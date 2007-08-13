@@ -1,0 +1,262 @@
+SHELL=/bin/bash -O extglob
+
+# TODO: Precompiled headers?
+
+UNAME := $(shell uname)
+ifneq ($(findstring CYGWIN,$(UNAME)),)
+  PLATFORM := CYGWIN
+else
+  ifneq ($(findstring Darwin,$(UNAME)),)
+    PLATFORM := MACOSX
+  else
+    ifneq ($(findstring Linux,$(UNAME)),)
+      PLATFORM := LINUX
+    else
+      ifeq ("$(UNAME)","")
+        PLATFORM := WIN32
+      else
+        $(error Unknown platform "$(UNAME)", please report this to the developers)
+      endif
+    endif
+  endif
+endif
+
+
+# Build tools
+# Make
+MAKE := make
+# C compiler
+CC   := gcc
+# C++ compiler
+CXX  := g++
+# C dependencies
+CDEP := gcc -M -MM -MP
+# C++ dependencies
+CCDEP:= g++ -M -MM -MP
+# Linker
+LD   := g++
+# Dynamic Libraries
+DLIB := g++
+# Static Libraries
+SLIB := ar
+
+ifeq ($(PLATFORM),MACOSX)
+  DEXT := dylib
+  SEXT := a
+else
+  ifeq ($(PLATFORM),LINUX)
+    DEXT := so
+    SEXT := a
+  else
+    DEXT := dll
+    SEXT := lib
+  endif
+endif
+
+# Different versions of stat need different options to get the file size.
+# We can detect which version we have with the --version option,
+# since the BSD version doesn't accept it and returns an error
+ifeq ($(PLATFORM),WIN32)
+  FSIZE=REM
+else
+  STAT_VER := $(shell stat --version &> /dev/null ; echo $$?)
+  ifeq ($(STAT_VER),0) # No error, so we have the GNU version
+    FSIZE := stat -c %s
+  else # We have the BSD version
+    FSIZE := stat -f %z
+  endif
+endif
+
+# Build options
+
+MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBUG=$(NODEBUG) MOREDEBUG=$(MOREDEBUG)
+
+# Common flags for C/C++/dependencies
+CPPFLAGS = -ansi -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
+
+# Extra flags for C compiler
+CFLAGS   = -Wall -W -Wno-long-long -O$(OPTIMIZE) $(CPPFLAGS)
+
+# Extra flags for C++ compiler
+CXXFLAGS = $(CFLAGS)
+
+# Linker flags
+#LDFLAGS := -static -all_load
+LDFLAGS := 
+SFLAGS  := ru
+ifeq ($(PLATFORM),MACOSX)
+  DFLAGS  = -dynamiclib
+else
+  DFLAGS := -shared
+endif
+
+ifeq ($(NODEBUG),1)
+  CPPFLAGS += -DNDEBUG
+else
+  CFLAGS   += -g
+endif
+
+ifeq ($(MOREDEBUG),1)
+  CPPFLAGS += -D_GLIBCXX_DEBUG_PEDANTIC -D_GLIBCXX_DEBUG #-D_GLIBCXX_CONCEPT_CHECKS
+endif
+
+ifeq ($(PROFILE),1)
+  CFLAGS += -pg
+  LDFLAGS += -pg
+endif
+
+ifeq ($(PLATFORM),WIN32)
+  LDFLAGS  += -Wl,--enable-auto-import -Wl,--enable-runtime-pseudo-reloc
+endif
+
+INCLUDES = -I$(INC) $(EXTERNAL_INCS:%=-I%)
+
+ifeq ($(PLATFORM),MACOSX)
+  RPATH := 
+else
+  RPATH = $(EXTERNAL_LIBDIRS:%=-Wl,-rpath,%)
+endif
+
+LDLIBS   = $(RPATH) $(EXTERNAL_LIBDIRS:%=-L%) $(EXTERNAL_LIBS:%=-l%) $(EXTERNAL_LDLIBS)
+
+CPPFLAGS += $(EXTERNAL_DEFS:%=-D%)
+
+# Build directories
+SRC := src
+INC := include
+OBJ := tmp
+DEP := tmp
+
+#INC_FILES := $(wildcard $(INC)/*.h) $(wildcard $(INC)/*.hh)
+C_FILES   := $(wildcard $(SRC)/*.c)
+CC_FILES  := $(wildcard $(SRC)/*.cc)
+CXX_FILES := $(wildcard $(SRC)/*.cxx)
+#SRC_FILES := $(C_FILES) $(CC_FILES) $(CXX_FILES)
+OBJ_FILES := $(CC_FILES:$(SRC)/%.cc=$(OBJ)/%.o) $(C_FILES:$(SRC)/%.c=$(OBJ)/%.o)
+DEP_FILES := $(CC_FILES:$(SRC)/%.cc=$(DEP)/%.d) $(CXX_FILES:$(SRC)/%.cxx=$(DEP)/%.d) $(C_FILES:$(SRC)/%.c=$(DEP)/%.d)
+EXEOBJ_FILES := $(CXX_FILES:$(SRC)/%.cxx=$(OBJ)/%.o)
+EXE_FILES := $(CXX_FILES:$(SRC)/%.cxx=%.exe)
+
+ifeq ($(VERBOSE),1)
+  V :=
+else
+  V := @
+endif
+
+vpath %.o $(OBJ)
+vpath %.c $(SRC)
+vpath %.cc $(SRC)
+vpath %.cxx $(SRC)
+vpath %.h $(INC)
+vpath %.hh $(INC)
+vpath %.gch $(INC)
+
+.PHONY: default_target
+default_target: default
+
+ifneq ($(TARGETLIB),)
+  TARGET := lib$(TARGETLIB).$(DEXT)
+endif
+
+ifneq ($(TARGET),)
+  $(TARGET): $(OBJ_FILES)
+endif
+
+ifneq ($(NO_DEFAULT_RULES),1)
+clean:
+	@echo -n " *** Removing old executable, library, object and dependency files in " && basename `pwd`
+	$(V) rm -f ./*.exe ./lib*.a ./lib*.so ./lib*.dylib ./lib*.dll ./lib*.lib $(OBJ)/*.o $(OBJ)/*.d
+
+  ifeq ($(MAKECMDGOALS),clean)
+    NODEPS := 1
+  endif
+endif
+
+debug:
+	@echo "FSIZE = '$(FSIZE)'"
+
+# Rules for building the different file types
+
+.SUFFIXES:
+
+%.exe: $(OBJ)/%.o
+	@echo "   * Linking    $@"
+	$V$(LD) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+
+lib%.$(DEXT):
+	@echo "   * Linking    $@"
+	$V$(DLIB) $(DFLAGS) -o $@ ${^:%.a=} $(LDLIBS)
+
+%.$(DEXT):
+	@echo "   * Linking    $@"
+	$V$(DLIB) $(DFLAGS) -o $@ ${^:%.a=} $(LDLIBS)
+
+lib%.$(SEXT):
+	@echo "   * Linking    $@"
+	$V$(SLIB) $(SFLAGS) $@ ${^:%.a=}
+
+%.$(SEXT):
+	@echo "   * Linking    $@"
+	$V$(SLIB) $(SFLAGS) $@ ${^:%.a=}
+
+$(OBJ)/%.o: %.c
+	@echo "  ** Compiling  `basename $@`"
+	$V$(CC) -o $@ $< -c $(CFLAGS)
+
+$(OBJ)/%.o: %.cc
+	@echo "  ** Compiling  `basename $@`"
+	$V$(CXX) -o $@ $< -c $(CXXFLAGS)
+
+$(OBJ)/%.o: %.cxx
+	@echo "  ** Compiling  `basename $@`"
+	$V$(CXX) -o $@ $< -c $(CXXFLAGS)
+
+$(DEP)/%.d: %.c
+	@echo " *** Creating   `basename $@`"
+	$V$(CDEP) $< $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(OBJ)/\1.o $@ : ,g' > $@
+	@[ `${FSIZE} $@` -gt 0 ] || (rm $@; false)
+
+$(DEP)/%.d: %.cc
+	@echo " *** Creating   `basename $@`"
+	$V$(CCDEP) $< $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(OBJ)/\1.o $@ : ,g' > $@
+	@[ `${FSIZE} $@` -gt 0 ] || (rm $@; false)
+
+$(DEP)/%.d: %.cxx
+	@echo " *** Creating   `basename $@`"
+	$V$(CCDEP) $< $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(OBJ)/\1.o $@ : ,g' > $@
+	@[ `${FSIZE} $@` -gt 0 ] || (rm $@; false)
+
+$(DEP)/%.hh.d: %.hh
+	@echo " *** Creating   `basename $@`"
+	$V$(CCDEP) -x c++ $< -g $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(INC)/\1.hh.gch $@ : ,g' > $@
+	@[ `${FSIZE} $@` -gt 0 ] || (rm $@; false)
+
+# When we try to create a dependency file and there is an error in the source file,
+# the compiler will fail with an error exit status and generate no output.
+# However since it is piped to sed, we don't see the exit status, but that of sed,
+# which succeeded, so we end up with an empty dependency file.
+# I couldn't find a way to get the return value of the compiler rather than that of
+# sed (apparently a $PIPESTATUS variable exists but I couldn't get it to work) so I
+# decided to check if the output file is empty, and if so delete it:
+# The first try was to put the whole file into a string and test if it is empty:
+# [ -n "`cat $@`" ] || rm $@
+# However this involves reading the whole file, which is not very efficient.
+# Then I tried the find command which can look for empty files:
+# find `dirname $@` -name `basename $@` -type f -maxdepth 1 -empty | xargs rm -
+# In the end I found the stat command, which simplifies it slightly:
+# [ `stat -c %s $@` -gt 0 ] || rm $@
+# This also allows me to add the false after the rm to tell make the command failed.
+
+$(INC)/%.gch: %
+	@echo "  ** Precompiling `basename $@`"
+	$V$(CXX) -o $@ -x c++ $< -c -g $(CXXFLAGS)
+
+# Include dependency files, if they don't exist yet they will be created
+
+ifneq ($(PLATFORM),WIN32)
+ifneq ($(NODEPS),1)
+ifneq ($(DEP_FILES),)
+-include $(DEP_FILES)
+endif
+endif
+endif

@@ -1,0 +1,177 @@
+<ui version="4.0" >
+ <class>wndLog</class>
+ <widget class="QMainWindow" name="wndLog" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>716</width>
+    <height>436</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>EUDAQ Log Collector</string>
+  </property>
+  <property name="windowIcon" >
+   <iconset>../../images/Icon_euLog.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <layout class="QVBoxLayout" >
+    <property name="margin" >
+     <number>9</number>
+    </property>
+    <property name="spacing" >
+     <number>6</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" >
+      <property name="margin" >
+       <number>0</number>
+      </property>
+      <property name="spacing" >
+       <number>2</number>
+      </property>
+      <item>
+       <layout class="QVBoxLayout" >
+        <property name="margin" >
+         <number>0</number>
+        </property>
+        <property name="spacing" >
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblLevel" >
+          <property name="text" >
+           <string>Level:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cmbLevel" />
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" >
+        <property name="margin" >
+         <number>0</number>
+        </property>
+        <property name="spacing" >
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblFrom" >
+          <property name="text" >
+           <string>From:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cmbFrom" >
+          <item>
+           <property name="text" >
+            <string>All</string>
+           </property>
+          </item>
+          <item>
+           <property name="text" >
+            <string>RunControl</string>
+           </property>
+          </item>
+          <item>
+           <property name="text" >
+            <string>DataCollector</string>
+           </property>
+          </item>
+          <item>
+           <property name="text" >
+            <string>LogCollector</string>
+           </property>
+          </item>
+          <item>
+           <property name="text" >
+            <string>Monitor.*</string>
+           </property>
+          </item>
+          <item>
+           <property name="text" >
+            <string>Producer.*</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" >
+        <property name="margin" >
+         <number>0</number>
+        </property>
+        <property name="spacing" >
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="lblSearch" >
+          <property name="text" >
+           <string>Search:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="txtSearch" />
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer>
+        <property name="orientation" >
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" >
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTreeView" name="viewLog" >
+      <property name="verticalScrollBarPolicy" >
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+      <property name="selectionMode" >
+       <enum>QAbstractItemView::ExtendedSelection</enum>
+      </property>
+      <property name="rootIsDecorated" >
+       <bool>false</bool>
+      </property>
+      <property name="sortingEnabled" >
+       <bool>true</bool>
+      </property>
+      <property name="allColumnsShowFocus" >
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>716</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>viewLog</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,976 @@
+<ui version="4.0" >
+ <author>Emlyn Corrin</author>
+ <class>wndProd</class>
+ <widget class="QMainWindow" name="wndProd" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>705</width>
+    <height>542</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>eudaq Dummy Producer</string>
+  </property>
+  <widget class="QWidget" name="centralwidget" >
+   <layout class="QHBoxLayout" >
+    <property name="margin" >
+     <number>9</number>
+    </property>
+    <property name="spacing" >
+     <number>6</number>
+    </property>
+    <item>
+     <layout class="QVBoxLayout" >
+      <property name="margin" >
+       <number>0</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QGroupBox" name="grpData" >
+        <property name="title" >
+         <string>Data</string>
+        </property>
+        <layout class="QVBoxLayout" >
+         <property name="margin" >
+          <number>9</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QRadioButton" name="radFile" >
+             <property name="text" >
+              <string>File:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="txtFile" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>30</width>
+               <height>0</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QRadioButton" name="radCustom" >
+           <property name="text" >
+            <string>Custom:</string>
+           </property>
+           <property name="checked" >
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QGridLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item row="0" column="0" >
+            <widget class="QLabel" name="lblWidth" >
+             <property name="text" >
+              <string>Width:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>spnWidth</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" >
+            <widget class="QSpinBox" name="spnWidth" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>50</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="maximum" >
+              <number>65536</number>
+             </property>
+             <property name="value" >
+              <number>512</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" >
+            <widget class="QLabel" name="lblProfile" >
+             <property name="text" >
+              <string>Profile:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>comboBox</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" >
+            <widget class="QLabel" name="lblX" >
+             <property name="text" >
+              <string>X:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>spnX</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="2" >
+            <widget class="QLabel" name="lblHeight" >
+             <property name="text" >
+              <string>Height:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>spnHeight</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="3" >
+            <widget class="QSpinBox" name="spnHeight" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>60</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="maximum" >
+              <number>65536</number>
+             </property>
+             <property name="value" >
+              <number>512</number>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2" >
+            <widget class="QLabel" name="lblRadius" >
+             <property name="text" >
+              <string>Radius:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>spnRadius</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2" >
+            <widget class="QLabel" name="lblY" >
+             <property name="text" >
+              <string>Y:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>spnY</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" >
+            <widget class="QComboBox" name="comboBox" >
+             <item>
+              <property name="text" >
+               <string>Circle</string>
+              </property>
+             </item>
+             <item>
+              <property name="text" >
+               <string>Gaussian</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="2" column="3" >
+            <widget class="QDoubleSpinBox" name="spnY" >
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>256.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" >
+            <widget class="QDoubleSpinBox" name="spnX" >
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>256.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3" >
+            <widget class="QDoubleSpinBox" name="spnRadius" >
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>100.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QGridLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item row="3" column="1" >
+            <widget class="QDoubleSpinBox" name="spnNoise" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>30</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="suffix" >
+              <string> ADC</string>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>4.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1" >
+            <widget class="QDoubleSpinBox" name="spnSparsify" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>30</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="suffix" >
+              <string> ADC</string>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>10.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0" >
+            <widget class="QCheckBox" name="chkPed" >
+             <property name="text" >
+              <string>Pedestal:</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0" >
+            <widget class="QCheckBox" name="chkSparsify" >
+             <property name="text" >
+              <string>Sparsify:</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1" >
+            <widget class="QDoubleSpinBox" name="spnPed" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>30</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="suffix" >
+              <string> ADC</string>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>2.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0" >
+            <widget class="QCheckBox" name="chkNoise" >
+             <property name="text" >
+              <string>Noise:</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" >
+            <widget class="QCheckBox" name="chkCMmean" >
+             <property name="text" >
+              <string>CM mean:</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" >
+            <widget class="QDoubleSpinBox" name="spnPulse" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>3</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize" >
+              <size>
+               <width>30</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="suffix" >
+              <string> ADC</string>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>20.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" >
+            <widget class="QCheckBox" name="chkCMstdev" >
+             <property name="text" >
+              <string>CM st.dev:</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" >
+            <widget class="QDoubleSpinBox" name="spnCMmean" >
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="suffix" >
+              <string> ADC</string>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>20.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" >
+            <widget class="QDoubleSpinBox" name="spnCMstdev" >
+             <property name="frame" >
+              <bool>false</bool>
+             </property>
+             <property name="alignment" >
+              <set>Qt::AlignRight</set>
+             </property>
+             <property name="suffix" >
+              <string> ADC</string>
+             </property>
+             <property name="decimals" >
+              <number>1</number>
+             </property>
+             <property name="maximum" >
+              <double>65536.000000000000000</double>
+             </property>
+             <property name="value" >
+              <double>5.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" >
+            <widget class="QCheckBox" name="chkPulses" >
+             <property name="text" >
+              <string>Pulses:</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="grpTriggers" >
+        <property name="title" >
+         <string>Triggers</string>
+        </property>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>9</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QRadioButton" name="radManual" >
+             <property name="text" >
+              <string>Manual</string>
+             </property>
+             <property name="checked" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radFixed" >
+             <property name="text" >
+              <string>Fixed</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QRadioButton" name="radPoisson" >
+             <property name="text" >
+              <string>Poisson</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item>
+            <layout class="QGridLayout" >
+             <property name="margin" >
+              <number>0</number>
+             </property>
+             <property name="spacing" >
+              <number>0</number>
+             </property>
+             <item row="0" column="1" >
+              <widget class="QDoubleSpinBox" name="spnFreq" >
+               <property name="sizePolicy" >
+                <sizepolicy>
+                 <hsizetype>3</hsizetype>
+                 <vsizetype>0</vsizetype>
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize" >
+                <size>
+                 <width>30</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="frame" >
+                <bool>false</bool>
+               </property>
+               <property name="alignment" >
+                <set>Qt::AlignRight</set>
+               </property>
+               <property name="suffix" >
+                <string> Hz</string>
+               </property>
+               <property name="maximum" >
+                <double>100000.000000000000000</double>
+               </property>
+               <property name="value" >
+                <double>1.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1" >
+              <widget class="QDoubleSpinBox" name="spnPeriod" >
+               <property name="sizePolicy" >
+                <sizepolicy>
+                 <hsizetype>3</hsizetype>
+                 <vsizetype>0</vsizetype>
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize" >
+                <size>
+                 <width>30</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="frame" >
+                <bool>false</bool>
+               </property>
+               <property name="alignment" >
+                <set>Qt::AlignRight</set>
+               </property>
+               <property name="suffix" >
+                <string> ms</string>
+               </property>
+               <property name="decimals" >
+                <number>1</number>
+               </property>
+               <property name="maximum" >
+                <double>999999999.000000000000000</double>
+               </property>
+               <property name="value" >
+                <double>1000.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" >
+              <widget class="QLabel" name="lblFreq" >
+               <property name="text" >
+                <string>Freq:</string>
+               </property>
+               <property name="buddy" >
+                <cstring>spnFreq</cstring>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" >
+              <widget class="QLabel" name="lblPeriod" >
+               <property name="text" >
+                <string>Period:</string>
+               </property>
+               <property name="buddy" >
+                <cstring>spnPeriod</cstring>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnTrigger" >
+             <property name="text" >
+              <string>Trigger!</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" >
+      <property name="margin" >
+       <number>0</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QLabel" name="lblPreview" >
+        <property name="text" >
+         <string>Preview:</string>
+        </property>
+        <property name="buddy" >
+         <cstring>grphPreview</cstring>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGraphicsView" name="grphPreview" />
+      </item>
+      <item>
+       <widget class="QGroupBox" name="grpStatus" >
+        <property name="title" >
+         <string>Status</string>
+        </property>
+        <layout class="QVBoxLayout" >
+         <property name="margin" >
+          <number>9</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QLineEdit" name="txtStatus" />
+           </item>
+           <item>
+            <widget class="QComboBox" name="cmbStatus" >
+             <item>
+              <property name="text" >
+               <string>Select:</string>
+              </property>
+             </item>
+             <item>
+              <property name="text" >
+               <string>OK</string>
+              </property>
+             </item>
+             <item>
+              <property name="text" >
+               <string>Warn</string>
+              </property>
+             </item>
+             <item>
+              <property name="text" >
+               <string>Error</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QLabel" name="lblStatus" >
+           <property name="text" >
+            <string>OK</string>
+           </property>
+           <property name="buddy" >
+            <cstring>txtStatus</cstring>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QGridLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>0</number>
+           </property>
+           <item row="4" column="1" >
+            <widget class="QLineEdit" name="txtDataColl" >
+             <property name="readOnly" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" >
+            <widget class="QLineEdit" name="txtState" >
+             <property name="readOnly" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" >
+            <widget class="QLabel" name="lblRun" >
+             <property name="text" >
+              <string>Run Num:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>txtRun</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" >
+            <widget class="QLabel" name="lblState" >
+             <property name="text" >
+              <string>State:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>txtState</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0" >
+            <widget class="QLabel" name="lblConfig" >
+             <property name="text" >
+              <string>Config:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>txtConfig</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0" >
+            <widget class="QLabel" name="lblDataColl" >
+             <property name="text" >
+              <string>DataCollector:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>txtDataColl</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1" >
+            <widget class="QLineEdit" name="txtConfig" >
+             <property name="readOnly" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" >
+            <widget class="QLabel" name="lblEvent" >
+             <property name="text" >
+              <string>Event Num:</string>
+             </property>
+             <property name="buddy" >
+              <cstring>txtEvent</cstring>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1" >
+            <widget class="QLineEdit" name="txtRun" >
+             <property name="readOnly" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1" >
+            <widget class="QLineEdit" name="txtEvent" >
+             <property name="readOnly" >
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnQuit" >
+        <property name="text" >
+         <string>Quit</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>705</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+ </widget>
+ <tabstops>
+  <tabstop>radFile</tabstop>
+  <tabstop>txtFile</tabstop>
+  <tabstop>radCustom</tabstop>
+  <tabstop>spnWidth</tabstop>
+  <tabstop>spnHeight</tabstop>
+  <tabstop>comboBox</tabstop>
+  <tabstop>spnRadius</tabstop>
+  <tabstop>spnX</tabstop>
+  <tabstop>spnY</tabstop>
+  <tabstop>chkPulses</tabstop>
+  <tabstop>spnPulse</tabstop>
+  <tabstop>chkCMmean</tabstop>
+  <tabstop>spnCMmean</tabstop>
+  <tabstop>chkCMstdev</tabstop>
+  <tabstop>spnCMstdev</tabstop>
+  <tabstop>chkNoise</tabstop>
+  <tabstop>spnNoise</tabstop>
+  <tabstop>chkPed</tabstop>
+  <tabstop>spnPed</tabstop>
+  <tabstop>chkSparsify</tabstop>
+  <tabstop>spnSparsify</tabstop>
+  <tabstop>radManual</tabstop>
+  <tabstop>radFixed</tabstop>
+  <tabstop>radPoisson</tabstop>
+  <tabstop>spnFreq</tabstop>
+  <tabstop>spnPeriod</tabstop>
+  <tabstop>btnTrigger</tabstop>
+  <tabstop>grphPreview</tabstop>
+  <tabstop>txtStatus</tabstop>
+  <tabstop>cmbStatus</tabstop>
+  <tabstop>txtEvent</tabstop>
+  <tabstop>txtRun</tabstop>
+  <tabstop>txtState</tabstop>
+  <tabstop>txtConfig</tabstop>
+  <tabstop>txtDataColl</tabstop>
+  <tabstop>btnQuit</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>btnQuit</sender>
+   <signal>clicked()</signal>
+   <receiver>wndProd</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>511</x>
+     <y>511</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>351</x>
+     <y>534</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
