@@ -58,7 +58,7 @@ public:
   unsigned GetTriggerNum() const { return m_triggernum; }
   unsigned long long GetTimestamp() const { return m_timestamp; }
 
-  unsigned char TLUController::GetTriggerStatus();
+  unsigned char GetTriggerStatus() const ;
 
   void InhibitTriggers(bool inhibit = true);
 

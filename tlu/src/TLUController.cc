@@ -242,7 +242,7 @@ void TLUController::Update() {
 }
 
 
-unsigned char TLUController::GetTriggerStatus() {
+unsigned char TLUController::GetTriggerStatus() const {
   return ReadRegister(TRIG_INHIBIT_ADDRESS);
 }
 
