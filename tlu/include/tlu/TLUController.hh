@@ -39,9 +39,9 @@ public:
   void SetVetoMask(unsigned char mask);
   void SetAndMask(unsigned char mask);
   void SetOrMask(unsigned char mask);
-  unsigned char GetVetoMask();
-  unsigned char GetAndMask();
-  unsigned char GetOrMask();
+  unsigned char GetVetoMask() const;
+  unsigned char GetAndMask() const;
+  unsigned char GetOrMask() const;
 
 
   int  ReadFirmwareID();

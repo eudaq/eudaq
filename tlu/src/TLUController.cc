@@ -186,15 +186,15 @@ void TLUController::SetTriggerInterval(unsigned millis) {
   WriteRegister(INTERNAL_TRIGGER_INTERVAL_ADDRESS, m_triggerint = millis);
 }
 
-unsigned char TLUController::GetAndMask() {
+unsigned char TLUController::GetAndMask() const {
   return ReadRegister(BEAM_TRIGGER_AMASK_ADDRESS);
 }
 
-unsigned char TLUController::GetOrMask() {
+unsigned char TLUController::GetOrMask() const {
   return ReadRegister(BEAM_TRIGGER_OMASK_ADDRESS);
 }
 
-unsigned char TLUController::GetVetoMask() {
+unsigned char TLUController::GetVetoMask() const {
   return ReadRegister(BEAM_TRIGGER_VMASK_ADDRESS);
 }
 
