@@ -82,8 +82,8 @@ namespace eudaq {
     //std::string packet;
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
     if (m_idata != (size_t)-1) {
-      SendCommand("PREPARE", to_string(m_runnumber), m_transport->GetConnection(m_idata));
-      mSleep(50);
+      SendReceiveCommand("PREPARE", to_string(m_runnumber), m_transport->GetConnection(m_idata));
+      mSleep(100);
     }
 //       EUDAQ_ERROR("No response from DataCollector");
 //       m_runnumber--;
@@ -111,6 +111,17 @@ namespace eudaq {
       packet += '\0' + param;
     }
     m_transport->SendPacket(packet, id);
+  }
+
+  std::string RunControl::SendReceiveCommand(const std::string & cmd, const std::string & param,
+                                             const ConnectionInfo & id) {
+    std::string packet(cmd);
+    if (param.length() > 0) {
+      packet += '\0' + param;
+    }
+    std::string result;
+    m_transport->SendReceivePacket(packet, &result, id);
+    return result;
   }
 
   void RunControl::CommandThread() {

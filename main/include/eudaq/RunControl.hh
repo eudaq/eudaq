@@ -40,6 +40,8 @@ namespace eudaq {
     void InitOther(const ConnectionInfo & id);
     void SendCommand(const std::string & cmd, const std::string & param = "",
                      const ConnectionInfo & id = ConnectionInfo::ALL);
+    std::string SendReceiveCommand(const std::string & cmd, const std::string & param = "",
+                                   const ConnectionInfo & id = ConnectionInfo::ALL);
     void CommandHandler(TransportEvent & ev);
     bool m_done;
     bool m_listening;
