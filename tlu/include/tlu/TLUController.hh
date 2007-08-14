@@ -39,6 +39,11 @@ public:
   void SetVetoMask(unsigned char mask);
   void SetAndMask(unsigned char mask);
   void SetOrMask(unsigned char mask);
+  unsigned char GetVetoMask();
+  unsigned char GetAndMask();
+  unsigned char GetOrMask();
+
+
   int  ReadFirmwareID();
   void SetTriggerInterval(unsigned millis);
 
@@ -52,6 +57,8 @@ public:
   TLUEntry GetEntry(size_t i) const { return m_buffer[i]; }
   unsigned GetTriggerNum() const { return m_triggernum; }
   unsigned long long GetTimestamp() const { return m_timestamp; }
+
+  unsigned char TLUController::GetTriggerStatus();
 
   void InhibitTriggers(bool inhibit = true);
 

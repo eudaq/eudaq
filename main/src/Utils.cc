@@ -7,6 +7,8 @@
 #if EUDAQ_PLATFORM_IS(WIN32)
 # define WIN32_LEAN_AND_MEAN
 # include <windows.h>
+# include <cstdio>  // HK
+# include <cstdlib>  // HK
 #else
 # include <unistd.h>
 #endif
@@ -88,7 +90,7 @@ namespace eudaq {
       else if (x[1] == 'x') base = 16;
       start += 2;
     }
-    long result = strtol(start, &end, base);
+    long result = std::strtol(start, &end, base);
     if (*end) throw std::invalid_argument("Invalid argument: " + x);
     return result;
   }
@@ -106,7 +108,7 @@ namespace eudaq {
       else if (x[1] == 'x') base = 16;
       start += 2;
     }
-    unsigned long result = strtoul(start, &end, base);
+    unsigned long result = std::strtoul(start, &end, base);
     if (*end) throw std::invalid_argument("Invalid argument: " + x);
     return result;
   }

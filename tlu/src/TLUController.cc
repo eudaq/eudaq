@@ -1,7 +1,15 @@
 #include "tlu/TLUController.hh"
 #include "tlu/TLU_address_map.h"
+#include "eudaq/Platform.hh"
 #include "eudaq/Utils.hh"
-#include <unistd.h>
+
+#if EUDAQ_PLATFORM_IS(WIN32)
+# include <cstdio>  // HK
+# include <cstdlib>  // HK
+#else
+# include <unistd.h>
+#endif
+
 #include <iostream>
 #include <ostream>
 #include <iomanip>
@@ -33,8 +41,8 @@ void DefaultErrorHandler(const char * function,
   throw TLUException(s);
 }
 
-TLUController::TLUController(const std::string & filename, ErrorHandler err) :
-  m_filename(filename != "" ? filename : "TLU_Toplevel.bit"),
+TLUController::TLUController(const std::string  & filename, ErrorHandler err) :
+  m_filename(filename),
   //m_errorhandler(0),
   m_mask(1),
   m_vmask(0),
@@ -50,6 +58,7 @@ TLUController::TLUController(const std::string & filename, ErrorHandler err) :
   m_timestamp(0),
   m_oldbuf(new unsigned long long [BUFFER_DEPTH])
 {
+  if (m_filename == "") m_filename = "TLU_Toplevel.bit";
   for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
     m_oldbuf[i] = 0;
   }
@@ -177,6 +186,19 @@ void TLUController::SetTriggerInterval(unsigned millis) {
   WriteRegister(INTERNAL_TRIGGER_INTERVAL_ADDRESS, m_triggerint = millis);
 }
 
+unsigned char TLUController::GetAndMask() {
+  return ReadRegister(BEAM_TRIGGER_AMASK_ADDRESS);
+}
+
+unsigned char TLUController::GetOrMask() {
+  return ReadRegister(BEAM_TRIGGER_OMASK_ADDRESS);
+}
+
+unsigned char TLUController::GetVetoMask() {
+  return ReadRegister(BEAM_TRIGGER_VMASK_ADDRESS);
+}
+
+
 int TLUController::ReadFirmwareID() {
   return ReadRegister(FIRMWARE_ID_ADDRESS);
 }
@@ -218,6 +240,12 @@ void TLUController::Update() {
 
   //mSleep(1);
 }
+
+
+unsigned char TLUController::GetTriggerStatus() {
+  return ReadRegister(TRIG_INHIBIT_ADDRESS);
+}
+
 
 void TLUController::InhibitTriggers(bool inhibit) {
   WriteRegister(TRIG_INHIBIT_ADDRESS, inhibit);
