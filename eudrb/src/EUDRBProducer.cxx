@@ -80,9 +80,13 @@ public:
       unsigned long readdata32=0;
       unsigned long address=boards[n_eudrb].BaseAddress|0x00400004;
       gettimeofday(&starttime,0);
+      int i=0;
       while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
-        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address); 
+	i++;
+	if (i%20000==0)  printf("waiting for ready %d cycles\n",i); 
       }
+
       gettimeofday(&stoptime,0);
       stoptime.tv_usec-=starttime.tv_usec;
       stoptime.tv_sec-=starttime.tv_sec; 
