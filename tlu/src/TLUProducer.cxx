@@ -11,6 +11,7 @@
 typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
 using eudaq::to_hex;
+using namespace tlu;
 
 class TLUProducer : public eudaq::Producer, public TLUController {
 public:
@@ -58,6 +59,7 @@ public:
     } while (!done);
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
+    SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       std::cout << "Configuring." << std::endl;
       std::string filename = param["BitFile"];
@@ -82,12 +84,13 @@ public:
     }
   }
   virtual void OnStartRun(unsigned param) {
+    SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       m_run = param;
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
-      TLUEvent ev(TLUEvent::BORE(m_run)); 
-      ev.SetTag("FirmwareID",  to_string(ReadFirmwareID()));
+      TLUEvent ev(TLUEvent::BORE(m_run));
+      ev.SetTag("FirmwareID",  to_string(GetFirmwareID()));
       ev.SetTag("TriggerInterval",to_string(trigger_interval));
       ev.SetTag("DutMask",  "0x"+to_hex(dut_mask));
       ev.SetTag("AndMask",  "0x"+to_hex(and_mask));
@@ -144,7 +147,7 @@ public:
   }
   virtual void OnStatus() {
     m_status.SetTag("TRIG", eudaq::to_string(m_ev));
-    m_status.SetTag("TIMESTAMP", "0x" + eudaq::to_hex(lasttime, 16));
+    m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(lasttime)));
     //std::cout << "Status " << m_status << std::endl;
   }
   virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {

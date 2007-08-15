@@ -136,6 +136,7 @@ public:
     }
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
+    SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       std::cout << "Configuring." << std::endl;
       int numboards = param.Get("NumBoards", 0);
@@ -255,6 +256,7 @@ public:
     done = true;
   }
   virtual void OnReset() {
+    SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       std::cout << "Reset" << std::endl;
       // EUDRB reset

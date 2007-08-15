@@ -6,6 +6,8 @@
 #include <sstream>
 #include <csignal>
 
+using namespace tlu;
+
 static sig_atomic_t g_done = 0;
 
 void ctrlchandler(int) {
@@ -43,7 +45,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
-    std::cout << "TLU Firmware version:" << TLU.ReadFirmwareID() << std::endl;
+    std::cout << "TLU Firmware version:" << TLU.GetFirmwareID() << std::endl;
     //sleep(1);
 
     eudaq::Time starttime(eudaq::Time::Current());
