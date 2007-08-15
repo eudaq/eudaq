@@ -72,13 +72,13 @@ public:
       SetVetoMask(veto_mask);
       SetAndMask(and_mask);
       SetOrMask(or_mask);
-      SetStatus(eudaq::Status::LVL_OK, "TLU: Configured");
+      SetStatus(eudaq::Status::LVL_OK, "Configured");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Configuration Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Configuration Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     }
   }
   virtual void OnStartRun(unsigned param) {
@@ -98,13 +98,13 @@ public:
       SendEvent(ev);
       Start();
       TLUStarted=true;
-      SetStatus(eudaq::Status::LVL_OK, "TLU: Started");
+      SetStatus(eudaq::Status::LVL_OK, "Started");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Start Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Start Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     }
   }
   virtual void OnStopRun() {
@@ -113,13 +113,13 @@ public:
       Stop();
       TLUStarted=false;
       TLUJustStopped=true;
-      SetStatus(eudaq::Status::LVL_OK, "TLU: Stopped");
+      SetStatus(eudaq::Status::LVL_OK, "Stopped");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Stop Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Stop Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     }
   }
   virtual void OnTerminate() {
@@ -133,13 +133,13 @@ public:
       SetStatus(eudaq::Status::LVL_OK);
       Stop();   // stop
       Update(); // empty events
-      SetStatus(eudaq::Status::LVL_OK, "TLU: Reset");
+      SetStatus(eudaq::Status::LVL_OK, "Reset");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Reset Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "TLU: Reset Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
     }
   }
   virtual void OnStatus() {
@@ -151,7 +151,7 @@ public:
     std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
     if (param.length() > 0) std::cout << " (" << param << ")";
     std::cout << std::endl;
-    SetStatus(eudaq::Status::LVL_WARN, "TLU: Unrecognised command");
+    SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
   }
 private:
   unsigned m_run, m_ev;

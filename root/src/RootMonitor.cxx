@@ -27,7 +27,8 @@
 #include <string>
 #include <algorithm>
 
-int colours[] = { kRed, kGreen, kBlue, kMagenta, kCyan, kBlack };
+int colours[] = { kRed, kGreen, kBlue, kMagenta, kCyan,
+                  kRed, kGreen, kBlue, kMagenta, kCyan };
 
 struct Seed {
   double x, y, c;
@@ -110,7 +111,7 @@ public:
       frame->AddFrame(m_embedmain, m_hintbig.get());
       m_canvasmain = m_embedmain->GetCanvas();
 
-      m_board = std::vector<BoardDisplay>(5);
+      m_board = std::vector<BoardDisplay>(5); // Maximum number of boards displayed
       m_canvasmain->Divide(4, 2);
       for (size_t i = 0; i < m_board.size(); ++i) {
         BookBoard(i+1, m_board[i]);
@@ -252,23 +253,23 @@ public:
         }
       }
       bool track = true;
-      for (size_t i = 0; i < m_board.size(); ++i) {
+      for (size_t i = 0; i < numplanes; ++i) {
         if (m_board[i].m_clusters.size() != 1) {
           track = false;
           break;
         }
       }
       if (track) {
-        for (size_t i = 0; i < m_board.size(); ++i) {
+        for (size_t i = 0; i < numplanes; ++i) {
           m_board[i].m_histotrack2d->Fill(m_board[i].m_clusterx[0], m_board[i].m_clustery[0]);
         }
-        for (size_t i = 1; i < m_board.size(); ++i) {
+        for (size_t i = 1; i < numplanes; ++i) {
           m_board[i].m_histodeltax->Fill(m_board[i].m_clusterx[0] - m_board[i-1].m_clusterx[0]);
           m_board[i].m_histodeltay->Fill(m_board[i].m_clustery[0] - m_board[i-1].m_clustery[0]);
         }
         std::ostringstream s;
         s << "Found track in event " << ev->GetEventNumber() << ":";
-        for (size_t i = 0; i < m_board.size(); ++i) {
+        for (size_t i = 0; i < numplanes; ++i) {
           s << " (" << m_board[i].m_clusterx[0]
             << ", " << m_board[i].m_clustery[0]
             << ", " << m_board[i].m_clusters[0]
@@ -284,7 +285,7 @@ public:
       double maxc = m_board[0].m_histoclusterval->GetMaximum();
       double maxx = m_board[1].m_histodeltax->GetMaximum();
       double maxy = m_board[1].m_histodeltay->GetMaximum();
-      for (size_t i = 1; i < m_board.size(); ++i) {
+      for (size_t i = 1; i < numplanes; ++i) {
         if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
         if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
         if (m_board[i].m_histoclusterval->GetMaximum() > maxc) maxc = m_board[i].m_histoclusterval->GetMaximum();

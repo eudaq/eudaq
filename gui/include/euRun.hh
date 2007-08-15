@@ -26,37 +26,7 @@ public:
   RunControlGUI(const std::string & listenaddress,
                 QRect geom,
                 QWidget *parent = 0,
-                Qt::WindowFlags flags = 0)
-    : QMainWindow(parent, flags),
-      eudaq::RunControl(listenaddress),
-      m_delegate(&m_run)
-  {
-    setupUi(this);
-    viewConn->setModel(&m_run);
-    viewConn->setItemDelegate(&m_delegate);
-    QDir dir("./conf/", "*.conf");
-    for (size_t i = 0; i < dir.count(); ++i) {
-      QString item = dir[i];
-      item.chop(5);
-      cmbConfig->addItem(item);
-    }
-    cmbConfig->setEditText("default");
-    QSize fsize = frameGeometry().size();
-    if (geom.x() == -1) geom.setX(x());
-    if (geom.y() == -1) geom.setY(y());
-    else geom.setY(geom.y() + MAGIC_NUMBER);
-    if (geom.width() == -1) geom.setWidth(fsize.width());
-    if (geom.height() == -1) geom.setHeight(fsize.height());
-    //else geom.setHeight(geom.height() - MAGIC_NUMBER);
-    move(geom.topLeft());
-    resize(geom.size());
-    connect(this, SIGNAL(RunNumberChanged(const QString &)), txtRunNumber, SLOT(setText(const QString &)));
-    connect(this, SIGNAL(TrigNumberChanged(const QString &)), txtTriggers, SLOT(setText(const QString &)));
-    connect(this, SIGNAL(EventNumberChanged(const QString &)), txtEvents,  SLOT(setText(const QString &)));
-    connect(this, SIGNAL(TimestampChanged(const QString &)), txtTimestamp, SLOT(setText(const QString &)));
-    connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
-    m_statustimer.start(500);
-  }
+                Qt::WindowFlags flags = 0);
 private:
   virtual void OnConnect(const eudaq::ConnectionInfo & id) {
     static bool registered = false;
@@ -68,7 +38,7 @@ private:
     //                         "This will reset all connected Producers etc.");
     m_run.newconnection(id);
     if (id.GetType() == "DataCollector") {
-      emit RunNumberChanged(("(" + eudaq::to_string(m_runnumber) + ")").c_str());
+      emit StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
     }
   }
   virtual void OnDisconnect(const eudaq::ConnectionInfo & id) {
@@ -81,10 +51,10 @@ private:
       registered = true;
     }
     if (id.GetType() == "DataCollector") {
-      emit EventNumberChanged(status->GetTag("EVENT").c_str());
+      emit StatusChanged("EVENT", status->GetTag("EVENT").c_str());
     } else if (id.GetType() == "Producer" && id.GetName() == "TLU") {
-      emit TrigNumberChanged(status->GetTag("TRIG").c_str());
-      emit TimestampChanged(status->GetTag("TIMESTAMP").c_str());
+      emit StatusChanged("TRIG", status->GetTag("TRIG").c_str());
+      emit StatusChanged("TIMESTAMP", status->GetTag("TIMESTAMP").c_str());
     }
     m_run.SetStatus(id, *status);
   }
@@ -108,11 +78,11 @@ private slots:
   }
   void on_btnStart_clicked() {
     StartRun(txtRunmsg->displayText().toStdString());
-    emit RunNumberChanged(eudaq::to_string(m_runnumber).c_str());
+    emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
   }
   void on_btnStop_clicked() {
     StopRun();
-    txtRunNumber->setText(("(" + eudaq::to_string(m_runnumber) + ")").c_str());
+    StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
   }
   void on_btnLog_clicked() {
     std::string msg = txtLogmsg->displayText().toStdString();
@@ -121,13 +91,18 @@ private slots:
   void timer() {
     GetStatus();
   }
+  void ChangeStatus(const QString & name, const QString & value) {
+    status_t::iterator i = m_status.find(name.toStdString());
+    if (i != m_status.end()) {
+      i->second.second->setText(value);
+    }
+  }
 signals:
-  void RunNumberChanged(const QString &);
-  void TrigNumberChanged(const QString &);
-  void EventNumberChanged(const QString &);
-  void TimestampChanged(const QString &);
+  void StatusChanged(const QString &, const QString &);
 private:
   RunControlModel m_run;
   RunConnectionDelegate m_delegate;
   QTimer m_statustimer;
+  typedef std::map<std::string, std::pair<QLabel *, QLabel *> > status_t;
+  status_t m_status;
 };

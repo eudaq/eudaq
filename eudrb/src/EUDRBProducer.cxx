@@ -119,8 +119,8 @@ public:
       n_error=0;
     } else {
       n_error++;
-      if (n_error<5) EUDAQ_ERROR("EUDRB: Event length 0");
-      else if (n_error==5) EUDAQ_ERROR("EUDRB: Event length 0 repeated more than 5 times, skipping!");
+      if (n_error<5) EUDAQ_ERROR("Event length 0");
+      else if (n_error==5) EUDAQ_ERROR("Event length 0 repeated more than 5 times, skipping!");
     }
 
 
@@ -194,13 +194,13 @@ public:
 
       }
 
-      SetStatus(eudaq::Status::LVL_OK, "EUDRB: Configured");
+      SetStatus(eudaq::Status::LVL_OK, "Configured");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Configuration Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Configuration Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     }
   }
   virtual void OnStartRun(unsigned param) {
@@ -225,13 +225,13 @@ public:
       }
       SendEvent(ev);
       started=true;
-      SetStatus(eudaq::Status::LVL_OK, "EUDRB: Started");
+      SetStatus(eudaq::Status::LVL_OK, "Started");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Start Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Start Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     }
   }
   virtual void OnStopRun() {
@@ -241,13 +241,13 @@ public:
       started=false;
       sleep(2); // fix for the moment
       SendEvent(EUDRBEvent::EORE(m_run, ++m_ev));
-      SetStatus(eudaq::Status::LVL_OK, "EUDRB: Stopped");
+      SetStatus(eudaq::Status::LVL_OK, "Stopped");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Stop Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Stop Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     }
   }
   virtual void OnTerminate() {
@@ -279,13 +279,13 @@ public:
         vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
 //        EUDRB_TriggerProcessingUnit_Reset(fdOut, BaseAddress[n_eudrb]);
       }
-      SetStatus(eudaq::Status::LVL_OK, "EUDRB: Reset");
+      SetStatus(eudaq::Status::LVL_OK, "Reset");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Reset Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "EUDRB: Reset Error");
+      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
     }
   }
   virtual void OnStatus() {
@@ -295,7 +295,7 @@ public:
     std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
     if (param.length() > 0) std::cout << " (" << param << ")";
     std::cout << std::endl;
-    SetStatus(eudaq::Status::LVL_WARN, "EUDRB: Unrecognised command");
+    SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
   }
 
   struct BoardInfo {

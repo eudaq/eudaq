@@ -147,7 +147,10 @@ namespace eudaq {
   }
 
   void DataCollector::OnStatus() {
-    m_status.SetTag("EVENT", to_string(m_eventnumber));
+    std::string evt;
+    if (m_eventnumber > 0) evt = to_string(m_eventnumber - 1);
+    m_status.SetTag("EVENT", evt);
+    if (m_ser.get()) m_status.SetTag("FILEBYTES", to_string(m_ser->FileBytes()));
   }
 
   void DataCollector::OnCompleteEvent() {
