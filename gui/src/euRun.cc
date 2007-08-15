@@ -8,6 +8,7 @@ static const char * statuses[] = {
   "TIMESTAMP", "Timestamp",
   "EVENT",     "Events Built",
   "TRIG",      "Triggers",
+  "FILEBYTES", "File Bytes",
   0
 };
 
@@ -73,7 +74,7 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
     //lblvalue->setText("");
     layout->addWidget(lblname, row, col*2);
     layout->addWidget(lblvalue, row, col*2+1);
-    m_status[st[0]] = std::make_pair(lblname, lblvalue);
+    m_status[st[0]] = lblvalue;
     if (++col > 1) {
       ++row;
       col = 0;
@@ -98,10 +99,6 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
   move(geom.topLeft());
   resize(geom.size());
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this, SLOT(ChangeStatus(const QString &, const QString &)));
-  
-  //connect(this, SIGNAL(TrigNumberChanged(const QString &)), txtTriggers, SLOT(setText(const QString &)));
-  //connect(this, SIGNAL(EventNumberChanged(const QString &)), txtEvents,  SLOT(setText(const QString &)));
-  //connect(this, SIGNAL(TimestampChanged(const QString &)), txtTimestamp, SLOT(setText(const QString &)));
-  //connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
+  connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
   m_statustimer.start(500);
 }

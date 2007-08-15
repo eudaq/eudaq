@@ -52,6 +52,7 @@ private:
     }
     if (id.GetType() == "DataCollector") {
       emit StatusChanged("EVENT", status->GetTag("EVENT").c_str());
+      emit StatusChanged("FILEBYTES", status->GetTag("FILEBYTES").c_str());
     } else if (id.GetType() == "Producer" && id.GetName() == "TLU") {
       emit StatusChanged("TRIG", status->GetTag("TRIG").c_str());
       emit StatusChanged("TIMESTAMP", status->GetTag("TIMESTAMP").c_str());
@@ -79,6 +80,7 @@ private slots:
   void on_btnStart_clicked() {
     StartRun(txtRunmsg->displayText().toStdString());
     emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
+    emit StatusChanged("EVENT", "");
   }
   void on_btnStop_clicked() {
     StopRun();
@@ -94,7 +96,7 @@ private slots:
   void ChangeStatus(const QString & name, const QString & value) {
     status_t::iterator i = m_status.find(name.toStdString());
     if (i != m_status.end()) {
-      i->second.second->setText(value);
+      i->second->setText(value);
     }
   }
 signals:
@@ -103,6 +105,6 @@ private:
   RunControlModel m_run;
   RunConnectionDelegate m_delegate;
   QTimer m_statustimer;
-  typedef std::map<std::string, std::pair<QLabel *, QLabel *> > status_t;
+  typedef std::map<std::string, QLabel *> status_t;
   status_t m_status;
 };

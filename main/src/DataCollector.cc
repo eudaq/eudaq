@@ -26,8 +26,8 @@ namespace eudaq {
         file >> result;
         std::cout << "Read run number = " << result << std::endl;
       } else {
-        std::cout << "Unable to open " << RUN_NUMBER_FILE << ", restarting run number counter from "
-                  << result << std::endl;
+        EUDAQ_ERROR("Restarting run number from " + to_string(result) +
+                   " (Unable to open " + RUN_NUMBER_FILE + ")");
       }
       return result;
     }
@@ -120,7 +120,7 @@ namespace eudaq {
 
       SetStatus(Status::LVL_OK);
     } catch (const Exception & e) {
-      EUDAQ_ERROR(e.what());
+      EUDAQ_ERROR("Unable to open data file (" + fname + ")");
       SetStatus(Status::LVL_ERROR, "Unable to open data file");
     }
   }
