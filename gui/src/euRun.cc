@@ -6,8 +6,9 @@
 static const char * statuses[] = {
   "RUN",       "Run Number",
   "TIMESTAMP", "Timestamp",
-  "EVENT",     "Events Built",
   "TRIG",      "Triggers",
+  "LASTTIME",  "Last Trig"
+  "EVENT",     "Events Built",
   "FILEBYTES", "File Bytes",
   0
 };

@@ -56,6 +56,7 @@ private:
     } else if (id.GetType() == "Producer" && id.GetName() == "TLU") {
       emit StatusChanged("TRIG", status->GetTag("TRIG").c_str());
       emit StatusChanged("TIMESTAMP", status->GetTag("TIMESTAMP").c_str());
+      emit StatusChanged("LASTTIME", status->GetTag("LASTTIME").c_str());
     }
     m_run.SetStatus(id, *status);
   }
