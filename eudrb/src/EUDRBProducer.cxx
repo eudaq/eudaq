@@ -63,6 +63,12 @@ public:
       return;
     }
 
+    struct timeval starttime, stoptime;
+    struct timeval starttime2, stoptime2;
+    //struct timeval starttime3, stoptime3;
+    //struct timeval starttime4, stoptime4;
+    gettimeofday(&starttime2,0);
+
     EventDataReady_wait(fdOut,boards[0].BaseAddress);
 
     unsigned long total_bytes=0;
@@ -73,9 +79,14 @@ public:
 
       unsigned long readdata32=0;
       unsigned long address=boards[n_eudrb].BaseAddress|0x00400004;
+      gettimeofday(&starttime,0);
       while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
         vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
       }
+      gettimeofday(&stoptime,0);
+      stoptime.tv_usec-=starttime.tv_usec;
+      stoptime.tv_sec-=starttime.tv_sec; 
+      printf("Waiting for board %d took %ld us\n",n_eudrb,stoptime.tv_sec*1000000+stoptime.tv_usec );
       unsigned long number_of_bytes=(readdata32&0xfffff)*4; //last 20 bits
       //      printf("number of bytes = %ld\n",number_of_bytes);
       if (number_of_bytes!=0) {
@@ -83,6 +94,7 @@ public:
          *      MBLT READ from the ‚ZSDataReadPort‚ located
          *                      at the board BASE address+0x400000
          */
+        gettimeofday(&starttime,0);
         address=boards[n_eudrb].BaseAddress|0x00400000;
 
         //      printf("mblt before: %ld\n",mblt_dstbuffer);
@@ -90,31 +102,52 @@ public:
         // pad number of bytes to multiples of 8 in case of ZS
         vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7,address,&buffer[0]);
         //        printf("MBLT DOPO!!!\n");
+        gettimeofday(&stoptime,0);
+        stoptime.tv_usec-=starttime.tv_usec;
+        stoptime.tv_sec-=starttime.tv_sec; 
+        printf("MBLT took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
+
+	// Reset the boards
+	unsigned long address=boards[n_eudrb].BaseAddress|0x10;
+	unsigned long readdata32=0xC0000000;
+	//      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix 
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
 
         //      for(int j=0;j<number_of_bytes/4;j++)
-        if (m_ev<20 || m_ev%10==0) {
+        if (m_ev<10 || m_ev%20==0) {
           printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
           printf("\theader =0x%lx\n",buffer[0]);
           //    printf("buf&0x54... = 0x%lx\n",(buffer[number_of_bytes/4-2]&0x54000000));
           if ( (buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n",buffer[number_of_bytes/4-2]);
           else printf("\ttrailer=x%lx\n",buffer[number_of_bytes/4-3]);
-        }
+        } 
 
         /*for(int j=0;j<10;j++)
           {
           printf("word=%d %lx\n",j,mblt_dstbuffer[j]);
           }*/
+	//	number_of_bytes=0;
+        gettimeofday(&starttime,0);
         ev.AddBoard(n_eudrb,&buffer[0], number_of_bytes);
         total_bytes+=(number_of_bytes+7)&~7;
-        //      printf("mblt after: %ld\n",mblt_dstbuffer);
+        gettimeofday(&stoptime,0);
+        stoptime.tv_usec-=starttime.tv_usec;
+        stoptime.tv_sec-=starttime.tv_sec; 
+        printf("Addboard took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
       }
     }
     //mblt_dstbuffer=temp_buffer;
+
     if (total_bytes) {
-      printf("before sendevent\n");
+      gettimeofday(&starttime,0);
+      //      printf("before sendevent\n");
       SendEvent(ev);
-      printf("after sendevent\n");
-      if (m_ev<20 || m_ev%10==0)
+      gettimeofday(&stoptime,0);
+      stoptime.tv_usec-=starttime.tv_usec;
+      stoptime.tv_sec-=starttime.tv_sec; 
+      printf("Sendevent took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
+      //      printf("after sendevent\n");
+      if (m_ev<10 || m_ev%20==0)
         printf("*** Event %d of length %ld sent!\n",m_ev, total_bytes);
       n_error=0;
     } else {
@@ -122,18 +155,11 @@ public:
       if (n_error<5) EUDAQ_ERROR("Event length 0");
       else if (n_error==5) EUDAQ_ERROR("Event length 0 repeated more than 5 times, skipping!");
     }
+    gettimeofday(&stoptime2,0);
+    stoptime2.tv_usec-=starttime2.tv_usec;
+    stoptime2.tv_sec-=starttime2.tv_sec; 
+    printf("*** Total took %ld us\n",stoptime2.tv_sec*1000000+stoptime2.tv_usec );
 
-
-    for (size_t n_eudrb=0; n_eudrb < boards.size(); n_eudrb++) {
-      unsigned long address=boards[n_eudrb].BaseAddress;
-      unsigned long readdata32=0, newdata32=0;
-      /* read address first and only set the reset bit */
-      vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-      newdata32=readdata32|0x40;
-      vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-      vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-//      EUDRB_TriggerProcessingUnit_Reset(fdOut, BaseAddress[n_eudrb]);
-    }
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
@@ -147,13 +173,24 @@ public:
         std::string mode = param.Get("Board" + to_string(i) + ".Mode", "Mode", "");
         boards.push_back(BoardInfo(addr, mode));
       }
-
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        EUDRB_Reset(fdOut, boards[n_eudrb].BaseAddress);
+      	unsigned long readdata32;
+	unsigned long address=boards[n_eudrb].BaseAddress;
+	vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+      	readdata32|=0x80000000;
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+	vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+      	readdata32&=~(0x80000000);
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
       }
       sleep(8);
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        unsigned long readdata32=0xD0000000;
+	//        EUDRB_Reset(fdOut, boards[n_eudrb].BaseAddress);
+	unsigned long readdata32=0xD0000001; 
+	if (n_eudrb==boards.size()-1) {
+	  readdata32=0xD0000000;
+	}
+	printf("n_eudrb: %d, readdata: %lx\n",n_eudrb,readdata32);
         unsigned long address=boards[n_eudrb].BaseAddress|0x10;
         vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
       }
@@ -170,19 +207,11 @@ public:
         unsigned long address=boards[n_eudrb].BaseAddress;
         unsigned long readdata32=0, newdata32=0;
         /* read address first and only set the reset bit */
-        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        newdata32=readdata32|0x40;
-        vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-        vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-//        EUDRB_TriggerProcessingUnit_Reset(fdOut, BaseAddress[n_eudrb]);
-
-        // read length of Pixels
-        //      unsigned long int readdata32=0x41ff;
-        //        unsigned long address=BaseAddress[n_eudrb]|0x00000004;
-        //        vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address); usleep(100000);
-        //        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        //      printf("Size of Pixels (Mimotel or Mimo*2): 0x%lx\n",readdata32);
-
+	vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+	newdata32=readdata32|0x40;
+	vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+	
 
         // check for Zero Suppression
         if (boards[n_eudrb].zs) {
@@ -193,6 +222,12 @@ public:
           //zs=false;
         }
 
+      }
+      for (size_t n_eudrb=0; n_eudrb < boards.size(); n_eudrb++) {
+	unsigned long address=boards[n_eudrb].BaseAddress|0x10;
+	unsigned long readdata32=0xC0000000;
+	/* read address first and only set the reset bit */
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
       }
 
       SetStatus(eudaq::Status::LVL_OK, "Configured");
