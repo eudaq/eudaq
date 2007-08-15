@@ -12,9 +12,11 @@ namespace eudaq {
   public:
     FileSerializer(const std::string & fname, bool overwrite = false);
     virtual void Flush();
+    unsigned long long FileBytes() const { return m_filebytes; }
   private:
     virtual void Serialize(const unsigned char * data, size_t len);
     std::ofstream m_stream;
+    unsigned long long m_filebytes;
   };
 
   class FileDeserializer : public Deserializer {

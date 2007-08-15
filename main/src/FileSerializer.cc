@@ -4,7 +4,9 @@
 
 namespace eudaq {
 
-  FileSerializer::FileSerializer(const std::string & fname, bool overwrite) {
+  FileSerializer::FileSerializer(const std::string & fname, bool overwrite)
+    : m_filebytes(0)
+  {
     if (!overwrite) {
       std::ifstream test(fname.c_str());
       if (test.is_open()) EUDAQ_THROW("File already exists: " + fname);
@@ -15,6 +17,7 @@ namespace eudaq {
 
   void FileSerializer::Serialize(const unsigned char * data, size_t len) {
     m_stream.write(reinterpret_cast<const char *>(data), len);
+    m_filebytes += len;
   }
 
   void FileSerializer::Flush() {

@@ -104,7 +104,7 @@ int RunControlModel::columnCount(const QModelIndex &/*parent*/) const {
 
 int RunControlModel::GetLevel(const QModelIndex &index) const {
   const RunControlConnection & conn = m_data[m_disp[index.row()]];
-  if (conn.IsConnected()) return conn.GetStatus().GetLevel();
+  if (conn.IsConnected()) return conn.GetLevel();
   return eudaq::Status::LVL_DEBUG;
 }
 

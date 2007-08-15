@@ -110,7 +110,7 @@ public:
       frame->AddFrame(m_embedmain, m_hintbig.get());
       m_canvasmain = m_embedmain->GetCanvas();
 
-      m_board = std::vector<BoardDisplay>(3);
+      m_board = std::vector<BoardDisplay>(5);
       m_canvasmain->Divide(4, 2);
       for (size_t i = 0; i < m_board.size(); ++i) {
         BookBoard(i+1, m_board[i]);

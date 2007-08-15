@@ -11,6 +11,7 @@ public:
   static int NumColumns();
   static const char * ColumnName(int i);
   eudaq::Status GetStatus() const { return m_status; }
+  int GetLevel() const { return m_status.GetLevel(); }
   bool IsConnected() const { return m_id->IsEnabled(); }
   void SetConnected(bool con) { m_id->SetState(2*con - 1); }
   const eudaq::ConnectionInfo & GetId() const { return *m_id; }
