@@ -57,6 +57,11 @@ namespace eudaq {
     return ret.str();
   }
 
+  std::string firstline(const std::string & s) {
+    size_t i = s.find('\n');
+    return s.substr(0, i);
+  }
+
   std::vector<std::string> split(const std::string & str, const std::string & delim) {
     std::string s(str);
     std::vector<std::string> result;

@@ -1,4 +1,5 @@
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Logger.hh"
 #include <ostream>
 #include <sstream>
 
@@ -102,9 +103,11 @@ namespace eudaq {
       return 1;
     } catch (const std::exception & e) {
       out << "Uncaught Exception:\n" << e.what() << std::endl;
+      EUDAQ_ERROR(std::string("Uncaught exception: ") + e.what());
       return 1;
     } catch (...) {
       out << "Unknown Exception." << std::endl;
+      EUDAQ_ERROR("Unknown exception");
       return 1;
     }
     return 0;

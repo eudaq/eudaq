@@ -11,12 +11,12 @@ namespace eudaq {
 # define EUDAQ_FUNC ""
 #endif
 
-#define EUDAQ_THROW(msg) throw eudaq::Exception(msg, __FILE__, __LINE__, EUDAQ_FUNC)
+#define EUDAQ_THROW(msg) throw eudaq::LoggedException(msg, __FILE__, __LINE__, EUDAQ_FUNC)
 
   class Exception : public std::exception {
   public:
-    Exception(const std::string & msg, const std::string & file,
-              unsigned line, const std::string & func);
+    Exception(const std::string & msg, const std::string & file = "",
+              unsigned line = 0, const std::string & func = "");
     const char * what() const throw() {
       if (m_text.length() == 0) make_text();
       return m_text.c_str();
@@ -34,6 +34,11 @@ namespace eudaq {
     unsigned m_line;
   };
 
+  class LoggedException : public Exception {
+  public:
+    LoggedException(const std::string & msg, const std::string & file,
+                    unsigned line, const std::string & func);
+  };
 
 }
 

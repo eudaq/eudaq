@@ -10,6 +10,7 @@
 
 using eudaq::to_string;
 using eudaq::from_string;
+using eudaq::firstline;
 using eudaq::split;
 
 namespace {
@@ -105,7 +106,7 @@ QString LogMessage::operator [] (int i) const {
   switch(i) {
   case 0: return m_time.Formatted("%H:%M:%S.%3").c_str();
   case 1: return (to_string(m_level) + "-" + Level2String(m_level)).c_str();
-  case 2: return m_msg.c_str();
+  case 2: return firstline(m_msg).c_str();
   case 3: return GetSender().c_str();
   case 4: return (simple_file(m_file) + (m_line != 0 ? (":" + to_string(m_line)) : "")).c_str();
   case 5: return simple_func(m_func).c_str();
@@ -168,7 +169,7 @@ bool LogCollectorModel::IsDisplayed(size_t index) {
           m_search.Match(msg));
 }
 
-void LogCollectorModel::AddMessage(const LogMessage & msg) {
+QModelIndex LogCollectorModel::AddMessage(const LogMessage & msg) {
   m_all.push_back(msg);
   if (IsDisplayed(m_all.size() - 1)) {
     std::vector<size_t>::iterator it = std::lower_bound(m_disp.begin(), m_disp.end(), m_all.size() - 1, m_sorter);
@@ -176,7 +177,9 @@ void LogCollectorModel::AddMessage(const LogMessage & msg) {
     beginInsertRows(QModelIndex(), pos, pos);
     m_disp.insert(it, m_all.size() - 1);
     endInsertRows();
+    return index(it - m_disp.begin());
   }
+  return QModelIndex();
 }
 
 void LogCollectorModel::UpdateDisplayed() {

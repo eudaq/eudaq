@@ -121,7 +121,7 @@ namespace eudaq {
     if (i != m_cur->end()) {
       return i->second;
     }
-    EUDAQ_THROW("Configuration: key not found");
+    throw Exception("Configuration: key not found");
   }
 
   void Configuration::SetString(const std::string & key, const std::string & val) {

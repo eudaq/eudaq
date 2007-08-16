@@ -17,6 +17,7 @@ namespace eudaq {
   std::string ucase(const std::string &);
   std::string lcase(const std::string &);
   std::string trim(const std::string & s);
+  std::string firstline(const std::string & s);
   std::string escape(const std::string &);
   std::vector<std::string> split(const std::string & str, const std::string & delim = "\t");
 

@@ -52,7 +52,7 @@ public:
   LogCollectorModel(QObject *parent = 0);
 
   std::vector<std::string> LoadFile(const std::string & filename); // returns list of sources
-  void AddMessage(const LogMessage & msg);
+  QModelIndex AddMessage(const LogMessage & msg);
 
   int GetLevel(const QModelIndex &index) const;
 

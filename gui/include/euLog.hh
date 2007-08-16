@@ -97,7 +97,8 @@ protected:
       qRegisterMetaType<QModelIndex>("QModelIndex");
       registered = true;
     }
-    m_model.AddMessage(msg);
+    QModelIndex pos = m_model.AddMessage(msg);
+    if (pos.isValid()) viewLog->scrollTo(pos);
   }
   void AddSender(const std::string & type, const std::string & name = "");
 private slots:

@@ -143,10 +143,14 @@ namespace eudaq {
     const size_t datasize = 2 * m_rows * m_cols * m_mats * NumFrames();
     if (brd.DataSize() < datasize) {
       EUDAQ_ERROR("EUDRB data size too small: " +
-                  to_string(brd.DataSize()) + " < " + to_string(datasize));
+                  to_string(brd.DataSize()) + " < " + to_string(datasize) +
+                  ", event = " + to_string(brd.LocalEventNumber()) +
+                  " (local) " + to_string(brd.TLUEventNumber()) + " (TLU)");
     } else if (brd.DataSize() > datasize) {
       EUDAQ_WARN("EUDRB data size larger than expected: " +
-                 to_string(brd.DataSize()) + " > " + to_string(datasize));
+                 to_string(brd.DataSize()) + " > " + to_string(datasize) +
+                  ", event = " + to_string(brd.LocalEventNumber()) +
+                  " (local) " + to_string(brd.TLUEventNumber()) + " (TLU)");
     }
     EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames());
     const unsigned char * data = brd.GetData();
