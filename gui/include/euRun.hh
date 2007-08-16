@@ -1,6 +1,7 @@
 #include "ui_euRun.h"
 #include "RunControlModel.hh"
 #include "eudaq/RunControl.hh"
+#include "eudaq/Utils.hh"
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QCloseEvent>
@@ -8,6 +9,9 @@
 #include <QDir>
 #include <QPainter>
 #include <QTimer>
+
+using eudaq::to_string;
+using eudaq::from_string;
 
 // To make Qt behave on OSX (to be checked on other OSes)
 #define MAGIC_NUMBER 22
@@ -57,6 +61,18 @@ private:
       emit StatusChanged("TRIG", status->GetTag("TRIG").c_str());
       emit StatusChanged("TIMESTAMP", status->GetTag("TIMESTAMP").c_str());
       emit StatusChanged("LASTTIME", status->GetTag("LASTTIME").c_str());
+      int trigs = from_string(status->GetTag("TRIG"), 0);
+      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
+      emit StatusChanged("MEANRATE", time ? (to_string(trigs/time) + " Hz").c_str() : "");
+      int dtrigs = trigs - m_prevtrigs;
+      double dtime = time - m_prevtime;
+      if ((dtime >= 0.2 && dtrigs >= 10) ||
+          (dtime >= 2   && dtrigs >=  3) ||
+          (dtime >= 10)) {
+        m_prevtrigs = trigs;
+        m_prevtime = time;
+        emit StatusChanged("RATE", (to_string(dtrigs/dtime) + " Hz").c_str());
+      }
     }
     m_run.SetStatus(id, *status);
   }
@@ -108,4 +124,6 @@ private:
   QTimer m_statustimer;
   typedef std::map<std::string, QLabel *> status_t;
   status_t m_status;
+  int m_prevtrigs;
+  double m_prevtime;
 };

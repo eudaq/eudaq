@@ -85,11 +85,6 @@ namespace eudaq {
       SendReceiveCommand("PREPARE", to_string(m_runnumber), m_transport->GetConnection(m_idata));
       mSleep(100);
     }
-//       EUDAQ_ERROR("No response from DataCollector");
-//       m_runnumber--;
-//       return;
-//     }
-//     EUDAQ_EXTRA("DataCollector responded " + packet);
     SendCommand("START", to_string(m_runnumber));
   }
 

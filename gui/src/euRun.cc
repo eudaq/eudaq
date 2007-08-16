@@ -5,9 +5,9 @@
 
 static const char * statuses[] = {
   "RUN",       "Run Number",
-  "TIMESTAMP", "Timestamp",
+  "RATE",      "Rate",
   "TRIG",      "Triggers",
-  "LASTTIME",  "Last Trig",
+  "MEANRATE",  "Mean Rate",
   "EVENT",     "Events Built",
   "FILEBYTES", "File Bytes",
   0
@@ -60,7 +60,9 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
                              Qt::WindowFlags flags)
   : QMainWindow(parent, flags),
     eudaq::RunControl(listenaddress),
-    m_delegate(&m_run)
+    m_delegate(&m_run),
+    m_prevtrigs(0),
+    m_prevtime(0.0)
 {
   setupUi(this);
   if (!grpStatus->layout()) grpStatus->setLayout(new QGridLayout(grpStatus));
