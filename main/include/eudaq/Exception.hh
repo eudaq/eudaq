@@ -5,13 +5,13 @@
 #include <exception>
 #include <string>
 
-namespace eudaq {
-
 #ifndef EUDAQ_FUNC
 # define EUDAQ_FUNC ""
 #endif
 
-#define EUDAQ_THROW(msg) throw eudaq::LoggedException(msg, __FILE__, __LINE__, EUDAQ_FUNC)
+#define EUDAQ_THROW(msg) throw ::eudaq::LoggedException(msg, __FILE__, __LINE__, EUDAQ_FUNC)
+
+namespace eudaq {
 
   class Exception : public std::exception {
   public:

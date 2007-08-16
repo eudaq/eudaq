@@ -8,10 +8,10 @@ namespace eudaq {
   LogSender & GetLogger();
 }
 
-#define EUDAQ_LOG_LEVEL(level) eudaq::GetLogger().SetLevel(level)
-#define EUDAQ_LOG_CONNECT(type, name, server) eudaq::GetLogger().Connect(type, name, server)
+#define EUDAQ_LOG_LEVEL(level) ::eudaq::GetLogger().SetLevel(level)
+#define EUDAQ_LOG_CONNECT(type, name, server) ::eudaq::GetLogger().Connect(type, name, server)
 
-#define EUDAQ_LOG(level, msg) eudaq::GetLogger().SendLogMessage(eudaq::LogMessage(msg, eudaq::LogMessage::LVL_##level) \
+#define EUDAQ_LOG(level, msg) ::eudaq::GetLogger().SendLogMessage(::eudaq::LogMessage(msg, ::eudaq::LogMessage::LVL_##level) \
                                                                 .SetLocation(__FILE__, __LINE__, EUDAQ_FUNC))
 #define EUDAQ_DEBUG(msg) EUDAQ_LOG(DEBUG, msg)
 #define EUDAQ_EXTRA(msg) EUDAQ_LOG(EXTRA, msg)
