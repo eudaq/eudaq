@@ -141,17 +141,21 @@ namespace eudaq {
   template <typename T_coord, typename T_adc>
   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArrays(const EUDRBBoard & brd) const {
     const size_t datasize = 2 * m_rows * m_cols * m_mats * NumFrames();
-    if (brd.DataSize() < datasize) {
-      EUDAQ_ERROR("EUDRB data size too small: " +
-                  to_string(brd.DataSize()) + " < " + to_string(datasize) +
-                  ", event = " + to_string(brd.LocalEventNumber()) +
-                  " (local) " + to_string(brd.TLUEventNumber()) + " (TLU)");
-    } else if (brd.DataSize() > datasize) {
-      EUDAQ_WARN("EUDRB data size larger than expected: " +
-                 to_string(brd.DataSize()) + " > " + to_string(datasize) +
-                  ", event = " + to_string(brd.LocalEventNumber()) +
-                  " (local) " + to_string(brd.TLUEventNumber()) + " (TLU)");
+    if (brd.DataSize() != datasize) {
+      EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
+                  ", expecting " + to_string(datasize));
     }
+//     if (brd.DataSize() < datasize) {
+//       EUDAQ_ERROR("EUDRB data size too small: " +
+//                   to_string(brd.DataSize()) + " < " + to_string(datasize) +
+//                   ", event = " + to_string(brd.LocalEventNumber()) +
+//                   " (local) " + to_string(brd.TLUEventNumber()) + " (TLU)");
+//     } else if (brd.DataSize() > datasize) {
+//       EUDAQ_WARN("EUDRB data size larger than expected: " +
+//                  to_string(brd.DataSize()) + " > " + to_string(datasize) +
+//                   ", event = " + to_string(brd.LocalEventNumber()) +
+//                   " (local) " + to_string(brd.TLUEventNumber()) + " (TLU)");
+//     }
     EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames());
     const unsigned char * data = brd.GetData();
     unsigned pivot = brd.PivotPixel();

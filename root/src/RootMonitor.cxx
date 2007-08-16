@@ -243,16 +243,20 @@ public:
           if (eudaq::EUDRBEvent * drbev = dynamic_cast<eudaq::EUDRBEvent *>(ev->GetEvent(i))) {
             if (drbev->NumBoards() > 0 && m_decoder->NumFrames() > 1) {
               m_histoevents++;
-              for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
-                numplanes++;
-                FillBoard(m_board[i], drbev->GetBoard(i));
+              try {
+                for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
+                  numplanes++;
+                  FillBoard(m_board[i], drbev->GetBoard(i));
+                }
+              } catch (const eudaq::Exception & e) {
+                EUDAQ_ERROR("Bad data size in event " + eudaq::to_string(ev->GetEventNumber()) + ": " + e.what());
               }
             }
             break;
           }
         }
       }
-      int planeshit = 0;
+      unsigned planeshit = 0;
       for (size_t i = 0; i < numplanes; ++i) {
         if (m_board[i].m_clusters.size() != 1) {
           planeshit++;
@@ -263,7 +267,7 @@ public:
         std::ostringstream s;
         s << "Found track in event " << ev->GetEventNumber() << ":";
         for (size_t i = 0; i < numplanes; ++i) {
-          if (m_board[i].m_clusters.size() > 0) {
+          if (m_board[i].m_clusters.size() == 1) {
             m_board[i].m_histotrack2d->Fill(m_board[i].m_clusterx[0], m_board[i].m_clustery[0]);
             if (i > 0) {
               m_board[i].m_histodeltax->Fill(m_board[i].m_clusterx[0] - m_board[i-1].m_clusterx[0]);

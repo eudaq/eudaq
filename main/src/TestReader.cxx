@@ -67,7 +67,7 @@ int main(int /*argc*/, char ** argv) {
                 for (size_t j = 0; j < eudev->NumBoards(); ++j) {
                   eudaq::EUDRBBoard & brd = eudev->GetBoard(j);
                   std::cout << " Board " << j << ":\n" << brd;
-                  //decoder->GetArrays<short, short>(brd);
+                  decoder->GetArrays<short, short>(brd);
                 }
               }
             }

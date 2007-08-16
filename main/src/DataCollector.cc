@@ -11,7 +11,7 @@ namespace eudaq {
 
   namespace {
 
-    const char * RUN_NUMBER_FILE = "data/runnumber.dat";
+    static const char * const RUN_NUMBER_FILE = "data/runnumber.dat";
 
     void * DataCollector_thread(void * arg) {
       DataCollector * dc = static_cast<DataCollector *>(arg);
