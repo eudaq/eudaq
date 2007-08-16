@@ -60,6 +60,7 @@ public:
     //else geom.setHeight(geom.height() - MAGIC_NUMBER);
     move(geom.topLeft());
     resize(geom.size());
+    connect(this, SIGNAL(RecMessage(const eudaq::LogMessage &)), this, SLOT(AddMessage(const eudaq::LogMessage &)));
     try {
       if (filename != "") LoadFile(filename);
     } catch (const std::runtime_error &) {
@@ -80,11 +81,7 @@ protected:
     }
   }
   virtual void OnConnect(const eudaq::ConnectionInfo & id) {
-    static bool registered = false;
-    if (!registered) {
-      qRegisterMetaType<QModelIndex>("QModelIndex");
-      registered = true;
-    }
+    CheckRegistered();
     EUDAQ_INFO("Connection from " + to_string(id));
     AddSender(id.GetType(), id.GetName());
   }
@@ -92,15 +89,12 @@ protected:
     EUDAQ_INFO("Disconnected " + to_string(id));
   }
   virtual void OnReceive(const eudaq::LogMessage & msg) {
-    static bool registered = false;
-    if (!registered) {
-      qRegisterMetaType<QModelIndex>("QModelIndex");
-      registered = true;
-    }
-    QModelIndex pos = m_model.AddMessage(msg);
-    if (pos.isValid()) viewLog->scrollTo(pos);
+    CheckRegistered();
+    emit RecMessage(msg);
   }
   void AddSender(const std::string & type, const std::string & name = "");
+signals:
+  void RecMessage(const eudaq::LogMessage & msg);
 private slots:
   void on_cmbLevel_currentIndexChanged(int index) {
     //std::cout << "Index " << index << "!!!" << std::endl;
@@ -119,7 +113,20 @@ private slots:
   void on_txtSearch_editingFinished() {
     m_model.SetSearch(txtSearch->displayText().toStdString());
   }
+  void AddMessage(const eudaq::LogMessage & msg) {
+    QModelIndex pos = m_model.AddMessage(msg);
+    //std::cout << "pos valid=" << pos.isValid() << ", row=" << pos.row() << ", col=" << pos.column() << std::endl;
+    if (pos.isValid()) viewLog->scrollTo(pos);
+  }
 private:
+  static void CheckRegistered() {
+    static bool registered = false;
+    if (!registered) {
+      qRegisterMetaType<QModelIndex>("QModelIndex");
+      qRegisterMetaType<eudaq::LogMessage>("eudaq::LogMessage");
+      registered = true;
+    }
+  }
   LogCollectorModel m_model;
   LogItemDelegate m_delegate;
 };

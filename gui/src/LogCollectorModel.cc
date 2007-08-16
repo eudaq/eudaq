@@ -177,7 +177,8 @@ QModelIndex LogCollectorModel::AddMessage(const LogMessage & msg) {
     beginInsertRows(QModelIndex(), pos, pos);
     m_disp.insert(it, m_all.size() - 1);
     endInsertRows();
-    return index(it - m_disp.begin());
+    //std::cout << "Added row=" << pos << std::endl;
+    return createIndex(pos, 0);
   }
   return QModelIndex();
 }
