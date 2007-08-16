@@ -66,9 +66,7 @@ private:
       emit StatusChanged("MEANRATE", time ? (to_string(trigs/time) + " Hz").c_str() : "");
       int dtrigs = trigs - m_prevtrigs;
       double dtime = time - m_prevtime;
-      if ((dtime >= 0.2 && dtrigs >= 10) ||
-          (dtime >= 2   && dtrigs >=  3) ||
-          (dtime >= 10)) {
+      if (dtrigs >= 10 || dtime >= 1.0) {
         m_prevtrigs = trigs;
         m_prevtime = time;
         emit StatusChanged("RATE", (to_string(dtrigs/dtime) + " Hz").c_str());
