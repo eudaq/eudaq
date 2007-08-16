@@ -79,7 +79,7 @@ public:
       m_toolbar(new TGHorizontalFrame(this, 800, 20, kFixedWidth)),
       m_tb_filename(new TGLabel(m_toolbar.get(), "                              ")),
       m_tb_runnum(new TGLabel(m_toolbar.get(), "0     ")),
-      m_tb_evtnum(new TGLabel(m_toolbar.get(), "0       ")),
+      m_tb_evtnum(new TGLabel(m_toolbar.get(), "0          ")),
       m_tb_reduce(new TGNumberEntry(m_toolbar.get(), 1.0, 3)),
       m_tb_update(new TGNumberEntry(m_toolbar.get(), 5.0, 4)),
       m_tabs(new TGTab(this, 700, 500)),
@@ -252,28 +252,28 @@ public:
           }
         }
       }
-      bool track = true;
+      int planeshit = 0;
       for (size_t i = 0; i < numplanes; ++i) {
         if (m_board[i].m_clusters.size() != 1) {
-          track = false;
+          planeshit++;
           break;
         }
       }
-      if (track) {
-        for (size_t i = 0; i < numplanes; ++i) {
-          m_board[i].m_histotrack2d->Fill(m_board[i].m_clusterx[0], m_board[i].m_clustery[0]);
-        }
-        for (size_t i = 1; i < numplanes; ++i) {
-          m_board[i].m_histodeltax->Fill(m_board[i].m_clusterx[0] - m_board[i-1].m_clusterx[0]);
-          m_board[i].m_histodeltay->Fill(m_board[i].m_clustery[0] - m_board[i-1].m_clustery[0]);
-        }
+      if (planeshit >= numplanes-1) {
         std::ostringstream s;
         s << "Found track in event " << ev->GetEventNumber() << ":";
         for (size_t i = 0; i < numplanes; ++i) {
-          s << " (" << m_board[i].m_clusterx[0]
-            << ", " << m_board[i].m_clustery[0]
-            << ", " << m_board[i].m_clusters[0]
-            << ")";
+          if (m_board[i].m_clusters.size() > 0) {
+            m_board[i].m_histotrack2d->Fill(m_board[i].m_clusterx[0], m_board[i].m_clustery[0]);
+            if (i > 0) {
+              m_board[i].m_histodeltax->Fill(m_board[i].m_clusterx[0] - m_board[i-1].m_clusterx[0]);
+              m_board[i].m_histodeltay->Fill(m_board[i].m_clustery[0] - m_board[i-1].m_clustery[0]);
+            }
+            s << " (" << m_board[i].m_clusterx[0]
+              << ", " << m_board[i].m_clustery[0]
+              << ", " << m_board[i].m_clusters[0]
+              << ")";
+          }
         }
         EUDAQ_EXTRA(s.str());
       }

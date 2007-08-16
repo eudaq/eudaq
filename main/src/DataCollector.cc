@@ -186,6 +186,7 @@ namespace eudaq {
       }
       if (ev.IsEORE()) {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
+        EIDAQ_INFO("EORE event = " + to_string(ev.GetEventNumber()));
       }
       if (m_ser.get()) {
         ev.Serialize(*m_ser);

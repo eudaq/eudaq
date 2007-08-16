@@ -22,6 +22,7 @@ namespace eudaq {
     std::string m_name;
     TransportClient * m_transport;
     int m_level;
+    bool m_shownotconnected;
   };
 
 }

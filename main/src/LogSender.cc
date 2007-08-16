@@ -7,9 +7,10 @@
 namespace eudaq {
 
   LogSender::LogSender() :
-    m_transport(0) {}
+    m_transport(0), m_shownotconnected(false) {}
 
   void LogSender::Connect(const std::string & type, const std::string & name, const std::string & server) {
+    m_shownotconnected = true;
     delete m_transport;
     m_name = type + " " + name;
     m_transport = TransportFactory::CreateClient(server);
@@ -45,7 +46,7 @@ namespace eudaq {
   void LogSender::SendLogMessage(const LogMessage & msg) {
     //std::cout << "Sending: " << msg << std::endl;
     if (!m_transport) {
-      std::cerr << "### Logger not connected ###\n";
+      if (m_shownotconnected) std::cerr << "### Logger not connected ###\n";
     } else {
       BufferSerializer ser;
       msg.Serialize(ser);
@@ -54,8 +55,7 @@ namespace eudaq {
     if (msg.GetLevel() >= m_level) {
       std::cerr << "[" << m_name << "] " << msg << std::endl;
     }
- }
-
+  }
 
   LogSender::~LogSender() {
     delete m_transport;
