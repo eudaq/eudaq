@@ -22,7 +22,7 @@ namespace eudaq {
     void Write(std::ostream &) const;
     LogMessage & SetLocation(const std::string & file, unsigned line, const std::string & func = "");
     LogMessage & SetSender(const std::string & name);
-    std::string GetSender() const { return m_sendertype + (m_sendername == "" ? "" : "." + m_sendername); }
+    std::string GetSender() const { return m_sendertype + (m_sendername == "" ? std::string("") : "." + m_sendername); }
     std::string GetSenderType() const { return m_sendertype; }
     std::string GetSenderName() const { return m_sendername; }
   protected:

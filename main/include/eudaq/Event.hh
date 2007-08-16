@@ -25,7 +25,7 @@
     static const unsigned long id_(id);    \
     return id_;                            \
   }                                        \
-  namespace {                              \
+  namespace eudaq {                              \
     static RegisterEventType<type> eudaq_reg;\
   }                                        \
   static const int EUDAQ_DUMMY_VAR_DONT_USE = 0

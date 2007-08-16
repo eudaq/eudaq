@@ -86,7 +86,7 @@ namespace eudaq {
     time_t t = tv_sec;
     struct tm * tm = std::localtime(&t);
     std::strftime(buf, sizeof buf, fmt.c_str(), tm);
-    return buf;
+    return std::string(buf);
   }
 
 }

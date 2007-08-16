@@ -44,7 +44,7 @@ namespace eudaq {
       for (size_t i = 0; f > 0; ++i, f >>= 1) {
         if (f & 1) {
           os << (first ? ", Flags=" : ",")
-             << (i < sizeof FLAGNAMES / sizeof *FLAGNAMES ? FLAGNAMES[i] : to_string(i));
+             << (i < sizeof FLAGNAMES / sizeof *FLAGNAMES ? std::string(FLAGNAMES[i]) : to_string(i));
           first = false;
         }
       }

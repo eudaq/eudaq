@@ -83,13 +83,13 @@ namespace eudaq {
   }
 
   template <>
-  inline void Serializer::write(const std::vector<unsigned char> & t) {
+  inline void Serializer::write<unsigned char>(const std::vector<unsigned char> & t) {
     write(t.size());
     Serialize(&t[0], t.size());
   }
 
   template <>
-  inline void Serializer::write(const std::vector<char> & t) {
+  inline void Serializer::write<char>(const std::vector<char> & t) {
     write(t.size());
     Serialize(reinterpret_cast<const unsigned char *>(&t[0]), t.size());
   }
@@ -188,7 +188,7 @@ namespace eudaq {
   }
 
   template <>
-  inline void Deserializer::read(std::vector<unsigned char> & t) {
+  inline void Deserializer::read<unsigned char>(std::vector<unsigned char> & t) {
     size_t len = 0;
     read(len);
     t.resize(len);
@@ -196,7 +196,7 @@ namespace eudaq {
   }
 
   template <>
-  inline void Deserializer::read(std::vector<char> & t) {
+  inline void Deserializer::read<char>(std::vector<char> & t) {
     size_t len = 0;
     read(len);
     t.resize(len);
