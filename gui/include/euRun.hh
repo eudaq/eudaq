@@ -93,6 +93,8 @@ private slots:
     Reset();
   }
   void on_btnStart_clicked() {
+    m_prevtrigs = 0;
+    m_prevtime = 0;
     StartRun(txtRunmsg->displayText().toStdString());
     emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
     emit StatusChanged("EVENT", "");
