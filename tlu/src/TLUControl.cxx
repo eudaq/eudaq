@@ -24,9 +24,9 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for enabling the DUT connections");
   eudaq::Option<int>         vmask(op, "v", "vetomask", 0, "mask",
                                    "The mask for vetoing external triggers");
-  eudaq::Option<int>         amask(op, "a", "andmask", 0, "mask",
+  eudaq::Option<int>         amask(op, "a", "andmask", 255, "mask",
                                    "The mask for coincidence of external triggers");
-  eudaq::Option<int>         omask(op, "o", "ormask", 255, "mask",
+  eudaq::Option<int>         omask(op, "o", "ormask", 0, "mask",
                                    "The mask for ORing of external triggers");
   try {
     op.Parse(argv);

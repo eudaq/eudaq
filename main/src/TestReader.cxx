@@ -16,7 +16,7 @@ int main(int /*argc*/, char ** argv) {
                          1);
   try {
     op.Parse(argv);
-    EUDAQ_LOG_LEVEL("NONE");
+    EUDAQ_LOG_LEVEL("INFO");
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       std::string datafile = op.GetArg(i);
       if (datafile.find_first_not_of("0123456789") == std::string::npos) {
@@ -56,7 +56,7 @@ int main(int /*argc*/, char ** argv) {
           std::cout << "Warning: not a DetectorEvent(" << nnondet << "):\n" << *ev << std::endl;
         } else {
           ndata++;
-          if (!seendata) {
+          if (!seendata || ndata<10) {
             seendata = true;
             std::cout << *ev << std::endl;
             for (size_t i = 0; i < dev->NumEvents(); ++i) {
@@ -67,7 +67,7 @@ int main(int /*argc*/, char ** argv) {
                 for (size_t j = 0; j < eudev->NumBoards(); ++j) {
                   eudaq::EUDRBBoard & brd = eudev->GetBoard(j);
                   std::cout << " Board " << j << ":\n" << brd;
-                  decoder->GetArrays<short, short>(brd);
+                  //decoder->GetArrays<short, short>(brd);
                 }
               }
             }
