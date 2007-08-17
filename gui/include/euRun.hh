@@ -84,6 +84,17 @@ private:
       event->accept();
     }
   }
+  virtual void StartRun(const std::string & msg = "") {
+    m_prevtrigs = 0;
+    m_prevtime = 0;
+    RunControl::StartRun(msg);
+    emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
+    emit StatusChanged("EVENT", "");
+  }
+  virtual void StopRun(bool listen = true) {
+    RunControl::StopRun();
+    StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
+  }
 private slots:
   void on_btnConfig_clicked() {
     std::string settings = cmbConfig->currentText().toStdString();
@@ -93,15 +104,10 @@ private slots:
     Reset();
   }
   void on_btnStart_clicked() {
-    m_prevtrigs = 0;
-    m_prevtime = 0;
     StartRun(txtRunmsg->displayText().toStdString());
-    emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
-    emit StatusChanged("EVENT", "");
   }
   void on_btnStop_clicked() {
     StopRun();
-    StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
   }
   void on_btnLog_clicked() {
     std::string msg = txtLogmsg->displayText().toStdString();

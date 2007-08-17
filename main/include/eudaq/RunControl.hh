@@ -22,8 +22,8 @@ namespace eudaq {
     void Configure(const std::string & settings); ///< Send 'Configure' command with settings
     void Reset();     ///< Send 'Reset' command
     void GetStatus();    ///< Send 'Status' command to get status
-    void StartRun(const std::string & msg = "");  ///< Send 'StartRun' command with run number
-    void StopRun(bool listen = true);   ///< Send 'StopRun' command
+    virtual void StartRun(const std::string & msg = "");  ///< Send 'StartRun' command with run number
+    virtual void StopRun(bool listen = true);   ///< Send 'StopRun' command
     void Terminate(); ///< Send 'Terminate' command
     void RestartRun();
 
