@@ -111,12 +111,12 @@ public:
         stoptime.tv_sec-=starttime.tv_sec; 
         printf("MBLT took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
 
-	// Reset the boards
+	// Reset the boards here, after the MBLT
 	unsigned long address=boards[n_eudrb].BaseAddress|0x10;
 	unsigned long readdata32=0xC0000000;
 	//      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix 
 	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-
+	
         //      for(int j=0;j<number_of_bytes/4;j++)
         if (m_ev<10 || m_ev%20==0) {
           printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
@@ -141,6 +141,15 @@ public:
       }
     }
     //mblt_dstbuffer=temp_buffer;
+
+    //            for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
+    //              // Reset the boards, here is critical and causing hangups, should do above!
+    //              unsigned long address=boards[n_eudrb].BaseAddress|0x10;
+    //              unsigned long readdata32=0xC0000000;
+    //              //      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix 
+    //              vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+    //            }
+    
 
     if (total_bytes) {
       gettimeofday(&starttime,0);
@@ -208,7 +217,7 @@ public:
         std::cout << "EUDRB" << n_eudrb << "at address: 0x" << std::hex << boards[n_eudrb].BaseAddress
                   <<", mode: " << boards[n_eudrb].mode << std::dec << std::endl;
         EUDRB_CSR_Default(fdOut,boards[n_eudrb].BaseAddress);
-        unsigned long address=boards[n_eudrb].BaseAddress;
+        unsigned long address=boards[n_eudrb].BaseAddress,baseShift=0x800000;
         unsigned long readdata32=0, newdata32=0;
         /* read address first and only set the reset bit */
 	vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
@@ -221,6 +230,44 @@ public:
         if (boards[n_eudrb].zs) {
           EUDRB_ZS_On(fdOut,boards[n_eudrb].BaseAddress);
           //zs=true;
+
+	  // here we put in the uploading of pedestals:
+	  unsigned long offset=0x0;
+	  // VME is master of SRAM
+	  printf("Become Master of SRAM\n");
+	  vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+	  newdata32=readdata32|0x200;
+	  vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
+
+	  printf("Fill Matrices on board: %lx\n",address);
+	  newdata32=0xf; // high threshold to test
+	  for (int subm=0;subm<4;subm++) {
+	    for (int y=0;y<256;y++) {
+	      for (int x=0;x<66;x++) {
+		offset=(x+(y<<7)+(subm<<18))<<2;
+		address=boards[n_eudrb].BaseAddress+baseShift+offset;
+		if ((y<3 || y>252) && (x<3||x>62)) 
+		  printf("\tsubm=%2d,y=%3d,x=%3d,address=0x%8lx,data=0x%lx\n",subm,y,x,address,newdata32);
+		vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
+	      }
+	    }
+	  }
+
+
+
+	  // Release master of SRAM
+	  printf("Release Master of SRAM\n");
+	  address=boards[n_eudrb].BaseAddress;
+	  vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+	  newdata32=readdata32&~0x200;
+	  vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
+	  // reset once more to be sure
+	  /* read address first and only set the reset bit */
+	  vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+	  newdata32=readdata32|0x40;
+	  vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
+	  vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+	  
         } else {
           EUDRB_ZS_Off(fdOut,boards[n_eudrb].BaseAddress);
           //zs=false;
@@ -298,28 +345,17 @@ public:
     SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       std::cout << "Reset" << std::endl;
-      // EUDRB reset
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        EUDRB_Reset(fdOut, boards[n_eudrb].BaseAddress);
+      	unsigned long readdata32;
+	unsigned long address=boards[n_eudrb].BaseAddress;
+	vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+      	readdata32|=0x80000000;
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+	vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+      	readdata32&=~(0x80000000);
+	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
       }
       sleep(8);
-      for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        unsigned long readdata32=0xD0000000;
-        unsigned long address=boards[n_eudrb].BaseAddress|0x10;
-        vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-      }
-      for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        printf("address: %lx\n",boards[n_eudrb].BaseAddress);
-        EUDRB_CSR_Default(fdOut,boards[n_eudrb].BaseAddress);
-        unsigned long address=boards[n_eudrb].BaseAddress;
-        unsigned long readdata32=0, newdata32=0;
-        /* read address first and only set the reset bit */
-        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        newdata32=readdata32|0x40;
-        vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-        vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-//        EUDRB_TriggerProcessingUnit_Reset(fdOut, BaseAddress[n_eudrb]);
-      }
       SetStatus(eudaq::Status::LVL_OK, "Reset");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
