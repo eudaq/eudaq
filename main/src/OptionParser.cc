@@ -103,11 +103,11 @@ namespace eudaq {
       return 1;
     } catch (const std::exception & e) {
       out << "Uncaught Exception:\n" << e.what() << std::endl;
-      EUDAQ_ERROR(std::string("Uncaught exception: ") + e.what());
+      GetLogger().SendLogMessage(LogMessage(e.what(), LogMessage::LVL_ERROR), false);
       return 1;
     } catch (...) {
       out << "Unknown Exception." << std::endl;
-      EUDAQ_ERROR("Unknown exception");
+      GetLogger().SendLogMessage(LogMessage("Unknown exception", LogMessage::LVL_ERROR), false);
       return 1;
     }
     return 0;

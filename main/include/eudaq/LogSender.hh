@@ -15,7 +15,7 @@ namespace eudaq {
     LogSender();
     ~LogSender();
     void Connect(const std::string & type, const std::string & name, const std::string & server);
-    void SendLogMessage(const LogMessage &);
+    void SendLogMessage(const LogMessage &, bool show = true);
     void SetLevel(int level) { m_level = level; }
     void SetLevel(const std::string & level) { SetLevel(Status::String2Level(level)); }
   private:
