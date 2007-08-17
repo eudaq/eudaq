@@ -36,11 +36,12 @@ std::vector<unsigned> parsenumbers(const std::string & s) {
   return result;
 }
 
-bool DoEvent(unsigned ndata, eudaq::DetectorEvent * dev, bool do_process, bool do_display, eudaq::EUDRBDecoder * decoder) {
-  if (do_process || do_display) {
+bool DoEvent(unsigned ndata, eudaq::DetectorEvent * dev, bool do_process, bool do_display, bool do_dump, eudaq::EUDRBDecoder * decoder) {
+  if (do_process || do_display || do_dump) {
     if (do_display) {
       std::cout << *dev << std::endl;
     }
+    unsigned boardnum = 0;
     for (size_t i = 0; i < dev->NumEvents(); ++i) {
       eudaq::Event * subev = dev->GetEvent(i);
       eudaq::EUDRBEvent * eudev = dynamic_cast<eudaq::EUDRBEvent*>(subev);
@@ -49,6 +50,7 @@ bool DoEvent(unsigned ndata, eudaq::DetectorEvent * dev, bool do_process, bool d
         if (do_display) std::cout << "EUDRB Event:" << std::endl;
         for (size_t j = 0; j < eudev->NumBoards(); ++j) {
           eudaq::EUDRBBoard & brd = eudev->GetBoard(j);
+          boardnum++;
           if (do_display) std::cout << " Board " << j << ":\n" << brd;
           if (do_process && decoder) {
             try {
@@ -56,6 +58,10 @@ bool DoEvent(unsigned ndata, eudaq::DetectorEvent * dev, bool do_process, bool d
             } catch (const eudaq::Exception & e) {
               std::cout << "Error in event " << ndata << ": " << e.what() << std::endl;
             }
+          }
+          if (do_dump) {
+            std::ofstream file(("board" + to_string(boardnum) + ".dat").c_str());
+            file.write(reinterpret_cast<const char*>(brd.GetData()), brd.DataSize());
           }
         }
       }
@@ -73,6 +79,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionFlag do_proc(op, "p", "process", "Process data from displayed events");
   eudaq::OptionFlag do_pall(op, "a", "process-all", "Process data from all events");
   eudaq::Option<std::string> do_data(op, "d", "display", "", "numbers", "Event numbers to display (eg. '1-10,99,-1')");
+  eudaq::Option<unsigned> do_dump(op, "u", "dumpevent", 0, "number", "Dump event to files (1 per EUDRB)");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("INFO");
@@ -121,7 +128,8 @@ int main(int /*argc*/, char ** argv) {
           // TODO: check event number matches ndata
           bool show = std::find(displaynumbers.begin(), displaynumbers.end(), ndata) != displaynumbers.end();
           bool proc = do_pall.IsSet() || (show && do_proc.IsSet());
-          bool shown = DoEvent(ndata, dev, proc, show, decoder.get());
+          bool dump = (do_dump.IsSet() && do_dump.Value() == ndata);
+          bool shown = DoEvent(ndata, dev, proc, show, dump, decoder.get());
           if (showlast) {
             if (shown) {
               lastevent = 0;
@@ -132,7 +140,7 @@ int main(int /*argc*/, char ** argv) {
           }
         }
       }
-      if (lastevent.get()) DoEvent(ndatalast, dynamic_cast<eudaq::DetectorEvent*>(lastevent.get()), false, true, decoder.get());
+      if (lastevent.get()) DoEvent(ndatalast, dynamic_cast<eudaq::DetectorEvent*>(lastevent.get()), false, true, false, decoder.get());
       EUDAQ_INFO("Number of data events: " + to_string(ndata));
       if (nnondet) std::cout << "Warning: Non-DetectorEvents found: " << nnondet << std::endl;
       if (!nbore) {

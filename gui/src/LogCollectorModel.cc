@@ -185,7 +185,7 @@ QModelIndex LogCollectorModel::AddMessage(const LogMessage & msg) {
 
 void LogCollectorModel::UpdateDisplayed() {
   if (m_disp.size() > 0) {
-    beginRemoveRows(index(0), 0, m_disp.size() - 1);
+    beginRemoveRows(createIndex(0, 0), 0, m_disp.size() - 1);
     m_disp.clear();
     endRemoveRows();
   }
@@ -197,7 +197,7 @@ void LogCollectorModel::UpdateDisplayed() {
   }
   std::sort(disp.begin(), disp.end(), m_sorter);
   if (disp.size() > 0) {
-    beginInsertRows(index(0), 0, disp.size() - 1);
+    beginInsertRows(createIndex(0, 0), 0, disp.size() - 1);
     m_disp = disp;
     endInsertRows();
   }

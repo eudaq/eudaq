@@ -28,7 +28,9 @@ namespace eudaq {
       m_runnumber(0),
       m_transport(0),
       m_idata((size_t)-1),
-      m_ilog((size_t)-1)
+      m_ilog((size_t)-1),
+      m_runsizelimit(0),
+      m_stopping(false)
   {
     if (listenaddress != "") {
       StartServer(listenaddress);
@@ -61,6 +63,8 @@ namespace eudaq {
     if (file.is_open()) {
       Configuration config(file);
       SendCommand("CONFIG", to_string(config));
+      config.SetSection("RunControl");
+      m_runsizelimit = config.Get("RunSizeLimit", 0LL);
     } else {
       EUDAQ_ERROR("Unable to open file '" + filename + "'");
     }
@@ -78,6 +82,7 @@ namespace eudaq {
 
   void RunControl::StartRun(const std::string & msg) {
     m_listening = false;
+    m_stopping = false;
     m_runnumber++;
     //std::string packet;
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
@@ -88,10 +93,17 @@ namespace eudaq {
     SendCommand("START", to_string(m_runnumber));
   }
 
-  void RunControl::StopRun() {
+  void RunControl::StopRun(bool listen) {
     EUDAQ_INFO("Stopping Run " + to_string(m_runnumber));
     SendCommand("STOP");
-    m_listening = true;
+    m_stopping = true;
+    m_listening = listen;
+  }
+
+  void RunControl::RestartRun() {
+    StopRun(false);
+    mSleep(2000);
+    StartRun("Continued");
   }
 
   void RunControl::Terminate() {
@@ -185,7 +197,18 @@ namespace eudaq {
       } else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         counted_ptr<Status> status(new Status(ser));
-        OnReceive(ev.id, status);
+        if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
+          // We ignore status messages that are marked with a previous run number
+          OnReceive(ev.id, status);
+          if (ev.id.GetType() == "DataCollector") {
+            //std::cout << "st=" << m_stopping << ", lim=" << m_runsizelimit << ", size=" << status->GetTag("FILEBYTES") << std::endl;
+            if (!m_stopping && m_runsizelimit > 800 &&
+                from_string(status->GetTag("FILEBYTES"), 0LL) >= m_runsizelimit) {
+              EUDAQ_INFO("File limit reached: " + status->GetTag("FILEBYTES") + " > " + to_string(m_runsizelimit));
+              RestartRun();
+            }
+          }
+        }
         //std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" << std::endl;
       }
       break;

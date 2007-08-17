@@ -83,14 +83,14 @@ void RunControlModel::SetStatus(const eudaq::ConnectionInfo & id, eudaq::Status 
 
 void RunControlModel::UpdateDisplayed() {
   if (m_disp.size() > 0) {
-    //beginRemoveRows(index(0), 0, m_data.size() - 1);
+    //beginRemoveRows(createIndex(0, 0), 0, m_data.size() - 1);
     //m_disp.clear();
     //endRemoveRows();
     std::sort(m_disp.begin(), m_disp.end(), m_sorter);
-    //beginInsertRows(index(0), 0, m_disp.size() - 1);
+    //beginInsertRows(createIndex(0, 0), 0, m_disp.size() - 1);
     //m_disp = disp;
     //endInsertRows();
-    emit dataChanged(index(0, 0), index(m_data.size() - 1, columnCount() - 1));
+    emit dataChanged(createIndex(0, 0), createIndex(m_data.size() - 1, 0));
   }
 }
 

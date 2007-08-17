@@ -23,8 +23,9 @@ namespace eudaq {
     void Reset();     ///< Send 'Reset' command
     void GetStatus();    ///< Send 'Status' command to get status
     void StartRun(const std::string & msg = "");  ///< Send 'StartRun' command with run number
-    void StopRun();   ///< Send 'StopRun' command
+    void StopRun(bool listen = true);   ///< Send 'StopRun' command
     void Terminate(); ///< Send 'Terminate' command
+    void RestartRun();
 
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
@@ -47,12 +48,13 @@ namespace eudaq {
     bool m_listening;
   protected:
     unsigned m_runnumber;   ///< The current run number
-  private:
     TransportServer * m_transport; ///< Transport for sending commands
     pthread_t m_thread;
     pthread_attr_t m_threadattr;
     size_t m_idata, m_ilog;
     std::string m_dataaddr, m_logaddr;
+    long long m_runsizelimit;
+    bool m_stopping;
   };
 
 }

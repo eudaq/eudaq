@@ -108,7 +108,9 @@ private slots:
     EUDAQ_USER(msg);
   }
   void timer() {
-    GetStatus();
+    if (!m_stopping) {
+      GetStatus();
+    }
   }
   void ChangeStatus(const QString & name, const QString & value) {
     status_t::iterator i = m_status.find(name.toStdString());
