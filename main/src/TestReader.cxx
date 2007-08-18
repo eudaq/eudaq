@@ -105,14 +105,7 @@ int main(int /*argc*/, char ** argv) {
             EUDAQ_WARN("Multiple BOREs (" + to_string(nbore) + ")");
           }
           if (do_bore.IsSet()) std::cout << *ev << std::endl;
-          for (size_t i = 0; i < dev->NumEvents(); ++i) {
-            if (eudaq::EUDRBEvent * eudev = dynamic_cast<eudaq::EUDRBEvent*>(dev->GetEvent(i))) {
-              if (eudev->IsBORE()) {
-                decoder = new eudaq::EUDRBDecoder(*eudev);
-                break;
-              }
-            }
-          }
+          decoder = new eudaq::EUDRBDecoder(*dev);
         } else if (ev->IsEORE()) {
           neore++;
           if (neore > 1) {

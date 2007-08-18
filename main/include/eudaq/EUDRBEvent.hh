@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <ostream>
-#include "eudaq/Event.hh"
+#include "eudaq/DetectorEvent.hh"
 
 namespace eudaq {
 
@@ -24,9 +24,10 @@ namespace eudaq {
     unsigned FrameNumber() const;
     unsigned PivotPixel() const;
     unsigned WordCount() const;
+    unsigned GetID() const { return m_id; }
     size_t   DataSize() const;
-    void Print(std::ostream &) const;
     const unsigned char * GetData() const { return &m_data[8]; }
+    void Print(std::ostream &) const;
   private:
     unsigned char GetByte(size_t i) const { return m_data[i]; }
     template <typename T>
@@ -75,8 +76,9 @@ namespace eudaq {
       m_boards.push_back(EUDRBBoard(id, data, bytes));
     }
     virtual void Print(std::ostream &) const;
-    unsigned NumBoards() { return m_boards.size(); }
+    unsigned NumBoards() const { return m_boards.size(); }
     EUDRBBoard & GetBoard(unsigned i) { return m_boards[i]; }
+    const EUDRBBoard & GetBoard(unsigned i) const { return m_boards[i]; }
     void Debug();
     static EUDRBEvent BORE(unsigned run) {
       return EUDRBEvent((void*)0, run);
@@ -96,13 +98,13 @@ namespace eudaq {
 
   class EUDRBDecoder {
   public:
-    enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER } m_det;
-    enum E_MODE { MODE_RAW3, MODE_RAW2, MODE_ZS } m_mode;
+    enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER };
+    enum E_MODE { MODE_RAW3, MODE_RAW2, MODE_ZS };
 
-    EUDRBDecoder(E_DET det, E_MODE mode);
-    EUDRBDecoder(const EUDRBEvent & bore);
+    //EUDRBDecoder(E_DET det, E_MODE mode);
+    EUDRBDecoder(const DetectorEvent & bore);
 
-    unsigned NumFrames() const;
+    unsigned NumFrames(const EUDRBBoard & brd) const;
     unsigned NumPixels(const EUDRBBoard & brd) const;
 
     // for now just use double (easier to use with root)
@@ -128,12 +130,31 @@ namespace eudaq {
       std::vector<bool> m_pivot;
     };
     template <typename T_coord, typename T_adc>
-    arrays_t<T_coord, T_adc> GetArrays(const EUDRBBoard & brd) const;
+    arrays_t<T_coord, T_adc> GetArrays(const EUDRBBoard & brd) const {
+      switch (GetInfo(brd).m_mode) {
+      case MODE_RAW2:
+      case MODE_RAW3: return GetArraysRaw<T_coord, T_adc>(brd);
+      case MODE_ZS:   return GetArraysZS<T_coord, T_adc>(brd);
+      default: EUDAQ_THROW("Unrecognised mode");
+      }
+    }
 
   private:
-    void Check();
-    unsigned m_rows, m_cols, m_mats;
-    std::vector<int> m_order;
+    template <typename T_coord, typename T_adc>
+    arrays_t<T_coord, T_adc> GetArraysRaw(const EUDRBBoard & brd) const;
+    template <typename T_coord, typename T_adc>
+    arrays_t<T_coord, T_adc> GetArraysZS(const EUDRBBoard & brd) const;
+    struct BoardInfo {
+      BoardInfo();
+      BoardInfo(const EUDRBEvent & ev, unsigned brd);
+      void Check();
+      E_DET m_det;
+      E_MODE m_mode;
+      unsigned m_rows, m_cols, m_mats;
+      std::vector<int> m_order;
+    };
+    const BoardInfo & GetInfo(const EUDRBBoard & brd) const;
+    std::map<unsigned, BoardInfo> m_info;
   };
 
 }

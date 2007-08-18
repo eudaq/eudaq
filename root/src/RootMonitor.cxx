@@ -191,11 +191,11 @@ public:
     RootLocker lock;
     std::cout << *ev << std::endl;
     if (ev->IsBORE()) {
+      m_decoder = new eudaq::EUDRBDecoder(*ev);
       eudaq::EUDRBEvent * drbev = 0;
       for (size_t i = 0; i < ev->NumEvents(); ++i) {
         drbev = dynamic_cast<eudaq::EUDRBEvent *>(ev->GetEvent(i));
         if (drbev) {
-          m_decoder = new eudaq::EUDRBDecoder(*drbev);
           break;
         }
       }
@@ -241,7 +241,7 @@ public:
         m_tb_evtnum->SetText(eudaq::to_string(ev->GetEventNumber()).c_str());
         for (size_t i = 0; i < ev->NumEvents(); ++i) {
           if (eudaq::EUDRBEvent * drbev = dynamic_cast<eudaq::EUDRBEvent *>(ev->GetEvent(i))) {
-            if (drbev->NumBoards() > 0 && m_decoder->NumFrames() > 1) {
+            if (drbev->NumBoards() > 0) {
               m_histoevents++;
               try {
                 for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
@@ -372,7 +372,7 @@ private:
     b.m_historaw2d      = new TH2D(make_name("RawProfile",    board).c_str(), "Raw 2D Profile",    264, 0, 264, 256, 0, 256);
     b.m_tempcds         = new TH2D(make_name("TempCDS",       board).c_str(), "Temp CDS",          264, 0, 264, 256, 0, 256);
     b.m_histocds2d      = new TH2D(make_name("CDSProfile",    board).c_str(), "CDS Profile",       264, 0, 264, 256, 0, 256);
-    b.m_histohit2d      = new TH2D(make_name("HitMap",        board).c_str(), "Clusters",          264, 0, 264, 256, 0, 256);
+    b.m_histohit2d      = new TH2D(make_name("HitMap",        board).c_str(), "Hit Profile",       264, 0, 264, 256, 0, 256);
     b.m_histocluster2d  = new TH2D(make_name("ClusterMap",    board).c_str(), "Cluster Profile",   132, 0, 264, 128, 0, 256);
     b.m_histotrack2d    = new TH2D(make_name("TrackMap",      board).c_str(), "Track Candidates",  132, 0, 264, 128, 0, 256);
     b.m_histonoise2d    = new TH2D(make_name("NoiseMap",      board).c_str(), "Noise Profile",     264, 0, 264, 256, 0, 256);
@@ -400,8 +400,6 @@ private:
     b.m_canvas->cd(4);
     b.m_histoclusterval->Draw();
     b.m_canvas->cd(5);
-    //b.m_histohit2d->Draw();
-    //b.m_histonumclusters->Draw();
     b.m_histonoise2d->Draw("colz");
 
     b.m_canvas->cd(6);
@@ -419,20 +417,26 @@ private:
     eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     size_t npixels = m_decoder->NumPixels(e), nx=264, ny=256;
     std::vector<double> ones(npixels, 1.0);
-    std::vector<double> cds(npixels, 0.0);
+    std::vector<double> cds(a.m_adc[0]);
     for (size_t i = 0; i < cds.size(); ++i) {
-      cds[i] = a.m_adc[0][i] * (a.m_pivot[i])
-             + a.m_adc[1][i] * (1-2*a.m_pivot[i])
-             + a.m_adc[2][i] * (a.m_pivot[i]-1);
+      cds[i] = cds[i]*4;
     }
-    b.m_historaw2d->FillN(npixels, &a.m_x[0], &a.m_y[0], &a.m_adc[1][0]);
-    b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
-    b.m_historawx->FillN(npixels, &a.m_x[0], &a.m_adc[1][0]);
-    b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents / ny);
-    b.m_historawy->FillN(npixels, &a.m_y[0], &a.m_adc[1][0]);
-    b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents / nx);
-    b.m_historawval->FillN(npixels, &a.m_adc[1][0], &ones[0]);
-    b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
+
+    if (m_decoder->NumFrames(e) > 1) {
+      for (size_t i = 0; i < cds.size(); ++i) {
+        cds[i] = a.m_adc[0][i] * (a.m_pivot[i])
+          + a.m_adc[1][i] * (1-2*a.m_pivot[i])
+          + a.m_adc[2][i] * (a.m_pivot[i]-1);
+      }
+      b.m_historaw2d->FillN(npixels, &a.m_x[0], &a.m_y[0], &a.m_adc[1][0]);
+      b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
+      b.m_historawx->FillN(npixels, &a.m_x[0], &a.m_adc[1][0]);
+      b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents / ny);
+      b.m_historawy->FillN(npixels, &a.m_y[0], &a.m_adc[1][0]);
+      b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents / nx);
+      b.m_historawval->FillN(npixels, &a.m_adc[1][0], &ones[0]);
+      b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
+    }
     b.m_histocdsval->FillN(npixels, &cds[0], &ones[0]);
     b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
     std::vector<double> newx(a.m_x); // TODO: shouldn't need to recalculate this for each event
@@ -465,7 +469,7 @@ private:
       for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
         for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
           double s = b.m_tempcds->GetBinContent(ix, iy);
-          double noise = b.m_histonoise2d->GetBinContent(ix, iy);
+          double noise = 4.0; //b.m_histonoise2d->GetBinContent(ix, iy);
           if (s > seed_thresh*noise) {
             seeds.push_back(Seed(ix, iy, s));
           }
@@ -480,7 +484,7 @@ private:
             for (int dy = -1; dy <= 1; ++dy) {
               for (int dx = -1; dx <= 1; ++dx) {
                 cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                double n = b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
+                double n = 4.0; //b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
                 noise += n*n;
                 b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);
               }
