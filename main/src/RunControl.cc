@@ -102,7 +102,7 @@ namespace eudaq {
 
   void RunControl::RestartRun() {
     StopRun(false);
-    mSleep(2000);
+    mSleep(10000);
     StartRun("Continued");
   }
 

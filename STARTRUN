@@ -3,11 +3,14 @@
 EUDRBIP=zeneudet1.desy.de
 TLUIP=zenpixell2.desy.de
 
+cd `dirname $0`
+
 printf 'STARTING DAQ\n'
 printf '\t Cleaning up first...\n'
 killall RootMonitor.exe
 killall TestDataCollector.exe
 ssh -X -Y root@$EUDRBIP "killall EUDRBProducer.exe" &
+ssh -X -Y root@$EUDRBIP "cd /home/eudet/eudrb/Lorenzo; ./JTAGDownload_18.sh" &
 ssh -X -Y root@$TLUIP "killall TLUProducer.exe" &
 killall euLog
 sleep 1
