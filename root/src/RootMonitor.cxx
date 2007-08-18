@@ -258,9 +258,8 @@ public:
       }
       unsigned planeshit = 0;
       for (size_t i = 0; i < numplanes; ++i) {
-        if (m_board[i].m_clusters.size() != 1) {
+        if (m_board[i].m_clusters.size() == 1) {
           planeshit++;
-          break;
         }
       }
       if (planeshit >= numplanes-1) {
