@@ -259,10 +259,10 @@ public:
 	  if ( (fp = fopen(filename, "r") ) ) {
 	    printf("Opened file %s\n",filename);
 	    printf("\tDownloading pedestals to board: %d\n",n_eudrb);
-	    //	    fgets(dummy,100,fp);
-	    //	    printf("Line 1: %s\n",dummy);
-	    //	    fgets(dummy,100,fp); // skip 2 lines
-	    //	    printf("Line 2: %s\n",dummy);
+	    fgets(dummy,100,fp); fscanf(fp,"\n");
+	    printf("\t%s\n",dummy);
+	    fgets(dummy,100,fp); fscanf(fp,"\n");// skip 2 lines
+	    printf("\t%s\n",dummy);
 	    
 	    while (fscanf(fp,"%d %d %d %f %f %d\n",&board,&x,&y,&ped,&thresh,&flag)!=EOF) {
 	      //	      printf("I read: board: %1d, x: %3d, y: %3d, ped: %2.3f, thresh: %2.3f, flag: %2d\n",board,x,y,ped,thresh,flag);
@@ -275,15 +275,19 @@ public:
 	      ped2bit=(int) ped&0x1f; // prepare for 2bits complement
 
 	      //	      newdata32=0xc;
-	      if (thresh2bit<0) newdata32=(~thresh2bit)+1; else newdata32=thresh2bit;
-	      if (ped2bit<0) newdata32=newdata32+(((~ped2bit)+1)<<6); else newdata32=newdata32+(ped2bit<<6);
+	      if (thresh2bit>31) thresh2bit=31;
+	      if (thresh2bit<-32) thresh2bit=-32;
+	      if (ped2bit>31) ped2bit=31;
+	      if (ped2bit<-32) ped2bit=-32;
+	      if (thresh2bit<0) newdata32=(~abs(thresh2bit))+1; else newdata32=thresh2bit;
+	      if (ped2bit<0) newdata32=newdata32+(((~abs(ped2bit))+1)<<6); else newdata32=newdata32+(ped2bit<<6);
 
 	      if (flag) newdata32=0x1f+(1<<11); // mask bad pixels as good as you can (high thresh and very low ped) 
 
 
-// 	      if ((y<2 || y>253) && (x<4||x>61)) {
-// 		printf("\tsubm=%2d,y=%3d,x=%3d,address=0x%8lx,data=0x%3lx,thresh2bit=%3d\n",subm,y,x,address,newdata32,thresh2bit);
-// 	      }
+//  	      if ((y<2 || y>253) && (x<4||x>61)) {
+//  		printf("\tsubm=%2d,y=%3d,x=%3d,address=0x%8lx,data=0x%3lx,thresh2bit=%3d\n",subm,y,x,address,newdata32,thresh2bit);
+//  	      }
 	      
 	      vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
 	    }
