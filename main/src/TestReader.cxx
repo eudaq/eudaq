@@ -61,7 +61,7 @@ bool DoEvent(unsigned ndata, eudaq::DetectorEvent * dev, bool do_process, bool d
           }
           if (do_dump) {
             std::ofstream file(("board" + to_string(boardnum) + ".dat").c_str());
-            file.write(reinterpret_cast<const char*>(brd.GetData()), brd.DataSize());
+            file.write(reinterpret_cast<const char*>(brd.GetData()-8), brd.DataSize()+16);
           }
         }
       }
