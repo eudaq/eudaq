@@ -81,6 +81,7 @@ public:
       unsigned long address=boards[n_eudrb].BaseAddress|0x00400004;
       gettimeofday(&starttime,0);
       int i=0;
+      bool badev=false;
       while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
         vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address); 
 	i++;
@@ -90,7 +91,7 @@ public:
       gettimeofday(&stoptime,0);
       stoptime.tv_usec-=starttime.tv_usec;
       stoptime.tv_sec-=starttime.tv_sec; 
-      printf("Waiting for board %d took %ld us\n",n_eudrb,stoptime.tv_sec*1000000+stoptime.tv_usec );
+      if (m_ev<10 || m_ev%20==0) printf("Waiting for board %d took %ld us\n",n_eudrb,stoptime.tv_sec*1000000+stoptime.tv_usec );
       unsigned long number_of_bytes=(readdata32&0xfffff)*4; //last 20 bits
       //      printf("number of bytes = %ld\n",number_of_bytes);
       if (number_of_bytes!=0) {
@@ -101,6 +102,11 @@ public:
         gettimeofday(&starttime,0);
         address=boards[n_eudrb].BaseAddress|0x00400000;
 
+	if (number_of_bytes>405520 || number_of_bytes==0) {     
+	  printf("Board: %d, Event: %d, number of bytes = %ld\n",n_eudrb,m_ev,number_of_bytes);
+	  EUDAQ_WARN("Board "  + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big or zero: " + to_string(number_of_bytes));
+	  badev=true;
+	}
         //      printf("mblt before: %ld\n",mblt_dstbuffer);
         //        printf("MBLT PRIMA !!!\n");
         // pad number of bytes to multiples of 8 in case of ZS
@@ -118,12 +124,13 @@ public:
 	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
 	
         //      for(int j=0;j<number_of_bytes/4;j++)
-        if (m_ev<10 || m_ev%20==0) {
+        if (m_ev<10 || m_ev%20==0 || badev) {
           printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
           printf("\theader =0x%lx\n",buffer[0]);
           //    printf("buf&0x54... = 0x%lx\n",(buffer[number_of_bytes/4-2]&0x54000000));
           if ( (buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n",buffer[number_of_bytes/4-2]);
-          else printf("\ttrailer=x%lx\n",buffer[number_of_bytes/4-3]);
+          else printf("\ttrailer=x%lx\n",buffer[number_of_bytes/4-3]); 
+	  badev=false;
         } 
 
         /*for(int j=0;j<10;j++)
@@ -235,7 +242,7 @@ public:
           //zs=true;
 
 
-	  printf("Downloading pedestals to board %d, this takes a _LONG TIME_ (10-15 Minutes)\n",n_eudrb);
+	  printf("Downloading pedestals to board %d, this takes 2-3 Minutes per board!\n",n_eudrb);
 	  EUDAQ_INFO("Downloading pedestals to board"  + to_string(n_eudrb) +"be very patient");
 
 	  FILE *fp;
@@ -340,6 +347,7 @@ public:
 	/* read address first and only set the reset bit */
 	vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
       }
+      std::cout << "...Configured!" << std::endl;
 
       SetStatus(eudaq::Status::LVL_OK, "Configured");
     } catch (const std::exception & e) {
