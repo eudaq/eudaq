@@ -417,10 +417,6 @@ private:
     size_t npixels = m_decoder->NumPixels(e), nx=264, ny=256;
     std::vector<double> ones(npixels, 1.0);
     std::vector<double> cds(a.m_adc[0]);
-    for (size_t i = 0; i < cds.size(); ++i) {
-      cds[i] = cds[i]*4;
-    }
-
     if (m_decoder->NumFrames(e) > 1) {
       for (size_t i = 0; i < cds.size(); ++i) {
         cds[i] = a.m_adc[0][i] * (a.m_pivot[i])
