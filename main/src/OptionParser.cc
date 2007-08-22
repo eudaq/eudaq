@@ -1,7 +1,9 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Time.hh"
 #include <ostream>
 #include <sstream>
+#include <fstream>
 
 namespace eudaq {
 
@@ -89,9 +91,23 @@ namespace eudaq {
     if (m_desc != "") os << "\n     " << m_desc;
   }
 
+  void OptionParser::LogException(const std::string & msg, std::ostream & os) const {
+    {
+      std::ofstream logfile("crashlog.txt", std::ios::app);
+      logfile << "===============================================\n"
+              << "Abnormal exit of " << m_name << "(" << m_ver << ") at " << Time::Current().Formatted() << "\n"
+              << msg << "\n"
+              << "-----------------------------------------------" << std::endl;
+    }
+    GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR), false);
+    os << msg << "\n"
+       << "Please report this to the developers. Press enter to quit." << std::endl;
+    std::string str;
+    std::getline(std::cin, str);
+  }
+    
+
   int OptionParser::HandleMainException(std::ostream & err, std::ostream & out) {
-    //if (!err) err = &std::cerr;
-    //if (!out) err = &std::cout;
     try {
       throw;
     } catch (const eudaq::MessageException & e) {
@@ -102,12 +118,10 @@ namespace eudaq {
       err << std::endl;
       return 1;
     } catch (const std::exception & e) {
-      out << "Uncaught Exception:\n" << e.what() << std::endl;
-      GetLogger().SendLogMessage(LogMessage(e.what(), LogMessage::LVL_ERROR), false);
+      LogException("Uncaught exception:\n" + std::string(e.what()));
       return 1;
     } catch (...) {
-      out << "Unknown Exception." << std::endl;
-      GetLogger().SendLogMessage(LogMessage("Unknown exception", LogMessage::LVL_ERROR), false);
+      LogException("Unknown exception");
       return 1;
     }
     return 0;
