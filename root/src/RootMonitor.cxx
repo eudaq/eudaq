@@ -280,6 +280,8 @@ public:
         }
         EUDAQ_EXTRA(s.str());
       }
+      m_board[0].m_historawval->SetMaximum();
+      m_board[0].m_histocdsval->SetMaximum();
       m_board[0].m_histoclusterval->SetMaximum();
       m_board[1].m_histodeltax->SetMaximum();
       m_board[1].m_histodeltay->SetMaximum();
