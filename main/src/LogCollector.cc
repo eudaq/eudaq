@@ -5,6 +5,7 @@
 #include "eudaq/BufferSerializer.hh"
 #include <iostream>
 #include <ostream>
+#include <sstream>
 
 namespace eudaq {
 
@@ -33,7 +34,9 @@ namespace eudaq {
     pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
     std::cout << "###### listenaddress=" << m_transport->ConnectionString() << std::endl
               << "       logfile=" << m_filename << std::endl;
-    m_file << "\n*** LogCollector started at " << Time::Current().Formatted() << " ***" << std::endl;
+    std::ostringstream os;
+    os << "\n*** LogCollector started at " << Time::Current().Formatted() << " ***" << std::endl;
+    m_file.write(os.str().c_str(), os.str().length());
     CommandReceiver::StartThread();
   }
 
@@ -51,7 +54,9 @@ namespace eudaq {
   }
 
   void LogCollector::DoReceive(const LogMessage & ev) {
-    ev.Write(m_file);
+    std::ostringstream buf;
+    ev.Write(buf);
+    m_file.write(buf.str().c_str(), buf.str().length());
     OnReceive(ev);
   }
 
