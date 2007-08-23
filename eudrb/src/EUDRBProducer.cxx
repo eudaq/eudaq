@@ -183,7 +183,7 @@ public:
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
-      std::cout << "Configuring." << std::endl;
+      std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       int numboards = param.Get("NumBoards", 0);
       m_idoffset = param.Get("IDOffset", 0);
       boards.clear();
@@ -346,7 +346,7 @@ public:
         /* read address first and only set the reset bit */
         vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
       }
-      std::cout << "...Configured!" << std::endl;
+      std::cout << "...Configured (" << param.Name() << ")" << std::endl;
 
       EUDAQ_INFO("Configured (" + param.Name() + ")");
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
