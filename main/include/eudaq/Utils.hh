@@ -38,6 +38,13 @@ namespace eudaq {
     return s.str();
   }
 
+  inline std::string to_string(const std::string & x, int /*digits*/ = 0) {
+    return x;
+  }
+  inline std::string to_string(const char * x, int /*digits*/ = 0) {
+    return x;
+  }
+
   /** Converts any type that has an ostream streamer to a string in hexadecimal.
    * \param x The value to be converted.
    * \param digits The minimum number of digits, shorter numbers are padded with zeroes.

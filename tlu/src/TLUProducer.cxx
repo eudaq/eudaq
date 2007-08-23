@@ -74,7 +74,8 @@ public:
       SetVetoMask(veto_mask);
       SetAndMask(and_mask);
       SetOrMask(or_mask);
-      SetStatus(eudaq::Status::LVL_OK, "Configured");
+      EUDAQ_INFO("Configured (" + param.Name() + ")");
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");

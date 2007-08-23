@@ -31,6 +31,7 @@ namespace eudaq {
     //std::string Get(const std::string & key, const std::string & def = "");
     template <typename T>
     void Set(const std::string & key, const T & val);
+    std::string Name() const;
   private:
     std::string GetString(const std::string & key) const;
     void SetString(const std::string & key, const std::string & val);

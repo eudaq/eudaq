@@ -17,6 +17,14 @@ namespace eudaq {
     Load(conffile, section);
   }
 
+  std::string Configuration::Name() const {
+    map_t::const_iterator it = m_config.find("");
+    if (it == m_config.end()) return "";
+    section_t::const_iterator it2 = it->second.find("Name");
+    if (it2 == it->second.end()) return "";
+    return it2->second;
+  }
+
   void Configuration::Save(std::ostream & stream) const {
     for (map_t::const_iterator i = m_config.begin(); i != m_config.end(); ++i) {
       if (i->first != "") {

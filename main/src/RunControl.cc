@@ -58,10 +58,12 @@ namespace eudaq {
 
   void RunControl::Configure(const std::string & param) {
     std::string filename = "conf/" + (param == "" ? "default" : param) + ".conf";
-    EUDAQ_EXTRA("Loading configuration from: " + filename);
+    EUDAQ_INFO("Configuring (" + param + ")");
+    //EUDAQ_EXTRA("Loading configuration from: " + filename);
     std::ifstream file(filename.c_str());
     if (file.is_open()) {
       Configuration config(file);
+      config.Set("Name", param);
       SendCommand("CONFIG", to_string(config));
       config.SetSection("RunControl");
       m_runsizelimit = config.Get("RunSizeLimit", 0LL);

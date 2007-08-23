@@ -29,7 +29,8 @@ public:
   virtual void OnConfigure(const eudaq::Configuration & param) {
     std::cout << "Configuring." << std::endl;
     eventsize = param.Get("EventSize", 1);
-    SetStatus(eudaq::Status::LVL_OK);
+    EUDAQ_INFO("Configured (" + param.Name() + ")");
+    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
     m_run = param;
