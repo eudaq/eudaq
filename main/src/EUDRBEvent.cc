@@ -223,7 +223,7 @@ namespace eudaq {
     EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, NumFrames(brd));
     const unsigned char * data = brd.GetData();
     for (unsigned i = 0; i < pixels; ++i) {
-      int mat = data[4*i] >> 6;
+      int mat = 3 - (data[4*i] >> 6);
       int col = ((data[4*i+1] & 0x7) << 4) | (data[4*i+2] >> 4);
       result.m_x[i] = col + b.m_order[mat]*b.m_cols;
       result.m_y[i] = ((data[4*i] & 0x7) << 5) | (data[4*i+1] >> 3);
