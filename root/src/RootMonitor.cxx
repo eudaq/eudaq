@@ -112,35 +112,43 @@ public:
       m_canvasmain = m_embedmain->GetCanvas();
 
       m_board = std::vector<BoardDisplay>(5); // Maximum number of boards displayed
-      m_canvasmain->Divide(4, 2);
+      m_canvasmain->Divide(4, 3);
       for (size_t i = 0; i < m_board.size(); ++i) {
         BookBoard(i+1, m_board[i]);
       }
 
       for (size_t i = 0; i < m_board.size(); ++i) {
-        m_canvasmain->cd(1)->SetLogy();
+        m_canvasmain->cd(1);
         m_board[i].m_historawval->SetLineColor(colours[i]);
         m_board[i].m_historawval->Draw(i == 0 ? "" : "same");
-        m_canvasmain->cd(2)->SetLogy();
-        m_board[i].m_histocdsval->SetLineColor(colours[i]);
-        m_board[i].m_histocdsval->Draw(i == 0 ? "" : "same");
-        m_canvasmain->cd(3)->SetLogy();
-        m_board[i].m_histoclusterval->SetLineColor(colours[i]);
-        m_board[i].m_histoclusterval->Draw(i == 0 ? "" : "same");
-        m_canvasmain->cd(4);
+        m_canvasmain->cd(2);
         m_board[i].m_histocluster2d->SetFillColor(colours[i]);
         m_board[i].m_histocluster2d->Draw(i == 0 ? "box" : "same box");
+        m_canvasmain->cd(3);
         if (i > 0) {
-          m_canvasmain->cd(6);
           m_board[i].m_histodeltax->SetLineColor(colours[i]);
           m_board[i].m_histodeltax->Draw(i == 1 ? "" : "same");
-          m_canvasmain->cd(7);
+        }
+        m_canvasmain->cd(4);
+        m_board[i].m_histonumhits->SetLineColor(colours[i]);
+        m_board[i].m_histonumhits->Draw(i == 0 ? "" : "same");
+        m_canvasmain->cd(5);
+        m_board[i].m_histocdsval->SetLineColor(colours[i]);
+        m_board[i].m_histocdsval->Draw(i == 0 ? "" : "same");
+        m_canvasmain->cd(6);
+        m_board[i].m_histotrack2d->SetFillColor(colours[i]);
+        m_board[i].m_histotrack2d->Draw(i == 0 ? "box" : "same box");
+        m_canvasmain->cd(7);
+        if (i > 0) {
           m_board[i].m_histodeltay->SetLineColor(colours[i]);
           m_board[i].m_histodeltay->Draw(i == 1 ? "" : "same");
         }
         m_canvasmain->cd(8);
-        m_board[i].m_histotrack2d->SetFillColor(colours[i]);
-        m_board[i].m_histotrack2d->Draw(i == 0 ? "box" : "same box");
+        m_board[i].m_histonumclusters->SetLineColor(colours[i]);
+        m_board[i].m_histonumclusters->Draw(i == 0 ? "" : "same");
+        m_canvasmain->cd(9);
+        m_board[i].m_histoclusterval->SetLineColor(colours[i]);
+        m_board[i].m_histoclusterval->Draw(i == 0 ? "" : "same");
       }
 
       // Add tabs to window
@@ -283,26 +291,39 @@ public:
       m_board[0].m_historawval->SetMaximum();
       m_board[0].m_histocdsval->SetMaximum();
       m_board[0].m_histoclusterval->SetMaximum();
+      m_board[0].m_histonumhits->SetMaximum();
+      m_board[0].m_histonumclusters->SetMaximum();
       m_board[1].m_histodeltax->SetMaximum();
       m_board[1].m_histodeltay->SetMaximum();
       double maxr = m_board[0].m_historawval->GetMaximum();
       double maxd = m_board[0].m_histocdsval->GetMaximum();
       double maxc = m_board[0].m_histoclusterval->GetMaximum();
+      double maxh = m_board[0].m_histonumhits->GetMaximum();
+      double maxn = m_board[0].m_histonumclusters->GetMaximum();
       double maxx = m_board[1].m_histodeltax->GetMaximum();
       double maxy = m_board[1].m_histodeltay->GetMaximum();
       for (size_t i = 1; i < numplanes; ++i) {
         if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
         if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
         if (m_board[i].m_histoclusterval->GetMaximum() > maxc) maxc = m_board[i].m_histoclusterval->GetMaximum();
+        if (m_board[i].m_histonumhits->GetMaximum() > maxh) maxh = m_board[i].m_histonumhits->GetMaximum();
+        if (m_board[i].m_histonumclusters->GetMaximum() > maxn) maxn = m_board[i].m_histonumclusters->GetMaximum();
         if (m_board[i].m_histodeltax->GetMaximum() > maxx) maxx = m_board[i].m_histodeltax->GetMaximum();
         if (m_board[i].m_histodeltay->GetMaximum() > maxy) maxy = m_board[i].m_histodeltay->GetMaximum();
       }
       m_board[0].m_historawval->SetMaximum(maxr*1.1);
       m_board[0].m_histocdsval->SetMaximum(maxd*1.1);
       m_board[0].m_histoclusterval->SetMaximum(maxc*1.1);
+      m_board[0].m_histonumhits->SetMaximum(maxh*1.1);
+      m_board[0].m_histonumclusters->SetMaximum(maxn*1.1);
       m_board[1].m_histodeltax->SetMaximum(maxx*1.1);
       m_board[1].m_histodeltay->SetMaximum(maxy*1.1);
       m_modified = true;
+      if (m_histoevents == 100) {
+        m_canvasmain->cd(1)->SetLogy();
+        m_canvasmain->cd(5)->SetLogy();
+        m_canvasmain->cd(9)->SetLogy();
+      }
     }
   }
   virtual void OnBadEvent(counted_ptr<eudaq::Event> ev) {
@@ -338,7 +359,7 @@ private:
       m_histocluster2d, m_histotrack2d, m_histonoise2d;
     counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval,
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
-      m_histodeltax, m_histodeltay;
+      m_histodeltax, m_histodeltay, m_histonumhits;
     std::vector<double> m_clusters, m_clusterx, m_clustery;
     void Reset() {
       m_historaw2d->Reset();
@@ -358,6 +379,7 @@ private:
       m_histonumclusters->Reset();
       m_histodeltax->Reset();
       m_histodeltay->Reset();
+      m_histonumhits->Reset();
     }
   };
 
@@ -368,7 +390,7 @@ private:
     b.m_embedded = new TRootEmbeddedCanvas(make_name("Canvas", board).c_str(), frame, 100, 100);
     frame->AddFrame(b.m_embedded.get(), m_hintbig.get());
     b.m_canvas = b.m_embedded->GetCanvas();
-    b.m_canvas->Divide(5, 2);
+    b.m_canvas->Divide(4, 3);
 
     b.m_historaw2d      = new TH2D(make_name("RawProfile",    board).c_str(), "Raw 2D Profile",    264, 0, 264, 256, 0, 256);
     b.m_tempcds         = new TH2D(make_name("TempCDS",       board).c_str(), "Temp CDS",          264, 0, 264, 256, 0, 256);
@@ -387,32 +409,39 @@ private:
     b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",      20,  0, 20);
     b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           80,-40, 40);
     b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           80,-40, 40);
+    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          100, 0, 100);
     b.m_histocds2d->Sumw2();
     b.m_historawval->SetBit(TH1::kCanRebin);
     b.m_histocdsval->SetBit(TH1::kCanRebin);
     b.m_histoclusterval->SetBit(TH1::kCanRebin);
+    b.m_histonumhits->SetBit(TH1::kCanRebin);
 
     b.m_canvas->cd(1);
-    b.m_histocluster2d->Draw("colz");
+    b.m_historaw2d->Draw("colz");
     b.m_canvas->cd(2);
-    b.m_histoclusterx->Draw();
+    b.m_histocluster2d->Draw("colz");
     b.m_canvas->cd(3);
-    b.m_histoclustery->Draw();
+    b.m_historawval->Draw();
     b.m_canvas->cd(4);
-    b.m_histoclusterval->Draw();
-    b.m_canvas->cd(5);
     b.m_histonoise2d->Draw("colz");
 
-    b.m_canvas->cd(6);
-    b.m_historaw2d->Draw("colz");
-    b.m_canvas->cd(7);
+    b.m_canvas->cd(5);
     b.m_historawx->Draw();
-    b.m_canvas->cd(8);
-    b.m_historawy->Draw();
-    b.m_canvas->cd(9);
-    b.m_historawval->Draw();
-    b.m_canvas->cd(10);
+    b.m_canvas->cd(6);
+    b.m_histoclusterx->Draw();
+    b.m_canvas->cd(7);
     b.m_histocdsval->Draw();
+    b.m_canvas->cd(8);
+    b.m_histonumhits->Draw();
+
+    b.m_canvas->cd(9);
+    b.m_historawy->Draw();
+    b.m_canvas->cd(10);
+    b.m_histoclustery->Draw();
+    b.m_canvas->cd(11);
+    b.m_histoclusterval->Draw();
+    b.m_canvas->cd(12);
+    b.m_histonumclusters->Draw();
   }
   void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e) {
     eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
@@ -504,12 +533,18 @@ private:
         b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents / 256);
         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
       }
+      if (m_decoder->NumFrames(e) > 1) {
+        b.m_histonumhits->Fill(seeds.size());
+      } else {
+        b.m_histonumhits->Fill(npixels);
+      }
+
     }
-    if (!b.islog) {
+    if (!b.islog && m_histoevents > 100) {
       b.islog = true;
-      b.m_canvas->cd(4)->SetLogy();
-      b.m_canvas->cd(9)->SetLogy();
-      b.m_canvas->cd(10)->SetLogy();
+      b.m_canvas->cd(3)->SetLogy();
+      b.m_canvas->cd(7)->SetLogy();
+      b.m_canvas->cd(11)->SetLogy();
       //m_canvasmain->cd(board + m_board.size() + 1)->SetLogy();
     }
   }
