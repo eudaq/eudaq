@@ -27,7 +27,8 @@
 #include <string>
 #include <algorithm>
 
-static const int MAX_BOARDS = 6;
+static const unsigned MAX_BOARDS = 6;
+static const unsigned MAX_SEEDS = 100;
 
 int colours[] = { kRed, kGreen, kBlue, kMagenta, kCyan,
                   kRed, kGreen, kBlue, kMagenta, kCyan };
@@ -503,7 +504,7 @@ private:
           }
         }
       }
-      if (seeds.size() < 1000) {
+      if (seeds.size() < MAX_SEEDS) {
         std::sort(seeds.begin(), seeds.end(), &Seed::compare);
         for (size_t i = 0; i < seeds.size(); ++i) {
           if (b.m_tempcds->GetBinContent((int)seeds[i].x, (int)seeds[i].y) > 0) {
@@ -525,7 +526,7 @@ private:
             }
           }
         }
-        b.m_histonumclusters->Fill(b.m_clusters.size());
+        if (b.m_clusters.size()) b.m_histonumclusters->Fill(b.m_clusters.size());
         b.m_histohit2d->Reset();
         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
@@ -536,9 +537,9 @@ private:
         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
       }
       if (m_decoder->NumFrames(e) > 1) {
-        b.m_histonumhits->Fill(seeds.size());
+        if (seeds.size()) b.m_histonumhits->Fill(seeds.size());
       } else {
-        b.m_histonumhits->Fill(npixels);
+        if (npixels) b.m_histonumhits->Fill(npixels);
       }
 
     }
