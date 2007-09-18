@@ -448,7 +448,7 @@ private:
   }
   void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e) {
     eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
-    size_t npixels = m_decoder->NumPixels(e), nx=264, ny=256;
+    size_t npixels = m_decoder->NumPixels(e); //, nx=264, ny=256;
     std::vector<double> ones(npixels, 1.0);
     std::vector<double> cds(a.m_adc[0]);
     if (m_decoder->NumFrames(e) > 1) {
@@ -460,9 +460,9 @@ private:
       b.m_historaw2d->FillN(npixels, &a.m_x[0], &a.m_y[0], &a.m_adc[1][0]);
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
       b.m_historawx->FillN(npixels, &a.m_x[0], &a.m_adc[1][0]);
-      b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents / ny);
+      b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents);
       b.m_historawy->FillN(npixels, &a.m_y[0], &a.m_adc[1][0]);
-      b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents / nx);
+      b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
       b.m_historawval->FillN(npixels, &a.m_adc[1][0], &ones[0]);
       b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
     }
@@ -531,9 +531,9 @@ private:
         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clusters[0]);
-        b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents / ny);
+        b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
         b.m_histoclustery->FillN(b.m_clusters.size(), &b.m_clustery[0], &b.m_clusters[0]);
-        b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents / 256);
+        b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
       }
       if (m_decoder->NumFrames(e) > 1) {
