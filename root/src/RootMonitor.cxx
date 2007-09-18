@@ -27,6 +27,8 @@
 #include <string>
 #include <algorithm>
 
+static const int MAX_BOARDS = 6;
+
 int colours[] = { kRed, kGreen, kBlue, kMagenta, kCyan,
                   kRed, kGreen, kBlue, kMagenta, kCyan };
 
@@ -111,10 +113,10 @@ public:
       frame->AddFrame(m_embedmain, m_hintbig.get());
       m_canvasmain = m_embedmain->GetCanvas();
 
-      m_board = std::vector<BoardDisplay>(5); // Maximum number of boards displayed
+      m_board = std::vector<BoardDisplay>(MAX_BOARDS); // Maximum number of boards displayed
       m_canvasmain->Divide(4, 3);
       for (size_t i = 0; i < m_board.size(); ++i) {
-        BookBoard(i+1, m_board[i]);
+        BookBoard(i, m_board[i]);
       }
 
       for (size_t i = 0; i < m_board.size(); ++i) {
