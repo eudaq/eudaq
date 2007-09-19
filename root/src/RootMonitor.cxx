@@ -26,6 +26,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <cmath>
 
 static const unsigned MAX_BOARDS = 6;
 static const unsigned MAX_SEEDS = 100;
@@ -577,7 +578,7 @@ private:
       if (m_histoevents < 500) {
         for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
-            double rms = b.m_histocds2d->GetBinError(ix, iy) / sqrt(m_histoevents);
+            double rms = b.m_histocds2d->GetBinError(ix, iy) / std::sqrt(m_histoevents);
             b.m_histonoise2d->SetBinContent(ix, iy, rms);
           }
         }
@@ -607,7 +608,7 @@ private:
                 b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);
               }
             }
-            noise = sqrt(noise);
+            noise = std::sqrt(noise);
             if (cluster > cluster_thresh*noise) {
               b.m_clusters.push_back(cluster);
               b.m_clusterx.push_back(seeds[i].x);
