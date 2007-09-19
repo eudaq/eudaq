@@ -39,6 +39,11 @@ struct Seed {
   static bool compare(const Seed & lhs, const Seed & rhs) { return lhs.c > rhs.c; }
 };
 
+template <typename T>
+T square(T val) {
+  return val * val;
+}
+
 class RootLocker {
 public:
   RootLocker() {
@@ -200,7 +205,7 @@ public:
   }
   virtual void OnEvent(counted_ptr<eudaq::DetectorEvent> ev) {
     RootLocker lock;
-    std::cout << *ev << std::endl;
+    //std::cout << *ev << std::endl;
     if (ev->IsBORE()) {
       m_decoder = new eudaq::EUDRBDecoder(*ev);
       eudaq::EUDRBEvent * drbev = 0;
@@ -273,23 +278,106 @@ public:
           planeshit++;
         }
       }
-      if (planeshit >= numplanes-1) {
-        std::ostringstream s;
-        s << "Found track in event " << ev->GetEventNumber() << ":";
-        for (size_t i = 0; i < numplanes; ++i) {
-          if (m_board[i].m_clusters.size() == 1) {
-            m_board[i].m_histotrack2d->Fill(m_board[i].m_clusterx[0], m_board[i].m_clustery[0]);
-            if (i > 0) {
-              m_board[i].m_histodeltax->Fill(m_board[i].m_clusterx[0] - m_board[i-1].m_clusterx[0]);
-              m_board[i].m_histodeltay->Fill(m_board[i].m_clustery[0] - m_board[i-1].m_clustery[0]);
+      std::cout << "Event " << ev->GetEventNumber() << ", clusters:";
+      for (size_t i = 0; i < numplanes; ++i) {
+        std::cout << " " << m_board[i].m_clusters.size();
+      }
+      std::cout << std::endl;
+      if (planeshit < numplanes-2) {
+        std::cout << "No track candidate" << std::endl;
+      } else {
+
+#if 0
+        const double threshold2 = square(1000);
+        for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
+          std::cout << "Trying cluster " << i << std::endl;
+          size_t board = 1;
+          std::vector<double> trackx(numplanes), tracky(numplanes);
+          trackx[0] = m_board[0].m_clusterx[i];
+          tracky[0] = m_board[0].m_clustery[i];
+          double closest2 = threshold2+1;
+          size_t iclosest = 0;
+          do {
+            closest2 = threshold2+1;
+            for (size_t cluster = 0; cluster < m_board[board].m_clusters.size(); ++cluster) {
+              double dist2 = square(m_board[board].m_clusterx[cluster] - trackx[board-1])
+                           + square(m_board[board].m_clustery[cluster] - tracky[board-1]);
+              //std::cout << "dist^2 = " << dist2 << std::endl;
+              if (dist2 < closest2) {
+                iclosest = cluster;
+                closest2 = dist2;
+              }
             }
-            s << " (" << m_board[i].m_clusterx[0]
-              << ", " << m_board[i].m_clustery[0]
-              << ", " << m_board[i].m_clusters[0]
+            trackx[board] = m_board[board].m_clusterx[iclosest];
+            tracky[board] = m_board[board].m_clustery[iclosest];
+            ++board;
+            std::cout << "closest^2 = " << closest2 << std::endl;
+          } while (board < numplanes && (closest2 < threshold2 || board == 1));
+          if (closest2 < threshold2) {
+            std::cout << "Found track in event " << ev->GetEventNumber() << ":";
+            for (size_t i = 0; i < trackx.size(); ++i) {
+              std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
+              m_board[i].m_histotrack2d->Fill(trackx[i], tracky[i]);
+              if (i > 0) {
+                m_board[i].m_histodeltax->Fill(trackx[i] - trackx[i-1]);
+                m_board[i].m_histodeltay->Fill(tracky[i] - tracky[i-1]);
+              }
+            }
+            std::cout << std::endl;
+            //fittrack(trackx, tracky);
+          }
+        }
+
+#else
+
+        std::ostringstream s;
+        s << "Found track candidate in event " << ev->GetEventNumber() << ":";
+        double x = -1, y = -1;
+        double clustval = 0;
+        for (size_t i = 0; i < numplanes; ++i) {
+          if (m_board[i].m_clusters.size() < 1) {
+            m_board[i].m_trackx = -1;
+            m_board[i].m_tracky = -1;
+            s << " ()";
+          } else {
+            if (x == -1) { // first plane: find highest cluster
+              for (size_t c = 0; c < m_board[i].m_clusters.size(); ++c) {
+                if (m_board[i].m_clusters[c] > clustval) {
+                  clustval = m_board[i].m_clusters[c];
+                  x = m_board[i].m_clusterx[c];
+                  y = m_board[i].m_clustery[c];
+                }
+              }
+            } else { // find closest cluster
+              double d2 = -1;
+              for (size_t c = 0; c < m_board[i].m_clusters.size(); ++c) {
+                double dd2 = square(m_board[i].m_clusterx[c]) + square(m_board[i].m_clustery[c]);
+                if (d2 < 0 || dd2 < d2) {
+                  d2 = dd2;
+                  clustval = m_board[i].m_clusters[c];
+                  x = m_board[i].m_clusterx[c];
+                  y = m_board[i].m_clustery[c];
+                }
+              }
+            }
+            m_board[i].m_trackx = x;
+            m_board[i].m_tracky = y;
+            m_board[i].m_histotrack2d->Fill(m_board[i].m_trackx, m_board[i].m_tracky);
+            if (i > 0 && m_board[i-1].m_trackx != -1) {
+              m_board[i].m_histodeltax->Fill(m_board[i].m_trackx - m_board[i-1].m_trackx);
+              m_board[i].m_histodeltay->Fill(m_board[i].m_tracky - m_board[i-1].m_tracky);
+            }
+            s << " (" << m_board[i].m_trackx
+              << ", " << m_board[i].m_tracky
+              << ", " << clustval
+              << ", " << m_board[i].m_clusters.size()
               << ")";
           }
         }
         EUDAQ_EXTRA(s.str());
+
+#endif
+
       }
       m_board[0].m_historawval->SetMaximum();
       m_board[0].m_histocdsval->SetMaximum();
@@ -323,9 +411,9 @@ public:
       m_board[1].m_histodeltay->SetMaximum(maxy*1.1);
       m_modified = true;
       if (m_histoevents == 100) {
-        m_canvasmain->cd(1)->SetLogy();
-        m_canvasmain->cd(5)->SetLogy();
-        m_canvasmain->cd(9)->SetLogy();
+        //m_canvasmain->cd(1)->SetLogy();
+        //m_canvasmain->cd(5)->SetLogy();
+        //m_canvasmain->cd(9)->SetLogy();
       }
     }
   }
@@ -364,6 +452,7 @@ private:
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
       m_histodeltax, m_histodeltay, m_histonumhits;
     std::vector<double> m_clusters, m_clusterx, m_clustery;
+    double m_trackx, m_tracky;
     void Reset() {
       m_historaw2d->Reset();
       m_tempcds->Reset();
@@ -406,18 +495,18 @@ private:
     b.m_historawy       = new TH1D(make_name("RawYProfile",   board).c_str(), "Raw Y Profile",     256, 0, 256);
     b.m_histoclusterx   = new TH1D(make_name("ClustXProfile", board).c_str(), "Cluster X Profile", 264, 0, 264);
     b.m_histoclustery   = new TH1D(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", 256, 0, 256);
-    b.m_historawval     = new TH1D(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 64);
-    b.m_histocdsval     = new TH1D(make_name("CDSValues",     board).c_str(), "CDS Values",        100, 0, 10);
-    b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    50,  0, 100);
-    b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",      20,  0, 20);
-    b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           80,-40, 40);
-    b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           80,-40, 40);
-    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          100, 0, 100);
+    b.m_historawval     = new TH1D(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
+    b.m_histocdsval     = new TH1D(make_name("CDSValues",     board).c_str(), "CDS Values",        400, -100, 300);
+    b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 4000);
+    b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",      50, 0, 50);
+    b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           400,-400, 400);
+    b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           400,-400, 400);
+    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          250, 0, 250);
     b.m_histocds2d->Sumw2();
-    b.m_historawval->SetBit(TH1::kCanRebin);
-    b.m_histocdsval->SetBit(TH1::kCanRebin);
-    b.m_histoclusterval->SetBit(TH1::kCanRebin);
-    b.m_histonumhits->SetBit(TH1::kCanRebin);
+    //b.m_historawval->SetBit(TH1::kCanRebin);
+    //b.m_histocdsval->SetBit(TH1::kCanRebin);
+    //b.m_histoclusterval->SetBit(TH1::kCanRebin);
+    //b.m_histonumhits->SetBit(TH1::kCanRebin);
 
     b.m_canvas->cd(1);
     b.m_historaw2d->Draw("colz");
@@ -464,10 +553,10 @@ private:
       b.m_historawy->FillN(npixels, &a.m_y[0], &a.m_adc[1][0]);
       b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
       b.m_historawval->FillN(npixels, &a.m_adc[1][0], &ones[0]);
-      b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
+      //b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
     }
     b.m_histocdsval->FillN(npixels, &cds[0], &ones[0]);
-    b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
+    //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
     std::vector<double> newx(a.m_x); // TODO: shouldn't need to recalculate this for each event
 //     for (int i = 0; i < cds.size(); ++i) {
 //       int mat = a.m_x[i] / 66, col = (int)a.m_x[i] % 66;
@@ -494,11 +583,11 @@ private:
         }
       }
       std::vector<Seed> seeds;
-      const double seed_thresh = 3.5 /* sigma */ , cluster_thresh = 7.5 /* sigma */;
+      const double seed_thresh = 5 /* sigma */ , cluster_thresh = 7 /* sigma */;
       for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
         for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
           double s = b.m_tempcds->GetBinContent(ix, iy);
-          double noise = 4.0; //b.m_histonoise2d->GetBinContent(ix, iy);
+          double noise = 5; //b.m_histonoise2d->GetBinContent(ix, iy);
           if (s > seed_thresh*noise) {
             seeds.push_back(Seed(ix, iy, s));
           }
@@ -513,7 +602,7 @@ private:
             for (int dy = -1; dy <= 1; ++dy) {
               for (int dx = -1; dx <= 1; ++dx) {
                 cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                double n = 4.0; //b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
+                double n = 5; //b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
                 noise += n*n;
                 b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);
               }
@@ -537,17 +626,15 @@ private:
         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
       }
       if (m_decoder->NumFrames(e) > 1) {
-        if (seeds.size()) b.m_histonumhits->Fill(seeds.size());
-      } else {
-        if (npixels) b.m_histonumhits->Fill(npixels);
+        npixels = seeds.size();
       }
-
+      if (npixels) b.m_histonumhits->Fill(npixels);
     }
     if (!b.islog && m_histoevents > 100) {
       b.islog = true;
-      b.m_canvas->cd(3)->SetLogy();
-      b.m_canvas->cd(7)->SetLogy();
-      b.m_canvas->cd(11)->SetLogy();
+      //b.m_canvas->cd(3)->SetLogy();
+      //b.m_canvas->cd(7)->SetLogy();
+      //b.m_canvas->cd(11)->SetLogy();
       //m_canvasmain->cd(board + m_board.size() + 1)->SetLogy();
     }
   }

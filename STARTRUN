@@ -1,7 +1,7 @@
 #!/bin/bash
 # cleanup rests of previous RunControl to be sure
-EUDRBIP=zeneudet1.desy.de
-TLUIP=zenpixell2.desy.de
+EUDRBIP=eudetvme001.cern.ch
+TLUIP=eudetpc001.cern.ch
 
 cd `dirname $0`
 
@@ -10,8 +10,10 @@ printf '\t Cleaning up first...\n'
 killall RootMonitor.exe
 killall TestDataCollector.exe
 ssh -X -Y root@$EUDRBIP "killall EUDRBProducer.exe" &
-ssh -X -Y root@$EUDRBIP "cd /home/eudet/eudrb/Lorenzo; ./JTAGDownload_18.sh" &
+sleep 3
 ssh -X -Y root@$TLUIP "killall TLUProducer.exe" &
+ssh -X -Y root@$EUDRBIP "cd /home/eudet/eudrb/Lorenzo; ./JTAGDownload_18.sh" &
+sleep 12
 killall euLog
 sleep 1
 killall euRun
@@ -39,7 +41,7 @@ cd -
 #ssh -X -Y root@$EUDRBIP "cd /home/eudet/eudrb/lorenzo/; ./reset > /dev/null" &
 sleep 1
 printf '\t\t  EUDRB\n'
-ssh -X -Y root@$EUDRBIP "(xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd /home/eudet/eudaq/eudrb/; ./EUDRBProducer.exe -r EUDET.local')" &
+ssh -X -Y root@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd /home/eudet/eudaq/eudrb/; ./EUDRBProducer.exe -r EUDET.local')" &
 sleep 2
 printf '\t\t  TLU\n'
 ssh -X -Y root@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd /home/eudet/eudaq/tlu/; ./TLUProducer.exe -r EUDET.local')" &

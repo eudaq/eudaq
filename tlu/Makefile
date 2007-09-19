@@ -4,12 +4,16 @@ EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
 include ../main/Makefile.common
 
 ifeq ($(PLATFORM),WIN32)
-  ZESTSC1DEFAULT := C:\Progra~1\Orange~1\ZestSC1
+  ZESTSC1DEFAULT := ../extern/ZestSC1/windows
 else
   ifeq ($(PLATFORM),CYGWIN)
-    ZESTSC1DEFAULT := /cygdrive/c/Progra~1/Orange~1/ZestSC1
+    ZESTSC1DEFAULT := ../extern/ZestSC1/windows
   else
-    ZESTSC1DEFAULT := ../../ZestSC1
+    ifeq ($(PLATFORM),LINUX)
+      ZESTSC1DEFAULT := ../extern/ZestSC1/linux
+    else
+      ZESTSC1DEFAULT := ../extern/ZestSC1/macosx
+    endif
   endif
 endif
 ZESTSC1DIR ?= $(ZESTSC1DEFAULT)
