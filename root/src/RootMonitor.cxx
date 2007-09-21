@@ -21,6 +21,7 @@
 #include "TH2D.h"
 #include "TThread.h"
 #include "TFile.h"
+#include "TColor.h"
 //#include "TSystem.h" // for TProcessEventTimer
 #include <iostream>
 #include <vector>
@@ -31,8 +32,10 @@
 static const unsigned MAX_BOARDS = 6;
 static const unsigned MAX_SEEDS = 100;
 
-int colours[] = { kRed, kGreen, kBlue, kMagenta, kCyan,
-                  kRed, kGreen, kBlue, kMagenta, kCyan };
+static const int COL_R[] = { 128,   0,   0,  96,  96,   0 };
+static const int COL_G[] = {   0, 128,   0,   0,  96,  96 };
+static const int COL_B[] = {   0,   0, 128,  96,   0,  96 };
+static const int COL_BASE = 10000;
 
 struct Seed {
   double x, y, c;
@@ -112,6 +115,18 @@ public:
       m_tb_update->SetFormat(TGNumberFormat::kNESRealOne, TGNumberFormat::kNEAPositive);
       m_toolbar->AddFrame(m_tb_update.get(), m_hintleft.get());
 
+      m_toolbar->AddFrame(new TGLabel(m_toolbar.get(), "Colours:"), m_hintleft.get());
+      static const int NUM_COL = sizeof COL_R / sizeof *COL_R;
+      for (unsigned b = 0; b < MAX_BOARDS; ++b) {
+        int i = b % NUM_COL;
+        m_colours.push_back(new TColor(COL_BASE+b, COL_R[i], COL_G[i], COL_B[i]));
+        TGLabel * label = new TGLabel(m_toolbar.get(), ("Board " + eudaq::to_string(b)).c_str());
+        label->SetTextColor(m_colours[b]);
+        m_toolbar->AddFrame(label, m_hintleft.get());
+      }
+      // For some reason the palette seems to get reset - set it again here:
+      gStyle->SetPalette(1);
+
       AddFrame(m_toolbar.get(), m_hinttop.get());
 
       // Main tab
@@ -128,35 +143,35 @@ public:
 
       for (size_t i = 0; i < m_board.size(); ++i) {
         m_canvasmain->cd(1);
-        m_board[i].m_historawval->SetLineColor(colours[i]);
+        m_board[i].m_historawval->SetLineColor(COL_BASE+i);
         m_board[i].m_historawval->Draw(i == 0 ? "" : "same");
         m_canvasmain->cd(2);
-        m_board[i].m_histocluster2d->SetFillColor(colours[i]);
+        m_board[i].m_histocluster2d->SetFillColor(COL_BASE+i);
         m_board[i].m_histocluster2d->Draw(i == 0 ? "box" : "same box");
         m_canvasmain->cd(3);
         if (i > 0) {
-          m_board[i].m_histodeltax->SetLineColor(colours[i]);
+          m_board[i].m_histodeltax->SetLineColor(COL_BASE+i);
           m_board[i].m_histodeltax->Draw(i == 1 ? "" : "same");
         }
         m_canvasmain->cd(4);
-        m_board[i].m_histonumhits->SetLineColor(colours[i]);
+        m_board[i].m_histonumhits->SetLineColor(COL_BASE+i);
         m_board[i].m_histonumhits->Draw(i == 0 ? "" : "same");
         m_canvasmain->cd(5);
-        m_board[i].m_histocdsval->SetLineColor(colours[i]);
+        m_board[i].m_histocdsval->SetLineColor(COL_BASE+i);
         m_board[i].m_histocdsval->Draw(i == 0 ? "" : "same");
         m_canvasmain->cd(6);
-        m_board[i].m_histotrack2d->SetFillColor(colours[i]);
+        m_board[i].m_histotrack2d->SetFillColor(COL_BASE+i);
         m_board[i].m_histotrack2d->Draw(i == 0 ? "box" : "same box");
         m_canvasmain->cd(7);
         if (i > 0) {
-          m_board[i].m_histodeltay->SetLineColor(colours[i]);
+          m_board[i].m_histodeltay->SetLineColor(COL_BASE+i);
           m_board[i].m_histodeltay->Draw(i == 1 ? "" : "same");
         }
         m_canvasmain->cd(8);
-        m_board[i].m_histonumclusters->SetLineColor(colours[i]);
+        m_board[i].m_histonumclusters->SetLineColor(COL_BASE+i);
         m_board[i].m_histonumclusters->Draw(i == 0 ? "" : "same");
         m_canvasmain->cd(9);
-        m_board[i].m_histoclusterval->SetLineColor(colours[i]);
+        m_board[i].m_histoclusterval->SetLineColor(COL_BASE+i);
         m_board[i].m_histoclusterval->Draw(i == 0 ? "" : "same");
       }
 
@@ -274,47 +289,59 @@ public:
         }
       }
       unsigned planeshit = 0;
-      for (size_t i = 0; i < numplanes; ++i) {
-        if (m_board[i].m_clusters.size() == 1) {
-          planeshit++;
-        }
-      }
       std::cout << "Event " << ev->GetEventNumber() << ", clusters:";
       for (size_t i = 0; i < numplanes; ++i) {
         std::cout << " " << m_board[i].m_clusters.size();
       }
       std::cout << std::endl;
-      if (planeshit < numplanes-2) {
+
+#if 1 //
+
+      for (size_t i = 0; i < numplanes; ++i) {
+        if (m_board[i].m_clusters.size() >= 1) {
+          planeshit++;
+        }
+      }
+      if (planeshit < numplanes) {
         std::cout << "No track candidate" << std::endl;
       } else {
-
-#if 0
-        const double threshold2 = square(1000);
+        const double alignx[] = { -20, -15, -60, 20 };
+        const double aligny[] = { -20,   0, -20,  0 };
+        const double thresh2 = square(20);
         for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
           std::cout << "Trying cluster " << i << std::endl;
           size_t board = 1;
           std::vector<double> trackx(numplanes), tracky(numplanes);
           trackx[0] = m_board[0].m_clusterx[i];
           tracky[0] = m_board[0].m_clustery[i];
-          double closest2 = threshold2+1;
+          double closest2;
           size_t iclosest = 0;
+          //bool havecluster;
           do {
-            closest2 = threshold2+1;
+            closest2 = 10*thresh2;
+            //havecluster = false;
             for (size_t cluster = 0; cluster < m_board[board].m_clusters.size(); ++cluster) {
-              double dist2 = square(m_board[board].m_clusterx[cluster] - trackx[board-1])
-                           + square(m_board[board].m_clustery[cluster] - tracky[board-1]);
+              double x = m_board[board].m_clusterx[cluster];
+              double y = m_board[board].m_clustery[cluster];
+              if (board >= 3) {
+                x = 263 - x;
+              }
+              double dx = x - trackx[board-1] - alignx[board-1];
+              double dy = y - tracky[board-1] - aligny[board-1];
+              double dist2 = square(dx) + square(dy);
               //std::cout << "dist^2 = " << dist2 << std::endl;
               if (dist2 < closest2) {
                 iclosest = cluster;
                 closest2 = dist2;
+                //havecluster = true;
+                trackx[board] = x;
+                tracky[board] = y;
               }
             }
-            trackx[board] = m_board[board].m_clusterx[iclosest];
-            tracky[board] = m_board[board].m_clustery[iclosest];
             ++board;
-            std::cout << "closest^2 = " << closest2 << std::endl;
-          } while (board < numplanes && (closest2 < threshold2 || board == 1));
-          if (closest2 < threshold2) {
+            std::cout << "closest = " << std::sqrt(closest2) << std::endl;
+          } while (board < numplanes && closest2 < thresh2);
+          if (closest2 < thresh2) {
             std::cout << "Found track in event " << ev->GetEventNumber() << ":";
             for (size_t i = 0; i < trackx.size(); ++i) {
               std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
@@ -328,9 +355,18 @@ public:
             //fittrack(trackx, tracky);
           }
         }
+      }
 
 #else
 
+      for (size_t i = 0; i < numplanes; ++i) {
+        if (m_board[i].m_clusters.size() == 1) {
+          planeshit++;
+        }
+      }
+      if (planeshit < numplanes-2) {
+        std::cout << "No track candidate" << std::endl;
+      } else {
         std::ostringstream s;
         s << "Found track candidate in event " << ev->GetEventNumber() << ":";
         double x = -1, y = -1;
@@ -376,10 +412,10 @@ public:
           }
         }
         EUDAQ_EXTRA(s.str());
+      }
 
 #endif
 
-      }
       m_board[0].m_historawval->SetMaximum();
       m_board[0].m_histocdsval->SetMaximum();
       m_board[0].m_histoclusterval->SetMaximum();
@@ -499,10 +535,10 @@ private:
     b.m_historawval     = new TH1D(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
     b.m_histocdsval     = new TH1D(make_name("CDSValues",     board).c_str(), "CDS Values",        400, -100, 300);
     b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 4000);
-    b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",      50, 0, 50);
-    b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           400,-400, 400);
-    b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           400,-400, 400);
-    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          250, 0, 250);
+    b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",       80,  0,   80);
+    b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
+    b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           200,-100, 100);
+    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          100,   0, 100);
     b.m_histocds2d->Sumw2();
     //b.m_historawval->SetBit(TH1::kCanRebin);
     //b.m_histocdsval->SetBit(TH1::kCanRebin);
@@ -645,6 +681,7 @@ private:
   unsigned long long m_prevt;
   unsigned long m_histoevents; // count of histogrammed events for normalization factor
   counted_ptr<eudaq::EUDRBDecoder> m_decoder;
+  std::vector<TColor*> m_colours;
 
   // Layout hints
   counted_ptr<TGLayoutHints> m_hinttop;
