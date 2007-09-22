@@ -32,9 +32,9 @@
 static const unsigned MAX_BOARDS = 6;
 static const unsigned MAX_SEEDS = 100;
 
-static const int COL_R[] = { 128,   0,   0,  96,  96,   0 };
-static const int COL_G[] = {   0, 128,   0,   0,  96,  96 };
-static const int COL_B[] = {   0,   0, 128,  96,   0,  96 };
+static const float COL_R[] = { .8,  0,  0, .9, .8,  0 };
+static const float COL_G[] = {  0, .7,  0,  0, .8, .8 };
+static const float COL_B[] = {  0,  0, .9, .9,  0, .8 };
 static const int COL_BASE = 10000;
 
 struct Seed {
@@ -140,6 +140,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         BookBoard(i, m_board[i]);
       }
+      m_histonumtracks = new TH1D("NumTracks", "Num Tracks", 50, 0, 50);
 
       for (size_t i = 0; i < m_board.size(); ++i) {
         m_canvasmain->cd(1);
@@ -174,6 +175,8 @@ public:
         m_board[i].m_histoclusterval->SetLineColor(COL_BASE+i);
         m_board[i].m_histoclusterval->Draw(i == 0 ? "" : "same");
       }
+      m_canvasmain->cd(12);
+      m_histonumtracks->Draw();
 
       // Add tabs to window
       AddFrame(m_tabs.get(), m_hintbig.get());
@@ -294,6 +297,7 @@ public:
         std::cout << " " << m_board[i].m_clusters.size();
       }
       std::cout << std::endl;
+      int numtracks = 0;
 
 #if 1 //
 
@@ -305,9 +309,10 @@ public:
       if (planeshit < numplanes) {
         std::cout << "No track candidate" << std::endl;
       } else {
-        const double alignx[] = { -20, -15, -60, 20 };
-        const double aligny[] = { -20,   0, -20,  0 };
-        const double thresh2 = square(20);
+        const double alignx[] = { -10,  -5, -20, 30 };
+        const double aligny[] = { -10,   5, -10, 10 };
+        const double thresh[] = {  20,  20,  20, 20 };
+        //const double thresh2 = square(20);
         for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
           std::cout << "Trying cluster " << i << std::endl;
           size_t board = 1;
@@ -318,7 +323,7 @@ public:
           size_t iclosest = 0;
           //bool havecluster;
           do {
-            closest2 = 10*thresh2;
+            closest2 = 2.0;
             //havecluster = false;
             for (size_t cluster = 0; cluster < m_board[board].m_clusters.size(); ++cluster) {
               double x = m_board[board].m_clusterx[cluster];
@@ -328,7 +333,7 @@ public:
               }
               double dx = x - trackx[board-1] - alignx[board-1];
               double dy = y - tracky[board-1] - aligny[board-1];
-              double dist2 = square(dx) + square(dy);
+              double dist2 = (square(dx) + square(dy)) / square(thresh[board-1]);
               //std::cout << "dist^2 = " << dist2 << std::endl;
               if (dist2 < closest2) {
                 iclosest = cluster;
@@ -340,8 +345,9 @@ public:
             }
             ++board;
             std::cout << "closest = " << std::sqrt(closest2) << std::endl;
-          } while (board < numplanes && closest2 < thresh2);
-          if (closest2 < thresh2) {
+          } while (board < numplanes && closest2 < 1);
+          if (closest2 < 1) {
+            numtracks++;
             std::cout << "Found track in event " << ev->GetEventNumber() << ":";
             for (size_t i = 0; i < trackx.size(); ++i) {
               std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
@@ -367,6 +373,7 @@ public:
       if (planeshit < numplanes-2) {
         std::cout << "No track candidate" << std::endl;
       } else {
+        numtracks++;
         std::ostringstream s;
         s << "Found track candidate in event " << ev->GetEventNumber() << ":";
         double x = -1, y = -1;
@@ -415,7 +422,7 @@ public:
       }
 
 #endif
-
+      m_histonumtracks->Fill(numtracks);
       m_board[0].m_historawval->SetMaximum();
       m_board[0].m_histocdsval->SetMaximum();
       m_board[0].m_histoclusterval->SetMaximum();
@@ -533,12 +540,12 @@ private:
     b.m_histoclusterx   = new TH1D(make_name("ClustXProfile", board).c_str(), "Cluster X Profile", 264, 0, 264);
     b.m_histoclustery   = new TH1D(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", 256, 0, 256);
     b.m_historawval     = new TH1D(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
-    b.m_histocdsval     = new TH1D(make_name("CDSValues",     board).c_str(), "CDS Values",        400, -100, 300);
-    b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 4000);
+    b.m_histocdsval     = new TH1D(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
+    b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 2000);
     b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",       80,  0,   80);
     b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
     b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           200,-100, 100);
-    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          100,   0, 100);
+    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          100,   0, 300);
     b.m_histocds2d->Sumw2();
     //b.m_historawval->SetBit(TH1::kCanRebin);
     //b.m_histocdsval->SetBit(TH1::kCanRebin);
@@ -703,14 +710,8 @@ private:
   //TGCompositeFrame * m_framemain;
   TRootEmbeddedCanvas * m_embedmain;
   TCanvas * m_canvasmain;
-  //counted_ptr<TH2D> m_histotrack, m_histotrack_coinc, m_histotrack_sum, m_histotrack_seed;
 
-//   TH1I * m_hist_adc1;
-//   TH1I * m_hist_x1;
-//   TH1I * m_hist_y1;
-//   TH1I * m_hist_adcds;
-//   TH2F * m_hist_prof1;
-//   TH2F * m_hist_profcds;
+  counted_ptr<TH1D> m_histonumtracks;
 
   // Board tabs (1 per board)
   std::vector<BoardDisplay> m_board;
