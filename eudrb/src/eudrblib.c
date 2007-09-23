@@ -118,7 +118,7 @@ void EventDataReady_wait(int fdOut, unsigned long int baseaddress)
       vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
       usleep(1);
       i++; 
-      if (i%20000==0)  printf("waiting for ready %d cycles\n",i); 
+      if (i%1000==0)  printf("waiting for ready %d cycles\n",i); 
     }
 
 }

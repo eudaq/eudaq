@@ -84,7 +84,7 @@ public:
       while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
         vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
         i++;
-        if (i%20000==0)  printf("waiting for ready %d cycles\n",i);
+        if (i%1000==0)  printf("waiting for ready %d cycles\n",i);
       }
 
       gettimeofday(&stoptime,0);
@@ -248,7 +248,7 @@ public:
           char filename[80],dummy[100],fileno[1];
 
           int board,x,y,flag,subm,thresh2bit,ped2bit;
-          float ped, thresh,sigma=1.0; // sigma is hardcoded for the moment
+          float ped, thresh,sigma=2.0; // sigma is hardcoded for the moment
           sprintf(fileno,"%1d",n_eudrb);
 
           sprintf(filename,"./pedestal/ped%s.dat",fileno);
@@ -277,7 +277,7 @@ public:
               x=x%64;
               offset=((x+2)+(y<<7)+(subm<<18))<<2; // x+2, because 0 and 1 are dummy pixels
               address=boards[n_eudrb].BaseAddress+baseShift+offset;
-              thresh2bit=(int) (thresh*sigma)&0x1f; // prepare for 2bits complement
+              thresh2bit=(int) (thresh*sigma); // prepare for 2bits complement
               ped2bit=(int) ped&0x1f; // prepare for 2bits complement
 
               //              newdata32=0xc;
@@ -285,10 +285,10 @@ public:
               if (thresh2bit<-32) thresh2bit=-32;
               if (ped2bit>31) ped2bit=31;
               if (ped2bit<-32) ped2bit=-32;
-              if (thresh2bit<0) newdata32=(~abs(thresh2bit))+1; else newdata32=thresh2bit;
+              newdata32=thresh2bit;
               // temporary
-              newdata32=4;
-              if (ped2bit<0) newdata32=newdata32+(((~abs(ped2bit))+1)<<6); else newdata32=newdata32+(ped2bit<<6);
+              //newdata32=4;
+              newdata32=newdata32+(ped2bit<<6);
 
               if (flag) newdata32=0x1f+(1<<11); // mask bad pixels as good as you can (high thresh and very low ped)
 
