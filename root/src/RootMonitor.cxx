@@ -30,7 +30,7 @@
 #include <cmath>
 
 static const unsigned MAX_BOARDS = 6;
-static const unsigned MAX_SEEDS = 100;
+static const unsigned MAX_SEEDS = 1000;
 
 static const float COL_R[] = { .8,  0,  0, .9, .8,  0 };
 static const float COL_G[] = {  0, .7,  0,  0, .8, .8 };
@@ -140,7 +140,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         BookBoard(i, m_board[i]);
       }
-      m_histonumtracks = new TH1D("NumTracks", "Num Tracks", 50, 0, 50);
+      m_histonumtracks = new TH1D("NumTracks", "Num Tracks", 100, 0, 100);
 
       for (size_t i = 0; i < m_board.size(); ++i) {
         m_canvasmain->cd(1);
@@ -311,7 +311,7 @@ public:
       } else {
         const double alignx[] = { -10,  -5, -20, 30 };
         const double aligny[] = { -10,   5, -10, 10 };
-        const double thresh[] = {  20,  20,  20, 20 };
+        const double thresh[] = {  20,  20,  40, 20 };
         //const double thresh2 = square(20);
         for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
           std::cout << "Trying cluster " << i << std::endl;
@@ -541,11 +541,11 @@ private:
     b.m_histoclustery   = new TH1D(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", 256, 0, 256);
     b.m_historawval     = new TH1D(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
     b.m_histocdsval     = new TH1D(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
-    b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 2000);
-    b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",       80,  0,   80);
+    b.m_histoclusterval = new TH1D(make_name("ClusterValues", board).c_str(), "Cluster Charge",    200,  0, 2000);
+    b.m_histonumclusters= new TH1D(make_name("NumClusters",   board).c_str(), "Num Clusters",      100,  0,  100);
     b.m_histodeltax     = new TH1D(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
     b.m_histodeltay     = new TH1D(make_name("DeltaY",        board).c_str(), "Delta Y",           200,-100, 100);
-    b.m_histonumhits    = new TH1D(make_name("NumHits",       board).c_str(), "Num Hits",          100,   0, 300);
+    b.m_histonumhits    = new TH1D(make_name("NumSeeds",      board).c_str(), "Num Seeds",         100,   0, 500);
     b.m_histocds2d->Sumw2();
     //b.m_historawval->SetBit(TH1::kCanRebin);
     //b.m_histocdsval->SetBit(TH1::kCanRebin);
@@ -659,7 +659,7 @@ private:
             }
           }
         }
-        if (b.m_clusters.size()) b.m_histonumclusters->Fill(b.m_clusters.size());
+        /*if (b.m_clusters.size())*/ b.m_histonumclusters->Fill(b.m_clusters.size());
         b.m_histohit2d->Reset();
         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
@@ -669,10 +669,10 @@ private:
         b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
       }
-      if (m_decoder->NumFrames(e) > 1) {
-        npixels = seeds.size();
-      }
-      if (npixels) b.m_histonumhits->Fill(npixels);
+      //if (m_decoder->NumFrames(e) > 1) {
+      npixels = seeds.size();
+      //}
+      /*if (npixels)*/ b.m_histonumhits->Fill(npixels);
     }
     if (!b.islog && m_histoevents > 100) {
       b.islog = true;
