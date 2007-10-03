@@ -2,7 +2,11 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/Exception.hh"
+#include "eudaq/counted_ptr.hh"
 #include <unistd.h>
+#include <string>
+#include <fstream>
 #include <sstream>
 #include <csignal>
 
@@ -28,6 +32,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for coincidence of external triggers");
   eudaq::Option<int>         omask(op, "o", "ormask", 0, "mask",
                                    "The mask for ORing of external triggers");
+  eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
+                                   "The filename to save trigger numbers and timestamps");
   try {
     op.Parse(argv);
     std::cout << "Using options:\n"
@@ -37,7 +43,13 @@ int main(int /*argc*/, char ** argv) {
               << "Veto Mask = " << vmask.Value() << "\n"
               << "And Mask = " << amask.Value() << "\n"
               << "Or Mask = " << omask.Value() << "\n"
+              << "Save file = " << (sname.Value() == "" ? std::string("(none)") : sname.Value()) << "\n"
               << std::endl;
+    counted_ptr<std::ofstream> sfile;
+    if (sname.Value() != "") {
+      sfile = new std::ofstream(sname.Value().c_str());
+      if (!sfile->is_open()) EUDAQ_THROW("Unable to open file: " + sname.Value());
+    }
     signal(SIGINT, ctrlchandler);
     TLUController TLU(fname.Value());
     TLU.SetTriggerInterval(trigg.Value());
@@ -66,6 +78,7 @@ int main(int /*argc*/, char ** argv) {
         std::cout << "  " << TLU.GetEntry(i)
                   << ", diff=" << d << (d <= 0 ? "  ***" : "")
                   << std::endl;
+        if (sfile.get()) *sfile << TLU.GetEntry(i).Eventnum() << "\t" << TLU.GetEntry(i).Timestamp() << std::endl;
         lasttime = t;
       }
       total+=i;
