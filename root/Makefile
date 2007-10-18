@@ -1,6 +1,6 @@
 EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
 
-include ../main/Makefile.common
+include ../Makefile.common
 
 EXTERNAL_LIBS += eudaq Thread pthread
 EXTERNAL_LIBDIRS += ../main

@@ -10,7 +10,7 @@ EXTERNAL_LIBDIRS += ../main
 EXTERNAL_INCS += ../main/include
 
 
-include ../main/Makefile.common
+include ../Makefile.common
 CFLAGS   := $(CFLAGS:-ansi=)
 
 ifeq ($(PLATFORM),WIN32)

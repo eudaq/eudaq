@@ -1,7 +1,7 @@
 TARGETLIB := tlu
 EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
 
-include ../main/Makefile.common
+include ../Makefile.common
 
 ifeq ($(PLATFORM),WIN32)
   ZESTSC1DEFAULT := ../extern/ZestSC1/windows

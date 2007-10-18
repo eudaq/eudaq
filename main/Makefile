@@ -2,7 +2,7 @@ TARGETLIB := eudaq
 EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
 EXTERNAL_LIBS += pthread
 
-include Makefile.common
+include ../Makefile.common
 
 ifeq ($(PLATFORM),WIN32)
 EXTERNAL_LIBS += Ws2_32

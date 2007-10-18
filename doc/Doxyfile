@@ -459,7 +459,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = include/eudaq/Documentation.hh include/eudaq/RunControl.hh include/eudaq/Producer.hh include/eudaq/Event.hh include/eudaq/CommandReceiver.hh include/eudaq/DataSender.hh
+INPUT                  = ../main/include/eudaq/Documentation.hh ../main/include/eudaq/RunControl.hh ../main/include/eudaq/Producer.hh ../main/include/eudaq/Event.hh ../main/include/eudaq/CommandReceiver.hh ../main/include/eudaq/DataSender.hh
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
