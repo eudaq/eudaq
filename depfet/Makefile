@@ -3,7 +3,7 @@ EXTERNAL_LIBS += eudaq
 EXTERNAL_LIBDIRS += ../main
 EXTERNAL_INCS += ../main/include
 
-include Makefile.common
+include ../Makefile.common
 
 ifeq ($(PLATFORM),WIN32)
 EXTERNAL_LIBS += Ws2_32
