@@ -14,4 +14,7 @@ exe: $(EXE_FILES)
 
 $(EXE_FILES): $(TARGET)
 
+Correlator.exe: tmp/radon.o
+test.exe: tmp/radon.o
+
 .PHONY: exe
