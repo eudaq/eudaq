@@ -26,7 +26,7 @@ namespace eudaq {
       m_listening(true),
       m_transport(TransportFactory::CreateServer(listenaddress)),
       m_thread(),
-      m_filename("logs/" + Time::Current().Formatted("%Y-%m-%d.log")),
+      m_filename("../logs/" + Time::Current().Formatted("%Y-%m-%d.log")),
       m_file(m_filename.c_str(), std::ios_base::app)
   {
     m_transport->SetCallback(TransportCallback(this, &LogCollector::LogHandler));

@@ -11,7 +11,7 @@ namespace eudaq {
 
   namespace {
 
-    static const char * const RUN_NUMBER_FILE = "data/runnumber.dat";
+    static const char * const RUN_NUMBER_FILE = "../data/runnumber.dat";
 
     void * DataCollector_thread(void * arg) {
       DataCollector * dc = static_cast<DataCollector *>(arg);
@@ -97,7 +97,7 @@ namespace eudaq {
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
     //if (runnumber == m_runnumber && m_ser.get()) return false;
-    std::string fname = "data/run" + to_string(runnumber, 6) + ".raw";
+    std::string fname = "../data/run" + to_string(runnumber, 6) + ".raw";
     EUDAQ_INFO("Preparing for run " + to_string(runnumber) + ", file=" + fname);
     m_runstart = Time::Current();
     try {

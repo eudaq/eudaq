@@ -4,6 +4,7 @@
 #include "eudaq/TransportServer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Status.hh"
+#include "eudaq/Configuration.hh"
 #include <pthread.h>
 #include <string>
 
@@ -19,6 +20,7 @@ namespace eudaq {
     void StartServer(const std::string & listenaddress);
     void StopServer();
 
+    void Configure(const Configuration & settings); ///< Send 'Configure' command with settings
     void Configure(const std::string & settings); ///< Send 'Configure' command with settings
     void Reset();     ///< Send 'Reset' command
     void GetStatus();    ///< Send 'Status' command to get status

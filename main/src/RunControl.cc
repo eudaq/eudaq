@@ -56,17 +56,24 @@ namespace eudaq {
     StopServer();
   }
 
+  void RunControl::Configure(const Configuration & config) {
+    SendCommand("CONFIG", to_string(config));
+    if (config.SetSection("RunControl")) {
+      m_runsizelimit = config.Get("RunSizeLimit", 0LL);
+    } else {
+      m_runsizelimit = 0;
+    }
+  }
+
   void RunControl::Configure(const std::string & param) {
-    std::string filename = "conf/" + (param == "" ? "default" : param) + ".conf";
+    std::string filename = "../conf/" + (param == "" ? "default" : param) + ".conf";
     EUDAQ_INFO("Configuring (" + param + ")");
     //EUDAQ_EXTRA("Loading configuration from: " + filename);
     std::ifstream file(filename.c_str());
     if (file.is_open()) {
       Configuration config(file);
       config.Set("Name", param);
-      SendCommand("CONFIG", to_string(config));
-      config.SetSection("RunControl");
-      m_runsizelimit = config.Get("RunSizeLimit", 0LL);
+      Configure(config);
     } else {
       EUDAQ_ERROR("Unable to open file '" + filename + "'");
     }

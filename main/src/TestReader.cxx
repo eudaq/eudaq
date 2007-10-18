@@ -90,7 +90,7 @@ int main(int /*argc*/, char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       std::string datafile = op.GetArg(i);
       if (datafile.find_first_not_of("0123456789") == std::string::npos) {
-        datafile = "data/run" + to_string(from_string(datafile, 0), 6) + ".raw";
+        datafile = "../data/run" + to_string(from_string(datafile, 0), 6) + ".raw";
       }
       EUDAQ_INFO("Reading: " + datafile);
       eudaq::FileDeserializer des(datafile);

@@ -60,7 +60,7 @@ namespace eudaq {
 
   void Monitor::OnStartRun(unsigned param) {
     m_run = param;
-    if (m_run > 0) m_datafile = "data/run" + to_string(m_run, 6) + ".raw";
+    if (m_run > 0) m_datafile = "../data/run" + to_string(m_run, 6) + ".raw";
     m_ser = counted_ptr<FileDeserializer>(new FileDeserializer(m_datafile));
     EUDAQ_INFO("Starting run " + to_string(m_run) + ", file=" + m_datafile);
   }
