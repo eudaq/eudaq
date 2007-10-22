@@ -43,7 +43,7 @@ void Clusters::read(std::istream & in) {
   }
 }
 
-int main(int argc, char ** argv) {
+int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Correlator", "1.0",
                          "Looks for correlation in X and Y between two detector planes",
                          2, 2);
@@ -96,14 +96,14 @@ int main(int argc, char ** argv) {
     double * xp = &correlx[0];
     for (unsigned x2 = 0; x2 < w; ++x2) {
       for (unsigned x1 = 0; x1 < w; ++x1) {
-        hx.Fill(x1, x2, *xp++);
+        hx.SetBinContent(x1+1, x2+1, *xp++);
       }
     }
     TH2D hy("correly", "Y Correlation", h, 0.0, h, h, 0.0, h);
     double * yp = &correly[0];
     for (unsigned y2 = 0; y2 < h; ++y2) {
       for (unsigned y1 = 0; y1 < h; ++y1) {
-        hy.Fill(y1, y2, *yp++);
+        hy.SetBinContent(y1+1, y2+1, *yp++);
       }
     }
     hx.Write("correlx", TObject::kOverwrite);
@@ -111,30 +111,17 @@ int main(int argc, char ** argv) {
     std::cout << "Calculating Radon transform for X..." << std::endl;
     unsigned Tx = (int)std::ceil(pi * w), Rx = 2*w;
     std::vector<double> radonx(Tx*Rx);
-    double param[12] = { w,
-                         -(w/2.0),
-                         1,
-                         Tx,
-                         pi/Tx,
-                         Rx,
-                         -(w/std::sqrt(2)),
-                         1/std::sqrt(2),
-                         0
+    double param[9] = { w,
+                        -(w/2.0),
+                        1,
+                        Tx,
+                        pi/Tx,
+                        Rx,
+                        -(w/std::sqrt(2)),
+                        1/std::sqrt(2),
+                        0
     };
-//     for (int i = 0; i < 9; ++i) {
-//       std::cout << "p[" << i << "] = " << param[i] << std::endl;
-//     }
     radon(&radonx[0], &correlx[0], param);
-
-    double * ptr = &radonx[0];
-    double min = *ptr, max = min;
-    for (unsigned i = 0; i < Rx*Tx; ++i) {
-      double p = *ptr++;
-      if (p < min) min = p;
-      if (p > max) max = p;
-    }
-    std::cout << "Min = " << min << ", max = " << max << std::endl;
-    if (min == 0 && max == 0) return 1;
 
     std::cout << "Calculating Radon transform for Y..." << std::endl;
     unsigned Ty = (int)std::ceil(pi * h), Ry = 2*h;
@@ -148,19 +135,19 @@ int main(int argc, char ** argv) {
     radon(&radony[0], &correly[0], param);
 
     std::cout << "OK, saving Radon histograms..." << std::endl;
-    TH2D rx("radonx", "X Radon", Tx, 0, Tx, Rx, 0, Rx);
+    TH2D rx("radonx", "X Radon", Tx, -90, 90, Rx, -(w/std::sqrt(2)), w/std::sqrt(2));
     double * xpr = &radonx[0];
     for (unsigned i2 = 0; i2 < Rx; ++i2) {
       for (unsigned i1 = 0; i1 < Tx; ++i1) {
-        rx.Fill(i1, i2, *xpr++);
+        rx.SetBinContent(i1+1, i2+1, *xpr++);
       }
     }
 
-    TH2D ry("radony", "Y Radon", Ty, 0, Ty, Ry, 0, Ry);
+    TH2D ry("radony", "Y Radon", Ty, -90, 90, Ry, -(h/std::sqrt(2)), h/std::sqrt(2));
     double * ypr = &radony[0];
     for (unsigned i2 = 0; i2 < Ry; ++i2) {
       for (unsigned i1 = 0; i1 < Ty; ++i1) {
-        ry.Fill(i1, i2, *ypr++);
+        ry.SetBinContent(i1+1, i2+1, *ypr++);
       }
     }
 
