@@ -126,6 +126,8 @@ SRC := src
 INC := include
 OBJ := tmp
 DEP := tmp
+BIN := ../bin
+LIB := ../bin
 
 #INC_FILES := $(wildcard $(INC)/*.h) $(wildcard $(INC)/*.hh)
 C_FILES   := $(wildcard $(SRC)/*.c)
@@ -135,7 +137,7 @@ CXX_FILES := $(wildcard $(SRC)/*.cxx)
 OBJ_FILES := $(CC_FILES:$(SRC)/%.cc=$(OBJ)/%.o) $(C_FILES:$(SRC)/%.c=$(OBJ)/%.o)
 DEP_FILES := $(CC_FILES:$(SRC)/%.cc=$(DEP)/%.d) $(CXX_FILES:$(SRC)/%.cxx=$(DEP)/%.d) $(C_FILES:$(SRC)/%.c=$(DEP)/%.d)
 EXEOBJ_FILES := $(CXX_FILES:$(SRC)/%.cxx=$(OBJ)/%.o)
-EXE_FILES := $(CXX_FILES:$(SRC)/%.cxx=%.exe)
+EXE_FILES := $(CXX_FILES:$(SRC)/%.cxx=$(BIN)/%.exe)
 
 ifeq ($(VERBOSE),1)
   V :=
@@ -155,7 +157,7 @@ vpath %.gch $(INC)
 default_target: default
 
 ifneq ($(TARGETLIB),)
-  TARGET := lib$(TARGETLIB).$(DEXT)
+  TARGET := $(LIB)/lib$(TARGETLIB).$(DEXT)
 endif
 
 ifneq ($(TARGET),)
@@ -179,23 +181,23 @@ debug:
 
 .SUFFIXES:
 
-%.exe: $(OBJ)/%.o
+$(BIN)/%.exe: $(OBJ)/%.o
 	@echo "   * Linking    $@"
 	$V$(LD) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
-lib%.$(DEXT):
+$(LIB)/lib%.$(DEXT):
 	@echo "   * Linking    $@"
 	$V$(DLIB) $(DFLAGS) -o $@ ${^:%.a=} $(LDLIBS)
 
-%.$(DEXT):
+$(LIB)/%.$(DEXT):
 	@echo "   * Linking    $@"
 	$V$(DLIB) $(DFLAGS) -o $@ ${^:%.a=} $(LDLIBS)
 
-lib%.$(SEXT):
+$(LIB)/lib%.$(SEXT):
 	@echo "   * Linking    $@"
 	$V$(SLIB) $(SFLAGS) $@ ${^:%.a=}
 
-%.$(SEXT):
+$(LIB)/%.$(SEXT):
 	@echo "   * Linking    $@"
 	$V$(SLIB) $(SFLAGS) $@ ${^:%.a=}
 

@@ -18,7 +18,7 @@ else
 endif
 ZESTSC1DIR ?= $(ZESTSC1DEFAULT)
 EXTERNAL_LIBS += eudaq ZestSC1 pthread
-EXTERNAL_LIBDIRS += . ${ZESTSC1DIR}/Lib /sw/lib ../main /usr/local/lib
+EXTERNAL_LIBDIRS += . ${ZESTSC1DIR}/Lib /sw/lib $(LIB) /usr/local/lib
 EXTERNAL_INCS += ${ZESTSC1DIR}/Inc ../main/include
 #EXTERNAL_DEFS += TLUDEBUG
 
