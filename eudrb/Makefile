@@ -6,7 +6,7 @@ EXTERNAL_LIBDIRS += .
 #ZESTSC1DIR ?= ../../ZestSC1
 #TLUDIR ?= ../../tlu
 EXTERNAL_LIBS += eudaq 
-EXTERNAL_LIBDIRS += ../main
+EXTERNAL_LIBDIRS += ../bin
 EXTERNAL_INCS += ../main/include
 
 
