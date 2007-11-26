@@ -1,0 +1,18 @@
+mknod /dev/vme_m0  c 221 0
+mknod /dev/vme_m1  c 221 1
+mknod /dev/vme_m2  c 221 2
+mknod /dev/vme_m3  c 221 3
+mknod /dev/vme_m4  c 221 4
+mknod /dev/vme_m5  c 221 5
+mknod /dev/vme_m6  c 221 6
+mknod /dev/vme_m7  c 221 7
+mknod /dev/vme_dma0 c 221 16
+mknod /dev/vme_dma1 c 221 17
+mknod /dev/vme_ctl  c 221 32
+mknod /dev/vme_regs c 221 33
+mknod /dev/vme_rmw0 c 221 34
+mknod /dev/vme_lm0  c 221 35
+chown root /dev/vme*
+chgrp users /dev/vme*
+chmod 666 /dev/vme*
+chmod 600 /dev/vme_m7

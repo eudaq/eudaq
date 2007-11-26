@@ -1,0 +1,13 @@
+./vmesetarbiter roundrobin noarbitertimeout 100 noearlyrelease
+./vmesetarbiter roundrobin noarbitertimeout 100 earlyrelease
+./vmesetarbiter roundrobin arbitertimeout 100 noearlyrelease
+./vmesetarbiter roundrobin arbitertimeout 100 earlyrelease
+./vmesetarbiter priority noarbitertimeout 100 noearlyrelease
+./vmesetarbiter priority noarbitertimeout 100 earlyrelease
+./vmesetarbiter priority arbitertimeout 100 noearlyrelease
+./vmesetarbiter priority arbitertimeout 100 earlyrelease
+./vmesetarbiter priority arbitertimeout 1 earlyrelease
+./vmesetarbiter priority arbitertimeout 87 earlyrelease
+./vmesetarbiter priority arbitertimeout 200 earlyrelease
+./vmesetarbiter priority arbitertimeout 300 earlyrelease
+./vmesetarbiter priority arbitertimeout 1000 earlyrelease
