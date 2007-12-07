@@ -101,9 +101,9 @@ namespace eudaq {
     }
     GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR), false);
     os << msg << "\n"
-       << "Please report this to the developers. Press enter to quit." << std::endl;
-    std::string str;
-    std::getline(std::cin, str);
+       << "Please report this to the developers." << std::endl;
+    //std::string str;
+    //std::getline(std::cin, str);
   }
     
 
