@@ -17,8 +17,9 @@ namespace eudaq {
 
   class MutexLock {
   public:
-    MutexLock(Mutex & m);
+    MutexLock(Mutex & m, bool lock = true);
     ~MutexLock();
+    void Lock();
     void Release();
   private:
     Mutex & m_mutex;

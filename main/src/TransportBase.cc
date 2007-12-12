@@ -35,10 +35,14 @@ namespace eudaq {
     if (timeout == -1) timeout = DEFAULT_TIMEOUT;
     MutexLock m(m_mutex);
     ProcessEvents(timeout);
-    while (!m_events.empty()) {
+    m.Release();
+    for (;;) {
+      MutexLock m(m_mutex);
+      if (m_events.empty()) break;
       //std::cout << "Got packet" << std::endl;
       TransportEvent evt(m_events.front());
       m_events.pop();
+      m.Release();
       m_callback(evt);
     }
   }
@@ -76,10 +80,16 @@ namespace eudaq {
   {
     // acquire mutex...
     if (timeout == -1) timeout = DEFAULT_TIMEOUT;
-    MutexLock m(m_mutex);
-    //std::cout << "SendReceivePacket() got mutex" << std::endl;
+    //std::cout << "DEBUG: SendReceive: Acquiring mutex" << std::endl;
+    MutexLock m(m_mutex, false);
+    try {
+      m.Lock();
+    } catch (const eudaq::Exception &) {
+      // swallow it
+    }
+    //std::cout << "DEBUG: SendReceive: got mutex" << std::endl;
     SendPacket(sendpacket, connection);
-    //std::cout << "SendReceivePacket() sent packet " << sendpacket << std::endl;
+    //std::cout << "DEBUG: SendReceive sent packet " << sendpacket << std::endl;
     bool ret = ReceivePacket(recpacket, timeout, connection);
     //std::cout << "SendReceivePacket() return '" << *recpacket << "' " << (ret ? "true" : "false") << std::endl;
     return ret;

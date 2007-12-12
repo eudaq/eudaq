@@ -40,19 +40,26 @@ namespace eudaq {
     return pthread_mutex_unlock(&m_impl->m_mutex);
   }
 
-  MutexLock::MutexLock(Mutex & m) : m_mutex(m), m_locked(true) {
-    if (m_mutex.Lock()) {
+  MutexLock::MutexLock(Mutex & m, bool lock) : m_mutex(m), m_locked(lock) {
+    if (lock && m_mutex.TryLock()) {
       EUDAQ_THROW("Unable to lock mutex");
     }
   }
 
+  void MutexLock::Lock() {
+    if (m_mutex.TryLock()) {
+      EUDAQ_THROW("Unable to lock mutex");
+    }
+    m_locked = true;
+  }
+
   void MutexLock::Release() {
-    m_mutex.UnLock();
+    if (m_locked) m_mutex.UnLock();
     m_locked = false;
   }
 
   MutexLock::~MutexLock() {
-    if (m_locked) Release();
+    Release();
   }
 
 //   MutexTryLock::MutexTryLock(Mutex & m) : m_mutex(m), m_locked(true) {
