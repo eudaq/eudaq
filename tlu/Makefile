@@ -54,5 +54,5 @@ pdf: doc
 
 all: default pdf
 
-.PHONY: exe doc pdf all
+.PHONY: exe lib doc pdf all default
 

@@ -19,4 +19,4 @@ lib: $(TARGET)
 
 all: exe
 
-.PHONY: exe
+.PHONY: exe lib all default

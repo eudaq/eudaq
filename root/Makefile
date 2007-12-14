@@ -16,4 +16,4 @@ $(EXE_FILES): $(TARGET)
 
 $(BIN)/Correlator.exe: tmp/radon.o
 
-.PHONY: exe
+.PHONY: exe default
