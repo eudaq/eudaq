@@ -69,7 +69,7 @@ int main(int /*argc*/, char ** argv) {
       Clusters c1(file1), c2(file2);
       while (c1.EventNum() != c2.EventNum()) {
         if (c1.EventNum() < c2.EventNum()) c1.read(file1);
-        if (c1.EventNum() > c2.EventNum()) c2.read(file1);
+        if (c1.EventNum() > c2.EventNum()) c2.read(file2);
         if (file1.eof() || file2.eof()) break;
       }
       if (file1.eof() || file2.eof()) break;
