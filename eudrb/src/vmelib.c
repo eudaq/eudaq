@@ -34,6 +34,29 @@ static void set_parameters(int fdOut,int window_number,unsigned long int address
  *       Utilizzata per controllare se i campi della struttura vmeOutWindowCfg_t 
  *       sono stati impostati correttamente dopo una  chiamata ioctl VME_IOCTL_SET_OUTBOUND
  */
+#define VMECHECK(x) if (a->x != b->x) return 0
+static int vme_equal(const vmeOutWindowCfg_t * a, const vmeOutWindowCfg_t * b) {
+  VMECHECK(windowNbr);
+  VMECHECK(windowEnable);
+  VMECHECK(pciBusAddrU);
+  VMECHECK(pciBusAddrL);
+  VMECHECK(windowSizeU);
+  VMECHECK(windowSizeL);
+  VMECHECK(xlatedAddrU);
+  VMECHECK(xlatedAddrL);
+  VMECHECK(bcastSelect2esst);
+  VMECHECK(wrPostEnable);
+  VMECHECK(prefetchEnable);
+  VMECHECK(prefetchSize);
+  VMECHECK(xferRate2esst);
+  VMECHECK(addrSpace);
+  VMECHECK(maxDataWidth);
+  VMECHECK(xferProtocol);
+  VMECHECK(userAccessType);
+  VMECHECK(dataAccessType);
+  return 1;
+}
+#undef VMECHECK
 
 static void outbound_ctl(int fdOut,vmeOutWindowCfg_t *vmeOutSet)
 {
@@ -210,6 +233,7 @@ static int dodmaxfer(int bytecount,unsigned long int srcaddress,unsigned long in
 static void set_parameters(int fdOut,int window_number,unsigned long int address,int xferRate2esst,int addrSpace,int maxDataWidth,int xferProtocol,int userAccessType,int dataAccessType)
 {
   int status;                           /*Per controllare se ioctl e' andata a buon fine*/
+  static vmeOutWindowCfg_t vmePrevSet = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   vmeOutWindowCfg_t vmeOutSet;            /*
                                            * Struttura da riempire per fare 
                                            * VME_IOCTL_SET_OUTBOUND con ioctl
@@ -248,7 +272,7 @@ static void set_parameters(int fdOut,int window_number,unsigned long int address
    *  xlatedAddrL parte bassa 
    *  di un indirizzo a 64-bit (a31...a1)
    */
-  vmeOutSet.xlatedAddrL = address&0xffff0000;
+  vmeOutSet.xlatedAddrL = address&0xffffff00;
                 
   vmeOutSet.xferRate2esst = xferRate2esst;        /* Abilitazione del clock 
                                                    *  per effettuare un trasferimento sincrono 2eSST
@@ -262,6 +286,8 @@ static void set_parameters(int fdOut,int window_number,unsigned long int address
   vmeOutSet.userAccessType = userAccessType;      /* Accesso di tipo User/Supervisor OTAT*/
   vmeOutSet.dataAccessType = dataAccessType;      /* Accesso di tipo Data/Program OTAT*/
 
+  if (vme_equal(&vmeOutSet, &vmePrevSet)) return;
+
   /*
    * Scrittura sul registro OTAT attraverso ioctl dei parametri impostati
    */
@@ -272,10 +298,11 @@ static void set_parameters(int fdOut,int window_number,unsigned long int address
       _exit(1);
     }
         
-  outbound_ctl(fdOut,&vmeOutSet);                 /*Controllo se i parametri settati sono stati
+  /*outbound_ctl(fdOut,&vmeOutSet);*/                 /*Controllo se i parametri settati sono stati
                                                    * correttamente scritti sul registro OTAT
                                                    * rileggendoli e facendo un match
                                                    */
+  vmePrevSet = vmeOutSet;
 }
 
 
@@ -327,7 +354,7 @@ int vme_A32_D32_User_Data_SCT_read(int fdOut,unsigned long int *readdata,unsigne
  */
   nbyte=4; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -352,7 +379,7 @@ int vme_A32_D16_User_Data_SCT_read(int fdOut,unsigned short int *readdata,unsign
  */
   nbyte=2; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -376,7 +403,7 @@ int vme_A24_D16_User_Data_SCT_read(int fdOut,unsigned  short int *readdata,unsig
  */
   nbyte=2; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -400,7 +427,7 @@ int vme_A24_D32_User_Data_SCT_read(int fdOut,unsigned long int *readdata,unsigne
  */
   nbyte=4; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -431,7 +458,7 @@ int vme_A32_D32_User_Data_SCT_write(int fdOut,unsigned long int writedata,unsign
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=4;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
@@ -457,7 +484,7 @@ int vme_A32_D16_User_Data_SCT_write(int fdOut,unsigned short int writedata,unsig
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=2;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
@@ -483,7 +510,7 @@ int vme_A24_D32_User_Data_SCT_write(int fdOut,unsigned long int writedata,unsign
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=4;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
@@ -509,7 +536,7 @@ int vme_A24_D16_User_Data_SCT_write(int fdOut,unsigned short int writedata,unsig
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=2;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x0000FFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
