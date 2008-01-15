@@ -21,30 +21,31 @@ printf '\033[1;32;48m\t ...Done!\033[0m \n'
 sleep 1
 printf '\t Starting Subprocesses\n'
 printf '\t\t  RunControl\n'
-cd gui
+cd bin
+#cd gui
 ./euRun.app/Contents/MacOS/euRun -x 0 -y 0 -w 350 -g 450 &
 sleep 1
 printf '\t\t  Logger\n'
 ./euLog.app/Contents/MacOS/euLog -x 0 -y 450 -w 350 -g 550 &
-cd -
+#cd -
 sleep 1
 printf '\t\t  DataCollector\n'
-cd main
+#cd main
 ./TestDataCollector.exe &
-cd -
+#cd -
 sleep 1
 printf '\t\t  RootMonitor\n'
-cd root
+#cd root
 ./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 &
 cd -
 #printf '\t\t  ...Resetting EUDRBs\n'
 #ssh -X -Y root@$EUDRBIP "cd /home/eudet/eudrb/lorenzo/; ./reset > /dev/null" &
 sleep 1
 printf '\t\t  EUDRB\n'
-ssh -X -Y root@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd /home/eudet/eudaq/eudrb/; ./EUDRBProducer.exe -r EUDET.local')" &
+ssh -X -Y root@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd /home/eudet/eudaq/bin/; ./EUDRBProducer.exe -r EUDET.local')" &
 sleep 2
 printf '\t\t  TLU\n'
-ssh -X -Y root@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd /home/eudet/eudaq/tlu/; ./TLUProducer.exe -r EUDET.local')" &
+ssh -X -Y root@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd /home/eudet/eudaq/bin/; ./TLUProducer.exe -r EUDET.local')" &
 printf '\033[1;32;48m\t ...Done!\033[0m \n'
 printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'
 

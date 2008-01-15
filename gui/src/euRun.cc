@@ -85,7 +85,7 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
   }
   viewConn->setModel(&m_run);
   viewConn->setItemDelegate(&m_delegate);
-  QDir dir("./conf/", "*.conf");
+  QDir dir("../conf/", "*.conf");
   for (size_t i = 0; i < dir.count(); ++i) {
     QString item = dir[i];
     item.chop(5);
