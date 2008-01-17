@@ -28,36 +28,16 @@ static void outbound_ctl(int fdOut, vmeOutWindowCfg_t *vmeOutSet);
 /*static short int byte_swap(short int num);*/
 static void flushLine(void *ramptr);
 static int dodmaxfer(int bytecount,unsigned long int srcaddress,unsigned long int dstaddress,int xfer);
-static void set_parameters(int fdOut,int window_number,unsigned long int address,int xferRate2esst,int addrSpace,int maxDataWidth,int xferProtocol,int userAccessType,int dataAccessType);
+void set_parameters(int fdOut,int window_number,unsigned long int address,int xferRate2esst,int addrSpace,int maxDataWidth,int xferProtocol,int userAccessType,int dataAccessType);
+
+#define WINDOW_SIZE 0x01000000
+#define MASK_LOW    (WINDOW_SIZE - 1)
+#define MASK_HIGH   (0xffffffff - MASK_LOW)
 
 /*
  *       Utilizzata per controllare se i campi della struttura vmeOutWindowCfg_t 
  *       sono stati impostati correttamente dopo una  chiamata ioctl VME_IOCTL_SET_OUTBOUND
  */
-#define VMECHECK(x) if (a->x != b->x) return 0
-static int vme_equal(const vmeOutWindowCfg_t * a, const vmeOutWindowCfg_t * b) {
-  VMECHECK(windowNbr);
-  VMECHECK(windowEnable);
-  VMECHECK(pciBusAddrU);
-  VMECHECK(pciBusAddrL);
-  VMECHECK(windowSizeU);
-  VMECHECK(windowSizeL);
-  VMECHECK(xlatedAddrU);
-  VMECHECK(xlatedAddrL);
-  VMECHECK(bcastSelect2esst);
-  VMECHECK(wrPostEnable);
-  VMECHECK(prefetchEnable);
-  VMECHECK(prefetchSize);
-  VMECHECK(xferRate2esst);
-  VMECHECK(addrSpace);
-  VMECHECK(maxDataWidth);
-  VMECHECK(xferProtocol);
-  VMECHECK(userAccessType);
-  VMECHECK(dataAccessType);
-  return 1;
-}
-#undef VMECHECK
-
 static void outbound_ctl(int fdOut,vmeOutWindowCfg_t *vmeOutSet)
 {
   vmeOutWindowCfg_t vmeOutGet;
@@ -230,10 +210,11 @@ static int dodmaxfer(int bytecount,unsigned long int srcaddress,unsigned long in
  *       per il settaggio dei parametri delle finestre
  */
 
-static void set_parameters(int fdOut,int window_number,unsigned long int address,int xferRate2esst,int addrSpace,int maxDataWidth,int xferProtocol,int userAccessType,int dataAccessType)
+void set_parameters(int fdOut,int window_number,unsigned long int address,int xferRate2esst,int addrSpace,int maxDataWidth,int xferProtocol,int userAccessType,int dataAccessType)
 {
+  static unsigned long vme_prevaddr = (unsigned long)-1;
+  static int vme_prevspace = -65536;
   int status;                           /*Per controllare se ioctl e' andata a buon fine*/
-  static vmeOutWindowCfg_t vmePrevSet = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   vmeOutWindowCfg_t vmeOutSet;            /*
                                            * Struttura da riempire per fare 
                                            * VME_IOCTL_SET_OUTBOUND con ioctl
@@ -241,68 +222,69 @@ static void set_parameters(int fdOut,int window_number,unsigned long int address
                                            */ 
                                                 
   /*off_t offset;                                 //Offset della lseek*/
-        
 
-  memset(&vmeOutSet, 0, sizeof(vmeOutSet));       /*Inizializzazione di vmeOutSet*/
-        
-/*
- *       Preparazione dei della struttura per effettuare 
- *       il settaggio dei parametri di accesso 
- */
-  vmeOutSet.windowNbr = window_number;            /* "Numero della Finestra"
-                                                   *  E' il numero del registro OTAT [0...7] del TSI148
-                                                   *  a livello logico e' meglio usare window numer=vme_m#
-                                                   */                      
-  vmeOutSet.windowEnable = 1;                     /* 
-                                                   *  Abilitazione del registro OTAT 
-                                                   *  0 disabilitato per default
-                                                   */
-                                                         
-  vmeOutSet.windowSizeL = 0x01000000;             /* Grandezza della finestra impostato a 16M*/
-        
-  /* Indirizzo di base dello slave su cui 
-   *  si vuole leggere/scrivere
-   *  xlatedAddrU parte alta 
-   *  di un indirizzo a 64-bit (a63...a32)
-   */
-  vmeOutSet.xlatedAddrU = 0x00000000;             
-  /*
-   *  Indirizzo di base dello slave su cui 
-   *  si vuole leggere/scrivere
-   *  xlatedAddrL parte bassa 
-   *  di un indirizzo a 64-bit (a31...a1)
-   */
-  vmeOutSet.xlatedAddrL = address&0xffffff00;
-                
-  vmeOutSet.xferRate2esst = xferRate2esst;        /* Abilitazione del clock 
-                                                   *  per effettuare un trasferimento sincrono 2eSST
-                                                   */   
-  vmeOutSet.addrSpace = addrSpace;                        /*Numero di bit per gli indirizzi       OTAT*/
-  vmeOutSet.maxDataWidth = maxDataWidth;          /*Numero di bit per i dati      OTAT*/
-  vmeOutSet.xferProtocol = xferProtocol;          /* 
-                                                   * Protocollo di trasferimento 
-                                                   * Single Cycle Transfer OTAT
-                                                   */
-  vmeOutSet.userAccessType = userAccessType;      /* Accesso di tipo User/Supervisor OTAT*/
-  vmeOutSet.dataAccessType = dataAccessType;      /* Accesso di tipo Data/Program OTAT*/
+  if (vme_prevspace != addrSpace || vme_prevaddr != (address & MASK_HIGH)) {
+    vme_prevspace = addrSpace;
+    vme_prevaddr = (address & MASK_HIGH);
 
-  if (vme_equal(&vmeOutSet, &vmePrevSet)) return;
-
-  /*
-   * Scrittura sul registro OTAT attraverso ioctl dei parametri impostati
-   */
-  status = ioctl(fdOut, VME_IOCTL_SET_OUTBOUND, &vmeOutSet);
-  if (status < 0) 
-    {
-      printf(" VME_IOCTL_SET_OUTBOUND failed.  Errno = %d\n", errno);
-      _exit(1);
-    }
-        
-  /*outbound_ctl(fdOut,&vmeOutSet);*/                 /*Controllo se i parametri settati sono stati
-                                                   * correttamente scritti sul registro OTAT
-                                                   * rileggendoli e facendo un match
-                                                   */
-  vmePrevSet = vmeOutSet;
+    memset(&vmeOutSet, 0, sizeof(vmeOutSet));       /*Inizializzazione di vmeOutSet*/
+    
+    /*
+     *       Preparazione dei della struttura per effettuare 
+     *       il settaggio dei parametri di accesso 
+     */
+    vmeOutSet.windowNbr = window_number;  /* "Numero della Finestra"
+                                           *  E' il numero del registro OTAT [0...7] del TSI148
+                                           *  a livello logico e' meglio usare window numer=vme_m#
+                                           */                      
+    vmeOutSet.windowEnable = 1;           /* 
+                                           *  Abilitazione del registro OTAT 
+                                           *  0 disabilitato per default
+                                           */
+    
+    vmeOutSet.windowSizeL = WINDOW_SIZE;             /* Grandezza della finestra impostato a 16M*/
+    
+    /* Indirizzo di base dello slave su cui 
+     *  si vuole leggere/scrivere
+     *  xlatedAddrU parte alta 
+     *  di un indirizzo a 64-bit (a63...a32)
+     */
+    vmeOutSet.xlatedAddrU = 0;             
+    /*
+     *  Indirizzo di base dello slave su cui 
+     *  si vuole leggere/scrivere
+     *  xlatedAddrL parte bassa 
+     *  di un indirizzo a 64-bit (a31...a1)
+     */
+    vmeOutSet.xlatedAddrL = address & MASK_HIGH;
+    
+    vmeOutSet.xferRate2esst = xferRate2esst;        /* Abilitazione del clock 
+                                                     *  per effettuare un trasferimento sincrono 2eSST
+                                                     */   
+    vmeOutSet.addrSpace = addrSpace;                        /*Numero di bit per gli indirizzi       OTAT*/
+    vmeOutSet.maxDataWidth = maxDataWidth;          /*Numero di bit per i dati      OTAT*/
+    vmeOutSet.xferProtocol = xferProtocol;          /* 
+                                                     * Protocollo di trasferimento 
+                                                     * Single Cycle Transfer OTAT
+                                                     */
+    vmeOutSet.userAccessType = userAccessType;      /* Accesso di tipo User/Supervisor OTAT*/
+    vmeOutSet.dataAccessType = dataAccessType;      /* Accesso di tipo Data/Program OTAT*/
+    
+    printf("DEBUG: Setting parameters, addr = 0x%8lx, space=%d\n", address, addrSpace);
+    /*
+     * Scrittura sul registro OTAT attraverso ioctl dei parametri impostati
+     */
+    status = ioctl(fdOut, VME_IOCTL_SET_OUTBOUND, &vmeOutSet);
+    if (status < 0) 
+      {
+        printf(" VME_IOCTL_SET_OUTBOUND failed.  Errno = %d\n", errno);
+        _exit(1);
+      }
+    outbound_ctl(fdOut,&vmeOutSet);                 /*Controllo se i parametri settati sono stati
+                                                     * correttamente scritti sul registro OTAT
+                                                     * rileggendoli e facendo un match
+                                                     */
+  }
 }
 
 
@@ -354,7 +336,7 @@ int vme_A32_D32_User_Data_SCT_read(int fdOut,unsigned long int *readdata,unsigne
  */
   nbyte=4; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -379,7 +361,7 @@ int vme_A32_D16_User_Data_SCT_read(int fdOut,unsigned short int *readdata,unsign
  */
   nbyte=2; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -403,7 +385,7 @@ int vme_A24_D16_User_Data_SCT_read(int fdOut,unsigned  short int *readdata,unsig
  */
   nbyte=2; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -427,7 +409,7 @@ int vme_A24_D32_User_Data_SCT_read(int fdOut,unsigned long int *readdata,unsigne
  */
   nbyte=4; /*Impostazione del numero di byte da leggere*/
         
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET); /*Impostazione dell'offset dal base address dello slave*/
         
   n = read(fdOut,readdata,nbyte); /*Lettura*/
         
@@ -458,7 +440,7 @@ int vme_A32_D32_User_Data_SCT_write(int fdOut,unsigned long int writedata,unsign
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=4;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
@@ -484,7 +466,7 @@ int vme_A32_D16_User_Data_SCT_write(int fdOut,unsigned short int writedata,unsig
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=2;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
@@ -510,7 +492,7 @@ int vme_A24_D32_User_Data_SCT_write(int fdOut,unsigned long int writedata,unsign
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=4;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
@@ -536,7 +518,7 @@ int vme_A24_D16_User_Data_SCT_write(int fdOut,unsigned short int writedata,unsig
  *       2-Operazione di scrittura di 4 byte D32
  */      
   nbyte=2;        /*Impostazione del numero di byte da scrivere*/
-  offset=lseek(fdOut,address&0x00FFFFFF,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
+  offset=lseek(fdOut,address & MASK_LOW,SEEK_SET);/*Impostazione dell'offset dal base address dello slave*/
         
   n = write(fdOut,&writedata,nbyte);      /*Scrittura*/
         
