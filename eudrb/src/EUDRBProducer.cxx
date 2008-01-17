@@ -251,7 +251,7 @@ public:
           float ped, thresh,sigma=2.0; // sigma is hardcoded for the moment
           sprintf(fileno,"%1d",n_eudrb);
 
-          sprintf(filename,"./pedestal/ped%s.dat",fileno);
+          sprintf(filename,"../pedestal/ped%s.dat",fileno);
           // here we put in the uploading of pedestals:
           unsigned long offset=0x0;
           // VME is master of SRAM
@@ -299,8 +299,10 @@ public:
 
               vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
             }
+            fclose(fp);
+          } else {
+            EUDAQ_ERROR(std::string("Unable top open pedestal file ") + filename);
           }
-          fclose(fp);
           // now black out the dummy pixels
           printf("\tMasking dummy pixels!\n");
           newdata32=0x1f+(1<<11); // mask dummy pixels as good as you can (high thresh and very low ped)
