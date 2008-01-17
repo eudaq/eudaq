@@ -270,7 +270,7 @@ void set_parameters(int fdOut,int window_number,unsigned long int address,int xf
     vmeOutSet.userAccessType = userAccessType;      /* Accesso di tipo User/Supervisor OTAT*/
     vmeOutSet.dataAccessType = dataAccessType;      /* Accesso di tipo Data/Program OTAT*/
     
-    printf("DEBUG: Setting parameters, addr = 0x%8lx, space=%d\n", address, addrSpace);
+    /*printf("DEBUG: Setting parameters, addr = 0x%8lx, space=%d\n", address, addrSpace);*/
     /*
      * Scrittura sul registro OTAT attraverso ioctl dei parametri impostati
      */
