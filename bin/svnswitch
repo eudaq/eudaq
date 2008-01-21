@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$2" == "" ]; then
+  echo "Usage: svnswitch <newrepo> <svn-command> [svn-params]..."
+  echo "  e.g. svnswitch svn+ssh://login.hepforge.org/eudaq ci -m \"blah\""
+  exit 1
+fi
+
+OLDREPO=`svn info | grep '^Repository Root: ' | sed 's/^[^:]*: //'`
+NEWREPO=$1
+
+shift
+
+if ! svn switch --relocate "$OLDREPO" "$NEWREPO"; then
+  echo "Error: Unable to switch repository to $NEWREPO"
+  exit 1
+fi
+svn $*
+svn switch --relocate "$NEWREPO" "$OLDREPO"
