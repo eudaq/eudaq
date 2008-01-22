@@ -7,9 +7,10 @@ extern "C" {
 #include "vmedrv.h"
 }
 
-#include "sys/ioctl.h"
-#include "fcntl.h"
-#include "errno.h"
+#include <sys/ioctl.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 
 using eudaq::to_string;
 
@@ -23,8 +24,12 @@ TSI148Interface::TSI148Interface(unsigned long base, unsigned long size, int awi
     m_chan(-1), m_fd(-1)
 {
   vmeInfoCfg_t VmeInfo;
+  memset(&VmeInfo, 0, sizeof VmeInfo);
   int fd = open("/dev/vme_ctl",O_RDONLY);
-  if (fd == -1 || ioctl(fd, VME_IOCTL_GET_SLOT_VME_INFO, &VmeInfo) == -1) {
+  //std::cout << "DEBUG: cme_ctl fd = " << fd << std::endl;
+  int status = -1;
+  if (fd != -1) status = ioctl(fd, VME_IOCTL_GET_SLOT_VME_INFO, &VmeInfo);
+  if (status == -1) {
     if (fd != -1) close(fd);
     EUDAQ_THROW("Unable to talk to VME driver. "
                 "Check that the kernel module is loaded "
@@ -37,7 +42,7 @@ TSI148Interface::TSI148Interface(unsigned long base, unsigned long size, int awi
     EUDAQ_THROW("Unable to open VME device file,"
                 "maybe too many VME channels are open.");
   }
-  std::cout << "DEBUG: VME channel = " << m_chan << std::endl;
+  //std::cout << "DEBUG: VME channel = " << m_chan << std::endl;
   SetWindowParameters();
 }
 
@@ -51,6 +56,7 @@ void TSI148Interface::OpenDevice() {
     for (m_chan = MAX_CHANNEL; m_chan >= 0; --m_chan) {
       devfile = "/dev/vme_m" + to_string(m_chan);
       m_fd = open(devfile.c_str(), O_RDWR);
+      std::cout << "DEBUG: VME trying channel " << m_chan << ", fd = " << m_fd << std::endl;
       if (m_fd != -1) break;
     }
   }
