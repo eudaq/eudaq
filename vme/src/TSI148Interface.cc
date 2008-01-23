@@ -56,7 +56,7 @@ void TSI148Interface::OpenDevice() {
     for (m_chan = MAX_CHANNEL; m_chan >= 0; --m_chan) {
       devfile = "/dev/vme_m" + to_string(m_chan);
       m_fd = open(devfile.c_str(), O_RDWR);
-      std::cout << "DEBUG: VME trying channel " << m_chan << ", fd = " << m_fd << std::endl;
+      //std::cout << "DEBUG: VME trying channel " << m_chan << ", fd = " << m_fd << std::endl;
       if (m_fd != -1) break;
     }
   }
@@ -67,6 +67,7 @@ bool TSI148Interface::IsDMA() {
 }
 
 void TSI148Interface::SetWindowParameters() {
+  //std::cout << "DEBUG: SetWindowParameters" << std::endl;
   if (m_fd != -1) {
     if ((IsDMA() && m_chan != -1) || (!IsDMA() && m_chan == -1)) {
       close(m_fd);
@@ -88,11 +89,13 @@ void TSI148Interface::SetWindowParameters() {
     wincfg.windowSizeL = m_size;
     wincfg.xlatedAddrL = m_base;
     wincfg.xferRate2esst = VME_SSTNONE; // TODO: get from m_rate
-    wincfg.addrSpace = (addressMode_t)m_awidth;
+    wincfg.addrSpace = m_awidth == A16 ? VME_A16 : m_awidth == A24 ? VME_A24 :
+      m_awidth == A32 ? VME_A32 : m_awidth == A64 ? VME_A64 : VME_CRCSR;
     wincfg.maxDataWidth = (dataWidth_t)m_dwidth;
     wincfg.xferProtocol = VME_SCT; // Other protocols use DMA
     wincfg.userAccessType = VME_USER;
     wincfg.dataAccessType = VME_DATA;
+    //std::cout << "DEBUG: setting window parameters" << std::endl;
     if (ioctl(m_fd, VME_IOCTL_SET_OUTBOUND, &wincfg) < 0) {
       EUDAQ_THROW("Error setting up VME window (code = " + to_string(errno) + ")");
     }
@@ -102,8 +105,11 @@ void TSI148Interface::SetWindowParameters() {
 unsigned long TSI148Interface::Read(unsigned long offset) {
   // TODO: make this work with D16 etc.
   unsigned long result = 0;
+  //std::cout << "DEBUG: seeking to offset " << offset << std::endl;
   lseek(m_fd, offset, SEEK_SET);
+  //std::cout << "DEBUG: reading..." << std::endl;
   int n = read(m_fd, &result, sizeof result);
+  //std::cout << "DEBUG: OK." << std::endl;
   if (n != sizeof result) {
     EUDAQ_THROW("Error: VME read failed at offset " + to_string(offset) +
                 " (code = " + to_string(errno) + ")");
