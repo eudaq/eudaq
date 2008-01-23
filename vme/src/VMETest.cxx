@@ -12,6 +12,7 @@ using eudaq::hexdec;
 
 void do_cmd(VMEInterface& vme, const std::string & cmd) {
   unsigned long address = 0, data = 0;
+  std::vector<unsigned long> vdata;
   char c(cmd[0]);
   std::vector<std::string> args = split(trim(cmd.substr(1)), ",");
   //std::cout << "cmd: " << c << ", args " << args << std::endl;
@@ -23,12 +24,34 @@ void do_cmd(VMEInterface& vme, const std::string & cmd) {
     data = vme.Read(address);
     std::cout << "Result = " << hexdec(data) << std::endl;
     break;
+  case 'R':
+    if (args.size() != 2) throw eudaq::OptionException("Command 'R' takes 2 parameters");
+    address = from_string(args[0], 0);
+    data = from_string(args[1], 0);
+    std::cout << "Reading from " << hexdec(address, 0) << ", " << data << " words" << std::endl;
+    vdata.resize(data);
+    vme.Read(address, vdata);
+    std::cout << "Result:\n";
+    for (size_t i = 0; i < vdata.size(); ++i) {
+      std::cout << "  " << hexdec(vdata[i]) << std::endl;
+    }
+    break;
   case 'w':
     if (args.size() != 2) throw eudaq::OptionException("Command 'w' takes 2 parameters");
     address = from_string(args[0], 0);
     data = from_string(args[1], 0);
     std::cout << "Writing to " << hexdec(address, 0) << ", data " << hexdec(data) << std::endl;
     vme.Write(address, data);
+    break;
+  case 'W':
+    if (args.size() < 2) throw eudaq::OptionException("Command 'W' takes at least 2 parameters");
+    address = from_string(args[0], 0);
+    vdata.resize(args.size() - 1);
+    for (size_t i = 0; i < vdata.size(); ++i) {
+      vdata[i] = from_string(args[i+1], 0);
+    }
+    std::cout << "Writing to " << hexdec(address, 0) << ", " << vdata.size() << " words" << std::endl;
+    vme.Write(address, vdata);
     break;
   default:
     std::cout << "Unrecognised command" << std::endl;
