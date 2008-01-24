@@ -1,15 +1,28 @@
 #include "VMEInterface.hh"
 
-class TSI148Interface : public VMEInterface {
+class TSI148SingleInterface : public VMEInterface {
 public:
-  TSI148Interface(unsigned long base, unsigned long size, int awidth = A32, int dwidth = D32,
-                  int proto = PSCT, int sstrate = SSTNONE);
-
-  virtual unsigned long Read(unsigned long offset);
-  virtual void Write(unsigned long offset, unsigned long data);
+  TSI148SingleInterface(unsigned long base, unsigned long size, int awidth = A32, int dwidth = D32,
+                        int proto = PSCT, int sstrate = SSTNONE);
 private:
-  bool IsDMA();
-  void OpenDevice();
   virtual void SetWindowParameters();
+  virtual void DoRead(unsigned long offset, unsigned char * data, size_t size);
+  virtual void DoWrite(unsigned long offset, const unsigned char * data, size_t size);
+  void OpenDevice();
   int m_chan, m_fd;
 };
+
+class TSI148DMAInterface : public VMEInterface {
+public:
+  TSI148DMAInterface(unsigned long base, unsigned long size, int awidth = A32, int dwidth = D32,
+                     int proto = PBLT, int sstrate = SSTNONE);
+private:
+  virtual void SetWindowParameters();
+  virtual void DoRead(unsigned long offset, unsigned char * data, size_t size);
+  virtual void DoWrite(unsigned long offset, const unsigned char * data, size_t size);
+  void OpenDevice();
+  int m_fd;
+  class DMAparams;
+  DMAparams * m_params;
+};
+

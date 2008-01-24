@@ -1,4 +1,5 @@
 #include "VMEInterface.hh"
+#include "TSI148Interface.hh"
 
 VMEInterface::VMEInterface(unsigned long base, unsigned long size,
                            int awidth, int dwidth, int proto, int sstrate)
@@ -24,16 +25,10 @@ void VMEInterface::SetWindow(unsigned long base, unsigned long size, int awidth,
   SetWindowParameters();
 }
 
-std::vector<unsigned long> & VMEInterface::Read(unsigned long offset,
-                                                std::vector<unsigned long> & data) {
-  for (size_t i = 0; i < data.size(); ++i) {
-    data[i] = Read(offset + i*m_dwidth/8);
+VMEptr VMEFactory::Create(unsigned long base, unsigned long size, int awidth, int dwidth,
+                          int proto, int sstrate) {
+  if (proto == VMEInterface::PSCT) {
+    return VMEptr(new TSI148SingleInterface(base, size, awidth, dwidth, proto));
   }
-  return data;
-}
-
-void VMEInterface::Write(unsigned long offset, const std::vector<unsigned long> & data) {
-  for (size_t i = 0; i < data.size(); ++i) {
-    Write(offset + i*m_dwidth/8, data[i]);
-  }
+  return VMEptr(new TSI148DMAInterface(base, size, awidth, dwidth, proto, sstrate));
 }
