@@ -70,7 +70,6 @@ namespace tlu {
     m_inhibit(true),
     m_vetostatus(0),
     m_fsmstatus(0),
-    m_dmastatus(0),
     m_ledstatus(0),
     m_triggernum(0),
     m_timestamp(0),
@@ -321,17 +320,7 @@ namespace tlu {
 
     for (int tries = 0; tries < 3; ++tries) {
       // Request block transfer from TLU
-      //std::cout << "DEBUG: ";
       WriteRegister(INITIATE_READOUT_ADDRESS, 0xFF);
-      //int i;
-      //for (i = 0; i < 10; ++i) {
-      //  m_dmastatus = ReadRegister(DMA_STATUS_ADDRESS);
-      //  std::cout << m_dmastatus << std::flush;
-      //  if (!m_dmastatus) break;
-      //  mSleep(1);
-      //}
-      //std::cout << ", " << i << std::endl;
-      //mSleep(10);
       ZestSC1ReadData(m_handle, buffer, sizeof buffer);
       if (buffer[entries-1] != m_oldbuf[entries-1]) {
         for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {

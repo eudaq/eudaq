@@ -90,7 +90,7 @@ namespace tlu {
     unsigned m_triggerint;
     bool m_inhibit;
 
-    unsigned m_vetostatus, m_fsmstatus, m_dmastatus, m_ledstatus;
+    unsigned m_vetostatus, m_fsmstatus, m_ledstatus;
     unsigned m_triggernum;
     unsigned long long m_timestamp;
     std::vector<TLUEntry> m_buffer;

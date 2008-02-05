@@ -69,21 +69,8 @@ int main(int /*argc*/, char ** argv) {
     unsigned long total = 0;
     while (!g_done) {
       TLU.Update();
-      //std::cout << "hello " << TLU.NumEntries() << std::endl;
-      //std::cout << (TLU.NumEntries() ? "\n" : ".") << std::flush;
       std::cout << std::endl;
       TLU.Print();
-//       size_t i=0;
-//       for (i = 0; i < TLU.NumEntries(); ++i) {
-//         //std::cout << "test " << 1 << std::endl;
-//         unsigned long long t = TLU.GetEntry(i).Timestamp();
-//         //std::cout << "test " << 2 << std::endl;
-//         long long d = t-lasttime;
-//         std::cout << "  " << TLU.GetEntry(i)
-//                   << ", diff=" << d << (d <= 0 ? "  ***" : "")
-//                   << std::endl;
-//         lasttime = t;
-//       }
       if (sfile.get()) {
         for (size_t i = 0; i < TLU.NumEntries(); ++i) {
           *sfile << TLU.GetEntry(i).Eventnum() << "\t" << TLU.GetEntry(i).Timestamp() << std::endl;
@@ -93,12 +80,10 @@ int main(int /*argc*/, char ** argv) {
       eudaq::Time elapsedtime(eudaq::Time::Current() - starttime);
       double hertz = total / elapsedtime.Seconds();
       std::cout << "Time: " << elapsedtime.Formatted("%s.%3") << " s, Hertz: " << hertz << std::endl;
-      //usleep(100000);
       sleep(1);
     }
     std::cout << "Quitting..." << std::endl;
     TLU.Stop();
-    //sleep(1);
     TLU.Update();
     //TLU.Print();
   } catch (...) {
