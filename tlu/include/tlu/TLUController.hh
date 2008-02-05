@@ -9,6 +9,7 @@
 
 namespace tlu {
 
+  static const int TLU_TRIGGER_INPUTS = 4;
   double Timestamp2Seconds(unsigned long long t);
 
   class TLUException : public std::runtime_error {
@@ -54,6 +55,8 @@ namespace tlu {
     void Start();
     void Stop();
     void ResetTriggerCounter();
+    void ResetScalers();
+    void FullReset();
 
     size_t NumEntries() const { return m_buffer.size(); }
     TLUEntry GetEntry(size_t i) const { return m_buffer[i]; }
@@ -67,8 +70,11 @@ namespace tlu {
     void Print(std::ostream & out = std::cout) const;
 
     unsigned GetFirmwareID() const;
+    static unsigned GetLibraryID();
     void SetLEDs(unsigned);
     unsigned GetLEDs() const;
+
+    unsigned GetScaler(unsigned) const;
   private:
     void Initialize();
     void WriteRegister(unsigned long offset, unsigned char val);
@@ -89,6 +95,8 @@ namespace tlu {
     unsigned long long m_timestamp;
     std::vector<TLUEntry> m_buffer;
     unsigned long long * m_oldbuf;
+    unsigned m_scalers[TLU_TRIGGER_INPUTS];
+    mutable unsigned long long m_lasttime;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {

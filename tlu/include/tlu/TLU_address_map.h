@@ -6,9 +6,9 @@
 /* Do not edit by hand!                                             */
 /* Edit TLU_address_map.dat instead                                 */
 /*                                                                  */
-/* Generated on Wed May 23 15:40:00 2007               */
+/* Generated on Thu Oct 11 08:52:15 2007               */
 
-#define FIRMWARE_ID 18
+#define FIRMWARE_ID 189
 
 #define TIMESTAMP_RESET_BIT   0
 #define TRIGGER_COUNTER_RESET_BIT    1
@@ -16,6 +16,7 @@
 #define TRIGGER_FSM_RESET_BIT    3
 #define BEAM_TRIGGER_FSM_RESET_BIT 4
 #define DMA_CONTROLLER_RESET_BIT   5
+#define TRIGGER_SCALERS_RESET_BIT 6
 
 #define BUFFER_DEPTH 4096
 
@@ -70,3 +71,12 @@
 #define DUT_DEBUG_TRIGGER_ADDRESS  8239
 #define DUT_CLOCK_DEBUG_ADDRESS  8240
 #define DUT_LED_ADDRESS  8241
+#define CLOCK_SOURCE_SELECT_ADDRESS  8242
+#define TRIGGER_IN0_COUNTER_0  8243
+#define TRIGGER_IN0_COUNTER_1  8244
+#define TRIGGER_IN1_COUNTER_0  8245
+#define TRIGGER_IN1_COUNTER_1  8246
+#define TRIGGER_IN2_COUNTER_0  8247
+#define TRIGGER_IN2_COUNTER_1  8248
+#define TRIGGER_IN3_COUNTER_0  8249
+#define TRIGGER_IN3_COUNTER_1  8250

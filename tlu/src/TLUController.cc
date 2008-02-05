@@ -24,7 +24,18 @@ using eudaq::mSleep;
 
 namespace tlu {
 
-  static double TLUFREQUENCY = 48e6;
+  namespace {
+
+    static const double TLUFREQUENCY = 48.001e6;
+
+    static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
+      TRIGGER_IN0_COUNTER_0,
+      TRIGGER_IN1_COUNTER_0,
+      TRIGGER_IN2_COUNTER_0,
+      TRIGGER_IN3_COUNTER_0
+    };
+
+  }
 
   double Timestamp2Seconds(unsigned long long t) {
     return t / TLUFREQUENCY;
@@ -32,8 +43,8 @@ namespace tlu {
 
   void TLUEntry::Print(std::ostream & out) const {
     out << m_eventnum
-        << ", 0x" << std::hex << m_timestamp << std::dec
-        << " (" << Timestamp2Seconds(m_timestamp) << ")";
+        << ", " << eudaq::hexdec(m_timestamp, 0)
+        << " = " << Timestamp2Seconds(m_timestamp);
   }
 
 // Error handler function
@@ -63,8 +74,12 @@ namespace tlu {
     m_ledstatus(0),
     m_triggernum(0),
     m_timestamp(0),
-    m_oldbuf(new unsigned long long [BUFFER_DEPTH])
+    m_oldbuf(new unsigned long long [BUFFER_DEPTH]),
+    m_lasttime(0)
   {
+    for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
+      m_scalers[i] = 0;
+    }
     if (m_filename == "") m_filename = "TLU_Toplevel.bit";
     for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
       m_oldbuf[i] = 0;
@@ -164,12 +179,22 @@ namespace tlu {
   }
 
   void TLUController::Stop() {
-    SetLEDs(0);
     InhibitTriggers(true);
+    SetLEDs(0);
   }
 
   void TLUController::ResetTriggerCounter() {
     WriteRegister(RESET_REGISTER_ADDRESS, 1<<TRIGGER_COUNTER_RESET_BIT);
+    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+  }
+
+  void TLUController::ResetScalers() {
+    WriteRegister(RESET_REGISTER_ADDRESS, 1<<TRIGGER_SCALERS_RESET_BIT);
+    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+  }
+
+  void TLUController::FullReset() {
+    WriteRegister(RESET_REGISTER_ADDRESS, 0xff);
     WriteRegister(RESET_REGISTER_ADDRESS, 0);
   }
 
@@ -230,6 +255,10 @@ namespace tlu {
 
     m_triggernum = ReadRegister32(REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
     m_timestamp = ReadRegister64(REGISTERED_TIMESTAMP_ADDRESS_0);
+
+    for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
+      m_scalers[i] = ReadRegister16(g_scaler_address[i]);
+    }
 
     // Read timestamp buffer of BUFFER_DEPTH entries from TLU
     m_buffer.clear();
@@ -292,12 +321,17 @@ namespace tlu {
 
     for (int tries = 0; tries < 3; ++tries) {
       // Request block transfer from TLU
+      //std::cout << "DEBUG: ";
       WriteRegister(INITIATE_READOUT_ADDRESS, 0xFF);
-      for (int i = 0; i < 10; ++i) {
-        mSleep(1);
-        m_dmastatus = ReadRegister(DMA_STATUS_ADDRESS);
-        if (!m_dmastatus) break;
-      }
+      //int i;
+      //for (i = 0; i < 10; ++i) {
+      //  m_dmastatus = ReadRegister(DMA_STATUS_ADDRESS);
+      //  std::cout << m_dmastatus << std::flush;
+      //  if (!m_dmastatus) break;
+      //  mSleep(1);
+      //}
+      //std::cout << ", " << i << std::endl;
+      //mSleep(10);
       ZestSC1ReadData(m_handle, buffer, sizeof buffer);
       if (buffer[entries-1] != m_oldbuf[entries-1]) {
         for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
@@ -311,22 +345,27 @@ namespace tlu {
   }
 
   void TLUController::Print(std::ostream &out) const {
-    out << "FSM Status:      " << m_fsmstatus << std::endl
-        << "Veto Status:     " << m_vetostatus << std::endl
-        << "DMA Status:      " << m_dmastatus << std::endl
-        << "Trigger counter: " << m_triggernum << std::endl
-        << "Timestamp:       0x" << std::hex
-        << m_timestamp << std::dec
-        << " (" << (m_timestamp / TLUFREQUENCY) << ")" << std::endl
-        << "Buffer level:    " << m_buffer.size() << std::endl;
-  
+    out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << std::endl
+        << "Scalers:   ";
+    for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
+      std::cout << m_scalers[i] << (i < (TLU_TRIGGER_INPUTS - 1) ? ", " : "\n");
+    }
+    out << "Triggers:  " << m_triggernum << std::endl
+        << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
+        << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
     for (size_t i = 0; i < m_buffer.size(); ++i) {
-      out << "  " << m_buffer[i] << std::endl;
+      unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
+      out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << std::endl;
+      m_lasttime = m_buffer[i].Timestamp();
     }
   }
 
   unsigned TLUController::GetFirmwareID() const {
     return ReadRegister(FIRMWARE_ID_ADDRESS);
+  }
+
+  unsigned TLUController::GetLibraryID() {
+    return FIRMWARE_ID;
   }
 
   void TLUController::SetLEDs(unsigned int val) {

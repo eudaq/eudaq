@@ -52,43 +52,51 @@ int main(int /*argc*/, char ** argv) {
     }
     signal(SIGINT, ctrlchandler);
     TLUController TLU(fname.Value());
+    TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
     TLU.SetDUTMask(dmask.Value());
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
-    std::cout << "TLU Firmware version:" << TLU.GetFirmwareID() << std::endl;
+    std::cout << "TLU Firmware version: " << TLU.GetFirmwareID()
+              << " (library " << TLU.GetLibraryID() << ")" << std::endl;
     //sleep(1);
 
     eudaq::Time starttime(eudaq::Time::Current());
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
-    unsigned long long lasttime = 0;
+    //unsigned long long lasttime = 0;
     unsigned long total = 0;
     while (!g_done) {
       TLU.Update();
       //std::cout << "hello " << TLU.NumEntries() << std::endl;
-      std::cout << (TLU.NumEntries() ? "\n" : ".") << std::flush;
-      size_t i=0;
-      for (i = 0; i < TLU.NumEntries(); ++i) {
-        //std::cout << "test " << 1 << std::endl;
-        unsigned long long t = TLU.GetEntry(i).Timestamp();
-        //std::cout << "test " << 2 << std::endl;
-        long long d = t-lasttime;
-        std::cout << "  " << TLU.GetEntry(i)
-                  << ", diff=" << d << (d <= 0 ? "  ***" : "")
-                  << std::endl;
-        if (sfile.get()) *sfile << TLU.GetEntry(i).Eventnum() << "\t" << TLU.GetEntry(i).Timestamp() << std::endl;
-        lasttime = t;
+      //std::cout << (TLU.NumEntries() ? "\n" : ".") << std::flush;
+      std::cout << std::endl;
+      TLU.Print();
+//       size_t i=0;
+//       for (i = 0; i < TLU.NumEntries(); ++i) {
+//         //std::cout << "test " << 1 << std::endl;
+//         unsigned long long t = TLU.GetEntry(i).Timestamp();
+//         //std::cout << "test " << 2 << std::endl;
+//         long long d = t-lasttime;
+//         std::cout << "  " << TLU.GetEntry(i)
+//                   << ", diff=" << d << (d <= 0 ? "  ***" : "")
+//                   << std::endl;
+//         lasttime = t;
+//       }
+      if (sfile.get()) {
+        for (size_t i = 0; i < TLU.NumEntries(); ++i) {
+          *sfile << TLU.GetEntry(i).Eventnum() << "\t" << TLU.GetEntry(i).Timestamp() << std::endl;
+        }
       }
-      total+=i;
+      total += TLU.NumEntries();
       eudaq::Time elapsedtime(eudaq::Time::Current() - starttime);
       double hertz = total / elapsedtime.Seconds();
       std::cout << "Time: " << elapsedtime.Formatted("%s.%3") << " s, Hertz: " << hertz << std::endl;
       //usleep(100000);
       sleep(1);
     }
-    printf("Quitting...\n");
+    std::cout << "Quitting..." << std::endl;
     TLU.Stop();
     //sleep(1);
     TLU.Update();
