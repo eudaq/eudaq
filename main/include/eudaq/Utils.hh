@@ -111,6 +111,40 @@ namespace eudaq {
     T m_val;
   };
 
+  template <typename T>
+  struct hexdec_t {
+    enum { DIGITS = 2 * sizeof (T) };
+    hexdec_t(T val, unsigned hexdigits) : m_val(val), m_dig(hexdigits) {}
+    T m_val;
+    unsigned m_dig;
+  };
+
+  template <typename T>
+  inline hexdec_t<T> hexdec(T val, unsigned hexdigits = hexdec_t<T>::DIGITS) {
+    return hexdec_t<T>(val, hexdigits);
+  }
+
+  template <typename T>
+  inline std::ostream & operator << (std::ostream & os, const hexdec_t<T> & h) {
+    return os << h.m_val << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
+  }
+
+  template <typename T> unsigned char * uchar_cast(T * x) {
+    return reinterpret_cast<unsigned char *>(x);
+  }
+
+  template <typename T> unsigned char * uchar_cast(std::vector<T> & x) {
+    return uchar_cast(&x[0]);
+  }
+
+  template <typename T> const unsigned char * constuchar_cast(const T * x) {
+    return reinterpret_cast<const unsigned char *>(x);
+  }
+
+  template <typename T> const unsigned char * constuchar_cast(const std::vector<T> & x) {
+    return constuchar_cast(&x[0]);
+  }
+
 }
 
 #endif // EUDAQ_INCLUDED_Utils
