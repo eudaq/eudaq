@@ -4,6 +4,50 @@
 #include "eudaq/counted_ptr.hh"
 #include "eudaq/Utils.hh"
 #include <vector>
+#include <cstdlib>
+
+#if !defined(NDEBUG) && !defined(VME_TRACE)
+#define VME_TRACE 1
+#endif
+
+#if VME_TRACE
+#include <cstdio>
+  static FILE * tracefile() {
+    static FILE * fp = 0;
+    if (!fp) fp = fopen("vmetrace.txt", "w");
+    return fp;
+  }
+  static void vmetrace(char * mode, int aw, int dw, unsigned long addr, unsigned long data) {
+    fprintf(tracefile(), "%s A%d D%d %lx %lx\n", mode, aw, dw, addr, data);
+    fflush(tracefile());
+  }
+#endif
+
+// template <typename T = unsigned long>
+// class DMABuffer {
+// public:
+//   DMABuffer(size_t capacity)
+//     : m_size(0), m_capacity(capacity), m_buf((T*)malloc(capacity * sizeof (T)))
+//     {
+//       std::cout << "DEBUG: buffer = " << eudaq::hexdec((unsigned long)m_buf) << std::endl;
+//     }
+
+//   void clear() { m_size = 0; }
+//   void resize(size_t size) { m_size = size; /* TODO: throw error if size > capacity */ }
+//   size_t size() const { return m_size; }
+
+//   const T & operator [] (size_t i) const { return m_buf[i]; }
+//   T & operator [] (size_t i) { return m_buf[i]; }
+
+//   size_t Bytes() const { return m_size * sizeof (T); }
+//   const unsigned char * Buffer() const { return eudaq::constuchar_cast(m_buf); }
+//   unsigned char * Buffer() { return eudaq::uchar_cast(m_buf); }
+
+//   ~DMABuffer() { free(m_buf); }
+// private:
+//   size_t m_size, m_capacity;
+//   T * m_buf;
+// };
 
 class VMEInterface {
 public:
@@ -22,24 +66,64 @@ public:
   template <typename T> T Read(unsigned long offset, T def) {
     T data = def;
     DoRead(offset, eudaq::uchar_cast(&data), sizeof data);
+#if VME_TRACE
+    vmetrace(" R", m_awidth, m_dwidth, offset, data);
+#endif
     return data;
   }
   unsigned long Read(unsigned long offset) {
     unsigned long data = 0;
     return Read(offset, data);
   }
+//   template <typename T>
+//   DMABuffer<T> & Read(unsigned long offset,
+//                         DMABuffer<T> & data) {
+//     DoRead(offset, data.Buffer(), data.Bytes());
+// #if VME_TRACE
+//     vmetrace("BR", m_awidth, m_dwidth, offset, data[0]);
+//     for (size_t i = 1; i < data.size(); ++i) {
+//       vmetrace("  ", m_awidth, m_dwidth, offset + i*4, data[i]);
+//     }
+// #endif
+//     return data;
+//   }
   template <typename T>
   std::vector<T> & Read(unsigned long offset,
                         std::vector<T> & data) {
-    DoRead(offset, eudaq::uchar_cast(data), data.size() * sizeof (T));
+    DoRead(offset, eudaq::uchar_cast(&data[0]), data.size() * sizeof (T));
+#if VME_TRACE
+    vmetrace("BR", m_awidth, m_dwidth, offset, data[0]);
+    for (size_t i = 1; i < data.size(); ++i) {
+      vmetrace("  ", m_awidth, m_dwidth, offset + i*4, data[i]);
+    }
+#endif
     return data;
   }
   template <typename T> void Write(unsigned long offset, T data) {
     DoWrite(offset, eudaq::constuchar_cast(&data), sizeof data);
+#if VME_TRACE
+    vmetrace(" W", m_awidth, m_dwidth, offset, data);
+#endif
   }
+//   template <typename T>
+//   void Write(unsigned long offset, const DMABuffer<T> & data) {
+//     DoWrite(offset, data.Buffer(), data.Bytes());
+// #if VME_TRACE
+//     vmetrace("BW", m_awidth, m_dwidth, offset, data[0]);
+//     for (size_t i = 1; i < data.size(); ++i) {
+//       vmetrace("  ", m_awidth, m_dwidth, offset + i*4, data[i]);
+//     }
+// #endif
+//   }
   template <typename T>
   void Write(unsigned long offset, const std::vector<T> & data) {
-    DoWrite(offset, eudaq::constuchar_cast(data), data.size() * sizeof (T));
+    DoWrite(offset, eudaq::constuchar_cast(&data[0]), data.size() * sizeof (T));
+#if VME_TRACE
+    vmetrace("BR", m_awidth, m_dwidth, offset, data[0]);
+    for (size_t i = 1; i < data.size(); ++i) {
+      vmetrace("  ", m_awidth, m_dwidth, offset + i*4, data[i]);
+    }
+#endif
   }
 
   virtual ~VMEInterface() {}

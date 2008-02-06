@@ -61,15 +61,15 @@ void do_cmd(VMEInterface& vme, const std::string & cmd) {
   switch(c) {
   case 'r':
     if (args.size() != 1) throw eudaq::OptionException("Command 'r' takes 1 parameter");
-    address = from_string(args[0], 0);
+    address = from_string(args[0], 0UL);
     std::cout << "Reading from " << hexdec(address, 0) << std::endl;
     data = vme.Read(address);
     std::cout << "Result = " << hexdec(data) << std::endl;
     break;
   case 'R':
     if (args.size() != 2) throw eudaq::OptionException("Command 'R' takes 2 parameters");
-    address = from_string(args[0], 0);
-    data = from_string(args[1], 0);
+    address = from_string(args[0], 0UL);
+    data = from_string(args[1], 0UL);
     std::cout << "Reading from " << hexdec(address, 0) << ", " << data << " words" << std::endl;
     vdata.resize(data);
     vme.Read(address, vdata);
@@ -80,14 +80,14 @@ void do_cmd(VMEInterface& vme, const std::string & cmd) {
     break;
   case 'w':
     if (args.size() != 2) throw eudaq::OptionException("Command 'w' takes 2 parameters");
-    address = from_string(args[0], 0);
-    data = from_string(args[1], 0);
+    address = from_string(args[0], 0UL);
+    data = from_string(args[1], 0UL);
     std::cout << "Writing to " << hexdec(address, 0) << ", data " << hexdec(data) << std::endl;
     vme.Write(address, data);
     break;
   case 'W':
     if (args.size() < 2) throw eudaq::OptionException("Command 'W' takes at least 2 parameters");
-    address = from_string(args[0], 0);
+    address = from_string(args[0], 0UL);
     vdata.resize(args.size() - 1);
     for (size_t i = 0; i < vdata.size(); ++i) {
       vdata[i] = from_string(args[i+1], 0);

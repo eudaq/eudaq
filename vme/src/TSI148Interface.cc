@@ -47,15 +47,25 @@ namespace {
   static int ToProto(int proto) {
     return proto == VMEInterface::PSCT ? VME_SCT :
            proto == VMEInterface::PBLT ? VME_BLT :
-           proto == VMEInterface::PMBLT ? VME_BLT :
-           proto == VMEInterface::P2eVME ? VME_BLT :
-           proto == VMEInterface::P2eSST ? VME_BLT :
-           proto == VMEInterface::P2eSSTB ? VME_BLT :
+           proto == VMEInterface::PMBLT ? VME_MBLT :
+           proto == VMEInterface::P2eVME ? VME_2eVME :
+           proto == VMEInterface::P2eSST ? VME_2eSST :
+           proto == VMEInterface::P2eSSTB ? VME_2eSSTB :
       0;
   }
   static vme2esstRate_t ToSSTRate(int rate) {
     return static_cast<vme2esstRate_t>(rate);
   }
+
+//   // make sure cache is synced with main memory
+//   static void asm_sync() {
+//     asm("sync");     // Ensure dcbf is complete
+//   }
+//   static void asm_dcbf(void * x) {
+//     (void)x; // suppress warning
+//     asm("dcbf 0,3"); // Data Cache Block Flush
+//     asm_sync();      // Ensure dcbf is complete
+//   }
 }
 
 TSI148SingleInterface::TSI148SingleInterface(unsigned long base, unsigned long size,
@@ -119,39 +129,31 @@ void TSI148SingleInterface::DoRead(unsigned long offset, unsigned char * data, s
 
 void TSI148SingleInterface::DoWrite(unsigned long offset, const unsigned char * data, size_t size) {
   lseek(m_fd, offset, SEEK_SET);
+  //int cont = 2;
+  errno = 0;
   size_t n = write(m_fd, data, size);
   if (n != size) {
     EUDAQ_THROW("Error: VME write failed at offset " + to_string(offset) +
+                ", wrote " + to_string(n) + " of " + to_string(size) + " bytes"
                 " (code = " + to_string(errno) + ")");
   }
 }
 
-#define VMESET(var, val) read.var = val; write.var = val
-struct TSI148DMAInterface::DMAparams {
+struct TSI148DMAInterface::DMAparams : public vmeDmaPacket {
   DMAparams() {
-    memset(&read, 0, sizeof (vmeDmaPacket));
-    memset(&write, 0, sizeof (vmeDmaPacket));
-
-    VMESET(maxPciBlockSize, 4096);
-    VMESET(maxVmeBlockSize, 2048);
-    VMESET(srcVmeAttr.userAccessType, VME_USER);
-    VMESET(srcVmeAttr.dataAccessType, VME_DATA);
-    VMESET(dstVmeAttr.userAccessType, VME_USER);
-    VMESET(dstVmeAttr.dataAccessType, VME_DATA);
-
-    read.srcBus = VME_DMA_VME;
-    read.dstBus = VME_DMA_USER;
-    write.srcBus = VME_DMA_USER;
-    write.dstBus = VME_DMA_VME;
+    memset(this, 0, sizeof (vmeDmaPacket));
+    maxPciBlockSize = 4096;
+    maxVmeBlockSize = 2048;
+    srcVmeAttr.userAccessType = dstVmeAttr.userAccessType = VME_USER;
+    srcVmeAttr.dataAccessType = dstVmeAttr.dataAccessType = VME_DATA;
   }
-  vmeDmaPacket read, write;
 };
-#undef VMESET
 
 TSI148DMAInterface::TSI148DMAInterface(unsigned long base, unsigned long size,
                                        int awidth, int dwidth,
                                        int proto, int sstrate)
-  : VMEInterface(base, size, awidth, dwidth, proto, sstrate)
+  : VMEInterface(base, size, awidth, dwidth, proto, sstrate),
+    m_params(new DMAparams)
 {
   CheckDriver();
   m_fd = open("/dev/vme_dma0", O_RDWR);
@@ -161,8 +163,12 @@ TSI148DMAInterface::TSI148DMAInterface(unsigned long base, unsigned long size,
   SetWindowParameters();
 }
 
-#define VMESET(var, val) m_params->read.srcVmeAttr.var = val; m_params->write.srcVmeAttr.var = val; \
-                         m_params->read.dstVmeAttr.var = val; m_params->write.dstVmeAttr.var = val
+TSI148DMAInterface::~TSI148DMAInterface() {
+  delete m_params;
+}
+
+#define VMESET(var, val) m_params->srcVmeAttr.var = val; \
+                         m_params->dstVmeAttr.var = val
 void TSI148DMAInterface::SetWindowParameters() {
   VMESET(maxDataWidth, ToDataWidth(m_dwidth));
   VMESET(addrSpace, ToAddrSpace(m_awidth));
@@ -172,23 +178,56 @@ void TSI148DMAInterface::SetWindowParameters() {
 #undef VMESET
 
 void TSI148DMAInterface::DoRead(unsigned long offset, unsigned char * data, size_t size) {
-  m_params->read.srcAddr = m_base + offset;
-  m_params->read.dstAddr = (unsigned)data;
-  m_params->read.byteCount = size;
-  int status = ioctl(m_fd, VME_IOCTL_START_DMA, &m_params->read);
+  m_params->srcBus = VME_DMA_VME;
+  m_params->dstBus = VME_DMA_USER;
+  m_params->srcAddr = m_base + offset;
+  m_params->dstAddr = (unsigned long)data;
+  m_params->byteCount = size;
+  //std::cout << "DEBUG: Zeroing memory and flushing cache." << std::endl;
+  //memset(data, 0, size);
+  //for (size_t i = 0; i < size; i += 4) {
+  //  asm_dcbf(data+i);
+  //}
+  //asm_sync();
+  //std::cout << "DEBUG: dst address = " << eudaq::hexdec((unsigned long)data) << std::endl;
+// #define DBG(x) std::cout << "VME DEBUG: " #x " = " << m_params->x << std::endl
+//   DBG(maxPciBlockSize);
+//   DBG(maxVmeBlockSize);
+//   DBG(byteCount);
+//   DBG(srcBus);
+//   DBG(srcAddr);
+//   DBG(srcVmeAttr.maxDataWidth);
+//   DBG(srcVmeAttr.addrSpace);
+//   DBG(srcVmeAttr.userAccessType);
+//   DBG(srcVmeAttr.dataAccessType);
+//   DBG(srcVmeAttr.xferProtocol);
+//   DBG(dstBus);
+//   DBG(dstAddr);
+//   DBG(dstVmeAttr.maxDataWidth);
+//   DBG(dstVmeAttr.addrSpace);
+//   DBG(dstVmeAttr.userAccessType);
+//   DBG(dstVmeAttr.dataAccessType);
+//   DBG(dstVmeAttr.xferProtocol);
+// #undef DBG
+  int status = ioctl(m_fd, VME_IOCTL_START_DMA, m_params);
+  //std::cout << "DEBUG: done, status = " << status << std::endl;
   if (status < 0) {
+    std::cout << "DEBUG: DMA errno = " << errno << std::endl;
     EUDAQ_THROW("Error while DMA reading VME (code = " + to_string(errno) + ")");
   }
-  //m_params->read.vmeDmaElapsedTime
-  //m_params->read.vmeDmaStatus
+  //std::cout << "DEBUG: elapsed time = " << m_params->vmeDmaElapsedTime << "\n"
+  //          << "       DMA status = " << m_params->vmeDmaStatus << std::endl;
+  //status = ioctl(m_fd, VME_IOCTL_WAIT_DMA, m_params);
 }
 
 void TSI148DMAInterface::DoWrite(unsigned long offset, const unsigned char * data, size_t size) {
-  m_params->write.srcAddr = (unsigned)data;
-  m_params->write.dstAddr = m_base + offset;
-  m_params->write.byteCount = size;
-  int status = ioctl(m_fd, VME_IOCTL_START_DMA, &m_params->write);
+  m_params->srcBus = VME_DMA_USER;
+  m_params->dstBus = VME_DMA_VME;
+  m_params->srcAddr = (unsigned long)data;
+  m_params->dstAddr = m_base + offset;
+  m_params->byteCount = size;
+  int status = ioctl(m_fd, VME_IOCTL_START_DMA, m_params);
   if (status < 0) {
-    EUDAQ_THROW("Error while DMA reading VME (code = " + to_string(errno) + ")");
+    EUDAQ_THROW("Error while DMA writing VME (code = " + to_string(errno) + ")");
   }
 }
