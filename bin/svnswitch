@@ -2,7 +2,7 @@
 
 if [ "$2" == "" ]; then
   echo "Usage: svnswitch <newrepo> <svn-command> [svn-params]..."
-  echo "  e.g. svnswitch svn+ssh://login.hepforge.org/eudaq ci -m \"blah\""
+  echo "  e.g. svnswitch svn+ssh://corrin@login.hepforge.org/hepforge/svn/eudaq ci -m \"blah\""
   exit 1
 fi
 
