@@ -8,37 +8,15 @@
 #include <ostream>
 #include <cctype>
 
-// stuff for VME/C-related business
-//#include <sys/ioctl.h>          //ioctl()
-//#include <unistd.h>             //close() read() write()
-//#include <sys/types.h>          //open()
-//#include <sys/stat.h>           //open()
-//#include <fcntl.h>              //open()
-//#include <stdlib.h>             //strtol()
-//#include <stdio.h>
-//#include <string.h>
-//#include <errno.h>
-//#include <sys/time.h>
-
-//#include "vmedrv.h"
 #include "eudrblib.hh"
-//#include "vmelib.h"
-
 #include "VMEInterface.hh"
 
 #define DMABUFFERSIZE   0x100000                               //MBLT Buffer Dimension
 
 using eudaq::EUDRBEvent;
 using eudaq::to_string;
-
-// VME stuff, not very clean like this
-//int fdOut;                                                                      //File descriptor of the dev_m#
-//unsigned long int readdata32=0;                         //For Longword Read
-//unsigned long int i=0;
-//unsigned long int address=0;                            //VME address
-//unsigned long int BaseAddress=0x30000000;       //EUDRB VME Base address
-//unsigned long int number_of_bytes, total_bytes;                      //Number of byte for a MBLT read
-//unsigned long int * mblt_dstbuffer=NULL, * temp_buffer=NULL;
+using eudaq::Time;
+using eudaq::hexdec;
 
 class EUDRBProducer : public eudaq::Producer {
 public:
@@ -48,15 +26,8 @@ public:
       started(false),
       n_error(0),
       buffer(DMABUFFERSIZE),
-      //fdOut(open("/dev/vme_m0", O_RDWR)),
       m_idoffset(0)
     {
-      //if (fdOut < 0) {
-      //  EUDAQ_THROW("Open device failed Errno = " + to_string(errno));
-      //}
-      //if (getMyInfo() != 0) {
-      //  EUDAQ_THROW("getMyInfo failed.  Errno = " + to_string(errno));
-      //}
     }
   void Process() {
     if (!started) {
@@ -64,136 +35,69 @@ public:
       return;
     }
 
-    struct timeval starttime, stoptime;
-    struct timeval starttime2, stoptime2;
-    //struct timeval starttime3, stoptime3;
-    //struct timeval starttime4, stoptime4;
-    gettimeofday(&starttime2,0);
-
-    boards[0].EventDataReady_wait();
+    Time tm_total = Time::Current();
 
     unsigned long total_bytes=0;
-
     EUDRBEvent ev(m_run, ++m_ev);
 
-    for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
+    for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
 
-      unsigned long readdata32=0;
-      //unsigned long address=boards[n_eudrb].BaseAddress|0x00400004;
-      gettimeofday(&starttime,0);
-      int i=0;
-      bool badev=false;
-      while ((readdata32 & 0x80000000) != 0x80000000) { // be sure that each board is really ready
-        //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        readdata32 = boards[n_eudrb].Read(0x00400004);
-        i++;
-        if (i%200==0)  printf("waiting for ready %d cycles\n",i);
-        if (i == 2000) break;
-      }
+      Time tm_wait = Time::Current();
+      unsigned long number_of_bytes = 4 * boards[n_eudrb].EventDataReady_wait();
+      tm_wait = Time::Current() - tm_wait;
 
-      gettimeofday(&stoptime,0);
-      stoptime.tv_usec-=starttime.tv_usec;
-      stoptime.tv_sec-=starttime.tv_sec;
-      if (m_ev<10 || m_ev%20==0) printf("Waiting for board %ld took %ld us\n",(long)n_eudrb,stoptime.tv_sec*1000000+stoptime.tv_usec );
-      unsigned long number_of_bytes=(readdata32&0xfffff)*4; //last 20 bits
       //      printf("number of bytes = %ld\n",number_of_bytes);
-      if (number_of_bytes!=0) {
-        /*
-         *      MBLT READ from the âZSDataReadPortâ located
-         *                      at the board BASE address+0x400000
-         */
-        gettimeofday(&starttime,0);
-        //address=boards[n_eudrb].BaseAddress|0x00400000;
+      if (number_of_bytes == 0) {
+        EUDAQ_ERROR("Timeout reading data from eudrb " + to_string(n_eudrb));
+      } else {
 
         if (number_of_bytes>405520 || number_of_bytes==0) {
           printf("Board: %ld, Event: %d, number of bytes = %ld\n",(long)n_eudrb,m_ev,number_of_bytes);
           EUDAQ_WARN("Board "  + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big or zero: " + to_string(number_of_bytes));
-          badev=true;
+          //badev=true;
         }
-        //      printf("mblt before: %ld\n",mblt_dstbuffer);
-        //        printf("MBLT PRIMA !!!\n");
         // pad number of bytes to multiples of 8 in case of ZS
         buffer.resize(((number_of_bytes+7)&~7) / 4);
-        //vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7,address,&buffer[0]);
+
+        Time tm_read = Time::Current();
         boards[n_eudrb].ReadBlock(0x00400000, buffer);
-        //        printf("MBLT DOPO!!!\n");
-        gettimeofday(&stoptime,0);
-        stoptime.tv_usec-=starttime.tv_usec;
-        stoptime.tv_sec-=starttime.tv_sec;
-        if (m_ev<10 || m_ev%20==0) printf("MBLT took %ld us for %ld words\n",
-                                          stoptime.tv_sec*1000000+stoptime.tv_usec,
-                                          (long)buffer.size());
+        tm_read = Time::Current() - tm_read;
 
-        // Reset the boards here, after the MBLT
-        //unsigned long address=boards[n_eudrb].BaseAddress|0x10;
-        //unsigned long readdata32=0xC0000000;
-        if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-//         eudaq::mSleep(500);
-//         std::cout << "DEBUG: testing read" << std::endl;
-//         unsigned long ddd = boards[n_eudrb].Read(0);
-//         std::cout << "DEBUG: testing write" << std::endl;
-//         boards[n_eudrb].Write(0, ddd);
-//         std::cout << "DEBUG: OK" << std::endl;
-        boards[n_eudrb].Write(0x10, 0xC0000000);
+        //boards[n_eudrb].Write(0x10, 0xC0000000);
+        unsigned long data = boards[n_eudrb].Read(0);
+        boards[n_eudrb].Write(0x0, data | 0x40);
+        boards[n_eudrb].Write(0x0, data);
+        if (n_eudrb==boards.size()-1) usleep(1000); // temporary fix
 
-        //      for(int j=0;j<number_of_bytes/4;j++)
-        if (m_ev<10 || m_ev%20==0 || badev) {
-          printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
-          printf("\theader =0x%lx\n",buffer[0]);
-          //    printf("buf&0x54... = 0x%lx\n",(buffer[number_of_bytes/4-2]&0x54000000));
-          if ( (buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n",buffer[number_of_bytes/4-2]);
-          else printf("\ttrailer=x%lx\n",buffer[number_of_bytes/4-3]);
-          badev=false;
-        }
-
-        /*for(int j=0;j<10;j++)
-          {
-          printf("word=%d %lx\n",j,mblt_dstbuffer[j]);
-          }*/
-        //      number_of_bytes=0;
-        gettimeofday(&starttime,0);
+        Time tm_add = Time::Current();
         ev.AddBoard(n_eudrb,&buffer[0], number_of_bytes);
+        tm_add = Time::Current() - tm_add;
         total_bytes+=(number_of_bytes+7)&~7;
-        gettimeofday(&stoptime,0);
-        stoptime.tv_usec-=starttime.tv_usec;
-        stoptime.tv_sec-=starttime.tv_sec;
-        if (m_ev<10 || m_ev%20==0) printf("Addboard took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
+
+        if (m_ev<10 || m_ev%20==0 /*|| badev*/) {
+          std::cout << "Event " << m_ev << ", EUDRB " << n_eudrb << ", bytes " << hexdec(number_of_bytes) << "\n"
+                    << "  Time(ms) wait " << 1000*tm_wait.Seconds() << ", read " << 1000*tm_read.Seconds()
+                    << ", add " << 1000*tm_add.Seconds() << std::endl;
+          //badev=false;
+        }
       }
     }
-    //mblt_dstbuffer=temp_buffer;
 
-    //            for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
-    //              // Reset the boards, here is critical and causing hangups, should do above!
-    //              unsigned long address=boards[n_eudrb].BaseAddress|0x10;
-    //              unsigned long readdata32=0xC0000000;
-    //              //      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix
-    //              vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-    //            }
-
-
+    Time tm_send = Time::Current();
+    SendEvent(ev);
+    tm_send = Time::Current() - tm_send;
     if (total_bytes) {
-      gettimeofday(&starttime,0);
-      //      printf("before sendevent\n");
-      SendEvent(ev);
-      gettimeofday(&stoptime,0);
-      stoptime.tv_usec-=starttime.tv_usec;
-      stoptime.tv_sec-=starttime.tv_sec;
-      if (m_ev<10 || m_ev%20==0) printf("Sendevent took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
-      //      printf("after sendevent\n");
-      if (m_ev<10 || m_ev%20==0)
-        printf("*** Event %d of length %ld sent!\n",m_ev, total_bytes);
       n_error=0;
     } else {
       n_error++;
       if (n_error<5) EUDAQ_ERROR("Event length 0");
       else if (n_error==5) EUDAQ_ERROR("Event length 0 repeated more than 5 times, skipping!");
     }
-    gettimeofday(&stoptime2,0);
-    stoptime2.tv_usec-=starttime2.tv_usec;
-    stoptime2.tv_sec-=starttime2.tv_sec;
-    if (m_ev<10 || m_ev%20==0) printf("*** Total took %ld us\n",stoptime2.tv_sec*1000000+stoptime2.tv_usec );
-
+    tm_total = Time::Current() - tm_total;
+    if (m_ev<10 || m_ev%20==0) {
+      std::cout << "Event " << m_ev << ", Time(ms) send " << 1000*tm_send.Seconds()
+                << ", total " << 1000*tm_total.Seconds() << std::endl;
+    }
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
@@ -208,14 +112,7 @@ public:
         boards.push_back(BoardInfo(addr, mode));
       }
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        //unsigned long address=boards[n_eudrb].BaseAddress;
         unsigned long readdata32 = boards[n_eudrb].Read(0);
-        //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        //readdata32|=0x80000000;
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-        //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        //readdata32&=~(0x80000000);
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
         boards[n_eudrb].Write(0, readdata32 | 0x80000000);
         readdata32 = boards[n_eudrb].Read(0);
         boards[n_eudrb].Write(0, readdata32 & ~0x80000000);
@@ -231,8 +128,6 @@ public:
           strcpy(mode,"Master");
         }
         printf("Board: %ld is a %s\n",(long)n_eudrb,mode);
-        //unsigned long address=boards[n_eudrb].BaseAddress|0x10;
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
         boards[n_eudrb].Write(0x10, readdata32);
       }
 
@@ -247,11 +142,6 @@ public:
         boards[n_eudrb].EUDRB_CSR_Default();
         unsigned long /*address=boards[n_eudrb].BaseAddress,*/baseShift=0x800000;
         unsigned long /*readdata32=0,*/ newdata32=0;
-        /* read address first and only set the reset bit */
-        //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        //newdata32=readdata32|0x40;
-        //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
         unsigned long data = boards[n_eudrb].Read(0);
         boards[n_eudrb].Write(0, data | 0x40);
         boards[n_eudrb].Write(0, data & ~0x40);
@@ -277,9 +167,6 @@ public:
           unsigned long offset=0x0;
           // VME is master of SRAM
           printf("Become Master of SRAM\n");
-          //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-          //newdata32=readdata32|0x200;
-          //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
           boards[n_eudrb].Write(0, boards[n_eudrb].Read(0) | 0x200);
 
           printf("Fill Matrices on board: %ld\n",(long)n_eudrb);
@@ -308,8 +195,6 @@ public:
               if (ped2bit>31) ped2bit=31;
               if (ped2bit<-32) ped2bit=-32;
               newdata32=thresh2bit;
-              // temporary
-              //newdata32=4;
               newdata32=newdata32+(ped2bit<<6);
 
               if (flag) newdata32=0x1f+(1<<11); // mask bad pixels as good as you can (high thresh and very low ped)
@@ -346,17 +231,8 @@ public:
 
           // Release master of SRAM
           printf("\tRelease Master of SRAM\n");
-          //address=boards[n_eudrb].BaseAddress;
-          //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-          //newdata32=readdata32&~0x200;
-          //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
           boards[n_eudrb].Write(0, boards[n_eudrb].Read(0) & ~0x200);
           // reset once more to be sure
-          /* read address first and only set the reset bit */
-          //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-          //newdata32=readdata32|0x40;
-          //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-          //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
           unsigned long data = boards[n_eudrb].Read(0);
           boards[n_eudrb].Write(0, data | 0x40);
           boards[n_eudrb].Write(0, data & ~0x40);
@@ -370,11 +246,7 @@ public:
       }
 
       for (size_t n_eudrb=0; n_eudrb < boards.size(); n_eudrb++) {
-        //unsigned long address=boards[n_eudrb].BaseAddress|0x10;
-        unsigned long readdata32=0xC0000000;
-        /* read address first and only set the reset bit */
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-        boards[n_eudrb].Write(0x10, readdata32);
+        boards[n_eudrb].Write(0x10, 0xC0000000);
       }
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
 
@@ -447,14 +319,6 @@ public:
     try {
       std::cout << "Reset" << std::endl;
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        //unsigned long readdata32;
-        //unsigned long address=boards[n_eudrb].BaseAddress;
-        //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        //readdata32|=0x80000000;
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-        //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        //readdata32&=~(0x80000000);
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
         unsigned long data = boards[n_eudrb].Read(0);
         boards[n_eudrb].Write(0, data | 0x80000000);
         data = boards[n_eudrb].Read(0);
