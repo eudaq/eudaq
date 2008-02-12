@@ -11,9 +11,12 @@ NEWREPO=$1
 
 shift
 
+echo "Switching from $OLDREPO to $NEWREPO"
 if ! svn switch --relocate "$OLDREPO" "$NEWREPO"; then
-  echo "Error: Unable to switch repository to $NEWREPO"
+  echo "Error: Unable to switch repository"
   exit 1
 fi
-svn $*
+echo "Performing command: $@"
+svn "$@"
+echo "Returning repository back to original setting"
 svn switch --relocate "$NEWREPO" "$OLDREPO"
