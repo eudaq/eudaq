@@ -20,11 +20,20 @@
   </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QVBoxLayout" >
-    <property name="margin" >
+    <property name="spacing" >
      <number>4</number>
     </property>
-    <property name="spacing" >
-     <number>0</number>
+    <property name="leftMargin" >
+     <number>4</number>
+    </property>
+    <property name="topMargin" >
+     <number>4</number>
+    </property>
+    <property name="rightMargin" >
+     <number>4</number>
+    </property>
+    <property name="bottomMargin" >
+     <number>4</number>
     </property>
     <item>
      <widget class="QGroupBox" name="grpControl" >
@@ -32,11 +41,23 @@
        <string>Control</string>
       </property>
       <layout class="QGridLayout" >
-       <property name="margin" >
+       <property name="leftMargin" >
         <number>0</number>
        </property>
-       <property name="spacing" >
+       <property name="topMargin" >
         <number>0</number>
+       </property>
+       <property name="rightMargin" >
+        <number>0</number>
+       </property>
+       <property name="bottomMargin" >
+        <number>0</number>
+       </property>
+       <property name="horizontalSpacing" >
+        <number>8</number>
+       </property>
+       <property name="verticalSpacing" >
+        <number>4</number>
        </property>
        <item row="0" column="0" >
         <widget class="QLabel" name="lblConfig" >
@@ -68,9 +89,7 @@
        <item row="0" column="1" >
         <widget class="QComboBox" name="cmbConfig" >
          <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>7</hsizetype>
-           <vsizetype>0</vsizetype>
+          <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -103,9 +122,7 @@
        <item row="0" column="2" >
         <widget class="QPushButton" name="btnConfig" >
          <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>1</hsizetype>
-           <vsizetype>0</vsizetype>
+          <sizepolicy vsizetype="Fixed" hsizetype="Minimum" >
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -138,11 +155,23 @@
        <string>Status</string>
       </property>
       <layout class="QGridLayout" >
-       <property name="margin" >
+       <property name="leftMargin" >
         <number>0</number>
        </property>
-       <property name="spacing" >
+       <property name="topMargin" >
         <number>0</number>
+       </property>
+       <property name="rightMargin" >
+        <number>0</number>
+       </property>
+       <property name="bottomMargin" >
+        <number>0</number>
+       </property>
+       <property name="horizontalSpacing" >
+        <number>8</number>
+       </property>
+       <property name="verticalSpacing" >
+        <number>4</number>
        </property>
       </layout>
      </widget>
@@ -153,10 +182,19 @@
        <string>Connections</string>
       </property>
       <layout class="QVBoxLayout" >
-       <property name="margin" >
+       <property name="spacing" >
+        <number>4</number>
+       </property>
+       <property name="leftMargin" >
         <number>0</number>
        </property>
-       <property name="spacing" >
+       <property name="topMargin" >
+        <number>0</number>
+       </property>
+       <property name="rightMargin" >
+        <number>0</number>
+       </property>
+       <property name="bottomMargin" >
         <number>0</number>
        </property>
        <item>
