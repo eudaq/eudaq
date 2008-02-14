@@ -52,7 +52,7 @@ int main(int /*argc*/, char ** argv) {
     }
     signal(SIGINT, ctrlchandler);
     TLUController TLU(fname.Value());
-    TLU.FullReset();
+    //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
     TLU.SetDUTMask(dmask.Value());
     TLU.SetVetoMask(vmask.Value());
@@ -60,12 +60,11 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetOrMask(omask.Value());
     std::cout << "TLU Firmware version: " << TLU.GetFirmwareID()
               << " (library " << TLU.GetLibraryID() << ")" << std::endl;
-    //sleep(1);
 
     eudaq::Time starttime(eudaq::Time::Current());
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
-    //unsigned long long lasttime = 0;
+
     unsigned long total = 0;
     while (!g_done) {
       TLU.Update();
@@ -81,6 +80,7 @@ int main(int /*argc*/, char ** argv) {
       double hertz = total / elapsedtime.Seconds();
       std::cout << "Time: " << elapsedtime.Formatted("%s.%3") << " s, Hertz: " << hertz << std::endl;
       sleep(1);
+      //TLU.ResetUSB(); // DEBUG
     }
     std::cout << "Quitting..." << std::endl;
     TLU.Stop();

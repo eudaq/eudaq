@@ -56,7 +56,7 @@ namespace tlu {
     void Stop();
     void ResetTriggerCounter();
     void ResetScalers();
-    void FullReset();
+    void ResetUSB();
 
     size_t NumEntries() const { return m_buffer.size(); }
     TLUEntry GetEntry(size_t i) const { return m_buffer[i]; }
@@ -76,6 +76,7 @@ namespace tlu {
 
     unsigned GetScaler(unsigned) const;
   private:
+    static ZESTSC1_HANDLE OpenTLU();
     void Initialize();
     void WriteRegister(unsigned long offset, unsigned char val);
     unsigned char ReadRegister(unsigned long offset) const;

@@ -15,6 +15,7 @@
 #include <iomanip>
 
 using eudaq::mSleep;
+using eudaq::hexdec;
 
 //#define TLUDEBUG
 
@@ -23,6 +24,8 @@ using eudaq::mSleep;
 #endif
 
 namespace tlu {
+
+  int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
 
   namespace {
 
@@ -87,8 +90,18 @@ namespace tlu {
     // Install an error handler
     ZestSC1RegisterErrorHandler(err ? err : DefaultErrorHandler);
 
+    m_handle = OpenTLU();
+
+#ifdef TLUDEBUG
+    std::cout << "DEBUG: TLU handle = " << m_handle << std::endl;
+#endif
+
+    Initialize();
+  }
+
+  ZESTSC1_HANDLE TLUController::OpenTLU() {
     // Request information about the system
-    unsigned long NumCards;
+    unsigned long NumCards = 0;
     unsigned long CardIDs[256];
     unsigned long SerialNumbers[256];
     ZESTSC1_FPGA_TYPE FPGATypes[256];
@@ -97,10 +110,10 @@ namespace tlu {
 #ifdef TLUDEBUG
     std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
     for (unsigned i = 0; i < NumCards; ++i) {
-      std::cout << "DEBUG: Card " << i << std::hex
-                << ", ID = 0x" << CardIDs[i]
-                << ", SerialNum = 0x" << SerialNumbers[i]
-                << ", FPGAType = " << std::dec << FPGATypes[i]
+      std::cout << "DEBUG: Card " << i
+                << ", ID = " << hexdec(CardIDs[i])
+                << ", SerialNum = 0x" << hexdec(SerialNumbers[i])
+                << ", FPGAType = " << hexdec(FPGATypes[i])
                 << ", Possible TLU: " << (FPGATypes[i] == ZESTSC1_XC3S1000 ?
                                           "Yes" : "No")
                 << std::endl;
@@ -124,13 +137,10 @@ namespace tlu {
 
 
     // Open the card
-    ZestSC1OpenCard(CardIDs[found], &m_handle);
-
-#ifdef TLUDEBUG
-    std::cout << "DEBUG: TLU handle = " << m_handle << std::endl;
-#endif
-
-    Initialize();
+    ZESTSC1_HANDLE handle;
+    ZestSC1OpenCard(CardIDs[found], &handle);
+    ZestSC1SetTimeOut(handle, 200);
+    return handle;
   }
 
   void TLUController::Initialize() {
@@ -192,9 +202,12 @@ namespace tlu {
     WriteRegister(RESET_REGISTER_ADDRESS, 0);
   }
 
-  void TLUController::FullReset() {
-    WriteRegister(RESET_REGISTER_ADDRESS, 0xff);
-    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+  void TLUController::ResetUSB() {
+    do_usb_reset(m_handle);
+    // this fails with error:
+    // "The requested card ID does not correspond to any devices in the system"
+    // Why?
+    m_handle = OpenTLU();
   }
 
   void TLUController::SetDUTMask(unsigned char mask) {
@@ -334,6 +347,11 @@ namespace tlu {
   }
 
   void TLUController::Print(std::ostream &out) const {
+    for (size_t i = 0; i < m_buffer.size(); ++i) {
+      unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
+      out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << std::endl;
+      m_lasttime = m_buffer[i].Timestamp();
+    }
     out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << std::endl
         << "Scalers:   ";
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -342,11 +360,6 @@ namespace tlu {
     out << "Triggers:  " << m_triggernum << std::endl
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
-    for (size_t i = 0; i < m_buffer.size(); ++i) {
-      unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
-      out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << std::endl;
-      m_lasttime = m_buffer[i].Timestamp();
-    }
   }
 
   unsigned TLUController::GetFirmwareID() const {
