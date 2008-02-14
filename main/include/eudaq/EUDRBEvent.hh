@@ -98,7 +98,7 @@ namespace eudaq {
 
   class EUDRBDecoder {
   public:
-    enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER };
+    enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER, DET_MIMOSA18 };
     enum E_MODE { MODE_RAW3, MODE_RAW2, MODE_ZS };
 
     //EUDRBDecoder(E_DET det, E_MODE mode);

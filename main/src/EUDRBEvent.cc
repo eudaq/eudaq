@@ -121,6 +121,7 @@ namespace eudaq {
 
     if (det == "MIMOTEL") m_det = DET_MIMOTEL;
     else if (det == "MIMOSTAR2") m_det = DET_MIMOSTAR2;
+    else if (det == "MIMOSA18") m_det = DET_MIMOSA18;
     else EUDAQ_THROW("Unknown detector in EUDRBDecoder: " + det);
 
     std::string mode = ev.GetTag("MODE" + to_string(brd));
@@ -144,16 +145,18 @@ namespace eudaq {
       if (!m_rows) m_rows = 256;
       if (!m_cols) m_cols = 66;
       if (!m_mats) m_mats = 4;
-      if (m_det == DET_MIMOTEL)
+      if (m_det == DET_MIMOTEL) {
         m_order = order_mimotel_old;
-      else
+      } else {
         m_order = order_mimotel_new;
-
+      }
     } else if (m_det == DET_MIMOSTAR2) {
       if (!m_rows) m_rows = 128;
       if (!m_cols) m_cols = 66;
       if (!m_mats) m_cols = 4;
-    } else {
+    } else if (m_det == DET_MIMOSA18) {
+      // TODO: Fill in values for rows/cols/matrices
+    }else {
       EUDAQ_THROW("Unknown detector in EUDRBDecoder");
     }
     if (m_mode != MODE_RAW3 && m_mode != MODE_RAW2 && m_mode != MODE_ZS)
