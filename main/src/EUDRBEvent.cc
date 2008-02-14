@@ -155,7 +155,9 @@ namespace eudaq {
       if (!m_cols) m_cols = 66;
       if (!m_mats) m_cols = 4;
     } else if (m_det == DET_MIMOSA18) {
-      // TODO: Fill in values for rows/cols/matrices
+      if (!m_rows) m_rows = 256;
+      if (!m_cols) m_cols = 256;
+      if (!m_mats) m_cols = 4;
     }else {
       EUDAQ_THROW("Unknown detector in EUDRBDecoder");
     }
@@ -236,6 +238,18 @@ namespace eudaq {
     return result;
   }
 
+  template <typename T_coord, typename T_adc>
+  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawM18(const EUDRBBoard & brd) const {
+    EUDAQ_THROW("Not implemented");
+    (void)brd; // to remove warning
+  }
+
+  template <typename T_coord, typename T_adc>
+  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysZSM18(const EUDRBBoard & brd) const {
+    EUDAQ_THROW("Not implemented");
+    (void)brd; // to remove warning
+  }
+
   template
   EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRaw<>(const EUDRBBoard & brd) const;
 
@@ -247,5 +261,17 @@ namespace eudaq {
 
   template
   EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZS<>(const EUDRBBoard & brd) const;
+
+  template
+  EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
+
+  template
+  EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
+
+  template
+  EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
+
+  template
+  EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
 
 }

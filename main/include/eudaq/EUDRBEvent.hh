@@ -131,11 +131,26 @@ namespace eudaq {
     };
     template <typename T_coord, typename T_adc>
     arrays_t<T_coord, T_adc> GetArrays(const EUDRBBoard & brd) const {
-      switch (GetInfo(brd).m_mode) {
-      case MODE_RAW2:
-      case MODE_RAW3: return GetArraysRaw<T_coord, T_adc>(brd);
-      case MODE_ZS:   return GetArraysZS<T_coord, T_adc>(brd);
-      default: EUDAQ_THROW("Unrecognised mode");
+      switch (GetInfo(brd).m_det) {
+      case DET_MIMOSTAR2:
+      case DET_MIMOTEL:
+      case DET_MIMOTEL_NEWORDER:
+        switch (GetInfo(brd).m_mode) {
+        case MODE_RAW2:
+        case MODE_RAW3: return GetArraysRaw<T_coord, T_adc>(brd);
+        case MODE_ZS:   return GetArraysZS<T_coord, T_adc>(brd);
+        default: EUDAQ_THROW("Unrecognised mode");
+        }
+        break;
+      case DET_MIMOSA18:
+        switch (GetInfo(brd).m_mode) {
+        case MODE_RAW2:
+        case MODE_RAW3: return GetArraysRawM18<T_coord, T_adc>(brd);
+        case MODE_ZS:   return GetArraysZSM18<T_coord, T_adc>(brd);
+        default: EUDAQ_THROW("Unrecognised mode");
+        }
+        break;
+      default: EUDAQ_THROW("Unrecognised detector");
       }
     }
 
@@ -144,6 +159,10 @@ namespace eudaq {
     arrays_t<T_coord, T_adc> GetArraysRaw(const EUDRBBoard & brd) const;
     template <typename T_coord, typename T_adc>
     arrays_t<T_coord, T_adc> GetArraysZS(const EUDRBBoard & brd) const;
+    template <typename T_coord, typename T_adc>
+    arrays_t<T_coord, T_adc> GetArraysRawM18(const EUDRBBoard & brd) const;
+    template <typename T_coord, typename T_adc>
+    arrays_t<T_coord, T_adc> GetArraysZSM18(const EUDRBBoard & brd) const;
     struct BoardInfo {
       BoardInfo();
       BoardInfo(const EUDRBEvent & ev, unsigned brd);
