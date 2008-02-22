@@ -5,6 +5,25 @@
 
 namespace eudaq {
 
+  namespace {
+
+    inline std::string escape_char(char c) {
+      if (c == '\n') return "\\n";
+      if (c == '\t') return "\\t";
+      return std::string(1, c);
+    }
+
+    static std::string escape_string(const std::string & s) {
+      std::string result;
+      result.reserve(s.length());
+      for (std::string::const_iterator it = s.begin(); it != s.end(); ++it) {
+        result += escape_char(*it);
+      }
+      return result;
+    }
+
+  }
+
   LogMessage::LogMessage(const std::string & msg, Level level, const Time & time)
     : Status(level, msg), m_line(0), m_time(time), m_createtime(Time::Current())
   {}
@@ -38,7 +57,7 @@ namespace eudaq {
 
   void LogMessage::Write(std::ostream & os) const {
     os << Level2String(m_level) << "\t"
-       << m_msg << "\t"
+       << escape_string(m_msg) << "\t"
        << m_time.Formatted() << "\t"
        << GetSender() << "\t"
        << m_file << ":" << m_line << "\t"
