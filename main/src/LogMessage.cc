@@ -5,11 +5,12 @@
 
 namespace eudaq {
 
-  LogMessage::LogMessage(const std::string & msg, Level level, const Time & time) :
-    Status(level, msg), m_line(0), m_time(time)
+  LogMessage::LogMessage(const std::string & msg, Level level, const Time & time)
+    : Status(level, msg), m_line(0), m_time(time), m_createtime(Time::Current())
   {}
 
-  LogMessage::LogMessage(Deserializer & ds) : Status(ds), m_time(0, 0) {
+  LogMessage::LogMessage(Deserializer & ds)
+    : Status(ds), m_time(0, 0), m_createtime(Time::Current()) {
     ds.read(m_file);
     ds.read(m_func);
     ds.read(m_line);
@@ -61,11 +62,6 @@ namespace eudaq {
       m_sendername = name.substr(i+1);
     }
     return *this;
-  }
-
-  std::ostream & operator << (std::ostream &os, const LogMessage &ev) {
-    ev.Print(os);
-    return os;
   }
 
 }

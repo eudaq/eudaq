@@ -28,10 +28,14 @@ namespace eudaq {
   protected:
     std::string m_file, m_func, m_sendertype, m_sendername;
     unsigned m_line;
-    Time m_time;
+    Time m_time, m_createtime;
   };
 
-  std::ostream & operator << (std::ostream &, const LogMessage &);
+  inline std::ostream & operator << (std::ostream &os, const LogMessage &ev) {
+    ev.Print(os);
+    return os;
+  }
+
 
 }
 
