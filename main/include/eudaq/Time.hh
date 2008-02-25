@@ -76,6 +76,10 @@ namespace eudaq {
     return t;
   }
 
+  inline bool operator == (const timeval & lhs, const timeval rhs) {
+    return (lhs.tv_sec == rhs.tv_sec) && (lhs.tv_usec == rhs.tv_usec);
+  }
+
   inline std::ostream & operator << (std::ostream & os, const timeval & tv) {
     if (tv.tv_sec < 0) {
       return os << '-' << Time(-tv.tv_sec - 1, 1000000 - tv.tv_usec);
