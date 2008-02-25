@@ -11,50 +11,11 @@ using eudaq::trim;
 using eudaq::split;
 using eudaq::hexdec;
 
-void do_cmd(VMEInterface& vme, const std::string & cmd);
-
-int main(int /*argc*/, char ** argv) {
-  EUDAQ_LOG_LEVEL(eudaq::Status::LVL_NONE);
-  eudaq::OptionParser op("EUDAQ VME library test program", "1.0", "for vme access", 1);
-  eudaq::Option<unsigned> op_base(op, "b", "base", 0x38000000, "address", "The base address");
-  eudaq::Option<unsigned> op_size(op, "s", "size", 0x01000000, "bytes", "The window size");
-  eudaq::Option<unsigned> op_awidth(op, "a", "awidth", 32, "bits", "Address bus width");
-  eudaq::Option<unsigned> op_dwidth(op, "d", "dwidth", 32, "bits", "Data bus width");
-  eudaq::Option<char> op_mode(op, "m", "mode", 'S', "bytes", "The access mode:"
-                              "S=SINGLE, B=BLT, M=MBLT, 2=2eVME, S=2eSST, B=2eSSTB");
-  try {
-    op.Parse(argv);
-    char c = toupper(op_mode.Value());
-    int proto = c == 'S' ? VMEInterface::PSCT :
-                c == 'B' ? VMEInterface::PBLT :
-                c == 'M' ? VMEInterface::PMBLT :
-                c == '2' ? VMEInterface::P2eVME :
-                c == 'S' ? VMEInterface::P2eSST :
-                c == 'B' ? VMEInterface::P2eSSTB :
-                           VMEInterface::PNONE;
-    std::cout << "Base address  = " << eudaq::hexdec(op_base.Value()) << "\n"
-              << "Window size   = " << eudaq::hexdec(op_size.Value()) << "\n"
-              << "Access mode   = " << c << " (" << proto << ")\n"
-              << "Address width = " << op_awidth.Value() << "\n"
-              << "Data width    = " << op_dwidth.Value() << "\n"
-              << std::endl;
-    VMEptr vme = VMEFactory::Create(op_base.Value(), op_size.Value(), op_awidth.Value(),
-                                    op_dwidth.Value(), proto);
-    for (size_t i = 0; i < op.NumArgs(); ++i) {
-      do_cmd(*vme, op.GetArg(i));
-    }
-  } catch(const eudaq::Exception & e) {
-    std::cout << "Error: " << e.what() << std::endl;
-    return 1;
-  } catch (...) {
-    return op.HandleMainException();
-  }
-  return 0;
-}
-
+template <typename T>
 void do_cmd(VMEInterface& vme, const std::string & cmd) {
-  unsigned long address = 0, data = 0;
-  std::vector<unsigned long> vdata;
+  unsigned long address = 0;
+  T data = 0;
+  std::vector<T> vdata;
   char c(cmd[0]);
   std::vector<std::string> args = split(trim(cmd.substr(1)), ",");
   //std::cout << "cmd: " << c << ", args " << args << std::endl;
@@ -98,4 +59,59 @@ void do_cmd(VMEInterface& vme, const std::string & cmd) {
   default:
     std::cout << "Unrecognised command" << std::endl;
   }
+}
+
+
+int main(int /*argc*/, char ** argv) {
+  EUDAQ_LOG_LEVEL(eudaq::Status::LVL_NONE);
+  eudaq::OptionParser op("EUDAQ VME library test program", "1.0", "for vme access", 1);
+  eudaq::Option<unsigned> op_base(op, "b", "base", 0x38000000, "address", "The base address");
+  eudaq::Option<unsigned> op_size(op, "s", "size", 0x01000000, "bytes", "The window size");
+  eudaq::Option<unsigned> op_awidth(op, "a", "awidth", 32, "bits", "Address bus width");
+  eudaq::Option<unsigned> op_dwidth(op, "d", "dwidth", 32, "bits", "Data bus width");
+  eudaq::Option<char> op_mode(op, "m", "mode", 'S', "bytes", "The access mode:"
+                              "S=SINGLE, B=BLT, M=MBLT, 2=2eVME, S=2eSST, B=2eSSTB");
+  try {
+    op.Parse(argv);
+    char c = toupper(op_mode.Value());
+    int proto = c == 'S' ? VMEInterface::PSCT :
+                c == 'B' ? VMEInterface::PBLT :
+                c == 'M' ? VMEInterface::PMBLT :
+                c == '2' ? VMEInterface::P2eVME :
+                c == 'S' ? VMEInterface::P2eSST :
+                c == 'B' ? VMEInterface::P2eSSTB :
+                           VMEInterface::PNONE;
+    std::cout << "Base address  = " << eudaq::hexdec(op_base.Value()) << "\n"
+              << "Window size   = " << eudaq::hexdec(op_size.Value()) << "\n"
+              << "Access mode   = " << c << " (" << proto << ")\n"
+              << "Address width = " << op_awidth.Value() << "\n"
+              << "Data width    = " << op_dwidth.Value() << "\n"
+              << std::endl;
+    VMEptr vme = VMEFactory::Create(op_base.Value(), op_size.Value(), op_awidth.Value(),
+                                    op_dwidth.Value(), proto);
+    for (size_t i = 0; i < op.NumArgs(); ++i) {
+      switch (op_dwidth.Value()) {
+      case 8:
+        do_cmd<unsigned char>(*vme, op.GetArg(i));
+        break;
+      case 16:
+        do_cmd<unsigned short>(*vme, op.GetArg(i));
+        break;
+      case 32:
+        do_cmd<unsigned int>(*vme, op.GetArg(i));
+        break;
+      case 64:
+        do_cmd<unsigned long long>(*vme, op.GetArg(i));
+        break;
+      default:
+        EUDAQ_THROW("Bad data width");
+      }
+    }
+  } catch(const eudaq::Exception & e) {
+    std::cout << "Error: " << e.what() << std::endl;
+    return 1;
+  } catch (...) {
+    return op.HandleMainException();
+  }
+  return 0;
 }
