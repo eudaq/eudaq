@@ -2,11 +2,13 @@
 #include "eudaq/EUDRBEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Timer.hh"
 #include "eudaq/OptionParser.hh"
 
 #include <iostream>
 #include <ostream>
 #include <cctype>
+#include <time.h>
 
 #include "eudrblib.hh"
 #include "VMEInterface.hh"
@@ -15,7 +17,7 @@
 
 using eudaq::EUDRBEvent;
 using eudaq::to_string;
-using eudaq::Time;
+using eudaq::Timer;
 using eudaq::hexdec;
 
 class EUDRBProducer : public eudaq::Producer {
@@ -35,16 +37,23 @@ public:
       return;
     }
 
-    Time tm_total = Time::Current();
-
+    Timer tm_total;
+    Timer tm_setup;
     unsigned long total_bytes=0;
     EUDRBEvent ev(m_run, ++m_ev);
+    tm_setup.Stop();
+
+    if (m_ev <= 10 || m_ev % 100 == 0) {
+      std::cout << "Event " << m_ev << ", Setup time " << 1000*tm_setup.Seconds() << " ms" << std::endl;
+    }
 
     for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
 
-      Time tm_wait = Time::Current();
-      unsigned long number_of_bytes = 4 * boards[n_eudrb].EventDataReady_wait();
-      tm_wait = Time::Current() - tm_wait;
+      Timer tm_board;
+      Timer tm_wait;
+      unsigned nloops = 0;
+      unsigned long number_of_bytes = 4 * boards[n_eudrb].EventDataReady_wait(&nloops);
+      tm_wait.Stop();
 
       //      printf("number of bytes = %ld\n",number_of_bytes);
       if (number_of_bytes == 0) {
@@ -56,47 +65,61 @@ public:
           EUDAQ_WARN("Board "  + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big or zero: " + to_string(number_of_bytes));
           //badev=true;
         }
+
+        Timer tm_read;
         // pad number of bytes to multiples of 8 in case of ZS
         buffer.resize(((number_of_bytes+7)&~7) / 4);
-
-        Time tm_read = Time::Current();
         boards[n_eudrb].ReadBlock(0x00400000, buffer);
-        tm_read = Time::Current() - tm_read;
+        tm_read.Stop();
 
-        //boards[n_eudrb].Write(0x10, 0xC0000000);
-        unsigned long data = boards[n_eudrb].Read(0);
-        boards[n_eudrb].Write(0x0, data | 0x40);
-        boards[n_eudrb].Write(0x0, data);
-        if (n_eudrb==boards.size()-1) usleep(1000); // temporary fix
+        Timer tm_clear;
+        boards[n_eudrb].Write(0x10, 0xC0000000);
+        
+        //unsigned long data = boards[n_eudrb].Read(0);
+        //boards[n_eudrb].Write(0x0, data | 0x40);
+        //boards[n_eudrb].Write(0x0, data);
+        tm_clear.Stop();
 
-        Time tm_add = Time::Current();
+        Timer tm_add;
         ev.AddBoard(n_eudrb,&buffer[0], number_of_bytes);
-        tm_add = Time::Current() - tm_add;
         total_bytes+=(number_of_bytes+7)&~7;
+        tm_add.Stop();
 
-        if (m_ev<10 || m_ev%20==0 /*|| badev*/) {
-          std::cout << "Event " << m_ev << ", EUDRB " << n_eudrb << ", bytes " << hexdec(number_of_bytes) << "\n"
-                    << "  Time(ms) wait " << 1000*tm_wait.Seconds() << ", read " << 1000*tm_read.Seconds()
-                    << ", add " << 1000*tm_add.Seconds() << std::endl;
+        tm_board.Stop();
+
+        if (m_ev <= 10 || m_ev % 100 == 0) {
+          std::cout << "  Board " << n_eudrb << ", bytes " << hexdec(number_of_bytes)
+                    << ", loops " << nloops << ", time " << tm_board.mSeconds() << "\n"
+                    << "    Times: wait " << tm_wait.mSeconds() << ", read " << tm_read.mSeconds()
+                    << ", clear " << tm_clear.mSeconds() << ", add " << tm_add.mSeconds() << std::endl;
           //badev=false;
         }
       }
     }
 
-    Time tm_send = Time::Current();
-    SendEvent(ev);
-    tm_send = Time::Current() - tm_send;
+    Timer tm_send;
     if (total_bytes) {
+      SendEvent(ev);
       n_error=0;
     } else {
+      --m_ev;
       n_error++;
       if (n_error<5) EUDAQ_ERROR("Event length 0");
       else if (n_error==5) EUDAQ_ERROR("Event length 0 repeated more than 5 times, skipping!");
     }
-    tm_total = Time::Current() - tm_total;
-    if (m_ev<10 || m_ev%20==0) {
-      std::cout << "Event " << m_ev << ", Time(ms) send " << 1000*tm_send.Seconds()
-                << ", total " << 1000*tm_total.Seconds() << std::endl;
+    tm_send.Stop();
+
+    Timer tm_delay;
+    //std::cout << "Delaying..." << std::endl;
+    //usleep(1);
+    do {
+    } while (tm_delay.mSeconds() < 20);
+    tm_delay.Stop();
+
+    tm_total.Stop();
+    if (m_ev <= 10 || m_ev % 100 == 0) {
+      std::cout << "  Times: send " << tm_send.mSeconds() << ", delay " << tm_delay.mSeconds()
+                << ", total " << tm_total.mSeconds() << std::endl;
     }
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
@@ -117,7 +140,7 @@ public:
         readdata32 = boards[n_eudrb].Read(0);
         boards[n_eudrb].Write(0, readdata32 & ~0x80000000);
       }
-      sleep(8);
+      sleep(4);
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
         //        EUDRB_Reset(fdOut, boards[n_eudrb].BaseAddress);
         unsigned long readdata32=0xD0000001;
@@ -246,6 +269,8 @@ public:
       }
 
       for (size_t n_eudrb=0; n_eudrb < boards.size(); n_eudrb++) {
+        // enable AutoRstTrigProcUnits
+        boards[n_eudrb].Write(0x10, 0x70000001);
         boards[n_eudrb].Write(0x10, 0xC0000000);
       }
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;

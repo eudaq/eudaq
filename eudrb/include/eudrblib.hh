@@ -340,15 +340,16 @@ public:
     return vmed->Read(offset, data);
   }
 
-unsigned EventDataReady_wait()
+unsigned EventDataReady_wait(unsigned * nloops = 0)
 {
   unsigned i = 0, d = vmes->Read(0x00400004);
   while (!(d & 0x80000000)) {
-    if (++i % 200 == 0) printf("waiting for ready %d cycles\n", i);
-    if (i == 2000) break;
-    usleep(1);
+    if (++i % 1000000 == 0) printf("waiting for ready %d cycles\n", i);
+    //usleep(1);
+    if (i == 10000000) break;
     d = vmes->Read(0x00400004);
   }
+  if (nloops) *nloops = i;
   if (!(d & 0x80000000)) d = 0;
   return d & 0xfffff;
 }
