@@ -1,6 +1,6 @@
 #include "TSI148Interface.hh"
-#include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
+#include "eudaq/Utils.hh"
 #include <iostream>
 
 extern "C" {
@@ -13,6 +13,7 @@ extern "C" {
 #include <errno.h>
 
 using eudaq::to_string;
+using eudaq::uchar_cast;
 
 namespace {
   static const int MAX_CHANNEL = 7;
@@ -31,6 +32,21 @@ namespace {
                   "and the device files exist "
                   "with the correct properties.");
     }
+    close(fd);
+  }
+
+  static void DoSysReset() {
+    int fd = open("/dev/vme_regs", O_RDWR);
+    if (fd == -1) {
+      close(fd);
+      EUDAQ_THROW("Unable to open VME registers device.");
+    }
+    lseek(fd, 0x238, SEEK_SET);
+    unsigned long data;
+    read(fd, uchar_cast(&data), sizeof data);
+    data |= 1 << 17;
+    lseek(fd, 0x238, SEEK_SET);
+    write(fd, uchar_cast(&data), sizeof data);
     close(fd);
   }
 
@@ -82,6 +98,10 @@ TSI148SingleInterface::TSI148SingleInterface(unsigned long base, unsigned long s
   }
   //std::cout << "DEBUG: VME channel = " << m_chan << std::endl;
   SetWindowParameters();
+}
+
+TSI148SingleInterface::~TSI148SingleInterface() {
+  if (m_fd != -1) close(m_fd);
 }
 
 void TSI148SingleInterface::OpenDevice() {
@@ -139,6 +159,10 @@ void TSI148SingleInterface::DoWrite(unsigned long offset, const unsigned char * 
   }
 }
 
+void TSI148SingleInterface::SysReset() {
+  DoSysReset();
+}
+
 struct TSI148DMAInterface::DMAparams : public vmeDmaPacket {
   DMAparams() {
     memset(this, 0, sizeof (vmeDmaPacket));
@@ -164,6 +188,7 @@ TSI148DMAInterface::TSI148DMAInterface(unsigned long base, unsigned long size,
 }
 
 TSI148DMAInterface::~TSI148DMAInterface() {
+  if (m_fd != -1) close(m_fd);
   delete m_params;
 }
 
@@ -230,4 +255,8 @@ void TSI148DMAInterface::DoWrite(unsigned long offset, const unsigned char * dat
   if (status < 0) {
     EUDAQ_THROW("Error while DMA writing VME (code = " + to_string(errno) + ")");
   }
+}
+
+void TSI148DMAInterface::SysReset() {
+  DoSysReset();
 }

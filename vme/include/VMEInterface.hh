@@ -126,6 +126,7 @@ public:
 #endif
   }
 
+  virtual void SysReset() = 0;
   virtual ~VMEInterface() {}
 protected:
   virtual void DoRead(unsigned long offset, unsigned char * data, size_t size) = 0;

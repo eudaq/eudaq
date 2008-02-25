@@ -4,6 +4,8 @@ class TSI148SingleInterface : public VMEInterface {
 public:
   TSI148SingleInterface(unsigned long base, unsigned long size, int awidth = A32, int dwidth = D32,
                         int proto = PSCT, int sstrate = SSTNONE);
+  virtual void SysReset();
+  ~TSI148SingleInterface();
 private:
   virtual void SetWindowParameters();
   virtual void DoRead(unsigned long offset, unsigned char * data, size_t size);
@@ -16,6 +18,7 @@ class TSI148DMAInterface : public VMEInterface {
 public:
   TSI148DMAInterface(unsigned long base, unsigned long size, int awidth = A32, int dwidth = D32,
                      int proto = PBLT, int sstrate = SSTNONE);
+  virtual void SysReset();
   ~TSI148DMAInterface();
 private:
   virtual void SetWindowParameters();
