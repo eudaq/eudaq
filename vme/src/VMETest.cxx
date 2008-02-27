@@ -24,7 +24,7 @@ void do_cmd(VMEInterface& vme, const std::string & cmd) {
     if (args.size() != 1) throw eudaq::OptionException("Command 'r' takes 1 parameter");
     address = from_string(args[0], 0UL);
     std::cout << "Reading from " << hexdec(address, 0) << std::endl;
-    data = vme.Read(address);
+    data = vme.Read(address, data);
     std::cout << "Result = " << hexdec(data) << std::endl;
     break;
   case 'R':

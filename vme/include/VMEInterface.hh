@@ -63,7 +63,7 @@ public:
   virtual void SetWindow(unsigned long base, unsigned long size, int awidth, int dwidth,
                          int proto = PSCT, int sstrate = SSTNONE);
 
-  template <typename T> T Read(unsigned long offset, T def) {
+  template <typename T> T Read(unsigned long offset, T def = 0) {
     T data = def;
     DoRead(offset, eudaq::uchar_cast(&data), sizeof data);
 #if VME_TRACE
@@ -71,21 +71,9 @@ public:
 #endif
     return data;
   }
-  unsigned long Read(unsigned long offset) {
-    unsigned long data = 0;
-    return Read(offset, data);
-  }
-//   template <typename T>
-//   DMABuffer<T> & Read(unsigned long offset,
-//                         DMABuffer<T> & data) {
-//     DoRead(offset, data.Buffer(), data.Bytes());
-// #if VME_TRACE
-//     vmetrace("BR", m_awidth, m_dwidth, offset, data[0]);
-//     for (size_t i = 1; i < data.size(); ++i) {
-//       vmetrace("  ", m_awidth, m_dwidth, offset + i*4, data[i]);
-//     }
-// #endif
-//     return data;
+//   unsigned long Read(unsigned long offset) {
+//     unsigned long data = 0;
+//     return Read(offset, data);
 //   }
   template <typename T>
   std::vector<T> & Read(unsigned long offset,

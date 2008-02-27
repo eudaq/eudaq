@@ -334,7 +334,7 @@ public:
     vmes->Write(offset, data);
   }
   unsigned long Read(unsigned long offset) {
-    return vmes->Read(offset);
+    return vmes->Read(offset, 0UL);
   }
   std::vector<unsigned long> & ReadBlock(unsigned long offset, std::vector<unsigned long> & data) {
     return vmed->Read(offset, data);
@@ -342,14 +342,14 @@ public:
 
 unsigned EventDataReady_wait(unsigned * nloops = 0)
 {
-  unsigned i = 0, d = vmes->Read(0x00400004);
-  while (!(d & 0x80000000)) {
-    if (++i % 1000000 == 0) printf("waiting for ready %d cycles\n", i);
-    //usleep(1);
-    if (i == 10000000) break;
-    d = vmes->Read(0x00400004);
-  }
-  if (nloops) *nloops = i;
+  eudaq::Timer t;
+  unsigned n = 0, d;
+  do {
+    n++;
+    d = vmes->Read(0x00400004, 0UL);
+    if (t.mSeconds() > 1000) break;
+  } while (!(d & 0x80000000));
+  if (nloops) *nloops = n;
   if (!(d & 0x80000000)) d = 0;
   return d & 0xfffff;
 }
@@ -412,7 +412,7 @@ void EUDRB_ZS_On()
   //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
   //newdata32=readdata32|0x20;
   //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-  vmes->Write(0, vmes->Read(0) | 0x20);
+  vmes->Write(0, vmes->Read(0, 0UL) | 0x20);
 }
 void EUDRB_ZS_Off()
 {
@@ -422,7 +422,7 @@ void EUDRB_ZS_Off()
   //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
   //newdata32=readdata32&~0x20;
   //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-  vmes->Write(0, vmes->Read(0) & ~0x20);
+  vmes->Write(0, vmes->Read(0, 0UL) & ~0x20);
 }
 
 /*
@@ -445,7 +445,7 @@ void EUDRB_TriggerProcessingUnit_Reset_Check()
   //unsigned long int address = baseaddress|0x00400004;
   //unsigned long int readdata32=0;
   //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-  while((vmes->Read(0x00400004) & 0x80000000) == 0x80000000) {
+  while((vmes->Read(0x00400004, 0UL) & 0x80000000) == 0x80000000) {
     //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
     usleep(1);
   }
@@ -460,7 +460,7 @@ void EUDRB_Reset()
   //newdata32=readdata32|0x8;
   //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
   //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-  unsigned long data = vmes->Read(0);
+  unsigned long data = vmes->Read(0, 0UL);
   vmes->Write(0, data | 0x8);
   vmes->Write(0, data & ~0x8);
 }
@@ -472,7 +472,7 @@ void EUDRB_Reset()
 void EUDRB_CSR_Read()
 {
   //vme_A32_D32_User_Data_SCT_read(fdOut,&Control_Status_Register.eudrb_csr_reg,baseaddress);
-  Control_Status_Register.eudrb_csr_reg = vmes->Read(0);
+  Control_Status_Register.eudrb_csr_reg = vmes->Read(0, 0UL);
 }
 
 
@@ -498,7 +498,7 @@ void EUDRB_TriggerProcessingUnit_Reset()
   //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
 /*  unsigned long int address=(baseaddress|CommandToMCU); */
 /*  vme_A32_D32_User_Data_SCT_write(fdOut,ClearTrigProcUnits,address); */
-  unsigned long data = vmes->Read(0);
+  unsigned long data = vmes->Read(0, 0UL);
   vmes->Write(0, data | 0x8);
   vmes->Write(0, data & ~0x8);
 }
