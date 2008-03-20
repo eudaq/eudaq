@@ -13,7 +13,8 @@
 #include "eudrblib.hh"
 #include "VMEInterface.hh"
 
-#define DMABUFFERSIZE   0x100000                               //MBLT Buffer Dimension
+//MBLT Buffer Dimension
+#define DMABUFFERSIZE 0x100000
 
 using eudaq::EUDRBEvent;
 using eudaq::to_string;
@@ -130,8 +131,15 @@ public:
       m_idoffset = param.Get("IDOffset", 0);
       boards.clear();
       for (int i = 0; i < numboards; ++i) {
-        unsigned addr = param.Get("Board" + to_string(i) + ".Addr", "Addr", 0x8000000*(i+2));
+        int slot = param.Get("Board" + to_string(i) + ".Slot", -1);
+        unsigned addr = param.Get("Board" + to_string(i) + ".Addr", -1);
         std::string mode = param.Get("Board" + to_string(i) + ".Mode", "Mode", "");
+        if (addr == (unsigned)-1) {
+          addr = slot << 27;
+        } else if (slot != -1 && ((unsigned)slot << 27) != addr) {
+          EUDAQ_ERROR("Configuration mismatch for board " + to_string(i) +
+                      ": Slot " + to_string(slot) + " != Addr " + eudaq::to_hex(addr));
+        }
         boards.push_back(BoardInfo(addr, mode));
       }
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
