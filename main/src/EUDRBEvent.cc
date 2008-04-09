@@ -153,11 +153,11 @@ namespace eudaq {
     } else if (m_det == DET_MIMOSTAR2) {
       if (!m_rows) m_rows = 128;
       if (!m_cols) m_cols = 66;
-      if (!m_mats) m_cols = 4;
+      if (!m_mats) m_mats = 4;
     } else if (m_det == DET_MIMOSA18) {
       if (!m_rows) m_rows = 256;
       if (!m_cols) m_cols = 256;
-      if (!m_mats) m_cols = 4;
+      if (!m_mats) m_mats = 4;
     }else {
       EUDAQ_THROW("Unknown detector in EUDRBDecoder");
     }
@@ -240,14 +240,116 @@ namespace eudaq {
 
   template <typename T_coord, typename T_adc>
   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawM18(const EUDRBBoard & brd) const {
-    EUDAQ_THROW("Not implemented");
-    (void)brd; // to remove warning
+    //  EUDAQ_THROW("Not implemented");
+//     (void)brd; // to remove warning
+
+    const BoardInfo & b = GetInfo(brd);
+    const size_t datasize = 2 * b.m_rows * b.m_cols * b.m_mats * NumFrames(brd);
+    if (brd.DataSize() != datasize) {
+      EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
+                  ", expecting " + to_string(datasize));
+    }
+    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames(brd));
+    const unsigned char * data = brd.GetData();
+    unsigned pivot = brd.PivotPixel();
+
+    unsigned nxpixel = b.m_cols*2; //number of pixels in x direction
+    unsigned nypixel = b.m_rows*2; //number of pixels in y direction
+
+    //decoding array 0
+    for (unsigned i = nypixel-1; i >= nypixel/2; i--) {
+      for (unsigned j = 0; j < nxpixel/2; j++) {
+        unsigned index = i*nypixel+j;
+        result.m_x[index] = i;
+        result.m_y[index] = j;
+        result.m_pivot[index] = (index >= pivot);
+        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
+          short pix = *data++ << 8;
+          pix |= *data++;
+          pix &= 0xfff;
+          result.m_adc[frame][index] = pix;
+        }
+      }
+    }
+    //end of decoding array 0
+    //decoding array 1
+    for (unsigned i = 0; i < nypixel/2; i--) {
+      for (unsigned j = 0; j < nxpixel/2; j++) {
+        unsigned index = i*nypixel+j;
+        result.m_x[index] = i;
+        result.m_y[index] = j;
+        result.m_pivot[index] = (index >= pivot);
+        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
+          short pix = *data++ << 8;
+          pix |= *data++;
+          pix &= 0xfff;
+          result.m_adc[frame][index] = pix;
+        }
+      }
+    }
+    //end of decoding array 1
+    //decoding array 2
+    for (unsigned i = 0; i < nypixel/2; i--) {
+      for (unsigned j = nxpixel-1; j >= nxpixel/2; j++) {
+        unsigned index = i*nypixel+j;
+        result.m_x[index] = i;
+        result.m_y[index] = j;
+        result.m_pivot[index] = (index >= pivot);
+        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
+          short pix = *data++ << 8;
+          pix |= *data++;
+          pix &= 0xfff;
+          result.m_adc[frame][index] = pix;
+        }
+      }
+    }
+    //end of decoding array 2
+    //decoding array 3
+    for (unsigned i = nypixel-1; i >= nypixel/2; i--) {
+      for (unsigned j = nxpixel-1; j >= nxpixel/2; j++) {
+        unsigned index = i*nypixel+j;
+        result.m_x[index] = i;
+        result.m_y[index] = j;
+        result.m_pivot[index] = (index >= pivot);
+        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
+          short pix = *data++ << 8;
+          pix |= *data++;
+          pix &= 0xfff;
+          result.m_adc[frame][index] = pix;
+        }
+      }
+    }
+    //end of decoding array 3
+    return result;
   }
 
   template <typename T_coord, typename T_adc>
   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysZSM18(const EUDRBBoard & brd) const {
-    EUDAQ_THROW("Not implemented");
-    (void)brd; // to remove warning
+    const BoardInfo & b = GetInfo(brd);
+    unsigned pixels = NumPixels(brd);
+    EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, NumFrames(brd));
+    const unsigned char * data = brd.GetData();
+    for (unsigned i = 0; i < pixels; ++i) {
+      int mat = 3 - (data[4*i] >> 6);
+      int col = ((data[4*i+1] & 0x1F) << 4) | (data[4*i+2] >> 4);
+      int row = ((data[4*i] & 0x3F) << 3) |  (data[4*i+1] >> 5);
+      result.m_adc[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
+      result.m_pivot[i] = false;
+      if (mat == 0) {
+        result.m_x[i] = col;
+        result.m_y[i] = row;
+      } else if (mat == 1) {
+        result.m_x[i] = col;
+        result.m_y[i] = row +  b.m_rows;
+      } else if (mat == 2) {
+        result.m_x[i] = col + b.m_cols;
+        result.m_y[i] = row + b.m_rows;
+      }  else if (mat == 3) {
+        result.m_x[i] = col + b.m_cols;
+        result.m_y[i] = row;
+      }
+    }
+    return result;
   }
 
   template
