@@ -38,6 +38,7 @@ public:
       if (TLUStarted || JustStopped) {
         Update(); // get new events
         usleep(100000);
+	std::cout << "****" << std::endl;
         for (size_t i = 0; i < NumEntries(); ++i) {
           m_ev = GetEntry(i).Eventnum();
           unsigned long long t = GetEntry(i).Timestamp();
@@ -50,6 +51,7 @@ public:
           lasttime = t;
           Event(m_ev,t);
         }
+	std::cout << "----" << std::endl;
       }
       if (JustStopped) {
         TLUJustStopped = false;
@@ -173,9 +175,13 @@ int main(int /*argc*/, const char ** argv) {
                                    "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
                                    "The minimum level for displaying log messages locally");
+  eudaq::Option<std::string> op_trace(op, "t", "tracefile", "", "filename", "Log file for tracing USB access");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
+    if (op_trace.Value() != "") {
+      setusbtracefile(op_trace.Value());
+    }
     TLUProducer producer(rctrl.Value());
     producer.MainLoop();
     std::cout << "Quitting" << std::endl;

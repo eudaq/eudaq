@@ -6,8 +6,41 @@
 #include <vector>
 #include <stdexcept>
 #include <iostream>
+#include "eudaq/Utils.hh"
+
+#if !defined(NDEBUG) && !defined(USB_TRACE)
+#define USB_TRACE 1
+#endif
 
 namespace tlu {
+
+void setusbtracefile(const std::string &);
+inline int getusbtracelevel() {
+  return USB_TRACE + 0;
+}
+
+#if USB_TRACE
+void dousbtrace(const char * mode, unsigned long addr, const std::string & data);
+
+template <typename T>
+inline void usbtrace(const char * mode, unsigned long addr, T data) {
+  dousbtrace(mode, addr, eudaq::to_string(eudaq::hexdec(data)));
+}
+
+template <typename T>
+inline void usbtrace(const char * mode, unsigned long addr, T * data, int size) {
+  dousbtrace(mode, addr, "[" + eudaq::to_string(eudaq::hexdec(size)) + "]");
+#if USB_TRACE > 1
+  for (size_t i = 0; i < size; ++i) {
+    dousbtrace("  ", addr + i*dw/8, eudaq::to_string(eudaq::hexdec(data[i])));
+  }
+#else
+  (void)data;
+#endif
+}
+
+
+#endif
 
   static const int TLU_TRIGGER_INPUTS = 4;
   double Timestamp2Seconds(unsigned long long t);
