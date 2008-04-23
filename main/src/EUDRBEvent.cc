@@ -122,6 +122,7 @@ namespace eudaq {
     if (det == "MIMOTEL") m_det = DET_MIMOTEL;
     else if (det == "MIMOSTAR2") m_det = DET_MIMOSTAR2;
     else if (det == "MIMOSA18") m_det = DET_MIMOSA18;
+    else if (det == "MIMOSA1") m_det = DET_MIMOSA18; // DEBUGGING (can be removed)
     else EUDAQ_THROW("Unknown detector in EUDRBDecoder: " + det);
 
     std::string mode = ev.GetTag("MODE" + to_string(brd));
@@ -244,12 +245,12 @@ namespace eudaq {
 //     (void)brd; // to remove warning
 
     const BoardInfo & b = GetInfo(brd);
-    const size_t datasize = 2 * b.m_rows * b.m_cols * b.m_mats * NumFrames(brd);
+    const size_t datasize = 2 * (b.m_rows * b.m_cols - 1) * b.m_mats * NumFrames(brd);
     if (brd.DataSize() != datasize) {
       EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
                   ", expecting " + to_string(datasize));
     }
-    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames(brd));
+    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), (NumFrames(brd) != 2) ? NumFrames(brd) : 3);
     const unsigned char * data = brd.GetData();
     unsigned pivot = brd.PivotPixel();
 
@@ -329,23 +330,25 @@ namespace eudaq {
     unsigned pixels = NumPixels(brd);
     EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, NumFrames(brd));
     const unsigned char * data = brd.GetData();
+    //std::cout << "Decoding Mi18 in ZS, frames=" << NumFrames(brd) << ", pixels = " << NumPixels(brd) << std::endl;
     for (unsigned i = 0; i < pixels; ++i) {
+      //std::cout << "  pixel" << std::endl;
       int mat = 3 - (data[4*i] >> 6);
       int col = ((data[4*i+1] & 0x1F) << 4) | (data[4*i+2] >> 4);
       int row = ((data[4*i] & 0x3F) << 3) |  (data[4*i+1] >> 5);
       result.m_adc[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
       result.m_pivot[i] = false;
-      if (mat == 0) {
+      if(mat == 0) {
         result.m_x[i] = col;
         result.m_y[i] = row;
-      } else if (mat == 1) {
+      } else if(mat == 1) {
+        result.m_x[i] = 2 * b.m_cols - 1 - col;
+        result.m_y[i] = 2 * b.m_rows - 1 - row ;
+      } else if(mat == 2) {
         result.m_x[i] = col;
-        result.m_y[i] = row +  b.m_rows;
-      } else if (mat == 2) {
-        result.m_x[i] = col + b.m_cols;
-        result.m_y[i] = row + b.m_rows;
-      }  else if (mat == 3) {
-        result.m_x[i] = col + b.m_cols;
+        result.m_y[i] = 2 * b.m_rows - 1 - row;
+      }  else if(mat == 3) {
+        result.m_x[i] = 2 * b.m_cols - 1 - col;
         result.m_y[i] = row;
       }
     }

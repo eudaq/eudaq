@@ -21,8 +21,9 @@ struct Seed {
 };
 
 struct Cluster {
-  Cluster(short x, short y) : x(x), y(y) {}
-  short x, y;
+  Cluster(double x, double y, unsigned c) : x(x), y(y), c(c) {}
+  double x, y;
+  unsigned c;
 };
 
 short delmarker(short x) {
@@ -36,10 +37,17 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Extractor", "1.0",
                          "A command-line tool for extracting cluster information from native raw files",
                          1);
-  eudaq::OptionFlag tracksonly(op, "t", "tracks-only", "Extract only clusters which are part of a track");
+  eudaq::Option<int> xsize(op, "x", "x-size", 512, "pixels", "Size of sensor in X direction");
+  eudaq::Option<int> ysize(op, "y", "y-size", 512, "pixels", "Size of sensor in Y direction");
+  eudaq::Option<int> clust(op, "p", "cluster-size", 3, "pixels", "Size of clusters (1=no clustering, 3=3x3, etc.)");
+
   eudaq::Option<double> noise(op, "n", "noise", 5.0, "val", "Noise level, in adc units");
   eudaq::Option<double> thresh_seed(op, "s", "seed-thresh", 5.0, "thresh", "Threshold for seed pixels, in units of sigma");
   eudaq::Option<double> thresh_clus(op, "c", "cluster-thresh", 10.0, "thresh", "Threshold for 3x3 clusters, in units of sigma");
+
+  eudaq::OptionFlag weighted(op, "w", "weighted", "Use weighted average for cluster centre instead of seed position");
+  eudaq::OptionFlag tracksonly(op, "t", "tracks-only", "Extract only clusters which are part of a track (not implemented)");
+
   typedef counted_ptr<std::ofstream> fileptr_t;
   typedef std::map<int, fileptr_t> filemap_t;
   filemap_t files;
@@ -51,11 +59,21 @@ int main(int /*argc*/, char ** argv) {
       if (datafile.find_first_not_of("0123456789") == std::string::npos) {
         datafile = "../data/run" + to_string(from_string(datafile, 0), 6) + ".raw";
       }
+      if (tracksonly.IsSet()) EUDAQ_THROW("Tracking is not yet implemented");
+      if (clust.Value() < 1 || (clust.Value() % 2) != 1) EUDAQ_THROW("Cluster size must be an odd number");
       std::cout << "Reading: " << datafile << std::endl;
       eudaq::FileDeserializer des(datafile);
       counted_ptr<eudaq::EUDRBDecoder> decoder;
       std::vector<std::vector<Cluster> > track;
       unsigned runnum = 0;
+      const size_t npixels = xsize.Value() * ysize.Value();
+      const int dclust = clust.Value()/2;
+      std::cout << "Using sensor size " << xsize.Value() << "x" << ysize.Value() << " = " << npixels << " pixels" << std::endl;
+      std::cout << "Cluster size " << clust.Value() << "x" << clust.Value() << " (dclust=" << dclust << ")" << std::endl;
+      std::cout << "Seed threshold: " << thresh_seed.Value() << " sigma = "
+                << thresh_seed.Value()*noise.Value() << " adc" << std::endl;
+      std::cout << "Cluster threshold: " << thresh_clus.Value() << " sigma = "
+                << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
       while (des.HasData()) {
         counted_ptr<eudaq::Event> ev(eudaq::EventFactory::Create(des));
         eudaq::DetectorEvent * dev = dynamic_cast<eudaq::DetectorEvent*>(ev.get());
@@ -101,29 +119,31 @@ int main(int /*argc*/, char ** argv) {
                   eudaq::EUDRBBoard & brd = eudev->GetBoard(j);
                   //std::cout << "boardnum " << boardnum << ", id " << brd.GetID() << std::endl;
                   eudaq::EUDRBDecoder::arrays_t<short, short> a = decoder->GetArrays<short, short>(brd);
-                  const size_t npixels = 256*256;
                   std::vector<short> cds(npixels);
-                  if (decoder->NumFrames(brd) > 1) {
+                  if (decoder->NumFrames(brd) == 1) {
+                    for (size_t i = 0; i < a.m_adc[0].size(); ++i) {
+                      short x = a.m_x[i]; //delmarker(a.m_x[i]);
+                      if (x < 0) continue;
+                      size_t idx = x + xsize.Value()*a.m_y[i];
+                      //std::cout << "pixel " << x << ", " << a.m_y[i] << " (" << idx << ") = " << a.m_adc[0][i] << std::endl;
+                      cds[idx] = a.m_adc[0][i];
+                    }
+                  } else if (decoder->NumFrames(brd) == 3) {
                     for (size_t i = 0; i < cds.size(); ++i) {
                       short x = delmarker(a.m_x[i]);
                       if (x < 0) continue;
-                      size_t idx = x + 256*a.m_y[i];
+                      size_t idx = x + xsize.Value()*a.m_y[i];
                       cds[idx] = a.m_adc[0][i] * (a.m_pivot[i])
                         + a.m_adc[1][i] * (1-2*a.m_pivot[i])
                         + a.m_adc[2][i] * (a.m_pivot[i]-1);
                     }
                   } else {
-                    for (size_t i = 0; i < a.m_adc.size(); ++i) {
-                      short x = delmarker(a.m_x[i]);
-                      if (x < 0) continue;
-                      size_t idx = x + 256*a.m_y[i];
-                      cds[idx] = a.m_adc[0][i];
-                    }
+                    EUDAQ_THROW("Not implemented: frames=" + to_string(decoder->NumFrames(brd)));
                   }
                   std::vector<Seed> seeds;
                   size_t i = 0;
-                  for (short y = 0; y < 256; ++y) {
-                    for (short x = 0; x < 256; ++x) {
+                  for (short y = 0; y < ysize.Value(); ++y) {
+                    for (short x = 0; x < xsize.Value(); ++x) {
                       if (cds[i] > noise.Value() * thresh_seed.Value()) {
                         seeds.push_back(Seed(x, y, cds[i]));
                       }
@@ -133,28 +153,38 @@ int main(int /*argc*/, char ** argv) {
                   std::sort(seeds.begin(), seeds.end(), &Seed::compare);
                   std::vector<Cluster> clusters;
                   for (size_t i = 0; i < seeds.size(); ++i) {
-                    int charge = 0;
                     bool badseed = false;
-                    for (int dy = -1; dy < 2; ++dy) {
+                    long long charge = 0, sumx = 0, sumy = 0;
+                    for (int dy = -dclust; dy <= dclust; ++dy) {
                       int y = seeds[i].y + dy;
-                      if (y < 0 || y >= 256) continue;
-                      for (int dx = -1; dx < 2; ++dx) {
+                      if (y < 0 || y >= ysize.Value()) continue;
+                      for (int dx = -dclust; dx <= dclust; ++dx) {
                         int x = seeds[i].x + dx;
-                        if (x < 0 || x >= 256) continue;
-                        size_t idx = 256 * y + x;
-                        if (cds[idx] == BADPIX) badseed = true;
-                        charge += cds[idx];
+                        if (x < 0 || x >= xsize.Value()) continue;
+                        size_t idx = xsize.Value() * y + x;
+                        if (cds[idx] == BADPIX) {
+                          badseed = true;
+                        } else {
+                          charge += cds[idx];
+                          sumx += x*cds[idx];
+                          sumy += y*cds[idx];
+                        }
                       }
                     }
-                    if (!badseed && charge > 3 * noise.Value() * thresh_clus.Value()) {
-                      clusters.push_back(Cluster(seeds[i].x, seeds[i].y));
-                      for (int dy = -1; dy < 2; ++dy) {
+                    if (!badseed && charge > clust.Value() * noise.Value() * thresh_clus.Value()) {
+                      double cx = seeds[i].x, cy = seeds[i].y;
+                      if (weighted.IsSet()) {
+                        cx = sumx / (double)charge;
+                        cy = sumy / (double)charge;
+                      }
+                      clusters.push_back(Cluster(cx, cy, charge));
+                      for (int dy = -dclust; dy <= dclust; ++dy) {
                         int y = seeds[i].y + dy;
-                        if (y < 0 || y >= 256) continue;
-                        for (int dx = -1; dx < 2; ++dx) {
+                        if (y < 0 || y >= ysize.Value()) continue;
+                        for (int dx = -dclust; dx <= dclust; ++dx) {
                           int x = seeds[i].x + dx;
-                          if (x < 0 || x >= 256) continue;
-                          size_t idx = 256 * y + x;
+                          if (x < 0 || x >= xsize.Value()) continue;
+                          size_t idx = xsize.Value() * y + x;
                           cds[idx] = BADPIX;
                         }
                       }
@@ -174,8 +204,9 @@ int main(int /*argc*/, char ** argv) {
               if (track[b].size()) {
                 *files[b] << dev->GetEventNumber() << "\t" << track[b].size() << "\n";
                 for (size_t c = 0; c < track[b].size(); ++c) {
-                  *files[b] << " " << track[b][c].x << "\t" << track[b][c].y << "\n";
+                  *files[b] << " " << track[b][c].x << "\t" << track[b][c].y << "\t" << track[b][c].c << "\n";
                 }
+                *files[b] << std::flush;
               }
             }
 
