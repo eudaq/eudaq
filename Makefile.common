@@ -156,8 +156,13 @@ vpath %.gch $(INC)
 .PHONY: default_target
 default_target: default
 
+# On cygwin build static libraries, since there is a problem with exceptions in .dlls
 ifneq ($(TARGETLIB),)
+ifeq ($(PLATFORM),CYGWIN)
+  TARGET := $(LIB)/lib$(TARGETLIB).$(SEXT)
+else
   TARGET := $(LIB)/lib$(TARGETLIB).$(DEXT)
+endif
 endif
 
 ifneq ($(TARGET),)

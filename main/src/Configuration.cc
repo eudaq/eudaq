@@ -1,4 +1,5 @@
 #include "eudaq/Configuration.hh"
+#include "eudaq/Platform.hh"
 
 #include <fstream>
 #include <iostream>
@@ -107,7 +108,12 @@ namespace eudaq {
   long long Configuration::Get(const std::string & key, long long def) const {
     try {
       std::string s = GetString(key);
+#if EUDAQ_PLATFORM_IS(CYGWIN)
+      // cygwin doesn't have strtoll, so just use strtol for now
+      return std::strtol(s.c_str(), 0, 0);
+#else
       return std::strtoll(s.c_str(), 0, 0);
+#endif
     } catch (const Exception &) {
       // ignore: return default
     }
