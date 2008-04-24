@@ -74,6 +74,7 @@ int main(int /*argc*/, char ** argv) {
                 << thresh_seed.Value()*noise.Value() << " adc" << std::endl;
       std::cout << "Cluster threshold: " << thresh_clus.Value() << " sigma = "
                 << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
+      std::vector<unsigned> hit_hist;
       while (des.HasData()) {
         counted_ptr<eudaq::Event> ev(eudaq::EventFactory::Create(des));
         eudaq::DetectorEvent * dev = dynamic_cast<eudaq::DetectorEvent*>(ev.get());
@@ -99,6 +100,7 @@ int main(int /*argc*/, char ** argv) {
             }
           }
           if (track.size() != totalboards) EUDAQ_THROW("Missing IDs");
+          hit_hist = std::vector<unsigned>(totalboards+1, 0); // resize and clear histo
         } else if (ev->IsEORE()) {
           std::cout << "Found EORE" << std::endl;
         } else {
@@ -200,8 +202,10 @@ int main(int /*argc*/, char ** argv) {
               for (size_t c1 = 0; c1 < track[0].size(); ++c1) {
               }
             }
+            unsigned numhit = 0;
             for (size_t b = 0; b < track.size(); ++b) {
               if (track[b].size()) {
+                numhit++;
                 *files[b] << dev->GetEventNumber() << "\t" << track[b].size() << "\n";
                 for (size_t c = 0; c < track[b].size(); ++c) {
                   *files[b] << " " << track[b][c].x << "\t" << track[b][c].y << "\t" << track[b][c].c << "\n";
@@ -209,11 +213,16 @@ int main(int /*argc*/, char ** argv) {
                 *files[b] << std::flush;
               }
             }
+            hit_hist[numhit]++;
 
           } catch (const eudaq::Exception & e) {
             std::cerr << "Exception: " << e.what() << std::endl;
           }
         }
+      }
+      std::cout << "Done. Planes hit:\n";
+      for (size_t i = 0; i < hit_hist.size(); ++i) {
+        std::cout << " " << i << ": " << hit_hist[i] << std::endl;
       }
     }
   } catch (...) {
