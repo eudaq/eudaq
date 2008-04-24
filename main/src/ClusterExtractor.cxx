@@ -220,10 +220,13 @@ int main(int /*argc*/, char ** argv) {
           }
         }
       }
-      std::cout << "Done. Planes hit:\n";
+      std::cout << "Done. Number of planes with hits:\n";
+      unsigned events = 0;
       for (size_t i = 0; i < hit_hist.size(); ++i) {
-        std::cout << " " << i << ": " << hit_hist[i] << std::endl;
+        events += hit_hist[i];
+        std::cout << " " << i << ": " << hit_hist[i] << "\n";
       }
+      std::cout << "Out of " << events << " total events." << std::endl;
     }
   } catch (...) {
     return op.HandleMainException();
