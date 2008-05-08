@@ -35,9 +35,9 @@ CDEP := gcc -M -MM -MP
 CCDEP:= g++ -M -MM -MP
 # Linker
 LD   := g++
-# Dynamic Libraries
+# Command for building dynamic libraries
 DLIB := g++
-# Static Libraries
+# Command for building static libraries
 SLIB := ar
 
 ifeq ($(PLATFORM),MACOSX)
@@ -93,7 +93,7 @@ endif
 ifeq ($(NODEBUG),1)
   CPPFLAGS += -DNDEBUG
 else
-  CFLAGS   += -g
+  CFLAGS   += -g -fno-inline
 endif
 
 ifeq ($(MOREDEBUG),1)

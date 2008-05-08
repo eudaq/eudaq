@@ -184,9 +184,9 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   ZESTSC1_HANDLE TLUController::OpenTLU() {
     // Request information about the system
     unsigned long NumCards = 0;
-    unsigned long CardIDs[256];
-    unsigned long SerialNumbers[256];
-    ZESTSC1_FPGA_TYPE FPGATypes[256];
+    unsigned long CardIDs[256] = {0};
+    unsigned long SerialNumbers[256] = {0};
+    ZESTSC1_FPGA_TYPE FPGATypes[256] = {ZESTSC1_FPGA_UNKNOWN};
     ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
 
 #ifdef TLUDEBUG
@@ -407,7 +407,7 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   }
 
   unsigned char TLUController::ReadRegister(unsigned long offset) const {
-    unsigned char val;
+    unsigned char val = 0;
     ZestSC1ReadRegister(m_handle, offset, &val);
     usbtrace(" R", offset, val);
     return val;
@@ -437,7 +437,7 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   unsigned long long * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
-    unsigned long long buffer[BUFFER_DEPTH];
+    unsigned long long buffer[BUFFER_DEPTH] = {0};
     for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
       buffer[i] = m_oldbuf[i];
     }

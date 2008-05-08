@@ -37,7 +37,7 @@ public:
       bool JustStopped = TLUJustStopped;
       if (TLUStarted || JustStopped) {
         Update(); // get new events
-        usleep(100000);
+        usleep(1000000);
 	std::cout << "****" << std::endl;
         for (size_t i = 0; i < NumEntries(); ++i) {
           m_ev = GetEntry(i).Eventnum();

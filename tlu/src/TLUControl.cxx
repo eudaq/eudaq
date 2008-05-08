@@ -79,7 +79,7 @@ int main(int /*argc*/, char ** argv) {
       eudaq::Time elapsedtime(eudaq::Time::Current() - starttime);
       double hertz = total / elapsedtime.Seconds();
       std::cout << "Time: " << elapsedtime.Formatted("%s.%3") << " s, Hertz: " << hertz << std::endl;
-      sleep(1);
+      usleep(50000);
       //TLU.ResetUSB(); // DEBUG
     }
     std::cout << "Quitting..." << std::endl;
