@@ -129,6 +129,16 @@ namespace eudaq {
     return os << h.m_val << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
   }
 
+  template <>
+  inline std::ostream & operator << (std::ostream & os, const hexdec_t<char> & h) {
+    return os << (int)h.m_val << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
+  }
+
+  template <>
+  inline std::ostream & operator << (std::ostream & os, const hexdec_t<unsigned char> & h) {
+    return os << (int)h.m_val << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
+  }
+
   template <typename T> unsigned char * uchar_cast(T * x) {
     return reinterpret_cast<unsigned char *>(x);
   }

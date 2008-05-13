@@ -1,6 +1,14 @@
 #!/bin/bash
 
-USBINF=`lsusb -d 0x165d:0x0001`
+if which lsusb > /dev/null; then
+  USBINF=`lsusb -d 0x165d:0x0001`
+elif which /sbin/lsusb > /dev/null; then
+  USBINF=`/sbin/lsusb -d 0x165d:0x0001`
+else
+  echo "No lsusb command detected, please install usbutils"
+  exit 1
+fi
+
 if [ "$USBINF" == "" ]; then
   echo "No TLU Detected"
   exit 1

@@ -444,7 +444,9 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
 
     for (int tries = 0; tries < 3; ++tries) {
       // Request block transfer from TLU
+      usleep(10);
       WriteRegister(INITIATE_READOUT_ADDRESS, 0xFF);
+      //usleep(10);
 #ifdef TLUDEBUG
       //std::cout << "ReadBlock 1st write, tries " << tries << std::endl;
 #endif

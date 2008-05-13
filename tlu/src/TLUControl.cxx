@@ -34,6 +34,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for ORing of external triggers");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
+  eudaq::Option<std::string> trace(op, "z", "trace-file", "", "filename",
+                                   "The filename to save a trace of all usb accesses");
   try {
     op.Parse(argv);
     std::cout << "Using options:\n"
@@ -51,6 +53,7 @@ int main(int /*argc*/, char ** argv) {
       if (!sfile->is_open()) EUDAQ_THROW("Unable to open file: " + sname.Value());
     }
     signal(SIGINT, ctrlchandler);
+    if (trace.Value() != "") tlu::setusbtracefile(trace.Value());
     TLUController TLU(fname.Value());
     //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
