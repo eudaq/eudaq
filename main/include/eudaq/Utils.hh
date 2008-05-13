@@ -63,6 +63,11 @@ namespace eudaq {
   }
 
   template<>
+  inline std::string to_hex(const signed char & x, int digits) {
+    return to_hex((int)x, digits);
+  }
+
+  template<>
   inline std::string to_hex(const char & x, int digits) {
     return to_hex((unsigned char)x, digits);
   }
@@ -130,13 +135,19 @@ namespace eudaq {
   }
 
   template <>
-  inline std::ostream & operator << (std::ostream & os, const hexdec_t<char> & h) {
+  inline std::ostream & operator << (std::ostream & os, const hexdec_t<unsigned char> & h) {
     return os << (int)h.m_val << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
   }
 
   template <>
-  inline std::ostream & operator << (std::ostream & os, const hexdec_t<unsigned char> & h) {
+  inline std::ostream & operator << (std::ostream & os, const hexdec_t<signed char> & h) {
     return os << (int)h.m_val << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
+  }
+
+  template <>
+  inline std::ostream & operator << (std::ostream & os, const hexdec_t<char> & h) {
+    return os << (int)(unsigned char)h.m_val
+	      << " (0x" << to_hex(h.m_val, h.m_dig) << ")";
   }
 
   template <typename T> unsigned char * uchar_cast(T * x) {

@@ -416,21 +416,21 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   unsigned short TLUController::ReadRegister16(unsigned long offset) const {
     unsigned short val = ReadRegister(offset);
     val |= ReadRegister(offset+1) << 8;
-    usbtrace(" R", offset, val);
+    //usbtrace(" R", offset, val);
     return val;
   }
 
   unsigned long TLUController::ReadRegister32(unsigned long offset) const {
     unsigned long val = ReadRegister16(offset);
     val |= ReadRegister16(offset+2) << 16;
-    usbtrace(" R", offset, val);
+    //usbtrace(" R", offset, val);
     return val;
   }
 
   unsigned long long TLUController::ReadRegister64(unsigned long offset) const {
     unsigned long long val = ReadRegister32(offset);
     val |= static_cast<unsigned long long>(ReadRegister32(offset+4)) << 32;
-    usbtrace(" R", offset, val);
+    //usbtrace(" R", offset, val);
     return val;
   }
 
