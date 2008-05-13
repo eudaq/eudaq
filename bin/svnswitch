@@ -39,4 +39,4 @@ else
 fi
 
 echo "Returning repository back to original setting"
-svn switch --relocate "$NEWREPO" "$OLDREPO"
+svn switch --relocate "$REPO" "$OLDREPO"
