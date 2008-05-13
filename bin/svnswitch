@@ -1,22 +1,42 @@
 #!/bin/bash
 
+DEF_REPO1="svn+ssh://"
+DEF_REPO2="login.hepforge.org/hepforge/svn/eudaq"
+
 if [ "$2" == "" ]; then
   echo "Usage: svnswitch <newrepo> <svn-command> [svn-params]..."
-  echo "  e.g. svnswitch svn+ssh://corrin@login.hepforge.org/hepforge/svn/eudaq ci -m \"blah\""
+  echo "  <newrepo> can be:"
+  echo "    -     Use $DEF_REPO1$DEF_REPO2"
+  echo "    -USER Use ${DEF_REPO1}USER@$DEF_REPO2"
+  echo "  otherwise <newrepo> is used unmodified as the repository"
+  echo "  e.g. svnswitch -corrin ci -m \"Commit message\""
   exit 1
+fi
+
+if [ "$1" == "-" ]; then
+  REPO=$DEF_REPO1$DEF_REPO2
+elif [ "${1}" == "-${1#-}" ]; then
+  REPO=$DEF_REPO1${1#-}@$DEF_REPO2
+else
+  REPO="$1"
 fi
 
 OLDREPO=`svn info | grep '^Repository Root: ' | sed 's/^[^:]*: //'`
-NEWREPO=$1
 
 shift
 
-echo "Switching from $OLDREPO to $NEWREPO"
-if ! svn switch --relocate "$OLDREPO" "$NEWREPO"; then
+echo "Switching from $OLDREPO to $REPO"
+if ! svn switch --relocate "$OLDREPO" "$REPO"; then
   echo "Error: Unable to switch repository"
   exit 1
 fi
+
 echo "Performing command: $@"
-svn "$@"
+if svn "$@"; then
+  echo OK
+else
+  echo Failed
+fi
+
 echo "Returning repository back to original setting"
 svn switch --relocate "$NEWREPO" "$OLDREPO"
