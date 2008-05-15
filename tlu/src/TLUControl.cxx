@@ -1,4 +1,5 @@
 #include "tlu/TLUController.hh"
+#include "tlu/USBTracer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Utils.hh"
@@ -32,10 +33,13 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for coincidence of external triggers");
   eudaq::Option<int>         omask(op, "o", "ormask", 0, "mask",
                                    "The mask for ORing of external triggers");
+  eudaq::Option<int>         emode(op, "e", "error-handler", 2, "value",
+                                   "Error handler (0=abort, >0=number of tries before exception)");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
   eudaq::Option<std::string> trace(op, "z", "trace-file", "", "filename",
-                                   "The filename to save a trace of all usb accesses");
+                                   "The filename to save a trace of all usb accesses,\n"
+				   "prepend - for only errors, or + for all data (including block transfers)");
   try {
     op.Parse(argv);
     std::cout << "Using options:\n"
@@ -53,8 +57,20 @@ int main(int /*argc*/, char ** argv) {
       if (!sfile->is_open()) EUDAQ_THROW("Unable to open file: " + sname.Value());
     }
     signal(SIGINT, ctrlchandler);
-    if (trace.Value() != "") tlu::setusbtracefile(trace.Value());
-    TLUController TLU(fname.Value());
+    if (trace.Value() != "") {
+      std::string fname = trace.Value();
+      if (fname[0] == '-') {
+	tlu::setusbtracelevel(1);
+	fname = std::string(fname, 1);
+      } else if (fname[0] == '+') {
+	tlu::setusbtracelevel(3);
+	fname = std::string(fname, 1);
+      } else {
+	tlu::setusbtracelevel(2);
+      }	
+      tlu::setusbtracefile(fname);
+    }
+    TLUController TLU(fname.Value(), emode.Value());
     //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
     TLU.SetDUTMask(dmask.Value());

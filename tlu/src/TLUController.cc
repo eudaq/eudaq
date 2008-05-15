@@ -1,4 +1,5 @@
 #include "tlu/TLUController.hh"
+#include "tlu/USBTracer.hh"
 #include "tlu/TLU_address_map.h"
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
@@ -27,88 +28,18 @@ using eudaq::hexdec;
 
 namespace tlu {
 
-class USBTraceFile {
-public:
-  static USBTraceFile & Instance() {
-    static USBTraceFile tracefile;
-    return tracefile;
-  }
-  void Open(const std::string & filename) {
-    Close();
-    m_filename = filename;
-    if (filename != "") {
-      m_file.open(filename.c_str(), std::ios::app);
-      if (!m_file.is_open()) EUDAQ_THROW("Unable to open USB trace file " + m_filename);
-      WriteString("# Log started at " + eudaq::Time::Current().Formatted() + "\n");
-    }
-  }
-  void Close() {
-    if (m_file.is_open()) {
-      m_file.close();
-    }
-  }
-  void WriteString(const std::string & s) {
-    if (m_file.is_open()) {
-      m_file.write(s.c_str(), s.size());
-      m_file.flush();
-    }
-  }
-  void Write(const char * mode, unsigned long addr, const std::string & data) {
-    eudaq::Time time = eudaq::Time::Current();
-    if (addr == m_prev_addr && data == m_prev_data && mode == m_prev_mode) {
-      m_prev_time = time;
-      m_repeated++;
-    } else {
-      FlushRepeated();
-      std::ostringstream s;
-      s << time.Formatted("%T.%6") << " " << mode
-        << " " << eudaq::hexdec(addr) << " " << data << std::endl;
-      WriteString(s.str());
-      m_prev_time = time;
-      m_prev_mode = mode;
-      m_prev_data = data;
-      m_prev_addr = addr;
-    }
-  }
-  bool IsOpen() { return m_file.is_open(); }
-  ~USBTraceFile() {
-    FlushRepeated();
-    Close();
-  }
-private:
-  USBTraceFile() : m_repeated(0), m_prev_time(0), m_prev_addr(0) {}
-  void FlushRepeated() {
-    if (m_repeated) {
-      std::ostringstream s;
-      s << m_prev_time.Formatted("%T.%6") << " ## Repeated " << m_repeated << " time(s)\n";
-      m_repeated = 0;
-      WriteString(s.str());
-      s.clear();
-    }
-  }
-  std::string m_filename;
-  std::ofstream m_file;
-  unsigned long m_repeated;
-  eudaq::Time m_prev_time;
-  std::string m_prev_mode, m_prev_data;
-  unsigned long m_prev_addr;
-};
-
-void setusbtracefile(const std::string & filename) {
-  if (getusbtracelevel() > 0) {
-    USBTraceFile::Instance().Open(filename);
-  } else {
-    EUDAQ_THROW("VME tracing not enabled in this build");
-  }
-}
-
-void dousbtrace(const char * mode, unsigned long addr, const std::string & data) {
-  if (!USBTraceFile::Instance().IsOpen()) return;
-  USBTraceFile::Instance().Write(mode, addr, data);
-}
-
-
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
+
+  std::string TLUException::make_msg(const std::string & msg, int status, int tries) {
+    if (status == 0) {
+      return msg;
+    } else {
+      char * errmsg;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(status), &errmsg);
+      return "ZestSC1 ERROR in function " + msg + " (" + eudaq::to_string(tries) + " tries)"
+	+ " status = " + eudaq::to_string(status) + " (" + errmsg + ").";
+    }
+  }
 
   namespace {
 
@@ -120,6 +51,28 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
       TRIGGER_IN2_COUNTER_0,
       TRIGGER_IN3_COUNTER_0
     };
+
+    // Use one static flag for aborting, since the ErrorHandler can't easily
+    // find which instance did the access
+    // (an improvement would be to use a static std::map<ZESTSC1_HANDLE,TLUController*>)
+    static bool errorhandleraborts(int newmode = -1) {
+      static bool mode = false;
+      if (newmode >= 0) mode = newmode;
+      return mode;
+    }
+
+    static void DefaultErrorHandler(const char * function,
+				    ZESTSC1_HANDLE handle,
+				    ZESTSC1_STATUS status,
+				    const char *msg) {
+      (void)handle;
+      (void)status;
+      if (errorhandleraborts()) {
+	std::cerr << "ZESTSC1 ERROR:  function " << function << " returned error: " << msg << std::endl;
+	usbflushtracefile();
+	abort();
+      }
+    }
 
   }
 
@@ -133,18 +86,8 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
         << " = " << Timestamp2Seconds(m_timestamp);
   }
 
-// Error handler function
-  void DefaultErrorHandler(const char * function,
-                           ZESTSC1_HANDLE handle,
-                           ZESTSC1_STATUS status,
-                           const char *msg) {
-    (void)handle;
-    (void)status;
-    std::cout << "ZESTSC1 ERROR:  function " << function << " returned error: " << msg << std::endl;
-    //throw TLUException(s);
-  }
-
-  TLUController::TLUController(const std::string  & filename, ErrorHandler err) :
+  // Error handler function
+  TLUController::TLUController(const std::string  & filename, int errorhandler) :
     m_filename(filename),
     //m_errorhandler(0),
     m_mask(1),
@@ -159,8 +102,10 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
     m_triggernum(0),
     m_timestamp(0),
     m_oldbuf(new unsigned long long [BUFFER_DEPTH]),
-    m_lasttime(0)
+    m_lasttime(0),
+    m_errorhandler(errorhandler)
   {
+    errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       m_scalers[i] = 0;
     }
@@ -170,7 +115,7 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
     }
 
     // Install an error handler
-    ZestSC1RegisterErrorHandler(err ? err : DefaultErrorHandler);
+    ZestSC1RegisterErrorHandler(DefaultErrorHandler);
 
     m_handle = OpenTLU();
 
@@ -313,15 +258,15 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   }
 
   unsigned char TLUController::GetAndMask() const {
-    return ReadRegister(BEAM_TRIGGER_AMASK_ADDRESS);
+    return ReadRegister8(BEAM_TRIGGER_AMASK_ADDRESS);
   }
 
   unsigned char TLUController::GetOrMask() const {
-    return ReadRegister(BEAM_TRIGGER_OMASK_ADDRESS);
+    return ReadRegister8(BEAM_TRIGGER_OMASK_ADDRESS);
   }
 
   unsigned char TLUController::GetVetoMask() const {
-    return ReadRegister(BEAM_TRIGGER_VMASK_ADDRESS);
+    return ReadRegister8(BEAM_TRIGGER_VMASK_ADDRESS);
   }
 
   void TLUController::Update() {
@@ -355,8 +300,8 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
     //std::cout << "TLU::Update: entries=" << entries << std::endl;
 #endif
 
-    m_fsmstatus = ReadRegister(TRIGGER_FSM_STATUS_ADDRESS);
-    m_vetostatus = ReadRegister(TRIG_INHIBIT_ADDRESS);
+    m_fsmstatus = ReadRegister8(TRIGGER_FSM_STATUS_ADDRESS);
+    m_vetostatus = ReadRegister8(TRIG_INHIBIT_ADDRESS);
 #ifdef TLUDEBUG
     //std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
 #endif
@@ -392,7 +337,7 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
 
 
   unsigned char TLUController::GetTriggerStatus() const {
-    return ReadRegister(TRIG_INHIBIT_ADDRESS);
+    return ReadRegister8(TRIG_INHIBIT_ADDRESS);
   }
 
 
@@ -402,35 +347,77 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   }
 
   void TLUController::WriteRegister(unsigned long offset, unsigned char val) {
-    usbtrace(" W", offset, val);
-    ZestSC1WriteRegister(m_handle, offset, val);
+    int status = ZESTSC1_SUCCESS;
+    int delay = 0;
+    const int count = m_errorhandler ? m_errorhandler : 1;
+    for (int i = 0; i < count; ++i) {
+      if (delay == 0) {
+	delay = 20;
+      } else {
+	usleep(delay);
+	delay += delay;
+      }
+      status = ZestSC1WriteRegister(m_handle, offset, val);
+      usbtrace(" W", offset, val, status);
+      if (status == ZESTSC1_SUCCESS) break;
+    }
+    if (status != ZESTSC1_SUCCESS) {
+      usbflushtracefile();
+      throw TLUException("WriteRegister", status, count);
+    }
   }
 
-  unsigned char TLUController::ReadRegister(unsigned long offset) const {
-    unsigned char val = 0;
-    ZestSC1ReadRegister(m_handle, offset, &val);
-    usbtrace(" R", offset, val);
+  unsigned char TLUController::ReadRegister8(unsigned long offset) const {
+    unsigned char val = ReadRegisterRaw(offset);
+    //usbtrace(" R", offset, val);
     return val;
   }
 
   unsigned short TLUController::ReadRegister16(unsigned long offset) const {
-    unsigned short val = ReadRegister(offset);
-    val |= ReadRegister(offset+1) << 8;
+    unsigned short val = ReadRegisterRaw(offset);
+    val |= static_cast<unsigned short>(ReadRegisterRaw(offset+1)) << 8;
     //usbtrace(" R", offset, val);
     return val;
   }
 
   unsigned long TLUController::ReadRegister32(unsigned long offset) const {
-    unsigned long val = ReadRegister16(offset);
-    val |= ReadRegister16(offset+2) << 16;
+    unsigned long val = 0;
+    for (int i = 0; i < 4; ++i) {
+      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+    }
     //usbtrace(" R", offset, val);
     return val;
   }
 
   unsigned long long TLUController::ReadRegister64(unsigned long offset) const {
-    unsigned long long val = ReadRegister32(offset);
-    val |= static_cast<unsigned long long>(ReadRegister32(offset+4)) << 32;
+    unsigned long long val = 0;
+    for (int i = 0; i < 8; ++i) {
+      val |= static_cast<unsigned long long>(ReadRegisterRaw(offset+i)) << (8*i);
+    }
     //usbtrace(" R", offset, val);
+    return val;
+  }
+
+  unsigned char TLUController::ReadRegisterRaw(unsigned long offset) const {
+    unsigned char val = 0;
+    int status = ZESTSC1_SUCCESS;
+    int delay = 0;
+    const int count = m_errorhandler ? m_errorhandler : 1;
+    for (int i = 0; i < count; ++i) {
+      if (delay == 0) {
+	delay = 20;
+      } else {
+	usleep(delay);
+	delay += delay;
+      }
+      status = ZestSC1ReadRegister(m_handle, offset, &val);
+      usbtrace(" R", offset, val, status);
+      if (status == ZESTSC1_SUCCESS) break;
+    }
+    if (status != ZESTSC1_SUCCESS) {
+      usbflushtracefile();
+      throw TLUException("ReadRegister", status, count);
+    }
     return val;
   }
 
@@ -485,7 +472,7 @@ void dousbtrace(const char * mode, unsigned long addr, const std::string & data)
   }
 
   unsigned TLUController::GetFirmwareID() const {
-    return ReadRegister(FIRMWARE_ID_ADDRESS);
+    return ReadRegister8(FIRMWARE_ID_ADDRESS);
   }
 
   unsigned TLUController::GetLibraryID() {

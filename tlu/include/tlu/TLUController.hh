@@ -1,5 +1,5 @@
-#ifndef H_TLUController_h
-#define H_TLUController_h
+#ifndef H_TLUController_hh
+#define H_TLUController_hh
 
 #include "ZestSC1.h"
 #include <string>
@@ -8,46 +8,23 @@
 #include <iostream>
 #include "eudaq/Utils.hh"
 
-#if !defined(NDEBUG) && !defined(USB_TRACE)
-#define USB_TRACE 1
-#endif
-
 namespace tlu {
-
-void setusbtracefile(const std::string &);
-inline int getusbtracelevel() {
-  return USB_TRACE + 0;
-}
-
-#if USB_TRACE
-void dousbtrace(const char * mode, unsigned long addr, const std::string & data);
-
-template <typename T>
-inline void usbtrace(const char * mode, unsigned long addr, T data) {
-  dousbtrace(mode, addr, eudaq::to_string(eudaq::hexdec(data)));
-}
-
-template <typename T>
-inline void usbtrace(const char * mode, unsigned long addr, T * data, int size) {
-  dousbtrace(mode, addr, "[" + eudaq::to_string(eudaq::hexdec(size)) + "]");
-#if USB_TRACE > 1
-  for (size_t i = 0; i < size; ++i) {
-    dousbtrace("  ", addr + i*dw/8, eudaq::to_string(eudaq::hexdec(data[i])));
-  }
-#else
-  (void)data;
-#endif
-}
-
-
-#endif
 
   static const int TLU_TRIGGER_INPUTS = 4;
   double Timestamp2Seconds(unsigned long long t);
 
   class TLUException : public std::runtime_error {
   public:
-    TLUException(const std::string & msg) : std::runtime_error(msg.c_str()) {}
+    TLUException(const std::string & msg, int status = 0, int tries = 1)
+      : std::runtime_error(make_msg(msg, status, tries).c_str()),
+	m_status(status),
+	m_tries(tries)
+    {}
+    int GetStatus() const { return m_status; }
+    int GetTries() const { return m_tries; }
+  private:
+    static std::string make_msg(const std::string & msg, int status, int tries);
+    int m_status, m_tries;
   };
 
   class TLUEntry {
@@ -64,12 +41,18 @@ inline void usbtrace(const char * mode, unsigned long addr, T * data, int size) 
 
   class TLUController {
   public:
-    typedef void (*ErrorHandler)(const char * function,
-                                 ZESTSC1_HANDLE,
-                                 ZESTSC1_STATUS,
-                                 const char * msg);
+    //typedef void (*ErrorHandler)(const char * function,
+    //                             ZESTSC1_HANDLE,
+    //                             ZESTSC1_STATUS,
+    //                             const char * msg);
+    enum ErrorHandler { // What to do if a usb access returns an error
+      ERR_ABORT,        // Abort the program (used for debugging)
+      ERR_THROW,        // Throw a TLUException
+      ERR_RETRY1,       // Retry once before throwing
+      ERR_RETRY2        // Retry twice
+    };
 
-    TLUController(const std::string & filename = "", ErrorHandler f = 0);
+    TLUController(const std::string & filename = "", int errormech = ERR_RETRY1);
     ~TLUController();
 
     //void SetFilename(const std::string & filename) { m_filename = filename; }
@@ -112,11 +95,12 @@ inline void usbtrace(const char * mode, unsigned long addr, T * data, int size) 
     static ZESTSC1_HANDLE OpenTLU();
     void Initialize();
     void WriteRegister(unsigned long offset, unsigned char val);
-    unsigned char ReadRegister(unsigned long offset) const;
+    unsigned char ReadRegister8(unsigned long offset) const;
     unsigned short ReadRegister16(unsigned long offset) const;
     unsigned long ReadRegister32(unsigned long offset) const;
     unsigned long long ReadRegister64(unsigned long offset) const;
     unsigned long long * ReadBlock(unsigned entries);
+    unsigned char ReadRegisterRaw(unsigned long offset) const;
 
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
@@ -131,6 +115,7 @@ inline void usbtrace(const char * mode, unsigned long addr, T * data, int size) 
     unsigned long long * m_oldbuf;
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     mutable unsigned long long m_lasttime;
+    int m_errorhandler;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
