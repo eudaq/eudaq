@@ -15,7 +15,7 @@ namespace tlu {
 
   class TLUException : public std::runtime_error {
   public:
-    TLUException(const std::string & msg, int status = 0, int tries = 1)
+    TLUException(const std::string & msg, int status = 0, int tries = 0)
       : std::runtime_error(make_msg(msg, status, tries).c_str()),
 	m_status(status),
 	m_tries(tries)

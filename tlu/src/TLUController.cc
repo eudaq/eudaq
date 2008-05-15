@@ -36,7 +36,7 @@ namespace tlu {
     } else {
       char * errmsg;
       ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(status), &errmsg);
-      return "ZestSC1 ERROR in function " + msg + " (" + eudaq::to_string(tries) + " tries)"
+      return "ZestSC1 ERROR in function " + msg + (tries ? " (" + eudaq::to_string(tries) + " tries)" : "")
 	+ " status = " + eudaq::to_string(status) + " (" + errmsg + ").";
     }
   }
@@ -132,7 +132,8 @@ namespace tlu {
     unsigned long CardIDs[256] = {0};
     unsigned long SerialNumbers[256] = {0};
     ZESTSC1_FPGA_TYPE FPGATypes[256] = {ZESTSC1_FPGA_UNKNOWN};
-    ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
+    int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
+    if (status != 0) throw TLUException("ZestSC1CountCards", status);
 
 #ifdef TLUDEBUG
     std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
@@ -162,10 +163,10 @@ namespace tlu {
       throw TLUException("No TLU detected");
     }
 
-
     // Open the card
     ZESTSC1_HANDLE handle;
-    ZestSC1OpenCard(CardIDs[found], &handle);
+    status = ZestSC1OpenCard(CardIDs[found], &handle);
+    if (status != 0) throw TLUException("ZestSC1OpenCard", status);
     ZestSC1SetTimeOut(handle, 200);
     return handle;
   }
@@ -429,15 +430,13 @@ namespace tlu {
       buffer[i] = m_oldbuf[i];
     }
 
+    int result = ZESTSC1_SUCCESS;
     for (int tries = 0; tries < 3; ++tries) {
       // Request block transfer from TLU
       usleep(10);
       WriteRegister(INITIATE_READOUT_ADDRESS, 0xFF);
       //usleep(10);
-#ifdef TLUDEBUG
-      //std::cout << "ReadBlock 1st write, tries " << tries << std::endl;
-#endif
-      int result = ZestSC1ReadData(m_handle, buffer, sizeof buffer);
+      result = ZestSC1ReadData(m_handle, buffer, sizeof buffer);
 
 #ifdef TLUDEBUG
       std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << "ZestSC1ReadData returned " << result << std::endl;
@@ -446,11 +445,11 @@ namespace tlu {
         for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
           m_oldbuf[i] = buffer[i];
         }
-        usbtrace("BR", 0, buffer, BUFFER_DEPTH);
+        usbtrace("BR", 0, buffer, BUFFER_DEPTH, result);
         return m_oldbuf;
       }
     }
-    usbtrace("bR", 0, buffer, BUFFER_DEPTH);
+    usbtrace("bR", 0, buffer, BUFFER_DEPTH, result);
     std::cout << (buffer[0] == m_oldbuf[0] ? "*" : "#") << std::flush;
     return 0;
   }

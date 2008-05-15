@@ -47,7 +47,7 @@ namespace tlu {
     if (status != 0 || getusbtracelevel() > 1) {    
       dousbtrace(mode, addr, "[" + eudaq::to_string(eudaq::hexdec(size)) + "]", status);
       if (getusbtracelevel() > 2) {
-	for (size_t i = 0; i < size; ++i) {
+	for (int i = 0; i < size; ++i) {
 	  dousbtrace("  ", addr + i*sizeof(T), eudaq::to_string(eudaq::hexdec(data[i])));
 	}
       }
