@@ -26,7 +26,7 @@ namespace tlu {
   inline void setusbtracefile(const std::string &) {
     EUDAQ_THROW("VME tracing not enabled in this build");
   }
-  inline void usbtracelevel(int) {
+  inline void setusbtracelevel(int) {
     EUDAQ_THROW("VME tracing not enabled in this build");
   }
   inline void usbflushtracefile() {}
