@@ -137,8 +137,8 @@ namespace eudaq {
       case DET_MIMOTEL_NEWORDER:
         switch (GetInfo(brd).m_mode) {
         case MODE_RAW2:
-        case MODE_RAW3: return GetArraysRaw<T_coord, T_adc>(brd);
-        case MODE_ZS:   return GetArraysZS<T_coord, T_adc>(brd);
+        case MODE_RAW3: return GetArraysRawMTEL<T_coord, T_adc>(brd);
+        case MODE_ZS:   return GetArraysZSMTEL<T_coord, T_adc>(brd);
         default: EUDAQ_THROW("Unrecognised mode");
         }
         break;
@@ -156,9 +156,9 @@ namespace eudaq {
 
   private:
     template <typename T_coord, typename T_adc>
-    arrays_t<T_coord, T_adc> GetArraysRaw(const EUDRBBoard & brd) const;
+    arrays_t<T_coord, T_adc> GetArraysRawMTEL(const EUDRBBoard & brd) const;
     template <typename T_coord, typename T_adc>
-    arrays_t<T_coord, T_adc> GetArraysZS(const EUDRBBoard & brd) const;
+    arrays_t<T_coord, T_adc> GetArraysZSMTEL(const EUDRBBoard & brd) const;
     template <typename T_coord, typename T_adc>
     arrays_t<T_coord, T_adc> GetArraysRawM18(const EUDRBBoard & brd) const;
     template <typename T_coord, typename T_adc>

@@ -8,11 +8,11 @@
 namespace eudaq {
 
   namespace {
-    static const int temp1[] = { 3, 1, 2, 0 };
-    static const std::vector<int> order_mimotel_old(temp1, temp1+4);
+    static const int temp_order_0[] = { 0, 1, 2, 3 };
+    static const std::vector<int> order_default(temp_order_0, temp_order_0+4);
 
-    static const int temp2[] = { 0, 1, 2, 3 };
-    static const std::vector<int> order_mimotel_new(temp2, temp2+4);
+    static const int temp_order_1[] = { 3, 1, 2, 0 };
+    static const std::vector<int> order_swap03(temp_order_1, temp_order_1+4);
   }
 
   EUDAQ_DEFINE_EVENT(EUDRBEvent, str2id("_DRB"));
@@ -85,12 +85,6 @@ namespace eudaq {
     ser.write(m_boards);
   }
 
-//   EUDRBDecoder::EUDRBDecoder(EUDRBDecoder::E_DET det, EUDRBDecoder::E_MODE mode)
-//     : m_det(det), m_mode(mode)
-//   {
-//     Check();
-//   }
-
   EUDRBDecoder::EUDRBDecoder(const DetectorEvent & bore) {
     for (size_t i = 0; i < bore.NumEvents(); ++i) {
       const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(bore.GetEvent(i));
@@ -109,12 +103,12 @@ namespace eudaq {
   }
 
   EUDRBDecoder::BoardInfo::BoardInfo()
-    : m_det(DET_MIMOTEL), m_mode(MODE_RAW3), m_rows(0), m_cols(0), m_mats(0)
+    : m_det(DET_MIMOTEL), m_mode(MODE_RAW3), m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03)
   {
   }
 
   EUDRBDecoder::BoardInfo::BoardInfo(const EUDRBEvent & ev, unsigned brd)
-    : m_rows(0), m_cols(0), m_mats(0)
+    : m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03)
   {
     std::string det = ev.GetTag("DET" + to_string(brd));
     if (det == "") det = ev.GetTag("DET", "MIMOTEL");
@@ -133,8 +127,7 @@ namespace eudaq {
     else if (mode == "RAW3") m_mode = MODE_RAW3;
     else if (mode == "Mixed") {
       /// TODO: remove this 'else if' block it is just a hack for testing
-      m_mode = MODE_RAW3;
-      if (brd % 2) m_mode = MODE_ZS;
+      m_mode = (brd % 2) ? MODE_ZS : MODE_RAW3;
     }
     else EUDAQ_THROW("Unknown mode in EUDRBDecoder: " + mode);
 
@@ -147,18 +140,20 @@ namespace eudaq {
       if (!m_cols) m_cols = 66;
       if (!m_mats) m_mats = 4;
       if (m_det == DET_MIMOTEL) {
-        m_order = order_mimotel_old;
+        m_order = order_swap03;
       } else {
-        m_order = order_mimotel_new;
+        m_order = order_default;
       }
     } else if (m_det == DET_MIMOSTAR2) {
       if (!m_rows) m_rows = 128;
       if (!m_cols) m_cols = 66;
       if (!m_mats) m_mats = 4;
+      m_order = order_swap03; // ???
     } else if (m_det == DET_MIMOSA18) {
       if (!m_rows) m_rows = 256;
       if (!m_cols) m_cols = 256;
       if (!m_mats) m_mats = 4;
+      m_order = order_swap03;
     }else {
       EUDAQ_THROW("Unknown detector in EUDRBDecoder");
     }
@@ -184,7 +179,7 @@ namespace eudaq {
   }
 
   template <typename T_coord, typename T_adc>
-  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRaw(const EUDRBBoard & brd) const {
+  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawMTEL(const EUDRBBoard & brd) const {
     const BoardInfo & b = GetInfo(brd);
     const size_t datasize = 2 * b.m_rows * b.m_cols * b.m_mats * NumFrames(brd);
     if (brd.DataSize() != datasize) {
@@ -222,7 +217,7 @@ namespace eudaq {
   }
 
   template <typename T_coord, typename T_adc>
-  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysZS(const EUDRBBoard & brd) const {
+  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysZSMTEL(const EUDRBBoard & brd) const {
     const BoardInfo & b = GetInfo(brd);
     unsigned pixels = NumPixels(brd);
     //std::cout << "board datasize = " << brd.DataSize() << ", pixels = " << pixels << ", frames = " << NumFrames(brd) << std::endl;
@@ -241,9 +236,6 @@ namespace eudaq {
 
   template <typename T_coord, typename T_adc>
   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawM18(const EUDRBBoard & brd) const {
-    //  EUDAQ_THROW("Not implemented");
-//     (void)brd; // to remove warning
-
     const BoardInfo & b = GetInfo(brd);
     const size_t datasize = 2 * (b.m_rows * b.m_cols - 1) * b.m_mats * NumFrames(brd);
     if (brd.DataSize() != datasize) {
@@ -330,53 +322,42 @@ namespace eudaq {
     unsigned pixels = NumPixels(brd);
     EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, NumFrames(brd));
     const unsigned char * data = brd.GetData();
-    //std::cout << "Decoding Mi18 in ZS, frames=" << NumFrames(brd) << ", pixels = " << NumPixels(brd) << std::endl;
     for (unsigned i = 0; i < pixels; ++i) {
-      //std::cout << "  pixel" << std::endl;
       int mat = 3 - (data[4*i] >> 6);
       int col = ((data[4*i+1] & 0x1F) << 4) | (data[4*i+2] >> 4);
       int row = ((data[4*i] & 0x3F) << 3) |  (data[4*i+1] >> 5);
       result.m_adc[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
       result.m_pivot[i] = false;
-      if(mat == 0) {
+      switch (b.m_order[mat]) {
+      case 0:
         result.m_x[i] = col;
         result.m_y[i] = row;
-      } else if(mat == 1) {
-        result.m_x[i] = 2 * b.m_cols - 1 - col;
+        break;
+      case 1:
+        result.m_x[i] = col;
         result.m_y[i] = 2 * b.m_rows - 1 - row ;
-      } else if(mat == 2) {
-        result.m_x[i] = col;
+        break;
+      case 2:
+        result.m_x[i] = 2 * b.m_cols - 1 - col;
         result.m_y[i] = 2 * b.m_rows - 1 - row;
-      }  else if(mat == 3) {
+        break;
+      case 3:
         result.m_x[i] = 2 * b.m_cols - 1 - col;
         result.m_y[i] = row;
+        break;
       }
     }
     return result;
   }
 
-  template
-  EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRaw<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRawMTEL<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZSMTEL<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
 
-  template
-  EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRaw<>(const EUDRBBoard & brd) const;
-
-  template
-  EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZS<>(const EUDRBBoard & brd) const;
-
-  template
-  EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZS<>(const EUDRBBoard & brd) const;
-
-  template
-  EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
-
-  template
-  EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
-
-  template
-  EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
-
-  template
-  EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRawMTEL<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZSMTEL<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
+  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
 
 }
