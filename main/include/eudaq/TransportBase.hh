@@ -11,7 +11,7 @@
 #include <string>
 #include <queue>
 #include <iosfwd>
-
+#include <cstring>
 #include <iostream>
 
 namespace eudaq {

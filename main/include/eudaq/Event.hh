@@ -36,7 +36,7 @@ namespace eudaq {
 
   class Event : public Serializable {
   public:
-    enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_ALL=(unsigned)-1 };
+    enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_ALL=(unsigned)-1 };
     Event(unsigned run, unsigned event, unsigned long long timestamp = NOTIMESTAMP, unsigned flags=0)
       : m_flags(flags), m_runnumber(run), m_eventnumber(event), m_timestamp(timestamp) {}
     Event(Deserializer & ds);
@@ -50,13 +50,13 @@ namespace eudaq {
     Event & SetTag(const std::string & name, const std::string & val);
     std::string GetTag(const std::string & name, const std::string def = "") const;
 
-    bool IsBORE() const { return m_flags & FLAG_BORE; }
-    bool IsEORE() const { return m_flags & FLAG_EORE; }
+    bool IsBORE() const { return GetFlags(FLAG_BORE); }
+    bool IsEORE() const { return GetFlags(FLAG_EORE); }
+    bool HasHits() const { return GetFlags(FLAG_HITS); }
 
     static unsigned long str2id(const std::string & idstr);
     static std::string id2str(unsigned long id);
     unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
-  protected:
     void SetFlags(unsigned f) { m_flags |= f; }
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
   private:

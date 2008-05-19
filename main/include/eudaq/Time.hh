@@ -6,6 +6,7 @@
 #include <ostream>
 #include <iomanip>
 #include <string>
+#include <cstring>
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 //# include <time.h>
