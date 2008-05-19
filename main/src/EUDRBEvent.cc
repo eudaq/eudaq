@@ -189,26 +189,26 @@ namespace eudaq {
     EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames(brd));
     const unsigned char * data = brd.GetData();
     unsigned pivot = brd.PivotPixel();
-    //size_t i = 0;
+
+    unsigned nxpixel = b.m_cols*b.m_mats; //number of pixels in x direction
+    //unsigned nypixel = b.m_rows;          //number of pixels in y direction
+
     for (size_t row = 0; row < b.m_rows; ++row) {
       for (size_t col = 0; col < b.m_cols; ++col) {
-        //size_t saved_i = i;
-        for (size_t mat = 0; mat < b.m_mats; ++mat) {
-          size_t i = col + b.m_order[mat]*b.m_cols + row*b.m_mats*b.m_cols;
-          result.m_x[i] = col + b.m_order[mat]*b.m_cols;
-          result.m_y[i] = row;
-          result.m_pivot[i] = (row<<7 | col) >= pivot;
-          //i++;
-        }
         for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          //i = saved_i;
           for (size_t mat = 0; mat < b.m_mats; ++mat) {
-            size_t i = col + b.m_order[mat]*b.m_cols + row*b.m_mats*b.m_cols;
+            unsigned x = col + b.m_order[mat]*b.m_cols;
+            unsigned y = row;
+            size_t i = x + y*nxpixel;
+            if (frame == 0) {
+              result.m_x[i] = x;
+              result.m_y[i] = y;
+              result.m_pivot[i] = (row<<7 | col) >= pivot;
+            }
             short pix = *data++ << 8;
             pix |= *data++;
             pix &= 0xfff;
             result.m_adc[frame][i] = pix;
-            //i++;
           }
         }
       }
@@ -242,77 +242,57 @@ namespace eudaq {
       EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
                   ", expecting " + to_string(datasize));
     }
-    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), (NumFrames(brd) != 2) ? NumFrames(brd) : 3);
+    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames(brd));
     const unsigned char * data = brd.GetData();
     unsigned pivot = brd.PivotPixel();
 
     unsigned nxpixel = b.m_cols*2; //number of pixels in x direction
     unsigned nypixel = b.m_rows*2; //number of pixels in y direction
 
-    //decoding array 0
-    for (unsigned i = nypixel-1; i >= nypixel/2; i--) {
-      for (unsigned j = 0; j < nxpixel/2; j++) {
-        unsigned index = i*nypixel+j;
-        result.m_x[index] = i;
-        result.m_y[index] = j;
-        result.m_pivot[index] = (index >= pivot);
+    for (size_t row = 0; row < b.m_rows; ++row) {
+      for (size_t col = 0; col < b.m_cols; ++col) {
+        if (row == b.m_rows-1 && col == b.m_cols-1) break; // last pixel is not transferred
         for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          short pix = *data++ << 8;
-          pix |= *data++;
-          pix &= 0xfff;
-          result.m_adc[frame][index] = pix;
+          for (size_t mat = 0; mat < b.m_mats; ++mat) {
+            unsigned x = 0;
+            unsigned y = 0;
+            unsigned coltmp = col, rowtmp = row;
+            if (NumFrames(brd) == 2) { // rolling frames
+              coltmp = (col + (pivot & 0x1f)) % b.m_cols;
+              rowtmp = (row + (pivot >> 9)) % b.m_rows;
+            }
+            switch (b.m_order[mat]) {
+            case 0:
+              x = rowtmp;
+              y = coltmp;
+              break;
+            case 1:
+              x = rowtmp;
+              y = nypixel - 1 - rowtmp;
+              break;
+            case 2:
+              x = nxpixel - 1 - coltmp;
+              y = nypixel - 1 - rowtmp;
+              break;
+            case 3:
+              x = nxpixel - 1 - coltmp;
+              y = coltmp;
+              break;
+            }
+            size_t i = x + y*nxpixel;
+            if (frame == 0) {
+              result.m_x[i] = x;
+              result.m_y[i] = y;
+              result.m_pivot[i] = (row<<7 | col) >= pivot;
+            }
+            short pix = *data++ << 8;
+            pix |= *data++;
+            pix &= 0xfff;
+            result.m_adc[frame][i] = pix;
+          }
         }
       }
     }
-    //end of decoding array 0
-    //decoding array 1
-    for (unsigned i = 0; i < nypixel/2; i--) {
-      for (unsigned j = 0; j < nxpixel/2; j++) {
-        unsigned index = i*nypixel+j;
-        result.m_x[index] = i;
-        result.m_y[index] = j;
-        result.m_pivot[index] = (index >= pivot);
-        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          short pix = *data++ << 8;
-          pix |= *data++;
-          pix &= 0xfff;
-          result.m_adc[frame][index] = pix;
-        }
-      }
-    }
-    //end of decoding array 1
-    //decoding array 2
-    for (unsigned i = 0; i < nypixel/2; i--) {
-      for (unsigned j = nxpixel-1; j >= nxpixel/2; j++) {
-        unsigned index = i*nypixel+j;
-        result.m_x[index] = i;
-        result.m_y[index] = j;
-        result.m_pivot[index] = (index >= pivot);
-        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          short pix = *data++ << 8;
-          pix |= *data++;
-          pix &= 0xfff;
-          result.m_adc[frame][index] = pix;
-        }
-      }
-    }
-    //end of decoding array 2
-    //decoding array 3
-    for (unsigned i = nypixel-1; i >= nypixel/2; i--) {
-      for (unsigned j = nxpixel-1; j >= nxpixel/2; j++) {
-        unsigned index = i*nypixel+j;
-        result.m_x[index] = i;
-        result.m_y[index] = j;
-        result.m_pivot[index] = (index >= pivot);
-        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          short pix = *data++ << 8;
-          pix |= *data++;
-          pix &= 0xfff;
-          result.m_adc[frame][index] = pix;
-        }
-      }
-    }
-    //end of decoding array 3
     return result;
   }
 
