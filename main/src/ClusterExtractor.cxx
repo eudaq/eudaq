@@ -130,6 +130,13 @@ int main(int /*argc*/, char ** argv) {
                       //std::cout << "pixel " << x << ", " << a.m_y[i] << " (" << idx << ") = " << a.m_adc[0][i] << std::endl;
                       cds[idx] = a.m_adc[0][i];
                     }
+                  } else if (decoder->NumFrames(brd) == 2) {
+                    for (size_t i = 0; i < cds.size(); ++i) {
+                      short x = delmarker(a.m_x[i]);
+                      if (x < 0) continue;
+                      size_t idx = x + xsize.Value()*a.m_y[i];
+                      cds[idx] = a.m_adc[1][i] - a.m_adc[0][i];
+                    }
                   } else if (decoder->NumFrames(brd) == 3) {
                     for (size_t i = 0; i < cds.size(); ++i) {
                       short x = delmarker(a.m_x[i]);
