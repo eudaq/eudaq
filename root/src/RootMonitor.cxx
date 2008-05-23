@@ -1313,7 +1313,7 @@ private:
     b.m_histonumclusters= new TH1DNew(make_name("NumClusters",   board).c_str(), "Num Clusters",      100,  0,  100);
     b.m_histodeltax     = new TH1DNew(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
     b.m_histodeltay     = new TH1DNew(make_name("DeltaY",        board).c_str(), "Delta Y",           200,-100, 100);
-    b.m_histonumhits    = new TH1DNew(make_name("NumSeeds",      board).c_str(), "Num Seeds",         100,   0, 500);
+    b.m_histonumhits    = new TH1DNew(make_name("NumSeeds",      board).c_str(), "Num Seeds",         100,   0, 100);
     b.m_histocds2d->Sumw2();
 
     b.m_testhisto = new TH2DNew(make_name("CDSLego",    board).c_str(), "CDS Lego",       264, 0, 264, 256, 0, 256);
@@ -1326,10 +1326,20 @@ private:
     std::vector<double> ones(npixels, 1.0);
     std::vector<double> cds(a.m_adc[0]);
     if (m_decoder->NumFrames(e) > 1) {
-      for (size_t i = 0; i < cds.size(); ++i) {
-        cds[i] = a.m_adc[0][i] * (a.m_pivot[i])
-          + a.m_adc[1][i] * (1-2*a.m_pivot[i])
-          + a.m_adc[2][i] * (a.m_pivot[i]-1);
+      if (m_decoder->NumFrames(e) == 3) {
+        for (size_t i = 0; i < cds.size(); ++i) {
+          cds[i] = a.m_adc[0][i] * (a.m_pivot[i])
+            + a.m_adc[1][i] * (1-2*a.m_pivot[i])
+            + a.m_adc[2][i] * (a.m_pivot[i]-1);
+        }
+      } else if (m_decoder->NumFrames(e) == 2) {
+        for (size_t i = 0; i < cds.size(); ++i) {
+          cds[i] = a.m_adc[1][i] - a.m_adc[0][i];
+        }
+      } else {
+        for (size_t i = 0; i < cds.size(); ++i) {
+          cds[i] = 100;
+        }
       }
       b.m_historaw2d->FillN(npixels, &a.m_x[0], &a.m_y[0], &a.m_adc[1][0]);
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
