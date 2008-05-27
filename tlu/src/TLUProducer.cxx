@@ -14,7 +14,7 @@ using eudaq::to_string;
 using eudaq::to_hex;
 using namespace tlu;
 
-class TLUProducer : public eudaq::Producer, public TLUController {
+class TLUProducer : public TLUController, public eudaq::Producer {
 public:
   TLUProducer(const std::string & runcontrol)
     : eudaq::Producer("TLU", runcontrol),
@@ -36,10 +36,14 @@ public:
   void MainLoop() {
     do {
       bool JustStopped = TLUJustStopped;
+      if (JustStopped) {
+        Stop();
+        eudaq::mSleep(100);
+      }
       if (TLUStarted || JustStopped) {
+        eudaq::mSleep(100);
         Update(); // get new events
-        usleep(1000000);
-	std::cout << "****" << std::endl;
+        //std::cout << "--------" << std::endl;
         for (size_t i = 0; i < NumEntries(); ++i) {
           m_ev = GetEntry(i).Eventnum();
           unsigned long long t = GetEntry(i).Timestamp();
@@ -52,11 +56,11 @@ public:
           lasttime = t;
           Event(m_ev,t);
         }
-	std::cout << "----" << std::endl;
+        std::cout << "========" << std::endl;
       }
       if (JustStopped) {
-        TLUJustStopped = false;
         SendEvent(TLUEvent::EORE(m_run, ++m_ev));
+        TLUJustStopped = false;
       }
       usleep(100);
     } while (!done);
@@ -117,9 +121,11 @@ public:
   virtual void OnStopRun() {
     try {
       std::cout << "Stop Run" << std::endl;
-      Stop();
       TLUStarted=false;
       TLUJustStopped=true;
+      while (TLUJustStopped) {
+        eudaq::mSleep(100);
+      }
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -132,7 +138,7 @@ public:
   virtual void OnTerminate() {
     std::cout << "Terminate (press enter)" << std::endl;
     done = true;
-    sleep(2);
+    sleep(1);
   }
   virtual void OnReset() {
     try {
