@@ -55,48 +55,48 @@ class histopad // this class represents a pad of histograms.
 {
 public:
   histopad(TGCheckButton *check) // assign a checkbutton to this pad
-  {
-    SetVars();
-    checkboxbutton = check;
-    Disable();
-  }
+    {
+      SetVars();
+      checkboxbutton = check;
+      Disable();
+    }
   ~histopad(){ }
   
   void AddHisto(TH1 *histo, TString option) //add histograms and the draw options to this pad
-  {
-    h.push_back(histo);
-    drawoptions.push_back(option);
-  }
+    {
+      h.push_back(histo);
+      drawoptions.push_back(option);
+    }
   void Enable() //enable the pad. this updates also the assigned checkbox
-  {
-    enabled = kTRUE;
-    UpdateStatus();
-  }
+    {
+      enabled = kTRUE;
+      UpdateStatus();
+    }
   void Disable() //disable the pad
-  {
-    enabled = kFALSE;
-    UpdateStatus();
-  }
+    {
+      enabled = kFALSE;
+      UpdateStatus();
+    }
   Bool_t GetStatus() const { return enabled; } //return whether the pad is enabled or disabled
   void SetVars() //initialize variables
-  {
-    enabled = kTRUE;
-  }
+    {
+      enabled = kTRUE;
+    }
   void SetStatus() //synchronize the histopad object and the assigned checkbox
-  {
-    enabled = checkboxbutton->IsOn();
-  }
+    {
+      enabled = checkboxbutton->IsOn();
+    }
   TGCheckButton *checkboxbutton; //check box associated to this array of histograms
   std::vector<TH1*> h; // array of histogram pointer
   std::vector<TString> drawoptions; //draw option for each histogram
 private:
   void UpdateStatus() // update the checkbox
-  {
-    if(enabled)
-      checkboxbutton->SetOn();
-    else
-      checkboxbutton->SetOn(kFALSE);
-  }
+    {
+      if(enabled)
+        checkboxbutton->SetOn();
+      else
+        checkboxbutton->SetOn(kFALSE);
+    }
   
   Bool_t enabled; //boolean whether this pad is drawn or not
   
@@ -106,29 +106,29 @@ class TH2DNew : public TH2D //inherited TH2D class to add a "modified" flag. for
 {
 public:
   TH2DNew(const char *name,const char *title,Int_t nbinsx,Double_t xlow,Double_t xup,Int_t nbinsy,Double_t ylow,Double_t yup) : TH2D(name,title,nbinsx,xlow,xup,nbinsy,ylow,yup), modified(kFALSE)
-  {
+    {
     
-  }
+    }
   virtual void Reset(Option_t *option)
-  {
-    TH2D::Reset(option);
-    modified = kTRUE;
-  }
+    {
+      TH2D::Reset(option);
+      modified = kTRUE;
+    }
   virtual void FillN(Int_t ntimes, const Double_t* x, const Double_t* y, const Double_t* w, Int_t stride = 1)
-  {
-    TH2D::FillN(ntimes,x,y,w,stride);
-    modified = kTRUE;
-  }
+    {
+      TH2D::FillN(ntimes,x,y,w,stride);
+      modified = kTRUE;
+    }
   virtual Int_t Fill(Double_t x,Double_t y, Double_t w)
-  {
-    modified = kTRUE;
-    return TH2D::Fill(x,y,w);
-  }
+    {
+      modified = kTRUE;
+      return TH2D::Fill(x,y,w);
+    }
   virtual Int_t Fill(Double_t x,Double_t y)
-  {
-    modified = kTRUE;
-    return Fill(x,y,1.0);
-  }
+    {
+      modified = kTRUE;
+      return Fill(x,y,1.0);
+    }
   Bool_t modified; //flag whether this histogram was modified.
 };
 
@@ -136,39 +136,39 @@ class TH1DNew : public TH1D //inherited TH1D class to add a "modified" flag. for
 {
 public:
   TH1DNew(const char *name,const char *title,Int_t nbinsx,Double_t xlow,Double_t xup) : TH1D(name,title,nbinsx,xlow,xup), modified(kFALSE)
-  {
+    {
     
-  }
+    }
   virtual void Reset(Option_t *option)
-  {
-    TH1D::Reset(option);
-    modified = kTRUE;
-  }
+    {
+      TH1D::Reset(option);
+      modified = kTRUE;
+    }
   virtual void FillN(Int_t ntimes, const Double_t* x, const Double_t* w, Int_t stride = 1)
-  {
-    TH1D::FillN(ntimes,x,w,stride);
-    modified = kTRUE;
-  }
+    {
+      TH1D::FillN(ntimes,x,w,stride);
+      modified = kTRUE;
+    }
   virtual Int_t Fill(Double_t x, Double_t w)
-  {
-    modified = kTRUE;
-    return TH1D::Fill(x,w);
-  }
-virtual Int_t Fill(Double_t x)
-  {
-    modified = kTRUE;
-    return Fill(x,1.0);
-  }
+    {
+      modified = kTRUE;
+      return TH1D::Fill(x,w);
+    }
+  virtual Int_t Fill(Double_t x)
+    {
+      modified = kTRUE;
+      return Fill(x,1.0);
+    }
   Bool_t modified; //flag whether this histogram was modified.
 };
 
 class ConfigurationClass : public TQObject { //a class holding some configuration informations
 public:
   ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0) //some default values for the configuration
-  {
-  }
+    {
+    }
 
- ~ConfigurationClass(){}
+  ~ConfigurationClass(){}
   unsigned UPDATE_EVERY_N_EVENTS;
   unsigned CLUSTER_POSITION; // 0=seed position, 1=lin cog
   unsigned CLUSTER_TYPE; // 3=3x3, 5=5x5
@@ -213,46 +213,46 @@ class RootMonitor : private eudaq::Holder<int>,
                     public eudaq::Monitor {
 public:
   virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t) //this method implements the communication between gui elements and the underlaying functions
-  {
-    switch (GET_MSG(msg))
-      {
-     case  kC_COMMAND:
-	switch(GET_SUBMSG(msg))
-	  {
-	  case kCM_BUTTON:
-	    if(parm1 == 150) // the apply button
-	      {
-		UpdateConf();
-		m_conf_apply->SetEnabled(kFALSE); //the configuration was changed; enable the apply button, so it is again possible to push it
-	      }
-	    if(parm1 == 160) //the reset button
-	      {
-		std::cout << "*** resetting all histograms ***" << std:: endl;
-		for (size_t i = 0; i < m_board.size(); ++i) {
-		  m_board[i].Reset();
-		}
-	      }
-	    break;
-	    case kCM_COMBOBOX:
-	      m_conf_apply->SetEnabled(kTRUE);//the configuration was changed; enable the apply button, so it is again possible to push it
-	      
-	      break;
-	  case kCM_CHECKBUTTON:
-	    m_conf_apply->SetEnabled(kTRUE);//the configuration was changed; enable the apply button, so it is again possible to push it
-	    break;
-	  }
-	break;
-      case kC_TEXTENTRY:
-	switch(GET_SUBMSG(msg))
-	  {
-	  case kTE_TEXTCHANGED:
-	    m_conf_apply->SetEnabled(kTRUE);//the configuration was changed; enable the apply button, so it is again possible to push it
-	    break;
-	  }
-      }
+    {
+      switch (GET_MSG(msg))
+        {
+        case  kC_COMMAND:
+          switch(GET_SUBMSG(msg))
+            {
+            case kCM_BUTTON:
+              if(parm1 == 150) // the apply button
+                {
+                  UpdateConf();
+                  m_conf_apply->SetEnabled(kFALSE); //the configuration was changed; enable the apply button, so it is again possible to push it
+                }
+              if(parm1 == 160) //the reset button
+                {
+                  std::cout << "*** resetting all histograms ***" << std:: endl;
+                  for (size_t i = 0; i < m_board.size(); ++i) {
+                    m_board[i].Reset();
+                  }
+                }
+              break;
+            case kCM_COMBOBOX:
+              m_conf_apply->SetEnabled(kTRUE);//the configuration was changed; enable the apply button, so it is again possible to push it
+       
+              break;
+            case kCM_CHECKBUTTON:
+              m_conf_apply->SetEnabled(kTRUE);//the configuration was changed; enable the apply button, so it is again possible to push it
+              break;
+            }
+          break;
+        case kC_TEXTENTRY:
+          switch(GET_SUBMSG(msg))
+            {
+            case kTE_TEXTCHANGED:
+              m_conf_apply->SetEnabled(kTRUE);//the configuration was changed; enable the apply button, so it is again possible to push it
+              break;
+            }
+        }
     
-    return kTRUE;
-  }
+      return kTRUE;
+    }
   RootMonitor(const std::string & runcontrol, const std::string & datafile, int x, int y, int w, int h,
               int argc, const char ** argv)
     : eudaq::Holder<int>(argc),
@@ -369,6 +369,9 @@ public:
       m_conf_cds_lego_update = new TGNumberEntry(m_conf_group_frame.get(), conf.UPDATE_EVERY_N_EVENTS, 5);
       m_conf_cds_lego_update->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_cds_lego_update.get(), m_hinttop.get());
+
+
+      
     
       clustertypelabel = new TGLabel(m_conf_group_frame.get(),"Cluster Type:");
       m_conf_group_frame->AddFrame(clustertypelabel.get(), m_hinttop.get());
@@ -378,11 +381,11 @@ public:
       clustertypeComboBox->AddEntry("5x5",1);
       clustertypeComboBox->Resize(102,23);
       if(conf.CLUSTER_TYPE == 3)
-	clustertypeComboBox->Select(0);
+        clustertypeComboBox->Select(0);
       else if (conf.CLUSTER_TYPE == 5)
-	clustertypeComboBox->Select(1);
+        clustertypeComboBox->Select(1);
       else
-	clustertypeComboBox->Select(0);
+        clustertypeComboBox->Select(0);
       clustertypeComboBox->Associate(this);
       m_conf_group_frame->AddFrame(clustertypeComboBox.get(), m_hinttop.get());
 
@@ -394,9 +397,9 @@ public:
       clusterpositionComboBox->AddEntry("linear center of gravity",1);
       clusterpositionComboBox->Resize(102,23);
       if(conf.CLUSTER_POSITION == 0)
-	clusterpositionComboBox->Select(0);
+        clusterpositionComboBox->Select(0);
       else if(conf.CLUSTER_POSITION == 1)
-	clusterpositionComboBox->Select(1);
+        clusterpositionComboBox->Select(1);
       clusterpositionComboBox->Associate(this);
       m_conf_group_frame->AddFrame(clusterpositionComboBox.get(), m_hinttop.get());
 
@@ -420,6 +423,20 @@ public:
       }
       m_histonumtracks = new TH1DNew("NumTracks", "Num Tracks", 100, 0, 100);
 
+
+      //histograms for hit correlation between neighbor boards
+      for (size_t i = 0; i < m_board.size()-1; ++i) {
+        TString title;
+        char tmpstring[50];
+        sprintf(tmpstring, "Hit Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
+        title = tmpstring;
+        m_hitcorrelation.push_back(
+          new TH2DNew(make_name("hitcorrelation",    i).c_str(), title,   20, 0, 20, 20, 0, 20)
+          );
+        (m_hitcorrelation.back())->SetContour(99);
+      }
+      
+
       //main histogram checkboxes
       m_conf_group_frame_main = new TGGroupFrame(m_conf_tab.get(),"Main Histograms");
 
@@ -431,20 +448,33 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_numclusters.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_numclusters.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "" : "same");
-       	(main_pads.back()).AddHisto((m_board[i].m_histonumclusters).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_histonumclusters).get(), drawoption);
       }
       //end of number of clusters
+      
+      //hit correlations
+      m_conf_checkbox_main_hitcorr =  new TGCheckButton(m_conf_group_frame_main.get(),"Hit Correlations");
+      m_conf_checkbox_main_hitcorr->Associate(this);
+      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_hitcorr.get(), m_hinttop.get());
+      for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
+        main_pads.push_back(histopad(m_conf_checkbox_main_hitcorr.get()));
+        TString drawoption;
+        drawoption =  "col2z";
+        (main_pads.back()).AddHisto(m_hitcorrelation[i], drawoption);
+      }
+      //end of hit correlations
+
       //raw value
       m_conf_checkbox_main_rawval =  new TGCheckButton(m_conf_group_frame_main.get(),"Raw Value");
       m_conf_checkbox_main_rawval->Associate(this);
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_rawval.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_rawval.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "" : "same");
-       	(main_pads.back()).AddHisto((m_board[i].m_historawval).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_historawval).get(), drawoption);
       }
       //end of raw value
       //cluster 2d
@@ -453,9 +483,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_cluster2d.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_cluster2d.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "box" : "same box");
-       	(main_pads.back()).AddHisto((m_board[i].m_histocluster2d).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "box" : "same box");
+        (main_pads.back()).AddHisto((m_board[i].m_histocluster2d).get(), drawoption);
       }
       //end of cluster 2d
       //delta x
@@ -464,9 +494,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_deltax.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_deltax.get()));
       for (size_t i = 1; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 1 ? "" : "same");
-       	(main_pads.back()).AddHisto((m_board[i].m_histodeltax).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 1 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_histodeltax).get(), drawoption);
       }
       //end of delta x
       //delta y
@@ -475,9 +505,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_deltay.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_deltay.get()));
       for (size_t i = 1; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 1 ? "" : "same");
-       	(main_pads.back()).AddHisto((m_board[i].m_histodeltay).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 1 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_histodeltay).get(), drawoption);
       }
       //end of delta y
       //number of seeds
@@ -486,9 +516,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_numhits.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_numhits.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "" : "same");
-       	(main_pads.back()).AddHisto((m_board[i].m_histonumhits).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_histonumhits).get(), drawoption);
       }
       //end of number of seeds
       //cds value
@@ -497,9 +527,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_cdsval.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_cdsval.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "" : "same");
-       	(main_pads.back()).AddHisto((m_board[i].m_histocdsval).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_histocdsval).get(), drawoption);
       }
       //end of cds value
       //track 2d
@@ -508,9 +538,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_track2d.get(),m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_track2d.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "box" : "same box");
-       	(main_pads.back()).AddHisto((m_board[i].m_histotrack2d).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "box" : "same box");
+        (main_pads.back()).AddHisto((m_board[i].m_histotrack2d).get(), drawoption);
       }
       //end of track 2d
       //cluster charge
@@ -519,9 +549,9 @@ public:
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_clusterval.get(), m_hinttop.get());
       main_pads.push_back(histopad(m_conf_checkbox_main_clusterval.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	TString drawoption;
-	drawoption = (i == 0 ? "box" : "same box");
-       	(main_pads.back()).AddHisto((m_board[i].m_histoclusterval).get(), drawoption);
+        TString drawoption;
+        drawoption = (i == 0 ? "box" : "same box");
+        (main_pads.back()).AddHisto((m_board[i].m_histoclusterval).get(), drawoption);
       }
       //end of cluster charge
       //number of tracks
@@ -552,8 +582,8 @@ public:
       m_conf_group_frame_cdslego->AddFrame(m_conf_checkbox_cdslego.get(), m_hinttop.get());
       cdslego_pads.push_back(histopad(m_conf_checkbox_cdslego.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-	(cdslego_pads.back()).AddHisto((m_board[i].m_testhisto).get(), "SURF2ZFBBB"); //
-	//(cdslego_pads.back()).AddHisto((m_board[i].m_testhisto).get(), "scat");
+        (cdslego_pads.back()).AddHisto((m_board[i].m_testhisto).get(), "SURF2ZFBBB"); //
+        //(cdslego_pads.back()).AddHisto((m_board[i].m_testhisto).get(), "scat");
       }
       //end of cds lego plot
 
@@ -569,7 +599,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_clusterx.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_clusterx.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histoclusterx).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histoclusterx).get(), "");
       }
       //end of clusterx
      
@@ -579,17 +609,17 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_clustery.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_clustery.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histoclustery).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histoclustery).get(), "");
       }
       //end of clustery
      
-     //raw2d
+      //raw2d
       m_conf_checkbox_raw2d =  new TGCheckButton(m_conf_group_frame_board.get(),"Raw 2D");
       m_conf_checkbox_raw2d->Associate(this);
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_raw2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_raw2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_historaw2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board[i].m_historaw2d).get(), "colz");
       }
       //end of raw2d
     
@@ -599,7 +629,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_cluster2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_cluster2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histocluster2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histocluster2d).get(), "colz");
       }
       //end of cluster2d
      
@@ -609,7 +639,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_rawval.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_rawval.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_historawval).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_historawval).get(), "");
       }
       //end of raw value
       //noise 2d
@@ -618,7 +648,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_noise2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_noise2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histonoise2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histonoise2d).get(), "colz");
       }
       //end of noise2d
       //raw x
@@ -627,16 +657,16 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_rawx.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_rawx.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_historawx).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_historawx).get(), "");
       }
       //end of raw x
-     //raw y
+      //raw y
       m_conf_checkbox_rawy =  new TGCheckButton(m_conf_group_frame_board.get(),"Raw Y");
       m_conf_checkbox_rawy->Associate(this);
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_rawy.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_rawy.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_historawy).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_historawy).get(), "");
       }
       //end of raw y
       //cds value
@@ -645,7 +675,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_cdsval.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_cdsval.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histocdsval).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histocdsval).get(), "");
       }
       //end of cds value
       //number of seeds
@@ -654,7 +684,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_numhits.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_numhits.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histonumhits).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histonumhits).get(), "");
       }
       //end of number of seeds
       //cluster charge
@@ -663,7 +693,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_clusterval.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_clusterval.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histoclusterval).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histoclusterval).get(), "");
       }
       //end of cluster charge
       //number of clusters
@@ -672,7 +702,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_numclusters.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_numclusters.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-	board_pads.back().at(i).AddHisto((m_board[i].m_histonumclusters).get(), "");
+        board_pads.back().at(i).AddHisto((m_board[i].m_histonumclusters).get(), "");
       }
       //end of number of clusters
       
@@ -721,185 +751,198 @@ public:
     }
   ~RootMonitor() {
     //std::cout << "Destructor" << std::endl;
+    for(size_t i =0; i < m_hitcorrelation.size();i++)
+      delete m_hitcorrelation[i];
     gApplication->Terminate();
   }
   void UpdateCDSLegoCanvas() //this function updates the cds lego canvas
-  {
-    m_cds_lego_canvas->Clear(); //first clear the old canvas
-    if(cdslego_pads.size() > 0)
-      {
-	if(cdslego_pads[0].GetStatus()) //only update the canvas if the checkbox was enabled
-	  {
-	    m_cds_lego_canvas->Divide(3,2); //
-	    for (size_t j = 0; j < m_board.size()-1; ++j) //add the plots for each board
-	      {
-		m_cds_lego_canvas->cd(j+1);
-		gStyle->SetPalette(1,0);
-		gPad->SetRightMargin(0.13);
-	// 	cdslego_pads[0].h[j]->GetZaxis()->SetTitleColor(10);
-// 		cdslego_pads[0].h[j]->GetZaxis()->SetLabelColor(10);
-//   		cdslego_pads[0].h[j]->GetZaxis()->SetAxisColor(10);
-// 		TPaletteAxis *palette = new TPaletteAxis(0.798918, -0.894338, 0.8911, 0.894338,  cdslego_pads[0].h[j]);
-// 		palette->SetLabelColor(1);
-// 		palette->SetLabelFont(62);
-// 		palette->SetLabelOffset(0.005);
-// 		palette->SetLabelSize(0.04);
-// 		palette->SetTitleOffset(1);
-// 		palette->SetTitleSize(0.04);
-// 		palette->SetFillColor(100);
-// 		palette->SetFillStyle(1001);
-// 		cdslego_pads[0].h[j]->GetListOfFunctions()->Add(palette,"br");
+    {
+      m_cds_lego_canvas->Clear(); //first clean the old canvas
+      if(cdslego_pads.size() > 0)
+        {
+          if(cdslego_pads[0].GetStatus()) //only update the canvas if the checkbox was enabled
+            {
+              m_cds_lego_canvas->Divide(3,2); //
+              for (size_t j = 0; j < m_board.size()-1; ++j) //add the plots for each board
+                {
+                  m_cds_lego_canvas->cd(j+1);
+                  gStyle->SetPalette(1,0);
+                  gPad->SetRightMargin(0.13);
+                  //  cdslego_pads[0].h[j]->GetZaxis()->SetTitleColor(10);
+//   cdslego_pads[0].h[j]->GetZaxis()->SetLabelColor(10);
+//     cdslego_pads[0].h[j]->GetZaxis()->SetAxisColor(10);
+//   TPaletteAxis *palette = new TPaletteAxis(0.798918, -0.894338, 0.8911, 0.894338,  cdslego_pads[0].h[j]);
+//   palette->SetLabelColor(1);
+//   palette->SetLabelFont(62);
+//   palette->SetLabelOffset(0.005);
+//   palette->SetLabelSize(0.04);
+//   palette->SetTitleOffset(1);
+//   palette->SetTitleSize(0.04);
+//   palette->SetFillColor(100);
+//   palette->SetFillStyle(1001);
+//   cdslego_pads[0].h[j]->GetListOfFunctions()->Add(palette,"br");
 
-		cdslego_pads[0].h[j]->Draw(cdslego_pads[0].drawoptions[j]); //access the plot, that were assigned to this pad and draw it
-	      }
-	  }
-      }
-  }
+                  cdslego_pads[0].h[j]->DrawCopy(cdslego_pads[0].drawoptions[j]); //access the plot, that were assigned to this pad and draw it
+                }
+            }
+        }
+    }
   void UpdateBoardCanvas() //update the board display canvases
-  {
-    for (size_t i = 0; i <  m_board.size(); ++i) //loop over all boards
-      {
-	m_board[i].m_canvas->Clear(); //clear the canvas for this board
-	int activepads = 0; //counter for the number auf active pads. this is important to divide the canvas in a suitable way
+    {
+      for (size_t i = 0; i <  m_board.size(); ++i) //loop over all boards
+        {
+          m_board[i].m_canvas->Clear(); //clear the canvas for this board
+          int activepads = 0; //counter for the number auf active pads. this is important to divide the canvas in a suitable way
 
-	for(size_t j = 0; j < board_pads.size(); j++)
-	   {
-	     if(board_pads[j].at(0).GetStatus()) //count the number of pads with enabled plots
-	       activepads++;
-	   }
-	
-	//now divide the canvas depending on the number of active pads. a more intelligent algorithm should be added
-	 if(activepads <= 3)
-	   m_board[i].m_canvas->Divide(activepads, 1);
-	 else if(activepads > 3 && activepads <= 6)
-	   m_board[i].m_canvas->Divide(3, 2);
-	 else if(activepads > 6 && activepads <= 9)
-	   m_board[i].m_canvas->Divide(3, 3);
-	 else if(activepads > 9 && activepads <= 12)
-	   m_board[i].m_canvas->Divide(4, 3);
-	 else if(activepads > 12 && activepads <= 16)
-	   m_board[i].m_canvas->Divide(4, 4);
-	 
-	 int canvaspadindex = 1;
-	 for(size_t t = 0; t < board_pads.size(); t++)
-	   {
-	     m_board[i].m_canvas->cd(canvaspadindex);
-	     if(board_pads[t].at(i).GetStatus()) //if the pad is active, it is drawn
-	       {
-		 board_pads[t].at(i).h.at(0)->Draw( board_pads[t].at(i).drawoptions.at(0)); //index is equal to 0 because in each board display tab only one plot per pad is drawn
-		 canvaspadindex++;
-	       }
-	   }
-      }
-  }
+          for(size_t j = 0; j < board_pads.size(); j++)
+            {
+              if(board_pads[j].at(0).GetStatus()) //count the number of pads with enabled plots
+                activepads++;
+            }
+ 
+          //now divide the canvas depending on the number of active pads. a more intelligent algorithm should be added
+          if(activepads <= 3)
+            m_board[i].m_canvas->Divide(activepads, 1);
+          else if(activepads > 3 && activepads <= 6)
+            m_board[i].m_canvas->Divide(3, 2);
+          else if(activepads > 6 && activepads <= 9)
+            m_board[i].m_canvas->Divide(3, 3);
+          else if(activepads > 9 && activepads <= 12)
+            m_board[i].m_canvas->Divide(4, 3);
+          else if(activepads > 12 && activepads <= 16)
+            m_board[i].m_canvas->Divide(4, 4);
+  
+          int canvaspadindex = 1;
+          for(size_t t = 0; t < board_pads.size(); t++)
+            {
+              m_board[i].m_canvas->cd(canvaspadindex);
+              if(board_pads[t].at(i).GetStatus()) //if the pad is active, it is drawn
+                {
+                  board_pads[t].at(i).h.at(0)->DrawCopy( board_pads[t].at(i).drawoptions.at(0)); //index is equal to 0 because in each board display tab only one plot per pad is drawn
+                  canvaspadindex++;
+                }
+            }
+        }
+    }
   void UpdateMainCanvas() //update the main canvas
-  {
-    m_canvasmain->Clear(); //first clear the old canvas. this deletes all subpads
+    {
+      m_canvasmain->Clear(); //first clear the old canvas. this deletes all subpads
 
-    int activepads = 0; //counter for the number auf active pads. this is important to divide the canvas in a suitable way
-
-    for(size_t i = 0; i < main_pads.size(); i++)
-      {
-	if(main_pads[i].GetStatus())//count the number of pads with enabled plots
-	  activepads++;
-      }
-    //now divide the canvas depending on the number of active pads.
-    if(activepads <= 3)
-      m_canvasmain->Divide(activepads, 1);
-    else if(activepads > 3 && activepads <= 6)
-      m_canvasmain->Divide(3, 2);
-    else if(activepads > 6 && activepads <= 9)
-      m_canvasmain->Divide(3, 3);
-    else if(activepads > 9 && activepads <= 12)
-      m_canvasmain->Divide(4, 3);
-    else if(activepads > 12 && activepads <= 16)
-      m_canvasmain->Divide(4, 4);
-      
-      
-    int canvaspadindex = 1;
-    for(size_t i = 1; i <= main_pads.size(); i++)
-      {
-	m_canvasmain->cd(canvaspadindex);
-	if(main_pads[i-1].GetStatus())//if the pad is active, it is drawn
-	  {
-	    for(size_t j = 0; j < (main_pads[i-1].h).size(); j++) //loop over all plots
-	      {
-		if(main_pads[i-1].h[j]->InheritsFrom("TH2D")) //if it is a 2d plot, set the correct fillcolor
-		  main_pads[i-1].h[j]->SetFillColor(COL_BASE+j);
-		else //otherwise change the linecolor
-		  main_pads[i-1].h[j]->SetLineColor(COL_BASE+j); 
-		main_pads[i-1].h[j]->Draw(main_pads[i-1].drawoptions.at(j));
-	      }
-	    canvaspadindex++;
-	  }
-      }
+      int activepads = 0; //counter for the number auf active pads. this is important to divide the canvas in a suitable way
+    
+      for(size_t i = 0; i < main_pads.size(); i++)
+        {
+          if(main_pads[i].GetStatus())//count the number of pads with enabled plots
+            activepads++;
+        }
+      //now divide the canvas depending on the number of active pads.
+      if(activepads <= 3)
+        m_canvasmain->Divide(activepads, 1);
+      else if(activepads > 3 && activepads <= 6)
+        m_canvasmain->Divide(3, 2);
+      else if(activepads > 6 && activepads <= 9)
+        m_canvasmain->Divide(3, 3);
+      else if(activepads > 9 && activepads <= 12)
+        m_canvasmain->Divide(4, 3);
+      else if(activepads > 12 && activepads <= 16)
+        m_canvasmain->Divide(4, 4);
+      else if(activepads > 16 && activepads <= 20)
+        m_canvasmain->Divide(5, 4);
+      else if(activepads > 20 && activepads <= 22)
+        m_canvasmain->Divide(5, 5);
+  
+       
+      int canvaspadindex = 1;
+      for(size_t i = 1; i <= main_pads.size(); i++)
+        {
+          m_canvasmain->cd(canvaspadindex);
+          if(main_pads[i-1].GetStatus())//if the pad is active, it is drawn
+            {
+              for(size_t j = 0; j < (main_pads[i-1].h).size(); j++) //loop over all plots
+                {
+                  if(main_pads[i-1].h[j]->InheritsFrom("TH2D")) //if it is a 2d plot, set the correct fillcolor
+                    main_pads[i-1].h[j]->SetFillColor(COL_BASE+j);
+                  else //otherwise change the linecolor
+                    main_pads[i-1].h[j]->SetLineColor(COL_BASE+j); 
+                  main_pads[i-1].h[j]->Draw(main_pads[i-1].drawoptions.at(j));
+                }
+              canvaspadindex++;
+            }
+        }
    
-  }
+    }
   void UpdateConf() //after pushing the "apply" button in the configuration tab, this function is called. it updates the configuration
-  {
-    //which histograms to be displayed?
-    for(size_t i = 0; i < main_pads.size(); i++)
-      {
-	main_pads[i].SetStatus(); //synchronize histopads and checkboxes
-      }
+    {
+      //which histograms to be displayed?
+      for(size_t i = 0; i < main_pads.size(); i++)
+        {
+          main_pads[i].SetStatus(); //synchronize histopads and checkboxes
+        }
     
-    for(size_t i = 0; i < board_pads.size(); i++)
-      {
-	for(size_t t = 0; t < board_pads[i].size(); t++)
-	  {
-	    board_pads[i].at(t).SetStatus();//synchronize histopads and checkboxes
-	  }
-      }
-    UpdateBoardCanvas(); //update the canvases
+      for(size_t i = 0; i < board_pads.size(); i++)
+        {
+          for(size_t t = 0; t < board_pads[i].size(); t++)
+            {
+              board_pads[i].at(t).SetStatus();//synchronize histopads and checkboxes
+            }
+        }
+      UpdateBoardCanvas(); //update the canvases
 
-    UpdateMainCanvas(); //update the canvas
+      UpdateMainCanvas(); //update the canvas
     
-    cdslego_pads[0].SetStatus();
-    UpdateCDSLegoCanvas(); //update the canvas
+      cdslego_pads[0].SetStatus();
+      UpdateCDSLegoCanvas(); //update the canvas
     
-    unsigned cdsupdate = (unsigned)m_conf_cds_lego_update->GetNumber();
-    if(cdsupdate > 0)
-      conf.UPDATE_EVERY_N_EVENTS = cdsupdate;
+      unsigned cdsupdate = (unsigned)m_conf_cds_lego_update->GetNumber();
+      if(cdsupdate > 0)
+        conf.UPDATE_EVERY_N_EVENTS = cdsupdate;
 
-    double seedthresh = (double) m_conf_seedthreshold->GetNumber();
-    if(seedthresh > 0)
-      conf.SEED_THRESHOLD = seedthresh;
 
-    double seedneighbourthresh = (double) m_conf_seedneighbourthreshold->GetNumber();
-    if(seedneighbourthresh > 0)
-      conf.SEED_NEIGHBOUR_THRESHOLD = seedneighbourthresh;
+
+
+      double seedthresh = (double) m_conf_seedthreshold->GetNumber();
+      if(seedthresh > 0)
+        conf.SEED_THRESHOLD = seedthresh;
+
+      double seedneighbourthresh = (double) m_conf_seedneighbourthreshold->GetNumber();
+      if(seedneighbourthresh > 0)
+        conf.SEED_NEIGHBOUR_THRESHOLD = seedneighbourthresh;
     
-    double clusterthresh = (double) m_conf_clusterthreshold->GetNumber();
-    if(clusterthresh > 0)
-      conf.CLUSTER_THRESHOLD = clusterthresh;
+      double clusterthresh = (double) m_conf_clusterthreshold->GetNumber();
+      if(clusterthresh > 0)
+        conf.CLUSTER_THRESHOLD = clusterthresh;
 
-    //fast and dirty fix. only reset histograms if cluster position or cluster type was changed
-    int tmpclustertype = 0;
-    if(conf.CLUSTER_TYPE == 3)
-      tmpclustertype = 0;
-    if(conf.CLUSTER_TYPE == 5)
-      tmpclustertype = 1;
+
+
+      //fast and dirty fix. only reset histograms if cluster position or cluster type was changed
+      int tmpclustertype = 0;
+      if(conf.CLUSTER_TYPE == 3)
+        tmpclustertype = 0;
+      if(conf.CLUSTER_TYPE == 5)
+        tmpclustertype = 1;
     
-    if ( clusterpositionComboBox->GetSelected() != (int)conf.CLUSTER_POSITION || clustertypeComboBox->GetSelected() != tmpclustertype)
-      {
-	std::cout << "*** resetting all histograms ***" << std:: endl;
-	for (size_t i = 0; i < m_board.size(); ++i) {
-	  m_board[i].Reset();
-	}
-      }
-    //read out the gui elements and change the configuration object
-    if(clustertypeComboBox->GetSelected() == 0)
-      conf.CLUSTER_TYPE = 3;
-    if(clustertypeComboBox->GetSelected() == 1)
-      conf.CLUSTER_TYPE = 5;
-    if(clusterpositionComboBox->GetSelected() == 0)
-      conf.CLUSTER_POSITION = 0;
-    if(clusterpositionComboBox->GetSelected() == 1)
-      conf.CLUSTER_POSITION = 1;
+      if ( clusterpositionComboBox->GetSelected() != (int)conf.CLUSTER_POSITION || clustertypeComboBox->GetSelected() != tmpclustertype)
+        {
+          std::cout << "*** resetting all histograms ***" << std:: endl;
+          for (size_t i = 0; i < m_board.size(); ++i) {
+            m_board[i].Reset();
+            m_hitcorrelation[i]->Reset("");
+          }
+ 
+        }
+      //read out the gui elements and change the configuration object
+      if(clustertypeComboBox->GetSelected() == 0)
+        conf.CLUSTER_TYPE = 3;
+      if(clustertypeComboBox->GetSelected() == 1)
+        conf.CLUSTER_TYPE = 5;
+      if(clusterpositionComboBox->GetSelected() == 0)
+        conf.CLUSTER_POSITION = 0;
+      if(clusterpositionComboBox->GetSelected() == 1)
+        conf.CLUSTER_POSITION = 1;
 
 
-    Update(); //update all canvases
-  }
+      Update(); //update all canvases
+    }
   virtual void StartIdleing() {
     eudaq::Time now = eudaq::Time::Current();
     bool needupdate = (now - m_lastupdate) > eudaq::Time(0, (int)(1e6*m_tb_update->GetNumber()));
@@ -956,7 +999,7 @@ public:
       filename += ".root";
       TFile rootfile(filename.c_str(), "RECREATE");
       for (size_t i = 0; i < m_board.size(); ++i) {
-	m_board[i].m_testhisto->Write();
+        m_board[i].m_testhisto->Write();
         m_board[i].m_historaw2d->Write();
         m_board[i].m_histocds2d->Write();
         m_board[i].m_histohit2d->Write();
@@ -992,11 +1035,17 @@ public:
             if (drbev->NumBoards() > 0) {
               m_histoevents++;
               try {
-		totalnumevents++;
+                totalnumevents++;
+                std::vector<unsigned int> numberofclusters(m_board.size(),0);
                 for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
                   numplanes++;
-		  FillBoard(m_board[i], drbev->GetBoard(i),i);
-		}
+                  FillBoard(m_board[i], drbev->GetBoard(i),i,numberofclusters[i]);
+                }
+                for(size_t i = 0; i < m_board.size()-1; i++)
+                  {
+                    if(numberofclusters[i] != 0 || numberofclusters[i+1] != 0)
+                      m_hitcorrelation[i]->Fill(numberofclusters[i+1],numberofclusters[i]);
+                  }
               } catch (const eudaq::Exception & e) {
                 EUDAQ_ERROR("Bad data size in event " + eudaq::to_string(ev->GetEventNumber()) + ": " + e.what());
               }
@@ -1155,14 +1204,14 @@ public:
       double maxn = m_board[0].m_histonumclusters->GetMaximum();
       double maxx = m_board[1].m_histodeltax->GetMaximum();
       double maxy = m_board[1].m_histodeltay->GetMaximum();
-        for (size_t i = 0; i < m_board.size(); ++i) {
-	
-// 	m_board[i].m_testhisto->SetMaximum(40.0);
-	  //m_board[i].m_testhisto->SetMinimum(conf.SEED_NEIGHBOUR_THRESHOLD*5.0);
-	  m_board[i].m_testhisto->SetMinimum(0.0); //set the minimum of the cds lego plots
-         }
+      for (size_t i = 0; i < m_board.size(); ++i) {
+ 
+//  m_board[i].m_testhisto->SetMaximum(40.0);
+        //m_board[i].m_testhisto->SetMinimum(conf.SEED_NEIGHBOUR_THRESHOLD*5.0);
+        m_board[i].m_testhisto->SetMinimum(0.0); //set the minimum of the cds lego plots
+      }
       for (size_t i = 1; i < numplanes; ++i) {
-	
+ 
 
         if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
         if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
@@ -1200,40 +1249,40 @@ public:
       int j = 0;
       int totnumpads = 0;
       int updatedpads = 0;
-       while (TVirtualPad * p = c->GetPad(++j)) {
-	 TList *l;
-	 l = p->GetListOfPrimitives();
-	 // std::cout << "pad entries = " << (l->GetEntries()) <<  std::endl;
-	 Bool_t mod = kFALSE;
-	 for (Int_t j = 0; j < l->GetEntries(); j++) { //this loop updates ONLY pads that contain updated and modified plots
-	   if(l->At(j)->InheritsFrom("TH2D")) //ensure that we have histograms and not another tobject like a title and so on
-	     {
-	       TH2DNew *h = (TH2DNew*)l->At(j);
-	       if(h->modified)
-		 {
-		   mod = kTRUE;
-		   h->modified = kFALSE;
-		 }
-	     }
-	   if(l->At(j)->InheritsFrom("TH1D"))
-	     {
-	       TH1DNew *h = (TH1DNew*)l->At(j);
-	       if(h->modified)
-		 {
-		   mod = kTRUE;
-		   h->modified = kFALSE;
-		 }
-	     }
-	 }
-	 if(mod)
-	   {
-	     p->Modified();
-	     updatedpads++;
-	   }
-	 totnumpads++;
-       }
-       c->Update();
-       //std::cout << "updated pads / total number of pads = " << updatedpads << " / " << totnumpads << std::endl;
+      while (TVirtualPad * p = c->GetPad(++j)) {
+        TList *l;
+        l = p->GetListOfPrimitives();
+        // std::cout << "pad entries = " << (l->GetEntries()) <<  std::endl;
+        Bool_t mod = kFALSE;
+        for (Int_t j = 0; j < l->GetEntries(); j++) { //this loop updates ONLY pads that contain updated and modified plots
+          if(l->At(j)->InheritsFrom("TH2D")) //ensure that we have histograms and not another tobject like a title and so on
+            {
+              TH2DNew *h = (TH2DNew*)l->At(j);
+              if(h->modified)
+                {
+                  mod = kTRUE;
+                  h->modified = kFALSE;
+                }
+            }
+          if(l->At(j)->InheritsFrom("TH1D"))
+            {
+              TH1DNew *h = (TH1DNew*)l->At(j);
+              if(h->modified)
+                {
+                  mod = kTRUE;
+                  h->modified = kFALSE;
+                }
+            }
+        }
+        if(mod)
+          {
+            p->Modified();
+            updatedpads++;
+          }
+        totnumpads++;
+      }
+      c->Update();
+      //std::cout << "updated pads / total number of pads = " << updatedpads << " / " << totnumpads << std::endl;
     }
     //std::cout << "-------------------------------------------------end update" << std::endl;
   }
@@ -1320,7 +1369,7 @@ private:
 
 
   }
-  void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e, int boardnumber) {
+  void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e, int boardnumber, unsigned int &numberofclusters) {
     eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     size_t npixels = m_decoder->NumPixels(e); //, nx=264, ny=256;
     std::vector<double> ones(npixels, 1.0);
@@ -1373,13 +1422,13 @@ private:
     
     if((totalnumevents % (int)conf.UPDATE_EVERY_N_EVENTS) == 0)
       {
-	b.m_testhisto->Reset();
-	TString tmpstring;
-	char tmpstring2[50];
-	sprintf(tmpstring2, "Board %1.0f, event: %1.0i", (float)boardnumber, totalnumevents);
-	tmpstring = tmpstring2;
-	b.m_testhisto->SetTitle(tmpstring);
-	b.m_testhisto->FillN(npixels, &newx[0], &a.m_y[0], &cds[0]);
+        b.m_testhisto->Reset();
+        TString tmpstring;
+        char tmpstring2[50];
+        sprintf(tmpstring2, "Board %1.0f, event: %1.0i", (float)boardnumber, totalnumevents);
+        tmpstring = tmpstring2;
+        b.m_testhisto->SetTitle(tmpstring);
+        b.m_testhisto->FillN(npixels, &newx[0], &a.m_y[0], &cds[0]);
       }
     
 
@@ -1416,98 +1465,99 @@ private:
       if (seeds.size() < MAX_SEEDS) {
         std::sort(seeds.begin(), seeds.end(), &Seed::compare);
         for (size_t i = 0; i < seeds.size(); ++i) {
-	  int clustersizeindex = 1;
-	  //chose the cluster type. so far 3x3 or 5x5
-	  if (conf.CLUSTER_TYPE == 3)
-	    clustersizeindex = 1;
-	  if (conf.CLUSTER_TYPE == 5)
-	    clustersizeindex = 2;
-	  
+          int clustersizeindex = 1;
+          //chose the cluster type. so far 3x3 or 5x5
+          if (conf.CLUSTER_TYPE == 3)
+            clustersizeindex = 1;
+          if (conf.CLUSTER_TYPE == 5)
+            clustersizeindex = 2;
+   
           if (b.m_tempcds->GetBinContent((int)seeds[i].x, (int)seeds[i].y) > 0) {
             double cluster = 0;
             double noise = 0;
             for (int dy = -clustersizeindex; dy <= clustersizeindex; ++dy) {
               for (int dx = -clustersizeindex; dx <= clustersizeindex; ++dx) {
-		if(((int)seeds[i].x+dx)  <= 0 || ((int)seeds[i].y+dy) <= 0 || ((int)seeds[i].x+dx) > b.m_tempcds->GetXaxis()->GetLast() || ((int)seeds[i].y+dy) > b.m_tempcds->GetYaxis()->GetLast()) //check whether we are outside the histogram
-		  {
-		  cluster += 0.0;
-		  }
-		else if(b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy) > seedneighbour_thresh * 5.0)
-		  {
-		    double n = 5; //b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-		    noise += n*n;
-		    cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-		    b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);  
-		  }
-	      }
+                if(((int)seeds[i].x+dx)  <= 0 || ((int)seeds[i].y+dy) <= 0 || ((int)seeds[i].x+dx) > b.m_tempcds->GetXaxis()->GetLast() || ((int)seeds[i].y+dy) > b.m_tempcds->GetYaxis()->GetLast()) //check whether we are outside the histogram
+                  {
+                    cluster += 0.0;
+                  }
+                else if(b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy) > seedneighbour_thresh * 5.0)
+                  {
+                    double n = 5; //b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
+                    noise += n*n;
+                    cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
+                    b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);  
+                  }
+              }
             }
             noise = std::sqrt(noise);
             if (cluster > cluster_thresh*noise) { //cut on the cluster charge
-	      if (conf.CLUSTER_POSITION == 1)
-		{
-		  //compute the center of gravity
-		  int array_size=3;
-		  if (conf.CLUSTER_TYPE == 3)
-		    array_size=3;
-		  if (conf.CLUSTER_TYPE == 5)
-		    array_size=5;
-		  std::vector<double> sumx(array_size,0.0);
-		  std::vector<double> sumy(array_size,0.0);
-		 
-		  for(int dx =-clustersizeindex ; dx<=clustersizeindex;dx++)
-		    {
-		      for(int dy = -clustersizeindex; dy<=clustersizeindex;dy++)
-			{
-			  double noise = 5.0;
-			  double value = b.m_tempcds2->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-			  if(((int)seeds[i].x+dx)  <= 0 || ((int)seeds[i].y+dy) <= 0 || ((int)seeds[i].x+dx) > b.m_tempcds2->GetXaxis()->GetLast() || ((int)seeds[i].y+dy) > b.m_tempcds2->GetYaxis()->GetLast()) //check whether we are outside the histogram
-			    {
-			      sumy[dy+1] += 0.0;
-			      sumx[dx+1] += 0.0;
-			    }
-			  else if(value > seedneighbour_thresh*noise) // cut on s/n of the seed pixels neighbours
-			    {
-			      sumy[dy+1] += value;
-			      sumx[dx+1] += value;
-			    }
-			  else 
-			    {
-			      sumy[dy+1] += 0.0;
-			      sumx[dx+1] += 0.0;
-			    }
-			}
-		    }
-		  double x = 0.0;
-		  double y = 0.0;
-		  double sumweight_x = 0.0;
-		  double sumweight_y = 0.0;
-	      
-		  for(int u = -clustersizeindex; u <= clustersizeindex;u++)
-		    {
-		      x += ( seeds[i].x + u ) * sumx[u+1];
-		      y += ( seeds[i].y + u ) * sumy[u+1];
-		      sumweight_x += sumx[u+1];
-		      sumweight_y += sumy[u+1];
-		    }
-		  double_t cluster_x = x / sumweight_x;
-		  double_t cluster_y = y / sumweight_y;
-	      
-		  b.m_clusterx.push_back(cluster_x);
-		  b.m_clustery.push_back(cluster_y);
-		  //end of center of gravity
-		}
-	      else
-		{
-		  // seed position
-		  b.m_clusterx.push_back(seeds[i].x);
-		  b.m_clustery.push_back(seeds[i].y);
-		}
-	      b.m_clusters.push_back(cluster);
-	      
+              if (conf.CLUSTER_POSITION == 1)
+                {
+                  //compute the center of gravity
+                  int array_size=3;
+                  if (conf.CLUSTER_TYPE == 3)
+                    array_size=3;
+                  if (conf.CLUSTER_TYPE == 5)
+                    array_size=5;
+                  std::vector<double> sumx(array_size,0.0);
+                  std::vector<double> sumy(array_size,0.0);
+   
+                  for(int dx =-clustersizeindex ; dx<=clustersizeindex;dx++)
+                    {
+                      for(int dy = -clustersizeindex; dy<=clustersizeindex;dy++)
+                        {
+                          double noise = 5.0;
+                          double value = b.m_tempcds2->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
+                          if(((int)seeds[i].x+dx)  <= 0 || ((int)seeds[i].y+dy) <= 0 || ((int)seeds[i].x+dx) > b.m_tempcds2->GetXaxis()->GetLast() || ((int)seeds[i].y+dy) > b.m_tempcds2->GetYaxis()->GetLast()) //check whether we are outside the histogram
+                            {
+                              sumy[dy+1] += 0.0;
+                              sumx[dx+1] += 0.0;
+                            }
+                          else if(value > seedneighbour_thresh*noise) // cut on s/n of the seed pixels neighbours
+                            {
+                              sumy[dy+1] += value;
+                              sumx[dx+1] += value;
+                            }
+                          else 
+                            {
+                              sumy[dy+1] += 0.0;
+                              sumx[dx+1] += 0.0;
+                            }
+                        }
+                    }
+                  double x = 0.0;
+                  double y = 0.0;
+                  double sumweight_x = 0.0;
+                  double sumweight_y = 0.0;
+       
+                  for(int u = -clustersizeindex; u <= clustersizeindex;u++)
+                    {
+                      x += ( seeds[i].x + u ) * sumx[u+1];
+                      y += ( seeds[i].y + u ) * sumy[u+1];
+                      sumweight_x += sumx[u+1];
+                      sumweight_y += sumy[u+1];
+                    }
+                  double_t cluster_x = x / sumweight_x;
+                  double_t cluster_y = y / sumweight_y;
+       
+                  b.m_clusterx.push_back(cluster_x);
+                  b.m_clustery.push_back(cluster_y);
+                  //end of center of gravity
+                }
+              else
+                {
+                  // seed position
+                  b.m_clusterx.push_back(seeds[i].x);
+                  b.m_clustery.push_back(seeds[i].y);
+                }
+              b.m_clusters.push_back(cluster);
+       
             }
           }
         }
         /*if (b.m_clusters.size())*/ b.m_histonumclusters->Fill(b.m_clusters.size());
+        numberofclusters = b.m_clusters.size();
         b.m_histohit2d->Reset();
         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
@@ -1585,6 +1635,7 @@ private:
   counted_ptr<TGTextButton>m_reset_histos;
   //checkboxes
   counted_ptr<TGCheckButton> m_conf_checkbox_main_numclusters;
+  counted_ptr<TGCheckButton> m_conf_checkbox_main_hitcorr;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_rawval;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_cluster2d;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_deltax;
@@ -1619,7 +1670,7 @@ private:
   TCanvas *m_cds_lego_canvas;
 
   counted_ptr<TH1DNew> m_histonumtracks;
-
+  std::vector< TH2DNew* > m_hitcorrelation;
   // Board tabs (1 per board)
   std::vector<BoardDisplay> m_board;
 
@@ -1671,3 +1722,4 @@ int main(int argc, const char ** argv) {
   }
   return 0;
 }
+
