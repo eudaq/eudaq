@@ -1,4 +1,5 @@
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Clusters.hh"
 
 #include "TROOT.h"
 #include "TH2D.h"
@@ -17,31 +18,6 @@ static const double pi = 3.14159265358979;
 
 extern "C" void radon(double *v,double *u,double *setpar);
 
-class Clusters {
-public:
-  Clusters(std::istream & in) { read(in); }
-  void read(std::istream & in);
-  int EventNum() const { return m_event; }
-  int NumClusters() const { return m_x.size(); }
-  int ClusterX(int i) const { return m_x[i]; }
-  int ClusterY(int i) const { return m_y[i]; }
-private:
-  int m_event;
-  std::vector<int> m_x, m_y;
-};
-
-void Clusters::read(std::istream & in) {
-  in >> m_event;
-  int nclust;
-  in >> nclust;
-  if (in.eof()) return;
-  m_x.resize(nclust);
-  m_y.resize(nclust);
-  for (int i = 0; i < nclust; ++i) {
-    in >> m_x[i];
-    in >> m_y[i];
-  }
-}
 
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Correlator", "1.0",
@@ -66,7 +42,7 @@ int main(int /*argc*/, char ** argv) {
     std::vector<double> correlx(w*w), correly(h*h);
     std::cout << "Reading and histogramming clusters..." << std::endl;
     for (;;) {
-      Clusters c1(file1), c2(file2);
+      eudaq::Clusters c1(file1), c2(file2);
       while (c1.EventNum() != c2.EventNum()) {
         if (c1.EventNum() < c2.EventNum()) c1.read(file1);
         if (c1.EventNum() > c2.EventNum()) c2.read(file2);

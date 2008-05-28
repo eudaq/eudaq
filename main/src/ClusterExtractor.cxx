@@ -121,7 +121,7 @@ int main(int /*argc*/, char ** argv) {
                   eudaq::EUDRBBoard & brd = eudev->GetBoard(j);
                   //std::cout << "boardnum " << boardnum << ", id " << brd.GetID() << std::endl;
                   eudaq::EUDRBDecoder::arrays_t<short, short> a = decoder->GetArrays<short, short>(brd);
-                  std::vector<short> cds(npixels);
+                  std::vector<short> cds(npixels, 0);
                   if (decoder->NumFrames(brd) == 1) {
                     for (size_t i = 0; i < a.m_adc[0].size(); ++i) {
                       short x = a.m_x[i]; //delmarker(a.m_x[i]);
