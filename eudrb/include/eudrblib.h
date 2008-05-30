@@ -22,8 +22,9 @@
 #ifndef _eudrblib
 #define _eudrblib
 
-#include "VMEInterface.hh"
-#include <unistd.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
 *       FunctionalCtrl_Stat_Reg
@@ -296,7 +297,7 @@ Copy the value of register ÒTest1Ó readback from the chip via JTAG to the
 ÒDataFromMCUÓ (OFFSET = 0x18) location in the VME address space
 
 */
-/*
+
 void EUDRB_CSR_Default(int fdOut, unsigned long int baseaddress);
 void EUDRB_NIOSII_InterruptServeEna(int fdOut, unsigned long int baseaddress);
 void EUDRB_NIOSII_Reset(int fdOut, unsigned long int baseaddress);
@@ -304,6 +305,7 @@ void EUDRB_Fake_Trigger(int fdOut, unsigned long int baseaddress);
 void EUDRB_TriggerProcessingUnit_Reset(int fdOut, unsigned long int baseaddress);
 void EUDRB_ZS_On(int fdOut, unsigned long int baseaddress);
 void EUDRB_ZS_Off(int fdOut, unsigned long int baseaddress);
+unsigned long EventDataReady_size(int fdOut, unsigned long int baseaddress);
 void EventDataReady_wait(int fdOut, unsigned long int baseaddress);
 void EUDRB_TriggerProcessingUnit_Reset_Check(int fdOut, unsigned long int baseaddress);
 void EUDRB_Reset(int fdOut, unsigned long int baseaddress);
@@ -314,343 +316,11 @@ void EUDRB_NIOSII_FakeTriggerEnable_Reset(int fdOut, unsigned long int baseaddre
 void EUDRB_NIOSII_IsMasterOfSRAM_Set(int fdOut, unsigned long int baseaddress);
 void EUDRB_NIOSII_IsMasterOfSRAM_Reset(int fdOut, unsigned long int baseaddress);
 void PedThrInitialize(void);
-*/
-class BoardInfo {
-public:
-  BoardInfo(unsigned long addr, const std::string & mode)
-    : mode(mode), zs(mode == "ZS")
-    {
-      vmes = VMEFactory::Create(addr, 0x01000000);
-      vmed = VMEFactory::Create(addr, 0x01000000, VMEInterface::A32, VMEInterface::D32,
-                                VMEInterface::PMBLT);
-    }
 
-  //unsigned long BaseAddress;
-  VMEptr vmes, vmed;
-  std::string mode;
-  bool zs;
-  EUDRB_CSR Control_Status_Register;
-  void Write(unsigned long offset, unsigned long data) {
-    vmes->Write(offset, data);
-  }
-  unsigned long Read(unsigned long offset) {
-    return vmes->Read(offset, 0UL);
-  }
-  std::vector<unsigned long> & ReadBlock(unsigned long offset, std::vector<unsigned long> & data) {
-    return vmed->Read(offset, data);
-  }
-
-unsigned EventDataReady_wait(unsigned * nloops = 0)
-{
-  eudaq::Timer t;
-  unsigned n = 0, d;
-  do {
-    n++;
-    d = vmes->Read(0x00400004, 0UL);
-    if (t.mSeconds() > 1000) break;
-  } while (!(d & 0x80000000));
-  if (nloops) *nloops = n;
-  if (!(d & 0x80000000)) d = 0;
-  return d & 0xfffff;
-}
-
-/*
- *       EUDRB_CSR Control_Status_Register.eudrb_csr_reg=0x02000000
- *       !!!!    THIS ASSIGNMENT IT'S NOT POSSIBLE USE THE EUDRB_CSR_Default() FUNCTION TO INITIALIZE THE FUNCTIONAL Control_Status_Register VARIABLE;
- */
-
-/*
- *       FUNCTIONS TO SET THE EUDRB FUNCTIONAL CONTROL STATUS REGISTER
- */
-
-/*
- *       MAIN VARIABLE
- */
-
-void EUDRB_CSR_Default()
-{
-  Control_Status_Register.eudrb_csr_reg=0x00000000;
-  vmes->Write(0, Control_Status_Register.eudrb_csr_reg);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-}
-
-void EUDRB_NIOSII_InterruptServeEna()
-{
-  Control_Status_Register.Bit.NIOS_IntrptServEnable=1;
-  vmes->Write(0, Control_Status_Register.eudrb_csr_reg);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-}
-
-void EUDRB_FakeTriggerEnable_Set()
-{
-  Control_Status_Register.Bit.FakeTriggerEnable=1;
-  vmes->Write(0, Control_Status_Register.eudrb_csr_reg);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-}
-
-void EUDRB_FakeTriggerEnable_Reset()
-{
-  /*    Control_Status_Register.Bit.FakeTriggerEnable=1;*/
-  Control_Status_Register.Bit.FakeTriggerEnable=0; /* dhaas: must be 0, I suppose! */
-  vmes->Write(0, Control_Status_Register.eudrb_csr_reg);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-}
-
-void EUDRB_NIOSII_Reset()
-{
-  Control_Status_Register.Bit.NIOS_Reset=1;
-  vmes->Write(0, Control_Status_Register.eudrb_csr_reg);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-  sleep(1);
-}
-
-void EUDRB_ZS_On()
-{
-  //unsigned long int address=baseaddress;
-  //unsigned long int readdata32=0, newdata32=0;
-  /* read address first and only set the reset bit */
-  //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-  //newdata32=readdata32|0x20;
-  //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-  vmes->Write(0, vmes->Read(0, 0UL) | 0x20);
-}
-void EUDRB_ZS_Off()
-{
-  //unsigned long int address=baseaddress;
-  //unsigned long int readdata32=0, newdata32=0;
-  /* read address first and only set the reset bit */
-  //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-  //newdata32=readdata32&~0x20;
-  //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-  vmes->Write(0, vmes->Read(0, 0UL) & ~0x20);
-}
-
-/*
-  void EUDRB_ZS_On(int fdOut, unsigned long int baseaddress)
-  {
-  Control_Status_Register.Bit.ZS_Enabled=1;
-  vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-  }
-
-  void EUDRB_ZS_Off(int fdOut, unsigned long int baseaddress)
-  {
-  Control_Status_Register.Bit.ZS_Enabled=0;
-  vme_A32_D32_User_Data_SCT_write(fdOut,Control_Status_Register.eudrb_csr_reg,baseaddress);
-  }
-*/
-
-
-void EUDRB_TriggerProcessingUnit_Reset_Check()
-{
-  //unsigned long int address = baseaddress|0x00400004;
-  //unsigned long int readdata32=0;
-  //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-  while((vmes->Read(0x00400004, 0UL) & 0x80000000) == 0x80000000) {
-    //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-    usleep(1);
-  }
-}
-
-void EUDRB_Reset()
-{
-  //unsigned long int address=baseaddress;
-  //unsigned long int readdata32=0, newdata32=0;
-  /* read address first and only set the reset bit */
-  //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-  //newdata32=readdata32|0x8;
-  //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-  unsigned long data = vmes->Read(0, 0UL);
-  vmes->Write(0, data | 0x8);
-  vmes->Write(0, data & ~0x8);
-}
-
-
-/*
-  Forse la uso per la visualizzazione se si richiede di leggere lo stato dei vari flags
-*/
-void EUDRB_CSR_Read()
-{
-  //vme_A32_D32_User_Data_SCT_read(fdOut,&Control_Status_Register.eudrb_csr_reg,baseaddress);
-  Control_Status_Register.eudrb_csr_reg = vmes->Read(0, 0UL);
-}
-
-
-/*
- *       NIOS II COMMAND FUNCTIONS
- */
-
-void EUDRB_Fake_Trigger()
-{
-  //unsigned long int address=(baseaddress|CommandToMCU);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,FakeTrig_Generate,address);
-  vmes->Write(CommandToMCU, FakeTrig_Generate);
-}
-
-void EUDRB_TriggerProcessingUnit_Reset()
-{
-  //unsigned long int address=baseaddress;
-  //unsigned long int readdata32=0, newdata32=0;
-  /* read address first and only set the reset bit */
-  //vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-  //newdata32=readdata32|0x8;
-  //vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,address);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-/*  unsigned long int address=(baseaddress|CommandToMCU); */
-/*  vme_A32_D32_User_Data_SCT_write(fdOut,ClearTrigProcUnits,address); */
-  unsigned long data = vmes->Read(0, 0UL);
-  vmes->Write(0, data | 0x8);
-  vmes->Write(0, data & ~0x8);
-}
-
-void EUDRB_NIOSII_IsMasterOfSRAM_Set()
-{
-  //unsigned long int address=(baseaddress|CommandToMCU);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,uCIsMasterOfSRAM_SET,address);
-  vmes->Write(CommandToMCU, uCIsMasterOfSRAM_SET);
-}
-
-void EUDRB_NIOSII_IsMasterOfSRAM_Reset()
-{
-  //unsigned long int address=(baseaddress|CommandToMCU);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,uCIsMasterOfSRAM_CLR,address);
-  vmes->Write(CommandToMCU, uCIsMasterOfSRAM_CLR);
-}
-
-void EUDRB_NIOSII_FakeTriggerEnable_Set()
-{
-  //unsigned long int address=(baseaddress|CommandToMCU);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,FakeTriggerEnable_SET,address);
-  vmes->Write(CommandToMCU, FakeTriggerEnable_SET);
-}
-
-void EUDRB_NIOSII_FakeTriggerEnable_Reset()
-{
-  //unsigned long int address=(baseaddress|CommandToMCU);
-  //vme_A32_D32_User_Data_SCT_write(fdOut,FakeTriggerEnable_CLR,address);
-  vmes->Write(CommandToMCU, FakeTriggerEnable_CLR);
-}
-
-
-
-/*
- *       MIMO*2 CONFIGURATION
- */
-#if 0
-void PedThrInitialize(void)
-{
-
-  FILE *outputFile_a=NULL;
-  FILE *outputFile_b=NULL;
-  FILE *outputFile_c=NULL;
-  FILE *outputFile_d=NULL;
-  int i,temp_adr,TargetData;
-
-  /*CHANNEL A     */
-  outputFile_a = fopen("PedThrA.txt", "w");
-  if(outputFile_a==NULL)
-    {
-      printf("Could not open PedThrA.txt\n");
-    }
-  else
-    {
-      for(i=0;i<QSRAM_SIZE;i++)
-        {
-          temp_adr = i & 0x7f;
-          if ((temp_adr == 0xa) || (temp_adr == 0xb))
-            {
-              TargetData  = 0x000000A;       /* threshold*/
-              TargetData |= 0x1F << 6;        /* pedestal*/
-            }
-          else
-            {
-              TargetData = QSRAM_DATAOUT_Default;
-            }
-          fprintf(outputFile_a,"%x\n",TargetData);
-        }
-      fclose(outputFile_a);
-    }
-
-  /*CHANNEL B             */
-  outputFile_b = fopen("PedThrB.txt", "w");
-  if(outputFile_b==NULL)
-    {
-      printf("Could not open PedThrB.txt\n");
-    }
-  else
-    {
-
-      for (i=0; i<QSRAM_SIZE; i++)
-        {
-          temp_adr = i & 0x7f;
-          if (temp_adr == 0xb)
-            {
-              TargetData  = 0x000000A;       /* threshold*/
-              TargetData |= 0x1F << 6;        /* pedestal*/
-            }
-          else
-            {
-              TargetData = QSRAM_DATAOUT_Default;
-            }
-          fprintf(outputFile_b,"%x\n",TargetData);
-        }
-      fclose(outputFile_b);
-    }
-
-  /*CHANNEL C     */
-  outputFile_c = fopen("PedThrC.txt", "w");
-  if(outputFile_c==NULL)
-    {
-      printf("Could not open PedThrC.txt\n");
-    }
-  else
-    {
-      for (i=0; i<QSRAM_SIZE; i++)
-        {
-          temp_adr = i & 0x7f;
-          if (temp_adr == 0xc)
-            {
-              TargetData  = 0x000000A;       /* threshold*/
-              TargetData |= 0x1F << 6;        /* pedestal*/
-            }
-          else
-            {
-              TargetData = QSRAM_DATAOUT_Default;
-            }
-          fprintf(outputFile_c,"%x\n",TargetData);
-        }
-      fclose(outputFile_c);
-    }
-
-  /*CHANNEL D*/
-  outputFile_d = fopen("PedThrD.txt", "w");
-  if(outputFile_d==NULL)
-    {
-      printf("Could not open PedThrD.txt\n");
-    }
-  else
-    {
-      for (i=0; i<QSRAM_SIZE; i++)
-        {
-
-          temp_adr = i & 0x7f;
-          if (temp_adr == 0xd)
-            {
-              TargetData  = 0x000000A;       /* threshold*/
-              TargetData |= 0x1F << 6;        /* pedestal*/
-            }
-          else
-            {
-              TargetData = QSRAM_DATAOUT_Default;
-            }
-          fprintf(outputFile_d,"%x\n",TargetData);
-        }
-      fclose(outputFile_d);
-    }
-
+#ifdef __cplusplus
 }
 #endif
-};
+
 
 
 #endif
