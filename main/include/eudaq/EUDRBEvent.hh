@@ -126,7 +126,6 @@ namespace eudaq {
     template <typename T_coord, typename T_adc>
     arrays_t<T_coord, T_adc> GetArrays(const EUDRBBoard & brd) const;
 
-  private:
     struct BoardInfo {
       BoardInfo();
       BoardInfo(const EUDRBEvent & ev, unsigned brd);
@@ -139,6 +138,7 @@ namespace eudaq {
       std::vector<int> m_order;
       int m_version;
     };
+  private:
     const BoardInfo & GetInfo(const EUDRBBoard & brd) const;
     std::map<unsigned, BoardInfo> m_info;
   };
