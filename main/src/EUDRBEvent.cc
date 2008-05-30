@@ -42,7 +42,11 @@ namespace eudaq {
               if (frame == 0) {
                 result.m_x[i] = x;
                 result.m_y[i] = y;
-                result.m_pivot[i] = (row<<7 | col) >= pivot;
+                if (inf.m_version == 1) {
+                  result.m_pivot[i] = (row << 7 | col) >= pivot;
+                } else {
+                  result.m_pivot[i] = (row << 9 | col) >= pivot;
+                }
               }
               short pix = *data++ << 8;
               pix |= *data++;
@@ -62,12 +66,17 @@ namespace eudaq {
       EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, inf.NumFrames());
       const unsigned char * data = brd.GetData();
       for (unsigned i = 0; i < pixels; ++i) {
-        int mat = 3 - (data[4*i] >> 6);
-        int col = ((data[4*i+1] & 0x7) << 4) | (data[4*i+2] >> 4);
-        result.m_x[i] = col + inf.m_order[mat]*inf.m_cols;
-        result.m_y[i] = ((data[4*i] & 0x7) << 5) | (data[4*i+1] >> 3);
-        result.m_adc[0][i] = ((data[4*i+2] & 0xf) << 8) | data[4*i+3];
-        result.m_pivot[i] = false;
+        if (inf.m_version == 1) {
+          // TODO: put old code back in here
+          EUDAQ_THROW("Version 1 EUDRB decoding not implemented in ZS");
+        } else {
+          int mat = 3 - (data[4*i] >> 6);
+          int col = ((data[4*i+1] & 0x7) << 4) | (data[4*i+2] >> 4);
+          result.m_x[i] = col + inf.m_order[mat]*inf.m_cols;
+          result.m_y[i] = ((data[4*i] & 0x7) << 5) | (data[4*i+1] >> 3);
+          result.m_adc[0][i] = ((data[4*i+2] & 0xf) << 8) | data[4*i+3];
+          result.m_pivot[i] = false;
+        }
       }
       return result;
     }
@@ -121,7 +130,7 @@ namespace eudaq {
               if (frame == 0) {
                 result.m_x[i] = x;
                 result.m_y[i] = y;
-                result.m_pivot[i] = (row<<7 | col) >= pivot;
+                result.m_pivot[i] = (row << 9 | col) >= pivot;
               }
               short pix = *data++ << 8;
               pix |= *data++;
