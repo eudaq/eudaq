@@ -7,15 +7,167 @@
 
 namespace eudaq {
 
+  EUDAQ_DEFINE_EVENT(EUDRBEvent, str2id("_DRB"));
+
   namespace {
     static const int temp_order_0[] = { 0, 1, 2, 3 };
     static const std::vector<int> order_default(temp_order_0, temp_order_0+4);
 
     static const int temp_order_1[] = { 3, 1, 2, 0 };
     static const std::vector<int> order_swap03(temp_order_1, temp_order_1+4);
-  }
 
-  EUDAQ_DEFINE_EVENT(EUDRBEvent, str2id("_DRB"));
+    template <typename T_coord, typename T_adc>
+    static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawMTEL(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+      const bool missingpixel = inf.m_version == 2;
+      const size_t datasize = 2 * (inf.m_rows * inf.m_cols - missingpixel) * inf.m_mats * inf.NumFrames();
+      if (brd.DataSize() != datasize) {
+        EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
+                    ", expecting " + to_string(datasize));
+      }
+      EUDRBDecoder::arrays_t<T_coord, T_adc> result(inf.NumPixels(brd), inf.NumFrames());
+      const unsigned char * data = brd.GetData();
+      unsigned pivot = brd.PivotPixel();
+
+      unsigned nxpixel = inf.m_cols*inf.m_mats; //number of pixels in x direction
+      //unsigned nypixel = b.m_rows;          //number of pixels in y direction
+
+      for (size_t row = 0; row < inf.m_rows; ++row) {
+        for (size_t col = 0; col < inf.m_cols; ++col) {
+          if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1) break; // last pixel is not transferred
+          for (size_t frame = 0; frame < inf.NumFrames(); ++frame) {
+            for (size_t mat = 0; mat < inf.m_mats; ++mat) {
+              unsigned x = col + inf.m_order[mat]*inf.m_cols;
+              unsigned y = row;
+              size_t i = x + y*nxpixel;
+              if (frame == 0) {
+                result.m_x[i] = x;
+                result.m_y[i] = y;
+                result.m_pivot[i] = (row<<7 | col) >= pivot;
+              }
+              short pix = *data++ << 8;
+              pix |= *data++;
+              pix &= 0xfff;
+              result.m_adc[frame][i] = pix;
+            }
+          }
+        }
+      }
+      return result;
+    }
+
+    template <typename T_coord, typename T_adc>
+    static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysZSMTEL(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+      unsigned pixels = inf.NumPixels(brd);
+      //std::cout << "board datasize = " << brd.DataSize() << ", pixels = " << pixels << ", frames = " << NumFrames(brd) << std::endl;
+      EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, inf.NumFrames());
+      const unsigned char * data = brd.GetData();
+      for (unsigned i = 0; i < pixels; ++i) {
+        int mat = 3 - (data[4*i] >> 6);
+        int col = ((data[4*i+1] & 0x7) << 4) | (data[4*i+2] >> 4);
+        result.m_x[i] = col + inf.m_order[mat]*inf.m_cols;
+        result.m_y[i] = ((data[4*i] & 0x7) << 5) | (data[4*i+1] >> 3);
+        result.m_adc[0][i] = ((data[4*i+2] & 0xf) << 8) | data[4*i+3];
+        result.m_pivot[i] = false;
+      }
+      return result;
+    }
+
+    template <typename T_coord, typename T_adc>
+    static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawM18(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+      const bool missingpixel = true;
+      const size_t datasize = 2 * (inf.m_rows * inf.m_cols - missingpixel) * inf.m_mats * inf.NumFrames();
+      if (brd.DataSize() != datasize) {
+        EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
+                    ", expecting " + to_string(datasize));
+      }
+      EUDRBDecoder::arrays_t<T_coord, T_adc> result(inf.NumPixels(brd), inf.NumFrames());
+      const unsigned char * data = brd.GetData();
+      unsigned pivot = brd.PivotPixel();
+
+      unsigned nxpixel = inf.m_cols*2; //number of pixels in x direction
+      unsigned nypixel = inf.m_rows*2; //number of pixels in y direction
+
+      for (size_t row = 0; row < inf.m_rows; ++row) {
+        for (size_t col = 0; col < inf.m_cols; ++col) {
+          if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1) break; // last pixel is not transferred
+          for (size_t frame = 0; frame < inf.NumFrames(); ++frame) {
+            for (size_t mat = 0; mat < inf.m_mats; ++mat) {
+              unsigned x = 0;
+              unsigned y = 0;
+              unsigned coltmp = col, rowtmp = row;
+              if (inf.NumFrames() == 2) { // rolling frames
+                coltmp = (col + (pivot & 0x1f)) % inf.m_cols;
+                rowtmp = (row + (pivot >> 9)) % inf.m_rows;
+              }
+              switch (inf.m_order[mat]) {
+              case 0:
+                x = rowtmp;
+                y = coltmp;
+                break;
+              case 1:
+                x = rowtmp;
+                y = nypixel - 1 - rowtmp;
+                break;
+              case 2:
+                x = nxpixel - 1 - coltmp;
+                y = nypixel - 1 - rowtmp;
+                break;
+              case 3:
+                x = nxpixel - 1 - coltmp;
+                y = coltmp;
+                break;
+              }
+              size_t i = x + y*nxpixel;
+              if (frame == 0) {
+                result.m_x[i] = x;
+                result.m_y[i] = y;
+                result.m_pivot[i] = (row<<7 | col) >= pivot;
+              }
+              short pix = *data++ << 8;
+              pix |= *data++;
+              pix &= 0xfff;
+              result.m_adc[frame][i] = pix;
+            }
+          }
+        }
+      }
+      return result;
+    }
+
+    template <typename T_coord, typename T_adc>
+    static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysZSM18(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+      unsigned pixels = inf.NumPixels(brd);
+      EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, inf.NumFrames());
+      const unsigned char * data = brd.GetData();
+      for (unsigned i = 0; i < pixels; ++i) {
+        int mat = 3 - (data[4*i] >> 6);
+        int col = ((data[4*i+1] & 0x1F) << 4) | (data[4*i+2] >> 4);
+        int row = ((data[4*i] & 0x3F) << 3) |  (data[4*i+1] >> 5);
+        result.m_adc[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
+        result.m_pivot[i] = false;
+        switch (inf.m_order[mat]) {
+        case 0:
+          result.m_x[i] = col;
+          result.m_y[i] = row;
+          break;
+        case 1:
+          result.m_x[i] = col;
+          result.m_y[i] = 2 * inf.m_rows - 1 - row ;
+          break;
+        case 2:
+          result.m_x[i] = 2 * inf.m_cols - 1 - col;
+          result.m_y[i] = 2 * inf.m_rows - 1 - row;
+          break;
+        case 3:
+          result.m_x[i] = 2 * inf.m_cols - 1 - col;
+          result.m_y[i] = row;
+          break;
+        }
+      }
+      return result;
+    }
+
+  }
 
   EUDRBBoard::EUDRBBoard(Deserializer & ds) {
     ds.read(m_id);
@@ -103,12 +255,12 @@ namespace eudaq {
   }
 
   EUDRBDecoder::BoardInfo::BoardInfo()
-    : m_det(DET_MIMOTEL), m_mode(MODE_RAW3), m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03)
+    : m_det(DET_MIMOTEL), m_mode(MODE_RAW3), m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03), m_version(0)
   {
   }
 
   EUDRBDecoder::BoardInfo::BoardInfo(const EUDRBEvent & ev, unsigned brd)
-    : m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03)
+    : m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03), m_version(0)
   {
     std::string det = ev.GetTag("DET" + to_string(brd));
     if (det == "") det = ev.GetTag("DET", "MIMOTEL");
@@ -130,6 +282,16 @@ namespace eudaq {
       m_mode = (brd % 2) ? MODE_ZS : MODE_RAW3;
     }
     else EUDAQ_THROW("Unknown mode in EUDRBDecoder: " + mode);
+
+    m_version = ev.GetTag("VERSION", 0);
+    if (m_version == 0) { // No VERSION tag, try to guess it
+      if (det == "MIMOTEL" && mode != "RAW2") {
+        m_version = 1;
+      } else {
+        m_version = 2;
+      }
+      EUDAQ_WARN("No EUDRB Version tag, guessing VERSION=" + to_string(m_version));
+    }
 
     Check();
   }
@@ -167,178 +329,47 @@ namespace eudaq {
     return it->second;
   }
 
-  unsigned EUDRBDecoder::NumFrames(const EUDRBBoard & brd) const {
-    return 3 - GetInfo(brd).m_mode; // RAW3=0 -> 3, RAW2=1 -> 2, ZS=2 -> 1
+  unsigned EUDRBDecoder::BoardInfo::NumFrames() const {
+    return 3 - m_mode; // RAW3=0 -> 3, RAW2=1 -> 2, ZS=2 -> 1
   }
 
-  unsigned EUDRBDecoder::NumPixels(const EUDRBBoard & brd) const {
-    const BoardInfo & b = GetInfo(brd);
-    if (b.m_mode != MODE_ZS) return b.m_rows * b.m_cols * b.m_mats;
+  unsigned EUDRBDecoder::BoardInfo::NumPixels(const EUDRBBoard & brd) const {
+    if (m_mode != MODE_ZS) return m_rows * m_cols * m_mats;
     return brd.DataSize() / 4;
-    //EUDAQ_THROW("ZS mode not yet implemented");
   }
 
   template <typename T_coord, typename T_adc>
-  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawMTEL(const EUDRBBoard & brd) const {
-    const BoardInfo & b = GetInfo(brd);
-    const size_t datasize = 2 * (b.m_rows * b.m_cols - 1) * b.m_mats * NumFrames(brd);
-    if (brd.DataSize() != datasize) {
-      EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
-                  ", expecting " + to_string(datasize));
-    }
-    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames(brd));
-    const unsigned char * data = brd.GetData();
-    unsigned pivot = brd.PivotPixel();
-
-    unsigned nxpixel = b.m_cols*b.m_mats; //number of pixels in x direction
-    //unsigned nypixel = b.m_rows;          //number of pixels in y direction
-
-    for (size_t row = 0; row < b.m_rows; ++row) {
-      for (size_t col = 0; col < b.m_cols; ++col) {
-        if (row == b.m_rows-1 && col == b.m_cols-1) break; // last pixel is not transferred
-        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          for (size_t mat = 0; mat < b.m_mats; ++mat) {
-            unsigned x = col + b.m_order[mat]*b.m_cols;
-            unsigned y = row;
-            size_t i = x + y*nxpixel;
-            if (frame == 0) {
-              result.m_x[i] = x;
-              result.m_y[i] = y;
-              result.m_pivot[i] = (row<<7 | col) >= pivot;
-            }
-            short pix = *data++ << 8;
-            pix |= *data++;
-            pix &= 0xfff;
-            result.m_adc[frame][i] = pix;
-          }
-        }
+  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArrays(const EUDRBBoard & brd) const {
+    const BoardInfo & inf = GetInfo(brd);
+    switch (inf.m_det) {
+    case DET_MIMOSTAR2:
+    case DET_MIMOTEL:
+    case DET_MIMOTEL_NEWORDER:
+      switch (inf.m_mode) {
+      case MODE_RAW2:
+      case MODE_RAW3: return GetArraysRawMTEL<T_coord, T_adc>(brd, inf);
+      case MODE_ZS:   return GetArraysZSMTEL<T_coord, T_adc>(brd, inf);
+      default: EUDAQ_THROW("Unrecognised mode");
       }
-    }
-    return result;
-  }
-
-  template <typename T_coord, typename T_adc>
-  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysZSMTEL(const EUDRBBoard & brd) const {
-    const BoardInfo & b = GetInfo(brd);
-    unsigned pixels = NumPixels(brd);
-    //std::cout << "board datasize = " << brd.DataSize() << ", pixels = " << pixels << ", frames = " << NumFrames(brd) << std::endl;
-    EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, NumFrames(brd));
-    const unsigned char * data = brd.GetData();
-    for (unsigned i = 0; i < pixels; ++i) {
-      int mat = 3 - (data[4*i] >> 6);
-      int col = ((data[4*i+1] & 0x7) << 4) | (data[4*i+2] >> 4);
-      result.m_x[i] = col + b.m_order[mat]*b.m_cols;
-      result.m_y[i] = ((data[4*i] & 0x7) << 5) | (data[4*i+1] >> 3);
-      result.m_adc[0][i] = ((data[4*i+2] & 0xf) << 8) | data[4*i+3];
-      result.m_pivot[i] = false;
-    }
-    return result;
-  }
-
-  template <typename T_coord, typename T_adc>
-  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawM18(const EUDRBBoard & brd) const {
-    const BoardInfo & b = GetInfo(brd);
-    const size_t datasize = 2 * (b.m_rows * b.m_cols - 1) * b.m_mats * NumFrames(brd);
-    if (brd.DataSize() != datasize) {
-      EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
-                  ", expecting " + to_string(datasize));
-    }
-    EUDRBDecoder::arrays_t<T_coord, T_adc> result(NumPixels(brd), NumFrames(brd));
-    const unsigned char * data = brd.GetData();
-    unsigned pivot = brd.PivotPixel();
-
-    unsigned nxpixel = b.m_cols*2; //number of pixels in x direction
-    unsigned nypixel = b.m_rows*2; //number of pixels in y direction
-
-    for (size_t row = 0; row < b.m_rows; ++row) {
-      for (size_t col = 0; col < b.m_cols; ++col) {
-        if (row == b.m_rows-1 && col == b.m_cols-1) break; // last pixel is not transferred
-        for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
-          for (size_t mat = 0; mat < b.m_mats; ++mat) {
-            unsigned x = 0;
-            unsigned y = 0;
-            unsigned coltmp = col, rowtmp = row;
-            if (NumFrames(brd) == 2) { // rolling frames
-              coltmp = (col + (pivot & 0x1f)) % b.m_cols;
-              rowtmp = (row + (pivot >> 9)) % b.m_rows;
-            }
-            switch (b.m_order[mat]) {
-            case 0:
-              x = rowtmp;
-              y = coltmp;
-              break;
-            case 1:
-              x = rowtmp;
-              y = nypixel - 1 - rowtmp;
-              break;
-            case 2:
-              x = nxpixel - 1 - coltmp;
-              y = nypixel - 1 - rowtmp;
-              break;
-            case 3:
-              x = nxpixel - 1 - coltmp;
-              y = coltmp;
-              break;
-            }
-            size_t i = x + y*nxpixel;
-            if (frame == 0) {
-              result.m_x[i] = x;
-              result.m_y[i] = y;
-              result.m_pivot[i] = (row<<7 | col) >= pivot;
-            }
-            short pix = *data++ << 8;
-            pix |= *data++;
-            pix &= 0xfff;
-            result.m_adc[frame][i] = pix;
-          }
-        }
+      break;
+    case DET_MIMOSA18:
+      switch (inf.m_mode) {
+      case MODE_RAW2:
+      case MODE_RAW3: return GetArraysRawM18<T_coord, T_adc>(brd, inf);
+      case MODE_ZS:   return GetArraysZSM18<T_coord, T_adc>(brd, inf);
+      default: EUDAQ_THROW("Unrecognised mode");
       }
+      break;
+    default: EUDAQ_THROW("Unrecognised detector");
     }
-    return result;
   }
 
-  template <typename T_coord, typename T_adc>
-  EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysZSM18(const EUDRBBoard & brd) const {
-    const BoardInfo & b = GetInfo(brd);
-    unsigned pixels = NumPixels(brd);
-    EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, NumFrames(brd));
-    const unsigned char * data = brd.GetData();
-    for (unsigned i = 0; i < pixels; ++i) {
-      int mat = 3 - (data[4*i] >> 6);
-      int col = ((data[4*i+1] & 0x1F) << 4) | (data[4*i+2] >> 4);
-      int row = ((data[4*i] & 0x3F) << 3) |  (data[4*i+1] >> 5);
-      result.m_adc[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
-      result.m_pivot[i] = false;
-      switch (b.m_order[mat]) {
-      case 0:
-        result.m_x[i] = col;
-        result.m_y[i] = row;
-        break;
-      case 1:
-        result.m_x[i] = col;
-        result.m_y[i] = 2 * b.m_rows - 1 - row ;
-        break;
-      case 2:
-        result.m_x[i] = 2 * b.m_cols - 1 - col;
-        result.m_y[i] = 2 * b.m_rows - 1 - row;
-        break;
-      case 3:
-        result.m_x[i] = 2 * b.m_cols - 1 - col;
-        result.m_y[i] = row;
-        break;
-      }
-    }
-    return result;
-  }
+#define MAKE_DECODER_TYPE(TCOORD, TADC) \
+  template EUDRBDecoder::arrays_t<TCOORD, TADC> EUDRBDecoder::GetArrays<>(const EUDRBBoard & brd) const
 
-  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRawMTEL<>(const EUDRBBoard & brd) const;
-  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZSMTEL<>(const EUDRBBoard & brd) const;
-  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
-  template EUDRBDecoder::arrays_t<double, double> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
+  MAKE_DECODER_TYPE(short, short);
+  MAKE_DECODER_TYPE(double, double);
 
-  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRawMTEL<>(const EUDRBBoard & brd) const;
-  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZSMTEL<>(const EUDRBBoard & brd) const;
-  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysRawM18<>(const EUDRBBoard & brd) const;
-  template EUDRBDecoder::arrays_t<short, short> EUDRBDecoder::GetArraysZSM18<>(const EUDRBBoard & brd) const;
+#undef MAKE_DECODER_TYPE
 
 }

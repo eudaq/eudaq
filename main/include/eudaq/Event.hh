@@ -10,6 +10,7 @@
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Exception.hh"
+#include "eudaq/Utils.hh"
 
 #define EUDAQ_DECLARE_EVENT(type)           \
   public:                                   \
@@ -48,7 +49,12 @@ namespace eudaq {
     virtual void Print(std::ostream & os) const = 0;
 
     Event & SetTag(const std::string & name, const std::string & val);
-    std::string GetTag(const std::string & name, const std::string def = "") const;
+    std::string GetTag(const std::string & name, const std::string & def = "") const;
+    std::string GetTag(const std::string & name, const char * def) const { return GetTag(name, std::string(def)); }
+    template <typename T>
+    T GetTag(const std::string & name, T def) const {
+      return eudaq::from_string(GetTag(name), def);
+    }
 
     bool IsBORE() const { return GetFlags(FLAG_BORE); }
     bool IsEORE() const { return GetFlags(FLAG_EORE); }
