@@ -381,7 +381,6 @@ public:
   bool done, started;
   int n_error;
   std::vector<unsigned long> buffer;
-  //std::vector<unsigned long> buffer;
   std::vector<BoardInfo> boards;
   //int fdOut;
   int m_idoffset;
