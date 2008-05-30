@@ -1,7 +1,7 @@
 #include "tlu/TLUController.hh"
 #include <usb.h>
 #include "ZestSC1.h"
-#include "../Local.h"
+#include "Local.h"
 
 namespace tlu {
 

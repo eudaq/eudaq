@@ -1,9 +1,12 @@
-#!/bin/bash
-# cleanup rests of previous RunControl to be sure
-#EUDRBIP=eudetvme001.cern.ch
-#TLUIP=eudetpc001.cern.ch
+#!/bin/sh
+# EUDRBIP=eudetvme001.cern.ch
+# TLUIP=eudetpc001.cern.ch
 EUDRBIP=mvme6100
 TLUIP=tlupc
+
+export ROOTSYS=/usr/share/root/
+
+export HOSTNAME=eudet
 
 cd `dirname $0`
 
@@ -13,8 +16,9 @@ killall RootMonitor.exe
 killall TestDataCollector.exe
 ssh -X -Y eudet@$EUDRBIP "killall EUDRBProducer.exe" &
 sleep 3
+killall TLUProducer.exe
 ssh -X -Y eudet@$TLUIP "killall TLUProducer.exe" &
-ssh -X -Y eudet@$EUDRBIP "cd /home/eudet/eudrb/Lorenzo; ./JTAGDownload_18.sh" &
+#ssh -X -Y eudet@$EUDRBIP "cd /home/eudet/eudrb/Lorenzo; ./JTAGDownload_18.sh" &
 sleep 12
 killall euLog
 sleep 1
@@ -38,7 +42,7 @@ printf '\t\t  DataCollector\n'
 sleep 1
 printf '\t\t  RootMonitor\n'
 #cd root
-./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 &
+# ./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 &
 cd -
 #printf '\t\t  ...Resetting EUDRBs\n'
 #ssh -X -Y eudet$EUDRBIP "cd /home/eudet/eudrb/lorenzo/; ./reset > /dev/null" &
@@ -47,6 +51,7 @@ printf '\t\t  EUDRB\n'
 ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd /home/eudet/eudaq/bin/; ./EUDRBProducer.exe -r EUDET.local')" &
 sleep 2
 printf '\t\t  TLU\n'
+#/usr/X11/bin/xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd bin; ./TLUProducer.exe' &
 ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd /home/eudet/eudaq/bin/; ./TLUProducer.exe -r EUDET.local')" &
 printf '\033[1;32;48m\t ...Done!\033[0m \n'
 printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'
