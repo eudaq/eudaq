@@ -1037,6 +1037,7 @@ public:
               try {
                 totalnumevents++;
                 std::vector<unsigned int> numberofclusters(m_board.size(),0);
+                //std::cout << "Numboards " << drbev->NumBoards() << ", " << m_board.size() << std::endl;
                 for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
                   numplanes++;
                   FillBoard(m_board[i], drbev->GetBoard(i),i,numberofclusters[i]);
@@ -1346,7 +1347,7 @@ private:
 
     b.m_historaw2d      = new TH2DNew(make_name("RawProfile",    board).c_str(), "Raw 2D Profile",    264, 0, 264, 256, 0, 256);
     b.m_tempcds         = new TH2DNew(make_name("TempCDS",       board).c_str(), "Temp CDS",          264, 0, 264, 256, 0, 256);
-    b.m_tempcds2        = new TH2DNew(make_name("TempCDS2",       board).c_str(), "Temp CDS2",          264, 0, 264, 256, 0, 256);
+    b.m_tempcds2        = new TH2DNew(make_name("TempCDS2",      board).c_str(), "Temp CDS2",         264, 0, 264, 256, 0, 256);
     b.m_histocds2d      = new TH2DNew(make_name("CDSProfile",    board).c_str(), "CDS Profile",       264, 0, 264, 256, 0, 256);
     b.m_histohit2d      = new TH2DNew(make_name("HitMap",        board).c_str(), "Hit Profile",       264, 0, 264, 256, 0, 256);
     b.m_histocluster2d  = new TH2DNew(make_name("ClusterMap",    board).c_str(), "Cluster Profile",   132, 0, 264, 128, 0, 256);
@@ -1372,6 +1373,8 @@ private:
   void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e, int boardnumber, unsigned int &numberofclusters) {
     eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     size_t npixels = m_decoder->NumPixels(e); //, nx=264, ny=256;
+    //std::cout << "Filling " << e.LocalEventNumber() << " board" << boardnumber
+    //          << " frames " << m_decoder->NumFrames(e) << " pixels " << npixels << std::endl;
     std::vector<double> ones(npixels, 1.0);
     std::vector<double> cds(a.m_adc[0]);
     if (m_decoder->NumFrames(e) > 1) {
@@ -1436,12 +1439,14 @@ private:
     b.m_clusters.clear();
     b.m_clusterx.clear();
     b.m_clustery.clear();
-    if (m_histoevents >= 50) {
+    if (m_histoevents >= 20) {
       if (m_histoevents < 500) {
+        b.m_histonoise2d->Reset();
         for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
             double rms = b.m_histocds2d->GetBinError(ix, iy) / std::sqrt((double)m_histoevents);
-            b.m_histonoise2d->SetBinContent(ix, iy, rms);
+            int bin = b.m_histonoise2d->Fill(ix-1, iy-1, rms);
+            if (ix < 5 && iy < 5) std::cout << ix << ", " << iy << " rms = " << rms << " bin = " << bin << std::endl;
           }
         }
       }

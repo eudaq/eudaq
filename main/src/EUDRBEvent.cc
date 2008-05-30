@@ -181,7 +181,7 @@ namespace eudaq {
   template <typename T_coord, typename T_adc>
   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArraysRawMTEL(const EUDRBBoard & brd) const {
     const BoardInfo & b = GetInfo(brd);
-    const size_t datasize = 2 * b.m_rows * b.m_cols * b.m_mats * NumFrames(brd);
+    const size_t datasize = 2 * (b.m_rows * b.m_cols - 1) * b.m_mats * NumFrames(brd);
     if (brd.DataSize() != datasize) {
       EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
                   ", expecting " + to_string(datasize));
@@ -195,6 +195,7 @@ namespace eudaq {
 
     for (size_t row = 0; row < b.m_rows; ++row) {
       for (size_t col = 0; col < b.m_cols; ++col) {
+        if (row == b.m_rows-1 && col == b.m_cols-1) break; // last pixel is not transferred
         for (size_t frame = 0; frame < NumFrames(brd); ++frame) {
           for (size_t mat = 0; mat < b.m_mats; ++mat) {
             unsigned x = col + b.m_order[mat]*b.m_cols;

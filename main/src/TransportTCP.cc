@@ -23,7 +23,7 @@ namespace eudaq {
 
     static const std::string PROTO_NAME = "tcp";
     static const int MAXPENDING = 16;
-    static const int MAX_BUFFER_SIZE = 1500;
+    static const int MAX_BUFFER_SIZE = 10000;
 
     static int to_int(char c) {
       return static_cast<unsigned char>(c);
@@ -317,8 +317,8 @@ namespace eudaq {
   }
 
   std::string TCPServer::ConnectionString() const {
-    char buf[500] = {0};
-    gethostname(buf, sizeof buf);
+    char * buf = getenv("HOSTNAME");
+    //gethostname(buf, sizeof buf);
     return PROTO_NAME + "://" + buf + ":" + to_string(m_port);
   }
 
