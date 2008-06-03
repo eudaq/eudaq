@@ -56,7 +56,7 @@ namespace eudaq {
           cur_sec = &config[line];
         }
       } else {
-        std::string key = trim(std::string(line, 0, equals-1));
+        std::string key = trim(std::string(line, 0, equals));
         // TODO: check key does not already exist
         // handle lines like: blah = "foo said ""bar""; ok." # not "baz"
         line = trim(std::string(line, equals+1));
@@ -65,7 +65,7 @@ namespace eudaq {
           line = std::string(line, 1, line.length()-2);
         } else {
           size_t i = line.find_first_of(";#");
-          if (i != std::string::npos) line = trim(std::string(line, 0, i-1));
+          if (i != std::string::npos) line = trim(std::string(line, 0, i));
         }
         //std::cerr << "Key " << key << " = " << line << std::endl;
         (*cur_sec)[key] = line;
