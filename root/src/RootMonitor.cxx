@@ -42,7 +42,7 @@
 
 static const unsigned MAX_BOARDS = 6;
 static const unsigned MAX_SEEDS = 1000;
-
+static const double DEFAULT_NOISE = 4;
 
 //displayed board colors
 static const float COL_R[] = { .8,  0,  0, .9, .8,  0 };
@@ -178,8 +178,9 @@ public:
 };
 
 struct Seed {
-  double x, y, c;
-  Seed(double x, double y, double c) : x(x), y(y), c(c) {}
+  int x, y;
+  double c;
+  Seed(int x, int y, double c) : x(x), y(y), c(c) {}
   static bool compare(const Seed & lhs, const Seed & rhs) { return lhs.c > rhs.c; }
 };
 
@@ -1359,7 +1360,7 @@ private:
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", 256, 0, 256);
     b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
     b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
-    b.m_histoclusterval = new TH1DNew(make_name("ClusterValues", board).c_str(), "Cluster Charge",    200,  0, 2000);
+    b.m_histoclusterval = new TH1DNew(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 1000);
     b.m_histonumclusters= new TH1DNew(make_name("NumClusters",   board).c_str(), "Num Clusters",      100,  0,  100);
     b.m_histodeltax     = new TH1DNew(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
     b.m_histodeltay     = new TH1DNew(make_name("DeltaY",        board).c_str(), "Delta Y",           200,-100, 100);
@@ -1446,7 +1447,7 @@ private:
           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
             double rms = b.m_histocds2d->GetBinError(ix, iy) / std::sqrt((double)m_histoevents);
             int bin = b.m_histonoise2d->Fill(ix-1, iy-1, rms);
-            if (ix < 5 && iy < 5) std::cout << ix << ", " << iy << " rms = " << rms << " bin = " << bin << std::endl;
+            //if (ix < 5 && iy < 5) std::cout << ix << ", " << iy << " rms = " << rms << " bin = " << bin << std::endl;
           }
         }
       }
@@ -1459,7 +1460,7 @@ private:
       for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
         for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
           double s = b.m_tempcds->GetBinContent(ix, iy);
-          double noise = 5; //b.m_histonoise2d->GetBinContent(ix, iy);
+          double noise = DEFAULT_NOISE; //b.m_histonoise2d->GetBinContent(ix, iy);
           if (s > seed_thresh*noise) {
             seeds.push_back(Seed(ix, iy, s));
           }
@@ -1482,16 +1483,13 @@ private:
             double noise = 0;
             for (int dy = -clustersizeindex; dy <= clustersizeindex; ++dy) {
               for (int dx = -clustersizeindex; dx <= clustersizeindex; ++dx) {
-                if(((int)seeds[i].x+dx)  <= 0 || ((int)seeds[i].y+dy) <= 0 || ((int)seeds[i].x+dx) > b.m_tempcds->GetXaxis()->GetLast() || ((int)seeds[i].y+dy) > b.m_tempcds->GetYaxis()->GetLast()) //check whether we are outside the histogram
+                if((seeds[i].x+dx) >= 0 && (seeds[i].y+dy) >= 0 && (seeds[i].x+dx) < b.m_tempcds->GetXaxis()->GetLast()
+                   && (seeds[i].y+dy) < b.m_tempcds->GetYaxis()->GetLast() //check whether we are inside the histogram
+                   && b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy) > seedneighbour_thresh * DEFAULT_NOISE)
                   {
-                    cluster += 0.0;
-                  }
-                else if(b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy) > seedneighbour_thresh * 5.0)
-                  {
-                    double n = 5; //b.m_histonoise2d->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                    noise += n*n;
+                    noise += DEFAULT_NOISE*DEFAULT_NOISE;
                     cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                    b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);  
+                    b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);
                   }
               }
             }
@@ -1514,20 +1512,12 @@ private:
                         {
                           double noise = 5.0;
                           double value = b.m_tempcds2->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                          if(((int)seeds[i].x+dx)  <= 0 || ((int)seeds[i].y+dy) <= 0 || ((int)seeds[i].x+dx) > b.m_tempcds2->GetXaxis()->GetLast() || ((int)seeds[i].y+dy) > b.m_tempcds2->GetYaxis()->GetLast()) //check whether we are outside the histogram
-                            {
-                              sumy[dy+1] += 0.0;
-                              sumx[dx+1] += 0.0;
-                            }
-                          else if(value > seedneighbour_thresh*noise) // cut on s/n of the seed pixels neighbours
+                          if((seeds[i].x+dx) >= 0 && (seeds[i].y+dy) >= 0 && (seeds[i].x+dx) < b.m_tempcds2->GetXaxis()->GetLast()
+                             && (seeds[i].y+dy) < b.m_tempcds2->GetYaxis()->GetLast() //check whether we are inside the histogram
+                             && value > seedneighbour_thresh*noise) // cut on s/n of the seed pixels neighbours
                             {
                               sumy[dy+1] += value;
                               sumx[dx+1] += value;
-                            }
-                          else 
-                            {
-                              sumy[dy+1] += 0.0;
-                              sumx[dx+1] += 0.0;
                             }
                         }
                     }
