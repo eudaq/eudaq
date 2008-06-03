@@ -345,7 +345,7 @@ namespace eudaq {
 
   unsigned EUDRBDecoder::BoardInfo::NumPixels(const EUDRBBoard & brd) const {
     if (m_mode != MODE_ZS) return m_rows * m_cols * m_mats;
-    int padding = (unsigned *)(brd.GetData() + brd.DataSize() - 4) == 0;
+    int padding = *(unsigned *)(brd.GetData() + brd.DataSize() - 4) == 0;
     return brd.DataSize() / 4 - padding;
   }
 
