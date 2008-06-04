@@ -36,16 +36,21 @@ namespace eudaq {
           if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1) break; // last pixel is not transferred
           for (size_t frame = 0; frame < inf.NumFrames(); ++frame) {
             for (size_t mat = 0; mat < inf.m_mats; ++mat) {
-              unsigned x = col + inf.m_order[mat]*inf.m_cols;
-              unsigned y = row;
+              unsigned coltmp = col, rowtmp = row;
+              if (inf.NumFrames() == 2) { // rolling frames
+                coltmp = (col + (pivot & 0x1f)) % inf.m_cols;
+                rowtmp = (row + (pivot >> 9)) % inf.m_rows; // RAW2 only in V2, no need for V1 encoding
+              }
+              unsigned x = coltmp + inf.m_order[mat]*inf.m_cols;
+              unsigned y = rowtmp;
               size_t i = x + y*nxpixel;
               if (frame == 0) {
                 result.m_x[i] = x;
                 result.m_y[i] = y;
                 if (inf.m_version == 1) {
-                  result.m_pivot[i] = (row << 7 | col) >= pivot;
+                  result.m_pivot[i] = (rowtmp << 7 | coltmp) >= pivot;
                 } else {
-                  result.m_pivot[i] = (row << 9 | col) >= pivot;
+                  result.m_pivot[i] = (rowtmp << 9 | coltmp) >= pivot;
                 }
               }
               short pix = *data++ << 8;
@@ -102,13 +107,13 @@ namespace eudaq {
           if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1) break; // last pixel is not transferred
           for (size_t frame = 0; frame < inf.NumFrames(); ++frame) {
             for (size_t mat = 0; mat < inf.m_mats; ++mat) {
-              unsigned x = 0;
-              unsigned y = 0;
               unsigned coltmp = col, rowtmp = row;
               if (inf.NumFrames() == 2) { // rolling frames
                 coltmp = (col + (pivot & 0x1f)) % inf.m_cols;
                 rowtmp = (row + (pivot >> 9)) % inf.m_rows;
               }
+              unsigned x = 0;
+              unsigned y = 0;
               switch (inf.m_order[mat]) {
               case 0:
                 x = rowtmp;
@@ -131,7 +136,7 @@ namespace eudaq {
               if (frame == 0) {
                 result.m_x[i] = x;
                 result.m_y[i] = y;
-                result.m_pivot[i] = (row << 9 | col) >= pivot;
+                result.m_pivot[i] = (rowtmp << 9 | coltmp) >= pivot;
               }
               short pix = *data++ << 8;
               pix |= *data++;
