@@ -1446,7 +1446,7 @@ private:
         for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
             double rms = b.m_histocds2d->GetBinError(ix, iy) / std::sqrt((double)m_histoevents);
-            int bin = b.m_histonoise2d->Fill(ix-1, iy-1, rms);
+            b.m_histonoise2d->Fill(ix-1, iy-1, rms);
             //if (ix < 5 && iy < 5) std::cout << ix << ", " << iy << " rms = " << rms << " bin = " << bin << std::endl;
           }
         }
