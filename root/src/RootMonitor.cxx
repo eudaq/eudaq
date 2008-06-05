@@ -1387,7 +1387,7 @@ private:
         }
       } else if (m_decoder->NumFrames(e) == 2) {
         for (size_t i = 0; i < cds.size(); ++i) {
-          cds[i] = a.m_adc[1][i] - a.m_adc[0][i];
+          cds[i] = a.m_adc[0][i] - a.m_adc[1][i];
         }
       } else {
         for (size_t i = 0; i < cds.size(); ++i) {
