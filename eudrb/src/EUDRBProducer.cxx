@@ -438,8 +438,9 @@ public:
       while (fscanf(fp,"%d %d %d %f %f %d\n",&board,&x,&y,&ped,&thresh,&flag)!=EOF) {
         //printf("I read: board: %1d, x: %3d, y: %3d, ped: %2.3f, thresh: %2.3f, flag: %2d\n",board,x,y,ped,thresh,flag);
         subm=(x>>6);
+        if (subm == 1 || subm == 2) subm = 3-subm; // fix for submatrix ordering
         x=x%64;
-        offset=((x+2)+(y<<7)+(subm<<18))<<2; // x+2, because 0 and 1 are dummy pixels
+        offset=((x+2)+(y<<9)+(subm<<18))<<2; // x+2, because 0 and 1 are dummy pixels
         thresh2bit=(int) (thresh*sigma); // prepare for 2bits complement
         ped2bit=(int) ped&0x1f; // prepare for 2bits complement
         //              newdata32=0xc;
@@ -447,10 +448,7 @@ public:
         if (thresh2bit<-32) thresh2bit=-32;
         if (ped2bit>31) ped2bit=31;
         if (ped2bit<-32) ped2bit=-32;
-        newdata32=thresh2bit;
-        // temporary
-        //newdata32=4;
-        newdata32=newdata32+(ped2bit<<6);
+        newdata32=(thresh2bit & 0x3f) | ((ped2bit & 0x3f) << 6);
         
         if (flag) newdata32=0x1f+(1<<11); // mask bad pixels as good as you can (high thresh and very low ped)
         
@@ -498,7 +496,7 @@ public:
     newdata32=readdata32|0x200;
     vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
     for (size_t i = 0; i < peds.size(); ++i) {
-      vme_A32_D32_User_Data_SCT_write(fdOut, newdata32, board.BaseAddress + 0x800000 + i*4);
+      vme_A32_D32_User_Data_SCT_write(fdOut, peds[i], board.BaseAddress + 0x800000 + i*4);
     }
     // Release master of SRAM
     printf("\tRelease Master of SRAM\n");
