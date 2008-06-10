@@ -20,6 +20,7 @@ namespace eudaq {
     virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream &) const;
     void Write(std::ostream &) const;
+    static LogMessage Read(std::istream &);
     LogMessage & SetLocation(const std::string & file, unsigned line, const std::string & func = "");
     LogMessage & SetSender(const std::string & name);
     std::string GetSender() const { return m_sendertype + (m_sendername == "" ? std::string("") : "." + m_sendername); }
