@@ -45,7 +45,9 @@ public:
     if (p) itsCounter = new counter(p);
     return *this;
   }
-
+  operator bool () const {
+    return get();
+  }
 #ifndef NO_MEMBER_TEMPLATES
   template <class Y> friend class counted_ptr;
   template <class Y> counted_ptr(const counted_ptr<Y>& r) throw()
