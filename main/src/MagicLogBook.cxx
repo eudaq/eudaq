@@ -221,8 +221,8 @@ private:
 };
 
 int main(int /*argc*/, char ** argv) {
-  eudaq::OptionParser op("EUDAQ run information extractor", "1.0",
-                         "Extracts run information from data and log files",
+  eudaq::OptionParser op("EUDAQ Magic Log Book", "1.0",
+                         "Uses powerful black magic to create the log book you forgot to write",
                          1);
   eudaq::Option<std::vector<std::string> > fields(op, "f", "fields", "name", ",",
                                                   "A list of fields to include in the output");
@@ -230,13 +230,35 @@ int main(int /*argc*/, char ** argv) {
                                  "String to separate output fields");
   eudaq::Option<std::string> head(op, "h", "header", "", "string",
                                  "String to precede the header line (blank=no header)");
-  eudaq::Option<std::string> fset(op, "p", "predefined", "", "Predefined set of fields (fast, full...)");
+  eudaq::Option<std::string> pdef(op, "p", "predefined", "", "name",
+                                  "Predefined set of fields (normal, fast, full...)");
   eudaq::Option<std::string> ofile(op, "o", "output", "", "file",
                                    "File name for storing the output (default=stdout)");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(eudaq::Status::LVL_NONE);
-    RunInfo info(ofile.Value(), fields.Value(), sep.Value(), head.Value());
+    std::vector<std::string> flds;
+    if (pdef.Value() == "normal") {
+      std::string vals[] = {
+        "Run=bore:.Run",
+        "Config=config",
+        "Mode=eudrb:MODE",
+        "Det=eudrb:DET",
+        "Start=bore:STARTTIME",
+        "Unsync=config:Producer.EUDRB:Unsynchronized",
+        "Planes=config:Producer.EUDRB:NumBoards",
+        "TriggerInterval=tlu:TriggerInterval",
+        "AndMask=tlu:AndMask",
+        "DUTMask=tlu:DutMask",
+        "TLUfw=tlu:FirmwareID",
+        "EUDRBfw=eudrb:VERSION",
+      };
+      flds.insert(flds.end(), vals, vals + sizeof vals / sizeof *vals);
+    } else if (pdef.Value() != "") {
+      EUDAQ_THROW("Unknown predefined fields: " + pdef.Value());
+    }
+    flds.insert(flds.end(), fields.Value().begin(), fields.Value().end());
+    RunInfo info(ofile.Value(), flds, sep.Value(), head.Value());
     //EUDAQ_LOG_LEVEL("INFO");
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       std::string datafile = op.GetArg(i);
