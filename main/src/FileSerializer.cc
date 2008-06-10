@@ -9,10 +9,10 @@ namespace eudaq {
   {
     if (!overwrite) {
       std::ifstream test(fname.c_str());
-      if (test.is_open()) EUDAQ_THROW("File already exists: " + fname);
+      if (test.is_open()) EUDAQ_THROWX(FileExistsException, "File already exists: " + fname);
     }
     m_stream.open(fname.c_str(), std::ios::binary);
-    if (!m_stream.is_open()) EUDAQ_THROW("Unable to open file: " + fname);
+    if (!m_stream.is_open()) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
   }
 
   void FileSerializer::Serialize(const unsigned char * data, size_t len) {
@@ -27,7 +27,7 @@ namespace eudaq {
   FileDeserializer::FileDeserializer(const std::string & fname) :
     m_stream(fname.c_str(), std::ios::binary)
   {
-    if (!m_stream.is_open()) EUDAQ_THROW("Unable to open file: " + fname);
+    if (!m_stream.is_open()) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
   }
 
   bool FileDeserializer::HasData() {
@@ -55,7 +55,7 @@ namespace eudaq {
         mSleep(1);
       } else if (m_stream.bad()) {
         std::cout << std::endl;
-        EUDAQ_THROW("Error reading from file");
+        EUDAQ_THROWX(FileReadException, "Error reading from file");
       }
     }
     //std::cout << std::endl;

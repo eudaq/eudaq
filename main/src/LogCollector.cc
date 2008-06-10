@@ -29,7 +29,7 @@ namespace eudaq {
       m_filename("../logs/" + Time::Current().Formatted("%Y-%m-%d.log")),
       m_file(m_filename.c_str(), std::ios_base::app)
   {
-    if (!m_file.is_open()) EUDAQ_THROW("Unable to open log file (" + m_filename + ") is there a logs directory?");
+    if (!m_file.is_open()) EUDAQ_THROWX(FileWriteException, "Unable to open log file (" + m_filename + ") is there a logs directory?");
     m_transport->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     pthread_attr_init(&m_threadattr);
     pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
