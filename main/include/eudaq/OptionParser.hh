@@ -91,13 +91,41 @@ namespace eudaq {
            const T & deflt = T(), const std::string & argname = "", const std::string & desc = "")
       : OptionBase(p, shortname, longname, to_string(deflt), argname, desc), m_value(deflt)
       {}
-    T Value() const { return m_value; }
+    const T & Value() const { return m_value; }
     void SetValue(const T & val) { m_value = val; }
   private:
     virtual void DoParsing(const std::string & /*name*/, const std::string & arg) {
       m_value = from_string(arg, m_value);
     }
     T m_value;
+  };
+
+  template <typename T>
+  class Option<std::vector<T> > : public OptionBase {
+  public:
+    Option(OptionParser & p, const std::string & shortname, const std::string & longname,
+           const std::string & argname = "", const std::string & sep = "", const std::string & desc = "")
+      : OptionBase(p, shortname, longname, "", argname, desc), m_sep(sep)
+      {}
+    const std::vector<T> & Value() const { return m_value; }
+    void SetValue(const std::vector<T> & val = std::vector<T>()) { m_value = val; }
+    size_t NumItems() const { return m_value.size(); }
+    const T & Item(size_t i) const { return m_value[i]; }
+  private:
+    virtual void DoParsing(const std::string & /*name*/, const std::string & arg) {
+      size_t i = 0;
+      do {
+        size_t start = i;
+        i = arg.find(m_sep, start);
+        //std::cout << '"' << arg << '"' << ".find(" << m_sep << ", " << start << ") = " << i << std::endl;
+        m_value.push_back(from_string(std::string(arg, start, i-start), T()));
+        if (i != std::string::npos) {
+          i += m_sep.length();
+        }
+      } while (i != std::string::npos);
+    }
+    std::string m_sep;
+    std::vector<T> m_value;
   };
 
 }

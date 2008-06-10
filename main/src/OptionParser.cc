@@ -70,10 +70,10 @@ namespace eudaq {
       os << " [" << m_minargs;
       if (m_maxargs == (size_t)-1) {
         os << " or more";
-      } else {
+      } else if (m_maxargs != m_minargs) {
         os << "-" << m_maxargs;
       }
-      os << " arguments]";
+      os << ((m_minargs == 1 && m_maxargs == 1) ? " argument]" : " arguments]");
     }
     os << "\n\noptions:\n";
     for (size_t i = 0; i < m_options.size(); ++i) {
@@ -105,7 +105,6 @@ namespace eudaq {
     //std::string str;
     //std::getline(std::cin, str);
   }
-    
 
   int OptionParser::HandleMainException(std::ostream & err, std::ostream & out) {
     try {
