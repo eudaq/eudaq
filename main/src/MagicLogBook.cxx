@@ -98,9 +98,17 @@ public:
       if (!m_eore) GetEORE();
       return GetTag(*m_eore, param);
     } else if (name == "eudrb") {
-      return GetTag(GetSubEvent<EUDRBEvent>(*m_bore), param);
+      try {
+        return GetTag(GetSubEvent<EUDRBEvent>(*m_bore), param);
+      } catch (const eudaq::Exception &) {
+        return "";
+      }
     } else if (name == "tlu") {
-      return GetTag(GetSubEvent<TLUEvent>(*m_bore), param);
+      try {
+        return GetTag(GetSubEvent<TLUEvent>(*m_bore), param);
+      } catch (const eudaq::Exception &) {
+        return "";
+      }
     } else if (name == "config") {
       return GetConfig(param);
     } else if (name == "log") {
