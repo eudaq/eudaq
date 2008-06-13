@@ -23,6 +23,20 @@ namespace eudaq {
     size_t NumEvents() const { return m_events.size(); }
     Event * GetEvent(size_t i) { return m_events[i].get(); }
     const Event * GetEvent(size_t i) const { return m_events[i].get(); }
+    template <typename T>
+    const T * GetSubEvent(int n = 0) const {
+      for (size_t i = 0; i < NumEvents(); i++) {
+        const T * sev = dynamic_cast<const T*>(GetEvent(i));
+        if (sev) {
+          if (n > 0) {
+            --n;
+          } else {
+            return sev;
+          }
+        }
+      }
+      return 0;
+    }
   private:
     std::vector<counted_ptr<Event> > m_events;
   };

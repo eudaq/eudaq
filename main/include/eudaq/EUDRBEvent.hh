@@ -111,7 +111,7 @@ namespace eudaq {
     typedef std::vector<frame_t> data_t;
     data_t GetData(const EUDRBBoard & brd);
 
-    template <typename T_coord, typename T_adc>
+    template <typename T_coord, typename T_adc = T_coord>
     struct arrays_t {
       arrays_t(size_t numpix, size_t numframes)
         : m_x(numpix, 0),
