@@ -47,20 +47,30 @@ int main(int /*argc*/, char ** argv) {
       eudaq::FileDeserializer des(datafile);
       counted_ptr<eudaq::Event> ev(eudaq::EventFactory::Create(des));
       eudaq::DetectorEvent * dev = dynamic_cast<eudaq::DetectorEvent*>(ev.get());
-      int neore = 0, tluexpect = -1;
+      unsigned neore = 0, evtexpect = 0, tluexpect = (unsigned)-1;
       if (!dev) Fatal("Not a detector event", ev.get());
       if (!dev->IsBORE()) Error("First event is not a BORE", dev);
+      if (dev->GetEventNumber() != evtexpect) Error("Unexpected event number "
+                                                    + to_string(dev->GetEventNumber())
+                                                    + ", expect " + to_string(evtexpect),
+                                                    dev);
+      evtexpect = dev->GetEventNumber() + 1;
       counted_ptr<eudaq::EUDRBDecoder> decoder(new eudaq::EUDRBDecoder(*dev));
       for (size_t i = 0; i < dev->NumEvents(); ++i) {
         if (!dev->GetEvent(i)->IsBORE()) Error("Subevent of BORE is not a BORE", dev);
         if (dev->GetEvent(i)->IsEORE()) Error("Subevent of BORE is an EORE", dev);
       }
-      if (disp.IsSet()) std::cout << "Event\tTLU\tEUDRB\tBoards\n";
+      if (disp.IsSet()) std::cout << "Event\tTLU\tEUDRB\t.Local\t.TLU\n";
       while (des.HasData()) {
         ev = eudaq::EventFactory::Create(des);
         dev = dynamic_cast<eudaq::DetectorEvent*>(ev.get());
         if (!dev) Fatal("Not a detector event", ev.get());
         if (dev->IsBORE()) Error("More than one BORE", dev);
+        if (dev->GetEventNumber() != evtexpect) Error("Unexpected event number "
+                                                      + to_string(dev->GetEventNumber())
+                                                      + ", expect " + to_string(evtexpect),
+                                                      dev);
+        evtexpect = dev->GetEventNumber() + 1;
         if (ev->IsEORE()) {
           neore++;
           if (neore > 1) Error("More then one EORE", dev);
@@ -79,15 +89,28 @@ int main(int /*argc*/, char ** argv) {
                                       << '\t' << (tev ? to_string(tev->GetEventNumber()) : "-")
                                       << '\t' << (eev ? to_string(eev->GetEventNumber()) : "-");
           if (eev) {
-            bool sametlu = true;
+            bool sameloc = true, sametlu = true;
             int numsame = 0, numdiff = 0;
             for (size_t b = 0; b < eev->NumBoards(); ++b) {
-              if (tluexpect!= -1 && eev->GetBoard(b).TLUEventNumber() == tluexpect) {
+              const eudaq::EUDRBBoard & brd = eev->GetBoard(b);
+              if (tluexpect!= (unsigned)-1 && brd.TLUEventNumber() == tluexpect) {
                 numsame++;
-              } else if (tluexpect != -1) {
+              } else if (tluexpect != (unsigned)-1) {
                 numdiff++;
               }
-              if (b > 0 && eev->GetBoard(b).TLUEventNumber() != eev->GetBoard(b-1).TLUEventNumber()) sametlu = false;
+              if (b > 0) {
+                if (brd.LocalEventNumber() != eev->GetBoard(b-1).LocalEventNumber()) sameloc = false;
+                if (brd.TLUEventNumber() != eev->GetBoard(b-1).TLUEventNumber()) sametlu = false;
+              }
+            }
+            if (disp.IsSet()) std::cout << '\t' << eev->GetBoard(0).LocalEventNumber();
+            if (!sameloc) {
+              if (disp.IsSet()) {
+                for (size_t b = 1; b < eev->NumBoards(); ++b) {
+                  std::cout << ',' << eev->GetBoard(b).LocalEventNumber();
+                }
+              }
+              Error("Mismatched Local event numbers", dev);
             }
             if (disp.IsSet()) std::cout << '\t' << eev->GetBoard(0).TLUEventNumber();
             if (!sametlu) {
@@ -103,6 +126,10 @@ int main(int /*argc*/, char ** argv) {
               if (sametlu && eev->GetBoard(0).TLUEventNumber() == 0) {
                 msg = "Zero TLU event number, ev=" + to_string(dev->GetEventNumber())
                   + ", expect=" + to_string(tluexpect);
+              } else if (sametlu && eev->GetBoard(0).TLUEventNumber() == tluexpect+1) {
+                int offset = eev->GetBoard(0).TLUEventNumber() - (dev->GetEventNumber() % 32768);
+                msg = "Missed TLU event number, ev=" + to_string(dev->GetEventNumber())
+                  + ", offset=" + to_string(offset);
               } else {
                 msg = "Unexpected TLU event number, ev=" + to_string(dev->GetEventNumber())
                   + ", expect=" + to_string(tluexpect) + ", values=" + to_string(eev->GetBoard(0).TLUEventNumber());
@@ -115,7 +142,7 @@ int main(int /*argc*/, char ** argv) {
               Error(msg, 0);
             }
             if (sametlu) {
-              if (tluexpect != -1 && eev->GetBoard(0).TLUEventNumber() == 0) {
+              if (tluexpect != (unsigned)-1 && eev->GetBoard(0).TLUEventNumber() == 0) {
                 tluexpect++;
               } else {
                 tluexpect = eev->GetBoard(0).TLUEventNumber() + 1;
@@ -123,11 +150,11 @@ int main(int /*argc*/, char ** argv) {
             } else if (numsame) {
               tluexpect++;
             } else {
-              tluexpect = -1;
+              tluexpect = (unsigned)-1;
             }
-            if (tluexpect != -1) tluexpect %= 32768;
+            if (tluexpect != (unsigned)-1) tluexpect %= 32768;
           }
-          std::cout << std::endl;
+          if (disp.IsSet()) std::cout << std::endl;
         }
       }
     }
