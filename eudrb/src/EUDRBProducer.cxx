@@ -217,9 +217,9 @@ public:
         } else if (m_version == 2) {
           if (boards[n_eudrb].det == "MIMOTEL") {
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x00ff2041, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0003000a, address+0x24);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0004000a, address+0x24);
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x000041ff, address+0x2c);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00004200, address+0x2c);
             vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
             data = 0xd0000001;
             if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
@@ -228,7 +228,7 @@ public:
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d10000, address+0x10);
           } else if (boards[n_eudrb].det == "MIMOSA18") {
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x00ff20ff, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0104000a, address+0x24);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0105000a, address+0x24);
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x0000ffff, address+0x2c);
             vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
@@ -239,15 +239,26 @@ public:
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d30000, address+0x10);
           } else if (boards[n_eudrb].det == "MIMOSTAR2") {
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x007f2041, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0003000a, address+0x24);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0004000a, address+0x24);
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x000020ff, address+0x2c);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00002100, address+0x2c);
             vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
             data = 0xd0000001;
             if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
             vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
             eudaq::mSleep(100);
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d20000, address+0x10);
+          } else if (boards[n_eudrb].det == "MIMOSA5") {
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x01ffa1ff, address+0x20);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0004000a, address+0x24);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00040000, address+0x2c);
+            vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+            data = 0xd0000001;
+            if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
+            vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
+            eudaq::mSleep(100);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d00000, address+0x10);
           } else {
             EUDAQ_THROW("Unknown detector type: " + boards[n_eudrb].det);
           }

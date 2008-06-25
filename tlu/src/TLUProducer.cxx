@@ -81,6 +81,7 @@ public:
       SetVetoMask(veto_mask);
       SetAndMask(and_mask);
       SetOrMask(or_mask);
+      std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
     } catch (const std::exception & e) {
