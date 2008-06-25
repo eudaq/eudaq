@@ -18,9 +18,10 @@ namespace eudaq {
 
     template <typename T_coord, typename T_adc>
     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawMTEL(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
-      const bool missingpixel = inf.m_version == 2;
-      const size_t datasize = 2 * (inf.m_rows * inf.m_cols - missingpixel) * inf.m_mats * inf.NumFrames();
-      if (brd.DataSize() != datasize) {
+      const size_t datasize = 2 * inf.m_rows * inf.m_cols * inf.m_mats * inf.NumFrames();
+      const size_t datasize2 = 2 * (inf.m_rows * inf.m_cols - 1) * inf.m_mats * inf.NumFrames();
+      const bool missingpixel = brd.DataSize() == datasize2;
+      if (brd.DataSize() != datasize && brd.DataSize() != datasize2) {
         EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
                     ", expecting " + to_string(datasize));
       }
