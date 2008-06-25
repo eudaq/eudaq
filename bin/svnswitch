@@ -31,7 +31,7 @@ if ! svn switch --relocate "$OLDREPO" "$REPO"; then
   exit 1
 fi
 
-echo "Performing command: $@"
+echo "Performing command: svn $@"
 if svn "$@"; then
   echo OK
 else
