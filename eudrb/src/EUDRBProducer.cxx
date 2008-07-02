@@ -106,9 +106,13 @@ public:
         gettimeofday(&starttime,0);
         address=boards[n_eudrb].BaseAddress|0x00400000;
 
-        if (number_of_bytes>1048576 || number_of_bytes==0) {
+        if (number_of_bytes==0) {
+          printf("Board: %d, Event: %d, empty\n",(int)n_eudrb,m_ev);
+          EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " empty");
+          badev=true;
+        } else if (number_of_bytes>1048576) {
           printf("Board: %d, Event: %d, number of bytes = %ld\n",(int)n_eudrb,m_ev,number_of_bytes);
-          EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big or zero: " + to_string(number_of_bytes));
+          EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big: " + to_string(number_of_bytes));
           badev=true;
         }
         //      printf("mblt before: %ld\n",mblt_dstbuffer);
