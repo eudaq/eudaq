@@ -98,13 +98,15 @@ namespace eudaq {
 
   class EUDRBDecoder {
   public:
-    enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER, DET_MIMOSA18 };
+    enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER, DET_MIMOSA18, DET_MIMOSA5 };
     enum E_MODE { MODE_RAW3, MODE_RAW2, MODE_ZS };
 
     EUDRBDecoder(const DetectorEvent & bore);
 
     unsigned NumFrames(const EUDRBBoard & brd) const { return GetInfo(brd).NumFrames(); }
     unsigned NumPixels(const EUDRBBoard & brd) const { return GetInfo(brd).NumPixels(brd); }
+    unsigned Width(const EUDRBBoard & brd) const;
+    unsigned Height(const EUDRBBoard & brd) const;
 
     typedef std::vector<short> column_t;
     typedef std::vector<column_t> frame_t;

@@ -37,7 +37,7 @@ namespace eudaq {
 
   class Event : public Serializable {
   public:
-    enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_ALL=(unsigned)-1 };
+    enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
     Event(unsigned run, unsigned event, unsigned long long timestamp = NOTIMESTAMP, unsigned flags=0)
       : m_flags(flags), m_runnumber(run), m_eventnumber(event), m_timestamp(timestamp) {}
     Event(Deserializer & ds);

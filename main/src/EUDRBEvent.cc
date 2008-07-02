@@ -16,6 +16,28 @@ namespace eudaq {
     static const int temp_order_1[] = { 3, 1, 2, 0 };
     static const std::vector<int> order_swap03(temp_order_1, temp_order_1+4);
 
+    unsigned EUDRBDecoder::Width(const EUDRBBoard & brd) const {
+      switch (GetInfo(brd).m_det) {
+      case DET_MIMOSTAR2: return 132;
+      case DET_MIMOTEL_NEWORDER:
+      case DET_MIMOTEL: return 264;
+      case DET_MIMOSA18: return 512;
+      case DET_MIMOSA5: return 1024;
+      }
+      EUDAQ_THROW("Don't know the width of this sensor");
+    }
+
+    unsigned EUDRBDecoder::Height(const EUDRBBoard & brd) const {
+      switch (GetInfo(brd).m_det) {
+      case DET_MIMOSTAR2: return 128;
+      case DET_MIMOTEL_NEWORDER:
+      case DET_MIMOTEL: return 256;
+      case DET_MIMOSA18: return 512;
+      case DET_MIMOSA5: return 1024;
+      }
+      EUDAQ_THROW("Don't know the height of this sensor");
+    }
+
     template <typename T_coord, typename T_adc>
     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawMTEL(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
       const size_t datasize = 2 * inf.m_rows * inf.m_cols * inf.m_mats * inf.NumFrames();
@@ -107,11 +129,11 @@ namespace eudaq {
               unsigned y = 0;
               switch (inf.m_order[mat]) {
               case 0:
-                x = row;
-                y = col;
+                x = col;
+                y = row;
                 break;
               case 1:
-                x = row;
+                x = col;
                 y = nypixel - 1 - row;
                 break;
               case 2:
@@ -120,7 +142,7 @@ namespace eudaq {
                 break;
               case 3:
                 x = nxpixel - 1 - col;
-                y = col;
+                y = row;
                 break;
               }
               size_t i = x + y*nxpixel;
@@ -202,7 +224,7 @@ namespace eudaq {
   }
 
   unsigned EUDRBBoard::WordCount() const {
-    return ((GetByte(m_data.size()-3) & 0x3) << 16) |
+    return ((GetByte(m_data.size()-3) & 0xf) << 16) |
       (GetByte(m_data.size()-2) << 8) |
       GetByte(m_data.size()-1);
   }
