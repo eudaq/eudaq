@@ -219,53 +219,45 @@ public:
           eudaq::mSleep(100);
           vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d10000, address+0x10);
         } else if (m_version == 2) {
+          const int adcdelay = 0x7 & param.Get("Board" + to_string(n_eudrb) + ".AdcDelay", "AdcDelay", 3);
+          const int clkselect = 0xf & param.Get("Board" + to_string(n_eudrb) + ".ClkSelect", "ClkSelect", 1);
+          unsigned long reg01 = 0x00ff2000;
+          unsigned long reg23 = 0x0000000a;
+          unsigned long reg45 = 0x8040001f | (adcdelay << 8) | (clkselect << 12);
+          unsigned long reg6  = 0;
+          unsigned long mimoconf = 0x48d00000;
           if (boards[n_eudrb].det == "MIMOTEL") {
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00ff2041, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0004000a, address+0x24);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00004200, address+0x2c);
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
-            data = 0xd0000001;
-            if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-            eudaq::mSleep(100);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d10000, address+0x10);
+            reg01 |= 65;
+            reg23 |= (4 << 16);
+            reg6   = 16896;
+            mimoconf |= (1 << 16);
           } else if (boards[n_eudrb].det == "MIMOSA18") {
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00ff20ff, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0105000a, address+0x24);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0000ffff, address+0x2c);
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
-            data = 0xd0000001;
-            if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-            eudaq::mSleep(100);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d30000, address+0x10);
+            reg01 |= 255;
+            reg23 |= (261 << 16);
+            reg6   = 65535;
+            mimoconf |= (3 << 16);
           } else if (boards[n_eudrb].det == "MIMOSTAR2") {
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x007f2041, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0004000a, address+0x24);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00002100, address+0x2c);
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
-            data = 0xd0000001;
-            if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-            eudaq::mSleep(100);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d20000, address+0x10);
+            reg01 |= 65;
+            reg23 |= (4 << 16);
+            reg6   = 8448;
+            mimoconf |= (2 << 16);
           } else if (boards[n_eudrb].det == "MIMOSA5") {
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x01ffa1ff, address+0x20);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x0004000a, address+0x24);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x8040111f, address+0x28);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x00040000, address+0x2c);
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
-            data = 0xd0000001;
-            if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-            vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-            eudaq::mSleep(100);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d00000, address+0x10);
+            reg01 |= 511;
+            reg23 |= (4 << 16);
+            reg6   = 0x3ffff;
           } else {
             EUDAQ_THROW("Unknown detector type: " + boards[n_eudrb].det);
           }
+          vme_A32_D32_User_Data_SCT_write(fdOut, reg01, address+0x20);
+          vme_A32_D32_User_Data_SCT_write(fdOut, reg23, address+0x24);
+          vme_A32_D32_User_Data_SCT_write(fdOut, reg45, address+0x28);
+          vme_A32_D32_User_Data_SCT_write(fdOut, reg6 , address+0x2c);
+          vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+          data = 0xd0000001;
+          if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
+          vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
+          eudaq::mSleep(100);
+          vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
         } else {
           EUDAQ_THROW("Must set Version = 1 or 2 in config file");
         }
