@@ -81,7 +81,7 @@ namespace tlu {
 
     unsigned char GetTriggerStatus() const ;
 
-    void InhibitTriggers(bool inhibit = true);
+    bool InhibitTriggers(bool inhibit = true); // returns previous value
 
     void Print(std::ostream & out = std::cout) const;
 

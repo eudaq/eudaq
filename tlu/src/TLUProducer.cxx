@@ -26,6 +26,7 @@ public:
       veto_mask(0),
       and_mask(255),
       or_mask(0),
+      trig_rollover(0),
       done(false),
       TLUStarted(false),
       TLUJustStopped(false),
@@ -47,6 +48,11 @@ public:
       if (TLUStarted || JustStopped) {
         eudaq::mSleep(100);
         m_tlu->Update(); // get new events
+        if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
+          bool inhibit = m_tlu->InhibitTriggers();
+          m_tlu->ResetTriggerCounter();
+          m_tlu->InhibitTriggers(inhibit);
+        }
         //std::cout << "--------" << std::endl;
         for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
           m_ev = m_tlu->GetEntry(i).Eventnum();
@@ -80,6 +86,7 @@ public:
       and_mask = param.Get("AndMask", 0xff);
       or_mask = param.Get("OrMask", 0);
       veto_mask = param.Get("VetoMask", 0);
+      trig_rollover = param.Get("TrigRollover", 0);
       // ***
       m_tlu->SetTriggerInterval(trigger_interval);
       m_tlu->SetDUTMask(dut_mask);
@@ -176,6 +183,7 @@ public:
 private:
   unsigned m_run, m_ev;
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask;
+  unsigned trig_rollover;
   bool done;
   bool TLUStarted;
   bool TLUJustStopped;

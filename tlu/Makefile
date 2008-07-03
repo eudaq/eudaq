@@ -6,32 +6,27 @@ include ../Makefile.common
 
 ifeq ($(PLATFORM),WIN32)
   ZESTSC1DEFAULT := ../extern/ZestSC1/windows
+  EXTERNAL_LIBS += SetupAPI Ws2_32
 else
   ifeq ($(PLATFORM),CYGWIN)
     ZESTSC1DEFAULT := ../extern/ZestSC1/windows
+    EXTERNAL_LIBS += SetupAPI Ws2_32
   else
+    EXTERNAL_LIBS += usb
     ifeq ($(PLATFORM),LINUX)
       ZESTSC1DEFAULT := ../extern/ZestSC1/linux
     else
       ZESTSC1DEFAULT := ../extern/ZestSC1/macosx
+      EXTERNAL_INCS += /sw/include
     endif
   endif
 endif
+
 ZESTSC1DIR ?= $(ZESTSC1DEFAULT)
 EXTERNAL_LIBS += eudaq ZestSC1 pthread
 EXTERNAL_LIBDIRS += . ${ZESTSC1DIR}/Lib /sw/lib $(LIB) /usr/local/lib
 EXTERNAL_INCS += ${ZESTSC1DIR}/Inc ../main/include
 #EXTERNAL_DEFS += TLUDEBUG
-
-ifeq ($(PLATFORM),WIN32)
-  EXTERNAL_LIBS += SetupAPI Ws2_32
-else
-  ifeq ($(PLATFORM),CYGWIN)
-    EXTERNAL_LIBS += SetupAPI Ws2_32
-  else
-    EXTERNAL_LIBS += usb
-  endif 
-endif
 
 default: exe
 

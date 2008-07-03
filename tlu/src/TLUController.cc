@@ -197,7 +197,8 @@ namespace tlu {
     // Set input mask
     WriteRegister(DUT_MASK_ADDRESS, m_mask);
 
-    SetLEDs(0);
+    //SetLEDs(0);
+    SetLEDs(m_mask);
   }
 
   TLUController::~TLUController() {
@@ -217,7 +218,7 @@ namespace tlu {
 
   void TLUController::Stop() {
     InhibitTriggers(true);
-    SetLEDs(0);
+    //SetLEDs(0);
   }
 
   void TLUController::ResetTriggerCounter() {
@@ -271,8 +272,7 @@ namespace tlu {
   }
 
   void TLUController::Update() {
-    bool oldinhibit = m_inhibit;
-    InhibitTriggers(true);
+    bool oldinhibit = InhibitTriggers();
 
     WriteRegister(STATE_CAPTURE_ADDRESS, 0xFF);
 
@@ -342,9 +342,11 @@ namespace tlu {
   }
 
 
-  void TLUController::InhibitTriggers(bool inhibit) {
+  bool TLUController::InhibitTriggers(bool inhibit) {
     WriteRegister(TRIG_INHIBIT_ADDRESS, inhibit);
+    bool result = m_inhibit;
     m_inhibit = inhibit;
+    return result;
   }
 
   void TLUController::WriteRegister(unsigned long offset, unsigned char val) {
@@ -353,10 +355,10 @@ namespace tlu {
     const int count = m_errorhandler ? m_errorhandler : 1;
     for (int i = 0; i < count; ++i) {
       if (delay == 0) {
-	delay = 20;
+        delay = 20;
       } else {
-	usleep(delay);
-	delay += delay;
+        usleep(delay);
+        delay += delay;
       }
       status = ZestSC1WriteRegister(m_handle, offset, val);
       usbtrace(" W", offset, val, status);
