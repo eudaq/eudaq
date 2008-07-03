@@ -10,6 +10,7 @@
 #include "TApplication.h"
 #include "TCanvas.h"
 #include "TH2D.h"
+#include "TH1D.h"
 #include "TFile.h"
 
 #include <iostream>
@@ -55,7 +56,8 @@ int main(int /*argc*/, char ** argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("INFO");
     std::vector<unsigned> eventlist = parsenumbers(events.Value());
-    std::vector<counted_ptr<TH2D> > histos;
+    std::vector<counted_ptr<TH2D> > frames;
+    std::vector<counted_ptr<TH1D> > histos;
     std::string datafile = op.GetArg(0);
     if (datafile.find_first_not_of("0123456789") == std::string::npos) {
       datafile = "../data/run" + to_string(from_string(datafile, 0), 6) + ".raw";
@@ -74,8 +76,8 @@ int main(int /*argc*/, char ** argv) {
     int numframes = 0, w = 0, h = 0;
     size_t numevents = 0;
     if (mode == "ZS") numframes = 1;
-    else if (mode == "RAW2") numframes = 2;
-    else if (mode == "RAW3") numframes = 3;
+    else if (mode == "RAW2") numframes = 3; // inc cds
+    else if (mode == "RAW3") numframes = 4; // inc cds
     else EUDAQ_THROW("Unknown MODE: " + mode);
     if (det == "MIMOTEL") {
       w = 264; h = 256;
@@ -83,12 +85,20 @@ int main(int /*argc*/, char ** argv) {
       w = 512; h = 512;
     } else EUDAQ_THROW("Unknown sensor: " + det);
     for (int f = 0; f < numframes; ++f) {
-      std::string name = "fr" + to_string(f);
+      std::string namef = "fr" + to_string(f);
+      std::string nameh = "hs" + to_string(f);
       std::string title = "Frame " + to_string(f);
-      histos.push_back(counted_ptr<TH2D>(new TH2D(name.c_str(), title.c_str(), w, 0, w, h, 0, h)));
+      if (f == numframes-1) {
+        title = "CDS";
+        histos.push_back(counted_ptr<TH1D>(new TH1D(nameh.c_str(), title.c_str(), 2000, -1000, 1000)));
+      } else {
+        histos.push_back(counted_ptr<TH1D>(new TH1D(nameh.c_str(), title.c_str(), 4096, 0, 4096)));
+      }
+      frames.push_back(counted_ptr<TH2D>(new TH2D(namef.c_str(), title.c_str(), w, 0, w, h, 0, h)));
     }
     while (des.HasData()) {
       counted_ptr<eudaq::Event> ev(eudaq::EventFactory::Create(des));
+      if (ev->IsEORE()) break;
       eudaq::DetectorEvent * dev = dynamic_cast<eudaq::DetectorEvent*>(ev.get());
       std::vector<unsigned>::iterator it = std::find(eventlist.begin(), eventlist.end(), ev->GetEventNumber());
       if (it != eventlist.end()) {
@@ -98,10 +108,32 @@ int main(int /*argc*/, char ** argv) {
           numevents++;
           const eudaq::EUDRBBoard & brd = eev->GetBoard(board.Value());
           eudaq::EUDRBDecoder::arrays_t<short> data = decoder->GetArrays<short, short>(brd);
-          for (size_t frame = 0; frame < data.m_adc.size(); ++frame) {
-            TH2D & histo = *histos[frame];
+          for (size_t f = 0; f < data.m_adc.size(); ++f) {
+            TH1D & histo = *histos[f];
+            TH2D & frame = *frames[f];
             for (size_t i = 0; i < data.m_x.size(); ++i) {
-              histo.Fill(data.m_x[i], data.m_y[i], data.m_adc[frame][i]);
+              histo.Fill(data.m_adc[f][i]);
+              frame.Fill(data.m_x[i], data.m_y[i], data.m_adc[f][i]);
+            }
+          }
+          if (data.m_adc.size() > 1) { // calc cds
+            std::vector<short> cds(data.m_x.size(), 0);
+            if (data.m_adc.size() == 3) {
+              for (size_t i = 0; i < data.m_x.size(); ++i) {
+                cds[i] = data.m_adc[0][i] * (data.m_pivot[i])
+                  + data.m_adc[1][i] * (1-2*data.m_pivot[i])
+                  + data.m_adc[2][i] * (data.m_pivot[i]-1);
+               }
+            } else {
+              for (size_t i = 0; i < data.m_x.size(); ++i) {
+                cds[i] = data.m_adc[0][i] - data.m_adc[1][i];
+              }
+            }
+            TH1D & histo = *histos.back();
+            TH2D & frame = *frames.back();
+            for (size_t i = 0; i < data.m_x.size(); ++i) {
+              histo.Fill(cds[i]);
+              frame.Fill(data.m_x[i], data.m_y[i], cds[i]);
             }
           }
         } else {
@@ -111,14 +143,24 @@ int main(int /*argc*/, char ** argv) {
       }
     }
     std::cout << "Histogrammed " << numevents << " events" << std::endl;
+    for (size_t i = 0; i < frames.size() - 1; ++i) { // make non-cds frames average (not sum)
+      for (int iy = 1; iy <= frames[i]->GetNbinsY(); ++iy) {
+        for (int ix = 1; ix <= frames[i]->GetNbinsX(); ++ix) {
+          double a = frames[i]->GetBinContent(ix, iy);
+          frames[i]->SetBinContent(ix, iy, a / numevents);
+        }
+      }
+    }
     if (rootf.Value() != "") {
       TFile froot(rootf.Value().c_str(), "RECREATE", "", 2);
-      for (size_t frame = 0; frame < histos.size(); ++frame) {
-        std::string name = "fr" + to_string(frame);
-        histos[frame]->Write(name.c_str(), TObject::kOverwrite);
+      for (size_t f = 0; f < frames.size(); ++f) {
+        std::string nameh = "hs" + to_string(f);
+        std::string namef = "fr" + to_string(f);
+        histos[f]->Write(nameh.c_str(), TObject::kOverwrite);
+        frames[f]->Write(namef.c_str(), TObject::kOverwrite);
       }
     } else {
-      std::cout << "Displaying " << histos.size() << " histos" << std::endl;
+      std::cout << "Displaying " << frames.size() << " histos" << std::endl;
       int x_argc = 0;
       char * x_argv[] = {"", 0};
       TApplication app("TestHisto", &x_argc, x_argv);
@@ -126,15 +168,20 @@ int main(int /*argc*/, char ** argv) {
       gROOT->SetStyle("Plain");
       gStyle->SetPalette(1);
       gStyle->SetOptStat(0);
-      TCanvas * c = new TCanvas("c1", "Histos");
-      c->Divide(2, 2);
-      for (size_t frame = 0; frame < histos.size(); ++frame) {
-        c->cd(frame+1);
-        histos[frame]->Draw("colz");
+      const int n = frames.size();
+      TCanvas * ch = new TCanvas("ch", "Histos");
+      ch->Divide(n > 1 ? 2 : 1, n > 2 ? 2 : 1);
+      for (int f = 0; f < n; ++f) {
+        ch->cd(f+1);
+        histos[f]->Draw();
       }
-      std::cout << "Running root" << std::endl;
+      TCanvas * cf = new TCanvas("cf", "Frames");
+      cf->Divide(n > 1 ? 2 : 1, n > 2 ? 2 : 1);
+      for (int f = 0; f < n; ++f) {
+        cf->cd(f+1);
+        frames[f]->Draw("colz");
+      }
       app.Run();
-      std::cout << "Quitting" << std::endl;
     }
   } catch (...) {
     return op.HandleMainException();
