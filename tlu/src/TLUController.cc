@@ -37,7 +37,7 @@ namespace tlu {
       char * errmsg;
       ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(status), &errmsg);
       return "ZestSC1 ERROR in function " + msg + (tries ? " (" + eudaq::to_string(tries) + " tries)" : "")
-	+ " status = " + eudaq::to_string(status) + " (" + errmsg + ").";
+        + " status = " + eudaq::to_string(status) + " (" + errmsg + ").";
     }
   }
 
@@ -62,15 +62,15 @@ namespace tlu {
     }
 
     static void DefaultErrorHandler(const char * function,
-				    ZESTSC1_HANDLE handle,
-				    ZESTSC1_STATUS status,
-				    const char *msg) {
+                                    ZESTSC1_HANDLE handle,
+                                    ZESTSC1_STATUS status,
+                                    const char *msg) {
       (void)handle;
       (void)status;
       if (errorhandleraborts()) {
-	std::cerr << "ZESTSC1 ERROR:  function " << function << " returned error: " << msg << std::endl;
-	usbflushtracefile();
-	abort();
+        std::cerr << "ZESTSC1 ERROR:  function " << function << " returned error: " << msg << std::endl;
+        usbflushtracefile();
+        abort();
       }
     }
 
@@ -406,10 +406,10 @@ namespace tlu {
     const int count = m_errorhandler ? m_errorhandler : 1;
     for (int i = 0; i < count; ++i) {
       if (delay == 0) {
-	delay = 20;
+        delay = 20;
       } else {
-	usleep(delay);
-	delay += delay;
+        usleep(delay);
+        delay += delay;
       }
       status = ZestSC1ReadRegister(m_handle, offset, &val);
       usbtrace(" R", offset, val, status);

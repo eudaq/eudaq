@@ -17,8 +17,8 @@ namespace tlu {
   public:
     TLUException(const std::string & msg, int status = 0, int tries = 0)
       : std::runtime_error(make_msg(msg, status, tries).c_str()),
-	m_status(status),
-	m_tries(tries)
+        m_status(status),
+        m_tries(tries)
     {}
     int GetStatus() const { return m_status; }
     int GetTries() const { return m_tries; }

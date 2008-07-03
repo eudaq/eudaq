@@ -3,6 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/counted_ptr.hh"
 #include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
 #include <iostream>
@@ -14,7 +15,7 @@ using eudaq::to_string;
 using eudaq::to_hex;
 using namespace tlu;
 
-class TLUProducer : public TLUController, public eudaq::Producer {
+class TLUProducer : public eudaq::Producer {
 public:
   TLUProducer(const std::string & runcontrol)
     : eudaq::Producer("TLU", runcontrol),
@@ -28,28 +29,31 @@ public:
       done(false),
       TLUStarted(false),
       TLUJustStopped(false),
-      lasttime(0)
+      lasttime(0),
+      m_tlu(0)
     {}
   void Event(unsigned tlu_evntno, const long long int & tlu_timestamp) {
     SendEvent(TLUEvent(m_run, tlu_evntno, tlu_timestamp)); // not the right event number!!
   }
   void MainLoop() {
     do {
+      usleep(100);
+      if (!m_tlu) continue;
       bool JustStopped = TLUJustStopped;
       if (JustStopped) {
-        Stop();
+        m_tlu->Stop();
         eudaq::mSleep(100);
       }
       if (TLUStarted || JustStopped) {
         eudaq::mSleep(100);
-        Update(); // get new events
+        m_tlu->Update(); // get new events
         //std::cout << "--------" << std::endl;
-        for (size_t i = 0; i < NumEntries(); ++i) {
-          m_ev = GetEntry(i).Eventnum();
-          unsigned long long t = GetEntry(i).Timestamp();
+        for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
+          m_ev = m_tlu->GetEntry(i).Eventnum();
+          unsigned long long t = m_tlu->GetEntry(i).Timestamp();
           long long d = t-lasttime;
           float freq= 1./(d*20./1000000000);
-          std::cout << "  " << GetEntry(i)
+          std::cout << "  " << m_tlu->GetEntry(i)
                     << ", diff=" << d << (d <= 0 ? "  ***" : "")
                     << ", freq=" << freq
                     << std::endl;
@@ -62,7 +66,6 @@ public:
         SendEvent(TLUEvent::EORE(m_run, ++m_ev));
         TLUJustStopped = false;
       }
-      usleep(100);
     } while (!done);
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
@@ -70,17 +73,19 @@ public:
     try {
       std::cout << "Configuring." << std::endl;
       std::string filename = param["BitFile"];
+      if (m_tlu) m_tlu = 0;
+      m_tlu = counted_ptr<TLUController>(new TLUController(filename));
       trigger_interval = param.Get("TriggerInterval", 0);
       dut_mask = param.Get("DutMask", 2);
       and_mask = param.Get("AndMask", 0xff);
       or_mask = param.Get("OrMask", 0);
       veto_mask = param.Get("VetoMask", 0);
       // ***
-      SetTriggerInterval(trigger_interval);
-      SetDUTMask(dut_mask);
-      SetVetoMask(veto_mask);
-      SetAndMask(and_mask);
-      SetOrMask(or_mask);
+      m_tlu->SetTriggerInterval(trigger_interval);
+      m_tlu->SetDUTMask(dut_mask);
+      m_tlu->SetVetoMask(veto_mask);
+      m_tlu->SetAndMask(and_mask);
+      m_tlu->SetOrMask(or_mask);
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
@@ -99,7 +104,7 @@ public:
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
       TLUEvent ev(TLUEvent::BORE(m_run));
-      ev.SetTag("FirmwareID",  to_string(GetFirmwareID()));
+      ev.SetTag("FirmwareID",  to_string(m_tlu->GetFirmwareID()));
       ev.SetTag("TriggerInterval",to_string(trigger_interval));
       ev.SetTag("DutMask",  "0x"+to_hex(dut_mask));
       ev.SetTag("AndMask",  "0x"+to_hex(and_mask));
@@ -108,7 +113,7 @@ public:
       sleep(2); // temporarily, to fix startup with EUDRB
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       SendEvent(ev);
-      Start();
+      m_tlu->Start();
       TLUStarted=true;
       SetStatus(eudaq::Status::LVL_OK, "Started");
     } catch (const std::exception & e) {
@@ -145,8 +150,8 @@ public:
     try {
       std::cout << "Reset" << std::endl;
       SetStatus(eudaq::Status::LVL_OK);
-      Stop();   // stop
-      Update(); // empty events
+      m_tlu->Stop();   // stop
+      m_tlu->Update(); // empty events
       SetStatus(eudaq::Status::LVL_OK, "Reset");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -158,7 +163,7 @@ public:
   }
   virtual void OnStatus() {
     m_status.SetTag("TRIG", eudaq::to_string(m_ev));
-    m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(GetTimestamp())));
+    m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
     m_status.SetTag("LASTTIME", eudaq::to_string(Timestamp2Seconds(lasttime)));
     //std::cout << "Status " << m_status << std::endl;
   }
@@ -175,6 +180,7 @@ private:
   bool TLUStarted;
   bool TLUJustStopped;
   unsigned long long lasttime;
+  counted_ptr<TLUController> m_tlu;
 };
 
 int main(int /*argc*/, const char ** argv) {
