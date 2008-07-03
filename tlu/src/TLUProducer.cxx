@@ -163,7 +163,7 @@ public:
   }
   virtual void OnStatus() {
     m_status.SetTag("TRIG", eudaq::to_string(m_ev));
-    m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
+    m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(m_tlu ? m_tlu->GetTimestamp() : 0)));
     m_status.SetTag("LASTTIME", eudaq::to_string(Timestamp2Seconds(lasttime)));
     //std::cout << "Status " << m_status << std::endl;
   }
