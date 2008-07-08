@@ -152,7 +152,7 @@ int main(int /*argc*/, char ** argv) {
             } else {
               tluexpect = (unsigned)-1;
             }
-            if (tluexpect != (unsigned)-1) tluexpect %= 32768;
+            if (tluexpect != (unsigned)-1) tluexpect %= 65536;
           }
           if (disp.IsSet()) std::cout << std::endl;
         }

@@ -219,7 +219,7 @@ public:
           eudaq::mSleep(100);
           vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d10000, address+0x10);
         } else if (m_version == 2) {
-          const int adcdelay = 0x7 & param.Get("Board" + to_string(n_eudrb) + ".AdcDelay", "AdcDelay", 3);
+          const int adcdelay = 0x7 & param.Get("Board" + to_string(n_eudrb) + ".AdcDelay", "AdcDelay", 2);
           const int clkselect = 0xf & param.Get("Board" + to_string(n_eudrb) + ".ClkSelect", "ClkSelect", 1);
           unsigned long reg01 = 0x00ff2000;
           unsigned long reg23 = 0x0000000a;

@@ -35,11 +35,13 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for ORing of external triggers");
   eudaq::Option<int>         emode(op, "e", "error-handler", 2, "value",
                                    "Error handler (0=abort, >0=number of tries before exception)");
+  eudaq::Option<int>         wait(op, "w", "wait", 1000, "ms",
+                                  "Time to wait between updates in milliseconds");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
   eudaq::Option<std::string> trace(op, "z", "trace-file", "", "filename",
                                    "The filename to save a trace of all usb accesses,\n"
-				   "prepend - for only errors, or + for all data (including block transfers)");
+                                   "prepend - for only errors, or + for all data (including block transfers)");
   try {
     op.Parse(argv);
     std::cout << "Using options:\n"
@@ -60,14 +62,14 @@ int main(int /*argc*/, char ** argv) {
     if (trace.Value() != "") {
       std::string fname = trace.Value();
       if (fname[0] == '-') {
-	tlu::setusbtracelevel(1);
-	fname = std::string(fname, 1);
+        tlu::setusbtracelevel(1);
+        fname = std::string(fname, 1);
       } else if (fname[0] == '+') {
-	tlu::setusbtracelevel(3);
-	fname = std::string(fname, 1);
+        tlu::setusbtracelevel(3);
+        fname = std::string(fname, 1);
       } else {
-	tlu::setusbtracelevel(2);
-      }	
+        tlu::setusbtracelevel(2);
+      }
       tlu::setusbtracefile(fname);
     }
     TLUController TLU(fname.Value(), emode.Value());
@@ -98,8 +100,9 @@ int main(int /*argc*/, char ** argv) {
       eudaq::Time elapsedtime(eudaq::Time::Current() - starttime);
       double hertz = total / elapsedtime.Seconds();
       std::cout << "Time: " << elapsedtime.Formatted("%s.%3") << " s, Hertz: " << hertz << std::endl;
-      usleep(50000);
-      //TLU.ResetUSB(); // DEBUG
+      if (wait.Value() > 0) {
+        eudaq::mSleep(wait.Value());
+      }
     }
     std::cout << "Quitting..." << std::endl;
     TLU.Stop();

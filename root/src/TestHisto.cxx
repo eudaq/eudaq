@@ -52,6 +52,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::Option<std::string> events(op, "e", "events", "", "numbers", "Event numbers to accumulate (eg. '1-10,99,-1')");
   eudaq::Option<unsigned> board(op, "b", "board", 0U, "number", "Board number");
   eudaq::Option<std::string> rootf(op, "r", "root-file", "", "filename", "File to save root histograms");
+  eudaq::Option<int> thresh(op, "t", "thresh", 10, "adcs", "Threshold for CDS");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("INFO");
@@ -132,8 +133,10 @@ int main(int /*argc*/, char ** argv) {
             TH1D & histo = *histos.back();
             TH2D & frame = *frames.back();
             for (size_t i = 0; i < data.m_x.size(); ++i) {
-              histo.Fill(cds[i]);
-              frame.Fill(data.m_x[i], data.m_y[i], cds[i]);
+              if (cds[i] >= thresh.Value()) {
+                histo.Fill(cds[i]);
+                frame.Fill(data.m_x[i], data.m_y[i], cds[i]);
+              }
             }
           }
         } else {

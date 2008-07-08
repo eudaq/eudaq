@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [ "$1" == "" ]; then
+  cat <<EOF
+Runs the specified command in gdb
+usage: $0 command [args...]
+EOF
+  exit 1
+fi
+
+CMDFILE=.gdbcommands
+
+cat <<EOF > $CMDFILE
+cont
+quit
+EOF
+
+"$@" &
+gdb -q -x $CMDFILE "$1" $!
