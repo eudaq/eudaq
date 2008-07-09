@@ -14,6 +14,20 @@ namespace eudaq {
 
   namespace {
 
+    class PseudoMutex {
+    public:
+      typedef bool type;
+      PseudoMutex(type & flag) : m_flag(flag) {
+        while (m_flag) {
+          mSleep(10);
+        };
+        m_flag = true;
+      }
+      ~PseudoMutex() { m_flag = false; }
+    private:
+      type & m_flag;
+    };
+
     void * RunControl_thread(void * arg) {
       RunControl * rc = static_cast<RunControl *>(arg);
       rc->CommandThread();
@@ -30,7 +44,8 @@ namespace eudaq {
       m_idata((size_t)-1),
       m_ilog((size_t)-1),
       m_runsizelimit(0),
-      m_stopping(false)
+      m_stopping(false),
+      m_busy(false)
   {
     if (listenaddress != "") {
       StartServer(listenaddress);
@@ -122,6 +137,7 @@ namespace eudaq {
 
   void RunControl::SendCommand(const std::string & cmd, const std::string & param,
                                const ConnectionInfo & id) {
+    PseudoMutex m(m_busy);
     std::string packet(cmd);
     if (param.length() > 0) {
       packet += '\0' + param;
@@ -131,6 +147,8 @@ namespace eudaq {
 
   std::string RunControl::SendReceiveCommand(const std::string & cmd, const std::string & param,
                                              const ConnectionInfo & id) {
+    PseudoMutex m(m_busy);
+    mSleep(500); // make sure there are no pending replies
     std::string packet(cmd);
     if (param.length() > 0) {
       packet += '\0' + param;

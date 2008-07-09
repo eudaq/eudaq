@@ -56,7 +56,7 @@ namespace eudaq {
     size_t m_idata, m_ilog;
     std::string m_dataaddr, m_logaddr;
     long long m_runsizelimit;
-    bool m_stopping;
+    bool m_stopping, m_busy;
   };
 
 }
