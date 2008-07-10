@@ -118,7 +118,13 @@ public:
         //      printf("mblt before: %ld\n",mblt_dstbuffer);
         //        printf("MBLT PRIMA !!!\n");
         // pad number of bytes to multiples of 8 in case of ZS
+        //unsigned long debug_before, debug_after;
+        //vme_A32_D32_User_Data_SCT_read(fdOut, &debug_before, boards[n_eudrb].BaseAddress|0x00400004);
         vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7,address,&buffer[0]);
+        //vme_A32_D32_User_Data_SCT_read(fdOut, &debug_after, boards[n_eudrb].BaseAddress|0x00400004);
+        //std::cout << "DEBUG " << m_ev << ", " << n_eudrb << ", "
+        //          << eudaq::hexdec(debug_before) << ", " << eudaq::hexdec(debug_after)
+        //          << std::endl;
         if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
         //        printf("MBLT DOPO!!!\n");
         gettimeofday(&stoptime,0);
@@ -228,22 +234,26 @@ public:
           unsigned long mimoconf = 0x48d00000;
           if (boards[n_eudrb].det == "MIMOTEL") {
             reg01 |= 65;
-            reg23 |= (4 << 16);
+            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 4);
+            reg23 |= (0xfff & pdrd) << 16;
             reg6   = 16896;
             mimoconf |= (1 << 16);
           } else if (boards[n_eudrb].det == "MIMOSA18") {
             reg01 |= 255;
-            reg23 |= (261 << 16);
+            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 261);
+            reg23 |= (0xfff & pdrd) << 16;
             reg6   = 65535;
             mimoconf |= (3 << 16);
           } else if (boards[n_eudrb].det == "MIMOSTAR2") {
             reg01 |= 65;
-            reg23 |= (4 << 16);
+            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 4);
+            reg23 |= (0xfff & pdrd) << 16;
             reg6   = 8448;
             mimoconf |= (2 << 16);
           } else if (boards[n_eudrb].det == "MIMOSA5") {
             reg01 |= 511;
-            reg23 |= (4 << 16);
+            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 4);
+            reg23 |= (0xfff & pdrd) << 16;
             reg6   = 0x3ffff;
           } else {
             EUDAQ_THROW("Unknown detector type: " + boards[n_eudrb].det);
@@ -296,14 +306,22 @@ public:
         if (boards[n_eudrb].zs) {
           int thresh = param.Get("Board" + to_string(n_eudrb) + ".Thresh", "Thresh", 10);
           int ped = param.Get("Board" + to_string(n_eudrb) + ".Ped", "Ped", 0);
-          //pedestal_t peds = ReadPedestals("../pedestal/ped" + to_string(n_eudrb) + ".dat");
-          std::string fname = "../pedestal/ped" + to_string(n_eudrb) + ".dat";
-          pedestal_t peds = (thresh < 0) ? ReadPedestals(fname)
+          std::string fname = param.Get("Board" + to_string(n_eudrb) + ".PedestalFile", "PedestalFile", "");
+          if (thresh < 0 && fname == "") {
+            fname = "ped%.dat";
+            EUDAQ_WARN("Config missing pedestal file name, using " + fname);
+          }
+          size_t n = fname.find('%');
+          if (n != std::string::npos) {
+            fname = std::string(fname, 0, n) + to_string(n_eudrb) + std::string(fname, n+1);
+          }
+          if (fname != "") fname = "../pedestal/" + fname;
+          pedestal_t peds = (fname != "") ? ReadPedestals(fname)
             : GeneratePedestals(thresh, ped);
           LoadPedestals(boards[n_eudrb], peds);
 
           std::string msg = "Board " + to_string(n_eudrb) + " pedestals loading";
-          if (thresh < 0) msg += " from file " + fname;
+          if (fname != "") msg += " from file " + fname;
           else msg += " values = " + to_string(ped) + ", " + to_string(thresh);
           puts(msg.c_str());
           EUDAQ_INFO(msg);
