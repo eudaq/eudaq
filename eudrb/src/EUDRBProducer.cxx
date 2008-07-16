@@ -228,6 +228,7 @@ public:
           if (marker1 >= 0 || marker2 >= 0) {
             if (marker1 < 0) marker1 = marker2;
             if (marker2 < 0) marker2 = marker1;
+            std::cout << "Setting markers to " << eudaq::hexdec(marker1) << ", " << eudaq::hexdec(marker2) << std::endl;
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
             vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
           }
@@ -275,6 +276,15 @@ public:
           if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
           vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
           eudaq::mSleep(100);
+          int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
+          int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker1", -1);
+          if (marker1 >= 0 || marker2 >= 0) {
+            if (marker1 < 0) marker1 = marker2;
+            if (marker2 < 0) marker2 = marker1;
+            std::cout << "Setting markers to " << eudaq::hexdec(marker1) << ", " << eudaq::hexdec(marker2) << std::endl;
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
+            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
+          }
           vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
         } else {
           EUDAQ_THROW("Must set Version = 1 or 2 in config file");
