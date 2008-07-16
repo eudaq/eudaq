@@ -10,6 +10,7 @@
 #define TLU_PRODUCT_ID 0x0001
 
 int main() {
+  int ret = 0;
   usb_init();
   usb_find_busses();
   usb_find_devices();
@@ -24,10 +25,15 @@ int main() {
   std::cout << "Found " << tlus.size() << " tlu(s)" << std::endl;
   for (size_t i = 0; i < tlus.size(); ++i) {
     std::string fname = std::string("/proc/bus/usb/") + tlus[i]->bus->dirname + "/" + tlus[i]->filename;
-    int res = chmod(fname.c_str(), 0x66);
-    std::string result = "OK";
-    if (res < 0) result = std::string("Error ") + strerror(errno);
+    std::string result = "Fixed";
+    struct stat st;
+    if (stat(fname.c_str(), &st) == 0 && (st.st_mode & 0x66) == 0x66) {
+      result = "OK";
+    } else if (chmod(fname.c_str(), 0x66) < 0) {
+      result = std::string("Error ") + strerror(errno);
+      ret = 1;
+    }
     std::cout << "TLU " << (i+1) << " at " << fname << ": " << result << std::endl;
   }
-  return 0;
+  return ret;
 }

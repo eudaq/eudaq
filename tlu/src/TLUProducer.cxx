@@ -66,7 +66,11 @@ public:
           lasttime = t;
           Event(m_ev,t);
         }
-        std::cout << "========" << std::endl;
+        if (m_tlu->NumEntries()) {
+          std::cout << "========" << std::endl;
+        } else {
+          std::cout << "." << std::flush;
+        }
       }
       if (JustStopped) {
         SendEvent(TLUEvent::EORE(m_run, ++m_ev));
