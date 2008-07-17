@@ -272,7 +272,7 @@ public:
           if (marker1 < 0) marker1 = marker2;
           if (marker2 < 0) marker2 = marker1;
           std::cout << "Setting board " << n_eudrb << " markers to "
-                    << eudaq::hexdec((char)marker1) << ", " << eudaq::hexdec((char)marker2) << std::endl;
+                    << eudaq::hexdec(marker1, 8) << ", " << eudaq::hexdec(marker2, 8) << std::endl;
           vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
           vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
         }
