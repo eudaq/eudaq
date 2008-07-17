@@ -215,24 +215,11 @@ public:
         if (n_eudrb==boards.size()-1 || unsync) data |= 0x2000; // Internal Timing
         vme_A32_D32_User_Data_SCT_write(fdOut, 0x80000000, address); // Reset
         vme_A32_D32_User_Data_SCT_write(fdOut, data, address); // Set mode
+        unsigned long mimoconf = 0x48d00000;
         if (m_version == 1) {
           if (boards[n_eudrb].det != "MIMOTEL") EUDAQ_THROW("EUDRB Version 1 only reads MIMOTEL (not "
                                                             + boards[n_eudrb].det + ")");
-          vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
-          data = 0xd0000001;
-          if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-          vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-          eudaq::mSleep(100);
-          int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
-          int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker1", -1);
-          if (marker1 >= 0 || marker2 >= 0) {
-            if (marker1 < 0) marker1 = marker2;
-            if (marker2 < 0) marker2 = marker1;
-            std::cout << "Setting markers to " << eudaq::hexdec(marker1) << ", " << eudaq::hexdec(marker2) << std::endl;
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
-          }
-          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48d10000, address+0x10);
+          mimoconf |= (1 << 16);
         } else if (m_version == 2) {
           const int adcdelay = 0x7 & param.Get("Board" + to_string(n_eudrb) + ".AdcDelay", "AdcDelay", 2);
           const int clkselect = 0xf & param.Get("Board" + to_string(n_eudrb) + ".ClkSelect", "ClkSelect", 1);
@@ -240,28 +227,28 @@ public:
           unsigned long reg23 = 0x0000000a;
           unsigned long reg45 = 0x8040001f | (adcdelay << 8) | (clkselect << 12);
           unsigned long reg6  = 0;
-          unsigned long mimoconf = 0x48d00000;
+          int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", -1);
           if (boards[n_eudrb].det == "MIMOTEL") {
             reg01 |= 65;
-            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 4);
+            if (pdrd < 0) pdrd = 4;
             reg23 |= (0xfff & pdrd) << 16;
             reg6   = 16896;
             mimoconf |= (1 << 16);
           } else if (boards[n_eudrb].det == "MIMOSA18") {
             reg01 |= 255;
-            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 261);
+            if (pdrd < 0) pdrd = 261;
             reg23 |= (0xfff & pdrd) << 16;
             reg6   = 65535;
             mimoconf |= (3 << 16);
           } else if (boards[n_eudrb].det == "MIMOSTAR2") {
             reg01 |= 65;
-            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 4);
+            if (pdrd < 0) pdrd = 4;
             reg23 |= (0xfff & pdrd) << 16;
             reg6   = 8448;
             mimoconf |= (2 << 16);
           } else if (boards[n_eudrb].det == "MIMOSA5") {
             reg01 |= 511;
-            int pdrd =  param.Get("Board" + to_string(n_eudrb) + ".PostDetResetDelay", "PostDetResetDelay", 4);
+            if (pdrd < 0) pdrd = 4;
             reg23 |= (0xfff & pdrd) << 16;
             reg6   = 0x3ffff;
           } else {
@@ -272,23 +259,24 @@ public:
           vme_A32_D32_User_Data_SCT_write(fdOut, reg45, address+0x28);
           vme_A32_D32_User_Data_SCT_write(fdOut, reg6 , address+0x2c);
           vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
-          data = 0xd0000001;
-          if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-          vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-          eudaq::mSleep(100);
-          int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
-          int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker1", -1);
-          if (marker1 >= 0 || marker2 >= 0) {
-            if (marker1 < 0) marker1 = marker2;
-            if (marker2 < 0) marker2 = marker1;
-            std::cout << "Setting markers to " << eudaq::hexdec(marker1) << ", " << eudaq::hexdec(marker2) << std::endl;
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
-            vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
-          }
-          vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
         } else {
           EUDAQ_THROW("Must set Version = 1 or 2 in config file");
         }
+        data = 0xd0000001;
+        if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
+        vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
+        eudaq::mSleep(100);
+        int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
+        int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker1", -1);
+        if (marker1 >= 0 || marker2 >= 0) {
+          if (marker1 < 0) marker1 = marker2;
+          if (marker2 < 0) marker2 = marker1;
+          std::cout << "Setting board " << n_eudrb << " markers to "
+                    << eudaq::hexdec((char)marker1) << ", " << eudaq::hexdec((char)marker2) << std::endl;
+          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
+          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
+        }
+        vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
       }
       std::cout << "Waiting for boards to reset..." << std::endl;
 
