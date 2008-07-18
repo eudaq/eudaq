@@ -53,7 +53,7 @@ int set_host(char *host, int port) {
     perror ("pthread_create");
   }
 /*
-  void	*retval;
+  void *retval;
   if (pthread_join (rc_thread, &retval))
   perror ("pthread_join");
 */
@@ -88,8 +88,8 @@ int run_control (struct HOST* host) {
     {   memset(Buffer, 0, Bytes);  
       //printf("run_control():: new recv...sock=%d\n",cmd_socket);
       if ((Result=recv(cmd_socket, (void *)Buffer, Bytes, 0)) < 0)
-	{  perror ("run_control()::Can't recv");   break;
-	}  else if (Result == 0) { printf ("EOF\n"); 
+        {  perror ("run_control()::Can't recv");   break;
+        }  else if (Result == 0) { printf ("EOF\n"); 
         close(cmd_socket);
         cmd_socket=TCP_CONNECT(host->NAME, host->PORT); 
         host->sock=cmd_socket;

@@ -104,7 +104,8 @@ public:
   bool done;
 private:
   bool host_is_set;
-  unsigned m_run, m_evt, cmd_port;
+  unsigned m_run, m_evt;
+  int cmd_port;
   std::string data_host, cmd_host;
 
   unsigned int buffer[BUFSIZE];
