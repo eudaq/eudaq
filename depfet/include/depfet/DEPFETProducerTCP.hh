@@ -19,15 +19,23 @@ class DEPFETProducerTCP : public eudaq::Producer {
 public:
   DEPFETProducerTCP(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol),
-      done(false)
+      done(false),
+      host_is_set(false)
     {
       //
     }
   virtual void OnConfigure(const eudaq::Configuration & param) {
     data_host = param.Get("DataHost", "");
-    cmd_host = param.Get("CmdHost", "");
-    cmd_port = param.Get("CmdPort", 32767);
-    set_host(&cmd_host[0], cmd_port);
+    if (host_is_set) {
+      if (cmd_host != param.Get("CmdHost", "") || cmd_port != param.Get("CmdPort", 32767)) {
+
+      }
+    } else {
+      cmd_host = param.Get("CmdHost", "");
+      cmd_port = param.Get("CmdPort", 32767);
+      set_host(&cmd_host[0], cmd_port);
+      host_is_set = true;
+    }
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
@@ -50,6 +58,9 @@ public:
     SetStatus(eudaq::Status::LVL_OK, "Reset");
   }
   void Process() {
+    if (data_host == "") {
+      return;
+    }
     int lenevent;
     int Nmod, Kmod;
     unsigned int itrg, itrg_old = -1;
@@ -92,6 +103,7 @@ public:
   }
   bool done;
 private:
+  bool host_is_set;
   unsigned m_run, m_evt, cmd_port;
   std::string data_host, cmd_host;
 
