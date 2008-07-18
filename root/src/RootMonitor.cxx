@@ -266,7 +266,6 @@ public:
       m_prevt((unsigned long long)-1),
       m_histoevents(0),
       
-     
       m_hinttop(new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX, 2, 2, 2, 2)),
       m_hintleft(new TGLayoutHints(kLHintsCenterY | kLHintsLeft, 2, 10, 1, 1)),
       m_hintbig(new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 4, 4, 4, 4)),
@@ -354,8 +353,6 @@ public:
       m_conf_seedneighbourthreshold->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_seedneighbourthreshold.get(), m_hinttop.get());
 
-
-
       clusterthresholdlabel = new TGLabel(m_conf_group_frame.get(),"Cluster Threshold:");
       m_conf_group_frame->AddFrame(clusterthresholdlabel.get(), m_hinttop.get());
      
@@ -371,9 +368,6 @@ public:
       m_conf_cds_lego_update->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_cds_lego_update.get(), m_hinttop.get());
 
-
-      
-    
       clustertypelabel = new TGLabel(m_conf_group_frame.get(),"Cluster Type:");
       m_conf_group_frame->AddFrame(clustertypelabel.get(), m_hinttop.get());
       
@@ -562,8 +556,6 @@ public:
       main_pads.push_back(histopad(m_conf_checkbox_main_numtracks.get()));
       (main_pads.back()).AddHisto(m_histonumtracks.get(), "");
       //end of number of tracks
-      
-      
 
       m_conf_group_frame_main->SetLayoutManager(new TGVerticalLayout(m_conf_group_frame_main.get()));
       m_conf_group_frame_main->Resize(m_conf_group_frame_main->GetDefaultSize());
@@ -574,8 +566,6 @@ public:
       
       m_conf_group_frame_cdslego = new TGGroupFrame(m_conf_tab.get(),"CDS Lego Plots");
       m_conf_tab->AddFrame(m_conf_group_frame_cdslego.get(), m_hint_l.get());
-      
-
 
       //cds lego plot
       m_conf_checkbox_cdslego =  new TGCheckButton(m_conf_group_frame_cdslego.get(),"CDS Lego");
@@ -588,12 +578,8 @@ public:
       }
       //end of cds lego plot
 
-
-       
       m_conf_group_frame_board = new TGGroupFrame(m_conf_tab.get(),"Board Displays");
-      
-    
-      
+
       //clusterx
       m_conf_checkbox_clusterx =  new TGCheckButton(m_conf_group_frame_board.get(),"Cluster X");
       m_conf_checkbox_clusterx->Associate(this);
@@ -624,6 +610,16 @@ public:
       }
       //end of raw2d
     
+      //cds2d
+      m_conf_checkbox_cds2d =  new TGCheckButton(m_conf_group_frame_board.get(),"CDS 2D");
+      m_conf_checkbox_cds2d->Associate(this);
+      m_conf_group_frame_board->AddFrame(m_conf_checkbox_cds2d.get(), m_hinttop.get());
+      board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_cds2d.get())));
+      for (size_t i = 0; i <  m_board.size(); ++i) {
+        board_pads.back().at(i).AddHisto((m_board[i].m_histocds2d).get(), "colz");
+      }
+      //end of cds2d
+
       //cluster 2d
       m_conf_checkbox_cluster2d =  new TGCheckButton(m_conf_group_frame_board.get(),"Cluster 2D");
       m_conf_checkbox_cluster2d->Associate(this);
@@ -1614,7 +1610,6 @@ private:
   counted_ptr<TGGroupFrame>m_conf_group_frame_cdslego;
   counted_ptr<TGGroupFrame>m_conf_group_frame_board;
 
-  
   counted_ptr<TGLabel> updatecdslabel;
   counted_ptr<TGLabel> seedthresholdlabel;
   counted_ptr<TGLabel> seedneighbourthresholdlabel;
@@ -1646,6 +1641,7 @@ private:
   counted_ptr<TGCheckButton> m_conf_checkbox_clusterx;
   counted_ptr<TGCheckButton> m_conf_checkbox_clustery;
   counted_ptr<TGCheckButton> m_conf_checkbox_raw2d;
+  counted_ptr<TGCheckButton> m_conf_checkbox_cds2d;
   counted_ptr<TGCheckButton> m_conf_checkbox_cluster2d;
   counted_ptr<TGCheckButton> m_conf_checkbox_rawval;
   counted_ptr<TGCheckButton> m_conf_checkbox_noise2d;
@@ -1674,7 +1670,6 @@ private:
   std::vector<histopad> main_pads;
   std::vector<histopad> cdslego_pads;
   std::vector<std::vector<histopad> > board_pads;
-  
 
   int m_cluster_size;
   //TTimer * m_timer;
@@ -1707,7 +1702,6 @@ int main(int argc, const char ** argv) {
     gROOT->SetStyle("Plain");
     gStyle->SetPalette(1);
     gStyle->SetOptStat(1000010);
-    
     
     RootMonitor mon(rctrl.Value(), file.Value(), x.Value(), y.Value(), w.Value(), h.Value(), argc, argv);
     mon.Run();
