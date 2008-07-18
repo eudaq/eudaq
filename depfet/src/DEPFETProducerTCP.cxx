@@ -10,12 +10,12 @@ int main(int /*argc*/, char ** argv) {
                                    "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name (op, "n", "name", "DEPFET", "string",
                                    "The name of this Producer");
-  eudaq::Option<int>         port (op, "p", "port", 20248, "num",
-                                   "The TCP port to listen to for data");
+  //eudaq::Option<int>         port (op, "p", "port", 20248, "num",
+  //                                 "The TCP port to listen to for data");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    DEPFETProducerTCP producer(name.Value(), rctrl.Value(), port.Value());
+    DEPFETProducerTCP producer(name.Value(), rctrl.Value());
 
     do {
       producer.Process();

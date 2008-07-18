@@ -1,43 +1,44 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/DEPFETEvent.hh"
-#include "depfet/tcplib.h"
-#include "depfet/shmem_depfet.h"
+//#include "eudaq/DEPFETEvent.hh"
+#include "depfet/rc_depfet.hh"
+#include "depfet/TCPClient.h"
 
 using eudaq::to_string;
-using eudaq::DEPFETEvent;
+//using eudaq::DEPFETEvent;
+
+namespace {
+  static const int BUFSIZE = 128000;
+  static const int REQUEST = 0x1013;
+  static const unsigned BORE_TRIGGERID = 0x55555555;
+  static const unsigned EORE_TRIGGERID = 0xAAAAAAAA;
+}
 
 class DEPFETProducerTCP : public eudaq::Producer {
 public:
-  DEPFETProducerTCP(const std::string & name, const std::string & runcontrol, int listenport)
+  DEPFETProducerTCP(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol),
-      done(false),
-      m_port(listenport)
-      //m_buffer(MAXDATA + DEPFET_HEADER_LENGTH)
+      done(false)
     {
-      int rc = 0;
-      bool tcp_done = false;
-      do {
-        rc = tcp_open(m_port,"");  tcp_done = true;
-        printf("RC=%d\n",rc);
-        if (rc) {
-          tcp_done = false;
-          sleep(1);
-        }
-      } while (tcp_done == false);
-      rc = tcp_listen();
+      //
     }
   virtual void OnConfigure(const eudaq::Configuration & param) {
+    data_host = param.Get("DataHost", "");
+    cmd_host = param.Get("CmdHost", "");
+    cmd_port = param.Get("CmdPort", 32767);
+    set_host(&cmd_host[0], cmd_port);
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
     m_run = param;
     m_evt = 0;
-    SendEvent(DEPFETEvent::BORE(m_run));
+    cmd_send(1);
     SetStatus(eudaq::Status::LVL_OK, "Started");
   }
   virtual void OnStopRun() {
-    SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
+    eudaq::mSleep(1000);
+    cmd_send(3);
+    eudaq::mSleep(1000);
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   }
   virtual void OnTerminate() {
@@ -48,83 +49,45 @@ public:
     SetStatus(eudaq::Status::LVL_OK, "Reset");
   }
   void Process() {
-    int READY = 0;
+    int lenevent;
+    int Nmod, Kmod;
+    unsigned int itrg, itrg_old == -1;
+    do {   //--- modules of one event loop
+      lenevent = BUFSIZE;
+      Nmod = REQUEST;
+      int rc = tcp_event_get(&data_host[0], buffer, &lenevent, &Nmod, &Kmod, &itrg);
+      if (rc < 0) EUDAQ_WARN("tcp_event_get ERROR");
+      int evt_type = (BUFFER[0] >> 22) & 0x3;
+      if (itrg == BORE_TRIGGERID || itrg == EORE_TRIGGERID || itrg < itrg_old || evt_type != 2) {
+        int evtModID = (buffer[0] >> 24) & 0xf;
+        int len2 = buffer[0] & 0xfffff;
+        int dev_type = (BUFFER[0] >> 28) & 0xf;
+        std::cout << "Received: Mod " << (Kmod+1) << " of " << Nmod << ", id=" << evtModID
+                  << ", EvType=" << evt_type << ", DevType=" << dev_type
+                  << ", NData=" << LEVEVENT << " (" << len2 << ") "
+                  << ", TrigID=" << itrg << " (" << buffer[1] << ")" << std::endl;
+      }
+    }  while (Kmod!=(Nmod-1));
+    //--- here you have complete DEPFET event
+
+    if (itrg == BORE_TRIGGERID) {
+      SendEvent(DEPFETEvent::BORE(m_run, ++m_evt));
+    } else if (itrg == EORE_TRIGGERID) {
+      SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
+    }
+
+    if (evt_type != 0x2 || dev_type != 0x2) return;
+
     eudaq::DEPFETEvent ev(m_run, ++m_evt);
-    do {
-      //evt_Builder *event_ptr = new evt_Builder;
-      printf("Waiting for header \n");
-      int rc=tcp_get2(&m_buffer[0], DEPFET_HEADER_LENGTH * 4);
-      printf("Got header \n");
-      if(rc<0) { EUDAQ_THROW(" 1 get error: rc<0  (" + to_string(rc) + ")......");}   
-      else if(rc>0) {printf("Need to get more data \n");};
-      //int MARKER=HEADER[1];
-      int LENEVENT=m_buffer[2];
-      //int xxx=m_buffer[3];
-      int TriggerID=m_buffer[4];
-      int Nr_Modules=m_buffer[5];
-      int ModuleID=m_buffer[6];
-      int TriggerID_old = 0;
-      static int FIRST = 0;
-      printf("received header board id=%d of %d, FIRST=%d, READY=%d\n", ModuleID, Nr_Modules, FIRST, READY);
-
-      if (LENEVENT>MAXDATA) { 
-        printf("event size > buffsize %d %d \n", LENEVENT, MAXDATA); 
-        tcp_close(-1);   return;
-      }
-    
-      rc=tcp_get2(&m_buffer[DEPFET_HEADER_LENGTH], LENEVENT);
-      if(rc<0) { EUDAQ_THROW(" 2 get errorr rc<0 (" + to_string(rc) + ")......");}     
-      else if(rc>0) { printf("Need to get more data=%d", rc);}
-
-//       event_DEPFET * evtDEPFET=(event_DEPFET*) BUFFER;
-//       if(!(sig_hup%2)) 
-//         printf("evtDEPFET->Trigger=%d TrID=%d Mod=%d len=%d\n"
-//                ,evtDEPFET->Trigger,TriggerID,ModuleID,LENEVENT);
-    
-      if (ModuleID==0)  { 
-        //event_ptr->ptrDATA=(int*)event_ptr->DATA;  
-        //event_ptr->lenDEPFET=2;
-        TriggerID_old=TriggerID; 
-      } else if (ModuleID>0 && TriggerID!=TriggerID_old ) {
-        printf(" Error TriggerID Mod=%d Trg=%d Trg_old=%d\n"
-               ,ModuleID,TriggerID,TriggerID_old);
-      };
-
-      if (FIRST==0 && ModuleID==0) { FIRST=1; }
-
-      if ((ModuleID+1)==Nr_Modules && FIRST==1) { READY=1; printf("----- READY -----\n");}
-      else if (ModuleID>Nr_Modules) {
-        EUDAQ_THROW("ModuleID (" + to_string(ModuleID) + ") > Nr_Modules (" + to_string(Nr_Modules) + ")");
-      }
-//       event_ptr->n_Modules=Nr_Modules;
-//       event_ptr->k_Modules=ModuleID;
-//       event_ptr->HEADER=xxx;
-//       event_ptr->Trigger=TriggerID;
-//       event_ptr->READY=READY;
-
-//       event_ptr->lenDATA[ModuleID]=LENEVENT;
-//       event_ptr->lenDEPFET+=LENEVENT;
-//       event_ptr->ptrMOD[ModuleID]=event_ptr->ptrDATA;
-
-      //printf(" DATA ptr=%p \n",(void*)event_ptr->ptrDATA);
-
-//       if (event_ptr->ptrDATA!=NULL) {
-//         for(int i=0;i<LENEVENT;i++){ *(event_ptr->ptrDATA++)=BUFFER[i]; }
-//       }
-//       printf("Mod=%d TrID=%d \n",ModuleID,*(event_ptr->ptrMOD[ModuleID]));
-//       int t2;
-//       time((time_t*)&t2);
-//       event_ptr->Time_mark=t2;
-      printf("Adding board id=%d of %d, FIRST=%d, READY=%d\n", ModuleID, Nr_Modules, FIRST, READY);
-      ev.AddBoard(ModuleID, m_buffer, sizeof m_buffer);
-    } while (!READY);
+    ev.AddBoard(ModuleID, buffer, sizeof buffer);
     printf("Sending event \n");
-    SendEvent(ev);
+    //SendEvent(ev);
     printf("OK \n");
   }
   bool done;
 private:
-  unsigned m_port, m_run, m_evt;
-  int m_buffer[MAXDATA + DEPFET_HEADER_LENGTH];
-  //std::vector<int> m_buffer;
+  unsigned m_run, m_evt, cmd_port;
+  std::string data_host, cmd_host;
+
+  unsigned int buffer[BUFSIZE];
 };
