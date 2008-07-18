@@ -93,10 +93,9 @@ public:
 
       if (evt_type != 0x2 || dev_type != 0x2) return;
 
-      ev.AddBoard(evtModID, buffer, sizeof buffer);
+      ev.AddBoard(evtModID, buffer, lenevent*4);
 
     }  while (Kmod!=(Nmod-1));
-    //--- here you have complete DEPFET event
 
     printf("Sending event \n");
     ++m_evt;
