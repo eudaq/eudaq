@@ -273,8 +273,8 @@ public:
           if (marker2 < 0) marker2 = marker1;
           std::cout << "Setting board " << n_eudrb << " markers to "
                     << eudaq::hexdec(marker1, 8) << ", " << eudaq::hexdec(marker2, 8) << std::endl;
-          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100800 | (marker1 & 0xff), address+0x10);
-          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48100700 | (marker2 & 0xff), address+0x10);
+          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110800 | (marker1 & 0xff), address+0x10);
+          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110700 | (marker2 & 0xff), address+0x10);
         }
         vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
       }
