@@ -25,13 +25,15 @@ public:
       //
     }
   virtual void OnConfigure(const eudaq::Configuration & param) {
-    data_host = param.Get("DataHost", "");
+    data_host = param.Get("DataHost", "silab22a");
     if (host_is_set) {
-      if (cmd_host != param.Get("CmdHost", "") || cmd_port != param.Get("CmdPort", 32767)) {
-
+      if (cmd_host != param.Get("CmdHost", "silab22a") ||
+          cmd_port != param.Get("CmdPort", 32767)) {
+        SetStatus(eudaq::Status::LVL_ERROR, "Command Host changed");
+        EUDAQ_THROW("Changing DEPFET command host is not supported");
       }
     } else {
-      cmd_host = param.Get("CmdHost", "");
+      cmd_host = param.Get("CmdHost", "silab22a");
       cmd_port = param.Get("CmdPort", 32767);
       set_host(&cmd_host[0], cmd_port);
       host_is_set = true;
