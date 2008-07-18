@@ -1,6 +1,6 @@
 MAKE := make
 
-DIRS := main root gui tlu vme eudrb
+DIRS := main root gui tlu vme eudrb depfet
 
 default: main
 

@@ -1,11 +1,12 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Utils.hh"
-//#include "eudaq/DEPFETEvent.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/DEPFETEvent.hh"
 #include "depfet/rc_depfet.hh"
 #include "depfet/TCPClient.h"
 
 using eudaq::to_string;
-//using eudaq::DEPFETEvent;
+using eudaq::DEPFETEvent;
 
 namespace {
   static const int BUFSIZE = 128000;
@@ -51,37 +52,42 @@ public:
   void Process() {
     int lenevent;
     int Nmod, Kmod;
-    unsigned int itrg, itrg_old == -1;
+    unsigned int itrg, itrg_old = -1;
+    eudaq::DEPFETEvent ev(m_run, m_evt+1);
     do {   //--- modules of one event loop
       lenevent = BUFSIZE;
       Nmod = REQUEST;
       int rc = tcp_event_get(&data_host[0], buffer, &lenevent, &Nmod, &Kmod, &itrg);
       if (rc < 0) EUDAQ_WARN("tcp_event_get ERROR");
-      int evt_type = (BUFFER[0] >> 22) & 0x3;
+      int evtModID = (buffer[0] >> 24) & 0xf;
+      int len2 = buffer[0] & 0xfffff;
+      int evt_type = (buffer[0] >> 22) & 0x3;
+      int dev_type = (buffer[0] >> 28) & 0xf;
       if (itrg == BORE_TRIGGERID || itrg == EORE_TRIGGERID || itrg < itrg_old || evt_type != 2) {
-        int evtModID = (buffer[0] >> 24) & 0xf;
-        int len2 = buffer[0] & 0xfffff;
-        int dev_type = (BUFFER[0] >> 28) & 0xf;
         std::cout << "Received: Mod " << (Kmod+1) << " of " << Nmod << ", id=" << evtModID
                   << ", EvType=" << evt_type << ", DevType=" << dev_type
-                  << ", NData=" << LEVEVENT << " (" << len2 << ") "
+                  << ", NData=" << lenevent << " (" << len2 << ") "
                   << ", TrigID=" << itrg << " (" << buffer[1] << ")" << std::endl;
       }
+
+      if (itrg == BORE_TRIGGERID) {
+        SendEvent(DEPFETEvent::BORE(m_run));
+        return;
+      } else if (itrg == EORE_TRIGGERID) {
+        SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
+        return;
+      }
+
+      if (evt_type != 0x2 || dev_type != 0x2) return;
+
+      ev.AddBoard(evtModID, buffer, sizeof buffer);
+
     }  while (Kmod!=(Nmod-1));
     //--- here you have complete DEPFET event
 
-    if (itrg == BORE_TRIGGERID) {
-      SendEvent(DEPFETEvent::BORE(m_run, ++m_evt));
-    } else if (itrg == EORE_TRIGGERID) {
-      SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
-    }
-
-    if (evt_type != 0x2 || dev_type != 0x2) return;
-
-    eudaq::DEPFETEvent ev(m_run, ++m_evt);
-    ev.AddBoard(ModuleID, buffer, sizeof buffer);
     printf("Sending event \n");
-    //SendEvent(ev);
+    ++m_evt;
+    SendEvent(ev);
     printf("OK \n");
   }
   bool done;
