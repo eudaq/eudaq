@@ -267,7 +267,7 @@ public:
         vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
         eudaq::mSleep(100);
         int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
-        int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker1", -1);
+        int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker2", -1);
         if (marker1 >= 0 || marker2 >= 0) {
           if (marker1 < 0) marker1 = marker2;
           if (marker2 < 0) marker2 = marker1;
