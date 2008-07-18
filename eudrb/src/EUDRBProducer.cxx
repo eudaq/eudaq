@@ -265,7 +265,7 @@ public:
         data = 0xd0000001;
         if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
         vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
-        eudaq::mSleep(100);
+        eudaq::mSleep(1000);
         int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
         int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker2", -1);
         if (marker1 >= 0 || marker2 >= 0) {
@@ -274,24 +274,26 @@ public:
           std::cout << "Setting board " << n_eudrb << " markers to "
                     << eudaq::hexdec(marker1, 2) << ", " << eudaq::hexdec(marker2, 2) << std::endl;
           vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110800 | (marker1 & 0xff), address+0x10);
+          eudaq::mSleep(1000);
           vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110700 | (marker2 & 0xff), address+0x10);
+          eudaq::mSleep(1000);
         }
         vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
+        eudaq::mSleep(1000);
       }
       std::cout << "Waiting for boards to reset..." << std::endl;
 
       for (int i = 0; i < 150; ++i) {
         eudaq::mSleep(100);
-        bool waiting = false;
+        bool ready = true;
         for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
           unsigned long data = 0;
           vme_A32_D32_User_Data_SCT_read(fdOut, &data, boards[boards.size()-1].BaseAddress);
-          if (data & 0x02000000) {
-            waiting = true;
-            break;
+          if (!(data & 0x02000000)) {
+            done = false;
           }
         }
-        if (!waiting) break;
+        if (done) break;
       }
       std::cout << "OK" << std::endl;
 // new loop added by Angelo
