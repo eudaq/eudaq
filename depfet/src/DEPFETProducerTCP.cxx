@@ -19,7 +19,6 @@ int main(int /*argc*/, char ** argv) {
 
     do {
       producer.Process();
-      //      usleep(100);
     } while (!producer.done);
     std::cout << "Quitting" << std::endl;
   } catch (...) {

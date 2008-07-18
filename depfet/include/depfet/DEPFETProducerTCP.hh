@@ -20,7 +20,8 @@ public:
   DEPFETProducerTCP(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol),
       done(false),
-      host_is_set(false)
+      host_is_set(false),
+      running(false)
     {
       //
     }
@@ -44,12 +45,14 @@ public:
     m_run = param;
     m_evt = 0;
     cmd_send(1);
+    running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
   }
   virtual void OnStopRun() {
     eudaq::mSleep(1000);
     cmd_send(3);
     eudaq::mSleep(1000);
+    running = false;
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   }
   virtual void OnTerminate() {
@@ -60,7 +63,8 @@ public:
     SetStatus(eudaq::Status::LVL_OK, "Reset");
   }
   void Process() {
-    if (data_host == "") {
+    if (!running || data_host == "") {
+      usleep(10);
       return;
     }
     int lenevent;
@@ -84,14 +88,16 @@ public:
       }
 
       if (itrg == BORE_TRIGGERID) {
+        printf("Sending BORE \n");
         SendEvent(DEPFETEvent::BORE(m_run));
         return;
       } else if (itrg == EORE_TRIGGERID) {
+        printf("Sending EORE \n");
         SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
         return;
       }
 
-      if (evt_type != 0x2 || dev_type != 0x2) return;
+      if (evt_type != 2 /*|| dev_type != 2*/) continue;
 
       ev.AddBoard(evtModID, buffer, lenevent*4);
 
@@ -104,7 +110,7 @@ public:
   }
   bool done;
 private:
-  bool host_is_set;
+  bool host_is_set, running;
   unsigned m_run, m_evt;
   int cmd_port;
   std::string data_host, cmd_host;
