@@ -290,10 +290,10 @@ public:
           unsigned long data = 0;
           vme_A32_D32_User_Data_SCT_read(fdOut, &data, boards[boards.size()-1].BaseAddress);
           if (!(data & 0x02000000)) {
-            done = false;
+            ready = false;
           }
         }
-        if (done) break;
+        if (ready) break;
       }
       std::cout << "OK" << std::endl;
 // new loop added by Angelo
