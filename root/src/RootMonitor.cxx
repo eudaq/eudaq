@@ -28,6 +28,7 @@
 #include "TFile.h"
 #include "TColor.h"
 #include "TString.h"
+#include "TF1.h"
 //#include "TSystem.h" // for TProcessEventTimer
 #include <iostream>
 #include <vector>
@@ -164,12 +165,14 @@ public:
 
 class ConfigurationClass : public TQObject { //a class holding some configuration informations
 public:
-  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0) //some default values for the configuration
+  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0) //some default values for the configuration
     {
     }
 
   ~ConfigurationClass(){}
   unsigned UPDATE_EVERY_N_EVENTS;
+  unsigned HITCORR_NUM_BINS;
+
   unsigned CLUSTER_POSITION; // 0=seed position, 1=lin cog
   unsigned CLUSTER_TYPE; // 3=3x3, 5=5x5
   double SEED_THRESHOLD;
@@ -311,6 +314,7 @@ public:
         m_toolbar->AddFrame(label, m_hintleft.get());
       }
     
+   
       // For some reason the palette seems to get reset - set it again here:
       gStyle->SetPalette(1);
 
@@ -368,6 +372,12 @@ public:
       m_conf_cds_lego_update->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_cds_lego_update.get(), m_hinttop.get());
 
+      numbinshitcorr = new TGLabel(m_conf_group_frame.get(),"Hit Correlation: number of Bins");
+      m_conf_group_frame->AddFrame(numbinshitcorr.get(), m_hinttop.get());
+      m_conf_numbinshitcorr = new TGNumberEntry(m_conf_group_frame.get(), conf.HITCORR_NUM_BINS, 20);
+      m_conf_numbinshitcorr->Associate(this);
+      m_conf_group_frame->AddFrame(m_conf_numbinshitcorr.get(), m_hinttop.get());
+      
       clustertypelabel = new TGLabel(m_conf_group_frame.get(),"Cluster Type:");
       m_conf_group_frame->AddFrame(clustertypelabel.get(), m_hinttop.get());
       
@@ -426,9 +436,53 @@ public:
         sprintf(tmpstring, "Hit Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
         title = tmpstring;
         m_hitcorrelation.push_back(
-          new TH2DNew(make_name("hitcorrelation",    i).c_str(), title,   20, 0, 20, 20, 0, 20)
-          );
+				   new TH2DNew(make_name("hitcorrelation",    i).c_str(), title, conf.HITCORR_NUM_BINS, 0, conf.HITCORR_NUM_BINS, conf.HITCORR_NUM_BINS, 0, conf.HITCORR_NUM_BINS)
+				   );
         (m_hitcorrelation.back())->SetContour(99);
+      }
+
+      //cluster correlations between neigbhor boards
+      for (size_t i = 0; i < m_board.size()-1; ++i) {
+        TString title;
+        char tmpstring[50];
+        sprintf(tmpstring, "X Cluster Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
+        title = tmpstring;
+        m_clustercorrelation.push_back(
+				       new TH2DNew(make_name("clustercorrelation",    i).c_str(), title,  264, 0, 264, 264, 0, 264)
+          );
+        (m_clustercorrelation.back())->SetContour(99);
+      }
+      {
+	TString title;
+        char tmpstring[50];
+        sprintf(tmpstring, "X Cluster Correlation Board 0 : Board %1.0f", (float)(m_board.size()) );
+        title = tmpstring;
+        m_clustercorrelation.push_back(
+				       new TH2DNew(make_name("clustercorrelation",    (m_board.size()-1)).c_str(), title,  264, 0, 264, 264, 0, 264)
+				       );
+        (m_clustercorrelation.back())->SetContour(99);
+      }
+      
+     //y cluster correlations between neigbhor boards
+      for (size_t i = 0; i < m_board.size()-1; ++i) {
+        TString title;
+        char tmpstring[50];
+        sprintf(tmpstring, "Y Cluster Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
+        title = tmpstring;
+        m_clustercorrelationy.push_back(
+				       new TH2DNew(make_name("clustercorrelationy",    i).c_str(), title,  264, 0, 264, 264, 0, 264)
+          );
+        (m_clustercorrelationy.back())->SetContour(99);
+      }
+      {
+	TString title;
+        char tmpstring[50];
+        sprintf(tmpstring, "Y Cluster Correlation Board 0 : Board %1.0f", (float)(m_board.size()) );
+        title = tmpstring;
+        m_clustercorrelationy.push_back(
+				       new TH2DNew(make_name("clustercorrelationy",    (m_board.size()-1)).c_str(), title,  264, 0, 264, 264, 0, 264)
+				       );
+        (m_clustercorrelationy.back())->SetContour(99);
       }
       
 
@@ -460,6 +514,32 @@ public:
         (main_pads.back()).AddHisto(m_hitcorrelation[i], drawoption);
       }
       //end of hit correlations
+
+
+      //cluster correlations
+      m_conf_checkbox_main_clustercorr =  new TGCheckButton(m_conf_group_frame_main.get(),"X Cluster Correlations");
+      m_conf_checkbox_main_clustercorr->Associate(this);
+      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_clustercorr.get(), m_hinttop.get());
+      for (size_t i = 0; i < m_clustercorrelation.size(); ++i) {
+        main_pads.push_back(histopad(m_conf_checkbox_main_clustercorr.get()));
+        TString drawoption;
+        drawoption =  "col2z";
+        (main_pads.back()).AddHisto(m_clustercorrelation[i], drawoption);
+      }
+      //end of cluster correlations
+
+      //y cluster correlations
+      m_conf_checkbox_main_clustercorry =  new TGCheckButton(m_conf_group_frame_main.get(),"Y Cluster Correlations");
+      m_conf_checkbox_main_clustercorry->Associate(this);
+      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_clustercorry.get(), m_hinttop.get());
+      for (size_t i = 0; i < m_clustercorrelationy.size(); ++i) {
+        main_pads.push_back(histopad(m_conf_checkbox_main_clustercorry.get()));
+        TString drawoption;
+        drawoption =  "col2z";
+        (main_pads.back()).AddHisto(m_clustercorrelationy[i], drawoption);
+      }
+      //y end of cluster correlations
+
 
       //raw value
       m_conf_checkbox_main_rawval =  new TGCheckButton(m_conf_group_frame_main.get(),"Raw Value");
@@ -527,6 +607,32 @@ public:
         (main_pads.back()).AddHisto((m_board[i].m_histocdsval).get(), drawoption);
       }
       //end of cds value
+      
+      //noise
+      m_conf_checkbox_main_noise =  new TGCheckButton(m_conf_group_frame_main.get(),"Noise");
+      m_conf_checkbox_main_noise->Associate(this);
+      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_noise.get(), m_hinttop.get());
+      main_pads.push_back(histopad(m_conf_checkbox_main_noise.get()));
+      for (size_t i = 0; i < m_board.size(); ++i) {
+        TString drawoption;
+        drawoption = (i == 0 ? "" : "same");
+        (main_pads.back()).AddHisto((m_board[i].m_histonoise).get(), drawoption);
+      }
+      //end of noise
+      
+      //noise as a function of event nr
+      m_conf_checkbox_main_noiseeventnr =  new TGCheckButton(m_conf_group_frame_main.get(),"NoiseEventNr");
+      m_conf_checkbox_main_noiseeventnr->Associate(this);
+      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_noiseeventnr.get(), m_hinttop.get());
+      main_pads.push_back(histopad(m_conf_checkbox_main_noiseeventnr.get()));
+      for (size_t i = 0; i < m_board.size(); ++i) {
+        TString drawoption;
+        drawoption = (i == 0 ? "hist" : "hist same");
+        (main_pads.back()).AddHisto((m_board[i].m_histonoiseeventnr).get(), drawoption);
+      }
+      //end of noise as a function of event nr
+      
+
       //track 2d
       m_conf_checkbox_main_track2d =  new TGCheckButton(m_conf_group_frame_main.get(),"Tracks 2D");
       m_conf_checkbox_main_track2d->Associate(this);
@@ -675,6 +781,31 @@ public:
         board_pads.back().at(i).AddHisto((m_board[i].m_histocdsval).get(), "");
       }
       //end of cds value
+      //noise
+      m_conf_checkbox_noise =  new TGCheckButton(m_conf_group_frame_board.get(),"Noise");
+      m_conf_checkbox_noise->Associate(this);
+      m_conf_group_frame_board->AddFrame(m_conf_checkbox_noise.get(), m_hinttop.get());
+      board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_noise.get())));
+      for (size_t i = 0; i <  m_board.size(); ++i) {
+        board_pads.back().at(i).AddHisto((m_board[i].m_histonoise).get(), "");
+      }
+      //end of noise
+
+
+      //noise as a function of eventnr
+      m_conf_checkbox_noiseeventnr =  new TGCheckButton(m_conf_group_frame_board.get(),"NoiseEventnr");
+      m_conf_checkbox_noiseeventnr->Associate(this);
+      m_conf_group_frame_board->AddFrame(m_conf_checkbox_noiseeventnr.get(), m_hinttop.get());
+      board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_noiseeventnr.get())));
+      for (size_t i = 0; i <  m_board.size(); ++i) {
+        board_pads.back().at(i).AddHisto((m_board[i].m_histonoiseeventnr).get(), "");
+      }
+      //end of noise as a function of eventnr
+
+
+
+
+
       //number of seeds
       m_conf_checkbox_numhits =  new TGCheckButton(m_conf_group_frame_board.get(),"Number of Seeds");
       m_conf_checkbox_numhits->Associate(this);
@@ -750,6 +881,11 @@ public:
     //std::cout << "Destructor" << std::endl;
     for(size_t i =0; i < m_hitcorrelation.size();i++)
       delete m_hitcorrelation[i];
+    for(size_t i =0; i < m_clustercorrelation.size();i++)
+      delete m_clustercorrelation[i];
+    for(size_t i =0; i < m_clustercorrelationy.size();i++)
+      delete m_clustercorrelationy[i];
+   
     gApplication->Terminate();
   }
   void UpdateCDSLegoCanvas() //this function updates the cds lego canvas
@@ -808,7 +944,19 @@ public:
             m_board[i].m_canvas->Divide(4, 3);
           else if(activepads > 12 && activepads <= 16)
             m_board[i].m_canvas->Divide(4, 4);
-  
+	  else if(activepads > 16 && activepads <= 20)
+	    m_board[i].m_canvas->Divide(5, 4);
+	  else if(activepads > 20 && activepads <= 22)
+	    m_board[i].m_canvas->Divide(5, 5);
+	  else if(activepads > 22 && activepads <= 30)
+	    m_board[i].m_canvas->Divide(6, 5);
+	  else if(activepads > 30 && activepads <= 36)
+	    m_board[i].m_canvas->Divide(6, 6);
+	  else if(activepads > 36 && activepads <= 42)
+	    m_board[i].m_canvas->Divide(7, 6);
+	  else if(activepads > 42 && activepads <= 49)
+	    m_board[i].m_canvas->Divide(7, 7);
+	  
           int canvaspadindex = 1;
           for(size_t t = 0; t < board_pads.size(); t++)
             {
@@ -847,6 +995,16 @@ public:
         m_canvasmain->Divide(5, 4);
       else if(activepads > 20 && activepads <= 22)
         m_canvasmain->Divide(5, 5);
+      else if(activepads > 22 && activepads <= 30)
+        m_canvasmain->Divide(6, 5);
+      else if(activepads > 30 && activepads <= 36)
+        m_canvasmain->Divide(6, 6);
+     else if(activepads > 36 && activepads <= 42)
+        m_canvasmain->Divide(7, 6);
+     else if(activepads > 42 && activepads <= 49)
+        m_canvasmain->Divide(7, 7);
+
+  
   
        
       int canvaspadindex = 1;
@@ -895,6 +1053,24 @@ public:
         conf.UPDATE_EVERY_N_EVENTS = cdsupdate;
 
 
+      unsigned numbinshitcorr = (unsigned)m_conf_numbinshitcorr->GetNumber();
+      if(numbinshitcorr != conf.HITCORR_NUM_BINS && numbinshitcorr > 0)
+	{
+	  for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
+	    delete m_hitcorrelation[i];
+	    TString title;
+	    char tmpstring[50];
+	    sprintf(tmpstring, "Hit Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
+	    title = tmpstring;
+	    m_hitcorrelation[i] = new TH2DNew(make_name("hitcorrelation",    i).c_str(), title,   numbinshitcorr, 0, numbinshitcorr, numbinshitcorr, 0, numbinshitcorr);
+	    m_hitcorrelation[i]->SetContour(99);
+	    
+	    main_pads[i].h[0] = m_hitcorrelation[i];
+	  }
+	  conf.HITCORR_NUM_BINS = numbinshitcorr;
+	  UpdateMainCanvas(); //update the canvas
+	}
+      
 
 
       double seedthresh = (double) m_conf_seedthreshold->GetNumber();
@@ -924,7 +1100,9 @@ public:
           for (size_t i = 0; i < m_board.size(); ++i) {
             m_board[i].Reset();
             m_hitcorrelation[i]->Reset("");
-          }
+	    m_clustercorrelation[i]->Reset("");
+	     m_clustercorrelationy[i]->Reset("");
+	  }
  
         }
       //read out the gui elements and change the configuration object
@@ -1009,6 +1187,9 @@ public:
         m_board[i].m_histoclustery->Write();
         m_board[i].m_historawval->Write();
         m_board[i].m_histocdsval->Write();
+	m_board[i].m_histonoise->Write();
+	m_board[i].m_histonoiseeventnr->Write();
+  	
         m_board[i].m_histoclusterval->Write();
         if (i > 0) {
           m_board[i].m_histodeltax->Write();
@@ -1034,16 +1215,80 @@ public:
               try {
                 totalnumevents++;
                 std::vector<unsigned int> numberofclusters(m_board.size(),0);
-                //std::cout << "Numboards " << drbev->NumBoards() << ", " << m_board.size() << std::endl;
+                std::vector<std::vector<double> > cpos(m_board.size());
+                std::vector<std::vector<double> > cposy(m_board.size());
+                
+		//		std::cout << "Numboards " << drbev->NumBoards() << ", " << m_board.size() << std::endl;
                 for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
                   numplanes++;
-                  FillBoard(m_board[i], drbev->GetBoard(i),i,numberofclusters[i]);
-                }
+		  std::vector<double> clusterposition;
+		  std::vector<double> clusterpositiony;
+		  
+                  FillBoard(m_board[i], drbev->GetBoard(i),i,numberofclusters[i], clusterposition, clusterpositiony);
+		  //cpos.push_back(clusterposition);
+		  cpos.at(i) = clusterposition;
+		  cposy.at(i) = clusterpositiony;
+		  
+		}
+		//
+               for(size_t i = 0; i < m_board.size()-1; i++)
+                  {
+                   
+		   
+		    for(size_t k = 0; k < cposy.at(i).size(); k++)
+		      {
+
+			for(size_t l = 0; l < cposy.at(i+1).size(); l++)
+			  {
+			    m_clustercorrelationy[i]->Fill(cposy.at(i+1).at(l),cposy.at(i).at(k));
+			  }
+		      }
+		  }
+		
+		for(size_t k = 0; k < cposy.at(0).size(); k++)
+		  {
+		    
+		    for(size_t l = 0; l < cposy.at((int)m_board.size()-1).size(); l++)
+		      {
+			
+		       (m_clustercorrelationy.back())->Fill(cposy.at((int)m_board.size()-1).at(l),cposy.at(0).at(k));
+		      }
+		  }
+		//
                 for(size_t i = 0; i < m_board.size()-1; i++)
                   {
                     if(numberofclusters[i] != 0 || numberofclusters[i+1] != 0)
                       m_hitcorrelation[i]->Fill(numberofclusters[i+1],numberofclusters[i]);
-                  }
+		    //cluster correlation
+		    for(size_t k = 0; k < cpos.at(i).size(); k++)
+		      {
+
+			for(size_t l = 0; l < cpos.at(i+1).size(); l++)
+			  {
+			    m_clustercorrelation[i]->Fill(cpos.at(i+1).at(l),cpos.at(i).at(k));
+			  }
+		      }
+		  }
+		
+		for(size_t k = 0; k < cpos.at(0).size(); k++)
+		  {
+		    
+		    for(size_t l = 0; l < cpos.at((int)m_board.size()-2).size(); l++)
+		      {
+			
+		       (m_clustercorrelation.back())->Fill(cpos.at((int)m_board.size()-2).at(l),cpos.at(0).at(k));
+		      }
+		  }
+		
+	 //end of cluster correlation
+
+
+// 		std::cout << "cpos size=" << cpos.size() << std::endl;
+// 		for(size_t i = 0; i < m_board.size(); i++)
+// 		  {
+// 		    std::cout << i;
+// 		    std::cout << " size=" << cpos.at(i).size() << std::endl;
+// 		  }
               } catch (const eudaq::Exception & e) {
                 EUDAQ_ERROR("Bad data size in event " + eudaq::to_string(ev->GetEventNumber()) + ": " + e.what());
               }
@@ -1078,7 +1323,7 @@ public:
         const double thresh[] = {  20,  20,  40, 20 };
         //const double thresh2 = square(20);
         for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
-          std::cout << "Trying cluster " << i << std::endl;
+          //std::cout << "Trying cluster " << i << std::endl;
           size_t board = 1;
           std::vector<double> trackx(numplanes), tracky(numplanes);
           trackx[0] = m_board[0].m_clusterx[i];
@@ -1112,16 +1357,16 @@ public:
           } while (board < numplanes && closest2 < 1);
           if (closest2 < 1) {
             numtracks++;
-            std::cout << "Found track in event " << ev->GetEventNumber() << ":";
+            //std::cout << "Found track in event " << ev->GetEventNumber() << ":";
             for (size_t i = 0; i < trackx.size(); ++i) {
-              std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
+              //std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
               m_board[i].m_histotrack2d->Fill(trackx[i], tracky[i]);
               if (i > 0) {
                 m_board[i].m_histodeltax->Fill(trackx[i] - trackx[i-1]);
                 m_board[i].m_histodeltay->Fill(tracky[i] - tracky[i-1]);
               }
             }
-            std::cout << std::endl;
+            //std::cout << std::endl;
             //fittrack(trackx, tracky);
           }
         }
@@ -1190,6 +1435,9 @@ public:
       m_histonumtracks->Fill(numtracks);
       m_board[0].m_historawval->SetMaximum();
       m_board[0].m_histocdsval->SetMaximum();
+      m_board[0].m_histonoise->SetMaximum();
+      m_board[0].m_histonoiseeventnr->SetMaximum();
+     
       m_board[0].m_histoclusterval->SetMaximum();
       m_board[0].m_histonumhits->SetMaximum();
       m_board[0].m_histonumclusters->SetMaximum();
@@ -1197,6 +1445,9 @@ public:
       m_board[1].m_histodeltay->SetMaximum();
       double maxr = m_board[0].m_historawval->GetMaximum();
       double maxd = m_board[0].m_histocdsval->GetMaximum();
+      double max_noise = m_board[0].m_histonoise->GetMaximum();
+      double max_noise_eventnr = m_board[0].m_histonoiseeventnr->GetMaximum();
+      
       double maxc = m_board[0].m_histoclusterval->GetMaximum();
       double maxh = m_board[0].m_histonumhits->GetMaximum();
       double maxn = m_board[0].m_histonumclusters->GetMaximum();
@@ -1213,6 +1464,8 @@ public:
 
         if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
         if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
+	if (m_board[i].m_histonoise->GetMaximum() > max_noise) max_noise = m_board[i].m_histonoise->GetMaximum();
+	if (m_board[i].m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board[i].m_histonoiseeventnr->GetMaximum();
         if (m_board[i].m_histoclusterval->GetMaximum() > maxc) maxc = m_board[i].m_histoclusterval->GetMaximum();
         if (m_board[i].m_histonumhits->GetMaximum() > maxh) maxh = m_board[i].m_histonumhits->GetMaximum();
         if (m_board[i].m_histonumclusters->GetMaximum() > maxn) maxn = m_board[i].m_histonumclusters->GetMaximum();
@@ -1221,6 +1474,9 @@ public:
       }
       m_board[0].m_historawval->SetMaximum(maxr*1.1);
       m_board[0].m_histocdsval->SetMaximum(maxd*1.1);
+      m_board[0].m_histonoise->SetMaximum(max_noise*1.1);
+      m_board[0].m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
+      
       m_board[0].m_histoclusterval->SetMaximum(maxc*1.1);
       m_board[0].m_histonumhits->SetMaximum(maxh*1.1);
       m_board[0].m_histonumclusters->SetMaximum(maxn*1.1);
@@ -1299,9 +1555,9 @@ private:
     TCanvas * m_canvas;
     counted_ptr<TH2D> m_historaw2d, m_tempcds, m_tempcds2, m_histocds2d, m_histohit2d,
       m_histocluster2d, m_histotrack2d, m_histonoise2d, m_testhisto;
-    counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval,
+    counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval, m_histonoise, m_histonoiseeventnr,
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
-      m_histodeltax, m_histodeltay, m_histonumhits;
+      m_histodeltax, m_histodeltay, m_histonumhits, rmshisto;
     std::vector<double> m_clusters, m_clusterx, m_clustery;
     double m_trackx, m_tracky;
     void Reset() {
@@ -1318,6 +1574,11 @@ private:
       m_historawy->Reset();
       m_historawval->Reset();
       m_histocdsval->Reset();
+      m_histonoise->Reset();
+      rmshisto->Reset();
+      
+      m_histonoiseeventnr->Reset();
+      
       m_histoclusterx->Reset();
       m_histoclustery->Reset();
       m_histoclusterval->Reset();
@@ -1342,6 +1603,7 @@ private:
     b.m_canvas = b.m_embedded->GetCanvas();
     //b.m_canvas->Divide(1, 1);
 
+    b.rmshisto = new TH1DNew(make_name("rms histo",board).c_str(),"rms histo", 40, -50, 50);
     b.m_historaw2d      = new TH2DNew(make_name("RawProfile",    board).c_str(), "Raw 2D Profile",    264, 0, 264, 256, 0, 256);
     b.m_tempcds         = new TH2DNew(make_name("TempCDS",       board).c_str(), "Temp CDS",          264, 0, 264, 256, 0, 256);
     b.m_tempcds2        = new TH2DNew(make_name("TempCDS2",      board).c_str(), "Temp CDS2",         264, 0, 264, 256, 0, 256);
@@ -1356,6 +1618,9 @@ private:
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", 256, 0, 256);
     b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
     b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
+    b.m_histonoise     = new TH1DNew(make_name("Noise",     board).c_str(), "Noise",        40, 0, 20);
+    b.m_histonoiseeventnr     = new TH1DNew(make_name("NoiseEventNr",     board).c_str(), "NoiseEventNr",        30, 0, 1500);
+    
     b.m_histoclusterval = new TH1DNew(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 1000);
     b.m_histonumclusters= new TH1DNew(make_name("NumClusters",   board).c_str(), "Num Clusters",      100,  0,  100);
     b.m_histodeltax     = new TH1DNew(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
@@ -1367,7 +1632,7 @@ private:
 
 
   }
-  void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e, int boardnumber, unsigned int &numberofclusters) {
+  void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e, int boardnumber, unsigned int &numberofclusters, std::vector<double> & clusterposition,  std::vector<double> & clusterpositiony) {
     eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     size_t npixels = m_decoder->NumPixels(e); //, nx=264, ny=256;
     //std::cout << "Filling " << e.LocalEventNumber() << " board" << boardnumber
@@ -1390,6 +1655,38 @@ private:
           cds[i] = 100;
         }
       }
+
+      {
+	//rms for noise determination
+	b.rmshisto->FillN(npixels, &cds[0], &ones[0]);
+
+	double rms = b.rmshisto->GetRMS();
+	b.m_histonoise->Fill(rms);
+	
+	int te = ((totalnumevents-1) % (int)50);
+	if(te == 0)
+	  {
+	    double  kom = (totalnumevents-1)/50;
+	    int t = (int) kom;
+	    
+	    TF1 *f1 = new TF1("bla","gaus");
+
+	    b.rmshisto->Fit(f1,"Q0","");
+	    Double_t sigma = f1->GetParameter(2);
+	    b.m_histonoiseeventnr->SetBinContent((t+1),sigma);
+	    b.m_histonoiseeventnr->SetBinError((t+1),0.0);
+	    
+	    for(int h = t+2; h <= t+4 && h <= 30; h++)
+	      {
+		b.m_histonoiseeventnr->SetBinContent(h,0.0);
+		b.m_histonoiseeventnr->SetBinError(h,0.0);
+	      }
+	    delete f1;
+	    b.rmshisto->Reset();
+	  }
+	//end of rms for noise determination
+      }
+
       b.m_historaw2d->FillN(npixels, &a.m_x[0], &a.m_y[0], &a.m_adc[1][0]);
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
       b.m_historawx->FillN(npixels, &a.m_x[0], &a.m_adc[1][0]);
@@ -1549,7 +1846,11 @@ private:
         }
         /*if (b.m_clusters.size())*/ b.m_histonumclusters->Fill(b.m_clusters.size());
         numberofclusters = b.m_clusters.size();
-        b.m_histohit2d->Reset();
+
+	clusterposition = b.m_clusterx;
+	clusterpositiony = b.m_clustery;
+	
+	b.m_histohit2d->Reset();
         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
         b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clusters[0]);
@@ -1586,11 +1887,12 @@ private:
   counted_ptr<TGLayoutHints> m_hint_l;
   counted_ptr<TGLayoutHints> m_hint_test;
   
-
   // Toolbar
   counted_ptr<TGCompositeFrame> m_toolbar;
   counted_ptr<TGLabel>          m_tb_filename;
   counted_ptr<TGLabel>          clustertypelabel;
+  counted_ptr<TGLabel> numbinshitcorr;
+
   counted_ptr<TGLabel>          clusterpositionlabel;
   counted_ptr<TGComboBox> clusterpositionComboBox;
   counted_ptr<TGComboBox> clustertypeComboBox;
@@ -1616,22 +1918,30 @@ private:
   counted_ptr<TGLabel> clusterthresholdlabel;
   
   counted_ptr<TGNumberEntry> m_conf_cds_lego_update;
+ counted_ptr<TGNumberEntry> m_conf_numbinshitcorr;
+
   counted_ptr<TGNumberEntry> m_conf_seedthreshold;
   counted_ptr<TGNumberEntry> m_conf_seedneighbourthreshold;
   
   counted_ptr<TGNumberEntry> m_conf_clusterthreshold;
   
-  counted_ptr<TGTextButton>m_conf_apply;
-  counted_ptr<TGTextButton>m_reset_histos;
+  counted_ptr<TGTextButton> m_conf_apply;
+  counted_ptr<TGTextButton> m_reset_histos;
   //checkboxes
   counted_ptr<TGCheckButton> m_conf_checkbox_main_numclusters;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_hitcorr;
+  counted_ptr<TGCheckButton> m_conf_checkbox_main_clustercorr;
+  counted_ptr<TGCheckButton> m_conf_checkbox_main_clustercorry;
+  
   counted_ptr<TGCheckButton> m_conf_checkbox_main_rawval;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_cluster2d;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_deltax;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_deltay;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_numhits;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_cdsval;
+  counted_ptr<TGCheckButton> m_conf_checkbox_main_noise;
+  counted_ptr<TGCheckButton> m_conf_checkbox_main_noiseeventnr;
+  
   counted_ptr<TGCheckButton> m_conf_checkbox_main_track2d;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_clusterval;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_numtracks;
@@ -1648,6 +1958,9 @@ private:
   counted_ptr<TGCheckButton> m_conf_checkbox_rawx;
   counted_ptr<TGCheckButton> m_conf_checkbox_rawy;
   counted_ptr<TGCheckButton> m_conf_checkbox_cdsval;
+  counted_ptr<TGCheckButton> m_conf_checkbox_noise;
+  counted_ptr<TGCheckButton> m_conf_checkbox_noiseeventnr;
+  
   counted_ptr<TGCheckButton> m_conf_checkbox_numhits;
   counted_ptr<TGCheckButton> m_conf_checkbox_clusterval;
   counted_ptr<TGCheckButton> m_conf_checkbox_numclusters;
@@ -1662,6 +1975,9 @@ private:
 
   counted_ptr<TH1DNew> m_histonumtracks;
   std::vector< TH2DNew* > m_hitcorrelation;
+  std::vector< TH2DNew* > m_clustercorrelation;
+  std::vector< TH2DNew* > m_clustercorrelationy;
+
   // Board tabs (1 per board)
   std::vector<BoardDisplay> m_board;
 
