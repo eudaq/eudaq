@@ -42,7 +42,7 @@ public:
     cmd_send("CMD STATUS");
     eudaq::mSleep(100);
     cmd_send("CMD INIT");
-    eudaq::mSleep(5000);
+    eudaq::mSleep(4000);
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
@@ -50,6 +50,7 @@ public:
     m_evt = 0;
     cmd_send("CMD EVB SET RUNNUM " + to_string(m_run));
     eudaq::mSleep(100);
+    //SendEvent(DEPFETEvent::BORE(m_run));
     cmd_send("CMD START");
     running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
@@ -93,8 +94,12 @@ public:
                   << ", TrigID=" << itrg << " (" << buffer[1] << ")" << std::endl;
       }
 
-      if (itrg == BORE_TRIGGERID && dev_type == 2) {
-        printf("Sending BORE \n");
+      if (itrg == BORE_TRIGGERID) {
+        if (dev_type == 2) {
+          printf("Sending BORE \n");
+          SendEvent(DEPFETEvent::BORE(m_run));
+        }
+        //printf("DEBUG: BORE\n");
         return;
       } else if (itrg == EORE_TRIGGERID) {
         printf("Sending EORE \n");
@@ -102,7 +107,10 @@ public:
         return;
       }
 
-      if (evt_type != 2 /*|| dev_type != 2*/) continue;
+      if (evt_type != 2 /*|| dev_type != 2*/) {
+        //printf("DEBUG: ignoring evt_type %d\n", evt_type);
+        continue;
+      }
 
       ev.AddBoard(evtModID, buffer, lenevent*4);
 
