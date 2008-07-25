@@ -40,6 +40,7 @@ public:
       host_is_set = true;
     }
     cmd_send("CMD STATUS");
+    eudaq::mSleep(100);
     cmd_send("CMD INIT");
     eudaq::mSleep(5000);
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
@@ -48,7 +49,7 @@ public:
     m_run = param;
     m_evt = 0;
     cmd_send("CMD EVB SET RUNNUM " + to_string(m_run));
-    SendEvent(DEPFETEvent::BORE(m_run));
+    eudaq::mSleep(100);
     cmd_send("CMD START");
     running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
@@ -57,7 +58,6 @@ public:
     eudaq::mSleep(1000);
     cmd_send("CMD STOP");
     eudaq::mSleep(1000);
-    SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
     running = false;
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   }
@@ -93,11 +93,12 @@ public:
                   << ", TrigID=" << itrg << " (" << buffer[1] << ")" << std::endl;
       }
 
-      if (itrg == BORE_TRIGGERID) {
-        printf("Found BORE \n");
+      if (itrg == BORE_TRIGGERID && dev_type == 2) {
+        printf("Sending BORE \n");
         return;
       } else if (itrg == EORE_TRIGGERID) {
-        printf("Found EORE \n");
+        printf("Sending EORE \n");
+        SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
         return;
       }
 
