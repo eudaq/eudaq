@@ -3,7 +3,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/DEPFETEvent.hh"
 #include "depfet/rc_depfet.hh"
-#include "depfet/TCPClient.h"
+#include "depfet/TCPclient.h"
 
 using eudaq::to_string;
 using eudaq::DEPFETEvent;
@@ -39,19 +39,25 @@ public:
       set_host(&cmd_host[0], cmd_port);
       host_is_set = true;
     }
+    cmd_send("CMD STATUS");
+    cmd_send("CMD INIT");
+    eudaq::mSleep(5000);
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
     m_run = param;
     m_evt = 0;
-    cmd_send(1);
+    cmd_send("CMD EVB SET RUNNUM " + to_string(m_run));
+    SendEvent(DEPFETEvent::BORE(m_run));
+    cmd_send("CMD START");
     running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
   }
   virtual void OnStopRun() {
     eudaq::mSleep(1000);
-    cmd_send(3);
+    cmd_send("CMD STOP");
     eudaq::mSleep(1000);
+    SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
     running = false;
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   }
@@ -88,12 +94,10 @@ public:
       }
 
       if (itrg == BORE_TRIGGERID) {
-        printf("Sending BORE \n");
-        SendEvent(DEPFETEvent::BORE(m_run));
+        printf("Found BORE \n");
         return;
       } else if (itrg == EORE_TRIGGERID) {
-        printf("Sending EORE \n");
-        SendEvent(DEPFETEvent::EORE(m_run, ++m_evt));
+        printf("Found EORE \n");
         return;
       }
 

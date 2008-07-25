@@ -219,39 +219,12 @@ int field_cmd(char *msg) {
 //                        SEND  Commands
 //==================================================================================================
 
-int cmd_send(int icmd) {
-//    char command[256];
-  std::string command;
+
+
+int cmd_send(const std::string & command) {
   int ret;
 
   while (cmd_socket<=0) { printf("cmd_send():: Wait for connection sock=%d\n",cmd_socket); sleep(1);}
-
-  switch (icmd)
-    {
-    case 0:  
-      command="cmd help  \n";
-      break;
-
-    case 1:  
-      command="cmd status \n";
-      sleep(1);
-      command="cmd init \n";
-      sleep(2);
-      command="cmd start\n";
-      sleep(1);
-      break;
-	    
-    case 3:
-      command="cmd stop\n";
-      sleep(3);
-      break;
-	    
-    case 4:
-      command="cmd stat \n";
-      break;
-	    
-    default: return 0;
-    }
 
   if ((ret=send(cmd_socket, (void *)command.c_str(),command.length(), 0))!=(int)command.length()) {
     printf("Error Send INFO ret=%d of (%d)\n",ret,(int)command.length()); perror("send to RC");
