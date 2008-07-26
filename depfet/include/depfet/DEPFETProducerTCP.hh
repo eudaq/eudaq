@@ -50,7 +50,7 @@ public:
     m_evt = 0;
     cmd_send("CMD EVB SET RUNNUM " + to_string(m_run));
     eudaq::mSleep(100);
-    //SendEvent(DEPFETEvent::BORE(m_run));
+    SendEvent(DEPFETEvent::BORE(m_run));
     cmd_send("CMD START");
     running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
@@ -95,10 +95,10 @@ public:
       }
 
       if (itrg == BORE_TRIGGERID) {
-        if (dev_type == 2) {
-          printf("Sending BORE \n");
-          SendEvent(DEPFETEvent::BORE(m_run));
-        }
+        //if (dev_type == 2) {
+        //  printf("Sending BORE \n");
+        //  SendEvent(DEPFETEvent::BORE(m_run));
+        //}
         //printf("DEBUG: BORE\n");
         return;
       } else if (itrg == EORE_TRIGGERID) {
