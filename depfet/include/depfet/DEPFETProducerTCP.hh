@@ -21,7 +21,8 @@ public:
     : eudaq::Producer(name, runcontrol),
       done(false),
       host_is_set(false),
-      running(false)
+      running(false),
+      firstevent(false)
     {
       //
     }
@@ -39,6 +40,8 @@ public:
       set_host(&cmd_host[0], cmd_port);
       host_is_set = true;
     }
+    //cmd_send("CMD STOP");
+    //eudaq::mSleep(2000);
     cmd_send("CMD STATUS");
     eudaq::mSleep(100);
     cmd_send("CMD INIT");
@@ -52,6 +55,7 @@ public:
     eudaq::mSleep(100);
     SendEvent(DEPFETEvent::BORE(m_run));
     cmd_send("CMD START");
+    firstevent = true;
     running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
   }
@@ -119,6 +123,11 @@ public:
 
     }  while (Kmod!=(Nmod-1));
 
+    if (firstevent && itrg != 1) {
+      printf("Ignoring bad event (%d)\n", itrg);
+      firstevent = false;
+      return;
+    }
     printf("Sending event \n");
     ++m_evt;
     SendEvent(*ev);
@@ -126,7 +135,7 @@ public:
   }
   bool done;
 private:
-  bool host_is_set, running;
+  bool host_is_set, running, firstevent;
   unsigned m_run, m_evt;
   int cmd_port;
   std::string data_host, cmd_host;

@@ -121,9 +121,10 @@ public:
       ev.SetTag("AndMask",  "0x"+to_hex(and_mask));
       ev.SetTag("OrMask",   "0x"+to_hex(or_mask));
       ev.SetTag("VetoMask", "0x"+to_hex(veto_mask));
-      sleep(2); // temporarily, to fix startup with EUDRB
+      sleep(4); // temporarily, to fix startup with EUDRB
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       SendEvent(ev);
+      sleep(4);
       m_tlu->Start();
       TLUStarted=true;
       SetStatus(eudaq::Status::LVL_OK, "Started");
