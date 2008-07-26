@@ -77,7 +77,8 @@ public:
     int lenevent;
     int Nmod, Kmod;
     unsigned int itrg, itrg_old = -1;
-    eudaq::DEPFETEvent ev(m_run, m_evt+1);
+    //eudaq::DEPFETEvent ev(m_run, m_evt+1);
+    counted_ptr<eudaq::DEPFETEvent> ev;
     do {   //--- modules of one event loop
       lenevent = BUFSIZE;
       Nmod = REQUEST;
@@ -111,14 +112,16 @@ public:
         //printf("DEBUG: ignoring evt_type %d\n", evt_type);
         continue;
       }
-
-      ev.AddBoard(evtModID, buffer, lenevent*4);
+      if (!ev) {
+	ev = new eudaq::DEPFETEvent(m_run, itrg);
+      }
+      ev->AddBoard(evtModID, buffer, lenevent*4);
 
     }  while (Kmod!=(Nmod-1));
 
     printf("Sending event \n");
     ++m_evt;
-    SendEvent(ev);
+    SendEvent(*ev);
     printf("OK \n");
   }
   bool done;
