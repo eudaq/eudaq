@@ -117,17 +117,17 @@ public:
         continue;
       }
       if (!ev) {
-	ev = new eudaq::DEPFETEvent(m_run, itrg);
+	ev = new eudaq::DEPFETEvent(m_run, itrg); 
       }
       ev->AddBoard(evtModID, buffer, lenevent*4);
 
     }  while (Kmod!=(Nmod-1));
 
-    if (firstevent && itrg != 1) {
-      printf("Ignoring bad event (%d)\n", itrg);
-      firstevent = false;
-      return;
-    }
+//    if (firstevent && itrg != 0) {
+//      printf("Ignoring bad event (%d)\n", itrg);
+//      firstevent = false;
+//      return;
+//    }
     printf("Sending event \n");
     ++m_evt;
     SendEvent(*ev);
