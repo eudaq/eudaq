@@ -97,6 +97,11 @@ public:
       m_tlu->SetVetoMask(veto_mask);
       m_tlu->SetAndMask(and_mask);
       m_tlu->SetOrMask(or_mask);
+
+	// by dhaas
+	m_tlu->Configure();
+	sleep(2);
+
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
@@ -113,6 +118,7 @@ public:
     try {
       m_run = param;
       m_ev = 0;
+	m_tlu->Configure();
       std::cout << "Start Run: " << param << std::endl;
       TLUEvent ev(TLUEvent::BORE(m_run));
       ev.SetTag("FirmwareID",  to_string(m_tlu->GetFirmwareID()));
@@ -121,10 +127,10 @@ public:
       ev.SetTag("AndMask",  "0x"+to_hex(and_mask));
       ev.SetTag("OrMask",   "0x"+to_hex(or_mask));
       ev.SetTag("VetoMask", "0x"+to_hex(veto_mask));
-      sleep(4); // temporarily, to fix startup with EUDRB
+      sleep(5); // temporarily, to fix startup with EUDRB
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       SendEvent(ev);
-      sleep(4);
+      sleep(5);
       m_tlu->Start();
       TLUStarted=true;
       SetStatus(eudaq::Status::LVL_OK, "Started");

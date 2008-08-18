@@ -206,11 +206,15 @@ namespace tlu {
     ZestSC1CloseCard(m_handle);
   }
 
+  void TLUController::Configure() {
+    Initialize();
+    InhibitTriggers(true);
+  }
+  
   void TLUController::Start() {
     // restart triggers
     //ResetTriggerCounter();
-
-    Initialize();
+    //Initialize();
 
     SetLEDs(m_mask);
     InhibitTriggers(false);

@@ -66,7 +66,7 @@ namespace tlu {
 
     void SetTriggerInterval(unsigned millis);
 
-    //void Configure();
+    void Configure();
     void Update();
     void Start();
     void Stop();
