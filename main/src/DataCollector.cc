@@ -132,7 +132,7 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, counted_ptr<Event> ev) {
-    //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
+    std::cout << "Received Event from " << id << ": " << *ev << std::endl;
     Info & inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
     bool tmp = false;
@@ -171,8 +171,8 @@ namespace eudaq {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
         }
-        if (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) {
-          EUDAQ_ERROR("Event number mismatch in event " + to_string(ev.GetEventNumber()));
+        if ( (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber-1) ){
+          EUDAQ_ERROR("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()));
         }
         ev.AddEvent(m_buffer[i].events.front());
         m_buffer[i].events.pop_front();
@@ -256,17 +256,17 @@ namespace eudaq {
         ev.id.SetState(1); // successfully identified
         OnConnect(ev.id);
       } else {
-        //std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
-        //for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
-        //    std::cout << to_hex(ev.packet[i], 2) << ' ';
-        //}
-        //std::cout << ")" << std::endl;
+        std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
+        for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
+            std::cout << to_hex(ev.packet[i], 2) << ' ';
+        }
+        std::cout << ")" << std::endl;
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-        //std::cout << "Deserializing" << std::endl;
+        std::cout << "Deserializing" << std::endl;
         counted_ptr<Event> event(EventFactory::Create(ser));
-        //std::cout << "Done" << std::endl;
+        std::cout << "Done" << std::endl;
         OnReceive(ev.id, event);
-        //std::cout << "End" << std::endl;
+        std::cout << "End" << std::endl;
       }
       break;
     default:
