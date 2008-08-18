@@ -41,12 +41,11 @@ sleep 2
 
 printf '\t\t  DataCollector\n'
 #./TestDataCollector.exe &
-/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -e './TestDataCollector.exe' &
+/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -e './rungdb TestDataCollector.exe' &
 sleep 2
 
 printf '\t\t  RootMonitor\n'
 ./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 &
-cd -
 
 printf '\t\t  EUDRB\n'
 ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd eudaq/bin/; ./EUDRBProducer.exe -r eudet')" &
@@ -54,9 +53,10 @@ ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 
 printf '\t\t  TLU\n'
 ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd eudaq/bin/; ./TLUProducer.exe -r eudet')" &
 
-#printf '\t\t  DEPFET\n'
-#./DEPFETProducerTCP.exe &
+# printf '\t\t  DEPFET\n'
+# /usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -e './DEPFETProducerTCP.exe' &
 
+cd -
 printf '\033[1;32;48m\t ...Done!\033[0m \n'
 printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'
 
