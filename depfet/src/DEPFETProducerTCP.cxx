@@ -4,7 +4,7 @@
 
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("DEPFET Producer", "1.0", "The DEPFET Producer");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:7000", "address",
+  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
                                    "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
                                    "The minimum level for displaying log messages locally");

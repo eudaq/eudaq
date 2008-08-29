@@ -157,7 +157,7 @@ namespace eudaq {
   }
 
   TCPServer::TCPServer(const std::string & param)
-    : m_port(from_string(param, 7000)),
+    : m_port(from_string(param, 44000)),
       m_srvsock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
       m_maxfd(m_srvsock)
   {
@@ -317,14 +317,15 @@ namespace eudaq {
   }
 
   std::string TCPServer::ConnectionString() const {
-    char * buf = getenv("HOSTNAME");
+    char * host = getenv("HOSTNAME");
+    if (!host) host = "localhost";
     //gethostname(buf, sizeof buf);
-    return PROTO_NAME + "://" + buf + ":" + to_string(m_port);
+    return PROTO_NAME + "://" + host + ":" + to_string(m_port);
   }
 
   TCPClient::TCPClient(const std::string & param)
     : m_server(param),
-      m_port(7000),
+      m_port(44000),
       m_sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
       m_buf(ConnectionInfoTCP(m_sock, param))
   {
@@ -333,7 +334,7 @@ namespace eudaq {
     size_t i = param.find(':');
     if (i != std::string::npos) {
       m_server = trim(std::string(param, 0, i));
-      m_port = from_string(std::string(param, i+1), 7000);
+      m_port = from_string(std::string(param, i+1), 44000);
     }
     if (m_server == "") m_server = "localhost";
 

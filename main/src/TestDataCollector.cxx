@@ -62,9 +62,9 @@ public:
 
 int main(int /*argc*/, const char ** argv) {
   eudaq::OptionParser op("EUDAQ Data Collector", "1.0", "A command-line version of the Data Collector");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:7000", "address",
+  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
                                    "The address of the RunControl application");
-  eudaq::Option<std::string> addr (op, "a", "listen-address", "tcp://7001", "address",
+  eudaq::Option<std::string> addr (op, "a", "listen-address", "tcp://44001", "address",
                                    "The address on which to listen for Data connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
                                    "The minimum level for displaying log messages locally");

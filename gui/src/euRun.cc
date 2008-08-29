@@ -16,7 +16,7 @@ static const char * statuses[] = {
 int main(int argc, char ** argv) {
   QApplication app(argc, argv);
   eudaq::OptionParser op("EUDAQ Run Control", "1.0", "A Qt version of the Run Control");
-  eudaq::Option<std::string>  addr(op, "a", "listen-address", "tcp://7000", "address",
+  eudaq::Option<std::string>  addr(op, "a", "listen-address", "tcp://44000", "address",
                                    "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
                                    "The minimum level for displaying log messages locally");

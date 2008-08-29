@@ -117,7 +117,7 @@ public:
         continue;
       }
       if (!ev) {
-	ev = new eudaq::DEPFETEvent(m_run, itrg); 
+        ev = new eudaq::DEPFETEvent(m_run, itrg);
       }
       ev->AddBoard(evtModID, buffer, lenevent*4);
 
