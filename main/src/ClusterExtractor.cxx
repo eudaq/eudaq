@@ -37,11 +37,11 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Extractor", "1.0",
                          "A command-line tool for extracting cluster information from native raw files",
                          1);
-  eudaq::Option<int> xsize(op, "x", "x-size", 512, "pixels", "Size of sensor in X direction");
-  eudaq::Option<int> ysize(op, "y", "y-size", 512, "pixels", "Size of sensor in Y direction");
+  eudaq::Option<int> xsize(op, "x", "x-size", 256, "pixels", "Size of sensor in X direction");
+  eudaq::Option<int> ysize(op, "y", "y-size", 256, "pixels", "Size of sensor in Y direction");
   eudaq::Option<int> clust(op, "p", "cluster-size", 3, "pixels", "Size of clusters (1=no clustering, 3=3x3, etc.)");
 
-  eudaq::Option<double> noise(op, "n", "noise", 5.0, "val", "Noise level, in adc units");
+  eudaq::Option<double> noise(op, "n", "noise", 4.0, "val", "Noise level, in adc units");
   eudaq::Option<double> thresh_seed(op, "s", "seed-thresh", 5.0, "thresh", "Threshold for seed pixels, in units of sigma");
   eudaq::Option<double> thresh_clus(op, "c", "cluster-thresh", 10.0, "thresh", "Threshold for 3x3 clusters, in units of sigma");
 
@@ -124,7 +124,7 @@ int main(int /*argc*/, char ** argv) {
                   std::vector<short> cds(npixels, 0);
                   if (decoder->NumFrames(brd) == 1) {
                     for (size_t i = 0; i < a.m_adc[0].size(); ++i) {
-                      short x = a.m_x[i]; //delmarker(a.m_x[i]);
+                      short x = delmarker(a.m_x[i]);
                       if (x < 0) continue;
                       size_t idx = x + xsize.Value()*a.m_y[i];
                       //std::cout << "pixel " << x << ", " << a.m_y[i] << " (" << idx << ") = " << a.m_adc[0][i] << std::endl;
