@@ -213,7 +213,8 @@ int main(int /*argc*/, char ** argv) {
             for (size_t b = 0; b < track.size(); ++b) {
               if (track[b].size()) {
                 numhit++;
-                *files[b] << dev->GetEventNumber() << "\t" << track[b].size() << "\n";
+                std::string ts = to_string(dev->GetTimestamp() == eudaq::NOTIMESTAMP ? 0 : dev->GetTimestamp());
+                *files[b] << dev->GetEventNumber() << "\t" << track[b].size() << "\t" << ts << "\n";
                 for (size_t c = 0; c < track[b].size(); ++c) {
                   *files[b] << " " << track[b][c].x << "\t" << track[b][c].y << "\t" << track[b][c].c << "\n";
                 }
