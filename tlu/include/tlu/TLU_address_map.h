@@ -6,9 +6,9 @@
 /* Do not edit by hand!                                             */
 /* Edit TLU_address_map.dat instead                                 */
 /*                                                                  */
-/* Generated on Thu Oct 11 08:52:15 2007               */
+/* Generated on Sun Aug 31 21:05:20 2008               */
 
-#define FIRMWARE_ID 189
+#define FIRMWARE_ID 250
 
 #define TIMESTAMP_RESET_BIT   0
 #define TRIGGER_COUNTER_RESET_BIT    1
@@ -80,3 +80,7 @@
 #define TRIGGER_IN2_COUNTER_1  8248
 #define TRIGGER_IN3_COUNTER_0  8249
 #define TRIGGER_IN3_COUNTER_1  8250
+#define REGISTERED_PARTICLE_COUNTER_ADDRESS_0  8251
+#define REGISTERED_PARTICLE_COUNTER_ADDRESS_1  8252
+#define REGISTERED_PARTICLE_COUNTER_ADDRESS_2  8253
+#define REGISTERED_PARTICLE_COUNTER_ADDRESS_3  8254
