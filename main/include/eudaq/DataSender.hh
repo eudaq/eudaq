@@ -16,7 +16,7 @@ namespace eudaq {
     void SendEvent(const Event &);
   private:
     std::string m_type, m_name;
-    TransportClient * m_transport;
+    TransportClient * m_dataclient;
   };
 
 }

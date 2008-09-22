@@ -27,14 +27,14 @@ namespace eudaq {
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
                                    const std::string & runcontrol, bool startthread)
-    : m_transport(TransportFactory::CreateClient(runcontrol)),
+    : m_cmdclient(TransportFactory::CreateClient(runcontrol)),
       m_done(false),
       m_type(type),
       m_name(name)
   {
-    if (!m_transport->IsNull()) {
+    if (!m_cmdclient->IsNull()) {
       std::string packet;
-      if (!m_transport->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+      if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
       // check packet is OK ("EUDAQ.CMD.RunControl nnn")
       size_t i0 = 0, i1 = packet.find(' ');
       if (i1 == std::string::npos) EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
@@ -55,14 +55,14 @@ namespace eudaq {
       part = std::string(packet, i0, i1-i0);
       if (part != "RunControl") EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
 
-      m_transport->SendPacket("OK EUDAQ CMD " + m_type + " " + m_name);
+      m_cmdclient->SendPacket("OK EUDAQ CMD " + m_type + " " + m_name);
       packet = "";
-      if (!m_transport->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+      if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
       i1 = packet.find(' ');
       if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by RunControl server: " + packet);
     }
 
-    m_transport->SetCallback(TransportCallback(this, &CommandReceiver::CommandHandler));
+    m_cmdclient->SetCallback(TransportCallback(this, &CommandReceiver::CommandHandler));
 
     pthread_attr_init(&m_threadattr);
     if (startthread) StartThread();
@@ -77,7 +77,7 @@ namespace eudaq {
   }
 
   void CommandReceiver::Process(int timeout) {
-    m_transport->Process(timeout);
+    m_cmdclient->Process(timeout);
   }
 
   void CommandReceiver::OnLog(const std::string & param) {
@@ -91,7 +91,7 @@ namespace eudaq {
 
   void CommandReceiver::CommandThread() {
     while (!m_done) {
-      m_transport->Process();
+      m_cmdclient->Process();
       OnIdle();
     }
   }
@@ -136,14 +136,14 @@ namespace eudaq {
       //std::cout << "Response = " << m_status << std::endl;
       BufferSerializer ser;
       m_status.Serialize(ser);
-      m_transport->SendPacket(ser);
+      m_cmdclient->SendPacket(ser);
     }
   }
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
     pthread_join(m_thread, 0);
-    delete m_transport;
+    delete m_cmdclient;
   }
 
 }

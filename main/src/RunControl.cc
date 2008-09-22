@@ -40,7 +40,7 @@ namespace eudaq {
     : m_done(false),
       m_listening(true),
       m_runnumber(0),
-      m_transport(0),
+      m_cmdserver(0),
       m_idata((size_t)-1),
       m_ilog((size_t)-1),
       m_runsizelimit(0),
@@ -54,17 +54,17 @@ namespace eudaq {
 
   void RunControl::StartServer(const std::string & listenaddress) {
     m_done = false;
-    m_transport = TransportFactory::CreateServer(listenaddress);
-    m_transport->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
+    m_cmdserver = TransportFactory::CreateServer(listenaddress);
+    m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
     pthread_attr_init(&m_threadattr);
     pthread_create(&m_thread, &m_threadattr, RunControl_thread, this);
-    std::cout << "DEBUG: listenaddress=" << m_transport->ConnectionString() << std::endl;
+    std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString() << std::endl;
   }
 
   void RunControl::StopServer() {
     m_done = true;
     /*if (m_thread)*/ pthread_join(m_thread, 0);
-    delete m_transport;
+    delete m_cmdserver;
   }
 
   RunControl::~RunControl() {
@@ -111,7 +111,7 @@ namespace eudaq {
     //std::string packet;
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
     if (m_idata != (size_t)-1) {
-      SendReceiveCommand("PREPARE", to_string(m_runnumber), m_transport->GetConnection(m_idata));
+      SendReceiveCommand("PREPARE", to_string(m_runnumber), m_cmdserver->GetConnection(m_idata));
       mSleep(100);
     }
     SendCommand("START", to_string(m_runnumber));
@@ -142,7 +142,7 @@ namespace eudaq {
     if (param.length() > 0) {
       packet += '\0' + param;
     }
-    m_transport->SendPacket(packet, id);
+    m_cmdserver->SendPacket(packet, id);
   }
 
   std::string RunControl::SendReceiveCommand(const std::string & cmd, const std::string & param,
@@ -154,13 +154,13 @@ namespace eudaq {
       packet += '\0' + param;
     }
     std::string result;
-    m_transport->SendReceivePacket(packet, &result, id);
+    m_cmdserver->SendReceivePacket(packet, &result, id);
     return result;
   }
 
   void RunControl::CommandThread() {
     while (!m_done) {
-      m_transport->Process(100000);
+      m_cmdserver->Process(100000);
     }
   }
 
@@ -170,10 +170,10 @@ namespace eudaq {
     case (TransportEvent::CONNECT):
       std::cout << "Connect:    " << ev.id << std::endl;
       if (m_listening) {
-        m_transport->SendPacket("OK EUDAQ CMD RunControl", ev.id, true);
+        m_cmdserver->SendPacket("OK EUDAQ CMD RunControl", ev.id, true);
       } else {
-        m_transport->SendPacket("ERROR EUDAQ CMD Not accepting new connections", ev.id, true);
-        m_transport->Close(ev.id);
+        m_cmdserver->SendPacket("ERROR EUDAQ CMD Not accepting new connections", ev.id, true);
+        m_cmdserver->Close(ev.id);
       }
       break;
     case (TransportEvent::DISCONNECT):
@@ -211,7 +211,7 @@ namespace eudaq {
           ev.id.SetName(part);
         } while(false);
         //std::cout << "client replied, sending OK" << std::endl;
-        m_transport->SendPacket("OK", ev.id, true);
+        m_cmdserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
         if (ev.id.GetType() == "LogCollector") {
           InitLog(ev.id);
@@ -247,7 +247,7 @@ namespace eudaq {
   void RunControl::InitData(const ConnectionInfo & id) {
     if (m_idata != (size_t)-1) EUDAQ_WARN("Data collector already connected");
 
-    eudaq::Status status = m_transport->SendReceivePacket<eudaq::Status>("GETRUN", id, 1000000);
+    eudaq::Status status = m_cmdserver->SendReceivePacket<eudaq::Status>("GETRUN", id, 1000000);
     std::string part = status.GetTag("_RUN");
 
     if (part == "") EUDAQ_THROW("Bad response from DataCollector");
@@ -261,7 +261,7 @@ namespace eudaq {
     }
     if (m_idata == (size_t)-1) EUDAQ_THROW("No DataCollector is connected");
 
-    status = m_transport->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
+    status = m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
     m_dataaddr = status.GetTag("_SERVER");
     std::cout << "DataServer responded: " << m_dataaddr << std::endl;
     if (m_dataaddr == "") EUDAQ_THROW("Invalid response from DataCollector");
@@ -281,7 +281,7 @@ namespace eudaq {
       }
     }
     if (m_ilog == (size_t)-1) EUDAQ_THROW("No LogCollector is connected");
-    eudaq::Status status = m_transport->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
+    eudaq::Status status = m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
 
     m_logaddr = status.GetTag("_SERVER");
     std::cout << "LogServer responded: " << m_logaddr << std::endl;

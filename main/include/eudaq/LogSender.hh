@@ -20,7 +20,7 @@ namespace eudaq {
     void SetLevel(const std::string & level) { SetLevel(Status::String2Level(level)); }
   private:
     std::string m_name;
-    TransportClient * m_transport;
+    TransportClient * m_logclient;
     int m_level;
     bool m_shownotconnected;
   };

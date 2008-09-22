@@ -39,7 +39,7 @@ namespace eudaq {
     : CommandReceiver("DataCollector", "", runcontrol, false),
       m_done(false),
       m_listening(true),
-      m_transport(TransportFactory::CreateServer(listenaddress)),
+      m_dataserver(TransportFactory::CreateServer(listenaddress)),
       m_thread(),
       m_numwaiting(0),
       m_itlu((size_t)-1),
@@ -47,21 +47,21 @@ namespace eudaq {
       m_eventnumber(0),
       m_runstart(0)
   {
-    m_transport->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
+    m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
     pthread_attr_init(&m_threadattr);
     pthread_create(&m_thread, &m_threadattr, DataCollector_thread, this);
-    EUDAQ_DEBUG("Listen address=" + to_string(m_transport->ConnectionString()));
+    EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
     CommandReceiver::StartThread();
   }
 
   DataCollector::~DataCollector() {
     m_done = true;
     /*if (m_thread)*/ pthread_join(m_thread, 0);
-    delete m_transport;
+    delete m_dataserver;
   }
 
   void DataCollector::OnServer() {
-    m_status.SetTag("_SERVER", m_transport->ConnectionString());
+    m_status.SetTag("_SERVER", m_dataserver->ConnectionString());
   }
 
   void DataCollector::OnGetRun() {
@@ -214,10 +214,10 @@ namespace eudaq {
     case (TransportEvent::CONNECT):
       //std::cout << "Connect:    " << ev.id << std::endl;
       if (m_listening) {
-        m_transport->SendPacket("OK EUDAQ DATA DataCollector", ev.id, true);
+        m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", ev.id, true);
       } else {
-        m_transport->SendPacket("ERROR EUDAQ DATA Not accepting new connections", ev.id, true);
-        m_transport->Close(ev.id);
+        m_dataserver->SendPacket("ERROR EUDAQ DATA Not accepting new connections", ev.id, true);
+        m_dataserver->Close(ev.id);
       }
       break;
     case (TransportEvent::DISCONNECT):
@@ -252,7 +252,7 @@ namespace eudaq {
           ev.id.SetName(part);
         } while(false);
         //std::cout << "client replied, sending OK" << std::endl;
-        m_transport->SendPacket("OK", ev.id, true);
+        m_dataserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
         OnConnect(ev.id);
       } else {
@@ -277,7 +277,7 @@ namespace eudaq {
   void DataCollector::DataThread() {
     try {
       while (!m_done) {
-        m_transport->Process(100000);
+        m_dataserver->Process(100000);
       }
     } catch (const std::exception & e) {
       std::cout << "Error: Uncaught exception: " << e.what() << "\n"

@@ -35,8 +35,8 @@ namespace eudaq {
     virtual ~RunControl();
 
     void CommandThread();
-    size_t NumConnections() const { return m_transport->NumConnections(); }
-    const ConnectionInfo & GetConnection(size_t i) const { return m_transport->GetConnection(i); }
+    size_t NumConnections() const { return m_cmdserver->NumConnections(); }
+    const ConnectionInfo & GetConnection(size_t i) const { return m_cmdserver->GetConnection(i); }
   private:
     void InitLog(const ConnectionInfo & id);
     void InitData(const ConnectionInfo & id);
@@ -50,7 +50,7 @@ namespace eudaq {
     bool m_listening;
   protected:
     unsigned m_runnumber;   ///< The current run number
-    TransportServer * m_transport; ///< Transport for sending commands
+    TransportServer * m_cmdserver; ///< Transport for sending commands
     pthread_t m_thread;
     pthread_attr_t m_threadattr;
     size_t m_idata, m_ilog;

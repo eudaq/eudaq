@@ -31,7 +31,7 @@ namespace eudaq {
     void LogHandler(TransportEvent & ev);
     void DoReceive(const LogMessage & msg);
     bool m_done, m_listening;
-    TransportServer * m_transport; ///< Transport for sending commands
+    TransportServer * m_logserver; ///< Transport for receiving log messages
     pthread_t m_thread;
     pthread_attr_t m_threadattr;
     std::string m_filename;

@@ -36,7 +36,7 @@ namespace eudaq {
     void StartThread();
   protected:
     Status m_status;
-    TransportClient * m_transport;
+    TransportClient * m_cmdclient;
   private:
     bool m_done;
     std::string m_type, m_name;

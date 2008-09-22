@@ -24,16 +24,16 @@ namespace eudaq {
     : CommandReceiver("LogCollector", "", runcontrol, false),
       m_done(false),
       m_listening(true),
-      m_transport(TransportFactory::CreateServer(listenaddress)),
+      m_logserver(TransportFactory::CreateServer(listenaddress)),
       m_thread(),
       m_filename("../logs/" + Time::Current().Formatted("%Y-%m-%d.log")),
       m_file(m_filename.c_str(), std::ios_base::app)
   {
     if (!m_file.is_open()) EUDAQ_THROWX(FileWriteException, "Unable to open log file (" + m_filename + ") is there a logs directory?");
-    m_transport->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
+    m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     pthread_attr_init(&m_threadattr);
     pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
-    std::cout << "###### listenaddress=" << m_transport->ConnectionString() << std::endl
+    std::cout << "###### listenaddress=" << m_logserver->ConnectionString() << std::endl
               << "       logfile=" << m_filename << std::endl;
     std::ostringstream os;
     os << "\n*** LogCollector started at " << Time::Current().Formatted() << " ***" << std::endl;
@@ -45,13 +45,13 @@ namespace eudaq {
     m_file << "*** LogCollector stopped at " << Time::Current().Formatted() << " ***" << std::endl;
     m_done = true;
     /*if (m_thread)*/ pthread_join(m_thread, 0);
-    delete m_transport;
+    delete m_logserver;
   }
 
   void LogCollector::OnServer() {
-    if (!m_transport) EUDAQ_ERROR("Oops");
-    //std::cout << "OnServer: " << m_transport->ConnectionString() << std::endl;
-    m_status.SetTag("_SERVER", m_transport->ConnectionString());
+    if (!m_logserver) EUDAQ_ERROR("Oops");
+    //std::cout << "OnServer: " << m_logserver->ConnectionString() << std::endl;
+    m_status.SetTag("_SERVER", m_logserver->ConnectionString());
   }
 
   void LogCollector::DoReceive(const LogMessage & ev) {
@@ -67,10 +67,10 @@ namespace eudaq {
     case (TransportEvent::CONNECT):
       //std::cout << "Connect:    " << ev.id << std::endl;
       if (m_listening) {
-        m_transport->SendPacket("OK EUDAQ LOG LogCollector", ev.id, true);
+        m_logserver->SendPacket("OK EUDAQ LOG LogCollector", ev.id, true);
       } else {
-        m_transport->SendPacket("ERROR EUDAQ LOG Not accepting new connections", ev.id, true);
-        m_transport->Close(ev.id);
+        m_logserver->SendPacket("ERROR EUDAQ LOG Not accepting new connections", ev.id, true);
+        m_logserver->Close(ev.id);
       }
       break;
     case (TransportEvent::DISCONNECT):
@@ -105,7 +105,7 @@ namespace eudaq {
           ev.id.SetName(part);
         } while(false);
         //std::cout << "client replied, sending OK" << std::endl;
-        m_transport->SendPacket("OK", ev.id, true);
+        m_logserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
         OnConnect(ev.id);
       } else {
@@ -128,7 +128,7 @@ namespace eudaq {
   void LogCollector::LogThread() {
     try {
       while (!m_done) {
-        m_transport->Process(100000);
+        m_logserver->Process(100000);
       }
     } catch (const std::exception & e) {
       std::cout << "Error: Uncaught exception: " << e.what() << "\n"

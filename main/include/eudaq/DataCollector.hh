@@ -47,7 +47,7 @@ namespace eudaq {
     size_t GetInfo(const ConnectionInfo & id);
 
     bool m_done, m_listening;
-    TransportServer * m_transport; ///< Transport for sending commands
+    TransportServer * m_dataserver; ///< Transport for receiving data packets
     pthread_t m_thread;
     pthread_attr_t m_threadattr;
     std::vector<Info> m_buffer;

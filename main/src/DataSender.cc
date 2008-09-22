@@ -9,14 +9,14 @@ namespace eudaq {
   DataSender::DataSender(const std::string & type, const std::string & name)
     : m_type(type),
       m_name(name),
-      m_transport(0) {}
+      m_dataclient(0) {}
 
   void DataSender::Connect(const std::string & server) {
-    delete m_transport;
-    m_transport = TransportFactory::CreateClient(server);
+    delete m_dataclient;
+    m_dataclient = TransportFactory::CreateClient(server);
 
     std::string packet;
-    if (!m_transport->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from DataCollector server");
+    if (!m_dataclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from DataCollector server");
     size_t i0 = 0, i1 = packet.find(' ');
     if (i1 == std::string::npos) EUDAQ_THROW("Invalid response from DataCollector server");
     std::string part(packet, i0, i1);
@@ -36,26 +36,26 @@ namespace eudaq {
     part = std::string(packet, i0, i1-i0);
     if (part != "DataCollector" ) EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
 
-    m_transport->SendPacket("OK EUDAQ DATA " + m_type + " " + m_name);
+    m_dataclient->SendPacket("OK EUDAQ DATA " + m_type + " " + m_name);
     packet = "";
-    if (!m_transport->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from DataCollector server");
+    if (!m_dataclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from DataCollector server");
     i1 = packet.find(' ');
     if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by DataCollector server: " + packet);
   }
 
   void DataSender::SendEvent(const Event &ev) {
-    if (!m_transport) EUDAQ_THROW("Transport not connected error");
+    if (!m_dataclient) EUDAQ_THROW("Transport not connected error");
     //EUDAQ_DEBUG("Serializing event");
     BufferSerializer ser;
     ev.Serialize(ser);
     //EUDAQ_DEBUG("Sending event");
-    m_transport->SendPacket(ser);
+    m_dataclient->SendPacket(ser);
     //EUDAQ_DEBUG("Sent event");
  }
 
 
   DataSender::~DataSender() {
-    delete m_transport;
+    delete m_dataclient;
   }
 
 }
