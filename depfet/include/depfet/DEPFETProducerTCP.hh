@@ -2,6 +2,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/DEPFETEvent.hh"
+#include "eudaq/Timer.hh"
 #include "depfet/rc_depfet.hh"
 #include "depfet/TCPclient.h"
 
@@ -74,6 +75,7 @@ public:
     SetStatus(eudaq::Status::LVL_OK, "Reset");
   }
   void Process() {
+    eudaq::Timer timer;
     if (!running || data_host == "") {
       usleep(10);
       return;
@@ -86,7 +88,9 @@ public:
     do {   //--- modules of one event loop
       lenevent = BUFSIZE;
       Nmod = REQUEST;
+      eudaq::Timer timer2;
       int rc = tcp_event_get(&data_host[0], buffer, &lenevent, &Nmod, &Kmod, &itrg);
+      std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
       if (rc < 0) EUDAQ_WARN("tcp_event_get ERROR");
       int evtModID = (buffer[0] >> 24) & 0xf;
       int len2 = buffer[0] & 0xfffff;
@@ -122,7 +126,8 @@ public:
       ev->AddBoard(evtModID, buffer, lenevent*4);
 
     }  while (Kmod!=(Nmod-1));
-
+    std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
+    timer.Restart();
 //    if (firstevent && itrg != 0) {
 //      printf("Ignoring bad event (%d)\n", itrg);
 //      firstevent = false;
@@ -132,6 +137,7 @@ public:
     ++m_evt;
     SendEvent(*ev);
     printf("OK \n");
+    std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
   }
   bool done;
 private:
