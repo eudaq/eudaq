@@ -113,13 +113,18 @@ unsigned long EventDataReady_size(int fdOut, unsigned long int baseaddress)
   unsigned long int address=(baseaddress|0x00400004);
   unsigned long int readdata32=0;
   int i;
-  for (i = 0; i < 100; ++i) {
+  unsigned long int olddata = 0;
+  for (i = 0; i <= 100; ++i) {
     vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
     if (readdata32 & 0x80000000) {
       return readdata32 & 0xfffff;
     }
     usleep(1);
-    if ((i+1) % 50 == 0)  printf("waiting for ready %d cycles\n",i); 
+    if (readdata32 != olddata) {
+      printf("W %d, r=%ld (%08lx)\n", i, readdata32, readdata32);
+      olddata = readdata32;
+    }
+    if (i > 0 && i % 50 == 0)  printf("waiting for ready %d cycles\n",i);
   }
   return 0;
 }

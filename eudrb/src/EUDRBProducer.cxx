@@ -3,6 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Timer.hh"
 
 #include <iostream>
 #include <ostream>
@@ -23,11 +24,13 @@
 #include "vmedrv.h"
 #include "eudrblib.h"
 #include "vmelib.h"
+//#include "TSI148Interface.hh"
 
 #define DMABUFFERSIZE   0x100000                               //MBLT Buffer Dimension
 
 using eudaq::EUDRBEvent;
 using eudaq::to_string;
+using eudaq::Timer;
 
 // VME stuff, not very clean like this
 //int fdOut;                                                                      //File descriptor of the dev_m#
@@ -64,148 +67,95 @@ public:
       return;
     }
 
-    struct timeval starttime, stoptime;
-    struct timeval starttime2, stoptime2;
-    //struct timeval starttime3, stoptime3;
-    //struct timeval starttime4, stoptime4;
-    gettimeofday(&starttime2,0); 
-
+    static Timer t_total;
+    static bool readingstarted = false;
+    Timer t_event;
     unsigned long total_bytes=0;
 
     EUDRBEvent ev(m_run, m_ev+1);
 
     for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
 
-      //unsigned long readdata32=0;
+      Timer t_board;
       unsigned long address=boards[n_eudrb].BaseAddress|0x00400004;
-      gettimeofday(&starttime,0);
-      //int i=0;
-      bool badev=false;
-//      while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
-//        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-//        i++;
-//        if (i%2000==0)  printf("waiting for ready %d cycles\n",i);
-//      }
-//      int datasize=readdata32&0xfffff;
-//      if (n_eudrb ==0 && juststopped) started=false;
 
+      bool badev=false;
+
+      Timer t_wait;
       int datasize = EventDataReady_size(fdOut, boards[n_eudrb].BaseAddress);
+      t_wait.Stop();
       if (datasize == 0 && n_eudrb == 0) {
         if (juststopped) started = false;
         break;
       }
+      if (!readingstarted) {
+        readingstarted = true;
+        t_total.Restart();
+      }
 
-      gettimeofday(&stoptime,0);
-      stoptime.tv_usec-=starttime.tv_usec;
-      stoptime.tv_sec-=starttime.tv_sec;
-/*      if (m_ev<10 || m_ev%100==0) printf("Waiting for board %d took %ld us\n",n_eudrb,stoptime.tv_sec*1000000+stoptime.tv_usec );*/
       unsigned long number_of_bytes=datasize*4;
       //printf("number of bytes = %ld\n",number_of_bytes);
-      if (number_of_bytes!=0) {
-        /*
-         *      MBLT READ from the âZSDataReadPortâ located
-         *                      at the board BASE address+0x400000
-         */
-        gettimeofday(&starttime,0);
-        address=boards[n_eudrb].BaseAddress|0x00400000;
-
-        if (number_of_bytes==0) {
-          printf("Board: %d, Event: %d, empty\n",(int)n_eudrb,m_ev);
-          EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " empty");
-          badev=true;
-        } else if (number_of_bytes>1048576) {
+      Timer t_mblt, t_reset;
+      if (number_of_bytes == 0) {
+        printf("Board: %d, Event: %d, empty\n",(int)n_eudrb,m_ev);
+        EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " empty");
+        badev=true;
+      } else {
+        if (number_of_bytes>1048576) {
           printf("Board: %d, Event: %d, number of bytes = %ld\n",(int)n_eudrb,m_ev,number_of_bytes);
           EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big: " + to_string(number_of_bytes));
           badev=true;
         }
-        //      printf("mblt before: %ld\n",mblt_dstbuffer);
-        //        printf("MBLT PRIMA !!!\n");
-        // pad number of bytes to multiples of 8 in case of ZS
-        //unsigned long debug_before, debug_after;
-        //vme_A32_D32_User_Data_SCT_read(fdOut, &debug_before, boards[n_eudrb].BaseAddress|0x00400004);
-        vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7,address,&buffer[0]);
-        //vme_A32_D32_User_Data_SCT_read(fdOut, &debug_after, boards[n_eudrb].BaseAddress|0x00400004);
-        //std::cout << "DEBUG " << m_ev << ", " << n_eudrb << ", "
-        //          << eudaq::hexdec(debug_before) << ", " << eudaq::hexdec(debug_after)
-        //          << std::endl;
+        t_mblt.Restart();
+        address = boards[n_eudrb].BaseAddress | 0x00400000;
+        vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7, address, &buffer[0]);
+        t_mblt.Stop();
         if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
-        //        printf("MBLT DOPO!!!\n");
-        gettimeofday(&stoptime,0);
-        stoptime.tv_usec-=starttime.tv_usec;
-        stoptime.tv_sec-=starttime.tv_sec;
-        if (m_ev<10 || m_ev%100==0) printf("MBLT took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
-
-        // Reset the boards here, after the MBLT
-        //address=boards[n_eudrb].BaseAddress|0x10;
-        //unsigned long readdata32=0xC0000000;
-        //      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix
-        //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-
 
         // Reset the BUSY on the MASTER after all MBLTs are done
+        t_reset.Restart();
         if (n_eudrb==boards.size()-1) { // Master
-          address=boards[n_eudrb].BaseAddress; 
+          address=boards[n_eudrb].BaseAddress;
           unsigned long readdata32 = 0x2000; // for raw mode only
-          if (boards[n_eudrb].zs) readdata32 |= 0x20; // ZS mode 
+          if (boards[n_eudrb].zs) readdata32 |= 0x20; // ZS mode
           readdata32 |= 0x80;
           vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
           readdata32 &= ~0x80;
           vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
         }
+        t_reset.Stop();
 
-
-        //      for(int j=0;j<number_of_bytes/4;j++)
-        if (m_ev<10 || m_ev%100==0 || badev) {
+        if (/*m_ev<10 || m_ev%100==0 ||*/ badev) {
           printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
           printf("\theader =0x%lx\n",buffer[0]);
-          //    printf("buf&0x54... = 0x%lx\n",(buffer[number_of_bytes/4-2]&0x54000000));
           if ( (buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n",buffer[number_of_bytes/4-2]);
           else printf("\ttrailer=x%lx\n",buffer[number_of_bytes/4-3]);
           badev=false;
         }
-
-        /*for(int j=0;j<10;j++)
-          {
-          printf("word=%d %lx\n",j,mblt_dstbuffer[j]);
-          }*/
-        //      number_of_bytes=0;
-        gettimeofday(&starttime,0);
-        ev.AddBoard(n_eudrb,&buffer[0], number_of_bytes);
-        total_bytes+=(number_of_bytes+7)&~7;
-        gettimeofday(&stoptime,0);
-        stoptime.tv_usec-=starttime.tv_usec;
-        stoptime.tv_sec-=starttime.tv_sec;
-        if (m_ev<10 || m_ev%100==0) printf("Addboard took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
       }
+      Timer t_add;
+      ev.AddBoard(n_eudrb,&buffer[0], number_of_bytes);
+      t_add.Stop();
+      total_bytes+=(number_of_bytes+7)&~7;
+      std::cout << "B" << n_eudrb << ": wait=" << t_wait.uSeconds() << "us, "
+                << "mblt=" << t_mblt.uSeconds() << "us, "
+                << "reset=" << t_reset.uSeconds() << "us, "
+                << "add=" << t_add.uSeconds() << "us, "
+                << "board=" << t_board.uSeconds() << "us, "
+                << "bytes=" << number_of_bytes << "\n";
     }
-    //mblt_dstbuffer=temp_buffer;
-
-    //            for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
-    //              // Reset the boards, here is critical and causing hangups, should do above!
-    //              unsigned long address=boards[n_eudrb].BaseAddress|0x10;
-    //              unsigned long readdata32=0xC0000000;
-    //              //      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix
-    //              vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-    //            }
-
 
     if (total_bytes) {
-      gettimeofday(&starttime,0);
-      //      printf("before sendevent\n");
       ++m_ev;
+      Timer t_send;
       SendEvent(ev);
-      gettimeofday(&stoptime,0);
-      stoptime.tv_usec-=starttime.tv_usec;
-      stoptime.tv_sec-=starttime.tv_sec;
-      if (m_ev<10 || m_ev%100==0) printf("Sendevent took %ld us\n",stoptime.tv_sec*1000000+stoptime.tv_usec );
-      //      printf("after sendevent\n");
-      if (m_ev<10 || m_ev%100==0)
-        printf("*** Event %d of length %ld sent!\n",m_ev, total_bytes);
+      t_send.Stop();
+      //if (m_ev<10 || m_ev%100==0) printf("*** Event %d of length %ld sent!\n",m_ev, total_bytes);
       n_error=0;
-      gettimeofday(&stoptime2,0);
-      stoptime2.tv_usec-=starttime2.tv_usec;
-      stoptime2.tv_sec-=starttime2.tv_sec;
-      if (m_ev<10 || m_ev%100==0) printf("*** Total took %ld us\n",stoptime2.tv_sec*1000000+stoptime2.tv_usec );
+      std::cout << "EV " << m_ev << ": send=" << t_send.uSeconds() << "us, "
+                << "event=" << t_event.uSeconds() << "us, "
+                << "running=" << t_total.mSeconds() << "ms, "
+                << "bytes=" << total_bytes << "\n" << std::endl;
     }
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
