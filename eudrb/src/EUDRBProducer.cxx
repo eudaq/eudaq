@@ -21,10 +21,10 @@
 #include <errno.h>
 #include <sys/time.h>
 
-#include "vmedrv.h"
-#include "eudrblib.h"
-#include "vmelib.h"
-//#include "TSI148Interface.hh"
+//#include "vmedrv.h"
+//#include "eudrblib.h"
+//#include "vmelib.h"
+#include "VMEInterface.hh"
 
 #define DMABUFFERSIZE   0x100000                               //MBLT Buffer Dimension
 
@@ -50,16 +50,16 @@ public:
       juststopped(false),
       n_error(0),
       buffer(DMABUFFERSIZE),
-      fdOut(open("/dev/vme_m0", O_RDWR)),
+      //fdOut(open("/dev/vme_m0", O_RDWR)),
       m_idoffset(0),
       m_version(-1)
     {
-      if (fdOut < 0) {
-        EUDAQ_THROW("Open device failed Errno = " + to_string(errno));
-      }
-      if (getMyInfo() != 0) {
-        EUDAQ_THROW("getMyInfo failed.  Errno = " + to_string(errno));
-      }
+//       if (fdOut < 0) {
+//         EUDAQ_THROW("Open device failed Errno = " + to_string(errno));
+//       }
+//       if (getMyInfo() != 0) {
+//         EUDAQ_THROW("getMyInfo failed.  Errno = " + to_string(errno));
+//       }
     }
   void Process() {
     if (!started) {
@@ -77,12 +77,12 @@ public:
     for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
 
       Timer t_board;
-      unsigned long address=boards[n_eudrb].BaseAddress|0x00400004;
+      ///unsigned long address;
 
       bool badev=false;
 
       Timer t_wait;
-      int datasize = EventDataReady_size(fdOut, boards[n_eudrb].BaseAddress);
+      int datasize = EventDataReady_size(boards[n_eudrb]);
       t_wait.Stop();
       if (datasize == 0 && n_eudrb == 0) {
         if (juststopped) started = false;
@@ -107,21 +107,25 @@ public:
           badev=true;
         }
         t_mblt.Restart();
-        address = boards[n_eudrb].BaseAddress | 0x00400000;
-        vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7, address, &buffer[0]);
+        ///address = boards[n_eudrb].BaseAddress | 0x00400000;
+        ///vme_A32_D32_User_Data_MBLT_read((number_of_bytes+7)&~7, address, &buffer[0]);
+        buffer.resize(((number_of_bytes+7) & ~7) / 4);
+        boards[n_eudrb].vmed->Read(0x00400000, buffer);
         t_mblt.Stop();
         if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
 
         // Reset the BUSY on the MASTER after all MBLTs are done
         t_reset.Restart();
         if (n_eudrb==boards.size()-1) { // Master
-          address=boards[n_eudrb].BaseAddress;
+          ///address=boards[n_eudrb].BaseAddress;
           unsigned long readdata32 = 0x2000; // for raw mode only
           if (boards[n_eudrb].zs) readdata32 |= 0x20; // ZS mode
           readdata32 |= 0x80;
-          vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+          boards[n_eudrb].vmes->Write(0, readdata32);
           readdata32 &= ~0x80;
-          vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+          boards[n_eudrb].vmes->Write(0, readdata32);
         }
         t_reset.Stop();
 
@@ -175,12 +179,14 @@ public:
       bool unsync = param.Get("Unsynchronized", 0);
       std::cout << "Running in " << (unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        unsigned long address=boards[n_eudrb].BaseAddress;
+        ///unsigned long address=boards[n_eudrb].BaseAddress;
         unsigned long data = 0;
         if (boards[n_eudrb].zs) data |= 0x20; // ZS mode
         if (n_eudrb==boards.size()-1 || unsync) data |= 0x2000; // Internal Timing
-        vme_A32_D32_User_Data_SCT_write(fdOut, 0x80000000, address); // Reset
-        vme_A32_D32_User_Data_SCT_write(fdOut, data, address); // Set mode
+        ///vme_A32_D32_User_Data_SCT_write(fdOut, 0x80000000, address); // Reset
+        boards[n_eudrb].vmes->Write(0, 0x80000000);
+        ///vme_A32_D32_User_Data_SCT_write(fdOut, data, address); // Set mode
+        boards[n_eudrb].vmes->Write(0, data);
         unsigned long mimoconf = 0x48d00000;
         if (m_version == 1) {
           if (boards[n_eudrb].det != "MIMOTEL") EUDAQ_THROW("EUDRB Version 1 only reads MIMOTEL (not "
@@ -220,17 +226,23 @@ public:
           } else {
             EUDAQ_THROW("Unknown detector type: " + boards[n_eudrb].det);
           }
-          vme_A32_D32_User_Data_SCT_write(fdOut, reg01, address+0x20);
-          vme_A32_D32_User_Data_SCT_write(fdOut, reg23, address+0x24);
-          vme_A32_D32_User_Data_SCT_write(fdOut, reg45, address+0x28);
-          vme_A32_D32_User_Data_SCT_write(fdOut, reg6 , address+0x2c);
-          vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, reg01, address+0x20);
+          boards[n_eudrb].vmes->Write(0x20, reg01);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, reg23, address+0x24);
+          boards[n_eudrb].vmes->Write(0x24, reg23);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, reg45, address+0x28);
+          boards[n_eudrb].vmes->Write(0x28, reg45);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, reg6 , address+0x2c);
+          boards[n_eudrb].vmes->Write(0x2c, reg6);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+          boards[n_eudrb].vmes->Write(0, data);
         } else {
           EUDAQ_THROW("Must set Version = 1 or 2 in config file");
         }
         data = 0xd0000001;
         if (n_eudrb==boards.size()-1 || unsync) data = 0xd0000000;
-        vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
+        ///vme_A32_D32_User_Data_SCT_write(fdOut, data, address+0x10);
+        boards[n_eudrb].vmes->Write(0x10, data);
         eudaq::mSleep(1000);
         int marker1 = param.Get("Board" + to_string(n_eudrb) + ".Marker1", "Marker1", -1);
         int marker2 = param.Get("Board" + to_string(n_eudrb) + ".Marker2", "Marker2", -1);
@@ -239,12 +251,15 @@ public:
           if (marker2 < 0) marker2 = marker1;
           std::cout << "Setting board " << n_eudrb << " markers to "
                     << eudaq::hexdec(marker1, 2) << ", " << eudaq::hexdec(marker2, 2) << std::endl;
-          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110800 | (marker1 & 0xff), address+0x10);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110800 | (marker1 & 0xff), address+0x10);
+          boards[n_eudrb].vmes->Write(0x10, 0x48110800 | (marker1 & 0xff));
           eudaq::mSleep(1000);
-          vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110700 | (marker2 & 0xff), address+0x10);
+          ///vme_A32_D32_User_Data_SCT_write(fdOut, 0x48110700 | (marker2 & 0xff), address+0x10);
+          boards[n_eudrb].vmes->Write(0x10, 0x48110700 | (marker2 & 0xff));
           eudaq::mSleep(1000);
         }
-        vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
+        ///vme_A32_D32_User_Data_SCT_write(fdOut, mimoconf, address+0x10);
+        boards[n_eudrb].vmes->Write(0x10, mimoconf);
         eudaq::mSleep(1000);
       }
       std::cout << "Waiting for boards to reset..." << std::endl;
@@ -254,7 +269,8 @@ public:
         bool ready = true;
         for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
           unsigned long data = 0;
-          vme_A32_D32_User_Data_SCT_read(fdOut, &data, boards[boards.size()-1].BaseAddress);
+          ///vme_A32_D32_User_Data_SCT_read(fdOut, &data, boards[boards.size()-1].BaseAddress);
+          data = boards[n_eudrb].vmes->Read(0);
           if (!(data & 0x02000000)) {
             ready = false;
           }
@@ -264,15 +280,17 @@ public:
       std::cout << "OK" << std::endl;
 // new loop added by Angelo
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        unsigned long address=boards[n_eudrb].BaseAddress;
+        //unsigned long address=boards[n_eudrb].BaseAddress;
         unsigned long data = 0x40;
         if (boards[n_eudrb].zs) data |= 0x20;
         if (n_eudrb==boards.size()-1) data |= 0x2000;
-        vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+        ///vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+        boards[n_eudrb].vmes->Write(0, data);
         data=0;
         if (boards[n_eudrb].zs) data |= 0x20;
         if (n_eudrb==boards.size()-1) data |= 0x2000;
-        vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+        ///vme_A32_D32_User_Data_SCT_write(fdOut, data, address);
+        boards[n_eudrb].vmes->Write(0, data);
       }
 
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
@@ -391,13 +409,17 @@ public:
       std::cout << "Reset" << std::endl;
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
         unsigned long readdata32;
-        unsigned long address=boards[n_eudrb].BaseAddress;
-        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-        readdata32|=0x80000000;
-        vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
-        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+        ///unsigned long address=boards[n_eudrb].BaseAddress;
+        ///vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+        readdata32 = boards[n_eudrb].vmes->Read(0);
+        readdata32 |= 0x80000000;
+        ///vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+        boards[n_eudrb].vmes->Write(0, readdata32);
+        ///vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+        readdata32 = boards[n_eudrb].vmes->Read(0);
         readdata32&=~(0x80000000);
-        vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+        ///vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+        boards[n_eudrb].vmes->Write(0, readdata32);
       }
       sleep(8);
       SetStatus(eudaq::Status::LVL_OK, "Reset");
@@ -485,34 +507,66 @@ public:
 
   struct BoardInfo {
     BoardInfo(unsigned long addr, const std::string & mode, const std::string & det)
-      : BaseAddress(addr), mode(mode), det(det), zs(mode == "ZS") {}
-    unsigned long BaseAddress;
+      : vmes(VMEFactory::Create(addr, 0x1000000)),
+        vmed(VMEFactory::Create(addr, 0x1000000, VMEInterface::PMBLT)),
+        mode(mode), det(det), zs(mode == "ZS") {}
+    VMEptr vmes, vmed;
+    //unsigned long BaseAddress;
     std::string mode, det;
     bool zs;
   };
+
+  unsigned long EventDataReady_size(const BoardInfo & brd) {
+    unsigned long int i = 0, readdata32 = 0; //, olddata = 0;
+    for (eudaq::Timer timer; timer.Seconds() < 1.0; /**/) {
+      ++i;
+      ///vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+      readdata32 = brd.vmes->Read(0x00400004);
+      if (readdata32 & 0x80000000) {
+        return readdata32 & 0xfffff;
+      }
+      if (timer.Seconds() > 0.5) {
+        eudaq::mSleep(20);
+      }
+//       if (readdata32 != olddata) {
+//         printf("W %ld, r=%ld (%08lx)\n", i, readdata32, readdata32);
+//         olddata = readdata32;
+//       }
+    }
+    printf("Ready wait timed out after 1 second (%ld cycles)\n",i);
+    return 0;
+  }
 
   void LoadPedestals(const BoardInfo & board, const pedestal_t & peds) {
     unsigned long readdata32, newdata32;
     // here we put in the uploading of pedestals:
     // VME is master of SRAM
     printf("Become Master of SRAM\n");
-    vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,board.BaseAddress);
+    ///vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,board.BaseAddress);
+    readdata32 = board.vmes->Read(0);
     newdata32=readdata32|0x200;
-    vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
+    ///vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
+    board.vmes->Write(0, newdata32);
     for (size_t i = 0; i < peds.size(); ++i) {
-      vme_A32_D32_User_Data_SCT_write(fdOut, peds[i], board.BaseAddress + 0x800000 + i*4);
+      ///vme_A32_D32_User_Data_SCT_write(fdOut, peds[i], board.BaseAddress + 0x800000 + i*4);
+      board.vmes->Write(0x800000 + i*4, peds[i]);
     }
     // Release master of SRAM
     printf("\tRelease Master of SRAM\n");
-    vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,board.BaseAddress);
-    newdata32=readdata32&~0x200;
-    vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
+    ///vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,board.BaseAddress);
+    readdata32 = board.vmes->Read(0);
+    newdata32=readdata32 & ~0x200;
+    ///vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
+    board.vmes->Write(0, newdata32);
     // reset once more to be sure
     /* read address first and only set the reset bit */
-    vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,board.BaseAddress);
-    newdata32=readdata32|0x40;
-    vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
-    vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,board.BaseAddress);
+    ///vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,board.BaseAddress);
+    readdata32 = board.vmes->Read(0);
+    newdata32=readdata32 | 0x40;
+    ///vme_A32_D32_User_Data_SCT_write(fdOut,newdata32 ,board.BaseAddress);
+    board.vmes->Write(0, newdata32);
+    ///vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,board.BaseAddress);
+    board.vmes->Write(0, readdata32);
     //EUDAQ_INFO("Board " + to_string(n_eudrb) + " done!");
   }
   unsigned m_run, m_ev;
@@ -520,7 +574,7 @@ public:
   int n_error;
   std::vector<unsigned long> buffer;
   std::vector<BoardInfo> boards;
-  int fdOut;
+  //int fdOut;
   int m_idoffset, m_version;
 };
 

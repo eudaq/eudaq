@@ -63,13 +63,16 @@ public:
   virtual void SetWindow(unsigned long base, unsigned long size, int awidth, int dwidth,
                          int proto = PSCT, int sstrate = SSTNONE);
 
-  template <typename T> T Read(unsigned long offset, T def = 0) {
+  template <typename T> T Read(unsigned long offset, T def) {
     T data = def;
     DoRead(offset, eudaq::uchar_cast(&data), sizeof data);
 #if VME_TRACE
     vmetrace(" R", m_awidth, m_dwidth, offset, data);
 #endif
     return data;
+  }
+  unsigned long Read(unsigned long offset) {
+    return Read(offset, 0UL);
   }
 //   unsigned long Read(unsigned long offset) {
 //     unsigned long data = 0;
@@ -131,9 +134,17 @@ typedef counted_ptr<VMEInterface> VMEptr;
 
 class VMEFactory {
 public:
-  static VMEptr Create(unsigned long base, unsigned long size,
-                       int awidth = VMEInterface::A32, int dwidth = VMEInterface::D32,
-                       int proto = VMEInterface::PSCT, int sstrate = VMEInterface::SSTNONE);
+  static VMEptr Create(unsigned long base, unsigned long size, int awidth, int dwidth,
+                       int proto, int sstrate = VMEInterface::SSTNONE);
+  static VMEptr Create(unsigned long base, unsigned long size) {
+    return Create(base, size, VMEInterface::A32, VMEInterface::D32, VMEInterface::PSCT);
+  }
+  static VMEptr Create(unsigned long base, unsigned long size, int proto) {
+    return Create(base, size, VMEInterface::A32, VMEInterface::D32, proto);
+  }
+  static VMEptr Create(unsigned long base, unsigned long size, int awidth, int dwidth) {
+    return Create(base, size, awidth, dwidth, VMEInterface::PSCT);
+  }
 };
 
 #endif // EUDAQ_INCLUDED_VMEInterface_hh

@@ -17,7 +17,7 @@ private:
 class TSI148DMAInterface : public VMEInterface {
 public:
   TSI148DMAInterface(unsigned long base, unsigned long size, int awidth = A32, int dwidth = D32,
-                     int proto = PBLT, int sstrate = SSTNONE);
+                     int proto = PMBLT, int sstrate = SSTNONE);
   virtual void SysReset();
   ~TSI148DMAInterface();
 private:
