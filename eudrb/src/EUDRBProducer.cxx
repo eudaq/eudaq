@@ -81,11 +81,14 @@ public:
       gettimeofday(&starttime,0);
       //int i=0;
       bool badev=false;
-      //while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
-      //  vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
-      //  i++;
-      //  if (i%2000==0)  printf("waiting for ready %d cycles\n",i);
-      //}
+//      while ((readdata32&0x80000000)!=0x80000000) { // be sure that each board is really ready
+//        vme_A32_D32_User_Data_SCT_read(fdOut,&readdata32,address);
+//        i++;
+//        if (i%2000==0)  printf("waiting for ready %d cycles\n",i);
+//      }
+//      int datasize=readdata32&0xfffff;
+//      if (n_eudrb ==0 && juststopped) started=false;
+
       int datasize = EventDataReady_size(fdOut, boards[n_eudrb].BaseAddress);
       if (datasize == 0 && n_eudrb == 0) {
         if (juststopped) started = false;
@@ -97,7 +100,7 @@ public:
       stoptime.tv_sec-=starttime.tv_sec;
 /*      if (m_ev<10 || m_ev%100==0) printf("Waiting for board %d took %ld us\n",n_eudrb,stoptime.tv_sec*1000000+stoptime.tv_usec );*/
       unsigned long number_of_bytes=datasize*4;
-      //      printf("number of bytes = %ld\n",number_of_bytes);
+      //printf("number of bytes = %ld\n",number_of_bytes);
       if (number_of_bytes!=0) {
         /*
          *      MBLT READ from the âZSDataReadPortâ located
@@ -137,6 +140,19 @@ public:
         //unsigned long readdata32=0xC0000000;
         //      if (n_eudrb==boards.size()-1) usleep(10000); // temporary fix
         //vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+
+
+        // Reset the BUSY on the MASTER after all MBLTs are done
+        if (n_eudrb==boards.size()-1) { // Master
+          address=boards[n_eudrb].BaseAddress; 
+          unsigned long readdata32 = 0x2000; // for raw mode only
+          if (boards[n_eudrb].zs) readdata32 |= 0x20; // ZS mode 
+          readdata32 |= 0x80;
+          vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+          readdata32 &= ~0x80;
+          vme_A32_D32_User_Data_SCT_write(fdOut,readdata32,address);
+        }
+
 
         //      for(int j=0;j<number_of_bytes/4;j++)
         if (m_ev<10 || m_ev%100==0 || badev) {
@@ -318,6 +334,11 @@ public:
           if (thresh < 0 && fname == "") {
             fname = "ped%.dat";
             EUDAQ_WARN("Config missing pedestal file name, using " + fname);
+          }
+          if (fname != "" &&
+              fname.find_first_not_of("0123456789") == std::string::npos) {
+            std::string padding(6-fname.length(), '0');
+            fname = "run" + padding + fname + "-ped-db-b%.dat";
           }
           size_t n = fname.find('%');
           if (n != std::string::npos) {
