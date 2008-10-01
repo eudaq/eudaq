@@ -24,8 +24,8 @@ namespace eudaq {
     m_stream.flush();
   }
 
-  FileDeserializer::FileDeserializer(const std::string & fname) :
-    m_stream(fname.c_str(), std::ios::binary)
+  FileDeserializer::FileDeserializer(const std::string & fname, bool faileof) :
+    m_stream(fname.c_str(), std::ios::binary), m_faileof(faileof)
   {
     if (!m_stream.is_open()) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
   }
@@ -46,6 +46,9 @@ namespace eudaq {
       read += r;
       //if (r) std::cout << "<<<" << r << ">>>" << std::flush;
       if (m_stream.eof()) {
+        if (m_faileof) {
+          throw FileReadException("End of File encountered");
+        }
         if (m_interrupting) {
           m_interrupting = false;
           throw InterruptedException();

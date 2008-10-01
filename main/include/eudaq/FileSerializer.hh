@@ -21,11 +21,12 @@ namespace eudaq {
 
   class FileDeserializer : public Deserializer {
   public:
-    FileDeserializer(const std::string & fname);
+    FileDeserializer(const std::string & fname, bool faileof = false);
     virtual bool HasData();
   private:
     virtual void Deserialize(unsigned char * data, size_t len);
     std::ifstream m_stream;
+    bool m_faileof;
   };
 
 }

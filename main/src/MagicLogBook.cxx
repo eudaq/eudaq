@@ -61,7 +61,8 @@ public:
     : m_fields(fields),
       m_sep(sep),
       m_file(ofile == "" ? 0 : new std::ofstream(ofile.c_str())),
-      m_out(m_file ? *m_file : std::cout) {
+      m_out(m_file ? *m_file : std::cout),
+      m_events(0) {
     if (m_file && !m_file->is_open()) EUDAQ_THROWX(eudaq::FileWriteException,
                                                    "Unable to open '" + ofile + "'");
     m_out << head;
@@ -72,13 +73,19 @@ public:
     m_out << std::endl;
   }
   void Process(const std::string & fname) {
-    m_des = new eudaq::FileDeserializer(fname);
+    m_des = new eudaq::FileDeserializer(fname, true);
     //std::cerr << "Processing " << fname << std::endl;
-    m_bore = NextEvent();
+    try {
+      m_bore = NextEvent();
+    } catch (const eudaq::FileReadException &) {
+      // probably empty file, ignore it
+      return;
+    }
     m_eore = 0;
     m_config = 0;
     m_dec = 0; //new eudaq::EUDRBDecoder(*m_bore);
     m_log = 0;
+    m_events = 0;
     if (m_fields.size() > 0) m_out << GetField(m_fields[0]);
     for (size_t i = 1; i < m_fields.size(); ++i) {
       m_out << m_sep << GetField(m_fields[i]);
@@ -113,6 +120,9 @@ public:
       return GetConfig(param);
     } else if (name == "log") {
       return GetLog(param);
+    } else if (name == "events") {
+      if (!m_eore) GetEORE();
+      return to_string(m_events);
     } else {
       EUDAQ_THROW("Unknown field: " + name);
     }
@@ -176,12 +186,18 @@ private:
     return str;
   }
   void GetEORE() {
-    for (;;) {
-      counted_ptr<DetectorEvent> dev = NextEvent();
-      if (dev->IsEORE()) {
-        m_eore = dev;
-        break;
+    try {
+      for (;;) {
+        counted_ptr<DetectorEvent> dev = NextEvent();
+        if (dev->IsEORE()) {
+          m_eore = dev;
+          break;
+        } else if (!dev->IsBORE()) {
+          m_events++;
+        }
       }
+    } catch (const eudaq::FileReadException &) {
+      // unexpected end of file, ignore it
     }
   }
   std::string GetTag(const Event & evt, const std::string & tag) {
@@ -226,6 +242,7 @@ private:
   counted_ptr<eudaq::Configuration> m_config;
   counted_ptr<eudaq::EUDRBDecoder> m_dec;
   counted_ptr<std::vector<eudaq::LogMessage> > m_log;
+  int m_events;
 };
 
 int main(int /*argc*/, char ** argv) {
@@ -262,6 +279,23 @@ int main(int /*argc*/, char ** argv) {
         "EUDRBfw=eudrb:VERSION",
       };
       flds.insert(flds.end(), vals, vals + sizeof vals / sizeof *vals);
+    } else if (pdef.Value() == "full") {
+      std::string vals[] = {
+        "Run=bore:.Run",
+        "Config=config",
+        "Mode=eudrb:MODE",
+        "Det=eudrb:DET",
+        "Start=bore:STARTTIME",
+        "Events=events",
+        "Unsync=config:Producer.EUDRB:Unsynchronized",
+        "Planes=config:Producer.EUDRB:NumBoards",
+        "TriggerInterval=tlu:TriggerInterval",
+        "AndMask=tlu:AndMask",
+        "DUTMask=tlu:DutMask",
+        "TLUfw=tlu:FirmwareID",
+        "EUDRBfw=eudrb:VERSION",
+      };
+      flds.insert(flds.end(), vals, vals + sizeof vals / sizeof *vals);
     } else if (pdef.Value() != "") {
       EUDAQ_THROW("Unknown predefined fields: " + pdef.Value());
     }
@@ -282,7 +316,7 @@ int main(int /*argc*/, char ** argv) {
           try {
             info.Process("../data/run" + to_string(i, 6) + ".raw");
           } catch (const eudaq::FileNotFoundException &) {
-            if (last == 0) break;
+            if (last != 0) continue;
             throw;
           }
         }

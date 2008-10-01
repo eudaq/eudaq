@@ -112,7 +112,7 @@ namespace eudaq {
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
     if (m_idata != (size_t)-1) {
       SendReceiveCommand("PREPARE", to_string(m_runnumber), m_cmdserver->GetConnection(m_idata));
-      mSleep(100);
+      mSleep(1000);
     }
     SendCommand("START", to_string(m_runnumber));
   }

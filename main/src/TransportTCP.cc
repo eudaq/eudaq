@@ -338,7 +338,11 @@ namespace eudaq {
     }
     if (m_server == "") m_server = "localhost";
 
-    sockaddr_in addr; /* server address */
+    OpenConnection();
+  }
+
+  void TCPClient::OpenConnection() {
+    sockaddr_in addr;
     std::memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(m_port);
@@ -349,12 +353,11 @@ namespace eudaq {
       EUDAQ_THROW(LastSockErrorString("Error looking up address \'" + m_server + "\'"));
     }
     memcpy((char *) &addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-
     if (connect(m_sock, (sockaddr *) &addr, sizeof(addr)) &&
         LastSockError() != EINPROGRESS &&
         LastSockError() != EWOULDBLOCK) {
-      closesocket(m_sock);
-      EUDAQ_THROW(LastSockErrorString("Are you sure the server is running? - Error connecting to " +
+      EUDAQ_THROW(LastSockErrorString("Are you sure the server is running? - Error "
+                                      + to_string(LastSockError()) + " connecting to " +
                                       m_server + ":" + to_string(m_port)));
     }
     setup_socket(m_sock); // set to non-blocking
@@ -390,10 +393,14 @@ namespace eudaq {
         if (result == (SOCKET)-1 && LastSockError() == EWOULDBLOCK) {
           //std::cout << "no more data" << std::endl;
           donereading = true;
-        } else if (result == 0 || result == (SOCKET)-1) {
+        } else if (result == 0) {
+          std::cerr << "WARN: Connection closed (?)" << std::endl;
+          OpenConnection();
+          donereading = true;
+        } else if (result == (SOCKET)-1) {
           //std::cout << "disconnect or error" << std::endl;
           // disconnect || error
-          EUDAQ_THROW(LastSockErrorString("Socket Error"));
+          EUDAQ_THROW(LastSockErrorString("Socket Error (" + to_string(LastSockError()) + ")"));
         } else {
           //std::cout << "received bytes: " << escape(std::string(buffer, result)) << std::endl;
           m_buf.append(result, buffer);

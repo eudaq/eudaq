@@ -70,6 +70,7 @@ namespace eudaq {
                             bool = false);
     virtual void ProcessEvents(int timeout = -1);
   private:
+    void OpenConnection();
     std::string m_server;
     int m_port;
     SOCKET m_sock;

@@ -34,8 +34,13 @@ namespace eudaq {
     }
   private:
     void make_text() const {
-      m_text = m_msg + "\n"
-        + "  From " + m_file + ":" + to_string(m_line);
+      m_text = m_msg;
+      if (m_file.length() > 0) {
+        m_text += "\n  From " + m_file;
+        if (m_line > 0) {
+          m_text += ":" + to_string(m_line);
+        }
+      }
       if (m_func.length() > 0) m_text += "\n  In " + m_func;
     }
     mutable std::string m_text;
