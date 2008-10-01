@@ -4,6 +4,8 @@
 EUDRBIP=mvme6100
 TLUIP=tlupc
 #TLUIP=eudet
+RCPORT=44000
+[ "$1" != "" ] && RCPORT=$1
 
 export ROOTSYS=/usr/share/root/
 
@@ -32,26 +34,26 @@ printf '\t Starting Subprocesses\n'
 cd bin
 
 printf '\t\t  RunControl\n'
-./euRun.app/Contents/MacOS/euRun -x 0 -y 0 -w 350 -g 450 &
+./euRun.app/Contents/MacOS/euRun -x 0 -y 0 -w 350 -g 450 -a tcp://$RCPORT &
 sleep 2
 
 printf '\t\t  Logger\n'
-./euLog.app/Contents/MacOS/euLog -x 0 -y 450 -w 350 -g 550 &
+./euLog.app/Contents/MacOS/euLog -x 0 -y 450 -w 350 -g 550 -r tcp://eudet:$RCPORT &
 sleep 2
 
 printf '\t\t  DataCollector\n'
 #./TestDataCollector.exe &
-/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -e './rungdb TestDataCollector.exe' &
+/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -e './TestDataCollector.exe -r tcp://eudet:$RCPORT' &
 sleep 2
 
 printf '\t\t  RootMonitor\n'
-./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 &
+./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 -r tcp://localhost:$RCPORT &
 
 printf '\t\t  EUDRB\n'
-ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd eudaq/bin/; ./EUDRBProducer.exe -r eudet')" &
+ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd eudaq/bin/; ./EUDRBProducer.exe -r tcp://eudet:$RCPORT')" &
 
 printf '\t\t  TLU\n'
-ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd eudaq/bin/; ./TLUProducer.exe -r eudet')" &
+ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd eudaq/bin/; ./TLUProducer.exe -r tcp://eudet:$RCPORT')" &
 
 # printf '\t\t  DEPFET\n'
 # /usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -e './DEPFETProducerTCP.exe' &
