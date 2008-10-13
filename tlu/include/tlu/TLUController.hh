@@ -86,13 +86,14 @@ namespace tlu {
     void Print(std::ostream & out = std::cout) const;
 
     unsigned GetFirmwareID() const;
+    unsigned GetSerialNumber() const;
     static unsigned GetLibraryID();
     void SetLEDs(unsigned);
     unsigned GetLEDs() const;
 
     unsigned GetScaler(unsigned) const;
   private:
-    static ZESTSC1_HANDLE OpenTLU();
+    ZESTSC1_HANDLE OpenTLU();
     void Initialize();
     void WriteRegister(unsigned long offset, unsigned char val);
     unsigned char ReadRegister8(unsigned long offset) const;
@@ -105,7 +106,7 @@ namespace tlu {
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
     unsigned char m_mask, m_vmask, m_amask, m_omask;
-    unsigned m_triggerint;
+    unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
     unsigned m_vetostatus, m_fsmstatus, m_ledstatus;

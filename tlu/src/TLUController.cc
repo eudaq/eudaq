@@ -163,6 +163,7 @@ namespace tlu {
       throw TLUException("No TLU detected");
     }
 
+    m_serial = SerialNumbers[found];
     // Open the card
     ZESTSC1_HANDLE handle;
     status = ZestSC1OpenCard(CardIDs[found], &handle);
@@ -210,7 +211,7 @@ namespace tlu {
     Initialize();
     InhibitTriggers(true);
   }
-  
+
   void TLUController::Start() {
     // restart triggers
     //ResetTriggerCounter();
@@ -231,8 +232,12 @@ namespace tlu {
   }
 
   void TLUController::ResetScalers() {
+#ifdef TRIGGER_SCALERS_RESET_BIT
     WriteRegister(RESET_REGISTER_ADDRESS, 1<<TRIGGER_SCALERS_RESET_BIT);
     WriteRegister(RESET_REGISTER_ADDRESS, 0);
+#else
+    EUDAQ_THROW("Not implemented");
+#endif
   }
 
   void TLUController::ResetUSB() {
@@ -480,12 +485,20 @@ namespace tlu {
     return ReadRegister8(FIRMWARE_ID_ADDRESS);
   }
 
+  unsigned TLUController::GetSerialNumber() const {
+    return m_serial;
+  }
+
   unsigned TLUController::GetLibraryID() {
     return FIRMWARE_ID;
   }
 
   void TLUController::SetLEDs(unsigned int val) {
+#ifdef DUT_LED_ADDRESS
     WriteRegister(DUT_LED_ADDRESS, m_ledstatus = val);
+#else
+    // TODO: implement v0.2
+#endif
   }
 
   unsigned TLUController::GetLEDs() const {

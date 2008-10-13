@@ -79,7 +79,8 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
-    std::cout << "TLU Firmware version: " << TLU.GetFirmwareID()
+    std::cout << "TLU Serial number: " << TLU.GetSerialNumber()
+              << ", Firmware version: " << TLU.GetFirmwareID()
               << " (library " << TLU.GetLibraryID() << ")" << std::endl;
 
     eudaq::Time starttime(eudaq::Time::Current());
