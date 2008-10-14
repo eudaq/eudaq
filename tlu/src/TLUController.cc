@@ -22,10 +22,6 @@ using eudaq::hexdec;
 
 //#define TLUDEBUG
 
-#ifndef INTERNAL_TRIGGER_INTERVAL_ADDRESS
-#define INTERNAL_TRIGGER_INTERVAL_ADDRESS INTERNAL_TRIGGER_INTERVAL
-#endif
-
 namespace tlu {
 
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
@@ -44,6 +40,7 @@ namespace tlu {
   namespace {
 
     static const double TLUFREQUENCY = 48.001e6;
+    static const unsigned FIRSTV2SERIAL = 1000;
 
     static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
       TRIGGER_IN0_COUNTER_0,
@@ -87,8 +84,8 @@ namespace tlu {
   }
 
   // Error handler function
-  TLUController::TLUController(const std::string  & filename, int errorhandler) :
-    m_filename(filename),
+  TLUController::TLUController(int errorhandler) :
+    //m_filename(""),
     //m_errorhandler(0),
     m_mask(1),
     m_vmask(0),
@@ -117,16 +114,10 @@ namespace tlu {
     // Install an error handler
     ZestSC1RegisterErrorHandler(DefaultErrorHandler);
 
-    m_handle = OpenTLU();
-
-#ifdef TLUDEBUG
-    std::cout << "DEBUG: TLU handle = " << m_handle << std::endl;
-#endif
-
-    Initialize();
+    OpenTLU();
   }
 
-  ZESTSC1_HANDLE TLUController::OpenTLU() {
+  void TLUController::OpenTLU() {
     // Request information about the system
     unsigned long NumCards = 0;
     unsigned long CardIDs[256] = {0};
@@ -165,17 +156,17 @@ namespace tlu {
 
     m_serial = SerialNumbers[found];
     // Open the card
-    ZESTSC1_HANDLE handle;
-    status = ZestSC1OpenCard(CardIDs[found], &handle);
+    status = ZestSC1OpenCard(CardIDs[found], &m_handle);
     if (status != 0) throw TLUException("ZestSC1OpenCard", status);
-    ZestSC1SetTimeOut(handle, 200);
-    return handle;
+    ZestSC1SetTimeOut(m_handle, 200);
+  }
+
+  void TLUController::LoadFirmware() {
+    ZestSC1ConfigureFromFile(m_handle, const_cast<char*>(m_filename.c_str()));
+    InhibitTriggers(true);
   }
 
   void TLUController::Initialize() {
-    ZestSC1ConfigureFromFile(m_handle, const_cast<char*>(m_filename.c_str()));
-    InhibitTriggers(true);
-
     // set up beam trigger
     WriteRegister(BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
     WriteRegister(BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
@@ -191,9 +182,9 @@ namespace tlu {
 
     // Reset pointers
     WriteRegister(RESET_REGISTER_ADDRESS, 0x0F);
-    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+    WriteRegister(RESET_REGISTER_ADDRESS, 0x00);
 
-    WriteRegister(INTERNAL_TRIGGER_INTERVAL_ADDRESS, m_triggerint);
+    WriteRegister(INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
     // Set input mask
     WriteRegister(DUT_MASK_ADDRESS, m_mask);
@@ -208,6 +199,24 @@ namespace tlu {
   }
 
   void TLUController::Configure() {
+    if (m_version == 0) {
+      if (m_serial < FIRSTV2SERIAL) {
+        m_version = 1;
+      } else {
+        m_version = 2;
+      }
+    }
+    if (m_filename == "") {
+      m_filename = "TLU";
+      if (m_version == 2) m_filename += "2";
+      m_filename += "_Toplevel.bit";
+    } else if (m_filename.find_first_not_of("0123456789") == std::string::npos) {
+      std::string filename = "../tlu/TLU";
+      if (m_version == 2) filename += "2";
+      filename += "_Toplevel-" + m_filename + ".bit";
+      m_filename = filename;
+    }
+    LoadFirmware();
     Initialize();
     InhibitTriggers(true);
   }
@@ -245,7 +254,15 @@ namespace tlu {
     // this fails with error:
     // "The requested card ID does not correspond to any devices in the system"
     // Why?
-    m_handle = OpenTLU();
+    OpenTLU();
+  }
+
+  void TLUController::SetFirmware(const std::string & f) {
+    m_filename = f;
+  }
+
+  void TLUController::SetVersion(int v) {
+    m_version = v;
   }
 
   void TLUController::SetDUTMask(unsigned char mask) {
@@ -265,7 +282,7 @@ namespace tlu {
   }
 
   void TLUController::SetTriggerInterval(unsigned millis) {
-    WriteRegister(INTERNAL_TRIGGER_INTERVAL_ADDRESS, m_triggerint = millis);
+    WriteRegister(INTERNAL_TRIGGER_INTERVAL, m_triggerint = millis);
   }
 
   unsigned char TLUController::GetAndMask() const {

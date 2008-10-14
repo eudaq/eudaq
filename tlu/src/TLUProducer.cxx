@@ -82,9 +82,9 @@ public:
     SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       std::cout << "Configuring." << std::endl;
-      std::string filename = param["BitFile"];
       if (m_tlu) m_tlu = 0;
-      m_tlu = counted_ptr<TLUController>(new TLUController(filename));
+      m_tlu = counted_ptr<TLUController>(new TLUController());
+
       trigger_interval = param.Get("TriggerInterval", 0);
       dut_mask = param.Get("DutMask", 2);
       and_mask = param.Get("AndMask", 0xff);
@@ -92,15 +92,17 @@ public:
       veto_mask = param.Get("VetoMask", 0);
       trig_rollover = param.Get("TrigRollover", 0);
       // ***
+      m_tlu->SetFirmware(param["BitFile"]);
+      m_tlu->SetVersion(param.Get("Version", 0));
       m_tlu->SetTriggerInterval(trigger_interval);
       m_tlu->SetDUTMask(dut_mask);
       m_tlu->SetVetoMask(veto_mask);
       m_tlu->SetAndMask(and_mask);
       m_tlu->SetOrMask(or_mask);
 
-	// by dhaas
-	m_tlu->Configure();
-	sleep(2);
+      // by dhaas
+      m_tlu->Configure();
+      sleep(2);
 
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");

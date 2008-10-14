@@ -72,7 +72,8 @@ int main(int /*argc*/, char ** argv) {
       }
       tlu::setusbtracefile(fname);
     }
-    TLUController TLU(fname.Value(), emode.Value());
+    TLUController TLU(emode.Value());
+    TLU.SetFirmware(fname.Value());
     //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
     TLU.SetDUTMask(dmask.Value());

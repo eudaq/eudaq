@@ -52,10 +52,11 @@ namespace tlu {
       ERR_RETRY2        // Retry twice
     };
 
-    TLUController(const std::string & filename = "", int errormech = ERR_RETRY1);
+    TLUController(int errormech = ERR_RETRY1);
     ~TLUController();
 
-    //void SetFilename(const std::string & filename) { m_filename = filename; }
+    void SetVersion(int version); // default (0) = auto detect from serial number
+    void SetFirmware(const std::string & filename); // can be just version number
     void SetDUTMask(unsigned char mask);
     void SetVetoMask(unsigned char mask);
     void SetAndMask(unsigned char mask);
@@ -93,7 +94,8 @@ namespace tlu {
 
     unsigned GetScaler(unsigned) const;
   private:
-    ZESTSC1_HANDLE OpenTLU();
+    void OpenTLU();
+    void LoadFirmware();
     void Initialize();
     void WriteRegister(unsigned long offset, unsigned char val);
     unsigned char ReadRegister8(unsigned long offset) const;
@@ -116,7 +118,7 @@ namespace tlu {
     unsigned long long * m_oldbuf;
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     mutable unsigned long long m_lasttime;
-    int m_errorhandler;
+    int m_errorhandler, m_version;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
