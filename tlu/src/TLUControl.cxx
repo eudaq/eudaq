@@ -74,6 +74,7 @@ int main(int /*argc*/, char ** argv) {
     }
     TLUController TLU(emode.Value());
     TLU.SetFirmware(fname.Value());
+    TLU.Configure();
     //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
     TLU.SetDUTMask(dmask.Value());

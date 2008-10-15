@@ -48,8 +48,9 @@ namespace tlu {
 	if (status > 0) {
 	  char * msg = "Invalid error code";
 	  ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(status), &msg);
-	  s << " {" << status << ": " << msg << "}" << std::endl;
+	  s << " {" << status << ": " << msg << "}";
 	}
+        s << "\n";
 	WriteString(s.str());
 	m_prev_time = time;
 	m_prev_mode = mode;
