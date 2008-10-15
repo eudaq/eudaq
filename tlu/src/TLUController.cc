@@ -22,6 +22,9 @@ using eudaq::hexdec;
 using eudaq::to_string;
 
 //#define TLUDEBUG
+#define PCA955_HW_ADDR 4
+#define PCA955_CONFIG0_REGISTER 6
+#define PCA955_OUTPUT0_REGISTER 2
 
 namespace tlu {
 
@@ -72,6 +75,10 @@ namespace tlu {
       }
     }
 
+    static void I2Cdelay(unsigned us = 100) {
+      usleep(us);
+    }
+
   }
 
   double Timestamp2Seconds(unsigned long long t) {
@@ -100,6 +107,7 @@ namespace tlu {
     m_triggernum(0),
     m_timestamp(0),
     m_oldbuf(0),
+    m_particles(0),
     m_lasttime(0),
     m_errorhandler(errorhandler),
     m_addr(0)
@@ -188,18 +196,12 @@ namespace tlu {
 
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
-    // Set input mask
-    //WriteRegister(m_addr->TLU_DUT_MASK_ADDRESS, m_mask);
-
-    //SetLEDs(0);
     SetDUTMask(m_mask);
-    SetLEDs(m_mask);
-    //SetTriggerInterval(m_triggerint);
-    //SetDUTMask(m_mask);
+    SetLeftLEDs(m_mask);
 
-    //SetVetoMask(m_vmask);
-    //SetAndMask(m_amask);
-    //SetOrMask(m_omask);
+    WritePCA955(3, 1, 0xff00); // turn mb and lemo trigger outputs on
+    WritePCA955(3, 2, 0xff00); // turn mb and lemo reset outpute on
+    WritePCA955(3, 3, 0xffff); // select mb busy input
   }
 
   TLUController::~TLUController() {
@@ -241,13 +243,13 @@ namespace tlu {
     //ResetTriggerCounter();
     //Initialize();
 
-    SetLEDs(m_mask);
+    SetLeftLEDs(m_mask);
     InhibitTriggers(false);
   }
 
   void TLUController::Stop() {
     InhibitTriggers(true);
-    //SetLEDs(0);
+    //SetLeftLEDs(0);
   }
 
   void TLUController::ResetTriggerCounter() {
@@ -369,6 +371,8 @@ namespace tlu {
 #ifdef TLUDEBUG
     std::cout << std::endl;
 #endif
+
+    m_particles = ReadRegister32(m_addr->TLU_REGISTERED_PARTICLE_COUNTER_ADDRESS_0);
 
     // Read timestamp buffer of BUFFER_DEPTH entries from TLU
     m_buffer.clear();
@@ -508,15 +512,16 @@ namespace tlu {
   void TLUController::Print(std::ostream &out) const {
     for (size_t i = 0; i < m_buffer.size(); ++i) {
       unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
-      out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << std::endl;
+      out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << "\n";
       m_lasttime = m_buffer[i].Timestamp();
     }
-    out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << std::endl
+    out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
         << "Scalers:   ";
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       std::cout << m_scalers[i] << (i < (TLU_TRIGGER_INPUTS - 1) ? ", " : "\n");
     }
-    out << "Triggers:  " << m_triggernum << std::endl
+    out << "Particles: " << m_particles << "\n"
+        << "Triggers:  " << m_triggernum << "\n"
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }
@@ -552,15 +557,90 @@ namespace tlu {
     m_ledstatus = val;
     if (m_addr) {
       if (m_version == 1) {
-        WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, m_ledstatus);
+        unsigned data = 0;
+        for (int i = 0; i < 6; ++i) {
+          data |= (m_ledstatus >> 2*i) & 1;
+        }
+        WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, data);
       } else {
-        // TODO: implement v0.2
+        unsigned data = (val & ~2) | ((val & 1) << 1) | ((val >> 1) & 1);
+        data = ~data;
+        WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
       }
     }
+  }
+  void TLUController::SetLeftLEDs(unsigned int val) {
+    for (int i = 0; i < 8; ++i) {
+      unsigned bit = 1 << 2*i+1;
+      if ((val >> i) & 1) {
+        m_ledstatus |= bit;
+      } else {
+        m_ledstatus &= ~bit;
+      }
+    }
+    SetLEDs(m_ledstatus);
+  }
+
+  void TLUController::SetRightLEDs(unsigned int val) {
+    for (int i = 0; i < 8; ++i) {
+      unsigned bit = 1 << 2*i;
+      if ((val >> i) & 1) {
+        m_ledstatus |= bit;
+      } else {
+        m_ledstatus &= ~bit;
+      }
+    }
+    SetLEDs(m_ledstatus);
   }
 
   unsigned TLUController::GetLEDs() const {
     return m_ledstatus;
   }
 
+  void TLUController::WritePCA955(unsigned bus, unsigned device, unsigned data) {
+    // select i2c bus
+    WriteI2C(1, 1);
+    WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
+    // set pca955 io as output
+    WriteI2C16(device, PCA955_CONFIG0_REGISTER, 0, 1);
+    I2Cdelay(2500); // for scope debugging
+    // write pca955 io data
+    WriteI2C16(device, PCA955_OUTPUT0_REGISTER, data, 1);
+  }
+
+  void TLUController::WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian) {
+    // execute i2c start
+    WriteI2C(1, 1);
+    I2Cdelay();
+    WriteI2C(1, 0);
+    I2Cdelay();
+    //
+    WriteI2Cbyte((PCA955_HW_ADDR << 4) | (device << 1));
+    WriteI2Cbyte(command);
+    WriteI2Cbyte(endian ? (data & 0xff) : (data >> 8));
+    WriteI2Cbyte(endian ? (data >> 8) : (data & 0xff));
+    // execute i2c stop
+    WriteI2C(0, 0);
+    I2Cdelay();
+    WriteI2C(1, 0);
+    I2Cdelay();
+    WriteI2C(1, 1);
+    I2Cdelay();
+  }
+
+  void TLUController::WriteI2Cbyte(unsigned data) {
+    for (int i = 0; i < 8; ++i) {
+      bool sda = (data >> (7-i)) & 1;
+      WriteI2C(0, sda);
+      I2Cdelay();
+      WriteI2C(1, sda);
+      I2Cdelay();
+    }
+  }
+
+  unsigned TLUController::WriteI2C(unsigned scl, unsigned sda) {
+    WriteRegister(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS, (scl << 2) | sda);
+    I2Cdelay();
+    return ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS);
+  }
 }

@@ -94,13 +94,17 @@ namespace tlu {
     unsigned GetSerialNumber() const;
     unsigned GetLibraryID(unsigned ver = 0) const;
     void SetLEDs(unsigned);
+    void SetLeftLEDs(unsigned);
+    void SetRightLEDs(unsigned);
     unsigned GetLEDs() const;
 
     unsigned GetScaler(unsigned) const;
+    unsigned GetParticles() const;
   private:
     void OpenTLU();
     void LoadFirmware();
     void Initialize();
+
     void WriteRegister(unsigned long offset, unsigned char val);
     unsigned char ReadRegister8(unsigned long offset) const;
     unsigned short ReadRegister16(unsigned long offset) const;
@@ -108,6 +112,11 @@ namespace tlu {
     unsigned long long ReadRegister64(unsigned long offset) const;
     unsigned long long * ReadBlock(unsigned entries);
     unsigned char ReadRegisterRaw(unsigned long offset) const;
+
+    void WritePCA955(unsigned bus, unsigned device, unsigned data);
+    void WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian);
+    void WriteI2Cbyte(unsigned data);
+    unsigned WriteI2C(unsigned scl, unsigned sda);
 
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
@@ -121,6 +130,7 @@ namespace tlu {
     std::vector<TLUEntry> m_buffer;
     unsigned long long * m_oldbuf;
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
+    unsigned m_particles;
     mutable unsigned long long m_lasttime;
     int m_errorhandler;
     unsigned m_version;
