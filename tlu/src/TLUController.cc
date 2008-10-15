@@ -1,6 +1,6 @@
 #include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
-#include "tlu/TLU_address_map.h"
+#include "tlu/TLUAddresses.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Time.hh"
@@ -19,6 +19,7 @@
 
 using eudaq::mSleep;
 using eudaq::hexdec;
+using eudaq::to_string;
 
 //#define TLUDEBUG
 
@@ -42,12 +43,12 @@ namespace tlu {
     static const double TLUFREQUENCY = 48.001e6;
     static const unsigned FIRSTV2SERIAL = 1000;
 
-    static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
-      TRIGGER_IN0_COUNTER_0,
-      TRIGGER_IN1_COUNTER_0,
-      TRIGGER_IN2_COUNTER_0,
-      TRIGGER_IN3_COUNTER_0
-    };
+//     static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
+//       TRIGGER_IN0_COUNTER_0,
+//       TRIGGER_IN1_COUNTER_0,
+//       TRIGGER_IN2_COUNTER_0,
+//       TRIGGER_IN3_COUNTER_0
+//     };
 
     // Use one static flag for aborting, since the ErrorHandler can't easily
     // find which instance did the access
@@ -98,18 +99,19 @@ namespace tlu {
     m_ledstatus(0),
     m_triggernum(0),
     m_timestamp(0),
-    m_oldbuf(new unsigned long long [BUFFER_DEPTH]),
+    m_oldbuf(0),
     m_lasttime(0),
-    m_errorhandler(errorhandler)
+    m_errorhandler(errorhandler),
+    m_addr(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       m_scalers[i] = 0;
     }
     if (m_filename == "") m_filename = "TLU_Toplevel.bit";
-    for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
-      m_oldbuf[i] = 0;
-    }
+//     for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
+//       m_oldbuf[i] = 0;
+//     }
 
     // Install an error handler
     ZestSC1RegisterErrorHandler(DefaultErrorHandler);
@@ -168,29 +170,36 @@ namespace tlu {
 
   void TLUController::Initialize() {
     // set up beam trigger
-    WriteRegister(BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
-    WriteRegister(BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
-    WriteRegister(BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
+    WriteRegister(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
+    WriteRegister(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
+    WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
 
     // Write to reset a few times...
     //for (int i=0; i<10 ; i++) {
     //mysleep (100);
     mSleep(1);
-    WriteRegister(DUT_RESET_ADDRESS, 0x3F);
-    WriteRegister(DUT_RESET_ADDRESS, 0x00);
+    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x3F);
+    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x00);
     //}
 
     // Reset pointers
-    WriteRegister(RESET_REGISTER_ADDRESS, 0x0F);
-    WriteRegister(RESET_REGISTER_ADDRESS, 0x00);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0x0F);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0x00);
 
-    WriteRegister(INTERNAL_TRIGGER_INTERVAL, m_triggerint);
+    WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
     // Set input mask
-    WriteRegister(DUT_MASK_ADDRESS, m_mask);
+    //WriteRegister(m_addr->TLU_DUT_MASK_ADDRESS, m_mask);
 
     //SetLEDs(0);
+    SetDUTMask(m_mask);
     SetLEDs(m_mask);
+    //SetTriggerInterval(m_triggerint);
+    //SetDUTMask(m_mask);
+
+    //SetVetoMask(m_vmask);
+    //SetAndMask(m_amask);
+    //SetOrMask(m_omask);
   }
 
   TLUController::~TLUController() {
@@ -206,6 +215,12 @@ namespace tlu {
         m_version = 2;
       }
     }
+    if (m_version == 1) {
+      m_addr = &v0_1;
+    } else {
+      m_addr = &v0_2;
+    }
+    if (!m_oldbuf) m_oldbuf = new unsigned long long[m_addr->TLU_BUFFER_DEPTH];
     if (m_filename == "") {
       m_filename = "TLU";
       if (m_version == 2) m_filename += "2";
@@ -218,7 +233,7 @@ namespace tlu {
     }
     LoadFirmware();
     Initialize();
-    InhibitTriggers(true);
+    //InhibitTriggers(true);
   }
 
   void TLUController::Start() {
@@ -236,14 +251,14 @@ namespace tlu {
   }
 
   void TLUController::ResetTriggerCounter() {
-    WriteRegister(RESET_REGISTER_ADDRESS, 1<<TRIGGER_COUNTER_RESET_BIT);
-    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
   }
 
   void TLUController::ResetScalers() {
 #ifdef TRIGGER_SCALERS_RESET_BIT
-    WriteRegister(RESET_REGISTER_ADDRESS, 1<<TRIGGER_SCALERS_RESET_BIT);
-    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TRIGGER_SCALERS_RESET_BIT);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
 #else
     EUDAQ_THROW("Not implemented");
 #endif
@@ -257,58 +272,63 @@ namespace tlu {
     OpenTLU();
   }
 
-  void TLUController::SetFirmware(const std::string & f) {
-    m_filename = f;
+  void TLUController::SetFirmware(const std::string & filename) {
+    m_filename = filename;
   }
 
-  void TLUController::SetVersion(int v) {
-    m_version = v;
+  void TLUController::SetVersion(unsigned version) {
+    m_version = version;
   }
 
   void TLUController::SetDUTMask(unsigned char mask) {
-    WriteRegister(DUT_MASK_ADDRESS, m_mask = mask);
+    m_mask = mask;
+    if (m_addr) WriteRegister(m_addr->TLU_DUT_MASK_ADDRESS, m_mask);
   }
 
   void TLUController::SetVetoMask(unsigned char mask) {
-    WriteRegister(BEAM_TRIGGER_VMASK_ADDRESS, m_vmask = mask);
+    m_vmask = mask;
+    if (m_addr) WriteRegister(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
   }
 
   void TLUController::SetAndMask(unsigned char mask) {
-    WriteRegister(BEAM_TRIGGER_AMASK_ADDRESS, m_amask = mask);
+    m_amask = mask;
+    if (m_addr) WriteRegister(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
   }
 
   void TLUController::SetOrMask(unsigned char mask) {
-    WriteRegister(BEAM_TRIGGER_OMASK_ADDRESS, m_omask = mask);
+    m_omask = mask;
+    if (m_addr) WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
   }
 
   void TLUController::SetTriggerInterval(unsigned millis) {
-    WriteRegister(INTERNAL_TRIGGER_INTERVAL, m_triggerint = millis);
+    m_triggerint = millis;
+    if (m_addr) WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
   }
 
   unsigned char TLUController::GetAndMask() const {
-    return ReadRegister8(BEAM_TRIGGER_AMASK_ADDRESS);
+    return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS);
   }
 
   unsigned char TLUController::GetOrMask() const {
-    return ReadRegister8(BEAM_TRIGGER_OMASK_ADDRESS);
+    return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS);
   }
 
   unsigned char TLUController::GetVetoMask() const {
-    return ReadRegister8(BEAM_TRIGGER_VMASK_ADDRESS);
+    return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
   }
 
   void TLUController::Update() {
     bool oldinhibit = InhibitTriggers();
 
-    WriteRegister(STATE_CAPTURE_ADDRESS, 0xFF);
+    WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
 
 #ifdef TLUDEBUG
     //std::cout << "TLU::Update: after initial write" << std::endl;
 #endif
-    unsigned entries = ReadRegister16(REGISTERED_BUFFER_POINTER_ADDRESS_0);
+    unsigned entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
 
 #ifdef TLUDEBUG
-    //std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
+    std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
 #endif
 
     unsigned long long * timestamp_buffer = ReadBlock(entries);
@@ -318,36 +338,36 @@ namespace tlu {
 #endif
 
     // Reset buffer pointer
-    WriteRegister(RESET_REGISTER_ADDRESS, 1<<BUFFER_POINTER_RESET_BIT);
-    WriteRegister(RESET_REGISTER_ADDRESS, 0);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
 
     InhibitTriggers(oldinhibit);
 
 #ifdef TLUDEBUG
-    //std::cout << "TLU::Update: entries=" << entries << std::endl;
+    std::cout << "TLU::Update: entries=" << entries << std::endl;
 #endif
 
-    m_fsmstatus = ReadRegister8(TRIGGER_FSM_STATUS_ADDRESS);
-    m_vetostatus = ReadRegister8(TRIG_INHIBIT_ADDRESS);
+    m_fsmstatus = ReadRegister8(m_addr->TLU_TRIGGER_FSM_STATUS_ADDRESS);
+    m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
 #ifdef TLUDEBUG
     //std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
 #endif
 
-    m_triggernum = ReadRegister32(REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
-    m_timestamp = ReadRegister64(REGISTERED_TIMESTAMP_ADDRESS_0);
+    m_triggernum = ReadRegister32(m_addr->TLU_REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
+    m_timestamp = ReadRegister64(m_addr->TLU_REGISTERED_TIMESTAMP_ADDRESS_0);
 #ifdef TLUDEBUG
-    //std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
-    //std::cout << "TLU::Update: scalers";
+    std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
+    std::cout << "TLU::Update: scalers";
 #endif
 
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
-      m_scalers[i] = ReadRegister16(g_scaler_address[i]);
+      m_scalers[i] = ReadRegister16(m_addr->TLU_SCALERS(i));
 #ifdef TLUDEBUG
-      //std::cout << ", [" << i << "] " << m_scalers[i];
+      std::cout << ", [" << i << "] " << m_scalers[i];
 #endif
     }
 #ifdef TLUDEBUG
-    //std::cout << std::endl;
+    std::cout << std::endl;
 #endif
 
     // Read timestamp buffer of BUFFER_DEPTH entries from TLU
@@ -364,12 +384,12 @@ namespace tlu {
 
 
   unsigned char TLUController::GetTriggerStatus() const {
-    return ReadRegister8(TRIG_INHIBIT_ADDRESS);
+    return ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
   }
 
 
   bool TLUController::InhibitTriggers(bool inhibit) {
-    WriteRegister(TRIG_INHIBIT_ADDRESS, inhibit);
+    WriteRegister(m_addr->TLU_TRIG_INHIBIT_ADDRESS, inhibit);
     bool result = m_inhibit;
     m_inhibit = inhibit;
     return result;
@@ -453,8 +473,9 @@ namespace tlu {
   unsigned long long * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
-    unsigned long long buffer[BUFFER_DEPTH] = {0};
-    for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
+    unsigned long long buffer[4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
+    for (unsigned i = 0; i < m_addr->TLU_BUFFER_DEPTH; ++i) {
       buffer[i] = m_oldbuf[i];
     }
 
@@ -462,22 +483,24 @@ namespace tlu {
     for (int tries = 0; tries < 3; ++tries) {
       // Request block transfer from TLU
       usleep(10);
-      WriteRegister(INITIATE_READOUT_ADDRESS, 0xFF);
+      WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, 0xFF);
       //usleep(10);
       result = ZestSC1ReadData(m_handle, buffer, sizeof buffer);
 
 #ifdef TLUDEBUG
-      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << "ZestSC1ReadData returned " << result << std::endl;
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
 #endif
       if (result == ZESTSC1_SUCCESS && buffer[entries-1] != m_oldbuf[entries-1]) {
-        for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
+        for (unsigned i = 0; i < m_addr->TLU_BUFFER_DEPTH; ++i) {
           m_oldbuf[i] = buffer[i];
         }
-        usbtrace("BR", 0, buffer, BUFFER_DEPTH, result);
+        usbtrace("BR", 0, buffer, m_addr->TLU_BUFFER_DEPTH, result);
         return m_oldbuf;
       }
     }
-    usbtrace("bR", 0, buffer, BUFFER_DEPTH, result);
+    usbtrace("bR", 0, buffer, m_addr->TLU_BUFFER_DEPTH, result);
     std::cout << (buffer[0] == m_oldbuf[0] ? "*" : "#") << std::flush;
     return 0;
   }
@@ -498,24 +521,42 @@ namespace tlu {
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }
 
+  unsigned TLUController::GetVersion() const {
+    return m_version;
+  }
+
+  std::string TLUController::GetFirmware() const {
+    return m_filename;
+  }
+
   unsigned TLUController::GetFirmwareID() const {
-    return ReadRegister8(FIRMWARE_ID_ADDRESS);
+    return ReadRegister8(m_addr->TLU_FIRMWARE_ID_ADDRESS);
   }
 
   unsigned TLUController::GetSerialNumber() const {
     return m_serial;
   }
 
-  unsigned TLUController::GetLibraryID() {
-    return FIRMWARE_ID;
+  unsigned TLUController::GetLibraryID(unsigned ver) const {
+    if (ver == 1) {
+      return v0_1.TLU_FIRMWARE_ID;
+    } else if (ver == 2) {
+      return v0_2.TLU_FIRMWARE_ID;
+    } else if (ver == 0 && m_addr) {
+      return m_addr->TLU_FIRMWARE_ID;
+    }
+    EUDAQ_THROW("TLU is not configured");
   }
 
   void TLUController::SetLEDs(unsigned int val) {
-#ifdef DUT_LED_ADDRESS
-    WriteRegister(DUT_LED_ADDRESS, m_ledstatus = val);
-#else
-    // TODO: implement v0.2
-#endif
+    m_ledstatus = val;
+    if (m_addr) {
+      if (m_version == 1) {
+        WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, m_ledstatus);
+      } else {
+        // TODO: implement v0.2
+      }
+    }
   }
 
   unsigned TLUController::GetLEDs() const {

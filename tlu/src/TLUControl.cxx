@@ -1,7 +1,7 @@
 #include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Time.hh"
+#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/counted_ptr.hh"
@@ -12,6 +12,7 @@
 #include <csignal>
 
 using namespace tlu;
+using eudaq::to_string;
 
 static sig_atomic_t g_done = 0;
 
@@ -21,7 +22,7 @@ void ctrlchandler(int) {
 
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("TLU Control Utility", "1.0", "A comand-line tool for controlling the Trigger Logic Unit");
-  eudaq::Option<std::string> fname(op, "f", "bitfile", "TLU_Toplevel.bit", "filename",
+  eudaq::Option<std::string> fname(op, "f", "bitfile", "", "filename",
                                    "The bitfile containing the TLU firmware to be loaded");
   eudaq::Option<int>         trigg(op, "t", "trigger", 0, "msecs",
                                    "The interval in milliseconds for internally generated triggers (0 = off)");
@@ -35,6 +36,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for ORing of external triggers");
   eudaq::Option<int>         emode(op, "e", "error-handler", 2, "value",
                                    "Error handler (0=abort, >0=number of tries before exception)");
+  eudaq::Option<int>         fwver(op, "r", "fwversion", 0, "value",
+                                   "Firmware version to load (0=auto)");
   eudaq::Option<int>         wait(op, "w", "wait", 1000, "ms",
                                   "Time to wait between updates in milliseconds");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
@@ -45,13 +48,15 @@ int main(int /*argc*/, char ** argv) {
   try {
     op.Parse(argv);
     std::cout << "Using options:\n"
-              << "Bit file name = " << fname.Value() << "\n"
-              << "Trigger interval = " << trigg.Value() << "\n"
+              << "TLU version = " << fwver.Value() << (fwver.Value() == 0 ? " (auto)" : "") << "\n"
+              << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
+              << "Trigger interval = " << trigg.Value()
+              << (trigg.Value() > 0 ? " ms (" + to_string(1e3/trigg.Value()) + " Hz)" : std::string()) << "\n"
               << "DUT Mask = " << dmask.Value() << "\n"
               << "Veto Mask = " << vmask.Value() << "\n"
               << "And Mask = " << amask.Value() << "\n"
               << "Or Mask = " << omask.Value() << "\n"
-              << "Save file = " << (sname.Value() == "" ? std::string("(none)") : sname.Value()) << "\n"
+              << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
     if (sname.Value() != "") {
@@ -73,6 +78,7 @@ int main(int /*argc*/, char ** argv) {
       tlu::setusbtracefile(fname);
     }
     TLUController TLU(emode.Value());
+    TLU.SetVersion(fwver.Value());
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     //TLU.FullReset();
@@ -81,11 +87,14 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
-    std::cout << "TLU Serial number: " << TLU.GetSerialNumber()
-              << ", Firmware version: " << TLU.GetFirmwareID()
-              << " (library " << TLU.GetLibraryID() << ")" << std::endl;
+    std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
+              << "TLU Serial number = " << TLU.GetSerialNumber() << "\n"
+              << "Firmware file = " << TLU.GetFirmware() << "\n"
+              << "Firmware version = " << TLU.GetFirmwareID() << "\n"
+              << "Library version = " << TLU.GetLibraryID() << "\n"
+              << std::endl;
 
-    eudaq::Time starttime(eudaq::Time::Current());
+    eudaq::Timer totaltime, lasttime;
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
 
@@ -100,9 +109,12 @@ int main(int /*argc*/, char ** argv) {
         }
       }
       total += TLU.NumEntries();
-      eudaq::Time elapsedtime(eudaq::Time::Current() - starttime);
-      double hertz = total / elapsedtime.Seconds();
-      std::cout << "Time: " << elapsedtime.Formatted("%s.%3") << " s, Hertz: " << hertz << std::endl;
+      double hertz = TLU.NumEntries() / lasttime.Seconds();
+      double avghertz = total / totaltime.Seconds();
+      lasttime.Restart();
+      std::cout << "Time: " << totaltime.Formatted("%s.%3") << " s, "
+                << "Freq: " << hertz << " Hz, "
+                << "Average: " << avghertz << " Hz" << std::endl;
       if (wait.Value() > 0) {
         eudaq::mSleep(wait.Value());
       }

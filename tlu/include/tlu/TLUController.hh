@@ -39,6 +39,8 @@ namespace tlu {
     unsigned long m_eventnum;
   };
 
+  struct TLUAddresses;
+
   class TLUController {
   public:
     //typedef void (*ErrorHandler)(const char * function,
@@ -55,7 +57,7 @@ namespace tlu {
     TLUController(int errormech = ERR_RETRY1);
     ~TLUController();
 
-    void SetVersion(int version); // default (0) = auto detect from serial number
+    void SetVersion(unsigned version); // default (0) = auto detect from serial number
     void SetFirmware(const std::string & filename); // can be just version number
     void SetDUTMask(unsigned char mask);
     void SetVetoMask(unsigned char mask);
@@ -86,9 +88,11 @@ namespace tlu {
 
     void Print(std::ostream & out = std::cout) const;
 
+    unsigned GetVersion() const;
+    std::string GetFirmware() const;
     unsigned GetFirmwareID() const;
     unsigned GetSerialNumber() const;
-    static unsigned GetLibraryID();
+    unsigned GetLibraryID(unsigned ver = 0) const;
     void SetLEDs(unsigned);
     unsigned GetLEDs() const;
 
@@ -118,7 +122,9 @@ namespace tlu {
     unsigned long long * m_oldbuf;
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     mutable unsigned long long m_lasttime;
-    int m_errorhandler, m_version;
+    int m_errorhandler;
+    unsigned m_version;
+    TLUAddresses * m_addr;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
