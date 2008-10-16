@@ -92,8 +92,9 @@ public:
       veto_mask = param.Get("VetoMask", 0);
       trig_rollover = param.Get("TrigRollover", 0);
       // ***
-      m_tlu->SetFirmware(param["BitFile"]);
+      m_tlu->SetFirmware(param.Get("BitFile", ""));
       m_tlu->SetVersion(param.Get("Version", 0));
+      m_tlu->Configure();
       m_tlu->SetTriggerInterval(trigger_interval);
       m_tlu->SetDUTMask(dut_mask);
       m_tlu->SetVetoMask(veto_mask);
@@ -101,7 +102,6 @@ public:
       m_tlu->SetOrMask(or_mask);
 
       // by dhaas
-      m_tlu->Configure();
       sleep(2);
 
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
@@ -120,7 +120,7 @@ public:
     try {
       m_run = param;
       m_ev = 0;
-	m_tlu->Configure();
+      //m_tlu->Configure();
       std::cout << "Start Run: " << param << std::endl;
       TLUEvent ev(TLUEvent::BORE(m_run));
       ev.SetTag("FirmwareID",  to_string(m_tlu->GetFirmwareID()));
