@@ -21,7 +21,7 @@ using eudaq::mSleep;
 using eudaq::hexdec;
 using eudaq::to_string;
 
-//#define TLUDEBUG
+//#define TLUDEBUG 1
 #define PCA955_HW_ADDR 4
 #define PCA955_CONFIG0_REGISTER 6
 #define PCA955_OUTPUT0_REGISTER 2
@@ -136,7 +136,7 @@ namespace tlu {
     int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
     if (status != 0) throw TLUException("ZestSC1CountCards", status);
 
-#ifdef TLUDEBUG
+#if TLUDEBUG
     std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
     for (unsigned i = 0; i < NumCards; ++i) {
       std::cout << "DEBUG: Card " << i
@@ -324,18 +324,18 @@ namespace tlu {
 
     WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
 
-#ifdef TLUDEBUG
+#if TLUDEBUG
     //std::cout << "TLU::Update: after initial write" << std::endl;
 #endif
     unsigned entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
 
-#ifdef TLUDEBUG
+#if TLUDEBUG
     std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
 #endif
 
     unsigned long long * timestamp_buffer = ReadBlock(entries);
 
-#ifdef TLUDEBUG
+#if TLUDEBUG
     //std::cout << "TLU::Update: after 2 reads" << std::endl;
 #endif
 
@@ -345,30 +345,30 @@ namespace tlu {
 
     InhibitTriggers(oldinhibit);
 
-#ifdef TLUDEBUG
+#if TLUDEBUG
     std::cout << "TLU::Update: entries=" << entries << std::endl;
 #endif
 
     m_fsmstatus = ReadRegister8(m_addr->TLU_TRIGGER_FSM_STATUS_ADDRESS);
     m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
-#ifdef TLUDEBUG
+#if TLUDEBUG
     //std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
 #endif
 
     m_triggernum = ReadRegister32(m_addr->TLU_REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
     m_timestamp = ReadRegister64(m_addr->TLU_REGISTERED_TIMESTAMP_ADDRESS_0);
-#ifdef TLUDEBUG
+#if TLUDEBUG
     std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
     std::cout << "TLU::Update: scalers";
 #endif
 
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       m_scalers[i] = ReadRegister16(m_addr->TLU_SCALERS(i));
-#ifdef TLUDEBUG
+#if TLUDEBUG
       std::cout << ", [" << i << "] " << m_scalers[i];
 #endif
     }
-#ifdef TLUDEBUG
+#if TLUDEBUG
     std::cout << std::endl;
 #endif
 
@@ -491,7 +491,7 @@ namespace tlu {
       //usleep(10);
       result = ZestSC1ReadData(m_handle, buffer, sizeof buffer);
 
-#ifdef TLUDEBUG
+#if TLUDEBUG
       char * errmsg = 0;
       ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
       std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
@@ -601,6 +601,9 @@ namespace tlu {
 
   void TLUController::WritePCA955(unsigned bus, unsigned device, unsigned data) {
     if (m_version < 2) return;
+#if TLUDEBUG
+    std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << device << ", data=" << hexdec(data) << std::endl;
+#endif
     // select i2c bus
     WriteI2C(1, 1);
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
@@ -632,6 +635,9 @@ namespace tlu {
   }
 
   void TLUController::WriteI2Cbyte(unsigned data) {
+#if TLUDEBUG
+    std::cout << "DEBUG: I2C data=" << hexdec(data, 2) << std::endl;
+#endif
     for (int i = 0; i < 8; ++i) {
       bool sda = (data >> (7-i)) & 1;
       WriteI2C(0, sda);
