@@ -95,7 +95,7 @@ namespace tlu {
   TLUController::TLUController(int errorhandler) :
     //m_filename(""),
     //m_errorhandler(0),
-    m_mask(1),
+    m_mask(0),
     m_vmask(0),
     m_amask(0),
     m_omask(0),
@@ -559,8 +559,10 @@ namespace tlu {
       if (m_version == 1) {
         unsigned data = 0;
         for (int i = 0; i < 6; ++i) {
-          data |= (m_ledstatus >> 2*i) & 1;
+          bool bit = (m_ledstatus >> 2*i+1) & 1;
+	  data |= bit << i;
         }
+	std::cout << "DEBUG: LEDs=" << hexdec(val) << ", data=" << hexdec(data) << std::endl;
         WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, data);
       } else {
         unsigned data = (val & ~2) | ((val & 1) << 1) | ((val >> 1) & 1);
@@ -598,6 +600,7 @@ namespace tlu {
   }
 
   void TLUController::WritePCA955(unsigned bus, unsigned device, unsigned data) {
+    if (m_version < 2) return;
     // select i2c bus
     WriteI2C(1, 1);
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
