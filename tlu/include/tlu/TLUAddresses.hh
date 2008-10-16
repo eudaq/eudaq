@@ -111,7 +111,7 @@ namespace tlu {
         : i == 1 ? TLU_TRIGGER_IN1_COUNTER_0
         : i == 2 ? TLU_TRIGGER_IN2_COUNTER_0
         : i == 3 ? TLU_TRIGGER_IN3_COUNTER_0
-        : -1;
+        : EUDAQ_TLU_MISSING;
     };
   };
 
