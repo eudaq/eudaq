@@ -114,9 +114,9 @@ namespace tlu {
     unsigned char ReadRegisterRaw(unsigned long offset) const;
 
     void WritePCA955(unsigned bus, unsigned device, unsigned data);
-    void WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian);
+    void WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian = 1);
     void WriteI2Cbyte(unsigned data);
-    unsigned WriteI2C(unsigned scl, unsigned sda);
+    bool WriteI2Clines(bool scl, bool sda);
 
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;

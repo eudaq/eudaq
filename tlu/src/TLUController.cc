@@ -3,7 +3,7 @@
 #include "tlu/TLUAddresses.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/Time.hh"
+#include "eudaq/Timer.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 # include <cstdio>  // HK
@@ -76,7 +76,11 @@ namespace tlu {
     }
 
     static void I2Cdelay(unsigned us = 100) {
-      usleep(us);
+      eudaq::Timer t;
+      do {
+        // wait
+      } while (t.uSeconds() < us);
+      //usleep(us);
     }
 
   }
@@ -197,7 +201,7 @@ namespace tlu {
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
     SetDUTMask(m_mask);
-    SetLeftLEDs(m_mask);
+    //SetLeftLEDs(m_mask);
 
     WritePCA955(3, 1, 0xff00); // turn mb and lemo trigger outputs on
     WritePCA955(3, 2, 0xff00); // turn mb and lemo reset outpute on
@@ -560,13 +564,13 @@ namespace tlu {
         unsigned data = 0;
         for (int i = 0; i < 6; ++i) {
           bool bit = (m_ledstatus >> 2*i+1) & 1;
-	  data |= bit << i;
+          data |= bit << i;
         }
-	std::cout << "DEBUG: LEDs=" << hexdec(val) << ", data=" << hexdec(data) << std::endl;
+        std::cout << "DEBUG: LEDs=" << hexdec(val) << ", data=" << hexdec(data) << std::endl;
         WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, data);
       } else {
         unsigned data = (val & ~2) | ((val & 1) << 1) | ((val >> 1) & 1);
-        data = ~data;
+        data = ~data & 0xffff;
         WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
       }
     }
@@ -605,32 +609,39 @@ namespace tlu {
     std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << device << ", data=" << hexdec(data) << std::endl;
 #endif
     // select i2c bus
-    WriteI2C(1, 1);
+    WriteI2Clines(1, 1);
+    I2Cdelay();
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
+    I2Cdelay();
     // set pca955 io as output
-    WriteI2C16(device, PCA955_CONFIG0_REGISTER, 0, 1);
+    WriteI2C16(device, PCA955_CONFIG0_REGISTER, 0);
     I2Cdelay(2500); // for scope debugging
     // write pca955 io data
-    WriteI2C16(device, PCA955_OUTPUT0_REGISTER, data, 1);
+    WriteI2C16(device, PCA955_OUTPUT0_REGISTER, data);
   }
 
   void TLUController::WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian) {
+#if TLUDEBUG
+    std::cout << "DEBUG: I2C16 device=" << device << ", command=" << command
+              << ", data=" << hexdec(data) << std::endl;
+#endif
     // execute i2c start
-    WriteI2C(1, 1);
+    WriteI2Clines(1, 1);
     I2Cdelay();
-    WriteI2C(1, 0);
+    WriteI2Clines(1, 0);
     I2Cdelay();
     //
-    WriteI2Cbyte((PCA955_HW_ADDR << 4) | (device << 1));
+    unsigned deviceaddress = (PCA955_HW_ADDR << 3) | device;
+    WriteI2Cbyte(deviceaddress << 1); // lsb=0 for write
     WriteI2Cbyte(command);
     WriteI2Cbyte(endian ? (data & 0xff) : (data >> 8));
     WriteI2Cbyte(endian ? (data >> 8) : (data & 0xff));
     // execute i2c stop
-    WriteI2C(0, 0);
+    WriteI2Clines(0, 0);
     I2Cdelay();
-    WriteI2C(1, 0);
+    WriteI2Clines(1, 0);
     I2Cdelay();
-    WriteI2C(1, 1);
+    WriteI2Clines(1, 1);
     I2Cdelay();
   }
 
@@ -640,16 +651,25 @@ namespace tlu {
 #endif
     for (int i = 0; i < 8; ++i) {
       bool sda = (data >> (7-i)) & 1;
-      WriteI2C(0, sda);
+      WriteI2Clines(0, sda);
       I2Cdelay();
-      WriteI2C(1, sda);
+      WriteI2Clines(1, sda);
       I2Cdelay();
+    }
+    // check for ack
+    WriteI2Clines(0, 1);
+    I2Cdelay();
+    if (WriteI2Clines(1, 1)) {
+      EUDAQ_THROW("I2C device failed to acknowledge");
     }
   }
 
-  unsigned TLUController::WriteI2C(unsigned scl, unsigned sda) {
+  bool TLUController::WriteI2Clines(bool scl, bool sda) {
+#if TLUDEBUG
+    //std::cout << scl << sda << ",";
+#endif
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS, (scl << 2) | sda);
     I2Cdelay();
-    return ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS);
+    return 2 & ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS);
   }
 }
