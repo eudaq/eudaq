@@ -207,11 +207,14 @@ namespace tlu {
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
     SetDUTMask(m_mask);
-    //SetLeftLEDs(m_mask);
+    //SetLeftLEDs(m_mask, m_mask);
 
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, 1, 0xff00); // turn mb and lemo trigger outputs on
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, 2, 0xff00); // turn mb and lemo reset outpute on
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, 3, 0xffff); // select mb busy input
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
+             m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
+             m_addr->TLU_I2C_BUS_MOTHERBOARD_RESET_ENABLE_IO, 0xff00); // turn mb and lemo reset outputs on
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
+             m_addr->TLU_I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO, 0xffff); // select mb busy input
   }
 
   TLUController::~TLUController() {
@@ -253,13 +256,13 @@ namespace tlu {
     //ResetTriggerCounter();
     //Initialize();
 
-    SetLeftLEDs(m_mask);
+    SetLEDs(m_mask, m_mask);
     InhibitTriggers(false);
   }
 
   void TLUController::Stop() {
     InhibitTriggers(true);
-    //SetLeftLEDs(0);
+    //SetLEDs(0, 0);
   }
 
   void TLUController::ResetTriggerCounter() {
@@ -563,50 +566,33 @@ namespace tlu {
     EUDAQ_THROW("TLU is not configured");
   }
 
-  void TLUController::SetLEDs(unsigned int val) {
-    m_ledstatus = val;
+  void TLUController::SetLEDs(int left, int right) {
+    for (int i = 0; i < 8; ++i) {
+      unsigned bitr = 1 << 2*i, bitl = bitr << 1;
+      if (right >= 0) {
+        if ((right >> i) & 1) {
+          m_ledstatus |= bitr;
+        } else {
+          m_ledstatus &= ~bitr;
+        }
+      }
+      if (left >= 0) {
+        if ((left >> i) & 1) {
+          m_ledstatus |= bitl;
+        } else {
+          m_ledstatus &= ~bitl;
+        }
+      }
+    }
     if (m_addr) {
       if (m_version == 1) {
-        unsigned data = 0;
-        for (int i = 0; i < 6; ++i) {
-          bool bit = (m_ledstatus >> 2*i+1) & 1;
-          data |= bit << i;
-        }
-        std::cout << "DEBUG: LEDs=" << hexdec(val) << ", data=" << hexdec(data) << std::endl;
-        WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, data);
+        WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, left);
       } else {
-        unsigned data = (val & ~2) | ((val & 1) << 1) | ((val >> 1) & 1);
+        unsigned data = (m_ledstatus & ~2) | ((m_ledstatus & 1) << 1) | ((m_ledstatus >> 1) & 1);
         data = ~data & 0xffff;
         WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
       }
     }
-  }
-  void TLUController::SetLeftLEDs(unsigned int val) {
-    for (int i = 0; i < 8; ++i) {
-      unsigned bit = 1 << 2*i+1;
-      if ((val >> i) & 1) {
-        m_ledstatus |= bit;
-      } else {
-        m_ledstatus &= ~bit;
-      }
-    }
-    SetLEDs(m_ledstatus);
-  }
-
-  void TLUController::SetRightLEDs(unsigned int val) {
-    for (int i = 0; i < 8; ++i) {
-      unsigned bit = 1 << 2*i;
-      if ((val >> i) & 1) {
-        m_ledstatus |= bit;
-      } else {
-        m_ledstatus &= ~bit;
-      }
-    }
-    SetLEDs(m_ledstatus);
-  }
-
-  unsigned TLUController::GetLEDs() const {
-    return m_ledstatus;
   }
 
   void TLUController::SetLemoLEDs(unsigned val) {

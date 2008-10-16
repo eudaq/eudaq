@@ -93,10 +93,8 @@ namespace tlu {
     unsigned GetFirmwareID() const;
     unsigned GetSerialNumber() const;
     unsigned GetLibraryID(unsigned ver = 0) const;
-    void SetLEDs(unsigned);
-    void SetLeftLEDs(unsigned);
-    void SetRightLEDs(unsigned);
-    unsigned GetLEDs() const;
+    void SetLEDs(int left, int right);
+    //unsigned GetLEDs() const;
     void SetLemoLEDs(unsigned);
     //void SetLemoADCVoltage(unsigned mask, double voltage);
 
