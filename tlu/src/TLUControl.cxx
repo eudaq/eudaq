@@ -87,6 +87,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
+    TLU.SetLemoLEDs(0x35c);
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
               << "TLU Serial number = " << TLU.GetSerialNumber() << "\n"
               << "Firmware file = " << TLU.GetFirmware() << "\n"

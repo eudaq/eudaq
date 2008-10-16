@@ -97,6 +97,8 @@ namespace tlu {
     void SetLeftLEDs(unsigned);
     void SetRightLEDs(unsigned);
     unsigned GetLEDs() const;
+    void SetLemoLEDs(unsigned);
+    //void SetLemoADCVoltage(unsigned mask, double voltage);
 
     unsigned GetScaler(unsigned) const;
     unsigned GetParticles() const;
@@ -113,8 +115,8 @@ namespace tlu {
     unsigned long long * ReadBlock(unsigned entries);
     unsigned char ReadRegisterRaw(unsigned long offset) const;
 
-    void WritePCA955(unsigned bus, unsigned device, unsigned data);
-    void WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian = 1);
+    void WriteI2C(unsigned hw, unsigned bus, unsigned device, unsigned data);
+    void WriteI2C16(unsigned device, unsigned command, unsigned data);
     void WriteI2Cbyte(unsigned data);
     bool WriteI2Clines(bool scl, bool sda);
 

@@ -21,10 +21,16 @@ using eudaq::mSleep;
 using eudaq::hexdec;
 using eudaq::to_string;
 
-//#define TLUDEBUG 1
 #define PCA955_HW_ADDR 4
-#define PCA955_CONFIG0_REGISTER 6
+#define AD5316_HW_ADDR 3
+#define PCA955_INPUT0_REGISTER 0
+#define PCA955_INPUT1_REGISTER 1
 #define PCA955_OUTPUT0_REGISTER 2
+#define PCA955_OUTPUT1_REGISTER 3
+#define PCA955_POLARITY0_REGISTER 4
+#define PCA955_POLARITY1_REGISTER 5
+#define PCA955_CONFIG0_REGISTER 6
+#define PCA955_CONFIG1_REGISTER 7
 
 namespace tlu {
 
@@ -203,9 +209,9 @@ namespace tlu {
     SetDUTMask(m_mask);
     //SetLeftLEDs(m_mask);
 
-    WritePCA955(3, 1, 0xff00); // turn mb and lemo trigger outputs on
-    WritePCA955(3, 2, 0xff00); // turn mb and lemo reset outpute on
-    WritePCA955(3, 3, 0xffff); // select mb busy input
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, 1, 0xff00); // turn mb and lemo trigger outputs on
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, 2, 0xff00); // turn mb and lemo reset outpute on
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, 3, 0xffff); // select mb busy input
   }
 
   TLUController::~TLUController() {
@@ -571,7 +577,7 @@ namespace tlu {
       } else {
         unsigned data = (val & ~2) | ((val & 1) << 1) | ((val >> 1) & 1);
         data = ~data & 0xffff;
-        WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
+        WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
       }
     }
   }
@@ -603,7 +609,11 @@ namespace tlu {
     return m_ledstatus;
   }
 
-  void TLUController::WritePCA955(unsigned bus, unsigned device, unsigned data) {
+  void TLUController::SetLemoLEDs(unsigned val) {
+    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_LED_IO, val);
+  }
+
+  void TLUController::WriteI2C(unsigned hw, unsigned bus, unsigned device, unsigned data) {
     if (m_version < 2) return;
 #if TLUDEBUG
     std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << device << ", data=" << hexdec(data) << std::endl;
@@ -614,13 +624,13 @@ namespace tlu {
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
     I2Cdelay();
     // set pca955 io as output
-    WriteI2C16(device, PCA955_CONFIG0_REGISTER, 0);
+    WriteI2C16((hw << 3) | device, PCA955_CONFIG0_REGISTER, 0);
     I2Cdelay(2500); // for scope debugging
     // write pca955 io data
-    WriteI2C16(device, PCA955_OUTPUT0_REGISTER, data);
+    WriteI2C16((hw << 3) | device, PCA955_OUTPUT0_REGISTER, data);
   }
 
-  void TLUController::WriteI2C16(unsigned device, unsigned command, unsigned data, unsigned endian) {
+  void TLUController::WriteI2C16(unsigned device, unsigned command, unsigned data) {
 #if TLUDEBUG
     std::cout << "DEBUG: I2C16 device=" << device << ", command=" << command
               << ", data=" << hexdec(data) << std::endl;
@@ -631,11 +641,10 @@ namespace tlu {
     WriteI2Clines(1, 0);
     I2Cdelay();
     //
-    unsigned deviceaddress = (PCA955_HW_ADDR << 3) | device;
-    WriteI2Cbyte(deviceaddress << 1); // lsb=0 for write
+    WriteI2Cbyte(device << 1); // lsb=0 for write
     WriteI2Cbyte(command);
-    WriteI2Cbyte(endian ? (data & 0xff) : (data >> 8));
-    WriteI2Cbyte(endian ? (data >> 8) : (data & 0xff));
+    WriteI2Cbyte(data & 0xff);
+    WriteI2Cbyte(data >> 8);
     // execute i2c stop
     WriteI2Clines(0, 0);
     I2Cdelay();
@@ -668,8 +677,9 @@ namespace tlu {
 #if TLUDEBUG
     //std::cout << scl << sda << ",";
 #endif
-    WriteRegister(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS, (scl << 2) | sda);
+    WriteRegister(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS,
+                  (scl << m_addr->TLU_I2C_SCL_OUT_BIT) | (sda << m_addr->TLU_I2C_SDA_OUT_BIT));
     I2Cdelay();
-    return 2 & ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS);
+    return ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS) & (1 << m_addr->TLU_I2C_SDA_IN_BIT);
   }
 }
