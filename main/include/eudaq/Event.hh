@@ -14,16 +14,16 @@
 
 #define EUDAQ_DECLARE_EVENT(type)           \
   public:                                   \
-    static unsigned long eudaq_static_id(); \
-    virtual unsigned long get_id() const {  \
+    static unsigned eudaq_static_id();      \
+    virtual unsigned get_id() const {       \
       return eudaq_static_id();             \
     }                                       \
   private:                                  \
     static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
 #define EUDAQ_DEFINE_EVENT(type, id)       \
-  unsigned long type::eudaq_static_id() {  \
-    static const unsigned long id_(id);    \
+  unsigned type::eudaq_static_id() {       \
+    static const unsigned id_(id);         \
     return id_;                            \
   }                                        \
   namespace _eudaq_dummy_ {                \
@@ -60,13 +60,13 @@ namespace eudaq {
     bool IsEORE() const { return GetFlags(FLAG_EORE); }
     bool HasHits() const { return GetFlags(FLAG_HITS); }
 
-    static unsigned long str2id(const std::string & idstr);
-    static std::string id2str(unsigned long id);
+    static unsigned str2id(const std::string & idstr);
+    static std::string id2str(unsigned id);
     unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
     void SetFlags(unsigned f) { m_flags |= f; }
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
   private:
-    virtual unsigned long get_id() const = 0;
+    virtual unsigned get_id() const = 0;
     typedef std::map<std::string, std::string> map_t;
 
     unsigned m_flags, m_runnumber, m_eventnumber;
@@ -79,7 +79,7 @@ namespace eudaq {
   class EventFactory {
   public:
     static Event * Create(Deserializer & ds) {
-      unsigned long id = 0;
+      unsigned id = 0;
       ds.read(id);
       //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       event_creator cr = GetCreator(id);

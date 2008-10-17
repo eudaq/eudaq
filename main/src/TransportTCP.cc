@@ -317,7 +317,7 @@ namespace eudaq {
   }
 
   std::string TCPServer::ConnectionString() const {
-    char * host = getenv("HOSTNAME");
+    const char * host = getenv("HOSTNAME");
     if (!host) host = "localhost";
     //gethostname(buf, sizeof buf);
     return PROTO_NAME + "://" + host + ":" + to_string(m_port);

@@ -58,17 +58,17 @@ namespace eudaq {
     }
   }
 
-  unsigned long Event::str2id(const std::string & str) {
+  unsigned Event::str2id(const std::string & str) {
     unsigned long result = 0;
     for (size_t i = 0; i < 4; ++i) {
       if (i < str.length()) result |= str[i] << (8*i);
     }
-    //std::cout << "str2id(" << idstr << ") = " << std::hex << result << std::dec << std::endl;
+    std::cout << "str2id(" << str << ") = " << std::hex << result << std::dec << std::endl;
     return result;
   }
 
-  std::string Event::id2str(unsigned long id) {
-    //std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
+  std::string Event::id2str(unsigned id) {
+    std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
     std::string result(4, '\0');
     for (int i = 0; i < 4; ++i) {
       result[i] = (char)(id & 0xff);
@@ -80,7 +80,7 @@ namespace eudaq {
         break;
       }
     }
-    //std::cout << " = " << result << std::endl;
+    std::cout << " = " << result << std::endl;
     return result;
   }
 

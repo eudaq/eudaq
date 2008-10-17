@@ -9,7 +9,7 @@ namespace eudaq {
   DetectorEvent::DetectorEvent(Deserializer & ds) :
     Event(ds)
   {
-    size_t n;
+    unsigned n;
     ds.read(n);
     //std::cout << "Num=" << n << std::endl;
     for (size_t i = 0; i < n; ++i) {
@@ -34,7 +34,7 @@ namespace eudaq {
 
   void DetectorEvent::Serialize(Serializer & ser) const {
     Event::Serialize(ser);
-    ser.write(m_events.size());
+    ser.write((unsigned)m_events.size());
     for (size_t i = 0; i < m_events.size(); ++i) {
       m_events[i]->Serialize(ser);
     }

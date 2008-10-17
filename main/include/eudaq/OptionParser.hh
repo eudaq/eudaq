@@ -26,7 +26,7 @@ namespace eudaq {
   class OptionParser {
   public:
     OptionParser(const std::string & name, const std::string & version, const std::string & desc="",
-                 int minargs = (size_t)-1, int maxargs = (size_t)-1)
+                 int minargs = -1, int maxargs = -1)
       : m_name(name), m_ver(version), m_desc(desc), m_minargs(minargs), m_maxargs(maxargs)
       {}
     OptionParser & Parse(const char ** args);

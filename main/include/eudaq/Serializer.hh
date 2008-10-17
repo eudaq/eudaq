@@ -63,19 +63,19 @@ namespace eudaq {
 
   template <>
   inline void Serializer::write(const std::string & t) {
-    write(t.length());
+    write((unsigned)t.length());
     Serialize(reinterpret_cast<const unsigned char *>(&t[0]), t.length());
   }
 
   template <>
   inline void Serializer::write(const Time & t) {
-    write(timeval(t).tv_sec);
-    write(timeval(t).tv_usec);
+    write((int)timeval(t).tv_sec);
+    write((int)timeval(t).tv_usec);
   }
 
   template <typename T>
   inline void Serializer::write(const std::vector<T> & t) {
-    size_t len = t.size();
+    unsigned len = t.size();
     write(len);
     for (size_t i = 0; i < len; ++i) {
       write(t[i]);
@@ -84,19 +84,19 @@ namespace eudaq {
 
   template <>
   inline void Serializer::write<unsigned char>(const std::vector<unsigned char> & t) {
-    write(t.size());
+    write((unsigned)t.size());
     Serialize(&t[0], t.size());
   }
 
   template <>
   inline void Serializer::write<char>(const std::vector<char> & t) {
-    write(t.size());
+    write((unsigned)t.size());
     Serialize(reinterpret_cast<const unsigned char *>(&t[0]), t.size());
   }
 
   template <typename T, typename U>
   inline void Serializer::write(const std::map<T, U> & t) {
-    size_t len = t.size();
+    unsigned len = t.size();
     write(len);
     for (typename std::map<T, U>::const_iterator i = t.begin(); i != t.end(); ++i) {
       write(i->first);
@@ -163,7 +163,7 @@ namespace eudaq {
 
   template <>
   inline void Deserializer::read(std::string & t) {
-    size_t len = 0;
+    unsigned len = 0;
     read(len);
     t = std::string(len, ' ');
     if (len) Deserialize(reinterpret_cast<unsigned char *>(&t[0]), len);
@@ -171,7 +171,7 @@ namespace eudaq {
 
   template <>
   inline void Deserializer::read(Time & t) {
-    long sec, usec;
+    int sec, usec;
     read(sec);
     read(usec);
     t = Time(sec, usec);
@@ -179,7 +179,7 @@ namespace eudaq {
 
   template <typename T>
   inline void Deserializer::read(std::vector<T> & t) {
-    size_t len = 0;
+    unsigned len = 0;
     read(len);
     t.reserve(len);
     for (size_t i = 0; i < len; ++i) {
@@ -189,7 +189,7 @@ namespace eudaq {
 
   template <>
   inline void Deserializer::read<unsigned char>(std::vector<unsigned char> & t) {
-    size_t len = 0;
+    unsigned len = 0;
     read(len);
     t.resize(len);
     Deserialize(&t[0], len);
@@ -197,7 +197,7 @@ namespace eudaq {
 
   template <>
   inline void Deserializer::read<char>(std::vector<char> & t) {
-    size_t len = 0;
+    unsigned len = 0;
     read(len);
     t.resize(len);
     Deserialize(reinterpret_cast<unsigned char *>(&t[0]), len);
@@ -205,7 +205,7 @@ namespace eudaq {
 
   template<typename T, typename U>
   inline void Deserializer::read(std::map<T, U> & t) {
-    size_t len = 0;
+    unsigned len = 0;
     read(len);
     for (size_t i = 0; i < len; ++i) {
       std::string name = read<std::string>();
