@@ -13,6 +13,7 @@
 
 using namespace tlu;
 using eudaq::to_string;
+using eudaq::hexdec;
 
 static sig_atomic_t g_done = 0;
 
@@ -34,6 +35,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for coincidence of external triggers");
   eudaq::Option<int>         omask(op, "o", "ormask", 0, "mask",
                                    "The mask for ORing of external triggers");
+  eudaq::Option<int>         ipsel(op, "i", "dutinputs", 3, "value",
+                                   "Selects the DUT inputs 0-3 (1=HDMI, 2=LEMO, 3=RJ45)");
   eudaq::Option<int>         emode(op, "e", "error-handler", 2, "value",
                                    "Error handler (0=abort, >0=number of tries before exception)");
   eudaq::Option<int>         fwver(op, "r", "fwversion", 0, "value",
@@ -52,10 +55,11 @@ int main(int /*argc*/, char ** argv) {
               << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
               << "Trigger interval = " << trigg.Value()
               << (trigg.Value() > 0 ? " ms (" + to_string(1e3/trigg.Value()) + " Hz)" : std::string()) << "\n"
-              << "DUT Mask = " << dmask.Value() << "\n"
-              << "Veto Mask = " << vmask.Value() << "\n"
-              << "And Mask = " << amask.Value() << "\n"
-              << "Or Mask = " << omask.Value() << "\n"
+              << "DUT Mask = " << hexdec(dmask.Value()) << "\n"
+              << "Veto Mask = " << hexdec(vmask.Value()) << "\n"
+              << "And Mask = " << hexdec(amask.Value()) << "\n"
+              << "Or Mask = " << hexdec(omask.Value()) << "\n"
+              << "DUT inputs = " << ipsel.Value() << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -87,7 +91,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
-    TLU.SetLemoLEDs(0x35c);
+    TLU.SelectDUT(ipsel.Value());
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
               << "TLU Serial number = " << TLU.GetSerialNumber() << "\n"
               << "Firmware file = " << TLU.GetFirmware() << "\n"

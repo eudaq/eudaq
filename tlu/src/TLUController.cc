@@ -109,6 +109,7 @@ namespace tlu {
     m_vmask(0),
     m_amask(0),
     m_omask(0),
+    m_ipsel(0xff),
     m_triggerint(0),
     m_inhibit(true),
     m_vetostatus(0),
@@ -213,8 +214,6 @@ namespace tlu {
              m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
     WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
              m_addr->TLU_I2C_BUS_MOTHERBOARD_RESET_ENABLE_IO, 0xff00); // turn mb and lemo reset outputs on
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
-             m_addr->TLU_I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO, 0xffff); // select mb busy input
   }
 
   TLUController::~TLUController() {
@@ -256,13 +255,11 @@ namespace tlu {
     //ResetTriggerCounter();
     //Initialize();
 
-    SetLEDs(m_mask, m_mask);
     InhibitTriggers(false);
   }
 
   void TLUController::Stop() {
     InhibitTriggers(true);
-    //SetLEDs(0, 0);
   }
 
   void TLUController::ResetTriggerCounter() {
@@ -298,6 +295,7 @@ namespace tlu {
   void TLUController::SetDUTMask(unsigned char mask) {
     m_mask = mask;
     if (m_addr) WriteRegister(m_addr->TLU_DUT_MASK_ADDRESS, m_mask);
+    UpdateLEDs();
   }
 
   void TLUController::SetVetoMask(unsigned char mask) {
@@ -330,6 +328,18 @@ namespace tlu {
 
   unsigned char TLUController::GetVetoMask() const {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
+  }
+
+  void TLUController::SelectDUT(int input, unsigned mask) {
+    for (int i = 0; i < 4; ++i) {
+      if ((mask >> i) & 1) {
+        m_ipsel &= ~(3 << (2*i));
+        m_ipsel |= (input & 3) << (2*i);
+      }
+    }
+    if (m_addr) WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
+                         m_addr->TLU_I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO, m_ipsel);
+    UpdateLEDs();
   }
 
   void TLUController::Update() {
@@ -566,7 +576,22 @@ namespace tlu {
     EUDAQ_THROW("TLU is not configured");
   }
 
-  void TLUController::SetLEDs(int left, int right) {
+  void TLUController::UpdateLEDs() {
+    int right = 0, lemo = 0;
+    for (int i = 0; i < 4; ++i) {
+      lemo |= 5 << (3*i);
+      if (m_mask & (1 << i)) {
+        int ipsel = (m_ipsel >> (2*i)) & 3;
+        switch (ipsel) {
+        case IN_RJ45: right |= 1 << i; break;
+        case IN_LEMO: lemo |= 2 << (3*i); break;
+        }
+      }
+    }
+    SetLEDs(m_mask, right, lemo);
+  }
+
+  void TLUController::SetLEDs(int left, int right, int lemo) {
     for (int i = 0; i < 8; ++i) {
       unsigned bitr = 1 << 2*i, bitl = bitr << 1;
       if (right >= 0) {
@@ -591,12 +616,9 @@ namespace tlu {
         unsigned data = (m_ledstatus & ~2) | ((m_ledstatus & 1) << 1) | ((m_ledstatus >> 1) & 1);
         data = ~data & 0xffff;
         WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
+        WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_LED_IO, lemo);
       }
     }
-  }
-
-  void TLUController::SetLemoLEDs(unsigned val) {
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_LED_IO, val);
   }
 
   void TLUController::WriteI2C(unsigned hw, unsigned bus, unsigned device, unsigned data) {
@@ -611,7 +633,7 @@ namespace tlu {
     I2Cdelay();
     // set pca955 io as output
     WriteI2C16((hw << 3) | device, PCA955_CONFIG0_REGISTER, 0);
-    I2Cdelay(2500); // for scope debugging
+    I2Cdelay(200);
     // write pca955 io data
     WriteI2C16((hw << 3) | device, PCA955_OUTPUT0_REGISTER, data);
   }

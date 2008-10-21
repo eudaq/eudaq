@@ -43,15 +43,17 @@ namespace tlu {
 
   class TLUController {
   public:
-    //typedef void (*ErrorHandler)(const char * function,
-    //                             ZESTSC1_HANDLE,
-    //                             ZESTSC1_STATUS,
-    //                             const char * msg);
     enum ErrorHandler { // What to do if a usb access returns an error
       ERR_ABORT,        // Abort the program (used for debugging)
       ERR_THROW,        // Throw a TLUException
       ERR_RETRY1,       // Retry once before throwing
       ERR_RETRY2        // Retry twice
+    };
+    enum Input_t {      // Selects the input for DUT connectors 0-3
+      IN_NONE,          // Disable the DUT input
+      IN_HDMI,          // Select the HDMI input
+      IN_LEMO,          // Select the Lemo (TTL or NIM) input
+      IN_RJ45           // Select the RJ45 input
     };
 
     TLUController(int errormech = ERR_RETRY1);
@@ -66,6 +68,7 @@ namespace tlu {
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
+    void SelectDUT(int input, unsigned mask = 0xf);
 
     void SetTriggerInterval(unsigned millis);
 
@@ -93,9 +96,8 @@ namespace tlu {
     unsigned GetFirmwareID() const;
     unsigned GetSerialNumber() const;
     unsigned GetLibraryID(unsigned ver = 0) const;
-    void SetLEDs(int left, int right);
-    //unsigned GetLEDs() const;
-    void SetLemoLEDs(unsigned);
+    void SetLEDs(int left, int right = 0, int lemo = 0);
+    void UpdateLEDs();
     //void SetLemoADCVoltage(unsigned mask, double voltage);
 
     unsigned GetScaler(unsigned) const;
@@ -120,7 +122,7 @@ namespace tlu {
 
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
-    unsigned char m_mask, m_vmask, m_amask, m_omask;
+    unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel;
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
