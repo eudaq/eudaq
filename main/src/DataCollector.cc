@@ -256,17 +256,17 @@ namespace eudaq {
         ev.id.SetState(1); // successfully identified
         OnConnect(ev.id);
       } else {
-        std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
+        //std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
         for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
             std::cout << to_hex(ev.packet[i], 2) << ' ';
         }
-        std::cout << ")" << std::endl;
+        //std::cout << ")" << std::endl;
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-        std::cout << "Deserializing" << std::endl;
+        //std::cout << "Deserializing" << std::endl;
         counted_ptr<Event> event(EventFactory::Create(ser));
-        std::cout << "Done" << std::endl;
+        //std::cout << "Done" << std::endl;
         OnReceive(ev.id, event);
-        std::cout << "End" << std::endl;
+        //std::cout << "End" << std::endl;
       }
       break;
     default:

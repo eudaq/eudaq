@@ -74,23 +74,12 @@ namespace {
     return static_cast<vme2esstRate_t>(rate);
   }
 
-//   // make sure cache is synced with main memory
-//   static void asm_sync() {
-//     asm("sync");     // Ensure dcbf is complete
-//   }
-//   static void asm_dcbf(void * x) {
-//     (void)x; // suppress warning
-//     asm("dcbf 0,3"); // Data Cache Block Flush
-//     asm_sync();      // Ensure dcbf is complete
-//   }
-
-  TSI148SingleInterface * g_lastaccess = 0;
-
-  void do_delay(int usecs) {
-    eudaq::Timer t;
-    while (t.uSeconds() < usecs) {
-      // wait
-    }
+  // make sure cache is synced with main memory
+  static inline void asm_dcbf(unsigned char *) {
+    __asm__("dcbf 0,3");
+  }
+  static inline void asm_sync() {
+    __asm__("sync");
   }
 
 }
@@ -146,10 +135,6 @@ void TSI148SingleInterface::SetWindowParameters() {
 }
 
 void TSI148SingleInterface::DoRead(unsigned long offset, unsigned char * data, size_t size) {
-  if (g_lastaccess != this) {
-    g_lastaccess = this;
-    do_delay(2000);
-  }
   //std::cout << "DEBUG: seeking to offset " << offset << std::endl;
   lseek(m_fd, offset, SEEK_SET);
   //std::cout << "DEBUG: reading..." << std::endl;
@@ -162,10 +147,6 @@ void TSI148SingleInterface::DoRead(unsigned long offset, unsigned char * data, s
 }
 
 void TSI148SingleInterface::DoWrite(unsigned long offset, const unsigned char * data, size_t size) {
-  if (g_lastaccess != this) {
-    g_lastaccess = this;
-    do_delay(2000);
-  }
   lseek(m_fd, offset, SEEK_SET);
   //int cont = 2;
   errno = 0;
@@ -228,10 +209,10 @@ void TSI148DMAInterface::DoRead(unsigned long offset, unsigned char * data, size
   m_params->byteCount = size;
   //std::cout << "DEBUG: Zeroing memory and flushing cache." << std::endl;
   //memset(data, 0, size);
-  //for (size_t i = 0; i < size; i += 4) {
-  //  asm_dcbf(data+i);
-  //}
-  //asm_sync();
+  for (size_t i = 0; i < size; i += 4) {
+    asm_dcbf(data+i);
+  }
+  asm_sync();
   //std::cout << "DEBUG: dst address = " << eudaq::hexdec((unsigned long)data) << std::endl;
 // #define DBG(x) std::cout << "VME DEBUG: " #x " = " << m_params->x << std::endl
 //   DBG(maxPciBlockSize);

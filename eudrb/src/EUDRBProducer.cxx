@@ -508,7 +508,7 @@ public:
   struct BoardInfo {
     BoardInfo(unsigned long addr, const std::string & mode, const std::string & det)
       : vmes(VMEFactory::Create(addr, 0x1000000)),
-        vmed(VMEFactory::Create(addr, 0x1000000, VMEInterface::PMBLT)),
+        vmed(VMEFactory::Create(addr, 0x1000000, VMEInterface::A32, VMEInterface::D64, VMEInterface::PMBLT)),
         mode(mode), det(det), zs(mode == "ZS") {}
     VMEptr vmes, vmed;
     //unsigned long BaseAddress;
