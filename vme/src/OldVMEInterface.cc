@@ -11,6 +11,7 @@ extern "C" {
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <iostream>
 
 using eudaq::to_string;
 
@@ -42,7 +43,10 @@ OldVMEInterface::OldVMEInterface(unsigned long base, unsigned long size,
   : VMEInterface(base, size, awidth, dwidth, proto, sstrate)
 {
   CheckDriver();
-  if (g_fd == -1) g_fd = open("/dev/vme_m0", O_RDWR);
+  if (g_fd == -1) {
+    g_fd = open("/dev/vme_m0", O_RDWR);
+    std::cout << "*** Warning: $EUDAQ_OLDVME=1: using old VME library" << std::endl;
+  }
   if (g_fd == -1) {
     EUDAQ_THROW("Unable to open VME device file,"
                 "maybe another process is accessing it.");

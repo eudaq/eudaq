@@ -1,6 +1,7 @@
 #include "TSI148Interface.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/Timer.hh"
 #include <iostream>
 
 extern "C" {
@@ -82,6 +83,16 @@ namespace {
 //     asm("dcbf 0,3"); // Data Cache Block Flush
 //     asm_sync();      // Ensure dcbf is complete
 //   }
+
+  TSI148SingleInterface * g_lastaccess = 0;
+
+  void do_delay(int usecs) {
+    eudaq::Timer t;
+    while (t.uSeconds() < usecs) {
+      // wait
+    }
+  }
+
 }
 
 TSI148SingleInterface::TSI148SingleInterface(unsigned long base, unsigned long size,
@@ -135,6 +146,10 @@ void TSI148SingleInterface::SetWindowParameters() {
 }
 
 void TSI148SingleInterface::DoRead(unsigned long offset, unsigned char * data, size_t size) {
+  if (g_lastaccess != this) {
+    g_lastaccess = this;
+    do_delay(2000);
+  }
   //std::cout << "DEBUG: seeking to offset " << offset << std::endl;
   lseek(m_fd, offset, SEEK_SET);
   //std::cout << "DEBUG: reading..." << std::endl;
@@ -147,6 +162,10 @@ void TSI148SingleInterface::DoRead(unsigned long offset, unsigned char * data, s
 }
 
 void TSI148SingleInterface::DoWrite(unsigned long offset, const unsigned char * data, size_t size) {
+  if (g_lastaccess != this) {
+    g_lastaccess = this;
+    do_delay(2000);
+  }
   lseek(m_fd, offset, SEEK_SET);
   //int cont = 2;
   errno = 0;
