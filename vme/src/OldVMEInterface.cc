@@ -32,17 +32,18 @@ namespace {
     close(fd);
   }
 
+  static int g_fd = -1;
+
 }
 
 OldVMEInterface::OldVMEInterface(unsigned long base, unsigned long size,
                                  int awidth, int dwidth,
                                  int proto, int sstrate)
-  : VMEInterface(base, size, awidth, dwidth, proto, sstrate),
-    m_fd(-1)
+  : VMEInterface(base, size, awidth, dwidth, proto, sstrate)
 {
   CheckDriver();
-  m_fd = open("/dev/vme_m0", O_RDWR);
-  if (m_fd == -1) {
+  if (g_fd == -1) g_fd = open("/dev/vme_m0", O_RDWR);
+  if (g_fd == -1) {
     EUDAQ_THROW("Unable to open VME device file,"
                 "maybe another process is accessing it.");
   }
@@ -50,7 +51,6 @@ OldVMEInterface::OldVMEInterface(unsigned long base, unsigned long size,
 }
 
 OldVMEInterface::~OldVMEInterface() {
-  if (m_fd != -1) close(m_fd);
 }
 
 void OldVMEInterface::SetWindowParameters() {
@@ -60,12 +60,12 @@ void OldVMEInterface::SetWindowParameters() {
 
 void OldVMEInterface::DoRead(unsigned long offset, unsigned char * data, size_t size) {
   if (size != 4) EUDAQ_THROW("Only support D32 single read access (" + to_string(size) + ")");
-  vme_A32_D32_User_Data_SCT_read(m_fd, (unsigned long *)data, m_base + offset);
+  vme_A32_D32_User_Data_SCT_read(g_fd, (unsigned long *)data, m_base + offset);
 }
 
 void OldVMEInterface::DoWrite(unsigned long offset, const unsigned char * data, size_t size) {
   if (size != 4) EUDAQ_THROW("Only support D32 single write access (" + to_string(size) + ")");
-  vme_A32_D32_User_Data_SCT_write(m_fd, *(const unsigned long *)data, m_base + offset);
+  vme_A32_D32_User_Data_SCT_write(g_fd, *(const unsigned long *)data, m_base + offset);
 }
 
 OldDMAInterface::OldDMAInterface(unsigned long base, unsigned long size,

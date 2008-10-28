@@ -9,7 +9,6 @@ private:
   virtual void SetWindowParameters();
   virtual void DoRead(unsigned long offset, unsigned char * data, size_t size);
   virtual void DoWrite(unsigned long offset, const unsigned char * data, size_t size);
-  int m_chan, m_fd;
 };
 
 class OldDMAInterface : public VMEInterface {
