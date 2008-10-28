@@ -63,7 +63,7 @@ namespace eudaq {
     for (size_t i = 0; i < 4; ++i) {
       if (i < str.length()) result |= str[i] << (8*i);
     }
-    std::cout << "str2id(" << str << ") = " << std::hex << result << std::dec << std::endl;
+    //std::cout << "str2id(" << str << ") = " << std::hex << result << std::dec << std::endl;
     return result;
   }
 
