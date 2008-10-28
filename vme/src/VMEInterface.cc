@@ -1,5 +1,9 @@
 #include "VMEInterface.hh"
 #include "TSI148Interface.hh"
+#include "OldVMEInterface.hh"
+#include "eudaq/Exception.hh"
+#include <cstdlib>
+#include <iostream>
 
 VMEInterface::VMEInterface(unsigned long base, unsigned long size,
                            int awidth, int dwidth, int proto, int sstrate)
@@ -25,10 +29,19 @@ void VMEInterface::SetWindow(unsigned long base, unsigned long size, int awidth,
   SetWindowParameters();
 }
 
+void VMEInterface::SysReset() {
+  EUDAQ_THROW("SysReset not implemented in this driver");
+}
+
 VMEptr VMEFactory::Create(unsigned long base, unsigned long size, int awidth, int dwidth,
                           int proto, int sstrate) {
+  char * oldstr = std::getenv("EUDAQ_OLDVME");
+  bool oldvme = oldstr && oldstr == std::string("1");
+  if (oldvme) std::cout << "*** Warning: $EUDAQ_OLDVME=1: using old VME library" << std::endl;
   if (proto == VMEInterface::PSCT) {
-    return VMEptr(new TSI148SingleInterface(base, size, awidth, dwidth, proto));
+    return oldvme ? VMEptr(new OldVMEInterface(base, size, awidth, dwidth, proto))
+                  : VMEptr(new TSI148SingleInterface(base, size, awidth, dwidth, proto));
   }
-  return VMEptr(new TSI148DMAInterface(base, size, awidth, dwidth, proto, sstrate));
+  return oldvme ? VMEptr(new OldDMAInterface(base, size, awidth, dwidth, proto, sstrate))
+                : VMEptr(new TSI148DMAInterface(base, size, awidth, dwidth, proto, sstrate));
 }

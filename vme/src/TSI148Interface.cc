@@ -105,10 +105,9 @@ TSI148SingleInterface::~TSI148SingleInterface() {
 }
 
 void TSI148SingleInterface::OpenDevice() {
-  std::string devfile = "/dev/vme_dma0";
   // start from high end, so that old programs using vme_m0 still function
   for (m_chan = MAX_CHANNEL; m_chan >= 0; --m_chan) {
-    devfile = "/dev/vme_m" + to_string(m_chan);
+    std::string devfile = "/dev/vme_m" + to_string(m_chan);
     m_fd = open(devfile.c_str(), O_RDWR);
     //std::cout << "DEBUG: VME trying channel " << m_chan << ", fd = " << m_fd << std::endl;
     if (m_fd != -1) break;
