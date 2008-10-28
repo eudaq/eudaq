@@ -11,7 +11,7 @@ EXTERNAL_DEFS += VME_TRACE=0
 #EXTERNAL_INCS += ../main/include
 
 include ../Makefile.common
-#CFLAGS   := $(CFLAGS:-ansi=)
+CFLAGS   := $(CFLAGS:-ansi=)
 
 default: exe lib
 

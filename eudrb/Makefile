@@ -12,7 +12,7 @@ EXTERNAL_INCS += ../main/include
 
 
 include ../Makefile.common
-CFLAGS   := $(CFLAGS:-ansi=)
+#CFLAGS   := $(CFLAGS:-ansi=)
 
 ifeq ($(PLATFORM),WIN32)
 EXTERNAL_LIBS += Ws2_32
