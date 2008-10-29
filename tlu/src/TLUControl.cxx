@@ -43,6 +43,7 @@ int main(int /*argc*/, char ** argv) {
                                    "Firmware version to load (0=auto)");
   eudaq::Option<int>         wait(op, "w", "wait", 1000, "ms",
                                   "Time to wait between updates in milliseconds");
+  eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
   eudaq::Option<std::string> trace(op, "z", "trace-file", "", "filename",
@@ -105,9 +106,9 @@ int main(int /*argc*/, char ** argv) {
 
     unsigned long total = 0;
     while (!g_done) {
-      TLU.Update();
+      TLU.Update(!nots.IsSet());
       std::cout << std::endl;
-      TLU.Print();
+      TLU.Print(!nots.IsSet());
       if (sfile.get()) {
         for (size_t i = 0; i < TLU.NumEntries(); ++i) {
           *sfile << TLU.GetEntry(i).Eventnum() << "\t" << TLU.GetEntry(i).Timestamp() << std::endl;

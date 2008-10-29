@@ -73,7 +73,7 @@ namespace tlu {
     void SetTriggerInterval(unsigned millis);
 
     void Configure();
-    void Update();
+    void Update(bool timestamps = true);
     void Start();
     void Stop();
     void ResetTriggerCounter();
@@ -89,7 +89,8 @@ namespace tlu {
 
     bool InhibitTriggers(bool inhibit = true); // returns previous value
 
-    void Print(std::ostream & out = std::cout) const;
+    void Print(std::ostream & out = std::cout, bool timestamps = true) const;
+    void Print(bool timestamps) const { Print(std::cout, timestamps); }
 
     unsigned GetVersion() const;
     std::string GetFirmware() const;

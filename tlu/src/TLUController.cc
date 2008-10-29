@@ -342,31 +342,40 @@ namespace tlu {
     UpdateLEDs();
   }
 
-  void TLUController::Update() {
-    bool oldinhibit = InhibitTriggers();
+  void TLUController::Update(bool timestamps) {
+    unsigned entries = 0;
+    unsigned long long * timestamp_buffer = 0;
+    if (timestamps) {
+      bool oldinhibit = InhibitTriggers();
 
-    WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
-
-#if TLUDEBUG
-    //std::cout << "TLU::Update: after initial write" << std::endl;
-#endif
-    unsigned entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
+      WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
 
 #if TLUDEBUG
-    std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
+      //std::cout << "TLU::Update: after initial write" << std::endl;
 #endif
-
-    unsigned long long * timestamp_buffer = ReadBlock(entries);
+      entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
 
 #if TLUDEBUG
-    //std::cout << "TLU::Update: after 2 reads" << std::endl;
+      std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
 #endif
 
-    // Reset buffer pointer
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
+      timestamp_buffer = ReadBlock(entries);
 
-    InhibitTriggers(oldinhibit);
+#if TLUDEBUG
+      //std::cout << "TLU::Update: after 2 reads" << std::endl;
+#endif
+
+      // Reset buffer pointer
+      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
+      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
+
+      InhibitTriggers(oldinhibit);
+    } else {
+      WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
+      entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
+      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
+      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
+    }
 
 #if TLUDEBUG
     std::cout << "TLU::Update: entries=" << entries << std::endl;
@@ -399,11 +408,9 @@ namespace tlu {
 
     // Read timestamp buffer of BUFFER_DEPTH entries from TLU
     m_buffer.clear();
-    if (timestamp_buffer) {
-      int trig = m_triggernum - entries;
-      for (unsigned i = 0; i < entries; ++i) {
-        m_buffer.push_back(TLUEntry(timestamp_buffer[i], ++trig));
-      }
+    int trig = m_triggernum - entries;
+    for (unsigned i = 0; i < entries; ++i) {
+      m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : 0, ++trig));
     }
 
     //mSleep(1);
@@ -532,11 +539,13 @@ namespace tlu {
     return 0;
   }
 
-  void TLUController::Print(std::ostream &out) const {
-    for (size_t i = 0; i < m_buffer.size(); ++i) {
-      unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
-      out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << "\n";
-      m_lasttime = m_buffer[i].Timestamp();
+  void TLUController::Print(std::ostream &out, bool timestamps) const {
+    if (timestamps) {
+      for (size_t i = 0; i < m_buffer.size(); ++i) {
+        unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
+        out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << "\n";
+        m_lasttime = m_buffer[i].Timestamp();
+      }
     }
     out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
         << "Scalers:   ";
@@ -545,6 +554,7 @@ namespace tlu {
     }
     out << "Particles: " << m_particles << "\n"
         << "Triggers:  " << m_triggernum << "\n"
+        << "Entries:   " << NumEntries() << "\n"
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }

@@ -47,7 +47,7 @@ public:
       }
       if (TLUStarted || JustStopped) {
         eudaq::mSleep(100);
-        m_tlu->Update(); // get new events
+        m_tlu->Update(timestamps); // get new events
         if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
           bool inhibit = m_tlu->InhibitTriggers();
           m_tlu->ResetTriggerCounter();
@@ -91,6 +91,7 @@ public:
       or_mask = param.Get("OrMask", 0);
       veto_mask = param.Get("VetoMask", 0);
       trig_rollover = param.Get("TrigRollover", 0);
+      timestamps = param.Get("Timestamps", 1);
       // ***
       m_tlu->SetFirmware(param.Get("BitFile", ""));
       m_tlu->SetVersion(param.Get("Version", 0));
@@ -171,7 +172,7 @@ public:
       std::cout << "Reset" << std::endl;
       SetStatus(eudaq::Status::LVL_OK);
       m_tlu->Stop();   // stop
-      m_tlu->Update(); // empty events
+      m_tlu->Update(false); // empty events
       SetStatus(eudaq::Status::LVL_OK, "Reset");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -197,7 +198,7 @@ private:
   unsigned m_run, m_ev;
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask;
   unsigned trig_rollover;
-  bool done;
+  bool timestamps, done;
   bool TLUStarted;
   bool TLUJustStopped;
   unsigned long long lasttime;
