@@ -587,7 +587,7 @@ namespace tlu {
   }
 
   void TLUController::UpdateLEDs() {
-    int right = 0, lemo = 0;
+    int right = m_mask & 0x30, lemo = 0;
     for (int i = 0; i < 4; ++i) {
       lemo |= 5 << (3*i);
       if (m_mask & (1 << i)) {
