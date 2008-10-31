@@ -34,6 +34,8 @@ using eudaq::to_string;
 
 namespace tlu {
 
+  static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
+
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
 
   std::string TLUException::make_msg(const std::string & msg, int status, int tries) {
@@ -410,7 +412,7 @@ namespace tlu {
     m_buffer.clear();
     int trig = m_triggernum - entries;
     for (unsigned i = 0; i < entries; ++i) {
-      m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : 0, ++trig));
+      m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP, ++trig));
     }
 
     //mSleep(1);
