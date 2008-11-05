@@ -25,7 +25,7 @@ namespace eudaq {
     //unsigned WordCount() const;
     //unsigned GetID() const { return m_id; }
     //size_t   DataSize() const;
-    const unsigned char * GetData() const { return &m_data[8]; }
+    const unsigned char * GetData() const { return &m_data[0]; }
     void Print(std::ostream &) const;
   private:
     unsigned char GetByte(size_t i) const { return m_data[i]; }
