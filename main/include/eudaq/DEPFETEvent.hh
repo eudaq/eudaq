@@ -19,12 +19,12 @@ namespace eudaq {
       m_id(id), m_data(make_vector(data, bytes)) {}
     DEPFETBoard(Deserializer &);
     virtual void Serialize(Serializer &) const;
-    //unsigned LocalEventNumber() const;
-    //unsigned TLUEventNumber() const;
+      //unsigned LocalEventNumber() const;
+      //unsigned TLUEventNumber() const;
     //unsigned FrameNumber() const;
     //unsigned WordCount() const;
     //unsigned GetID() const { return m_id; }
-    //size_t   DataSize() const;
+    size_t   DataSize() const;
     const unsigned char * GetData() const { return &m_data[0]; }
     void Print(std::ostream &) const;
   private:
@@ -94,6 +94,54 @@ namespace eudaq {
     //bool m_analyzed;
     std::vector<DEPFETBoard> m_boards;
   };
+
+
+  class DEPFETDecoder {
+  public:
+
+    DEPFETDecoder(const DetectorEvent & bore);
+
+
+    typedef std::vector<short> column_t;
+      //   typedef std::vector<frame_t> data_t;
+//    data_t GetData(const EUDRBBoard & brd);
+
+    template <typename T_coord, typename T_adc = T_coord>
+    struct arrays_t {
+      arrays_t(size_t numpix, size_t numframes)
+        : m_x(numpix, 0),
+          m_y(numpix, 0),
+          m_adc(numframes, std::vector<T_adc>(numpix, 0)),
+          m_pivot(numpix, false)
+        {}
+      std::vector<T_coord> m_x, m_y;
+      std::vector<std::vector<T_adc> > m_adc;
+      std::vector<bool> m_pivot;
+    };
+    template <typename T_coord, typename T_adc>
+    arrays_t<T_coord, T_adc> GetArrays(const DEPFETBoard & brd) const;
+
+      /*   struct BoardInfo {
+      BoardInfo();
+      BoardInfo(const EUDRBEvent & ev, unsigned brd);
+      void Check();
+      unsigned NumFrames() const;
+      unsigned NumPixels(const EUDRBBoard & brd) const;
+      E_DET m_det;
+      E_MODE m_mode;
+      unsigned m_rows, m_cols, m_mats;
+      std::vector<int> m_order;
+      int m_version;
+    };
+      */
+  private:
+      // const BoardInfo & GetInfo(const EUDRBBoard & brd) const;
+      //std::map<unsigned, BoardInfo> m_info;
+  };
+
+
+
+
 
 }
 
