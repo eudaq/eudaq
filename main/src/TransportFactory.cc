@@ -11,7 +11,7 @@ namespace eudaq {
 
     typedef std::map<std::string, TransportInfo> map_t;
 
-    map_t & TransportMap() {
+    static map_t & TransportMap() {
       static map_t m;
       return m;
     }
