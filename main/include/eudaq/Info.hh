@@ -6,6 +6,10 @@
  * to enable users of the library to conditionally enable functionality.
  */
 
+// The Info.hh file itself exists
+#define EUDAQ_INFO_FILE 1
+
+// The DEPFET decoder is implemented
 #define EUDAQ_DEPFET_DECODER 1
 
 #endif // EUDAQ_INCLUDED_Info
