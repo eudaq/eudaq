@@ -137,8 +137,8 @@ static void flushLine(void * ramptr)
   (void)ramptr; /* Disable unused parameter warning */
 #if defined(_ARCH_PPC) || defined(__PPC__) || defined(__PPC) || \
     defined(__powerpc__) || defined(__powerpc)
-  asm("dcbf 0,3");
-  asm("sync");
+  __asm__("dcbf 0,3");
+  __asm__("sync");
 #else
 # warning "Old VME library is only compatible with Motorola CPUs"
 #endif
