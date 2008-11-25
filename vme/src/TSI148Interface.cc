@@ -74,6 +74,8 @@ namespace {
     return static_cast<vme2esstRate_t>(rate);
   }
 
+#if defined(_ARCH_PPC) || defined(__PPC__) || defined(__PPC) || \
+    defined(__powerpc__) || defined(__powerpc)
   // make sure cache is synced with main memory
   static inline void asm_dcbf(unsigned char *) {
     __asm__("dcbf 0,3");
@@ -81,7 +83,11 @@ namespace {
   static inline void asm_sync() {
     __asm__("sync");
   }
-
+#else
+# warning "TSI148 VME library is only compatible with Motorola CPUs"
+  static inline void asm_dcbf(unsigned char *) {}
+  static inline void asm_sync() {}
+#endif
 }
 
 TSI148SingleInterface::TSI148SingleInterface(unsigned long base, unsigned long size,
