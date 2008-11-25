@@ -78,7 +78,7 @@ void LogCollectorGUI::AddSender(const std::string & type, const std::string & na
         cmbFrom->insertItem(i, text.c_str());
         insertedtype = true;
       }
-      if (foundtype || i == count && name != "") {
+      if (foundtype || (i == count && name != "")) {
         //std::cout << "Inserting name" << std::endl;
         cmbFrom->insertItem(i+insertedtype, (type + "." + name).c_str());
         return;

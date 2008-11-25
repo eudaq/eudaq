@@ -77,21 +77,21 @@ namespace eudaq {
  	return result;
   }
 
-  DEPFETDecoder::DEPFETDecoder(const DetectorEvent & bore) {
-    for (size_t i = 0; i < bore.NumEvents(); ++i) {
-      const DEPFETEvent * ev = dynamic_cast<const DEPFETEvent *>(bore.GetEvent(i));
-      //std::cout << "SubEv " << i << (ev ? " is DEPFET" : "") << std::endl;
-      if (ev) {
-        unsigned nboards = from_string(ev->GetTag("BOARDS"), 0);
-        for (size_t j = 0; j < nboards; ++j) {
-          //std::cout << "Board " << j << std::endl;
-          unsigned id = from_string(ev->GetTag("ID") + to_string(j), j);
-          //std::cout << "ID = " << id << std::endl;
-	  //    m_info[id] = BoardInfo(*ev, j);
-	  // std::cout << "ok" << std::endl;
-        }
-      }
-    }
+  DEPFETDecoder::DEPFETDecoder(const DetectorEvent & /*bore*/) {
+//     for (size_t i = 0; i < bore.NumEvents(); ++i) {
+//       const DEPFETEvent * ev = dynamic_cast<const DEPFETEvent *>(bore.GetEvent(i));
+//       //std::cout << "SubEv " << i << (ev ? " is DEPFET" : "") << std::endl;
+//       if (ev) {
+//         unsigned nboards = from_string(ev->GetTag("BOARDS"), 0);
+//         for (size_t j = 0; j < nboards; ++j) {
+//           //std::cout << "Board " << j << std::endl;
+//           unsigned id = from_string(ev->GetTag("ID") + to_string(j), j);
+//           //std::cout << "ID = " << id << std::endl;
+// 	  m_info[id] = BoardInfo(*ev, j);
+// 	  // std::cout << "ok" << std::endl;
+//         }
+//       }
+//     }
   }
 
 

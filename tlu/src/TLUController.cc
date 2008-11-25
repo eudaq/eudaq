@@ -7,7 +7,6 @@
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 # include <cstdio>  // HK
-# include <cstdlib>  // HK
 #else
 # include <unistd.h>
 #endif
@@ -16,6 +15,7 @@
 #include <ostream>
 #include <fstream>
 #include <iomanip>
+#include <cstdlib>
 
 using eudaq::mSleep;
 using eudaq::hexdec;
@@ -79,7 +79,7 @@ namespace tlu {
       if (errorhandleraborts()) {
         std::cerr << "ZESTSC1 ERROR:  function " << function << " returned error: " << msg << std::endl;
         usbflushtracefile();
-        abort();
+        std::abort();
       }
     }
 

@@ -165,7 +165,8 @@ int main(int /*argc*/, char ** argv) {
     } else {
       std::cout << "Displaying " << frames.size() << " histos" << std::endl;
       int x_argc = 0;
-      char * x_argv[] = {"", 0};
+      char emptystr[] = "";
+      char * x_argv[] = {emptystr, 0};
       TApplication app("TestHisto", &x_argc, x_argv);
       gROOT->Reset();
       gROOT->SetStyle("Plain");

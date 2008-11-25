@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <set>
+#include <algorithm>
 
 using eudaq::to_string;
 using eudaq::from_string;

@@ -91,7 +91,7 @@ private:
     emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
     emit StatusChanged("EVENT", "");
   }
-  virtual void StopRun(bool listen = true) {
+  virtual void StopRun(bool /*listen*/ = true) {
     RunControl::StopRun();
     StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
   }
