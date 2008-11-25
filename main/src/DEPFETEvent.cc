@@ -55,26 +55,27 @@ namespace eudaq {
 
 
   DEPFETDecoder::arrays_t<T_coord, T_adc> DEPFETDecoder::GetArrays(const DEPFETBoard & brd) const {
-	unsigned pixels = 8192; // datasize 8195!!! 
+      unsigned pixels = 8192; // datasize 8195!!! 
       DEPFETDecoder::arrays_t<T_coord, T_adc> result(pixels, 1);
       const unsigned  * data0 = (unsigned *) brd.GetData();
       const unsigned  * data = &data0[3];
-     
-       printf("eudaq::DEPFET data0=0x%x Trigger=0x%x data2= 0x%x  brdsize=%d\n",data0[0],data0[1],data0[2],brd.DataSize());
 
+      //printf("eudaq::DEPFET data0=0x%x Trigger=0x%x data2= 0x%x  brdsize=%d\n",
+      //       data0[0],data0[1],data0[2],(int)brd.DataSize());
 
       for (unsigned i = 0; i < pixels; ++i) {
         int col = (data[i]>>16)&0x3F;
         int row = (data[i]>>22)&0x7F;
-        
+
         result.m_adc[0][i] = (data[i]& 0xffff);
         result.m_pivot[i] = false;
-	result.m_x[i] = col;
-	result.m_y[i] = row;
-	//     printf("eudaq::DEPFET ipix=%d col= %d row= %d data=%d brdsize=%d \n",i,col,row,data[i]&0xffff, brd.DataSize());
+        result.m_x[i] = col;
+        result.m_y[i] = row;
+        //printf("eudaq::DEPFET ipix=%d col= %d row= %d data=%d brdsize=%d \n",
+        //       i,col,row,data[i]&0xffff,(int)brd.DataSize());
       }
 
- 	return result;
+      return result;
   }
 
   DEPFETDecoder::DEPFETDecoder(const DetectorEvent & /*bore*/) {
@@ -87,8 +88,8 @@ namespace eudaq {
 //           //std::cout << "Board " << j << std::endl;
 //           unsigned id = from_string(ev->GetTag("ID") + to_string(j), j);
 //           //std::cout << "ID = " << id << std::endl;
-// 	  m_info[id] = BoardInfo(*ev, j);
-// 	  // std::cout << "ok" << std::endl;
+//           m_info[id] = BoardInfo(*ev, j);
+//           // std::cout << "ok" << std::endl;
 //         }
 //       }
 //     }
