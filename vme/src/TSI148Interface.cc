@@ -12,6 +12,7 @@ extern "C" {
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cstring>
 
 using eudaq::to_string;
 using eudaq::uchar_cast;
@@ -21,7 +22,7 @@ namespace {
 
   static void CheckDriver() {
     vmeInfoCfg_t VmeInfo;
-    memset(&VmeInfo, 0, sizeof VmeInfo);
+    std::memset(&VmeInfo, 0, sizeof VmeInfo);
     int fd = open("/dev/vme_ctl",O_RDONLY);
     //std::cout << "DEBUG: cme_ctl fd = " << fd << std::endl;
     int status = -1;
@@ -44,10 +45,14 @@ namespace {
     }
     lseek(fd, 0x238, SEEK_SET);
     unsigned long data;
-    read(fd, uchar_cast(&data), sizeof data);
+    if (read(fd, uchar_cast(&data), sizeof data) < 0) {
+      EUDAQ_THROW("Unable to read from TSI148 registers");
+    }
     data |= 1 << 17;
     lseek(fd, 0x238, SEEK_SET);
-    write(fd, uchar_cast(&data), sizeof data);
+    if (write(fd, uchar_cast(&data), sizeof data) < 0) {
+      EUDAQ_THROW("Unable to write to TSI148 registers");
+    }
     close(fd);
   }
 

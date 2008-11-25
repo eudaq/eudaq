@@ -12,13 +12,14 @@ extern "C" {
 #include <unistd.h>
 #include <errno.h>
 #include <iostream>
+#include <cstring>
 
 using eudaq::to_string;
 
 namespace {
   static void CheckDriver() {
     vmeInfoCfg_t VmeInfo;
-    memset(&VmeInfo, 0, sizeof VmeInfo);
+    std::memset(&VmeInfo, 0, sizeof VmeInfo);
     int fd = open("/dev/vme_ctl",O_RDONLY);
     //std::cout << "DEBUG: cme_ctl fd = " << fd << std::endl;
     int status = -1;

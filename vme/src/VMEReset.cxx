@@ -25,13 +25,17 @@ int main(int /*argc*/, const char ** argv) {
     }
     lseek(fd, 0x238, SEEK_SET);
     unsigned long data;
-    read(fd, uchar_cast(&data), sizeof data);
+    if (read(fd, uchar_cast(&data), sizeof data) < 0) {
+      EUDAQ_THROW("Unable to read from TSI148 registers");
+    }
     if (dbg.IsSet()) std::cout << "DEBUG: VCTRL register read " << eudaq::hexdec(data) << std::endl;
     if (sys.IsSet()) data |= 1 << 17;
     if (loc.IsSet()) data |= 1 << 16;
     lseek(fd, 0x238, SEEK_SET);
     if (dbg.IsSet()) std::cout << "DEBUG: VCTRL register writing " << eudaq::hexdec(data) << std::endl;
-    write(fd, uchar_cast(&data), sizeof data);
+    if (write(fd, uchar_cast(&data), sizeof data) < 0) {
+      EUDAQ_THROW("Unable to write to TSI148 registers");
+    }
     close(fd);
     std::cout << "Done." << std::endl;
   } catch (...) {
