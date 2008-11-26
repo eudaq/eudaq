@@ -93,15 +93,16 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
+    m_writer = FileWriterFactory::Create(m_config.Get("FileType", ""));
+    m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
     //if (runnumber == m_runnumber && m_ser.get()) return false;
-    std::string fname = "../data/run" + to_string(runnumber, 6) + ".raw";
-    EUDAQ_INFO("Preparing for run " + to_string(runnumber) + ", file=" + fname);
+    EUDAQ_INFO("Preparing for run " + to_string(runnumber));
     m_runstart = Time::Current();
     try {
-      m_ser = counted_ptr<FileSerializer>(new FileSerializer(fname));
+      m_writer->StartRun(runnumber);
       {
         std::ofstream file(RUN_NUMBER_FILE);
         file << runnumber << std::endl;
@@ -120,8 +121,9 @@ namespace eudaq {
 
       SetStatus(Status::LVL_OK);
     } catch (const Exception & e) {
-      EUDAQ_ERROR("Unable to open data file (" + fname + ")");
-      SetStatus(Status::LVL_ERROR, "Unable to open data file");
+      std::string msg = "Error preparing for run " + to_string(runnumber) + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::LVL_ERROR, msg);
     }
   }
 
@@ -151,7 +153,7 @@ namespace eudaq {
     if (m_eventnumber > 0) evt = to_string(m_eventnumber - 1);
     m_status.SetTag("EVENT", evt);
     m_status.SetTag("RUN", to_string(m_runnumber));
-    if (m_ser.get()) m_status.SetTag("FILEBYTES", to_string(m_ser->FileBytes()));
+    if (m_writer.get()) m_status.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
   }
 
   void DataCollector::OnCompleteEvent() {
@@ -189,9 +191,8 @@ namespace eudaq {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
         EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
       }
-      if (m_ser.get()) {
-        ev.Serialize(*m_ser);
-        m_ser->Flush();
+      if (m_writer.get()) {
+        m_writer->WriteEvent(ev);
       } else {
         EUDAQ_ERROR("Event received before start of run");
       }

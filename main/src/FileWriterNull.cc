@@ -3,7 +3,7 @@
 namespace eudaq {
 
   namespace {
-    RegisterFileWriter<FileWriterNull> reg("NULL");
+    RegisterFileWriter<FileWriterNull> reg("null");
   }
 
 }

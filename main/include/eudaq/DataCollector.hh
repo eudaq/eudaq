@@ -9,7 +9,7 @@
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/Event.hh"
-#include "eudaq/FileSerializer.hh"
+#include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/counted_ptr.hh"
@@ -54,7 +54,7 @@ namespace eudaq {
     size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
     size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
     unsigned m_runnumber, m_eventnumber;
-    counted_ptr<FileSerializer> m_ser;
+    counted_ptr<FileWriter> m_writer;
     Configuration m_config;
     Time m_runstart;
   };

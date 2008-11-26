@@ -1,16 +1,17 @@
 #include "eudaq/FileWriterNative.hh"
+#include "eudaq/FileNamer.hh"
 
 namespace eudaq {
 
   namespace {
-    static RegisterFileWriter<FileWriterNative> reg("NATIVE");
+    static RegisterFileWriter<FileWriterNative> reg("native");
   }
 
   FileWriterNative::FileWriterNative(const std::string &) : m_ser(0) {}
 
   void FileWriterNative::StartRun(unsigned runnumber) {
     if (m_ser) delete m_ser;
-    m_ser = new FileSerializer(GenFilename(runnumber, ".raw"));
+    m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
   }
 
   void FileWriterNative::WriteEvent(const DetectorEvent & ev) {

@@ -14,7 +14,6 @@ namespace eudaq {
     void SetFilePattern(const std::string & p) { m_filepattern = p; }
     virtual ~FileWriter() {}
   protected:
-    std::string GenFilename(unsigned run, const std::string & ext) const;
     std::string m_filepattern;
   };
 

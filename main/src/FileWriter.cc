@@ -1,4 +1,5 @@
 #include "eudaq/FileWriter.hh"
+#include "eudaq/FileNamer.hh"
 #include "eudaq/Exception.hh"
 
 namespace eudaq {
@@ -18,17 +19,11 @@ namespace eudaq {
   }
 
   FileWriter * FileWriterFactory::Create(const std::string & name, const std::string & params) {
-    map_t::const_iterator it = FileWriterMap().find(name);
+    map_t::const_iterator it = FileWriterMap().find(name == "" ? "native" : name);
     if (it == FileWriterMap().end()) EUDAQ_THROW("Unknown file writer: " + name);
     return (it->second)(params);
   }
 
-  FileWriter::FileWriter() : m_filepattern("../data/run#") {}
-
-  std::string FileWriter::GenFilename(unsigned run, const std::string & ext) const {
-    size_t i = m_filepattern.find('#');
-    if (i == std::string::npos) return m_filepattern + ext;
-    return m_filepattern.substr(0, i) + to_string(run, 6) + m_filepattern.substr(i+1) + ext;
-  }
+  FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern) {}
 
 }
