@@ -43,6 +43,7 @@ namespace eudaq {
     void CommandHandler(TransportEvent &);
     pthread_t m_thread;
     pthread_attr_t m_threadattr;
+    bool m_threadcreated;
   };
 
 }

@@ -30,7 +30,8 @@ namespace eudaq {
     : m_cmdclient(TransportFactory::CreateClient(runcontrol)),
       m_done(false),
       m_type(type),
-      m_name(name)
+      m_name(name),
+      m_threadcreated(false)
   {
     if (!m_cmdclient->IsNull()) {
       std::string packet;
@@ -64,12 +65,14 @@ namespace eudaq {
 
     m_cmdclient->SetCallback(TransportCallback(this, &CommandReceiver::CommandHandler));
 
-    pthread_attr_init(&m_threadattr);
     if (startthread) StartThread();
   }
 
   void CommandReceiver::StartThread() {
-    pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this);
+    pthread_attr_init(&m_threadattr);
+    if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
+      m_threadcreated = true;
+    }
   }
 
   void CommandReceiver::SetStatus(Status::Level level, const std::string & info) {
@@ -142,7 +145,7 @@ namespace eudaq {
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
-    pthread_join(m_thread, 0);
+    if (m_threadcreated) pthread_join(m_thread, 0);
     delete m_cmdclient;
   }
 
