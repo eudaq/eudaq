@@ -22,7 +22,11 @@ else
 fi
 
 OLDREPO=`svn info | grep '^Repository Root: ' | sed 's/^[^:]*: //'`
-
+if [ "$OLDREPO" == "" ]; then
+  OLDREPO="http://svn.hepforge.org/eudaq"
+  echo "Unable to detect repository root (you probably have an old svn installed)"
+  echo "assuming it is: http://svn.hepforge.org/eudaq"
+fi
 shift
 
 echo "Switching from $OLDREPO to $REPO"
