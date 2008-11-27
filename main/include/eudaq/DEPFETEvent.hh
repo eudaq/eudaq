@@ -23,7 +23,7 @@ namespace eudaq {
       //unsigned TLUEventNumber() const;
     //unsigned FrameNumber() const;
     //unsigned WordCount() const;
-    //unsigned GetID() const { return m_id; }
+    unsigned GetID() const { return m_id; }
     size_t   DataSize() const;
     const unsigned char * GetData() const { return &m_data[0]; }
     void Print(std::ostream &) const;
