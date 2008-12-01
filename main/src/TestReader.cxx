@@ -6,6 +6,7 @@
 #include "eudaq/Utils.hh"
 
 #include <iostream>
+#include <fstream>
 
 using eudaq::from_string;
 using eudaq::to_string;

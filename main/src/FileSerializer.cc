@@ -1,51 +1,77 @@
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/Utils.hh"
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <iostream>
 
 namespace eudaq {
 
-  FileSerializer::FileSerializer(const std::string & fname, bool overwrite)
-    : m_filebytes(0)
+  FileSerializer::FileSerializer(const std::string & fname, bool overwrite, int wprot)
+    : m_file(0), m_filebytes(0), m_wprot(wprot)
   {
     if (!overwrite) {
-      std::ifstream test(fname.c_str());
-      if (test.is_open()) EUDAQ_THROWX(FileExistsException, "File already exists: " + fname);
+      FILE * fd = fopen(fname.c_str(), "rb");
+      if (fd) {
+        fclose(fd);
+        EUDAQ_THROWX(FileExistsException, "File already exists: " + fname);
+      }
     }
-    m_stream.open(fname.c_str(), std::ios::binary);
-    if (!m_stream.is_open()) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
+    m_file = fopen(fname.c_str(), "wb");
+    if (!m_file) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
+    if (m_wprot == WP_ONOPEN) {
+      WriteProtect();
+    }
+  }
+
+  FileSerializer::~FileSerializer() {
+    if (m_wprot == WP_ONCLOSE) {
+      WriteProtect();
+    }
+    if (m_file) {
+      fclose(m_file);
+    }
   }
 
   void FileSerializer::Serialize(const unsigned char * data, size_t len) {
-    m_stream.write(reinterpret_cast<const char *>(data), len);
+    std::fwrite(reinterpret_cast<const char *>(data), len, 1, m_file);
     m_filebytes += len;
   }
 
   void FileSerializer::Flush() {
-    m_stream.flush();
+    fflush(m_file);
+  }
+
+  void FileSerializer::WriteProtect() {
+    fchmod(fileno(m_file), S_IRUSR | S_IRGRP | S_IROTH);
   }
 
   FileDeserializer::FileDeserializer(const std::string & fname, bool faileof) :
-    m_stream(fname.c_str(), std::ios::binary), m_faileof(faileof)
+    m_file(0), m_faileof(faileof)
   {
-    if (!m_stream.is_open()) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
+    m_file = fopen(fname.c_str(), "rb");
+    if (!m_file) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
   }
 
   bool FileDeserializer::HasData() {
-    m_stream.clear();
-    bool result = m_stream.peek() != std::ifstream::traits_type::eof();
-    if (!result) m_stream.clear();
-    return result;
+    clearerr(m_file);
+    int c = std::fgetc(m_file);
+    if (c == EOF) {
+      clearerr(m_file);
+      return false;
+    }
+    std::ungetc(c, m_file);
+    return true;
   }
 
   void FileDeserializer::Deserialize(unsigned char * data, size_t len) {
     size_t read = 0;
     //std::cout << "Reading " << len << std::flush;
     while (read < len) {
-      m_stream.read(reinterpret_cast<char *>(data) + read, len - read);
-      size_t r = m_stream.gcount();
+      if (read) mSleep(10);
+      size_t r = fread(reinterpret_cast<char *>(data) + read, 1, len - read, m_file);
       read += r;
       //if (r) std::cout << "<<<" << r << ">>>" << std::flush;
-      if (m_stream.eof()) {
+      if (feof(m_file)) {
         if (m_faileof) {
           throw FileReadException("End of File encountered");
         }
@@ -53,12 +79,11 @@ namespace eudaq {
           m_interrupting = false;
           throw InterruptedException();
         }
-        m_stream.clear();
+        clearerr(m_file);
         //std::cout << '.' << std::flush;
-        mSleep(1);
-      } else if (m_stream.bad()) {
+      } else if (int err = ferror(m_file)) {
         std::cout << std::endl;
-        EUDAQ_THROWX(FileReadException, "Error reading from file");
+        EUDAQ_THROWX(FileReadException, "Error reading from file: " + to_string(err));
       }
     }
     //std::cout << std::endl;

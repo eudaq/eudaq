@@ -10,7 +10,7 @@ namespace eudaq {
   FileNamer::FileNamer(const std::string & p) {
     std::string pattern(p == "" ? default_pattern : p);
     size_t i0 = 0;
-    std::cout << "FileNamer " << pattern << std::endl;
+    //std::cout << "FileNamer " << pattern << std::endl;
     for (;;) {
       size_t i1 = pattern.find('$', i0);
       //std::cout << "loop i0 " << i0 << ", i1 " << i1 << std::endl;
@@ -57,7 +57,7 @@ namespace eudaq {
     for (size_t i = 0; i < m_parts.size(); ++i) {
       result += m_parts[i].str;
     }
-    std::cout << "FileNamer " << result << std::endl;
+    //std::cout << "FileNamer " << result << std::endl;
     return result;
   }
 
