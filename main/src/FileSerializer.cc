@@ -33,8 +33,11 @@ namespace eudaq {
   }
 
   void FileSerializer::Serialize(const unsigned char * data, size_t len) {
-    std::fwrite(reinterpret_cast<const char *>(data), len, 1, m_file);
-    m_filebytes += len;
+    size_t written = std::fwrite(reinterpret_cast<const char *>(data), 1, len, m_file);
+    m_filebytes += written;
+    if (written != len) {
+      EUDAQ_THROW("Error writing to file: " + to_string(errno) + ", " + strerror(errno));
+    }
   }
 
   void FileSerializer::Flush() {
