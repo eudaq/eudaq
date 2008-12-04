@@ -102,6 +102,9 @@ namespace eudaq {
     EUDAQ_INFO("Preparing for run " + to_string(runnumber));
     m_runstart = Time::Current();
     try {
+      if (!m_writer) {
+        EUDAQ_THROW("You must configure before starting a run");
+      }
       m_writer->StartRun(runnumber);
       {
         std::ofstream file(RUN_NUMBER_FILE);
