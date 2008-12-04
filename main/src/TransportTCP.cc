@@ -19,6 +19,8 @@
 
 namespace eudaq {
 
+  const std::string TCPServer::name = "tcp";
+
   namespace {
 
     static const int MAXPENDING = 16;
@@ -45,8 +47,6 @@ namespace eudaq {
       (void)sig;
     }
 #endif
-
-    const std::string TCPServer::name = "tcp";
 
     static void do_send_data(SOCKET sock, const unsigned char * data, size_t len) {
       //if (len > 500000) std::cout << "Starting send" << std::endl;
