@@ -6,7 +6,7 @@
 #include <map>
 
 // All transport header files must be included here
-#include "eudaq/TransportNull.hh"
+#include "eudaq/TransportNULL.hh"
 #include "eudaq/TransportTCP.hh"
 
 namespace eudaq {
