@@ -5,15 +5,7 @@
 
 namespace eudaq {
 
-  namespace {
-
-    static const std::string PROTO_NAME = "null";
-
-    /** This registers the Transport with the TransportFactory
-     */
-    static RegisterTransport<NULLServer, NULLClient> reg(PROTO_NAME);
-
-  } // anonymous namespace
+  const std::string NULLServer::name = "null";
 
   NULLServer::NULLServer(const std::string &) {
   }
@@ -32,7 +24,7 @@ namespace eudaq {
   }
 
   std::string NULLServer::ConnectionString() const {
-    return PROTO_NAME + "://";
+    return "null://";
   }
 
   NULLClient::NULLClient(const std::string & /*param*/) {

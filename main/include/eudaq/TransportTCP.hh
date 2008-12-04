@@ -49,6 +49,7 @@ namespace eudaq {
     virtual void ProcessEvents(int timeout);
 
     virtual std::string ConnectionString() const;
+    static const std::string name;
   private:
     int m_port;
     SOCKET m_srvsock;

@@ -21,7 +21,6 @@ namespace eudaq {
 
   namespace {
 
-    static const std::string PROTO_NAME = "tcp";
     static const int MAXPENDING = 16;
     static const int MAX_BUFFER_SIZE = 10000;
 
@@ -47,9 +46,7 @@ namespace eudaq {
     }
 #endif
 
-    /** This registers the TCP Transport with the TransportFactory
-     */
-    static RegisterTransport<TCPServer, TCPClient> reg(PROTO_NAME);
+    const std::string TCPServer::name = "tcp";
 
     static void do_send_data(SOCKET sock, const unsigned char * data, size_t len) {
       //if (len > 500000) std::cout << "Starting send" << std::endl;
@@ -320,7 +317,7 @@ namespace eudaq {
     const char * host = getenv("HOSTNAME");
     if (!host) host = "localhost";
     //gethostname(buf, sizeof buf);
-    return PROTO_NAME + "://" + host + ":" + to_string(m_port);
+    return name + "://" + host + ":" + to_string(m_port);
   }
 
   TCPClient::TCPClient(const std::string & param)

@@ -22,6 +22,7 @@ namespace eudaq {
 
     virtual std::string ConnectionString() const;
     virtual bool IsNull() const { return true; }
+    static const std::string name;
   private:
   };
 

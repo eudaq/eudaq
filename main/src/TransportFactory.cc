@@ -5,13 +5,50 @@
 #include <string>
 #include <map>
 
+// All transport header files must be included here
+#include "eudaq/TransportNull.hh"
+#include "eudaq/TransportTCP.hh"
+
 namespace eudaq {
+
+  /** Stores the name and factory methods for a type of Transport.
+   */
+  struct TransportFactory::TransportInfo {
+    typedef TransportServer * (*ServerFactory)(const std::string &);
+    typedef TransportClient * (*ClientFactory)(const std::string &);
+    TransportInfo() : name(""), serverfactory(0), clientfactory(0) {}
+    TransportInfo(const std::string & nm, ServerFactory sf, ClientFactory cf):
+      name(nm), serverfactory(sf), clientfactory(cf) {}
+    std::string name;
+    ServerFactory serverfactory;
+    ClientFactory clientfactory;
+  };
 
   namespace {
 
-    typedef std::map<std::string, TransportInfo> map_t;
+    template <typename T_Server, typename T_Client>
+    struct MakeTransportInfo : public TransportFactory::TransportInfo {
+      MakeTransportInfo(const std::string & thename) :
+        TransportInfo(thename, theserverfactory, theclientfactory) {
+      }
+      static TransportServer * theserverfactory(const std::string & param) {
+        return new T_Server(param);
+      }
+      static TransportClient * theclientfactory(const std::string & param) {
+        return new T_Client(param);
+      }
+    };
+
+    typedef std::map<std::string, TransportFactory::TransportInfo> map_t;
 
     static map_t & TransportMap() {
+      static bool initialised = false;
+      if (!initialised) {
+        initialised = true;
+        // All transports have to be registered here
+        TransportFactory::Register(MakeTransportInfo<NULLServer, NULLClient>(NULLServer::name));
+        TransportFactory::Register(MakeTransportInfo<TCPServer, TCPClient>(TCPServer::name));
+      }
       static map_t m;
       return m;
     }
