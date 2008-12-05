@@ -20,10 +20,10 @@ int main(int argc, char ** argv) {
                                    "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
                                    "The minimum level for displaying log messages locally");
-  eudaq::Option<int>             x(op, "x", "left",   -1, "pos");
-  eudaq::Option<int>             y(op, "y", "top",    -1, "pos");
-  eudaq::Option<int>             w(op, "w", "width",  -1, "pos");
-  eudaq::Option<int>             h(op, "g", "height", -1, "pos", "The initial position of the window");
+  eudaq::Option<int>             x(op, "x", "left",   0, "pos");
+  eudaq::Option<int>             y(op, "y", "top",    0, "pos");
+  eudaq::Option<int>             w(op, "w", "width",  150, "pos");
+  eudaq::Option<int>             h(op, "g", "height", 200, "pos", "The initial position of the window");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
