@@ -96,7 +96,7 @@ namespace eudaq {
 
   template <typename T, typename U>
   inline void Serializer::write(const std::map<T, U> & t) {
-    unsigned len = t.size();
+    unsigned len = (unsigned)t.size();
     write(len);
     for (typename std::map<T, U>::const_iterator i = t.begin(); i != t.end(); ++i) {
       write(i->first);

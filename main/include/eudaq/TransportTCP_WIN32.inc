@@ -3,7 +3,7 @@
 #define EWOULDBLOCK WSAEWOULDBLOCK
 
 #include <map>
-
+#include <winsock.h>
 namespace eudaq {
 
   namespace {

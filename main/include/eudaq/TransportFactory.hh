@@ -13,7 +13,7 @@ namespace eudaq {
     static TransportServer * CreateServer(const std::string & name);
     static TransportClient * CreateClient(const std::string & name);
 
-    class TransportInfo;
+    struct TransportInfo;
     static void Register(const TransportInfo & info);
   };
 

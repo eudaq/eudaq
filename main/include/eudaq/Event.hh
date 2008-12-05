@@ -56,9 +56,9 @@ namespace eudaq {
       return eudaq::from_string(GetTag(name), def);
     }
 
-    bool IsBORE() const { return GetFlags(FLAG_BORE); }
-    bool IsEORE() const { return GetFlags(FLAG_EORE); }
-    bool HasHits() const { return GetFlags(FLAG_HITS); }
+    bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
+    bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
+    bool HasHits() const { return GetFlags(FLAG_HITS) != 0; }
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
