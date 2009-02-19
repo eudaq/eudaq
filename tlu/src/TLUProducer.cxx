@@ -121,7 +121,7 @@ public:
     try {
       m_run = param;
       m_ev = 0;
-      //m_tlu->Configure();
+      m_tlu->ResetTriggerCounter();
       std::cout << "Start Run: " << param << std::endl;
       TLUEvent ev(TLUEvent::BORE(m_run));
       ev.SetTag("FirmwareID",  to_string(m_tlu->GetFirmwareID()));
