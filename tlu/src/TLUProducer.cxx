@@ -83,7 +83,8 @@ public:
     try {
       std::cout << "Configuring." << std::endl;
       if (m_tlu) m_tlu = 0;
-      m_tlu = counted_ptr<TLUController>(new TLUController());
+      int errorhandler = param.Get("ErrorHandler", 2);
+      m_tlu = counted_ptr<TLUController>(new TLUController(errorhandler));
 
       trigger_interval = param.Get("TriggerInterval", 0);
       dut_mask = param.Get("DutMask", 2);
