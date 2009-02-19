@@ -69,6 +69,9 @@ endif
 
 # Build options
 
+# Default value for optimization, if not set on command line
+OPTIMIZE := 2
+
 MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBUG=$(NODEBUG) MOREDEBUG=$(MOREDEBUG)
 
 # Common flags for C/C++/dependencies
