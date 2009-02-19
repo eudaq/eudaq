@@ -17,6 +17,7 @@ namespace eudaq {
   void FileWriterNative::WriteEvent(const DetectorEvent & ev) {
     if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
     m_ser->write(ev);
+    m_ser->Flush();
   }
 
   FileWriterNative::~FileWriterNative() {
