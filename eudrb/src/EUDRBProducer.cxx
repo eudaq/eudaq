@@ -21,25 +21,13 @@
 #include <errno.h>
 #include <sys/time.h>
 
-//#include "vmedrv.h"
-//#include "eudrblib.h"
-//#include "vmelib.h"
 #include "VMEInterface.hh"
 
-#define DMABUFFERSIZE   0x100000                               //MBLT Buffer Dimension
+#define DMABUFFERSIZE   0x100000   //MBLT Buffer Dimension
 
 using eudaq::EUDRBEvent;
 using eudaq::to_string;
 using eudaq::Timer;
-
-// VME stuff, not very clean like this
-//int fdOut;                                                                      //File descriptor of the dev_m#
-//unsigned long int readdata32=0;                         //For Longword Read
-//unsigned long int i=0;
-//unsigned long int address=0;                            //VME address
-//unsigned long int BaseAddress=0x30000000;       //EUDRB VME Base address
-//unsigned long int number_of_bytes, total_bytes;                      //Number of byte for a MBLT read
-//unsigned long int * mblt_dstbuffer=NULL, * temp_buffer=NULL;
 
 class EUDRBProducer : public eudaq::Producer {
 public:
@@ -53,12 +41,6 @@ public:
       m_idoffset(0),
       m_version(-1)
     {
-//       if (fdOut < 0) {
-//         EUDAQ_THROW("Open device failed Errno = " + to_string(errno));
-//       }
-//       if (getMyInfo() != 0) {
-//         EUDAQ_THROW("getMyInfo failed.  Errno = " + to_string(errno));
-//       }
     }
   void Process() {
     if (!started) {
@@ -76,7 +58,6 @@ public:
     for (size_t n_eudrb=0;n_eudrb<boards.size();n_eudrb++) {
 
       Timer t_board;
-      ///unsigned long address;
 
       bool badev=false;
 
@@ -135,12 +116,14 @@ public:
       ev.AddBoard(n_eudrb,&buffer[0], number_of_bytes);
       t_add.Stop();
       total_bytes+=(number_of_bytes+7)&~7;
-      std::cout << "B" << n_eudrb << ": wait=" << t_wait.uSeconds() << "us, "
-                << "mblt=" << t_mblt.uSeconds() << "us, "
-                << "reset=" << t_reset.uSeconds() << "us, "
-                << "add=" << t_add.uSeconds() << "us, "
-                << "board=" << t_board.uSeconds() << "us, "
-                << "bytes=" << number_of_bytes << "\n";
+      if (m_ev % 100 == 0) {
+        std::cout << "B" << n_eudrb << ": wait=" << t_wait.uSeconds() << "us, "
+                  << "mblt=" << t_mblt.uSeconds() << "us, "
+                  << "reset=" << t_reset.uSeconds() << "us, "
+                  << "add=" << t_add.uSeconds() << "us, "
+                  << "board=" << t_board.uSeconds() << "us, "
+                  << "bytes=" << number_of_bytes << "\n";
+      }
     }
 
     if (total_bytes) {
@@ -173,7 +156,6 @@ public:
       bool unsync = param.Get("Unsynchronized", 0);
       std::cout << "Running in " << (unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-        ///unsigned long address=boards[n_eudrb].BaseAddress;
         unsigned long data = 0;
         if (boards[n_eudrb].zs) data |= 0x20; // ZS mode
         if (n_eudrb==boards.size()-1 || unsync) data |= 0x2000; // Internal Timing
