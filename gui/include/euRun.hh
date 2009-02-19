@@ -63,7 +63,11 @@ private:
       emit StatusChanged("LASTTIME", status->GetTag("LASTTIME").c_str());
       int trigs = from_string(status->GetTag("TRIG"), 0);
       double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
-      emit StatusChanged("MEANRATE", time ? (to_string(trigs/time) + " Hz").c_str() : "");
+      if (m_runstarttime == 0.0) {
+        m_runstarttime = time;
+      } else {
+        emit StatusChanged("MEANRATE", (to_string((trigs-1)/(time-m_runstarttime)) + " Hz").c_str());
+      }
       int dtrigs = trigs - m_prevtrigs;
       double dtime = time - m_prevtime;
       if (dtrigs >= 10 || dtime >= 1.0) {
@@ -86,10 +90,13 @@ private:
   }
   virtual void StartRun(const std::string & msg = "") {
     m_prevtrigs = 0;
-    m_prevtime = 0;
+    m_prevtime = 0.0;
+    m_runstarttime = 0.0;
     RunControl::StartRun(msg);
     emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
     emit StatusChanged("EVENT", "");
+    emit StatusChanged("RATE", "");
+    emit StatusChanged("MEANRATE", "");
   }
   virtual void StopRun(bool /*listen*/ = true) {
     RunControl::StopRun();
@@ -133,5 +140,5 @@ private:
   typedef std::map<std::string, QLabel *> status_t;
   status_t m_status;
   int m_prevtrigs;
-  double m_prevtime;
+  double m_prevtime, m_runstarttime;
 };

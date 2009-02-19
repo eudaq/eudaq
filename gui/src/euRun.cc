@@ -62,7 +62,8 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
     eudaq::RunControl(listenaddress),
     m_delegate(&m_run),
     m_prevtrigs(0),
-    m_prevtime(0.0)
+    m_prevtime(0.0),
+    m_runstarttime(0.0)
 {
   setupUi(this);
   if (!grpStatus->layout()) grpStatus->setLayout(new QGridLayout(grpStatus));
