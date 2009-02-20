@@ -54,9 +54,9 @@ int main(int /*argc*/, const char ** argv) {
   eudaq::Option<std::string> sensor(op, "s", "sensor", "mimotel", "name",
                                      "The type of sensor (sets default size: mimotel=256x256, mimosa18=508x512)");
   eudaq::Option<unsigned> width(op, "x", "width", 256, "pixels",
-                                "The width of the sensor in pixels");
+                                "The width of the sensor in pixels (overrides the -s option)");
   eudaq::Option<unsigned> height(op, "y", "height", 256, "pixels",
-                                 "The height of the sensor in pixels");
+                                 "The height of the sensor in pixels (overrides -s)");
   eudaq::Option<std::string> pattern(op, "p", "pattern", "zs", "name",
                                      "The name of the pattern to generate");
   eudaq::Option<std::string> outfile(op, "o", "out", "", "file",

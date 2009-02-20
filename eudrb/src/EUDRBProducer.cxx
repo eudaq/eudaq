@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <ostream>
+#include <fstream>
 #include <cctype>
 
 // stuff for VME/C-related business
@@ -28,6 +29,22 @@
 using eudaq::EUDRBEvent;
 using eudaq::to_string;
 using eudaq::Timer;
+
+static int decode_offset_mimotel(int x, int y) {
+  unsigned subm = x>>6;
+  if (subm == 1 || subm == 2) subm = 3-subm; // fix for submatrix ordering
+  x %= 64;
+  return (x+2) | (y << 9) | (subm << 18); // x+2, because 0 and 1 are dummy pixels
+}
+
+static int decode_offset_mimosa18(int x, int y) {
+  // Not yet correct - needs debugging
+  unsigned subm = x / 256 + 2*(y / 256);
+  x %= 256;
+  y %= 256;
+  unsigned offset = x | (y << 9) | (subm << 18);
+  return offset;
+}
 
 class EUDRBProducer : public eudaq::Producer {
 public:
@@ -259,6 +276,7 @@ public:
         if (boards[n_eudrb].zs) {
           int thresh = param.Get("Board" + to_string(n_eudrb) + ".Thresh", "Thresh", 10);
           int ped = param.Get("Board" + to_string(n_eudrb) + ".Ped", "Ped", 0);
+          float mult = param.Get("Board" + to_string(n_eudrb) + ".Mult", "Mult", 2.0);
           std::string fname = param.Get("Board" + to_string(n_eudrb) + ".PedestalFile", "PedestalFile", "");
           if (thresh < 0 && fname == "") {
             fname = "ped%.dat";
@@ -274,12 +292,12 @@ public:
             fname = std::string(fname, 0, n) + to_string(n_eudrb) + std::string(fname, n+1);
           }
           if (fname != "") fname = "../pedestal/" + fname;
-          pedestal_t peds = (fname != "") ? ReadPedestals(fname)
-            : GeneratePedestals(thresh, ped);
+          pedestal_t peds = (fname == "") ? GeneratePedestals(thresh, ped)
+            : ReadPedestals(fname, mult, boards[n_eudrb].det);
           LoadPedestals(boards[n_eudrb], peds);
 
           std::string msg = "Board " + to_string(n_eudrb) + " pedestals loading";
-          if (fname != "") msg += " from file " + fname;
+          if (fname != "") msg += " from file " + fname + " * " + to_string(mult);
           else msg += " values = " + to_string(ped) + ", " + to_string(thresh);
           puts(msg.c_str());
           EUDAQ_INFO(msg);
@@ -400,61 +418,52 @@ public:
   pedestal_t GeneratePedestals(int thresh = 10, int ped = 0) const {
     return pedestal_t(1UL<<20, thresh | (ped << 6));
   }
-  pedestal_t ReadPedestals(const std::string & filename) const {
-    pedestal_t result(1UL<<20);
-    FILE *fp;
-    unsigned long /*readdata32,*/ newdata32, offset;
-    int board,x,y,flag,subm,thresh2bit,ped2bit;
-    float ped, thresh,sigma=2.0; // sigma is hardcoded for the moment
+  pedestal_t ReadPedestals(const std::string & filename, float sigma, const std::string & sensor) const {
+    static const unsigned badpix = 0x1f + (1<<11);
+    pedestal_t result(1UL<<20, badpix);
     //printf("Fill Matrices on board: %lx\n",address);
-    char dummy[100];
-    if ( (fp = fopen(filename.c_str(), "r") ) ) {
-      printf("Opened file %s\n",filename.c_str());
-      //printf("\tDownloading pedestals to board: %d\n",n_eudrb);
-      fgets(dummy,100,fp); fscanf(fp,"\n");
-      printf("\t%s\n",dummy);
-      fgets(dummy,100,fp); fscanf(fp,"\n");// skip 2 lines
-      printf("\t%s\n",dummy);
-      
-      while (fscanf(fp,"%d %d %d %f %f %d\n",&board,&x,&y,&ped,&thresh,&flag)!=EOF) {
-        //printf("I read: board: %1d, x: %3d, y: %3d, ped: %2.3f, thresh: %2.3f, flag: %2d\n",board,x,y,ped,thresh,flag);
-        subm=(x>>6);
-        if (subm == 1 || subm == 2) subm = 3-subm; // fix for submatrix ordering
-        x=x%64;
-        offset=((x+2)+(y<<9)+(subm<<18))<<2; // x+2, because 0 and 1 are dummy pixels
-        thresh2bit=(int) (thresh*sigma); // prepare for 2bits complement
-        ped2bit=(int) ped&0x1f; // prepare for 2bits complement
-        //              newdata32=0xc;
-        if (thresh2bit>31) thresh2bit=31;
-        if (thresh2bit<-32) thresh2bit=-32;
-        if (ped2bit>31) ped2bit=31;
-        if (ped2bit<-32) ped2bit=-32;
-        newdata32=(thresh2bit & 0x3f) | ((ped2bit & 0x3f) << 6);
-        
-        if (flag) newdata32=0x1f+(1<<11); // mask bad pixels as good as you can (high thresh and very low ped)
-        
-//            if ((y<2 || y>253) && (x<4||x>61)) {
-//              printf("\tsubm=%2d,y=%3d,x=%3d,address=0x%8lx,data=0x%3lx,thresh2bit=%3d\n",subm,y,x,address,newdata32,thresh2bit);
-//            }
-        result[offset/4] = newdata32;
-      }
-      fclose(fp);
+    int (*decode_offset)(int,int) = 0;
+    if (sensor == "MIMOTEL") {
+      decode_offset = decode_offset_mimotel;
+    } else if (sensor == "MIMOSA18") {
+      decode_offset = decode_offset_mimosa18;
     } else {
-      EUDAQ_ERROR(std::string("Unable top open pedestal file ") + filename);
+      EUDAQ_THROW("I don't know how to decode " + sensor + " pedestal files");
     }
-    // now black out the dummy pixels
-    printf("\tMasking dummy pixels!\n");
-    newdata32=0x1f+(1<<11); // mask dummy pixels as good as you can (high thresh and very low ped)
-    for (int subm=0;subm<4;subm++) {
-      for (int y=0;y<256;y++) {
-        for (int x=0;x<2;x++) {
-          offset=(x+(y<<7)+(subm<<18))<<2;
-//              if ((y<3 || y>252) && (x<2))
-//                printf("\tsubm=%2d,y=%3d,x=%3d,address=0x%8lx,data=0x%lx\n",subm,y,x,address,newdata32);
+    std::ifstream file(filename.c_str());
+    if (file.is_open()) {
+      //printf("Opened file %s\n",filename.c_str());
+      std::string line;
+      while (std::getline(file, line)) {
+        line = eudaq::trim(line);
+        if (line == "") {
+          continue;
+        } else if (line[0] == '#') {
+          std::cout << line << std::endl;
+          continue;
         }
+        int board,x,y,flag=0;
+        float ped, thresh;
+        if (sscanf(line.c_str(),"%d %d %d %f %f %d\n",&board,&x,&y,&ped,&thresh,&flag) < 5) {
+          EUDAQ_THROW("Error in pedestal file");
+        }
+        unsigned long offset = decode_offset(x, y);
+        int thresh2bit = (int) (thresh*sigma);
+        int ped2bit = (int)ped & 0x1f;
+        if (thresh2bit > 31) thresh2bit = 31;
+        if (thresh2bit < -32) thresh2bit = -32;
+        if (ped2bit > 31) ped2bit = 31;
+        if (ped2bit < -32) ped2bit = -32;
+        unsigned long newdata32 = (thresh2bit & 0x3f) | ((ped2bit & 0x3f) << 6);
+
+        if (flag) newdata32 = badpix; // mask bad pixels as good as you can (high thresh and very low ped)
+
+        result[offset] = newdata32;
       }
+    } else {
+      EUDAQ_THROW("Unable top open pedestal file " + filename);
     }
-    printf("\tdone!\n");
+    //printf("\tdone!\n");
     return result;
   }
 
