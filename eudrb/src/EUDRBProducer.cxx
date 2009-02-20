@@ -39,9 +39,19 @@ static int decode_offset_mimotel(int x, int y) {
 
 static int decode_offset_mimosa18(int x, int y) {
   // Not yet correct - needs debugging
-  unsigned subm = x / 256 + 2*(y / 256);
-  x %= 256;
+  unsigned subm = x / 254 + 2*(y / 256);
+  if (subm == 1 || subm == 3) subm = 4-subm; // fix for submatrix ordering
+  x %= 254;
   y %= 256;
+  if (subm == 3) {
+    x = 253-x;
+  } else if (subm == 2) {
+    y = 255-y;
+  } else if (subm == 1) {
+    x = 253-x;
+    y = 255-y;
+  }
+  x += 2;
   unsigned offset = x | (y << 9) | (subm << 18);
   return offset;
 }
