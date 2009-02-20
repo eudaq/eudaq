@@ -31,6 +31,7 @@ using eudaq::to_string;
 using eudaq::Timer;
 
 static int decode_offset_mimotel(int x, int y) {
+  if (x >= 256 || y >= 256) EUDAQ_THROW("Bad coordinates in pedestal file");
   unsigned subm = x>>6;
   if (subm == 1 || subm == 2) subm = 3-subm; // fix for submatrix ordering
   x %= 64;
@@ -38,7 +39,8 @@ static int decode_offset_mimotel(int x, int y) {
 }
 
 static int decode_offset_mimosa18(int x, int y) {
-  // Not yet correct - needs debugging
+  if (x >= 508 || y >= 512) EUDAQ_THROW("Bad coordinates in pedestal file");
+  // Arbitrary submatrix numbering - not the same as Strasbourg's numbers
   unsigned subm = x / 254 + 2*(y / 256);
   if (subm == 1 || subm == 3) subm = 4-subm; // fix for submatrix ordering
   x %= 254;
@@ -51,7 +53,7 @@ static int decode_offset_mimosa18(int x, int y) {
     x = 253-x;
     y = 255-y;
   }
-  x += 2;
+  x += 2; // for the dummy pixels
   unsigned offset = x | (y << 9) | (subm << 18);
   return offset;
 }
