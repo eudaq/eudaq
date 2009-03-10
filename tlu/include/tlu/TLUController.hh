@@ -92,14 +92,13 @@ namespace tlu {
     void Print(std::ostream & out = std::cout, bool timestamps = true) const;
     void Print(bool timestamps) const { Print(std::cout, timestamps); }
 
-    unsigned GetVersion() const;
+    std::string GetVersion() const;
     std::string GetFirmware() const;
     unsigned GetFirmwareID() const;
     unsigned GetSerialNumber() const;
     unsigned GetLibraryID(unsigned ver = 0) const;
     void SetLEDs(int left, int right = 0, int lemo = 0);
     void UpdateLEDs();
-    //void SetLemoADCVoltage(unsigned mask, double voltage);
 
     unsigned GetScaler(unsigned) const;
     unsigned GetParticles() const;
@@ -107,6 +106,7 @@ namespace tlu {
     void OpenTLU();
     void LoadFirmware();
     void Initialize();
+    bool SetupLemo(); // Tries to set the LEMO termination and DAC voltage, returns true if successful
 
     void WriteRegister(unsigned long offset, unsigned char val);
     unsigned char ReadRegister8(unsigned long offset) const;
@@ -116,7 +116,8 @@ namespace tlu {
     unsigned long long * ReadBlock(unsigned entries);
     unsigned char ReadRegisterRaw(unsigned long offset) const;
 
-    void WriteI2C(unsigned hw, unsigned bus, unsigned device, unsigned data);
+    void SelectBus(unsigned bus);
+    void WritePCA955(unsigned bus, unsigned device, unsigned data);
     void WriteI2C16(unsigned device, unsigned command, unsigned data);
     void WriteI2Cbyte(unsigned data);
     bool WriteI2Clines(bool scl, bool sda);

@@ -35,7 +35,7 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for coincidence of external triggers");
   eudaq::Option<int>         omask(op, "o", "ormask", 0, "mask",
                                    "The mask for ORing of external triggers");
-  eudaq::Option<int>         ipsel(op, "i", "dutinputs", 3, "value",
+  eudaq::Option<std::vector<int> > ipsel(op, "i", "dutinputs", "value", ",",
                                    "Selects the DUT inputs 0-3 (1=HDMI, 2=LEMO, 3=RJ45)");
   eudaq::Option<int>         emode(op, "e", "error-handler", 2, "value",
                                    "Error handler (0=abort, >0=number of tries before exception)");
@@ -44,6 +44,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::Option<int>         wait(op, "w", "wait", 1000, "ms",
                                   "Time to wait between updates in milliseconds");
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
+  eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
   eudaq::Option<std::string> trace(op, "z", "trace-file", "", "filename",
@@ -51,6 +52,9 @@ int main(int /*argc*/, char ** argv) {
                                    "prepend - for only errors, or + for all data (including block transfers)");
   try {
     op.Parse(argv);
+    for (size_t i = ipsel.NumItems()-1; i >= 4; --i) {
+      if (ipsel.Item(i) != TLUController::IN_RJ45) throw eudaq::OptionException("Invalid DUT input selection");
+    }
     std::cout << "Using options:\n"
               << "TLU version = " << fwver.Value() << (fwver.Value() == 0 ? " (auto)" : "") << "\n"
               << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
@@ -60,7 +64,7 @@ int main(int /*argc*/, char ** argv) {
               << "Veto Mask = " << hexdec(vmask.Value()) << "\n"
               << "And Mask = " << hexdec(amask.Value()) << "\n"
               << "Or Mask = " << hexdec(omask.Value()) << "\n"
-              << "DUT inputs = " << ipsel.Value() << "\n"
+              << "DUT inputs = " << to_string(ipsel.Value()) << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -92,7 +96,16 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
-    TLU.SelectDUT(ipsel.Value());
+    if (ipsel.NumItems() > 4) ipsel.Resize(4);
+    for (size_t i = 0; i < ipsel.NumItems(); ++i) {
+      unsigned mask = 1U << i;
+      if (i == ipsel.NumItems() - 1) {
+        for (size_t j = i+1; j < 4; ++j) {
+          mask |= 1U << j;
+        }
+      }
+      TLU.SelectDUT(ipsel.Item(i), mask);
+    }
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
               << "TLU Serial number = " << TLU.GetSerialNumber() << "\n"
               << "Firmware file = " << TLU.GetFirmware() << "\n"
@@ -100,6 +113,7 @@ int main(int /*argc*/, char ** argv) {
               << "Library version = " << TLU.GetLibraryID() << "\n"
               << std::endl;
 
+    if (quit.IsSet()) return 0;
     eudaq::Timer totaltime, lasttime;
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;

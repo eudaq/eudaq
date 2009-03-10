@@ -109,6 +109,7 @@ namespace eudaq {
       {}
     const std::vector<T> & Value() const { return m_value; }
     void SetValue(const std::vector<T> & val = std::vector<T>()) { m_value = val; }
+    void Resize(size_t size) { m_value.resize(size); }
     size_t NumItems() const { return m_value.size(); }
     const T & Item(size_t i) const { return m_value[i]; }
   private:
@@ -118,7 +119,8 @@ namespace eudaq {
         size_t start = i;
         i = arg.find(m_sep, start);
         //std::cout << '"' << arg << '"' << ".find(" << m_sep << ", " << start << ") = " << i << std::endl;
-        m_value.push_back(from_string(std::string(arg, start, i-start), T()));
+        std::string valstr(arg, start, (i == std::string::npos ? arg.length() : i) - start);
+        m_value.push_back(from_string(valstr, T()));
         if (i != std::string::npos) {
           i += m_sep.length();
         }

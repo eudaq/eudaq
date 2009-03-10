@@ -54,6 +54,13 @@ namespace tlu {
     static const double TLUFREQUENCY = 48.001e6;
     static const unsigned FIRSTV2SERIAL = 1000;
 
+    static const char * g_versions[] = {
+      "Unknown",
+      "v0.1",
+      "v0.2a",
+      "v0.2c"
+    };
+
 //     static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
 //       TRIGGER_IN0_COUNTER_0,
 //       TRIGGER_IN1_COUNTER_0,
@@ -89,6 +96,13 @@ namespace tlu {
         // wait
       } while (t.uSeconds() < us);
       //usleep(us);
+    }
+
+    static unsigned lemo_dac_value(double voltage) {
+      static const double vref = 2.049, vgain = 3.3;
+      static const unsigned fullscale = 0x3ff;
+      double vdac = vref - ((voltage - vref) / vgain);
+      return unsigned(fullscale * (vdac / (2*vref))) & 0x3FFU;
     }
 
   }
@@ -190,6 +204,13 @@ namespace tlu {
   }
 
   void TLUController::Initialize() {
+    if (m_version == 2) {
+      if (!SetupLemo()) {
+        // If LEMO ADC does not respond, we must have a v0.2c TLU, so increment version number
+        m_version++;
+      }
+    }
+
     // set up beam trigger
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
@@ -212,10 +233,10 @@ namespace tlu {
     SetDUTMask(m_mask);
     //SetLeftLEDs(m_mask, m_mask);
 
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
-             m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
-    WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
-             m_addr->TLU_I2C_BUS_MOTHERBOARD_RESET_ENABLE_IO, 0xff00); // turn mb and lemo reset outputs on
+    WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
+                m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
+    WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
+                m_addr->TLU_I2C_BUS_MOTHERBOARD_RESET_ENABLE_IO, 0xff00); // turn mb and lemo reset outputs on
   }
 
   TLUController::~TLUController() {
@@ -249,7 +270,23 @@ namespace tlu {
     }
     LoadFirmware();
     Initialize();
-    //InhibitTriggers(true);
+  }
+
+  bool TLUController::SetupLemo() {
+    SelectBus(m_addr->TLU_I2C_BUS_LEMO);
+    try {
+      // TTL (0x3) -> -0.5
+      // NIM (0xC) ->  0.4
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_ADC,
+                 0x3, 0xf000 | (lemo_dac_value(-0.5) << 2));
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_ADC,
+                 0xC, 0xf000 | (lemo_dac_value(0.4) << 2));
+    } catch (const eudaq::Exception &) {
+      return false;
+    }
+    // Set high-z for TTL, 50-ohm for NIM
+    WritePCA955(m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_RELAY_IO, 0x03);
+    return true;
   }
 
   void TLUController::Start() {
@@ -339,8 +376,8 @@ namespace tlu {
         m_ipsel |= (input & 3) << (2*i);
       }
     }
-    if (m_addr) WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD,
-                         m_addr->TLU_I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO, m_ipsel);
+    if (m_addr) WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
+                            m_addr->TLU_I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO, m_ipsel);
     UpdateLEDs();
   }
 
@@ -561,8 +598,8 @@ namespace tlu {
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }
 
-  unsigned TLUController::GetVersion() const {
-    return m_version;
+  std::string TLUController::GetVersion() const {
+    return g_versions[m_version];
   }
 
   std::string TLUController::GetFirmware() const {
@@ -625,29 +662,38 @@ namespace tlu {
       if (m_version == 1) {
         WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, left);
       } else {
+        // Swap the two LSBs, to work around routing bug on TLU
         unsigned data = (m_ledstatus & ~2) | ((m_ledstatus & 1) << 1) | ((m_ledstatus >> 1) & 1);
+        // And invert, because 1 means off
         data = ~data & 0xffff;
-        WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
-        WriteI2C(PCA955_HW_ADDR, m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_LED_IO, lemo);
+        WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
+        if (m_version >= 3) {
+          // Versions before 3 (v0.2c) didn't have LEMO LEDs
+          WritePCA955(m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_LED_IO, lemo);
+        }
       }
     }
   }
 
-  void TLUController::WriteI2C(unsigned hw, unsigned bus, unsigned device, unsigned data) {
-    if (m_version < 2) return;
-#if TLUDEBUG
-    std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << device << ", data=" << hexdec(data) << std::endl;
-#endif
+  void TLUController::SelectBus(unsigned bus) {
     // select i2c bus
     WriteI2Clines(1, 1);
     I2Cdelay();
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
     I2Cdelay();
+  }
+
+  void TLUController::WritePCA955(unsigned bus, unsigned device, unsigned data) {
+    if (m_version < 2) return;
+#if TLUDEBUG
+    std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << device << ", data=" << hexdec(data) << std::endl;
+#endif
+    SelectBus(bus);
     // set pca955 io as output
-    WriteI2C16((hw << 3) | device, PCA955_CONFIG0_REGISTER, 0);
+    WriteI2C16((PCA955_HW_ADDR << 3) | device, PCA955_CONFIG0_REGISTER, 0);
     I2Cdelay(200);
     // write pca955 io data
-    WriteI2C16((hw << 3) | device, PCA955_OUTPUT0_REGISTER, data);
+    WriteI2C16((PCA955_HW_ADDR << 3) | device, PCA955_OUTPUT0_REGISTER, data);
   }
 
   void TLUController::WriteI2C16(unsigned device, unsigned command, unsigned data) {
