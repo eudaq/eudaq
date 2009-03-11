@@ -117,10 +117,7 @@ namespace tlu {
         << " = " << Timestamp2Seconds(m_timestamp);
   }
 
-  // Error handler function
   TLUController::TLUController(int errorhandler) :
-    //m_filename(""),
-    //m_errorhandler(0),
     m_mask(0),
     m_vmask(0),
     m_amask(0),
@@ -137,16 +134,13 @@ namespace tlu {
     m_particles(0),
     m_lasttime(0),
     m_errorhandler(errorhandler),
+    m_version(0),
     m_addr(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       m_scalers[i] = 0;
     }
-    if (m_filename == "") m_filename = "TLU_Toplevel.bit";
-//     for (unsigned i = 0; i < BUFFER_DEPTH; ++i) {
-//       m_oldbuf[i] = 0;
-//     }
 
     // Install an error handler
     ZestSC1RegisterErrorHandler(DefaultErrorHandler);
@@ -199,6 +193,16 @@ namespace tlu {
   }
 
   void TLUController::LoadFirmware() {
+    if (m_filename == "") {
+      m_filename = "TLU";
+      if (m_version > 1) m_filename += "2";
+      m_filename += "_Toplevel.bit";
+    } else if (m_filename.find_first_not_of("0123456789") == std::string::npos) {
+      std::string filename = "../tlu/TLU";
+      if (m_version == 2) filename += "2";
+      filename += "_Toplevel-" + m_filename + ".bit";
+      m_filename = filename;
+    }
     ZestSC1ConfigureFromFile(m_handle, const_cast<char*>(m_filename.c_str()));
     InhibitTriggers(true);
   }
@@ -258,16 +262,6 @@ namespace tlu {
       m_addr = &v0_2;
     }
     if (!m_oldbuf) m_oldbuf = new unsigned long long[m_addr->TLU_BUFFER_DEPTH];
-    if (m_filename == "") {
-      m_filename = "TLU";
-      if (m_version == 2) m_filename += "2";
-      m_filename += "_Toplevel.bit";
-    } else if (m_filename.find_first_not_of("0123456789") == std::string::npos) {
-      std::string filename = "../tlu/TLU";
-      if (m_version == 2) filename += "2";
-      filename += "_Toplevel-" + m_filename + ".bit";
-      m_filename = filename;
-    }
     LoadFirmware();
     Initialize();
   }
@@ -599,7 +593,8 @@ namespace tlu {
   }
 
   std::string TLUController::GetVersion() const {
-    return g_versions[m_version];
+    size_t maxversion = sizeof g_versions / sizeof *g_versions;
+    return g_versions[m_version < maxversion ? m_version : 0];
   }
 
   std::string TLUController::GetFirmware() const {

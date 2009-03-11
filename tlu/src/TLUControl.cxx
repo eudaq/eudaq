@@ -27,7 +27,7 @@ int main(int /*argc*/, char ** argv) {
                                    "The bitfile containing the TLU firmware to be loaded");
   eudaq::Option<int>         trigg(op, "t", "trigger", 0, "msecs",
                                    "The interval in milliseconds for internally generated triggers (0 = off)");
-  eudaq::Option<int>         dmask(op, "d", "dutmask", 2, "mask",
+  eudaq::Option<int>         dmask(op, "d", "dutmask", 0, "mask",
                                    "The mask for enabling the DUT connections");
   eudaq::Option<int>         vmask(op, "v", "vetomask", 0, "mask",
                                    "The mask for vetoing external triggers");
@@ -52,7 +52,7 @@ int main(int /*argc*/, char ** argv) {
                                    "prepend - for only errors, or + for all data (including block transfers)");
   try {
     op.Parse(argv);
-    for (size_t i = ipsel.NumItems()-1; i >= 4; --i) {
+    for (size_t i = 4; i < ipsel.NumItems(); ++i) {
       if (ipsel.Item(i) != TLUController::IN_RJ45) throw eudaq::OptionException("Invalid DUT input selection");
     }
     std::cout << "Using options:\n"
