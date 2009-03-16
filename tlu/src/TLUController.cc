@@ -235,7 +235,6 @@ namespace tlu {
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
     SetDUTMask(m_mask);
-    //SetLeftLEDs(m_mask, m_mask);
 
     WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                 m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
@@ -672,6 +671,9 @@ namespace tlu {
 
   void TLUController::SelectBus(unsigned bus) {
     // select i2c bus
+#if TLUDEBUG
+    std::cerr << "DEBUG: SelectBus " << bus << std::endl;
+#endif
     WriteI2Clines(1, 1);
     I2Cdelay();
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_SELECT_ADDRESS, bus);
@@ -681,7 +683,7 @@ namespace tlu {
   void TLUController::WritePCA955(unsigned bus, unsigned device, unsigned data) {
     if (m_version < 2) return;
 #if TLUDEBUG
-    std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << device << ", data=" << hexdec(data) << std::endl;
+    std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << hexdec(device) << ", data=" << hexdec(data) << std::endl;
 #endif
     SelectBus(bus);
     // set pca955 io as output
@@ -693,7 +695,7 @@ namespace tlu {
 
   void TLUController::WriteI2C16(unsigned device, unsigned command, unsigned data) {
 #if TLUDEBUG
-    std::cout << "DEBUG: I2C16 device=" << device << ", command=" << command
+    std::cout << "DEBUG: I2C16 device=" << device << ", command=" << eudaq::hexdec(command)
               << ", data=" << hexdec(data) << std::endl;
 #endif
     // execute i2c start

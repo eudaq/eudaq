@@ -187,6 +187,7 @@ public:
     m_status.SetTag("TRIG", eudaq::to_string(m_ev));
     m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(m_tlu ? m_tlu->GetTimestamp() : 0)));
     m_status.SetTag("LASTTIME", eudaq::to_string(Timestamp2Seconds(lasttime)));
+    m_status.SetTag("PARTICLES", eudaq::to_string(m_tlu ? m_tlu->GetParticles() : 0));
     //std::cout << "Status " << m_status << std::endl;
   }
   virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
