@@ -619,6 +619,10 @@ namespace tlu {
     EUDAQ_THROW("TLU is not configured");
   }
 
+  unsigned TLUController::GetParticles() const {
+    return m_particles;
+  }
+
   void TLUController::UpdateLEDs() {
     int right = m_mask & 0x30, lemo = 0;
     for (int i = 0; i < 4; ++i) {
