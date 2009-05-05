@@ -648,7 +648,7 @@ namespace tlu {
 	leds[i].trig = 1;
 	break;
       case IN_LEMO:
-	leds[i].busy = 1;
+	leds[i].busy = leds[i].left;
 	leds[i].trig = 1;
 	break;
       case IN_HDMI:
