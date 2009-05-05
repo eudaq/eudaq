@@ -35,8 +35,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The mask for coincidence of external triggers");
   eudaq::Option<int>         omask(op, "o", "ormask", 0, "mask",
                                    "The mask for ORing of external triggers");
-  eudaq::Option<std::vector<int> > ipsel(op, "i", "dutinputs", "value", ",",
-                                   "Selects the DUT inputs 0-3 (1=HDMI, 2=LEMO, 3=RJ45)");
+  eudaq::Option<std::vector<std::string> > ipsel(op, "i", "dutinputs", "value", ",",
+                                   "Selects the DUT inputs (values: RJ45,LEMO,HDMI,NONE)");
   eudaq::Option<int>         emode(op, "e", "error-handler", 2, "value",
                                    "Error handler (0=abort, >0=number of tries before exception)");
   eudaq::Option<int>         fwver(op, "r", "fwversion", 0, "value",
@@ -52,8 +52,8 @@ int main(int /*argc*/, char ** argv) {
                                    "prepend - for only errors, or + for all data (including block transfers)");
   try {
     op.Parse(argv);
-    for (size_t i = 4; i < ipsel.NumItems(); ++i) {
-      if (ipsel.Item(i) != TLUController::IN_RJ45) throw eudaq::OptionException("Invalid DUT input selection");
+    for (size_t i = TLU_LEMO_DUTS; i < ipsel.NumItems(); ++i) {
+      if (TLUController::DUTnum(ipsel.Item(i)) != TLUController::IN_RJ45) throw eudaq::OptionException("Invalid DUT input selection");
     }
     std::cout << "Using options:\n"
               << "TLU version = " << fwver.Value() << (fwver.Value() == 0 ? " (auto)" : "") << "\n"
@@ -92,11 +92,11 @@ int main(int /*argc*/, char ** argv) {
     TLU.Configure();
     //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
-    if (ipsel.NumItems() > 4) ipsel.Resize(4);
+    if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS) ipsel.Resize(TLU_LEMO_DUTS);
     for (size_t i = 0; i < ipsel.NumItems(); ++i) {
       unsigned mask = 1U << i;
       if (i == ipsel.NumItems() - 1) {
-        for (size_t j = i+1; j < 4; ++j) {
+        for (size_t j = i+1; j < (unsigned)TLU_LEMO_DUTS; ++j) {
           mask |= 1U << j;
         }
       }

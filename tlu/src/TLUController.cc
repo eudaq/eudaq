@@ -20,6 +20,7 @@
 using eudaq::mSleep;
 using eudaq::hexdec;
 using eudaq::to_string;
+using eudaq::ucase;
 
 #define PCA955_HW_ADDR 4
 #define AD5316_HW_ADDR 3
@@ -368,6 +369,20 @@ namespace tlu {
 
   unsigned char TLUController::GetVetoMask() const {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
+  }
+
+  int TLUController::DUTnum(const std::string & name) {
+    if (ucase(name) == "RJ45") return IN_RJ45;
+    if (ucase(name) == "LEMO") return IN_LEMO;
+    if (ucase(name) == "HDMI") return IN_HDMI;
+    if (name.find_first_not_of("0123456789") == std::string::npos) {
+      return eudaq::from_string(name, 0);
+    }
+    EUDAQ_THROW("Bad DUT input name");
+  }
+
+  void TLUController::SelectDUT(const std::string & name, unsigned mask, bool updateleds) {
+    SelectDUT(DUTnum(name), mask, updateleds);
   }
 
   void TLUController::SelectDUT(int input, unsigned mask, bool updateleds) {

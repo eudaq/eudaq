@@ -97,6 +97,9 @@ public:
       m_tlu->SetFirmware(param.Get("BitFile", ""));
       m_tlu->SetVersion(param.Get("Version", 0));
       m_tlu->Configure();
+      for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
+	m_tlu->SelectDUT(param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i, false);
+      }
       m_tlu->SetTriggerInterval(trigger_interval);
       m_tlu->SetDUTMask(dut_mask);
       m_tlu->SetVetoMask(veto_mask);

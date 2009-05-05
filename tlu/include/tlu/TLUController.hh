@@ -83,6 +83,8 @@ namespace tlu {
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
+    static int DUTnum(const std::string & name);
+    void SelectDUT(const std::string & name, unsigned mask = 0xf, bool updateleds = true);
     void SelectDUT(int input, unsigned mask = 0xf, bool updateleds = true);
 
     void SetTriggerInterval(unsigned millis);
