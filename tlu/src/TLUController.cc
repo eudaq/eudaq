@@ -646,6 +646,11 @@ namespace tlu {
     return m_particles;
   }
 
+  unsigned TLUController::GetScaler(unsigned i) const {
+    if (i >= (unsigned)TLU_TRIGGER_INPUTS) EUDAQ_THROW("Scaler number out of range");
+    return m_scalers[i];
+  }
+
   void TLUController::UpdateLEDs() {
     std::vector<TLU_LEDs> leds(TLU_DUTS);
     //std::cout << "mask: " << hexdec(m_mask) << ", ipsel: " << hexdec(m_ipsel) << std::endl;

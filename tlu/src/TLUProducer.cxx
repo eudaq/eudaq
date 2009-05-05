@@ -48,6 +48,12 @@ public:
       if (TLUStarted || JustStopped) {
         eudaq::mSleep(100);
         m_tlu->Update(timestamps); // get new events
+	m_status.SetTag("TRIGGERS", to_string(m_tlu->GetTriggerNum()));
+	m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+	m_status.SetTag("TIMESTAMP", to_string(m_tlu->GetTimestamp()));
+	for (int i = 0; i < 4; ++i) {
+	  m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
+	}
         if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
           bool inhibit = m_tlu->InhibitTriggers();
           m_tlu->ResetTriggerCounter();
