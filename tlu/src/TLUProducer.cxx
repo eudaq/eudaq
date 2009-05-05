@@ -33,9 +33,6 @@ public:
       lasttime(0),
       m_tlu(0)
     {}
-  void Event(unsigned tlu_evntno, const long long int & tlu_timestamp) {
-    SendEvent(TLUEvent(m_run, tlu_evntno, tlu_timestamp)); // not the right event number!!
-  }
   void MainLoop() {
     do {
       usleep(100);
@@ -49,8 +46,8 @@ public:
         eudaq::mSleep(100);
         m_tlu->Update(timestamps); // get new events
 	m_status.SetTag("TRIGGERS", to_string(m_tlu->GetTriggerNum()));
-	m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
 	m_status.SetTag("TIMESTAMP", to_string(m_tlu->GetTimestamp()));
+	m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
 	for (int i = 0; i < 4; ++i) {
 	  m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
 	}
@@ -70,7 +67,14 @@ public:
                     << ", freq=" << freq
                     << std::endl;
           lasttime = t;
-          Event(m_ev,t);
+	  TLUEvent ev(m_run, m_ev, t);
+	  if (i == m_tlu->NumEntries()-1) {
+	    ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+	    for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
+	      ev.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
+	    }
+	  }
+          SendEvent(ev);
         }
         if (m_tlu->NumEntries()) {
           std::cout << "========" << std::endl;
