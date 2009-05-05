@@ -1,7 +1,7 @@
 /*                                                                  */
 /* TLU_address_map_v0-2.h                                                          */
 /*                                                                  */
-/* Generated on Thu Jul 24 14:43:25 2008               */
+/* Generated on Thu Apr  9 10:21:40 2009               */
 /*                                                                  */
 /*                                                                  */
 /* Definitions for JRA1 TLU                                         */
@@ -33,13 +33,19 @@
 #define I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO  3
 #define I2C_BUS_MOTHERBOARD_LCD_IO  4
 
-#define I2C_BUS_LEMO_RELAY_IO 0  
-#define I2C_BUS_LEMO_LED_IO 1
-#define I2C_BUS_LEMO_ADC 2
+#define I2C_BUS_LEMO_RELAY_IO 0
+
+/* This is a bit of a cock-up. The PCA9555 attached to the LEDs changed address between version "b" ( = 1 ) and version "c" (= 0)  */
+#define I2C_BUS_LEMO_LED_IO_VB 1
+#define I2C_BUS_LEMO_LED_IO 0
+
+#define I2C_BUS_LEMO_DAC 2
+
+#define I2C_BUS_PMT_DAC 2
 
 #define BUFFER_DEPTH 4096
 
-#define FIRMWARE_ID 241
+#define FIRMWARE_ID 250
 #define BASE_ADDRESS 8192
 #define FIRMWARE_ID_ADDRESS  8192
 #define DUT_BUSY_ADDRESS  8193
@@ -126,4 +132,21 @@
 #define REGISTERED_PARTICLE_COUNTER_ADDRESS_1  8252
 #define REGISTERED_PARTICLE_COUNTER_ADDRESS_2  8253
 #define REGISTERED_PARTICLE_COUNTER_ADDRESS_3  8254
-#define ADDRESS_MAP_SIZE 63
+#define REGISTERED_AUX_COUNTER_ADDRESS_BASE  8255
+#define REGISTERED_AUX_COUNTER_ADDRESS_BYTES  4
+#define REGISTERED_AUX_COUNTER_ADDRESS_0  8255
+#define REGISTERED_AUX_COUNTER_ADDRESS_1  8256
+#define REGISTERED_AUX_COUNTER_ADDRESS_2  8257
+#define REGISTERED_AUX_COUNTER_ADDRESS_3  8258
+#define HANDSHAKE_MODE_ADDRESS  8259
+#define BUFFER_STOP_MODE_ADDRESS  8260
+#define WRITE_TRIGGER_BITS_MODE_ADDRESS  8261
+#define TRIGGER_PATTERN_ADDRESS_BASE  8262
+#define TRIGGER_PATTERN_ADDRESS_BYTES  2
+#define TRIGGER_PATTERN_ADDRESS_0  8262
+#define TRIGGER_PATTERN_ADDRESS_1  8263
+#define AUX_PATTERN_ADDRESS_BASE  8264
+#define AUX_PATTERN_ADDRESS_BYTES  2
+#define AUX_PATTERN_ADDRESS_0  8264
+#define AUX_PATTERN_ADDRESS_1  8265
+#define ADDRESS_MAP_SIZE 74

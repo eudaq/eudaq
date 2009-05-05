@@ -6,11 +6,26 @@
 #include <vector>
 #include <stdexcept>
 #include <iostream>
+#include <ostream>
 #include "eudaq/Utils.hh"
 
 namespace tlu {
 
+  struct TLU_LEDs {
+    TLU_LEDs(int left = 0, int right = 0, int rst = 0, int busy = 0, int trig = 0)
+      : left(left), right(right), rst(rst), busy(busy), trig(trig) {}
+    void print(std::ostream &) const;
+    int left, right, rst, busy, trig;
+  };
+
+  inline std::ostream & operator << (std::ostream & os, const TLU_LEDs & leds) {
+    leds.print(os);
+    return os;
+  }
+
   static const int TLU_TRIGGER_INPUTS = 4;
+  static const int TLU_LEMO_DUTS = 4;
+  static const int TLU_DUTS = 6;
   double Timestamp2Seconds(unsigned long long t);
 
   class TLUException : public std::runtime_error {
@@ -61,14 +76,14 @@ namespace tlu {
 
     void SetVersion(unsigned version); // default (0) = auto detect from serial number
     void SetFirmware(const std::string & filename); // can be just version number
-    void SetDUTMask(unsigned char mask);
+    void SetDUTMask(unsigned char mask, bool updateleds = true);
     void SetVetoMask(unsigned char mask);
     void SetAndMask(unsigned char mask);
     void SetOrMask(unsigned char mask);
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
-    void SelectDUT(int input, unsigned mask = 0xf);
+    void SelectDUT(int input, unsigned mask = 0xf, bool updateleds = true);
 
     void SetTriggerInterval(unsigned millis);
 
@@ -97,7 +112,8 @@ namespace tlu {
     unsigned GetFirmwareID() const;
     unsigned GetSerialNumber() const;
     unsigned GetLibraryID(unsigned ver = 0) const;
-    void SetLEDs(int left, int right = 0, int lemo = 0);
+    void SetLEDs(int left, int right = 0); // DEPRECATED
+    void SetLEDs(const std::vector<TLU_LEDs> &);
     void UpdateLEDs();
 
     unsigned GetScaler(unsigned) const;
@@ -128,7 +144,7 @@ namespace tlu {
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
-    unsigned m_vetostatus, m_fsmstatus, m_ledstatus;
+    unsigned m_vetostatus, m_fsmstatus;
     unsigned m_triggernum;
     unsigned long long m_timestamp;
     std::vector<TLUEntry> m_buffer;

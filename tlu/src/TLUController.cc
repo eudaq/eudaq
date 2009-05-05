@@ -34,6 +34,15 @@ using eudaq::to_string;
 
 namespace tlu {
 
+  void TLU_LEDs::print(std::ostream & os) const {
+    os << (left ? 'L' : '.')
+       << (right ? 'R' : '.')
+       << '-'
+       << ((trig & 3) == 3 ? 'Y' : (trig & 2) ? 'R' : (trig & 1) ? 'G' : '.')
+       << (busy ? 'B' : '.')
+       << (rst ? 'R' : '.');
+  }
+
   static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
 
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
@@ -127,7 +136,6 @@ namespace tlu {
     m_inhibit(true),
     m_vetostatus(0),
     m_fsmstatus(0),
-    m_ledstatus(0),
     m_triggernum(0),
     m_timestamp(0),
     m_oldbuf(0),
@@ -234,7 +242,7 @@ namespace tlu {
 
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
-    SetDUTMask(m_mask);
+    SetDUTMask(m_mask, false);
 
     WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                 m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
@@ -324,10 +332,10 @@ namespace tlu {
     m_version = version;
   }
 
-  void TLUController::SetDUTMask(unsigned char mask) {
+  void TLUController::SetDUTMask(unsigned char mask, bool updateleds) {
     m_mask = mask;
     if (m_addr) WriteRegister(m_addr->TLU_DUT_MASK_ADDRESS, m_mask);
-    UpdateLEDs();
+    if (updateleds) UpdateLEDs();
   }
 
   void TLUController::SetVetoMask(unsigned char mask) {
@@ -362,7 +370,7 @@ namespace tlu {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
   }
 
-  void TLUController::SelectDUT(int input, unsigned mask) {
+  void TLUController::SelectDUT(int input, unsigned mask, bool updateleds) {
     for (int i = 0; i < 4; ++i) {
       if ((mask >> i) & 1) {
         m_ipsel &= ~(3 << (2*i));
@@ -371,7 +379,7 @@ namespace tlu {
     }
     if (m_addr) WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                             m_addr->TLU_I2C_BUS_MOTHERBOARD_FRONT_PANEL_IO, m_ipsel);
-    UpdateLEDs();
+    if (updateleds) UpdateLEDs();
   }
 
   void TLUController::Update(bool timestamps) {
@@ -624,51 +632,83 @@ namespace tlu {
   }
 
   void TLUController::UpdateLEDs() {
-    int right = m_mask & 0x30, lemo = 0;
-    for (int i = 0; i < 4; ++i) {
-      lemo |= 5 << (3*i);
-      if (m_mask & (1 << i)) {
-        int ipsel = (m_ipsel >> (2*i)) & 3;
-        switch (ipsel) {
-        case IN_RJ45: right |= 1 << i; break;
-        case IN_LEMO: lemo |= 2 << (3*i); break;
-        }
+    std::vector<TLU_LEDs> leds(TLU_DUTS);
+    //std::cout << "mask: " << hexdec(m_mask) << ", ipsel: " << hexdec(m_ipsel) << std::endl;
+    for (int i = 0; i < TLU_DUTS; ++i) {
+      int bit = 1 << i;
+      if (m_mask & bit) leds[i].left = 1;
+      if (i >= TLU_LEMO_DUTS) {
+	leds[i].right = leds[i].left;
+	continue;
+      }
+      int ipsel = (m_ipsel >> (2*i)) & 3;
+      switch (ipsel) {
+      case IN_RJ45:
+	leds[i].right = leds[i].left;
+	leds[i].trig = 1;
+	break;
+      case IN_LEMO:
+	leds[i].busy = 1;
+	leds[i].trig = 1;
+	break;
+      case IN_HDMI:
+	leds[i].trig = 2;
+	break;
       }
     }
-    SetLEDs(m_mask, right, lemo);
+    //std::cout << "LEDS: " << to_string(leds) << std::endl;
+    SetLEDs(leds);
   }
 
-  void TLUController::SetLEDs(int left, int right, int lemo) {
-    for (int i = 0; i < 8; ++i) {
-      unsigned bitr = 1 << 2*i, bitl = bitr << 1;
-      if (right >= 0) {
-        if ((right >> i) & 1) {
-          m_ledstatus |= bitr;
-        } else {
-          m_ledstatus &= ~bitr;
-        }
-      }
-      if (left >= 0) {
-        if ((left >> i) & 1) {
-          m_ledstatus |= bitl;
-        } else {
-          m_ledstatus &= ~bitl;
-        }
-      }
+  void TLUController::SetLEDs(int left, int right) {
+    std::vector<TLU_LEDs> leds(TLU_DUTS);
+    for (int i = 0; i < TLU_DUTS; ++i) {
+      int bit = 1 << i;
+      if (left & bit) leds[i].left = 1;
+      if (right & bit) leds[i].right = 1;
     }
-    if (m_addr) {
-      if (m_version == 1) {
-        WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, left);
-      } else {
-        // Swap the two LSBs, to work around routing bug on TLU
-        unsigned data = (m_ledstatus & ~2) | ((m_ledstatus & 1) << 1) | ((m_ledstatus >> 1) & 1);
-        // And invert, because 1 means off
-        data = ~data & 0xffff;
-        WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, data);
-        if (m_version >= 3) {
-          // Versions before 3 (v0.2c) didn't have LEMO LEDs
-          WritePCA955(m_addr->TLU_I2C_BUS_LEMO, m_addr->TLU_I2C_BUS_LEMO_LED_IO, lemo);
-        }
+    SetLEDs(leds);
+  }
+
+  void TLUController::SetLEDs(const std::vector<TLU_LEDs> & leds) {
+    if (!m_addr) EUDAQ_THROW("Cannot set LEDs on unconfigured TLU");
+    if (m_version == 1) {
+      int ledval = 0;
+      for (int i = 0; i < TLU_DUTS; ++i) {
+	if (leds[i].left) ledval |= 1 << i;
+      }
+      WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, ledval);
+    } else {
+      int dutled = 0, lemoled = 0;
+      //std::cout << "LED:";
+      for (int i = 0; i < TLU_DUTS; ++i) {
+	//std::cout << ' ' << leds[i];
+	if (leds[i].left) dutled |= 1 << (2*i+1);
+	if (leds[i].right) dutled |= 1 << (2*i);
+	if (leds[i].rst) lemoled |= 1 << (2*i);
+	if (leds[i].busy) lemoled |= 1 << (2*i+1);
+	int swap = ((leds[i].trig >> 1) & 1) | ((leds[i].trig & 1) << 1);
+	lemoled |= swap << (2*i+8);
+      }
+      //std::cout << "\n  dut=" << hexdec(dutled) << ", lemo=" << hexdec(lemoled) << std::endl;
+      // Swap the two LSBs, to work around routing bug on TLU
+      dutled = (dutled & ~3) | ((dutled & 1) << 1) | ((dutled >> 1) & 1);
+      // And invert, because 1 means off
+      dutled ^= 0xffff;
+      // Invert lowest 8 bits (LEMO reset/busy LEDs)
+      lemoled ^= 0xff;
+      //std::cout << "  dut=" << hexdec(dutled) << ", lemo=" << hexdec(lemoled) << std::endl;
+      try {
+	WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, dutled);
+      } catch (const eudaq::Exception & e) {
+	std::cerr << "Error writing DUT LEDs: " << e.what() << std::endl;
+      }
+      unsigned long addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO;
+      if (m_version < 3) addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO_VB;
+      try {
+	WritePCA955(m_addr->TLU_I2C_BUS_LEMO, addr, lemoled);
+      } catch (const eudaq::Exception & e) {
+	std::cerr << "Error writing LEMO LEDs: " << e.what() << std::endl;
       }
     }
   }
@@ -736,7 +776,7 @@ namespace tlu {
     WriteI2Clines(0, 1);
     I2Cdelay();
     if (WriteI2Clines(1, 1)) {
-      EUDAQ_THROW("I2C device failed to acknowledge");
+      throw eudaq::Exception("I2C device failed to acknowledge");
     }
   }
 

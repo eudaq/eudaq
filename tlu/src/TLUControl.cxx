@@ -92,10 +92,6 @@ int main(int /*argc*/, char ** argv) {
     TLU.Configure();
     //TLU.FullReset();
     TLU.SetTriggerInterval(trigg.Value());
-    TLU.SetDUTMask(dmask.Value());
-    TLU.SetVetoMask(vmask.Value());
-    TLU.SetAndMask(amask.Value());
-    TLU.SetOrMask(omask.Value());
     if (ipsel.NumItems() > 4) ipsel.Resize(4);
     for (size_t i = 0; i < ipsel.NumItems(); ++i) {
       unsigned mask = 1U << i;
@@ -104,15 +100,22 @@ int main(int /*argc*/, char ** argv) {
           mask |= 1U << j;
         }
       }
-      TLU.SelectDUT(ipsel.Item(i), mask);
+      TLU.SelectDUT(ipsel.Item(i), mask, false);
     }
+    TLU.SetDUTMask(dmask.Value());
+    TLU.SetVetoMask(vmask.Value());
+    TLU.SetAndMask(amask.Value());
+    TLU.SetOrMask(omask.Value());
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
-              << "TLU Serial number = " << TLU.GetSerialNumber() << "\n"
+              << "TLU Serial number = " << eudaq::hexdec(TLU.GetSerialNumber(), 4) << "\n"
               << "Firmware file = " << TLU.GetFirmware() << "\n"
               << "Firmware version = " << TLU.GetFirmwareID() << "\n"
               << "Library version = " << TLU.GetLibraryID() << "\n"
               << std::endl;
 
+    if (TLU.GetFirmwareID() != TLU.GetLibraryID()) {
+      std::cout << "Warning: *** Firmware version does not match Library version ***\n" << std::endl;
+    }
     if (quit.IsSet()) return 0;
     eudaq::Timer totaltime, lasttime;
     TLU.Start();
