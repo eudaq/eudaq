@@ -129,8 +129,6 @@ public:
     try {
       m_run = param;
       m_ev = 0;
-      m_tlu->ResetTriggerCounter();
-      m_tlu->ResetScalers();
       std::cout << "Start Run: " << param << std::endl;
       TLUEvent ev(TLUEvent::BORE(m_run));
       ev.SetTag("FirmwareID",  to_string(m_tlu->GetFirmwareID()));
@@ -143,6 +141,8 @@ public:
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       SendEvent(ev);
       sleep(5);
+      m_tlu->ResetTriggerCounter();
+      m_tlu->ResetScalers();
       m_tlu->Start();
       TLUStarted=true;
       SetStatus(eudaq::Status::LVL_OK, "Started");

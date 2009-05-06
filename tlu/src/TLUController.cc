@@ -309,12 +309,12 @@ namespace tlu {
   }
 
   void TLUController::ResetScalers() {
-#ifdef TRIGGER_SCALERS_RESET_BIT
+//#ifdef TRIGGER_SCALERS_RESET_BIT
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TRIGGER_SCALERS_RESET_BIT);
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
-#else
-    EUDAQ_THROW("Not implemented");
-#endif
+//#else
+//    EUDAQ_THROW("Not implemented");
+//#endif
   }
 
   void TLUController::ResetUSB() {
