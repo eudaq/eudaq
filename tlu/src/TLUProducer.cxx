@@ -45,12 +45,6 @@ public:
       if (TLUStarted || JustStopped) {
         eudaq::mSleep(100);
         m_tlu->Update(timestamps); // get new events
-	m_status.SetTag("TRIGGERS", to_string(m_tlu->GetTriggerNum()));
-	m_status.SetTag("TIMESTAMP", to_string(m_tlu->GetTimestamp()));
-	m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
-	for (int i = 0; i < 4; ++i) {
-	  m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
-	}
         if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
           bool inhibit = m_tlu->InhibitTriggers();
           m_tlu->ResetTriggerCounter();
@@ -67,13 +61,13 @@ public:
                     << ", freq=" << freq
                     << std::endl;
           lasttime = t;
-	  TLUEvent ev(m_run, m_ev, t);
-	  if (i == m_tlu->NumEntries()-1) {
-	    ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
-	    for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
-	      ev.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
-	    }
-	  }
+          TLUEvent ev(m_run, m_ev, t);
+          if (i == m_tlu->NumEntries()-1) {
+            ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+            for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
+              ev.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
+            }
+          }
           SendEvent(ev);
         }
         if (m_tlu->NumEntries()) {
@@ -91,7 +85,7 @@ public:
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
-      std::cout << "Configuring." << std::endl;
+      std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       if (m_tlu) m_tlu = 0;
       int errorhandler = param.Get("ErrorHandler", 2);
       m_tlu = counted_ptr<TLUController>(new TLUController(errorhandler));
@@ -108,7 +102,7 @@ public:
       m_tlu->SetVersion(param.Get("Version", 0));
       m_tlu->Configure();
       for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
-	m_tlu->SelectDUT(param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i, false);
+        m_tlu->SelectDUT(param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i, false);
       }
       m_tlu->SetTriggerInterval(trigger_interval);
       m_tlu->SetDUTMask(dut_mask);
@@ -136,6 +130,7 @@ public:
       m_run = param;
       m_ev = 0;
       m_tlu->ResetTriggerCounter();
+      m_tlu->ResetScalers();
       std::cout << "Start Run: " << param << std::endl;
       TLUEvent ev(TLUEvent::BORE(m_run));
       ev.SetTag("FirmwareID",  to_string(m_tlu->GetFirmwareID()));
@@ -197,10 +192,15 @@ public:
     }
   }
   virtual void OnStatus() {
-    m_status.SetTag("TRIG", eudaq::to_string(m_ev));
-    m_status.SetTag("TIMESTAMP", eudaq::to_string(Timestamp2Seconds(m_tlu ? m_tlu->GetTimestamp() : 0)));
-    m_status.SetTag("LASTTIME", eudaq::to_string(Timestamp2Seconds(lasttime)));
-    m_status.SetTag("PARTICLES", eudaq::to_string(m_tlu ? m_tlu->GetParticles() : 0));
+    m_status.SetTag("TRIG", to_string(m_ev));
+    if (m_tlu) {
+      m_status.SetTag("TIMESTAMP", to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
+      m_status.SetTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
+      m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+      for (int i = 0; i < 4; ++i) {
+        m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
+      }
+    }
     //std::cout << "Status " << m_status << std::endl;
   }
   virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
