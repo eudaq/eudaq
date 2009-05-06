@@ -1395,9 +1395,9 @@ public:
       m_lastupdate = now;
     }
   }
-  virtual void OnConfigure(const std::string & param) {
-    std::cout << "Configure: " << param << std::endl;
-    SetStatus(eudaq::Status::LVL_OK);
+  virtual void OnConfigure(const eudaq::Configuration & param) {
+    std::cout << "Configure: " << param.Name() << std::endl;
+    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnTerminate() {
     std::cout << "Terminating" << std::endl;
@@ -1417,6 +1417,7 @@ public:
       //      std::cout << "i=" << i << std::endl;
       m_board[i].Reset();
     }
+    SetStatus(eudaq::Status::LVL_OK);
   }
   virtual void OnEvent(counted_ptr<eudaq::DetectorEvent> ev) {
     RootLocker lock;
