@@ -1,6 +1,6 @@
 MAKE := make
 
-DIRS := main root gui tlu vme eudrb depfet
+DIRS := main tlu vme eudrb depfet fortis root gui
 
 default: main
 
