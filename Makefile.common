@@ -48,8 +48,13 @@ else
     DEXT := so
     SEXT := a
   else
-    DEXT := dll
-    SEXT := lib
+    ifeq ($(PLATFORM),CYGWIN)
+      DEXT := dll
+      SEXT := a
+    else
+      DEXT := dll
+      SEXT := lib
+    endif
   endif
 endif
 
@@ -75,10 +80,21 @@ OPTIMIZE := 2
 MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBUG=$(NODEBUG) MOREDEBUG=$(MOREDEBUG)
 
 # Common flags for C/C++/dependencies
-CPPFLAGS = -ansi -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
+CPPFLAGS = -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
+
+# Except for Cygwin we want ANSI handling of headers
+ifneq ($(PLATFORM),CYGWIN)
+  CPPFLAGS += -ansi
+endif
 
 # Extra flags for C compiler
-CFLAGS   = -fPIC -Wall -W -Wno-long-long -O$(OPTIMIZE) $(CPPFLAGS)
+CFLAGS   = -Wall -W -Wno-long-long -O$(OPTIMIZE) $(CPPFLAGS)
+
+# Except for Cygwin we want to specify position independent code.
+# With Cygwin this just spits out warnings saying that all code is PIC
+ifneq ($(PLATFORM),CYGWIN)
+  CFLAGS += -fPIC
+endif
 
 # Extra flags for C++ compiler
 CXXFLAGS = $(CFLAGS)
