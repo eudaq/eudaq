@@ -258,10 +258,10 @@ namespace tlu {
 
   void TLUController::Configure() {
     if (m_version == 0) {
-      if (m_serial < FIRSTV2SERIAL) {
-        m_version = 1;
-      } else {
+      if (m_serial >= FIRSTV2SERIAL || m_serial == 260) { // DEST TLU v0.2 has serial 260
         m_version = 2;
+      } else {
+        m_version = 1;
       }
     }
     if (m_version == 1) {
