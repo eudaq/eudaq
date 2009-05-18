@@ -1,4 +1,6 @@
 #include "eudaq/FileSerializer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/Platform.hh"
 #include "eudaq/Utils.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,7 +47,11 @@ namespace eudaq {
   }
 
   void FileSerializer::WriteProtect() {
+#if EUDAQ_PLATFORM_IS(CYGWIN)
+    EUDAQ_WARN("Cannot write protect under cygwin: function fileno() is not available");
+#else
     fchmod(fileno(m_file), S_IRUSR | S_IRGRP | S_IROTH);
+#endif
   }
 
   FileDeserializer::FileDeserializer(const std::string & fname, bool faileof) :
