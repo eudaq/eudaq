@@ -54,48 +54,75 @@ namespace eudaq {
 #endif
   }
 
-  FileDeserializer::FileDeserializer(const std::string & fname, bool faileof) :
-    m_file(0), m_faileof(faileof)
+  FileDeserializer::FileDeserializer(const std::string & fname, bool faileof, size_t buffersize) :
+    m_file(0), m_faileof(faileof), m_buf(buffersize), m_start(&m_buf[0]), m_stop(m_start)
   {
     m_file = fopen(fname.c_str(), "rb");
     if (!m_file) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
   }
 
   bool FileDeserializer::HasData() {
+    if (level() == 0) FillBuffer();
+    return level() > 0;
+  }
+
+  size_t FileDeserializer::FillBuffer(size_t min) {
     clearerr(m_file);
-    int c = std::fgetc(m_file);
-    if (c == EOF) {
-      clearerr(m_file);
-      return false;
+    if (level() == 0) m_start = m_stop = &m_buf[0];
+    unsigned char * end = &m_buf[0] + m_buf.size();
+    if (size_t(end - m_stop) < min) {
+      // not enough space remaining before end of buffer,
+      // so shift everything back to the beginning of the buffer
+      std::memmove(m_start, &m_buf[0], level());
+      m_stop -= (m_start - &m_buf[0]);
+      m_start = &m_buf[0];
+      if (size_t(end - m_stop) < min) {
+        // still not enough space? nothing we can do, reduce the required amount
+        min = end - m_stop;
+      }
     }
-    std::ungetc(c, m_file);
-    return true;
+    size_t read = fread(reinterpret_cast<char *>(m_stop), 1, end - m_stop, m_file);
+    m_stop += read;
+    while (read < min) {
+      if (feof(m_file) && m_faileof) {
+        throw FileReadException("End of File encountered");
+      } else if (int err = ferror(m_file)) {
+        EUDAQ_THROWX(FileReadException, "Error reading from file: " + to_string(err));
+      } else if (m_interrupting) {
+        m_interrupting = false;
+        throw InterruptedException();
+      }
+      mSleep(10);
+      clearerr(m_file);
+      size_t bytes = fread(reinterpret_cast<char *>(m_stop), 1, end - m_stop, m_file);
+      read += bytes;
+      m_stop += bytes;
+    }
+    return read;
   }
 
   void FileDeserializer::Deserialize(unsigned char * data, size_t len) {
-    size_t read = 0;
-    //std::cout << "Reading " << len << std::flush;
-    while (read < len) {
-      if (read) mSleep(10);
-      size_t r = fread(reinterpret_cast<char *>(data) + read, 1, len - read, m_file);
-      read += r;
-      //if (r) std::cout << "<<<" << r << ">>>" << std::flush;
-      if (feof(m_file)) {
-        if (m_faileof) {
-          throw FileReadException("End of File encountered");
-        }
-        if (m_interrupting) {
-          m_interrupting = false;
-          throw InterruptedException();
-        }
-        clearerr(m_file);
-        //std::cout << '.' << std::flush;
-      } else if (int err = ferror(m_file)) {
-        std::cout << std::endl;
-        EUDAQ_THROWX(FileReadException, "Error reading from file: " + to_string(err));
-      }
+    if (len <= level()) {
+      // The buffer contains enough data
+      memcpy(data, m_start, len);
+      m_start += len;
+    } else if (level() > 0) {
+      // The buffer contains some data, so use it up first
+      size_t tmp = level();
+      memcpy(data, m_start, tmp);
+      m_start = m_stop;
+      // Then deserialise what remains
+      Deserialize(data + tmp, len - tmp);
+    //} else if (len >= m_buf.size()/2) {
+      // The buffer must be empty, and we have a lot of data to read
+      // So read directly into the destination
+      //FillBuffer(data, len);
+    } else {
+      // Otherwise fill up the buffer, making sure we have at least enough data
+      FillBuffer(len);
+      // Now we have enough data in the buffer, just call deserialize again
+      Deserialize(data, len);
     }
-    //std::cout << std::endl;
   }
 
 }

@@ -25,12 +25,17 @@ namespace eudaq {
 
   class FileDeserializer : public Deserializer {
   public:
-    FileDeserializer(const std::string & fname, bool faileof = false);
+    FileDeserializer(const std::string & fname, bool faileof = false, size_t buffersize = 65536);
     virtual bool HasData();
   private:
     virtual void Deserialize(unsigned char * data, size_t len);
+    size_t FillBuffer(size_t min = 0);
+    size_t level() const { return m_stop - m_start; }
+    typedef unsigned char *ptr_t;
     FILE * m_file;
     bool m_faileof;
+    std::vector<unsigned char> m_buf;
+    ptr_t m_start, m_stop;
   };
 
 }
