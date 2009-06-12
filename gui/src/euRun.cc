@@ -5,11 +5,13 @@
 
 static const char * statuses[] = {
   "RUN",       "Run Number",
+  "EVENT",     "Events Built",
   "RATE",      "Rate",
   "TRIG",      "Triggers",
   "MEANRATE",  "Mean Rate",
-  "EVENT",     "Events Built",
+  "PARTICLES", "Particles",
   "FILEBYTES", "File Bytes",
+  "SCALERS",   "Scalers",
   0
 };
 

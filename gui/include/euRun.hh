@@ -13,6 +13,19 @@
 using eudaq::to_string;
 using eudaq::from_string;
 
+inline std::string to_bytes(const std::string & val) {
+  if (val == "") return "";
+  unsigned long long n = from_string(val, 0ULL);
+  const char * suff[] = { " B", " kB", " MB", " GB", " TB" };
+  const int numsuff = sizeof suff / sizeof *suff;
+  int mult = 0;
+  while (n/1024 >= 10 && mult < numsuff-1) {
+    n /= 1024;
+    mult++;
+  }
+  return to_string(n) + suff[mult];
+}
+
 // To make Qt behave on OSX (to be checked on other OSes)
 #define MAGIC_NUMBER 22
 
@@ -42,7 +55,7 @@ private:
     //                         "This will reset all connected Producers etc.");
     m_run.newconnection(id);
     if (id.GetType() == "DataCollector") {
-      emit StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
+      EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
     }
   }
   virtual void OnDisconnect(const eudaq::ConnectionInfo & id) {
@@ -55,28 +68,47 @@ private:
       registered = true;
     }
     if (id.GetType() == "DataCollector") {
-      emit StatusChanged("EVENT", status->GetTag("EVENT").c_str());
-      emit StatusChanged("FILEBYTES", status->GetTag("FILEBYTES").c_str());
+      EmitStatus("EVENT", status->GetTag("EVENT"));
+      EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
     } else if (id.GetType() == "Producer" && id.GetName() == "TLU") {
-      emit StatusChanged("TRIG", status->GetTag("TRIG").c_str());
-      emit StatusChanged("TIMESTAMP", status->GetTag("TIMESTAMP").c_str());
-      emit StatusChanged("LASTTIME", status->GetTag("LASTTIME").c_str());
-      int trigs = from_string(status->GetTag("TRIG"), 0);
-      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
-      if (m_runstarttime == 0.0) {
-        m_runstarttime = time;
-      } else {
-        emit StatusChanged("MEANRATE", (to_string((trigs-1)/(time-m_runstarttime)) + " Hz").c_str());
+      EmitStatus("TRIG", status->GetTag("TRIG"));
+      EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
+      EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
+      EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
+      bool ok = true;
+      std::string scalers;
+      for (int i = 0; i < 4; ++i) {
+        std::string s = status->GetTag("SCALER" + to_string(i));
+        if (s == "") {
+          ok = false;
+          break;
+        }
+        if (scalers != "") scalers += ", ";
+        scalers += s;
       }
-      int dtrigs = trigs - m_prevtrigs;
-      double dtime = time - m_prevtime;
-      if (dtrigs >= 10 || dtime >= 1.0) {
-        m_prevtrigs = trigs;
-        m_prevtime = time;
-        emit StatusChanged("RATE", (to_string(dtrigs/dtime) + " Hz").c_str());
+      if (ok) EmitStatus("SCALERS", scalers);
+      int trigs = from_string(status->GetTag("TRIG"), -1);
+      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
+      if (trigs >= 0) {
+        if (m_runstarttime == 0.0) {
+          if (trigs > 0) m_runstarttime = time;
+        } else {
+          EmitStatus("MEANRATE", to_string((trigs-1)/(time-m_runstarttime)) + " Hz");
+        }
+        int dtrigs = trigs - m_prevtrigs;
+        double dtime = time - m_prevtime;
+        if (dtrigs >= 10 || dtime >= 1.0) {
+          m_prevtrigs = trigs;
+          m_prevtime = time;
+          EmitStatus("RATE", to_string(dtrigs/dtime) + " Hz");
+        }
       }
     }
     m_run.SetStatus(id, *status);
+  }
+  void EmitStatus(const char * name, const std::string & val) {
+    if (val == "") return;
+    emit StatusChanged(name, val.c_str());
   }
   void closeEvent(QCloseEvent * event) {
     if (m_run.rowCount() > 0 &&
@@ -93,14 +125,16 @@ private:
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
     RunControl::StartRun(msg);
-    emit StatusChanged("RUN", eudaq::to_string(m_runnumber).c_str());
-    emit StatusChanged("EVENT", "");
+    EmitStatus("RUN", to_string(m_runnumber));
+    emit StatusChanged("EVENT", "0");
+    emit StatusChanged("TRIG", "0");
+    emit StatusChanged("PARTICLES", "0");
     emit StatusChanged("RATE", "");
     emit StatusChanged("MEANRATE", "");
   }
   virtual void StopRun(bool /*listen*/ = true) {
     RunControl::StopRun();
-    StatusChanged("RUN", ("(" + eudaq::to_string(m_runnumber) + ")").c_str());
+    EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
   }
 private slots:
   void on_btnConfig_clicked() {

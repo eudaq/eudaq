@@ -80,6 +80,16 @@ protected:
       }
     }
   }
+  virtual void OnConfigure(const eudaq::Configuration & param) {
+    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+    LogCollector::OnConfigure(param);
+    std::cout << "...Configured (" << param.Name() << ")" << std::endl;
+    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+  }
+  virtual void OnStartRun(unsigned param) {
+    LogCollector::OnStartRun(param);
+    SetStatus(eudaq::Status::LVL_OK);
+  }
   virtual void OnConnect(const eudaq::ConnectionInfo & id) {
     CheckRegistered();
     EUDAQ_INFO("Connection from " + to_string(id));
