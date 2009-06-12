@@ -24,6 +24,9 @@ namespace eudaq {
       std::ifstream file(RUN_NUMBER_FILE);
       if (file.is_open()) {
         file >> result;
+        if (file.fail())
+          EUDAQ_THROW("Error reading run number, check permissions of file "
+                      + std::string(RUN_NUMBER_FILE));
         std::cout << "Read run number = " << result << std::endl;
       } else {
         EUDAQ_ERROR("Restarting run number from " + to_string(result) +

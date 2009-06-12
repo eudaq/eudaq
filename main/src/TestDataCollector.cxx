@@ -22,8 +22,13 @@ public:
     std::cout << "Connect:    " << id << std::endl;
   }
   virtual void OnConfigure(const eudaq::Configuration & param) {
+    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
     DataCollector::OnConfigure(param);
-    std::cout << "Configuring." << std::endl;
+    std::cout << "...Configured (" << param.Name() << ")" << std::endl;
+    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+  }
+  virtual void OnStartRun(unsigned param) {
+    DataCollector::OnStartRun(param);
     SetStatus(eudaq::Status::LVL_OK);
   }
 //   virtual bool OnStartRun(unsigned param) {
