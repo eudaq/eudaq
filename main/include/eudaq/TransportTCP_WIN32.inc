@@ -3,7 +3,11 @@
 #define EWOULDBLOCK WSAEWOULDBLOCK
 
 #include <map>
-#include <afxwin.h>
+#if EUDAQ_PLATFORM_IS(MINGW)
+#  include <windows.h>
+#else
+#  include <afxwin.h>
+#endif
 #include <winsock.h>
 
 namespace eudaq {

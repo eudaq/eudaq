@@ -8,7 +8,6 @@
 #include "eudaq/counted_ptr.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Exception.hh"
-//#include "eudaq/Tricks.hh"
 
 namespace eudaq {
 
@@ -40,6 +39,8 @@ namespace eudaq {
   struct WriteHelper {
     typedef void (*writer)(Serializer & ser, const T & v);
     static writer GetFunc(Serializable *) { return write_ser; }
+    static writer GetFunc(float *) { return write_float; }
+    static writer GetFunc(double *) { return write_double; }
     static writer GetFunc(...) { return write_int; }
 
     static void write_ser(Serializer & sr, const T & v) {
@@ -47,6 +48,24 @@ namespace eudaq {
     }
     static void write_int(Serializer & sr, const T & v) {
       T t = v;
+      unsigned char buf[sizeof t];
+      for (size_t i = 0; i < sizeof t; ++i) {
+        buf[i] = t & 0xff;
+        t >>= 8;
+      }
+      sr.Serialize(buf, sizeof t);
+    }
+    static void write_float(Serializer & sr, const float & v) {
+      unsigned t = *(unsigned *)&v;
+      unsigned char buf[sizeof t];
+      for (size_t i = 0; i < sizeof t; ++i) {
+        buf[i] = t & 0xff;
+        t >>= 8;
+      }
+      sr.Serialize(buf, sizeof t);
+    }
+    static void write_double(Serializer & sr, const double & v) {
+      unsigned long long t = *(unsigned long long *)&v;
       unsigned char buf[sizeof t];
       for (size_t i = 0; i < sizeof t; ++i) {
         buf[i] = t & 0xff;
@@ -139,6 +158,8 @@ namespace eudaq {
   struct ReadHelper {
     typedef T (*reader)(Deserializer & ser);
     static reader GetFunc(Serializable *) { return read_ser; }
+    static reader GetFunc(float *) { return read_float; }
+    static reader GetFunc(double *) { return read_double; }
     static reader GetFunc(...) { return read_int; }
 
     static T read_ser(Deserializer & ds) {
@@ -153,6 +174,26 @@ namespace eudaq {
         t += buf[sizeof t - 1 - i];
       }
       return t;
+    }
+    static float read_float(Deserializer & ds) {
+      unsigned char buf[sizeof (float)];
+      ds.Deserialize(buf, sizeof buf);
+      unsigned t = 0;
+      for (size_t i = 0; i < sizeof t; ++i) {
+        t <<= 8;
+        t += buf[sizeof t - 1 - i];
+      }
+      return *(float *)&t;
+    }
+    static double read_double(Deserializer & ds) {
+      unsigned char buf[sizeof (double)];
+      ds.Deserialize(buf, sizeof buf);
+      unsigned long long t = 0;
+      for (size_t i = 0; i < sizeof t; ++i) {
+        t <<= 8;
+        t += buf[sizeof t - 1 - i];
+      }
+      return *(double *)&t;
     }
   };
 

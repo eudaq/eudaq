@@ -24,6 +24,8 @@ killall DEPFETProducerTCP.exe
 killall euLog
 killall euRun
 sleep 3
+printf '\t Making sure all data files are properly writeprotected \n'
+chmod a=r data/run*.raw
 printf '\033[1;32;48m\t ...Done!\033[0m \n'
 
 printf '\t Making sure TLU is accessible\n'
@@ -35,28 +37,29 @@ cd bin
 
 printf '\t\t  RunControl\n'
 ./euRun.app/Contents/MacOS/euRun -x 0 -y 0 -w 350 -g 450 -a tcp://$RCPORT &
-sleep 2
+sleep 3
 
 printf '\t\t  Logger\n'
 ./euLog.app/Contents/MacOS/euLog -x 0 -y 450 -w 350 -g 550 -r tcp://eudet:$RCPORT &
-sleep 2
+sleep 3
 
 printf '\t\t  DataCollector\n'
 #./TestDataCollector.exe &
-/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -e './TestDataCollector.exe -r tcp://eudet:$RCPORT' &
+/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://eudet:$RCPORT' &
 sleep 2
 
 printf '\t\t  RootMonitor\n'
+#/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-500 -fn fixed -T "Root Monitor" -e 'gdb ./RootMonitor.exe' &
 ./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 -r tcp://localhost:$RCPORT &
 
 printf '\t\t  EUDRB\n'
-ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -e 'cd eudaq/bin/; ./EUDRBProducer.exe -r tcp://eudet:$RCPORT')" &
+ssh -X -Y eudet@$EUDRBIP "(/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-30 -fn fixed -T 'EUDRB Producer' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -r tcp://eudet:$RCPORT')" &
 
 printf '\t\t  TLU\n'
-ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -e 'cd eudaq/bin/; ./TLUProducer.exe -r tcp://eudet:$RCPORT')" &
+ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -T 'TLU Producer' -e 'cd eudaq/bin/; ./TLUProducer.exe -r tcp://eudet:$RCPORT')" &
 
 # printf '\t\t  DEPFET\n'
-# /usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -e './DEPFETProducerTCP.exe' &
+# /usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -T 'DEPFET Producer' -e './DEPFETProducerTCP.exe' &
 
 cd -
 printf '\033[1;32;48m\t ...Done!\033[0m \n'

@@ -3,7 +3,7 @@
 #include "eudaq/Time.hh"
 #include "eudaq/Utils.hh"
 
-#if EUDAQ_PLATFORM_IS(WIN32)
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 # include "eudaq/TransportTCP_WIN32.inc"
 #else
 # include "eudaq/TransportTCP_POSIX.inc"

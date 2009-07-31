@@ -1,6 +1,6 @@
-#include "eudaq/FileSerializer.hh"
+#include "eudaq/PluginManager.hh"
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/EUDRBEvent.hh"
+#include "eudaq/FileReader.hh"
 #include "eudaq/OptionParser.hh"
 //#include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <fstream>
 
+using eudaq::StandardEvent;
 using eudaq::from_string;
 using eudaq::to_string;
 using eudaq::split;
@@ -38,8 +39,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Extractor", "1.0",
                          "A command-line tool for extracting cluster information from native raw files",
                          1);
-  eudaq::Option<int> xsize(op, "x", "x-size", 256, "pixels", "Size of sensor in X direction");
-  eudaq::Option<int> ysize(op, "y", "y-size", 256, "pixels", "Size of sensor in Y direction");
+  eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<int> clust(op, "p", "cluster-size", 3, "pixels", "Size of clusters (1=no clustering, 3=3x3, etc.)");
 
   eudaq::Option<double> noise(op, "n", "noise", 4.0, "val", "Noise level, in adc units");
@@ -56,156 +56,123 @@ int main(int /*argc*/, char ** argv) {
     op.Parse(argv);
     //EUDAQ_LOG_LEVEL("INFO");
     for (size_t i = 0; i < op.NumArgs(); ++i) {
-      std::string datafile = op.GetArg(i);
-      if (datafile.find_first_not_of("0123456789") == std::string::npos) {
-        datafile = "../data/run" + to_string(from_string(datafile, 0), 6) + ".raw";
-      }
+      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       if (tracksonly.IsSet()) EUDAQ_THROW("Tracking is not yet implemented");
       if (clust.Value() < 1 || (clust.Value() % 2) != 1) EUDAQ_THROW("Cluster size must be an odd number");
-      std::cout << "Reading: " << datafile << std::endl;
-      eudaq::FileDeserializer des(datafile);
-      counted_ptr<eudaq::EUDRBDecoder> decoder;
+      std::cout << "Reading: " << reader.Filename() << std::endl;
       std::vector<std::vector<Cluster> > track;
       unsigned runnum = 0;
-      const size_t npixels = xsize.Value() * ysize.Value();
       const int dclust = clust.Value()/2;
-      std::cout << "Using sensor size " << xsize.Value() << "x" << ysize.Value() << " = " << npixels << " pixels" << std::endl;
       std::cout << "Cluster size " << clust.Value() << "x" << clust.Value() << " (dclust=" << dclust << ")" << std::endl;
       std::cout << "Seed threshold: " << thresh_seed.Value() << " sigma = "
                 << thresh_seed.Value()*noise.Value() << " adc" << std::endl;
       std::cout << "Cluster threshold: " << thresh_clus.Value() << " sigma = "
                 << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
       std::vector<unsigned> hit_hist;
-      while (des.HasData()) {
-        counted_ptr<eudaq::Event> ev(eudaq::EventFactory::Create(des));
-        eudaq::DetectorEvent * dev = dynamic_cast<eudaq::DetectorEvent*>(ev.get());
-        if (ev->IsBORE()) {
-          runnum = ev->GetRunNumber();
-          std::cout << "Found BORE, run number = " << runnum << std::endl;
-          decoder = new eudaq::EUDRBDecoder(*dev);
-          unsigned totalboards = 0;
-          for (size_t i = 0; i < dev->NumEvents(); ++i) {
-            eudaq::EUDRBEvent * drbev = dynamic_cast<eudaq::EUDRBEvent *>(dev->GetEvent(i));
-            if (drbev) {
-              unsigned numboards = from_string(drbev->GetTag("BOARDS"), 0);
-              totalboards += numboards;
-              for (unsigned i = 0; i < numboards; ++i) {
-                unsigned id = from_string(drbev->GetTag("ID" + to_string(i)), i);
-                if (id >= track.size()) track.resize(id+1);
-                filemap_t::const_iterator it = files.find(id);
-                if (it != files.end()) EUDAQ_THROW("ID is repeated: " + to_string(id));
-                std::string fname = "run" + to_string(runnum) + "_eutel_" + to_string(id) + ".txt";
-                std::cout << "Opening output file: " << fname << std::endl;
-                files[id] = fileptr_t(new std::ofstream(fname.c_str()));
-              }
+
+      {
+        const eudaq::DetectorEvent & dev = reader.Event();
+        runnum = dev.GetRunNumber();
+        std::cout << "Found BORE, run number = " << runnum << std::endl;
+        eudaq::PluginManager::ConvertToStandard(dev);
+        unsigned totalboards = 0;
+        for (size_t i = 0; i < dev.NumEvents(); ++i) {
+          const eudaq::Event * drbev = dev.GetEvent(i);
+          if (drbev->GetSubType() == "EUDRB") {
+            unsigned numboards = from_string(drbev->GetTag("BOARDS"), 0);
+            totalboards += numboards;
+            for (unsigned i = 0; i < numboards; ++i) {
+              unsigned id = from_string(drbev->GetTag("ID" + to_string(i)), i);
+              if (id >= track.size()) track.resize(id+1);
+              filemap_t::const_iterator it = files.find(id);
+              if (it != files.end()) EUDAQ_THROW("ID is repeated: " + to_string(id));
+              std::string fname = "run" + to_string(runnum) + "_eutel_" + to_string(id) + ".txt";
+              std::cout << "Opening output file: " << fname << std::endl;
+              files[id] = fileptr_t(new std::ofstream(fname.c_str()));
             }
           }
-          if (track.size() != totalboards) EUDAQ_THROW("Missing IDs");
-          hit_hist = std::vector<unsigned>(totalboards+1, 0); // resize and clear histo
-        } else if (ev->IsEORE()) {
+        }
+        if (track.size() != totalboards) EUDAQ_THROW("Missing IDs");
+        hit_hist = std::vector<unsigned>(totalboards+1, 0); // resize and clear histo
+      }
+
+      while (reader.NextEvent()) {
+        const eudaq::DetectorEvent & dev = reader.Event();
+        if (dev.IsBORE()) {
+          std::cout << "ERROR: Found another BORE !!!" << std::endl;
+        } else if (dev.IsEORE()) {
           std::cout << "Found EORE" << std::endl;
         } else {
           try {
             unsigned boardnum = 0;
-            if (dev->GetEventNumber() % 100 == 0) {
-              std::cout << "Event " << dev->GetEventNumber() << std::endl;
+            if (dev.GetEventNumber() % 100 == 0) {
+              std::cout << "Event " << dev.GetEventNumber() << std::endl;
             }
             for (size_t i = 0; i < track.size(); ++i) {
               track[i].clear();
             }
-            for (size_t i = 0; i < dev->NumEvents(); ++i) {
-              eudaq::Event * subev = dev->GetEvent(i);
-              eudaq::EUDRBEvent * eudev = dynamic_cast<eudaq::EUDRBEvent*>(subev);
-              if (eudev) {
-                if (!decoder.get()) EUDAQ_THROW("Missing EUDRB BORE, cannot decode events");
-                for (size_t j = 0; j < eudev->NumBoards(); ++j) {
-                  eudaq::EUDRBBoard & brd = eudev->GetBoard(j);
-                  //std::cout << "boardnum " << boardnum << ", id " << brd.GetID() << std::endl;
-                  eudaq::EUDRBDecoder::arrays_t<short, short> a = decoder->GetArrays<short, short>(brd);
-                  std::vector<short> cds(npixels, 0);
-                  if (decoder->NumFrames(brd) == 1) {
-                    for (size_t i = 0; i < a.m_adc[0].size(); ++i) {
-                      short x = delmarker(a.m_x[i]);
-                      if (x < 0) continue;
-                      size_t idx = x + xsize.Value()*a.m_y[i];
-                      //std::cout << "pixel " << x << ", " << a.m_y[i] << " (" << idx << ") = " << a.m_adc[0][i] << std::endl;
-                      cds[idx] = a.m_adc[0][i];
-                    }
-                  } else if (decoder->NumFrames(brd) == 2) {
-                    for (size_t i = 0; i < cds.size(); ++i) {
-                      short x = delmarker(a.m_x[i]);
-                      if (x < 0) continue;
-                      size_t idx = x + xsize.Value()*a.m_y[i];
-                      cds[idx] = a.m_adc[1][i] - a.m_adc[0][i];
-                    }
-                  } else if (decoder->NumFrames(brd) == 3) {
-                    for (size_t i = 0; i < cds.size(); ++i) {
-                      short x = delmarker(a.m_x[i]);
-                      if (x < 0) continue;
-                      size_t idx = x + xsize.Value()*a.m_y[i];
-                      cds[idx] = a.m_adc[0][i] * (a.m_pivot[i])
-                        + a.m_adc[1][i] * (1-2*a.m_pivot[i])
-                        + a.m_adc[2][i] * (a.m_pivot[i]-1);
-                    }
-                  } else {
-                    EUDAQ_THROW("Not implemented: frames=" + to_string(decoder->NumFrames(brd)));
+            StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
+            for (size_t i = 0; i < sev.NumPlanes(); ++i) {
+              eudaq::StandardPlane & brd = sev.GetPlane(i);
+              size_t npixels = brd.m_xsize * brd.m_ysize;
+              std::vector<short> cds(npixels, 0);
+              for (size_t i = 0; i < brd.m_x.size(); ++i) {
+                cds[i] = brd.GetPixel(i);
+              }
+              std::vector<Seed> seeds;
+              size_t i = 0;
+              for (unsigned y = 0; y < brd.m_ysize; ++y) {
+                for (unsigned x = 0; x < brd.m_xsize; ++x) {
+                  if (cds[i] > noise.Value() * thresh_seed.Value()) {
+                    seeds.push_back(Seed(x, y, cds[i]));
                   }
-                  std::vector<Seed> seeds;
-                  size_t i = 0;
-                  for (short y = 0; y < ysize.Value(); ++y) {
-                    for (short x = 0; x < xsize.Value(); ++x) {
-                      if (cds[i] > noise.Value() * thresh_seed.Value()) {
-                        seeds.push_back(Seed(x, y, cds[i]));
-                      }
-                      ++i;
-                    }
-                  }
-                  std::sort(seeds.begin(), seeds.end(), &Seed::compare);
-                  std::vector<Cluster> clusters;
-                  for (size_t i = 0; i < seeds.size(); ++i) {
-                    bool badseed = false;
-                    long long charge = 0, sumx = 0, sumy = 0;
-                    for (int dy = -dclust; dy <= dclust; ++dy) {
-                      int y = seeds[i].y + dy;
-                      if (y < 0 || y >= ysize.Value()) continue;
-                      for (int dx = -dclust; dx <= dclust; ++dx) {
-                        int x = seeds[i].x + dx;
-                        if (x < 0 || x >= xsize.Value()) continue;
-                        size_t idx = xsize.Value() * y + x;
-                        if (cds[idx] == BADPIX) {
-                          badseed = true;
-                        } else {
-                          charge += cds[idx];
-                          sumx += x*cds[idx];
-                          sumy += y*cds[idx];
-                        }
-                      }
-                    }
-                    if (!badseed && charge > clust.Value() * noise.Value() * thresh_clus.Value()) {
-                      double cx = seeds[i].x, cy = seeds[i].y;
-                      if (weighted.IsSet()) {
-                        cx = sumx / (double)charge;
-                        cy = sumy / (double)charge;
-                      }
-                      clusters.push_back(Cluster(cx, cy, charge));
-                      for (int dy = -dclust; dy <= dclust; ++dy) {
-                        int y = seeds[i].y + dy;
-                        if (y < 0 || y >= ysize.Value()) continue;
-                        for (int dx = -dclust; dx <= dclust; ++dx) {
-                          int x = seeds[i].x + dx;
-                          if (x < 0 || x >= xsize.Value()) continue;
-                          size_t idx = xsize.Value() * y + x;
-                          cds[idx] = BADPIX;
-                        }
-                      }
-                    }
-                  }
-                  track[brd.GetID()] = clusters;
-                  boardnum++;
+                  ++i;
                 }
               }
+              std::sort(seeds.begin(), seeds.end(), &Seed::compare);
+              std::vector<Cluster> clusters;
+              for (size_t i = 0; i < seeds.size(); ++i) {
+                bool badseed = false;
+                long long charge = 0, sumx = 0, sumy = 0;
+                for (int dy = -dclust; dy <= dclust; ++dy) {
+                  int y = seeds[i].y + dy;
+                  if (y < 0 || y >= (int)brd.m_ysize) continue;
+                  for (int dx = -dclust; dx <= dclust; ++dx) {
+                    int x = seeds[i].x + dx;
+                    if (x < 0 || x >= (int)brd.m_xsize) continue;
+                    size_t idx = brd.m_xsize * y + x;
+                    if (cds[idx] == BADPIX) {
+                      badseed = true;
+                    } else {
+                      charge += cds[idx];
+                      sumx += x*cds[idx];
+                      sumy += y*cds[idx];
+                    }
+                  }
+                }
+                if (!badseed && charge > clust.Value() * noise.Value() * thresh_clus.Value()) {
+                  double cx = seeds[i].x, cy = seeds[i].y;
+                  if (weighted.IsSet()) {
+                    cx = sumx / (double)charge;
+                    cy = sumy / (double)charge;
+                  }
+                  clusters.push_back(Cluster(cx, cy, charge));
+                  for (int dy = -dclust; dy <= dclust; ++dy) {
+                    int y = seeds[i].y + dy;
+                    if (y < 0 || y >= (int)brd.m_ysize) continue;
+                    for (int dx = -dclust; dx <= dclust; ++dx) {
+                      int x = seeds[i].x + dx;
+                      if (x < 0 || x >= (int)brd.m_xsize) continue;
+                      size_t idx = brd.m_xsize * y + x;
+                      cds[idx] = BADPIX;
+                    }
+                  }
+                }
+              }
+              track[brd.m_id] = clusters;
+              boardnum++;
             }
-            
+
             if (tracksonly.IsSet()) {
               for (size_t c1 = 0; c1 < track[0].size(); ++c1) {
               }
@@ -214,8 +181,8 @@ int main(int /*argc*/, char ** argv) {
             for (size_t b = 0; b < track.size(); ++b) {
               if (track[b].size()) {
                 numhit++;
-                std::string ts = to_string(dev->GetTimestamp() == eudaq::NOTIMESTAMP ? 0 : dev->GetTimestamp());
-                *files[b] << dev->GetEventNumber() << "\t" << track[b].size() << "\t" << ts << "\n";
+                std::string ts = to_string(dev.GetTimestamp() == eudaq::NOTIMESTAMP ? 0 : dev.GetTimestamp());
+                *files[b] << dev.GetEventNumber() << "\t" << track[b].size() << "\t" << ts << "\n";
                 for (size_t c = 0; c < track[b].size(); ++c) {
                   *files[b] << " " << track[b][c].x << "\t" << track[b][c].y << "\t" << track[b][c].c << "\n";
                 }

@@ -1,5 +1,6 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
+#include "eudaq/Exception.hh"
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
@@ -117,6 +118,25 @@ namespace eudaq {
     }
     unsigned long result = std::strtoul(start, &end, base);
     if (*end) throw std::invalid_argument("Invalid argument: " + x);
+    return result;
+  }
+
+  void WriteStringToFile(const std::string & fname, const std::string & val) {
+    std::ofstream file(fname.c_str());
+    if (!file.is_open()) EUDAQ_THROW("Unable to open file " + fname + " for writing");
+    file << val << std::endl;
+    if (file.fail()) EUDAQ_THROW("Error writing to file " + fname);
+  }
+
+  std::string ReadLineFromFile(const std::string & fname) {
+    std::ifstream file(fname.c_str());
+    std::string result;
+    if (file.is_open()) {
+      std::getline(file, result);
+      if (file.fail()) {
+        EUDAQ_THROW("Error reading from file " + fname);
+      }
+    }
     return result;
   }
 

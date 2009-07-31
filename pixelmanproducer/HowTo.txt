@@ -1,0 +1,7 @@
+Compiling the Pixelman Producer
+
+1) Download the Pixelman version you want to use from http://aladdin.utef.cvut.cz/ofat/others/Pixelman/Pixelman_download.html
+2) Unzip the Pixelman to desired location and make the folder <Pixelman>\_other_\header known to the compiler
+3) Copy <eudaq>\extern\logix4u\input32.lib to <eudaq>\pixelmanproducer\PixelmanProducerMFC\
+4) Copy <eudaq>\extern\logix4u\input32.dll to the folder where your Pixelman producer Dll is going to be built
+5) Repeat step 4) for <eudaq>\extern\pthread-win32\lib\pthreadVC2.dll

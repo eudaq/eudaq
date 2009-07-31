@@ -1,3 +1,5 @@
+SHELL=/bin/bash -O extglob
+
 PRO_FILES := $(wildcard *.pro)
 TEMP_APPS := $(PRO_FILES:%.pro=%)
 APPS := $(TEMP_APPS:common=)

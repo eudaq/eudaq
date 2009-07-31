@@ -5,6 +5,7 @@
 #include <cstdio>
 #include "eudaq/Serializer.hh"
 #include "eudaq/Exception.hh"
+#include "eudaq/BufferSerializer.hh"
 
 namespace eudaq {
 
@@ -27,6 +28,14 @@ namespace eudaq {
   public:
     FileDeserializer(const std::string & fname, bool faileof = false, size_t buffersize = 65536);
     virtual bool HasData();
+    template <typename T>
+    T peek() {
+      FillBuffer();
+      BufferSerializer buf(m_start, m_stop);
+      T result;
+      buf.read(result);
+      return result;
+    }
   private:
     virtual void Deserialize(unsigned char * data, size_t len);
     size_t FillBuffer(size_t min = 0);

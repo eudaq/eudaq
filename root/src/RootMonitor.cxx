@@ -70,7 +70,7 @@ struct  m_DATA  {
   unsigned short nil : 3;
 };
 
-static const unsigned MAX_BOARDS = 6;
+static const unsigned MAX_BOARDS = 9;
 static const unsigned MAX_SEEDS = 1000;
 static const double DEFAULT_NOISE = 4;
 
@@ -201,7 +201,7 @@ public:
 
 class ConfigurationClass : public TQObject { //a class holding some configuration informations
 public:
-  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), DEPFET_SEED_THRESHOLD(50.0), DEPFET_NEIGHBOUR_THRESHOLD(20.0) //some default values for the configuration
+  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), DEPFET_SEED_THRESHOLD(50.0), DEPFET_NEIGHBOUR_THRESHOLD(20.0), RESETONNEWRUN(true)  //some default values for the configuration
     {
     }
 
@@ -216,6 +216,7 @@ public:
   double CLUSTER_THRESHOLD;
   double DEPFET_SEED_THRESHOLD;
   double DEPFET_NEIGHBOUR_THRESHOLD;
+  bool RESETONNEWRUN;
 };
 
 struct Seed {
@@ -336,7 +337,7 @@ public:
       m_tb_filename(new TGLabel(m_toolbar.get(), "                              ")),
       m_tb_runnum(new TGLabel(m_toolbar.get(), "0     ")),
       m_tb_evtnum(new TGLabel(m_toolbar.get(), "0          ")),
-      m_tb_reduce(new TGNumberEntry(m_toolbar.get(), 1.0, 3)),
+      m_tb_reduce(new TGNumberEntry(m_toolbar.get(), 5.0, 3)),
       m_tb_update(new TGNumberEntry(m_toolbar.get(), 10.0, 4)),
       m_tabs(new TGTab(this, 700, 500)),
       m_cluster_size(8)
@@ -389,6 +390,12 @@ public:
                     num_x_pixels.push_back(264);
                     num_y_pixels.push_back(256);
                   }
+
+                else if(tmpstring == "DET_MIMOSA26")
+                  {
+                    num_x_pixels.push_back(1152);
+                    num_y_pixels.push_back(576);
+                  }
                 else if(tmpstring == "DET_MIMOSA18")
                   {
                     num_x_pixels.push_back(512);
@@ -398,6 +405,11 @@ public:
                   {
                     num_x_pixels.push_back(1024);
                     num_y_pixels.push_back(1024);
+                  }
+                else if(tmpstring == "DET_DEPFET")
+                  {
+                    num_x_pixels.push_back(64);
+                    num_y_pixels.push_back(256);
                   }
               }
             delete arr;
@@ -457,7 +469,8 @@ public:
 
       if(m_board.size() != num_x_pixels.size())
         {
-          std::cout << "mismatch of number of configured boards and displayed boards in online monitor" << std::endl;
+          std::cout << "mismatch of number of configured boards (" << m_board.size()
+                    << ") and displayed boards (" << num_x_pixels.size() << ") in online monitor" << std::endl;
           exit(-1);
         }
       //here the code for the configuration tab starts
@@ -564,6 +577,16 @@ public:
       clusterpositionComboBox->Associate(this);
       m_conf_group_frame->AddFrame(clusterpositionComboBox.get(), m_hinttop.get());
 
+
+      m_conf_checkbox_resetonnewrun =  new TGCheckButton(m_conf_group_frame.get(),"Reset Histograms at BOR");
+      if(conf.RESETONNEWRUN)
+        m_conf_checkbox_resetonnewrun->SetState(kButtonDown);
+      else
+        m_conf_checkbox_resetonnewrun->SetState(kButtonUp);
+
+      m_conf_checkbox_resetonnewrun->Associate(this);
+      m_conf_group_frame->AddFrame(m_conf_checkbox_resetonnewrun.get(), m_hinttop.get());
+     
       m_conf_apply = new TGTextButton(m_conf_group_frame.get(),"&Apply",150);
       m_conf_apply->SetEnabled(kFALSE);
       m_conf_apply->Associate(this);
@@ -1312,8 +1335,14 @@ public:
       unsigned cdsupdate = (unsigned)m_conf_cds_lego_update->GetNumber();
       if(cdsupdate > 0)
         conf.UPDATE_EVERY_N_EVENTS = cdsupdate;
-
-
+      if(m_conf_checkbox_resetonnewrun->IsOn())
+        {
+          conf.RESETONNEWRUN = true;
+        }
+      else
+        {
+          conf.RESETONNEWRUN = false;
+        }  
       unsigned numbinshitcorr = (unsigned)m_conf_numbinshitcorr->GetNumber();
       if(numbinshitcorr != conf.HITCORR_NUM_BINS && numbinshitcorr > 0)
         {
@@ -1353,6 +1382,8 @@ public:
       double clusterthresh = (double) m_conf_clusterthreshold->GetNumber();
       if(clusterthresh > 0)
         conf.CLUSTER_THRESHOLD = clusterthresh;
+
+      
 
 
 
@@ -1410,32 +1441,46 @@ public:
   virtual void OnStartRun(unsigned param) {
     RootLocker lock;
     Monitor::OnStartRun(param);
-    m_tb_filename->SetText(m_datafile.c_str());
+    m_tb_filename->SetText(m_reader ? m_reader->Filename().c_str() : "");
     m_tb_runnum->SetText(eudaq::to_string(param).c_str());
 
-    for (size_t i = 0; i < m_board.size(); ++i) {
-      //      std::cout << "i=" << i << std::endl;
-      m_board[i].Reset();
-    }
+    if(conf.RESETONNEWRUN)
+      {
+
+        for (size_t i = 0; i < m_board.size(); ++i) {
+          //      std::cout << "i=" << i << std::endl;
+          m_board[i].Reset();
+        }
+
+        for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
+          m_hitcorrelation[i]->Reset("");
+        }
+        for (size_t i = 0; i <m_clustercorrelation.size(); ++i) {
+          m_clustercorrelation[i]->Reset("");
+        }
+        for (size_t i = 0; i <m_clustercorrelationy.size(); ++i) {
+          m_clustercorrelationy[i]->Reset("");
+        }
+        for (size_t i = 0; i <m_depfet_correlation.size(); ++i) {
+          m_depfet_correlation[i]->Reset("");
+        }
+        for (size_t i = 0; i <m_depfet_correlationy.size(); ++i) {
+          m_depfet_correlationy[i]->Reset("");
+        }
+        m_depfet_adc->Reset("");
+        m_depfet_map->Reset("");
+        m_histonumtracks->Reset("");
+      }
     SetStatus(eudaq::Status::LVL_OK);
   }
-  virtual void OnEvent(counted_ptr<eudaq::DetectorEvent> ev) {
+  virtual void OnEvent(const eudaq::StandardEvent & ev) {
     RootLocker lock;
     //std::cout << *ev << std::endl;
-    if (ev->IsBORE()) {
-      m_decoder = new eudaq::EUDRBDecoder(*ev);
-      eudaq::EUDRBEvent * drbev = 0;
-      for (size_t i = 0; i < ev->NumEvents(); ++i) {
-        drbev = dynamic_cast<eudaq::EUDRBEvent *>(ev->GetEvent(i));
-        if (drbev) {
-          break;
-        }
-      }
-      if (!drbev) EUDAQ_THROW("No EUDRB detected");
+    if (ev.IsBORE()) {
       m_histoevents = 0;
       // Initialize histograms
-    } else if (ev->IsEORE()) {
-      std::string filename = m_datafile;
+    } else if (ev.IsEORE()) {
+      std::string filename = m_reader->Filename();
       size_t dot = filename.find_last_of("./\\:");
       if (dot != std::string::npos && filename[dot] == '.') filename.erase(dot);
       filename += ".root";
@@ -1469,534 +1514,221 @@ public:
       // Data event
       unsigned reduce = static_cast<unsigned>(m_tb_reduce->GetNumber());
       // Fill histograms
-      m_prevt = ev->GetTimestamp();
+      m_prevt = ev.GetTimestamp();
 
       unsigned numplanes = 0;
 
-      if ((ev->GetEventNumber() % reduce) == 0) {
-        m_tb_evtnum->SetText(eudaq::to_string(ev->GetEventNumber()).c_str());
+      if ((ev.GetEventNumber() % reduce) == 0) {
+        m_tb_evtnum->SetText(eudaq::to_string(ev.GetEventNumber()).c_str());
 
+        m_histoevents++;
+        totalnumevents++;
+        std::vector<unsigned int> numberofclusters(m_board.size(),0);
+        std::vector<std::vector<double> > cpos(m_board.size());
+        std::vector<std::vector<double> > cposy(m_board.size());
+        for (size_t i = 0; i < ev.NumPlanes(); ++i) {
+          const eudaq::StandardPlane & plane = ev.GetPlane(i);
 
-        //depfet
-        //not sure if 64 is correct
-        //number of pixel: 64 times 128
-        std::vector<Seed> depfet_seeds;
-        std::vector<double> depfet_cluster_charge;
-        std::vector<double> depfet_clusterx;
-        std::vector<double> depfet_clustery;
+          numplanes++;
+          std::vector<double> clusterposition;
+          std::vector<double> clusterpositiony;
+          clusterposition.reserve(50);
+          clusterpositiony.reserve(50);
 
-        std::vector<int> depfet_adc;
+          //bool depfethit = depfet_cluster_charge.size() > 0;
+          FillBoard(m_board[i], plane, i, numberofclusters[i], clusterposition, clusterpositiony/*, depfethit*/);
+          //cpos.push_back(clusterposition);
+          cpos.at(i) = clusterposition;
+          cposy.at(i) = clusterpositiony;
 
-        if (eudaq::DEPFETEvent * depfetev = dynamic_cast<eudaq::DEPFETEvent *>(ev->GetEvent(0))) {
-
-          //decoding depfet
-
-          const unsigned char * data_daq = depfetev->GetBoard(0).GetData();
-
-          std::vector<unsigned int> depfet_adc; depfet_adc.reserve(128*64);
-          std::vector<unsigned int> depfet_col; depfet_col.reserve(128*64);
-          std::vector<unsigned int> depfet_row; depfet_row.reserve(128*64);
-
-
-          std::vector< std::vector<double> > depfet_matrix(64, std::vector<double>(128,0.0));
-
-          static std::vector< std::vector<double> > depfet_ped_matrix(64, std::vector<double>(128,0.0));
-          static bool firstcall = true;
-          if(firstcall)
-            {
-              //fill ped array
-
-              std::fstream f;
-              std::string s;
-              std::string pedfilename = "Pedestals.bdt";
-              f.open(pedfilename.c_str(), std::ios::in);
-
-              if(!f)
-                {
-                  std::cout << "can not find depfet pedestal file: " <<pedfilename <<  std::endl;
-                  exit(-1);
-                }
-              else
-                {
-                  std::cout << "the depfet pedestal file was found" << std::endl;
-                }
-              while (!f.eof())
-                {
-                  std::getline(f, s);        // read one line
-                  TString tmpstring = s;
-                  TPRegexp shortTest("(.+?)\\s(.+?)\\s(.+?)\\s(.+?)\\s(.+?)");
-                  TObjArray *subStrL = shortTest.MatchS(tmpstring);
-
-                  int x = -1;
-                  int y = -1;
-                  double ped = -9999.0;
-
-                  //loop over all groups
-                  for (int i = 1; i < subStrL->GetEntries(); i++) {
-                    const TString subStr = ((TObjString *)subStrL->At(i))->GetString();
-
-                    if(i==1)
-                      x = subStr.Atoi();
-                    if(i==2)
-                      y = subStr.Atoi();
-                    if(i==3)
-                      ped = subStr.Atof();
-                  }
-                  delete subStrL;
-
-                  //only fill depfet ped matrix if the matching was a success
-                  if(x != -1 && y != -1 && ped != -999.0)
-                    {
-                      depfet_ped_matrix[x][y] = ped;
-                    }
-                }
-
-              f.close();
-
-
-
-
-              //end of fill ped array
-              firstcall = false;
-            }
-
-
-          //the header was removed from the data stream. so both numbers are decreased by 1
-          int lower_edge = 3; // 3
-          int upper_edge = 8194; // 8194
-
-
-          //index is the running variable
-          int index = (lower_edge - 1 ) * 4;
-
-          int index_upper = upper_edge * 4 - 1;
-
-
-          while(index < index_upper)
-            {
-              unsigned int tmp_data = 0;
-
-              //merging 4 elements of data_daq to one 32 bit word
-              tmp_data = (unsigned int)(data_daq[index])
-                | ((unsigned int)(data_daq[index+1]) << 8 )
-                | ((unsigned int)(data_daq[index+2]) << 16 )
-                | ((unsigned int)(data_daq[index+3]) << 24 );
-
-              unsigned int adcdata = 0;
-              unsigned int col = 0;
-              unsigned int row = 0;
-
-              //data format: bitfield
-              //struct DATA  {
-              //     unsigned short adcdata: 16;
-              //     unsigned short col : 6;
-              //     unsigned short row : 7;
-              //     unsigned short nil : 3;
-              // };
-
-              adcdata = tmp_data & 0xFFFF;
-              //extract cols and rows and shift it back, so that the first bit is in the right position
-              col = (tmp_data & 0x3F0000) >> 16;
-
-              row = (tmp_data & 0x1FC00000) >> 22;
-
-              depfet_matrix[col][row] = adcdata;
-
-
-
-              depfet_adc.push_back(adcdata);
-              depfet_col.push_back(col);
-              depfet_row.push_back(row);
-
-              //jump to the next 4 elements, which must be combined
-              index += 4;
-            }
-
-
-
-          //m_depfet_map->Reset("");
-
-          const double seed_thresh = conf.DEPFET_SEED_THRESHOLD; //20.0; //seed_thresh > neighbour_thresh //7
-          const double neighbour_thresh = conf.DEPFET_NEIGHBOUR_THRESHOLD; //6
-          const double NOISE = 1.0;
-
-          //std::cout << "depfet seed=" << seed_thresh << " nei=" << neighbour_thresh << std::endl;
-          unsigned int maxcol = 0;
-          unsigned int maxrow = 0;
-          for(size_t i = 0; i < depfet_adc.size();i++)
-            {
-              double ped = depfet_ped_matrix[depfet_col[i]][depfet_row[i]];
-              m_depfet_adc->Fill(depfet_adc[i]);
-              //m_depfet_map->Fill(depfet_col[i], depfet_row[i], depfet_adc[i]-ped);
-
-              if(depfet_col[i] > maxcol)
-                maxcol = depfet_col[i];
-              if(depfet_row[i] > maxrow)
-                maxrow = depfet_row[i];
-
-              if((depfet_adc[i] - ped) > seed_thresh*NOISE)
-                depfet_seeds.push_back(Seed(depfet_col[i], depfet_row[i], depfet_adc[i]));
-
-            }
-
-          //row = 128, col = 64
-          //std::cout << "maxrow=" << maxrow << " maxcol=" << maxcol << std::endl;
-          std::sort(depfet_seeds.begin(), depfet_seeds.end(), &Seed::compare);
-
-          //clustering
-
-
-          for (size_t i = 0; i < depfet_seeds.size(); ++i) {
-
-            double clustercharge = 0.0;
-            bool take_cluster = true;
-            for (int dy = -1; dy <= 1; ++dy) {
-              for (int dx = -1; dx <= 1; ++dx) {
-                if(
-                  (depfet_seeds[i].x+dx) >= 0
-                  && (depfet_seeds[i].y+dy) >= 0
-                  && (depfet_seeds[i].x+dx) < 64
-                  && (depfet_seeds[i].y+dy) < 128 //check whether we are inside the sensor
-                  && (depfet_matrix[depfet_seeds[i].x+dx][depfet_seeds[i].y+dy]-depfet_ped_matrix[depfet_seeds[i].x+dx][depfet_seeds[i].y+dy]) > neighbour_thresh*NOISE)
-                  {
-                    clustercharge += depfet_matrix[depfet_seeds[i].x+dx][depfet_seeds[i].y+dy] - depfet_ped_matrix[depfet_seeds[i].x+dx][depfet_seeds[i].y+dy];
-                  }
-                else
-                  take_cluster = false;
-              }
-            }
-            if(take_cluster)
-              {
-                for (int dy = -1; dy <= 1; ++dy) {
-                  for (int dx = -1; dx <= 1; ++dx) {
-                    depfet_matrix[depfet_seeds[i].x+dx][depfet_seeds[i].y+dy] = 0.0;
-                  }
-                }
-                depfet_cluster_charge.push_back(clustercharge);
-                depfet_clusterx.push_back(depfet_seeds[i].x);
-                depfet_clustery.push_back(depfet_seeds[i].y);
-                m_depfet_map->Fill(depfet_seeds[i].x,depfet_seeds[i].y);
-              }
-
-          }
-          //end of clustering
-          //end of decoding depfet
         }
-        else
-          {
-            //std::cout <<  0 << " depfet not avail." << std::endl;
-          }
-        //end of depfet
-
-
-
-        for (size_t i = 0; i < ev->NumEvents(); ++i) {
-          if (eudaq::EUDRBEvent * drbev = dynamic_cast<eudaq::EUDRBEvent *>(ev->GetEvent(i))) {
-            if (drbev->NumBoards() > 0) {
-              m_histoevents++;
-              try {
-                totalnumevents++;
-                std::vector<unsigned int> numberofclusters(m_board.size(),0);
-                std::vector<std::vector<double> > cpos(m_board.size());
-                std::vector<std::vector<double> > cposy(m_board.size());
-
-                //              std::cout << "Numboards " << drbev->NumBoards() << ", " << m_board.size() << std::endl;
-                for (size_t i = 0; i < drbev->NumBoards() && i < m_board.size(); ++i) {
-                  numplanes++;
-                  std::vector<double> clusterposition;
-                  std::vector<double> clusterpositiony;
-
-                  bool depfethit = false;
-                  if(depfet_cluster_charge.size() > 0)
-                    depfethit = true;
-                  else
-                    depfethit = false;
-                  FillBoard(m_board[i], drbev->GetBoard(i),i,numberofclusters[i], clusterposition, clusterpositiony, depfethit);
-                  //cpos.push_back(clusterposition);
-                  cpos.at(i) = clusterposition;
-                  cposy.at(i) = clusterpositiony;
-
-                }
-                //
-                for(size_t i = 0; i < m_board.size()-1; i++)
-                  {
-                    for(size_t k = 0; k < cposy.at(i).size(); k++)
-                      {
-                        for(size_t l = 0; l < cposy.at(i+1).size(); l++)
-                          {
-                            m_clustercorrelationy[i]->Fill(cposy.at(i+1).at(l),cposy.at(i).at(k));
-                          }
-                      }
-                  }
-
-                for(size_t k = 0; k < cposy.at(0).size(); k++)
-                  {
-
-                    for(size_t l = 0; l < cposy.at((int)m_board.size()-1).size(); l++)
-                      {
-
-                        m_clustercorrelationy.back()->Fill(cposy.at((int)m_board.size()-1).at(l),cposy.at(0).at(k));
-                      }
-                  }
-                //
-                for(size_t i = 0; i < m_board.size()-1; i++)
-                  {
-                    if(numberofclusters[i] != 0 || numberofclusters[i+1] != 0)
-                      m_hitcorrelation[i]->Fill(numberofclusters[i+1],numberofclusters[i]);
-                    //cluster correlation
-                    for(size_t k = 0; k < cpos.at(i).size(); k++)
-                      {
-                        for(size_t l = 0; l < cpos.at(i+1).size(); l++)
-                          {
-                            m_clustercorrelation[i]->Fill(cpos.at(i+1).at(l),cpos.at(i).at(k));
-                          }
-                      }
-                  }
-
-                for(size_t k = 0; k < cpos.at(0).size(); k++)
-                  {
-
-                    for(size_t l = 0; l < cpos.at((int)m_board.size()-2).size(); l++)
-                      {
-
-                        (m_clustercorrelation.back())->Fill(cpos.at((int)m_board.size()-2).at(l),cpos.at(0).at(k));
-                      }
-                  }
-                //depfet correlation
-                //      std::cout << "seedx=" << depfet_seedx.size() << std::endl;
-                //      std::cout << "depfet_clusterx=" << depfet_clusterx.size() << " depfet_clustery=" << depfet_clustery.size() << std::endl;
-                for(size_t i = 0; i < m_board.size(); i++)
-                  {
-                    for(size_t k = 0; k < depfet_clusterx.size(); k++)
-                      {
-                        for(size_t l = 0; l < cpos.at(i).size(); l++)
-                          {
-                            m_depfet_correlation[i]->Fill(depfet_clusterx[k], cpos.at(i).at(l));
-                          }
-                      }
-                  }
-
-                for(size_t i = 0; i < m_board.size(); i++)
-                  {
-                    for(size_t k = 0; k < depfet_clustery.size(); k++)
-                      {
-                        //std::cout << "cpos = " << cpos.at(i).size() << " cposy = "<< cposy.at(i).size() << std::endl;
-
-                        for(size_t l = 0; l < cposy.at(i).size(); l++)
-                          {
-                            m_depfet_correlationy[i]->Fill(depfet_clustery[k], cposy.at(i).at(l));
-                          }
-                      }
-                  }
-                //end of depfet correlation
-                //end of cluster correlation
-
-
-                //              std::cout << "cpos size=" << cpos.size() << std::endl;
-                //              for(size_t i = 0; i < m_board.size(); i++)
-                //                {
-                //                  std::cout << i;
-                //                  std::cout << " size=" << cpos.at(i).size() << std::endl;
-                //                }
-              } catch (const eudaq::Exception & e) {
-                EUDAQ_ERROR("Bad data size in event " + eudaq::to_string(ev->GetEventNumber()) + ": " + e.what());
-              }
+        //
+        for(size_t i = 0; i < m_board.size()-1; i++) {
+          for(size_t k = 0; k < cposy.at(i).size(); k++) {
+            for(size_t l = 0; l < cposy.at(i+1).size(); l++) {
+              m_clustercorrelationy[i]->Fill(cposy.at(i+1).at(l),cposy.at(i).at(k));
             }
-            break;
           }
         }
+
+        for(size_t k = 0; k < cposy.at(0).size(); k++) {
+          for(size_t l = 0; l < cposy.at((int)m_board.size()-1).size(); l++) {
+            m_clustercorrelationy.back()->Fill(cposy.at((int)m_board.size()-1).at(l),cposy.at(0).at(k));
+          }
+        }
+        //
+        for(size_t i = 0; i < m_board.size()-1; i++) {
+          if (numberofclusters[i] != 0 || numberofclusters[i+1] != 0)
+            m_hitcorrelation[i]->Fill(numberofclusters[i+1],numberofclusters[i]);
+          //cluster correlation
+          for(size_t k = 0; k < cpos.at(i).size(); k++) {
+            for(size_t l = 0; l < cpos.at(i+1).size(); l++) {
+              m_clustercorrelation[i]->Fill(cpos.at(i+1).at(l),cpos.at(i).at(k));
+            }
+          }
+        }
+
+        for(size_t k = 0; k < cpos.at(0).size(); k++) {
+          for(size_t l = 0; l < cpos.at((int)m_board.size()-2).size(); l++) {
+            m_clustercorrelation.back()->Fill(cpos.at((int)m_board.size()-2).at(l),cpos.at(0).at(k));
+          }
+        }
+        //depfet correlation
+        //      std::cout << "seedx=" << depfet_seedx.size() << std::endl;
+        //      std::cout << "depfet_clusterx=" << depfet_clusterx.size() << " depfet_clustery=" << depfet_clustery.size() << std::endl;
+        /*
+        for(size_t i = 0; i < m_board.size(); i++) {
+          for(size_t k = 0; k < depfet_clusterx.size(); k++) {
+            for(size_t l = 0; l < cpos.at(i).size(); l++) {
+              m_depfet_correlation[i]->Fill(depfet_clusterx[k], cpos.at(i).at(l));
+            }
+          }
+        }
+
+        for(size_t i = 0; i < m_board.size(); i++) {
+          for(size_t k = 0; k < depfet_clustery.size(); k++) {
+            //std::cout << "cpos = " << cpos.at(i).size() << " cposy = "<< cposy.at(i).size() << std::endl;
+            for(size_t l = 0; l < cposy.at(i).size(); l++) {
+              m_depfet_correlationy[i]->Fill(depfet_clustery[k], cposy.at(i).at(l));
+            }
+          }
+        }
+        */
+        //end of depfet correlation
+        //end of cluster correlation
+
+
+        //              std::cout << "cpos size=" << cpos.size() << std::endl;
+        //              for(size_t i = 0; i < m_board.size(); i++)
+        //                {
+        //                  std::cout << i;
+        //                  std::cout << " size=" << cpos.at(i).size() << std::endl;
+        //                }
       }
-      unsigned planeshit = 0;
-      //  std::cout << "Event " << ev->GetEventNumber() << ", clusters:";
+    }
+    unsigned planeshit = 0;
+    //  std::cout << "Event " << ev->GetEventNumber() << ", clusters:";
 //       for (size_t i = 0; i < numplanes; ++i) {
 //         std::cout << " " << m_board[i].m_clusters.size();
 //       }
 //       std::cout << std::endl;
-      int numtracks = 0;
+    int numtracks = 0;
 
-
-
-
-#if 1 //
-
-      for (size_t i = 0; i < numplanes; ++i) {
-        if (m_board[i].m_clusters.size() >= 1) {
-          planeshit++;
-        }
+    for (size_t i = 0; i < ev.NumPlanes(); ++i) {
+      if (m_board[i].m_clusters.size() >= 1) {
+        planeshit++;
       }
-      if (planeshit < numplanes) {
-        // std::cout << "No track candidate" << std::endl;
-      } else {
-        const double alignx[] = { -10,  -5, -20, 30 };
-        const double aligny[] = { -10,   5, -10, 10 };
-        const double thresh[] = {  20,  20,  40, 20 };
-        //const double thresh2 = square(20);
-        for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
-          //std::cout << "Trying cluster " << i << std::endl;
-          size_t board = 1;
-          std::vector<double> trackx(numplanes), tracky(numplanes);
-          trackx[0] = m_board[0].m_clusterx[i];
-          tracky[0] = m_board[0].m_clustery[i];
-          double closest2;
-          size_t iclosest = 0;
-          //bool havecluster;
-          do {
-            closest2 = 2.0;
-            //havecluster = false;
-            for (size_t cluster = 0; cluster < m_board[board].m_clusters.size(); ++cluster) {
-              double x = m_board[board].m_clusterx[cluster];
-              double y = m_board[board].m_clustery[cluster];
-              if (board >= 3) { // ????????????????????
-                x = 263 - x;
-              }
-              double dx = x - trackx[board-1] - alignx[board-1];
-              double dy = y - tracky[board-1] - aligny[board-1];
-              double dist2 = (square(dx) + square(dy)) / square(thresh[board-1]);
-              //std::cout << "dist^2 = " << dist2 << std::endl;
-              if (dist2 < closest2) {
-                iclosest = cluster;
-                closest2 = dist2;
-                //havecluster = true;
-                trackx[board] = x;
-                tracky[board] = y;
-              }
+    }
+    if (planeshit < ev.NumPlanes()) {
+      // std::cout << "No track candidate" << std::endl;
+    } else {
+      const double alignx[] = { -10,  -5, -20, 30 };
+      const double aligny[] = { -10,   5, -10, 10 };
+      const double thresh[] = {  20,  20,  40, 20 };
+      //const double thresh2 = square(20);
+      for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
+        //std::cout << "Trying cluster " << i << std::endl;
+        size_t board = 1;
+        std::vector<double> trackx(ev.NumPlanes()), tracky(ev.NumPlanes());
+        trackx[0] = m_board[0].m_clusterx[i];
+        tracky[0] = m_board[0].m_clustery[i];
+        double closest2;
+        size_t iclosest = 0;
+        //bool havecluster;
+        do {
+          closest2 = 2.0;
+          //havecluster = false;
+          for (size_t cluster = 0; cluster < m_board[board].m_clusters.size(); ++cluster) {
+            double x = m_board[board].m_clusterx[cluster];
+            double y = m_board[board].m_clustery[cluster];
+            if (board >= 3) { // ????????????????????
+              x = 263 - x;
             }
-            ++board;
-            //std::cout << "closest = " << std::sqrt(closest2) << std::endl;
-          } while (board < numplanes && closest2 < 1);
-          if (closest2 < 1) {
-            numtracks++;
-            //std::cout << "Found track in event " << ev->GetEventNumber() << ":";
-            for (size_t i = 0; i < trackx.size(); ++i) {
-              //std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
-              m_board[i].m_histotrack2d->Fill(trackx[i], tracky[i]);
-              if (i > 0) {
-                m_board[i].m_histodeltax->Fill(trackx[i] - trackx[i-1]);
-                m_board[i].m_histodeltay->Fill(tracky[i] - tracky[i-1]);
-              }
+            double dx = x - trackx[board-1] - alignx[board-1];
+            double dy = y - tracky[board-1] - aligny[board-1];
+            double dist2 = (square(dx) + square(dy)) / square(thresh[board-1]);
+            //std::cout << "dist^2 = " << dist2 << std::endl;
+            if (dist2 < closest2) {
+              iclosest = cluster;
+              closest2 = dist2;
+              //havecluster = true;
+              trackx[board] = x;
+              tracky[board] = y;
             }
-            //std::cout << std::endl;
-            //fittrack(trackx, tracky);
           }
-        }
-      }
-
-#else
-
-      for (size_t i = 0; i < numplanes; ++i) {
-        if (m_board[i].m_clusters.size() == 1) {
-          planeshit++;
-        }
-      }
-      if (planeshit < numplanes-2) {
-        std::cout << "No track candidate" << std::endl;
-      } else {
-        numtracks++;
-        std::ostringstream s;
-        s << "Found track candidate in event " << ev->GetEventNumber() << ":";
-        double x = -1, y = -1;
-        double clustval = 0;
-        for (size_t i = 0; i < numplanes; ++i) {
-          if (m_board[i].m_clusters.size() < 1) {
-            m_board[i].m_trackx = -1;
-            m_board[i].m_tracky = -1;
-            s << " ()";
-          } else {
-            if (x == -1) { // first plane: find highest cluster
-              for (size_t c = 0; c < m_board[i].m_clusters.size(); ++c) {
-                if (m_board[i].m_clusters[c] > clustval) {
-                  clustval = m_board[i].m_clusters[c];
-                  x = m_board[i].m_clusterx[c];
-                  y = m_board[i].m_clustery[c];
-                }
-              }
-            } else { // find closest cluster
-              double d2 = -1;
-              for (size_t c = 0; c < m_board[i].m_clusters.size(); ++c) {
-                double dd2 = square(m_board[i].m_clusterx[c]) + square(m_board[i].m_clustery[c]);
-                if (d2 < 0 || dd2 < d2) {
-                  d2 = dd2;
-                  clustval = m_board[i].m_clusters[c];
-                  x = m_board[i].m_clusterx[c];
-                  y = m_board[i].m_clustery[c];
-                }
-              }
+          ++board;
+          //std::cout << "closest = " << std::sqrt(closest2) << std::endl;
+        } while (board < ev.NumPlanes() && closest2 < 1);
+        if (closest2 < 1) {
+          numtracks++;
+          //std::cout << "Found track in event " << ev->GetEventNumber() << ":";
+          for (size_t i = 0; i < trackx.size(); ++i) {
+            //std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
+            m_board[i].m_histotrack2d->Fill(trackx[i], tracky[i]);
+            if (i > 0) {
+              m_board[i].m_histodeltax->Fill(trackx[i] - trackx[i-1]);
+              m_board[i].m_histodeltay->Fill(tracky[i] - tracky[i-1]);
             }
-            m_board[i].m_trackx = x;
-            m_board[i].m_tracky = y;
-            m_board[i].m_histotrack2d->Fill(m_board[i].m_trackx, m_board[i].m_tracky);
-            if (i > 0 && m_board[i-1].m_trackx != -1) {
-              m_board[i].m_histodeltax->Fill(m_board[i].m_trackx - m_board[i-1].m_trackx);
-              m_board[i].m_histodeltay->Fill(m_board[i].m_tracky - m_board[i-1].m_tracky);
-            }
-            s << " (" << m_board[i].m_trackx
-              << ", " << m_board[i].m_tracky
-              << ", " << clustval
-              << ", " << m_board[i].m_clusters.size()
-              << ")";
           }
+          //std::cout << std::endl;
+          //fittrack(trackx, tracky);
         }
-        EUDAQ_EXTRA(s.str());
       }
+    }
 
-#endif
-      //m_board[0].m_testhisto->SetMaximum();
-      m_histonumtracks->Fill(numtracks);
-      m_board[0].m_historawval->SetMaximum();
-      m_board[0].m_histocdsval->SetMaximum();
-      m_board[0].m_histonoise->SetMaximum();
-      m_board[0].m_histonoiseeventnr->SetMaximum();
+    //m_board[0].m_testhisto->SetMaximum();
+    m_histonumtracks->Fill(numtracks);
+    m_board[0].m_historawval->SetMaximum();
+    m_board[0].m_histocdsval->SetMaximum();
+    m_board[0].m_histonoise->SetMaximum();
+    m_board[0].m_histonoiseeventnr->SetMaximum();
 
-      m_board[0].m_histoclusterval->SetMaximum();
-      m_board[0].m_histonumhits->SetMaximum();
-      m_board[0].m_histonumclusters->SetMaximum();
-      m_board[1].m_histodeltax->SetMaximum();
-      m_board[1].m_histodeltay->SetMaximum();
-      double maxr = m_board[0].m_historawval->GetMaximum();
-      double maxd = m_board[0].m_histocdsval->GetMaximum();
-      double max_noise = m_board[0].m_histonoise->GetMaximum();
-      double max_noise_eventnr = m_board[0].m_histonoiseeventnr->GetMaximum();
+    m_board[0].m_histoclusterval->SetMaximum();
+    m_board[0].m_histonumhits->SetMaximum();
+    m_board[0].m_histonumclusters->SetMaximum();
+    m_board[1].m_histodeltax->SetMaximum();
+    m_board[1].m_histodeltay->SetMaximum();
+    double maxr = m_board[0].m_historawval->GetMaximum();
+    double maxd = m_board[0].m_histocdsval->GetMaximum();
+    double max_noise = m_board[0].m_histonoise->GetMaximum();
+    double max_noise_eventnr = m_board[0].m_histonoiseeventnr->GetMaximum();
 
-      double maxc = m_board[0].m_histoclusterval->GetMaximum();
-      double maxh = m_board[0].m_histonumhits->GetMaximum();
-      double maxn = m_board[0].m_histonumclusters->GetMaximum();
-      double maxx = m_board[1].m_histodeltax->GetMaximum();
-      double maxy = m_board[1].m_histodeltay->GetMaximum();
-      for (size_t i = 0; i < m_board.size(); ++i) {
+    double maxc = m_board[0].m_histoclusterval->GetMaximum();
+    double maxh = m_board[0].m_histonumhits->GetMaximum();
+    double maxn = m_board[0].m_histonumclusters->GetMaximum();
+    double maxx = m_board[1].m_histodeltax->GetMaximum();
+    double maxy = m_board[1].m_histodeltay->GetMaximum();
+    for (size_t i = 0; i < m_board.size(); ++i) {
+      //  m_board[i].m_testhisto->SetMaximum(40.0);
+      //m_board[i].m_testhisto->SetMinimum(conf.SEED_NEIGHBOUR_THRESHOLD*5.0);
+      m_board[i].m_testhisto->SetMinimum(0.0); //set the minimum of the cds lego plots
+    }
+    for (size_t i = 1; i < ev.NumPlanes(); ++i) {
+      if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
+      if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
+      if (m_board[i].m_histonoise->GetMaximum() > max_noise) max_noise = m_board[i].m_histonoise->GetMaximum();
+      if (m_board[i].m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board[i].m_histonoiseeventnr->GetMaximum();
+      if (m_board[i].m_histoclusterval->GetMaximum() > maxc) maxc = m_board[i].m_histoclusterval->GetMaximum();
+      if (m_board[i].m_histonumhits->GetMaximum() > maxh) maxh = m_board[i].m_histonumhits->GetMaximum();
+      if (m_board[i].m_histonumclusters->GetMaximum() > maxn) maxn = m_board[i].m_histonumclusters->GetMaximum();
+      if (m_board[i].m_histodeltax->GetMaximum() > maxx) maxx = m_board[i].m_histodeltax->GetMaximum();
+      if (m_board[i].m_histodeltay->GetMaximum() > maxy) maxy = m_board[i].m_histodeltay->GetMaximum();
+    }
+    m_board[0].m_historawval->SetMaximum(maxr*1.1);
+    m_board[0].m_histocdsval->SetMaximum(maxd*1.1);
+    m_board[0].m_histonoise->SetMaximum(max_noise*1.1);
+    m_board[0].m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
 
-        //  m_board[i].m_testhisto->SetMaximum(40.0);
-        //m_board[i].m_testhisto->SetMinimum(conf.SEED_NEIGHBOUR_THRESHOLD*5.0);
-        m_board[i].m_testhisto->SetMinimum(0.0); //set the minimum of the cds lego plots
-      }
-      for (size_t i = 1; i < numplanes; ++i) {
-
-
-        if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
-        if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
-        if (m_board[i].m_histonoise->GetMaximum() > max_noise) max_noise = m_board[i].m_histonoise->GetMaximum();
-        if (m_board[i].m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board[i].m_histonoiseeventnr->GetMaximum();
-        if (m_board[i].m_histoclusterval->GetMaximum() > maxc) maxc = m_board[i].m_histoclusterval->GetMaximum();
-        if (m_board[i].m_histonumhits->GetMaximum() > maxh) maxh = m_board[i].m_histonumhits->GetMaximum();
-        if (m_board[i].m_histonumclusters->GetMaximum() > maxn) maxn = m_board[i].m_histonumclusters->GetMaximum();
-        if (m_board[i].m_histodeltax->GetMaximum() > maxx) maxx = m_board[i].m_histodeltax->GetMaximum();
-        if (m_board[i].m_histodeltay->GetMaximum() > maxy) maxy = m_board[i].m_histodeltay->GetMaximum();
-      }
-      m_board[0].m_historawval->SetMaximum(maxr*1.1);
-      m_board[0].m_histocdsval->SetMaximum(maxd*1.1);
-      m_board[0].m_histonoise->SetMaximum(max_noise*1.1);
-      m_board[0].m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
-
-      m_board[0].m_histoclusterval->SetMaximum(maxc*1.1);
-      m_board[0].m_histonumhits->SetMaximum(maxh*1.1);
-      m_board[0].m_histonumclusters->SetMaximum(maxn*1.1);
-      m_board[1].m_histodeltax->SetMaximum(maxx*1.1);
-      m_board[1].m_histodeltay->SetMaximum(maxy*1.1);
-      m_modified = true;
-      if (m_histoevents == 100) {
-        //m_canvasmain->cd(1)->SetLogy();
-        //m_canvasmain->cd(5)->SetLogy();
-        //m_canvasmain->cd(9)->SetLogy();
-      }
+    m_board[0].m_histoclusterval->SetMaximum(maxc*1.1);
+    m_board[0].m_histonumhits->SetMaximum(maxh*1.1);
+    m_board[0].m_histonumclusters->SetMaximum(maxn*1.1);
+    m_board[1].m_histodeltax->SetMaximum(maxx*1.1);
+    m_board[1].m_histodeltay->SetMaximum(maxy*1.1);
+    m_modified = true;
+    if (m_histoevents == 100) {
+      //m_canvasmain->cd(1)->SetLogy();
+      //m_canvasmain->cd(5)->SetLogy();
+      //m_canvasmain->cd(9)->SetLogy();
     }
   }
   virtual void OnBadEvent(counted_ptr<eudaq::Event> ev) {
@@ -2066,7 +1798,7 @@ private:
       m_histocluster2d, m_histotrack2d, m_histonoise2d, m_testhisto, m_hitmap_depfet_corr;
     counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval, m_histonoise, m_histonoiseeventnr,
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
-      m_histodeltax, m_histodeltay, m_histonumhits, rmshisto;
+      m_histodeltax, m_histodeltay, m_histonumhits;
     std::vector<double> m_clusters, m_clusterx, m_clustery;
     double m_trackx, m_tracky;
     void Reset() {
@@ -2084,7 +1816,6 @@ private:
       m_historawval->Reset();
       m_histocdsval->Reset();
       m_histonoise->Reset();
-      rmshisto->Reset();
       m_hitmap_depfet_corr->Reset();
       m_histonoiseeventnr->Reset();
 
@@ -2112,7 +1843,7 @@ private:
     b.m_canvas = b.m_embedded->GetCanvas();
     //b.m_canvas->Divide(1, 1);
 
-    b.rmshisto = new TH1DNew(make_name("rms histo",board).c_str(),"rms histo", 40, -50, 50);
+    // b.rmshisto = new TH1DNew(make_name("rms histo",board).c_str(),"rms histo", 40, -50, 50);
     b.m_historaw2d      = new TH2DNew(make_name("RawProfile",    board).c_str(), "Raw 2D Profile",    num_x_pixels, 0, num_x_pixels, num_y_pixels, 0, num_y_pixels);
     b.m_tempcds         = new TH2DNew(make_name("TempCDS",       board).c_str(), "Temp CDS",         num_x_pixels, 0, num_x_pixels, num_y_pixels, 0, num_y_pixels);
     b.m_tempcds2        = new TH2DNew(make_name("TempCDS2",      board).c_str(), "Temp CDS2",         num_x_pixels, 0, num_x_pixels, num_y_pixels, 0, num_y_pixels);
@@ -2121,14 +1852,20 @@ private:
     b.m_histocluster2d  = new TH2DNew(make_name("ClusterMap",    board).c_str(), "Cluster Profile",  num_x_pixels, 0, num_x_pixels, num_y_pixels, 0, num_y_pixels);
     b.m_histotrack2d    = new TH2DNew(make_name("TrackMap",      board).c_str(), "Track Candidates",  num_x_pixels, 0, num_x_pixels, num_y_pixels, 0, num_y_pixels);
     b.m_histonoise2d    = new TH2DNew(make_name("NoiseMap",      board).c_str(), "Noise Profile",    num_x_pixels, 0, num_x_pixels, num_y_pixels, 0, num_y_pixels);
+    b.m_histonoise2d->SetMaximum(15);
     b.m_historawx       = new TH1DNew(make_name("RawXProfile",   board).c_str(), "Raw X Profile",      num_x_pixels, 0, num_x_pixels);
     b.m_historawy       = new TH1DNew(make_name("RawYProfile",   board).c_str(), "Raw Y Profile",      num_y_pixels, 0, num_y_pixels);
     b.m_histoclusterx   = new TH1DNew(make_name("ClustXProfile", board).c_str(), "Cluster X Profile", num_x_pixels, 0, num_x_pixels);
-    b.m_hitmap_depfet_corr  = new TH2DNew(make_name("EUDET DEPFET HITMAP",    board).c_str(), "EUDET DEPFET HITMAP",   264, 0, 264, 256, 0, 256);
+    b.m_hitmap_depfet_corr = new TH2DNew(make_name("EUDET DEPFET HITMAP", board).c_str(), "EUDET DEPFET HITMAP",   264, 0, 264, 256, 0, 256);
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", num_y_pixels, 0, num_y_pixels);
     b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
-    b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
-    b.m_histonoise     = new TH1DNew(make_name("Noise",     board).c_str(), "Noise",        40, 0, 20);
+    if (num_x_pixels == 64) {
+      // Horrible hack for DEPFET
+      b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        4050, -50, 4000);
+    } else {
+      b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
+    }
+    b.m_histonoise     = new TH1DNew(make_name("Noise",     board).c_str(), "Noise",        100, 0, 10);
     b.m_histonoiseeventnr     = new TH1DNew(make_name("NoiseEventNr",     board).c_str(), "NoiseEventNr",        30, 0, 1500);
 
     b.m_histoclusterval = new TH1DNew(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 1000);
@@ -2142,73 +1879,66 @@ private:
 
 
   }
-  void FillBoard(BoardDisplay & b, eudaq::EUDRBBoard & e, int boardnumber, unsigned int &numberofclusters, std::vector<double> & clusterposition,  std::vector<double> & clusterpositiony, bool depfethit) {
-    eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
-    size_t npixels = m_decoder->NumPixels(e); //, nx=264, ny=256;
+  void FillBoard(BoardDisplay & b, const eudaq::StandardPlane & plane, int boardnumber,
+                 unsigned int &numberofclusters, std::vector<double> & clusterposition,
+                 std::vector<double> & clusterpositiony /*, bool depfethit*/) {
+    //eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
+    //const size_t totpixels = plane.m_xsize * plane.m_ysize; //, nx=264, ny=256;
+    const size_t hitpixels = plane.m_pix[0].size();
     //std::cout << "Filling " << e.LocalEventNumber() << " board" << boardnumber
     //          << " frames " << m_decoder->NumFrames(e) << " pixels " << npixels << std::endl;
-    std::vector<double> ones(npixels, 1.0);
-    std::vector<double> cds(a.m_adc[0]);
-    if (m_decoder->NumFrames(e) > 1) {
-      if (m_decoder->NumFrames(e) == 3) {
-        for (size_t i = 0; i < cds.size(); ++i) {
-          cds[i] = a.m_adc[0][i] * (a.m_pivot[i])
-            + a.m_adc[1][i] * (1-2*a.m_pivot[i])
-            + a.m_adc[2][i] * (a.m_pivot[i]-1);
-        }
-      } else if (m_decoder->NumFrames(e) == 2) {
-        for (size_t i = 0; i < cds.size(); ++i) {
-          cds[i] = a.m_adc[0][i] - a.m_adc[1][i];
-        }
-      } else {
-        for (size_t i = 0; i < cds.size(); ++i) {
-          cds[i] = 100;
-        }
+    std::vector<double> cds(hitpixels, 0.0), ones(hitpixels, 1.0);
+    double sumx2 = 0.0;
+    if (plane.m_pix.size() == 1) {
+      for (size_t i = 0; i < hitpixels; ++i) {
+        cds[i] = plane.m_pix[0][i];
+        sumx2 += plane.m_pix[0][i] * plane.m_pix[0][i];
       }
-
-      {
-        //rms for noise determination
-        b.rmshisto->FillN(npixels, &cds[0], &ones[0]);
-
-        double rms = b.rmshisto->GetRMS();
-        b.m_histonoise->Fill(rms);
-
-        int te = ((totalnumevents-1) % (int)50);
-        if(te == 0)
-          {
-            double  kom = (totalnumevents-1)/50;
-            int t = (int) kom;
-
-            TF1 *f1 = new TF1("bla","gaus");
-
-            b.rmshisto->Fit(f1,"Q0","");
-            Double_t sigma = f1->GetParameter(2);
-            b.m_histonoiseeventnr->SetBinContent((t+1),sigma);
-            b.m_histonoiseeventnr->SetBinError((t+1),0.0);
-
-            for(int h = t+2; h <= t+4 && h <= 30; h++)
-              {
-                b.m_histonoiseeventnr->SetBinContent(h,0.0);
-                b.m_histonoiseeventnr->SetBinError(h,0.0);
-              }
-            delete f1;
-            b.rmshisto->Reset();
-          }
-        //end of rms for noise determination
+    } else {
+      for (size_t i = 0; i < hitpixels; ++i) {
+        cds[i] = plane.GetPixel(i);
+        sumx2 += plane.GetPixel(i);
       }
+      //rms for noise determination
+      //b.rmshisto->FillN(hitpixels, &cds[0], &ones[0]);
 
-      b.m_historaw2d->FillN(npixels, &a.m_x[0], &a.m_y[0], &a.m_adc[1][0]);
+      double rms = sqrt(sumx2/hitpixels);
+      //double rms = b.rmshisto->GetRMS();
+      b.m_histonoise->Fill(rms);
+
+      if((totalnumevents-1) % 50 == 0) {
+        int t = (totalnumevents-1)/50;
+
+       //  TF1 *f1 = new TF1("bla","gaus");
+
+//         b.rmshisto->Fit(f1,"Q0","");
+        
+        //  Double_t sigma = f1->GetParameter(2);
+        
+        b.m_histonoiseeventnr->SetBinContent((t+1),rms);
+        b.m_histonoiseeventnr->SetBinError((t+1),0.0);
+
+        for(int h = t+2; h <= t+4 && h <= 30; h++) {
+          b.m_histonoiseeventnr->SetBinContent(h, 0.0);
+          b.m_histonoiseeventnr->SetBinError(h, 0.0);
+        }
+        //  delete f1;
+        //b.rmshisto->Reset();
+      }
+      //end of rms for noise determination
+
+      b.m_historaw2d->FillN(hitpixels, &plane.m_x[0], &plane.m_y[0], &plane.m_pix[1][0]);
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
-      b.m_historawx->FillN(npixels, &a.m_x[0], &a.m_adc[1][0]);
+      b.m_historawx->FillN(hitpixels, &plane.m_x[0], &plane.m_pix[1][0]);
       b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents);
-      b.m_historawy->FillN(npixels, &a.m_y[0], &a.m_adc[1][0]);
+      b.m_historawy->FillN(hitpixels, &plane.m_y[0], &plane.m_pix[1][0]);
       b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
-      b.m_historawval->FillN(npixels, &a.m_adc[1][0], &ones[0]);
+      b.m_historawval->FillN(hitpixels, &plane.m_pix[1][0], &ones[0]);
       //b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
     }
-    b.m_histocdsval->FillN(npixels, &cds[0], &ones[0]);
+    b.m_histocdsval->FillN(hitpixels, &cds[0], &ones[0]);
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
-    std::vector<double> newx(a.m_x); // TODO: shouldn't need to recalculate this for each event
+    const std::vector<double> & newx = plane.m_x; // TODO: shouldn't need to recalculate this for each event
     //     for (int i = 0; i < cds.size(); ++i) {
     //       int mat = a.m_x[i] / 66, col = (int)a.m_x[i] % 66;
     //       if (col >= 2) {
@@ -2219,32 +1949,29 @@ private:
     //       }
     //     }
     b.m_tempcds->Reset();
-    b.m_tempcds->FillN(npixels, &newx[0], &a.m_y[0], &cds[0]);
+    b.m_tempcds->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
 
     b.m_tempcds2->Reset();
-    b.m_tempcds2->FillN(npixels, &newx[0], &a.m_y[0], &cds[0]);
+    b.m_tempcds2->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
 
+    if((totalnumevents % (int)conf.UPDATE_EVERY_N_EVENTS) == 0) {
+      b.m_testhisto->Reset();
+      TString tmpstring;
+      char tmpstring2[50];
+      sprintf(tmpstring2, "Board %1.0f, event: %1.0i", (float)boardnumber, totalnumevents);
+      tmpstring = tmpstring2;
+      b.m_testhisto->SetTitle(tmpstring);
+      b.m_testhisto->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
+    }
 
-
-
-    if((totalnumevents % (int)conf.UPDATE_EVERY_N_EVENTS) == 0)
-      {
-        b.m_testhisto->Reset();
-        TString tmpstring;
-        char tmpstring2[50];
-        sprintf(tmpstring2, "Board %1.0f, event: %1.0i", (float)boardnumber, totalnumevents);
-        tmpstring = tmpstring2;
-        b.m_testhisto->SetTitle(tmpstring);
-        b.m_testhisto->FillN(npixels, &newx[0], &a.m_y[0], &cds[0]);
-      }
-
-
-    b.m_histocds2d->FillN(npixels, &newx[0], &a.m_y[0], &cds[0]);
+    b.m_histocds2d->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
     b.m_clusters.clear();
     b.m_clusterx.clear();
     b.m_clustery.clear();
+    //std::cout << "DEBUG: FillBoard " << m_histoevents << std::endl;
     if (m_histoevents >= 20) {
       if (m_histoevents < 500) {
+        //std::cout << "DEBUG: filling noise" << std::endl;
         b.m_histonoise2d->Reset();
         for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
@@ -2255,9 +1982,8 @@ private:
         }
       }
 
-
       std::vector<Seed> seeds;
-      seeds.reserve(20); // allocate memory for 20 seed pixels
+      seeds.reserve(20); // preallocate memory for 20 seed pixels
       const double seed_thresh = conf.SEED_THRESHOLD /* sigma */ , cluster_thresh = conf.CLUSTER_THRESHOLD /* sigma */, seedneighbour_thresh = conf.SEED_NEIGHBOUR_THRESHOLD;
 
       for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
@@ -2354,13 +2080,13 @@ private:
             }
           }
         }
-        if(depfethit)
-          {
-            for(size_t i = 0; i < b.m_clusterx.size(); i++)
-              {
-                b.m_hitmap_depfet_corr->Fill(b.m_clusterx[i], b.m_clustery[i]);
-              }
+        /*
+        if(depfethit) {
+          for(size_t i = 0; i < b.m_clusterx.size(); i++) {
+            b.m_hitmap_depfet_corr->Fill(b.m_clusterx[i], b.m_clustery[i]);
           }
+        }
+        */
         /*if (b.m_clusters.size())*/ b.m_histonumclusters->Fill(b.m_clusters.size());
         numberofclusters = b.m_clusters.size();
 
@@ -2376,10 +2102,7 @@ private:
         b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
       }
-      //if (m_decoder->NumFrames(e) > 1) {
-      npixels = seeds.size();
-      //}
-      /*if (npixels)*/ b.m_histonumhits->Fill(npixels);
+      /*if (seeds.size())*/ b.m_histonumhits->Fill(seeds.size());
     }
     if (!b.islog && m_histoevents > 100) {
       b.islog = true;
@@ -2394,7 +2117,7 @@ private:
   bool m_modified, m_runended;
   unsigned long long m_prevt;
   unsigned long m_histoevents; // count of histogrammed events for normalization factor
-  counted_ptr<eudaq::EUDRBDecoder> m_decoder;
+  //counted_ptr<eudaq::EUDRBDecoder> m_decoder;
   std::vector<TColor*> m_colours;
 
   // Layout hints
@@ -2450,6 +2173,10 @@ private:
   counted_ptr<TGNumberEntry> m_conf_depfet_seedneighbourthreshold;
 
   counted_ptr<TGNumberEntry> m_conf_clusterthreshold;
+
+                             
+  counted_ptr<TGCheckButton> m_conf_checkbox_resetonnewrun;
+
 
   counted_ptr<TGTextButton> m_conf_apply;
   counted_ptr<TGTextButton> m_reset_histos;
@@ -2563,7 +2290,6 @@ int main(int argc, const char ** argv) {
     RootMonitor mon(rctrl.Value(), file.Value(), x.Value(), y.Value(), w.Value(), h.Value(), argc, argv);
     mon.Run();
   } catch (...) {
-    std::cout << "RootMonitor exception handler" << std::endl;
     return op.HandleMainException();
   }
   return 0;

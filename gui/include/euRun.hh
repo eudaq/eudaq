@@ -9,6 +9,7 @@
 #include <QDir>
 #include <QPainter>
 #include <QTimer>
+#include <QInputDialog>
 
 using eudaq::to_string;
 using eudaq::from_string;
@@ -45,70 +46,20 @@ public:
                 QWidget *parent = 0,
                 Qt::WindowFlags flags = 0);
 private:
-  virtual void OnConnect(const eudaq::ConnectionInfo & id) {
-    static bool registered = false;
-    if (!registered) {
-      qRegisterMetaType<QModelIndex>("QModelIndex");
-      registered = true;
-    }
-    //QMessageBox::information(this, "EUDAQ Run Control",
-    //                         "This will reset all connected Producers etc.");
-    m_run.newconnection(id);
-    if (id.GetType() == "DataCollector") {
-      EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-    }
-  }
+  enum state_t { ST_NONE, ST_READY, ST_RUNNING };
+  virtual void OnConnect(const eudaq::ConnectionInfo & id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo & id) {
     m_run.disconnected(id);
   }
-  virtual void OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<eudaq::Status> status) {
-    static bool registered = false;
-    if (!registered) {
-      qRegisterMetaType<QModelIndex>("QModelIndex");
-      registered = true;
-    }
-    if (id.GetType() == "DataCollector") {
-      EmitStatus("EVENT", status->GetTag("EVENT"));
-      EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
-    } else if (id.GetType() == "Producer" && id.GetName() == "TLU") {
-      EmitStatus("TRIG", status->GetTag("TRIG"));
-      EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
-      EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
-      EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
-      bool ok = true;
-      std::string scalers;
-      for (int i = 0; i < 4; ++i) {
-        std::string s = status->GetTag("SCALER" + to_string(i));
-        if (s == "") {
-          ok = false;
-          break;
-        }
-        if (scalers != "") scalers += ", ";
-        scalers += s;
-      }
-      if (ok) EmitStatus("SCALERS", scalers);
-      int trigs = from_string(status->GetTag("TRIG"), -1);
-      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
-      if (trigs >= 0) {
-        if (m_runstarttime == 0.0) {
-          if (trigs > 0) m_runstarttime = time;
-        } else {
-          EmitStatus("MEANRATE", to_string((trigs-1)/(time-m_runstarttime)) + " Hz");
-        }
-        int dtrigs = trigs - m_prevtrigs;
-        double dtime = time - m_prevtime;
-        if (dtrigs >= 10 || dtime >= 1.0) {
-          m_prevtrigs = trigs;
-          m_prevtime = time;
-          EmitStatus("RATE", to_string(dtrigs/dtime) + " Hz");
-        }
-      }
-    }
-    m_run.SetStatus(id, *status);
-  }
+  virtual void OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<eudaq::Status> status);
   void EmitStatus(const char * name, const std::string & val) {
     if (val == "") return;
     emit StatusChanged(name, val.c_str());
+  }
+  void SetState(int state) {
+    btnConfig->setEnabled(state != ST_RUNNING);
+    btnStart->setEnabled(state == ST_READY);
+    btnStop->setEnabled(state == ST_RUNNING);
   }
   void closeEvent(QCloseEvent * event) {
     if (m_run.rowCount() > 0 &&
@@ -120,35 +71,33 @@ private:
       event->accept();
     }
   }
-  virtual void StartRun(const std::string & msg = "") {
+  bool eventFilter(QObject *object, QEvent *event);
+private slots:
+  void on_btnConfig_clicked() {
+    std::string settings = cmbConfig->currentText().toStdString();
+    Configure(settings, txtGeoID->text().toInt());
+    SetState(ST_READY);
+  }
+  //void on_btnReset_clicked() {
+  //  Reset();
+  //}
+  void on_btnStart_clicked() {
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
-    RunControl::StartRun(msg);
+    StartRun(txtRunmsg->displayText().toStdString());
     EmitStatus("RUN", to_string(m_runnumber));
     emit StatusChanged("EVENT", "0");
     emit StatusChanged("TRIG", "0");
     emit StatusChanged("PARTICLES", "0");
     emit StatusChanged("RATE", "");
     emit StatusChanged("MEANRATE", "");
-  }
-  virtual void StopRun(bool /*listen*/ = true) {
-    RunControl::StopRun();
-    EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-  }
-private slots:
-  void on_btnConfig_clicked() {
-    std::string settings = cmbConfig->currentText().toStdString();
-    Configure(settings);
-  }
-  void on_btnReset_clicked() {
-    Reset();
-  }
-  void on_btnStart_clicked() {
-    StartRun(txtRunmsg->displayText().toStdString());
+    SetState(ST_RUNNING);
   }
   void on_btnStop_clicked() {
     StopRun();
+    EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
+    SetState(ST_READY);
   }
   void on_btnLog_clicked() {
     std::string msg = txtLogmsg->displayText().toStdString();

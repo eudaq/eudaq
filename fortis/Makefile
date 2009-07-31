@@ -9,6 +9,10 @@ ifeq ($(PLATFORM),WIN32)
 EXTERNAL_LIBS += Ws2_32
 endif
 
+ifeq ($(PLATFORM),MINGW)
+EXTERNAL_LIBS += Ws2_32 pthread
+endif
+
 default: exe
 
 exe: $(EXE_FILES)

@@ -1,6 +1,6 @@
 #include "EUDRBController.hh"
 #include "eudaq/Producer.hh"
-#include "eudaq/EUDRBEvent.hh"
+#include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
@@ -13,9 +13,17 @@
 #include "EUDRBController.hh"
 
 using eudaq::EUDRBController;
-using eudaq::EUDRBEvent;
+using eudaq::RawDataEvent;
 using eudaq::to_string;
 using eudaq::Timer;
+
+inline bool doprint(int n) {
+  if (n < 10) return true;
+  if (n < 100 && n%10 == 0) return true;
+  if (n < 1000 && n%100 == 0) return true;
+  if (n%1000 == 0) return true;
+  return false;
+}
 
 class EUDRBProducer : public eudaq::Producer {
 public:
@@ -30,102 +38,15 @@ public:
       m_version(-1)
     {
     }
-  void Process() {
-    if (!started) {
-      eudaq::mSleep(1);
-      return;
-    }
-
-    static Timer t_total;
-    static bool readingstarted = false;
-    Timer t_event;
-    unsigned long total_bytes=0;
-
-    EUDRBEvent ev(m_run, m_ev+1);
-
-    for (size_t n_eudrb=0; n_eudrb < m_boards.size(); n_eudrb++) {
-      Timer t_board;
-      bool badev=false;
-      Timer t_wait;
-      int datasize = m_boards[n_eudrb]->EventDataReady_size();
-      t_wait.Stop();
-      if (datasize == 0 && n_eudrb == 0) {
-        if (juststopped) started = false;
-        break;
-      }
-      if (!readingstarted) {
-        readingstarted = true;
-        t_total.Restart();
-      }
-
-      unsigned long number_of_bytes=datasize*4;
-      //printf("number of bytes = %ld\n",number_of_bytes);
-      Timer t_mblt, t_reset;
-      if (number_of_bytes == 0) {
-        printf("Board: %d, Event: %d, empty\n",(int)n_eudrb,m_ev);
-        EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " empty");
-        badev=true;
-      } else {
-        if (number_of_bytes>1048576) {
-          printf("Board: %d, Event: %d, number of bytes = %ld\n",(int)n_eudrb,m_ev,number_of_bytes);
-          EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big: " + to_string(number_of_bytes));
-          badev=true;
-        }
-        t_mblt.Restart();
-        m_buffer.resize(((number_of_bytes+7) & ~7) / 4);
-        m_boards[n_eudrb]->ReadEvent(m_buffer);
-        t_mblt.Stop();
-        if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
-
-        // Reset the BUSY on the MASTER after all MBLTs are done
-        t_reset.Restart();
-        if ((int)n_eudrb == m_master) { // Master
-          m_boards[n_eudrb]->ResetTriggerBusy();
-        }
-        t_reset.Stop();
-
-        if (/*m_ev<10 || m_ev%100==0 ||*/ badev) {
-          printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
-          printf("\theader =0x%lx\n", m_buffer[0]);
-          if ( (m_buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n", m_buffer[number_of_bytes/4-2]);
-          else printf("\ttrailer=x%lx\n", m_buffer[number_of_bytes/4-3]);
-          badev=false;
-        }
-      }
-      Timer t_add;
-      ev.AddBoard(n_eudrb, &m_buffer[0], number_of_bytes);
-      t_add.Stop();
-      total_bytes+=(number_of_bytes+7)&~7;
-      if (m_ev % 100 == 0) {
-        std::cout << "B" << n_eudrb << ": wait=" << t_wait.uSeconds() << "us, "
-                  << "mblt=" << t_mblt.uSeconds() << "us, "
-                  << "reset=" << t_reset.uSeconds() << "us, "
-                  << "add=" << t_add.uSeconds() << "us, "
-                  << "board=" << t_board.uSeconds() << "us, "
-                  << "bytes=" << number_of_bytes << "\n";
-      }
-    }
-
-    if (total_bytes) {
-      ++m_ev;
-      Timer t_send;
-      SendEvent(ev);
-      t_send.Stop();
-      //if (m_ev<10 || m_ev%100==0) printf("*** Event %d of length %ld sent!\n",m_ev, total_bytes);
-      n_error=0;
-      std::cout << "EV " << m_ev << ": send=" << t_send.uSeconds() << "us, "
-                << "event=" << t_event.uSeconds() << "us, "
-                << "running=" << t_total.mSeconds() << "ms, "
-                << "bytes=" << total_bytes << "\n" << std::endl;
-    }
-  }
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       int numboards = param.Get("NumBoards", 0);
       m_idoffset = param.Get("IDOffset", 0);
+      m_resetbusy = param.Get("ResetBusy", 1);
       m_boards.clear();
+      m_version = param.Get("Version", 0);
       for (int n_eudrb = 0; n_eudrb < numboards; ++n_eudrb) {
         int id = m_idoffset + n_eudrb;
         int version = param.Get("Board" + to_string(id) + ".Version", "Version", 0);
@@ -139,6 +60,9 @@ public:
       bool unsync = param.Get("Unsynchronized", 0);
       std::cout << "Running in " << (unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
       m_master = param.Get("Master", -1);
+      std::cout << "Pausing while TLU gets configured..." << std::endl;
+      eudaq::mSleep(1000);
+      std::cout << "OK, let's continue." << std::endl;
       if (m_master < 0) m_master += numboards;
       for (int n_eudrb = 0; n_eudrb < numboards; ++n_eudrb) {
         m_boards[n_eudrb]->Configure(param, m_master);
@@ -147,25 +71,15 @@ public:
 
       bool ok = true;
       for (size_t n_eudrb = 0; n_eudrb < m_boards.size(); n_eudrb++) {
-        // give the first board ~20 seconds, then only wait 1 extra second for each other board
-        ok &= m_boards[n_eudrb]->WaitForReady(1.0 + 20.0 * (n_eudrb == 0));
+        // give the first board ~20 seconds, then only wait 2 extra seconds for each other board
+        ok &= m_boards[n_eudrb]->WaitForReady((n_eudrb == 0) ? 20.0 : 2.0);
       }
 
       std::cout << (ok ? "OK" : "*** Timeout ***") << std::endl;
-      // new loop added by Angelo
-//       for (size_t n_eudrb = 0; n_eudrb < boards.size(); n_eudrb++) {
-//         unsigned long data = 0x40;
-//         if (boards[n_eudrb].zs) data |= 0x20;
-//         if (n_eudrb==boards.size()-1) data |= 0x2000;
-//         boards[n_eudrb].vmes->Write(0, data);
-//         data=0;
-//         if (boards[n_eudrb].zs) data |= 0x20;
-//         if (n_eudrb==boards.size()-1) data |= 0x2000;
-//         boards[n_eudrb].vmes->Write(0, data);
-//       }
 
+      m_pedfiles.clear();
       for (size_t n_eudrb = 0; n_eudrb < m_boards.size(); n_eudrb++) {
-        m_boards[n_eudrb]->ConfigurePedestals(param);
+        m_pedfiles.push_back(m_boards[n_eudrb]->PostConfigure(param, m_master));
       }
 
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
@@ -185,35 +99,27 @@ public:
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
       // EUDRB startup (activation of triggers etc)
-      EUDRBEvent ev(EUDRBEvent::BORE(m_run));
+      RawDataEvent ev(RawDataEvent::BORE("EUDRB", m_run));
+
       std::string version = to_string(m_boards[0]->Version());
+      std::string det = m_boards[0]->Det();
+      std::string mode = m_boards[0]->Mode();
       for (size_t i = 1; i < m_boards.size(); ++i) {
         std::string ver = to_string(m_boards[i]->Version());
         if (ver != version) version = "Mixed";
-      }
-      ev.SetTag("VERSION", to_string(version));
-      std::string det = m_boards[0]->Det();
-      for (size_t i = 1; i < m_boards.size(); ++i) {
         if (m_boards[i]->Det() != det) det = "Mixed";
-      }
-      ev.SetTag("DET", det);
-      for (size_t i = 0; i < m_boards.size(); ++i) {
-        ev.SetTag("DET" + to_string(i), m_boards[i]->Det());
-      }
-      std::string mode = m_boards[0]->Mode();
-      for (size_t i = 1; i < m_boards.size(); ++i) {
         if (m_boards[i]->Mode() != mode) mode = "Mixed";
       }
+      ev.SetTag("VERSION", to_string(version));
+      ev.SetTag("DET", det);
       ev.SetTag("MODE", mode);
-      for (size_t i = 0; i < m_boards.size(); ++i) {
-        ev.SetTag("MODE" + to_string(i), m_boards[i]->Mode());
-      }
       ev.SetTag("BOARDS", to_string(m_boards.size()));
-      //ev.SetTag("ROWS", to_string(256))
-      //ev.SetTag("COLS", to_string(66))
-      //ev.SetTag("MATS", to_string(4))
       for (size_t i = 0; i < m_boards.size(); ++i) {
         ev.SetTag("ID" + to_string(i), to_string(i + m_idoffset));
+        if (version == "Mixed") ev.SetTag("VERSION" + to_string(i), to_string(m_boards[i]->Version()));
+        if (det     == "Mixed") ev.SetTag("DET" + to_string(i), m_boards[i]->Det());
+        if (mode    == "Mixed") ev.SetTag("MODE" + to_string(i), m_boards[i]->Mode());
+        if (m_pedfiles[i] != "") ev.SetTag("PEDESTAL" + to_string(i), m_pedfiles[i]);
       }
       SendEvent(ev);
       eudaq::mSleep(100);
@@ -227,6 +133,175 @@ public:
       SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     }
   }
+  void Process() {
+    if (!started) {
+      eudaq::mSleep(10);
+      return;
+    }
+
+    //static Timer t_total;
+    Timer t_event;
+
+    RawDataEvent ev("EUDRB", m_run, m_ev);
+
+    bool ok = (m_version < 3) ? ReadoutEventOld(ev) : ReadoutEventNew(ev);
+
+    if (ok) {
+      Timer t_send;
+      SendEvent(ev);
+      t_send.Stop();
+      //if (doprint(m_ev)) printf("*** Event %d of length %ld sent!\n",m_ev, total_bytes);
+      n_error=0;
+      if (doprint(m_ev)) {
+        std::cout << "EV " << m_ev << ": send=" << t_send.uSeconds() << "us, "
+                  << "event=" << t_event.uSeconds() << "us, "
+          //<< "running=" << t_total.mSeconds() << "ms, "
+          //<< "bytes=" << total_bytes << "\n"
+                  << std::endl;
+      }
+      ++m_ev;
+    }
+  }
+  bool ReadoutEventOld(RawDataEvent & ev) {
+    static bool readingstarted = false;
+    unsigned long total_bytes=0;
+    for (size_t n_eudrb=0; n_eudrb < m_boards.size(); n_eudrb++) {
+      Timer t_board;
+      bool badev=false;
+      Timer t_wait;
+      int datasize = m_boards[n_eudrb]->EventDataReady_size();
+      t_wait.Stop();
+      if (datasize == 0 && n_eudrb == 0) {
+        if (juststopped) started = false;
+        return false;
+      }
+      if (!readingstarted) {
+        readingstarted = true;
+        //t_total.Restart();
+      }
+
+      Timer t_mblt, t_reset;
+      unsigned long number_of_bytes=datasize*4;
+
+      //printf("number of bytes = %ld\n",number_of_bytes);
+      if (number_of_bytes <= 0) {
+        printf("Board: %d, Event: %d, empty\n",(int)n_eudrb,m_ev);
+        EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " empty");
+        badev=true;
+      } else {
+        if (number_of_bytes>1048576) {
+          printf("Board: %d, Event: %d, number of bytes = %ld\n",(int)n_eudrb,m_ev,number_of_bytes);
+          EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " too big: " + to_string(number_of_bytes));
+          badev=true;
+        }
+        //t_mblt.Restart();
+        m_buffer.resize(((number_of_bytes+7) & ~7) / 4);
+        m_boards[n_eudrb]->ReadEvent(m_buffer);
+        t_mblt.Stop();
+        if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
+
+        // Reset the BUSY on the MASTER after all MBLTs are done
+        t_reset.Restart();
+        if (m_resetbusy && (int)n_eudrb == m_master) { // Master
+          m_boards[n_eudrb]->ResetTriggerBusy();
+          //eudaq::mSleep(20);
+        }
+        t_reset.Stop();
+
+        if (/*doprint(ev) ||*/ badev) {
+          printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
+          printf("\theader =0x%lx\n", m_buffer[0]);
+          if ( (m_buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n", m_buffer[number_of_bytes/4-2]);
+          else printf("\ttrailer=x%lx\n", m_buffer[number_of_bytes/4-3]);
+          badev=false;
+        }
+      }
+      Timer t_add;
+      ev.AddBlock(m_idoffset+n_eudrb, &m_buffer[0], number_of_bytes);
+      t_add.Stop();
+      total_bytes+=(number_of_bytes+7)&~7;
+      if (doprint(m_ev)) {
+        std::cout << "B" << n_eudrb << ": wait=" << t_wait.uSeconds() << "us, "
+                  << "mblt=" << t_mblt.uSeconds() << "us, "
+                  << "reset=" << t_reset.uSeconds() << "us, "
+                  << "add=" << t_add.uSeconds() << "us, "
+                  << "board=" << t_board.uSeconds() << "us, "
+                  << "bytes=" << number_of_bytes << "\n";
+      }
+    }
+    return true;
+  }
+  bool ReadoutEventNew(RawDataEvent & ev) {
+    static bool readingstarted = false;
+    unsigned long total_bytes=0;
+    Timer t_wait;
+    if (!m_boards[m_boards.size()-1]->EventDataReady()) {
+      if (juststopped) started = false;
+      return false;
+    }
+    t_wait.Stop();
+    if (!readingstarted) {
+      readingstarted = true;
+    }
+    for (size_t i=m_boards.size(); i > 0; --i) {
+      size_t n_eudrb = i - 1;
+      Timer t_board;
+      bool badev=false;
+
+      size_t blockindex = ev.AddBlock(m_idoffset+n_eudrb);
+
+      Timer t_mblt, t_reset;
+
+      m_buffer.resize(4);
+      m_boards[n_eudrb]->ReadEvent(m_buffer);
+      ev.AppendBlock(blockindex, m_buffer);
+
+      unsigned long number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
+      if (doprint(m_ev)) std::cout << "DEBUG: read leading words, remaining = " << number_of_bytes << std::endl;
+
+      //printf("number of bytes = %ld\n",number_of_bytes);
+      if (number_of_bytes == 0) {
+        printf("Board: %d, Event: %d, empty\n",(int)n_eudrb,m_ev);
+        EUDAQ_WARN("Board " + to_string(n_eudrb) +" in Event " + to_string(m_ev) + " empty");
+        badev=true;
+      } else {
+        //t_mblt.Restart();
+        m_buffer.resize(number_of_bytes / 4);
+        m_boards[n_eudrb]->ReadEvent(m_buffer);
+        t_mblt.Stop();
+        if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
+
+        // Reset the BUSY on the MASTER after all MBLTs are done
+        t_reset.Restart();
+        if (m_resetbusy && (int)n_eudrb == m_master) { // Master
+          m_boards[n_eudrb]->ResetTriggerBusy();
+          eudaq::mSleep(20);
+        }
+        t_reset.Stop();
+
+        if (/*doprint(m_ev) ||*/ badev) {
+          printf("event   =0x%x, eudrb   =%3d, nbytes = %ld\n",m_ev,(int)n_eudrb,number_of_bytes);
+          printf("\theader =0x%lx\n", m_buffer[0]);
+          if ( (m_buffer[number_of_bytes/4-2]&0x54000000)==0x54000000) printf("\ttrailer=0x%lx\n", m_buffer[number_of_bytes/4-2]);
+          else printf("\ttrailer=x%lx\n", m_buffer[number_of_bytes/4-3]);
+          badev=false;
+        }
+      }
+      Timer t_add;
+      ev.AppendBlock(blockindex, &m_buffer[0], number_of_bytes);
+      t_add.Stop();
+      total_bytes += number_of_bytes;
+      if (doprint(m_ev)) {
+        std::cout << "B" << n_eudrb << ": wait=" << t_wait.uSeconds() << "us, "
+                  << "mblt=" << t_mblt.uSeconds() << "us, "
+                  << "reset=" << t_reset.uSeconds() << "us, "
+                  << "add=" << t_add.uSeconds() << "us, "
+                  << "board=" << t_board.uSeconds() << "us, "
+                  << "bytes=" << number_of_bytes << "\n";
+      }
+    }
+    return true;
+  }
   virtual void OnStopRun() {
     try {
       std::cout << "Stopping Run" << std::endl;
@@ -236,7 +311,7 @@ public:
         eudaq::mSleep(100);
       }
       juststopped = false;
-      SendEvent(EUDRBEvent::EORE(m_run, ++m_ev));
+      SendEvent(RawDataEvent::EORE("EUDRB", m_run, m_ev++));
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -250,33 +325,15 @@ public:
     std::cout << "Terminating..." << std::endl;
     done = true;
   }
-  virtual void OnReset() {
-    SetStatus(eudaq::Status::LVL_OK, "Wait");
-    try {
-      std::cout << "Reset" << std::endl;
-      for (size_t n_eudrb = 0; n_eudrb < m_boards.size(); n_eudrb++) {
-        m_boards[n_eudrb]->ResetBoard();
-      }
-      for (size_t n_eudrb = 0; n_eudrb < m_boards.size(); n_eudrb++) {
-        m_boards[n_eudrb]->WaitForReady();
-      }
-      SetStatus(eudaq::Status::LVL_OK, "Reset");
-    } catch (const std::exception & e) {
-      printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
-    } catch (...) {
-      printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
-    }
-  }
 
   unsigned m_run, m_ev;
-  bool done, started, juststopped;
+  bool done, started, juststopped, m_resetbusy;
   int n_error;
   std::vector<unsigned long> m_buffer;
   std::vector<counted_ptr<EUDRBController> > m_boards;
   //int fdOut;
   int m_idoffset, m_version, m_master;
+  std::vector<std::string> m_pedfiles;
 };
 
 int main(int /*argc*/, const char ** argv) {

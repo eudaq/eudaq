@@ -1,22 +1,23 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/PluginManager.hh"
 
-#define EUDAQ_MAX_EVENTS_PER_IDLE 32
+#define EUDAQ_MAX_EVENTS_PER_IDLE 10
 
 namespace eudaq {
 
   Monitor::Monitor(const std::string & name, const std::string & runcontrol, const std::string & datafile) :
     CommandReceiver("Monitor", name, runcontrol, false),
     m_run(0),
-    m_datafile(datafile),
-    m_callstart(false)
+    m_callstart(false),
+    m_reader(0)
   {
     if (datafile != "") {
       // set offline
-      if (datafile.find_first_not_of("0123456789") == std::string::npos) {
-        m_run = from_string(datafile, 0);
-      }
-      m_callstart = true;
+      m_reader = counted_ptr<FileReader>(new FileReader(datafile));
+      PluginManager::Initialize(m_reader->Event()); // process BORE
+      //m_callstart = true;
+      std::cout << "DEBUG: Reading file " << datafile << " -> " << m_reader->Filename() << std::endl;
       //OnStartRun(m_run);
     }
     StartThread();
@@ -24,17 +25,17 @@ namespace eudaq {
 
   bool Monitor::ProcessEvent() {
     //std::cout << "processevent" << std::endl;
-    if (!m_ser.get()) return false;
-    if (!m_ser->HasData()) return false;
+    if (!m_reader.get()) return false;
+    if (!m_reader->NextEvent()) return false;
+    if (m_reader->Event().GetEventNumber() % 10 == 0) {
+      std::cout << "ProcessEvent " << m_reader->Event().GetEventNumber()
+                << (m_reader->Event().IsBORE() ? "B" : m_reader->Event().IsEORE() ? "E" : "")
+                << std::endl;
+    }
     try {
-      Event * event = EventFactory::Create(*m_ser);
-      counted_ptr<DetectorEvent> dev(dynamic_cast<DetectorEvent *>(event));
-      if (dev.get()) {
-        if (dev->IsBORE()) m_lastbore = dev;
-        OnEvent(dev);
-      } else {
-        OnBadEvent(counted_ptr<Event>(event));
-      }
+      const DetectorEvent & dev = m_reader->Event();
+      if (dev.IsBORE()) m_lastbore = counted_ptr<DetectorEvent>(new DetectorEvent(dev));
+      OnEvent(PluginManager::ConvertToStandard(dev));
     } catch (const InterruptedException &) {
       return false;
     }
@@ -42,6 +43,7 @@ namespace eudaq {
   }
 
   void Monitor::OnIdle() {
+    //std::cout << "..." << std::endl;
     if (m_callstart) {
       m_callstart = false;
       OnStartRun(m_run);
@@ -59,14 +61,15 @@ namespace eudaq {
   }
 
   void Monitor::OnStartRun(unsigned param) {
+    std::cout << "run " << param << std::endl;
     m_run = param;
-    if (m_run > 0) m_datafile = "../data/run" + to_string(m_run, 6) + ".raw";
-    m_ser = counted_ptr<FileDeserializer>(new FileDeserializer(m_datafile));
-    EUDAQ_INFO("Starting run " + to_string(m_run) + ", file=" + m_datafile);
+    m_reader = counted_ptr<FileReader>(new FileReader(to_string(m_run)));
+    PluginManager::Initialize(m_reader->Event()); // process BORE
+    EUDAQ_INFO("Starting run " + to_string(m_run));
   }
 
   void Monitor::OnStopRun() {
-    m_ser->Interrupt();
+    m_reader->Interrupt();
   }
 
 }

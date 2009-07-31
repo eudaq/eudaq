@@ -3,9 +3,9 @@
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Utils.hh"
 #include <iostream>
 #include <ostream>
-#include <fstream>
 
 namespace eudaq {
 
@@ -19,22 +19,6 @@ namespace eudaq {
       return 0;
     }
 
-    unsigned ReadRunNumber() {
-      unsigned result = 0;
-      std::ifstream file(RUN_NUMBER_FILE);
-      if (file.is_open()) {
-        file >> result;
-        if (file.fail())
-          EUDAQ_THROW("Error reading run number, check permissions of file "
-                      + std::string(RUN_NUMBER_FILE));
-        std::cout << "Read run number = " << result << std::endl;
-      } else {
-        EUDAQ_ERROR("Restarting run number from " + to_string(result) +
-                   " (Unable to open " + RUN_NUMBER_FILE + ")");
-      }
-      return result;
-    }
-
   } // anonymous namespace
 
   DataCollector::DataCollector(const std::string & runcontrol,
@@ -46,7 +30,7 @@ namespace eudaq {
       m_thread(),
       m_numwaiting(0),
       m_itlu((size_t)-1),
-      m_runnumber(ReadRunNumber()),
+      m_runnumber(ReadFromFile(RUN_NUMBER_FILE, 0U)),
       m_eventnumber(0),
       m_runstart(0)
   {
@@ -109,10 +93,7 @@ namespace eudaq {
         EUDAQ_THROW("You must configure before starting a run");
       }
       m_writer->StartRun(runnumber);
-      {
-        std::ofstream file(RUN_NUMBER_FILE);
-        file << runnumber << std::endl;
-      }
+      WriteToFile(RUN_NUMBER_FILE, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
 
@@ -140,7 +121,7 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, counted_ptr<Event> ev) {
-    std::cout << "Received Event from " << id << ": " << *ev << std::endl;
+    //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
     Info & inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
     bool tmp = false;
@@ -165,7 +146,9 @@ namespace eudaq {
   void DataCollector::OnCompleteEvent() {
     bool more = true;
     while (more) {
-      std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
+      if (m_eventnumber < 10 || m_eventnumber % 10 == 0) {
+        std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
+      }
       unsigned n_run = m_runnumber, n_ev = m_eventnumber;
       unsigned long long n_ts = (unsigned long long)-1;
       if (m_itlu != (size_t)-1) {
@@ -180,7 +163,8 @@ namespace eudaq {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
         }
         if ( (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber-1) ){
-          EUDAQ_ERROR("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()));
+// dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out
+          if (m_buffer[i].events.front()->GetEventNumber() != 0)  EUDAQ_ERROR("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()));
         }
         ev.AddEvent(m_buffer[i].events.front());
         m_buffer[i].events.pop_front();
@@ -264,9 +248,9 @@ namespace eudaq {
         OnConnect(ev.id);
       } else {
         //std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
-        for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
-            std::cout << to_hex(ev.packet[i], 2) << ' ';
-        }
+        //for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
+        //    std::cout << to_hex(ev.packet[i], 2) << ' ';
+        //}
         //std::cout << ")" << std::endl;
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         //std::cout << "Deserializing" << std::endl;

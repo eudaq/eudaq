@@ -18,6 +18,9 @@ namespace eudaq {
     explicit TLUEvent(Deserializer &);
     virtual void Print(std::ostream &) const;
 
+    /// Return "TLUEvent" as type.
+    virtual std::string GetType() const {return "TLUEvent";}
+
     static TLUEvent BORE(unsigned run) {
       return TLUEvent(run);
     }

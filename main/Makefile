@@ -1,8 +1,22 @@
+USE_LCIO := 1
+USE_EUTELESCOPE := 0
+
 TARGETLIB := eudaq
+EXTERNAL_DEFS += USE_LCIO=$(USE_LCIO) USE_EUTELESCOPE=$(USE_EUTELESCOPE)
 EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
-EXTERNAL_INCS += /Applications/ilcsoft/lcio/v01-09/include
-EXTERNAL_LIBS += pthread #lcio
-#EXTERNAL_LIBDIRS += /Applications/ilcsoft/lcio/v01-09/lib
+EXTERNAL_LIBS += pthread
+
+ifneq (${USE_LCIO},0)
+  EXTERNAL_INCS += ${LCIO}/include
+  EXTERNAL_LIBS += lcio
+  EXTERNAL_LIBDIRS += ${LCIO}/lib
+endif
+
+ifneq (${USE_EUTELESCOPE},0) 
+  EXTERNAL_INCS += ${EUTELESCOPE}/include
+  EXTERNAL_LIBS += Eutelescope
+  EXTERNAL_LIBDIRS += ${EUTELESCOPE}/lib
+endif
 
 include ../Makefile.common
 
@@ -10,7 +24,12 @@ ifeq ($(PLATFORM),WIN32)
 EXTERNAL_LIBS += Ws2_32
 endif
 
+ifeq ($(PLATFORM),MINGW)
+EXTERNAL_LIBS += Ws2_32
+endif
+
 default: exe
+
 
 exe: $(EXE_FILES)
 

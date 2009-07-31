@@ -2,6 +2,18 @@
 
 namespace eudaq {
 
+  BufferSerializer::BufferSerializer(Deserializer & des) : m_offset(0) {
+    des.read(m_data);
+  }
+
+  void BufferSerializer::Serialize(Serializer & ser) const {
+    ser.write(m_data);
+  }
+
+  void BufferSerializer::Serialize(const unsigned char * data, size_t len) {
+    m_data.insert(m_data.end(), data, data+len);
+  }
+
   void BufferSerializer::Deserialize(unsigned char * data, size_t len) {
     if (!len) return;
     if (len+m_offset > m_data.size()) {
@@ -16,6 +28,5 @@ namespace eudaq {
     //tmp = std::string(begin(), end());
     //std::cout << "Remaining: " << (end()-begin()) << /*" \"" << tmp << "\"" <<*/ std::endl;
   }
-
 
 }

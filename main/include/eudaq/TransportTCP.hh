@@ -4,7 +4,7 @@
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/Platform.hh"
 
-#if EUDAQ_PLATFORM_IS(WIN32)
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 # include <winsock2.h>
 #else
 # include <sys/select.h>

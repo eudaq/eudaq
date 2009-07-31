@@ -21,20 +21,54 @@ namespace {
   static const int MAX_CHANNEL = 7;
 
   static void CheckDriver() {
+    static const char * msg = "Check that the kernel module is loaded "
+      "and the device files exist with the correct properties.";
+    static bool alreadychecked = false;
+    if (alreadychecked) return;
+
+    int fd = open("/dev/vme_ctl", O_RDONLY);
+    //std::cout << "DEBUG: cme_ctl fd = " << fd << std::endl;
+    if (fd < 0) {
+      EUDAQ_THROW("Unable to open VME control (errno=" + to_string(errno) + "). " + msg);
+    }
+
     vmeInfoCfg_t VmeInfo;
     std::memset(&VmeInfo, 0, sizeof VmeInfo);
-    int fd = open("/dev/vme_ctl",O_RDONLY);
-    //std::cout << "DEBUG: cme_ctl fd = " << fd << std::endl;
-    int status = -1;
-    if (fd != -1) status = ioctl(fd, VME_IOCTL_GET_SLOT_VME_INFO, &VmeInfo);
-    if (status == -1) {
-      if (fd != -1) close(fd);
-      EUDAQ_THROW("Unable to talk to VME driver. "
-                  "Check that the kernel module is loaded "
-                  "and the device files exist "
-                  "with the correct properties.");
+    int status = ioctl(fd, VME_IOCTL_GET_SLOT_VME_INFO, &VmeInfo);
+    if (status < 0) {
+      close(fd);
+      EUDAQ_THROW("Unable get VME Info (errno=" + to_string(errno) + "). "+ msg);
     }
+
+    // Set VME Requestor as suggested by David Abbot
+    vmeRequesterCfg_t VmeReq;
+    std::memset(&VmeReq, 0, sizeof VmeReq);
+    VmeReq.requestLevel = 3;
+    VmeReq.fairMode = 1;
+    VmeReq.releaseMode = 0;
+    VmeReq.timeonTimeoutTimer = 7;
+    VmeReq.timeoffTimeoutTimer = 0;
+    status = ioctl(fd, VME_IOCTL_SET_REQUESTOR, &VmeReq);
+    if (status < 0) {
+      close(fd);
+      EUDAQ_THROW("Unable set VME requestor (errno=" + to_string(errno) + "). " + msg);
+    }
+
+    vmeRequesterCfg_t VmeReq2;
+    std::memset(&VmeReq2, 0, sizeof VmeReq2);
+    status = ioctl(fd, VME_IOCTL_GET_REQUESTOR, &VmeReq2);
+    if (status < 0) {
+      close(fd);
+      EUDAQ_THROW("Unable get VME requestor (errno=" + to_string(errno) + "). " + msg);
+    }
+
     close(fd);
+#define BAD(a) (VmeReq.a != VmeReq2.a)
+    if (BAD(requestLevel) || BAD(fairMode) || BAD(releaseMode) || BAD(timeonTimeoutTimer) || BAD(timeoffTimeoutTimer)) {
+      EUDAQ_THROW("Mismatch reading back VME requestor. Check VME driver.");
+    }
+#undef BAD
+    alreadychecked = true;
   }
 
   static void DoSysReset() {
@@ -152,7 +186,8 @@ void TSI148SingleInterface::DoRead(unsigned long offset, unsigned char * data, s
   size_t n = read(m_fd, data, size);
   //std::cout << "DEBUG: OK." << std::endl;
   if (n != size) {
-    EUDAQ_THROW("Error: VME read failed at offset " + to_string(offset) +
+    EUDAQ_THROW("Error: VME read failed at " + to_string(m_base) + "+" + to_string(offset) +
+                "=" + to_string(eudaq::hexdec(m_base+offset, 8)) +
                 " (code = " + to_string(errno) + ")");
   }
 }

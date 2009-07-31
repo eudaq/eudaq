@@ -18,6 +18,12 @@ namespace eudaq {
     Load(conffile, section);
   }
 
+  Configuration::Configuration(const Configuration & other)
+    : m_config(other.m_config)
+  {
+    SetSection(other.m_section);
+  }
+
   std::string Configuration::Name() const {
     map_t::const_iterator it = m_config.find("");
     if (it == m_config.end()) return "";
@@ -36,6 +42,12 @@ namespace eudaq {
       }
       stream << "\n";
     }
+  }
+
+  Configuration & Configuration::operator = (const Configuration & other) {
+    m_config = other.m_config;
+    SetSection(other.m_section);
+    return *this;
   }
 
   void Configuration::Load(std::istream & stream, const std::string & section) {
@@ -78,11 +90,13 @@ namespace eudaq {
   bool Configuration::SetSection(const std::string & section) const {
     map_t::const_iterator i = m_config.find(section);
     if (i == m_config.end()) return false;
+    m_section = section;
     m_cur = const_cast<section_t*>(&i->second);
     return true;
   }
 
   bool Configuration::SetSection(const std::string & section) {
+    m_section = section;
     m_cur = &m_config[section];
     return true;
   }

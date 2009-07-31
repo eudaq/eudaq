@@ -1,6 +1,6 @@
 MAKE := make
 
-DIRS := main tlu vme eudrb depfet fortis root gui
+DIRS := main tlu vme eudrb depfet fortis mimoroma root gui
 
 default: main
 
@@ -14,6 +14,6 @@ $(DIRS):
 	$(MAKE) -C $@
 
 clean:
-	@for d in $(DIRS); do $(MAKE) -C $$d clean; done
+	@for d in $(DIRS) bin; do $(MAKE) -C "$$d" clean; done
 
 .PHONY: default all clean $(DIRS)

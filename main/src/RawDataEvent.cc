@@ -16,6 +16,9 @@ namespace eudaq {
     ser.write(data);
   }
 
+  void RawDataEvent::block_t::Append(const RawDataEvent::data_t & d) {
+    data.insert(data.end(), d.begin(), d.end());
+  }
 
   RawDataEvent::RawDataEvent(std::string type, unsigned run, unsigned event) :
     Event(run, event),
@@ -45,6 +48,10 @@ namespace eudaq {
   void RawDataEvent::Print(std::ostream & os) const {
     Event::Print(os);
     os << ", " << m_blocks.size() << " blocks";
+    if (m_type == "EUDRB" && m_blocks.size() > 0 && m_blocks[0].data.size() >= 8) {
+      size_t offset = m_blocks[0].data.size() - 7;
+      os << ", tluev=" << (GetByte(0, offset) << 8) + GetByte(0, offset + 1);
+    }
   }
 
   void RawDataEvent::Serialize(Serializer & ser) const {

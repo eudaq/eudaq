@@ -12,6 +12,7 @@ namespace eudaq {
   public:
     Configuration(const std::string & config = "", const std::string & section = "");
     Configuration(std::istream & conffile, const std::string & section = "");
+    Configuration(const Configuration & other);
     void Save(std::ostream & file) const;
     void Load(std::istream & file, const std::string & section);
     bool SetSection(const std::string & section) const;
@@ -32,12 +33,14 @@ namespace eudaq {
     template <typename T>
     void Set(const std::string & key, const T & val);
     std::string Name() const;
+    Configuration & operator = (const Configuration & other);
   private:
     std::string GetString(const std::string & key) const;
     void SetString(const std::string & key, const std::string & val);
     typedef std::map<std::string, std::string> section_t;
     typedef std::map<std::string, section_t> map_t;
     map_t m_config;
+    mutable std::string m_section;
     mutable section_t * m_cur;
   };
 

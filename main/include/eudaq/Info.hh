@@ -12,4 +12,7 @@
 // The DEPFET decoder is implemented
 #define EUDAQ_DEPFET_DECODER 1
 
+// The new plugin decoder mechanism is implemented
+#define EUDAQ_NEW_DECODER
+
 #endif // EUDAQ_INCLUDED_Info

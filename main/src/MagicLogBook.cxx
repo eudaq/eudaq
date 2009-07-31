@@ -83,7 +83,7 @@ public:
     }
     m_eore = 0;
     m_config = 0;
-    m_dec = 0; //new eudaq::EUDRBDecoder(*m_bore);
+    //    m_dec = 0; //new eudaq::EUDRBDecoder(*m_bore);
     m_log = 0;
     m_events = 0;
     if (m_fields.size() > 0) m_out << GetField(m_fields[0]);
@@ -240,7 +240,7 @@ private:
   counted_ptr<eudaq::FileDeserializer> m_des;
   counted_ptr<DetectorEvent> m_bore, m_eore;
   counted_ptr<eudaq::Configuration> m_config;
-  counted_ptr<eudaq::EUDRBDecoder> m_dec;
+  //  counted_ptr<eudaq::EUDRBDecoder> m_dec;
   counted_ptr<std::vector<eudaq::LogMessage> > m_log;
   int m_events;
 };

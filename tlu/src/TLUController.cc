@@ -144,7 +144,8 @@ namespace tlu {
     m_lasttime(0),
     m_errorhandler(errorhandler),
     m_version(0),
-    m_addr(0)
+    m_addr(0),
+    m_timestampzero(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -232,13 +233,14 @@ namespace tlu {
     // Write to reset a few times...
     //for (int i=0; i<10 ; i++) {
     //mysleep (100);
-    mSleep(1);
+    mSleep(20);
     WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x3F);
     WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x00);
     //}
 
     // Reset pointers
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0x0F);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, (1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT)
+                  | (1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT) | (1 << m_addr->TLU_TRIGGER_FSM_RESET_BIT));
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0x00);
 
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
@@ -309,12 +311,14 @@ namespace tlu {
   }
 
   void TLUController::ResetScalers() {
-//#ifdef TRIGGER_SCALERS_RESET_BIT
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TRIGGER_SCALERS_RESET_BIT);
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
-//#else
-//    EUDAQ_THROW("Not implemented");
-//#endif
+  }
+
+  void TLUController::ResetTimestamp() {
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TIMESTAMP_RESET_BIT);
+    m_timestampzero = eudaq::Time::Current();
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
   }
 
   void TLUController::ResetUSB() {
@@ -465,7 +469,7 @@ namespace tlu {
     m_buffer.clear();
     int trig = m_triggernum - entries;
     for (unsigned i = 0; i < entries; ++i) {
-      m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP, ++trig));
+      m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP, trig++));
     }
 
     //mSleep(1);
@@ -658,22 +662,22 @@ namespace tlu {
       int bit = 1 << i;
       if (m_mask & bit) leds[i].left = 1;
       if (i >= TLU_LEMO_DUTS) {
-	leds[i].right = leds[i].left;
-	continue;
+        leds[i].right = leds[i].left;
+        continue;
       }
       int ipsel = (m_ipsel >> (2*i)) & 3;
       switch (ipsel) {
       case IN_RJ45:
-	leds[i].right = leds[i].left;
-	leds[i].trig = 1;
-	break;
+        leds[i].right = leds[i].left;
+        leds[i].trig = 1;
+        break;
       case IN_LEMO:
-	leds[i].busy = leds[i].left;
-	leds[i].trig = 1;
-	break;
+        leds[i].busy = leds[i].left;
+        leds[i].trig = 1;
+        break;
       case IN_HDMI:
-	leds[i].trig = 2;
-	break;
+        leds[i].trig = 2;
+        break;
       }
     }
     //std::cout << "LEDS: " << to_string(leds) << std::endl;
@@ -695,20 +699,20 @@ namespace tlu {
     if (m_version == 1) {
       int ledval = 0;
       for (int i = 0; i < TLU_DUTS; ++i) {
-	if (leds[i].left) ledval |= 1 << i;
+        if (leds[i].left) ledval |= 1 << i;
       }
       WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, ledval);
     } else {
       int dutled = 0, lemoled = 0;
       //std::cout << "LED:";
       for (int i = 0; i < TLU_DUTS; ++i) {
-	//std::cout << ' ' << leds[i];
-	if (leds[i].left) dutled |= 1 << (2*i+1);
-	if (leds[i].right) dutled |= 1 << (2*i);
-	if (leds[i].rst) lemoled |= 1 << (2*i);
-	if (leds[i].busy) lemoled |= 1 << (2*i+1);
-	int swap = ((leds[i].trig >> 1) & 1) | ((leds[i].trig & 1) << 1);
-	lemoled |= swap << (2*i+8);
+        //std::cout << ' ' << leds[i];
+        if (leds[i].left) dutled |= 1 << (2*i+1);
+        if (leds[i].right) dutled |= 1 << (2*i);
+        if (leds[i].rst) lemoled |= 1 << (2*i);
+        if (leds[i].busy) lemoled |= 1 << (2*i+1);
+        int swap = ((leds[i].trig >> 1) & 1) | ((leds[i].trig & 1) << 1);
+        lemoled |= swap << (2*i+8);
       }
       //std::cout << "\n  dut=" << hexdec(dutled) << ", lemo=" << hexdec(lemoled) << std::endl;
       // Swap the two LSBs, to work around routing bug on TLU
@@ -719,16 +723,16 @@ namespace tlu {
       lemoled ^= 0xff;
       //std::cout << "  dut=" << hexdec(dutled) << ", lemo=" << hexdec(lemoled) << std::endl;
       try {
-	WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, dutled);
+        WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD, m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, dutled);
       } catch (const eudaq::Exception & e) {
-	std::cerr << "Error writing DUT LEDs: " << e.what() << std::endl;
+        std::cerr << "Error writing DUT LEDs: " << e.what() << std::endl;
       }
       unsigned long addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO;
       if (m_version < 3) addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO_VB;
       try {
-	WritePCA955(m_addr->TLU_I2C_BUS_LEMO, addr, lemoled);
+        WritePCA955(m_addr->TLU_I2C_BUS_LEMO, addr, lemoled);
       } catch (const eudaq::Exception & e) {
-	std::cerr << "Error writing LEMO LEDs: " << e.what() << std::endl;
+        std::cerr << "Error writing LEMO LEDs: " << e.what() << std::endl;
       }
     }
   }

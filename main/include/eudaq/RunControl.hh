@@ -21,7 +21,7 @@ namespace eudaq {
     void StopServer();
 
     void Configure(const Configuration & settings); ///< Send 'Configure' command with settings
-    void Configure(const std::string & settings); ///< Send 'Configure' command with settings
+    void Configure(const std::string & settings, int geoid = 0); ///< Send 'Configure' command with settings
     void Reset();     ///< Send 'Reset' command
     void GetStatus();    ///< Send 'Status' command to get status
     virtual void StartRun(const std::string & msg = "");  ///< Send 'StartRun' command with run number

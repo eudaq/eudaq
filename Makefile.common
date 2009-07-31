@@ -3,19 +3,24 @@ SHELL=/bin/bash -O extglob
 # TODO: Precompiled headers?
 
 UNAME := $(shell uname)
-ifneq ($(findstring CYGWIN,$(UNAME)),)
-  PLATFORM := CYGWIN
-else
-  ifneq ($(findstring Darwin,$(UNAME)),)
-    PLATFORM := MACOSX
+
+ifneq ($(findstring MINGW,$(UNAME)),)
+  PLATFORM := MINGW
+else  
+  ifneq ($(findstring CYGWIN,$(UNAME)),)
+    PLATFORM := CYGWIN
   else
-    ifneq ($(findstring Linux,$(UNAME)),)
-      PLATFORM := LINUX
+    ifneq ($(findstring Darwin,$(UNAME)),)
+      PLATFORM := MACOSX
     else
-      ifeq ("$(UNAME)","")
-        PLATFORM := WIN32
+      ifneq ($(findstring Linux,$(UNAME)),)
+        PLATFORM := LINUX
       else
-        $(error Unknown platform "$(UNAME)", please report this to the developers)
+        ifeq ("$(UNAME)","")
+          PLATFORM := WIN32
+        else
+          $(error Unknown platform "$(UNAME)", please report this to the developers)
+        endif
       endif
     endif
   endif
@@ -83,8 +88,10 @@ MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBU
 CPPFLAGS = -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
 
 # Except for Cygwin we want ANSI handling of headers
-ifneq ($(PLATFORM),CYGWIN)
-  CPPFLAGS += -ansi
+ifneq ($(PLATFORM),CYGWIN) 
+  ifneq ($(PLATFORM),MINGW)
+    CPPFLAGS += -ansi
+  endif
 endif
 
 # Extra flags for C compiler
@@ -93,7 +100,9 @@ CFLAGS   = -Wall -W -Wno-long-long -O$(OPTIMIZE) $(CPPFLAGS)
 # Except for Cygwin we want to specify position independent code.
 # With Cygwin this just spits out warnings saying that all code is PIC
 ifneq ($(PLATFORM),CYGWIN)
-  CFLAGS += -fPIC
+  ifneq ($(PLATFORM),MINGW)
+    CFLAGS += -fPIC
+  endif
 endif
 
 # Extra flags for C++ compiler
@@ -128,6 +137,10 @@ ifeq ($(PLATFORM),WIN32)
   LDFLAGS  += -Wl,--enable-auto-import -Wl,--enable-runtime-pseudo-reloc
 endif
 
+ifeq ($(PLATFORM),MINGW)
+  LDFLAGS  += -Wl,--enable-auto-import -Wl,--enable-runtime-pseudo-reloc
+#  EXTERNAL_LIBDIRS += /c/MinGW/Pre-built.2/lib/
+endif
 INCLUDES = -I$(INC) $(EXTERNAL_INCS:%=-I%)
 
 ifeq ($(PLATFORM),MACOSX)
@@ -154,8 +167,8 @@ CC_FILES  := $(wildcard $(SRC)/*.cc)
 CXX_FILES := $(wildcard $(SRC)/*.cxx)
 #SRC_FILES := $(C_FILES) $(CC_FILES) $(CXX_FILES)
 OBJ_FILES := $(CC_FILES:$(SRC)/%.cc=$(OBJ)/%.o) $(C_FILES:$(SRC)/%.c=$(OBJ)/%.o)
-DEP_FILES := $(CC_FILES:$(SRC)/%.cc=$(DEP)/%.d) $(CXX_FILES:$(SRC)/%.cxx=$(DEP)/%.d) $(C_FILES:$(SRC)/%.c=$(DEP)/%.d)
-EXEOBJ_FILES := $(CXX_FILES:$(SRC)/%.cxx=$(OBJ)/%.o)
+DEP_FILES := $(CC_FILES:$(SRC)/%.cc=$(DEP)/%.d) $(CXX_FILES:$(SRC)/%.cxx=$(DEP)/%_exe.d) $(C_FILES:$(SRC)/%.c=$(DEP)/%.d)
+EXEOBJ_FILES := $(CXX_FILES:$(SRC)/%.cxx=$(OBJ)/%_exe.o)
 EXE_FILES := $(CXX_FILES:$(SRC)/%.cxx=$(BIN)/%.exe)
 
 ifeq ($(VERBOSE),1)
@@ -172,7 +185,7 @@ vpath %.h $(INC)
 vpath %.hh $(INC)
 vpath %.gch $(INC)
 
-.PHONY: default_target
+.PHONY: default_target objs
 default_target: default
 
 # On cygwin build static libraries, since there is a problem with exceptions in .dlls
@@ -188,10 +201,12 @@ ifneq ($(TARGET),)
   $(TARGET): $(OBJ_FILES)
 endif
 
+objs: $(OBJ_FILES) $(EXEOBJ_FILES)
+
 ifneq ($(NO_DEFAULT_RULES),1)
 clean:
 	@echo -n " *** Removing old executable, library, object and dependency files in " && basename `pwd`
-	$(V) rm -f ./*.exe ./lib*.a ./lib*.so ./lib*.dylib ./lib*.dll ./lib*.lib $(OBJ)/*.o $(OBJ)/*.d
+	$(V) rm -f *.exe lib*.{a,so,dylib,dll,lib} $(OBJ)/*.{o,d}
 
   ifeq ($(MAKECMDGOALS),clean)
     NODEPS := 1
@@ -205,7 +220,7 @@ debug:
 
 .SUFFIXES:
 
-$(BIN)/%.exe: $(OBJ)/%.o
+$(BIN)/%.exe: $(OBJ)/%_exe.o
 	@echo "   * Linking    $@"
 	$V$(LD) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
@@ -233,7 +248,7 @@ $(OBJ)/%.o: %.cc
 	@echo "  ** Compiling  `basename $@`"
 	$V$(CXX) -o $@ $< -c $(CXXFLAGS)
 
-$(OBJ)/%.o: %.cxx
+$(OBJ)/%_exe.o: %.cxx
 	@echo "  ** Compiling  `basename $@`"
 	$V$(CXX) -o $@ $< -c $(CXXFLAGS)
 
@@ -247,9 +262,9 @@ $(DEP)/%.d: %.cc
 	$V$(CCDEP) $< $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(OBJ)/\1.o $@ : ,g' > $@
 	@[ `${FSIZE} $@` -gt 0 ] || (rm $@; false)
 
-$(DEP)/%.d: %.cxx
+$(DEP)/%_exe.d: %.cxx
 	@echo " *** Creating   `basename $@`"
-	$V$(CCDEP) $< $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(OBJ)/\1.o $@ : ,g' > $@
+	$V$(CCDEP) $< $(CPPFLAGS) | sed 's,\($*\)\.o[ :]*,$(OBJ)/\1_exe.o $@ : ,g' > $@
 	@[ `${FSIZE} $@` -gt 0 ] || (rm $@; false)
 
 $(DEP)/%.hh.d: %.hh

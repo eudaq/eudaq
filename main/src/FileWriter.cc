@@ -15,6 +15,7 @@ namespace eudaq {
 
 
   void FileWriterFactory::do_register(const std::string & name, FileWriterFactory::factoryfunc func) {
+    std::cout << "DEBUG: Registering FileWriter: " << name << std::endl;
     FileWriterMap()[name] = func;
   }
 

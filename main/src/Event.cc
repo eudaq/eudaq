@@ -34,9 +34,8 @@ namespace eudaq {
   }
 
   void Event::Print(std::ostream & os) const {
-    os << "Type=" << id2str(get_id())
-       << ", Run=" << m_runnumber
-       << ", Event=" << m_eventnumber;
+    os << "Type=" << id2str(get_id()) << ":" << GetSubType()
+       << ", Number=" << m_runnumber << "." << m_eventnumber;
     if (m_timestamp != NOTIMESTAMP)
       os << ", Time=0x" << to_hex(m_timestamp, 16);
     if (m_flags) {
@@ -68,7 +67,7 @@ namespace eudaq {
   }
 
   std::string Event::id2str(unsigned id) {
-    std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
+    //std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
     std::string result(4, '\0');
     for (int i = 0; i < 4; ++i) {
       result[i] = (char)(id & 0xff);
@@ -80,7 +79,7 @@ namespace eudaq {
         break;
       }
     }
-    std::cout << " = " << result << std::endl;
+    //std::cout << " = " << result << std::endl;
     return result;
   }
 

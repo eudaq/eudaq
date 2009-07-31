@@ -80,7 +80,7 @@ namespace eudaq {
     }
   }
 
-  void RunControl::Configure(const std::string & param) {
+  void RunControl::Configure(const std::string & param, int geoid) {
     std::string filename = "../conf/" + (param == "" ? "default" : param) + ".conf";
     EUDAQ_INFO("Configuring (" + param + ")");
     //EUDAQ_EXTRA("Loading configuration from: " + filename);
@@ -88,6 +88,7 @@ namespace eudaq {
     if (file.is_open()) {
       Configuration config(file);
       config.Set("Name", param);
+      if (geoid) config.Set("GeoID", to_string(geoid));
       Configure(config);
     } else {
       EUDAQ_ERROR("Unable to open file '" + filename + "'");

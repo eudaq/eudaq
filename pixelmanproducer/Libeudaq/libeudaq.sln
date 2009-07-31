@@ -1,0 +1,29 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libeudaq", "libeudaq.vcproj", "{DE4B1E16-58E2-4B5F-B958-42C8E906B142}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PixelmanProducerMFC", "..\PixelmanProducerMFC\PixelmanProducerMFC.vcproj", "{C3C0D164-0D42-44FD-90B6-5FD6E4AEFBA8}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DE4B1E16-58E2-4B5F-B958-42C8E906B142} = {DE4B1E16-58E2-4B5F-B958-42C8E906B142}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE4B1E16-58E2-4B5F-B958-42C8E906B142}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DE4B1E16-58E2-4B5F-B958-42C8E906B142}.Debug|Win32.Build.0 = Debug|Win32
+		{DE4B1E16-58E2-4B5F-B958-42C8E906B142}.Release|Win32.ActiveCfg = Release|Win32
+		{DE4B1E16-58E2-4B5F-B958-42C8E906B142}.Release|Win32.Build.0 = Release|Win32
+		{C3C0D164-0D42-44FD-90B6-5FD6E4AEFBA8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C3C0D164-0D42-44FD-90B6-5FD6E4AEFBA8}.Debug|Win32.Build.0 = Debug|Win32
+		{C3C0D164-0D42-44FD-90B6-5FD6E4AEFBA8}.Release|Win32.ActiveCfg = Release|Win32
+		{C3C0D164-0D42-44FD-90B6-5FD6E4AEFBA8}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

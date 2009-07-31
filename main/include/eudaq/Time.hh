@@ -49,11 +49,11 @@ namespace eudaq {
     }
     bool operator < (const timeval & other) {
       return tv_sec < other.tv_sec ||
-	(tv_sec == other.tv_sec && tv_usec < other.tv_usec);
+        (tv_sec == other.tv_sec && tv_usec < other.tv_usec);
     }
     bool operator > (const timeval & other) {
       return tv_sec > other.tv_sec ||
-	(tv_sec == other.tv_sec && tv_usec > other.tv_usec);
+        (tv_sec == other.tv_sec && tv_usec > other.tv_usec);
     }
     operator const timeval () const {
       timeval tv;

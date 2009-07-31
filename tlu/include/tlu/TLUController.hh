@@ -8,6 +8,7 @@
 #include <iostream>
 #include <ostream>
 #include "eudaq/Utils.hh"
+#include "eudaq/Time.hh"
 
 namespace tlu {
 
@@ -95,7 +96,9 @@ namespace tlu {
     void Stop();
     void ResetTriggerCounter();
     void ResetScalers();
+    void ResetTimestamp();
     void ResetUSB();
+    eudaq::Time TimestampZero() const { return m_timestampzero; }
 
     size_t NumEntries() const { return m_buffer.size(); }
     TLUEntry GetEntry(size_t i) const { return m_buffer[i]; }
@@ -157,6 +160,7 @@ namespace tlu {
     int m_errorhandler;
     unsigned m_version;
     TLUAddresses * m_addr;
+    eudaq::Time m_timestampzero;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {

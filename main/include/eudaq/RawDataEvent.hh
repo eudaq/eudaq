@@ -20,6 +20,7 @@ namespace eudaq {
       block_t(unsigned id = (unsigned)-1, data_t data = data_t()) : id(id), data(data) {}
       block_t(Deserializer &);
       void Serialize(Serializer &) const;
+      void Append(const data_t & data);
       unsigned id;
       data_t data;
     };
@@ -27,16 +28,36 @@ namespace eudaq {
     RawDataEvent(std::string type, unsigned run, unsigned event);
     RawDataEvent(Deserializer &);
 
+    /// Add an empty block
+    size_t AddBlock(unsigned id) {
+      m_blocks.push_back(block_t(id));
+      return m_blocks.size() - 1;
+    }
+
     /// Add a data block as std::vector
     template <typename T>
-    void AddBlock(unsigned id, const std::vector<T> & data) {
+    size_t AddBlock(unsigned id, const std::vector<T> & data) {
       m_blocks.push_back(block_t(id, make_vector(data)));
+      return m_blocks.size() - 1;
     }
 
     /// Add a data block as array with given size
     template <typename T>
-    void AddBlock(unsigned id, const T * data, size_t bytes) {
+    size_t AddBlock(unsigned id, const T * data, size_t bytes) {
       m_blocks.push_back(block_t(id, make_vector(data, bytes)));
+      return m_blocks.size() - 1;
+    }
+
+    /// Append data to a block as std::vector
+    template <typename T>
+    void AppendBlock(size_t index, const std::vector<T> & data) {
+      m_blocks[index].Append(make_vector(data));
+    }
+
+    /// Append data to a block as array with given size
+    template <typename T>
+    void AppendBlock(size_t index, const T * data, size_t bytes) {
+      m_blocks[index].Append(make_vector(data, bytes));
     }
 
     unsigned GetID(size_t i) const;

@@ -20,6 +20,10 @@ namespace eudaq {
     explicit DetectorEvent(Deserializer&);
     void AddEvent(counted_ptr<Event> evt);
     virtual void Print(std::ostream &) const;
+
+    /// Return "DetectorEvent" as type.
+    virtual std::string GetType() const {return "DetectorEvent";}
+
     size_t NumEvents() const { return m_events.size(); }
     Event * GetEvent(size_t i) { return m_events[i].get(); }
     const Event * GetEvent(size_t i) const { return m_events[i].get(); }
