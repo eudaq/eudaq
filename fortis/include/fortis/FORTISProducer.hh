@@ -83,7 +83,7 @@ public:
 
     }
 
-	m_currentFrame = m_frameBuffer[m_buffer_number][0];
+	m_currentFrame = m_frameBuffer[m_buffer_number][0] + 0x10000*m_frameBuffer[m_buffer_number][1]  ;
     std::cout << "Read  frame number = " << m_currentFrame << ". chunk count = " << chunk_count << std::endl ;
 
 
@@ -144,7 +144,7 @@ public:
 			}
 		}
     
-		std::cout << "Sending Event number " << m_ev << " , frame number from current_frame = " << m_currentFrame << " frame number from raw_data = " << m_rawData[0] << std::endl;
+		std::cout << "Sending Event number " << m_ev << " , frame number from current_frame = " << m_currentFrame << " frame number from raw_data = " << (m_rawData[0] + m_rawData[1]*0x10000)<< std::endl;
  
 		RawDataEvent ev(FORTIS_DATATYPE_NAME, m_run, m_ev); // create an instance of the RawDataEvent with FORTIS-ID
 	   
@@ -172,11 +172,17 @@ public:
     m_triggers_pending = 0; // this shouldn't be necessary....
 
     // Loop through looking for triggers ...
-    for ( row_counter=0; row_counter < m_NumRows ; row_counter++) {
-	  
-      // m_triggers_pending = m_triggers_pending + ( 0x7FFF & m_frameBuffer[m_buffer_number ][1 + row_counter*words_per_row ] );
-	  // bodge up for now .... max. one trigger per frame.
-	  if ( m_frameBuffer[m_buffer_number ][1 + row_counter*words_per_row ] != 0 ) { m_triggers_pending = 1; }
+    for ( row_counter=1; row_counter < m_NumRows ; row_counter++) {
+
+		std::cout << "row, Trigger words : " <<  hex << row_counter << "  " << m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] << "   " << m_frameBuffer[m_buffer_number ][1+ row_counter*words_per_row ]  << std::endl;
+		m_triggers_pending = m_triggers_pending + ( 0x00FF & m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] );	  
+
+		if ( row_counter == 1 ) { // if we are on the first row, include the previous row ( zero ) where the trigger counter is taken over by the frame-counter.
+			m_triggers_pending = m_triggers_pending + (( 0xFF00 & m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] )>>8) ;
+		}
+
+      // bodge up for now .... max. one trigger per frame.
+      //if ( m_frameBuffer[m_buffer_number ][1 + row_counter*words_per_row ] != 0 ) { m_triggers_pending = 1; }
     }
 
     std::cout << "Found " << m_triggers_pending << " triggers in frame " << m_currentFrame << std::endl;
@@ -378,7 +384,7 @@ private:
     // ExecutableArgs exeArgs;
     m_exeArgs.dir = m_param.Get("ExecutableDirectory","./");
     m_exeArgs.filename = m_param.Get("ExecutableFilename","stream_exe") ;
-	m_exeArgs.killcommand =  "/bin/ps -W | /bin/awk  '/" + m_param.Get("ExecutableProcessName","optodaqV.exe") + "/{print $1}' | /bin/xargs /bin/kill -f"; 
+	m_exeArgs.killcommand =  "/bin/ps -W | /bin/awk  '/" + m_param.Get("ExecutableProcessName","optodaq") + "/{print $1}' | /bin/xargs /bin/kill -f"; 
     m_exeArgs.args = m_param.Get("ExecutableArgs","");
 
     unsigned threadCreateResult = pthread_create(&m_executableThreadId, NULL, &startExecutableThread, (void*)&m_exeArgs);
