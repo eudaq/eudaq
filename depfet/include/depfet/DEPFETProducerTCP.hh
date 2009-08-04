@@ -92,13 +92,13 @@ public:
       Nmod = REQUEST;
       eudaq::Timer timer2;
       int rc = tcp_event_get(&data_host[0], buffer, &lenevent, &Nmod, &Kmod, &itrg);
-      std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
+      if (itrg%100 == 0) std::cout << "##DEBUG## tcp_event_get " << timer2.mSeconds() << "ms" << std::endl;
       if (rc < 0) EUDAQ_WARN("tcp_event_get ERROR");
       int evtModID = (buffer[0] >> 24) & 0xf;
       int len2 = buffer[0] & 0xfffff;
       int evt_type = (buffer[0] >> 22) & 0x3;
       int dev_type = (buffer[0] >> 28) & 0xf;
-      if (itrg == BORE_TRIGGERID || itrg == EORE_TRIGGERID || itrg < itrg_old || evt_type != 2) {
+      if (itrg == BORE_TRIGGERID || itrg == EORE_TRIGGERID || itrg < itrg_old /*|| evt_type != 2*/) {
         std::cout << "Received: Mod " << (Kmod+1) << " of " << Nmod << ", id=" << evtModID
                   << ", EvType=" << evt_type << ", DevType=" << dev_type
                   << ", NData=" << lenevent << " (" << len2 << ") "
@@ -128,18 +128,16 @@ public:
       ev->AddBlock(id++, buffer, lenevent*4);
 
     }  while (Kmod!=(Nmod-1));
-    std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
+    if (itrg%100 == 0) std::cout << "##DEBUG## Reading took " << timer.mSeconds() << "ms" << std::endl;
     timer.Restart();
 //    if (firstevent && itrg != 0) {
 //      printf("Ignoring bad event (%d)\n", itrg);
 //      firstevent = false;
 //      return;
 //    }
-    printf("Sending event \n");
     ++m_evt;
     SendEvent(*ev);
-    printf("OK \n");
-    std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
+    if (itrg%100 == 0) std::cout << "##DEBUG## Sending took " << timer.mSeconds() << "ms" << std::endl;
   }
   bool done;
 private:
