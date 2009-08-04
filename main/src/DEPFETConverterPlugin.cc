@@ -23,8 +23,8 @@ namespace eudaq {
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
       StandardPlane plane(id, "DEPFET", "?");
       //     plane.m_tluevent = getlittleendian<unsigned>(&data[4]);
-      plane.m_tluevent = getlittleendian<unsigned>(&data[1]);
-      int Startgate=getlittleendian<unsigned>(&data[2]);
+      plane.m_tluevent = getlittleendian<unsigned>(&data[4]);
+      int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x7f;
       int DevType=(getlittleendian<unsigned>(&data[0])>>28) & 0xf;
       printf("TLU=%d Startgate=%d DevType=0x%x \n",plane.m_tluevent,Startgate,DevType);
       int ix,iy,i,j;
