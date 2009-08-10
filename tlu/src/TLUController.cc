@@ -230,22 +230,19 @@ namespace tlu {
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
 
-    // Write to reset a few times...
-    //for (int i=0; i<10 ; i++) {
-    //mysleep (100);
-    mSleep(20);
-    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x3F);
-    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x00);
-    //}
+
+    SetDUTMask(m_mask, false);
 
     // Reset pointers
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, (1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT)
-                  | (1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT) | (1 << m_addr->TLU_TRIGGER_FSM_RESET_BIT));
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0x00);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 
+		  (1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT)
+                  | (1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT) 
+		  | (1 << m_addr->TLU_TRIGGER_FSM_RESET_BIT) 
+		  | (1 << m_addr->TLU_TIMESTAMP_RESET_BIT ) ); // N.B. Writing to TIMESTAMP_RESET_BIT also causes a pulse on reset outputs marked active by DUT_MASK
 
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
 
-    SetDUTMask(m_mask, false);
+
 
     WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                 m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
@@ -426,14 +423,12 @@ namespace tlu {
 
       // Reset buffer pointer
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
-      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
 
       InhibitTriggers(oldinhibit);
     } else {
       WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
       entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
-      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
     }
 
 #if TLUDEBUG
@@ -566,36 +561,46 @@ namespace tlu {
   unsigned long long * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
-    unsigned long long buffer[4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
-    for (unsigned i = 0; i < m_addr->TLU_BUFFER_DEPTH; ++i) {
-      buffer[i] = m_oldbuf[i];
-    }
 
     int result = ZESTSC1_SUCCESS;
-    for (int tries = 0; tries < 3; ++tries) {
-      // Request block transfer from TLU
+    WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, 0xFF); // the first write sets transfer going. Further writes do nothing.
       usleep(10);
-      WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, 0xFF);
-      //usleep(10);
-      result = ZestSC1ReadData(m_handle, buffer, sizeof buffer);
+
+    for (int tries = 0; tries < 4; ++tries) { // first buffer will be useless, futher reads should be the same, but data corruption will often require multiple reads.
+
+      result = ZestSC1ReadData(m_handle, buffer[tries], sizeof buffer);
 
 #if TLUDEBUG
       char * errmsg = 0;
       ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
       std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
 #endif
-      if (result == ZESTSC1_SUCCESS && buffer[entries-1] != m_oldbuf[entries-1]) {
-        for (unsigned i = 0; i < m_addr->TLU_BUFFER_DEPTH; ++i) {
-          m_oldbuf[i] = buffer[i];
-        }
-        usbtrace("BR", 0, buffer, m_addr->TLU_BUFFER_DEPTH, result);
-        return m_oldbuf;
-      }
+
     }
-    usbtrace("bR", 0, buffer, m_addr->TLU_BUFFER_DEPTH, result);
-    std::cout << (buffer[0] == m_oldbuf[0] ? "*" : "#") << std::flush;
-    return 0;
+
+    for (unsigned i = 1; i < entries+1; ++i) {
+
+      // check that at least 2 out of three timestamps agree with each other....
+      // due to latency in buffer transfer the real data starts at the second 64-bit word.
+      if (( buffer[1][i] == buffer[2][i] ) || ( buffer[2][i] == buffer[3][i] ) ) {
+	m_oldbuf[i-1] = buffer[1][i];
+      } else if ( buffer[2][i] == buffer[3][i] ) {
+	m_oldbuf[i-1] = buffer[2][i];
+      } else {
+	m_oldbuf[i-1] = 0;
+      }
+
+    }
+
+    // need to add checking to make sure that the current timestamp[0] is more recent than previous timestamp[events]
+
+    // need to add checking that timestamp is in the correct ball-park ( use Timestamp2Seconds ... )
+
+    usbtrace("BR", 0, buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
+    return m_oldbuf;
+
   }
 
   void TLUController::Print(std::ostream &out, bool timestamps) const {
