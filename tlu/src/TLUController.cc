@@ -568,9 +568,13 @@ namespace tlu {
     WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, 0xFF); // the first write sets transfer going. Further writes do nothing.
       usleep(10);
 
-    for (int tries = 0; tries < 4; ++tries) { // first buffer will be useless, futher reads should be the same, but data corruption will often require multiple reads.
+    for (int tries = 0; tries < 4; ++tries) { // first buffer will contain some data from previous readout, but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. Try to correct this using multiple reads.
 
-      result = ZestSC1ReadData(m_handle, buffer[tries], sizeof buffer);
+      result = ZestSC1ReadData(m_handle, buffer[tries], sizeof buffer[0] );
+
+      if (buffer[tries][0] !=0) {
+	std::cout << "### Warning: buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl; 
+      }
 
 #if TLUDEBUG
       char * errmsg = 0;
@@ -584,12 +588,13 @@ namespace tlu {
 
       // check that at least 2 out of three timestamps agree with each other....
       // due to latency in buffer transfer the real data starts at the second 64-bit word.
-      if (( buffer[1][i] == buffer[2][i] ) || ( buffer[2][i] == buffer[3][i] ) ) {
+      if (( buffer[1][i] == buffer[2][i] ) || ( buffer[1][i] == buffer[3][i] ) ) {
 	m_oldbuf[i-1] = buffer[1][i];
       } else if ( buffer[2][i] == buffer[3][i] ) {
 	m_oldbuf[i-1] = buffer[2][i];
       } else {
 	m_oldbuf[i-1] = 0;
+	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << buffer[1][i] << "  " << buffer[2][i] << "  " << buffer[3][i] << std::endl;
       }
 
     }
