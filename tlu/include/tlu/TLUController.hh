@@ -81,6 +81,7 @@ namespace tlu {
     void SetVetoMask(unsigned char mask);
     void SetAndMask(unsigned char mask);
     void SetOrMask(unsigned char mask);
+    void SetStrobe(unsigned long period , unsigned long width);
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
@@ -130,8 +131,10 @@ namespace tlu {
     bool SetupLemo(); // Tries to set the LEMO termination and DAC voltage, returns true if successful
 
     void WriteRegister(unsigned long offset, unsigned char val);
+    void WriteRegister24(unsigned long offset, unsigned long val);
     unsigned char ReadRegister8(unsigned long offset) const;
     unsigned short ReadRegister16(unsigned long offset) const;
+    unsigned long ReadRegister24(unsigned long offset) const;
     unsigned long ReadRegister32(unsigned long offset) const;
     unsigned long long ReadRegister64(unsigned long offset) const;
     unsigned long long * ReadBlock(unsigned entries);
@@ -146,6 +149,7 @@ namespace tlu {
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
     unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel;
+    unsigned long m_strobewidth , m_strobeperiod;
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 

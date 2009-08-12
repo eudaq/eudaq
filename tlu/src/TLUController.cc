@@ -230,7 +230,6 @@ namespace tlu {
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
 
-
     SetDUTMask(m_mask, false);
 
     // Reset pointers
@@ -238,11 +237,9 @@ namespace tlu {
 		  (1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT)
                   | (1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT) 
 		  | (1 << m_addr->TLU_TRIGGER_FSM_RESET_BIT) 
-		  | (1 << m_addr->TLU_TIMESTAMP_RESET_BIT ) ); // N.B. Writing to TIMESTAMP_RESET_BIT also causes a pulse on reset outputs marked active by DUT_MASK
+		  ); 
 
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
-
-
 
     WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                 m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
@@ -315,7 +312,7 @@ namespace tlu {
   void TLUController::ResetTimestamp() {
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TIMESTAMP_RESET_BIT);
     m_timestampzero = eudaq::Time::Current();
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
+    // WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0); // don't need to write zero afterwards.
   }
 
   void TLUController::ResetUSB() {
@@ -353,6 +350,19 @@ namespace tlu {
   void TLUController::SetOrMask(unsigned char mask) {
     m_omask = mask;
     if (m_addr) WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
+  }
+
+  void TLUController::SetStrobe(unsigned long period , unsigned long width) {
+    m_strobeperiod = period;
+    m_strobewidth = width;
+
+    if (m_addr) {
+      if ( (m_strobeperiod !=0) & (m_strobewidth !=0) ) { // if either period or width is zero don't enable strobe
+	WriteRegister24(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_strobeperiod);
+	WriteRegister24(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_strobewidth);
+	WriteRegister(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS,0x01); // enable strobe, but strobe won't start running until timest mp is reset.
+      }
+    }
   }
 
   void TLUController::SetTriggerInterval(unsigned millis) {
@@ -504,6 +514,33 @@ namespace tlu {
     }
   }
 
+  void TLUController::WriteRegister24(unsigned long offset, unsigned long val) {
+    int status = ZESTSC1_SUCCESS;
+    int delay = 0;
+
+    const int count = m_errorhandler ? m_errorhandler : 1;
+
+    for (int byte = 0; byte < 3; ++byte ) {
+
+      for (int i = 0; i < count; ++i) {
+	if (delay == 0) {
+	  delay = 20;
+	} else {
+	  usleep(delay);
+	  delay += delay;
+	}
+	status = ZestSC1WriteRegister(m_handle, offset+byte, ((val >> (8*byte)) & 0xFF)  );
+	usbtrace(" W", offset, val, status);
+	if (status == ZESTSC1_SUCCESS) break;
+      }
+      if (status != ZESTSC1_SUCCESS) {
+	usbflushtracefile();
+	throw TLUException("WriteRegister24", status, count);
+      }
+
+    }
+  }
+
   unsigned char TLUController::ReadRegister8(unsigned long offset) const {
     unsigned char val = ReadRegisterRaw(offset);
     //usbtrace(" R", offset, val);
@@ -513,6 +550,15 @@ namespace tlu {
   unsigned short TLUController::ReadRegister16(unsigned long offset) const {
     unsigned short val = ReadRegisterRaw(offset);
     val |= static_cast<unsigned short>(ReadRegisterRaw(offset+1)) << 8;
+    //usbtrace(" R", offset, val);
+    return val;
+  }
+
+  unsigned long TLUController::ReadRegister24(unsigned long offset) const {
+    unsigned long val = 0;
+    for (int i = 0; i < 3; ++i) {
+      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+    }
     //usbtrace(" R", offset, val);
     return val;
   }
