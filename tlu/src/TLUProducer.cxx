@@ -28,6 +28,7 @@ public:
       or_mask(0),
       strobe_period(0),
       strobe_width(0),
+      enable_dut_veto(0),
       trig_rollover(0),
       done(false),
       TLUStarted(false),
@@ -102,6 +103,7 @@ public:
       or_mask = param.Get("OrMask", 0);
       strobe_period = param.Get("StrobePeriod", 0);
       strobe_width = param.Get("StrobeWidth", 0);
+      enable_dut_veto = param.Get("EnableDUTVeto", 0);
       veto_mask = param.Get("VetoMask", 0);
       trig_rollover = param.Get("TrigRollover", 0);
       timestamps = param.Get("Timestamps", 1);
@@ -120,6 +122,7 @@ public:
       m_tlu->SetAndMask(and_mask);
       m_tlu->SetOrMask(or_mask);
       m_tlu->SetStrobe(strobe_period , strobe_width);
+      m_tlu->SetEnableDUTVeto( enable_dut_veto );
       m_tlu->ResetTimestamp(); // Resetting timestamp also sets the strobe running ( if activated )
 
       // by dhaas
@@ -228,6 +231,7 @@ private:
   unsigned m_run, m_ev;
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask;
   unsigned long strobe_period , strobe_width ;
+  unsigned enable_dut_veto;
   unsigned trig_rollover, readout_delay;
   bool timestamps, done, timestamp_per_run;
   bool TLUStarted;

@@ -82,9 +82,15 @@ namespace tlu {
     void SetAndMask(unsigned char mask);
     void SetOrMask(unsigned char mask);
     void SetStrobe(unsigned long period , unsigned long width);
+    void SetEnableDUTVeto(unsigned char mask);
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
+    unsigned long GetStrobeWidth() const;
+    unsigned long GetStrobePeriod() const;
+    unsigned char GetStrobeStatus() const;
+    unsigned char GetEnableDUTVeto() const;
+
     static int DUTnum(const std::string & name);
     void SelectDUT(const std::string & name, unsigned mask = 0xf, bool updateleds = true);
     void SelectDUT(int input, unsigned mask = 0xf, bool updateleds = true);
@@ -148,7 +154,7 @@ namespace tlu {
 
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
-    unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel;
+    unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel,  m_enabledutveto;
     unsigned long m_strobewidth , m_strobeperiod;
     unsigned m_triggerint, m_serial;
     bool m_inhibit;

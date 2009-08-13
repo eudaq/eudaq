@@ -352,15 +352,20 @@ namespace tlu {
     if (m_addr) WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
   }
 
+  void TLUController::SetEnableDUTVeto(unsigned char mask) {
+    m_enabledutveto = mask;
+    if (m_addr) WriteRegister(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS, m_enabledutveto);
+  }
+
   void TLUController::SetStrobe(unsigned long period , unsigned long width) {
     m_strobeperiod = period;
     m_strobewidth = width;
 
     if (m_addr) {
       if ( (m_strobeperiod !=0) & (m_strobewidth !=0) ) { // if either period or width is zero don't enable strobe
-	WriteRegister24(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_strobeperiod);
-	WriteRegister24(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_strobewidth);
-	WriteRegister(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS,0x01); // enable strobe, but strobe won't start running until timest mp is reset.
+	WriteRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0, m_strobeperiod);
+	WriteRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0, m_strobewidth);
+	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS,0x01); // enable strobe, but strobe won't start running until timest mp is reset.
       }
     }
   }
@@ -381,6 +386,23 @@ namespace tlu {
   unsigned char TLUController::GetVetoMask() const {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
   }
+
+  unsigned long TLUController::GetStrobeWidth() const {
+    return ReadRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0 );
+  }
+
+  unsigned long TLUController::GetStrobePeriod() const {
+    return ReadRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0 );
+  }
+
+  unsigned char TLUController::GetStrobeStatus() const {
+    return ReadRegister8(m_addr->TLU_STROBE_ENABLE_ADDRESS );
+  }
+
+  unsigned char TLUController::GetEnableDUTVeto() const {
+    return ReadRegister8(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS );
+  }
+
 
   int TLUController::DUTnum(const std::string & name) {
     if (ucase(name) == "RJ45") return IN_RJ45;
