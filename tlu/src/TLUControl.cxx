@@ -43,6 +43,12 @@ int main(int /*argc*/, char ** argv) {
                                    "Firmware version to load (0=auto)");
   eudaq::Option<int>         wait(op, "w", "wait", 1000, "ms",
                                   "Time to wait between updates in milliseconds");
+  eudaq::Option<int>         strobeperiod(op, "p", "strobeperiod", 1000, "cycles",
+                                  "Period for timing strobe in clock cycles");
+  eudaq::Option<int>         strobelength(op, "l", "strobelength", 100, "cycles",
+                                  "Length of 'on' time for timing strobe in clock cycles");
+  eudaq::Option<int>         enabledutveto(op, "b", "duteveto", 0, "mask",
+                                  "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
@@ -65,6 +71,9 @@ int main(int /*argc*/, char ** argv) {
               << "And Mask = " << hexdec(amask.Value()) << "\n"
               << "Or Mask = " << hexdec(omask.Value()) << "\n"
               << "DUT inputs = " << to_string(ipsel.Value()) << "\n"
+              << "Strobe period = " << hexdec(strobeperiod.Value()) << "\n"
+              << "Strobe length = " << hexdec(strobelength.Value()) << "\n"
+              << "Enable DUT Veto (backpressure) = " << hexdec(enabledutveto.Value()) << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -106,6 +115,10 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetVetoMask(vmask.Value());
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
+    TLU.SetStrobe(strobeperiod.Value() , strobelength.Value());
+    TLU.SetEnableDUTVeto( enabledutveto.Value() );
+    TLU.ResetTimestamp(); // also sets strobe running (if enabled) 
+
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
               << "TLU Serial number = " << eudaq::hexdec(TLU.GetSerialNumber(), 4) << "\n"
               << "Firmware file = " << TLU.GetFirmware() << "\n"

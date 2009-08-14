@@ -137,6 +137,7 @@ namespace tlu {
     m_inhibit(true),
     m_vetostatus(0),
     m_fsmstatus(0),
+    m_fsmstatusvalues(0),
     m_triggernum(0),
     m_timestamp(0),
     m_oldbuf(0),
@@ -468,6 +469,7 @@ namespace tlu {
 #endif
 
     m_fsmstatus = ReadRegister8(m_addr->TLU_TRIGGER_FSM_STATUS_ADDRESS);
+    m_fsmstatusvalues = ReadRegister24(m_addr->TLU_TRIGGER_FSM_STATUS_VALUE_ADDRESS_0);
     m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
 #if TLUDEBUG
     //std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
@@ -684,7 +686,7 @@ namespace tlu {
         m_lasttime = m_buffer[i].Timestamp();
       }
     }
-    out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
+    out << "Status:    FSM:" << m_fsmstatus << " ( " << std::hex << m_fsmstatusvalues << std::dec <<  ") Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
         << "Scalers:   ";
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       std::cout << m_scalers[i] << (i < (TLU_TRIGGER_INPUTS - 1) ? ", " : "\n");

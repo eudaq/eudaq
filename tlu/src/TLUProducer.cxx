@@ -123,7 +123,7 @@ public:
       m_tlu->SetOrMask(or_mask);
       m_tlu->SetStrobe(strobe_period , strobe_width);
       m_tlu->SetEnableDUTVeto( enable_dut_veto );
-      m_tlu->ResetTimestamp(); // Resetting timestamp also sets the strobe running ( if activated )
+      m_tlu->ResetTimestamp(); 
 
       // by dhaas
       sleep(2);

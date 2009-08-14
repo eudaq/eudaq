@@ -160,6 +160,7 @@ namespace tlu {
     bool m_inhibit;
 
     unsigned m_vetostatus, m_fsmstatus;
+    unsigned long m_fsmstatusvalues;
     unsigned m_triggernum;
     unsigned long long m_timestamp;
     std::vector<TLUEntry> m_buffer;
