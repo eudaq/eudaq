@@ -31,17 +31,17 @@ endif
 # Make
 MAKE := make
 # C compiler
-CC   := gcc34
+CC   := gcc
 # C++ compiler
-CXX  := g++34
+CXX  := g++
 # C dependencies
-CDEP := gcc34 -M -MM -MP
+CDEP := $(CC) -M -MM -MP
 # C++ dependencies
-CCDEP:= g++34 -M -MM -MP
+CCDEP:= $(CXX) -M -MM -MP
 # Linker
-LD   := g++34
+LD   := $(CXX)
 # Command for building dynamic libraries
-DLIB := g++34 -m32
+DLIB := $(CXX) -m32
 # Command for building static libraries
 SLIB := ar
 
