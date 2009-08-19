@@ -79,7 +79,7 @@ namespace eudaq {
 
     unsigned int frame_number[2];
 
-    for (size_t Frame = 0; Frame < 2; ++Frame ) {
+    for (unsigned Frame = 0; Frame < 2; ++Frame ) {
 
       size_t i = 0;
 
@@ -101,11 +101,12 @@ namespace eudaq {
         for (size_t Column = 0; Column < m_NumColumns; ++Column) {
           unsigned offset = (Column + 2 + (m_NumColumns + 2) * Row + Frame*nwords) * sizeof (short);
           unsigned short d = getlittleendian<unsigned short>(&data[offset]);
-          plane.m_x[i] = Column + m_InitialColumn ;
-          plane.m_y[i] = Row + m_InitialRow;
+          //plane.m_x[i] = Column + m_InitialColumn ;
+          //plane.m_y[i] = Row + m_InitialRow;
           // FORTIS data has a pedestal near 0xFFFF with excursions below this when charge is deposited.
           // The initial [0] refers to the frame number.
-          plane.m_pix[Frame][i] = 0xffff - d ;
+          //plane.m_pix[Frame][i] = 0xffff - d ;
+          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, 0xffff - d, Frame);
           ++i;
         }
       }

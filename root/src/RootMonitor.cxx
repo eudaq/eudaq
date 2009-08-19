@@ -1999,25 +1999,30 @@ private:
                  std::vector<double> & clusterpositiony /*, bool depfethit*/) {
     //eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     //const size_t totpixels = plane.m_xsize * plane.m_ysize; //, nx=264, ny=256;
-    const size_t hitpixels = plane.m_pix[0].size();
+    const size_t hitpixels = plane.HitPixels();
     //std::cout << "Filling " << e.LocalEventNumber() << " board" << boardnumber
     //          << " frames " << m_decoder->NumFrames(e) << " pixels " << npixels << std::endl;
-    std::vector<double> cds(hitpixels, 0.0), ones(hitpixels, 1.0);
+    std::vector<double> cds = plane.GetPixels<double>();
+    std::vector<double> ones(cds.size(), 1.0);
     double sumx2 = 0.0;
-    if (plane.m_pix.size() == 1) {
-      for (size_t i = 0; i < hitpixels; ++i) {
-        cds[i] = plane.m_pix[0][i];
-        sumx2 += plane.m_pix[0][i] * plane.m_pix[0][i];
-      }
-    } else {
-      for (size_t i = 0; i < hitpixels; ++i) {
-        cds[i] = plane.GetPixel(i);
-        sumx2 += plane.GetPixel(i);
+    // if (plane.m_pix.size() == 1) {
+    //   for (size_t i = 0; i < hitpixels; ++i) {
+    //     cds[i] = plane.GetPixel(i);
+    //     sumx2 += cds[i] * cds[i];
+    //   }
+    // } else {
+    //   for (size_t i = 0; i < hitpixels; ++i) {
+    //     cds[i] = plane.GetPixel(i);
+    //     sumx2 += cds[i] * cds[i];
+    //   }
+    if (plane.NeedsCDS()) {
+      for (size_t i = 0; i < cds.size(); ++i) {
+        sumx2 += cds[i] * cds[i];
       }
       //rms for noise determination
       //b.rmshisto->FillN(hitpixels, &cds[0], &ones[0]);
 
-      double rms = sqrt(sumx2/hitpixels);
+      double rms = sqrt(sumx2/cds.size());
       //double rms = b.rmshisto->GetRMS();
       b.m_histonoise->Fill(rms);
 
@@ -2042,41 +2047,31 @@ private:
       }
       //end of rms for noise determination
 
-      b.m_historaw2d->FillN(hitpixels, &plane.m_x[0], &plane.m_y[0], &plane.m_pix[1][0]);
+      b.m_historaw2d->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &plane.PixVector(1)[0]);
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
-      b.m_historawx->FillN(hitpixels, &plane.m_x[0], &plane.m_pix[1][0]);
+      b.m_historawx->FillN(hitpixels, &plane.XVector()[0], &plane.PixVector(1)[0]);
       b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents);
-      b.m_historawy->FillN(hitpixels, &plane.m_y[0], &plane.m_pix[1][0]);
+      b.m_historawy->FillN(hitpixels, &plane.YVector()[0], &plane.PixVector(1)[0]);
       b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
-      b.m_historawval->FillN(hitpixels, &plane.m_pix[1][0], &ones[0]);
+      b.m_historawval->FillN(hitpixels, &plane.PixVector(1)[0], &ones[0]);
       //b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
     }
     //b.m_histocdsval->FillN(hitpixels, &cds[0], &ones[0]);
 
-    for(size_t i = 0; i < plane.m_y.size();i++)
+    for(size_t i = 0; i < plane.YSize();i++)
       {
         double pedestal = 0.0;
         if(isdepfet[boardnumber])
-          pedestal = depfet_ped_matrix[plane.m_x[i]][plane.m_y[i]];
+          pedestal = depfet_ped_matrix[plane.GetX(i)][plane.GetY(i)];
         b.m_histocdsval->Fill((cds[i]-pedestal));
       }
 
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
-    const std::vector<double> & newx = plane.m_x; // TODO: shouldn't need to recalculate this for each event
-    //     for (int i = 0; i < cds.size(); ++i) {
-    //       int mat = a.m_x[i] / 66, col = (int)a.m_x[i] % 66;
-    //       if (col >= 2) {
-    //         newx[i] = mat*64 + col - 2;
-    //       } else {
-    //         newx[i] = -1;
-    //         cds[i] = 0;
-    //       }
-    //     }
     b.m_tempcds->Reset();
-    b.m_tempcds->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
+    b.m_tempcds->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
 
     b.m_tempcds2->Reset();
-    b.m_tempcds2->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
+    b.m_tempcds2->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
 
     if((totalnumevents % (int)conf.UPDATE_EVERY_N_EVENTS) == 0) {
       b.m_testhisto->Reset();
@@ -2085,16 +2080,16 @@ private:
       sprintf(tmpstring2, "Board %1.0f, event: %1.0i", (float)boardnumber, totalnumevents);
       tmpstring = tmpstring2;
       b.m_testhisto->SetTitle(tmpstring);
-      b.m_testhisto->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
+      b.m_testhisto->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
     }
 
     //b.m_histocds2d->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
-    for(size_t i = 0; i < plane.m_y.size();i++)
+    for(size_t i = 0; i < plane.HitPixels();i++)
       {
         double pedestal = 0.0;
         if(isdepfet[boardnumber])
-          pedestal = depfet_ped_matrix[plane.m_x[i]][plane.m_y[i]];
-        b.m_histocds2d->Fill(plane.m_x[i], plane.m_y[i],(cds[i]-pedestal));
+          pedestal = depfet_ped_matrix[plane.GetX(i)][plane.GetY(i)];
+        b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i),(cds[i]-pedestal));
       }
 
     b.m_clusters.clear();
@@ -2105,10 +2100,10 @@ private:
 
     if(mimosa26[boardnumber])
       {
-        for(size_t i =0; i< plane.m_y.size(); i++)
+        for(size_t i =0; i< plane.HitPixels(); i++)
           {
-            b.m_clusterx.push_back( plane.m_x[i]);
-            b.m_clustery.push_back( plane.m_y[i]);
+            b.m_clusterx.push_back( plane.GetX(i));
+            b.m_clustery.push_back( plane.GetY(i));
             
             b.m_clusters.push_back(1.0);
           }

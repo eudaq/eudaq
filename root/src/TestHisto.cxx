@@ -85,16 +85,16 @@ int main(int /*argc*/, char ** argv) {
         eudaq::StandardPlane pl = ev.GetPlane(board.Value());
         if (!booked) {
           booked = true;
-          unsigned w = pl.m_xsize, h = pl.m_ysize;
-          for (unsigned f = 0; f < pl.m_pix.size(); ++f) {
+          unsigned w = pl.XSize(), h = pl.YSize();
+          for (unsigned f = 0; f < pl.NumFrames(); ++f) {
             std::string namef = "fr" + to_string(f);
             std::string nameh = "hs" + to_string(f);
             std::string title = "Frame " + to_string(f);
             histos.push_back(counted_ptr<TH1D>(new TH1D(nameh.c_str(), title.c_str(), 512, 0, 4096)));
             frames.push_back(counted_ptr<TH2D>(new TH2D(namef.c_str(), title.c_str(), w, 0, w, h, 0, h)));
           }
-          if (pl.m_pix.size() > 1) {
-            unsigned f = pl.m_pix.size();
+          if (pl.NumFrames() > 1) {
+            unsigned f = pl.NumFrames();
             std::string namef = "fr" + to_string(f);
             std::string nameh = "hs" + to_string(f);
             std::string title = "CDS";
@@ -103,22 +103,22 @@ int main(int /*argc*/, char ** argv) {
           }
         }
 
-        for (size_t f = 0; f < pl.m_pix.size(); ++f) {
+        for (size_t f = 0; f < pl.NumFrames(); ++f) {
           TH1D & histo = *histos[f];
           TH2D & frame = *frames[f];
-          for (size_t i = 0; i < pl.m_x.size(); ++i) {
-            histo.Fill(pl.m_pix[f][i]);
-            frame.Fill(pl.m_x[i], pl.m_y[i], pl.m_pix[f][i]);
+          for (size_t i = 0; i < pl.HitPixels(); ++i) {
+            histo.Fill(pl.GetPixel(i, f));
+            frame.Fill(pl.GetX(i, f), pl.GetY(i, f), pl.GetPixel(i, f));
           }
-          if (pl.m_pix.size() > 1) { // calc cds
-            std::vector<short> cds(pl.m_x.size(), 0);
+          if (pl.NumFrames() > 1) { // calc cds
+            std::vector<short> cds = pl.GetPixels<short>();
             TH1D & histo = *histos.back();
             TH2D & frame = *frames.back();
-            for (size_t i = 0; i < pl.m_x.size(); ++i) {
-              double cds = pl.GetPixel(i);
-              if (cds >= thresh.Value()) {
-                histo.Fill(cds);
-                frame.Fill(pl.m_x[i], pl.m_y[i], cds);
+            for (size_t i = 0; i < cds.size(); ++i) {
+              double v = cds[i];
+              if (v >= thresh.Value()) {
+                histo.Fill(v);
+                frame.Fill(pl.GetX(i), pl.GetY(i), v);
               }
             }
           }

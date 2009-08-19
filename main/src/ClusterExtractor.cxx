@@ -114,15 +114,16 @@ int main(int /*argc*/, char ** argv) {
             StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
             for (size_t i = 0; i < sev.NumPlanes(); ++i) {
               eudaq::StandardPlane & brd = sev.GetPlane(i);
-              size_t npixels = brd.m_xsize * brd.m_ysize;
-              std::vector<short> cds(npixels, 0);
-              for (size_t i = 0; i < brd.m_x.size(); ++i) {
-                cds[i] = brd.GetPixel(i);
-              }
+              //size_t npixels = brd.HitPixels();
+              //std::vector<short> cds(npixels, 0);
+              //for (size_t i = 0; i < brd.m_x.size(); ++i) {
+              //  cds[i] = brd.GetPixel(i);
+              //}
+              std::vector<short> cds = brd.GetPixels<short>();
               std::vector<Seed> seeds;
               size_t i = 0;
-              for (unsigned y = 0; y < brd.m_ysize; ++y) {
-                for (unsigned x = 0; x < brd.m_xsize; ++x) {
+              for (unsigned y = 0; y < brd.YSize(); ++y) {
+                for (unsigned x = 0; x < brd.XSize(); ++x) {
                   if (cds[i] > noise.Value() * thresh_seed.Value()) {
                     seeds.push_back(Seed(x, y, cds[i]));
                   }
@@ -136,11 +137,11 @@ int main(int /*argc*/, char ** argv) {
                 long long charge = 0, sumx = 0, sumy = 0;
                 for (int dy = -dclust; dy <= dclust; ++dy) {
                   int y = seeds[i].y + dy;
-                  if (y < 0 || y >= (int)brd.m_ysize) continue;
+                  if (y < 0 || y >= (int)brd.YSize()) continue;
                   for (int dx = -dclust; dx <= dclust; ++dx) {
                     int x = seeds[i].x + dx;
-                    if (x < 0 || x >= (int)brd.m_xsize) continue;
-                    size_t idx = brd.m_xsize * y + x;
+                    if (x < 0 || x >= (int)brd.XSize()) continue;
+                    size_t idx = brd.XSize() * y + x;
                     if (cds[idx] == BADPIX) {
                       badseed = true;
                     } else {
@@ -159,17 +160,17 @@ int main(int /*argc*/, char ** argv) {
                   clusters.push_back(Cluster(cx, cy, charge));
                   for (int dy = -dclust; dy <= dclust; ++dy) {
                     int y = seeds[i].y + dy;
-                    if (y < 0 || y >= (int)brd.m_ysize) continue;
+                    if (y < 0 || y >= (int)brd.YSize()) continue;
                     for (int dx = -dclust; dx <= dclust; ++dx) {
                       int x = seeds[i].x + dx;
-                      if (x < 0 || x >= (int)brd.m_xsize) continue;
-                      size_t idx = brd.m_xsize * y + x;
+                      if (x < 0 || x >= (int)brd.XSize()) continue;
+                      size_t idx = brd.XSize() * y + x;
                       cds[idx] = BADPIX;
                     }
                   }
                 }
               }
-              track[brd.m_id] = clusters;
+              track[brd.ID()] = clusters;
               boardnum++;
             }
 

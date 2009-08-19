@@ -139,10 +139,10 @@ namespace eudaq {
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
       const BoardInfo & info = GetInfo(id);
       StandardPlane plane(id, "EUDRB", info.Sensor().name);
-      plane.m_tluevent = (data[data.size()-7] << 8) | data[data.size()-6];
-      plane.m_xsize = info.Sensor().width;
-      plane.m_ysize = info.Sensor().height;
-      plane.m_pivotpixel = ((data[5] & 0x3) << 16) | (data[6] << 8) | data[7];
+      plane.SetTLUEvent((data[data.size()-7] << 8) | data[data.size()-6]);
+      plane.SetXSize(info.Sensor().width);
+      plane.SetYSize(info.Sensor().height);
+      plane.SetPivotPixel(((data[5] & 0x3) << 16) | (data[6] << 8) | data[7]);
       if (info.m_mode == BoardInfo::MODE_ZS2) {
         ConvertZS2(plane, data, info);
       } else if (info.m_mode == BoardInfo::MODE_ZS) {
@@ -150,7 +150,7 @@ namespace eudaq {
       } else {
         ConvertRaw(plane, data, info);
       }
-      plane.m_flags |= StandardPlane::FLAG_NEGATIVE;
+      plane.SetFlags(StandardPlane::FLAG_NEGATIVE);
       return plane;
     }
     static void ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
@@ -303,7 +303,7 @@ namespace eudaq {
         vec.push_back(word>>16 & 0xffff);
       }
       unsigned npixels = 0;
-      plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0);
+      plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
       for (size_t i = 0; i < vec.size(); ++i) {
       //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
         if (i == vec.size() - 1) break;
@@ -318,7 +318,8 @@ namespace eudaq {
           if (dbg) std::cout << (s ? "," : " ") << column;
           if (dbg) if (v&3 > 0) std::cout << "-" << (column + num);
           for (unsigned j = 0; j < num+1; ++j) {
-            plane.PushPixel(column+j, row, 1);
+            bool pivot = false;
+            plane.PushPixel(column+j, row, 1, pivot, frame-1);
           }
           npixels += num + 1;
         }
@@ -346,7 +347,7 @@ namespace eudaq {
     bool padding = (alldata[alldata.size()-trailersize-4] == 0);
     unsigned npixels = (alldata.size() - headersize - trailersize) / 4 - padding;
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, npixels);
-    plane.m_mat.resize(plane.m_pix[0].size());
+    //plane.m_mat.resize(plane.m_pix[0].size());
     const unsigned char * data = &alldata[headersize];
     for (unsigned i = 0; i < npixels; ++i) {
       int mat = 3 - (data[4*i] >> 6), col = 0, row = 0;
@@ -359,10 +360,12 @@ namespace eudaq {
       }
       unsigned x, y;
       info.Sensor().mapfunc(x, y, col, row, mat, info.Sensor().cols, info.Sensor().rows);
-      plane.m_x[i] = x;
-      plane.m_y[i] = y;
-      plane.m_mat[i] = mat;
-      plane.m_pix[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
+      unsigned pix = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
+      plane.SetPixel(i, x, y, pix);
+      //plane.m_x[i] = x;
+      //plane.m_y[i] = y;
+      //plane.m_mat[i] = mat;
+      //plane.m_pix[0][i] = ((data[4*i+2] & 0x0F) << 8) | (data[4*i+3]);
     }
   }
 
@@ -384,9 +387,9 @@ namespace eudaq {
                   + to_string(possible1) + " or " + to_string(possible2));
     }
     //unsigned npixels = info.Sensor().cols * info.Sensor().rows * info.Sensor().mats;
-    plane.SetSizeRaw(info.Sensor().width, info.Sensor().height, info.Frames(), true);
-    plane.m_flags |= StandardPlane::FLAG_NEEDCDS;
-    plane.m_mat.resize(plane.m_pix[0].size());
+    plane.SetSizeRaw(info.Sensor().width, info.Sensor().height, info.Frames(), StandardPlane::FLAG_WITHPIVOT);
+    plane.SetFlags(StandardPlane::FLAG_NEEDCDS);
+    //plane.m_mat.resize(plane.m_pix[0].size());
     const unsigned char * ptr = &data[headersize];
     for (unsigned row = 0; row < info.Sensor().rows; ++row) {
       for (unsigned col = 0; col < info.Sensor().cols; ++col) {
@@ -396,20 +399,22 @@ namespace eudaq {
             unsigned x = 0, y = 0;
             info.Sensor().mapfunc(x, y, col, row, mat, info.Sensor().cols, info.Sensor().rows);
             size_t i = x + y*info.Sensor().width;
-            if (frame == 0) {
-              plane.m_x[i] = x;
-              plane.m_y[i] = y;
-              plane.m_mat[i] = mat;
-              if (info.m_version < 2) {
-                plane.m_pivot[i] = (row << 7 | col) >= plane.m_pivotpixel;
-              } else {
-                plane.m_pivot[i] = (row << 9 | col) >= plane.m_pivotpixel;
-              }
-            }
+            // if (frame == 0) {
+            //   plane.m_x[i] = x;
+            //   plane.m_y[i] = y;
+            //   plane.m_mat[i] = mat;
+            //   if (info.m_version < 2) {
+            //     plane.m_pivot[i] = (row << 7 | col) >= plane.m_pivotpixel;
+            //   } else {
+            //     plane.m_pivot[i] = (row << 9 | col) >= plane.m_pivotpixel;
+            //   }
+            // }
             short pix = *ptr++ << 8;
             pix |= *ptr++;
             pix &= 0xfff;
-            plane.m_pix[frame][i] = pix;
+            //plane.m_pix[frame][i] = pix;
+            bool pivot = (info.m_version < 2) ? (row << 7 | col) >= plane.PivotPixel() : (row << 9 | col) >= plane.PivotPixel();
+            plane.SetPixel(i, x, y, pix, pivot, frame);
           }
         }
       }
