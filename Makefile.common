@@ -31,17 +31,17 @@ endif
 # Make
 MAKE := make
 # C compiler
-CC   := gcc
+CC   := gcc34
 # C++ compiler
-CXX  := g++
+CXX  := g++34
 # C dependencies
-CDEP := gcc -M -MM -MP
+CDEP := gcc34 -M -MM -MP
 # C++ dependencies
-CCDEP:= g++ -M -MM -MP
+CCDEP:= g++34 -M -MM -MP
 # Linker
-LD   := g++
+LD   := g++34
 # Command for building dynamic libraries
-DLIB := g++
+DLIB := g++34 -m32
 # Command for building static libraries
 SLIB := ar
 
@@ -85,7 +85,7 @@ OPTIMIZE := 2
 MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBUG=$(NODEBUG) MOREDEBUG=$(MOREDEBUG)
 
 # Common flags for C/C++/dependencies
-CPPFLAGS = -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
+CPPFLAGS = -m32 -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
 
 # Except for Cygwin we want ANSI handling of headers
 ifneq ($(PLATFORM),CYGWIN) 
@@ -110,7 +110,7 @@ CXXFLAGS = $(CFLAGS)
 
 # Linker flags
 #LDFLAGS := -static -all_load
-LDFLAGS := 
+LDFLAGS := -m32
 SFLAGS  := ru
 ifeq ($(PLATFORM),MACOSX)
   DFLAGS  = -dynamiclib
