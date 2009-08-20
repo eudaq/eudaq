@@ -63,7 +63,7 @@ namespace eudaq {
               }
               int iy = readout_gate * 2 + (icase == 1 || icase == 3 || icase == 4 || icase == 6 ? odderon : 1 - odderon);
               int j = gate * plane.YSize() / 2 + col*4 + icase;
-              
+
               plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
             } // icase
           } // col
@@ -80,7 +80,7 @@ namespace eudaq {
       return plane;
     }
 
- protected:
+  protected:
     static size_t NumPlanes(const Event & event) {
       if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
         return ev->NumBlocks();
@@ -159,22 +159,16 @@ namespace eudaq {
 //    runHeader.setDAQHWName(EUTELESCOPE::DEPFET);
     //   printf("DEPFETConverterBase::ConvertLCIOHeader \n");
 
-    unsigned numplanes = bore.GetTag("BOARDS", 0);
-    runHeader.setNoOfDetector(numplanes);
-    std::vector<int> xMin(numplanes, 0), xMax(numplanes, 63), yMin(numplanes, 0), yMax(numplanes, 255);
-    for (unsigned i = 0; i < numplanes; ++i) {
-      const int id = bore.GetTag("ID" + to_string(i), i);
-//      const BoardInfo & info = GetInfo(id);
-      xMax[i] = 64;
-      yMax[i] = 255;
-    }
-    runHeader.setMinX(xMin);
-    runHeader.setMaxX(xMax);
-    runHeader.setMinY(yMin);
-    runHeader.setMaxY(yMax);
+    // unsigned numplanes = bore.GetTag("BOARDS", 0);
+    // runHeader.setNoOfDetector(numplanes);
+    // std::vector<int> xMin(numplanes, 0), xMax(numplanes, 63), yMin(numplanes, 0), yMax(numplanes, 255);
+    // runHeader.setMinX(xMin);
+    // runHeader.setMaxX(xMax);
+    // runHeader.setMinY(yMin);
+    // runHeader.setMaxY(yMax);
   }
 
- bool DEPFETConverterBase::ConvertLCIO(lcio::LCEvent & result, const Event & source) const {
+  bool DEPFETConverterBase::ConvertLCIO(lcio::LCEvent & result, const Event & source) const {
     TrackerRawDataImpl *rawMatrix;
 
     if (source.IsBORE()) {
@@ -191,7 +185,7 @@ namespace eudaq {
 
     // set the proper cell encoder
     CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
-      
+
 
     // a description of the setup
     std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
@@ -200,15 +194,15 @@ namespace eudaq {
 
       StandardPlane plane = ConvertPlane(GetPlane(source, iPlane), GetID(source, iPlane));
       //     printf("DEPFETConverterBase::ConvertLCIO numplanes=%d  \n", numplanes);
-        // The current detector is ...
+      // The current detector is ...
       eutelescope::EUTelPixelDetector * currentDetector = 0x0;
       //   printf("DEPFETConverterBase::ConvertLCIO  1 %d  \n", plane.m_sensor);
       //    if ( plane.m_sensor == "DEPFET" ) {
       std::string  mode = "RAW2";
-   
-     currentDetector = new eutelescope::EUTelDEPFETDetector;
-    rawMatrix = new TrackerRawDataImpl;
-   
+
+      currentDetector = new eutelescope::EUTelDEPFETDetector;
+      rawMatrix = new TrackerRawDataImpl;
+
       currentDetector->setMode( mode );
       // storage of RAW data is done here according to the mode
       //printf("XMin =% d, XMax=%d, YMin=%d YMax=%d \n",currentDetector->getXMin(),currentDetector->getXMax(),currentDetector->getYMin(),currentDetector->getYMax());
@@ -217,41 +211,39 @@ namespace eudaq {
       rawDataEncoder["yMin"]     = currentDetector->getYMin();
       rawDataEncoder["yMax"]     = currentDetector->getYMax();
       rawDataEncoder["sensorID"] = 6;
-      rawDataEncoder.setCellID (rawMatrix);
+      rawDataEncoder.setCellID(rawMatrix);
 
- 
-      //     std::vector<short> adcVec = plane.GetPixels<short>();
+      size_t nPixel = plane.m_x.size();
+      // printf(" plane.m_x.size()=%d \n",plane.m_x.size());
+      for (int yPixel = 0; yPixel <= currentDetector->getYMax(); yPixel++) {
+        for (int xPixel = 0; xPixel <= currentDetector->getXMax(); xPixel++) {
+          //   printf("xPixel =%d yPixel=%d DATA=%d \n",xPixel, yPixel, (size_t)plane.m_pix[0][ xPixel*currentDetector->getYMax() + yPixel] ); 
+          rawMatrix->adcValues().push_back(plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
+        }
+      }
+      rawDataCollection->push_back(rawMatrix);
 
-       
-    size_t nPixel = plane.m_x.size();
-    // printf(" plane.m_x.size()=%d \n",plane.m_x.size());
-	for ( size_t iPixel = 0; iPixel < nPixel; ++iPixel ) {
-	    //printf("QQQ 0  %d %d \n",iPixel,(size_t)plane.m_pix[0][ iPixel ]);
-	    rawMatrix->adcValues().push_back( (size_t)plane.m_pix[0][ iPixel ] ) ;
-	}
-       rawDataCollection->push_back(rawMatrix);
-    
-       if ( result.getEventNumber() == 0 ) {
-           setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
-       }
- 
-       // add the collections to the event only if not empty!
-       if ( rawDataCollection->size() != 0 ) {
-	   result.addCollection( rawDataCollection.release(), "rawdata_dep" );
-       }
-       // this is the right place to prepare the TrackerRawData
-        // object
+      if ( result.getEventNumber() == 0 ) {
+        setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
+      }
+
+      // add the collections to the event only if not empty!
+      if ( rawDataCollection->size() != 0 ) {
+        result.addCollection( rawDataCollection.release(), "rawdata_dep" );
+      }
+      // this is the right place to prepare the TrackerRawData
+      // object
 
     }
 
- 
+
     if ( result.getEventNumber() == 0 ) {
 
       // do this only in the first event
 
       LCCollectionVec * depfetSetupCollection = NULL;
       bool depfetSetupExists = false;
-      try { 
+      try {
         depfetSetupCollection = static_cast< LCCollectionVec* > ( result.getCollection( "depfetSetup" ) ) ;
         depfetSetupExists = true;
       } catch (...) {
@@ -259,24 +251,24 @@ namespace eudaq {
       }
 
       for ( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane ) {
- 
-       depfetSetupCollection->push_back( setupDescription.at( iPlane ) );
- 
-     }
+
+        depfetSetupCollection->push_back( setupDescription.at( iPlane ) );
+
+      }
 
       if (!depfetSetupExists) {
- 
-       result.addCollection( depfetSetupCollection, "depfetSetup" );
- 
+
+        result.addCollection( depfetSetupCollection, "depfetSetup" );
+
       }
     }
 
 
     //     printf("DEPFETConverterBase::ConvertLCIO return true \n");
-   return true;
- }
+    return true;
+  }
 
- #endif
+#endif
 
   /********************************************/
 
