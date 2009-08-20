@@ -201,7 +201,7 @@ public:
 
 class ConfigurationClass : public TQObject { //a class holding some configuration informations
 public:
-  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), DEPFET_SEED_THRESHOLD(16.0), DEPFET_NEIGHBOUR_THRESHOLD(4.0), RESETONNEWRUN(true)  //some default values for the configuration
+  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), DEPFET_SEED_THRESHOLD(16.0), DEPFET_NEIGHBOUR_THRESHOLD(4.0), FORTIS_SEED_THRESHOLD(16.0), FORTIS_NEIGHBOUR_THRESHOLD(4.0), RESETONNEWRUN(true)  //some default values for the configuration
     {
     }
 
@@ -216,6 +216,9 @@ public:
   double CLUSTER_THRESHOLD;
   double DEPFET_SEED_THRESHOLD;
   double DEPFET_NEIGHBOUR_THRESHOLD;
+  double FORTIS_SEED_THRESHOLD;
+  double FORTIS_NEIGHBOUR_THRESHOLD;
+  
   bool RESETONNEWRUN;
 };
 
@@ -392,7 +395,16 @@ public:
                     mimosa26.push_back(false);
                   }
 
-
+                if(tmpstring == "DET_FORTIS")
+                  {
+                    std::cout << "fortis sensor found in the config file." << std::endl;
+                    isfortis.push_back(true);
+                  }
+                else
+                  {
+                    isfortis.push_back(false);
+                  }
+ 
 
               if(tmpstring == "DET_DEPFET")
                 {
@@ -407,7 +419,7 @@ public:
 
 
               //find the sensor type and add the number of pixels to the array
-                if(tmpstring == "DET_MIMOSTAR2")
+              if(tmpstring == "DET_MIMOSTAR2")
                   {
                     num_x_pixels.push_back(132);
                     num_y_pixels.push_back(128);
@@ -436,6 +448,11 @@ public:
                   {
                     num_x_pixels.push_back(64);
                     num_y_pixels.push_back(256);
+                  }
+                else if(tmpstring == "DET_FORTIS")
+                  {
+                    num_x_pixels.push_back(64);
+                    num_y_pixels.push_back(64);
                   }
               }
             delete arr;
@@ -637,6 +654,24 @@ public:
       m_conf_group_frame->AddFrame(m_conf_depfet_seedneighbourthreshold.get(), m_hinttop.get());
 
       //
+ //
+      fortis_seedthresholdlabel = new TGLabel(m_conf_group_frame.get(),"FORTIS Seed Threshold:");
+      m_conf_group_frame->AddFrame(fortis_seedthresholdlabel.get(), m_hinttop.get());
+
+      m_conf_fortis_seedthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.FORTIS_SEED_THRESHOLD, 20);
+      m_conf_fortis_seedthreshold->Associate(this);
+      m_conf_group_frame->AddFrame(m_conf_fortis_seedthreshold.get(), m_hinttop.get());
+
+      fortis_seedneighbourthresholdlabel = new TGLabel(m_conf_group_frame.get(),"FORTIS Seed Neighbour Threshold:");
+      m_conf_group_frame->AddFrame(fortis_seedneighbourthresholdlabel.get(), m_hinttop.get());
+
+      m_conf_fortis_seedneighbourthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.FORTIS_NEIGHBOUR_THRESHOLD, 8);
+      m_conf_fortis_seedneighbourthreshold->Associate(this);
+      m_conf_group_frame->AddFrame(m_conf_fortis_seedneighbourthreshold.get(), m_hinttop.get());
+
+      //
+
+
 
 
       clusterthresholdlabel = new TGLabel(m_conf_group_frame.get(),"Cluster Threshold:");
@@ -1486,6 +1521,17 @@ public:
         conf.DEPFET_NEIGHBOUR_THRESHOLD = depfet_seedneighbourthresh;
       //end of depfet
 
+      //fortis
+      double fortis_seedthresh = (double) m_conf_fortis_seedthreshold->GetNumber();
+      if(fortis_seedthresh > 0)
+        conf.FORTIS_SEED_THRESHOLD = fortis_seedthresh;
+      
+      double fortis_seedneighbourthresh = (double) m_conf_fortis_seedneighbourthreshold->GetNumber();
+      if(fortis_seedneighbourthresh > 0)
+        conf.FORTIS_NEIGHBOUR_THRESHOLD = fortis_seedneighbourthresh;
+      //end of fortis
+      
+
       double seedthresh = (double) m_conf_seedthreshold->GetNumber();
       if(seedthresh > 0)
         conf.SEED_THRESHOLD = seedthresh;
@@ -1973,8 +2019,12 @@ private:
     b.m_histoclusterx   = new TH1DNew(make_name("ClustXProfile", board).c_str(), "Cluster X Profile", num_x_pixels, 0, num_x_pixels);
     b.m_hitmap_depfet_corr = new TH2DNew(make_name("EUDET DEPFET HITMAP", board).c_str(), "EUDET DEPFET HITMAP",   264, 0, 264, 256, 0, 256);
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", num_y_pixels, 0, num_y_pixels);
-    b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
-    if (num_x_pixels == 64) {
+    if(isfortis[board])
+      b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        65536 , 0, 65536 );
+    else
+      b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);  
+    
+    if (isdepfet[board]) {
       // Horrible hack for DEPFET
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        4050, -50, 4000);
     } else {
@@ -2068,8 +2118,15 @@ private:
 
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
     b.m_tempcds->Reset();
-    b.m_tempcds->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
-
+    if(isfortis[boardnumber]) {
+      const double pedestal = 59321.0;
+      for(size_t i = 0; i < plane.m_y.size(); ++i) {
+        b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), plane.GetPixel(i, 1) - pedestal);
+        b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), plane.GetPixel(i, 1) - pedestal);
+      }
+    } else {
+      b.m_tempcds->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
+    }
     b.m_tempcds2->Reset();
     b.m_tempcds2->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
 
@@ -2089,7 +2146,13 @@ private:
         double pedestal = 0.0;
         if(isdepfet[boardnumber])
           pedestal = depfet_ped_matrix[plane.GetX(i)][plane.GetY(i)];
-        b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i),(cds[i]-pedestal));
+        else if (isfortis[boardnumber])
+          pedestal = 59321.0;
+
+        if(isfortis[boardnumber])
+          b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), plane.GetPixel(i, 1) - pedestal);
+        else
+          b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), cds[i] - pedestal);
       }
 
     b.m_clusters.clear();
@@ -2119,8 +2182,9 @@ private:
       }
     else
       {
+      
 
-    //std::cout << "DEBUG: FillBoard " << m_histoevents << std::endl;
+        //std::cout << "DEBUG: FillBoard " << m_histoevents << std::endl;
     if (m_histoevents >= 20) {
       if (m_histoevents < 500) {
         //std::cout << "DEBUG: filling noise" << std::endl;
@@ -2142,6 +2206,10 @@ private:
         {
           seed_thresh = conf.DEPFET_SEED_THRESHOLD /* sigma */ , cluster_thresh = 0.0 /* sigma */, seedneighbour_thresh = conf.DEPFET_NEIGHBOUR_THRESHOLD; 
         }
+      if(isfortis[boardnumber])
+        {
+          seed_thresh = conf.FORTIS_SEED_THRESHOLD /* sigma */ , cluster_thresh = 0.0 /* sigma */, seedneighbour_thresh = conf.FORTIS_NEIGHBOUR_THRESHOLD; 
+        }
       for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
         for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
           double s = b.m_tempcds->GetBinContent(ix, iy);
@@ -2153,6 +2221,11 @@ private:
             {          
               pedestal = depfet_ped_matrix[ix-1][iy-1];
               noise =  depfet_noise_matrix[ix-1][iy-1];
+            }
+          if(isfortis[boardnumber])
+            {          
+              pedestal = 59321.0;
+              noise =  1.0;
             }
           if ((s-pedestal) > seed_thresh*noise) {
             seeds.push_back(Seed(ix, iy, s));
@@ -2180,8 +2253,12 @@ private:
                 try{
                   if((seeds[i].x+dx) >= 0 && (seeds[i].y+dy) >= 0 && (seeds[i].x+dx) < b.m_tempcds->GetXaxis()->GetLast()
                      && (seeds[i].y+dy) < b.m_tempcds->GetYaxis()->GetLast())
-                    if(isdepfet[boardnumber])
-                      pedestal = depfet_ped_matrix.at(seeds[i].x+dx).at(seeds[i].y+dy);
+                    {
+                      if(isdepfet[boardnumber])
+                        pedestal = depfet_ped_matrix.at(seeds[i].x+dx).at(seeds[i].y+dy);
+                      if(isfortis[boardnumber])
+                        pedestal = 59321.0;
+                    }
                 }
                 catch (...) 
                   {
@@ -2197,8 +2274,14 @@ private:
                         
                         noise +=  depfet_noise_matrix[seeds[i].x+dx-1][seeds[i].y+dy-1] * depfet_noise_matrix[seeds[i].x+dx-1][seeds[i].y+dy-1];
                       }
+                    if(isfortis[boardnumber])
+                      {          
+                        
+                        noise += 1.0;
+                      }
                     else
-                    noise += DEFAULT_NOISE*DEFAULT_NOISE;
+                      noise += DEFAULT_NOISE*DEFAULT_NOISE;
+                    
                     cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
                     b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);
                   }
@@ -2366,6 +2449,8 @@ private:
   counted_ptr<TGLabel> seedneighbourthresholdlabel;
   counted_ptr<TGLabel> depfet_seedthresholdlabel;
   counted_ptr<TGLabel> depfet_seedneighbourthresholdlabel;
+  counted_ptr<TGLabel> fortis_seedthresholdlabel;
+  counted_ptr<TGLabel> fortis_seedneighbourthresholdlabel;
 
 
   counted_ptr<TGLabel> clusterthresholdlabel;
@@ -2377,6 +2462,8 @@ private:
   counted_ptr<TGNumberEntry> m_conf_seedneighbourthreshold;
   counted_ptr<TGNumberEntry> m_conf_depfet_seedthreshold;
   counted_ptr<TGNumberEntry> m_conf_depfet_seedneighbourthreshold;
+  counted_ptr<TGNumberEntry> m_conf_fortis_seedthreshold;
+  counted_ptr<TGNumberEntry> m_conf_fortis_seedneighbourthreshold;
 
   counted_ptr<TGNumberEntry> m_conf_clusterthreshold;
 
@@ -2451,6 +2538,8 @@ private:
   std::vector< std::vector<double> > depfet_noise_matrix;
   
   std::vector<bool> isdepfet;
+  std::vector<bool> isfortis;
+  
   counted_ptr<TH1DNew> m_depfet_adc;
   counted_ptr<TH2DNew> m_depfet_map;
 
