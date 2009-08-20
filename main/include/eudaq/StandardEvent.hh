@@ -33,16 +33,22 @@ namespace eudaq {
     void PushPixel(unsigned x, unsigned y, unsigned pix, bool pivot = false, unsigned frame = 0);
     void PushPixel(unsigned x, unsigned y, unsigned pix, unsigned frame) { PushPixel(x, y, pix, false, frame); }
 
-    double GetPixel(unsigned index, unsigned frame = 0) const;
-    double GetX(unsigned index, unsigned frame = 0) const;
-    double GetY(unsigned index, unsigned frame = 0) const;
+    double GetPixel(unsigned index, unsigned frame) const;
+    double GetPixel(unsigned index) const;
+    double GetX(unsigned index, unsigned frame) const;
+    double GetX(unsigned index) const;
+    double GetY(unsigned index, unsigned frame) const;
+    double GetY(unsigned index) const;
     bool GetPivot(unsigned index, unsigned frame = 0) const;
     // defined for short, int, double
     template <typename T>
     std::vector<T> GetPixels() const;
-    const std::vector<coord_t> & XVector(unsigned plane = 0) const { return GetPlane(m_x, plane); }
-    const std::vector<coord_t> & YVector(unsigned plane = 0) const { return GetPlane(m_y, plane); }
-    const std::vector<pixel_t> & PixVector(unsigned plane = 0) const { return GetPlane(m_pix, plane); }
+    const std::vector<coord_t> & XVector(unsigned frame) const { return GetFrame(m_x, frame); }
+    const std::vector<coord_t> & XVector() const { SetupResult(); return *m_result_x; }
+    const std::vector<coord_t> & YVector(unsigned frame) const { return GetFrame(m_y, frame); }
+    const std::vector<coord_t> & YVector() const { SetupResult(); return *m_result_y; }
+    const std::vector<pixel_t> & PixVector(unsigned frame) const { return GetFrame(m_pix, frame); }
+    const std::vector<pixel_t> & PixVector() const { SetupResult(); return *m_result_pix; }
 
     void SetXSize(unsigned x) { m_xsize = x; }
     void SetYSize(unsigned y) { m_ysize = y; }
@@ -55,7 +61,7 @@ namespace eudaq {
     unsigned YSize() const { return m_ysize; }
     unsigned NumFrames() const { return m_pix.size(); }
     unsigned TotalPixels() const { return m_xsize * m_ysize; }
-    unsigned HitPixels() const { return m_pix[0].size(); } // Doesn't properly handle ZS2 mode
+    unsigned HitPixels() const { SetupResult(); return m_result_pix->size(); }
     unsigned TLUEvent() const { return m_tluevent; }
     unsigned PivotPixel() const { return m_pivotpixel; }
 
@@ -64,10 +70,9 @@ namespace eudaq {
     int  Polarity() const { return m_flags & FLAG_NEGATIVE ? -1 : 1; }
 
     void Print(std::ostream &) const;
-  private: // left public for the moment for compatibility
-    const std::vector<pixel_t> & GetPlane(const std::vector<std::vector<pixel_t> > & v, unsigned p) const {
-      if (v.size() == 1) return v[0];
-      return v[p];
+  private:
+    const std::vector<pixel_t> & GetFrame(const std::vector<std::vector<pixel_t> > & v, unsigned f) const {
+      return v.at(f);
     }
     std::string m_type, m_sensor;
     unsigned m_id, m_tluevent;
@@ -77,6 +82,13 @@ namespace eudaq {
     std::vector<std::vector<coord_t> > m_x, m_y;
     std::vector<std::vector<bool> > m_pivot;
     std::vector<unsigned> m_mat;
+
+    void SetupResult() const;
+    mutable const std::vector<pixel_t> * m_result_pix;
+    mutable const std::vector<coord_t> * m_result_x, * m_result_y;
+    
+    mutable std::vector<pixel_t> m_temp_pix;
+    mutable std::vector<coord_t> m_temp_x, m_temp_y;
   };
 
   class StandardEvent : public Event {

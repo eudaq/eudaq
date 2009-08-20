@@ -150,7 +150,6 @@ namespace eudaq {
       } else {
         ConvertRaw(plane, data, info);
       }
-      plane.SetFlags(StandardPlane::FLAG_NEGATIVE);
       return plane;
     }
     static void ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
@@ -286,6 +285,7 @@ namespace eudaq {
     if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(word & 0x3ffff, 0) << std::endl;
     unsigned wordremain = wordcount-12;
 
+    plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
     for (int frame = 1; frame <= 2; ++frame) {
       word = GET(offset += 2);
       if (dbg) std::cout << "M26FrameCounter_" << frame << " = " << hexdec(word, 0) << std::endl;
@@ -303,7 +303,6 @@ namespace eudaq {
         vec.push_back(word>>16 & 0xffff);
       }
       unsigned npixels = 0;
-      plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
       for (size_t i = 0; i < vec.size(); ++i) {
       //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
         if (i == vec.size() - 1) break;
@@ -318,7 +317,8 @@ namespace eudaq {
           if (dbg) std::cout << (s ? "," : " ") << column;
           if (dbg) if (v&3 > 0) std::cout << "-" << (column + num);
           for (unsigned j = 0; j < num+1; ++j) {
-            bool pivot = false;
+            unsigned pixeladdress = (row*plane.XSize() + column + j) / 4;
+            bool pivot = pixeladdress >= plane.PivotPixel();
             plane.PushPixel(column+j, row, 1, pivot, frame-1);
           }
           npixels += num + 1;
@@ -328,6 +328,13 @@ namespace eudaq {
       if (dbg) std::cout << "Total pixels = " << npixels << std::endl;
       ++offset;
     }
+//     if (dbg) {
+//       std::cout << "Plane " << plane.m_pix.size();
+//       for (size_t i = 0; i < plane.m_pix.size(); ++i) {
+//         std::cout << ", " << plane.m_pix[i].size();
+//       }
+//       std::cout << std::endl;
+//     }
     word = GET(++offset);
     if (dbg) std::cout << "TLUEventNumber = " << hexdec(word>>8 & 0xffff, 0) << std::endl;
     if (dbg) std::cout << "NumFramesAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
@@ -387,8 +394,7 @@ namespace eudaq {
                   + to_string(possible1) + " or " + to_string(possible2));
     }
     //unsigned npixels = info.Sensor().cols * info.Sensor().rows * info.Sensor().mats;
-    plane.SetSizeRaw(info.Sensor().width, info.Sensor().height, info.Frames(), StandardPlane::FLAG_WITHPIVOT);
-    plane.SetFlags(StandardPlane::FLAG_NEEDCDS);
+    plane.SetSizeRaw(info.Sensor().width, info.Sensor().height, info.Frames(), StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_NEEDCDS | StandardPlane::FLAG_NEGATIVE);
     //plane.m_mat.resize(plane.m_pix[0].size());
     const unsigned char * ptr = &data[headersize];
     for (unsigned row = 0; row < info.Sensor().rows; ++row) {

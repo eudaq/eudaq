@@ -6,10 +6,11 @@ namespace eudaq {
   EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
 
   StandardPlane::StandardPlane(unsigned id, const std::string & type, const std::string & sensor)
-    : m_type(type), m_sensor(sensor), m_id(id), m_tluevent(0), m_xsize(0), m_ysize(0), m_flags(0), m_pivotpixel(0)
+    : m_type(type), m_sensor(sensor), m_id(id), m_tluevent(0), m_xsize(0), m_ysize(0),
+      m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0)
   {}
 
-  StandardPlane::StandardPlane(Deserializer & ds) {
+  StandardPlane::StandardPlane(Deserializer & ds) : m_result_pix(0), m_result_x(0), m_result_y(0) {
     ds.read(m_type);
     ds.read(m_sensor);
     ds.read(m_id);
@@ -53,13 +54,14 @@ namespace eudaq {
   }
 
   void StandardPlane::SetSizeRaw(unsigned w, unsigned h, unsigned frames, int flags) {
-    m_flags |= flags;
+    m_flags = flags;
     SetSizeZS(w, h, w*h, frames, flags);
     m_flags &= ~FLAG_ZS;
   }
 
   void StandardPlane::SetSizeZS(unsigned w, unsigned h, unsigned npix, unsigned frames, int flags) {
-    m_flags |= flags | FLAG_ZS;
+    m_flags = flags | FLAG_ZS;
+    //std::cout << "DBG flags " << hexdec(m_flags) << std::endl;
     m_xsize = w;
     m_ysize = h;
     m_pix.resize(frames);
@@ -82,6 +84,7 @@ namespace eudaq {
     m_y[frame].push_back(y);
     m_pix[frame].push_back(p);
     if (m_pivot.size()) m_pivot[frame].push_back(pivot);
+    //std::cout << "DBG: " << frame << ", " << x << ", " << y << ", " << p << ";" << m_pix[0].size() << std::endl;
   }
 
   void StandardPlane::SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot, unsigned frame) {
@@ -95,6 +98,147 @@ namespace eudaq {
   void StandardPlane::SetFlags(StandardPlane::FLAGS flags) {
     m_flags |= flags;
   }
+
+  double StandardPlane::GetPixel(unsigned index, unsigned frame) const {
+    return m_pix.at(frame).at(index);
+  }
+  double StandardPlane::GetPixel(unsigned index) const {
+    SetupResult();
+    return m_result_pix->at(index);
+  }
+  double StandardPlane::GetX(unsigned index, unsigned frame) const {
+    if (!(m_flags & FLAG_DIFFCOORDS)) frame = 0;
+    return m_x.at(frame).at(index);
+  }
+  double StandardPlane::GetX(unsigned index) const {
+    SetupResult();
+    return m_result_x->at(index);
+  }
+  double StandardPlane::GetY(unsigned index, unsigned frame) const {
+    if (!(m_flags & FLAG_DIFFCOORDS)) frame = 0;
+    return m_y.at(frame).at(index);
+  }
+  double StandardPlane::GetY(unsigned index) const {
+    SetupResult();
+    return m_result_y->at(index);
+  }
+  bool StandardPlane::GetPivot(unsigned index, unsigned frame) const {
+    if (!(m_flags & FLAG_DIFFCOORDS)) frame = 0;
+    return m_pivot.at(frame).at(index);
+  }
+
+  template <typename T>
+  std::vector<T> StandardPlane::GetPixels() const {
+    SetupResult();
+    std::vector<T> result(m_result_pix->size());
+    for (size_t i = 0; i < result.size(); ++i) {
+      result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
+    }
+    return result;
+  }
+
+  void StandardPlane::SetupResult() const {
+    if (m_result_pix) return;
+    m_result_x = &m_x[0];
+    m_result_y = &m_y[0];
+    if (m_pix.size() == 1 && !NeedsCDS()) {
+      m_result_pix = &m_pix[0];
+    } else if (m_pix.size() == 2) {
+      if (NeedsCDS()) {
+        m_temp_pix.resize(m_pix[0].size());
+        for (size_t i = 0; i < m_temp_pix.size(); ++i) {
+          m_temp_pix[i] = m_pix[1][i] - m_pix[0][i];
+        }
+        m_result_pix = &m_temp_pix;
+      } else {
+        if (m_x.size() == 1) {
+          m_temp_pix.resize(m_pix[0].size());
+          for (size_t i = 0; i < m_temp_pix.size(); ++i) {
+            m_temp_pix[i] = m_pix[1 - m_pivot[0][i]][i];
+          }
+        } else {
+          m_temp_x.resize(0);
+          m_temp_y.resize(0);
+          m_temp_pix.resize(0);
+          size_t i;
+          for (i = 0; i < m_pix[1].size(); ++i) {
+            if (m_pivot[1][i]) break;
+            m_temp_x.push_back(m_x[1][i]);
+            m_temp_y.push_back(m_y[1][i]);
+            m_temp_pix.push_back(m_pix[1][i]);
+          }
+          for (i = 0; i < m_pix[0].size(); ++i) {
+            if (m_pivot[0][i]) break;
+          }
+          for (/**/; i < m_pix[0].size(); ++i) {
+            m_temp_x.push_back(m_x[0][i]);
+            m_temp_y.push_back(m_y[0][i]);
+            m_temp_pix.push_back(m_pix[0][i]);
+          }
+          m_result_x = &m_temp_x;
+          m_result_y = &m_temp_y;
+        }
+        m_result_pix = &m_temp_pix;
+      }
+    } else if (m_pix.size() == 3 && NeedsCDS()) {
+      m_temp_pix.resize(m_pix[0].size());
+      for (size_t i = 0; i < m_temp_pix.size(); ++i) {
+        m_temp_pix[i] = m_pix[0][i] * (m_pivot[0][i]-1)
+                      + m_pix[1][i] * (2*m_pivot[0][i]-1)
+                      + m_pix[2][i] * (m_pivot[0][i]);
+      }
+      m_result_pix = &m_temp_pix;
+    } else {
+      EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
+                  + " frames, CDS=" + (NeedsCDS() ? "Needed" : "Done") + ")");
+    }
+    
+  }
+
+#if 0
+  template <typename T>
+  std::vector<T> StandardPlane::GetPixels() const {
+    std::vector<T> result(m_pix[0].size());
+    if (m_pix.size() == 1 && !NeedsCDS()) {
+      for (size_t i = 0; i < result.size(); ++i) {
+        result[i] = static_cast<T>(m_pix[0][i] * Polarity());
+      }
+    } else if (m_pix.size() == 2) {
+      if (NeedsCDS()) {
+        for (size_t i = 0; i < result.size(); ++i) {
+          result[i] = static_cast<T>((m_pix[1][i] - m_pix[0][i]) * Polarity());
+        }
+      } else {
+        if (m_x.size() == 1) {
+          for (size_t i = 0; i < result.size(); ++i) {
+            result[i] = static_cast<T>(m_pix[1 - m_pivot[0][i]][i] * Polarity());
+          }
+        } else {
+          result.resize(0);
+          for (size_t i = 0; i < result.size(); ++i) {
+            result[i] = static_cast<T>(m_pix[0][i] * Polarity());
+          }
+        }
+      }
+    } else if (m_pix.size() == 3 && NeedsCDS()) {
+      std::vector<T> result(m_pix[0].size());
+      for (size_t i = 0; i < result.size(); ++i) {
+        result[i] = static_cast<T>((m_pix[0][i] * (m_pivot[0][i]-1)
+                                    + m_pix[1][i] * (2*m_pivot[0][i]-1)
+                                    + m_pix[2][i] * (m_pivot[0][i])
+                                     ) * Polarity());
+      }
+    } else {
+      EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
+                  + " frames, CDS=" + (NeedsCDS() ? "Needed" : "Done") + ")");
+    }
+    return result;
+  }
+#endif
+
+  template std::vector<short> StandardPlane::GetPixels<>() const;
+  template std::vector<int> StandardPlane::GetPixels<>() const;
+  template std::vector<double> StandardPlane::GetPixels<>() const;
 
   StandardEvent::StandardEvent(unsigned run, unsigned evnum, unsigned long long timestamp)
     : Event(run, evnum, timestamp)
@@ -140,82 +284,5 @@ namespace eudaq {
   void StandardEvent::AddPlane(const StandardPlane & plane) {
     m_planes.push_back(plane);
   }
-
-  // double StandardPlane::GetPixel(unsigned i) const {
-  //   if (m_pix.size() < 1 || i >= m_pix[0].size()) {
-  //     EUDAQ_THROW("Index out of bounds (" + to_string(i) + ")");
-  //   } else if (m_pix.size() == 1 && !NeedsCDS()) {
-  //     return m_pix[0][i] * Polarity();
-  //   } else if (m_pix.size() == 2) {
-  //     if (NeedsCDS()) {
-  //       return (m_pix[1][i] - m_pix[0][i]) * Polarity();
-  //     } else {
-  //       return m_pix[1 - m_pivot[i]][i] * Polarity();
-  //     }
-  //   } else if (m_pix.size() == 3 && NeedsCDS()) {
-  //     return (m_pix[0][i] * (m_pivot[i])
-  //             + m_pix[1][i] * (1-2*m_pivot[i])
-  //             + m_pix[2][i] * (m_pivot[i]-1)
-  //       ) * -Polarity();
-  //   }
-  //   EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-  //               + " frames, CDS=" + (NeedsCDS() ? "Needed" : "Done") + ")");
-  // }
-  double StandardPlane::GetPixel(unsigned index, unsigned frame) const {
-    if (frame > m_pix.size()) EUDAQ_THROW("Frame out of range");
-    return m_pix[frame][index];
-  }
-  double StandardPlane::GetX(unsigned index, unsigned frame) const {
-    if (frame > m_x.size() && m_x.size() != 1) EUDAQ_THROW("Frame out of range");
-    return m_x[m_x.size() == 1 ? 0 : frame][index];
-  }
-  double StandardPlane::GetY(unsigned index, unsigned frame) const {
-    if (frame > m_y.size() && m_y.size() != 1) EUDAQ_THROW("Frame out of range");
-    return m_y[m_y.size() == 1 ? 0 : frame][index];
-  }
-  bool StandardPlane::GetPivot(unsigned index, unsigned frame) const {
-    if (frame > m_pivot.size() && m_pivot.size() != 1) EUDAQ_THROW("Frame out of range");
-    return m_pivot[m_pivot.size() == 1 ? 0 : frame][index];
-  }
-
-  template <typename T>
-  std::vector<T> StandardPlane::GetPixels() const {
-    std::vector<T> result(m_pix[0].size());
-    if (m_pix.size() == 1 && !NeedsCDS()) {
-      for (size_t i = 0; i < result.size(); ++i) {
-        result[i] = static_cast<T>(m_pix[0][i] * Polarity());
-      }
-    } else if (m_pix.size() == 2) {
-      if (NeedsCDS()) {
-        for (size_t i = 0; i < result.size(); ++i) {
-          result[i] = static_cast<T>((m_pix[1][i] - m_pix[0][i]) * Polarity());
-        }
-      } else {
-        if (m_x.size() == 1) {
-          for (size_t i = 0; i < result.size(); ++i) {
-            result[i] = static_cast<T>(m_pix[1 - m_pivot[0][i]][i] * Polarity());
-          }
-        } else {
-          EUDAQ_THROW("ZS2 not yet implemented");
-        }
-      }
-      return result;
-    } else if (m_pix.size() == 3 && NeedsCDS()) {
-      std::vector<T> result(m_pix[0].size());
-      for (size_t i = 0; i < result.size(); ++i) {
-        result[i] = static_cast<T>((m_pix[0][i] * (m_pivot[0][i])
-                                    + m_pix[1][i] * (1-2*m_pivot[0][i])
-                                    + m_pix[2][i] * (m_pivot[0][i]-1)
-                                     ) * -Polarity());
-      }
-      return result;
-    }
-    EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-                + " frames, CDS=" + (NeedsCDS() ? "Needed" : "Done") + ")");
-  }
-
-  template std::vector<short> StandardPlane::GetPixels<>() const;
-  template std::vector<int> StandardPlane::GetPixels<>() const;
-  template std::vector<double> StandardPlane::GetPixels<>() const;
 
 }
