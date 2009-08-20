@@ -42,28 +42,28 @@ public:
       set_host(&cmd_host[0], cmd_port);
       host_is_set = true;
     }
-    //cmd_send("CMD STOP");
+    //cmd_send("CMD STOP\n");
     //eudaq::mSleep(2000);
-    cmd_send("CMD STATUS");
-    eudaq::mSleep(100);
-    cmd_send("CMD INIT");
+    cmd_send("CMD STATUS\n");
+    eudaq::mSleep(1000);
+    cmd_send("CMD INIT\n");
     eudaq::mSleep(4000);
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
     m_run = param;
     m_evt = 0;
-    cmd_send("CMD EVB SET RUNNUM " + to_string(m_run));
+    cmd_send("CMD EVB SET RUNNUM " + to_string(m_run) + "\n");
     eudaq::mSleep(100);
     SendEvent(RawDataEvent::BORE("DEPFET", m_run));
-    cmd_send("CMD START");
+    cmd_send("CMD START\n");
     firstevent = true;
     running = true;
     SetStatus(eudaq::Status::LVL_OK, "Started");
   }
   virtual void OnStopRun() {
     eudaq::mSleep(1000);
-    cmd_send("CMD STOP");
+    cmd_send("CMD STOP\n");
     eudaq::mSleep(1000);
     running = false;
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
