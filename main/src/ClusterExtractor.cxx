@@ -48,6 +48,7 @@ int main(int /*argc*/, char ** argv) {
 
   eudaq::OptionFlag weighted(op, "w", "weighted", "Use weighted average for cluster centre instead of seed position");
   eudaq::OptionFlag tracksonly(op, "t", "tracks-only", "Extract only clusters which are part of a track (not implemented)");
+  eudaq::Option<unsigned> limit(op, "l", "limit-events", 0U, "events", "Maximum number of events to process");
 
   typedef counted_ptr<std::ofstream> fileptr_t;
   typedef std::map<int, fileptr_t> filemap_t;
@@ -72,9 +73,10 @@ int main(int /*argc*/, char ** argv) {
 
       {
         const eudaq::DetectorEvent & dev = reader.Event();
+        eudaq::PluginManager::Initialize(dev);
         runnum = dev.GetRunNumber();
         std::cout << "Found BORE, run number = " << runnum << std::endl;
-        eudaq::PluginManager::ConvertToStandard(dev);
+        //eudaq::PluginManager::ConvertToStandard(dev);
         unsigned totalboards = 0;
         for (size_t i = 0; i < dev.NumEvents(); ++i) {
           const eudaq::Event * drbev = dev.GetEvent(i);
@@ -105,6 +107,7 @@ int main(int /*argc*/, char ** argv) {
         } else {
           try {
             unsigned boardnum = 0;
+            if (limit.Value() > 0 && dev.GetEventNumber() >= limit.Value()) break;
             if (dev.GetEventNumber() % 100 == 0) {
               std::cout << "Event " << dev.GetEventNumber() << std::endl;
             }
@@ -112,22 +115,21 @@ int main(int /*argc*/, char ** argv) {
               track[i].clear();
             }
             StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
-            for (size_t i = 0; i < sev.NumPlanes(); ++i) {
-              eudaq::StandardPlane & brd = sev.GetPlane(i);
+            for (size_t p = 0; p < sev.NumPlanes(); ++p) {
+              eudaq::StandardPlane & brd = sev.GetPlane(p);
               //size_t npixels = brd.HitPixels();
               //std::vector<short> cds(npixels, 0);
               //for (size_t i = 0; i < brd.m_x.size(); ++i) {
               //  cds[i] = brd.GetPixel(i);
               //}
-              std::vector<short> cds = brd.GetPixels<short>();
+              std::vector<short> cds(brd.TotalPixels());
               std::vector<Seed> seeds;
-              size_t i = 0;
-              for (unsigned y = 0; y < brd.YSize(); ++y) {
-                for (unsigned x = 0; x < brd.XSize(); ++x) {
-                  if (cds[i] > noise.Value() * thresh_seed.Value()) {
-                    seeds.push_back(Seed(x, y, cds[i]));
-                  }
-                  ++i;
+              for (unsigned i = 0; i < brd.HitPixels(); ++i) {
+                unsigned x = brd.GetX(i), y = brd.GetY(i), idx = brd.XSize() * y + x;
+                cds[idx] = brd.GetPixel(i) * brd.Polarity();
+                if (cds[idx] >= noise.Value() * thresh_seed.Value()) {
+                  seeds.push_back(Seed(x, y, cds[idx]));
+                  //if (p < 6) std::cout << i << ", " << x << ", " << y << ", " << idx << ", " << cds[idx] << std::endl;
                 }
               }
               std::sort(seeds.begin(), seeds.end(), &Seed::compare);
@@ -151,7 +153,7 @@ int main(int /*argc*/, char ** argv) {
                     }
                   }
                 }
-                if (!badseed && charge > clust.Value() * noise.Value() * thresh_clus.Value()) {
+                if (!badseed && charge >= clust.Value() * noise.Value() * thresh_clus.Value()) {
                   double cx = seeds[i].x, cy = seeds[i].y;
                   if (weighted.IsSet()) {
                     cx = sumx / (double)charge;
