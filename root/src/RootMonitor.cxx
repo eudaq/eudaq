@@ -280,8 +280,8 @@ public:
                   for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
                     m_hitcorrelation[i]->Reset("");
                   }
-                  for (size_t i = 0; i < m_clustercorrelation.size(); ++i) {
-                    m_clustercorrelation[i]->Reset("");
+                  for (size_t i = 0; i < m_clustercorrelationx.size(); ++i) {
+                    m_clustercorrelationx[i]->Reset("");
                   }
                   for (size_t i = 0; i < m_clustercorrelationy.size(); ++i) {
                     m_clustercorrelationy[i]->Reset("");
@@ -780,20 +780,20 @@ public:
         char tmpstring[50];
         sprintf(tmpstring, "X Cluster Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
         title = tmpstring;
-        m_clustercorrelation.push_back(
+        m_clustercorrelationx.push_back(
           new TH2DNew(make_name("clustercorrelation",    i).c_str(), title,  num_x_pixels[i+1], 0, num_x_pixels[i+1], num_x_pixels[i], 0, num_x_pixels[i])
           );
-        (m_clustercorrelation.back())->SetContour(99);
+        (m_clustercorrelationx.back())->SetContour(99);
       }
       {
         TString title;
         char tmpstring[50];
         sprintf(tmpstring, "X Cluster Correlation Board 0 : Board %1.0f", (float)(m_board.size()-1) );
         title = tmpstring;
-        m_clustercorrelation.push_back(
+        m_clustercorrelationx.push_back(
           new TH2DNew(make_name("clustercorrelation",    (m_board.size()-1)).c_str(), title,  num_x_pixels.back(), 0, num_x_pixels.back(), num_x_pixels[0], 0, num_x_pixels[0])
           );
-        (m_clustercorrelation.back())->SetContour(99);
+        (m_clustercorrelationx.back())->SetContour(99);
       }
 
       //y cluster correlations between neigbhor boards
@@ -882,11 +882,11 @@ public:
       m_conf_checkbox_main_clustercorr =  new TGCheckButton(m_conf_group_frame_main.get(),"X Cluster Correlations");
       m_conf_checkbox_main_clustercorr->Associate(this);
       m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_clustercorr.get(), m_hinttop.get());
-      for (size_t i = 0; i < m_clustercorrelation.size(); ++i) {
+      for (size_t i = 0; i < m_clustercorrelationx.size(); ++i) {
         main_pads.push_back(histopad(m_conf_checkbox_main_clustercorr.get()));
         TString drawoption;
         drawoption =  "col2z";
-        (main_pads.back()).AddHisto(m_clustercorrelation[i], drawoption);
+        (main_pads.back()).AddHisto(m_clustercorrelationx[i], drawoption);
       }
       //end of cluster correlations
 
@@ -1304,8 +1304,8 @@ public:
     //std::cout << "Destructor" << std::endl;
     for(size_t i =0; i < m_hitcorrelation.size();i++)
       delete m_hitcorrelation[i];
-    for(size_t i =0; i < m_clustercorrelation.size();i++)
-      delete m_clustercorrelation[i];
+    for(size_t i =0; i < m_clustercorrelationx.size();i++)
+      delete m_clustercorrelationx[i];
     for(size_t i =0; i < m_clustercorrelationy.size();i++)
       delete m_clustercorrelationy[i];
 
@@ -1561,7 +1561,7 @@ public:
           for (size_t i = 0; i < m_board.size(); ++i) {
             m_board[i].Reset();
             m_hitcorrelation[i]->Reset("");
-            m_clustercorrelation[i]->Reset("");
+            m_clustercorrelationx[i]->Reset("");
             m_clustercorrelationy[i]->Reset("");
           }
 
@@ -1616,8 +1616,8 @@ public:
         for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
           m_hitcorrelation[i]->Reset("");
         }
-        for (size_t i = 0; i <m_clustercorrelation.size(); ++i) {
-          m_clustercorrelation[i]->Reset("");
+        for (size_t i = 0; i <m_clustercorrelationx.size(); ++i) {
+          m_clustercorrelationx[i]->Reset("");
         }
         for (size_t i = 0; i <m_clustercorrelationy.size(); ++i) {
           m_clustercorrelationy[i]->Reset("");
@@ -1664,6 +1664,8 @@ public:
         m_board[i].m_histonoiseeventnr->Write();
 
         m_board[i].m_histoclusterval->Write();
+        m_clustercorrelationx[i]->Write();
+        m_clustercorrelationy[i]->Write();
         if (i > 0) {
           m_board[i].m_histodeltax->Write();
           m_board[i].m_histodeltay->Write();
@@ -1724,14 +1726,14 @@ public:
           //cluster correlation
           for(size_t k = 0; k < cpos.at(i).size(); k++) {
             for(size_t l = 0; l < cpos.at(i+1).size(); l++) {
-              m_clustercorrelation[i]->Fill(cpos.at(i+1).at(l),cpos.at(i).at(k));
+              m_clustercorrelationx[i]->Fill(cpos.at(i+1).at(l),cpos.at(i).at(k));
             }
           }
         }
 
         for(size_t k = 0; k < cpos.at(0).size(); k++) {
           for(size_t l = 0; l < cpos.at((int)m_board.size()-1).size(); l++) {
-            m_clustercorrelation.back()->Fill(cpos.at((int)m_board.size()-1).at(l),cpos.at(0).at(k));
+            m_clustercorrelationx.back()->Fill(cpos.at((int)m_board.size()-1).at(l),cpos.at(0).at(k));
           }
         }
         //depfet correlation
@@ -2529,7 +2531,7 @@ private:
 
   counted_ptr<TH1DNew> m_histonumtracks;
   std::vector< TH2DNew* > m_hitcorrelation;
-  std::vector< TH2DNew* > m_clustercorrelation;
+  std::vector< TH2DNew* > m_clustercorrelationx;
   std::vector< TH2DNew* > m_clustercorrelationy;
 
   std::vector< TH2DNew *> m_depfet_correlation;
