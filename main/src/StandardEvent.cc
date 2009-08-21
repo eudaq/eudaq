@@ -73,7 +73,7 @@ namespace eudaq {
       for (size_t j = 0; j < m_x.size(); ++j) {
         m_x[j].resize(npix);
         m_y[j].resize(npix);
-        if (m_flags & FLAG_WITHPIVOT) m_pivot.resize(npix);
+        if (m_pivot.size()) m_pivot[i].resize(npix);
       }
     }
   }
@@ -84,7 +84,7 @@ namespace eudaq {
     m_y[frame].push_back(y);
     m_pix[frame].push_back(p);
     if (m_pivot.size()) m_pivot[frame].push_back(pivot);
-    //std::cout << "DBG: " << frame << ", " << x << ", " << y << ", " << p << ";" << m_pix[0].size() << std::endl;
+    //std::cout << "DBG: " << frame << ", " << x << ", " << y << ", " << p << ";" << m_pix[0].size() << ", " << m_pivot.size() << std::endl;
   }
 
   void StandardPlane::SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot, unsigned frame) {

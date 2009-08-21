@@ -2108,12 +2108,12 @@ private:
     }
     //b.m_histocdsval->FillN(hitpixels, &cds[0], &ones[0]);
 
-    for(size_t i = 0; i < plane.YSize();i++)
+    for(size_t i = 0; i < cds.size();i++)
       {
         double pedestal = 0.0;
         if(isdepfet[boardnumber])
           pedestal = depfet_ped_matrix[plane.GetX(i)][plane.GetY(i)];
-        b.m_histocdsval->Fill((cds[i]-pedestal));
+        b.m_histocdsval->Fill(cds[i]-pedestal);
       }
 
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
