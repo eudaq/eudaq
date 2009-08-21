@@ -35,6 +35,31 @@ short delmarker(short x) {
   return submat * 64 + subpix - 2;
 }
 
+std::vector<unsigned> parsenumbers(const std::string & s) {
+  std::vector<unsigned> result;
+  std::vector<std::string> ranges = split(s, ",");
+  for (size_t i = 0; i < ranges.size(); ++i) {
+    size_t j = ranges[i].find('-');
+    if (j == std::string::npos) {
+      unsigned v = from_string(ranges[i], 0);
+      result.push_back(v);
+    } else {
+      long min = from_string(ranges[i].substr(0, j), 0);
+      long max = from_string(ranges[i].substr(j+1), 0);
+      if (j == 0 && max == 1) {
+        result.push_back((unsigned)-1);
+      } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
+        EUDAQ_THROW("Bad range");
+      } else {
+        for (long n = min; n <= max; ++n) {
+          result.push_back(n);
+        }
+      }
+    }
+  }
+  return result;
+}
+
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Extractor", "1.0",
                          "A command-line tool for extracting cluster information from native raw files",
@@ -48,6 +73,7 @@ int main(int /*argc*/, char ** argv) {
 
   eudaq::OptionFlag weighted(op, "w", "weighted", "Use weighted average for cluster centre instead of seed position");
   eudaq::OptionFlag tracksonly(op, "t", "tracks-only", "Extract only clusters which are part of a track (not implemented)");
+  eudaq::Option<std::string> boards(op, "b", "boards", "", "numbers", "Board numbers to extract (empty=all)");
   eudaq::Option<unsigned> limit(op, "l", "limit-events", 0U, "events", "Maximum number of events to process");
 
   typedef counted_ptr<std::ofstream> fileptr_t;
@@ -64,11 +90,16 @@ int main(int /*argc*/, char ** argv) {
       std::vector<std::vector<Cluster> > track;
       unsigned runnum = 0;
       const int dclust = clust.Value()/2;
+      std::vector<unsigned> planes = parsenumbers(boards.Value());
       std::cout << "Cluster size " << clust.Value() << "x" << clust.Value() << " (dclust=" << dclust << ")" << std::endl;
       std::cout << "Seed threshold: " << thresh_seed.Value() << " sigma = "
                 << thresh_seed.Value()*noise.Value() << " adc" << std::endl;
       std::cout << "Cluster threshold: " << thresh_clus.Value() << " sigma = "
                 << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
+      std::cout << "Boards: ";
+      if (planes.size() == 0) std::cout << "all";
+      for (size_t i = 0; i < planes.size(); ++i) std::cout << (i ? ", " : "") << planes[i];
+      std::cout << std::endl;
       std::vector<unsigned> hit_hist;
 
       {
@@ -85,6 +116,7 @@ int main(int /*argc*/, char ** argv) {
             totalboards += numboards;
             for (unsigned i = 0; i < numboards; ++i) {
               unsigned id = from_string(drbev->GetTag("ID" + to_string(i)), i);
+              if (std::find(planes.begin(), planes.end(), id) == planes.end()) continue;
               if (id >= track.size()) track.resize(id+1);
               filemap_t::const_iterator it = files.find(id);
               if (it != files.end()) EUDAQ_THROW("ID is repeated: " + to_string(id));
@@ -116,6 +148,7 @@ int main(int /*argc*/, char ** argv) {
             }
             StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
             for (size_t p = 0; p < sev.NumPlanes(); ++p) {
+              if (!files[p]) continue;
               eudaq::StandardPlane & brd = sev.GetPlane(p);
               //size_t npixels = brd.HitPixels();
               //std::vector<short> cds(npixels, 0);
