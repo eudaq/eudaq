@@ -61,6 +61,7 @@ namespace eudaq {
     unsigned YSize() const { return m_ysize; }
     unsigned NumFrames() const { return m_pix.size(); }
     unsigned TotalPixels() const { return m_xsize * m_ysize; }
+    unsigned HitPixels(unsigned frame) const { return GetFrame(m_pix, frame).size(); }
     unsigned HitPixels() const { SetupResult(); return m_result_pix->size(); }
     unsigned TLUEvent() const { return m_tluevent; }
     unsigned PivotPixel() const { return m_pivotpixel; }

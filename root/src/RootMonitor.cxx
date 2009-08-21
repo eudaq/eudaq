@@ -2120,7 +2120,7 @@ private:
     b.m_tempcds->Reset();
     if(isfortis[boardnumber]) {
       const double pedestal = 59321.0;
-      for(size_t i = 0; i < plane.m_y.size(); ++i) {
+      for(size_t i = 0; i < plane.HitPixels(1); ++i) {
         b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), plane.GetPixel(i, 1) - pedestal);
         b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), plane.GetPixel(i, 1) - pedestal);
       }
