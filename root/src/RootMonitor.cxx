@@ -224,7 +224,7 @@ public:
   double DEPFET_NEIGHBOUR_THRESHOLD;
   double FORTIS_SEED_THRESHOLD;
   double FORTIS_NEIGHBOUR_THRESHOLD;
-  
+
   bool RESETONNEWRUN;
 };
 
@@ -356,7 +356,7 @@ public:
       //load the config file
       std::vector<int> num_x_pixels;
       std::vector<int> num_y_pixels;
-     
+
 
       std::fstream f;
       std::string s;
@@ -411,20 +411,20 @@ public:
                     isfortis.push_back(false);
                   }
 
-              if(tmpstring == "DET_DEPFET")
-                {
-                  std::cout << "depfet sensor found in the config file." << std::endl;
-                  isdepfet.push_back(true);
-                }
-              else
-                {
-                  isdepfet.push_back(false);
-                }
+                if(tmpstring == "DET_DEPFET")
+                  {
+                    std::cout << "depfet sensor found in the config file." << std::endl;
+                    isdepfet.push_back(true);
+                  }
+                else
+                  {
+                    isdepfet.push_back(false);
+                  }
 
 
 
-              //find the sensor type and add the number of pixels to the array
-              if(tmpstring == "DET_MIMOSTAR2")
+                //find the sensor type and add the number of pixels to the array
+                if(tmpstring == "DET_MIMOSTAR2")
                   {
                     num_x_pixels.push_back(132);
                     num_y_pixels.push_back(128);
@@ -1825,22 +1825,22 @@ public:
         //      std::cout << "seedx=" << depfet_seedx.size() << std::endl;
         //      std::cout << "depfet_clusterx=" << depfet_clusterx.size() << " depfet_clustery=" << depfet_clustery.size() << std::endl;
         /*
-        for(size_t i = 0; i < m_board.size(); i++) {
+          for(size_t i = 0; i < m_board.size(); i++) {
           for(size_t k = 0; k < depfet_clusterx.size(); k++) {
-            for(size_t l = 0; l < cpos.at(i).size(); l++) {
-              m_depfet_correlation[i]->Fill(depfet_clusterx[k], cpos.at(i).at(l));
-            }
+          for(size_t l = 0; l < cpos.at(i).size(); l++) {
+          m_depfet_correlation[i]->Fill(depfet_clusterx[k], cpos.at(i).at(l));
           }
-        }
+          }
+          }
 
-        for(size_t i = 0; i < m_board.size(); i++) {
+          for(size_t i = 0; i < m_board.size(); i++) {
           for(size_t k = 0; k < depfet_clustery.size(); k++) {
-            //std::cout << "cpos = " << cpos.at(i).size() << " cposy = "<< cposy.at(i).size() << std::endl;
-            for(size_t l = 0; l < cposy.at(i).size(); l++) {
-              m_depfet_correlationy[i]->Fill(depfet_clustery[k], cposy.at(i).at(l));
-            }
+          //std::cout << "cpos = " << cpos.at(i).size() << " cposy = "<< cposy.at(i).size() << std::endl;
+          for(size_t l = 0; l < cposy.at(i).size(); l++) {
+          m_depfet_correlationy[i]->Fill(depfet_clustery[k], cposy.at(i).at(l));
           }
-        }
+          }
+          }
         */
         //end of depfet correlation
         //end of cluster correlation
@@ -2109,8 +2109,8 @@ private:
     if(isfortis[board])
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        65536 , 0, 65536 );
     else
-      b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);  
-    
+      b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
+
     if (isdepfet[board]) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        4050, -50, 4000);
     } else if (isfortis[board]) {
@@ -2168,12 +2168,12 @@ private:
       if((totalnumevents-1) % 50 == 0) {
         int t = (totalnumevents-1)/50;
 
-       //  TF1 *f1 = new TF1("bla","gaus");
+        //  TF1 *f1 = new TF1("bla","gaus");
 
         //         b.rmshisto->Fit(f1,"Q0","");
-        
+
         //  Double_t sigma = f1->GetParameter(2);
-        
+
         b.m_histonoiseeventnr->SetBinContent((t+1),rms);
         b.m_histonoiseeventnr->SetBinError((t+1),0.0);
 
@@ -2270,35 +2270,35 @@ private:
           {
             b.m_clusterx.push_back( plane.GetX(i));
             b.m_clustery.push_back( plane.GetY(i));
-            
+
             b.m_clusters.push_back(1.0);
           }
-      //   for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
+        //   for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
 //           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
 //             b.m_clusters.push_back(ix);
 //             b.m_clusterx.push_back(iy);
 //             b.m_clustery.push_back(1.0);
-            
+
 //           }
 //         }
-        
+
       }
     else
       {
 
         //std::cout << "DEBUG: FillBoard " << m_histoevents << std::endl;
-    if (m_histoevents >= 20) {
-      if (m_histoevents < 500) {
-        //std::cout << "DEBUG: filling noise" << std::endl;
-        b.m_histonoise2d->Reset();
-        for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
-          for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
-            double rms = b.m_histocds2d->GetBinError(ix, iy) / std::sqrt((double)m_histoevents);
-            b.m_histonoise2d->Fill(ix-1, iy-1, rms);
-            //if (ix < 5 && iy < 5) std::cout << ix << ", " << iy << " rms = " << rms << " bin = " << bin << std::endl;
+        if (m_histoevents >= 20) {
+          if (m_histoevents < 500) {
+            //std::cout << "DEBUG: filling noise" << std::endl;
+            b.m_histonoise2d->Reset();
+            for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
+              for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
+                double rms = b.m_histocds2d->GetBinError(ix, iy) / std::sqrt((double)m_histoevents);
+                b.m_histonoise2d->Fill(ix-1, iy-1, rms);
+                //if (ix < 5 && iy < 5) std::cout << ix << ", " << iy << " rms = " << rms << " bin = " << bin << std::endl;
+              }
+            }
           }
-        }
-      }
 
           std::vector<Seed> seeds;
           seeds.reserve(20); // preallocate memory for 20 seed pixels
@@ -2483,7 +2483,7 @@ private:
         clusterposition = b.m_clusterx;
         clusterpositiony = b.m_clustery;
 
-       //  b.m_histohit2d->Reset();
+        //  b.m_histohit2d->Reset();
 //         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
 //         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
 //         b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clusters[0]);
