@@ -125,12 +125,6 @@ namespace eudaq {
     m_listening = listen;
   }
 
-  void RunControl::RestartRun() {
-    StopRun(false);
-    mSleep(10000);
-    StartRun("Continued");
-  }
-
   void RunControl::Terminate() {
     EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE");

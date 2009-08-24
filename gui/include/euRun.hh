@@ -81,11 +81,11 @@ private slots:
   //void on_btnReset_clicked() {
   //  Reset();
   //}
-  void on_btnStart_clicked() {
+  void on_btnStart_clicked(bool cont = false) {
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
-    StartRun(txtRunmsg->displayText().toStdString());
+    StartRun(cont ? "Continued" : txtRunmsg->displayText().toStdString());
     EmitStatus("RUN", to_string(m_runnumber));
     emit StatusChanged("EVENT", "0");
     emit StatusChanged("TRIG", "0");
@@ -107,7 +107,10 @@ private slots:
     if (!m_stopping) {
       if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
         EUDAQ_INFO("File limit reached: " + to_string(m_filebytes) + " > " + to_string(m_runsizelimit));
-        RestartRun();
+        eudaq::mSleep(1000);
+        StopRun(false);
+        eudaq::mSleep(8000);
+        on_btnStart_clicked(true);
       } else {
         GetStatus();
       }

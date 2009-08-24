@@ -27,7 +27,6 @@ namespace eudaq {
     virtual void StartRun(const std::string & msg = "");  ///< Send 'StartRun' command with run number
     virtual void StopRun(bool listen = true);   ///< Send 'StopRun' command
     void Terminate(); ///< Send 'Terminate' command
-    void RestartRun();
 
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
