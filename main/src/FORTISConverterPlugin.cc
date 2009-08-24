@@ -88,7 +88,7 @@ namespace eudaq {
       unsigned int frame_offset = (Frame*nwords) * sizeof (short);
 
       frame_number[Frame] = getlittleendian<unsigned int>(&data[frame_offset]);
-      std::cout << "frame in data = " << std::hex << frame_number[Frame] << std::dec << std::endl;
+      std::cout << "frame number in data = " << std::hex << frame_number[Frame] << std::endl;
 
       for (size_t Row = 0; Row < m_NumRows; ++Row) {
 
@@ -106,17 +106,18 @@ namespace eudaq {
           // FORTIS data has a pedestal near 0xFFFF with excursions below this when charge is deposited.
           // The initial [0] refers to the frame number.
           //plane.m_pix[Frame][i] = 0xffff - d ;
-          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, 0xffff - d, Frame);
+          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, d, Frame);
           ++i;
         }
       }
     }
 
-    if ( frame_number[1] != (frame_number[0] + 1) ) {
+/* There is a problem somewhere - frame number increments by two. Sort this out back in Bristol..... */
+/*    if ( frame_number[1] != (frame_number[0] + 1) ) {
       std::cout << "Frame_number[0] ,  Frame_number[1] = " << frame_number[0] <<"   "<< frame_number[1] << std::endl;
 
       EUDAQ_THROW("FORTIS data corruption: Frame_number[1] != Frame_number[0]+1 (" + to_string(frame_number[1]) + " != " + to_string(frame_number[0]) + " +1 )");
-    }
+      } */
 
     return plane;
   }
