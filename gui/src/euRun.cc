@@ -71,7 +71,8 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
     m_delegate(&m_run),
     m_prevtrigs(0),
     m_prevtime(0.0),
-    m_runstarttime(0.0)
+    m_runstarttime(0.0),
+    m_filebytes(0)
 {
   setupUi(this);
   if (!grpStatus->layout()) grpStatus->setLayout(new QGridLayout(grpStatus));
@@ -124,6 +125,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<euda
     registered = true;
   }
   if (id.GetType() == "DataCollector") {
+    m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer" && id.GetName() == "TLU") {

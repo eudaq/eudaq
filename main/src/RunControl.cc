@@ -228,14 +228,6 @@ namespace eudaq {
         if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
           // We ignore status messages that are marked with a previous run number
           OnReceive(ev.id, status);
-          if (ev.id.GetType() == "DataCollector") {
-            //std::cout << "st=" << m_stopping << ", lim=" << m_runsizelimit << ", size=" << status->GetTag("FILEBYTES") << std::endl;
-            if (!m_stopping && m_runsizelimit > 800 &&
-                from_string(status->GetTag("FILEBYTES"), 0LL) >= m_runsizelimit) {
-              EUDAQ_INFO("File limit reached: " + status->GetTag("FILEBYTES") + " > " + to_string(m_runsizelimit));
-              RestartRun();
-            }
-          }
         }
         //std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" << std::endl;
       }

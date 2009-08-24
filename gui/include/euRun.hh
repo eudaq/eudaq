@@ -105,7 +105,12 @@ private slots:
   }
   void timer() {
     if (!m_stopping) {
-      GetStatus();
+      if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
+        EUDAQ_INFO("File limit reached: " + to_string(m_filebytes) + " > " + to_string(m_runsizelimit));
+        RestartRun();
+      } else {
+        GetStatus();
+      }
     }
   }
   void ChangeStatus(const QString & name, const QString & value) {
@@ -124,4 +129,5 @@ private:
   status_t m_status;
   int m_prevtrigs;
   double m_prevtime, m_runstarttime;
+  long long m_filebytes;
 };
