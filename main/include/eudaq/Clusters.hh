@@ -21,20 +21,25 @@ namespace eudaq {
 
   inline void Clusters::read(std::istream & in) {
     int lastevent = m_event;
-    in >> m_event;
+    std::string line;
+    std::getline(in, line);
     if (in.eof()) return;
+    std::istringstream str(line);
+    str >> m_event;
     if (m_event <= lastevent) EUDAQ_THROW("Bad data file: event " + eudaq::to_string(m_event)
                                           + " <= " + eudaq::to_string(lastevent));
-    int nclust;
-    in >> nclust;
-    if (in.eof()) return;
+    int nclust = -1;
+    str >> nclust;
+    if (nclust < 0) return;
     m_x.resize(nclust);
     m_y.resize(nclust);
     m_a.resize(nclust);
     for (int i = 0; i < nclust; ++i) {
-      in >> m_x[i];
-      in >> m_y[i];
-      in >> m_a[i];
+      std::getline(in, line);
+      std::istringstream str(line);
+      str >> m_x[i];
+      str >> m_y[i];
+      str >> m_a[i];
     }
     if (in.eof()) EUDAQ_THROW("Bad data file: unexpected end of file");
   }
