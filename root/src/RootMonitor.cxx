@@ -411,8 +411,8 @@ public:
                   }
                 else if(tmpstring == "DET_MIMOSA26")
                   {
-                    num_x_pixels.push_back(1178);
-                    num_y_pixels.push_back(512);
+                    num_x_pixels.push_back(1152);
+                    num_y_pixels.push_back(576);
                   }
                 else if(tmpstring == "DET_MIMOSA5")
                   {
