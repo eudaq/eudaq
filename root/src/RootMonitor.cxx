@@ -44,37 +44,8 @@
 #include <TPRegexp.h>
 #include <TObjString.h>
 
-//
-//
-
 const int FORTIS_NUM_PIXELS_X = 128;
 const int FORTIS_NUM_PIXELS_Y = 128;
-
-
-
-
-struct m_Header {
-  unsigned int    EventSize: 20;
-  unsigned short   flag0: 1;
-  unsigned short   flag1: 1;
-  unsigned short  EventType: 2;
-  unsigned short  ModuleNo: 4;
-  unsigned short  DeviceType: 4;
-};
-struct  m_InfoWord  {
-  unsigned short framecnt:        10; // number of Bits
-  unsigned short startgate:        6;
-  unsigned short succframes:       4;
-  unsigned short zerosupp:         1;
-  unsigned short startgate_ver:    1;
-  unsigned short temperature:     10;
-};
-struct  m_DATA  {
-  unsigned short adcdata: 16;
-  unsigned short col : 6;
-  unsigned short row : 7;
-  unsigned short nil : 3;
-};
 
 static const unsigned MAX_BOARDS = 7;
 static const unsigned MAX_SEEDS = 1000;
@@ -85,7 +56,6 @@ static const float COL_R[] = { .8,  0,  0, .9, .8,  0 };
 static const float COL_G[] = {  0, .7,  0,  0, .8, .8 };
 static const float COL_B[] = {  0,  0, .9, .9,  0, .8 };
 static const int COL_BASE = 10000;
-
 
 class histopad // this class represents a pad of histograms.
 {
