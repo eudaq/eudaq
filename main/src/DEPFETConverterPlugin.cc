@@ -154,7 +154,7 @@ namespace eudaq {
   }
 
 #if USE_LCIO && USE_EUTELESCOPE
-  void DEPFETConverterBase::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & /*conf*/) const {
+  void DEPFETConverterBase::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/, eudaq::Configuration const & /*conf*/) const {
     eutelescope::EUTelRunHeaderImpl runHeader(&header);
 //    runHeader.setDAQHWName(EUTELESCOPE::DEPFET);
     //   printf("DEPFETConverterBase::ConvertLCIOHeader \n");
@@ -213,12 +213,12 @@ namespace eudaq {
       rawDataEncoder["sensorID"] = 6;
       rawDataEncoder.setCellID(rawMatrix);
 
-      size_t nPixel = plane.m_x.size();
+      //size_t nPixel = plane.HitPixels();
       // printf(" plane.m_x.size()=%d \n",plane.m_x.size());
       for (int yPixel = 0; yPixel <= currentDetector->getYMax(); yPixel++) {
         for (int xPixel = 0; xPixel <= currentDetector->getXMax(); xPixel++) {
           //   printf("xPixel =%d yPixel=%d DATA=%d \n",xPixel, yPixel, (size_t)plane.m_pix[0][ xPixel*currentDetector->getYMax() + yPixel] ); 
-          rawMatrix->adcValues().push_back(plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
+          rawMatrix->adcValues().push_back((short)plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
         }
       }
       rawDataCollection->push_back(rawMatrix);

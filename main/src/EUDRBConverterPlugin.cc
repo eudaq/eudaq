@@ -432,6 +432,11 @@ namespace eudaq {
   void EUDRBConverterBase::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & /*conf*/) const {
     eutelescope::EUTelRunHeaderImpl runHeader(&header);
     runHeader.setDAQHWName(EUTELESCOPE::EUDRB);
+
+    // the information below was used by EUTelescope before the
+    // introduction of the BUI. Now all these parameters shouldn't be
+    // used anymore but they are left here for backward compatibility.
+
     runHeader.setEUDRBMode(bore.GetTag("MODE"));
     runHeader.setEUDRBDet(bore.GetTag("DET"));
     unsigned numplanes = bore.GetTag("BOARDS", 0);
@@ -440,6 +445,10 @@ namespace eudaq {
     for (unsigned i = 0; i < numplanes; ++i) {
       const int id = bore.GetTag("ID" + to_string(i), i);
       const BoardInfo & info = GetInfo(id);
+
+      // @ EMLYN
+      // Can you fix this size stripping away the markers? 
+      // thx
       xMax[i] = info.Sensor().width - 1;
       yMax[i] = info.Sensor().height - 1;
     }
@@ -463,12 +472,34 @@ namespace eudaq {
     result.parameters().setValue( eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE );
 
     // prepare the collections for the rawdata and the zs ones
-    std::auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERRAWDATA) ) ;
-    std::auto_ptr< lcio::LCCollectionVec > zsDataCollection  ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERDATA) ) ;
+    LCCollectionVec * rawDataCollection, * zsDataCollection, * zs2DataCollection;
+    bool rawDataCollectionExists = false, zsDataCollectionExists = false, zs2DataCollectionExists = false;
+
+    try {
+      rawDataCollection = static_cast< LCCollectionVec* > ( result.getCollection( "rawdata" ) );
+      rawDataCollectionExists = true;
+    } catch ( lcio::DataNotAvailableException& e ) {
+      rawDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERRAWDATA );
+    }
+
+    try {
+      zsDataCollection = static_cast< LCCollectionVec* > ( result.getCollection( "zsdata" ) );
+      zsDataCollectionExists = true;
+    } catch ( lcio::DataNotAvailableException& e ) {
+      zsDataCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
+    }
+
+    try {
+      zs2DataCollection = static_cast< LCCollectionVec* > ( result.getCollection( "zsdata_m26" ) );
+      zs2DataCollectionExists = true;
+    } catch ( lcio::DataNotAvailableException& e ) {
+      zs2DataCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
+    }
 
     // set the proper cell encoder
-    CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
-    CellIDEncoder< TrackerDataImpl    > zsDataEncoder  ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection.get()  );
+    CellIDEncoder< TrackerRawDataImpl > rawDataEncoder  ( eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection );
+    CellIDEncoder< TrackerDataImpl    > zsDataEncoder   ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  );
+    CellIDEncoder< TrackerDataImpl    > zs2DataEncoder  ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zs2DataCollection  );
 
     // a description of the setup
     std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
@@ -488,7 +519,7 @@ namespace eudaq {
 
       // The current detector is ...
       eutelescope::EUTelPixelDetector * currentDetector = 0x0;
-      if ( plane.m_sensor == "MIMOTEL" ) {
+      if ( plane.Sensor() == "MIMOTEL" ) {
 
         currentDetector = new eutelescope::EUTelMimoTelDetector;
         std::string mode;
@@ -497,7 +528,7 @@ namespace eudaq {
         if ( result.getEventNumber() == 0 ) {
           setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
         }
-      } else if ( plane.m_sensor == "MIMOSA18" ) {
+      } else if ( plane.Sensor() == "MIMOSA18" ) {
 
         currentDetector = new eutelescope::EUTelMimosa18Detector;
         std::string mode;
@@ -506,7 +537,7 @@ namespace eudaq {
         if ( result.getEventNumber() == 0 ) {
           setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector ));
         }
-      } else if ( plane.m_sensor == "MIMOSA26" ) {
+      } else if ( plane.Sensor() == "MIMOSA26" ) {
 
         currentDetector = new eutelescope::EUTelMimosa26Detector;
         std::string mode = "ZS2";
@@ -516,20 +547,19 @@ namespace eudaq {
         }
       } else {
 
-        EUDAQ_ERROR("Unrecognised sensor type in LCIO converter: " + plane.m_sensor);
+        EUDAQ_ERROR("Unrecognised sensor type in LCIO converter: " + plane.Sensor());
         return true;
 
       }
       std::vector<size_t > markerVec = currentDetector->getMarkerPosition();
 
       if ( plane.IsZS() ) {
-        // storage of ZS data is done here
-        zsDataEncoder["sensorID"] = iPlane;
+        zsDataEncoder["sensorID"] = plane.ID();
         zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
 
         // get the total number of pixel. This is written in the
         // eudrbBoard and to get it in a easy way pass through the eudrbDecoder
-        size_t nPixel = plane.m_x.size();
+        size_t nPixel = plane.HitPixels();
 
         // prepare a new TrackerData for the ZS data
         std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
@@ -547,7 +577,7 @@ namespace eudaq {
           // them out. First I need to have the original position
           // (with markers in) and then calculate how many pixels I
           // have to remove
-          size_t originalX = (size_t)plane.m_x[ iPixel ] ;
+          size_t originalX = (size_t)plane.GetX(iPixel);
 
           if ( find( markerVec.begin(), markerVec.end(), originalX ) == markerVec.end() ) {
             // the original X is not on a marker column, so I need
@@ -560,11 +590,11 @@ namespace eudaq {
             sparsePixel->setXCoord( originalX - diff );
 
             // no problem instead with the Y coordinate
-            sparsePixel->setYCoord( (size_t)plane.m_y[ iPixel ] );
+            sparsePixel->setYCoord( (size_t)plane.GetY(iPixel) );
 
             // last the pixel charge. The CDS is automatically
             // calculated by the EUDRB
-            sparsePixel->setSignal( (size_t)plane.m_pix[0][ iPixel ] );
+            sparsePixel->setSignal( (size_t)plane.GetX(iPixel) );
 
             // in case of DEBUG
             // streamlog_out ( DEBUG0 ) << ( *(sparsePixel.get() ) ) << endl;
@@ -587,10 +617,14 @@ namespace eudaq {
         }
 
         // perfect! Now add the TrackerData to the collection
-        zsDataCollection->push_back( zsFrame.release() );
+        if ( plane.Sensor() == "MIMOSA26" ) {
+          zs2DataCollection->push_back( zsFrame.release() );
+        } else {
+          zsDataCollection->push_back( zsFrame.release() );
+        }
 
         // for the debug of the synchronization
-        pivotPixelPosVec.push_back( plane.m_pivotpixel );
+        pivotPixelPosVec.push_back( plane.PivotPixel() );
 
       } else {
 
@@ -599,7 +633,7 @@ namespace eudaq {
         rawDataEncoder["xMax"]     = currentDetector->getXMax() - markerVec.size();
         rawDataEncoder["yMin"]     = currentDetector->getYMin();
         rawDataEncoder["yMax"]     = currentDetector->getYMax();
-        rawDataEncoder["sensorID"] = iPlane;
+        rawDataEncoder["sensorID"] = plane.ID();
 
         // get the full vector of CDS
         std::vector<short> cdsVec = plane.GetPixels<short>();
@@ -648,11 +682,11 @@ namespace eudaq {
         // put the pivot pixel in the timestamp field of the
         // TrackerRawData. I know that is not correct, but this is
         // the only place where I can put this info
-        cdsFrame->setTime( plane.m_pivotpixel );
+        cdsFrame->setTime( plane.PivotPixel() );
 
         // this is also the right place to add the pivot pixel to
         // the pivot pixel vector for synchronization checks
-        pivotPixelPosVec.push_back( plane.m_pivotpixel );
+        pivotPixelPosVec.push_back( plane.PivotPixel() );
 
         // now append the TrackerRawData object to the corresponding
         // collection releasing the auto pointer
@@ -669,16 +703,15 @@ namespace eudaq {
 
       LCCollectionVec * eudrbSetupCollection = NULL;
       bool eudrbSetupExists = false;
-      try { 
+      try {
         eudrbSetupCollection = static_cast< LCCollectionVec* > ( result.getCollection( "eudrbSetup" ) ) ;
         eudrbSetupExists = true;
-      } catch (...) {
+      } catch ( lcio::DataNotAvailableException& e) {
         eudrbSetupCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
       }
 
       for ( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane ) {
-        eudrbSetupCollection->push_back( setupDescription.at( iPlane ) );
-      }
+        eudrbSetupCollection->push_back( setupDescription.at( iPlane ) );      }
 
       if (!eudrbSetupExists) {
         result.addCollection( eudrbSetupCollection, "eudrbSetup" );
@@ -739,14 +772,19 @@ namespace eudaq {
       }
     }
 
-    // add the collections to the event only if not empty!
-    if ( rawDataCollection->size() != 0 ) {
-      result.addCollection( rawDataCollection.release(), "rawdata" );
+    // add the collections to the event only if not empty and not yet there
+    if ( !rawDataCollectionExists && ( rawDataCollection->size() != 0 ) ){
+      result.addCollection( rawDataCollection, "rawdata" );
     }
 
-    if ( zsDataCollection->size() != 0 ) {
-      result.addCollection( zsDataCollection.release(), "zsdata" );
+    if ( !zsDataCollectionExists && ( zsDataCollection->size() != 0 )) {
+      result.addCollection( zsDataCollection, "zsdata" );
     }
+
+    if ( !zs2DataCollectionExists && ( zs2DataCollection->size() != 0 )) {
+      result.addCollection( zs2DataCollection, "zsdata_m26" );
+    }
+
 
     return true;
   }

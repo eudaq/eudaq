@@ -57,6 +57,7 @@ namespace eudaq {
     void SetFlags(FLAGS flags);
 
     unsigned ID() const { return m_id; }
+    const std::string & Sensor() const { return m_sensor; }
     unsigned XSize() const { return m_xsize; }
     unsigned YSize() const { return m_ysize; }
     unsigned NumFrames() const { return m_pix.size(); }
