@@ -21,7 +21,7 @@ namespace eudaq {
     typedef double coord_t;
     StandardPlane(unsigned id, const std::string & type, const std::string & sensor);
     StandardPlane(Deserializer &);
-    StandardPlane() : m_id(0), m_tluevent(0), m_xsize(0), m_ysize(0), m_flags(0), m_pivotpixel(0) {}
+    StandardPlane();
     void Serialize(Serializer &) const;
     //StandardPlane(size_t pixels = 0, size_t frames = 1);
     void SetSizeRaw(unsigned w, unsigned h, unsigned frames = 1, int flags = 0);

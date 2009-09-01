@@ -5,6 +5,8 @@ namespace eudaq {
 
   EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
 
+  StandardPlane::StandardPlane() : m_id(0), m_tluevent(0), m_xsize(0), m_ysize(0), m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0) {}
+
   StandardPlane::StandardPlane(unsigned id, const std::string & type, const std::string & sensor)
     : m_type(type), m_sensor(sensor), m_id(id), m_tluevent(0), m_xsize(0), m_ysize(0),
       m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0)
@@ -70,11 +72,11 @@ namespace eudaq {
     m_pivot.resize((m_flags & FLAG_WITHPIVOT) ? ((m_flags & FLAG_DIFFCOORDS) ? frames : 1) : 0);
     for (size_t i = 0; i < frames; ++i) {
       m_pix[i].resize(npix);
-      for (size_t j = 0; j < m_x.size(); ++j) {
-        m_x[j].resize(npix);
-        m_y[j].resize(npix);
-        if (m_pivot.size()) m_pivot[i].resize(npix);
-      }
+    }
+    for (size_t i = 0; i < m_x.size(); ++i) {
+      m_x[i].resize(npix);
+      m_y[i].resize(npix);
+      if (m_pivot.size()) m_pivot[i].resize(npix);
     }
   }
 
