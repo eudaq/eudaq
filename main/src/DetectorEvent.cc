@@ -19,6 +19,7 @@ namespace eudaq {
   }
 
   void DetectorEvent::AddEvent(counted_ptr<Event> evt) {
+    if (!evt.get()) EUDAQ_THROW("Adding null event!");
     m_events.push_back(evt);
     SetFlags(evt->GetFlags());
   }

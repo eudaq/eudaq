@@ -59,13 +59,16 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
         }
         //std::cout << (bad ? "***" : "") << std::endl;
         if (bad) std::cout << "***" << std::endl;
-        // if (do_zs && plane.m_pix.size() == 1) {
+        if (do_zs) {
+          for (size_t i = 0; i < 20 && i < cds.size(); ++i) {
+            std::cout << i << ": " << eudaq::hexdec(cds[i]) << std::endl;
+          }
         //   std::cout << "  Plane: " << plane << std::endl;
         //   for (size_t p = 0; p < plane.m_pix[0].size(); ++p) {
         //     static const char tab = '\t';
         //     std::cout << "    " << ndata << tab << boardnum << tab << plane.m_x[p] << tab << plane.m_y[p] << tab << plane.m_pix[0][p] << std::endl;
         //   }
-        // }
+        }
 //       if (do_dump) {
 //         std::ofstream file(("board" + to_string(boardnum) + ".dat").c_str());
 //         file.write(reinterpret_cast<const char*>(brd.GetData()-8), brd.DataSize()+16);

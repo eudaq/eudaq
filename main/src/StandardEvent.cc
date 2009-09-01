@@ -89,10 +89,10 @@ namespace eudaq {
 
   void StandardPlane::SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot, unsigned frame) {
     if (frame >= m_pix.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in PushPixel");
-    if (frame < m_x.size()) m_x[frame][index] = x;
-    if (frame < m_y.size()) m_y[frame][index] = y;
-    if (frame < m_pivot.size()) m_pivot[frame][index] = pivot;
-    m_pix[frame][index] = pix;
+    if (frame < m_x.size()) m_x.at(frame).at(index) = x;
+    if (frame < m_y.size()) m_y.at(frame).at(index) = y;
+    if (frame < m_pivot.size()) m_pivot.at(frame).at(index) = pivot;
+    m_pix.at(frame).at(index) = pix;
   }
 
   void StandardPlane::SetFlags(StandardPlane::FLAGS flags) {
