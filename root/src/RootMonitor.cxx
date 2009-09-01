@@ -1450,7 +1450,7 @@ public:
               m_board[i].m_canvas->cd(canvaspadindex);
               if(board_pads[t].at(i).GetStatus()) //if the pad is active, it is drawn
                 {
-                  if(board_pads[t].at(i).h[0]->GetTitle() == "CDS Values")
+                  if(board_pads[t].at(i).h[0]->GetTitle() == std::string("CDS Values"))
                     gPad->SetLogy();
                   board_pads[t].at(i).h[0]->DrawCopy( board_pads[t].at(i).drawoptions.at(0)); //index is equal to 0 because in each board display tab only one plot per pad is drawn
                   canvaspadindex++;
