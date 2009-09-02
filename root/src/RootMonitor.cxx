@@ -2171,9 +2171,9 @@ private:
       {
         double pedestal = 0.0;
         if(isdepfet[boardnumber])
-          pedestal = depfet_ped_matrix[plane.GetX(i)][plane.GetY(i)];
+          pedestal = depfet_ped_matrix[(int)plane.GetX(i)][(int)plane.GetY(i)];
         if(isfortis[boardnumber])
-          pedestal = fortis_ped_matrix[plane.GetX(i)][plane.GetY(i)];
+          pedestal = fortis_ped_matrix[(int)plane.GetX(i)][(int)plane.GetY(i)];
 
         if(isfortis[boardnumber])
           b.m_histocdsval->Fill((plane.GetPixel(i, 1) - pedestal));
@@ -2218,9 +2218,9 @@ private:
       {
         double pedestal = 0.0;
         if(isdepfet[boardnumber])
-          pedestal = depfet_ped_matrix[plane.GetX(i)][plane.GetY(i)];
+          pedestal = depfet_ped_matrix[(int)plane.GetX(i)][(int)plane.GetY(i)];
         else if (isfortis[boardnumber])
-          pedestal = fortis_ped_matrix[plane.GetX(i)][plane.GetY(i)];
+          pedestal = fortis_ped_matrix[(int)plane.GetX(i)][(int)plane.GetY(i)];
 
         if(isfortis[boardnumber])
           b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), plane.GetPixel(i, 1) - pedestal);
