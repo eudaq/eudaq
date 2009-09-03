@@ -23,12 +23,10 @@ public:
     {}
   void MainLoop() {
     do {
-      if (!m_mvd) {
+      if (!m_mvd || !m_running || !m_mvd->DataReady()) {
         eudaq::mSleep(50);
         continue;
       }
-
-      if (!m_mvd->DataReady()) continue; 
 
       eudaq::RawDataEvent ev("MVD", m_run, m_ev);
       
