@@ -1,6 +1,6 @@
 MAKE := make
 
-DIRS := main tlu vme eudrb depfet fortis mimoroma root gui
+DIRS := main tlu vme eudrb mvd depfet fortis mimoroma root gui
 
 default: main
 
@@ -8,7 +8,7 @@ all: $(DIRS)
 
 $(DIRS:main=): main
 
-eudrb: vme
+eudrb mvd: vme
 
 $(DIRS):
 	$(MAKE) -C $@
