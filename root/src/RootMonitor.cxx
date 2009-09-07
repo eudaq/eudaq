@@ -44,8 +44,16 @@
 #include <TPRegexp.h>
 #include <TObjString.h>
 
+using eudaq::to_string;
+
+template <typename T>
+const T * dataptr(const std::vector<T> & v) {
+  if (!v.size()) return 0;
+  return &v[0];
+}
+
 struct PlaneInfo {
-  PlaneInfo(const std::vector<std::string> & parts) : name(parts[0]), width(0), height(0), clustsize(3),
+  PlaneInfo(const std::vector<std::string> & parts) : name(parts.at(0)), width(0), height(0), clustsize(3),
                                                       seed_thresh(5), neighbour_thresh(2), cluster_thresh(7) {
     // First set default values
     if      (is("MIMOTEL"))   { width = 264; height = 256; }
@@ -63,7 +71,7 @@ struct PlaneInfo {
     }
     //else if (is("TAKI"))      { width = 128; height = 128; }
     // Override with values from conf file if they are set
-#define GETPART(n, val) if (parts.size() > n && parts[n].size()) val = eudaq::from_string(parts[n], val)
+#define GETPART(n, val) if (parts.size() > n && parts.at(n).size()) val = eudaq::from_string(parts.at(n), val)
     GETPART(1, width);
     GETPART(2, height);
     GETPART(3, pedfile);
@@ -80,8 +88,8 @@ struct PlaneInfo {
       ped_matrix.resize(width);
       noise_matrix.resize(width);
       for (size_t i = 0; i < ped_matrix.size(); ++i) {
-        ped_matrix[i] = std::vector<double>(height, 0.0);
-        noise_matrix[i] = std::vector<double>(height, 1.0);
+        ped_matrix.at(i) = std::vector<double>(height, 0.0);
+        noise_matrix.at(i) = std::vector<double>(height, 1.0);
       }
       std::ifstream file(pedfile.c_str());
       if (!file) EUDAQ_THROW("Unable to open pedestal file for " + name + ": " + pedfile);
@@ -89,23 +97,23 @@ struct PlaneInfo {
         std::string line;
         std::getline(file, line);        // read one line
         line = eudaq::trim(line);
-        if (line.size() == 0 || line[0] == '#') continue;
+        if (line.size() == 0 || line.at(0) == '#') continue;
         std::vector<std::string> parts = eudaq::split(line, " \t", true);
         if (parts.size() < 3) EUDAQ_THROW("Bad pedestal file");
 
-        int x = eudaq::from_string(parts[0], -1);
-        int y = eudaq::from_string(parts[1], -1);
-        double ped = eudaq::from_string(parts[2], -1e6);
+        int x = eudaq::from_string(parts.at(0), -1);
+        int y = eudaq::from_string(parts.at(1), -1);
+        double ped = eudaq::from_string(parts.at(2), -1e6);
         double noise = -1.0;
-        if (parts.size() > 3) ped = eudaq::from_string(parts[3], -1.0);
+        if (parts.size() > 3) ped = eudaq::from_string(parts.at(3), -1.0);
 
         if (x < 0 || x >= (int)width || y < 0 || y >= (int)height || ped < -1000) {
           std::cout << "Pedestal file reading error! unreasonable numbers:"
                     << x << " " << y << " " << ped << " " << noise << std::endl;
             
           } else {
-          noise_matrix[x][y] = noise;
-          ped_matrix[x][y] = ped;
+          noise_matrix.at(x).at(y) = noise;
+          ped_matrix.at(x).at(y) = ped;
         }
       }
     }
@@ -137,18 +145,14 @@ public:
       SetVars();
       checkboxbutton = check;
       Disable();
-      for(int i =0; i < 50; i++)
-        {
-          h[i] = NULL;
-        }
       index =0;
     }
   ~histopad(){ }
 
   void AddHisto(TH1 *histo, TString option) //add histograms and the draw options to this pad
     {
-      h[index] = histo;
-      //h.push_back(histo);
+      //h.at(index) = histo;
+      h.push_back(histo);
       index++;
       drawoptions.push_back(option);
     }
@@ -173,7 +177,7 @@ public:
     }
   TGCheckButton *checkboxbutton; //check box associated to this array of histograms
   //std::vector<TH1*> h; // array of histogram pointer
-  TH1 *h[50];
+  std::vector<TH1 *>h;
   int index;
   std::vector<TString> drawoptions; //draw option for each histogram
 private:
@@ -323,22 +327,16 @@ public:
                 {
                   std::cout << "*** resetting all histograms ***" << std:: endl;
                   for (size_t i = 0; i < m_board.size(); ++i) {
-                    m_board[i].Reset();
+                    m_board.at(i).Reset();
                   }
                   for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
-                    m_hitcorrelation[i]->Reset("");
+                    m_hitcorrelation.at(i)->Reset("");
                   }
                   for (size_t i = 0; i < m_clustercorrelationx.size(); ++i) {
-                    m_clustercorrelationx[i]->Reset("");
+                    m_clustercorrelationx.at(i)->Reset("");
                   }
                   for (size_t i = 0; i < m_clustercorrelationy.size(); ++i) {
-                    m_clustercorrelationy[i]->Reset("");
-                  }
-                  for (size_t i = 0; i < m_depfet_correlation.size(); ++i) {
-                    m_depfet_correlation[i]->Reset("");
-                  }
-                  for (size_t i = 0; i < m_depfet_correlationy.size(); ++i) {
-                    m_depfet_correlationy[i]->Reset("");
+                    m_clustercorrelationy.at(i)->Reset("");
                   }
                   m_depfet_adc->Reset("");
                   m_depfet_map->Reset("");
@@ -410,9 +408,9 @@ public:
         std::string line;
         std::getline(file, line);        // read one line
         line = eudaq::trim(line);
-        if (line.size() == 0 || line[0] == '#') continue;
+        if (line.size() == 0 || line.at(0) == '#') continue;
         std::vector<std::string> parts = eudaq::split(line, ",", true);
-        if (parts.size() == 0 || parts[0].size() == 0) EUDAQ_THROW("Bad configuration file");
+        if (parts.size() == 0 || parts.at(0).size() == 0) EUDAQ_THROW("Bad configuration file");
         m_dets.push_back(PlaneInfo(parts));
       }
       file.close();
@@ -447,7 +445,7 @@ public:
         int i = b % NUM_COL;
         m_colours.push_back(new TColor(COL_BASE+b, COL_R[i], COL_G[i], COL_B[i]));
         TGLabel * label = new TGLabel(m_toolbar.get(), ("Board " + eudaq::to_string(b)).c_str());
-        label->SetTextColor(m_colours[b]);
+        label->SetTextColor(m_colours.at(b));
         m_toolbar->AddFrame(label, m_hintleft.get());
       }
 
@@ -613,65 +611,50 @@ public:
       m_conf_tab->AddFrame(m_conf_group_frame.get(), m_hint_l.get());
 
       for (size_t i = 0; i < m_board.size(); ++i) {
-        BookBoard(i, m_board[i], m_dets[i].width, m_dets[i].height);
+        BookBoard(i, m_board.at(i), m_dets.at(i).width, m_dets.at(i).height);
       }
       m_histonumtracks = new TH1DNew("NumTracks", "Num Tracks", 100, 0, 100);
 
 
       //histograms for hit correlation between neighbor boards
       for (size_t i = 0; i < m_board.size()-1; ++i) {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "Hit Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
-        title = tmpstring;
+        std::string title = "Hit Correlation Board " + to_string(i) + " : Board " + to_string(i+1);
         m_hitcorrelation.push_back(
-          new TH2DNew(make_name("hitcorrelation",    i).c_str(), title, conf.HITCORR_NUM_BINS, 0, conf.HITCORR_NUM_BINS, conf.HITCORR_NUM_BINS, 0, conf.HITCORR_NUM_BINS)
+          new TH2DNew(make_name("hitcorrelation",    i).c_str(), title.c_str(), conf.HITCORR_NUM_BINS, 0, conf.HITCORR_NUM_BINS, conf.HITCORR_NUM_BINS, 0, conf.HITCORR_NUM_BINS)
           );
-        (m_hitcorrelation.back())->SetContour(99);
+        m_hitcorrelation.back()->SetContour(99);
       }
 
       //cluster correlations between neigbhor boards
       for (size_t i = 0; i < m_board.size()-1; ++i) {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "X Cluster Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
-        title = tmpstring;
+        std::string title = "X Cluster Correlation Board " + to_string(i) + " : Board " + to_string(i+1);
         m_clustercorrelationx.push_back(
-          new TH2DNew(make_name("clustercorrelation",    i).c_str(), title,  m_dets[i+1].width, 0, m_dets[i+1].width, m_dets[i].width, 0, m_dets[i].width)
+          new TH2DNew(make_name("clustercorrelation",    i).c_str(), title.c_str(),  m_dets.at(i+1).width, 0, m_dets.at(i+1).width, m_dets.at(i).width, 0, m_dets.at(i).width)
           );
-        (m_clustercorrelationx.back())->SetContour(99);
+        m_clustercorrelationx.back()->SetContour(99);
       }
       {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "X Cluster Correlation Board 0 : Board %1.0f", (float)(m_board.size()-1) );
-        title = tmpstring;
+        std::string title = "X Cluster Correlation Board 0 : Board " + to_string(m_board.size()-1);
         m_clustercorrelationx.push_back(
-          new TH2DNew(make_name("clustercorrelation",    (m_board.size()-1)).c_str(), title,  m_dets.back().width, 0, m_dets.back().width, m_dets[0].width, 0, m_dets[0].width)
+          new TH2DNew(make_name("clustercorrelation",    (m_board.size()-1)).c_str(), title.c_str(),  m_dets.back().width, 0, m_dets.back().width, m_dets.at(0).width, 0, m_dets.at(0).width)
           );
-        (m_clustercorrelationx.back())->SetContour(99);
+        m_clustercorrelationx.back()->SetContour(99);
       }
 
       //y cluster correlations between neigbhor boards
       for (size_t i = 0; i < m_board.size()-1; ++i) {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "Y Cluster Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
-        title = tmpstring;
+        std::string title = "Y Cluster Correlation Board " + to_string(i) + " : Board " + to_string(i+1);
         m_clustercorrelationy.push_back(
-          new TH2DNew(make_name("clustercorrelationy",    i).c_str(), title,  m_dets[i+1].height, 0, m_dets[i+1].height, m_dets[i].height, 0, m_dets[i].height)
+          new TH2DNew(make_name("clustercorrelationy",    i).c_str(), title.c_str(),  m_dets.at(i+1).height, 0, m_dets.at(i+1).height, m_dets.at(i).height, 0, m_dets.at(i).height)
           );
-        (m_clustercorrelationy.back())->SetContour(99);
+        m_clustercorrelationy.back()->SetContour(99);
       }
       {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "Y Cluster Correlation Board 0 : Board %1.0f", (float)(m_board.size()-1) );
-        title = tmpstring;
+        std::string title = "Y Cluster Correlation Board 0 : Board " + to_string(m_board.size()-1);
         m_clustercorrelationy.push_back(
-          new TH2DNew(make_name("clustercorrelationy",    (m_board.size()-1)).c_str(), title,  m_dets.back().height, 0, m_dets.back().height, m_dets[0].height, 0, m_dets[0].height)
+          new TH2DNew(make_name("clustercorrelationy",    (m_board.size()-1)).c_str(), title.c_str(),  m_dets.back().height, 0, m_dets.back().height, m_dets.at(0).height, 0, m_dets.at(0).height)
           );
-        (m_clustercorrelationy.back())->SetContour(99);
+        m_clustercorrelationy.back()->SetContour(99);
       }
 
       //depfet
@@ -680,29 +663,6 @@ public:
       m_depfet_adc = new TH1DNew("DEPFET adc","DEPFET adc",  40 ,7800., 12000.);
       m_depfet_map = new TH2DNew("DEPFET map","DEPFET map",  64, 0.0, 64.0, 128, 0.0, 128.0);
       m_depfet_map->SetMinimum(0.0);
-
-      for (size_t i = 0; i < m_board.size(); i++) {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "Y Correlation Board %1.0f : DEPFET", (float)i );
-        title = tmpstring;
-        m_depfet_correlationy.push_back(
-          new TH2DNew(make_name("depfetcorrelationy",    i).c_str(), title,  128, 0, 128, m_dets[i].height, 0, m_dets[i].height)
-          );
-        (m_depfet_correlationy.back())->SetContour(99);
-      }
-      for (size_t i = 0; i < m_board.size(); i++) {
-        TString title;
-        char tmpstring[50];
-        sprintf(tmpstring, "X Correlation Board %1.0f : DEPFET", (float)i );
-        title = tmpstring;
-        m_depfet_correlation.push_back(
-          new TH2DNew(make_name("depfetcorrelation",    i).c_str(), title,  64, 0, 64, m_dets[i].width, 0, m_dets[i].width)
-          );
-        (m_depfet_correlation.back())->SetContour(99);
-      }
-
-
 
       //main histogram checkboxes
       m_conf_group_frame_main = new TGGroupFrame(m_conf_tab.get(),"Main Histograms");
@@ -717,7 +677,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_histonumclusters).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histonumclusters).get(), drawoption);
       }
       //end of number of clusters
 
@@ -729,7 +689,7 @@ public:
         main_pads.push_back(histopad(m_conf_checkbox_main_hitcorr.get()));
         TString drawoption;
         drawoption =  "col2z";
-        (main_pads.back()).AddHisto(m_hitcorrelation[i], drawoption);
+        (main_pads.back()).AddHisto(m_hitcorrelation.at(i), drawoption);
       }
       //end of hit correlations
 
@@ -742,7 +702,7 @@ public:
         main_pads.push_back(histopad(m_conf_checkbox_main_clustercorr.get()));
         TString drawoption;
         drawoption =  "col2z";
-        (main_pads.back()).AddHisto(m_clustercorrelationx[i], drawoption);
+        (main_pads.back()).AddHisto(m_clustercorrelationx.at(i), drawoption);
       }
       //end of cluster correlations
 
@@ -754,36 +714,9 @@ public:
         main_pads.push_back(histopad(m_conf_checkbox_main_clustercorry.get()));
         TString drawoption;
         drawoption =  "col2z";
-        (main_pads.back()).AddHisto(m_clustercorrelationy[i], drawoption);
+        (main_pads.back()).AddHisto(m_clustercorrelationy.at(i), drawoption);
       }
       //y end of cluster correlations
-
-
-
-
-      //depfet x correlations
-      m_conf_checkbox_main_depfet_clustercorr =  new TGCheckButton(m_conf_group_frame_main.get(),"X DEPFET Correlations");
-      m_conf_checkbox_main_depfet_clustercorr->Associate(this);
-      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_depfet_clustercorr.get(), m_hinttop.get());
-      for (size_t i = 0; i < m_depfet_correlation.size(); ++i) {
-        main_pads.push_back(histopad(m_conf_checkbox_main_depfet_clustercorr.get()));
-        TString drawoption;
-        drawoption =  "col2z";
-        (main_pads.back()).AddHisto(m_depfet_correlation[i], drawoption);
-      }
-      //end of depfet x correlation
-
-      //depfet y correlations
-      m_conf_checkbox_main_depfet_clustercorry =  new TGCheckButton(m_conf_group_frame_main.get(),"Y DEPFET Correlations");
-      m_conf_checkbox_main_depfet_clustercorry->Associate(this);
-      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_depfet_clustercorry.get(), m_hinttop.get());
-      for (size_t i = 0; i < m_depfet_correlationy.size(); ++i) {
-        main_pads.push_back(histopad(m_conf_checkbox_main_depfet_clustercorry.get()));
-        TString drawoption;
-        drawoption =  "col2z";
-        (main_pads.back()).AddHisto(m_depfet_correlationy[i], drawoption);
-      }
-      //end of depfet y correlation
 
       //depfet adc
       {
@@ -818,7 +751,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_historawval).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_historawval).get(), drawoption);
       }
       //end of raw value
       //cluster 2d
@@ -829,7 +762,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "box" : "same box");
-        (main_pads.back()).AddHisto((m_board[i].m_histocluster2d).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histocluster2d).get(), drawoption);
       }
       //end of cluster 2d
       //delta x
@@ -840,7 +773,7 @@ public:
       for (size_t i = 1; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 1 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_histodeltax).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histodeltax).get(), drawoption);
       }
       //end of delta x
       //delta y
@@ -851,7 +784,7 @@ public:
       for (size_t i = 1; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 1 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_histodeltay).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histodeltay).get(), drawoption);
       }
       //end of delta y
       //number of seeds
@@ -862,7 +795,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_histonumhits).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histonumhits).get(), drawoption);
       }
       //end of number of seeds
       //cds value
@@ -873,7 +806,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_histocdsval).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histocdsval).get(), drawoption);
       }
       //end of cds value
 
@@ -885,7 +818,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "" : "same");
-        (main_pads.back()).AddHisto((m_board[i].m_histonoise).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histonoise).get(), drawoption);
       }
       //end of noise
 
@@ -897,7 +830,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "hist" : "hist same");
-        (main_pads.back()).AddHisto((m_board[i].m_histonoiseeventnr).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histonoiseeventnr).get(), drawoption);
       }
       //end of noise as a function of event nr
 
@@ -910,7 +843,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "box" : "same box");
-        (main_pads.back()).AddHisto((m_board[i].m_histotrack2d).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histotrack2d).get(), drawoption);
       }
       //end of track 2d
       //cluster charge
@@ -921,7 +854,7 @@ public:
       for (size_t i = 0; i < m_board.size(); ++i) {
         TString drawoption;
         drawoption = (i == 0 ? "box" : "same box");
-        (main_pads.back()).AddHisto((m_board[i].m_histoclusterval).get(), drawoption);
+        (main_pads.back()).AddHisto((m_board.at(i).m_histoclusterval).get(), drawoption);
       }
       //end of cluster charge
       //number of tracks
@@ -948,8 +881,8 @@ public:
       m_conf_group_frame_cdslego->AddFrame(m_conf_checkbox_cdslego.get(), m_hinttop.get());
       cdslego_pads.push_back(histopad(m_conf_checkbox_cdslego.get()));
       for (size_t i = 0; i < m_board.size(); ++i) {
-        (cdslego_pads.back()).AddHisto((m_board[i].m_testhisto).get(), "SURF2ZFBBB"); //
-        //(cdslego_pads.back()).AddHisto((m_board[i].m_testhisto).get(), "scat");
+        (cdslego_pads.back()).AddHisto((m_board.at(i).m_testhisto).get(), "SURF2ZFBBB"); //
+        //(cdslego_pads.back()).AddHisto((m_board.at(i).m_testhisto).get(), "scat");
       }
       //end of cds lego plot
 
@@ -961,7 +894,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_clusterx.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_clusterx.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histoclusterx).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histoclusterx).get(), "");
       }
       //end of clusterx
 
@@ -971,7 +904,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_clustery.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_clustery.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histoclustery).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histoclustery).get(), "");
       }
       //end of clustery
 
@@ -981,19 +914,9 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_raw2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_raw2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_historaw2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_historaw2d).get(), "colz");
       }
       //end of raw2d
-
-      //depfet eudet hitmap
-      m_conf_checkbox_hitmapdepfetcorr =  new TGCheckButton(m_conf_group_frame_board.get(),"eudet depfet hitmap");
-      m_conf_checkbox_hitmapdepfetcorr->Associate(this);
-      m_conf_group_frame_board->AddFrame(m_conf_checkbox_hitmapdepfetcorr.get(), m_hinttop.get());
-      board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_hitmapdepfetcorr.get())));
-      for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_hitmap_depfet_corr).get(), "colz");
-      }
-      //end of depfet eudet hitmap
 
       //cds2d
       m_conf_checkbox_cds2d =  new TGCheckButton(m_conf_group_frame_board.get(),"CDS 2D");
@@ -1001,7 +924,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_cds2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_cds2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histocds2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histocds2d).get(), "colz");
       }
       //end of cds2d
 
@@ -1011,7 +934,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_cluster2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_cluster2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histocluster2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histocluster2d).get(), "colz");
       }
       //end of cluster2d
 
@@ -1021,7 +944,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_rawval.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_rawval.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_historawval).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_historawval).get(), "");
       }
       //end of raw value
       //noise 2d
@@ -1030,7 +953,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_noise2d.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_noise2d.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histonoise2d).get(), "colz");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histonoise2d).get(), "colz");
       }
       //end of noise2d
       //raw x
@@ -1039,7 +962,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_rawx.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_rawx.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_historawx).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_historawx).get(), "");
       }
       //end of raw x
       //raw y
@@ -1048,7 +971,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_rawy.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_rawy.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_historawy).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_historawy).get(), "");
       }
       //end of raw y
       //cds value
@@ -1057,7 +980,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_cdsval.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_cdsval.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histocdsval).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histocdsval).get(), "");
       }
       //end of cds value
       //noise
@@ -1066,7 +989,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_noise.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_noise.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histonoise).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histonoise).get(), "");
       }
       //end of noise
 
@@ -1077,7 +1000,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_noiseeventnr.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_noiseeventnr.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histonoiseeventnr).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histonoiseeventnr).get(), "");
       }
       //end of noise as a function of eventnr
 
@@ -1091,7 +1014,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_numhits.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_numhits.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histonumhits).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histonumhits).get(), "");
       }
       //end of number of seeds
       //cluster charge
@@ -1100,7 +1023,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_clusterval.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_clusterval.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histoclusterval).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histoclusterval).get(), "");
       }
       //end of cluster charge
       //number of clusters
@@ -1109,7 +1032,7 @@ public:
       m_conf_group_frame_board->AddFrame(m_conf_checkbox_numclusters.get(), m_hinttop.get());
       board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_numclusters.get())));
       for (size_t i = 0; i <  m_board.size(); ++i) {
-        board_pads.back().at(i).AddHisto((m_board[i].m_histonumclusters).get(), "");
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histonumclusters).get(), "");
       }
       //end of number of clusters
 
@@ -1159,11 +1082,11 @@ public:
   ~RootMonitor() {
     //std::cout << "Destructor" << std::endl;
     for(size_t i =0; i < m_hitcorrelation.size();i++)
-      delete m_hitcorrelation[i];
+      delete m_hitcorrelation.at(i);
     for(size_t i =0; i < m_clustercorrelationx.size();i++)
-      delete m_clustercorrelationx[i];
+      delete m_clustercorrelationx.at(i);
     for(size_t i =0; i < m_clustercorrelationy.size();i++)
-      delete m_clustercorrelationy[i];
+      delete m_clustercorrelationy.at(i);
 
     gApplication->Terminate();
   }
@@ -1172,7 +1095,7 @@ public:
       m_cds_lego_canvas->Clear(); //first clean the old canvas
       if(cdslego_pads.size() > 0)
         {
-          if(cdslego_pads[0].GetStatus()) //only update the canvas if the checkbox was enabled
+          if(cdslego_pads.at(0).GetStatus()) //only update the canvas if the checkbox was enabled
             {
               m_cds_lego_canvas->Divide(3,2); //
               for (size_t j = 0; j < m_board.size()-1; ++j) //add the plots for each board
@@ -1180,10 +1103,10 @@ public:
                   m_cds_lego_canvas->cd(j+1);
                   gStyle->SetPalette(1,0);
                   gPad->SetRightMargin(0.13);
-                  //  cdslego_pads[0].h[j]->GetZaxis()->SetTitleColor(10);
-                  //   cdslego_pads[0].h[j]->GetZaxis()->SetLabelColor(10);
-                  //     cdslego_pads[0].h[j]->GetZaxis()->SetAxisColor(10);
-                  //   TPaletteAxis *palette = new TPaletteAxis(0.798918, -0.894338, 0.8911, 0.894338,  cdslego_pads[0].h[j]);
+                  //  cdslego_pads.at(0).h.at(j)->GetZaxis()->SetTitleColor(10);
+                  //   cdslego_pads.at(0).h.at(j)->GetZaxis()->SetLabelColor(10);
+                  //     cdslego_pads.at(0).h.at(j)->GetZaxis()->SetAxisColor(10);
+                  //   TPaletteAxis *palette = new TPaletteAxis(0.798918, -0.894338, 0.8911, 0.894338,  cdslego_pads.at(0).h.at(j));
                   //   palette->SetLabelColor(1);
                   //   palette->SetLabelFont(62);
                   //   palette->SetLabelOffset(0.005);
@@ -1192,9 +1115,9 @@ public:
                   //   palette->SetTitleSize(0.04);
                   //   palette->SetFillColor(100);
                   //   palette->SetFillStyle(1001);
-                  //   cdslego_pads[0].h[j]->GetListOfFunctions()->Add(palette,"br");
+                  //   cdslego_pads.at(0).h.at(j)->GetListOfFunctions()->Add(palette,"br");
 
-                  cdslego_pads[0].h[j]->DrawCopy(cdslego_pads[0].drawoptions[j]); //access the plot, that were assigned to this pad and draw it
+                  cdslego_pads.at(0).h.at(j)->DrawCopy(cdslego_pads.at(0).drawoptions.at(j)); //access the plot, that were assigned to this pad and draw it
                 }
             }
         }
@@ -1207,51 +1130,51 @@ public:
         {
           //    std::cout << "blabla bug 5.1 " <<i <<  std::endl;
 
-          m_board[i].m_canvas->Clear(); //clear the canvas for this board
+          m_board.at(i).m_canvas->Clear(); //clear the canvas for this board
           int activepads = 0; //counter for the number auf active pads. this is important to divide the canvas in a suitable way
 
           for(size_t j = 0; j < board_pads.size(); j++)
             {
-              if(board_pads[j].at(0).GetStatus()) //count the number of pads with enabled plots
+              if(board_pads.at(j).at(0).GetStatus()) //count the number of pads with enabled plots
                 activepads++;
             }
           //    std::cout << "blabla bug 5.2" << std::endl;
 
           //now divide the canvas depending on the number of active pads. a more intelligent algorithm should be added
           if(activepads <= 3)
-            m_board[i].m_canvas->Divide(activepads, 1);
+            m_board.at(i).m_canvas->Divide(activepads, 1);
           else if(activepads > 3 && activepads <= 6)
-            m_board[i].m_canvas->Divide(3, 2);
+            m_board.at(i).m_canvas->Divide(3, 2);
           else if(activepads > 6 && activepads <= 9)
-            m_board[i].m_canvas->Divide(3, 3);
+            m_board.at(i).m_canvas->Divide(3, 3);
           else if(activepads > 9 && activepads <= 12)
-            m_board[i].m_canvas->Divide(4, 3);
+            m_board.at(i).m_canvas->Divide(4, 3);
           else if(activepads > 12 && activepads <= 16)
-            m_board[i].m_canvas->Divide(4, 4);
+            m_board.at(i).m_canvas->Divide(4, 4);
           else if(activepads > 16 && activepads <= 20)
-            m_board[i].m_canvas->Divide(5, 4);
+            m_board.at(i).m_canvas->Divide(5, 4);
           else if(activepads > 20 && activepads <= 22)
-            m_board[i].m_canvas->Divide(5, 5);
+            m_board.at(i).m_canvas->Divide(5, 5);
           else if(activepads > 22 && activepads <= 30)
-            m_board[i].m_canvas->Divide(6, 5);
+            m_board.at(i).m_canvas->Divide(6, 5);
           else if(activepads > 30 && activepads <= 36)
-            m_board[i].m_canvas->Divide(6, 6);
+            m_board.at(i).m_canvas->Divide(6, 6);
           else if(activepads > 36 && activepads <= 42)
-            m_board[i].m_canvas->Divide(7, 6);
+            m_board.at(i).m_canvas->Divide(7, 6);
           else if(activepads > 42 && activepads <= 49)
-            m_board[i].m_canvas->Divide(7, 7);
+            m_board.at(i).m_canvas->Divide(7, 7);
 
           //   std::cout << "blabla bug 5.3" << std::endl;
 
           int canvaspadindex = 1;
           for(size_t t = 0; t < board_pads.size(); t++)
             {
-              m_board[i].m_canvas->cd(canvaspadindex);
-              if(board_pads[t].at(i).GetStatus()) //if the pad is active, it is drawn
+              m_board.at(i).m_canvas->cd(canvaspadindex);
+              if(board_pads.at(t).at(i).GetStatus()) //if the pad is active, it is drawn
                 {
-                  if(board_pads[t].at(i).h[0]->GetTitle() == std::string("CDS Values"))
+                  if(board_pads.at(t).at(i).h.at(0)->GetTitle() == std::string("CDS Values"))
                     gPad->SetLogy();
-                  board_pads[t].at(i).h[0]->DrawCopy( board_pads[t].at(i).drawoptions.at(0)); //index is equal to 0 because in each board display tab only one plot per pad is drawn
+                  board_pads.at(t).at(i).h.at(0)->DrawCopy( board_pads.at(t).at(i).drawoptions.at(0)); //index is equal to 0 because in each board display tab only one plot per pad is drawn
                   canvaspadindex++;
                 }
             }
@@ -1267,7 +1190,7 @@ public:
 
       for(size_t i = 0; i < main_pads.size(); i++)
         {
-          if(main_pads[i].GetStatus())//count the number of pads with enabled plots
+          if(main_pads.at(i).GetStatus())//count the number of pads with enabled plots
             activepads++;
         }
       //now divide the canvas depending on the number of active pads.
@@ -1305,15 +1228,15 @@ public:
       for(size_t i = 1; i <= main_pads.size(); i++)
         {
           m_canvasmain->cd(canvaspadindex);
-          if(main_pads[i-1].GetStatus())//if the pad is active, it is drawn
+          if(main_pads.at(i-1).GetStatus())//if the pad is active, it is drawn
             {
-              for(int j = 0; j < main_pads[i-1].index; j++) //loop over all plots
+              for(int j = 0; j < main_pads.at(i-1).index; j++) //loop over all plots
                 {
-                  if(main_pads[i-1].h[j]->InheritsFrom("TH2D")) //if it is a 2d plot, set the correct fillcolor
-                    main_pads[i-1].h[j]->SetFillColor(COL_BASE+j);
+                  if(main_pads.at(i-1).h.at(j)->InheritsFrom("TH2D")) //if it is a 2d plot, set the correct fillcolor
+                    main_pads.at(i-1).h.at(j)->SetFillColor(COL_BASE+j);
                   else //otherwise change the linecolor
-                    main_pads[i-1].h[j]->SetLineColor(COL_BASE+j);
-                  main_pads[i-1].h[j]->Draw(main_pads[i-1].drawoptions.at(j));
+                    main_pads.at(i-1).h.at(j)->SetLineColor(COL_BASE+j);
+                  main_pads.at(i-1).h.at(j)->Draw(main_pads.at(i-1).drawoptions.at(j));
                 }
               canvaspadindex++;
             }
@@ -1325,18 +1248,18 @@ public:
       //which histograms to be displayed?
       for(size_t i = 0; i < main_pads.size(); i++)
         {
-          main_pads[i].SetStatus(); //synchronize histopads and checkboxes
+          main_pads.at(i).SetStatus(); //synchronize histopads and checkboxes
         }
       for(size_t i = 0; i < board_pads.size(); i++)
         {
-          for(size_t t = 0; t < board_pads[i].size(); t++)
+          for(size_t t = 0; t < board_pads.at(i).size(); t++)
             {
-              board_pads[i].at(t).SetStatus();//synchronize histopads and checkboxes
+              board_pads.at(i).at(t).SetStatus();//synchronize histopads and checkboxes
             }
         }
       UpdateBoardCanvas(); //update the canvases
       UpdateMainCanvas(); //update the canvas
-      cdslego_pads[0].SetStatus();
+      cdslego_pads.at(0).SetStatus();
       UpdateCDSLegoCanvas(); //update the canvas
       unsigned cdsupdate = (unsigned)m_conf_cds_lego_update->GetNumber();
       if(cdsupdate > 0)
@@ -1353,15 +1276,12 @@ public:
       if(numbinshitcorr != conf.HITCORR_NUM_BINS && numbinshitcorr > 0)
         {
           for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
-            delete m_hitcorrelation[i];
-            TString title;
-            char tmpstring[50];
-            sprintf(tmpstring, "Hit Correlation Board %1.0f : Board %1.0f", (float)i,(float)(i+1) );
-            title = tmpstring;
-            m_hitcorrelation[i] = new TH2DNew(make_name("hitcorrelation",    i).c_str(), title,   numbinshitcorr, 0, numbinshitcorr, numbinshitcorr, 0, numbinshitcorr);
-            m_hitcorrelation[i]->SetContour(99);
+            delete m_hitcorrelation.at(i);
+            std::string title = "Hit Correlation Board " + to_string(i) + " : Board " + to_string(i+1);
+            m_hitcorrelation.at(i) = new TH2DNew(make_name("hitcorrelation",    i).c_str(), title.c_str(),   numbinshitcorr, 0, numbinshitcorr, numbinshitcorr, 0, numbinshitcorr);
+            m_hitcorrelation.at(i)->SetContour(99);
 
-            main_pads[i].h[0] = m_hitcorrelation[i];
+            main_pads.at(i).h.at(0) = m_hitcorrelation.at(i);
           }
           conf.HITCORR_NUM_BINS = numbinshitcorr;
           UpdateMainCanvas(); //update the canvas
@@ -1413,10 +1333,10 @@ public:
         {
           std::cout << "*** resetting all histograms ***" << std:: endl;
           for (size_t i = 0; i < m_board.size(); ++i) {
-            m_board[i].Reset();
-            m_hitcorrelation[i]->Reset("");
-            m_clustercorrelationx[i]->Reset("");
-            m_clustercorrelationy[i]->Reset("");
+            m_board.at(i).Reset();
+            m_hitcorrelation.at(i)->Reset("");
+            m_clustercorrelationx.at(i)->Reset("");
+            m_clustercorrelationy.at(i)->Reset("");
           }
 
         }
@@ -1464,23 +1384,17 @@ public:
 
         for (size_t i = 0; i < m_board.size(); ++i) {
           //      std::cout << "i=" << i << std::endl;
-          m_board[i].Reset();
+          m_board.at(i).Reset();
         }
 
         for (size_t i = 0; i < m_hitcorrelation.size(); ++i) {
-          m_hitcorrelation[i]->Reset("");
+          m_hitcorrelation.at(i)->Reset("");
         }
         for (size_t i = 0; i <m_clustercorrelationx.size(); ++i) {
-          m_clustercorrelationx[i]->Reset("");
+          m_clustercorrelationx.at(i)->Reset("");
         }
         for (size_t i = 0; i <m_clustercorrelationy.size(); ++i) {
-          m_clustercorrelationy[i]->Reset("");
-        }
-        for (size_t i = 0; i <m_depfet_correlation.size(); ++i) {
-          m_depfet_correlation[i]->Reset("");
-        }
-        for (size_t i = 0; i <m_depfet_correlationy.size(); ++i) {
-          m_depfet_correlationy[i]->Reset("");
+          m_clustercorrelationy.at(i)->Reset("");
         }
         m_depfet_adc->Reset("");
         m_depfet_map->Reset("");
@@ -1497,34 +1411,35 @@ public:
     } else if (ev.IsEORE()) {
       std::string filename = m_reader->Filename();
       size_t dot = filename.find_last_of("./\\:");
-      if (dot != std::string::npos && filename[dot] == '.') filename.erase(dot);
+      if (dot != std::string::npos && filename.at(dot) == '.') filename.erase(dot);
       filename += ".root";
       TFile rootfile(filename.c_str(), "RECREATE");
       for (size_t i = 0; i < m_board.size(); ++i) {
-        m_board[i].m_testhisto->Write();
-        m_board[i].m_historaw2d->Write();
-        m_board[i].m_histocds2d->Write();
-        m_board[i].m_histohit2d->Write();
-        m_board[i].m_histocluster2d->Write();
-        m_board[i].m_histotrack2d->Write();
-        m_board[i].m_histonoise2d->Write();
-        m_board[i].m_historawx->Write();
-        m_board[i].m_historawy->Write();
-        m_board[i].m_histoclusterx->Write();
-        m_board[i].m_histoclustery->Write();
-        m_board[i].m_historawval->Write();
-        m_board[i].m_histocdsval->Write();
-        m_board[i].m_histonoise->Write();
-        m_board[i].m_histonoiseeventnr->Write();
+        m_board.at(i).m_testhisto->Write();
+        m_board.at(i).m_historaw2d->Write();
+        m_board.at(i).m_histocds2d->Write();
+        m_board.at(i).m_histohit2d->Write();
+        m_board.at(i).m_histocluster2d->Write();
+        m_board.at(i).m_histotrack2d->Write();
+        m_board.at(i).m_histonoise2d->Write();
+        m_board.at(i).m_historawx->Write();
+        m_board.at(i).m_historawy->Write();
+        m_board.at(i).m_histoclusterx->Write();
+        m_board.at(i).m_histoclustery->Write();
+        m_board.at(i).m_historawval->Write();
+        m_board.at(i).m_histocdsval->Write();
+        m_board.at(i).m_histonoise->Write();
+        m_board.at(i).m_histonoiseeventnr->Write();
 
-        m_board[i].m_histoclusterval->Write();
-        m_clustercorrelationx[i]->Write();
-        m_clustercorrelationy[i]->Write();
+        m_board.at(i).m_histoclusterval->Write();
+        m_clustercorrelationx.at(i)->Write();
+        m_clustercorrelationy.at(i)->Write();
         if (i > 0) {
-          m_board[i].m_histodeltax->Write();
-          m_board[i].m_histodeltay->Write();
+          m_board.at(i).m_histodeltax->Write();
+          m_board.at(i).m_histodeltay->Write();
         }
       }
+      std::cout << "Saved histograms to " << filename << std::endl;
       //m_histo
       m_runended = true;
     } else {
@@ -1563,7 +1478,7 @@ public:
           clusterpositiony.reserve(50);
 
           //bool depfethit = depfet_cluster_charge.size() > 0;
-          FillBoard(m_board[i], plane, i, numberofclusters[i], clusterpositionx, clusterpositiony/*, depfethit*/);
+          FillBoard(m_board.at(i), plane, i, numberofclusters.at(i), clusterpositionx, clusterpositiony/*, depfethit*/);
           //cposx.push_back(clusterposition);
           cposx.at(i) = clusterpositionx;
           cposy.at(i) = clusterpositiony;
@@ -1573,7 +1488,7 @@ public:
         for(size_t i = 0; i < m_board.size()-1; i++) {
           for(size_t k = 0; k < cposy.at(i).size(); k++) {
             for(size_t l = 0; l < cposy.at(i+1).size(); l++) {
-              m_clustercorrelationy[i]->Fill(cposy.at(i+1).at(l),cposy.at(i).at(k));
+              m_clustercorrelationy.at(i)->Fill(cposy.at(i+1).at(l),cposy.at(i).at(k));
             }
           }
         }
@@ -1585,12 +1500,12 @@ public:
         }
         //
         for(size_t i = 0; i < m_board.size()-1; i++) {
-          if (numberofclusters[i] != 0 || numberofclusters[i+1] != 0)
-            m_hitcorrelation[i]->Fill(numberofclusters[i+1],numberofclusters[i]);
+          if (numberofclusters.at(i) != 0 || numberofclusters.at(i+1) != 0)
+            m_hitcorrelation.at(i)->Fill(numberofclusters.at(i+1),numberofclusters.at(i));
           //cluster correlation
           for(size_t k = 0; k < cposx.at(i).size(); k++) {
             for(size_t l = 0; l < cposx.at(i+1).size(); l++) {
-              m_clustercorrelationx[i]->Fill(cposx.at(i+1).at(l),cposx.at(i).at(k));
+              m_clustercorrelationx.at(i)->Fill(cposx.at(i+1).at(l),cposx.at(i).at(k));
             }
           }
         }
@@ -1600,28 +1515,6 @@ public:
             m_clustercorrelationx.back()->Fill(cposx.at((int)m_board.size()-1).at(l),cposx.at(0).at(k));
           }
         }
-        //depfet correlation
-        //      std::cout << "seedx=" << depfet_seedx.size() << std::endl;
-        //      std::cout << "depfet_clusterx=" << depfet_clusterx.size() << " depfet_clustery=" << depfet_clustery.size() << std::endl;
-        /*
-          for(size_t i = 0; i < m_board.size(); i++) {
-          for(size_t k = 0; k < depfet_clusterx.size(); k++) {
-          for(size_t l = 0; l < cposx.at(i).size(); l++) {
-          m_depfet_correlation[i]->Fill(depfet_clusterx[k], cposx.at(i).at(l));
-          }
-          }
-          }
-
-          for(size_t i = 0; i < m_board.size(); i++) {
-          for(size_t k = 0; k < depfet_clustery.size(); k++) {
-          //std::cout << "cpos = " << cposx.at(i).size() << " cposy = "<< cposy.at(i).size() << std::endl;
-          for(size_t l = 0; l < cposy.at(i).size(); l++) {
-          m_depfet_correlationy[i]->Fill(depfet_clustery[k], cposy.at(i).at(l));
-          }
-          }
-          }
-        */
-        //end of depfet correlation
         //end of cluster correlation
 
 
@@ -1636,51 +1529,48 @@ public:
     unsigned planeshit = 0;
     //  std::cout << "Event " << ev->GetEventNumber() << ", clusters:";
     //       for (size_t i = 0; i < numplanes; ++i) {
-    //         std::cout << " " << m_board[i].m_clusters.size();
+    //         std::cout << " " << m_board.at(i).m_clusters.size();
     //       }
     //       std::cout << std::endl;
     int numtracks = 0;
 
     for (size_t i = 0; i < ev.NumPlanes() && i < m_dets.size(); ++i) {
-      if (m_board[i].m_clusters.size() >= 1) {
+      if (m_board.at(i).m_clusters.size() >= 1) {
         planeshit++;
       }
     }
     if (planeshit < ev.NumPlanes() && planeshit < m_dets.size()) {
       // std::cout << "No track candidate" << std::endl;
     } else {
-      const double alignx[] = { -10,  -5, -20, 30 };
-      const double aligny[] = { -10,   5, -10, 10 };
-      const double thresh[] = {  20,  20,  40, 20 };
       //const double thresh2 = square(20);
-      for (size_t i = 0; i < m_board[0].m_clusters.size(); ++i) {
+      if (m_board.size()) for (size_t i = 0; i < m_board.at(0).m_clusters.size(); ++i) {
         //std::cout << "Trying cluster " << i << std::endl;
         size_t board = 1;
-        std::vector<double> trackx(ev.NumPlanes()), tracky(ev.NumPlanes());
-        trackx[0] = m_board[0].m_clusterx[i];
-        tracky[0] = m_board[0].m_clustery[i];
+        std::vector<double> trackx(m_board.size()), tracky(m_board.size());
+        trackx.at(0) = m_board.at(0).m_clusterx.at(i);
+        tracky.at(0) = m_board.at(0).m_clustery.at(i);
         double closest2;
         size_t iclosest = 0;
         //bool havecluster;
         do {
           closest2 = 2.0;
           //havecluster = false;
-          for (size_t cluster = 0; cluster < m_board[board].m_clusters.size(); ++cluster) {
-            double x = m_board[board].m_clusterx[cluster];
-            double y = m_board[board].m_clustery[cluster];
+          for (size_t cluster = 0; cluster < m_board.at(board).m_clusters.size(); ++cluster) {
+            double x = m_board.at(board).m_clusterx.at(cluster);
+            double y = m_board.at(board).m_clustery.at(cluster);
             if (board >= 3) { // ????????????????????
               x = 263 - x;
             }
-            double dx = x - trackx[board-1] - alignx[board-1];
-            double dy = y - tracky[board-1] - aligny[board-1];
-            double dist2 = (square(dx) + square(dy)) / square(thresh[board-1]);
+            double dx = x - trackx.at(board-1); // - m_dets[board-1].alignx;
+            double dy = y - tracky.at(board-1); // - m_dets[board-1].aligny;
+            double dist2 = (square(dx) + square(dy)) / square(20); // square(m_dets[board-1].trackthresh);
             //std::cout << "dist^2 = " << dist2 << std::endl;
             if (dist2 < closest2) {
               iclosest = cluster;
               closest2 = dist2;
               //havecluster = true;
-              trackx[board] = x;
-              tracky[board] = y;
+              trackx.at(board) = x;
+              tracky.at(board) = y;
             }
           }
           ++board;
@@ -1690,11 +1580,11 @@ public:
           numtracks++;
           //std::cout << "Found track in event " << ev->GetEventNumber() << ":";
           for (size_t i = 0; i < trackx.size(); ++i) {
-            //std::cout << " (" << trackx[i] << ", " << tracky[i] << ")";
-            m_board[i].m_histotrack2d->Fill(trackx[i], tracky[i]);
+            //std::cout << " (" << trackx.at(i) << ", " << tracky.at(i) << ")";
+            m_board.at(i).m_histotrack2d->Fill(trackx.at(i), tracky.at(i));
             if (i > 0) {
-              m_board[i].m_histodeltax->Fill(trackx[i] - trackx[i-1]);
-              m_board[i].m_histodeltay->Fill(tracky[i] - tracky[i-1]);
+              m_board.at(i).m_histodeltax->Fill(trackx.at(i) - trackx.at(i-1));
+              m_board.at(i).m_histodeltay->Fill(tracky.at(i) - tracky.at(i-1));
             }
           }
           //std::cout << std::endl;
@@ -1703,54 +1593,54 @@ public:
       }
     }
 
-    //m_board[0].m_testhisto->SetMaximum();
+    //m_board.at(0).m_testhisto->SetMaximum();
     m_histonumtracks->Fill(numtracks);
-    m_board[0].m_historawval->SetMaximum();
-    m_board[0].m_histocdsval->SetMaximum();
-    m_board[0].m_histonoise->SetMaximum();
-    m_board[0].m_histonoiseeventnr->SetMaximum();
+    m_board.at(0).m_historawval->SetMaximum();
+    m_board.at(0).m_histocdsval->SetMaximum();
+    m_board.at(0).m_histonoise->SetMaximum();
+    m_board.at(0).m_histonoiseeventnr->SetMaximum();
 
-    m_board[0].m_histoclusterval->SetMaximum();
-    m_board[0].m_histonumhits->SetMaximum();
-    m_board[0].m_histonumclusters->SetMaximum();
-    m_board[1].m_histodeltax->SetMaximum();
-    m_board[1].m_histodeltay->SetMaximum();
-    double maxr = m_board[0].m_historawval->GetMaximum();
-    double maxd = m_board[0].m_histocdsval->GetMaximum();
-    double max_noise = m_board[0].m_histonoise->GetMaximum();
-    double max_noise_eventnr = m_board[0].m_histonoiseeventnr->GetMaximum();
+    m_board.at(0).m_histoclusterval->SetMaximum();
+    m_board.at(0).m_histonumhits->SetMaximum();
+    m_board.at(0).m_histonumclusters->SetMaximum();
+    m_board.at(1).m_histodeltax->SetMaximum();
+    m_board.at(1).m_histodeltay->SetMaximum();
+    double maxr = m_board.at(0).m_historawval->GetMaximum();
+    double maxd = m_board.at(0).m_histocdsval->GetMaximum();
+    double max_noise = m_board.at(0).m_histonoise->GetMaximum();
+    double max_noise_eventnr = m_board.at(0).m_histonoiseeventnr->GetMaximum();
 
-    double maxc = m_board[0].m_histoclusterval->GetMaximum();
-    double maxh = m_board[0].m_histonumhits->GetMaximum();
-    double maxn = m_board[0].m_histonumclusters->GetMaximum();
-    double maxx = m_board[1].m_histodeltax->GetMaximum();
-    double maxy = m_board[1].m_histodeltay->GetMaximum();
+    double maxc = m_board.at(0).m_histoclusterval->GetMaximum();
+    double maxh = m_board.at(0).m_histonumhits->GetMaximum();
+    double maxn = m_board.at(0).m_histonumclusters->GetMaximum();
+    double maxx = m_board.at(1).m_histodeltax->GetMaximum();
+    double maxy = m_board.at(1).m_histodeltay->GetMaximum();
     for (size_t i = 0; i < m_board.size(); ++i) {
-      //  m_board[i].m_testhisto->SetMaximum(40.0);
-      //m_board[i].m_testhisto->SetMinimum(conf.SEED_NEIGHBOUR_THRESHOLD*5.0);
-      m_board[i].m_testhisto->SetMinimum(0.0); //set the minimum of the cds lego plots
+      //  m_board.at(i).m_testhisto->SetMaximum(40.0);
+      //m_board.at(i).m_testhisto->SetMinimum(conf.SEED_NEIGHBOUR_THRESHOLD*5.0);
+      m_board.at(i).m_testhisto->SetMinimum(0.0); //set the minimum of the cds lego plots
     }
     for (size_t i = 1; i < ev.NumPlanes() && i < m_dets.size(); ++i) {
-      if (m_board[i].m_historawval->GetMaximum() > maxr) maxr = m_board[i].m_historawval->GetMaximum();
-      if (m_board[i].m_histocdsval->GetMaximum() > maxd) maxd = m_board[i].m_histocdsval->GetMaximum();
-      if (m_board[i].m_histonoise->GetMaximum() > max_noise) max_noise = m_board[i].m_histonoise->GetMaximum();
-      if (m_board[i].m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board[i].m_histonoiseeventnr->GetMaximum();
-      if (m_board[i].m_histoclusterval->GetMaximum() > maxc) maxc = m_board[i].m_histoclusterval->GetMaximum();
-      if (m_board[i].m_histonumhits->GetMaximum() > maxh) maxh = m_board[i].m_histonumhits->GetMaximum();
-      if (m_board[i].m_histonumclusters->GetMaximum() > maxn) maxn = m_board[i].m_histonumclusters->GetMaximum();
-      if (m_board[i].m_histodeltax->GetMaximum() > maxx) maxx = m_board[i].m_histodeltax->GetMaximum();
-      if (m_board[i].m_histodeltay->GetMaximum() > maxy) maxy = m_board[i].m_histodeltay->GetMaximum();
+      if (m_board.at(i).m_historawval->GetMaximum() > maxr) maxr = m_board.at(i).m_historawval->GetMaximum();
+      if (m_board.at(i).m_histocdsval->GetMaximum() > maxd) maxd = m_board.at(i).m_histocdsval->GetMaximum();
+      if (m_board.at(i).m_histonoise->GetMaximum() > max_noise) max_noise = m_board.at(i).m_histonoise->GetMaximum();
+      if (m_board.at(i).m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board.at(i).m_histonoiseeventnr->GetMaximum();
+      if (m_board.at(i).m_histoclusterval->GetMaximum() > maxc) maxc = m_board.at(i).m_histoclusterval->GetMaximum();
+      if (m_board.at(i).m_histonumhits->GetMaximum() > maxh) maxh = m_board.at(i).m_histonumhits->GetMaximum();
+      if (m_board.at(i).m_histonumclusters->GetMaximum() > maxn) maxn = m_board.at(i).m_histonumclusters->GetMaximum();
+      if (m_board.at(i).m_histodeltax->GetMaximum() > maxx) maxx = m_board.at(i).m_histodeltax->GetMaximum();
+      if (m_board.at(i).m_histodeltay->GetMaximum() > maxy) maxy = m_board.at(i).m_histodeltay->GetMaximum();
     }
-    m_board[0].m_historawval->SetMaximum(maxr*1.1);
-    m_board[0].m_histocdsval->SetMaximum(maxd*1.1);
-    m_board[0].m_histonoise->SetMaximum(max_noise*1.1);
-    m_board[0].m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
+    m_board.at(0).m_historawval->SetMaximum(maxr*1.1);
+    m_board.at(0).m_histocdsval->SetMaximum(maxd*1.1);
+    m_board.at(0).m_histonoise->SetMaximum(max_noise*1.1);
+    m_board.at(0).m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
 
-    m_board[0].m_histoclusterval->SetMaximum(maxc*1.1);
-    m_board[0].m_histonumhits->SetMaximum(maxh*1.1);
-    m_board[0].m_histonumclusters->SetMaximum(maxn*1.1);
-    m_board[1].m_histodeltax->SetMaximum(maxx*1.1);
-    m_board[1].m_histodeltay->SetMaximum(maxy*1.1);
+    m_board.at(0).m_histoclusterval->SetMaximum(maxc*1.1);
+    m_board.at(0).m_histonumhits->SetMaximum(maxh*1.1);
+    m_board.at(0).m_histonumclusters->SetMaximum(maxn*1.1);
+    m_board.at(1).m_histodeltax->SetMaximum(maxx*1.1);
+    m_board.at(1).m_histodeltay->SetMaximum(maxy*1.1);
     m_modified = true;
     if (m_histoevents == 100) {
       //m_canvasmain->cd(1)->SetLogy();
@@ -1822,7 +1712,7 @@ private:
     counted_ptr<TRootEmbeddedCanvas> m_embedded;
     TCanvas * m_canvas;
     counted_ptr<TH2D> m_historaw2d, m_tempcds, m_tempcds2, m_histocds2d, m_histohit2d,
-      m_histocluster2d, m_histotrack2d, m_histonoise2d, m_testhisto, m_hitmap_depfet_corr;
+      m_histocluster2d, m_histotrack2d, m_histonoise2d, m_testhisto;
     counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval, m_histonoise, m_histonoiseeventnr,
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
       m_histodeltax, m_histodeltay, m_histonumhits;
@@ -1843,7 +1733,6 @@ private:
       m_historawval->Reset();
       m_histocdsval->Reset();
       m_histonoise->Reset();
-      m_hitmap_depfet_corr->Reset();
       m_histonoiseeventnr->Reset();
 
       m_histoclusterx->Reset();
@@ -1883,16 +1772,15 @@ private:
     b.m_historawx       = new TH1DNew(make_name("RawXProfile",   board).c_str(), "Raw X Profile",      num_x_pixels, 0, num_x_pixels);
     b.m_historawy       = new TH1DNew(make_name("RawYProfile",   board).c_str(), "Raw Y Profile",      num_y_pixels, 0, num_y_pixels);
     b.m_histoclusterx   = new TH1DNew(make_name("ClustXProfile", board).c_str(), "Cluster X Profile", num_x_pixels, 0, num_x_pixels);
-    b.m_hitmap_depfet_corr = new TH2DNew(make_name("EUDET DEPFET HITMAP", board).c_str(), "EUDET DEPFET HITMAP",   264, 0, 264, 256, 0, 256);
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", num_y_pixels, 0, num_y_pixels);
-    if(m_dets[board].is("fortis"))
+    if(m_dets.at(board).is("fortis"))
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        65536 , 0, 65536 );
     else
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
 
-    if (m_dets[board].is("depfet")) {
+    if (m_dets.at(board).is("depfet")) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        4050, -50, 4000);
-    } else if (m_dets[board].is("fortis")) {
+    } else if (m_dets.at(board).is("fortis")) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        9000, -1000, 10000);
     } else {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
@@ -1912,7 +1800,7 @@ private:
 
   }
   void FillBoard(BoardDisplay & b, const eudaq::StandardPlane & plane, int boardnumber,
-                 unsigned int &numberofclusters, std::vector<double> & clusterposition,
+                 unsigned int &numberofclusters, std::vector<double> & clusterpositionx,
                  std::vector<double> & clusterpositiony /*, bool depfethit*/) {
     //eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     //const size_t totpixels = plane.m_xsize * plane.m_ysize; //, nx=264, ny=256;
@@ -1925,20 +1813,20 @@ private:
     double sumx2 = 0.0;
     // if (plane.m_pix.size() == 1) {
     //   for (size_t i = 0; i < hitpixels; ++i) {
-    //     cds[i] = plane.GetPixel(i);
-    //     sumx2 += cds[i] * cds[i];
+    //     cds.at(i) = plane.GetPixel(i);
+    //     sumx2 += cds.at(i) * cds.at(i);
     //   }
     // } else {
     //   for (size_t i = 0; i < hitpixels; ++i) {
-    //     cds[i] = plane.GetPixel(i);
-    //     sumx2 += cds[i] * cds[i];
+    //     cds.at(i) = plane.GetPixel(i);
+    //     sumx2 += cds.at(i) * cds.at(i);
     //   }
     if (plane.NeedsCDS()) {
       for (size_t i = 0; i < cds.size(); ++i) {
-        sumx2 += cds[i] * cds[i];
+        sumx2 += cds.at(i) * cds.at(i);
       }
       //rms for noise determination
-      //b.rmshisto->FillN(hitpixels, &cds[0], &ones[0]);
+      //b.rmshisto->FillN(hitpixels, &cds.at(0), &ones.at(0));
 
       double rms = sqrt(sumx2/cds.size());
       //double rms = b.rmshisto->GetRMS();
@@ -1965,66 +1853,59 @@ private:
       }
       //end of rms for noise determination
 
-      b.m_historaw2d->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &plane.PixVector(1)[0]);
+      b.m_historaw2d->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(plane.PixVector(1)));
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
-      b.m_historawx->FillN(hitpixels, &plane.XVector()[0], &plane.PixVector(1)[0]);
+      b.m_historawx->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.PixVector(1)));
       b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents);
-      b.m_historawy->FillN(hitpixels, &plane.YVector()[0], &plane.PixVector(1)[0]);
+      b.m_historawy->FillN(hitpixels, dataptr(plane.YVector()), dataptr(plane.PixVector(1)));
       b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
-      b.m_historawval->FillN(hitpixels, &plane.PixVector(1)[0], &ones[0]);
+      b.m_historawval->FillN(hitpixels, dataptr(plane.PixVector(1)), dataptr(ones));
       //b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
     }
-    //b.m_histocdsval->FillN(hitpixels, &cds[0], &ones[0]);
+    //b.m_histocdsval->FillN(hitpixels, &cds.at(0), &ones.at(0));
 
     for(size_t i = 0; i < cds.size();i++)
       {
         double pedestal = 0.0;
-        if(m_dets[boardnumber].ped_matrix.size())
-          pedestal = m_dets[boardnumber].ped_matrix[(int)plane.GetX(i)][(int)plane.GetY(i)];
+        if(m_dets.at(boardnumber).ped_matrix.size())
+          pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
 
-        b.m_histocdsval->Fill((cds[i] - pedestal));
+        b.m_histocdsval->Fill((cds.at(i) - pedestal));
       }
 
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
     b.m_tempcds->Reset();
     b.m_tempcds2->Reset();
-    if(m_dets[boardnumber].is("fortis"))
-      {
-        double pedestal = 0.0;
+    if(m_dets.at(boardnumber).is("fortis")) {
+      double pedestal = 0.0;
 
-        for(size_t i = 0; i < plane.HitPixels(); ++i)
-          {
-            //pedestal = fortis_ped_matrix[plane.m_x[i]][plane.m_y[i]];
-            pedestal = 0.0;
-            b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
-            b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
-          }
+      for(size_t i = 0; i < plane.HitPixels(); ++i) {
+        //pedestal = fortis_ped_matrix[plane.m_x.at(i)][plane.m_y.at(i)];
+        pedestal = 0.0;
+        b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
+        b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
       }
-    else
-      {
-        b.m_tempcds->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
-        b.m_tempcds2->Reset();
-        b.m_tempcds2->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
-      }
+    } else if (hitpixels) {
+      b.m_tempcds->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(cds));
+      b.m_tempcds2->Reset();
+      b.m_tempcds2->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(cds));
+    }
 
     if((totalnumevents % (int)conf.UPDATE_EVERY_N_EVENTS) == 0) {
       b.m_testhisto->Reset();
-      TString tmpstring;
-      char tmpstring2[50];
-      sprintf(tmpstring2, "Board %1.0f, event: %1.0i", (float)boardnumber, totalnumevents);
-      tmpstring = tmpstring2;
-      b.m_testhisto->SetTitle(tmpstring);
-      b.m_testhisto->FillN(hitpixels, &plane.XVector()[0], &plane.YVector()[0], &cds[0]);
+      std::string title = "Board " + to_string(boardnumber) + ", event: " + to_string(totalnumevents);
+      b.m_testhisto->SetTitle(title.c_str());
+      if (hitpixels) b.m_testhisto->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(cds));
     }
 
-    //b.m_histocds2d->FillN(hitpixels, &newx[0], &plane.m_y[0], &cds[0]);
+    //b.m_histocds2d->FillN(hitpixels, &newx.at(0), &plane.m_y.at(0), &cds.at(0));
     for(size_t i = 0; i < plane.HitPixels();i++)
       {
         double pedestal = 0.0;
-        if(m_dets[boardnumber].ped_matrix.size())
-          pedestal = m_dets[boardnumber].ped_matrix[(int)plane.GetX(i)][(int)plane.GetY(i)];
+        if(m_dets.at(boardnumber).ped_matrix.size())
+          pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
 
-        b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), cds[i] - pedestal);
+        b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), cds.at(i) - pedestal);
       }
 
     b.m_clusters.clear();
@@ -2033,7 +1914,7 @@ private:
 
 
 
-    if(m_dets[boardnumber].is("mimosa26"))
+    if(m_dets.at(boardnumber).is("mimosa26"))
       {
         for(size_t i =0; i< plane.HitPixels(); i++)
           {
@@ -2071,9 +1952,9 @@ private:
 
           std::vector<Seed> seeds;
           seeds.reserve(20); // preallocate memory for 20 seed pixels
-          double seed_thresh = m_dets[boardnumber].seed_thresh /* sigma */,
-            seedneighbour_thresh = m_dets[boardnumber].neighbour_thresh,
-            cluster_thresh = m_dets[boardnumber].cluster_thresh /* sigma */;
+          double seed_thresh = m_dets.at(boardnumber).seed_thresh /* sigma */,
+            seedneighbour_thresh = m_dets.at(boardnumber).neighbour_thresh,
+            cluster_thresh = m_dets.at(boardnumber).cluster_thresh /* sigma */;
           
           for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
             for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
@@ -2081,9 +1962,9 @@ private:
               double noise = DEFAULT_NOISE; //b.m_histonoise2d->GetBinContent(ix, iy);
 
               Double_t pedestal = 0.0;
-              if (m_dets[boardnumber].ped_matrix.size()) {
-                pedestal = m_dets[boardnumber].ped_matrix[ix-1][iy-1];
-                noise = m_dets[boardnumber].noise_matrix[ix-1][iy-1];
+              if (m_dets.at(boardnumber).ped_matrix.size()) {
+                pedestal = m_dets.at(boardnumber).ped_matrix.at(ix-1).at(iy-1);
+                noise = m_dets.at(boardnumber).noise_matrix.at(ix-1).at(iy-1);
               }
               if ((s-pedestal) > seed_thresh*noise) {
                 seeds.push_back(Seed(ix, iy, s));
@@ -2092,54 +1973,54 @@ private:
           }
 
           //construct the cluster
-          int clustersizeindex = m_dets[boardnumber].clustsize / 2;
-          if (seeds.size() < MAX_SEEDS || m_dets[boardnumber].is("fortis")) {
+          int clustersizeindex = m_dets.at(boardnumber).clustsize / 2;
+          if (seeds.size() < MAX_SEEDS || m_dets.at(boardnumber).is("fortis")) {
             std::sort(seeds.begin(), seeds.end(), &Seed::compare);
             for (size_t i = 0; i < seeds.size(); ++i) {
 
-              if (b.m_tempcds->GetBinContent((int)seeds[i].x, (int)seeds[i].y) > 0) {
+              if (b.m_tempcds->GetBinContent((int)seeds.at(i).x, (int)seeds.at(i).y) > 0) {
                 double cluster = 0;
                 double noise = 0;
                 for (int dy = -clustersizeindex; dy <= clustersizeindex; ++dy) {
                   for (int dx = -clustersizeindex; dx <= clustersizeindex; ++dx) {
                     Double_t pedestal = 0.0;
                     try{
-                      if((seeds[i].x+dx) >= 0 && (seeds[i].y+dy) >= 0 && (seeds[i].x+dx) < b.m_tempcds->GetXaxis()->GetLast()
-                         && (seeds[i].y+dy) < b.m_tempcds->GetYaxis()->GetLast())
+                      if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0 && (seeds.at(i).x+dx) < b.m_tempcds->GetXaxis()->GetLast()
+                         && (seeds.at(i).y+dy) < b.m_tempcds->GetYaxis()->GetLast())
                         {
-                          if (m_dets[boardnumber].ped_matrix.size()) {
-                            pedestal = m_dets[boardnumber].ped_matrix.at(seeds[i].x+dx).at(seeds[i].y+dy);
+                          if (m_dets.at(boardnumber).ped_matrix.size()) {
+                            pedestal = m_dets.at(boardnumber).ped_matrix.at(seeds.at(i).x+dx).at(seeds.at(i).y+dy);
                           }
                         }
                     }
                     catch (...)
                       {
-                        std::cout << "error " << (seeds[i].x+dx) << " " << (seeds[i].y+dy) << std::endl;
+                        std::cout << "error " << (seeds.at(i).x+dx) << " " << (seeds.at(i).y+dy) << std::endl;
                         exit(-1);
                       }
-                    if((seeds[i].x+dx) >= 0 && (seeds[i].y+dy) >= 0 && (seeds[i].x+dx) < b.m_tempcds->GetXaxis()->GetLast()
-                       && (seeds[i].y+dy) < b.m_tempcds->GetYaxis()->GetLast() //check whether we are inside the histogram
-                       && (b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy)-pedestal) > seedneighbour_thresh * DEFAULT_NOISE)
+                    if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0 && (seeds.at(i).x+dx) < b.m_tempcds->GetXaxis()->GetLast()
+                       && (seeds.at(i).y+dy) < b.m_tempcds->GetYaxis()->GetLast() //check whether we are inside the histogram
+                       && (b.m_tempcds->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy)-pedestal) > seedneighbour_thresh * DEFAULT_NOISE)
                       {
                         
                         double n = DEFAULT_NOISE;
-                        if (m_dets[boardnumber].noise_matrix.size()) {
-                          n = m_dets[boardnumber].noise_matrix[seeds[i].x+dx-1][seeds[i].y+dy-1];
+                        if (m_dets.at(boardnumber).noise_matrix.size()) {
+                          n = m_dets.at(boardnumber).noise_matrix.at(seeds.at(i).x+dx-1).at(seeds.at(i).y+dy-1);
                         }
                         noise += n*n;
-                        cluster += b.m_tempcds->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                        b.m_tempcds->SetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy, 0);
+                        cluster += b.m_tempcds->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy);
+                        b.m_tempcds->SetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy, 0);
                       }
                   }
                 }
                 noise = std::sqrt(noise);
-                if(m_dets[boardnumber].is("depfet"))
+                if(m_dets.at(boardnumber).is("depfet"))
                   noise = 0.0;
                 if (cluster > cluster_thresh*noise) { //cut on the cluster charge
                   if (conf.CLUSTER_POSITION == 1)
                     {
                       //compute the center of gravity
-                      int array_size=m_dets[boardnumber].clustsize;
+                      int array_size=m_dets.at(boardnumber).clustsize;
                       std::vector<double> sumx(array_size,0.0);
                       std::vector<double> sumy(array_size,0.0);
 
@@ -2148,15 +2029,15 @@ private:
                           for(int dy = -clustersizeindex; dy<=clustersizeindex;dy++)
                             {
                               double noise = 5.0;
-                              double value = b.m_tempcds2->GetBinContent((int)seeds[i].x+dx, (int)seeds[i].y+dy);
-                              if(m_dets[boardnumber].is("depfet"))
+                              double value = b.m_tempcds2->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy);
+                              if(m_dets.at(boardnumber).is("depfet"))
                                 noise = 0.0;
-                              if((seeds[i].x+dx) >= 0 && (seeds[i].y+dy) >= 0 && (seeds[i].x+dx) < b.m_tempcds2->GetXaxis()->GetLast()
-                                 && (seeds[i].y+dy) < b.m_tempcds2->GetYaxis()->GetLast() //check whether we are inside the histogram
+                              if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0 && (seeds.at(i).x+dx) < b.m_tempcds2->GetXaxis()->GetLast()
+                                 && (seeds.at(i).y+dy) < b.m_tempcds2->GetYaxis()->GetLast() //check whether we are inside the histogram
                                  && value > seedneighbour_thresh*noise) // cut on s/n of the seed pixels neighbours
                                 {
-                                  sumy[dy+1] += value;
-                                  sumx[dx+1] += value;
+                                  sumy.at(dy+1) += value;
+                                  sumx.at(dx+1) += value;
                                 }
                             }
                         }
@@ -2167,10 +2048,10 @@ private:
 
                       for(int u = -clustersizeindex; u <= clustersizeindex;u++)
                         {
-                          x += ( seeds[i].x + u ) * sumx[u+1];
-                          y += ( seeds[i].y + u ) * sumy[u+1];
-                          sumweight_x += sumx[u+1];
-                          sumweight_y += sumy[u+1];
+                          x += ( seeds.at(i).x + u ) * sumx.at(u+1);
+                          y += ( seeds.at(i).y + u ) * sumy.at(u+1);
+                          sumweight_x += sumx.at(u+1);
+                          sumweight_y += sumy.at(u+1);
                         }
                       double_t cluster_x = x / sumweight_x;
                       double_t cluster_y = y / sumweight_y;
@@ -2182,55 +2063,50 @@ private:
                   else
                     {
                       // seed position
-                      b.m_clusterx.push_back(seeds[i].x);
-                      b.m_clustery.push_back(seeds[i].y);
+                      b.m_clusterx.push_back(seeds.at(i).x);
+                      b.m_clustery.push_back(seeds.at(i).y);
                     }
                   b.m_clusters.push_back(cluster);
 
                 }
               }
             }
-            /*
-              if(depfethit) {
-              for(size_t i = 0; i < b.m_clusterx.size(); i++) {
-              b.m_hitmap_depfet_corr->Fill(b.m_clusterx[i], b.m_clustery[i]);
-              }
-              }
-            */
             /*if (b.m_clusters.size())*/ b.m_histonumclusters->Fill(b.m_clusters.size());
             numberofclusters = b.m_clusters.size();
 
-            clusterposition = b.m_clusterx;
+            clusterpositionx = b.m_clusterx;
             clusterpositiony = b.m_clustery;
 
-            b.m_histohit2d->Reset();
-            b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
-            b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
-            b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clusters[0]);
-            b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
-            b.m_histoclustery->FillN(b.m_clusters.size(), &b.m_clustery[0], &b.m_clusters[0]);
-            b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
-            b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
+            if (numberofclusters) {
+              b.m_histohit2d->Reset();
+              b.m_histohit2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
+              b.m_histocluster2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
+              b.m_histoclusterx->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clusters));
+              b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
+              b.m_histoclustery->FillN(numberofclusters, dataptr(b.m_clustery), dataptr(b.m_clusters));
+              b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
+              b.m_histoclusterval->FillN(numberofclusters, dataptr(b.m_clusters), dataptr(ones));
+            }
           }
           /*if (seeds.size())*/ b.m_histonumhits->Fill(seeds.size());
         }
       } // end of eudrb clustering
 
-    if(m_dets[boardnumber].is("mimosa26"))
+    if(m_dets.at(boardnumber).is("mimosa26"))
       {
         numberofclusters = b.m_clusters.size();
 
-        clusterposition = b.m_clusterx;
+        clusterpositionx = b.m_clusterx;
         clusterpositiony = b.m_clustery;
 
         //  b.m_histohit2d->Reset();
-//         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
-//         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clustery[0], &b.m_clusters[0]);
-//         b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx[0], &b.m_clusters[0]);
+//         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx.at(0), &b.m_clustery.at(0), &b.m_clusters.at(0));
+//         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx.at(0), &b.m_clustery.at(0), &b.m_clusters.at(0));
+//         b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx.at(0), &b.m_clusters.at(0));
 //         b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
-//         b.m_histoclustery->FillN(b.m_clusters.size(), &b.m_clustery[0], &b.m_clusters[0]);
+//         b.m_histoclustery->FillN(b.m_clusters.size(), &b.m_clustery.at(0), &b.m_clusters.at(0));
 //         b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
-//         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters[0], &ones[0]);
+//         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters.at(0), &ones.at(0));
       }
     if (!b.islog && m_histoevents > 100) {
       b.islog = true;
@@ -2373,8 +2249,8 @@ private:
   std::vector< TH2DNew* > m_clustercorrelationx;
   std::vector< TH2DNew* > m_clustercorrelationy;
 
-  std::vector< TH2DNew *> m_depfet_correlation;
-  std::vector< TH2DNew *> m_depfet_correlationy;
+  //std::vector< TH2DNew *> m_depfet_correlation;
+  //std::vector< TH2DNew *> m_depfet_correlationy;
   //std::vector< std::vector<double> > depfet_ped_matrix;
   //std::vector< std::vector<double> > depfet_noise_matrix;
   //std::vector< std::vector<double> > fortis_ped_matrix;
