@@ -41,7 +41,7 @@ CCDEP:= $(CXX) -M -MM -MP
 # Linker
 LD   := $(CXX)
 # Command for building dynamic libraries
-DLIB := $(CXX) -m32
+DLIB := $(CXX)
 # Command for building static libraries
 SLIB := ar
 
@@ -85,7 +85,7 @@ OPTIMIZE := 2
 MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBUG=$(NODEBUG) MOREDEBUG=$(MOREDEBUG)
 
 # Common flags for C/C++/dependencies
-CPPFLAGS = -m32 -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
+CPPFLAGS = -pedantic $(INCLUDES) $(EXTERNAL_CFLAGS)
 
 # Except for Cygwin we want ANSI handling of headers
 ifneq ($(PLATFORM),CYGWIN) 
@@ -110,7 +110,7 @@ CXXFLAGS = $(CFLAGS)
 
 # Linker flags
 #LDFLAGS := -static -all_load
-LDFLAGS := -m32
+LDFLAGS :=
 SFLAGS  := ru
 ifeq ($(PLATFORM),MACOSX)
   DFLAGS  = -dynamiclib
