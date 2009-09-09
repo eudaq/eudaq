@@ -74,11 +74,11 @@ public:
           }
           SendEvent(ev);
         }
-        if (m_tlu->NumEntries()) {
-          std::cout << "========" << std::endl;
-        } else {
-          std::cout << "." << std::flush;
-        }
+//         if (m_tlu->NumEntries()) {
+//           std::cout << "========" << std::endl;
+//         } else {
+//           std::cout << "." << std::flush;
+//         }
       }
       if (JustStopped) {
         SendEvent(TLUEvent::EORE(m_run, ++m_ev));
