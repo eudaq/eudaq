@@ -158,8 +158,8 @@ int main(int /*argc*/, char ** argv) {
               std::vector<short> cds(brd.TotalPixels());
               std::vector<Seed> seeds;
               for (unsigned i = 0; i < brd.HitPixels(); ++i) {
-                unsigned x = brd.GetX(i), y = brd.GetY(i), idx = brd.XSize() * y + x;
-                cds[idx] = brd.GetPixel(i) * brd.Polarity();
+                unsigned x = (int)brd.GetX(i), y = (int)brd.GetY(i), idx = brd.XSize() * y + x;
+                cds[idx] = (int)brd.GetPixel(i) * brd.Polarity();
                 if (cds[idx] >= noise.Value() * thresh_seed.Value()) {
                   seeds.push_back(Seed(x, y, cds[idx]));
                   //if (p < 6) std::cout << i << ", " << x << ", " << y << ", " << idx << ", " << cds[idx] << std::endl;

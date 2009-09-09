@@ -49,9 +49,10 @@ namespace eudaq {
      */
     std::map<t_eventid, DataConverterPlugin *> m_pluginmap;
 
-  private:
     PluginManager() {}
     PluginManager(PluginManager const &) {}
+    class _dummy;
+    friend class _dummy; // Silence superfluous warnings in some gcc versions
   };
 
 }//namespace eudaq
