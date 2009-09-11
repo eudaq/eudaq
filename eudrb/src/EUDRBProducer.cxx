@@ -165,7 +165,9 @@ public:
   bool ReadoutEventOld(RawDataEvent & ev) {
     static bool readingstarted = false;
     unsigned long total_bytes=0;
-    for (size_t n_eudrb=0; n_eudrb < m_boards.size(); n_eudrb++) {
+    for (size_t i=0; i <= m_boards.size(); ++i) {
+      if ((int)i == m_master) continue; // don't do master yet
+      size_t n_eudrb = i < m_boards.size() ? i : m_master; // make sure master is read out last
       Timer t_board;
       bool badev=false;
       Timer t_wait;
@@ -243,8 +245,9 @@ public:
     if (!readingstarted) {
       readingstarted = true;
     }
-    for (size_t i=m_boards.size(); i > 0; --i) {
-      size_t n_eudrb = i - 1;
+    for (size_t i=0; i <= m_boards.size(); ++i) {
+      if ((int)i == m_master) continue; // don't do master yet
+      size_t n_eudrb = i < m_boards.size() ? i : m_master; // make sure master is read out last
       Timer t_board;
       bool badev=false;
 
