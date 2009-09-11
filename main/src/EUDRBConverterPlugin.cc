@@ -594,7 +594,7 @@ namespace eudaq {
 
             // last the pixel charge. The CDS is automatically
             // calculated by the EUDRB
-            sparsePixel->setSignal( (size_t)plane.GetX(iPixel) );
+            sparsePixel->setSignal( (size_t)plane.GetPixel(iPixel) );
 
             // in case of DEBUG
             // streamlog_out ( DEBUG0 ) << ( *(sparsePixel.get() ) ) << endl;
