@@ -36,8 +36,9 @@ public:
       m_buffer(32768), // will get resized as needed
       m_idoffset(0),
       m_version(-1)
-    {
-    }
+  {
+    m_buffer.reserve(40000);
+  }
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
     try {
@@ -242,7 +243,7 @@ public:
     unsigned long total_bytes=0;
     Timer t_wait;
     if (!m_boards[m_boards.size()-1]->EventDataReady()) {
-    //if (!m_boards[0]->EventDataReady()) {
+      //if (!m_boards[0]->EventDataReady()) {
 
       if (juststopped) started = false;
       return false;
@@ -254,6 +255,8 @@ public:
     //std::cout<< "--"<< std::endl;
     unsigned long off = 0;
     unsigned long pivot = 0;
+    bool off_set = false;
+    bool pivot_set = false;
 
     for (size_t i=0; i <= m_boards.size(); ++i) {
       // size_t n_test = i < m_boards.size() ? i : m_master; 
@@ -270,35 +273,47 @@ public:
       m_buffer.resize(4);
       m_boards[n_eudrb]->ReadEvent(m_buffer);
       ev.AppendBlock(blockindex, m_buffer);
- //      std::cout << "-----------" << std::endl; 
-//       for(size_t u = 0; u < m_buffer.size(); u++)
-//        {
-//         std::cout << "board " << n_eudrb<< " - " << u << " : ";
-//          printf("%x\n", m_buffer[u]);// << (m_buffer[u] & 0xFFFFF) << std::endl; 
-//        } 
-//        std::cout << "->->->->->->->->->->->-" << std::endl;
 
-       if(n_eudrb == 0)
-         {
-           off = m_buffer[3];
-         }
-       else
-         {
-           unsigned long diff = 3;
-           if(off > m_buffer[3] )
-             diff = (off - m_buffer[3]) % 9215;
-           else
-             diff = (m_buffer[3] - off) % 9215;
-          
-           if(diff > 2)
-             {
-               //EUDAQ_THROW("data consistency check failed!");
-               //exit(-1);
-             }
-         }
-      unsigned long number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
-      //std::cout << "number of bytes = " << number_of_bytes << std::endl;
-      
+      if(n_eudrb == 0 && m_boards[0]->Det() == "MIMOSA26")
+        {
+          off = m_buffer[3];
+          off_set = true;
+        }
+      else if(m_boards[n_eudrb]->Det() == "MIMOSA26")
+        {
+          if(!off_set)
+            {
+              off = m_buffer[3];
+              off_set = true;
+            }
+           
+          unsigned long diff[2] = {3,3};
+           
+          if(off > m_buffer[3] )
+            { 
+              diff[0] = off - m_buffer[3];
+              diff[1] = 9215 - off + m_buffer[3];
+            }
+          else
+            {
+              diff[0] = m_buffer[3] - off;
+              diff[1] = 9215 - m_buffer[3] + off; 
+            }
+           
+          if(!(diff[0] < 3 || diff[1] < 3))
+            {
+              EUDAQ_WARN("data consistency check for board " + to_string(n_eudrb) +" in event " + to_string(m_ev) + " failed! The offset difference in pixel is " + to_string(diff[0] > diff[1] ? diff[0] : diff[1]) + "!");
+              std::cout << "------ header -----" << std::endl; 
+              for(size_t u = 0; u < m_buffer.size(); u++)
+                {
+                  std::cout << "board " << n_eudrb<< " - " << u << " : ";
+                  printf("%x\n", (unsigned int)m_buffer[u]);
+                } 
+              std::cout << "->->->->->->->->->->->-" << std::endl;
+            }
+        }
+      const unsigned long number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
+            
       if (doprint(m_ev)) std::cout << "DEBUG: read leading words, remaining = " << number_of_bytes << std::endl;
 
       //printf("number of bytes = %ld\n",number_of_bytes);
@@ -311,34 +326,47 @@ public:
         m_buffer.resize(number_of_bytes / 4);
         m_boards[n_eudrb]->ReadEvent(m_buffer);
 
+        if(n_eudrb == 0 && m_boards[0]->Det() == "MIMOSA26")
+          {
+            pivot = (m_buffer[1] & 0x3FFF);
+            pivot_set = true;
+          }
+        else if(m_boards[n_eudrb]->Det() == "MIMOSA26")
+          { 
+            const unsigned long p = m_buffer[1] & 0x3FFF;
+             
+            if(!pivot_set)
+              {
+                pivot = p;
+                pivot_set = true;
+              }
+             
+            unsigned long diff[2] = {3,3};
+             
+            if(pivot > p )
+              { 
+                diff[0] = pivot - p;
+                diff[1] = 9215 - pivot + p;
+              }
+            else
+              {
+                diff[0] = p - pivot;
+                diff[1] = 9215 - p + pivot; 
+              }
+           
+            if(!(diff[0] < 3 || diff[1] < 3))
+              {
+                EUDAQ_WARN("data consistency check for board " + to_string(n_eudrb) +" in event " + to_string(m_ev) + " failed! The pivot pixel  difference is " + to_string(diff[0] > diff[1] ? diff[0] : diff[1]) + "!");
+                std::cout << "------ data -----" << std::endl; 
 
-// for(size_t u = 0; u < m_buffer.size(); u++)
-//          {
-//            std::cout <<"board " << n_eudrb<< " - " <<  u << " : ";
-//            printf("%x\n", m_buffer[u]);
-//          } 
-//         std::cout << "-----------" << std::endl; 
-
-
-         if(n_eudrb == 0)
-           {
-             pivot = (m_buffer[1] & 0x3FFF);
-           }
-         else
-           { 
-             unsigned long diff = 3;
-             if(pivot > (m_buffer[1] & 0x3FFF) ) 
-               diff = (pivot - (m_buffer[1] & 0x3FFF)) % 9215;
-             else
-               diff = ((m_buffer[1] & 0x3FFF) - pivot) % 9215;
-            
-             if(diff > 2)
-               {
-                 std::cout << "diff = " << diff << " pivot = " << pivot <<  " buffer[1] = "<< (m_buffer[1] & 0x3FFF) << std::endl;
-                 //EUDAQ_THROW("data consistency check failed!");
-                 //exit(-1);
-               }
-           }
+                for(size_t u = 0; u < m_buffer.size(); u++)
+                  {
+                    std::cout <<"board " << n_eudrb<< " - " <<  u << " : ";
+                    printf("%x\n", (unsigned int) m_buffer[u]);
+                  } 
+                std::cout << "-----------" << std::endl; 
+              }
+          }
        
         t_mblt.Stop();
         if (number_of_bytes > 16) ev.SetFlags(eudaq::Event::FLAG_HITS);
