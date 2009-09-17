@@ -116,12 +116,12 @@ int main(int /*argc*/, char ** argv) {
     if (do_test.IsSet()) {
       for (int type = 0; type < 4; ++type) {
         int sign = type % 2 ? 1 : -1;
-        std::string name = "test" + std::string(type<2 ? "x" : "y") + (type%2 ? "pos" : "neg");
-        std::string desc = "Test " + std::string(type<2 ? "X" : "Y") + (type%2 ? " Pos" : " Neg");
+        std::string name = "test" + std::string(type<2 ? "x" : "y") + (type%2 ? "neg" : "pos");
+        std::string desc = "Test " + std::string(type<2 ? "X" : "Y") + (type%2 ? " Neg" : " Pos");
         std::cout << "Calculating " << desc << "..." << std::endl;
         unsigned wh = type < 2 ? w : h;
         unsigned Tx = 1, Rx = 2*sqrt2*wh;
-        double tt = atan(-sign * pitch2.Value() / pitch1.Value()), dt = 0.01;
+        double tt = atan(sign * pitch2.Value() / pitch1.Value()), dt = 0.01;
         std::vector<double> test(Tx*Rx);
         double param[9] = { wh,
                             -(wh/2.0),
