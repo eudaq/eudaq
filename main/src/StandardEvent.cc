@@ -52,7 +52,8 @@ namespace eudaq {
   // }
 
   void StandardPlane::Print(std::ostream & os) const {
-    os << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << ", " << m_x.size();
+    os << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_x.size()
+       << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent << ", pivot=" << m_pivotpixel;
   }
 
   void StandardPlane::SetSizeRaw(unsigned w, unsigned h, unsigned frames, int flags) {
@@ -163,19 +164,38 @@ namespace eudaq {
           m_temp_y.resize(0);
           m_temp_pix.resize(0);
           size_t i;
-          for (i = 0; i < m_pix[1].size(); ++i) {
-            if (m_pivot[1][i]) break;
-            m_temp_x.push_back(m_x[1][i]);
-            m_temp_y.push_back(m_y[1][i]);
-            m_temp_pix.push_back(m_pix[1][i]);
-          }
-          for (i = 0; i < m_pix[0].size(); ++i) {
-            if (m_pivot[0][i]) break;
-          }
-          for (/**/; i < m_pix[0].size(); ++i) {
-            m_temp_x.push_back(m_x[0][i]);
-            m_temp_y.push_back(m_y[0][i]);
-            m_temp_pix.push_back(m_pix[0][i]);
+          if (true) {
+            // Correct
+            for (i = 0; i < m_pix[1].size(); ++i) {
+              if (m_pivot[1][i]) break;
+              m_temp_x.push_back(m_x[1][i]);
+              m_temp_y.push_back(m_y[1][i]);
+              m_temp_pix.push_back(m_pix[1][i]);
+            }
+            for (i = 0; i < m_pix[0].size(); ++i) {
+              if (m_pivot[0][i]) break;
+            }
+            for (/**/; i < m_pix[0].size(); ++i) {
+              m_temp_x.push_back(m_x[0][i]);
+              m_temp_y.push_back(m_y[0][i]);
+              m_temp_pix.push_back(m_pix[0][i]);
+            }
+          } else {
+            // Inverse
+            for (i = 0; i < m_pix[0].size(); ++i) {
+              if (m_pivot[0][i]) break;
+              m_temp_x.push_back(m_x[0][i]);
+              m_temp_y.push_back(m_y[0][i]);
+              m_temp_pix.push_back(m_pix[0][i]);
+            }
+            for (i = 0; i < m_pix[1].size(); ++i) {
+              if (m_pivot[1][i]) break;
+            }
+            for (/**/; i < m_pix[1].size(); ++i) {
+              m_temp_x.push_back(m_x[1][i]);
+              m_temp_y.push_back(m_y[1][i]);
+              m_temp_pix.push_back(m_pix[1][i]);
+            }
           }
           m_result_x = &m_temp_x;
           m_result_y = &m_temp_y;
