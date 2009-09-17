@@ -75,6 +75,8 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionFlag tracksonly(op, "t", "tracks-only", "Extract only clusters which are part of a track (not implemented)");
   eudaq::Option<std::string> boards(op, "b", "boards", "", "numbers", "Board numbers to extract (empty=all)");
   eudaq::Option<unsigned> limit(op, "l", "limit-events", 0U, "events", "Maximum number of events to process");
+  eudaq::Option<std::vector<unsigned> > xmarkers(op, "xm", "xmarkers", "values", ",", "Marker pixels in X");
+  eudaq::Option<std::vector<unsigned> > ymarkers(op, "ym", "ymarkers", "values", ",", "Marker pixels in Y");
 
   typedef counted_ptr<std::ofstream> fileptr_t;
   typedef std::map<int, fileptr_t> filemap_t;
@@ -100,8 +102,52 @@ int main(int /*argc*/, char ** argv) {
       if (planes.size() == 0) std::cout << "all";
       for (size_t i = 0; i < planes.size(); ++i) std::cout << (i ? ", " : "") << planes[i];
       std::cout << std::endl;
-      std::vector<unsigned> hit_hist;
+      bool badmarkers = false;
+      std::cout << "Markers";
+      if (xmarkers.Value().size() || ymarkers.Value().size()) {
+        if (xmarkers.Value().size()) {
+          std::cout << ": X = " << xmarkers.Value()[0];
+          for (size_t i = 1; i < xmarkers.Value().size(); ++i) {
+            std::cout << ", " << xmarkers.Value()[i];
+            if (xmarkers.Value()[i] <= xmarkers.Value()[i-1]) badmarkers = true;
+          }
+        }
+        if (ymarkers.Value().size()) {
+          std::cout << ": Y = " << ymarkers.Value()[0];
+          for (size_t i = 1; i < ymarkers.Value().size(); ++i) {
+            std::cout << ", " << ymarkers.Value()[i];
+            if (ymarkers.Value()[i] <= ymarkers.Value()[i-1]) badmarkers = true;
+          }
+        }
+      } else {
+        std::cout << "None";
+      }
+      std::cout << std::endl;
+      if (badmarkers) EUDAQ_THROW("Markers must be in order, and not duplicated");
 
+      std::vector<int> xfix, yfix;
+      for (unsigned x = 0, i = 0; i < xmarkers.Value().size(); ++i) {
+        while (x < xmarkers.Value()[i]) {
+          xfix.push_back(x++ - i);
+        }
+        x++;
+        xfix.push_back(-1);
+      }
+      for (unsigned y = 0, i = 0; i < ymarkers.Value().size(); ++i) {
+        while (y < ymarkers.Value()[i]) {
+          yfix.push_back(y++ - i);
+        }
+        y++;
+        yfix.push_back(-1);
+      }
+#define XFIX(x) ((x) < xfix.size() ? xfix[(x)] : int((x) - xmarkers.Value().size()))
+#define YFIX(y) ((y) < yfix.size() ? yfix[(y)] : int((y) - ymarkers.Value().size()))
+      // for (unsigned i = 0; i < 264; ++i) {
+      //   std::cout << i << ": " << XFIX(i) << (i % 4 == 3 ? "\n" : "    \t");
+      // }
+      // std::cout << std::endl;
+
+      std::vector<unsigned> hit_hist;
       {
         const eudaq::DetectorEvent & dev = reader.Event();
         eudaq::PluginManager::Initialize(dev);
@@ -126,7 +172,8 @@ int main(int /*argc*/, char ** argv) {
             }
           }
         }
-        if (track.size() != totalboards) EUDAQ_THROW("Missing IDs");
+        //if (track.size() != totalboards) EUDAQ_THROW("Missing IDs");
+        totalboards = track.size();
         hit_hist = std::vector<unsigned>(totalboards+1, 0); // resize and clear histo
       }
 
@@ -155,11 +202,15 @@ int main(int /*argc*/, char ** argv) {
               //for (size_t i = 0; i < brd.m_x.size(); ++i) {
               //  cds[i] = brd.GetPixel(i);
               //}
-              std::vector<short> cds(brd.TotalPixels());
+              int width = brd.XSize() - xmarkers.Value().size();
+              int height = brd.YSize() - ymarkers.Value().size();
+              std::vector<short> cds(width * height);
               std::vector<Seed> seeds;
               for (unsigned i = 0; i < brd.HitPixels(); ++i) {
-                unsigned x = (int)brd.GetX(i), y = (int)brd.GetY(i), idx = brd.XSize() * y + x;
-                cds[idx] = (int)brd.GetPixel(i) * brd.Polarity();
+                int x = XFIX(brd.GetX(i)), y = YFIX(brd.GetY(i));
+                if (x < 0 || y < 0) continue;
+                unsigned idx = width * y + x;
+                cds[idx] = brd.GetPixel(i) * brd.Polarity();
                 if (cds[idx] >= noise.Value() * thresh_seed.Value()) {
                   seeds.push_back(Seed(x, y, cds[idx]));
                   //if (p < 6) std::cout << i << ", " << x << ", " << y << ", " << idx << ", " << cds[idx] << std::endl;
@@ -172,11 +223,11 @@ int main(int /*argc*/, char ** argv) {
                 long long charge = 0, sumx = 0, sumy = 0;
                 for (int dy = -dclust; dy <= dclust; ++dy) {
                   int y = seeds[i].y + dy;
-                  if (y < 0 || y >= (int)brd.YSize()) continue;
+                  if (y < 0 || y >= height) continue;
                   for (int dx = -dclust; dx <= dclust; ++dx) {
                     int x = seeds[i].x + dx;
-                    if (x < 0 || x >= (int)brd.XSize()) continue;
-                    size_t idx = brd.XSize() * y + x;
+                    if (x < 0 || x >= width) continue;
+                    size_t idx = width * y + x;
                     if (cds[idx] == BADPIX) {
                       badseed = true;
                     } else {
@@ -195,11 +246,11 @@ int main(int /*argc*/, char ** argv) {
                   clusters.push_back(Cluster(cx, cy, charge));
                   for (int dy = -dclust; dy <= dclust; ++dy) {
                     int y = seeds[i].y + dy;
-                    if (y < 0 || y >= (int)brd.YSize()) continue;
+                    if (y < 0 || y >= height) continue;
                     for (int dx = -dclust; dx <= dclust; ++dx) {
                       int x = seeds[i].x + dx;
-                      if (x < 0 || x >= (int)brd.XSize()) continue;
-                      size_t idx = brd.XSize() * y + x;
+                      if (x < 0 || x >= width) continue;
+                      size_t idx = width * y + x;
                       cds[idx] = BADPIX;
                     }
                   }
@@ -232,7 +283,7 @@ int main(int /*argc*/, char ** argv) {
           }
         }
       }
-      std::cout << "Done. Number of planes with hits:\n";
+      std::cout << "Done. Number of times N planes had hits:\n";
       unsigned events = 0;
       for (size_t i = 0; i < hit_hist.size(); ++i) {
         events += hit_hist[i];
