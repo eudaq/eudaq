@@ -139,10 +139,8 @@ namespace eudaq {
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
       const BoardInfo & info = GetInfo(id);
       StandardPlane plane(id, "EUDRB", info.Sensor().name);
-      plane.SetTLUEvent((data[data.size()-7] << 8) | data[data.size()-6]);
       plane.SetXSize(info.Sensor().width);
       plane.SetYSize(info.Sensor().height);
-      plane.SetPivotPixel(((data[5] & 0x3) << 16) | (data[6] << 8) | data[7]);
       if (info.m_mode == BoardInfo::MODE_ZS2) {
         ConvertZS2(plane, data, info);
       } else if (info.m_mode == BoardInfo::MODE_ZS) {
@@ -270,6 +268,7 @@ namespace eudaq {
     //    std::cerr << to_hex(i/4+1) << " : " << to_hex(getbigendian<unsigned>(&alldata[i]), 0) << std::endl;
     //  }
     //}
+
     if (dbg) std::cout << "DataSize = " << alldata.size() << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
@@ -278,11 +277,18 @@ namespace eudaq {
     if (dbg) std::cout << "WordCount = " << wordcount << std::endl;
     if (wordcount*4 + 16 != alldata.size()) EUDAQ_THROW("Bad wordcount (" + to_string(wordcount) +
                                                           ", bytes=" + to_string(alldata.size()) + ")");
+    word = GET(offset=1);
+    unsigned sof = word>>8 & 0xffff;
+    if (dbg) std::cout << "StartOfFrame = " << to_hex(sof, 0) << std::endl;
+    // offset 2,3 are repeats of 0,1
     word = GET(offset=4);
     if (dbg) std::cout << "LocalEventNumber = " << (word>>8 & 0xffff) << std::endl;
     if (dbg) std::cout << "FrameNumberAtTrigger = " << (word & 0xff) << std::endl;
     word = GET(offset=5);
-    if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(word & 0x3ffff, 0) << std::endl;
+    unsigned pixadd = word & 0x3ffff;
+    plane.SetPivotPixel((pixadd - sof) % 9216);
+    if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(pixadd, 0)
+                       << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
     unsigned wordremain = wordcount-12;
 
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
@@ -311,14 +317,13 @@ namespace eudaq {
         if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
                            << ", states " << numstates << ":";
         for (unsigned s = 0; s < numstates; ++s) {
-          unsigned v = vec[++i];
+          unsigned v = vec.at(++i);
           unsigned column = v>>2 & 0x7ff;
           unsigned num = v & 3;
           if (dbg) std::cout << (s ? "," : " ") << column;
           if (dbg) if (v&3 > 0) std::cout << "-" << (column + num);
           for (unsigned j = 0; j < num+1; ++j) {
-            unsigned pixeladdress = (row*plane.XSize() + column + j) / 4;
-            bool pivot = pixeladdress >= plane.PivotPixel();
+            bool pivot = (column + j) >= (plane.PivotPixel() / 16);
             plane.PushPixel(column+j, row, 1, pivot, frame-1);
           }
           npixels += num + 1;
@@ -336,7 +341,9 @@ namespace eudaq {
 //       std::cout << std::endl;
 //     }
     word = GET(++offset);
-    if (dbg) std::cout << "TLUEventNumber = " << hexdec(word>>8 & 0xffff, 0) << std::endl;
+    unsigned tluev = word>>8 & 0xffff;
+    plane.SetTLUEvent((alldata[alldata.size()-7] << 8) | alldata[alldata.size()-6]);    
+    if (dbg) std::cout << "TLUEventNumber = " << hexdec(tluev, 0) << std::endl;
     if (dbg) std::cout << "NumFramesAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
     word = GET(++offset);
     if (dbg) std::cout << "EventWordCount = " << hexdec(word & 0x7ffff, 0) << std::endl;
@@ -356,6 +363,8 @@ namespace eudaq {
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, npixels);
     //plane.m_mat.resize(plane.m_pix[0].size());
     const unsigned char * data = &alldata[headersize];
+    plane.SetTLUEvent((alldata[alldata.size()-7] << 8) | alldata[alldata.size()-6]);
+    plane.SetPivotPixel(((data[5] & 0x3) << 16) | (data[6] << 8) | data[7]);
     for (unsigned i = 0; i < npixels; ++i) {
       int mat = 3 - (data[4*i] >> 6), col = 0, row = 0;
       if (info.m_version < 2) {
@@ -382,6 +391,8 @@ namespace eudaq {
       headersize += 8;
       EUDAQ_THROW("EUDRB V3 decoding not yet implemented");
     }
+    plane.SetTLUEvent((data[data.size()-7] << 8) | data[data.size()-6]);
+    plane.SetPivotPixel(((data[5] & 0x3) << 16) | (data[6] << 8) | data[7]);
     unsigned possible1 = 2 *  info.Sensor().cols * info.Sensor().rows      * info.Sensor().mats * info.Frames();
     unsigned possible2 = 2 * (info.Sensor().cols * info.Sensor().rows - 1) * info.Sensor().mats * info.Frames();
     bool missingpixel = false;
