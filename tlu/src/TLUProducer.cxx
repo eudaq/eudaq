@@ -118,7 +118,7 @@ public:
       m_tlu->ResetTimestamp();
 
       // by dhaas
-      sleep(2);
+      eudaq::mSleep(1000);
 
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
@@ -145,12 +145,12 @@ public:
       ev.SetTag("OrMask",   "0x"+to_hex(or_mask));
       ev.SetTag("VetoMask", "0x"+to_hex(veto_mask));
       ev.SetTag("ReadoutDelay", to_string(readout_delay));
-      sleep(5); // temporarily, to fix startup with EUDRB
+      eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       if (timestamp_per_run) m_tlu->ResetTimestamp();
       ev.SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
       SendEvent(ev);
-      sleep(5);
+      eudaq::mSleep(5000);
       m_tlu->ResetTriggerCounter();
       m_tlu->ResetScalers();
       m_tlu->Start();
@@ -184,7 +184,7 @@ public:
   virtual void OnTerminate() {
     std::cout << "Terminate (press enter)" << std::endl;
     done = true;
-    sleep(1);
+    eudaq::mSleep(1000);
   }
   virtual void OnReset() {
     try {
