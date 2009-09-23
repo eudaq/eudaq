@@ -19,6 +19,7 @@ namespace tlu {
 
   TLUAddresses v0_2 = {
     EUDAQ_TLU_REGISTERS
+    0
   };
 
 }

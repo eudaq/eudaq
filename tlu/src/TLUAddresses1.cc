@@ -50,6 +50,7 @@ namespace tlu {
 
   TLUAddresses v0_1 = {
     EUDAQ_TLU_REGISTERS
+    0
   };
 
 }

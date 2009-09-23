@@ -120,7 +120,7 @@ namespace tlu {
 #define EUDAQ_TLU_REG(r) TLU_ ## r,
 
   struct TLUAddresses {
-    unsigned EUDAQ_TLU_REGISTERS;
+    unsigned EUDAQ_TLU_REGISTERS eudaq_dummy_do_not_use;
     unsigned TLU_SCALERS(int i) {
       return i == 0 ? TLU_TRIGGER_IN0_COUNTER_0
         : i == 1 ? TLU_TRIGGER_IN1_COUNTER_0
