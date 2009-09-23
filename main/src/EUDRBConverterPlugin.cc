@@ -292,24 +292,24 @@ namespace eudaq {
     unsigned wordremain = wordcount-12;
 
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
-    for (int frame = 1; frame <= 2; ++frame) {
-      word = GET(offset += 2);
-      if (dbg) std::cout << "M26FrameCounter_" << frame << " = " << hexdec(word, 0) << std::endl;
-      word = GET(++offset);
-      unsigned count = word & 0xffff;
-      if (dbg) std::cout << "M26WordCount_" << frame << " = " << hexdec(count, 0) << std::endl;
-      if (count > wordremain) EUDAQ_THROW("Bad M26 word count (" + to_string(count) + ", remain=" +
-                                           to_string(wordremain) + ", total=" + to_string(wordcount) + ")");
-      wordremain -= count;
-      std::vector<unsigned short> vec;
-      // read pixel data
-      for (size_t i = 0; i < count; ++i) {
+    try {
+      for (int frame = 1; frame <= 2; ++frame) {
+        word = GET(offset += 2);
+        if (dbg) std::cout << "M26FrameCounter_" << frame << " = " << hexdec(word, 0) << std::endl;
         word = GET(++offset);
-        vec.push_back(word & 0xffff);
-        vec.push_back(word>>16 & 0xffff);
-      }
-      unsigned npixels = 0;
-      try {
+        unsigned count = word & 0xffff;
+        if (dbg) std::cout << "M26WordCount_" << frame << " = " << hexdec(count, 0) << std::endl;
+        if (count > wordremain) EUDAQ_THROW("Bad M26 word count (" + to_string(count) + ", remain=" +
+                                            to_string(wordremain) + ", total=" + to_string(wordcount) + ")");
+        wordremain -= count;
+        std::vector<unsigned short> vec;
+        // read pixel data
+        for (size_t i = 0; i < count; ++i) {
+          word = GET(++offset);
+          vec.push_back(word & 0xffff);
+          vec.push_back(word>>16 & 0xffff);
+        }
+        unsigned npixels = 0;
         for (size_t i = 0; i < vec.size(); ++i) {
           //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
           if (i == vec.size() - 1) break;
@@ -333,9 +333,11 @@ namespace eudaq {
         }
         if (dbg) std::cout << "Total pixels = " << npixels << std::endl;
         ++offset;
-      } catch (const std::out_of_range & e) {
-        std::cout << "Oops: " << e.what() << std::endl;
       }
+    } catch (const std::out_of_range & e) {
+      std::cout << "Oops: " << e.what() << std::endl;
+      // readjust offset to point to trailer:
+      offset = alldata.size() / 4 - 2;
     }
 //     if (dbg) {
 //       std::cout << "Plane " << plane.m_pix.size();
@@ -345,9 +347,9 @@ namespace eudaq {
 //       std::cout << std::endl;
 //     }
     word = GET(++offset);
-    unsigned tluev = word>>8 & 0xffff;
-    plane.SetTLUEvent((alldata[alldata.size()-7] << 8) | alldata[alldata.size()-6]);    
-    if (dbg) std::cout << "TLUEventNumber = " << hexdec(tluev, 0) << std::endl;
+    unsigned tluev = word>>8 & 0xffff, tludbg = (alldata[alldata.size()-7] << 8) | alldata[alldata.size()-6];
+    plane.SetTLUEvent(tluev);    
+    if (dbg) std::cout << "TLUEventNumber = " << hexdec(tluev, 0) << ", " << hexdec(tludbg, 0) << std::endl;
     if (dbg) std::cout << "NumFramesAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
     word = GET(++offset);
     if (dbg) std::cout << "EventWordCount = " << hexdec(word & 0x7ffff, 0) << std::endl;
