@@ -56,7 +56,7 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
       //     }
       //     //break;
       //   }
-      }
+      // }
     }
     if (do_process) {
       unsigned boardnum = 0;
