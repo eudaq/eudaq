@@ -260,7 +260,7 @@ namespace eudaq {
     //else
     //  printf("!!! nDataBytesFromStreamContent matches nDataBytesFromStreamHeader (%d)!!!",nDataBytesFromStreamContent);
 
-    plane.SetSizeZS(xsize, ysize, (nDataBytesFromStreamContent/3), 1); // Set the size for one frames of ... * ...
+    plane.SetSizeZS(xsize, ysize, (nDataBytesFromStreamContent/3)); // Set the size for one frames of ... * ...
 
 
     //use data in order to decode your sensor

@@ -3,6 +3,8 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/DetectorEvent.hh"
+#include "eudaq/RawDataEvent.hh"
 
 #include <iostream>
 #include <fstream>
@@ -44,6 +46,17 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
   if (do_process || do_display || do_dump || do_zs) {
     if (do_display) {
       std::cout << dev << std::endl;
+      // for (size_t i = 0; i < dev.NumEvents(); ++i) {
+      //   const eudaq::RawDataEvent * rev = dynamic_cast<const eudaq::RawDataEvent *>(dev.GetEvent(i));
+      //   if (rev && rev->GetSubType() == "EUDRB" && rev->NumBlocks() > 0) {
+      //     std::cout << "#### Raw Data: ####" << std::endl;
+      //     const std::vector<unsigned char> & data = rev->GetBlock(0);
+      //     for (size_t i = 0; i+3 < data.size(); i += 4) {
+      //       std::cout << std::setw(2) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned long>(&data[i])) << std::endl;
+      //     }
+      //     //break;
+      //   }
+      }
     }
     if (do_process) {
       unsigned boardnum = 0;

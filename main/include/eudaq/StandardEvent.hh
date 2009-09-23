@@ -25,7 +25,6 @@ namespace eudaq {
     void Serialize(Serializer &) const;
     //StandardPlane(size_t pixels = 0, size_t frames = 1);
     void SetSizeRaw(unsigned w, unsigned h, unsigned frames = 1, int flags = 0);
-    void SetSizeRaw(unsigned w, unsigned h, int flags) { SetSizeRaw(w, h, 1, flags); }
     void SetSizeZS(unsigned w, unsigned h, unsigned npix, unsigned frames = 1, int flags = 0);
 
     void SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot = false, unsigned frame = 0);

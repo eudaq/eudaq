@@ -286,7 +286,7 @@ namespace eudaq {
     if (dbg) std::cout << "FrameNumberAtTrigger = " << (word & 0xff) << std::endl;
     word = GET(offset=5);
     unsigned pixadd = word & 0x3ffff;
-    plane.SetPivotPixel((pixadd - sof) % 9216);
+    plane.SetPivotPixel((pixadd + sof - 16) % 9216); // seems OK in one setup, needs to be verified
     if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(pixadd, 0)
                        << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
     unsigned wordremain = wordcount-12;
@@ -309,29 +309,33 @@ namespace eudaq {
         vec.push_back(word>>16 & 0xffff);
       }
       unsigned npixels = 0;
-      for (size_t i = 0; i < vec.size(); ++i) {
-      //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
-        if (i == vec.size() - 1) break;
-        unsigned numstates = vec[i] & 0xf;
-        unsigned row = vec[i]>>4 & 0x7ff;
-        if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
-                           << ", states " << numstates << ":";
-        for (unsigned s = 0; s < numstates; ++s) {
-          unsigned v = vec.at(++i);
-          unsigned column = v>>2 & 0x7ff;
-          unsigned num = v & 3;
-          if (dbg) std::cout << (s ? "," : " ") << column;
-          if (dbg) if (v&3 > 0) std::cout << "-" << (column + num);
-          for (unsigned j = 0; j < num+1; ++j) {
-            bool pivot = (column + j) >= (plane.PivotPixel() / 16);
-            plane.PushPixel(column+j, row, 1, pivot, frame-1);
+      try {
+        for (size_t i = 0; i < vec.size(); ++i) {
+          //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
+          if (i == vec.size() - 1) break;
+          unsigned numstates = vec[i] & 0xf;
+          unsigned row = vec[i]>>4 & 0x7ff;
+          if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
+                             << ", states " << numstates << ":";
+          bool pivot = row >= (plane.PivotPixel() / 16);
+          for (unsigned s = 0; s < numstates; ++s) {
+            unsigned v = vec.at(++i);
+            unsigned column = v>>2 & 0x7ff;
+            unsigned num = v & 3;
+            if (dbg) std::cout << (s ? "," : " ") << column;
+            if (dbg) if (v&3 > 0) std::cout << "-" << (column + num);
+            for (unsigned j = 0; j < num+1; ++j) {
+              plane.PushPixel(column+j, row, 1, pivot, frame-1);
+            }
+            npixels += num + 1;
           }
-          npixels += num + 1;
+          if (dbg) std::cout << std::endl;
         }
-        if (dbg) std::cout << std::endl;
+        if (dbg) std::cout << "Total pixels = " << npixels << std::endl;
+        ++offset;
+      } catch (const std::out_of_range & e) {
+        std::cout << "Oops: " << e.what() << std::endl;
       }
-      if (dbg) std::cout << "Total pixels = " << npixels << std::endl;
-      ++offset;
     }
 //     if (dbg) {
 //       std::cout << "Plane " << plane.m_pix.size();

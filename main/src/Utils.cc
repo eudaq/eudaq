@@ -68,6 +68,7 @@ namespace eudaq {
   std::vector<std::string> split(const std::string & str, const std::string & delim, bool dotrim) {
     std::string s(str);
     std::vector<std::string> result;
+    if (str == "") return result;
     size_t i;
     while ((i = s.find_first_of(delim)) != std::string::npos) {
       result.push_back(dotrim ? trim(s.substr(0, i)) : s.substr(0, i));
