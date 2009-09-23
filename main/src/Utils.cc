@@ -65,6 +65,10 @@ namespace eudaq {
     return s.substr(0, i);
   }
 
+  std::vector<std::string> split(const std::string & str, const std::string & delim) {
+    return split(str, delim, false);
+  }
+
   std::vector<std::string> split(const std::string & str, const std::string & delim, bool dotrim) {
     std::string s(str);
     std::vector<std::string> result;
