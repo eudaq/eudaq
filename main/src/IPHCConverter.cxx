@@ -38,6 +38,18 @@ inline std::string decodetime(unsigned date, unsigned time) {
   return result;
 }
 
+std::string asicname(unsigned n) {
+  static const char * names[] = {
+    "NONE",
+    "MIMOSA26",
+    "ULTIMATE1",
+    "UNKNOWN"
+  };
+  static const unsigned num = sizeof names / sizeof *names;
+  if (n >= num) n = num-1;
+  return names[n];
+}
+
 int main(int, char ** argv) {
   OptionParser op("IPHC M26 to EUDAQ Native File Converter", "1.0", "", 1);
   Option<std::string> type(op, "t", "type", "native", "name", "Output file type");
@@ -69,6 +81,9 @@ int main(int, char ** argv) {
                 << "RunEvNb:     " << conf.RunEvNb << std::endl
                 << "RunFileEvNb: " << conf.RunFileEvNb << std::endl
                 << "AsicNb:      " << (int)conf.AsicNb << std::endl
+                << "AsicName:    " << (int)conf.AsicName << " (" << asicname(conf.AsicName) << ")" << std::endl
+                << "SwTrigEn:    " << (int)conf.SwTrigEnabled << std::endl
+                << "HwTrigMode:  " << (int)conf.HwTrigModeSavedData << std::endl
                 << "StartTime:   " << decodetime(conf.StartDate, conf.StartTime) << std::endl
         ;
 
@@ -98,7 +113,7 @@ int main(int, char ** argv) {
         DetectorEvent dev(runnumber, 0, NOTIMESTAMP);
         counted_ptr<Event> rev(new RawDataEvent(RawDataEvent::BORE("EUDRB", runnumber)));
         rev->SetTag("VERSION", "3");
-        rev->SetTag("DET", "MIMOSA26");
+        rev->SetTag("DET", asicname(conf.AsicName));
         rev->SetTag("MODE", "ZS2");
         rev->SetTag("BOARDS", to_string((int)conf.AsicNb));
         dev.AddEvent(rev);
@@ -138,6 +153,8 @@ int main(int, char ** argv) {
               break;
             }
             size_t words = (data.DataLength & 0xffff) / 4;
+            // std::cout << "Frame      " << data.SStatus.FrameNoInAcq << ":" << data.SStatus.FrameNoInRun
+            //           << ", " << data.SStatus.AsicNo
             // std::cout << "Header     " << hexdec(data.Header) << std::endl;
             // std::cout << "FrameCnt   " << hexdec(data.FrameCnt) << std::endl;
             // std::cout << "DataLength " << hexdec(data.DataLength) << std::endl;
@@ -148,7 +165,7 @@ int main(int, char ** argv) {
             block[1] = 0xfe001000;
             block[2] = block[0];
             block[3] = 16;
-            block[4] = 0xf0000000 + (ev << 8);
+            block[4] = 0xf0000000 + (data.SStatus.FrameNoInRun << 8); // (ev << 8)
             block[5] = 0;
             block[6] = data.Header;
             block[7] = data.FrameCnt;
@@ -166,7 +183,7 @@ int main(int, char ** argv) {
             for (size_t i = 0; i < block.size(); ++i) {
               block[i] = block[i] >> 24 | block[i] >> 8 & 0xff00 | block[i] << 8 & 0xff0000 | block[i] << 24;
             }
-            rev->AddBlock(brd, block);
+            rev->AddBlock(data.SStatus.AsicNo, block);
           }
           if (ferror(f)) break;
           dev.AddEvent(ev);
