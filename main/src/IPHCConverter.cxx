@@ -48,7 +48,7 @@ int main(int, char ** argv) {
     op.Parse(argv);
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       unsigned runnumber = from_string(op.GetArg(i), 0U);
-      std::cout << "Run: " << runnumber << std::endl;
+      std::cout << "\nStarting processing for run " << runnumber << std::endl;
       FileNamer fnamer(ipat.Value());
 
       fnamer.Set('P', path.Value()).Set('R', runnumber).Set('T', "cnf").Set('X', ".bin");
