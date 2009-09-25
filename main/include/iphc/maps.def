@@ -1,0 +1,49 @@
+/*******************************************************************************
+File      : x:\lib\com\maps\maps.def
+Goal      : Macros definition of MAPS library.
+          : It provides MAPS types definition and data handling functions.
+Prj date  : 17/07/2009
+File date : 17/07/2009
+Doc date  : //200
+Author    : Gilles CLAUS
+E-mail    : gilles.claus@ires.in2p3.fr
+----------------------------------------------------------------------------------
+License   : You are free to use this source files for your own development as long
+          : as it stays in a public research context. You are not allowed to use it
+          : for commercial purpose. You must put this header with laboratory and
+          : authors names in all development based on this library.
+----------------------------------------------------------------------------------
+Labo      : IPHC */
+/*******************************************************************************/
+
+
+#ifndef MAPS_DEF
+#define MAPS_DEF
+
+
+/* ================= */
+/*  Macro example    */
+/* ================= */
+
+
+#define MAPS__TCDigTelMon_MAX_EV_NB 300
+#define MAPS__TCDigTelMon_MAX_PLANE_NB     6
+#define MAPS__TCDigTelMon_MAX_RES_RUN_EV_NB 10000
+#define MAPS__TCDigTelMon_MAX_RES_RUN_HIT_NB_PER_PLANE 1000
+
+#define MAPS__TCDigTelMon_CHK_PLANE_ID(Id) { if ( (Id < 0) || (Id >= MAPS__TCDigTelMon_MAX_PLANE_NB) ) err_retfail ( -1, (ERR_OUT,"Bad Id=%d MUST be 0..%d", Id, MAPS__TCDigTelMon_MAX_PLANE_NB-1) ); }
+
+#define MAPS__TCDigTelMon_CHK_PLANE_NB(Nb) { if ( (Nb <= 0) || (Nb > MAPS__TCDigTelMon_MAX_PLANE_NB) ) err_retfail ( -1, (ERR_OUT,"Bad Id=%d MUST be 0..%d", Nb, MAPS__TCDigTelMon_MAX_PLANE_NB-1) ); }
+
+
+#define MAPS__TCDigTelMon_MODE_PLOT_PLANE_FRAME                    0
+#define MAPS__TCDigTelMon_MODE_PLOT_PLANE_CUMUL                    1
+#define MAPS__TCDigTelMon_MODE_PLOT_PLANE_COIN_PER_FRAME_6_COLORS  2
+#define MAPS__TCDigTelMon_MODE_PLOT_PLANE_COIN_CUMUL_1_COLOR       3
+#define MAPS__TCDigTelMon_MODE_PLOT_PLANE_COIN_CUMUL_6_COLORS      4
+
+#define MAPS__TCDigTelMon_LIST_HIT_ALL_PLANES_MODE__HIT_ALL_PLANES    0
+#define MAPS__TCDigTelMon_LIST_HIT_ALL_PLANES_MODE__SINGLE_EACH_PLANE 1
+
+
+#endif

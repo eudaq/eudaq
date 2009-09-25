@@ -208,6 +208,35 @@ namespace eudaq {
 #endif
   }
 
+  template <typename T>
+  inline void setbigendian(unsigned char * ptr, const T & val) {
+#if (defined(       __BYTE_ORDER) &&        __BYTE_ORDER ==        __BIG_ENDIAN) || \
+    (defined(__DARWIN_BYTE_ORDER) && __DARWIN_BYTE_ORDER == __DARWIN_BIG_ENDIAN)
+    *reinterpret_cast<T *>(ptr) = val;
+#else
+    T tmp = val;
+    ptr += sizeof (T);
+    for (size_t i = 0; i < sizeof (T); ++i) {
+      *--ptr = tmp & 0xff;
+      tmp >>= 8;
+    }
+#endif
+  }
+
+  template <typename T>
+  inline void setlittleendian(unsigned char * ptr, const T & val) {
+#if (defined(       __BYTE_ORDER) &&        __BYTE_ORDER ==        __LITTLE_ENDIAN) || \
+    (defined(__DARWIN_BYTE_ORDER) && __DARWIN_BYTE_ORDER == __DARWIN_LITTLE_ENDIAN)
+    *reinterpret_cast<T *>(ptr) = val;
+#else
+    T tmp = val;
+    for (size_t i = 0; i < sizeof (T); ++i) {
+      *ptr++ = tmp & 0xff;
+      tmp >>= 8;
+    }
+#endif
+  }
+
   std::string ReadLineFromFile(const std::string & fname);
 
   template <typename T>

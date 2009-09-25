@@ -1,0 +1,175 @@
+/*******************************************************************************
+File      : x:\lib\com\maps\mi26\mi26.def
+Goal      : Macros definition of Mi26 library.
+: It provides Mi26 types definition and data handling functions.
+Prj date  : 24/11/2008
+File date : 24/11/2008
+Doc date  : //200
+Author    : Gilles CLAUS
+E-mail    : gilles.claus@ires.in2p3.fr
+----------------------------------------------------------------------------------
+License   : You are free to use this source files for your own development as long
+: as it stays in a public research context. You are not allowed to use it
+: for commercial purpose. You must put this header with laboratory and
+: authors names in all development based on this library.
+----------------------------------------------------------------------------------
+Labo      : IPHC */
+/*******************************************************************************/
+
+
+#ifndef MI26_DEF
+#define MI26_DEF
+
+
+/* ================= */
+/*  Macro example    */
+/* ================= */
+
+
+#define MI26__REG_DISCRI_BIT_SZ     1152
+#define MI26__REG_DISCRI_W32_SZ       36
+
+#define MI26__REG_AFTER_ZS_BIT_SZ    160
+#define MI26__REG_AFTER_ZS_W32_SZ      5
+
+#define MI26__REG_AFTER_MUX_BIT_SZ   160
+#define MI26__REG_AFTER_MUX_W32_SZ     5
+
+#define MI26__MAT_DISCRI_LINES_NB    578
+
+#define MI26__ZS_FFRAME_RAW_MAX_W16  1140 // 1142
+
+#define MI26__ZS_FFRAME_MAX_STATES_NB_PER_STATES_REC   9
+#define MI26__ZS_FFRAME_MAX_STATES_REC               576 // one per line
+
+#define MI26__ZS_FFRAME_MODE0_2X80MHZ 0
+#define MI26__ZS_FFRAME_MODE1_2X40MHZ 1
+#define MI26__ZS_FFRAME_MODE2_1X80MHZ 2
+
+
+#define MI26__ZS_FFRAME_MODE_2X80MHZ_BIT_SZ 9216
+#define MI26__ZS_FFRAME_MODE_2X40MHZ_BIT_SZ 4608
+#define MI26__ZS_FFRAME_MODE_1X80MHZ_BIT_SZ 9216
+
+#define MI26__ZS_FFRAME_MODE_2X80MHZ_W16_SZ 576
+#define MI26__ZS_FFRAME_MODE_2X40MHZ_W16_SZ 288
+#define MI26__ZS_FFRAME_MODE_1X80MHZ_W16_SZ 576
+
+
+
+// Id to select Mi26 register
+
+#define MI26__REG_DISCRI        0
+#define MI26__REG_AFTER_ZS      1
+#define MI26__REG_AFTER_MUX     2
+#define MI26__REG_DISCRI_SCAN   3
+
+// ======================================
+// For MI26 discri analysis tools
+// ======================================
+
+// Submatrices number
+
+#define MI26__SUB_MAT_NB          4
+
+// --------------------
+// Bias registers index
+// --------------------
+
+#define MI26__REG_BIAS_NB        19
+
+#define MI26__REG_BIAS_ICLPDISC   0
+#define MI26__REG_BIAS_IPWRSW     1
+#define MI26__REG_BIAS_IBUF       2
+#define MI26__REG_BIAS_ID1PWRS    3
+#define MI26__REG_BIAS_ID2PWRS    4
+#define MI26__REG_BIAS_ILVDSTX    5
+#define MI26__REG_BIAS_ILVDS      6
+#define MI26__REG_BIAS_IVTST1     7
+#define MI26__REG_BIAS_IVTST2     8
+#define MI26__REG_BIAS_IANABUF    9
+#define MI26__REG_BIAS_IVDREF1D  10
+#define MI26__REG_BIAS_IVDREF1C  11
+#define MI26__REG_BIAS_IVDREF1B  12
+#define MI26__REG_BIAS_IVDREF1A  13
+#define MI26__REG_BIAS_IVDREF2   14
+#define MI26__REG_BIAS_IDIS1     15
+#define MI26__REG_BIAS_IDIS2     16
+#define MI26__REG_BIAS_IPXI      17
+#define MI26__REG_BIAS_IKIMO     18
+
+// ---------------------------------------------------------------------------------
+// User defined parameters for each step ( threshold = run ) of discri measurement
+// ---------------------------------------------------------------------------------
+
+// Maximum parameters number
+
+#define MI26__DIS_MEAS_STEP_MAX_PAR_NB 20
+
+// Index of each parameter to access them in array
+// User can create new parameters here
+
+#define MI26__DIS_MEAS_STEP_PAR_FIRST   0
+#define MI26__DIS_MEAS_STEP_PAR_LAST    (MI26__DIS_MEAS_STEP_MAX_PAR_NB - 1)
+
+// Maximum number of steps
+
+#define MI26__DIS_TEST_MAX_STEP_NB 30
+
+
+/* ============================================================================ */
+/*                                                     */
+/*                                                          */
+/*                                                              */
+/* ---------------------------------------------------------------------------- */
+/*   */
+/* ---------------------------------------------------------------------------- */
+/* Date :                                                             */
+/* ============================================================================ */
+
+#define MI26__NB_MAX_MI26_PER_DAQ 8
+
+
+// --------------------
+// ZS Run info record
+// --------------------
+
+#define MI26__TZSRunCnf__HW_TRIG_PAR_NB 10 // WARNING !!! MUST be >= DPXI__HW_TRIG_PAR_NB
+
+#define MI26__TZSRunRes__MAX_ACQ_REJ_NB 1000
+
+#define MI26__TCZsRunRW__CHK_INIT() {err_retfail ( ProConfDone, (ERR_OUT,"Conf NOT done => Abort") ); }
+
+
+
+
+
+// --------------------
+// MI26__TCTelMon
+// --------------------
+
+#define MI26__COLOR_BROWN   0x000066CC
+#define MI26__COLOR_ORANGE  0x0000A5FF
+#define MI26__COLOR_YELLOW  0x0000FFFF
+#define MI26__COLOR_GREEN   0x0000FF00
+#define MI26__COLOR_BLUE    0x00FF0000
+#define MI26__COLOR_VIOLET  0x00990066
+
+#define MI26__TCTelMon__COL_PLANE_0 (TColor) MI26__COLOR_ORANGE
+#define MI26__TCTelMon__COL_PLANE_1 (TColor) MI26__COLOR_BLUE
+#define MI26__TCTelMon__COL_PLANE_2 (TColor) MI26__COLOR_BROWN
+#define MI26__TCTelMon__COL_PLANE_3 (TColor) MI26__COLOR_YELLOW 
+#define MI26__TCTelMon__COL_PLANE_4 (TColor) MI26__COLOR_GREEN
+#define MI26__TCTelMon__COL_PLANE_5 (TColor) MI26__COLOR_VIOLET
+
+
+#define MI26__TCTelMon__EV_LIST_MAX_CHAN_NB  (MAPS__TCDigTelMon_MAX_PLANE_NB + 1) // 1 channel = 1 plane
+                                                                                  // Last channel = cumul hit nb of all planes
+                                                                                  
+#define MI26__TCTelMon__EV_LIST_CHAN_ID_CUMUL MAPS__TCDigTelMon_MAX_PLANE_NB         // Channel for cumul hit nb of all planes
+
+                                                                                  
+#define MI26__TCTelMon__EV_LIST_MAX_ELT_NB  200000
+
+
+#endif

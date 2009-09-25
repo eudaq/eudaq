@@ -259,16 +259,7 @@ namespace eudaq {
 
 #define GET(o) getbigendian<unsigned>(&alldata[(o)*4])
   void EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
-    static const bool dbg = false;
-    //static int debugcount = 0;
-    //debugcount++;
-    //if (0 && debugcount <= 6) { // Outputs raw data in Angelo's text format (Now implemented in FileWriterMimoloop)
-    //  std::cerr << "BaseAddress: " << to_hex(getbigendian<unsigned>(&alldata[0]) & 0xff000000 | 0x00400000) << std::endl;
-    //  for (size_t i = 0; i < alldata.size()-3; i += 4) {
-    //    std::cerr << to_hex(i/4+1) << " : " << to_hex(getbigendian<unsigned>(&alldata[i]), 0) << std::endl;
-    //  }
-    //}
-
+    static const bool dbg = true;
     if (dbg) std::cout << "DataSize = " << alldata.size() << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
@@ -279,6 +270,7 @@ namespace eudaq {
                                                           ", bytes=" + to_string(alldata.size()) + ")");
     word = GET(offset=1);
     unsigned sof = word>>8 & 0xffff;
+    // should this be: unsigned sof = GET(offset=3);
     if (dbg) std::cout << "StartOfFrame = " << to_hex(sof, 0) << std::endl;
     // offset 2,3 are repeats of 0,1
     word = GET(offset=4);
@@ -335,9 +327,7 @@ namespace eudaq {
         ++offset;
       }
     } catch (const std::out_of_range & e) {
-      std::cout << "Oops: " << e.what() << std::endl;
-      // readjust offset to point to trailer:
-      offset = alldata.size() / 4 - 2;
+      std::cout << "\n%%%% Oops: " << e.what() << " %%%%" << std::endl;
     }
 //     if (dbg) {
 //       std::cout << "Plane " << plane.m_pix.size();
@@ -346,10 +336,11 @@ namespace eudaq {
 //       }
 //       std::cout << std::endl;
 //     }
-    word = GET(++offset);
-    unsigned tluev = word>>8 & 0xffff, tludbg = (alldata[alldata.size()-7] << 8) | alldata[alldata.size()-6];
+    // readjust offset to be sure it points to trailer:
+    word = GET(offset = alldata.size() / 4 - 2);
+    unsigned tluev = word>>8 & 0xffff;
     plane.SetTLUEvent(tluev);    
-    if (dbg) std::cout << "TLUEventNumber = " << hexdec(tluev, 0) << ", " << hexdec(tludbg, 0) << std::endl;
+    if (dbg) std::cout << "TLUEventNumber = " << hexdec(tluev, 0) << std::endl;
     if (dbg) std::cout << "NumFramesAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
     word = GET(++offset);
     if (dbg) std::cout << "EventWordCount = " << hexdec(word & 0x7ffff, 0) << std::endl;

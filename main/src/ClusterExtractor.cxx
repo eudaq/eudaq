@@ -207,7 +207,7 @@ int main(int /*argc*/, char ** argv) {
               std::vector<short> cds(width * height);
               std::vector<Seed> seeds;
               for (unsigned i = 0; i < brd.HitPixels(); ++i) {
-                int x = XFIX(brd.GetX(i)), y = YFIX(brd.GetY(i));
+                int x = XFIX((int)brd.GetX(i)), y = YFIX((int)brd.GetY(i));
                 if (x < 0 || y < 0) continue;
                 unsigned idx = width * y + x;
                 cds[idx] = brd.GetPixel(i) * brd.Polarity();

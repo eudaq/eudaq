@@ -46,17 +46,23 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
   if (do_process || do_display || do_dump || do_zs) {
     if (do_display) {
       std::cout << dev << std::endl;
-      // for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      //   const eudaq::RawDataEvent * rev = dynamic_cast<const eudaq::RawDataEvent *>(dev.GetEvent(i));
-      //   if (rev && rev->GetSubType() == "EUDRB" && rev->NumBlocks() > 0) {
-      //     std::cout << "#### Raw Data: ####" << std::endl;
-      //     const std::vector<unsigned char> & data = rev->GetBlock(0);
-      //     for (size_t i = 0; i+3 < data.size(); i += 4) {
-      //       std::cout << std::setw(2) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned long>(&data[i])) << std::endl;
-      //     }
-      //     //break;
-      //   }
-      // }
+      if (do_dump) {
+        unsigned num = 0;
+	for (size_t i = 0; i < dev.NumEvents(); ++i) {
+	  const eudaq::RawDataEvent * rev = dynamic_cast<const eudaq::RawDataEvent *>(dev.GetEvent(i));
+	  if (rev && rev->GetSubType() == "EUDRB" && rev->NumBlocks() > 0) {
+            ++num;
+            for (unsigned block = 0; block < rev->NumBlocks(); ++block) {
+              std::cout << "#### Producer " << num << ", block " << block << " (ID " << rev->GetID(block) << ") ####" << std::endl;
+              const std::vector<unsigned char> & data = rev->GetBlock(block);
+              for (size_t i = 0; i+3 < data.size(); i += 4) {
+                std::cout << std::setw(4) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned long>(&data[i])) << std::endl;
+              }
+              //break;
+            }
+	  }
+	}
+      }
     }
     if (do_process) {
       unsigned boardnum = 0;
@@ -82,10 +88,6 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
         //     std::cout << "    " << ndata << tab << boardnum << tab << plane.m_x[p] << tab << plane.m_y[p] << tab << plane.m_pix[0][p] << std::endl;
         //   }
         }
-//       if (do_dump) {
-//         std::ofstream file(("board" + to_string(boardnum) + ".dat").c_str());
-//         file.write(reinterpret_cast<const char*>(brd.GetData()-8), brd.DataSize()+16);
-//       }
         boardnum++;
       }
     }
@@ -103,7 +105,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionFlag do_proc(op, "p", "process", "Process data from displayed events");
   eudaq::OptionFlag do_pall(op, "a", "process-all", "Process data from all events");
   eudaq::Option<std::string> do_data(op, "d", "display", "", "numbers", "Event numbers to display (eg. '1-10,99,-1')");
-  eudaq::Option<unsigned> do_dump(op, "u", "dumpevent", 0, "number", "Dump event to files (1 per EUDRB)");
+  eudaq::OptionFlag do_dump(op, "u", "dump", "Dump raw data for displayed events");
   eudaq::OptionFlag do_zs(op, "z", "zsdump", "Print pixels for zs events");
   try {
     op.Parse(argv);
@@ -136,7 +138,7 @@ int main(int /*argc*/, char ** argv) {
           // TODO: check event number matches ndata
           bool show = std::find(displaynumbers.begin(), displaynumbers.end(), ndata) != displaynumbers.end();
           bool proc = do_pall.IsSet() || (show && do_proc.IsSet());
-          bool dump = (do_dump.IsSet() && do_dump.Value() == ndata);
+          bool dump = (do_dump.IsSet());
           bool shown = DoEvent(ndata, dev, proc, show, do_zs.IsSet(), dump);
           if (showlast) {
             if (shown) {
