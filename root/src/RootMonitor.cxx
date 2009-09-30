@@ -1853,13 +1853,13 @@ private:
       }
       //end of rms for noise determination
 
-      b.m_historaw2d->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(plane.PixVector(1)));
+      b.m_historaw2d->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(plane.PixVector(0)));
       b.m_historaw2d->SetNormFactor(b.m_historaw2d->Integral() / m_histoevents);
-      b.m_historawx->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.PixVector(1)));
+      b.m_historawx->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.PixVector(0)));
       b.m_historawx->SetNormFactor(b.m_historawx->Integral() / m_histoevents);
-      b.m_historawy->FillN(hitpixels, dataptr(plane.YVector()), dataptr(plane.PixVector(1)));
+      b.m_historawy->FillN(hitpixels, dataptr(plane.YVector()), dataptr(plane.PixVector(0)));
       b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
-      b.m_historawval->FillN(hitpixels, dataptr(plane.PixVector(1)), dataptr(ones));
+      b.m_historawval->FillN(hitpixels, dataptr(plane.PixVector(0)), dataptr(ones));
       //b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
     }
     //b.m_histocdsval->FillN(hitpixels, &cds.at(0), &ones.at(0));
