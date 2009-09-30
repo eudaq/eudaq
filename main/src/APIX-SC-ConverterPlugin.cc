@@ -70,7 +70,8 @@ namespace eudaq {
     StandardPlane plane(id, "APIX", "APIX");
     //unsigned npixels = m_NumRows * m_NumColumns;
 
-    plane.SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_ACCUMULATE);
+    // Size 18x160, no pixels preallocated, one frame, each frame has its own coordinates, and all frames should be accumulated
+    plane.SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
     for (size_t i = 0; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
@@ -85,7 +86,8 @@ namespace eudaq {
         //tot=(one_line & 0xff);
         int tot = (one_line >> 7) & 0xff;
         //std::cout << xpos << " " <<ypos << " " <<tot << std::endl;
-        plane.PushPixel(xpos, ypos, tot);
+        int subtrigger = 0;
+        plane.PushPixel(xpos, ypos, tot, subtrigger);
       }
     }
     return plane;

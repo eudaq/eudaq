@@ -75,7 +75,8 @@ namespace eudaq {
     StandardPlane plane(id, "APIX", "APIX");
     //unsigned npixels = m_NumRows * m_NumColumns;
 
-    plane.SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_ACCUMULATE);
+    // Size 18x160, no pixels preallocated, one frame, each frame has its own coordinates, and all frames should be accumulated
+    plane.SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
     for (size_t i = 0; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
@@ -84,11 +85,12 @@ namespace eudaq {
       if ((one_line & 0x80000001)!=0x80000001 && i > 12 && (one_line & 0x02000000)>>25 != 0x1) {
 
         chip = (one_line >> 21) & 0xf;
-        if (chip == FE) { //other wise the data belongs to a differnet frame
+        if (chip == FE) { // otherwise the data belongs to a different frame
           //std::cout << "DATA" << std::endl;
           int ypos = (one_line >>13) & 0xff; //row
           int xpos =(one_line >> 8 ) & 0x1f; //column
           int tot = (one_line) & 0xff;
+          int subtrigger = 0;
           /* I guess this is only necessary to present the Module-Data in one plane
              if (chip > 7)
              {
@@ -99,7 +101,7 @@ namespace eudaq {
              xpos = (18*chip) + xpos
              }
           */
-          plane.PushPixel(xpos, ypos, tot);
+          plane.PushPixel(xpos, ypos, tot, subtrigger);
         }
       }
     }
