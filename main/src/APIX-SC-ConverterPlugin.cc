@@ -20,25 +20,25 @@ namespace eudaq {
 
   /********************************************/
 
-  class APIXMCConverterPlugin : public DataConverterPlugin {
+  class APIXSCConverterPlugin : public DataConverterPlugin {
   public:
     virtual void Initialize(const Event & e, const Configuration & c);
     //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
     virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
 
   private:
-    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id, int FE) const;
-    APIXMCConverterPlugin() : DataConverterPlugin("APIX-MC"),
+    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const;
+    APIXSCConverterPlugin() : DataConverterPlugin("APIX-SC"),
                               m_NumRows(160), m_NumColumns(18),
                               m_InitialRow(0), m_InitialColumn(0) {}
     unsigned m_NumRows, m_NumColumns, m_InitialRow , m_InitialColumn;
 
-    static APIXMCConverterPlugin const m_instance;
+    static APIXSCConverterPlugin const m_instance;
   };
 
-  APIXMCConverterPlugin const APIXMCConverterPlugin::m_instance;
+  APIXSCConverterPlugin const APIXSCConverterPlugin::m_instance;
 
-  void APIXMCConverterPlugin::Initialize(const Event & source, const Configuration &) {
+  void APIXSCConverterPlugin::Initialize(const Event & source, const Configuration &) {
     m_NumRows = from_string(source.GetTag("NumRows"), 160);
     m_NumColumns = from_string(source.GetTag("NumColumns"), 18);
     m_InitialRow = from_string(source.GetTag("InitialRow"), 0);
@@ -48,7 +48,7 @@ namespace eudaq {
     std::cout << " Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
   }
 
-  bool APIXMCConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
+  bool APIXSCConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
     if (source.IsBORE()) {
       // shouldn't happen
       return true;
@@ -58,20 +58,15 @@ namespace eudaq {
     }
     // If we get here it must be a data event
     const RawDataEvent & ev = dynamic_cast<const RawDataEvent &>(source);
-
-    /* Yes this is bit strange...
-       in MutiChip-Mode which is used here, all the Data are written in only one block,
-       in principal its possible to do it different, but then a lot of data would be doubled.
-       The Data in block 1 is exactly what is in the eudet-fifo and the datafifo for on event.
-    */
-    for (int FE=0; FE<3;FE++) {
-      result.AddPlane(ConvertPlane(ev.GetBlock(0),ev.GetID(0),FE));
+    for (size_t i = 0; i < ev.NumBlocks(); ++i) {
+      result.AddPlane(ConvertPlane(ev.GetBlock(i),
+                                   ev.GetID(i)));
+      std::cout << "Danach" << std::endl;
     }
-
     return true;
   }
 
-  StandardPlane APIXMCConverterPlugin::ConvertPlane(const std::vector<unsigned char> & data, unsigned id, int FE) const {
+  StandardPlane APIXSCConverterPlugin::ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
     StandardPlane plane(id, "APIX", "APIX");
     //unsigned npixels = m_NumRows * m_NumColumns;
 
@@ -79,28 +74,18 @@ namespace eudaq {
 
     for (size_t i = 0; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
-      int chip = (one_line >> 21) & 0xf;
-      //std::cout << "Raw Data: " << hexdec(one_line) << ", FE: "<< chip << " (" << FE << ")" << std::endl;
-      if ((one_line & 0x80000001)!=0x80000001 && i > 12 && (one_line & 0x02000000)>>25 != 0x1) {
+      if ((one_line & 0x80000001)!=0x80000001 && i > 12 && (one_line & 0x0f000000)>>20 != 0xf0) {
+        //std::cout << "DATEN!!!" << std::endl;
+        //std::cout << " 0x" << std::hex << one_line <<  std::endl;
+        //ypos = (one_line & 0x0ff00000)>>20;
+        int ypos = (one_line >>20) & 0xff;
 
-        chip = (one_line >> 21) & 0xf;
-        if (chip == FE) { //other wise the data belongs to a differnet frame
-          //std::cout << "DATA" << std::endl;
-          int ypos = (one_line >>13) & 0xff; //row
-          int xpos =(one_line >> 8 ) & 0x1f; //column
-          int tot = (one_line) & 0xff;
-          /* I guess this is only necessary to present the Module-Data in one plane
-             if (chip > 7)
-             {
-             xpos = 287 - (18*chip) - xpos;
-             ypos = 319 - ypos;
-             } else
-             {
-             xpos = (18*chip) + xpos
-             }
-          */
-          plane.PushPixel(xpos, ypos, tot);
-        }
+        //xpos =(one_line & 0x000f800)>>11;
+        int xpos =(one_line >> 15 ) & 0x1f;
+        //tot=(one_line & 0xff);
+        int tot = (one_line >> 7) & 0xff;
+        //std::cout << xpos << " " <<ypos << " " <<tot << std::endl;
+        plane.PushPixel(xpos, ypos, tot);
       }
     }
     return plane;
