@@ -68,9 +68,9 @@ namespace eudaq {
     m_xsize = w;
     m_ysize = h;
     m_pix.resize(frames);
-    m_x.resize((m_flags & FLAG_DIFFCOORDS) ? frames : 1);
-    m_y.resize((m_flags & FLAG_DIFFCOORDS) ? frames : 1);
-    m_pivot.resize((m_flags & FLAG_WITHPIVOT) ? ((m_flags & FLAG_DIFFCOORDS) ? frames : 1) : 0);
+    m_x.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
+    m_y.resize(GetFlags(FLAG_DIFFCOORDS) ? frames : 1);
+    m_pivot.resize(GetFlags(FLAG_WITHPIVOT) ? (GetFlags(FLAG_DIFFCOORDS) ? frames : 1) : 0);
     for (size_t i = 0; i < frames; ++i) {
       m_pix[i].resize(npix);
     }
@@ -91,7 +91,7 @@ namespace eudaq {
   }
 
   void StandardPlane::SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot, unsigned frame) {
-    if (frame >= m_pix.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in PushPixel");
+    if (frame >= m_pix.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in SetPixel");
     if (frame < m_x.size()) m_x.at(frame).at(index) = x;
     if (frame < m_y.size()) m_y.at(frame).at(index) = y;
     if (frame < m_pivot.size()) m_pivot.at(frame).at(index) = pivot;
@@ -110,7 +110,7 @@ namespace eudaq {
     return m_result_pix->at(index);
   }
   double StandardPlane::GetX(unsigned index, unsigned frame) const {
-    if (!(m_flags & FLAG_DIFFCOORDS)) frame = 0;
+    if (!GetFlags(FLAG_DIFFCOORDS)) frame = 0;
     return m_x.at(frame).at(index);
   }
   double StandardPlane::GetX(unsigned index) const {
@@ -118,7 +118,7 @@ namespace eudaq {
     return m_result_x->at(index);
   }
   double StandardPlane::GetY(unsigned index, unsigned frame) const {
-    if (!(m_flags & FLAG_DIFFCOORDS)) frame = 0;
+    if (!GetFlags(FLAG_DIFFCOORDS)) frame = 0;
     return m_y.at(frame).at(index);
   }
   double StandardPlane::GetY(unsigned index) const {
@@ -126,7 +126,7 @@ namespace eudaq {
     return m_result_y->at(index);
   }
   bool StandardPlane::GetPivot(unsigned index, unsigned frame) const {
-    if (!(m_flags & FLAG_DIFFCOORDS)) frame = 0;
+    if (!GetFlags(FLAG_DIFFCOORDS)) frame = 0;
     return m_pivot.at(frame).at(index);
   }
 
@@ -144,10 +144,24 @@ namespace eudaq {
     if (m_result_pix) return;
     m_result_x = &m_x[0];
     m_result_y = &m_y[0];
-    if (m_pix.size() == 1 && !NeedsCDS()) {
+    if (GetFlags(FLAG_ACCUMULATE)) {
+      m_temp_pix.resize(0);
+      m_temp_x.resize(0);
+      m_temp_y.resize(0);
+      for (size_t f = 0; f < m_pix.size(); ++f) {
+        for (size_t p = 0; p < m_pix[f].size(); ++p) {
+          m_temp_x.push_back(GetX(p, f));
+          m_temp_y.push_back(GetY(p, f));
+          m_temp_pix.push_back(GetPixel(p, f));
+        }
+      }
+      m_result_x = &m_temp_x;
+      m_result_y = &m_temp_y;
+      m_result_pix = &m_temp_pix;
+    } else if (m_pix.size() == 1 && !GetFlags(FLAG_NEEDCDS)) {
       m_result_pix = &m_pix[0];
     } else if (m_pix.size() == 2) {
-      if (NeedsCDS()) {
+      if (GetFlags(FLAG_NEEDCDS)) {
         m_temp_pix.resize(m_pix[0].size());
         for (size_t i = 0; i < m_temp_pix.size(); ++i) {
           m_temp_pix[i] = m_pix[1][i] - m_pix[0][i];
@@ -184,7 +198,7 @@ namespace eudaq {
         }
         m_result_pix = &m_temp_pix;
       }
-    } else if (m_pix.size() == 3 && NeedsCDS()) {
+    } else if (m_pix.size() == 3 && GetFlags(FLAG_NEEDCDS)) {
       m_temp_pix.resize(m_pix[0].size());
       for (size_t i = 0; i < m_temp_pix.size(); ++i) {
         m_temp_pix[i] = m_pix[0][i] * (m_pivot[0][i]-1)
@@ -194,7 +208,7 @@ namespace eudaq {
       m_result_pix = &m_temp_pix;
     } else {
       EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-                  + " frames, CDS=" + (NeedsCDS() ? "Needed" : "Done") + ")");
+                  + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
     }
     
   }
@@ -203,12 +217,12 @@ namespace eudaq {
   template <typename T>
   std::vector<T> StandardPlane::GetPixels() const {
     std::vector<T> result(m_pix[0].size());
-    if (m_pix.size() == 1 && !NeedsCDS()) {
+    if (m_pix.size() == 1 && !GetFlags(FLAG_NEEDCDS)) {
       for (size_t i = 0; i < result.size(); ++i) {
         result[i] = static_cast<T>(m_pix[0][i] * Polarity());
       }
     } else if (m_pix.size() == 2) {
-      if (NeedsCDS()) {
+      if (GetFlags(FLAG_NEEDCDS)) {
         for (size_t i = 0; i < result.size(); ++i) {
           result[i] = static_cast<T>((m_pix[1][i] - m_pix[0][i]) * Polarity());
         }
@@ -224,7 +238,7 @@ namespace eudaq {
           }
         }
       }
-    } else if (m_pix.size() == 3 && NeedsCDS()) {
+    } else if (m_pix.size() == 3 && GetFlags(FLAG_NEEDCDS)) {
       std::vector<T> result(m_pix[0].size());
       for (size_t i = 0; i < result.size(); ++i) {
         result[i] = static_cast<T>((m_pix[0][i] * (m_pivot[0][i]-1)
@@ -234,7 +248,7 @@ namespace eudaq {
       }
     } else {
       EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-                  + " frames, CDS=" + (NeedsCDS() ? "Needed" : "Done") + ")");
+                  + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
     }
     return result;
   }

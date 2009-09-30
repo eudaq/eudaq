@@ -12,6 +12,7 @@ namespace eudaq {
     enum FLAGS { FLAG_ZS = 0x1, // Data are zero suppressed
                  FLAG_NEEDCDS = 0x2, // CDS needs to be calculated (data is 2 or 3 raw frames)
                  FLAG_NEGATIVE = 0x4, // Signal polarity is negative
+                 FLAG_ACCUMULATE = 0x8, // Multiple frames should be accumulated for output
 
                  FLAG_WITHPIVOT = 0x10000, // Include before/after pivot boolean per pixel
                  FLAG_WITHSUBMAT = 0x20000, // Include Submatrix ID per pixel
@@ -66,9 +67,10 @@ namespace eudaq {
     unsigned TLUEvent() const { return m_tluevent; }
     unsigned PivotPixel() const { return m_pivotpixel; }
 
-    bool IsZS() const { return m_flags & FLAG_ZS; }
-    bool NeedsCDS() const { return m_flags & FLAG_NEEDCDS; }
-    int  Polarity() const { return m_flags & FLAG_NEGATIVE ? -1 : 1; }
+    int GetFlags(int f) const { return m_flags & f; }
+    //bool IsZS() const { return GetFlags(FLAG_ZS); }
+    bool NeedsCDS() const { return GetFlags(FLAG_NEEDCDS); }
+    int  Polarity() const { return GetFlags(FLAG_NEGATIVE) ? -1 : 1; }
 
     void Print(std::ostream &) const;
   private:
