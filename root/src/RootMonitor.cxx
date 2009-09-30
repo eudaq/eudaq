@@ -69,6 +69,9 @@ struct PlaneInfo {
       width = 128; height = 128; pedfile = "fortis_pedestals.txt";
       seed_thresh = 16.0; neighbour_thresh = 4.0; cluster_thresh = 0.0;
     }
+    else if (is("APIX"))    {
+      width = 18; height = 160;
+    }
     //else if (is("TAKI"))      { width = 128; height = 128; }
     // Override with values from conf file if they are set
 #define GETPART(n, val) if (parts.size() > n && parts.at(n).size()) val = eudaq::from_string(parts.at(n), val)
