@@ -37,11 +37,10 @@ namespace eudaq {
     virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
 
   private:
-    APIXPlanes ConvertPlanes(const std::vector<unsigned char> & data) const;
+    void ConvertPlanes(const std::vector<unsigned char> & data, APIXPlanes & result) const;
     APIXMCConverterPlugin() : DataConverterPlugin("APIX-MC"),
-                              m_NumRows(160), m_NumColumns(18),
-                              m_InitialRow(0), m_InitialColumn(0) {}
-    unsigned m_NumRows, m_NumColumns, m_InitialRow , m_InitialColumn;
+                              m_PlaneMask(0) {}
+    unsigned m_PlaneMask;
 
     static APIXMCConverterPlugin const m_instance;
   };
@@ -49,13 +48,10 @@ namespace eudaq {
   APIXMCConverterPlugin const APIXMCConverterPlugin::m_instance;
 
   void APIXMCConverterPlugin::Initialize(const Event & source, const Configuration &) {
-    m_NumRows = from_string(source.GetTag("NumRows"), 160);
-    m_NumColumns = from_string(source.GetTag("NumColumns"), 18);
-    m_InitialRow = from_string(source.GetTag("InitialRow"), 0);
-    m_InitialColumn = from_string(source.GetTag("InitialColumn"), 0);
+    m_PlaneMask = from_string(source.GetTag("PlaneMask"), 0);
 
-    std::cout << " Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
-    std::cout << " Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
+    //std::cout << " Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
+    //std::cout << " Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
   }
 
   bool APIXMCConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
@@ -77,7 +73,20 @@ namespace eudaq {
 //     for (int FE=0; FE<4; FE++) {
 //       result.AddPlane(ConvertPlane(ev.GetBlock(0),ev.GetID(0),FE));
 //     }
-    APIXPlanes planes = ConvertPlanes(ev.GetBlock(0));
+    APIXPlanes planes;
+    int feid = 0;
+    unsigned mask = m_PlaneMask;
+    while (mask) {
+      if (mask & 1) {
+        std::cout << "APIX plane " << feid << std::endl;
+        planes.planes.push_back(StandardPlane(feid, "APIX", "APIX"));
+        planes.feids.push_back(feid);
+        planes.planes.back().SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+      }
+      feid++;
+      mask >>= 1;
+    }
+    ConvertPlanes(ev.GetBlock(0), planes);
     for (size_t i = 0; i < planes.feids.size(); ++i) {
       result.AddPlane(planes.planes[i]);
     }
@@ -85,8 +94,7 @@ namespace eudaq {
     return true;
   }
 
-  APIXPlanes APIXMCConverterPlugin::ConvertPlanes(const std::vector<unsigned char> & data) const {
-    APIXPlanes result;
+  void APIXMCConverterPlugin::ConvertPlanes(const std::vector<unsigned char> & data, APIXPlanes & result) const {
     //StandardPlane plane(id, "APIX", "APIX");
     //unsigned npixels = m_NumRows * m_NumColumns;
 
@@ -95,28 +103,24 @@ namespace eudaq {
 
     for (size_t i = 0; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
-      int chip = (one_line >> 21) & 0xf;
       //std::cout << "Raw Data: " << hexdec(one_line) << ", FE: "<< chip << " (" << FE << ")" << std::endl;
       if ((one_line & 0x80000001)!=0x80000001 && i > 12 && (one_line & 0x02000000)>>25 != 0x1) {
 
-        chip = (one_line >> 21) & 0xf;
+        int chip = (one_line >> 21) & 0xf;
 
         int index = result.Find(chip);
         if (index == -1) {
-          index = result.planes.size();
-          result.planes.push_back(StandardPlane(chip, "APIX", "APIX"));
-          result.feids.push_back(chip);
-          result.planes[index].SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+          std::cerr << "Bad index: " << index << std::endl;
+        } else {
+          //std::cout << "DATA" << std::endl;
+          int ypos = (one_line >>13) & 0xff; //row
+          int xpos = (one_line >> 8) & 0x1f; //column
+          int tot = (one_line) & 0xff;
+          unsigned subtrigger = 0;
+          result.planes.at(index).PushPixel(xpos, ypos, tot, subtrigger);
         }
-        //std::cout << "DATA" << std::endl;
-        int ypos = (one_line >>13) & 0xff; //row
-        int xpos =(one_line >> 8 ) & 0x1f; //column
-        int tot = (one_line) & 0xff;
-        unsigned subtrigger = 0;
-        result.planes.at(index).PushPixel(xpos, ypos, tot, subtrigger);
       }
     }
-    return result;
   }
 
 } //namespace eudaq
