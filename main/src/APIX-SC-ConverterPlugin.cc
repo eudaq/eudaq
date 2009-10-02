@@ -86,7 +86,7 @@ namespace eudaq {
         //tot=(one_line & 0xff);
         int tot = (one_line >> 7) & 0xff;
         //std::cout << xpos << " " <<ypos << " " <<tot << std::endl;
-        int subtrigger = 0;
+        unsigned subtrigger = 0;
         plane.PushPixel(xpos, ypos, tot, subtrigger);
       }
     }

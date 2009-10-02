@@ -90,7 +90,7 @@ namespace eudaq {
           int ypos = (one_line >>13) & 0xff; //row
           int xpos =(one_line >> 8 ) & 0x1f; //column
           int tot = (one_line) & 0xff;
-          int subtrigger = 0;
+          unsigned subtrigger = 0;
           /* I guess this is only necessary to present the Module-Data in one plane
              if (chip > 7)
              {
