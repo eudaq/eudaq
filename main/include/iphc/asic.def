@@ -54,3 +54,4 @@ typedef enum {
 #define ASIC__ENUM_TRIG_RES_NB 4
 
 #endif
+
