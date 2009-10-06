@@ -536,7 +536,7 @@ namespace eudaq {
 
         currentDetector = new eutelescope::EUTelMimoTelDetector;
         std::string mode;
-        plane.IsZS() ? mode = "ZS" : mode = "RAW2";
+        plane.GetFlags(StandardPlane::FLAG_ZS) ? mode = "ZS" : mode = "RAW2";
         currentDetector->setMode( mode );
         if ( result.getEventNumber() == 0 ) {
           setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
@@ -545,7 +545,7 @@ namespace eudaq {
 
         currentDetector = new eutelescope::EUTelMimosa18Detector;
         std::string mode;
-        plane.IsZS() ? mode = "ZS" : mode = "RAW2";
+        plane.GetFlags(StandardPlane::FLAG_ZS) ? mode = "ZS" : mode = "RAW2";
         currentDetector->setMode( mode );
         if ( result.getEventNumber() == 0 ) {
           setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector ));
@@ -566,7 +566,7 @@ namespace eudaq {
       }
       std::vector<size_t > markerVec = currentDetector->getMarkerPosition();
 
-      if ( plane.IsZS() ) {
+      if (plane.GetFlags(StandardPlane::FLAG_ZS)) {
         zsDataEncoder["sensorID"] = plane.ID();
         zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
 
