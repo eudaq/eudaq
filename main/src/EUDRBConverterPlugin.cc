@@ -260,22 +260,22 @@ namespace eudaq {
 #define GET(o) getbigendian<unsigned>(&alldata[(o)*4])
   void EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
     static const bool dbg = false;
-    if (dbg) std::cout << "DataSize = " << alldata.size() << std::endl;
+    if (dbg) std::cout << "DataSize = " << hexdec(alldata.size(), 0) << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
-    if (dbg) std::cout << "BaseAddress = " << to_hex(word & 0xff000000 | 0x00400000) << std::endl;
+    if (dbg) std::cout << "BaseAddress = 0x" << to_hex(word & 0xff000000 | 0x00400000) << std::endl;
     unsigned wordcount = word & 0xffffff;
-    if (dbg) std::cout << "WordCount = " << wordcount << std::endl;
+    if (dbg) std::cout << "WordCount = " << hexdec(wordcount, 0) << std::endl;
     if (wordcount*4 + 16 != alldata.size()) EUDAQ_THROW("Bad wordcount (" + to_string(wordcount) +
                                                           ", bytes=" + to_string(alldata.size()) + ")");
     word = GET(offset=1);
     unsigned sof = word>>8 & 0xffff;
     // should this be: unsigned sof = GET(offset=3);
-    if (dbg) std::cout << "StartOfFrame = " << to_hex(sof, 0) << std::endl;
+    if (dbg) std::cout << "StartOfFrame = " << hexdec(sof, 0) << std::endl;
     // offset 2,3 are repeats of 0,1
     word = GET(offset=4);
-    if (dbg) std::cout << "LocalEventNumber = " << (word>>8 & 0xffff) << std::endl;
-    if (dbg) std::cout << "FrameNumberAtTrigger = " << (word & 0xff) << std::endl;
+    if (dbg) std::cout << "LocalEventNumber = " << hexdec(word>>8 & 0xffff, 0) << std::endl;
+    if (dbg) std::cout << "FrameNumberAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
     word = GET(offset=5);
     unsigned pixadd = word & 0x3ffff;
     plane.SetPivotPixel((pixadd + sof - 16) % 9216); // seems OK in one setup, needs to be verified
@@ -290,7 +290,7 @@ namespace eudaq {
         if (dbg) std::cout << "M26FrameCounter_" << frame << " = " << hexdec(word, 0) << std::endl;
         word = GET(++offset);
         unsigned count = word & 0xffff;
-        if (dbg) std::cout << "M26WordCount_" << frame << " = " << hexdec(count, 0) << std::endl;
+        if (dbg) std::cout << "M26WordCount_" << frame << " = " << hexdec(count, 0) << ", " << hexdec(word>>16, 0) << std::endl;
         if (count > wordremain) EUDAQ_THROW("Bad M26 word count (" + to_string(count) + ", remain=" +
                                             to_string(wordremain) + ", total=" + to_string(wordcount) + ")");
         wordremain -= count;
@@ -307,6 +307,11 @@ namespace eudaq {
           if (i == vec.size() - 1) break;
           unsigned numstates = vec[i] & 0xf;
           unsigned row = vec[i]>>4 & 0x7ff;
+          if (numstates+1 > vec.size()-i) {
+            // Ignoring bad line
+            //std::cout << "Ignoring bad line " << row << " (too many states)" << std::endl;
+            break;
+          }
           if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
                              << ", states " << numstates << ":";
           bool pivot = row >= (plane.PivotPixel() / 16);
