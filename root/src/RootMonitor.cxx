@@ -1469,7 +1469,7 @@ public:
         }
         if (ev.NumPlanes() > 0) {
           int d = maxtlu - mintlu;
-          if (d > 50) d = 50;
+          if (d >= 50) d = 49;
           m_histotludiff->Fill(d);
         }
         //
