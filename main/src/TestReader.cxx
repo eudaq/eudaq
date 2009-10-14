@@ -6,6 +6,12 @@
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 
+#include "TFile.h"
+#include "TTree.h"
+#include "TRandom.h"
+
+
+
 #include <iostream>
 #include <fstream>
 
@@ -13,6 +19,19 @@ using eudaq::StandardEvent;
 using eudaq::from_string;
 using eudaq::to_string;
 using eudaq::split;
+
+// Book variables for the Event_to_TTree conversion 
+TFile *tfile       = 0 ; // book the pointer to a file (to store the otuput)
+TTree *ttree       = 0 ; // book the tree (to store the needed event info)
+Int_t id_plane     = 0 ; // plane id, where the hit is 
+Int_t id_hit       = 0 ; // the hit id (within a plane)  
+Double_t  id_x         = 0 ; // the hit position along  X-axis  
+Double_t  id_y         = 0 ; // the hit position along  Y-axis  
+unsigned long long int i_time_stamp = 0 ; // the time stampe 
+unsigned i_tlu        = 0 ; // a trigger id
+unsigned i_run        = 0 ; // a run  number 
+unsigned i_event      = 0 ; // an event number 
+//
 
 std::vector<unsigned> parsenumbers(const std::string & s) {
   std::vector<unsigned> result;
@@ -68,19 +87,30 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
       unsigned boardnum = 0;
       const StandardEvent & sev = eudaq::PluginManager::ConvertToStandard(dev);
       if (do_display) std::cout << "Standard Event: " << sev << std::endl;
-      for (size_t i = 0; i < sev.NumPlanes(); ++i) {
-        const eudaq::StandardPlane & plane = sev.GetPlane(i);
+      for (size_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
+        const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
         std::vector<double> cds = plane.GetPixels<double>();
         //std::cout << "DBG " << eudaq::hexdec(plane.m_flags);
         bool bad = false;
-        for (size_t i = 0; i < cds.size(); ++i) {
-          //if (i < 10) std::cout << ", " << /*plane.m_pix[0][i] << ";" <<*/ cds[i];
+        for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
+//          if (ipix < 10) std::cout << ", " << plane.m_pix[0][ipix] << ";" << cds[ipix]
+          id_plane = plane.ID();          
+          id_hit = ipix;
+          id_x = plane.GetX(ipix);
+          id_y = plane.GetY(ipix);
+          i_time_stamp =  sev.GetTimestamp();
+//          printf("%#x \n", i_time_stamp);  
+          i_tlu = plane.TLUEvent();
+          i_run = sev.GetRunNumber();
+          i_event = sev.GetEventNumber();                  
+          ttree->Fill(); 
         }
+
         //std::cout << (bad ? "***" : "") << std::endl;
         if (bad) std::cout << "***" << std::endl;
         if (do_zs) {
-          for (size_t i = 0; i < 20 && i < cds.size(); ++i) {
-            std::cout << i << ": " << eudaq::hexdec(cds[i]) << std::endl;
+          for (size_t ipix = 0; ipix < 20 && ipix < cds.size(); ++ipix) {
+            std::cout << ipix << ": " << eudaq::hexdec(cds[ipix]) << std::endl;
           }
         //   std::cout << "  Plane: " << plane << std::endl;
         //   for (size_t p = 0; p < plane.m_pix[0].size(); ++p) {
@@ -91,6 +121,10 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
         boardnum++;
       }
     }
+
+    
+   ttree->Write();
+
   }
   return do_display;
 }
@@ -107,6 +141,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::Option<std::string> do_data(op, "d", "display", "", "numbers", "Event numbers to display (eg. '1-10,99,-1')");
   eudaq::OptionFlag do_dump(op, "u", "dump", "Dump raw data for displayed events");
   eudaq::OptionFlag do_zs(op, "z", "zsdump", "Print pixels for zs events");
+  eudaq::OptionFlag do_event_to_ttree(op, "r", "event-to-ttree", "Convert a file into a TTree .root format");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("INFO");
@@ -114,6 +149,40 @@ int main(int /*argc*/, char ** argv) {
     //for (unsigned i = 0; i < displaynumbers.size(); ++i) std::cout << "+ " << displaynumbers[i] << std::endl;
     bool showlast = std::find(displaynumbers.begin(), displaynumbers.end(), (unsigned)-1) != displaynumbers.end();
     counted_ptr<eudaq::DetectorEvent> lastevent;
+
+    if(do_event_to_ttree.IsSet()){
+        std::cout << "Converting the inputfile into a TTree "   << std::endl;
+        tfile = new TFile("output.root","RECREATE");
+        ttree = new TTree("tree","a simple Tree with simple variables");
+        
+        ttree->Branch("id_plane",&id_plane,"id_plane/I");
+        ttree->Branch("id_hit",&id_hit,"id_hit/I");
+        ttree->Branch("id_x",&id_x,"id_x/D");
+        ttree->Branch("id_y",&id_y,"id_y/D");
+        ttree->Branch("i_time_stamp",&i_time_stamp,"i_time_stamp/LLU");
+        ttree->Branch("i_tlu",&i_tlu,"i_tlu/I");
+        ttree->Branch("i_run",&i_run,"i_run/I");
+        ttree->Branch("i_event",&i_event,"i_event/I");
+  
+        //fill the tree
+/*
+        for (Int_t i=0;i<10000;i++) {
+            id_plane      = i;
+            id_x         = i;
+            id_y         = i;
+            i_time_stamp = i;
+            i_event      = i;
+            i_tlu        = i;
+            ttree->Fill();
+        }
+
+        //save the Tree header. The file will be automatically closed
+        //when going out of the function scope
+
+        ttree->Write();
+        */
+    }
+    
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       EUDAQ_INFO("Reading: " + reader.Filename());

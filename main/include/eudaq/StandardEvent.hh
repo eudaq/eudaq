@@ -100,12 +100,16 @@ namespace eudaq {
     StandardEvent(unsigned run = 0, unsigned evnum = 0, unsigned long long timestamp = NOTIMESTAMP);
     StandardEvent(Deserializer &);
     void SetTimestamp(unsigned long long);
+    
     void AddPlane(const StandardPlane &);
     size_t NumPlanes() const;
     const StandardPlane & GetPlane(size_t i) const;
     StandardPlane & GetPlane(size_t i);
     virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream &) const;
+
+    unsigned long long GetTimestamp() const;
+ 
   private:
     std::vector<StandardPlane> m_planes;
   };

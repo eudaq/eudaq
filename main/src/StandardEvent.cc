@@ -279,6 +279,11 @@ namespace eudaq {
     m_timestamp = val;
   }
 
+  unsigned long long  StandardEvent::GetTimestamp() const {
+    return m_timestamp;
+  }
+
+
   void StandardEvent::Print(std::ostream & os) const {
     Event::Print(os);
     os << ", " << m_planes.size() << " planes:\n";
