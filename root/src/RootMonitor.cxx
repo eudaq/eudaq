@@ -585,7 +585,7 @@ public:
         BookBoard(i, m_board.at(i), m_dets.at(i).width, m_dets.at(i).height);
       }
       m_histonumtracks = new TH1DNew("NumTracks", "Num Tracks", 100, 0, 100);
-
+      m_histotludiff = new TH1DNew("TLUDiff", "TLUDiff", 50, 0, 50);
 
       //histograms for hit correlation between neighbor boards
       for (size_t i = 0; i < m_board.size()-1; ++i) {
@@ -781,6 +781,13 @@ public:
         (main_pads.back()).AddHisto((m_board.at(i).m_histocdsval).get(), drawoption);
       }
       //end of cds value
+      //TLU diff
+      m_conf_checkbox_main_tludiff =  new TGCheckButton(m_conf_group_frame_main.get(),"TLU Diff");
+      m_conf_checkbox_main_tludiff->Associate(this);
+      m_conf_group_frame_main->AddFrame(m_conf_checkbox_main_tludiff.get(), m_hinttop.get());
+      main_pads.push_back(histopad(m_conf_checkbox_main_tludiff.get()));
+      main_pads.back().AddHisto(m_histotludiff.get(), "");
+      //end of TLU diff
 
       //noise
       m_conf_checkbox_main_noise =  new TGCheckButton(m_conf_group_frame_main.get(),"Noise");
@@ -955,6 +962,15 @@ public:
         board_pads.back().at(i).AddHisto((m_board.at(i).m_histocdsval).get(), "");
       }
       //end of cds value
+      //TLU delta
+      m_conf_checkbox_tludelta =  new TGCheckButton(m_conf_group_frame_board.get(),"TLU Delta");
+      m_conf_checkbox_tludelta->Associate(this);
+      m_conf_group_frame_board->AddFrame(m_conf_checkbox_tludelta.get(), m_hinttop.get());
+      board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_tludelta.get())));
+      for (size_t i = 0; i < m_board.size(); ++i) {
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histotludelta).get(), "");
+      }
+      //end of TLU delta
       //frame hits
       m_conf_checkbox_framehits =  new TGCheckButton(m_conf_group_frame_board.get(),"Frame Hits");
       m_conf_checkbox_framehits->Associate(this);
@@ -1389,6 +1405,7 @@ public:
         m_board.at(i).m_histoclustery->Write();
         m_board.at(i).m_historawval->Write();
         m_board.at(i).m_histocdsval->Write();
+        m_board.at(i).m_histotludelta->Write();
         m_board.at(i).m_histoframehits->Write();
         m_board.at(i).m_histonoise->Write();
         m_board.at(i).m_histonoiseeventnr->Write();
@@ -1401,6 +1418,7 @@ public:
           m_board.at(i).m_histodeltay->Write();
         }
       }
+      m_histotludiff->Write();
       std::cout << "Saved histograms to " << filename << std::endl;
       //m_histo
       m_runended = true;
@@ -1420,6 +1438,7 @@ public:
         std::vector<unsigned int> numberofclusters(m_board.size(),0);
         std::vector<std::vector<double> > cposx(m_board.size());
         std::vector<std::vector<double> > cposy(m_board.size());
+        int mintlu = ev.NumPlanes() > 0 ? ev.GetPlane(0).TLUEvent() : 0, maxtlu = mintlu;
         for (size_t i = 0; i < ev.NumPlanes(); ++i) {
 
           if (i >= m_dets.size()) {
@@ -1432,6 +1451,8 @@ public:
           }
 
           const eudaq::StandardPlane & plane = ev.GetPlane(i);
+          if ((int)plane.TLUEvent() > maxtlu) maxtlu = plane.TLUEvent();
+          if ((int)plane.TLUEvent() < mintlu) mintlu = plane.TLUEvent();
 
           numplanes++;
           std::vector<double> clusterpositionx;
@@ -1445,6 +1466,11 @@ public:
           cposx.at(i) = clusterpositionx;
           cposy.at(i) = clusterpositiony;
 
+        }
+        if (ev.NumPlanes() > 0) {
+          int d = maxtlu - mintlu;
+          if (d > 50) d = 50;
+          m_histotludiff->Fill(d);
         }
         //
         for(size_t i = 0; i < m_board.size()-1; i++) {
@@ -1560,6 +1586,7 @@ public:
     m_histonumtracks->Fill(numtracks);
     m_board.at(0).m_historawval->SetMaximum();
     m_board.at(0).m_histocdsval->SetMaximum();
+    m_board.at(0).m_histotludelta->SetMaximum();
     m_board.at(0).m_histoframehits->SetMaximum();
     m_board.at(0).m_histonoise->SetMaximum();
     m_board.at(0).m_histonoiseeventnr->SetMaximum();
@@ -1571,6 +1598,7 @@ public:
     m_board.at(1).m_histodeltay->SetMaximum();
     double maxr = m_board.at(0).m_historawval->GetMaximum();
     double maxd = m_board.at(0).m_histocdsval->GetMaximum();
+    double maxt = m_board.at(0).m_histotludelta->GetMaximum();
     double maxf = m_board.at(0).m_histoframehits->GetMaximum();
     double max_noise = m_board.at(0).m_histonoise->GetMaximum();
     double max_noise_eventnr = m_board.at(0).m_histonoiseeventnr->GetMaximum();
@@ -1588,6 +1616,7 @@ public:
     for (size_t i = 1; i < ev.NumPlanes() && i < m_dets.size(); ++i) {
       if (m_board.at(i).m_historawval->GetMaximum() > maxr) maxr = m_board.at(i).m_historawval->GetMaximum();
       if (m_board.at(i).m_histocdsval->GetMaximum() > maxd) maxd = m_board.at(i).m_histocdsval->GetMaximum();
+      if (m_board.at(i).m_histotludelta->GetMaximum() > maxt) maxt = m_board.at(i).m_histotludelta->GetMaximum();
       if (m_board.at(i).m_histoframehits->GetMaximum() > maxf) maxf = m_board.at(i).m_histoframehits->GetMaximum();
       if (m_board.at(i).m_histonoise->GetMaximum() > max_noise) max_noise = m_board.at(i).m_histonoise->GetMaximum();
       if (m_board.at(i).m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board.at(i).m_histonoiseeventnr->GetMaximum();
@@ -1599,6 +1628,7 @@ public:
     }
     m_board.at(0).m_historawval->SetMaximum(maxr*1.1);
     m_board.at(0).m_histocdsval->SetMaximum(maxd*1.1);
+    m_board.at(0).m_histotludelta->SetMaximum(maxt*1.1);
     m_board.at(0).m_histoframehits->SetMaximum(maxf*1.1);
     m_board.at(0).m_histonoise->SetMaximum(max_noise*1.1);
     m_board.at(0).m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
@@ -1680,7 +1710,8 @@ private:
     TCanvas * m_canvas;
     counted_ptr<TH2D> m_historaw2d, m_tempcds, m_tempcds2, m_histocds2d, m_histohit2d,
       m_histocluster2d, m_histotrack2d, m_histonoise2d, m_testhisto;
-    counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval, m_histoframehits, m_histonoise, m_histonoiseeventnr,
+    counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval,
+      m_histotludelta, m_histoframehits, m_histonoise, m_histonoiseeventnr,
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
       m_histodeltax, m_histodeltay, m_histonumhits;
     std::vector<double> m_clusters, m_clusterx, m_clustery;
@@ -1689,6 +1720,7 @@ private:
     std::map<unsigned int, std::map<unsigned int, unsigned int> > hit_freq;
     unsigned int processed_events;
     double m_trackx, m_tracky;
+    int m_lasttlu;
     void Reset() {
       m_testhisto->Reset();
       m_historaw2d->Reset();
@@ -1703,6 +1735,7 @@ private:
       m_historawy->Reset();
       m_historawval->Reset();
       m_histocdsval->Reset();
+      m_histotludelta->Reset();
       m_histoframehits->Reset();
       m_histonoise->Reset();
       m_histonoiseeventnr->Reset();
@@ -1714,6 +1747,7 @@ private:
       m_histodeltax->Reset();
       m_histodeltay->Reset();
       m_histonumhits->Reset();
+      m_lasttlu = -1;
     }
   };
 
@@ -1760,6 +1794,7 @@ private:
     } else {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        250, -50, 200);
     }
+    b.m_histotludelta     = new TH1DNew(make_name("TLUDelta",      board).c_str(), "TLU Delta",         41, -20, 21);
     b.m_histoframehits    = new TH1DNew(make_name("Framehits",     board).c_str(), "Frame Hits",        16, 0, 16);
     b.m_histonoise     = new TH1DNew(make_name("Noise",     board).c_str(), "Noise",        100, 0, 10);
     b.m_histonoiseeventnr     = new TH1DNew(make_name("NoiseEventNr",     board).c_str(), "NoiseEventNr",        30, 0, 1500);
@@ -1799,6 +1834,13 @@ private:
     //     cds.at(i) = plane.GetPixel(i);
     //     sumx2 += cds.at(i) * cds.at(i);
     //   }
+    if (b.m_lasttlu != -1) {
+      int d = plane.TLUEvent() - b.m_lasttlu;
+      if (d < -20) d = -20;
+      if (d > 20) d = 20;
+      b.m_histotludelta->Fill(d);
+    }
+    b.m_lasttlu = plane.TLUEvent();
     if (plane.NeedsCDS()) {
       for (size_t i = 0; i < cds.size(); ++i) {
         sumx2 += cds.at(i) * cds.at(i);
@@ -2304,6 +2346,7 @@ private:
   counted_ptr<TGCheckButton> m_conf_checkbox_main_deltay;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_numhits;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_cdsval;
+  counted_ptr<TGCheckButton> m_conf_checkbox_main_tludiff;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_noise;
   counted_ptr<TGCheckButton> m_conf_checkbox_main_noiseeventnr;
 
@@ -2325,6 +2368,7 @@ private:
   counted_ptr<TGCheckButton> m_conf_checkbox_rawx;
   counted_ptr<TGCheckButton> m_conf_checkbox_rawy;
   counted_ptr<TGCheckButton> m_conf_checkbox_cdsval;
+  counted_ptr<TGCheckButton> m_conf_checkbox_tludelta;
   counted_ptr<TGCheckButton> m_conf_checkbox_framehits;
   counted_ptr<TGCheckButton> m_conf_checkbox_noise;
   counted_ptr<TGCheckButton> m_conf_checkbox_noiseeventnr;
@@ -2345,6 +2389,7 @@ private:
   std::vector< TH2DNew* > m_hitcorrelation;
   std::vector< TH2DNew* > m_clustercorrelationx;
   std::vector< TH2DNew* > m_clustercorrelationy;
+  counted_ptr<TH1DNew> m_histotludiff;
 
   //std::vector< TH2DNew *> m_depfet_correlation;
   //std::vector< TH2DNew *> m_depfet_correlationy;
