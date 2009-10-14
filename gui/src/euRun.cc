@@ -72,7 +72,8 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
     m_prevtrigs(0),
     m_prevtime(0.0),
     m_runstarttime(0.0),
-    m_filebytes(0)
+    m_filebytes(0),
+    dostatus(false)
 {
   setupUi(this);
   if (!grpStatus->layout()) grpStatus->setLayout(new QGridLayout(grpStatus));

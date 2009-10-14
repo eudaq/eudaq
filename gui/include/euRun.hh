@@ -77,6 +77,7 @@ private slots:
     std::string settings = cmbConfig->currentText().toStdString();
     Configure(settings, txtGeoID->text().toInt());
     SetState(ST_READY);
+    dostatus = true;
   }
   //void on_btnReset_clicked() {
   //  Reset();
@@ -111,7 +112,7 @@ private slots:
         StopRun(false);
         eudaq::mSleep(8000);
         on_btnStart_clicked(true);
-      } else {
+      } else if (dostatus) {
         GetStatus();
       }
     }
@@ -133,4 +134,5 @@ private:
   int m_prevtrigs;
   double m_prevtime, m_runstarttime;
   long long m_filebytes;
+  bool dostatus;
 };
