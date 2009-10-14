@@ -250,7 +250,7 @@ namespace eudaq {
 
     status = m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
     m_dataaddr = status.GetTag("_SERVER");
-    std::cout << "DataServer responded: " << m_dataaddr << std::endl;
+    std::cout << "DataServer responded: Server = '" << m_dataaddr << "'" << std::endl;
     if (m_dataaddr == "") EUDAQ_THROW("Invalid response from DataCollector");
     SendCommand("DATA", m_dataaddr);
 
