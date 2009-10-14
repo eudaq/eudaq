@@ -15,6 +15,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cassert>
 
 namespace eudaq {
 
@@ -80,7 +81,7 @@ namespace eudaq {
     unsigned mask = m_PlaneMask;
     while (mask) {
       if (mask & 1) {
-        std::cout << "APIX plane " << feid << std::endl;
+        //std::cout << "APIX plane " << feid << std::endl;
         planes.planes.push_back(StandardPlane(feid, "APIX", "APIX"));
         planes.feids.push_back(feid);
         planes.planes.back().SetSizeZS(18, 160, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
