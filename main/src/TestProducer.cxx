@@ -1,11 +1,13 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/StringEvent.hh"
+#include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>
+#include <cstdlib>
 
 // class TestEvent : public eudaq::Event {
 // public:
@@ -15,14 +17,25 @@
 //   std::string m_text;
 // };
 
-typedef eudaq::StringEvent TestEvent;
+using eudaq::StringEvent;
+using eudaq::RawDataEvent;
 
 class TestProducer : public eudaq::Producer {
 public:
   TestProducer(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol), done(false), eventsize(100) {}
   void Event(const std::string & str) {
-    TestEvent ev(m_run, ++m_ev, str);
+    StringEvent ev(m_run, ++m_ev, str);
+    //ev.SetTag("Debug", "foo");
+    SendEvent(ev);
+  }
+  void Event(unsigned size) {
+    RawDataEvent ev("Test", m_run, ++m_ev);
+    std::vector<int> tmp((size+3)/4);
+    for (size_t i = 0; i < tmp.size(); ++i) {
+      tmp[i] = std::rand();
+    }
+    ev.AddBlock(0, &tmp[0], size);
     //ev.SetTag("Debug", "foo");
     SendEvent(ev);
   }
@@ -35,11 +48,11 @@ public:
   virtual void OnStartRun(unsigned param) {
     m_run = param;
     m_ev = 0;
-    SendEvent(TestEvent::BORE(m_run));
+    SendEvent(RawDataEvent::BORE("Test", m_run));
     std::cout << "Start Run: " << param << std::endl;
   }
   virtual void OnStopRun() {
-    SendEvent(TestEvent::EORE(m_run, ++m_ev));
+    SendEvent(RawDataEvent::EORE("Test", m_run, ++m_ev));
     std::cout << "Stop Run" << std::endl;
   }
   virtual void OnTerminate() {
@@ -82,8 +95,8 @@ int main(int /*argc*/, const char ** argv) {
       if (help) {
         help = false;
         std::cout << "--- Commands ---\n"
-                  << "d data Send data packet\n"
-                  << "b      Send big data packet\n"
+                  << "s data Send StringEvent with 'data' as payload\n"
+                  << "r size Send RawDataEvent with size bytes of random data (default=1k)\n"
                   << "l msg  Send log message\n"
                   << "o msg  Set status=OK\n"
                   << "w msg  Set status=WARN\n"
@@ -105,11 +118,11 @@ int main(int /*argc*/, const char ** argv) {
       switch (cmd) {
       case '\0': // ignore
         break;
-      case 'd':
+      case 's':
         producer.Event(line);
         break;
-      case 'b':
-        producer.Event(std::string(producer.eventsize, '$'));
+      case 'r':
+        producer.Event(eudaq::from_string(line, 1024));
         break;
       case 'l':
         EUDAQ_USER(line);
