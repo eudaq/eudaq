@@ -81,7 +81,7 @@ namespace eudaq {
         std::cout << "APIX plane " << feid << std::endl;
         planes.planes.push_back(StandardPlane(feid, "APIX", "APIX"));
         planes.feids.push_back(feid);
-        planes.planes.back().SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+        planes.planes.back().SetSizeZS(18, 160, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
       }
       feid++;
       mask >>= 1;
@@ -101,22 +101,37 @@ namespace eudaq {
     // Size 18x160, no pixels preallocated, one frame, each frame has its own coordinates, and all frames should be accumulated
     //plane.SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 
-    for (size_t i = 0; i < data.size(); i += 4) {
+    unsigned subtrigger = 0;
+    for (size_t i = 16; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
       //std::cout << "Raw Data: " << hexdec(one_line) << ", FE: "<< chip << " (" << FE << ")" << std::endl;
-      if ((one_line & 0x80000001)!=0x80000001 && i > 12 && (one_line & 0x02000000)>>25 != 0x1) {
+      bool moduleError = false, moduleEoe = false;
+      if ((one_line & 0x80000001)==0x80000001) {
+        continue;
+      }
+      if ((one_line >> 25) & 0x1) {
+        moduleEoe = true;
+        subtrigger++;
+      }
+      if ((one_line >> 26) & 0x1) {
+        moduleError = true;
+      }
 
+      if (!moduleEoe && !moduleError) {
         int chip = (one_line >> 21) & 0xf;
 
         int index = result.Find(chip);
         if (index == -1) {
-          std::cerr << "Bad index: " << index << std::endl;
+          std::cerr << "Error in APIX-MC Converter: Bad index: " << index << std::endl;
         } else {
           //std::cout << "DATA" << std::endl;
           int ypos = (one_line >>13) & 0xff; //row
           int xpos = (one_line >> 8) & 0x1f; //column
           int tot = (one_line) & 0xff;
-          unsigned subtrigger = 0;
+          if (subtrigger > 15) {
+            std::cerr << "Error in APIX-MC Converter: subtrigger > 15, skipping frame" << std::endl;
+            continue;
+          }
           result.planes.at(index).PushPixel(xpos, ypos, tot, subtrigger);
         }
       }
