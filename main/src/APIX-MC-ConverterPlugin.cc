@@ -38,6 +38,8 @@ namespace eudaq {
 
   private:
     void ConvertPlanes(const std::vector<unsigned char> & data, APIXPlanes & result) const;
+    unsigned int isPLLTrig(unsigned int word) const;
+    unsigned int isEudetTrig(unsigned int word) const;
     APIXMCConverterPlugin() : DataConverterPlugin("APIX-MC"),
                               m_PlaneMask(0) {}
     unsigned m_PlaneMask;
@@ -94,13 +96,55 @@ namespace eudaq {
     return true;
   }
 
+  unsigned int APIXMCConverterPlugin::isPLLTrig(unsigned int word) const {
+    if((word & 0xf000000f) == 0x80000001) {
+      return (word & 0x00ffff00) >> 8;
+    }
+    return 0xffffffff;
+  }
+
+  unsigned int APIXMCConverterPlugin::isEudetTrig(unsigned int word) const {
+    //similar to: if(word & 0x0c000000) >> 26; case 0x1
+    if(word & 0x04000000) {
+      return word;
+    }
+    return 0xffffffff;
+  }
+
   void APIXMCConverterPlugin::ConvertPlanes(const std::vector<unsigned char> & data, APIXPlanes & result) const {
     //StandardPlane plane(id, "APIX", "APIX");
     //unsigned npixels = m_NumRows * m_NumColumns;
 
     // Size 18x160, no pixels preallocated, one frame, each frame has its own coordinates, and all frames should be accumulated
     //plane.SetSizeZS(18, 160, 0, 1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-
+    
+    //Check that the start of the data block has a PLL trigger and the next is the EUDET trigger ID
+    unsigned int pll_trig = 0xffffffff;
+    unsigned int eudet_trig = 0xffffffff;
+    for (size_t i = 0; i < 8; i += 4) {
+      unsigned one_line = getlittleendian<unsigned int>(&data[i]);
+      //std::cout << "Raw Data: " << hexdec(one_line) << ", FE: "<< chip << " (" << FE << ")" << std::endl;
+      if(i<4) {
+        if ((pll_trig = isPLLTrig(one_line)) == 0xffffffff) {
+          std::cerr << "Error in APIX-MC Converter: First block in the data is not a PLL trigger: " << hexdec(one_line) << std::endl;
+        }
+      } else {
+        if (isPLLTrig(one_line) != 0xffffffff) {
+          std::cerr << "Error in APIX-MC Converter: Second block in the data after "<< hexdec(pll_trig) <<" is a PLL trigger: " << hexdec(one_line) << std::endl;
+        } else {
+          eudet_trig = one_line;
+//           if((eudet_trig = isEudetTrig(one_line)) == 0xffffffff) {
+//             std::cerr << "Error in APIX-MC Converter: Was expecting a eudet trigger after "<< hexdec(pll_trig) <<" but got " << hexdec(one_line) << std::endl;
+//           }
+        }
+      }
+    }
+    
+    assert(result.planes.size()==result.feids.size());
+    for (size_t iplane = 0; iplane < result.feids.size(); ++iplane) {
+      result.planes.at(iplane).SetTLUEvent(eudet_trig);
+    }
+    
     unsigned subtrigger = 0;
     for (size_t i = 16; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
@@ -136,6 +180,7 @@ namespace eudaq {
         }
       }
     }
+
   }
 
 } //namespace eudaq
