@@ -21,16 +21,17 @@ using eudaq::to_string;
 using eudaq::split;
 
 // Book variables for the Event_to_TTree conversion 
-TFile *tfile       = 0 ; // book the pointer to a file (to store the otuput)
-TTree *ttree       = 0 ; // book the tree (to store the needed event info)
-Int_t id_plane     = 0 ; // plane id, where the hit is 
-Int_t id_hit       = 0 ; // the hit id (within a plane)  
-Double_t  id_x         = 0 ; // the hit position along  X-axis  
-Double_t  id_y         = 0 ; // the hit position along  Y-axis  
+TFile *tfile            = 0 ; // book the pointer to a file (to store the otuput)
+TTree *ttree            = 0 ; // book the tree (to store the needed event info)
+Int_t id_plane          = 0 ; // plane id, where the hit is 
+Int_t id_hit            = 0 ; // the hit id (within a plane)  
+Double_t  id_x          = 0 ; // the hit position along  X-axis  
+Double_t  id_y          = 0 ; // the hit position along  Y-axis  
+unsigned i_tlu          = 0 ; // a trigger id
+unsigned i_run          = 0 ; // a run  number 
+unsigned i_event        = 0 ; // an event number 
+//
 unsigned long long int i_time_stamp = 0 ; // the time stampe 
-unsigned i_tlu        = 0 ; // a trigger id
-unsigned i_run        = 0 ; // a run  number 
-unsigned i_event      = 0 ; // an event number 
 //
 
 std::vector<unsigned> parsenumbers(const std::string & s) {
