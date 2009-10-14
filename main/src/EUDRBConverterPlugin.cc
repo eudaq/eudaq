@@ -260,6 +260,7 @@ namespace eudaq {
 #define GET(o) getbigendian<unsigned>(&alldata[(o)*4])
   void EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
     static const bool dbg = false;
+    static const bool dbg2 = false;
     if (dbg) std::cout << "DataSize = " << hexdec(alldata.size(), 0) << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
@@ -314,6 +315,7 @@ namespace eudaq {
           }
           if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
                              << ", states " << numstates << ":";
+          if (dbg2) std::cout << "*** Overflow in plane " << plane.ID() << ", row " << row << std::endl;
           bool pivot = row >= (plane.PivotPixel() / 16);
           for (unsigned s = 0; s < numstates; ++s) {
             unsigned v = vec.at(++i);
