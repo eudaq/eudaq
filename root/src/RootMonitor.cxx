@@ -35,6 +35,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <map>
+
 //#include <algorithm>
 #include <cmath>
 #include <TSystem.h>
@@ -45,6 +47,8 @@
 #include <TObjString.h>
 
 using eudaq::to_string;
+const double TAKI_NOISE = 1.3;
+const double TAKI_PEDESTAL = 64;
 
 template <typename T>
 const T * dataptr(const std::vector<T> & v) {
@@ -58,7 +62,7 @@ struct PlaneInfo {
     // First set default values
     if      (is("MIMOTEL"))   { width = 264; height = 256; }
     else if (is("MIMOSA18"))  { width = 512; height = 512; }
-    else if (is("MIMOSA26"))  { width = 1152; height = 576; clustsize = 1; seed_thresh = 0.5; cluster_thresh = 0.5; }
+    else if (is("MIMOSA26"))  { width = 1152; height = 576; clustsize = 3; seed_thresh = 0.5; cluster_thresh = 0.5; }
     else if (is("MIMOSTAR2")) { width = 132; height = 128; }
     else if (is("MIMOSA5"))   { width = 1024; height = 1024; }
     else if (is("DEPFET"))    {
@@ -68,6 +72,10 @@ struct PlaneInfo {
     else if (is("FORTIS"))    {
       width = 128; height = 128; pedfile = "fortis_pedestals.txt";
       seed_thresh = 16.0; neighbour_thresh = 4.0; cluster_thresh = 0.0;
+    }
+    else if (is("TAKI"))      {
+      width = 128; height = 128;
+      seed_thresh = 4.0; neighbour_thresh = 1.0; cluster_thresh = 0.0;
     }
     else if (is("APIX"))    {
       width = 18; height = 160;
@@ -256,7 +264,7 @@ public:
 
 class ConfigurationClass : public TQObject { //a class holding some configuration informations
 public:
-  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), DEPFET_SEED_THRESHOLD(16.0), DEPFET_NEIGHBOUR_THRESHOLD(4.0), FORTIS_SEED_THRESHOLD(16.0), FORTIS_NEIGHBOUR_THRESHOLD(4.0), RESETONNEWRUN(true)  //some default values for the configuration
+  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), RESETONNEWRUN(true)  //some default values for the configuration
     {
     }
 
@@ -269,10 +277,6 @@ public:
   double SEED_THRESHOLD;
   double SEED_NEIGHBOUR_THRESHOLD;
   double CLUSTER_THRESHOLD;
-  double DEPFET_SEED_THRESHOLD;
-  double DEPFET_NEIGHBOUR_THRESHOLD;
-  double FORTIS_SEED_THRESHOLD;
-  double FORTIS_NEIGHBOUR_THRESHOLD;
 
   bool RESETONNEWRUN;
 };
@@ -495,42 +499,6 @@ public:
       m_conf_seedneighbourthreshold->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_seedneighbourthreshold.get(), m_hinttop.get());
 
-      //
-      depfet_seedthresholdlabel = new TGLabel(m_conf_group_frame.get(),"DEPFET Seed Threshold:");
-      m_conf_group_frame->AddFrame(depfet_seedthresholdlabel.get(), m_hinttop.get());
-
-      m_conf_depfet_seedthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.DEPFET_SEED_THRESHOLD, 20);
-      m_conf_depfet_seedthreshold->Associate(this);
-      m_conf_group_frame->AddFrame(m_conf_depfet_seedthreshold.get(), m_hinttop.get());
-
-      depfet_seedneighbourthresholdlabel = new TGLabel(m_conf_group_frame.get(),"DEPFET Seed Neighbour Threshold:");
-      m_conf_group_frame->AddFrame(depfet_seedneighbourthresholdlabel.get(), m_hinttop.get());
-
-      m_conf_depfet_seedneighbourthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.DEPFET_NEIGHBOUR_THRESHOLD, 8);
-      m_conf_depfet_seedneighbourthreshold->Associate(this);
-      m_conf_group_frame->AddFrame(m_conf_depfet_seedneighbourthreshold.get(), m_hinttop.get());
-
-      //
-      //
-      fortis_seedthresholdlabel = new TGLabel(m_conf_group_frame.get(),"FORTIS Seed Threshold:");
-      m_conf_group_frame->AddFrame(fortis_seedthresholdlabel.get(), m_hinttop.get());
-
-      m_conf_fortis_seedthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.FORTIS_SEED_THRESHOLD, 20);
-      m_conf_fortis_seedthreshold->Associate(this);
-      m_conf_group_frame->AddFrame(m_conf_fortis_seedthreshold.get(), m_hinttop.get());
-
-      fortis_seedneighbourthresholdlabel = new TGLabel(m_conf_group_frame.get(),"FORTIS Seed Neighbour Threshold:");
-      m_conf_group_frame->AddFrame(fortis_seedneighbourthresholdlabel.get(), m_hinttop.get());
-
-      m_conf_fortis_seedneighbourthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.FORTIS_NEIGHBOUR_THRESHOLD, 8);
-      m_conf_fortis_seedneighbourthreshold->Associate(this);
-      m_conf_group_frame->AddFrame(m_conf_fortis_seedneighbourthreshold.get(), m_hinttop.get());
-
-      //
-
-
-
-
       clusterthresholdlabel = new TGLabel(m_conf_group_frame.get(),"Cluster Threshold:");
       m_conf_group_frame->AddFrame(clusterthresholdlabel.get(), m_hinttop.get());
 
@@ -652,6 +620,7 @@ public:
           );
         m_clustercorrelationy.back()->SetContour(99);
       }
+      //std::cout << "number of clu corr plots " << m_clustercorrelationy.size() << std::endl;
       {
         std::string title = "Y Cluster Correlation Board 0 : Board " + to_string(m_board.size()-1);
         m_clustercorrelationy.push_back(
@@ -986,6 +955,15 @@ public:
         board_pads.back().at(i).AddHisto((m_board.at(i).m_histocdsval).get(), "");
       }
       //end of cds value
+      //frame hits
+      m_conf_checkbox_framehits =  new TGCheckButton(m_conf_group_frame_board.get(),"Frame Hits");
+      m_conf_checkbox_framehits->Associate(this);
+      m_conf_group_frame_board->AddFrame(m_conf_checkbox_framehits.get(), m_hinttop.get());
+      board_pads.push_back(std::vector<histopad>(m_board.size(),histopad(m_conf_checkbox_framehits.get())));
+      for (size_t i = 0; i <  m_board.size(); ++i) {
+        board_pads.back().at(i).AddHisto((m_board.at(i).m_histoframehits).get(), "");
+      }
+      //end of framehits
       //noise
       m_conf_checkbox_noise =  new TGCheckButton(m_conf_group_frame_board.get(),"Noise");
       m_conf_checkbox_noise->Associate(this);
@@ -1290,26 +1268,6 @@ public:
           UpdateMainCanvas(); //update the canvas
         }
 
-      //depfet
-      double depfet_seedthresh = (double) m_conf_depfet_seedthreshold->GetNumber();
-      if(depfet_seedthresh > 0)
-        conf.DEPFET_SEED_THRESHOLD = depfet_seedthresh;
-
-      double depfet_seedneighbourthresh = (double) m_conf_depfet_seedneighbourthreshold->GetNumber();
-      if(depfet_seedneighbourthresh > 0)
-        conf.DEPFET_NEIGHBOUR_THRESHOLD = depfet_seedneighbourthresh;
-      //end of depfet
-
-      //fortis
-      double fortis_seedthresh = (double) m_conf_fortis_seedthreshold->GetNumber();
-      if(fortis_seedthresh > 0)
-        conf.FORTIS_SEED_THRESHOLD = fortis_seedthresh;
-
-      double fortis_seedneighbourthresh = (double) m_conf_fortis_seedneighbourthreshold->GetNumber();
-      if(fortis_seedneighbourthresh > 0)
-        conf.FORTIS_NEIGHBOUR_THRESHOLD = fortis_seedneighbourthresh;
-      //end of fortis
-
       double seedthresh = (double) m_conf_seedthreshold->GetNumber();
       if(seedthresh > 0)
         conf.SEED_THRESHOLD = seedthresh;
@@ -1431,6 +1389,7 @@ public:
         m_board.at(i).m_histoclustery->Write();
         m_board.at(i).m_historawval->Write();
         m_board.at(i).m_histocdsval->Write();
+        m_board.at(i).m_histoframehits->Write();
         m_board.at(i).m_histonoise->Write();
         m_board.at(i).m_histonoiseeventnr->Write();
 
@@ -1491,6 +1450,7 @@ public:
         for(size_t i = 0; i < m_board.size()-1; i++) {
           for(size_t k = 0; k < cposy.at(i).size(); k++) {
             for(size_t l = 0; l < cposy.at(i+1).size(); l++) {
+              //std::cout << "i = " << i << std::endl;
               m_clustercorrelationy.at(i)->Fill(cposy.at(i+1).at(l),cposy.at(i).at(k));
             }
           }
@@ -1600,6 +1560,7 @@ public:
     m_histonumtracks->Fill(numtracks);
     m_board.at(0).m_historawval->SetMaximum();
     m_board.at(0).m_histocdsval->SetMaximum();
+    m_board.at(0).m_histoframehits->SetMaximum();
     m_board.at(0).m_histonoise->SetMaximum();
     m_board.at(0).m_histonoiseeventnr->SetMaximum();
 
@@ -1610,6 +1571,7 @@ public:
     m_board.at(1).m_histodeltay->SetMaximum();
     double maxr = m_board.at(0).m_historawval->GetMaximum();
     double maxd = m_board.at(0).m_histocdsval->GetMaximum();
+    double maxf = m_board.at(0).m_histoframehits->GetMaximum();
     double max_noise = m_board.at(0).m_histonoise->GetMaximum();
     double max_noise_eventnr = m_board.at(0).m_histonoiseeventnr->GetMaximum();
 
@@ -1626,6 +1588,7 @@ public:
     for (size_t i = 1; i < ev.NumPlanes() && i < m_dets.size(); ++i) {
       if (m_board.at(i).m_historawval->GetMaximum() > maxr) maxr = m_board.at(i).m_historawval->GetMaximum();
       if (m_board.at(i).m_histocdsval->GetMaximum() > maxd) maxd = m_board.at(i).m_histocdsval->GetMaximum();
+      if (m_board.at(i).m_histoframehits->GetMaximum() > maxf) maxf = m_board.at(i).m_histoframehits->GetMaximum();
       if (m_board.at(i).m_histonoise->GetMaximum() > max_noise) max_noise = m_board.at(i).m_histonoise->GetMaximum();
       if (m_board.at(i).m_histonoiseeventnr->GetMaximum() > max_noise_eventnr) max_noise_eventnr = m_board.at(i).m_histonoiseeventnr->GetMaximum();
       if (m_board.at(i).m_histoclusterval->GetMaximum() > maxc) maxc = m_board.at(i).m_histoclusterval->GetMaximum();
@@ -1636,6 +1599,7 @@ public:
     }
     m_board.at(0).m_historawval->SetMaximum(maxr*1.1);
     m_board.at(0).m_histocdsval->SetMaximum(maxd*1.1);
+    m_board.at(0).m_histoframehits->SetMaximum(maxf*1.1);
     m_board.at(0).m_histonoise->SetMaximum(max_noise*1.1);
     m_board.at(0).m_histonoiseeventnr->SetMaximum(max_noise_eventnr*1.1);
 
@@ -1716,10 +1680,14 @@ private:
     TCanvas * m_canvas;
     counted_ptr<TH2D> m_historaw2d, m_tempcds, m_tempcds2, m_histocds2d, m_histohit2d,
       m_histocluster2d, m_histotrack2d, m_histonoise2d, m_testhisto;
-    counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval, m_histonoise, m_histonoiseeventnr,
+    counted_ptr<TH1D> m_historawx, m_historawy, m_historawval, m_histocdsval, m_histoframehits, m_histonoise, m_histonoiseeventnr,
       m_histoclusterx, m_histoclustery, m_histoclusterval, m_histonumclusters,
       m_histodeltax, m_histodeltay, m_histonumhits;
     std::vector<double> m_clusters, m_clusterx, m_clustery;
+    
+    std::map<unsigned int, std::map<unsigned int, bool> > hotpixel;
+    std::map<unsigned int, std::map<unsigned int, unsigned int> > hit_freq;
+    unsigned int processed_events;
     double m_trackx, m_tracky;
     void Reset() {
       m_testhisto->Reset();
@@ -1735,6 +1703,7 @@ private:
       m_historawy->Reset();
       m_historawval->Reset();
       m_histocdsval->Reset();
+      m_histoframehits->Reset();
       m_histonoise->Reset();
       m_histonoiseeventnr->Reset();
 
@@ -1750,9 +1719,10 @@ private:
 
   void BookBoard(int board, BoardDisplay & b, int num_x_pixels, int num_y_pixels) {
     //allocate some memory for the cluster vectors
-    b.m_clusters.reserve(50);
-    b.m_clusterx.reserve(50);
-    b.m_clustery.reserve(50);
+    b.m_clusters.reserve(200);
+    b.m_clusterx.reserve(200);
+    b.m_clustery.reserve(200);
+    b.processed_events = 0;
 
     b.islog = false;
     //std::string name = "Board " + eudaq::to_string(board);
@@ -1778,6 +1748,8 @@ private:
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", num_y_pixels, 0, num_y_pixels);
     if(m_dets.at(board).is("fortis"))
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        65536 , 0, 65536 );
+    else if(m_dets.at(board).is("taki"))
+      b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        256, 0, 256 );
     else
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
 
@@ -1786,12 +1758,13 @@ private:
     } else if (m_dets.at(board).is("fortis")) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        9000, -1000, 10000);
     } else {
-      b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        150, -50, 100);
+      b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        250, -50, 200);
     }
+    b.m_histoframehits    = new TH1DNew(make_name("Framehits",     board).c_str(), "Frame Hits",        16, 0, 16);
     b.m_histonoise     = new TH1DNew(make_name("Noise",     board).c_str(), "Noise",        100, 0, 10);
     b.m_histonoiseeventnr     = new TH1DNew(make_name("NoiseEventNr",     board).c_str(), "NoiseEventNr",        30, 0, 1500);
 
-    b.m_histoclusterval = new TH1DNew(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 10000);
+    b.m_histoclusterval = new TH1DNew(make_name("ClusterValues", board).c_str(), "Cluster Charge",    500,  0, 1000);
     b.m_histonumclusters= new TH1DNew(make_name("NumClusters",   board).c_str(), "Num Clusters",      100,  0,  100);
     b.m_histodeltax     = new TH1DNew(make_name("DeltaX",        board).c_str(), "Delta X",           200,-100, 100);
     b.m_histodeltay     = new TH1DNew(make_name("DeltaY",        board).c_str(), "Delta Y",           200,-100, 100);
@@ -1805,6 +1778,8 @@ private:
   void FillBoard(BoardDisplay & b, const eudaq::StandardPlane & plane, int boardnumber,
                  unsigned int &numberofclusters, std::vector<double> & clusterpositionx,
                  std::vector<double> & clusterpositiony /*, bool depfethit*/) {
+    
+    b.processed_events++;
     //eudaq::EUDRBDecoder::arrays_t<double, double> a = m_decoder->GetArrays<double, double>(e);
     //const size_t totpixels = plane.m_xsize * plane.m_ysize; //, nx=264, ny=256;
     const size_t hitpixels = plane.HitPixels();
@@ -1872,22 +1847,38 @@ private:
         double pedestal = 0.0;
         if(m_dets.at(boardnumber).ped_matrix.size())
           pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
-
+        if((m_dets.at(boardnumber).is("taki")))
+          pedestal = TAKI_PEDESTAL;
+        
         b.m_histocdsval->Fill((cds.at(i) - pedestal));
       }
 
+    for (size_t i = 0; i < plane.NumFrames(); ++i) {
+      int hits = plane.HitPixels(i);
+      for (int h = 0; h < hits; ++h) {
+        b.m_histoframehits->Fill(i);
+      }
+    }
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
     b.m_tempcds->Reset();
     b.m_tempcds2->Reset();
-    if(m_dets.at(boardnumber).is("fortis")) {
-      double pedestal = 0.0;
+    if(m_dets.at(boardnumber).is("fortis") || m_dets.at(boardnumber).is("taki")) {
+        double pedestal = 0.0;
+        if((m_dets.at(boardnumber).is("taki")))
+          pedestal = TAKI_PEDESTAL;
+        // std::cout << "numpixels " <<  plane.HitPixels() << std::endl;
+        for(size_t i = 0; i < plane.HitPixels(); ++i)
+          {
+            //pedestal = fortis_ped_matrix[plane.m_x[i]][plane.m_y[i]];
+            //    std::cout << "befre taki" << std::endl;
+//             std::cout << "taki blablub " << plane.GetX(i) << " " <<  plane.GetY(i) << " " << cds[i] << " " << pedestal << std::endl;//
+//             std::cout << "AFTER taki" << std::endl;
+            //   b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
+//             b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
+            b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), (cds[i] - pedestal));
+            b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), (cds[i] - pedestal));
 
-      for(size_t i = 0; i < plane.HitPixels(); ++i) {
-        //pedestal = fortis_ped_matrix[plane.m_x.at(i)][plane.m_y.at(i)];
-        pedestal = 0.0;
-        b.m_tempcds->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
-        b.m_tempcds2->Fill(plane.GetX(i), plane.GetY(i), (plane.GetPixel(i, 1) - pedestal));
-      }
+          }
     } else if (hitpixels) {
       b.m_tempcds->FillN(hitpixels, dataptr(plane.XVector()), dataptr(plane.YVector()), dataptr(cds));
       b.m_tempcds2->Reset();
@@ -1907,6 +1898,8 @@ private:
         double pedestal = 0.0;
         if(m_dets.at(boardnumber).ped_matrix.size())
           pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
+        else if ((m_dets.at(boardnumber).is("taki")))
+          pedestal = TAKI_PEDESTAL;
 
         b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), cds.at(i) - pedestal);
       }
@@ -1915,26 +1908,108 @@ private:
     b.m_clusterx.clear();
     b.m_clustery.clear();
 
-
-
     if(m_dets.at(boardnumber).is("mimosa26"))
       {
+        //kill hot pixel after this number of processed events
+        const unsigned int nkill = 200;
+
+        //a std::map would be much faster ...
+        std::map<unsigned int, std::map<unsigned int, bool> > matrix;
+
+        //would be nice to have the matrix in the standardplane class
         for(size_t i =0; i< plane.HitPixels(); i++)
           {
-            b.m_clusterx.push_back( plane.GetX(i));
-            b.m_clustery.push_back( plane.GetY(i));
-
-            b.m_clusters.push_back(1.0);
+            const unsigned int x = (unsigned int)plane.GetX(i);
+            const unsigned int y = (unsigned int)plane.GetY(i);
+            matrix[x][y] = true;
           }
-        //   for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
-//           for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
-//             b.m_clusters.push_back(ix);
-//             b.m_clusterx.push_back(iy);
-//             b.m_clustery.push_back(1.0);
-
+        
+        const int clustersizeindex = m_dets.at(boardnumber).clustsize / 2;
+        std::map<unsigned int, std::map<unsigned int, bool> >::iterator pos;
+        for(pos = matrix.begin(); pos != matrix.end(); ++pos) 
+          {
+            std::map<unsigned int, bool>::iterator sec;
+            for (sec = matrix[(*pos).first].begin(); sec != matrix[(*pos).first].end(); ++sec) 
+              {
+                bool hot = false;
+                if(b.processed_events > nkill)
+                  {
+                    std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = b.hotpixel.find(pos->first);
+                    if(z!=b.hotpixel.end() && z->second.find(sec->first)!=z->second.end())
+                      hot = true;
+                    else
+                      hot = false;
+                  }
+                if(!hot && matrix[pos->first][sec->first])
+                  {
+                    if(b.processed_events <= nkill)
+                      {
+                        std::map<unsigned int, std::map<unsigned int, unsigned int> >::const_iterator z = b.hit_freq.find(pos->first);
+                        if(z!=b.hit_freq.end() && z->second.find(sec->first)!=z->second.end())
+                          b.hit_freq[pos->first][sec->first]++;
+                        else
+                          b.hit_freq[pos->first][sec->first] = 1;
+                      }
+                    unsigned int signal = 1;
+                    for (int dy = -clustersizeindex; dy <= clustersizeindex; ++dy)
+                      {
+                         for(int dx = -clustersizeindex; dx <= clustersizeindex; ++dx) 
+                           {
+                             std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = matrix.find(pos->first+dx);
+                             if(z!=matrix.end() && z->second.find(sec->first+dy)!=z->second.end())
+                               {
+                                 ++signal;
+                                 matrix[pos->first+dx][sec->first+dy] = false;
+                                 if(b.processed_events <= nkill)
+                                   {
+                                     std::map<unsigned int, std::map<unsigned int, unsigned int> >::const_iterator z = b.hit_freq.find(pos->first+dx);
+                                     if(z!=b.hit_freq.end() && z->second.find(sec->first+dy)!=z->second.end())
+                                       b.hit_freq[pos->first+dx][sec->first+dy]++;
+                                     else
+                                       b.hit_freq[pos->first+dx][sec->first+dy] = 1;
+                                   }
+                               }                            
+                             else
+                               {
+                                 // nothing to do so far ...
+                               }
+                           }
+                      }
+                    matrix[pos->first][sec->first] = false;
+                    b.m_clusterx.push_back(pos->first);
+                    b.m_clustery.push_back(sec->first);
+                    b.m_clusters.push_back(signal);
+                  }
+               }
+          }
+         if(b.processed_events == nkill)
+            {
+              unsigned int nhotpixel = 0;
+              std::map<unsigned int, std::map<unsigned int, unsigned int> >::iterator pos;
+              for(pos = b.hit_freq.begin(); pos != b.hit_freq.end(); ++pos) 
+                {
+                  std::map<unsigned int, unsigned int>::iterator sec;
+                  for (sec = b.hit_freq[(*pos).first].begin(); sec != b.hit_freq[(*pos).first].end(); ++sec) 
+                    {
+                      const double ratio = ((double)b.hit_freq[pos->first][sec->first] / (double) b.processed_events);
+                      if(ratio > 0.15)
+                        {
+                          nhotpixel++;
+                          b.hotpixel[pos->first][sec->first] = true;
+                        } 
+                   }
+                } 
+              std::string text = "" + eudaq::to_string(nhotpixel) + " hot pixel was/were killed on board " + eudaq::to_string(boardnumber);
+              std::cout << text << std::endl;
+              EUDAQ_INFO(text);
+            }
+         //        the old clustering ...
+         //         for(size_t i =0; i< plane.HitPixels(); i++)
+        //           {
+        //             b.m_clusterx.push_back( plane.GetX(i));
+//             b.m_clustery.push_back( plane.GetY(i));
+//             b.m_clusters.push_back(1.0);
 //           }
-//         }
-
       }
     else
       {
@@ -1958,7 +2033,7 @@ private:
           double seed_thresh = m_dets.at(boardnumber).seed_thresh /* sigma */,
             seedneighbour_thresh = m_dets.at(boardnumber).neighbour_thresh,
             cluster_thresh = m_dets.at(boardnumber).cluster_thresh /* sigma */;
-          
+
           for (int iy = 1; iy <= b.m_tempcds->GetNbinsY(); ++iy) {
             for (int ix = 1; ix <= b.m_tempcds->GetNbinsX(); ++ix) {
               double s = b.m_tempcds->GetBinContent(ix, iy);
@@ -1969,6 +2044,12 @@ private:
                 pedestal = m_dets.at(boardnumber).ped_matrix.at(ix-1).at(iy-1);
                 noise = m_dets.at(boardnumber).noise_matrix.at(ix-1).at(iy-1);
               }
+              if((m_dets.at(boardnumber).is("taki")))
+                {
+                  pedestal = TAKI_PEDESTAL;
+                  noise =  TAKI_NOISE;
+                }
+
               if ((s-pedestal) > seed_thresh*noise) {
                 seeds.push_back(Seed(ix, iy, s));
               }
@@ -1994,6 +2075,9 @@ private:
                           if (m_dets.at(boardnumber).ped_matrix.size()) {
                             pedestal = m_dets.at(boardnumber).ped_matrix.at(seeds.at(i).x+dx).at(seeds.at(i).y+dy);
                           }
+                          if((m_dets.at(boardnumber).is("taki")))
+                            pedestal = TAKI_PEDESTAL;
+                          
                         }
                     }
                     catch (...)
@@ -2005,10 +2089,11 @@ private:
                        && (seeds.at(i).y+dy) < b.m_tempcds->GetYaxis()->GetLast() //check whether we are inside the histogram
                        && (b.m_tempcds->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy)-pedestal) > seedneighbour_thresh * DEFAULT_NOISE)
                       {
-                        
                         double n = DEFAULT_NOISE;
                         if (m_dets.at(boardnumber).noise_matrix.size()) {
                           n = m_dets.at(boardnumber).noise_matrix.at(seeds.at(i).x+dx-1).at(seeds.at(i).y+dy-1);
+                        } else if (m_dets.at(boardnumber).is("TAKI")) {
+                          noise +=  TAKI_NOISE*TAKI_NOISE;
                         }
                         noise += n*n;
                         cluster += b.m_tempcds->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy);
@@ -2080,36 +2165,40 @@ private:
             clusterpositionx = b.m_clusterx;
             clusterpositiony = b.m_clustery;
 
-            if (numberofclusters) {
-              b.m_histohit2d->Reset();
-              b.m_histohit2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
-              b.m_histocluster2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
-              b.m_histoclusterx->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clusters));
-              b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
-              b.m_histoclustery->FillN(numberofclusters, dataptr(b.m_clustery), dataptr(b.m_clusters));
-              b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
-              b.m_histoclusterval->FillN(numberofclusters, dataptr(b.m_clusters), dataptr(ones));
-            }
+            if (numberofclusters > 0) 
+              {
+                b.m_histohit2d->Reset();
+                b.m_histohit2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
+                b.m_histocluster2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
+                b.m_histoclusterx->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clusters));
+                b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
+                b.m_histoclustery->FillN(numberofclusters, dataptr(b.m_clustery), dataptr(b.m_clusters));
+                b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
+                b.m_histoclusterval->FillN(numberofclusters, dataptr(b.m_clusters), dataptr(ones));
+              }
           }
-          /*if (seeds.size())*/ b.m_histonumhits->Fill(seeds.size());
+          b.m_histonumhits->Fill(seeds.size());
         }
       } // end of eudrb clustering
 
     if(m_dets.at(boardnumber).is("mimosa26"))
       {
         numberofclusters = b.m_clusters.size();
-
+        b.m_histonumhits->Fill(plane.HitPixels());
         clusterpositionx = b.m_clusterx;
         clusterpositiony = b.m_clustery;
-
-        //  b.m_histohit2d->Reset();
-//         b.m_histohit2d->FillN(b.m_clusters.size(), &b.m_clusterx.at(0), &b.m_clustery.at(0), &b.m_clusters.at(0));
-//         b.m_histocluster2d->FillN(b.m_clusters.size(), &b.m_clusterx.at(0), &b.m_clustery.at(0), &b.m_clusters.at(0));
-//         b.m_histoclusterx->FillN(b.m_clusters.size(), &b.m_clusterx.at(0), &b.m_clusters.at(0));
-//         b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
-//         b.m_histoclustery->FillN(b.m_clusters.size(), &b.m_clustery.at(0), &b.m_clusters.at(0));
-//         b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
-//         b.m_histoclusterval->FillN(b.m_clusters.size(), &b.m_clusters.at(0), &ones.at(0));
+        b.m_histonumclusters->Fill(b.m_clusters.size());
+        if (numberofclusters > 0) 
+          {
+            b.m_histohit2d->Reset();
+            b.m_histohit2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
+            b.m_histocluster2d->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clustery), dataptr(b.m_clusters));
+            b.m_histoclusterx->FillN(numberofclusters, dataptr(b.m_clusterx), dataptr(b.m_clusters));
+            b.m_histoclusterx->SetNormFactor(b.m_histoclusterx->Integral() / m_histoevents);
+            b.m_histoclustery->FillN(numberofclusters, dataptr(b.m_clustery), dataptr(b.m_clusters));
+            b.m_histoclustery->SetNormFactor(b.m_histoclustery->Integral() / m_histoevents);
+            b.m_histoclusterval->FillN(numberofclusters, dataptr(b.m_clusters), dataptr(ones));
+          }
       }
     if (!b.islog && m_histoevents > 100) {
       b.islog = true;
@@ -2171,6 +2260,8 @@ private:
   counted_ptr<TGLabel> depfet_seedneighbourthresholdlabel;
   counted_ptr<TGLabel> fortis_seedthresholdlabel;
   counted_ptr<TGLabel> fortis_seedneighbourthresholdlabel;
+  counted_ptr<TGLabel> taki_seedthresholdlabel;
+  counted_ptr<TGLabel> taki_seedneighbourthresholdlabel;
 
 
   counted_ptr<TGLabel> clusterthresholdlabel;
@@ -2184,6 +2275,8 @@ private:
   counted_ptr<TGNumberEntry> m_conf_depfet_seedneighbourthreshold;
   counted_ptr<TGNumberEntry> m_conf_fortis_seedthreshold;
   counted_ptr<TGNumberEntry> m_conf_fortis_seedneighbourthreshold;
+  counted_ptr<TGNumberEntry> m_conf_taki_seedthreshold;
+  counted_ptr<TGNumberEntry> m_conf_taki_seedneighbourthreshold;
 
   counted_ptr<TGNumberEntry> m_conf_clusterthreshold;
 
@@ -2232,6 +2325,7 @@ private:
   counted_ptr<TGCheckButton> m_conf_checkbox_rawx;
   counted_ptr<TGCheckButton> m_conf_checkbox_rawy;
   counted_ptr<TGCheckButton> m_conf_checkbox_cdsval;
+  counted_ptr<TGCheckButton> m_conf_checkbox_framehits;
   counted_ptr<TGCheckButton> m_conf_checkbox_noise;
   counted_ptr<TGCheckButton> m_conf_checkbox_noiseeventnr;
 
@@ -2258,9 +2352,6 @@ private:
   //std::vector< std::vector<double> > depfet_noise_matrix;
   //std::vector< std::vector<double> > fortis_ped_matrix;
   //std::vector< std::vector<double> > fortis_noise_matrix;
-
-  //std::vector<bool> isdepfet;
-  //std::vector<bool> isfortis;
 
   counted_ptr<TH1DNew> m_depfet_adc;
   counted_ptr<TH2DNew> m_depfet_map;
