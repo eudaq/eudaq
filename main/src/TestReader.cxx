@@ -35,7 +35,9 @@ unsigned i_run          = 0 ; // a run  number
 unsigned i_event        = 0 ; // an event number 
 //
 unsigned long long int i_time_stamp = 0 ; // the time stampe 
-unsigned int           i_last       = 0 ; // imply event count in the raw file
+static int           i_first      = 0 ; // the event range to read (first)
+static int           i_last       = 0 ; // the event range to read (last)
+static int           i_curr       = 0 ; // the event range to read (last)
 //
 
 std::vector<unsigned> parsenumbers(const std::string & s) {
@@ -215,6 +217,15 @@ int main(int /*argc*/, char ** argv) {
         //for (unsigned i = 0; i < displaynumbers.size(); ++i) std::cout << "+ " << displaynumbers[i] << std::endl;
 
         bool showlast = std::find(displaynumbers.begin(), displaynumbers.end(), (unsigned)-1) != displaynumbers.end();
+
+        if(!displaynumbers.empty()){ 
+            int n_size = displaynumbers.size();
+            i_first = displaynumbers[0];
+            i_last  = displaynumbers[n_size-1];
+//            cout << i_first  << endl;
+//            cout << i_last  << endl;
+        }
+
         counted_ptr<eudaq::DetectorEvent> lastevent;
 
         if(do_event_to_ttree.IsSet() && do_ttree == false ){
@@ -225,13 +236,19 @@ int main(int /*argc*/, char ** argv) {
             TString foutput = reader.Filename();           
             StripAllDirs(foutput);
             if(foutput.Contains(".raw")) foutput.ReplaceAll("raw" , "root");
+            if(foutput.Contains(".root")) {
+                foutput.ReplaceAll(".root","" );
+                foutput.Append("_" + to_string(i_first) );
+                foutput.Append("_" + to_string(i_last) );
+                foutput.Append(".root" );   
+            }
             
             EUDAQ_INFO("Preparing the outputfile: " +  to_string(foutput.Data()) );
 
             if(!foutput.Contains(".root")) foutput = "output.root";
                 
             do_ttree = true;
-           tfile = new TFile(foutput,"RECREATE");
+            tfile = new TFile(foutput,"RECREATE");
             ttree = new TTree("tree","a simple Tree with simple variables");
             
             ttree->Branch("id_plane",&id_plane,"id_plane/I");
@@ -276,6 +293,8 @@ int main(int /*argc*/, char ** argv) {
             do {
           
                 const eudaq::DetectorEvent & dev = reader.Event();
+//                i_size  =  dev.NumEvents();    
+
                 if (dev.IsBORE()) {
                     
                     nbore++;
@@ -307,8 +326,9 @@ int main(int /*argc*/, char ** argv) {
                         std::cout << dev << std::endl;
                     }
         
-                } else {
-            
+                } else if( !do_data.IsSet() || (i_curr >= i_first && i_curr < i_last) ){
+                    
+                
                     ndata++;
                     // TODO: check event number matches ndata
 
@@ -330,9 +350,10 @@ int main(int /*argc*/, char ** argv) {
                     }
                 }
             
-                i_last++; // keep in mind the last event read from the file
-               
-            } while (reader.NextEvent());
+                i_curr++; // keep in mind the last event read from the file
+            } while (
+                    reader.NextEvent() 
+                   );
       
             
             if (lastevent.get()) DoEvent(ndatalast, *lastevent.get(), false, true, do_zs.IsSet(), false);
