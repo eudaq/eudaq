@@ -59,72 +59,96 @@ std::vector<unsigned> parsenumbers(const std::string & s) {
   return result;
 }
 
+
 bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_process, bool do_display, bool do_zs, bool do_dump) {
-  if (!do_display) do_zs = false;
-  if (do_zs) do_display = false;
-  //std::cout << "DEBUG " << ndata << ", " << do_display << ", " << do_zs << std::endl;
-  if (do_process || do_display || do_dump || do_zs) {
-    if (do_display) {
-      std::cout << dev << std::endl;
-      if (do_dump) {
-        unsigned num = 0;
-	for (size_t i = 0; i < dev.NumEvents(); ++i) {
-	  const eudaq::RawDataEvent * rev = dynamic_cast<const eudaq::RawDataEvent *>(dev.GetEvent(i));
-	  if (rev && rev->GetSubType() == "EUDRB" && rev->NumBlocks() > 0) {
-            ++num;
-            for (unsigned block = 0; block < rev->NumBlocks(); ++block) {
-              std::cout << "#### Producer " << num << ", block " << block << " (ID " << rev->GetID(block) << ") ####" << std::endl;
-              const std::vector<unsigned char> & data = rev->GetBlock(block);
-              for (size_t i = 0; i+3 < data.size(); i += 4) {
-                std::cout << std::setw(4) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned long>(&data[i])) << std::endl;
-              }
-              //break;
+    
+    if (!do_display) do_zs = false; // "Print pixels for zs events"); (if event range is not set -> zs = false, otherwise..)
+    if (do_zs) do_display = false;  // "Print pixels for zs events"); (if NOT set)
+    
+    //std::cout << "DEBUG " << ndata << ", " << do_display << ", " << do_zs << std::endl;
+
+    if (do_process || do_display || do_dump || do_zs) {
+        
+        if (do_display) {
+            
+            std::cout << dev << std::endl;
+            
+            if (do_dump) {
+
+                unsigned num = 0;
+                
+                for (size_t i = 0; i < dev.NumEvents(); ++i) {
+                    
+                    const eudaq::RawDataEvent * rev = dynamic_cast<const eudaq::RawDataEvent *>(dev.GetEvent(i));
+                    
+                    if (rev && rev->GetSubType() == "EUDRB" && rev->NumBlocks() > 0) {
+                        
+                        ++num;
+                        for (unsigned block = 0; block < rev->NumBlocks(); ++block) {
+                            
+                            std::cout << "#### Producer " << num << ", block " << block << " (ID " << rev->GetID(block) << ") ####" << std::endl;
+                            const std::vector<unsigned char> & data = rev->GetBlock(block);
+                            
+                            for (size_t i = 0; i+3 < data.size(); i += 4) {
+                                
+                                std::cout << std::setw(4) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned long>(&data[i])) << std::endl;
+                            }
+                            
+                            //break;
+                        }
+                    }
+                }
             }
-	  }
-	}
-      }
-    }
-    if (do_process) {
-      unsigned boardnum = 0;
-      const StandardEvent & sev = eudaq::PluginManager::ConvertToStandard(dev);
-      if (do_display) std::cout << "Standard Event: " << sev << std::endl;
-      for (size_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
-        const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
-        std::vector<double> cds = plane.GetPixels<double>();
-        //std::cout << "DBG " << eudaq::hexdec(plane.m_flags);
-        bool bad = false;
-        for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
-//          if (ipix < 10) std::cout << ", " << plane.m_pix[0][ipix] << ";" << cds[ipix]
-          id_plane = plane.ID();          
-          id_hit = ipix;
-          id_x = plane.GetX(ipix);
-          id_y = plane.GetY(ipix);
-          i_time_stamp =  sev.GetTimestamp();
-//          printf("%#x \n", i_time_stamp);  
-          i_tlu = plane.TLUEvent();
-          i_run = sev.GetRunNumber();
-          i_event = sev.GetEventNumber();                  
-          ttree->Fill(); 
         }
+    
+        if (do_process) {
+        unsigned boardnum = 0;
+        const StandardEvent & sev = eudaq::PluginManager::ConvertToStandard(dev);
+        if (do_display) std::cout << "Standard Event: " << sev << std::endl;
+        for (size_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) 
+        {
+            const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
+            std::vector<double> cds = plane.GetPixels<double>();
+            //std::cout << "DBG " << eudaq::hexdec(plane.m_flags);
+
+            bool bad = false;
+            for (size_t ipix = 0; ipix < cds.size(); ++ipix) 
+            {
+                //          if (ipix < 10) std::cout << ", " << plane.m_pix[0][ipix] << ";" << cds[ipix]
+
+                id_plane = plane.ID();          
+                id_hit = ipix;
+                id_x = plane.GetX(ipix);
+                id_y = plane.GetY(ipix);
+                i_time_stamp =  sev.GetTimestamp();
+//          printf("%#x \n", i_time_stamp);  
+                i_tlu = plane.TLUEvent();   
+                i_run = sev.GetRunNumber();
+                i_event = sev.GetEventNumber();                  
+                ttree->Fill(); 
+            }
 
         //std::cout << (bad ? "***" : "") << std::endl;
-        if (bad) std::cout << "***" << std::endl;
-        if (do_zs) {
-          for (size_t ipix = 0; ipix < 20 && ipix < cds.size(); ++ipix) {
-            std::cout << ipix << ": " << eudaq::hexdec(cds[ipix]) << std::endl;
-          }
-        //   std::cout << "  Plane: " << plane << std::endl;
-        //   for (size_t p = 0; p < plane.m_pix[0].size(); ++p) {
-        //     static const char tab = '\t';
-        //     std::cout << "    " << ndata << tab << boardnum << tab << plane.m_x[p] << tab << plane.m_y[p] << tab << plane.m_pix[0][p] << std::endl;
-        //   }
-        }
-        boardnum++;
-      }
-    }
 
+            if (bad) std::cout << "***" << std::endl;
+            if (do_zs) 
+            {
+                for (size_t ipix = 0; ipix < 20 && ipix < cds.size(); ++ipix) 
+                {
+                    std::cout << ipix << ": " << eudaq::hexdec(cds[ipix]) << std::endl;
+                }
+
+                //   std::cout << "  Plane: " << plane << std::endl;
+                //   for (size_t p = 0; p < plane.m_pix[0].size(); ++p) {
+                //     static const char tab = '\t';
+                //     std::cout << "    " << ndata << tab << boardnum << tab << plane.m_x[p] << tab << plane.m_y[p] << tab << plane.m_pix[0][p] << std::endl;
+                //   }
+            }
+            boardnum++;
+        }
+    }
     
-   ttree->Write();
+    ttree->Write();
 
   }
   return do_display;
@@ -187,6 +211,7 @@ int main(int /*argc*/, char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       EUDAQ_INFO("Reading: " + reader.Filename());
+
       unsigned ndata = 0, ndatalast = 0, nnondet = 0, nbore = 0, neore = 0;
       do {
         const eudaq::DetectorEvent & dev = reader.Event();
