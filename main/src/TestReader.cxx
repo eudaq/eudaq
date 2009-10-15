@@ -62,8 +62,8 @@ std::vector<unsigned> parsenumbers(const std::string & s) {
 
 bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_process, bool do_display, bool do_zs, bool do_dump) {
     
-    if (!do_display) do_zs = false; // "Print pixels for zs events"); (if event range is not set -> zs = false, otherwise..)
-    if (do_zs) do_display = false;  // "Print pixels for zs events"); (if NOT set)
+    if (!do_display) do_zs = false; // "data range is not given"); (if event range is not set -> zs = false (do not print pixels), otherwise..)
+    if (do_zs) do_display = false;  // "Print pixels for zs events"); (if print pixels is set -> do not do, what you do if event range is given )  :)
     
     //std::cout << "DEBUG " << ndata << ", " << do_display << ", " << do_zs << std::endl;
 
