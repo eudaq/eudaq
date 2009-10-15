@@ -198,9 +198,9 @@ namespace eudaq {
 
   TAKIConverterPlugin const TAKIConverterPlugin::m_instance;
 
-  void TAKIConverterPlugin::Initialize(const Event & source, const Configuration &) {
-  
+  void TAKIConverterPlugin::Initialize(const Event &, const Configuration &) {
   }
+  
   bool TAKIConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
     if (source.IsBORE()) {
       // shouldn't happen
