@@ -220,7 +220,7 @@ int main(int /*argc*/, char ** argv) {
         if(do_event_to_ttree.IsSet() && do_ttree == false ){
  
             EUDAQ_INFO("Converting the inputfile into a TTree " );
-         
+          
             eudaq::FileReader reader(op.GetArg(0), ipat.Value());
             TString foutput = reader.Filename();           
             StripAllDirs(foutput);
