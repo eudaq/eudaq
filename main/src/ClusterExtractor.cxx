@@ -160,9 +160,10 @@ int main(int /*argc*/, char ** argv) {
           if (drbev->GetSubType() == "EUDRB") {
             unsigned numboards = from_string(drbev->GetTag("BOARDS"), 0);
             totalboards += numboards;
+            std::cout << "Found EUDRB with " << numboards << " planes, total = " << totalboards << std::endl;
             for (unsigned i = 0; i < numboards; ++i) {
               unsigned id = from_string(drbev->GetTag("ID" + to_string(i)), i);
-              if (std::find(planes.begin(), planes.end(), id) == planes.end()) continue;
+              if (planes.size() > 0 && std::find(planes.begin(), planes.end(), id) == planes.end()) continue;
               if (id >= track.size()) track.resize(id+1);
               filemap_t::const_iterator it = files.find(id);
               if (it != files.end()) EUDAQ_THROW("ID is repeated: " + to_string(id));
