@@ -118,7 +118,11 @@ namespace eudaq {
 #endif
 
   void PluginManager::ConvertStandardSubEvent(StandardEvent & dest, const Event & source) {
-    GetInstance().GetPlugin(source).GetStandardSubEvent(dest, source);
+    try {
+      GetInstance().GetPlugin(source).GetStandardSubEvent(dest, source);
+    } catch (const Exception & e) {
+      std::cerr << "Error during conversion in PluginManager::ConvertStandardSubEvent" << std::endl;
+    }
   }
 
   void PluginManager::ConvertLCIOSubEvent(lcio::LCEvent & dest, const Event & source) {
