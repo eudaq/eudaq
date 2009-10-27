@@ -392,7 +392,7 @@ public:
       m_toolbar(new TGHorizontalFrame(this, 800, 20, kFixedWidth)),
       m_tb_filename(new TGLabel(m_toolbar.get(), "                              ")),
       m_tb_runnum(new TGLabel(m_toolbar.get(), "0     ")),
-      m_tb_evtnum(new TGLabel(m_toolbar.get(), "0          ")),
+      m_tb_evtnum(new TGLabel(m_toolbar.get(), "0             ")),
       m_tb_reduce(new TGNumberEntry(m_toolbar.get(), 5.0, 3)),
       m_tb_update(new TGNumberEntry(m_toolbar.get(), 10.0, 4)),
       m_tabs(new TGTab(this, 700, 500)),
