@@ -274,44 +274,23 @@ public:
       m_boards[n_eudrb]->ReadEvent(m_buffer);
       ev.AppendBlock(blockindex, m_buffer);
 
-      if(n_eudrb == 0 && m_boards[0]->Det() == "MIMOSA26")
-        {
+      if (m_boards[0]->Det() == "MIMOSA26") {
+        if (!off_set) {
           off = m_buffer[3];
           off_set = true;
+        } else {
+          unsigned long diff = (9216 + off - m_buffer[3]) % 9216;
+          if(diff > 3 && diff < 9213) {
+            EUDAQ_WARN("data consistency check for board " + to_string(n_eudrb) +" in event " + to_string(m_ev) + " failed! The offset difference in pixel is " + to_string(diff) + "!");
+            std::cout << "------ header -----" << std::endl; 
+            for(size_t u = 0; u < m_buffer.size(); u++) {
+              std::cout << "board " << n_eudrb<< " - " << u << " : ";
+              printf("%x\n", (unsigned int)m_buffer[u]);
+            } 
+            std::cout << "->->->->->->->->->->->-" << std::endl;
+          }
         }
-      else if(m_boards[n_eudrb]->Det() == "MIMOSA26")
-        {
-          if(!off_set)
-            {
-              off = m_buffer[3];
-              off_set = true;
-            }
-           
-          unsigned long diff[2] = {3,3};
-           
-          if(off > m_buffer[3] )
-            { 
-              diff[0] = off - m_buffer[3];
-              diff[1] = 9215 - off + m_buffer[3];
-            }
-          else
-            {
-              diff[0] = m_buffer[3] - off;
-              diff[1] = 9215 - m_buffer[3] + off; 
-            }
-           
-          if(!(diff[0] < 3 || diff[1] < 3))
-            {
-              EUDAQ_WARN("data consistency check for board " + to_string(n_eudrb) +" in event " + to_string(m_ev) + " failed! The offset difference in pixel is " + to_string(diff[0] > diff[1] ? diff[0] : diff[1]) + "!");
-              std::cout << "------ header -----" << std::endl; 
-              for(size_t u = 0; u < m_buffer.size(); u++)
-                {
-                  std::cout << "board " << n_eudrb<< " - " << u << " : ";
-                  printf("%x\n", (unsigned int)m_buffer[u]);
-                } 
-              std::cout << "->->->->->->->->->->->-" << std::endl;
-            }
-        }
+      }
       const unsigned long number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
             
       if (doprint(m_ev)) std::cout << "DEBUG: read leading words, remaining = " << number_of_bytes << std::endl;
