@@ -219,6 +219,7 @@ namespace eudaq {
       EUDAQ_INFO(msg);
       if (fname == "") fname = to_string(ped) + ":" + to_string(thresh);
     }
+    std::cout << "m_id " << m_id << std::endl;
     if (m_version > 2 && m_id == master) {
       // For M26: Send pulse start to the master, it propagates to the slaves
       std::cout << "Sending start pulse to board " << m_id << std::endl;
