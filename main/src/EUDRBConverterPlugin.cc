@@ -191,7 +191,9 @@ namespace eudaq {
     }
 
     virtual unsigned GetTriggerID(Event const & ev) const {
-      const std::vector<unsigned char> & data = dynamic_cast<const RawDataEvent &>(ev).GetBlock(0);
+      const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
+      if (rawev.NumBlocks() < 1) return 0;
+      const std::vector<unsigned char> & data = rawev.GetBlock(0);
       unsigned word = getbigendian<unsigned>(&data[data.size() - 4]);
       return word>>8 & 0xffff;
     }
