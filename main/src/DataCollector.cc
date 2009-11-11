@@ -169,8 +169,8 @@ namespace eudaq {
         } else {
           unsigned tluev2 = PluginManager::GetTriggerID(*m_buffer[i].events.front());
           if (tluev2 != tluev) {
-            EUDAQ_ERROR("Trigger number mismatch: " + to_string(tluev) + " != " + to_string(tluev2) +
-                        " in " + m_buffer[i].id->GetName());
+            //EUDAQ_ERROR("Trigger number mismatch: " + to_string(tluev) + " != " + to_string(tluev2) +
+            //            " in " + m_buffer[i].id->GetName());
           }
         }
         if ( (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber-1) ){
