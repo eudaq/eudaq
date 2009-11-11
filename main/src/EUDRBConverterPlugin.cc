@@ -190,8 +190,8 @@ namespace eudaq {
       FillInfo(e, c);
     }
 
-    virtual unsigned GetTriggerID(eudaq::RawDataEvent const & ev) const {
-      const std::vector<unsigned char> & data = ev.GetBlock(0);
+    virtual unsigned GetTriggerID(Event const & ev) const {
+      const std::vector<unsigned char> & data = dynamic_cast<const RawDataEvent &>(ev).GetBlock(0);
       unsigned word = getbigendian<unsigned>(&data[data.size() - 4]);
       return word>>8 & 0xffff;
     }

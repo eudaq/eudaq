@@ -31,7 +31,7 @@ namespace eudaq{
 
     virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
 
-    virtual unsigned GetTriggerID(eudaq::RawDataEvent const &) const;
+    virtual unsigned GetTriggerID(eudaq::Event const &) const;
 
     virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {}
 

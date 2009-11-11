@@ -17,6 +17,10 @@ namespace eudaq{
       result.SetTimestamp(source.GetTimestamp());
       return true;
     }
+    virtual unsigned GetTriggerID(const eudaq::Event & ev) const {
+      return ev.GetEventNumber();
+    }
+
 
 #if USE_LCIO
     virtual bool GetLCIOSubEvent(lcio::LCEvent & result, const eudaq::Event & source) const {

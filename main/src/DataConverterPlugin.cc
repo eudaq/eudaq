@@ -5,7 +5,7 @@
 
 namespace eudaq {
 
-  unsigned DataConverterPlugin::GetTriggerID(eudaq::RawDataEvent const &) const {
+  unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const &) const {
     EUDAQ_THROW("GetTriggerID not implemented");
   }
 

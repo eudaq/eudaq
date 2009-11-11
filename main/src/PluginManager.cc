@@ -54,6 +54,10 @@ namespace eudaq {
     }
   }
 
+  unsigned PluginManager::GetTriggerID(const Event & ev) {
+    return GetInstance().GetPlugin(ev).GetTriggerID(ev);
+  }
+
 #if USE_LCIO && USE_EUTELESCOPE
   lcio::LCRunHeader * PluginManager::GetLCRunHeader(const DetectorEvent & bore) {
     IMPL::LCRunHeaderImpl * lcHeader = new IMPL::LCRunHeaderImpl;
