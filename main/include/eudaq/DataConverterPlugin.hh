@@ -2,6 +2,7 @@
 #define EUDAQ_INCLUDED_DataConverterPlugin
 
 #include "eudaq/StandardEvent.hh"
+#include "eudaq/RawDataEvent.hh"
 
 namespace EVENT { class LCEvent; class LCRunHeader; }
 namespace lcio { using namespace EVENT; }
@@ -29,6 +30,8 @@ namespace eudaq{
     typedef std::pair<unsigned, std::string> t_eventid;
 
     virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
+
+    virtual unsigned GetTriggerID(eudaq::RawDataEvent const &) const;
 
     virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {}
 

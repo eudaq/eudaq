@@ -5,6 +5,10 @@
 
 namespace eudaq {
 
+  unsigned DataConverterPlugin::GetTriggerID(eudaq::RawDataEvent const &) const {
+    EUDAQ_THROW("GetTriggerID not implemented");
+  }
+
   DataConverterPlugin::DataConverterPlugin(std::string subtype)
     : m_eventtype(make_pair(Event::str2id("_RAW"), subtype))
   {

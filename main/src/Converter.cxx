@@ -39,11 +39,15 @@ int main(int, char ** argv) {
   eudaq::Option<std::string> events(op, "e", "events", "", "numbers", "Event numbers to convert (eg. '1-10,99' default is all)");
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<std::string> opat(op, "o", "outpattern", "test$6R$X", "string", "Output filename pattern");
+  eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
   try {
     op.Parse(argv);
     std::vector<unsigned> numbers = parsenumbers(events.Value());
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value());
+      if (sync.IsSet()) {
+        std::cerr << "Sync not yet implemented";
+      }
       counted_ptr<eudaq::FileWriter> writer(FileWriterFactory::Create(type.Value()));
       writer->SetFilePattern(opat.Value());
       writer->StartRun(reader.RunNumber());
