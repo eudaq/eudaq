@@ -75,6 +75,7 @@ namespace eudaq {
   }
 
   void EUDRBController::Configure(const eudaq::Configuration & param, int master) {
+    std::cout << "Configuring board " << m_id << " as a " << (m_id == master ? "master" : "slave") << std::endl;
     std::string mode = getpar(param, m_id, "Mode", "");
     m_mode = ModeNum(mode);
     std::string det = getpar(param, m_id, "Det", "");
@@ -144,19 +145,21 @@ namespace eudaq {
       const unsigned M26sim   = (16 << 0)    // M26SimulatorWordCount
                               | (9215 << 16) // M26_FrameSizeMinusOne
                               | (0 << 31);   // M26SimulatorEnable
-      std::cout << "Setting M26param " << hexdec(M26param) << std::endl;
+      std::cout << "  Setting M26param " << hexdec(M26param) << std::endl;
       m_vmes->Write(0x30, M26param);
       eudaq::mSleep(100);
       m_vmes->Write(0x24, postrstdelay << 16);
-      std::cout << "Setting PostResetDelay " << hexdec(postrstdelay) << std::endl;
+      std::cout << "  Setting PostResetDelay " << hexdec(postrstdelay) << std::endl;
       eudaq::mSleep(100);
-      std::cout << "Setting M26sim " << hexdec(M26sim) << std::endl;
+      std::cout << "  Setting M26sim " << hexdec(M26sim) << std::endl;
       m_vmes->Write(0x38, M26sim);
       eudaq::mSleep(100);
     } else {
       EUDAQ_THROW("Must set Version = 1-3 in config file");
     }
-    m_vmes->Write(0x10, internaltiming ? 0xd0000000 : 0xd0000001);
+    unsigned tmp = internaltiming ? 0xd0000000 : 0xd0000001;
+    std::cout << "  Setting 0x10 " << hexdec(tmp) << std::endl;
+    m_vmes->Write(0x10, tmp);
     eudaq::mSleep(1000);
     int marker1 = getpar(param, m_id, "Marker1", -1);
     int marker2 = getpar(param, m_id, "Marker2", -1);
@@ -170,8 +173,10 @@ namespace eudaq {
       m_vmes->Write(0x10, 0x48110700 | (marker2 & 0xff));
       eudaq::mSleep(1000);
     }
+    std::cout << "  Setting 0x10 " << hexdec(mimoconf) << std::endl;
     m_vmes->Write(0x10, mimoconf);
     eudaq::mSleep(100);
+    std::cout << "Finished configuring board " << m_id << std::endl;
   }
 
   std::string EUDRBController::PostConfigure(const eudaq::Configuration & param, int master) {
