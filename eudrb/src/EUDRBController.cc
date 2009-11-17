@@ -82,10 +82,12 @@ namespace eudaq {
     m_det = DetNum(det);
     bool unsync = getpar(param, m_id, "Unsynchronized", true);
     bool internaltiming = (m_id == master) || unsync;
+    std::cout << "  Sending reset" << std::endl;
     ResetBoard();
     m_ctrlstat = 0;
     if (m_mode == M_ZS) m_ctrlstat |= 0x20;
     if (internaltiming) m_ctrlstat |= 0x2000;
+    std::cout << "  Setting Control/Status   " << hexdec(m_ctrlstat) << std::endl;
     m_vmes->Write(0, m_ctrlstat);
     unsigned long mimoconf = 0x48d00000;
     if (m_version == 1) {
@@ -145,20 +147,20 @@ namespace eudaq {
       const unsigned M26sim   = (16 << 0)    // M26SimulatorWordCount
                               | (9215 << 16) // M26_FrameSizeMinusOne
                               | (0 << 31);   // M26SimulatorEnable
-      std::cout << "  Setting M26param " << hexdec(M26param) << std::endl;
+      std::cout << "  Setting M26param       " << hexdec(M26param) << std::endl;
       m_vmes->Write(0x30, M26param);
       eudaq::mSleep(100);
       m_vmes->Write(0x24, postrstdelay << 16);
       std::cout << "  Setting PostResetDelay " << hexdec(postrstdelay) << std::endl;
       eudaq::mSleep(100);
-      std::cout << "  Setting M26sim " << hexdec(M26sim) << std::endl;
+      std::cout << "  Setting M26sim         " << hexdec(M26sim) << std::endl;
       m_vmes->Write(0x38, M26sim);
       eudaq::mSleep(100);
     } else {
       EUDAQ_THROW("Must set Version = 1-3 in config file");
     }
     unsigned tmp = internaltiming ? 0xd0000000 : 0xd0000001;
-    std::cout << "  Setting 0x10 " << hexdec(tmp) << std::endl;
+    std::cout << "  Setting 0x10             " << hexdec(tmp) << std::endl;
     m_vmes->Write(0x10, tmp);
     eudaq::mSleep(1000);
     int marker1 = getpar(param, m_id, "Marker1", -1);
@@ -173,7 +175,7 @@ namespace eudaq {
       m_vmes->Write(0x10, 0x48110700 | (marker2 & 0xff));
       eudaq::mSleep(1000);
     }
-    std::cout << "  Setting 0x10 " << hexdec(mimoconf) << std::endl;
+    std::cout << "  Setting 0x10             " << hexdec(mimoconf) << std::endl;
     m_vmes->Write(0x10, mimoconf);
     eudaq::mSleep(100);
     std::cout << "Finished configuring board " << m_id << std::endl;
