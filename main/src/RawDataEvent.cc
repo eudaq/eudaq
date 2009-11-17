@@ -48,12 +48,16 @@ namespace eudaq {
 
   void RawDataEvent::Print(std::ostream & os) const {
     Event::Print(os);
-    os << ", " << m_blocks.size() << " blocks, tluev=";
+    std::string tluevstr = "unknown";
     try {
-      os << PluginManager::GetTriggerID(*this);
+      unsigned tluev = PluginManager::GetTriggerID(*this);
+      if (tluev != (unsigned)-1) {
+        tluevstr = to_string(tluev);
+      }
     } catch (const Exception &) {
-      os << "unknown";
+      // ignore it
     }
+    os << ", " << m_blocks.size() << " blocks, tluev=" << tluevstr;
   }
 
   void RawDataEvent::Serialize(Serializer & ser) const {

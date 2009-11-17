@@ -6,7 +6,7 @@
 namespace eudaq {
 
   unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const &) const {
-    EUDAQ_THROW("GetTriggerID not implemented");
+    return (unsigned)-1;
   }
 
   DataConverterPlugin::DataConverterPlugin(std::string subtype)
