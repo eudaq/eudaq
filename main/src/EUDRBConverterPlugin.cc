@@ -134,6 +134,10 @@ namespace eudaq {
       if (id >= m_info.size() || m_info[id].m_version < 1) EUDAQ_THROW("Unrecognised ID ("+to_string(id)+", num="+to_string(m_info.size())+") converting EUDRB event");
       return m_info[id];
     }
+    static unsigned GetTLUEvent(const std::vector<unsigned char> & data) {
+      const unsigned word = getbigendian<unsigned>(&data[data.size() - 8]);
+      return word>>8 & 0xffff;
+    }
     void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const;
     bool ConvertStandard(StandardEvent & stdEvent, const Event & eudaqEvent) const;
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
@@ -141,6 +145,7 @@ namespace eudaq {
       StandardPlane plane(id, "EUDRB", info.Sensor().name);
       plane.SetXSize(info.Sensor().width);
       plane.SetYSize(info.Sensor().height);
+      plane.SetTLUEvent(GetTLUEvent(data));
       if (info.m_mode == BoardInfo::MODE_ZS2) {
         ConvertZS2(plane, data, info);
       } else if (info.m_mode == BoardInfo::MODE_ZS) {
@@ -192,10 +197,9 @@ namespace eudaq {
 
     virtual unsigned GetTriggerID(Event const & ev) const {
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-      if (rawev.NumBlocks() < 1) return 0;
+      if (rawev.NumBlocks() < 1) return (unsigned)-1;
       const std::vector<unsigned char> & data = rawev.GetBlock(0);
-      unsigned word = getbigendian<unsigned>(&data[data.size() - 4]);
-      return word>>8 & 0xffff;
+      return GetTLUEvent(data);
     }
 
     virtual bool GetStandardSubEvent(StandardEvent & result, const Event & source) const {
@@ -224,6 +228,13 @@ namespace eudaq {
   class LegacyEUDRBConverterPlugin : public DataConverterPlugin, public EUDRBConverterBase {
     virtual void Initialize(const eudaq::Event & e, const eudaq::Configuration & c) {
       FillInfo(e, c);
+    }
+
+    virtual unsigned GetTriggerID(Event const & ev) const {
+      const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
+      if (rawev.NumBlocks() < 1) return (unsigned)-1;
+      const std::vector<unsigned char> & data = rawev.GetBlock(0);
+      return GetTLUEvent(data);
     }
 
     virtual bool GetStandardSubEvent(StandardEvent & result, const Event & source) const {
@@ -353,9 +364,7 @@ namespace eudaq {
 //     }
     // readjust offset to be sure it points to trailer:
     word = GET(offset = alldata.size() / 4 - 2);
-    unsigned tluev = word>>8 & 0xffff;
-    plane.SetTLUEvent(tluev);    
-    if (dbg) std::cout << "TLUEventNumber = " << hexdec(tluev, 0) << std::endl;
+    if (dbg) std::cout << "TLUEventNumber = " << hexdec(word>>8 & 0xffff, 0) << std::endl;
     if (dbg) std::cout << "NumFramesAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
     word = GET(++offset);
     if (dbg) std::cout << "EventWordCount = " << hexdec(word & 0x7ffff, 0) << std::endl;
@@ -375,7 +384,6 @@ namespace eudaq {
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, npixels);
     //plane.m_mat.resize(plane.m_pix[0].size());
     const unsigned char * data = &alldata[headersize];
-    plane.SetTLUEvent((alldata[alldata.size()-7] << 8) | alldata[alldata.size()-6]);
     plane.SetPivotPixel(((data[5] & 0x3) << 16) | (data[6] << 8) | data[7]);
     for (unsigned i = 0; i < npixels; ++i) {
       int mat = 3 - (data[4*i] >> 6), col = 0, row = 0;
@@ -403,7 +411,6 @@ namespace eudaq {
       headersize += 8;
       EUDAQ_THROW("EUDRB V3 decoding not yet implemented");
     }
-    plane.SetTLUEvent((data[data.size()-7] << 8) | data[data.size()-6]);
     plane.SetPivotPixel(((data[5] & 0x3) << 16) | (data[6] << 8) | data[7]);
     unsigned possible1 = 2 *  info.Sensor().cols * info.Sensor().rows      * info.Sensor().mats * info.Frames();
     unsigned possible2 = 2 * (info.Sensor().cols * info.Sensor().rows - 1) * info.Sensor().mats * info.Frames();

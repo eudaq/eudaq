@@ -1,4 +1,5 @@
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/PluginManager.hh"
 
 #include <ostream>
 
@@ -47,10 +48,11 @@ namespace eudaq {
 
   void RawDataEvent::Print(std::ostream & os) const {
     Event::Print(os);
-    os << ", " << m_blocks.size() << " blocks";
-    if (m_type == "EUDRB" && m_blocks.size() > 0 && m_blocks[0].data.size() >= 8) {
-      size_t offset = m_blocks[0].data.size() - 7;
-      os << ", tluev=" << (GetByte(0, offset) << 8) + GetByte(0, offset + 1);
+    os << ", " << m_blocks.size() << " blocks, tluev=";
+    try {
+      os << PluginManager::GetTriggerID(*this);
+    } catch (const Exception &) {
+      os << "unknown";
     }
   }
 
