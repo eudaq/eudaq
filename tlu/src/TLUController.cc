@@ -62,6 +62,7 @@ namespace tlu {
   namespace {
 
     static const double TLUFREQUENCY = 48.001e6;
+    static const int TLUFREQUENCYMULTIPLIER = 8;
     static const unsigned FIRSTV2SERIAL = 1000;
 
     static const char * g_versions[] = {
@@ -118,7 +119,7 @@ namespace tlu {
   }
 
   double Timestamp2Seconds(unsigned long long t) {
-    return t / TLUFREQUENCY;
+    return t / ( TLUFREQUENCY * TLUFREQUENCYMULTIPLIER ) ;
   }
 
   void TLUEntry::Print(std::ostream & out) const {
@@ -634,7 +635,7 @@ namespace tlu {
   unsigned long long * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
-    const unsigned buffer_offset = 2;
+    static const unsigned buffer_offset = 2;
 
     unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
