@@ -146,7 +146,10 @@ namespace tlu {
     m_errorhandler(errorhandler),
     m_version(0),
     m_addr(0),
-    m_timestampzero(0)
+    m_timestampzero(0),
+    m_correctable_blockread_errors(0),
+    m_uncorrectable_blockread_errors(0),
+    m_usb_timeout_errors(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -631,41 +634,58 @@ namespace tlu {
   unsigned long long * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
+    const unsigned buffer_offset = 2;
+
     unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
 
+
     int result = ZESTSC1_SUCCESS;
     WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, 0xFF); // the first write sets transfer going. Further writes do nothing.
-      usleep(10);
+    usleep(10);
 
-    for (int tries = 0; tries < 4; ++tries) { // first buffer will contain some data from previous readout, but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. Try to correct this using multiple reads.
 
-      result = ZestSC1ReadData(m_handle, buffer[tries], sizeof buffer[0] );
 
-      if (buffer[tries][0] !=0) {
-	std::cout << "### Warning: buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl; 
-      }
+// Read four buffers at onece. first buffer will contain some data from previous readout, but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. Try to correct this using multiple reads.
+
+    result = ZestSC1ReadData(m_handle, buffer[0], sizeof buffer );
 
 #if TLUDEBUG
-      char * errmsg = 0;
-      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
-      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
+    char * errmsg = 0;
+    ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+    std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
 #endif
 
+    for (int tries = 0; tries < 4; ++tries) { 
+      if (buffer[tries][0] !=0) {
+	std::cout << "### Warning: buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl;
+	m_uncorrectable_blockread_errors++; 
+      }
     }
 
-    for (unsigned i = 1; i < entries+1; ++i) {
+    for (unsigned i = buffer_offset; i < entries+buffer_offset; ++i) {
+
+      // std::cout << std::setw(8) <<  buffer[0][i] << "  " <<  buffer[1][i] << "  " <<   buffer[2][i] << "  " <<   buffer[3][i] << std::endl;
 
       // check that at least 2 out of three timestamps agree with each other....
-      // due to latency in buffer transfer the real data starts at the second 64-bit word.
-      if (( buffer[1][i] == buffer[2][i] ) || ( buffer[1][i] == buffer[3][i] ) ) {
-	m_oldbuf[i-1] = buffer[1][i];
+      // due to latency in buffer transfer the real data starts at the third 64-bit word.
+      if (( buffer[1][i] == buffer[2][i] ) || 
+	  ( buffer[1][i] == buffer[3][i] ) ) {
+	m_oldbuf[i-buffer_offset] = buffer[1][i];
+
       } else if ( buffer[2][i] == buffer[3][i] ) {
-	m_oldbuf[i-1] = buffer[2][i];
+	m_oldbuf[i-buffer_offset] = buffer[2][i];
       } else {
-	m_oldbuf[i-1] = 0;
-	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << buffer[1][i] << "  " << buffer[2][i] << "  " << buffer[3][i] << std::endl;
+	m_oldbuf[i-buffer_offset] = 0;
+	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << std::setw(8) << buffer[1][i] << "  " << buffer[2][i] << "  " << buffer[3][i] << std::endl;
+	m_uncorrectable_blockread_errors++;
       }
+
+      if (( buffer[1][i] != buffer[2][i] ) || 
+	  ( buffer[1][i] != buffer[3][i] ) ||
+	  ( buffer[2][i] != buffer[3][i] ) 
+	  ){
+	  m_correctable_blockread_errors++; }
 
     }
 
@@ -673,7 +693,7 @@ namespace tlu {
 
     // need to add checking that timestamp is in the correct ball-park ( use Timestamp2Seconds ... )
 
-    usbtrace("BR", 0, buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
+    // usbtrace("BR", 0, buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
     return m_oldbuf;
 
   }
@@ -694,6 +714,8 @@ namespace tlu {
     out << "Particles: " << m_particles << "\n"
         << "Triggers:  " << m_triggernum << "\n"
         << "Entries:   " << NumEntries() << "\n"
+	<< "Total correctable read errors "<< m_correctable_blockread_errors << "\n"
+	<< "Total uncorrectable read errors "<< m_uncorrectable_blockread_errors << "\n"
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }

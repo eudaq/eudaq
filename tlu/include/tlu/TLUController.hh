@@ -172,6 +172,9 @@ namespace tlu {
     unsigned m_version;
     TLUAddresses * m_addr;
     eudaq::Time m_timestampzero;
+    unsigned m_correctable_blockread_errors;
+    unsigned m_uncorrectable_blockread_errors;
+    unsigned m_usb_timeout_errors;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
