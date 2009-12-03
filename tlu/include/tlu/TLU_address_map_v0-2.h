@@ -1,7 +1,7 @@
 /*                                                                  */
 /* TLU_address_map_v0-2.h                                                          */
 /*                                                                  */
-/* Generated on Mon Aug  3 09:50:52 2009               */
+/* Generated on Tue Nov 24 15:09:19 2009               */
 /*                                                                  */
 /*                                                                  */
 /* Definitions for JRA1 TLU                                         */
@@ -18,6 +18,8 @@
 #define TRIGGER_SCALERS_RESET_BIT   6
 #define CLOCK_GEN_RESET_BIT 7
 
+#define ENABLE_DMA_BIT 0
+#define RESET_DMA_COUNTER_BIT 1
 
 #define I2C_SDA_OUT_BIT  0
 #define I2C_SDA_IN_BIT  1
@@ -51,7 +53,7 @@
 #define BUFFER_DEPTH 4096 
 /* #define BUFFER_DEPTH 1024 */
 
-#define FIRMWARE_ID 253
+#define FIRMWARE_ID 28
 #define BASE_ADDRESS 8192
 #define FIRMWARE_ID_ADDRESS  8192
 #define DUT_BUSY_ADDRESS  8193

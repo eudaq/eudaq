@@ -144,6 +144,10 @@ namespace tlu {
     unsigned long ReadRegister32(unsigned long offset) const;
     unsigned long long ReadRegister64(unsigned long offset) const;
     unsigned long long * ReadBlock(unsigned entries);
+    unsigned ReadBlockRaw(unsigned entries , unsigned buffer_offset);
+    unsigned ReadBlockSoftErrorCorrect(unsigned entries  , bool pad );
+    unsigned ResetBlockRead( unsigned entries) ;
+    void PrintBlock( unsigned long long  block[][4096] , unsigned nbuf , unsigned bufsize );
     unsigned char ReadRegisterRaw(unsigned long offset) const;
 
     void SelectBus(unsigned bus);
