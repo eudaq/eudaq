@@ -659,6 +659,16 @@ namespace tlu {
 
       if ( num_errors == 0 ) break;
 
+      std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)" << std::endl;
+      num_errors = ReadBlockSoftErrorCorrect( entries , false );
+
+      if ( num_errors == 0 ) break;
+
+      std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)" << std::endl;
+      num_errors = ReadBlockSoftErrorCorrect( entries , true );
+
+      if ( num_errors == 0 ) break;
+
       // then try to reset DMA
       std::cout << "### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer" << std::endl;
       num_errors = ResetBlockRead( entries ) ;
@@ -683,7 +693,7 @@ namespace tlu {
 
     const unsigned long long timestamp_mask  = 0x0FFFFFFFFFFFFFFFULL ; 
 
-    unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    //    unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
 
     int result = ZESTSC1_SUCCESS;
@@ -695,7 +705,7 @@ namespace tlu {
     // Read four buffers at onece. first buffer will contain some data from previous readout, 
     // but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. 
     // Try to correct this using multiple reads.
-    result = ZestSC1ReadData(m_handle, buffer[0], sizeof buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
 
 #if TLUDEBUG
     char * errmsg = 0;
@@ -705,33 +715,33 @@ namespace tlu {
 
     // check to make sure that the first entry is zero ( which it should be unless something has slipped )
     for (int tries = 0; tries < 4; ++tries) { 
-      if (buffer[tries][0] !=0) {
-	std::cout << "### Warning: buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl;
+      if (m_working_buffer[tries][0] !=0) {
+	std::cout << "### Warning: m_working_buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl;
 	num_uncorrectable_errors++;
       }
     }
 
     for (unsigned i = buffer_offset; i < entries+buffer_offset; ++i) {
 
-      // std::cout << std::setw(8) <<  buffer[0][i] << "  " <<  buffer[1][i] << "  " <<   buffer[2][i] << "  " <<   buffer[3][i] << std::endl;
+      // std::cout << std::setw(8) <<  m_working_buffer[0][i] << "  " <<  m_working_buffer[1][i] << "  " <<   m_working_buffer[2][i] << "  " <<   m_working_buffer[3][i] << std::endl;
 
       // check that at least 2 out of three timestamps agree with each other....
       // due to latency in buffer transfer the real data starts at the third 64-bit word.
-      if (( buffer[1][i] == buffer[2][i] ) || 
-	  ( buffer[1][i] == buffer[3][i] ) ) {
-	m_oldbuf[i-buffer_offset] = buffer[1][i];
+      if (( m_working_buffer[1][i] == m_working_buffer[2][i] ) || 
+	  ( m_working_buffer[1][i] == m_working_buffer[3][i] ) ) {
+	m_oldbuf[i-buffer_offset] = m_working_buffer[1][i];
 
-      } else if ( buffer[2][i] == buffer[3][i] ) {
-	m_oldbuf[i-buffer_offset] = buffer[2][i];
+      } else if ( m_working_buffer[2][i] == m_working_buffer[3][i] ) {
+	m_oldbuf[i-buffer_offset] = m_working_buffer[2][i];
       } else {
 	m_oldbuf[i-buffer_offset] = 0;
-	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << std::setw(8) << buffer[1][i] << "  " << buffer[2][i] << "  " << buffer[3][i] << std::endl;
+	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << std::setw(8) << m_working_buffer[1][i] << "  " << m_working_buffer[2][i] << "  " << m_working_buffer[3][i] << std::endl;
 	num_correctable_errors++;
       }
 
-      if (( buffer[1][i] != buffer[2][i] ) || 
-	  ( buffer[1][i] != buffer[3][i] ) ||
-	  ( buffer[2][i] != buffer[3][i] ) 
+      if (( m_working_buffer[1][i] != m_working_buffer[2][i] ) || 
+	  ( m_working_buffer[1][i] != m_working_buffer[3][i] ) ||
+	  ( m_working_buffer[2][i] != m_working_buffer[3][i] ) 
 	  ){
 	  num_correctable_errors++; }
 
@@ -766,7 +776,7 @@ namespace tlu {
 
     // need to add checking that timestamp is in the correct ball-park ( use Timestamp2Seconds ... )
 
-    // usbtrace("BR", 0, buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
+    // usbtrace("BR", 0, m_working_buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
 
     m_uncorrectable_blockread_errors += num_uncorrectable_errors; 
     m_correctable_blockread_errors += num_correctable_errors;
@@ -775,15 +785,15 @@ namespace tlu {
     num_errors = num_uncorrectable_errors ;
 
     std::cout << "Debug - dumping block" << std::endl;
-    PrintBlock( buffer , 4 , 4096 );
+    PrintBlock( m_working_buffer , 4 , 4096 );
 
     //if ( num_errors > 0 ) {
     //  std::cout << "Detected errors. Dumping block" << std::endl;
     //
-    //  PrintBlock( buffer , 4 , 4096 );
+    //  PrintBlock( m_working_buffer , 4 , 4096 );
     //}
 
-    std::cout << "Debug - about to return num_errors ( num_uncorrectable ) = " << num_errors << "  ( " << num_uncorrectable_errors << " )" << std::endl;
+    std::cout << "Debug - about to return num_errors ( num_correctable ) = " << num_errors << "  ( " << num_correctable_errors << " )" << std::endl;
     return num_errors;
   }
 
@@ -797,14 +807,14 @@ namespace tlu {
     
     unsigned num_errors ;
 
-    unsigned long long buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    // unsigned long long buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     unsigned long long padding_buffer[2048]; 
 
     std::cout << "### About to read out blocks three times..." << std::endl;
 
     int result = ZESTSC1_SUCCESS;
 
-    result = ZestSC1ReadData(m_handle, buffer[0], sizeof buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
 
 #if TLUDEBUG
     char * errmsg = 0;
@@ -812,7 +822,9 @@ namespace tlu {
     std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (1st read): ") << errmsg << std::endl;
 #endif
 
-    result = ZestSC1ReadData(m_handle, buffer[0], sizeof buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
 
 #if TLUDEBUG
     char * errmsg = 0;
@@ -864,15 +876,20 @@ namespace tlu {
     static const unsigned buffer_offset = 2;
     unsigned num_errors;
 
+    std::cout << "### About to read data with pointer held reset" << std::endl;
     num_errors = ReadBlockRaw( entries , buffer_offset );
+    std::cout << "### Read data with pointer held reset" << std::endl;
 
     WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS ,
     		  original_dma_status );
     new_dma_status = ReadRegister8(m_addr->TLU_INITIATE_READOUT_ADDRESS);
     std::cout << "### Read back (after dropping reset line) INITIATE_READOUT_ADDRESS: " << new_dma_status << std::endl;
 
-    // and again again....
+    // and readout data....
     std::cout << "### Reading block after resetting pointer." << std::endl;
+    num_errors = ReadBlockRaw( entries , buffer_offset );
+
+    std::cout << "### Reading block after resetting pointer. (2nd time)" << std::endl;
     num_errors = ReadBlockRaw( entries , buffer_offset );
     
     return num_errors;

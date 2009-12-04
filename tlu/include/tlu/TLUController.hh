@@ -27,6 +27,9 @@ namespace tlu {
   static const int TLU_TRIGGER_INPUTS = 4;
   static const int TLU_LEMO_DUTS = 4;
   static const int TLU_DUTS = 6;
+  static const int TLU_BUFFER_SIZE = 4096;
+  static const int NUM_TLU_BUFFERS = 4;
+
   double Timestamp2Seconds(unsigned long long t);
 
   class TLUException : public std::runtime_error {
@@ -169,6 +172,7 @@ namespace tlu {
     unsigned long long m_timestamp;
     std::vector<TLUEntry> m_buffer;
     unsigned long long * m_oldbuf;
+    unsigned long long m_working_buffer[NUM_TLU_BUFFERS][TLU_BUFFER_SIZE];
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     unsigned m_particles;
     mutable unsigned long long m_lasttime;
