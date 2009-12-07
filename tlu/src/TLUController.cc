@@ -150,7 +150,8 @@ namespace tlu {
     m_timestampzero(0),
     m_correctable_blockread_errors(0),
     m_uncorrectable_blockread_errors(0),
-    m_usb_timeout_errors(0)
+    m_usb_timeout_errors(0),
+    m_debug_level(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -172,18 +173,18 @@ namespace tlu {
     int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
     if (status != 0) throw TLUException("ZestSC1CountCards", status);
 
-#if TLUDEBUG
-    std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
-    for (unsigned i = 0; i < NumCards; ++i) {
-      std::cout << "DEBUG: Card " << i
-                << ", ID = " << hexdec(CardIDs[i])
-                << ", SerialNum = 0x" << hexdec(SerialNumbers[i])
-                << ", FPGAType = " << hexdec(FPGATypes[i])
-                << ", Possible TLU: " << (FPGATypes[i] == ZESTSC1_XC3S1000 ?
-                                          "Yes" : "No")
-                << std::endl;
+    if ( m_debug_level & TLU_DEBUG_CONFIG ) {
+      std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
+      for (unsigned i = 0; i < NumCards; ++i) {
+	std::cout << "DEBUG: Card " << i
+		  << ", ID = " << hexdec(CardIDs[i])
+		  << ", SerialNum = 0x" << hexdec(SerialNumbers[i])
+		  << ", FPGAType = " << hexdec(FPGATypes[i])
+		  << ", Possible TLU: " << (FPGATypes[i] == ZESTSC1_XC3S1000 ?
+					    "Yes" : "No")
+		  << std::endl;
+      }
     }
-#endif
 
     unsigned found = NumCards;
     for (unsigned i = 0; i < NumCards; ++i) {
@@ -443,20 +444,13 @@ namespace tlu {
 
       WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
 
-#if TLUDEBUG
-      //std::cout << "TLU::Update: after initial write" << std::endl;
-#endif
       entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
 
-#if TLUDEBUG
-      std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
-#endif
+      if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+	std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
+      }
 
       timestamp_buffer = ReadBlock(entries);
-
-#if TLUDEBUG
-      //std::cout << "TLU::Update: after 2 reads" << std::endl;
-#endif
 
       // Reset buffer pointer
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
@@ -468,33 +462,37 @@ namespace tlu {
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
     }
 
-#if TLUDEBUG
-    std::cout << "TLU::Update: entries=" << entries << std::endl;
-#endif
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << "TLU::Update: entries=" << entries << std::endl;
+    }
 
     m_fsmstatus = ReadRegister8(m_addr->TLU_TRIGGER_FSM_STATUS_ADDRESS);
     m_fsmstatusvalues = ReadRegister24(m_addr->TLU_TRIGGER_FSM_STATUS_VALUE_ADDRESS_0);
     m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
-#if TLUDEBUG
-    //std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
-#endif
+
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
+    }
 
     m_triggernum = ReadRegister32(m_addr->TLU_REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
     m_timestamp = ReadRegister64(m_addr->TLU_REGISTERED_TIMESTAMP_ADDRESS_0);
-#if TLUDEBUG
-    std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
-    std::cout << "TLU::Update: scalers";
-#endif
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
+      std::cout << "TLU::Update: scalers";
+    }
+
 
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       m_scalers[i] = ReadRegister16(m_addr->TLU_SCALERS(i));
-#if TLUDEBUG
-      std::cout << ", [" << i << "] " << m_scalers[i];
-#endif
+
+      if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+	std::cout << ", [" << i << "] " << m_scalers[i];
+      }
     }
-#if TLUDEBUG
-    std::cout << std::endl;
-#endif
+
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << std::endl;
+    }
 
     m_particles = ReadRegister32(m_addr->TLU_REGISTERED_PARTICLE_COUNTER_ADDRESS_0);
 
@@ -649,28 +647,38 @@ namespace tlu {
 
       // try to correct error
 
-      std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding" << std::endl;
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding" << std::endl;
+      }
       num_errors = ReadBlockSoftErrorCorrect( entries , false );
 
       if ( num_errors == 0 ) break;
 
-      std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding" << std::endl;
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding" << std::endl;
+      }
       num_errors = ReadBlockSoftErrorCorrect( entries , true );
 
       if ( num_errors == 0 ) break;
 
-      std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)" << std::endl;
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)" << std::endl;
+      }
       num_errors = ReadBlockSoftErrorCorrect( entries , false );
 
       if ( num_errors == 0 ) break;
 
-      std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)" << std::endl;
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)" << std::endl;
+      }
       num_errors = ReadBlockSoftErrorCorrect( entries , true );
 
       if ( num_errors == 0 ) break;
 
       // then try to reset DMA
-      std::cout << "### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer" << std::endl;
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer" << std::endl;
+      }
       num_errors = ResetBlockRead( entries ) ;
 
       if ( num_errors == 0 ) break;
@@ -707,11 +715,12 @@ namespace tlu {
     // Try to correct this using multiple reads.
     result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
 
-#if TLUDEBUG
-    char * errmsg = 0;
-    ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
-    std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
-#endif
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
+    }
+
 
     // check to make sure that the first entry is zero ( which it should be unless something has slipped )
     for (int tries = 0; tries < 4; ++tries) { 
@@ -784,16 +793,13 @@ namespace tlu {
     // return the number of uncorrectable errors....
     num_errors = num_uncorrectable_errors ;
 
-    std::cout << "Debug - dumping block" << std::endl;
-    PrintBlock( m_working_buffer , 4 , 4096 );
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      std::cout << "Debug - dumping block" << std::endl;
+      PrintBlock( m_working_buffer , 4 , 4096 );
+    
+      std::cout << "Debug - about to return num_errors ( num_correctable ) = " << num_errors << "  ( " << num_correctable_errors << " )" << std::endl;
+    }
 
-    //if ( num_errors > 0 ) {
-    //  std::cout << "Detected errors. Dumping block" << std::endl;
-    //
-    //  PrintBlock( m_working_buffer , 4 , 4096 );
-    //}
-
-    std::cout << "Debug - about to return num_errors ( num_correctable ) = " << num_errors << "  ( " << num_correctable_errors << " )" << std::endl;
     return num_errors;
   }
 
@@ -816,21 +822,24 @@ namespace tlu {
 
     result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
 
-#if TLUDEBUG
-    char * errmsg = 0;
-    ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
-    std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (1st read): ") << errmsg << std::endl;
-#endif
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (1st read): ") << errmsg << std::endl;
+    }
+
 
     result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
     result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
     result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
 
-#if TLUDEBUG
-    char * errmsg = 0;
-    ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
-    std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
-#endif
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
+    }
 
 
     if ( pad ) {
@@ -840,17 +849,21 @@ namespace tlu {
       std::cout <<"### No padding block read ...."  << std::endl;   
     }
 
-#if TLUDEBUG
-    char * errmsg = 0;
-    ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
-    std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
-#endif
 
-    std::cout << "#### Read buffers to resync. About to read data ..." << std::endl;
- 
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
+
+      std::cout << "#### Read buffers to resync. About to read data ..." << std::endl;
+    }
+
+
     num_errors = ReadBlockRaw( entries , buffer_offset );
 
-    std::cout << "#### Number of errors reported by ReadBlockRaw after rsync = " << num_errors << std::endl;
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      std::cout << "#### Number of errors reported by ReadBlockRaw after rsync = " << num_errors << std::endl;
+    }
 
     return num_errors;
 
@@ -931,8 +944,8 @@ namespace tlu {
     out << "Particles: " << m_particles << "\n"
         << "Triggers:  " << m_triggernum << "\n"
         << "Entries:   " << NumEntries() << "\n"
-	<< "Total correctable read errors "<< m_correctable_blockread_errors << "\n"
-	<< "Total uncorrectable read errors "<< m_uncorrectable_blockread_errors << "\n"
+	<< "Total timestamp errors corrected by data redundancy"<< m_correctable_blockread_errors << "\n"
+	<< "Total timestamp errors corrected by block re-read"<< m_uncorrectable_blockread_errors << "\n"
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }

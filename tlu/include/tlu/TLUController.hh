@@ -30,6 +30,10 @@ namespace tlu {
   static const int TLU_BUFFER_SIZE = 4096;
   static const int NUM_TLU_BUFFERS = 4;
 
+  static const unsigned TLU_DEBUG_UPDATE = 0x0001 ;
+  static const unsigned TLU_DEBUG_CONFIG = 0x0002 ;
+  static const unsigned TLU_DEBUG_BLOCKREAD = 0x0004 ;
+
   double Timestamp2Seconds(unsigned long long t);
 
   class TLUException : public std::runtime_error {
@@ -183,6 +187,7 @@ namespace tlu {
     unsigned m_correctable_blockread_errors;
     unsigned m_uncorrectable_blockread_errors;
     unsigned m_usb_timeout_errors;
+    unsigned m_debug_level;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
