@@ -1,7 +1,7 @@
 /*                                                                  */
 /* TLU_address_map_v0-2.h                                                          */
 /*                                                                  */
-/* Generated on Tue Nov 24 15:09:19 2009               */
+/* Generated on Mon Dec  7 15:23:47 2009               */
 /*                                                                  */
 /*                                                                  */
 /* Definitions for JRA1 TLU                                         */
@@ -53,7 +53,7 @@
 #define BUFFER_DEPTH 4096 
 /* #define BUFFER_DEPTH 1024 */
 
-#define FIRMWARE_ID 28
+#define FIRMWARE_ID 255
 #define BASE_ADDRESS 8192
 #define FIRMWARE_ID_ADDRESS  8192
 #define DUT_BUSY_ADDRESS  8193
