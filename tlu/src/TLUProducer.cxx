@@ -60,7 +60,8 @@ public:
           m_ev = m_tlu->GetEntry(i).Eventnum();
           unsigned long long t = m_tlu->GetEntry(i).Timestamp();
           long long d = t-lasttime;
-          float freq= 1./(d*20./1000000000);
+          //float freq= 1./(d*20./1000000000);
+	  float freq= 1./Timestamp2Seconds(d);
           if (m_ev < 10 || m_ev%10 == 0) {
             std::cout << "  " << m_tlu->GetEntry(i)
                       << ", diff=" << d << (d <= 0 ? "  ***" : "")
