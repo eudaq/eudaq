@@ -11,19 +11,21 @@ namespace eudaq {
 
   class FileReader {
   public:
-    FileReader(const std::string & filename, const std::string & filepattern = "");
+    FileReader(const std::string & filename, const std::string & filepattern = "", bool synctriggerid = false);
+    ~FileReader();
     bool NextEvent(size_t skip = 0);
     std::string Filename() const { return m_filename; }
     unsigned RunNumber() const;
     const DetectorEvent & Event() const;
     //const StandardEvent & GetStandardEvent() const;
     void Interrupt() { m_des.Interrupt(); }
+    class eventqueue_t;
   private:
     std::string m_filename;
     FileDeserializer m_des;
     counted_ptr<eudaq::Event> m_ev;
     unsigned m_ver;
-    //mutable counted_ptr<eudaq::StandardEvent> m_sev;
+    eventqueue_t * m_queue;
   };
 
 }

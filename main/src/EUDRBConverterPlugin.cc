@@ -198,7 +198,7 @@ namespace eudaq {
     virtual unsigned GetTriggerID(Event const & ev) const {
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
       if (rawev.NumBlocks() < 1) return (unsigned)-1;
-      const std::vector<unsigned char> & data = rawev.GetBlock(0);
+      const std::vector<unsigned char> & data = rawev.GetBlock(rawev.NumBlocks() - 1);
       return GetTLUEvent(data);
     }
 

@@ -207,6 +207,7 @@ int main(int /*argc*/, char ** argv) {
     eudaq::Option<std::string> do_data(op, "d", "display", "", "numbers", "Event numbers to display (eg. '1-10,99,-1')");
     eudaq::OptionFlag do_dump(op, "u", "dump", "Dump raw data for displayed events");
     eudaq::OptionFlag do_zs(op, "z", "zsdump", "Print pixels for zs events");
+    eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
     eudaq::OptionFlag do_event_to_ttree(op, "r", "event-to-ttree", "Convert a file into a TTree .root format");
     
     try {
@@ -232,7 +233,7 @@ int main(int /*argc*/, char ** argv) {
  
             EUDAQ_INFO("Converting the inputfile into a TTree " );
           
-            eudaq::FileReader reader(op.GetArg(0), ipat.Value());
+            eudaq::FileReader reader(op.GetArg(0), ipat.Value(), sync.IsSet());
             TString foutput = reader.Filename();           
             StripAllDirs(foutput);
             if(foutput.Contains(".raw")) foutput.ReplaceAll("raw" , "root");

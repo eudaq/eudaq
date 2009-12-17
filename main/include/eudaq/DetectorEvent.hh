@@ -27,6 +27,7 @@ namespace eudaq {
     size_t NumEvents() const { return m_events.size(); }
     Event * GetEvent(size_t i) { return m_events[i].get(); }
     const Event * GetEvent(size_t i) const { return m_events[i].get(); }
+    counted_ptr<Event> GetEventPtr(size_t i) { return m_events[i]; }
     template <typename T>
     const T * GetSubEvent(int n = 0) const {
       for (size_t i = 0; i < NumEvents(); i++) {

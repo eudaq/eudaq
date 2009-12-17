@@ -44,10 +44,7 @@ int main(int, char ** argv) {
     op.Parse(argv);
     std::vector<unsigned> numbers = parsenumbers(events.Value());
     for (size_t i = 0; i < op.NumArgs(); ++i) {
-      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
-      if (sync.IsSet()) {
-        std::cerr << "Sync not yet implemented";
-      }
+      eudaq::FileReader reader(op.GetArg(i), ipat.Value(), sync.IsSet());
       counted_ptr<eudaq::FileWriter> writer(FileWriterFactory::Create(type.Value()));
       writer->SetFilePattern(opat.Value());
       writer->StartRun(reader.RunNumber());
