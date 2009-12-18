@@ -6,13 +6,6 @@
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TRandom.h"
-#include "TString.h"
-
-
-
 #include <iostream>
 #include <fstream>
 
@@ -21,6 +14,12 @@ using eudaq::from_string;
 using eudaq::to_string;
 using eudaq::split;
 using namespace std;
+
+#if USE_ROOT
+# include "TFile.h"
+# include "TTree.h"
+# include "TRandom.h"
+# include "TString.h"
 
 // Book variables for the Event_to_TTree conversion 
 static bool do_ttree    = false; // static variable to see if the tree is open already for writing  
@@ -33,12 +32,18 @@ Double_t  id_y          = 0 ; // the hit position along  Y-axis
 unsigned i_tlu          = 0 ; // a trigger id
 unsigned i_run          = 0 ; // a run  number 
 unsigned i_event        = 0 ; // an event number 
-//
+
 unsigned long long int i_time_stamp = 0 ; // the time stampe 
 static int           i_first      = 0 ; // the event range to read (first)
 static int           i_last       = 0 ; // the event range to read (last)
 static int           i_curr       = 0 ; // the event range to read (last)
-//
+
+void StripAllDirs(TString &fstring) {
+  // Removes everything before the last slash '/' (including the slash
+  fstring.Remove(0,fstring.Last('/')+1);
+}
+
+#endif
 
 std::vector<unsigned> parsenumbers(const std::string & s) {
   std::vector<unsigned> result;
@@ -73,9 +78,12 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
     
     //std::cout << "DEBUG " << ndata << ", " << do_display << ", " << do_zs << std::endl;
 
+#if USE_ROOT
     // always do this 
     if (do_process || do_display || do_dump || do_zs || do_ttree) {
-        
+#else
+    if (do_process || do_display || do_dump || do_zs) {
+#endif
 
         // do this if an event range is given
         if (do_display) {
@@ -149,6 +157,7 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
             }
         }
 
+#if USE_ROOT
         // if the tree is open do this
     
 //        cout <<   do_ttree <<endl; 
@@ -180,19 +189,11 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
                 }               
             }  
        }
+#endif
         
     }
   return do_display;
 }
-
-void StripAllDirs(TString &fstring){
-// 
-// Removes everything before the last slash '/' (including the slash
-// 
-    fstring.Remove(0,fstring.Last('/')+1);
-
-}
-
 
 int main(int /*argc*/, char ** argv) {
     
@@ -219,6 +220,9 @@ int main(int /*argc*/, char ** argv) {
 
         bool showlast = std::find(displaynumbers.begin(), displaynumbers.end(), (unsigned)-1) != displaynumbers.end();
 
+        counted_ptr<eudaq::DetectorEvent> lastevent;
+
+#if USE_ROOT
         if(!displaynumbers.empty()){ 
             int n_size = displaynumbers.size();
             i_first = displaynumbers[0];
@@ -227,9 +231,7 @@ int main(int /*argc*/, char ** argv) {
 //            cout << i_last  << endl;
         }
 
-        counted_ptr<eudaq::DetectorEvent> lastevent;
-
-        if(do_event_to_ttree.IsSet() && do_ttree == false ){
+        if (do_event_to_ttree.IsSet() && do_ttree == false ){
  
             EUDAQ_INFO("Converting the inputfile into a TTree " );
           
@@ -280,7 +282,9 @@ int main(int /*argc*/, char ** argv) {
         */
         
         }
-    
+#else
+	if (do_event_to_ttree.IsSet()) EUDAQ_THROW("Root file support not compiled into this version.");
+#endif
         
         for (size_t i = 0; i < op.NumArgs(); ++i) {
                          
@@ -327,8 +331,11 @@ int main(int /*argc*/, char ** argv) {
                         std::cout << dev << std::endl;
                     }
         
+#if USE_ROOT
                 } else if( !do_data.IsSet() || (i_curr >= i_first && i_curr < i_last) ){
-                    
+#else
+                } else if (!do_data.IsSet()) {
+#endif
                 
                     ndata++;
                     // TODO: check event number matches ndata
@@ -351,7 +358,9 @@ int main(int /*argc*/, char ** argv) {
                     }
                 }
             
+#if USE_ROOT
                 i_curr++; // keep in mind the last event read from the file
+#endif
             } while (
                     reader.NextEvent() 
                    );
@@ -387,8 +396,10 @@ int main(int /*argc*/, char ** argv) {
         return op.HandleMainException();
     }
     
+#if USE_ROOT
     // finish by writing the ttree
     if( do_ttree ) ttree->Write();
+#endif
  
     return 0;
 
