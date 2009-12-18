@@ -332,9 +332,9 @@ int main(int /*argc*/, char ** argv) {
                     }
         
 #if USE_ROOT
-                } else if( !do_data.IsSet() || (i_curr >= i_first && i_curr < i_last) ){
+                } else if (!do_data.IsSet() || (i_curr >= i_first && i_curr < i_last)) {
 #else
-                } else if (!do_data.IsSet()) {
+                } else {
 #endif
                 
                     ndata++;
