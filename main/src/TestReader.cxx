@@ -234,7 +234,7 @@ int main(int /*argc*/, char ** argv) {
         if (do_event_to_ttree.IsSet() && do_ttree == false ){
  
             EUDAQ_INFO("Converting the inputfile into a TTree " );
-          
+	    
             eudaq::FileReader reader(op.GetArg(0), ipat.Value(), sync.IsSet());
             TString foutput = reader.Filename();           
             StripAllDirs(foutput);
@@ -288,7 +288,7 @@ int main(int /*argc*/, char ** argv) {
         
         for (size_t i = 0; i < op.NumArgs(); ++i) {
                          
-            eudaq::FileReader reader(op.GetArg(i), ipat.Value());
+            eudaq::FileReader reader(op.GetArg(i), ipat.Value(), sync.IsSet());
             EUDAQ_INFO("Reading: " + reader.Filename());
 
 //            cout << i << " " << reader.Filename()  << endl;

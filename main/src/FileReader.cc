@@ -6,8 +6,14 @@
 
 #include <list>
 
+#define DBGT(a) std::cout << "DEBUG: " << a << std::endl;
+#define DBGB(a) DBGT(#a << " = " << ((a)?"yes":"no"))
+#define DBG(a) DBGT(#a << " = " << a)
+
 namespace eudaq {
 
+  struct FileReader::eventqueue_t;
+  std::ostream & operator << (std::ostream & os, const FileReader::eventqueue_t & q);
   struct FileReader::eventqueue_t {
     struct item_t {
       item_t(DetectorEvent * ev = 0) : event(ev) {
@@ -20,17 +26,24 @@ namespace eudaq {
       eudaq::DetectorEvent * event;
       std::vector<unsigned>  triggerids;
     };
-    eventqueue_t(unsigned numproducers = 0) : offsets(numproducers, items.end()), expected(0) {}
-    bool isempty() const {
+    eventqueue_t(unsigned numproducers = 0) : offsets(numproducers, items.end())/*, expected(0)*/ {}
+    bool isempty(bool dbg = false) const {
       for (size_t i = 0; i < offsets.size(); ++i) {
-        if (offsets[i] == items.begin()) {
+	if (dbg) std::cout << "i " << i << std::flush;
+        //if (offsets[i] == items.begin()) {
+        if (events(i, dbg*((i==2)+1)) == 0) {
+	  if (dbg) std::cout << "Empty" << std::endl;
           return true;
         }
       }
+      if (dbg) std::cout << "not empty" << std::endl;
       return false;
     }
-    size_t events(size_t producer) const {
-      return std::distance(items.begin(), iter(producer));
+    size_t events(size_t producer, int dbg = 0) const {
+      std::list<item_t>::const_iterator it = iter(producer, -1);
+      if (dbg) std::cout << "." << std::endl;
+      if (it == items.begin()) return 0;
+      return std::distance(items.begin(), it);
     }
     size_t fullevents() const {
       size_t min = events(0);
@@ -47,6 +60,24 @@ namespace eudaq {
     void discardevent(size_t producer) {
       --offsets[producer];
     }
+    int clean_back() {
+      int result = 0;
+      bool done = false;
+      while (!done) {
+	for (size_t i = 0; i < producers(); ++i) {
+	  std::list<item_t>::const_iterator it = offsets.at(i);
+	  if (it == items.end()) return result;
+	  ++it;
+	  if (it == items.end()) {
+	    done = true;
+	    offsets[i] = items.end();
+	  }
+	}
+	++result;
+	items.pop_back();
+      }
+      return result;
+    }
     eudaq::DetectorEvent * popevent() {
       unsigned run = getevent(0).GetRunNumber();
       unsigned evt = getevent(0).GetEventNumber();
@@ -59,26 +90,73 @@ namespace eudaq {
 	  break;
 	}
       }
+      //std::cout << "dev " << run << ", " << evt << ", " << ts << std::endl;
       DetectorEvent * dev = new DetectorEvent(run, evt, ts);
       for (size_t i = 0; i < producers(); ++i) {
 	dev->AddEvent(iter(i)->event->GetEventPtr(i));
       }
       bool more = true;
       do {
-	items.pop_back();
+	//std::cout << "DBG2a " << (*this) << std::endl;
+	//std::cout << "*** " << std::distance(items.begin(), items.end()) << std::endl;
+	for (size_t i = 0; i < producers(); ++i) {
+	  std::list<item_t>::const_iterator it = iter(i, -1);
+	  if (0) std::cout << i << ": "
+		    << (it == items.begin() ? "b":".")
+		    << (it == items.end() ? "e":".")
+		    << " " << std::flush
+		    << std::distance(((const std::list<item_t> &)items).begin(), it)
+		    << ", "
+		    << std::distance(it, ((const std::list<item_t> &)items).end())
+		    << std::endl;
+	}
+	clean_back();
+	//std::cout << "*** " << std::distance(items.begin(), items.end()) << std::endl;
+	for (size_t i = 0; i < producers(); ++i) {
+	  //std::cout << "foo" << std::endl;
+	  std::list<item_t>::const_iterator it = iter(i, -1); //, true);
+	  //std::cout << "bar" << std::endl;
+	  if (0) std::cout << i << ": "
+		    << (it == items.begin() ? "b":".")
+		    << (it == items.end() ? "e":".")
+		    << " " << std::flush
+		    << std::distance(((const std::list<item_t> &)items).begin(), it)
+		    << ", " << std::flush
+		    << std::distance(it, ((const std::list<item_t> &)items).end())
+		    << std::endl;
+	}
+	//std::cout << "DBG2b " << std::flush;
+	//debug(std::cout, true);
+	//std::cout << std::endl;
 	more = true;
 	for (size_t i = 0; i < producers(); ++i) {
-	  if (iter(i) == items.end()) {
+	  if (iter(i, -1) == items.end()) {
 	    more = false;
 	    break;
 	  }
 	}
       } while (more);
+      //std::cout << "hmm" << std::endl;
       return dev;
     }
-    std::list<item_t>::const_iterator iter(size_t producer, int offset = 0) const {
-      std::list<item_t>::const_iterator it = offsets[producer];
-      std::advance(it, offset - 1);
+    void debug(std::ostream & os, bool moredbg = false) const {
+      os << "empty=" << (isempty(moredbg)?"yes":"no") << std::flush;
+      os << " fullevents=" << fullevents() << std::flush
+	 << " events=" << events(0) << std::flush;
+      for (size_t i = 1; i < producers(); ++i) {
+	os << "," << events(i) << std::flush;
+      }
+    }
+    std::list<item_t>::const_iterator iter(size_t producer, int offset = 0, bool dbg = false) const {
+      std::list<item_t>::const_iterator it = offsets.at(producer);
+      //std::advance(it, -offset - 1);
+      if (dbg) std::cout << "iter " << producer << ", " << offset << std::endl;
+      for (int i = 0; i <= offset; ++i) {
+	if (dbg) std::cout << "..." << std::endl;
+	if (it == items.begin()) EUDAQ_THROW("Bad offset in ResyncTLU routine");
+	--it;
+      }
+      if (dbg) std::cout << "ok" << std::endl;
       return it;
     }
     unsigned getid(size_t producer) const {
@@ -92,8 +170,13 @@ namespace eudaq {
     }
     std::list<item_t> items;
     std::vector<std::list<item_t>::const_iterator> offsets;
-    unsigned expected;
+    //unsigned expected;
   };
+
+  std::ostream & operator << (std::ostream & os, const FileReader::eventqueue_t & q) {
+    q.debug(os);
+    return os;
+  }
 
   namespace {
 
@@ -118,8 +201,10 @@ namespace eudaq {
     }
 
     static bool SyncEvent(FileReader::eventqueue_t & queue, FileDeserializer & des, int ver, eudaq::Event * & ev) {
+      //DBGT("");
       static const int MAXTRIES = 3;
       for (int itry = 0; itry < MAXTRIES; ++itry) {
+	//std::cout << "DBGa " << queue << std::endl;
         if (queue.isempty()) {
           eudaq::Event * ev = 0;
           if (!ReadEvent(des, ver, ev)) {
@@ -127,25 +212,42 @@ namespace eudaq {
           }
           queue.push(ev);
         }
+	//std::cout << "DBGb " << queue << std::endl;
 	bool isbore = queue.getevent(0).IsBORE();
+	//DBGB(isbore);
 	bool iseore = queue.getevent(0).IsEORE();
+	//DBGB(iseore);
 	bool haszero = PluginManager::GetTriggerID(queue.getevent(0)) == 0;
+	//DBGB(haszero);
 	bool hasother = false;
 	unsigned eventnum = PluginManager::GetTriggerID(queue.getevent(0));
+	//DBG(eventnum);
+	//DBG("event " << eventnum);
 	for (size_t i = 1; i < queue.producers(); ++i) {
+	  //std::cout << "blah " << i << std::endl;
 	  unsigned evnum = PluginManager::GetTriggerID(queue.getevent(i));
+	  //DBG(evnum);
+	  //DBG(eventnum << ", " << evnum);
 	  if (!queue.getevent(i).IsBORE()) isbore = false;
 	  if (!queue.getevent(i).IsEORE()) iseore = false;
 	  if (evnum == 0) haszero = true;
 	  if (eventnum == 0) eventnum = evnum;
-	  if (eventnum != 0 && eventnum != evnum) hasother = true;
+	  if (evnum != 0 && evnum != eventnum) hasother = true;
 	}
-	if (isbore || iseore || (!haszero && !hasother)) {
+	if (isbore || iseore || (!haszero && !hasother) || eventnum == 0) {
+	  //std::cout << "OK" << std::endl;
 	  ev = queue.popevent();
+	  return true;
 	}
+	//DBG(eventnum);
+	//DBGB(isbore);
+	//DBGB(iseore);
+	//DBGB(haszero);
+	//DBGB(hasother);
 	if (hasother) {
 	  EUDAQ_THROW("Unable to synchronize - please report this run to the EUDAQ developers.");
 	}
+	//std::cout << "DBGc " << queue << std::endl;
         if (queue.fullevents() < 2) {
           eudaq::Event * ev = 0;
           if (!ReadEvent(des, ver, ev)) {
@@ -153,14 +255,15 @@ namespace eudaq {
           }
           queue.push(ev);
         }
-	for (size_t i = 1; i < queue.producers(); ++i) {
+	//std::cout << "DBGd " << queue << std::endl;
+	for (size_t i = 0; i < queue.producers(); ++i) {
 	  unsigned evnum = PluginManager::GetTriggerID(queue.getevent(i));
 	  if (evnum == 0) {
 	    unsigned evnum1 = PluginManager::GetTriggerID(queue.getevent(i, 1));
 	    if (evnum1 == eventnum) {
 	      EUDAQ_INFO("Discarded extra 'zero' event");
 	      queue.discardevent(i);
-	    } else if (evnum1 == eventnum + 1) {
+	    } else if (evnum1 == (eventnum + 1) & 0x7fff) {
 	      EUDAQ_INFO("Detected 'zero' event");
 	    } else {
 	      EUDAQ_THROW("Unable to synchronize 'zero' event - please report this run to the EUDAQ developers.");
@@ -168,6 +271,7 @@ namespace eudaq {
 	  }
 	}
 	ev = queue.popevent();
+	return true;
       }
       EUDAQ_WARN("Unable to synchronize after " + to_string(MAXTRIES) + " events.");
       return false;
@@ -193,6 +297,8 @@ namespace eudaq {
     if (synctriggerid) {
       m_queue = new eventqueue_t(Event().NumEvents());
     }
+    //DBGB(synctriggerid);
+    //DBGB(m_queue);
   }
 
   FileReader::~FileReader() {
