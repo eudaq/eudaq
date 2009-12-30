@@ -3,6 +3,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/counted_ptr.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
 
 #include <iostream>
 
@@ -40,8 +41,11 @@ int main(int, char ** argv) {
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<std::string> opat(op, "o", "outpattern", "test$6R$X", "string", "Output filename pattern");
   eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
+  eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
+				   "The minimum level for displaying log messages locally");
   try {
     op.Parse(argv);
+    EUDAQ_LOG_LEVEL(level.Value());
     std::vector<unsigned> numbers = parsenumbers(events.Value());
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value(), sync.IsSet());
