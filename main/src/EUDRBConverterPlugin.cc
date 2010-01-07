@@ -289,16 +289,17 @@ namespace eudaq {
     if (wordcount*4 + 16 != alldata.size()) EUDAQ_THROW("Bad wordcount (" + to_string(wordcount) +
                                                           ", bytes=" + to_string(alldata.size()) + ")");
     word = GET(offset=1);
-    unsigned sof = word>>8 & 0xffff;
-    // should this be: unsigned sof = GET(offset=3);
+    if (dbg) std::cout << "Unknown = " << hexdec(word >> 8 & 0xffff) << std::endl;
+    // offset 2 is a repeat of offset 0
+    word = GET(offset=3);
+    unsigned sof = word;
     if (dbg) std::cout << "StartOfFrame = " << hexdec(sof, 0) << std::endl;
-    // offset 2,3 are repeats of 0,1
     word = GET(offset=4);
     if (dbg) std::cout << "LocalEventNumber = " << hexdec(word>>8 & 0xffff, 0) << std::endl;
     if (dbg) std::cout << "FrameNumberAtTrigger = " << hexdec(word & 0xff, 0) << std::endl;
     word = GET(offset=5);
     unsigned pixadd = word & 0x3ffff;
-    plane.SetPivotPixel((pixadd + sof - 16) % 9216); // seems OK in one setup, needs to be verified
+    plane.SetPivotPixel((9216 + pixadd - sof + 56) % 9216);
     if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(pixadd, 0)
                        << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
     unsigned wordremain = wordcount-12;
