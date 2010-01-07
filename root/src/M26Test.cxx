@@ -79,6 +79,7 @@ int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ M26 decoding test", "1.0", "Testing", 1);
   eudaq::OptionFlag do_display(op, "d", "display", "Display histograms");
   eudaq::Option<unsigned> limit(op, "l", "limit", 1U, "hits", "Maximum hits per event");
+  eudaq::Option<unsigned> maxevents(op, "m", "maxevents", 0U, "events", "Stop after processing enough events (0=whole run)");
   eudaq::Option<int> xmin(op, "xmin", "xmin", 0, "pixels", "Minimum X");
   eudaq::Option<int> xmax(op, "xmax", "xmax", 1151, "pixels", "Maximum X");
   eudaq::Option<int> ymin(op, "ymin", "ymin", 0, "pixels", "Minimum Y");
@@ -93,6 +94,7 @@ int main(int /*argc*/, char ** argv) {
     if (planes.size() == 0) std::cout << "all";
     for (size_t i = 0; i < planes.size(); ++i) std::cout << (i ? ", " : "") << planes[i];
     std::cout << std::endl;
+    unsigned numevents = 0;
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       std::cout << "Reading: " << reader.Filename() << std::endl;
@@ -108,8 +110,8 @@ int main(int /*argc*/, char ** argv) {
         }
         try {
           //unsigned boardnum = 0;
-          if (dev.GetEventNumber() % 100 == 0) {
-            std::cout << "Event " << dev.GetEventNumber() << std::endl;
+          if (dev.GetEventNumber() % 1000 == 0) {
+            std::cout << "Event " << dev.GetEventNumber() << ", processed " << numevents << std::endl;
           }
           StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
           for (size_t p = 0; p < sev.NumPlanes(); ++p) {
@@ -154,16 +156,20 @@ int main(int /*argc*/, char ** argv) {
               }
             }
             if (clusters.size() > 0 && clusters.size() <= limit.Value()) {
-              const std::set<m26pix_t> & pix = clusters.begin()->p;
-              for (std::set<m26pix_t>::const_iterator it = pix.begin(); it != pix.end(); ++it) {
-                histo[M26PIVOTRANGE+offset(it->f, it->x, it->y, brd.PivotPixel())]++;
-              }
+	      numevents++;
+	      for (std::set<clust_t>::const_iterator itc = clusters.begin(); itc != clusters.end(); ++itc) {
+		const std::set<m26pix_t> & pix = itc->p;
+		for (std::set<m26pix_t>::const_iterator itp = pix.begin(); itp != pix.end(); ++itp) {
+		  histo[M26PIVOTRANGE+offset(itp->f, itp->x, itp->y, brd.PivotPixel())]++;
+		}
+	      }
             }
             //std::cout << "Clusters:" << std::endl;
             //for (std::set<clust_t>::const_iterator it = clusters.begin(); it != clusters.end(); ++it) {
             //  std::cout << it->f << ", " << it->x << ", " << it->y << ", " << it->p.size() << std::endl;
             //}
           }
+	  if (maxevents.Value() && numevents >= maxevents.Value()) break;
         } catch (const Exception & e) {
           std::cout << "Error: " << e.what() << std::endl;
         }
