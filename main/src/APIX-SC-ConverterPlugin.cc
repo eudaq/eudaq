@@ -24,6 +24,7 @@ namespace eudaq {
   public:
     virtual void Initialize(const Event & e, const Configuration & c);
     //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
+    virtual unsigned GetTriggerID(eudaq::Event const &) const;
     virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
 
   private:
@@ -46,6 +47,12 @@ namespace eudaq {
 
     std::cout << " Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
     std::cout << " Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
+  }
+
+  unsigned APIXSCConverterPlugin::GetTriggerID(eudaq::Event const & ev) const {
+    // Untested (copypasta from APIX-MC)
+    const RawDataEvent & rev = dynamic_cast<const RawDataEvent &>(ev);
+    return getlittleendian<unsigned int>(&rev.GetBlock(0)[4]);
   }
 
   bool APIXSCConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
