@@ -165,6 +165,7 @@ namespace eudaq {
       static const unsigned IDMASK = 0x7fff;
       static const int MAXTRIES = 3;
       unsigned eventnum = 0;
+      static const bool dbg = false;
       for (int itry = 0; itry < MAXTRIES; ++itry) {
         if (queue.isempty()) {
           eudaq::Event * evnt = 0;
@@ -185,12 +186,15 @@ namespace eudaq {
           }
           unsigned tid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
           if (!queue.getevent(i).IsBORE()) isbore = false;
-          if (!queue.getevent(i).IsEORE()) iseore = false;
+          if (queue.getevent(i).IsEORE()) iseore = true;
           if (tid == 0) haszero = true;
           if (triggerid == 0) triggerid = tid;
           if (tid != 0 && tid != triggerid) hasother = true;
         }
+	if (dbg) std::cout << "Event " << eventnum << ", id=" << triggerid << ", zero=" << (haszero?"y":"n")
+			   << ", other=" << (hasother?"y":"n") << std::flush;
         if (isbore || iseore || (!haszero && !hasother) || triggerid == 0) {
+	  if (dbg) std::cout << ", ok" << std::endl;
           ev = queue.popevent();
           return true;
         }
@@ -199,8 +203,11 @@ namespace eudaq {
           for (size_t i = 1; i < queue.producers(); ++i) {
             nums.push_back(PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK);
           }
-          EUDAQ_WARN("Unexpected event number " + to_string(eventnum) + ": " + to_string(nums));
-        }
+	  if (dbg) std::cout << ", " << to_string(nums) << std::endl;
+          EUDAQ_WARN("Unexpected tid in event number " + to_string(eventnum) + ": " + to_string(nums));
+        } else {
+	  if (dbg) std::cout << ", hmm" << std::endl;
+	}
         if (queue.fullevents() < 2) {
           eudaq::Event * evnt = 0;
           if (!ReadEvent(des, ver, evnt)) {

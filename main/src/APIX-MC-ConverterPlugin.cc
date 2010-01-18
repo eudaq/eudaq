@@ -60,7 +60,12 @@ namespace eudaq {
 
   unsigned APIXMCConverterPlugin::GetTriggerID(eudaq::Event const & ev) const {
     const RawDataEvent & rev = dynamic_cast<const RawDataEvent &>(ev);
-    return getlittleendian<unsigned int>(&rev.GetBlock(0)[4]);
+    if (rev.NumBlocks() < 1) return (unsigned)-1;
+    unsigned tid = getlittleendian<unsigned int>(&rev.GetBlock(0)[4]);
+    // Events that should have tid=0 have rubbish instead
+    // so if number is illegal, convert it to zero.
+    if (tid >= 0x8000) return 0;
+    return tid;
   }
 
   bool APIXMCConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
