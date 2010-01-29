@@ -5,7 +5,10 @@
 #include "eudaq/OptionParser.hh"
 #include "fortis/FORTIS.hh"
 
-#include <windows.h>
+#if EUDAQ_PLATFORM_IS(WIN32)|| EUDAQ_PLATFORM_IS(MINGW)
+# include <windows.h>
+#endif
+
 // #include <stdio.h>
 
 #include <iostream>
@@ -48,9 +51,11 @@ public:
 
   void Process() {
 
-	DWORD dwRead;
-	unsigned int words_read;
-	unsigned int chunk_count ; 
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
+    DWORD dwRead; // DWORD is 32-bits(?)
+#endif
+    unsigned int words_read;
+    unsigned int chunk_count ; 
 	
     // we always want to be sensitive to data from the FORTIS.... which can arrive any time after configuration....
     if (!configured) { // If we aren't configured just sleep for a while and return
@@ -64,11 +69,12 @@ public:
     try {
 
       m_buffer_number = ( ++m_buffer_number ) % 2; // alternate between buffers...
-	  ////
-	words_read = 0;
-    chunk_count = 0;
+
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
+      words_read = 0;
+      chunk_count = 0;
 	
-    while ( words_read < m_num_pixels_per_frame ) {
+      while ( words_read < m_num_pixels_per_frame ) {
 
 		ReadFile( m_FORTIS_Data , &m_frameBuffer[m_buffer_number][words_read], 
 				 (m_num_bytes_per_frame - words_read*sizeof(short) ), 
@@ -81,9 +87,21 @@ public:
 		
 		if ( dwRead == 0 ) { EUDAQ_THROW("Problem reading FORTIS data from input pipe"); }
 
-    }
+      }
+#else
+       m_rawData_pointer = reinterpret_cast<char *>(&m_frameBuffer[m_buffer_number][0]); // read into buffer number m_buffer_number
+      if (  m_FORTIS_Data.good() ) {
+	m_FORTIS_Data.read( m_rawData_pointer , sizeof(short)*m_num_pixels_per_frame );
+      } else {
+	EUDAQ_THROW("Problem reading FORTIS data from input pipe");
+      }
+      if ( m_FORTIS_Data.gcount() != sizeof(short)*m_num_pixels_per_frame ) {
+	EUDAQ_THROW("Read wrong number of characters from pipe");
+      }
+      std::cout << "Read block of data ..."<< std::endl;
+#endif
 
-	m_currentFrame = m_frameBuffer[m_buffer_number][0] + 0x10000*m_frameBuffer[m_buffer_number][1]  ;
+      m_currentFrame = m_frameBuffer[m_buffer_number][0] + 0x10000*m_frameBuffer[m_buffer_number][1]  ;
     std::cout << "Read  frame number = " << m_currentFrame << ". chunk count = " << chunk_count << std::endl ;
 
 
@@ -217,6 +235,10 @@ public:
 		std::cout << "Number of columns: " <<  m_NumColumns  << std::endl;
 		std::cout << "Number of pixels in each frame (including row-headers) = " << m_num_pixels_per_frame << std::endl;
 
+		// Now try to open the named pipe that will accept data from the OptoDAQV programme.
+
+		// conditional compilation depending on Windows-MinGW or Linux/Cygwin
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 		std::string filename = m_param.Get("NamedPipe","\\\\.\\pipe\\EUDAQPipe") ;
 
 		// Open input file ( actually a named pipe... )
@@ -230,16 +252,25 @@ public:
   
 
 		if ( m_FORTIS_Data == NULL ) { EUDAQ_THROW("Problems creating named pipe"); }
+#else
+		std::string filename = m_param.Get("NamedPipe","./fortis_named_pipe") ;
+
+		std::cout << "About to open named pipe = " << filename << std::endl;
+
+		m_FORTIS_Data.open( filename.c_str() , ios::in | ios::binary );
+		if ( ! m_FORTIS_Data.is_open() ) { EUDAQ_THROW("Unable to open named pipe"); }
+#endif
 	
 		std::cout << "Starting Command line programme to stream FORTIS data" << std::endl;
 		startExecutable();
   
-		std::cout << "Waiting for connection to pipe" << std::endl;
 
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
+		std::cout << "Waiting for connection to pipe" << std::endl;
 		ConnectNamedPipe(m_FORTIS_Data, NULL);
-  
 		std::cout << "Client has connected to pipe" << std::endl;
-      
+#endif      
+
 		m_frameBuffer[0].resize(  m_num_pixels_per_frame); // set the size of our frame buffer.
 		m_frameBuffer[1].resize(  m_num_pixels_per_frame); 
 		m_rawData.resize( 2 * m_num_pixels_per_frame); // set the size of our event(big enough for two frames)...
@@ -333,12 +364,16 @@ public:
 	
     // Kill the thread with the command-line-programme here ....
 	std::cout << "About to kill FORTIS command line programme. Command = " << m_exeArgs.killcommand << std::endl;
-    system(  m_exeArgs.killcommand.c_str() );
-	
+	system(  m_exeArgs.killcommand.c_str() );
+
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)	
 	DisconnectNamedPipe(m_FORTIS_Data);
-    CloseHandle(m_FORTIS_Data);
-	
-    done = true;
+	CloseHandle(m_FORTIS_Data);
+#else
+	m_FORTIS_Data.close();
+#endif	
+
+	done = true;
   }
 
 
@@ -358,7 +393,14 @@ private:
 
   
   // PRIVATE MEMBER VARIABLES
+
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
   HANDLE m_FORTIS_Data;  ///< Named pipe for receiving FORTIS data
+  unsigned short  * m_rawData_pointer;
+#else
+  ifstream m_FORTIS_Data;  ///< Named pipe for receiving FORTIS data
+  char * m_rawData_pointer;
+#endif
 
   DoubleFrame m_frameBuffer; // buffer for two frames
 
@@ -367,7 +409,7 @@ private:
   unsigned int m_triggers_pending;
   unsigned int m_buffer_number  ;
 
-  unsigned short  * m_rawData_pointer;
+
   unsigned int m_NumRows ;
   unsigned int m_NumColumns;
   unsigned int m_num_pixels_per_frame ;
@@ -384,9 +426,18 @@ private:
     // ExecutableArgs exeArgs;
     m_exeArgs.dir = m_param.Get("ExecutableDirectory","./");
     m_exeArgs.filename = m_param.Get("ExecutableFilename","stream_exe") ;
-	m_exeArgs.killcommand =  "/bin/ps -W | /bin/awk  '/" + m_param.Get("ExecutableProcessName","optodaq") + "/{print $1}' | /bin/xargs /bin/kill -f"; 
+
+    // Before trying to start up new OptoDAQ process, we will try to kill the old one.
+    // prepare the command line....
+    // Use ps , grep and kill for Windows MinGW/Cygwin | killall for Linux 
+#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW) || EUDAQ_PLATFORM_IS(CYGWIN)
+    m_exeArgs.killcommand =  "/bin/ps -W | /bin/awk  '/" + m_param.Get("ExecutableProcessName","optodaq") + "/{print $1}' | /bin/xargs /bin/kill -f"; 
+#else
+    m_exeArgs.killcommand =  "killall " + m_param.Get("ExecutableProcessName","optodaq") ;
+#endif 
     m_exeArgs.args = m_param.Get("ExecutableArgs","");
 
+    // Create the thread that will start up OptoDAQ process.
     unsigned threadCreateResult = pthread_create(&m_executableThreadId, NULL, &startExecutableThread, (void*)&m_exeArgs);
   
     // If the thread wasn't made successfully, bail out
