@@ -111,6 +111,7 @@ public:
       readout_delay = param.Get("ReadoutDelay", 100);
       timestamp_per_run = param.Get("TimestampPerRun", false);
       // ***
+      m_tlu->SetDebugLevel(param.Get("DebugLevel",0));
       m_tlu->SetFirmware(param.Get("BitFile", ""));
       m_tlu->SetVersion(param.Get("Version", 0));
       m_tlu->Configure();
@@ -124,6 +125,7 @@ public:
       m_tlu->SetOrMask(or_mask);
       m_tlu->SetStrobe(strobe_period , strobe_width);
       m_tlu->SetEnableDUTVeto( enable_dut_veto );
+ 
       m_tlu->ResetTimestamp(); 
 
       // by dhaas

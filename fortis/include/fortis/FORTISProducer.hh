@@ -53,8 +53,9 @@ public:
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
     DWORD dwRead; // DWORD is 32-bits(?)
-#endif
     unsigned int words_read;
+#endif
+
     unsigned int chunk_count ; 
 	
     // we always want to be sensitive to data from the FORTIS.... which can arrive any time after configuration....
@@ -88,8 +89,17 @@ public:
 		if ( dwRead == 0 ) { EUDAQ_THROW("Problem reading FORTIS data from input pipe"); }
 
       }
+
+      m_currentFrame = m_frameBuffer[m_buffer_number][0] + 0x10000*m_frameBuffer[m_buffer_number][1]  ;
+      std::cout << "Read  frame number = " << m_currentFrame << ". chunk count = " << chunk_count << std::endl ;
+
+      if ( m_currentFrame != (m_previousFrame+1) ) {
+	EUDAQ_DEBUG("Detected skipped frame(s): current, previous frame# =  " + eudaq::to_string(m_currentFrame) + "  " + eudaq::to_string(m_previousFrame) );
+      }
+      m_previousFrame = m_currentFrame;
 #else
-       m_rawData_pointer = reinterpret_cast<char *>(&m_frameBuffer[m_buffer_number][0]); // read into buffer number m_buffer_number
+      
+      m_rawData_pointer = reinterpret_cast<char *>(&m_frameBuffer[m_buffer_number][0]); // read into buffer number m_buffer_number
       if (  m_FORTIS_Data.good() ) {
 	m_FORTIS_Data.read( m_rawData_pointer , sizeof(short)*m_num_pixels_per_frame );
       } else {
@@ -99,11 +109,18 @@ public:
 	EUDAQ_THROW("Read wrong number of characters from pipe");
       }
       std::cout << "Read block of data ..."<< std::endl;
-#endif
 
+      // Construct 32-bit frame number from data.
       m_currentFrame = m_frameBuffer[m_buffer_number][0] + 0x10000*m_frameBuffer[m_buffer_number][1]  ;
-    std::cout << "Read  frame number = " << m_currentFrame << ". chunk count = " << chunk_count << std::endl ;
+      std::cout << "Read  frame number = " << m_currentFrame << ". chunk count = " << chunk_count << std::endl ;
+      
+      if ( m_currentFrame != (m_previousFrame+1) ) {
+	EUDAQ_DEBUG("Detected skipped frame(s): ");
+	std::cout << "Detected skipped frame(s): current, previous frame# = " << m_currentFrame << "   " << m_previousFrame << std::endl;
+      }
+      m_previousFrame = m_currentFrame;
 
+#endif
 
     }  catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -130,22 +147,8 @@ public:
     unsigned int word_counter ;
 
     // If DEBUG flag is set then print out the frame...
-// #define DEBUG 1
-#if DEBUG
-
-    for (row_counter=0; row_counter < m_NumRows ; row_counter++) {
-
-      std::cout << "Row = " << row_counter << std::endl ;
-
-      
-      for (word_counter =0; word_counter < words_per_row ; word_counter++) {
-
-	std::cout << hex << m_frameBuffer[m_buffer_number][word_counter + (words_per_row)*row_counter ]) << "\t" ;
-      }
-
-    std::cout << dec << std::endl;      
-    }
-
+#if FORTIS_DEBUG
+    printFrame();
 #endif
 
     if (  m_triggers_pending > 0 ) { // We have triggers pending from a previous frame. 
@@ -192,15 +195,28 @@ public:
     // Loop through looking for triggers ...
     for ( row_counter=1; row_counter < m_NumRows ; row_counter++) {
 
-		std::cout << "row, Trigger words : " <<  hex << row_counter << "  " << m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] << "   " << m_frameBuffer[m_buffer_number ][1+ row_counter*words_per_row ]  << std::endl;
-		m_triggers_pending = m_triggers_pending + ( 0x00FF & m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] );	  
+      unsigned int TriggerWord = m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] ;
+      unsigned int LatchWord   = m_frameBuffer[m_buffer_number ][1+ row_counter*words_per_row ] ;
 
-		if ( row_counter == 1 ) { // if we are on the first row, include the previous row ( zero ) where the trigger counter is taken over by the frame-counter.
-			m_triggers_pending = m_triggers_pending + (( 0xFF00 & m_frameBuffer[m_buffer_number ][row_counter*words_per_row ] )>>8) ;
-		}
+#if FORTIS_DEBUG
+      std::cout << "row, Trigger words : " <<  hex << row_counter << "  " << TriggerWord << "   " << LatchWord  << std::endl;
+#endif
 
-      // bodge up for now .... max. one trigger per frame.
-      //if ( m_frameBuffer[m_buffer_number ][1 + row_counter*words_per_row ] != 0 ) { m_triggers_pending = 1; }
+      m_triggers_pending = m_triggers_pending + ( 0x00FF & TriggerWord );	  
+
+      if ( row_counter == 1 ) { // if we are on the first row, include the previous row ( zero ) where the trigger counter is taken over by the frame-counter.
+	m_triggers_pending = m_triggers_pending + (( 0xFF00 & TriggerWord )>>8) ;
+      }
+
+      // search for reset pulse
+      if (( 0x4000 & LatchWord ) && ( ! m_resetSyncFound )) { // this is the first time we have found a reset pulse.  
+	m_resetSyncFound = true; // set to false at start of config. declare member variables as well.. Then write these into BORE in onStartRun.
+	m_resetSyncFrame = m_currentFrame ;
+	m_resetSyncRow = row_counter ;
+	// put entry into log....
+	EUDAQ_DEBUG("Found reset pulse in data. Frame number = " + eudaq::to_string(m_resetSyncFrame) + " Frame number = "+ eudaq::to_string(m_resetSyncRow) );
+      }
+      
     }
 
     std::cout << "Found " << m_triggers_pending << " triggers in frame " << m_currentFrame << std::endl;
@@ -220,6 +236,7 @@ public:
     
     m_param = param;
 
+    configured = false;
 
     try {
 		std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
@@ -235,7 +252,19 @@ public:
 		std::cout << "Number of columns: " <<  m_NumColumns  << std::endl;
 		std::cout << "Number of pixels in each frame (including row-headers) = " << m_num_pixels_per_frame << std::endl;
 
+
+		// if pipe is already open then close it....
+		if ( m_FORTIS_Data.is_open() ) { m_FORTIS_Data.close(); }
+
+
+		// start the executable that will transmitt data.
+		std::cout << "Starting Command line programme to stream FORTIS data" << std::endl;
+		killExecutable();
+		startExecutable();
+
 		// Now try to open the named pipe that will accept data from the OptoDAQV programme.
+
+
 
 		// conditional compilation depending on Windows-MinGW or Linux/Cygwin
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
@@ -258,12 +287,14 @@ public:
 		std::cout << "About to open named pipe = " << filename << std::endl;
 
 		m_FORTIS_Data.open( filename.c_str() , ios::in | ios::binary );
-		if ( ! m_FORTIS_Data.is_open() ) { EUDAQ_THROW("Unable to open named pipe"); }
+		std::cout << "Opened pipe = " << filename << std::endl;
+		if ( ! m_FORTIS_Data.is_open() ) { 
+		  EUDAQ_THROW("Error opening named pipe"); 
+		} else {
+		  std::cout << "Opened named pipe sucessfully" << std::endl;
+		}
 #endif
 	
-		std::cout << "Starting Command line programme to stream FORTIS data" << std::endl;
-		startExecutable();
-  
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 		std::cout << "Waiting for connection to pipe" << std::endl;
@@ -363,8 +394,7 @@ public:
 	configured = false ; 
 	
     // Kill the thread with the command-line-programme here ....
-	std::cout << "About to kill FORTIS command line programme. Command = " << m_exeArgs.killcommand << std::endl;
-	system(  m_exeArgs.killcommand.c_str() );
+	killExecutable();
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)	
 	DisconnectNamedPipe(m_FORTIS_Data);
@@ -405,10 +435,14 @@ private:
   DoubleFrame m_frameBuffer; // buffer for two frames
 
   unsigned int m_currentFrame;
+  unsigned int m_previousFrame;
 
   unsigned int m_triggers_pending;
   unsigned int m_buffer_number  ;
 
+  bool m_resetSyncFound;
+  unsigned int m_resetSyncFrame;
+  unsigned int m_resetSyncRow;
 
   unsigned int m_NumRows ;
   unsigned int m_NumColumns;
@@ -421,21 +455,33 @@ private:
   
   // PRIVATE METHODS
   
+  // Method that kills command line programm that streams data from FORTIS 
+  void killExecutable() {
+
+    std::string killCommand;
+
+  // Use ps , grep and kill for Windows MinGW/Cygwin | killall for Linux 
+# if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW) || EUDAQ_PLATFORM_IS(CYGWIN)
+    killCommand =  "/bin/ps -W | /bin/awk  '/" + m_param.Get("ExecutableProcessName","optodaq") + "/{print $1}' | /bin/xargs /bin/kill -f"; 
+# else
+    killCommand =  "killall " + m_param.Get("ExecutableProcessName","optodaq") ;
+#endif 
+
+    std::cout << "Executing kill command: " << killCommand << std::endl;
+    system(killCommand.c_str());
+
+  }
+
   /// Entry point for thread that starts the command-line-program that streams data from FORTIS
   void startExecutable() {
     // ExecutableArgs exeArgs;
     m_exeArgs.dir = m_param.Get("ExecutableDirectory","./");
     m_exeArgs.filename = m_param.Get("ExecutableFilename","stream_exe") ;
 
-    // Before trying to start up new OptoDAQ process, we will try to kill the old one.
-    // prepare the command line....
-    // Use ps , grep and kill for Windows MinGW/Cygwin | killall for Linux 
-#if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW) || EUDAQ_PLATFORM_IS(CYGWIN)
-    m_exeArgs.killcommand =  "/bin/ps -W | /bin/awk  '/" + m_param.Get("ExecutableProcessName","optodaq") + "/{print $1}' | /bin/xargs /bin/kill -f"; 
-#else
-    m_exeArgs.killcommand =  "killall " + m_param.Get("ExecutableProcessName","optodaq") ;
-#endif 
     m_exeArgs.args = m_param.Get("ExecutableArgs","");
+
+    std::cout << "startExecutable:: ExecutableFilename = " << m_exeArgs.filename << std::endl;
+    std::cout << "startExecutable:: ExecutableArgs = " << m_exeArgs.args << std::endl;
 
     // Create the thread that will start up OptoDAQ process.
     unsigned threadCreateResult = pthread_create(&m_executableThreadId, NULL, &startExecutableThread, (void*)&m_exeArgs);
@@ -443,6 +489,28 @@ private:
     // If the thread wasn't made successfully, bail out
     if(threadCreateResult) { EUDAQ_THROW("Error creating thread (result=" + to_string(threadCreateResult) + ")!" ); }    
   }
-  
-};
 
+//-----------------
+
+  void printFrame(){
+
+    unsigned int words_per_row =  m_NumColumns +  WORDS_IN_ROW_HEADER;
+    unsigned int row_counter;
+    unsigned int word_counter;
+
+    for (row_counter=0; row_counter < m_NumRows ; row_counter++) {
+
+      std::cout << "Row = " << row_counter << std::endl ;
+
+      for (word_counter =0; word_counter < words_per_row ; word_counter++) {
+
+	std::cout << hex << m_frameBuffer[m_buffer_number][word_counter + words_per_row*row_counter ] << "\t" ;
+      }
+
+    std::cout << dec << std::endl;      
+    }
+
+  
+  }
+
+};

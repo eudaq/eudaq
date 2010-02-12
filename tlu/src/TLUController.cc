@@ -4,6 +4,7 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Timer.hh"
+#include "eudaq/Logger.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 # include <cstdio>  // HK
@@ -337,6 +338,10 @@ namespace tlu {
     m_version = version;
   }
 
+  void TLUController::SetDebugLevel(unsigned level) {
+    m_debug_level = level;
+  }
+
   void TLUController::SetDUTMask(unsigned char mask, bool updateleds) {
     m_mask = mask;
     if (m_addr) WriteRegister(m_addr->TLU_DUT_MASK_ADDRESS, m_mask);
@@ -371,7 +376,7 @@ namespace tlu {
       if ( (m_strobeperiod !=0) & (m_strobewidth !=0) ) { // if either period or width is zero don't enable strobe
 	WriteRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0, m_strobeperiod);
 	WriteRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0, m_strobewidth);
-	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS,0x01); // enable strobe, but strobe won't start running until timest mp is reset.
+	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS,0x01); // enable strobe, but strobe won't start running until time-stamp is reset.
       }
     }
   }
@@ -405,9 +410,14 @@ namespace tlu {
     return ReadRegister8(m_addr->TLU_STROBE_ENABLE_ADDRESS );
   }
 
+  unsigned char TLUController::GetDUTClockStatus() const {
+    return ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS );
+  }
+
   unsigned char TLUController::GetEnableDUTVeto() const {
     return ReadRegister8(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS );
   }
+
 
 
   int TLUController::DUTnum(const std::string & name) {
@@ -471,13 +481,13 @@ namespace tlu {
     m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
 
     if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
-      std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
+      std::cout << "TLU::Update: fsm 0x" << std::hex << m_fsmstatus << " status values 0x" << m_fsmstatusvalues << " veto 0x" << (int) m_vetostatus << " DUT Clock status 0x" << (int) ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS) << std::dec << std::endl;
     }
 
     m_triggernum = ReadRegister32(m_addr->TLU_REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
     m_timestamp = ReadRegister64(m_addr->TLU_REGISTERED_TIMESTAMP_ADDRESS_0);
     if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
-      std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
+      std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp 0x" << std::hex << m_timestamp << std::dec << std::endl;
       std::cout << "TLU::Update: scalers";
     }
 
@@ -649,6 +659,7 @@ namespace tlu {
 
       if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
 	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding");
       }
       num_errors = ReadBlockSoftErrorCorrect( entries , false );
 
@@ -656,6 +667,7 @@ namespace tlu {
 
       if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
 	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding");
       }
       num_errors = ReadBlockSoftErrorCorrect( entries , true );
 
@@ -663,6 +675,7 @@ namespace tlu {
 
       if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
 	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)");
       }
       num_errors = ReadBlockSoftErrorCorrect( entries , false );
 
@@ -670,6 +683,7 @@ namespace tlu {
 
       if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
 	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)");
       }
       num_errors = ReadBlockSoftErrorCorrect( entries , true );
 
@@ -678,6 +692,7 @@ namespace tlu {
       // then try to reset DMA
       if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
 	std::cout << "### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer" << std::endl;
+	EUDAQ_WARN("### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer");
       }
       num_errors = ResetBlockRead( entries ) ;
 
@@ -713,7 +728,9 @@ namespace tlu {
     // Read four buffers at onece. first buffer will contain some data from previous readout, 
     // but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. 
     // Try to correct this using multiple reads.
-    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    // result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    // Change syntax. Should be exactly the same but getting mysterious SEGFAULTs so hack at random...
+    result = ZestSC1ReadData(m_handle, &m_working_buffer, sizeof m_working_buffer );
 
     if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
       char * errmsg = 0;
@@ -726,6 +743,7 @@ namespace tlu {
     for (int tries = 0; tries < 4; ++tries) { 
       if (m_working_buffer[tries][0] !=0) {
 	std::cout << "### Warning: m_working_buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl;
+	EUDAQ_WARN("### Warning: m_working_buffer[buf][0] != 0. This shouldn't happen. buf = " + eudaq::to_string(tries) );
 	num_uncorrectable_errors++;
       }
     }
@@ -745,6 +763,7 @@ namespace tlu {
       } else {
 	m_oldbuf[i-buffer_offset] = 0;
 	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << std::setw(8) << m_working_buffer[1][i] << "  " << m_working_buffer[2][i] << "  " << m_working_buffer[3][i] << std::endl;
+	EUDAQ_WARN("### Warning: Uncorrectable data error in timestamp buffer. location = " + eudaq::to_string(i) + "data ( buffer =2,3,4) : "  + eudaq::to_string(m_working_buffer[1][i]) +  "  " +   eudaq::to_string(m_working_buffer[2][i]) + "  " +  eudaq::to_string( m_working_buffer[3][i]) );
 	num_correctable_errors++;
       }
 
@@ -816,7 +835,8 @@ namespace tlu {
     // unsigned long long buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     unsigned long long padding_buffer[2048]; 
 
-    std::cout << "### About to read out blocks three times..." << std::endl;
+    std::cout << "### Error recovery: About to read out blocks three times..." << std::endl;
+    EUDAQ_INFO("Error recovery: About to read out blocks three times...");
 
     int result = ZESTSC1_SUCCESS;
 
@@ -856,6 +876,7 @@ namespace tlu {
       std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
 
       std::cout << "#### Read buffers to resync. About to read data ..." << std::endl;
+      EUDAQ_INFO("Error recovery:  Read buffers to resync. About to read data ...");
     }
 
 
@@ -863,6 +884,7 @@ namespace tlu {
 
     if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
       std::cout << "#### Number of errors reported by ReadBlockRaw after rsync = " << num_errors << std::endl;
+      EUDAQ_INFO("Error recovery: Number of errors reported by ReadBlockRaw after rsync = " + eudaq::to_string( num_errors) );
     }
 
     return num_errors;

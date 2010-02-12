@@ -84,6 +84,7 @@ namespace tlu {
 
     void SetVersion(unsigned version); // default (0) = auto detect from serial number
     void SetFirmware(const std::string & filename); // can be just version number
+    void SetDebugLevel(unsigned level); // default (0) = no debug output
     void SetDUTMask(unsigned char mask, bool updateleds = true);
     void SetVetoMask(unsigned char mask);
     void SetAndMask(unsigned char mask);
@@ -96,6 +97,7 @@ namespace tlu {
     unsigned long GetStrobeWidth() const;
     unsigned long GetStrobePeriod() const;
     unsigned char GetStrobeStatus() const;
+    unsigned char GetDUTClockStatus() const;
     unsigned char GetEnableDUTVeto() const;
 
     static int DUTnum(const std::string & name);
