@@ -27,7 +27,7 @@ namespace eudaq {
   }
 
   void FileWriterNative2::StartRun(unsigned runnumber) {
-    if (m_ser) delete m_ser;
+    delete m_ser;
     m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
     unsigned versiontag = Event::str2id("VER2");
     m_ser->write(versiontag);
@@ -42,7 +42,7 @@ namespace eudaq {
   }
 
   FileWriterNative2::~FileWriterNative2() {
-    if (m_ser) delete m_ser;
+    delete m_ser;
   }
 
   unsigned long long FileWriterNative2::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }

@@ -27,7 +27,7 @@ namespace eudaq {
     virtual void Serialize(Serializer &) const;
 
     Status & SetTag(const std::string & name, const std::string & val);
-    std::string GetTag(const std::string & name, const std::string def = "") const;
+    std::string GetTag(const std::string & name, const std::string & def = "") const;
     static std::string Level2String(int level);
     static int String2Level(const std::string &);
     virtual ~Status() {}

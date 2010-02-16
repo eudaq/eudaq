@@ -53,7 +53,7 @@ int main(int, char ** argv) {
       writer->SetFilePattern(opat.Value());
       writer->StartRun(reader.RunNumber());
       do {
-	if (reader.Event().IsBORE() || reader.Event().IsEORE() || numbers.size() == 0 ||
+	if (reader.Event().IsBORE() || reader.Event().IsEORE() || numbers.empty() ||
 	    std::find(numbers.begin(), numbers.end(), reader.Event().GetEventNumber()) != numbers.end()) {
 	  writer->WriteEvent(reader.Event());
 	}

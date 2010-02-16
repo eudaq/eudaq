@@ -23,7 +23,7 @@ using eudaq::RawDataEvent;
 class TestProducer : public eudaq::Producer {
 public:
   TestProducer(const std::string & name, const std::string & runcontrol)
-    : eudaq::Producer(name, runcontrol), done(false), eventsize(100) {}
+    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), done(false), eventsize(100) {}
   void Event(const std::string & str) {
     StringEvent ev(m_run, ++m_ev, str);
     //ev.SetTag("Debug", "foo");

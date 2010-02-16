@@ -27,7 +27,7 @@ namespace eudaq {
   }
 
   void FileWriterMimoloop::StartRun(unsigned runnumber) {
-    if (m_file) delete m_file;
+    delete m_file;
     m_file = new std::ofstream(std::string(FileNamer(m_filepattern).Set('X', ".txt").Set('R', runnumber)).c_str());
   }
 
@@ -52,7 +52,7 @@ namespace eudaq {
   }
 
   FileWriterMimoloop::~FileWriterMimoloop() {
-    if (m_file) delete m_file;
+    delete m_file;
   }
 
   unsigned long long FileWriterMimoloop::FileBytes() const { if (!m_file) return 0; return m_file->tellp(); }

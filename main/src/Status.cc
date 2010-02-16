@@ -47,7 +47,7 @@ namespace eudaq {
     return *this;
   }
 
-  std::string Status::GetTag(const std::string & name, const std::string def) const {
+  std::string Status::GetTag(const std::string & name, const std::string & def) const {
     std::map<std::string, std::string>::const_iterator i = m_tags.find(name);
     if (i == m_tags.end()) return def;
     return i->second;

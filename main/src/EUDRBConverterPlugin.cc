@@ -54,7 +54,7 @@ namespace eudaq {
 
   struct SensorInfo {
     typedef void (*mapfunc_t)(unsigned & x, unsigned & y, unsigned c, unsigned r, unsigned m, unsigned nc, unsigned nr);
-    SensorInfo(const std::string name, unsigned c, unsigned r, unsigned m, unsigned w, unsigned h, mapfunc_t mfunc = 0)
+    SensorInfo(const std::string & name, unsigned c, unsigned r, unsigned m, unsigned w, unsigned h, mapfunc_t mfunc = 0)
       : name(name), cols(c), rows(r), mats(m), width(w), height(h), mapfunc(mfunc)
       {}
     std::string name;

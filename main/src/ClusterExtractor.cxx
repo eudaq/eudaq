@@ -99,7 +99,7 @@ int main(int /*argc*/, char ** argv) {
       std::cout << "Cluster threshold: " << thresh_clus.Value() << " sigma = "
                 << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
       std::cout << "Boards: ";
-      if (planes.size() == 0) std::cout << "all";
+      if (planes.empty()) std::cout << "all";
       for (size_t i = 0; i < planes.size(); ++i) std::cout << (i ? ", " : "") << planes[i];
       std::cout << std::endl;
       bool badmarkers = false;
@@ -163,7 +163,7 @@ int main(int /*argc*/, char ** argv) {
             std::cout << "Found EUDRB with " << numboards << " planes, total = " << totalboards << std::endl;
             for (unsigned i = 0; i < numboards; ++i) {
               unsigned id = from_string(drbev->GetTag("ID" + to_string(i)), i);
-              if (planes.size() > 0 && std::find(planes.begin(), planes.end(), id) == planes.end()) continue;
+              if (!planes.empty() && std::find(planes.begin(), planes.end(), id) == planes.end()) continue;
               if (id >= track.size()) track.resize(id+1);
               filemap_t::const_iterator it = files.find(id);
               if (it != files.end()) EUDAQ_THROW("ID is repeated: " + to_string(id));
