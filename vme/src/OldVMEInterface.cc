@@ -23,15 +23,16 @@ namespace {
     int fd = open("/dev/vme_ctl",O_RDONLY);
     //std::cout << "DEBUG: cme_ctl fd = " << fd << std::endl;
     int status = -1;
-    if (fd != -1) status = ioctl(fd, VME_IOCTL_GET_SLOT_VME_INFO, &VmeInfo);
+    if (fd != -1) {
+      status = ioctl(fd, VME_IOCTL_GET_SLOT_VME_INFO, &VmeInfo);
+      close(fd);
+    }
     if (status == -1) {
-      if (fd != -1) close(fd);
       EUDAQ_THROW("Unable to talk to VME driver. "
                   "Check that the kernel module is loaded "
                   "and the device files exist "
                   "with the correct properties.");
     }
-    close(fd);
   }
 
   static int g_fd = -1;

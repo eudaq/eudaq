@@ -20,7 +20,6 @@ int main(int /*argc*/, const char ** argv) {
     if (!sys.IsSet() && !loc.IsSet() && !dbg.IsSet()) throw eudaq::OptionException("Must specify either SYS- or LOCAL-reset");
     int fd = open("/dev/vme_regs", O_RDWR);
     if (fd == -1) {
-      close(fd);
       EUDAQ_THROW("Unable to open VME registers device.");
     }
     lseek(fd, 0x238, SEEK_SET);
@@ -33,10 +32,11 @@ int main(int /*argc*/, const char ** argv) {
     if (loc.IsSet()) data |= 1 << 16;
     lseek(fd, 0x238, SEEK_SET);
     if (dbg.IsSet()) std::cout << "DEBUG: VCTRL register writing " << eudaq::hexdec(data) << std::endl;
-    if (write(fd, uchar_cast(&data), sizeof data) < 0) {
+    int written = write(fd, uchar_cast(&data), sizeof data);
+    close(fd);
+    if (written < 0) {
       EUDAQ_THROW("Unable to write to TSI148 registers");
     }
-    close(fd);
     std::cout << "Done." << std::endl;
   } catch (...) {
     return op.HandleMainException();

@@ -219,7 +219,6 @@ void set_parameters(int fdOut,int window_number,unsigned long int address,int xf
 {
   static unsigned long vme_prevaddr = (unsigned long)-1;
   static int vme_prevspace = -65536;
-  int status;                           /*Per controllare se ioctl e' andata a buon fine*/
   vmeOutWindowCfg_t vmeOutSet;            /*
                                            * Struttura da riempire per fare 
                                            * VME_IOCTL_SET_OUTBOUND con ioctl
@@ -279,7 +278,7 @@ void set_parameters(int fdOut,int window_number,unsigned long int address,int xf
     /*
      * Scrittura sul registro OTAT attraverso ioctl dei parametri impostati
      */
-    status = ioctl(fdOut, VME_IOCTL_SET_OUTBOUND, &vmeOutSet);
+    int status = ioctl(fdOut, VME_IOCTL_SET_OUTBOUND, &vmeOutSet);
     if (status < 0) 
       {
         printf(" VME_IOCTL_SET_OUTBOUND failed.  Errno = %d\n", errno);
@@ -304,23 +303,22 @@ int getMyInfo()
 
   int fdInfo;    /*File descriptor del device aperto(vme_ctl) */
   int status;    /*Per controllare se ioctl e' andata a buon fine*/
-  fdInfo = open("/dev/vme_ctl",O_RDONLY); /*Costante O_RDONLY=0*/
-  if (fdInfo == -1) 
-    {
-      return(1);
-    }
+  fdInfo = open("/dev/vme_ctl", O_RDONLY); /*Costante O_RDONLY=0*/
+  if (fdInfo == -1) {
+    return 1;
+  }
 
   memset(&myVmeInfo, 0, sizeof(myVmeInfo)); 
         
   status = ioctl(fdInfo, VME_IOCTL_GET_SLOT_VME_INFO, &myVmeInfo); 
         
-  if (status == -1) 
-    {
-      return(1);
-    }
-        
   close(fdInfo);
-  return(0);
+
+  if (status == -1) {
+    return 1;
+  }
+        
+  return 0;
 }
 
 /*

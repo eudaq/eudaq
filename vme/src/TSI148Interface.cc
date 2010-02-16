@@ -57,12 +57,11 @@ namespace {
     vmeRequesterCfg_t VmeReq2;
     std::memset(&VmeReq2, 0, sizeof VmeReq2);
     status = ioctl(fd, VME_IOCTL_GET_REQUESTOR, &VmeReq2);
+    close(fd);
     if (status < 0) {
-      close(fd);
       EUDAQ_THROW("Unable get VME requestor (errno=" + to_string(errno) + "). " + msg);
     }
 
-    close(fd);
 #define BAD(a) (VmeReq.a != VmeReq2.a)
     if (BAD(requestLevel) || BAD(fairMode) || BAD(releaseMode) || BAD(timeonTimeoutTimer) || BAD(timeoffTimeoutTimer)) {
       EUDAQ_THROW("Mismatch reading back VME requestor. Check VME driver.");
@@ -74,7 +73,6 @@ namespace {
   static void DoSysReset() {
     int fd = open("/dev/vme_regs", O_RDWR);
     if (fd == -1) {
-      close(fd);
       EUDAQ_THROW("Unable to open VME registers device.");
     }
     lseek(fd, 0x238, SEEK_SET);
@@ -248,6 +246,7 @@ void TSI148DMAInterface::SetWindowParameters() {
 #undef VMESET
 
 void TSI148DMAInterface::DoRead(unsigned long offset, unsigned char * data, size_t size) {
+  int status = 0;
   m_params->srcBus = VME_DMA_VME;
   m_params->dstBus = VME_DMA_USER;
   m_params->srcAddr = m_base + offset;
@@ -279,7 +278,7 @@ void TSI148DMAInterface::DoRead(unsigned long offset, unsigned char * data, size
 //   DBG(dstVmeAttr.dataAccessType);
 //   DBG(dstVmeAttr.xferProtocol);
 // #undef DBG
-  int status = ioctl(m_fd, VME_IOCTL_START_DMA, m_params);
+  status = ioctl(m_fd, VME_IOCTL_START_DMA, m_params);
   //std::cout << "DEBUG: done, status = " << status << std::endl;
   if (status < 0) {
     std::cout << "DEBUG: DMA errno = " << errno << std::endl;
