@@ -12,7 +12,7 @@ all: $(APPS)
 
 clean:
 	@echo -n " *** Removing old executable, library, object and dependency files in " && basename `pwd`
-	@rm -rf $(OBJ)/*.o $(OBJ)/*.d Makefile_*
+	@rm -rf Makefile_* $(OBJ)/*.o $(OBJ)/*.d $(OBJ)/moc_*.cpp $(OBJ)/ui_*.h
 
 euRun: Makefile_euRun
 
