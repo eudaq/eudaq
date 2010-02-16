@@ -446,7 +446,7 @@ int main(int argc, char* argv[])
 	    	    }
             } 
         }
-	    delete p_uc_buffer_TCP;
+	    delete[] p_uc_buffer_TCP;
        	close(newsockfd);
     	close(sockfd);
     }
