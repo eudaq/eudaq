@@ -91,7 +91,7 @@ int main(int /*argc*/, char ** argv) {
     op.Parse(argv);
     std::vector<unsigned> planes = parsenumbers(boards.Value());
     std::cout << "Boards: ";
-    if (planes.size() == 0) std::cout << "all";
+    if (planes.empty()) std::cout << "all";
     for (size_t i = 0; i < planes.size(); ++i) std::cout << (i ? ", " : "") << planes[i];
     std::cout << std::endl;
     unsigned numevents = 0;
@@ -117,7 +117,7 @@ int main(int /*argc*/, char ** argv) {
           for (size_t p = 0; p < sev.NumPlanes(); ++p) {
             eudaq::StandardPlane & brd = sev.GetPlane(p);
             if (brd.Sensor() != "MIMOSA26") continue;
-            if (planes.size() > 0 && std::find(planes.begin(), planes.end(), brd.ID()) == planes.end()) continue;
+            if (!planes.empty() && std::find(planes.begin(), planes.end(), brd.ID()) == planes.end()) continue;
             std::map<m26pix_t, bool> pix;
             for (size_t f = 0; f < brd.NumFrames(); ++f) {
               for (size_t i = 0; i < brd.HitPixels(f); ++i) {

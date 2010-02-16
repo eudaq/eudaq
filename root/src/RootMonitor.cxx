@@ -347,6 +347,7 @@ public:
                   }
                   m_depfet_adc->Reset("");
                   m_depfet_map->Reset("");
+                  m_histotludiff->Reset("");
                 }
               if(parm1 == 170) //the redraw button
                 {
@@ -1376,6 +1377,7 @@ public:
         m_depfet_adc->Reset("");
         m_depfet_map->Reset("");
         m_histonumtracks->Reset("");
+        m_histotludiff->Reset("");
       }
     SetStatus(eudaq::Status::LVL_OK);
   }
