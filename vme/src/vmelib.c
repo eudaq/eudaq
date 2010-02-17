@@ -217,6 +217,7 @@ static int dodmaxfer(int bytecount,unsigned long int srcaddress,unsigned long in
 
 void set_parameters(int fdOut,int window_number,unsigned long int address,int xferRate2esst,int addrSpace,int maxDataWidth,int xferProtocol,int userAccessType,int dataAccessType)
 {
+  int status = 0;
   static unsigned long vme_prevaddr = (unsigned long)-1;
   static int vme_prevspace = -65536;
   vmeOutWindowCfg_t vmeOutSet;            /*
@@ -278,7 +279,7 @@ void set_parameters(int fdOut,int window_number,unsigned long int address,int xf
     /*
      * Scrittura sul registro OTAT attraverso ioctl dei parametri impostati
      */
-    int status = ioctl(fdOut, VME_IOCTL_SET_OUTBOUND, &vmeOutSet);
+    status = ioctl(fdOut, VME_IOCTL_SET_OUTBOUND, &vmeOutSet);
     if (status < 0) 
       {
         printf(" VME_IOCTL_SET_OUTBOUND failed.  Errno = %d\n", errno);
