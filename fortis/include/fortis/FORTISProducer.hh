@@ -106,8 +106,9 @@ public:
       } else {
 	EUDAQ_THROW("Problem reading FORTIS data from input pipe");
       }
-      if ( m_FORTIS_Data.gcount() != (unsigned) sizeof(short)*m_numPixelsPerFrame ) {
-	EUDAQ_THROW("Read wrong number of characters from pipe");
+      unsigned int wordsRead = m_FORTIS_Data.gcount() ;
+      if ( wordsRead != (unsigned) sizeof(short)*m_numPixelsPerFrame  ) {
+	EUDAQ_THROW("Read wrong number of chars from pipe : " + eudaq::to_string(wordsRead));
       }
 
       // Construct 32-bit frame number from data.
@@ -117,7 +118,9 @@ public:
 
       if ( m_currentFrame < m_previousFrame)  {
 	printFrames( m_bufferNumber ); // dump frames and die.
-        EUDAQ_THROW("Data corruption. Currrent frame is less than previous frame:" + eudaq::to_string(m_currentFrame) + "  < " + eudaq::to_string(m_previousFrame) );
+	string ErrorMessage = "Data corruption. Currrent frame is less than previous frame:" + eudaq::to_string(m_currentFrame) + "  < " + eudaq::to_string(m_previousFrame);
+	m_previousFrame = m_currentFrame;
+        EUDAQ_THROW(ErrorMessage);
 
       } else if ( (m_currentFrame != (m_previousFrame+1)) && ( m_previousFrame != 0 ) ) { // flag skipped frames if frame counter hasn't incrememented by one AND we aren't right at the beginning of the run.
 
@@ -266,7 +269,9 @@ public:
 
 
 		// if pipe is already open then close it....
-		if ( m_FORTIS_Data.is_open() ) { m_FORTIS_Data.close(); }
+		if ( m_FORTIS_Data.is_open() ) { 
+		  std::cout << "Closing named pipe";
+		  m_FORTIS_Data.close(); }
 
 
 		// start the executable that will transmitt data.
@@ -274,6 +279,7 @@ public:
 		killExecutable();
 		startExecutable();
 
+		eudaq::mSleep(1000); // go to sleep for a couple of seconds before opening pipe....
 		// Now try to open the named pipe that will accept data from the OptoDAQV programme.
 
 
@@ -318,6 +324,9 @@ public:
 		m_frameBuffer[1].resize(  m_numPixelsPerFrame); 
 		m_rawData.resize( 2 * m_numPixelsPerFrame); // set the size of our event(big enough for two frames)...
 
+		
+		std::cout << "Sleeping before announcing config. complete"  << std::endl;
+		eudaq::mSleep(1000); // go to sleep for a couple of seconds before opening pipe....
 		configured = true;
 
 		std::cout << "...Configured (" << param.Name() << ")" << std::endl;
