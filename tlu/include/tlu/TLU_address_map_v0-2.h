@@ -1,7 +1,7 @@
 /*                                                                  */
 /* TLU_address_map_v0-2.h                                                          */
 /*                                                                  */
-/* Generated on Thu Apr  9 10:21:40 2009               */
+/* Generated on Mon Feb  8 18:18:05 2010               */
 /*                                                                  */
 /*                                                                  */
 /* Definitions for JRA1 TLU                                         */
@@ -13,6 +13,13 @@
 #define TRIGGER_COUNTER_RESET_BIT    1
 #define BUFFER_POINTER_RESET_BIT   2
 #define TRIGGER_FSM_RESET_BIT    3
+#define BEAM_TRIGGER_FSM_RESET_BIT   4
+#define DMA_CONTROLLER_RESET_BIT   5
+#define TRIGGER_SCALERS_RESET_BIT   6
+#define CLOCK_GEN_RESET_BIT 7
+
+#define ENABLE_DMA_BIT 0
+#define RESET_DMA_COUNTER_BIT 1
 
 #define I2C_SDA_OUT_BIT  0
 #define I2C_SDA_IN_BIT  1
@@ -43,9 +50,10 @@
 
 #define I2C_BUS_PMT_DAC 2
 
-#define BUFFER_DEPTH 4096
+#define BUFFER_DEPTH 4096 
+/* #define BUFFER_DEPTH 1024 */
 
-#define FIRMWARE_ID 250
+#define FIRMWARE_ID 65
 #define BASE_ADDRESS 8192
 #define FIRMWARE_ID_ADDRESS  8192
 #define DUT_BUSY_ADDRESS  8193
@@ -149,4 +157,23 @@
 #define AUX_PATTERN_ADDRESS_BYTES  2
 #define AUX_PATTERN_ADDRESS_0  8264
 #define AUX_PATTERN_ADDRESS_1  8265
-#define ADDRESS_MAP_SIZE 74
+#define STROBE_WIDTH_ADDRESS_BASE  8266
+#define STROBE_WIDTH_ADDRESS_BYTES  4
+#define STROBE_WIDTH_ADDRESS_0  8266
+#define STROBE_WIDTH_ADDRESS_1  8267
+#define STROBE_WIDTH_ADDRESS_2  8268
+#define STROBE_WIDTH_ADDRESS_3  8269
+#define STROBE_PERIOD_ADDRESS_BASE  8270
+#define STROBE_PERIOD_ADDRESS_BYTES  4
+#define STROBE_PERIOD_ADDRESS_0  8270
+#define STROBE_PERIOD_ADDRESS_1  8271
+#define STROBE_PERIOD_ADDRESS_2  8272
+#define STROBE_PERIOD_ADDRESS_3  8273
+#define STROBE_ENABLE_ADDRESS  8274
+#define TRIGGER_FSM_STATUS_VALUE_ADDRESS_BASE  8275
+#define TRIGGER_FSM_STATUS_VALUE_ADDRESS_BYTES  3
+#define TRIGGER_FSM_STATUS_VALUE_ADDRESS_0  8275
+#define TRIGGER_FSM_STATUS_VALUE_ADDRESS_1  8276
+#define TRIGGER_FSM_STATUS_VALUE_ADDRESS_2  8277
+#define ENABLE_DUT_VETO_ADDRESS  8278
+#define ADDRESS_MAP_SIZE 87

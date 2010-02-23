@@ -79,7 +79,9 @@ namespace eudaq {
 
     unsigned int frame_number[2];
 
-    for (unsigned Frame = 0; Frame < 2; ++Frame ) {
+    unsigned int triggerRow = 0;
+
+    for (size_t Frame = 0; Frame < 2; ++Frame ) {
 
       size_t i = 0;
 
@@ -94,9 +96,12 @@ namespace eudaq {
 
         unsigned int header_offset = ( (m_NumColumns+sizeof(short))*Row + Frame*nwords) * sizeof (short);
 
-        std::cout << "Row = " << Row << " Header = "
-                  << std::hex << getlittleendian<unsigned short>(&data[header_offset])
-                  << "    " << getlittleendian<unsigned short>(&data[header_offset+sizeof (short) ]) << std::endl ;
+	unsigned short TriggerWord = getlittleendian<unsigned short>(&data[header_offset]);
+	unsigned short TriggerCount = TriggerWord & 0x00FF;
+	unsigned short LatchWord   =  getlittleendian<unsigned short>(&data[header_offset+sizeof (short) ]) ;
+        std::cout << "Row = " << Row << " Header = " << std::hex << TriggerWord << "    " << LatchWord << std::endl ;
+
+	if ( (triggerRow == 0) && (TriggerCount >0 )) { triggerRow = Row ; }
 
         for (size_t Column = 0; Column < m_NumColumns; ++Column) {
           unsigned offset = (Column + 2 + (m_NumColumns + 2) * Row + Frame*nwords) * sizeof (short);
@@ -118,6 +123,8 @@ namespace eudaq {
 
       EUDAQ_THROW("FORTIS data corruption: Frame_number[1] != Frame_number[0]+1 (" + to_string(frame_number[1]) + " != " + to_string(frame_number[0]) + " +1 )");
       } */
+
+    std::cout << "Trigger Row = 0x" << triggerRow << std::endl;
 
     return plane;
   }

@@ -4,6 +4,7 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Timer.hh"
+#include "eudaq/Logger.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 # include <cstdio>  // HK
@@ -62,6 +63,7 @@ namespace tlu {
   namespace {
 
     static const double TLUFREQUENCY = 48.001e6;
+    static const int TLUFREQUENCYMULTIPLIER = 8;
     static const unsigned FIRSTV2SERIAL = 1000;
 
     static const char * g_versions[] = {
@@ -118,7 +120,7 @@ namespace tlu {
   }
 
   double Timestamp2Seconds(unsigned long long t) {
-    return t / TLUFREQUENCY;
+    return t / ( TLUFREQUENCY * TLUFREQUENCYMULTIPLIER ) ;
   }
 
   void TLUEntry::Print(std::ostream & out) const {
@@ -137,6 +139,7 @@ namespace tlu {
     m_inhibit(true),
     m_vetostatus(0),
     m_fsmstatus(0),
+    m_fsmstatusvalues(0),
     m_triggernum(0),
     m_timestamp(0),
     m_oldbuf(0),
@@ -145,7 +148,11 @@ namespace tlu {
     m_errorhandler(errorhandler),
     m_version(0),
     m_addr(0),
-    m_timestampzero(0)
+    m_timestampzero(0),
+    m_correctable_blockread_errors(0),
+    m_uncorrectable_blockread_errors(0),
+    m_usb_timeout_errors(0),
+    m_debug_level(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -167,18 +174,18 @@ namespace tlu {
     int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
     if (status != 0) throw TLUException("ZestSC1CountCards", status);
 
-#if TLUDEBUG
-    std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
-    for (unsigned i = 0; i < NumCards; ++i) {
-      std::cout << "DEBUG: Card " << i
-                << ", ID = " << hexdec(CardIDs[i])
-                << ", SerialNum = 0x" << hexdec(SerialNumbers[i])
-                << ", FPGAType = " << hexdec(FPGATypes[i])
-                << ", Possible TLU: " << (FPGATypes[i] == ZESTSC1_XC3S1000 ?
-                                          "Yes" : "No")
-                << std::endl;
+    if ( m_debug_level & TLU_DEBUG_CONFIG ) {
+      std::cout << "DEBUG: NumCards: " << NumCards << std::endl;
+      for (unsigned i = 0; i < NumCards; ++i) {
+	std::cout << "DEBUG: Card " << i
+		  << ", ID = " << hexdec(CardIDs[i])
+		  << ", SerialNum = 0x" << hexdec(SerialNumbers[i])
+		  << ", FPGAType = " << hexdec(FPGATypes[i])
+		  << ", Possible TLU: " << (FPGATypes[i] == ZESTSC1_XC3S1000 ?
+					    "Yes" : "No")
+		  << std::endl;
+      }
     }
-#endif
 
     unsigned found = NumCards;
     for (unsigned i = 0; i < NumCards; ++i) {
@@ -230,22 +237,16 @@ namespace tlu {
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS, m_amask);
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
 
-    // Write to reset a few times...
-    //for (int i=0; i<10 ; i++) {
-    //mysleep (100);
-    mSleep(20);
-    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x3F);
-    WriteRegister(m_addr->TLU_DUT_RESET_ADDRESS, 0x00);
-    //}
+    SetDUTMask(m_mask, false);
 
     // Reset pointers
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, (1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT)
-                  | (1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT) | (1 << m_addr->TLU_TRIGGER_FSM_RESET_BIT));
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0x00);
+    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 
+		  (1 << m_addr->TLU_TRIGGER_COUNTER_RESET_BIT)
+                  | (1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT) 
+		  | (1 << m_addr->TLU_TRIGGER_FSM_RESET_BIT) 
+		  ); 
 
     WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
-
-    SetDUTMask(m_mask, false);
 
     WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                 m_addr->TLU_I2C_BUS_MOTHERBOARD_TRIGGER__ENABLE_IPSEL_IO, 0xff00); // turn mb and lemo trigger outputs on
@@ -318,7 +319,7 @@ namespace tlu {
   void TLUController::ResetTimestamp() {
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_TIMESTAMP_RESET_BIT);
     m_timestampzero = eudaq::Time::Current();
-    WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
+    // WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0); // don't need to write zero afterwards.
   }
 
   void TLUController::ResetUSB() {
@@ -335,6 +336,10 @@ namespace tlu {
 
   void TLUController::SetVersion(unsigned version) {
     m_version = version;
+  }
+
+  void TLUController::SetDebugLevel(unsigned level) {
+    m_debug_level = level;
   }
 
   void TLUController::SetDUTMask(unsigned char mask, bool updateleds) {
@@ -358,6 +363,24 @@ namespace tlu {
     if (m_addr) WriteRegister(m_addr->TLU_BEAM_TRIGGER_OMASK_ADDRESS, m_omask);
   }
 
+  void TLUController::SetEnableDUTVeto(unsigned char mask) {
+    m_enabledutveto = mask;
+    if (m_addr) WriteRegister(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS, m_enabledutveto);
+  }
+
+  void TLUController::SetStrobe(unsigned long period , unsigned long width) {
+    m_strobeperiod = period;
+    m_strobewidth = width;
+
+    if (m_addr) {
+      if ( (m_strobeperiod !=0) & (m_strobewidth !=0) ) { // if either period or width is zero don't enable strobe
+	WriteRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0, m_strobeperiod);
+	WriteRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0, m_strobewidth);
+	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS,0x01); // enable strobe, but strobe won't start running until time-stamp is reset.
+      }
+    }
+  }
+
   void TLUController::SetTriggerInterval(unsigned millis) {
     m_triggerint = millis;
     if (m_addr) WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
@@ -374,6 +397,28 @@ namespace tlu {
   unsigned char TLUController::GetVetoMask() const {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
   }
+
+  unsigned long TLUController::GetStrobeWidth() const {
+    return ReadRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0 );
+  }
+
+  unsigned long TLUController::GetStrobePeriod() const {
+    return ReadRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0 );
+  }
+
+  unsigned char TLUController::GetStrobeStatus() const {
+    return ReadRegister8(m_addr->TLU_STROBE_ENABLE_ADDRESS );
+  }
+
+  unsigned char TLUController::GetDUTClockStatus() const {
+    return ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS );
+  }
+
+  unsigned char TLUController::GetEnableDUTVeto() const {
+    return ReadRegister8(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS );
+  }
+
+
 
   int TLUController::DUTnum(const std::string & name) {
     if (ucase(name) == "RJ45") return IN_RJ45;
@@ -409,59 +454,55 @@ namespace tlu {
 
       WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
 
-#if TLUDEBUG
-      //std::cout << "TLU::Update: after initial write" << std::endl;
-#endif
       entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
 
-#if TLUDEBUG
-      std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
-#endif
+      if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+	std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
+      }
 
       timestamp_buffer = ReadBlock(entries);
 
-#if TLUDEBUG
-      //std::cout << "TLU::Update: after 2 reads" << std::endl;
-#endif
-
       // Reset buffer pointer
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
-      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
 
       InhibitTriggers(oldinhibit);
     } else {
       WriteRegister(m_addr->TLU_STATE_CAPTURE_ADDRESS, 0xFF);
       entries = ReadRegister16(m_addr->TLU_REGISTERED_BUFFER_POINTER_ADDRESS_0);
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
-      WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0);
     }
 
-#if TLUDEBUG
-    std::cout << "TLU::Update: entries=" << entries << std::endl;
-#endif
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << "TLU::Update: entries=" << entries << std::endl;
+    }
 
     m_fsmstatus = ReadRegister8(m_addr->TLU_TRIGGER_FSM_STATUS_ADDRESS);
+    m_fsmstatusvalues = ReadRegister24(m_addr->TLU_TRIGGER_FSM_STATUS_VALUE_ADDRESS_0);
     m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
-#if TLUDEBUG
-    //std::cout << "TLU::Update: fsm " << m_fsmstatus << " veto " << m_vetostatus << std::endl;
-#endif
+
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << "TLU::Update: fsm 0x" << std::hex << m_fsmstatus << " status values 0x" << m_fsmstatusvalues << " veto 0x" << (int) m_vetostatus << " DUT Clock status 0x" << (int) ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS) << std::dec << std::endl;
+    }
 
     m_triggernum = ReadRegister32(m_addr->TLU_REGISTERED_TRIGGER_COUNTER_ADDRESS_0);
     m_timestamp = ReadRegister64(m_addr->TLU_REGISTERED_TIMESTAMP_ADDRESS_0);
-#if TLUDEBUG
-    std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp " << m_timestamp << std::endl;
-    std::cout << "TLU::Update: scalers";
-#endif
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << "TLU::Update: trigger " << m_triggernum << " timestamp 0x" << std::hex << m_timestamp << std::dec << std::endl;
+      std::cout << "TLU::Update: scalers";
+    }
+
 
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       m_scalers[i] = ReadRegister16(m_addr->TLU_SCALERS(i));
-#if TLUDEBUG
-      std::cout << ", [" << i << "] " << m_scalers[i];
-#endif
+
+      if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+	std::cout << ", [" << i << "] " << m_scalers[i];
+      }
     }
-#if TLUDEBUG
-    std::cout << std::endl;
-#endif
+
+    if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
+      std::cout << std::endl;
+    }
 
     m_particles = ReadRegister32(m_addr->TLU_REGISTERED_PARTICLE_COUNTER_ADDRESS_0);
 
@@ -509,6 +550,33 @@ namespace tlu {
     }
   }
 
+  void TLUController::WriteRegister24(unsigned long offset, unsigned long val) {
+    int status = ZESTSC1_SUCCESS;
+    int delay = 0;
+
+    const int count = m_errorhandler ? m_errorhandler : 1;
+
+    for (int byte = 0; byte < 3; ++byte ) {
+
+      for (int i = 0; i < count; ++i) {
+	if (delay == 0) {
+	  delay = 20;
+	} else {
+	  usleep(delay);
+	  delay += delay;
+	}
+	status = ZestSC1WriteRegister(m_handle, offset+byte, ((val >> (8*byte)) & 0xFF)  );
+	usbtrace(" W", offset, val, status);
+	if (status == ZESTSC1_SUCCESS) break;
+      }
+      if (status != ZESTSC1_SUCCESS) {
+	usbflushtracefile();
+	throw TLUException("WriteRegister24", status, count);
+      }
+
+    }
+  }
+
   unsigned char TLUController::ReadRegister8(unsigned long offset) const {
     unsigned char val = ReadRegisterRaw(offset);
     //usbtrace(" R", offset, val);
@@ -518,6 +586,15 @@ namespace tlu {
   unsigned short TLUController::ReadRegister16(unsigned long offset) const {
     unsigned short val = ReadRegisterRaw(offset);
     val |= static_cast<unsigned short>(ReadRegisterRaw(offset+1)) << 8;
+    //usbtrace(" R", offset, val);
+    return val;
+  }
+
+  unsigned long TLUController::ReadRegister24(unsigned long offset) const {
+    unsigned long val = 0;
+    for (int i = 0; i < 3; ++i) {
+      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+    }
     //usbtrace(" R", offset, val);
     return val;
   }
@@ -566,37 +643,312 @@ namespace tlu {
   unsigned long long * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
-    unsigned long long buffer[4096]; // should be m_addr->TLU_BUFFER_DEPTH
-    if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
-    for (unsigned i = 0; i < m_addr->TLU_BUFFER_DEPTH; ++i) {
-      buffer[i] = m_oldbuf[i];
+    const int count = m_errorhandler ? m_errorhandler : 1;
+    static const unsigned buffer_offset = 2;
+    unsigned num_errors = 0;
+
+    for (int i = 0; i < count; ++i) { // loop round trying to read buffer
+
+      // read the timestamp buffer
+      unsigned num_errors ;
+      num_errors = ReadBlockRaw( entries , buffer_offset );
+
+      if ( num_errors == 0 ) break;
+
+      // try to correct error
+
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding");
+      }
+      num_errors = ReadBlockSoftErrorCorrect( entries , false );
+
+      if ( num_errors == 0 ) break;
+
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding");
+      }
+      num_errors = ReadBlockSoftErrorCorrect( entries , true );
+
+      if ( num_errors == 0 ) break;
+
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with NO padding (2nd time)");
+      }
+      num_errors = ReadBlockSoftErrorCorrect( entries , false );
+
+      if ( num_errors == 0 ) break;
+
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)" << std::endl;
+	EUDAQ_WARN("### Warning: detected error in block read. Trying a soft correction by reading blocks again with padding (2nd time)");
+      }
+      num_errors = ReadBlockSoftErrorCorrect( entries , true );
+
+      if ( num_errors == 0 ) break;
+
+      // then try to reset DMA
+      if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+	std::cout << "### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer" << std::endl;
+	EUDAQ_WARN("### Warning: Re-read of block data failed to correct problem. Will try to reset DMA buffer pointer");
+      }
+      num_errors = ResetBlockRead( entries ) ;
+
+      if ( num_errors == 0 ) break;
+
     }
 
-    int result = ZESTSC1_SUCCESS;
-    for (int tries = 0; tries < 3; ++tries) {
-      // Request block transfer from TLU
-      usleep(10);
-      WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, 0xFF);
-      //usleep(10);
-      result = ZestSC1ReadData(m_handle, buffer, sizeof buffer);
+    if ( num_errors != 0) {
+      throw TLUException("ReadBlock" , 0 , count);
+    }
 
-#if TLUDEBUG
+    return m_oldbuf;
+
+  }
+
+  unsigned  TLUController::ReadBlockRaw(unsigned entries , unsigned buffer_offset ) {
+
+    unsigned num_errors = 0;
+    unsigned num_correctable_errors = 0;
+    unsigned num_uncorrectable_errors = 0;
+
+    const unsigned long long timestamp_mask  = 0x0FFFFFFFFFFFFFFFULL ; 
+
+    //    unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
+
+    int result = ZESTSC1_SUCCESS;
+
+    WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, ( 1<< m_addr->TLU_ENABLE_DMA_BIT) ); // the first write sets transfer going. Further writes do nothing.
+
+    usleep(10);
+
+    // Read four buffers at onece. first buffer will contain some data from previous readout, 
+    // but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. 
+    // Try to correct this using multiple reads.
+    // result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    // Change syntax. Should be exactly the same but getting mysterious SEGFAULTs so hack at random...
+    result = ZestSC1ReadData(m_handle, &m_working_buffer, sizeof m_working_buffer );
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
       char * errmsg = 0;
       ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
       std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning: ") << errmsg << std::endl;
-#endif
-      if (result == ZESTSC1_SUCCESS && buffer[entries-1] != m_oldbuf[entries-1]) {
-        for (unsigned i = 0; i < m_addr->TLU_BUFFER_DEPTH; ++i) {
-          m_oldbuf[i] = buffer[i];
-        }
-        usbtrace("BR", 0, buffer, m_addr->TLU_BUFFER_DEPTH, result);
-        return m_oldbuf;
+    }
+
+
+    // check to make sure that the first entry is zero ( which it should be unless something has slipped )
+    for (int tries = 0; tries < 4; ++tries) { 
+      if (m_working_buffer[tries][0] !=0) {
+	std::cout << "### Warning: m_working_buffer[buf][0] != 0. This shouldn't happen. buf = " << tries << std::endl;
+	EUDAQ_WARN("### Warning: m_working_buffer[buf][0] != 0. This shouldn't happen. buf = " + eudaq::to_string(tries) );
+	num_uncorrectable_errors++;
       }
     }
-    usbtrace("bR", 0, buffer, m_addr->TLU_BUFFER_DEPTH, result);
-    std::cout << (buffer[0] == m_oldbuf[0] ? "*" : "#") << std::flush;
-    return 0;
+
+    for (unsigned i = buffer_offset; i < entries+buffer_offset; ++i) {
+
+      // std::cout << std::setw(8) <<  m_working_buffer[0][i] << "  " <<  m_working_buffer[1][i] << "  " <<   m_working_buffer[2][i] << "  " <<   m_working_buffer[3][i] << std::endl;
+
+      // check that at least 2 out of three timestamps agree with each other....
+      // due to latency in buffer transfer the real data starts at the third 64-bit word.
+      if (( m_working_buffer[1][i] == m_working_buffer[2][i] ) || 
+	  ( m_working_buffer[1][i] == m_working_buffer[3][i] ) ) {
+	m_oldbuf[i-buffer_offset] = m_working_buffer[1][i];
+
+      } else if ( m_working_buffer[2][i] == m_working_buffer[3][i] ) {
+	m_oldbuf[i-buffer_offset] = m_working_buffer[2][i];
+      } else {
+	m_oldbuf[i-buffer_offset] = 0;
+	std::cout << "### Warning: Uncorrectable data error in timestamp buffer. location = " << i << "data ( buffer =2,3,4) : " << std::setw(8) << m_working_buffer[1][i] << "  " << m_working_buffer[2][i] << "  " << m_working_buffer[3][i] << std::endl;
+	EUDAQ_WARN("### Warning: Uncorrectable data error in timestamp buffer. location = " + eudaq::to_string(i) + "data ( buffer =2,3,4) : "  + eudaq::to_string(m_working_buffer[1][i]) +  "  " +   eudaq::to_string(m_working_buffer[2][i]) + "  " +  eudaq::to_string( m_working_buffer[3][i]) );
+	num_correctable_errors++;
+      }
+
+      if (( m_working_buffer[1][i] != m_working_buffer[2][i] ) || 
+	  ( m_working_buffer[1][i] != m_working_buffer[3][i] ) ||
+	  ( m_working_buffer[2][i] != m_working_buffer[3][i] ) 
+	  ){
+	  num_correctable_errors++; }
+
+    }
+
+    // Check to make sure that the current timestamp[0] is more recent than previous timestamp[events]
+    unsigned long long last_timestamp = m_lasttime & timestamp_mask;
+    unsigned long long first_timestamp = m_oldbuf[0] & timestamp_mask;
+    if (  last_timestamp >= first_timestamp ) {
+      std::cout << "### Warning: First time-stamp from current buffer is older than last timestamp of previous buffer: (m_lasttime , buf[0]) " << std::setw(8) <<  m_lasttime  << "  " << m_oldbuf[0] << std::endl;
+      num_uncorrectable_errors++;
+    }
+
+
+    // check that the timestamps are chronological ...
+    for (unsigned i = 1; i < entries; ++i) {
+
+      unsigned long long current_timestamp = m_oldbuf[i]; // & timestamp_mask;
+      unsigned long long previous_timestamp = m_oldbuf[i-1]; // & timestamp_mask;
+
+      if ( previous_timestamp >= current_timestamp ) {
+
+	// throw TLUException("Timestamp data check error: first timestamp of  this block is more recent that last timestamp of previous block", 1, count);
+
+	std::cout << "Timestamp data check error: timestamps not in chronological order: " << std::setw(8) <<  m_oldbuf[i-1]  << " >  " << m_oldbuf[i] << std::endl;
+	num_uncorrectable_errors++;
+
+      } 
+
+
+    }
+
+    // need to add checking that timestamp is in the correct ball-park ( use Timestamp2Seconds ... )
+
+    // usbtrace("BR", 0, m_working_buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
+
+    m_uncorrectable_blockread_errors += num_uncorrectable_errors; 
+    m_correctable_blockread_errors += num_correctable_errors;
+
+    // return the number of uncorrectable errors....
+    num_errors = num_uncorrectable_errors ;
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      std::cout << "Debug - dumping block" << std::endl;
+      PrintBlock( m_working_buffer , 4 , 4096 );
+    
+      std::cout << "Debug - about to return num_errors ( num_correctable ) = " << num_errors << "  ( " << num_correctable_errors << " )" << std::endl;
+    }
+
+    return num_errors;
   }
+
+
+  // try to recover from a problem by reading the TLU buffer repeatedly.
+  unsigned TLUController::ReadBlockSoftErrorCorrect( unsigned entries , bool pad ) {
+
+    // first read the 4 block again three times...
+
+    static const unsigned buffer_offset = 2;
+    
+    unsigned num_errors ;
+
+    // unsigned long long buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    unsigned long long padding_buffer[2048]; 
+
+    std::cout << "### Error recovery: About to read out blocks three times..." << std::endl;
+    EUDAQ_INFO("Error recovery: About to read out blocks three times...");
+
+    int result = ZESTSC1_SUCCESS;
+
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (1st read): ") << errmsg << std::endl;
+    }
+
+
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+    result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
+
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
+    }
+
+
+    if ( pad ) {
+      std::cout <<"### Reading 2048 long-long words to pad ...."  << std::endl;   
+      result = ZestSC1ReadData(m_handle, padding_buffer, sizeof padding_buffer );
+    } else {
+      std::cout <<"### No padding block read ...."  << std::endl;   
+    }
+
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      char * errmsg = 0;
+      ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(result), &errmsg);
+      std::cout << (result == ZESTSC1_SUCCESS ? "" : "#### Warning (2nd read): ") << errmsg << std::endl;
+
+      std::cout << "#### Read buffers to resync. About to read data ..." << std::endl;
+      EUDAQ_INFO("Error recovery:  Read buffers to resync. About to read data ...");
+    }
+
+
+    num_errors = ReadBlockRaw( entries , buffer_offset );
+
+    if ( m_debug_level & TLU_DEBUG_BLOCKREAD ) {
+      std::cout << "#### Number of errors reported by ReadBlockRaw after rsync = " << num_errors << std::endl;
+      EUDAQ_INFO("Error recovery: Number of errors reported by ReadBlockRaw after rsync = " + eudaq::to_string( num_errors) );
+    }
+
+    return num_errors;
+
+  }
+
+
+  unsigned TLUController::ResetBlockRead( unsigned entries ) {
+
+    std::cout << "### Warning: Attempting to reset block transfer" << std::endl;
+
+    // Assert reset line on DMA controller buffer address...
+    unsigned original_dma_status = ReadRegister8(m_addr->TLU_INITIATE_READOUT_ADDRESS);
+    std::cout << "Read back INITIATE_READOUT_ADDRESS: " << original_dma_status << std::endl;
+
+    WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS ,
+    		  (original_dma_status | (1<< m_addr->TLU_RESET_DMA_COUNTER_BIT)) );
+    unsigned new_dma_status = ReadRegister8(m_addr->TLU_INITIATE_READOUT_ADDRESS);
+    std::cout << "### Read back (after raising reset line) INITIATE_READOUT_ADDRESS: " << new_dma_status << std::endl;
+
+
+    // read out some data to reset transfer machine.
+
+    static const unsigned buffer_offset = 2;
+    unsigned num_errors;
+
+    std::cout << "### About to read data with pointer held reset" << std::endl;
+    num_errors = ReadBlockRaw( entries , buffer_offset );
+    std::cout << "### Read data with pointer held reset" << std::endl;
+
+    WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS ,
+    		  original_dma_status );
+    new_dma_status = ReadRegister8(m_addr->TLU_INITIATE_READOUT_ADDRESS);
+    std::cout << "### Read back (after dropping reset line) INITIATE_READOUT_ADDRESS: " << new_dma_status << std::endl;
+
+    // and readout data....
+    std::cout << "### Reading block after resetting pointer." << std::endl;
+    num_errors = ReadBlockRaw( entries , buffer_offset );
+
+    std::cout << "### Reading block after resetting pointer. (2nd time)" << std::endl;
+    num_errors = ReadBlockRaw( entries , buffer_offset );
+    
+    return num_errors;
+
+  }
+
+  void TLUController::PrintBlock( unsigned long long  block[][4096] , unsigned nbuf , unsigned bufsize ) {
+
+    // print contents of 4-buffer block
+    unsigned buf , sample;
+    for ( sample = 0 ; sample < bufsize ; sample++ ) {
+
+      std::cout << " " << sample << " " << std::setw(8) ;
+
+      for (buf = 0 ; buf < nbuf ; buf++ ) {
+
+	std::cout << " " << std::hex << block[buf][sample] << std::dec ;
+      }
+
+      std::cout << std::endl;
+    }  
+
+  }
+
 
   void TLUController::Print(std::ostream &out, bool timestamps) const {
     if (timestamps) {
@@ -606,7 +958,7 @@ namespace tlu {
         m_lasttime = m_buffer[i].Timestamp();
       }
     }
-    out << "Status:    FSM:" << m_fsmstatus << " Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
+    out << "Status:    FSM:" << m_fsmstatus << " ( " << std::hex << m_fsmstatusvalues << std::dec <<  ") Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
         << "Scalers:   ";
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       std::cout << m_scalers[i] << (i < (TLU_TRIGGER_INPUTS - 1) ? ", " : "\n");
@@ -614,6 +966,8 @@ namespace tlu {
     out << "Particles: " << m_particles << "\n"
         << "Triggers:  " << m_triggernum << "\n"
         << "Entries:   " << NumEntries() << "\n"
+	<< "Total timestamp errors corrected by data redundancy "<< m_correctable_blockread_errors << "\n"
+	<< "Total timestamp errors corrected by block re-read   "<< m_uncorrectable_blockread_errors << "\n"
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }

@@ -26,6 +26,9 @@ public:
       veto_mask(0),
       and_mask(255),
       or_mask(0),
+      strobe_period(0),
+      strobe_width(0),
+      enable_dut_veto(0),
       trig_rollover(0),
       readout_delay(100),
       timestamps(true),
@@ -60,7 +63,8 @@ public:
           m_ev = m_tlu->GetEntry(i).Eventnum();
           unsigned long long t = m_tlu->GetEntry(i).Timestamp();
           long long d = t-lasttime;
-          float freq= 1./(d*20./1000000000);
+          //float freq= 1./(d*20./1000000000);
+	  float freq= 1./Timestamp2Seconds(d);
           if (m_ev < 10 || m_ev%10 == 0) {
             std::cout << "  " << m_tlu->GetEntry(i)
                       << ", diff=" << d << (d <= 0 ? "  ***" : "")
@@ -101,12 +105,16 @@ public:
       dut_mask = param.Get("DutMask", 2);
       and_mask = param.Get("AndMask", 0xff);
       or_mask = param.Get("OrMask", 0);
+      strobe_period = param.Get("StrobePeriod", 0);
+      strobe_width = param.Get("StrobeWidth", 0);
+      enable_dut_veto = param.Get("EnableDUTVeto", 0);
       veto_mask = param.Get("VetoMask", 0);
       trig_rollover = param.Get("TrigRollover", 0);
       timestamps = param.Get("Timestamps", 1);
       readout_delay = param.Get("ReadoutDelay", 100);
       timestamp_per_run = param.Get("TimestampPerRun", false);
       // ***
+      m_tlu->SetDebugLevel(param.Get("DebugLevel",0));
       m_tlu->SetFirmware(param.Get("BitFile", ""));
       m_tlu->SetVersion(param.Get("Version", 0));
       m_tlu->Configure();
@@ -118,7 +126,10 @@ public:
       m_tlu->SetVetoMask(veto_mask);
       m_tlu->SetAndMask(and_mask);
       m_tlu->SetOrMask(or_mask);
-      m_tlu->ResetTimestamp();
+      m_tlu->SetStrobe(strobe_period , strobe_width);
+      m_tlu->SetEnableDUTVeto( enable_dut_veto );
+ 
+      m_tlu->ResetTimestamp(); 
 
       // by dhaas
       eudaq::mSleep(1000);
@@ -225,6 +236,8 @@ public:
 private:
   unsigned m_run, m_ev;
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask;
+  unsigned long strobe_period , strobe_width ;
+  unsigned enable_dut_veto;
   unsigned trig_rollover, readout_delay;
   bool timestamps, done, timestamp_per_run;
   bool TLUStarted;

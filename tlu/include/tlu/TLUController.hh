@@ -27,6 +27,13 @@ namespace tlu {
   static const int TLU_TRIGGER_INPUTS = 4;
   static const int TLU_LEMO_DUTS = 4;
   static const int TLU_DUTS = 6;
+  static const int TLU_BUFFER_SIZE = 4096;
+  static const int NUM_TLU_BUFFERS = 4;
+
+  static const unsigned TLU_DEBUG_UPDATE = 0x0001 ;
+  static const unsigned TLU_DEBUG_CONFIG = 0x0002 ;
+  static const unsigned TLU_DEBUG_BLOCKREAD = 0x0004 ;
+
   double Timestamp2Seconds(unsigned long long t);
 
   class TLUException : public std::runtime_error {
@@ -77,13 +84,22 @@ namespace tlu {
 
     void SetVersion(unsigned version); // default (0) = auto detect from serial number
     void SetFirmware(const std::string & filename); // can be just version number
+    void SetDebugLevel(unsigned level); // default (0) = no debug output
     void SetDUTMask(unsigned char mask, bool updateleds = true);
     void SetVetoMask(unsigned char mask);
     void SetAndMask(unsigned char mask);
     void SetOrMask(unsigned char mask);
+    void SetStrobe(unsigned long period , unsigned long width);
+    void SetEnableDUTVeto(unsigned char mask);
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
+    unsigned long GetStrobeWidth() const;
+    unsigned long GetStrobePeriod() const;
+    unsigned char GetStrobeStatus() const;
+    unsigned char GetDUTClockStatus() const;
+    unsigned char GetEnableDUTVeto() const;
+
     static int DUTnum(const std::string & name);
     void SelectDUT(const std::string & name, unsigned mask = 0xf, bool updateleds = true);
     void SelectDUT(int input, unsigned mask = 0xf, bool updateleds = true);
@@ -130,11 +146,17 @@ namespace tlu {
     bool SetupLemo(); // Tries to set the LEMO termination and DAC voltage, returns true if successful
 
     void WriteRegister(unsigned long offset, unsigned char val);
+    void WriteRegister24(unsigned long offset, unsigned long val);
     unsigned char ReadRegister8(unsigned long offset) const;
     unsigned short ReadRegister16(unsigned long offset) const;
+    unsigned long ReadRegister24(unsigned long offset) const;
     unsigned long ReadRegister32(unsigned long offset) const;
     unsigned long long ReadRegister64(unsigned long offset) const;
     unsigned long long * ReadBlock(unsigned entries);
+    unsigned ReadBlockRaw(unsigned entries , unsigned buffer_offset);
+    unsigned ReadBlockSoftErrorCorrect(unsigned entries  , bool pad );
+    unsigned ResetBlockRead( unsigned entries) ;
+    void PrintBlock( unsigned long long  block[][4096] , unsigned nbuf , unsigned bufsize );
     unsigned char ReadRegisterRaw(unsigned long offset) const;
 
     void SelectBus(unsigned bus);
@@ -145,15 +167,18 @@ namespace tlu {
 
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
-    unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel;
+    unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel,  m_enabledutveto;
+    unsigned long m_strobewidth , m_strobeperiod;
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
     unsigned m_vetostatus, m_fsmstatus;
+    unsigned long m_fsmstatusvalues;
     unsigned m_triggernum;
     unsigned long long m_timestamp;
     std::vector<TLUEntry> m_buffer;
     unsigned long long * m_oldbuf;
+    unsigned long long m_working_buffer[NUM_TLU_BUFFERS][TLU_BUFFER_SIZE];
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     unsigned m_particles;
     mutable unsigned long long m_lasttime;
@@ -161,6 +186,10 @@ namespace tlu {
     unsigned m_version;
     TLUAddresses * m_addr;
     eudaq::Time m_timestampzero;
+    unsigned m_correctable_blockread_errors;
+    unsigned m_uncorrectable_blockread_errors;
+    unsigned m_usb_timeout_errors;
+    unsigned m_debug_level;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
