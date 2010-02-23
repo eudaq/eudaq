@@ -111,7 +111,7 @@ namespace eudaq {
           // FORTIS data has a pedestal near 0xFFFF with excursions below this when charge is deposited.
           // The initial [0] refers to the frame number.
           //plane.m_pix[Frame][i] = 0xffff - d ;
-          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, d, Frame);
+          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, d, (unsigned)Frame);
           ++i;
         }
       }
