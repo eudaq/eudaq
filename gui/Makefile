@@ -6,9 +6,14 @@ APPS := $(TEMP_APPS:common=)
 
 OBJ := tmp
 
-OS := $(uname -s)
-
 all: $(APPS)
+
+UNAME := $(shell uname)
+
+# On OS X, tell qmake to use Makefiles, not XCode
+ifneq ($(findstring Darwin,$(UNAME)),)
+  QMAKEOPTS := -spec macx-g++
+endif
 
 clean:
 	@echo -n " *** Removing old executable, library, object and dependency files in " && basename `pwd`
@@ -20,13 +25,11 @@ euLog: Makefile_euLog
 
 euProd: Makefile_euProd
 
-test: Makefile_test
-
 $(APPS):
 	make -f Makefile_$@
 
 Makefile_%: %.pro
-	qmake -o $@ $^
-	echo '$$(TARGET): ../bin/libeudaq.*' >> $@
+	qmake $(QMAKEOPTS) -o $@ $^
+	[ -f $@ ] && echo '$$(TARGET): ../bin/libeudaq.*' >> $@
 
-.PHONY: all $(APPS)
+.PHONY: all clean $(APPS)
