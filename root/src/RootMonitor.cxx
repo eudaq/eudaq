@@ -36,6 +36,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cstring>
 
 //#include <algorithm>
 #include <cmath>
@@ -57,7 +58,7 @@ const T * dataptr(const std::vector<T> & v) {
 }
 
 struct PlaneInfo {
-  PlaneInfo(const std::vector<std::string> & parts) : name(parts.at(0)), width(0), height(0), clustsize(3),
+  PlaneInfo(const std::vector<std::string> & parts) : name(eudaq::ucase(parts.at(0))), width(0), height(0), clustsize(3),
                                                       seed_thresh(5), neighbour_thresh(2), cluster_thresh(7) {
     // First set default values
     if      (is("MIMOTEL"))   { width = 264; height = 256; }
@@ -130,8 +131,9 @@ struct PlaneInfo {
     }
   }
   //PlaneInfo() : width(0), height(0) {}
-  bool is(const std::string & type) {
-    return eudaq::lcase(type) == eudaq::lcase(name);
+  bool is(const char * type) {
+    //return eudaq::lcase(type) == eudaq::lcase(name);
+    return std::strcmp(type, name.c_str()) == 0;
   }
   std::string name, pedfile;
   unsigned width, height, clustsize;
@@ -1782,16 +1784,16 @@ private:
     b.m_historawy       = new TH1DNew(make_name("RawYProfile",   board).c_str(), "Raw Y Profile",      num_y_pixels, 0, num_y_pixels);
     b.m_histoclusterx   = new TH1DNew(make_name("ClustXProfile", board).c_str(), "Cluster X Profile", num_x_pixels, 0, num_x_pixels);
     b.m_histoclustery   = new TH1DNew(make_name("ClustYProfile", board).c_str(), "Cluster Y Profile", num_y_pixels, 0, num_y_pixels);
-    if(m_dets.at(board).is("fortis"))
+    if(m_dets.at(board).is("FORTIS"))
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        65536 , 0, 65536 );
-    else if(m_dets.at(board).is("taki"))
+    else if(m_dets.at(board).is("TAKI"))
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        256, 0, 256 );
     else
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
 
-    if (m_dets.at(board).is("depfet")) {
+    if (m_dets.at(board).is("DEPFET")) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        4050, -50, 4000);
-    } else if (m_dets.at(board).is("fortis")) {
+    } else if (m_dets.at(board).is("FORTIS")) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        9000, -1000, 10000);
     } else {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        250, -50, 200);
@@ -1891,7 +1893,7 @@ private:
         double pedestal = 0.0;
         if(m_dets.at(boardnumber).ped_matrix.size())
           pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
-        if((m_dets.at(boardnumber).is("taki")))
+        if((m_dets.at(boardnumber).is("TAKI")))
           pedestal = TAKI_PEDESTAL;
         
         b.m_histocdsval->Fill((cds.at(i) - pedestal));
@@ -1906,9 +1908,9 @@ private:
     //b.m_histocdsval->SetNormFactor(b.m_histocdsval->Integral() / m_histoevents);
     b.m_tempcds->Reset();
     b.m_tempcds2->Reset();
-    if(m_dets.at(boardnumber).is("fortis") || m_dets.at(boardnumber).is("taki")) {
+    if(m_dets.at(boardnumber).is("FORTIS") || m_dets.at(boardnumber).is("TAKI")) {
         double pedestal = 0.0;
-        if((m_dets.at(boardnumber).is("taki")))
+        if((m_dets.at(boardnumber).is("TAKI")))
           pedestal = TAKI_PEDESTAL;
         // std::cout << "numpixels " <<  plane.HitPixels() << std::endl;
         for(size_t i = 0; i < plane.HitPixels(); ++i)
@@ -1942,7 +1944,7 @@ private:
         double pedestal = 0.0;
         if(m_dets.at(boardnumber).ped_matrix.size())
           pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
-        else if ((m_dets.at(boardnumber).is("taki")))
+        else if ((m_dets.at(boardnumber).is("TAKI")))
           pedestal = TAKI_PEDESTAL;
 
         b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), cds.at(i) - pedestal);
@@ -1952,7 +1954,7 @@ private:
     b.m_clusterx.clear();
     b.m_clustery.clear();
 
-    if(m_dets.at(boardnumber).is("mimosa26"))
+    if(m_dets.at(boardnumber).is("MIMOSA26"))
       {
         //kill hot pixel after this number of processed events
         const unsigned int nkill = 200;
@@ -2088,7 +2090,7 @@ private:
                 pedestal = m_dets.at(boardnumber).ped_matrix.at(ix-1).at(iy-1);
                 noise = m_dets.at(boardnumber).noise_matrix.at(ix-1).at(iy-1);
               }
-              if((m_dets.at(boardnumber).is("taki")))
+              if((m_dets.at(boardnumber).is("TAKI")))
                 {
                   pedestal = TAKI_PEDESTAL;
                   noise =  TAKI_NOISE;
@@ -2102,7 +2104,7 @@ private:
 
           //construct the cluster
           int clustersizeindex = m_dets.at(boardnumber).clustsize / 2;
-          if (seeds.size() < MAX_SEEDS || m_dets.at(boardnumber).is("fortis")) {
+          if (seeds.size() < MAX_SEEDS || m_dets.at(boardnumber).is("FORTIS")) {
             std::sort(seeds.begin(), seeds.end(), &Seed::compare);
             for (size_t i = 0; i < seeds.size(); ++i) {
 
@@ -2119,7 +2121,7 @@ private:
                           if (m_dets.at(boardnumber).ped_matrix.size()) {
                             pedestal = m_dets.at(boardnumber).ped_matrix.at(seeds.at(i).x+dx).at(seeds.at(i).y+dy);
                           }
-                          if((m_dets.at(boardnumber).is("taki")))
+                          if((m_dets.at(boardnumber).is("TAKI")))
                             pedestal = TAKI_PEDESTAL;
                           
                         }
@@ -2146,7 +2148,7 @@ private:
                   }
                 }
                 noise = std::sqrt(noise);
-                if(m_dets.at(boardnumber).is("depfet"))
+                if(m_dets.at(boardnumber).is("DEPFET"))
                   noise = 0.0;
                 if (cluster > cluster_thresh*noise) { //cut on the cluster charge
                   if (conf.CLUSTER_POSITION == 1)
@@ -2162,7 +2164,7 @@ private:
                             {
                               double noise = 5.0;
                               double value = b.m_tempcds2->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy);
-                              if(m_dets.at(boardnumber).is("depfet"))
+                              if(m_dets.at(boardnumber).is("DEPFET"))
                                 noise = 0.0;
                               if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0 && (seeds.at(i).x+dx) < b.m_tempcds2->GetXaxis()->GetLast()
                                  && (seeds.at(i).y+dy) < b.m_tempcds2->GetYaxis()->GetLast() //check whether we are inside the histogram
@@ -2225,7 +2227,7 @@ private:
         }
       } // end of eudrb clustering
 
-    if(m_dets.at(boardnumber).is("mimosa26"))
+    if(m_dets.at(boardnumber).is("MIMOSA26"))
       {
         numberofclusters = b.m_clusters.size();
         b.m_histonumhits->Fill(plane.HitPixels());
