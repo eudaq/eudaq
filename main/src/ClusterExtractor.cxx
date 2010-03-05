@@ -149,7 +149,7 @@ int main(int /*argc*/, char ** argv) {
 
       std::vector<unsigned> hit_hist;
       {
-        const eudaq::DetectorEvent & dev = reader.Event();
+        const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
         eudaq::PluginManager::Initialize(dev);
         runnum = dev.GetRunNumber();
         std::cout << "Found BORE, run number = " << runnum << std::endl;
@@ -179,7 +179,7 @@ int main(int /*argc*/, char ** argv) {
       }
 
       while (reader.NextEvent()) {
-        const eudaq::DetectorEvent & dev = reader.Event();
+        const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
         if (dev.IsBORE()) {
           std::cout << "ERROR: Found another BORE !!!" << std::endl;
         } else if (dev.IsEORE()) {

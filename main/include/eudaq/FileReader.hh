@@ -16,7 +16,10 @@ namespace eudaq {
     bool NextEvent(size_t skip = 0);
     std::string Filename() const { return m_filename; }
     unsigned RunNumber() const;
-    const DetectorEvent & Event() const;
+    const Event & GetEvent() const;
+    const DetectorEvent & GetDetectorEvent() const;
+    const StandardEvent & GetStandardEvent() const;
+    //const DetectorEvent & Event() const { return GetDetectorEvent(); } // for backward compatibility
     //const StandardEvent & GetStandardEvent() const;
     void Interrupt() { m_des.Interrupt(); }
     class eventqueue_t;

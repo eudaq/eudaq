@@ -287,7 +287,7 @@ namespace eudaq {
     //EUDAQ_INFO("FileReader, version = " + to_string(m_ver));
     //NextEvent();
     if (synctriggerid) {
-      m_queue = new eventqueue_t(Event().NumEvents());
+      m_queue = new eventqueue_t(GetDetectorEvent().NumEvents());
     }
   }
 
@@ -317,8 +317,16 @@ namespace eudaq {
     return m_ev->GetRunNumber();
   }
 
-  const DetectorEvent & FileReader::Event() const {
+  const Event & FileReader::GetEvent() const {
+    return *m_ev;
+  }
+
+  const DetectorEvent & FileReader::GetDetectorEvent() const {
     return dynamic_cast<const DetectorEvent &>(*m_ev);
+  }
+
+  const StandardEvent & FileReader::GetStandardEvent() const {
+    return dynamic_cast<const StandardEvent &>(*m_ev);
   }
 
 //   const StandardEvent & FileReader::GetStandardEvent() const {

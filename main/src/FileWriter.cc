@@ -13,7 +13,6 @@ namespace eudaq {
     }
   }
 
-
   void FileWriterFactory::do_register(const std::string & name, FileWriterFactory::factoryfunc func) {
     //std::cout << "DEBUG: Registering FileWriter: " << name << std::endl;
     FileWriterMap()[name] = func;
@@ -23,6 +22,14 @@ namespace eudaq {
     map_t::const_iterator it = FileWriterMap().find(name == "" ? "native" : name);
     if (it == FileWriterMap().end()) EUDAQ_THROW("Unknown file writer: " + name);
     return (it->second)(params);
+  }
+
+  std::vector<std::string> FileWriterFactory::GetTypes() {
+    std::vector<std::string> result;
+    for (map_t::const_iterator it = FileWriterMap().begin(); it != FileWriterMap().end(); ++it) {
+      result.push_back(it->first);
+    }
+    return result;
   }
 
   FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern) {}

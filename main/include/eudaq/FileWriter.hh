@@ -2,6 +2,8 @@
 #define EUDAQ_INCLUDED_FileWriter
 
 #include "eudaq/DetectorEvent.hh"
+#include <vector>
+#include <string>
 
 namespace eudaq {
 
@@ -26,6 +28,7 @@ namespace eudaq {
       do_register(name, filewriterfactory<T>);
     }
     typedef FileWriter * (*factoryfunc)(const std::string &);
+    static std::vector<std::string> GetTypes();
   private:
     template <typename T>
     static FileWriter * filewriterfactory(const std::string & params) {

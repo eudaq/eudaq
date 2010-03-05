@@ -36,10 +36,11 @@ namespace eudaq {
     void ShowHelp(std::ostream &);
 
     void AddOption(OptionBase * opt);
+    void ExtraHelpText(const std::string &);
     int HandleMainException(std::ostream & err = std::cerr, std::ostream & out = std::cout);
   private:
     void LogException(const std::string & msg, std::ostream & = std::cerr) const;
-    std::string m_name, m_ver, m_desc, m_cmd;
+    std::string m_name, m_ver, m_desc, m_cmd, m_extra;
     std::vector<OptionBase *> m_options;
     std::map<std::string, size_t> m_names;
     std::vector<std::string> m_args;

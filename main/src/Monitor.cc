@@ -15,7 +15,7 @@ namespace eudaq {
     if (datafile != "") {
       // set offline
       m_reader = counted_ptr<FileReader>(new FileReader(datafile));
-      PluginManager::Initialize(m_reader->Event()); // process BORE
+      PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
       //m_callstart = true;
       std::cout << "DEBUG: Reading file " << datafile << " -> " << m_reader->Filename() << std::endl;
       //OnStartRun(m_run);
@@ -27,13 +27,13 @@ namespace eudaq {
     //std::cout << "processevent" << std::endl;
     if (!m_reader.get()) return false;
     if (!m_reader->NextEvent()) return false;
-    if (m_reader->Event().GetEventNumber() % 10 == 0) {
-      std::cout << "ProcessEvent " << m_reader->Event().GetEventNumber()
-                << (m_reader->Event().IsBORE() ? "B" : m_reader->Event().IsEORE() ? "E" : "")
+    if (m_reader->GetDetectorEvent().GetEventNumber() % 10 == 0) {
+      std::cout << "ProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
+                << (m_reader->GetDetectorEvent().IsBORE() ? "B" : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
                 << std::endl;
     }
     try {
-      const DetectorEvent & dev = m_reader->Event();
+      const DetectorEvent & dev = m_reader->GetDetectorEvent();
       if (dev.IsBORE()) m_lastbore = counted_ptr<DetectorEvent>(new DetectorEvent(dev));
       OnEvent(PluginManager::ConvertToStandard(dev));
     } catch (const InterruptedException &) {
@@ -64,7 +64,7 @@ namespace eudaq {
     std::cout << "run " << param << std::endl;
     m_run = param;
     m_reader = counted_ptr<FileReader>(new FileReader(to_string(m_run)));
-    PluginManager::Initialize(m_reader->Event()); // process BORE
+    PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
     EUDAQ_INFO("Starting run " + to_string(m_run));
   }
 

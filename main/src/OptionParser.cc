@@ -62,6 +62,10 @@ namespace eudaq {
     return *this;
   }
 
+  void OptionParser::ExtraHelpText(const std::string & str) {
+    m_extra += str;
+  }
+
   void OptionParser::ShowHelp(std::ostream & os) {
     os << m_name << " version " << m_ver << "\n";
     if (m_desc != "") os << m_desc << "\n\n";
@@ -78,6 +82,9 @@ namespace eudaq {
     os << "\n\noptions:\n";
     for (size_t i = 0; i < m_options.size(); ++i) {
       os << " " << *m_options[i] << "\n";
+    }
+    if (m_extra.length()) {
+      os << "\n" << m_extra << "\n";
     }
   }
 

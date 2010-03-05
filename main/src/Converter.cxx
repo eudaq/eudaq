@@ -43,6 +43,7 @@ int main(int, char ** argv) {
   eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
 				   "The minimum level for displaying log messages locally");
+  op.ExtraHelpText("Available output types are: " + to_string(eudaq::FileWriterFactory::GetTypes(), ", "));
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
@@ -53,9 +54,9 @@ int main(int, char ** argv) {
       writer->SetFilePattern(opat.Value());
       writer->StartRun(reader.RunNumber());
       do {
-	if (reader.Event().IsBORE() || reader.Event().IsEORE() || numbers.empty() ||
-	    std::find(numbers.begin(), numbers.end(), reader.Event().GetEventNumber()) != numbers.end()) {
-	  writer->WriteEvent(reader.Event());
+	if (reader.GetDetectorEvent().IsBORE() || reader.GetDetectorEvent().IsEORE() || numbers.empty() ||
+	    std::find(numbers.begin(), numbers.end(), reader.GetDetectorEvent().GetEventNumber()) != numbers.end()) {
+	  writer->WriteEvent(reader.GetDetectorEvent());
 	}
       } while (reader.NextEvent());
     }

@@ -42,13 +42,18 @@ namespace eudaq {
   }
 
   template <typename T>
-  inline std::string to_string(const std::vector<T> & x, int digits = 0) {
+  inline std::string to_string(const std::vector<T> & x, const std::string & sep, int digits = 0) {
     std::ostringstream s;
     if (x.size() > 0) s << to_string(x[0], digits);
     for (size_t i = 1; i < x.size(); ++i) {
-      s << "," << to_string(x[i], digits);
+      s << sep << to_string(x[i], digits);
     }
     return s.str();
+  }
+
+  template <typename T>
+  inline std::string to_string(const std::vector<T> & x, int digits = 0) {
+    return to_string(x, ",", digits);
   }
 
   inline std::string to_string(const std::string & x, int /*digits*/ = 0) {

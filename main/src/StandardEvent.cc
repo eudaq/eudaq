@@ -24,12 +24,11 @@ namespace eudaq {
     ds.read(m_pix);
     ds.read(m_x);
     ds.read(m_y);
-    ds.read(m_mat);
     ds.read(m_pivot);
+    ds.read(m_mat);
   }
 
   void StandardPlane::Serialize(Serializer & ser) const {
-    EUDAQ_THROW("StandardPlane serialization not yet implemented (wait until implementation has stabilised)");
     ser.write(m_type);
     ser.write(m_sensor);
     ser.write(m_id);
@@ -41,8 +40,8 @@ namespace eudaq {
     ser.write(m_pix);
     ser.write(m_x);
     ser.write(m_y);
-    ser.write(m_mat);
     ser.write(m_pivot);
+    ser.write(m_mat);
   }
 
   // StandardPlane::StandardPlane(size_t pixels, size_t frames) 
@@ -270,7 +269,6 @@ namespace eudaq {
   }
 
   void StandardEvent::Serialize(Serializer & ser) const {
-    EUDAQ_THROW("StandardEvent serialization not yet implemented (wait until implementation has stabilised)");
     Event::Serialize(ser);
     ser.write(m_planes);
   }
