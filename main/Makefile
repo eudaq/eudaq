@@ -5,8 +5,8 @@ TARGETLIB := eudaq
 EXTERNAL_DEFS += USE_LCIO=$(USE_LCIO) USE_EUTELESCOPE=$(USE_EUTELESCOPE)
 EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
 EXTERNAL_LIBS += pthread
-##EXTERNAL_CFLAGS += $(shell root-config --cflags)
-#EXTERNAL_INCLUDES += $(shell root-config --incdir)
+#EXTERNAL_DEFS += USE_ROOT=1
+#EXTERNAL_INCS += $(shell root-config --incdir)
 #EXTERNAL_LDLIBS += $(shell root-config --glibs)
 
 ifneq (${USE_LCIO},0)

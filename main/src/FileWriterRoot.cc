@@ -30,15 +30,11 @@ namespace eudaq {
     unsigned i_tlu; // a trigger id
     unsigned i_run; // a run  number 
     unsigned i_event; // an event number 
-    unsigned long long int i_time_stamp = 0 ; // the time stamp
+    unsigned long long int i_time_stamp; // the time stamp
   };
 
   namespace {
     static RegisterFileWriter<FileWriterRoot> reg("root");
-
-    static int           i_first      = 0 ; // the event range to read (first)
-    static int           i_last       = 0 ; // the event range to read (last)
-    static int           i_curr       = 0 ; // the event range to read (last)
   }
 
   FileWriterRoot::FileWriterRoot(const std::string & /*param*/)
@@ -71,7 +67,7 @@ namespace eudaq {
     m_ttree->Branch("i_event", &i_event, "i_event/I");
   }
 
-  void FileWriterStandard::WriteEvent(const DetectorEvent & ev) {
+  void FileWriterRoot::WriteEvent(const DetectorEvent & ev) {
     if (ev.IsBORE()) {
       eudaq::PluginManager::Initialize(ev);
       return;
@@ -104,6 +100,8 @@ namespace eudaq {
 
   FileWriterRoot::~FileWriterRoot() {
   }
+
+  unsigned long long FileWriterRoot::FileBytes() const { return 0; }
 
 }
 
