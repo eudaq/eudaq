@@ -1,9 +1,20 @@
-#include "eudaq/FileWriterText.hh"
+#include "eudaq/FileWriter.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/PluginManager.hh"
 #include <iostream>
 
 namespace eudaq {
+
+  class FileWriterText : public FileWriter {
+  public:
+    FileWriterText(const std::string &);
+    virtual void StartRun(unsigned);
+    virtual void WriteEvent(const DetectorEvent &);
+    virtual unsigned long long FileBytes() const;
+    virtual ~FileWriterText();
+  private:
+    std::FILE * m_file;
+  };
 
   namespace {
     static RegisterFileWriter<FileWriterText> reg("text");
