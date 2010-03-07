@@ -45,7 +45,10 @@ public:
       m_frameBuffer(2),
       m_triggersPending(false),
       m_bufferNumber(0),
-      m_executableThreadId()
+      m_executableThreadId(),
+      m_currentFrame(0),
+      m_previousFrame(0),
+      m_debug_level(0)
   {} // empty constructor
 
 
@@ -63,7 +66,15 @@ public:
       return;
     }
 
-    if (juststopped) started = false; // this risks loosing the last event or two in the buffers. cf. EUDRBProducer for ideas how to fix this.
+
+    // logic to set "started" flag to "false" a certain number of frames after the "juststopped" flag is raised.
+    if (juststopped) {
+      if ( m_FortisFrameEORCount > 0 ) {
+	m_FortisFrameEORCount--; 
+      } else {
+	started = false; 
+      }
+    }
 
     // wait for data here....
     try {
@@ -93,10 +104,10 @@ public:
       // std::cout << "Read  frame number = " << m_currentFrame << ". chunk count = " << chunk_count << std::endl ;
       EUDAQ_DEBUG("Read  frame number = " + eudaq::to_string(m_currentFrame) + " chunk count = " + eudaq::to_string(chunk_count) );
 
-      if ( m_currentFrame != (m_previousFrame+1) ) {
+      if ( ( m_currentFrame != (m_previousFrame+1))  
+	   && ( m_previousFrame =! 0)) {
 	EUDAQ_INFO("Detected skipped frame(s): current, previous frame# =  " + eudaq::to_string(m_currentFrame) + "  " + eudaq::to_string(m_previousFrame) );
       }
-      m_previousFrame = m_currentFrame;
 
 #else
       // code for Linux
@@ -104,6 +115,7 @@ public:
       if (  m_FORTIS_Data.good() ) {
 	m_FORTIS_Data.read( m_rawData_pointer , sizeof(short)*m_numPixelsPerFrame );
       } else {
+	std::cout << "Rdstate: badbit , failbit , eofbit : " << ( m_FORTIS_Data.rdstate( ) & ios::badbit ) << "  " << ( m_FORTIS_Data.rdstate( ) & ios::failbit ) << "  " << ( m_FORTIS_Data.rdstate( ) & ios::eofbit ) << endl;
 	EUDAQ_THROW("Problem reading FORTIS data from input pipe");
       }
       unsigned int wordsRead = m_FORTIS_Data.gcount() ;
@@ -114,36 +126,37 @@ public:
       // Construct 32-bit frame number from data.
       m_currentFrame = m_frameBuffer[m_bufferNumber][0] + 0x10000*m_frameBuffer[m_bufferNumber][1]  ;
       //std::cout << "Read  frame number = " << m_currentFrame << std::endl ;
-      EUDAQ_DEBUG("Read  frame number = " + eudaq::to_string(m_currentFrame));
+      if ( m_debug_level & FORTIS_DEBUG_FRAMEREAD ) {EUDAQ_DEBUG("Read  frame number = " + eudaq::to_string(m_currentFrame));}
 
-      if ( m_currentFrame < m_previousFrame)  {
-	printFrames( m_bufferNumber ); // dump frames and die.
-	string ErrorMessage = "Data corruption. Currrent frame is less than previous frame:" + eudaq::to_string(m_currentFrame) + "  < " + eudaq::to_string(m_previousFrame);
-	m_previousFrame = m_currentFrame;
-        EUDAQ_THROW(ErrorMessage);
 
-      } else if ( (m_currentFrame != (m_previousFrame+1)) && ( m_previousFrame != 0 ) ) { // flag skipped frames if frame counter hasn't incrememented by one AND we aren't right at the beginning of the run.
+      
+    
+      if ((m_currentFrame != (m_previousFrame+1)) 
+	  && ( m_previousFrame != 0 ))  { // flag skipped frames if frame counter hasn't incrememented by one AND we aren't right at the beginning of the run.
 
 	EUDAQ_INFO("Detected skipped frame(s): current, previous frame# =  " + eudaq::to_string(m_currentFrame) + "  " + eudaq::to_string(m_previousFrame) );
 	// std::cout << "Detected skipped frame(s): current, previous frame# = " << m_currentFrame << "   " << m_previousFrame << std::endl;
       }
-      m_previousFrame = m_currentFrame;
-
+  
 #endif
 
-    }  catch (const std::exception & e) {
+  }  catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(eudaq::Status::LVL_ERROR, "Read Error");
-    }
-
-    if (started) { // OK, the run has started. We want to do something with the frames we are reading....
-
-      std::cout << "Processing data"<<std::endl;
-
-      ProcessFrame();
-
-    }
   }
+
+
+
+  if (started) { // OK, the run has started. We want to do something with the frames we are reading....
+    if ( m_debug_level & FORTIS_DEBUG_PROCESSLOOP ) {
+      EUDAQ_DEBUG("Processing data");
+    }
+    ProcessFrame();
+  }
+
+  m_previousFrame = m_currentFrame;
+  
+  } // Process
 
 
   // Called from Process, in order to 
@@ -156,13 +169,14 @@ public:
     unsigned int word_counter ;
 
     // If DEBUG flag is set then print out the frame...
-#if FORTIS_DEBUG
-    printFrames(m_bufferNumber);
-#endif
+    if ( m_debug_level & FORTIS_DEBUG_PRINTRAW ) {printFrames(m_bufferNumber);}
+
+    checkFrame( true ); // check - and if possible correct - frame.
 
     if (  m_triggersPending > 0 ) { // We have triggers pending from a previous frame. 
                                      // Append this frame to the previous one and send out event....
 
+      unsigned int frameNumberFromData = m_rawData[0] + m_rawData[1]*0x10000;
 		// look the other way while I do something really inefficient....
 		int frame;
 
@@ -174,7 +188,7 @@ public:
 			}
 		}
     
-		std::cout << "Sending Event number " << m_ev << " , frame number from current_frame = " << m_currentFrame << " frame number from raw_data = " << (m_rawData[0] + m_rawData[1]*0x10000)<< std::endl;
+		if ( m_debug_level & FORTIS_DEBUG_EVENTSEND ) { EUDAQ_DEBUG("Sending Event number " + eudaq::to_string(m_ev) +  " , frame number from current_frame = " + eudaq::to_string(m_currentFrame) + " frame number from raw_data = " + eudaq::to_string(frameNumberFromData) ); }
  
 		RawDataEvent ev(FORTIS_DATATYPE_NAME, m_run, m_ev); // create an instance of the RawDataEvent with FORTIS-ID
 	   
@@ -190,7 +204,7 @@ public:
 		while ( m_triggersPending > 0 ) {
 
 		  // std::cout << "Sending EMPTY Event number " << m_ev << std::endl;
-		  EUDAQ_DEBUG("Sending EMPTY Event number " + eudaq::to_string(m_ev));
+		  if ( m_debug_level & FORTIS_DEBUG_EVENTSEND ) {EUDAQ_DEBUG("Sending EMPTY Event number " + eudaq::to_string(m_ev));}
 
 		  RawDataEvent ev(FORTIS_DATATYPE_NAME, m_run, m_ev);
 		  SendEvent( ev );
@@ -208,9 +222,9 @@ public:
       unsigned int TriggerWord = m_frameBuffer[m_bufferNumber ][row_counter*words_per_row ] ;
       unsigned int LatchWord   = m_frameBuffer[m_bufferNumber ][1+ row_counter*words_per_row ] ;
 
-#if FORTISDEBUG
-      std::cout << "row, Trigger words : " <<  hex << row_counter << "  " << TriggerWord << "   " << LatchWord  << std::endl;
-#endif
+      if ( m_debug_level & FORTIS_DEBUG_TRIGGERWORDS ) {
+	std::cout << "row, Trigger words : " <<  hex << row_counter << "  " << TriggerWord << "   " << LatchWord  << std::endl;
+      }
 
       m_triggersPending +=  ( 0x00FF & TriggerWord );	  
 
@@ -231,20 +245,22 @@ public:
 	m_resetSyncFrame = m_currentFrame ;
 	m_resetSyncRow = row_counter ;
 	// put entry into log....
-	EUDAQ_DEBUG("Found reset pulse in data. Frame number = " + eudaq::to_string(m_resetSyncFrame) + " Frame number = "+ eudaq::to_string(m_resetSyncRow) );
+	EUDAQ_INFO("Found reset pulse in data. Frame number = " + eudaq::to_string(m_resetSyncFrame) + " Frame number = "+ eudaq::to_string(m_resetSyncRow) );
       }
       
     }
 
-    EUDAQ_DEBUG("Found " + eudaq::to_string(m_triggersPending) +  " triggers in frame " + eudaq::to_string(m_currentFrame) );
-    // std::cout << "Found " << m_triggersPending << " triggers in frame " << m_currentFrame << std::endl;
+    if ( m_debug_level & FORTIS_DEBUG_TRIGGERS ) {
+      EUDAQ_DEBUG("Found " + eudaq::to_string(m_triggersPending) +  " triggers in frame " + eudaq::to_string(m_currentFrame) );
+    }
 
-    if ( ( m_ev < 10 ) || ( m_ev % 10 == 0 )){ // print out a debug message for each of first ten events, then every 10th 
-      EUDAQ_INFO( "Processed frame number = " + eudaq::to_string(m_currentFrame) );
+#   define FORTIS_FRAME_PRINT_INTERVAL 10
+    if ( m_currentFrame % FORTIS_FRAME_PRINT_INTERVAL == 0 ){ // print out a debug message for every ten frames 
+      EUDAQ_INFO( "Processed frame number = " + eudaq::to_string(m_currentFrame) + " current event = " + eudaq::to_string(m_ev) );
     }
 
 
-  }
+  } // ProcessFrame
 
   virtual void OnConfigure(const eudaq::Configuration & param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
@@ -254,96 +270,96 @@ public:
     configured = false;
 
     try {
-		std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+      EUDAQ_INFO( "Configuring (" + param.Name() + ")...");
 
-		// put our configuration stuff in here...
-		m_NumRows = m_param.Get("NumRows", 512) ;
-		m_NumColumns = m_param.Get("NumColumns", 512) ;
-		m_numPixelsPerFrame = ( m_NumColumns + WORDS_IN_ROW_HEADER) *   m_NumRows ;
+      // put our configuration stuff in here...
+      m_debug_level = m_param.Get("DebugLevel",0);
+      m_NumRows = m_param.Get("NumRows", 512) ;
+      m_NumColumns = m_param.Get("NumColumns", 512) ;
+      m_numPixelsPerFrame = ( m_NumColumns + WORDS_IN_ROW_HEADER) *   m_NumRows ;
 
-		m_numBytesPerFrame = sizeof(short) * m_numPixelsPerFrame;
-	  
-		std::cout << "Number of rows: " <<  m_NumRows << std::endl;
-		std::cout << "Number of columns: " <<  m_NumColumns  << std::endl;
-		std::cout << "Number of pixels in each frame (including row-headers) = " << m_numPixelsPerFrame << std::endl;
-
-
-		// if pipe is already open then close it....
-		if ( m_FORTIS_Data.is_open() ) { 
-		  std::cout << "Closing named pipe";
-		  m_FORTIS_Data.close(); }
+      m_numBytesPerFrame = sizeof(short) * m_numPixelsPerFrame;
+      
+      std::cout << "Number of rows: " <<  m_NumRows << std::endl;
+      std::cout << "Number of columns: " <<  m_NumColumns  << std::endl;
+      std::cout << "Number of pixels in each frame (including row-headers) = " << m_numPixelsPerFrame << std::endl;
 
 
-		// start the executable that will transmitt data.
-		std::cout << "Starting Command line programme to stream FORTIS data" << std::endl;
-		killExecutable();
-		startExecutable();
-
-		eudaq::mSleep(1000); // go to sleep for a couple of seconds before opening pipe....
-		// Now try to open the named pipe that will accept data from the OptoDAQV programme.
+      // if pipe is already open then close it....
+      if ( m_FORTIS_Data.is_open() ) { 
+	std::cout << "Closing named pipe";
+	m_FORTIS_Data.close(); }
 
 
+      // start the executable that will transmitt data.
+      std::cout << "Starting Command line programme to stream FORTIS data" << std::endl;
+      killExecutable();
+      startExecutable();
 
-		// conditional compilation depending on Windows-MinGW or Linux/Cygwin
+      eudaq::mSleep(1000); // go to sleep for a couple of seconds before opening pipe....
+      // Now try to open the named pipe that will accept data from the OptoDAQV programme.
+
+
+
+      // conditional compilation depending on Windows-MinGW or Linux/Cygwin
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
-		std::string filename = m_param.Get("NamedPipe","\\\\.\\pipe\\EUDAQPipe") ;
+      std::string filename = m_param.Get("NamedPipe","\\\\.\\pipe\\EUDAQPipe") ;
 
-		// Open input file ( actually a named pipe... )
-		std::cout << "About to create named pipe. Filename = " << filename << std::endl;
+      // Open input file ( actually a named pipe... )
+      std::cout << "About to create named pipe. Filename = " << filename << std::endl;
 
-		m_FORTIS_Data = CreateNamedPipe(
-			  filename.c_str(), 
-			  PIPE_ACCESS_INBOUND,
-			  PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 
-			  1, m_numBytesPerFrame , m_numBytesPerFrame, 0, NULL);
+      m_FORTIS_Data = CreateNamedPipe(
+				      filename.c_str(), 
+				      PIPE_ACCESS_INBOUND,
+				      PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 
+				      1, m_numBytesPerFrame , m_numBytesPerFrame, 0, NULL);
   
 
-		if ( m_FORTIS_Data == NULL ) { EUDAQ_THROW("Problems creating named pipe"); }
+      if ( m_FORTIS_Data == NULL ) { EUDAQ_THROW("Problems creating named pipe"); }
 #else
-		std::string filename = m_param.Get("NamedPipe","./fortis_named_pipe") ;
+      std::string filename = m_param.Get("NamedPipe","./fortis_named_pipe") ;
 
-		std::cout << "About to open named pipe = " << filename << std::endl;
+      std::cout << "About to open named pipe = " << filename << std::endl;
 
-		m_FORTIS_Data.open( filename.c_str() , ios::in | ios::binary );
-		std::cout << "Opened pipe = " << filename << std::endl;
-		if ( ! m_FORTIS_Data.is_open() ) { 
-		  EUDAQ_THROW("Error opening named pipe"); 
-		} else {
-		  std::cout << "Opened named pipe sucessfully" << std::endl;
-		}
+      m_FORTIS_Data.open( filename.c_str() , ios::in | ios::binary );
+      std::cout << "Opened pipe = " << filename << std::endl;
+      if ( ! m_FORTIS_Data.is_open() ) { 
+	EUDAQ_THROW("Error opening named pipe"); 
+      } else {
+	std::cout << "Opened named pipe sucessfully" << std::endl;
+      }
 #endif
 	
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
-		std::cout << "Waiting for connection to pipe" << std::endl;
-		ConnectNamedPipe(m_FORTIS_Data, NULL);
-		std::cout << "Client has connected to pipe" << std::endl;
+      std::cout << "Waiting for connection to pipe" << std::endl;
+      ConnectNamedPipe(m_FORTIS_Data, NULL);
+      std::cout << "Client has connected to pipe" << std::endl;
 #endif      
 
-		m_frameBuffer[0].resize(  m_numPixelsPerFrame); // set the size of our frame buffer.
-		m_frameBuffer[1].resize(  m_numPixelsPerFrame); 
-		m_rawData.resize( 2 * m_numPixelsPerFrame); // set the size of our event(big enough for two frames)...
+      m_frameBuffer[0].resize(  m_numPixelsPerFrame); // set the size of our frame buffer.
+      m_frameBuffer[1].resize(  m_numPixelsPerFrame); 
+      m_rawData.resize( 2 * m_numPixelsPerFrame); // set the size of our event(big enough for two frames)...
 
 		
-		std::cout << "Sleeping before announcing config. complete"  << std::endl;
-		eudaq::mSleep(1000); // go to sleep for a couple of seconds before opening pipe....
-		configured = true;
+      std::cout << "Sleeping before announcing config. complete"  << std::endl;
+      eudaq::mSleep(1000); // go to sleep for a couple of seconds before opening pipe....
+      configured = true;
 
-		std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-		EUDAQ_INFO("Configured (" + param.Name() + ")");
-		SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+      EUDAQ_INFO("Configured (" + param.Name() + ")");
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
 		
     } catch (const std::exception & e) {
-		printf("Caught exception: %s\n", e.what());
-		SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      printf("Caught exception: %s\n", e.what());
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     } catch (char * str) {
-		printf("Exception: %s\n" , str);
-		SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      printf("Exception: %s\n" , str);
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     } catch (...) {
-		printf("Unknown exception\n");
-		SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      printf("Unknown exception\n");
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     }
-  }
+  } // OnConfigure
 
 
   virtual void OnStartRun(unsigned param) {
@@ -386,13 +402,14 @@ public:
       printf("Unknown exception\n");
       SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     }
-  }
+  } // end of OnStartRun
   
 
   virtual void OnStopRun() {
     try {
       std::cout << "Stopping Run" << std::endl;
       juststopped = true;
+      m_FortisFrameEORCount = FORTIS_NUM_EOR_FRAMES ; // set count down...
       while (started) {
         eudaq::mSleep(100);
       }
@@ -406,7 +423,7 @@ public:
       printf("Unknown exception\n");
       SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     }
-  }
+  } // end of OnStopRun
 
 
   virtual void OnTerminate() {
@@ -425,12 +442,13 @@ public:
 #endif	
 
 	done = true;
-  }
+  } // end of OnTerminate
 
 
       // Declare members of class FORTISProducer.
   unsigned m_run, m_ev;
   bool done, started, juststopped , configured;
+  unsigned m_FortisFrameEORCount;
   eudaq::Configuration  m_param;
 
   std::vector<unsigned short> m_rawData; // buffer for raw data frames. 
@@ -471,6 +489,8 @@ private:
   unsigned int m_numBytesPerFrame ;
 
   pthread_t m_executableThreadId;
+
+  unsigned int m_debug_level;
   
   ExecutableArgs m_exeArgs;
   
@@ -545,4 +565,156 @@ private:
 
   }
 
-};
+  // -----------------------------------------------------------------------
+  // check frame and if fixFrame is set then try to correct.
+  void checkFrame( bool fixFrame ) {
+
+    // std::cout << "Checking frame. Number = " << m_currentFrame  << std::endl ;
+
+    unsigned int currentWord;
+    unsigned int rowCounter;
+    unsigned int wordsPerRow =  m_NumColumns +  WORDS_IN_ROW_HEADER;
+
+    const unsigned int wordsToSkip = 2;
+
+    // first check if the frame number is messed up
+    if ( m_currentFrame < m_previousFrame ) {
+      EUDAQ_WARN("Data corruption. Current frame-number is less than previous frame. Current , previous frame = " + eudaq::to_string(m_currentFrame) + "  " + eudaq::to_string(m_previousFrame) );
+      std::cout << "Data corruption. Frame number problem.  Dumping frame. Current, previous frame = " << m_currentFrame << "  " << m_previousFrame << std::endl;
+      printFrames( m_bufferNumber );
+
+
+      unsigned int RightShiftedFrameNumber = m_frameBuffer[m_bufferNumber][wordsToSkip] + 0x10000*m_frameBuffer[m_bufferNumber][wordsToSkip+1]  ;
+      std::cout << "RightShiftedFrameNumber (hex)= "<< hex <<  RightShiftedFrameNumber << dec << std::endl;
+
+      if ( RightShiftedFrameNumber == ( m_previousFrame +1 ) ) {
+	EUDAQ_INFO("Looks like data recovery possible.");
+	if ( fixFrame ) {
+	  // if we get here we probably can fix the data , and we want to do so.
+	  EUDAQ_INFO("Attempting data recovery.");
+	  currentWord=0;
+	  recoverFrame( wordsToSkip , false , currentWord);
+	} else {
+	  EUDAQ_THROW("Correctable Frame number data corruption. fix=false, so bailing out");
+	}
+      } else {
+	  EUDAQ_THROW("Uncorrectable frame number data corruption. Bailing out");
+      }
+
+    }
+     
+    // next look through the frame and make sure that the row numbers are OK
+    unsigned int previousRow = 0;
+    for (rowCounter=1; rowCounter < m_NumRows ; rowCounter++) {
+      
+      unsigned int rowCounterFromData = m_frameBuffer[m_bufferNumber][wordsPerRow*rowCounter + 1] & FORTIS_MAXROW ;
+
+      if ( rowCounterFromData != (previousRow +1)) { // start of row recovery
+	EUDAQ_WARN("Data corruption. Current row-number is incorrect. Current , previous row = " + eudaq::to_string(rowCounterFromData) + "  " + eudaq::to_string(previousRow) );
+	std::cout << "Data corruption. Row number problem. Dumping frame" << std::endl;
+	printFrames( m_bufferNumber );
+
+	// maximum frame number for FORTIS 1.1 = 511 , therefore mask with 0x01FF
+	unsigned int RightShiftedRowCounter = m_frameBuffer[m_bufferNumber][wordsPerRow*rowCounter + 1 + wordsToSkip ] & FORTIS_MAXROW ;
+	unsigned int LeftShiftedRowCounter  = m_frameBuffer[m_bufferNumber][wordsPerRow*rowCounter + 1 - wordsToSkip ] & FORTIS_MAXROW ;
+	bool padFlag;
+
+	if ( RightShiftedRowCounter == (previousRow +1)) {
+	  padFlag = false; // need to delete some words
+	  rowCounterFromData = RightShiftedRowCounter ; // need to reset rowCounterFromData or we will fail the next time through.
+	} else if ( LeftShiftedRowCounter == (previousRow +1)) {
+	  padFlag = true; // need to add some words
+	  rowCounterFromData = LeftShiftedRowCounter ; // need to reset rowCounterFromData or we will fail the next time through.
+	} else {
+	  EUDAQ_THROW("Uncorrectable row number data corruption. Bailing out");
+	}
+
+	// if we get here we think we can fix the problem.
+
+	EUDAQ_INFO("Looks like data recovery possible.");
+
+	if ( fixFrame ) {
+	  // if we get here we probably can fix the data , and we want to do so.
+	  EUDAQ_INFO("Attempting data recovery.");
+	  currentWord=wordsPerRow*rowCounter;
+	  recoverFrame( wordsToSkip , padFlag , currentWord); // try to recover from data slippage. Throw an exception inside if fails.
+
+	} else {
+	  EUDAQ_THROW("Correctable row-number data corruption. fix=false, so bailing out");
+	}
+	
+      } // end of row-recovery       
+
+      previousRow = rowCounterFromData;
+      
+    } // end of row-counter loop
+
+    // we have now checked for frame number problems and row number problems.
+
+  } // end of checkFrame
+  
+  void recoverFrame ( unsigned int wordsToSkip , bool padFlag , unsigned int currentWord ) {
+
+    // if padFlag is false , removes two words at "currentWord" in frame buffer and adds zeros to end of frame.
+    // if padFlag is true , adds two words at "currentWord"
+
+    int wordOffset = padFlag ? -1*wordsToSkip : wordsToSkip;
+
+    std::vector<unsigned short> tempBuffer = m_frameBuffer[m_bufferNumber];
+ 
+    std::vector<unsigned short>::iterator itFrameBuffer = m_frameBuffer[m_bufferNumber].begin() + currentWord;
+    std::vector<unsigned short>::iterator  itTempBufferFirst = tempBuffer.begin() + currentWord + wordOffset;
+    std::vector<unsigned short>::iterator  itTempBufferLast = tempBuffer.end();
+
+    if ( padFlag ) { itTempBufferLast -= wordsToSkip ; } // subtract words from iterator to avoid overflowing m_currentFrame
+
+    m_frameBuffer[m_bufferNumber].insert( itFrameBuffer , itTempBufferFirst , itTempBufferLast ) ;
+
+    std::cout << "Data corruption (hopefully) corrected. Printing frames after correction:" << std::endl;
+
+    std::cout << "Fixing up frame number. Frame number before fix:  m_currentFrame = " << m_currentFrame << std::endl;
+    m_currentFrame = m_frameBuffer[m_bufferNumber][0] + 0x10000*m_frameBuffer[m_bufferNumber][1]  ;
+    std::cout << "Frame number after fix = " << m_currentFrame << std::endl;
+
+    printFrames( m_bufferNumber );
+
+    /*    
+    if (  padFlag ) {
+      // if we need to add some words, then push them back into the stream.
+      std::cout << "Pushing back dummy frame number to stream ..." << std::endl;
+      assert ( wordsToSkip == 2 ); // this trick will only work if we pushing back the 32-bit frame number and nothing else.
+      unsigned int byteCounter ;
+      for ( byteCounter=0; byteCounter < ( wordsToSkip * sizeof(short )) ; byteCounter++ ) {
+	unsigned int maskedWord = (( m_currentFrame + 1)>>(byteCounter*8)) & 0x000000FF  ;
+	char byteToPush = (char) maskedWord;
+	std::cout << "byte " << byteCounter <<" pushing " << std::hex << maskedWord << std::dec << std::endl;
+	std::cout << "Rdstate before push : badbit , failbit , eofbit : " << ( m_FORTIS_Data.rdstate( ) & ios::badbit ) << "  " << ( m_FORTIS_Data.rdstate( ) & ios::failbit ) << "  " << ( m_FORTIS_Data.rdstate( ) & ios::eofbit ) << endl;
+	m_FORTIS_Data.putback( byteToPush );
+	std::cout << "Rdstate after push : badbit , failbit , eofbit : " << ( m_FORTIS_Data.rdstate( ) & ios::badbit ) << "  " << ( m_FORTIS_Data.rdstate( ) & ios::failbit ) << "  " << ( m_FORTIS_Data.rdstate( ) & ios::eofbit ) << endl; 
+      }
+
+    } else {
+      // If we want to chop out some words, read in some words from pipe
+      char * dummyBuffer = new char [ sizeof(short)* wordsToSkip ];
+      m_FORTIS_Data.read( dummyBuffer , sizeof(short)*wordsToSkip );
+      delete dummyBuffer; // don't want small but tiresome memory leak.
+      unsigned int wordsRead = m_FORTIS_Data.gcount() ;
+      if ( wordsRead != (unsigned) sizeof(short)*wordsToSkip  ) {
+	EUDAQ_THROW("Read wrong number of chars from pipe while attempting data recovery: " + eudaq::to_string(wordsRead));
+      }
+    
+
+    } // end of reading words from pipe.
+
+    */
+
+  }
+
+
+  void SetDebugLevel(unsigned level) {
+    m_debug_level = level;
+  }
+
+  };
+
+
