@@ -141,7 +141,7 @@ int main(int /*argc*/, char ** argv) {
       
     counted_ptr<eudaq::Event> lastevent;
 
-    if (do_event_to_ttree.IsSet()) EUDAQ_THROW("Use ./Converter.exe with -t root.");
+    if (do_event_to_ttree.IsSet()) throw eudaq::MessageException("The -r option is deprecated: use \"./Converter.exe -t root\" instead.");
         
     for (size_t i = 0; i < op.NumArgs(); ++i) {
                          
