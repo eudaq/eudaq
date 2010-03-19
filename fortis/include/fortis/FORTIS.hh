@@ -2,7 +2,7 @@
 #define FORTIS_DATATYPE_NAME "FORTIS"
 #define WORDS_IN_ROW_HEADER 2
 
-#define FORTIS_MAXROW 0x01FF
+#define FORTIS_MAXROW 0x00FF
 
 // the number of frames to wait after "stopping" flag is set true before haling run.
 #define FORTIS_NUM_EOR_FRAMES 10

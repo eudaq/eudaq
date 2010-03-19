@@ -16,6 +16,7 @@
 #include <fstream>
 #include <cctype>
 #include <vector>
+#include <queue>
 #include <cassert>
 #include <pthread.h>
 
@@ -194,19 +195,36 @@ public:
 	   
 		// std::cout << "Created RawDataEvent. About to add block" << std::endl; //debug
 		ev.AddBlock(evtModID , m_rawData); // add the raw data block to the event
-	   
+
+		// Set tagw with the frame number and pivot row
+		ev.SetTag("FRAMENUMBER" , to_string(m_previousFrame));
+		unsigned int pivotRow = m_pivotPixels.front(); m_pivotPixels.pop();
+		ev.SetTag("PIVOTROW" , to_string(pivotRow));
+		ev.SetTag("CHILDEVENTS" , to_string(m_triggersPending-1));
+ 
 		// std::cout << "Added block. About to call SendEvent" << std::endl; //debug
 		SendEvent( ev ); // send the 2-frame data to the data-collector
+
+		unsigned int parentEvent = m_ev; 
 
 		++m_ev; // increment the internal event counter.
 		--m_triggersPending; // decrement the number of triggers to send out...
 
-		while ( m_triggersPending > 0 ) {
+
+		while ( m_triggersPending > 0 ) { // pad out with events with no raw data.
 
 		  // std::cout << "Sending EMPTY Event number " << m_ev << std::endl;
 		  if ( m_debug_level & FORTIS_DEBUG_EVENTSEND ) {EUDAQ_DEBUG("Sending EMPTY Event number " + eudaq::to_string(m_ev));}
 
+		  // create an event to send to keep the FORTIS producer in step with other producere.
 		  RawDataEvent ev(FORTIS_DATATYPE_NAME, m_run, m_ev);
+
+		  // Set tags with the frame number and event number we are associated with.
+		  ev.SetTag("FRAMENUMBER" , to_string(m_previousFrame));
+		  ev.SetTag("PARENTEVENT" , to_string(parentEvent)); // point back to the frame with the data.....
+		  unsigned int pivotRow = m_pivotPixels.front(); m_pivotPixels.pop();
+		  ev.SetTag("PIVOTROW" , to_string(pivotRow));
+		  
 		  SendEvent( ev );
 		  ++m_ev; // increment the internal event counter.
 		  --m_triggersPending; // decrement the number of triggers to send out...
@@ -214,11 +232,13 @@ public:
 
     }
 
-    m_triggersPending = 0; // this shouldn't be necessary....
+
 
     // Loop through looking for triggers ...
+    m_triggersPending = 0; // this shouldn't be necessary....
     for ( row_counter=1; row_counter < m_NumRows ; row_counter++) {
 
+      unsigned int triggersInCurrentRow , triggersInRowZero;
       unsigned int TriggerWord = m_frameBuffer[m_bufferNumber ][row_counter*words_per_row ] ;
       unsigned int LatchWord   = m_frameBuffer[m_bufferNumber ][1+ row_counter*words_per_row ] ;
 
@@ -226,11 +246,17 @@ public:
 	std::cout << "row, Trigger words : " <<  hex << row_counter << "  " << TriggerWord << "   " << LatchWord  << std::endl;
       }
 
-      m_triggersPending +=  ( 0x00FF & TriggerWord );	  
-
       if ( row_counter == 1 ) { // if we are on the first row, include the previous row ( zero ) where the trigger counter is taken over by the frame-counter.
-	m_triggersPending += (( 0xFF00 & TriggerWord )>>8) ;
-      } // end of search for triggers
+	triggersInRowZero = (( 0xFF00 & TriggerWord )>>8) ;
+	m_triggersPending += triggersInRowZero;
+	for ( size_t trig = 0; trig < triggersInRowZero; trig++) { m_pivotPixels.push(row_counter); } // push current row into pivot-pixels FIFO
+      }
+
+      triggersInCurrentRow = ( 0x00FF & TriggerWord );	  
+      m_triggersPending += triggersInCurrentRow ;
+      for ( size_t trig = 0; trig < triggersInCurrentRow; trig++) { m_pivotPixels.push(row_counter); } // push current row into pivot-pixels FIFO
+
+      // end of search for triggers
 
       if ( m_triggersPending > MAX_TRIGGERS_PER_FORTIS_FRAME ) {
 	std::cout << "Too many triggers found. Dumping frame" << std::endl;
@@ -254,9 +280,10 @@ public:
       EUDAQ_DEBUG("Found " + eudaq::to_string(m_triggersPending) +  " triggers in frame " + eudaq::to_string(m_currentFrame) );
     }
 
-#   define FORTIS_FRAME_PRINT_INTERVAL 10
+#   define FORTIS_FRAME_PRINT_INTERVAL 100
     if ( m_currentFrame % FORTIS_FRAME_PRINT_INTERVAL == 0 ){ // print out a debug message for every ten frames 
-      EUDAQ_INFO( "Processed frame number = " + eudaq::to_string(m_currentFrame) + " current event = " + eudaq::to_string(m_ev) );
+      EUDAQ_DEBUG( "Processed frame number = " + eudaq::to_string(m_currentFrame) + " current event = " + eudaq::to_string(m_ev) );
+      std::cout << "Processed frame number = " << m_currentFrame << " current event = " <<m_ev << std::endl;
     }
 
 
@@ -385,7 +412,7 @@ public:
       ev.SetTag("InitialRow", to_string( m_param.Get("InitialRow", 0x0)  )) ; // put run parameters into BORE
       ev.SetTag("InitialColumn", to_string( m_param.Get("InitialColumn", 0x0) )) ; // put run parameters into BORE  
       ev.SetTag("NumRows", to_string( m_param.Get("NumRows", 512) )) ; // put run parameters into BORE
-      ev.SetTag("NumColumns", to_string( m_param.Get("NumRows", 512) )) ; // put run parameters into BORE
+      ev.SetTag("NumColumns", to_string( m_param.Get("NumColumns", 512) )) ; // put run parameters into BORE
 
       ev.SetTag("Vectors", m_param.Get("Vectors", "./MyVectors.bin" ) ) ; // put run parameters into BORE
 
@@ -478,6 +505,8 @@ private:
 
   unsigned int m_triggersPending;
   unsigned int m_bufferNumber  ;
+
+  std::queue<unsigned int> m_pivotPixels;
 
   bool m_resetSyncFound;
   unsigned int m_resetSyncFrame;
@@ -609,7 +638,9 @@ private:
       
       unsigned int rowCounterFromData = m_frameBuffer[m_bufferNumber][wordsPerRow*rowCounter + 1] & FORTIS_MAXROW ;
 
-      if ( rowCounterFromData != (previousRow +1)) { // start of row recovery
+      unsigned int maskedPreviousRowPlusOne = (previousRow +1)& FORTIS_MAXROW; // only have 8 bits of row counter.
+
+      if ( rowCounterFromData != maskedPreviousRowPlusOne ) { // start of row recovery
 	EUDAQ_WARN("Data corruption. Current row-number is incorrect. Current , previous row = " + eudaq::to_string(rowCounterFromData) + "  " + eudaq::to_string(previousRow) );
 	std::cout << "Data corruption. Row number problem. Dumping frame" << std::endl;
 	printFrames( m_bufferNumber );
@@ -619,10 +650,10 @@ private:
 	unsigned int LeftShiftedRowCounter  = m_frameBuffer[m_bufferNumber][wordsPerRow*rowCounter + 1 - wordsToSkip ] & FORTIS_MAXROW ;
 	bool padFlag;
 
-	if ( RightShiftedRowCounter == (previousRow +1)) {
+	if ( RightShiftedRowCounter == maskedPreviousRowPlusOne) {
 	  padFlag = false; // need to delete some words
 	  rowCounterFromData = RightShiftedRowCounter ; // need to reset rowCounterFromData or we will fail the next time through.
-	} else if ( LeftShiftedRowCounter == (previousRow +1)) {
+	} else if ( LeftShiftedRowCounter == maskedPreviousRowPlusOne) {
 	  padFlag = true; // need to add some words
 	  rowCounterFromData = LeftShiftedRowCounter ; // need to reset rowCounterFromData or we will fail the next time through.
 	} else {
