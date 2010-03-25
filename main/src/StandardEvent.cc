@@ -129,6 +129,106 @@ namespace eudaq {
     return m_pivot.at(frame).at(index);
   }
 
+  const std::vector<StandardPlane::coord_t> & StandardPlane::XVector(unsigned frame) const {
+    return GetFrame(m_x, frame);
+  }
+
+  const std::vector<StandardPlane::coord_t> & StandardPlane::XVector() const {
+    SetupResult();
+    return *m_result_x;
+  }
+
+  const std::vector<StandardPlane::coord_t> & StandardPlane::YVector(unsigned frame) const {
+    return GetFrame(m_y, frame);
+  }
+
+  const std::vector<StandardPlane::coord_t> & StandardPlane::YVector() const {
+    SetupResult();
+    return *m_result_y;
+  }
+
+  const std::vector<StandardPlane::pixel_t> & StandardPlane::PixVector(unsigned frame) const {
+    return GetFrame(m_pix, frame);
+  }
+
+  const std::vector<StandardPlane::pixel_t> & StandardPlane::PixVector() const {
+    SetupResult();
+    return *m_result_pix;
+  }
+
+  void StandardPlane::SetXSize(unsigned x) {
+    m_xsize = x;
+  }
+
+  void StandardPlane::SetYSize(unsigned y) {
+    m_ysize = y;
+  }
+
+  void StandardPlane::SetTLUEvent(unsigned ev) {
+    m_tluevent = ev;
+  }
+
+  void StandardPlane::SetPivotPixel(unsigned p) {
+    m_pivotpixel = p;
+  }
+
+  unsigned StandardPlane::ID() const {
+    return m_id;
+  }
+
+  const std::string & StandardPlane::Sensor() const {
+    return m_sensor;
+  }
+
+  unsigned StandardPlane::XSize() const {
+    return m_xsize;
+  }
+
+  unsigned StandardPlane::YSize() const {
+    return m_ysize;
+  }
+
+  unsigned StandardPlane::NumFrames() const {
+    return m_pix.size();
+  }
+
+  unsigned StandardPlane::TotalPixels() const {
+    return m_xsize * m_ysize;
+  }
+
+  unsigned StandardPlane::HitPixels(unsigned frame) const {
+    return GetFrame(m_pix, frame).size();
+  }
+
+  unsigned StandardPlane::HitPixels() const {
+    SetupResult();
+    return m_result_pix->size();
+  }
+
+  unsigned StandardPlane::TLUEvent() const {
+    return m_tluevent;
+  }
+
+  unsigned StandardPlane::PivotPixel() const {
+    return m_pivotpixel;
+  }
+
+  int StandardPlane::GetFlags(int f) const {
+    return m_flags & f;
+  }
+
+  bool StandardPlane::NeedsCDS() const {
+    return GetFlags(FLAG_NEEDCDS);
+  }
+
+  int StandardPlane::Polarity() const {
+    return GetFlags(FLAG_NEGATIVE) ? -1 : 1;
+  }
+
+  const std::vector<StandardPlane::pixel_t> & StandardPlane::GetFrame(const std::vector<std::vector<pixel_t> > & v, unsigned f) const {
+    return v.at(f);
+  }
+
   template <typename T>
   std::vector<T> StandardPlane::GetPixels() const {
     SetupResult();
@@ -211,47 +311,6 @@ namespace eudaq {
     }
     
   }
-
-#if 0
-  template <typename T>
-  std::vector<T> StandardPlane::GetPixels() const {
-    std::vector<T> result(m_pix[0].size());
-    if (m_pix.size() == 1 && !GetFlags(FLAG_NEEDCDS)) {
-      for (size_t i = 0; i < result.size(); ++i) {
-        result[i] = static_cast<T>(m_pix[0][i] * Polarity());
-      }
-    } else if (m_pix.size() == 2) {
-      if (GetFlags(FLAG_NEEDCDS)) {
-        for (size_t i = 0; i < result.size(); ++i) {
-          result[i] = static_cast<T>((m_pix[1][i] - m_pix[0][i]) * Polarity());
-        }
-      } else {
-        if (m_x.size() == 1) {
-          for (size_t i = 0; i < result.size(); ++i) {
-            result[i] = static_cast<T>(m_pix[1 - m_pivot[0][i]][i] * Polarity());
-          }
-        } else {
-          result.resize(0);
-          for (size_t i = 0; i < result.size(); ++i) {
-            result[i] = static_cast<T>(m_pix[0][i] * Polarity());
-          }
-        }
-      }
-    } else if (m_pix.size() == 3 && GetFlags(FLAG_NEEDCDS)) {
-      std::vector<T> result(m_pix[0].size());
-      for (size_t i = 0; i < result.size(); ++i) {
-        result[i] = static_cast<T>((m_pix[0][i] * (m_pivot[0][i]-1)
-                                    + m_pix[1][i] * (2*m_pivot[0][i]-1)
-                                    + m_pix[2][i] * (m_pivot[0][i])
-                                     ) * Polarity());
-      }
-    } else {
-      EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-                  + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
-    }
-    return result;
-  }
-#endif
 
   template std::vector<short> StandardPlane::GetPixels<>() const;
   template std::vector<int> StandardPlane::GetPixels<>() const;

@@ -1,26 +1,13 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/ExampleHardware.hh"
 #include <iostream>
 #include <ostream>
 #include <vector>
-
-// This is just a dummy class representing the hardware
-// It only here so that the example code below will compile
-class ExampleHardware {
-public:
-  void Setup(int) {
-  }
-  bool EventsPending() const {
-    return false;
-  }
-  std::vector<unsigned char> ReadEvent() {
-    return std::vector<unsigned char>(0);
-  }
-};
-ExampleHardware hardware;
 
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
@@ -112,13 +99,16 @@ public:
       // Create a RawDataEvent to contain the event data to be sent
       eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
 
-      // Read out a block of raw data from the hardware
-      std::vector<unsigned char> buffer = hardware.ReadEvent();
-      // Each block of data has an ID that will be used for ordering the planes later
-      // If you have more than one sensor, you should number them incrementally
-      int id = 0;
-      // Add the block of raw data to the event
-      ev.AddBlock(id, buffer);
+      for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
+        // Read out a block of raw data from the hardware
+        std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
+        // Each block of data has an ID that will be used for ordering the planes later
+        // If you have more than one sensor, you should number them incrementally
+
+        // Add the block of raw data to the event
+        ev.AddBlock(plane, buffer);
+      }
+      hardware.CompletedEvent();
       // Send the event to the Data Collector      
       SendEvent(ev);
       // Now increment the event number
@@ -127,6 +117,10 @@ public:
   }
 
 private:
+  // This is just a dummy class representing the hardware
+  // It here basically that the example code will compile
+  // but it also generates example raw data to help illustrate the decoder
+  eudaq::ExampleHardware hardware;
   unsigned m_run, m_ev, m_exampleparam;
   bool stopping, done;
 };

@@ -1,13 +1,11 @@
 USE_LCIO := 0
 USE_EUTELESCOPE := 0
+USE_ROOT := 0
 
 TARGETLIB := eudaq
-EXTERNAL_DEFS += USE_LCIO=$(USE_LCIO) USE_EUTELESCOPE=$(USE_EUTELESCOPE)
+EXTERNAL_DEFS += USE_LCIO=$(USE_LCIO) USE_EUTELESCOPE=$(USE_EUTELESCOPE) USE_ROOT=$(USE_ROOT)
 EXTERNAL_DEFS += EUDAQ_FUNC=__PRETTY_FUNCTION__ EUDAQ_PLATFORM=PF_$(PLATFORM)
 EXTERNAL_LIBS += pthread
-#EXTERNAL_DEFS += USE_ROOT=1
-#EXTERNAL_INCS += $(shell root-config --incdir)
-#EXTERNAL_LDLIBS += $(shell root-config --glibs)
 
 ifneq (${USE_LCIO},0)
   EXTERNAL_INCS += ${LCIO}/include
@@ -19,6 +17,11 @@ ifneq (${USE_EUTELESCOPE},0)
   EXTERNAL_INCS += ${EUTELESCOPE}/include
   EXTERNAL_LIBS += Eutelescope
   EXTERNAL_LIBDIRS += ${EUTELESCOPE}/lib
+endif
+
+ifneq (${USE_ROOT},0)
+  EXTERNAL_INCS += $(shell root-config --incdir)
+  EXTERNAL_LDLIBS += $(shell root-config --glibs)
 endif
 
 include ../Makefile.common

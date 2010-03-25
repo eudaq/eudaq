@@ -20,18 +20,28 @@ namespace eudaq {
     };
     typedef double pixel_t;
     typedef double coord_t;
-    StandardPlane(unsigned id, const std::string & type, const std::string & sensor);
+    StandardPlane(unsigned id, const std::string & type,
+                  const std::string & sensor);
     StandardPlane(Deserializer &);
     StandardPlane();
     void Serialize(Serializer &) const;
     //StandardPlane(size_t pixels = 0, size_t frames = 1);
-    void SetSizeRaw(unsigned w, unsigned h, unsigned frames = 1, int flags = 0);
-    void SetSizeZS(unsigned w, unsigned h, unsigned npix, unsigned frames = 1, int flags = 0);
+    void SetSizeRaw(unsigned w, unsigned h,
+                    unsigned frames = 1, int flags = 0);
+    void SetSizeZS(unsigned w, unsigned h, unsigned npix,
+                   unsigned frames = 1, int flags = 0);
 
-    void SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot = false, unsigned frame = 0);
-    void SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, unsigned frame) { SetPixel(index, x, y, pix, false, frame); }
-    void PushPixel(unsigned x, unsigned y, unsigned pix, bool pivot = false, unsigned frame = 0);
-    void PushPixel(unsigned x, unsigned y, unsigned pix, unsigned frame) { PushPixel(x, y, pix, false, frame); }
+    void SetPixel(unsigned index, unsigned x, unsigned y,
+                  unsigned pix, bool pivot = false, unsigned frame = 0);
+    void SetPixel(unsigned index, unsigned x, unsigned y,
+                  unsigned pix, unsigned frame) {
+      SetPixel(index, x, y, pix, false, frame);
+    }
+    void PushPixel(unsigned x, unsigned y, unsigned pix,
+                   bool pivot = false, unsigned frame = 0);
+    void PushPixel(unsigned x, unsigned y, unsigned pix, unsigned frame) {
+      PushPixel(x, y, pix, false, frame);
+    }
 
     double GetPixel(unsigned index, unsigned frame) const;
     double GetPixel(unsigned index) const;
@@ -43,40 +53,39 @@ namespace eudaq {
     // defined for short, int, double
     template <typename T>
     std::vector<T> GetPixels() const;
-    const std::vector<coord_t> & XVector(unsigned frame) const { return GetFrame(m_x, frame); }
-    const std::vector<coord_t> & XVector() const { SetupResult(); return *m_result_x; }
-    const std::vector<coord_t> & YVector(unsigned frame) const { return GetFrame(m_y, frame); }
-    const std::vector<coord_t> & YVector() const { SetupResult(); return *m_result_y; }
-    const std::vector<pixel_t> & PixVector(unsigned frame) const { return GetFrame(m_pix, frame); }
-    const std::vector<pixel_t> & PixVector() const { SetupResult(); return *m_result_pix; }
+    const std::vector<coord_t> & XVector(unsigned frame) const;
+    const std::vector<coord_t> & XVector() const;
+    const std::vector<coord_t> & YVector(unsigned frame) const;
+    const std::vector<coord_t> & YVector() const;
+    const std::vector<pixel_t> & PixVector(unsigned frame) const;
+    const std::vector<pixel_t> & PixVector() const;
 
-    void SetXSize(unsigned x) { m_xsize = x; }
-    void SetYSize(unsigned y) { m_ysize = y; }
-    void SetTLUEvent(unsigned ev) { m_tluevent = ev; }
-    void SetPivotPixel(unsigned p) { m_pivotpixel = p; }
+    void SetXSize(unsigned x);
+    void SetYSize(unsigned y);
+    void SetTLUEvent(unsigned ev);
+    void SetPivotPixel(unsigned p);
     void SetFlags(FLAGS flags);
 
-    unsigned ID() const { return m_id; }
-    const std::string & Sensor() const { return m_sensor; }
-    unsigned XSize() const { return m_xsize; }
-    unsigned YSize() const { return m_ysize; }
-    unsigned NumFrames() const { return m_pix.size(); }
-    unsigned TotalPixels() const { return m_xsize * m_ysize; }
-    unsigned HitPixels(unsigned frame) const { return GetFrame(m_pix, frame).size(); }
-    unsigned HitPixels() const { SetupResult(); return m_result_pix->size(); }
-    unsigned TLUEvent() const { return m_tluevent; }
-    unsigned PivotPixel() const { return m_pivotpixel; }
+    unsigned ID() const;
+    const std::string & Sensor() const;
+    unsigned XSize() const;
+    unsigned YSize() const;
+    unsigned NumFrames() const;
+    unsigned TotalPixels() const;
+    unsigned HitPixels(unsigned frame) const;
+    unsigned HitPixels() const;
+    unsigned TLUEvent() const;
+    unsigned PivotPixel() const;
 
-    int GetFlags(int f) const { return m_flags & f; }
-    //bool IsZS() const { return GetFlags(FLAG_ZS); }
-    bool NeedsCDS() const { return GetFlags(FLAG_NEEDCDS); }
-    int  Polarity() const { return GetFlags(FLAG_NEGATIVE) ? -1 : 1; }
+    int GetFlags(int f) const;
+    bool NeedsCDS() const;
+    int  Polarity() const;
 
     void Print(std::ostream &) const;
   private:
-    const std::vector<pixel_t> & GetFrame(const std::vector<std::vector<pixel_t> > & v, unsigned f) const {
-      return v.at(f);
-    }
+    const std::vector<pixel_t> & GetFrame(const std::vector<std::vector<pixel_t> > & v, unsigned f) const;
+    void SetupResult() const;
+
     std::string m_type, m_sensor;
     unsigned m_id, m_tluevent;
     unsigned m_xsize, m_ysize;
@@ -86,7 +95,6 @@ namespace eudaq {
     std::vector<std::vector<bool> > m_pivot;
     std::vector<unsigned> m_mat;
 
-    void SetupResult() const;
     mutable const std::vector<pixel_t> * m_result_pix;
     mutable const std::vector<coord_t> * m_result_x, * m_result_y;
     
@@ -97,7 +105,8 @@ namespace eudaq {
   class StandardEvent : public Event {
     EUDAQ_DECLARE_EVENT(StandardEvent);
   public:
-    StandardEvent(unsigned run = 0, unsigned evnum = 0, unsigned long long timestamp = NOTIMESTAMP);
+    StandardEvent(unsigned run = 0, unsigned evnum = 0,
+                  unsigned long long timestamp = NOTIMESTAMP);
     StandardEvent(Deserializer &);
     void SetTimestamp(unsigned long long);
     
@@ -114,15 +123,17 @@ namespace eudaq {
     std::vector<StandardPlane> m_planes;
   };
 
-  inline std::ostream & operator << (std::ostream & os, const StandardPlane & pl) {
+  inline std::ostream & operator << (std::ostream & os,
+                                     const StandardPlane & pl) {
     pl.Print(os);
     return os;
   }
-  inline std::ostream & operator << (std::ostream & os, const StandardEvent & ev) {
+  inline std::ostream & operator << (std::ostream & os,
+                                     const StandardEvent & ev) {
     ev.Print(os);
     return os;
   }
 
-}
+} // namespace eudaq
 
 #endif // EUDAQ_INCLUDED_StandardEvent
