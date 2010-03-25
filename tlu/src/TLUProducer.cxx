@@ -221,6 +221,7 @@ public:
       m_status.SetTag("TIMESTAMP", to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
       m_status.SetTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
       m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+      m_status.SetTag("STATUS", m_tlu->GetStatusString());
       for (int i = 0; i < 4; ++i) {
         m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
       }

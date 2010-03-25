@@ -100,6 +100,7 @@ namespace tlu {
     unsigned char GetDUTClockStatus() const;
     unsigned char GetEnableDUTVeto() const;
 
+    std::string GetStatusString() const;
     static int DUTnum(const std::string & name);
     void SelectDUT(const std::string & name, unsigned mask = 0xf, bool updateleds = true);
     void SelectDUT(int input, unsigned mask = 0xf, bool updateleds = true);
@@ -172,7 +173,7 @@ namespace tlu {
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
-    unsigned m_vetostatus, m_fsmstatus;
+    unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat, m_dmastat;
     unsigned long m_fsmstatusvalues;
     unsigned m_triggernum;
     unsigned long long m_timestamp;

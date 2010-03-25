@@ -4,6 +4,7 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Timer.hh"
+#include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32)
@@ -21,6 +22,7 @@
 using eudaq::mSleep;
 using eudaq::hexdec;
 using eudaq::to_string;
+using eudaq::to_hex;
 using eudaq::ucase;
 
 #define PCA955_HW_ADDR 4
@@ -139,6 +141,9 @@ namespace tlu {
     m_inhibit(true),
     m_vetostatus(0),
     m_fsmstatus(0),
+    m_dutbusy(0),
+    m_clockstat(0),
+    m_dmastat(0),
     m_fsmstatusvalues(0),
     m_triggernum(0),
     m_timestamp(0),
@@ -418,7 +423,22 @@ namespace tlu {
     return ReadRegister8(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS );
   }
 
-
+  std::string TLUController::GetStatusString() const {
+    std::string result;
+    unsigned bit = 1;
+    for (int i = 0; i < TLU_DUTS; ++i) {
+      if (i) result += ",";
+      if (m_mask & bit) {
+        result += to_hex(!!(m_dutbusy & bit) + 2 * !!(m_clockstat & bit));
+        result += to_hex(m_fsmstatusvalues >> 4*i & 0xf);
+      } else {
+        result += "--";
+      }
+      bit <<= 1;
+    }
+    result += " (" + to_string(m_vetostatus) + "," + to_string(m_dmastat) + ")";
+    return result;
+  }
 
   int TLUController::DUTnum(const std::string & name) {
     if (ucase(name) == "RJ45") return IN_RJ45;
@@ -449,6 +469,7 @@ namespace tlu {
   void TLUController::Update(bool timestamps) {
     unsigned entries = 0;
     unsigned long long * timestamp_buffer = 0;
+    m_dmastat = ReadRegister8(m_addr->TLU_DMA_STATUS_ADDRESS);
     if (timestamps) {
       bool oldinhibit = InhibitTriggers();
 
@@ -479,6 +500,8 @@ namespace tlu {
     m_fsmstatus = ReadRegister8(m_addr->TLU_TRIGGER_FSM_STATUS_ADDRESS);
     m_fsmstatusvalues = ReadRegister24(m_addr->TLU_TRIGGER_FSM_STATUS_VALUE_ADDRESS_0);
     m_vetostatus = ReadRegister8(m_addr->TLU_TRIG_INHIBIT_ADDRESS);
+    m_dutbusy = ReadRegister8(m_addr->TLU_DUT_BUSY_ADDRESS);
+    m_clockstat = ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS);
 
     if ( m_debug_level & TLU_DEBUG_UPDATE ) { 
       std::cout << "TLU::Update: fsm 0x" << std::hex << m_fsmstatus << " status values 0x" << m_fsmstatusvalues << " veto 0x" << (int) m_vetostatus << " DUT Clock status 0x" << (int) ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS) << std::dec << std::endl;
@@ -725,7 +748,7 @@ namespace tlu {
 
     usleep(10);
 
-    // Read four buffers at onece. first buffer will contain some data from previous readout, 
+    // Read four buffers at once. first buffer will contain some data from previous readout, 
     // but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical. 
     // Try to correct this using multiple reads.
     // result = ZestSC1ReadData(m_handle, m_working_buffer[0], sizeof m_working_buffer );
@@ -958,7 +981,7 @@ namespace tlu {
         m_lasttime = m_buffer[i].Timestamp();
       }
     }
-    out << "Status:    FSM:" << m_fsmstatus << " ( " << std::hex << m_fsmstatusvalues << std::dec <<  ") Veto:" << m_vetostatus << " BUF:" << m_buffer.size() << "\n"
+    out << "Status:    " << GetStatusString() << "\n"
         << "Scalers:   ";
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
       std::cout << m_scalers[i] << (i < (TLU_TRIGGER_INPUTS - 1) ? ", " : "\n");
