@@ -378,10 +378,12 @@ namespace tlu {
     m_strobewidth = width;
 
     if (m_addr) {
-      if ( (m_strobeperiod !=0) & (m_strobewidth !=0) ) { // if either period or width is zero don't enable strobe
+      if (m_strobeperiod != 0 && m_strobewidth != 0) { // if either period or width is zero don't enable strobe
 	WriteRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0, m_strobeperiod);
 	WriteRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0, m_strobewidth);
-	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS,0x01); // enable strobe, but strobe won't start running until time-stamp is reset.
+	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS, 1); // enable strobe, but strobe won't start running until time-stamp is reset.
+      } else {
+	WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS, 0); // disable strobe.
       }
     }
   }
@@ -404,23 +406,23 @@ namespace tlu {
   }
 
   unsigned long TLUController::GetStrobeWidth() const {
-    return ReadRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0 );
+    return ReadRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0);
   }
 
   unsigned long TLUController::GetStrobePeriod() const {
-    return ReadRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0 );
+    return ReadRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0);
   }
 
   unsigned char TLUController::GetStrobeStatus() const {
-    return ReadRegister8(m_addr->TLU_STROBE_ENABLE_ADDRESS );
+    return ReadRegister8(m_addr->TLU_STROBE_ENABLE_ADDRESS);
   }
 
   unsigned char TLUController::GetDUTClockStatus() const {
-    return ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS );
+    return ReadRegister8(m_addr->TLU_DUT_CLOCK_DEBUG_ADDRESS);
   }
 
   unsigned char TLUController::GetEnableDUTVeto() const {
-    return ReadRegister8(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS );
+    return ReadRegister8(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS);
   }
 
   std::string TLUController::GetStatusString() const {

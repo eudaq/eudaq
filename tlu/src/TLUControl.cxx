@@ -9,6 +9,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cstdio>
 #include <csignal>
 
 using namespace tlu;
@@ -18,7 +19,7 @@ using eudaq::hexdec;
 static sig_atomic_t g_done = 0;
 
 void ctrlchandler(int) {
-  g_done = 1;
+  g_done += 1;
 }
 
 int main(int /*argc*/, char ** argv) {
@@ -47,10 +48,11 @@ int main(int /*argc*/, char ** argv) {
                                   "Period for timing strobe in clock cycles");
   eudaq::Option<int>         strobelength(op, "l", "strobelength", 100, "cycles",
                                   "Length of 'on' time for timing strobe in clock cycles");
-  eudaq::Option<int>         enabledutveto(op, "b", "duteveto", 0, "mask",
+  eudaq::Option<int>         enabledutveto(op, "b", "dutveto", 0, "mask",
                                   "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
+  eudaq::OptionFlag          pause(op, "u", "wait-for-user", "Wait for user input before starting triggers");
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
   eudaq::Option<std::string> trace(op, "z", "trace-file", "", "filename",
@@ -66,14 +68,14 @@ int main(int /*argc*/, char ** argv) {
               << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
               << "Trigger interval = " << trigg.Value()
               << (trigg.Value() > 0 ? " ms (" + to_string(1e3/trigg.Value()) + " Hz)" : std::string()) << "\n"
-              << "DUT Mask = " << hexdec(dmask.Value()) << "\n"
-              << "Veto Mask = " << hexdec(vmask.Value()) << "\n"
-              << "And Mask = " << hexdec(amask.Value()) << "\n"
-              << "Or Mask = " << hexdec(omask.Value()) << "\n"
+              << "DUT Mask  = " << hexdec(dmask.Value(), 2) << "\n"
+              << "Veto Mask = " << hexdec(vmask.Value(), 2) << "\n"
+              << "And Mask  = " << hexdec(amask.Value(), 2) << "\n"
+              << "Or Mask   = " << hexdec(omask.Value(), 2) << "\n"
               << "DUT inputs = " << to_string(ipsel.Value()) << "\n"
-              << "Strobe period = " << hexdec(strobeperiod.Value()) << "\n"
-              << "Strobe length = " << hexdec(strobelength.Value()) << "\n"
-              << "Enable DUT Veto (backpressure) = " << hexdec(enabledutveto.Value()) << "\n"
+              << "Strobe period = " << hexdec(strobeperiod.Value(), 6) << "\n"
+              << "Strobe length = " << hexdec(strobelength.Value(), 6) << "\n"
+              << "Enable DUT Veto = " << hexdec(enabledutveto.Value(), 2) << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -116,7 +118,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetAndMask(amask.Value());
     TLU.SetOrMask(omask.Value());
     TLU.SetStrobe(strobeperiod.Value() , strobelength.Value());
-    TLU.SetEnableDUTVeto( enabledutveto.Value() );
+    TLU.SetEnableDUTVeto(enabledutveto.Value());
     TLU.ResetTimestamp(); // also sets strobe running (if enabled) 
 
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"
@@ -131,6 +133,11 @@ int main(int /*argc*/, char ** argv) {
     }
     if (quit.IsSet()) return 0;
     eudaq::Timer totaltime, lasttime;
+
+    if (pause.IsSet()) {
+      std::cerr << "Press enter to start triggers." << std::endl;
+      std::getchar();
+    }
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
 
