@@ -8,11 +8,11 @@
 static const char * statuses[] = {
   "RUN",       "Run Number",
   "EVENT",     "Events Built",
-  "RATE",      "Rate",
+  "FULLRATE",  "Rate",
   "TRIG",      "Triggers",
-  "MEANRATE",  "Mean Rate",
-  "PARTICLES", "Particles",
   "FILEBYTES", "File Bytes",
+  "PARTICLES", "Particles",
+  "TLUSTAT",   "TLU Status",
   "SCALERS",   "Scalers",
   0
 };
@@ -134,6 +134,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<euda
     EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
     EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
     EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
+    EmitStatus("TLUSTAT", status->GetTag("STATUS"));
     bool ok = true;
     std::string scalers;
     for (int i = 0; i < 4; ++i) {
@@ -149,8 +150,10 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<euda
     int trigs = from_string(status->GetTag("TRIG"), -1);
     double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
     if (trigs >= 0) {
+      bool dorate = true;
       if (m_runstarttime == 0.0) {
         if (trigs > 0) m_runstarttime = time;
+        dorate = false;
       } else {
         EmitStatus("MEANRATE", to_string((trigs-1)/(time-m_runstarttime)) + " Hz");
       }
@@ -160,6 +163,11 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<euda
         m_prevtrigs = trigs;
         m_prevtime = time;
         EmitStatus("RATE", to_string(dtrigs/dtime) + " Hz");
+      } else {
+        dorate = false;
+      }
+      if (dorate) {
+        EmitStatus("FULLRATE", to_string((trigs-1)/(time-m_runstarttime)) + " (" + to_string(dtrigs/dtime) + ") Hz");
       }
     }
   }
