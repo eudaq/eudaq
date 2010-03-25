@@ -98,9 +98,9 @@ int main(int /*argc*/, char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       std::cout << "Reading: " << reader.Filename() << std::endl;
-      eudaq::PluginManager::Initialize(reader.Event());
+      eudaq::PluginManager::Initialize(reader.GetDetectorEvent());
       while (reader.NextEvent()) {
-        const eudaq::DetectorEvent & dev = reader.Event();
+        const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
         if (dev.IsBORE()) {
           std::cout << "ERROR: Found another BORE !!!" << std::endl;
           continue;

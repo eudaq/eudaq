@@ -71,17 +71,17 @@ int main(int /*argc*/, char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       EUDAQ_INFO("Reading: " + reader.Filename());
-      if (!reader.Event().IsBORE()) {
+      if (!reader.GetEvent().IsBORE()) {
         EUDAQ_THROW("First event is not a BORE!");
       }
-      eudaq::PluginManager::Initialize(reader.Event());
+      eudaq::PluginManager::Initialize(reader.GetDetectorEvent());
       while (reader.NextEvent()) {
         std::vector<unsigned>::iterator it = std::find(eventlist.begin(),
                                                        eventlist.end(),
-                                                       reader.Event().GetEventNumber());
+                                                       reader.GetEvent().GetEventNumber());
         if (it == eventlist.end()) continue;
         numevents++;
-        eudaq::StandardEvent ev = eudaq::PluginManager::ConvertToStandard(reader.Event());
+        eudaq::StandardEvent ev = eudaq::PluginManager::ConvertToStandard(reader.GetDetectorEvent());
         eudaq::StandardPlane pl = ev.GetPlane(board.Value());
         if (!booked) {
           booked = true;
