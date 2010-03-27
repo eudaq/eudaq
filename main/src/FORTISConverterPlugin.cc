@@ -17,7 +17,7 @@
 #  include "EUTELESCOPE.h"
 #  include "EUTelRunHeaderImpl.h"
 #  include "EUTelTakiDetector.h"
-#  include "EUTelFortisDetector.h"
+#  include "/opt/eudet/ilcinstall/Eutelescope/HEAD/include/EUTelFortisDetector.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
@@ -53,7 +53,7 @@ namespace eudaq {
   private:
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const;
     FORTISConverterPlugin() : DataConverterPlugin("FORTIS"),
-			      m_NumRows(128), m_NumColumns(128),
+			      m_NumRows(512), m_NumColumns(512),
 			      m_InitialRow(0), m_InitialColumn(0) {}
     unsigned m_NumRows, m_NumColumns, m_InitialRow, m_InitialColumn;
     static FORTISConverterPlugin const m_instance;
@@ -198,8 +198,8 @@ namespace eudaq {
 
   void FORTISConverterPlugin::Initialize(const Event & source, const Configuration &) {
     std::cout << "Fortis converter initialised::" << std::endl;
-    m_NumRows = from_string(source.GetTag("NumRows"), 128);
-    m_NumColumns = from_string(source.GetTag("NumColumns"), 128);
+    m_NumRows = from_string(source.GetTag("NumRows"), 512);
+    m_NumColumns = from_string(source.GetTag("NumColumns"), 512);
     m_InitialRow = from_string(source.GetTag("InitialRow"), 0);
     m_InitialColumn = from_string(source.GetTag("InitialColumn"), 0);
 
@@ -239,6 +239,8 @@ namespace eudaq {
     
     plane.SetSizeZS(512, 512, npixels, 2); // Set the size for two frames of 512*512
 
+    plane.SetFlags(StandardPlane::FLAG_NEEDCDS);
+
     unsigned int frame_number[2];                   //frame_number was 2
     
     unsigned int triggerRow = 0;
@@ -260,28 +262,32 @@ namespace eudaq {
 
 	unsigned short TriggerWord = getlittleendian<unsigned short>(&data[header_offset]);
 	unsigned short TriggerCount = TriggerWord & 0x00FF;
+#       ifdef FORTIS_DEBUG
 	unsigned short LatchWord   =  getlittleendian<unsigned short>(&data[header_offset+sizeof (short) ]) ;
         std::cout << "Row = " << Row << " Header = " << std::hex << TriggerWord << "    " << LatchWord << std::endl ;
-
+#       endif
 	if ( (triggerRow == 0) && (TriggerCount >0 )) { triggerRow = Row ; }
 
         for (size_t Column = 0; Column < m_NumColumns; ++Column) {
           unsigned offset = (Column + 2 + (m_NumColumns + 2) * Row + Frame*nwords) * sizeof (short);
           unsigned short d = getlittleendian<unsigned short>(&data[offset]);
-          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, d, (unsigned)Frame);
+          plane.SetPixel(i, Column + m_InitialColumn, Row + m_InitialRow, d, (unsigned)Frame); // need to put option to have inversion at this stage ( ie. put in 0xFFFF -d rather than d. This is because by selecting jumpers can read out FORTIS with singled ended *inverting* amplifier.
           ++i;
         }
       }
     }
 
-/* There is a problem somewhere - frame number increments by two. Sort this out back in Bristol..... */
-/*    if ( frame_number[1] != (frame_number[0] + 1) ) {
+    /* Check that the two frames have frame numbers separated by one */
+    if ( frame_number[1] != (frame_number[0] + 1) ) {
       std::cout << "Frame_number[0] ,  Frame_number[1] = " << frame_number[0] <<"   "<< frame_number[1] << std::endl;
 
       EUDAQ_THROW("FORTIS data corruption: Frame_number[1] != Frame_number[0]+1 (" + to_string(frame_number[1]) + " != " + to_string(frame_number[0]) + " +1 )");
-      } */
+      } 
 
+
+#   ifdef FORTIS_DEBUG
     std::cout << "Trigger Row = 0x" << triggerRow << std::endl;
+#   endif
 
     return plane;
   }
