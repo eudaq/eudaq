@@ -134,14 +134,14 @@ int main(int /*argc*/, char ** argv) {
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<int> limit(op, "l", "limit", -1, "event limit",
 				     "Maximum number of events to process.");
-  eudaq::Option<int> rows(op, "r", "rows", 128, "#rows",
-				     "Number of rows in frame");
-  eudaq::Option<int> columns(op, "c", "columns", 128, "#columns",
-				     "Number of columns in frame");
+  eudaq::Option<int> rows(op, "r", "rows", 0, "#rows",
+				     "Number of rows in frame. By default read from BORE");
+  eudaq::Option<int> columns(op, "c", "columns", 0, "#columns",
+				     "Number of columns in frame. By default read from BORE");
   eudaq::Option<std::string> rootfile(op, "o", "root", "fortisFrameNumbers.root", "Root File",
-				     "Root files containing timestamp histograms");
+				     "Root output file containing timestamp histograms");
   eudaq::Option<std::string> textfile(op, "t", "text", "fortisFrameNumbers.txt", "Text File",
-				     "Text file containing timestamps");
+				     "Text output file containing timestamps");
 
   try {
         
@@ -159,7 +159,7 @@ int main(int /*argc*/, char ** argv) {
 
     EUDAQ_INFO("Opening text file: " + textfile.Value());
     std::ofstream timestampStream( textfile.Value().c_str());
-    timestampStream << "# RunNumber\tEventNumber\tTLUTimestamp\tFrameNumber\tPivotRow" << std::endl; //print out header
+    timestampStream << "# Run\tEvent\tTLUTimestamp\tFrame\tPivotRow" << std::endl; //print out header
 
     unsigned long long previousTimestamp = 0 ;
     unsigned long long startTimestamp = 0 ;
@@ -167,7 +167,7 @@ int main(int /*argc*/, char ** argv) {
     int previousFortisFrameNumber =0 ;
     int startFortisFrameNumber =0 ;
 
-    int previousPivotRow = 0;
+    // int previousPivotRow = 0;
 
     unsigned long int  previousFortisTimestamp = 0 ;
     unsigned long int  startFortisTimestamp = 0 ;
@@ -186,32 +186,37 @@ int main(int /*argc*/, char ** argv) {
       eudaq::FileReader reader(op.GetArg(i), ipat.Value(), false );
       EUDAQ_INFO("Reading: " + reader.Filename());
 
-//      {
-//        const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
-//        unsigned runNumber = dev.GetRunNumber();
-//        std::cout << "Run number = " << runNumber << std::endl;
-//	numRows = from_string(dev.GetTag("NumRows"), 512);
-//	numColumns = from_string(dev.GetTag("NumColumns"), 512);
-//	std::cout << "Setting num rows, num columns = " << numRows << "\t" << numColumns << std::endl;
-//
-//      }
+      {
+        const eudaq::Event & borev = reader.GetEvent();
+        runNumber = borev.GetRunNumber();
+	if ( borev.IsBORE() ) { std::cout << "Found BORE" << std::endl; } else { EUDAQ_THROW("Fatal error - first event isn't BORE");}
+        std::cout << "Run number = " << runNumber << std::endl;
 
+        const eudaq::DetectorEvent * dev = dynamic_cast<const eudaq::DetectorEvent *>(&borev);
+        for (size_t i = 0; i < dev->NumEvents(); ++i) { // loop over detectors in event
+	    const eudaq::RawDataEvent * rev = dynamic_cast<const eudaq::RawDataEvent *>(dev->GetEvent(i));
+	    if (rev && rev->GetSubType() == "FORTIS" ) {
+		if ( ! (numRows && numColumns) ) {
+  		  numRows = from_string(rev->GetTag("NumRows"), -1);
+		  numColumns = from_string(rev->GetTag("NumColumns"), -1);
+		  std::cout << "Setting num rows, num columns from data = " << numRows << "\t" << numColumns << std::endl;
+		} else {
+		  std::cout << "Setting num rows, num columns from command line = " << numRows << "\t" << numColumns << std::endl;
+		}
+
+	    }
+        }
+
+      }
+
+      if ( ! (numRows && numColumns) ) { EUDAQ_THROW("Failed to get Rows, Columns. Halting. (Are you sure this file contains FORTIS data?"); }
       std::vector<unsigned int> pivotRows;
       while (reader.NextEvent()) { // loop over events
 	const eudaq::Event & ev = reader.GetEvent();
 
-	runNumber = ev.GetRunNumber();
-
-	if  (ev.IsBORE()) {
-          std::cout << "Found BORE" << std::endl;
-	  numRows = from_string(ev.GetTag("NumRows"), 512);
-	  numColumns = from_string(ev.GetTag("NumColumns"), 512);
-	  std::cout << "Setting num rows, num columns from data. Rows, columns = " << numRows << "\t" << numColumns << std::endl;
-
-	} else if (! ev.IsEORE() ) { // not a BORE or EORE
+	if (! ( ev.IsBORE() ||ev.IsEORE()) ) { // not a BORE or EORE
 
 	  const eudaq::DetectorEvent * dev = dynamic_cast<const eudaq::DetectorEvent *>(&ev);
-	  //const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
 
 	  if (limit.Value() > 0 && (int) ev.GetEventNumber() >= limit.Value()) break;
 	  if (ev.GetEventNumber() % 100 == 0) {
@@ -230,7 +235,7 @@ int main(int /*argc*/, char ** argv) {
 
 	      int fortisFrameNumber = from_string(rev->GetTag( "FRAMENUMBER"),-1);
 	      int fortisPivotRow = from_string(rev->GetTag("PIVOTROW"),-1);
-	      long int FortisTimestamp = fortisFrameNumber*rows.Value() + fortisPivotRow;
+	      long int FortisTimestamp = fortisFrameNumber*numRows + fortisPivotRow;
 
 	      if ( rev->NumBlocks() ) {
 		 if ( ! pivotRows.empty() ) {
@@ -241,7 +246,7 @@ int main(int /*argc*/, char ** argv) {
 		 const std::vector<unsigned char> & data = rev->GetBlock(0);
 		 pivotRows = GetPivotRows( data , numRows , numColumns );
 
-                if ( fortisFrameNumber != GetFrameNumber( data , numRows , numColumns ,0 )) {
+                if ( fortisFrameNumber != (int) GetFrameNumber( data , numRows , numColumns ,0 )) {
                   std::cout << "Frame from tag, raw-data = " << fortisFrameNumber << "\t" << GetFrameNumber( data , numRows , numColumns ,0 ) << std::endl;
                   EUDAQ_THROW("Frame number mis-match");
                 }
@@ -255,7 +260,7 @@ int main(int /*argc*/, char ** argv) {
 
 	      unsigned int currentPivotRow = pivotRows.back();
 	      pivotRows.pop_back();
-              if ( currentPivotRow != fortisPivotRow ) {
+              if ( currentPivotRow != (unsigned) fortisPivotRow ) {
 		std::cout << "Row from tag, raw-data = " << fortisPivotRow << "\t" << currentPivotRow << std::endl;
 		EUDAQ_THROW("Row number mis-match");
 	      }
