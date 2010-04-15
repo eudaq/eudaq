@@ -20,14 +20,15 @@ public:
   // The constructor must call the eudaq::Producer constructor with the name
   // and the runcontrol connection string, and initialize any member variables.
   ExampleProducer(const std::string & name, const std::string & runcontrol)
-    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), stopping(false), done(false) {}
+    : eudaq::Producer(name, runcontrol),
+      m_run(0), m_ev(0), stopping(false), done(false) {}
 
   // This gets called whenever the DAQ is configured
   virtual void OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Configuring: " << config.Name() << std::endl;
 
     // Do any configuration of the hardware here
-    // You can get values from the configuration file with config.Get(name, default)
+    // Configuration file values are accessible as config.Get(name, default)
     m_exampleparam = config.Get("Parameter", 0);
     std::cout << "Example Parameter = " << m_exampleparam << std::endl;
     hardware.Setup(m_exampleparam);
@@ -102,8 +103,8 @@ public:
       for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
         // Read out a block of raw data from the hardware
         std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
-        // Each block of data has an ID that will be used for ordering the planes later
-        // If you have more than one sensor, you should number them incrementally
+        // Each data block has an ID that is used for ordering the planes later
+        // If there are multiple sensors, they should be numbered incrementally
 
         // Add the block of raw data to the event
         ev.AddBlock(plane, buffer);
@@ -129,9 +130,11 @@ private:
 int main(int /*argc*/, const char ** argv) {
   // You can use the OptionParser to get command-line arguments
   // then they will automatically be described in the help (-h) option
-  eudaq::OptionParser op("EUDAQ Example Producer", "1.0", "Just an example, modify it to suit your own needs");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
-                                   "The address of the RunControl application");
+  eudaq::OptionParser op("EUDAQ Example Producer", "1.0",
+                         "Just an example, modify it to suit your own needs");
+  eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
+                                   "tcp://localhost:44000", "address",
+                                   "The address of the RunControl.");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
                                    "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name (op, "n", "name", "Example", "string",

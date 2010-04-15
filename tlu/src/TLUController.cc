@@ -991,8 +991,7 @@ namespace tlu {
     out << "Particles: " << m_particles << "\n"
         << "Triggers:  " << m_triggernum << "\n"
         << "Entries:   " << NumEntries() << "\n"
-	<< "Total timestamp errors corrected by data redundancy "<< m_correctable_blockread_errors << "\n"
-	<< "Total timestamp errors corrected by block re-read   "<< m_uncorrectable_blockread_errors << "\n"
+	<< "TS errors: " << m_correctable_blockread_errors << ", " << m_uncorrectable_blockread_errors << " (redundancy, re-read)\n"
         << "Timestamp: " << eudaq::hexdec(m_timestamp, 0)
         << " = " << Timestamp2Seconds(m_timestamp) << std::endl;
   }

@@ -37,22 +37,22 @@ namespace eudaq {
     virtual unsigned GetTriggerID(const Event & ev) const {
       static const unsigned TRIGGER_OFFSET = 8;
       // Make sure the event is of class RawDataEvent
-      if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *>(&ev)) {
-        // This is just an example, it should be modified to suit your raw data format
+      if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
+        // This is just an example, modified it to suit your raw data format
         // Make sure we have at least one block of data, and it is large enough
         if (rev->NumBlocks() > 0 &&
-            rev->GetBlock(0).size() >= (TRIGGER_OFFSET + sizeof(unsigned short))) {
+            rev->GetBlock(0).size() >= (TRIGGER_OFFSET + sizeof(short))) {
           // Read a little-endian unsigned short from offset TRIGGER_OFFSET
-          return getlittleendian<unsigned short>(&rev->GetBlock(0)[TRIGGER_OFFSET]);
+          return getlittleendian<unsigned short> (&rev->GetBlock(0)[TRIGGER_OFFSET]);
         }
       }
-      // If we are unable to extract the Trigger ID for any reason, signal with (unsigned)-1
+      // If we are unable to extract the Trigger ID, signal with (unsigned)-1
       return (unsigned)-1;
     }
 
-    // Here, the data from the custom RawDataEvent should be extracted and put into a StandardEvent.
+    // Here, the data from the RawDataEvent is extracted into a StandardEvent.
     // The return value indicates whether the conversion was successful.
-    // Again, this is just an example, it should be adapted for the exact data layout.
+    // Again, this is just an example, adapted it for the actual data layout.
     virtual bool GetStandardSubEvent(StandardEvent & sev,
                                      const Event & ev) const {
       // If the event type is used for different sensors
@@ -81,15 +81,15 @@ namespace eudaq {
 
   private:
 
-    // The constructor can be private, since only one static instance will be created
-    // The DataConverterPlugin constructor must be called with the event type in order to
-    // register this converter as a handler for conversions from the corresponding event type.
-    // Any member variables should also be initialized to default values here.
+    // The constructor can be private, only one static instance is created
+    // The DataConverterPlugin constructor must be passed the event type
+    // in order to register this converter for the corresponding conversions
+    // Member variables should also be initialized to default values here.
     ExampleConverterPlugin()
       : DataConverterPlugin(EVENT_TYPE), m_exampleparam(0)
       {}
 
-    // Any information extracted during initialization can be stored in member variables.
+    // Information extracted in Initialize() can be stored here:
     unsigned m_exampleparam;
 
     // The single instance of this converter plugin
