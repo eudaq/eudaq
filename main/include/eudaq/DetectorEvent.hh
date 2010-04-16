@@ -7,6 +7,8 @@
 
 namespace eudaq {
 
+  class RawDataEvent;
+
   class DetectorEvent : public Event {
     EUDAQ_DECLARE_EVENT(DetectorEvent);
   public:
@@ -28,6 +30,7 @@ namespace eudaq {
     Event * GetEvent(size_t i) { return m_events[i].get(); }
     const Event * GetEvent(size_t i) const { return m_events[i].get(); }
     counted_ptr<Event> GetEventPtr(size_t i) { return m_events[i]; }
+    const RawDataEvent & GetRawSubEvent(const std::string & subtype, int n = 0) const;
     template <typename T>
     const T * GetSubEvent(int n = 0) const {
       for (size_t i = 0; i < NumEvents(); i++) {

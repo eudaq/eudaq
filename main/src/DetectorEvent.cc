@@ -1,4 +1,5 @@
 #include "eudaq/DetectorEvent.hh"
+#include "eudaq/RawDataEvent.hh"
 
 #include <ostream>
 
@@ -41,5 +42,18 @@ namespace eudaq {
     }
   }
 
+  const RawDataEvent & DetectorEvent::GetRawSubEvent(const std::string & subtype, int n) const {
+    for (size_t i = 0; i < NumEvents(); i++) {
+      const RawDataEvent * sev = dynamic_cast<const RawDataEvent*>(GetEvent(i));
+      if (sev && sev->GetSubType() == subtype) {
+        if (n > 0) {
+          --n;
+        } else {
+          return *sev;
+        }
+      }
+    }
+    EUDAQ_THROW("DetectorEvent::GetRawSubEvent: could not find " + subtype + ":" + to_string(n));
+  }
 
 }
