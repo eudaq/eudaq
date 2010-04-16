@@ -74,7 +74,7 @@ namespace eudaq {
     } else if (ev.IsEORE()) {
       m_ttree->Write();
     }
-    const StandardEvent & sev = eudaq::PluginManager::ConvertToStandard(ev);
+    StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
     for (size_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
                 
       const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
