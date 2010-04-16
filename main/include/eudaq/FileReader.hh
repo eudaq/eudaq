@@ -17,7 +17,7 @@ namespace eudaq {
     std::string Filename() const { return m_filename; }
     unsigned RunNumber() const;
     const eudaq::Event & GetEvent() const;
-    const eudaq::Event & Event() const { return GetEvent(); } // for backward compatibility
+    const DetectorEvent & Event() const { return GetDetectorEvent(); } // for backward compatibility
     const DetectorEvent & GetDetectorEvent() const;
     const StandardEvent & GetStandardEvent() const;
     void Interrupt() { m_des.Interrupt(); }
