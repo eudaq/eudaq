@@ -221,7 +221,7 @@ int main(int /*argc*/, char ** argv) {
               std::vector<Cluster> clusters;
               for (size_t i = 0; i < seeds.size(); ++i) {
                 bool badseed = false;
-                long long charge = 0, sumx = 0, sumy = 0;
+                double charge = 0, sumx = 0, sumy = 0;
                 for (int dy = -dclust; dy <= dclust; ++dy) {
                   int y = seeds[i].y + dy;
                   if (y < 0 || y >= height) continue;
