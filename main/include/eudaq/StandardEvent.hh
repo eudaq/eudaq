@@ -67,6 +67,7 @@ namespace eudaq {
     void SetFlags(FLAGS flags);
 
     unsigned ID() const;
+    const std::string & Type() const;
     const std::string & Sensor() const;
     unsigned XSize() const;
     unsigned YSize() const;
@@ -117,8 +118,6 @@ namespace eudaq {
     virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream &) const;
 
-    unsigned long long GetTimestamp() const;
- 
   private:
     std::vector<StandardPlane> m_planes;
   };

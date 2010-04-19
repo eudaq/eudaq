@@ -176,6 +176,10 @@ namespace eudaq {
     return m_id;
   }
 
+  const std::string & StandardPlane::Type() const {
+    return m_type;
+  }
+
   const std::string & StandardPlane::Sensor() const {
     return m_sensor;
   }
@@ -335,11 +339,6 @@ namespace eudaq {
   void StandardEvent::SetTimestamp(unsigned long long val) {
     m_timestamp = val;
   }
-
-  unsigned long long  StandardEvent::GetTimestamp() const {
-    return m_timestamp;
-  }
-
 
   void StandardEvent::Print(std::ostream & os) const {
     Event::Print(os);

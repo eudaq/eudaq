@@ -80,6 +80,7 @@ namespace eudaq {
                const std::string & desc = "")
       : OptionBase(p, shortname, longname, "", "", desc)
       {}
+    bool Value() const { return IsSet(); }
   private:
     virtual void DoParsing(const std::string & /*name*/, const std::string & /*arg*/) {
     }
@@ -106,7 +107,7 @@ namespace eudaq {
   public:
     Option(OptionParser & p, const std::string & shortname, const std::string & longname,
            const std::string & argname = "", const std::string & sep = "", const std::string & desc = "")
-      : OptionBase(p, shortname, longname, "", argname, desc), m_sep(sep)
+      : OptionBase(p, shortname, longname, "", argname, desc), m_sep(sep.length() ? sep : ",")
       {}
     const std::vector<T> & Value() const { return m_value; }
     void SetValue(const std::vector<T> & val = std::vector<T>()) { m_value = val; }
