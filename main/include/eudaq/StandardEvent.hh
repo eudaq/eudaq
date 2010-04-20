@@ -25,7 +25,6 @@ namespace eudaq {
     StandardPlane(Deserializer &);
     StandardPlane();
     void Serialize(Serializer &) const;
-    //StandardPlane(size_t pixels = 0, size_t frames = 1);
     void SetSizeRaw(unsigned w, unsigned h,
                     unsigned frames = 1, int flags = 0);
     void SetSizeZS(unsigned w, unsigned h, unsigned npix,
@@ -50,6 +49,7 @@ namespace eudaq {
     double GetY(unsigned index, unsigned frame) const;
     double GetY(unsigned index) const;
     bool GetPivot(unsigned index, unsigned frame = 0) const;
+    void SetPivot(unsigned index, unsigned frame , bool PivotFlag);
     // defined for short, int, double
     template <typename T>
     std::vector<T> GetPixels() const;
@@ -111,7 +111,7 @@ namespace eudaq {
     StandardEvent(Deserializer &);
     void SetTimestamp(unsigned long long);
     
-    void AddPlane(const StandardPlane &);
+    StandardPlane & AddPlane(const StandardPlane &);
     size_t NumPlanes() const;
     const StandardPlane & GetPlane(size_t i) const;
     StandardPlane & GetPlane(size_t i);

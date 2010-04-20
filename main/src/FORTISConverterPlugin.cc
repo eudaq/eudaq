@@ -57,6 +57,9 @@ namespace eudaq {
 			      m_InitialRow(0), m_InitialColumn(0) {}
     unsigned m_NumRows, m_NumColumns, m_InitialRow, m_InitialColumn;
     static FORTISConverterPlugin const m_instance;
+    mutable StandardPlane m_frameDataBuffer;
+    mutable unsigned m_parentEvent;
+
   };
 
 
@@ -101,7 +104,7 @@ namespace eudaq {
              // The current detector is ...
              eutelescope::EUTelPixelDetector * currentDetector = NULL;
         
-             std::string  mode = "RAW2"; //mode correct? will this be used somewhere????
+             std::string  mode = "ZS2"; //mode correct? will this be used somewhere????
         
              currentDetector = new eutelescope::EUTelFortisDetector;
              rawMatrix = new TrackerRawDataImpl;
@@ -122,13 +125,13 @@ namespace eudaq {
                                                               std::vector<short>(currentDetector->getYMax()+1,0)
                                                               );
            
-	     const unsigned int frameNumber = 0; // for now just look at the first frame out of two.
+	     //const unsigned int frameNumber = 0; // for now just look at the first frame out of two.
              const unsigned int hitpixel = plane.HitPixels(frameNumber);
              for (unsigned int i = 0; i < hitpixel; ++i) 
                {
-                 const int x = (int) plane.GetX(i,frameNumber);
-                 const int y = (int) plane.GetY(i,frameNumber);
-                 hardcore_matrix.at(x).at(y) = (short int) plane.GetPixel(i, frameNumber);
+                 const int x = (int) plane.GetX(i); //,frameNumber);
+                 const int y = (int) plane.GetY(i); //,frameNumber);
+                 hardcore_matrix.at(x).at(y) = (short int) plane.GetPixel(i); //, frameNumber);
                }
 
              for (int yPixel = 0; yPixel <= currentDetector->getYMax(); yPixel++) {
@@ -218,10 +221,27 @@ namespace eudaq {
     }
     // If we get here it must be a data event
     const RawDataEvent & ev = dynamic_cast<const RawDataEvent &>(source);
-    for (size_t i = 0; i < ev.NumBlocks(); ++i) {
-      result.AddPlane(ConvertPlane(ev.GetBlock(i),
-                                   ev.GetID(i)));
+    if ( ev.NumBlocks() > 1) {
+      // more than one fortis not yet implemented
+      EUDAQ_THROW("More than one FORTIS not yet supported");
+    } else if (ev.NumBlocks() == 1) {
+      // if we have the frame data, then take a copy so that events with only pivot row info can refer to it
+      m_frameDataBuffer = ConvertPlane(ev.GetBlock(0),ev.GetID(0));
+      m_parentEvent = ev.GetEventNumber();
+    } else if ( m_parentEvent != ev.GetTag("PARENTEVENT",0U)) { // if we get here we have no frame data, so check that parent event is correct...
+	EUDAQ_ERROR("FORTIS PARENT EVENT doesn't match .... ");
     }
+
+    StandardPlane & localPlane = result.AddPlane(m_frameDataBuffer); // add plane to data from copy.
+
+    unsigned pivotRow =  ev.GetTag("PIVOTROW",0);
+    localPlane.SetPivotPixel( pivotRow ); // set the pivot pixel to be the pivot row
+
+    // now loop through setting the pivot pixel bits.
+    for (size_t pixel = 0; pixel < localPlane.HitPixels(0); ++pixel) {
+      localPlane.SetPivot( pixel, 0 ,  (localPlane.GetY(pixel,0) < pivotRow ) );
+    }
+
     return true;
   }
 
@@ -237,9 +257,7 @@ namespace eudaq {
 
     std::cout << "Size of data (bytes)= " << data.size() << std::endl ;
     
-    plane.SetSizeZS(512, 512, npixels, 2); // Set the size for two frames of 512*512
-
-    plane.SetFlags(StandardPlane::FLAG_NEEDCDS);
+    plane.SetSizeZS(512, 512, npixels, 2 , StandardPlane::FLAG_WITHPIVOT); // Set the size for two frames of 512*512
 
     unsigned int frame_number[2];                   //frame_number was 2
     
@@ -254,7 +272,7 @@ namespace eudaq {
       unsigned int frame_offset = (Frame*nwords) * sizeof (short);
 
       frame_number[Frame] = getlittleendian<unsigned int>(&data[frame_offset]);
-      std::cout << "frame number in data = " << std::hex << frame_number[Frame] << std::endl;
+      std::cout << "frame number in data = " << eudaq::to_hex(frame_number[Frame]) << std::endl;
 
       for (size_t Row = 0; Row < m_NumRows; ++Row) {
 
@@ -264,7 +282,7 @@ namespace eudaq {
 	unsigned short TriggerCount = TriggerWord & 0x00FF;
 #       ifdef FORTIS_DEBUG
 	unsigned short LatchWord   =  getlittleendian<unsigned short>(&data[header_offset+sizeof (short) ]) ;
-        std::cout << "Row = " << Row << " Header = " << std::hex << TriggerWord << "    " << LatchWord << std::endl ;
+        std::cout << "Row = " << Row << " Header = " << eudaq::to_hex(TriggerWord) << "    " << LatchWord << std::endl ;
 #       endif
 	if ( (triggerRow == 0) && (TriggerCount >0 )) { triggerRow = Row ; }
 

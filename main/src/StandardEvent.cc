@@ -51,7 +51,7 @@ namespace eudaq {
   // }
 
   void StandardPlane::Print(std::ostream & os) const {
-    os << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_x.size()
+    os << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_pix.size()
        << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent << ", pivot=" << m_pivotpixel;
   }
 
@@ -127,6 +127,10 @@ namespace eudaq {
   bool StandardPlane::GetPivot(unsigned index, unsigned frame) const {
     if (!GetFlags(FLAG_DIFFCOORDS)) frame = 0;
     return m_pivot.at(frame).at(index);
+  }
+
+  void StandardPlane::SetPivot(unsigned index, unsigned frame , bool PivotFlag) {
+    m_pivot.at(frame).at(index) = PivotFlag;
   }
 
   const std::vector<StandardPlane::coord_t> & StandardPlane::XVector(unsigned frame) const {
@@ -360,8 +364,9 @@ namespace eudaq {
     return m_planes[i];
   }
 
-  void StandardEvent::AddPlane(const StandardPlane & plane) {
+  StandardPlane & StandardEvent::AddPlane(const StandardPlane & plane) {
     m_planes.push_back(plane);
+    return m_planes.back();
   }
 
 }
