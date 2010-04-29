@@ -1,0 +1,353 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Data Conversion}
+Data are stored on disk, by default, in a native binary format, containing the raw data as read out by the various Producers.
+It is basically the same format used for serialising the data over the socket connection to the Data Collector.
+To be useful, this data must be converted into a standardised format so that the monitoring and analysis software
+does not depend on particularities of the individual sensors, but can be applied generically to any sensor.
+Two different formats are used for this. The first is the \texttt{StandardEvent} type,
+an internal class that does not depend on any external libraries,
+and is used by the online monitoring, and many of the utility programs of the framework.
+The second type is the \gls{LCIO} standard format from the linear collider community,
+used by the full analysis software.
+
+\subsection{StandardEvent and StandardPlane}
+The \texttt{StandardEvent} is a class designed to represent pixel sensor data in a reasonably easy to use way,
+but still be flexible enough to store the data from a wide range of different sensors as completely as possible.
+Each \texttt{StandardEvent} represents one event of data from the whole telescope and any \glspl{DUT},
+so a run will consist of a sequence of \texttt{StandardEvent}s.
+It inherits from the \texttt{Event} base class, meaning that it has a run number, an event number, an optional timestamp,
+and may also contain tags (see \autoref{sec:Tags}).
+It also has an array of \texttt{StandardPlane}s, each representing one sensor plane of the telescope or \gls{DUT}.
+
+Each \texttt{StandardPlane} contains the charge values from the pixels of one sensor,
+and may contain several frames in cases where the sensor is read out multiple times per event.
+It also has the concept of a ``result'' frame, which is calculated from the one or more of the source frames
+according to different rules that may be specified with flags.
+The result frame contains only one charge value per pixel, with a positive signal,
+and is what will be used for the analysis.
+It may consist of either differences between the original frames (e.g. in the case of \gls{CDS}),
+a sum of all original frames, or specific parts of the different frames selected according to the pivot information.
+Flags may be set to select which of the different methods is used.
+It may also contain a submatrix number per pixel, which can be used to differentiate different parts of the sensor,
+so that they may be analyzed separately later, and a pivot boolean (true or false) per pixel,
+which can be used to indicate whether the pixel was sampled before or after the trigger,
+and is used to determine which parts of the sensor to combine when the \texttt{FLAG\_NEEDCDS} flag is set.
+
+Both the \texttt{StandardEvent} and the \texttt{StandardPlane} classes are defined in the following header file:
+\begin{listing}
+#include "eudaq/StandardEvent.hh"
+\end{listing}
+
+In general, a user should not need to construct a \texttt{StandardEvent} object,
+but should create one or more \texttt{StandardPlane}s, that will be added to a given \texttt{StandardEvent}.
+
+\subsubsection{Constructor}
+The \texttt{StandardPlane} constructor has the following signature:
+\begin{listing}
+StandardPlane(unsigned id, const std::string & type,
+              const std::string & sensor = "");
+\end{listing}
+
+Where \texttt{id} is an arbitrary numerical identifier for the plane
+that can be used to differentiate between different planes of the same type,
+\texttt{type} is the type of the Producer that generated the frame
+(should be the same as that in the \texttt{Producer} and the \texttt{DataConverterPlugin}),
+and \texttt{sensor} is the name of the sensor,
+in the case that the Producer can read out more than one type of sensor.
+
+\subsubsection{SetSizeRaw and SetSizeZS}
+Once a \texttt{StandardPlane} has been constructed, the size should be set.
+There are two methods for doing this,
+depending on whether the data are stored in raw or zero-suppressed mode.
+In raw mode all pixels are stored, whether they have a signal or not.
+In zero-suppressed mode, only those with a signal above a certain threshold are stored,
+along with their coordinates, and any below the threshold are suppressed.
+
+The signature of the \texttt{SetSizeRaw} method is:
+\begin{listing}
+void SetSizeRaw(unsigned w, unsigned h, unsigned frames = 1, int flags = 0);
+\end{listing}
+
+Where \texttt{w} is the full width of the sensor (in the x-direction, usually columns) in pixels,
+h is the full height of the sensor (in the y-direction, usually rows) in pixels, \texttt{frames} is the number of frames,
+and \texttt{flags} may be a combination of the following values, separated by a bitwise OR (i.e. \texttt{|}):
+
+\begin{description}
+\ttitem{FLAG\_NEEDCDS} Indicates that the data are in 2 or 3 frames
+and that neighbouring frames should be subtracted to produce the result.
+
+\ttitem{FLAG\_NEGATIVE} Indicates that the charge values are negative,
+so should be negated to produce the result.
+
+\ttitem{FLAG\_ACCUMULATE} Indicates that all frames should be summed to produce the result.
+
+\ttitem{FLAG\_WITHPIVOT} Indicates that pivot information is stored per pixel,
+and should be used for constructing the result.
+
+\ttitem{FLAG\_WITHSUBMAT} Indicates that submatrix information is stored per pixel.
+
+\ttitem{FLAG\_DIFFCOORDS} Indicates that each frame can have different coordinates,
+in the case of zero-suppressed data, otherwise all frames will share the same coordinates.
+
+\end{description}
+
+The signature of the \texttt{SetSizeZS} method is a follows:
+\begin{listing}
+void SetSizeZS(unsigned w, unsigned h, unsigned npix,
+               unsigned frames = 1, int flags = 0);
+\end{listing}
+
+Where all parameters are the same as in \texttt{SetSizeRaw}, but there is an extra parameter (\texttt{npix})
+that specifies how many pixels to preallocate.
+If the number of pixels above threshold is known, this may be used to allocate them all at once.
+If not, then this parameter may be set to zero, and pixels can be allocated as needed
+(but note that this way may be slower, since memory will need to be reallocated for each new pixel).
+
+\subsubsection{SetPixel and PushPixel}
+Once the size has been set, the values of the pixels can then be loaded into the \texttt{StandardPlane}.
+There are two methods for doing this: \texttt{SetPixel}, that sets the value of an already allocated pixel,
+and \texttt{PushPixel} that allocates space for a new pixel and sets that.
+
+The signatures of \texttt{SetPixel} are as follows:
+\begin{listing}
+void SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix,
+              bool pivot = false, unsigned frame = 0);
+void SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix,
+              unsigned frame);
+\end{listing}
+
+where \texttt{index} is the index of the pixel to set, \texttt{x} and \texttt{y} are the coordinates of the pixel,
+and \texttt{pix} is the charge value for the pixel.
+The value of the pivot, and the frame number may optionally be set also, if relevant.
+Note that if only the pivot is set, care should be taken that it is of type \texttt{bool}
+to avoid accidentally setting the frame instead.
+
+The signatures of \texttt{PushPixel} are as follows:
+\begin{listing}
+void PushPixel(unsigned x, unsigned y, unsigned pix,
+               bool pivot = false, unsigned frame = 0);
+void PushPixel(unsigned x, unsigned y, unsigned pix,
+               unsigned frame);
+\end{listing}
+
+where all parameters are the same as in \texttt{SetPixel}.
+The only difference being the lack of an \texttt{index} parameter,
+since this will always be the newly allocated pixel.
+
+\subsubsection{Setting other information}
+Other than the pixel values, the \texttt{StandardPlane} also stores some other information
+that should be set if applicable:
+
+\begin{listing}
+void SetTLUEvent(unsigned ev);
+\end{listing}
+
+This sets the trigger ID as read out from the \gls{TLU}.
+If it was read out and stored, it should be set using this method to allow cross checks in the analysis.
+
+\begin{listing}
+void SetPivotPixel(unsigned p);
+\end{listing}
+
+This sets the value of the pivot pixel (or pivot row etc. -- the value is arbitrary).
+It is only here to allow cross-checks in the analysis;
+if the pixels are to be combined using the pivot information,
+then it should also be set in the per-pixel pivot values.
+The value here cannot be used for that purpose since the order of reading out the pixels is not in general known.
+
+\begin{listing}
+void SetFlags(FLAGS flags);
+\end{listing}
+
+Some flags may be set after calling \texttt{SetSizeRaw} or \texttt{SetSizeZS}, but this is not possible with the flags
+\texttt{FLAG\_WITHPIVOT}, \texttt{FLAG\_WITHSUBMAT} or \texttt{FLAG\_DIFFCOORDS} since these
+flags affect how memory is allocated by those methods.
+
+\subsubsection{Adding to the StandardEvent}
+Once the plane has been constructed and filled, it may be added to a \texttt{StandardPlane} using the following method:
+\begin{listing}
+StandardPlane & AddPlane(const StandardPlane &);
+\end{listing}
+
+This will copy the plane into the list of \texttt{StandardPlane}s stored by the \texttt{StandardEvent}.
+It will return a reference to the copy of the plane, that can be used to make further modifications if necessary.
+
+\subsubsection{Extracting information}
+The \texttt{StandardEvent} inherits the following methods from the \texttt{Event} base class:
+\begin{listing}
+unsigned GetRunNumber() const;
+unsigned GetEventNumber() const;
+unsigned long long GetTimestamp() const;
+T GetTag(const std::string & name, T def) const;
+\end{listing}
+
+allowing access to the run number, event number, timestamp (if set) and any tags (where T is an arbitrary type).
+It also has the following methods to access the \texttt{StandardPlane}s that it contains:
+\begin{listing}
+size_t NumPlanes() const;
+const StandardPlane & GetPlane(size_t i) const;
+\end{listing}
+
+These return the number of planes stored, and a reference to a particular plane, respectively.
+The individual planes can then be examined using the following methods:
+\begin{listing}
+const std::string & Type() const;
+const std::string & Sensor() const;
+unsigned ID() const;
+unsigned TLUEvent() const;
+unsigned PivotPixel() const;
+\end{listing}
+
+These return the type of the plane (i.e. the type of Producer / DataConverter that generated it),
+the type of sensor for the plane (in the case that the plane type can hold different types of sensor data),
+the ID of the plane (used to differentiate different planes of the same type),
+the TLU trigger ID for the plane (if it was read out and stored)
+and the value of the pivot pixel (or pivot row) for the plane.
+Further information about the plane is available in:
+\begin{listing}
+unsigned XSize() const;
+unsigned YSize() const;
+unsigned NumFrames() const;
+unsigned TotalPixels() const;
+unsigned HitPixels() const;
+unsigned HitPixels(unsigned frame) const;
+\end{listing}
+
+These return the full width and height of the sensor in pixels,
+the number of frames stored for the plane,
+total number of pixels for the plane (i.e. full width \x{} height),
+the number of pixels over threshold (for zero-suppressed data) in the result frame,
+and the number of pixels over threshold in a particular source frame.
+
+Note that for the \texttt{HitPixels} method, there are two versions;
+the first takes no parameter and returns the number of hit pixels in the result frame,
+while the second takes the frame number as a parameter and returns the number of hit pixels
+in that frame from the underlying source data.
+Normally the first version would be used, unless access is needed to the raw data from the sensor.
+Similarly, the other methods for accessing the data all have two versions:
+
+\begin{listing}
+double GetPixel(unsigned index) const;
+double GetX(unsigned index) const;
+double GetY(unsigned index) const;
+const std::vector<pixel_t> & PixVector() const;
+const std::vector<coord_t> & XVector() const;
+const std::vector<coord_t> & YVector() const;
+\end{listing}
+
+These return the charge value, the x coordinate and the y coordinate of a particular pixel
+(for the first three methods),
+or a vector of these values for all pixels in the frame (for the final three methods.
+
+Here, \texttt{coord\_t} and \texttt{pixel\_t} are both \texttt{double}, even though the values stored are usually integers.
+This is in order to make the \texttt{StandardPlane} as general as possible, allowing it to store, for example,
+clusters with non-integer coordinates instead of pixels, and it also makes it easier to pass the values directly
+into Root histograms without first having to convert them to \texttt{double}.
+All the above methods also have a version taking the frame number
+(as the second parameter if they already have one parameter),
+which returns the information from the underlying source frame instead of the result frame.
+
+\subsection{LCIO and LCEvent}\label{sec:LCIO}
+% TODO: describe LCIO format
+Due to time constraints, the \gls{LCIO} format is not yet described in this manual.
+If you need to write a converter to \gls{LCIO},
+first check whether a newer version of this manual is available,
+otherwise you can look at the other converters that are already implemented,
+and if that is not enough, seek the help of an expert.
+%\begin{listing}
+%#include "IMPL/LCEventImpl.h"
+%#include "IMPL/TrackerRawDataImpl.h"
+%#include "IMPL/TrackerDataImpl.h"
+%#include "IMPL/LCCollectionVec.h"
+%#include "IMPL/LCGenericObjectImpl.h"
+%#include "UTIL/CellIDEncoder.h"
+%#include "lcio.h"
+%\end{listing}
+
+\subsection{DataConverterPlugin}
+In order to allow different \glspl{DUT} to easily incorporate their data into the monitoring and analysis chain,
+the \texttt{DataConverterPlugin} system was developed.
+This allows all the conversion code for each producer to be kept in one file,
+with the necessary parts being called automatically as needed.
+This section describes how to write a new converter plugin,
+to use existing converter plugins see \autoref{sec:PluginManager}.
+
+Writing a converter plugin for a new producer involves defining a new class
+that derives from the \texttt{DataConverterPlugin} base class and implementing a few methods.
+Each converter plugin contains a unique string that defines
+which type of \texttt{RawDataEvent}s it is able to convert.
+This is the same string that is set in the \texttt{RawDataEvent} when it is created by the relevant producer.
+The \texttt{DataConverterPlugin} class is defined in the following header:
+\begin{listing}
+#include "eudaq/DataConverterPlugin.hh"
+\end{listing}
+
+The methods to be implemented are described below,
+and a full example is provided in \autoref{sec:ExampleConverter}.
+
+\subsubsection{Constructor}
+The constructor should call the \texttt{DataConverterPlugin} constructor, and pass as a parameter the
+string representing the type of \texttt{RawDataEvent} this plugin can convert.
+A single static instance of the converter should then be defined,
+and instantiated in the source file.
+This is illustrated below:
+\begin{listing}[C++]
+class ExampleConverterPlugin : public eudaq::DataConverterPlugin {
+  ExampleConverterPlugin() : eudaq::DataConverterPlugin("EXAMPLE") {
+    // constructor...
+  }
+  // more methods...
+  static ExampleConverterPlugin m_instance;
+};
+ExampleConverterPlugin ExampleConverterPlugin::m_instance;
+\end{listing}
+
+this will cause the constructor to be called during initialization of the program,
+and the \texttt{DataConverterPlugin} constructor will automatically register the plugin
+and make it available in the \texttt{PluginManager}.
+
+\subsubsection{Initialization}
+Every time a new run is started, the \texttt{Initialize} method will be called.
+It has the following signature:
+\begin{listing}
+virtual void Initialize(const Event & ev, const Configuration & c);
+\end{listing}
+
+It receives as parameters the \gls{BORE}, and the configuration used for the run.
+The plugin may extract any tags from the \gls{BORE}, or other information from the configuration,
+and store it in member variables for use during decoding.
+
+\subsubsection{GetTriggerID}
+Since each producer that reads out the trigger ID from the \gls{TLU} stores it differently in the raw data,
+there is no general way to extract this information.
+The \texttt{GetTriggerID} method remedies this, by providing a generic interface to access the trigger ID.
+The signature is as follows:
+\begin{listing}
+virtual unsigned GetTriggerID(const Event & ev) const;
+\end{listing}
+
+It receives the \texttt{Event} as a parameter, from which it should extract the \gls{TLU} trigger ID,
+and return it as an unsigned integer.
+
+\subsubsection{GetStandardEvent}
+This method should extract the sensor data from the \texttt{RawDataEvent} input parameter,
+and fill in the \texttt{StandardEvent} by adding the appropriate number of \texttt{StandardPlane}s
+(one per sensor plane).
+The method signature is:
+\begin{listing}
+virtual bool GetStandardSubEvent(StandardEvent & out,
+                                 const Event & in) const;
+\end{listing}
+
+It should return \texttt{true} if it successfully updated the \texttt{StandardEvent}, or \texttt{false} to indicate an error.
+
+\subsubsection{GetLCIOEvent}
+Similar to \texttt{GetStandardEvent}, the \texttt{GetLCIOEvent} method converts a \texttt{RawDataEvent}
+into a standardized format, in this case \gls{LCIO}.
+The signature is:
+\begin{listing}
+virtual lcio::LCEvent * GetLCIOEvent(const Event * ev) const;
+\end{listing}
+
+It receives the \texttt{RawDataEvent} as a parameter, and should return a pointer to a new LCEvent
+if the conversion is successful. In the event of an error, it should return a null pointer.

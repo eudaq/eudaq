@@ -1,0 +1,125 @@
+% !TEX root = EUDAQUserManual.tex
+\documentclass[12pt, oneside, notitlepage, a4paper]{scrartcl}
+\usepackage{epsfig, scrpage2, graphicx, listings, microtype, setspace, upquote}
+\usepackage[british]{babel}
+\usepackage{hyperref} % must be the last package (apart from glossaries)
+\usepackage[toc, nonumberlist]{glossaries} % must go after hyperref, so entries are clickable
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+
+\setlength{\parindent}{0em}
+\setlength{\parskip}{0ex plus0.5ex minus0ex}
+\pagestyle{scrheadings}
+
+\def\subsectionautorefname{section}
+\def\subsubsectionautorefname{section}
+%\let\stdsection\section
+%\renewcommand\section{\newpage\stdsection}
+
+% Some useful commands
+\newcommand*\micron{\ensuremath{\mu\mathrm{m}}}
+\newcommand*\micro{\ensuremath{\mu}}
+\newcommand*\square{\ensuremath{^2}}
+\newcommand*\degree{\ensuremath{^\circ}}
+\newcommand*\lt{\ensuremath{<}}
+\newcommand*\gt{\ensuremath{>}}
+\newcommand*\x{\ensuremath{\times}}
+\newcommand*\param[1]{\ensuremath{\langle}#1\ensuremath{\rangle}}
+
+\newcommand*\ttitem[1]{\item[\texttt{#1}\,:]}
+\newcommand*\ccitem[1]{\item[]\lstinline[style=shaded,language=C++]{#1}}
+%\lstMakeShortInline[style=plain,language=C++]@
+\newcommand*\inline[2][C++]{\lstinline[style=plain,language=#1]{#2}}
+\newcommand*\myinputlisting[3][C++]{
+Latest version available at:\\
+\textls[#2]{\url{http://projects.hepforge.org/eudaq/trac/browser/trunk/#3}}
+
+\lstinputlisting[style=full, language=#1]{eudaq/#3}
+\rule[\baselineskip]{\textwidth}{1pt}
+}
+\lstnewenvironment{listing}[1][C++]{\lstset{style=shaded,language=#1}}{}
+
+\newenvironment{myitemize}
+{\begin{itemize}%
+  \setlength{\itemsep}{0.1\baselineskip}%
+  \setlength{\parskip}{0pt}%
+  \setlength{\parsep}{0pt}}
+{\end{itemize}}
+\newenvironment{mydescription}
+{\begin{description}%
+  \setlength{\itemsep}{0.1\baselineskip}%
+  \setlength{\parskip}{0pt}%
+  \setlength{\parsep}{0pt}}
+{\end{description}}
+
+\renewcommand*\headfont{\normalfont}
+
+\renewcommand*\glsgroupskip{}
+\renewcommand*{\glspostdescription}{.\vspace{-0.5\baselineskip}}
+\makeglossaries
+
+%\glsdisablehyper
+%\defglsdisplay{\cooltooltip[1,1,0.9][1,1,1]{Glossary}{a #2}{}{b #2}{#1}}
+%\renewcommand{\glsdisplay}[4]{%
+%   \cooltooltip[1,1,1][1,1,0.9]{Definition}{#2}{}{#2}{#1#4}%
+%} 
+
+\lstset{
+    %basicstyle=\ttfamily
+    keywordstyle=\color[rgb]{0,0,0.8},
+    %identifierstyle=\color[rgb]{0,0,0},
+    commentstyle=\color[rgb]{0,0.4,0},
+    stringstyle=\color[rgb]{0.4,0,0.8},
+    showstringspaces=false,
+    basewidth=1.2ex,
+    numberstyle=\footnotesize\color[rgb]{0.6,0.6,0.6},
+    stepnumber=1,
+    numbersep=10pt,
+    tabsize=2,
+    breaklines=true,
+    prebreak = \raisebox{0ex}[0ex][0ex]{\color[rgb]{0.6,0.6,0.6}\ensuremath{\hookleftarrow}},
+    breakatwhitespace=true,
+    %aboveskip={1.5\baselineskip},
+    columns=fixed,
+    upquote=true,
+    extendedchars=false,
+    framerule=0pt,
+    belowskip={0.5\baselineskip},
+}
+\lstdefinestyle{plain}{
+    basicstyle=\normalsize\ttfamily,
+    numbers=none,
+    frame=none,
+    %belowskip={0.5\baselineskip},
+    backgroundcolor={},
+}
+\lstdefinestyle{shaded}{
+    basicstyle=\small\ttfamily,
+    numbers=none,
+    frame=single,
+    backgroundcolor=\color[rgb]{1,0.98,0.95},
+}
+\lstdefinestyle{full}{
+    basicstyle=\small\ttfamily,
+    numbers=left,
+    frame=single,
+    %belowskip={\baselineskip},
+    backgroundcolor=\color[rgb]{1,1,0.95},
+}
+\lstdefinelanguage{conf}{
+    otherkeywords={=},
+    alsoletter={[},
+    alsoletter={]},
+    moredelim=[s][keywordstyle]{[}{]},
+    comment=[l]{\#},
+    %morecomment=[l]{\;},
+    %string=[s]',
+    %morestring=[s]",
+}
+\lstdefinelanguage{mybash}[]{bash}{
+    deletekeywords={test,read},
+    morekeywords={svn,make,chown,chmod},
+    %keywordsprefix={./},
+    moredelim=[is][keywordstyle]{$[}{]$},
+}

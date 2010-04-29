@@ -1,0 +1,51 @@
+\glossarysection[\glossarytoctitle]{\glossarytitle}\glossarypreamble
+\begin{theglossary}\glossaryheader
+\glsgroupheading{B}\relax \glsresetentrylist %
+\glossaryentryfield{BORE}{\glsnamefont{BORE}}{beginning-of-run-event, basically a run header}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{17\delimN 18}\delimN 
+		\setentrycounter{page}\glsnumberformat{22}\delimN 
+		\setentrycounter{page}\glsnumberformat{27}\delimN 
+		\setentrycounter{page}\glsnumberformat{30\delimN 31}\delimN 
+		\setentrycounter{page}\glsnumberformat{39\delimR 41}}}\glsgroupskip
+\glsgroupheading{C}\relax \glsresetentrylist %
+\glossaryentryfield{CDS}{\glsnamefont{CDS}}{correlated double sampling, when two frames are acquired, one before and one after the trigger, and then subtracted to get the actual signal}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{15}\delimN 
+		\setentrycounter{page}\glsnumberformat{33}}}\glsgroupskip
+\glsgroupheading{D}\relax \glsresetentrylist %
+\glossaryentryfield{DUT}{\glsnamefont{DUT}}{device under test}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{3}\delimN 
+		\setentrycounter{page}\glsnumberformat{10}\delimN 
+		\setentrycounter{page}\glsnumberformat{20\delimN 21}\delimN 
+		\setentrycounter{page}\glsnumberformat{29}\delimN 
+		\setentrycounter{page}\glsnumberformat{33}\delimN 
+		\setentrycounter{page}\glsnumberformat{38}}}\glsgroupskip
+\glsgroupheading{E}\relax \glsresetentrylist %
+\glossaryentryfield{EORE}{\glsnamefont{EORE}}{end-of-run-event, basically a run trailer}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{22}\delimN 
+		\setentrycounter{page}\glsnumberformat{27}\delimN 
+		\setentrycounter{page}\glsnumberformat{30\delimN 31}}}%
+\glossaryentryfield{EUDRB}{\glsnamefont{EUDRB}}{the EUDET data reduction board, a VME readout board for pixel sensors}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{3\delimN 4}\delimN 
+		\setentrycounter{page}\glsnumberformat{6}\delimN 
+		\setentrycounter{page}\glsnumberformat{14}\delimN 
+		\setentrycounter{page}\glsnumberformat{26}}}\glsgroupskip
+\glsgroupheading{L}\relax \glsresetentrylist %
+\glossaryentryfield{LCIO}{\glsnamefont{LCIO}}{Linear Collider I/O, the file format used by the analysis software}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{4}\delimN 
+		\setentrycounter{page}\glsnumberformat{7}\delimN 
+		\setentrycounter{page}\glsnumberformat{23}\delimN 
+		\setentrycounter{page}\glsnumberformat{33}\delimN 
+		\setentrycounter{page}\glsnumberformat{37}\delimN 
+		\setentrycounter{page}\glsnumberformat{39}}}\glsgroupskip
+\glsgroupheading{T}\relax \glsresetentrylist %
+\glossaryentryfield{TLU}{\glsnamefont{TLU}}{trigger logic unit}{\relax }{\glossaryentrynumbers{\relax 
+		\setentrycounter{page}\glsnumberformat{3\delimN 4}\delimN 
+		\setentrycounter{page}\glsnumberformat{6}\delimN 
+		\setentrycounter{page}\glsnumberformat{11}\delimN 
+		\setentrycounter{page}\glsnumberformat{14}\delimN 
+		\setentrycounter{page}\glsnumberformat{18}\delimN 
+		\setentrycounter{page}\glsnumberformat{20\delimR 22}\delimN 
+		\setentrycounter{page}\glsnumberformat{27}\delimN 
+		\setentrycounter{page}\glsnumberformat{35}\delimN 
+		\setentrycounter{page}\glsnumberformat{39}}}%
+\end{theglossary}\glossarypostamble

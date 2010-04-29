@@ -1,0 +1,340 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Other Parts of the Framework}
+The EUDAQ framework contains a number of other parts that may be useful.
+Those that have not already been described in previous sections will be outlined below.
+
+\subsection{FileWriter}
+The FileWriter part of the framework allows different file formats to be written,
+using a common interface, using a plugin-like system to define new file types.
+The \texttt{FileWriter} class defines the interface that each type must implement,
+and the \texttt{FileWriterFactory} allows code that writes data files to select any
+available file type, and write it in a generic way,
+without needing to know details about the particular file format.
+A number of different file types are already implemented,
+for a list with descriptions, see page \pageref{lst:FileTypes}
+
+The easiest way to make use of the different \texttt{FileWriter}s,
+is to use the \texttt{Converter.exe} program (see \autoref{sec:Converter}).
+
+The \texttt{FileWriter} base class is defined in the following header:
+\begin{listing}
+#include "eudaq/FileWriter.hh"
+\end{listing}
+
+In order to implement a new \texttt{FileWriter}, a new class must be written,
+inheriting from the \texttt{FileWriter} base class, and implementing the following methods:
+\begin{listing}
+virtual void StartRun(unsigned);
+virtual void WriteEvent(const DetectorEvent &);
+virtual unsigned long long FileBytes() const;
+\end{listing}
+
+The \texttt{StartRun} method is called at the start of each new run
+with the run number as a parameter.
+This allows a new file to be opened, and any header information to be written if necessary.
+Then the \texttt{WriteEvent} method is called for each event to be written.
+Here the \texttt{DetectorEvent} can be decoded and processed
+and the necessary data written to file.
+The \texttt{FileBytes} method should return the number of bytes written to the file.
+However, it is optional, and may simply return zero if the actual size is not easily known.
+
+\subsection{FileReader}
+Although tools are provided to access the information in the native data files,
+and to convert them to other formats (such as LCIO, for analysis with the EUTelescope package),
+in some cases it may be preferable to access the native data directly.
+For this, the \texttt{FileReader} class is provided,
+allowing a custom program to be written to access a native file and process it as desired.
+
+The constructor takes as an argument the name of the file to be opened,
+and will read the first event from the file (which should be the \gls{BORE}).
+The \texttt{NextEvent()} method can then be called to advance through the file.
+It can optionally take as a parameter the number of events to skip,
+and will return \texttt{true} as long as a new event was read.
+The currently loaded event can be accessed with the \texttt{GetDetectorEvent()} method.
+
+The basic usage is shown below, while a more complete example is available in \autoref{sec:ExampleReader}:
+\begin{listing}
+#include "eudaq/FileReader.hh"
+#include <iostream>
+
+int main(int argc, char ** argv) {
+  if (argc != 2) {
+    std::cerr << "usage: " << argv[0] << " file" << std::endl;
+    return 1;
+  }
+  eudaq::FileReader reader(argv[1]);
+  std::cout << "Opened file: " << reader.Filename() << std::endl;
+  std::cout << "BORE:\n" << reader.GetDetectorEvent() << std::endl;
+  while (reader.NextEvent()) {
+    std::cout << reader.GetDetectorEvent() << std::endl;
+  }
+  return 0;
+}
+\end{listing}
+
+This will open the file specified on the command line,
+and print out a summary of all the events in there.
+Be aware that running it as it is may generate a large amount of output,
+especially with large data files.
+
+%\subsection{FileNamer}
+\subsection{PluginManager}\label{sec:PluginManager}
+The \texttt{PluginManager} handles the different \texttt{DataConverterPlugin}s,
+allowing raw data stored in a \texttt{RawDataEvent} to be easily converted
+to a \texttt{StandardEvent} or \texttt{LCEvent} without having to know the details of all the detector types in there.
+It is defined in the following header:
+\begin{listing}
+#include "eudaq/PluginManager.hh"
+\end{listing}
+
+In order to convert the events correctly,
+the plugins must have access to the information in the BORE.
+Therefore, before any events may be converted, and for each data file,
+the \texttt{PluginManager} must be initialized as follows:
+\begin{listing}
+eudaq::PluginManager::Initialize(bore);
+\end{listing}
+
+The \texttt{PluginManager} will take care of passing the relevant parts of the \gls{BORE}
+to the appropriate \texttt{DataConverterPlugin}s.
+The \texttt{DetectorEvent}s can then be converted as follows:
+\begin{listing}
+eudaq::StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
+\end{listing}
+
+The \texttt{PluginManager} will take care of splitting the \texttt{DetectorEvent}
+into its constituent subevents, and passing them all to the appropriate
+\texttt{DataConverterPlugin}s to be inserted into the returned \texttt{StandardEvent}.
+For a slightly more complete example of the \texttt{PluginManager},
+see the \texttt{ExampleReader} in \autoref{sec:ExampleReader}.
+
+\subsection{OptionParser}
+The \texttt{OptionParser} is used to simplify parsing of command-line options.
+It provides a way to specify which arguments a program accepts,
+with the types, default values and descriptions,
+so that the help text can be automatically generated,
+and therefore is always in sync with the code,
+and all command line programs can have a uniform interface.
+
+All programs using the \texttt{OptionParser} will automatically provide a
+\texttt{-h} (and \texttt{--help}) option to display the help text,
+as well as a \texttt{-v} (and \texttt{--version}) option to display the program version,
+unless the program explicitly overrides these options with other ones with the same names.
+
+The \texttt{OptionParser} is the class that handles the actual parsing of the command line.
+The signature of the constructor is as follows:
+\begin{listing}
+OptionParser(const std::string & name, const std::string & version,
+             const std::string & desc="", int minargs = -1, int maxargs = -1);
+\end{listing}
+The first three arguments are the program name, version and (optionally) description,
+and these are optionally followed by two numbers specifying the number of arguments
+expected after the command line options.
+The default value of -1 for the minimum means no arguments are allowed,
+and for the maximum means that an arbitrary number may be given
+(i.e. there is no explicit maximum).
+
+If the automatically generated help text is not sufficient,
+extra text may also be given to display at the end of the help text,
+by passing it to the following method:
+\begin{listing}
+void OptionParser::ExtraHelpText(const std::string & text);
+\end{listing}
+This can be used to provide extra information about the options to the program.
+
+Once an \texttt{OptionParser} object has been constructed, the different options may be specified.
+There are two types: \texttt{OptionFlag}, which specifies a simple option with no argument,
+and the template \texttt{Option<T>}, which specifies an option taking an argument of type \texttt{T}.
+
+The \texttt{OptionFlag} constructor has the following signature:
+\begin{listing}
+OptionFlag(OptionParser & op, const std::string & shortname,
+           const std::string & longname, const std::string & desc = "");
+\end{listing}
+where \texttt{op} is a reference to the \texttt{OptionParser} object created previously,
+that will do the actual parsing of the command line.
+It then takes two names: a short version (usually a single character) that is used with a single hyphen,
+and a long version that must be preceded by two hyphens on the command line.
+Finally, a description may be given that will be displayed in the help text.
+
+The \texttt{Option} constructor has the following two signatures,
+one for normal types, the other for vectors of another type:
+\begin{listing}
+Option<T>(OptionParser & op, const std::string & shortname,
+          const std::string & longname, const T & deflt = T(),
+          const std::string & argname = "", const std::string & desc = "");
+Option<std::vector<T> >(OptionParser & op, const std::string & shortname,
+          const std::string & longname, const std::string & argname = "",
+          const std::string & sep = "", const std::string & desc = "");
+\end{listing}
+where, in both cases, the first three arguments are as for \texttt{OptionFlag}.
+The first constructor then takes a default value that will be used
+in the case the option is not specified on the command line,
+a name for the argument to the option (to be used in the help text),
+and a description of the option.
+The vector version also takes an argument name and a description,
+but no default value (the default is always an empty vector), instead it takes a separator,
+which is the string used to separate multiple elements of the vector on the command line.
+By default (or if an empty string is specified), a comma will be used.
+
+Once all the options have been specified, the command line can be parsed,
+which is done by calling the following method of the \texttt{OptionParser} object:
+\begin{listing}
+OptionParser & OptionParser::Parse(const char ** args);
+\end{listing}
+as an argument it takes the list of arguments from the command line (by convention usually called \texttt{argv}).
+If there is an error during parsing, an exception may be thrown;
+this should be handled by the \texttt{HandleMainException} method as described below.
+
+Afterwards the values of the options can be accessed using their \texttt{Value()} method.
+The \texttt{IsSet()} method is also available to tell whether an option has been set on the command line
+(for \texttt{OptionFlag}s this will hold the same value as the \texttt{Value()} method).
+
+Finally, the \texttt{OptionParser} has a \texttt{HandleMainException} method that provides
+a way to catch any unhandled exceptions,
+and either display help if it is a problem with parsing the command line,
+or otherwise display a standard text informing the user of a problem.
+It will also catch exceptions of type \texttt{MessageException} and display the message,
+without treating it as an error, so this can be used to exit the program with a message to the user.
+It is recommended to put the main program inside a \texttt{try} block,
+then call the \texttt{HandleMainException} method from a \texttt{catch(...)} block,
+after any other exceptions have been handled (if necessary).
+
+An example use is shown below, illustrating most of what is described above:
+\lstinputlisting[style=full, language=C++]{eudaq/main/src/OptionExample.cxx}
+
+Running this program produces the following output:
+\begin{listing}[mybash]
+$[./OptionExample.exe]$ -h
+Example version 1.0
+An example program
+
+usage: ./OptionExample.exe [options] [0 or more arguments]
+
+options:
+  -t --test
+     Enable test
+  -e --example <value>	(default = 42)
+     Example parameter
+  -a --another <values>	(default = )
+     Example vector
+
+Some more information about this program.
+
+$[./OptionExample.exe]$
+Test: Disabled
+Example: 42
+Another: 
+No arguments were given
+
+$[./OptionExample.exe]$ -t -e 2.718 -a 1;2;3 foo bar
+Test: Enabled
+Example: 2.718
+Another: 1, 2, 3
+Argument 1: foo
+Argument 2: bar
+\end{listing}
+
+\subsection{Timer}
+The \texttt{Timer} class wraps the underlying operating system's timer functions,
+making them easier to use in a platform independent way.
+Whenever a \texttt{Timer} object is created, it will record the current time.
+Then at any time in the future, the elapsed time in seconds may be accesses
+with the \texttt{Seconds()} method.
+
+There is also a \texttt{Stop()} method to stop the timer counting, so any subsequent calls
+to \texttt{Seconds} will return the same value, and a \texttt{Restart()} method to
+reset the timer's start time to the current time and start counting again.
+An example use is shown below:
+\begin{listing}[C++]
+#include "eudaq/Timer.hh"
+
+Timer t;
+function_a();
+cout << "Function A took " << t.Seconds() << " seconds." << endl;
+t.Restart();
+function_b();
+cout << "Function B took " << t.Seconds() << " seconds." << endl;
+// wait 3 microseconds
+t.Restart();
+while (t.Seconds() < 3e-6) {
+  // do nothing
+}
+\end{listing}
+
+This shows a timer being used to measure the execution time of two functions,
+and to wait for a small delay.
+Usually to wait for a delay, it is preferable to use sleep (or \texttt{mSleep}, see \autoref{sec:mSleep}),
+but in most operating systems the minimum delay for a sleep is around 20~ms
+(even when using \texttt{usleep} which has microsecond resolution)
+so if the delay must be shorter, a busy loop like above is needed.
+
+\subsection{Utils}
+The \texttt{Utils} package is a collection of useful functions and classes too small to merit
+their own individual files.
+It is used by including the header:
+\begin{listing}
+#include "eudaq/Utils.hh"
+\end{listing}
+
+Some of the most useful parts are described here.
+
+\subsubsection{to\_string}
+This is a template function that takes (almost) any type and returns the value converted to a string.
+An optional second argument specifies the minimum number of digits to use
+(padding with zeroes if necessary).
+\begin{listing}
+int value = 123;
+strfunction(to_string(value));
+strfunction(to_string(value, 6));
+\end{listing}
+
+This will pass first the string \inline{"123"},
+and then the string \inline{"000123"}
+to the function \texttt{strfunction}.
+
+\subsubsection{from\_string}
+This template function is the inverse of \texttt{to\_string}.
+It takes as arguments a string and a default value of type T,
+and returns an object of type T initialised from the string.
+If it is not possible to convert the string to the required type,
+the default value is returned instead.
+\begin{listing}
+std::string value = "456";
+intfunction(from_string(value, 0));
+\end{listing}
+
+This will call \texttt{intfunction} with the integer value 456.
+
+\subsubsection{hexdec}
+This is a class to facilitate printing numbers in both hexadecimal and decimal.
+It is used similarly to \texttt{to\_string}, but when printed,
+it will display the value in hexadecimal, followed by the value in decimal in parentheses.
+The hexadecimal values will be padded to the full width of the type,
+unless a second argument is given specifying the minimum number of hex digits to display.
+\begin{listing}
+short value = 789;
+cout << hexdec(value) << endl
+     << hexdec(value, 0) << endl;
+\end{listing}
+
+This will display:
+\begin{listing}[]
+0x0315 (789)
+0x315 (789)
+\end{listing}
+
+If the result is required in a string, instead of being printed,
+this can be achieved with \inline{to_string(hexdec(value))}.
+
+\subsubsection{mSleep}\label{sec:mSleep}
+This is a wrapper around the operating system's \texttt{sleep}/\texttt{usleep}
+(or equivalent) function.
+It takes as an argument the number of milliseconds to sleep.
+The advantage of this function is that it will work on Linux,
+Mac OS X and Windows, as it will automatically call the correct underlying function.
+
+%\section{Monitoring and Analysis}
+%The EUDAQ framework is does not perform any detailed analysis of the data taken.
+%For this, the EUTelescope\cite{eutel2008} package is available.
+%In order to use it, the data must be converted to LCIO format (\autoref{sec:LCIO}).

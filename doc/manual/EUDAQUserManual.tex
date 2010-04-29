@@ -1,0 +1,84 @@
+% !TEX TS-program = pdflatexmk
+\input{preamble}
+
+% Insert EUDET document number here:
+\newcommand*\EUDETnum{EUDAQ User Manual}
+
+% PDF info and link colours
+\hypersetup{
+  pdftitle={EUDAQ Software User Manual},
+  pdfauthor={Emlyn Corrin},
+  pdfsubject={EUDET},
+  pdfkeywords={EUDET, EUDAQ, Software, User Manual},
+  colorlinks=true,
+  linkcolor=black, % \ref \autoref \pageref
+  citecolor=blue, % \cite
+  urlcolor=blue, % \url \href (external)
+  filecolor=blue, % \href (local file)
+}
+
+% Load glossary
+\loadglsentries{glossary.tex}
+
+% Headers and Footers
+\titlehead{\EUDETnum}
+\lehead{\EUDETnum}
+\lohead{\EUDETnum}
+\automark{section}
+\rehead{\headmark}
+\rohead{\headmark}
+\chead{}
+\cfoot{\pagemark}
+
+% Title info
+\subject{\includegraphics[scale=0.7]{logo_eudet}}
+\title{\Large EUDAQ Software User Manual} 
+\author{\normalsize E.~Corrin\thanks{Universit\'e de Gen\`eve, Geneva, Switzerland}}
+\date{\normalsize \today}
+
+\begin{document}
+
+% Title page
+\maketitle
+\begin{abstract}
+\noindent
+This document provides an overview of the EUDAQ software,
+the data acquisition framework used by the EUDET JRA1 beam telescope.
+It describes how to install and run the DAQ system and use many of the included utility programs,
+and how users may integrate their systems into the EUDAQ framework
+by writing their own Producer and DataConverterPlugin,
+thus allowing them to take advantage of the EUTelescope analysis framework.
+\end{abstract}
+\newpage
+
+% Contents
+% Condense slightly to fit on one page
+\begin{spacing}{0.92}
+\tableofcontents
+\end{spacing}
+
+% Main sections
+\include{Introduction}
+\include{Installing}
+\include{Running}
+\include{Producers}
+\include{Conversion}
+\include{OtherParts}
+\include{Reporting}
+
+% Appendices
+\appendix
+\include{SourceCode}
+
+\printglossaries
+
+\section*{Acknowledgements}
+This work is supported by the Commission of the European Communities
+under the 6\textsuperscript{th} Framework Programme
+``Structuring the European Research Area,'' contract number RII3--026126.
+
+%\bibliographystyle{unsrt}
+\bibliographystyle{ClassicCite}
+\bibliography{References}
+
+\end{document}

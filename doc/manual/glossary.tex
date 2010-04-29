@@ -1,0 +1,19 @@
+% !TEX root = EUDAQUserManual.tex
+\renewcommand\newacronym[3]{
+  \newglossaryentry{#1}{
+    type=\acronymtype,
+    name={#1},
+    description={#2#3},
+    text={#1},
+    first={#2 (#1)},
+    plural={#1\glspluralsuffix},
+    firstplural={#2\glspluralsuffix{} (#1\glspluralsuffix)},
+  }
+}
+\newacronym{BORE}{beginning-of-run-event}{, basically a run header}
+\newacronym{EORE}{end-of-run-event}{, basically a run trailer}
+\newacronym{TLU}{trigger logic unit}{}
+\newacronym{EUDRB}{the EUDET data reduction board}{, a VME readout board for pixel sensors}
+\newacronym{LCIO}{Linear Collider I/O}{, the file format used by the analysis software}
+\newacronym{DUT}{device under test}{}
+\newacronym{CDS}{correlated double sampling}{, when two frames are acquired, one before and one after the trigger, and then subtracted to get the actual signal}

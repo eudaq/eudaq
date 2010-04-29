@@ -1,0 +1,153 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Installing EUDAQ}
+
+\subsection{Prerequisites}
+EUDAQ has relatively few dependencies on other software, but some features do rely on other packages.
+The libusb library is only needed to communicate over USB with a \gls{TLU}\cite{Cussans2009}.
+The VME driver is only needed for reading out \glspl{EUDRB}\cite{Cotta2008}
+via VME with a Motorola MVME6100 single board computer.
+The other dependencies are only needed for running the DAQ, and not for the common library
+(for example if you only want to perform data analysis,
+or write a custom Producer to run in the EUDET telescope,
+but not run the whole DAQ yourself).
+
+\subsubsection{libusb}
+In order to communicate with a \gls{TLU}, the libusb library is needed.
+Therefore, if you want to compile the \texttt{TLU} subdirectory, you should make sure that libusb is properly installed.
+
+On Mac OS X, this can be installed using fink or macports.
+If using macports you may also need to install the \texttt{libusb-compat} package.
+On Linux it may already be installed,
+otherwise you should use the built-in package manager (aptitude/apt-get/yum etc.) to install it.
+Make sure to get the development version, which may be named \texttt{libusb-devel} instead of simply \texttt{libusb}.
+On Windows, libusb is only needed if compiling with cygwin,
+in which case you should use the cygwin installer to install libusb.
+Otherwise libusb is not needed, as the included ZestSC1 libraries should work as they are.
+
+\subsubsection{VME driver}
+In order to communicate with the \gls{EUDRB} boards a VME library is needed.
+A kernel module is included for the Tsi148 VME bridge,
+for use on a Motorola MVME6100, in the \texttt{extern/Tsi148} subdirectory.
+Installation of this module is beyond the scope of this document.
+
+The \texttt{vme} subdirectory includes code for accessing the VME bus with the Tsi148 module.
+In principle other VME bridges could be used,
+you just need to write a C++ class that inherits from the VMEInterface class
+and implements the necessary methods (look at the TSI148Interface class for an example).
+
+\subsubsection{Qt}
+The graphical interface of EUDAQ uses the Qt graphical framework.
+In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
+It is available in most Linux distributions as the package \texttt{qt4-devel},
+but make sure the version is at least 4.4, since there are a few issues with earlier versions.
+If the included version is too old, or on other platforms,
+it can be downloaded from \url{http://qt.nokia.com/downloads}.
+Select the LGPL (free) version, then choose the complete development environment
+(it may also work with just the framework, but this is untested).
+Make sure the \texttt{QTDIR} environment variable is set to the Qt installation directory,
+and the \texttt{\$QTDIR/bin} directory is in your path.
+
+If you are using Mac OS 10.6 (Snow Leopard) or later, it is recommended to use the Cocoa version of Qt
+(as opposed to the Carbon version), since it supports 64-bit binaries,
+and by default most other libraries are 64 bits on OS 10.6, so this should cause fewer compilation issues.
+The Cocoa version is not so easy to find on the Qt website, at the time of writing it could be found at
+\url{http://qt.nokia.com/downloads/mac-os-cpp},
+just cancel the download that starts, then find the link to the Cocoa (32 and 64-bit) version.
+
+\subsubsection{Root}\label{sec:Root}
+The online monitor, as well as a few command-line utilities (contained in the \texttt{root} subdirectory),
+use the Root package for histogramming.
+It can be downloaded from \url{http://root.cern.ch}.
+Make sure Root's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
+This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
+script in the \texttt{bin} directory of the Root installation:
+\begin{listing}[mybash]
+source /path/to/root/bin/thisroot.sh
+\end{listing}
+
+\subsubsection{LCIO / EUTelescope}\label{sec:LCIO-EUTel}
+To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
+eudaq must be linked against the \gls{LCIO} and EUTelescope libraries.
+They are both available from \url{http://ilcsoft.desy.de}.
+It is recommended to use the \texttt{ilcinstall} script to install them and their dependencies.
+
+The \texttt{EUTELESCOPE} and \texttt{LCIO} environment variables should be set to the
+installation directories of EUTelescope and LCIO respectively.
+This can be done by sourcing the \texttt{build\_env.sh} script as follows:
+\begin{listing}[mybash]
+source /path/to/Eutelescope/HEAD/build_env.sh
+\end{listing}
+
+\subsection{Downloading}
+The EUDAQ source code is hosted on hepforge. The recommended way to obtain the software is with subversion,
+since this will allow you to easily update to newer versions.
+The latest version can be checked out with the following command:
+\begin{listing}[mybash]
+svn co https://svn.hepforge.org/eudaq/trunk eudaq
+\end{listing}
+
+This may fail if the installed version of subversion does not include ssl support. In this case, replace the \texttt{https} with \texttt{http}. Occasionally, when connecting via \texttt{http}, it may fail with an error resembling:
+\begin{listing}[]
+svn: REPORT of '/path...': 200 OK (http://svn.hepforge.org)
+\end{listing}
+
+if this occurs, just repeat the command, it usually works the second time.
+
+This will create the directory \texttt{eudaq}, and download the latest version into it. 
+If you already have a copy installed, and want to update it to the latest version, you do not need to repeat the \texttt{svn co} command, just change to the \texttt{eudaq} directory use the command:
+\begin{listing}[mybash]
+svn up
+\end{listing}
+
+If you do not have subversion installed, and are unwilling or unable to install it, you can download a zip file from
+\url{http://projects.hepforge.org/eudaq/trac/browser/trunk}, at the bottom of the page is a link to download a zip file.
+
+\subsection{Configuring}
+Currently some manual editing is needed to configure the software.
+Hopefully this will be replaced with a configuration script in the near future.
+In the \texttt{main} subdirectory you should edit the file \texttt{Makefile},
+and set \texttt{USE\_LCIO}, \texttt{USE\_EUTELESCOPE} and \texttt{USE\_ROOT}
+to 1 if the corresponding packages are installed, or 0 if not.
+If they are enabled make sure that the packages are correctly set up
+as described in \autoref{sec:Root} and \autoref{sec:LCIO-EUTel}.
+
+\subsection{Compiling}
+You should just have to run the command:
+\begin{listing}[mybash]
+make
+\end{listing}
+
+from the top eudaq directory to compile the common library,
+along with some command-line programs (the contents of the \texttt{main} subdirectory).
+If other parts are needed, you can specify them as arguments to the make command.
+The different parts are:
+\begin{description}
+
+\ttitem{main}
+The common library, and some command-line programs that depend on only this library
+
+\ttitem{tlu}
+The TLU library, and the command-line programs that depend on it.
+
+\ttitem{gui}
+The graphical parts of the DAQ, such as the Run Control and Log Collector.
+
+\ttitem{root}
+Parts of the software that depend on Root, in particular the Root Monitor.
+
+\ttitem{vme}
+The VME library. This should only be compiled on an MVME6100 single-board computer,
+as it is only compatible with the Tundra Tsi148 VME bridge, and PPC processors. 
+
+\ttitem{eudrb}
+The code for accessing EUDRB boards over VME.
+Depends on the vme library, and should only be compiled on an MVME6100 single-board computer.
+
+\end{description}
+
+The \texttt{altro}, \texttt{altroUSB}, \texttt{depfet}, \texttt{fortis}, \texttt{mimoroma}, \texttt{mvd}, \texttt{pixelmanproducer},
+and \texttt{taki} subdirectories are other producers for users of the EUDET telescope.
+They should not be compiled unless specifically needed.
+
+If any directory depends on another, it will be automatically built; there is no need to specify it as well.
+For example, when you build the \texttt{gui} directory, the \texttt{main} directory will automatically be built first.

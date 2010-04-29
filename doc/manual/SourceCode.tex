@@ -1,0 +1,43 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Source Code}
+This section contains example code to illustrate the concepts in the manual,
+when they are too long to be included in the main section.
+%It also contains some header files from EUDAQ,
+%in cases where they contain public interfaces that may be useful to the user.
+
+All files are also present in the \texttt{EUDAQ} distribution;
+so if possible those versions should be used, since they may be more up to date than the manual.
+
+\subsection{Example Config File}\label{sec:ExampleConfig}
+\myinputlisting[conf]{-30}{conf/ExampleConfig.conf}
+\newpage
+
+\subsection{Example Producer}\label{sec:ExampleProducer}
+\myinputlisting{-60}{main/src/ExampleProducer.cxx}
+\newpage
+
+\subsection{Example DataConverterPlugin}\label{sec:ExampleConverter}
+\myinputlisting{-90}{main/src/ExampleConverterPlugin.cc}
+\newpage
+
+%\subsection{ExampleHardware Header}\label{sec:ExampleHardwareHeader}
+%This is not actually a real example to be followed,
+%it is just so that the \texttt{ExampleProducer} compiles properly,
+%and so that we can have some actual data to demonstrate the \texttt{ExampleConverterPlugin}.
+%The header is included here as a reference since the interface is used in the ExampleProducer.
+%
+%\myinputlisting{-105}{main/include/eudaq/ExampleHardware.hh}
+%\newpage
+
+%\subsection{ExampleHardware Source}\label{sec:ExampleHardwareSource}
+%As noted in \autoref{sec:ExampleHardwareHeader}, this is not a real example to be followed.
+%
+%\myinputlisting{-55}{main/src/ExampleHardware.cc}
+%\newpage
+
+\subsection{Example Reader}\label{sec:ExampleReader}
+\myinputlisting{-50}{main/src/ExampleReader.cxx}
+\newpage
+
+%\subsection{StandardEvent header}\label{sec:StandardEvent}
+%\myinputlisting{-95}{main/include/eudaq/StandardEvent.hh}

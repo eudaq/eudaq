@@ -1,0 +1,224 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Writing a Producer}\label{sec:Producers}
+In order to integrate a \gls{DUT} fully into the DAQ, it needs its own Producer.
+A Producer is both a CommandReceiver and a DataSender,
+meaning it receives commands from Run Control,
+and it also sends events to the Data Collector.
+A base class is provided that users may inherit from, to make this as easy as possible.
+For example code, see \autoref{sec:ExampleProducer}.
+
+\subsection{Configuration}
+The \texttt{Configuration} class is a way of storing configuration information
+in a way that is easily accessible, and can be saved to or loaded from a human-readable file
+(see \autoref{sec:ConfigFiles}), and can be sent over the network.
+It is defined in the following header:
+
+\begin{listing}
+#include "eudaq/Configuration.hh"
+\end{listing}
+
+The configuration consists of a number of sections,
+each of which contains a list of name-value pairs.
+The values are stored as strings, but they can be converted to/from arbitrary types.
+Methods are provided to load from or save to file, to set the current section,
+and to set or get configuration values.
+An example use is shown below:
+
+\begin{listing}
+std::ifstream infile("../conf/ExampleConfig.conf");
+eudaq::Configuration config(infile, "Producer.Example");
+int param = config.Get("Parameter", 0);
+std::cout << "Loaded config, param = " << param << std::endl;
+config.Set("Parameter", param+1);
+config.Set("OtherParam", "something");
+std::ofstream outfile("Test.conf");
+config.Save(outfile);
+\end{listing}
+
+This creates a configuration loaded from the file \texttt{../conf/ExampleConfig.conf},
+selecting the \texttt{Producer.Example} section.
+It then gets an integer parameter from the configuration and displays it.
+Then it modifies the value of the parameter and sets another parameter,
+before writing the configuration to the file \texttt{Test.conf}.
+
+A configuration object will be received by the Producer during the configuration,
+as described in \autoref{sec:OnConfigure}.
+
+\subsection{Receiving Commands}
+Whenever a command is received from the Run Control,
+a corresponding member function of the Producer will be called by the code in the base classes.
+In order to react to a command, the necessary code is simply put inside the corresponding method.
+The \texttt{Producer} base class is declared by including the following header file:
+\begin{listing}
+#include "eudaq/Producer.hh"
+\end{listing}
+
+\subsubsection{OnConfigure}\label{sec:OnConfigure}
+This method is called whenever a configure command is received from the Run Control.
+The method signature is:
+\begin{listing}
+virtual void OnConfigure(const eudaq::Configuration & config);
+\end{listing}
+
+As a parameter, it receives the configuration chosen in the Run Control.
+Information may be extracted from the configuration in order to set up the hardware.
+
+\subsubsection{OnStartRun}
+This is called on the start of each run.
+The method signature is:
+\begin{listing}
+virtual void OnStartRun(unsigned param);
+\end{listing}
+
+As a parameter, it receives the run number of the started run.
+The Producer must send a \gls{BORE},
+and then prepare for reading out events from the hardware.
+
+\subsubsection{OnStopRun}
+This is called at the end of the run.
+The method signature is simply:
+\begin{listing}
+virtual void OnStopRun();
+\end{listing}
+
+Care should be taken that there are no more events pending to be read out.
+Once all data events have been sent, an \gls{EORE} should also be sent,
+to signal to the DAQ that the Producer has ended the run successfully.
+
+\subsection{Sending Data and the RawDataEvent class}
+Events may be sent to the DAQ using the \texttt{Producer}'s \texttt{SendEvent()} method
+that has the following signature:
+\begin{listing}
+void SendEvent(const Event &);
+\end{listing}
+
+It takes as a parameter an object derived from the \texttt{eudaq::Event} base class
+that will be serialised and sent to the Data Collector.
+In practice it will usually be of concrete type \texttt{RawDataEvent}.
+
+The \texttt{RawDataEvent} is a generic container for blocks of raw bytes,
+used to encapsulate the data read out from the sensor electronics
+and send it to the DAQ.
+Each \texttt{RawDataEvent} may contain any number of raw data blocks.
+By convention each block usually corresponds to one sensor,
+but this is not required;
+it is up to each Producer how the raw data are encoded,
+since it is up to the corresponding DataConverterPlugin how they are decoded.
+The RawDataEvent class is defined in the following header file:
+\begin{listing}
+#include "eudaq/RawDataEvent.hh"
+\end{listing}
+
+The class is described in more detail below.
+
+\subsubsection{Constructing}
+A \texttt{RawDataEvent} is constructed as follows:
+\begin{listing}
+RawDataEvent event("EXAMPLE", run, event);
+\end{listing}
+
+Where \texttt{"EXAMPLE"} is a string unique to the particular producer
+that will be used to select the correct converter during decoding.
+The \texttt{run} and \texttt{event} parameters are the run number
+and event number respectively.
+
+As well as normal data events, the producer must also send a \gls{BORE}
+and \gls{EORE} at the beginning and end of a run respectively.
+These are just normal \texttt{RawDataEvent} objects, but with a particular flag set.
+The \texttt{RawDataEvent} has factory methods to simplify these cases:
+\begin{listing}
+RawDataEvent::BORE("EXAMPLE", run);
+RawDataEvent::EORE("EXAMPLE", run, event);
+\end{listing}
+
+These methods return a \texttt{RawDataEvent} that may be either be sent directly to the DAQ,
+or be modified first, e.g. by setting tags as described below in \autoref{sec:Tags}.
+
+\subsubsection{Adding Data}
+Once a RawDataEvent has been constructed,
+data blocks may be added either using a vector:
+\begin{listing}
+std::vector<unsigned char> buffer = ...;
+event.AddBlock(id, buffer);
+\end{listing}
+
+or using a pointer to a block of memory, and a length in bytes:
+\begin{listing}
+unsigned char * buffer = ...;
+event.AddBlock(id, buffer, len);
+\end{listing}
+
+Where \texttt{id} is an integer used to differentiate the different blocks.
+Usually it can just be 0 for the first block and increment by 1 for the following blocks.
+And \texttt{buffer} contains the actual data for the block.
+If the buffer is a \texttt{vector}, the whole length is used,
+if it is a pointer, then the length must be specified.
+
+The type of the vector or pointer need not be \texttt{unsigned char},
+since these methods are in fact template methods that can take a vector of any basic type,
+but if larger types are used, care must be taken about endianness,
+since the buffer will be converted to \texttt{unsigned char}
+according to the endianness of the machine it is running on.
+Therefore if the producer may run on different architectures steps should be taken
+to ensure that any endianness issues are handled correctly.
+
+\subsubsection{Tags}\label{sec:Tags}
+The \texttt{RawDataEvent} (in fact any type that descends from the \texttt{Event} base class)
+may also have tags set.
+These are name-value pairs containing extra information that does not easily fit
+in the usual raw data.
+This is used particularly in the \gls{BORE} to include information about the particular run
+that may be useful for the decoding later.
+A tag may be set as follows:
+\begin{listing}
+event.SetTag("Temperature", 42);
+\end{listing}
+
+The value corresponding to the tag can be set as an arbitrary type (in this case an integer),
+it will be converted to a string internally.
+
+\subsection{Log Messages}
+A method is provided for sending log messages to the central Log Collector.
+To use it the follwing header should be included:
+\begin{listing}
+#include "eudaq/Logger.hh"
+\end{listing}
+
+This defines the following macros for sending log messages,
+listed in decreasing order of severity:
+\begin{description}
+
+\ttitem{EUDAQ\_USER}
+A user-generated message (e.g. from the RunControl Log button).
+
+\ttitem{EUDAQ\_ERROR}
+Something that has gone wrong and should probably be looked into.
+
+\ttitem{EUDAQ\_WARN}
+A warning that something may not be quite right.
+
+\ttitem{EUDAQ\_INFO}
+An message generated during normal running containing information that may be useful to the user.
+
+\ttitem{EUDAQ\_EXTRA}
+Some extra information that may be less useful in normal running.
+
+\ttitem{EUDAQ\_DEBUG}
+Information for debugging purposes that will normally be hidden.
+
+\end{description}
+
+They are used as follows:
+\begin{listing}
+EUDAQ_ERROR("No keyboard detected: press F1 to continue.");
+\end{listing}
+
+The messages will be sent to the central Log Collector if it is connected,
+otherwise they will be displayed on the local terminal.
+The log level can be changed in the following way:
+\begin{listing}
+EUDAQ_LOG_LEVEL("WARN");
+\end{listing}
+
+Any messages lower than the specified level will just be ignored.
+This can be useful to filter out unimportant messages and, for example, just display error messages.
