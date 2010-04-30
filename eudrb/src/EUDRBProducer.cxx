@@ -25,6 +25,27 @@ inline bool doprint(int n) {
   return false;
 }
 
+template <typename T>
+void DoTags(const std::string & name, T (EUDRBController::*func)() const,
+            eudaq::Event & ev, std::vector<counted_ptr<EUDRBController> > & boards) {
+  const EUDRBController * ptr = boards[0].get();
+  std::string val = to_string((ptr->*func)());
+  for (size_t i = 1; i < boards.size(); ++i) {
+    const EUDRBController * ptr = boards[i].get();
+    if (val != to_string((ptr->*func)())) {
+      val = "Mixed";
+      break;
+    }
+  }
+  ev.SetTag(name, val);
+  if (val == "Mixed") {
+    for (size_t i = 0; i < boards.size(); ++i) {
+      const EUDRBController * ptr = boards[i].get();
+      ev.SetTag(name + to_string(i), to_string((ptr->*func)()));
+    }
+  }
+}
+
 class EUDRBProducer : public eudaq::Producer {
 public:
   EUDRBProducer(const std::string & name, const std::string & runcontrol)
@@ -58,8 +79,8 @@ public:
         if (slot < 2 || slot > 21) EUDAQ_THROW("Bad Slot number (" + to_string(slot) + ") for board " + to_string(id));
         m_boards.push_back(counted_ptr<EUDRBController>(new EUDRBController(id-m_idoffset, slot, version)));
       }
-      bool unsync = param.Get("Unsynchronized", 0);
-      std::cout << "Running in " << (unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
+      m_unsync = param.Get("Unsynchronized", 0);
+      std::cout << "Running in " << (m_unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
       m_master = param.Get("Master", -1);
       std::cout << "Pausing while TLU gets configured..." << std::endl;
       eudaq::mSleep(4000);
@@ -102,26 +123,18 @@ public:
       // EUDRB startup (activation of triggers etc)
       RawDataEvent ev(RawDataEvent::BORE("EUDRB", m_run));
 
-      std::string version = to_string(m_boards[0]->Version());
-      std::string det = m_boards[0]->Det();
-      std::string mode = m_boards[0]->Mode();
-      for (size_t i = 1; i < m_boards.size(); ++i) {
-        std::string ver = to_string(m_boards[i]->Version());
-        if (ver != version) version = "Mixed";
-        if (m_boards[i]->Det() != det) det = "Mixed";
-        if (m_boards[i]->Mode() != mode) mode = "Mixed";
-      }
-      ev.SetTag("VERSION", to_string(version));
-      ev.SetTag("DET", det);
-      ev.SetTag("MODE", mode);
-      ev.SetTag("BOARDS", to_string(m_boards.size()));
+      DoTags("VERSION", &EUDRBController::Version, ev, m_boards);
+      DoTags("DET", &EUDRBController::Det, ev, m_boards);
+      DoTags("MODE", &EUDRBController::Mode, ev, m_boards);
+      DoTags("AdcDelay", &EUDRBController::AdcDelay, ev, m_boards);
+      DoTags("ClkSelect", &EUDRBController::ClkSelect, ev, m_boards);
+      DoTags("PostDetResetDelay", &EUDRBController::PostDetResetDelay, ev, m_boards);
       for (size_t i = 0; i < m_boards.size(); ++i) {
         ev.SetTag("ID" + to_string(i), to_string(i + m_idoffset));
-        if (version == "Mixed") ev.SetTag("VERSION" + to_string(i), to_string(m_boards[i]->Version()));
-        if (det     == "Mixed") ev.SetTag("DET" + to_string(i), m_boards[i]->Det());
-        if (mode    == "Mixed") ev.SetTag("MODE" + to_string(i), m_boards[i]->Mode());
         if (m_pedfiles[i] != "") ev.SetTag("PEDESTAL" + to_string(i), m_pedfiles[i]);
       }
+      ev.SetTag("Unsynchronized", m_unsync);
+      ev.SetTag("ResetBusy", m_resetbusy);
       SendEvent(ev);
       eudaq::mSleep(100);
       started=true;
@@ -392,7 +405,7 @@ public:
   }
 
   unsigned m_run, m_ev;
-  bool done, started, juststopped, m_resetbusy;
+  bool done, started, juststopped, m_resetbusy, m_unsync;
   int n_error;
   std::vector<unsigned long> m_buffer;
   std::vector<counted_ptr<EUDRBController> > m_boards;

@@ -58,7 +58,10 @@ namespace eudaq {
     : m_id(id),
       m_version(version),
       m_mode(M_NONE),
-      m_det(D_NONE)
+      m_det(D_NONE),
+      m_adcdelay(0),
+      m_clkselect(0),
+      m_pdrd(0)
   {
     m_vmes = VMEFactory::Create(slot << 27, 0x1000000);
     m_vmed = VMEFactory::Create(slot << 27, 0x1000000, VMEInterface::A32, VMEInterface::D32,
@@ -80,7 +83,7 @@ namespace eudaq {
     m_det = DetNum(det);
     std::string mode = getpar(param, m_id, "Mode", (m_det == D_MIMOSA26 ? "ZS2" : "ZS"));
     m_mode = ModeNum(mode);
-    bool unsync = getpar(param, m_id, "Unsynchronized", false);
+    const bool unsync = getpar(param, m_id, "Unsynchronized", false);
     bool internaltiming = (m_id == master) || unsync;
     std::cout << "  Sending reset" << std::endl;
     ResetBoard();
@@ -96,35 +99,35 @@ namespace eudaq {
       }
       mimoconf |= (1 << 16);
     } else if (m_version == 2) {
-      const int adcdelay = 0x7 & getpar(param, m_id, "AdcDelay", 3);
-      const int clkselect = 0xf & getpar(param, m_id, "ClkSelect", 2);
+      m_adcdelay = 0x7 & getpar(param, m_id, "AdcDelay", 3);
+      m_clkselect = 0xf & getpar(param, m_id, "ClkSelect", 2);
       unsigned long reg01 = 0x00ff2000;
       unsigned long reg23 = 0x0000000a;
-      unsigned long reg45 = 0x8040001f | (adcdelay << 8) | (clkselect << 12);
+      unsigned long reg45 = 0x8040001f | (m_adcdelay << 8) | (m_clkselect << 12);
       unsigned long reg6  = 0;
-      int pdrd = getpar(param, m_id, "PostDetResetDelay", -1);
+      m_pdrd = getpar(param, m_id, "PostDetResetDelay", -1);
       if (m_det == D_MIMOTEL) {
         reg01 |= 65;
-        if (pdrd < 0) pdrd = 4;
-        reg23 |= (0xfff & pdrd) << 16;
+        if (m_pdrd < 0) m_pdrd = 4;
+        reg23 |= (0xfff & m_pdrd) << 16;
         reg6   = 16896;
         mimoconf |= (1 << 16);
       } else if (m_det == D_MIMOSA18) {
         reg01 |= 255;
-        if (pdrd < 0) pdrd = 261;
-        reg23 |= (0xfff & pdrd) << 16;
+        if (m_pdrd < 0) m_pdrd = 261;
+        reg23 |= (0xfff & m_pdrd) << 16;
         reg6   = 65535;
         mimoconf |= (3 << 16);
       } else if (m_det == D_MIMOSTAR2) {
         reg01 |= 65;
-        if (pdrd < 0) pdrd = 4;
-        reg23 |= (0xfff & pdrd) << 16;
+        if (m_pdrd < 0) m_pdrd = 4;
+        reg23 |= (0xfff & m_pdrd) << 16;
         reg6   = 8448;
         mimoconf |= (2 << 16);
       } else if (m_det == D_MIMOSA5) {
         reg01 |= 511;
-        if (pdrd < 0) pdrd = 4;
-        reg23 |= (0xfff & pdrd) << 16;
+        if (m_pdrd < 0) m_pdrd = 4;
+        reg23 |= (0xfff & m_pdrd) << 16;
         reg6   = 0x3ffff;
       } else {
         EUDAQ_THROW("EUDRB Version 2 does not read " + to_string(m_det));
@@ -138,7 +141,7 @@ namespace eudaq {
       if (m_det != D_MIMOSA26) {
         EUDAQ_THROW("EUDRB Version 3 only reads MIMOSA26 (not " + det + ")");
       }
-      const unsigned postrstdelay = 0xffff & getpar(param, m_id, "PostResetDelay", 133);
+      m_pdrd = 0xffff & getpar(param, m_id, "PostDetResetDelay", 133);
 
       const unsigned M26param = (64 << 0)    // M26_DelayBeforeBusyRelease
                               | (64 << 8)    // M26_DelayAfterAckRdOutDone
@@ -150,8 +153,8 @@ namespace eudaq {
       std::cout << "  Setting M26param       " << hexdec(M26param) << std::endl;
       m_vmes->Write(0x30, M26param);
       eudaq::mSleep(100);
-      m_vmes->Write(0x24, postrstdelay << 16);
-      std::cout << "  Setting PostResetDelay " << hexdec(postrstdelay) << std::endl;
+      m_vmes->Write(0x24, m_pdrd << 16);
+      std::cout << "  Setting PostResetDelay " << hexdec(m_pdrd) << std::endl;
       eudaq::mSleep(100);
       std::cout << "  Setting M26sim         " << hexdec(M26sim) << std::endl;
       m_vmes->Write(0x38, M26sim);

@@ -19,6 +19,9 @@ namespace eudaq {
     int Version() const { return m_version; }
     std::string Mode() const;
     std::string Det() const;
+    int AdcDelay() const { return m_adcdelay; }
+    int ClkSelect() const { return m_clkselect; }
+    int PostDetResetDelay() const { return m_pdrd; }
 
     void Configure(const eudaq::Configuration & param, int master);
     std::string PostConfigure(const eudaq::Configuration & param, int master); // Download pedestals, send M26 start pulse, returns ped file name if any
@@ -37,6 +40,7 @@ namespace eudaq {
     static pedestal_t ReadPedestals(const std::string & filename, float sigma, int det);
     int m_id, m_version, m_mode, m_det, m_ctrlstat;
     VMEptr m_vmes, m_vmed;
+    int m_adcdelay, m_clkselect, m_pdrd;
   };
 
 }
