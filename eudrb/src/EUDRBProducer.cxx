@@ -45,7 +45,7 @@ public:
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       int numboards = param.Get("NumBoards", 0);
       m_idoffset = param.Get("IDOffset", 0);
-      m_resetbusy = param.Get("ResetBusy", 1);
+      m_resetbusy = param.Get("ResetBusy", 0);
       m_boards.clear();
       m_version = param.Get("Version", 0);
       for (int n_eudrb = 0; n_eudrb < numboards; ++n_eudrb) {

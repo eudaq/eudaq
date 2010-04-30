@@ -76,11 +76,11 @@ namespace eudaq {
 
   void EUDRBController::Configure(const eudaq::Configuration & param, int master) {
     std::cout << "Configuring board " << m_id << " as a " << (m_id == master ? "master" : "slave") << std::endl;
-    std::string mode = getpar(param, m_id, "Mode", "");
-    m_mode = ModeNum(mode);
     std::string det = getpar(param, m_id, "Det", "");
     m_det = DetNum(det);
-    bool unsync = getpar(param, m_id, "Unsynchronized", true);
+    std::string mode = getpar(param, m_id, "Mode", (m_det == D_MIMOSA26 ? "ZS2" : "ZS"));
+    m_mode = ModeNum(mode);
+    bool unsync = getpar(param, m_id, "Unsynchronized", false);
     bool internaltiming = (m_id == master) || unsync;
     std::cout << "  Sending reset" << std::endl;
     ResetBoard();
@@ -96,8 +96,8 @@ namespace eudaq {
       }
       mimoconf |= (1 << 16);
     } else if (m_version == 2) {
-      const int adcdelay = 0x7 & getpar(param, m_id, "AdcDelay", 2);
-      const int clkselect = 0xf & getpar(param, m_id, "ClkSelect", 1);
+      const int adcdelay = 0x7 & getpar(param, m_id, "AdcDelay", 3);
+      const int clkselect = 0xf & getpar(param, m_id, "ClkSelect", 2);
       unsigned long reg01 = 0x00ff2000;
       unsigned long reg23 = 0x0000000a;
       unsigned long reg45 = 0x8040001f | (adcdelay << 8) | (clkselect << 12);
