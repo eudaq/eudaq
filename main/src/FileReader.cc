@@ -22,7 +22,7 @@ namespace eudaq {
       eudaq::DetectorEvent * event;
       std::vector<unsigned>  triggerids;
     };
-    eventqueue_t(unsigned numproducers = 0) : offsets(numproducers, items.end())/*, expected(0)*/ {}
+    eventqueue_t(unsigned numproducers = 0) : offsets(numproducers, items.end()), lastid(0) {}
     bool isempty() const {
       for (size_t i = 0; i < offsets.size(); ++i) {
         if (events(i) == 0) {
@@ -132,6 +132,7 @@ namespace eudaq {
     }
     std::list<item_t> items;
     std::vector<std::list<item_t>::const_iterator> offsets;
+    unsigned lastid;
   };
 
   std::ostream & operator << (std::ostream & os, const FileReader::eventqueue_t & q) {
@@ -167,6 +168,7 @@ namespace eudaq {
       unsigned eventnum = 0;
       static const bool dbg = false;
       for (int itry = 0; itry < MAXTRIES; ++itry) {
+        // Make sure there is at least one whole event in the queue
         if (queue.isempty()) {
           eudaq::Event * evnt = 0;
           if (!ReadEvent(des, ver, evnt)) {
@@ -178,6 +180,7 @@ namespace eudaq {
         bool iseore = queue.getevent(0).IsEORE();
         bool haszero = PluginManager::GetTriggerID(queue.getevent(0)) == 0;
         bool hasother = false;
+        bool hasrepeat = false;
         unsigned triggerid = PluginManager::GetTriggerID(queue.getevent(0)) & IDMASK;
         eventnum = queue.getevent(0).GetEventNumber();
         for (size_t i = 1; i < queue.producers(); ++i) {
@@ -189,15 +192,41 @@ namespace eudaq {
           if (queue.getevent(i).IsEORE()) iseore = true;
           if (tid == 0) haszero = true;
           if (triggerid == 0) triggerid = tid;
-          if (tid != 0 && tid != triggerid) hasother = true;
+          if (tid != 0) {
+            if (tid == queue.lastid) {
+              hasrepeat = true;
+            } else if (tid != triggerid) {
+              hasother = true;
+            }
+          }
         }
-	if (dbg) std::cout << "Event " << eventnum << ", id=" << triggerid << ", zero=" << (haszero?"y":"n")
-			   << ", other=" << (hasother?"y":"n") << std::flush;
-        if (isbore || iseore || (!haszero && !hasother) || triggerid == 0) {
+	if (dbg) std::cout << "Event " << eventnum
+                           << ", id=" << triggerid
+                           << ", zero=" << (haszero?"y":"n")
+			   << ", repeat=" << (hasrepeat?"y":"n")
+                           << ", other=" << (hasother?"y":"n")
+                           << std::flush;
+        // If everything looks fine, return the next event
+        if (isbore || iseore || (!haszero && !hasrepeat && !hasother) || triggerid == 0) {
 	  if (dbg) std::cout << ", ok" << std::endl;
           ev = queue.popevent();
+          queue.lastid = triggerid;
           return true;
         }
+        if (triggerid != 0 && triggerid == queue.lastid) {
+          EUDAQ_WARN("Trigger ID " + to_string(triggerid) + " is repeated for whole event " + to_string(eventnum));      
+        }
+        if (hasrepeat) {
+          for (size_t i = 0; i < queue.producers(); ++i) {
+            unsigned tid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
+            if (tid == queue.lastid) {
+              EUDAQ_INFO("Discarded repeated ID (" + to_string(triggerid) + ") in event " + to_string(eventnum));
+              queue.discardevent(i);
+            }
+          }
+          continue;
+        }
+        // If there is an unexpected id, we don't know how to continue
         if (hasother) {
           std::vector<int> nums;
           for (size_t i = 1; i < queue.producers(); ++i) {
@@ -208,6 +237,7 @@ namespace eudaq {
         } else {
 	  if (dbg) std::cout << ", hmm" << std::endl;
 	}
+        // Make sure we have at least two full events in the queue
         if (queue.fullevents() < 2) {
           eudaq::Event * evnt = 0;
           if (!ReadEvent(des, ver, evnt)) {
@@ -227,6 +257,7 @@ namespace eudaq {
             } else if (tid1 == triggerid1) {
               EUDAQ_DEBUG("Detected 'zero' in event " + to_string(eventnum));
             } else if (tid1 == 0) {
+              // Make sure there are at least three full events in the queue
               if (queue.fullevents() < 3) {
                 eudaq::Event * evnt = 0;
                 if (!ReadEvent(des, ver, evnt)) {
@@ -262,6 +293,7 @@ namespace eudaq {
         }
         if (!doskip) {
           ev = queue.popevent();
+          queue.lastid = triggerid;
           return true;
         } 
       }
