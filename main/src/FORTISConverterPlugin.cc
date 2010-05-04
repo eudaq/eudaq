@@ -17,7 +17,7 @@
 #  include "EUTELESCOPE.h"
 #  include "EUTelRunHeaderImpl.h"
 #  include "EUTelTakiDetector.h"
-#  include "/opt/eudet/ilcinstall/Eutelescope/HEAD/include/EUTelFortisDetector.h"
+#  include "EUTelFortisDetector.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
@@ -126,7 +126,7 @@ namespace eudaq {
                                                               );
            
 	     //const unsigned int frameNumber = 0; // for now just look at the first frame out of two.
-             const unsigned int hitpixel = plane.HitPixels(frameNumber);
+             const unsigned int hitpixel = plane.HitPixels();
              for (unsigned int i = 0; i < hitpixel; ++i) 
                {
                  const int x = (int) plane.GetX(i); //,frameNumber);
