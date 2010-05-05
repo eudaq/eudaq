@@ -15,14 +15,6 @@ using eudaq::firstline;
 using eudaq::split;
 
 namespace {
-  static const char * const g_columns[] = {
-    "Time",
-    "Level",
-    "Text",
-    "From",
-    "File",
-    "Function"
-  };
 
   static eudaq::LogMessage make_msg(const std::string & fileline) {
      std::vector<std::string> parts = split(fileline);
@@ -72,6 +64,9 @@ namespace {
     std::string result = file;
     size_t i;
     while ((i = result.find_first_of("/:\\")) != std::string::npos) {
+      if (result[i] == ':' && result.find_first_not_of("0123456789") != std::string::npos) {
+        break;
+      }
       result = result.substr(i+1);
     }
     return result;
@@ -103,14 +98,48 @@ namespace {
 LogMessage::LogMessage(const eudaq::LogMessage & msg) : eudaq::LogMessage(msg), m_ok(true) {}
 LogMessage::LogMessage(const std::string & fileline)  : eudaq::LogMessage(make_msg(fileline)) {}
 
+namespace {
+  static const char * const g_columns[] = {
+    "Received",
+    "Sent",
+    "Level",
+    "Text",
+    "From",
+    "File",
+    "Function"
+  };
+}
+
+int LogMessage::ColumnWidth(int i) {
+  switch (i) {
+  case 0:
+  case 1: return 100;
+  case 2: return 60;
+  case 3: return 400;
+  default: return -1;
+  }
+}
+
 QString LogMessage::operator [] (int i) const {
   switch(i) {
-  case 0: return m_time.Formatted("%H:%M:%S.%3").c_str();
-  case 1: return (to_string(m_level) + "-" + Level2String(m_level)).c_str();
-  case 2: return firstline(m_msg).c_str();
-  case 3: return GetSender().c_str();
-  case 4: return (simple_file(m_file) + (m_line != 0 ? (":" + to_string(m_line)) : "")).c_str();
-  case 5: return simple_func(m_func).c_str();
+  case 0: return m_createtime.Formatted("%H:%M:%S.%3").c_str();
+  case 1: return m_time.Formatted("%H:%M:%S.%3").c_str();
+  case 3: return firstline(this->Text(i)).c_str();
+  case 5: return simple_file(this->Text(i)).c_str();
+  case 6: return simple_func(this->Text(i)).c_str();
+  default: return this->Text(i).c_str();
+  }
+}
+
+std::string LogMessage::Text(int i) const {
+  switch(i) {
+  case 0: return m_createtime.Formatted("%Y-%m-%d %H:%M:%S.%3");
+  case 1: return m_time.Formatted("%Y-%m-%d %H:%M:%S.%3");
+  case 2: return (to_string(m_level) + "-" + Level2String(m_level));
+  case 3: return m_msg;
+  case 4: return GetSender();
+  case 5: return m_file + (m_line == 0 ? "" : (":" + to_string(m_line)));
+  case 6: return m_func;
   default: return "";
   }
 }
@@ -227,9 +256,13 @@ QVariant LogCollectorModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 
   if (index.column() < columnCount() && index.row() < rowCount())
-    return m_all[m_disp[index.row()]][index.column()];
+    return GetMessage(index.row())[index.column()];
 
   return QVariant();
+}
+
+const LogMessage & LogCollectorModel::GetMessage(int row) const {
+  return m_all[m_disp[row]];
 }
 
 QVariant LogCollectorModel::headerData(int section, Qt::Orientation orientation,

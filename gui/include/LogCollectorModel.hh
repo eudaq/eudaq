@@ -1,3 +1,6 @@
+#ifndef INCLUDED_LogCollectorModel_hh
+#define INCLUDED_LogCollectorModel_hh
+
 #include "eudaq/LogMessage.hh"
 #include <QAbstractListModel>
 #include <QRegExp>
@@ -10,8 +13,10 @@ public:
   LogMessage(const eudaq::LogMessage & msg);
   LogMessage(const std::string & fileline);
   QString operator [] (int) const;
+  std::string Text(int) const;
   static int NumColumns();
   static const char * ColumnName(int i);
+  static int ColumnWidth(int);
   bool IsOK() const { return m_ok; }
 private:
   bool m_ok;
@@ -35,8 +40,8 @@ public:
   LogSorter(std::vector<LogMessage> * messages) : m_msgs(messages), m_col(0), m_asc(true) {}
   void SetSort(int col, bool ascending) { m_col = col; m_asc = ascending; }
   bool operator() (size_t lhs, size_t rhs) {
-    QString l = (*m_msgs)[lhs][m_col];
-    QString r = (*m_msgs)[rhs][m_col];
+    QString l = (*m_msgs)[lhs].Text(m_col).c_str();
+    QString r = (*m_msgs)[rhs].Text(m_col).c_str();
     return m_asc ^ (QString::compare(l, r, Qt::CaseInsensitive) < 0);
   }
 private:
@@ -65,6 +70,7 @@ public:
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role) const;
+  const LogMessage & GetMessage(int row) const;
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const;
   void sort(int column, Qt::SortOrder order) {
@@ -79,3 +85,5 @@ private:
   LogSearcher m_search;
   LogSorter m_sorter;
  };
+
+#endif // INCLUDED_LogCollectorModel_hh

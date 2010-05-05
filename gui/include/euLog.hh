@@ -1,5 +1,6 @@
 #include "ui_euLog.h"
 #include "LogCollectorModel.hh"
+#include "LogDialog.hh"
 #include "eudaq/LogCollector.hh"
 #include "eudaq/Logger.hh"
 #include <QMainWindow>
@@ -39,9 +40,10 @@ public:
     setupUi(this);
     viewLog->setModel(&m_model);
     viewLog->setItemDelegate(&m_delegate);
-    viewLog->setColumnWidth(0, 96);
-    viewLog->setColumnWidth(1, 70);
-    viewLog->setColumnWidth(2, 240);
+    for (int i = 0; i < LogMessage::NumColumns(); ++i) {
+      int w = LogMessage::ColumnWidth(i);
+      if (w >= 0) viewLog->setColumnWidth(i, w);
+    }
     int level = 0;
     for(;;) {
       std::string text = eudaq::Status::Level2String(level);
@@ -103,6 +105,10 @@ protected:
     emit RecMessage(msg);
   }
   void AddSender(const std::string & type, const std::string & name = "");
+  void closeEvent(QCloseEvent *) {
+    std::cout << "Closing!" << std::endl;
+    QApplication::quit();
+  }
 signals:
   void RecMessage(const eudaq::LogMessage & msg);
 private slots:
@@ -122,6 +128,10 @@ private slots:
   }
   void on_txtSearch_editingFinished() {
     m_model.SetSearch(txtSearch->displayText().toStdString());
+  }
+  void on_viewLog_activated(const QModelIndex & i) {
+    //std::cout << "Activated: " << i.row() << ", " << i.column() << std::endl;
+    new LogDialog(m_model.GetMessage(i.row()));
   }
   void AddMessage(const eudaq::LogMessage & msg) {
     QModelIndex pos = m_model.AddMessage(msg);

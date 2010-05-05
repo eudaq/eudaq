@@ -12,7 +12,8 @@ namespace {
     QColor(255, 255, 192, alpha), // INFO
     QColor(255, 224,  96, alpha), // WARN
     QColor(255,  96,  96, alpha), // ERROR
-    QColor(208,  96, 255, alpha)  // USER
+    QColor(208,  96, 255, alpha), // USER
+    QColor(192, 192, 255, alpha), // NONE
   };
 
 }
