@@ -29,6 +29,7 @@ namespace eudaq {
     virtual void OnServer() {}
     virtual void OnGetRun() {}
     virtual void OnIdle();
+    virtual void OnClear();
     virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
 
     void Process(int timeout);

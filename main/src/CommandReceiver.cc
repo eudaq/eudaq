@@ -83,6 +83,10 @@ namespace eudaq {
     m_cmdclient->Process(timeout);
   }
 
+  void CommandReceiver::OnClear() {
+    SetStatus(Status::LVL_NONE, "Wait");
+  }
+
   void CommandReceiver::OnLog(const std::string & param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
     //return false;
@@ -108,7 +112,9 @@ namespace eudaq {
         cmd = std::string(cmd, 0, i);
       }
       //std::cout << "(" << cmd << ")(" << param << ")" << std::endl;
-      if (cmd == "CONFIG") {
+      if (cmd == "CLEAR") {
+        OnClear();
+      } else if (cmd == "CONFIG") {
         std::string section = m_type;
         if (m_name != "") section += "." + m_name;
         Configuration conf(param, section);

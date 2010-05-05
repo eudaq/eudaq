@@ -72,6 +72,8 @@ namespace eudaq {
   }
 
   void RunControl::Configure(const Configuration & config) {
+    SendCommand("CLEAR");
+    mSleep(500);
     SendCommand("CONFIG", to_string(config));
     if (config.SetSection("RunControl")) {
       m_runsizelimit = config.Get("RunSizeLimit", 0LL);
@@ -111,6 +113,8 @@ namespace eudaq {
     m_runnumber++;
     //std::string packet;
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
+    SendCommand("CLEAR");
+    mSleep(500);
     if (m_idata != (size_t)-1) {
       SendReceiveCommand("PREPARE", to_string(m_runnumber), m_cmdserver->GetConnection(m_idata));
       mSleep(1000);

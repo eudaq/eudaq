@@ -42,6 +42,7 @@ public:
   virtual void OnConfigure(const eudaq::Configuration & param) {
     std::cout << "Configuring." << std::endl;
     eventsize = param.Get("EventSize", 1);
+    eudaq::mSleep(2000);
     EUDAQ_INFO("Configured (" + param.Name() + ")");
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
@@ -50,6 +51,7 @@ public:
     m_ev = 0;
     SendEvent(RawDataEvent::BORE("Test", m_run));
     std::cout << "Start Run: " << param << std::endl;
+    SetStatus(eudaq::Status::LVL_OK, "");
   }
   virtual void OnStopRun() {
     SendEvent(RawDataEvent::EORE("Test", m_run, ++m_ev));
