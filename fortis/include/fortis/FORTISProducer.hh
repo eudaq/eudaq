@@ -609,8 +609,9 @@ private:
     // first check if the frame number is messed up
     if ( m_currentFrame < m_previousFrame ) {
       EUDAQ_WARN("Data corruption. Current frame-number is less than previous frame. Current , previous frame = " + eudaq::to_string(m_currentFrame) + "  " + eudaq::to_string(m_previousFrame) );
-      std::cout << "Data corruption. Frame number problem.  Dumping frame. Current, previous frame = " << m_currentFrame << "  " << m_previousFrame << std::endl;
-      printFrames( m_bufferNumber );
+      std::cout << "Data corruption. Frame number problem. Current, previous frame = " << m_currentFrame << "  " << m_previousFrame << std::endl;
+      if ( m_debug_level & FORTIS_DEBUG_PRINTRECOVERY ) {printFrames(m_bufferNumber);}
+
 
 
       unsigned int RightShiftedFrameNumber = m_frameBuffer[m_bufferNumber][wordsToSkip] + 0x10000*m_frameBuffer[m_bufferNumber][wordsToSkip+1]  ;
@@ -642,8 +643,8 @@ private:
 
       if ( rowCounterFromData != maskedPreviousRowPlusOne ) { // start of row recovery
 	EUDAQ_WARN("Data corruption. Current row-number is incorrect. Current , previous row = " + eudaq::to_string(rowCounterFromData) + "  " + eudaq::to_string(previousRow) );
-	std::cout << "Data corruption. Row number problem. Dumping frame" << std::endl;
-	printFrames( m_bufferNumber );
+	std::cout << "Data corruption. Row number problem." << std::endl;
+	if ( m_debug_level & FORTIS_DEBUG_PRINTRECOVERY ) {printFrames(m_bufferNumber);}
 
 	// maximum frame number for FORTIS 1.1 = 511 , therefore mask with 0x01FF
 	unsigned int RightShiftedRowCounter = m_frameBuffer[m_bufferNumber][wordsPerRow*rowCounter + 1 + wordsToSkip ] & FORTIS_MAXROW ;
@@ -707,9 +708,11 @@ private:
     m_currentFrame = m_frameBuffer[m_bufferNumber][0] + 0x10000*m_frameBuffer[m_bufferNumber][1]  ;
     std::cout << "Frame number after fix = " << m_currentFrame << std::endl;
 
-    printFrames( m_bufferNumber );
+    if ( m_debug_level & FORTIS_DEBUG_PRINTRECOVERY ) {printFrames(m_bufferNumber);}
 
+    if (  padFlag ) { std::cout << "Warning - padding data stream not yet implmented. padFlag has no effect" << std::endl; } 
     /*    
+	  // it turns out that pushing back into a named pipe isn't possible, so this next bit of code doesn't work.
     if (  padFlag ) {
       // if we need to add some words, then push them back into the stream.
       std::cout << "Pushing back dummy frame number to stream ..." << std::endl;
