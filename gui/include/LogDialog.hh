@@ -1,7 +1,7 @@
 #ifndef INCLUDED_LogDialog_hh
 #define INCLUDED_LogDialog_hh
 
-#include "ui_LogMessage.h"
+#include "ui_LogDialog.h"
 #include "LogCollectorModel.hh"
 
 class LogDialog : public QDialog, Ui::dlgLogMessage {
