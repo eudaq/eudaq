@@ -24,10 +24,10 @@ namespace tlu {
 #else
 
   inline void setusbtracefile(const std::string &) {
-    EUDAQ_THROW("VME tracing not enabled in this build");
+    EUDAQ_THROW("USB tracing not enabled in this build");
   }
   inline void setusbtracelevel(int) {
-    EUDAQ_THROW("VME tracing not enabled in this build");
+    EUDAQ_THROW("USB tracing not enabled in this build");
   }
   inline void usbflushtracefile() {}
   inline void dousbtrace(const std::string &, unsigned long, const std::string &, int = -1) {}
