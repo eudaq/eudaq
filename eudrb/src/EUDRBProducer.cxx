@@ -133,6 +133,7 @@ public:
         ev.SetTag("ID" + to_string(i), to_string(i + m_idoffset));
         if (m_pedfiles[i] != "") ev.SetTag("PEDESTAL" + to_string(i), m_pedfiles[i]);
       }
+      ev.SetTag("BOARDS", m_boards.size());
       ev.SetTag("Unsynchronized", m_unsync);
       ev.SetTag("ResetBusy", m_resetbusy);
       SendEvent(ev);
