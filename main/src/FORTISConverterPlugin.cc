@@ -25,6 +25,9 @@
 using eutelescope::EUTELESCOPE;
 #endif
 
+// Define number of rows, columns in entire FORTIS
+#define FORTIS_ROWS 512
+#define FORTIS_COLUMNS 448
 
 
 #include <iostream>
@@ -53,7 +56,7 @@ namespace eudaq {
   private:
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const;
     FORTISConverterPlugin() : DataConverterPlugin("FORTIS"),
-			      m_NumRows(512), m_NumColumns(512),
+			      m_NumRows(FORTIS_ROWS), m_NumColumns(FORTIS_COLUMNS),
 			      m_InitialRow(0), m_InitialColumn(0) {}
     unsigned m_NumRows, m_NumColumns, m_InitialRow, m_InitialColumn;
     static FORTISConverterPlugin const m_instance;
@@ -200,18 +203,20 @@ namespace eudaq {
   FORTISConverterPlugin const FORTISConverterPlugin::m_instance;
 
   void FORTISConverterPlugin::Initialize(const Event & source, const Configuration &) {
-    std::cout << "Fortis converter initialised::" << std::endl;
-    m_NumRows = from_string(source.GetTag("NumRows"), 512);
-    m_NumColumns = from_string(source.GetTag("NumColumns"), 512);
+    std::cout << "FORTISConverterPlugin::Initialize::" << std::endl;
+    m_NumRows = from_string(source.GetTag("NumRows"), FORTIS_ROWS);
+    m_NumColumns = from_string(source.GetTag("NumColumns"), FORTIS_COLUMNS);
     m_InitialRow = from_string(source.GetTag("InitialRow"), 0);
     m_InitialColumn = from_string(source.GetTag("InitialColumn"), 0);
 
-    std::cout << " Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
-    std::cout << " Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
+    std::cout << " FORTIS: Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
+    std::cout << " FORTIS: Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
     }
 
   bool FORTISConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
+#   if FORTIS_DEBUG
     std::cout << "FORTISConverterPlugin::GetStandardSubEvent" << std::endl;
+#   endif
     if (source.IsBORE()) {
       // shouldn't happen
       return true;
@@ -247,7 +252,9 @@ namespace eudaq {
 
 
   StandardPlane FORTISConverterPlugin::ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
+#   if FORTIS_DEBUG
     std::cout << "FORTISConverterPlugin::ConvertPlane:" << std::endl;
+#   endif
     size_t expected = ((m_NumColumns + 2) * m_NumRows) * sizeof (short);
     if (data.size() < expected)
       EUDAQ_THROW("Bad Data Size (" + to_string(data.size()) + " < " + to_string(expected) + ")");
@@ -255,9 +262,11 @@ namespace eudaq {
     unsigned npixels = m_NumRows * m_NumColumns;
     unsigned nwords =  m_NumRows * ( m_NumColumns + 2);
 
-    std::cout << "Size of data (bytes)= " << data.size() << std::endl ;
+#   if FORTIS_DEBUG
+    std::cout << "FORTIS:: Size of data (bytes)= " << data.size() << std::endl ;
+#   endif
     
-    plane.SetSizeZS(512, 512, npixels, 2 , StandardPlane::FLAG_WITHPIVOT); // Set the size for two frames of 512*512
+    plane.SetSizeZS(FORTIS_ROWS, FORTIS_COLUMNS, npixels, 2 , StandardPlane::FLAG_WITHPIVOT); // Set the size for two frames of 512*512
 
     unsigned int frame_number[2];                   //frame_number was 2
     
@@ -267,12 +276,14 @@ namespace eudaq {
       
       size_t i = 0;
 
-      std::cout << "Frame = " << Frame << std::endl;
-
       unsigned int frame_offset = (Frame*nwords) * sizeof (short);
 
       frame_number[Frame] = getlittleendian<unsigned int>(&data[frame_offset]);
-      std::cout << "frame number in data = " << eudaq::to_hex(frame_number[Frame]) << std::endl;
+
+#     if FORTIS_DEBUG
+      std::cout << "FORTIS:: Frame = " << Frame << std::endl;
+      std::cout << "FORTIS:: frame number in data = " << eudaq::to_hex(frame_number[Frame]) << std::endl;
+#     endif
 
       for (size_t Row = 0; Row < m_NumRows; ++Row) {
 
@@ -280,7 +291,8 @@ namespace eudaq {
 
 	unsigned short TriggerWord = getlittleendian<unsigned short>(&data[header_offset]);
 	unsigned short TriggerCount = TriggerWord & 0x00FF;
-#       ifdef FORTIS_DEBUG
+
+#       if FORTIS_DEBUG
 	unsigned short LatchWord   =  getlittleendian<unsigned short>(&data[header_offset+sizeof (short) ]) ;
         std::cout << "Row = " << Row << " Header = " << eudaq::to_hex(TriggerWord) << "    " << LatchWord << std::endl ;
 #       endif
@@ -303,7 +315,7 @@ namespace eudaq {
       } 
 
 
-#   ifdef FORTIS_DEBUG
+#   if FORTIS_DEBUG
     std::cout << "Trigger Row = 0x" << triggerRow << std::endl;
 #   endif
 
