@@ -404,7 +404,14 @@ public:
       // previous frame.
       m_triggersPending = 0;
       m_bufferNumber = 0;
- 
+
+      // clear any pending triggers
+      while (!m_pivotPixels.empty())
+	{
+	  EUDAQ_WARN("Discarding pivot pixels left over from previous run before starting this one" );
+	  m_pivotPixels.pop();
+	}
+
       std::cout << "Start Run: " << param << std::endl;
       
       RawDataEvent ev( RawDataEvent::BORE( FORTIS_DATATYPE_NAME , m_run ) );
