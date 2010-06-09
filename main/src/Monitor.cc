@@ -2,7 +2,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/PluginManager.hh"
 
-#define EUDAQ_MAX_EVENTS_PER_IDLE 10
+#define EUDAQ_MAX_EVENTS_PER_IDLE 1000
 
 namespace eudaq {
 

@@ -273,7 +273,7 @@ namespace eudaq {
         //std::cout << "APIX-MC plane " << feid << std::endl;
         planes.planes.push_back(StandardPlane(feid, "APIX", "APIX"));
         planes.feids.push_back(feid);
-        if (UGLY_HACK && ( feid == 3 || feid == 4 || feid == 5 || feid == 6 )) {
+        if (UGLY_HACK && ( feid == 0 || feid == 1 )) {
           planes.planes.back().SetSizeZS(160, 18, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
         } else {
           planes.planes.back().SetSizeZS(18, 160, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
@@ -300,7 +300,7 @@ namespace eudaq {
         std::cerr << "APIX-MC-ConvertPlugin::ConvertPlanes: Bad index: " << index << std::endl;
       }
       else {
-        if (UGLY_HACK && (result.feids[index] == 3 || result.feids[index] == 4 || result.feids[index] == 5 || result.feids[index] == 6)) {
+        if (UGLY_HACK && (result.feids[index] == 0 || result.feids[index] == 1)) {
           result.planes.at(index).PushPixel(hit.y, hit.x, hit.tot, false, hit.lv1);
         } else {
           result.planes.at(index).PushPixel(hit.x, hit.y, hit.tot, false, hit.lv1);
@@ -326,12 +326,20 @@ namespace eudaq {
   }
 
   std::vector<APIXHit> APIXMCConverterPlugin::decodeData(const std::vector<unsigned char> & data) const{
-    std::vector<APIXHit> hits;
+       //for (size_t i = 0; i < data.size(); i=+4) 
+       //  std::cout << "APIX DATA" << std::hex << "0x" << getlittleendian<unsigned int>(&data[i]) << std::endl;
+
+
+
+	   std::vector<APIXHit> hits;
     unsigned subtrigger = 0;
     unsigned pllTrig   = getPLLTrig(getlittleendian<unsigned int>(&data[0]));
     if(pllTrig == 0xFFFFFFFF) { std::cout << "ERROR APIX-Converter: first block is not PLL trigger" << std::endl;}
     unsigned eudetTrig   = getlittleendian<unsigned int>(&data[4]);
     if(getPLLTrig(eudetTrig) != 0xFFFFFFFF) { std::cout << "ERROR APIX-Converter: second block is PLL trigger" << std::endl;}
+
+
+
     for (size_t i = 16; i < data.size(); i += 4) {
       unsigned one_line = getlittleendian<unsigned int>(&data[i]);
       bool moduleError(false), moduleEoe(false);
@@ -354,7 +362,7 @@ namespace eudaq {
         hit.pllTrigger = pllTrig;
         hit.eudetTrigger = eudetTrig;
         hits.push_back(hit);
-      }
+	}
     }
     return hits;
   }

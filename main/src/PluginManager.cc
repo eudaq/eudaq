@@ -125,7 +125,7 @@ namespace eudaq {
     try {
       GetInstance().GetPlugin(source).GetStandardSubEvent(dest, source);
     } catch (const Exception & e) {
-      std::cerr << "Error during conversion in PluginManager::ConvertStandardSubEvent" << std::endl;
+      std::cerr << "Error during conversion in PluginManager::ConvertStandardSubEvent:\n" << e.what() << std::endl;
     }
   }
 

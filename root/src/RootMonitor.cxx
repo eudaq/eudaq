@@ -71,7 +71,7 @@ struct PlaneInfo {
       seed_thresh = 16.0; neighbour_thresh = 4.0; cluster_thresh = 0.0;
     }
     else if (is("FORTIS"))    {
-      width = 128; height = 128; pedfile = "fortis_pedestals.txt";
+      width = 512; height = 512; pedfile = "fortis_pedestals.txt";
       seed_thresh = 16.0; neighbour_thresh = 4.0; cluster_thresh = 0.0;
     }
     else if (is("TAKI"))      {
@@ -80,6 +80,9 @@ struct PlaneInfo {
     }
     else if (is("APIX"))    {
       width = 18; height = 160;
+    }
+    else if (is("TIMEPIX")) {
+      width = 256; height = 256;
     }
     //else if (is("TAKI"))      { width = 128; height = 128; }
     // Override with values from conf file if they are set
@@ -266,7 +269,7 @@ public:
 
 class ConfigurationClass : public TQObject { //a class holding some configuration informations
 public:
-  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(7.0), RESETONNEWRUN(true)  //some default values for the configuration
+  ConfigurationClass () : UPDATE_EVERY_N_EVENTS(40), HITCORR_NUM_BINS(20), CLUSTER_POSITION(1), CLUSTER_TYPE(3), SEED_THRESHOLD(5.0), SEED_NEIGHBOUR_THRESHOLD(2.0), CLUSTER_THRESHOLD(0.0), RESETONNEWRUN(true)  //some default values for the configuration
     {
     }
 
@@ -502,10 +505,10 @@ public:
       m_conf_seedneighbourthreshold->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_seedneighbourthreshold.get(), m_hinttop.get());
 
-      clusterthresholdlabel = new TGLabel(m_conf_group_frame.get(),"Cluster Threshold:");
+      clusterthresholdlabel = new TGLabel(m_conf_group_frame.get(),"Cluster Charge Threshold:");
       m_conf_group_frame->AddFrame(clusterthresholdlabel.get(), m_hinttop.get());
 
-      m_conf_clusterthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.CLUSTER_THRESHOLD, 3);
+      m_conf_clusterthreshold= new TGNumberEntry(m_conf_group_frame.get(), conf.CLUSTER_THRESHOLD, 0);
       m_conf_clusterthreshold->Associate(this);
       m_conf_group_frame->AddFrame(m_conf_clusterthreshold.get(), m_hinttop.get());
 
@@ -1296,7 +1299,7 @@ public:
         conf.SEED_NEIGHBOUR_THRESHOLD = seedneighbourthresh;
 
       double clusterthresh = (double) m_conf_clusterthreshold->GetNumber();
-      if(clusterthresh > 0)
+      if(clusterthresh >= 0)
         conf.CLUSTER_THRESHOLD = clusterthresh;
 
 
@@ -2022,9 +2025,13 @@ private:
                            }
                       }
                     matrix[pos->first][sec->first] = false;
-                    b.m_clusterx.push_back(pos->first);
-                    b.m_clustery.push_back(sec->first);
-                    b.m_clusters.push_back(signal);
+                    //if(signal>0){
+                    if(signal>conf.CLUSTER_THRESHOLD)
+                      {
+                        b.m_clusterx.push_back(pos->first);
+                        b.m_clustery.push_back(sec->first);
+                        b.m_clusters.push_back(signal);
+                      }
                   }
                }
           }
