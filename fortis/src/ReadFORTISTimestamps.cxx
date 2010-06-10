@@ -63,7 +63,8 @@ unsigned int GetFrameNumber( const std::vector<unsigned char> data , const int n
 
 std::vector<unsigned int> GetPivotRows( const std::vector<unsigned char> data , const int numRows , const int numColumns  ) {
 
-  const int debug_level = 0x0000;
+  //  const int debug_level = 0xFFFFFFFF;
+  const int debug_level = 0x00000000;
 
   std ::vector<unsigned int> pivotRows;
 
@@ -138,9 +139,9 @@ int main(int /*argc*/, char ** argv) {
 				     "Number of rows in frame. By default read from BORE");
   eudaq::Option<int> columns(op, "c", "columns", 0, "#columns",
 				     "Number of columns in frame. By default read from BORE");
-  eudaq::Option<std::string> rootfile(op, "o", "root", "fortisFrameNumbers.root", "Root File",
+  eudaq::Option<std::string> rootfile(op, "o", "root", "fortisTimestamps.root", "Root File",
 				     "Root output file containing timestamp histograms");
-  eudaq::Option<std::string> textfile(op, "t", "text", "fortisFrameNumbers.txt", "Text File",
+  eudaq::Option<std::string> textfile(op, "t", "text", "fortisTimestmps.txt", "Text File",
 				     "Text output file containing timestamps");
 
   try {
@@ -155,6 +156,7 @@ int main(int /*argc*/, char ** argv) {
     TH2F* h2 = new TH2F("TimestampCorrelationFraction","Delta-Timestamp Correlation Fraction",1000,0.0,1000.0,1000,0.0,2.0);
     TH2I* h3 = new TH2I("TimestampCorrelationPrevious","Delta-Timestamp Correlation with Previous Event",1000,0,1000,1000,0,1000);
     TH1F* h4 = new TH1F("DeltaTimestampDifference","Delta-Timestamp Difference",1000,-1000.0,1000.0);
+    TH1I* h5 = new TH1I("TLUDeltaTimestamp","TLU Delta-Timestamp",1000,-1000,1000);
 #   endif
 
     EUDAQ_INFO("Opening text file: " + textfile.Value());
@@ -289,6 +291,7 @@ int main(int /*argc*/, char ** argv) {
 	      h2->Fill( deltaTimestamp , ( float(deltaFortisTimestamp)/float(deltaTimestamp) ) );
 	      h3->Fill( previousDeltaTimestamp , deltaTimestamp );
 	      h4->Fill( float(deltaFortisTimestamp) - float(deltaTimestamp)*timestampMultiplier );
+	      h5->Fill( deltaTimestamp );
 #             endif
 
 	      // std::cout << "event , TLU Timestamp , event " << eventNumber  << " \t" << Timestamp << " Fortis frame, row = "<<fortisFrameNumber << "\t" << fortisPivotRow << " Fortis timestamp = " <<  FortisTimestamp <<  std::endl;
