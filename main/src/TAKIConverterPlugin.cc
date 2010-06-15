@@ -191,6 +191,8 @@ namespace eudaq {
          }
          return true;
        }
+
+     return false; 
   }
 #endif
 
