@@ -64,7 +64,7 @@ public:
           unsigned long long t = m_tlu->GetEntry(i).Timestamp();
           long long d = t-lasttime;
           //float freq= 1./(d*20./1000000000);
-	  float freq= 1./Timestamp2Seconds(d);
+          float freq= 1./Timestamp2Seconds(d);
           if (m_ev < 10 || m_ev%10 == 0) {
             std::cout << "  " << m_tlu->GetEntry(i)
                       << ", diff=" << d << (d <= 0 ? "  ***" : "")
@@ -88,6 +88,7 @@ public:
 //         }
       }
       if (JustStopped) {
+        m_tlu->Update(timestamps);
         SendEvent(TLUEvent::EORE(m_run, ++m_ev));
         TLUJustStopped = false;
       }
@@ -134,6 +135,7 @@ public:
       // by dhaas
       eudaq::mSleep(1000);
 
+      m_tlu->Update(timestamps);
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
@@ -161,12 +163,13 @@ public:
       ev.SetTag("ReadoutDelay", to_string(readout_delay));
       eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
-      if (timestamp_per_run) m_tlu->ResetTimestamp();
       ev.SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
       SendEvent(ev);
       eudaq::mSleep(5000);
       m_tlu->ResetTriggerCounter();
+      if (timestamp_per_run) m_tlu->ResetTimestamp();
       m_tlu->ResetScalers();
+      m_tlu->Update(timestamps);
       m_tlu->Start();
       TLUStarted=true;
       SetStatus(eudaq::Status::LVL_OK, "Started");
