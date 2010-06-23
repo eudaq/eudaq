@@ -58,6 +58,10 @@ namespace eudaq {
   }
 
   void FileWriterLCIO::WriteEvent(const DetectorEvent & devent) {
+    if (devent.IsBORE()) {
+      PluginManager::Initialize(devent);
+      return;
+    }
     std::cout << "EUDAQ_DEBUG: FileWriterLCIO::WriteEvent() processing event "
               <<  devent.GetRunNumber () <<"." << devent.GetEventNumber () << std::endl;
 
