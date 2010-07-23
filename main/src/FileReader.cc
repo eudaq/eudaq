@@ -8,6 +8,11 @@
 
 namespace eudaq {
 
+  namespace {
+    static const unsigned TLUID = Event::str2id("_TLU");
+    static const unsigned IDMASK = 0x7fff;
+  }
+
   struct FileReader::eventqueue_t;
   std::ostream & operator << (std::ostream & os, const FileReader::eventqueue_t & q);
   struct FileReader::eventqueue_t {
@@ -22,7 +27,8 @@ namespace eudaq {
       eudaq::DetectorEvent * event;
       std::vector<unsigned>  triggerids;
     };
-    eventqueue_t(unsigned numproducers = 0) : offsets(numproducers, items.end()), lastid(0) {}
+    eventqueue_t(unsigned numproducers = 0)
+      : offsets(numproducers, items.end()), firstid((unsigned)-1), lastid(0) {}
     bool isempty() const {
       for (size_t i = 0; i < offsets.size(); ++i) {
         if (events(i) == 0) {
@@ -74,7 +80,7 @@ namespace eudaq {
       unsigned evt = getevent(0).GetEventNumber();
       unsigned long long ts = NOTIMESTAMP;
       for (size_t i = 0; i < producers(); ++i) {
-        if (getevent(i).get_id() == eudaq::Event::str2id("_TLU")) {
+        if (getevent(i).get_id() == TLUID) {
           run = getevent(i).GetRunNumber();
           evt = getevent(i).GetEventNumber();
           ts = getevent(i).GetTimestamp();
@@ -121,8 +127,12 @@ namespace eudaq {
       }
       return it;
     }
-    unsigned getid(size_t producer) const {
-      return iter(producer)->triggerids[producer];
+    unsigned getid(size_t producer, size_t offset = 0) const {
+      unsigned diff = 0;
+      if (firstid != (unsigned)-1 && getevent(producer).get_id() == TLUID) {
+        diff = firstid;
+      }
+      return (iter(producer, offset)->triggerids[producer] + diff) & IDMASK;
     }
     const eudaq::Event & getevent(size_t producer, int offset = 0) const {
       return *iter(producer, offset)->event->GetEvent(producer);
@@ -132,7 +142,7 @@ namespace eudaq {
     }
     std::list<item_t> items;
     std::vector<std::list<item_t>::const_iterator> offsets;
-    unsigned lastid;
+    unsigned firstid, lastid;
   };
 
   std::ostream & operator << (std::ostream & os, const FileReader::eventqueue_t & q) {
@@ -163,7 +173,6 @@ namespace eudaq {
     }
 
     static bool SyncEvent(FileReader::eventqueue_t & queue, FileDeserializer & des, int ver, eudaq::Event * & ev) {
-      static const unsigned IDMASK = 0x7fff;
       static const int MAXTRIES = 3;
       unsigned eventnum = 0;
       static const bool dbg = false;
@@ -176,18 +185,31 @@ namespace eudaq {
           }
           queue.push(evnt);
         }
+        if (queue.firstid == (unsigned)-1 && !queue.getevent(0).IsBORE()) {
+          for (size_t i = 0; i < queue.producers(); ++i) {
+            if (queue.getevent(i).get_id() != TLUID) {
+              queue.firstid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
+              if (queue.firstid <= 1) {
+                EUDAQ_INFO("First TLU id detected as " + to_string(queue.firstid));
+              } else {
+                EUDAQ_WARN("First TLU id detected as " + to_string(queue.firstid) + " (should be 0 or 1)");
+              }
+              break;
+            }
+          }
+        }
         bool isbore = queue.getevent(0).IsBORE();
         bool iseore = queue.getevent(0).IsEORE();
-        bool haszero = PluginManager::GetTriggerID(queue.getevent(0)) == 0;
         bool hasother = false;
         bool hasrepeat = false;
-        unsigned triggerid = PluginManager::GetTriggerID(queue.getevent(0)) & IDMASK;
+        unsigned triggerid = queue.getid(0);
+        bool haszero = triggerid == 0;
         eventnum = queue.getevent(0).GetEventNumber();
         for (size_t i = 1; i < queue.producers(); ++i) {
-          if (eventnum == 0 || queue.getevent(i).get_id() == eudaq::Event::str2id("_TLU")) {
+          if (eventnum == 0 || queue.getevent(i).get_id() == TLUID) {
             eventnum = queue.getevent(i).GetEventNumber();
           }
-          unsigned tid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
+          unsigned tid = queue.getid(i);
           if (!queue.getevent(i).IsBORE()) isbore = false;
           if (queue.getevent(i).IsEORE()) iseore = true;
           if (tid == 0) haszero = true;
@@ -205,6 +227,7 @@ namespace eudaq {
                            << ", zero=" << (haszero?"y":"n")
 			   << ", repeat=" << (hasrepeat?"y":"n")
                            << ", other=" << (hasother?"y":"n")
+                           << ", last=" << queue.lastid
                            << std::flush;
         // If everything looks fine, return the next event
         if (isbore || iseore || (!haszero && !hasrepeat && !hasother) || triggerid == 0) {
@@ -218,19 +241,54 @@ namespace eudaq {
         }
         if (hasrepeat) {
           for (size_t i = 0; i < queue.producers(); ++i) {
-            unsigned tid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
+            unsigned tid = queue.getid(i);
             if (tid == queue.lastid) {
+              if (dbg) std::cout << std::endl;
               EUDAQ_INFO("Discarded repeated ID (" + to_string(triggerid) + ") in event " + to_string(eventnum));
               queue.discardevent(i);
             }
           }
           continue;
         }
-        // If there is an unexpected id, we don't know how to continue
+        // If there is an unexpected id, look in more detail
         if (hasother) {
+          bool istlumiss = true, isothermiss = true;
           std::vector<int> nums;
-          for (size_t i = 1; i < queue.producers(); ++i) {
-            nums.push_back(PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK);
+          for (size_t i = 0; i < queue.producers(); ++i) {
+            unsigned tid = queue.getid(i);
+            if (tid != (queue.lastid + 1) & IDMASK && tid != (queue.lastid + 2) & IDMASK) {
+              isothermiss = false;
+            }
+            if (queue.getevent(i).get_id() == TLUID) {
+              if (tid != (queue.lastid + 2) & IDMASK) {
+                istlumiss = false;
+              }
+            } else {
+              if (tid != (queue.lastid + 1) & IDMASK) {
+                istlumiss = false;
+              }
+            }
+            nums.push_back(tid);
+          }
+          if (istlumiss) {
+            if (dbg) std::cout << ", tlumiss" << std::endl;
+            EUDAQ_INFO("Skipped TLU event detected, discarding rest of event " + to_string(eventnum));
+            for (size_t i = 0; i < queue.producers(); ++i) {
+              if (queue.getevent(i).get_id() != TLUID) {
+                queue.discardevent(i);
+              }
+            }
+            continue;
+          }
+          if (isothermiss) {
+            if (dbg) std::cout << ", othermiss" << std::endl;
+            EUDAQ_INFO("Skipped event detected, discarding rest of event " + to_string(eventnum));
+            for (size_t i = 0; i < queue.producers(); ++i) {
+              if (queue.getid(i) != (queue.lastid + 2) & IDMASK) {
+                queue.discardevent(i);
+              }
+            }
+            continue;
           }
 	  if (dbg) std::cout << ", " << to_string(nums) << std::endl;
           EUDAQ_WARN("Unexpected tid in event number " + to_string(eventnum) + ": " + to_string(nums));
@@ -248,9 +306,9 @@ namespace eudaq {
         bool doskip = false;
         unsigned triggerid1 = (triggerid + 1) & IDMASK;
         for (size_t i = 0; i < queue.producers(); ++i) {
-          unsigned tid = PluginManager::GetTriggerID(queue.getevent(i)) & IDMASK;
+          unsigned tid = queue.getid(i);
           if (tid == 0) {
-            unsigned tid1 = PluginManager::GetTriggerID(queue.getevent(i, 1)) & IDMASK;
+            unsigned tid1 = queue.getid(i, 1);
             if (tid1 == triggerid) {
               EUDAQ_INFO("Discarded extra 'zero' in event " + to_string(eventnum));
               queue.discardevent(i);
@@ -265,7 +323,7 @@ namespace eudaq {
                 }
                 queue.push(evnt);
               }
-              unsigned tid2 = PluginManager::GetTriggerID(queue.getevent(i, 2)) & IDMASK;
+              unsigned tid2 = queue.getid(i, 2);
               unsigned triggerid2 = (triggerid + 2) & IDMASK;
               if (tid2 == triggerid) {
                 EUDAQ_INFO("Discarded two extra 'zero's in event " + to_string(eventnum));
