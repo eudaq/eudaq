@@ -28,6 +28,7 @@ namespace eudaq {
     void ResetTriggerProc();
     void ResetBoard();
     bool WaitForReady(double timeout = 20.0);
+    void SendStartPulse();
     void LoadPedestals(const pedestal_t & peds);
     bool EventDataReady(double timeout = 1.0); /// Returns false on timeout, else true
     int  EventDataReady_size(double timeout = 1.0); /// Returns 0 on timeout, else event size
@@ -35,12 +36,19 @@ namespace eudaq {
     void ResetTriggerBusy();
     static int ModeNum(const std::string & mode);
     static int DetNum(const std::string & det);
+    bool HasDebugRegister() const;
+    unsigned GetDebugRegister() const;
+    unsigned UpdateDebugRegister();
+    void Disable() { m_disabled = true; }
+    bool IsDisabled() const { return m_disabled; }
   private:
     static pedestal_t GeneratePedestals(int thresh = 10, int ped = 0);
     static pedestal_t ReadPedestals(const std::string & filename, float sigma, int det);
     int m_id, m_version, m_mode, m_det, m_ctrlstat;
     VMEptr m_vmes, m_vmed;
     int m_adcdelay, m_clkselect, m_pdrd;
+    bool m_disabled, m_hasdbgreg;
+    unsigned m_dbgreg;
   };
 
 }

@@ -61,12 +61,21 @@ namespace eudaq {
       m_det(D_NONE),
       m_adcdelay(0),
       m_clkselect(0),
-      m_pdrd(0)
+      m_pdrd(0),
+      m_disabled(false),
+      m_hasdbgreg(false),
+      m_dbgreg(0)
   {
     m_vmes = VMEFactory::Create(slot << 27, 0x1000000);
     m_vmed = VMEFactory::Create(slot << 27, 0x1000000, VMEInterface::A32, VMEInterface::D32,
                                 version >= 3 ? VMEInterface::P2eSST : VMEInterface::PMBLT,
                                 version >= 3 ? VMEInterface::SST160 : VMEInterface::SSTNONE);
+    try {
+      m_dbgreg = m_vmes->Read(0x50);
+      m_hasdbgreg = true;
+    } catch (const Exception &) {
+      // Doesn't have debug register, ignore it
+    }
   }
 
   std::string EUDRBController::Mode() const {
@@ -79,6 +88,7 @@ namespace eudaq {
 
   void EUDRBController::Configure(const eudaq::Configuration & param, int master) {
     std::cout << "Configuring board " << m_id << " as a " << (m_id == master ? "master" : "slave") << std::endl;
+    m_disabled = false;
     std::string det = getpar(param, m_id, "Det", "");
     m_det = DetNum(det);
     std::string mode = getpar(param, m_id, "Mode", (m_det == D_MIMOSA26 ? "ZS2" : "ZS"));
@@ -230,13 +240,10 @@ namespace eudaq {
       if (fname == "") fname = to_string(ped) + ":" + to_string(thresh);
     }
     std::cout << "m_id " << m_id << std::endl;
-    if (m_version > 2 && m_id == master) {
+    if (m_id == master) {
       // For M26: Send pulse start to the master, it propagates to the slaves
       std::cout << "Sending start pulse to board " << m_id << std::endl;
-      m_vmes->Write(0, m_ctrlstat | 0x80);
-      eudaq::mSleep(100);
-      m_vmes->Write(0, m_ctrlstat);
-      eudaq::mSleep(100);
+      SendStartPulse();
     }
     unsigned fcs = m_vmes->Read(0);
     std::cout << "Version = " << m_version << "\n"
@@ -258,6 +265,15 @@ namespace eudaq {
     m_vmes->Write(0, readdata32);
   }
 
+  void EUDRBController::SendStartPulse() {
+    if (m_version > 2) {
+      m_vmes->Write(0, m_ctrlstat | 0x80);
+      eudaq::mSleep(100);
+      m_vmes->Write(0, m_ctrlstat);
+      eudaq::mSleep(100);
+    }
+  }
+  
   bool EUDRBController::WaitForReady(double timeout) {
     for (eudaq::Timer timer; timer.Seconds() < timeout; /**/) {
       eudaq::mSleep(200);
@@ -285,7 +301,7 @@ namespace eudaq {
   }
 
   int EUDRBController::EventDataReady_size(double timeout) {
-    if (m_version >= 3) EUDAQ_THROW("EventDataReady_size only works wth FW >= 3");
+    if (m_version >= 3) EUDAQ_THROW("EventDataReady_size only works wth FW < 3");
     unsigned long int i = 0, readdata32 = 0; //, olddata = 0;
     for (eudaq::Timer timer; timer.Seconds() < timeout; /**/) {
       ++i;
@@ -391,5 +407,9 @@ namespace eudaq {
     //printf("\tdone!\n");
     return result;
   }
+
+  bool EUDRBController::HasDebugRegister() const { return m_hasdbgreg; }
+  unsigned EUDRBController::GetDebugRegister() const { return m_dbgreg; }
+  unsigned EUDRBController::UpdateDebugRegister() { m_dbgreg = m_vmes->Read(0x50); return GetDebugRegister(); }
 
 }

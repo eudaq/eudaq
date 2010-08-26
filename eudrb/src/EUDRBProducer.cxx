@@ -108,10 +108,10 @@ public:
       EUDAQ_INFO("Configured (" + param.Name() + ")");
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
     } catch (const std::exception & e) {
-      printf("Caught exception: %s\n", e.what());
+      EUDAQ_ERROR("Config exception: " + to_string(e.what()));
       SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     } catch (...) {
-      printf("Unknown exception\n");
+      EUDAQ_ERROR("Unknown Config exception");
       SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     }
   }
@@ -120,6 +120,22 @@ public:
       m_run = param;
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
+#if 0
+      for (size_t i = 0; i < m_boards.size(); ++i) {
+        m_boards[i]->ResetBoard();
+      }
+
+      std::cout << "Waiting for boards to reset..." << std::endl;
+      bool ok = true;
+      for (size_t n_eudrb = 0; n_eudrb < m_boards.size(); n_eudrb++) {
+        // give the first board ~20 seconds, then only wait 2 extra seconds for each other board
+        ok &= m_boards[n_eudrb]->WaitForReady((n_eudrb == 0) ? 20.0 : 2.0);
+      }
+      std::cout << (ok ? "OK" : "*** Timeout ***") << std::endl;
+
+      m_boards[m_master]->SendStartPulse();
+      
+#endif
       // EUDRB startup (activation of triggers etc)
       RawDataEvent ev(RawDataEvent::BORE("EUDRB", m_run));
 
@@ -132,6 +148,9 @@ public:
       for (size_t i = 0; i < m_boards.size(); ++i) {
         ev.SetTag("ID" + to_string(i), to_string(i + m_idoffset));
         if (m_pedfiles[i] != "") ev.SetTag("PEDESTAL" + to_string(i), m_pedfiles[i]);
+        if (m_boards[i]->HasDebugRegister()) {
+          ev.SetTag("DEBUGREG" + to_string(i), m_boards[i]->UpdateDebugRegister());
+        }
       }
       ev.SetTag("BOARDS", m_boards.size());
       ev.SetTag("Unsynchronized", m_unsync);
@@ -160,7 +179,18 @@ public:
     RawDataEvent ev("EUDRB", m_run, m_ev);
 
     bool ok = (m_version < 3) ? ReadoutEventOld(ev) : ReadoutEventNew(ev);
-
+    for (size_t i = 0; i < m_boards.size(); ++i) {
+      if (m_boards[i]->HasDebugRegister()) {
+        unsigned oldval = m_boards[i]->GetDebugRegister();
+        unsigned newval = m_boards[i]->UpdateDebugRegister();
+        if (newval != oldval) {
+          ev.SetTag("DEBUGREG" + to_string(i), newval);
+          ev.SetTag("DEBUGDIFF" + to_string(i), newval - oldval);
+          EUDAQ_WARN("Clock sync error on board " + to_string(i));
+        }
+      }
+    }
+    
     if (ok) {
       Timer t_send;
       SendEvent(ev);
@@ -256,10 +286,13 @@ public:
     static bool readingstarted = false;
     unsigned long total_bytes=0;
     Timer t_wait;
+    //std::cout << "ReadoutEventNew" << std::endl;
     if (!m_boards[m_boards.size()-1]->EventDataReady()) {
       //if (!m_boards[0]->EventDataReady()) {
-
-      if (juststopped) started = false;
+      if (juststopped) {
+        started = false;
+        std::cout << "Stopping readout" << std::endl;
+      }
       return false;
     }
     t_wait.Stop();
@@ -280,10 +313,29 @@ public:
       Timer t_board;
       bool badev=false;
 
+      if (m_boards[n_eudrb]->IsDisabled()) {
+        continue;
+      }
+      if (!m_boards[n_eudrb]->EventDataReady()) {
+        EUDAQ_ERROR("Board " + to_string(n_eudrb) + " not ready in event " + to_string(m_ev) + ", disabling");
+        //m_boards[n_eudrb]->Disable();
+        continue;
+      }
+
       size_t blockindex = ev.AddBlock(m_idoffset+n_eudrb);
 
       Timer t_mblt, t_reset;
-
+      //std::cout << "Reading block 1, board " << n_eudrb << std::endl;
+      if (doprint(m_ev)) std::cout << "Checking ready board " << n_eudrb << std::endl;
+      bool ready = false;
+      Timer t;
+      while (t.Seconds() < 0.1) {
+        ready = m_boards[n_eudrb]->EventDataReady();
+        if (ready) break;
+      }
+      if (!ready) {
+        EUDAQ_ERROR("Board " + to_string(n_eudrb) + " not ready in event " + to_string(m_ev));
+      }
       m_buffer.resize(4);
       m_boards[n_eudrb]->ReadEvent(m_buffer);
       ev.AppendBlock(blockindex, m_buffer);
@@ -307,7 +359,7 @@ public:
       }
       const unsigned long number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
             
-      if (doprint(m_ev)) std::cout << "DEBUG: read leading words, remaining = " << number_of_bytes << std::endl;
+      if (doprint(m_ev)) std::cout << "DEBUG: read leading words board " << n_eudrb << ", remaining = " << number_of_bytes << std::endl;
 
       //printf("number of bytes = %ld\n",number_of_bytes);
       if (number_of_bytes == 0) {
@@ -317,8 +369,11 @@ public:
       } else {
         //t_mblt.Restart();
         m_buffer.resize(number_of_bytes / 4);
+        
+        if (doprint(m_ev)) std::cout << "Reading block 2, board " << n_eudrb << std::endl;
         m_boards[n_eudrb]->ReadEvent(m_buffer);
-
+        if (doprint(m_ev)) std::cout << "OK" << std::endl;
+        
 	if (m_boards[0]->Det() == "MIMOSA26") {
           const unsigned long p = m_buffer[1] & 0x3FFF;
           if(!pivot_set)
@@ -390,7 +445,27 @@ public:
         eudaq::mSleep(100);
       }
       juststopped = false;
+      
+#if 0
+      for (size_t i = 0; i < m_boards.size(); ++i) {
+        m_boards[i]->ResetBoard();
+      }
+
+      std::cout << "Waiting for boards to reset..." << std::endl;
+      bool ok = true;
+      for (size_t n_eudrb = 0; n_eudrb < m_boards.size(); n_eudrb++) {
+        // give the first board ~20 seconds, then only wait 2 extra seconds for each other board
+        ok &= m_boards[n_eudrb]->WaitForReady((n_eudrb == 0) ? 20.0 : 2.0);
+      }
+      std::cout << (ok ? "OK" : "*** Timeout ***") << std::endl;
+
+      m_boards[m_master]->SendStartPulse();
+      
+#endif
+
+      std::cout << "Sending EORE." << std::endl;
       SendEvent(RawDataEvent::EORE("EUDRB", m_run, m_ev++));
+      std::cout << "Setting status." << std::endl;
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -399,6 +474,7 @@ public:
       printf("Unknown exception\n");
       SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     }
+    std::cout << "OK" << std::endl;
   }
   virtual void OnTerminate() {
     std::cout << "Terminating..." << std::endl;
