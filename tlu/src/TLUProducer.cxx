@@ -161,10 +161,11 @@ public:
       ev.SetTag("OrMask",   "0x"+to_hex(or_mask));
       ev.SetTag("VetoMask", "0x"+to_hex(veto_mask));
       ev.SetTag("ReadoutDelay", to_string(readout_delay));
-      eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
       //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       ev.SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
+      eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
       SendEvent(ev);
+      if (timestamp_per_run) m_tlu->ResetTimestamp();
       eudaq::mSleep(5000);
       m_tlu->ResetTriggerCounter();
       if (timestamp_per_run) m_tlu->ResetTimestamp();
