@@ -95,11 +95,11 @@ namespace eudaq {
       bool more = true;
       do {
         for (size_t i = 0; i < producers(); ++i) {
-          std::list<item_t>::const_iterator it = iter(i, -1);
+          /*std::list<item_t>::const_iterator it =*/ iter(i, -1);
         }
         clean_back();
         for (size_t i = 0; i < producers(); ++i) {
-          std::list<item_t>::const_iterator it = iter(i, -1); //, true);
+          /*std::list<item_t>::const_iterator it =*/ iter(i, -1); //, true);
         }
         more = true;
         for (size_t i = 0; i < producers(); ++i) {
