@@ -17,6 +17,8 @@ using eudaq::RawDataEvent;
 using eudaq::to_string;
 using eudaq::Timer;
 
+static unsigned MAX_ERR_CLOCKSYNC = 10;
+
 inline bool doprint(int n) {
   if (n < 10) return true;
   if (n < 100 && n%10 == 0) return true;
@@ -56,7 +58,8 @@ public:
       n_error(0),
       m_buffer(32768), // will get resized as needed
       m_idoffset(0),
-      m_version(-1)
+      m_version(-1),
+      m_numerr_clocksync(0)
   {
     m_buffer.reserve(40000);
   }
@@ -119,6 +122,7 @@ public:
     try {
       m_run = param;
       m_ev = 0;
+      m_numerr_clocksync = 0;
       std::cout << "Start Run: " << param << std::endl;
 #if 0
       for (size_t i = 0; i < m_boards.size(); ++i) {
@@ -186,7 +190,10 @@ public:
         if (newval != oldval) {
           ev.SetTag("DEBUGREG" + to_string(i), newval);
           ev.SetTag("DEBUGDIFF" + to_string(i), newval - oldval);
-          EUDAQ_WARN("Clock sync error on board " + to_string(i));
+          if (m_numerr_clocksync < MAX_ERR_CLOCKSYNC) {
+            m_numerr_clocksync++;
+            EUDAQ_WARN("Clock sync error on board " + to_string(i));
+          }
         }
       }
     }
@@ -489,6 +496,7 @@ public:
   //int fdOut;
   int m_idoffset, m_version, m_master;
   std::vector<std::string> m_pedfiles;
+  unsigned m_numerr_clocksync;
 };
 
 int main(int /*argc*/, const char ** argv) {
