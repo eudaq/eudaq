@@ -18,10 +18,14 @@ namespace eudaq {
     void SendLogMessage(const LogMessage &, bool show = true);
     void SetLevel(int level) { m_level = level; }
     void SetLevel(const std::string & level) { SetLevel(Status::String2Level(level)); }
+    void SetErrLevel(int level) { m_errlevel = level; }
+    void SetErrLevel(const std::string & level) { SetErrLevel(Status::String2Level(level)); }
+    bool IsLogged(const std::string & level) { return Status::String2Level(level) >= m_level; }
   private:
     std::string m_name;
     TransportClient * m_logclient;
     int m_level;
+    int m_errlevel;
     bool m_shownotconnected;
   };
 

@@ -203,15 +203,19 @@ namespace eudaq {
   FORTISConverterPlugin const FORTISConverterPlugin::m_instance;
 
   void FORTISConverterPlugin::Initialize(const Event & source, const Configuration &) {
-    std::cout << "FORTISConverterPlugin::Initialize::" << std::endl;
+    //std::cout << "FORTISConverterPlugin::Initialize::" << std::endl;
+    EUDAQ_EXTRA("FORTISConverterPlugin::Initialize:: ");
+
     m_NumRows = from_string(source.GetTag("NumRows"), FORTIS_ROWS);
     m_NumColumns = from_string(source.GetTag("NumColumns"), FORTIS_COLUMNS);
     m_InitialRow = from_string(source.GetTag("InitialRow"), 0);
     m_InitialColumn = from_string(source.GetTag("InitialColumn"), 0);
 
-    std::cout << " FORTIS: Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
-    std::cout << " FORTIS: Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
-    }
+    //std::cout << " FORTIS: Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
+    EUDAQ_EXTRA(std::string(" FORTIS: Nrows , NColumns = ")+to_string(m_NumRows)+"  ,  "+to_string(m_NumColumns)+": ");
+    //std::cout << " FORTIS: Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
+    EUDAQ_EXTRA(std::string(" FORTIS: Initial row , column = ")+to_string(m_InitialRow)+"  ,  "+to_string(m_InitialColumn)+": ");
+  }
 
   bool FORTISConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
 #   if FORTIS_DEBUG

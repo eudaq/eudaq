@@ -7,7 +7,7 @@
 namespace eudaq {
 
   LogSender::LogSender() :
-    m_logclient(0), m_shownotconnected(false) {}
+    m_logclient(0), m_errlevel(Status::LVL_DEBUG), m_shownotconnected(false) {}
 
   void LogSender::Connect(const std::string & type, const std::string & name, const std::string & server) {
     m_shownotconnected = true;
@@ -52,9 +52,15 @@ namespace eudaq {
       msg.Serialize(ser);
       m_logclient->SendPacket(ser);
     }
+
     if (msg.GetLevel() >= m_level && show) {
-      if (m_name != "") std::cerr << "[" << m_name << "] ";
-      std::cerr << msg << std::endl;
+      if (msg.GetLevel() >= m_errlevel) {
+	if (m_name != "") std::cerr << "[" << m_name << "] ";
+	std::cerr << msg << std::endl;
+      } else {
+	if (m_name != "") std::cout << "[" << m_name << "] ";
+	std::cout << msg << std::endl;
+      }
     }
   }
 
