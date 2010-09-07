@@ -133,8 +133,8 @@ QString LogMessage::operator [] (int i) const {
 
 std::string LogMessage::Text(int i) const {
   switch(i) {
-  case 0: return m_createtime.Formatted("%Y-%m-%d %H:%M:%S.%3");
-  case 1: return m_time.Formatted("%Y-%m-%d %H:%M:%S.%3");
+  case 0: return m_createtime.Formatted("%Y-%m-%d %H:%M:%S.%6");
+  case 1: return m_time.Formatted("%Y-%m-%d %H:%M:%S.%6");
   case 2: return (to_string(m_level) + "-" + Level2String(m_level));
   case 3: return m_msg;
   case 4: return GetSender();
@@ -274,4 +274,5 @@ QVariant LogCollectorModel::headerData(int section, Qt::Orientation orientation,
     return LogMessage::ColumnName(section);
 
   return QVariant();
- }
+}
+
