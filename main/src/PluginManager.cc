@@ -84,7 +84,8 @@ namespace eudaq {
 #endif
 
   StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
-    StandardEvent event(dev.GetRunNumber(), dev.GetEventNumber(), dev.GetTimestamp());
+    //StandardEvent event(dev.GetRunNumber(), dev.GetEventNumber(), dev.GetTimestamp());
+    StandardEvent event(dev);
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const Event * ev = dev.GetEvent(i);
       if (!ev) EUDAQ_THROW("Null event!");

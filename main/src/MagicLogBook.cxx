@@ -158,7 +158,7 @@ public:
       }
     }
   }
-  std::string GetLog(const std::string & param) {
+  std::string GetLog(const std::string & /*param*/) {
     if (!m_log) {
       m_log = new std::vector<eudaq::LogMessage>();
     }

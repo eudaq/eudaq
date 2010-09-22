@@ -27,7 +27,7 @@
     return id_;                            \
   }                                        \
   namespace _eudaq_dummy_ {                \
-    static RegisterEventType<type> eudaq_reg;\
+    static eudaq::RegisterEventType<type> eudaq_reg;	\
   }                                        \
   static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
@@ -37,7 +37,7 @@ namespace eudaq {
 
   class Event : public Serializable {
   public:
-    enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
+    enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_FAKE=8, FLAG_SIMU=16, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
     Event(unsigned run, unsigned event, unsigned long long timestamp = NOTIMESTAMP, unsigned flags=0)
       : m_flags(flags), m_runnumber(run), m_eventnumber(event), m_timestamp(timestamp) {}
     Event(Deserializer & ds);
@@ -69,6 +69,8 @@ namespace eudaq {
     bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
     bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
     bool HasHits() const { return GetFlags(FLAG_HITS) != 0; }
+    bool IsFake() const { return GetFlags(FLAG_FAKE) != 0; }
+    bool IsSimulation() const { return GetFlags(FLAG_SIMU) != 0; }
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);

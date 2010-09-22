@@ -10,7 +10,9 @@ namespace eudaq {
     static const char * const FLAGNAMES[] = {
       "BORE",
       "EORE",
-      "HITS"
+      "HITS",
+      "FAKE",
+      "SIMU"
     };
 
   }

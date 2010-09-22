@@ -27,6 +27,8 @@ namespace eudaq {
     void write(const std::vector<T> & t);
     template<typename T, typename U>
     void write(const std::map<T, U> & t);
+    template<typename T, typename U>
+    void write(const std::pair<T, U> & t);
 
     virtual ~Serializer() {}
   private:
@@ -123,6 +125,12 @@ namespace eudaq {
     }
   }
 
+  template <typename T, typename U>
+  inline void Serializer::write(const std::pair<T, U> & t) {
+    write(t->first);
+    write(t->second);
+  }
+
   class Deserializer {
   public:
     Deserializer() : m_interrupting(false) {}
@@ -137,6 +145,9 @@ namespace eudaq {
 
     template <typename T, typename U>
     void read(std::map<T, U> & t);
+
+    template <typename T, typename U>
+    void read(std::pair<T, U> & t);
 
     template <typename T>
     T read() {
@@ -255,6 +266,12 @@ namespace eudaq {
       std::string val = read<std::string>();
       t[name]=val;
     }
+  }
+
+  template<typename T, typename U>
+  inline void Deserializer::read(std::pair<T, U> & t) {
+    t.first  = read<T>();
+    t.second = read<U>();
   }
 
 }

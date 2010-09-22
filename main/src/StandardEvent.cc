@@ -329,6 +329,11 @@ namespace eudaq {
   {
   }
 
+  StandardEvent::StandardEvent(const Event & e)
+    : Event(e)
+  {
+  }
+
   StandardEvent::StandardEvent(Deserializer & ds)
     : Event(ds)
   {

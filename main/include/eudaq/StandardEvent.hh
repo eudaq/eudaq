@@ -108,6 +108,7 @@ namespace eudaq {
   public:
     StandardEvent(unsigned run = 0, unsigned evnum = 0,
                   unsigned long long timestamp = NOTIMESTAMP);
+    StandardEvent(const Event &);
     StandardEvent(Deserializer &);
     void SetTimestamp(unsigned long long);
     
