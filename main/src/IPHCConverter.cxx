@@ -181,7 +181,10 @@ int main(int, char ** argv) {
             block[14+words] = 0xf1000000;
             block[15+words] = words+12;
             for (size_t i = 0; i < block.size(); ++i) {
-              block[i] = block[i] >> 24 | block[i] >> 8 & 0xff00 | block[i] << 8 & 0xff0000 | block[i] << 24;
+              block[i] = (block[i] >> 24) |
+                         (block[i] >> 8 & 0xff00) |
+                         (block[i] << 8 & 0xff0000) |
+                         (block[i] << 24);
             }
             rev->AddBlock(data.SStatus.AsicNo, block);
           }

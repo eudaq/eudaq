@@ -43,7 +43,7 @@ namespace eudaq {
         //std::cout << "  board " << j << ", (" << ev->GetID(j) << ") " << alldata.size() << " bytes" << std::endl;
         if (alldata.size() < 4) break;
         //std::cout << "  BaseAddress: " << to_hex(getbigendian<unsigned>(&alldata[0]) & 0xff000000 | 0x00400000) << std::endl;
-        (*m_file) << "BaseAddress: " << to_hex(getbigendian<unsigned>(&alldata[0]) & 0xff000000 | 0x00400000) << std::endl;
+        (*m_file) << "BaseAddress: " << to_hex((getbigendian<unsigned>(&alldata[0]) & 0xff000000) | 0x00400000) << std::endl;
         for (size_t k = 0; k < alldata.size()-3; k += 4) {
           (*m_file) << to_hex(k/4+1) << " : " << to_hex(getbigendian<unsigned>(&alldata[k]), 0) << std::endl;
         }

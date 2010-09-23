@@ -13,8 +13,8 @@ namespace eudaq {
     static const unsigned IDMASK = 0x7fff;
   }
 
-  struct FileReader::eventqueue_t;
-  std::ostream & operator << (std::ostream & os, const FileReader::eventqueue_t & q);
+  std::ostream & operator << (std::ostream &, const FileReader::eventqueue_t &);
+
   struct FileReader::eventqueue_t {
     struct item_t {
       item_t(DetectorEvent * ev = 0) : event(ev) {
@@ -256,15 +256,16 @@ namespace eudaq {
           std::vector<int> nums;
           for (size_t i = 0; i < queue.producers(); ++i) {
             unsigned tid = queue.getid(i);
-            if (tid != (queue.lastid + 1) & IDMASK && tid != (queue.lastid + 2) & IDMASK) {
+            if (tid != ((queue.lastid + 1) & IDMASK) &&
+                tid != ((queue.lastid + 2) & IDMASK)) {
               isothermiss = false;
             }
             if (queue.getevent(i).get_id() == TLUID) {
-              if (tid != (queue.lastid + 2) & IDMASK) {
+              if (tid != ((queue.lastid + 2) & IDMASK)) {
                 istlumiss = false;
               }
             } else {
-              if (tid != (queue.lastid + 1) & IDMASK) {
+              if (tid != ((queue.lastid + 1) & IDMASK)) {
                 istlumiss = false;
               }
             }
@@ -284,7 +285,7 @@ namespace eudaq {
             if (dbg) std::cout << ", othermiss" << std::endl;
             EUDAQ_INFO("Skipped event detected, discarding rest of event " + to_string(eventnum));
             for (size_t i = 0; i < queue.producers(); ++i) {
-              if (queue.getid(i) != (queue.lastid + 2) & IDMASK) {
+              if (queue.getid(i) != ((queue.lastid + 2) & IDMASK)) {
                 queue.discardevent(i);
               }
             }

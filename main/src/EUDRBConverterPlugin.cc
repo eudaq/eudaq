@@ -283,7 +283,9 @@ namespace eudaq {
     if (dbg) std::cout << "DataSize = " << hexdec(alldata.size(), 0) << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
-    if (dbg) std::cout << "BaseAddress = 0x" << to_hex(word & 0xff000000 | 0x00400000) << std::endl;
+    if (dbg) std::cout << "BaseAddress = 0x"
+                       << to_hex((word & 0xff000000) | 0x00400000)
+                       << std::endl;
     unsigned wordcount = word & 0xffffff;
     if (dbg) std::cout << "WordCount = " << hexdec(wordcount, 0) << std::endl;
     if (wordcount*4 + 16 != alldata.size()) EUDAQ_THROW("Bad wordcount (" + to_string(wordcount) +
@@ -342,7 +344,7 @@ namespace eudaq {
             unsigned column = v>>2 & 0x7ff;
             unsigned num = v & 3;
             if (dbg) std::cout << (s ? "," : " ") << column;
-            if (dbg) if (v&3 > 0) std::cout << "-" << (column + num);
+            if (dbg) if ((v&3) > 0) std::cout << "-" << (column + num);
             for (unsigned j = 0; j < num+1; ++j) {
               plane.PushPixel(column+j, row, 1, pivot, frame-1);
             }
