@@ -9,11 +9,11 @@ ifeq ($(PLATFORM),WIN32)
   ZESTSC1DEFAULT := ../extern/ZestSC1/windows
   EXTERNAL_LIBS += SetupAPI Ws2_32
 else
+  EXTERNAL_LIBS += usb  
   ifeq ($(PLATFORM),CYGWIN)
     ZESTSC1DEFAULT := ../extern/ZestSC1/windows
-    EXTERNAL_LIBS += SetupAPI Ws2_32
+    EXTERNAL_LIBS += ZestSC1 SetupAPI Ws2_32
   else
-    EXTERNAL_LIBS += usb
     ifeq ($(PLATFORM),LINUX)
       ZESTSC1DEFAULT := ../extern/ZestSC1/linux
     else
