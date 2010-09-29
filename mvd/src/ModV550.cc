@@ -31,7 +31,6 @@ ModV550::ModV550(unsigned int adr){
   ModuleInfo();
 
 }//ModV550
-
 void ModV550::ModuleInfo(){
 
   printf("--------------------------------------------\n");
@@ -46,7 +45,6 @@ void ModV550::ModuleInfo(){
 
 
 }//ModuleInfo
-
 void ModV550::SetTestPattern(unsigned short int tst0, unsigned short int tst1){
 
   unsigned short int tmp = tst0;
@@ -58,20 +56,15 @@ void ModV550::SetTestPattern(unsigned short int tst0, unsigned short int tst1){
   vme->Write(Test1,tmp);
 
 }//SetTestPattern
-
 void ModV550::GetWordCounter(unsigned int& NoOTD0, unsigned int& NoOTD1){
 
   NoOTD0 = vme->Read(WC0,data) & 0x7FF;
   NoOTD1 = vme->Read(WC1,data) & 0x7FF;
 
 }//GetWordCounter
-
 unsigned int ModV550::GetWordCounter(unsigned int n){
-
   return vme->Read(n ? WC1 : WC0,data) & 0x7FF;
-
 }//GetWordCounter
-
 void ModV550::GetFifo0(unsigned int OR, unsigned int V, int* ChNum, int* ChData){
 
   unsigned int tmp = vme32->Read(Fifo_0, 0U);
@@ -82,7 +75,6 @@ void ModV550::GetFifo0(unsigned int OR, unsigned int V, int* ChNum, int* ChData)
   *ChData =  tmp & 0xFFF;
 
 }//GetFifo0
-
 void ModV550::GetFifo1(unsigned int OR, unsigned int V, int* ChNum, int* ChData){
 
   unsigned int tmp = vme32->Read(Fifo_1, 0U);
@@ -93,13 +85,11 @@ void ModV550::GetFifo1(unsigned int OR, unsigned int V, int* ChNum, int* ChData)
   *ChData =  tmp & 0xFFF;
 
 }//GetFifo1
-
 void ModV550::Clear(){
 
   vme->Write((MClear), (unsigned short int)(0));
 
 }//Clear
-
 void ModV550::SetNumberOfChannels(unsigned short int ChN0, unsigned short int ChN1){
 
   unsigned short int tmp = (((ChN1 & 0x3F) << 6) | (ChN0 & 0x3F));
@@ -107,14 +97,12 @@ void ModV550::SetNumberOfChannels(unsigned short int ChN0, unsigned short int Ch
   vme->Write(Nchan,tmp);
 
 }//SetNumberOfChannels
-
 void ModV550::GetNumberOfChannels(unsigned int& ChN0, unsigned int& ChN1){
 
   ChN0 = ((vme->Read(Nchan,data) >> 6) & 0x3F);
   ChN1 = (vme->Read(Nchan,data) & 0x3F);
 
 }//GetNumberOfChannels
-
 void ModV550::GetStatus(){
 
   printf("--------------------------------------------\n");
@@ -135,56 +123,47 @@ void ModV550::GetStatus(){
   printf("--------------------------------------------\n");
 
 }//GetStatus
-
 unsigned int ModV550::GetTestMode(){
 
   return vme->Read(Status,data) & 0x1;
 
 }//GetTestMode
-
 unsigned int ModV550::GetMemoryOwner(){
 
   return (vme->Read(Status,data) & 0x2) >> 1;
 
 }//GetMemoryOwner
-
 unsigned int ModV550::GetDRDY0(){
 
   return (vme->Read(Status,data) & 0x4) >> 2;
 
 }//GetDRDY0
-
 unsigned int ModV550::GetDRDY1(){
 
   return (vme->Read(Status,data) & 0x8) >> 3;
 
 }//GetDRDY1
-
 unsigned int ModV550::GetFifoEmpty0()
 {
 
   return (vme->Read(Status,data) & 0x10) >> 4;
 
 }//GetFifoEmpty0
-
 unsigned int ModV550::GetFifoEmpty1(){
 
   return (vme->Read(Status,data) & 0x20) >> 5;
 
 }//GetFifoEmpty1
-
 unsigned int ModV550::GetFifoHF0(){
 
   return (vme->Read(Status,data) & 0x40) >> 6;
 
 }//GetFifoHF0
-
 unsigned int ModV550::GetFifoHF1(){
 
   return (vme->Read(Status,data) & 0x80) >> 7;
 
 }//GetFifoHF1
-
 unsigned int ModV550::GetFifoFull0(){
 
   unsigned int tmp;
@@ -192,13 +171,11 @@ unsigned int ModV550::GetFifoFull0(){
   return tmp;
 
 }//GetFifoFull0
-
 unsigned int ModV550::GetFifoFull1(){
 
   return (vme->Read(Status,data) & 0x200) >> 9;
 
 }//GetFifoFull1
-
 void ModV550::SetTestMode(unsigned int TM){
 
   unsigned short int tmp = vme->Read(Status,data);
@@ -215,7 +192,6 @@ void ModV550::SetTestMode(unsigned int TM){
   }
 
 }//SetTestMode
-
 void ModV550::SetMemoryOwner(unsigned int MO){
 
   unsigned short int tmp = vme->Read(Status,data);
@@ -232,7 +208,6 @@ void ModV550::SetMemoryOwner(unsigned int MO){
   }
 
 }//SetMemoryOwner
-
 void ModV550::SetInterrupt(unsigned short int IntLev, unsigned short int StatID){
 
   unsigned short int tmp = (((IntLev & 0x7) << 8) | (StatID & 0xFF)); 
@@ -240,7 +215,24 @@ void ModV550::SetInterrupt(unsigned short int IntLev, unsigned short int StatID)
   vme->Write((IRQ),tmp);
 
 }//SetInterrupt
+void ModV550::SetPedestalThresholdFull(int adc, int chan, int PedThr){
+	  if(adc > 1){
+	    printf(" !!! Error v550: There are only 2 adc modules in the module");
+	    exit(1);
+	  }
 
+	  SetMemoryOwner(0); //memory owner VME
+
+	  if(adc == 0){
+	    vme32->Write((PT0 + chan*sizeof(PedThr)),PedThr);
+	  }
+	  if(adc == 1){
+	    vme32->Write((PT1 + chan*sizeof(PedThr)),PedThr);
+	  }
+
+	  SetMemoryOwner(1); //memory owner Convertion Logick
+
+}//SetPedestalThresholdFull
 void ModV550::SetPedestalThreshold(int adc, int chan, int ped, int thr){
 
   if(adc > 1){
@@ -255,7 +247,6 @@ void ModV550::SetPedestalThreshold(int adc, int chan, int ped, int thr){
   SetMemoryOwner(1); //memory owner Conversion Logic 
 
 }//SetPedestalThreshold
-
 void ModV550::GetPedestalThreshold(int adc, int chan, int* ped, int* thr){
 
   SetMemoryOwner(0); //memory owner VME
@@ -268,7 +259,19 @@ void ModV550::GetPedestalThreshold(int adc, int chan, int* ped, int* thr){
   SetMemoryOwner(1); //memory owner Conversion Logic
 
 }//GetPedestalThreshold
+void ModV550::GetPedestalThresholdFull(int adc, int chan, int* PedThr){
+  unsigned int tmp;
 
+  SetMemoryOwner(0); //memory owner VME
+
+  if(adc == 0) tmp = vme32->Read(PT0 + chan*sizeof(tmp),tmp);
+  if(adc == 1) tmp = vme32->Read(PT1 + chan*sizeof(tmp),tmp);
+
+  *PedThr = tmp;
+
+  SetMemoryOwner(1); //memory owner Convertion Logick
+
+}//GetPedestalThresholdFull
 void ModV550::SetPedThrZero(){
 
   SetMemoryOwner(0);
@@ -285,7 +288,6 @@ void ModV550::SetPedThrZero(){
   SetMemoryOwner(1);
 
 }//SetPedThrZero
-
 void ModV550::Init(unsigned int NChan){
 
   unsigned int tmp = NChan/32;
@@ -295,13 +297,11 @@ void ModV550::Init(unsigned int NChan){
   SetNumberOfChannels(tmp,tmp);
 
 }//Init
-
 unsigned int ModV550::GetEvent(unsigned int adc){
 
   return vme32->Read(adc ? Fifo_1 : Fifo_0, 0U);
 
 }//GetEvent
-
 ModV550::~ModV550(){
 
   printf(" v550: ModV550 destructor is working \n");

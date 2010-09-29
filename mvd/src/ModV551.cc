@@ -31,14 +31,13 @@ ModV551::ModV551(unsigned int adr){
   SetIRQLevel(0); //disabled interrupts
   printf(" v551: Interrupts have been disabled \n"); 
 
-  time1 = 75;
+  time1 = 150;
   time2 = 30; 
   time3 = 20; 
   time4 = 49; 
   time5 = 48;
 
 }//ModV551
-
 unsigned int ModV551::ReadVME16(unsigned int adr){
   
   unsigned int rc;
@@ -46,7 +45,6 @@ unsigned int ModV551::ReadVME16(unsigned int adr){
   return rc;
 
 }//ReadVME16
-
 void ModV551::WriteVME16(unsigned int adr, unsigned int dataW){
 
   unsigned short int tmp = (unsigned short int)dataW;
@@ -54,7 +52,6 @@ void ModV551::WriteVME16(unsigned int adr, unsigned int dataW){
   vme->Write(adr,tmp);
 
 }//WriteVME16
-
 void ModV551::ModuleInfo(){
 
   printf("--------------------------------------------\n");
@@ -69,31 +66,31 @@ void ModV551::ModuleInfo(){
 
 
 }//ModuleInfo
-
 void ModV551::SetIRQStatusID(unsigned int StatusID){
 
   WriteVME16(IRQvector,StatusID);
 
 }//SetIRQStatusID
-
 void ModV551::SetIRQLevel(unsigned int IRQL){
 
     WriteVME16(IRQlevel,IRQL);
 
 }//SetIRQLevel
-
 void ModV551::Clear(){
 
   WriteVME16(SClear,0);
 
 }//SetIRQLevel
-
 void ModV551::SoftwareTrigger(){
 
   WriteVME16(STrigger,0);
 
 }//SoftwareTrigger
-
+unsigned int ModV551::GetTrigger(){
+	unsigned int tmp  =  (  ReadVME16(STrigger)  & 0x1 );
+	//printf("trig551=%d ", tmp);
+	return tmp;
+}//GetTrigger
 void ModV551::SetInternalDelay(unsigned int ID){
 
   unsigned int tmp = ReadVME16(Status) & 0x3F;
@@ -101,7 +98,6 @@ void ModV551::SetInternalDelay(unsigned int ID){
   else WriteVME16(Status,(tmp & 0x3E));
 
 }//SetInternalDelay
-
 void ModV551::SetVeto(unsigned int V){
 
   unsigned int tmp = ReadVME16(Status) & 0x3F;
@@ -109,7 +105,6 @@ void ModV551::SetVeto(unsigned int V){
   else WriteVME16(Status,(tmp & 0x3D));
 
 }//SetVeto
-
 void ModV551::SetAutoTrigger(unsigned int AT){
 
   unsigned int tmp = ReadVME16(Status) & 0x3F;
@@ -117,7 +112,6 @@ void ModV551::SetAutoTrigger(unsigned int AT){
   else WriteVME16(Status,(tmp & 0x3B));
 
 }//SetAutoTrigger
-
 void ModV551::GetStatus(){
   
   printf("--------------------------------------------\n");
@@ -134,28 +128,24 @@ void ModV551::GetStatus(){
   printf("--------------------------------------------\n");
 
 }//GetStatus
-
 unsigned int ModV551::GetDataRedy(){
 
   unsigned int tmp = ((ReadVME16(Status) & 0x8) >> 3);
   return tmp;
 
 }//GetDataRedy
-
 unsigned int ModV551::GetBusy(){
 
   unsigned int tmp = ((ReadVME16(Status) & 0x10) >> 4);
   return tmp;
 
 }//GetBusy
-
 unsigned int ModV551::GetActiveSequence(){
-
   unsigned int tmp = ((ReadVME16(Status) & 0x20) >> 5);
+  while(tmp != 1);
+  printf("A=%d ",tmp);
   return tmp;
-
 }//GetActiveSequence
-
 void ModV551::SetTestMode(unsigned int TM){
 
   unsigned int tmp = ReadVME16(Test) & 0xF;
@@ -163,7 +153,6 @@ void ModV551::SetTestMode(unsigned int TM){
   else WriteVME16(Test,(tmp & 0xE));
 
 }//SetTestMode
-
 void ModV551::SetClockLevel(unsigned int CL){
 
   unsigned int tmp = ReadVME16(Test) & 0xF;
@@ -171,7 +160,6 @@ void ModV551::SetClockLevel(unsigned int CL){
   else WriteVME16(Test,(tmp & 0xD));
 
 }//SetClockLevel
-
 void ModV551::SetShiftLevel(unsigned int SL){
 
   unsigned int tmp = ReadVME16(Test) & 0xF;
@@ -179,7 +167,6 @@ void ModV551::SetShiftLevel(unsigned int SL){
   else WriteVME16(Test,(tmp & 0xB));
 
 }//SetShiftLevel
-
 void ModV551::SetTestPulsLevel(unsigned int PL){
 
   unsigned int tmp = ReadVME16(Test) & 0xF;
@@ -187,7 +174,6 @@ void ModV551::SetTestPulsLevel(unsigned int PL){
   else WriteVME16(Test,(tmp & 0x7));
 
 }//SetTestPulsLevel
-
 void ModV551::GetTest(){
 
   printf("--------------------------------------------\n");
@@ -202,41 +188,35 @@ void ModV551::GetTest(){
   printf("--------------------------------------------\n");
 
 }//GetTest
-
 unsigned int ModV551::GetTestMode(){
 
   unsigned int tmp = (ReadVME16(Test) & 0x1);
   return tmp;
 
 }//GetTestMode
-
 unsigned int ModV551::GetClockLevel(){
 
   unsigned int tmp = ((ReadVME16(Test) & 0x2) >> 1);
   return tmp;
 
 }//GetClockLevel
-
 unsigned int ModV551::GetShiftLevel(){
 
   unsigned int tmp = ((ReadVME16(Test) & 0x4) >> 2);
   return tmp;
 
 }//GetShiftLevel
-
 unsigned int ModV551::GetTestPulsLevel(){
 
   unsigned int tmp = ((ReadVME16(Test) & 0x8) >> 3);
   return tmp;
 
 }//GetTestPulsLevel
-
 void ModV551::SetNChannels(unsigned int NCh){
 
   WriteVME16(Nchan,NCh);
 
 }//SetNChannels
-
 void ModV551::GetNChannels(){
 
   unsigned int NCh = (ReadVME16(Nchan) & 0x7FF);
@@ -249,7 +229,6 @@ void ModV551::GetNChannels(){
   printf("--------------------------------------------\n");
 
 }//GetNChannels
-
 void ModV551::SetTime(int t1, int t2, int t3, int t4, int t5){
 
   if(t1 < 0 || t1 > 255){
@@ -284,7 +263,6 @@ void ModV551::SetTime(int t1, int t2, int t3, int t4, int t5){
   WriteVME16(T5,t5);
 
 }//SetTime
-
 void ModV551::GetTime(int* t1, int* t2, int* t3, int* t4, int* t5){
 
   *t1 = ReadVME16(T1) & 0xFF;
@@ -294,15 +272,108 @@ void ModV551::GetTime(int* t1, int* t2, int* t3, int* t4, int* t5){
   *t5 = ReadVME16(T5) & 0x1FF;
 
 }//GetTime
-
 void ModV551::SetVCAL(unsigned int VCAL){
 
   WriteVME16(DAC,VCAL);
 
 }//SetVCAL
+/*void ModV551::CalibAutoTrig(){
+  unsigned int HitNumberADC0;
+  unsigned int HitNumberADC1;
+  unsigned int OR;
+  unsigned int V;
+  int ChNum;
+  int ChData;
+  int SilcPointer;
+//  v551->Init(NumOfChan);
 
+//  for(int i = 0; i < NumOfADC; i++) {
+//    v550[i]->Init(NumOfChan);
+//    v550[i]->SetPedThrZero();
+//  }//i
+
+  int* Ped =  new int[BuffSize551];
+  int* Ped2 = new int[BuffSize551];
+  int* Noi = new int[BuffSize551];
+  int* Norm = new int[BuffSize551];
+
+  for(int tmp = 0; tmp < BuffSize551; tmp++) {
+    Ped[tmp] = 0;
+    Ped2[tmp] = 0;
+    Noi[tmp] = 0;
+    Norm[tmp] = 0;
+  }//tmp
+  printf("!!!!!=====Calibration=====!!!!! ");
+
+  for(int i_trig = 0; i_trig < 1000; i_trig++) {
+    m_modv551->SoftwareTrigger();
+    if( (i_trig%100) == 0 ) printf("Calibration: Event - %d \n\r",i_trig);
+
+    SilcPointer = 0;
+
+    for(int i = 0; i < NumOfADC; i++) {
+      while(!m_modv551->GetDataRedy());
+      m_modv550[i]->GetWordCounter(HitNumberADC0,HitNumberADC1);
+      for(int ADC_int = 0; ADC_int < 2; ADC_int++) {
+    	if(ADC_int == 0){
+    		  for(int chan = 0; chan < HitNumberADC0; chan++){
+    			  m_modv550[i]->GetFifo0(OR,V,&ChNum,&ChData);
+    			  Ped[ChNum + SilcPointer*NumOfChan] += ChData;
+    			  Ped2[ChNum + SilcPointer*NumOfChan] += ChData*ChData;
+    			  Norm[ChNum + SilcPointer*NumOfChan] += 1;
+    		  }//chan
+    		  SilcPointer++;
+    	  }//ADC0
+    	  if(ADC_int == 1){
+    		  for(int chan = 0; chan < HitNumberADC1; chan++){
+    			  m_modv550[i]->GetFifo1(OR,V,&ChNum,&ChData);
+    			  Ped[ChNum + SilcPointer*NumOfChan] += ChData;
+    			  Ped2[ChNum + SilcPointer*NumOfChan] += ChData*ChData;
+    			  Norm[ChNum + SilcPointer*NumOfChan] += 1;
+    		  }//chan
+    		  SilcPointer++;
+    	  }//ADC1
+      }//ADC_int
+    }//i
+  }//i_trig
+
+  for(int tmp = 0; tmp < BuffSize; tmp++){
+
+    if(Norm[tmp] > 1){
+      Ped[tmp] = Ped[tmp]/Norm[tmp];
+      Ped2[tmp] = Ped2[tmp]/Norm[tmp];
+      Noi[tmp] = (int) ( sqrt(  (double)  ( (Norm[tmp]/(Norm[tmp] - 1)) *(Ped2[tmp] - Ped[tmp]*Ped[tmp]) )  )  );
+    }
+    else{
+      Ped[tmp] = 0;
+      		Noi[tmp] = 0;
+    	}
+
+  }//tmp
+//////////////////////////////////////////////////////////////////////////////
+  int ped_tmp, thr_tmp;
+
+  SilcPointer = 0;
+
+  for(int i = 0; i < NumOfADC; i++){
+
+    for(int ADC_int = 0; ADC_int < 2; ADC_int++){
+    	//if(!ADC_Status[ADC_int + i*NumOfADC]) continue;
+    	for(int chan = 0; chan < NumOfChan; chan++){
+    	ped_tmp = Ped[ chan + SilcPointer*NumOfChan ];
+    	thr_tmp = ped_tmp + 3*Noi[chan + SilcPointer*NumOfChan];
+	m_modv550[i]->SetPedestalThreshold( ADC_int, chan, ped_tmp, thr_tmp );
+     }//chan
+    	SilcPointer++;
+    }//ADC_int
+	}//i
+  delete [] Ped;
+  delete [] Ped2;
+  delete [] Noi;
+  delete [] Norm;
+}//CalibAutoTrig
+ */
 void ModV551::Init(unsigned int NChan){
-
   Clear();
   SetTestMode(0);
   SetClockLevel(0);
@@ -315,7 +386,6 @@ void ModV551::Init(unsigned int NChan){
   SetTime(time1,time2,time3,time4,time5);
 
 }//Init
-
 ModV551::~ModV551(){
 
   printf("ModV551B destructor is working \n");

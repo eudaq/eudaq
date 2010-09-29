@@ -55,6 +55,7 @@ public:
   void SetIRQLevel(unsigned int);
   void Clear();
   void SoftwareTrigger();
+  unsigned int GetTrigger();
   void SetInternalDelay(unsigned int);
   void SetVeto(unsigned int);
   void SetAutoTrigger(unsigned int);
@@ -76,6 +77,7 @@ public:
   void SetTime(int, int, int, int, int);
   void GetTime(int*, int*, int*, int*, int*);
   void SetVCAL(unsigned int);
+  //void CalibAutoTrig();
   void Init(unsigned int);
 
 };

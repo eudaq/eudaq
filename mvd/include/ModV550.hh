@@ -70,7 +70,9 @@ public:
   void SetMemoryOwner(unsigned int);
   void SetInterrupt(unsigned short int, unsigned short int);
   void SetPedestalThreshold(int, int, int, int);
+  void SetPedestalThresholdFull(int, int, int );
   void GetPedestalThreshold(int, int, int*, int*);
+  void GetPedestalThresholdFull(int, int, int* );
   void SetPedThrZero();
   void Init(unsigned int);
   unsigned int GetEvent(unsigned int);
