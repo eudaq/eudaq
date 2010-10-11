@@ -1,4 +1,4 @@
-USE_LCIO := 0 
+USE_LCIO := 0
 USE_EUTELESCOPE := 0
 USE_ROOT := 0
 
