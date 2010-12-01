@@ -28,6 +28,23 @@ using eutelescope::EUTELESCOPE;
 #include <string>
 #include <vector>
 
+static int SWITCHERBMAP[16]={1,0,3,2,5,4,7,6,9,8,11,10,13,12,15,14};
+
+int DCDCOLMAPPING[128]={ 0, 4, 8, 12, 2, 6, 10, 14, 124, 120,
+                        116, 112, 126, 122, 118, 114, 16, 20, 24, 28,
+                         18, 22, 26, 30, 108, 104, 100, 96, 110, 106,
+                         102, 98, 36, 35, 37, 34, 52, 51, 53, 50,
+                         68,67, 69, 66, 84, 83, 85, 82, 38, 33,
+                         39,32, 54, 49, 55, 48, 70, 65, 71, 64,
+                         86, 81, 87, 80,  1, 5, 9, 13, 3, 7,
+                         11, 15, 125, 121, 117, 113, 127, 123, 119, 115, 17,
+                         21, 25, 29, 19, 23, 27, 31, 109, 105,
+                         101, 97, 111, 107, 103, 99, 44, 43, 45,
+                         42, 60, 59, 61, 58, 76, 75, 77, 74, 92,
+                         91, 93, 90, 46, 41, 47, 40, 62, 57, 63,
+                         56, 78, 73, 79, 72, 94, 89, 95, 88 };
+
+
 namespace eudaq {
 
   class DEPFETConverterBase {
@@ -41,11 +58,11 @@ namespace eudaq {
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
       StandardPlane plane(id, "DEPFET", "");
       plane.SetTLUEvent(getlittleendian<unsigned>(&data[4]));
-      int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x7f;
       int DevType=(getlittleendian<unsigned>(&data[0])>>28) & 0xf;
       //  printf("TLU=%d Startgate=%d DevType=0x%x \n",plane.m_tluevent,Startgate,DevType);
       if (DevType==0x3) {
         plane.SetSizeRaw(64, 256);
+       int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x7f;
 
         for (unsigned gate = 0; gate < plane.YSize()/2; ++gate)  {      // Pixel sind uebereinander angeordnet
           int readout_gate = (Startgate + gate) % (plane.YSize()/2);
@@ -69,7 +86,36 @@ namespace eudaq {
           } // col
         } // gates
 
-      } else {
+      } else if (DevType==0x4) {  
+
+//------- DCD readout ---------- 
+
+//       printf("DEV_TYPE=4\n");
+       int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x3f;
+
+        plane.SetSizeRaw(128, 16);
+	int i=-1;
+        int icol,irow;
+//        unsigned npixels = plane.XSize() * plane.YSize();
+//	unsigned char *v4data=(unsigned char *)data[3];
+ 
+	for (int irowd = 0; irowd < plane.YSize(); irowd ++)  {     
+            int readout_gate = (Startgate + irowd) % (plane.YSize());
+            irow=SWITCHERBMAP[readout_gate];
+	    for (int icoldcd = 0; icoldcd < plane.XSize(); icoldcd ++) {
+                     icol=DCDCOLMAPPING[icoldcd];	
+
+		i++;
+//		unsigned short  d = (unsigned short)v4data[(3 + i)]&0xff;
+                double d = getlittleendian<signed char>(&data[12 + i]);
+		plane.SetPixel(i, icol, irow, d);
+//                if(i<10) printf("DEV_TYPE= icol=%d,irow=%d data=0x%x\n",icol,irow,d);
+
+	    };
+	 };
+		
+
+      }else { //------- S3A system -------
         plane.SetSizeRaw(64, 128);
         unsigned npixels = plane.XSize() * plane.YSize();
         for (size_t i = 0; i < npixels; ++i) {
@@ -117,6 +163,12 @@ namespace eudaq {
     //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
 
     virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
+
+    virtual unsigned GetTriggerID(Event const & ev) const {
+      const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
+      if (rawev.NumBlocks() < 1) return (unsigned)-1;
+      return getlittleendian<unsigned>(&rawev.GetBlock(0)[4]);
+    }
 
 #if USE_LCIO && USE_EUTELESCOPE
     virtual void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const {
@@ -210,7 +262,8 @@ namespace eudaq {
       rawDataEncoder["xMax"]     = currentDetector->getXMax();
       rawDataEncoder["yMin"]     = currentDetector->getYMin();
       rawDataEncoder["yMax"]     = currentDetector->getYMax();
-      rawDataEncoder["sensorID"] = 6;
+// for 2009      rawDataEncoder["sensorID"] = 6;
+      rawDataEncoder["sensorID"] = 8;
       rawDataEncoder.setCellID(rawMatrix);
 
       //size_t nPixel = plane.HitPixels();
