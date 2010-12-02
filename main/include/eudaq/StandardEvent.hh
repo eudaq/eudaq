@@ -30,18 +30,30 @@ namespace eudaq {
     void SetSizeZS(unsigned w, unsigned h, unsigned npix,
                    unsigned frames = 1, int flags = 0);
 
+    template <typename T>
     void SetPixel(unsigned index, unsigned x, unsigned y,
-                  unsigned pix, bool pivot = false, unsigned frame = 0);
-    void SetPixel(unsigned index, unsigned x, unsigned y,
-                  unsigned pix, unsigned frame) {
-      SetPixel(index, x, y, pix, false, frame);
+                  T pix, bool pivot = false, unsigned frame = 0) {
+      SetPixelHelper(index, x, y, (double)pix, pivot, frame);
     }
-    void PushPixel(unsigned x, unsigned y, unsigned pix,
-                   bool pivot = false, unsigned frame = 0);
-    void PushPixel(unsigned x, unsigned y, unsigned pix, unsigned frame) {
-      PushPixel(x, y, pix, false, frame);
+    template <typename T>
+    void SetPixel(unsigned index, unsigned x, unsigned y,
+                  T pix, unsigned frame) {
+      SetPixelHelper(index, x, y, (double)pix, false, frame);
+    }
+    template <typename T>
+    void PushPixel(unsigned x, unsigned y, T pix,
+                   bool pivot = false, unsigned frame = 0) {
+      PushPixelHelper(x, y, (double)pix, pivot, frame);
+    }
+    template <typename T>
+    void PushPixel(unsigned x, unsigned y, T pix, unsigned frame) {
+      PushPixelHelper(x, y, (double)pix, false, frame);
     }
 
+    void SetPixelHelper(unsigned index, unsigned x, unsigned y,
+                        double pix, bool pivot, unsigned frame);
+    void PushPixelHelper(unsigned x, unsigned y,
+                         double pix, bool pivot, unsigned frame);
     double GetPixel(unsigned index, unsigned frame) const;
     double GetPixel(unsigned index) const;
     double GetX(unsigned index, unsigned frame) const;

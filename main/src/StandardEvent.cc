@@ -80,7 +80,7 @@ namespace eudaq {
     }
   }
 
-  void StandardPlane::PushPixel(unsigned x, unsigned y, unsigned p, bool pivot, unsigned frame) {
+  void StandardPlane::PushPixelHelper(unsigned x, unsigned y, double p, bool pivot, unsigned frame) {
     if (frame > m_x.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in PushPixel");
     m_x[frame].push_back(x);
     m_y[frame].push_back(y);
@@ -89,7 +89,7 @@ namespace eudaq {
     //std::cout << "DBG: " << frame << ", " << x << ", " << y << ", " << p << ";" << m_pix[0].size() << ", " << m_pivot.size() << std::endl;
   }
 
-  void StandardPlane::SetPixel(unsigned index, unsigned x, unsigned y, unsigned pix, bool pivot, unsigned frame) {
+  void StandardPlane::SetPixelHelper(unsigned index, unsigned x, unsigned y, double pix, bool pivot, unsigned frame) {
     if (frame >= m_pix.size()) EUDAQ_THROW("Bad frame number " + to_string(frame) + " in SetPixel");
     if (frame < m_x.size()) m_x.at(frame).at(index) = x;
     if (frame < m_y.size()) m_y.at(frame).at(index) = y;
