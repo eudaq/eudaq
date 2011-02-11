@@ -111,6 +111,9 @@ private slots:
         eudaq::mSleep(1000);
         StopRun(false);
         eudaq::mSleep(8000);
+        while (m_producerbusy) {
+        	eudaq::mSleep(50);
+        }
         on_btnStart_clicked(true);
       } else if (dostatus) {
         GetStatus();

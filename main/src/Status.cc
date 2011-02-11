@@ -26,6 +26,7 @@ namespace eudaq {
       "WARN",
       "ERROR",
       "USER",
+      "BUSY",
       "NONE"
     };
     if (level < LVL_DEBUG || level > LVL_NONE) return "";

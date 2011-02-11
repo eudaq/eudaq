@@ -4,6 +4,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "Colours.hh"
+#include "eudaq/Status.hh"
 
 static const char * statuses[] = {
   "RUN",       "Run Number",
@@ -171,6 +172,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<euda
       }
     }
   }
+  
   m_run.SetStatus(id, *status);
 }
 

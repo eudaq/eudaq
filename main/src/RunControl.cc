@@ -45,7 +45,8 @@ namespace eudaq {
       m_ilog((size_t)-1),
       m_runsizelimit(0),
       m_stopping(false),
-      m_busy(false)
+      m_busy(false),
+      m_producerbusy(false)
   {
     if (listenaddress != "") {
       StartServer(listenaddress);
@@ -223,6 +224,19 @@ namespace eudaq {
       } else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         counted_ptr<Status> status(new Status(ser));
+        if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
+        	ev.id.SetState(2);
+        } else if (status->GetLevel() != Status::LVL_BUSY && ev.id.GetState() == 2) {
+        	ev.id.SetState(1);
+		}
+		bool busy = false;
+		for (size_t i = 0; i < m_cmdserver->NumConnections(); ++i) {
+			if (m_cmdserver->GetConnection(i).GetState() == 2) {
+				busy = true;
+				break;
+			}
+		}
+		m_producerbusy = busy;
         if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
           // We ignore status messages that are marked with a previous run number
           OnReceive(ev.id, status);

@@ -99,10 +99,10 @@ namespace eudaq {
 //        unsigned npixels = plane.XSize() * plane.YSize();
 //	unsigned char *v4data=(unsigned char *)data[3];
  
-	for (int irowd = 0; irowd < plane.YSize(); irowd ++)  {     
+	for (size_t irowd = 0; irowd < plane.YSize(); irowd ++)  {     
             int readout_gate = (Startgate + irowd) % (plane.YSize());
             irow=SWITCHERBMAP[readout_gate];
-	    for (int icoldcd = 0; icoldcd < plane.XSize(); icoldcd ++) {
+	    for (size_t icoldcd = 0; icoldcd < plane.XSize(); icoldcd ++) {
                      icol=DCDCOLMAPPING[icoldcd];	
 
 		i++;

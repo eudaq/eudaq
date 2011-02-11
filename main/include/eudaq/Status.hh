@@ -19,7 +19,8 @@ namespace eudaq {
       LVL_WARN,
       LVL_ERROR,
       LVL_USER,
-      LVL_NONE
+      LVL_BUSY,
+      LVL_NONE  // The last value, any additions should go before this
     };
     Status(int level = LVL_OK, const std::string & msg = "")
       : m_level(level), m_msg(msg) {}
