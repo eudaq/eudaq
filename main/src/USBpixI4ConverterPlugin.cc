@@ -2,7 +2,8 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/USBpix_i3.hh"
+#include "eudaq/Timer.hh"
+#include "eudaq/USBpix_i4.hh"
 
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
@@ -29,26 +30,27 @@ using eutelescope::EUTELESCOPE;
 namespace eudaq {
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const std::string EVENT_TYPE = "USBPIX";
+  static const std::string EVENT_TYPE = "USBPIXI4";
 
-  static const unsigned int CHIP_MIN_COL = 0;
-  static const unsigned int CHIP_MAX_COL = 17;
-  static const unsigned int CHIP_MIN_ROW = 0;
-  static const unsigned int CHIP_MAX_ROW = 159;
+  static const unsigned int CHIP_MIN_COL = 1;
+  static const unsigned int CHIP_MAX_COL = 80;
+  static const unsigned int CHIP_MIN_ROW = 1;
+  static const unsigned int CHIP_MAX_ROW = 336;
   static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	// Maximum ROW normalized (starting with 0)
   static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
 
-	static int chip_id_offset = 10;
+	static int chip_id_offset = 20;
 
-  class USBpixConverterBase {
+  class USBpixI4ConverterBase {
   private:
   	unsigned int count_boards;
 	std::vector<unsigned int> board_ids;
 
   public:
   	unsigned int consecutive_lvl1;
+	unsigned int tot_mode;
 
-  	int getCountBoards() {
+  int getCountBoards() {
 		return count_boards;
 	}
 
@@ -60,11 +62,15 @@ namespace eudaq {
 		if (board_index >= board_ids.size()) return (unsigned) -1;
 		return board_ids[board_index];
 	}
-  	void getBOREparameters (const Event & ev) {
+
+  void getBOREparameters (const Event & ev) {
 		count_boards = ev.GetTag ("boards", -1);
 		board_ids.clear();
 
 		consecutive_lvl1 = ev.GetTag ("consecutive_lvl1", 16);
+		if (consecutive_lvl1>16) consecutive_lvl1=16;
+		tot_mode = ev.GetTag ("tot_mode", 0);
+		if (tot_mode>2) tot_mode=0;
 
 		if (count_boards == (unsigned) -1) return;
 
@@ -74,45 +80,64 @@ namespace eudaq {
 	}
 
 	bool isEventValid(const std::vector<unsigned char> & data) const {
-		// check for error flags
-		unsigned int i = data.size() - 4;
-		unsigned Trigger_word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
-		if (Trigger_word==(unsigned)-1) return false;
-
-		if (TRIGGER_WORD_ERROR_MACRO(Trigger_word) != 0) return false;
-
 		// ceck data consistency
-		unsigned int eoe_found = 0;
-		for (int i=0; i < data.size()-4; i += 4) {
+		unsigned int dh_found = 0;
+		for (int i=0; i < data.size()-8; i += 4) {
 			unsigned word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
-			if ((TRIGGER_WORD_HEADER_MACRO(word) == 0) && (HEADER_MACRO(word) == 1) && ((FLAG_MACRO(word) & FLAG_WO_STATUS) == FLAG_WO_STATUS))	{
-				eoe_found++;
+			if (DATA_HEADER_MACRO(word))	{
+				dh_found++;
 			}
 		}
 
-		if (eoe_found != consecutive_lvl1) return false;
+		if (dh_found != consecutive_lvl1) return false;
 		else return true;
 	}
 
-	// returns trigger number or (unsigned) -1 if bcid window is not valid
 	unsigned getTrigger(const std::vector<unsigned char> & data) const {
 		//Get Trigger Number and check for errors
-		unsigned int i = data.size() - 4;
-		unsigned Trigger_word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+		unsigned int i = data.size() - 8; // splitted in 2x 32bit words
+		unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+		if (Trigger_word1==(unsigned)-1) return (unsigned)-1;
+		unsigned Trigger_word2 = (((unsigned int)data[i + 7]) << 24) | (((unsigned int)data[i + 6]) << 16) | (((unsigned int)data[i + 5]) << 8) | (unsigned int)data[i + 4];
 
-		unsigned int trigger_number = TRIGGER_NUMBER_MACRO(Trigger_word);
-
+		unsigned int trigger_number = TRIGGER_NUMBER_MACRO2(Trigger_word1, Trigger_word2);
+		//std::cout << "Trigger: " << trigger_number << std::endl;
 		return trigger_number;
 	}
 
-	bool getHitData (unsigned int &Word, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
+	bool getHitData (unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
 
-		if ( ( FLAG_MACRO(Word) & FLAG_WO_STATUS ) == FLAG_WO_STATUS ) return false;	// EoE word; skip for the timebeing
-		if ( TRIGGER_WORD_HEADER_MACRO(Word) == 1 ) return false;						// trigger word
+		if ( !DATA_RECORD_MACRO(Word) ) return false;	// No Data Record
 
-		ToT = TOT_MACRO(Word);
-		unsigned int t_Col = COL_MACRO(Word);
-		unsigned int t_Row = ROW_MACRO(Word);
+		unsigned int t_Col=0;
+		unsigned int t_Row=0;
+		unsigned int t_ToT=15;
+
+		if (!second_hit) {
+			t_ToT = DATA_RECORD_TOT1_MACRO(Word);
+			t_Col = DATA_RECORD_COLUMN1_MACRO(Word);
+			t_Row = DATA_RECORD_ROW1_MACRO(Word);
+		} else {
+			t_ToT = DATA_RECORD_TOT2_MACRO(Word);
+			t_Col = DATA_RECORD_COLUMN2_MACRO(Word);
+			t_Row = DATA_RECORD_ROW2_MACRO(Word);
+		}
+
+		// translate FE-I4 ToT code into tot
+		if (tot_mode==1) {
+			if (t_ToT==15) return false;
+			if (t_ToT==14) ToT = 1;
+			else ToT = t_ToT + 2;
+		} else if (tot_mode==2) {
+			// No tot = 2 ?
+			if (t_ToT==15) return false;
+			if (t_ToT==14) ToT = 1;
+			else ToT = t_ToT + 3;
+		} else {
+			// 0
+			if (t_ToT==14 || t_ToT==15) return false;
+			ToT = t_ToT + 1;
+		}
 
 		if (t_Row > CHIP_MAX_ROW || t_Row < CHIP_MIN_ROW) {
 			std::cout << "Invalid row: " << t_Row << std::endl;
@@ -122,42 +147,52 @@ namespace eudaq {
 			std::cout << "Invalid col: " << t_Col << std::endl;
 			return false;
 		}
-		//std::cout << "Event: (" << getBoardID (id) << " - " << getBoardOrientation(id) << ") " << trigger_number << ": " << Row << ":" << Col << ":" << ToT << std::endl;
 
 		// Normalize Pixelpositions
 		t_Col -= CHIP_MIN_COL;
 		t_Row -= CHIP_MIN_ROW;
-
 		Col = t_Col;
 		Row = t_Row;
 		return true;
 	}
 
 	StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
-		StandardPlane plane(id, EVENT_TYPE, "USBPIX");
-
-		plane.SetSizeZS(CHIP_MAX_COL_NORM + 1, CHIP_MAX_ROW_NORM + 1, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-
-		//Get Trigger Number
-		unsigned int trigger_number = getTrigger(data);
-		plane.SetTLUEvent(trigger_number);
+		StandardPlane plane(id, EVENT_TYPE, "USBPIXI4");
 
 		// check for consistency
-		if (!isEventValid(data)) return plane;
+		bool valid=isEventValid(data);
 
 		unsigned int ToT = 0;
 		unsigned int Col = 0;
 		unsigned int Row = 0;
+		// FE-I4: DH with lv1 before Data Record
 		unsigned int lvl1 = 0;
 
+		plane.SetSizeZS(CHIP_MAX_COL_NORM + 1, CHIP_MAX_ROW_NORM + 1, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE); //
+		//Get Trigger Number
+		unsigned int trigger_number = getTrigger(data);
+		plane.SetTLUEvent(trigger_number);
+
+		if (!valid) return plane;
+		unsigned int eventnr=0;
+
 		// Get Events
-		for (int i=0; i < data.size()-4; i += 4) {
+		for (int i=0; i < data.size()-8; i += 4) {
 			unsigned int Word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
 
-			if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
+			if (DATA_HEADER_MACRO(Word)) {
 				lvl1++;
-			} else if (getHitData(Word, Col, Row, ToT)) {
-				plane.PushPixel(Col, Row, ToT, false, lvl1);
+			} else {
+				// First Hit
+				if (getHitData(Word, false, Col, Row, ToT)) {
+					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+					eventnr++;
+				}
+				// Second Hit
+				if (getHitData(Word, true, Col, Row, ToT)) {
+					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+					eventnr++;
+				}
 			}
 		}
 		return plane;
@@ -165,7 +200,7 @@ namespace eudaq {
   };
 
   // Declare a new class that inherits from DataConverterPlugin
-  class USBPixConverterPlugin : public DataConverterPlugin , public USBpixConverterBase {
+  class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBpixI4ConverterBase {
 
   public:
 
@@ -224,7 +259,7 @@ namespace eudaq {
     }
 
 	virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
-		//std::cout << "getlciosubevent (I3) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
+		//std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
 		if (eudaqEvent.IsBORE()) {
 			// shouldn't happen
 			return true;
@@ -249,7 +284,7 @@ namespace eudaq {
 
 		//	create cell encoders to set sensorID and pixel type
 		CellIDEncoder< TrackerDataImpl > zsDataEncoder   ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  );
-		zsDataEncoder["sensorID"] = 13;
+		zsDataEncoder["sensorID"] = 14;
 		zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelAPIXSparsePixel;
 
         // prepare a new TrackerData object for the ZS data
@@ -279,13 +314,23 @@ namespace eudaq {
 		
 			for (int i=0; i < buffer.size()-4; i += 4) {
 				unsigned int Word = (((unsigned int)buffer[i + 3]) << 24) | (((unsigned int)buffer[i + 2]) << 16) | (((unsigned int)buffer[i + 1]) << 8) | (unsigned int)buffer[i];
-				if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
+
+				if (DATA_HEADER_MACRO(Word)) {
 					lvl1++;
-				} else if (getHitData(Word, Col, Row, ToT)) {
-					eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset, lvl1);
-					sparseFrame->addSparsePixel( thisHit );
-					tmphits.push_back( thisHit );
-		   		}
+				} else {
+					// First Hit
+					if (getHitData(Word, false, Col, Row, ToT)) {
+						eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT+1, ev_raw.GetID(chip) + chip_id_offset, lvl1-1);
+						sparseFrame->addSparsePixel( thisHit );
+						tmphits.push_back( thisHit );
+					}
+					// Second Hit
+					if (getHitData(Word, true, Col, Row, ToT)) {
+						eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT+1, ev_raw.GetID(chip) + chip_id_offset, lvl1-1);
+						sparseFrame->addSparsePixel( thisHit );
+						tmphits.push_back( thisHit );
+					}
+				}
 			}
 		}
 
@@ -311,17 +356,15 @@ namespace eudaq {
     // The DataConverterPlugin constructor must be passed the event type
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
-    USBPixConverterPlugin()
+    USBPixI4ConverterPlugin()
       : DataConverterPlugin(EVENT_TYPE)
-      {
-		  consecutive_lvl1=16;
-	  }
+      {}
 
     // The single instance of this converter plugin
-    static USBPixConverterPlugin m_instance;
-  }; // class ExampleConverterPlugin
+    static USBPixI4ConverterPlugin m_instance;
+  };
 
   // Instantiate the converter plugin instance
-  USBPixConverterPlugin USBPixConverterPlugin::m_instance;
+  USBPixI4ConverterPlugin USBPixI4ConverterPlugin::m_instance;
 
 } // namespace eudaq
