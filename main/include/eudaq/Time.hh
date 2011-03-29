@@ -10,7 +10,7 @@
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 //# include <time.h>
-# include <afxwin.h>
+//# include <afxwin.h>
 # include <winsock2.h>
 #else
 # include <sys/time.h>

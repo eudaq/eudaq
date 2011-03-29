@@ -52,7 +52,7 @@ namespace eudaq {
       T t = v;
       unsigned char buf[sizeof t];
       for (size_t i = 0; i < sizeof t; ++i) {
-        buf[i] = t & 0xff;
+        buf[i] = static_cast<unsigned char>(t & 0xff);
         t >>= 8;
       }
       sr.Serialize(buf, sizeof t);

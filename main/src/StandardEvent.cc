@@ -226,7 +226,7 @@ namespace eudaq {
   }
 
   bool StandardPlane::NeedsCDS() const {
-    return GetFlags(FLAG_NEEDCDS);
+    return GetFlags(FLAG_NEEDCDS) != 0;
   }
 
   int StandardPlane::Polarity() const {

@@ -6,7 +6,8 @@
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 # define WIN32_LEAN_AND_MEAN
-# include <afxwin.h> 
+//# include <afxwin.h> 
+# include <Windows.h>
 # include <time.h>
 # define EPOCHFILETIME (116444736000000000LL)
 #endif
@@ -59,7 +60,7 @@ namespace eudaq {
     time.tm_hour = hour;
     time.tm_min = minute;
     time.tm_sec = sec + usec / 1000000;
-    tv_sec = mktime(&time);
+    tv_sec = static_cast<long>(mktime(&time));
     tv_usec = usec % 1000000;
   }
 

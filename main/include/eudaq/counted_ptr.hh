@@ -46,7 +46,7 @@ public:
     return *this;
   }
   operator bool () const {
-    return get();
+    return get() != 0;
   }
 #ifndef NO_MEMBER_TEMPLATES
   template <class Y> friend class counted_ptr;

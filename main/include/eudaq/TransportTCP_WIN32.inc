@@ -1,12 +1,16 @@
 #define MSG_NOSIGNAL 0
+#ifndef EINPROGRESS
 #define EINPROGRESS WSAEINPROGRESS
+#endif
+#ifndef EWOULDBLOCK
 #define EWOULDBLOCK WSAEWOULDBLOCK
+#endif
 
 #include <map>
 #if EUDAQ_PLATFORM_IS(MINGW)
 #  include <windows.h>
 #else
-#  include <afxwin.h>
+//#  include <afxwin.h>
 #endif
 #include <winsock.h>
 
