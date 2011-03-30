@@ -22,6 +22,7 @@
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
 #  include "EUTelAPIXSparsePixel.h"
+#  include "EUTelAPIXMCDetector.h"
 #  include "EUTelRunHeaderImpl.h"
 using eutelescope::EUTELESCOPE;
 #endif
@@ -83,7 +84,7 @@ namespace eudaq {
 
 		// ceck data consistency
 		unsigned int eoe_found = 0;
-		for (int i=0; i < data.size()-4; i += 4) {
+		for (unsigned int i=0; i < data.size()-4; i += 4) {
 			unsigned word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
 			if ((TRIGGER_WORD_HEADER_MACRO(word) == 0) && (HEADER_MACRO(word) == 1) && ((FLAG_MACRO(word) & FLAG_WO_STATUS) == FLAG_WO_STATUS))	{
 				eoe_found++;
@@ -114,11 +115,11 @@ namespace eudaq {
 		unsigned int t_Col = COL_MACRO(Word);
 		unsigned int t_Row = ROW_MACRO(Word);
 
-		if (t_Row > CHIP_MAX_ROW || t_Row < CHIP_MIN_ROW) {
+		if (t_Row > CHIP_MAX_ROW /*|| t_Row < CHIP_MIN_ROW*/) {
 			std::cout << "Invalid row: " << t_Row << std::endl;
 			return false;
 		}
-		if (t_Col > CHIP_MAX_COL || t_Col < CHIP_MIN_COL) {
+		if (t_Col > CHIP_MAX_COL /*|| t_Col < CHIP_MIN_COL*/) {
 			std::cout << "Invalid col: " << t_Col << std::endl;
 			return false;
 		}
@@ -151,7 +152,7 @@ namespace eudaq {
 		unsigned int lvl1 = 0;
 
 		// Get Events
-		for (int i=0; i < data.size()-4; i += 4) {
+		for (unsigned int i=0; i < data.size()-4; i += 4) {
 			unsigned int Word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
 
 			if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
@@ -219,7 +220,7 @@ namespace eudaq {
 
 #if USE_LCIO && USE_EUTELESCOPE
     // This is where the conversion to LCIO is done
-    virtual lcio::LCEvent * GetLCIOEvent(const Event * ev) const {
+    virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
 		return 0;
     }
 
@@ -249,35 +250,46 @@ namespace eudaq {
 
 		//	create cell encoders to set sensorID and pixel type
 		CellIDEncoder< TrackerDataImpl > zsDataEncoder   ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  );
-		zsDataEncoder["sensorID"] = 13;
-		zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelAPIXSparsePixel;
-
-        // prepare a new TrackerData object for the ZS data
-		// it contains all the hits for a particular sensor in one event
-        std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
-		// set some values of "Cells" for this object
-        zsDataEncoder.setCellID( zsFrame.get() );
-
-        // this is the structure that will host the sparse pixel
-		// it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to 
-		// a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-        std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > >
-          sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > ( zsFrame.get() ) );
 
 		// this is an event as we sent from Producer
 		// needs to be converted to concrete type RawDataEvent
 		const RawDataEvent & ev_raw = dynamic_cast <const RawDataEvent &> (eudaqEvent);
-		std::list<eutelescope::EUTelAPIXSparsePixel*> tmphits;
+
+		std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
 
 		for (size_t chip = 0; chip < ev_raw.NumBlocks(); ++chip) {
 			const std::vector <unsigned char> & buffer=dynamic_cast<const std::vector<unsigned char> &> (ev_raw.GetBlock(chip));
+
+			if (lcioEvent.getEventNumber() == 0) {
+				eutelescope::EUTelPixelDetector * currentDetector = new eutelescope::EUTelAPIXMCDetector(1);
+				currentDetector->setMode( "ZS" );
+
+				setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
+			}
+
+			std::list<eutelescope::EUTelAPIXSparsePixel*> tmphits;
+
+			zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset;;
+			zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelAPIXSparsePixel;
+
+			// prepare a new TrackerData object for the ZS data
+			// it contains all the hits for a particular sensor in one event
+			std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+			// set some values of "Cells" for this object
+			zsDataEncoder.setCellID( zsFrame.get() );
+
+			// this is the structure that will host the sparse pixel
+			// it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to 
+			// a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
+			std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > >
+			  sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > ( zsFrame.get() ) );
 
 			unsigned int ToT = 0;
 			unsigned int Col = 0;
 			unsigned int Row = 0;
 			unsigned int lvl1 = 0;
 		
-			for (int i=0; i < buffer.size()-4; i += 4) {
+			for (unsigned int i=0; i < buffer.size()-4; i += 4) {
 				unsigned int Word = (((unsigned int)buffer[i + 3]) << 24) | (((unsigned int)buffer[i + 2]) << 16) | (((unsigned int)buffer[i + 1]) << 8) | (unsigned int)buffer[i];
 				if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
 					lvl1++;
@@ -287,17 +299,35 @@ namespace eudaq {
 					tmphits.push_back( thisHit );
 		   		}
 			}
-		}
 
-		// write TrackerData object that contains info from one sensor to LCIO collection
-		zsDataCollection->push_back( zsFrame.release() );
+			// write TrackerData object that contains info from one sensor to LCIO collection
+			zsDataCollection->push_back( zsFrame.release() );
+
+			for( std::list<eutelescope::EUTelAPIXSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
+			  delete (*it);
+			}
+		}
 		
 		// add this collection to lcio event
-
 		if ( ( !zsDataCollectionExists )  && ( zsDataCollection->size() != 0 ) ) lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
 
-		for( std::list<eutelescope::EUTelAPIXSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
-		  delete (*it);
+		if (lcioEvent.getEventNumber() == 0) {
+			// do this only in the first event
+			LCCollectionVec * apixSetupCollection = NULL;
+      
+			bool apixSetupExists = false;
+			try {
+				apixSetupCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "apix_setup" ) ) ;
+				apixSetupExists = true;
+			} catch (...) {
+				apixSetupCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
+			}
+	
+			for ( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane ) {
+				apixSetupCollection->push_back( setupDescription.at( iPlane ) );
+			}
+
+			if (!apixSetupExists) lcioEvent.addCollection( apixSetupCollection, "apix_setup" );
 		}
 
 		return true;
