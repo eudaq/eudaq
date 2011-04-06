@@ -8,6 +8,7 @@
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
 #  include "IMPL/TrackerRawDataImpl.h"
+#  include "IMPL/TrackerDataImpl.h"
 #  include "IMPL/LCCollectionVec.h"
 #  include "UTIL/CellIDEncoder.h"
 #  include "lcio.h"
@@ -28,7 +29,13 @@ using eutelescope::EUTELESCOPE;
 #include <string>
 #include <vector>
 
-static int SWITCHERBMAP[16]={1,0,3,2,5,4,7,6,9,8,11,10,13,12,15,14};
+#define TB2010bonding 1 
+
+#ifdef TB2010bonding
+ static int SWITCHERBMAP[16]={1,0,3,2,5,4,7,6,9,8,11,10,13,12,15,14};
+#else
+ static int SWITCHERBMAP[16]={0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+#endif
 
 int DCDCOLMAPPING[128]={ 0, 4, 8, 12, 2, 6, 10, 14, 124, 120,
                         116, 112, 126, 122, 118, 114, 16, 20, 24, 28,
@@ -44,8 +51,10 @@ int DCDCOLMAPPING[128]={ 0, 4, 8, 12, 2, 6, 10, 14, 124, 120,
                          91, 93, 90, 46, 41, 47, 40, 62, 57, 63,
                          56, 78, 73, 79, 72, 94, 89, 95, 88 };
 
-
+int ZEROSUPP=0;
+int EvSize=0;
 namespace eudaq {
+
 
   class DEPFETConverterBase {
   public:
@@ -91,30 +100,113 @@ namespace eudaq {
 //------- DCD readout ---------- 
 
 //       printf("DEV_TYPE=4\n");
+       int EvSize=(getlittleendian<unsigned>(&data[0])) & 0xfffff;
+       int Trig=(getlittleendian<unsigned>(&data[4]));
        int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x3f;
+       ZEROSUPP=(getlittleendian<unsigned>(&data[8])>>20) & 0x1;
 
-        plane.SetSizeRaw(128, 16);
+//for DCD         plane.SetSizeRaw(128, 16);
+// dcd converted to Matrix + rotated at 90 degree
+//        plane.SetSizeRaw(32, 64);
+        plane.SetSizeRaw(64, 32);
 	int i=-1;
-        int icol,irow;
+        int icol,irow,icold,irowd;
+        double DATA1[ plane.XSize()* plane.YSize()];
 //        unsigned npixels = plane.XSize() * plane.YSize();
 //	unsigned char *v4data=(unsigned char *)data[3];
- 
-	for (size_t irowd = 0; irowd < plane.YSize(); irowd ++)  {     
-            int readout_gate = (Startgate + irowd) % (plane.YSize());
-            irow=SWITCHERBMAP[readout_gate];
-	    for (size_t icoldcd = 0; icoldcd < plane.XSize(); icoldcd ++) {
-                     icol=DCDCOLMAPPING[icoldcd];	
-
-		i++;
-//		unsigned short  d = (unsigned short)v4data[(3 + i)]&0xff;
-                double d = getlittleendian<signed char>(&data[12 + i]);
-		plane.SetPixel(i, icol, irow, d);
-//                if(i<10) printf("DEV_TYPE= icol=%d,irow=%d data=0x%x\n",icol,irow,d);
-
+	if( ZEROSUPP==0){ 
+	    for (int irowdcd = 0; irowdcd < plane.YSize()/2; irowdcd ++)  {     
+		int readout_gate = (Startgate + irowdcd) % (plane.YSize()/2);
+		irowd=SWITCHERBMAP[readout_gate];
+                int odderon = irowd %2; 
+		for (int icoldcd = 0; icoldcd < plane.XSize()*2; icoldcd ++) {
+		    icold=DCDCOLMAPPING[icoldcd];	
+		    i++;
+		    int odderon_c = icold %2;
+		    double d = getlittleendian<signed char>(&data[12 + i]);
+		    if(odderon==0) {  //--  even row
+			if(odderon_c==0) { 
+			    irow=(irowd*2)%(plane.YSize());
+			    icol=icold/2;
+			    //               if( icoldcd<4) printf(" gate=%d, irowd=%d odderon=%d,odderon_c=%d, icold=%d, [icol=%d,irow=%d] data=%f\n",readout_gate,irowd,odderon,odderon_c,icold,icol,irow,d);
+			} else {            
+			    irow=((irowd*2)%(plane.YSize()))+1;
+			    icol=icold/2;
+			}
+		    } else {
+			if(odderon_c==0) { 
+			    irow=((irowd*2)%(plane.YSize()))+1;
+			    icol=icold/2;
+			    
+			} else {
+			    irow=(irowd*2)%(plane.YSize());
+			    icol=icold/2;
+			}
+		    }
+		    DATA1[icol*plane.YSize()+irow]= d;               
+		    
+		    //     if(i<10) printf("DEV_TYPE=DEPFET icol=%d,irow=%d data=%f\n",icol,irow,d);
+		    //	    if(d>-0.1 && d<0.1)  printf("QQQ ipix=%d icol=%d,irow=%d   d=%f  DATA1=%f \n",i, icol,irow, d,DATA1[icol*plane.YSize()+irow]);
+		    plane.SetPixel(icol*plane.YSize() + irow, icol, irow, DATA1[icol*plane.YSize() + irow]);
+				    
+		};
 	    };
-	 };
-		
+//	    for (int iy = 0; iy < plane.YSize(); iy ++)  {     
+//		for (int ix = 0; ix < plane.XSize(); ix ++) {
+//		    if(iy==27 && ix<10 ) printf("Xmax=%d , ymax=%d  icol=%d,irow=%d data=%f\n",plane.XSize(),plane.YSize(),ix,iy,DATA1[ix*plane.YSize() + iy]);
+//		    plane.SetPixel(ix*plane.YSize() + iy, ix, iy, DATA1[ix*plane.YSize() + iy]);
+//		}
+//	    }
 
+
+	} else {
+            double d;
+	    int readout_gate;
+	    int ipix, irowdcd,icol,icoldcd, irowd,irow,i=-1;
+	    /* ONLY FOR ZS data */
+	    printf("ZERO SUPPRESS\n");
+	    printf("data.size()=%d Trig=%d 0x%x\n",EvSize,Trig,Trig);
+ 
+	    for(ipix=0; ipix<(EvSize-3)*4; ipix+=3){
+                i++;
+                icoldcd= ((getlittleendian<unsigned>(&data[12+ipix])) & 0xff)-1;
+                icold=DCDCOLMAPPING[icoldcd];
+		int odderon_c = icold %2;
+		irowdcd= ((getlittleendian<unsigned>(&data[12+ipix+1])) & 0xff)-1;
+                readout_gate = (Startgate + irowdcd) % (plane.YSize());
+                irowd=SWITCHERBMAP[readout_gate];
+                int odderon = irowd %2; 
+                d= ((getlittleendian<signed char>(&data[12+ipix+2])) & 0xff);
+
+                if(icold>127 || irowd>15 || d<0.1 ) {i--; continue;}
+ 
+		if(odderon==0) {  //--  even row
+                    if(odderon_c==0) { 
+			irow=(irowd*2)%(plane.YSize());
+			icol=icold/2;
+                    } else {            
+			irow=((irowd*2)%(plane.YSize()))+1;
+			icol=icold/2;
+                    }
+		} else {
+                    if(odderon_c==0) { 
+			irow=((irowd*2)%(plane.YSize()))+1;
+			icol=icold/2;
+                    } else {
+			irow=(irowd*2)%(plane.YSize());
+			icol=icold/2;
+                    }
+		}
+
+		if(icol>63 && irow>31) {printf(" AAAH! icol=%d ,irow=%d \n",icol,irow); i--; continue;}
+                printf("Decode ZS data =icol=%d 0x%x, irow=%d 0x%x, ADC=%x,%f\n",icol,icol,irow,irow,((getlittleendian<signed char>(&data[12+ipix+2])) & 0xff),d);
+ 		plane.SetPixel(i, icol, irow, d);
+
+            } 
+	    plane.SetSizeZS(plane.XSize(), plane.YSize(),i+1);
+
+	    /* END ONLY FOR ZS data */
+	}
       }else { //------- S3A system -------
         plane.SetSizeRaw(64, 128);
         unsigned npixels = plane.XSize() * plane.YSize();
@@ -213,7 +305,7 @@ namespace eudaq {
 
     // unsigned numplanes = bore.GetTag("BOARDS", 0);
     // runHeader.setNoOfDetector(numplanes);
-    // std::vector<int> xMin(numplanes, 0), xMax(numplanes, 63), yMin(numplanes, 0), yMax(numplanes, 255);
+    //     std::vector<int> xMin(numplanes, 0), xMax(numplanes, 128), yMin(numplanes, 0), yMax(numplanes, 16);
     // runHeader.setMinX(xMin);
     // runHeader.setMaxX(xMax);
     // runHeader.setMinY(yMin);
@@ -222,6 +314,7 @@ namespace eudaq {
 
   bool DEPFETConverterBase::ConvertLCIO(lcio::LCEvent & result, const Event & source) const {
     TrackerRawDataImpl *rawMatrix;
+    TrackerDataImpl *zsFrame;
 
     if (source.IsBORE()) {
       // shouldn't happen
@@ -234,62 +327,98 @@ namespace eudaq {
 
     // prepare the collections for the rawdata and the zs ones
     std::auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERRAWDATA) ) ;
+    std::auto_ptr< lcio::LCCollectionVec > zsDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERDATA) ) ;
 
     // set the proper cell encoder
     CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
+   CellIDEncoder< TrackerDataImpl > zsDataEncoder ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection.get() );
 
 
     // a description of the setup
     std::vector< eutelescope::EUTelSetupDescription * >  setupDescription;
     size_t numplanes = NumPlanes(source);
+    std::string  mode;
     for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) {
 
       StandardPlane plane = ConvertPlane(GetPlane(source, iPlane), GetID(source, iPlane));
       //     printf("DEPFETConverterBase::ConvertLCIO numplanes=%d  \n", numplanes);
       // The current detector is ...
       eutelescope::EUTelPixelDetector * currentDetector = 0x0;
-      //   printf("DEPFETConverterBase::ConvertLCIO  1 %d  \n", plane.m_sensor);
+//       printf("DEPFETConverterBase::ConvertLCIO   iplane=%d  \n", iPlane);
+ 
       //    if ( plane.m_sensor == "DEPFET" ) {
-      std::string  mode = "RAW2";
+       if(ZEROSUPP==0) {mode = "RAW2"; } else { mode = "ZS";}
 
       currentDetector = new eutelescope::EUTelDEPFETDetector;
-      rawMatrix = new TrackerRawDataImpl;
 
-      currentDetector->setMode( mode );
-      // storage of RAW data is done here according to the mode
-      //printf("XMin =% d, XMax=%d, YMin=%d YMax=%d \n",currentDetector->getXMin(),currentDetector->getXMax(),currentDetector->getYMin(),currentDetector->getYMax());
-      rawDataEncoder["xMin"]     = currentDetector->getXMin();
-      rawDataEncoder["xMax"]     = currentDetector->getXMax();
-      rawDataEncoder["yMin"]     = currentDetector->getYMin();
-      rawDataEncoder["yMax"]     = currentDetector->getYMax();
+
+      if(ZEROSUPP==0) {
+	  rawMatrix = new TrackerRawDataImpl;
+	  
+	  currentDetector->setMode( mode );
+	  // storage of RAW data is done here according to the mode
+	  //printf("XMin =% d, XMax=%d, YMin=%d YMax=%d \n",currentDetector->getXMin(),currentDetector->getXMax(),currentDetector->getYMin(),currentDetector->getYMax());
+	  rawDataEncoder["xMin"]     = currentDetector->getXMin();
+	  rawDataEncoder["xMax"]     = currentDetector->getXMax();
+	  rawDataEncoder["yMin"]     = currentDetector->getYMin();
+	  rawDataEncoder["yMax"]     = currentDetector->getYMax();
 // for 2009      rawDataEncoder["sensorID"] = 6;
-      rawDataEncoder["sensorID"] = 8;
-      rawDataEncoder.setCellID(rawMatrix);
+	  rawDataEncoder["sensorID"] = 8;
+	  rawDataEncoder.setCellID(rawMatrix);
+	  
+	  //size_t nPixel = plane.HitPixels();
+//	    printf(" max X=%d, max Y=%d  \n",currentDetector->getXMax(),currentDetector->getYMax());
+	  for (int yPixel = 0; yPixel <= currentDetector->getYMax(); yPixel++) {
+	      for (int xPixel = 0; xPixel <= currentDetector->getXMax(); xPixel++) {
+//	    if( yPixel==14 && (xPixel==0 ||xPixel==4 || xPixel==8 || xPixel==12))  printf("xPixel =%d yPixel=%d DATA=%d %f \n",xPixel, yPixel,(signed short) plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0), plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0) ); 
+//	    printf("xPixel =%d yPixel=%d DATA=%d %f \n",xPixel, yPixel,(signed short) plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0), plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0) );
+		  rawMatrix->adcValues().push_back(plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
+	      }
+	  }
+	  rawDataCollection->push_back(rawMatrix);
+	  
+	  if ( result.getEventNumber() == 0 ) {
+	      setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
+	  }
+	  
+	  // add the collections to the event only if not empty!
+	  if ( rawDataCollection->size() != 0 ) {
+	      result.addCollection( rawDataCollection.release(), "rawdata_dep" );
+	  }
+	  // this is the right place to prepare the TrackerRawData
+	  // object
+      } else { /*---------------ZERO SUPP ---------------*/
 
-      //size_t nPixel = plane.HitPixels();
-      // printf(" plane.m_x.size()=%d \n",plane.m_x.size());
-      for (int yPixel = 0; yPixel <= currentDetector->getYMax(); yPixel++) {
-        for (int xPixel = 0; xPixel <= currentDetector->getXMax(); xPixel++) {
-          //   printf("xPixel =%d yPixel=%d DATA=%d \n",xPixel, yPixel, (size_t)plane.m_pix[0][ xPixel*currentDetector->getYMax() + yPixel] ); 
-          rawMatrix->adcValues().push_back((short)plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
-        }
-      }
-      rawDataCollection->push_back(rawMatrix);
+	  printf("prepare a new TrackerData for the ZS data \n");
+	  // prepare a new TrackerData for the ZS data
+	  //  std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+          zsFrame= new TrackerDataImpl;
+     	  currentDetector->setMode( mode );
+//	  zsDataEncoder["sensorID"] = plane.ID();
+	  zsDataEncoder["sensorID"] = 8;
+	  zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+	  zsDataEncoder.setCellID( zsFrame );
 
-      if ( result.getEventNumber() == 0 ) {
-        setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
-      }
+           size_t nPixel = plane.HitPixels();
+//	   printf("EvSize=%d %d \n",EvSize,nPixel);
+	  for (int i = 0; i < nPixel; i++) {
+	      printf("EvSize=%d iPixel =%d DATA=%d  icol=%d irow=%d  \n",nPixel,i, (signed short) plane.GetPixel(i, 0), (signed short)plane.GetX(i) ,(signed short)plane.GetY(i));
 
-      // add the collections to the event only if not empty!
-      if ( rawDataCollection->size() != 0 ) {
-        result.addCollection( rawDataCollection.release(), "rawdata_dep" );
+	      // Note X and Y are swapped - for 2010 TB DEPFET module was rotated at 90 degree. 
+	      zsFrame->chargeValues().push_back(plane.GetX(i));
+	      zsFrame->chargeValues().push_back(plane.GetY(i));
+	      zsFrame->chargeValues().push_back(plane.GetPixel(i, 0));
+	  }
+
+	  zsDataCollection->push_back( zsFrame);
+
+	  if (  zsDataCollection->size() != 0 ) {
+	      result.addCollection( zsDataCollection.release(), "zsdata_dep" );
+	  }
+
       }
-      // this is the right place to prepare the TrackerRawData
-      // object
 
     }
-
-
     if ( result.getEventNumber() == 0 ) {
 
       // do this only in the first event
