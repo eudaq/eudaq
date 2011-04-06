@@ -48,6 +48,7 @@ namespace eudaq {
 
   public:
   	unsigned int consecutive_lvl1;
+  	int first_sensor_id;
 
   	int getCountBoards() {
 		return count_boards;
@@ -66,6 +67,7 @@ namespace eudaq {
 		board_ids.clear();
 
 		consecutive_lvl1 = ev.GetTag ("consecutive_lvl1", 16);
+		first_sensor_id = ev.GetTag ("first_sensor_id", 0);
 
 		if (count_boards == (unsigned) -1) return;
 
@@ -269,7 +271,7 @@ namespace eudaq {
 
 			std::list<eutelescope::EUTelAPIXSparsePixel*> tmphits;
 
-			zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset;;
+			zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + first_sensor_id;
 			zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelAPIXSparsePixel;
 
 			// prepare a new TrackerData object for the ZS data
@@ -279,7 +281,7 @@ namespace eudaq {
 			zsDataEncoder.setCellID( zsFrame.get() );
 
 			// this is the structure that will host the sparse pixel
-			// it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to 
+			// it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
 			// a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
 			std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > >
 			  sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > ( zsFrame.get() ) );
@@ -288,13 +290,13 @@ namespace eudaq {
 			unsigned int Col = 0;
 			unsigned int Row = 0;
 			unsigned int lvl1 = 0;
-		
+
 			for (unsigned int i=0; i < buffer.size()-4; i += 4) {
 				unsigned int Word = (((unsigned int)buffer[i + 3]) << 24) | (((unsigned int)buffer[i + 2]) << 16) | (((unsigned int)buffer[i + 1]) << 8) | (unsigned int)buffer[i];
 				if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
 					lvl1++;
 				} else if (getHitData(Word, Col, Row, ToT)) {
-					eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset, lvl1);
+					eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1);
 					sparseFrame->addSparsePixel( thisHit );
 					tmphits.push_back( thisHit );
 		   		}
@@ -307,14 +309,14 @@ namespace eudaq {
 			  delete (*it);
 			}
 		}
-		
+
 		// add this collection to lcio event
 		if ( ( !zsDataCollectionExists )  && ( zsDataCollection->size() != 0 ) ) lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
 
 		if (lcioEvent.getEventNumber() == 0) {
 			// do this only in the first event
 			LCCollectionVec * apixSetupCollection = NULL;
-      
+
 			bool apixSetupExists = false;
 			try {
 				apixSetupCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "apix_setup" ) ) ;
@@ -322,7 +324,7 @@ namespace eudaq {
 			} catch (...) {
 				apixSetupCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
 			}
-	
+
 			for ( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane ) {
 				apixSetupCollection->push_back( setupDescription.at( iPlane ) );
 			}
