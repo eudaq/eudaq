@@ -84,19 +84,25 @@
  * trigger data
  */
 
-#define TRIGGER_WORD_HEADER			0x00F80000 // tolerant to 1-bit flips and not equal to control/comma symbols
-#define TRIGGER_WORD_HEADER_MASK		0xFFF80000
+#define TRIGGER_WORD_HEADER_V10			0x00FFFF00
+#define TRIGGER_WORD_HEADER_MASK_V10	0xFFFFFF00
+
+#define TRIGGER_WORD_HEADER				0x00F80000 // tolerant to 1-bit flips and not equal to control/comma symbols
+#define TRIGGER_WORD_HEADER_MASK		0xFFFF0000
 #define TRIGGER_NUMBER_31_24_MASK		0x000000FF
 #define TRIGGER_NUMBER_23_0_MASK		0x00FFFFFF
-#define TRIGGER_DATA_MASK			0x0007FF00 // trigger error + trigger mode
-#define TRIGGER_MODE_MASK			0x00078000 // trigger mode
-#define TRIGGER_ERROR_MASK			0x00007F00 // error code: bit 0: wrong number of dh, bit 1 service record recieved, bit 7: (not set in the FPGA) trigger number missing
 
-#define TRIGGER_WORD_MACRO(X)			((TRIGGER_WORD_HEADER_MASK & X) == TRIGGER_WORD_HEADER ? true : false)
+#define TRIGGER_DATA_MASK				0x0000FF00 // trigger error + trigger mode
+#define TRIGGER_MODE_MASK				0x0000E000 // trigger mode
+#define TRIGGER_ERROR_MASK				0x00001F00 // error code: bit 0: wrong number of dh, bit 1 service record recieved
+
+#define TRIGGER_WORD_MACRO(X)			((((TRIGGER_WORD_HEADER_MASK & X) == TRIGGER_WORD_HEADER)  || ((TRIGGER_WORD_HEADER_MASK_V10 & X) == TRIGGER_WORD_HEADER_V10))? true : false)
 #define TRIGGER_NUMBER_MACRO2(X, Y)		(((TRIGGER_NUMBER_31_24_MASK & X) << 24) | (TRIGGER_NUMBER_23_0_MASK & Y)) // returns full trigger number; reference and dereference of following array element
-#define TRIGGER_ERROR_OCCURRED_MACRO(X)		(((TRIGGER_ERROR_MASK & X) >> 8) == 0x0000007F ? false : true)
+
+#define TRIGGER_ERROR_OCCURRED_MACRO(X)	(((((TRIGGER_ERROR_MASK & X) >> 8) == 0x00000000) || ((TRIGGER_WORD_HEADER_MASK_V10 & X) == TRIGGER_WORD_HEADER_V10)) ? false : true)
 #define TRIGGER_DATA_MACRO(X)			((TRIGGER_DATA_MASK & X) >> 8)
-#define TRIGGER_ERROR_MACRO(X)			(~((TRIGGER_ERROR_MASK & X) >> 8))
-#define TRIGGER_MODE_MACRO(X)			((TRIGGER_MODE_MASK & X) >> 15)
+#define TRIGGER_ERROR_MACRO(X)			((TRIGGER_ERROR_MASK & X) >> 8)
+#define TRIGGER_MODE_MACRO(X)			((TRIGGER_MODE_MASK & X) >> 13)
 
 #endif // USBPIX_I4_H
+
