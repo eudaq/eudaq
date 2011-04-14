@@ -111,15 +111,15 @@ namespace eudaq {
         plane.SetSizeRaw(64, 32);
 	int i=-1;
         int icol,irow,icold,irowd;
-        double DATA1[ plane.XSize()* plane.YSize()];
+        std::vector<double> DATA1(plane.XSize() * plane.YSize());
 //        unsigned npixels = plane.XSize() * plane.YSize();
 //	unsigned char *v4data=(unsigned char *)data[3];
 	if( ZEROSUPP==0){ 
-	    for (int irowdcd = 0; irowdcd < plane.YSize()/2; irowdcd ++)  {     
+	    for (unsigned irowdcd = 0; irowdcd < plane.YSize()/2; irowdcd ++)  {     
 		int readout_gate = (Startgate + irowdcd) % (plane.YSize()/2);
 		irowd=SWITCHERBMAP[readout_gate];
                 int odderon = irowd %2; 
-		for (int icoldcd = 0; icoldcd < plane.XSize()*2; icoldcd ++) {
+		for (unsigned icoldcd = 0; icoldcd < plane.XSize()*2; icoldcd ++) {
 		    icold=DCDCOLMAPPING[icoldcd];	
 		    i++;
 		    int odderon_c = icold %2;
@@ -372,7 +372,7 @@ namespace eudaq {
 	      for (int xPixel = 0; xPixel <= currentDetector->getXMax(); xPixel++) {
 //	    if( yPixel==14 && (xPixel==0 ||xPixel==4 || xPixel==8 || xPixel==12))  printf("xPixel =%d yPixel=%d DATA=%d %f \n",xPixel, yPixel,(signed short) plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0), plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0) ); 
 //	    printf("xPixel =%d yPixel=%d DATA=%d %f \n",xPixel, yPixel,(signed short) plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0), plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0) );
-		  rawMatrix->adcValues().push_back(plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
+		  rawMatrix->adcValues().push_back((int)plane.GetPixel(xPixel*(currentDetector->getYMax()+1) + yPixel, 0));
 	      }
 	  }
 	  rawDataCollection->push_back(rawMatrix);
@@ -401,7 +401,7 @@ namespace eudaq {
 
            size_t nPixel = plane.HitPixels();
 //	   printf("EvSize=%d %d \n",EvSize,nPixel);
-	  for (int i = 0; i < nPixel; i++) {
+	  for (unsigned i = 0; i < nPixel; i++) {
 	      printf("EvSize=%d iPixel =%d DATA=%d  icol=%d irow=%d  \n",nPixel,i, (signed short) plane.GetPixel(i, 0), (signed short)plane.GetX(i) ,(signed short)plane.GetY(i));
 
 	      // Note X and Y are swapped - for 2010 TB DEPFET module was rotated at 90 degree. 
