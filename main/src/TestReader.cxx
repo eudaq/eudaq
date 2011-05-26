@@ -72,7 +72,7 @@ bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_proce
                             
                             for (size_t i = 0; i+3 < data.size(); i += 4) {
                                 
-                                std::cout << std::setw(4) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned long>(&data[i])) << std::endl;
+                                std::cout << std::setw(4) << i << " " << eudaq::hexdec(eudaq::getbigendian<unsigned>(&data[i])) << std::endl;
                             }
                             
                             //break;
