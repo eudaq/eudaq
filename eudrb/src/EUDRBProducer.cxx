@@ -190,11 +190,12 @@ public:
         unsigned oldval = m_boards[i]->GetDebugRegister();
         unsigned newval = m_boards[i]->UpdateDebugRegister();
         if (newval != oldval) {
-          ev.SetTag("DEBUGREG" + to_string(i), newval);
-          ev.SetTag("DEBUGDIFF" + to_string(i), newval - oldval);
+          ev.SetTag("DEBUGREG" + to_string(i), eudaq::to_hex(newval, 8));
+          ev.SetTag("DEBUGREGOLD" + to_string(i), eudaq::to_hex(oldval, 8));
           if (m_numerr_clocksync < MAX_ERR_CLOCKSYNC) {
             m_numerr_clocksync++;
-            EUDAQ_WARN("Clock sync error on board " + to_string(i));
+            EUDAQ_WARN("Clock sync error on board " + to_string(i) + " in event " + to_string(m_ev) +
+                       " (" + eudaq::to_hex(oldval, 8) + " -> " + eudaq::to_hex(newval, 8) + ")");
           }
         }
       }
