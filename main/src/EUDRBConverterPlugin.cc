@@ -279,8 +279,8 @@ namespace eudaq {
 
 #define GET(o) getbigendian<unsigned>(&alldata[(o)*4])
   unsigned EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
-    static const bool dbg = false; //true;
-    static const bool dbg2 = false; //true;
+    static const bool dbg = true;
+    static const bool dbg2 = true;
     if (dbg) std::cout << "DataSize = " << hexdec(alldata.size(), 0) << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
@@ -306,10 +306,11 @@ namespace eudaq {
     if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(pixadd, 0)
                        << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
     unsigned wordremain = wordcount-12;
-    unsigned numoverflows = 0;
+    unsigned totaloverflows = 0;
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
     try {
       for (int frame = 1; frame <= 2; ++frame) {
+        unsigned numoverflows = 0;
         word = GET(offset += 2);
         if (dbg) std::cout << "M26FrameCounter_" << frame << " = " << hexdec(word, 0) << std::endl;
         word = GET(++offset);
@@ -336,12 +337,9 @@ namespace eudaq {
             //std::cout << "Ignoring bad line " << row << " (too many states)" << std::endl;
             break;
           }
-          if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
+          bool over = vec[i] & 0x8000;
+          if (dbg) std::cout << "Hit line " << (over ? "* " : ". ") << row
                              << ", states " << numstates << ":";
-          if (vec[i] & 0x8000) {
-            numoverflows++;
-            if (dbg2) std::cout << "*** Overflow in plane " << plane.ID() << ", row " << row << std::endl;
-          }
           bool pivot = row >= (plane.PivotPixel() / 16);
           for (unsigned s = 0; s < numstates; ++s) {
             unsigned v = vec.at(++i);
@@ -355,11 +353,17 @@ namespace eudaq {
             npixels += num + 1;
           }
           if (dbg) std::cout << std::endl;
+          if (over) {
+            numoverflows++;
+            if (dbg2) std::cout << "*** Overflow in plane " << plane.ID() << ", row " << row << std::endl;
+          }
         }
-        if (dbg) std::cout << "Total pixels = " << npixels << std::endl;
-        if (dbg) std::cout << "Total overflows = " << numoverflows << std::endl;
+        if (dbg) std::cout << "Frame pixels = " << npixels << std::endl;
+        if (dbg) std::cout << "Frame overflows = " << numoverflows << std::endl;
         ++offset;
+        totaloverflows += numoverflows;
       }
+      if (dbg && totaloverflows) std::cout << "Total overflows = " << totaloverflows << std::endl;
     } catch (const std::out_of_range & e) {
       std::cout << "\n%%%% Oops: " << e.what() << " %%%%" << std::endl;
     }
@@ -378,7 +382,7 @@ namespace eudaq {
     if (dbg) std::cout << "EventWordCount = " << hexdec(word & 0x7ffff, 0) << std::endl;
 
     if (dbg) std::cout << "****************" << std::endl;
-    return numoverflows;
+    return totaloverflows;
   }
 #undef GET
 
