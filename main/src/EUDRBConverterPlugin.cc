@@ -140,14 +140,15 @@ namespace eudaq {
     }
     void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const;
     bool ConvertStandard(StandardEvent & stdEvent, const Event & eudaqEvent) const;
-    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
+    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id, StandardEvent & evt) const {
       const BoardInfo & info = GetInfo(id);
       StandardPlane plane(id, "EUDRB", info.Sensor().name);
       plane.SetXSize(info.Sensor().width);
       plane.SetYSize(info.Sensor().height);
       plane.SetTLUEvent(GetTLUEvent(data));
       if (info.m_mode == BoardInfo::MODE_ZS2) {
-        ConvertZS2(plane, data, info);
+        unsigned numoverflows = ConvertZS2(plane, data, info);
+        if (numoverflows) evt.SetTag("OVF" + to_string(id), numoverflows);
       } else if (info.m_mode == BoardInfo::MODE_ZS) {
         ConvertZS(plane, data, info);
       } else {
@@ -155,7 +156,7 @@ namespace eudaq {
       }
       return plane;
     }
-    static void ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
+    static unsigned ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
     static void ConvertZS(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
     static void ConvertRaw(StandardPlane & plane, const std::vector<unsigned char> & data, const BoardInfo & info);
     bool ConvertLCIO(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const;
@@ -271,15 +272,15 @@ namespace eudaq {
     // If we get here it must be a data event
     size_t numplanes = NumPlanes(source);
     for (size_t i = 0; i < numplanes; ++i) {
-      result.AddPlane(ConvertPlane(GetPlane(source, i), GetID(source, i)));
+      result.AddPlane(ConvertPlane(GetPlane(source, i), GetID(source, i), result));
     }
     return true;
   }
 
 #define GET(o) getbigendian<unsigned>(&alldata[(o)*4])
-  void EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
-    static const bool dbg = false;
-    static const bool dbg2 = false;
+  unsigned EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
+    static const bool dbg = false; //true;
+    static const bool dbg2 = false; //true;
     if (dbg) std::cout << "DataSize = " << hexdec(alldata.size(), 0) << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
@@ -305,7 +306,7 @@ namespace eudaq {
     if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(pixadd, 0)
                        << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
     unsigned wordremain = wordcount-12;
-
+    unsigned numoverflows = 0;
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
     try {
       for (int frame = 1; frame <= 2; ++frame) {
@@ -337,7 +338,10 @@ namespace eudaq {
           }
           if (dbg) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
                              << ", states " << numstates << ":";
-          if (dbg2) std::cout << "*** Overflow in plane " << plane.ID() << ", row " << row << std::endl;
+          if (vec[i] & 0x8000) {
+            numoverflows++;
+            if (dbg2) std::cout << "*** Overflow in plane " << plane.ID() << ", row " << row << std::endl;
+          }
           bool pivot = row >= (plane.PivotPixel() / 16);
           for (unsigned s = 0; s < numstates; ++s) {
             unsigned v = vec.at(++i);
@@ -353,6 +357,7 @@ namespace eudaq {
           if (dbg) std::cout << std::endl;
         }
         if (dbg) std::cout << "Total pixels = " << npixels << std::endl;
+        if (dbg) std::cout << "Total overflows = " << numoverflows << std::endl;
         ++offset;
       }
     } catch (const std::out_of_range & e) {
@@ -373,6 +378,7 @@ namespace eudaq {
     if (dbg) std::cout << "EventWordCount = " << hexdec(word & 0x7ffff, 0) << std::endl;
 
     if (dbg) std::cout << "****************" << std::endl;
+    return numoverflows;
   }
 #undef GET
 
@@ -548,7 +554,8 @@ namespace eudaq {
     size_t numplanes = NumPlanes(source);
     for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) {
 
-      StandardPlane plane = ConvertPlane(GetPlane(source, iPlane), GetID(source, iPlane));
+      StandardEvent tmp_evt;
+      StandardPlane plane = ConvertPlane(GetPlane(source, iPlane), GetID(source, iPlane), tmp_evt);
 
       // The current detector is ...
       eutelescope::EUTelPixelDetector * currentDetector = 0x0;
