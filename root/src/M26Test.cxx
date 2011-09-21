@@ -179,17 +179,20 @@ int main(int /*argc*/, char ** argv) {
     TFile froot("m26test.root", "RECREATE", "", 2);
     TH1D rhisto1 ("m26test1",  "M26 Test 1",  3*M26PIVOTRANGE,    -M26PIVOTRANGE, 2*M26PIVOTRANGE),
          rhisto4 ("m26test4",  "M26 Test 4",  3*M26PIVOTRANGE/4,  -M26PIVOTRANGE, 2*M26PIVOTRANGE),
-         rhisto16("m26test16", "M26 Test 16", 3*M26PIVOTRANGE/16, -M26PIVOTRANGE, 2*M26PIVOTRANGE);
+         rhisto16("m26test16", "M26 Test 16", 3*M26PIVOTRANGE/16, -M26PIVOTRANGE, 2*M26PIVOTRANGE),
+         rhisto32("m26test32", "M26 Test 32", 3*M26PIVOTRANGE/32, -M26PIVOTRANGE, 2*M26PIVOTRANGE);
     //unsigned max = 0;
     for (int i = 0; i < 3*M26PIVOTRANGE; ++i) {
       rhisto1.Fill(i-M26PIVOTRANGE, histo[i]);
       rhisto4.Fill(i-M26PIVOTRANGE, histo[i]);
       rhisto16.Fill(i-M26PIVOTRANGE, histo[i]);
+      rhisto32.Fill(i-M26PIVOTRANGE, histo[i]);
       //if (histo[i] > max) max = histo[i];
     }
     rhisto1.Write("m26test1", TObject::kOverwrite);
     rhisto4.Write("m26test4", TObject::kOverwrite);
     rhisto16.Write("m26test16", TObject::kOverwrite);
+    rhisto32.Write("m26test32", TObject::kOverwrite);
     //froot.Close();
     if (do_display.IsSet()) {
       int x_argc = 0;
@@ -208,6 +211,8 @@ int main(int /*argc*/, char ** argv) {
       rhisto4.Draw();
       c->cd(3);
       rhisto16.Draw();
+      c->cd(4);
+      rhisto32.Draw();
       app.Run();
     }
   } catch (...) {

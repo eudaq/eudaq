@@ -39,6 +39,7 @@ using eutelescope::EUTELESCOPE;
 
 namespace eudaq {
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
+  static const int PIVOTPIXELOFFSET = 64;
 
   class NIConverterPlugin : public DataConverterPlugin {
     typedef std::vector<unsigned char> datavect;
@@ -130,7 +131,7 @@ namespace eudaq {
         StandardPlane plane(id, "NI", "MIMOSA26");
         plane.SetSizeZS(1152, 576, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
         plane.SetTLUEvent(tluid);
-        plane.SetPivotPixel(pivot);
+        plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
         DecodeFrame(plane, len0, it0+8, 0);
         DecodeFrame(plane, len1, it1+8, 1);
         result.AddPlane(plane);
@@ -165,7 +166,7 @@ namespace eudaq {
           }
           if (dbg>1) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
                              << ", states " << numstates << ":";
-          bool pivot = row >= (plane.PivotPixel() / 16);
+          bool pivot = (row >= (plane.PivotPixel() / 16));
           for (unsigned s = 0; s < numstates; ++s) {
             unsigned v = vec.at(++i);
             unsigned column = v>>2 & 0x7ff;
