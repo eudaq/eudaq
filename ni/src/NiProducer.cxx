@@ -14,7 +14,7 @@ using eudaq::RawDataEvent;
 class NiProducer: public eudaq::Producer {
 public:
 	NiProducer(const std::string & runcontrol) :
-		eudaq::Producer("NI", runcontrol), done(false), running(false), stopping(false) {
+		eudaq::Producer("MimosaNI", runcontrol), done(false), running(false), stopping(false) {
 
 		configure = false;
 
@@ -27,7 +27,7 @@ public:
 				continue;
 			}
 			if (running) {
-				eudaq::RawDataEvent ev("NI", m_run, m_ev++);
+				eudaq::RawDataEvent ev("NI", m_run, ++m_ev);
 				datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
 				ev.AddBlock(0, ni_control->DataTransportClientSocket_ReadData(datalength1));
 				datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");

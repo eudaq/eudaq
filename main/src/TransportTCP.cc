@@ -281,11 +281,17 @@ namespace eudaq {
         for (SOCKET j=0; j < m_maxfd+1; j++) {
           if (FD_ISSET(j, &tempset)) {
             char buffer[MAX_BUFFER_SIZE+1];
-
-            do {
-              result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
+			int num =0;
+			do {
+				result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
+				if (result == 0 & num < 1) {
+					result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
+					num++;
+				}
             } while (result == -1 && LastSockError() == EINTR);
-
+			if (result < 1) {
+				std::cout << "Result = " << result << std::endl;
+			}
             if (result > 0) {
               buffer[result] = 0;
               //std::cout << "Received bits " << j << std::endl;
@@ -296,15 +302,19 @@ namespace eudaq {
                 //std::cout << "Received packet " << j << std::endl;
                 m_events.push(TransportEvent(TransportEvent::RECEIVE, m, m.getpacket()));
               }
-            } else /*if (result == 0)*/ {
-              //std::cout << "Disconnect " << j << std::endl;
-              ConnectionInfoTCP & m = GetInfo(j);
-              m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
-              m.Disable();
-              closesocket(j);
-              FD_CLR(j, &m_fdset);
-              /*} else {
-                std::cout << LastSockErrorString("Error in recv()") << std::endl;*/
+            } //else /*if (result == 0)*/ {
+			if (result == 0){
+				std::cout << "Disconnect ---> " << j << std::endl;
+				std::cout << "WSAError " << LastSockError()  << std::endl;
+				ConnectionInfoTCP & m = GetInfo(j);
+				m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
+				m.Disable();
+				closesocket(j);
+				FD_CLR(j, &m_fdset);
+			}
+			if (result == -1 ){
+				std::cout << "Disconnect " << j << std::endl;
+				std::cout << "WSAError " << LastSockError()  << std::endl;
             }
           } // end if (FD_ISSET(j, &amp;tempset))
         } // end for (j=0;...)
@@ -384,16 +394,23 @@ namespace eudaq {
       bool donereading = false;
       do {
         char buffer[MAX_BUFFER_SIZE+1];
-        do {
-          result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
+		int num = 0;
+		do {
+			result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
+			if (result == 0 & num < 0){
+				result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
+				num++;
+			}
         } while (result == (SOCKET)-1 && LastSockError() == EINTR);
         if (result == (SOCKET)-1 && LastSockError() == EWOULDBLOCK) {
           //std::cout << "no more data" << std::endl;
           donereading = true;
         } else if (result == 0) {
           std::cerr << "WARN: Connection closed (?)" << std::endl;
-          OpenConnection();
-          donereading = true;
+          std::cout << "WSAError --->" << LastSockError()  << std::endl;
+          closesocket(m_sock);
+          //OpenConnection();
+          //donereading = true;
         } else if (result == (SOCKET)-1) {
           //std::cout << "disconnect or error" << std::endl;
           // disconnect || error
