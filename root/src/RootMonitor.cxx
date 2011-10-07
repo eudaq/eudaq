@@ -48,7 +48,7 @@
 #include <TObjString.h>
 
 using eudaq::to_string;
-const double TAKI_NOISE = 1.3;
+const double TAKI_NOISE = 1.0;
 const double TAKI_PEDESTAL = 64;
 
 template <typename T>
@@ -67,7 +67,7 @@ struct PlaneInfo {
     else if (is("MIMOSTAR2")) { width = 132; height = 128; }
     else if (is("MIMOSA5"))   { width = 1024; height = 1024; }
     else if (is("DEPFET"))    {
-      width = 64; height = 256; pedfile = "Pedestals.bdt";
+      width = 128; height = 16; pedfile = "Pedestals.bdt";
       seed_thresh = 16.0; neighbour_thresh = 4.0; cluster_thresh = 0.0;
     }
     else if (is("FORTIS"))    {
@@ -76,7 +76,7 @@ struct PlaneInfo {
     }
     else if (is("TAKI"))      {
       width = 128; height = 128;
-      seed_thresh = 4.0; neighbour_thresh = 1.0; cluster_thresh = 0.0;
+      seed_thresh = 6.0; neighbour_thresh = 0.0; cluster_thresh = 0.0;
     }
     else if (is("APIX"))    {
       width = 18; height = 160;
@@ -120,7 +120,7 @@ struct PlaneInfo {
         int y = eudaq::from_string(parts.at(1), -1);
         double ped = eudaq::from_string(parts.at(2), -1e6);
         double noise = -1.0;
-        if (parts.size() > 3) ped = eudaq::from_string(parts.at(3), -1.0);
+        if (parts.size() > 3) noise = eudaq::from_string(parts.at(3), -1.0);
 
         if (x < 0 || x >= (int)width || y < 0 || y >= (int)height || ped < -1000) {
           std::cout << "Pedestal file reading error! unreasonable numbers:"
@@ -604,33 +604,61 @@ public:
 
       //cluster correlations between neigbhor boards
       for (size_t i = 0; i < m_board.size()-1; ++i) {
+        unsigned x2 = m_dets.at(i+1).width, x1 = m_dets.at(i).width;
+        if (m_dets.at(i).is("DEPFET") || m_dets.at(i).is("TAKI")) {
+          x1 = m_dets.at(i).height;
+        }
+        if (m_dets.at(i+1).is("DEPFET") || m_dets.at(i+1).is("TAKI")) {
+          x2 = m_dets.at(i+1).height;
+        }
         std::string title = "X Cluster Correlation Board " + to_string(i) + " : Board " + to_string(i+1);
         m_clustercorrelationx.push_back(
-          new TH2DNew(make_name("clustercorrelation",    i).c_str(), title.c_str(),  m_dets.at(i+1).width, 0, m_dets.at(i+1).width, m_dets.at(i).width, 0, m_dets.at(i).width)
+          new TH2DNew(make_name("clustercorrelation",    i).c_str(), title.c_str(),  x2, 0, x2, x1, 0, x1)
           );
         m_clustercorrelationx.back()->SetContour(99);
       }
       {
+        unsigned x2 = m_dets.back().width, x1 = m_dets.at(0).width;
+        if (m_dets.at(0).is("DEPFET") || m_dets.at(0).is("TAKI")) {
+          x1 = m_dets.at(0).height;
+        }
+        if (m_dets.back().is("DEPFET") || m_dets.back().is("TAKI")) {
+          x2 = m_dets.back().height;
+        }
         std::string title = "X Cluster Correlation Board 0 : Board " + to_string(m_board.size()-1);
         m_clustercorrelationx.push_back(
-          new TH2DNew(make_name("clustercorrelation",    (m_board.size()-1)).c_str(), title.c_str(),  m_dets.back().width, 0, m_dets.back().width, m_dets.at(0).width, 0, m_dets.at(0).width)
+          new TH2DNew(make_name("clustercorrelation",    (m_board.size()-1)).c_str(), title.c_str(), x2, 0, x2,x1, 0,x1)
           );
         m_clustercorrelationx.back()->SetContour(99);
       }
 
       //y cluster correlations between neigbhor boards
       for (size_t i = 0; i < m_board.size()-1; ++i) {
+        unsigned y2 = m_dets.at(i+1).height, y1 = m_dets.at(i).height;
+        if (m_dets.at(i).is("DEPFET") || m_dets.at(i).is("TAKI")) {
+          y1 = m_dets.at(i).width;
+        }
+        if (m_dets.at(i+1).is("DEPFET") || m_dets.at(i+1).is("TAKI")) {
+          y2 = m_dets.at(i+1).width;
+        }
         std::string title = "Y Cluster Correlation Board " + to_string(i) + " : Board " + to_string(i+1);
         m_clustercorrelationy.push_back(
-          new TH2DNew(make_name("clustercorrelationy",    i).c_str(), title.c_str(),  m_dets.at(i+1).height, 0, m_dets.at(i+1).height, m_dets.at(i).height, 0, m_dets.at(i).height)
+          new TH2DNew(make_name("clustercorrelationy",    i).c_str(), title.c_str(),  y2, 0, y2, y1, 0, y1)
           );
         m_clustercorrelationy.back()->SetContour(99);
       }
       //std::cout << "number of clu corr plots " << m_clustercorrelationy.size() << std::endl;
       {
+        unsigned y2 = m_dets.back().height, y1 = m_dets.at(0).height;
+        if (m_dets.at(0).is("DEPFET") || m_dets.at(0).is("TAKI")) {
+          y1 = m_dets.at(0).width;
+        }
+        if (m_dets.back().is("DEPFET") || m_dets.back().is("TAKI")) {
+          y2 = m_dets.back().width;
+        }
         std::string title = "Y Cluster Correlation Board 0 : Board " + to_string(m_board.size()-1);
         m_clustercorrelationy.push_back(
-          new TH2DNew(make_name("clustercorrelationy",    (m_board.size()-1)).c_str(), title.c_str(),  m_dets.back().height, 0, m_dets.back().height, m_dets.at(0).height, 0, m_dets.at(0).height)
+          new TH2DNew(make_name("clustercorrelationy",    (m_board.size()-1)).c_str(), title.c_str(), y2, 0, y2, y1, 0, y1)
           );
         m_clustercorrelationy.back()->SetContour(99);
       }
@@ -1470,9 +1498,13 @@ public:
           //bool depfethit = depfet_cluster_charge.size() > 0;
           FillBoard(m_board.at(i), plane, i, numberofclusters.at(i), clusterpositionx, clusterpositiony/*, depfethit*/);
           //cposx.push_back(clusterposition);
-          cposx.at(i) = clusterpositionx;
-          cposy.at(i) = clusterpositiony;
-
+          if (m_dets.at(i).is("DEPFET") || m_dets.at(i).is("TAKI")) {
+            cposx.at(i) = clusterpositiony;
+            cposy.at(i) = clusterpositionx;
+          } else {
+            cposx.at(i) = clusterpositionx;
+            cposy.at(i) = clusterpositiony;
+          }
         }
         if (ev.NumPlanes() > 0) {
           int d = maxtlu - mintlu;
@@ -1791,11 +1823,13 @@ private:
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        65536 , 0, 65536 );
     else if(m_dets.at(board).is("TAKI"))
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        256, 0, 256 );
+    else if(m_dets.at(board).is("DEPFET"))
+      b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        256, -256, 255 );
     else
       b.m_historawval     = new TH1DNew(make_name("RawValues",     board).c_str(), "Raw Values",        512, 0, 4096);
 
     if (m_dets.at(board).is("DEPFET")) {
-      b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        4050, -50, 4000);
+      b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        400, -200, 200);
     } else if (m_dets.at(board).is("FORTIS")) {
       b.m_histocdsval     = new TH1DNew(make_name("CDSValues",     board).c_str(), "CDS Values",        9000, -1000, 10000);
     } else {
@@ -1850,7 +1884,13 @@ private:
     b.m_lasttlu = plane.TLUEvent();
     if (plane.NeedsCDS()) {
       for (size_t i = 0; i < cds.size(); ++i) {
-        sumx2 += cds.at(i) * cds.at(i);
+        double pedestal = 0.0;
+        if(m_dets.at(boardnumber).ped_matrix.size())
+          pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
+        if((m_dets.at(boardnumber).is("TAKI")))
+          pedestal = TAKI_PEDESTAL;
+        double tmp = cds.at(i) - pedestal;
+        sumx2 += tmp * tmp;
       }
       //rms for noise determination
       //b.rmshisto->FillN(hitpixels, &cds.at(0), &ones.at(0));
@@ -1888,19 +1928,27 @@ private:
       b.m_historawy->SetNormFactor(b.m_historawy->Integral() / m_histoevents);
       b.m_historawval->FillN(hitpixels, dataptr(plane.PixVector(0)), dataptr(ones));
       //b.m_historawval->SetNormFactor(b.m_historawval->Integral() / m_histoevents);
+    } else {
+      b.m_historaw2d->Reset();
+      for(size_t i = 0; i < cds.size();i++)
+        {
+          b.m_historaw2d->Fill(plane.GetX(i), plane.GetY(i), cds.at(i));
+          b.m_historawval->Fill(cds.at(i));
+        }
     }
     //b.m_histocdsval->FillN(hitpixels, &cds.at(0), &ones.at(0));
 
-    for(size_t i = 0; i < cds.size();i++)
-      {
-        double pedestal = 0.0;
-        if(m_dets.at(boardnumber).ped_matrix.size())
-          pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
-        if((m_dets.at(boardnumber).is("TAKI")))
-          pedestal = TAKI_PEDESTAL;
+//     for(size_t i = 0; i < cds.size();i++)
+//       {
+//         double pedestal = 0.0;
+//         if(m_dets.at(boardnumber).ped_matrix.size())
+//           pedestal = m_dets.at(boardnumber).ped_matrix.at((int)plane.GetX(i)).at((int)plane.GetY(i));
+//         if((m_dets.at(boardnumber).is("TAKI")))
+//           pedestal = TAKI_PEDESTAL;
         
-        b.m_histocdsval->Fill((cds.at(i) - pedestal));
-      }
+//         b.m_histocdsval->Fill((cds.at(i) - pedestal));
+//         //std::cout << "x=" << plane.GetX(i) << ", y=" << plane.GetY(i) << ", cds=" << cds.at(i) << ", ped=" << pedestal << std::endl;
+//       }
 
     for (size_t i = 0; i < plane.NumFrames(); ++i) {
       int hits = plane.HitPixels(i);
@@ -1942,6 +1990,7 @@ private:
     }
 
     //b.m_histocds2d->FillN(hitpixels, &newx.at(0), &plane.m_y.at(0), &cds.at(0));
+    b.m_histocds2d->Reset();
     for(size_t i = 0; i < plane.HitPixels();i++)
       {
         double pedestal = 0.0;
@@ -1950,7 +1999,9 @@ private:
         else if ((m_dets.at(boardnumber).is("TAKI")))
           pedestal = TAKI_PEDESTAL;
 
-        b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), cds.at(i) - pedestal);
+        double val = cds.at(i) - pedestal;
+        b.m_histocdsval->Fill(val);
+        if (val < 200) b.m_histocds2d->Fill(plane.GetX(i), plane.GetY(i), val);
       }
 
     b.m_clusters.clear();
@@ -2099,7 +2150,8 @@ private:
               }
               if((m_dets.at(boardnumber).is("TAKI")))
                 {
-                  pedestal = TAKI_PEDESTAL;
+                  // pedestal = TAKI_PEDESTAL;
+                  pedestal = 0;//HACK IVAN
                   noise =  TAKI_NOISE;
                 }
 
@@ -2129,7 +2181,9 @@ private:
                             pedestal = m_dets.at(boardnumber).ped_matrix.at(seeds.at(i).x+dx).at(seeds.at(i).y+dy);
                           }
                           if((m_dets.at(boardnumber).is("TAKI")))
-                            pedestal = TAKI_PEDESTAL;
+                            // pedestal = TAKI_PEDESTAL;
+                            pedestal = 0;//HACK IVAN
+
                           
                         }
                     }
@@ -2138,13 +2192,14 @@ private:
                         std::cout << "error " << (seeds.at(i).x+dx) << " " << (seeds.at(i).y+dy) << std::endl;
                         exit(-1);
                       }
-                    if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0 && (seeds.at(i).x+dx) < b.m_tempcds->GetXaxis()->GetLast()
-                       && (seeds.at(i).y+dy) < b.m_tempcds->GetYaxis()->GetLast() //check whether we are inside the histogram
+                    if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0
+                       && (seeds.at(i).x+dx) < m_dets.at(boardnumber).noise_matrix.size()
+                       && (seeds.at(i).y+dy) < m_dets.at(boardnumber).noise_matrix[0].size() //check whether we are inside the histogram
                        && (b.m_tempcds->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy)-pedestal) > seedneighbour_thresh * DEFAULT_NOISE)
                       {
                         double n = DEFAULT_NOISE;
                         if (m_dets.at(boardnumber).noise_matrix.size()) {
-                          n = m_dets.at(boardnumber).noise_matrix.at(seeds.at(i).x+dx-1).at(seeds.at(i).y+dy-1);
+                          n = m_dets.at(boardnumber).noise_matrix.at(seeds.at(i).x+dx).at(seeds.at(i).y+dy);
                         } else if (m_dets.at(boardnumber).is("TAKI")) {
                           noise +=  TAKI_NOISE*TAKI_NOISE;
                         }
@@ -2173,6 +2228,10 @@ private:
                               double value = b.m_tempcds2->GetBinContent((int)seeds.at(i).x+dx, (int)seeds.at(i).y+dy);
                               if(m_dets.at(boardnumber).is("DEPFET"))
                                 noise = 0.0;
+                              if (m_dets.at(boardnumber).is("TAKI")) {
+                                noise = TAKI_NOISE;
+                              }
+
                               if((seeds.at(i).x+dx) >= 0 && (seeds.at(i).y+dy) >= 0 && (seeds.at(i).x+dx) < b.m_tempcds2->GetXaxis()->GetLast()
                                  && (seeds.at(i).y+dy) < b.m_tempcds2->GetYaxis()->GetLast() //check whether we are inside the histogram
                                  && value > seedneighbour_thresh*noise) // cut on s/n of the seed pixels neighbours
