@@ -2,6 +2,7 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 # include "eudaq/TransportTCP_WIN32.inc"
@@ -281,31 +282,20 @@ namespace eudaq {
         for (SOCKET j=0; j < m_maxfd+1; j++) {
           if (FD_ISSET(j, &tempset)) {
             char buffer[MAX_BUFFER_SIZE+1];
-			int num =0;
 			do {
 				result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
-				if (result == 0 & num < 1) {
-					result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
-					num++;
-				}
             } while (result == -1 && LastSockError() == EINTR);
-			if (result < 1) {
-				std::cout << "Result = " << result << std::endl;
-			}
             if (result > 0) {
               buffer[result] = 0;
-              //std::cout << "Received bits " << j << std::endl;
               ConnectionInfoTCP & m = GetInfo(j);
               m.append(result, buffer);
               while (m.havepacket()) {
                 done = true;
-                //std::cout << "Received packet " << j << std::endl;
                 m_events.push(TransportEvent(TransportEvent::RECEIVE, m, m.getpacket()));
               }
             } //else /*if (result == 0)*/ {
 			if (result == 0){
-				std::cout << "Disconnect ---> " << j << std::endl;
-				std::cout << "WSAError " << LastSockError()  << std::endl;
+				EUDAQ_THROW("Disconnect. Server (" + to_string(j) + ") with WSAError: " + to_string(LastSockError()));
 				ConnectionInfoTCP & m = GetInfo(j);
 				m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
 				m.Disable();
@@ -313,8 +303,7 @@ namespace eudaq {
 				FD_CLR(j, &m_fdset);
 			}
 			if (result == -1 ){
-				std::cout << "Disconnect " << j << std::endl;
-				std::cout << "WSAError " << LastSockError()  << std::endl;
+				std::cout << "ResultServer= "<< result <<" Time out. Server (" << j << ") with WSAError: "<< LastSockError() << std::endl;
             }
           } // end if (FD_ISSET(j, &amp;tempset))
         } // end for (j=0;...)
@@ -383,6 +372,7 @@ namespace eudaq {
     //std::cout << "ProcessEvents()" << std::endl;
     Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
     bool done = false;
+    bool dbg = false;
     do {
       fd_set tempset;
       FD_ZERO(&tempset);
@@ -394,29 +384,26 @@ namespace eudaq {
       bool donereading = false;
       do {
         char buffer[MAX_BUFFER_SIZE+1];
-		int num = 0;
 		do {
 			result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
-			if (result == 0 & num < 0){
-				result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
-				num++;
-			}
         } while (result == (SOCKET)-1 && LastSockError() == EINTR);
         if (result == (SOCKET)-1 && LastSockError() == EWOULDBLOCK) {
-          //std::cout << "no more data" << std::endl;
-          donereading = true;
-        } else if (result == 0) {
-          std::cerr << "WARN: Connection closed (?)" << std::endl;
-          std::cout << "WSAError --->" << LastSockError()  << std::endl;
-          closesocket(m_sock);
-          //OpenConnection();
-          //donereading = true;
-        } else if (result == (SOCKET)-1) {
-          //std::cout << "disconnect or error" << std::endl;
-          // disconnect || error
-          EUDAQ_THROW(LastSockErrorString("Socket Error (" + to_string(LastSockError()) + ")"));
-        } else {
-          //std::cout << "received bytes: " << escape(std::string(buffer, result)) << std::endl;
+        	if (dbg)	std::cout << "ResultClient = " << result << std::endl;
+        	donereading = true;
+        }
+        if (result == -1) {
+        	if (dbg) std::cout << "Time out. Client. WSAError: "<< LastSockError() << std::endl;
+        }
+        if (result == 0) {
+        	EUDAQ_INFO("Disconnect. Client.WSAError: " + to_string(LastSockError()));
+        	if (dbg){
+        		std::cerr << "WARN: Connection closed (?)" << std::endl;
+        		std::cout << "WSAErrorClient --->" << LastSockError()  << std::endl;
+        	}
+        	donereading = true;
+        	EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
+        }
+        if (result > 0){
           m_buf.append(result, buffer);
           while (m_buf.havepacket()) {
             m_events.push(TransportEvent(TransportEvent::RECEIVE, m_buf, m_buf.getpacket()));

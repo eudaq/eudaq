@@ -40,17 +40,18 @@ void NiController::Start(){
 void NiController::Stop(){
 	ConfigClientSocket_Send(stop, sizeof(stop) );
 }
+
 void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 	/*** Network configuration for NI, NAME and INET ADDRESS ***/
-	//std::string adr = param.Get("NiIPaddr", "");
-	//const char* psz = adr.c_str();
-	//data = inet_addr(psz);
-	//printf("data");
-	data = inet_addr("192.168.2.2");
+
+	std::string m_server;
+	m_server = param.Get("NiIPaddr", "");
+	data= inet_addr(m_server.c_str());
+
 	hconfig = gethostbyaddr(&data, 4, AF_INET);
 	if ( hconfig == NULL) {
 		EUDAQ_ERROR("Config. Socket: get HOST error  " );
-		perror("gethostbyname()");
+		perror("Config. Socket: gethostbyname()");
 		exit(1);
 	} else{
 		bcopy ( hconfig->h_addr, &(config.sin_addr), hconfig->h_length);
@@ -59,32 +60,104 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 	}
 	if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		EUDAQ_ERROR("ConfSocket: Create socket error  " );
-		perror("socket()");
+		perror("Config. Socket: socket()");
 		exit(1);
 	} else
-		printf("----TCP/NI crate: The SOCKET is OK...\n");
+		printf("----TCP/NI crate The SOCKET is OK...\n");
 
 	config.sin_family = AF_INET;
 	config.sin_port = htons(PORT_CONFIG);
 	memset(&(config.sin_zero), '\0', 8);
 	if (connect(sock_config, (struct sockaddr *) &config, sizeof(struct sockaddr)) == -1) {
 		EUDAQ_ERROR("ConfSocket: National Instruments crate doesn't running  " );
-		perror("connect()");
+		perror("Config. Socket: connect()");
 		sleep(5);
 		exit(1);
 	} else
-		printf("----TCP/NI crate: The CONNECT is OK...\n");
+		printf("----TCP/NI crate The CONNECT is OK...\n");
 }
+void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len){
+	bool dbg = false;
+	if (dbg) printf("size=%d ", len);
+	if (send(sock_config, text, len, 0) == -1) 	perror("Server-send() error lol!");
+}
+void NiController::ConfigClientSocket_Close(){
+	close(sock_config);
+}
+unsigned int NiController::ConfigClientSocket_ReadLength(const char string[4]){
+	unsigned int datalengthTmp;
+	unsigned int datalength;
+	int i;
+	bool dbg =false;
+	if ((numbytes = recv(sock_config, Buffer_length, 2, 0)) == -1) {
+		EUDAQ_ERROR("DataTransportSocket: Read length error " );
+		perror("recv()");
+		exit(1);
+	}
+	else {
+		if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%d \n", numbytes);
+		i=0;
+		if (dbg){
+			while (i<numbytes){
+				printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i+1]);
+				i=i+2;
+			}
+		}
+		datalengthTmp = 0;
+		datalengthTmp = 0xFF & Buffer_length[0];
+		datalengthTmp <<= 8;
+		datalengthTmp += 0xFF & Buffer_length[1];
+		datalength = datalengthTmp;
+
+		if (dbg) printf(" data= %d", datalength);
+		if (dbg) printf("\n");
+	}
+	return datalength;
+}
+std::vector<unsigned char> NiController::ConfigClientSocket_ReadData(int datalength){
+	std::vector<unsigned char> ConfigData(datalength);
+	unsigned int stored_bytes;
+	unsigned int read_bytes_left;
+	unsigned int i;
+	bool dbg =false;
+
+	stored_bytes = 0;
+	read_bytes_left = datalength;
+	while (read_bytes_left > 0 ) {
+		if ((numbytes = recv(sock_config, Buffer_data, read_bytes_left, 0)) == -1) {
+			EUDAQ_ERROR("|==ConfigClientSocket_ReadLength==| Read data error " );
+			perror("recv()");
+			exit(1);
+		}
+		else {
+			if (dbg) printf("|==ConfigClientSocket_ReadLength==|    numbytes=%d \n", numbytes);
+			read_bytes_left = read_bytes_left - numbytes;
+			for (int k=0; k< numbytes; k++){
+				ConfigData[stored_bytes] = Buffer_data[k];
+				stored_bytes++;
+			}
+			i=0;
+			if (dbg){
+				while (i<numbytes){
+					printf(" 0x%x \n", 0xFF & Buffer_data[i]);
+					i++;
+				}
+			}
+		}
+	}
+	if (dbg) printf("\n");
+	return ConfigData;
+}
+
 void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & param){
 	/*** Creation for the data transmit socket, NAME and INET ADDRESS ***/
-	//std::string adr = param.Get("NiIPaddr", "");
-	//const char* psz = adr.c_str();
-	//data_trans_addres = inet_addr(psz);
-	data_trans_addres= inet_addr("192.168.2.2");
+	std::string m_server;
+	m_server = param.Get("NiIPaddr", "");
+	data_trans_addres= inet_addr(m_server.c_str());
 	hdatatransport = gethostbyaddr(&data_trans_addres, 4, AF_INET);
 	if ( hdatatransport == NULL) {
 		EUDAQ_ERROR("DataTransportSocket: get HOST error " );
-		perror("gethostbyname()");
+		perror("DataTransportSocket: gethostbyname()");
 		exit(1);
 	} else{
 		bcopy ( hdatatransport->h_addr, &(datatransport.sin_addr), hdatatransport->h_length);
@@ -93,7 +166,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 	}
 	if ((sock_datatransport = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		EUDAQ_ERROR("DataTransportSocket: create socket error " );
-		perror("socket()");
+		perror("DataTransportSocket: socket()");
 		exit(1);
 	} else
 		printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
@@ -103,7 +176,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 	memset(&(datatransport.sin_zero), '\0', 8);
 	if (connect(sock_datatransport, (struct sockaddr *) &datatransport, sizeof(struct sockaddr)) == -1) {
 		EUDAQ_ERROR("DataTransportSocket: National Instruments crate doesn't running  " );
-		perror("connect()");
+		perror("DataTransportSocket: connect()");
 		exit(1);
 	} else
 		printf("----TCP/NI crate DATA TRANSPORT: The CONNECT is OK...\n");
@@ -111,7 +184,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 unsigned int NiController::DataTransportClientSocket_ReadLength(const char string[4]) {
 	unsigned int datalengthTmp;
 	unsigned int datalength;
-	unsigned int i;
+	int i;
 	bool dbg =false;
 	if ((numbytes = recv(sock_datatransport, Buffer_length, 2, 0)) == -1) {
 		EUDAQ_ERROR("DataTransportSocket: Read length error " );
@@ -172,13 +245,6 @@ std::vector<unsigned char> NiController::DataTransportClientSocket_ReadData(int 
 	}
 	if (dbg) printf("\n");
 	return mimosa_data;
-}
-void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len){
-	printf("size=%d ", len);
-	if (send(sock_config, text, len, 0) == -1) 	perror("Server-send() error lol!");
-}
-void NiController::ConfigClientSocket_Close(){
-	close(sock_config);
 }
 void NiController::DatatransportClientSocket_Close(){
 	close(sock_datatransport);

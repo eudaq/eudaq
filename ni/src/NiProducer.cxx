@@ -63,7 +63,7 @@ public:
 			}
 			OneFrame = param.Get("OneFrame", 255);
 
-			std::cout << "...Configured (" << param.Name() << ")" << std::endl;
+			std::cout << "Configuring ...(" << param.Name() << ")" << std::endl;
 
 			conf_parameters[0] = NiVersion;
 			conf_parameters[1] = TriggerType;
@@ -75,15 +75,97 @@ public:
 			conf_parameters[7] = MimosaEn[5];
 			conf_parameters[8] = NumBoards;
 			conf_parameters[9] = FPGADownload;
-			for (int z=0; z<10; z++) printf("En[%d]=%d \n", z, conf_parameters[z]);
-			for (int z=0; z<6; z++) printf("ID[%d]=%d \n", z, MimosaID[z]);
 
 			ni_control->ConfigClientSocket_Send(configur, sizeof(configur) );
 			ni_control->ConfigClientSocket_Send(conf_parameters, sizeof(conf_parameters) );
 
-			std::cout << "... was Configured " << param.Name() << " " << std::endl;
-			EUDAQ_INFO("Configured (" + param.Name() + ")");
-			SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+			ConfDataLength = ni_control->ConfigClientSocket_ReadLength("priv");
+			ConfDataError  = ni_control->ConfigClientSocket_ReadData(ConfDataLength);
+
+			NiConfig = false;
+
+			if ( (ConfDataError[3] & 0x1) >> 0) {
+				EUDAQ_ERROR("NI crate can not be configure: ErrorReceive Config" );
+				NiConfig = true;
+			} //ErrorReceive Config
+			if ( (ConfDataError[3] & 0x2) >> 1) {
+				EUDAQ_ERROR("NI crate can not be configure: Error FPGA open" );
+				NiConfig = true;
+			} //Error FPGA open
+			if ( (ConfDataError[3] & 0x4) >> 2) {
+				EUDAQ_ERROR("NI crate can not be configure: Error FPGA reset" );
+				NiConfig = true;
+			} //Error FPGA reset
+			if ( (ConfDataError[3] & 0x8) >> 3) {
+				EUDAQ_ERROR("NI crate can not be configure: Error FPGA download" );
+				NiConfig = true;
+			} //Error FPGA download
+			if ( (ConfDataError[3] & 0x10)>> 4) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_0 Configure" );
+				NiConfig = true;
+			} //FIFO_0 Configure
+			if ( (ConfDataError[3] & 0x20)>> 5) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_0 Start" );
+				NiConfig = true;
+			} //FIFO_0 Start
+			if ( (ConfDataError[3] & 0x40)>> 6) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_1 Configure" );
+				NiConfig = true;
+			} //FIFO_1 Configure
+			if ( (ConfDataError[3] & 0x80)>> 7) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_1 Start" );
+				NiConfig = true;
+			} //FIFO_1 Start
+			if ( (ConfDataError[2] & 0x1) >> 0) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_2 Configure" );
+				NiConfig = true;
+			} //FIFO_2 Configure
+			if ( (ConfDataError[2] & 0x2) >> 1) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_2 Start" );
+				NiConfig = true;
+			} //FIFO_2 Start
+			if ( (ConfDataError[2] & 0x4) >> 2) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_3 Configure" );
+				NiConfig = true;
+			} //FIFO_3 Configure
+			if ( (ConfDataError[2] & 0x8) >> 3) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_3 Start" );
+				NiConfig = true;
+			} //FIFO_3 Start
+			if ( (ConfDataError[2] & 0x10)>> 4) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_4 Configure" );
+				NiConfig = true;
+			} //FIFO_4 Configure
+			if ( (ConfDataError[2] & 0x20)>> 5) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_4 Start" );
+				NiConfig = true;
+			} //FIFO_4 Start
+			if ( (ConfDataError[2] & 0x40)>> 6) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_5 Configure" );
+				NiConfig = true;
+			} //FIFO_5 Configure
+			if ( (ConfDataError[2] & 0x80)>> 7) {
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_5 Start" );
+				NiConfig = true;
+			} //FIFO_5 Start
+			if ( (ConfDataError[1] & 0x1) >> 0){
+				EUDAQ_ERROR("NI crate can not be configure: FPGA Run" );
+				NiConfig = true;
+			} //FPGA Run
+			if ( (ConfDataError[1] & 0x2) >> 1) {
+				EUDAQ_ERROR("NI crate can not be configure: FPGA Start" );
+				NiConfig = true;
+			} //FPGA Start
+
+			if (NiConfig){
+				std::cout << "NI crate was Configured with ERRORs " << param.Name() << " " << std::endl;
+				SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+			}
+			else {
+				std::cout << "... was Configured " << param.Name() << " " << std::endl;
+				EUDAQ_INFO("Configured (" + param.Name() + ")");
+				SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+			}
 		} catch (const std::exception & e) {
 			printf("Caught exception: %s\n", e.what());
 			SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
@@ -160,6 +242,8 @@ private:
 	unsigned int datalength1;
 	char *Buffer2;
 	unsigned int datalength2;
+	unsigned int  ConfDataLength;
+	std::vector<unsigned char>  ConfDataError;
 	int r ;
 	int t ;
 
@@ -197,6 +281,7 @@ private:
 	unsigned MimosaID[6];
 	unsigned MimosaEn[6];
 	bool OneFrame;
+	bool NiConfig;
 
 	unsigned char conf_parameters[10];
 

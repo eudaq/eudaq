@@ -46,8 +46,8 @@ public:
   void ConfigClientSocket_Open(const eudaq::Configuration & conf);
   void ConfigClientSocket_Close();
   void ConfigClientSocket_Send(unsigned char *text, size_t len);
-  unsigned int ConfigClientSocket_Length(const char string[4]);
-  char *ConfigClientSocket_Data(int datalength);
+  unsigned int ConfigClientSocket_ReadLength(const char string[4]);
+  std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
 
 
 
