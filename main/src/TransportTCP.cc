@@ -2,7 +2,6 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 # include "eudaq/TransportTCP_WIN32.inc"
@@ -239,6 +238,7 @@ namespace eudaq {
     //std::cout << "DEBUG: Process..." << std::endl;
     Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
     bool done = false;
+    bool dbg = true;
     do {
       fd_set tempset;
       memcpy(&tempset, &m_fdset, sizeof(tempset));
@@ -295,7 +295,7 @@ namespace eudaq {
               }
             } //else /*if (result == 0)*/ {
 			if (result == 0){
-				EUDAQ_THROW("Disconnect. Server (" + to_string(j) + ") with WSAError: " + to_string(LastSockError()));
+				if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() <<", --> was closed "<< std::endl;
 				ConnectionInfoTCP & m = GetInfo(j);
 				m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
 				m.Disable();
@@ -303,7 +303,7 @@ namespace eudaq {
 				FD_CLR(j, &m_fdset);
 			}
 			if (result == -1 ){
-				std::cout << "ResultServer= "<< result <<" Time out. Server (" << j << ") with WSAError: "<< LastSockError() << std::endl;
+				if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() << std::endl;
             }
           } // end if (FD_ISSET(j, &amp;tempset))
         } // end for (j=0;...)
@@ -392,14 +392,10 @@ namespace eudaq {
         	donereading = true;
         }
         if (result == -1) {
-        	if (dbg) std::cout << "Time out. Client. WSAError: "<< LastSockError() << std::endl;
+        	if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> Time out. "<< std::endl;
         }
         if (result == 0) {
-        	EUDAQ_INFO("Disconnect. Client.WSAError: " + to_string(LastSockError()));
-        	if (dbg){
-        		std::cerr << "WARN: Connection closed (?)" << std::endl;
-        		std::cout << "WSAErrorClient --->" << LastSockError()  << std::endl;
-        	}
+        	if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> WARN: Connection closed (?) "<< std::endl;
         	donereading = true;
         	EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
         }
