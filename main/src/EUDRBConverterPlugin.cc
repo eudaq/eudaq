@@ -279,8 +279,8 @@ namespace eudaq {
 
 #define GET(o) getbigendian<unsigned>(&alldata[(o)*4])
   unsigned EUDRBConverterBase::ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info) {
-    static const bool dbg = true;
-    static const bool dbg2 = true;
+    static const bool dbg  = false;
+    static const bool dbg2 = false;
     if (dbg) std::cout << "DataSize = " << hexdec(alldata.size(), 0) << std::endl;
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
