@@ -46,7 +46,7 @@ public:
     //eudaq::mSleep(2000);
     cmd_send("CMD STATUS\n");
     eudaq::mSleep(1000);
-    cmd_send("CMD INIT\n");
+    //--  cmd_send("CMD INIT\n");
     eudaq::mSleep(4000);
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
@@ -54,7 +54,7 @@ public:
     m_run = param;
     m_evt = 0;
     cmd_send("CMD EVB SET RUNNUM " + to_string(m_run) + "\n");
-    eudaq::mSleep(100);
+    eudaq::mSleep(1000);  
     SendEvent(RawDataEvent::BORE("DEPFET", m_run));
     cmd_send("CMD START\n");
     firstevent = true;
@@ -123,7 +123,8 @@ public:
         continue;
       }
       if (!ev) {
-        ev = new eudaq::RawDataEvent("DEPFET", m_run, itrg);
+        //ev = new eudaq::RawDataEvent("DEPFET", m_run, itrg); 
+        ev = new eudaq::RawDataEvent("DEPFET", m_run, m_evt); // -- fsv:: send local counter instead TLU number
       }
       ev->AddBlock(id++, buffer, lenevent*4);
 
