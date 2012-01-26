@@ -53,6 +53,7 @@ int DCDCOLMAPPING[128]={ 0, 4, 8, 12, 2, 6, 10, 14, 124, 120,
 
 int ZEROSUPP=0;
 int EvSize=0;
+int DEV_FOLD=0;
 namespace eudaq {
 
 
@@ -65,10 +66,13 @@ namespace eudaq {
 #endif
 
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
-      StandardPlane plane(id, "DEPFET", "");
+      StandardPlane plane(id, "DEPFET", "DEPFET");
       plane.SetTLUEvent(getlittleendian<unsigned>(&data[4]));
       int DevType=(getlittleendian<unsigned>(&data[0])>>28) & 0xf;
-      //  printf("TLU=%d Startgate=%d DevType=0x%x \n",plane.m_tluevent,Startgate,DevType);
+      //printf("TLU=%d Startgate=%d DevType=0x%x \n",plane.m_tluevent,Startgate,DevType);
+      //unsigned int TriggerID = getlittleendian<unsigned>(&data[4]);
+      //printf("DEPFET:: TLU=%d  DevType=0x%x \n",TriggerID,DevType);
+      if (DevType==0x4) DevType=5;
       if (DevType==0x3) {
         plane.SetSizeRaw(64, 256);
        int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x7f;
@@ -95,8 +99,45 @@ namespace eudaq {
           } // col
         } // gates
 
+      }    else  if (DevType==0x6) { // S3B 4-fold readout
+	  plane.SetSizeRaw(32, 512);
+	  int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x7f;
+	  
+	  for (unsigned gate = 0; gate < plane.YSize()/4; ++gate)  {      // Pixel sind uebereinander angeordnet
+	      int readout_gate = (Startgate + gate) % (plane.YSize()/4);
+	      
+	      for (unsigned col = 0; col < plane.XSize()/2; col += 1) {
+		  
+		  int ix,iy,j;
+		  // 0 
+		  ix=plane.XSize()-1-col; iy=readout_gate*4+3; j = gate * plane.YSize() / 4 + col*8 + 0 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+		  // 1 
+		  ix=col;                 iy=readout_gate*4+0;  j = gate * plane.YSize() / 4 + col*8 + 1 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+                  // 2 
+		  ix=plane.XSize()-1-col; iy=readout_gate*4+2; j = gate * plane.YSize() / 4 + col*8 + 2 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+		  // 3
+		  ix=col;                 iy=readout_gate*4+1; j = gate * plane.YSize() / 4 + col*8 + 3 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+		  // 4
+		  ix=plane.XSize()-1-col; iy=readout_gate*4+1; j = gate * plane.YSize() / 4 + col*8 + 4 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+		  // 5
+		  ix=col;                 iy=readout_gate*4+2; j = gate * plane.YSize() / 4 + col*8 + 5 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+		  // 6
+		  ix=plane.XSize()-1-col; iy=readout_gate*4+0; j = gate * plane.YSize() / 4 + col*8 + 6 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+		  // 7
+		  ix=col;                 iy=readout_gate*4+3; j = gate * plane.YSize() / 4 + col*8 + 7 ;
+		  plane.SetPixel(ix*plane.YSize() + iy, ix, iy, getlittleendian<unsigned short>(&data[12 + 2*j]));
+	      } // col
+	  } // gates
+	  
       } else if (DevType==0x4) {  
-
+	  
 //------- DCD readout ---------- 
 
 //       printf("DEV_TYPE=4\n");
@@ -114,17 +155,18 @@ namespace eudaq {
         std::vector<double> DATA1(plane.XSize() * plane.YSize());
 //        unsigned npixels = plane.XSize() * plane.YSize();
 //	unsigned char *v4data=(unsigned char *)data[3];
-	if( ZEROSUPP==0){ 
-	    for (unsigned irowdcd = 0; irowdcd < plane.YSize()/2; irowdcd ++)  {     
-		int readout_gate = (Startgate + irowdcd) % (plane.YSize()/2);
-		irowd=SWITCHERBMAP[readout_gate];
-                int odderon = irowd %2; 
-		for (unsigned icoldcd = 0; icoldcd < plane.XSize()*2; icoldcd ++) {
-		    icold=DCDCOLMAPPING[icoldcd];	
-		    i++;
-		    int odderon_c = icold %2;
-		    double d = getlittleendian<signed char>(&data[12 + i]);
-		    if(odderon==0) {  //--  even row
+	if( ZEROSUPP==0){
+
+		for (unsigned irowdcd = 0; irowdcd < plane.YSize()/2; irowdcd ++)  {     
+		    int readout_gate = (Startgate + irowdcd) % (plane.YSize()/2);
+		    irowd=SWITCHERBMAP[readout_gate];
+		    int odderon = irowd %2; 
+		    for (unsigned icoldcd = 0; icoldcd < plane.XSize()*2; icoldcd ++) {
+			icold=DCDCOLMAPPING[icoldcd];	
+			i++;
+			int odderon_c = icold %2;
+			double d = getlittleendian<signed char>(&data[12 + i]);
+			if(odderon==0) {  //--  even row
 			if(odderon_c==0) { 
 			    irow=(irowd*2)%(plane.YSize());
 			    icol=icold/2;
@@ -133,35 +175,35 @@ namespace eudaq {
 			    irow=((irowd*2)%(plane.YSize()))+1;
 			    icol=icold/2;
 			}
-		    } else {
-			if(odderon_c==0) { 
-			    irow=((irowd*2)%(plane.YSize()))+1;
-			    icol=icold/2;
-			    
 			} else {
-			    irow=(irowd*2)%(plane.YSize());
-			    icol=icold/2;
-			}
+			    if(odderon_c==0) { 
+				irow=((irowd*2)%(plane.YSize()))+1;
+				icol=icold/2;
+				
+			    } else {
+				irow=(irowd*2)%(plane.YSize());
+				icol=icold/2;
+			    }
 		    }
-		    DATA1[icol*plane.YSize()+irow]= d;               
-		    
-		    //     if(i<10) printf("DEV_TYPE=DEPFET icol=%d,irow=%d data=%f\n",icol,irow,d);
-		    //	    if(d>-0.1 && d<0.1)  printf("QQQ ipix=%d icol=%d,irow=%d   d=%f  DATA1=%f \n",i, icol,irow, d,DATA1[icol*plane.YSize()+irow]);
+			DATA1[icol*plane.YSize()+irow]= d;               
+			
+			//     if(i<10) printf("DEV_TYPE=DEPFET icol=%d,irow=%d data=%f\n",icol,irow,d);
+			//	    if(d>-0.1 && d<0.1)  printf("QQQ ipix=%d icol=%d,irow=%d   d=%f  DATA1=%f \n",i, icol,irow, d,DATA1[icol*plane.YSize()+irow]);
 		    plane.SetPixel(icol*plane.YSize() + irow, icol, irow, DATA1[icol*plane.YSize() + irow]);
-				    
+		    
+		    };
 		};
-	    };
 //	    for (int iy = 0; iy < plane.YSize(); iy ++)  {     
 //		for (int ix = 0; ix < plane.XSize(); ix ++) {
 //		    if(iy==27 && ix<10 ) printf("Xmax=%d , ymax=%d  icol=%d,irow=%d data=%f\n",plane.XSize(),plane.YSize(),ix,iy,DATA1[ix*plane.YSize() + iy]);
 //		    plane.SetPixel(ix*plane.YSize() + iy, ix, iy, DATA1[ix*plane.YSize() + iy]);
 //		}
 //	    }
+		
 
-
-	} else {
-            double d;
-	    int readout_gate;
+	} else { // Zero-supp.
+		double d;
+		int readout_gate;
 	    int ipix, irowdcd,icol,icoldcd, irowd,irow,i=-1;
 	    /* ONLY FOR ZS data */
 	    printf("ZERO SUPPRESS\n");
@@ -207,7 +249,40 @@ namespace eudaq {
 
 	    /* END ONLY FOR ZS data */
 	}
-      }else { //------- S3A system -------
+      } else if (DevType==0x5) {  // 4-fold readout DCD
+
+//       printf("DEV_TYPE=44\n");
+       int EvSize=(getlittleendian<unsigned>(&data[0])) & 0xfffff;
+       int Trig=(getlittleendian<unsigned>(&data[4]));
+       int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x3f;
+       ZEROSUPP=(getlittleendian<unsigned>(&data[8])>>20) & 0x1;
+
+       plane.SetSizeRaw(32, 64);  
+	int i=-1;
+        int icol,irow,icold,irowd;
+        std::vector<double> DATA1(plane.XSize() * plane.YSize());
+
+	if( ZEROSUPP==0){ 
+	    for (unsigned irowdcd = 0; irowdcd < plane.YSize()/4; irowdcd ++)  {     
+		int readout_gate = (Startgate + irowdcd) % (plane.YSize()/4);
+		for (unsigned icoldcd = 0; icoldcd < plane.XSize()*4; icoldcd ++) {
+		    icold=DCDCOLMAPPING[icoldcd];	
+		    i++;
+		    double d = getlittleendian<signed char>(&data[12 + i]);
+
+		    irow=(readout_gate*4+3-icold%4)%(plane.YSize());
+		    icol=(icold/4)%(plane.XSize());
+		    DATA1[icol*plane.YSize()+irow]= d;               
+		    
+		    //     if(i<10) printf("DEV_TYPE=DEPFET icol=%d,irow=%d data=%f\n",icol,irow,d);
+		    //	    if(d>-0.1 && d<0.1)  printf("QQQ ipix=%d icol=%d,irow=%d   d=%f  DATA1=%f \n",i, icol,irow, d,DATA1[icol*plane.YSize()+irow]);
+		    plane.SetPixel(icol*plane.YSize() + irow, icol, irow, DATA1[icol*plane.YSize() + irow]);
+				    
+		};
+	    };
+	}
+      }
+     else { //------- S3A system -------
         plane.SetSizeRaw(64, 128);
         unsigned npixels = plane.XSize() * plane.YSize();
         for (size_t i = 0; i < npixels; ++i) {
