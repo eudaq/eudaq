@@ -26,15 +26,22 @@ public:
 				eudaq::mSleep(50);
 				continue;
 			}
-			if (running) {
-				eudaq::RawDataEvent ev("NI", m_run, ++m_ev);
-				datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
-				ev.AddBlock(0, ni_control->DataTransportClientSocket_ReadData(datalength1));
-				datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");
-				ev.AddBlock(1, ni_control->DataTransportClientSocket_ReadData(datalength2));
+			if (running ) {
 
+				datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
+				std::vector<unsigned char> mimosa_data_0(datalength1);
+				mimosa_data_0 = ni_control->DataTransportClientSocket_ReadData(datalength1);
+
+				datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");
+				std::vector<unsigned char> mimosa_data_1(datalength2);
+				mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
+
+				eudaq::RawDataEvent ev("NI", m_run, m_ev++);
+				ev.AddBlock(0, mimosa_data_0);
+				ev.AddBlock(1, mimosa_data_1);
 				SendEvent(ev);
 			}
+
 		} while (!done);
 	}
 	virtual void OnConfigure(const eudaq::Configuration & param) {
