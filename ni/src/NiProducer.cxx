@@ -222,7 +222,7 @@ public:
 			// Send an EORE after all the real events have been sent
 			// You can also set tags on it (as with the BORE) if necessary
 			SetStatus(eudaq::Status::LVL_OK, "Stopped");
-			SendEvent(eudaq::RawDataEvent::EORE("NI", m_run, ++m_ev));
+			SendEvent(eudaq::RawDataEvent::EORE("NI", m_run, m_ev));
 
 		} catch (const std::exception & e) {
 			printf("Caught exception: %s\n", e.what());
