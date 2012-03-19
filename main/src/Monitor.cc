@@ -27,7 +27,7 @@ namespace eudaq {
     //std::cout << "processevent" << std::endl;
     if (!m_reader.get()) return false;
     if (!m_reader->NextEvent()) return false;
-    if (m_reader->GetDetectorEvent().GetEventNumber() % 10 == 0) {
+    if (m_reader->GetDetectorEvent().GetEventNumber() % 1000 == 0) {
       std::cout << "ProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
                 << (m_reader->GetDetectorEvent().IsBORE() ? "B" : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
                 << std::endl;
