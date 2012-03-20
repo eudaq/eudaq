@@ -216,7 +216,7 @@ public:
 			std::cout << "Stop Run" << std::endl;
 
 			ni_control->Stop();
-			eudaq::mSleep(500);
+			eudaq::mSleep(5000);
 			running = false;
 			eudaq::mSleep(100);
 			// Send an EORE after all the real events have been sent
