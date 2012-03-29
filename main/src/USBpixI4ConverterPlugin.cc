@@ -31,7 +31,7 @@ using eutelescope::EUTELESCOPE;
 namespace eudaq {
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const std::string EVENT_TYPE = "USBPIXI4";
+  static const char* EVENT_TYPE = "USBPIXI4";
 
   static const unsigned int CHIP_MIN_COL = 1;
   static const unsigned int CHIP_MAX_COL = 80;

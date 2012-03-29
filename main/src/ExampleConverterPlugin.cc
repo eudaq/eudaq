@@ -15,7 +15,7 @@ namespace eudaq {
   
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const std::string EVENT_TYPE = "Example";
+  static const char* EVENT_TYPE = "Example";
 
   // Declare a new class that inherits from DataConverterPlugin
   class ExampleConverterPlugin : public DataConverterPlugin {

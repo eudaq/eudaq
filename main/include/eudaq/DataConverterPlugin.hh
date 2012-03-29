@@ -4,6 +4,19 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 
+#if USE_LCIO
+#  include "IMPL/LCEventImpl.h"
+#  include "IMPL/TrackerRawDataImpl.h"
+#  include "IMPL/TrackerDataImpl.h"
+#  include "IMPL/LCCollectionVec.h"
+#  include "IMPL/LCGenericObjectImpl.h"
+#  include "UTIL/CellIDEncoder.h"
+#  include "lcio.h"
+using namespace IMPL;
+using namespace UTIL;
+#endif
+
+
 namespace EVENT { class LCEvent; class LCRunHeader; }
 namespace lcio { using namespace EVENT; }
 
