@@ -26,9 +26,9 @@ else
   endif
 endif
 
-ifeq ($(PLATFORM),LINUX)
-  CFLAGS += -m32
-endif
+#ifeq ($(PLATFORM),LINUX)
+#  CFLAGS += -m32
+#endif
   
 # Build tools
 # Make
