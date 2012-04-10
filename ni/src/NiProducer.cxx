@@ -108,61 +108,29 @@ public:
 				NiConfig = true;
 			} //Error FPGA download
 			if ( (ConfDataError[3] & 0x10)>> 4) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_0 Configure" );
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_0 Start" );
 				NiConfig = true;
 			} //FIFO_0 Configure
 			if ( (ConfDataError[3] & 0x20)>> 5) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_0 Start" );
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_1 Start");
 				NiConfig = true;
 			} //FIFO_0 Start
 			if ( (ConfDataError[3] & 0x40)>> 6) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_1 Configure" );
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_2 Start" );
 				NiConfig = true;
 			} //FIFO_1 Configure
 			if ( (ConfDataError[3] & 0x80)>> 7) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_1 Start" );
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_3 Start" );
 				NiConfig = true;
 			} //FIFO_1 Start
 			if ( (ConfDataError[2] & 0x1) >> 0) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_2 Configure" );
+				EUDAQ_ERROR("NI crate can not be configure: FIFO_4 Start" );
 				NiConfig = true;
 			} //FIFO_2 Configure
 			if ( (ConfDataError[2] & 0x2) >> 1) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_2 Start" );
-				NiConfig = true;
-			} //FIFO_2 Start
-			if ( (ConfDataError[2] & 0x4) >> 2) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_3 Configure" );
-				NiConfig = true;
-			} //FIFO_3 Configure
-			if ( (ConfDataError[2] & 0x8) >> 3) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_3 Start" );
-				NiConfig = true;
-			} //FIFO_3 Start
-			if ( (ConfDataError[2] & 0x10)>> 4) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_4 Configure" );
-				NiConfig = true;
-			} //FIFO_4 Configure
-			if ( (ConfDataError[2] & 0x20)>> 5) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_4 Start" );
-				NiConfig = true;
-			} //FIFO_4 Start
-			if ( (ConfDataError[2] & 0x40)>> 6) {
-				EUDAQ_ERROR("NI crate can not be configure: FIFO_5 Configure" );
-				NiConfig = true;
-			} //FIFO_5 Configure
-			if ( (ConfDataError[2] & 0x80)>> 7) {
 				EUDAQ_ERROR("NI crate can not be configure: FIFO_5 Start" );
 				NiConfig = true;
-			} //FIFO_5 Start
-			if ( (ConfDataError[1] & 0x1) >> 0){
-				EUDAQ_ERROR("NI crate can not be configure: FPGA Run" );
-				NiConfig = true;
-			} //FPGA Run
-			if ( (ConfDataError[1] & 0x2) >> 1) {
-				EUDAQ_ERROR("NI crate can not be configure: FPGA Start" );
-				NiConfig = true;
-			} //FPGA Start
+			} //FIFO_2 Start
 
 			if (NiConfig){
 				std::cout << "NI crate was Configured with ERRORs " << param.Name() << " " << std::endl;
