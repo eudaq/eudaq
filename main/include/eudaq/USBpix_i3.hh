@@ -29,13 +29,49 @@
 #define FLAG_ERROR_4			0xE4 // flag with error n=4
 #define FLAG_ERROR_8			0xE8 // flag with error n=8
 
+
+// USBpixI3 1.5 and below
+// ======================
+//
+//// trigger word
+//#define TRIGGER_WORD_HEADER_MASK		0x80000000 // trigger header
+//#define TRIGGER_NUMBER_MASK				0x7FFFFF00 // trigger number
+//#define EXT_TRIGGER_MODE_MASK			0x00000003 // trigger number
+//#define TRIGGER_WORD_ERROR_MASK			0x000000FC // trigger number
+//#define	L_TOTAL_TIME_OUT_MASK			0x00000004 // trigger number
+//#define EOE_HIT_WORD_TIME_OUT_MASK		0x00000008 // trigger number
+//#define EOE_WORD_WRONG_NUMBER_MASK		0x00000010 // trigger number
+//#define UNKNOWN_WORD_MASK				0x00000020 // trigger number
+//#define EOE_WORD_WARNING_MASK			0x00000040 // trigger number
+//#define EOE_WORD_ERROR_MASK				0x00000080 // trigger number
+//
+//// macros for for FE-I3 data processing
+//// EOE / hit word
+//#define HEADER_MACRO(X)			((HEADER_MASK & X) >> 25)
+//#define FLAG_MACRO(X)			((FLAG_MASK & X) >> 13)
+//#define ROW_MACRO(X)			((ROW_MASK & X) >> 13)
+//#define COL_MACRO(X)			((COL_MASK & X) >> 8)
+//#define BCID_3_0_MACRO(X)		((BCID_3_0_MASK & X) >> 21)
+//#define L1ID_MACRO(X)			((L1ID_MASK & X) >> 8)
+//#define BCID_MACRO(X)			(((BCID_3_0_MASK & X) >> 21) | (BCID_7_4_MASK & X))
+//#define TOT_MACRO(X)			(TOT_MASK & X)
+//#define WARN_MACRO(X)			(WARN_MASK & X)
+//// trigger word
+//#define TRIGGER_WORD_HEADER_MACRO(X)	((TRIGGER_WORD_HEADER_MASK & X) >> 31)
+//#define TRIGGER_NUMBER_MACRO(X)			((TRIGGER_NUMBER_MASK & X) >> 8)
+//#define TRIGGER_MODE_MACRO(X)			(EXT_TRIGGER_MODE_MASK & X)
+//#define TRIGGER_WORD_ERROR_MACRO(X)		((TRIGGER_WORD_ERROR_MASK & X) >> 2)
+
+
+// USBpixI3 trunk (newer than 1.5)
+// ===============================
+//
 // trigger word
 #define TRIGGER_WORD_HEADER_MASK		0x80000000 // trigger header
 #define TRIGGER_NUMBER_MASK				0x7FFFFF00 // trigger number
-#define EXT_TRIGGER_MODE_MASK			0x00000003 // trigger number
-#define TRIGGER_WORD_ERROR_MASK			0x000000FC // trigger number
+#define EXT_TRIGGER_MODE_MASK			0x00000007 // trigger number
+#define TRIGGER_WORD_ERROR_MASK			0x000000F8 // trigger number
 #define	L_TOTAL_TIME_OUT_MASK			0x00000004 // trigger number
-#define EOE_HIT_WORD_TIME_OUT_MASK		0x00000008 // trigger number
 #define EOE_WORD_WRONG_NUMBER_MASK		0x00000010 // trigger number
 #define UNKNOWN_WORD_MASK				0x00000020 // trigger number
 #define EOE_WORD_WARNING_MASK			0x00000040 // trigger number
@@ -56,6 +92,6 @@
 #define TRIGGER_WORD_HEADER_MACRO(X)	((TRIGGER_WORD_HEADER_MASK & X) >> 31)
 #define TRIGGER_NUMBER_MACRO(X)			((TRIGGER_NUMBER_MASK & X) >> 8)
 #define TRIGGER_MODE_MACRO(X)			(EXT_TRIGGER_MODE_MASK & X)
-#define TRIGGER_WORD_ERROR_MACRO(X)		((TRIGGER_WORD_ERROR_MASK & X) >> 2)
+#define TRIGGER_WORD_ERROR_MACRO(X)		((TRIGGER_WORD_ERROR_MASK & X) >> 3)
 
 #endif // USBPIX_I3_H
