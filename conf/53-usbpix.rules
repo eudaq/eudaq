@@ -1,0 +1,15 @@
+# SUBSYSTEM!="usb", GOTO="usbpix_rules_end"
+
+SYSFS{idVendor}=="5312", SYSFS{idProduct}=="0200", GROUP="NOROOTUSB", MODE="0666"
+
+SYSFS{idVendor}=="5312", SYSFS{idProduct}=="0201", GROUP="NOROOTUSB", MODE="0666"
+
+SYSFS{idVendor}=="5312", SYSFS{idProduct}=="0300", GROUP="NOROOTUSB", MODE="0666"
+
+SYSFS{idVendor}=="0547", SYSFS{idProduct}=="2131", GROUP="NOROOTUSB", MODE="0666"
+
+SYSFS{idVendor}=="0547", SYSFS{idProduct}=="0080", GROUP="NOROOTUSB", MODE="0666"
+
+SYSFS{idVendor}=="04b4", SYSFS{idProduct}=="8613", GROUP="NOROOTUSB", MODE="0666"
+
+# LABEL="usbpix_rules_end" 
