@@ -47,7 +47,7 @@ public:
 					long long d = t - lasttime;
 					//float freq= 1./(d*20./1000000000);
 					float freq = 1. / Timestamp2Seconds(d);
-					if (m_ev < 10 || m_ev % 100 == 0) {
+					if (m_ev < 10 || m_ev % 1000 == 0) {
 						std::cout << "  " << m_tlu->GetEntry(i) << ", diff=" << d << (d <= 0 ? "  ***" : "") << ", freq=" << freq << std::endl;
 					}
 					lasttime = t;
