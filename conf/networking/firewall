@@ -1,0 +1,101 @@
+#!/bin/sh 
+# 
+# iptables firewall script v0.3 
+# 
+# get newer versions at www.zleep.org 
+# (c)2003 by mr_abe <cg@zleep.org> 
+# 
+
+#Gibt  
+EXT_DEV=eth0 
+INT_DEV=eth1 
+INT_NET=192.168.2.0/24 
+IPTABLES=/sbin/iptables 
+
+case $1 in 
+        start) 
+        echo "Activate routing" 
+                # load required modules 
+                modprobe iptable_nat 
+
+                # flush all tables, an set all connections to accept
+
+
+                $IPTABLES -t filter -F INPUT 
+                $IPTABLES -t filter -F OUTPUT 
+                $IPTABLES -t filter -F FORWARD 
+                $IPTABLES -t filter -P INPUT ACCEPT 
+                $IPTABLES -t filter -P OUTPUT ACCEPT 
+                $IPTABLES -t filter -P FORWARD ACCEPT 
+     
+
+        #new 
+                echo 1 > /proc/sys/net/ipv4/ip_dynaddr 
+         
+                # accept all connections on localhost
+                $IPTABLES -t filter -A INPUT -i lo -s 0/0 -d 0/0 -j ACCEPT 
+
+                #Open a ports 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m tcp -p tcp --dport 21   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m tcp -p tcp --dport 22   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m tcp -p tcp --dport 23   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m tcp -p tcp --dport 80   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m tcp -p tcp --dport 443  -j ACCEPT 
+
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m udp -p udp --dport 21   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m udp -p udp --dport 22   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m udp -p udp --dport 23   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m udp -p udp --dport 80   -j ACCEPT 
+                $IPTABLES -t filter -A INPUT -i $EXT_DEV -m udp -p udp --dport 443  -j ACCEPT 
+
+                $IPTABLES -t filter -A FORWARD -i $INT_DEV -o $EXT_DEV  -j ACCEPT 
+                $IPTABLES -t filter -A FORWARD -i $EXT_DEV -o $INT_DEV  -m state --state ESTABLISHED,RELATED -j ACCEPT 
+
+
+                # set up routing for internal network
+                $IPTABLES -t nat -F POSTROUTING 
+                echo 1 > /proc/sys/net/ipv4/ip_forward
+                $IPTABLES -t nat -A POSTROUTING -o $EXT_DEV -s $INT_NET -j MASQUERADE 
+
+
+                #Forward this Ports to 192.168.0.2
+#                $IPTABLES -t nat -F POSTROUTING 
+#                $IPTABLES -t nat -A PREROUTING -i $EXT_DEV -p tcp --dport 4662 -j DNAT 
+#                $IPTABLES -t nat -A PREROUTING -i $INT_DEV -p tcp --dport 4662 -j DNAT  
+#                $IPTABLES -t nat -o eth0 -j MASQUERADE
+
+ 
+                # don't route this ports/ips 
+                #$IPTABLES -t filter -A FORWARD -p tcp -i $INT_DEV -s 10.10.12.21 -j REJECT 
+                #$IPTABLES -t filter -A FORWARD -p tcp -i $INT_DEV -s 10.10.12.21 --dport 80 -j REJECT 
+                #$IPTABLES -t filter -A FORWARD -p tcp -i $INT_DEV -s 10.10.12.21 --dport 7082 -j REJECT 
+        #$IPTABLES -t filter -A FORWARD -p tcp -i $INT_DEV -s 10.10.12.20 -d www.uboot.com -j REJECT 
+        #Wir wollen verhindern das Port 21 geroutet wird
+        #$IPTABLES -t filter -A FORWARD -p tcp -i $INT_DEV --dport 21 -j REJECT 
+         
+                # set up some logging rules 
+                #$IPTABLES -t filter -A INPUT -p tcp -j LOG --log-prefix "INPUT: TCP " 
+                #$IPTABLES -t filter -A INPUT -p udp -j LOG --log-prefix "INPUT: UDP " 
+  
+        echo "Firewall & Routing activated" 
+        ;; 
+
+        stop) 
+                $IPTABLES -t filter -F INPUT 
+                $IPTABLES -t filter -F OUTPUT 
+                $IPTABLES -t filter -F FORWARD 
+                $IPTABLES -t nat -F PREROUTING 
+                $IPTABLES -t nat -F POSTROUTING 
+        ;; 
+
+        restart) 
+                $0 stop && $0 start 
+        ;; 
+
+        *) 
+                echo "Usage: $0 {start|stop|restart}"
+        ;; 
+
+esac 
+
+
