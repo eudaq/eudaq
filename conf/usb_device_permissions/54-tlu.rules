@@ -1,0 +1,10 @@
+# SUBSYSTEM!="usb", GOTO="usbpix_rules_end"
+
+# SL5
+# SYSFS{idVendor}=="165d", SYSFS{idProduct}=="0001", GROUP="NOROOTUSB", MODE="0666"
+
+# Ubunutu
+ACTION=="add", DRIVERS=="?*",  ATTR{idVendor}=="165d", ATTR{idProduct}=="0001",  MODE="0666"
+
+
+# LABEL="usbpix_rules_end" 
