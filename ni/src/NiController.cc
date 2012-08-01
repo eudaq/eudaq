@@ -30,9 +30,16 @@ void NiController::GetProduserHostInfo(){
 	/*** get Producer information, NAME and INET ADDRESS ***/
 	gethostname(ThisHost, MAXHOSTNAME);
 	printf("----TCP/Producer running at host NAME: %s\n", ThisHost);
-	hclient = gethostbyname(ThisHost);
-	bcopy ( hclient->h_addr, &(client.sin_addr), hclient->h_length);
-	printf("----TCP/Producer INET ADDRESS is: %s \n", inet_ntoa(client.sin_addr));
+	hclient = gethostbyname(ThisHost);       
+        if( hclient != 0 )
+        {
+	  bcopy ( hclient->h_addr, &(client.sin_addr), hclient->h_length);
+  	  printf("----TCP/Producer INET ADDRESS is: %s \n", inet_ntoa(client.sin_addr));
+        }
+        else
+        {
+	  printf("----TCP/Producer -- Warning! -- failed attempting to gethostbyname() for: %s. Check your /etc/hosts list \n", ThisHost );        
+        }
 }
 void NiController::Start(){
 	ConfigClientSocket_Send(start, sizeof(start) );
