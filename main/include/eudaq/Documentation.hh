@@ -35,13 +35,20 @@
  *
  * \section install_sec Installation
  * \subsection step1 Step 1: Get the code
- * The latest version of the EUDAQ code will soon be available either via our Subversion server
- * at http://svn.example.com/eudaq/ or you can download a tarball from
- * http://www.example.com/eudaq/download/
- * \subsection step2 Step 2: Unzip it
- * If you downloaded the tarball, unzip it into a directory of your choice.
- * \subsection step3 Step 3: Build it
- * Go to the directory containing eudaq and type make.
+ * The latest version of the EUDAQ code is available on eudaq.hepforge.org SubVersion control server
+ * at http://eudaq.hepforge.org/svn/.
+ *
+ * @code
+ *   svn co  http://eudaq.hepforge.org/svn/trunk/ eudaq
+ * @endcode
+ *
+ * To checkout OnlineMonitor you might want to check out the following branch version as well:
+ * @code 
+ *   svn co  http://eudaq.hepforge.org/svn/branches/online.monitor/ onlinemon
+ * @endcode
+ *
+ * \subsection step2 Step 2: Build it
+ * Go to the directory containing eudaq and type make main. This will be the libeudaq.so library and place it in the ./bin/ folder.
  *
  */
 
