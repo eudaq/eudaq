@@ -18,7 +18,8 @@ namespace eudaq {
      * The constructor.
      * \param runcontrol A string containing the address of the RunControl to connect to.
      */
-    Monitor(const std::string & name, const std::string & runcontrol, const std::string & datafile = "");
+    Monitor(const std::string & name, const std::string & runcontrol, const unsigned lim,
+            const unsigned skip_, const std::string & datafile = "");
     virtual ~Monitor() {}
 
     bool ProcessEvent();
@@ -35,6 +36,8 @@ namespace eudaq {
     bool m_callstart;
     counted_ptr<FileReader> m_reader;
     counted_ptr<DetectorEvent> m_lastbore;
+    unsigned limit;
+    unsigned skip;
   };
 
 }

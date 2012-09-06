@@ -8,7 +8,7 @@
 class TestMonitor : public eudaq::Monitor {
 public:
   TestMonitor(const std::string & runcontrol, const std::string & datafile)
-    : eudaq::Monitor("Test", runcontrol, datafile), done(false)
+    : eudaq::Monitor("Test", runcontrol, 0, 0, datafile), done(false)
     {
     }
   virtual void OnEvent(counted_ptr<eudaq::DetectorEvent> ev) {
