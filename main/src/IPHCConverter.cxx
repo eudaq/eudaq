@@ -144,7 +144,7 @@ int main(int, char ** argv) {
         for (int ev = 0; ev < nevents; ++ev) {
           eudaq::DetectorEvent dev(runnumber, eventnumber, NOTIMESTAMP);
           RawDataEvent * rev = new RawDataEvent("EUDRB", runnumber, eventnumber);
-          counted_ptr<Event> ev(rev);
+          counted_ptr<Event> ev1(rev);
           for (int brd = 0; brd < conf.AsicNb; ++brd) {
             MI26__TZsFFrameRaw data;
             if (!fread((void*)&data, sizeof data, 1, f)) {
@@ -189,7 +189,7 @@ int main(int, char ** argv) {
             rev->AddBlock(data.SStatus.AsicNo, block);
           }
           if (ferror(f)) break;
-          dev.AddEvent(ev);
+          dev.AddEvent(ev1);
           writer->WriteEvent(dev);
           eventnumber++;
         }
