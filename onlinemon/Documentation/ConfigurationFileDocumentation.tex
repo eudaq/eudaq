@@ -1,0 +1,57 @@
+\documentclass{article}
+\begin{document}
+\section{Sections}
+we have the following Section Keywords, to be put in [].
+\begin{itemize}
+\item  ~[General]
+\item ~[Correlations]
+\item ~[Clusterizer]
+\item ~[HotPixelFinder]
+\item ~[Mimosa26]
+\end{itemize}
+\subsection{Configuration options in [General]} 
+\begin{description}
+\item[SnapShotDir] {\it string} \\Stores the location of snapshots from the online monitor
+\item[SnapShotFormat] {\it string}\\ Which Format to use for the snapshots, e.g. ".pdf"
+\end{description}
+\subsection{Configuration options in [Correlations]}
+\begin{description}
+\item[MinClusterSize] {\it int} \\
+Which minimum cluster size to use for the correlation plots  
+\item[DisablePlanes] {\it int,int,int} \\
+List of planes to disbale, separates by a ","
+\end{description}
+\subsection{Configuration options in [Clusterizer]}
+\subsection{Configuration options in [HotPixelFinder]}
+\begin{description}
+\item[HotPixelCut] {\it float} \\ Cut above which a pixel is considered "hot"
+\end{description}
+\subsection{Configuration options in [Mimosa26]}
+\begin{description}
+\item[Mimosa26\_max\_sections] {\it int} \\
+Number of section of the Mimosa 26 chip, default is 4   
+\item[Mimosa26\_section\_boundary] {\it int} \\ 
+Number of pixels in a Mimosa26 section, default is 288
+\end{description}
+
+\section{Example}
+\begin{verbatim}
+[General]
+SnapShotDir = "/scratch/eudet/EUDAQ/bin/"
+SnapShotFormat = ".pdf"
+
+[Correlations]
+MinClusterSize = 2
+DisablePlanes = 2,3
+
+[Clusterizer]
+
+[HotPixelFinder]
+HotPixelCut = 0.05
+
+[Mimosa26]
+Mimosa26_max_sections = 4 
+Mimosa26_section_boundary = 288
+\end{verbatim}
+
+\end{document}
