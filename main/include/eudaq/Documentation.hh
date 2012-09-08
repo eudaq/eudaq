@@ -42,11 +42,6 @@
  *   svn co  http://eudaq.hepforge.org/svn/trunk/ eudaq
  * @endcode
  *
- * To checkout OnlineMonitor you might want to check out the following branch version as well:
- * @code 
- *   svn co  http://eudaq.hepforge.org/svn/branches/online.monitor/ onlinemon
- * @endcode
- *
  * \subsection step2 Step 2: Build it
  * Go to the directory containing eudaq and type make main. This will be the libeudaq.so library and place it in the ./bin/ folder.
  *
