@@ -28,7 +28,8 @@ namespace eudaq {
   }
 
   bool Monitor::ProcessEvent() {
-    //if (!m_reader.get()) return false;
+
+    if (!m_reader.get()) return false;
     if (!m_reader->NextEvent()) return false;
 
     unsigned evt_number = m_reader->GetDetectorEvent().GetEventNumber();
