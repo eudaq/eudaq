@@ -483,10 +483,10 @@ int main(int argc, const char ** argv) {
     eudaq::Option<int>             h(op, "g", "height",  700, "pos", "The initial position of the window");
     eudaq::Option<int>             reduce(op, "rd", "reduce",  1, "Reduce the number of events");
     eudaq::Option<unsigned>        limit(op, "n", "limit", 0, "Event number limit for analysis");
-    eudaq::Option<unsigned>        skip_counter(op, "sc", "skip_count", 0, "Number of events to skip per every taken event");
+    eudaq::Option<unsigned>        skip_counter(op, "sc", "skip_count", 10, "Number of events to skip per every taken event");
     eudaq::Option<unsigned>        skipping(op, "s", "skip", 0, "Percentage of events to skip");
-    eudaq::Option<unsigned>        corr_width(op, "cw", "corr_width", 50, "Width of the track correlation window");
-    eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  3, "Minimum amount of planes for track reconstruction in the correlation");
+    eudaq::Option<unsigned>        corr_width(op, "cw", "corr_width",500, "Width of the track correlation window");
+    eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
     eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", true, "Using track correlation(true) or cluster correlation(false)");
     eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
     eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
