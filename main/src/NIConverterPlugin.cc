@@ -120,6 +120,11 @@ namespace eudaq {
           len1 = std::max(len1 & 0xffff, len1 >> 16);
         }
         len1 &= 0xffff;
+
+//        for(unsigned i=0;i<len0;i++) std::cout << "0:i="<<i << hexdec(GET(it0, i)) << std::endl;
+//        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i << hexdec(GET(it1, i)) << std::endl;
+
+
         if (it0 + len0*4 + 12 > data0.end()) {
           EUDAQ_WARN("Bad length in first frame");
           break;
@@ -135,16 +140,57 @@ namespace eudaq {
         DecodeFrame(plane, len0, it0+8, 0);
         DecodeFrame(plane, len1, it1+8, 1);
         result.AddPlane(plane);
+
         if (dbg) std::cout << "Mimosa_trailer0 = " << hexdec(GET(it0, len0+2)) << std::endl;
+//        if (dbg) std::cout << "Mimosa        0 = " << hexdec(GET(it0, 0)) << " len0 = " << len0 << " by " << (len0*4+16) <<std::endl;      
         if (dbg) std::cout << "Mimosa_trailer1 = " << hexdec(GET(it1, len1+2)) << std::endl;
-        it0 += len0*4 + 16;
-        it1 += len1*4 + 16;
-        if (it0 <= data0.end()) header0 = GET(it0, -1);
-        if (it1 <= data1.end()) header1 = GET(it1, -1);
-        ++board;
-      }
+//        if (dbg) std::cout << "Mimosa        1 = " << hexdec(GET(it1, 0)) << " len1 = " << len1 << " by " << (len1*4+16) <<std::endl;
+        
+//      it0  = it0 + len0*4 + 16; std::cout << " done 0 \n";
+//      it1  = it1 + len1*4 + 16; std::cout << " done 1 \n";
+
+// add len*4+16 untill reching the end of data block, if reached break!
+
+        bool advance_one_block_0 = false;
+        bool advance_one_block_1 = false;
+
+        if( it0 < data0.end() - (len0+4)*4 ) 
+        {
+          advance_one_block_0 = true; 
+        } 
+
+        if( it1 < data1.end() - (len1+4)*4 ) 
+        {
+          advance_one_block_1 = true; 
+        } 
+
+
+        if( advance_one_block_0 && advance_one_block_1)
+        {
+         it0  = it0 + (len0+4)*4 ; if(dbg) std::cout << " done 0 \n";
+         if (it0 <= data0.end()) header0 = GET(it0, -1);
+ 
+         it1  = it1 + (len1+4)*4 ; if(dbg) std::cout << " done 1 \n";
+         if (it1 <= data1.end()) header1 = GET(it1, -1);
+        }
+        else
+        {
+         if(dbg) std::cout << "advance_one_block_0 = " << advance_one_block_0 << std::endl;
+         if(dbg) std::cout << "advance_one_block_1 = " << advance_one_block_1 << std::endl;
+         if(dbg) std::cout << "break the block" << std::endl;
+         break;
+        }
+ 
+//        std::cout << " to " << hexdec(GET(data0.end(),0 )) << std::endl;
+//        std::cout << " to " << hexdec(GET(data1.end(),0 )) << std::endl;
+
+       ++board;
+
+     }
       return true;
     }
+    
+
     void DecodeFrame(StandardPlane & plane, size_t len, datait it, int frame) const {
       std::vector<unsigned short> vec;
       for (size_t i = 0; i < len; ++i) {
