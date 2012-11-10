@@ -45,8 +45,13 @@ namespace eudaq {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
   public:
+    virtual ~NIConverterPlugin(){ std::cout<<"~NIConverterPlugin done" << std::endl;}
+
     virtual void Initialize(const Event & bore, const Configuration & /*c*/) {
+     
       m_boards = from_string(bore.GetTag("BOARDS"), 0);
+      if( m_boards == 255 ) { m_boards = 6; }
+
       m_ids.clear();
       for (unsigned i = 0; i < m_boards; ++i) {
         unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
@@ -62,12 +67,17 @@ namespace eudaq {
 
     virtual bool GetStandardSubEvent(StandardEvent & result, const Event & source) const {
       if (source.IsBORE()) {
+        std::cout << "GetStandardSubEvent : got BORE" << std::endl;
         // shouldn't happen
         return true;
       } else if (source.IsEORE()) {
+        std::cout << "GetStandardSubEvent : got EORE" << std::endl;
         // nothing to do
         return true;
       }
+
+      if(dbg>0) std::cout << "GetStandardSubEvent : data" << std::endl;
+ 
       // If we get here it must be a data event
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(source);
       if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
@@ -210,21 +220,21 @@ namespace eudaq {
             //std::cout << "Ignoring bad line " << row << " (too many states)" << std::endl;
             break;
           }
-          if (dbg>1) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
+          if (dbg>2) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
                              << ", states " << numstates << ":";
           bool pivot = (row >= (plane.PivotPixel() / 16));
           for (unsigned s = 0; s < numstates; ++s) {
             unsigned v = vec.at(++i);
             unsigned column = v>>2 & 0x7ff;
             unsigned num = v & 3;
-            if (dbg>1) std::cout << (s ? "," : " ") << column;
-            if (dbg>1) if ((v&3) > 0) std::cout << "-" << (column + num);
+            if (dbg>2) std::cout << (s ? "," : " ") << column;
+            if (dbg>2) if ((v&3) > 0) std::cout << "-" << (column + num);
             for (unsigned j = 0; j < num+1; ++j) {
               plane.PushPixel(column+j, row, 1, pivot, frame);
             }
             npixels += num + 1;
           }
-          if (dbg>1) std::cout << std::endl;
+          if (dbg>2) std::cout << std::endl;
         }
         if (dbg) std::cout << "Total pixels " << frame << " = " << npixels << std::endl;
         //++offset;
@@ -286,14 +296,17 @@ namespace eudaq {
 
   bool NIConverterPlugin::GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const {
     if (source.IsBORE()) {
+      if(dbg>0) std::cout << "NIConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
       // shouldn't happen
       return true;
     } else if (source.IsEORE()) {
+      if(dbg>0) std::cout << "NIConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
       // nothing to do
       return true;
     }
     // If we get here it must be a data event
 
+    if(dbg>0) std::cout << "NIConverterPlugin::GetLCIOSubEvent data " << std::endl;
     result.parameters().setValue( eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE );
 
     // prepare the collections for the rawdata and the zs ones
@@ -335,16 +348,22 @@ namespace eudaq {
     bool outOfSyncFlag = false;
     std::vector<size_t > pivotPixelPosVec;
 
+    if(dbg>0) std::cout << "NIConverterPlugin::GetLCIOSubEvent rawDataEvent with boards=" << m_boards << std::endl;
     const RawDataEvent & rawDataEvent = dynamic_cast< const RawDataEvent & > ( source ) ;
 
     size_t numplanes = m_boards; //NumPlanes(source);
 
     StandardEvent tmp_evt;
     GetStandardSubEvent(tmp_evt, rawDataEvent);
+ 
+    if( numplanes !=  tmp_evt.NumPlanes() ) 
+    {
+      numplanes = tmp_evt.NumPlanes() ;
+    }
     
     for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) {
-
-      StandardPlane plane = tmp_evt.GetPlane(iPlane);
+     if(dbg>2) std::cout << "setting plane #  "<< iPlane << " out of " << numplanes << " up to " << tmp_evt.NumPlanes() << std::endl;
+     StandardPlane plane = static_cast<StandardPlane> ( tmp_evt.GetPlane(iPlane) );
 
       // The current detector is ...
       eutelescope::EUTelPixelDetector * currentDetector = 0x0;
