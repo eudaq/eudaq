@@ -8,6 +8,7 @@
 #include <iostream>
 
 using namespace eudaq;
+unsigned dbg = 0; 
 
 std::vector<unsigned> parsenumbers(const std::string & s) {
   std::vector<unsigned> result;
@@ -57,11 +58,15 @@ int main(int, char ** argv) {
 	if (reader.GetDetectorEvent().IsBORE() || reader.GetDetectorEvent().IsEORE() || numbers.empty() ||
 	    std::find(numbers.begin(), numbers.end(), reader.GetDetectorEvent().GetEventNumber()) != numbers.end()) {
 	  writer->WriteEvent(reader.GetDetectorEvent());
-	}
+	  if(dbg>0)std::cout<< "writing one more event" << std::endl;
+        }
       } while (reader.NextEvent());
+      if(dbg>0)std::cout<< "no more events to read" << std::endl;
     }
   } catch (...) {
     return op.HandleMainException();
   }
+
+  if(dbg>0)std::cout<< "almost done with Converter. exiting" << std::endl;
   return 0;
 }
