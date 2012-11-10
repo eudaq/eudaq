@@ -33,6 +33,10 @@ using eutelescope::EUTELESCOPE;
 
 
 namespace eudaq {
+  // The event type for which this converter plugin will be registered
+  // Modify this to match your actual event type (from the Producer)
+  static const char* EVENT_TYPE = "APIX-CT";
+  static int dbg = 0;
 
   static const unsigned int NCOL=80;
   static const unsigned int NROW=336;
@@ -162,23 +166,25 @@ namespace eudaq {
 #endif
     std::vector<CTELHit> decodeData(const RawDataEvent & event) const;
     void ConvertPlanes(const RawDataEvent & event, std::map<int, StandardPlane> & result) const;
-    APIXCTConverterPlugin() : DataConverterPlugin("APIX-CT"), m_nFrames(1), \
+    APIXCTConverterPlugin() : DataConverterPlugin(EVENT_TYPE), m_nFrames(1), \
                               m_feToSensorid(*new std::map<int, int>), 
                               m_fepos(*new std::map<int, int>), 
                               m_sensorids(*new std::vector<int>) {}
-    virtual ~APIXCTConverterPlugin(){
-       delete &m_feToSensorid;
-       delete &m_fepos;
-       delete &m_sensorids;
-    }
+    virtual ~APIXCTConverterPlugin(){ std::cout<<"~APIXCTConverterPlugin done" << std::endl;}
+//       delete &m_feToSensorid;
+//       delete &m_fepos;
+//       delete &m_sensorids;
+//    }
     unsigned m_nFrames;
     std::map<int, int> &m_feToSensorid;
     std::map<int, int> &m_fepos;
     std::vector<int> &m_sensorids;
     
-    static APIXCTConverterPlugin const m_instance;
+    static APIXCTConverterPlugin  m_instance;
   };
-  
+
+
+
 #if USE_LCIO && USE_EUTELESCOPE
   void APIXCTConverterPlugin::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & , eudaq::Configuration const & ) const
   {
@@ -189,9 +195,11 @@ namespace eudaq {
   bool APIXCTConverterPlugin::GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const
   {
     if (eudaqEvent.IsBORE()) {
+      if(dbg>0) std::cout << " APIXCTConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
       // shouldn't happen
       return true;
     } else if (eudaqEvent.IsEORE()) {
+      if(dbg>0) std::cout << " APIXCTConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
       // nothing to do
       return true;
     }
@@ -247,7 +255,7 @@ namespace eudaq {
       for (size_t i=0;i<hits.size();i++){
 	if(m_feToSensorid[hits[i].link]==m_sensorids[sensor]){
 	  int col=m_fepos[hits[i].link]*NCOL+hits[i].col; //left or right on 2-chip module
-	  eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( col, hits[i].row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, lv1-1);
+	  eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( col, hits[i].row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1-1);
 	  sparseFrame->addSparsePixel( thisHit );
 	  tmphits.push_back( thisHit );
 	}
@@ -294,8 +302,6 @@ namespace eudaq {
    */
 #endif
 
-  APIXCTConverterPlugin const APIXCTConverterPlugin::m_instance;
-
   void APIXCTConverterPlugin::Initialize(const Event & source, const Configuration &) {
     int nFrontends = from_string(source.GetTag("nFrontends"), 0);
     m_nFrames = from_string(source.GetTag("consecutive_lvl1"), 1);
@@ -328,9 +334,11 @@ namespace eudaq {
 
   bool APIXCTConverterPlugin::GetStandardSubEvent(StandardEvent & result, const Event & source) const {
     if (source.IsBORE()) {
+      if(dbg>0) std::cout << " APIXCTConverterPlugin::GetStandardSubEvent BORE " << std::endl;
       // shouldn't happen
       return true;
     } else if (source.IsEORE()) {
+      if(dbg>0) std::cout << " APIXCTConverterPlugin::GetStandardLCIOSubEvent EORE " << std::endl;
       // nothing to do
       return true;
     }
@@ -342,7 +350,7 @@ namespace eudaq {
     std::map<int, StandardPlane> planes; //sensor id to plane
     for(size_t i=0;i<m_sensorids.size();i++){
       int sensorid=m_sensorids[i];
-      StandardPlane plane(sensorid, "APIXCT", "APIXCT");
+      StandardPlane plane(sensorid, EVENT_TYPE, "APIXCT");
       plane.SetSizeZS(2*NCOL, NROW, 0, m_nFrames, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
       plane.SetTLUEvent(eudetTrig);
       planes[sensorid]=plane;
@@ -455,4 +463,9 @@ namespace eudaq {
     }
     return hits;
   }
+
+  // Instantiate the converter plugin instance
+  APIXCTConverterPlugin APIXCTConverterPlugin::m_instance;
+
+
 } //namespace eudaq
