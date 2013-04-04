@@ -45,7 +45,7 @@ namespace eudaq {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
   public:
-    virtual ~NIConverterPlugin(){ std::cout<<"~NIConverterPlugin done" << std::endl;}
+    virtual ~NIConverterPlugin(){ }
 
     virtual void Initialize(const Event & bore, const Configuration & /*c*/) {
      

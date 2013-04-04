@@ -170,7 +170,7 @@ namespace eudaq {
                               m_feToSensorid(*new std::map<int, int>), 
                               m_fepos(*new std::map<int, int>), 
                               m_sensorids(*new std::vector<int>) {}
-    virtual ~APIXCTConverterPlugin(){ std::cout<<"~APIXCTConverterPlugin done" << std::endl;}
+    virtual ~APIXCTConverterPlugin(){ }
 //       delete &m_feToSensorid;
 //       delete &m_fepos;
 //       delete &m_sensorids;
