@@ -621,16 +621,25 @@ namespace eudaq {
     }
 
     // add the collections to the event only if not empty and not yet there
-    if ( !rawDataCollectionExists && ( rawDataCollection->size() != 0 ) ){
-      result.addCollection( rawDataCollection, "rawdata" );
+    if ( !rawDataCollectionExists){
+      if ( rawDataCollection->size() != 0 )
+	result.addCollection( rawDataCollection, "rawdata" );
+      else
+	delete rawDataCollection; // clean up if not storing the collection here
     }
 
-    if ( !zsDataCollectionExists && ( zsDataCollection->size() != 0 )) {
-      result.addCollection( zsDataCollection, "zsdata" );
+    if ( !zsDataCollectionExists){
+      if ( zsDataCollection->size() != 0 ) 
+	result.addCollection( zsDataCollection, "zsdata" );
+      else
+	delete zsDataCollection; // clean up if not storing the collection here
     }
 
-    if ( !zs2DataCollectionExists && ( zs2DataCollection->size() != 0 )) {
-      result.addCollection( zs2DataCollection, "zsdata_m26" );
+    if ( !zs2DataCollectionExists){
+      if ( zs2DataCollection->size() != 0 )
+	result.addCollection( zs2DataCollection, "zsdata_m26" );
+      else
+	delete zs2DataCollection; // clean up if not storing the collection here
     }
 
 
