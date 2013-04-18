@@ -5,7 +5,6 @@
  *      Author: stanitz
  */
 
-
 #include <string>
 #include <vector>
 #include "include/SimpleStandardPlane.hh"

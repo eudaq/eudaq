@@ -8,38 +8,57 @@
 #include "CorrelationCollection.hh"
 #include "OnlineMon.hh"
 
+CorrelationCollection::CorrelationCollection()
+: BaseCollection(),
+  _mapOld(),
+  _map(),
+  _planes(),
+  skip_this_plane(), 
+  correlateAllPlanes(false),
+  selected_planes_to_skip(),
+  planesNumberForCorrelation(0),
+  windowWidthForCorrelation(0)
+{
+  cout << " Initializing Correlation Collection"<<endl;
+  CollectionType = CORRELATION_COLLECTION_TYPE;
+}
+
 bool checkIfClusterIsBigEnough(SimpleStandardCluster oneCluster)
 {
-  if (oneCluster.getNPixel() == 1)
+  if (oneCluster.getNPixel() == 1){
+    //(Phill) Should this say that NPixel is equal to one or greater than or equal to one?
     return true;
-  else 
-    return false;
+  }
+  return false;
 }
 
 bool CorrelationCollection::isPlaneRegistered(const SimpleStandardPlane p)
 {
-  std::vector<SimpleStandardPlane>::iterator it = std::find(_planes.begin(), _planes.end(), p);
+  vector<SimpleStandardPlane>::iterator it = find(_planes.begin(), _planes.end(), p);
 
-  if (it == _planes.end())
+  if (it == _planes.end()){
+    //(Phill) So this says that if the plane you are checking is exactly one beyond the last point in the vector, return false. What if p isn't in the vector at all?
     return false;
-  else
-    return true;
+  }
+  return true;
 }
 
-bool CorrelationCollection::checkCorrelations(const SimpleStandardCluster &cluster1, const SimpleStandardCluster &cluster2,
-    const bool only_mimos_planes=true)
+bool CorrelationCollection::checkCorrelations(const SimpleStandardCluster &cluster1, const SimpleStandardCluster &cluster2, const bool only_mimos_planes = true)
 {
   int diffParam;
 
-  if (only_mimos_planes == true)
+  if (only_mimos_planes == true){
     diffParam = getWindowWidthForCorrelation();
-  else
-    return true;
+  } else{
+    return false; //(Phill) Changed this from true to false because I think if it can only correlate mimosa planes then it should fail if there is anything else
+  }
 
-  if (abs(cluster1.getX() - cluster2.getX()) < diffParam && abs(cluster1.getY() - cluster2.getY()) < diffParam)
+  if (abs(cluster1.getX() - cluster2.getX()) < diffParam && abs(cluster1.getY() - cluster2.getY()) < diffParam){
+    //This says that if the x and y differences of the two clusters is less than the 'window width for correlation' then the check is successful, otherwise it fails
     return true;
-  else
+  } else{
     return false;
+  }
 }
 
 
@@ -47,18 +66,13 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlaneDouble &simp
 {
   CorrelationHistos *corrmap = _mapOld[simpPlaneDouble];
 
-  if (corrmap == NULL)// this hasn't been booked yet
-  {
+  if (corrmap != NULL) {
+    const vector< SimpleStandardCluster > aClusters = simpPlaneDouble.getPlane1().getClusters();
+    const vector< SimpleStandardCluster > bClusters = simpPlaneDouble.getPlane2().getClusters();
 
-  }
-  else
-  {
-    const std::vector<SimpleStandardCluster> aClusters=simpPlaneDouble.getPlane1().getClusters();
-    const std::vector<SimpleStandardCluster> bClusters=simpPlaneDouble.getPlane2().getClusters();
-
-    for (unsigned int acluster = 0; acluster < aClusters.size();acluster++)
+    for (unsigned int acluster = 0; acluster < aClusters.size(); acluster++)
     {
-      const SimpleStandardCluster& oneAcluster = aClusters.at(acluster);
+      const SimpleStandardCluster &oneAcluster = aClusters.at(acluster);
       if (oneAcluster.getNPixel() < _mon->mon_configdata.getCorrel_minclustersize()) // we are only interested in clusters with several pixels
       {
         continue;
@@ -71,10 +85,7 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlaneDouble &simp
         {
           continue;
         }
-        else
-        {
-          corrmap->Fill(oneAcluster, oneBcluster);
-        }
+        corrmap->Fill(oneAcluster, oneBcluster);
       }
     }
   }
