@@ -62,8 +62,8 @@ std::vector<unsigned> parsenumbers(const std::string & s) {
 
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Extractor", "1.0",
-                         "A command-line tool for extracting cluster information from native raw files",
-                         1);
+      "A command-line tool for extracting cluster information from native raw files",
+      1);
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<int> clust(op, "p", "cluster-size", 3, "pixels", "Size of clusters (1=no clustering, 3=3x3, etc.)");
 
@@ -95,9 +95,9 @@ int main(int /*argc*/, char ** argv) {
       std::vector<unsigned> planes = parsenumbers(boards.Value());
       std::cout << "Cluster size " << clust.Value() << "x" << clust.Value() << " (dclust=" << dclust << ")" << std::endl;
       std::cout << "Seed threshold: " << thresh_seed.Value() << " sigma = "
-                << thresh_seed.Value()*noise.Value() << " adc" << std::endl;
+        << thresh_seed.Value()*noise.Value() << " adc" << std::endl;
       std::cout << "Cluster threshold: " << thresh_clus.Value() << " sigma = "
-                << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
+        << clust.Value()*noise.Value()*thresh_clus.Value() << " adc" << std::endl;
       std::cout << "Boards: ";
       if (planes.empty()) std::cout << "all";
       for (size_t i = 0; i < planes.size(); ++i) std::cout << (i ? ", " : "") << planes[i];

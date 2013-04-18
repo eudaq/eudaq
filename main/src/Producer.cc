@@ -4,7 +4,7 @@ namespace eudaq {
 
   Producer::Producer(const std::string & name, const std::string & runcontrol)
     : CommandReceiver("Producer", name, runcontrol),
-      DataSender("Producer", name)
+    DataSender("Producer", name)
   {
   }
 

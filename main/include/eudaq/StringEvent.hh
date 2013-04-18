@@ -11,7 +11,7 @@ namespace eudaq {
    */
   class StringEvent : public Event {
     EUDAQ_DECLARE_EVENT(StringEvent);
-  public:
+    public:
     virtual void Serialize(Serializer &) const;
     StringEvent(unsigned run, unsigned event, const std::string & str) :
       Event(run, event),
@@ -28,7 +28,7 @@ namespace eudaq {
     static StringEvent EORE(unsigned run, unsigned event) {
       return StringEvent(run, event);
     }
-  private:
+    private:
     StringEvent(unsigned run, unsigned event = 0)
       : Event(run, event, NOTIMESTAMP, event ? Event::FLAG_EORE : Event::FLAG_BORE)
       {}

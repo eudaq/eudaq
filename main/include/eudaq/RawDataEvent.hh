@@ -13,7 +13,7 @@ namespace eudaq {
    */
   class RawDataEvent : public Event {
     EUDAQ_DECLARE_EVENT(RawDataEvent);
-  public:
+    public:
     typedef unsigned char byte_t;
     typedef std::vector<byte_t> data_t;
     struct block_t : public Serializable {
@@ -36,29 +36,29 @@ namespace eudaq {
 
     /// Add a data block as std::vector
     template <typename T>
-    size_t AddBlock(unsigned id, const std::vector<T> & data) {
-      m_blocks.push_back(block_t(id, make_vector(data)));
-      return m_blocks.size() - 1;
-    }
+      size_t AddBlock(unsigned id, const std::vector<T> & data) {
+        m_blocks.push_back(block_t(id, make_vector(data)));
+        return m_blocks.size() - 1;
+      }
 
     /// Add a data block as array with given size
     template <typename T>
-    size_t AddBlock(unsigned id, const T * data, size_t bytes) {
-      m_blocks.push_back(block_t(id, make_vector(data, bytes)));
-      return m_blocks.size() - 1;
-    }
+      size_t AddBlock(unsigned id, const T * data, size_t bytes) {
+        m_blocks.push_back(block_t(id, make_vector(data, bytes)));
+        return m_blocks.size() - 1;
+      }
 
     /// Append data to a block as std::vector
     template <typename T>
-    void AppendBlock(size_t index, const std::vector<T> & data) {
-      m_blocks[index].Append(make_vector(data));
-    }
+      void AppendBlock(size_t index, const std::vector<T> & data) {
+        m_blocks[index].Append(make_vector(data));
+      }
 
     /// Append data to a block as array with given size
     template <typename T>
-    void AppendBlock(size_t index, const T * data, size_t bytes) {
-      m_blocks[index].Append(make_vector(data, bytes));
-    }
+      void AppendBlock(size_t index, const T * data, size_t bytes) {
+        m_blocks[index].Append(make_vector(data, bytes));
+      }
 
     unsigned GetID(size_t i) const;
     /** Get the data block number i as vector of \c{unsigned char}, which is the byte sequence which
@@ -84,24 +84,24 @@ namespace eudaq {
     /// Return the type string.
     virtual std::string GetSubType() const { return m_type; }
 
-  private:
+    private:
     // private constructor to create BORE and EORE
     // make sure that event number is 0 for BORE
     RawDataEvent(std::string type, unsigned run, unsigned event, Event::Flags flag)
       : Event(run, event, NOTIMESTAMP, flag) ,  m_type(type)
-      {}
+    {}
 
     template <typename T>
-    static data_t make_vector(const T * data, size_t bytes) {
-      const unsigned char * ptr = reinterpret_cast<const byte_t *>(data);
-      return data_t(ptr, ptr + bytes);
-    }
+      static data_t make_vector(const T * data, size_t bytes) {
+        const unsigned char * ptr = reinterpret_cast<const byte_t *>(data);
+        return data_t(ptr, ptr + bytes);
+      }
 
     template <typename T>
-    static data_t make_vector(const std::vector<T> & data) {
-      const unsigned char * ptr = reinterpret_cast<const byte_t *>(&data[0]);
-      return data_t(ptr, ptr + data.size() * sizeof(T));
-    }
+      static data_t make_vector(const std::vector<T> & data) {
+        const unsigned char * ptr = reinterpret_cast<const byte_t *>(&data[0]);
+        return data_t(ptr, ptr + data.size() * sizeof(T));
+      }
 
     std::string m_type;
     std::vector<block_t> m_blocks;

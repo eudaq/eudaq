@@ -26,29 +26,29 @@
 
 class HitmapCollection : public BaseCollection
 {
-	RQ_OBJECT("HitmapCollection")
-protected:
-	bool isOnePlaneRegistered;
-	std::map<SimpleStandardPlane,HitmapHistos*> _map;
-	bool isPlaneRegistered(SimpleStandardPlane p);
-	void fillHistograms(const SimpleStandardPlane &simpPlane);
+  RQ_OBJECT("HitmapCollection")
+  protected:
+    bool isOnePlaneRegistered;
+    std::map<SimpleStandardPlane,HitmapHistos*> _map;
+    bool isPlaneRegistered(SimpleStandardPlane p);
+    void fillHistograms(const SimpleStandardPlane &simpPlane);
 
-public:
+  public:
 
-	void registerPlane(const SimpleStandardPlane &p);
-	void bookHistograms(const SimpleStandardEvent &simpev);
-	void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
-	HitmapCollection() : BaseCollection()
-	{
-		std::cout << " Initialising Hitmap Collection"<<std::endl;
-		isOnePlaneRegistered = false;
-		CollectionType = HITMAP_COLLECTION_TYPE;
-	}
-	void Fill(const SimpleStandardEvent &simpev);
-	HitmapHistos * getHitmapHistos(std::string sensor, int id);
-	void Reset();
-	virtual void Write(TFile *file);
-	virtual void Calculate(const unsigned int currentEventNumber);
+    void registerPlane(const SimpleStandardPlane &p);
+    void bookHistograms(const SimpleStandardEvent &simpev);
+    void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
+    HitmapCollection() : BaseCollection()
+  {
+    std::cout << " Initialising Hitmap Collection"<<std::endl;
+    isOnePlaneRegistered = false;
+    CollectionType = HITMAP_COLLECTION_TYPE;
+  }
+    void Fill(const SimpleStandardEvent &simpev);
+    HitmapHistos * getHitmapHistos(std::string sensor, int id);
+    void Reset();
+    virtual void Write(TFile *file);
+    virtual void Calculate(const unsigned int currentEventNumber);
 };
 
 #ifdef __CINT__

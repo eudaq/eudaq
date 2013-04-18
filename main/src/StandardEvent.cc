@@ -9,7 +9,7 @@ namespace eudaq {
 
   StandardPlane::StandardPlane(unsigned id, const std::string & type, const std::string & sensor)
     : m_type(type), m_sensor(sensor), m_id(id), m_tluevent(0), m_xsize(0), m_ysize(0),
-      m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0)
+    m_flags(0), m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0)
   {}
 
   StandardPlane::StandardPlane(Deserializer & ds) : m_result_pix(0), m_result_x(0), m_result_y(0) {
@@ -52,7 +52,7 @@ namespace eudaq {
 
   void StandardPlane::Print(std::ostream & os) const {
     os << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_pix.size()
-       << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent << ", pivot=" << m_pivotpixel;
+      << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent << ", pivot=" << m_pivotpixel;
   }
 
   void StandardPlane::SetSizeRaw(unsigned w, unsigned h, unsigned frames, int flags) {
@@ -238,14 +238,14 @@ namespace eudaq {
   }
 
   template <typename T>
-  std::vector<T> StandardPlane::GetPixels() const {
-    SetupResult();
-    std::vector<T> result(m_result_pix->size());
-    for (size_t i = 0; i < result.size(); ++i) {
-      result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
+    std::vector<T> StandardPlane::GetPixels() const {
+      SetupResult();
+      std::vector<T> result(m_result_pix->size());
+      for (size_t i = 0; i < result.size(); ++i) {
+        result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
+      }
+      return result;
     }
-    return result;
-  }
 
   void StandardPlane::SetupResult() const {
     if (m_result_pix) return;
@@ -309,15 +309,15 @@ namespace eudaq {
       m_temp_pix.resize(m_pix[0].size());
       for (size_t i = 0; i < m_temp_pix.size(); ++i) {
         m_temp_pix[i] = m_pix[0][i] * (m_pivot[0][i]-1)
-                      + m_pix[1][i] * (2*m_pivot[0][i]-1)
-                      + m_pix[2][i] * (m_pivot[0][i]);
+          + m_pix[1][i] * (2*m_pivot[0][i]-1)
+          + m_pix[2][i] * (m_pivot[0][i]);
       }
       m_result_pix = &m_temp_pix;
     } else {
       EUDAQ_THROW("Unrecognised pixel format (" + to_string(m_pix.size())
-                  + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
+          + " frames, CDS=" + (GetFlags(FLAG_NEEDCDS) ? "Needed" : "Done") + ")");
     }
-    
+
   }
 
   template std::vector<short> StandardPlane::GetPixels<>() const;

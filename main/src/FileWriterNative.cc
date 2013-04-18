@@ -6,14 +6,14 @@
 namespace eudaq {
 
   class FileWriterNative : public FileWriter {
-  public:
-    FileWriterNative(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
-    virtual ~FileWriterNative();
-  private:
-    FileSerializer * m_ser;
+    public:
+      FileWriterNative(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const;
+      virtual ~FileWriterNative();
+    private:
+      FileSerializer * m_ser;
   };
 
   namespace {

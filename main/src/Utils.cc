@@ -90,40 +90,40 @@ namespace eudaq {
   }
 
   template<>
-  long from_string(const std::string & x, const long & def) {
-    if (x == "") return def;
-    const char * start = x.c_str();
-    char * end = 0;
-    int base = 10;
-    std::string bases("box");
-    if (x.length() > 2 && x[0] == '0' && bases.find(x[1]) != std::string::npos) {
-      if (x[1] == 'b') base = 2;
-      else if (x[1] == 'o') base = 8;
-      else if (x[1] == 'x') base = 16;
-      start += 2;
+    long from_string(const std::string & x, const long & def) {
+      if (x == "") return def;
+      const char * start = x.c_str();
+      char * end = 0;
+      int base = 10;
+      std::string bases("box");
+      if (x.length() > 2 && x[0] == '0' && bases.find(x[1]) != std::string::npos) {
+        if (x[1] == 'b') base = 2;
+        else if (x[1] == 'o') base = 8;
+        else if (x[1] == 'x') base = 16;
+        start += 2;
+      }
+      long result = std::strtol(start, &end, base);
+      if (*end) throw std::invalid_argument("Invalid argument: " + x);
+      return result;
     }
-    long result = std::strtol(start, &end, base);
-    if (*end) throw std::invalid_argument("Invalid argument: " + x);
-    return result;
-  }
 
   template<>
-  unsigned long from_string(const std::string & x, const unsigned long & def) {
-    if (x == "") return def;
-    const char * start = x.c_str();
-    char * end = 0;
-    int base = 10;
-    std::string bases("box");
-    if (x.length() > 2 && x[0] == '0' && bases.find(x[1]) != std::string::npos) {
-      if (x[1] == 'b') base = 2;
-      else if (x[1] == 'o') base = 8;
-      else if (x[1] == 'x') base = 16;
-      start += 2;
+    unsigned long from_string(const std::string & x, const unsigned long & def) {
+      if (x == "") return def;
+      const char * start = x.c_str();
+      char * end = 0;
+      int base = 10;
+      std::string bases("box");
+      if (x.length() > 2 && x[0] == '0' && bases.find(x[1]) != std::string::npos) {
+        if (x[1] == 'b') base = 2;
+        else if (x[1] == 'o') base = 8;
+        else if (x[1] == 'x') base = 16;
+        start += 2;
+      }
+      unsigned long result = std::strtoul(start, &end, base);
+      if (*end) throw std::invalid_argument("Invalid argument: " + x);
+      return result;
     }
-    unsigned long result = std::strtoul(start, &end, base);
-    if (*end) throw std::invalid_argument("Invalid argument: " + x);
-    return result;
-  }
 
   void WriteStringToFile(const std::string & fname, const std::string & val) {
     std::ofstream file(fname.c_str());

@@ -28,23 +28,23 @@ using namespace std;
 
 class MonitorPerformanceCollection: public BaseCollection
 {
-	RQ_OBJECT("MonitorPerformanceCollection")
-protected:
+  RQ_OBJECT("MonitorPerformanceCollection")
+  protected:
 
-	void fillHistograms(const SimpleStandardEvent &ev);
-	bool histos_init;
-public:
-	MonitorPerformanceCollection();
-	virtual ~MonitorPerformanceCollection();
-	void Reset();
-	virtual void Write(TFile *file);
-	void Calculate(const unsigned int currentEventNumber);
-	void bookHistograms(const SimpleStandardEvent &simpev);
-	void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
-	void Fill(const SimpleStandardEvent &simpev);
-	MonitorPerformanceHistos * getMonitorPerformanceHistos();
-private:
-	MonitorPerformanceHistos * mymonhistos;
+    void fillHistograms(const SimpleStandardEvent &ev);
+    bool histos_init;
+  public:
+    MonitorPerformanceCollection();
+    virtual ~MonitorPerformanceCollection();
+    void Reset();
+    virtual void Write(TFile *file);
+    void Calculate(const unsigned int currentEventNumber);
+    void bookHistograms(const SimpleStandardEvent &simpev);
+    void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
+    void Fill(const SimpleStandardEvent &simpev);
+    MonitorPerformanceHistos * getMonitorPerformanceHistos();
+  private:
+    MonitorPerformanceHistos * mymonhistos;
 };
 
 #ifdef __CINT__

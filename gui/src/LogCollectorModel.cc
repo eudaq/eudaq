@@ -17,11 +17,11 @@ using eudaq::split;
 namespace {
 
   static eudaq::LogMessage make_msg(const std::string & fileline) {
-     std::vector<std::string> parts = split(fileline);
-//     std::cout << "line: " << fileline << std::endl;
-//     for (size_t i = 0; i < parts.size(); ++i) {
-//       std::cout << " " << i << ": \'" << parts[i] << "\'" << std::endl;
-//     }
+    std::vector<std::string> parts = split(fileline);
+    //     std::cout << "line: " << fileline << std::endl;
+    //     for (size_t i = 0; i < parts.size(); ++i) {
+    //       std::cout << " " << i << ": \'" << parts[i] << "\'" << std::endl;
+    //     }
     if (parts.size() == 1) {
       parts = split(fileline, " ");
       if (parts.size() == 7 && parts[0] == "***" && parts[3] == "at" && parts[6] == "***") {
@@ -29,13 +29,13 @@ namespace {
         std::vector<std::string> tempparts = split(parts[5], ":.");
         if (timeparts.size() != 3 || tempparts.size() != 4) EUDAQ_THROW("Badly formatted time: " + parts[4] + " " + parts[5]);
         timeparts.insert(timeparts.end(), tempparts.begin(), tempparts.end());
-//         std::vector<std::string> & r = timeparts;
-//         for (size_t i = 0; i < r.size(); ++i) {
-//           std::cout << i << ": \'" << r[i] << "\' " << from_string(r[i], 0) << std::endl;
-//         }
+        //         std::vector<std::string> & r = timeparts;
+        //         for (size_t i = 0; i < r.size(); ++i) {
+        //           std::cout << i << ": \'" << r[i] << "\' " << from_string(r[i], 0) << std::endl;
+        //         }
         eudaq::Time time(from_string(timeparts[0], 1970), from_string(timeparts[1], 1), from_string(timeparts[2], 1),
-                         from_string(timeparts[3], 0), from_string(timeparts[4], 0), from_string(timeparts[5], 0),
-                         from_string(timeparts[6], 0) * 1000);
+            from_string(timeparts[3], 0), from_string(timeparts[4], 0), from_string(timeparts[5], 0),
+            from_string(timeparts[6], 0) * 1000);
         return eudaq::LogMessage("*** " + parts[2] + " ***", eudaq::Status::LVL_USER, time)
           .SetSender(parts[1]);
       }
@@ -44,17 +44,17 @@ namespace {
       if (timeparts.size() != 7) EUDAQ_THROW("Badly formatted time: " + parts[2]);
       int level = 0;
       while (eudaq::Status::Level2String(level) != "" &&
-             eudaq::Status::Level2String(level) != parts[0]) {
+          eudaq::Status::Level2String(level) != parts[0]) {
         level++;
       }
       eudaq::Time time(from_string(timeparts[0], 1970), from_string(timeparts[1], 1), from_string(timeparts[2], 1),
-                       from_string(timeparts[3], 0), from_string(timeparts[4], 0), from_string(timeparts[5], 0),
-                       from_string(timeparts[6], 0) * 1000);
+          from_string(timeparts[3], 0), from_string(timeparts[4], 0), from_string(timeparts[5], 0),
+          from_string(timeparts[6], 0) * 1000);
       size_t colon = parts[4].find_last_of(":");
       return eudaq::LogMessage(parts[1], (eudaq::Status::Level)level, time)
         .SetLocation(parts[4].substr(0, colon),
-                     from_string(parts[4].substr(colon+1), 0),
-                     parts[5])
+            from_string(parts[4].substr(colon+1), 0),
+            parts[5])
         .SetSender(parts[3]);
     }
     EUDAQ_THROW("Badly formatted log message: " + fileline);
@@ -112,35 +112,35 @@ namespace {
 
 int LogMessage::ColumnWidth(int i) {
   switch (i) {
-  case 0:
-  case 1: return 100;
-  case 2: return 60;
-  case 3: return 400;
-  default: return -1;
+    case 0:
+    case 1: return 100;
+    case 2: return 60;
+    case 3: return 400;
+    default: return -1;
   }
 }
 
 QString LogMessage::operator [] (int i) const {
   switch(i) {
-  case 0: return m_createtime.Formatted("%H:%M:%S.%3").c_str();
-  case 1: return m_time.Formatted("%H:%M:%S.%3").c_str();
-  case 3: return firstline(this->Text(i)).c_str();
-  case 5: return simple_file(this->Text(i)).c_str();
-  case 6: return simple_func(this->Text(i)).c_str();
-  default: return this->Text(i).c_str();
+    case 0: return m_createtime.Formatted("%H:%M:%S.%3").c_str();
+    case 1: return m_time.Formatted("%H:%M:%S.%3").c_str();
+    case 3: return firstline(this->Text(i)).c_str();
+    case 5: return simple_file(this->Text(i)).c_str();
+    case 6: return simple_func(this->Text(i)).c_str();
+    default: return this->Text(i).c_str();
   }
 }
 
 std::string LogMessage::Text(int i) const {
   switch(i) {
-  case 0: return m_createtime.Formatted("%Y-%m-%d %H:%M:%S.%6");
-  case 1: return m_time.Formatted("%Y-%m-%d %H:%M:%S.%6");
-  case 2: return (to_string(m_level) + "-" + Level2String(m_level));
-  case 3: return m_msg;
-  case 4: return GetSender();
-  case 5: return m_file + (m_line == 0 ? "" : (":" + to_string(m_line)));
-  case 6: return m_func;
-  default: return "";
+    case 0: return m_createtime.Formatted("%Y-%m-%d %H:%M:%S.%6");
+    case 1: return m_time.Formatted("%Y-%m-%d %H:%M:%S.%6");
+    case 2: return (to_string(m_level) + "-" + Level2String(m_level));
+    case 3: return m_msg;
+    case 4: return GetSender();
+    case 5: return m_file + (m_line == 0 ? "" : (":" + to_string(m_line)));
+    case 6: return m_func;
+    default: return "";
   }
 }
 
@@ -168,10 +168,10 @@ bool LogSearcher::Match(const LogMessage & msg) {
   return false;
 }
 
-LogCollectorModel::LogCollectorModel(QObject *parent)
-  : QAbstractListModel(parent),
-    m_displaylevel(0),
-    m_sorter(&m_all)
+  LogCollectorModel::LogCollectorModel(QObject *parent)
+: QAbstractListModel(parent),
+  m_displaylevel(0),
+  m_sorter(&m_all)
 {
 }
 
@@ -194,9 +194,9 @@ std::vector<std::string> LogCollectorModel::LoadFile(const std::string & filenam
 bool LogCollectorModel::IsDisplayed(size_t index) {
   LogMessage & msg = m_all[index];
   return (msg.GetLevel() >= m_displaylevel &&
-          (m_displaytype == "" || m_displaytype == "All" || msg.GetSenderType() == m_displaytype) &&
-          (m_displayname == "" || m_displayname == "*"   || msg.GetSenderName() == m_displayname) &&
-          m_search.Match(msg));
+      (m_displaytype == "" || m_displaytype == "All" || msg.GetSenderType() == m_displaytype) &&
+      (m_displayname == "" || m_displayname == "*"   || msg.GetSenderName() == m_displayname) &&
+      m_search.Match(msg));
 }
 
 QModelIndex LogCollectorModel::AddMessage(const LogMessage & msg) {
@@ -251,22 +251,22 @@ int LogCollectorModel::GetLevel(const QModelIndex &index) const {
   return m_all[m_disp[index.row()]].GetLevel();
 }
 
-QVariant LogCollectorModel::data(const QModelIndex &index, int role) const {
-  if (role != Qt::DisplayRole || !index.isValid())
+  QVariant LogCollectorModel::data(const QModelIndex &index, int role) const {
+    if (role != Qt::DisplayRole || !index.isValid())
+      return QVariant();
+
+    if (index.column() < columnCount() && index.row() < rowCount())
+      return GetMessage(index.row())[index.column()];
+
     return QVariant();
-
-  if (index.column() < columnCount() && index.row() < rowCount())
-    return GetMessage(index.row())[index.column()];
-
-  return QVariant();
-}
+  }
 
 const LogMessage & LogCollectorModel::GetMessage(int row) const {
   return m_all[m_disp[row]];
 }
 
 QVariant LogCollectorModel::headerData(int section, Qt::Orientation orientation,
-                                      int role) const {
+    int role) const {
   if (role != Qt::DisplayRole)
     return QVariant();
 

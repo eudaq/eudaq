@@ -19,53 +19,53 @@
 namespace eudaq {
 
   class Time {
-  public:
-    static const std::string DEFAULT_FORMAT;
-    explicit Time(long sec, long usec = 0) {
-      tv_usec = usec % 1000000;
-      tv_sec = sec + usec / 1000000;
-    }
-    Time(int year, int month, int date, int hour = 0, int minute = 0, int sec = 0, int usec = 0);
-    Time(timeval tv) {
-      tv_usec = tv.tv_usec % 1000000;
-      tv_sec = tv.tv_sec + tv.tv_usec / 1000000;
-    }
-    double Seconds() const { return tv_sec + tv_usec / 1e6; }
-    Time & operator += (const timeval & other) {
-      tv_usec += other.tv_usec;
-      tv_sec += other.tv_sec + tv_usec / 1000000;
-      tv_usec %= 1000000;
-      return *this;
-    }
-    Time & operator -= (const timeval & other) {
-      if (tv_usec < other.tv_usec) {
-        tv_usec += 1000000 - other.tv_usec;
-        tv_sec -= other.tv_sec + 1;
-      } else {
-        tv_usec -= other.tv_usec;
-        tv_sec -= other.tv_sec;
+    public:
+      static const std::string DEFAULT_FORMAT;
+      explicit Time(long sec, long usec = 0) {
+        tv_usec = usec % 1000000;
+        tv_sec = sec + usec / 1000000;
       }
-      return *this;
-    }
-    bool operator < (const timeval & other) {
-      return tv_sec < other.tv_sec ||
-        (tv_sec == other.tv_sec && tv_usec < other.tv_usec);
-    }
-    bool operator > (const timeval & other) {
-      return tv_sec > other.tv_sec ||
-        (tv_sec == other.tv_sec && tv_usec > other.tv_usec);
-    }
-    operator const timeval () const {
-      timeval tv;
-      tv.tv_sec = tv_sec;
-      tv.tv_usec = tv_usec;
-      return tv;
-    }
-    std::string Formatted(const std::string & format = DEFAULT_FORMAT) const;
-    static Time Current();
-  private:
-    long tv_sec;
-    long tv_usec;
+      Time(int year, int month, int date, int hour = 0, int minute = 0, int sec = 0, int usec = 0);
+      Time(timeval tv) {
+        tv_usec = tv.tv_usec % 1000000;
+        tv_sec = tv.tv_sec + tv.tv_usec / 1000000;
+      }
+      double Seconds() const { return tv_sec + tv_usec / 1e6; }
+      Time & operator += (const timeval & other) {
+        tv_usec += other.tv_usec;
+        tv_sec += other.tv_sec + tv_usec / 1000000;
+        tv_usec %= 1000000;
+        return *this;
+      }
+      Time & operator -= (const timeval & other) {
+        if (tv_usec < other.tv_usec) {
+          tv_usec += 1000000 - other.tv_usec;
+          tv_sec -= other.tv_sec + 1;
+        } else {
+          tv_usec -= other.tv_usec;
+          tv_sec -= other.tv_sec;
+        }
+        return *this;
+      }
+      bool operator < (const timeval & other) {
+        return tv_sec < other.tv_sec ||
+          (tv_sec == other.tv_sec && tv_usec < other.tv_usec);
+      }
+      bool operator > (const timeval & other) {
+        return tv_sec > other.tv_sec ||
+          (tv_sec == other.tv_sec && tv_usec > other.tv_usec);
+      }
+      operator const timeval () const {
+        timeval tv;
+        tv.tv_sec = tv_sec;
+        tv.tv_usec = tv_usec;
+        return tv;
+      }
+      std::string Formatted(const std::string & format = DEFAULT_FORMAT) const;
+      static Time Current();
+    private:
+      long tv_sec;
+      long tv_usec;
   };
 
   inline Time operator + (const timeval & lhs, const timeval rhs) {

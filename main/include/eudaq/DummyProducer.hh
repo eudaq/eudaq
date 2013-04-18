@@ -6,8 +6,8 @@
 namespace eudaq {
 
   class DummyProducer : public Producer {
-  public:
-    DummyProducer(const std::string & name, const std::string & runcontrol);
+    public:
+      DummyProducer(const std::string & name, const std::string & runcontrol);
   };
 
 }

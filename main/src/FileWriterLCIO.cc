@@ -17,15 +17,15 @@
 namespace eudaq {
 
   class FileWriterLCIO : public FileWriter {
-  public:
-    FileWriterLCIO(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const { return 0; }
-    virtual ~FileWriterLCIO();
-  private:
-    lcio::LCWriter *m_lcwriter; /// The lcio writer
-    bool m_fileopened; /// We have to keep track whether a file is open ourselves
+    public:
+      FileWriterLCIO(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const { return 0; }
+      virtual ~FileWriterLCIO();
+    private:
+      lcio::LCWriter *m_lcwriter; /// The lcio writer
+      bool m_fileopened; /// We have to keep track whether a file is open ourselves
   };
 
   namespace {
@@ -34,7 +34,7 @@ namespace eudaq {
 
   FileWriterLCIO::FileWriterLCIO(const std::string & /*param*/)
     : m_lcwriter(lcio::LCFactory::getInstance()->createLCWriter()), // get an LCWriter from the factory
-      m_fileopened(false)
+    m_fileopened(false)
   {
     //EUDAQ_DEBUG("Constructing FileWriterLCIO(" + to_string(param) + ")");
   }
@@ -49,7 +49,7 @@ namespace eudaq {
     // open a new file
     try {
       m_lcwriter->open(FileNamer(m_filepattern).Set('X', ".slcio").Set('R', runnumber),
-                       lcio::LCIO::WRITE_NEW) ;
+          lcio::LCIO::WRITE_NEW) ;
       m_fileopened=true;
     } catch(const lcio::IOException & e) {
       std::cout << e.what() << std::endl ;
@@ -63,7 +63,7 @@ namespace eudaq {
       return;
     }
     std::cout << "EUDAQ_DEBUG: FileWriterLCIO::WriteEvent() processing event "
-              <<  devent.GetRunNumber () <<"." << devent.GetEventNumber () << std::endl;
+      <<  devent.GetRunNumber () <<"." << devent.GetEventNumber () << std::endl;
 
     lcio::LCEvent * lcevent = PluginManager::ConvertToLCIO(devent);
 

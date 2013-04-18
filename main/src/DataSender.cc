@@ -8,8 +8,8 @@ namespace eudaq {
 
   DataSender::DataSender(const std::string & type, const std::string & name)
     : m_type(type),
-      m_name(name),
-      m_dataclient(0) {}
+    m_name(name),
+    m_dataclient(0) {}
 
   void DataSender::Connect(const std::string & server) {
     delete m_dataclient;
@@ -51,7 +51,7 @@ namespace eudaq {
     //EUDAQ_DEBUG("Sending event");
     m_dataclient->SendPacket(ser);
     //EUDAQ_DEBUG("Sent event");
- }
+  }
 
 
   DataSender::~DataSender() {

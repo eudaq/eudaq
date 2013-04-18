@@ -76,7 +76,7 @@ namespace eudaq {
     };
     static const int k_NumMessages = sizeof g_ErrorList / sizeof *g_ErrorList;
     std::map<int, std::string> g_ErrorCodes(g_ErrorList,
-					    g_ErrorList + k_NumMessages);
+        g_ErrorList + k_NumMessages);
 
     typedef int socklen_t;
 
@@ -96,14 +96,14 @@ namespace eudaq {
     }
 
     class WSAHelper {
-    public:
-      WSAHelper() {
-	WSAData wsadata;
-	WSAStartup(MAKEWORD(2, 2), &wsadata);
-      }
-      ~WSAHelper() {
-	WSACleanup();
-      }
+      public:
+        WSAHelper() {
+          WSAData wsadata;
+          WSAStartup(MAKEWORD(2, 2), &wsadata);
+        }
+        ~WSAHelper() {
+          WSACleanup();
+        }
     };
     static WSAHelper theHelper;
 

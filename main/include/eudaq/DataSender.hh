@@ -9,14 +9,14 @@
 namespace eudaq {
 
   class DataSender {
-  public:
-    DataSender(const std::string & type, const std::string & name);
-    ~DataSender();
-    void Connect(const std::string & server);
-    void SendEvent(const Event &);
-  private:
-    std::string m_type, m_name;
-    TransportClient * m_dataclient;
+    public:
+      DataSender(const std::string & type, const std::string & name);
+      ~DataSender();
+      void Connect(const std::string & server);
+      void SendEvent(const Event &);
+    private:
+      std::string m_type, m_name;
+      TransportClient * m_dataclient;
   };
 
 }

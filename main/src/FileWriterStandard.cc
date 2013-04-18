@@ -7,14 +7,14 @@
 namespace eudaq {
 
   class FileWriterStandard : public FileWriter {
-  public:
-    FileWriterStandard(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
-    virtual ~FileWriterStandard();
-  private:
-    FileSerializer * m_ser;
+    public:
+      FileWriterStandard(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const;
+      virtual ~FileWriterStandard();
+    private:
+      FileSerializer * m_ser;
   };
 
   namespace {

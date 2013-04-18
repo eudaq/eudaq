@@ -11,9 +11,9 @@ namespace eudaq {
   class Serializer;
 
   class Serializable {
-  public:
-    virtual void Serialize(Serializer &) const = 0;
-    virtual ~Serializable() {}
+    public:
+      virtual void Serialize(Serializer &) const = 0;
+      virtual ~Serializable() {}
 
   };
 

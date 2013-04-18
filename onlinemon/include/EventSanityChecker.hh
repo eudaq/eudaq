@@ -10,15 +10,15 @@
 
 class EventSanityChecker
 {
-public:
+  public:
 
-	EventSanityChecker();
-	EventSanityChecker(int nplanes);
-	virtual ~EventSanityChecker();
+    EventSanityChecker();
+    EventSanityChecker(int nplanes);
+    virtual ~EventSanityChecker();
     unsigned int getNPlanes() const;
     void setNPlanes(int NPlanes);
-private:
-	unsigned int NPlanes;
+  private:
+    unsigned int NPlanes;
 
 };
 

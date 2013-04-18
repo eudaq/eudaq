@@ -8,11 +8,11 @@ namespace eudaq {
 
   class TLUEvent : public Event {
     EUDAQ_DECLARE_EVENT(TLUEvent);
-  public:
+    public:
     typedef std::vector<unsigned long long> vector_t;
     virtual void Serialize(Serializer &) const;
     explicit TLUEvent(unsigned run, unsigned event, unsigned long long timestamp,
-                      const vector_t & extratimes = vector_t()) :
+        const vector_t & extratimes = vector_t()) :
       Event(run, event, timestamp),
       m_extratimes(extratimes) {}
     explicit TLUEvent(Deserializer &);
@@ -27,7 +27,7 @@ namespace eudaq {
     static TLUEvent EORE(unsigned run, unsigned event) {
       return TLUEvent(run, event);
     }
-  private:
+    private:
     TLUEvent(unsigned run, unsigned event = 0)
       : Event(run, event, NOTIMESTAMP, event ? Event::FLAG_EORE : Event::FLAG_BORE)
       {}

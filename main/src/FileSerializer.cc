@@ -113,16 +113,16 @@ namespace eudaq {
       m_start = m_stop;
       // Then deserialise what remains
       Deserialize(data + tmp, len - tmp);
-    //} else if (len >= m_buf.size()/2) {
+      //} else if (len >= m_buf.size()/2) {
       // The buffer must be empty, and we have a lot of data to read
       // So read directly into the destination
       //FillBuffer(data, len);
-    } else {
-      // Otherwise fill up the buffer, making sure we have at least enough data
-      FillBuffer(len);
-      // Now we have enough data in the buffer, just call deserialize again
-      Deserialize(data, len);
-    }
+  } else {
+    // Otherwise fill up the buffer, making sure we have at least enough data
+    FillBuffer(len);
+    // Now we have enough data in the buffer, just call deserialize again
+    Deserialize(data, len);
+  }
   }
 
 }

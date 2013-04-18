@@ -21,20 +21,20 @@ class RootMonitor;
 
 class MonitorPerformanceHistos
 {
-protected:
+  protected:
     TH1I * _AnalysisTimeHisto;
     TH1I * _FillTimeHisto;
     TH1I * _ClusteringTimeHisto;
     TH1I * _CorrelationTimeHisto;
 
-public:
-	MonitorPerformanceHistos();
-	virtual ~MonitorPerformanceHistos();
-	void Fill( SimpleStandardEvent ev);
-	void Write();
-	void Reset();
-	TH1I*  getAnalysisTimeHisto() {return _AnalysisTimeHisto;}
-	TH1I*  getFillTimeHisto() {return _FillTimeHisto;}
+  public:
+    MonitorPerformanceHistos();
+    virtual ~MonitorPerformanceHistos();
+    void Fill( SimpleStandardEvent ev);
+    void Write();
+    void Reset();
+    TH1I*  getAnalysisTimeHisto() {return _AnalysisTimeHisto;}
+    TH1I*  getFillTimeHisto() {return _FillTimeHisto;}
     TH1I*  getClusteringTimeHisto() {return _ClusteringTimeHisto;}
     TH1I*  getCorrelationTimeHisto() {return _CorrelationTimeHisto;}
 

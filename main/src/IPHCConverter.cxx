@@ -78,13 +78,13 @@ int main(int, char ** argv) {
       }
       fclose(f);
       std::cout << "RunNo:       " << conf.RunNo << std::endl
-                << "RunEvNb:     " << conf.RunEvNb << std::endl
-                << "RunFileEvNb: " << conf.RunFileEvNb << std::endl
-                << "AsicNb:      " << (int)conf.AsicNb << std::endl
-                << "AsicName:    " << (int)conf.AsicName << " (" << asicname(conf.AsicName) << ")" << std::endl
-                << "SwTrigEn:    " << (int)conf.SwTrigEnabled << std::endl
-                << "HwTrigMode:  " << (int)conf.HwTrigModeSavedData << std::endl
-                << "StartTime:   " << decodetime(conf.StartDate, conf.StartTime) << std::endl
+        << "RunEvNb:     " << conf.RunEvNb << std::endl
+        << "RunFileEvNb: " << conf.RunFileEvNb << std::endl
+        << "AsicNb:      " << (int)conf.AsicNb << std::endl
+        << "AsicName:    " << (int)conf.AsicName << " (" << asicname(conf.AsicName) << ")" << std::endl
+        << "SwTrigEn:    " << (int)conf.SwTrigEnabled << std::endl
+        << "HwTrigMode:  " << (int)conf.HwTrigModeSavedData << std::endl
+        << "StartTime:   " << decodetime(conf.StartDate, conf.StartTime) << std::endl
         ;
 
       fnamer.Set('T', "res");
@@ -102,8 +102,8 @@ int main(int, char ** argv) {
       }
       fclose(f);
       std::cout << "EvNbTaken:   " << res.EvNbTaken << std::endl
-                << "RejAcqNb:    " << res.RejAcqNb << std::endl
-                << "StopTime:    " << decodetime(res.StopDate, res.StopTime) << std::endl
+        << "RejAcqNb:    " << res.RejAcqNb << std::endl
+        << "StopTime:    " << decodetime(res.StopDate, res.StopTime) << std::endl
         ;
 
       counted_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value()));
@@ -182,9 +182,9 @@ int main(int, char ** argv) {
             block[15+words] = words+12;
             for (size_t i = 0; i < block.size(); ++i) {
               block[i] = (block[i] >> 24) |
-                         (block[i] >> 8 & 0xff00) |
-                         (block[i] << 8 & 0xff0000) |
-                         (block[i] << 24);
+                (block[i] >> 8 & 0xff00) |
+                (block[i] << 8 & 0xff0000) |
+                (block[i] << 24);
             }
             rev->AddBlock(data.SStatus.AsicNo, block);
           }

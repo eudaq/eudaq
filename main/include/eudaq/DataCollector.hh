@@ -20,43 +20,43 @@ namespace eudaq {
    *
    */
   class DataCollector : public CommandReceiver {
-  public:
-    DataCollector(const std::string & runcontrol,
-                  const std::string & listenaddress);
+    public:
+      DataCollector(const std::string & runcontrol,
+          const std::string & listenaddress);
 
-    virtual void OnConnect(const ConnectionInfo & id);
-    virtual void OnDisconnect(const ConnectionInfo & id);
-    virtual void OnServer();
-    virtual void OnGetRun();
-    virtual void OnConfigure(const Configuration & param);
-    virtual void OnPrepareRun(unsigned runnumber);
-    virtual void OnStopRun();
-    virtual void OnReceive(const ConnectionInfo & id, counted_ptr<Event> ev);
-    virtual void OnCompleteEvent();
-    virtual void OnStatus();
-    virtual ~DataCollector();
+      virtual void OnConnect(const ConnectionInfo & id);
+      virtual void OnDisconnect(const ConnectionInfo & id);
+      virtual void OnServer();
+      virtual void OnGetRun();
+      virtual void OnConfigure(const Configuration & param);
+      virtual void OnPrepareRun(unsigned runnumber);
+      virtual void OnStopRun();
+      virtual void OnReceive(const ConnectionInfo & id, counted_ptr<Event> ev);
+      virtual void OnCompleteEvent();
+      virtual void OnStatus();
+      virtual ~DataCollector();
 
-    void DataThread();
-  private:
-    struct Info {
-      counted_ptr<ConnectionInfo> id;
-      std::list<counted_ptr<Event> > events;
-    };
+      void DataThread();
+    private:
+      struct Info {
+        counted_ptr<ConnectionInfo> id;
+        std::list<counted_ptr<Event> > events;
+      };
 
-    void DataHandler(TransportEvent & ev);
-    size_t GetInfo(const ConnectionInfo & id);
+      void DataHandler(TransportEvent & ev);
+      size_t GetInfo(const ConnectionInfo & id);
 
-    bool m_done, m_listening;
-    TransportServer * m_dataserver; ///< Transport for receiving data packets
-    pthread_t m_thread;
-    pthread_attr_t m_threadattr;
-    std::vector<Info> m_buffer;
-    size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
-    size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
-    unsigned m_runnumber, m_eventnumber;
-    counted_ptr<FileWriter> m_writer;
-    Configuration m_config;
-    Time m_runstart;
+      bool m_done, m_listening;
+      TransportServer * m_dataserver; ///< Transport for receiving data packets
+      pthread_t m_thread;
+      pthread_attr_t m_threadattr;
+      std::vector<Info> m_buffer;
+      size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
+      size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
+      unsigned m_runnumber, m_eventnumber;
+      counted_ptr<FileWriter> m_writer;
+      Configuration m_config;
+      Time m_runstart;
   };
 
 }

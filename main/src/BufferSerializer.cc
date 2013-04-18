@@ -18,7 +18,7 @@ namespace eudaq {
     if (!len) return;
     if (len+m_offset > m_data.size()) {
       EUDAQ_THROW("Deserialize asked for " + to_string(len) +
-                  ", only have " + to_string(m_data.size()-m_offset));
+          ", only have " + to_string(m_data.size()-m_offset));
     }
     std::copy(&m_data[m_offset], &m_data[m_offset] + len, data);
     //m_data.erase(m_data.begin(), m_data.begin() + len);

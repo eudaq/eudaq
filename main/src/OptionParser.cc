@@ -102,13 +102,13 @@ namespace eudaq {
     {
       std::ofstream logfile("crashlog.txt", std::ios::app);
       logfile << "===============================================\n"
-              << "Abnormal exit of " << m_name << "(" << m_ver << ") at " << Time::Current().Formatted() << "\n"
-              << msg << "\n"
-              << "-----------------------------------------------" << std::endl;
+        << "Abnormal exit of " << m_name << "(" << m_ver << ") at " << Time::Current().Formatted() << "\n"
+        << msg << "\n"
+        << "-----------------------------------------------" << std::endl;
     }
     GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR), false);
     os << msg << "\n"
-       << "Please report this to the developers." << std::endl;
+      << "Please report this to the developers." << std::endl;
     //std::string str;
     //std::getline(std::cin, str);
   }

@@ -56,7 +56,7 @@ namespace eudaq {
     typedef void (*mapfunc_t)(unsigned & x, unsigned & y, unsigned c, unsigned r, unsigned m, unsigned nc, unsigned nr);
     SensorInfo(const std::string & name, unsigned c, unsigned r, unsigned m, unsigned w, unsigned h, mapfunc_t mfunc = 0)
       : name(name), cols(c), rows(r), mats(m), width(w), height(h), mapfunc(mfunc)
-      {}
+    {}
     std::string name;
     unsigned cols, rows, mats, width, height;
     mapfunc_t mapfunc;
@@ -77,37 +77,37 @@ namespace eudaq {
     BoardInfo() : m_version(0), m_det(DET_MIMOTEL), m_mode(MODE_RAW3) {}
     BoardInfo(const Event & ev, int brd)
       : m_version(0), m_det(DET_NONE), m_mode(MODE_NONE)
-      {
-        std::string det = ev.GetTag("DET" + to_string(brd));
-        if (det == "") det = ev.GetTag("DET", "MIMOTEL");
+    {
+      std::string det = ev.GetTag("DET" + to_string(brd));
+      if (det == "") det = ev.GetTag("DET", "MIMOTEL");
 
-        for (size_t i = 0; i < sizeof g_sensors / sizeof *g_sensors; ++i) {
-          if (det == g_sensors[i].name) {
-            m_det = (E_DET)i;
-            break;
-          }
-        }
-        if (m_det == DET_NONE) EUDAQ_THROW("Unknown detector in EUDRBConverterPlugin: " + det);
-
-        std::string mode = ev.GetTag("MODE" + to_string(brd));
-        if (mode == "") mode = ev.GetTag("MODE", "RAW3");
-
-        if (mode == "ZS") m_mode = MODE_ZS;
-        else if (mode == "ZS2") m_mode = MODE_ZS2;
-        else if (mode == "RAW2") m_mode = MODE_RAW2;
-        else if (mode == "RAW3") m_mode = MODE_RAW3;
-        else EUDAQ_THROW("Unknown mode in EUDRBConverterPlugin: " + mode);
-
-        m_version = ev.GetTag("VERSION", 0);
-        if (m_version == 0) { // No VERSION tag, try to guess it
-          if (det == "MIMOTEL" && mode != "RAW2") {
-            m_version = 1;
-          } else {
-            m_version = 2;
-          }
-          EUDAQ_WARN("No EUDRB Version tag, guessing VERSION=" + to_string(m_version));
+      for (size_t i = 0; i < sizeof g_sensors / sizeof *g_sensors; ++i) {
+        if (det == g_sensors[i].name) {
+          m_det = (E_DET)i;
+          break;
         }
       }
+      if (m_det == DET_NONE) EUDAQ_THROW("Unknown detector in EUDRBConverterPlugin: " + det);
+
+      std::string mode = ev.GetTag("MODE" + to_string(brd));
+      if (mode == "") mode = ev.GetTag("MODE", "RAW3");
+
+      if (mode == "ZS") m_mode = MODE_ZS;
+      else if (mode == "ZS2") m_mode = MODE_ZS2;
+      else if (mode == "RAW2") m_mode = MODE_RAW2;
+      else if (mode == "RAW3") m_mode = MODE_RAW3;
+      else EUDAQ_THROW("Unknown mode in EUDRBConverterPlugin: " + mode);
+
+      m_version = ev.GetTag("VERSION", 0);
+      if (m_version == 0) { // No VERSION tag, try to guess it
+        if (det == "MIMOTEL" && mode != "RAW2") {
+          m_version = 1;
+        } else {
+          m_version = 2;
+        }
+        EUDAQ_WARN("No EUDRB Version tag, guessing VERSION=" + to_string(m_version));
+      }
+    }
     const SensorInfo & Sensor() const {
       return g_sensors[m_det];
     }
@@ -120,106 +120,106 @@ namespace eudaq {
   };
 
   class EUDRBConverterBase {
-  public:
-    void FillInfo(const Event & bore, const Configuration &) {
-      unsigned nboards = from_string(bore.GetTag("BOARDS"), 0);
-      //std::cout << "FillInfo " << nboards << std::endl;
-      for (unsigned i = 0; i < nboards; ++i) {
-        unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
-        if (m_info.size() <= id) m_info.resize(id+1);
-        m_info[id] = BoardInfo(bore, i);
+    public:
+      void FillInfo(const Event & bore, const Configuration &) {
+        unsigned nboards = from_string(bore.GetTag("BOARDS"), 0);
+        //std::cout << "FillInfo " << nboards << std::endl;
+        for (unsigned i = 0; i < nboards; ++i) {
+          unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
+          if (m_info.size() <= id) m_info.resize(id+1);
+          m_info[id] = BoardInfo(bore, i);
+        }
       }
-    }
-    const BoardInfo & GetInfo(unsigned id) const {
-      if (id >= m_info.size() || m_info[id].m_version < 1) EUDAQ_THROW("Unrecognised ID ("+to_string(id)+", num="+to_string(m_info.size())+") converting EUDRB event");
-      return m_info[id];
-    }
-    static unsigned GetTLUEvent(const std::vector<unsigned char> & data) {
-      const unsigned word = getbigendian<unsigned>(&data[data.size() - 8]);
-      return word>>8 & 0xffff;
-    }
-    void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const;
-    bool ConvertStandard(StandardEvent & stdEvent, const Event & eudaqEvent) const;
-    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id, StandardEvent & evt) const {
-      const BoardInfo & info = GetInfo(id);
-      StandardPlane plane(id, "EUDRB", info.Sensor().name);
-      plane.SetXSize(info.Sensor().width);
-      plane.SetYSize(info.Sensor().height);
-      plane.SetTLUEvent(GetTLUEvent(data));
-      if (info.m_mode == BoardInfo::MODE_ZS2) {
-        unsigned numoverflows = ConvertZS2(plane, data, info);
-        if (numoverflows) evt.SetTag("OVF" + to_string(id), numoverflows);
-      } else if (info.m_mode == BoardInfo::MODE_ZS) {
-        ConvertZS(plane, data, info);
-      } else {
-        ConvertRaw(plane, data, info);
+      const BoardInfo & GetInfo(unsigned id) const {
+        if (id >= m_info.size() || m_info[id].m_version < 1) EUDAQ_THROW("Unrecognised ID ("+to_string(id)+", num="+to_string(m_info.size())+") converting EUDRB event");
+        return m_info[id];
       }
-      return plane;
-    }
-    static unsigned ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
-    static void ConvertZS(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
-    static void ConvertRaw(StandardPlane & plane, const std::vector<unsigned char> & data, const BoardInfo & info);
-    bool ConvertLCIO(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const;
-  protected:
-    static size_t NumPlanes(const Event & event) {
-      if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
-        return ev->NumBlocks();
-      } else if (const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(&event)) {
-        return ev->NumBoards();
+      static unsigned GetTLUEvent(const std::vector<unsigned char> & data) {
+        const unsigned word = getbigendian<unsigned>(&data[data.size() - 8]);
+        return word>>8 & 0xffff;
       }
-      return 0;
-    }
-    static std::vector<unsigned char> GetPlane(const Event & event, size_t i) {
-      if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
-        return ev->GetBlock(i);
-      } else if (const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(&event)) {
-        return ev->GetBoard(i).GetDataVector();
+      void ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const;
+      bool ConvertStandard(StandardEvent & stdEvent, const Event & eudaqEvent) const;
+      StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id, StandardEvent & evt) const {
+        const BoardInfo & info = GetInfo(id);
+        StandardPlane plane(id, "EUDRB", info.Sensor().name);
+        plane.SetXSize(info.Sensor().width);
+        plane.SetYSize(info.Sensor().height);
+        plane.SetTLUEvent(GetTLUEvent(data));
+        if (info.m_mode == BoardInfo::MODE_ZS2) {
+          unsigned numoverflows = ConvertZS2(plane, data, info);
+          if (numoverflows) evt.SetTag("OVF" + to_string(id), numoverflows);
+        } else if (info.m_mode == BoardInfo::MODE_ZS) {
+          ConvertZS(plane, data, info);
+        } else {
+          ConvertRaw(plane, data, info);
+        }
+        return plane;
       }
-      return std::vector<unsigned char>();
-    }
-    static size_t GetID(const Event & event, size_t i) {
-      if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
-        return ev->GetID(i);
-      } else if (const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(&event)) {
-        return ev->GetBoard(i).GetID();
+      static unsigned ConvertZS2(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
+      static void ConvertZS(StandardPlane & plane, const std::vector<unsigned char> & alldata, const BoardInfo & info);
+      static void ConvertRaw(StandardPlane & plane, const std::vector<unsigned char> & data, const BoardInfo & info);
+      bool ConvertLCIO(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const;
+    protected:
+      static size_t NumPlanes(const Event & event) {
+        if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
+          return ev->NumBlocks();
+        } else if (const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(&event)) {
+          return ev->NumBoards();
+        }
+        return 0;
       }
-      return 0;
-    }
-    std::vector<BoardInfo> m_info;
+      static std::vector<unsigned char> GetPlane(const Event & event, size_t i) {
+        if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
+          return ev->GetBlock(i);
+        } else if (const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(&event)) {
+          return ev->GetBoard(i).GetDataVector();
+        }
+        return std::vector<unsigned char>();
+      }
+      static size_t GetID(const Event & event, size_t i) {
+        if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
+          return ev->GetID(i);
+        } else if (const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(&event)) {
+          return ev->GetBoard(i).GetID();
+        }
+        return 0;
+      }
+      std::vector<BoardInfo> m_info;
   };
 
   /********************************************/
 
   class EUDRBConverterPlugin : public DataConverterPlugin, public EUDRBConverterBase {
-  public:
-    virtual void Initialize(const Event & e, const Configuration & c) {
-      FillInfo(e, c);
-    }
+    public:
+      virtual void Initialize(const Event & e, const Configuration & c) {
+        FillInfo(e, c);
+      }
 
-    virtual unsigned GetTriggerID(Event const & ev) const {
-      const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-      if (rawev.NumBlocks() < 1) return (unsigned)-1;
-      const std::vector<unsigned char> & data = rawev.GetBlock(rawev.NumBlocks() - 1);
-      return GetTLUEvent(data);
-    }
+      virtual unsigned GetTriggerID(Event const & ev) const {
+        const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
+        if (rawev.NumBlocks() < 1) return (unsigned)-1;
+        const std::vector<unsigned char> & data = rawev.GetBlock(rawev.NumBlocks() - 1);
+        return GetTLUEvent(data);
+      }
 
-    virtual bool GetStandardSubEvent(StandardEvent & result, const Event & source) const {
-      return ConvertStandard(result, source);
-    }
+      virtual bool GetStandardSubEvent(StandardEvent & result, const Event & source) const {
+        return ConvertStandard(result, source);
+      }
 
 #if USE_LCIO && USE_EUTELESCOPE
-    virtual void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const {
-      return ConvertLCIOHeader(header, bore, conf);
-    }
+      virtual void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const {
+        return ConvertLCIOHeader(header, bore, conf);
+      }
 
-    virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
-      return ConvertLCIO(lcioEvent, eudaqEvent);
-    }
+      virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
+        return ConvertLCIO(lcioEvent, eudaqEvent);
+      }
 #endif
 
-  private:
-    EUDRBConverterPlugin() : DataConverterPlugin("EUDRB") {}
-    static EUDRBConverterPlugin const m_instance;
+    private:
+      EUDRBConverterPlugin() : DataConverterPlugin("EUDRB") {}
+      static EUDRBConverterPlugin const m_instance;
   };
 
   EUDRBConverterPlugin const EUDRBConverterPlugin::m_instance;
@@ -252,7 +252,7 @@ namespace eudaq {
     }
 #endif
 
-  private:
+    private:
     LegacyEUDRBConverterPlugin() : DataConverterPlugin(Event::str2id("_DRB")){}
     static LegacyEUDRBConverterPlugin const m_instance;
   };
@@ -285,12 +285,12 @@ namespace eudaq {
     if (alldata.size() < 64) EUDAQ_THROW("Bad data packet (only " + to_string(alldata.size()) + " bytes)");
     unsigned offset = 0, word = GET(offset);
     if (dbg) std::cout << "BaseAddress = 0x"
-                       << to_hex((word & 0xff000000) | 0x00400000)
-                       << std::endl;
+      << to_hex((word & 0xff000000) | 0x00400000)
+        << std::endl;
     unsigned wordcount = word & 0xffffff;
     if (dbg) std::cout << "WordCount = " << hexdec(wordcount, 0) << std::endl;
     if (wordcount*4 + 16 != alldata.size()) EUDAQ_THROW("Bad wordcount (" + to_string(wordcount) +
-                                                          ", bytes=" + to_string(alldata.size()) + ")");
+        ", bytes=" + to_string(alldata.size()) + ")");
     word = GET(offset=1);
     if (dbg) std::cout << "Unknown = " << hexdec(word >> 8 & 0xffff) << std::endl;
     // offset 2 is a repeat of offset 0
@@ -304,7 +304,7 @@ namespace eudaq {
     unsigned pixadd = word & 0x3ffff;
     plane.SetPivotPixel((9216 + pixadd - sof + 56) % 9216);
     if (dbg) std::cout << "PixelAddressAtTrigger = " << hexdec(pixadd, 0)
-                       << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
+      << ": pivot = " << hexdec(plane.PivotPixel(), 0) << std::endl;
     unsigned wordremain = wordcount-12;
     unsigned totaloverflows = 0;
     plane.SetSizeZS(info.Sensor().width, info.Sensor().height, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
@@ -317,7 +317,7 @@ namespace eudaq {
         unsigned count = word & 0xffff;
         if (dbg) std::cout << "M26WordCount_" << frame << " = " << hexdec(count, 0) << ", " << hexdec(word>>16, 0) << std::endl;
         if (count > wordremain) EUDAQ_THROW("Bad M26 word count (" + to_string(count) + ", remain=" +
-                                            to_string(wordremain) + ", total=" + to_string(wordcount) + ")");
+            to_string(wordremain) + ", total=" + to_string(wordcount) + ")");
         wordremain -= count;
         std::vector<unsigned short> vec;
         // read pixel data
@@ -339,7 +339,7 @@ namespace eudaq {
           }
           bool over = vec[i] & 0x8000;
           if (dbg) std::cout << "Hit line " << (over ? "* " : ". ") << row
-                             << ", states " << numstates << ":";
+            << ", states " << numstates << ":";
           bool pivot = row >= (plane.PivotPixel() / 16);
           for (unsigned s = 0; s < numstates; ++s) {
             unsigned v = vec.at(++i);
@@ -367,13 +367,13 @@ namespace eudaq {
     } catch (const std::out_of_range & e) {
       std::cout << "\n%%%% Oops: " << e.what() << " %%%%" << std::endl;
     }
-//     if (dbg) {
-//       std::cout << "Plane " << plane.m_pix.size();
-//       for (size_t i = 0; i < plane.m_pix.size(); ++i) {
-//         std::cout << ", " << plane.m_pix[i].size();
-//       }
-//       std::cout << std::endl;
-//     }
+    //     if (dbg) {
+    //       std::cout << "Plane " << plane.m_pix.size();
+    //       for (size_t i = 0; i < plane.m_pix.size(); ++i) {
+    //         std::cout << ", " << plane.m_pix[i].size();
+    //       }
+    //       std::cout << std::endl;
+    //     }
     // readjust offset to be sure it points to trailer:
     word = GET(offset = alldata.size() / 4 - 2);
     if (dbg) std::cout << "TLUEventNumber = " << hexdec(word>>8 & 0xffff, 0) << std::endl;
@@ -434,7 +434,7 @@ namespace eudaq {
       missingpixel = true;
     } else {
       EUDAQ_THROW("Bad raw data size (" + to_string(data.size() - headersize - trailersize)+") expecting "
-                  + to_string(possible1) + " or " + to_string(possible2));
+          + to_string(possible1) + " or " + to_string(possible2));
     }
     //unsigned npixels = info.Sensor().cols * info.Sensor().rows * info.Sensor().mats;
     plane.SetSizeRaw(info.Sensor().width, info.Sensor().height, info.Frames(), StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_NEEDCDS | StandardPlane::FLAG_NEGATIVE);
@@ -651,10 +651,10 @@ namespace eudaq {
             // we don't have to add it to the sparse frame.
 
             /*
-              streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
-                                       <<")  on a marker column. Not adding it to the frame" << endl
-                                       << (* (sparsePixel.get() ) ) << endl;
-            */
+               streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
+               <<")  on a marker column. Not adding it to the frame" << endl
+               << (* (sparsePixel.get() ) ) << endl;
+             */
 
           }
 
@@ -701,18 +701,18 @@ namespace eudaq {
           // marker column
           currentCDSPos = copy( cdsBegin + offset, cdsBegin + ( *(marker) + offset ), currentCDSPos );
 
-            // now copy from the next column to the next marker into a
-            // while loop
-            while ( marker != markerVec.end() ) {
-              if ( marker < markerVec.end() - 1 ) {
-                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
-              } else {
-                // now from the last marker column to the end of the
-                // row
-                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + offset + currentDetector->getXNoOfPixel(), currentCDSPos );
-              }
-              ++marker;
+          // now copy from the next column to the next marker into a
+          // while loop
+          while ( marker != markerVec.end() ) {
+            if ( marker < markerVec.end() - 1 ) {
+              currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
+            } else {
+              // now from the last marker column to the end of the
+              // row
+              currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + offset + currentDetector->getXNoOfPixel(), currentCDSPos );
             }
+            ++marker;
+          }
         }
 
         // this is the right place to prepare the TrackerRawData
@@ -788,23 +788,23 @@ namespace eudaq {
         while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
           // print out all the slave boards first
           std::cout << " --> Board (S) " <<  std::setw(3) << setiosflags( std::ios::right )
-                    << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
-                    << " = " << std::setw(15) << setiosflags( std::ios::right )
-                    << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
-                    << " (" << std::setw(15) << setiosflags( std::ios::right )
-                    << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
-                    << ")" << std::endl;
+            << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
+            << " = " << std::setw(15) << setiosflags( std::ios::right )
+            << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
+            << " (" << std::setw(15) << setiosflags( std::ios::right )
+            << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
+            << ")" << std::endl;
           ++slaveBoardPivotAddress;
         }
         // print out also the master. It is impossible that the master
         // is out of sync with respect to itself, but for completeness...
         std::cout  << " --> Board (M) "  <<  std::setw(3) << setiosflags( std::ios::right )
-                   << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
-                   << " = " << std::setw(15) << setiosflags( std::ios::right )
-                   << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
-                   << " (" << std::setw(15)  << setiosflags( std::ios::right )
-                   << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
-                   << ")" << std::endl;
+          << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
+          << " = " << std::setw(15) << setiosflags( std::ios::right )
+          << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
+          << " (" << std::setw(15)  << setiosflags( std::ios::right )
+          << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
+          << ")" << std::endl;
 
       } else if ( result.getEventNumber()  == 20 ) {
         // if the number of consecutive warnings is equal to the maximum
@@ -812,30 +812,30 @@ namespace eudaq {
         // because it's very likely the run was taken unsynchronized on
         // purpose
         std::cout << "The maximum number of unsychronized events has been reached." << std::endl
-                  << "Assuming the run was taken in asynchronous mode" << std::endl;
+          << "Assuming the run was taken in asynchronous mode" << std::endl;
       }
     }
 
     // add the collections to the event only if not empty and not yet there
     if ( !rawDataCollectionExists){
       if ( rawDataCollection->size() != 0 )
-	result.addCollection( rawDataCollection, "rawdata" );
+        result.addCollection( rawDataCollection, "rawdata" );
       else
-	delete rawDataCollection; // clean up if not storing the collection here
+        delete rawDataCollection; // clean up if not storing the collection here
     }
 
     if ( !zsDataCollectionExists){
       if ( zsDataCollection->size() != 0 ) 
-	result.addCollection( zsDataCollection, "zsdata" );
+        result.addCollection( zsDataCollection, "zsdata" );
       else
-	delete zsDataCollection; // clean up if not storing the collection here
+        delete zsDataCollection; // clean up if not storing the collection here
     }
 
     if ( !zs2DataCollectionExists){
       if ( zs2DataCollection->size() != 0 )
-	result.addCollection( zs2DataCollection, "zsdata_m26" );
+        result.addCollection( zs2DataCollection, "zsdata_m26" );
       else
-	delete zs2DataCollection; // clean up if not storing the collection here
+        delete zs2DataCollection; // clean up if not storing the collection here
     }
 
     return true;

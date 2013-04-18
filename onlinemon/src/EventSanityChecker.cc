@@ -10,7 +10,7 @@
 //default constructor
 EventSanityChecker::EventSanityChecker()
 {
-	NPlanes=0;
+  NPlanes=0;
 
 }
 
@@ -18,25 +18,25 @@ EventSanityChecker::EventSanityChecker()
 EventSanityChecker::EventSanityChecker(int nplanes)
 {
 
-	NPlanes=nplanes;
+  NPlanes=nplanes;
 }
 
 EventSanityChecker::~EventSanityChecker()
 {
-	// TODO Auto-generated destructor stub
+  // TODO Auto-generated destructor stub
 }
 
 
 unsigned int EventSanityChecker::getNPlanes() const
 {
-    return NPlanes;
+  return NPlanes;
 }
 
 
 
 void EventSanityChecker::setNPlanes(int NPlanes)
 {
-    this->NPlanes = NPlanes;
+  this->NPlanes = NPlanes;
 }
 
 

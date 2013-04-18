@@ -6,7 +6,7 @@ namespace eudaq {
   namespace {
 
     std::vector<unsigned char> MakeRawEvent(unsigned width,
-                                            unsigned height) {
+        unsigned height) {
       std::vector<unsigned char> result(width*height*2);
       size_t offset = 0;
       for (unsigned y = 0; y < height; ++y) {
@@ -43,10 +43,10 @@ namespace eudaq {
 
   ExampleHardware::ExampleHardware()
     : m_numsensors(2),
-      m_width(256),
-      m_height(256),
-      m_triggerid(0)
-    {}
+    m_width(256),
+    m_height(256),
+    m_triggerid(0)
+  {}
 
   void ExampleHardware::Setup(int) {
   }
