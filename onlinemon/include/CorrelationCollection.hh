@@ -73,13 +73,7 @@ class CorrelationCollection : public BaseCollection {
     void fillHistograms(const SimpleStandardPlaneDouble &simpPlaneDouble);
     void fillHistograms(const SimpleStandardPlane& p1, const SimpleStandardPlane& p2);
   public:
-    CorrelationCollection() : BaseCollection()
-  {
-    cout << " Initializing Correlation Collection"<<endl;
-    CollectionType = CORRELATION_COLLECTION_TYPE;
-    correlateAllPlanes=false;
-    //counter = 0;
-  }
+    CorrelationCollection();
     void Fill(const SimpleStandardEvent &simpev);
     unsigned int FillWithTracks(const SimpleStandardEvent &simpev);
     virtual void Reset();
