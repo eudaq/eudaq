@@ -42,8 +42,8 @@ class SimpleStandardPlane {
     int _tlu_event;
     int _pivot_pixel;
   public:
-    SimpleStandardPlane(const std::string & name, const int id, const int maxX, const int maxY, const int tlu_event, const int pivot_pixel, OnlineMonConfiguration* mymon) : _name(name), _id(id), _maxX(maxX), _maxY(maxY),_binsX(maxX), _binsY(maxY);
-    SimpleStandardPlane(const std::string & name, const int id) : _name(name), _id(id), _maxX(-1), _maxY(-1);
+    SimpleStandardPlane(const std::string & name, const int id, const int maxX, const int maxY, const int tlu_event, const int pivot_pixel, OnlineMonConfiguration* mymon);
+    SimpleStandardPlane(const std::string & name, const int id);
     void addHit(SimpleStandardHit oneHit);
     void addRawHit(SimpleStandardHit oneHit);
     void doClustering();
