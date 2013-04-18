@@ -15,17 +15,17 @@ namespace eudaq {
   namespace {
 
     class PseudoMutex {
-    public:
-      typedef bool type;
-      PseudoMutex(type & flag) : m_flag(flag) {
-        while (m_flag) {
-          mSleep(10);
-        };
-        m_flag = true;
-      }
-      ~PseudoMutex() { m_flag = false; }
-    private:
-      type & m_flag;
+      public:
+        typedef bool type;
+        PseudoMutex(type & flag) : m_flag(flag) {
+          while (m_flag) {
+            mSleep(10);
+          };
+          m_flag = true;
+        }
+        ~PseudoMutex() { m_flag = false; }
+      private:
+        type & m_flag;
     };
 
     void * RunControl_thread(void * arg) {
@@ -38,15 +38,15 @@ namespace eudaq {
 
   RunControl::RunControl(const std::string & listenaddress)
     : m_done(false),
-      m_listening(true),
-      m_runnumber(0),
-      m_cmdserver(0),
-      m_idata((size_t)-1),
-      m_ilog((size_t)-1),
-      m_runsizelimit(0),
-      m_stopping(false),
-      m_busy(false),
-      m_producerbusy(false)
+    m_listening(true),
+    m_runnumber(0),
+    m_cmdserver(0),
+    m_idata((size_t)-1),
+    m_ilog((size_t)-1),
+    m_runsizelimit(0),
+    m_stopping(false),
+    m_busy(false),
+    m_producerbusy(false)
   {
     if (listenaddress != "") {
       StartServer(listenaddress);
@@ -136,7 +136,7 @@ namespace eudaq {
   }
 
   void RunControl::SendCommand(const std::string & cmd, const std::string & param,
-                               const ConnectionInfo & id) {
+      const ConnectionInfo & id) {
     PseudoMutex m(m_busy);
     std::string packet(cmd);
     if (param.length() > 0) {
@@ -146,7 +146,7 @@ namespace eudaq {
   }
 
   std::string RunControl::SendReceiveCommand(const std::string & cmd, const std::string & param,
-                                             const ConnectionInfo & id) {
+      const ConnectionInfo & id) {
     PseudoMutex m(m_busy);
     mSleep(500); // make sure there are no pending replies
     std::string packet(cmd);
@@ -167,85 +167,85 @@ namespace eudaq {
   void RunControl::CommandHandler(TransportEvent & ev) {
     //std::cout << "Event: ";
     switch (ev.etype) {
-    case (TransportEvent::CONNECT):
-      std::cout << "Connect:    " << ev.id << std::endl;
-      if (m_listening) {
-        m_cmdserver->SendPacket("OK EUDAQ CMD RunControl", ev.id, true);
-      } else {
-        m_cmdserver->SendPacket("ERROR EUDAQ CMD Not accepting new connections", ev.id, true);
-        m_cmdserver->Close(ev.id);
-      }
-      break;
-    case (TransportEvent::DISCONNECT):
-      //std::cout << "Disconnection: " << ev.id << std::endl;
-      OnDisconnect(ev.id);
-      if (m_idata != (size_t)-1 && ev.id.Matches(GetConnection(m_idata))) m_idata = (size_t)-1;
-      if (m_ilog  != (size_t)-1 && ev.id.Matches(GetConnection(m_ilog)))  m_ilog  = (size_t)-1;
-      break;
-    case (TransportEvent::RECEIVE):
-      //std::cout << "Receive: " << ev.packet << std::endl;
-      if (ev.id.GetState() == 0) { // waiting for identification
-        // check packet
-        do {
-          size_t i0 = 0, i1 = ev.packet.find(' ');
-          if (i1 == std::string::npos) break;
-          std::string part(ev.packet, i0, i1);
-          if (part != "OK") break;
-          i0 = i1+1;
-          i1 = ev.packet.find(' ', i0);
-          if (i1 == std::string::npos) break;
-          part = std::string(ev.packet, i0, i1-i0);
-          if (part != "EUDAQ") break;
-          i0 = i1+1;
-          i1 = ev.packet.find(' ', i0);
-          if (i1 == std::string::npos) break;
-          part = std::string(ev.packet, i0, i1-i0);
-          if (part != "CMD") break;
-          i0 = i1+1;
-          i1 = ev.packet.find(' ', i0);
-          part = std::string(ev.packet, i0, i1-i0);
-          ev.id.SetType(part);
-          i0 = i1+1;
-          i1 = ev.packet.find(' ', i0);
-          part = std::string(ev.packet, i0, i1-i0);
-          ev.id.SetName(part);
-        } while(false);
-        //std::cout << "client replied, sending OK" << std::endl;
-        m_cmdserver->SendPacket("OK", ev.id, true);
-        ev.id.SetState(1); // successfully identified
-        if (ev.id.GetType() == "LogCollector") {
-          InitLog(ev.id);
-        } else if (ev.id.GetType() == "DataCollector") {
-          InitData(ev.id);
+      case (TransportEvent::CONNECT):
+        std::cout << "Connect:    " << ev.id << std::endl;
+        if (m_listening) {
+          m_cmdserver->SendPacket("OK EUDAQ CMD RunControl", ev.id, true);
         } else {
-          InitOther(ev.id);
+          m_cmdserver->SendPacket("ERROR EUDAQ CMD Not accepting new connections", ev.id, true);
+          m_cmdserver->Close(ev.id);
         }
-        OnConnect(ev.id);
-      } else {
-        BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-        counted_ptr<Status> status(new Status(ser));
-        if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
-        	ev.id.SetState(2);
-        } else if (status->GetLevel() != Status::LVL_BUSY && ev.id.GetState() == 2) {
-        	ev.id.SetState(1);
-		}
-		bool busy = false;
-		for (size_t i = 0; i < m_cmdserver->NumConnections(); ++i) {
-			if (m_cmdserver->GetConnection(i).GetState() == 2) {
-				busy = true;
-				break;
-			}
-		}
-		m_producerbusy = busy;
-        if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
-          // We ignore status messages that are marked with a previous run number
-          OnReceive(ev.id, status);
+        break;
+      case (TransportEvent::DISCONNECT):
+        //std::cout << "Disconnection: " << ev.id << std::endl;
+        OnDisconnect(ev.id);
+        if (m_idata != (size_t)-1 && ev.id.Matches(GetConnection(m_idata))) m_idata = (size_t)-1;
+        if (m_ilog  != (size_t)-1 && ev.id.Matches(GetConnection(m_ilog)))  m_ilog  = (size_t)-1;
+        break;
+      case (TransportEvent::RECEIVE):
+        //std::cout << "Receive: " << ev.packet << std::endl;
+        if (ev.id.GetState() == 0) { // waiting for identification
+          // check packet
+          do {
+            size_t i0 = 0, i1 = ev.packet.find(' ');
+            if (i1 == std::string::npos) break;
+            std::string part(ev.packet, i0, i1);
+            if (part != "OK") break;
+            i0 = i1+1;
+            i1 = ev.packet.find(' ', i0);
+            if (i1 == std::string::npos) break;
+            part = std::string(ev.packet, i0, i1-i0);
+            if (part != "EUDAQ") break;
+            i0 = i1+1;
+            i1 = ev.packet.find(' ', i0);
+            if (i1 == std::string::npos) break;
+            part = std::string(ev.packet, i0, i1-i0);
+            if (part != "CMD") break;
+            i0 = i1+1;
+            i1 = ev.packet.find(' ', i0);
+            part = std::string(ev.packet, i0, i1-i0);
+            ev.id.SetType(part);
+            i0 = i1+1;
+            i1 = ev.packet.find(' ', i0);
+            part = std::string(ev.packet, i0, i1-i0);
+            ev.id.SetName(part);
+          } while(false);
+          //std::cout << "client replied, sending OK" << std::endl;
+          m_cmdserver->SendPacket("OK", ev.id, true);
+          ev.id.SetState(1); // successfully identified
+          if (ev.id.GetType() == "LogCollector") {
+            InitLog(ev.id);
+          } else if (ev.id.GetType() == "DataCollector") {
+            InitData(ev.id);
+          } else {
+            InitOther(ev.id);
+          }
+          OnConnect(ev.id);
+        } else {
+          BufferSerializer ser(ev.packet.begin(), ev.packet.end());
+          counted_ptr<Status> status(new Status(ser));
+          if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
+            ev.id.SetState(2);
+          } else if (status->GetLevel() != Status::LVL_BUSY && ev.id.GetState() == 2) {
+            ev.id.SetState(1);
+          }
+          bool busy = false;
+          for (size_t i = 0; i < m_cmdserver->NumConnections(); ++i) {
+            if (m_cmdserver->GetConnection(i).GetState() == 2) {
+              busy = true;
+              break;
+            }
+          }
+          m_producerbusy = busy;
+          if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
+            // We ignore status messages that are marked with a previous run number
+            OnReceive(ev.id, status);
+          }
+          //std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" << std::endl;
         }
-        //std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" << std::endl;
-      }
-      break;
-    default:
-      std::cout << "Unknown:    " << ev.id << std::endl;
+        break;
+      default:
+        std::cout << "Unknown:    " << ev.id << std::endl;
     }
   }
 

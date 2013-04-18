@@ -22,9 +22,9 @@ int main(int argc, char ** argv) {
   QApplication app(argc, argv);
   eudaq::OptionParser op("EUDAQ Run Control", "1.0", "A Qt version of the Run Control");
   eudaq::Option<std::string>  addr(op, "a", "listen-address", "tcp://44000", "address",
-                                   "The address on which to listen for connections");
+      "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
-                                   "The minimum level for displaying log messages locally");
+      "The minimum level for displaying log messages locally");
   eudaq::Option<int>             x(op, "x", "left",   0, "pos");
   eudaq::Option<int>             y(op, "y", "top",    0, "pos");
   eudaq::Option<int>             w(op, "w", "width",  150, "pos");
@@ -64,17 +64,17 @@ void RunConnectionDelegate::paint(QPainter * painter, const QStyleOptionViewItem
 }
 
 RunControlGUI::RunControlGUI(const std::string & listenaddress,
-                             QRect geom,
-                             QWidget *parent,
-                             Qt::WindowFlags flags)
-  : QMainWindow(parent, flags),
-    eudaq::RunControl(listenaddress),
-    m_delegate(&m_run),
-    m_prevtrigs(0),
-    m_prevtime(0.0),
-    m_runstarttime(0.0),
-    m_filebytes(0),
-    dostatus(false)
+    QRect geom,
+    QWidget *parent,
+    Qt::WindowFlags flags)
+: QMainWindow(parent, flags),
+  eudaq::RunControl(listenaddress),
+  m_delegate(&m_run),
+  m_prevtrigs(0),
+  m_prevtime(0.0),
+  m_runstarttime(0.0),
+  m_filebytes(0),
+  dostatus(false)
 {
   setupUi(this);
   if (!grpStatus->layout()) grpStatus->setLayout(new QGridLayout(grpStatus));
@@ -172,7 +172,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<euda
       }
     }
   }
-  
+
   m_run.SetStatus(id, *status);
 }
 

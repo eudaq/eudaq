@@ -9,8 +9,8 @@ int main(int /*argc*/, const char ** argv) {
   // You can use the OptionParser to get command-line arguments
   // then they will automatically be described in the help (-h) option
   eudaq::OptionParser op("EUDAQ Example File Reader", "1.0",
-                         "Just an example, modify it to suit your own needs",
-                         1);
+      "Just an example, modify it to suit your own needs",
+      1);
   eudaq::OptionFlag doraw(op, "r", "raw", "Display raw data from events");
   eudaq::OptionFlag docon(op, "c", "converted", "Display converted events");
   try {
@@ -52,8 +52,8 @@ int main(int /*argc*/, const char ** argv) {
             std::cout << rev << std::endl;
           } catch (const eudaq::Exception & e) {
             std::cout << "No " << EVENT_TYPE << " subevent in event "
-                      << reader.GetDetectorEvent().GetEventNumber()
-                      << std::endl;
+              << reader.GetDetectorEvent().GetEventNumber()
+              << std::endl;
           }
         }
 

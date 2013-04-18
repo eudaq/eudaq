@@ -8,14 +8,14 @@
 namespace eudaq {
 
   class FileWriterMimoloop : public FileWriter {
-  public:
-    FileWriterMimoloop(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
-    virtual ~FileWriterMimoloop();
-  private:
-    std::ofstream * m_file;
+    public:
+      FileWriterMimoloop(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const;
+      virtual ~FileWriterMimoloop();
+    private:
+      std::ofstream * m_file;
   };
 
   namespace {

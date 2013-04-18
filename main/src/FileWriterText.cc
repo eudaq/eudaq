@@ -6,14 +6,14 @@
 namespace eudaq {
 
   class FileWriterText : public FileWriter {
-  public:
-    FileWriterText(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
-    virtual ~FileWriterText();
-  private:
-    std::FILE * m_file;
+    public:
+      FileWriterText(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const;
+      virtual ~FileWriterText();
+    private:
+      std::FILE * m_file;
   };
 
   namespace {
@@ -42,7 +42,7 @@ namespace eudaq {
 
   void FileWriterText::WriteEvent(const DetectorEvent & devent) {
     std::cout << "EUDAQ_DEBUG: FileWriterText::WriteEvent() processing event "
-              <<  devent.GetRunNumber() <<"." << devent.GetEventNumber() << std::endl;
+      <<  devent.GetRunNumber() <<"." << devent.GetEventNumber() << std::endl;
 
     //disentangle the detector event
     StandardEvent sevent(PluginManager::ConvertToStandard(devent));

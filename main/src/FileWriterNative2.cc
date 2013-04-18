@@ -7,15 +7,15 @@
 namespace eudaq {
 
   class FileWriterNative2 : public FileWriter {
-  public:
-    FileWriterNative2(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
-    virtual ~FileWriterNative2();
-  private:
-    BufferSerializer m_buf;
-    FileSerializer * m_ser;
+    public:
+      FileWriterNative2(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const;
+      virtual ~FileWriterNative2();
+    private:
+      BufferSerializer m_buf;
+      FileSerializer * m_ser;
   };
 
   namespace {

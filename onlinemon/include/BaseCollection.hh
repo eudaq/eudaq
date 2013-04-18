@@ -24,18 +24,18 @@ const unsigned int UNKNOWN_COLLECTION_TYPE = 9999;
 
 class BaseCollection
 {
-protected:
-	unsigned int _reduce;
-	RootMonitor *_mon;
-	unsigned int CollectionType; // used to specify what kind of Collection we are having
-public:
-		BaseCollection() : _reduce(1), _mon(NULL), CollectionType(UNKNOWN_COLLECTION_TYPE) {};
-		virtual void Write(TFile *file) = 0;
-		virtual void Calculate(const unsigned int currentEventNumber) = 0;
-		virtual void Fill(const SimpleStandardEvent& simpev) = 0;
-		virtual void Reset() = 0;
-		void setReduce(const unsigned int red);
-		unsigned int getCollectionType(){return CollectionType;};
+  protected:
+    unsigned int _reduce;
+    RootMonitor *_mon;
+    unsigned int CollectionType;
+  public:
+    BaseCollection();
+    virtual void Write(TFile *file) = 0;
+    virtual void Calculate(const unsigned int currentEventNumber) = 0;
+    virtual void Fill(const SimpleStandardEvent& simpev) = 0;
+    virtual void Reset() = 0;
+    void setReduce(const unsigned int red);
+    unsigned int getCollectionType();
 };
 
 #ifdef __CINT__

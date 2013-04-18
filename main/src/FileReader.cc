@@ -114,7 +114,7 @@ namespace eudaq {
     void debug(std::ostream & os) const {
       os << "empty=" << (isempty()?"yes":"no") << std::flush;
       os << " fullevents=" << fullevents() << std::flush
-         << " events=" << events(0) << std::flush;
+        << " events=" << events(0) << std::flush;
       for (size_t i = 1; i < producers(); ++i) {
         os << "," << events(i) << std::flush;
       }
@@ -222,16 +222,16 @@ namespace eudaq {
             }
           }
         }
-	if (dbg) std::cout << "Event " << eventnum
-                           << ", id=" << triggerid
-                           << ", zero=" << (haszero?"y":"n")
-			   << ", repeat=" << (hasrepeat?"y":"n")
-                           << ", other=" << (hasother?"y":"n")
-                           << ", last=" << queue.lastid
-                           << std::flush;
+        if (dbg) std::cout << "Event " << eventnum
+          << ", id=" << triggerid
+            << ", zero=" << (haszero?"y":"n")
+            << ", repeat=" << (hasrepeat?"y":"n")
+            << ", other=" << (hasother?"y":"n")
+            << ", last=" << queue.lastid
+            << std::flush;
         // If everything looks fine, return the next event
         if (isbore || iseore || (!haszero && !hasrepeat && !hasother) || triggerid == 0) {
-	  if (dbg) std::cout << ", ok" << std::endl;
+          if (dbg) std::cout << ", ok" << std::endl;
           ev = queue.popevent();
           queue.lastid = triggerid;
           return true;
@@ -291,11 +291,11 @@ namespace eudaq {
             }
             continue;
           }
-	  if (dbg) std::cout << ", " << to_string(nums) << std::endl;
+          if (dbg) std::cout << ", " << to_string(nums) << std::endl;
           EUDAQ_WARN("Unexpected tid in event number " + to_string(eventnum) + ": " + to_string(nums));
         } else {
-	  if (dbg) std::cout << ", hmm" << std::endl;
-	}
+          if (dbg) std::cout << ", hmm" << std::endl;
+        }
         // Make sure we have at least two full events in the queue
         if (queue.fullevents() < 2) {
           eudaq::Event * evnt = 0;
@@ -346,7 +346,7 @@ namespace eudaq {
               }
             } else {
               EUDAQ_THROW("Unable to synchronize at event " + to_string(eventnum) +
-                          ", next = " + to_string(tid1) + ", expected = " + to_string(triggerid1));
+                  ", next = " + to_string(tid1) + ", expected = " + to_string(triggerid1));
             }
           }
         }
@@ -364,23 +364,23 @@ namespace eudaq {
 
   FileReader::FileReader(const std::string & file, const std::string & filepattern, bool synctriggerid)
     : m_filename(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
-      m_des(m_filename),
-      m_ev(EventFactory::Create(m_des)),
-      m_ver(1),
-      m_queue(0) {
-    //unsigned versiontag = m_des.peek<unsigned>();
-    //if (versiontag == Event::str2id("VER2")) {
-    //  m_ver = 2;
-    //  m_des.read(versiontag);
-    //} else if (versiontag != Event::str2id("_DET")) {
-    //  EUDAQ_WARN("Unrecognised native file (tag=" + Event::id2str(versiontag) + "), assuming version 1");
-    //}
-    //EUDAQ_INFO("FileReader, version = " + to_string(m_ver));
-    //NextEvent();
-    if (synctriggerid) {
-      m_queue = new eventqueue_t(GetDetectorEvent().NumEvents());
+    m_des(m_filename),
+    m_ev(EventFactory::Create(m_des)),
+    m_ver(1),
+    m_queue(0) {
+      //unsigned versiontag = m_des.peek<unsigned>();
+      //if (versiontag == Event::str2id("VER2")) {
+      //  m_ver = 2;
+      //  m_des.read(versiontag);
+      //} else if (versiontag != Event::str2id("_DET")) {
+      //  EUDAQ_WARN("Unrecognised native file (tag=" + Event::id2str(versiontag) + "), assuming version 1");
+      //}
+      //EUDAQ_INFO("FileReader, version = " + to_string(m_ver));
+      //NextEvent();
+      if (synctriggerid) {
+        m_queue = new eventqueue_t(GetDetectorEvent().NumEvents());
+      }
     }
-  }
 
   FileReader::~FileReader() {
     delete m_queue;
@@ -420,27 +420,27 @@ namespace eudaq {
     return dynamic_cast<const StandardEvent &>(*m_ev);
   }
 
-//   const StandardEvent & FileReader::GetStandardEvent() const {
-//     if (!m_sev) {
-//       counted_ptr<StandardEvent> sevent(new StandardEvent);
-//       const DetectorEvent & dev = GetDetectorEvent();
-//       for (size_t i = 0; i < dev.NumEvents(); ++i) {
-//         const eudaq::Event * subevent = dev.GetEvent(i);
+  //   const StandardEvent & FileReader::GetStandardEvent() const {
+  //     if (!m_sev) {
+  //       counted_ptr<StandardEvent> sevent(new StandardEvent);
+  //       const DetectorEvent & dev = GetDetectorEvent();
+  //       for (size_t i = 0; i < dev.NumEvents(); ++i) {
+  //         const eudaq::Event * subevent = dev.GetEvent(i);
 
-//         try {
-//           const DataConverterPlugin * converterplugin = PluginManager::GetInstance().GetPlugin(subevent->GetType());
-//           converterplugin->GetStandardSubEvent(*sevent, *subevent);
-//           //std::fprintf(m_file, "Event %d %d\n", devent.GetEventNumber(), standardevent->m_x.size());
-//         } catch(eudaq::Exception & e) {
-//           //std::cout <<  e.what() << std::endl;
-//           std::cout <<  "FileWriterText::WriteEvent(): Ignoring event type "
-//                     <<  subevent->GetType() << std::endl;
-//           continue;
-//         }
-//       }
-//       m_sev = sevent;
-//     }
-//     return *m_sev;
-//   }
+  //         try {
+  //           const DataConverterPlugin * converterplugin = PluginManager::GetInstance().GetPlugin(subevent->GetType());
+  //           converterplugin->GetStandardSubEvent(*sevent, *subevent);
+  //           //std::fprintf(m_file, "Event %d %d\n", devent.GetEventNumber(), standardevent->m_x.size());
+  //         } catch(eudaq::Exception & e) {
+  //           //std::cout <<  e.what() << std::endl;
+  //           std::cout <<  "FileWriterText::WriteEvent(): Ignoring event type "
+  //                     <<  subevent->GetType() << std::endl;
+  //           continue;
+  //         }
+  //       }
+  //       m_sev = sevent;
+  //     }
+  //     return *m_sev;
+  //   }
 
 }

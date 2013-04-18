@@ -21,20 +21,20 @@ namespace eudaq {
   /********************************************/
 
   class APIXSCConverterPlugin : public DataConverterPlugin {
-  public:
-    virtual void Initialize(const Event & e, const Configuration & c);
-    //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
-    virtual unsigned GetTriggerID(eudaq::Event const &) const;
-    virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
+    public:
+      virtual void Initialize(const Event & e, const Configuration & c);
+      //virtual lcio::LCEvent * GetLCIOEvent( eudaq::Event const * ee ) const;
+      virtual unsigned GetTriggerID(eudaq::Event const &) const;
+      virtual bool GetStandardSubEvent(StandardEvent &, const eudaq::Event &) const;
 
-  private:
-    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const;
-    APIXSCConverterPlugin() : DataConverterPlugin("APIX-SC"),
-                              m_NumRows(160), m_NumColumns(18),
-                              m_InitialRow(0), m_InitialColumn(0) {}
-    unsigned m_NumRows, m_NumColumns, m_InitialRow , m_InitialColumn;
+    private:
+      StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const;
+      APIXSCConverterPlugin() : DataConverterPlugin("APIX-SC"),
+      m_NumRows(160), m_NumColumns(18),
+      m_InitialRow(0), m_InitialColumn(0) {}
+      unsigned m_NumRows, m_NumColumns, m_InitialRow , m_InitialColumn;
 
-    static APIXSCConverterPlugin const m_instance;
+      static APIXSCConverterPlugin const m_instance;
   };
 
   APIXSCConverterPlugin const APIXSCConverterPlugin::m_instance;
@@ -72,7 +72,7 @@ namespace eudaq {
     const RawDataEvent & ev = dynamic_cast<const RawDataEvent &>(source);
     for (size_t i = 0; i < ev.NumBlocks(); ++i) {
       result.AddPlane(ConvertPlane(ev.GetBlock(i),
-                                   ev.GetID(i)));
+            ev.GetID(i)));
       std::cout << "Danach" << std::endl;
     }
     return true;

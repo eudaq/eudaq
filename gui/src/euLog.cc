@@ -8,13 +8,13 @@ int main(int argc, char ** argv) {
   QApplication app(argc, argv);
   eudaq::OptionParser op("EUDAQ Log Collector", "1.0", "A Qt version of the Log Collector");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
-                                   "The address of the RunControl application");
+      "The address of the RunControl application");
   eudaq::Option<std::string> addr (op, "a", "listen-address", "tcp://44002", "address",
-                                   "The address on which to listen for Log connections");
+      "The address on which to listen for Log connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
-                                   "The initial level for displaying log messages");
+      "The initial level for displaying log messages");
   eudaq::Option<std::string> file (op, "f", "log-file", "", "filename",
-                                   "A log file to load at startup");
+      "A log file to load at startup");
   eudaq::Option<int>             x(op, "x", "left",   0, "pos");
   eudaq::Option<int>             y(op, "y", "top",    0, "pos");
   eudaq::Option<int>             w(op, "w", "width",  100, "pos");

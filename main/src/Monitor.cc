@@ -7,7 +7,7 @@
 namespace eudaq {
 
   Monitor::Monitor(const std::string & name, const std::string & runcontrol, const unsigned lim,
-                   const unsigned skip_, const unsigned int skip_evts, const std::string & datafile) :
+      const unsigned skip_, const unsigned int skip_evts, const std::string & datafile) :
     CommandReceiver("Monitor", name, runcontrol, false),
     m_run(0),
     m_callstart(false),
@@ -34,24 +34,24 @@ namespace eudaq {
 
     unsigned evt_number = m_reader->GetDetectorEvent().GetEventNumber();
     if(limit > 0 && evt_number > limit)
-        return true;
+      return true;
 
 
     if (evt_number % 1000 == 0) {
       std::cout << "ProcessEvent " << m_reader->GetDetectorEvent().GetEventNumber()
-                << (m_reader->GetDetectorEvent().IsBORE() ? "B" : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
-                << std::endl;
+        << (m_reader->GetDetectorEvent().IsBORE() ? "B" : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
+        << std::endl;
     }
 
     if(skip > 0 && (evt_number % 100 >= skip))  //-s functionality
-        return true;
+      return true;
 
     else if (skip_events_with_counter > 0)      //-sc functionality, you cant have both
     {
-        if(++counter_for_skipping < skip_events_with_counter && evt_number > 0)
-            return true;
-        else
-            counter_for_skipping = 0;
+      if(++counter_for_skipping < skip_events_with_counter && evt_number > 0)
+        return true;
+      else
+        counter_for_skipping = 0;
     }
 
 
@@ -60,7 +60,7 @@ namespace eudaq {
       const DetectorEvent & dev = m_reader->GetDetectorEvent();
       if (dev.IsBORE()) m_lastbore = counted_ptr<DetectorEvent>(new DetectorEvent(dev));
       OnEvent(PluginManager::ConvertToStandard(dev));
-//        ++counter_events_for_online_monitor;
+      //        ++counter_events_for_online_monitor;
     } catch (const InterruptedException &) {
       return false;
     }

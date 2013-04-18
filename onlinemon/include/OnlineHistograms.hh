@@ -37,35 +37,35 @@ class RootMonitor;
 
 
 struct Plane {
-	std::string sensor;
-	int id;
-	
+  std::string sensor;
+  int id;
+
 };
 
 inline bool operator==(Plane const &a, Plane const &b) {
-		if (a.sensor==b.sensor && a.id == b.id) {
-			 return true;
-		} else {
-			return false;
-		}
+  if (a.sensor==b.sensor && a.id == b.id) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 inline bool operator<(Plane const &a, Plane const &b) { // Needed to use struct in a map
-	return a.sensor<b.sensor || ( a.sensor==b.sensor && a.id < b.id); 
+  return a.sensor<b.sensor || ( a.sensor==b.sensor && a.id < b.id); 
 }
 
 class OnlineHistograms {
-	protected:
-		std::vector<std::string> _sensorVec;
-		
-	
-	public:
-		OnlineHistograms() {}
-		void addSensor(const std::string & name, const int id) {}
-		void FillHistos() {}
+  protected:
+    std::vector<std::string> _sensorVec;
 
 
-	
+  public:
+    OnlineHistograms() {}
+    void addSensor(const std::string & name, const int id) {}
+    void FillHistos() {}
+
+
+
 };
 
 #ifdef __CINT__

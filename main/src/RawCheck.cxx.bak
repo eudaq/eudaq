@@ -31,10 +31,10 @@ void Fatal(const std::string & msg, const eudaq::Event * e) {
 
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Raw Data file checker", "1.0",
-                         "A command-line tool for checking consistency of raw data file",
-                         1);
+      "A command-line tool for checking consistency of raw data file",
+      1);
   eudaq::OptionFlag disp(op, "d", "display",
-                         "Display event numbers");
+      "Display event numbers");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("INFO");
@@ -51,9 +51,9 @@ int main(int /*argc*/, char ** argv) {
       if (!dev) Fatal("Not a detector event", ev.get());
       if (!dev->IsBORE()) Error("First event is not a BORE", dev);
       if (dev->GetEventNumber() != evtexpect) Error("Unexpected event number "
-                                                    + to_string(dev->GetEventNumber())
-                                                    + ", expect " + to_string(evtexpect),
-                                                    dev);
+          + to_string(dev->GetEventNumber())
+          + ", expect " + to_string(evtexpect),
+          dev);
       evtexpect = dev->GetEventNumber() + 1;
       counted_ptr<eudaq::EUDRBDecoder> decoder(new eudaq::EUDRBDecoder(*dev));
       for (size_t i = 0; i < dev->NumEvents(); ++i) {
@@ -67,9 +67,9 @@ int main(int /*argc*/, char ** argv) {
         if (!dev) Fatal("Not a detector event", ev.get());
         if (dev->IsBORE()) Error("More than one BORE", dev);
         if (dev->GetEventNumber() != evtexpect) Error("Unexpected event number "
-                                                      + to_string(dev->GetEventNumber())
-                                                      + ", expect " + to_string(evtexpect),
-                                                      dev);
+            + to_string(dev->GetEventNumber())
+            + ", expect " + to_string(evtexpect),
+            dev);
         evtexpect = dev->GetEventNumber() + 1;
         if (ev->IsEORE()) {
           neore++;
@@ -86,8 +86,8 @@ int main(int /*argc*/, char ** argv) {
           const eudaq::EUDRBEvent * eev = GetSubEvent<eudaq::EUDRBEvent>(dev);
           const eudaq::TLUEvent * tev = GetSubEvent<eudaq::TLUEvent>(dev);
           if (disp.IsSet()) std::cout << dev->GetEventNumber()
-                                      << '\t' << (tev ? to_string(tev->GetEventNumber()) : "-")
-                                      << '\t' << (eev ? to_string(eev->GetEventNumber()) : "-");
+            << '\t' << (tev ? to_string(tev->GetEventNumber()) : "-")
+              << '\t' << (eev ? to_string(eev->GetEventNumber()) : "-");
           if (eev) {
             bool sameloc = true, sametlu = true;
             int numsame = 0, numdiff = 0;

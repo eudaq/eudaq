@@ -55,11 +55,11 @@ namespace eudaq {
 
     if (msg.GetLevel() >= m_level && show) {
       if (msg.GetLevel() >= m_errlevel) {
-	if (m_name != "") std::cerr << "[" << m_name << "] ";
-	std::cerr << msg << std::endl;
+        if (m_name != "") std::cerr << "[" << m_name << "] ";
+        std::cerr << msg << std::endl;
       } else {
-	if (m_name != "") std::cout << "[" << m_name << "] ";
-	std::cout << msg << std::endl;
+        if (m_name != "") std::cout << "[" << m_name << "] ";
+        std::cout << msg << std::endl;
       }
     }
   }

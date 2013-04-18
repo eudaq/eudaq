@@ -13,24 +13,24 @@
 namespace eudaq {
 
   class FileWriterRoot : public FileWriter {
-  public:
-    FileWriterRoot(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
-    virtual ~FileWriterRoot();
-  private:
-    TFile * m_tfile; // book the pointer to a file (to store the otuput)
-    TTree * m_ttree; // book the tree (to store the needed event info)
-    // Book variables for the Event_to_TTree conversion 
-    Int_t id_plane; // plane id, where the hit is 
-    Int_t id_hit; // the hit id (within a plane)  
-    Double_t  id_x; // the hit position along  X-axis  
-    Double_t  id_y; // the hit position along  Y-axis  
-    unsigned i_tlu; // a trigger id
-    unsigned i_run; // a run  number 
-    unsigned i_event; // an event number 
-    unsigned long long int i_time_stamp; // the time stamp
+    public:
+      FileWriterRoot(const std::string &);
+      virtual void StartRun(unsigned);
+      virtual void WriteEvent(const DetectorEvent &);
+      virtual unsigned long long FileBytes() const;
+      virtual ~FileWriterRoot();
+    private:
+      TFile * m_tfile; // book the pointer to a file (to store the otuput)
+      TTree * m_ttree; // book the tree (to store the needed event info)
+      // Book variables for the Event_to_TTree conversion 
+      Int_t id_plane; // plane id, where the hit is 
+      Int_t id_hit; // the hit id (within a plane)  
+      Double_t  id_x; // the hit position along  X-axis  
+      Double_t  id_y; // the hit position along  Y-axis  
+      unsigned i_tlu; // a trigger id
+      unsigned i_run; // a run  number 
+      unsigned i_event; // an event number 
+      unsigned long long int i_time_stamp; // the time stamp
   };
 
   namespace {
@@ -39,10 +39,10 @@ namespace eudaq {
 
   FileWriterRoot::FileWriterRoot(const std::string & /*param*/)
     : m_tfile(0), m_ttree(0),
-      id_plane(0), id_hit(0),
-      id_x(0), id_y(0),
-      i_tlu(0), i_run(0),
-      i_event(0), i_time_stamp(0)
+    id_plane(0), id_hit(0),
+    id_x(0), id_y(0),
+    i_tlu(0), i_run(0),
+    i_event(0), i_time_stamp(0)
   {
   }
 
@@ -76,10 +76,10 @@ namespace eudaq {
     }
     StandardEvent sev = eudaq::PluginManager::ConvertToStandard(ev);
     for (size_t iplane = 0; iplane < sev.NumPlanes(); ++iplane) {
-                
+
       const eudaq::StandardPlane & plane = sev.GetPlane(iplane);
       std::vector<double> cds = plane.GetPixels<double>();
-                
+
       for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
 
         //          if (ipix < 10) std::cout << ", " << plane.m_pix[0][ipix] << ";" << cds[ipix]

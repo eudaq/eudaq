@@ -31,16 +31,16 @@ class RootMonitor;
 
 class EUDAQMonitorHistos
 {
-protected:
+  protected:
     TProfile* Hits_vs_EventsTotal;
     TProfile** Hits_vs_Events;
     TProfile * Hits_vs_PlaneHisto;
     TH1F * Planes_perEventHisto;
     TProfile ** TLUdelta_perEventHisto;
-//    TH2I * TracksPerEvent;
+    //    TH2I * TracksPerEvent;
     TProfile * TracksPerEvent;
 
-public:
+  public:
     EUDAQMonitorHistos(const SimpleStandardEvent &ev);
     virtual ~EUDAQMonitorHistos();
     void Fill( const SimpleStandardEvent &ev);
@@ -52,12 +52,12 @@ public:
     TProfile *getHits_vs_PlaneHisto()const;
     TH1F *getPlanes_perEventHisto() const;
     TProfile *getTLUdelta_perEventHisto(unsigned int i) const;
-//    TH2I *getTracksPerEventHisto() const;
+    //    TH2I *getTracksPerEventHisto() const;
     TProfile *getTracksPerEventHisto() const;
 
     void setPlanes_perEventHisto(TH1F *Planes_perEventHisto);
     unsigned int getNplanes() const;
-private:
+  private:
     unsigned int nplanes;
 };
 

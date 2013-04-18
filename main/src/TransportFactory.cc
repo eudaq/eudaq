@@ -27,17 +27,17 @@ namespace eudaq {
   namespace {
 
     template <typename T_Server, typename T_Client>
-    struct MakeTransportInfo : public TransportFactory::TransportInfo {
-      MakeTransportInfo(const std::string & thename) :
-        TransportInfo(thename, theserverfactory, theclientfactory) {
-      }
-      static TransportServer * theserverfactory(const std::string & param) {
-        return new T_Server(param);
-      }
-      static TransportClient * theclientfactory(const std::string & param) {
-        return new T_Client(param);
-      }
-    };
+      struct MakeTransportInfo : public TransportFactory::TransportInfo {
+        MakeTransportInfo(const std::string & thename) :
+          TransportInfo(thename, theserverfactory, theclientfactory) {
+          }
+        static TransportServer * theserverfactory(const std::string & param) {
+          return new T_Server(param);
+        }
+        static TransportClient * theclientfactory(const std::string & param) {
+          return new T_Client(param);
+        }
+      };
 
     typedef std::map<std::string, TransportFactory::TransportInfo> map_t;
 

@@ -22,7 +22,7 @@ namespace eudaq {
 
   void DEPFETBoard::Print(std::ostream & os) const {
     os << "  ID            = " << m_id << "\n";
-//        << "  DataSize      = " << DataSize() << "\n";
+    //        << "  DataSize      = " << DataSize() << "\n";
   }
 
 
@@ -48,60 +48,60 @@ namespace eudaq {
     Event::Serialize(ser);
     ser.write(m_boards);
   }
-//   size_t DEPFETBoard::DataSize() const {
-//     return m_data.size();
-//   }
+  //   size_t DEPFETBoard::DataSize() const {
+  //     return m_data.size();
+  //   }
 
-//   template <typename T_coord, typename T_adc>
-//   DEPFETDecoder::arrays_t<T_coord, T_adc> DEPFETDecoder::GetArrays(const DEPFETBoard & brd) const {
-//       unsigned pixels = 8192; // datasize 8195!!! 
-//       DEPFETDecoder::arrays_t<T_coord, T_adc> result(pixels, 1);
-//       const unsigned  * data0 = (unsigned *) brd.GetData();
-//       const unsigned  * data = &data0[3];
+  //   template <typename T_coord, typename T_adc>
+  //   DEPFETDecoder::arrays_t<T_coord, T_adc> DEPFETDecoder::GetArrays(const DEPFETBoard & brd) const {
+  //       unsigned pixels = 8192; // datasize 8195!!! 
+  //       DEPFETDecoder::arrays_t<T_coord, T_adc> result(pixels, 1);
+  //       const unsigned  * data0 = (unsigned *) brd.GetData();
+  //       const unsigned  * data = &data0[3];
 
-//       //printf("eudaq::DEPFET data0=0x%x Trigger=0x%x data2= 0x%x  brdsize=%d\n",
-//       //       data0[0],data0[1],data0[2],(int)brd.DataSize());
+  //       //printf("eudaq::DEPFET data0=0x%x Trigger=0x%x data2= 0x%x  brdsize=%d\n",
+  //       //       data0[0],data0[1],data0[2],(int)brd.DataSize());
 
-//       for (unsigned i = 0; i < pixels; ++i) {
-//         int col = (data[i]>>16)&0x3F;
-//         int row = (data[i]>>22)&0x7F;
+  //       for (unsigned i = 0; i < pixels; ++i) {
+  //         int col = (data[i]>>16)&0x3F;
+  //         int row = (data[i]>>22)&0x7F;
 
-//         result.m_adc[0][i] = (data[i]& 0xffff);
-//         result.m_pivot[i] = false;
-//         result.m_x[i] = col;
-//         result.m_y[i] = row;
-//         //printf("eudaq::DEPFET ipix=%d col= %d row= %d data=%d brdsize=%d \n",
-//         //       i,col,row,data[i]&0xffff,(int)brd.DataSize());
-//       }
+  //         result.m_adc[0][i] = (data[i]& 0xffff);
+  //         result.m_pivot[i] = false;
+  //         result.m_x[i] = col;
+  //         result.m_y[i] = row;
+  //         //printf("eudaq::DEPFET ipix=%d col= %d row= %d data=%d brdsize=%d \n",
+  //         //       i,col,row,data[i]&0xffff,(int)brd.DataSize());
+  //       }
 
-//       return result;
-//   }
+  //       return result;
+  //   }
 
-//   DEPFETDecoder::DEPFETDecoder(const DetectorEvent & /*bore*/) {
-// //     for (size_t i = 0; i < bore.NumEvents(); ++i) {
-// //       const DEPFETEvent * ev = dynamic_cast<const DEPFETEvent *>(bore.GetEvent(i));
-// //       //std::cout << "SubEv " << i << (ev ? " is DEPFET" : "") << std::endl;
-// //       if (ev) {
-// //         unsigned nboards = from_string(ev->GetTag("BOARDS"), 0);
-// //         for (size_t j = 0; j < nboards; ++j) {
-// //           //std::cout << "Board " << j << std::endl;
-// //           unsigned id = from_string(ev->GetTag("ID") + to_string(j), j);
-// //           //std::cout << "ID = " << id << std::endl;
-// //           m_info[id] = BoardInfo(*ev, j);
-// //           // std::cout << "ok" << std::endl;
-// //         }
-// //       }
-// //     }
-//   }
+  //   DEPFETDecoder::DEPFETDecoder(const DetectorEvent & /*bore*/) {
+  // //     for (size_t i = 0; i < bore.NumEvents(); ++i) {
+  // //       const DEPFETEvent * ev = dynamic_cast<const DEPFETEvent *>(bore.GetEvent(i));
+  // //       //std::cout << "SubEv " << i << (ev ? " is DEPFET" : "") << std::endl;
+  // //       if (ev) {
+  // //         unsigned nboards = from_string(ev->GetTag("BOARDS"), 0);
+  // //         for (size_t j = 0; j < nboards; ++j) {
+  // //           //std::cout << "Board " << j << std::endl;
+  // //           unsigned id = from_string(ev->GetTag("ID") + to_string(j), j);
+  // //           //std::cout << "ID = " << id << std::endl;
+  // //           m_info[id] = BoardInfo(*ev, j);
+  // //           // std::cout << "ok" << std::endl;
+  // //         }
+  // //       }
+  // //     }
+  //   }
 
 
-// #define MAKE_DECODER_TYPE_D(TCOORD, TADC)
-//   template DEPFETDecoder::arrays_t<TCOORD, TADC> DEPFETDecoder::GetArrays<>(const DEPFETBoard & brd) const
+  // #define MAKE_DECODER_TYPE_D(TCOORD, TADC)
+  //   template DEPFETDecoder::arrays_t<TCOORD, TADC> DEPFETDecoder::GetArrays<>(const DEPFETBoard & brd) const
 
-//   MAKE_DECODER_TYPE_D(short, short);
-//   MAKE_DECODER_TYPE_D(double, double);
+  //   MAKE_DECODER_TYPE_D(short, short);
+  //   MAKE_DECODER_TYPE_D(double, double);
 
-// #undef MAKE_DECODER_TYPE_D
+  // #undef MAKE_DECODER_TYPE_D
 
 
 

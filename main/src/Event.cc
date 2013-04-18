@@ -37,7 +37,7 @@ namespace eudaq {
 
   void Event::Print(std::ostream & os) const {
     os << "Type=" << id2str(get_id()) << ":" << GetSubType()
-       << ", Number=" << m_runnumber << "." << m_eventnumber;
+      << ", Number=" << m_runnumber << "." << m_eventnumber;
     if (m_timestamp != NOTIMESTAMP)
       os << ", Time=0x" << to_hex(m_timestamp, 16);
     if (m_flags) {
@@ -46,7 +46,7 @@ namespace eudaq {
       for (size_t i = 0; f > 0; ++i, f >>= 1) {
         if (f & 1) {
           os << (first ? ", Flags=" : ",")
-             << (i < sizeof FLAGNAMES / sizeof *FLAGNAMES ? std::string(FLAGNAMES[i]) : to_string(i));
+            << (i < sizeof FLAGNAMES / sizeof *FLAGNAMES ? std::string(FLAGNAMES[i]) : to_string(i));
           first = false;
         }
       }

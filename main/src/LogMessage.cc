@@ -31,40 +31,40 @@ namespace eudaq {
 
   LogMessage::LogMessage(Deserializer & ds)
     : Status(ds), m_time(0, 0), m_createtime(Time::Current()) {
-    ds.read(m_file);
-    ds.read(m_func);
-    ds.read(m_line);
-    ds.read(m_time);
-  }
+      ds.read(m_file);
+      ds.read(m_func);
+      ds.read(m_line);
+      ds.read(m_time);
+    }
 
   LogMessage LogMessage::Read(std::istream & is) {
-//     os << Level2String(m_level) << "\t"
-//        << escape_string(m_msg) << "\t"
-//        << m_time.Formatted() << "\t"
-//        << GetSender() << "\t"
-//        << m_file << ":" << m_line << "\t"
-//        << m_func << "\n";
+    //     os << Level2String(m_level) << "\t"
+    //        << escape_string(m_msg) << "\t"
+    //        << m_time.Formatted() << "\t"
+    //        << GetSender() << "\t"
+    //        << m_file << ":" << m_line << "\t"
+    //        << m_func << "\n";
     std::string line;
     std::getline(is, line);
     std::vector<std::string> parts = eudaq::split(line);
     if (parts.size() == 1 && line.substr(0, 3) == "***") EUDAQ_THROWX(FileFormatException, "Ignored line");
     if (parts.size() != 6) EUDAQ_THROWX(FileFormatException, "Badly formatted line");
-      std::vector<std::string> timeparts = split(parts[2], " -.:");
-      if (timeparts.size() != 7) EUDAQ_THROW("Badly formatted time: " + parts[2]);
-      int level = 0;
-      while (eudaq::Status::Level2String(level) != "" &&
-             eudaq::Status::Level2String(level) != parts[0]) {
-        level++;
-      }
-      eudaq::Time time(from_string(timeparts[0], 1970), from_string(timeparts[1], 1), from_string(timeparts[2], 1),
-                       from_string(timeparts[3], 0), from_string(timeparts[4], 0), from_string(timeparts[5], 0),
-                       from_string(timeparts[6], 0) * 1000);
-      size_t colon = parts[4].find_last_of(":");
-      return eudaq::LogMessage(parts[1], (eudaq::Status::Level)level, time)
-        .SetLocation(parts[4].substr(0, colon),
-                     from_string(parts[4].substr(colon+1), 0),
-                     parts[5])
-        .SetSender(parts[3]);
+    std::vector<std::string> timeparts = split(parts[2], " -.:");
+    if (timeparts.size() != 7) EUDAQ_THROW("Badly formatted time: " + parts[2]);
+    int level = 0;
+    while (eudaq::Status::Level2String(level) != "" &&
+        eudaq::Status::Level2String(level) != parts[0]) {
+      level++;
+    }
+    eudaq::Time time(from_string(timeparts[0], 1970), from_string(timeparts[1], 1), from_string(timeparts[2], 1),
+        from_string(timeparts[3], 0), from_string(timeparts[4], 0), from_string(timeparts[5], 0),
+        from_string(timeparts[6], 0) * 1000);
+    size_t colon = parts[4].find_last_of(":");
+    return eudaq::LogMessage(parts[1], (eudaq::Status::Level)level, time)
+      .SetLocation(parts[4].substr(0, colon),
+          from_string(parts[4].substr(colon+1), 0),
+          parts[5])
+      .SetSender(parts[3]);
   }
 
   void LogMessage::Serialize(Serializer & ser) const {
@@ -77,7 +77,7 @@ namespace eudaq {
 
   void LogMessage::Print(std::ostream & os) const {
     os << Level2String(m_level) << ": " << m_msg
-       << " " << m_time.Formatted();
+      << " " << m_time.Formatted();
     if (m_sendertype != "") os << " " << GetSender();
     if ((m_level <= LVL_DEBUG || m_level >= LVL_ERROR) && m_file != "") {
       os << " [in " << m_file << ":" << m_line;
@@ -88,11 +88,11 @@ namespace eudaq {
 
   void LogMessage::Write(std::ostream & os) const {
     os << Level2String(m_level) << "\t"
-       << escape_string(m_msg) << "\t"
-       << m_time.Formatted() << "\t"
-       << GetSender() << "\t"
-       << m_file << ":" << m_line << "\t"
-       << m_func << "\n";
+      << escape_string(m_msg) << "\t"
+      << m_time.Formatted() << "\t"
+      << GetSender() << "\t"
+      << m_file << ":" << m_line << "\t"
+      << m_func << "\n";
   }
 
   LogMessage & LogMessage::SetLocation(const std::string & file, unsigned line, const std::string & func) {

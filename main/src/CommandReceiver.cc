@@ -26,12 +26,12 @@ namespace eudaq {
   } // anonymous namespace
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
-                                   const std::string & runcontrol, bool startthread)
+      const std::string & runcontrol, bool startthread)
     : m_cmdclient(TransportFactory::CreateClient(runcontrol)),
-      m_done(false),
-      m_type(type),
-      m_name(name),
-      m_threadcreated(false)
+    m_done(false),
+    m_type(type),
+    m_name(name),
+    m_threadcreated(false)
   {
     if (!m_cmdclient->IsNull()) {
       std::string packet;

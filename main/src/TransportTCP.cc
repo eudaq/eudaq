@@ -53,9 +53,9 @@ namespace eudaq {
       size_t sent = 0;
       do {
         int result = send(sock,
-                          reinterpret_cast<const char*>(data+sent),
-                          static_cast<int>(len-sent),
-                          FLAGS);
+            reinterpret_cast<const char*>(data+sent),
+            static_cast<int>(len-sent),
+            FLAGS);
         if (result > 0) {
           sent += result;
         } else if (result < 0 && (LastSockError() == EAGAIN || LastSockError() == EINTR)) {
@@ -93,14 +93,14 @@ namespace eudaq {
       //if (length > 500000) std::cout << "Done send packet" << std::endl;
     }
 
-//     static void send_data(SOCKET sock, unsigned long data) {
-//       std::string str;
-//       for (int i = 0; i < 4; ++i) {
-//         str += static_cast<char>(data & 0xff);
-//         data >>= 8;
-//       }
-//       send_data(sock, str);
-//     }
+    //     static void send_data(SOCKET sock, unsigned long data) {
+    //       std::string str;
+    //       for (int i = 0; i < 4; ++i) {
+    //         str += static_cast<char>(data & 0xff);
+    //         data >>= 8;
+    //       }
+    //       send_data(sock, str);
+    //     }
 
   } // anonymous namespace
 
@@ -143,11 +143,11 @@ namespace eudaq {
         for (int i = 0; i < 4; ++i) {
           m_len |= to_int(m_buf[i]) << (8*i);
         }
-//         std::cout << " (" << to_hex(m_buf[3], 2)
-//                   << " " << to_hex(m_buf[2], 2)
-//                   << " " << to_hex(m_buf[1], 2)
-//                   << " " << to_hex(m_buf[0], 2)
-//                   << ")";
+        //         std::cout << " (" << to_hex(m_buf[3], 2)
+        //                   << " " << to_hex(m_buf[2], 2)
+        //                   << " " << to_hex(m_buf[1], 2)
+        //                   << " " << to_hex(m_buf[0], 2)
+        //                   << ")";
       }
     }
     //std::cout << ", len=" << m_len << std::endl;
@@ -155,8 +155,8 @@ namespace eudaq {
 
   TCPServer::TCPServer(const std::string & param)
     : m_port(from_string(param, 44000)),
-      m_srvsock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
-      m_maxfd(m_srvsock)
+    m_srvsock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
+    m_maxfd(m_srvsock)
   {
     if (m_srvsock == (SOCKET)-1) EUDAQ_THROW(LastSockErrorString("Failed to create socket"));
     setup_signal();
@@ -282,8 +282,8 @@ namespace eudaq {
         for (SOCKET j=0; j < m_maxfd+1; j++) {
           if (FD_ISSET(j, &tempset)) {
             char buffer[MAX_BUFFER_SIZE+1];
-			do {
-				result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
+            do {
+              result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
             } while (result == -1 && LastSockError() == EINTR);
             if (result > 0) {
               buffer[result] = 0;
@@ -294,127 +294,127 @@ namespace eudaq {
                 m_events.push(TransportEvent(TransportEvent::RECEIVE, m, m.getpacket()));
               }
             } //else /*if (result == 0)*/ {
-			if (result == 0){
-				if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() <<", --> was closed "<< std::endl;
-				ConnectionInfoTCP & m = GetInfo(j);
-				m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
-				m.Disable();
-				closesocket(j);
-				FD_CLR(j, &m_fdset);
-			}
-			if (result == -1 ){
-				if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() << std::endl;
+            if (result == 0){
+              if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() <<", --> was closed "<< std::endl;
+              ConnectionInfoTCP & m = GetInfo(j);
+              m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
+              m.Disable();
+              closesocket(j);
+              FD_CLR(j, &m_fdset);
+            }
+            if (result == -1 ){
+              if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() << std::endl;
             }
           } // end if (FD_ISSET(j, &amp;tempset))
-        } // end for (j=0;...)
-      } // end else if (result > 0)
-      t_remain = Time(0, timeout) + t_start - Time::Current();
-    } while (!done && t_remain > Time(0));
-  }
+          } // end for (j=0;...)
+        } // end else if (result > 0)
+        t_remain = Time(0, timeout) + t_start - Time::Current();
+      } while (!done && t_remain > Time(0));
+    }
 
-  std::string TCPServer::ConnectionString() const {
-    const char * host = getenv("HOSTNAME");
-    if (!host) host = "localhost";
-    //gethostname(buf, sizeof buf);
-    return name + "://" + host + ":" + to_string(m_port);
-  }
+    std::string TCPServer::ConnectionString() const {
+      const char * host = getenv("HOSTNAME");
+      if (!host) host = "localhost";
+      //gethostname(buf, sizeof buf);
+      return name + "://" + host + ":" + to_string(m_port);
+    }
 
-  TCPClient::TCPClient(const std::string & param)
-    : m_server(param),
+    TCPClient::TCPClient(const std::string & param)
+      : m_server(param),
       m_port(44000),
       m_sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
       m_buf(ConnectionInfoTCP(m_sock, param))
-  {
-    if (m_sock == (SOCKET)-1) EUDAQ_THROW(LastSockErrorString("Failed to create socket"));
+    {
+      if (m_sock == (SOCKET)-1) EUDAQ_THROW(LastSockErrorString("Failed to create socket"));
 
-    size_t i = param.find(':');
-    if (i != std::string::npos) {
-      m_server = trim(std::string(param, 0, i));
-      m_port = from_string(std::string(param, i+1), 44000);
+      size_t i = param.find(':');
+      if (i != std::string::npos) {
+        m_server = trim(std::string(param, 0, i));
+        m_port = from_string(std::string(param, i+1), 44000);
+      }
+      if (m_server == "") m_server = "localhost";
+
+      OpenConnection();
     }
-    if (m_server == "") m_server = "localhost";
 
-    OpenConnection();
-  }
+    void TCPClient::OpenConnection() {
+      sockaddr_in addr;
+      std::memset(&addr, 0, sizeof(addr));
+      addr.sin_family = AF_INET;
+      addr.sin_port = htons(m_port);
 
-  void TCPClient::OpenConnection() {
-    sockaddr_in addr;
-    std::memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(m_port);
-
-    hostent * host = gethostbyname(m_server.c_str());
-    if (!host) {
-      closesocket(m_sock);
-      EUDAQ_THROW(LastSockErrorString("Error looking up address \'" + m_server + "\'"));
+      hostent * host = gethostbyname(m_server.c_str());
+      if (!host) {
+        closesocket(m_sock);
+        EUDAQ_THROW(LastSockErrorString("Error looking up address \'" + m_server + "\'"));
+      }
+      memcpy((char *) &addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+      if (connect(m_sock, (sockaddr *) &addr, sizeof(addr)) &&
+          LastSockError() != EINPROGRESS &&
+          LastSockError() != EWOULDBLOCK) {
+        EUDAQ_THROW(LastSockErrorString("Are you sure the server is running? - Error "
+              + to_string(LastSockError()) + " connecting to " +
+              m_server + ":" + to_string(m_port)));
+      }
+      setup_socket(m_sock); // set to non-blocking
     }
-    memcpy((char *) &addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
-    if (connect(m_sock, (sockaddr *) &addr, sizeof(addr)) &&
-        LastSockError() != EINPROGRESS &&
-        LastSockError() != EWOULDBLOCK) {
-      EUDAQ_THROW(LastSockErrorString("Are you sure the server is running? - Error "
-                                      + to_string(LastSockError()) + " connecting to " +
-                                      m_server + ":" + to_string(m_port)));
+
+    void TCPClient::SendPacket(const unsigned char * data, size_t len, const ConnectionInfo & id, bool) {
+      //std::cout << "Sending packet to " << id << std::endl;
+      if (id.Matches(m_buf)) {
+        //std::cout << " ok" << std::endl;
+        do_send_packet(m_buf.GetFd(), data, len);
+      }
+      //std::cout << "Sent" << std::endl;
     }
-    setup_socket(m_sock); // set to non-blocking
-  }
 
-  void TCPClient::SendPacket(const unsigned char * data, size_t len, const ConnectionInfo & id, bool) {
-    //std::cout << "Sending packet to " << id << std::endl;
-    if (id.Matches(m_buf)) {
-      //std::cout << " ok" << std::endl;
-      do_send_packet(m_buf.GetFd(), data, len);
-    }
-    //std::cout << "Sent" << std::endl;
-  }
-
-  void TCPClient::ProcessEvents(int timeout) {
-    //std::cout << "ProcessEvents()" << std::endl;
-    Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
-    bool done = false;
-    bool dbg = false;
-    do {
-      fd_set tempset;
-      FD_ZERO(&tempset);
-      FD_SET(m_sock, &tempset);
-          timeval timeremain = t_remain;
-      SOCKET result = select(static_cast<int>(m_sock+1), &tempset, NULL, NULL, &timeremain);
-      //std::cout << "Select result=" << result << std::endl;
-
-      bool donereading = false;
+    void TCPClient::ProcessEvents(int timeout) {
+      //std::cout << "ProcessEvents()" << std::endl;
+      Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
+      bool done = false;
+      bool dbg = false;
       do {
-        char buffer[MAX_BUFFER_SIZE+1];
-		do {
-			result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
-        } while (result == (SOCKET)-1 && LastSockError() == EINTR);
-        if (result == (SOCKET)-1 && LastSockError() == EWOULDBLOCK) {
-        	if (dbg)	std::cout << "ResultClient = " << result << std::endl;
-        	donereading = true;
-        }
-        if (result == -1) {
-        	if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> Time out. "<< std::endl;
-        }
-        if (result == 0) {
-        	if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> WARN: Connection closed (?) "<< std::endl;
-        	donereading = true;
-        	EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
-        }
-        if (result > 0){
-          m_buf.append(result, buffer);
-          while (m_buf.havepacket()) {
-            m_events.push(TransportEvent(TransportEvent::RECEIVE, m_buf, m_buf.getpacket()));
-            done = true;
+        fd_set tempset;
+        FD_ZERO(&tempset);
+        FD_SET(m_sock, &tempset);
+        timeval timeremain = t_remain;
+        SOCKET result = select(static_cast<int>(m_sock+1), &tempset, NULL, NULL, &timeremain);
+        //std::cout << "Select result=" << result << std::endl;
+
+        bool donereading = false;
+        do {
+          char buffer[MAX_BUFFER_SIZE+1];
+          do {
+            result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
+          } while (result == (SOCKET)-1 && LastSockError() == EINTR);
+          if (result == (SOCKET)-1 && LastSockError() == EWOULDBLOCK) {
+            if (dbg)	std::cout << "ResultClient = " << result << std::endl;
+            donereading = true;
           }
-        }
-      } while (!donereading);
-      t_remain = Time(0, timeout) + t_start - Time::Current();
-      //std::cout << "Remaining: " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
-    } while (!done && t_remain > Time(0));
-    //std::cout << "done" << std::endl;
-  }
+          if (result == -1) {
+            if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> Time out. "<< std::endl;
+          }
+          if (result == 0) {
+            if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> WARN: Connection closed (?) "<< std::endl;
+            donereading = true;
+            EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
+          }
+          if (result > 0){
+            m_buf.append(result, buffer);
+            while (m_buf.havepacket()) {
+              m_events.push(TransportEvent(TransportEvent::RECEIVE, m_buf, m_buf.getpacket()));
+              done = true;
+            }
+          }
+        } while (!donereading);
+        t_remain = Time(0, timeout) + t_start - Time::Current();
+        //std::cout << "Remaining: " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
+      } while (!done && t_remain > Time(0));
+      //std::cout << "done" << std::endl;
+    }
 
-  TCPClient::~TCPClient() {
-    closesocket(m_sock);
-  }
+    TCPClient::~TCPClient() {
+      closesocket(m_sock);
+    }
 
-}
+  }

@@ -74,9 +74,9 @@ namespace eudaq {
   }
 
   bool TransportBase::SendReceivePacket(const std::string & sendpacket,
-                                        std::string * recpacket,
-                                        const ConnectionInfo & connection,
-                                        int timeout)
+      std::string * recpacket,
+      const ConnectionInfo & connection,
+      int timeout)
   {
     // acquire mutex...
     if (timeout == -1) timeout = DEFAULT_TIMEOUT;

@@ -14,8 +14,8 @@
 
 #define EUDAQ_EXCEPTIONX(name, base) \
   class name : public base {         \
-  public:                            \
-  name(const std::string & msg)      \
+    public:                            \
+                                       name(const std::string & msg)      \
     : base(msg) {}                   \
   }
 
@@ -24,34 +24,34 @@
 namespace eudaq {
 
   class Exception : public std::exception {
-  public:
-    Exception(const std::string & msg);
-    const char * what() const throw() {
-      if (m_text.length() == 0) make_text();
-      return m_text.c_str();
-    }
-    // This shouldn't really be const, but it must be callable on temporary objects...
-    const Exception & SetLocation(const std::string & file = "",
-                                  unsigned line = 0,
-                                  const std::string & func = "") const;
-    virtual ~Exception() throw() {
-    }
-  protected:
-    std::string m_msg;
-  private:
-    void make_text() const;
-    mutable std::string m_text;
-    mutable std::string m_file, m_func;
-    mutable unsigned m_line;
+    public:
+      Exception(const std::string & msg);
+      const char * what() const throw() {
+        if (m_text.length() == 0) make_text();
+        return m_text.c_str();
+      }
+      // This shouldn't really be const, but it must be callable on temporary objects...
+      const Exception & SetLocation(const std::string & file = "",
+          unsigned line = 0,
+          const std::string & func = "") const;
+      virtual ~Exception() throw() {
+      }
+    protected:
+      std::string m_msg;
+    private:
+      void make_text() const;
+      mutable std::string m_text;
+      mutable std::string m_file, m_func;
+      mutable unsigned m_line;
   };
 
   class LoggedException : public Exception {
-  public:
-    LoggedException(const std::string & msg);
-    void Log() const;
-    virtual ~LoggedException() throw();
-  private:
-    mutable bool m_logged;
+    public:
+      LoggedException(const std::string & msg);
+      void Log() const;
+      virtual ~LoggedException() throw();
+    private:
+      mutable bool m_logged;
   };
 
   namespace {
@@ -63,11 +63,11 @@ namespace eudaq {
   }
 
   template <typename T>
-  const T & InitException(const T & e, const std::string & file, int line = 0, const std::string func = "") {
-    e.SetLocation(file, line, func);
-    do_log(e); // If it is a LoggedException, send it to be logged already
-    return e;
-  }
+    const T & InitException(const T & e, const std::string & file, int line = 0, const std::string func = "") {
+      e.SetLocation(file, line, func);
+      do_log(e); // If it is a LoggedException, send it to be logged already
+      return e;
+    }
 
   // Some useful predefined exceptions
   EUDAQ_EXCEPTION(FileNotFoundException);

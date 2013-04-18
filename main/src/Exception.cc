@@ -9,8 +9,8 @@ namespace eudaq {
   {}
 
   const Exception & Exception::SetLocation(const std::string & file,
-                                           unsigned line,
-                                           const std::string & func) const {
+      unsigned line,
+      const std::string & func) const {
     m_file = file;
     m_line = line;
     m_func = func;

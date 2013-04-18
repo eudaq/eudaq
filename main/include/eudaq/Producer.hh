@@ -13,16 +13,16 @@ namespace eudaq {
    * and a DataSender, sending data to a DataCollector.
    */
   class Producer : public CommandReceiver, public DataSender {
-  public:
-    /**
-     * The constructor.
-     * \param runcontrol A string containing the address of the RunControl to connect to.
-     */
-    Producer(const std::string & name, const std::string & runcontrol);
-    virtual ~Producer() {}
+    public:
+      /**
+       * The constructor.
+       * \param runcontrol A string containing the address of the RunControl to connect to.
+       */
+      Producer(const std::string & name, const std::string & runcontrol);
+      virtual ~Producer() {}
 
-    virtual void OnData(const std::string & param);
-  private:
+      virtual void OnData(const std::string & param);
+    private:
   };
 
 }

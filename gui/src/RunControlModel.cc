@@ -13,17 +13,17 @@ namespace {
   };
 }
 
-RunControlConnection::RunControlConnection(const eudaq::ConnectionInfo & id)
-  : m_id(id.Clone())
+  RunControlConnection::RunControlConnection(const eudaq::ConnectionInfo & id)
+: m_id(id.Clone())
 {}
 
 QString RunControlConnection::operator [] (int i) const {
   switch(i) {
-  case 0: return m_id->GetType().c_str();
-  case 1: return m_id->GetName().c_str();
-  case 2: return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
-  case 3: return m_id->GetRemote().c_str();
-  default: return "";
+    case 0: return m_id->GetType().c_str();
+    case 1: return m_id->GetName().c_str();
+    case 2: return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
+    case 3: return m_id->GetRemote().c_str();
+    default: return "";
   }
 }
 
@@ -38,9 +38,9 @@ const char * RunControlConnection::ColumnName(int i) {
   return g_columns[i];
 }
 
-RunControlModel::RunControlModel(QObject *parent)
-  : QAbstractListModel(parent),
-    m_sorter(&m_data)
+  RunControlModel::RunControlModel(QObject *parent)
+: QAbstractListModel(parent),
+  m_sorter(&m_data)
 {
 }
 
@@ -108,18 +108,18 @@ int RunControlModel::GetLevel(const QModelIndex &index) const {
   return eudaq::Status::LVL_DEBUG;
 }
 
-QVariant RunControlModel::data(const QModelIndex &index, int role) const {
-  if (role != Qt::DisplayRole || !index.isValid())
+  QVariant RunControlModel::data(const QModelIndex &index, int role) const {
+    if (role != Qt::DisplayRole || !index.isValid())
+      return QVariant();
+
+    if (index.column() < columnCount() && index.row() < rowCount())
+      return m_data[m_disp[index.row()]][index.column()];
+
     return QVariant();
-
-  if (index.column() < columnCount() && index.row() < rowCount())
-    return m_data[m_disp[index.row()]][index.column()];
-
-  return QVariant();
-}
+  }
 
 QVariant RunControlModel::headerData(int section, Qt::Orientation orientation,
-                                      int role) const {
+    int role) const {
   if (role != Qt::DisplayRole)
     return QVariant();
 
@@ -127,4 +127,4 @@ QVariant RunControlModel::headerData(int section, Qt::Orientation orientation,
     return RunControlConnection::ColumnName(section);
 
   return QVariant();
- }
+}

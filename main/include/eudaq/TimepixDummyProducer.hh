@@ -45,7 +45,7 @@ class TimepixDummyProducer : public eudaq::Producer
      *  Make sure they do not perfom computing intensive tasks and return as
      *  soon as possible.
      */
-protected:
+  protected:
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
     virtual void OnStopRun();
@@ -59,6 +59,6 @@ protected:
     bool m_done;       pthread_mutex_t m_done_mutex;
     unsigned m_run;  pthread_mutex_t m_run_mutex;
     unsigned m_ev;   pthread_mutex_t m_ev_mutex;
-    
+
     pthread_mutexattr_t m_mutexattr;
 };

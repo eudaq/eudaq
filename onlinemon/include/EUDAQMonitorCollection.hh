@@ -31,22 +31,22 @@ using namespace std;
 
 class EUDAQMonitorCollection: public BaseCollection
 {
-	RQ_OBJECT("EUDAQMonitorCollection")
-	protected:
-		void fillHistograms(const SimpleStandardEvent &ev);
-		bool histos_init;
-public:
-	EUDAQMonitorCollection();
-	virtual ~EUDAQMonitorCollection();
-	void Reset();
-	virtual void Write(TFile *file);
-	void Calculate(const unsigned int currentEventNumber);
-	void bookHistograms(const SimpleStandardEvent &simpev);
-	void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
-	void Fill(const SimpleStandardEvent &simpev);
-	EUDAQMonitorHistos * getEUDAQMonitorHistos();
-private:
-	EUDAQMonitorHistos * mymonhistos;
+  RQ_OBJECT("EUDAQMonitorCollection")
+  protected:
+    void fillHistograms(const SimpleStandardEvent &ev);
+    bool histos_init;
+  public:
+    EUDAQMonitorCollection();
+    virtual ~EUDAQMonitorCollection();
+    void Reset();
+    virtual void Write(TFile *file);
+    void Calculate(const unsigned int currentEventNumber);
+    void bookHistograms(const SimpleStandardEvent &simpev);
+    void setRootMonitor(RootMonitor *mon)  {_mon = mon; }
+    void Fill(const SimpleStandardEvent &simpev);
+    EUDAQMonitorHistos * getEUDAQMonitorHistos();
+  private:
+    EUDAQMonitorHistos * mymonhistos;
 
 };
 

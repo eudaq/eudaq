@@ -44,11 +44,11 @@ namespace eudaq {
   class NIConverterPlugin : public DataConverterPlugin {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
-  public:
+    public:
     virtual ~NIConverterPlugin(){ }
 
     virtual void Initialize(const Event & bore, const Configuration & /*c*/) {
-     
+
       m_boards = from_string(bore.GetTag("BOARDS"), 0);
       if( m_boards == 255 ) { m_boards = 6; }
 
@@ -77,7 +77,7 @@ namespace eudaq {
       }
 
       if(dbg>0) std::cout << "GetStandardSubEvent : data" << std::endl;
- 
+
       // If we get here it must be a data event
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(source);
       if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
@@ -114,25 +114,25 @@ namespace eudaq {
         if (dbg) std::cout << "Mimosa_framecount1 = " << hexdec(GET(it1, 0)) << std::endl;
         unsigned len0 = GET(it0, 1);
         if (dbg) std::cout << "Mimosa_wordcount0 = " << hexdec(len0 & 0xffff, 4)
-                           << ", " << hexdec(len0 >> 16, 4) << std::endl;
+          << ", " << hexdec(len0 >> 16, 4) << std::endl;
         if ((len0 & 0xffff) != (len0 >> 16)) {
           EUDAQ_WARN("Mismatched lengths decoding first frame (" +
-                     to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
+              to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
           len0 = std::max(len0 & 0xffff, len0 >> 16);
         }
         len0 &= 0xffff;
         unsigned len1 = GET(it1, 1);
         if (dbg) std::cout << "Mimosa_wordcount1 = " << hexdec(len1 & 0xffff, 4)
-                           << ", " << hexdec(len1 >> 16, 4) << std::endl;
+          << ", " << hexdec(len1 >> 16, 4) << std::endl;
         if ((len1 & 0xffff) != (len1 >> 16)) {
           EUDAQ_WARN("Mismatched lengths decoding second frame (" +
-                     to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) + ")");
+              to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) + ")");
           len1 = std::max(len1 & 0xffff, len1 >> 16);
         }
         len1 &= 0xffff;
 
-//        for(unsigned i=0;i<len0;i++) std::cout << "0:i="<<i << hexdec(GET(it0, i)) << std::endl;
-//        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i << hexdec(GET(it1, i)) << std::endl;
+        //        for(unsigned i=0;i<len0;i++) std::cout << "0:i="<<i << hexdec(GET(it0, i)) << std::endl;
+        //        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i << hexdec(GET(it1, i)) << std::endl;
 
 
         if (it0 + len0*4 + 12 > data0.end()) {
@@ -152,14 +152,14 @@ namespace eudaq {
         result.AddPlane(plane);
 
         if (dbg) std::cout << "Mimosa_trailer0 = " << hexdec(GET(it0, len0+2)) << std::endl;
-//        if (dbg) std::cout << "Mimosa        0 = " << hexdec(GET(it0, 0)) << " len0 = " << len0 << " by " << (len0*4+16) <<std::endl;      
+        //        if (dbg) std::cout << "Mimosa        0 = " << hexdec(GET(it0, 0)) << " len0 = " << len0 << " by " << (len0*4+16) <<std::endl;      
         if (dbg) std::cout << "Mimosa_trailer1 = " << hexdec(GET(it1, len1+2)) << std::endl;
-//        if (dbg) std::cout << "Mimosa        1 = " << hexdec(GET(it1, 0)) << " len1 = " << len1 << " by " << (len1*4+16) <<std::endl;
-        
-//      it0  = it0 + len0*4 + 16; std::cout << " done 0 \n";
-//      it1  = it1 + len1*4 + 16; std::cout << " done 1 \n";
+        //        if (dbg) std::cout << "Mimosa        1 = " << hexdec(GET(it1, 0)) << " len1 = " << len1 << " by " << (len1*4+16) <<std::endl;
 
-// add len*4+16 untill reching the end of data block, if reached break!
+        //      it0  = it0 + len0*4 + 16; std::cout << " done 0 \n";
+        //      it1  = it1 + len1*4 + 16; std::cout << " done 1 \n";
+
+        // add len*4+16 untill reching the end of data block, if reached break!
 
         bool advance_one_block_0 = false;
         bool advance_one_block_1 = false;
@@ -177,29 +177,29 @@ namespace eudaq {
 
         if( advance_one_block_0 && advance_one_block_1)
         {
-         it0  = it0 + (len0+4)*4 ; if(dbg) std::cout << " done 0 \n";
-         if (it0 <= data0.end()) header0 = GET(it0, -1);
- 
-         it1  = it1 + (len1+4)*4 ; if(dbg) std::cout << " done 1 \n";
-         if (it1 <= data1.end()) header1 = GET(it1, -1);
+          it0  = it0 + (len0+4)*4 ; if(dbg) std::cout << " done 0 \n";
+          if (it0 <= data0.end()) header0 = GET(it0, -1);
+
+          it1  = it1 + (len1+4)*4 ; if(dbg) std::cout << " done 1 \n";
+          if (it1 <= data1.end()) header1 = GET(it1, -1);
         }
         else
         {
-         if(dbg) std::cout << "advance_one_block_0 = " << advance_one_block_0 << std::endl;
-         if(dbg) std::cout << "advance_one_block_1 = " << advance_one_block_1 << std::endl;
-         if(dbg) std::cout << "break the block" << std::endl;
-         break;
+          if(dbg) std::cout << "advance_one_block_0 = " << advance_one_block_0 << std::endl;
+          if(dbg) std::cout << "advance_one_block_1 = " << advance_one_block_1 << std::endl;
+          if(dbg) std::cout << "break the block" << std::endl;
+          break;
         }
- 
-//        std::cout << " to " << hexdec(GET(data0.end(),0 )) << std::endl;
-//        std::cout << " to " << hexdec(GET(data1.end(),0 )) << std::endl;
 
-       ++board;
+        //        std::cout << " to " << hexdec(GET(data0.end(),0 )) << std::endl;
+        //        std::cout << " to " << hexdec(GET(data1.end(),0 )) << std::endl;
 
-     }
+        ++board;
+
+      }
       return true;
     }
-    
+
 
     void DecodeFrame(StandardPlane & plane, size_t len, datait it, int frame) const {
       std::vector<unsigned short> vec;
@@ -209,35 +209,35 @@ namespace eudaq {
         vec.push_back(v >> 16);
       }
 
-        unsigned npixels = 0;
-        for (size_t i = 0; i < vec.size(); ++i) {
-          //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
-          if (i == vec.size() - 1) break;
-          unsigned numstates = vec[i] & 0xf;
-          unsigned row = vec[i]>>4 & 0x7ff;
-          if (numstates+1 > vec.size()-i) {
-            // Ignoring bad line
-            //std::cout << "Ignoring bad line " << row << " (too many states)" << std::endl;
-            break;
-          }
-          if (dbg>2) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
-                             << ", states " << numstates << ":";
-          bool pivot = (row >= (plane.PivotPixel() / 16));
-          for (unsigned s = 0; s < numstates; ++s) {
-            unsigned v = vec.at(++i);
-            unsigned column = v>>2 & 0x7ff;
-            unsigned num = v & 3;
-            if (dbg>2) std::cout << (s ? "," : " ") << column;
-            if (dbg>2) if ((v&3) > 0) std::cout << "-" << (column + num);
-            for (unsigned j = 0; j < num+1; ++j) {
-              plane.PushPixel(column+j, row, 1, pivot, frame);
-            }
-            npixels += num + 1;
-          }
-          if (dbg>2) std::cout << std::endl;
+      unsigned npixels = 0;
+      for (size_t i = 0; i < vec.size(); ++i) {
+        //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
+        if (i == vec.size() - 1) break;
+        unsigned numstates = vec[i] & 0xf;
+        unsigned row = vec[i]>>4 & 0x7ff;
+        if (numstates+1 > vec.size()-i) {
+          // Ignoring bad line
+          //std::cout << "Ignoring bad line " << row << " (too many states)" << std::endl;
+          break;
         }
-        if (dbg) std::cout << "Total pixels " << frame << " = " << npixels << std::endl;
-        //++offset;
+        if (dbg>2) std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
+          << ", states " << numstates << ":";
+        bool pivot = (row >= (plane.PivotPixel() / 16));
+        for (unsigned s = 0; s < numstates; ++s) {
+          unsigned v = vec.at(++i);
+          unsigned column = v>>2 & 0x7ff;
+          unsigned num = v & 3;
+          if (dbg>2) std::cout << (s ? "," : " ") << column;
+          if (dbg>2) if ((v&3) > 0) std::cout << "-" << (column + num);
+          for (unsigned j = 0; j < num+1; ++j) {
+            plane.PushPixel(column+j, row, 1, pivot, frame);
+          }
+          npixels += num + 1;
+        }
+        if (dbg>2) std::cout << std::endl;
+      }
+      if (dbg) std::cout << "Total pixels " << frame << " = " << npixels << std::endl;
+      //++offset;
 
 
     }
@@ -247,7 +247,7 @@ namespace eudaq {
     virtual bool GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const;
 #endif
 
-  protected:
+    protected:
     //static size_t GetID(const Event & event, size_t i) {
     //  if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
     //    return ev->GetID(i);
@@ -264,7 +264,7 @@ namespace eudaq {
     //    offset += len + 4;
     //  }
     //}
-  private:
+    private:
     NIConverterPlugin() : DataConverterPlugin("NI"), m_boards(0) {}
     unsigned m_boards;
     std::vector<int> m_ids;
@@ -355,15 +355,15 @@ namespace eudaq {
 
     StandardEvent tmp_evt;
     GetStandardSubEvent(tmp_evt, rawDataEvent);
- 
+
     if( numplanes !=  tmp_evt.NumPlanes() ) 
     {
       numplanes = tmp_evt.NumPlanes() ;
     }
-    
+
     for (size_t iPlane = 0; iPlane < numplanes; ++iPlane) {
-     if(dbg>2) std::cout << "setting plane #  "<< iPlane << " out of " << numplanes << " up to " << tmp_evt.NumPlanes() << std::endl;
-     StandardPlane plane = static_cast<StandardPlane> ( tmp_evt.GetPlane(iPlane) );
+      if(dbg>2) std::cout << "setting plane #  "<< iPlane << " out of " << numplanes << " up to " << tmp_evt.NumPlanes() << std::endl;
+      StandardPlane plane = static_cast<StandardPlane> ( tmp_evt.GetPlane(iPlane) );
 
       // The current detector is ...
       eutelescope::EUTelPixelDetector * currentDetector = 0x0;
@@ -455,10 +455,10 @@ namespace eudaq {
             // we don't have to add it to the sparse frame.
 
             /*
-              streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
-                                       <<")  on a marker column. Not adding it to the frame" << endl
-                                       << (* (sparsePixel.get() ) ) << endl;
-            */
+               streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
+               <<")  on a marker column. Not adding it to the frame" << endl
+               << (* (sparsePixel.get() ) ) << endl;
+             */
 
           }
 
@@ -505,18 +505,18 @@ namespace eudaq {
           // marker column
           currentCDSPos = copy( cdsBegin + offset, cdsBegin + ( *(marker) + offset ), currentCDSPos );
 
-            // now copy from the next column to the next marker into a
-            // while loop
-            while ( marker != markerVec.end() ) {
-              if ( marker < markerVec.end() - 1 ) {
-                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
-              } else {
-                // now from the last marker column to the end of the
-                // row
-                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + offset + currentDetector->getXNoOfPixel(), currentCDSPos );
-              }
-              ++marker;
+          // now copy from the next column to the next marker into a
+          // while loop
+          while ( marker != markerVec.end() ) {
+            if ( marker < markerVec.end() - 1 ) {
+              currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
+            } else {
+              // now from the last marker column to the end of the
+              // row
+              currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + offset + currentDetector->getXNoOfPixel(), currentCDSPos );
             }
+            ++marker;
+          }
         }
 
         // this is the right place to prepare the TrackerRawData
@@ -592,23 +592,23 @@ namespace eudaq {
         while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
           // print out all the slave boards first
           std::cout << " --> Board (S) " <<  std::setw(3) << setiosflags( std::ios::right )
-                    << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
-                    << " = " << std::setw(15) << setiosflags( std::ios::right )
-                    << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
-                    << " (" << std::setw(15) << setiosflags( std::ios::right )
-                    << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
-                    << ")" << std::endl;
+            << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
+            << " = " << std::setw(15) << setiosflags( std::ios::right )
+            << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
+            << " (" << std::setw(15) << setiosflags( std::ios::right )
+            << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
+            << ")" << std::endl;
           ++slaveBoardPivotAddress;
         }
         // print out also the master. It is impossible that the master
         // is out of sync with respect to itself, but for completeness...
         std::cout  << " --> Board (M) "  <<  std::setw(3) << setiosflags( std::ios::right )
-                   << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
-                   << " = " << std::setw(15) << setiosflags( std::ios::right )
-                   << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
-                   << " (" << std::setw(15)  << setiosflags( std::ios::right )
-                   << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
-                   << ")" << std::endl;
+          << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( std::ios::right )
+          << " = " << std::setw(15) << setiosflags( std::ios::right )
+          << (*slaveBoardPivotAddress) << resetiosflags( std::ios::right )
+          << " (" << std::setw(15)  << setiosflags( std::ios::right )
+          << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags( std::ios::right)
+          << ")" << std::endl;
 
       } else if ( result.getEventNumber()  == 20 ) {
         // if the number of consecutive warnings is equal to the maximum
@@ -616,36 +616,36 @@ namespace eudaq {
         // because it's very likely the run was taken unsynchronized on
         // purpose
         std::cout << "The maximum number of unsychronized events has been reached." << std::endl
-                  << "Assuming the run was taken in asynchronous mode" << std::endl;
+          << "Assuming the run was taken in asynchronous mode" << std::endl;
       }
     }
 
     // add the collections to the event only if not empty and not yet there
     if ( !rawDataCollectionExists){
       if ( rawDataCollection->size() != 0 )
-	result.addCollection( rawDataCollection, "rawdata" );
+        result.addCollection( rawDataCollection, "rawdata" );
       else
-	delete rawDataCollection; // clean up if not storing the collection here
+        delete rawDataCollection; // clean up if not storing the collection here
     }
 
     if ( !zsDataCollectionExists){
       if ( zsDataCollection->size() != 0 ) 
-	result.addCollection( zsDataCollection, "zsdata" );
+        result.addCollection( zsDataCollection, "zsdata" );
       else
-	delete zsDataCollection; // clean up if not storing the collection here
+        delete zsDataCollection; // clean up if not storing the collection here
     }
 
     if ( !zs2DataCollectionExists){
       if ( zs2DataCollection->size() != 0 )
-	result.addCollection( zs2DataCollection, "zsdata_m26" );
+        result.addCollection( zs2DataCollection, "zsdata_m26" );
       else
-	delete zs2DataCollection; // clean up if not storing the collection here
+        delete zs2DataCollection; // clean up if not storing the collection here
     }
 
 
     return true;
   }
-  
+
 #endif
 
 

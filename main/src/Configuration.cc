@@ -9,14 +9,14 @@ namespace eudaq {
 
   Configuration::Configuration(const std::string & config, const std::string & section)
     : m_cur(&m_config[""]) {
-    std::istringstream confstr(config);
-    Load(confstr, section);
-  }
+      std::istringstream confstr(config);
+      Load(confstr, section);
+    }
 
   Configuration::Configuration(std::istream & conffile, const std::string & section)
-  : m_cur(&m_config[""]) {
-    Load(conffile, section);
-  }
+    : m_cur(&m_config[""]) {
+      Load(conffile, section);
+    }
 
   Configuration::Configuration(const Configuration & other)
     : m_config(other.m_config)
