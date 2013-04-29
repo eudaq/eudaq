@@ -487,7 +487,7 @@ int main(int argc, const char ** argv) {
   eudaq::Option<unsigned>        skipping(op, "s", "skip", 0, "Percentage of events to skip");
   eudaq::Option<unsigned>        corr_width(op, "cw", "corr_width",500, "Width of the track correlation window");
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
-  eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", true, "Using track correlation(true) or cluster correlation(false)");
+  eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", false, "Using (EXPERIMENTAL) track correlation(true) or cluster correlation(false)");
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
