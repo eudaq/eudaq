@@ -1,0 +1,13 @@
+#!/bin/bash
+# cleanup of DAQ
+EUDRBIP2=192.168.3.4
+printf 'Killing DAQ\n'
+printf '\t Cleaning up...\n'
+killall TestDataCollector.exe
+ssh -Y $EUDRBIP "killall EUDRBProducer.exe" &
+killall TLUProducer.exe
+killall euLog
+sleep 1
+killall euRun
+printf '\033[1;32;48mKILLING DAQ COMPLETE, type STARTRUN to relaunch\033[0m \n'
+
