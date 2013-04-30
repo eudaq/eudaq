@@ -119,6 +119,22 @@ namespace tlu {
       return unsigned(fullscale * (vdac / (2*vref))) & 0x3FFU;
     }
 
+    static unsigned pmt_dac_value(double voltage) { // input range 0- 1.0V
+
+      if(voltage <0.0 || voltage > 1.0)   {
+	std::cout << "Input voltage range [0, 1.0 V] " <<std::endl;
+	return 0;
+      }
+      static const double vref = 0.5, vgain = 2.0;  
+      static const unsigned fullscale = 0x3ff;   // 12-bits
+      unsigned dac_orig = 0xb000 | ((unsigned(fullscale * ( voltage/ (vref * vgain))) & 0x3FFU) << 2); 
+
+      //repack the data
+      unsigned dac_val = (dac_orig >> 8) | ((dac_orig & 0x00ff) << 8);
+      return dac_val;
+
+    }
+
   }
 
   double Timestamp2Seconds(unsigned long long t) {
@@ -229,6 +245,10 @@ namespace tlu {
     InhibitTriggers(true);
   }
 
+
+
+
+
   void TLUController::Initialize() {
     if (m_version == 2) {
       if (!SetupLemo()) {
@@ -236,6 +256,8 @@ namespace tlu {
         m_version++;
       }
     }
+
+    SetupLVPower();
 
     // set up beam trigger
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
@@ -282,16 +304,32 @@ namespace tlu {
     Initialize();
   }
 
+
+  bool TLUController::SetupLVPower() {  // set LV-Out control voltage to 0.8 V
+
+    SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
+    try {
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(0.8) ); //        
+    } catch (const eudaq::Exception &) {
+      return false;
+    }
+    
+    return true;
+  }
+
+
+
   bool TLUController::SetupLemo() {
     SelectBus(m_addr->TLU_I2C_BUS_LEMO);
     try {
       // TTL (0x3) -> -0.5
       // NIM (0xC) ->  0.4
-      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_ADC,
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_DAC,
                  0x3, 0xf000 | (lemo_dac_value(-0.5) << 2));
-      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_ADC,
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_DAC,
                  0xC, 0xf000 | (lemo_dac_value(0.4) << 2));
     } catch (const eudaq::Exception &) {
+      
       return false;
     }
     // Set high-z for TTL, 50-ohm for NIM
@@ -537,6 +575,7 @@ namespace tlu {
     unsigned trig = m_triggernum - entries;
     if (entries > 0) {
       if (trig != old_triggernum) {
+
         EUDAQ_ERROR("Unexpected trigger number: " + to_string(trig) +
                     " (expecting " + to_string(old_triggernum) + ")");
       }
@@ -1137,6 +1176,7 @@ namespace tlu {
 #if TLUDEBUG
     std::cout << "DEBUG: PCA955 bus=" << bus << ", device=" << hexdec(device) << ", data=" << hexdec(data) << std::endl;
 #endif
+
     SelectBus(bus);
     // set pca955 io as output
     WriteI2C16((PCA955_HW_ADDR << 3) | device, PCA955_CONFIG0_REGISTER, 0);
@@ -1150,6 +1190,7 @@ namespace tlu {
     std::cout << "DEBUG: I2C16 device=" << device << ", command=" << eudaq::hexdec(command)
               << ", data=" << hexdec(data) << std::endl;
 #endif
+
     // execute i2c start
     WriteI2Clines(1, 1);
     I2Cdelay();
