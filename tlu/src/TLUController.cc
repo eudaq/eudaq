@@ -309,7 +309,7 @@ namespace tlu {
 
     SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
     try {
-      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(0.8) ); //        
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(0.91) ); //
     } catch (const eudaq::Exception &) {
       return false;
     }
