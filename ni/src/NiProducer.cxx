@@ -63,7 +63,7 @@ public:
 			Mode = 			param.Get("Mode", 255);
 			NiVersion = 	param.Get("NiVersion", 255);
 			NumBoards = 	param.Get("NumBoards", 255);
-			FPGADownload = 	param.Get("FPGADownload", 255);
+			FPGADownload = 	param.Get("FPGADownload", 1  );
 			for(unsigned char i=0; i<6; i++){
 				MimosaID[i] = param.Get("MimosaID_" + to_string(i+1), 255);
 				MimosaEn[i] = param.Get("MimosaEn_" + to_string(i+1), 255);
