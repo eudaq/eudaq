@@ -50,6 +50,8 @@ int main(int /*argc*/, char ** argv) {
                                   "Length of 'on' time for timing strobe in clock cycles");
   eudaq::Option<int>         enabledutveto(op, "b", "dutveto", 0, "mask",
                                   "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
+  eudaq::Option<int>         lvpowervref(op, "p", "powervref", 900, "mV", "LV power, range from 250 to 900 (in mV)");
+
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
   eudaq::OptionFlag          pause(op, "u", "wait-for-user", "Wait for user input before starting triggers");
@@ -76,6 +78,7 @@ int main(int /*argc*/, char ** argv) {
               << "Strobe period = " << hexdec(strobeperiod.Value(), 6) << "\n"
               << "Strobe length = " << hexdec(strobelength.Value(), 6) << "\n"
               << "Enable DUT Veto = " << hexdec(enabledutveto.Value(), 2) << "\n"
+              << "Enable LV vref = " << lvpowervref.Value() << " mV " << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -119,6 +122,8 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetOrMask(omask.Value());
     TLU.SetStrobe(strobeperiod.Value() , strobelength.Value());
     TLU.SetEnableDUTVeto(enabledutveto.Value());
+    TLU.SetupLVPower(lvpowervref.Value());
+
     TLU.ResetTimestamp(); // also sets strobe running (if enabled) 
 
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"

@@ -92,7 +92,7 @@ public:
 			veto_mask = param.Get("VetoMask", 0);
 			trig_rollover = param.Get("TrigRollover", 0);
 			timestamps = param.Get("Timestamps", 1);
-			readout_delay = param.Get("ReadoutDelay", 100);
+			readout_delay = param.Get("ReadoutDelay", 1000);
 			timestamp_per_run = param.Get("TimestampPerRun", false);
 			// ***
 			m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
