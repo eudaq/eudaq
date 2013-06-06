@@ -305,7 +305,7 @@ namespace tlu {
   }
 
 
-  bool TLUController::SetupLVPower() {  // set LV-Out control voltage to 0.8 V
+  bool TLUController::SetupLVPower() {  // set LV-Out control voltage to 0.91 V
 
     SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
     try {
