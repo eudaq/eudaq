@@ -70,19 +70,15 @@ namespace eudaq {
     // if it was read out, otherwise it can either return (unsigned)-1,
     // or be left undefined as there is already a default version.
     virtual unsigned GetTriggerID(const Event & ev) const {
-      static const unsigned TRIGGER_OFFSET = 8;
-      // Make sure the event is of class RawDataEvent
-      if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
-        // This is just an example, modified it to suit your raw data format
-        // Make sure we have at least one block of data, and it is large enough
-        if (rev->NumBlocks() > 0 &&
-            rev->GetBlock(0).size() >= (TRIGGER_OFFSET + sizeof(short))) {
-          // Read a little-endian unsigned short from offset TRIGGER_OFFSET
-          return getlittleendian<unsigned short> (&rev->GetBlock(0)[TRIGGER_OFFSET]);
-        }
-      }
-      // If we are unable to extract the Trigger ID, signal with (unsigned)-1
-      return (unsigned)-1;
+	
+//	const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev);
+//	vector<unsigned char> tludata = rev->GetBlock(1);
+//	unsigned int aWord =0;	
+//	for(unsigned int j=0;j<4;j++){
+//		aWord =aWord | (tludata[j] << j*8);
+//		}
+	return 0;
+	
     }
 
     // Here, the data from the RawDataEvent is extracted into a StandardEvent.
