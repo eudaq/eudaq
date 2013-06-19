@@ -28,6 +28,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The bitfile containing the TLU firmware to be loaded");
   eudaq::Option<int>         trigg(op, "t", "trigger", 0, "msecs",
                                    "The interval in milliseconds for internally generated triggers (0 = off)");
+  eudaq::Option<int>         hsmode(op, "hm", "handshakemode", 0, "nohandshake",
+                                   "In this mode the TLU issues a fixed-length pulse on the trigger line (0 = no hand shake)");
   eudaq::Option<int>         dmask(op, "d", "dutmask", 0, "mask",
                                    "The mask for enabling the DUT connections");
   eudaq::Option<int>         vmask(op, "v", "vetomask", 0, "mask",
@@ -68,6 +70,7 @@ int main(int /*argc*/, char ** argv) {
     std::cout << "Using options:\n"
               << "TLU version = " << fwver.Value() << (fwver.Value() == 0 ? " (auto)" : "") << "\n"
               << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
+              << "Hand shake mode = " << hsmode.Value()
               << "Trigger interval = " << trigg.Value()
               << (trigg.Value() > 0 ? " ms (" + to_string(1e3/trigg.Value()) + " Hz)" : std::string()) << "\n"
               << "DUT Mask  = " << hexdec(dmask.Value(), 2) << "\n"
@@ -105,6 +108,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     //TLU.FullReset();
+    TLU.SetHandShakeMode(hsmode.Value());
     TLU.SetTriggerInterval(trigg.Value());
     if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS) ipsel.Resize(TLU_LEMO_DUTS);
     for (size_t i = 0; i < ipsel.NumItems(); ++i) {
