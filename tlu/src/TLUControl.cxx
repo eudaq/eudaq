@@ -1,4 +1,4 @@
-#include "tlu/TLUController.hh"
+include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
@@ -28,6 +28,8 @@ int main(int /*argc*/, char ** argv) {
                                    "The bitfile containing the TLU firmware to be loaded");
   eudaq::Option<int>         trigg(op, "t", "trigger", 0, "msecs",
                                    "The interval in milliseconds for internally generated triggers (0 = off)");
+  eudaq::Option<int>         hsmode(op, "hm", "handshakemode", 0, "nohandshake",
+                                   "In this mode the TLU issues a fixed-length pulse on the trigger line (0 = no hand shake)");
   eudaq::Option<int>         dmask(op, "d", "dutmask", 0, "mask",
                                    "The mask for enabling the DUT connections");
   eudaq::Option<int>         vmask(op, "v", "vetomask", 0, "mask",
@@ -50,6 +52,8 @@ int main(int /*argc*/, char ** argv) {
                                   "Length of 'on' time for timing strobe in clock cycles");
   eudaq::Option<int>         enabledutveto(op, "b", "dutveto", 0, "mask",
                                   "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
+  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", 900, "mV", "LV power, range from 250 to 900 (in mV)");
+
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
   eudaq::OptionFlag          pause(op, "u", "wait-for-user", "Wait for user input before starting triggers");
@@ -66,6 +70,7 @@ int main(int /*argc*/, char ** argv) {
     std::cout << "Using options:\n"
               << "TLU version = " << fwver.Value() << (fwver.Value() == 0 ? " (auto)" : "") << "\n"
               << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
+              << "Hand shake mode = " << hsmode.Value()
               << "Trigger interval = " << trigg.Value()
               << (trigg.Value() > 0 ? " ms (" + to_string(1e3/trigg.Value()) + " Hz)" : std::string()) << "\n"
               << "DUT Mask  = " << hexdec(dmask.Value(), 2) << "\n"
@@ -76,6 +81,7 @@ int main(int /*argc*/, char ** argv) {
               << "Strobe period = " << hexdec(strobeperiod.Value(), 6) << "\n"
               << "Strobe length = " << hexdec(strobelength.Value(), 6) << "\n"
               << "Enable DUT Veto = " << hexdec(enabledutveto.Value(), 2) << "\n"
+              << "Enable LV vctrl = " << lvpowervctrl.Value() << " mV " << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -102,6 +108,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     //TLU.FullReset();
+    TLU.SetHandShakeMode(hsmode.Value());
     TLU.SetTriggerInterval(trigg.Value());
     if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS) ipsel.Resize(TLU_LEMO_DUTS);
     for (size_t i = 0; i < ipsel.NumItems(); ++i) {
@@ -119,6 +126,8 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetOrMask(omask.Value());
     TLU.SetStrobe(strobeperiod.Value() , strobelength.Value());
     TLU.SetEnableDUTVeto(enabledutveto.Value());
+    TLU.SetupLVPower(lvpowervctrl.Value());
+
     TLU.ResetTimestamp(); // also sets strobe running (if enabled) 
 
     std::cout << "TLU Version = " << TLU.GetVersion() << "\n"

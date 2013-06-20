@@ -140,11 +140,12 @@ namespace tlu {
 
     unsigned GetScaler(unsigned) const;
     unsigned GetParticles() const;
-  private:
+    bool SetupLVPower(int value=800); // in mV
+
+ private:
     void OpenTLU();
     void LoadFirmware();
     void Initialize();
-    bool SetupLVPower();
     bool SetupLemo(); // Tries to set the LEMO termination and DAC voltage, returns true if successful
 
     void WriteRegister(unsigned long offset, unsigned char val);

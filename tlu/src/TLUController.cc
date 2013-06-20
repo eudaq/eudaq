@@ -153,6 +153,7 @@ namespace tlu {
     m_amask(0),
     m_omask(0),
     m_ipsel(0xff),
+    m_handshakemode(0),
     m_triggerint(0),
     m_inhibit(true),
     m_vetostatus(0),
@@ -305,11 +306,11 @@ namespace tlu {
   }
 
 
-  bool TLUController::SetupLVPower() {  // set LV-Out control voltage to 0.8 V
+  bool TLUController::SetupLVPower(int value ) {  // set LV-Out control voltage to 0.9 V
 
     SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
     try {
-      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(0.8) ); //        
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(value/1000.) ); //      convert to V
     } catch (const eudaq::Exception &) {
       return false;
     }
@@ -424,6 +425,11 @@ namespace tlu {
         WriteRegister(m_addr->TLU_STROBE_ENABLE_ADDRESS, 0); // disable strobe.
       }
     }
+  }
+
+  void TLUController::SetHandShakeMode(unsigned handshakemode) {
+    m_handshakemode = handshakemode;
+    if (m_addr) WriteRegister(m_addr->TLU_HANDSHAKE_MODE_ADDRESS, m_handshakemode);
   }
 
   void TLUController::SetTriggerInterval(unsigned millis) {

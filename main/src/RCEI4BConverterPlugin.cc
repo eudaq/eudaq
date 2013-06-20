@@ -31,7 +31,7 @@ using eutelescope::EUTELESCOPE;
 namespace eudaq {
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const char* EVENT_TYPE = "USBPIXI4B";
+  static const char* EVENT_TYPE = "RCE-FEI4";
 
   static const unsigned int CHIP_MIN_COL = 1;
   static const unsigned int CHIP_MAX_COL = 80;
@@ -42,7 +42,7 @@ namespace eudaq {
 
   static int chip_id_offset = 20;
 
-  class USBpixI4BConverterBase {
+  class RCEI4BConverterBase {
     private:
       unsigned int count_boards;
       std::vector<unsigned int> board_ids;
@@ -164,12 +164,16 @@ namespace eudaq {
 
         // check for consistency
         bool valid=isEventValid(data);
+        //check for two chip modules
+        bool secondchip = false;
 
         unsigned int ToT = 0;
         unsigned int Col = 0;
         unsigned int Row = 0;
         // FE-I4: DH with lv1 before Data Record
         unsigned int lvl1 = 0;
+        //check for two chip modules
+        unsigned int currentlvl1 = 0;
 
         plane.SetSizeZS(CHIP_MAX_COL_NORM + 1, CHIP_MAX_ROW_NORM + 1, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE); //
         //Get Trigger Number
@@ -185,16 +189,34 @@ namespace eudaq {
 
           if (DATA_HEADER_MACRO(Word)) {
             lvl1++;
+
+            //check for second Data Header (i.e. second chip)
+            if (currentlvl1 == DATA_HEADER_LV1ID_MACRO(Word)) {
+              secondchip = true;
+            } else {
+              secondchip = false;
+              currentlvl1 = DATA_HEADER_LV1ID_MACRO(Word);
+            }
           } else {
             // First Hit
             if (getHitData(Word, false, Col, Row, ToT)) {
-              plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
-              eventnr++;
+              //First Chip
+              if (!secondchip) {
+                plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+                eventnr++;
+              } else {
+                plane.PushPixel(Col + CHIP_MAX_COL, Row, ToT, false, lvl1 - 1);
+              }
             }
             // Second Hit
-            if (getHitData(Word, true, Col, Row, ToT)) {
-              plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
-              eventnr++;
+            if (getHitData(Word, true, Col, Row, ToT)) {	
+              //First Chip
+              if (!secondchip) {
+                plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+                eventnr++;
+              } else {
+                plane.PushPixel(Col + CHIP_MAX_COL, Row, ToT, false, lvl1 - 1);
+              }
             }
           }
         }
@@ -203,7 +225,7 @@ namespace eudaq {
   };
 
   // Declare a new class that inherits from DataConverterPlugin
-  class USBPixI4BConverterPlugin : public DataConverterPlugin , public USBpixI4BConverterBase {
+  class RCEI4BConverterPlugin : public DataConverterPlugin , public RCEI4BConverterBase {
 
     public:
 
@@ -262,7 +284,7 @@ namespace eudaq {
       }
 
       virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
-        //std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
+        //std::cout << "getlciosubevent (I4B) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
         if (eudaqEvent.IsBORE()) {
           // shouldn't happen
           return true;
@@ -388,15 +410,15 @@ namespace eudaq {
       // The DataConverterPlugin constructor must be passed the event type
       // in order to register this converter for the corresponding conversions
       // Member variables should also be initialized to default values here.
-      USBPixI4BConverterPlugin()
+      RCEI4BConverterPlugin()
         : DataConverterPlugin(EVENT_TYPE)
       {}
 
       // The single instance of this converter plugin
-      static USBPixI4BConverterPlugin m_instance;
+      static RCEI4BConverterPlugin m_instance;
   };
 
   // Instantiate the converter plugin instance
-  USBPixI4BConverterPlugin USBPixI4BConverterPlugin::m_instance;
+  RCEI4BConverterPlugin RCEI4BConverterPlugin::m_instance;
 
 } // namespace eudaq
