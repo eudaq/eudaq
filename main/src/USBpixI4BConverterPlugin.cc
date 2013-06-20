@@ -164,16 +164,12 @@ namespace eudaq {
 
         // check for consistency
         bool valid=isEventValid(data);
-        //check for two chip modules
-        bool secondchip = false;
 
         unsigned int ToT = 0;
         unsigned int Col = 0;
         unsigned int Row = 0;
         // FE-I4: DH with lv1 before Data Record
         unsigned int lvl1 = 0;
-        //check for two chip modules
-        unsigned int currentlvl1 = 0;
 
         plane.SetSizeZS(CHIP_MAX_COL_NORM + 1, CHIP_MAX_ROW_NORM + 1, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE); //
         //Get Trigger Number
@@ -189,34 +185,16 @@ namespace eudaq {
 
           if (DATA_HEADER_MACRO(Word)) {
             lvl1++;
-
-            //check for second Data Header (i.e. second chip)
-            if (currentlvl1 == DATA_HEADER_LV1ID_MACRO(Word)) {
-              secondchip = true;
-            } else {
-              secondchip = false;
-              currentlvl1 = DATA_HEADER_LV1ID_MACRO(Word);
-            }
           } else {
             // First Hit
             if (getHitData(Word, false, Col, Row, ToT)) {
-              //First Chip
-              if (!secondchip) {
-                plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
-                eventnr++;
-              } else {
-                plane.PushPixel(Col + CHIP_MAX_COL, Row, ToT, false, lvl1 - 1);
-              }
+              plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+              eventnr++;
             }
             // Second Hit
-            if (getHitData(Word, true, Col, Row, ToT)) {	
-              //First Chip
-              if (!secondchip) {
-                plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
-                eventnr++;
-              } else {
-                plane.PushPixel(Col + CHIP_MAX_COL, Row, ToT, false, lvl1 - 1);
-              }
+            if (getHitData(Word, true, Col, Row, ToT)) {
+              plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+              eventnr++;
             }
           }
         }
@@ -284,7 +262,7 @@ namespace eudaq {
       }
 
       virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
-        //std::cout << "getlciosubevent (I4B) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
+        //std::cout << "getlciosubevent (I4) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
         if (eudaqEvent.IsBORE()) {
           // shouldn't happen
           return true;
