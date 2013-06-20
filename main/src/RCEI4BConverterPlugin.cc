@@ -31,7 +31,7 @@ using eutelescope::EUTELESCOPE;
 namespace eudaq {
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const char* EVENT_TYPE = "USBPIXI4B";
+  static const char* EVENT_TYPE = "RCE-FEI4";
 
   static const unsigned int CHIP_MIN_COL = 1;
   static const unsigned int CHIP_MAX_COL = 80;
@@ -42,7 +42,7 @@ namespace eudaq {
 
   static int chip_id_offset = 20;
 
-  class USBpixI4BConverterBase {
+  class RCEI4BConverterBase {
     private:
       unsigned int count_boards;
       std::vector<unsigned int> board_ids;
@@ -225,7 +225,7 @@ namespace eudaq {
   };
 
   // Declare a new class that inherits from DataConverterPlugin
-  class USBPixI4BConverterPlugin : public DataConverterPlugin , public USBpixI4BConverterBase {
+  class RCEI4BConverterPlugin : public DataConverterPlugin , public RCEI4BConverterBase {
 
     public:
 
@@ -410,15 +410,15 @@ namespace eudaq {
       // The DataConverterPlugin constructor must be passed the event type
       // in order to register this converter for the corresponding conversions
       // Member variables should also be initialized to default values here.
-      USBPixI4BConverterPlugin()
+      RCEI4BConverterPlugin()
         : DataConverterPlugin(EVENT_TYPE)
       {}
 
       // The single instance of this converter plugin
-      static USBPixI4BConverterPlugin m_instance;
+      static RCEI4BConverterPlugin m_instance;
   };
 
   // Instantiate the converter plugin instance
-  USBPixI4BConverterPlugin USBPixI4BConverterPlugin::m_instance;
+  RCEI4BConverterPlugin RCEI4BConverterPlugin::m_instance;
 
 } // namespace eudaq
