@@ -306,13 +306,21 @@ namespace tlu {
   }
 
 
-  bool TLUController::SetupLVPower(int value ) {  // set LV-Out control voltage to 0.9 V
-
-    SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
-    try {
-      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(value/1000.) ); //      convert to V
-    } catch (const eudaq::Exception &) {
-      return false;
+  bool TLUController::SetupLVPower(int value ) {  // set LV-Out control voltage to a "value" (default 800 mV)
+    
+    if(value < 250. || value > 900.)
+    {
+        std::cout << "TLU::SetupLVPower, the value of control voltage " << value << " mV is outside of allowed range [ 250 to 900 mV], skipping" << std::endl;
+    }
+    else
+    {
+        SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
+        try 
+        {
+          WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(value/1000.) ); //      convert to V
+        } catch (const eudaq::Exception &) {
+          return false;
+        }
     }
     
     return true;
