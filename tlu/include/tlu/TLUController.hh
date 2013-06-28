@@ -91,6 +91,7 @@ namespace tlu {
     void SetOrMask(unsigned char mask);
     void SetStrobe(unsigned long period , unsigned long width);
     void SetEnableDUTVeto(unsigned char mask);
+    void SetHandShakeMode(unsigned handshakemode);
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
@@ -193,6 +194,7 @@ namespace tlu {
     unsigned m_uncorrectable_blockread_errors;
     unsigned m_usb_timeout_errors;
     unsigned m_debug_level;
+    unsigned m_handshakemode;
   };
 
   inline std::ostream & operator << (std::ostream & o, const TLUController & t) {
