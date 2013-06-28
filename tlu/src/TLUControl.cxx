@@ -1,4 +1,4 @@
-include "tlu/TLUController.hh"
+#include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
