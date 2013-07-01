@@ -56,7 +56,7 @@ namespace eudaq {
 
   void Status::print(std::ostream & os) const {
     os << Level2String(m_level);
-    if (m_msg != "") {
+    if (m_msg.size() > 0 ) {
       os << ": " << m_msg;
     }
   }
