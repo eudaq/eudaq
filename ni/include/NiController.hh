@@ -23,6 +23,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+typedef int SOCKET;
 #endif
 
 using eudaq::to_string;
@@ -80,8 +81,8 @@ private:
 
 	unsigned long data;// = INADDR_NONE;
 	unsigned long data_trans_addres;// = INADDR_NONE;
-	int sock_config;
-	int sock_datatransport;
+	SOCKET sock_config;
+	SOCKET sock_datatransport;
 	int numbytes;
 
 	 //NiIPaddr;
