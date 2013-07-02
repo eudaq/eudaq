@@ -5,8 +5,9 @@
 #include <ostream>
 #include <istream>
 #include <cctype>
+#ifndef WIN32
 #include <unistd.h>
-
+#endif
 class TestRunControl : public eudaq::RunControl {
   public:
     TestRunControl(const std::string & listenaddress)
