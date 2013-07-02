@@ -5,10 +5,11 @@
 #include "eudaq/Serializer.hh"
 #include <string>
 #include <ostream>
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
-  class Status : public Serializable {
+  class DLLEXPORT Status : public Serializable {
     public:
       enum Level {
         LVL_DEBUG,
