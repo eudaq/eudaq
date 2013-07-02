@@ -4,7 +4,7 @@
 #include <pthread.h>
 #include <string>
 #include <fstream>
-
+#include "eudaq/Platform.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
 
@@ -15,7 +15,7 @@ namespace eudaq {
   /** Implements the functionality of the File Writer application.
    *
    */
-  class LogCollector : public CommandReceiver {
+  class DLLEXPORT LogCollector : public CommandReceiver {
     public:
       LogCollector(const std::string & runcontrol,
           const std::string & listenaddress);
