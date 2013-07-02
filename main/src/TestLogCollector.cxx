@@ -7,9 +7,9 @@
 #include "eudaq/LogCollector.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-
+#ifndef WIN32
 #include <unistd.h>
-
+#endif
 class TestLogCollector : public eudaq::LogCollector {
   public:
     TestLogCollector(const std::string & runcontrol,
