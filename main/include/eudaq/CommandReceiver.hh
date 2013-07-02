@@ -4,6 +4,7 @@
 #include "eudaq/TransportClient.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Status.hh"
+#include "eudaq/Platform.hh"
 #include <pthread.h>
 #include <string>
 #include <iosfwd>
