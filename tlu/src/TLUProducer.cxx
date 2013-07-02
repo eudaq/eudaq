@@ -14,7 +14,10 @@ typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
 using eudaq::to_hex;
 using namespace tlu;
-
+#ifdef WIN32
+ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler=NULL;  // Windows needs some parameters for this. i dont know where it will be called so we need to check it in future
+char *ZestSC1_ErrorStrings[]={"bla bla","blub"};
+#endif
 class TLUProducer: public eudaq::Producer {
 public:
 	TLUProducer(const std::string & runcontrol) :
