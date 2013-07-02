@@ -58,6 +58,7 @@ namespace eudaq {
     std::ostringstream buf;
     ev.Write(buf);
     m_file.write(buf.str().c_str(), buf.str().length());
+	m_file.flush();
     OnReceive(ev);
   }
 
