@@ -47,10 +47,10 @@ namespace eudaq {
   }
 
   void FileSerializer::WriteProtect() {
-#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(MINGW)
+#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(MINGW)|| WIN32 
     EUDAQ_WARN("Cannot write protect under cygwin or MinGW: function fileno() is not available");
 #else
-    fchmod(fileno(m_file), S_IRUSR | S_IRGRP | S_IROTH);
+    fchmod(fileno(m_file), S_IRUSR | S_IRGRP | S_IROTH); 
 #endif
   }
 
