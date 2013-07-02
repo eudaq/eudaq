@@ -3,9 +3,10 @@
 
 #include "eudaq/LogSender.hh"
 #include "eudaq/LogMessage.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
-  LogSender & GetLogger();
+ DLLEXPORT LogSender &  GetLogger();
 }
 
 #define EUDAQ_LOG_LEVEL(level) ::eudaq::GetLogger().SetLevel(level)
