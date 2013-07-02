@@ -1,6 +1,6 @@
 #ifndef EUDAQ_INCLUDED_Serializable
 #define EUDAQ_INCLUDED_Serializable
-
+#include "eudaq/Platform.hh"
 //#include <string>
 //#include <vector>
 //#include <map>
@@ -8,9 +8,9 @@
 
 namespace eudaq {
 
-  class Serializer;
+  class Serializer; //$$ change
 
-  class Serializable {
+  class DLLEXPORT Serializable {
     public:
       virtual void Serialize(Serializer &) const = 0;
       virtual ~Serializable() {}
