@@ -4,6 +4,7 @@
 #include "eudaq/Utils.hh"
 #include <exception>
 #include <string>
+#include "Platform.hh"
 
 #ifndef EUDAQ_FUNC
 # define EUDAQ_FUNC ""
@@ -23,7 +24,7 @@
 
 namespace eudaq {
 
-  class Exception : public std::exception {
+  class DLLEXPORT Exception : public std::exception {
     public:
       Exception(const std::string & msg);
       const char * what() const throw() {
@@ -45,7 +46,7 @@ namespace eudaq {
       mutable unsigned m_line;
   };
 
-  class LoggedException : public Exception {
+  class DLLEXPORT LoggedException : public Exception {
     public:
       LoggedException(const std::string & msg);
       void Log() const;
