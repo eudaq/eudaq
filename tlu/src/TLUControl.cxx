@@ -5,7 +5,10 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/counted_ptr.hh"
+#ifndef WIN32
 #include <unistd.h>
+#endif
+
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -18,6 +21,10 @@ using eudaq::hexdec;
 
 static sig_atomic_t g_done = 0;
 
+#ifdef WIN32
+ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler=NULL;  // set to NULL so that this function will not be called. it seems that this is only requiered on WINDOWS
+char *ZestSC1_ErrorStrings[]={"bla bla","blub"}; // needs to have some dummy strings but for now i dont know where they will be used again. 
+#endif
 void ctrlchandler(int) {
   g_done += 1;
 }
@@ -52,7 +59,7 @@ int main(int /*argc*/, char ** argv) {
                                   "Length of 'on' time for timing strobe in clock cycles");
   eudaq::Option<int>         enabledutveto(op, "b", "dutveto", 0, "mask",
                                   "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
-  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", 800, "mV", "LV power, range from 250 to 900 (in mV)");
+  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", 900, "mV", "LV power, range from 250 to 900 (in mV)");
 
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
@@ -108,7 +115,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     //TLU.FullReset();
-    TLU.SetHandShakeMode(hsmode.Value());
+   // TLU.SetHandShakeMode(hsmode.Value()); //$$ change
     TLU.SetTriggerInterval(trigg.Value());
     if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS) ipsel.Resize(TLU_LEMO_DUTS);
     for (size_t i = 0; i < ipsel.NumItems(); ++i) {

@@ -1,7 +1,15 @@
 #include "tlu/TLUController.hh"
+#ifdef WIN32
+
+#include "lusb0_usb.h"
+#else
 #include <usb.h>
+
+#endif
 #include "ZestSC1.h"
 #include "Local.h"
+
+
 
 namespace tlu {
 

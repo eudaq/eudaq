@@ -9,7 +9,11 @@
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 # include <cstdio>  // HK
+#include "tlu/new_Usleep.h"
+#define EUDAQ_uSLEEP(x) uSleep(x)
+
 #else
+#define EUDAQ_uSLEEP(x) usleep(x)
 # include <unistd.h>
 #endif
 
@@ -44,7 +48,7 @@ namespace tlu {
        << '-'
        << ((trig & 3) == 3 ? 'Y' : (trig & 2) ? 'R' : (trig & 1) ? 'G' : '.')
        << (busy ? 'B' : '.')
-       << (rst ? 'R' : '.');
+       << (rst ? 'R' : '.'); 
   }
 
   static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
@@ -153,7 +157,7 @@ namespace tlu {
     m_amask(0),
     m_omask(0),
     m_ipsel(0xff),
-    m_handshakemode(0),
+   // m_handshakemode(0), //$$ change
     m_triggerint(0),
     m_inhibit(true),
     m_vetostatus(0),
@@ -306,21 +310,13 @@ namespace tlu {
   }
 
 
-  bool TLUController::SetupLVPower(int value ) {  // set LV-Out control voltage to a "value" (default 800 mV)
-    
-    if(value < 250. || value > 900.)
-    {
-        std::cout << "TLU::SetupLVPower, the value of control voltage " << value << " mV is outside of allowed range [ 250 to 900 mV], skipping" << std::endl;
-    }
-    else
-    {
-        SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
-        try 
-        {
-          WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(value/1000.) ); //      convert to V
-        } catch (const eudaq::Exception &) {
-          return false;
-        }
+  bool TLUController::SetupLVPower(int value ) {  // set LV-Out control voltage to 0.9 V
+
+    SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
+    try {
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(value/1000.) ); //      convert to V
+    } catch (const eudaq::Exception &) {
+      return false;
     }
     
     return true;
@@ -435,10 +431,10 @@ namespace tlu {
     }
   }
 
-  void TLUController::SetHandShakeMode(unsigned handshakemode) {
-    m_handshakemode = handshakemode;
-    if (m_addr) WriteRegister(m_addr->TLU_HANDSHAKE_MODE_ADDRESS, m_handshakemode);
-  }
+//   void TLUController::SetHandShakeMode(unsigned handshakemode) {  //$$change
+//     m_handshakemode = handshakemode;
+//     if (m_addr) WriteRegister(m_addr->TLU_HANDSHAKE_MODE_ADDRESS, m_handshakemode);
+//   }
 
   void TLUController::SetTriggerInterval(unsigned millis) {
     m_triggerint = millis;
@@ -621,7 +617,7 @@ namespace tlu {
       if (delay == 0) {
         delay = 20;
       } else {
-        usleep(delay);
+        EUDAQ_uSLEEP(delay);
         delay += delay;
       }
       status = ZestSC1WriteRegister(m_handle, offset, val);
@@ -646,7 +642,7 @@ namespace tlu {
         if (delay == 0) {
           delay = 20;
         } else {
-          usleep(delay);
+           EUDAQ_uSLEEP(delay);
           delay += delay;
         }
         status = ZestSC1WriteRegister(m_handle, offset+byte, ((val >> (8*byte)) & 0xFF)  );
@@ -710,7 +706,7 @@ namespace tlu {
       if (delay == 0) {
         delay = 20;
       } else {
-        usleep(delay);
+         EUDAQ_uSLEEP(delay);
         delay += delay;
       }
       status = ZestSC1ReadRegister(m_handle, offset, &val);
@@ -807,7 +803,7 @@ namespace tlu {
 
     WriteRegister(m_addr->TLU_INITIATE_READOUT_ADDRESS, ( 1<< m_addr->TLU_ENABLE_DMA_BIT) ); // the first write sets transfer going. Further writes do nothing.
 
-    usleep(10);
+     EUDAQ_uSLEEP(10);
 
     // Read four buffers at once. first buffer will contain some data from previous readout,
     // but futher reads should return indentical data, but data corruption will mean than the buffer contents aren't identical.
