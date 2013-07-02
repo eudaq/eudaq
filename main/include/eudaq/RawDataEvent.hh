@@ -5,18 +5,18 @@
 
 #include <vector>
 #include "eudaq/Event.hh"
-
+#include "eudaq/Platform.hh"
 namespace eudaq {
 
   /** An Event type consisting of just a vector of bytes.
    *
    */
-  class RawDataEvent : public Event {
+  class DLLEXPORT RawDataEvent : public Event {
     EUDAQ_DECLARE_EVENT(RawDataEvent);
     public:
     typedef unsigned char byte_t;
     typedef std::vector<byte_t> data_t;
-    struct block_t : public Serializable {
+    struct DLLEXPORT block_t : public Serializable {
       block_t(unsigned id = (unsigned)-1, data_t data = data_t()) : id(id), data(data) {}
       block_t(Deserializer &);
       void Serialize(Serializer &) const;
