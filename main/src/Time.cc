@@ -14,7 +14,8 @@
 
 namespace eudaq {
 
-  const std::string Time::DEFAULT_FORMAT = "%Y-%m-%d %H:%M:%S.%3";
+
+
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 

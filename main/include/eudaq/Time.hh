@@ -12,15 +12,20 @@
 //# include <time.h>
 //# include <afxwin.h>
 # include <winsock2.h>
+
 #else
 # include <sys/time.h>
 #endif
 
+
+#define TIME_DEFAULT_FORMAT    "%Y-%m-%d %H:%M:%S.%3"   //I thing it is impossible to export static variables from a dll. so i made it to a macro this works fine.
 namespace eudaq {
 
-  class Time {
+  class DLLEXPORT Time {
     public:
-      static const std::string DEFAULT_FORMAT;
+
+
+      
       explicit Time(long sec, long usec = 0) {
         tv_usec = usec % 1000000;
         tv_sec = sec + usec / 1000000;
@@ -61,7 +66,7 @@ namespace eudaq {
         tv.tv_usec = tv_usec;
         return tv;
       }
-      std::string Formatted(const std::string & format = DEFAULT_FORMAT) const;
+      std::string Formatted(const std::string & format = TIME_DEFAULT_FORMAT) const;
       static Time Current();
     private:
       long tv_sec;
