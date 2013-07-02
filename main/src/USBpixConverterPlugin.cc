@@ -177,7 +177,10 @@ namespace eudaq {
       // and store it in member variables to use during the decoding later.
       virtual void Initialize(const Event & bore,
           const Configuration & cnf) {
-        (void)cnf; // just to suppress a warning about unused parameter cnf
+#ifndef WIN32 // Some Linux Stuff //$$ change
+		(void)cnf; // just to suppress a warning about unused parameter cnf
+#endif
+        
         getBOREparameters (bore);
       }
 
