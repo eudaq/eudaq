@@ -8,6 +8,7 @@
 #include "eudaq/counted_ptr.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Exception.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
@@ -15,7 +16,7 @@ namespace eudaq {
     const char * what() const throw() { return "InterruptedException"; }
   };
 
-  class Serializer {
+  class DLLEXPORT Serializer {
     public:
       virtual void Flush() {}
       void write(const Serializable & t) {
