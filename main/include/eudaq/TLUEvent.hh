@@ -3,10 +3,11 @@
 
 #include <vector>
 #include "eudaq/Event.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
-  class TLUEvent : public Event {
+  class DLLEXPORT TLUEvent : public Event {
     EUDAQ_DECLARE_EVENT(TLUEvent);
     public:
     typedef std::vector<unsigned long long> vector_t;
