@@ -11,6 +11,8 @@
 #include "eudaq/Serializer.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/Platform.hh"
+
 
 #define EUDAQ_DECLARE_EVENT(type)           \
   public:                                   \
@@ -35,7 +37,7 @@ namespace eudaq {
 
   static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
 
-  class Event : public Serializable {
+  class DLLEXPORT Event : public Serializable {
     public:
       enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_FAKE=8, FLAG_SIMU=16, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
       Event(unsigned run, unsigned event, unsigned long long timestamp = NOTIMESTAMP, unsigned flags=0)
