@@ -8,10 +8,11 @@
 #include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Time.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
-  class LogMessage : public Status {
+  class DLLEXPORT LogMessage : public Status {
     public:
       LogMessage(const std::string & msg = "",
           Level level = LVL_EXTRA,
