@@ -13,13 +13,14 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/counted_ptr.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
   /** Implements the functionality of the File Writer application.
    *
    */
-  class DataCollector : public CommandReceiver {
+  class DLLEXPORT DataCollector : public CommandReceiver {
     public:
       DataCollector(const std::string & runcontrol,
           const std::string & listenaddress);
