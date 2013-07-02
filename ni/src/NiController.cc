@@ -3,14 +3,55 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include <errno.h>
 
-#include <netdb.h>
+
 #include <sys/types.h>
+
+
+#ifndef WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+
+#define EUDAQ_BCOPY(source,dest,NSize) bcopy(source,dest,NSize)
+#define EUDAQ_Sleep(x) sleep(x)
+#define EUDAQ_CLOSE_SOCKET(x) close(x)
+
+#else
+
+#include <winsock.h>
+#pragma comment(lib, "Ws2_32.lib")
+#include "eudaq/RunControl.hh"
+#define EUDAQ_Sleep(x) Sleep(x)
+#define EUDAQ_BCOPY(source,dest,NSize) memmove(dest,source,NSize)
+
+
+#define EUDAQ_CLOSE_SOCKET(x) closesocket(x)
+
+
+
+#endif
+
+
+int EUDAQ_SEND(SOCKET s,unsigned char* buf,int len ,int flags){
+
+
+#ifdef WIN32  
+	//on windows this function takes a signed char ... 
+	// in prinziple I always distrust reinterpreter_cast but in this case it should be save 
+	return send(s, reinterpret_cast<const char*>(buf), len, flags) ;
+
+#else
+	return send(s, buf, len, flags) ;
+#endif
+
+}
+
+
 
 unsigned char start[5] = "star";
 unsigned char stop[5] = "stop";
@@ -33,7 +74,7 @@ void NiController::GetProduserHostInfo(){
 	hclient = gethostbyname(ThisHost);       
         if( hclient != 0 )
         {
-	  bcopy ( hclient->h_addr, &(client.sin_addr), hclient->h_length);
+	  EUDAQ_BCOPY( hclient->h_addr, &(client.sin_addr), hclient->h_length);
   	  printf("----TCP/Producer INET ADDRESS is: %s \n", inet_ntoa(client.sin_addr));
         }
         else
@@ -53,15 +94,33 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 
 	std::string m_server;
 	m_server = param.Get("NiIPaddr", "");
-	data= inet_addr(m_server.c_str());
+	
 
+#ifdef WIN32 
+	struct in_addr addr = { 0 };
+	addr.s_addr = inet_addr(m_server.c_str());
+	if (addr.s_addr == INADDR_NONE) {
+		printf("The IPv4 address entered must be a legal address\n");
+		hconfig=nullptr;
+	} 
+	else
+	{
+		hconfig = gethostbyaddr((char *) &addr, 4, AF_INET);
+	}
+
+
+#else 
+	data= inet_addr(m_server.c_str());
 	hconfig = gethostbyaddr(&data, 4, AF_INET);
+
+#endif
+
 	if ( hconfig == NULL) {
 		EUDAQ_ERROR("Config. Socket: get HOST error  " );
 		perror("Config. Socket: gethostbyname()");
 		exit(1);
 	} else{
-		bcopy ( hconfig->h_addr, &(config.sin_addr), hconfig->h_length);
+		EUDAQ_BCOPY( hconfig->h_addr, &(config.sin_addr), hconfig->h_length);
 		printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
 		printf("----TCP/NI crate INET PORT is: %d \n", PORT_CONFIG );
 	}
@@ -78,7 +137,7 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 	if (connect(sock_config, (struct sockaddr *) &config, sizeof(struct sockaddr)) == -1) {
 		EUDAQ_ERROR("ConfSocket: National Instruments crate doesn't running  " );
 		perror("Config. Socket: connect()");
-		sleep(5);
+		EUDAQ_Sleep(5);
 		exit(1);
 	} else
 		printf("----TCP/NI crate The CONNECT is OK...\n");
@@ -86,10 +145,18 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len){
 	bool dbg = false;
 	if (dbg) printf("size=%d ", len);
-	if (send(sock_config, text, len, 0) == -1) 	perror("Server-send() error lol!");
+
+	if (EUDAQ_SEND(sock_config,text, len, 0) == -1) 	perror("Server-send() error lol!");
+
+	
 }
 void NiController::ConfigClientSocket_Close(){
-	close(sock_config);
+
+
+	EUDAQ_CLOSE_SOCKET(sock_config);
+
+	
+	
 }
 unsigned int NiController::ConfigClientSocket_ReadLength(const char string[4]){
 	unsigned int datalengthTmp;
@@ -160,14 +227,35 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 	/*** Creation for the data transmit socket, NAME and INET ADDRESS ***/
 	std::string m_server;
 	m_server = param.Get("NiIPaddr", "");
+
+#ifdef WIN32 
+	
+
+	struct in_addr addr = { 0 };
+	addr.s_addr = inet_addr(m_server.c_str());
+	if (addr.s_addr == INADDR_NONE) {
+		printf("The IPv4 address entered must be a legal address\n");
+		hdatatransport=nullptr;
+	} 
+	else
+	{
+		hdatatransport= gethostbyaddr((char *) &addr, 4, AF_INET);
+	}
+
+	
+
+#else  
 	data_trans_addres= inet_addr(m_server.c_str());
 	hdatatransport = gethostbyaddr(&data_trans_addres, 4, AF_INET);
+
+
+#endif
 	if ( hdatatransport == NULL) {
 		EUDAQ_ERROR("DataTransportSocket: get HOST error " );
 		perror("DataTransportSocket: gethostbyname()");
 		exit(1);
 	} else{
-		bcopy ( hdatatransport->h_addr, &(datatransport.sin_addr), hdatatransport->h_length);
+		EUDAQ_BCOPY( hdatatransport->h_addr, &(datatransport.sin_addr), hdatatransport->h_length);
 		printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n", inet_ntoa(datatransport.sin_addr));
 		printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %d \n", PORT_DATATRANSF );
 	}
@@ -254,7 +342,7 @@ std::vector<unsigned char> NiController::DataTransportClientSocket_ReadData(int 
 	return mimosa_data;
 }
 void NiController::DatatransportClientSocket_Close(){
-	close(sock_datatransport);
+EUDAQ_CLOSE_SOCKET(sock_datatransport);
 }
 NiController::~NiController() {
 	//
