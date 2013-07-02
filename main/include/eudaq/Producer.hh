@@ -3,6 +3,7 @@
 
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/DataSender.hh"
+#include "eudaq/Platform.hh"
 #include <string>
 
 namespace eudaq {
