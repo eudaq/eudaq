@@ -5,6 +5,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Platform.hh"
 #include <pthread.h>
 #include <string>
 
@@ -13,7 +14,7 @@ namespace eudaq {
   /** Implements the functionality of the Run Control application.
    *
    */
-  class RunControl {
+  class DLLEXPORT RunControl {
     public:
       explicit RunControl(const std::string & listenaddress = "");
 
