@@ -10,7 +10,7 @@
 
 namespace eudaq {
 
-  class CommandReceiver {
+  class DLLEXPORT CommandReceiver {
     public:
       CommandReceiver(const std::string & type, const std::string & name, const std::string & runcontrol,
           bool startthread = true);
