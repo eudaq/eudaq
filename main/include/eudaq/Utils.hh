@@ -13,21 +13,22 @@
 #include <stdexcept>
 #include <fstream>
 #include <sys/types.h>
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
-  std::string ucase(const std::string &);
-  std::string lcase(const std::string &);
-  std::string trim(const std::string & s);
-  std::string firstline(const std::string & s);
-  std::string escape(const std::string &);
-  std::vector<std::string> split(const std::string & str, const std::string & delim = "\t");
-  std::vector<std::string> split(const std::string & str, const std::string & delim, bool dotrim);
+  std::string DLLEXPORT ucase(const std::string &);
+  std::string DLLEXPORT lcase(const std::string &);
+  std::string DLLEXPORT trim(const std::string & s);
+  std::string DLLEXPORT firstline(const std::string & s);
+  std::string DLLEXPORT escape(const std::string &);
+  std::vector<std::string> DLLEXPORT split(const std::string & str, const std::string & delim = "\t");
+  std::vector<std::string> DLLEXPORT split(const std::string & str, const std::string & delim, bool dotrim);
 
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds
    */
-  void mSleep(unsigned ms);
+  void DLLEXPORT mSleep(unsigned ms);
 
   /** Converts any type to a string.
    * There must be a compatible streamer defined, which this function will make use of.
@@ -99,7 +100,7 @@ namespace eudaq {
    *         that is not valid then the value of def.
    */
   template <typename T>
-    inline T from_string(const std::string & x, const T & def = 0) {
+    inline T DLLEXPORT from_string(const std::string & x, const T & def = 0) {
       if (x == "") return def;
       T ret = def;
       std::istringstream s(x);
@@ -111,16 +112,16 @@ namespace eudaq {
     }
 
   template<>
-    inline std::string from_string(const std::string & x, const std::string & def) {
+    inline std::string DLLEXPORT from_string(const std::string & x, const std::string & def) {
       return x == "" ? def : x;
     }
 
   template<>
-    long from_string(const std::string & x, const long & def);
+    long DLLEXPORT from_string(const std::string & x, const long & def);
   template<>
-    unsigned long from_string(const std::string & x, const unsigned long & def);
+    unsigned long DLLEXPORT from_string(const std::string & x, const unsigned long & def);
   template<>
-    inline int from_string(const std::string & x, const int & def) {
+    inline int DLLEXPORT from_string(const std::string & x, const int & def) {
       return from_string(x, (long)def);
     }
   template<>
@@ -242,14 +243,14 @@ namespace eudaq {
 #endif
     }
 
-  std::string ReadLineFromFile(const std::string & fname);
+  std::string DLLEXPORT ReadLineFromFile(const std::string & fname);
 
   template <typename T>
     inline T ReadFromFile(const std::string & fname, const T & def = 0) {
       return from_string(ReadLineFromFile(fname), def);
     }
 
-  void WriteStringToFile(const std::string & fname, const std::string & val);
+  void DLLEXPORT WriteStringToFile(const std::string & fname, const std::string & val);
 
   template <typename T>
     inline void WriteToFile(const std::string & fname, const T & val) {
