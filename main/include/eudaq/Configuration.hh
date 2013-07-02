@@ -8,7 +8,7 @@
 
 namespace eudaq {
 
-  class Configuration {
+  class DLLEXPORT Configuration {
     public:
       Configuration(const std::string & config = "", const std::string & section = "");
       Configuration(std::istream & conffile, const std::string & section = "");
