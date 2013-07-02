@@ -28,7 +28,7 @@ namespace eudaq {
       double uSeconds() const {
         return 1e6 * Seconds();
       }
-      std::string Formatted(const std::string & format = Time::DEFAULT_FORMAT) const {
+      std::string Formatted(const std::string & format = TIME_DEFAULT_FORMAT) const {
         return Elapsed().Formatted(format);
       }
     private:
