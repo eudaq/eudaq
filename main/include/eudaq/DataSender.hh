@@ -4,11 +4,12 @@
 #include "eudaq/Event.hh"
 #include "eudaq/TransportClient.hh"
 #include "eudaq/Serializer.hh"
+#include "eudaq/Platform.hh"
 #include <string>
 
 namespace eudaq {
 
-  class DataSender {
+  class DLLEXPORT DataSender {
     public:
       DataSender(const std::string & type, const std::string & name);
       ~DataSender();
