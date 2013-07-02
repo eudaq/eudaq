@@ -4,13 +4,15 @@
 #include "eudaq/TransportClient.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
+#include "Platform.hh"
+
 #include <string>
 
 namespace eudaq {
 
   class LogMessage;
 
-  class LogSender {
+  class DLLEXPORT LogSender {
     public:
       LogSender();
       ~LogSender();
