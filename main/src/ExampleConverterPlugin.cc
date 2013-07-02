@@ -28,7 +28,10 @@ namespace eudaq {
       virtual void Initialize(const Event & bore,
           const Configuration & cnf) {
         m_exampleparam = bore.GetTag("EXAMPLE", 0);
-        (void)cnf; // just to suppress a warning about unused parameter cnf
+#ifndef WIN32  //some linux Stuff //$$change
+		(void)cnf; // just to suppress a warning about unused parameter cnf
+#endif
+        
       }
 
       // This should return the trigger ID (as provided by the TLU)
