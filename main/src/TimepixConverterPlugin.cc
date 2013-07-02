@@ -61,7 +61,10 @@ namespace eudaq {
                             const Configuration & cnf) {
       m_exampleparam = bore.GetTag("EXAMPLE", 0);
       //eudaq::PluginManager::Initialize(bore);
-      (void)cnf; // just to suppress a warning about unused parameter cnf
+#ifndef WIN32  //some linux stuff
+	  (void)cnf; // just to suppress a warning about unused parameter cnf
+#endif
+      
     }
 
 
