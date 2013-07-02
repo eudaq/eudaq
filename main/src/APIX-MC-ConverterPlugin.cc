@@ -370,8 +370,12 @@ namespace eudaq {
         moduleError = true;
       }
       //      if ( (one_line & 0x80000001) == 0x80000001 ) { continue;}
+	// $$ change
+	// Orignal line:
+	//  if ( (one_line & 0x80000001) != 0x80000001 and (not moduleEoe) and (not moduleError) and (subtrigger < 16) ) {
+	// replaced and with && and so on 
 
-      if ( (one_line & 0x80000001) != 0x80000001 and (not moduleEoe) and (not moduleError) and (subtrigger < 16) ) {
+      if ( (one_line & 0x80000001) != 0x80000001 && (!moduleEoe) && (!moduleError) && (subtrigger < 16) ) {
         APIXHit hit;
         hit.pllTrigger = pllTrig;
         hit.eudetTrigger = eudetTrig;
