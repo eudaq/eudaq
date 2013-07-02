@@ -2,18 +2,28 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Logger.hh"
 
-#include<sys/time.h>
+
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
+
 #include <errno.h>
 #include <string.h>
-#include <netdb.h>
+
 #include <sys/types.h>
+
+
+
+#ifndef WIN32
+
+
+#include<sys/time.h>
+#include <unistd.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#endif
 
 using eudaq::to_string;
 
