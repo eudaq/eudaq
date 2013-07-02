@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <iosfwd>
 #include <iostream>
+#include "Platform.hh"
 
 namespace eudaq {
 
@@ -23,7 +24,7 @@ namespace eudaq {
 
   class OptionBase;
 
-  class OptionParser {
+  class DLLEXPORT OptionParser {
     public:
       OptionParser(const std::string & name, const std::string & version, const std::string & desc="",
           int minargs = -1, int maxargs = -1)
@@ -47,7 +48,7 @@ namespace eudaq {
       size_t m_minargs, m_maxargs;
   };
 
-  class OptionBase {
+  class DLLEXPORT OptionBase {
     public:
       OptionBase(OptionParser & p, const std::string & shortname, const std::string & longname,
           const std::string & deflt = "", const std::string & argname = "", const std::string & desc = "")
