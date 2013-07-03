@@ -8,7 +8,7 @@
 #include <string>
 #include <cstring>
 
-#if EUDAQ_PLATFORM_IS(WIN32)
+#ifdef WIN32
 //# include <time.h>
 //# include <afxwin.h>
 # include <winsock2.h>
