@@ -7,7 +7,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 
-#if EUDAQ_PLATFORM_IS(WIN32)
+#ifdef WIN32
 # include <cstdio>  // HK
 #include "tlu/new_Usleep.h"
 #define EUDAQ_uSLEEP(x) uSleep(x)
