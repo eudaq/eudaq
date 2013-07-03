@@ -1,0 +1,56 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libEudaq", "libEudaq\libEudaq.vcxproj", "{632ABF66-C5ED-4557-882C-7B1A69EC1971}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestRunControl", "TestRunControl\TestRunControl.vcxproj", "{D593AE93-F6D7-4AAC-BD46-F62C5BAC29F4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestDataCollector", "TestDataCollector\TestDataCollector.vcxproj", "{5B631DB8-B57D-4324-BA57-C00EAF23A47A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ni_Producer", "ni_Producer\ni_Producer.vcxproj", "{AAB80444-9A1B-49EC-B912-2614B15FADB2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestLogCollector", "TestLogCollector\TestLogCollector.vcxproj", "{F2F50A57-A5C7-413D-A32E-3616F751558A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLUProducer", "TLUProducer\TLUProducer.vcxproj", "{448D569D-9FAE-44DB-A21F-FCFEE2DBCF80}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLUControl", "TLUControl\TLUControl.vcxproj", "{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{632ABF66-C5ED-4557-882C-7B1A69EC1971}.Debug|Win32.ActiveCfg = Debug|Win32
+		{632ABF66-C5ED-4557-882C-7B1A69EC1971}.Debug|Win32.Build.0 = Debug|Win32
+		{632ABF66-C5ED-4557-882C-7B1A69EC1971}.Release|Win32.ActiveCfg = Release|Win32
+		{632ABF66-C5ED-4557-882C-7B1A69EC1971}.Release|Win32.Build.0 = Release|Win32
+		{D593AE93-F6D7-4AAC-BD46-F62C5BAC29F4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D593AE93-F6D7-4AAC-BD46-F62C5BAC29F4}.Debug|Win32.Build.0 = Debug|Win32
+		{D593AE93-F6D7-4AAC-BD46-F62C5BAC29F4}.Release|Win32.ActiveCfg = Release|Win32
+		{D593AE93-F6D7-4AAC-BD46-F62C5BAC29F4}.Release|Win32.Build.0 = Release|Win32
+		{5B631DB8-B57D-4324-BA57-C00EAF23A47A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5B631DB8-B57D-4324-BA57-C00EAF23A47A}.Debug|Win32.Build.0 = Debug|Win32
+		{5B631DB8-B57D-4324-BA57-C00EAF23A47A}.Release|Win32.ActiveCfg = Release|Win32
+		{5B631DB8-B57D-4324-BA57-C00EAF23A47A}.Release|Win32.Build.0 = Release|Win32
+		{AAB80444-9A1B-49EC-B912-2614B15FADB2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AAB80444-9A1B-49EC-B912-2614B15FADB2}.Debug|Win32.Build.0 = Debug|Win32
+		{AAB80444-9A1B-49EC-B912-2614B15FADB2}.Release|Win32.ActiveCfg = Release|Win32
+		{AAB80444-9A1B-49EC-B912-2614B15FADB2}.Release|Win32.Build.0 = Release|Win32
+		{F2F50A57-A5C7-413D-A32E-3616F751558A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F2F50A57-A5C7-413D-A32E-3616F751558A}.Debug|Win32.Build.0 = Debug|Win32
+		{F2F50A57-A5C7-413D-A32E-3616F751558A}.Release|Win32.ActiveCfg = Release|Win32
+		{F2F50A57-A5C7-413D-A32E-3616F751558A}.Release|Win32.Build.0 = Release|Win32
+		{448D569D-9FAE-44DB-A21F-FCFEE2DBCF80}.Debug|Win32.ActiveCfg = Debug|Win32
+		{448D569D-9FAE-44DB-A21F-FCFEE2DBCF80}.Debug|Win32.Build.0 = Debug|Win32
+		{448D569D-9FAE-44DB-A21F-FCFEE2DBCF80}.Release|Win32.ActiveCfg = Release|Win32
+		{448D569D-9FAE-44DB-A21F-FCFEE2DBCF80}.Release|Win32.Build.0 = Release|Win32
+		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Debug|Win32.Build.0 = Debug|Win32
+		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Release|Win32.ActiveCfg = Release|Win32
+		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

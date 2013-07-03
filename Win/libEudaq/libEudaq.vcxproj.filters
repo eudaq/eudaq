@@ -1,0 +1,370 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="TCPConnection">
+      <UniqueIdentifier>{c6950928-ff8c-4976-8b68-34e4501f0026}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TCPConnection\src">
+      <UniqueIdentifier>{9dc6215d-d76f-4080-bf63-178d66c380cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TCPConnection\include">
+      <UniqueIdentifier>{5695cbc6-1926-480e-a610-f1572ab8d183}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fileWriter">
+      <UniqueIdentifier>{12f820c6-c8f7-4588-9f6a-315973a52858}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fileWriter\src">
+      <UniqueIdentifier>{e957c80d-4a1e-449f-a247-0f48de3e140a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="fileWriter\include">
+      <UniqueIdentifier>{f0160721-bbc9-4c7f-ac09-b72eb617be01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logging">
+      <UniqueIdentifier>{8111b840-f211-42a2-acdd-d18763164847}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logging\src">
+      <UniqueIdentifier>{a21b6d97-ff1e-4c2b-aa4c-ee53f608f4a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logging\include">
+      <UniqueIdentifier>{c4c687fe-1f76-460b-9e76-cc59a36ea539}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{dc363671-913a-4011-837d-2c722f30cba5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities\src">
+      <UniqueIdentifier>{a345e6c8-bf94-44e9-a604-2ae4d58ad075}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities\Include">
+      <UniqueIdentifier>{2647bb32-6a19-46f8-b3c8-11a218581cb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data">
+      <UniqueIdentifier>{bf833c06-ec27-4505-ae9e-b83b89bd9047}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data\src">
+      <UniqueIdentifier>{146a21ed-1fee-4da8-84c5-7d22c5f9d94a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data\include">
+      <UniqueIdentifier>{0f914ed0-392f-47de-a418-dcd48d7b9a1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugins">
+      <UniqueIdentifier>{d0fb2dd6-9b56-4354-90cc-6c48b17322ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugins\src">
+      <UniqueIdentifier>{e026c00a-c244-47ef-a855-ae2011044a99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Plugins\include">
+      <UniqueIdentifier>{6e6a1426-adfa-47cc-80c2-3a5b72bf4641}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="unsorted">
+      <UniqueIdentifier>{31742098-4e06-4ed1-9b0d-8cf13a927cd9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="unsorted\src">
+      <UniqueIdentifier>{d1401d53-b1a1-40bb-bf33-1f58da270419}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\main\src\TransportTCP.cc">
+      <Filter>TCPConnection\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TransportBase.cc">
+      <Filter>TCPConnection\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TransportServer.cc">
+      <Filter>TCPConnection\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TransportNULL.cc">
+      <Filter>TCPConnection\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TransportFactory.cc">
+      <Filter>TCPConnection\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TransportClient.cc">
+      <Filter>TCPConnection\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileNamer.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterText.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileReader.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileSerializer.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriter.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterLCIO.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterMimoloop.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterNative.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterNative2.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterNull.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterRoot.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FileWriterStandard.cc">
+      <Filter>fileWriter\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\LogCollector.cc">
+      <Filter>Logging\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\LogSender.cc">
+      <Filter>Logging\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Logger.cc">
+      <Filter>Logging\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\LogMessage.cc">
+      <Filter>Logging\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Utils.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Time.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Status.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Mutex.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Exception.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Configuration.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DataCollector.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DataConverterPlugin.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DataSender.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\BufferSerializer.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Event.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DetectorEvent.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Serializable.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\StandardEvent.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\StringEvent.cc">
+      <Filter>Data\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\AltroUSBConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\APIX-CT-ConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\APIX-MC-ConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\APIX-SC-ConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DEPFETConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\EUDRBConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\ExampleConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\FORTISConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\MVDConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TAKIConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TestConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TimepixConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TLUConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\USBpixConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\PluginManager.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\CommandReceiver.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\OptionParser.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DEPFETEvent.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\TLUEvent.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\DummyProducer.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\EUDRBEvent.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\ExampleHardware.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Monitor.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\Producer.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\RawDataEvent.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\RunControl.cc">
+      <Filter>unsorted\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\main\include\eudaq\TransportBase.hh">
+      <Filter>TCPConnection\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\TransportFactory.hh">
+      <Filter>TCPConnection\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\TransportNULL.hh">
+      <Filter>TCPConnection\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\TransportTCP.hh">
+      <Filter>TCPConnection\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\FileNamer.hh">
+      <Filter>fileWriter\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\FileReader.hh">
+      <Filter>fileWriter\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\FileSerializer.hh">
+      <Filter>fileWriter\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\FileWriter.hh">
+      <Filter>fileWriter\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\LogCollector.hh">
+      <Filter>Logging\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Logger.hh">
+      <Filter>Logging\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\LogMessage.hh">
+      <Filter>Logging\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\LogSender.hh">
+      <Filter>Logging\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Configuration.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Platform.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Exception.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Mutex.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Status.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Utils.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Time.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\BufferSerializer.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\DataCollector.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\DetectorEvent.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\DataSender.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\RawDataEvent.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Event.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\Serializable.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\StandardEvent.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\StringEvent.hh">
+      <Filter>Data\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\DataConverterPlugin.hh">
+      <Filter>Plugins\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\DEPFETEvent.hh">
+      <Filter>Plugins\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\EUDRBEvent.hh">
+      <Filter>Plugins\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\PluginManager.hh">
+      <Filter>Plugins\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\TLUEvent.hh">
+      <Filter>Plugins\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\USBpix_i3.hh">
+      <Filter>Plugins\include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\OptionParser.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\CommandReceiver.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+  </ItemGroup>
+</Project>
