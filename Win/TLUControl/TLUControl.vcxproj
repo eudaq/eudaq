@@ -83,7 +83,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\tlu\src\new_uSleep.cpp" />
+    <ClCompile Include="..\..\tlu\src\win_uSleep.cpp" />
     <ClCompile Include="..\..\tlu\src\TLUAddresses1.cc" />
     <ClCompile Include="..\..\tlu\src\TLUAddresses2.cc" />
     <ClCompile Include="..\..\tlu\src\TLUControl.cxx" />

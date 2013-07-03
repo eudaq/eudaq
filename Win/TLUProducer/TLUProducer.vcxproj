@@ -82,7 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\tlu\src\new_uSleep.cpp" />
+    <ClCompile Include="..\..\tlu\src\win_uSleep.cpp" />
     <ClCompile Include="..\..\tlu\src\TLUAddresses1.cc" />
     <ClCompile Include="..\..\tlu\src\TLUAddresses2.cc" />
     <ClCompile Include="..\..\tlu\src\TLUController.cc" />
@@ -96,7 +96,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\tlu\include\tlu\new_Usleep.h" />
+    <ClInclude Include="..\..\tlu\include\tlu\win_Usleep.h" />
     <ClInclude Include="..\..\tlu\include\tlu\TLU_address_map.h" />
     <ClInclude Include="..\..\tlu\include\tlu\TLU_address_map_v0-2.h" />
   </ItemGroup>
