@@ -13,7 +13,7 @@ namespace eudaq {
    * It is both a CommandReceiver, listening to commands from RunControl,
    * and a DataSender, sending data to a DataCollector.
    */
-  class Producer : public CommandReceiver, public DataSender {
+  class DLLEXPORT Producer : public CommandReceiver, public DataSender {
     public:
       /**
        * The constructor.
