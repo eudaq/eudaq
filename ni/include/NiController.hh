@@ -63,7 +63,7 @@ public:
 
 
 private:
-	struct hostent *hclient, *hconfig, *hdatatransport;
+	struct hostent *hclient, *hdatatransport;
 	struct sockaddr_in client;
 	struct sockaddr_in config;
 	struct sockaddr_in datatransport;
@@ -79,7 +79,6 @@ private:
 	char Buffer_data[7000];
 	char Buffer_length[7000];
 
-	unsigned long data;// = INADDR_NONE;
 	unsigned long data_trans_addres;// = INADDR_NONE;
 	SOCKET sock_config;
 	SOCKET sock_datatransport;
