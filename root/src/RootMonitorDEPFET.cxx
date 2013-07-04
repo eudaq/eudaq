@@ -382,7 +382,7 @@ public:
     : eudaq::Holder<int>(argc),
       TApplication("RootMonitor", &m_val, const_cast<char**>(argv)),
       TGMainFrame(gClient->GetRoot(), w, h),
-      eudaq::Monitor("Root", runcontrol, datafile),
+      eudaq::Monitor(runcontrol, datafile, 0, 0, 0),
       m_lastupdate(eudaq::Time::Current()),
       m_modified(true),
       m_runended(false),
