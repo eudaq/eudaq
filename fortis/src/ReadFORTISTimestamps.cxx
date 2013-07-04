@@ -15,6 +15,7 @@
 #ifdef USE_ROOT
 // Include files for ROOT
 #include "TH3F.h"
+#include "TH2I.h"
 #include "TROOT.h"
 #include "TCanvas.h"
 #include "TStyle.h"
