@@ -95,41 +95,24 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 	std::string m_server;
 	m_server = param.Get("NiIPaddr", "");
 	
+	// convert string in config into IPv4 address
+        struct in_addr inp;
+        int status = inet_aton(m_server.c_str(), &inp);
+        if (status == 0) {
+          EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
+          perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
+        }
 
-#ifdef WIN32 
-	struct in_addr addr = { 0 };
-	addr.s_addr = inet_addr(m_server.c_str());
-	if (addr.s_addr == INADDR_NONE) {
-		printf("The IPv4 address entered must be a legal address\n");
-		hconfig=nullptr;
-	} 
-	else
-	{
-		hconfig = gethostbyaddr((char *) &addr, 4, AF_INET);
-	}
+       if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+                EUDAQ_ERROR("ConfSocket: Create socket error  " );
+                perror("Config. Socket: socket()");
+                exit(1);
+        } else
+                printf("----TCP/NI crate: SOCKET is OK...\n");
 
-
-#else 
-	data= inet_addr(m_server.c_str());
-	hconfig = gethostbyaddr(&data, 4, AF_INET);
-
-#endif
-
-	if ( hconfig == NULL) {
-		EUDAQ_ERROR("Config. Socket: get HOST error  " );
-		perror("Config. Socket: gethostbyname()");
-		exit(1);
-	} else{
-		EUDAQ_BCOPY( hconfig->h_addr, &(config.sin_addr), hconfig->h_length);
-		printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
-		printf("----TCP/NI crate INET PORT is: %d \n", PORT_CONFIG );
-	}
-	if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		EUDAQ_ERROR("ConfSocket: Create socket error  " );
-		perror("Config. Socket: socket()");
-		exit(1);
-	} else
-		printf("----TCP/NI crate The SOCKET is OK...\n");
+        config.sin_addr = inp;
+        printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
+        printf("----TCP/NI crate INET PORT is: %d \n", PORT_CONFIG );
 
 	config.sin_family = AF_INET;
 	config.sin_port = htons(PORT_CONFIG);
