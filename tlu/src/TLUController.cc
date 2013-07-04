@@ -9,7 +9,7 @@
 
 #ifdef WIN32
 # include <cstdio>  // HK
-#include "tlu/new_Usleep.h"
+#include "tlu/win_Usleep.h"
 #define EUDAQ_uSLEEP(x) uSleep(x)
 
 #else
