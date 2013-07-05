@@ -59,7 +59,7 @@ int main(int /*argc*/, char ** argv) {
                                   "Length of 'on' time for timing strobe in clock cycles");
   eudaq::Option<int>         enabledutveto(op, "b", "dutveto", 0, "mask",
                                   "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
-  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", 900, "mV", "LV power, range from 250 to 900 (in mV)");
+  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", 800, "mV", "LV power, range from 250 to 900 (in mV)");
 
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
