@@ -63,7 +63,7 @@ public:
 
 
 private:
-	struct hostent *hclient, *hdatatransport;
+	struct hostent *hclient;
 	struct sockaddr_in client;
 	struct sockaddr_in config;
 	struct sockaddr_in datatransport;
@@ -82,7 +82,7 @@ private:
 	unsigned long data_trans_addres;// = INADDR_NONE;
 	SOCKET sock_config;
 	SOCKET sock_datatransport;
-	int numbytes;
+	ssize_t numbytes;
 
 	 //NiIPaddr;
 	unsigned TriggerType;
