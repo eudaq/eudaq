@@ -33,5 +33,8 @@
     <ClCompile Include="..\..\tlu\src\USBTracer.cc">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\tlu\src\win_uSleep.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
