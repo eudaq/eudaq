@@ -79,8 +79,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\..\extern\libusb-win32-bin-1.2.6.0\lib\msvc\;..\..\extern\ZestSC1\windows\Lib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>..\..\extern\ZestSC1\windows\Lib\*.lib;libusb.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\extern\libusb-win32-bin-1.2.6.0\lib\msvc\;..\..\extern\ZestSC1\windows 7\Lib\x86</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ZestSC1.lib;libusb.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
