@@ -15,6 +15,12 @@
 #include <iostream>
 #include <fstream> 
 
+// il numero di byte che dovrebbe leggere e' 2608 sovradimensionato
+#define mtu_date 3000
+
+// legge word di 4 byte
+#define mtu_xport 4 
+
 using namespace std;
 DeviceMimosa32::DeviceMimosa32()
 {
@@ -127,8 +133,6 @@ int DeviceMimosa32::read_file_cfg(){
 //Restituisce 1 quando termina un evento. Viene passato il file dove scrivere i dati.
 //----------------------------------------------------------------------------------------------
 int DeviceMimosa32::readout_event(int num_word_event, FILE *fp, char *cdh, char *dh, char *all_data){        
-    int mtu_xport=4;	// legge word di 4 byte
-    int mtu_date=3000; // il numero di byte che dovrebbe leggere e' 2608 sovradimensionato
     char data[mtu_xport];// word di 4byte ricevuta dal detector.
     char data_inv[mtu_date];// word di 4byte ricevuta dal detector invertita.
     char data2[mtu_xport];//word usata per la stringa di isrtuzione.
