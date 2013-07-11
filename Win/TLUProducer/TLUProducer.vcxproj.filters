@@ -24,27 +24,27 @@
     <ClCompile Include="..\..\tlu\src\TLUController.cc">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\tlu\src\USBTracer.cc">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\tlu\src\TLUProducer.cxx">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\tlu\src\new_uSleep.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="..\..\tlu\src\TLUAddresses1.cc">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\tlu\src\USBTracer.cc">
+      <Filter>Ressourcendateien</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tlu\src\win_uSleep.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\tlu\include\tlu\new_Usleep.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\tlu\include\tlu\TLU_address_map_v0-2.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="..\..\tlu\include\tlu\TLU_address_map.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\tlu\include\tlu\win_Usleep.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
