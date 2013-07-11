@@ -20,15 +20,16 @@
 #define EUDAQ_BCOPY(source,dest,NSize) bcopy(source,dest,NSize)
 #define EUDAQ_Sleep(x) sleep(x)
 #define EUDAQ_CLOSE_SOCKET(x) close(x)
-
+#define EUDAQ_inet_aton(inAdress,OutAddrBuffer) inet_aton(inAdress,OutAddrBuffer)
 #else
 
 #include <winsock.h>
 #pragma comment(lib, "Ws2_32.lib")
 #include "eudaq/RunControl.hh"
+#include <WS2tcpip.h>
 #define EUDAQ_Sleep(x) Sleep(x)
 #define EUDAQ_BCOPY(source,dest,NSize) memmove(dest,source,NSize)
-
+#define EUDAQ_inet_aton(inAdress,OutAddrBuffer) inet_pton(AF_INET,inAdress,OutAddrBuffer)
 
 #define EUDAQ_CLOSE_SOCKET(x) closesocket(x)
 
@@ -60,7 +61,7 @@ unsigned char stop[5] = "stop";
 NiController::NiController() {
 	//NI_IP = "192.76.172.199";
 }
-void NiController::Configure(const eudaq::Configuration & /* param */) {
+void NiController::Configure(const eudaq::Configuration & param) {
 	//NiIPaddr = param.Get("NiIPaddr", "");
 
 }
@@ -79,7 +80,7 @@ void NiController::GetProduserHostInfo(){
         }
         else
         {
-	  printf("----TCP/Producer -- Warning! -- failed at executing gethostbyname() for: %s. Check your /etc/hosts list \n", ThisHost );        
+	   printf("----TCP/Producer -- Warning! -- failed at executing gethostbyname() for: %s. Check your /etc/hosts list \n", ThisHost );            
         }
 }
 void NiController::Start(){
@@ -97,7 +98,7 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 	
 	// convert string in config into IPv4 address
         struct in_addr inp;
-        int status = inet_aton(m_server.c_str(), &inp);
+        int status = EUDAQ_inet_aton(m_server.c_str(), &inp);
         if (status == 0) {
           EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
           perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
@@ -127,7 +128,7 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 }
 void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len){
 	bool dbg = false;
-	if (dbg) printf("size=%lu", static_cast<unsigned long>(len));
+		if (dbg) printf("size=%lu", static_cast<unsigned long>(len));
 
 	if (EUDAQ_SEND(sock_config,text, len, 0) == -1) 	perror("Server-send() error lol!");
 
@@ -141,7 +142,7 @@ void NiController::ConfigClientSocket_Close(){
 	
 	
 }
-unsigned int NiController::ConfigClientSocket_ReadLength(const char /* string*/[4]){
+unsigned int NiController::ConfigClientSocket_ReadLength(const char string[4]){
 	unsigned int datalengthTmp;
 	unsigned int datalength;
 	int i;
@@ -152,7 +153,7 @@ unsigned int NiController::ConfigClientSocket_ReadLength(const char /* string*/[
 		exit(1);
 	}
 	else {
-	  if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
+		 if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
 		i=0;
 		if (dbg){
 			while (i<numbytes){
@@ -213,7 +214,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 
 	// convert string in config into IPv4 address
         struct in_addr inp;
-        int status = inet_aton(m_server.c_str(), &inp);
+        int status = EUDAQ_inet_aton(m_server.c_str(), &inp);
         if (status == 0) {
           EUDAQ_ERROR("DataTransportSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
           perror("DataTransportSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
@@ -239,8 +240,9 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 		exit(1);
 	} else
 		printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
+
 }
-unsigned int NiController::DataTransportClientSocket_ReadLength(const char /*string*/[4] ) {
+unsigned int NiController::DataTransportClientSocket_ReadLength(const char string[4]) {
 	unsigned int datalengthTmp;
 	unsigned int datalength;
 	int i;
@@ -251,7 +253,7 @@ unsigned int NiController::DataTransportClientSocket_ReadLength(const char /*str
 		exit(1);
 	}
 	else {
-	  if (dbg)printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
+		 if (dbg)printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
 		i=0;
 		if (dbg){
 			while (i<numbytes){
