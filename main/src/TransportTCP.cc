@@ -392,7 +392,7 @@ namespace eudaq {
     //std::cout << "DEBUG: Process..." << std::endl;
     Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
     bool done = false;
-    bool dbg = true;
+    bool dbg = false;
     do {
       fd_set tempset;
       memcpy(&tempset, &m_fdset, sizeof(tempset));
