@@ -24,9 +24,6 @@
     <ClCompile Include="..\..\tlu\src\TLUAddresses2.cc">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\tlu\src\new_uSleep.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\tlu\src\TLU_USB.cc">
       <Filter>Quelldateien</Filter>
     </ClCompile>
