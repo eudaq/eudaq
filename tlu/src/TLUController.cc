@@ -255,12 +255,16 @@ namespace tlu {
 
 
   void TLUController::Initialize() {
+#ifndef WIN32
     if (m_version == 2) {
       if (!SetupLemo()) {
         // If LEMO ADC does not respond, we must have a v0.2c TLU, so increment version number
         m_version++;
       }
     }
+#else 
+	 m_version=3;
+#endif
 
     SetupLVPower();
 
@@ -1226,10 +1230,10 @@ namespace tlu {
 #endif
     for (int i = 0; i < 8; ++i) {
       bool sda = (data >> (7-i)) & 1;
-      WriteI2Clines(0, sda);
+   	  WriteI2Clines(0, sda);
       I2Cdelay();
-      WriteI2Clines(1, sda);
-      I2Cdelay();
+  	  WriteI2Clines(1, sda);
+        I2Cdelay();
     }
     // check for ack
     WriteI2Clines(0, 1);
