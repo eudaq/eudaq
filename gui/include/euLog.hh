@@ -68,6 +68,7 @@ class LogCollectorGUI : public QMainWindow,
       } catch (const std::runtime_error &) {
         // probably file not found: ignore
       }
+      setWindowIcon(QIcon("../images/Icon_euLog.png"));
     }
     protected:
       void LoadFile(const std::string & filename) {
