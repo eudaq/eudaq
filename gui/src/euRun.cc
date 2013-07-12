@@ -118,6 +118,7 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
   m_statustimer.start(500);
   txtGeoID->setText(QString::number(eudaq::ReadFromFile(GEOID_FILE, 0U)));
   txtGeoID->installEventFilter(this);
+  setWindowIcon(QIcon("../images/Icon_euRun.png"));
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<eudaq::Status> status) {
