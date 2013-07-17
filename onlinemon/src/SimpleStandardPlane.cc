@@ -65,10 +65,19 @@ void SimpleStandardPlane::addHit(SimpleStandardHit oneHit) {
 
   _hits.push_back(oneHit);
 
+  
   if ( (oneHit.getX()<0) || (oneHit.getY()<0) ||(oneHit.getX()>_maxX) ||(oneHit.getY()>_maxY))
   {
     _badhits.push_back(oneHit);
+    if  ( getName() == "USBPIXI4" )
+    {
+//      printf("BAD: %d %d %d %d \n", oneHit.getX(),oneHit.getY(),_maxX,_maxY);
+    }
   }
+else    if  ( getName() == "USBPIXI4" )
+    {
+//      printf("GOOD %d %d %d %d \n", oneHit.getX(),oneHit.getY(),_maxX,_maxY);
+    }
 
   if  (is_MIMOSA26)
   {
@@ -256,6 +265,12 @@ void SimpleStandardPlane::setPixelType(string name)
     AnalogPixelType=true;
   }
   else if(name=="USBPIXI4")
+  {
+    is_USBPIXI4=true;
+    is_UNKNOWN=false;
+    AnalogPixelType=true;
+  }
+  else if(name=="USBPIXI4B")
   {
     is_USBPIXI4=true;
     is_UNKNOWN=false;
