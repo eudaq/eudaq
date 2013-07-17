@@ -261,7 +261,7 @@ void OnlineMonConfiguration::SetDefaults()
   mimosa26_section_boundary=288;
 
   //hotpixel settings
-  hotpixelcut=0.05;
+  hotpixelcut=0.01;
 
   //correl cluster settings
   correl_minclustersize=2;

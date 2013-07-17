@@ -35,6 +35,10 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
   {
     is_USBPIXI4=true;
   }
+  else if (_sensor == std::string("USBPIXI4B"))
+  {
+    is_USBPIXI4=true;
+  }
   is_DEPFET = p.is_DEPFET;
 
   std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
@@ -226,11 +230,6 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
       zero_plane_array();
     }
 
-
-
-
-
-
   } else {
     std::cout << "No max sensorsize known!" << std::endl;
   }
@@ -348,7 +347,7 @@ void HitmapHistos::Fill(const SimpleStandardCluster & cluster)
   }
 
 
-  if ( (is_APIX) || is_USBPIX || is_USBPIXI4 )
+  if ( (is_APIX) || (is_USBPIX) || (is_USBPIXI4) )
   {
     if (_lvl1Width != NULL)   _lvl1Width->Fill(cluster.getLVL1Width());
     if (_totCluster != NULL ) _totCluster->Fill(cluster.getTOT());
