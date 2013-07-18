@@ -72,7 +72,7 @@ namespace eudaq {
     setlittleendian<unsigned short>(&result[4], m_triggerid);
     if (sensorid % 2 == 0) {
       // Raw Data
-      setlittleendian(&result[6], 0);
+      setlittleendian(&result[6], static_cast<unsigned short>(0));
       std::vector<unsigned char> data = MakeRawEvent(m_width, m_height);
       result.insert(result.end(), data.begin(), data.end());
     } else {
@@ -85,7 +85,7 @@ namespace eudaq {
     return result;
   }
 
-  void ExampleHardware::CompletedEvent() {
+  void  ExampleHardware::CompletedEvent() {
     m_triggerid++;
     m_nextevent += 1.0;
   }
