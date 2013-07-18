@@ -18,7 +18,7 @@ at some places we have constructions like:
  if (m_srvsock == (SOCKET)-1)
 
 
- Maybe we can replace (SOCKET)-1 with a macro that has a understandeble name
+ Maybe we can replace (SOCKET)-1 with a macro that has a understandable name
 
  III:
 

@@ -6,7 +6,7 @@
     <LocalDebuggerCommandArguments>-r tcp://127.0.0.1:44000</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerWorkingDirectory>..\..\bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>..\..\Windows Binaries\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerCommandArguments>-r tcp://127.0.0.1:44000</LocalDebuggerCommandArguments>
   </PropertyGroup>

@@ -8,6 +8,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerCommandArguments>-r tcp://127.0.0.1:44000</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>..\..\bin\</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>..\..\Windows Binaries\</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>
