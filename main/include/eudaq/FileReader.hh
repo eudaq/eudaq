@@ -9,7 +9,7 @@
 
 namespace eudaq {
 
-  class FileReader {
+  class DLLEXPORT FileReader {
     public:
       FileReader(const std::string & filename, const std::string & filepattern = "", bool synctriggerid = false);
       ~FileReader();
