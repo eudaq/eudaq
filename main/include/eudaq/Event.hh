@@ -88,7 +88,7 @@ namespace eudaq {
       map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };
 
-  std::ostream & operator << (std::ostream &, const Event &);
+  DLLEXPORT std::ostream &  operator << (std::ostream &, const Event &);
 
   class EventFactory {
     public:

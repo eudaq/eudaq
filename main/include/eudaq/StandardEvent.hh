@@ -7,7 +7,7 @@
 
 namespace eudaq {
 
-  class StandardPlane : public Serializable {
+  class DLLEXPORT StandardPlane : public Serializable {
     public:
       enum FLAGS { FLAG_ZS = 0x1, // Data are zero suppressed
         FLAG_NEEDCDS = 0x2, // CDS needs to be calculated (data is 2 or 3 raw frames)
@@ -64,7 +64,14 @@ namespace eudaq {
       void SetPivot(unsigned index, unsigned frame , bool PivotFlag);
       // defined for short, int, double
       template <typename T>
-        std::vector<T> GetPixels() const;
+	  std::vector<T> GetPixels() const{
+		  SetupResult();
+		  std::vector<T> result(m_result_pix->size());
+		  for (size_t i = 0; i < result.size(); ++i) {
+			  result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
+		  }
+		  return result;
+	  }
       const std::vector<coord_t> & XVector(unsigned frame) const;
       const std::vector<coord_t> & XVector() const;
       const std::vector<coord_t> & YVector(unsigned frame) const;
@@ -115,7 +122,7 @@ namespace eudaq {
       mutable std::vector<coord_t> m_temp_x, m_temp_y;
   };
 
-  class StandardEvent : public Event {
+  class DLLEXPORT StandardEvent : public Event {
     EUDAQ_DECLARE_EVENT(StandardEvent);
     public:
     StandardEvent(unsigned run = 0, unsigned evnum = 0,

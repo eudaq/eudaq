@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLUProducer", "TLUProducer\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TLUControl", "TLUControl\TLUControl.vcxproj", "{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TestReader", "TestReader\TestReader.vcxproj", "{6A7CB690-C541-4FDA-AA5B-D0CAAA5D5AE4}"
+EndProject
 Global
 	GlobalSection(SubversionScc) = preSolution
 		Svn-Managed = True
@@ -53,6 +55,10 @@ Global
 		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Debug|Win32.Build.0 = Debug|Win32
 		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Release|Win32.ActiveCfg = Release|Win32
 		{D3F8787B-CDCF-4F6F-B271-DAA04EEF2A46}.Release|Win32.Build.0 = Release|Win32
+		{6A7CB690-C541-4FDA-AA5B-D0CAAA5D5AE4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6A7CB690-C541-4FDA-AA5B-D0CAAA5D5AE4}.Debug|Win32.Build.0 = Debug|Win32
+		{6A7CB690-C541-4FDA-AA5B-D0CAAA5D5AE4}.Release|Win32.ActiveCfg = Release|Win32
+		{6A7CB690-C541-4FDA-AA5B-D0CAAA5D5AE4}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

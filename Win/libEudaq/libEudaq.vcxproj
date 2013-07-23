@@ -102,7 +102,6 @@
     <ClCompile Include="..\..\main\src\EUDRBEvent.cc" />
     <ClCompile Include="..\..\main\src\Event.cc" />
     <ClCompile Include="..\..\main\src\ExampleConverterPlugin.cc" />
-    <ClCompile Include="..\..\main\src\ExampleHardware.cc" />
     <ClCompile Include="..\..\main\src\Exception.cc" />
     <ClCompile Include="..\..\main\src\FileNamer.cc" />
     <ClCompile Include="..\..\main\src\FileReader.cc" />

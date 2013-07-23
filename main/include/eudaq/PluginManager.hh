@@ -17,7 +17,7 @@ namespace eudaq {
    *  and the plugin manager can deliver the correct plugin to 
    *  convert it to lcio.
    */
-  class PluginManager {
+  class DLLEXPORT PluginManager {
 
     public:
       typedef DataConverterPlugin::t_eventid t_eventid;

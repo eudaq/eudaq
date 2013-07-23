@@ -237,15 +237,15 @@ namespace eudaq {
     return v.at(f);
   }
 
-  template <typename T>
-    std::vector<T> StandardPlane::GetPixels() const {
-      SetupResult();
-      std::vector<T> result(m_result_pix->size());
-      for (size_t i = 0; i < result.size(); ++i) {
-        result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
-      }
-      return result;
-    }
+//   template <typename T>
+//     std::vector<T> StandardPlane::GetPixels() const {
+//       SetupResult();
+//       std::vector<T> result(m_result_pix->size());
+//       for (size_t i = 0; i < result.size(); ++i) {
+//         result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
+//       }
+//       return result;
+//     }
 
   void StandardPlane::SetupResult() const {
     if (m_result_pix) return;

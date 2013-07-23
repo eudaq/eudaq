@@ -24,7 +24,7 @@ namespace eudaq {
       int m_wprot;
   };
 
-  class FileDeserializer : public Deserializer {
+  class DLLEXPORT FileDeserializer : public Deserializer {
     public:
       FileDeserializer(const std::string & fname, bool faileof = false, size_t buffersize = 65536);
       virtual bool HasData();

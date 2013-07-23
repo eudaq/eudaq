@@ -241,9 +241,6 @@
     <ClCompile Include="..\..\main\src\EUDRBEvent.cc">
       <Filter>unsorted\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\main\src\ExampleHardware.cc">
-      <Filter>unsorted\src</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\main\src\Monitor.cc">
       <Filter>unsorted\src</Filter>
     </ClCompile>
