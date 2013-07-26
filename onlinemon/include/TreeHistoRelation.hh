@@ -3,6 +3,7 @@
 #include <iostream>
 #include "TGListTree.h"
 #include <TH1.h>
+#include "TCanvas.h"
 class HistoTreeContainer;
 //!There is only one histogram per TreeItem, but the Draw-Method will draw also all histograms in the children of the TreeItem using the NextSibling-Method, typically an object like this contains an histogram or has at least one child
 class HistoItem {
@@ -19,15 +20,15 @@ class HistoItem {
 
   public:
     //!Constructor
-    HistoItem(const TGListTreeItem* tree, const std::string str) 
-      : _treeItem(tree), _treeItemString(str), _histo(0), _overviewHisto(0), _histoOptions(""), _histoLogOptions(0), _fCanvas(0)
+    HistoItem(TGListTreeItem* tree,  std::string str)   //$$ change removed const
+		: _treeItem(tree), _treeItemString(str), _histo(0), _overviewHisto(0), _histoOptions(""), _histoLogOption(0), _fCanvas(0){} //_histoLogOptions  --> _histoLogOption
         //!Nothing to do for the destructor
         virtual ~HistoItem() {};
 
     //!Add histograms to the TreeItem
     void setHisto(const TH1* histo, const std::string opt = "", const unsigned int logOpt = 0);
     //!If the Draw-Methods draws more than one histo the parent treeitems needs to know which of them to show in an overview
-    void setOverviewHisto(const TH1* histo) {_overviewHisto = histo;}
+    void setOverviewHisto(TH1* histo) {_overviewHisto = histo;}//$$ change removed const
     //!Simple print the TreeItemString for debugging
     void print() {std::cout << _treeItemString << std::endl;}
     //! Draw the histograms belonging to that TreeItem
@@ -46,13 +47,13 @@ class HistoTreeContainer{
 
   public:
     //! Standard Constructor - not much to do
-    HistoTreeContainer() : _treeItem(0), _histoItem(0);
+	  HistoTreeContainer() : _treeItem(0), _histoItem(0){}
     //! Getter for the HistoItems - overloaded argument is the TreeItem - use this to call Draw() from the TreeBrowser e.g.
     HistoItem const getHistoItem(TGListTreeItem* item) {return _treeItem[item];}
     //! Getter for the HistoItems - overloaded argument is the histogrampointer - use this to call Draw() from the Clicking for Histograms e.g.
     HistoItem* const getHistoItem(TH1* histo) {return _histoItem[histo];}
     //! Add method 
-    void add(TGListTreeItem* treeItem, &HistoItem histoItem) {
+    void add(TGListTreeItem* treeItem, HistoItem &histoItem) {
       _treeItem[treeItem] = histoItem;
       _histoItem[histoItem.getHisto()] = histoItem;
     }

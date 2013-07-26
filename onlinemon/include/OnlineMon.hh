@@ -43,6 +43,12 @@
 //STL includes
 #include <string>
 
+#ifdef WIN32
+#define EUDAQ_SLEEP(x) Sleep(x*1000)
+#else
+#define EUDAQ_SLEEP(x) sleep(x)
+#endif
+
 using namespace std;
 
 class OnlineMonWindow;
@@ -88,7 +94,7 @@ class RootMonitor : private eudaq::Holder<int>,
       }
       virtual void OnTerminate() {
         std::cout << "Terminating" << std::endl;
-        sleep(1);
+        EUDAQ_SLEEP(1);
         gApplication->Terminate();
       }
       virtual void OnReset() {
