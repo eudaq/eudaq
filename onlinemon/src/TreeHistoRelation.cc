@@ -1,10 +1,10 @@
 #include "../include/TreeHistoRelation.hh"
 
 void HistoItem::setHisto(const TH1* histo, const std::string opt, const unsigned int logOpt) {
-  _histo = histo;
+  _histo = const_cast<TH1*>(histo);
   if (_treeItem->GetFirstChild() != 0) _overviewHisto = _treeItem->GetFirstChild()->getHisto();
   _histoOptions = opt;
-  _histoLogOptions = logOpt;
+  _histoLogOption = logOpt;  //_histoLogOptions --> _histoLogOption
 }
 
   void HistoItem::Draw() {

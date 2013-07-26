@@ -12,7 +12,7 @@ namespace eudaq {
   /**
    * The base class from which all Monitors should inherit.
    */
-  class Monitor : public CommandReceiver {
+  class DLLEXPORT Monitor : public CommandReceiver {
     public:
       /**
        * The constructor.

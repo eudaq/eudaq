@@ -1,3 +1,7 @@
+#ifdef WIN32
+#define NOMINMAX
+#endif
+
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"

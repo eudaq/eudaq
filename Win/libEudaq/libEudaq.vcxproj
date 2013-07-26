@@ -123,10 +123,12 @@
     <ClCompile Include="..\..\main\src\Monitor.cc" />
     <ClCompile Include="..\..\main\src\Mutex.cc" />
     <ClCompile Include="..\..\main\src\MVDConverterPlugin.cc" />
+    <ClCompile Include="..\..\main\src\NIConverterPlugin.cc" />
     <ClCompile Include="..\..\main\src\OptionParser.cc" />
     <ClCompile Include="..\..\main\src\PluginManager.cc" />
     <ClCompile Include="..\..\main\src\Producer.cc" />
     <ClCompile Include="..\..\main\src\RawDataEvent.cc" />
+    <ClCompile Include="..\..\main\src\RCEI4BConverterPlugin.cc" />
     <ClCompile Include="..\..\main\src\RunControl.cc" />
     <ClCompile Include="..\..\main\src\Serializable.cc" />
     <ClCompile Include="..\..\main\src\StandardEvent.cc" />
@@ -145,6 +147,8 @@
     <ClCompile Include="..\..\main\src\TransportServer.cc" />
     <ClCompile Include="..\..\main\src\TransportTCP.cc" />
     <ClCompile Include="..\..\main\src\USBpixConverterPlugin.cc" />
+    <ClCompile Include="..\..\main\src\USBpixI4BConverterPlugin.cc" />
+    <ClCompile Include="..\..\main\src\USBpixI4ConverterPlugin.cc" />
     <ClCompile Include="..\..\main\src\Utils.cc" />
   </ItemGroup>
   <ItemGroup>

@@ -253,6 +253,18 @@
     <ClCompile Include="..\..\main\src\RunControl.cc">
       <Filter>unsorted\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\main\src\NIConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\RCEI4BConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\USBpixI4ConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\main\src\USBpixI4BConverterPlugin.cc">
+      <Filter>Plugins\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\main\include\eudaq\TransportBase.hh">

@@ -1,16 +1,26 @@
 #ifndef ONLINE_MON_WINDOW_H
 #define ONLINE_MON_WINDOW_H
 
-
-#include <TTimer.h>
 #include <TGFrame.h>
+
+
+#include <RQ_OBJECT.h>
+#include "Rtypes.h"
+
+
+
+//#include "OnlineHistograms.hh"
+
+
+
+
+#ifndef __CINT__
+#include <TTimer.h>
+
 #include <TGLayout.h>
 #include <TGWindow.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TGListTree.h>
-#include <RQ_OBJECT.h>
-#include <TH1.h>
-#include <TH2I.h>
 #include <TContextMenu.h>
 #include <TPad.h>
 #include <TApplication.h>
@@ -18,30 +28,36 @@
 #include <TGButton.h>
 #include <TGStatusBar.h>
 #include <TGNumberEntry.h>
-
-#include "BaseCollection.hh"
-//#include "OnlineHistograms.hh"
-
+#include <TH1.h>
+#include <TH2I.h>
 #include <vector>
 #include <map>
-
-
-#ifndef __CINT__
+#include "BaseCollection.hh"
 #include "OnlineMon.hh"
+
 //class RootMonitor;
-#endif
+
 
 
 static const unsigned int kLin = 0;
 static const unsigned int kLogX = 1;
 static const unsigned int kLogY = 2;
 static const unsigned int kLogZ = 4;
-
+#else
+class TGWindow;
+class TH1;
+class TGListTreeItem;
+class BaseCollection;
+class RootMonitor;
+#endif
 
 class OnlineMonWindow : public TGMainFrame{
-  RQ_OBJECT("OnlineMonWindow")
+
+		RQ_OBJECT("OnlineMonWindow")
+ #ifndef __CINT__
   protected:
-    //#ifndef __CINT__
+
+	  //#ifndef __CINT__
     //RootMonitor *_mon;
     //#endif
     std::string _rootfilename;
@@ -89,7 +105,7 @@ class OnlineMonWindow : public TGMainFrame{
 
     RootMonitor *rmon;
     int snapshot_sequence;
-
+#endif
   public:
     OnlineMonWindow(const TGWindow *p, UInt_t w, UInt_t h);
     //#ifndef __CINT__
@@ -128,12 +144,12 @@ class OnlineMonWindow : public TGMainFrame{
     void increaseAnalysedEventsCounter() {++_analysedEvents;}
     void ExecuteEvent(Int_t event, Int_t px, Int_t py, TObject *sel);
 
-    void SetOnlineMon(RootMonitor *mymon);
-    ClassDef(OnlineMonWindow,0)
+    void SetOnlineMon(RootMonitor* mymon);
+    ClassDef(OnlineMonWindow,0);
 };
 
-#ifdef __CINT__
-#pragma link C++ class OnlineMonWindow+;
-#endif
+// #ifdef __CINT__
+// #pragma link C++ class OnlineMonWindow+;
+// #endif
 
 #endif
