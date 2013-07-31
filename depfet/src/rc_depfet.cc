@@ -9,6 +9,8 @@
 #include <sys/time.h>
 #include "depfet/rc_depfet.hh"
 
+#include <unistd.h>
+
 
 void process_msg (char *buf, char **tk, int *ntk, int max_tok );
 int field_cmd(char *msg);
