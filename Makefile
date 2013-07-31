@@ -2,6 +2,8 @@ MAKE := make
 
 DIRS := main ni tlu vme eudrb mvd depfet fortis mimoroma taki root gui doc onlinemon
 
+telescope: main ni tlu gui onlinemon
+
 default: main
 
 all: $(DIRS)
