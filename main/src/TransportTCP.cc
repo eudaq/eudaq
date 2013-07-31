@@ -161,6 +161,12 @@ at some places we have constructions like:
 
 #endif
 
+// print debug messages that are optimized out if DEBUG_TRANSPORT is not set:
+// source and details: http://stackoverflow.com/questions/1644868/c-define-macro-for-debug-printing
+#define debug_transport(fmt, ...) \
+  do { if (DEBUG_TRANSPORT) fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, \
+					  __LINE__, __func__, __VA_ARGS__); } while (0)
+
 #include <sys/types.h>
 #include <errno.h>
 //#include <unistd.h>
@@ -392,7 +398,6 @@ namespace eudaq {
     //std::cout << "DEBUG: Process..." << std::endl;
     Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
     bool done = false;
-    bool dbg = false;
     do {
       fd_set tempset;
       memcpy(&tempset, &m_fdset, sizeof(tempset));
@@ -452,7 +457,7 @@ namespace eudaq {
               }
             } //else /*if (result == 0)*/ {
             if (result == 0){
-              if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() <<", --> was closed "<< std::endl;
+              debug_transport( "Server #%d, return=%d, WSAError:%d (%s), --> was closed \n", j, result, errno, strerror(errno));
               ConnectionInfoTCP & m = GetInfo(j);
               m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
               m.Disable();
@@ -460,12 +465,17 @@ namespace eudaq {
               FD_CLR(j, &m_fdset);
             }
             if (result == EUDAQ_ERROR_NO_DATA_RECEIVED ){
-              if (dbg) std::cout << "Server #" << j << ", return="<< result <<" WSAError:"<< LastSockError() << std::endl;
+              debug_transport( "Server #%d, return=%d, WSAError:%d (%s) \n", j, result, errno, strerror(errno));
             }
           } // end if (FD_ISSET(j, &amp;tempset))
           } // end for (j=0;...)
         } // end else if (result > 0)
-        t_remain = Time(0, timeout) + t_start - Time::Current();
+//optionally disable timeout at compile time by setting DEBUG_NOTIMEOUT to 1
+#if DEBUG_NOTIMEOUT
+      t_remain = Time(0, timeout);
+#else
+      t_remain = Time(0, timeout) + t_start - Time::Current();
+#endif
       } while (!done && t_remain > Time(0));
     }
 
@@ -529,7 +539,6 @@ namespace eudaq {
       //std::cout << "ProcessEvents()" << std::endl;
       Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
       bool done = false;
-      bool dbg = false;
       do {
         fd_set tempset;
         FD_ZERO(&tempset);
@@ -553,14 +562,14 @@ namespace eudaq {
 
           } while (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Interrupted_function_call);
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable) {
-            if (dbg)	std::cout << "ResultClient = " << result << std::endl;
+            debug_transport("ResultClient = %d", result);
             donereading = true;
           }
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
-            if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> Time out. "<< std::endl;
+            debug_transport("Client, return=%d, WSAError:%d (%s), --> Time out. \n",result,errno,strerror(errno));
           }
           if (result == 0) {
-            if (dbg) std::cout << "Client, return="<< result <<" WSAError:"<< LastSockError() <<", --> WARN: Connection closed (?) "<< std::endl;
+            debug_transport("Client, return=%d, WSAError:%d (%s), --> WARN: Connection closed (?)\n",result,errno,strerror(errno));
             donereading = true;
             EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
           }
@@ -572,8 +581,16 @@ namespace eudaq {
             }
           }
         } while (!donereading);
+//optionally disable timeout at compile time by setting DEBUG_NOTIMEOUT to 1
+#if DEBUG_NOTIMEOUT
+	t_remain = Time(0, timeout);
+#else
         t_remain = Time(0, timeout) + t_start - Time::Current();
-        //std::cout << "Remaining: " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
+#endif
+        //std::cout << "Remaining time in ProcessEvents(): " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
+	if ( !(t_remain > Time(0))){
+	  debug_transport("%s\n","Reached Timeout in ProcessEvents().");
+	}
       } while (!done && t_remain > Time(0));
       //std::cout << "done" << std::endl;
     }
