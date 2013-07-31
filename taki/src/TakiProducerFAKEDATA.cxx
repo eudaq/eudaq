@@ -15,6 +15,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <unistd.h>
+
 using std::cout;
 
 TakiProducerFAKEDATA::TakiProducerFAKEDATA(const std::string & name, const std::string & runcontrol)
