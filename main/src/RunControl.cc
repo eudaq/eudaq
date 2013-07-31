@@ -267,9 +267,33 @@ namespace eudaq {
     if (m_idata == (size_t)-1) EUDAQ_THROW("No DataCollector is connected");
 
     status = m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
-    m_dataaddr = status.GetTag("_SERVER");
-    std::cout << "DataServer responded: Server = '" << m_dataaddr << "'" << std::endl;
-    if (m_dataaddr == "") EUDAQ_THROW("Invalid response from DataCollector");
+    std::string dsAddrReported = status.GetTag("_SERVER");
+    if (dsAddrReported == "") EUDAQ_THROW("Invalid response from DataCollector");
+
+    // determine data server remote IP ADDRESS from actual connection origin
+    std::string dataip = "tcp://127.0.0.1";
+    // strip off the port number
+    size_t pos = id.GetRemote().find(":");
+    if (pos != std::string::npos) {
+      dataip = "tcp://";
+      dataip += std::string(id.GetRemote(), 0, pos);
+    }
+
+    // determine data server remote PORT from number reported by data server
+    std::string dataport = "44001";
+    // strip off the protocol and IP
+    pos = dsAddrReported.find("://");
+    if (pos != std::string::npos)
+      pos = dsAddrReported.find(":",pos+3);
+    else
+      pos = dsAddrReported.find(":");
+    if (pos != std::string::npos) {
+      dataport = std::string(dsAddrReported, pos+1);
+    }
+
+    // combine IP from connection with port number reported by data server
+    m_dataaddr = dataip;  m_dataaddr += ":"; m_dataaddr += dataport;
+    std::cout << "DataServer responded: full server address determined to be  = '" << m_dataaddr << "'" << std::endl;
     SendCommand("DATA", m_dataaddr);
 
     if (m_ilog != (size_t)-1) {
