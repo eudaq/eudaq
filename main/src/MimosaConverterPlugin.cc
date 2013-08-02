@@ -242,8 +242,7 @@ namespace eudaq {
       char ch4[2];
 
       unsigned char word[4];
-      int shift=0;
-	
+
       for (int i=0;i<4;i++){
 	unpack(fData,fOffset+4,word[i]);   
       }

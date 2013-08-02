@@ -72,7 +72,7 @@ namespace eudaq {
     // This should return the trigger ID (as provided by the TLU)
     // if it was read out, otherwise it can either return (unsigned)-1,
     // or be left undefined as there is already a default version.
-    virtual unsigned GetTriggerID(const Event & ev) const {
+    virtual unsigned GetTriggerID(const Event & /*ev*/) const {
 	
 //	const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev);
 //	vector<unsigned char> tludata = rev->GetBlock(1);
@@ -108,7 +108,7 @@ namespace eudaq {
       vector<unsigned int> ZSDataTOT;
       size_t offset = 0;
       unsigned int aWord =0;
-      for(int i=0;i<data.size()/12;i++){
+      for(size_t i=0;i<data.size()/12;i++){
     	  unpack(data,offset,aWord);
     	  offset+=sizeof(aWord);
     	  ZSDataX.push_back(aWord);
@@ -174,7 +174,7 @@ namespace eudaq {
 //
 //        		}
       //cout << "[TimepixConverter] Filling Standard Plane " << endl;
-      for(int i = 0 ; i<ZSDataX.size();i++){
+      for(size_t i = 0 ; i<ZSDataX.size();i++){
 
     	  plane.PushPixel(ZSDataX[i],ZSDataY[i],ZSDataTOT[i]);
 

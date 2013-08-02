@@ -13,8 +13,8 @@ namespace eudaq {
     m_callstart(false),
     m_reader(0),
     limit(lim),
-    skip_events_with_counter(skip_evts),
-    skip(100-skip_)
+    skip(100-skip_),
+    skip_events_with_counter(skip_evts)
   {
     if (datafile != "") {
       // set offline

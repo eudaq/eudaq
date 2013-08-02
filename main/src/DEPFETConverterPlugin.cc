@@ -252,14 +252,15 @@ namespace eudaq {
         } else if (DevType==0x5) {  // 4-fold readout DCD
 
           //       printf("DEV_TYPE=44\n");
-          int EvSize=(getlittleendian<unsigned>(&data[0])) & 0xfffff;
-          int Trig=(getlittleendian<unsigned>(&data[4]));
+          // int EvSize=(getlittleendian<unsigned>(&data[0])) & 0xfffff;
+          // int Trig=(getlittleendian<unsigned>(&data[4]));
           int Startgate=(getlittleendian<unsigned>(&data[8])>>10) & 0x3f;
           ZEROSUPP=(getlittleendian<unsigned>(&data[8])>>20) & 0x1;
 
           plane.SetSizeRaw(32, 64);  
           int i=-1;
-          int icol,irow,icold,irowd;
+          int icol,irow,icold;
+	  // int irowd;
           std::vector<double> DATA1(plane.XSize() * plane.YSize());
 
           if( ZEROSUPP==0){ 

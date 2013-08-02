@@ -40,8 +40,6 @@ namespace eudaq {
   static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	// Maximum ROW normalized (starting with 0)
   static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
 
-  static int chip_id_offset = 40;
-
   class RCEI4BConverterBase {
     private:
       unsigned int count_boards;
@@ -287,6 +285,9 @@ namespace eudaq {
       }
 
       virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const {
+
+	static int chip_id_offset = 40;
+
         //std::cout << "getlciosubevent (I4B) event " << eudaqEvent.GetEventNumber() << " | " << GetTriggerID(eudaqEvent) << std::endl;
         if (eudaqEvent.IsBORE()) {
           // shouldn't happen

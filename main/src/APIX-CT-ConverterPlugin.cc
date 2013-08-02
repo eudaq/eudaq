@@ -40,7 +40,6 @@ namespace eudaq {
 
   static const unsigned int NCOL=80;
   static const unsigned int NROW=336;
-  static int chip_id_offset = 20;
 
   class FormattedRecord{
     public:
@@ -194,6 +193,9 @@ void APIXCTConverterPlugin::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq:
 
 bool APIXCTConverterPlugin::GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const
 {
+
+  static int chip_id_offset = 20;
+
   if (eudaqEvent.IsBORE()) {
     if(dbg>0) std::cout << " APIXCTConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
     // shouldn't happen
@@ -396,10 +398,12 @@ std::vector<CTELHit> APIXCTConverterPlugin::decodeData(const RawDataEvent & ev) 
   std::vector<CTELHit> hits;
   eudaq::RawDataEvent::data_t block0=ev.GetBlock(0);
   unsigned long long rcetrig=getlittleendian<unsigned long long>(&block0[20]);
-  unsigned long long deadtime=getlittleendian<unsigned long long>(&block0[28]);
+  // Unused variable:
+  // unsigned long long deadtime=getlittleendian<unsigned long long>(&block0[28]);
   unsigned eudetTrig = getlittleendian<unsigned int>(&block0[36])&0x7fff;
   unsigned triggerword = (getlittleendian<unsigned int>(&block0[36])&0xff0000)>>16;
-  unsigned hitbusword = (getlittleendian<unsigned int>(&block0[36])&0xf000000)>>24;
+  // Unused variable:
+  // unsigned hitbusword = (getlittleendian<unsigned int>(&block0[36])&0xf000000)>>24;
   //std::cout<<"TLU word: "<<eudetTrig<<std::endl;
   //std::cout<<"Trigger word: "<<triggerword<<std::endl;
   //std::cout<<"Hitbus word: "<<hitbusword<<std::endl;
@@ -416,8 +420,12 @@ std::vector<CTELHit> APIXCTConverterPlugin::decodeData(const RawDataEvent & ev) 
   int ntrg;
   int bxid;
   int firstbxid[16];
-  int oldbxid[16];
-  int bxdiff;
+  // Unused variable:
+  // int oldbxid[16];
+
+  // Initialize variable, otherwise could be used uninitialized:
+  int bxdiff = 0;
+
   for (int i=0;i<16;i++){
     oldl1id[i]=-1;
     firstbxid[i]=-1;
@@ -439,7 +447,8 @@ std::vector<CTELHit> APIXCTConverterPlugin::decodeData(const RawDataEvent & ev) 
       bxdiff=bxid-firstbxid[link];
       if(bxdiff<0)bxdiff+=256;
     }else if(current.isHeaderTwo()){
-      int rce = current.getRCE();
+      // Unused variable:
+      //int rce = current.getRCE();
       //std::cout<<"RCE header. Number is "<<rce<<std::endl; 
     }else if(current.isData()){
       //int chip=current.getFE();
