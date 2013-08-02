@@ -85,12 +85,10 @@ int DeviceMimosa32::read_file_cfg(){
     ifstream file("../MimosaProducer/src/");
     string line;
     int count=0;
-    int skip=0;
     int isIp=0;
     int isPort=0; 
     int isNumChip=0;
     char * word;
-    char char_skip[]="#";
     char char_ip[]="IP";
     char char_port[]="PORT";
     char char_num_chip[]="NUM_CHP";
@@ -103,7 +101,6 @@ int DeviceMimosa32::read_file_cfg(){
           getline(file, line);
          // cout<<line<<endl;
           count=0;
-          skip=0;
           isIp=0;
           isPort=0;       
           word= strtok ((char*) line.c_str(),": ");
@@ -111,7 +108,6 @@ int DeviceMimosa32::read_file_cfg(){
      	         if (isIp==1)  {fIp=word; isIp=0;}
      	         if (isPort==1){ fPort=atoi(word);isPort=0;}
 		 if (isNumChip==1){ fNumChip=atoi(word);isNumChip=0;}
-     	         if (count==0 && strcmp(word,char_skip) == 0) {skip=1;}
      	         if (count==0 && strcmp(word,char_ip)   == 0) {isIp=1;}
      	         if (count==0 && strcmp(word,char_port) == 0 ){isPort=1;}
 		 if (count==0 && strcmp(word,char_num_chip)== 0){isNumChip=1;}
@@ -135,9 +131,8 @@ int DeviceMimosa32::read_file_cfg(){
 int DeviceMimosa32::readout_event(int num_word_event, FILE *fp, char *cdh, char *dh, char *all_data){        
     char data[mtu_xport];// word di 4byte ricevuta dal detector.
     char data_inv[mtu_date];// word di 4byte ricevuta dal detector invertita.
-    char data2[mtu_xport];//word usata per la stringa di isrtuzione.
     int count_word=0;//Numero di word
-    int d,i,n; // d e n contattori decrescenti usati rispettivamente per la stringa istruzione e per la stringa dati.
+    int i,n; // d e n contattori decrescenti usati rispettivamente per la stringa istruzione e per la stringa dati.
     int num_byte_event=0; //Numero totale di byte presi durante l'evento.
     int pos_start=0;//indice di posizione di inizio per la memorizzazione della word nella struttura dati.
     int pos_end=3;//indice di posizione di fine per la memorizzazione della word nella struttura dati.
@@ -147,7 +142,6 @@ int DeviceMimosa32::readout_event(int num_word_event, FILE *fp, char *cdh, char 
 
 //inizializza a 0 tutte le stringhe	
     //memset(&data,0,sizeof(data));   
-    //memset(&data2,0,sizeof(data2));
     // memset(&data_inv,0,sizeof(data_inv));   
     // memset(&cdh,0,sizeof(cdh));
     //memset(&dh,0,sizeof(dh));
@@ -159,12 +153,7 @@ int DeviceMimosa32::readout_event(int num_word_event, FILE *fp, char *cdh, char 
 //RICEZIONE DEI DATI			    			   
 	   byte_rcv=recv(fSD,data,mtu_xport,0);
 //WORD DI ISTRUZIONE			     
-	   if (count_word==1){  	       
-	       d=mtu_xport;
-	       for (i=0; i< mtu_xport; i++){
-	   	    d--;
-	   	    data2[i]=data[d];
-	   	    }		      
+	   if (count_word==1) {
 	       num_byte_event=num_word_event *4;
 	       printf ("  Num word for this event are: %d\n", num_word_event);  				 
 	       printf ("  Num byte for this event are: %d\n", num_byte_event);
@@ -194,8 +183,8 @@ int DeviceMimosa32::readout_event(int num_word_event, FILE *fp, char *cdh, char 
 //FINE DI UN EVENTO			       			  
 	   if ( num_word_event==count_word-1) {    //-1 da verificare
 	     print_data(data_inv, pos_end, fp);			     
-	    	printf ("\n ----------------------- End Event -----------------------\n",id_event);
-	    	return 1;		    
+	    	printf ("\n ----------------------- End Event %i -----------------------\n",id_event);
+	    	return 1;
 	    	}
 	   } //end while							    
     }
@@ -205,19 +194,16 @@ int DeviceMimosa32::readout_event(int num_word_event, FILE *fp, char *cdh, char 
 //La posizione finale della stringa e il puntatore al file descriptor.
 //La funzione non restituisce nulla.
 //----------------------------------------------------------------------------------------------
-void DeviceMimosa32::print_data(char *data, int pos_end, FILE *fp){
+void DeviceMimosa32::print_data(char *data, int pos_end, FILE * /*fp*/){
      int num_word=0; // Count num word
      int c=0;        // flag	
      int i;          // iterator for
      int n=0;
-     char parola[100];
      pos_end =pos_end -3;//o -4 da verificare
      printf("0001     ");    
      for (i=0; i< pos_end; i++){
           n++;	               					 
 	  printf ("%02X",(unsigned char)data[i]);
-	  //sprintf (parola,"%02X",(unsigned char)data[i]);
-          //fprintf(fp,"%s",&parola);
 	  if (n%4 == 0 ){
 	      printf ("     ");
 	      num_word++;
@@ -229,8 +215,6 @@ void DeviceMimosa32::print_data(char *data, int pos_end, FILE *fp){
 		     printf("\n");
 		     printf ("%04X     ",num_word);
 		     }
-	         //sprintf (parola,"\n");
-		 //fprintf(fp,"%s",&parola);
 	      } 		      	       		 		 		                
 	  }	  
       }
@@ -321,7 +305,6 @@ int DeviceMimosa32::cmdStartRun(){
      char word[4];
      int num_byte;
      int control;
-     int num_word_event;
      memset(&word,0,sizeof(word));  
      num_byte=from_carachter_to_word(start_string,word);
      if (num_byte<=0) return -1;
