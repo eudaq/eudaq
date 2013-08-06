@@ -1,0 +1,156 @@
+
+# /
+/data
+/logs
+/pedestal
+
+# /bin/
+/bin/*.exe
+/bin/*.app
+/bin/*.dylib
+/bin/*.dll
+/bin/*.so
+/bin/*.a
+/bin/*.lib
+/bin/euRun
+/bin/euLog
+/bin/euProd
+/bin/GeoID.dat
+/bin/fortis_named_pipe
+/bin/crashlog.txt
+/bin/.gdb_history
+/bin/.gdbcommands
+
+# /depfet/tmp/
+/depfet/tmp/*.d
+
+# /doc/
+/doc/
+
+# /doc/doxygen/html/
+/doc/doxygen/html/*
+
+# /doc/doxygen/latex/
+/doc/doxygen/latex/*
+
+# /doc/manual/
+/doc/manual/*.aux
+/doc/manual/*.log
+/doc/manual/*.toc
+/doc/manual/*.glo
+/doc/manual/*.ist
+/doc/manual/*.bbl
+/doc/manual/*.blg
+/doc/manual/*.glg
+/doc/manual/*.out
+/doc/manual/*.fdb_latexmk
+
+# /eudrb/
+/eudrb/*.exe
+/eudrb/*.dylib
+/eudrb/*.dll
+/eudrb/*.so
+/eudrb/*.a
+/eudrb/*.lib
+/eudrb/.gdb_history
+
+# /eudrb/tmp/
+/eudrb/tmp/*.d
+
+# /extern/logix4u/
+
+# /fortis/tmp/
+/fortis/tmp/*.d
+
+# /gui/
+/gui/Makefile_*
+/gui/*.app
+/gui/*.exe
+/gui/release
+/gui/debug
+/gui/.gdb_history
+
+# /gui/tmp/
+/gui/tmp/*.cpp
+/gui/tmp/*.h
+/gui/tmp/*.d
+
+# /main/
+/main/*.exe
+/main/*.dylib
+/main/*.dll
+/main/*.so
+/main/*.a
+/main/*.lib
+/main/.gdb_history
+
+# /main/include/
+/main/include/*.bak
+
+# /main/include/eudaq/
+/main/include/eudaq/*.bak
+
+# /main/src/
+/main/src/*.bak
+
+# /main/tmp/
+/main/tmp/*.d
+
+# /mimoroma/tmp/
+/mimoroma/tmp/*.d
+
+# /mvd/tmp/
+/mvd/tmp/*.d
+
+# /onlinemon/
+/onlinemon/tmp
+
+# /pixelmanproducer/
+/pixelmanproducer/Pixelman_2008_03_30
+
+# /pixelmanproducer/Libeudaq/
+/pixelmanproducer/Libeudaq/$Outdir
+/pixelmanproducer/Libeudaq/*.ncb
+/pixelmanproducer/Libeudaq/*.user
+/pixelmanproducer/Libeudaq/Debug
+/pixelmanproducer/Libeudaq/Release
+/pixelmanproducer/Libeudaq/libeudaq.suo
+
+# /pixelmanproducer/PixelmanProducerMFC/
+/pixelmanproducer/PixelmanProducerMFC/*.aps
+/pixelmanproducer/PixelmanProducerMFC/*.user
+/pixelmanproducer/PixelmanProducerMFC/Debug
+/pixelmanproducer/PixelmanProducerMFC/inpout32.dll
+/pixelmanproducer/PixelmanProducerMFC/inpout32.lib
+
+# /pixelmanproducer/PixelmanProducerMFC/res/
+
+# /root/
+/root/*.exe
+/root/*.dylib
+/root/*.dll
+/root/*.so
+/root/*.a
+/root/*.lib
+/root/.gdb_history
+
+# /root/tmp/
+/root/tmp/*.d
+
+# /taki/tmp/
+/taki/tmp/*.d
+
+# /tlu/
+/tlu/*.exe
+/tlu/*.dylib
+/tlu/*.dll
+/tlu/*.so
+/tlu/*.a
+/tlu/*.lib
+/tlu/.gdb_history
+
+# /tlu/tmp/
+/tlu/tmp/*.d
+
+# /vme/tmp/
+/vme/tmp/*.d
