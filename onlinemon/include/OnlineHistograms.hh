@@ -61,7 +61,7 @@ class OnlineHistograms {
 
   public:
     OnlineHistograms() {}
-    void addSensor(const std::string & name, const int id) {}
+    void addSensor(const std::string & /*name*/, const int /*id*/) {}
     void FillHistos() {}
 
 

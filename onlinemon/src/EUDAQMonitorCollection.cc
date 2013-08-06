@@ -51,7 +51,7 @@ void EUDAQMonitorCollection::Write(TFile *file)
   }
 }
 
-void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & simpev)
+void EUDAQMonitorCollection::bookHistograms(const SimpleStandardEvent & /*simpev*/)
 {
   if (_mon != NULL)
   {
@@ -96,8 +96,9 @@ EUDAQMonitorHistos *EUDAQMonitorCollection::getEUDAQMonitorHistos()
 
 
 
-void EUDAQMonitorCollection::Calculate(const unsigned int currentEventNumber)
+void EUDAQMonitorCollection::Calculate(const unsigned int /*currentEventNumber*/)
 {
+
 }
 
 
