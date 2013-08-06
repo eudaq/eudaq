@@ -61,7 +61,7 @@ unsigned char stop[5] = "stop";
 NiController::NiController() {
 	//NI_IP = "192.76.172.199";
 }
-void NiController::Configure(const eudaq::Configuration & param) {
+void NiController::Configure(const eudaq::Configuration & /*param*/) {
 	//NiIPaddr = param.Get("NiIPaddr", "");
 
 }
@@ -142,7 +142,7 @@ void NiController::ConfigClientSocket_Close(){
 	
 	
 }
-unsigned int NiController::ConfigClientSocket_ReadLength(const char string[4]){
+unsigned int NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/){
 	unsigned int datalengthTmp;
 	unsigned int datalength;
 	int i;
@@ -196,7 +196,7 @@ std::vector<unsigned char> NiController::ConfigClientSocket_ReadData(int datalen
 			}
 			i=0;
 			if (dbg){
-				while (i<numbytes){
+			  while ((int)i<numbytes){
 					printf(" 0x%x \n", 0xFF & Buffer_data[i]);
 					i++;
 				}
@@ -242,7 +242,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 		printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
 
 }
-unsigned int NiController::DataTransportClientSocket_ReadLength(const char string[4]) {
+unsigned int NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
 	unsigned int datalengthTmp;
 	unsigned int datalength;
 	int i;
@@ -297,7 +297,7 @@ std::vector<unsigned char> NiController::DataTransportClientSocket_ReadData(int 
 			}
 			i=0;
 			if (dbg){
-				while (i<numbytes){
+			  while ((int)i<numbytes){
 					printf(" 0x%x%x", 0xFF & Buffer_data[i], 0xFF & Buffer_data[i+1]);
 					i=i+2;
 				}
