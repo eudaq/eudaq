@@ -117,7 +117,7 @@
 /mvd/tmp/*.d
 
 # /onlinemon/
-/onlinemon/tmp
+/onlinemon/tmp/*.d
 
 # /pixelmanproducer/
 /pixelmanproducer/Pixelman_2008_03_30
