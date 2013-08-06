@@ -98,7 +98,7 @@ ifneq ($(PLATFORM),CYGWIN)
 endif
 
 # Extra flags for C compiler
-CFLAGS   = -Wall -W -Wno-long-long -O$(OPTIMIZE) $(CPPFLAGS)
+CFLAGS   = -Wall -W -Wno-long-long -Wno-variadic-macros -O$(OPTIMIZE) $(CPPFLAGS)
 
 # Except for Cygwin we want to specify position independent code.
 # With Cygwin this just spits out warnings saying that all code is PIC
