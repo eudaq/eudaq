@@ -457,7 +457,7 @@ namespace eudaq {
               }
             } //else /*if (result == 0)*/ {
             if (result == 0){
-              //debug_transport( "Server #%d, return=%d, WSAError:%d (%s), --> was closed \n", j, result, errno, strerror(errno));
+              debug_transport( "Server #%d, return=%d, WSAError:%d (%s), --> was closed \n", j, result, errno, strerror(errno));
               ConnectionInfoTCP & m = GetInfo(j);
               m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
               m.Disable();
@@ -465,7 +465,7 @@ namespace eudaq {
               FD_CLR(j, &m_fdset);
             }
             if (result == EUDAQ_ERROR_NO_DATA_RECEIVED ){
-              //debug_transport( "Server #%d, return=%d, WSAError:%d (%s) \n", j, result, errno, strerror(errno));
+              debug_transport( "Server #%d, return=%d, WSAError:%d (%s) \n", j, result, errno, strerror(errno));
             }
           } // end if (FD_ISSET(j, &amp;tempset))
           } // end for (j=0;...)
@@ -562,14 +562,14 @@ namespace eudaq {
 
           } while (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Interrupted_function_call);
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable) {
-            //debug_transport("ResultClient = %d", result);
+            debug_transport("ResultClient = %d", result);
             donereading = true;
           }
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
-            //debug_transport("Client, return=%d, WSAError:%d (%s), --> Time out. \n",result,errno,strerror(errno));
+            debug_transport("Client, return=%d, WSAError:%d (%s), --> Time out. \n",result,errno,strerror(errno));
           }
           if (result == 0) {
-            //debug_transport("Client, return=%d, WSAError:%d (%s), --> WARN: Connection closed (?)\n",result,errno,strerror(errno));
+            debug_transport("Client, return=%d, WSAError:%d (%s), --> WARN: Connection closed (?)\n",result,errno,strerror(errno));
             donereading = true;
             EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
           }
@@ -589,7 +589,7 @@ namespace eudaq {
 #endif
         //std::cout << "Remaining time in ProcessEvents(): " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
 	if ( !(t_remain > Time(0))){
-	  //debug_transport("%s\n","Reached Timeout in ProcessEvents().");
+	  debug_transport("%s\n","Reached Timeout in ProcessEvents().");
 	}
       } while (!done && t_remain > Time(0));
       //std::cout << "done" << std::endl;
