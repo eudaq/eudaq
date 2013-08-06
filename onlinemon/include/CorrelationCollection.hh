@@ -88,7 +88,7 @@ class CorrelationCollection : public BaseCollection {
     vector<int> getSelected_planes_to_skip() const;
     void setCorrelateAllPlanes(bool correlateAllPlanes);
     void setSelected_planes_to_skip(vector<int> selected_planes_to_skip);
-    virtual void Calculate(const unsigned int currentEventNumber)
+  virtual void Calculate(const unsigned int /*currentEventNumber*/)
     {
 
     }

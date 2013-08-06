@@ -37,7 +37,7 @@ void MonitorPerformanceCollection::Write(TFile *file)
   }
 }
 
-void MonitorPerformanceCollection::Calculate(const unsigned int currentEventNumber)
+void MonitorPerformanceCollection::Calculate(const unsigned int /*currentEventNumber*/)
 {
 
 }
@@ -58,7 +58,7 @@ void MonitorPerformanceCollection::Fill(const SimpleStandardEvent &simpev)
 }
 
 
-void MonitorPerformanceCollection::bookHistograms(const SimpleStandardEvent & simpev)
+void MonitorPerformanceCollection::bookHistograms(const SimpleStandardEvent & /*simpev*/)
 {
   if (_mon != NULL)
   {

@@ -45,11 +45,9 @@
 
 using namespace std;
 
-static double mean_ev_size = 0;
-
-RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int x, int y, int w,
-    int h, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
-    const std::string & conffile)
+RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
+			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
+			 const std::string & conffile)
 : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline){
 
   if (_offline <= 0)
@@ -176,7 +174,6 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 #endif
   _checkEOF.EventReceived();
 
-  //    mean_ev_size += ev.
   //    cout << "Called onEvent " << ev.GetEventNumber()<< endl;
 
   //start timing to measure processing time

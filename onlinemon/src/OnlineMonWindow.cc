@@ -143,7 +143,7 @@ OnlineMonWindow::OnlineMonWindow(const TGWindow* p, UInt_t w, UInt_t h)
 //Execute action corresponding to an event at (px,py). This method
 // must be overridden if an object can react to graphics events. From ROOT doc
 
-void OnlineMonWindow::ExecuteEvent(Int_t event, Int_t px, Int_t py, TObject *sel) {
+void OnlineMonWindow::ExecuteEvent(Int_t event, Int_t /*px*/, Int_t /*py*/, TObject *sel) {
   if ((event == kButton1Down) && (strstr(sel->ClassName(),"TH")!=NULL )) // only do this, if a histogramme has been clicked
   {
 #ifdef DEBUG
@@ -224,9 +224,10 @@ void OnlineMonWindow::Print()
 {
   cout << "Print not implemented yet" << endl;
 }
+
 void OnlineMonWindow::About()
 {
-  TGMsgBox *t1= new TGMsgBox(gClient->GetRoot(),this,"About Onlinemon","OnlineMonitor for EUDET/AIDA Telescopes\nVersion 1.0Beta4\n",kMBIconAsterisk,kMBDismiss,  0,  kVerticalFrame, kTextCenterX|kTextCenterY);
+  TGMsgBox *t1 = new TGMsgBox(gClient->GetRoot(),this,"About Onlinemon","OnlineMonitor for EUDET/AIDA Telescopes\nVersion 1.0Beta4\n",kMBIconAsterisk,kMBDismiss,  0,  kVerticalFrame, kTextCenterX|kTextCenterY);
 }
 
 void OnlineMonWindow::registerTreeItem(std::string item) {
@@ -338,7 +339,7 @@ void OnlineMonWindow::autoUpdate() {
 
   }
 
-  void OnlineMonWindow::ChangeReduce(Long_t num) {
+  void OnlineMonWindow::ChangeReduce(Long_t /*num*/) {
 
     _reduce = (unsigned int) (nen_reduce->GetNumber());
     for (unsigned int i = 0 ; i < _colls.size(); ++i) {
@@ -355,7 +356,7 @@ void OnlineMonWindow::autoUpdate() {
      }
    */
 
-  void OnlineMonWindow::actorMenu(TGListTreeItem* item, Int_t btn, Int_t x, Int_t y) {
+void OnlineMonWindow::actorMenu(TGListTreeItem* /*item*/, Int_t btn, Int_t x, Int_t y) {
 
     if (btn == 3)
     {
@@ -365,7 +366,7 @@ void OnlineMonWindow::autoUpdate() {
 
 
 
-  void OnlineMonWindow::actor(TGListTreeItem* item, Int_t btn) {
+  void OnlineMonWindow::actor(TGListTreeItem* item, Int_t /*btn*/) {
 
     //cout << "Here we are acting " << btn << endl;
 
