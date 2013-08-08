@@ -8,8 +8,8 @@
 
 namespace eudaq {
 
-  FileSerializer::FileSerializer(const std::string & fname, bool overwrite, int wprot)
-    : m_file(0), m_filebytes(0), m_wprot(wprot)
+  FileSerializer::FileSerializer(const std::string & fname, bool overwrite)
+    : m_file(0), m_filebytes(0)
   {
     if (!overwrite) {
       FILE * fd = fopen(fname.c_str(), "rb");
@@ -20,15 +20,9 @@ namespace eudaq {
     }
     m_file = fopen(fname.c_str(), "wb");
     if (!m_file) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
-    if (m_wprot == WP_ONOPEN) {
-      WriteProtect();
-    }
   }
 
   FileSerializer::~FileSerializer() {
-    if (m_wprot == WP_ONCLOSE) {
-      WriteProtect();
-    }
     if (m_file) {
       fclose(m_file);
     }
@@ -44,14 +38,6 @@ namespace eudaq {
 
   void FileSerializer::Flush() {
     fflush(m_file);
-  }
-
-  void FileSerializer::WriteProtect() {
-#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(MINGW)|| WIN32 
-    EUDAQ_WARN("Cannot write protect under cygwin or MinGW: function fileno() is not available");
-#else
-    fchmod(fileno(m_file), S_IRUSR | S_IRGRP | S_IROTH); 
-#endif
   }
 
   FileDeserializer::FileDeserializer(const std::string & fname, bool faileof, size_t buffersize) :
