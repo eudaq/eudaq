@@ -69,7 +69,7 @@ at some places we have constructions like:
 // Operation now in progress.
 // 
 // 	A blocking operation is currently executing. Windows Sockets 
-// 	only allows a single blocking operation—per- task or thread—to 
+// 	only allows a single blocking operation (per- task or thread) to 
 // 	be outstanding, and if any other function call is made (whether 
 // 	or not it references that or any other socket) the function fails 
 // 	with the WSAEINPROGRESS error.
@@ -221,9 +221,9 @@ namespace eudaq {
         } else if (result < 0 && (LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable || LastSockError() == EUDAQ_ERROR_Interrupted_function_call)) {
           // continue
         } else if (result == 0) {
-          EUDAQ_THROW("Connection reset by peer");
+          EUDAQ_THROW_NOLOG("Connection reset by peer");
         } else if (result < 0) {
-          EUDAQ_THROW(LastSockErrorString("Error sending data"));
+          EUDAQ_THROW_NOLOG(LastSockErrorString("Error sending data"));
         }
       } while (sent < len);
       //if (len > 500000) std::cout << "Done send" << std::endl;
@@ -287,7 +287,7 @@ namespace eudaq {
   }
 
   std::string ConnectionInfoTCP::getpacket() {
-    if (!havepacket()) EUDAQ_THROW("No packet available");
+    if (!havepacket()) EUDAQ_THROW_NOLOG("No packet available");
     std::string packet(m_buf, 4, m_len);
     m_buf.erase(0, m_len+4);
     update_length(true);
@@ -318,7 +318,7 @@ namespace eudaq {
     m_srvsock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
     m_maxfd(m_srvsock)
   {
-    if (m_srvsock == (SOCKET)-1) EUDAQ_THROW(LastSockErrorString("Failed to create socket"));  //$$ check if (SOCKET)-1 is correct
+    if (m_srvsock == (SOCKET)-1) EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to create socket"));  //$$ check if (SOCKET)-1 is correct
     setup_signal();
     FD_ZERO(&m_fdset);
     FD_SET(m_srvsock, &m_fdset);
@@ -333,11 +333,11 @@ namespace eudaq {
 
     if (bind(m_srvsock, (sockaddr *) &addr, sizeof addr)) {
       closesocket(m_srvsock);
-      EUDAQ_THROW(LastSockErrorString("Failed to bind socket: " + param));
+      EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to bind socket: " + param));
     }
     if (listen(m_srvsock, MAXPENDING)) {
       closesocket(m_srvsock);
-      EUDAQ_THROW(LastSockErrorString("Failed to listen on socket: " + param));
+      EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to listen on socket: " + param));
     }
   }
 
@@ -361,7 +361,7 @@ namespace eudaq {
         return *inf;
       }
     }
-    EUDAQ_THROW("BUG: please report it");
+    EUDAQ_THROW_NOLOG("BUG: please report it");
   }
 
   void TCPServer::Close(const ConnectionInfo & id) {
@@ -492,7 +492,7 @@ namespace eudaq {
       m_sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
       m_buf(ConnectionInfoTCP(m_sock, param))
     {
-      if (m_sock == (SOCKET)-1) EUDAQ_THROW(LastSockErrorString("Failed to create socket"));//$$ check if (SOCKET)-1 is correct
+      if (m_sock == (SOCKET)-1) EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to create socket"));//$$ check if (SOCKET)-1 is correct
 
       size_t i = param.find(':');
       if (i != std::string::npos) {
@@ -513,13 +513,13 @@ namespace eudaq {
       hostent * host = gethostbyname(m_server.c_str());
       if (!host) {
         closesocket(m_sock);
-        EUDAQ_THROW(LastSockErrorString("Error looking up address \'" + m_server + "\'"));
+        EUDAQ_THROW_NOLOG(LastSockErrorString("Error looking up address \'" + m_server + "\'"));
       }
       memcpy((char *) &addr.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
       if (connect(m_sock, (sockaddr *) &addr, sizeof(addr)) &&
           LastSockError() != EUDAQ_ERROR_Operation_progress &&
           LastSockError() != EUDAQ_ERROR_Resource_temp_unavailable) {
-        EUDAQ_THROW(LastSockErrorString("Are you sure the server is running? - Error "
+        EUDAQ_THROW_NOLOG(LastSockErrorString("Are you sure the server is running? - Error "
               + to_string(LastSockError()) + " connecting to " +
               m_server + ":" + to_string(m_port)));
       }
@@ -571,7 +571,7 @@ namespace eudaq {
           if (result == 0) {
             debug_transport("Client, return=%d, WSAError:%d (%s), --> WARN: Connection closed (?)\n",result,errno,strerror(errno));
             donereading = true;
-            EUDAQ_THROW(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
+            EUDAQ_THROW_NOLOG(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
           }
           if (result > 0){
             m_buf.append(result, buffer);
