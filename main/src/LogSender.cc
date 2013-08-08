@@ -43,9 +43,9 @@ namespace eudaq {
     if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by LogCollector server: " + packet);
   }
 
-  void LogSender::SendLogMessage(const LogMessage & msg, bool show) {
+  void LogSender::SendLogMessage(const LogMessage & msg) {
     //std::cout << "Sending: " << msg << std::endl;
-    if (msg.GetLevel() >= m_level && show) {
+    if (msg.GetLevel() >= m_level) {
       if (msg.GetLevel() >= m_errlevel) {
 	if (m_name != "")
 	  std::cerr << "[" << m_name << "] ";
