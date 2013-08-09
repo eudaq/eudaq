@@ -12,6 +12,8 @@
 
 #define EUDAQ_THROWX(exc, msg) throw ::eudaq::InitException(exc(msg), __FILE__, __LINE__, EUDAQ_FUNC)
 #define EUDAQ_THROW(msg) EUDAQ_THROWX(::eudaq::LoggedException, (msg))
+#define EUDAQ_THROW_NOLOG(msg) EUDAQ_THROWX(::eudaq::Exception, (msg))
+
 
 #define EUDAQ_EXCEPTIONX(name, base) \
   class name : public base {         \

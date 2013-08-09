@@ -106,7 +106,7 @@ namespace eudaq {
         << msg << "\n"
         << "-----------------------------------------------" << std::endl;
     }
-    GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR), false);
+    GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR));
     os << msg << "\n"
       << "Please report this to the developers." << std::endl;
     //std::string str;
