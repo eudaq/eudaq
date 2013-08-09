@@ -343,9 +343,13 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 
     if (ev.GetEventNumber() < 1)
     {
+#ifdef DEBUG
       cout << "Waiting for booking of Histograms..." << endl;
+#endif
       EUDAQ_SLEEP(1);
+#ifdef DEBUG
       cout << "...long enough"<< endl;
+#endif
     }
 
     //stop the Stop watch

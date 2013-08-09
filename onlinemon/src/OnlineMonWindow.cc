@@ -284,9 +284,7 @@ void OnlineMonWindow::addTreeItemSummary(std::string item, std::string histoitem
     _hitmapMap[tree] = h;
     _hitmapOptions[tree]= op;
     _logScaleMap[tree] = l;
-#ifndef DEBUG
-    cout << "OnlineMonWindow::registerHisto Registering : " << h->GetName()<<" "<< l<<" " << tree <<" "<< endl;
-#endif
+
     if (op == "") {
       const TGPicture *thp = gClient->GetPicture("h2_t.xpm");
       _treeMap[tree]->SetPictures(thp,thp);

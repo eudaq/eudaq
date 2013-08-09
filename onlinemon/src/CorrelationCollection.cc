@@ -19,7 +19,7 @@ CorrelationCollection::CorrelationCollection()
   planesNumberForCorrelation(0),
   windowWidthForCorrelation(0)
 {
-  cout << " Initializing Correlation Collection"<<endl;
+  //cout << " Initializing Correlation Collection"<<endl;
   CollectionType = CORRELATION_COLLECTION_TYPE;
 }
 
@@ -135,16 +135,16 @@ void CorrelationCollection::Fill(const SimpleStandardEvent &simpev)
       if ((selected_planes_to_skip[skipplanes]>0) && (selected_planes_to_skip[skipplanes]<nPlanes))
       {
         skip_this_plane[selected_planes_to_skip[skipplanes]]=true;
-        std::cout << "CorrelationCollection : Disabling Plane "<< selected_planes_to_skip[skipplanes] <<endl;
+        //std::cout << "CorrelationCollection : Disabling Plane "<< selected_planes_to_skip[skipplanes] <<endl;
         nPlanes_disabled++;
       }
     }
-    if (nPlanes_disabled > 0)
-      std::cout << "CorrelationCollection : Disabling "<<  nPlanes_disabled << " Planes" << endl;
+    //if (nPlanes_disabled > 0)
+      //std::cout << "CorrelationCollection : Disabling "<<  nPlanes_disabled << " Planes" << endl;
   }
   if (nPlanes-nPlanes_disabled<2)
   {
-    std::cout << "CorrelationCollection : Too Many Planes Disabled ..." <<endl;
+    //std::cout << "CorrelationCollection : Too Many Planes Disabled ..." <<endl;
   }
   else
   {
@@ -230,16 +230,16 @@ unsigned int CorrelationCollection::FillWithTracks(const SimpleStandardEvent &si
       if ((selected_planes_to_skip[skipplanes]>0) && (selected_planes_to_skip[skipplanes]<nPlanes))
       {
         skip_this_plane[selected_planes_to_skip[skipplanes]]=true;
-        std::cout << "CorrelationCollection : Disabling Plane "<< selected_planes_to_skip[skipplanes] <<endl;
+        //std::cout << "CorrelationCollection : Disabling Plane "<< selected_planes_to_skip[skipplanes] <<endl;
         nPlanes_disabled++;
       }
     }
-    if (nPlanes_disabled > 0)
-      std::cout << "CorrelationCollection : Disabling "<<  nPlanes_disabled << " Planes" << endl;
+    //if (nPlanes_disabled > 0)
+      //std::cout << "CorrelationCollection : Disabling "<<  nPlanes_disabled << " Planes" << endl;
   }
   if (nPlanes-nPlanes_disabled<2)
   {
-    std::cout << "CorrelationCollection : Too Many Planes Disabled ..." <<endl;
+    //std::cout << "CorrelationCollection : Too Many Planes Disabled ..." <<endl;
   }
   else
   {
@@ -381,7 +381,7 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane& p1, const 
   CorrelationHistos *corrmap = _map[plane];
   if (corrmap == NULL)
   {
-    std::cout << "CorrelationCollection: Histogram not registered ...yet  " << p1.getName()<< " "<<p1.getID() <<" / "<< p2.getName()<<" "<<p2.getID()<<std::endl;
+    //std::cout << "CorrelationCollection: Histogram not registered ...yet  " << p1.getName()<< " "<<p1.getID() <<" / "<< p2.getName()<<" "<<p2.getID()<<std::endl;
   }
   else
   {
@@ -430,7 +430,7 @@ void CorrelationCollection::registerPlaneCorrelations(const SimpleStandardPlane&
 
   if (_mon != NULL)
   {
-    cout << "HitmapCollection:: Monitor running in online-mode" << endl;
+    //cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if(_mon->getUseTrack_corr() == true)
@@ -476,7 +476,7 @@ void CorrelationCollection::Write(TFile *file) {
 
   if (file==NULL) // if the file pointer is null jump back
   {
-    cout << "Can't Write Correllation Collections " <<endl;
+    //cout << "Can't Write Correllation Collections " <<endl;
     return;
   }
   if (_mon->getUseTrack_corr() == true)
