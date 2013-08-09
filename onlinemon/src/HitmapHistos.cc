@@ -41,7 +41,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
   }
   is_DEPFET = p.is_DEPFET;
 
-  std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
+  //std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 
   if (_maxX != -1 && _maxY != -1) {
     sprintf(out,"%s %i Raw Hitmap",_sensor.c_str(),_id);
@@ -165,7 +165,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
       _nHits_section[section]= new TH1I(out2, out,50,0,50);
       if (_nHits_section[section]==NULL)
       {
-        cout<< "Error allocating Histogram" << out<< endl;
+        //cout<< "Error allocating Histogram" << out<< endl;
         exit(-1);
       }
       else
@@ -178,7 +178,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
       _nClusters_section[section]= new TH1I(out2, out,50,0,50);
       if (_nClusters_section[section]==NULL)
       {
-        cout<< "Error allocating Histogram" << out<< endl;
+        //cout<< "Error allocating Histogram" << out<< endl;
         exit(-1);
       }
       else
@@ -191,7 +191,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
       _nClustersize_section[section]= new TH1I(out2, out,10,0,10);
       if (_nClustersize_section[section]==NULL)
       {
-        cout<< "Error allocating Histogram" << out<< endl;
+        //cout<< "Error allocating Histogram" << out<< endl;
         exit(-1);
       }
       else
@@ -204,7 +204,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
       _nHotPixels_section[section]= new TH1I(out2, out,50,0,50);
       if (_nHotPixels_section[section]==NULL)
       {
-        cout<< "Error allocating Histogram" << out<< endl;
+        //cout<< "Error allocating Histogram" << out<< endl;
         exit(-1);
       }
       else
@@ -223,7 +223,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
         plane_map_array[j]=new int[_maxY];
         if (plane_map_array[j]==NULL)
         {
-          cout << "HitmapHistos :Error in memory allocation"<<endl;
+          //cout << "HitmapHistos :Error in memory allocation"<<endl;
           exit(-1);
         }
       }
