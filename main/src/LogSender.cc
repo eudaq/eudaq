@@ -43,23 +43,38 @@ namespace eudaq {
     if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by LogCollector server: " + packet);
   }
 
-  void LogSender::SendLogMessage(const LogMessage & msg, bool show) {
+  void LogSender::SendLogMessage(const LogMessage & msg) {
     //std::cout << "Sending: " << msg << std::endl;
+    if (msg.GetLevel() >= m_level) {
+      if (msg.GetLevel() >= m_errlevel) {
+	if (m_name != "")
+	  std::cerr << "[" << m_name << "] ";
+	std::cerr << msg << std::endl;
+      } else {
+	if (m_name != "")
+	  std::cout << "[" << m_name << "] ";
+	std::cout << msg << std::endl;
+      }
+    }
+
     if (!m_logclient) {
-      if (m_shownotconnected) std::cerr << "### Logger not connected ###\n";
+      if (m_shownotconnected)
+	std::cerr << "### Log message triggered but Logger not connected ###\n";
     } else {
       BufferSerializer ser;
       msg.Serialize(ser);
-      m_logclient->SendPacket(ser);
-    }
-
-    if (msg.GetLevel() >= m_level && show) {
-      if (msg.GetLevel() >= m_errlevel) {
-        if (m_name != "") std::cerr << "[" << m_name << "] ";
-        std::cerr << msg << std::endl;
-      } else {
-        if (m_name != "") std::cout << "[" << m_name << "] ";
-        std::cout << msg << std::endl;
+      try {
+	m_logclient->SendPacket(ser);
+      } catch (const eudaq::Exception & e) {
+	std::cerr << "Caught exception trying to log message '" << msg << "': " << e.what() << std::endl;
+	std::cerr << " -> will delete LogClient" << std::endl;
+	delete m_logclient;
+	m_logclient = 0;
+      } catch (...) {
+	std::cerr << "Caught exception trying to log message '" << msg << "'! " << std::endl;
+	std::cerr << " -> will delete LogClient" << std::endl;
+	delete m_logclient;
+	m_logclient = 0;
       }
     }
   }

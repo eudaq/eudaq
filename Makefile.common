@@ -81,9 +81,15 @@ else
 endif
 
 # Build options
+DEBUG_USEGDB := 0
 
-# Default value for optimization, if not set on command line
-OPTIMIZE := 2
+
+# Default value for optimization, if not set on command line or overridden by DEBUG_USEGDB
+ifeq ($(DEBUG_USEGDB),0)
+  OPTIMIZE := 2
+else
+  OPTIMIZE := 0
+endif
 
 MAKE_OPTS := --no-print-directory VERBOSE=$(VERBOSE) OPTIMIZE=$(OPTIMIZE) NODEBUG=$(NODEBUG) MOREDEBUG=$(MOREDEBUG)
 
@@ -124,7 +130,12 @@ endif
 ifeq ($(NODEBUG),1)
   CPPFLAGS += -DNDEBUG
 else
+ifeq ($(DEBUG_USEGDB),1)
+  CFLAGS   += -ggdb
+else
   CFLAGS   += -g -fno-inline
+endif
+
 endif
 
 ifeq ($(MOREDEBUG),1)
