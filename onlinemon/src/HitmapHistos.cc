@@ -41,7 +41,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
   }
   is_DEPFET = p.is_DEPFET;
 
-  //  std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
+  //std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<< std::endl;
 
   if (_maxX != -1 && _maxY != -1) {
     sprintf(out,"%s %i Raw Hitmap",_sensor.c_str(),_id);

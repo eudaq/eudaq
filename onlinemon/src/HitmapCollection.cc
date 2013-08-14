@@ -103,7 +103,7 @@ void HitmapCollection::Write(TFile *file)
 {
   if (file==NULL)
   {
-    cout << "HitmapCollection::Write File pointer is NULL"<<endl;
+    //cout << "HitmapCollection::Write File pointer is NULL"<<endl;
     exit(-1);
   }
   if (gDirectory!=NULL) //check if this pointer exists
@@ -117,7 +117,7 @@ void HitmapCollection::Write(TFile *file)
 
       char sensorfolder[255] = "";
       sprintf(sensorfolder,"%s_%d",it->first.getName().c_str(), it->first.getID());
-      cout << "Making new subfolder " << sensorfolder << endl;
+      //cout << "Making new subfolder " << sensorfolder << endl;
       gDirectory->mkdir(sensorfolder);
       gDirectory->cd(sensorfolder);
       it->second->Write();
@@ -295,7 +295,7 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
         {
           if (myhistos[nhistos]==NULL)
           {
-            cout << section << " " << "is null" << endl;
+            //cout << section << " " << "is null" << endl;
           }
           else
           {
