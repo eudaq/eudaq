@@ -1,4 +1,5 @@
 #include <QApplication>
+#include <QDateTime>
 #include <fstream>
 #include "euRunApplication.h"
 #include "euRun.hh"
@@ -29,10 +30,14 @@ bool euRunApplication::notify(QObject* receiver, QEvent* event) {
     try {
         done = QApplication::notify(receiver, event);
     } catch (const std::exception& ex) {
-    
-    std::cout << "Got one of these nasty exception !!!!" << std::endl;
+      //get current date
+      QDate date = QDate::currentDate();
+      std::cout << date.toString().toStdString() << ": euRun GUI caught (and ignored) exception: " << ex.what() << std::endl;
         
     } catch (...) {
+      //get current date
+      QDate date = QDate::currentDate();
+      std::cout << date.toString().toStdString() << ": euRun GUI caught (and ignored) unspecified exception " << std::endl;
     }
     return done;
 } 
