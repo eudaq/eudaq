@@ -1,10 +1,12 @@
 #include <QApplication>
 #include <fstream>
+#include "euRunApplication.h"
 #include "euRun.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "Colours.hh"
 #include "eudaq/Status.hh"
+#include <exception>
 
 static const char * statuses[] = {
   "RUN",       "Run Number",
@@ -17,9 +19,26 @@ static const char * statuses[] = {
   "SCALERS",   "Scalers",
   0
 };
+ 
+euRunApplication::euRunApplication(int& argc, char** argv) :
+    QApplication(argc, argv) {}
+    
+    
+bool euRunApplication::notify(QObject* receiver, QEvent* event) {
+    bool done = true;
+    try {
+        done = QApplication::notify(receiver, event);
+    } catch (const std::exception& ex) {
+    
+    std::cout << "Got one of these nasty exception !!!!" << std::endl;
+        
+    } catch (...) {
+    }
+    return done;
+} 
 
 int main(int argc, char ** argv) {
-  QApplication app(argc, argv);
+  euRunApplication app(argc, argv);
   eudaq::OptionParser op("EUDAQ Run Control", "1.0", "A Qt version of the Run Control");
   eudaq::Option<std::string>  addr(op, "a", "listen-address", "tcp://44000", "address",
       "The address on which to listen for connections");
