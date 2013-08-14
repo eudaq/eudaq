@@ -62,7 +62,6 @@ void MonitorPerformanceCollection::bookHistograms(const SimpleStandardEvent & /*
 {
   if (_mon != NULL)
   {
-    cout << "MonitorPerformanceCollection:: Monitor running in online-mode" << endl;
     string performance_folder_name="Monitor Performance";
     _mon->getOnlineMon()->registerTreeItem((performance_folder_name+"/Data Analysis Time"));
     _mon->getOnlineMon()->registerHisto( (performance_folder_name+"/Data Analysis Time"),mymonhistos->getAnalysisTimeHisto());
