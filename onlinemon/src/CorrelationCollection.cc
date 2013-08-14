@@ -19,7 +19,7 @@ CorrelationCollection::CorrelationCollection()
   planesNumberForCorrelation(0),
   windowWidthForCorrelation(0)
 {
-  cout << " Initializing Correlation Collection"<<endl;
+  //cout << " Initializing Correlation Collection"<<endl;
   CollectionType = CORRELATION_COLLECTION_TYPE;
 }
 
@@ -381,7 +381,7 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane& p1, const 
   CorrelationHistos *corrmap = _map[plane];
   if (corrmap == NULL)
   {
-    std::cout << "CorrelationCollection: Histogram not registered ...yet  " << p1.getName()<< " "<<p1.getID() <<" / "<< p2.getName()<<" "<<p2.getID()<<std::endl;
+    //std::cout << "CorrelationCollection: Histogram not registered ...yet  " << p1.getName()<< " "<<p1.getID() <<" / "<< p2.getName()<<" "<<p2.getID()<<std::endl;
   }
   else
   {
@@ -430,6 +430,7 @@ void CorrelationCollection::registerPlaneCorrelations(const SimpleStandardPlane&
 
   if (_mon != NULL)
   {
+    //cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if(_mon->getUseTrack_corr() == true)
