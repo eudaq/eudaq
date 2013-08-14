@@ -430,7 +430,6 @@ void CorrelationCollection::registerPlaneCorrelations(const SimpleStandardPlane&
 
   if (_mon != NULL)
   {
-    cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     std::string dirName;
 
     if(_mon->getUseTrack_corr() == true)

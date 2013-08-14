@@ -178,7 +178,7 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
     {
       return; // don't register items
     }
-    cout << "HitmapCollection:: Monitor running in online-mode" << endl;
+    //cout << "HitmapCollection:: Monitor running in online-mode" << endl;
     char tree[1024], folder[1024];
     sprintf(tree,"%s/Sensor %i/RawHitmap",p.getName().c_str(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
