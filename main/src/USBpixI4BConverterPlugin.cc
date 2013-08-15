@@ -40,7 +40,9 @@ namespace eudaq {
   static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	// Maximum ROW normalized (starting with 0)
   static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
 
-  //static int chip_id_offset = 30;
+#if USE_LCIO && USE_EUTELESCOPE
+  static const int chip_id_offset = 30;
+#endif
 
   class USBpixI4BConverterBase {
     private:
