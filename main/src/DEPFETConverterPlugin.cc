@@ -477,8 +477,8 @@ namespace eudaq {
 
         size_t nPixel = plane.HitPixels();
         //	   printf("EvSize=%d %d \n",EvSize,nPixel);
-        for (unsigned i = 0; i < nPixel; i++) {
-          printf("EvSize=%d iPixel =%d DATA=%d  icol=%d irow=%d  \n",nPixel,i, (signed short) plane.GetPixel(i, 0), (signed short)plane.GetX(i) ,(signed short)plane.GetY(i));
+        for (size_t i = 0; i < nPixel; i++) {
+          printf("EvSize=%d iPixel =%d DATA=%d  icol=%d irow=%d  \n",(int) nPixel,(int) i, (signed short) plane.GetPixel(i, 0), (signed short)plane.GetX(i) ,(signed short)plane.GetY(i));
 
           // Note X and Y are swapped - for 2010 TB DEPFET module was rotated at 90 degree. 
           zsFrame->chargeValues().push_back(plane.GetX(i));
