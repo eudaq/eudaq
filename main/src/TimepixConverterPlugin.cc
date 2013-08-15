@@ -215,7 +215,8 @@ namespace eudaq {
 
 
     bool ConvertLCIO(lcio::LCEvent & result, const Event & source) const {
-        TrackerRawDataImpl *rawMatrix;
+      //Unused variable:
+      //TrackerRawDataImpl *rawMatrix;
         TrackerDataImpl *zsFrame;
 
         if (source.IsBORE()) {
@@ -270,7 +271,7 @@ namespace eudaq {
 	      vector<unsigned int> ZSDataTOT;
 	      size_t offset = 0;
 	      unsigned int aWord =0;
-	      for(int i=0;i<data.size()/12;i++){
+	      for(size_t i = 0;i<data.size()/12;i++){
 	    	  unpack(data,offset,aWord);
 	    	  offset+=sizeof(aWord);
 	    	  ZSDataX.push_back(aWord);
@@ -292,7 +293,7 @@ namespace eudaq {
 	      plane.SetTLUEvent(GetTriggerID(source));
 
 	      // Add the plane to the StandardEvent
-	      for(int i = 0 ; i<ZSDataX.size();i++){
+	      for(size_t i = 0 ; i<ZSDataX.size();i++){
 
 	    	  plane.PushPixel(255-ZSDataX[i],255-ZSDataY[i],ZSDataTOT[i]);
 
