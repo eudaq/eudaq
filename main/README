@@ -1,3 +1,0 @@
-
-2013-06-20 breaking backward compatibility with data taken with RCE system of FEI4B modules (tagged USBPIXI4B before today or witheudaq v01-00-00)
-           from now on, the tunk version contains 2 FEI4B converter plugins for USBPIX system (USBpixI4BConverterPlugin) and for RCE system (RCEI4ConverterPlugin)

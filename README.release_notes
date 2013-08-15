@@ -1,0 +1,55 @@
+# this file uses emacs Org mode formatting -*- mode: Org; -*-
+#+options: num:nil toc:2
+Changelog and Versions 
+
+* Version 0.9 
+** New features and change log
+*** General
+    - EUDAQ main components compile and run under Windows 7 now (VS 2012), executables are included
+    - improved stability
+    - data collector can now run on different PC from run control
+    - added Mimosa32 producer (by Ilaria Aimo)
+    - there are now two FEI4B converter plugins (USBPIX/RCE), see notes on updating
+    - updated TimepixConverterPlugin (by Mathieu Benoit)
+    - now hosted on github
+*** 1.1.0 (15.08.2013)
+    - improved stability: better exception handling of run control when log collector fails
+    - improved stability: run control GUI application properly catches exceptions
+    - reduced verbosity of online monitor
+    - added some debugging facilities for low-level methods in TransportTCP.cc
+    - NI producer: NI PCs address does not need to be in system's host file any more
+    - data and logs folders are now present already in the repository; can be replaced e.g. with symlink by the user
+    - fixed compilation on gcc 4.7
+    - fixed build warnings
+** Notes on updating
+*** USBPIX/RCE systems
+    breaking backward compatibility with data taken with RCE system of
+    FEI4B modules (tagged USBPIXI4B before today or with eudaq
+    v01-00-00) from now on, there are 2 FEI4B converter plugins for
+    USBPIX system (USBpixI4BConverterPlugin) and for RCE system
+    (RCEI4ConverterPlugin)
+** Known Issues
+   For up-to-date details, check https://github.com/eudaq/eudaq/issues
+*** issue #1: Instabilities during data-taking
+    - some improvements since version 1.0 but no long term experience yet
+*** issue #2: Online monitor does not yet work on Windows
+
+* Version 1.0
+** New features and change log
+*** General
+    - first 'release': snapshot of development until April 2013
+    - EUDAQ developed since 2007 and in successful operation with various devices for years!
+*** 1.0.3
+    - change of default control voltage for PMTs, now it's 800 mV
+*** 1.0.2
+    - changes in USBpixI4BConverterPlugin and RCEI4BConverterPlugin
+*** 1.0.1
+    - changes to FEI4B converter plugin.
+*** 1.0.0
+    - minor clean-up, first 'versioned' release
+    - online monitor no longer defaults to simple tracking for the correlation plots
+** Known issues
+   For up-to-date details, check https://github.com/eudaq/eudaq/issues
+*** Instabilities during data-taking
+    - euRun crashes, sometimes with uncaught exceptions, sometimes with segfaults
+    - crashes occur 'regularly', on some systems every hour or others a couple of times per day
