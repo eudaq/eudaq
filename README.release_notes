@@ -2,7 +2,7 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
-* Version 0.9 
+* Version 1.1 
 ** New features and change log
 *** General
     - EUDAQ main components compile and run under Windows 7 now (VS 2012), executables are included
