@@ -67,7 +67,7 @@ namespace eudaq {
 
 
 #if USE_LCIO && USE_EUTELESCOPE
-  void FORTISConverterPlugin::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const
+  void FORTISConverterPlugin::ConvertLCIOHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/, eudaq::Configuration const & /*conf*/) const
   {
     eutelescope::EUTelRunHeaderImpl runHeader(&header);
   }
