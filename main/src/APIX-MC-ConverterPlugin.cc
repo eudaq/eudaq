@@ -200,7 +200,7 @@ namespace eudaq {
       lcio::LCCollectionVec* timingCollection,
       CellIDEncoder< TrackerDataImpl > &timingEncoder,
       std::vector< eutelescope::EUTelSetupDescription * >  &setupDescription,
-      lcio::LCEvent & result, int feid, int lcio_sensor_id) const{
+      lcio::LCEvent & result, int feid, int /*lcio_sensor_id*/) const{
 
     // describe the setup
     // The current detector is ...

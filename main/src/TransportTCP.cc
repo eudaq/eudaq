@@ -44,7 +44,7 @@ at some places we have constructions like:
 
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
-# include "eudaq/TransportTCP_WIN32.h"  //$$ changed to ".h" 
+#include "eudaq/TransportTCP_WIN32.h"  //$$ changed to ".h" 
 #pragma comment(lib, "Ws2_32.lib")
 
 //defining error code more informations under  http://msdn.microsoft.com/en-us/library/windows/desktop/ms740668%28v=vs.85%29.aspx
@@ -396,7 +396,10 @@ namespace eudaq {
 
   void TCPServer::ProcessEvents(int timeout) {
     //std::cout << "DEBUG: Process..." << std::endl;
-    Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
+#ifndef DEBUG_NOTIMEOUT
+    Time t_start = Time::Current(), /*t_curr = t_start,*/;
+#endif
+    Time t_remain = Time(0, timeout);
     bool done = false;
     do {
       fd_set tempset;
@@ -470,6 +473,7 @@ namespace eudaq {
           } // end if (FD_ISSET(j, &amp;tempset))
           } // end for (j=0;...)
         } // end else if (result > 0)
+
 //optionally disable timeout at compile time by setting DEBUG_NOTIMEOUT to 1
 #if DEBUG_NOTIMEOUT
       t_remain = Time(0, timeout);
@@ -537,7 +541,10 @@ namespace eudaq {
 
     void TCPClient::ProcessEvents(int timeout) {
       //std::cout << "ProcessEvents()" << std::endl;
-      Time t_start = Time::Current(), /*t_curr = t_start,*/ t_remain = Time(0, timeout);
+#ifndef DEBUG_NOTIMEOUT
+      Time t_start = Time::Current(), /*t_curr = t_start,*/;
+#endif
+      Time t_remain = Time(0, timeout);
       bool done = false;
       do {
         fd_set tempset;
