@@ -396,8 +396,8 @@ namespace eudaq {
 
   void TCPServer::ProcessEvents(int timeout) {
     //std::cout << "DEBUG: Process..." << std::endl;
-#ifndef DEBUG_NOTIMEOUT
-    Time t_start = Time::Current(), /*t_curr = t_start,*/;
+#if DEBUG_NOTIMEOUT == 0
+    Time t_start = Time::Current(); /*t_curr = t_start,*/
 #endif
     Time t_remain = Time(0, timeout);
     bool done = false;
@@ -541,8 +541,8 @@ namespace eudaq {
 
     void TCPClient::ProcessEvents(int timeout) {
       //std::cout << "ProcessEvents()" << std::endl;
-#ifndef DEBUG_NOTIMEOUT
-      Time t_start = Time::Current(), /*t_curr = t_start,*/;
+#if DEBUG_NOTIMEOUT == 0
+      Time t_start = Time::Current(); /*t_curr = t_start,*/
 #endif
       Time t_remain = Time(0, timeout);
       bool done = false;
@@ -552,7 +552,6 @@ namespace eudaq {
         FD_SET(m_sock, &tempset);
         timeval timeremain = t_remain;
 #ifdef WIN32
-
 		int result = select(static_cast<int>(m_sock+1), &tempset, NULL, NULL, &timeremain);
 #else
 		SOCKET result = select(static_cast<int>(m_sock+1), &tempset, NULL, NULL, &timeremain);  
