@@ -446,10 +446,11 @@ namespace eudaq {
         for (SOCKET j=0; j < m_maxfd+1; j++) {
           if (FD_ISSET(j, &tempset)) {
             char buffer[MAX_BUFFER_SIZE+1];
+
             do {
               result = recv(j, buffer, MAX_BUFFER_SIZE, 0);
-
             } while (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Interrupted_function_call);
+
             if (result > 0) {
               buffer[result] = 0;
               ConnectionInfoTCP & m = GetInfo(j);
@@ -459,17 +460,20 @@ namespace eudaq {
                 m_events.push(TransportEvent(TransportEvent::RECEIVE, m, m.getpacket()));
               }
             } //else /*if (result == 0)*/ {
-            if (result == 0){
-              debug_transport( "Server #%d, return=%d, WSAError:%d (%s), --> was closed \n", j, result, errno, strerror(errno));
+            else if (result == 0){
+              debug_transport( "Server #%d, return=%d, WSAError:%d (%s) Disconnected.\n", j, result, errno, strerror(errno));
               ConnectionInfoTCP & m = GetInfo(j);
               m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
               m.Disable();
               closesocket(j);
               FD_CLR(j, &m_fdset);
             }
-            if (result == EUDAQ_ERROR_NO_DATA_RECEIVED ){
-              debug_transport( "Server #%d, return=%d, WSAError:%d (%s) \n", j, result, errno, strerror(errno));
+            else if (result == EUDAQ_ERROR_NO_DATA_RECEIVED ){
+              debug_transport( "Server #%d, return=%d, WSAError:%d (%s) No Data Received.\n", j, result, errno, strerror(errno));
             }
+	    else {
+	      debug_transport( "Server #%d, return=%d, WSAError:%d (%s) \n", j, result, errno, strerror(errno));
+	    }
           } // end if (FD_ISSET(j, &amp;tempset))
           } // end for (j=0;...)
         } // end else if (result > 0)
@@ -563,23 +567,24 @@ namespace eudaq {
         bool donereading = false;
         do {
           char buffer[MAX_BUFFER_SIZE+1];
+
           do {
             result = recv(m_sock, buffer, MAX_BUFFER_SIZE, 0);
-
           } while (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Interrupted_function_call);
+
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable) {
-            debug_transport("ResultClient = %d", result);
+	    //debug_transport("Client, return=%d, WSAError:%d (%s) Nothing to do\n",result,errno,strerror(errno));
             donereading = true;
           }
-          if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
-            debug_transport("Client, return=%d, WSAError:%d (%s), --> Time out. \n",result,errno,strerror(errno));
+          else if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
+            debug_transport("Client, return=%d, WSAError:%d (%s) Time Out\n",result,errno,strerror(errno));
           }
-          if (result == 0) {
-            debug_transport("Client, return=%d, WSAError:%d (%s), --> WARN: Connection closed (?)\n",result,errno,strerror(errno));
+          else if (result == 0) {
+            debug_transport("Client, return=%d, WSAError:%d (%s) Disconnect (?)\n",result,errno,strerror(errno));
             donereading = true;
             EUDAQ_THROW_NOLOG(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
           }
-          if (result > 0){
+          else if (result > 0){
             m_buf.append(result, buffer);
             while (m_buf.havepacket()) {
               m_events.push(TransportEvent(TransportEvent::RECEIVE, m_buf, m_buf.getpacket()));
@@ -587,7 +592,8 @@ namespace eudaq {
             }
           }
         } while (!donereading);
-//optionally disable timeout at compile time by setting DEBUG_NOTIMEOUT to 1
+
+	//optionally disable timeout at compile time by setting DEBUG_NOTIMEOUT to 1
 #if DEBUG_NOTIMEOUT
 	t_remain = Time(0, timeout);
 #else
@@ -595,7 +601,7 @@ namespace eudaq {
 #endif
         //std::cout << "Remaining time in ProcessEvents(): " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
 	if ( !(t_remain > Time(0))){
-	  debug_transport("%s\n","Reached Timeout in ProcessEvents().");
+	  //debug_transport("%s\n","Reached Timeout in ProcessEvents().");
 	}
       } while (!done && t_remain > Time(0));
       //std::cout << "done" << std::endl;
