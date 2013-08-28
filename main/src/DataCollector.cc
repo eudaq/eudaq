@@ -26,8 +26,9 @@ namespace eudaq {
     CommandReceiver("DataCollector", "", runcontrol, false), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
         ReadFromFile(RUN_NUMBER_FILE, 0U)), m_eventnumber(0), m_runstart(0) {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
-      pthread_attr_init(&m_threadattr);
-      pthread_create(&m_thread, &m_threadattr, DataCollector_thread, this);
+      //pthread_attr_init(&m_threadattr);
+      //pthread_create(&m_thread, &m_threadattr, DataCollector_thread, this);
+	  m_thread.start(DataCollector_thread,this);
       EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
       CommandReceiver::StartThread();
     }
@@ -35,7 +36,8 @@ namespace eudaq {
   DataCollector::~DataCollector() {
     m_done = true;
     /*if (m_thread)*/
-    pthread_join(m_thread, 0);
+    //pthread_join(m_thread, 0);
+	m_thread.join();
     delete m_dataserver;
   }
 

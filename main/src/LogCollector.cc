@@ -25,14 +25,14 @@ namespace eudaq {
     m_done(false),
     m_listening(true),
     m_logserver(TransportFactory::CreateServer(listenaddress)),
-    m_thread(),
     m_filename("../logs/" + Time::Current().Formatted("%Y-%m-%d.log")),
     m_file(m_filename.c_str(), std::ios_base::app)
   {
     if (!m_file.is_open()) EUDAQ_THROWX(FileWriteException, "Unable to open log file (" + m_filename + ") is there a logs directory?");
     m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
-    pthread_attr_init(&m_threadattr);
-    pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
+    //pthread_attr_init(&m_threadattr);
+    //pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
+	m_thread.start( LogCollector_thread, this);
     std::cout << "###### listenaddress=" << m_logserver->ConnectionString() << std::endl
       << "       logfile=" << m_filename << std::endl;
     std::ostringstream os;
@@ -44,7 +44,8 @@ namespace eudaq {
   LogCollector::~LogCollector() {
     m_file << "*** LogCollector stopped at " << Time::Current().Formatted() << " ***" << std::endl;
     m_done = true;
-    /*if (m_thread)*/ pthread_join(m_thread, 0);
+    ///*if (m_thread)*/ pthread_join(m_thread, 0);
+	m_thread.join();
     delete m_logserver;
   }
 

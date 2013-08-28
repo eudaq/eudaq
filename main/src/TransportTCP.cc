@@ -163,9 +163,10 @@ at some places we have constructions like:
 
 // print debug messages that are optimized out if DEBUG_TRANSPORT is not set:
 // source and details: http://stackoverflow.com/questions/1644868/c-define-macro-for-debug-printing
+#define DEBUG_TRANSPORT 1
 #define debug_transport(fmt, ...) \
   do { if (DEBUG_TRANSPORT) fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, \
-					  __LINE__, __func__, __VA_ARGS__); } while (0)
+					  __LINE__, __FUNCTION__, __VA_ARGS__); } while (0)
 
 #include <sys/types.h>
 #include <errno.h>

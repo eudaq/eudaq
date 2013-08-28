@@ -168,3 +168,27 @@
 
 # /vme/tmp/
 /vme/tmp/*.d
+Win VS-2012/EUDAQ.sdf
+Win VS-2012/EUDAQ.opensdf
+Win VS-2012/EUDAQ.suo
+Win VS-2012/EUDAQ.v11.suo
+*.obj
+*.tlog
+Win/EUDAQ.sdf
+Win VS-2012/ni_Producer/Release/*
+Win VS-2012/libEudaq/x64/Release/*
+Win VS-2012/ni_Producer/x64/Release/*
+Win VS-2012/TestDataCollector/Release/*
+Win VS-2012/TestDataCollector/x64/Release/*
+Win VS-2012/TestLogCollector/Release/*
+Win VS-2012/TestReader/Release/*
+Win VS-2012/TestReader/x64/Release/*
+Win VS-2012/TestRunControl/Release/*
+Win VS-2012/TestLogCollector/x64/Release/*
+Win VS-2012/TestRunControl/x64/Release/*
+Win VS-2012/libEudaq/Release/*
+Win VS-2012/TLUControl/Release/*
+Win VS-2012/TLUControl/x64/Release/*
+Win VS-2012/TLUProducer/x64/Release/*
+Win VS-2012/TLUProducer/Release/*
+win/*.suo

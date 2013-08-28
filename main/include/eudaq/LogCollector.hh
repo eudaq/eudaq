@@ -1,13 +1,13 @@
 #ifndef EUDAQ_INCLUDED_LogCollector
 #define EUDAQ_INCLUDED_LogCollector
 
-#include <pthread.h>
+//#include <pthread.h>
 #include <string>
 #include <fstream>
 #include "eudaq/Platform.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-
+#include "eudaq/EudaqThread.hh"
 namespace eudaq {
 
   class LogMessage;
@@ -32,8 +32,9 @@ namespace eudaq {
       void DoReceive(const LogMessage & msg);
       bool m_done, m_listening;
       TransportServer * m_logserver; ///< Transport for receiving log messages
-      pthread_t m_thread;
-      pthread_attr_t m_threadattr;
+//      pthread_t m_thread;
+//      pthread_attr_t m_threadattr;
+	  eudaqThread m_thread;
       std::string m_filename;
       std::ofstream m_file;
   };

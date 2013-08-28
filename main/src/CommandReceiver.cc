@@ -69,10 +69,12 @@ namespace eudaq {
   }
 
   void CommandReceiver::StartThread() {
-    pthread_attr_init(&m_threadattr);
-    if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
-      m_threadcreated = true;
-    }
+	  m_thread.start(CommandReceiver_thread, this);
+	   m_threadcreated = true;
+//     pthread_attr_init(&m_threadattr);
+//     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
+//       m_threadcreated = true;
+//     }
   }
 
   void CommandReceiver::SetStatus(Status::Level level, const std::string & info) {
@@ -151,7 +153,7 @@ namespace eudaq {
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
-    if (m_threadcreated) pthread_join(m_thread, 0);
+    if (m_threadcreated) m_thread.join();
     delete m_cmdclient;
   }
 

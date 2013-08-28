@@ -6,7 +6,8 @@
 #include "eudaq/Status.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Platform.hh"
-#include <pthread.h>
+#include "eudaq/EudaqThread.hh"
+
 #include <string>
 
 namespace eudaq {
@@ -51,10 +52,11 @@ namespace eudaq {
     protected:
       unsigned m_runnumber;   ///< The current run number
       TransportServer * m_cmdserver; ///< Transport for sending commands
-      pthread_t m_thread;
-      pthread_attr_t m_threadattr;
+//       pthread_t m_thread;
+//       pthread_attr_t m_threadattr;
+	  eudaqThread m_thread;
       size_t m_idata, m_ilog;
-      std::string m_dataaddr, m_logaddr;
+	  std::string m_dataaddr, m_logaddr;
       long long m_runsizelimit;
       bool m_stopping, m_busy, m_producerbusy;
   };
