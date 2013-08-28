@@ -151,10 +151,8 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   previous_event_clustering_time=0;
   previous_event_correlation_time=0;
 
-  if (_offline < 0)
-  {
-    onlinemon->SetOnlineMon(this);
-  }
+  onlinemon->SetOnlineMon(this);    
+
 }
 
 

@@ -12,6 +12,14 @@
 #include <sstream>
 #include "OnlineMonWindow.hh"
 
+
+//File IO includes
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
+
 using namespace std;
 
 
@@ -199,8 +207,8 @@ void OnlineMonWindow::SnapShot()
 {
 #ifdef DEBUG
   cout << "SnapShot pressed" <<endl;
-  cout <<rmon->mon_configdata.getSnapShotDir()<<endl;
-  cout <<rmon->mon_configdata.getSnapShotFormat()<<endl;
+  cout <<(rmon->mon_configdata).getSnapShotDir()<<endl;
+  cout <<(rmon->mon_configdata).getSnapShotFormat()<<endl;
 #endif
 
   TCanvas* c1= ECvs_right->GetCanvas();
@@ -214,8 +222,22 @@ void OnlineMonWindow::SnapShot()
 
     string filename=rmon->mon_configdata.getSnapShotDir()+"Snapshot_"+buffer_runnum.str()+"_"+buffer_seqnum.str()+rmon->mon_configdata.getSnapShotFormat();
 
-    cout << filename << endl;
-    c1->SaveAs(filename.c_str());
+    cout << "Trying to Save to "<< filename << endl;
+// as ROOT doesn't tell you if it was successfully creating the file we have to use a POSIX call    
+    struct stat dirbuf;
+    if (stat(rmon->mon_configdata.getSnapShotDir().c_str(),&dirbuf)==0)
+    {
+    	if (S_ISDIR(dirbuf.st_mode))
+	{
+    		c1->SaveAs(filename.c_str());
+		cout << "Done" << endl;
+	}
+    }
+    else
+    {
+    	cout << "Error accessing snapshot directory " << rmon->mon_configdata.getSnapShotDir()<<endl;
+    }		
+    
     snapshot_sequence++;
   }
 
@@ -479,7 +501,7 @@ void OnlineMonWindow::actorMenu(TGListTreeItem* /*item*/, Int_t btn, Int_t x, In
   {
     if (mymon!=NULL)
     {
-      rmon=mymon;
+      rmon=mymon;    
     }
     else
     {
