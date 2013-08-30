@@ -192,3 +192,19 @@ Win VS-2012/TLUControl/x64/Release/*
 Win VS-2012/TLUProducer/x64/Release/*
 Win VS-2012/TLUProducer/Release/*
 win/*.suo
+*.exp
+*.ilk
+gui vs 2012/x64/*
+gui vs 2012/GeneratedFiles/*
+gui vs 2012/Win32/Debug/*
+gui vs 2012/Win32/*
+gui/Win32/*
+*.suo
+*.sdf
+Win VS-2012/libEudaq/*
+gui vs 2012/tmp/*
+Win VS-2012/ni_Producer/Debug/*
+Win VS-2012/TestDataCollector/Debug/*
+Win VS-2012/TestLogCollector/Debug/*
+*.cache
+Win/libEudaq/Debug/*
