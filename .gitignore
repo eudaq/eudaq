@@ -208,3 +208,4 @@ Win VS-2012/TestDataCollector/Debug/*
 Win VS-2012/TestLogCollector/Debug/*
 *.cache
 Win/libEudaq/Debug/*
+*.opensdf
