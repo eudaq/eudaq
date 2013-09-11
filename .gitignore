@@ -209,3 +209,6 @@ Win VS-2012/TestLogCollector/Debug/*
 *.cache
 Win/libEudaq/Debug/*
 *.opensdf
+gui vs 2012/crashlog.txt
+Windows Binaries x64/crashlog.txt
+*crashlog.txt
