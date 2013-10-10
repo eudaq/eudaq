@@ -212,3 +212,14 @@ Win/libEudaq/Debug/*
 gui vs 2012/crashlog.txt
 Windows Binaries x64/crashlog.txt
 *crashlog.txt
+Win VS-2012/TLUControl/Debug/*
+Win VS-2012/TestReader/Debug/*
+Win VS-2012/TestRunControl/Debug/*
+Win VS-2012/TLUProducer/Debug/*
+Win/libEudaq/Release/*
+*.obj
+*.log
+*.pdb
+*.root
+Windows Binaries with  ROOT/*
+zendata/*

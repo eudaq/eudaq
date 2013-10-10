@@ -98,6 +98,7 @@
     <ClCompile Include="..\..\main\src\DEPFETEvent.cc" />
     <ClCompile Include="..\..\main\src\DetectorEvent.cc" />
     <ClCompile Include="..\..\main\src\DummyProducer.cc" />
+    <ClCompile Include="..\..\main\src\EudaqThread.cc" />
     <ClCompile Include="..\..\main\src\EUDRBConverterPlugin.cc" />
     <ClCompile Include="..\..\main\src\EUDRBEvent.cc" />
     <ClCompile Include="..\..\main\src\Event.cc" />
@@ -160,6 +161,7 @@
     <None Include="..\..\main\include\eudaq\DataSender.hh" />
     <None Include="..\..\main\include\eudaq\DEPFETEvent.hh" />
     <None Include="..\..\main\include\eudaq\DetectorEvent.hh" />
+    <None Include="..\..\main\include\eudaq\EudaqThread.hh" />
     <None Include="..\..\main\include\eudaq\EUDRBEvent.hh" />
     <None Include="..\..\main\include\eudaq\Event.hh" />
     <None Include="..\..\main\include\eudaq\Exception.hh" />
