@@ -65,10 +65,12 @@ namespace eudaq {
     tv_usec = usec % 1000000;
   }
 
+
   std::string Time::Formatted(const std::string & format) const {
     char buf[256];
     std::string fmt = format;
     size_t i, pos = 0;
+
     while ((i = fmt.find('%', pos)) != std::string::npos) {
       //std::cout << "i=" << i << std::endl;
       if (i >= fmt.length() - 1) break;
@@ -85,9 +87,11 @@ namespace eudaq {
         //std::cout << "pos=" << pos << std::endl;
       }
     }
+
     time_t t = tv_sec;
-    struct tm * tm = std::localtime(&t);
-    std::strftime(buf, sizeof buf, fmt.c_str(), tm);
+    struct tm * tm1 = std::localtime(&t);
+	
+    std::strftime(buf, sizeof buf, fmt.c_str(), tm1);
     return std::string(buf);
   }
 

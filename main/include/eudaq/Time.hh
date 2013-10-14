@@ -19,6 +19,8 @@
 
 
 #define TIME_DEFAULT_FORMAT    "%Y-%m-%d %H:%M:%S.%3"   //I thing it is impossible to export static variables from a dll. so i made it to a macro this works fine.
+
+
 namespace eudaq {
 
   class DLLEXPORT Time {
