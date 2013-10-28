@@ -223,3 +223,6 @@ Win/libEudaq/Release/*
 *.root
 Windows Binaries with  ROOT/*
 zendata/*
+Windows Binaries/crashlog.txt
+Windows Binaries x64/crashlog.txt
+Windows Binaries x64/crashlog.txt
