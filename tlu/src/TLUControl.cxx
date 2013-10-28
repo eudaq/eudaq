@@ -20,7 +20,11 @@ using eudaq::to_string;
 using eudaq::hexdec;
 
 static sig_atomic_t g_done = 0;
-
+#ifdef WIN32
+static const std::string TIME_FORMAT="%M:%S.%3";
+#else
+static const std::string TIME_FORMAT="%s.%3";
+#endif
 #ifdef WIN32
 ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler=NULL;  // set to NULL so that this function will not be called. it seems that this is only requiered on WINDOWS
 char *ZestSC1_ErrorStrings[]={"bla bla","blub"}; // needs to have some dummy strings but for now i dont know where they will be used again. 
@@ -171,7 +175,7 @@ int main(int /*argc*/, char ** argv) {
       double hertz = TLU.NumEntries() / lasttime.Seconds();
       double avghertz = total / totaltime.Seconds();
       lasttime.Restart();
-      std::cout << "Time: " << totaltime.Formatted("%s.%3") << " s, "
+      std::cout << "Time: " << totaltime.Formatted(TIME_FORMAT) << " s, "
                 << "Freq: " << hertz << " Hz, "
                 << "Average: " << avghertz << " Hz" << std::endl;
       if (wait.Value() > 0) {

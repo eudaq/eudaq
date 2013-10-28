@@ -1,0 +1,9 @@
+
+The EUDET TLU is based in the Orange Tree ZestSC1 FPGA board. 
+With this board the FPGA configuration is downloaded over USB at start-up. 
+(There is no configuration EPROM )
+
+The *.bit files are produced by Xilinx ISE
+
+The source files are available from a subversion repository at 
+https://svn.phy.bris.ac.uk/svn/uob-hep-pc017a/trunk/firmware/
