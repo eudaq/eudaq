@@ -46,7 +46,7 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Platform)\$(Configuration)</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">euLog</TargetName>
     <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</IgnoreImportLibrary>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\Windows Binaries\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\win2012R\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Platform)\$(Configuration)</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">euLog</TargetName>
     <IgnoreImportLibrary Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</IgnoreImportLibrary>

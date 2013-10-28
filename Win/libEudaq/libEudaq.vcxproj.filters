@@ -265,6 +265,9 @@
     <ClCompile Include="..\..\main\src\USBpixI4BConverterPlugin.cc">
       <Filter>Plugins\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\main\src\EudaqThread.cc">
+      <Filter>Utilities\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\main\include\eudaq\TransportBase.hh">
@@ -373,6 +376,9 @@
       <Filter>Utilities\Include</Filter>
     </None>
     <None Include="..\..\main\include\eudaq\CommandReceiver.hh">
+      <Filter>Utilities\Include</Filter>
+    </None>
+    <None Include="..\..\main\include\eudaq\EudaqThread.hh">
       <Filter>Utilities\Include</Filter>
     </None>
   </ItemGroup>

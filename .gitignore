@@ -212,3 +212,13 @@ Win/libEudaq/Debug/*
 gui vs 2012/crashlog.txt
 Windows Binaries x64/crashlog.txt
 *crashlog.txt
+Win/TLUProducer/Release/*
+Win/libEudaq/Release/*
+Win/TestLogCollector/Release/*
+Win/ni_Producer/Release/*
+Win/TestDataCollector/Release/*
+Win/TestReader/Release/*
+*.suo
+Win/TLUControl/Release/*
+Win VS-2012/Converter/Debug/*
+Win/TestRunControl/Release/*
