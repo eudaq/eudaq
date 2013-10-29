@@ -73,6 +73,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\main\include;..\..\extern\pthread-win32\include;..\..\tlu\include;..\..\extern\ZestSC1\windows 7\Inc;..\..\extern\libusb-win32-bin-1.2.6.0\include</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4275;4251;4099;4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
