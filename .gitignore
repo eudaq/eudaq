@@ -38,8 +38,6 @@
 # /depfet/tmp/
 /depfet/tmp/*.d
 
-# /doc/
-/doc/
 
 # /doc/doxygen/html/
 /doc/doxygen/html/*
