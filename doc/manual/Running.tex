@@ -338,18 +338,18 @@ The \texttt{Config} drop-down in the Run Control is populated from the files in 
 These are just text files in a specific format, containing name-value pairs separated into different sections.
 See \autoref{sec:ExampleConfig} for an example file.
 
-Any text from a \texttt{\#} character until the end of the line is treated as a comment, and ignored.
-Each section in the config file is delimited by a name in square brackets (e.g. \verb@[RunControl]@).
-The name represents the type of process to which it applies;
-if there are several such processes, then they can be differentiated by including the name after a period
-(e.g. \verb@[Producer.Example]@).
-Within each section, any number of parameters may be specified, in the form \mbox{\texttt{Name = Value}}.
-It is then up to the individual processes how these parameters are interpreted.
+Any text from a \texttt{\#} character until the end of the line is treated as a comment, and
+ignored.  Each section in the config file is delimited by a name in square brackets
+(e.g. \verb@[RunControl]@).  The name represents the type of process to which it applies; if there
+are several such processes, then they can be differentiated by including the name after a period
+(e.g. \verb@[Producer.Example]@).  Within each section, any number of parameters may be specified,
+in the form \mbox{\texttt{Name = Value}}.  It is then up to the individual processes how these
+parameters are interpreted.
 
-The entire contents of the config file will be sent to all processes during the configuration,
-and each process will have the appropriate section selected.
-The file will also be attached to the \gls{BORE},
-so that it is available with the data later, even if the original config file is modified or deleted.
+The entire contents of the config file will be sent to all processes during the configuration, and
+each process will have the appropriate section selected.  The file will also be attached to the
+\gls{BORE}, so that it is available with the data later, even if the original config file is
+modified or deleted.
 
 \subsubsection{GeoID}\label{sec:GeoID}
 The GeoID is a number representing the physical positioning of the telescope and DUT(s).
@@ -369,30 +369,123 @@ They should all accept a help (\texttt{-h} or \texttt{--help}) option,
 to print a summary of the available options.
 
 \subsubsection{TLUControl}
-The \texttt{TLUControl.exe} program is a standalone program for running the TLU without using the full DAQ.
-The most commonly used parameters are the following:
+The \texttt{TLUControl.exe} program is a standalone program for running the TLU without using the
+full DAQ. The most commonly used parameters are shown below. For each option, the short (preceeded
+by one dash) and the long (preceeded by two dashes) option names are shown (only one of the two
+forms should be used for each option, but long and short options can be mixed together on the
+command line), along with any parameters and their default value that will be used if the option is
+not specified.
+
 \begin{description}
-\ttitem{-d \param{mask}}
-The DUT mask; this defines which DUT connections are activated.
-It is a bit-mask, so 1 means connector 0, 2 means connector 1 etc.
+\ttitem{-d --dutmask \param{mask = 0}}
+The DUT mask; this defines which DUT connections are activated.  It is a bit-mask, so 1 means
+connector 0, 2 means connector 1, etc..
 
-\ttitem{-a \param{mask}}
-The AND mask; this defines which external trigger inputs are activated.
-It is a bit-mask, so 1 means channel 0, 2 means channel 1 etc.
-The specified channels are ANDed together, and used to generate a trigger signal.
+\ttitem{-a --andmask \param{mask = 255}}
+The AND mask; this defines which external trigger inputs are activated. It is a bit-mask, so 1
+means channel 0, 2 means channel 1, etc.. The specified channels are ANDed together, and used to
+generate a trigger signal.
 
-\ttitem{-t \param{msecs}}
-Internal trigger period.
-If non-zero, the \gls{TLU} will generate internal triggers with the specified period in milliseconds.
+\ttitem{-t --trigger \param{msecs = 0}}
+Internal trigger period.  If non-zero, the \gls{TLU} will generate internal triggers with the
+specified period in milliseconds. If set to zero, the internal trigger is off.
 
-\ttitem{-i \param{values}}
-Input mode select.
-A sequence of comma-separated strings specifying which connectors to use for the DUT inputs.
-Valid values are \texttt{RJ45}, \texttt{LEMO}, \texttt{HDMI} and \texttt{NONE}.
+\ttitem{-i --dutinputs \param{values = ""}}
+Input mode select. A sequence of comma-separated strings specifying which connectors to use for the
+DUT inputs. Valid values are \texttt{RJ45}, \texttt{LEMO}, \texttt{HDMI}, and \texttt{NONE}.
 
-\ttitem{-u}
-Pause the program after the \gls{TLU} is configured, before starting triggers.
+\ttitem{-u --wait-for-user}
+Pause the program after the \gls{TLU} is configured, before starting triggers. The default is to not
+wait for the user.
+\end{description}
 
+Other parameters available are as follows:
+
+\begin{description}
+\ttitem{-o --ormask \param{mask = 0}}
+The OR mask; this defines which external trigger inputs are activated. It is a bit-mask, so 1
+means channel 0, 2 means channel 1, etc.. The specified channels are ORed together, and used to
+generate a trigger signal.
+
+\ttitem{-v --vetomask \param{mask = 0}}
+The VETO mask; this defines which external trigger inputs are activated. It is a bit-mask, so 1
+means channel 0, 2 means channel 1, etc.. The specified channels are used to veto the generation
+of a trigger if they are active.
+
+\ttitem{-w --wait \param{ms = 1000}}
+Wait time. This is the time to wait between updates.
+
+\ttitem{-n --notimestamp}
+Indicates that the timestamp buffer should not be read out.
+
+\ttitem{-q --quit}
+Quit the program after configuring the TLU.
+
+\ttitem{-s --save-file \param{filename = ""}}
+     The filename to save trigger numbers and timestamps
+
+\ttitem{-p --strobeperiod \param{cycles = 1000}}
+Period for timing strobe (in \gls{TLU} clock cycles).
+
+\ttitem{-l --strobelength \param{cycles = 100}}
+Length of `on' time for timing strobe (in \gls{TLU} clock cycles).
+
+\ttitem{-b --dutveto \param{mask = 0}}
+Mask for enabling veto of triggers (`backpressure') by rasing DUT\_CLK.
+
+\ttitem{-hm --handshakemode \param{nohandshake = 0}}
+In this mode the TLU issues a fixed-length pulse on the trigger line (0 = no handshake).
+
+\ttitem{-pw --powervctrl \param{mV = 800}}
+[obsolete but provided for backward compatibility, please use \texttt{-pv}] Sets the Vcntl control
+voltage to all PMTs. The range of values is between 0 and 1000 (or 0 and 2000 if the \gls{TLU} has
+been modified by cutting \texttt{LC1} and jumpering \texttt{LO1} on the PMT Supply Daughterboard and
+specifying the \texttt{-pm 1} option).
+
+\ttitem{-pv --pmtvcntl \param{mV = 800}}
+Sets the Vcntl control voltage to all PMTs (see option \texttt{-pw} for more details). Will override
+the value of \texttt{-pw} if it is specified. If neither \texttt{-pw} or \texttt{-pv} is specified,
+the default value will be used (and can be overridden on an individual PMT basis).
+
+\ttitem{-p1 --pmtvcntl1 \param{mV}}
+Sets the PMT Vcntl voltage for PMT1 (Chan 0) only. If not specified, the default or values specified
+by \texttt{-pw} or \texttt{-pv} (which will override \texttt{-pw}) is used.
+
+\ttitem{-p2 --pmtvcntl2 \param{mV}}
+Sets the PMT Vcntl voltage for PMT2 (Chan 1) only. If not specified, the default or values specified
+by \texttt{-pw} or \texttt{-pv} (which will override \texttt{-pw}) is used.
+
+\ttitem{-p3 --pmtvcntl3 \param{mV}}
+Sets the PMT Vcntl voltage for PMT3 (Chan 2) only. If not specified, the default or values specified
+by \texttt{-pw} or \texttt{-pv} (which will override \texttt{-pw}) is used.
+
+\ttitem{-p4 --pmtvcntl4 \param{mV}}
+Sets the PMT Vcntl voltage for PMT4 (Chan 3) only. If not specified, the default or values specified
+by \texttt{-pw} or \texttt{-pv} (which will override \texttt{-pw}) is used.
+
+\ttitem{-pm --pmtvcntlmod \param{value = 0}}
+Specifies whether the TLU PMT Supply Daughtercard is modified (\texttt{LC1} cut and \texttt{LO1}
+jumpered) or not.  A \param{value} of 0 specifies that it is unmodified (and thus the Vcntl range is
+from 0mV to 1000mV), and a \param{value} of 1 specifies that the \gls{TLU} is modified (and thus the
+Vcntl range is from 0mV to 2000mV).  This feature is to accomodate newer Hamamatsu PMT models
+(e.g. H10721) that require a control voltage range of, for instance, 500mV to 1100mV that are being
+used in place of the older (discontinued, but what the \gls{TLU} was designed to accomodate and
+control) models that required a control voltage of between 250mV and 900mV.
+
+\ttitem{-f --bitfile \param{filename = ""}}
+The bitfile containing the TLU firmware to be loaded.
+
+\ttitem{-e --error-handler \param{value = 2}}
+Error handler setting. Setting to 0 indicates the program should abort on an error. Setting it to a
+value greater than 0 indicates the number of tries that should be attempted before generating an
+exception.
+
+\ttitem{-r --fwversion \param{value = 0}}
+Specifies the firmware version to load (setting to 0 indicates the version should be chosen automatically).
+
+\ttitem{-z --trace-file \param{filename = ""}}
+The filename to save a trace of all USB accesses. Prepend a dash (`\texttt{-}') to output errors
+only, or a plus (`\texttt{+}') for all data (including block transfers).
 \end{description}
 
 An example use of the command is shown below:

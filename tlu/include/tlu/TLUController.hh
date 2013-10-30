@@ -29,6 +29,8 @@ namespace tlu {
   static const int TLU_DUTS = 6;
   static const int TLU_BUFFER_SIZE = 4096;
   static const int NUM_TLU_BUFFERS = 4;
+  static const int TLU_PMTS = 4;
+  static const int PMT_VCNTL_DEFAULT = 800;  // in mV
 
   static const unsigned TLU_DEBUG_UPDATE = 0x0001 ;
   static const unsigned TLU_DEBUG_CONFIG = 0x0002 ;
@@ -92,6 +94,10 @@ namespace tlu {
     void SetStrobe(unsigned long period , unsigned long width);
     void SetEnableDUTVeto(unsigned char mask);
     void SetHandShakeMode(unsigned handshakemode);
+    bool SetPMTVcntl(unsigned value = PMT_VCNTL_DEFAULT);  // in mV, sets all PMT control voltages the same
+    // in mV, TLU_PMTS entries expected, sets each PMT control voltage separately
+    bool SetPMTVcntl(unsigned *values, double *gain_errors = NULL, double *offset_errors = NULL);
+    void SetPMTVcntlMod(unsigned value);
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
@@ -141,13 +147,14 @@ namespace tlu {
 
     unsigned GetScaler(unsigned) const;
     unsigned GetParticles() const;
-    bool SetupLVPower(int value=800); // in mV
+    bool SetupLVPower(int value = 800); // in mV -- obsolete, use SetPMTVctrl()
 
  private:
     void OpenTLU();
     void LoadFirmware();
     void Initialize();
     bool SetupLemo(); // Tries to set the LEMO termination and DAC voltage, returns true if successful
+    unsigned CalcPMTDACValue(double voltage);
 
     void WriteRegister(unsigned long offset, unsigned char val);
     void WriteRegister24(unsigned long offset, unsigned long val);
@@ -176,7 +183,7 @@ namespace tlu {
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
-    unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat, m_dmastat;
+    unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat, m_dmastat, m_pmtvcntlmod;
     unsigned long m_fsmstatusvalues;
     unsigned m_triggernum;
     unsigned long long m_timestamp;
