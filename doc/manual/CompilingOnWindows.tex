@@ -1,30 +1,8 @@
 % !TEX root = EUDAQUserManual.tex
-\section{Compiling GUI on the command line}
+\section{Details to Compiling the GUI on Windows}
+\label{app:compileOnWindows}
 
-\subsection{Solution}
-
-\begin{itemize}
-      \item Go to the QT website download the version of QT you want to use.
-      \item Make sure the environment variable QTDIR is set. 
-      \item	The Project file in the "eudaq\ensuremath{\backslash}gui" folder links by default against QT 4
-      \item The project file in the "eudaq\ensuremath{\backslash}gui vs 2012" links against QT 5
-      \item Download the express version of Visual Studios\\
-      \url{http://www.microsoft.com/visualstudio/eng#downloads+d-express-windows-desktop}\\
-      Make sure you download the version for desktop apps 
-      \item Start a visual studio Command line. This is in principle just a command line which has already all the path end environment variables you need.
-      \item Go in the folder with the .SLN file you want to compile. 
-      \item Type: for example\\
-      \begin{listing}[mybash]
-$[MSBUILD.exe]$ GUI_EUDAQ.sln /p:Configuration=Release
-\end{listing}
- 
-\item Finish.
-    
-\end{itemize}
-
-\subsection{Details}
-
-\subsubsection{MSBUILD}
+\subsection{MSBUILD}
 
 This is the program that processes the project (solution) files and feeds it to the compiler and linker. If you have a working project file it is more or less straight forward. It has a very simple syntax:
 
@@ -32,15 +10,13 @@ This is the program that processes the project (solution) files and feeds it to 
 $[MSBUILD.exe]$ MyApp.sln /t:Rebuild /p:Configuration=Release
 \end{listing}
 
-myApp.sln is the file you want to Process. /target (short /t) tells msbuild what to do in this case rebuild. You have all the options you need like: clean, build and rebuild. You can also specify your own targets. With the “parameter property” switch you can change the properties of your Project. Let’s say you want to compile EUDAQ, you go in the folder where the solution (sln) file is and type:
-
+myApp.sln is the file you want to Process. The parameter \texttt{/target} (short \texttt{/t}) tells msbuild what to do in this case rebuild. You have all the options you need like: clean, build and rebuild. You can also specify your own targets. With the ``parameter property'' switch you can change the properties of your Project. Let's say you want to compile EUDAQ, you go in the folder where the solution (sln) file is and type:
 
       \begin{listing}[mybash]
 $[MSBUILD.exe]$ EUDAQ.sln /p:Configuration=Release 
 \end{listing}
 
-
-One thing one has to keep in mind is that there are some default configurations. The default is a debug build for x86. If you want to have it different then you need to specify it in the command line. And one thing you want to have is a release build! With the /p switch you can overwrite properties like in this case the configuration. But you could also overwrite the compiler version it should use. Let’s say you want to use VS 2013 then you have to specify it by writing:
+One thing one has to keep in mind is that there are some default configurations. The default is a debug build for x86. If you want to have it different then you need to specify it in the command line. And one thing you want to have is a release build! With the /p switch you can overwrite properties like in this case the configuration. But you could also overwrite the compiler version it should use. Let's say you want to use VS 2013 then you have to specify it by writing:
 
       \begin{listing}[mybash]
 $[MSBUILD.exe]$ EUDAQ.sln /p:PlatformToolset=v120 /p:Configuration=Release
@@ -48,10 +24,10 @@ $[MSBUILD.exe]$ EUDAQ.sln /p:PlatformToolset=v120 /p:Configuration=Release
 
 But be careful when changing the compiler settings. It is possible that some then link against an incompatible version of your external libraries. 
 
-\subsubsection{Project Files}
-It’s the Visual Studio equivalent to a makefile. The Project files have a very easy syntax but a complicated mechanism behind it. Making changes to an existing file is very easy. Writing a new one from scratch is expert level. But also, in most cases, pointless because VS does it for you. Therefore usually one gets a finished Project file that was auto created by VS and one just wants to make some minor changes to it, therefore it is enough to know where one can tweak around. 
+\subsection{Project Files}
+Project files are the Visual Studio equivalent to Makefiles. The Project files have a very easy syntax but a complicated mechanism behind it. Making changes to an existing file is very easy. Writing a new one from scratch is expert level. But also, in most cases, pointless because VS does it for you. Therefore usually one gets a finished Project file that was auto created by VS and one just wants to make some minor changes to it, therefore it is enough to know where one can tweak around. 
 
-Let’s start easy and assume you want to change the output directory. You can do this by adding the following line to the corresponding Property group. 
+Let's start easy and assume you want to change the output directory. You can do this by adding the following line to the corresponding Property group. 
 
 \lstset{language=XML}
 \begin{lstlisting}
@@ -61,11 +37,11 @@ Let’s start easy and assume you want to change the output directory. You can d
 
 \end{lstlisting}
 
-Or lets say you want to change the compiler version. You can do this by changing the platform toolset to the version you need. You can find this option in 
+Or let's say you want to change the compiler version. You can do this by changing the platform toolset to the version you need. You can find this option in 
 \lstset{language=XML}
 \begin{lstlisting}
 <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-…
+...
 <PlatformToolset>v110</PlatformToolset>
 </PropertyGroup>
 \end{lstlisting}
@@ -73,6 +49,8 @@ Or lets say you want to change the compiler version. You can do this by changing
 V110 stands for Visual Studio 2012. V120 stands for VS 2013 and so on.
 The next interesting switches are in here:
 
+{
+\footnotesize
 \lstset{language=XML}
 \begin{lstlisting}
 <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -109,12 +87,13 @@ The next interesting switches are in here:
   </Link> 
 </ItemDefinitionGroup>
 \end{lstlisting}
+}
 
-lets go through it from start to end.
 An Item definition Group is the place where you define your items. One can compare Items to a struct in C++; it is an object that contains different types of information. The Condition statement works like an IF in C++. 
 
 In this article you can find all the possibilities you have: \url{http://msdn.microsoft.com/de-de/library/7szfhaft.aspx}
-In the next line you are defining an item called “CLCompile” and you give it the some attributes like “PreprocessorDefinitions” or “AdditionalIncludeDirectories”. This Object contains all the information that gets sent to the compiler. That means all the compiler flags are set here. The actual files are included later in the project file. So for now you have only defined how you want to compile your files but not what files you want to compile. AdditionalIncludeDirectories does exactly what you think it does. It understands all relative paths and path with environment variables exactly as it should. Next thing is “PreprocessorDefinitions”. It also works exactly as you think it does. That means you can either define just names for your \ensuremath{\#}ifdef statements in the code or you can define macros like
+In the next line you are defining an item called ``CLCompile'' and you give it the some attributes like ``PreprocessorDefinitions'' or ``AdditionalIncludeDirectories''. This Object contains all the information that gets sent to the compiler. That means all the compiler flags are set here. The actual files are included later in the project file. So for now you have only defined how you want to compile your files but not what files you want to compile. AdditionalIncludeDirectories does exactly what you think it does. It understands all relative paths and path with environment variables exactly as it should. Next thing is ``PreprocessorDefinitions''. It also works exactly as you think it does. That means you can either define just names for your \ensuremath{\#}ifdef statements in the code or you can define macros like
+
 \lstset{language=XML}
 \begin{lstlisting}
 <PreprocessorDefinitions>
@@ -147,36 +126,36 @@ Next thing you need to know is where to put your files you want to compile. Some
 <ItemGroup>
   <ClCompile Include="src\someFile.cc"/>
   <ClCompile Include="src\someOtherFile.cc"/>
-  …
+  ...
   <ClCompile Include="src\*.cpp"/>
-   …
+   ...
 </ItemGroup>
 \end{lstlisting}
 
 
-Here you can either put individual files or groups of files in. But be careful that you don’t include the same file twice. There is also an ItemGroup which contains the include files. This one seems to be more important for the IDE of VS so that it shows the header files in the Solution Explorer. 
+Here you can either put individual files or groups of files in. But be careful that you don't include the same file twice. There is also an ItemGroup which contains the include files. This one seems to be more important for the IDE of VS so that it shows the header files in the Solution Explorer. 
 
-A typical use case is that you wrote your own “Data Converter Plugin”. This file needs to be mentioned here!
+A typical use case is that you wrote your own \emph{Data Converter Plugin}. This file needs to be mentioned here!
 
-What you won’t find in the project file is the section that passes the files to the compiler. This part is hidden behind the following import statement:
+What you won't find in the project file is the section that passes the files to the compiler. This part is hidden behind the following import statement:
 \lstset{language=XML}
 \begin{lstlisting}
 <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
 \end{lstlisting}
 
-It is usual not needed to go in this file and you should not make any changes there. But if you want to see it you can find it in this folder:
+It is usually not required to modify this file. But if you want to view it you can find it in this folder:
 \begin{listing}
 
 C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\
 \end{listing}
 
-Don’t go there in the attempt to understand how it works. It is not written to be very clear nor understandable, go to Documentation pages like:
+This file is written neither to be very clear nor understandable, so
+better check out the documentation pages such as:
 
 \url{http://msdn.microsoft.com/en-us/library/dd293626.aspx}
 
 \subsection{Known Problems}
 
-
 \begin{itemize}
-\item The environment variables are pulled in as properties therefore they can be overwritten in the project file or in the “vcxproj.user” file. So if for example your QT Project won’t compile and keeps complaining about not finding the correct directory make sure you are not overwriting the QTDIR environment Variable with a Property. 
+\item The environment variables are pulled in as properties therefore they can be overwritten in the project file or in the ``vcxproj.user'' file. So if for example your QT Project won't compile and keeps complaining about not finding the correct directory make sure you are not overwriting the QTDIR environment Variable with a Property. 
 \end{itemize}
