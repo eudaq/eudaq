@@ -68,39 +68,43 @@ source /path/to/root/bin/thisroot.sh
 \subsubsection{LCIO / EUTelescope}\label{sec:LCIO-EUTel}
 To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
 eudaq must be linked against the \gls{LCIO} and EUTelescope libraries.
-They are both available from \url{http://ilcsoft.desy.de}.
-It is recommended to use the \texttt{ilcinstall} script to install them and their dependencies.
+Detailed instructions on how to install both using the
+\texttt{ilcinstall} scripts can be found at \url{http://eutelescope.web.cern.ch/content/installation}.
 
 The \texttt{EUTELESCOPE} and \texttt{LCIO} environment variables should be set to the
 installation directories of EUTelescope and LCIO respectively.
 This can be done by sourcing the \texttt{build\_env.sh} script as follows:
 \begin{listing}[mybash]
-source /path/to/Eutelescope/HEAD/build_env.sh
+source /path/to/Eutelescope/build_env.sh
 \end{listing}
 
 \subsection{Downloading}
-The EUDAQ source code is hosted on hepforge. The recommended way to obtain the software is with subversion,
+The EUDAQ source code is hosted on github. The recommended way to obtain the software is with git,
 since this will allow you to easily update to newer versions.
 The latest version can be checked out with the following command:
 \begin{listing}[mybash]
-svn co https://eudaq.hepforge.org/svn/trunk eudaq
+git clone https://github.com/eudaq/eudaq.git eudaq
 \end{listing}
 
-This may fail if the installed version of subversion does not include ssl support. In this case, replace the \texttt{https} with \texttt{http}. Occasionally, when connecting via \texttt{http}, it may fail with an error resembling:
-\begin{listing}[]
-svn: REPORT of '/path...': 200 OK (http://eudaq.hepforge.org/svn/)
-\end{listing}
-
-if this occurs, just repeat the command, it usually works the second time.
-
-This will create the directory \texttt{eudaq}, and download the latest version into it. 
-If you already have a copy installed, and want to update it to the latest version, you do not need to repeat the \texttt{svn co} command, just change to the \texttt{eudaq} directory use the command:
+This will create the directory \texttt{eudaq}, and download the latest
+development version into it. 
+If you already have a copy installed, and want to update it to the
+latest version, you do not need to clone the repository again, just change to the \texttt{eudaq} directory use the command:
 \begin{listing}[mybash]
-svn up
+git pull
 \end{listing}
+to update your local copy with all changes commited to the central repository.
 
-If you do not have subversion installed, and are unwilling or unable to install it, you can download a zip file from
-\url{http://projects.hepforge.org/eudaq/trac/browser/trunk}, at the bottom of the page is a link to download a zip file.
+Alternatively you can also download a zip file from
+\url{https://github.com/eudaq/eudaq/archive/master.zip}.
+
+For production environments (e.g. testbeams) we strongly recommend to
+use the latest release version. Use the command \texttt{git tag} in
+the repository to find the newest version and type e.g. 
+\begin{listing}[mybash]
+git checkout tags/v01-01-00
+\end{listing}
+to change to version 1.1.0.
 
 \subsection{Configuring}
 Currently some manual editing is needed to configure the software.
@@ -151,3 +155,28 @@ They should not be compiled unless specifically needed.
 
 If any directory depends on another, it will be automatically built; there is no need to specify it as well.
 For example, when you build the \texttt{gui} directory, the \texttt{main} directory will automatically be built first.
+
+\subsection{Compiling the GUI on Windows}
+
+This section gives a short overview on the steps needed to compile the project under
+Windows (tested under Windows 7, 32-bit). For a more detailed
+explanation see the appendix~\ref{app:compileOnWindows} on page~\pageref{app:compileOnWindows}.
+
+\begin{itemize}
+      \item Go to the QT website download the version of QT you want to use.
+      \item Make sure the environment variable QTDIR is set. 
+      \item The Project file in the "eudaq\ensuremath{\backslash}gui" folder links by default against QT 4
+      \item The project file in the "eudaq\ensuremath{\backslash}gui vs 2012" links against QT 5
+      \item Download the express version of Visual Studios\\
+      \url{http://www.microsoft.com/visualstudio/eng#downloads+d-express-windows-desktop}\\
+      Make sure you download the version for desktop apps 
+      \item Start a visual studio Command line. This is in principle just a command line which has already all the path end environment variables you need.
+      \item Go in the folder with the .SLN file you want to compile. 
+      \item Type: for example\\
+      \begin{listing}[mybash]
+$[MSBUILD.exe]$ GUI_EUDAQ.sln /p:Configuration=Release
+\end{listing}
+ 
+\item Finish.
+    
+\end{itemize}

@@ -7,7 +7,7 @@
 
 namespace eudaq {
 
-  class FileWriter {
+  class DLLEXPORT FileWriter {
     public:
       FileWriter();
       virtual void StartRun(unsigned runnumber) = 0;
@@ -20,7 +20,7 @@ namespace eudaq {
   };
 
 
-  class FileWriterFactory {
+  class DLLEXPORT FileWriterFactory {
     public:
       static FileWriter * Create(const std::string & name, const std::string & params = "");
       template <typename T>
