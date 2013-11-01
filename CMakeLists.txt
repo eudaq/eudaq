@@ -40,6 +40,9 @@ endif()
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
+# additional packages to be searched for by cmake
+LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+
 # search for the packages needed for the main library
 FIND_PACKAGE(Threads)
 
@@ -71,5 +74,11 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 # build main EUDAQ library
 add_subdirectory(main/lib)
 
-# build main EUDAQ executables
-add_subdirectory(main/exe)
+# build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
+option(BUILD_main "Compile main EUDAQ executables?" ON)
+IF(BUILD_main)
+  add_subdirectory(main/exe)
+ENDIF()
+
+# include processors (will not be included in target 'all')
+add_subdirectory(producers)
