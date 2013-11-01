@@ -80,5 +80,12 @@ IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
+# build GUI executables
+option(BUILD_gui "Compile Qt4 GUI?" ON)
+IF(BUILD_gui)
+  add_subdirectory(gui)
+ENDIF()
+
+
 # include processors (will not be included in target 'all')
 add_subdirectory(producers)
