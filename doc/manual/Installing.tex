@@ -2,7 +2,9 @@
 \section{Installing EUDAQ}
 
 \subsection{Prerequisites}
-EUDAQ has relatively few dependencies on other software, but some features do rely on other packages.
+EUDAQ has relatively few dependencies on other software, but some
+features do rely on other packages.
+To compile EUDAQ from source code, the CMake cross-platform, open-source build system is used.
 The libusb library is only needed to communicate over USB with a \gls{TLU}\cite{Cussans2009}.
 The VME driver is only needed for reading out \glspl{EUDRB}\cite{Cotta2008}
 via VME with a Motorola MVME6100 single board computer.
@@ -11,6 +13,16 @@ The other dependencies are only needed for running the DAQ, and not for the comm
 or write a custom Producer to run in the EUDET telescope,
 but not run the whole DAQ yourself).
 
+\subsection{CMake}
+In order to automatically generate configuration files for the build
+process of EUDAQ both compiler and platform independent, the CMake
+build system is used.
+
+CMake is available for all major operating systems from
+\url{http://www.cmake.org/cmake/resources/software.html}. On most
+Linux distributions, it can usually be installed via the built-in
+package manager (aptitude/apt-get/yum etc.).
+
 \subsubsection{libusb}
 In order to communicate with a \gls{TLU}, the libusb library is needed.
 Therefore, if you want to compile the \texttt{TLU} subdirectory, you should make sure that libusb is properly installed.
@@ -18,7 +30,7 @@ Therefore, if you want to compile the \texttt{TLU} subdirectory, you should make
 On Mac OS X, this can be installed using fink or macports.
 If using macports you may also need to install the \texttt{libusb-compat} package.
 On Linux it may already be installed,
-otherwise you should use the built-in package manager (aptitude/apt-get/yum etc.) to install it.
+otherwise you should use the built-in package manager to install it.
 Make sure to get the development version, which may be named \texttt{libusb-devel} instead of simply \texttt{libusb}.
 On Windows, libusb is only needed if compiling with cygwin,
 in which case you should use the cygwin installer to install libusb.
@@ -106,25 +118,28 @@ git checkout tags/v01-01-00
 \end{listing}
 to change to version 1.1.0.
 
-\subsection{Configuring}
-Currently some manual editing is needed to configure the software.
-Hopefully this will be replaced with a configuration script in the near future.
-In the \texttt{main} subdirectory you should edit the file \texttt{Makefile},
-and set \texttt{USE\_LCIO}, \texttt{USE\_EUTELESCOPE} and \texttt{USE\_ROOT}
-to 1 if the corresponding packages are installed, or 0 if not.
-If they are enabled make sure that the packages are correctly set up
-as described in \autoref{sec:Root} and \autoref{sec:LCIO-EUTel}.
-
-\subsection{Compiling}
-You should just have to run the command:
+\subsection{Configuring via CMake}
+CMake supports out-of-source configurations and builds -- just enter
+the './build' directory and run CMake, i.e.
 \begin{listing}[mybash]
-make
+cd build
+cmake ..
 \end{listing}
 
-from the top eudaq directory to compile the common library,
-along with some command-line programs (the contents of the \texttt{main} subdirectory).
-If other parts are needed, you can specify them as arguments to the make command.
-The different parts are:
+CMake automatically searches for all required packages and verifies
+that all dependencies are met using the \texttt{CMakeLists.txt} script in the
+main folder. By default, only the central shared library, the main
+executables and (if Qt4 or Qt5 have been found) the graphical user
+interface (GUI) are configured for compilation. You can modify this
+default behavior by passing the \texttt{BUILD\_[name]} option to
+CMake where \texttt{[name]} refers to an optional component, e.g.
+\begin{listing}[mybash]
+cmake -D BUILD_gui=OFF -D BUILD_tlu=ON ..
+\end{listing}
+to disable the GUI but enable additionally the TLU producer and
+executables.
+
+Some of the optional packages include:
 \begin{description}
 
 \ttitem{main}
@@ -136,9 +151,6 @@ The TLU library, and the command-line programs that depend on it.
 \ttitem{gui}
 The graphical parts of the DAQ, such as the Run Control and Log Collector.
 
-\ttitem{root}
-Parts of the software that depend on Root, in particular the Root Monitor.
-
 \ttitem{vme}
 The VME library. This should only be compiled on an MVME6100 single-board computer,
 as it is only compatible with the Tundra Tsi148 VME bridge, and PPC processors. 
@@ -149,12 +161,47 @@ Depends on the vme library, and should only be compiled on an MVME6100 single-bo
 
 \end{description}
 
-The \texttt{altro}, \texttt{altroUSB}, \texttt{depfet}, \texttt{fortis}, \texttt{mimoroma}, \texttt{mvd}, \texttt{pixelmanproducer},
-and \texttt{taki} subdirectories are other producers for users of the EUDET telescope.
-They should not be compiled unless specifically needed.
+The producers are stored in the \texttt{./producer} subdirectory and
+include: \texttt{altro}, \texttt{altroUSB}, \texttt{depfet},
+\texttt{fortis}, \texttt{mimoroma}, \texttt{mvd},
+\texttt{pixelmanproducer}, and \texttt{taki}. These are
+user-contributed producers for specific detectors inside the EUDET
+telescope.  They should not be compiled unless needed.
 
-If any directory depends on another, it will be automatically built; there is no need to specify it as well.
-For example, when you build the \texttt{gui} directory, the \texttt{main} directory will automatically be built first.
+The corresponding settings are cached, so that they will be again used
+next time CMake is run.
+
+To install the binaries and the library outside the source tree, you
+need to set the \texttt{INSTALL\_PREFIX} option, e.g.
+\begin{listing}[mybash]
+cmake -D INSTALL_PREFIX=/usr/local ..
+\end{listing}
+to install the executables into the \texttt{bin} and the library into \texttt{lib} subdirectories of \texttt{/usr/local}.
+
+If you ever need to, you can safely remove all files from the build folder
+as it only contains automatically generated files. Just run
+\begin{listing}[mybash]
+cd build
+rm -rf *
+\end{listing}
+to start from scratch.
+
+
+\subsection{Compiling}
+You should just have to run the command:
+\begin{listing}[mybash]
+make install
+\end{listing}
+
+from the top EUDAQ directory to compile the common library,
+along with some command-line programs (the contents of the \texttt{./main/exe} subdirectory).
+If other parts are needed, you can specify them as arguments to the
+CMake command during the configuration step.
+
+The executable binaries and the common shared library will be installed by default into the
+\texttt{bin} and \texttt{lib} directories in the source tree,
+respectively. If you would like to install into a different location,
+please set the respective parameter during the CMake configuration.
 
 \subsection{Compiling the GUI on Windows}
 
