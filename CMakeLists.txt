@@ -81,9 +81,15 @@ IF(BUILD_main)
 ENDIF()
 
 # build GUI executables
-option(BUILD_gui "Compile Qt4 GUI?" ON)
+option(BUILD_gui "Compile GUI executables (requires QT4/5)?" ON)
 IF(BUILD_gui)
   add_subdirectory(gui)
+ENDIF()
+
+# build OnlineMon executable
+option(BUILD_gui "Compile Online Monitor executable (requires ROOT)?" OFF)
+IF(BUILD_onlinemon)
+  add_subdirectory(onlinemon)
 ENDIF()
 
 
