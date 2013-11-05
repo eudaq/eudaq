@@ -2,6 +2,7 @@ macro(optional_add_subdirectory dir)
   option(BUILD_${dir} "Build producer in directory ${dir}?" OFF)
   if(BUILD_${dir})
     add_subdirectory(${dir})
+    MESSAGE( STATUS "Building producer: " ${dir} )
   endif()
 endmacro()
 
