@@ -46,7 +46,7 @@ namespace tlu {
         s << time.Formatted("%T.%6") << " " << mode
           << " " << eudaq::hexdec(addr) << " " << data;
         if (status > 0) {
-          char * msg = "Invalid error code";
+          char * msg = (char *) "Invalid error code";
           ZestSC1GetErrorMessage(static_cast<ZESTSC1_STATUS>(status), &msg);
           s << " {" << status << ": " << msg << "}";
         }
