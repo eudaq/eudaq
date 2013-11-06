@@ -4,3 +4,7 @@ bin/*.exe
 # Ignore libraries:
 lib/*
 
+# Ignore binary data file folders downloaded for TLU producer:
+extern/ZestSC1
+extern/tlufirmware
+
