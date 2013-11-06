@@ -1,5 +1,7 @@
-# this command finds Qt4 libraries and sets all required variables
-# note that it's Qt4, not QT4 or qt4
+# CMake script to build GUI applications
+# it will search for either Qt4 or Qt5, starting with Qt5
+
+FIND_PACKAGE(Threads REQUIRED) # pthreads
 
 include(CMakeDependentOption)
 
