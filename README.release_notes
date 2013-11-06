@@ -2,6 +2,17 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
+* Version 1.2
+** CMake build system
+** Restructuring of directory hierarchy
+** Cleanup of repository
+   (almost) no binary files are now distributed with the code:
+   - no windows drivers (pthreads, libusb)
+   - no Mimosa26 DAQ labview projects
+   - no MS Visual Studio files
+   - manual is no longer provided as pdf but only in source (and can be downloaded from the homepage)
+   - no precompiled W32 binaries
+   - no ZestSC1 driver files (need to be downloaded from AFS, see instructions for installation in README.md)
 * Version 1.1 
 ** New features and change log
 *** General
