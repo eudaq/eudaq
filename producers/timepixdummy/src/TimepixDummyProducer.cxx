@@ -1,9 +1,9 @@
 #include "eudaq/Producer.hh"
-#include "eudaq/TimepixDummyProducer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#include "TimepixDummyProducer.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>
