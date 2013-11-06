@@ -9,25 +9,28 @@
 if( ${CMAKE_VERSION} VERSION_GREATER 2.8 )
 # define macro as alias to FILE(COPY ..)
 macro(copy_files srcDir destDir)
-  message (STATUS "calling FILE(COPY ...) ")
   FILE(COPY ${srcDir} DESTINATION ${destDir})
 endmacro(copy_files)
 else() # CMake 2.6
+# disable a warning about changed behaviour when traversing directories recursively (wrt symlinks)
+IF(COMMAND cmake_policy)
+  CMAKE_POLICY(SET CMP0009 NEW)
+  CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
+ENDIF(COMMAND cmake_policy)
+# actual copy macro
 macro(copy_files srcDir destDir)
-  message (STATUS "using FILE(GLOB ..) and configure_file() to copy from ${srcDir} to ${destDir}")
   get_filename_component(targetDir ${srcDir} NAME)
   set (fullDest "${destDir}/${targetDir}")
     make_directory(${fullDest})
-    file(GLOB templateFiles RELATIVE ${srcDir} ${srcDir}/*)
+    file(GLOB_RECURSE templateFiles RELATIVE ${srcDir} ${srcDir}/*)
     foreach(templateFile ${templateFiles})
-        set(srcTemplatePath ${srcDir}/${templateFile})
-        if(NOT IS_DIRECTORY ${srcTemplatePath})
-            message(STATUS "Configuring file ${templateFile}")
-            configure_file(
-                    ${srcTemplatePath}
-                    ${fullDest}/${templateFile}
-                    COPYONLY)
-        endif(NOT IS_DIRECTORY ${srcTemplatePath})
+      set(srcTemplatePath ${srcDir}/${templateFile})
+      if(NOT IS_DIRECTORY ${srcTemplatePath})
+        configure_file(
+          ${srcTemplatePath}
+          ${fullDest}/${templateFile}
+          COPYONLY)
+      endif(NOT IS_DIRECTORY ${srcTemplatePath})
     endforeach(templateFile)
-endmacro(copy_files)
+  endmacro(copy_files)
 endif()
