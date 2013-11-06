@@ -1,29 +1,43 @@
-# - Try to find ZestSC1
+# - Try to find ZestSC1 driver package needed for accessing the TLU
 # Once done this will define
 #  ZESTSC1_FOUND - System has ZestSC1
 #  ZESTSC1_INCLUDE_DIRS - The ZestSC1 include directories
 #  ZESTSC1_LIBRARIES - The libraries needed to use ZestSC1
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
-find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
-          HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/Inc )
+macro(find_zestsc1_in_extern arg)
+  find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
+    HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/Inc ${arg})
 
-
-if (WIN32) 
-  find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-    HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows/Lib )
-elseif (UNIX)
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/macosx/Lib )
+  if (WIN32) 
+    find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
+      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows/Lib ${arg})
+  elseif (UNIX)
+    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+      find_library(ZESTSC1_LIBRARY NAMES ZestSC1
+	HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/macosx/Lib ${arg})
+    else()
+      find_library(ZESTSC1_LIBRARY NAMES ZestSC1
+	HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/linux/Lib ${arg})
+    endif()
   else()
+    MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/linux/Lib )
+      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/linux ${arg})
   endif()
-else()
-  MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/linux )
+endmacro()
+
+find_zestsc1_in_extern("")
+
+# could not find the package at the usual locations -- try to copy from AFS if accessible
+if (NOT ZESTSC1_LIBRARY)
+  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
+    MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ./extern ....")
+    FILE(COPY "/afs/desy.de/group/telescopes/tlu/ZestSC1" DESTINATION ${PROJECT_SOURCE_DIR}/extern)
+    find_zestsc1_in_extern(NO_DEFAULT_PATH)
+  ELSE()
+    MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+  ENDIF()
 endif()
 
 set(ZESTSC1_LIBRARIES ${ZESTSC1_LIBRARY} )

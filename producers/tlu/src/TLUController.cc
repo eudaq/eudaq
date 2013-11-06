@@ -252,11 +252,13 @@ namespace tlu {
 
   void TLUController::LoadFirmware() {
     if (m_filename == "") {
-      m_filename = "TLU";
+      m_filename =TLUFIRMWARE_PATH;
+      m_filename+= "/TLU";
       if (m_version > 1) m_filename += "2";
       m_filename += "_Toplevel.bit";
     } else if (m_filename.find_first_not_of("0123456789") == std::string::npos) {
-      std::string filename = "../tlu/TLU";
+      std::string filename = TLUFIRMWARE_PATH;
+      filename+= "/TLU";
       if (m_version == 2) filename += "2";
       filename += "_Toplevel-" + m_filename + ".bit";
       m_filename = filename;
