@@ -139,7 +139,10 @@ cmake -D BUILD_gui=OFF -D BUILD_tlu=ON ..
 to disable the GUI but enable additionally the TLU producer and
 executables.
 
-Some of the optional packages include:
+The corresponding settings are cached, so that they will be again used
+next time CMake is run.
+
+Some of the optional packages and producers include:
 \begin{description}
 
 \ttitem{main}
@@ -151,25 +154,27 @@ The TLU library, and the command-line programs that depend on it.
 \ttitem{gui}
 The graphical parts of the DAQ, such as the Run Control and Log Collector.
 
-\ttitem{vme}
-The VME library. This should only be compiled on an MVME6100 single-board computer,
-as it is only compatible with the Tundra Tsi148 VME bridge, and PPC processors. 
-
-\ttitem{eudrb}
-The code for accessing EUDRB boards over VME.
-Depends on the vme library, and should only be compiled on an MVME6100 single-board computer.
-
 \end{description}
 
 The producers are stored in the \texttt{./producer} subdirectory and
 include: \texttt{altro}, \texttt{altroUSB}, \texttt{depfet},
-\texttt{fortis}, \texttt{mimoroma}, \texttt{mvd},
+\texttt{eudrb}, \texttt{fortis}, \texttt{mimoroma}, \texttt{mvd},
 \texttt{pixelmanproducer}, and \texttt{taki}. These are
 user-contributed producers for specific detectors inside the EUDET
 telescope.  They should not be compiled unless needed.
 
-The corresponding settings are cached, so that they will be again used
-next time CMake is run.
+A short description of selected producers:
+\begin{description}
+
+\ttitem{producers/eudrb}
+The code for accessing EUDRB boards over VME.  Depends
+on the vme library which will be automatically built
+when \texttt{eudrb} is enabled. This should only be compiled on an
+MVME6100 single-board computer, as it is only compatible with the
+Tundra Tsi148 VME bridge, and PPC processors.
+\end{description}
+
+
 
 To install the binaries and the library outside the source tree, you
 need to set the \texttt{INSTALL\_PREFIX} option, e.g.
