@@ -3,7 +3,7 @@ set(ext_libraries "vme" )
 set(ext_lib_paths "" )
 set(ext_inc_paths "../../extern/Tsi148" )
 
-ADD_DEFINITIONS(VME_TRACE=0)
+ADD_DEFINITIONS(-DVME_TRACE=0)
 LINK_DIRECTORIES( ${ext_lib_paths} )
 INCLUDE_DIRECTORIES( include ${ext_inc_paths})
 

@@ -4,7 +4,7 @@ set(ext_libraries "" )
 set(ext_lib_paths "" )
 set(ext_inc_paths "" )
 
-ADD_DEFINITIONS("")
+ADD_DEFINITIONS()
 LINK_DIRECTORIES( ${ext_lib_paths} )
 INCLUDE_DIRECTORIES( include ${ext_inc_paths})
 ADD_EXECUTABLE(${name} ${sourcefiles})

@@ -6,7 +6,7 @@ set(sourcefiles src/FORTISPackData.cc src/startExecutableThread.cc)
 set(ext_libraries "" )
 set(ext_lib_paths "" )
 set(ext_inc_paths "" )
-ADD_DEFINITIONS("USE_ROOT=1")
+ADD_DEFINITIONS(-DUSE_ROOT=1)
 
 LINK_DIRECTORIES( ${ext_lib_paths} )
 INCLUDE_DIRECTORIES( ${ext_inc_paths})
