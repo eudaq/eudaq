@@ -4,6 +4,13 @@ bin/*.exe
 # Ignore libraries:
 lib/*
 
+# ignore emacs autosaves
+\#*#
+
+# ignore eclipse project files
+.project
+.cproject
+
 # Ignore binary data file folders downloaded for TLU producer:
 extern/ZestSC1
 extern/tlufirmware
