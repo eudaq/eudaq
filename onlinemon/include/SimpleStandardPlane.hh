@@ -83,6 +83,7 @@ class SimpleStandardPlane {
     bool is_USBPIX;
     bool is_USBPIXI4;
     bool is_FORTIS;
+    bool is_EXPLORER;
     bool is_UNKNOWN;
 
   private:
