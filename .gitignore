@@ -4,3 +4,14 @@ bin/*.exe
 # Ignore libraries:
 lib/*
 
+# ignore emacs autosaves
+\#*#
+
+# ignore eclipse project files
+.project
+.cproject
+
+# ignore externally installed packages
+extern/ZestSC1
+extern/tlufirmware
+
