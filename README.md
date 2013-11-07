@@ -3,8 +3,38 @@ eudaq
 
 eudaq Data Acquisition Framework main repository
 
+1. Prerequisites
+----------------
 
-Compiling and Installing:
+1.1. Main Library, Executables and GUI
+--------------------------------------
+
+1.1.1 Linux
+------------------
+- Install Qt4 or later
+
+1.1.2 OS X
+------------------
+- Install Qt4 or later
+
+
+1.1.3 Windows
+------------------
+- Install Qt4 or later
+- download and install the pthreads library (pre-build binary from ftp://sources.redhat.com/pub/pthreads-win32)
+
+1.2. Specific Producers and Components
+--------------------------------------
+
+1.2.1 TLU producer
+------------------
+- (Windows) install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki)
+- (Linux) install libusb development package, e.g. 'apt-get install libusb-dev'
+- install ZestSC1 driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
+- install firmware bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
+
+
+2. Compiling and Installing:
 ------------------------
 cd build
 cmake ..
@@ -31,7 +61,7 @@ make install
 Variables thus set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
 
-Development:
+3. Development:
 -----------
 
 If you would like to contribute your code back into the main repository, please follow the 'fork & pull request' strategy:
