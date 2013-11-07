@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include "fortis/FORTIS.hh"
+#include "FORTIS.hh"
 
 /// Entry point for thread that starts the command-line-program that streams data from FORTIS
 void* startExecutableThread(void * args) {

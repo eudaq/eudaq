@@ -10,7 +10,7 @@
 #include <fstream>
 #include <assert.h>
 
-#include "fortis/FORTIS.hh"
+#include "FORTIS.hh"
 
 #ifdef USE_ROOT
 // Include files for ROOT

@@ -3,7 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "fortis/FORTIS.hh"
+#include "FORTIS.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32)|| EUDAQ_PLATFORM_IS(MINGW)
 # include <windows.h>
