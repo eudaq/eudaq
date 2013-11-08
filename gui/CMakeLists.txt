@@ -5,12 +5,19 @@ FIND_PACKAGE(Threads REQUIRED) # pthreads
 
 include(CMakeDependentOption)
 
-option(BUILD_WITH_QT4 "Build with Qt4 no matter if Qt5 is found" OFF)
+IF(COMMAND cmake_policy)
+  CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
+  CMAKE_POLICY(SET CMP0020 OLD) # explicitly disabling automatic linking of Qt executables to qtmain target on Windows (changed in CMake 2.8.10)
+ENDIF(COMMAND cmake_policy)
+
+
+option(BUILD_WITH_QT4 "Build with Qt4 no matter whether Qt5 is found or not" OFF)
 
 if( NOT BUILD_WITH_QT4 )
-    find_package(Qt5Gui QUIET) #implies core package
-    if( Qt5Gui_DIR )
-        message(STATUS "Found Qt5 core and gui packages!")
+    # search for Qt5 package 'Widgets' (implies Core and Gui)
+    find_package(Qt5Widgets QUIET) # QUIET means it won't complain if not found
+    if( Qt5Widgets_DIR)
+        message(STATUS "Found Qt5Widgets: ${Qt5Gui_DIR}")
         macro(qt_wrap_cpp)
             qt5_wrap_cpp(${ARGN})
         endmacro()

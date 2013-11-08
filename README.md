@@ -22,6 +22,8 @@ eudaq Data Acquisition Framework main repository
 ------------------
 - Install Qt4 or later
 - download and install the pthreads library (pre-build binary from ftp://sources.redhat.com/pub/pthreads-win32)
+For full description on how to set up the development environment for Windows, see section below.
+
 
 1.2. Specific Producers and Components
 --------------------------------------
@@ -60,6 +62,25 @@ make install
 
 Variables thus set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
+
+2.1. Setting up Windows Development Environment
+-----------------------------------------------
+Download Qt4 or Qt5:
+Download Visual Studio Express Desktop (e.g. 2013 Version):
+(Warning: requires registration)
+
+Install both packages.
+Start the Visual Studio "Developer Command Prmopt" from the Start Menu entries vor Visual Studio (Tools subfolder) which opens a cmd.exe session with the necessary environment variables already set. Now execute the "qtenv2.bat" batch file in the Qt folder, e.g.
+C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
+Replace "5.1.1" with the version string of your Qt installation.
+
+Now clone the EUDAQ repository (or download using GitHub) and enter the build directory on the prompt, e.g. by entering
+cd c:\Users\[username]\Documents\GitHub\eudaq\build
+
+Now enter
+cmake ..
+
+to generate the VS project files.
 
 3. Development:
 -----------
