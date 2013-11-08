@@ -6,6 +6,7 @@ lib/*
 
 # ignore emacs autosaves
 \#*#
+*~
 
 # ignore eclipse project files
 .project
