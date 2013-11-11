@@ -82,6 +82,11 @@ cmake ..
 
 to generate the VS project files.
 
+Compile by calling
+
+MSBUILD.exe EUDAQ.sln /p:Configuration=Release
+
+
 3. Development:
 -----------
 
