@@ -1,19 +1,10 @@
 #include "eudaq/DeviceMimosa32.hh"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h> // string function definitions
-#include <unistd.h> // UNIX standard function definitions
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <fcntl.h> // File control definitions
 #include <errno.h> // Error number definitions
-#include <termios.h> // POSIX terminal control definitionss
-#include <time.h>   // time calls
-#include <math.h>
-#include <arpa/inet.h>
 #include <iostream>
 #include <fstream> 
+#include <string> 
 
 // il numero di byte che dovrebbe leggere e' 2608 sovradimensionato
 #define mtu_date 3000
