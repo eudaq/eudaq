@@ -13,9 +13,9 @@ ADD_EXECUTABLE(VMEReset.exe src/exe/VMEReset.cxx)
 ADD_EXECUTABLE(VMETest.exe  src/exe/VMETest.cxx)
 ADD_EXECUTABLE(Scaler.exe   src/exe/Scaler.cxx)
 
-TARGET_LINK_LIBRARIES(VMEReset.exe   EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${libname})
-TARGET_LINK_LIBRARIES(VMETest.exe    EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${libname})
-TARGET_LINK_LIBRARIES(Scaler.exe     EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${libname})
+TARGET_LINK_LIBRARIES(VMEReset.exe   EUDAQ ${EUDAQ_THREADS_LIB} ${libname})
+TARGET_LINK_LIBRARIES(VMETest.exe    EUDAQ ${EUDAQ_THREADS_LIB} ${libname})
+TARGET_LINK_LIBRARIES(Scaler.exe     EUDAQ ${EUDAQ_THREADS_LIB} ${libname})
 
 INSTALL(TARGETS ${libname} VMEReset.exe VMETest.exe Scaler.exe
   RUNTIME DESTINATION bin

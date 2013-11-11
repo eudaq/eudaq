@@ -13,8 +13,8 @@ INCLUDE_DIRECTORIES( ${ext_inc_paths})
 ADD_EXECUTABLE(${name} src/FORTISProducer.cxx ${sourcefiles})
 ADD_EXECUTABLE(ReadFORTISTimestamps.exe src/ReadFORTISTimestamps.cxx ${sourcefiles})
 
-TARGET_LINK_LIBRARIES(${name}   EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${ext_libraries} ${ROOT_LIBRARIES})
-TARGET_LINK_LIBRARIES(ReadFORTISTimestamps.exe  EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${ext_libraries}  ${ROOT_LIBRARIES})
+TARGET_LINK_LIBRARIES(${name}   EUDAQ ${EUDAQ_THREADS_LIB} ${ext_libraries} ${ROOT_LIBRARIES})
+TARGET_LINK_LIBRARIES(ReadFORTISTimestamps.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${ext_libraries}  ${ROOT_LIBRARIES})
 
 INSTALL(TARGETS ${name} ReadFORTISTimestamps.exe
   RUNTIME DESTINATION bin

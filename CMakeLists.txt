@@ -13,11 +13,19 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.txt)
 
-# include directories
-INCLUDE_DIRECTORIES( ./main/include )
+# check for and activate c++11 support
+option(USE_CXX11 "Enable C++11 if available?" OFF)
+if (USE_CXX11)
+   include(${PROJECT_SOURCE_DIR}/cmake/CXX11.cmake)
+   check_for_cxx11_compiler(CXX11_COMPILER)
+   if(CXX11_COMPILER)
+	 enable_cxx11()
+    	 ADD_EFINITIONS("-DCPP11=1")
+   endif(CXX11_COMPILER)
+endif(USE_CXX11)
 
 # platform dependent preprocessor defines
-if (WIN32) 
+if (WIN32)
   if (CYGWIN)
     ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_CYGWIN")
   elseif (MINGW)
@@ -36,8 +44,28 @@ else()
   ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_LINUX")
 endif()
 
-# add some more general preprocessor defines
-add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
+# determine compiler type (32/64bit)
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+    MESSAGE(STATUS "64 bits compiler detected" )
+    SET( EX_PLATFORM 64 )
+    SET( EX_PLATFORM_NAME "x64" )
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 ) 
+    MESSAGE(STATUS "32 bits compiler detected" )
+    SET( EX_PLATFORM 32 )
+    SET( EX_PLATFORM_NAME "x86" )
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
+# compiler specific settings
+if (CMAKE_COMPILER_IS_GNUCC)
+   # add some more general preprocessor defines (only for gcc)
+   message(STATUS "Using gcc-specific preprocessor identifiers")
+   add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
+elseif(MSVC)
+   message(STATUS "Using MSVC-specific preprocessor identifiers")
+   add_definitions("-DEUDAQ_FUNC=__FUNCTION__")
+else()
+   add_definitions("-DEUDAQ_FUNC=__func__")
+endif()
 # optional debug defines
 # add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
 
@@ -46,8 +74,15 @@ add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
+# include directories
+INCLUDE_DIRECTORIES( ./main/include )
+
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+
+#FIND_PACKAGE(Threads REQUIRED) # pthreads
+# include checks for the available and necessary threading libraries (depending on platform)
+include(${PROJECT_SOURCE_DIR}/cmake/EUDAQThreads.cmake)
 
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)

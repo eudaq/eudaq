@@ -7,7 +7,7 @@ LINK_DIRECTORIES( ${ext_lib_paths} )
 INCLUDE_DIRECTORIES( include )
 ADD_EXECUTABLE(${name} ${sourcefiles})
 
-TARGET_LINK_LIBRARIES(${name}   EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${ext_libraries})
+TARGET_LINK_LIBRARIES(${name}   EUDAQ ${EUDAQ_THREADS_LIB} ${ext_libraries})
 
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin

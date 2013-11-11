@@ -1,8 +1,6 @@
 # CMake script to build GUI applications
 # it will search for either Qt4 or Qt5, starting with Qt5
 
-FIND_PACKAGE(Threads REQUIRED) # pthreads
-
 include(CMakeDependentOption)
 
 IF(COMMAND cmake_policy)
@@ -25,9 +23,9 @@ if( NOT BUILD_WITH_QT4 )
             qt5_wrap_ui(${ARGN})
         endmacro()
 	# setup Qt5 libaries and include paths
-	set (my_qt_libraries ${Qt5Gui_LIBRARIES})
-	include_directories(${Qt5Gui_INCLUDES})
-	ADD_DEFINITIONS(${Qt5Gui_DEFINITIONS})
+	set (my_qt_libraries ${Qt5Widgets_LIBRARIES})
+	include_directories(${Qt5Widgets_INCLUDES})
+	ADD_DEFINITIONS(${Qt5Widgets_DEFINITIONS})
     endif()
 endif()
 
@@ -74,9 +72,9 @@ ELSE()
   ADD_EXECUTABLE(euLog.exe src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
 
   # last thing we have to do is to tell CMake what libraries our executable needs
-  TARGET_LINK_LIBRARIES(euRun.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT}  ${my_qt_libraries})
-  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${my_qt_libraries})
-  TARGET_LINK_LIBRARIES(euLog.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT}  ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
 
   # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
   IF(WIN32) # Check if we are on Windows
