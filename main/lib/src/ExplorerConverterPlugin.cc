@@ -115,17 +115,21 @@ namespace eudaq {
         // - eoe frame = 9 byte + 4 byte
         // - 2 byte after the trigger id => 4 including the tlu id
         const unsigned int offset = 9 + 4 + 4;
-        if (rev->NumBlocks() < 2) return (unsigned)(-1);
-        unsigned int size_ADC   = rev->GetBlock(0).size();
-        unsigned int size_HLVDS = rev->GetBlock(1).size();
+        if (rev->NumBlocks() < 2) {
+
+	  return (unsigned)(-1);
+	}
+        unsigned int size_HLVDS = rev->GetBlock(0).size();
+        unsigned int size_ADC   = rev->GetBlock(1).size();
         if (size_ADC < offset || size_HLVDS < offset) return (unsigned)(-1);
-        unsigned int pos_ADC   = size_ADC   - offset;
         unsigned int pos_HLVDS = size_HLVDS - offset;
-        unsigned short id_ADC   = getbigendian<unsigned short>(&rev->GetBlock(0)[pos_ADC]);
-        unsigned short id_HLVDS = getbigendian<unsigned short>(&rev->GetBlock(1)[pos_HLVDS]);
+        unsigned int pos_ADC   = size_ADC   - offset;
+        unsigned short id_HLVDS = getbigendian<unsigned short>(&rev->GetBlock(0)[pos_HLVDS]);
+        unsigned short id_ADC   = getbigendian<unsigned short>(&rev->GetBlock(1)[pos_ADC]);
         if (id_ADC == id_HLVDS) return (unsigned)id_ADC;
         else {
-          std::cout << std::endl << id_ADC << '\t' << id_HLVDS << std::endl;
+          //std::cout << id_HLVDS << '\t' << id_ADC << std::endl;
+	  return (unsigned)id_HLVDS;
         }
       }
       // If we are unable to extract the Trigger ID, signal with (unsigned)-1
@@ -320,7 +324,7 @@ namespace eudaq {
         pedestal=input;
         pedit=pedestal.begin();
         if(pedestal.size()==0) std::cout << "Failed opening pedestal file!" << std::endl;
-        if(pedestal.size()!=4*2*(60*60+90*90)) std::cout << "Wrong pedestal data size!" << std::endl;
+        if(pedestal.size()!= 4*(60*60+90*90)) std::cout << "Wrong pedestal data size!" << pedestal.size() << " instead of " << 4*(60*60+90*90) << std::endl;
       }
 
       float pixpedvalue[4];	//buffer to store and calculate the pedestal values
