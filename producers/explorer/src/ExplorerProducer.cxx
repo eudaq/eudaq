@@ -50,7 +50,8 @@ public:
   // and the runcontrol connection string, and initialize any member variables.
   ExplorerProducer(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol),
-      m_run(0), m_ev(0), stopping(false), running(false), done(false) {
+      m_run(0), m_ev(0), stopping(false), running(false), done(false),
+      request_sent(false) {
     fExplorer1= new DeviceExplorer();
   }
 
@@ -218,6 +219,7 @@ public:
     std::cout << "[ExplorerProducer] Sent BORE " << std::endl;
 
     stopping = false;
+    request_sent = false;
     running = true;
     // At the end, set the status that will be displayed in the Run Control.
     SetStatus(eudaq::Status::LVL_OK, "Running");
@@ -227,9 +229,13 @@ public:
   virtual void OnStopRun() {
     std::cout << "Stopping Run" << std::endl;
 
-    running = false;
     // Set a flag to signal to the polling loop that the run is over
     stopping = true;
+    running = false;
+    while (stopping) {
+      eudaq::mSleep(100);
+    }
+    std::cout << "Stopped Run" << std::endl;
   }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -262,20 +268,19 @@ public:
     unsigned long evt_id     = 0x0;
     short max_frame_id       = 0x0;
     bool evt_finished        = false;
+    bool request_sent        = false;
 
     float timeout = 0.1;    // (in s) will be only used if data is expected
-    bool request_sent = false; // ensure that we don't send a double request
 
     // Loop until Run Control tells us to terminate
     while (!done) {
-      if (!running) {              //called while run not started yet
+      if (!running && !stopping) {          //called while run not started yet
         eudaq::mSleep(50);
         continue;
       }
-      else {       //running
-        if (!request_sent) {
-          fExplorer1->GetSingleEvent();
-          request_sent = true;
+      else if (running) {       //running
+        while (!request_sent) {
+          request_sent = fExplorer1->GetSingleEvent();
         }
         std::vector<unsigned char> bufferEvent_LVDS;              //Eventbuffer
         std::vector<unsigned char> bufferEvent_ADC;
@@ -429,23 +434,23 @@ public:
           // Now increment the event number
           m_ev++;
         }
-
-        if(stopping && !running){
-          //in case the run is stopped: finish event and send EORE
-          SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
-          std::cout << "[ExplorerProducer] Sent EORE " << std::endl;
-          while(check_socket(sd0, 1.)) { //read LVDS until empty
-            recvfrom(sd0, data_packet, buffer_size, 0, NULL, NULL);
-          }
-          while(check_socket(sd1, 1.)) { //read ADCS until empty
-            recvfrom(sd1, data_packet, buffer_size, 0, NULL, NULL);
-          }
-          SetStatus(eudaq::Status::LVL_OK, "Stopped");
-          printf("\n-------------------- Run %i Stopped --------------------\n",
-                 m_run);
-          request_sent = false;
-          fExplorer1->StopDAQ();
-        }
+      }
+      if (stopping) {
+	//in case the run is stopped: finish event and send EORE
+	std::cout << "[ExplorerProducer] Sent EORE " << std::endl;
+	while(check_socket(sd0, 1.)) { //read LVDS until empty
+	  recvfrom(sd0, data_packet, buffer_size, 0, NULL, NULL);
+	}
+	while(check_socket(sd1, 1.)) { //read ADC until empty
+	  recvfrom(sd1, data_packet, buffer_size, 0, NULL, NULL);
+	}
+	fExplorer1->StopDAQ();
+	stopping = false;
+	SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
+	SetStatus(eudaq::Status::LVL_OK, "Stopped");
+	printf("\n-------------------- Run %i Stopped --------------------\n",
+	       m_run);
+	request_sent = false;
       }
     } //end while
   }//end Readout loop
@@ -455,6 +460,7 @@ private:
   unsigned m_run, m_ev;         //run and event number of the instace
   char ip[14];                  //ip string
   bool stopping, running, done; //run information booleans
+  bool request_sent;            // ensure that we don't send a double request to the DUT
   DeviceExplorer* fExplorer1;   //pointer to the device object
 
   //Config values
