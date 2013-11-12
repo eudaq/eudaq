@@ -94,11 +94,13 @@ int DeviceExplorer::get_SD(int fecn){	//get socket descriptors of fecs
 ////call python scripts to steer SRS
 bool DeviceExplorer::Configure(){
   if(sc[0]>=0) StopDAQ();
-  if(cmdRdy){ system("../Explorer1Producer/srs-software/ConfigureExplorer.sh"); return true; }
+  if(cmdRdy){ system("../producers/explorer/srs-software/ConfigureExplorer.sh"); return true; }
   else return false;
 }
 
 bool DeviceExplorer::ConfigureDAQ(){
+  if(cmdRdy){ system("../producers/explorer/srs-software/ConfigureDAQ.sh"); }
+  else return false;
   cmdRdy = false;
   if (create_server_udp(0, SC_PORT) < 0) {
     perror("failed to create the slow control server");
@@ -146,5 +148,8 @@ bool DeviceExplorer::GetSingleEvent(){
     }
     return true;
   }
-  else return false;
+  else {
+    perror("slow control endpoint unavailable");
+    return false;
+  }
 }
