@@ -15,3 +15,5 @@ lib/*
 extern/ZestSC1
 extern/tlufirmware
 
+# ignore python byte code
+*.pyc
