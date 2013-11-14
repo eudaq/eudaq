@@ -34,7 +34,7 @@ namespace eudaq {
   //Templates
   ////////////////////////////////////////////////////////////////////////////////////
   template <typename T>
-  inline T unpack_fh (vector <unsigned char >::iterator &src, T& data){	//unpack from host-byte-order
+  inline T unpack_fh (vector <unsigned char >::iterator &src, T& data){         //unpack from host-byte-order
     data=0;
     for(unsigned int i=0;i<sizeof(T);i++){
       data+=((uint64_t)*src<<(8*i));
@@ -44,7 +44,7 @@ namespace eudaq {
   }
 
   template <typename T>
-  inline T unpack_fn(vector<unsigned char>::iterator &src, T& data){		//unpack from network-byte-order
+  inline T unpack_fn(vector<unsigned char>::iterator &src, T& data){            //unpack from network-byte-order
     data=0;
     for(unsigned int i=0;i<sizeof(T);i++){
       data+=((uint64_t)*src<<(8*(sizeof(T)-1-i)));
@@ -54,7 +54,7 @@ namespace eudaq {
   }
 
   template <typename T>
-  inline T unpack_b(vector<unsigned char>::iterator &src, T& data, unsigned int nb){		//unpack number of bytes n-b-o only
+  inline T unpack_b(vector<unsigned char>::iterator &src, T& data, unsigned int nb){            //unpack number of bytes n-b-o only
     data=0;
     for(unsigned int i=0;i<nb;i++){
       data+=(uint64_t(*src)<<(8*(nb-1-i)));
@@ -81,13 +81,13 @@ namespace eudaq {
     ////////////////////////////////////////
     //Take specific run data or configuration data from BORE
     virtual void Initialize(const Event & bore,
-                            const Configuration & /*cnf*/) {	//GetConfig
-      m_ExNum  	=	bore.GetTag<unsigned int>("ExplorerNumber", 0);
-      m_PedMeas	=	bore.GetTag<bool>("PedestalMeasurement", false);
-      m_UsePed	=	bore.GetTag<bool>("UsePedestal", false);
-      m_PedFile	=	bore.GetTag<string>("PedestalFileToUse","../data/pedestal0.ped");
-      m_UseThr	=	bore.GetTag<bool>("UseThreshold", true);
-      m_Thr	  	=	bore.GetTag<unsigned int>("Threshold", 10);
+                            const Configuration & /*cnf*/) {    //GetConfig
+      m_ExNum           =       bore.GetTag<unsigned int>("ExplorerNumber", 0);
+      m_PedMeas         =       bore.GetTag<bool>("PedestalMeasurement", false);
+      m_UsePed  =       bore.GetTag<bool>("UsePedestal", false);
+      m_PedFile         =       bore.GetTag<string>("PedestalFileToUse","../data/pedestal0.ped");
+      m_UseThr  =       bore.GetTag<bool>("UseThreshold", true);
+      m_Thr             =       bore.GetTag<unsigned int>("Threshold", 10);
 
       cout<<endl<<"INITIALIZE:"<<endl
           <<m_ExNum<<"\t"
@@ -117,8 +117,8 @@ namespace eudaq {
         const unsigned int offset = 9 + 4 + 4;
         if (rev->NumBlocks() < 2) {
 
-	  return (unsigned)(-1);
-	}
+          return (unsigned)(-1);
+        }
         unsigned int size_HLVDS = rev->GetBlock(0).size();
         unsigned int size_ADC   = rev->GetBlock(1).size();
         if (size_ADC < offset || size_HLVDS < offset) return (unsigned)(-1);
@@ -129,7 +129,7 @@ namespace eudaq {
         if (id_ADC == id_HLVDS) return (unsigned)id_ADC;
         else {
           //std::cout << id_HLVDS << '\t' << id_ADC << std::endl;
-	  return (unsigned)id_HLVDS;
+          return (unsigned)id_HLVDS;
         }
       }
       // If we are unable to extract the Trigger ID, signal with (unsigned)-1
@@ -143,34 +143,58 @@ namespace eudaq {
     //conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent & sev,const Event & ev) const {
 
-      if(ev.IsEORE() && m_PedMeas){					//generate output pedestals and noise
+      if(ev.IsEORE() && m_PedMeas){ // generate output pedestals and noise
         cout<<"Calculating Pedestals & Noise ..."<<endl;
 
-        double avped   = 0.; //average pedestal
-        double avnoise = 0.; //average noise
-        vector<float>peds;	//storage pedestals
-        vector<float>noise;	//storage noise values
-        for(unsigned int i=0;i<m_Ped.size();i++){			//calculate the values
-          peds.push_back(m_Ped[i]/(float)m_noe);
-          avped+=peds[peds.size()-1];
-          noise.push_back(sqrt(m_Ped_sq[i]/(float)m_noe - m_Ped[i]/(float)m_noe*m_Ped[i]/(float)m_noe));
-          avnoise+=noise[noise.size()-1];
+        // average pedestal and noise (calculated separately for each pitch and chip)
+        double avped[m_nExplorers*2]   = { 0., 0., 0., 0., 0., 0., 0., 0. };
+        double avnoise[m_nExplorers*2] = { 0., 0., 0., 0., 0., 0., 0., 0. };
+        // containers for pedestal and noise which are going to be written to disk
+        vector<float>peds;
+        vector<float>noise;
+        // reserve the needed amount of memory
+        peds.reserve(m_nPixels);
+        noise.reserve(m_nPixels);
+
+        // average all the runs
+        double div = 1./(float)m_noe;
+        for(unsigned int i=0; i<m_Ped.size(); ++i){
+          peds.push_back(m_Ped[i]*div);
+          avped[2*(i/11700)+((i%11700)/8100)]+=peds[peds.size()-1];
+          noise.push_back(sqrt(m_Ped_sq[i]*div-m_Ped[i]*div*m_Ped[i]*div));
+          avnoise[2*(i/11700)+((i%11700)/8100)]+=noise[noise.size()-1];
         }
-        avped=avped/peds.size();
-        avnoise=avnoise/noise.size();
+        // normalise the matrix means
+        for (int i=0; i<m_nExplorers*2; ++i) {
+          double div = (i%2==0) ? 1./8100. : 1./6400.;
+          avped[i]   *= div;
+          avnoise[i] *= div;
+        }
 
-        ofstream out(m_PedFile.c_str());		//put the data in output files
-        ostream_iterator<float> out_it(out, "\n");
-        copy(peds.begin(), peds.end(), out_it);							//Pedestals
+        // write the pedestal and the noise to the corresponding files
+        ofstream out_ped(m_PedFile.c_str());
+        ostream_iterator<float> out_ped_it(out_ped, "\n");
+        copy(peds.begin(), peds.end(), out_ped_it);
         cout<<"Pedestal Filename: "<<m_PedFile<<endl;
-        cout<<"Average Pedestal: "<<avped<<endl;
+        cout<<"Average Pedestal: "<<endl;
+        cout<<"Chip\t20x20\t30x30"<<endl;
+        for (int i=0; i<m_nExplorers; ++i) {
+          cout<<i<<'\t'<<avped[2*i]<<'\t'<<avped[2*i+1]<<endl;
+        }
 
-        string noisefile="../data/Noise"+(m_PedFile.substr(m_PedFile.size()-5+(m_PedFile.size()-21),1+(m_PedFile.size()-21)))+".ns";
-        ofstream out2(noisefile.c_str());
-        ostream_iterator<double> out_it2(out2, "\n");
-        copy(noise.begin(), noise.end(), out_it2);						//Noise
+        // derive noise file name from the pedestal file name
+        string noisefile= m_PedFile;
+        noisefile.replace(noisefile.find("pedestal"), 8, "noise");
+        noisefile.replace(noisefile.find(".ped"), 4, ".ns");
+        ofstream out_ns(noisefile.c_str());
+        ostream_iterator<double> out_ns_it(out_ns, "\n");
+        copy(noise.begin(), noise.end(), out_ns_it);
         cout<<"Noise Filename: "<<noisefile<<endl;
-        cout<<"Average Noise: "<<avnoise<<endl;
+        cout<<"Average Noise: "<<endl;
+        cout<<"Chip\t20x20\t30x30"<<endl;
+        for (int i=0; i<m_nExplorers; ++i) {
+          cout<<i<<'\t'<<avnoise[2*i]<<'\t'<<avnoise[2*i+1]<<endl;
+        }
       }
       //initialize everything
       std::string sensortype1 = "Explorer20x20";
@@ -183,16 +207,18 @@ namespace eudaq {
       //Create plane for all matrixes? (YES)
       StandardPlane planes[8];
       for( id=0 ; id<4 ; id++ ){
-        planes[id*2]=StandardPlane(id*2, EVENT_TYPE, sensortype1);		//Set planes for different types
+        //Set planes for different types
+        planes[id*2]  =StandardPlane(id*2,   EVENT_TYPE, sensortype1);
         planes[id*2+1]=StandardPlane(id*2+1, EVENT_TYPE, sensortype2);
-        planes[id*2].SetSizeRaw(width1, height1,2,6);				//2frames + CDS on
-        planes[id*2+1].SetSizeRaw(width2, height2,2,6);
+        //2frames + CDS on
+        planes[id*2  ].SetSizeRaw(width1, height1, 2, 6);
+        planes[id*2+1].SetSizeRaw(width2, height2, 2, 6);
       }
       //Conversion
 
       //Reading of the RawData
       const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev);
-      //cout << "[Number of blocks] " << rev->NumBlocks() << endl;		//just for checks
+      //cout << "[Number of blocks] " << rev->NumBlocks() << endl;
       if(rev->NumBlocks()==0) return false;
       vector<unsigned char> data = rev->GetBlock(1);
       //cout << "vector has size : " << data.size() << endl;
@@ -202,28 +228,28 @@ namespace eudaq {
 
       //###############################################
       //DATA FORMAT
-      //Eventlength 	4Byte(host-byte-order)
+      //Eventlength     4Byte(host-byte-order)
       //
-      //Framelength 	4Byte(h-b-o)
-      //Eventnumber 	8Byte(network-byte-order)
+      //Framelength     4Byte(h-b-o)
+      //Eventnumber     8Byte(network-byte-order)
       //Dataspecifier 3Byte(n-b-o)
-      //Framecount 	1Byte
-      //Data		(Framelength-12)Byte(n-b-o)
+      //Framecount      1Byte
+      //Data            (Framelength-12)Byte(n-b-o)
       //
       //Framelength...
       //...
       //(last data frame)
       //data..
-      //trailer	24Byte
+      //trailer         24Byte
       //
       //(End of Event Frame)
-      //Framelength	4Byte	=	9
-      //Event Number	8Byte
-      //Max FrmCnt	1Byte	=	15 (if Event correct)
+      //Framelength     4Byte   =       9
+      //Event Number    8Byte
+      //Max FrmCnt      1Byte   =       15 (if Event correct)
       //##############################################
 
       //numbers extracted from the header
-      unsigned int EVENT_LENGTH, FRAME_LENGTH,  DS/*Data specifier*/, ds;
+      unsigned int EVENT_LENGTH, FRAME_LENGTH, DS/*Data specifier*/, ds;
       uint64_t EVENT_NUM, evn;
 
       //array to save the iterator starting point of each frame ordered by frame number 16+1
@@ -232,42 +258,45 @@ namespace eudaq {
       //variable to move trough the array
       unsigned int nframes=1;
 
-      //first check if data is complete  //size determined empirically-->get rid of damaged events probably(UDP?)
+      //first check if data is complete
+      //size determined empirically-->get rid of damaged events probably(UDP?)
       if( data.size()-4!=unpack_fh(it,EVENT_LENGTH) || (data.size()!=140703 && data.size()!=140697)){
         //Event length not at the beginning or event corrupted
         //-->discard event
         cout<<"Event Length ERROR:\n";
-        std::cout<<"\tEvent Length not correct!"<<std::endl<<"\tEither order not correct or Event corrupt!!"
-                 <<std::endl<<"\tExpected Length: "<<EVENT_LENGTH<<" Seen: "<<data.size()-4<<" Correct Value: 140699"<<std::endl;
+        std::cout<<"\tEvent Length not correct!"<<std::endl
+                 <<"\tEither order not correct or Event corrupt!!"
+                 <<std::endl<<"\tExpected Length: "<<EVENT_LENGTH
+                 <<" Seen: "<<data.size()-4<<" Correct Value: 140699"<<std::endl;
         return false;
       }
 
       //If this is ok continue
-      //we are sure this frame is the first frame	FIXME
+      //we are sure this frame is the first frame       FIXME
       //
       //TASK #1: determine the frame order to read the adc data correctly
 
       //Extract the first Data Header --> all the other headers are compared to this header
 
-      unpack_fh(it,FRAME_LENGTH);	//Framelength
-      if(FRAME_LENGTH==9){ printf("\nWRONG\n"); return false;} //discar events with EoE-Frame as First frame
+      unpack_fh(it,FRAME_LENGTH);       //Framelength
+      if(FRAME_LENGTH==9){ printf("\nWRONG\n"); return false;} //discard events with EoE-Frame as First frame
 
-      unpack_fn(it,EVENT_NUM);	//Eventnumber
+      unpack_fn(it,EVENT_NUM);  //Eventnumber
 
-      unpack_b(it,DS,3);		//Dataspecifier
+      unpack_b(it,DS,3);                //Dataspecifier
 
       //Start position of first data frame
-      framepos[(int)*it]=make_pair(it+1,FRAME_LENGTH-12);	//readout the frame count should be 0 here
+      framepos[(int)*it]=make_pair(it+1,FRAME_LENGTH-12);       //readout the frame count should be 0 here
       it++;
 
       //End of 1. Data Header
       //Go on
 
-      it+=FRAME_LENGTH-12;	//minus header
+      it+=FRAME_LENGTH-12;      //minus header
 
       while(it!=data.end()){
 
-        if(unpack_fh(it,FRAME_LENGTH)==9){			//EOE expection
+        if(unpack_fh(it,FRAME_LENGTH)==9){                      //EOE expection
           if(unpack_fn(it,evn)==EVENT_NUM){
             framepos[16]=make_pair(data.end(),FRAME_LENGTH);
             nframes++;
@@ -281,7 +310,7 @@ namespace eudaq {
           }
         }
         else{
-          if(unpack_fn(it,evn)!=EVENT_NUM){		//EvNum exception
+          if(unpack_fn(it,evn)!=EVENT_NUM){             //EvNum exception
             cout<<"Event Number ERROR: "<<endl<<"\tEventnumber mismatch!"<<endl<<"\tDropping Event!"<<endl;
             return false;
           }
@@ -295,18 +324,18 @@ namespace eudaq {
             cout<<"Frame Counter ERROR:\n"<<"\tFramecount not possible! <1.|==1.|>16"<<endl<<"\tDropping Event"<<endl;
             return false;
           }
-          framepos[(int)*it]=make_pair(it+1,FRAME_LENGTH-12);	//Set FrameInfo
+          framepos[(int)*it]=make_pair(it+1,FRAME_LENGTH-12);   //Set FrameInfo
           it++;
           nframes++;
 
-          if(nframes>17){		//this should not be possible but anyway
+          if(nframes>17){               //this should not be possible but anyway
             cout<<"Frame ERROR:\n\tToo many frames!"<<endl<<"\tDropping Event"<<endl;
             return false;
           }
-          it+=FRAME_LENGTH-12;	//Set iterator to begin of next frame
+          it+=FRAME_LENGTH-12;  //Set iterator to begin of next frame
         }
       }
-      m_noe++;	//Event correct add Event
+      m_noe++;  //Event correct add Event
 
       /////////////////////////////////////////////////////////
       //Payload Decoding
@@ -315,11 +344,12 @@ namespace eudaq {
       //assumption data is complete for mem1 and 2 else i need to add exceptions
 
       //Pedestal
-      vector<float> pedestal;			//vector for the pedestal values
+      vector<float> pedestal;         //vector for the pedestal values
+      pedestal.reserve(m_nPixels);
       vector<float>::iterator pedit;
-      if(m_UsePed){					//set pedestal value in case of a Measurement using Pedestal
+      if(m_UsePed){ //set pedestal value in case of a Measurement using Pedestal
         ifstream in(m_PedFile.c_str());
-        istream_iterator<float>start(in),end;	//read pedestals from file
+        istream_iterator<float>start(in),end;   //read pedestals from file
         vector<float>input(start,end);
         pedestal=input;
         pedit=pedestal.begin();
@@ -327,34 +357,34 @@ namespace eudaq {
         if(pedestal.size()!= 4*(60*60+90*90)) std::cout << "Wrong pedestal data size!" << pedestal.size() << " instead of " << 4*(60*60+90*90) << std::endl;
       }
 
-      float pixpedvalue[4];	//buffer to store and calculate the pedestal values
+      float pixpedvalue[4];     //buffer to store and calculate the pedestal values
 
-      uint64_t buffer;	//buffer for the 6 byte containers
-      float adcc;	//adc counts (using float, as we subtract the pedestal)
-      nframes=0;		//reset
-      unsigned int type=0;		//20x20 or 30x30
-      vector<unsigned char>::iterator end;	//iterator to indicate the end of datafr
+      uint64_t buffer;  //buffer for the 6 byte containers
+      float adcc;       //adc counts (using float, as we subtract the pedestal)
+      nframes=0;                //reset
+      unsigned int type=0;              //20x20 or 30x30
+      vector<unsigned char>::iterator end;      //iterator to indicate the end of datafr
 
-      it=framepos[nframes].first;			//first frame; set iterators
+      it=framepos[nframes].first;                       //first frame; set iterators
       end=it+framepos[nframes].second;
 
-      int matrix_size=(int)height1;		//or width1 whatever
+      int matrix_size=(int)height1;             //or width1 whatever
 
-      for( int i=0 ; i<matrix_size ; i++ ){				//x
-        for( int j=0 ; j<matrix_size ; j++ ){			//y
-          for( unsigned int k=0 ; k<2 ; k++ ){			//mem
-            unpack_b(it,buffer,6);				//Get Data
-            for( unsigned int l=0 ; l<4 ; l++ ){		//fill matrixes
-              adcc=(float)((buffer>>(12*l)) & 0x0FFF);		//mask + shift of Data value
+      for( int i=0 ; i<matrix_size ; i++ ){                             //x
+        for( int j=0 ; j<matrix_size ; j++ ){                   //y
+          for( unsigned int k=0 ; k<2 ; k++ ){                  //mem
+            unpack_b(it,buffer,6);                              //Get Data
+            for( unsigned int l=0 ; l<4 ; l++ ){                //fill matrixes
+              adcc=(float)((buffer>>(12*l)) & 0x0FFF);          //mask + shift of Data value
 
-              //ZeroSubpression
-              if(m_UsePed && k==0 && pedestal.size()>0){adcc-=*pedit; pedit++;}	//iterate the pedestal values
+              // zero supression
+              if(m_UsePed && k==0 && pedestal.size()>0){adcc-=*pedit; pedit++;}         //iterate the pedestal values
               if(m_UseThr && k==0) adcc-=m_Thr;
 
               planes[2*l+type].SetPixel( j+i*matrix_size , i , j , adcc , k);
               //fill planes (i<-->j ??)
 
-              if(m_PedMeas){				//calculate pedestals
+              if(m_PedMeas){                            //calculate pedestals
                 if(k==0) pixpedvalue[l]=adcc;
                 else {
                   pixpedvalue[l]-=adcc;
@@ -366,10 +396,10 @@ namespace eudaq {
 
           if(it==end){
             nframes++;
-            it=framepos[nframes].first;			//change frame
+            it=framepos[nframes].first;                         //change frame
             end=it+framepos[nframes].second;
           }
-          if( i==matrix_size-1 && j==matrix_size-1 && matrix_size!=(int)height2 ){	//change matrix size
+          if( i==matrix_size-1 && j==matrix_size-1 && matrix_size!=(int)height2 ){      //change matrix size
             i=0;
             j=-1;
             matrix_size=(int)height2;
@@ -378,19 +408,19 @@ namespace eudaq {
         }
       }
 
-      if(m_PedMeas){			//sum up pedestals in a vector and sum up square of pedestals
-
-        if(m_noe==1){						//create pedestal and noise vectors
+      if(m_PedMeas){  //sum up pedestals in a vector and sum up square of pedestals
+        if(m_noe==1){ //create pedestal and noise vectors
           m_Ped=pedestal;
           for(unsigned int i=0;i<pedestal.size();i++){
             m_Ped_sq.push_back(pedestal[i]*pedestal[i]);
           }
         }
-        else for(unsigned int i=0;i<m_Ped.size();i++){		//summing up
-            m_Ped[i]=m_Ped[i]+pedestal[i];
-            m_Ped_sq[i]=m_Ped_sq[i]+pedestal[i]*pedestal[i];
+        else {
+          for(unsigned int i=0;i<m_Ped.size();i++){  //summing up
+            m_Ped[i]    += pedestal[i];
+            m_Ped_sq[i] += pedestal[i]*pedestal[i];
           }
-
+        }
       }
       //End of Data Conversion
 
@@ -400,39 +430,39 @@ namespace eudaq {
       //iterator already in perfect position
 
       //###############################################
-      //Trailer:		24Byte
-      //..EventTimestamp	8Byte
-      //..TriggerTimestamp	8Byte
-      //..TriggerCounter	4Byte
-      //..TluCounter		2Byte
-      //..StatusInfo		2Byte
+      //Trailer:                24Byte
+      //..EventTimestamp        8Byte
+      //..TriggerTimestamp      8Byte
+      //..TriggerCounter        4Byte
+      //..TluCounter            2Byte
+      //..StatusInfo            2Byte
       //
       //###############################################
 
-      uint64_t EvTS;			//EventTimestamp
-      uint64_t TrTS;			//TriggerTimestamp
-      unsigned int TrCnt;		//TriggerCounter
-      unsigned int TluCnt;		//TLU Counter
-      unsigned int SI;		//StatusInfo
+      uint64_t EvTS;                    //EventTimestamp
+      uint64_t TrTS;                    //TriggerTimestamp
+      unsigned int TrCnt;               //TriggerCounter
+      unsigned int TluCnt;              //TLU Counter
+      unsigned int SI;          //StatusInfo
 
 
       it=framepos[nframes].first + framepos[nframes].second-24; // beginning of the trailer
-      unpack_fn(it,EvTS);		//unpack stuff
+      unpack_fn(it,EvTS);               //unpack stuff
       unpack_fn(it,TrTS);
       unpack_fn(it,TrCnt);
       unpack_b(it,TluCnt,2);
       unpack_b(it,SI,2);
 
 //      if(m_noe<10 || m_noe%100==0){
-//	cout<<"---------------------------"<<endl;
-//	cout<<"\nEvent Count\t"<<m_noe<<endl;
-//	cout<<"\n\tEvent Number\t"<<EVENT_NUM<<endl;
-//	cout<<"\n\tTLU Count\t"<<TluCnt<<endl<<endl;
+//      cout<<"---------------------------"<<endl;
+//      cout<<"\nEvent Count\t"<<m_noe<<endl;
+//      cout<<"\n\tEvent Number\t"<<EVENT_NUM<<endl;
+//      cout<<"\n\tTLU Count\t"<<TluCnt<<endl<<endl;
 //      }
 
       // Add the planes to the StandardEvent
       for(int i=0;i<8;i++){
-        planes[i].SetTLUEvent(TluCnt);		//set TLU Event (still test)
+        planes[i].SetTLUEvent(TluCnt);          //set TLU Event (still test)
         sev.SetTimestamp(EvTS-TrTS);
         sev.AddPlane(planes[i]);
       }
@@ -446,13 +476,13 @@ namespace eudaq {
 #if USE_LCIO
     virtual bool GetLCIOSubEvent(lcio::LCEvent & lev, eudaq::Event const & ev) const{
 
-      StandardEvent sev;		//GetStandardEvent first then decode plains
+      StandardEvent sev;                //GetStandardEvent first then decode plains
       GetStandardSubEvent(sev,ev);
 
-      unsigned int nplanes=sev.NumPlanes();		//deduce number of planes from StandardEvent
+      unsigned int nplanes=sev.NumPlanes();             //deduce number of planes from StandardEvent
       StandardPlane plane;
 
-      for(unsigned int n=0 ; n<nplanes ; n++){	//pull out the data and put it into lcio format
+      for(unsigned int n=0 ; n<nplanes ; n++){  //pull out the data and put it into lcio format
 
         plane=sev.GetPlane(n);
 
@@ -504,6 +534,9 @@ namespace eudaq {
     string m_PedFile;
     bool m_UseThr;
     unsigned int m_Thr;
+    static const int m_nExplorers = 4;
+    static const int m_nPixels    = m_nExplorers*11700;
+
 
     mutable unsigned int m_noe; //# of converted events and with the events the added pedestal values
     mutable vector<float>m_Ped;
