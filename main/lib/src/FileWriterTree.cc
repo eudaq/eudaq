@@ -1,5 +1,5 @@
-﻿#if USE_ROOT
-
+﻿#ifdef ROOT_FOUND
+ 
 #include "eudaq/FileNamer.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/PluginManager.hh"
@@ -301,5 +301,4 @@ namespace eudaq {
   unsigned long long FileWriterTree::FileBytes() const { return 0; }
 
 }
-
-#endif
+#endif // ROOT_FOUND
