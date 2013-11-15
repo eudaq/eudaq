@@ -3,10 +3,10 @@
 
 include(CMakeDependentOption)
 
-IF(COMMAND cmake_policy)
+IF(POLICY CMP0020)
   CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
   CMAKE_POLICY(SET CMP0020 OLD) # explicitly disabling automatic linking of Qt executables to qtmain target on Windows (changed in CMake 2.8.10)
-ENDIF(COMMAND cmake_policy)
+ENDIF(POLICY CMP0020)
 
 
 option(BUILD_WITH_QT4 "Build with Qt4 no matter whether Qt5 is found or not" OFF)
