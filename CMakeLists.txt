@@ -20,7 +20,7 @@ if (USE_CXX11)
    check_for_cxx11_compiler(CXX11_COMPILER)
    if(CXX11_COMPILER)
 	 enable_cxx11()
-    	 ADD_EFINITIONS("-DCPP11=1")
+    	 ADD_DEFINITIONS("-DCPP11=1")
    endif(CXX11_COMPILER)
 endif(USE_CXX11)
 
