@@ -1,3 +1,5 @@
+FIND_PACKAGE(Threads REQUIRED) # pthreads
+
 add_executable(ClusterExtractor.exe   src/ClusterExtractor.cxx  )
 add_executable(Converter.exe          src/Converter.cxx         )
 add_executable(ExampleProducer.exe    src/ExampleProducer.cxx   )

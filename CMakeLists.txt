@@ -36,6 +36,11 @@ else()
   ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_LINUX")
 endif()
 
+# add some more general preprocessor defines
+add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
+# optional debug defines
+# add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
+
 # set the path to which we will install later: default project home, can be changed using
 # cmake -DINSTALL_PREFIX=/some/dir ..
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
@@ -44,8 +49,15 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-# search for the packages needed for the main library
-FIND_PACKAGE(Threads)
+# search for the packages needed for the main library when building the native reader library
+option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
+IF(BUILD_nreader)
+  FIND_PACKAGE(LCIO)
+  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
+  FIND_PACKAGE(EUTelescope)
+  INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS})
+  add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
+ENDIF()
 
 
 # SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
@@ -79,6 +91,11 @@ add_subdirectory(main/lib)
 option(BUILD_main "Compile main EUDAQ executables?" ON)
 IF(BUILD_main)
   add_subdirectory(main/exe)
+ENDIF()
+
+# build native reader used for data conversion into LCIO
+IF(BUILD_nreader)
+  add_subdirectory(nreader)
 ENDIF()
 
 # build GUI executables
