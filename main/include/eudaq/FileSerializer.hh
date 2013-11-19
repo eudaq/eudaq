@@ -9,7 +9,7 @@
 
 namespace eudaq {
 
-  class FileSerializer : public Serializer {
+  class DLLEXPORT FileSerializer : public Serializer {
     public:
       FileSerializer(const std::string & fname, bool overwrite = false);
       virtual void Flush();

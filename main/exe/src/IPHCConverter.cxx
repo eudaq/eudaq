@@ -25,6 +25,8 @@
 
 using namespace eudaq;
 
+const std::string FileNamer::default_pattern = "../data/run$6R$X";
+
 inline std::string decodetime(unsigned date, unsigned time) {
   std::string result =
     to_string((date & 0xff) + 2000) + "-" +

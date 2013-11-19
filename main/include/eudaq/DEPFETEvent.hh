@@ -7,7 +7,7 @@
 
 namespace eudaq {
 
-  class DEPFETBoard : public Serializable {
+  class DLLEXPORT DEPFETBoard : public Serializable {
     public:
       typedef std::vector<unsigned char> vec_t;
       DEPFETBoard(unsigned id = 0) : m_id(id) {}

@@ -132,7 +132,7 @@ namespace eudaq {
       write(t->second);
     }
 
-  class Deserializer {
+  class DLLEXPORT Deserializer {
     public:
       Deserializer() : m_interrupting(false) {}
       virtual bool HasData() = 0;
