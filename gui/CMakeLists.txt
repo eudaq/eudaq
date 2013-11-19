@@ -79,9 +79,10 @@ ELSE()
   # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
   IF(WIN32) # Check if we are on Windows
     if(MSVC) # Check if we are using the Visual Studio compiler
-      set_target_properties(euRun.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-      set_target_properties(euProd.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-      set_target_properties(euLog.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+# this causes linker errors on Qt5:
+#      set_target_properties(euRun.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+#      set_target_properties(euProd.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+#      set_target_properties(euLog.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
     elseif(CMAKE_COMPILER_IS_GNUCXX)
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows") # Not tested
     else()
