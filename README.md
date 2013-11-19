@@ -47,11 +47,12 @@ will build main library, executables and gui (if Qt is found) and install into t
 cmake -DINSTALL_PREFIX=/usr/local ..
 
 
-The main library (libEUDAQ.so) is always build, while the rest of the
+The main library (libEUDAQ.so) is always built, while the rest of the
 package is optional. Defaults are to build the main executables and
 (if Qt is found) the GUI application. Disable this behavior by setting
 e.g. BUILD_main=OFF (disabling main executables) or enable
-e.g. producers using BUILD_tlu=ON to enable build of tlu producer and
+e.g. producers using BUILD_tlu=ON to enable setting up the
+configuration and compilation environment of tlu producer and
 executables.
 
 Example:
@@ -66,6 +67,7 @@ Variables thus set are cached in CMakeCache.txt and will again be taken into acc
 2.1. Setting up Windows Development Environment
 -----------------------------------------------
 Download Qt4 or Qt5:
+Download and install the pthreads library (pre-build binary from ftp://sources.redhat.com/pub/pthreads-win32) into either c:\pthreads-w32 or ./extern/pthreads-w32
 Download Visual Studio Express Desktop (e.g. 2013 Version):
 (Warning: requires registration)
 
@@ -85,6 +87,9 @@ to generate the VS project files.
 Compile by calling
 
 MSBUILD.exe EUDAQ.sln /p:Configuration=Release
+
+
+Note: when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.
 
 
 3. Development:
