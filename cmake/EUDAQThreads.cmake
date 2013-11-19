@@ -8,7 +8,9 @@
 # and would be sufficient to provide threading
 if (USE_CXX11 AND CXX11_COMPILER)
   # nothing to be done here
-  message(STATUS "Use C++11 for threading")
+  message(STATUS "Use C++11 for threading interface")
+  Find_Package(Threads REQUIRED)
+  set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
 elseif(WIN32) # Windows specific checks
   message(STATUS "Looking for pthreads-w32 library")
