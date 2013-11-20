@@ -122,6 +122,23 @@ namespace tlu {
       double vdac = vref - ((voltage - vref) / vgain);
       return unsigned(fullscale * (vdac / (2*vref))) & 0x3FFU;
     }
+
+    static unsigned pmt_dac_value(double voltage) { // input range 0- 1.0V
+
+      if(voltage <0.0 || voltage > 1.0)   {
+	std::cout << "Input voltage range [0, 1.0 V] " <<std::endl;
+	return 0;
+      }
+      static const double vref = 0.5, vgain = 2.0;  
+      static const unsigned fullscale = 0x3ff;   // 12-bits
+      unsigned dac_orig = 0xb000 | ((unsigned(fullscale * ( voltage/ (vref * vgain))) & 0x3FFU) << 2); 
+
+      //repack the data
+      unsigned dac_val = (dac_orig >> 8) | ((dac_orig & 0x00ff) << 8);
+      return dac_val;
+
+    }
+
   }
 
   double Timestamp2Seconds(unsigned long long t) {
@@ -134,44 +151,13 @@ namespace tlu {
         << " = " << Timestamp2Seconds(m_timestamp);
   }
 
-    // Modified to allow for a flag to choose between a 0.0V->1.0V (vref = 0.5) or 0.0V->2.0V (vref = 1.0) range
-    // The default is vref = 0.5, but the TLU can be modified by cutting the LC1 trace and strapping the LO1 pads
-    //   on the PMT supply board (which changes the SET pin on the ADR130 chip, thus doubling the reference voltage).
-    unsigned TLUController::CalcPMTDACValue(double voltage)
-    {
-        double vref;
-	
-	static const double vgain = 2.0;  
-	static const unsigned fullscale = 0x3ffU;   // 10-bits (AD5316 used on standard TLU)
-
-	if(m_pmtvcntlmod == 0)
-	{
-	  vref = 0.5;  // Standard TLU as shipped
-	}
-	else
-	{
-	  vref = 1.0;  // After hardware modification on PMT power board (cut LC1, jumper LO1)
-	}
-	
-        if(voltage < 0.0 || voltage > vref * 2.0)
-	{
-	    std::cout << "Input voltage range [0, " << (unsigned)(vref * 2.0) << ".0 V] " << std::endl;
-	    return 0;
-	}
-
-	unsigned dac_orig = 0xb000 | ((unsigned)(fullscale * (voltage / (vref * vgain))) & fullscale) << 2; 
-
-        // repack the data and return
-        return((dac_orig >> 8) | ((dac_orig & 0x00ff) << 8));
-    }
-
   TLUController::TLUController(int errorhandler) :
     m_mask(0),
     m_vmask(0),
     m_amask(0),
     m_omask(0),
     m_ipsel(0xff),
-   // m_handshakemode(0), //$$ change
+    m_handshakemode(0x3F), //$$ change
     m_triggerint(0),
     m_inhibit(true),
     m_vetostatus(0),
@@ -179,7 +165,6 @@ namespace tlu {
     m_dutbusy(0),
     m_clockstat(0),
     m_dmastat(0),
-    m_pmtvcntlmod(0),
     m_fsmstatusvalues(0),
     m_triggernum((unsigned)-1),
     m_timestamp(0),
@@ -252,13 +237,11 @@ namespace tlu {
 
   void TLUController::LoadFirmware() {
     if (m_filename == "") {
-      m_filename =TLUFIRMWARE_PATH;
-      m_filename+= "/TLU";
+      m_filename = "TLU";
       if (m_version > 1) m_filename += "2";
       m_filename += "_Toplevel.bit";
     } else if (m_filename.find_first_not_of("0123456789") == std::string::npos) {
-      std::string filename = TLUFIRMWARE_PATH;
-      filename+= "/TLU";
+      std::string filename = "../tlu/TLU";
       if (m_version == 2) filename += "2";
       filename += "_Toplevel-" + m_filename + ".bit";
       m_filename = filename;
@@ -283,7 +266,7 @@ namespace tlu {
 	 m_version=3;
 #endif
 
-    SetPMTVcntl(0U);
+    SetupLVPower();
 
     // set up beam trigger
     WriteRegister(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS, m_vmask);
@@ -330,70 +313,20 @@ namespace tlu {
     Initialize();
   }
 
-    // Sets all DACs to the same value (value passed is in mV)
-    bool TLUController::SetPMTVcntl(unsigned value)
-    {
-        SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
-	try {
-	    WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0x0f, CalcPMTDACValue((double)value/1000.0));  // Convert mV value to volts
-	} catch (const eudaq::Exception &) {
-	    return false;
-	}
+
+  bool TLUController::SetupLVPower(int value ) {  // set LV-Out control voltage to 0.9 V
+
+    SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
+    try {
+      WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0xf,  pmt_dac_value(value/1000.) ); //      convert to V
+    } catch (const eudaq::Exception &) {
+      return false;
+    }
     
-	return true;
-    }
+    return true;
+  }
 
-    // in mV, TLU_PMTS entries expected, sets each PMT control voltage separately
-    // Note: PMT 1 (Chan 0 on faceplate) is connected to AD5316 DACD and PMT4 is connected to DACA (2->DACC, 3->DACB)
-    bool TLUController::SetPMTVcntl(unsigned *values, double *gain_errors, double *offset_errors)
-    {
-	double target_voltages[TLU_PMTS];
 
-	for(int i = 0; i < TLU_PMTS; i++)
-	{
-	    if(gain_errors != NULL)
-	    {
-		target_voltages[i] = (double)values[i] * (1.0 / gain_errors[i]);
-	    }
-	    else
-	    {
-		target_voltages[i] = (double)values[i];
-	    }
-
-	    // Convert to Volts at the same time
-	    if(offset_errors != NULL)
-	    {
-		target_voltages[i] = (target_voltages[i] - offset_errors[i]) / 1000.0;
-	    }
-	    else
-	    {
-		target_voltages[i] = target_voltages[i] / 1000.0;
-	    }
-	}
-
-        SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
-	for(int i = 0; i < TLU_PMTS; i++)
-	{
-	    try {
-	        WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0x08 >> i, CalcPMTDACValue(target_voltages[i]));
-	    } catch (const eudaq::Exception &) {
-	        return false;
-	    }
-	}
-    
-	return true;
-    }
-
-    // Used by CalcPMTDACValue to determine voltage range produced by the TLU for the PMT Vcntl values
-    void TLUController::SetPMTVcntlMod(unsigned value)
-    {
-        m_pmtvcntlmod = value;
-    }
-
-    // Preserved for backwards compatibility
-    bool TLUController::SetupLVPower(int value) {
-        return(SetPMTVcntl(value));
-    }
 
   bool TLUController::SetupLemo() {
     SelectBus(m_addr->TLU_I2C_BUS_LEMO);
@@ -502,10 +435,10 @@ namespace tlu {
     }
   }
 
-//   void TLUController::SetHandShakeMode(unsigned handshakemode) {  //$$change
-//     m_handshakemode = handshakemode;
-//     if (m_addr) WriteRegister(m_addr->TLU_HANDSHAKE_MODE_ADDRESS, m_handshakemode);
-//   }
+   void TLUController::SetHandShakeMode(unsigned handshakemode) {  //$$change
+     m_handshakemode = handshakemode;
+     if (m_addr) WriteRegister(m_addr->TLU_HANDSHAKE_MODE_ADDRESS, m_handshakemode);
+   }
 
   void TLUController::SetTriggerInterval(unsigned millis) {
     m_triggerint = millis;
@@ -1320,3 +1253,4 @@ namespace tlu {
     return ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS) & (1 << m_addr->TLU_I2C_SDA_IN_BIT);
   }
 }
+

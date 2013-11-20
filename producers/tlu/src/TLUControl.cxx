@@ -34,15 +34,13 @@ void ctrlchandler(int) {
 }
 
 int main(int /*argc*/, char ** argv) {
-  unsigned pmtvcntl_values[TLU_PMTS];
-
-  eudaq::OptionParser op("TLU Control Utility", "1.1", "A comand-line tool for controlling the Trigger Logic Unit");
+  eudaq::OptionParser op("TLU Control Utility", "1.0", "A comand-line tool for controlling the Trigger Logic Unit");
   eudaq::Option<std::string> fname(op, "f", "bitfile", "", "filename",
                                    "The bitfile containing the TLU firmware to be loaded");
   eudaq::Option<int>         trigg(op, "t", "trigger", 0, "msecs",
                                    "The interval in milliseconds for internally generated triggers (0 = off)");
-  eudaq::Option<int>         hsmode(op, "hm", "handshakemode", 0, "nohandshake",
-                                   "In this mode the TLU issues a fixed-length pulse on the trigger line (0 = no hand shake)");
+  eudaq::Option<int>         hsmode(op, "hm", "handshakemode", 0x3F, "nohandshake",
+                                   "Bit mask for handshake mode. Set to zero and in this mode the TLU issues a fixed-length pulse on the trigger line (0 = no hand shake)");
   eudaq::Option<int>         dmask(op, "d", "dutmask", 0, "mask",
                                    "The mask for enabling the DUT connections");
   eudaq::Option<int>         vmask(op, "v", "vetomask", 0, "mask",
@@ -65,13 +63,8 @@ int main(int /*argc*/, char ** argv) {
                                   "Length of 'on' time for timing strobe in clock cycles");
   eudaq::Option<int>         enabledutveto(op, "b", "dutveto", 0, "mask",
                                   "Mask for enabling veto of triggers ('backpressure') by rasing DUT_CLK");
-  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", (int)PMT_VCNTL_DEFAULT, "mV", "PMT Vcntl, range from 0 to 1000 [or 2000]");
-  eudaq::Option<int>         pmtvcntl(op, "pv", "pmtvcntl", -1, "mV", "PMT Vcntl (will override \"pw\" value if set to 0 or greater)");
-  eudaq::Option<int>         pmtvcntl_1(op, "p1", "pmtvcntl1", -1, "mV", "PMT 1 Vcntl (will override \"pv\" value if set to 0 or greater)");
-  eudaq::Option<int>         pmtvcntl_2(op, "p2", "pmtvcntl2", -1, "mV", "PMT 2 Vcntl (will override \"pv\" value if set to 0 or greater)");
-  eudaq::Option<int>         pmtvcntl_3(op, "p3", "pmtvcntl3", -1, "mV", "PMT 3 Vcntl (will override \"pv\" value if set to 0 or greater)");
-  eudaq::Option<int>         pmtvcntl_4(op, "p4", "pmtvcntl4", -1, "mV", "PMT 4 Vcntl (will override \"pv\" value if set to 0 or greater)");
-  eudaq::Option<int>         pmtvcntlmod(op, "pm", "pmtvcntlmod", 0, "value", "0: unmodified (<= 1000mV); 1: modified Vcntl range 0 to 2000mV");
+  eudaq::Option<int>         lvpowervctrl(op, "pw", "powervctrl", 800, "mV", "LV power, range from 250 to 900 (in mV)");
+
   eudaq::OptionFlag          nots(op, "n", "notimestamp", "Do not read out timestamp buffer");
   eudaq::OptionFlag          quit(op, "q", "quit", "Quit after configuring TLU");
   eudaq::OptionFlag          pause(op, "u", "wait-for-user", "Wait for user input before starting triggers");
@@ -82,52 +75,14 @@ int main(int /*argc*/, char ** argv) {
                                    "prepend - for only errors, or + for all data (including block transfers)");
   try {
     op.Parse(argv);
-
     for (size_t i = TLU_LEMO_DUTS; i < ipsel.NumItems(); ++i) {
       if (TLUController::DUTnum(ipsel.Item(i)) != TLUController::IN_RJ45) throw eudaq::OptionException("Invalid DUT input selection");
     }
-
-    unsigned pmt_override_set = 0;
-    for(int i = 0; i < TLU_PMTS; i++)
-    {
-	 pmtvcntl_values[i] = pmtvcntl.Value() == -1 ? lvpowervctrl.Value() : pmtvcntl.Value();
-    }
-
-    if(pmtvcntl_1.Value() != -1) { pmtvcntl_values[0] = pmtvcntl_1.Value(); pmt_override_set = 1; }
-    if(pmtvcntl_2.Value() != -1) { pmtvcntl_values[1] = pmtvcntl_2.Value(); pmt_override_set = 1; }
-    if(pmtvcntl_3.Value() != -1) { pmtvcntl_values[2] = pmtvcntl_3.Value(); pmt_override_set = 1; }
-    if(pmtvcntl_4.Value() != -1) { pmtvcntl_values[3] = pmtvcntl_4.Value(); pmt_override_set = 1; }
-
-    unsigned pmt_max_val;
-    if(pmtvcntlmod.Value() == 0)
-    {
-        pmt_max_val = 1000;
-    }
-    else
-    {
-	pmt_max_val = 2000;
-    }
-
-    for(int i = 0; i < TLU_PMTS; i++)
-    {
-	if(pmtvcntl_values[i] > pmt_max_val)
-	{
-	    if(pmtvcntlmod.Value() == 0)
-	    {
-		throw eudaq::OptionException("Invalid PMT Vcntl value (> 1000mV)");
-	    }
-	    else
-	    {
-		throw eudaq::OptionException("Invalid PMT Vcntl value (> 2000mV)");
-	    }
-	}
-    }
-
     std::cout << "Using options:\n"
               << "TLU version = " << fwver.Value() << (fwver.Value() == 0 ? " (auto)" : "") << "\n"
               << "Bit file name = '" << fname.Value() << "'" << (fname.Value() == "" ? " (auto)" : "") << "\n"
-              << "Hand shake mode = " << hsmode.Value()
-              << "Trigger interval = " << trigg.Value()
+              << "Hand shake mode = " << hsmode.Value() << "\n"
+              << "Trigger interval = " << trigg.Value() << "\n"
               << (trigg.Value() > 0 ? " ms (" + to_string(1e3/trigg.Value()) + " Hz)" : std::string()) << "\n"
               << "DUT Mask  = " << hexdec(dmask.Value(), 2) << "\n"
               << "Veto Mask = " << hexdec(vmask.Value(), 2) << "\n"
@@ -137,11 +92,7 @@ int main(int /*argc*/, char ** argv) {
               << "Strobe period = " << hexdec(strobeperiod.Value(), 6) << "\n"
               << "Strobe length = " << hexdec(strobelength.Value(), 6) << "\n"
               << "Enable DUT Veto = " << hexdec(enabledutveto.Value(), 2) << "\n"
-              << "PMT Vcntl Mod = " << pmtvcntlmod.Value() << " (0: standard [<= 1000mV], else: modified for 2000mV range)" << std::endl
-              << "PMT 1 Vcntl = " << pmtvcntl_values[0] << " mV" << std::endl
-              << "PMT 2 Vcntl = " << pmtvcntl_values[1] << " mV" << std::endl
-              << "PMT 3 Vcntl = " << pmtvcntl_values[2] << " mV" << std::endl
-              << "PMT 4 Vcntl = " << pmtvcntl_values[3] << " mV" << std::endl
+              << "Enable LV vctrl = " << lvpowervctrl.Value() << " mV " << "\n"
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
     counted_ptr<std::ofstream> sfile;
@@ -168,7 +119,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     //TLU.FullReset();
-   // TLU.SetHandShakeMode(hsmode.Value()); //$$ change
+    TLU.SetHandShakeMode(hsmode.Value()); //$$ change
     TLU.SetTriggerInterval(trigg.Value());
     if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS) ipsel.Resize(TLU_LEMO_DUTS);
     for (size_t i = 0; i < ipsel.NumItems(); ++i) {
@@ -186,15 +137,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetOrMask(omask.Value());
     TLU.SetStrobe(strobeperiod.Value() , strobelength.Value());
     TLU.SetEnableDUTVeto(enabledutveto.Value());
-    // TLU.SetupLVPower(lvpowervctrl.Value());
-    if(pmt_override_set)
-    {
-	TLU.SetPMTVcntl(pmtvcntl_values);
-    }
-    else
-    {
-	TLU.SetPMTVcntl(pmtvcntl_values[0]);  // Since all 4 are the same (saves I/O to TLU)
-    }
+    TLU.SetupLVPower(lvpowervctrl.Value());
 
     TLU.ResetTimestamp(); // also sets strobe running (if enabled) 
 
@@ -248,3 +191,4 @@ int main(int /*argc*/, char ** argv) {
   }
   return 0;
 }
+
