@@ -6,12 +6,27 @@
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
 macro(find_zestsc1_in_extern arg)
+ MESSAGE(STATUS "find_zestsc1_in_extern arg")
+IF(WIN32)
+ MESSAGE(STATUS "WIN32")
+ MESSAGE(STATUS "ZESTSC1_INCLUDE_DIR = ${ZESTSC1_INCLUDE_DIR}")
+ find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
+    HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Inc ${arg})
+ MESSAGE(STATUS "ZESTSC1_INCLUDE_DIR = ${ZESTSC1_INCLUDE_DIR}")
+ELSE(WIN32)
   find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
     HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/Inc ${arg})
+ENDIF(WIN32)
 
   if (WIN32) 
-    find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows/Lib ${arg})
+		if (${EX_PLATFORM} EQUAL 64)
+					find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
+			  HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/amd64 ${arg})
+		else() #32bit
+	
+			find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
+			  HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/x86 ${arg})
+		endif(${EX_PLATFORM} EQUAL 64)
   elseif (UNIX)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
@@ -27,8 +42,20 @@ macro(find_zestsc1_in_extern arg)
   endif()
 endmacro()
 
-find_zestsc1_in_extern("")
+IF(WIN32)
+	find_zestsc1_in_extern("windows_7")# this macro does not work. the string is set long before here but it is no where to find
+	SET(ZESTSC1_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Inc)
+		if (${EX_PLATFORM} EQUAL 64)
+			SET(ZESTSC1_LIBRARY ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/amd64/ZestSC1.lib)
+		else() #32bit
+            set(ZESTSC1_LIBRARY  ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/x86/ZestSC1.lib)
+		endif(${EX_PLATFORM} EQUAL 64)
+ELSE()
+	find_zestsc1_in_extern("")
+ENDIF()
 
+ MESSAGE(STATUS "ZESTSC1")
+ MESSAGE(STATUS "ZESTSC1_INCLUDE_DIR = ${ZESTSC1_INCLUDE_DIR}")
 # could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT ZESTSC1_LIBRARY)
   IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")

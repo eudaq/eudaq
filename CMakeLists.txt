@@ -1,7 +1,7 @@
 ########################################################
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 ########################################################
-
+MESSAGE(STATUS "ZESTSC1_INCLUDE_DIR = ${ZESTSC1_INCLUDE_DIR}")
 # project name
 PROJECT( EUDAQ )
 
