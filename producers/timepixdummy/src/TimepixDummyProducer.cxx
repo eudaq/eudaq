@@ -15,76 +15,85 @@ TimepixDummyProducer::TimepixDummyProducer(const std::string & name,
 : eudaq::Producer(name, runcontrol), m_done(false), m_run(0) , m_ev(0)
 {
   // First initialise the mutex attributes
-  pthread_mutexattr_init(&m_mutexattr);
+//  pthread_mutexattr_init(&m_mutexattr);
 
   // Inititalise the mutexes
-  pthread_mutex_init( &m_done_mutex, 0 );
-  pthread_mutex_init( &m_run_mutex, 0 );
-  pthread_mutex_init( &m_ev_mutex, 0 );
+//   pthread_mutex_init( &m_done_mutex, 0 );
+//   pthread_mutex_init( &m_run_mutex, 0 );
+//   pthread_mutex_init( &m_ev_mutex, 0 );
 }
 
 TimepixDummyProducer::~TimepixDummyProducer()
 {
-  pthread_mutex_destroy( &m_done_mutex );
-  pthread_mutex_destroy( &m_run_mutex );
-  pthread_mutex_destroy( &m_ev_mutex );
+//   pthread_mutex_destroy( &m_done_mutex );
+//   pthread_mutex_destroy( &m_run_mutex );
+//   pthread_mutex_destroy( &m_ev_mutex );
 }
 
 bool TimepixDummyProducer::GetDone()
 {
   bool retval;
-  pthread_mutex_lock( &m_done_mutex );
+  //pthread_mutex_lock( &m_done_mutex );
+    eudaq::MutexLock m(m_done_mutex);
   retval = m_done;
-  pthread_mutex_unlock( &m_done_mutex );    
+  
+  //pthread_mutex_unlock( &m_done_mutex );    
   return retval;
 }
 
 unsigned int TimepixDummyProducer::GetRunNumber()
 {
   unsigned int retval;
-  pthread_mutex_lock( &m_run_mutex );
+  //pthread_mutex_lock( &m_run_mutex );
+  eudaq::MutexLock m(m_run_mutex);
   retval = m_run;
-  pthread_mutex_unlock( &m_run_mutex );    
+
+  //pthread_mutex_unlock( &m_run_mutex );    
   return retval;
 }
 
 unsigned int TimepixDummyProducer::GetEventNumber()
 {
   unsigned int retval;
-  pthread_mutex_lock( &m_ev_mutex );
+  //pthread_mutex_lock( &m_ev_mutex );
+  eudaq::MutexLock m(m_ev_mutex);
   retval = m_ev;
-  pthread_mutex_unlock( &m_ev_mutex );    
+  //pthread_mutex_unlock( &m_ev_mutex );    
   return retval;
 }
 
 unsigned int TimepixDummyProducer::GetIncreaseEventNumber()
 {
   unsigned int retval;
-  pthread_mutex_lock( &m_ev_mutex );
+  //pthread_mutex_lock( &m_ev_mutex );
+  eudaq::MutexLock m(m_ev_mutex);
   retval = m_ev++;
-  pthread_mutex_unlock( &m_ev_mutex );
+  //pthread_mutex_unlock( &m_ev_mutex );
   return retval;
 }
 
 void TimepixDummyProducer::SetDone(bool done)
 {
-  pthread_mutex_lock( &m_done_mutex );
+  //pthread_mutex_lock( &m_done_mutex );
+	eudaq::MutexLock m(m_done_mutex);
   m_done = done;
-  pthread_mutex_unlock( &m_done_mutex );    
+  //pthread_mutex_unlock( &m_done_mutex );    
 }
 
 void TimepixDummyProducer::SetEventNumber(unsigned int eventnumber)
 {
-  pthread_mutex_lock( &m_ev_mutex );
+  //pthread_mutex_lock( &m_ev_mutex );
+	eudaq::MutexLock m(m_ev_mutex);
   m_ev = eventnumber;
-  pthread_mutex_unlock( &m_ev_mutex );    
+  //pthread_mutex_unlock( &m_ev_mutex );    
 }
 
 void TimepixDummyProducer::SetRunNumber(unsigned int runnumber)
 {
-  pthread_mutex_lock( &m_run_mutex );
+  //pthread_mutex_lock( &m_run_mutex );
+	eudaq::MutexLock m(m_run_mutex);
   m_run = runnumber;
-  pthread_mutex_unlock( &m_run_mutex );    
+  //pthread_mutex_unlock( &m_run_mutex );    
 }
 
 void TimepixDummyProducer::Event(unsigned short *timepixdata)

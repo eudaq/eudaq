@@ -1,9 +1,11 @@
 #ifndef H_EUDAQ_MUTEX
 #define H_EUDAQ_MUTEX
 
+#include "eudaq\Platform.hh"
+
 namespace eudaq {
 
-  class Mutex {
+  class DLLEXPORT Mutex {
     public:
       Mutex();
       ~Mutex();
@@ -15,7 +17,7 @@ namespace eudaq {
       Impl * m_impl;
   };
 
-  class MutexLock {
+  class DLLEXPORT MutexLock {
     public:
       MutexLock(Mutex & m, bool lock = true);
       ~MutexLock();
