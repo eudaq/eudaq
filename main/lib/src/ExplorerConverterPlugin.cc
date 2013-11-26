@@ -166,7 +166,7 @@ namespace eudaq {
         }
         // normalise the matrix means
         for (int i=0; i<m_nExplorers*2; ++i) {
-          double div = (i%2==0) ? 1./8100. : 1./6400.;
+          double div = (i%2==0) ? 1./8100. : 1./3600.;
           avped[i]   *= div;
           avnoise[i] *= div;
         }
@@ -379,6 +379,7 @@ namespace eudaq {
 
               // zero supression
               if(m_UsePed && k==0 && pedestal.size()>0){adcc-=*pedit; pedit++;}         //iterate the pedestal values
+	      // MEM1 - pedestal
               if(m_UseThr && k==0) adcc-=m_Thr;
 
               planes[2*l+type].SetPixel( j+i*matrix_size , i , j , adcc , k);
@@ -391,6 +392,7 @@ namespace eudaq {
                   pedestal.push_back(pixpedvalue[l]);
                 }
               }
+              // pedestal = MEM1-MEM2
             }
           }
 
