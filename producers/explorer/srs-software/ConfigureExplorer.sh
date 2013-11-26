@@ -13,6 +13,9 @@ echo "PATHSRS=$PATHSRS"
 ###############################################################################
 ### execution
 
+# check whether the ADC DCM is locked
+$PATHSRS/slow_control/check_ADC.py
+
 # create output folder
 mkdir -p $DATA
 if [ ! -d $DATA ]
