@@ -3,6 +3,8 @@ set(sourcefiles src/DeviceExplorer.cc src/ExplorerProducer.cxx)
 set(ext_libraries "" )
 set(ext_lib_paths "" )
 set(ext_inc_paths "include" )
+# config files to be installed
+set(ConfigFiles ni_autotrig_explorer_pedestalmeas.conf ni_coins_explorer_wpedestal.conf)
 
 ADD_DEFINITIONS()
 LINK_DIRECTORIES( ${ext_lib_paths} )
@@ -15,3 +17,11 @@ INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+
+foreach(ConfigFile ${ConfigFiles})
+  if (UNIX)
+    INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_CURRENT_SOURCE_DIR}/conf/${ConfigFile} ${CMAKE_INSTALL_PREFIX}/conf/${ConfigFile})")
+  else()
+    INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/conf/${ConfigFile} DESTINATION ${CMAKE_INSTALL_PREFIX}/conf)
+   endif()
+endforeach()
