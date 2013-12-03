@@ -223,7 +223,7 @@ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
   if (object == txtGeoID && event->type() == QEvent::MouseButtonDblClick) {
     int oldid = txtGeoID->text().toInt();
     bool ok = false;
-    int newid = QInputDialog::getInteger(this, "Increment GeoID to:", "value", oldid+1, 0, 2147483647, 1, &ok);
+    int newid = QInputDialog::getInt(this, "Increment GeoID to:", "value", oldid+1, 0, 2147483647, 1, &ok);
     if (ok) {
       txtGeoID->setText(QString::number(newid));
       eudaq::WriteToFile(GEOID_FILE, newid);
