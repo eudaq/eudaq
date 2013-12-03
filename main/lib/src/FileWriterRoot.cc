@@ -1,4 +1,4 @@
-#if USE_ROOT
+#ifdef ROOT_FOUND
 
 #include "eudaq/FileNamer.hh"
 #include "eudaq/FileWriter.hh"
@@ -105,4 +105,4 @@ namespace eudaq {
 
 }
 
-#endif // USE_ROOT
+#endif // ROOT_FOUND

@@ -316,6 +316,18 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
                 continue;
               }
             }
+	    if (simpPlane.is_EXPLORER)
+	    {
+	      if (lvl1!=0) continue;
+	      hit.setTOT((int)plane.GetPixel(index));
+	      //if (hit.getTOT() < -20 || hit.getTOT() > 20) {
+		//std::cout << hit.getTOT() << std::endl;
+	      //}
+	      if (hit.getTOT() < 20)
+	      {
+		continue;
+	      }
+	    }
             simpPlane.addHit(hit);
           }
           else //purely digital pixel

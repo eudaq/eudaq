@@ -31,7 +31,8 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string & name, const int id,
   is_USBPIX=false;
   is_USBPIXI4=false;
   is_FORTIS=false;
-  is_UNKNOWN=true ; // per default we don't know this plane
+  is_EXPLORER=false;
+  is_UNKNOWN=true; // per default we don't know this plane
   isRotated=false;
   setPixelType(name); //set the pixel type
   _tlu_event=tlu_event;
@@ -52,6 +53,7 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string & name, const int id)
   is_USBPIX=false;
   is_USBPIXI4=false;
   is_FORTIS=false;
+  is_EXPLORER=false;
   is_UNKNOWN=true ; // per default we don't know this plane
   isRotated=false;
   setPixelType(name); //set the pixel type
@@ -65,19 +67,10 @@ void SimpleStandardPlane::addHit(SimpleStandardHit oneHit) {
 
   _hits.push_back(oneHit);
 
-  
   if ( (oneHit.getX()<0) || (oneHit.getY()<0) ||(oneHit.getX()>_maxX) ||(oneHit.getY()>_maxY))
   {
     _badhits.push_back(oneHit);
-    if  ( getName() == "USBPIXI4" )
-    {
-//      printf("BAD: %d %d %d %d \n", oneHit.getX(),oneHit.getY(),_maxX,_maxY);
-    }
   }
-else    if  ( getName() == "USBPIXI4" )
-    {
-//      printf("GOOD %d %d %d %d \n", oneHit.getX(),oneHit.getY(),_maxX,_maxY);
-    }
 
   if  (is_MIMOSA26)
   {
@@ -264,15 +257,15 @@ void SimpleStandardPlane::setPixelType(string name)
     is_UNKNOWN=false;
     AnalogPixelType=true;
   }
-  else if(name=="USBPIXI4")
+  else if(name=="USBPIXI4" || name=="USBPIXI4B")
   {
     is_USBPIXI4=true;
     is_UNKNOWN=false;
     AnalogPixelType=true;
   }
-  else if(name=="USBPIXI4B")
+  else if(name=="Explorer20x20" || name=="Explorer30x30")
   {
-    is_USBPIXI4=true;
+    is_EXPLORER=true;
     is_UNKNOWN=false;
     AnalogPixelType=true;
   }
@@ -281,5 +274,3 @@ void SimpleStandardPlane::setPixelType(string name)
     is_UNKNOWN=true;
   }
 }
-
-
