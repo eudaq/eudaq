@@ -30,7 +30,7 @@ For full description on how to set up the development environment for Windows, s
 
 1.2.1 TLU producer
 ------------------
-- (Windows) install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki)
+- (Windows) install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki) into ./extern/libusb-w32
 - (Linux) install libusb development package, e.g. 'apt-get install libusb-dev'
 - install ZestSC1 driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
 - install firmware bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
@@ -56,44 +56,56 @@ configuration and compilation environment of tlu producer and
 executables.
 
 Example:
-
+```
 cd build
 cmake -D BUILD_tlu=ON ..
 make install
-
+```
 Variables thus set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
 
 2.1. Setting up Windows Development Environment
 -----------------------------------------------
-Download Qt4 or Qt5:
-Download and install the pthreads library (pre-build binary from ftp://sources.redhat.com/pub/pthreads-win32) into either c:\pthreads-w32 or ./extern/pthreads-w32
-Download Visual Studio Express Desktop (e.g. 2013 Version):
+- Download Qt4 or Qt5:
+- Download and install the pthreads library (pre-build binary from ftp://sources.redhat.com/pub/pthreads-win32) into either c:\pthreads-w32 or ./extern/pthreads-w32
+- Download Visual Studio Express Desktop (e.g. 2013 Version):
 (Warning: requires registration)
 
 Install both packages.
+
 Start the Visual Studio "Developer Command Prmopt" from the Start Menu entries vor Visual Studio (Tools subfolder) which opens a cmd.exe session with the necessary environment variables already set. Now execute the "qtenv2.bat" batch file in the Qt folder, e.g.
+```
 C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
+```
 Replace "5.1.1" with the version string of your Qt installation.
 
 Now clone the EUDAQ repository (or download using GitHub) and enter the build directory on the prompt, e.g. by entering
+```
 cd c:\Users\[username]\Documents\GitHub\eudaq\build
-
+```
 Now enter
+
+```
 cmake ..
+```
 
 to generate the VS project files.
 
 Compile by calling
 
+```
 MSBUILD.exe EUDAQ.sln /p:Configuration=Release
+```
 
 or install into eudaq\bin by running
 
+```
 MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
+```
 
 Note on "moc.exe - System Error: The program can't start because MSVCP110.dll is missing from your computer.": when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download (either x86 or x64) from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.
 
+This will compile the main library and the GUI; for the remaining processors, please check the individual documentation.
 
 3. Development:
 -----------
