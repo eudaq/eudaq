@@ -63,6 +63,7 @@ elseif(MSVC)
    message(STATUS "Using MSVC-specific preprocessor identifiers and options")
    add_definitions("-DEUDAQ_FUNC=__FUNCTION__")
    add_definitions("/wd4251") # disables warning concerning dll-interface (comes up for std classes too often)
+   add_definitions("/wd4996") # this compiler warnung is about that functions like fopen are unsafe.
 else()
    add_definitions("-DEUDAQ_FUNC=__func__")
 endif()
