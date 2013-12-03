@@ -1,4 +1,15 @@
-# add library
+option(USE_ROOT "Compiling main library using ROOT" OFF)
+if (USE_ROOT)
+   FIND_PACKAGE( ROOT REQUIRED )
+endif (USE_ROOT)
+
+
+if (ROOT_FOUND)
+   INCLUDE_DIRECTORIES( . include ${ROOT_INCLUDE_DIR} )
+   SET(CMAKE_SHARED_LINKER_FLAGS ${ROOT_LIBRARIES} )
+   ADD_DEFINITIONS(-DROOT_FOUND)
+endif (ROOT_FOUND)
+
 AUX_SOURCE_DIRECTORY( src library_sources )
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} )
 

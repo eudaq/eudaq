@@ -1,4 +1,4 @@
-#include "fortis/FORTISProducer.hh"
+#include "FORTISProducer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
 

@@ -19,3 +19,6 @@ extern/tlufirmware
 # Ignore paths to windows libraries installed by user:
 extern/pthreads*
 extern/libusb*
+
+# ignore python byte code
+*.pyc

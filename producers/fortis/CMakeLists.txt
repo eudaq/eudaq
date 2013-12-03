@@ -9,7 +9,7 @@ set(ext_inc_paths "" )
 ADD_DEFINITIONS(-DUSE_ROOT=1)
 
 LINK_DIRECTORIES( ${ext_lib_paths} )
-INCLUDE_DIRECTORIES( ${ext_inc_paths})
+INCLUDE_DIRECTORIES( include ${ext_inc_paths})
 ADD_EXECUTABLE(${name} src/FORTISProducer.cxx ${sourcefiles})
 ADD_EXECUTABLE(ReadFORTISTimestamps.exe src/ReadFORTISTimestamps.cxx ${sourcefiles})
 
