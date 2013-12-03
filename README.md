@@ -88,8 +88,11 @@ Compile by calling
 
 MSBUILD.exe EUDAQ.sln /p:Configuration=Release
 
+or install into eudaq\bin by running
 
-Note: when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.
+MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
+
+Note on "moc.exe - System Error: The program can't start because MSVCP110.dll is missing from your computer.": when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download (either x86 or x64) from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.
 
 
 3. Development:
