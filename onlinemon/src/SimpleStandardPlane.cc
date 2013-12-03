@@ -257,7 +257,7 @@ void SimpleStandardPlane::setPixelType(string name)
     is_UNKNOWN=false;
     AnalogPixelType=true;
   }
-  else if(name=="USBPIXI4")
+  else if(name=="USBPIXI4" || name=="USBPIXI4B")
   {
     is_USBPIXI4=true;
     is_UNKNOWN=false;
@@ -274,5 +274,3 @@ void SimpleStandardPlane::setPixelType(string name)
     is_UNKNOWN=true;
   }
 }
-
-
