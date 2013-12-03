@@ -1,5 +1,5 @@
 # Ignore binaries:
-bin/*.exe
+bin/*
 
 # Ignore libraries:
 lib/*
