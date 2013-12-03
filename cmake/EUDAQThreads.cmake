@@ -17,6 +17,13 @@ elseif(WIN32) # Windows specific checks
   Find_Package(W32Pthread REQUIRED)
   set(EUDAQ_THREADS_LIB ${W32PTHREADS_LIBRARIES})
   INCLUDE_DIRECTORIES( ${W32PTHREADS_INCLUDE_DIRS} )
+  # also install the pthread library into the bin directory so it's found by the .exe
+  STRING(REGEX REPLACE "/lib/" "/dll/" 
+                     DLL_PATH ${W32PTHREADS_LIBRARIES})
+  STRING(REGEX REPLACE ".lib" ".dll" 
+                     DLL_PATH ${DLL_PATH})
+  message(STATUS "found library in ${DLL_PATH}")
+  INSTALL(FILES ${DLL_PATH} DESTINATION bin)
 
 else() # unix-based platform (Darwin/Linux)
   message(STATUS "Looking for POSIX threading library")
