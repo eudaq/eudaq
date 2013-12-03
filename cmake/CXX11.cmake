@@ -39,9 +39,8 @@ endmacro()
 macro(enable_cxx11)
     if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-	ELSEIF(MSVC)
-	  message(STATUS "MSVC define cpp11 macro")
-		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /D \"CPP11\"")
+      ELSEIF(MSVC)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /D \"CPP11\"")
     endif()
 
 
