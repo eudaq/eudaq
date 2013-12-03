@@ -9,7 +9,7 @@
 #
 # This should work for both 32 bit and 64 bit systems.
 #
-# Author: F. Kooman <fkooman@tuxed.net>
+# Original author: F. Kooman <fkooman@tuxed.net>
 #
 
 # FreeBSD has built-in libusb since 800069
@@ -28,29 +28,16 @@ IF(NOT LIBUSB_FOUND)
 IF(MSVC)
   # for this version you need to have installed the lib usb driver to your system
   # Windows with Microsoft Visual C++ 
-  FIND_PATH(LIBUSB_INCLUDE_DIRS usb.h "$ENV{ProgramFiles}/LibUSB-Win32/include")
-  IF(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x64")
+  FIND_PATH(LIBUSB_INCLUDE_DIRS 
+    NAMES usb.h lusb0_usb.h 
+    PATHS "$ENV{ProgramFiles}/LibUSB-Win32/include" "${PROJECT_SOURCE_DIR}/extern/libusb-w32/include" "${PROJECT_SOURCE_DIR}/extern/libusb-win32/include")
+  if (${EX_PLATFORM} EQUAL 64)
     # on x64 (win64)
-    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc_x64")
-  ELSE(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x64")
+    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc_x64" "${PROJECT_SOURCE_DIR}/extern/libusb-w32/msvc_x64" "${PROJECT_SOURCE_DIR}/extern/libusb-win32/msvc_x64")
+  ELSE(${EX_PLATFORM} EQUAL 64)
     # on x86 (win32)
-    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc")
-  ENDIF(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x64")
-
-IF(NOT LIBUSB_INCLUDE_DIRS)
- message(STATUS "search in extern")
-# this function checks in the extern folder in case you don't have it installed 
-  FIND_PATH(LIBUSB_INCLUDE_DIRS lusb0_usb.h "${PROJECT_SOURCE_DIR}/extern/libusb-win32-bin-1.2.6.0/include")
-  IF(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x64")
-    # on x64 (win64)
-    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "${PROJECT_SOURCE_DIR}/extern/libusb-win32-bin-1.2.6.0/lib/msvc_x64")
-  ELSE(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x64")
-    # on x86 (win32)
-    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "${PROJECT_SOURCE_DIR}/extern/libusb-win32-bin-1.2.6.0/lib/msvc")
-  ENDIF(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x64")
-
-ENDIF(NOT LIBUSB_INCLUDE_DIRS)
-
+    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc" "${PROJECT_SOURCE_DIR}/extern/libusb-w32/msvc" "${PROJECT_SOURCE_DIR}/extern/libusb-win32/msvc")
+  ENDIF(${EX_PLATFORM} EQUAL 64)
 ELSE(MSVC)
   # If not MS Visual Studio we use PkgConfig
   FIND_PACKAGE (PkgConfig)

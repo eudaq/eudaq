@@ -48,21 +48,17 @@ if (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
   set(LIBUSB_FOUND TRUE)
 else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 
- message(STATUS "project dir :${PROJECT_SOURCE_DIR}")
-message(STATUS "start prozessing find_path libusb_1_include_dir")
   find_path(LIBUSB_1_INCLUDE_DIR
     NAMES
         libusb.h
-HINTS
-${PROJECT_SOURCE_DIR}/extern/libusb-win32-bin-1.2.6.0/include
     PATHS
       /usr/include
       /usr/local/include
       /opt/local/include
       /sw/include
-	
-        PATH_SUFFIXES
-         libusb-1.0
+      ${PROJECT_SOURCE_DIR}/extern/libusb-w32/include
+    PATH_SUFFIXES
+      libusb-1.0
   )
 
   find_library(LIBUSB_1_LIBRARY
@@ -73,8 +69,7 @@ ${PROJECT_SOURCE_DIR}/extern/libusb-win32-bin-1.2.6.0/include
       /usr/local/lib
       /opt/local/lib
       /sw/lib
-HINTS
-${PROJECT_SOURCE_DIR}/extern/libusb-win32-bin-1.2.6.0/lib/msvc
+      ${PROJECT_SOURCE_DIR}/extern/libusb-w32/lib/msvc
   )
 
   set(LIBUSB_1_INCLUDE_DIRS
