@@ -17,5 +17,5 @@ extern/ZestSC1
 extern/tlufirmware
 
 # Ignore paths to windows libraries installed by user:
-extern/pthreads-w32*
-extern/libusb-w32*
+extern/pthreads*
+extern/libusb*
