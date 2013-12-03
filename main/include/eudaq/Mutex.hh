@@ -1,7 +1,7 @@
 #ifndef H_EUDAQ_MUTEX
 #define H_EUDAQ_MUTEX
 
-#include "eudaq\Platform.hh"
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
