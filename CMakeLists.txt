@@ -80,6 +80,12 @@ IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
+# build EUDAQ python exe bindings
+option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
+IF(BUILD_python)
+  add_subdirectory(main/python)
+ENDIF()
+
 # build native reader used for data conversion into LCIO
 IF(BUILD_nreader)
   add_subdirectory(nreader)
