@@ -1,4 +1,3 @@
-FIND_PACKAGE(Threads REQUIRED) # pthreads
 
 ADD_LIBRARY( PyEUDAQ SHARED 
   src/PyRunControl.cpp 
@@ -6,7 +5,7 @@ ADD_LIBRARY( PyEUDAQ SHARED
   src/PyDataCollector.cpp
 )
 
-target_link_libraries(PyEUDAQ      EUDAQ ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(PyEUDAQ      EUDAQ ${EUDAQ_THREADS_LIB})
 
 INSTALL(TARGETS PyEUDAQ 
   RUNTIME DESTINATION bin
