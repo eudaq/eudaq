@@ -46,6 +46,9 @@ ENDIF()
 
 # SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
 # see http://www.cmake.org/Wiki/CMake_RPATH_handling
+# enable @rpath in the install name for any shared library being built
+# note: it is planned that a future version of CMake will enable this by default
+set(CMAKE_MACOSX_RPATH 1)
 # use, i.e. don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 # when building, don't use the install RPATH already
