@@ -26,5 +26,5 @@ extern "C" {
   void PyRunControl_StartRun(PyRunControl *prc){prc->StartRun();}
   void PyRunControl_StopRun(PyRunControl *prc){prc->StopRun();}
   void PyRunControl_Configure(PyRunControl *prc, char *cfg){prc->Configure(std::string(cfg));}
-  size_t PyRunControl_NumConnections(PyRunControl *prc){prc->NumConnections();}
+  size_t PyRunControl_NumConnections(PyRunControl *prc){return prc->NumConnections();}
 }

@@ -2,11 +2,14 @@
 execfile('PyEUDAQWrapper.py')
 from time import sleep
 
+print "Starting RunControl"
 prc = PyRunControl("44000")
 print "Number of active connections: ", prc.NumConnections()
 sleep(1)
+print "Starting Producer"
 pp = PyProducer("testproducer","tcp://localhost:44000")
 sleep(1)
+print "Starting DataCollector"
 pdc = PyDataCollector("tcp://localhost:44000","43000")
 
 while True:

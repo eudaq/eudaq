@@ -1,5 +1,12 @@
+import sys
 from ctypes import cdll, create_string_buffer, byref, c_uint
-lib = cdll.LoadLibrary('../lib/libPyEUDAQ.so')
+
+libpath = '../lib/libPyEUDAQ'
+libext = '.so'
+if sys.platform.startswith('darwin'):
+    # OSX-specific library extension
+    libext = '.dylib'
+lib = cdll.LoadLibrary(libpath+libext)
 
 class PyRunControl(object):
     def __init__(self,addr):
