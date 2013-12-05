@@ -8,6 +8,11 @@ IF(POLICY CMP0020)
   CMAKE_POLICY(SET CMP0020 OLD) # explicitly disabling automatic linking of Qt executables to qtmain target on Windows (changed in CMake 2.8.10)
 ENDIF(POLICY CMP0020)
 
+# Check if environment variable QTDIR is set.
+# Extra security for windows environment as well.
+if (DEFINED ENV{QTDIR})
+    set(CMAKE_PREFIX_PATH $ENV{QTDIR} ${CMAKE_PREFIX_PATH})
+endif()
 
 option(BUILD_WITH_QT4 "Build with Qt4 no matter whether Qt5 is found or not" OFF)
 
