@@ -4,6 +4,10 @@ bin/*
 # Ignore libraries:
 lib/*
 
+# Ignore data files:
+data/*.raw
+data/runnumber.dat
+
 # ignore emacs autosaves
 \#*#
 *~
