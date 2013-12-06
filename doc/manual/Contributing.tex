@@ -1,0 +1,34 @@
+% !TEX root = EUDAQUserManual.tex
+\section{Developing and Contributing to EUDAQ}
+
+If you would like to contribute your code back into the main repository, please follow the ``fork \& pull request'' strategy:
+
+\begin{itemize}
+\item Create a user account on github, log in
+\item ``Fork'' the (main) project on github (using the button on the page of the main repo)
+\item \emph{Either}: clone from the newly forked project and add
+  'upstream' repository to local clone (change user names in URLs
+  accordingly):
+  \begin{listing}[mybash]
+git clone https://github.com/hperrey/eudaq eudaq
+cd eudaq
+git remote add upstream https://github.com/eudaq/eudaq.git
+\end{listing}
+\item \emph{or} if edits were made to a previous checkout of upstream: rename origin to upstream, add fork as new origin:
+
+  \begin{listing}[mybash]
+cd eudaq
+git remote rename origin upstream
+git remote add origin https://github.com/hperrey/eudaq
+git remote -v show
+\end{listing}
+\item Optional: edit away on your local clone!
+\item Push the edits to origin (our fork)
+  \begin{listing}[mybash]
+git push origin
+\end{listing}
+(defaults to \texttt{git push origin master} where origin is the repo and master the branch)
+\item Verify that your changes made it to your github fork and then click there on the ``compare \& pull request'' button
+\item Summarize your changes and click on ``send''
+\item Thank you!
+\end{itemize}
