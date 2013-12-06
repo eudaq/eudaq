@@ -21,14 +21,15 @@ build system is used.
 CMake is available for all major operating systems from
 \url{http://www.cmake.org/cmake/resources/software.html}. On most
 Linux distributions, it can usually be installed via the built-in
-package manager (aptitude/apt-get/yum etc.).
+package manager (aptitude/apt-get/yum etc.) and on OSX using
+packages provided by e.g. the MacPorts or Fink projects.
 
 \subsubsection{libusb}
 In order to communicate with a \gls{TLU}, the libusb library is needed.
 Therefore, if you want to compile the \texttt{TLU} subdirectory, you should make sure that libusb is properly installed.
 
-On Mac OS X, this can be installed using fink or macports.
-If using macports you may also need to install the \texttt{libusb-compat} package.
+On Mac OS X, this can be installed using Fink or MacPorts.
+If using MacPorts you may also need to install the \texttt{libusb-compat} package.
 On Linux it may already be installed,
 otherwise you should use the built-in package manager to install it.
 Make sure to get the development version, which may be named \texttt{libusb-devel} instead of simply \texttt{libusb}.
@@ -52,6 +53,7 @@ The graphical interface of EUDAQ uses the Qt graphical framework.
 In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
 It is available in most Linux distributions as the package \texttt{qt4-devel},
 but make sure the version is at least 4.4, since there are a few issues with earlier versions.
+
 If the included version is too old, or on other platforms,
 it can be downloaded from \url{http://qt.nokia.com/downloads}.
 Select the LGPL (free) version, then choose the complete development environment
@@ -59,17 +61,14 @@ Select the LGPL (free) version, then choose the complete development environment
 Make sure the \texttt{QTDIR} environment variable is set to the Qt installation directory,
 and the \texttt{\$QTDIR/bin} directory is in your path.
 
-If you are using Mac OS 10.6 (Snow Leopard) or later, it is recommended to use the Cocoa version of Qt
-(as opposed to the Carbon version), since it supports 64-bit binaries,
-and by default most other libraries are 64 bits on OS 10.6, so this should cause fewer compilation issues.
-The Cocoa version is not so easy to find on the Qt website, at the time of writing it could be found at
-\url{http://qt.nokia.com/downloads/mac-os-cpp},
-just cancel the download that starts, then find the link to the Cocoa (32 and 64-bit) version.
+If you are using OSX, the easiest way to install Qt is using the
+packages provided by the MacPorts project (\url{http://www.macports.org/}).
 
 \subsubsection{Root}\label{sec:Root}
 The online monitor, as well as a few command-line utilities (contained in the \texttt{root} subdirectory),
 use the Root package for histogramming.
-It can be downloaded from \url{http://root.cern.ch}.
+It can be downloaded from \url{http://root.cern.ch} or installed via
+your favorite package manager.
 Make sure Root's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
 This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
 script in the \texttt{bin} directory of the Root installation:
@@ -208,27 +207,59 @@ The executable binaries and the common shared library will be installed by defau
 respectively. If you would like to install into a different location,
 please set the respective parameter during the CMake configuration.
 
-\subsection{Compiling the GUI on Windows}
+\subsection{Compiling the main library and GUI on Windows using Visual~Studio}
 
-This section gives a short overview on the steps needed to compile the project under
-Windows (tested under Windows 7, 32-bit). For a more detailed
-explanation see the appendix~\ref{app:compileOnWindows} on page~\pageref{app:compileOnWindows}.
+This section gives a short overview on the steps needed to compile the
+project under Windows (tested under Windows 7, 32-bit). For a more
+detailed introduction to the Windows build system and Visual~Studio
+project files see the appendix~\ref{app:compileOnWindows} on
+page~\pageref{app:compileOnWindows}.
 
 \begin{itemize}
-      \item Go to the QT website download the version of QT you want to use.
-      \item Make sure the environment variable QTDIR is set. 
-      \item The Project file in the "eudaq\ensuremath{\backslash}gui" folder links by default against QT 4
-      \item The project file in the "eudaq\ensuremath{\backslash}gui vs 2012" links against QT 5
-      \item Download the express version of Visual Studios\\
-      \url{http://www.microsoft.com/visualstudio/eng#downloads+d-express-windows-desktop}\\
-      Make sure you download the version for desktop apps 
-      \item Start a visual studio Command line. This is in principle just a command line which has already all the path end environment variables you need.
-      \item Go in the folder with the .SLN file you want to compile. 
-      \item Type: for example\\
-      \begin{listing}[mybash]
-$[MSBUILD.exe]$ GUI_EUDAQ.sln /p:Configuration=Release
-\end{listing}
- 
-\item Finish.
-    
+\item Prerequisites: 
+\begin{itemize}
+\item Download Qt4 or Qt5:
+\item Download and install the pthreads library (pre-build binary from
+  \url{ftp://sources.redhat.com/pub/pthreads-win32}) into either
+  \texttt{c:\\pthreads-w32} or \texttt{./extern/pthreads-w32}
+\item Download Visual Studio Express Desktop (e.g. 2013 Version):
+  \url{http://www.microsoft.com/en-us/download/details.aspx?id=40787}
 \end{itemize}
+
+\item Start the Visual Studio \emph{Developer Command Prompt} from the
+  Start~Menu entries for Visual~Studio (Tools subfolder) which opens a
+  \texttt{cmd.exe} session with the necessary environment variables
+  already set. Now execute the \texttt{qtenv2.bat} batch file (or similar) in the Qt folder, e.g.
+  
+  \begin{listing}[mybash]
+C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
+\end{listing}
+Replace "5.1.1" with the version string of your Qt installation.
+
+\item Now clone the EUDAQ repository (or download using GitHub) and enter the build directory on the prompt, e.g. by entering
+
+  \begin{listing}[mybash]
+cd c:\Users\[username]\Documents\GitHub\eudaq\build
+\end{listing}
+
+\item Configuration: Now enter
+
+  \begin{listing}[mybash]
+cmake ..
+\end{listing}
+
+to generate the VS project files.
+
+\item Compile by calling
+  \begin{listing}[mybash]
+MSBUILD.exe EUDAQ.sln /p:Configuration=Release
+\end{listing}
+or install into \texttt{eudaq\\bin} by running
+  \begin{listing}[mybash]
+MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
+\end{listing}
+\item This will compile the main library and the GUI; for the remaining processors, please check the individual documentation.
+\end{itemize}
+
+Note on ``\emph{moc.exe - System Error: The program can't start
+  because MSVCP110.dll is missing from your computer}'' errors: when using Visual~Express~2013 and \texttt{pthreads-w32} 2.9.1, you might require ``Visual C++ Redistributable for Visual Studio 2012'': download (either x86 or x64) from \url{http://www.microsoft.com/en-us/download/details.aspx?id=30679} and install.

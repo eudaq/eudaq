@@ -1,5 +1,5 @@
 % !TEX root = EUDAQUserManual.tex
-\section{Details to Compiling the GUI on Windows}
+\section{Introduction to the build system and project files on Windows}
 \label{app:compileOnWindows}
 
 \subsection{MSBUILD}
@@ -10,13 +10,24 @@ This is the program that processes the project (solution) files and feeds it to 
 $[MSBUILD.exe]$ MyApp.sln /t:Rebuild /p:Configuration=Release
 \end{listing}
 
-myApp.sln is the file you want to Process. The parameter \texttt{/target} (short \texttt{/t}) tells msbuild what to do in this case rebuild. You have all the options you need like: clean, build and rebuild. You can also specify your own targets. With the ``parameter property'' switch you can change the properties of your Project. Let's say you want to compile EUDAQ, you go in the folder where the solution (sln) file is and type:
+myApp.sln is the file you want to Process. The parameter
+\texttt{/target} (short \texttt{/t}) tells msbuild what to do in this
+case rebuild. You have all the options you need like: clean, build and
+rebuild. You can also specify your own targets. With the ``parameter
+property'' switch you can change the properties of your Project. Let's
+say you want to compile EUDAQ, you go in the build folder where the solution (sln) file is and type:
 
       \begin{listing}[mybash]
 $[MSBUILD.exe]$ EUDAQ.sln /p:Configuration=Release 
 \end{listing}
 
-One thing one has to keep in mind is that there are some default configurations. The default is a debug build for x86. If you want to have it different then you need to specify it in the command line. And one thing you want to have is a release build! With the /p switch you can overwrite properties like in this case the configuration. But you could also overwrite the compiler version it should use. Let's say you want to use VS 2013 then you have to specify it by writing:
+One thing one has to keep in mind is that there are some default
+configurations. The default is a debug build for x86. If you want to
+have it different then you need to specify it in the command line. And
+one thing you want to have is a release build! With the /p switch you
+can overwrite properties like in this case the configuration. But you
+could also overwrite the compiler version it should use. Let's say you
+want to use VS 2013 then you have to specify it by writing:
 
       \begin{listing}[mybash]
 $[MSBUILD.exe]$ EUDAQ.sln /p:PlatformToolset=v120 /p:Configuration=Release
@@ -25,7 +36,17 @@ $[MSBUILD.exe]$ EUDAQ.sln /p:PlatformToolset=v120 /p:Configuration=Release
 But be careful when changing the compiler settings. It is possible that some then link against an incompatible version of your external libraries. 
 
 \subsection{Project Files}
-Project files are the Visual Studio equivalent to Makefiles. The Project files have a very easy syntax but a complicated mechanism behind it. Making changes to an existing file is very easy. Writing a new one from scratch is expert level. But also, in most cases, pointless because VS does it for you. Therefore usually one gets a finished Project file that was auto created by VS and one just wants to make some minor changes to it, therefore it is enough to know where one can tweak around. 
+Project files are the Visual Studio equivalent to Makefiles. The
+Project files have a very easy syntax but a complicated mechanism
+behind it. Making changes to an existing file is very easy. Writing a
+new one from scratch is expert level. But also, in most cases,
+pointless because CMake does it for you. Therefore usually one gets a
+finished Project file that was auto created by CMake and one just
+wants to make some minor changes to it, therefore it is enough to know
+where one can tweak around.
+
+Please remember to adjust the CMake files when you are done
+accordingly, so that your changes are reproduced and not overwritten on the next CMake run.
 
 Let's start easy and assume you want to change the output directory. You can do this by adding the following line to the corresponding Property group. 
 
