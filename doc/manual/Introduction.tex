@@ -54,34 +54,32 @@ The general structure is outlined below:
   All definitions in the library should be inside the \texttt{eudaq} namespace.
   It is organised into the following subdirectories:
   \begin{myitemize}
-  \item \texttt{src}
-    contains the source code, with library files having the extension \texttt{.cc},
-    and program source files having the extension \texttt{.cxx},
+  \item \texttt{lib/src}
+    contains the library source code,
+  \item \texttt{exe/src}
+    contains the (command line) executables source code,
   \item \texttt{include}
     contains the header files inside the \texttt{eudaq} subdirectory (to match the namespace),
-  \item \texttt{tmp}
-    contains all temporary files generated during compilation (dependency (\texttt{.d}) and object (\texttt{.o}) files).
-  \end{myitemize}
-\item \texttt{root}
-  contains the parts that depend on Root, such as the RootMonitor and some command-line utilities.
-  \begin{myitemize}
-  \item \texttt{src}, \texttt{include} and \texttt{tmp} subdirectories as in \texttt{main}.
   \end{myitemize}
 \item \texttt{gui}
   contains the graphical programs that are built with Qt, such as the RunControl and LogCollector.
+\item \texttt{producers}
+  contains all (user-provided) producers shipped with the EUDAQ
+  distribution, for example:
+  \begin{myitemize}
 \item \texttt{tlu} and \texttt{eudrb}
   contain the parts that depend on the \gls{TLU} and \gls{EUDRB} respectively.
 \item\texttt{vme}
   contains a wrapper for the VME driver for the \gls{EUDRB}.
 \item \texttt{depfet}, \texttt{fortis}, \texttt{taki}\ldots{}
-  contain the code for third-party producers that have been used with the telescope.
+  contain the code for third-party producers that have been used with
+  the telescope.
+  \end{myitemize}
 \item \texttt{extern}
   stores external software that is not part of EUDAQ itself, but that is needed by EUDAQ in some cases,
   such as the ZestSC1 driver for the \gls{TLU} and the Tsi148 VME driver.
-\item \texttt{ports}
-  contains ports of EUDAQ to other platforms, such as Microsoft Visual C++.
-\item \texttt{bin}
-  contains the binaries (executables and libraries) generated from the other directories.
+\item \texttt{bin} and \texttt{lib}
+  contain the compiled binaries (executables and libraries) generated from the other directories.
 \item \texttt{conf}
   contains configuration files for running the beam telescope.
 \item \texttt{data} and \texttt{logs}
@@ -90,9 +88,8 @@ The general structure is outlined below:
   contains documentation, such as this manual.
 \end{myitemize}
 
-Each directory containing code has its own \texttt{src}, \texttt{include} and \texttt{tmp} subdirectories,
-as well as a local \texttt{Makefile} containing the rules for building that directory.
+Each directory containing code has its own \texttt{src} and \texttt{include} subdirectories,
+as well as a local \texttt{CMakeLists.txt} file containing the rules
+for building that directory using \texttt{CMake}.
 Header files usually have a \texttt{.hh} extension so that they can be automatically recognised as C++
 (as opposed to C), and source files have either \texttt{.cc} for parts of a library or \texttt{.cxx} for executables.
-The \texttt{Makefile}s contain rules to automatically combine all \texttt{.cc} files into libraries
-and to build all \texttt{.cxx} files into executables.
