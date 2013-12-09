@@ -1,11 +1,16 @@
 # Ignore binaries:
-bin/*.exe
+bin/*
 
 # Ignore libraries:
 lib/*
 
+# Ignore data files:
+data/*.raw
+data/runnumber.dat
+
 # ignore emacs autosaves
 \#*#
+*~
 
 # ignore eclipse project files
 .project
@@ -14,6 +19,10 @@ lib/*
 # Ignore binary data file folders downloaded for TLU producer:
 extern/ZestSC1
 extern/tlufirmware
+
+# Ignore paths to windows libraries installed by user:
+extern/pthreads*
+extern/libusb*
 
 # ignore python byte code
 *.pyc

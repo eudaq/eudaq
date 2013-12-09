@@ -7,7 +7,7 @@
 
 namespace eudaq {
 
-  class EUDRBBoard : public Serializable {
+  class DLLEXPORT EUDRBBoard : public Serializable {
     public:
       typedef std::vector<unsigned char> vec_t;
       EUDRBBoard(unsigned id = 0) : m_id(id) {}
@@ -53,7 +53,7 @@ namespace eudaq {
   /** An Event type consisting of just a vector of bytes.
    *
    */
-  class EUDRBEvent : public Event {
+  class DLLEXPORT EUDRBEvent : public Event {
     EUDAQ_DECLARE_EVENT(EUDRBEvent);
     public:
     virtual void Serialize(Serializer &) const;

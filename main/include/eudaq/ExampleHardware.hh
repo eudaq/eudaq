@@ -6,7 +6,7 @@
 
 namespace eudaq {
 
-  class ExampleHardware {
+  class DLLEXPORT ExampleHardware {
     public:
       ExampleHardware();
       void Setup(int);

@@ -1,16 +1,26 @@
 # CMake script to build GUI applications
 # it will search for either Qt4 or Qt5, starting with Qt5
 
-FIND_PACKAGE(Threads REQUIRED) # pthreads
-
 include(CMakeDependentOption)
 
-option(BUILD_WITH_QT4 "Build with Qt4 no matter if Qt5 is found" OFF)
+IF(POLICY CMP0020)
+  CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
+  CMAKE_POLICY(SET CMP0020 OLD) # explicitly disabling automatic linking of Qt executables to qtmain target on Windows (changed in CMake 2.8.10)
+ENDIF(POLICY CMP0020)
+
+# Check if environment variable QTDIR is set.
+# Extra security for windows environment as well.
+if (DEFINED ENV{QTDIR})
+    set(CMAKE_PREFIX_PATH $ENV{QTDIR} ${CMAKE_PREFIX_PATH})
+endif()
+
+option(BUILD_WITH_QT4 "Build with Qt4 no matter whether Qt5 is found or not" OFF)
 
 if( NOT BUILD_WITH_QT4 )
-    find_package(Qt5Gui QUIET) #implies core package
-    if( Qt5Gui_DIR )
-        message(STATUS "Found Qt5 core and gui packages!")
+    # search for Qt5 package 'Widgets' (implies Core and Gui)
+    find_package(Qt5Widgets QUIET) # QUIET means it won't complain if not found
+    if( Qt5Widgets_DIR)
+        message(STATUS "Found Qt5Widgets: ${Qt5Gui_DIR}")
         macro(qt_wrap_cpp)
             qt5_wrap_cpp(${ARGN})
         endmacro()
@@ -18,9 +28,9 @@ if( NOT BUILD_WITH_QT4 )
             qt5_wrap_ui(${ARGN})
         endmacro()
 	# setup Qt5 libaries and include paths
-	set (my_qt_libraries ${Qt5Gui_LIBRARIES})
-	include_directories(${Qt5Gui_INCLUDES})
-	ADD_DEFINITIONS(${Qt5Gui_DEFINITIONS})
+	set (my_qt_libraries ${Qt5Widgets_LIBRARIES})
+	include_directories(${Qt5Widgets_INCLUDES})
+	ADD_DEFINITIONS(${Qt5Widgets_DEFINITIONS})
     endif()
 endif()
 
@@ -67,16 +77,17 @@ ELSE()
   ADD_EXECUTABLE(euLog.exe src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
 
   # last thing we have to do is to tell CMake what libraries our executable needs
-  TARGET_LINK_LIBRARIES(euRun.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT}  ${my_qt_libraries})
-  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${my_qt_libraries})
-  TARGET_LINK_LIBRARIES(euLog.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT}  ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
 
   # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
   IF(WIN32) # Check if we are on Windows
     if(MSVC) # Check if we are using the Visual Studio compiler
-      set_target_properties(euRun.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-      set_target_properties(euProd.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-      set_target_properties(euLog.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+# this causes linker errors on Qt5:
+#      set_target_properties(euRun.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+#      set_target_properties(euProd.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
+#      set_target_properties(euLog.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
     elseif(CMAKE_COMPILER_IS_GNUCXX)
       SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows") # Not tested
     else()

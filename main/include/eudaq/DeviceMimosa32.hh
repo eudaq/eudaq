@@ -1,13 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // string function definitions
+
+#ifdef WIN32
+
+#include <winsock2.h>
+#include <WS2tcpip.h>
+#include <io.h>
+
+#else
+
 #include <unistd.h> // UNIX standard function definitions
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <termios.h> // POSIX terminal control definitionss
+#include <arpa/inet.h>
+
+#endif
+
+#include <sys/types.h>
 #include <fcntl.h> // File control definitions
 #include <errno.h> // Error number definitions
-#include <termios.h> // POSIX terminal control definitionss
 #include <time.h>   // time calls
 #include <math.h>
 class DeviceMimosa32

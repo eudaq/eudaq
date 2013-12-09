@@ -42,11 +42,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
+message(STATUS "start prozessing findlibusb-1.0.cmake")
 if (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
   # in cache already
   set(LIBUSB_FOUND TRUE)
 else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
+
   find_path(LIBUSB_1_INCLUDE_DIR
     NAMES
         libusb.h
@@ -55,8 +56,9 @@ else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
       /usr/local/include
       /opt/local/include
       /sw/include
-        PATH_SUFFIXES
-         libusb-1.0
+      ${PROJECT_SOURCE_DIR}/extern/libusb-w32/include
+    PATH_SUFFIXES
+      libusb-1.0
   )
 
   find_library(LIBUSB_1_LIBRARY
@@ -67,6 +69,7 @@ else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
       /usr/local/lib
       /opt/local/lib
       /sw/lib
+      ${PROJECT_SOURCE_DIR}/extern/libusb-w32/lib/msvc
   )
 
   set(LIBUSB_1_INCLUDE_DIRS

@@ -1,5 +1,3 @@
-FIND_PACKAGE(Threads REQUIRED) # pthreads
-
 macro(optional_add_subdirectory dir)
   option(BUILD_${dir} "Build producer in directory ${dir}?" OFF)
   if(BUILD_${dir})

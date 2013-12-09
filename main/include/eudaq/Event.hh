@@ -90,7 +90,7 @@ namespace eudaq {
 
   DLLEXPORT std::ostream &  operator << (std::ostream &, const Event &);
 
-  class EventFactory {
+  class DLLEXPORT EventFactory {
     public:
       static Event * Create(Deserializer & ds) {
         unsigned id = 0;

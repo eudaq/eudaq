@@ -6,12 +6,22 @@
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
 macro(find_zestsc1_in_extern arg)
+IF(WIN32)
+ find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
+    HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Inc ${arg})
+ELSE(WIN32)
   find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
     HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/Inc ${arg})
+ENDIF(WIN32)
 
-  if (WIN32) 
+if (WIN32) 
+  if (${EX_PLATFORM} EQUAL 64)
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows/Lib ${arg})
+      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/amd64 ${arg})
+  else() #32bit
+    find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
+      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/x86 ${arg})
+  endif(${EX_PLATFORM} EQUAL 64)
   elseif (UNIX)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1

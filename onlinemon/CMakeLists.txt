@@ -40,7 +40,7 @@ ROOT_GENERATE_DICTIONARY_OLD("${OnlineMon_HEADERS}" "${OnlineMon_DICTIONARY}" "$
 
 add_executable(OnlineMon.exe ${OnlineMon_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict.cxx)
 
-target_link_libraries(OnlineMon.exe EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${ROOT_LIBRARIES} )
+target_link_libraries(OnlineMon.exe EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} )
 
 INSTALL(TARGETS OnlineMon.exe
   RUNTIME DESTINATION bin

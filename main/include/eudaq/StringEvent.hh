@@ -9,7 +9,7 @@ namespace eudaq {
   /** An Event type consisting of just a string.
    *
    */
-  class StringEvent : public Event {
+  class DLLEXPORT StringEvent : public Event {
     EUDAQ_DECLARE_EVENT(StringEvent);
     public:
     virtual void Serialize(Serializer &) const;

@@ -1,7 +1,6 @@
 ########################################################
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 ########################################################
-
 # project name
 PROJECT( EUDAQ )
 
@@ -11,33 +10,11 @@ SET( ${PROJECT_NAME}_VERSION_MINOR 2 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined to keep compatability with CMake 2.6
-include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.txt)
+include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
-# include directories
-INCLUDE_DIRECTORIES( ./main/include )
+# Determine platform- and compiler-specific settings
+include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 
-# platform dependent preprocessor defines
-if (WIN32) 
-  if (CYGWIN)
-    ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_CYGWIN")
-  elseif (MINGW)
-    ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_MINGW")
-  else()
-    ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_WIN32")
-  endif()
-elseif (UNIX)
-  if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_MACOSX")
-  else()
-    ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_LINUX")
-  endif()
-else()
-  MESSAGE( "WARNING: Platform not defined in CMakeLists.txt -- assuming Unix/Linux (good luck)." )
-  ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_LINUX")
-endif()
-
-# add some more general preprocessor defines
-add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
 # optional debug defines
 # add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
 
@@ -46,8 +23,15 @@ add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__")
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
+# include directories
+INCLUDE_DIRECTORIES( ./main/include )
+
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+
+#FIND_PACKAGE(Threads REQUIRED) # pthreads
+# include checks for the available and necessary threading libraries (depending on platform)
+include(${PROJECT_SOURCE_DIR}/cmake/EUDAQThreads.cmake)
 
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
@@ -62,6 +46,9 @@ ENDIF()
 
 # SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
 # see http://www.cmake.org/Wiki/CMake_RPATH_handling
+# enable @rpath in the install name for any shared library being built
+# note: it is planned that a future version of CMake will enable this by default
+set(CMAKE_MACOSX_RPATH 1)
 # use, i.e. don't skip the full RPATH for the build tree
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 # when building, don't use the install RPATH already

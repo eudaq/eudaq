@@ -1,5 +1,6 @@
 #include "eudaq/Producer.hh"
-#include <pthread.h>
+//#include <pthread.h>
+#include "eudaq/Mutex.hh"
 
 class TimepixDummyProducer : public eudaq::Producer
 {
@@ -56,9 +57,10 @@ class TimepixDummyProducer : public eudaq::Producer
 
     // all data members have to be protected by mutex since they can be accessed by multiple 
     // threads
-    bool m_done;       pthread_mutex_t m_done_mutex;
-    unsigned m_run;  pthread_mutex_t m_run_mutex;
-    unsigned m_ev;   pthread_mutex_t m_ev_mutex;
+	
+    bool m_done;       eudaq::Mutex m_done_mutex;//pthread_mutex_t m_done_mutex;
+    unsigned m_run;  eudaq::Mutex m_run_mutex;// pthread_mutex_t m_run_mutex;
+    unsigned m_ev;  eudaq::Mutex m_ev_mutex;// pthread_mutex_t m_ev_mutex;
 
-    pthread_mutexattr_t m_mutexattr;
+   // pthread_mutexattr_t m_mutexattr;
 };
