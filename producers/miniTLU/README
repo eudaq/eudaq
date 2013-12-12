@@ -32,7 +32,10 @@ You can find these files in producers/miniTLU/etc and you must copy them in the 
 
 === To compile
 
-Look at cmake/FindCACTUS.cmake and edit it if it doesn't fit your system.
+Look at cmake/FindCACTUS.cmake and change CACTUS_ROOT to point at your installation directory (/opt/cactus on SLC5/6)
+
+If you don't use SLC5/6 you can use the script producers/miniTLU/etc/cactus_download_script.sh in a tmp directory to download and extract all rpm (edit it to choose between SLC5 and SLC6 rpms) then move opt/cactus to extern/cactus.
+If you use gcc > 4.7 you may need to apply the patch producers/miniTLU/etc/boost_1_48_with_gcc_47.patch
 
 Then:
 
