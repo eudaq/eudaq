@@ -37,11 +37,36 @@ endmacro()
 
 # Sets the appropriate flag to enable C++11 support
 macro(enable_cxx11)
-    if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-      ELSEIF(MSVC)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /D \"CPP11\"")
+  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # do some more elaborate compiler argument checks
+    # as suggested in http://stackoverflow.com/questions/20166663/compiler-flags-for-c11
+
+    # test for C++11 flags
+    include(TestCXXAcceptsFlag)
+
+    # try to use compiler flag -std=c++11
+    check_cxx_accepts_flag("-std=c++11" CXX_FLAG_CXX11)
+
+    if(CXX_FLAG_CXX11)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    else(CXX_FLAG_CXX11)
+      # try to use compiler flag -std=c++0x for older compilers
+      check_cxx_accepts_flag("-std=c++0x" CXX_FLAG_CXX0X)
+      if(CXX_FLAG_CXX0X)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+      else(CXX_FLAG_CXX0X)
+	message( FATAL_ERROR "Compiler does not support either '-std=c++0x' or '-std=c++11' flags." )
+      endif(CXX_FLAG_CXX0X)
+    endif(CXX_FLAG_CXX11)
+    
+    # and clang needs additional flags
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
     endif()
+
+  ELSEIF(MSVC)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  /D \"CPP11\"")
+  endif()
 
 
 endmacro()
