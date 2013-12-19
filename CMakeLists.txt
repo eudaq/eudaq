@@ -97,6 +97,12 @@ IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
 
+# run LaTeX to build manual as PDF
+option(BUILD_manual "Generate user's manual as PDF? (requires LaTeX)?" OFF)
+IF(BUILD_manual)
+  add_subdirectory(doc/manual)
+ENDIF()
+
 
 # include processors (will not be included in target 'all')
 add_subdirectory(producers)

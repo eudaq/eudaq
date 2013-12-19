@@ -1,7 +1,15 @@
 eudaq
 =====
 
-eudaq Data Acquisition Framework main repository
+eudaq Multi-platform Data Acquisition Framework main repository
+
+A user manual is provided as LaTeX source files in the repository; to generate the pdf, follow these steps:
+```
+cd build
+cmake -DBUILD_manual=ON ..
+make install
+```
+The manual can then be found in ```./doc/manual/EUDAQUserManual.pdf```.
 
 1. Prerequisites
 ----------------
