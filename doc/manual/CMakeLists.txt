@@ -15,6 +15,7 @@ ADD_LATEX_DOCUMENT(
          src/Reporting.tex
          src/Running.tex
          src/SourceCode.tex
+	 src/ClassicCite.bst
 	 ../../main/exe/src/OptionExample.cxx
 	 ../../conf/ExampleConfig.conf
 	 ../../main/exe/src/ExampleProducer.cxx
