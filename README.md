@@ -1,7 +1,15 @@
 eudaq
 =====
 
-eudaq Data Acquisition Framework main repository
+eudaq Multi-platform Data Acquisition Framework main repository
+
+A user manual is provided as LaTeX source files in the repository; to generate the pdf, follow these steps:
+```
+cd build
+cmake -DBUILD_manual=ON ..
+make install
+```
+The manual can then be found in ```./doc/manual/EUDAQUserManual.pdf```.
 
 1. Prerequisites
 ----------------
@@ -130,9 +138,17 @@ git remote rename origin upstream
 git remote add origin https://github.com/hperrey/eudaq
 git remote -v show
 ```
-* optional: edit away on your local clone!
+* now edit away on your local clone! But keep in sync with the development in the upstream repository by running
+```
+git pull upstream master
+```
+on a regular basis. Replace ```master``` by the appropriate branch if you work on a separate one.
+Don't forget that you can refer to issues in the main repository anytime by using the string ```eudaq/eudaq#XX``` in your commit messages, where 'XX' stands for the issue number, e.g.
+```
+[...]. this addresses issue eudaq/eudaq#1
+```
 
-* push the edits to origin (our fork)
+* push the edits to origin (your fork)
 ```
 git push origin
 ```
