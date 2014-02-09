@@ -172,6 +172,52 @@ namespace eudaq {
       return true;
     }
 
+    /** read and drop events until all producers see a BORE */
+    static bool SyncBore(
+      FileReader::eventqueue_t & queue,
+      FileDeserializer & des,
+      int ver,
+      eudaq::Event * & ev)
+    {
+      static const int MAXTRIES = 3;
+      bool is_complete_bore = true;
+
+      for (int i_try = 0; i_try < MAXTRIES; ++i_try) {
+        // there should be at at least one full event in the queue
+        if (queue.isempty()) {
+          eudaq::Event * evnt = 0;
+          if (!ReadEvent(des, ver, evnt)) return false;
+          queue.push(evnt);
+        }
+
+        // check if the BOREs are aligned
+        is_complete_bore = true;
+        for (size_t i = 0; i < queue.producers(); ++i) {
+          const eudaq::Event & e = queue.getevent(i);
+          if (!e.IsBORE()) {
+            is_complete_bore = false;
+            EUDAQ_WARN("found non-BORE event: " + to_string(e));
+          }
+        }
+
+        // if we have a complete bore we are done
+        if (is_complete_bore) {
+          ev = queue.popevent();
+          EUDAQ_INFO("found complete BORE after " + to_string(i_try) + " tries");
+          return true;
+        }
+
+        // at this point its clear that the current event is not a complete
+        // BORE. drop all non-BOREs and try again w/ the next event.
+        for (size_t i = 0; i < queue.producers(); ++i) {
+          if (!queue.getevent(i).IsBORE()) queue.discardevent(i);
+        }
+      }
+
+      EUDAQ_ERROR("unable to sync BORE events after " + to_string(MAXTRIES) + " events");
+      return false;
+    }
+
     static bool SyncEvent(FileReader::eventqueue_t & queue, FileDeserializer & des, int ver, eudaq::Event * & ev) {
       static const int MAXTRIES = 3;
       unsigned eventnum = 0;
@@ -367,7 +413,7 @@ namespace eudaq {
     m_des(m_filename),
     m_ev(EventFactory::Create(m_des)),
     m_ver(1),
-    m_queue(0) {
+    m_queue(NULL) {
       //unsigned versiontag = m_des.peek<unsigned>();
       //if (versiontag == Event::str2id("VER2")) {
       //  m_ver = 2;
@@ -378,12 +424,21 @@ namespace eudaq {
       //EUDAQ_INFO("FileReader, version = " + to_string(m_ver));
       //NextEvent();
       if (synctriggerid) {
+        // the first raw event was already read during the initialization. it
+        // needs to be added to the queue to allow bore alignment
         m_queue = new eventqueue_t(GetDetectorEvent().NumEvents());
+        m_queue->push(m_ev.get());
+        // TODO what to do if SyncBore fails?
+        // if it fails ev is undefined and somehere a segfault will popup.
+        // let's hope that's enough 'error-handling'
+        eudaq::Event * ev = NULL;
+        SyncBore(*m_queue, m_des, m_ver, ev);
+        m_ev = ev;
       }
     }
 
   FileReader::~FileReader() {
-    delete m_queue;
+    if (m_queue != NULL) delete m_queue;
   }
 
   bool FileReader::NextEvent(size_t skip) {
