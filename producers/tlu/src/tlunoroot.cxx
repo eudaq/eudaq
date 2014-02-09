@@ -24,7 +24,8 @@ int main() {
   }
   std::cout << "Found " << tlus.size() << " tlu(s)" << std::endl;
   for (size_t i = 0; i < tlus.size(); ++i) {
-    std::string fname = std::string("/proc/bus/usb/") + tlus[i]->bus->dirname + "/" + tlus[i]->filename;
+    std::string fname = std::string("/dev/bus/usb/") + tlus[i]->bus->dirname + "/" + tlus[i]->filename;
+
     std::string result = "Fixed";
     struct stat st;
     if (stat(fname.c_str(), &st) == 0 && (st.st_mode & 0x66) == 0x66) {
