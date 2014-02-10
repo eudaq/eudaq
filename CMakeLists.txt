@@ -106,3 +106,8 @@ ENDIF()
 
 # include processors (will not be included in target 'all')
 add_subdirectory(producers)
+
+#######################################################
+# Print out system information useful for bug reports #
+############################################### #######
+include(PrintSystemInformation)
