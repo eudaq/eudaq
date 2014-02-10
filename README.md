@@ -43,6 +43,11 @@ For full description on how to set up the development environment for Windows, s
 - install ZestSC1 driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
 - install firmware bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
 
+1.2.2 Online Monitor
+--------------------
+- requires ROOT (download from http://root.cern.ch/drupal/content/downloading-root)
+- (Windows) Make sure that you have installed the corresponding version of MSVC with which your downloaded ROOT binaries have been compiled!
+
 
 2. Compiling and Installing:
 ------------------------
@@ -77,9 +82,10 @@ Variables thus set are cached in CMakeCache.txt and will again be taken into acc
 
 2.1. Setting up Windows Development Environment to build main library and GUI
 -----------------------------------------------------------------------------
-- Download Qt4 or Qt5:
 - Download and install the pthreads library (pre-build binary from ftp://sources.redhat.com/pub/pthreads-win32) into either c:\pthreads-w32 or ./extern/pthreads-w32
 - Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
+  If you are using MSVC 2010, please make sure that you also install Service Pack 1 (SP1)
+- Download Qt4 or Qt5 (use the binaries compatible with your version of MSVC)
 
 Install both packages.
 
