@@ -144,6 +144,13 @@ namespace eudaq {
     return def;
   }
 
+  void Configuration::Print(){
+      for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
+      std::cout << it->first << " : " << it->second << std::endl;
+    }
+  }
+
+
   std::string Configuration::GetString(const std::string & key) const {
     section_t::const_iterator i = m_cur->find(key);
     if (i != m_cur->end()) {

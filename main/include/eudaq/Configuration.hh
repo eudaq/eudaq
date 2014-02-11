@@ -35,6 +35,7 @@ namespace eudaq {
         void Set(const std::string & key, const T & val);
       std::string Name() const;
       Configuration & operator = (const Configuration & other);
+      void Print();
     private:
       std::string GetString(const std::string & key) const;
       void SetString(const std::string & key, const std::string & val);
