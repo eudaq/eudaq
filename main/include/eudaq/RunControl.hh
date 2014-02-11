@@ -50,13 +50,12 @@ namespace eudaq {
       bool m_done;
       bool m_listening;
     protected:
-      unsigned m_runnumber;   ///< The current run number
+      long m_runnumber;   ///< The current run number
       TransportServer * m_cmdserver; ///< Transport for sending commands
-//       pthread_t m_thread;
-//       pthread_attr_t m_threadattr;
-	  eudaqThread m_thread;
+      eudaqThread m_thread;
       size_t m_idata, m_ilog;
-	  std::string m_dataaddr, m_logaddr;
+      std::string m_logaddr; // address of log collector
+      std::map<size_t,std::string> m_dataaddr; // map of data collector addresses
       long long m_runsizelimit;
       bool m_stopping, m_busy, m_producerbusy;
   };
