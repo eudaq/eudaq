@@ -55,8 +55,8 @@ namespace eudaq {
     section_t * cur_sec = &config[""];
     for (;;) {
       std::string line;
-      std::getline(stream, line);
       if (stream.eof()) break;
+      std::getline(stream, line);
       size_t equals = line.find('=');
       if (equals == std::string::npos) {
         line = trim(line);
