@@ -428,11 +428,11 @@ namespace eudaq {
         // needs to be added to the queue to allow bore alignment
         m_queue = new eventqueue_t(GetDetectorEvent().NumEvents());
         m_queue->push(m_ev.get());
-        // TODO what to do if SyncBore fails?
-        // if it fails ev is undefined and somehere a segfault will popup.
-        // let's hope that's enough 'error-handling'
+        // if we cannot sync the BOREs id doesnt make sense to continue
         eudaq::Event * ev = NULL;
-        SyncBore(*m_queue, m_des, m_ver, ev);
+        if (!SyncBore(*m_queue, m_des, m_ver, ev)) {
+            EUDAQ_THROWX(SyncException, "could not sync BOREs");
+        };
         m_ev = ev;
       }
     }
