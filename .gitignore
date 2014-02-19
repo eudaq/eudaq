@@ -8,6 +8,12 @@ lib/*
 data/*.raw
 data/runnumber.dat
 
+# ignore log files
+*.log
+
+# ignore ROOT files
+*.root
+
 # ignore emacs autosaves
 \#*#
 *~
