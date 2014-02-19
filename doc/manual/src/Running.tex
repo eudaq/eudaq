@@ -1011,6 +1011,34 @@ The columns \texttt{Mode}, \texttt{Det} and \texttt{EUDRBfw} are missing from th
 due to the fact that this information is now stored in a \texttt{RawDataEvent},
 which is not currently accessible with this version of the program.
 
+\subsubsection{FileChecker}
+
+This is a small utility that reads raw data files and checks if all events are
+readable, can be syncronised using the TLU trigger id and lists which type
+of subevents the file contains.
+
+It should be called with list of file paths or run numbers. For any argument
+that consist only of numerical digits the file path is constructed by
+substituting \texttt{\$6R} in the input pattern (defaults to
+``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
+
+For example:
+\begin{listing}[mybash]
+$[./FileChecker.exe]$ {6045..6050}
+\end{listing}
+
+This would produce the following output.
+\begin{listing}[]
+run     valid  num_events  contains                   errors                    
+------  -----  ----------  -------------------------  ----------------------
+  6045   true       13131  MUPIX4,NI,TLU                                        
+  6046   true           1  MUPIX4,NI,TLU                                        
+  6047   true       14674  MUPIX4,NI,TLU                                        
+  6048   true        7776  MUPIX4,NI,TLU                                        
+  6049  false           0                             no events in the file.    
+  6050  false          -1                             read error. 
+\end{listing}
+
 \subsubsection{Others}
 Some programs that are less used (or recently added)
 may not be described here.

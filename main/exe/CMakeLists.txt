@@ -1,8 +1,8 @@
-
 add_executable(ClusterExtractor.exe   src/ClusterExtractor.cxx  )
 add_executable(Converter.exe          src/Converter.cxx         )
 add_executable(ExampleProducer.exe    src/ExampleProducer.cxx   )
 add_executable(ExampleReader.exe      src/ExampleReader.cxx     )
+add_executable(FileChecker.exe        src/FileChecker.cxx       )
 add_executable(IPHCConverter.exe      src/IPHCConverter.cxx     )
 add_executable(MagicLogBook.exe       src/MagicLogBook.cxx      )
 add_executable(OptionExample.exe      src/OptionExample.cxx     )
@@ -18,6 +18,7 @@ target_link_libraries(ClusterExtractor.exe   EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(Converter.exe          EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(ExampleProducer.exe    EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(ExampleReader.exe      EUDAQ ${EUDAQ_THREADS_LIB})
+target_link_libraries(FileChecker.exe        EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(IPHCConverter.exe      EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(MagicLogBook.exe       EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(OptionExample.exe      EUDAQ ${EUDAQ_THREADS_LIB})
@@ -29,7 +30,7 @@ target_link_libraries(TestProducer.exe       EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(TestReader.exe         EUDAQ ${EUDAQ_THREADS_LIB})
 target_link_libraries(TestRunControl.exe     EUDAQ ${EUDAQ_THREADS_LIB})
 
-INSTALL(TARGETS ClusterExtractor.exe Converter.exe ExampleProducer.exe ExampleReader.exe IPHCConverter.exe MagicLogBook.exe OptionExample.exe RunListener.exe TestDataCollector.exe TestLogCollector.exe TestMonitor.exe TestProducer.exe TestReader.exe TestRunControl.exe
+INSTALL(TARGETS ClusterExtractor.exe Converter.exe ExampleProducer.exe ExampleReader.exe FileChecker.exe IPHCConverter.exe MagicLogBook.exe OptionExample.exe RunListener.exe TestDataCollector.exe TestLogCollector.exe TestMonitor.exe TestProducer.exe TestReader.exe TestRunControl.exe
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
