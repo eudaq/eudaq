@@ -37,6 +37,19 @@ On Windows, libusb is only needed if compiling with cygwin,
 in which case you should use the cygwin installer to install libusb.
 Otherwise libusb is not needed, as the included ZestSC1 libraries should work as they are.
 
+
+\subsubsection{ZestSC1 drivers and TLU firmware files}
+Additonally to the libusb library, the \gls{TLU} producer requires the
+ZestSC1 driver package and the FPGA firmware bitfiles; these are
+available to download via AFS from DESY. If AFS is accessible on the machine
+when CMake is run, the necessary files will be installed
+automatically; otherwise, manually copy full folder with
+sub-directories from
+\texttt{/afs/desy.de/group/telescopes/tlu/ZestSC1} and
+\texttt{/afs/desy.de/group/telescopes/tlu/tlufirmware} into the
+./extern subfolder in your EUDAQ source directory.
+
+
 \subsubsection{VME driver}
 In order to communicate with the \gls{EUDRB} boards a VME library is needed.
 A kernel module is included for the Tsi148 VME bridge,
@@ -89,7 +102,7 @@ This can be done by sourcing the \texttt{build\_env.sh} script as follows:
 source /path/to/Eutelescope/build_env.sh
 \end{listing}
 
-\subsection{Downloading}
+\subsection{Downloading the source code}
 The EUDAQ source code is hosted on github. The recommended way to obtain the software is with git,
 since this will allow you to easily update to newer versions.
 The latest version can be checked out with the following command:
@@ -148,10 +161,23 @@ Some of the optional packages and producers include:
 The common library, and some command-line programs that depend on only this library
 
 \ttitem{tlu}
-The TLU library, and the command-line programs that depend on it.
+The \gls{TLU} library, and the command-line programs that depend on
+it. Requires libusb, ZestSC1 drivers, and the TLU firmware files.
 
 \ttitem{gui}
-The graphical parts of the DAQ, such as the Run Control and Log Collector.
+The graphical parts of the DAQ, such as the Run Control and Log
+Collector. Require Qt to be installed.
+
+\ttitem{onlinemon}
+The Root Online Monitor. Requires Root to be installed.
+
+\ttitem{nreader}
+The native reader Marlin processor used for data conversion into LCIO
+by EUTelescope. Requires LCIO and EUTelescope to be installed.
+
+\texttt{manual}
+This manual compiled from its \LaTeX sources. Requires a working
+\LaTeX installation.
 
 \end{description}
 
