@@ -215,69 +215,37 @@ $[./EUDRBProducer.exe]$ -n EUDRB2 -r 192.168.1.1
 If you have a producer for your own hardware (see \autoref{sec:Producers}),
 it should also have an option to set the address of the Run Control.
 
-\subsubsection{RootMonitor}
+\subsubsection{OnlineMon}
 
-\begin{figure}[htb]
-  \begin{center}
-    \includegraphics[width=0.9\textwidth]{src/images/RootMonitorConf}
-    \caption{The Root Monitor configuration screen.}
-    \label{fig:RootMonitorConf}
-  \end{center}
-\end{figure}
-
-The RootMonitor reads the data file written by the Data Collector,
+The OnlineMon reads the data file written by the Data Collector,
 and generates several Root histograms that can be useful for online monitoring.
-Since it reads the native data file directly, it must be run on the same machine as the Data Collector.
-
-Although all plots are always generated internally by the Root Monitor,
-you can configure which plots are displayed on screen.
-The \texttt{Conf} tab (see \autoref{fig:RootMonitorConf}) contains four groups:
-\texttt{Settings}, where various parameters of the plots may be configured,
-\texttt{Main Histograms} for selecting which plots to show on the \texttt{Main} tab,
-\texttt{CDS Lego Plots} to select whether to show Lego plots of the per-board CDS profiles,
-and \texttt{Board Displays} to select which plots to display on the per-board tabs.
-After making any changes the \texttt{Apply} button must be pressed for them to take effect.
-\autoref{fig:RootMonitorPlots} shows an example of a per-board display with 2D, x and y cluster profiles,
-cluster charge and number distributions, and a 2D \gls{CDS} profile.
+Since it reads the native data file directly, it must be run on the
+same machine as the Data Collector.
 
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.8\textwidth]{src/images/RootMonitorPlots}
-    \caption{The Root Monitor showing some online plots.}
-    \label{fig:RootMonitorPlots}
+    \includegraphics[width=0.8\textwidth]{src/images/OnlineMonCorrelations}
+    \caption{The OnlineMon showing correlation plots between different
+      Mimosa26 planes of the EUDET telescope.}
+    \label{fig:OnlineMonPlots}
   \end{center}
 \end{figure}
 
-Due to the way the Root Monitor is implemented,
-it does not have access to the data file at the time the histograms are booked.
-This is a problem, since depending on what is in the data file,
-the number and parameters of the histograms may vary.
-To work around this, a simple text configuration file is used to specify these parameters.
-It is called \texttt{rootmonitor.conf},
-and is located in the directory from which the RootMonitor is run (usually \texttt{bin}).
-The file should contain one line per sensor in the data file,
-and may also contain comments (lines starting with a \texttt{\#} character).
-Each sensor line has a number of parameters, separated by commas,
-and all apart from the first are optional.
-These are: sensor type, width, height, pedestal file, seed threshold,
-neighbour threshold, cluster threshold, cluster size.
-Where width and height are in pixels, and the thresholds are in ADC units,
-and are used for clustering.
 
-The RootMonitor can be run in one of two modes: online or offline.
+The OnlineMon can be run in one of two modes: online or offline.
 In online mode, it connects to the RunControl, so it will know when new runs are started,
 and it will automatically open each new data file as it is created.
-In offline mode, there is no Run Control,
+In offline mode, there is no RunControl,
 and it only analyses the data file it is given on the command line. 
 An example command line is:
 \begin{listing}[mybash]
-$[./RootMonitor.exe]$ -f 5432
+$[./OnlineMon.exe]$ -f 5432
 \end{listing}
 
 This will run it in offline mode, opening the file corresponding to run 5432
 (alternatively, the full path to a file may be given).
 To run it in online mode, simply omit the \texttt{-f} option,
-then the \texttt{-r} option may be used if the Run Control
+then the \texttt{-r} option may be used if the RunControl
 is running on a different computer or using a non-standard port.
 
 \subsection{Running the DAQ}
