@@ -12,6 +12,7 @@
 #include <sstream>
 #include "OnlineMonWindow.hh"
 
+#include "config.h"  // for version symbols
 
 //File IO includes
 #include <sys/types.h>
@@ -145,7 +146,8 @@ OnlineMonWindow::OnlineMonWindow(const TGWindow* p, UInt_t w, UInt_t h)
     h1 = new TH2F("h1","hu h1",11,0,10,11,0,10);
     h2 = new TH2F("h2","hu h2",11,0,10,11,0,10);
     //a->Draw();
-    SetWindowName("EUDET Telescope Online-Monitor 1.0beta4 ");
+    std::string name = "EUDAQ Online-Monitor "; name+= PACKAGE_VERSION;
+    SetWindowName(name.data());
     MapSubwindows();
     //Resize(GetDefaultSize());
     Resize(w,h);

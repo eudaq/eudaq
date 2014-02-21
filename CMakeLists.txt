@@ -4,7 +4,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 # project name
 PROJECT( EUDAQ )
 
-# project version; before changing this, read README.release_procedure
+# project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 2 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
@@ -15,13 +15,36 @@ include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 # Determine platform- and compiler-specific settings
 include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 
-# optional debug defines
-# add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
+# Check if this is a source tarball build
+IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+  SET(SOURCE_PACKAGE 1)
+ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
+
+# Set package version
+IF(NOT SOURCE_PACKAGE)
+  # Get the version from last git tag plus numer of additional commits:
+  FIND_PACKAGE(Git)
+  IF(GIT_FOUND)
+    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD | "sed 's,^release-,,;s,-,+,;s,-,~,;'" OUTPUT_VARIABLE EUDAQ_LIB_VERSION) 
+  ELSE(GIT_FOUND)
+    # If we don't have git we take the hard-set version.
+    SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
+  ENDIF(GIT_FOUND)
+ELSE(NOT SOURCE_PACKAGE)
+  # If we don't have git we take the hard-set version.
+  SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
+ENDIF(NOT SOURCE_PACKAGE)
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
+MESSAGE("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
 # set the path to which we will install later: default project home, can be changed using
 # cmake -DINSTALL_PREFIX=/some/dir ..
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+
+# optional debug defines
+# add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
 
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )

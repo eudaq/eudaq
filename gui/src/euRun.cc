@@ -8,6 +8,7 @@
 #include "Colours.hh"
 #include "eudaq/Status.hh"
 #include <exception>
+#include "config.h" // for version symbols
 
 static const char * statuses[] = {
   "RUN",       "Run Number",
@@ -44,7 +45,7 @@ bool euRunApplication::notify(QObject* receiver, QEvent* event) {
 
 int main(int argc, char ** argv) {
   euRunApplication app(argc, argv);
-  eudaq::OptionParser op("EUDAQ Run Control", "1.0", "A Qt version of the Run Control");
+  eudaq::OptionParser op("EUDAQ Run Control", PACKAGE_VERSION, "A Qt version of the Run Control");
   eudaq::Option<std::string>  addr(op, "a", "listen-address", "tcp://44000", "address",
       "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
@@ -143,6 +144,7 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
   txtGeoID->setText(QString::number(eudaq::ReadFromFile(GEOID_FILE, 0U)));
   txtGeoID->installEventFilter(this);
   setWindowIcon(QIcon("../images/Icon_euRun.png"));
+  setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<eudaq::Status> status) {
