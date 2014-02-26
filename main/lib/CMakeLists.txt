@@ -11,7 +11,7 @@ endif (USE_ROOT)
 AUX_SOURCE_DIRECTORY( src library_sources )
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} )
 
-target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB})
+target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
