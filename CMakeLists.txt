@@ -61,11 +61,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/EUDAQThreads.cmake)
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
 IF(BUILD_nreader)
-  FIND_PACKAGE(LCIO)
+  FIND_PACKAGE(LCIO REQUIRED)
   INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
-  FIND_PACKAGE(EUTelescope)
+  FIND_PACKAGE(EUTelescope REQUIRED)
   INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS})
   add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
+  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES})
 ENDIF()
 
 
