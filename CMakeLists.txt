@@ -25,7 +25,9 @@ IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
-    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD | "sed 's,^release-,,;s,-,+,;s,-,~,;'" OUTPUT_VARIABLE EUDAQ_LIB_VERSION) 
+    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE EUDAQ_LIB_VERSION)
+    STRING(REGEX REPLACE "^release-" "" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
+    STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
   ELSE(GIT_FOUND)
     # If we don't have git we take the hard-set version.
     SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
