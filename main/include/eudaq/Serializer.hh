@@ -50,9 +50,10 @@ namespace eudaq {
         v.Serialize(sr);
       }
       static void write_int(Serializer & sr, const T & v) {
-        T t = v;
-        unsigned char buf[sizeof t];
-        for (size_t i = 0; i < sizeof t; ++i) {
+//        T t = v;
+    	unsigned long long t = static_cast<unsigned long long>(v);
+        unsigned char buf[sizeof v];
+        for (size_t i = 0; i < sizeof v; ++i) {
           buf[i] = static_cast<unsigned char>(t & 0xff);
           t >>= 8;
         }
