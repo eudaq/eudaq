@@ -2,6 +2,15 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
+* Version 1.3 (under development)
+** New user-provided producers/converters:
+   - miniTLU (Francesco Crescioli)
+   - MuPix converter (Moritz Kiehn)
+** Changes to existing Producers/converters:
+   - updated APIX FEI4 converter
+** New Tools
+*** FileChecker
+    a small utility to check raw data files (see manual for a description)
 * Version 1.2
 ** CMake build system
    - Multiplatform build system
@@ -21,7 +30,6 @@ Changelog and Versions
    - no ZestSC1 driver files (need to be downloaded from AFS, see instructions for installation in README.md)
 ** New user-provided producers:
    - Explorer-1 (Felix Reidt)
-   - miniTLU (Francesco Crescioli)
 ** NativeReader Marlin library for LCIO conversion
    - used to interface with EUTelescope analysis framework for data conversion from RAW into LCIO format
 ** Changes to existing Producers:
