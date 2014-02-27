@@ -10,7 +10,7 @@
 /** \mainpage EUDAQ Documentation
  *
  * \section intro_sec Introduction
- * EUDAQ is a simple and easy to use data aquisition framework, written in C++.
+ * EUDAQ is a simple and easy to use data acquisition framework, written in C++.
  * It was designed to be used for the EUDET JRA1 beam telescope (see http://www.eudet.org).
  *
  * The overall structure has some resemblance to the XDAQ framework (hence the name EUDAQ)
