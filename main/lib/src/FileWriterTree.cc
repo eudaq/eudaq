@@ -1,4 +1,5 @@
-#ifdef ROOT_FOUND 
+#ifdef ROOT_FOUND
+ 
 #include "eudaq/FileNamer.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/PluginManager.hh"
