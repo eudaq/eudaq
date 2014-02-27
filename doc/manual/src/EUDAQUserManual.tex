@@ -34,7 +34,10 @@
 \subject{\includegraphics[width=0.2\textwidth]{src/images/logo_eudet} \includegraphics[width=0.6\textwidth]{src/images/AIDA_logo_medium}}
 \title{\Large EUDAQ Software User Manual} 
 \author{\normalsize EUDAQ Development Team}
-\date{\normalsize \today}
+\input{src/version.tex} % defines the \CMakeLibVersion command which is
+                    % set by CMake to the current EUDAQ version number
+                    % (with git hash tag)
+\date{\normalsize As of \today \\ for EUDAQ version \CMakeLibVersion}
 
 \begin{document}
 
