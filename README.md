@@ -7,9 +7,15 @@ A user manual is provided as LaTeX source files in the repository; to generate t
 ```
 cd build
 cmake -DBUILD_manual=ON ..
-make install
+make pdf
 ```
 The manual can then be found in ```./doc/manual/EUDAQUserManual.pdf```.
+
+To generate the doxygen documentation, make sure that you have installed doxygen and run
+```
+make doxygen
+```
+in the ```build``` directory after CMake. The resulting HTML files are stored in ```../doc/doxygen/html```.
 
 1. Prerequisites
 ----------------
