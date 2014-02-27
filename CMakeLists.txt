@@ -123,11 +123,30 @@ IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
 
-# run LaTeX to build manual as PDF
+###############################################
+# LaTeX target to compile the PDF user manual #
+###############################################
+# Information and the manual on the UseLATEX.cmake package can be found here
+# http://www.cmake.org/Wiki/CMakeUserUseLATEX
+# The code resides here:
+# https://github.com/kmorel/UseLATEX
 option(BUILD_manual "Generate user's manual as PDF? (requires LaTeX)?" OFF)
 IF(BUILD_manual)
   add_subdirectory(doc/manual)
 ENDIF()
+
+#############################################
+# Doxygen target to generate HTML reference #
+#############################################
+FIND_PACKAGE(Doxygen)
+IF(DOXYGEN_FOUND)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/Doxyfile @ONLY)
+  ADD_CUSTOM_TARGET(doxygen
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen
+    COMMENT "Generating HTML documentation with Doxygen" VERBATIM
+    )
+ENDIF(DOXYGEN_FOUND)
 
 
 # include processors (will not be included in target 'all')
