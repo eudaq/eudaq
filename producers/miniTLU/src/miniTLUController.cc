@@ -18,6 +18,7 @@
 #include <fstream>
 #include <iomanip>
 #include <cstdlib>
+#include <cmath>
 
 using eudaq::mSleep;
 using eudaq::hexdec;
@@ -226,14 +227,22 @@ namespace tlu {
     return GetI2CRX();
   }
 
+  unsigned TLUController::GetScaler(unsigned i) const {
+    if (i >= (unsigned)TLU_TRIGGER_INPUTS) EUDAQ_THROW("Scaler number out of range");
+    m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
+
+    //return m_scalers[i];
+  }
+
   void miniTLUController::SetDACValue(unsigned char channel, uint32_t value) {
     unsigned char chrsToSend[2];
 
     std::cout << "Setting DAC channel " << channel << " = " << value << std::endl;
 
-    // enter vref-on mode:
+    // enter vref-off mode: ( very early TLU versions needed Vref mode on. )
     chrsToSend[0] = 0x0;
-    chrsToSend[1] = 0x1;
+    chrsToSend[1] = 0x0;
+    //chrsToSend[1] = 0x1;
     WriteI2CCharArray(m_DACaddr, 0x38, chrsToSend, 2);
 
     // set the value
@@ -241,4 +250,18 @@ namespace tlu {
     chrsToSend[0] = (value>>8)&0xff;
     WriteI2CCharArray(m_DACaddr, 0x18+(channel&0x7), chrsToSend, 2);
   }
+
+  void miniTLUController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
+
+    std::cout << "Setting threshold for channel " << channel << " to " << thresholdVoltage << " Volts" << std::endl;
+    float vref = 1.300 ; // Reference voltage is 1.3V on newer TLU
+    float vdac = ( thresholdVoltage + vref ) / 2;
+    float dacCode =  0xFFFF * vdac / vref;
+
+    if ( std::abs(thresholdVoltage) > vref )  EUDAQ_THROW("Threshold voltage must be > -1.3V and < 1.3V");
+
+    SetDACValue(channel , int(dacCode) );
+      
+  }
+
 }
