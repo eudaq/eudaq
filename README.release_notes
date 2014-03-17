@@ -2,15 +2,6 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
-* Version 1.3 (under development)
-** New user-provided producers/converters:
-   - miniTLU (Francesco Crescioli)
-   - MuPix converter (Moritz Kiehn)
-** Changes to existing Producers/converters:
-   - updated APIX FEI4 converter
-** New Tools
-*** FileChecker
-    a small utility to check raw data files (see manual for a description)
 * Version 1.2
 ** CMake build system
    - Multiplatform build system
