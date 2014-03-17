@@ -4,7 +4,7 @@ Changelog and Versions
 
 * Version 1.3 (under development)
 ** New user-provided producers/converters:
-   - miniTLU (Francesco Crescioli)
+   - miniTLU (Francesco Crescioli/David Cussans)
    - MuPix converter (Moritz Kiehn)
 ** Changes to existing Producers/converters:
    - updated APIX FEI4 converter
