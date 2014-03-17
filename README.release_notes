@@ -28,6 +28,10 @@ Changelog and Versions
    - no MS Visual Studio files or precompiled W32 binaries
    - manual is no longer provided as pdf but only in source (and can be downloaded from the homepage)
    - no ZestSC1 driver files (need to be downloaded from AFS, see instructions for installation in README.md)
+** Updated and extended documentation
+   - user manual
+   - web pages (http://eudaq.github.io/)
+   - source code using doxygen ("make doxygen")
 ** New user-provided producers:
    - Explorer-1 (Felix Reidt)
 ** NativeReader Marlin library for LCIO conversion
