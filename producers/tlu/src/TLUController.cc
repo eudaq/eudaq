@@ -29,6 +29,11 @@ using eudaq::to_string;
 using eudaq::to_hex;
 using eudaq::ucase;
 
+
+#define MASKOUTTHELASTFOURBITS 0xFFFFFFFFFFFFFFF
+
+
+
 #define PCA955_HW_ADDR 4
 #define AD5316_HW_ADDR 3
 #define PCA955_INPUT0_REGISTER 0
@@ -134,6 +139,20 @@ namespace tlu {
         << " = " << Timestamp2Seconds(m_timestamp);
   }
 
+  std::string TLUEntry::trigger2String()
+  {
+	
+		  std::string returnValue;
+		  for (auto i=TLU_TRIGGER_INPUTS-1;i>=0;--i)
+		  {
+
+			  
+			  returnValue+= to_string(m_trigger[i]);
+		  }
+		  return returnValue;
+	 
+  }
+
   // Modified to allow for a flag to choose between a 0.0V->1.0V (vref = 0.5) or 0.0V->2.0V (vref = 1.0) range
   // The default is vref = 0.5, but the TLU can be modified by cutting the LC1 trace and strapping the LO1 pads
   //   on the PMT supply board (which changes the SET pin on the ADR130 chip, thus doubling the reference voltage).
@@ -171,7 +190,7 @@ namespace tlu {
     m_amask(0),
     m_omask(0),
     m_ipsel(0xff),
-    m_handshakemode(0x3F), //$$ change
+    m_handshakemode(0x3F), 
     m_triggerint(0),
     m_inhibit(true),
     m_vetostatus(0),
@@ -184,6 +203,7 @@ namespace tlu {
     m_triggernum((unsigned)-1),
     m_timestamp(0),
     m_oldbuf(0),
+	m_triggerBuffer(nullptr),
     m_particles(0),
     m_lasttime(0),
     m_errorhandler(errorhandler),
@@ -193,7 +213,8 @@ namespace tlu {
     m_correctable_blockread_errors(0),
     m_uncorrectable_blockread_errors(0),
     m_usb_timeout_errors(0),
-    m_debug_level(0)
+    m_debug_level(0),
+	m_TriggerInformation(0)
   {
     errorhandleraborts(errorhandler == 0);
     for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -252,15 +273,18 @@ namespace tlu {
 
   void TLUController::LoadFirmware() {
     if (m_filename == "") {
-      m_filename = "TLU";
+      m_filename =TLUFIRMWARE_PATH;
+      m_filename+= "/TLU";
       if (m_version > 1) m_filename += "2";
       m_filename += "_Toplevel.bit";
     } else if (m_filename.find_first_not_of("0123456789") == std::string::npos) {
-      std::string filename = "../tlu/TLU";
+      std::string filename = TLUFIRMWARE_PATH;
+      filename+= "/TLU";
       if (m_version == 2) filename += "2";
       filename += "_Toplevel-" + m_filename + ".bit";
       m_filename = filename;
     }
+	std::cout<<"Loading bitfile: \""<<m_filename<<"\""<<std::endl;
     ZestSC1ConfigureFromFile(m_handle, const_cast<char*>(m_filename.c_str()));
     InhibitTriggers(true);
   }
@@ -307,6 +331,7 @@ namespace tlu {
 
   TLUController::~TLUController() {
     delete[] m_oldbuf;
+	delete[] m_triggerBuffer;
     ZestSC1CloseCard(m_handle);
   }
 
@@ -323,7 +348,10 @@ namespace tlu {
     } else {
       m_addr = &v0_2;
     }
-    if (!m_oldbuf) m_oldbuf = new unsigned long long[m_addr->TLU_BUFFER_DEPTH];
+    if (!m_oldbuf) {
+		m_oldbuf = new unsigned long long[m_addr->TLU_BUFFER_DEPTH];
+		m_triggerBuffer=new unsigned[m_addr->TLU_BUFFER_DEPTH];
+	}
     LoadFirmware();
     Initialize();
   }
@@ -369,20 +397,20 @@ namespace tlu {
 	    }
 	}
 
-    SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
+        SelectBus(m_addr->TLU_I2C_BUS_DISPLAY);
 	for(int i = 0; i < TLU_PMTS; i++)
 	{
-    try {
+	    try {
 	        WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0x08 >> i, CalcPMTDACValue(target_voltages[i]));
-    } catch (const eudaq::Exception &) {
-      return false;
+	    } catch (const eudaq::Exception &) {
+	        return false;
 	    }
-    }
+	}
     
-    return true;
-  }
+	return true;
+    }
 
-
+    // Used by CalcPMTDACValue to determine voltage range produced by the TLU for the PMT Vcntl values
     void TLUController::SetPMTVcntlMod(unsigned value)
     {
         m_pmtvcntlmod = value;
@@ -509,6 +537,11 @@ namespace tlu {
     m_triggerint = millis;
     if (m_addr) WriteRegister(m_addr->TLU_INTERNAL_TRIGGER_INTERVAL, m_triggerint);
   }
+  void TLUController::SetTriggerInformation( unsigned TriggerInf )
+  {m_TriggerInformation=TriggerInf;
+
+  if (m_addr) WriteRegister(m_addr->TLU_WRITE_TRIGGER_BITS_MODE_ADDRESS, m_TriggerInformation);
+  }
 
   unsigned char TLUController::GetAndMask() const {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS);
@@ -559,6 +592,11 @@ namespace tlu {
     return result;
   }
 
+  unsigned char TLUController::getTriggerInformation() const
+  {
+	      return ReadRegister8(m_addr->TLU_WRITE_TRIGGER_BITS_MODE_ADDRESS);
+  }
+
   int TLUController::DUTnum(const std::string & name) {
     if (ucase(name) == "RJ45") return IN_RJ45;
     if (ucase(name) == "LEMO") return IN_LEMO;
@@ -585,10 +623,19 @@ namespace tlu {
     if (updateleds) UpdateLEDs();
   }
 
+  void seperate_timing_info_from_trigger_info(unsigned long long * timestamp_buffer,unsigned* trigger,unsigned entries){
+	  for (unsigned i = 0; i < entries; ++i) {
+		 trigger[i]=timestamp_buffer[i]>>60;
+		 timestamp_buffer[i]=timestamp_buffer[i]& MASKOUTTHELASTFOURBITS;
+
+	  }
+
+  }
   void TLUController::Update(bool timestamps) {
     unsigned entries = 0;
     unsigned old_triggernum = m_triggernum;
     unsigned long long * timestamp_buffer = 0;
+	unsigned* trigger_buffer=nullptr;
     m_dmastat = ReadRegister8(m_addr->TLU_DMA_STATUS_ADDRESS);
     if (timestamps) {
       bool oldinhibit = InhibitTriggers();
@@ -600,8 +647,9 @@ namespace tlu {
       if ( m_debug_level & TLU_DEBUG_UPDATE ) {
         std::cout << "TLU::Update: after 1 read, entries " << entries << std::endl;
       }
-
+	  
       timestamp_buffer = ReadBlock(entries);
+	  trigger_buffer=m_triggerBuffer;   // this is not multi thread save. but since both are not multi thread save it seems to be ok
 
       // Reset buffer pointer
       WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 1 << m_addr->TLU_BUFFER_POINTER_RESET_BIT);
@@ -659,7 +707,7 @@ namespace tlu {
                     " (expecting " + to_string(old_triggernum) + ")");
       }
       for (unsigned i = 0; i < entries; ++i) {
-        m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP, trig++));
+        m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP, trig++,trigger_buffer[i]));
       }
     }
     //mSleep(1);
@@ -931,6 +979,12 @@ namespace tlu {
       std::cout << "### Warning: First time-stamp from current buffer is older than last timestamp of previous buffer: (m_lasttime , buf[0]) " << std::setw(8) <<  m_lasttime  << "  " << m_oldbuf[0] << std::endl;
       num_uncorrectable_errors++;
     }
+
+	if (m_TriggerInformation==USE_TRIGGER_INPUT_INFORMATION)
+	{
+
+		seperate_timing_info_from_trigger_info(m_oldbuf,m_triggerBuffer,entries);
+	}
 
 
     // check that the timestamps are chronological ...
@@ -1317,5 +1371,6 @@ namespace tlu {
     I2Cdelay();
     return ReadRegisterRaw(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS) & (1 << m_addr->TLU_I2C_SDA_IN_BIT);
   }
+
 }
 
