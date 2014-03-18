@@ -225,7 +225,7 @@ namespace eudaq {
           OnConnect(ev.id);
         } else {
           BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-          counted_ptr<Status> status(new Status(ser));
+          std::shared_ptr<Status> status(new Status(ser));
           if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
             ev.id.SetState(2);
           } else if (status->GetLevel() != Status::LVL_BUSY && ev.id.GetState() == 2) {

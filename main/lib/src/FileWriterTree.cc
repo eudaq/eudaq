@@ -6,7 +6,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
 
-# include<inttypes.h>
+//# include<inttypes.h>
 # include "TFile.h"
 # include "TTree.h"
 # include "TRandom.h"
