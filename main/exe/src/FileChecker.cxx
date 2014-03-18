@@ -91,7 +91,7 @@ int main(int /*argc*/, const char ** argv) {
 
         try {
             // always synchronize based on the trigger id
-            FileReader reader(run, input_pattern, true);
+            FileReader reader(run, input_pattern);// new file reader Layout does not has the possibility to sync files
 
             const DetectorEvent & bore = reader.GetDetectorEvent();
             if (!bore.IsBORE()) errors += "first event is not BORE. ";
