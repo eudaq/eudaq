@@ -6,7 +6,9 @@
  *
  */
 
-#include <inttypes.h>
+#ifndef WIN32
+#include <inttypes.h> /* uint32_t */
+#endif
 #include <memory>
 #include <vector>
 
