@@ -13,32 +13,34 @@ using eudaq::StandardEvent;
 using eudaq::from_string;
 using eudaq::to_string;
 using eudaq::split;
+using eudaq::parsenumbers;
+
 using namespace std;
 
-std::vector<unsigned> parsenumbers(const std::string & s) {
-  std::vector<unsigned> result;
-  std::vector<std::string> ranges = split(s, ",");
-  for (size_t i = 0; i < ranges.size(); ++i) {
-    size_t j = ranges[i].find('-');
-    if (j == std::string::npos) {
-      unsigned v = from_string(ranges[i], 0);
-      result.push_back(v);
-    } else {
-      long min = from_string(ranges[i].substr(0, j), 0);
-      long max = from_string(ranges[i].substr(j+1), 0);
-      if (j == 0 && max == 1) {
-        result.push_back((unsigned)-1);
-      } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
-        EUDAQ_THROW("Bad range");
-      } else {
-        for (long n = min; n <= max; ++n) {
-          result.push_back(n);
-        }
-      }
-    }
-  }
-  return result;
-}
+// std::vector<unsigned> parsenumbers(const std::string & s) {
+//   std::vector<unsigned> result;
+//   std::vector<std::string> ranges = split(s, ",");
+//   for (size_t i = 0; i < ranges.size(); ++i) {
+//     size_t j = ranges[i].find('-');
+//     if (j == std::string::npos) {
+//       unsigned v = from_string(ranges[i], 0);
+//       result.push_back(v);
+//     } else {
+//       long min = from_string(ranges[i].substr(0, j), 0);
+//       long max = from_string(ranges[i].substr(j+1), 0);
+//       if (j == 0 && max == 1) {
+//         result.push_back((unsigned)-1);
+//       } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
+//         EUDAQ_THROW("Bad range");
+//       } else {
+//         for (long n = min; n <= max; ++n) {
+//           result.push_back(n);
+//         }
+//       }
+//     }
+//   }
+//   return result;
+// }
 
 bool DoEvent(unsigned /*ndata*/, const eudaq::DetectorEvent & dev, bool do_process, bool do_display, bool do_zs, bool do_dump) {
 
@@ -139,13 +141,13 @@ int main(int /*argc*/, char ** argv) {
 
     bool showlast = std::find(displaynumbers.begin(), displaynumbers.end(), (unsigned)-1) != displaynumbers.end();
 
-    counted_ptr<eudaq::Event> lastevent;
+    std::shared_ptr<eudaq::Event> lastevent;
 
     if (do_event_to_ttree.IsSet()) throw eudaq::MessageException("The -r option is deprecated: use \"./Converter.exe -t root\" instead.");
 
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
-      eudaq::FileReader reader(op.GetArg(i), ipat.Value(), sync.IsSet());
+      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       EUDAQ_INFO("Reading: " + reader.Filename());
 
       //    cout << i << " " << reader.Filename()  << endl;
@@ -188,7 +190,7 @@ int main(int /*argc*/, char ** argv) {
             bool dump = (do_dump.IsSet());
             shown = DoEvent(ndata, *dev, proc, show, do_zs.IsSet(), dump);
             if (showlast && !shown) {
-              lastevent = counted_ptr<eudaq::Event>(new eudaq::DetectorEvent(*dev));
+              lastevent = std::shared_ptr<eudaq::Event>(new eudaq::DetectorEvent(*dev));
             }
           } else if (const StandardEvent * sev = dynamic_cast<const StandardEvent *>(&ev)) {
             bool show = std::find(displaynumbers.begin(), displaynumbers.end(), ndata) != displaynumbers.end();
@@ -196,7 +198,7 @@ int main(int /*argc*/, char ** argv) {
               std::cout << *sev << std::endl;
               shown = true;
             } else {
-              if (showlast) lastevent = counted_ptr<eudaq::Event>(new eudaq::StandardEvent(*sev));
+              if (showlast) lastevent = std::shared_ptr<eudaq::Event>(new eudaq::StandardEvent(*sev));
             }
           }
         }

@@ -4,7 +4,7 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/FileNamer.hh"
-#include "eudaq/counted_ptr.hh"
+//#include "eudaq/counted_ptr.hh"
 #include "eudaq/Utils.hh"
 
 #include <iostream>
@@ -108,12 +108,12 @@ int main(int, char ** argv) {
         << "StopTime:    " << decodetime(res.StopDate, res.StopTime) << std::endl
         ;
 
-      counted_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value()));
+      std::shared_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value()));
       writer->SetFilePattern(opat.Value());
       writer->StartRun(runnumber);
       {
         DetectorEvent dev(runnumber, 0, NOTIMESTAMP);
-        counted_ptr<Event> rev(new RawDataEvent(RawDataEvent::BORE("EUDRB", runnumber)));
+       std::shared_ptr<Event> rev(new RawDataEvent(RawDataEvent::BORE("EUDRB", runnumber)));
         rev->SetTag("VERSION", "3");
         rev->SetTag("DET", asicname(conf.AsicName));
         rev->SetTag("MODE", "ZS2");
@@ -146,7 +146,7 @@ int main(int, char ** argv) {
         for (int ev = 0; ev < nevents; ++ev) {
           eudaq::DetectorEvent dev(runnumber, eventnumber, NOTIMESTAMP);
           RawDataEvent * rev = new RawDataEvent("EUDRB", runnumber, eventnumber);
-          counted_ptr<Event> ev1(rev);
+          std::shared_ptr<Event> ev1(rev);
           for (int brd = 0; brd < conf.AsicNb; ++brd) {
             MI26__TZsFFrameRaw data;
             if (!fread((void*)&data, sizeof data, 1, f)) {
@@ -199,7 +199,7 @@ int main(int, char ** argv) {
       }
       {
         DetectorEvent dev(runnumber, eventnumber, NOTIMESTAMP);
-        counted_ptr<Event> rev(new RawDataEvent(RawDataEvent::EORE("EUDRB", runnumber, eventnumber)));
+        std::shared_ptr<Event> rev(new RawDataEvent(RawDataEvent::EORE("EUDRB", runnumber, eventnumber)));
         dev.AddEvent(rev);
         dev.SetTag("STOPTIME", decodetime(res.StopDate, res.StopTime));
         writer->WriteEvent(dev);

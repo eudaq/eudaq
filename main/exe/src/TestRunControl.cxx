@@ -13,7 +13,7 @@ class TestRunControl : public eudaq::RunControl {
     TestRunControl(const std::string & listenaddress)
       : eudaq::RunControl(listenaddress)
     {}
-    void OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<eudaq::Status> status) {
+    void OnReceive(const eudaq::ConnectionInfo & id, std::shared_ptr<eudaq::Status> status) {
       std::cout << "Receive:    " << *status << " from " << id << std::endl;
     }
     void OnConnect(const eudaq::ConnectionInfo & id) {
