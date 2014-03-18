@@ -12,9 +12,10 @@
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/counted_ptr.hh"
+//#include "eudaq/counted_ptr.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/EudaqThread.hh"
+#include <memory>
 namespace eudaq {
 
   /** Implements the functionality of the File Writer application.
@@ -32,7 +33,7 @@ namespace eudaq {
       virtual void OnConfigure(const Configuration & param);
       virtual void OnPrepareRun(unsigned runnumber);
       virtual void OnStopRun();
-      virtual void OnReceive(const ConnectionInfo & id, counted_ptr<Event> ev);
+      virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev);
       virtual void OnCompleteEvent();
       virtual void OnStatus();
       virtual ~DataCollector();
@@ -40,8 +41,8 @@ namespace eudaq {
       void DataThread();
     private:
       struct Info {
-        counted_ptr<ConnectionInfo> id;
-        std::list<counted_ptr<Event> > events;
+       std::shared_ptr<ConnectionInfo> id;
+        std::list<std::shared_ptr<Event> > events;
       };
 
       void DataHandler(TransportEvent & ev);
@@ -56,7 +57,7 @@ namespace eudaq {
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber;
-      counted_ptr<FileWriter> m_writer;
+      std::shared_ptr<FileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;
   };
