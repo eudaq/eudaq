@@ -9,9 +9,14 @@ if (USE_ROOT)
 endif (USE_ROOT)
 
 AUX_SOURCE_DIRECTORY( src library_sources )
-ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} )
 
-target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} )
+SOURCE_GROUP(plugins .*Plugin.*cc)
+SOURCE_GROUP(FileIO .*File.*cc)
+SOURCE_GROUP(TCPIP .*Transport.*cc)
+SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\CommandReceiver.cc src\\DataCollector.cc src\\DataSender.cc  src\\LogCollector.cc)
+SOURCE_GROUP(Event .*Event.*cc)
+SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 
 INSTALL(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
