@@ -22,12 +22,21 @@ namespace eudaq {
       std::string Get(const std::string & key, const std::string & def) const;
       double Get(const std::string & key, double def) const;
       long long Get(const std::string & key, long long def) const;
+	  unsigned long long Get(const std::string & key,unsigned long long def) const;
+	  template <typename T>
+	  T Get(const std::string &key, T def) const {
+		  return eudaq::from_string(Get(key,to_string(def)),  def);
+	  }
       int Get(const std::string & key, int def) const;
       template <typename T>
         T Get(const std::string & key, const std::string fallback, const T & def) const {
           return Get(key, Get(fallback, def));
         }
-      std::string Get(const std::string & key, const std::string fallback, const char * def) const {
+		std::string Get(const std::string & key, const char * def) const{
+			std::string ret(Get(key,std::string(def)));
+			return ret;
+		}
+      std::string Get(const std::string & key, const std::string fallback, std::string def) const {
         return Get(key, Get(fallback, def));
       }
       //std::string Get(const std::string & key, const std::string & def = "");

@@ -123,8 +123,8 @@ namespace eudaq {
     try {
       std::string s = GetString(key);
 #if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)
-      // Windows doesn't have strtoll, so just use strtol for now
-      return std::strtol(s.c_str(), 0, 0);
+      // Windows doesn't have strtoll, so just use stoll for now
+      return std::stoll(s);
 #else
       return std::strtoll(s.c_str(), 0, 0);
 #endif
@@ -133,6 +133,23 @@ namespace eudaq {
     }
     return def;
   }
+unsigned long long Configuration::Get(const std::string & key, unsigned long long def) const {
+	  try {
+		  std::string s = GetString(key);
+#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)
+		  // Windows doesn't have strtull, so just use stoull for now
+		  return std::stoull(s);
+		  
+#else
+		  return std::strtull(s.c_str(), 0, 0);
+#endif
+	  } catch (const Exception &) {
+		  // ignore: return default
+	  }
+	  return def;
+  }
+
+
 
   int Configuration::Get(const std::string & key, int def) const {
     try {
