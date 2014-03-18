@@ -15,6 +15,7 @@ namespace eudaq{
 
       virtual bool GetStandardSubEvent(eudaq::StandardEvent & result, const eudaq::Event & source) const {
         result.SetTimestamp(source.GetTimestamp());
+		result.SetTag("TLU_trigger",source.GetTag("trigger"));
         return true;
       }
       virtual unsigned GetTriggerID(const eudaq::Event & ev) const {
