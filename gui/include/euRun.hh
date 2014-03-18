@@ -51,16 +51,12 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
     virtual void OnDisconnect(const eudaq::ConnectionInfo & id) {
       m_run.disconnected(id);
     }
-    virtual void OnReceive(const eudaq::ConnectionInfo & id, counted_ptr<eudaq::Status> status);
+    virtual void OnReceive(const eudaq::ConnectionInfo & id, std::shared_ptr<eudaq::Status> status);
     void EmitStatus(const char * name, const std::string & val) {
       if (val == "") return;
       emit StatusChanged(name, val.c_str());
     }
-    void SetState(int state) {
-      btnConfig->setEnabled(state != ST_RUNNING);
-      btnStart->setEnabled(state == ST_READY);
-      btnStop->setEnabled(state == ST_RUNNING);
-    }
+
     void closeEvent(QCloseEvent * event) {
       if (m_run.rowCount() > 0 &&
           QMessageBox::question(this, "Quitting", "Terminate all connections and quit?",
@@ -73,7 +69,14 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
     }
     bool eventFilter(QObject *object, QEvent *event);
     private slots:
-      void on_btnConfig_clicked() {
+
+
+		void SetStateSlot(int state) {
+			btnConfig->setEnabled(state != ST_RUNNING);
+			btnStart->setEnabled(state == ST_READY);
+			btnStop->setEnabled(state == ST_RUNNING);
+		}
+		void on_btnConfig_clicked() {
         std::string settings = cmbConfig->currentText().toStdString();
         Configure(settings, txtGeoID->text().toInt());
         SetState(ST_READY);
@@ -126,8 +129,15 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
         i->second->setText(value);
       }
     }
+	void btnLogSetStatusSlot(bool status){
+
+		 btnLog->setEnabled(status);
+	}
+	
 signals:
     void StatusChanged(const QString &, const QString &);
+	void btnLogSetStatus(bool status);
+	void SetState(int status);
   private:
     RunControlModel m_run;
     RunConnectionDelegate m_delegate;

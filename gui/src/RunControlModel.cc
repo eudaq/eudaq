@@ -3,6 +3,9 @@
 
 #include <vector>
 #include <string>
+#include "qmetatype.h"
+
+
 
 namespace {
   static const char * const g_columns[] = {
@@ -12,6 +15,7 @@ namespace {
     "connection"
   };
 }
+
 
   RunControlConnection::RunControlConnection(const eudaq::ConnectionInfo & id)
 : m_id(id.Clone())
@@ -42,6 +46,9 @@ const char * RunControlConnection::ColumnName(int i) {
 : QAbstractListModel(parent),
   m_sorter(&m_data)
 {
+	
+		qRegisterMetaType<QVector<int>>();
+	
 }
 
 void RunControlModel::newconnection(const eudaq::ConnectionInfo & id) {
@@ -90,6 +97,7 @@ void RunControlModel::UpdateDisplayed() {
     //beginInsertRows(createIndex(0, 0), 0, m_disp.size() - 1);
     //m_disp = disp;
     //endInsertRows();
+
     emit dataChanged(createIndex(0, 0), createIndex(m_data.size() - 1, 0));
   }
 }
