@@ -6,7 +6,7 @@
 #include "eudaq/Logger.hh"
 
 #include <iostream>
-#include "eudaq/MuliFileReader.h"
+#include "eudaq/MultiFileReader.hh"
 
 using namespace eudaq;
 unsigned dbg = 0; 

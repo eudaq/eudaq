@@ -9,6 +9,7 @@
 #include <memory>
 #include "FileReader.hh"
 #include "Platform.hh"
+#include "EventSynchronisationBase.hh"
 
 
 
