@@ -77,31 +77,32 @@ where \texttt{name} is the name to use.
 \subsubsection{TLU permissions}\label{sec:TLUperm}
 If you are not using a TLU, or not running on Linux, you may skip this part.
 
-On Linux, the device file used to communicate over the USB bus is only accessible by the user \texttt{root}.
-In order to get around this, there is a small program included (\texttt{tlunoroot.exe}) that will
-locate this file and change its permissions.
-It is recommended that the owner and permissions of this program be changed so that it can be run by any user,
-by running the following commands as \texttt{root}, from the \texttt{bin} subdirectory:
-\begin{listing}[mybash]
-chown root tlunoroot.exe
-chmod u+s tlunoroot.exe
+On many Linux distributions, the device node used to communicate over the USB bus is only
+accessible by the user \texttt{root} by default.
+
+To have the system set the correct permissions when a \gls{TLU} is
+connected, you need to add a \texttt{udev} rule: as \textrm{root}
+user, create the file \texttt{/etc/udev/rules.d/54-tlu.rules} and add
+the following lines:
+
+\begin{listing}
+# for Red Hat, e.g. SL5
+SYSFS{idVendor}=="165d", SYSFS{idProduct}=="0001", GROUP="NOROOTUSB", MODE="0666"
 \end{listing}
 
-The \texttt{tlunoroot.exe} program can now be run by any user (not just \texttt{root}).
-It should be run each time the machine is rebooted, or the \gls{TLU} is plugged in.
-If you use the \texttt{STARTRUN} script (\autoref{sec:STARTRUN})
-this should happen automatically when you start the DAQ.
+if you are using a Red~Hat-based distribution (such as Scientific
+Linux) or:
 
-It has been observed on some (Linux) machines,
-that even setting the permissions of the USB device file is not enough,
-the \gls{TLU} is still not accessible, resulting in an error like:
-\begin{listing}[]
-Uncaught exception:
-No TLU detected
-Please report this to the developers.
+\begin{listing}
+# for Debian
+ACTION=="add", DRIVERS=="?*",  ATTR{idVendor}=="165d", ATTR{idProduct}=="0001",  MODE="0666"
 \end{listing}
-In this case the only workaround is to run the program
-(e.g. \texttt{TLUControl.exe} or \texttt{TLUProducer.exe}) as root.
+
+in case you are using a debian-based distribution such as Ubuntu.
+
+After replugging the {TLU}, the device should be accessible by
+all users.
+
 
 \subsection{Processes}
 The DAQ system is made up of a number of different processes that may all be run on the same,
@@ -115,7 +116,7 @@ The text-based version can be useful for testing, the executable is \texttt{Test
 
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.6\textwidth]{RunControl}
+    \includegraphics[width=0.6\textwidth]{src/images/RunControl}
     \caption{The Run Control graphical user interface.}
     \label{fig:RunControl}
   \end{center}
@@ -139,7 +140,7 @@ in the DAQ will be collected in one central location.
 
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=\textwidth]{LogCollector}
+    \includegraphics[width=\textwidth]{src/images/LogCollector}
     \caption{The Log Collector graphical user interface.}
     \label{fig:LogCollector}
   \end{center}
@@ -215,69 +216,37 @@ $[./EUDRBProducer.exe]$ -n EUDRB2 -r 192.168.1.1
 If you have a producer for your own hardware (see \autoref{sec:Producers}),
 it should also have an option to set the address of the Run Control.
 
-\subsubsection{RootMonitor}
+\subsubsection{OnlineMon}
 
-\begin{figure}[htb]
-  \begin{center}
-    \includegraphics[width=0.9\textwidth]{RootMonitorConf}
-    \caption{The Root Monitor configuration screen.}
-    \label{fig:RootMonitorConf}
-  \end{center}
-\end{figure}
-
-The RootMonitor reads the data file written by the Data Collector,
+The OnlineMon reads the data file written by the Data Collector,
 and generates several Root histograms that can be useful for online monitoring.
-Since it reads the native data file directly, it must be run on the same machine as the Data Collector.
-
-Although all plots are always generated internally by the Root Monitor,
-you can configure which plots are displayed on screen.
-The \texttt{Conf} tab (see \autoref{fig:RootMonitorConf}) contains four groups:
-\texttt{Settings}, where various parameters of the plots may be configured,
-\texttt{Main Histograms} for selecting which plots to show on the \texttt{Main} tab,
-\texttt{CDS Lego Plots} to select whether to show Lego plots of the per-board CDS profiles,
-and \texttt{Board Displays} to select which plots to display on the per-board tabs.
-After making any changes the \texttt{Apply} button must be pressed for them to take effect.
-\autoref{fig:RootMonitorPlots} shows an example of a per-board display with 2D, x and y cluster profiles,
-cluster charge and number distributions, and a 2D \gls{CDS} profile.
+Since it reads the native data file directly, it must be run on the
+same machine as the Data Collector.
 
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.8\textwidth]{RootMonitorPlots}
-    \caption{The Root Monitor showing some online plots.}
-    \label{fig:RootMonitorPlots}
+    \includegraphics[width=0.8\textwidth]{src/images/OnlineMonCorrelations}
+    \caption{The OnlineMon showing correlation plots between different
+      Mimosa26 planes of the EUDET telescope.}
+    \label{fig:OnlineMonPlots}
   \end{center}
 \end{figure}
 
-Due to the way the Root Monitor is implemented,
-it does not have access to the data file at the time the histograms are booked.
-This is a problem, since depending on what is in the data file,
-the number and parameters of the histograms may vary.
-To work around this, a simple text configuration file is used to specify these parameters.
-It is called \texttt{rootmonitor.conf},
-and is located in the directory from which the RootMonitor is run (usually \texttt{bin}).
-The file should contain one line per sensor in the data file,
-and may also contain comments (lines starting with a \texttt{\#} character).
-Each sensor line has a number of parameters, separated by commas,
-and all apart from the first are optional.
-These are: sensor type, width, height, pedestal file, seed threshold,
-neighbour threshold, cluster threshold, cluster size.
-Where width and height are in pixels, and the thresholds are in ADC units,
-and are used for clustering.
 
-The RootMonitor can be run in one of two modes: online or offline.
+The OnlineMon can be run in one of two modes: online or offline.
 In online mode, it connects to the RunControl, so it will know when new runs are started,
 and it will automatically open each new data file as it is created.
-In offline mode, there is no Run Control,
+In offline mode, there is no RunControl,
 and it only analyses the data file it is given on the command line. 
 An example command line is:
 \begin{listing}[mybash]
-$[./RootMonitor.exe]$ -f 5432
+$[./OnlineMon.exe]$ -f 5432
 \end{listing}
 
 This will run it in offline mode, opening the file corresponding to run 5432
 (alternatively, the full path to a file may be given).
 To run it in online mode, simply omit the \texttt{-f} option,
-then the \texttt{-r} option may be used if the Run Control
+then the \texttt{-r} option may be used if the RunControl
 is running on a different computer or using a non-standard port.
 
 \subsection{Running the DAQ}
@@ -758,7 +727,7 @@ the more usual (and therefore better tested) way is to use the EUTelescope conve
 \subsubsection{ClusterExtractor}
 This program can be used to quickly extract some clusters from raw data.
 It is not as sophisticated as the EUTelescope package, which should be preferred for real analysis,
-but it can be useful for doing quick checks, possibly with the \texttt{Correlator} (see below).
+but it can be useful for doing quick checks.
 It will read a native data file, perform a basic clustering,
 and then write these clusters to one text file per sensor plane.
 The most commonly used options are:
@@ -813,82 +782,6 @@ containing the \texttt{x} and \texttt{y} coordinates of the cluster centre,
 and the total charge in ADC units.
 The cluster lines are prepended with a space to make it easier to scan the file by eye.
 
-\subsubsection{Correlator}
-The \texttt{Corellator.exe} program is used to look for correlation between different sensor planes.
-This can be a useful check that everything is properly aligned and synchronised.
-It uses as input the text files generated by the \texttt{ClusterExtractor} program.
-It can generate a number of plots that are saved to a Root file, and optionally displayed on screen.
-
-\begin{figure}[htb]
-  \begin{center}
-    \includegraphics[width=0.7\textwidth]{correl}
-    \caption{Correlation plots.}
-    \label{fig:Correlation}
-  \end{center}
-\end{figure}
-
-The basic correlation plot (\autoref{fig:Correlation}, top left) consists of looping over every pair of clusters for each given event,
-and plotting the \texttt{x} (or \texttt{y}) coordinate of the first cluster against that of the second.
-For clusters that come from the same track, these coordinates should be correlated,
-giving a straight line on the 2D plot, while other pairs should be uncorrelated,
-giving a more or less flat background.
-The amount of background depends on the multiplicity of clusters;
-with only one cluster per event there is only one possible pair, and no background.
-As the multiplicity increases, so will the background.
-
-The Radon plot (\autoref{fig:Correlation}, top right) is a transformation of the basic plot,
-into a space where each point represents a straight line in the original plot,
-with the x-axis representing the angle, and the y-axis the offset from the centre.
-There should be a peak at the point representing the correlation line of the first plot
-(see zoomed area).
-
-Given the relative pitch of both sensors, the angle of the correlation line is known
-(e.g. it will have a gradient of 1, or angle of 45\degree, if both sensors have the same pitch).
-Therefore there is no need to calculate the full Radon transform,
-but just a slice at the correct angle,
-which is what is done in the third plot.
-We can see it gives a relatively flat background level,
-with a very sharp peak at a particular offset
-that depends on the relative alignment of the two sensors.
-
-The most used parameters for running the program are:
-\begin{description}
-\ttitem{-x\textit{N} / -y\textit{N} \param{pixels}}
-Sets the width (x) or height(y) of the sensors, where \texttt{N}
-is 1 for the first and 2 for the second sensor.
-The second sensor only needs to be specified if it differs in dimension from the first.
-The sizes are needed since the text files do not contain the sensor dimensions,
-and the dimensions are needed when booking the histograms.
-
-\ttitem{-p\textit{N} \param{size}}
-Sets the pitch of the two sensors.
-This is only needed for the 1D slice of the Radon plot (\texttt{-t} option).
-
-\ttitem{-l \param{clusters}}
-Limit to events with fewer than a certain number of clusters,
-in order to reduce the background.
-
-\ttitem{-r}
-Generate a Radon transform of the correlation plot.
-
-\ttitem{-t}
-Generate a 1D slice of the radon transform at the angle corresponding
-to the ratio of the pitches of the two sensors.
-
-\ttitem{-d}
-Display the generated plots on screen, as well as saving them to file.
-
-\end{description}
-
-An example usage is:
-\begin{listing}[mybash]
-$[./Correlator.exe]$ -x1 1152 -y1 576 -t -d run5432_eutel_1.txt run5432_eutel_2.txt
-\end{listing}
-
-This sets the sensor dimensions to 1152\x576 pixels,
-generates the 1D Radon slice (but not the full Radon plot),
-using two text files generated by the \texttt{ClusterExtractor} as input,
-and displays the generated plots on screen.
 
 \subsubsection{MagicLogBook}
 This program is designed to extract as much information as possible from data files and log files,
@@ -1010,6 +903,34 @@ and \texttt{Efw} should be \texttt{EUDRBfw}.
 The columns \texttt{Mode}, \texttt{Det} and \texttt{EUDRBfw} are missing from the output
 due to the fact that this information is now stored in a \texttt{RawDataEvent},
 which is not currently accessible with this version of the program.
+
+\subsubsection{FileChecker}
+
+This is a small utility that reads raw data files and checks if all events are
+readable, can be syncronised using the TLU trigger id and lists which type
+of subevents the file contains.
+
+It should be called with list of file paths or run numbers. For any argument
+that consist only of numerical digits the file path is constructed by
+substituting \texttt{\$6R} in the input pattern (defaults to
+``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
+
+For example:
+\begin{listing}[mybash]
+$[./FileChecker.exe]$ {6045..6050}
+\end{listing}
+
+This would produce the following output.
+\begin{listing}[]
+run     valid  num_events  contains                   errors                    
+------  -----  ----------  -------------------------  ----------------------
+  6045   true       13131  MUPIX4,NI,TLU                                        
+  6046   true           1  MUPIX4,NI,TLU                                        
+  6047   true       14674  MUPIX4,NI,TLU                                        
+  6048   true        7776  MUPIX4,NI,TLU                                        
+  6049  false           0                             no events in the file.    
+  6050  false          -1                             read error. 
+\end{listing}
 
 \subsubsection{Others}
 Some programs that are less used (or recently added)

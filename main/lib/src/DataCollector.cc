@@ -193,7 +193,14 @@ namespace eudaq {
         EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
       }
       if (m_writer.get()) {
-        m_writer->WriteEvent(ev);
+	try{
+	  m_writer->WriteEvent(ev);
+	}
+	catch(const Exception & e){
+	  std::string msg = "Exception writing to file: "; msg+= e.what();
+	  EUDAQ_ERROR(msg);
+	  SetStatus(Status::LVL_ERROR, msg);
+	}
       } else {
         EUDAQ_ERROR("Event received before start of run");
       }

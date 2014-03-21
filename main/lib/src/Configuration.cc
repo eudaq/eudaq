@@ -55,8 +55,8 @@ namespace eudaq {
     section_t * cur_sec = &config[""];
     for (;;) {
       std::string line;
-      std::getline(stream, line);
       if (stream.eof()) break;
+      std::getline(stream, line);
       size_t equals = line.find('=');
       if (equals == std::string::npos) {
         line = trim(line);
@@ -143,6 +143,13 @@ namespace eudaq {
     }
     return def;
   }
+
+  void Configuration::Print(){
+      for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
+      std::cout << it->first << " : " << it->second << std::endl;
+    }
+  }
+
 
   std::string Configuration::GetString(const std::string & key) const {
     section_t::const_iterator i = m_cur->find(key);

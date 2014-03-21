@@ -5,12 +5,22 @@
 #  W32PTHREADS_LIBRARIES - The libraries needed to use pthreads-w32
 #  W32PTHREADS_DEFINITIONS - Compiler switches required for using pthreads-w32
 
+# find path of libusb installation in ./extern folder
+file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*pthread.h)
+if (extern_file)
+    # strip the file and 'include' path away:
+    get_filename_component(extern_lib_path "${extern_file}" PATH)
+    get_filename_component(extern_lib_path "${extern_lib_path}" PATH)
+    MESSAGE(STATUS "Found pthreads package in 'extern' subfolder: ${extern_lib_path}")
+endif(extern_file)
+
+
   find_path(W32PTHREADS_INCLUDE_DIR pthread.h
     HINTS 
     "${W32PTHREADS}/include" 
     "$ENV{W32PTHREADS}/include"
     "c:/pthreads-w32/include"
-    "${PROJECT_SOURCE_DIR}/extern/pthreads-w32/include"
+    "${extern_lib_path}/include"
     )
 
 if (${EX_PLATFORM} EQUAL 64)
@@ -32,7 +42,7 @@ find_library(W32PTHREADS_LIBRARY NAMES ${libname}
   "${W32PTHREADS}/lib/${EX_PLATFORM_NAME}" 
   "$ENV{W32PTHREADS}/lib/${EX_PLATFORM_NAME}"
   "c:/pthreads-w32/lib/${EX_PLATFORM_NAME}"
-  "${PROJECT_SOURCE_DIR}/extern/pthreads-w32/lib/${EX_PLATFORM_NAME}"
+  "${extern_lib_path}/lib/${EX_PLATFORM_NAME}"
   )
 
 set(W32PTHREADS_LIBRARIES ${W32PTHREADS_LIBRARY} )

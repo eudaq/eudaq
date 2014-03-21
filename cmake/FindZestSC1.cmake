@@ -6,34 +6,59 @@
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
 macro(find_zestsc1_in_extern arg)
+# determine path to zestsc1 package in ./extern folder
+file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h)
+if (extern_file)
+  # should have found multiple files of that name, take root of folder (no 'windows*7/inc' string)
+  FOREACH (this_file ${extern_file})
+  	  IF(NOT "${this_file}" MATCHES ".*windows.?7/Inc/")
+	        SET(zest_inc_path "${this_file}")
+	  ENDIF()
+  ENDFOREACH(this_file)
+  IF (zest_inc_path)
+    # strip the file and 'Inc' path away:
+    get_filename_component(extern_lib_path "${zest_inc_path}" PATH)
+    get_filename_component(extern_lib_path "${extern_lib_path}" PATH)
+    MESSAGE(STATUS "Found ZestSC1 package in 'extern' subfolder: ${extern_lib_path}")
+  ENDIF()
+endif(extern_file)
+
 IF(WIN32)
  find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
-    HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Inc ${arg})
+    HINTS "${extern_lib_path}/windows_7/Inc"
+          "${extern_lib_path}/windows 7/Inc"
+    ${arg}
+	  )
 ELSE(WIN32)
   find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
-    HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/Inc ${arg})
+    HINTS "${extern_lib_path}/Inc" ${arg})
 ENDIF(WIN32)
 
 if (WIN32) 
   if (${EX_PLATFORM} EQUAL 64)
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/amd64 ${arg})
+      HINTS "${extern_lib_path}/windows_7/Lib/amd64"
+      	    "${extern_lib_path}/windows 7/Lib/amd64"
+      ${arg}
+      )
   else() #32bit
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/windows_7/Lib/x86 ${arg})
+      HINTS "${extern_lib_path}/windows_7/Lib/x86"
+      	    "${extern_lib_path}/windows 7/Lib/x86"
+      ${arg})
   endif(${EX_PLATFORM} EQUAL 64)
   elseif (UNIX)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/macosx/Lib ${arg})
+	HINTS "${extern_lib_path}/macosx/Lib" ${arg})
     else()
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/linux/Lib ${arg})
+	HINTS "${extern_lib_path}/linux/Lib" ${arg})
     endif()
   else()
     MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-      HINTS ${PROJECT_SOURCE_DIR}/extern/ZestSC1/linux ${arg})
+      HINTS "${extern_lib_path}/linux" ${arg})
   endif()
 endmacro()
 

@@ -25,18 +25,27 @@ IF(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
 
 IF(NOT LIBUSB_FOUND)
+# find path of libusb installation in ./extern folder
+file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*usb.h)
+if (extern_file)
+    # strip the file and 'include' path away:
+    get_filename_component(extern_lib_path "${extern_file}" PATH)
+    get_filename_component(extern_lib_path "${extern_lib_path}" PATH)
+    MESSAGE(STATUS "Found libusb package in 'extern' subfolder: ${extern_lib_path}")
+endif(extern_file)
+
 IF(MSVC)
   # for this version you need to have installed the lib usb driver to your system
   # Windows with Microsoft Visual C++ 
   FIND_PATH(LIBUSB_INCLUDE_DIRS 
     NAMES usb.h lusb0_usb.h 
-    PATHS "$ENV{ProgramFiles}/LibUSB-Win32/include" "${PROJECT_SOURCE_DIR}/extern/libusb-w32/include" "${PROJECT_SOURCE_DIR}/extern/libusb-win32/include")
+    PATHS "$ENV{ProgramFiles}/LibUSB-Win32/include" "${extern_lib_path}/include")
   if (${EX_PLATFORM} EQUAL 64)
     # on x64 (win64)
-    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc_x64" "${PROJECT_SOURCE_DIR}/extern/libusb-w32/msvc_x64" "${PROJECT_SOURCE_DIR}/extern/libusb-win32/msvc_x64")
+    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc_x64" "${extern_lib_path}/lib/msvc_x64")
   ELSE(${EX_PLATFORM} EQUAL 64)
     # on x86 (win32)
-    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc" "${PROJECT_SOURCE_DIR}/extern/libusb-w32/msvc" "${PROJECT_SOURCE_DIR}/extern/libusb-win32/msvc")
+    FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc" "${extern_lib_path}/lib/msvc")
   ENDIF(${EX_PLATFORM} EQUAL 64)
 ELSE(MSVC)
   # If not MS Visual Studio we use PkgConfig
