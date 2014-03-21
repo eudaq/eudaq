@@ -16,7 +16,6 @@ namespace {
   };
 }
 
-
   RunControlConnection::RunControlConnection(const eudaq::ConnectionInfo & id)
 : m_id(id.Clone())
 {}
@@ -46,8 +45,6 @@ const char * RunControlConnection::ColumnName(int i) {
 : QAbstractListModel(parent),
   m_sorter(&m_data)
 {
-	
-		qRegisterMetaType<QVector<int>>();
 	
 }
 
