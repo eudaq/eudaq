@@ -1,4 +1,4 @@
-#include "eudaq\EventSynchronisationBase.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 
 #include "eudaq/Event.hh"
 
