@@ -141,7 +141,7 @@ unsigned long long Configuration::Get(const std::string & key, unsigned long lon
 		  return std::stoull(s);
 		  
 #else
-		  return std::strtull(s.c_str(), 0, 0);
+		  return std::strtoull(s.c_str(), 0, 0);
 #endif
 	  } catch (const Exception &) {
 		  // ignore: return default
