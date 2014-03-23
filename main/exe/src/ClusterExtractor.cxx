@@ -2,7 +2,6 @@
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/FileReader.hh"
 #include "eudaq/OptionParser.hh"
-//#include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 
 #include <iostream>
