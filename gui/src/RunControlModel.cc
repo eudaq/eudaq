@@ -45,11 +45,7 @@ const char * RunControlConnection::ColumnName(int i) {
   RunControlModel::RunControlModel(QObject *parent)
 : QAbstractListModel(parent),
   m_sorter(&m_data)
-{
-	
-		qRegisterMetaType<QVector<int>>();
-	
-}
+{}
 
 void RunControlModel::newconnection(const eudaq::ConnectionInfo & id) {
   for (size_t i = 0; i < m_data.size(); ++i) {
