@@ -20,14 +20,33 @@ while True:
         break
 
 prc.Configure("ExampleConfig")
+sleep(2) # wait for a couple of seconds so that the connections can receive the config
+
 i = 0
-maxwait = 10
-while i<maxwait:
-    sleep(.5)
-    print "Waiting for configure",i,"/",maxwait,", Number of active connections: ", prc.NumConnections()
+maxwait = 100
+waittime = .5
+while i<maxwait and not prc.AllOk():
+    sleep(waittime)
+    print "Waiting for configure for ",i*waittime," seconds, number of active connections: ", prc.NumConnections()
     i+=1
+if prc.AllOk:
+    print "Successfullly configured!"
+else:
+    print "Not all connections returned 'OK' after ",maxwait*waittime," seconds!"
+    abort()
 prc.StartRun()
-sleep(10)
+
+i = 0
+while i<maxwait and not prc.AllOk():
+    sleep(waittime)
+    print "Waiting for run start for ",i*waittime," seconds, number of active connections: ", prc.NumConnections()
+    i+=1
+if prc.AllOk:
+    print "Successfullly started run!"
+else:
+    print "Not all connections returned 'OK' after ",maxwait*waittime," seconds!"
+    abort()
+
 while True:
     sleep(.1)
     pp.RandomEvent(500)

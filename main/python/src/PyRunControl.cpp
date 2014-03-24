@@ -17,6 +17,16 @@ class PyRunControl : public eudaq::RunControl {
     void OnDisconnect(const eudaq::ConnectionInfo & id) {
       std::cout << "Disconnect: " << id << std::endl;
     }
+  bool AllOk(){
+    bool ok = true;
+    for (size_t i = 0; i < m_cmdserver->NumConnections(); ++i) {
+      if (m_cmdserver->GetConnection(i).GetState() != 2) {
+	ok = false;
+	break;
+      }
+    }
+    return ok;
+  }
 };
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
@@ -27,4 +37,5 @@ extern "C" {
   void PyRunControl_StopRun(PyRunControl *prc){prc->StopRun();}
   void PyRunControl_Configure(PyRunControl *prc, char *cfg){prc->Configure(std::string(cfg));}
   size_t PyRunControl_NumConnections(PyRunControl *prc){return prc->NumConnections();}
+  bool PyRunControl_AllOk(PyRunControl *prc){return prc->AllOk();}
 }

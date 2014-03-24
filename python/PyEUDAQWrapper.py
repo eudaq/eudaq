@@ -6,6 +6,9 @@ libext = '.so'
 if sys.platform.startswith('darwin'):
     # OSX-specific library extension
     libext = '.dylib'
+elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
+    # Windows-specific library extension
+    libext = '.dll'
 lib = cdll.LoadLibrary(libpath+libext)
 
 class PyRunControl(object):
@@ -28,6 +31,9 @@ class PyRunControl(object):
     def NumConnections(self):
         return lib.PyRunControl_NumConnections(c_void_p(self.obj))
 
+    def AllOk(self):
+        return lib.PyRunControl_AllOk(c_void_p(self.obj))
+
 
 class PyProducer(object):
     def __init__(self,rcaddr, addr):
@@ -39,6 +45,14 @@ class PyProducer(object):
 
     def RandomEvent(self,size):
         lib.PyProducer_RandomEvent(c_void_p(self.obj),c_uint(size))
+
+    def GetConfigParameter(self, item):
+        return lib.PyProducer_GetConfigParameter(c_void_p(self.obj),create_string_buffer(item))
+
+    def Configuring(self):
+        return lib.PyProducer_Configuring(c_void_p(self.obj))
+
+
 
 class PyDataCollector(object):
     def __init__(self,rcaddr, addr):
