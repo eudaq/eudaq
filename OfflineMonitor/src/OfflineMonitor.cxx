@@ -20,7 +20,7 @@ int main(int, char ** argv) {
   eudaq::OptionParser op("EUDAQ File Converter", "1.0", "", 1);
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<std::string> opat(op, "o", "outpattern", "test$6R$X", "string", "Output filename pattern");
-  eudaq::Option<std::string> confFile(op, "c", "confFile", "..\\conf\\configuration.xml", "string", "load the file that contains all the information about the correlations plots");
+  eudaq::Option<std::string> confFile(op, "c", "confFile", "../conf/offlinemonconf.xml", "string", "load the file that contains all the information about the correlations plots");
   eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
   eudaq::Option<size_t> syncEvents(op, "n" ,"syncevents",0,"size_t","Number of events that need to be synchronous before they are used");
   eudaq::Option<long> syncDelay(op, "d" ,"longDelay",20,"unsigned long long","us time long time delay");
