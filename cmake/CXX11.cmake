@@ -19,6 +19,10 @@
 # THE SOFTWARE.
 
 # Determines whether or not the compiler supports C++11
+# some information on the C++11 compatability of the various compilers:
+# Clang: http://clang.llvm.org/cxx_status.html
+# GCC: http://gcc.gnu.org/projects/cxx0x.html
+# MSVC: http://msdn.microsoft.com/en-us/en-us/library/hh567368.aspx
 macro(check_for_cxx11_compiler _VAR)
     message(STATUS "Checking for C++11 compiler")
     set(${_VAR})

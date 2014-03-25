@@ -1,7 +1,7 @@
 #include <iostream>
 #include <ostream>
 #include <cctype>
-//#include <csignal>
+
 
 #include "eudaq/Utils.hh"
 #include "eudaq/LogCollector.hh"

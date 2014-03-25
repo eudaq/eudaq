@@ -1,32 +1,46 @@
 eudaq
 =====
 
-eudaq Multi-platform Data Acquisition Framework main repository
+A Multi-platform Data Acquisition Framework
 
-A user manual is provided as LaTeX source files in the repository; to generate the pdf, follow these steps:
+### First steps
+
+Please check out the online documentation at http://eudaq.github.io/
+
+### Other sources of documentation
+
+The user's manual is provided as LaTeX source files in the repository; to generate the pdf, follow these steps:
 ```
 cd build
 cmake -DBUILD_manual=ON ..
-make install
+make pdf
 ```
 The manual can then be found in ```./doc/manual/EUDAQUserManual.pdf```.
 
-1. Prerequisites
-----------------
+To generate the doxygen documentation, make sure that you have installed doxygen and run
+```
+make doxygen
+```
+in the ```build``` directory after CMake. The resulting HTML files are stored in ```../doc/doxygen/html```.
+
+1. Prerequisites for installation
+---------------------------------
 
 1.1. Main Library, Executables and GUI
 --------------------------------------
+EUDAQ requires a C++11 compliant compiler such as GCC (4.6 and later),
+Clang (at least version 3.1), or MSVC (Visual Studio 2012 and later).
 
-1.1.1 Linux
+### Linux
 ------------------
 - Install Qt4 or later, e.g. by using the package manager of your distribution: ```apt-get install qt4-devel```
 
-1.1.2 OS X
+### OS X
 ------------------
 - Install Qt4 or later, e.g. by using MacPorts (http://www.macports.org/): ```sudo port install qt4-mac-devel```
 
 
-1.1.3 Windows
+### Windows
 ------------------
 - Download and install Qt4 or later
 - Download and install the pthreads library for Windows
@@ -36,14 +50,14 @@ For full description on how to set up the development environment for Windows, s
 1.2. Specific Producers and Components
 --------------------------------------
 
-1.2.1 TLU producer
+### TLU producer
 ------------------
 - (Windows) install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki) into ./extern/libusb-w32
 - (Linux) install libusb development package, e.g. ```apt-get install libusb-dev```
 - install ZestSC1 driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
 - install firmware bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
 
-1.2.2 Online Monitor
+### Online Monitor
 --------------------
 - requires ROOT (download from http://root.cern.ch/drupal/content/downloading-root)
 - (Windows) Make sure that you have installed the corresponding version of MSVC with which your downloaded ROOT binaries have been compiled!

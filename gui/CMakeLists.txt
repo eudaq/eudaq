@@ -55,7 +55,7 @@ endif()
 IF (NOT Qt5Gui_DIR AND NOT QT4_FOUND)
   MESSAGE(WARNING "Neither Qt4 nor Qt5 were not found, will not build gui applications!")
 ELSE()
-  message(STATUS "Found Qt, will build GUI executables")
+  message(STATUS "Found Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}, will build GUI executables")
   # this will run uic on .ui files:
   QT_WRAP_UI(euRun_UISrcs ui/euRun.ui)
   QT_WRAP_UI(euProd_UISrcs ui/euProd.ui)
@@ -77,9 +77,9 @@ ELSE()
   ADD_EXECUTABLE(euLog.exe src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
 
   # last thing we have to do is to tell CMake what libraries our executable needs
-  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
-  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
-  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries})
+  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
 
   # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
   IF(WIN32) # Check if we are on Windows

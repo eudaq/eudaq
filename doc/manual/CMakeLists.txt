@@ -27,5 +27,9 @@ ADD_LATEX_DOCUMENT(
   DEFAULT_PDF
   )
 
+# overwrite the version info tex file with information from CMake/git
+CONFIGURE_FILE("${PROJECT_SOURCE_DIR}/cmake/version.cmake.tex" 
+  "${CMAKE_CURRENT_BINARY_DIR}/src/version.tex" @ONLY)
+
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/EUDAQUserManual.pdf
   DESTINATION doc/manual)
