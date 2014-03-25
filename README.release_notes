@@ -11,6 +11,12 @@ Changelog and Versions
 ** New Tools
 *** FileChecker
     a small utility to check raw data files (see manual for a description)
+*** OfflineMonitor
+** Notes on updating
+*** EUDAQ now requires a compiler which fully implements C++11
+    - GCC version > 4.6
+    - Clang version > 3.1
+    - MSVC12 or later
 * Version 1.2
 ** CMake build system
    - Multiplatform build system

@@ -1,15 +1,14 @@
 # Determine platform- and compiler-specific settings
 
 # check for and activate c++11 support
-option(USE_CXX11 "Enable C++11 if available?" OFF)
-if (USE_CXX11)
-   include(${PROJECT_SOURCE_DIR}/cmake/CXX11.cmake)
-   check_for_cxx11_compiler(CXX11_COMPILER)
-   if(CXX11_COMPILER)
-	 enable_cxx11()
-    	 ADD_DEFINITIONS("-DCPP11=1")
-   endif(CXX11_COMPILER)
-endif(USE_CXX11)
+include(${PROJECT_SOURCE_DIR}/cmake/CXX11.cmake)
+check_for_cxx11_compiler(CXX11_COMPILER)
+if(CXX11_COMPILER)
+  enable_cxx11()
+  ADD_DEFINITIONS("-DCPP11=1")
+else(CXX11_COMPILER)
+  MESSAGE(SEND_ERROR "Compiler is not compatible with C++11. Please use a fully C++11 compliant compiler -- see the EUDAQ documentation for more information.")
+endif(CXX11_COMPILER)
 
 # platform dependent preprocessor defines
 if (WIN32)
@@ -27,7 +26,7 @@ elseif (UNIX)
     ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_LINUX")
   endif()
 else()
-  MESSAGE( "WARNING: Platform not defined in CMakeLists.txt -- assuming Unix/Linux (good luck)." )
+  MESSAGE(WARNING "WARNING: Platform not defined in CMakeLists.txt -- assuming Unix/Linux (good luck)." )
   ADD_DEFINITIONS("-DEUDAQ_PLATFORM=PF_LINUX")
 endif()
 

@@ -55,7 +55,7 @@ endif()
 IF (NOT Qt5Gui_DIR AND NOT QT4_FOUND)
   MESSAGE(WARNING "Neither Qt4 nor Qt5 were not found, will not build gui applications!")
 ELSE()
-  message(STATUS "Found Qt, will build GUI executables")
+  message(STATUS "Found Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}, will build GUI executables")
   # this will run uic on .ui files:
   QT_WRAP_UI(euRun_UISrcs ui/euRun.ui)
   QT_WRAP_UI(euProd_UISrcs ui/euProd.ui)

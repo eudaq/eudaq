@@ -28,6 +28,8 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 
 1.1. Main Library, Executables and GUI
 --------------------------------------
+EUDAQ requires a C++11 compliant compiler such as GCC (4.6 and later),
+Clang (at least version 3.1), or MSVC (Visual Studio 2012 and later).
 
 ### Linux
 ------------------

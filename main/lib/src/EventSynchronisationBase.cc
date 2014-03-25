@@ -1,4 +1,4 @@
-#include "eudaq\EventSynchronisationBase.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 
 #include "eudaq/Event.hh"
 
@@ -71,7 +71,7 @@ void SyncBase::addBOREEvent(int fileIndex, const eudaq::DetectorEvent& BOREvent 
 bool SyncBase::Event_Queue_Is_Empty()
 {
 	
-	for (auto& q=m_ProducerEventQueue.begin();q!=m_ProducerEventQueue.end();++q)
+	for (auto q=m_ProducerEventQueue.begin();q!=m_ProducerEventQueue.end();++q)
 	{
 		if (q->empty())
 		{
