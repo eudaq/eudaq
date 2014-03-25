@@ -2,6 +2,7 @@
 #include "eudaq/RawDataEvent.hh"
 
 #include <ostream>
+#include <memory>
 
 namespace eudaq {
 
@@ -14,12 +15,12 @@ namespace eudaq {
     ds.read(n);
     //std::cout << "Num=" << n << std::endl;
     for (size_t i = 0; i < n; ++i) {
-      counted_ptr<Event> ev(EventFactory::Create(ds));
+      std::shared_ptr<Event> ev(EventFactory::Create(ds));
       m_events.push_back(ev);
     }
   }
 
-  void DetectorEvent::AddEvent(counted_ptr<Event> evt) {
+  void DetectorEvent::AddEvent(std::shared_ptr<Event>& evt) {
     if (!evt.get()) EUDAQ_THROW("Adding null event!");
     m_events.push_back(evt);
     SetFlags(evt->GetFlags());

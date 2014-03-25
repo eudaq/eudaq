@@ -53,7 +53,7 @@ namespace eudaq {
   void DataCollector::OnConnect(const ConnectionInfo & id) {
     EUDAQ_INFO("Connection from " + to_string(id));
     Info info;
-    info.id = counted_ptr<ConnectionInfo>(id.Clone());
+    info.id = std::shared_ptr<ConnectionInfo>(id.Clone());
     m_buffer.push_back(info);
     if (id.GetType() == "Producer" && id.GetName() == "TLU") {
       m_itlu = m_buffer.size() - 1;
@@ -74,7 +74,7 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
-    m_writer = FileWriterFactory::Create(m_config.Get("FileType", ""));
+    m_writer =  std::shared_ptr<eudaq::FileWriter>(FileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
@@ -113,7 +113,7 @@ namespace eudaq {
     //m_ser = counted_ptr<FileSerializer>();
   }
 
-  void DataCollector::OnReceive(const ConnectionInfo & id, counted_ptr<Event> ev) {
+  void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev) {
     //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
     Info & inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
@@ -279,7 +279,7 @@ namespace eudaq {
           //std::cout << ")" << std::endl;
           BufferSerializer ser(ev.packet.begin(), ev.packet.end());
           //std::cout << "Deserializing" << std::endl;
-          counted_ptr<Event> event(EventFactory::Create(ser));
+          std::shared_ptr<Event> event(EventFactory::Create(ser));
           //std::cout << "Done" << std::endl;
           OnReceive(ev.id, event);
           //std::cout << "End" << std::endl;

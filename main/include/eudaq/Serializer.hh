@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include "eudaq/Serializable.hh"
-#include "eudaq/counted_ptr.hh"
+//#include "eudaq/counted_ptr.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Platform.hh"

@@ -26,12 +26,17 @@ namespace eudaq {
        */
       void RegisterPlugin(DataConverterPlugin * plugin);
 
-      /** Get the instance of the plugin manager. As this is a songleton class with
-       *  private constructor and copy constructor, this is the only way to acces it.
+      /** Get the instance of the plugin manager. As this is a singleton class with
+       *  private constructor and copy constructor, this is the only way to access it.
        */
       static PluginManager & GetInstance();
 
       static unsigned GetTriggerID(const Event &);
+
+	  static int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu);
+	  static t_eventid getEventId( eudaq::Event const & ev);
+
+	  static void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu);
       static void Initialize(const DetectorEvent &);
       static lcio::LCRunHeader * GetLCRunHeader(const DetectorEvent &);
       static StandardEvent ConvertToStandard(const DetectorEvent &);

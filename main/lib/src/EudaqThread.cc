@@ -30,7 +30,7 @@ eudaq::eudaqThread::~eudaqThread()
 {
 	if (m_impl!=nullptr)
 	{
-		m_impl->t1.join();
+
 		delete m_impl;
 		m_impl=nullptr;
 	}
@@ -90,7 +90,11 @@ namespace eudaq {
 
 	eudaq::eudaqThread::~eudaqThread()
 	{
-		join();
+		if (joinable())
+		{
+			join();
+		}
+		
 
 	}
 
