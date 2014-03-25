@@ -1,8 +1,9 @@
 #include "eudaq/TransportBase.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/counted_ptr.hh"
+//#include "eudaq/counted_ptr.hh"
 #include <QAbstractListModel>
 #include <vector>
+#include <memory>
 
 class RunControlConnection {
   public:
@@ -17,7 +18,7 @@ class RunControlConnection {
     const eudaq::ConnectionInfo & GetId() const { return *m_id; }
     void SetStatus(const eudaq::Status & status) { m_status = status; }
   private:
-    counted_ptr<eudaq::ConnectionInfo> m_id;
+    std::shared_ptr<eudaq::ConnectionInfo> m_id;
     eudaq::Status m_status;
 };
 

@@ -73,7 +73,7 @@ class RunInfo {
         m_out << std::endl;
       }
     void Process(const std::string & fname) {
-      m_des = new eudaq::FileDeserializer(fname, true);
+      m_des = std::make_shared<eudaq::FileDeserializer>(fname, true);
       //std::cerr << "Processing " << fname << std::endl;
       try {
         m_bore = NextEvent();
@@ -128,7 +128,7 @@ class RunInfo {
       }
     }
     std::string GetConfig(const std::string & str) {
-      if (!m_config) m_config = new eudaq::Configuration(m_bore->GetTag("CONFIG"));
+      if (!m_config) m_config = std::make_shared<eudaq::Configuration>(m_bore->GetTag("CONFIG"));
       std::string section, name, fallback, def;
       size_t i = str.find(':');
       if (i != std::string::npos) {
@@ -160,7 +160,7 @@ class RunInfo {
     }
     std::string GetLog(const std::string & /*param*/) {
       if (!m_log) {
-        m_log = new std::vector<eudaq::LogMessage>();
+        m_log = std::make_shared<std::vector<eudaq::LogMessage>>();
       }
       EUDAQ_THROW("Not yet implemented");
     }
@@ -188,7 +188,7 @@ class RunInfo {
     void GetEORE() {
       try {
         for (;;) {
-          counted_ptr<DetectorEvent> dev = NextEvent();
+          std::shared_ptr<DetectorEvent> dev = NextEvent();
           if (dev->IsEORE()) {
             m_eore = dev;
             break;
@@ -224,24 +224,24 @@ class RunInfo {
       if (result == "") return def;
       return result;
     }
-    counted_ptr<DetectorEvent> NextEvent() {
+    std::shared_ptr<DetectorEvent> NextEvent() {
       Event * ev = eudaq::EventFactory::Create(*m_des);
       DetectorEvent * dev = dynamic_cast<DetectorEvent *>(ev);
       if (!dev) {
         delete ev;
         EUDAQ_THROW("Bad data file");
       }
-      return counted_ptr<DetectorEvent>(dev);
+      return std::shared_ptr<DetectorEvent>(dev);
     }
     std::vector<std::string> m_fields;
     std::string m_sep;
     std::ofstream * m_file;
     std::ostream & m_out;
-    counted_ptr<eudaq::FileDeserializer> m_des;
-    counted_ptr<DetectorEvent> m_bore, m_eore;
-    counted_ptr<eudaq::Configuration> m_config;
+    std::shared_ptr<eudaq::FileDeserializer> m_des;
+    std::shared_ptr<DetectorEvent> m_bore, m_eore;
+    std::shared_ptr<eudaq::Configuration> m_config;
     //  counted_ptr<eudaq::EUDRBDecoder> m_dec;
-    counted_ptr<std::vector<eudaq::LogMessage> > m_log;
+    std::shared_ptr<std::vector<eudaq::LogMessage> > m_log;
     int m_events;
 };
 

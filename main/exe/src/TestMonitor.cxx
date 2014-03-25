@@ -11,7 +11,7 @@ class TestMonitor : public eudaq::Monitor {
       : eudaq::Monitor("Test", runcontrol, 0, 0, 0, datafile), done(false)
     {
     }
-    virtual void OnEvent(counted_ptr<eudaq::DetectorEvent> ev) {
+    virtual void OnEvent(std::shared_ptr<eudaq::DetectorEvent> ev) {
       std::cout << *ev << std::endl;
       for (size_t i = 0; i < ev->NumEvents(); ++i) {
         if (eudaq::EUDRBEvent * rev = dynamic_cast<eudaq::EUDRBEvent *>(ev->GetEvent(i))) {
@@ -19,7 +19,7 @@ class TestMonitor : public eudaq::Monitor {
         }
       }
     }
-    virtual void OnBadEvent(counted_ptr<eudaq::Event> ev) {
+    virtual void OnBadEvent(std::shared_ptr<eudaq::Event> ev) {
       EUDAQ_ERROR("Bad event type found in data file");
       std::cout << "Bad Event: " << *ev << std::endl;
     }

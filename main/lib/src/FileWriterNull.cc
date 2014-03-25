@@ -1,4 +1,5 @@
 #include "eudaq/FileWriter.hh"
+#include "eudaq/PluginManager.hh"
 
 namespace eudaq {
 
@@ -6,7 +7,11 @@ namespace eudaq {
     public:
       FileWriterNull(const std::string &) {}
       virtual void StartRun(unsigned) {}
-      virtual void WriteEvent(const DetectorEvent &) {}
+	  virtual void WriteEvent(const DetectorEvent &devent) {	 
+		  if (devent.IsBORE()) {
+		  eudaq::PluginManager::Initialize(devent);
+		  }
+	  } 
       virtual unsigned long long FileBytes() const { return 0; }
   };
 
