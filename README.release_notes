@@ -9,9 +9,9 @@ Changelog and Versions
 ** Changes to existing Producers/converters:
    - updated APIX FEI4 converter
 ** New Tools
-*** FileChecker
+*** FileChecker (by Moritz Kiehn)
     a small utility to check raw data files (see manual for a description)
-*** OfflineMonitor
+*** OfflineMonitor (by Richard Peschke)
 ** Notes on updating
 *** EUDAQ now requires a compiler which fully implements C++11
     - GCC version > 4.6
