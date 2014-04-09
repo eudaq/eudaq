@@ -227,11 +227,12 @@ namespace tlu {
     return GetI2CRX();
   }
 
-  unsigned TLUController::GetScaler(unsigned i) const {
+  unsigned miniTLUController::GetScaler(unsigned i) const {
     if (i >= (unsigned)TLU_TRIGGER_INPUTS) EUDAQ_THROW("Scaler number out of range");
-    m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
+    //m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
 
     //return m_scalers[i];
+    return 0;
   }
 
   void miniTLUController::SetDACValue(unsigned char channel, uint32_t value) {
