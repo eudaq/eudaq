@@ -40,13 +40,34 @@ public:
 	//	std::cout << "Executing main loop" << std::endl;
 	m_tlu->CheckEventFIFO();
 	m_tlu->ReadEventFIFO();
-	for (int i = 0; i < m_tlu->GetNEvent(); i++) {
+	for (int i = 0; i < m_tlu->GetNEvent();) {
+	  /*
 	  uint64_t word = m_tlu->GetEvent(i);
+	  //	  std::cout << "Word " << i << " : " << word << std::endl;
 	  TLUEvent ev(m_run, m_ev++, word&0xFFFFFFFF);
 	  ev.SetTag("loBits",to_string(word&0xFFFFFFFF));
 	  ev.SetTag("hiBits",to_string(word>>32));
+	  */
+	  uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
+	  uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
+	  uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
+	  i++;
+	  uint32_t SC0 = (m_tlu->GetEvent(i) >> 56)&0xff;
+	  uint32_t SC1 = (m_tlu->GetEvent(i) >> 48)&0xff;
+	  uint32_t SC2 = (m_tlu->GetEvent(i) >> 40)&0xff;
+	  uint32_t SC3 = (m_tlu->GetEvent(i) >> 32)&0xff;
+	  uint32_t evtNumber = (m_tlu->GetEvent(i))&0xffffffff;
+	  i++;
+	  TLUEvent ev(m_run, evtNumber, timeStamp);
+	  ev.SetTag("inputTriggers", to_string(inputTrig));
+	  ev.SetTag("SC0", to_string(SC0));
+	  ev.SetTag("SC1", to_string(SC1));
+	  ev.SetTag("SC2", to_string(SC2));
+	  ev.SetTag("SC3", to_string(SC3));
 	  SendEvent(ev);	  
 	}
+	//std::cout << "eventFifoCSR " << m_tlu->GetEventFifoCSR() << std::endl;
+	m_tlu->DumpEvents();
 	m_tlu->ClearEventFIFO();
 	//m_tlu->Update(timestamps); // get new events
 // 	if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
@@ -106,40 +127,25 @@ public:
       m_tlu->SetCheckConfig(param.Get("CheckConfig",1));
 
       readout_delay = param.Get("ReadoutDelay",100);
-      /*
-      m_tlu->SetDUTInterfaces(param.Get("DUTInterfaces",42));
-      m_tlu->SetInternalTriggerInterval(param.Get("InternalTriggerInterval",42));
-      m_tlu->SetTriggerMask(param.Get("TriggerMask",42));
-      m_tlu->SetTriggerVeto(param.Get("TriggerVeto",42));
-      m_tlu->SetEventFifoCSR(param.Get("EventFifoCSR",42));
-      m_tlu->SetLogicClocksCSR(param.Get("LogicClocksCSR",42));
-      m_tlu->SetTriggerLength(param.Get("TriggerLength",42));
-      m_tlu->SetTrigInterpulseDeadTime(param.Get("TrigInterpulseDeadTime",42));
-      m_tlu->SetTriggerDelay(param.Get("TriggerDelay",42));
-      m_tlu->SetNMaxTriggers(param.Get("NMaxTriggers",42));
-      m_tlu->SetTrigRearmDeadTime(param.Get("TrigRearmDeadTime",42));
-      m_tlu->SetShutterLength(param.Get("ShutterLength",42));
-      m_tlu->SetShutInterpulseDeadTime(param.Get("ShutInterpulseDeadTime",42));
-      m_tlu->SetShutterDelay(param.Get("ShutterDelay",42));
-      m_tlu->SetNMaxShutters(param.Get("NMaxShutters",42));
-      m_tlu->SetShutRearmDeadTime(param.Get("ShutRearmDeadTime",42));
-      m_tlu->SetSpillLength(param.Get("SpillLength",42));
-      m_tlu->SetSpillInterpulseDeadTime(param.Get("SpillInterpulseDeadTime",42));
-      m_tlu->SetSpillDelay(param.Get("SpillDelay",42));
-      m_tlu->SetNMaxSpillgers(param.Get("NMaxSpillgers",42));
-      m_tlu->SetSpillRearmDeadTime(param.Get("SpillRearmDeadTime",42));
-      m_tlu->SetEnableRecordData(param.Get("Enable_Record_Data",42));
-      */
-
-      m_tlu->SetInternalTriggerInterval(param.Get("InternalTriggerInterval",0));
-       //    m_tlu->ResetBoard();
-
+      m_tlu->AllTriggerVeto();
       m_tlu->InitializeI2C(param.Get("I2C_DAC_Addr",0x1f),
 			   param.Get("I2C_ID_Addr",0x50));
-      m_tlu->SetDACValue(0, param.Get("DACThreshold0",0x4100));
-      m_tlu->SetDACValue(1, param.Get("DACThreshold1",0x4100));
-      m_tlu->SetDACValue(2, param.Get("DACThreshold2",0x4100));
-      m_tlu->SetDACValue(3, param.Get("DACThreshold3",0x4100));
+      if (param.Get("UseIntDACValues",1)) {
+	m_tlu->SetDACValue(0, param.Get("DACIntThreshold0",0x4100));
+	m_tlu->SetDACValue(1, param.Get("DACIntThreshold1",0x4100));
+	m_tlu->SetDACValue(2, param.Get("DACIntThreshold2",0x4100));
+	m_tlu->SetDACValue(3, param.Get("DACIntThreshold3",0x4100));
+      } else {
+	m_tlu->SetThresholdValue(0, param.Get("DACThreshold0",1.3));
+	m_tlu->SetThresholdValue(1, param.Get("DACThreshold1",1.3));
+	m_tlu->SetThresholdValue(2, param.Get("DACThreshold2",1.3));
+	m_tlu->SetThresholdValue(3, param.Get("DACThreshold3",1.3));
+      }
+      m_tlu->ConfigureInternalTriggerInterval(param.Get("InternalTriggerInterval",42));
+      m_tlu->SetTriggerMask(param.Get("TriggerMask",0x0));
+      // write DUT mask (not implemented)
+      // write DUT style (not implemented)
+
       // by dhaas
       eudaq::mSleep(1000);
 
@@ -165,7 +171,7 @@ public:
       TLUEvent ev(TLUEvent::BORE(m_run));
  	ev.SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
 	ev.SetTag("BoardID", to_string(m_tlu->GetBoardID()));
- 	ev.SetTag("ReadoutDelay", to_string(readout_delay));
+	// 	ev.SetTag("ReadoutDelay", to_string(readout_delay));
 // 	ev.SetTag("TriggerInterval", to_string(trigger_interval));
 // 	ev.SetTag("DutMask", "0x" + to_hex(dut_mask));
 // 	ev.SetTag("AndMask", "0x" + to_hex(and_mask));
@@ -186,6 +192,15 @@ public:
 // 	m_tlu->Update(timestamps);
 // 	m_tlu->Start();
       TLUStarted = true;
+      
+      m_tlu->ResetCounters();
+      std::cout << "Words in FIFO before start " << m_tlu->GetEventFifoFillLevel() << std::endl;
+      m_tlu->CheckEventFIFO();
+      m_tlu->ReadEventFIFO();
+      m_tlu->ClearEventFIFO(); // software side
+      m_tlu->ResetEventFIFO(); // hardware side
+      m_tlu->NoneTriggerVeto();
+      
       SetStatus(eudaq::Status::LVL_OK, "Started");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -200,6 +215,7 @@ public:
   virtual void OnStopRun() {
     try {
       std::cout << "Stop Run" << std::endl;
+      m_tlu->AllTriggerVeto();
       TLUStarted = false;
       TLUJustStopped = true;
       while (TLUJustStopped) {

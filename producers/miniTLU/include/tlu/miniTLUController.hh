@@ -26,11 +26,27 @@ namespace tlu {
     miniTLUController(const std::string & connectionFilename, const std::string & deviceName);
     ~miniTLUController();
 
+    void SetSerdesRst(int value) { miniTLUController::SetWRegister("triggerInputs.SerdesRst",value); };
+    void ResetCounters() {
+      miniTLUController::SetSerdesRst(0x2);
+      miniTLUController::SetSerdesRst(0x0);
+    };
+
     void SetDUTInterfaces(int value) { miniTLUController::SetRWRegister("DUTInterfaces",value); };
-    void SetInternalTriggerInterval(int value) { miniTLUController::SetRWRegister("triggerLogic.InternalTriggerInterval",value); };
-    void SetTriggerMask(int value) { miniTLUController::SetRWRegister("triggerLogic.TriggerMask",value); };
-    void SetTriggerVeto(int value) { miniTLUController::SetRWRegister("triggerLogic.TriggerVeto",value); };
+    void SetInternalTriggerInterval(int value) { miniTLUController::SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
+    uint32_t GetInternalTriggerInterval() { return miniTLUController::ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    void SetTriggerMask(int value) { miniTLUController::SetWRegister("triggerLogic.TriggerMaskW",value); };
+    uint32_t GetTriggerMask() { return miniTLUController::ReadRRegister("triggerLogic.TriggerMaskR"); };
+
+    void SetTriggerVeto(int value) { miniTLUController::SetWRegister("triggerLogic.TriggerVetoW",value); };
+    uint32_t GetTriggerVeto() { return miniTLUController::ReadRRegister("triggerLogic.TriggerVetoR"); };
+    void AllTriggerVeto() { miniTLUController::SetTriggerVeto(1); };
+    void NoneTriggerVeto() { miniTLUController::SetTriggerVeto(0); };
+
     void SetEventFifoCSR(int value) { miniTLUController::SetRWRegister("eventBuffer.EventFifoCSR",value); };
+    uint32_t GetEventFifoCSR() { return miniTLUController::ReadRRegister("eventBuffer.EventFifoCSR"); };
+    void ResetEventFIFO() { miniTLUController::SetEventFifoCSR(0x0); };
+
     void SetLogicClocksCSR(int value) { miniTLUController::SetRWRegister("logic_clocks.LogicClocksCSR",value); };
 
     void SetTriggerLength(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TriggerLength",value); };
@@ -55,6 +71,8 @@ namespace tlu {
     void SetSpillRearmDeadTime(int value) { miniTLUController::SetRWRegister("Spill_Generator.SpillRearmDeadTime",value); };
 
     void SetEnableRecordData(int value) { miniTLUController::SetRWRegister("Event_Formatter.Enable_Record_Data",value); };
+
+    uint32_t GetEventFifoFillLevel() { return miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel"); };
 
     void SetCheckConfig(bool value) { m_checkConfig = value; };
 
@@ -84,7 +102,7 @@ namespace tlu {
     void CheckEventFIFO();
     void ReadEventFIFO();
 
-    uint32_t GetNEvent() { return m_nEvtInFIFO; }
+    uint32_t GetNEvent() { return m_nEvtInFIFO/2; }
     uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
     void ClearEventFIFO() { m_dataFromTLU.resize(0); }
 
@@ -96,6 +114,9 @@ namespace tlu {
 
     void SetThresholdValue(unsigned char channel, float thresholdVoltage);
 
+    void ConfigureInternalTriggerInterval(unsigned int value);
+
+    void DumpEvents();
   private:
     HwInterface * m_hw;
     bool m_checkConfig;
