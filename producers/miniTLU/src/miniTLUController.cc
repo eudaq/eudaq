@@ -238,7 +238,7 @@ namespace tlu {
   void miniTLUController::SetDACValue(unsigned char channel, uint32_t value) {
     unsigned char chrsToSend[2];
 
-    std::cout << "Setting DAC channel " << channel << " = " << value << std::endl;
+    std::cout << "Setting DAC channel " << (unsigned int)channel << " = " << value << std::endl;
 
     // enter vref-off mode: ( very early TLU versions needed Vref mode on. )
     chrsToSend[0] = 0x0;
@@ -254,7 +254,7 @@ namespace tlu {
 
   void miniTLUController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
 
-    std::cout << "Setting threshold for channel " << channel << " to " << thresholdVoltage << " Volts" << std::endl;
+    std::cout << "Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
     float vref = 1.300 ; // Reference voltage is 1.3V on newer TLU
     float vdac = ( thresholdVoltage + vref ) / 2;
     float dacCode =  0xFFFF * vdac / vref;
