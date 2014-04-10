@@ -143,6 +143,8 @@ public:
       }
       m_tlu->ConfigureInternalTriggerInterval(param.Get("InternalTriggerInterval",42));
       m_tlu->SetTriggerMask(param.Get("TriggerMask",0x0));
+      m_tlu->SetDUTMask(param.Get("DUTMask",0x0));
+      m_tlu->SetEnableRecordData(param.Get("EnableRecordData",0x0));
       // write DUT mask (not implemented)
       // write DUT style (not implemented)
 

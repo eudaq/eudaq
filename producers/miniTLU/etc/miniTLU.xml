@@ -3,10 +3,17 @@
 <node id="miniTLU">
 
 <node id="DUTInterfaces" address="0x020" description="DUT Interfaces control registers">
+<node id="DutMaskW" address="0x0" permission="r" description="" />
+<node id="DutMaskR" address="0x1" permission="w" description="" />
 </node>
 
 <node id="triggerInputs" address="0x040" description="Inputs configuration">
-<node id="SerdesRst" address="0x0" permission="w" description="Reset serdes" />
+<node id="SerdesRst" address="0x0" permission="w" description="" />
+<node id="SerdesRstR" address="0x8" permission="w" description="" />
+<node id="ThrCount0R" address="0x9" permission="w" description="" />
+<node id="ThrCount1R" address="0xa" permission="w" description="" />
+<node id="ThrCount2R" address="0xb" permission="w" description="" />
+<node id="ThrCount3R" address="0xc" permission="w" description="" />
 </node>
 
 <node id="triggerLogic" address="0x060" description="Trigger logic configuration">

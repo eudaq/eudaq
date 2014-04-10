@@ -38,6 +38,9 @@ namespace tlu {
     void SetTriggerMask(int value) { miniTLUController::SetWRegister("triggerLogic.TriggerMaskW",value); };
     uint32_t GetTriggerMask() { return miniTLUController::ReadRRegister("triggerLogic.TriggerMaskR"); };
 
+    void SetDUTMask(int value) { miniTLUController::SetWRegister("DUTInterfaces.DutMaskW",value); };
+    uint32_t GetDUTMask() { return miniTLUController::ReadRRegister("DUTInterfaces.DutMaskR"); };
+
     void SetTriggerVeto(int value) { miniTLUController::SetWRegister("triggerLogic.TriggerVetoW",value); };
     uint32_t GetTriggerVeto() { return miniTLUController::ReadRRegister("triggerLogic.TriggerVetoR"); };
     void AllTriggerVeto() { miniTLUController::SetTriggerVeto(1); };
