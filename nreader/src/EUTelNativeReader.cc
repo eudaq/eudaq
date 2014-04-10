@@ -1,13 +1,3 @@
-// Version $Id: EUTelNativeReader.cc 2603 2013-05-13 08:25:41Z diont $
-/*
- *   This source code is part of the Eutelescope package of Marlin.
- *   You are free to use this source files for your own development as
- *   long as it stays in a public research context. You are not
- *   allowed to use it for commercial purpose. You must put this
- *   header with author names in all development based on this file.
- *
- */
-
 #ifdef USE_EUDAQ
 // in this case, read immediately the info
 #include <eudaq/Info.hh>
@@ -242,8 +232,3 @@ void EUTelNativeReader::processBORE( const eudaq::DetectorEvent & bore ) {
 
 #endif
 #endif
-
-//  LocalWords:  serialiazer EUTelNativeReader MIMOTEL rawdata eudrb zsdata
-//  LocalWords:  EUBRDRawModeOutputCollection EUDRBZSModeOutputCollection xMin
-//  LocalWords:  EUDRBSparsePixelType sensorID xMax yMin yMax EUDRBBoard
-//  LocalWords:  EUDRBDecoder TrackerRawData
