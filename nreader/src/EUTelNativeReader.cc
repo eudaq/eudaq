@@ -114,9 +114,6 @@ EUTelNativeReader::EUTelNativeReader ():
   registerOptionalParameter("EUDRBSparsePixelType",
                             "Type of sparsified pixel data structure (use SparsePixelType enumerator)",
                             _eudrbSparsePixelType , static_cast<int> ( 1 ) );
-
-  registerProcessorParameter("SyncTriggerID", "Resynchronize the events based on the TLU trigger ID",
-                             _syncTriggerID, false );
 }
 
 EUTelNativeReader * EUTelNativeReader::newProcessor () {
@@ -147,7 +144,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   eudaq::FileReader * reader = 0;
   // open the input file with the eudaq reader
   try{
-    reader = new eudaq::FileReader( _fileName, "", _syncTriggerID );
+    reader = new eudaq::FileReader( _fileName, "");
   }
   catch(...){
     streamlog_out( ERROR5 ) << "eudaq::FileReader could not read the input file ' " << _fileName << " '. Please verify that the path and file name are correct." << endl;
