@@ -110,7 +110,7 @@ namespace eudaq {
   void DataCollector::OnStopRun() {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
     // Leave the file open, more events could still arrive
-    //m_ser = counted_ptr<FileSerializer>();
+    //m_ser = std::shared_ptr<FileSerializer>();
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev) {

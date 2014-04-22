@@ -29,7 +29,7 @@ inline bool doprint(int n) {
 
 template <typename T>
 void DoTags(const std::string & name, T (EUDRBController::*func)() const,
-            eudaq::Event & ev, std::vector<counted_ptr<EUDRBController> > & boards) {
+            eudaq::Event & ev, std::vector<std::shared_ptr<EUDRBController> > & boards) {
   const EUDRBController * ptr = boards[0].get();
   std::string val = to_string((ptr->*func)());
   for (size_t i = 1; i < boards.size(); ++i) {
@@ -81,7 +81,7 @@ public:
         if (slot == 0) slot = addr >> 27;
         if (slot != 0 && addr != 0 && addr != (slot << 27)) EUDAQ_THROW("Mismatched Slot and Addr for board " + to_string(id));
         if (slot < 2 || slot > 21) EUDAQ_THROW("Bad Slot number (" + to_string(slot) + ") for board " + to_string(id));
-        m_boards.push_back(counted_ptr<EUDRBController>(new EUDRBController(id-m_idoffset, slot, version)));
+        m_boards.push_back(std::shared_ptr<EUDRBController>(new EUDRBController(id-m_idoffset, slot, version)));
       }
       m_unsync = param.Get("Unsynchronized", 0);
       std::cout << "Running in " << (m_unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
@@ -498,7 +498,7 @@ public:
   bool done, started, juststopped, m_resetbusy, m_unsync;
   int n_error;
   std::vector<unsigned long> m_buffer;
-  std::vector<counted_ptr<EUDRBController> > m_boards;
+  std::vector<std::shared_ptr<EUDRBController> > m_boards;
   //int fdOut;
   int m_idoffset, m_version, m_master;
   std::vector<std::string> m_pedfiles;
