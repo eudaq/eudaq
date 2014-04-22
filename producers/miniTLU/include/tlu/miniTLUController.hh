@@ -8,7 +8,7 @@
 #include <ostream>
 #include "eudaq/Utils.hh"
 #include "eudaq/Time.hh"
-#include "eudaq/counted_ptr.hh"
+
 #include "uhal/uhal.hpp"
  
 #include <boost/filesystem.hpp>

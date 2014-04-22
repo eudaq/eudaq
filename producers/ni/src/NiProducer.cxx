@@ -4,7 +4,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/counted_ptr.hh"
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -211,7 +211,7 @@ private:
 	unsigned m_run, m_ev;
 	bool done, running, stopping,  configure;
 	struct timeval tv;
-	counted_ptr<NiController> ni_control;
+	std::shared_ptr<NiController> ni_control;
 
 	char *Buffer1;
 	unsigned int datalength1;

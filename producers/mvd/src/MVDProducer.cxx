@@ -4,7 +4,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/counted_ptr.hh"
+
 #include <iostream>
 #include <ostream>
 #include <sys/time.h>
@@ -117,7 +117,7 @@ private:
 	unsigned int microsec;
 	time_t timer;
 	struct tm *date;
-	counted_ptr<MVDController> m_mvd;
+	std::shared_ptr<MVDController> m_mvd;
 };
 
 int main(int /*argc*/, const char ** argv) {

@@ -37,7 +37,7 @@ namespace tlu {
       m_hw = new uhal::HwInterface(manager.getDevice( deviceName ));
 
       // HwInterface hw = manager.getDevice( deviceName );
-      // m_hw = counted_ptr<HwInterface>( new HwInterface(hw) );
+      // m_hw = std::shared_ptr<HwInterface>( new HwInterface(hw) );
     }
     m_checkConfig = false;
     m_ipbus_verbose = false;

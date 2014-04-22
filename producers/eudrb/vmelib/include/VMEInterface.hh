@@ -1,7 +1,7 @@
 #ifndef EUDAQ_INCLUDED_VMEInterface_hh
 #define EUDAQ_INCLUDED_VMEInterface_hh
 
-#include "eudaq/counted_ptr.hh"
+
 #include "eudaq/Utils.hh"
 #include <vector>
 #include <cstdlib>
@@ -130,7 +130,7 @@ protected:
   int m_sstrate;
 };
 
-typedef counted_ptr<VMEInterface> VMEptr;
+typedef std::shared_ptr<VMEInterface> VMEptr;
 
 class VMEFactory {
 public:
