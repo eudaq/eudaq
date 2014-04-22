@@ -1,7 +1,9 @@
 #include <ostream>
 #include <iostream>
+#include <time.h>
 
 #include "eudaq/Event.hh"
+
 
 namespace eudaq {
 
@@ -94,6 +96,11 @@ namespace eudaq {
     std::map<std::string, std::string>::const_iterator i = m_tags.find(name);
     if (i == m_tags.end()) return def;
     return i->second;
+  }
+
+  void Event::SetTimeStampToNow()
+  {
+	  m_timestamp=static_cast<unsigned long long>(clock());
   }
 
   std::ostream & operator << (std::ostream &os, const Event &ev) {

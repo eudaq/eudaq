@@ -8,7 +8,9 @@
 #ifndef __MUPIX_HH_4GZYCGCM__
 #define __MUPIX_HH_4GZYCGCM__
 
-#include <inttypes.h>
+#ifndef WIN32
+#include <inttypes.h> /* uint32_t */
+#endif
 #include <vector>
 
 #include "eudaq/Logger.hh"

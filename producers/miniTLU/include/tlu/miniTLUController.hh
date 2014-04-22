@@ -16,6 +16,11 @@
 using namespace uhal;
 
 namespace tlu {
+
+  static const int TLU_TRIGGER_INPUTS = 4;
+  static const int TLU_PMTS = TLU_TRIGGER_INPUTS ;
+
+
   class miniTLUController {
   public:
     miniTLUController(const std::string & connectionFilename, const std::string & deviceName);
@@ -83,9 +88,13 @@ namespace tlu {
     uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
     void ClearEventFIFO() { m_dataFromTLU.resize(0); }
 
+    unsigned GetScaler(unsigned) const;
+
     void InitializeI2C(char DACaddr, char IDaddr);
 
     void SetDACValue(unsigned char channel, uint32_t value);
+
+    void SetThresholdValue(unsigned char channel, float thresholdVoltage);
 
   private:
     HwInterface * m_hw;
@@ -107,7 +116,9 @@ namespace tlu {
 
     std::vector<uint64_t> m_dataFromTLU;
 
-    
+    unsigned m_scalers[TLU_TRIGGER_INPUTS];
+    unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat;
+
   };
 }
 

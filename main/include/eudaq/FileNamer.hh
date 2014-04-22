@@ -9,7 +9,8 @@ namespace eudaq {
 
   class DLLEXPORT FileNamer {
     public:
-      FileNamer(const std::string & pattern = default_pattern);
+
+      FileNamer(const std::string & pattern="");
       FileNamer & SetReplace(char opt, const std::string & val);
       template <typename T>
         FileNamer & Set(char opt, const T & val);

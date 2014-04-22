@@ -1,12 +1,13 @@
 #ifndef EUDAQ_INCLUDED_Monitor
 #define EUDAQ_INCLUDED_Monitor
 
-#include "eudaq/counted_ptr.hh"
+//#include "eudaq/counted_ptr.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/FileReader.hh"
 #include <string>
-
+#include <memory>
+using std::shared_ptr;
 namespace eudaq {
 
   /**
@@ -26,16 +27,16 @@ namespace eudaq {
       virtual void OnIdle();
 
       virtual void OnEvent(const StandardEvent & /*ev*/ ) {};
-      virtual void OnBadEvent(counted_ptr<Event> /*ev*/) {}
+      virtual void OnBadEvent(shared_ptr<Event> /*ev*/) {}
       virtual void OnStartRun(unsigned param);
       virtual void OnStopRun();
 
-      counted_ptr<DetectorEvent> LastBore() const { return m_lastbore; }
+      shared_ptr<DetectorEvent> LastBore() const { return m_lastbore; }
     protected:
       unsigned m_run;
       bool m_callstart;
-      counted_ptr<FileReader> m_reader;
-      counted_ptr<DetectorEvent> m_lastbore;
+      shared_ptr<FileReader> m_reader;
+      shared_ptr<DetectorEvent> m_lastbore;
       unsigned limit;
       unsigned skip;
       unsigned int skip_events_with_counter;

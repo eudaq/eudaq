@@ -5,11 +5,14 @@ bin/*
 lib/*
 
 # Ignore data files:
-data/*.raw
-data/runnumber.dat
+*.raw
+runnumber.dat
 
 # ignore log files
 *.log
+
+# ignore conf files
+conf/*.conf
 
 # ignore ROOT files
 *.root
@@ -17,6 +20,9 @@ data/runnumber.dat
 # ignore emacs autosaves
 \#*#
 *~
+
+# ignore git mergetool backup files
+*.orig
 
 # ignore eclipse project files
 .project
@@ -27,8 +33,22 @@ extern/ZestSC1
 extern/tlufirmware
 
 # Ignore paths to windows libraries installed by user:
-extern/pthreads*
+extern/pthread*
 extern/libusb*
 
 # ignore python byte code
 *.pyc
+
+# ignore MSVC files
+*.vcxproj*
+
+# ignore archives
+*.zip
+*.rar
+*.7z
+*.gz
+*.tar*
+
+# ignore OS files
+Thumbs.db
+*.lnk

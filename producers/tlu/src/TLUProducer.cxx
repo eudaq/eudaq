@@ -3,12 +3,13 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/counted_ptr.hh"
+//#include "eudaq/counted_ptr.hh"
 #include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>
+#include <memory>
 
 typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
@@ -18,6 +19,7 @@ using namespace tlu;
 ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler=NULL;  // Windows needs some parameters for this. i dont know where it will be called so we need to check it in future
 char *ZestSC1_ErrorStrings[]={"bla bla","blub"};
 #endif
+
 class TLUProducer: public eudaq::Producer {
 public:
 	TLUProducer(const std::string & runcontrol) :
@@ -63,6 +65,7 @@ public:
 					}
 					lasttime = t;
 					TLUEvent ev(m_run, m_ev, t);
+					ev.SetTag("trigger",m_tlu->GetEntry(i).trigger2String());
 					if (i == m_tlu->NumEntries() - 1) {
 						ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
 						for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
@@ -91,7 +94,7 @@ public:
 			if (m_tlu)
 				m_tlu = 0;
 			int errorhandler = param.Get("ErrorHandler", 2);
-			m_tlu = counted_ptr<TLUController>(new TLUController(errorhandler));
+			m_tlu = std::make_shared<TLUController>(errorhandler);
 
 			trigger_interval = param.Get("TriggerInterval", 0);
 			dut_mask = param.Get("DutMask", 2);
@@ -132,6 +135,7 @@ public:
 			m_tlu->SetStrobe(strobe_period, strobe_width);
 			m_tlu->SetEnableDUTVeto(enable_dut_veto);
 			m_tlu->SetHandShakeMode(handshake_mode);
+			m_tlu->SetTriggerInformation(USE_TRIGGER_INPUT_INFORMATION);
 			m_tlu->ResetTimestamp();
 
 			// by dhaas
@@ -270,7 +274,7 @@ private:
 	bool TLUStarted;
 	bool TLUJustStopped;
 	unsigned long long lasttime;
-	counted_ptr<TLUController> m_tlu;
+	std::shared_ptr<TLUController> m_tlu;
 	std::string pmt_id[TLU_PMTS];
 	double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];
 };

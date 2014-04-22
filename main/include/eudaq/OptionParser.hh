@@ -133,6 +133,8 @@ namespace eudaq {
         std::vector<T> m_value;
     };
 
+	std::vector<unsigned> DLLEXPORT parsenumbers(const std::string & s);
+
 }
 
 #endif // EUDAQ_INCLUDED_OptionParser

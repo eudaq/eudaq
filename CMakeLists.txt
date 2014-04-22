@@ -25,7 +25,7 @@ IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
   FIND_PACKAGE(Git)
   IF(GIT_FOUND)
-    EXEC_PROGRAM(git ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE EUDAQ_LIB_VERSION)
+    EXEC_PROGRAM(${GIT_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE EUDAQ_LIB_VERSION)
     STRING(REGEX REPLACE "^release-" "" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
     STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
   ELSE(GIT_FOUND)
@@ -61,11 +61,12 @@ include(${PROJECT_SOURCE_DIR}/cmake/EUDAQThreads.cmake)
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
 IF(BUILD_nreader)
-  FIND_PACKAGE(LCIO)
+  FIND_PACKAGE(LCIO REQUIRED)
   INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
-  FIND_PACKAGE(EUTelescope)
+  FIND_PACKAGE(EUTelescope REQUIRED)
   INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS})
   add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
+  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES})
 ENDIF()
 
 
@@ -122,11 +123,30 @@ IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
 
-# run LaTeX to build manual as PDF
+###############################################
+# LaTeX target to compile the PDF user manual #
+###############################################
+# Information and the manual on the UseLATEX.cmake package can be found here
+# http://www.cmake.org/Wiki/CMakeUserUseLATEX
+# The code resides here:
+# https://github.com/kmorel/UseLATEX
 option(BUILD_manual "Generate user's manual as PDF? (requires LaTeX)?" OFF)
 IF(BUILD_manual)
   add_subdirectory(doc/manual)
 ENDIF()
+
+#############################################
+# Doxygen target to generate HTML reference #
+#############################################
+FIND_PACKAGE(Doxygen)
+IF(DOXYGEN_FOUND)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/Doxyfile @ONLY)
+  ADD_CUSTOM_TARGET(doxygen
+    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen
+    COMMENT "Generating HTML documentation with Doxygen" VERBATIM
+    )
+ENDIF(DOXYGEN_FOUND)
 
 
 # include processors (will not be included in target 'all')

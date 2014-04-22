@@ -10,40 +10,35 @@
 /** \mainpage EUDAQ Documentation
  *
  * \section intro_sec Introduction
- * EUDAQ is a simple and easy to use data aquisition framework, written in C++.
+ * EUDAQ is a simple and easy to use data acquisition framework, written in C++.
  * It was designed to be used for the EUDET JRA1 beam telescope (see http://www.eudet.org).
  *
  * The overall structure has some resemblance to the XDAQ framework (hence the name EUDAQ)
  * but it is greatly simplified, and relies on as few external libraries as possible.
  *
  * \subsection port_sec Portability
- * EUDAQ is designed to be reasonably portable, working out of the box Linux, MAC OS X, and
- * Windows with cygwin. It may be ported to Microsoft Visual C++ and/or Borland Developer
- * in future versions.
+ * EUDAQ is designed to be portable, working out of the box Linux, Mac OSX, and
+ * Windows.
  * \subsubsection cpp_sec C++
- * It is written mainly in Standard C++, and compiles on gcc in pedantic ansi mode with no
- * warnings.
+ * It is written mainly in Standard C++, and can be compiled using gcc, Clang, or MSVC.
  * \subsubsection posix_sec Posix
  * Some posix extensions are used where necessary for threading (pthreads) and sockets
- * (Berkely Sockets API). The socket functionality should be relatively easy to port to
- * WinSocks, and there are freely available pthread libraries for Windows so the threading
- * code should not need to be significantly rewritten.
+ * (Berkely Sockets API).
  * \subsubsection gui_sec GUI
- * A portable graphics library will be used for the GUI, this may be Qt, WxWidgets, or
- * simply Root (yet to be decided). All the applications also have a text-only interface
+ * Qt is used as portable graphics library for the GUI. All the applications also have a text-only interface
  * so they may be run without the GUI if necessary.
  *
  * \section install_sec Installation
  * \subsection step1 Step 1: Get the code
- * The latest version of the EUDAQ code is available on eudaq.hepforge.org SubVersion control server
- * at http://eudaq.hepforge.org/svn/.
+ * The latest version of the EUDAQ code is available as git repository hosted by GitHub
+ * at https://github.com/eudaq/eudaq.
  *
  * @code
- *   svn co  http://eudaq.hepforge.org/svn/trunk/ eudaq
+ *   git clone https://github.com/eudaq/eudaq.git eudaq
  * @endcode
  *
  * \subsection step2 Step 2: Build it
- * Go to the directory containing eudaq and type make main. This will be the libeudaq.so library and place it in the ./bin/ folder.
+ * Go to the directory containing eudaq, enter the build directory and type 'cmake ..' and 'make install'. This will build the libeudaq.so library and place it in the ./lib folder. For more detailed instructions see the README.md inside this repository or the manual provided through LaTeX sources.
  *
  */
 
