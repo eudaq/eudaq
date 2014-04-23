@@ -240,7 +240,7 @@ class RunInfo {
     std::shared_ptr<eudaq::FileDeserializer> m_des;
     std::shared_ptr<DetectorEvent> m_bore, m_eore;
     std::shared_ptr<eudaq::Configuration> m_config;
-    //  counted_ptr<eudaq::EUDRBDecoder> m_dec;
+    // std::shared_ptr<eudaq::EUDRBDecoder> m_dec;
     std::shared_ptr<std::vector<eudaq::LogMessage> > m_log;
     int m_events;
 };
