@@ -5,7 +5,10 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/EudaqThread.hh"
+
+
+#include <thread>
+#include <memory>
 //#include <pthread.h>
 #include <string>
 #include <iosfwd>
@@ -46,7 +49,7 @@ namespace eudaq {
       void CommandHandler(TransportEvent &);
   //    pthread_t m_thread;
   //    pthread_attr_t m_threadattr;
-	  eudaqThread m_thread;
+	  std::unique_ptr<std::thread> m_thread;
       bool m_threadcreated;
   };
 
