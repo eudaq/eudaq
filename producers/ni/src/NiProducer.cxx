@@ -4,7 +4,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-//#include "eudaq/counted_ptr.hh"
+
 
 #include <stdio.h>
 #include <stdlib.h>

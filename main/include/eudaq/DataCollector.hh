@@ -12,7 +12,6 @@
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
-//#include "eudaq/counted_ptr.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/EudaqThread.hh"
 #include <memory>

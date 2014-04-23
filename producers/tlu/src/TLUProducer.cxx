@@ -3,7 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-//#include "eudaq/counted_ptr.hh"
+
 #include "tlu/TLUController.hh"
 #include "tlu/USBTracer.hh"
 #include <iostream>
