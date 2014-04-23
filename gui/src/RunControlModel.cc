@@ -16,7 +16,6 @@ namespace {
   };
 }
 
-
   RunControlConnection::RunControlConnection(const eudaq::ConnectionInfo & id)
 : m_id(id.Clone())
 {}

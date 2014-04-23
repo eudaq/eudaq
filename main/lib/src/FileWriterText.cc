@@ -3,10 +3,10 @@
 #include "eudaq/PluginManager.hh"
 #include <iostream>
 #include <fstream>
+#include <cstdint>
 
-
-_ULonglong timediff=0;
-_ULonglong timediff1=(_ULonglong)-1;
+uint64_t  timediff=0;
+uint64_t  timediff1=(uint64_t)-1;
 namespace eudaq {
 
 	class FileWriterText : public FileWriter {

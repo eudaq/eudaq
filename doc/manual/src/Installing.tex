@@ -1,10 +1,12 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Installing EUDAQ}
 
-\subsection{Prerequisites}
+\subsection{Overview}
 EUDAQ has relatively few dependencies on other software, but some
 features do rely on other packages.
-To compile EUDAQ from source code, the CMake cross-platform, open-source build system is used.
+To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
+To compile EUDAQ from source code requires a compiler that implements
+the C++11 standard.
 The libusb library is only needed to communicate over USB with a \gls{TLU}\cite{Cussans2009}.
 The VME driver is only needed for reading out \glspl{EUDRB}\cite{Cotta2008}
 via VME with a Motorola MVME6100 single board computer.
@@ -23,6 +25,17 @@ CMake is available for all major operating systems from
 Linux distributions, it can usually be installed via the built-in
 package manager (aptitude/apt-get/yum etc.) and on OSX using
 packages provided by e.g. the MacPorts or Fink projects.
+
+\subsection{C++11 compliant compiler}
+The compilation of the EUDAQ source code requires a C++11 compliant
+compiler and has been tested with GCC (at
+least version 4.6), Clang (at least version 3.1), and MSVC (Visual
+Studio 2012 and later) on Linux, OS X and Windows.
+
+If you are using Scientific Linux, please install the \emph{Developer
+  Toolset} available e.g. from
+\url{http://linux.web.cern.ch/linux/devtoolset/} to get access to a
+GCC version which fully implements C++11.
 
 \subsubsection{libusb}
 In order to communicate with a \gls{TLU}, the libusb library is needed.
