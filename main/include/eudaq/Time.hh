@@ -38,6 +38,12 @@ namespace eudaq {
         tv_sec = tv.tv_sec + tv.tv_usec / 1000000;
       }
       double Seconds() const { return tv_sec + tv_usec / 1e6; }
+      timeval GetTimeval() const {
+        timeval tv;
+        tv.tv_sec = tv_sec;
+        tv.tv_usec = tv_usec;
+        return tv;
+      }
       Time & operator += (const timeval & other) {
         tv_usec += other.tv_usec;
         tv_sec += other.tv_sec + tv_usec / 1000000;
@@ -63,10 +69,7 @@ namespace eudaq {
           (tv_sec == other.tv_sec && tv_usec > other.tv_usec);
       }
       operator const timeval () const {
-        timeval tv;
-        tv.tv_sec = tv_sec;
-        tv.tv_usec = tv_usec;
-        return tv;
+	return GetTimeval();
       }
       std::string Formatted(const std::string & format = TIME_DEFAULT_FORMAT) const;
       static Time Current();
