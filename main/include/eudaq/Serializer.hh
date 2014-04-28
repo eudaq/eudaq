@@ -109,8 +109,8 @@ namespace eudaq {
 
   template <>
     inline void Serializer::write(const Time & t) {
-      write((int)timeval(t).tv_sec);
-      write((int)timeval(t).tv_usec);
+      write((int)t.GetTimeval().tv_sec);
+      write((int)t.GetTimeval().tv_usec);
     }
 
   template <typename T>
