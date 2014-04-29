@@ -28,6 +28,9 @@ class PyRunControl(object):
     def NumConnections(self):
         return lib.PyRunControl_NumConnections(c_void_p(self.obj))
     @property 
+    def RunNumber(self):
+        return lib.PyRunControl_GetRunNumber(c_void_p(self.obj))
+    @property 
     def AllOk(self):
         return lib.PyRunControl_AllOk(c_void_p(self.obj))
 

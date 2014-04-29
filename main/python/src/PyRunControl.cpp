@@ -17,6 +17,8 @@ class PyRunControl : public eudaq::RunControl {
     void OnDisconnect(const eudaq::ConnectionInfo & id) {
       std::cout << "Disconnect: " << id << std::endl;
     }
+  uint16_t GetEventNumber(){return m_eventnumber;}
+
   bool AllOk(){
     bool ok = true;
     for (size_t i = 0; i < m_cmdserver->NumConnections(); ++i) {
@@ -38,4 +40,6 @@ extern "C" {
   void PyRunControl_Configure(PyRunControl *prc, char *cfg){prc->Configure(std::string(cfg));}
   size_t PyRunControl_NumConnections(PyRunControl *prc){return prc->NumConnections();}
   bool PyRunControl_AllOk(PyRunControl *prc){return prc->AllOk();}
+  uint16_t PyRunControl_GetEventNumber(PyRunControl *prc){return prc->GetEventNumber();}
+
 }
