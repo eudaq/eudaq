@@ -4,15 +4,11 @@ from time import sleep
 
 print "Starting RunControl"
 prc = PyRunControl("44000") # listen to address 44000
-sleep(1)
-print "Number of active connections: ", prc.NumConnections
 
 # wait for more than one active connection to appear
-while True:
+while prc.NumConnections < 2:
     sleep(1)
     print "Number of active connections: ", prc.NumConnections
-    if prc.NumConnections > 1:
-        break
 
 # load configuration file
 prc.Configure("ExampleConfig")
