@@ -13,7 +13,7 @@ elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
 lib = cdll.LoadLibrary(libpath+libext)
 
 class PyRunControl(object):
-    def __init__(self,addr):
+    def __init__(self,addr = "tcp://44000"):
         lib.PyRunControl_new.restype = c_void_p # Needed
         self.obj = lib.PyRunControl_new(create_string_buffer(addr))
     def GetStatus(self):
@@ -33,10 +33,10 @@ class PyRunControl(object):
 
 lib.PyProducer_SendEvent.argtypes = [c_void_p,POINTER(c_uint64), c_size_t]
 class PyProducer(object):
-    def __init__(self,rcaddr, addr):
+    def __init__(self, name, rcaddr = "tcp://localhost:44000"):
         lib.PyProducer_new.restype = c_void_p # Needed
-        self.obj = lib.PyProducer_new(create_string_buffer(rcaddr), 
-                                      create_string_buffer(addr))
+        self.obj = lib.PyProducer_new(create_string_buffer(name), 
+                                      create_string_buffer(rcaddr))
     def SendEvent(self,data):
         data = data.astype(numpy.uint64)
         data_p = data.ctypes.data_as(POINTER(c_uint64))
@@ -89,7 +89,7 @@ class PyProducer(object):
 
 
 class PyDataCollector(object):
-    def __init__(self,rcaddr, addr):
+    def __init__(self,rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001"):
         lib.PyDataCollector_new.restype = c_void_p # Needed
         self.obj = lib.PyDataCollector_new(create_string_buffer(rcaddr), 
-                                           create_string_buffer(addr))
+                                           create_string_buffer(listenaddr))
