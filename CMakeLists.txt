@@ -117,7 +117,7 @@ IF(BUILD_main)
 ENDIF()
 
 # build EUDAQ python exe bindings
-option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
+option(BUILD_python "Compile Python EUDAQ binding library?" ON)
 IF(BUILD_python)
   add_subdirectory(main/python)
 ENDIF()
@@ -138,6 +138,7 @@ option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
+
 
 ###############################################
 # LaTeX target to compile the PDF user manual #
@@ -172,3 +173,26 @@ add_subdirectory(producers)
 # Print out system information useful for bug reports #
 ############################################### #######
 include(PrintSystemInformation)
+
+
+###############################################
+# Python-based regression tests
+###############################################
+# if the Python interpreter can be found and the numpy package is
+# installed, we can make available the Python-based regression tests
+# through CMake/CTest; for more detailed information see the CMake manual or
+#web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
+FIND_PACKAGE(PythonInterp)
+IF(PYTHONINTERP_FOUND AND BUILD_python)
+  # test for numpy package
+  EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
+  IF(NUMPYRC EQUAL 1)
+    MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
+  ELSE(NUMPYRC EQUAL 1)
+    MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
+    ENABLE_TESTING()
+    INCLUDE(CTest)
+    INCLUDE(etc/tests/testing.cmake)
+  ENDIF(NUMPYRC EQUAL 1)
+ENDIF()
+
