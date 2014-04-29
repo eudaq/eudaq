@@ -7,7 +7,7 @@ if(CXX11_COMPILER)
   enable_cxx11()
   ADD_DEFINITIONS("-DCPP11=1")
 else(CXX11_COMPILER)
-  MESSAGE(SEND_ERROR "Compiler is not compatible with C++11. Please use a fully C++11 compliant compiler -- see the EUDAQ documentation for more information.")
+  MESSAGE(FATAL_ERROR "Your C++ compiler version (${CMAKE_CXX_COMPILER_ID} ${COMPILER_VERSION}) is not compatible with C++11. Please use a fully C++11 compliant compiler -- see the EUDAQ documentation for more information.")
 endif(CXX11_COMPILER)
 
 # platform dependent preprocessor defines

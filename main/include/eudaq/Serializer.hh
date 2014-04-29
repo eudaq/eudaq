@@ -5,7 +5,7 @@
 #include <vector>
 #include <map>
 #include "eudaq/Serializable.hh"
-//#include "eudaq/counted_ptr.hh"
+
 #include "eudaq/Time.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Platform.hh"
@@ -50,13 +50,13 @@ namespace eudaq {
         v.Serialize(sr);
       }
       static void write_int(Serializer & sr, const T & v) {
-        T t = v;
-        unsigned char buf[sizeof t];
-        for (size_t i = 0; i < sizeof t; ++i) {
+    	unsigned long long t = static_cast<unsigned long long>(v);
+        unsigned char buf[sizeof v];
+        for (size_t i = 0; i < sizeof v; ++i) {
           buf[i] = static_cast<unsigned char>(t & 0xff);
           t >>= 8;
         }
-        sr.Serialize(buf, sizeof t);
+        sr.Serialize(buf, sizeof v);
       }
       static void write_float(Serializer & sr, const float & v) {
         unsigned t = *(unsigned *)&v;

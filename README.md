@@ -160,7 +160,8 @@ git remote -v show
 ```
 * now edit away on your local clone! But keep in sync with the development in the upstream repository by running
 ```
-git pull upstream master
+git fetch upstream        # download named heads or tags
+git pull upstream master  # merge changes into your branch
 ```
 on a regular basis. Replace ```master``` by the appropriate branch if you work on a separate one.
 Don't forget that you can refer to issues in the main repository anytime by using the string ```eudaq/eudaq#XX``` in your commit messages, where 'XX' stands for the issue number, e.g.

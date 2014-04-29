@@ -4,10 +4,11 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/counted_ptr.hh"
+
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory>
 
 using eudaq::RawDataEvent;
 
@@ -50,7 +51,7 @@ public:
 
 		try {
 			if (!configure){
-				ni_control = new NiController();
+				ni_control = std::make_shared<NiController>();
 				ni_control->GetProduserHostInfo();
 				ni_control->ConfigClientSocket_Open(param);
 				ni_control->DatatransportClientSocket_Open(param);
@@ -211,7 +212,7 @@ private:
 	unsigned m_run, m_ev;
 	bool done, running, stopping,  configure;
 	struct timeval tv;
-	counted_ptr<NiController> ni_control;
+	std::shared_ptr<NiController> ni_control;
 
 	char *Buffer1;
 	unsigned int datalength1;
