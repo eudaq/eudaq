@@ -4,7 +4,7 @@ void eudaq::multiFileReader::addFileReader( const std::string & filename, const 
 {
 	m_fileReaders.emplace_back(std::make_shared<FileReader>(filename,  filepattern));
 	m_ev=m_fileReaders.back()->GetDetectorEvent_ptr();
-	m_sync.addBOREEvent(m_fileReaders.size(),*m_ev);
+	m_sync.addBOREEvent(m_fileReaders.size()-1,*m_ev);
 }
 
 void eudaq::multiFileReader::Interrupt()
@@ -31,7 +31,7 @@ bool eudaq::multiFileReader::NextEvent( size_t skip /*= 0*/ )
 			{
 				return false;
 			}
-			m_sync.AddDetectorElementToProducerQueue(fileID+1,m_fileReaders[fileID]->GetDetectorEvent_ptr());
+			m_sync.AddDetectorElementToProducerQueue(fileID,m_fileReaders[fileID]->GetDetectorEvent_ptr());
 		}
 		m_sync.storeCurrentOrder();
 	}while (!m_sync.SyncNEvents(m_eventsToSync));
