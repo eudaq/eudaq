@@ -1,4 +1,4 @@
-#include "eudaq\EventSynchronisationBase.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 
 #include "eudaq/Event.hh"
 
@@ -71,7 +71,7 @@ void SyncBase::addBOREEvent(int fileIndex, const eudaq::DetectorEvent& BOREvent 
 bool SyncBase::Event_Queue_Is_Empty()
 {
 	
-	for (auto& q=m_ProducerEventQueue.begin();q!=m_ProducerEventQueue.end();++q)
+	for (auto q=m_ProducerEventQueue.begin();q!=m_ProducerEventQueue.end();++q)
 	{
 		if (q->empty())
 		{
@@ -111,7 +111,7 @@ SyncBase::eventqueue_t& SyncBase::getQueuefromId(unsigned producerID )
 {
 	if(m_ProducerId2Eventqueue.find(producerID)==m_ProducerId2Eventqueue.end()){
 
-		EUDAQ_THROW("unknown Producer ID");
+		EUDAQ_THROW("unknown Producer ID " + std::to_string(producerID));
  	}
 
 	return m_ProducerEventQueue[m_ProducerId2Eventqueue[producerID]];
@@ -299,7 +299,7 @@ void SyncBase::PrepareForEvents()
 
 unsigned SyncBase::getUniqueID( unsigned fileIndex,unsigned eventIndex )
 {
-	return fileIndex*10000+eventIndex;
+	return (fileIndex+1)*10000+eventIndex;
 }
 
 unsigned SyncBase::getTLU_UniqueID( unsigned fileIndex )

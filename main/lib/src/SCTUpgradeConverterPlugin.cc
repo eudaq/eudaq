@@ -174,10 +174,11 @@ namespace eudaq {
         if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
           // This is just an example, modified it to suit your raw data format
           // Make sure we have at least one block of data, and it is large enough
-
-            return GetTriggerCounter(*rev);   
+			return rev->GetEventNumber();
+            //return GetTriggerCounter(*rev);   
           
         }
+		
         // If we are unable to extract the Trigger ID, signal with (unsigned)-1
         return (unsigned)-1;
       }

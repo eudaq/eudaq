@@ -6,6 +6,10 @@
 #include "depfet/rc_depfet.hh"
 #include "depfet/TCPclient.h"
 
+
+#include <memory>
+
+
 using eudaq::to_string;
 using eudaq::RawDataEvent;
 
@@ -85,7 +89,7 @@ public:
     int Nmod, Kmod;
     unsigned int itrg, itrg_old = -1;
     //eudaq::DEPFETEvent ev(m_run, m_evt+1);
-    counted_ptr<eudaq::RawDataEvent> ev;
+    std::shared_ptr<eudaq::RawDataEvent> ev;
     unsigned id = m_idoffset;
     do {   //--- modules of one event loop
       lenevent = BUFSIZE;

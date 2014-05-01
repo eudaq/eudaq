@@ -4,7 +4,6 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/FileNamer.hh"
-//#include "eudaq/counted_ptr.hh"
 #include "eudaq/Utils.hh"
 
 #include <iostream>

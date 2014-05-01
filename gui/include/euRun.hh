@@ -76,7 +76,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
 			btnStart->setEnabled(state == ST_READY);
 			btnStop->setEnabled(state == ST_RUNNING);
 		}
-		void on_btnConfig_clicked() {
+    void on_btnConfig_clicked() {
         std::string settings = cmbConfig->currentText().toStdString();
         Configure(settings, txtGeoID->text().toInt());
         SetState(ST_READY);

@@ -3,12 +3,14 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/counted_ptr.hh"
+
 #include "tlu/miniTLUController.hh"
 //#include "tlu/USBTracer.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>
+#include <memory>
+
 
 typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
@@ -95,11 +97,11 @@ public:
     try {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       if (m_tlu)
-	m_tlu = 0;
+	m_tlu = nullptr;
       //	int errorhandler = param.Get("ErrorHandler", 2);
 
      
-      m_tlu = counted_ptr<miniTLUController>(new miniTLUController(param.Get("ConnectionFile","file:///dummy_connections.xml"),param.Get("DeviceName","dummy.udp")));
+      m_tlu =std::make_shared<miniTLUController>(param.Get("ConnectionFile","file:///dummy_connections.xml"),param.Get("DeviceName","dummy.udp"));
 
       std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::endl;
 	
@@ -269,7 +271,7 @@ private:
   bool TLUStarted;
   bool TLUJustStopped;
   unsigned long long lasttime;
-  counted_ptr<miniTLUController> m_tlu;
+  std::shared_ptr<miniTLUController> m_tlu;
 };
 
 int main(int /*argc*/, const char ** argv) {

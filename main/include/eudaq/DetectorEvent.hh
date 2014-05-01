@@ -4,7 +4,7 @@
 #include <vector>
 #include "eudaq/TLUEvent.hh"
 #include <memory>
-//#include "eudaq/counted_ptr.hh"
+
 
 namespace eudaq {
 

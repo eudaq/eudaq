@@ -7,7 +7,10 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/EudaqThread.hh"
+#include <memory>
+#include <thread>
+
+
 namespace eudaq {
 
   class LogMessage;
@@ -34,7 +37,7 @@ namespace eudaq {
       TransportServer * m_logserver; ///< Transport for receiving log messages
 //      pthread_t m_thread;
 //      pthread_attr_t m_threadattr;
-	  eudaqThread m_thread;
+	 std::unique_ptr<std::thread> m_thread;
       std::string m_filename;
       std::ofstream m_file;
   };

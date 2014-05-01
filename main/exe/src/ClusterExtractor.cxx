@@ -2,7 +2,6 @@
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/FileReader.hh"
 #include "eudaq/OptionParser.hh"
-//#include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 
 #include <iostream>
@@ -36,30 +35,6 @@ short delmarker(short x) {
   return submat * 64 + subpix - 2;
 }
 
-// std::vector<unsigned> parsenumbers(const std::string & s) {
-//   std::vector<unsigned> result;
-//   std::vector<std::string> ranges = split(s, ",");
-//   for (size_t i = 0; i < ranges.size(); ++i) {
-//     size_t j = ranges[i].find('-');
-//     if (j == std::string::npos) {
-//       unsigned v = from_string(ranges[i], 0);
-//       result.push_back(v);
-//     } else {
-//       long min = from_string(ranges[i].substr(0, j), 0);
-//       long max = from_string(ranges[i].substr(j+1), 0);
-//       if (j == 0 && max == 1) {
-//         result.push_back((unsigned)-1);
-//       } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
-//         EUDAQ_THROW("Bad range");
-//       } else {
-//         for (long n = min; n <= max; ++n) {
-//           result.push_back(n);
-//         }
-//       }
-//     }
-//   }
-//   return result;
-// }
 
 int main(int /*argc*/, char ** argv) {
   eudaq::OptionParser op("EUDAQ Cluster Extractor", "1.0",

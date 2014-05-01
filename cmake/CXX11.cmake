@@ -19,18 +19,22 @@
 # THE SOFTWARE.
 
 # Determines whether or not the compiler supports C++11
+# some information on the C++11 compatability of the various compilers:
+# Clang: http://clang.llvm.org/cxx_status.html
+# GCC: http://gcc.gnu.org/projects/cxx0x.html
+# MSVC: http://msdn.microsoft.com/en-us/en-us/library/hh567368.aspx
 macro(check_for_cxx11_compiler _VAR)
-    message(STATUS "Checking for C++11 compiler")
+    message(STATUS "Checking for C++11 compliance of compiler")
     set(${_VAR})
     if(
        (MSVC AND MSVC11) OR
        (MSVC AND MSVC12) OR
-       (CMAKE_COMPILER_IS_GNUCXX AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 4.6) OR
-       (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS 3.1))
+       (CMAKE_COMPILER_IS_GNUCXX AND NOT ${COMPILER_VERSION} VERSION_LESS 4.6) OR
+       (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT ${COMPILER_VERSION} VERSION_LESS 3.1))
         set(${_VAR} 1)
-        message(STATUS "Checking for C++11 compiler - available")
+	message(STATUS "Checking for C++11 compliance of compiler - available")
     else()
-        message(STATUS "Checking for C++11 compiler - unavailable")
+	message(STATUS "Checking for C++11 compliance of compiler - unavailable")
     endif()
 endmacro()
 

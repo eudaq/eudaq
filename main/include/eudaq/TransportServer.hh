@@ -2,7 +2,6 @@
 #define EUDAQ_INCLUDED_TransportServer
 
 #include "eudaq/TransportBase.hh"
-//#include "eudaq/counted_ptr.hh"
 #include <string>
 #include <memory>
 

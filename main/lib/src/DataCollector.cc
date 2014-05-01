@@ -28,7 +28,7 @@ namespace eudaq {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
       //pthread_attr_init(&m_threadattr);
       //pthread_create(&m_thread, &m_threadattr, DataCollector_thread, this);
-	  m_thread.start(DataCollector_thread,this);
+	  m_thread=std::unique_ptr<std::thread>(new std::thread(DataCollector_thread,this));
       EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
       CommandReceiver::StartThread();
     }
@@ -37,7 +37,7 @@ namespace eudaq {
     m_done = true;
     /*if (m_thread)*/
     //pthread_join(m_thread, 0);
-	m_thread.join();
+	m_thread->join();
     delete m_dataserver;
   }
 

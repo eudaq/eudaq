@@ -6,9 +6,10 @@
 #include <stdexcept>
 #include <iostream>
 #include <ostream>
+#include <memory>
+
 #include "eudaq/Utils.hh"
 #include "eudaq/Time.hh"
-#include "eudaq/counted_ptr.hh"
 #include "uhal/uhal.hpp"
  
 #include <boost/filesystem.hpp>

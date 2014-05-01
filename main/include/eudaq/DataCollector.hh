@@ -12,9 +12,7 @@
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
-//#include "eudaq/counted_ptr.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/EudaqThread.hh"
 #include <memory>
 namespace eudaq {
 
@@ -52,7 +50,7 @@ namespace eudaq {
       TransportServer * m_dataserver; ///< Transport for receiving data packets
 //       pthread_t m_thread;
 //       pthread_attr_t m_threadattr;
-	  eudaqThread m_thread;
+	  std::unique_ptr<std::thread> m_thread;
       std::vector<Info> m_buffer;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU

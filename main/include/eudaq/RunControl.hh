@@ -6,9 +6,12 @@
 #include "eudaq/Status.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/EudaqThread.hh"
+
 
 #include <string>
+#include <memory>
+#include <thread>
+
 
 namespace eudaq {
 
@@ -54,7 +57,7 @@ namespace eudaq {
       TransportServer * m_cmdserver; ///< Transport for sending commands
 //       pthread_t m_thread;
 //       pthread_attr_t m_threadattr;
-	  eudaqThread m_thread;
+	std::unique_ptr<std::thread> m_thread;
       size_t m_idata, m_ilog;
 	  std::string m_dataaddr, m_logaddr;
       long long m_runsizelimit;
