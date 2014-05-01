@@ -313,7 +313,7 @@ void SyncBase::storeCurrentOrder()
 	for (size_t i=1; i<m_ProducerEventQueue.size();++i)
 	{
 		shared_ptr<Event> currentEvent=m_ProducerEventQueue[i].back();
-		eudaq::PluginManager::setCurrentTLUEvent(*currentEvent,*tlu);
+		eudaq::PluginManager::SetCurrentTLUEvent(*currentEvent,*tlu);
 	}
 	
 }

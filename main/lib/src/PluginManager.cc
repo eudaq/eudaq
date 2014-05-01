@@ -155,9 +155,9 @@ namespace eudaq {
     GetInstance().GetPlugin(source).GetLCIOSubEvent(dest, source);
   }
 
-  void PluginManager::setCurrentTLUEvent( eudaq::Event & ev,eudaq::TLUEvent const & tlu )
+  void PluginManager::SetCurrentTLUEvent( eudaq::Event & ev,eudaq::TLUEvent const & tlu )
   {
-	  GetInstance().GetPlugin(ev).setCurrentTLUEvent(ev,tlu);
+	  GetInstance().GetPlugin(ev).SetCurrentTLUEvent(ev,tlu);
   }
 
 
