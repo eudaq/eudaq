@@ -20,9 +20,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
-#include "eudaq/EudaqThread.hh"
 #include <time.h>
-#include "../inc/SCTProducer.h"
+#include "../inc/ROOTProducer.h"
 
 #include "eudaq/Event.hh"
 #include "eudaq/Configuration.hh"
@@ -31,6 +30,7 @@
 #include <condition_variable>
 #include <memory>
 #include <chrono>
+#include <thread>
 
 
 void * workerthread_thread(void * arg);
@@ -39,7 +39,7 @@ void * workerthread_thread(void * arg);
 
 //static const std::string EVENT_TYPE = "SCTupgrade";
 
-class SCTProducer::Producer_PImpl : public eudaq::Producer {
+class ROOTProducer::Producer_PImpl : public eudaq::Producer {
 public:
 	Producer_PImpl(const std::string & name, const std::string & runcontrol): eudaq::Producer(name, runcontrol),
 		m_run(0), m_ev(0), isConfigured(false),readoutThread(),ProducerName(name) {
@@ -87,12 +87,7 @@ virtual	void OnStartRun(unsigned param) {
 	//	m_interface->send_onStart();
 
 		setOnStart(true);
-		int j=0;
-		while (getOnStart()&&++j<500)
-		{
-			eudaq::mSleep(20);
-		}
-		setOnStart(false);
+
 		
 
 		// It must send a BORE to the Data Collector
@@ -105,6 +100,13 @@ virtual	void OnStartRun(unsigned param) {
 
 		// At the end, set the status that will be displayed in the Run Control.
 		SetStatus(eudaq::Status::LVL_OK, "Running");
+
+    int j=0;
+    while (getOnStart()&&++j<500)
+    {
+      eudaq::mSleep(20);
+    }
+    setOnStart(false);
 
 	}
 	// This gets called whenever a run is stopped
@@ -250,7 +252,7 @@ virtual	void OnTerminate() {
 
 	unsigned m_run, m_ev, m_exampleparam;
 	bool isConfigured;
-	eudaq::eudaqThread readoutThread;
+	std::thread readoutThread;
 	std::unique_ptr<eudaq::RawDataEvent> ev;
 		
 	
@@ -304,18 +306,18 @@ inline	void bool2uchar1(const bool* inBegin,const bool* inEnd,std::vector<unsign
 
 // The constructor must call the eudaq::Producer constructor with the name
 // and the runcontrol connection string, and initialize any member variables.
-SCTProducer::SCTProducer(const char* name,const char* runcontrol):m_prod(nullptr) {
+ROOTProducer::ROOTProducer(const char* name,const char* runcontrol):m_prod(nullptr) {
 	//		std::cout<< "hallo from sct producer"<<std::endl;
 
 	Connect2RunControl(name,runcontrol);
 }
 
-SCTProducer::SCTProducer():m_prod(nullptr)
+ROOTProducer::ROOTProducer():m_prod(nullptr)
 {
 
 }
 
-SCTProducer::~SCTProducer()
+ROOTProducer::~ROOTProducer()
 {
 	delete m_prod;
 }
@@ -329,7 +331,7 @@ SCTProducer::~SCTProducer()
 
 
 
-void SCTProducer::Connect2RunControl( const char* name,const char* runcontrol )
+void ROOTProducer::Connect2RunControl( const char* name,const char* runcontrol )
 {  try {
 	std::string n="tcp://"+std::string(runcontrol);
 	m_prod=new Producer_PImpl(name,n);
@@ -341,7 +343,7 @@ void SCTProducer::Connect2RunControl( const char* name,const char* runcontrol )
 	}
 }
 
-void SCTProducer::createNewEvent()
+void ROOTProducer::createNewEvent()
 {
 	try
 	{
@@ -354,7 +356,7 @@ void SCTProducer::createNewEvent()
 	
 }
 
-void SCTProducer::setTimeStamp( unsigned long long TimeStamp )
+void ROOTProducer::setTimeStamp( unsigned long long TimeStamp )
 {
 	try{
 	m_prod->setTimeStamp(TimeStamp);
@@ -364,7 +366,7 @@ void SCTProducer::setTimeStamp( unsigned long long TimeStamp )
 	}
 }
 
-void SCTProducer::setTimeStamp2Now()
+void ROOTProducer::setTimeStamp2Now()
 {
 	m_prod->setTimeStamp2Now();
 }
@@ -373,7 +375,7 @@ void SCTProducer::setTimeStamp2Now()
 
 
 
-void SCTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned char>& inputVector )
+void ROOTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned char>& inputVector )
 {
 	try{
 	m_prod->AddPlane2Event(plane, inputVector);
@@ -386,7 +388,7 @@ void SCTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned char
 }
 
 
- void SCTProducer::AddPlane2Event(unsigned plane,const bool* inputVector,size_t Elements){
+ void ROOTProducer::AddPlane2Event(unsigned plane,const bool* inputVector,size_t Elements){
 
 	 try{
 		 std::vector<unsigned char> out;
@@ -398,9 +400,14 @@ void SCTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned char
 	 }
  }
 
+ void ROOTProducer::AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK , bool* evtr_strm0,bool* evtr_strm1){
+   AddPlane2Event((MODULE_NR*2),evtr_strm0,ST_STRIPS_PER_LINK);
+   AddPlane2Event(MODULE_NR*2+1,evtr_strm1,ST_STRIPS_PER_LINK);
+
+ }
 
  
-void SCTProducer::sendEvent()
+void ROOTProducer::sendEvent()
 {
 	try {
 	m_prod->sendEvent();
@@ -411,41 +418,41 @@ void SCTProducer::sendEvent()
 
 }
 
-void SCTProducer::send_onConfigure()
+void ROOTProducer::send_onConfigure()
 {
 	Emit("send_onConfigure()");
 }
 
-void SCTProducer::send_onStop()
+void ROOTProducer::send_onStop()
 {
 	Emit("send_onStop()");
 }
 
-void SCTProducer::send_start_run()
+void ROOTProducer::send_start_run()
 {
 	Emit("send_start_run()");
 }
 
 
-void SCTProducer::send_onStart()
+void ROOTProducer::send_onStart()
 {
 	Emit("send_onStart()");
 }
 
 
-void SCTProducer::send_OnTerminate()
+void ROOTProducer::send_OnTerminate()
 {
 	Emit("send_OnTerminate()");
 }
 
 
 
-bool SCTProducer::getConnectionStatus()
+bool ROOTProducer::getConnectionStatus()
 {
 	return !(m_prod==nullptr);
 }
 
-int SCTProducer::getConfiguration( const char* tag, int DefaultValue )
+int ROOTProducer::getConfiguration( const char* tag, int DefaultValue )
 {
 	try{
 	return m_prod->getConfiguration().Get(tag,DefaultValue);
@@ -459,7 +466,7 @@ int SCTProducer::getConfiguration( const char* tag, int DefaultValue )
 
 
 
-int SCTProducer::getConfiguration( const char* tag, const char* defaultValue,char* returnBuffer,Int_t sizeOfReturnBuffer )
+int ROOTProducer::getConfiguration( const char* tag, const char* defaultValue,char* returnBuffer,Int_t sizeOfReturnBuffer )
 {
 	try{
 	std::string dummy(tag);
@@ -487,7 +494,7 @@ int SCTProducer::getConfiguration( const char* tag, const char* defaultValue,cha
 // 		return ReturnValue;
 // 	}
 
-bool SCTProducer::ConfigurationSatus()
+bool ROOTProducer::ConfigurationSatus()
 {
 	try{
 	return	m_prod->ConfigurationSatus();
@@ -497,7 +504,7 @@ bool SCTProducer::ConfigurationSatus()
 	}
 }
 
-void SCTProducer::setTag( const char* tag,const char* Value )
+void ROOTProducer::setTag( const char* tag,const char* Value )
 {
 	try{
 	m_prod->setTag(tag,Value);
@@ -508,47 +515,67 @@ void SCTProducer::setTag( const char* tag,const char* Value )
 
 }
 
-bool SCTProducer::getOnStart()
+bool ROOTProducer::getOnStart()
 {
 	return m_prod->getOnStart();
 }
 
-void SCTProducer::setOnStart( bool newStat )
+void ROOTProducer::getOnStart( bool* onStart )
+{
+  *onStart=getOnStart();
+}
+
+void ROOTProducer::setOnStart( bool newStat )
 {
 	m_prod->setOnStart(newStat);
 }
 
-bool SCTProducer::getOnConfigure()
+bool ROOTProducer::getOnConfigure()
 {
 	return m_prod->getOnConfigure();
 }
 
-void SCTProducer::setOnconfigure( bool newStat )
+void ROOTProducer::getOnConfigure( bool* onConfig )
+{
+  //*onConfig=getConfiguration();
+}
+
+void ROOTProducer::setOnconfigure( bool newStat )
 {
 		m_prod->setOnconfigure(newStat);
 }
 
-bool SCTProducer::getOnStop()
+bool ROOTProducer::getOnStop()
 {
 	return m_prod->getOnStop();
 }
 
-void SCTProducer::setOnStop( bool newStat )
+void ROOTProducer::getOnStop( bool* onStop )
+{
+  *onStop=getOnStop();
+}
+
+void ROOTProducer::setOnStop( bool newStat )
 {
 	m_prod->setOnStop(newStat);
 }
 
-bool SCTProducer::getOnTerminate()
+bool ROOTProducer::getOnTerminate()
 {
 	return m_prod->getOnTerminate();
 }
 
-void SCTProducer::setOnTerminate( bool newStat )
+void ROOTProducer::getOnTerminate( bool* onTerminate )
+{
+  *onTerminate=getOnTerminate();
+}
+
+void ROOTProducer::setOnTerminate( bool newStat )
 {
 	m_prod->setOnTerminate(newStat);
 }
 
-void SCTProducer::checkStatus()
+void ROOTProducer::checkStatus()
 {
 	if(getOnStart()){
 		
@@ -588,7 +615,7 @@ bool StartTestbeamProducer(const char* nameIn,const char* IP_AdresseIn) {
 		// Set the Log level for displaying messages based on command-line
 		//		EUDAQ_LOG_LEVEL(level.Value());
 		// Create a producer
-		SCTProducer producer(name.c_str(), rctrl.c_str());
+		ROOTProducer producer(name.c_str(), rctrl.c_str());
 		// And set it running...
 		//	producer.ReadoutLoop();
 		// When the readout loop terminates, it is time to go

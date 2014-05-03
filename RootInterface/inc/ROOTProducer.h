@@ -19,16 +19,16 @@
 
 
 
-class DLLEXPORT SCTProducer
+class DLLEXPORT ROOTProducer
 {
-	RQ_OBJECT("SCTProducer")
+	RQ_OBJECT("ROOTProducer")
 public:
 
 	// The constructor must call the eudaq::Producer constructor with the name
 	// and the runcontrol connection string, and initialize any member variables.
-	SCTProducer(const char* name,const char* runcontrol);
-	SCTProducer();
-	~SCTProducer();
+	ROOTProducer(const char* name,const char* runcontrol);
+	ROOTProducer();
+	~ROOTProducer();
 	// This is just an example, adapt it to your hardware
 
 	void Connect2RunControl(const char* name,const char* runcontrol);
@@ -50,6 +50,8 @@ public:
 	void setTag(const char* tag,const char* Value);
 	void AddPlane2Event(unsigned plane,const std::vector<unsigned char>& inputVector);
 	void AddPlane2Event(unsigned plane,const bool* inputVector,size_t Elements);
+  void AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK , bool* evtr_strm0,bool* evtr_strm1);
+    
 	void sendEvent();
 
 	// signals
@@ -65,27 +67,31 @@ public:
 	//status flags
 	void checkStatus();
 
-	bool getOnStart();
+	void getOnStart(bool* onStart);
+  bool getOnStart();
 	void setOnStart(bool newStat);
 
-	bool getOnConfigure();
+	void  getOnConfigure(bool* onConfig);
+  bool  getOnConfigure();
 	void setOnconfigure(bool newStat);
 
-	bool getOnStop();
+	void getOnStop(bool* onStop);
+  bool getOnStop();
 	void setOnStop(bool newStat);
 
-	bool getOnTerminate();
+	void getOnTerminate(bool* onTerminate);
+  bool getOnTerminate();
 	void setOnTerminate(bool newStat);
 
 private:
 	class Producer_PImpl;
 	Producer_PImpl* m_prod;
 
-	ClassDef(SCTProducer,1)
+	ClassDef(ROOTProducer,1)
 };
 
 #ifdef __CINT__
-#pragma link C++ class SCTProducer;
+#pragma link C++ class ROOTProducer;
 #endif
 
 
