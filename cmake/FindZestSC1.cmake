@@ -6,6 +6,11 @@
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
 macro(find_zestsc1_in_extern arg)
+# disable a warning about changed behaviour when traversing directories recursively (wrt symlinks)
+IF(COMMAND cmake_policy)
+  CMAKE_POLICY(SET CMP0009 NEW)
+  CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
+ENDIF(COMMAND cmake_policy)
 # determine path to zestsc1 package in ./extern folder
 file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h)
 if (extern_file)
