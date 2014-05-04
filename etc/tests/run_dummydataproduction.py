@@ -70,12 +70,33 @@ if prc.RunNumber == runnr:
     
 # main run loop
 i = 0
-while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 100:
-    # prepare an array of dim (1,3) for data storage
-    data = numpy.ndarray(shape=[1,3], dtype=numpy.uint64)
-    data[0] = ([31415926535,271828182845,124567890]) # add some (dummy) data
-    pp.SendEvent(data)        # send event off
-    sleep(waittime) # wait a little while
+while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 1000:
+    # prepare an array of dim (1,20) for data storage
+    data = numpy.ndarray(shape=[1,20], dtype=numpy.uint64)
+    data[0] = ([31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890,
+                31415926535,271828182845,124567890
+                ]) # add some (dummy) data
+
+    pp.SendEvent(data)        # send event with some (fixed) dummy data off
+    sleep(0.01) # wait a little while
     i+=1
 
 if not pp.Error:

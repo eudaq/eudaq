@@ -15,7 +15,8 @@
 
   SET( testdir "${PROJECT_BINARY_DIR}/Testing/tests" )
   SET( datadir "${PROJECT_SOURCE_DIR}/data" )
-  SET( testscriptsdir "${PROJECT_SOURCE_DIR}/etc/tests" )
+  SET( testsdir "${PROJECT_SOURCE_DIR}/etc/tests" )
+  SET( pydir "${PROJECT_SOURCE_DIR}/python")
 
   #SET( referencedatadir "/afs/desy.de/group/telescopes/EudaqTestData" )
   SET( referencedatadir "${PROJECT_SOURCE_DIR}/data" )
@@ -26,7 +27,7 @@
   SET( pass_regex_1 "Successfullly started run!" )
   SET( pass_regex_1 "Successfullly finished run!" )
 
-  SET( generic_fail_regex "ERROR" "CRITICAL" "segmentation violation")
+  SET( generic_fail_regex "ERROR" "Error" "CRITICAL" "segmentation violation")
 
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -35,8 +36,8 @@
 
 
     ADD_TEST( NAME DummyDataProductionRun 
-              WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/python"
-	      COMMAND ${PYTHON_EXECUTABLE} run_test.py )
+              WORKING_DIRECTORY "${pydir}"
+	      COMMAND ${PYTHON_EXECUTABLE} ${testsdir}/run_dummydataproduction.py )
     SET_TESTS_PROPERTIES (DummyDataProductionRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${pass_regex_1}.*${pass_regex_2}"
@@ -47,7 +48,7 @@
 
     # now check if the expected output files exist and look ok
     ADD_TEST( NAME DummyDataProductionRefComp 
-    	      COMMAND ${PYTHON_EXECUTABLE} ${testscriptsdir}/compareRawFiles.py ${datadir} ${referencedatadir}/dummyrefrun.raw
+    	      COMMAND ${PYTHON_EXECUTABLE} "${testsdir}/compareRawFiles.py" "${datadir}" "${referencedatadir}/dummyrefrun.raw"
 	      )
     SET_TESTS_PROPERTIES (DummyDataProductionRefComp PROPERTIES DEPENDS DummyDataProductionRun)
 
