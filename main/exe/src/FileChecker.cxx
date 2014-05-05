@@ -20,6 +20,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/TLUEvent.hh"
+#include "eudaq/MultiFileReader.hh"
 
 
 using namespace eudaq;
@@ -91,7 +92,8 @@ int main(int /*argc*/, const char ** argv) {
 
         try {
             // always synchronize based on the trigger id
-            FileReader reader(run, input_pattern, true);
+            multiFileReader reader;
+            reader.addFileReader(run, input_pattern);
 
             const DetectorEvent & bore = reader.GetDetectorEvent();
             if (!bore.IsBORE()) errors += "first event is not BORE. ";

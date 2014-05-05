@@ -10,8 +10,9 @@
  * @date        2013
  *
  */
-
+#ifndef WIN32
 #include <inttypes.h> /* uint32_t */
+#endif
 #include <iostream>
 #include <memory> /* unique_ptr */
 

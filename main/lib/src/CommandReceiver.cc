@@ -95,7 +95,7 @@ namespace eudaq {
   }
 
   void CommandReceiver::OnIdle() {
-    mSleep(1);
+    mSleep(500);
   }
 
   void CommandReceiver::CommandThread() {

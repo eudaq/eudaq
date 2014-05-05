@@ -15,6 +15,21 @@
 using namespace IMPL;
 using namespace UTIL;
 #endif
+#include "TLUEvent.hh"
+
+#define NOTIMESTAMPSET (unsigned long long)-1
+#define NOTIMEDURATIONSET 0
+
+
+
+//////////////////////////////////////////////////////////////////////////
+// Compare Time stamps
+#define Event_IS_EARLY -1
+#define Event_IS_LATE 1
+#define Event_IS_Sync 0
+
+
+
 
 
 namespace EVENT { class LCEvent; class LCRunHeader; }
@@ -25,6 +40,89 @@ namespace lcio { using namespace EVENT; }
 
 namespace eudaq{
 
+	  inline int compareTLU2DUT(unsigned TLU_Trigger_Number, unsigned DUT_Trigger_number){
+	  if (DUT_Trigger_number==TLU_Trigger_Number)
+	  {
+		  return Event_IS_Sync;	
+	  }else if (DUT_Trigger_number>TLU_Trigger_Number)
+	  {
+		  return Event_IS_EARLY;
+	  }
+	  return Event_IS_LATE;
+
+
+
+  }
+  template <typename T>
+  inline int compareTLU2DUT(T TLU_Trigger_Number, T DUT_Trigger_number){
+	  if (DUT_Trigger_number==TLU_Trigger_Number)
+	  {
+		  return Event_IS_Sync;	
+	  }else if (DUT_Trigger_number>TLU_Trigger_Number)
+	  {
+		  return Event_IS_EARLY;
+	  }
+	  return Event_IS_LATE;
+
+
+
+  }
+
+  template <typename T>
+  inline int hasTimeOVerlaping(T eventBegin, T EventEnd, T TLUStart,T TLUEnd){
+
+
+
+	  if (eventBegin<=TLUEnd)
+	  {
+		  if (EventEnd>=TLUStart)
+		  {
+
+			  	  /*
+
+	                    | event start  |event End
+	  ----------------------------------------->
+	                                           t
+
+                 | tlu start  | tlu End
+	  ------------------------------------------>
+											   t
+
+	  */
+			  return Event_IS_Sync;
+		  }
+
+		  	  /*
+
+	    | event start  |event End
+	  ----------------------------------------->
+	                                           t
+
+                               | tlu start  | tlu End
+	  ------------------------------------------>
+											   t
+
+	  */
+		  return Event_IS_EARLY;
+	  }
+
+	 
+	  /*
+
+	                     | event start  |event End
+	  ----------------------------------------->
+	                                           t
+
+        | tlu start  | tlu End
+	  ------------------------------------------>
+											   t
+
+	  */
+
+	  return  Event_IS_LATE;
+  }
+
+
   class Configuration;
 
   /**
@@ -33,7 +131,7 @@ namespace eudaq{
    *  functions which
    *  get the eudaq::Event as input parameter.
    *
-   *  The implementations should be sinlgeton classes which only can be
+   *  The implementations should be singleton classes which only can be
    *  accessed via the plugin manager. (See TimepixConverterPlugin as example).
    *  The plugin implementations have to register with the plugin manager.
    */
@@ -45,8 +143,20 @@ namespace eudaq{
       virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
 
       virtual unsigned GetTriggerID(eudaq::Event const &) const;
+	  virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
+		  // dummy comparator. it is just checking if the event numbers are the same.
+		  
+		  //auto triggerID=ev.GetEventNumber();
+		  unsigned triggerID=ev.GetTag<unsigned>("tlu_trigger_id",0);
+	  auto tlu_triggerID=tlu.GetEventNumber();
+	return compareTLU2DUT(tlu_triggerID,triggerID);
+	  }
 
-      virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {}
+	  virtual void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu){
+		  ev.SetTag("tlu_trigger_id",tlu.GetEventNumber());
+	  }
+	  virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {}
+	  
 
       /** Returns the LCIO version of the event.
        */
@@ -70,6 +180,7 @@ namespace eudaq{
        *  of the plugin.
        */
       t_eventid m_eventtype;
+	  
 
       /** The protected constructor which automatically registeres the plugin
        *  at the pluginManager.
@@ -86,6 +197,10 @@ namespace eudaq{
       DataConverterPlugin(DataConverterPlugin &);
       DataConverterPlugin & operator = (const DataConverterPlugin &);
   };
+
+
+  
+
 
 }//namespace eudaq
 

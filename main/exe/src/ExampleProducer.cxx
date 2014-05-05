@@ -21,7 +21,7 @@ class ExampleProducer : public eudaq::Producer {
     // and the runcontrol connection string, and initialize any member variables.
     ExampleProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol),
-      m_run(0), m_ev(0), stopping(false), done(false) {}
+      m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
 
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
@@ -42,6 +42,7 @@ class ExampleProducer : public eudaq::Producer {
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_ev = 0;
+	  
       std::cout << "Start Run: " << m_run << std::endl;
 
       // It must send a BORE to the Data Collector
@@ -54,12 +55,13 @@ class ExampleProducer : public eudaq::Producer {
 
       // At the end, set the status that will be displayed in the Run Control.
       SetStatus(eudaq::Status::LVL_OK, "Running");
+	  started=true;
     }
 
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
       std::cout << "Stopping Run" << std::endl;
-
+	  started=false;
       // Set a flag to signal to the polling loop that the run is over
       stopping = true;
 
@@ -95,7 +97,13 @@ class ExampleProducer : public eudaq::Producer {
           // Then restart the loop
           continue;
         }
-
+		if (!started)
+		{
+			// Now sleep for a bit, to prevent chewing up all the CPU
+			eudaq::mSleep(20);
+			// Then restart the loop
+			continue;
+		}
         // If we get here, there must be data to read out
         // Create a RawDataEvent to contain the event data to be sent
         eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
@@ -123,7 +131,7 @@ class ExampleProducer : public eudaq::Producer {
     // but it also generates example raw data to help illustrate the decoder
     eudaq::ExampleHardware hardware;
     unsigned m_run, m_ev, m_exampleparam;
-    bool stopping, done;
+    bool stopping, done,started;
 };
 
 // The main function that will create a Producer instance and run it

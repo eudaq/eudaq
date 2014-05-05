@@ -42,6 +42,7 @@
 
 //STL includes
 #include <string>
+#include <memory>
 
 #ifdef WIN32
 #define EUDAQ_SLEEP(x) Sleep(x*1000)
@@ -104,7 +105,7 @@ class RootMonitor : private eudaq::Holder<int>,
       virtual void OnStartRun(unsigned param);
       virtual void OnEvent(const eudaq::StandardEvent & ev);
 
-      virtual void OnBadEvent(counted_ptr<eudaq::Event> ev) {
+      virtual void OnBadEvent(std::shared_ptr<eudaq::Event> ev) {
         EUDAQ_ERROR("Bad event type found in data file");
         std::cout << "Bad Event: " << *ev << std::endl;
       }

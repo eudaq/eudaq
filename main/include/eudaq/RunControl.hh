@@ -32,7 +32,7 @@ namespace eudaq {
 
       virtual void OnConnect(const ConnectionInfo & /*id*/) {}
       virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
-      virtual void OnReceive(const ConnectionInfo & /*id*/, counted_ptr<Status>) {}
+      virtual void OnReceive(const ConnectionInfo & /*id*/,std::shared_ptr<Status>) {}
       virtual ~RunControl();
 
       void CommandThread();

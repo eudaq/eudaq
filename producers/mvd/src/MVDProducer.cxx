@@ -4,10 +4,11 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/counted_ptr.hh"
 #include <iostream>
 #include <ostream>
 #include <sys/time.h>
+#include <memory>
+
 
 using eudaq::RawDataEvent;
 
@@ -15,7 +16,7 @@ class MVDProducer: public eudaq::Producer {
 public:
 	MVDProducer(const std::string & runcontrol) :
 		eudaq::Producer("MVD", runcontrol), m_run(0), m_ev(0), done(false),
-				m_running(false), m_stoppedrun(false), m_mvd(0) {
+				m_running(false), m_stoppedrun(false), m_mvd(nullptr) {
 	}
 	void MainLoop() {
 		do {
@@ -56,9 +57,9 @@ public:
 		try {
 			std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
 			if (m_mvd) {
-				m_mvd = 0;
+				m_mvd = nullptr;
 			}
-			m_mvd = new MVDController();
+			m_mvd = std::make_shared<MVDController>();
 			m_mvd->Configure(param);
 			std::cout << "...Configured (" << param.Name() << ")" << std::endl;
 			EUDAQ_INFO("Configured (" + param.Name() + ")");
@@ -117,7 +118,7 @@ private:
 	unsigned int microsec;
 	time_t timer;
 	struct tm *date;
-	counted_ptr<MVDController> m_mvd;
+	std::shared_ptr<MVDController> m_mvd;
 };
 
 int main(int /*argc*/, const char ** argv) {

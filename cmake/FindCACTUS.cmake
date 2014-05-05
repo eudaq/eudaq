@@ -7,7 +7,8 @@
 
 #find_cactus_in_extern("")
 
-set(CACTUS_ROOT ${PROJECT_SOURCE_DIR}/extern/cactus )
+#set(CACTUS_ROOT ${PROJECT_SOURCE_DIR}/extern/cactus )
+set(CACTUS_ROOT /opt/cactus )
 
 # could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT CACTUS_ROOT)
