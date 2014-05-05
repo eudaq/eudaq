@@ -44,13 +44,31 @@ namespace eudaq {
       static writer GetFunc(Serializable *) { return write_ser; }
       static writer GetFunc(float *) { return write_float; }
       static writer GetFunc(double *) { return write_double; }
-      static writer GetFunc(...) { return write_int; }
+      static writer GetFunc(bool * ) { return write_char; }
+      static writer GetFunc(uint8_t * ) { return write_char; }
+      static writer GetFunc(int8_t *  ) { return write_char; }
+      static writer GetFunc(uint16_t *) { return write_int; }
+      static writer GetFunc(int16_t * ) { return write_int; }
+      static writer GetFunc(uint32_t *) { return write_int; }
+      static writer GetFunc(int32_t * ) { return write_int; }
+      static writer GetFunc(uint64_t *) { return write_int; }
+      static writer GetFunc(int64_t * ) { return write_int; }
+      static writer GetFunc(unsigned long long int *) { return write_int; }
+      static writer GetFunc(long long int * ) { return write_int; }
 
       static void write_ser(Serializer & sr, const T & v) {
         v.Serialize(sr);
       }
+      static void write_char(Serializer & sr, const T & v) {
+	static_assert(sizeof(v) == 1,"Called write_char() in Serializer.hh which only supports integers of size == 1 byte!" );
+        unsigned char buf[sizeof (char)];
+	buf[0] = static_cast<unsigned char>(v & 0xff);
+        sr.Serialize(buf, sizeof (char));
+      }
+
       static void write_int(Serializer & sr, const T & v) {
-    	unsigned long long t = static_cast<unsigned long long>(v);
+	static_assert(sizeof(v) > 1,"Called write_int() in Serializer.hh which only supports integers of size > 1 byte!" );
+    	T t = v;
         unsigned char buf[sizeof v];
         for (size_t i = 0; i < sizeof v; ++i) {
           buf[i] = static_cast<unsigned char>(t & 0xff);
@@ -172,12 +190,30 @@ namespace eudaq {
       static reader GetFunc(Serializable *) { return read_ser; }
       static reader GetFunc(float *) { return read_float; }
       static reader GetFunc(double *) { return read_double; }
-      static reader GetFunc(...) { return read_int; }
+      static reader GetFunc(bool * ) { return read_char; }
+      static reader GetFunc(uint8_t * ) { return read_char; }
+      static reader GetFunc(int8_t *  ) { return read_char; }
+      static reader GetFunc(uint16_t *) { return read_int; }
+      static reader GetFunc(int16_t * ) { return read_int; }
+      static reader GetFunc(uint32_t *) { return read_int; }
+      static reader GetFunc(int32_t * ) { return read_int; }
+      static reader GetFunc(uint64_t *) { return read_int; }
+      static reader GetFunc(int64_t * ) { return read_int; }
+      static reader GetFunc(unsigned long long int *) { return read_int; }
+      static reader GetFunc(long long int * ) { return read_int; }
 
       static T read_ser(Deserializer & ds) {
         return T(ds);
       }
+      static T read_char(Deserializer & ds) {
+        unsigned char buf[sizeof (char)];
+        ds.Deserialize(buf, sizeof (char));
+        T t = buf[0];
+        return t;
+      }
       static T read_int(Deserializer & ds) {
+	// protect against types of 8 bit (or less) -- would cause indefined behaviour in bit shift below
+	static_assert(sizeof(T) > 1,"Called read_int() in Serializer.hh which only supports integers of size > 1 byte!" );
         unsigned char buf[sizeof (T)];
         ds.Deserialize(buf, sizeof (T));
         T t = 0;
