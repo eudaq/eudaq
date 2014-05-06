@@ -4,6 +4,9 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+
+#include "eudaq/BufferSerializer.hh"
+
 #include <iostream>
 #ifndef WIN32
 #include <inttypes.h> /* uint64_t */
@@ -17,14 +20,15 @@ class PyProducer : public eudaq::Producer {
     PyProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
   void SendEvent(uint64_t* data, size_t size) {
-      RawDataEvent ev("Test", m_run, ++m_evt);
+    RawDataEvent ev("Test", m_run, ++m_evt);
       ev.AddBlock(0, data, size);
       eudaq::DataSender::SendEvent(ev);
     }
     virtual void OnConfigure(const eudaq::Configuration & param) {
-      std::cout << "Received Configuration" << std::endl;
+      std::cout << "[PyProducer] Received Configuration" << std::endl;
       m_config = new eudaq::Configuration(param);
       m_internalstate = Configuring;
+      SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side configure");
     }
     virtual void OnStartRun(unsigned param) {
       m_run = param;
@@ -35,24 +39,26 @@ class PyProducer : public eudaq::Producer {
 	m_internalstate = Error;
       } else {
 	m_internalstate = StartingRun;
+	SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side run start");
       }
     }
     virtual void OnStopRun() {
-      std::cout << "Stop Run received" << std::endl;
+      std::cout << "[PyProducer] Stop Run received" << std::endl;
+      SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side run stop");
       m_internalstate = StoppingRun;
     }
     virtual void OnTerminate() {
-      std::cout << "Terminate received" << std::endl;
+      std::cout << "[PyProducer] Terminate received" << std::endl;
       m_internalstate = Terminating;
     }
     virtual void OnReset() {
-      std::cout << "Reset received" << std::endl;
+      std::cout << "[PyProducer] Reset received" << std::endl;
       m_internalstate = Resetting;
     }
     virtual void OnStatus() {
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
-      std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
+      std::cout << "[PyProducer] Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
       SetStatus(eudaq::Status::LVL_WARN, "Received Unrecognized Command");
@@ -61,10 +67,17 @@ class PyProducer : public eudaq::Producer {
     if (!m_config) return std::string();
     return m_config->Get(item,std::string());
   }
+  void UpdateStatus(eudaq::Status::Level level, const std::string & info = ""){
+    // updates the status and sends a packet to inform RC
+    SetStatus(level, info);
+    eudaq::BufferSerializer ser;
+    m_status.Serialize(ser);
+    m_cmdclient->SendPacket(ser);
+  }
   bool SetConfigured(){
     if (m_internalstate!=Configuring) return false;    
     EUDAQ_INFO("Configured (" + m_config->Name() + ")");
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
+    UpdateStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
     m_internalstate=Configured;
     return true;
   }
@@ -74,26 +87,25 @@ class PyProducer : public eudaq::Producer {
     m_run = 0;
     m_evt = 0;
     m_internalstate = Init;
-    SetStatus(eudaq::Status::LVL_OK);
+    UpdateStatus(eudaq::Status::LVL_OK);
     return true;
   }
   void SetError(){
     m_internalstate = Error;
-    SetStatus(eudaq::Status::LVL_ERROR);
+    UpdateStatus(eudaq::Status::LVL_ERROR);
   }
   bool SendBORE(){
     if (m_internalstate!=StartingRun) return false;
-    eudaq::DataSender::SendEvent(RawDataEvent::BORE(m_name, m_run));
-    std::cout << "Start Run: " << m_run << std::endl;
-    SetStatus(eudaq::Status::LVL_OK, "");
+    eudaq::DataSender::SendEvent(RawDataEvent::BORE("Test", m_run));
+    std::cout << "[PyProducer] Start Run: " << m_run << std::endl;
+    UpdateStatus(eudaq::Status::LVL_OK, "");
     m_internalstate = Running;
     return true;
   }
   bool SendEORE(){
     if (m_internalstate!=StoppingRun) return false;
-    m_internalstate = Stopped;
-    std::cout << "Stopping Run: " << m_run << std::endl;
-    eudaq::DataSender::SendEvent(RawDataEvent::EORE(m_name, m_run, ++m_evt));
+    std::cout << "[PyProducer] Stopping Run: " << m_run << std::endl;
+    eudaq::DataSender::SendEvent(RawDataEvent::EORE("Test", m_run, ++m_evt));
     m_internalstate = Stopped;
     return true;
   }
