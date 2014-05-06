@@ -92,7 +92,8 @@ class PyProducer(object):
 
 
 class PyDataCollector(object):
-    def __init__(self,rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001"):
+    def __init__(self,name = "", rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001"):
         lib.PyDataCollector_new.restype = c_void_p # Needed
-        self.obj = lib.PyDataCollector_new(create_string_buffer(rcaddr), 
+        self.obj = lib.PyDataCollector_new(create_string_buffer(name),
+                                           create_string_buffer(rcaddr), 
                                            create_string_buffer(listenaddr))

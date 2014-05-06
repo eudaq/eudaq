@@ -7,10 +7,10 @@
 
 class PyDataCollector : public eudaq::DataCollector {
   public:
-    PyDataCollector(const std::string & runcontrol,
-        const std::string & listenaddress)
-      : eudaq::DataCollector(runcontrol, listenaddress),
-      done(false)
+  PyDataCollector(const std::string & name, 
+		  const std::string & runcontrol,
+		  const std::string & listenaddress)
+      : eudaq::DataCollector(runcontrol, listenaddress)
   {}
     void OnConnect(const eudaq::ConnectionInfo & id) {
       DataCollector::OnConnect(id);
@@ -36,8 +36,8 @@ class PyDataCollector : public eudaq::DataCollector {
     //   }
     virtual void OnTerminate() {
       std::cout << "Terminating" << std::endl;
-      done = true;
     }
+
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
       SetStatus(eudaq::Status::LVL_OK);
@@ -52,11 +52,10 @@ class PyDataCollector : public eudaq::DataCollector {
       std::cout << std::endl;
       SetStatus(eudaq::Status::LVL_WARN, "Just testing");
     }
-    bool done;
 };
 
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  PyDataCollector* PyDataCollector_new(char *rcaddress, char *listenaddress){return new PyDataCollector(std::string(rcaddress),std::string(listenaddress));}
+  PyDataCollector* PyDataCollector_new(char *name, char *rcaddress, char *listenaddress){return new PyDataCollector(std::string(name), std::string(rcaddress),std::string(listenaddress));}
 }
