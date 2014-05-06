@@ -24,6 +24,8 @@ class PyRunControl(object):
         lib.PyRunControl_StopRun(c_void_p(self.obj))
     def Configure(self,cfg):
         lib.PyRunControl_Configure(c_void_p(self.obj), create_string_buffer(cfg))
+    def PrintConnections(self):
+        lib.PyRunControl_PrintConnections(c_void_p(self.obj))
     @property 
     def NumConnections(self):
         return lib.PyRunControl_NumConnections(c_void_p(self.obj))
