@@ -166,7 +166,7 @@ merges all the connected incoming streams into a single data stream, and writes 
 Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine,
 and it may also be told to listen on a non-standard port, with the \texttt{-r} and \texttt{-a} options respectively, for example:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -r eudet
+$[./TestDataCollector.exe]$ -r eudet -a tcp://55001
 \end{listing}
 
 It is also possible to run multiple Data Collector instances within
@@ -186,6 +186,17 @@ The name of a Data Collector can be set with the
 $[./TestDataCollector.exe]$ -n myproducer
 \end{listing}
 
+Should you wish to run several instances of the Data Collector on one
+machine, you need to make sure that they listen to different addresses
+using the \texttt{-a} option as described above. Furthermore, you need
+to make each Data Collector write to a different file by including the
+\texttt{FilePattern} option in the corresponding section of your
+configuration file (also see section \ref{sec:ConfigFiles}):
+
+\begin{listing}[conf]
+[DataCollector.myproducer]
+FilePattern = "run$6R_myproducer$X"
+\end{listing}
 
 \subsubsection{TestProducer}
 For testing purposes, you may use the Test Producer.
