@@ -10,21 +10,22 @@ print "Starting (Test-) Producer"
 pp = PyProducer("testproducer")
 
 print "Starting DataCollector"
-# create PyDataCollector instance
+# create PyDataCollector instance with default options
 pdc = PyDataCollector() # create main data collector
 
 
 # wait for more than one active connection to appear
-while prc.NumConnections < 2:
+while prc.NumConnections < 2 or not prc.AllOk:
     sleep(1)
-    print "Number of active connections: ", prc.NumConnections
+    prc.PrintConnections()
+    print " ----- "
 
-print "Current Run Number: " + prc.RunNumber
+prc.PrintConnections()
+print "Current Run Number: " + str(prc.RunNumber)
 runnr = prc.RunNumber # remember the current number
 
 # load configuration file
 prc.Configure("ExampleConfig")
-sleep(2) # wait for a couple of seconds so that the connections can receive the config
 
 # counter variables for simple timeout
 i = 0
@@ -33,8 +34,9 @@ waittime = .5
 # wait until all connections answer with 'OK'
 while i<maxwait and not prc.AllOk:
     sleep(waittime)
-    print "Waiting for configure for ",i*waittime," seconds, number of active connections: ", prc.NumConnections
     i+=1
+    print "Waiting for configure for ",i*waittime," seconds"
+    prc.PrintConnections()
     # our producer is not connected to actual hardware, so we just set the configured status here
     if pp.Configuring:
         pp.Configuring = True
@@ -63,7 +65,7 @@ else:
     print "Not all connections returned 'OK' after ",maxwait*waittime," seconds!"
     abort()
 
-print "New Run Number: " + prc.RunNumber
+print "New Run Number: ", prc.RunNumber
 if prc.RunNumber == runnr:
     print "ERROR: new run number identical to previous one!"
     abort()
@@ -71,8 +73,8 @@ if prc.RunNumber == runnr:
 # main run loop
 i = 0
 while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 1000:
-    # prepare an array of dim (1,20) for data storage
-    data = numpy.ndarray(shape=[1,20], dtype=numpy.uint64)
+    # prepare an array of dim (1,60) for data storage
+    data = numpy.ndarray(shape=[1,60], dtype=numpy.uint64)
     data[0] = ([31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890,
