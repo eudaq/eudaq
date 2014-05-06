@@ -10,7 +10,7 @@ class PyDataCollector : public eudaq::DataCollector {
   PyDataCollector(const std::string & name, 
 		  const std::string & runcontrol,
 		  const std::string & listenaddress)
-      : eudaq::DataCollector(runcontrol, listenaddress)
+    : eudaq::DataCollector(name, runcontrol, listenaddress)
   {}
     void OnConnect(const eudaq::ConnectionInfo & id) {
       DataCollector::OnConnect(id);
