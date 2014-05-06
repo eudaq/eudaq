@@ -50,6 +50,7 @@ def main(argv=None):
                 return 1
             # determine amount of padding from pattern argument
             p = re.compile("\$[0-9]R") # the key pattern determining the amount of zero padding of the run number in the file name
+            x = re.compile("\$X") # the extension pattern in case the full EUDAQ file naming scheme is used
             m = p.search(args.pattern)
             if not m:
                 print "Error: provided file pattern does not contain the key '$XR' where X is a integer determining the amount of padding"
@@ -58,6 +59,7 @@ def main(argv=None):
 
             # now actually construct the file name: search and replace pattern key with padded run number
             m = p.subn(str(run).zfill(padding), args.pattern, count=1)
+            m = x.subn(".raw", m[0], count=1) # replace a possible occurance of the file extension pattern with "raw"
             t = m[0]
         else:
             print "Error: Cannot find 'runnumber.dat' in path '"+args.testfile+"'"
