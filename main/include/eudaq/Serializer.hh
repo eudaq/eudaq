@@ -31,6 +31,12 @@ namespace eudaq {
       template<typename T, typename U>
         void write(const std::pair<T, U> & t);
 
+      void append( const unsigned char * data, size_t size ) {
+    	  Serialize( data, size );
+      }
+
+      virtual uint64_t GetCheckSum() { return 0; }
+
       virtual ~Serializer() {}
     private:
       template <typename T>
@@ -53,8 +59,6 @@ namespace eudaq {
       static writer GetFunc(int32_t * ) { return write_int; }
       static writer GetFunc(uint64_t *) { return write_int; }
       static writer GetFunc(int64_t * ) { return write_int; }
-      static writer GetFunc(unsigned long long int *) { return write_int; }
-      static writer GetFunc(long long int * ) { return write_int; }
 
       static void write_ser(Serializer & sr, const T & v) {
         v.Serialize(sr);
@@ -86,7 +90,7 @@ namespace eudaq {
         sr.Serialize(buf, sizeof t);
       }
       static void write_double(Serializer & sr, const double & v) {
-        unsigned long long t = *(unsigned long long *)&v;
+        uint64_t t = *(uint64_t *)&v;
         unsigned char buf[sizeof t];
         for (size_t i = 0; i < sizeof t; ++i) {
           buf[i] = t & 0xff;
@@ -111,6 +115,15 @@ namespace eudaq {
     inline void Serializer::write(const Time & t) {
       write((int)t.GetTimeval().tv_sec);
       write((int)t.GetTimeval().tv_usec);
+    }
+
+  template <>
+    inline void Serializer::write(const std::vector<bool> & t) {
+      unsigned len = t.size();
+      write(len);
+      for (size_t i = 0; i < len; ++i) {
+        write((uint8_t)t[i]);
+      }
     }
 
   template <typename T>
@@ -175,6 +188,8 @@ namespace eudaq {
           return t;
         }
 
+      void read( unsigned char *dst, size_t size ) { Deserialize( dst, size ); }
+
       virtual ~Deserializer() {}
     protected:
       bool m_interrupting;
@@ -199,8 +214,6 @@ namespace eudaq {
       static reader GetFunc(int32_t * ) { return read_int; }
       static reader GetFunc(uint64_t *) { return read_int; }
       static reader GetFunc(int64_t * ) { return read_int; }
-      static reader GetFunc(unsigned long long int *) { return read_int; }
-      static reader GetFunc(long long int * ) { return read_int; }
 
       static T read_ser(Deserializer & ds) {
         return T(ds);
