@@ -154,7 +154,7 @@ namespace eudaq {
         n_ts = ev->GetTimestamp();
       }
       DetectorEvent ev(n_run, n_ev, n_ts);
-      unsigned tluev = 0;
+
       for (size_t i = 0; i < m_buffer.size(); ++i) {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
