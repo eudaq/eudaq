@@ -47,8 +47,6 @@ namespace eudaq {
       bool m_done;
       std::string m_type, m_name;
       void CommandHandler(TransportEvent &);
-  //    pthread_t m_thread;
-  //    pthread_attr_t m_threadattr;
 	  std::unique_ptr<std::thread> m_thread;
       bool m_threadcreated;
   };
