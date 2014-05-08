@@ -56,7 +56,7 @@ namespace tlu {
        << (rst ? 'R' : '.'); 
   }
 
-  static const uint64_t NOTIMESTAMP = (uint32_t long)-1;
+  static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
 
@@ -349,7 +349,7 @@ namespace tlu {
       m_addr = &v0_2;
     }
     if (!m_oldbuf) {
-		m_oldbuf = new uint32_t long[m_addr->TLU_BUFFER_DEPTH];
+		m_oldbuf = new uint64_t[m_addr->TLU_BUFFER_DEPTH];
 		m_triggerBuffer=new unsigned[m_addr->TLU_BUFFER_DEPTH];
 	}
     LoadFirmware();
@@ -808,7 +808,7 @@ namespace tlu {
   uint64_t TLUController::ReadRegister64(uint32_t offset) const {
     uint64_t val = 0;
     for (int i = 0; i < 8; ++i) {
-      val |= static_cast<uint32_t long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint64_t>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;
@@ -1066,7 +1066,7 @@ namespace tlu {
 
 
     if ( pad ) {
-      std::cout <<"### Reading 2048 long-long words to pad ...."  << std::endl;   
+      std::cout <<"### Reading 2048 uint64_t words to pad ...."  << std::endl;   
       result = ZestSC1ReadData(m_handle, padding_buffer, sizeof padding_buffer );
     } else {
       std::cout <<"### No padding block read ...."  << std::endl;   
