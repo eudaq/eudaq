@@ -16,7 +16,7 @@ public:
 		m_tst_instance=eIn;
 		std::string name(nameIn),ip(IP_AdresseIn);
 
-		m_sct=new SCTProducer(name,ip);
+		m_sct=new ROOTProducer(name,ip);
 		m_sct->Connect("send2TST_start_run()","sct_root_interface",this,"start_run()");
 
 	}
@@ -123,7 +123,7 @@ public:
 		}
 	}
 
- SCTProducer* m_sct;
+ ROOTProducer* m_sct;
 TST* m_tst_instance;
 };
 
