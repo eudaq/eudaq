@@ -790,7 +790,7 @@ namespace tlu {
   uint32_t TLUController::ReadRegister24(uint32_t offset) const {
     uint32_t val = 0;
     for (int i = 0; i < 3; ++i) {
-      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint32_t>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;
@@ -799,7 +799,7 @@ namespace tlu {
   uint32_t TLUController::ReadRegister32(uint32_t offset) const {
     uint32_t val = 0;
     for (int i = 0; i < 4; ++i) {
-      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint32_t>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;

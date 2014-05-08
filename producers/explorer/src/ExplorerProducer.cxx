@@ -330,7 +330,7 @@ public:
               }
               // check whether we are finished
               if (max_frame_id != -1 &&
-                  evt_status == (unsigned long)(1 << (max_frame_id+1))-1)
+                  evt_status == (uint32_t)(1 << (max_frame_id+1))-1)
                 evt_finished = true;
             }
           }
@@ -388,7 +388,7 @@ public:
               }
               // check whether we are finished
               if (max_frame_id != -1 &&
-                  evt_status == (unsigned long)(1 <<(max_frame_id+1))-1)
+                  evt_status == (uint32_t)(1 <<(max_frame_id+1))-1)
                 evt_finished = true;
             }
           }

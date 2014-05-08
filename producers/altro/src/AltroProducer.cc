@@ -304,19 +304,19 @@ void AltroProducer::Event(volatile uint32_t *altrodata, int length)
     eudaq::RawDataEvent ev("TimepixEvent",GetRunNumber(), GetIncreaseEventNumber() );
 
     // a data block of unsigned char, in this the data is stored in little endian
-    unsigned char *serialdatablock =  new unsigned char[length*sizeof(unsigned long)];
+    unsigned char *serialdatablock =  new unsigned char[length*sizeof(uint32_t)];
     
     for (int i=0; i < length ; i ++)
     {
-	for (unsigned int j = 0; j < sizeof(unsigned long); j++)
+	for (unsigned int j = 0; j < sizeof(uint32_t); j++)
 	{
 	    // send little endian, i. e. the most significant first
-	    serialdatablock[sizeof(unsigned long)*i+j] 
-		= (altrodata[i] & (0xFF << 8*j)) >> (sizeof(unsigned long)-j-1)*8 ;
+	    serialdatablock[sizeof(uint32_t)*i+j] 
+		= (altrodata[i] & (0xFF << 8*j)) >> (sizeof(uint32_t)-j-1)*8 ;
 	}
     }
 
-    ev.AddBlock(serialdatablock , length*sizeof(unsigned long));
+    ev.AddBlock(serialdatablock , length*sizeof(uint32_t));
 
     SendEvent(ev);
     delete[] serialdatablock;

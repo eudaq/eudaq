@@ -497,7 +497,7 @@ public:
   unsigned m_run, m_ev;
   bool done, started, juststopped, m_resetbusy, m_unsync;
   int n_error;
-  std::vector<unsigned long> m_buffer;
+  std::vector<uint32_t> m_buffer;
   std::vector<counted_ptr<EUDRBController> > m_boards;
   //int fdOut;
   int m_idoffset, m_version, m_master;

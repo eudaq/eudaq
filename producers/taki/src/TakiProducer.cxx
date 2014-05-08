@@ -345,10 +345,10 @@ int main(int argc, char* argv[])
                 ui_lengthOfEUDAQData =    (( ((unsigned int )(p_uc_buffer_TCP[1]))       ) & 0x00FF)
                                         | (( ((unsigned int )(p_uc_buffer_TCP[0])) << 8  ) & 0xFF00); 
 
-                ul_TID_read =   (( ((unsigned long)(p_uc_buffer_TCP[5]))       ) & 0x000000FF)
-                              | (( ((unsigned long)(p_uc_buffer_TCP[4])) << 8  ) & 0x0000FF00)
-                              | (( ((unsigned long)(p_uc_buffer_TCP[3])) << 16 ) & 0x00FF0000)
-                              | (( ((unsigned long)(p_uc_buffer_TCP[2])) << 24 ) & 0xFF000000);  
+                ul_TID_read =   (( ((uint32_t)(p_uc_buffer_TCP[5]))       ) & 0x000000FF)
+                              | (( ((uint32_t)(p_uc_buffer_TCP[4])) << 8  ) & 0x0000FF00)
+                              | (( ((uint32_t)(p_uc_buffer_TCP[3])) << 16 ) & 0x00FF0000)
+                              | (( ((uint32_t)(p_uc_buffer_TCP[2])) << 24 ) & 0xFF000000);  
 
                 //! The readout PC does not send any 0 TIDs or TIDs > 32767 ! (making it easier for us to remove garbled TIDs)
                 //! So if a very high TID is received here, we just ignore it, because it must be garbage TCP data resulting from
@@ -391,10 +391,10 @@ int main(int argc, char* argv[])
                         //TODO BUT FIX THIS FOR FRAME READOUT ************
 
 
-				        p_ul_bufferedTIDs[i] =    (( ((unsigned long)(p_uc_buffer_TCP[5]))       ) & 0x000000FF)
-                		               		    | (( ((unsigned long)(p_uc_buffer_TCP[4])) << 8  ) & 0x0000FF00)
-		                             		    | (( ((unsigned long)(p_uc_buffer_TCP[3])) << 16 ) & 0x00FF0000)
-		                             		    | (( ((unsigned long)(p_uc_buffer_TCP[2])) << 24 ) & 0xFF000000);
+				        p_ul_bufferedTIDs[i] =    (( ((uint32_t)(p_uc_buffer_TCP[5]))       ) & 0x000000FF)
+                		               		    | (( ((uint32_t)(p_uc_buffer_TCP[4])) << 8  ) & 0x0000FF00)
+		                             		    | (( ((uint32_t)(p_uc_buffer_TCP[3])) << 16 ) & 0x00FF0000)
+		                             		    | (( ((uint32_t)(p_uc_buffer_TCP[2])) << 24 ) & 0xFF000000);
 			        }
 			
 			        bool bIsAscending = true;
@@ -525,10 +525,10 @@ int main(int argc, char* argv[])
                 ui_lengthOfEUDAQData =    (( ((unsigned int )(p_uc_buffer_TCP[1]))       ) & 0x00FF)
                                         | (( ((unsigned int )(p_uc_buffer_TCP[0])) << 8  ) & 0xFF00);
 
-                ul_TID_read =   (( ((unsigned long)(p_uc_buffer_TCP[5]))       ) & 0x000000FF)
-                              | (( ((unsigned long)(p_uc_buffer_TCP[4])) << 8  ) & 0x0000FF00)
-                              | (( ((unsigned long)(p_uc_buffer_TCP[3])) << 16 ) & 0x00FF0000)
-                              | (( ((unsigned long)(p_uc_buffer_TCP[2])) << 24 ) & 0xFF000000);
+                ul_TID_read =   (( ((uint32_t)(p_uc_buffer_TCP[5]))       ) & 0x000000FF)
+                              | (( ((uint32_t)(p_uc_buffer_TCP[4])) << 8  ) & 0x0000FF00)
+                              | (( ((uint32_t)(p_uc_buffer_TCP[3])) << 16 ) & 0x00FF0000)
+                              | (( ((uint32_t)(p_uc_buffer_TCP[2])) << 24 ) & 0xFF000000);
 
                 //! The readout PC does not send any 0 TIDs or TIDs > 32767 ! (making it easier for us to remove garbled TIDs)
                 //! So if a very high TID is received here, we just ignore it, because it must be garbage TCP data resulting from

@@ -108,7 +108,7 @@ namespace eudaq {
       static event_creator GetCreator(uint32_t id);
 
     private:
-      typedef std::map<unsigned long, event_creator> map_t;
+      typedef std::map<uint32_t, event_creator> map_t;
       static map_t & get_map();
   };
 

@@ -30,7 +30,7 @@ namespace tlu {
     EUDAQ_THROW("USB tracing not enabled in this build");
   }
   inline void usbflushtracefile() {}
-  inline void dousbtrace(const std::string &, unsigned long, const std::string &, int = -1) {}
+  inline void dousbtrace(const std::string &, uint32_t, const std::string &, int = -1) {}
   inline int getusbtracelevel() { return 0; }
 
 #endif

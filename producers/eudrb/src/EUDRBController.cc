@@ -317,7 +317,7 @@ namespace eudaq {
     return 0;
   }
 
-  void EUDRBController::ReadEvent(std::vector<unsigned long> & buf) {
+  void EUDRBController::ReadEvent(std::vector<uint32_t> & buf) {
     m_vmed->Read(0x00400000, buf);
   }
 
