@@ -150,7 +150,7 @@ namespace eudaq {
 		catch(...)
 		{
 
-			std::string errorMsg="error in SCT Upgrade plugin \n unable to convert " + to_string(longdelay) +"to unsigned long long";
+			std::string errorMsg="error in SCT Upgrade plugin \n unable to convert " + to_string(longdelay) +"to uint64_t";
 			EUDAQ_THROW(errorMsg);
 		}
 		if (longPause_time_from_command_line>0)
@@ -185,7 +185,7 @@ namespace eudaq {
 	   virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
 		   int returnValue=Event_IS_Sync;
 
-		   unsigned long long tluTime=tlu.GetTimestamp();
+		   uint64_t tluTime=tlu.GetTimestamp();
 	         long int tluEv=(long int)tlu.GetEventNumber();
 		   	 const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
 			// long int trigger_id=(long int)GetTriggerCounter(rawev );
@@ -267,7 +267,7 @@ namespace eudaq {
       // Information extracted in Initialize() can be stored here:
       unsigned m_exampleparam;
 	  long int oldDUTid;
-	 mutable  unsigned long long last_TLU_time,Last_DUT_Time;
+	 mutable  uint64_t last_TLU_time,Last_DUT_Time;
 		long int longPause_time;
 		mutable std::vector<std::vector<unsigned char>> m_event_queue;
       // The single instance of this converter plugin

@@ -164,8 +164,8 @@ int main(int /*argc*/, char ** argv) {
     std::ofstream timestampStream( textfile.Value().c_str());
     timestampStream << "# Run\tEvent\tTLUTimestamp\tFrame\tPivotRow" << std::endl; //print out header
 
-    unsigned long long previousTimestamp = 0 ;
-    unsigned long long startTimestamp = 0 ;
+    uint64_t previousTimestamp = 0 ;
+    uint64_t startTimestamp = 0 ;
 
     int previousFortisFrameNumber =0 ;
     int startFortisFrameNumber =0 ;
@@ -234,7 +234,7 @@ int main(int /*argc*/, char ** argv) {
 	    if (rev && rev->GetSubType() == "FORTIS" ) {
 	      
 	      unsigned eventNumber = dev->GetEventNumber();
-	      unsigned long long Timestamp = (dev->GetTimestamp() == eudaq::NOTIMESTAMP) ? 0 : dev->GetTimestamp();
+	      uint64_t Timestamp = (dev->GetTimestamp() == eudaq::NOTIMESTAMP) ? 0 : dev->GetTimestamp();
 
 	      int fortisFrameNumber = from_string(rev->GetTag( "FRAMENUMBER"),-1);
 	      int fortisPivotRow = from_string(rev->GetTag("PIVOTROW"),-1);

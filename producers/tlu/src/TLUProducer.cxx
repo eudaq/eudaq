@@ -56,7 +56,7 @@ public:
 				//std::cout << "--------" << std::endl;
 				for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
 					m_ev = m_tlu->GetEntry(i).Eventnum();
-					unsigned long long t = m_tlu->GetEntry(i).Timestamp();
+					uint64_t t = m_tlu->GetEntry(i).Timestamp();
 					long long d = t - lasttime;
 					//float freq= 1./(d*20./1000000000);
 					float freq = 1. / Timestamp2Seconds(d);
@@ -273,7 +273,7 @@ private:
 	bool timestamps, done, timestamp_per_run;
 	bool TLUStarted;
 	bool TLUJustStopped;
-	unsigned long long lasttime;
+	uint64_t lasttime;
 	std::shared_ptr<TLUController> m_tlu;
 	std::string pmt_id[TLU_PMTS];
 	double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];

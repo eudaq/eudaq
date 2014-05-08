@@ -100,7 +100,7 @@ namespace eudaq {
 
   void Event::SetTimeStampToNow()
   {
-	  m_timestamp=static_cast<unsigned long long>(clock());
+	  m_timestamp=static_cast<uint64_t>(clock());
   }
 
   std::ostream & operator << (std::ostream &os, const Event &ev) {

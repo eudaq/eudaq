@@ -126,10 +126,10 @@ namespace eudaq {
     EUDAQ_DECLARE_EVENT(StandardEvent);
     public:
     StandardEvent(unsigned run = 0, unsigned evnum = 0,
-        unsigned long long timestamp = NOTIMESTAMP);
+        uint64_t timestamp = NOTIMESTAMP);
     StandardEvent(const Event &);
     StandardEvent(Deserializer &);
-    void SetTimestamp(unsigned long long);
+    void SetTimestamp(uint64_t);
 
     StandardPlane & AddPlane(const StandardPlane &);
     size_t NumPlanes() const;

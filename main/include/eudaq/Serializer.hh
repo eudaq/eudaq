@@ -53,7 +53,6 @@ namespace eudaq {
       static writer GetFunc(int32_t * ) { return write_int; }
       static writer GetFunc(uint64_t *) { return write_int; }
       static writer GetFunc(int64_t * ) { return write_int; }
-      static writer GetFunc(unsigned long long int *) { return write_int; }
       static writer GetFunc(long long int * ) { return write_int; }
 
       static void write_ser(Serializer & sr, const T & v) {
@@ -86,7 +85,7 @@ namespace eudaq {
         sr.Serialize(buf, sizeof t);
       }
       static void write_double(Serializer & sr, const double & v) {
-        unsigned long long t = *(unsigned long long *)&v;
+        uint64_t t = *(uint64_t *)&v;
         unsigned char buf[sizeof t];
         for (size_t i = 0; i < sizeof t; ++i) {
           buf[i] = t & 0xff;
@@ -199,7 +198,6 @@ namespace eudaq {
       static reader GetFunc(int32_t * ) { return read_int; }
       static reader GetFunc(uint64_t *) { return read_int; }
       static reader GetFunc(int64_t * ) { return read_int; }
-      static reader GetFunc(unsigned long long int *) { return read_int; }
       static reader GetFunc(long long int * ) { return read_int; }
 
       static T read_ser(Deserializer & ds) {
@@ -234,10 +232,10 @@ namespace eudaq {
         return *(float *)&t;
       }
       static double read_double(Deserializer & ds) {
-        union { double d; unsigned long long i; unsigned char b[sizeof (double)]; } u;
+        union { double d; uint64_t i; unsigned char b[sizeof (double)]; } u;
         //unsigned char buf[sizeof (double)];
         ds.Deserialize(u.b, sizeof u.b);
-        unsigned long long t = 0;
+        uint64_t t = 0;
         for (size_t i = 0; i < sizeof t; ++i) {
           t <<= 8;
           t += u.b[sizeof t - 1 - i];

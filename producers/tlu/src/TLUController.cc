@@ -56,7 +56,7 @@ namespace tlu {
        << (rst ? 'R' : '.'); 
   }
 
-  static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
+  static const uint64_t NOTIMESTAMP = (unsigned long long)-1;
 
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
 
@@ -129,7 +129,7 @@ namespace tlu {
     }
   }
 
-  double Timestamp2Seconds(unsigned long long t) {
+  double Timestamp2Seconds(uint64_t t) {
     return t / ( TLUFREQUENCY * TLUFREQUENCYMULTIPLIER ) ;
   }
 
@@ -623,7 +623,7 @@ namespace tlu {
     if (updateleds) UpdateLEDs();
   }
 
-  void seperate_timing_info_from_trigger_info(unsigned long long * timestamp_buffer,unsigned* trigger,unsigned entries){
+  void seperate_timing_info_from_trigger_info(uint64_t * timestamp_buffer,unsigned* trigger,unsigned entries){
 	  for (unsigned i = 0; i < entries; ++i) {
 		 trigger[i]=timestamp_buffer[i]>>60;
 		 timestamp_buffer[i]=timestamp_buffer[i]& MASKOUTTHELASTFOURBITS;
@@ -634,7 +634,7 @@ namespace tlu {
   void TLUController::Update(bool timestamps) {
     unsigned entries = 0;
     unsigned old_triggernum = m_triggernum;
-    unsigned long long * timestamp_buffer = 0;
+    uint64_t * timestamp_buffer = 0;
 	unsigned* trigger_buffer=nullptr;
     m_dmastat = ReadRegister8(m_addr->TLU_DMA_STATUS_ADDRESS);
     if (timestamps) {
@@ -805,8 +805,8 @@ namespace tlu {
     return val;
   }
 
-  unsigned long long TLUController::ReadRegister64(unsigned long offset) const {
-    unsigned long long val = 0;
+  uint64_t TLUController::ReadRegister64(unsigned long offset) const {
+    uint64_t val = 0;
     for (int i = 0; i < 8; ++i) {
       val |= static_cast<unsigned long long>(ReadRegisterRaw(offset+i)) << (8*i);
     }
@@ -837,7 +837,7 @@ namespace tlu {
     return val;
   }
 
-  unsigned long long * TLUController::ReadBlock(unsigned entries) {
+  uint64_t * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
     const int count = m_errorhandler ? m_errorhandler : 1;
@@ -911,9 +911,9 @@ namespace tlu {
     unsigned num_correctable_errors = 0;
     unsigned num_uncorrectable_errors = 0;
 
-    const unsigned long long timestamp_mask  = 0x0FFFFFFFFFFFFFFFULL;
+    const uint64_t timestamp_mask  = 0x0FFFFFFFFFFFFFFFULL;
 
-    //    unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    //    uint64_t buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
 
     int result = ZESTSC1_SUCCESS;
@@ -973,8 +973,8 @@ namespace tlu {
     }
 
     // Check to make sure that the current timestamp[0] is more recent than previous timestamp[events]
-    unsigned long long last_timestamp = m_lasttime & timestamp_mask;
-    unsigned long long first_timestamp = m_oldbuf[0] & timestamp_mask;
+    uint64_t last_timestamp = m_lasttime & timestamp_mask;
+    uint64_t first_timestamp = m_oldbuf[0] & timestamp_mask;
     if (  last_timestamp >= first_timestamp ) {
       std::cout << "### Warning: First time-stamp from current buffer is older than last timestamp of previous buffer: (m_lasttime , buf[0]) " << std::setw(8) <<  m_lasttime  << "  " << m_oldbuf[0] << std::endl;
       num_uncorrectable_errors++;
@@ -990,8 +990,8 @@ namespace tlu {
     // check that the timestamps are chronological ...
     for (unsigned i = 1; i < entries; ++i) {
 
-      unsigned long long current_timestamp = m_oldbuf[i]; // & timestamp_mask;
-      unsigned long long previous_timestamp = m_oldbuf[i-1]; // & timestamp_mask;
+      uint64_t current_timestamp = m_oldbuf[i]; // & timestamp_mask;
+      uint64_t previous_timestamp = m_oldbuf[i-1]; // & timestamp_mask;
 
       if ( previous_timestamp >= current_timestamp ) {
 
@@ -1035,8 +1035,8 @@ namespace tlu {
     
     unsigned num_errors ;
 
-    // unsigned long long buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
-    unsigned long long padding_buffer[2048];
+    // uint64_t buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    uint64_t padding_buffer[2048];
 
     std::cout << "### Error recovery: About to read out blocks three times..." << std::endl;
     EUDAQ_INFO("Error recovery: About to read out blocks three times...");
@@ -1134,7 +1134,7 @@ namespace tlu {
 
   }
 
-  void TLUController::PrintBlock( unsigned long long  block[][4096] , unsigned nbuf , unsigned bufsize ) {
+  void TLUController::PrintBlock( uint64_t  block[][4096] , unsigned nbuf , unsigned bufsize ) {
 
     // print contents of 4-buffer block
     unsigned buf , sample;
@@ -1156,7 +1156,7 @@ namespace tlu {
   void TLUController::Print(std::ostream &out, bool timestamps) const {
     if (timestamps) {
       for (size_t i = 0; i < m_buffer.size(); ++i) {
-        unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
+        uint64_t d = m_buffer[i].Timestamp() - m_lasttime;
         out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << "\n";
         m_lasttime = m_buffer[i].Timestamp();
       }

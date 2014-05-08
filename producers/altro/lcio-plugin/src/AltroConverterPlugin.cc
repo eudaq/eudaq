@@ -61,7 +61,7 @@ public:
     /** Helper function to get a 40 bit word with correct endinanness out of the byte vector.
      *  The offset32bit is the position of the first 40 bit word within the 32bit stream
      */
-    unsigned long long int Get40bitWord(unsigned int index40bit, unsigned int n40bitwords, 
+    uint64_t Get40bitWord(unsigned int index40bit, unsigned int n40bitwords, 
 					unsigned int offset32bit) const;
 };
 
@@ -139,7 +139,7 @@ UCharBigEndianVec::UCharBigEndianVec(std::vector<unsigned char> const & datavec,
 	EUDAQ_THROW("Invalid header format in altro event data");
 }
 
-  unsigned long long int UCharBigEndianVec::Get40bitWord(unsigned int index40bit, unsigned int n40bitwords,
+  uint64_t UCharBigEndianVec::Get40bitWord(unsigned int index40bit, unsigned int n40bitwords,
 							 unsigned int offset32bit) const
 {
     // check position in data stream
@@ -160,12 +160,12 @@ UCharBigEndianVec::UCharBigEndianVec(std::vector<unsigned char> const & datavec,
     // Forunately this also works with the reversed 40 bit order, because 40 bits is always a 
     // sequence of 5 bytes, whatever the other words are.
 
-    unsigned long long int retval = 
-	static_cast<unsigned long long int>( _bytedata[ index8bit ] )  |
-	static_cast<unsigned long long int>( _bytedata[ index8bit + 1 ] ) << 8  |
-	static_cast<unsigned long long int>( _bytedata[ index8bit + 2 ] ) << 16 |
-	static_cast<unsigned long long int>( _bytedata[ index8bit + 3 ] ) << 24 |
-	static_cast<unsigned long long int>( _bytedata[ index8bit + 4 ] ) << 32 ;
+    uint64_t retval = 
+	static_cast<uint64_t>( _bytedata[ index8bit ] )  |
+	static_cast<uint64_t>( _bytedata[ index8bit + 1 ] ) << 8  |
+	static_cast<uint64_t>( _bytedata[ index8bit + 2 ] ) << 16 |
+	static_cast<uint64_t>( _bytedata[ index8bit + 3 ] ) << 24 |
+	static_cast<uint64_t>( _bytedata[ index8bit + 4 ] ) << 32 ;
     return retval;
 }
 
@@ -402,7 +402,7 @@ bool AltroConverterPlugin::GetLCIOSubEvent( lcio::LCEvent & lcioevent , eudaq::E
 		    previous_altrotrailer = altrotrailerposition;
 		  }
 		  
-		  unsigned long long int altrotrailer 
+		  uint64_t altrotrailer 
 		    = altrodatavec.Get40bitWord(altrotrailerposition, n40bitwords, rcublockstart +10 );
 
 		  // bool channel_is_broken = false;

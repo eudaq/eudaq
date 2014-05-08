@@ -22,7 +22,7 @@ namespace eudaq {
       std::string Get(const std::string & key, const std::string & def) const;
       double Get(const std::string & key, double def) const;
       long long Get(const std::string & key, long long def) const;
-	  unsigned long long Get(const std::string & key,unsigned long long def) const;
+	  uint64_t Get(const std::string & key,uint64_t def) const;
 	  template <typename T>
 	  T Get(const std::string &key, T def) const {
 		  return eudaq::from_string(Get(key,to_string(def)),  def);

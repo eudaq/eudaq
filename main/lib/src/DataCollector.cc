@@ -143,7 +143,7 @@ namespace eudaq {
         std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
       }
       unsigned n_run = m_runnumber, n_ev = m_eventnumber;
-      unsigned long long n_ts = (unsigned long long) -1;
+      uint64_t n_ts = (uint64_t) -1;
       if (m_itlu != (size_t) -1) {
         TLUEvent * ev = static_cast<TLUEvent *>(m_buffer[m_itlu].events.front().get());
         n_run = ev->GetRunNumber();

@@ -39,7 +39,7 @@ namespace tlu {
   static const unsigned TLU_DEBUG_CONFIG = 0x0002 ;
   static const unsigned TLU_DEBUG_BLOCKREAD = 0x0004 ;
 
-  double Timestamp2Seconds(unsigned long long t);
+  double Timestamp2Seconds(uint64_t t);
 
   class TLUException : public std::runtime_error {
   public:
@@ -57,9 +57,9 @@ namespace tlu {
 
   class TLUEntry {
   public:
-//     TLUEntry(unsigned long long t = 0, unsigned long e = 0)
+//     TLUEntry(uint64_t t = 0, unsigned long e = 0)
 // 		: m_timestamp(t), m_eventnum(e) {}
-	TLUEntry(unsigned long long t = 0, unsigned long e = 0,unsigned trigger=0)
+	TLUEntry(uint64_t t = 0, unsigned long e = 0,unsigned trigger=0)
 		: m_timestamp(t), m_eventnum(e) {
 			for (int i=0;i<4;++i)
 			{
@@ -69,12 +69,12 @@ namespace tlu {
 	
 	}
 
-    unsigned long long Timestamp() const { return m_timestamp; }
+    uint64_t Timestamp() const { return m_timestamp; }
     unsigned long Eventnum() const { return m_eventnum; }
     void Print(std::ostream & out = std::cout) const;
 	std::string trigger2String();
   private:
-    unsigned long long m_timestamp;
+    uint64_t m_timestamp;
     unsigned long m_eventnum;
 	bool m_trigger[TLU_TRIGGER_INPUTS];
   };
@@ -143,7 +143,7 @@ namespace tlu {
     size_t NumEntries() const { return m_buffer.size(); }
     TLUEntry GetEntry(size_t i) const { return m_buffer[i]; }
     unsigned GetTriggerNum() const { return m_triggernum; }
-    unsigned long long GetTimestamp() const { return m_timestamp; }
+    uint64_t GetTimestamp() const { return m_timestamp; }
 
     unsigned char GetTriggerStatus() const ;
 
@@ -178,12 +178,12 @@ namespace tlu {
     unsigned short ReadRegister16(unsigned long offset) const;
     unsigned long ReadRegister24(unsigned long offset) const;
     unsigned long ReadRegister32(unsigned long offset) const;
-    unsigned long long ReadRegister64(unsigned long offset) const;
-    unsigned long long * ReadBlock(unsigned entries);
+    uint64_t ReadRegister64(unsigned long offset) const;
+    uint64_t * ReadBlock(unsigned entries);
     unsigned ReadBlockRaw(unsigned entries , unsigned buffer_offset);
     unsigned ReadBlockSoftErrorCorrect(unsigned entries  , bool pad );
     unsigned ResetBlockRead( unsigned entries) ;
-    void PrintBlock( unsigned long long  block[][4096] , unsigned nbuf , unsigned bufsize );
+    void PrintBlock( uint64_t  block[][4096] , unsigned nbuf , unsigned bufsize );
     unsigned char ReadRegisterRaw(unsigned long offset) const;
 
     void SelectBus(unsigned bus);
@@ -202,14 +202,14 @@ namespace tlu {
     unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat, m_dmastat, m_pmtvcntlmod;
     unsigned long m_fsmstatusvalues;
     unsigned m_triggernum;
-    unsigned long long m_timestamp;
+    uint64_t m_timestamp;
     std::vector<TLUEntry> m_buffer;
-    unsigned long long * m_oldbuf;
+    uint64_t * m_oldbuf;
 	unsigned* m_triggerBuffer;
-    unsigned long long m_working_buffer[NUM_TLU_BUFFERS][TLU_BUFFER_SIZE];
+    uint64_t m_working_buffer[NUM_TLU_BUFFERS][TLU_BUFFER_SIZE];
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     unsigned m_particles;
-    mutable unsigned long long m_lasttime;
+    mutable uint64_t m_lasttime;
     int m_errorhandler;
     unsigned m_version;
     TLUAddresses * m_addr;

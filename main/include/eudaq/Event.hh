@@ -35,19 +35,19 @@ static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
 namespace eudaq {
 
-  static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
+  static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable {
     public:
       enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_FAKE=8, FLAG_SIMU=16, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
-      Event(unsigned run, unsigned event, unsigned long long timestamp = NOTIMESTAMP, unsigned flags=0)
+      Event(unsigned run, unsigned event, uint64_t timestamp = NOTIMESTAMP, unsigned flags=0)
         : m_flags(flags), m_runnumber(run), m_eventnumber(event), m_timestamp(timestamp) {}
       Event(Deserializer & ds);
       virtual void Serialize(Serializer &) const = 0;
 
       unsigned GetRunNumber() const { return m_runnumber; }
       unsigned GetEventNumber() const { return m_eventnumber; }
-      unsigned long long GetTimestamp() const { return m_timestamp; }
+      uint64_t GetTimestamp() const { return m_timestamp; }
 
       /** Returns the type string of the event implementation.
        *  Used by the plugin mechanism to identfy the event type.
@@ -79,14 +79,14 @@ namespace eudaq {
       unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
       void SetFlags(unsigned f) { m_flags |= f; }
 	  void SetTimeStampToNow();
-	  void setTimeStamp(unsigned long long timeStamp){m_timestamp=timeStamp; }
+	  void setTimeStamp(uint64_t timeStamp){m_timestamp=timeStamp; }
       void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
       virtual unsigned get_id() const = 0;
     protected:
       typedef std::map<std::string, std::string> map_t;
 
       unsigned m_flags, m_runnumber, m_eventnumber;
-      unsigned long long m_timestamp;
+      uint64_t m_timestamp;
       map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };
 

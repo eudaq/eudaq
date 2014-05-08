@@ -14,7 +14,7 @@ namespace eudaq {
 		FileWriterText(const std::string &);
 		virtual void StartRun(unsigned);
 		virtual void WriteEvent(const DetectorEvent &);
-		virtual unsigned long long FileBytes() const;
+		virtual uint64_t FileBytes() const;
 		virtual ~FileWriterText();
 	private:
 		
@@ -140,6 +140,6 @@ namespace eudaq {
 		}
 	}
 
-	unsigned long long FileWriterText::FileBytes() const { return m_out->tellp(); }
+	uint64_t FileWriterText::FileBytes() const { return m_out->tellp(); }
 
 }
