@@ -1,3 +1,4 @@
+
 #ifndef EUDAQ_INCLUDED_AidaPacket
 #define EUDAQ_INCLUDED_AidaPacket
 
@@ -9,118 +10,168 @@
 
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
+#include "eudaq/Event.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 
+#define EUDAQ_DECLARE_PACKET()                  \
+  public:                                       \
+  	  static uint64_t eudaq_static_type();      \
+  	  virtual uint64_t get_type() const {       \
+  		  return eudaq_static_type();           \
+  	  }
+//  private:                                    \
+//static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
-#define EUDAQ_DECLARE_EVENT(type)           \
-  public:                                   \
-static unsigned eudaq_static_id();      \
-virtual unsigned get_id() const {       \
-  return eudaq_static_id();             \
-}                                       \
-private:                                  \
-static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
-#define EUDAQ_DEFINE_EVENT(type, id)       \
-  unsigned type::eudaq_static_id() {       \
-    static const unsigned id_(id);         \
-    return id_;                            \
-  }                                        \
-namespace _eudaq_dummy_ {                \
-  static eudaq::RegisterEventType<type> eudaq_reg;	\
-}                                        \
-static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
+#define EUDAQ_DEFINE_PACKET(type, name)      \
+  uint64_t type::eudaq_static_type() {       \
+    static const uint64_t type_(name);       \
+    return type_;                            \
+  }										     \
+  namespace _eudaq_dummy_ {                  \
+  	  static eudaq::RegisterPacketType<type> eudaq_packet_reg;	\
+  }
+
 
 namespace eudaq {
 
-  static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
+#define PACKET_MARKER 0xDEADBADFADEDCAFE
 
-  class DLLEXPORT AidaPacket : public Serializable {
+#define PACKET_NUMBER_BITS  59
+#define PACKET_NUMBER_SHIFT  0
+
+#define PACKET_TYPE_BITS    4
+#define PACKET_TYPE_SHIFT 	60
+
+// meta data
+#define TLU_BITS   1
+#define TLU_SHIFT 63
+
+#define ENTRY_TYPE_BITS   4
+#define ENTRY_TYPE_SHIFT 59
+
+#define COUNTER_BITS  59
+#define COUNTER_SHIFT  0
+
+#define getBits(FIELD,from)	getBitsTemplate<FIELD ## _SHIFT, FIELD ## _BITS>(from)
+#define setBits(FIELD,dst, val)	setBitsTemplate<FIELD ## _SHIFT, FIELD ## _BITS>(dst,val)
+
+
+class DLLEXPORT AidaPacket : public Serializable {
+  public:
+
+	struct Metadata {
+	  enum TYPE { RUN_NUMBER, TRIGGER_COUNTER, TRIGGER_TIMESTAMP };
+	  Metadata() {
+		  type2string[ RUN_NUMBER ] = "RUN_NUMBER";
+		  type2string[ TRIGGER_COUNTER ] = "TRIGGER_COUNTER";
+		  type2string[ TRIGGER_TIMESTAMP ] = "TRIGGER_TIMESTAMP";
+	  };
+	  std::map<TYPE,std::string> type2string;
+	} META_DATA;
+
+
+
+
+	typedef struct {
+		  uint64_t marker; 				// 0xDEADBADFADEDCAFE
+		  uint64_t packetType;			// 8 byte string
+		  uint64_t packetSubType;		// 8 byte string
+		  uint64_t packetNumber;
+	  } PacketHeader;
+
+    virtual void Print(std::ostream & os) const;
+
+    // packet header methods
+    inline uint64_t GetPacketNumber() const { return m_header.packetNumber; };
+    inline void SetPacketNumber( uint64_t n ) { m_header.packetNumber = n; };
+    inline int GetPacketType() const { return m_header.packetType; };
+    inline void SetPacketType( int type ) { m_header.packetType = type; };
+
+    // meta data methods
+    static inline int GetType( uint64_t meta_data ) { return getBits(ENTRY_TYPE, meta_data ); };
+    static inline void SetType( uint64_t& meta_data, int type ) { setBits(ENTRY_TYPE,  meta_data, type ); };
+    static inline bool IsTLUBitSet( uint64_t meta_data ) { return getBits(TLU, meta_data ); };
+    static inline uint64_t GetCounter( uint64_t meta_data ) { return getBits(COUNTER, meta_data ); };
+    static inline void SetCounter( uint64_t& meta_data, uint64_t data ) { setBits(COUNTER, meta_data, data ); };
+
+
+    static uint64_t buildMetaData( bool tlu, Metadata::TYPE type, uint64_t data ) {
+    	uint64_t meta_data = 0;
+    	SetType( meta_data, type );
+    	SetCounter( meta_data, data );
+    	return meta_data;
+    };
+
+    template <int shift, int bits> static uint64_t getBitsTemplate( uint64_t from ) {
+    	return shift > 0 ? (from >> shift) & bit_mask()[bits] : from & bit_mask()[bits];
+    };
+
+    template <int shift, int bits> static void setBitsTemplate( uint64_t& dest, uint64_t val ) {
+    	dest |= shift > 0 ? (val & bit_mask()[bits]) << shift : val & bit_mask()[bits];
+    };
+
+  protected:
+    friend class PacketFactory;
+
+    void SerializeHeader( Serializer & ) const;
+
+    static PacketHeader DeserializeHeader( Deserializer & );
+    static const uint64_t * const bit_mask();
+    static uint64_t str2type(const std::string & str);
+    static std::string type2str(uint64_t id);
+
+    PacketHeader m_header;
+    std::vector<uint64_t> m_meta_data;
+    uint64_t checksum;
+};
+
+class DLLEXPORT EventPacket : public AidaPacket {
+  EUDAQ_DECLARE_PACKET();
+  public:
+	  EventPacket(const Event & ev );	// wrapper for old-style events
+	  virtual void Serialize(Serializer &) const;
+
+  protected:
+	  template <typename T_Packet> friend struct RegisterPacketType;
+
+	  EventPacket( PacketHeader& header, Deserializer & ds);
+	  const Event* m_ev;
+
+};
+
+DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);
+
+
+class DLLEXPORT PacketFactory {
     public:
-      enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_FAKE=8, FLAG_SIMU=16, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
-      AidaPacket(unsigned run, unsigned packet, unsigned long long timestamp = NOTIMESTAMP, unsigned flags=0)
-        : m_flags(flags), m_runnumber(run), m_packetnumber(packet), m_timestamp(timestamp) {}
-      AidaPacket(Deserializer & ds);
-      virtual void Serialize(Serializer &) const = 0;
+      static AidaPacket * Create( Deserializer & ds);
 
-      unsigned GetRunNumber() const { return m_runnumber; }
-      unsigned GetPacketNumber() const { return m_packetnumber; }
-      unsigned long long GetTimestamp() const { return m_timestamp; }
-
-      /** Returns the type string of the packet implementation.
-       *  Used by the plugin mechanism to identfy the packet type.
-       */
-      virtual std::string GetSubType() const { return ""; }
-
-      virtual void Print(std::ostream & os) const = 0;
-
-      AidaPacket & SetTag(const std::string & name, const std::string & val);
-      template <typename T>
-        AidaPacket & SetTag(const std::string & name, const T & val) {
-          return SetTag(name, eudaq::to_string(val));
-        }
-      std::string GetTag(const std::string & name, const std::string & def = "") const;
-      std::string GetTag(const std::string & name, const char * def) const { return GetTag(name, std::string(def)); }
-      template <typename T>
-        T GetTag(const std::string & name, T def) const {
-          return eudaq::from_string(GetTag(name), def);
-        }
-
-      bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
-      bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
-      bool HasHits() const { return GetFlags(FLAG_HITS) != 0; }
-      bool IsFake() const { return GetFlags(FLAG_FAKE) != 0; }
-      bool IsSimulation() const { return GetFlags(FLAG_SIMU) != 0; }
-
-      static unsigned str2id(const std::string & idstr);
-      static std::string id2str(unsigned id);
-      unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
-      void SetFlags(unsigned f) { m_flags |= f; }
-      void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
-      virtual unsigned get_id() const = 0;
-    protected:
-      typedef std::map<std::string, std::string> map_t;
-
-      unsigned m_flags, m_runnumber, m_packetnumber;
-      unsigned long long m_timestamp;
-      map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
-  };
-
-  DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);
-
-  class DLLEXPORT AidaPacketFactory {
-    public:
-      static AidaPacket * Create(Deserializer & ds) {
-        unsigned id = 0;
-        ds.read(id);
-        //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
-        packet_creator cr = GetCreator(id);
-        if (!cr) EUDAQ_THROW("Unrecognised AidaPacket type (" + AidaPacket::id2str(id) + ")");
-        return cr(ds);
-      }
-
-      typedef AidaPacket * (* packet_creator)(Deserializer & ds);
-      static void Register(unsigned long id, packet_creator func);
-      static packet_creator GetCreator(unsigned long id);
+      typedef AidaPacket * (* packet_creator)(AidaPacket::PacketHeader& header, Deserializer & ds);
+      static void Register(uint64_t id, packet_creator func);
+      static packet_creator GetCreator(int id);
 
     private:
-      typedef std::map<unsigned long, packet_creator> map_t;
+      typedef std::map<int, packet_creator> map_t;
       static map_t & get_map();
-  };
+};
 
-  /** A utility template class for registering an packet type.
-   */
-  template <typename T_Evt>
-    struct RegisterPacketType {
-      RegisterPacketType() {
-        AidaPacketFactory::Register(T_Evt::eudaq_static_id(), &factory_func);
-      }
-      static AidaPacket * factory_func(Deserializer & ds) {
-        return new T_Evt(ds);
-      }
-    };
+/** A utility template class for registering an Packet type.
+ */
+
+template <typename T_Packet>
+struct RegisterPacketType {
+  RegisterPacketType() {
+    PacketFactory::Register(T_Packet::eudaq_static_type(), &factory_func);
+  }
+  static AidaPacket * factory_func( AidaPacket::PacketHeader& header, Deserializer & ds) {
+    return new T_Packet( header, ds );
+  }
+};
+
+
 }
 
 #endif // EUDAQ_INCLUDED_AidaPacket
