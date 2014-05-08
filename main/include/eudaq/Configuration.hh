@@ -21,7 +21,7 @@ namespace eudaq {
       std::string operator [] (const std::string & key) const { return GetString(key); }
       std::string Get(const std::string & key, const std::string & def) const;
       double Get(const std::string & key, double def) const;
-      long long Get(const std::string & key, long long def) const;
+      int64_t Get(const std::string & key, int64_t def) const;
 	  uint64_t Get(const std::string & key,uint64_t def) const;
 	  template <typename T>
 	  T Get(const std::string &key, T def) const {

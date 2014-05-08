@@ -60,7 +60,7 @@ public:
 // 	for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
 // 	  m_ev = m_tlu->GetEntry(i).Eventnum();
 // 	  uint64_t t = m_tlu->GetEntry(i).Timestamp();
-// 	  long long d = t - lasttime;
+// 	  int64_t d = t - lasttime;
 // 	  //float freq= 1./(d*20./1000000000);
 // 	  float freq = 1. / Timestamp2Seconds(d);
 // 	  if (m_ev < 10 || m_ev % 1000 == 0) {

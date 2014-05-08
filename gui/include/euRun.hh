@@ -146,6 +146,6 @@ signals:
     status_t m_status;
     int m_prevtrigs;
     double m_prevtime, m_runstarttime;
-    long long m_filebytes;
+    int64_t m_filebytes;
     bool dostatus;
 };

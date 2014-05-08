@@ -56,7 +56,7 @@ namespace eudaq {
       size_t m_idata, m_ilog;
       std::string m_logaddr; // address of log collector
       std::map<size_t,std::string> m_dataaddr; // map of data collector addresses
-      long long m_runsizelimit;
+      int64_t m_runsizelimit;
       bool m_stopping, m_busy, m_producerbusy;
   };
 

@@ -155,7 +155,7 @@ UCharBigEndianVec::UCharBigEndianVec(std::vector<unsigned char> const & datavec,
     // the most significant bytes being in the second word (big endian 32 bit sequence).
     // This means the 5 bytes are in a consecutive
     // sequence in the big endian data stream, but in reverse order. We just have to pick them out 
-    // and place them in the long long word
+    // and place them in the int64_t word
 
     // Forunately this also works with the reversed 40 bit order, because 40 bits is always a 
     // sequence of 5 bytes, whatever the other words are.

@@ -119,7 +119,7 @@ namespace eudaq {
     return def;
   }
 
-  long long Configuration::Get(const std::string & key, long long def) const {
+  int64_t Configuration::Get(const std::string & key, int64_t def) const {
     try {
       std::string s = GetString(key);
 #if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)

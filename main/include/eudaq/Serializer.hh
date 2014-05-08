@@ -53,7 +53,6 @@ namespace eudaq {
       static writer GetFunc(int32_t * ) { return write_int; }
       static writer GetFunc(uint64_t *) { return write_int; }
       static writer GetFunc(int64_t * ) { return write_int; }
-      static writer GetFunc(long long int * ) { return write_int; }
 
       static void write_ser(Serializer & sr, const T & v) {
         v.Serialize(sr);
@@ -198,7 +197,6 @@ namespace eudaq {
       static reader GetFunc(int32_t * ) { return read_int; }
       static reader GetFunc(uint64_t *) { return read_int; }
       static reader GetFunc(int64_t * ) { return read_int; }
-      static reader GetFunc(long long int * ) { return read_int; }
 
       static T read_ser(Deserializer & ds) {
         return T(ds);
