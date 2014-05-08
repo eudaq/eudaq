@@ -104,8 +104,8 @@ namespace eudaq {
       }
 
       typedef Event * (* event_creator)(Deserializer & ds);
-      static void Register(unsigned long id, event_creator func);
-      static event_creator GetCreator(unsigned long id);
+      static void Register(uint32_t id, event_creator func);
+      static event_creator GetCreator(uint32_t id);
 
     private:
       typedef std::map<unsigned long, event_creator> map_t;

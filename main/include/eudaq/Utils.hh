@@ -119,7 +119,7 @@ namespace eudaq {
   template<>
     long DLLEXPORT from_string(const std::string & x, const long & def);
   template<>
-    unsigned long DLLEXPORT from_string(const std::string & x, const unsigned long & def);
+    uint32_t DLLEXPORT from_string(const std::string & x, const uint32_t & def);
   template<>
     inline int DLLEXPORT from_string(const std::string & x, const int & def) {
       return from_string(x, (long)def);

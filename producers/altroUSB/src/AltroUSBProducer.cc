@@ -126,7 +126,7 @@ void AltroUSBProducer::SetRunActive(bool activestatus)
     pthread_mutex_unlock( &m_runactive_mutex );    
 }
 
-//void AltroUSBProducer::Event(volatile unsigned long *altrodata, int length)
+//void AltroUSBProducer::Event(volatile uint32_t *altrodata, int length)
 //{
 //    eudaq::RawDataEvent ev("AltroUSB",GetRunNumber(), GetIncreaseEventNumber() );
 //

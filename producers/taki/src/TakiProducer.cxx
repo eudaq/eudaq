@@ -31,7 +31,7 @@ TakiProducer::TakiProducer(const std::string & name, const std::string & runcont
 
 }
 
-void TakiProducer::send(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const unsigned long long& r_ull_triggerID)
+void TakiProducer::send(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint32_t long& r_ull_triggerID)
 {
     cout << "[TakiProducer::send()] !! Sending " << r_i_numBytes << " bytes !!\n";
     cout << "[TakiProducer::send()] ==== DATA BEGIN ==== \n";
@@ -50,7 +50,7 @@ void TakiProducer::send(const char* const p_c_buffer_TCP, const int& r_i_numByte
     cout << "[TakiProducer::send()] !! DONE Sending !! m_u_ev=" << m_u_ev <<".\n\n";
 }
 
-void TakiProducer::sendCorrupt(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const unsigned long long& r_ull_triggerID)
+void TakiProducer::sendCorrupt(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint32_t long& r_ull_triggerID)
 {
     cout << "[TakiProducer::sendCorrupt()] !! Sending " << r_i_numBytes << " bytes !!\n";
     cout << "[TakiProducer::sendCorrupt()] ==== DATA BEGIN ==== \n";
@@ -233,15 +233,15 @@ int main(int argc, char* argv[])
         char*          p_c_fakeEmptyBuffer       = (char*) p_uc_fakeEmptyBuffer;
         unsigned int   ui_lengthOfEUDAQData      = 0;
 
-        unsigned long  ul_TID_read = 0UL;
-        unsigned long  ul_TID_prev = 0UL-1UL;
-        //unsigned long ul_TID_diff = 0UL;
+        uint32_t  ul_TID_read = 0UL;
+        uint32_t  ul_TID_prev = 0UL-1UL;
+        //uint32_t ul_TID_diff = 0UL;
 
 	
 	    #define TID_BUFFER_DEPTH 10
 	    #define TID_BUFFER_END 9
 	    //always set end to depth-1 !!
-	    unsigned long p_ul_bufferedTIDs[TID_BUFFER_DEPTH];
+	    uint32_t p_ul_bufferedTIDs[TID_BUFFER_DEPTH];
 
 
         // == SETUP SERVER ==
@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
 				        {
 					        printf("[TakiProducer] ...Looks like a new run has started!\n");
 					        printf("[TakiProducer] ...Sending empty events: TIDs %d to	%lu!\n",0,p_ul_bufferedTIDs[TID_BUFFER_END]);
-					        for (unsigned long i=0UL;i<=p_ul_bufferedTIDs[TID_BUFFER_END];++i)
+					        for (uint32_t i=0UL;i<=p_ul_bufferedTIDs[TID_BUFFER_END];++i)
 	                        	{
 	                        	    producer.send(p_c_fakeEmptyBuffer, 6, i); 
 	                        	}
@@ -422,7 +422,7 @@ int main(int argc, char* argv[])
 				        {
 					        printf("[TakiProducer] ...Looks like there is a TID missing!\n");
 					        printf("[TakiProducer] ...Sending empty events: TIDs %lu to %lu!\n",ul_TID_prev+1UL,p_ul_bufferedTIDs[TID_BUFFER_END]);
-					        for (unsigned long i=ul_TID_prev+1UL;i<=p_ul_bufferedTIDs[TID_BUFFER_END];++i)
+					        for (uint32_t i=ul_TID_prev+1UL;i<=p_ul_bufferedTIDs[TID_BUFFER_END];++i)
 	                        	{
 	                        	    producer.send(p_c_fakeEmptyBuffer, 6, i);
 	                        	}	
@@ -432,7 +432,7 @@ int main(int argc, char* argv[])
 			        {
 				        printf("[TakiProducer] ...Looks like a garbled/zero/missing TID occured!\n");
 				        printf("[TakiProducer] ...Sending empty events: TIDs %lu to %lu!\n",ul_TID_prev+1UL,p_ul_bufferedTIDs[TID_BUFFER_END]);
-				        for (unsigned long i=ul_TID_prev+1UL;i<=p_ul_bufferedTIDs[TID_BUFFER_END];++i)
+				        for (uint32_t i=ul_TID_prev+1UL;i<=p_ul_bufferedTIDs[TID_BUFFER_END];++i)
                         	{
                         	    producer.send(p_c_fakeEmptyBuffer, 6, i);
                         	}
@@ -463,9 +463,9 @@ int main(int argc, char* argv[])
         unsigned char p_uc_buffer_TCP[i_bufferlength_TCP];
         unsigned int  ui_lengthOfEUDAQData              = 0;
 
-        unsigned long ul_TID_read = 0UL;
-        unsigned long ul_TID_prev = 0UL-1UL;
-        unsigned long ul_TID_diff = 0UL;
+        uint32_t ul_TID_read = 0UL;
+        uint32_t ul_TID_prev = 0UL-1UL;
+        uint32_t ul_TID_diff = 0UL;
 
         // == SETUP SERVER ==
         printf("[TakiProducer] Setting up TCP server!\n");

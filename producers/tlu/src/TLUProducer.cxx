@@ -267,7 +267,7 @@ public:
 private:
 	unsigned m_run, m_ev;
     unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask, pmtvcntl[TLU_PMTS], pmtvcntlmod;
-	unsigned long strobe_period, strobe_width;
+	uint32_t strobe_period, strobe_width;
     unsigned enable_dut_veto , handshake_mode;
 	unsigned trig_rollover, readout_delay;
 	bool timestamps, done, timestamp_per_run;

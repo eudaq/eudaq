@@ -102,7 +102,7 @@ namespace eudaq {
     if (internaltiming) m_ctrlstat |= 0x2000;
     std::cout << "  Setting Control/Status   " << hexdec(m_ctrlstat) << std::endl;
     m_vmes->Write(0, m_ctrlstat);
-    unsigned long mimoconf = 0x48d00000;
+    uint32_t mimoconf = 0x48d00000;
     if (m_version == 1) {
       if (m_det != D_MIMOTEL) {
         EUDAQ_THROW("EUDRB Version 1 only reads MIMOTEL (not " + det + ")");
@@ -111,10 +111,10 @@ namespace eudaq {
     } else if (m_version == 2) {
       m_adcdelay = 0x7 & getpar(param, m_id, "AdcDelay", 3);
       m_clkselect = 0xf & getpar(param, m_id, "ClkSelect", 2);
-      unsigned long reg01 = 0x00ff2000;
-      unsigned long reg23 = 0x0000000a;
-      unsigned long reg45 = 0x8040001f | (m_adcdelay << 8) | (m_clkselect << 12);
-      unsigned long reg6  = 0;
+      uint32_t reg01 = 0x00ff2000;
+      uint32_t reg23 = 0x0000000a;
+      uint32_t reg45 = 0x8040001f | (m_adcdelay << 8) | (m_clkselect << 12);
+      uint32_t reg6  = 0;
       m_pdrd = getpar(param, m_id, "PostDetResetDelay", -1);
       if (m_det == D_MIMOTEL) {
         reg01 |= 65;
@@ -252,7 +252,7 @@ namespace eudaq {
   }
 
   void EUDRBController::ResetBoard() {
-    unsigned long readdata32 = m_vmes->Read(0);
+    uint32_t readdata32 = m_vmes->Read(0);
     m_vmes->Write(0, readdata32 | 0x80000000);
     eudaq::mSleep(100);
     m_vmes->Write(0, readdata32 &~0x80000000);
@@ -260,7 +260,7 @@ namespace eudaq {
   }
 
   void EUDRBController::ResetTriggerProc() {
-    unsigned long readdata32 = m_vmes->Read(0) & ~0x40;
+    uint32_t readdata32 = m_vmes->Read(0) & ~0x40;
     m_vmes->Write(0, readdata32 | 0x40);
     m_vmes->Write(0, readdata32);
   }
@@ -286,7 +286,7 @@ namespace eudaq {
 
   bool EUDRBController::EventDataReady(double timeout) {
     if (m_version < 3) EUDAQ_THROW("EventDataReady only works wth FW >= 3");
-    unsigned long i = 0;
+    uint32_t i = 0;
     for (eudaq::Timer timer; timer.Seconds() < timeout; /**/) {
       ++i;
       if (m_vmes->Read(0x40) & 0x80000000) {
@@ -302,7 +302,7 @@ namespace eudaq {
 
   int EUDRBController::EventDataReady_size(double timeout) {
     if (m_version >= 3) EUDAQ_THROW("EventDataReady_size only works wth FW < 3");
-    unsigned long int i = 0, readdata32 = 0; //, olddata = 0;
+    uint32_t i = 0, readdata32 = 0; //, olddata = 0;
     for (eudaq::Timer timer; timer.Seconds() < timeout; /**/) {
       ++i;
       readdata32 = m_vmes->Read(m_version < 3 ? 0x00400004 : 0x40);
@@ -322,7 +322,7 @@ namespace eudaq {
   }
 
   void EUDRBController::ResetTriggerBusy() {
-    unsigned long readdata32 = 0x2000; // for raw mode only
+    uint32_t readdata32 = 0x2000; // for raw mode only
     if (m_mode == M_ZS) readdata32 |= 0x20; // ZS mode
     m_vmes->Write(0, readdata32 | 0x80);
     m_vmes->Write(0, readdata32);
@@ -344,7 +344,7 @@ namespace eudaq {
 
   void EUDRBController::LoadPedestals(const pedestal_t & peds) {
     printf("Become Master of SRAM\n");
-    unsigned long readdata32 = m_vmes->Read(0) & ~0x200;
+    uint32_t readdata32 = m_vmes->Read(0) & ~0x200;
     m_vmes->Write(0, readdata32 | 0x200);
     for (size_t i = 0; i < peds.size(); ++i) {
       m_vmes->Write(0x800000 + i*4, peds[i]);
@@ -388,14 +388,14 @@ namespace eudaq {
         if (sscanf(line.c_str(),"%d %d %d %f %f %d\n",&board,&x,&y,&ped,&thresh,&flag) < 5) {
           EUDAQ_THROW("Error in pedestal file");
         }
-        unsigned long offset = decode_offset(x, y);
+        uint32_t offset = decode_offset(x, y);
         int thresh2bit = (int) (thresh*sigma);
         int ped2bit = (int)ped & 0x1f;
         if (thresh2bit > 31) thresh2bit = 31;
         if (thresh2bit < -32) thresh2bit = -32;
         if (ped2bit > 31) ped2bit = 31;
         if (ped2bit < -32) ped2bit = -32;
-        unsigned long newdata32 = (thresh2bit & 0x3f) | ((ped2bit & 0x3f) << 6);
+        uint32_t newdata32 = (thresh2bit & 0x3f) | ((ped2bit & 0x3f) << 6);
 
         if (flag) newdata32 = badpix; // mask bad pixels as good as you can (high thresh and very low ped)
 

@@ -172,8 +172,8 @@ int main(int /*argc*/, char ** argv) {
 
     // int previousPivotRow = 0;
 
-    unsigned long int  previousFortisTimestamp = 0 ;
-    unsigned long int  startFortisTimestamp = 0 ;
+    uint32_t  previousFortisTimestamp = 0 ;
+    uint32_t  startFortisTimestamp = 0 ;
 
     int previousDeltaTimestamp = 0;
 

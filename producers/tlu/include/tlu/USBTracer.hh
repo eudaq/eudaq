@@ -19,7 +19,7 @@ namespace tlu {
   // the reset is for programs to do tracing
   int getusbtracelevel();
   void usbflushtracefile();
-  void dousbtrace(const std::string & mode, unsigned long addr, const std::string & data, int status = -1);
+  void dousbtrace(const std::string & mode, uint32_t addr, const std::string & data, int status = -1);
 
 #else
 
@@ -36,14 +36,14 @@ namespace tlu {
 #endif
 
   template <typename T>
-  inline void usbtrace(const std::string & mode, unsigned long addr, T data, int status) {
+  inline void usbtrace(const std::string & mode, uint32_t addr, T data, int status) {
     if (status != 0 || getusbtracelevel() > 1) {
       dousbtrace(mode, addr, eudaq::to_string(eudaq::hexdec(data)), status);
     }
   }
 
   template <typename T>
-  inline void usbtrace(const std::string & mode, unsigned long addr, T * data, int size, int status) {
+  inline void usbtrace(const std::string & mode, uint32_t addr, T * data, int size, int status) {
     if (status != 0 || getusbtracelevel() > 1) {
       dousbtrace(mode, addr, "[" + eudaq::to_string(eudaq::hexdec(size)) + "]", status);
       if (getusbtracelevel() > 2) {

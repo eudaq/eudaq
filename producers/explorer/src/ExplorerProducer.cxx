@@ -29,8 +29,8 @@ inline void unpack (std::vector <unsigned char >& src, int index, T& data) {
 
 typedef std::pair<std::string,std::string> config;
 
-unsigned long extract_event_id(unsigned char* event) {
-  unsigned long id = 0x0;
+uint32_t extract_event_id(unsigned char* event) {
+  uint32_t id = 0x0;
   for (int i=3; i>=0; --i) {
     id |= event[i] << (3 - i);
   }
@@ -264,8 +264,8 @@ public:
     bool evt_bad = false;                   // flag to indicate something
                                             // is wrong with the data
                                             // => discard event
-    unsigned long evt_status = 0x0;         // indicates the frames received
-    unsigned long evt_id     = 0x0;
+    uint32_t evt_status = 0x0;         // indicates the frames received
+    uint32_t evt_id     = 0x0;
     short max_frame_id       = 0x0;
     bool evt_finished        = false;
     bool request_sent        = false;

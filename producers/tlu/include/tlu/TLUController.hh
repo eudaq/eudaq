@@ -57,9 +57,9 @@ namespace tlu {
 
   class TLUEntry {
   public:
-//     TLUEntry(uint64_t t = 0, unsigned long e = 0)
+//     TLUEntry(uint64_t t = 0, uint32_t e = 0)
 // 		: m_timestamp(t), m_eventnum(e) {}
-	TLUEntry(uint64_t t = 0, unsigned long e = 0,unsigned trigger=0)
+	TLUEntry(uint64_t t = 0, uint32_t e = 0,unsigned trigger=0)
 		: m_timestamp(t), m_eventnum(e) {
 			for (int i=0;i<4;++i)
 			{
@@ -70,12 +70,12 @@ namespace tlu {
 	}
 
     uint64_t Timestamp() const { return m_timestamp; }
-    unsigned long Eventnum() const { return m_eventnum; }
+    uint32_t Eventnum() const { return m_eventnum; }
     void Print(std::ostream & out = std::cout) const;
 	std::string trigger2String();
   private:
     uint64_t m_timestamp;
-    unsigned long m_eventnum;
+    uint32_t m_eventnum;
 	bool m_trigger[TLU_TRIGGER_INPUTS];
   };
 
@@ -106,7 +106,7 @@ namespace tlu {
     void SetVetoMask(unsigned char mask);
     void SetAndMask(unsigned char mask);
     void SetOrMask(unsigned char mask);
-    void SetStrobe(unsigned long period , unsigned long width);
+    void SetStrobe(uint32_t period , uint32_t width);
     void SetEnableDUTVeto(unsigned char mask);
     void SetHandShakeMode(unsigned handshakemode);
 	void SetTriggerInformation( unsigned TriggerInf );
@@ -117,8 +117,8 @@ namespace tlu {
     unsigned char GetVetoMask() const;
     unsigned char GetAndMask() const;
     unsigned char GetOrMask() const;
-    unsigned long GetStrobeWidth() const;
-    unsigned long GetStrobePeriod() const;
+    uint32_t GetStrobeWidth() const;
+    uint32_t GetStrobePeriod() const;
     unsigned char GetStrobeStatus() const;
     unsigned char GetDUTClockStatus() const;
     unsigned char GetEnableDUTVeto() const;
@@ -172,19 +172,19 @@ namespace tlu {
     bool SetupLemo(); // Tries to set the LEMO termination and DAC voltage, returns true if successful
     unsigned CalcPMTDACValue(double voltage);
 
-    void WriteRegister(unsigned long offset, unsigned char val);
-    void WriteRegister24(unsigned long offset, unsigned long val);
-    unsigned char ReadRegister8(unsigned long offset) const;
-    unsigned short ReadRegister16(unsigned long offset) const;
-    unsigned long ReadRegister24(unsigned long offset) const;
-    unsigned long ReadRegister32(unsigned long offset) const;
-    uint64_t ReadRegister64(unsigned long offset) const;
+    void WriteRegister(uint32_t offset, unsigned char val);
+    void WriteRegister24(uint32_t offset, uint32_t val);
+    unsigned char ReadRegister8(uint32_t offset) const;
+    unsigned short ReadRegister16(uint32_t offset) const;
+    uint32_t ReadRegister24(uint32_t offset) const;
+    uint32_t ReadRegister32(uint32_t offset) const;
+    uint64_t ReadRegister64(uint32_t offset) const;
     uint64_t * ReadBlock(unsigned entries);
     unsigned ReadBlockRaw(unsigned entries , unsigned buffer_offset);
     unsigned ReadBlockSoftErrorCorrect(unsigned entries  , bool pad );
     unsigned ResetBlockRead( unsigned entries) ;
     void PrintBlock( uint64_t  block[][4096] , unsigned nbuf , unsigned bufsize );
-    unsigned char ReadRegisterRaw(unsigned long offset) const;
+    unsigned char ReadRegisterRaw(uint32_t offset) const;
 
     void SelectBus(unsigned bus);
     void WritePCA955(unsigned bus, unsigned device, unsigned data);
@@ -195,12 +195,12 @@ namespace tlu {
     std::string m_filename;
     ZESTSC1_HANDLE m_handle;
     unsigned char m_mask, m_vmask, m_amask, m_omask, m_ipsel,  m_enabledutveto;
-    unsigned long m_strobewidth , m_strobeperiod;
+    uint32_t m_strobewidth , m_strobeperiod;
     unsigned m_triggerint, m_serial;
     bool m_inhibit;
 
     unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat, m_dmastat, m_pmtvcntlmod;
-    unsigned long m_fsmstatusvalues;
+    uint32_t m_fsmstatusvalues;
     unsigned m_triggernum;
     uint64_t m_timestamp;
     std::vector<TLUEntry> m_buffer;

@@ -35,7 +35,7 @@ namespace tlu {
         m_file.flush();
       }
     }
-    void Write(const std::string & mode, unsigned long addr, const std::string & data, int status) {
+    void Write(const std::string & mode, uint32_t addr, const std::string & data, int status) {
       eudaq::Time time = eudaq::Time::Current();
       if (addr == m_prev_addr && data == m_prev_data && mode == m_prev_mode && status == m_prev_stat) {
         m_prev_time = time;
@@ -80,10 +80,10 @@ namespace tlu {
     USBTraceFile() : m_repeated(0), m_prev_time(0), m_prev_addr(0), m_prev_stat(0), m_level(USB_TRACE) {}
     std::string m_filename;
     std::ofstream m_file;
-    unsigned long m_repeated;
+    uint32_t m_repeated;
     eudaq::Time m_prev_time;
     std::string m_prev_mode, m_prev_data;
-    unsigned long m_prev_addr;
+    uint32_t m_prev_addr;
     int m_prev_stat;
     int m_level;
   };
@@ -104,7 +104,7 @@ namespace tlu {
     USBTraceFile::Instance().FlushRepeated(true);
   }
 
-  void dousbtrace(const std::string & mode, unsigned long addr, const std::string & data, int status) {
+  void dousbtrace(const std::string & mode, uint32_t addr, const std::string & data, int status) {
     if (!USBTraceFile::Instance().IsOpen()) return;
     USBTraceFile::Instance().Write(mode, addr, data, status);
   }

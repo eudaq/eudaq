@@ -56,7 +56,7 @@ namespace tlu {
        << (rst ? 'R' : '.'); 
   }
 
-  static const uint64_t NOTIMESTAMP = (unsigned long long)-1;
+  static const uint64_t NOTIMESTAMP = (uint32_t long)-1;
 
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
 
@@ -84,7 +84,7 @@ namespace tlu {
       "v0.2c"
     };
 
-//     static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
+//     static const uint32_t g_scaler_address[TLU_TRIGGER_INPUTS] = {
 //       TRIGGER_IN0_COUNTER_0,
 //       TRIGGER_IN1_COUNTER_0,
 //       TRIGGER_IN2_COUNTER_0,
@@ -229,9 +229,9 @@ namespace tlu {
 
   void TLUController::OpenTLU() {
     // Request information about the system
-    unsigned long NumCards = 0;
-    unsigned long CardIDs[256] = {0};
-    unsigned long SerialNumbers[256] = {0};
+    uint32_t NumCards = 0;
+    uint32_t CardIDs[256] = {0};
+    uint32_t SerialNumbers[256] = {0};
     ZESTSC1_FPGA_TYPE FPGATypes[256] = {ZESTSC1_FPGA_UNKNOWN};
     int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
     if (status != 0) throw TLUException("ZestSC1CountCards", status);
@@ -349,7 +349,7 @@ namespace tlu {
       m_addr = &v0_2;
     }
     if (!m_oldbuf) {
-		m_oldbuf = new unsigned long long[m_addr->TLU_BUFFER_DEPTH];
+		m_oldbuf = new uint32_t long[m_addr->TLU_BUFFER_DEPTH];
 		m_triggerBuffer=new unsigned[m_addr->TLU_BUFFER_DEPTH];
 	}
     LoadFirmware();
@@ -513,7 +513,7 @@ namespace tlu {
     if (m_addr) WriteRegister(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS, m_enabledutveto);
   }
 
-  void TLUController::SetStrobe(unsigned long period , unsigned long width) {
+  void TLUController::SetStrobe(uint32_t period , uint32_t width) {
     m_strobeperiod = period;
     m_strobewidth = width;
 
@@ -555,11 +555,11 @@ namespace tlu {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
   }
 
-  unsigned long TLUController::GetStrobeWidth() const {
+  uint32_t TLUController::GetStrobeWidth() const {
     return ReadRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0);
   }
 
-  unsigned long TLUController::GetStrobePeriod() const {
+  uint32_t TLUController::GetStrobePeriod() const {
     return ReadRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0);
   }
 
@@ -726,7 +726,7 @@ namespace tlu {
     return result;
   }
 
-  void TLUController::WriteRegister(unsigned long offset, unsigned char val) {
+  void TLUController::WriteRegister(uint32_t offset, unsigned char val) {
     int status = ZESTSC1_SUCCESS;
     int delay = 0;
     const int count = m_errorhandler ? m_errorhandler : 1;
@@ -747,7 +747,7 @@ namespace tlu {
     }
   }
 
-  void TLUController::WriteRegister24(unsigned long offset, unsigned long val) {
+  void TLUController::WriteRegister24(uint32_t offset, uint32_t val) {
     int status = ZESTSC1_SUCCESS;
     int delay = 0;
 
@@ -774,21 +774,21 @@ namespace tlu {
     }
   }
 
-  unsigned char TLUController::ReadRegister8(unsigned long offset) const {
+  unsigned char TLUController::ReadRegister8(uint32_t offset) const {
     unsigned char val = ReadRegisterRaw(offset);
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned short TLUController::ReadRegister16(unsigned long offset) const {
+  unsigned short TLUController::ReadRegister16(uint32_t offset) const {
     unsigned short val = ReadRegisterRaw(offset);
     val |= static_cast<unsigned short>(ReadRegisterRaw(offset+1)) << 8;
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned long TLUController::ReadRegister24(unsigned long offset) const {
-    unsigned long val = 0;
+  uint32_t TLUController::ReadRegister24(uint32_t offset) const {
+    uint32_t val = 0;
     for (int i = 0; i < 3; ++i) {
       val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
     }
@@ -796,8 +796,8 @@ namespace tlu {
     return val;
   }
 
-  unsigned long TLUController::ReadRegister32(unsigned long offset) const {
-    unsigned long val = 0;
+  uint32_t TLUController::ReadRegister32(uint32_t offset) const {
+    uint32_t val = 0;
     for (int i = 0; i < 4; ++i) {
       val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
     }
@@ -805,16 +805,16 @@ namespace tlu {
     return val;
   }
 
-  uint64_t TLUController::ReadRegister64(unsigned long offset) const {
+  uint64_t TLUController::ReadRegister64(uint32_t offset) const {
     uint64_t val = 0;
     for (int i = 0; i < 8; ++i) {
-      val |= static_cast<unsigned long long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint32_t long>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned char TLUController::ReadRegisterRaw(unsigned long offset) const {
+  unsigned char TLUController::ReadRegisterRaw(uint32_t offset) const {
     unsigned char val = 0;
     int status = ZESTSC1_SUCCESS;
     int delay = 0;
@@ -1283,7 +1283,7 @@ namespace tlu {
       } catch (const eudaq::Exception & e) {
         std::cerr << "Error writing DUT LEDs: " << e.what() << std::endl;
       }
-      unsigned long addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO;
+      uint32_t addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO;
       if (m_version < 3) addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO_VB;
       try {
         WritePCA955(m_addr->TLU_I2C_BUS_LEMO, addr, lemoled);

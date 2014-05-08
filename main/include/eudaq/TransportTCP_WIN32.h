@@ -91,7 +91,7 @@ namespace eudaq {
     }
 
     static void setup_socket(SOCKET sock) {
-      unsigned long one = 1;
+      uint32_t one = 1;
       ioctlsocket(sock, FIONBIO, &one);
     }
 

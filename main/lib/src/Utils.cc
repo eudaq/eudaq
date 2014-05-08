@@ -108,7 +108,7 @@ namespace eudaq {
     }
 
   template<>
-    unsigned long from_string(const std::string & x, const unsigned long & def) {
+    uint32_t from_string(const std::string & x, const uint32_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
       char * end = 0;
@@ -120,7 +120,7 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      unsigned long result = std::strtoul(start, &end, base);
+      uint32_t result = std::strtoul(start, &end, base);
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
