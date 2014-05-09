@@ -12,8 +12,6 @@ namespace eudaq {
 
   namespace {
 
-    static const char * const RUN_NUMBER_FILE = "../data/runnumber.dat";
-
     void * DataCollector_thread(void * arg) {
       DataCollector * dc = static_cast<DataCollector *>(arg);
       dc->DataThread();
@@ -22,9 +20,9 @@ namespace eudaq {
 
   } // anonymous namespace
 
-  DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress) :
-    CommandReceiver("DataCollector", name, runcontrol, false), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
-        ReadFromFile(RUN_NUMBER_FILE, 0U)), m_eventnumber(0), m_runstart(0) {
+  DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
+    CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
+     ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0) {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
       m_thread.start(DataCollector_thread,this);
       EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
@@ -84,7 +82,7 @@ namespace eudaq {
         EUDAQ_THROW("You must configure before starting a run");
       }
       m_writer->StartRun(runnumber);
-      WriteToFile(RUN_NUMBER_FILE, runnumber);
+      WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
 
