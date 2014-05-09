@@ -33,8 +33,8 @@ namespace eudaq {
     t /= 10;                /* In microseconds */
 
     timeval tv;
-    tv.tv_sec  = (long)(t / 1000000);
-    tv.tv_usec = (long)(t % 1000000);
+    tv.tv_sec  = static_cast<int32_t>(t / 1000000);
+    tv.tv_usec = static_cast<int32_t>(t % 1000000);
 
     return tv;
   }
@@ -61,7 +61,7 @@ namespace eudaq {
     time.tm_hour = hour;
     time.tm_min = minute;
     time.tm_sec = sec + usec / 1000000;
-    tv_sec = static_cast<long>(mktime(&time));
+    tv_sec = static_cast<int32_t>(mktime(&time));
     tv_usec = usec % 1000000;
   }
 
