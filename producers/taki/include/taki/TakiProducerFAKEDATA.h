@@ -31,8 +31,8 @@ class TakiProducerFAKEDATA : public eudaq::Producer
 
     public:
         TakiProducerFAKEDATA(const std::string & name, const std::string & runcontrol);
-        void send(const char* const p_uc_buffer, const int& r_i_numBytes, const uint32_t long& ull_triggerID);
-        void sendCorrupt(const char* const p_uc_buffer, const int& r_i_numBytes, const uint32_t long& ull_triggerID);
+        void send(const char* const p_uc_buffer, const int& r_i_numBytes, const uint64_t& ull_triggerID);
+        void sendCorrupt(const char* const p_uc_buffer, const int& r_i_numBytes, const uint64_t& ull_triggerID);
         virtual void OnConfigure(const eudaq::Configuration & param);
         virtual void OnStartRun(unsigned param);
         virtual void OnStopRun();

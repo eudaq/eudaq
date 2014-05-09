@@ -31,7 +31,7 @@ TakiProducer::TakiProducer(const std::string & name, const std::string & runcont
 
 }
 
-void TakiProducer::send(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint32_t long& r_ull_triggerID)
+void TakiProducer::send(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint64_t& r_ull_triggerID)
 {
     cout << "[TakiProducer::send()] !! Sending " << r_i_numBytes << " bytes !!\n";
     cout << "[TakiProducer::send()] ==== DATA BEGIN ==== \n";
@@ -50,7 +50,7 @@ void TakiProducer::send(const char* const p_c_buffer_TCP, const int& r_i_numByte
     cout << "[TakiProducer::send()] !! DONE Sending !! m_u_ev=" << m_u_ev <<".\n\n";
 }
 
-void TakiProducer::sendCorrupt(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint32_t long& r_ull_triggerID)
+void TakiProducer::sendCorrupt(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint64_t& r_ull_triggerID)
 {
     cout << "[TakiProducer::sendCorrupt()] !! Sending " << r_i_numBytes << " bytes !!\n";
     cout << "[TakiProducer::sendCorrupt()] ==== DATA BEGIN ==== \n";
