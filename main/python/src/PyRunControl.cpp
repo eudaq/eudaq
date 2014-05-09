@@ -51,7 +51,7 @@ public:
     }
   }
 
-  bool PrintConnections(){
+  void PrintConnections(){
     std::cout << "Connections (" << m_connections.size() << ")" << std::endl;
     for (uint16_t i = 0; i < m_connections.size(); ++i) {
       std::cout << "  " << m_connections.at(i).GetId()<< ": " << m_connections.at(i).GetStatus() << std::endl;

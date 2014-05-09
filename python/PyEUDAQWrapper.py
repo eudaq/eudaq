@@ -1,8 +1,10 @@
 import sys
 from ctypes import cdll, create_string_buffer, byref, c_uint, c_void_p, c_char_p, c_size_t, c_uint64, POINTER
 import numpy
+import os.path
 
-libpath = '../lib/libPyEUDAQ'
+# construct the path to the library from the location of this script
+libpath = os.path.join(os.path.dirname(__file__),"../lib/libPyEUDAQ")
 libext = '.so'
 if sys.platform.startswith('darwin'):
     # OSX-specific library extension
@@ -94,8 +96,9 @@ class PyProducer(object):
 
 
 class PyDataCollector(object):
-    def __init__(self,name = "", rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001"):
+    def __init__(self,name = "", rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001", runnumberfile="../data/runnumber.dat"):
         lib.PyDataCollector_new.restype = c_void_p # Needed
         self.obj = lib.PyDataCollector_new(create_string_buffer(name),
                                            create_string_buffer(rcaddr), 
-                                           create_string_buffer(listenaddr))
+                                           create_string_buffer(listenaddr),
+                                           create_string_buffer(runnumberfile))

@@ -9,8 +9,9 @@ class PyDataCollector : public eudaq::DataCollector {
   public:
   PyDataCollector(const std::string & name, 
 		  const std::string & runcontrol,
-		  const std::string & listenaddress)
-    : eudaq::DataCollector(name, runcontrol, listenaddress)
+		  const std::string & listenaddress,
+		  const std::string & runnumberfile)
+    : eudaq::DataCollector(name, runcontrol, listenaddress, runnumberfile)
   {}
     void OnConnect(const eudaq::ConnectionInfo & id) {
       DataCollector::OnConnect(id);
@@ -57,5 +58,5 @@ class PyDataCollector : public eudaq::DataCollector {
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  PyDataCollector* PyDataCollector_new(char *name, char *rcaddress, char *listenaddress){return new PyDataCollector(std::string(name), std::string(rcaddress),std::string(listenaddress));}
+  PyDataCollector* PyDataCollector_new(char *name, char *rcaddress, char *listenaddress, char *runnumberfile){return new PyDataCollector(std::string(name), std::string(rcaddress),std::string(listenaddress), std::string(runnumberfile));}
 }
