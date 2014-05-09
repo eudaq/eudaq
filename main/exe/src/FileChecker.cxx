@@ -85,7 +85,7 @@ int main(int /*argc*/, const char ** argv) {
         const string & run = opt.GetArg(i_run);
         const string & input_pattern = opt_input_pattern.Value();
 
-        long num_events = -1;
+        int32_t num_events = -1;
         map<string, unsigned> subevents;
 
         string errors;

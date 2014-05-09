@@ -50,7 +50,7 @@ namespace eudaq {
       bool m_done;
       bool m_listening;
     protected:
-      long m_runnumber;   ///< The current run number
+      int32_t m_runnumber;   ///< The current run number
       TransportServer * m_cmdserver; ///< Transport for sending commands
       eudaqThread m_thread;
       size_t m_idata, m_ilog;
