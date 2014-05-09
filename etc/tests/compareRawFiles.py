@@ -61,6 +61,7 @@ def main(argv=None):
             m = p.subn(str(run).zfill(padding), args.pattern, count=1)
             m = x.subn(".raw", m[0], count=1) # replace a possible occurance of the file extension pattern with "raw"
             t = m[0]
+            t = os.path.join(args.testfile, t) # append the path
         else:
             print "Error: Cannot find 'runnumber.dat' in path '"+args.testfile+"'"
             return 1
