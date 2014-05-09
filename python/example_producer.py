@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-execfile('PyEUDAQWrapper.py') # load the ctypes wrapper
+import PyEUDAQWrapper # load the ctypes wrapper
 from time import sleep
 import numpy # for data handling
 

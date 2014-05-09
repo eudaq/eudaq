@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
-execfile('PyEUDAQWrapper.py') # load ctypes wrapper
+import PyEUDAQWrapper # load the ctypes wrapper
+
 from time import sleep
 
 print "Starting RunControl"
