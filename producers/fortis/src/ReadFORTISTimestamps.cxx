@@ -238,7 +238,7 @@ int main(int /*argc*/, char ** argv) {
 
 	      int fortisFrameNumber = from_string(rev->GetTag( "FRAMENUMBER"),-1);
 	      int fortisPivotRow = from_string(rev->GetTag("PIVOTROW"),-1);
-	      long int FortisTimestamp = fortisFrameNumber*numRows + fortisPivotRow;
+	      int32_t FortisTimestamp = fortisFrameNumber*numRows + fortisPivotRow;
 
 	      if ( rev->NumBlocks() ) {
 		 if ( ! pivotRows.empty() ) {

@@ -139,7 +139,7 @@ namespace eudaq {
 
 		auto configFile_long_time=cnf.Get("LongBusyTime","0");
 	//	std::cout<<" longdelay "<< longdelay<<std::endl;
-		long int longPause_time_from_command_line=0;
+		int32_t longPause_time_from_command_line=0;
 		
 		try{
 
@@ -186,10 +186,10 @@ namespace eudaq {
 		   int returnValue=Event_IS_Sync;
 
 		   uint64_t tluTime=tlu.GetTimestamp();
-	         long int tluEv=(long int)tlu.GetEventNumber();
+	         int32_t tluEv=(int32_t)tlu.GetEventNumber();
 		   	 const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-			// long int trigger_id=(long int)GetTriggerCounter(rawev );
-			 long int trigger_id=ev.GetEventNumber();
+			// int32_t trigger_id=(int32_t)GetTriggerCounter(rawev );
+			 int32_t trigger_id=ev.GetEventNumber();
 			 if (oldDUTid>trigger_id)
 			 {
 				 std::cout<<" if (oldDUTid>trigger_id)"<<std::endl;
@@ -266,9 +266,9 @@ namespace eudaq {
 
       // Information extracted in Initialize() can be stored here:
       unsigned m_exampleparam;
-	  long int oldDUTid;
+	  int32_t oldDUTid;
 	 mutable  uint64_t last_TLU_time,Last_DUT_Time;
-		long int longPause_time;
+		int32_t longPause_time;
 		mutable std::vector<std::vector<unsigned char>> m_event_queue;
       // The single instance of this converter plugin
       static SCTupgradeConverterPlugin m_instance;
