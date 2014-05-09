@@ -14,18 +14,6 @@
 #include <string>
 #include <queue>
 
-#define EVENTHEADERSIZE 14
-#define MODULEHEADERSIZE 3
-#define STREAMHEADERSIZE 3
-#define STREAMESIZE 160
-#define TOTALHEADERSIZE (EVENTHEADERSIZE+MODULEHEADERSIZE+STREAMHEADERSIZE)
-#define STARTSTREAM0 TOTALHEADERSIZE
-#define ENDSTREAM0 (STARTSTREAM0+STREAMESIZE)
-#define STARTSTREAM1 (TOTALHEADERSIZE+STREAMHEADERSIZE+STREAMESIZE)
-#define ENDSTREAM1 (STARTSTREAM1+STREAMESIZE)
-#define TOTALMODULSIZE (MODULEHEADERSIZE+2*STREAMHEADERSIZE+2*STREAMESIZE)
-#define STREAMSTART(streamNr) (TOTALHEADERSIZE+streamNr*(STREAMHEADERSIZE+STREAMESIZE))
-#define STREAMEND(streamNr) (STREAMSTART(streamNr)+STREAMESIZE)
 
 #define STRIPSPERCHIP 128
 
@@ -33,8 +21,8 @@
 
 
 
-void uchar2bool(const std::vector<unsigned char>& in,int lOffset,int hOffset, std::vector<bool>& out){
-	for (auto i=in.begin()+lOffset;i!=in.begin()+hOffset;++i)
+void uchar2bool(const std::vector<unsigned char>& in, std::vector<bool>& out){
+	for (auto i=in.begin();i!=in.end();++i)
 	{
 		for(int j=0;j<8;++j){
 			out.push_back((*i)&(1<<j));
@@ -44,85 +32,54 @@ void uchar2bool(const std::vector<unsigned char>& in,int lOffset,int hOffset, st
 
 }
 
-int numberOfEvents_inplane;
+
 
 namespace eudaq {
+  void pushData2StandartPlane(const std::vector<unsigned char>& inputVector,const int y,StandardPlane& plane){
+    int streamNr=y%2;
+    
+    std::vector<bool> outputStream0;
 
-	void puschDataInStandartPlane(const std::vector<unsigned char>& inputVector,int moduleNr, StandardPlane& plane){
-		int y_pos=(moduleNr-1)*2+1;
-
-		for (int streamNr=0;streamNr<2;++streamNr)
-		{
-		
-		std::vector<bool> outputStream0;
+    uchar2bool(inputVector,	outputStream0);
 
 
-
-
-		uchar2bool(inputVector,
-			STREAMSTART(streamNr) +(moduleNr-1)*TOTALMODULSIZE,
-			STREAMEND(streamNr)   +(moduleNr-1)*TOTALMODULSIZE,
-			outputStream0);
+    size_t x_pos=0;
+    for (size_t i=0; i<outputStream0.size();++i)
+    {
 
 
 
-	size_t x_pos=0;
-		for (size_t i=0; i<outputStream0.size();++i)
-		{
-			
+      if (outputStream0.at(i))
+      {
+        if (streamNr==1)
+        {
+          x_pos=i/STRIPSPERCHIP;
 
-			
-				if (outputStream0.at(i))
-				{
-					if (streamNr==1)
-					{
-						x_pos=i/STRIPSPERCHIP;
+          plane.PushPixel(2*x_pos*STRIPSPERCHIP-i+STRIPSPERCHIP,y+streamNr,1);
+        }else{
+          plane.PushPixel(i,y+streamNr,1);
+        }
+       
+        break;
+      }
 
-						plane.PushPixel(2*x_pos*STRIPSPERCHIP-i+STRIPSPERCHIP,y_pos+streamNr,1);
-					}else{
-					plane.PushPixel(i,y_pos+streamNr,1);
-					}
-					++numberOfEvents_inplane;
-					break;
-				}
 
-				
-		}
-}
-	
+    }
 
-	}
-	void pushHeaderInStundartplane(const std::vector<unsigned char>& inputVector, StandardPlane& plane){
 
-		int trigger_id=eudaq::getlittleendian<int>(&inputVector[0]);
-		short scan_type=eudaq::getlittleendian<short>(&inputVector[4]);
-		float scan_current=static_cast<float>(eudaq::getlittleendian<int>(&inputVector[6]))/1000;
-	}
-	int GetTriggerCounter(const eudaq::RawDataEvent &ev){
-			int trigger_id=eudaq::getlittleendian<int>(&(ev.GetBlock(0).at(0)));
-			return trigger_id;
-	}
-	void processImputVector(const std::vector<unsigned char>& inputVector, StandardPlane& plane){
+  }
 
-		int noModules=(inputVector.size()-EVENTHEADERSIZE)/TOTALMODULSIZE;
-		int y_pos=0;
 
-		int width = 1280, height = noModules*2;
-		plane.SetSizeRaw(width, height);
 
-		for (size_t k=1;k<=noModules;++k)
-		{
 
-			puschDataInStandartPlane(inputVector,k,plane);
 
-		}
-	}
+
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const char* EVENT_TYPE = "SCTupgrade";
+  static const char* EVENT_TYPE = "SCTupgrade2";
 
   // Declare a new class that inherits from DataConverterPlugin
-  class SCTupgradeConverterPlugin : public DataConverterPlugin {
+  class SCTupgrade2ConverterPlugin : public DataConverterPlugin {
 
 	 
 
@@ -189,7 +146,7 @@ namespace eudaq {
 		   unsigned long long tluTime=tlu.GetTimestamp();
 	         long int tluEv=(long int)tlu.GetEventNumber();
 		   	 const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-			// long int trigger_id=(long int)GetTriggerCounter(rawev );
+
 			 long int trigger_id=ev.GetEventNumber();
 			 if (oldDUTid>trigger_id)
 			 {
@@ -197,13 +154,6 @@ namespace eudaq {
 			 }
 		  returnValue=compareTLU2DUT(tluEv,trigger_id);
 
-// 		  if (returnValue==Event_IS_EARLY)
-// 		  {
-// 			  std::cout<<"SCT event is Early Event ID= "<<trigger_id<<std::endl;
-// 		  }else if (returnValue==Event_IS_LATE)
-// 		  {
-// 			  std::cout<<"SCT event is Late Event ID= "<<trigger_id<<std::endl;
-// 		  }
 
 		   return returnValue;
 	   
@@ -217,29 +167,35 @@ namespace eudaq {
         // If the event type is used for different sensors
         // they can be differentiated here
 			
-        numberOfEvents_inplane=0;
-        // Create a StandardPlane representing one sensor plane
+       
+
  
        
-        // Set the number of pixels
+  
 		 const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
 		 
 		 sev.SetTag("DUT_time",rawev.GetTimestamp());
 		 int id = 8;
 		 std::string sensortype = "SCT";
+             
+     // Create a StandardPlane representing one sensor plane
 		 StandardPlane plane(id, EVENT_TYPE, sensortype);
 
-		 
-		 std::vector<unsigned char> inputVector=rawev.GetBlock(0);
-		 
+           
+     // Set the number of pixels
+     int width =rawev.GetBlock(0).size()*8, height = rawev.NumBlocks();
+     plane.SetSizeRaw(width, height);
 
-		 processImputVector(inputVector,plane);
+
+
+		 for (size_t i=0;i< rawev.NumBlocks();++i){
+      pushData2StandartPlane(rawev.GetBlock(i),i,plane);
+
+     }
+	 
 
 		 // Set the trigger ID
-		
-		 pushHeaderInStundartplane(inputVector,plane);
-
-		  plane.SetTLUEvent(GetTriggerID(ev));
+	  plane.SetTLUEvent(GetTriggerID(ev));
 		  
 		//  std::cout<<"length of plane " <<numberOfEvents_inplane<<std::endl;
 		 // Add the plane to the StandardEvent	
@@ -261,7 +217,7 @@ namespace eudaq {
       // The DataConverterPlugin constructor must be passed the event type
       // in order to register this converter for the corresponding conversions
       // Member variables should also be initialized to default values here.
-      SCTupgradeConverterPlugin()
+     SCTupgrade2ConverterPlugin()
         : DataConverterPlugin(EVENT_TYPE), m_exampleparam(0),last_TLU_time(0),Last_DUT_Time(0),longPause_time(0)
       {oldDUTid=0;}
 
@@ -272,10 +228,10 @@ namespace eudaq {
 		long int longPause_time;
 		mutable std::vector<std::vector<unsigned char>> m_event_queue;
       // The single instance of this converter plugin
-      static SCTupgradeConverterPlugin m_instance;
+      static SCTupgrade2ConverterPlugin m_instance;
   }; // class ExampleConverterPlugin
 
   // Instantiate the converter plugin instance
-  SCTupgradeConverterPlugin SCTupgradeConverterPlugin::m_instance;
+ SCTupgrade2ConverterPlugin SCTupgrade2ConverterPlugin::m_instance;
 
 } // namespace eudaq

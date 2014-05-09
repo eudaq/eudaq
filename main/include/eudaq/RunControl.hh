@@ -6,9 +6,12 @@
 #include "eudaq/Status.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/EudaqThread.hh"
+
 
 #include <string>
+#include <memory>
+#include <thread>
+
 
 namespace eudaq {
 
@@ -52,7 +55,7 @@ namespace eudaq {
     protected:
       long m_runnumber;   ///< The current run number
       TransportServer * m_cmdserver; ///< Transport for sending commands
-      eudaqThread m_thread;
+	std::unique_ptr<std::thread> m_thread;
       size_t m_idata, m_ilog;
       std::string m_logaddr; // address of log collector
       std::map<size_t,std::string> m_dataaddr; // map of data collector addresses

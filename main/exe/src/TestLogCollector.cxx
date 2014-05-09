@@ -22,7 +22,7 @@ class TestLogCollector : public eudaq::LogCollector {
       std::cout << "Connect:    " << id << std::endl;
     }
     void OnDisconnect(const eudaq::ConnectionInfo & id) {
-      std::cout << "Disconnect: " << id << std::endl;
+      std::cout << "Disconnect: "  << std::endl;
     }
     virtual void OnReceive(const eudaq::LogMessage & ev) {
       if (ev.GetLevel() >= m_loglevel) std::cout << ev << std::endl;
