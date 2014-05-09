@@ -14,12 +14,12 @@
 
 
   SET( testdir "${PROJECT_BINARY_DIR}/Testing/tests" )
-  SET( datadir "${PROJECT_SOURCE_DIR}/data" )
-  SET( testsdir "${PROJECT_SOURCE_DIR}/etc/tests" )
+  SET( datadir "${testdir}/data" )
+  SET( testscriptdir "${PROJECT_SOURCE_DIR}/etc/tests" )
   SET( pydir "${PROJECT_SOURCE_DIR}/python")
 
-  #SET( referencedatadir "/afs/desy.de/group/telescopes/EudaqTestData" )
-  SET( referencedatadir "${PROJECT_SOURCE_DIR}/data" )
+  SET( referencedatadir "/afs/desy.de/group/telescopes/EudaqTestData" )
+  #SET( referencedatadir "${PROJECT_SOURCE_DIR}/data" )
 
   # all this regular expressions must be matched for the tests to pass.
   # the order of the expressions must be matched in the test execution!
@@ -31,13 +31,22 @@
 
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#  STEP 0: PREPARE TEST DIRECTORY
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	ADD_TEST(NAME TestSetup COMMAND ${CMAKE_COMMAND}
+            	      -D SETUPPATH=${testdir}
+            	      -D TESTSCRIPTPATH=${testscriptdir}
+   		      -P ${testscriptdir}/setup.cmake)
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  STEP 1: EXECUTE DUMMY RUN PRODUCING FIXED DATA SET
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
     ADD_TEST( NAME DummyDataProductionRun 
-              WORKING_DIRECTORY "${pydir}"
-	      COMMAND ${PYTHON_EXECUTABLE} ${testsdir}/run_dummydataproduction.py )
+              WORKING_DIRECTORY "${testdir}/data"
+	      COMMAND ${PYTHON_EXECUTABLE} ${testscriptdir}/run_dummydataproduction.py --eudaq-pypath=${pydir} )
     SET_TESTS_PROPERTIES (DummyDataProductionRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${pass_regex_1}.*${pass_regex_2}"
@@ -48,7 +57,7 @@
 
     # now check if the expected output files exist and look ok
     ADD_TEST( NAME DummyDataProductionRefComp 
-    	      COMMAND ${PYTHON_EXECUTABLE} "${testsdir}/compareRawFiles.py" "${datadir}" "${referencedatadir}/dummyrefrun.raw"
+    	      COMMAND ${PYTHON_EXECUTABLE} "${testscriptdir}/compareRawFiles.py" "${datadir}" "${referencedatadir}/dummyrefrun.raw"
 	      )
     SET_TESTS_PROPERTIES (DummyDataProductionRefComp PROPERTIES DEPENDS DummyDataProductionRun)
 

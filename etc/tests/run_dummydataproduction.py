@@ -1,5 +1,23 @@
 #!/usr/bin/env python2
-execfile('PyEUDAQWrapper.py') # load ctypes wrapper
+import sys, os
+import argparse # argument parsing
+
+parser = argparse.ArgumentParser(prog=sys.argv.pop(0), description="A script for EUDAQ regression testing")
+parser.add_argument("--eudaq-pypath", help="Path to EUDAQ Python ctypes wrapper (usually /path/to/eudaq/python)", metavar="PATH")
+args = parser.parse_args(sys.argv)
+
+if args.eudaq_pypath:
+    modpath = str(args.eudaq_pypath)
+    sys.path.append(args.eudaq_pypath)
+else:
+    modpath = ""
+
+try:
+    from PyEUDAQWrapper import *
+except ImportError:
+    print "ERROR: Could not find EUDAQ ctypes wrapper (PyEUDAQWrapper.py) -- please use --eudaq-pypath argument to set correct path"
+    sys.exit(1)
+    
 from time import sleep
 
 print "Starting RunControl"
@@ -25,7 +43,7 @@ print "Current Run Number: " + str(prc.RunNumber)
 runnr = prc.RunNumber # remember the current number
 
 # load configuration file
-prc.Configure("ExampleConfig")
+prc.Configure("test")
 
 # counter variables for simple timeout
 i = 0
