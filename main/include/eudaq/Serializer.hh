@@ -111,6 +111,15 @@ namespace eudaq {
       write((int)t.GetTimeval().tv_usec);
     }
 
+  template <>
+    inline void Serializer::write(const std::vector<bool> & t) {
+      unsigned len = t.size();
+      write(len);
+      for (size_t i = 0; i < len; ++i) {
+        write((uint8_t)t[i]);
+      }
+    }
+
   template <typename T>
     inline void Serializer::write(const std::vector<T> & t) {
       unsigned len = t.size();
