@@ -16,7 +16,7 @@ using eudaq::from_string;
 
 inline std::string to_bytes(const std::string & val) {
   if (val == "") return "";
-  unsigned long long n = from_string(val, 0ULL);
+  uint64_t n = from_string(val, 0ULL);
   const char * suff[] = { " B", " kB", " MB", " GB", " TB" };
   const int numsuff = sizeof suff / sizeof *suff;
   int mult = 0;
@@ -146,6 +146,6 @@ signals:
     status_t m_status;
     int m_prevtrigs;
     double m_prevtime, m_runstarttime;
-    long long m_filebytes;
+    int64_t m_filebytes;
     bool dostatus;
 };

@@ -256,7 +256,7 @@ namespace eudaq {
       //if (length > 500000) std::cout << "Done send packet" << std::endl;
     }
 
-    //     static void send_data(SOCKET sock, unsigned long data) {
+    //     static void send_data(SOCKET sock, uint32_t data) {
     //       std::string str;
     //       for (int i = 0; i < 4; ++i) {
     //         str += static_cast<char>(data & 0xff);

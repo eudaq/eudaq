@@ -324,7 +324,7 @@ namespace eudaq {
   template std::vector<int> StandardPlane::GetPixels<>() const;
   template std::vector<double> StandardPlane::GetPixels<>() const;
 
-  StandardEvent::StandardEvent(unsigned run, unsigned evnum, unsigned long long timestamp)
+  StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
     : Event(run, evnum, timestamp)
   {
   }
@@ -345,7 +345,7 @@ namespace eudaq {
     ser.write(m_planes);
   }
 
-  void StandardEvent::SetTimestamp(unsigned long long val) {
+  void StandardEvent::SetTimestamp(uint64_t val) {
     m_timestamp = val;
   }
 

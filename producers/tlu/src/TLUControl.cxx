@@ -216,7 +216,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
 
-    unsigned long total = 0;
+    uint32_t total = 0;
     while (!g_done) {
       TLU.Update(!nots.IsSet());
       std::cout << std::endl;

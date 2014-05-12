@@ -59,12 +59,12 @@ namespace eudaq {
     return GetInstance().GetPlugin(ev).GetTriggerID(ev);
   }
 
-//   unsigned long long PluginManager::GetTimeStamp( const Event& ev)
+//   uint64_t PluginManager::GetTimeStamp( const Event& ev)
 //   {
 // 	  return GetInstance().GetPlugin(ev).GetTimeStamp(ev);
 //   }
 // 
-//   unsigned long long PluginManager::GetTimeDuration( const Event& ev )
+//   uint64_t PluginManager::GetTimeDuration( const Event& ev )
 //   {
 // 	  return GetInstance().GetPlugin(ev).GetTimeDuration(ev);
 //   }

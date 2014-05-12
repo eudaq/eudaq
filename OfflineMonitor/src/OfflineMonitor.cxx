@@ -23,7 +23,7 @@ int main(int, char ** argv) {
   eudaq::Option<std::string> confFile(op, "c", "confFile", "../conf/offlinemonconf.xml", "string", "load the file that contains all the information about the correlations plots");
   eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
   eudaq::Option<size_t> syncEvents(op, "n" ,"syncevents",0,"size_t","Number of events that need to be synchronous before they are used");
-  eudaq::Option<long> syncDelay(op, "d" ,"longDelay",20,"unsigned long long","us time long time delay");
+  eudaq::Option<uint64_t> syncDelay(op, "d" ,"longDelay",20,"uint64_t","us time long time delay");
   eudaq::Option<size_t> skipEvents(op, "k" ,"skipEvents",0,"size_t","Number of events to skip");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
       "The minimum level for displaying log messages locally");

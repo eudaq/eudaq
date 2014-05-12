@@ -78,12 +78,12 @@ unsigned int SimpleStandardEvent::getEvent_number() const
   return event_number;
 }
 
-unsigned long long int SimpleStandardEvent::getEvent_timestamp() const
+uint64_t SimpleStandardEvent::getEvent_timestamp() const
 {
   return event_timestamp;
 }
 
-void SimpleStandardEvent::setEvent_timestamp(unsigned long long int event_timestamp)
+void SimpleStandardEvent::setEvent_timestamp(uint64_t event_timestamp)
 {
   this->event_timestamp = event_timestamp;
 }

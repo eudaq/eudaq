@@ -56,8 +56,8 @@ public:
 				//std::cout << "--------" << std::endl;
 				for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
 					m_ev = m_tlu->GetEntry(i).Eventnum();
-					unsigned long long t = m_tlu->GetEntry(i).Timestamp();
-					long long d = t - lasttime;
+					uint64_t t = m_tlu->GetEntry(i).Timestamp();
+					int64_t d = t - lasttime;
 					//float freq= 1./(d*20./1000000000);
 					float freq = 1. / Timestamp2Seconds(d);
 					if (m_ev < 10 || m_ev % 1000 == 0) {
@@ -267,13 +267,13 @@ public:
 private:
 	unsigned m_run, m_ev;
     unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask, pmtvcntl[TLU_PMTS], pmtvcntlmod;
-	unsigned long strobe_period, strobe_width;
+	uint32_t strobe_period, strobe_width;
     unsigned enable_dut_veto , handshake_mode;
 	unsigned trig_rollover, readout_delay;
 	bool timestamps, done, timestamp_per_run;
 	bool TLUStarted;
 	bool TLUJustStopped;
-	unsigned long long lasttime;
+	uint64_t lasttime;
 	std::shared_ptr<TLUController> m_tlu;
 	std::string pmt_id[TLU_PMTS];
 	double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];

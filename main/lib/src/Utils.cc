@@ -90,7 +90,7 @@ namespace eudaq {
   }
 
   template<>
-    long from_string(const std::string & x, const long & def) {
+  int64_t from_string(const std::string & x, const int64_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
       char * end = 0;
@@ -102,13 +102,13 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      long result = std::strtol(start, &end, base);
+      int64_t result = static_cast<int64_t>(std::strtoll(start, &end, base));
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
 
   template<>
-    unsigned long from_string(const std::string & x, const unsigned long & def) {
+    uint64_t from_string(const std::string & x, const uint64_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
       char * end = 0;
@@ -120,7 +120,7 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      unsigned long result = std::strtoul(start, &end, base);
+      uint64_t result = static_cast<uint64_t>(std::strtoull(start, &end, base));
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }

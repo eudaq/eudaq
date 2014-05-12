@@ -62,7 +62,7 @@ namespace eudaq {
   }
 
   unsigned Event::str2id(const std::string & str) {
-    unsigned long result = 0;
+    uint32_t result = 0;
     for (size_t i = 0; i < 4; ++i) {
       if (i < str.length()) result |= str[i] << (8*i);
     }
@@ -100,7 +100,7 @@ namespace eudaq {
 
   void Event::SetTimeStampToNow()
   {
-	  m_timestamp=static_cast<unsigned long long>(clock());
+	  m_timestamp=static_cast<uint64_t>(clock());
   }
 
   std::ostream & operator << (std::ostream &os, const Event &ev) {
@@ -113,12 +113,12 @@ namespace eudaq {
     return s_map;
   }
 
-  void EventFactory::Register(unsigned long id, EventFactory::event_creator func) {
+  void EventFactory::Register(uint32_t id, EventFactory::event_creator func) {
     // TODO: check id is not already in map
     get_map()[id] = func;
   }
 
-  EventFactory::event_creator EventFactory::GetCreator(unsigned long id) {
+  EventFactory::event_creator EventFactory::GetCreator(uint32_t id) {
     // TODO: check it exists...
     return get_map()[id];
   }

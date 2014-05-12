@@ -128,7 +128,7 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 }
 void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len){
 	bool dbg = false;
-		if (dbg) printf("size=%lu", static_cast<unsigned long>(len));
+		if (dbg) printf("size=%lu", static_cast<uint32_t>(len));
 
 	if (EUDAQ_SEND(sock_config,text, len, 0) == -1) 	perror("Server-send() error lol!");
 
@@ -153,7 +153,7 @@ unsigned int NiController::ConfigClientSocket_ReadLength(const char * /*string[4
 		exit(1);
 	}
 	else {
-		 if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
+		 if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
 		i=0;
 		if (dbg){
 			while (i<numbytes){
@@ -188,7 +188,7 @@ std::vector<unsigned char> NiController::ConfigClientSocket_ReadData(int datalen
 			exit(1);
 		}
 		else {
-		  if (dbg) printf("|==ConfigClientSocket_ReadLength==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
+		  if (dbg) printf("|==ConfigClientSocket_ReadLength==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
 			read_bytes_left = read_bytes_left - numbytes;
 			for (int k=0; k< numbytes; k++){
 				ConfigData[stored_bytes] = Buffer_data[k];
@@ -253,7 +253,7 @@ unsigned int NiController::DataTransportClientSocket_ReadLength(const char * /*s
 		exit(1);
 	}
 	else {
-		 if (dbg)printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
+		 if (dbg)printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
 		i=0;
 		if (dbg){
 			while (i<numbytes){
@@ -289,7 +289,7 @@ std::vector<unsigned char> NiController::DataTransportClientSocket_ReadData(int 
 			exit(1);
 		}
 		else {
-		  if (dbg) printf("|==DataTransportClientSocket_ReadData==|    numbytes=%lu \n", static_cast<unsigned long>(numbytes));
+		  if (dbg) printf("|==DataTransportClientSocket_ReadData==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
 			read_bytes_left = read_bytes_left - numbytes;
 			for (int k=0; k< numbytes; k++){
 				mimosa_data[stored_bytes] = Buffer_data[k];
