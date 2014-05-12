@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <string>
 #include <cstring>
+#include <cstdint>
 
 #ifdef WIN32
 //# include <time.h>
