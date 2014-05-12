@@ -102,7 +102,7 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      int64_t result = static_cast<int64_t>(std::strtol(start, &end, base));
+      int64_t result = static_cast<int64_t>(std::strtoll(start, &end, base));
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
@@ -120,7 +120,7 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      uint64_t result = static_cast<uint64_t>(std::strtoul(start, &end, base));
+      uint64_t result = static_cast<uint64_t>(std::strtoull(start, &end, base));
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
