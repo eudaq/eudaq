@@ -5,8 +5,6 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 
-#include "eudaq/BufferSerializer.hh"
-
 #include <iostream>
 #ifndef WIN32
 #include <inttypes.h> /* uint64_t */
@@ -29,6 +27,13 @@ class PyProducer : public eudaq::Producer {
       m_config = new eudaq::Configuration(param);
       m_internalstate = Configuring;
       SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side configure");
+      // now wait until the python side has everything configured and called SetConfigured()
+      while (m_internalstate != Configured){
+	eudaq::mSleep(100);
+      }
+      if (m_internalstate == Configured) {
+	SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
+      }
     }
     virtual void OnStartRun(unsigned param) {
       m_run = param;
@@ -41,11 +46,27 @@ class PyProducer : public eudaq::Producer {
 	m_internalstate = StartingRun;
 	SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side run start");
       }
+      // now wait until the python side is ready to start and called SendBORE()
+      while (m_internalstate != Running){
+	eudaq::mSleep(100);
+      }
+      if (m_internalstate == Running) {
+	eudaq::DataSender::SendEvent(RawDataEvent::BORE("Test", m_run));
+	SetStatus(eudaq::Status::LVL_OK, "");
+      }
     }
     virtual void OnStopRun() {
       std::cout << "[PyProducer] Stop Run received" << std::endl;
       SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side run stop");
       m_internalstate = StoppingRun;
+      // now wait until the python side is ready to start and called SendEORE()
+      while (m_internalstate != Stopped){
+	eudaq::mSleep(100);
+      }
+      if (m_internalstate == Stopped) {
+	eudaq::DataSender::SendEvent(RawDataEvent::EORE("Test", m_run, ++m_evt));
+	SetStatus(eudaq::Status::LVL_OK);
+      }
     }
     virtual void OnTerminate() {
       std::cout << "[PyProducer] Terminate received" << std::endl;
@@ -54,6 +75,12 @@ class PyProducer : public eudaq::Producer {
     virtual void OnReset() {
       std::cout << "[PyProducer] Reset received" << std::endl;
       m_internalstate = Resetting;
+      while (m_internalstate != Init){
+	eudaq::mSleep(100);
+      }
+      if (m_internalstate == Init) {
+	SetStatus(eudaq::Status::LVL_OK);
+      }
     }
     virtual void OnStatus() {
     }
@@ -67,17 +94,9 @@ class PyProducer : public eudaq::Producer {
     if (!m_config) return std::string();
     return m_config->Get(item,std::string());
   }
-  void UpdateStatus(eudaq::Status::Level level, const std::string & info = ""){
-    // updates the status and sends a packet to inform RC
-    SetStatus(level, info);
-    eudaq::BufferSerializer ser;
-    m_status.Serialize(ser);
-    m_cmdclient->SendPacket(ser);
-  }
   bool SetConfigured(){
     if (m_internalstate!=Configuring) return false;    
     EUDAQ_INFO("Configured (" + m_config->Name() + ")");
-    UpdateStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
     m_internalstate=Configured;
     return true;
   }
@@ -87,25 +106,21 @@ class PyProducer : public eudaq::Producer {
     m_run = 0;
     m_evt = 0;
     m_internalstate = Init;
-    UpdateStatus(eudaq::Status::LVL_OK);
     return true;
   }
   void SetError(){
     m_internalstate = Error;
-    UpdateStatus(eudaq::Status::LVL_ERROR);
+    SetStatus(eudaq::Status::LVL_ERROR);
   }
   bool SendBORE(){
     if (m_internalstate!=StartingRun) return false;
-    eudaq::DataSender::SendEvent(RawDataEvent::BORE("Test", m_run));
     std::cout << "[PyProducer] Start Run: " << m_run << std::endl;
-    UpdateStatus(eudaq::Status::LVL_OK, "");
     m_internalstate = Running;
     return true;
   }
   bool SendEORE(){
     if (m_internalstate!=StoppingRun) return false;
     std::cout << "[PyProducer] Stopping Run: " << m_run << std::endl;
-    eudaq::DataSender::SendEvent(RawDataEvent::EORE("Test", m_run, ++m_evt));
     m_internalstate = Stopped;
     return true;
   }
