@@ -102,3 +102,12 @@ class PyDataCollector(object):
                                            create_string_buffer(rcaddr), 
                                            create_string_buffer(listenaddr),
                                            create_string_buffer(runnumberfile))
+
+class PyLogCollector(object):
+    def __init__(self,name = "", rcaddr = "tcp://localhost:44000", listenaddr = "tcp://44001", loglevel="INFO"):
+        lib.PyDataCollector_new.restype = c_void_p # Needed
+        self.obj = lib.PyLogCollector_new(create_string_buffer(rcaddr), 
+                                          create_string_buffer(listenaddr),
+                                          create_string_buffer(loglevel))
+    def SetStatus(self, loglevel):
+        lib.PyLogCollector_SetStatus(c_void_p(self.obj), create_string_buffer(loglevel))
