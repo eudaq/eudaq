@@ -140,10 +140,10 @@ private:
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  PyProducer* PyProducer_new(char *name, char *rcaddress){return new PyProducer(std::string(name),std::string(rcaddress));}
+  DLLEXPORT PyProducer* PyProducer_new(char *name, char *rcaddress){return new PyProducer(std::string(name),std::string(rcaddress));}
   // functions for I/O
-  void PyProducer_SendEvent(PyProducer *pp, uint64_t* buffer, size_t size){pp->SendEvent(buffer,size);}
-  char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){
+  DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint64_t* buffer, size_t size){pp->SendEvent(buffer,size);}
+  DLLEXPORT char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){
     std::string value = pp->GetConfigParameter(std::string(item));
     // convert string to char*
     char* rv = (char*) malloc(sizeof(char) * (strlen(value.data())+1));
@@ -151,17 +151,17 @@ extern "C" {
     return rv;
   }
   // functions to report on the current state of the producer
-  bool PyProducer_IsConfiguring(PyProducer *pp){return pp->IsConfiguring();}
-  bool PyProducer_IsStartingRun(PyProducer *pp){return pp->IsStartingRun();}
-  bool PyProducer_IsStoppingRun(PyProducer *pp){return pp->IsStoppingRun();}
-  bool PyProducer_IsTerminating(PyProducer *pp){return pp->IsTerminating();}
-  bool PyProducer_IsResetting  (PyProducer *pp){return pp->IsResetting();}
-  bool PyProducer_IsError      (PyProducer *pp){return pp->IsError();}
+  DLLEXPORT bool PyProducer_IsConfiguring(PyProducer *pp){return pp->IsConfiguring();}
+  DLLEXPORT bool PyProducer_IsStartingRun(PyProducer *pp){return pp->IsStartingRun();}
+  DLLEXPORT bool PyProducer_IsStoppingRun(PyProducer *pp){return pp->IsStoppingRun();}
+  DLLEXPORT bool PyProducer_IsTerminating(PyProducer *pp){return pp->IsTerminating();}
+  DLLEXPORT bool PyProducer_IsResetting  (PyProducer *pp){return pp->IsResetting();}
+  DLLEXPORT bool PyProducer_IsError      (PyProducer *pp){return pp->IsError();}
 
   // functions to modify the current state of the producer
-  bool PyProducer_SetConfigured  (PyProducer *pp){return pp->SetConfigured();}
-  bool PyProducer_SetReset       (PyProducer *pp){return pp->SetReset();}
-  void PyProducer_SetError       (PyProducer *pp){pp->SetError();}
-  bool PyProducer_SendBORE       (PyProducer *pp){return pp->SendBORE();}
-  bool PyProducer_SendEORE       (PyProducer *pp){return pp->SendEORE();}
+  DLLEXPORT bool PyProducer_SetConfigured  (PyProducer *pp){return pp->SetConfigured();}
+  DLLEXPORT bool PyProducer_SetReset       (PyProducer *pp){return pp->SetReset();}
+  DLLEXPORT void PyProducer_SetError       (PyProducer *pp){pp->SetError();}
+  DLLEXPORT bool PyProducer_SendBORE       (PyProducer *pp){return pp->SendBORE();}
+  DLLEXPORT bool PyProducer_SendEORE       (PyProducer *pp){return pp->SendEORE();}
 }

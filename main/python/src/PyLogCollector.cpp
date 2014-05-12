@@ -60,7 +60,7 @@ class PyLogCollector : public eudaq::LogCollector {
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  PyLogCollector* PyLogCollector_new(char *rcaddress, char *listenaddress, char *loglevel){return new PyLogCollector(std::string(rcaddress),std::string(listenaddress), eudaq::Status::String2Level(loglevel));}
-  void PyLogCollector_SetLogLevel(PyLogCollector *plc, char *loglevel){plc->m_loglevel = eudaq::Status::String2Level(loglevel);}
+  DLLEXPORT PyLogCollector* PyLogCollector_new(char *rcaddress, char *listenaddress, char *loglevel){return new PyLogCollector(std::string(rcaddress),std::string(listenaddress), eudaq::Status::String2Level(loglevel));}
+  DLLEXPORT void PyLogCollector_SetLogLevel(PyLogCollector *plc, char *loglevel){plc->m_loglevel = eudaq::Status::String2Level(loglevel);}
 
 }

@@ -58,5 +58,5 @@ class PyDataCollector : public eudaq::DataCollector {
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  PyDataCollector* PyDataCollector_new(char *name, char *rcaddress, char *listenaddress, char *runnumberfile){return new PyDataCollector(std::string(name), std::string(rcaddress),std::string(listenaddress), std::string(runnumberfile));}
+  DLLEXPORT PyDataCollector* PyDataCollector_new(char *name, char *rcaddress, char *listenaddress, char *runnumberfile){return new PyDataCollector(std::string(name), std::string(rcaddress),std::string(listenaddress), std::string(runnumberfile));}
 }

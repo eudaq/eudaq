@@ -79,14 +79,14 @@ private:
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
-  PyRunControl* PyRunControl_new(char *listenaddress){return new PyRunControl(std::string(listenaddress));}
-  void PyRunControl_GetStatus(PyRunControl *prc){prc->GetStatus();}
-  void PyRunControl_StartRun(PyRunControl *prc){prc->StartRun();}
-  void PyRunControl_StopRun(PyRunControl *prc){prc->StopRun();}
-  void PyRunControl_Configure(PyRunControl *prc, char *cfg){prc->Configure(std::string(cfg));}
-  void PyRunControl_PrintConnections(PyRunControl *prc){prc->PrintConnections();}
-  size_t PyRunControl_NumConnections(PyRunControl *prc){return prc->NumConnections();}
-  bool PyRunControl_AllOk(PyRunControl *prc){return prc->AllOk();}
-  uint16_t PyRunControl_GetRunNumber(PyRunControl *prc){return prc->GetRunNumber();}
+  DLLEXPORT PyRunControl* PyRunControl_new(char *listenaddress){return new PyRunControl(std::string(listenaddress));}
+  DLLEXPORT void PyRunControl_GetStatus(PyRunControl *prc){prc->GetStatus();}
+  DLLEXPORT void PyRunControl_StartRun(PyRunControl *prc){prc->StartRun();}
+  DLLEXPORT void PyRunControl_StopRun(PyRunControl *prc){prc->StopRun();}
+  DLLEXPORT void PyRunControl_Configure(PyRunControl *prc, char *cfg){prc->Configure(std::string(cfg));}
+  DLLEXPORT void PyRunControl_PrintConnections(PyRunControl *prc){prc->PrintConnections();}
+  DLLEXPORT size_t PyRunControl_NumConnections(PyRunControl *prc){return prc->NumConnections();}
+  DLLEXPORT bool PyRunControl_AllOk(PyRunControl *prc){return prc->AllOk();}
+  DLLEXPORT uint16_t PyRunControl_GetRunNumber(PyRunControl *prc){return prc->GetRunNumber();}
 
 }

@@ -4,15 +4,19 @@ import numpy
 import os.path
 
 # construct the path to the library from the location of this script
-libpath = os.path.join(os.path.dirname(__file__),"../lib/libPyEUDAQ")
-libext = '.so'
+libext = '.so' # default extension on Linux
+libdir = 'lib' # default installation directory on Linux/OSX
+libprefix = 'lib' # default prefix for libraries on Linux/OSX
 if sys.platform.startswith('darwin'):
     # OSX-specific library extension
     libext = '.dylib'
 elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
     # Windows-specific library extension
     libext = '.dll'
-lib = cdll.LoadLibrary(libpath+libext)
+    libdir = 'bin'
+    libprefix = ""
+libpath = os.path.join(os.path.dirname(__file__),"..",libdir)
+lib = cdll.LoadLibrary(os.path.join(libpath,libprefix+"PyEUDAQ"+libext))
 
 class PyRunControl(object):
     def __init__(self,addr = "tcp://44000"):
