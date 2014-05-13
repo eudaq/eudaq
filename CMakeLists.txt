@@ -116,6 +116,8 @@ IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
+
+
 # build native reader used for data conversion into LCIO
 IF(BUILD_nreader)
   add_subdirectory(nreader)
@@ -131,6 +133,12 @@ ENDIF()
 option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
+ENDIF()
+
+# build ROOT Interface 
+option(BUILD_ROOT_Interface "Compile Producer interface for ROOT Interpreter (requires ROOT)?" OFF)
+IF(BUILD_ROOT_Interface)
+  add_subdirectory(RootInterface)
 ENDIF()
 
 ###############################################
@@ -166,3 +174,6 @@ add_subdirectory(producers)
 # Print out system information useful for bug reports #
 ############################################### #######
 include(PrintSystemInformation)
+
+
+

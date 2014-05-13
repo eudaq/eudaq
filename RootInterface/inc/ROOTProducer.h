@@ -7,11 +7,6 @@
 #include "RTypes.h"
 
 
-#ifndef  __CINT__
-#define  DLLEXPORT  __declspec( dllexport ) 
-#else
-#define  DLLEXPORT
-#endif
 
 
 
@@ -19,7 +14,7 @@
 
 
 
-class DLLEXPORT ROOTProducer
+class  ROOTProducer
 {
 	RQ_OBJECT("ROOTProducer")
 public:
