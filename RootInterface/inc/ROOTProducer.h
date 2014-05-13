@@ -10,11 +10,15 @@
 
 
 
+#ifndef  __CINT__
+#define  DLLEXPORT  __declspec( dllexport ) 
+#else
+#define  DLLEXPORT
+#endif
 
 
 
-
-class  ROOTProducer
+class DLLEXPORT ROOTProducer
 {
 	RQ_OBJECT("ROOTProducer")
 public:
