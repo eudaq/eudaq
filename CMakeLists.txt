@@ -141,6 +141,14 @@ IF(BUILD_ROOT_Interface)
   add_subdirectory(RootInterface)
 ENDIF()
 
+# build Offline Monitor
+option(BUILD_Offline_monitor "Compile Offline Monitor executable (requires ROOT)?" OFF)
+IF(BUILD_Offline_monitor)
+  add_subdirectory(OfflineMonitor)
+ENDIF()
+
+
+
 ###############################################
 # LaTeX target to compile the PDF user manual #
 ###############################################
