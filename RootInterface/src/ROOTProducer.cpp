@@ -1,7 +1,7 @@
 
 
 
-#include "../inc/ROOTProducer.h"
+#include "ROOTProducer.h"
 
 #include "eudaq/Producer.hh"
 #include "eudaq/RawDataEvent.hh"
