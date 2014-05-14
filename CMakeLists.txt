@@ -23,7 +23,7 @@ ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 # Set package version
 IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
-  FIND_PACKAGE(Git)
+  FIND_PACKAGE(Git QUIET)
   IF(GIT_FOUND)
     EXEC_PROGRAM(${GIT_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE EUDAQ_LIB_VERSION)
     STRING(REGEX REPLACE "([v0-9.]+[-a-zA-Z0-9]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
