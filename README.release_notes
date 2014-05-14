@@ -2,7 +2,11 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
-* Version 1.2
+* Version 1.2.1
+** Fixed compilation issue of NativeReader Marlin library
+   - removed obsolete converter plugin relying no longer existing EUTelescope headers
+** Updated APIX-CT-ConverterPlugin (provided by Stefano Terzo)
+* Version 1.2.0
 ** CMake build system
    - Multiplatform build system
    - out-of-source builds
