@@ -123,6 +123,12 @@ IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
 
+# build resender Producer
+option(BUILD_resender "Compile resender Producer?" OFF)
+IF(BUILD_resender)
+  add_subdirectory(reSendProducer)
+ENDIF()
+
 ###############################################
 # LaTeX target to compile the PDF user manual #
 ###############################################
