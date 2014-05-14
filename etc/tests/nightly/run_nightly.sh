@@ -3,7 +3,12 @@
 # to the dashboard.
 # use GNU screen to start this script from ssh sessions and then detach the session.
 
-WAKEUPAT="02:55" # time to wake up every day in HH:MM in UTC
+if [ -n "$1" ] 
+then 
+    WAKEUPAT="$1" # time to wake up every day in HH:MM in UTC
+else
+    WAKEUPAT="02:55" # time to wake up every day in HH:MM in UTC
+fi
 
 
 if [ -z "$DISPLAY" ]
@@ -13,13 +18,22 @@ then
     export DISPLAY=localhost:0
 fi
 
-EUDAQDIR="$(dirname $0)/../.."
-BUILDDIR="$(dirname $0)/../../build"
+EUDAQDIR="$(readlink -f $(dirname $0)/../../..)"
+BUILDDIR="$(readlink -f $(dirname $0)/../../../build)"
 
-cd $BUILDDIR
+if [ ! -f "${EUDAQDIR}/main/include/eudaq/Documentation.hh" -o ! -d "$BUILDDIR" ]
+then
+    echo " ERROR: Could not identify EUDAQ source and/or build directory!";
+    exit;
+fi
+
+echo " Using EUDAQ source directory: $EUDAQDIR"
+echo " Using EUDAQ build directory: $BUILDDIR"
+
+cd $EUDAQDIR
 if (( $? )); then
     {
-        echo " Could not change into EUDAQ build directory!";
+        echo " Could not change into EUDAQ source directory!";
         exit;
     }
 fi;
