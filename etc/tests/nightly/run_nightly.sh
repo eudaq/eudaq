@@ -39,15 +39,13 @@ if (( $? )); then
 fi;
 
 # setup done!
-echo " Waiting for my time to wake up ($WAKEUPAT UTC)... "
+echo " It' $(date --utc +%H:%M), and I'm waiting for my time to wake up ($WAKEUPAT UTC)... "
 
 # infinite loop
 while :; do
     now="$(date --utc +%H:%M)"
     if [[ "$now" = "$WAKEUPAT" ]]; then
 	echo " it's $now, time to wake up!"
-	echo " .. cleaning up .."
-	make clean
 	echo " .. running nightly checks .."
         ctest -S "$(dirname $0)/nightly.cmake" -D CTEST_CMAKE_GENERATOR="Unix Makefiles" -D WITH_MEMCHECK=ON -D CTEST_SOURCE_DIRECTORY="$EUDAQDIR" -D CTEST_BINARY_DIRECTORY="$BUILDDIR"
 	echo " .. my job is done done for now, going to sleep on $(date) .. "
