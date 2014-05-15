@@ -39,7 +39,7 @@ if (( $? )); then
 fi;
 
 # setup done!
-echo " It' $(date --utc +%H:%M), and I'm waiting for my time to wake up ($WAKEUPAT UTC)... "
+echo " It's $(date --utc +%H:%M), and I'm waiting for my time to wake up ($WAKEUPAT UTC)... "
 
 # infinite loop
 while :; do
