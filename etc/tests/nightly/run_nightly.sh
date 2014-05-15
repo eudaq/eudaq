@@ -47,7 +47,7 @@ while :; do
     if [[ "$now" = "$WAKEUPAT" ]]; then
 	echo " it's $now, time to wake up!"
 	echo " .. running nightly checks .."
-        ctest -S "$EUDAQDIR/etc/tests/nightly/nightly.cmake" -D CTEST_CMAKE_GENERATOR="Unix Makefiles" -D WITH_MEMCHECK=ON -D CTEST_SOURCE_DIRECTORY="$EUDAQDIR" -D CTEST_BINARY_DIRECTORY="$BUILDDIR"
+        ctest -V -S "$EUDAQDIR/etc/tests/nightly/nightly.cmake" -D CTEST_CMAKE_GENERATOR="Unix Makefiles" -D WITH_MEMCHECK=ON -D CTEST_SOURCE_DIRECTORY="$EUDAQDIR" -D CTEST_BINARY_DIRECTORY="$BUILDDIR"
 	echo " .. my job is done done for now, going to sleep on $(date) .. "
 	sleep 59
     fi
