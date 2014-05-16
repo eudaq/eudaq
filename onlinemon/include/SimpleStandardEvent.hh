@@ -1,5 +1,11 @@
 #ifndef SIMPLE_STANDARD_EVENT_H
 #define SIMPLE_STANDARD_EVENT_H
+
+#ifdef __CINT__
+#undef __GNUC__
+typedef unsigned long long int uint64_t; 
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
