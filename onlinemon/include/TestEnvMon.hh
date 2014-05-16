@@ -5,11 +5,12 @@
 #include "eudaq/EnvCollector.hh"
 #include "eudaq/Logger.hh"
 
+#ifndef __CINT__
 #include <unistd.h>
 
 #include "GraphWindow.hh"
 #include <TApplication.h>
 #include "TGraphSet.hh"
-#include "TestEnvMon.hh"
+#endif
 
 #endif

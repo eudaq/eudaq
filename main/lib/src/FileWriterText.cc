@@ -3,7 +3,15 @@
 #include "eudaq/PluginManager.hh"
 #include <iostream>
 #include <fstream>
+
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+typedef long long int64_t
+typedef unsigned int uint32_t
+typedef int int32_t
+#else
 #include <cstdint>
+#endif
 
 uint64_t  timediff=0;
 uint64_t  timediff1=(uint64_t)-1;

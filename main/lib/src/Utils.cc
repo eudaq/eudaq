@@ -6,11 +6,18 @@
 #include <iostream>
 #include <cctype>
 
+// for cross-platform sleep:
+#include <chrono>
+#include <thread>
+
 #if EUDAQ_PLATFORM_IS(WIN32)
-# define WIN32_LEAN_AND_MEAN
-# include <Windows.h>
-# include <cstdio>  // HK
-# include <cstdlib>  // HK
+#ifndef __CINT__
+#define WIN32_LEAN_AND_MEAN // causes some rarely used includes to be ignored
+#define _WINSOCKAPI_
+#define _WINSOCK2API_
+#include <cstdio>  // HK
+#include <cstdlib>  // HK
+#endif
 #else
 # include <unistd.h>
 #endif
@@ -82,11 +89,8 @@ namespace eudaq {
   }
 
   void mSleep(unsigned ms) {
-#if EUDAQ_PLATFORM_IS(WIN32)
-    Sleep(ms);
-#else
-    usleep(ms * 1000);
-#endif
+    // use c++11 std sleep routine
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
   }
 
   template<>

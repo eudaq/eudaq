@@ -10,6 +10,14 @@ typedef unsigned long long int uint64_t;
 #include <vector>
 #include <iostream>
 
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+#else
+#ifdef WIN32
+#include <cstdint>
+#endif
+#endif
+
 #include "include/SimpleStandardPlane.hh"
 
 inline bool operator==(SimpleStandardPlane const &a, SimpleStandardPlane const &b) {
@@ -60,10 +68,4 @@ class SimpleStandardEvent {
 
 
 
-
-#ifdef __CINT__
-
-#pragma link C++ class SimpleStandardPlane-;
-
-#endif
 #endif
