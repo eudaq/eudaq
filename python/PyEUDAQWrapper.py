@@ -31,6 +31,7 @@ try:
     lib = cdll.LoadLibrary(libname)
 except:
     print "ERROR: Could not load the shared library '", libname, "'!"
+    exit(404)
 
 class PyRunControl(object):
     def __init__(self,addr = "tcp://44000"):
