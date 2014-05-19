@@ -18,8 +18,9 @@
   SET( testscriptdir "${PROJECT_SOURCE_DIR}/etc/tests" )
   SET( pydir "${PROJECT_SOURCE_DIR}/python")
 
-  SET( referencedatadir "/afs/desy.de/group/telescopes/EudaqTestData" )
-  #SET( referencedatadir "${PROJECT_SOURCE_DIR}/data" )
+  IF (NOT ReferenceDataDir)
+    SET( ReferenceDataDir "/afs/desy.de/group/telescopes/EudaqTestData" )
+  ENDIF(NOT ReferenceDataDir)
 
   # all this regular expressions must be matched for the tests to pass.
   # the order of the expressions must be matched in the test execution!
@@ -57,10 +58,9 @@
 
     # now check if the expected output files exist and look ok
     ADD_TEST( NAME DummyDataProductionRefComp 
-    	      COMMAND ${PYTHON_EXECUTABLE} "${testscriptdir}/compareRawFiles.py" "${datadir}" "${referencedatadir}/dummyrefrun.raw"
+    	      COMMAND ${PYTHON_EXECUTABLE} "${testscriptdir}/compareRawFiles.py" "${datadir}" "${ReferenceDataDir}/dummyrefrun.raw"
 	      )
     SET_TESTS_PROPERTIES (DummyDataProductionRefComp PROPERTIES DEPENDS DummyDataProductionRun)
-
 
 
 
