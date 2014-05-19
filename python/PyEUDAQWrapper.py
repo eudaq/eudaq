@@ -15,8 +15,22 @@ elif sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
     libext = '.dll'
     libdir = 'bin'
     libprefix = ""
-libpath = os.path.join(os.path.dirname(__file__),"..",libdir)
-lib = cdll.LoadLibrary(os.path.join(libpath,libprefix+"PyEUDAQ"+libext))
+# construct the absolute path to the shared library relatively from this file
+libpath = os.path.abspath(os.path.join(os.path.dirname(__file__),os.pardir,libdir))
+
+# for Windows systems: check that the libpath is also in the system's PATH
+# where the shared library does not have the full RPATH set by CMake when installing
+if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
+    if libpath not in os.environ['PATH']:
+        print "Info: Adding '", libpath, "' to the PATH environment so the EUDAQ shared libarary can be found."
+        os.environ['PATH'] = libpath + ";" + os.environ['PATH'] #prepend our libpath
+
+# construct the library name with full absolute path
+libname = os.path.join(libpath,libprefix+"PyEUDAQ"+libext)
+try:
+    lib = cdll.LoadLibrary(libname)
+except:
+    print "ERROR: Could not load the shared library '", libname, "'!"
 
 class PyRunControl(object):
     def __init__(self,addr = "tcp://44000"):
