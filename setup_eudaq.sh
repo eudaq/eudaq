@@ -6,7 +6,8 @@
 . /afs/cern.ch/sw/lcg/app/releases/ROOT/5.34.18/x86_64-slc6-gcc48-opt/root/bin/thisroot.sh
 
 export LCGEXTERNAL=/afs/cern.ch/sw/lcg/external
-export CMAKE_HOME=$LCGEXTERNAL/CMake/2.8.8/x86_64-slc6-gcc46-opt
+#export CMAKE_HOME=$LCGEXTERNAL/CMake/2.8.8/x86_64-slc6-gcc46-opt
+export CMAKE_HOME=$LCGEXTERNAL/CMake/2.8.9/Linux-i386
 export PATH=${CMAKE_HOME}/bin:$PATH
 
 export QTDIR=/afs/cern.ch/sw/lcg/external/qt/5.0.0/x86_64-slc6-gcc47-opt
