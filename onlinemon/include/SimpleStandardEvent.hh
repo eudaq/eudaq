@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <cstdint>
+#include <stdint.h>
 
 #include "include/SimpleStandardPlane.hh"
 
