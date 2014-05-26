@@ -21,7 +21,7 @@
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
-#  include "EUTelSimpleSparsePixel.h"
+#  include "EUTelGenericSparsePixel.h"
 using eutelescope::EUTELESCOPE;
 #endif
 

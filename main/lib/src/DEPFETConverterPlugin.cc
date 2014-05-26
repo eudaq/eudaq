@@ -21,7 +21,7 @@
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
-#  include "EUTelSimpleSparsePixel.h"
+#  include "EUTelGenericSparsePixel.h"
 using eutelescope::EUTELESCOPE;
 #endif
 
@@ -472,7 +472,7 @@ namespace eudaq {
         currentDetector->setMode( mode );
         //	  zsDataEncoder["sensorID"] = plane.ID();
         zsDataEncoder["sensorID"] = 8;
-        zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+        zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
         zsDataEncoder.setCellID( zsFrame );
 
         size_t nPixel = plane.HitPixels();

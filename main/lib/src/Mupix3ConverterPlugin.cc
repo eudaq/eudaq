@@ -35,7 +35,7 @@
 #include "EUTelSetupDescription.h"
 #include "EUTelEventImpl.h"
 #include "EUTelSparseDataImpl.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 #endif
 
 
@@ -172,7 +172,7 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     using lcio::TrackerDataImpl;
     using eutelescope::EUTELESCOPE;
     using eutelescope::EUTelSparseDataImpl;
-    using eutelescope::EUTelSimpleSparsePixel;
+    using eutelescope::EUTelGenericSparsePixel;
     
     // raw input data stream
     unsigned n_hits;
@@ -184,7 +184,7 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     bool collection_exists = false;
     LCCollectionVec * collection;
     std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel> > pixels;
+    std::auto_ptr<EUTelSparseDataImpl<EUTelGenericSparsePixel> > pixels;
     
     if (source.IsBORE()) {
         // this should never happen. BORE event should be handled
@@ -221,21 +221,21 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     CellIDEncoder<TrackerDataImpl>
         cell_encoder(EUTELESCOPE::ZSDATADEFAULTENCODING, collection);
     cell_encoder["sensorID"] = MUPIX3_SENSOR_ID;
-    cell_encoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+    cell_encoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
     
     // the lcio object that stores the hit data for a single readout frame
     frame.reset(new TrackerDataImpl);
     cell_encoder.setCellID(frame.get());
     // a convenience object that encodes the sparse pixel data into an
     // eutelescope-specific format and stores it in the given readout frame
-    pixels.reset(new EUTelSparseDataImpl<EUTelSimpleSparsePixel>(frame.get()));
+    pixels.reset(new EUTelSparseDataImpl<EUTelGenericSparsePixel>(frame.get()));
     
     // extract hits from the raw buffer into the lcio readout frame
     unsigned col;
     unsigned row;
     for (unsigned i = 0; i < n_hits; ++i) {
         ExtractHit(raw_buffer, i, col, row);
-        EUTelSimpleSparsePixel pixel(col, row, MUPIX3_FAKE_SIGNAL);
+        EUTelGenericSparsePixel pixel(col, row, MUPIX3_FAKE_SIGNAL);
         pixels->addSparsePixel(&pixel);
     }
     

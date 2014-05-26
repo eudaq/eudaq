@@ -22,7 +22,7 @@
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
-#  include "EUTelAPIXSparsePixel.h"
+#  include "EUTelGenericSparsePixel.h"
 #  include "EUTelAPIXMCDetector.h"
 #  include "EUTelRunHeaderImpl.h"
 using eutelescope::EUTELESCOPE;
@@ -330,10 +330,10 @@ namespace eudaq {
             setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
           }
 
-          std::list<eutelescope::EUTelAPIXSparsePixel*> tmphits;
+          std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
 
           zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + first_sensor_id; // formerly 14
-          zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelAPIXSparsePixel;
+          zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
           // prepare a new TrackerData object for the ZS data
           // it contains all the hits for a particular sensor in one event
@@ -344,8 +344,8 @@ namespace eudaq {
           // this is the structure that will host the sparse pixel
           // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
           // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-          std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > >
-            sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > ( zsFrame.get() ) );
+          std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > >
+            sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
           unsigned int ToT = 0;
           unsigned int Col = 0;
@@ -360,13 +360,15 @@ namespace eudaq {
             } else {
               // First Hit
               if (getHitData(Word, false, Col, Row, ToT)) {
-                eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1-1);
+//                eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1-1);
+                eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
                 sparseFrame->addSparsePixel( thisHit );
                 tmphits.push_back( thisHit );
               }
               // Second Hit
               if (getHitData(Word, true, Col, Row, ToT)) {
-                eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1-1);
+//              eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1-1);
+                eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
                 sparseFrame->addSparsePixel( thisHit );
                 tmphits.push_back( thisHit );
               }
@@ -377,7 +379,7 @@ namespace eudaq {
           zsDataCollection->push_back( zsFrame.release() );
 
           // clean up
-          for( std::list<eutelescope::EUTelAPIXSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
+          for( std::list<eutelescope::EUTelGenericSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
             delete (*it);
           }
         }

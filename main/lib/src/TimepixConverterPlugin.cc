@@ -23,7 +23,7 @@
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
-#  include "EUTelSimpleSparsePixel.h"
+#  include "EUTelGenericSparsePixel.h"
 using eutelescope::EUTELESCOPE;
 #endif
 #define MATRIX_SIZE 65536
@@ -307,7 +307,7 @@ namespace eudaq {
           zsFrame= new TrackerDataImpl;
           currentDetector->setMode( mode );
           zsDataEncoder["sensorID"] = plane.ID();
-      	  zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+      	  zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
       	  zsDataEncoder.setCellID( zsFrame );
 
            size_t nPixel = plane.HitPixels();

@@ -33,7 +33,7 @@
 #include "EUTelSetupDescription.h"
 #include "EUTelEventImpl.h"
 #include "EUTelSparseDataImpl.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelGenericSparsePixel.h"
 #endif
 
 
@@ -144,7 +144,7 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
     using lcio::TrackerDataImpl;
     using eutelescope::EUTELESCOPE;
     using eutelescope::EUTelSparseDataImpl;
-    using eutelescope::EUTelSimpleSparsePixel;
+    using eutelescope::EUTelGenericSparsePixel;
 
     // beginning-of-run / end-of-run should not be converted
     if (source.IsBORE()) {
@@ -165,7 +165,7 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
     bool collection_exists = false;
     LCCollectionVec * collection;
     std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel> > pixels;
+    std::auto_ptr<EUTelSparseDataImpl<EUTelGenericSparsePixel> > pixels;
 
     // get the lcio output collection
     try {
@@ -184,14 +184,14 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
     CellIDEncoder<TrackerDataImpl>
         cell_encoder(EUTELESCOPE::ZSDATADEFAULTENCODING, collection);
     cell_encoder["sensorID"] = MUPIX4_SENSOR_ID;
-    cell_encoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+    cell_encoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
     // the lcio object that stores the hit data for a single readout frame
     frame.reset(new TrackerDataImpl);
     cell_encoder.setCellID(frame.get());
     // a convenience object that encodes the sparse pixel data into an
     // eutelescope-specific format and stores it in the given readout frame
-    pixels.reset(new EUTelSparseDataImpl<EUTelSimpleSparsePixel>(frame.get()));
+    pixels.reset(new EUTelSparseDataImpl<EUTelGenericSparsePixel>(frame.get()));
 
     Mupix4DataProxy data = Mupix4DataProxy::from_event(source);
     if (!data) return true;
@@ -201,7 +201,7 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
     // mounting the chip with 90deg rotation and we already rotate here
     // use the analog signal as feedthrough for the per-pixel timestamp (diffs)
     for (unsigned i = 0; i < data.num_hits(); ++i) {
-        EUTelSimpleSparsePixel pixel(
+        EUTelGenericSparsePixel pixel(
             data.hit_row(i),
             data.hit_col(i),
             MUPIX4_SENSOR_BINARY_SIGNAL);
