@@ -339,14 +339,12 @@ namespace eudaq {
             } else {
               // First Hit
               if (getHitData(Word, false, Col, Row, ToT)) {
-//              eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1-1);
                 eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
                 sparseFrame->addSparsePixel( thisHit );
                 tmphits.push_back( thisHit );
               }
               // Second Hit
               if (getHitData(Word, true, Col, Row, ToT)) {
-//              eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1-1);
                 eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
                 sparseFrame->addSparsePixel( thisHit );
                 tmphits.push_back( thisHit );

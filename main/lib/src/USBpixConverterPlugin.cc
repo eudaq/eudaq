@@ -301,7 +301,6 @@ namespace eudaq {
             if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
               lvl1++;
             } else if (getHitData(Word, Col, Row, ToT)) {
-//            eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, ev_raw.GetID(chip) + chip_id_offset + first_sensor_id, lvl1);
               eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1);
               sparseFrame->addSparsePixel( thisHit );
               tmphits.push_back( thisHit );

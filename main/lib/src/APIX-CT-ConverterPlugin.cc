@@ -271,7 +271,6 @@ namespace eudaq {
 	    int ModuleID=m_sensorids[sensor]+chip_id_offset;
 	    int lvl1=hits[i].lv1;
 	    int ToT=hits[i].tot;
-//	    eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, ToT,  lvl1);
             eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, ToT, lvl1);
 	    sparseFrame->addSparsePixel( thisHit );
 	    tmphits.push_back( thisHit );
@@ -398,7 +397,7 @@ namespace eudaq {
 		unsigned int rem2c = (hits[i].col + 1)%2;
 		int col = ( (rem4r<2 && rem2c==1) || (rem4r>1 && rem2c==0) ) ? Col1*2 : Col1*2+1;
 		int row = (int)(Row1/2);
-		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
+		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
 		sparseFrame->addSparsePixel( thisHit );
 		tmphits.push_back( thisHit );
 	      }
@@ -407,13 +406,12 @@ namespace eudaq {
 	      {
 		int col = hits[i].col;
 		int row = hits[i].row;
-//		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
 		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
 		sparseFrame->addSparsePixel( thisHit );
 		tmphits.push_back( thisHit );
 	      }
 	    //int col=(1+m_fepos[hits[i].link])*NCOL-1-hits[i].col; //left or right on 2-chip module
-	    // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
+	    // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
 	    //sparseFrame->addSparsePixel( thisHit );
 	    // tmphits.push_back( thisHit );
    
