@@ -140,7 +140,7 @@ namespace eudaq {
     unsigned int lv1;
     unsigned int col;
     unsigned int row;
-    unsigned long long rceTrigger;
+    uint64_t rceTrigger;
     unsigned int eudetTrigger;
   };
   
@@ -587,8 +587,8 @@ namespace eudaq {
   std::vector<CTELHit> APIXCTConverterPlugin::decodeData(const RawDataEvent & ev) const{
     std::vector<CTELHit> hits;
     eudaq::RawDataEvent::data_t block0=ev.GetBlock(0);
-    unsigned long long rcetrig=getlittleendian<unsigned long long>(&block0[20]);
-    unsigned long long deadtime=getlittleendian<unsigned long long>(&block0[28]);
+    uint64_t rcetrig=getlittleendian<uint64_t>(&block0[20]);
+    uint64_t deadtime=getlittleendian<uint64_t>(&block0[28]);
     unsigned eudetTrig = getlittleendian<unsigned int>(&block0[36])&0x7fff;
     unsigned triggerword = (getlittleendian<unsigned int>(&block0[36])&0xff0000)>>16;
     unsigned hitbusword = (getlittleendian<unsigned int>(&block0[36])&0xf000000)>>24;

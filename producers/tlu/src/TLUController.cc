@@ -56,7 +56,7 @@ namespace tlu {
        << (rst ? 'R' : '.'); 
   }
 
-  static const unsigned long long NOTIMESTAMP = (unsigned long long)-1;
+  static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
 
@@ -84,7 +84,7 @@ namespace tlu {
       "v0.2c"
     };
 
-//     static const unsigned long g_scaler_address[TLU_TRIGGER_INPUTS] = {
+//     static const uint32_t g_scaler_address[TLU_TRIGGER_INPUTS] = {
 //       TRIGGER_IN0_COUNTER_0,
 //       TRIGGER_IN1_COUNTER_0,
 //       TRIGGER_IN2_COUNTER_0,
@@ -129,7 +129,7 @@ namespace tlu {
     }
   }
 
-  double Timestamp2Seconds(unsigned long long t) {
+  double Timestamp2Seconds(uint64_t t) {
     return t / ( TLUFREQUENCY * TLUFREQUENCYMULTIPLIER ) ;
   }
 
@@ -229,9 +229,9 @@ namespace tlu {
 
   void TLUController::OpenTLU() {
     // Request information about the system
-    unsigned long NumCards = 0;
-    unsigned long CardIDs[256] = {0};
-    unsigned long SerialNumbers[256] = {0};
+    uint32_t NumCards = 0;
+    uint32_t CardIDs[256] = {0};
+    uint32_t SerialNumbers[256] = {0};
     ZESTSC1_FPGA_TYPE FPGATypes[256] = {ZESTSC1_FPGA_UNKNOWN};
     int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
     if (status != 0) throw TLUException("ZestSC1CountCards", status);
@@ -349,7 +349,7 @@ namespace tlu {
       m_addr = &v0_2;
     }
     if (!m_oldbuf) {
-		m_oldbuf = new unsigned long long[m_addr->TLU_BUFFER_DEPTH];
+		m_oldbuf = new uint64_t[m_addr->TLU_BUFFER_DEPTH];
 		m_triggerBuffer=new unsigned[m_addr->TLU_BUFFER_DEPTH];
 	}
     LoadFirmware();
@@ -513,7 +513,7 @@ namespace tlu {
     if (m_addr) WriteRegister(m_addr->TLU_ENABLE_DUT_VETO_ADDRESS, m_enabledutveto);
   }
 
-  void TLUController::SetStrobe(unsigned long period , unsigned long width) {
+  void TLUController::SetStrobe(uint32_t period , uint32_t width) {
     m_strobeperiod = period;
     m_strobewidth = width;
 
@@ -555,11 +555,11 @@ namespace tlu {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_VMASK_ADDRESS);
   }
 
-  unsigned long TLUController::GetStrobeWidth() const {
+  uint32_t TLUController::GetStrobeWidth() const {
     return ReadRegister24(m_addr->TLU_STROBE_WIDTH_ADDRESS_0);
   }
 
-  unsigned long TLUController::GetStrobePeriod() const {
+  uint32_t TLUController::GetStrobePeriod() const {
     return ReadRegister24(m_addr->TLU_STROBE_PERIOD_ADDRESS_0);
   }
 
@@ -623,7 +623,7 @@ namespace tlu {
     if (updateleds) UpdateLEDs();
   }
 
-  void seperate_timing_info_from_trigger_info(unsigned long long * timestamp_buffer,unsigned* trigger,unsigned entries){
+  void seperate_timing_info_from_trigger_info(uint64_t * timestamp_buffer,unsigned* trigger,unsigned entries){
 	  for (unsigned i = 0; i < entries; ++i) {
 		 trigger[i]=timestamp_buffer[i]>>60;
 		 timestamp_buffer[i]=timestamp_buffer[i]& MASKOUTTHELASTFOURBITS;
@@ -634,7 +634,7 @@ namespace tlu {
   void TLUController::Update(bool timestamps) {
     unsigned entries = 0;
     unsigned old_triggernum = m_triggernum;
-    unsigned long long * timestamp_buffer = 0;
+    uint64_t * timestamp_buffer = 0;
 	unsigned* trigger_buffer=nullptr;
     m_dmastat = ReadRegister8(m_addr->TLU_DMA_STATUS_ADDRESS);
     if (timestamps) {
@@ -726,7 +726,7 @@ namespace tlu {
     return result;
   }
 
-  void TLUController::WriteRegister(unsigned long offset, unsigned char val) {
+  void TLUController::WriteRegister(uint32_t offset, unsigned char val) {
     int status = ZESTSC1_SUCCESS;
     int delay = 0;
     const int count = m_errorhandler ? m_errorhandler : 1;
@@ -747,7 +747,7 @@ namespace tlu {
     }
   }
 
-  void TLUController::WriteRegister24(unsigned long offset, unsigned long val) {
+  void TLUController::WriteRegister24(uint32_t offset, uint32_t val) {
     int status = ZESTSC1_SUCCESS;
     int delay = 0;
 
@@ -774,47 +774,47 @@ namespace tlu {
     }
   }
 
-  unsigned char TLUController::ReadRegister8(unsigned long offset) const {
+  unsigned char TLUController::ReadRegister8(uint32_t offset) const {
     unsigned char val = ReadRegisterRaw(offset);
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned short TLUController::ReadRegister16(unsigned long offset) const {
+  unsigned short TLUController::ReadRegister16(uint32_t offset) const {
     unsigned short val = ReadRegisterRaw(offset);
     val |= static_cast<unsigned short>(ReadRegisterRaw(offset+1)) << 8;
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned long TLUController::ReadRegister24(unsigned long offset) const {
-    unsigned long val = 0;
+  uint32_t TLUController::ReadRegister24(uint32_t offset) const {
+    uint32_t val = 0;
     for (int i = 0; i < 3; ++i) {
-      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint32_t>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned long TLUController::ReadRegister32(unsigned long offset) const {
-    unsigned long val = 0;
+  uint32_t TLUController::ReadRegister32(uint32_t offset) const {
+    uint32_t val = 0;
     for (int i = 0; i < 4; ++i) {
-      val |= static_cast<unsigned long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint32_t>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned long long TLUController::ReadRegister64(unsigned long offset) const {
-    unsigned long long val = 0;
+  uint64_t TLUController::ReadRegister64(uint32_t offset) const {
+    uint64_t val = 0;
     for (int i = 0; i < 8; ++i) {
-      val |= static_cast<unsigned long long>(ReadRegisterRaw(offset+i)) << (8*i);
+      val |= static_cast<uint64_t>(ReadRegisterRaw(offset+i)) << (8*i);
     }
     //usbtrace(" R", offset, val);
     return val;
   }
 
-  unsigned char TLUController::ReadRegisterRaw(unsigned long offset) const {
+  unsigned char TLUController::ReadRegisterRaw(uint32_t offset) const {
     unsigned char val = 0;
     int status = ZESTSC1_SUCCESS;
     int delay = 0;
@@ -837,7 +837,7 @@ namespace tlu {
     return val;
   }
 
-  unsigned long long * TLUController::ReadBlock(unsigned entries) {
+  uint64_t * TLUController::ReadBlock(unsigned entries) {
     if (!entries) return 0;
 
     const int count = m_errorhandler ? m_errorhandler : 1;
@@ -911,9 +911,9 @@ namespace tlu {
     unsigned num_correctable_errors = 0;
     unsigned num_uncorrectable_errors = 0;
 
-    const unsigned long long timestamp_mask  = 0x0FFFFFFFFFFFFFFFULL;
+    const uint64_t timestamp_mask  = 0x0FFFFFFFFFFFFFFFULL;
 
-    //    unsigned long long buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    //    uint64_t buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096) EUDAQ_THROW("Buffer size error");
 
     int result = ZESTSC1_SUCCESS;
@@ -973,8 +973,8 @@ namespace tlu {
     }
 
     // Check to make sure that the current timestamp[0] is more recent than previous timestamp[events]
-    unsigned long long last_timestamp = m_lasttime & timestamp_mask;
-    unsigned long long first_timestamp = m_oldbuf[0] & timestamp_mask;
+    uint64_t last_timestamp = m_lasttime & timestamp_mask;
+    uint64_t first_timestamp = m_oldbuf[0] & timestamp_mask;
     if (  last_timestamp >= first_timestamp ) {
       std::cout << "### Warning: First time-stamp from current buffer is older than last timestamp of previous buffer: (m_lasttime , buf[0]) " << std::setw(8) <<  m_lasttime  << "  " << m_oldbuf[0] << std::endl;
       num_uncorrectable_errors++;
@@ -990,8 +990,8 @@ namespace tlu {
     // check that the timestamps are chronological ...
     for (unsigned i = 1; i < entries; ++i) {
 
-      unsigned long long current_timestamp = m_oldbuf[i]; // & timestamp_mask;
-      unsigned long long previous_timestamp = m_oldbuf[i-1]; // & timestamp_mask;
+      uint64_t current_timestamp = m_oldbuf[i]; // & timestamp_mask;
+      uint64_t previous_timestamp = m_oldbuf[i-1]; // & timestamp_mask;
 
       if ( previous_timestamp >= current_timestamp ) {
 
@@ -1035,8 +1035,8 @@ namespace tlu {
     
     unsigned num_errors ;
 
-    // unsigned long long buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
-    unsigned long long padding_buffer[2048];
+    // uint64_t buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
+    uint64_t padding_buffer[2048];
 
     std::cout << "### Error recovery: About to read out blocks three times..." << std::endl;
     EUDAQ_INFO("Error recovery: About to read out blocks three times...");
@@ -1066,7 +1066,7 @@ namespace tlu {
 
 
     if ( pad ) {
-      std::cout <<"### Reading 2048 long-long words to pad ...."  << std::endl;   
+      std::cout <<"### Reading 2048 uint64_t words to pad ...."  << std::endl;   
       result = ZestSC1ReadData(m_handle, padding_buffer, sizeof padding_buffer );
     } else {
       std::cout <<"### No padding block read ...."  << std::endl;   
@@ -1134,7 +1134,7 @@ namespace tlu {
 
   }
 
-  void TLUController::PrintBlock( unsigned long long  block[][4096] , unsigned nbuf , unsigned bufsize ) {
+  void TLUController::PrintBlock( uint64_t  block[][4096] , unsigned nbuf , unsigned bufsize ) {
 
     // print contents of 4-buffer block
     unsigned buf , sample;
@@ -1156,7 +1156,7 @@ namespace tlu {
   void TLUController::Print(std::ostream &out, bool timestamps) const {
     if (timestamps) {
       for (size_t i = 0; i < m_buffer.size(); ++i) {
-        unsigned long long d = m_buffer[i].Timestamp() - m_lasttime;
+        uint64_t d = m_buffer[i].Timestamp() - m_lasttime;
         out << " " << std::setw(8) << m_buffer[i] << ", diff=" << d << (d <= 0 ? "***" : "") << "\n";
         m_lasttime = m_buffer[i].Timestamp();
       }
@@ -1283,7 +1283,7 @@ namespace tlu {
       } catch (const eudaq::Exception & e) {
         std::cerr << "Error writing DUT LEDs: " << e.what() << std::endl;
       }
-      unsigned long addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO;
+      uint32_t addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO;
       if (m_version < 3) addr = m_addr->TLU_I2C_BUS_LEMO_LED_IO_VB;
       try {
         WritePCA955(m_addr->TLU_I2C_BUS_LEMO, addr, lemoled);

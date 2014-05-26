@@ -5,6 +5,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
+#include <memory> // shared ptr
 
 #include <iostream>
 #include <ostream>
@@ -29,7 +30,7 @@ inline bool doprint(int n) {
 
 template <typename T>
 void DoTags(const std::string & name, T (EUDRBController::*func)() const,
-            eudaq::Event & ev, std::vector<counted_ptr<EUDRBController> > & boards) {
+            eudaq::Event & ev, std::vector<std::shared_ptr<EUDRBController> > & boards) {
   const EUDRBController * ptr = boards[0].get();
   std::string val = to_string((ptr->*func)());
   for (size_t i = 1; i < boards.size(); ++i) {
@@ -81,7 +82,7 @@ public:
         if (slot == 0) slot = addr >> 27;
         if (slot != 0 && addr != 0 && addr != (slot << 27)) EUDAQ_THROW("Mismatched Slot and Addr for board " + to_string(id));
         if (slot < 2 || slot > 21) EUDAQ_THROW("Bad Slot number (" + to_string(slot) + ") for board " + to_string(id));
-        m_boards.push_back(counted_ptr<EUDRBController>(new EUDRBController(id-m_idoffset, slot, version)));
+        m_boards.push_back(std::make_shared<EUDRBController>(id-m_idoffset, slot, version));
       }
       m_unsync = param.Get("Unsynchronized", 0);
       std::cout << "Running in " << (m_unsync ? "UNSYNCHRONIZED" : "synchronized") << " mode" << std::endl;
@@ -219,7 +220,7 @@ public:
   }
   bool ReadoutEventOld(RawDataEvent & ev) {
     static bool readingstarted = false;
-    unsigned long total_bytes=0;
+    uint32_t total_bytes=0;
     std::cout << "--" << std::endl; 
     for (size_t i=0; i <= m_boards.size(); ++i) {
       size_t n_test = i < m_boards.size() ? i : m_master; // make sure master is read out last
@@ -241,7 +242,7 @@ public:
       }
 
       Timer t_mblt, t_reset;
-      unsigned long number_of_bytes=datasize*4;
+      uint32_t number_of_bytes=datasize*4;
 
       //printf("number of bytes = %ld\n",number_of_bytes);
       if (number_of_bytes <= 0) {
@@ -294,7 +295,7 @@ public:
   }
   bool ReadoutEventNew(RawDataEvent & ev) {
     static bool readingstarted = false;
-    unsigned long total_bytes=0;
+    uint32_t total_bytes=0;
     Timer t_wait;
     //std::cout << "ReadoutEventNew" << std::endl;
     if (!m_boards[m_boards.size()-1]->EventDataReady()) {
@@ -310,8 +311,8 @@ public:
       readingstarted = true;
     }
     //std::cout<< "--"<< std::endl;
-    unsigned long off = 0;
-    unsigned long pivot = 0;
+    uint32_t off = 0;
+    uint32_t pivot = 0;
     bool off_set = false;
     bool pivot_set = false;
 
@@ -355,7 +356,7 @@ public:
           off = m_buffer[3];
           off_set = true;
         } else {
-          unsigned long diff = (9216 + off - m_buffer[3]) % 9216;
+          uint32_t diff = (9216 + off - m_buffer[3]) % 9216;
           if(diff > 4 && diff < 9212) {
             EUDAQ_WARN("data consistency check 1 for board " + to_string(n_eudrb) +" in event " + to_string(m_ev) + " failed! The offset difference in pixel is " + to_string(diff) + "!");
 //            std::cout << "------ header -----" << std::endl; 
@@ -367,7 +368,7 @@ public:
           }
         }
       }
-      const unsigned long number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
+      const uint32_t number_of_bytes = 4 * (m_buffer[0] & 0xFFFFF);
             
       if (doprint(m_ev)) std::cout << "DEBUG: read leading words board " << n_eudrb << ", remaining = " << number_of_bytes << std::endl;
 
@@ -385,7 +386,7 @@ public:
         if (doprint(m_ev)) std::cout << "OK" << std::endl;
         
 	if (m_boards[0]->Det() == "MIMOSA26") {
-          const unsigned long p = m_buffer[1] & 0x3FFF;
+          const uint32_t p = m_buffer[1] & 0x3FFF;
           if(!pivot_set)
             {
               pivot = p;
@@ -394,7 +395,7 @@ public:
           else
             { 
              
-            unsigned long diff = (9216 + pivot - p) % 9216;
+            uint32_t diff = (9216 + pivot - p) % 9216;
              
             if(diff > 4 && diff < 9212)
               {
@@ -497,8 +498,8 @@ public:
   unsigned m_run, m_ev;
   bool done, started, juststopped, m_resetbusy, m_unsync;
   int n_error;
-  std::vector<unsigned long> m_buffer;
-  std::vector<counted_ptr<EUDRBController> > m_boards;
+  std::vector<uint32_t> m_buffer;
+  std::vector<std::shared_ptr<EUDRBController> > m_boards;
   //int fdOut;
   int m_idoffset, m_version, m_master;
   std::vector<std::string> m_pedfiles;

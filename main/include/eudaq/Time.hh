@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <string>
 #include <cstring>
+#include <cstdint>
 
 #ifdef WIN32
 //# include <time.h>
@@ -28,7 +29,7 @@ namespace eudaq {
 
 
       
-      explicit Time(long sec, long usec = 0) {
+      explicit Time(int32_t sec, int32_t usec = 0) {
         tv_usec = usec % 1000000;
         tv_sec = sec + usec / 1000000;
       }
@@ -38,6 +39,12 @@ namespace eudaq {
         tv_sec = tv.tv_sec + tv.tv_usec / 1000000;
       }
       double Seconds() const { return tv_sec + tv_usec / 1e6; }
+      timeval GetTimeval() const {
+        timeval tv;
+        tv.tv_sec = tv_sec;
+        tv.tv_usec = tv_usec;
+        return tv;
+      }
       Time & operator += (const timeval & other) {
         tv_usec += other.tv_usec;
         tv_sec += other.tv_sec + tv_usec / 1000000;
@@ -63,16 +70,13 @@ namespace eudaq {
           (tv_sec == other.tv_sec && tv_usec > other.tv_usec);
       }
       operator const timeval () const {
-        timeval tv;
-        tv.tv_sec = tv_sec;
-        tv.tv_usec = tv_usec;
-        return tv;
+	return GetTimeval();
       }
       std::string Formatted(const std::string & format = TIME_DEFAULT_FORMAT) const;
       static Time Current();
     private:
-      long tv_sec;
-      long tv_usec;
+      int32_t tv_sec;
+      int32_t tv_usec;
   };
 
   inline Time operator + (const timeval & lhs, const timeval rhs) {

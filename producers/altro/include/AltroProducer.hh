@@ -175,12 +175,12 @@ class AltroProducer : public eudaq::Producer
     virtual ~AltroProducer();
 
     /** Send an recorded event from the physmem.
-     *  The length is the number of unsigned long words.
+     *  The length is the number of uint32_t words.
      *  This function ensures little endian raw data. Use SendEvent to skip 
      *  the conversion, which is faster (memory does not have to be allocated and
      *  released).
      */
-    void Event(volatile unsigned long *altrodata, int length);
+    void Event(volatile uint32_t *altrodata, int length);
 
     /** Threadsave version to set the m_run variable
      */

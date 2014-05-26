@@ -23,18 +23,28 @@ ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 # Set package version
 IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
-  FIND_PACKAGE(Git)
+  FIND_PACKAGE(Git QUIET)
   IF(GIT_FOUND)
     EXEC_PROGRAM(${GIT_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE EUDAQ_LIB_VERSION)
-    STRING(REGEX REPLACE "^release-" "" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
-    STRING(REGEX REPLACE "([v0-9.]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
+    STRING(REGEX REPLACE "([v0-9.]+[-a-zA-Z0-9]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
+    STRING(REGEX REPLACE "v([v0-9.]+)(.*)" "\\1" EUDAQ_LIB_BASEVERSION ${EUDAQ_LIB_VERSION})
+    IF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
+      MESSAGE(WARNING "Your do not seem to have fetched the latest tags in your git repository -- please consider running 'git fetch upstream'")
+    ENDIF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
+    EXEC_PROGRAM(git ARGS status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_MAIN_STATUS)
+    IF(EUDAQ_MAIN_STATUS STREQUAL "")
+      MESSAGE(STATUS "Main EUDAQ library directory is clean (all changes have been commited).")
+    ELSE(EUDAQ_MAIN_STATUS STREQUAL "")
+      MESSAGE(STATUS "Main EUDAQ library directory is dirty (uncommitted changes present):\n ${EUDAQ_MAIN_STATUS}.")
+      SET(EUDAQ_LIB_VERSION "${EUDAQ_LIB_VERSION}*")
+    ENDIF(EUDAQ_MAIN_STATUS STREQUAL "")
   ELSE(GIT_FOUND)
     # If we don't have git we take the hard-set version.
     SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
   ENDIF(GIT_FOUND)
 ELSE(NOT SOURCE_PACKAGE)
   # If we don't have git we take the hard-set version.
-  SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
+  SET(EUDAQ_LIB_VERSION "v${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
 ENDIF(NOT SOURCE_PACKAGE)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
@@ -54,9 +64,9 @@ INCLUDE_DIRECTORIES( ./main/include )
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-#FIND_PACKAGE(Threads REQUIRED) # pthreads
-# include checks for the available and necessary threading libraries (depending on platform)
-include(${PROJECT_SOURCE_DIR}/cmake/EUDAQThreads.cmake)
+# find necessary threading libraries (using C++11 threading)
+Find_Package(Threads REQUIRED)
+set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
@@ -106,6 +116,12 @@ IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
+# build EUDAQ python exe bindings
+option(BUILD_python "Compile Python EUDAQ binding library?" ON)
+IF(BUILD_python)
+  add_subdirectory(main/python)
+ENDIF()
+
 # build native reader used for data conversion into LCIO
 IF(BUILD_nreader)
   add_subdirectory(nreader)
@@ -122,6 +138,7 @@ option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
+
 
 ###############################################
 # LaTeX target to compile the PDF user manual #
@@ -156,3 +173,32 @@ add_subdirectory(producers)
 # Print out system information useful for bug reports #
 ############################################### #######
 include(PrintSystemInformation)
+
+
+###############################################
+# Python-based regression tests
+###############################################
+# if the Python interpreter can be found and the numpy package is
+# installed, we can make available the Python-based regression tests
+# through CMake/CTest; for more detailed information see the CMake manual or
+#web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
+if (${CMAKE_VERSION} VERSION_GREATER 2.8)
+  # git support only available with CMake greater 2.8
+  ENABLE_TESTING()
+  INCLUDE(CTest)
+
+  FIND_PACKAGE(PythonInterp)
+  IF(PYTHONINTERP_FOUND AND BUILD_python)
+    # test for numpy package
+    EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
+    IF(NUMPYRC EQUAL 1)
+      MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
+    ELSE(NUMPYRC EQUAL 1)
+      MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
+      INCLUDE(etc/tests/testing.cmake)
+    ENDIF(NUMPYRC EQUAL 1)
+  ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
+ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
+  MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
+ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
+

@@ -12,8 +12,6 @@ namespace eudaq {
 
   namespace {
 
-    static const char * const RUN_NUMBER_FILE = "../data/runnumber.dat";
-
     void * DataCollector_thread(void * arg) {
       DataCollector * dc = static_cast<DataCollector *>(arg);
       dc->DataThread();
@@ -22,22 +20,19 @@ namespace eudaq {
 
   } // anonymous namespace
 
-  DataCollector::DataCollector(const std::string & runcontrol, const std::string & listenaddress) :
-    CommandReceiver("DataCollector", "", runcontrol, false), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
-        ReadFromFile(RUN_NUMBER_FILE, 0U)), m_eventnumber(0), m_runstart(0) {
+  DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
+    CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
+     ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0) {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
-      //pthread_attr_init(&m_threadattr);
-      //pthread_create(&m_thread, &m_threadattr, DataCollector_thread, this);
-	  m_thread.start(DataCollector_thread,this);
+      m_thread.start(DataCollector_thread,this);
+      EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
       EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
       CommandReceiver::StartThread();
     }
 
   DataCollector::~DataCollector() {
     m_done = true;
-    /*if (m_thread)*/
-    //pthread_join(m_thread, 0);
-	m_thread.join();
+    m_thread.join();
     delete m_dataserver;
   }
 
@@ -87,7 +82,7 @@ namespace eudaq {
         EUDAQ_THROW("You must configure before starting a run");
       }
       m_writer->StartRun(runnumber);
-      WriteToFile(RUN_NUMBER_FILE, runnumber);
+      WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
 
@@ -146,7 +141,7 @@ namespace eudaq {
         std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
       }
       unsigned n_run = m_runnumber, n_ev = m_eventnumber;
-      unsigned long long n_ts = (unsigned long long) -1;
+      uint64_t n_ts = (uint64_t) -1;
       if (m_itlu != (size_t) -1) {
         TLUEvent * ev = static_cast<TLUEvent *>(m_buffer[m_itlu].events.front().get());
         n_run = ev->GetRunNumber();

@@ -4,7 +4,7 @@
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
-//#include "eudaq/counted_ptr.hh"
+
 #ifndef WIN32
 #include <unistd.h>
 #endif
@@ -216,7 +216,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
 
-    unsigned long total = 0;
+    uint32_t total = 0;
     while (!g_done) {
       TLU.Update(!nots.IsSet());
       std::cout << std::endl;

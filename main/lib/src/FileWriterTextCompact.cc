@@ -13,13 +13,13 @@ namespace eudaq {
       FileWriterTextCompact(const std::string &);
       virtual void StartRun(unsigned);
       virtual void WriteEvent(const DetectorEvent &);
-      virtual unsigned long long FileBytes() const;
+      virtual uint64_t FileBytes() const;
       virtual ~FileWriterTextCompact();
     private:
     //  std::FILE * m_file;
 	  std::ofstream *m_out;
 	  bool firstEvent;
-	  unsigned long long int DUT_start_time;
+	  uint64_t DUT_start_time;
   };
 
   namespace {
@@ -113,6 +113,6 @@ namespace eudaq {
     }
   }
 
-  unsigned long long FileWriterTextCompact::FileBytes() const { return m_out->tellp(); }
+  uint64_t FileWriterTextCompact::FileBytes() const { return m_out->tellp(); }
 
 }

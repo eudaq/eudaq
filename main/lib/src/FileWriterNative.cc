@@ -10,7 +10,7 @@ namespace eudaq {
       FileWriterNative(const std::string &);
       virtual void StartRun(unsigned);
       virtual void WriteEvent(const DetectorEvent &);
-      virtual unsigned long long FileBytes() const;
+      virtual uint64_t FileBytes() const;
       virtual ~FileWriterNative();
     private:
       FileSerializer * m_ser;
@@ -39,6 +39,6 @@ namespace eudaq {
     delete m_ser;
   }
 
-  unsigned long long FileWriterNative::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }
+  uint64_t FileWriterNative::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }
 
 }

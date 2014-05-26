@@ -1,10 +1,12 @@
 macro(optional_add_subdirectory dir)
   option(BUILD_${dir} "Build producer in directory ${dir}?" OFF)
-  if(BUILD_${dir})
+  if(BUILD_${dir} OR BUILD_allproducer)
     add_subdirectory(${dir})
     MESSAGE( STATUS "Building producer: " ${dir} )
   endif()
 endmacro()
+
+option(BUILD_allproducer "Build all producers?" OFF)
 
 optional_add_subdirectory(altro)
 optional_add_subdirectory(altroUSB)

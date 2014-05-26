@@ -12,7 +12,7 @@ namespace eudaq {
       FileWriterMimoloop(const std::string &);
       virtual void StartRun(unsigned);
       virtual void WriteEvent(const DetectorEvent &);
-      virtual unsigned long long FileBytes() const;
+      virtual uint64_t FileBytes() const;
       virtual ~FileWriterMimoloop();
     private:
       std::ofstream * m_file;
@@ -55,6 +55,6 @@ namespace eudaq {
     delete m_file;
   }
 
-  unsigned long long FileWriterMimoloop::FileBytes() const { if (!m_file) return 0; return m_file->tellp(); }
+  uint64_t FileWriterMimoloop::FileBytes() const { if (!m_file) return 0; return m_file->tellp(); }
 
 }

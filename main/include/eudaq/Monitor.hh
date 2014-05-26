@@ -1,7 +1,7 @@
 #ifndef EUDAQ_INCLUDED_Monitor
 #define EUDAQ_INCLUDED_Monitor
 
-//#include "eudaq/counted_ptr.hh"
+
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/FileReader.hh"

@@ -12,7 +12,7 @@ namespace eudaq {
 		  eudaq::PluginManager::Initialize(devent);
 		  }
 	  } 
-      virtual unsigned long long FileBytes() const { return 0; }
+      virtual uint64_t FileBytes() const { return 0; }
   };
 
   namespace {

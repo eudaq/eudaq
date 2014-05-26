@@ -21,7 +21,7 @@ namespace eudaq {
       FileWriterLCIO(const std::string &);
       virtual void StartRun(unsigned);
       virtual void WriteEvent(const DetectorEvent &);
-      virtual unsigned long long FileBytes() const { return 0; }
+      virtual uint64_t FileBytes() const { return 0; }
       virtual ~FileWriterLCIO();
     private:
       lcio::LCWriter *m_lcwriter; /// The lcio writer

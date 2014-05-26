@@ -1,8 +1,8 @@
 set(name "Mimosa32Producer.exe")
-set(sourcefiles src/Mimosa32Producer.cxx)
+set(sourcefiles src/DeviceMimosa32.cc src/Mimosa32Producer.cxx)
 set(ext_libraries "" )
 set(ext_lib_paths "" )
-set(ext_inc_paths "" )
+set(ext_inc_paths "./include" )
 
 ADD_DEFINITIONS()
 LINK_DIRECTORIES( ${ext_lib_paths} )

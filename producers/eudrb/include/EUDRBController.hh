@@ -32,7 +32,7 @@ namespace eudaq {
     void LoadPedestals(const pedestal_t & peds);
     bool EventDataReady(double timeout = 1.0); /// Returns false on timeout, else true
     int  EventDataReady_size(double timeout = 1.0); /// Returns 0 on timeout, else event size
-    void ReadEvent(std::vector<unsigned long> &);
+    void ReadEvent(std::vector<uint32_t> &);
     void ResetTriggerBusy();
     static int ModeNum(const std::string & mode);
     static int DetNum(const std::string & det);

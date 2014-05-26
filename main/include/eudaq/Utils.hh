@@ -14,6 +14,7 @@
 #include <fstream>
 #include <sys/types.h>
 #include "eudaq/Platform.hh"
+#include <cstdint>
 
 namespace eudaq {
 
@@ -117,16 +118,16 @@ namespace eudaq {
     }
 
   template<>
-    long DLLEXPORT from_string(const std::string & x, const long & def);
+    int64_t DLLEXPORT from_string(const std::string & x, const int64_t & def);
   template<>
-    unsigned long DLLEXPORT from_string(const std::string & x, const unsigned long & def);
+    uint64_t DLLEXPORT from_string(const std::string & x, const uint64_t & def);
   template<>
-    inline int DLLEXPORT from_string(const std::string & x, const int & def) {
-      return from_string(x, (long)def);
+    inline int32_t DLLEXPORT from_string(const std::string & x, const int32_t & def) {
+      return static_cast<int32_t>(from_string(x, (int64_t)def));
     }
   template<>
-    inline unsigned int from_string(const std::string & x, const unsigned int & def) {
-      return from_string(x, (unsigned long)def);
+    inline uint32_t from_string(const std::string & x, const uint32_t & def) {
+      return static_cast<uint32_t>(from_string(x, (uint64_t)def));
     }
 
   template <typename T>
