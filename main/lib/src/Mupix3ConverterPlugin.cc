@@ -163,7 +163,7 @@ bool Mupix3ConverterPlugin::GetStandardSubEvent(
 #if USE_LCIO && USE_EUTELESCOPE
 
 bool Mupix3ConverterPlugin::GetLCIOSubEvent(
-    LCEvent & dest,
+    lcio::LCEvent & dest,
     const eudaq::Event & source) const
 {
     using lcio::CellIDEncoder;
