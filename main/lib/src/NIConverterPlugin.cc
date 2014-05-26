@@ -25,7 +25,7 @@
 #  include "EUTelMimosa26Detector.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
-#  include "EUTelSparseDataImpl.h"
+#  include "EUTelTrackerDataInterfacerImpl.h"
 #  include "EUTelGenericSparsePixel.h"
 #  include "EUTelRunHeaderImpl.h"
 using eutelescope::EUTELESCOPE;
@@ -418,8 +418,8 @@ namespace eudaq {
         zsDataEncoder.setCellID( zsFrame.get() );
 
         // this is the structure that will host the sparse pixel
-        std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > >
-          sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
+        std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+          sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
         // prepare a sparse pixel to be added to the sparse data
         std::auto_ptr< eutelescope::EUTelGenericSparsePixel > sparsePixel( new eutelescope::EUTelGenericSparsePixel );
