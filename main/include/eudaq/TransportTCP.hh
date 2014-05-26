@@ -5,7 +5,10 @@
 #include "eudaq/Platform.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
-# include <winsock2.h>
+#ifndef __CINT__
+#include <winsock.h> // using winsock2.h here would cause conflicts when including Windows4Root.h 
+                     // required e.g. by the ROOT online monitor
+#endif
 #else
 # include <sys/select.h>
 typedef int SOCKET;

@@ -1,8 +1,22 @@
 #ifndef SIMPLE_STANDARD_EVENT_H
 #define SIMPLE_STANDARD_EVENT_H
+
+#ifdef __CINT__
+#undef __GNUC__
+typedef unsigned long long int uint64_t; 
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
+
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+#else
+#ifdef WIN32
+#include <cstdint>
+#endif
+#endif
 
 #include "include/SimpleStandardPlane.hh"
 
@@ -54,10 +68,4 @@ class SimpleStandardEvent {
 
 
 
-
-#ifdef __CINT__
-
-#pragma link C++ class SimpleStandardPlane-;
-
-#endif
 #endif

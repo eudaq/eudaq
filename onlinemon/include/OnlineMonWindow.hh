@@ -1,6 +1,10 @@
 #ifndef ONLINE_MON_WINDOW_H
 #define ONLINE_MON_WINDOW_H
 
+#ifdef WIN32
+#include <Windows4Root.h>
+#endif
+
 #include <TGFrame.h>
 
 

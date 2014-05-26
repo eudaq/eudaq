@@ -1,3 +1,7 @@
+#ifdef WIN32
+#include <Windows4Root.h>
+#endif
+
 // ROOT includes
 #include "TROOT.h"
 #include "TNamed.h"

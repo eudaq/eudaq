@@ -1,9 +1,8 @@
 find_program(CTEST_GIT_COMMAND NAMES git)
 
-set(CTEST_BUILD_CONFIGURATION "Release")
 set(CTEST_CONFIGURATION_TYPE "Release")
 
-set(CTEST_BUILD_OPTIONS "-DBUILD_allproducer=ON -D ReferenceDataDir=${ReferenceDataDir}")
+set(CTEST_BUILD_OPTIONS "-DBUILD_allproducer=ON  -DBUILD_onlinemon=ON -D ReferenceDataDir=${ReferenceDataDir}")
 
 # valgrind is used for memchecks
 find_program(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
