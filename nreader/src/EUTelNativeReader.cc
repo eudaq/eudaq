@@ -28,8 +28,6 @@
 #include "EUTelMimosa26Detector.h"
 #include "EUTelTLUDetector.h"
 #include "EUTelDEPFETDetector.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelSimpleSparsePixel.h"
 #include "EUTelSetupDescription.h"
 
 // marlin includes
