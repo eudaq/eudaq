@@ -21,7 +21,7 @@
 #  include "EUTELESCOPE.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
-#  include "EUTelSparseDataImpl.h"
+#  include "EUTelTrackerDataInterfacerImpl.h"
 #  include "EUTelGenericSparsePixel.h"
 #  include "EUTelAPIXMCDetector.h"
 #  include "EUTelRunHeaderImpl.h"
@@ -344,8 +344,8 @@ namespace eudaq {
           // this is the structure that will host the sparse pixel
           // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
           // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-          std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > >
-            sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
+          std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+            sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
           unsigned int ToT = 0;
           unsigned int Col = 0;

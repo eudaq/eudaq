@@ -35,7 +35,7 @@
 #include "EUTelTakiDetector.h"
 #include "EUTelSetupDescription.h"
 #include "EUTelEventImpl.h"
-#include "EUTelSparseDataImpl.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
 #endif
 
@@ -170,7 +170,7 @@ bool Mupix2ConverterPlugin::GetLCIOSubEvent(
     using lcio::LCCollectionVec;
     using lcio::TrackerDataImpl;
     using eutelescope::EUTELESCOPE;
-    using eutelescope::EUTelSparseDataImpl;
+    using eutelescope::EUTelTrackerDataInterfacerImpl;
     using eutelescope::EUTelGenericSparsePixel;
     
     // raw input data stream
@@ -182,7 +182,7 @@ bool Mupix2ConverterPlugin::GetLCIOSubEvent(
     bool collection_exists = false;
     LCCollectionVec * collection;
     std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelSparseDataImpl<EUTelGenericSparsePixel> > pixels;
+    std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
     
     if (source.IsBORE()) {
         // this should never happen. BORE event should be handled
@@ -226,7 +226,7 @@ bool Mupix2ConverterPlugin::GetLCIOSubEvent(
     cell_encoder.setCellID(frame.get());
     // a convenience object that encodes the sparse pixel data into an
     // eutelescope-specific format and stores it in the given readout frame
-    pixels.reset(new EUTelSparseDataImpl<EUTelGenericSparsePixel>(frame.get()));
+    pixels.reset(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(frame.get()));
     
     // extract hits from the raw buffer into the lcio readout frame
     unsigned col;
