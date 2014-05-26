@@ -111,13 +111,13 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 add_subdirectory(main/lib)
 
 # build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
-option(BUILD_main "Compile main EUDAQ executables?" ON)
+option(BUILD_main "Compile main EUDAQ executables?" OFF)
 IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
 # build EUDAQ python exe bindings
-option(BUILD_python "Compile Python EUDAQ binding library?" ON)
+option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
 IF(BUILD_python)
   add_subdirectory(main/python)
 ENDIF()
@@ -128,7 +128,7 @@ IF(BUILD_nreader)
 ENDIF()
 
 # build GUI executables
-option(BUILD_gui "Compile GUI executables (requires QT4/5)?" ON)
+option(BUILD_gui "Compile GUI executables (requires QT4/5)?" OFF)
 IF(BUILD_gui)
   add_subdirectory(gui)
 ENDIF()

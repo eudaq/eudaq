@@ -170,7 +170,7 @@ namespace eudaq {
     //       zsFrame= new TrackerDataImpl;
     //       currentDetector->setMode( mode );
     //       zsDataEncoder["sensorID"] = plane.ID();
-    //   	  zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+    //   	  zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
     //   	  zsDataEncoder.setCellID( zsFrame );
 
     //        size_t nPixel = plane.HitPixels();
