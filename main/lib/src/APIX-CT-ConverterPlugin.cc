@@ -22,7 +22,7 @@
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
 #  include "EUTelSparseDataImpl.h"
-#  include "EUTelAPIXSparsePixel.h"
+#  include "EUTelGenericSparsePixel.h"
 #include <list>
 using eutelescope::EUTELESCOPE;
 #endif
@@ -230,10 +230,10 @@ namespace eudaq {
 	setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
       }
       
-      std::list<eutelescope::EUTelAPIXSparsePixel*> tmphits;
+      std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
       
       zsDataEncoder["sensorID"] = m_sensorids[sensor] + chip_id_offset;
-      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelAPIXSparsePixel;
+      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
       
       // prepare a new TrackerData object for the ZS data
       // it contains all the hits for a particular sensor in one event
@@ -244,8 +244,8 @@ namespace eudaq {
       // this is the structure that will host the sparse pixel
       // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
       // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-      std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > >
-	sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelAPIXSparsePixel > ( zsFrame.get() ) );
+      std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > >
+	sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
       
       for (size_t i=0;i<hits.size();i++){
 	if(m_feToSensorid[hits[i].link]==m_sensorids[sensor]){
@@ -271,7 +271,8 @@ namespace eudaq {
 	    int ModuleID=m_sensorids[sensor]+chip_id_offset;
 	    int lvl1=hits[i].lv1;
 	    int ToT=hits[i].tot;
-	    eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( col, row, ToT, ModuleID, lvl1);
+//	    eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, ToT, ModuleID, lvl1);
+            eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, ToT, lvl1);
 	    sparseFrame->addSparsePixel( thisHit );
 	    tmphits.push_back( thisHit );
 /*
@@ -279,12 +280,12 @@ namespace eudaq {
 	    if (row==329){
 	      row = 336;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 340;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -292,12 +293,12 @@ namespace eudaq {
 	    if (row==331){
 	      row = 337;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 341;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -305,12 +306,12 @@ namespace eudaq {
 	    if (row==333){
 	      row = 338;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 342;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -318,12 +319,12 @@ namespace eudaq {
 	    if (row==335){
 	      row = 339;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 343;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -332,12 +333,12 @@ namespace eudaq {
 	    if (row==352){
 	      row = 348;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 344;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -345,12 +346,12 @@ namespace eudaq {
 	    if (row==354){
 	      row = 349;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 345;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -358,12 +359,12 @@ namespace eudaq {
 	    if (row==356){
 	      row = 350;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 346;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -371,12 +372,12 @@ namespace eudaq {
 	    if (row==358){
 	      row = 351;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang1 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang1 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang1 );
 	      tmphits.push_back( thisHitgang1 );
 	      row = 347;
 	      col=col;
-	      eutelescope::EUTelAPIXSparsePixel *thisHitgang2 = new eutelescope::EUTelAPIXSparsePixel( row, col, ToT, ModuleID, lvl1);
+	      eutelescope::EUTelGenericSparsePixel *thisHitgang2 = new eutelescope::EUTelGenericSparsePixel( row, col, ToT, ModuleID, lvl1);
 	      sparseFrame->addSparsePixel( thisHitgang2 );
 	      tmphits.push_back( thisHitgang2 );
 	    }
@@ -397,7 +398,7 @@ namespace eudaq {
 		unsigned int rem2c = (hits[i].col + 1)%2;
 		int col = ( (rem4r<2 && rem2c==1) || (rem4r>1 && rem2c==0) ) ? Col1*2 : Col1*2+1;
 		int row = (int)(Row1/2);
-		eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
+		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
 		sparseFrame->addSparsePixel( thisHit );
 		tmphits.push_back( thisHit );
 	      }
@@ -406,12 +407,13 @@ namespace eudaq {
 	      {
 		int col = hits[i].col;
 		int row = hits[i].row;
-		eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
+//		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
+		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
 		sparseFrame->addSparsePixel( thisHit );
 		tmphits.push_back( thisHit );
 	      }
 	    //int col=(1+m_fepos[hits[i].link])*NCOL-1-hits[i].col; //left or right on 2-chip module
-	    // eutelescope::EUTelAPIXSparsePixel *thisHit = new eutelescope::EUTelAPIXSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
+	    // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, m_sensorids[sensor] + chip_id_offset, hits[i].lv1);
 	    //sparseFrame->addSparsePixel( thisHit );
 	    // tmphits.push_back( thisHit );
    
@@ -423,7 +425,7 @@ namespace eudaq {
       zsDataCollection->push_back( zsFrame.release() );
       
       // clean up
-      for( std::list<eutelescope::EUTelAPIXSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
+      for( std::list<eutelescope::EUTelGenericSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
 	delete (*it);
       }
     }
