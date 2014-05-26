@@ -74,7 +74,7 @@ IF(BUILD_nreader)
   FIND_PACKAGE(LCIO REQUIRED)
   INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
   FIND_PACKAGE(EUTelescope REQUIRED)
-  INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS})
+  INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
   add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
   set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES})
 ENDIF()
@@ -111,13 +111,13 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 add_subdirectory(main/lib)
 
 # build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
-option(BUILD_main "Compile main EUDAQ executables?" ON)
+option(BUILD_main "Compile main EUDAQ executables?" OFF)
 IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
 # build EUDAQ python exe bindings
-option(BUILD_python "Compile Python EUDAQ binding library?" ON)
+option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
 IF(BUILD_python)
   add_subdirectory(main/python)
 ENDIF()
@@ -128,7 +128,7 @@ IF(BUILD_nreader)
 ENDIF()
 
 # build GUI executables
-option(BUILD_gui "Compile GUI executables (requires QT4/5)?" ON)
+option(BUILD_gui "Compile GUI executables (requires QT4/5)?" OFF)
 IF(BUILD_gui)
   add_subdirectory(gui)
 ENDIF()
@@ -183,6 +183,10 @@ include(PrintSystemInformation)
 # through CMake/CTest; for more detailed information see the CMake manual or
 #web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
 if (${CMAKE_VERSION} VERSION_GREATER 2.8)
+  # git support only available with CMake greater 2.8
+  ENABLE_TESTING()
+  INCLUDE(CTest)
+
   FIND_PACKAGE(PythonInterp)
   IF(PYTHONINTERP_FOUND AND BUILD_python)
     # test for numpy package
@@ -191,8 +195,6 @@ if (${CMAKE_VERSION} VERSION_GREATER 2.8)
       MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
     ELSE(NUMPYRC EQUAL 1)
       MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
-      ENABLE_TESTING()
-      INCLUDE(CTest)
       INCLUDE(etc/tests/testing.cmake)
     ENDIF(NUMPYRC EQUAL 1)
   ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
