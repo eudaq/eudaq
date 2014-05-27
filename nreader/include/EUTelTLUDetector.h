@@ -1,11 +1,3 @@
-/*
- *   This source code is part of the Eutelescope package of Marlin.
- *   You are free to use this source files for your own development as
- *   long as it stays in a public research context. You are not
- *   allowed to use it for commercial purpose. You must put this
- *   header with author names in all development based on this file.
- *
- */
 
 #ifndef EUTELTLUDETECTOR_H
 #define EUTELTLUDETECTOR_H
@@ -27,8 +19,6 @@ namespace eutelescope {
   //! This is the TLU fake detector
   /*!
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id$
    */
 
   class EUTelTLUDetector : public EUTelBaseDetector {

@@ -1,22 +1,6 @@
-/*
- * EUTelTimepixDetector.h
- *
- *  Created on: Feb 25, 2013
- *      Author: mbenoit
- */
 
 #ifndef EUTELTIMEPIXDETECTOR_H_
 #define EUTELTIMEPIXDETECTOR_H_
-
-/*
- *   This source code is part of the Eutelescope package of Marlin.
- *   You are free to use this source files for your own development as
- *   long as it stays in a public research context. You are not
- *   allowed to use it for commercial purpose. You must put this
- *   header with author names in all development based on this file.
- *
- */
-
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
@@ -35,8 +19,6 @@ namespace eutelescope {
   //! This is the TLU fake detector
   /*!
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelDEPFETDetector.h 2285 2013-01-18 13:46:44Z hperrey $
    */
 
   class EUTelTimepixDetector : public EUTelPixelDetector {
