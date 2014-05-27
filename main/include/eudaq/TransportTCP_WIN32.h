@@ -6,13 +6,13 @@
 #define EWOULDBLOCK WSAEWOULDBLOCK
 #endif
 
-#include <map>
-#if EUDAQ_PLATFORM_IS(MINGW)
-#  include <windows.h>
-#else
-//#  include <afxwin.h>
-#endif
+#ifndef __CINT__
+// using winsock2.h here would cause conflicts when including Windows4Root.h 
+// required e.g. by the ROOT online monitor
 #include <winsock.h>
+#endif
+
+#include <map>
 
 namespace eudaq {
 

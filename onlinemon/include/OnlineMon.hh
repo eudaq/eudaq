@@ -13,12 +13,14 @@
 #include <TStopwatch.h>
 
 //EUDAQ includes
+#ifndef __CINT__
 #include "eudaq/Monitor.hh"
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/TLUEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#endif
 
 //Project Includes
 

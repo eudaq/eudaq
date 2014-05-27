@@ -5,16 +5,12 @@
 #include <iostream>
 
 #if EUDAQ_PLATFORM_IS(WIN32)
-# define WIN32_LEAN_AND_MEAN
-//# include <afxwin.h> 
-# include <Windows.h>
-# include <time.h>
-# define EPOCHFILETIME (116444736000000000LL)
+#define WIN32_LEAN_AND_MEAN
+#include <time.h>
+#define EPOCHFILETIME (116444736000000000LL)
 #endif
 
 namespace eudaq {
-
-
 
 
 #if EUDAQ_PLATFORM_IS(WIN32)
