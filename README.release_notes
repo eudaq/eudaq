@@ -2,6 +2,8 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
+* Version 1.2.2
+** Updated EUTelescope-dependent parts to work with newest development version
 * Version 1.2.1
 ** Fixed compilation issue of NativeReader Marlin library
    - removed obsolete converter plugin relying no longer existing EUTelescope headers
