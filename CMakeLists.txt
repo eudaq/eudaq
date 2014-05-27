@@ -76,7 +76,9 @@ IF(BUILD_nreader)
   FIND_PACKAGE(EUTelescope REQUIRED)
   INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
   add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
-  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES})
+  AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
+  ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
+  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
 
