@@ -1,8 +1,8 @@
 set(name "Timepix3Producer.exe")
 set(sourcefiles src/Timepix3Producer.cxx)
-set(ext_libraries "" )
-set(ext_lib_paths "" )
-set(ext_inc_paths "./include" )
+set(ext_libraries "libSpidrTpx3Lib.so" )
+set(ext_lib_paths "/afs/cern.ch/user/s/sarfaoui/work/public/SPIDR/software/trunk/Release" )
+set(ext_inc_paths "./include" "/afs/cern.ch/user/s/sarfaoui/work/public/SPIDR/software/trunk/SpidrTpx3Lib")
 
 ADD_DEFINITIONS()
 LINK_DIRECTORIES( ${ext_lib_paths} )
