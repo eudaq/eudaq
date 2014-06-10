@@ -136,6 +136,7 @@ namespace eudaq {
   void RunControl::Terminate() {
     EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE");
+    mSleep(5000);
   }
 
   void RunControl::SendCommand(const std::string & cmd, const std::string & param,
