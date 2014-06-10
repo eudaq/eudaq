@@ -57,6 +57,13 @@ namespace eudaq {
       m_nLayers = bore.GetTag<int>("Devices", -1);
 //       m_nLayers = 4;
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
+      
+      for (int i=0; i<m_nLayers; i++) {
+	char tmp[100];
+	sprintf(tmp, "Config_%d", i);
+	std::string config = bore.GetTag<std::string>(tmp, "");
+	cout << "Config of layer " << i << " is: " << config.c_str() << endl;
+      }
     }
     //##############################################################################
     ///////////////////////////////////////

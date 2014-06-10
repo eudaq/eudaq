@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!--
+Syntax rules:
+1. Address tags define the value for base, rgn and sub out of which the address is calculated
+   They have to be in the order base, rgn, sub to allow proper searching of the DOM
+2. The token %base% %rgn% %sub% are replaced in any tag content by the current value
+3. If the title tag is present a new line with a Save/Load button in the GUI is generated. All following value tags are put in the same line until the next title tag
+4. The optional description tag is shown as tooltip on the checkbox/edit field
+5. Value tags need to contain the first bit (attribute begin). The width is 1 by default and can be specified to be larger.
+   One bit wide fields are shown as checkbox. Wider fields as edit field.
+   Wider fields can be forced to be shown as checkboxes by providing the <display>bits</display> tag within the value tag
+   Default values can be specified with the tag default, otherwise it is 0
+   Optional content values can be specified with the tag content. The content tag overrides the value given at the default tag.
+6. Repetitions can be written in any address tag by adding the attributes repetition_count and  repetition_attribute. This tag and all its children are duplicated repetition_count times by increasing the attribute indicated with repetition_attribute by 1 each time. The start value is given in the attribute itself.
+-->
+<root>
+  <address base="0">
+    <address rgn="0">
+      <title>Base 0</title>
+      <address sub="1">
+	<title>Region disable Register 15-0</title>
+	<value begin="0" width="16">
+	  <display>bits</display>
+	  <content>7fff</content>
+	</value>
+      </address>
+      <address sub="2">
+	<title>Region disable Register 31-16</title>
+	<value begin="0" width="16">
+	  <display>bits</display>
+	  <content>ffff</content>
+	</value>
+      </address>
+    </address>
+  </address>
+</root>

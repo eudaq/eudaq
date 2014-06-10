@@ -1,6 +1,6 @@
 set(name "PALPIDEFSProducer.exe")
 set(sourcefiles src/PALPIDEFSProducer.cxx)
-set(ext_libraries "palpidefs.so" )
+set(ext_libraries "palpidefs.so" "tinyxml.so")
 set(ext_lib_paths "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}")
 set(ext_inc_paths "include" "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}")
 # config files to be installed

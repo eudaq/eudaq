@@ -9,6 +9,8 @@
 #include "eudaq/EudaqThread.hh"
 #include <queue>
 
+#include <tinyxml.h>
+
 // pALPIDEfs driver
 #include "TTestsetup.h"
 
@@ -53,6 +55,8 @@ class DeviceReader {
     void PrintQueueStatus();
     static void* LoopWrapper(void* arg);
   
+    void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
+
   protected:
     void Loop();
     void Print(const char* text);
@@ -85,7 +89,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_nDevices(0), m_status_interval(-1) {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_nDevices(0), m_status_interval(-1), m_full_config() {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -116,4 +120,5 @@ class PALPIDEFSProducer : public eudaq::Producer {
     // config
     int m_nDevices;
     int m_status_interval;
+    std::string m_full_config;
 };

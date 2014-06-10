@@ -18,13 +18,106 @@
 #include <list>
 #include <climits>
 
-#define SIMULATION // don't initialize, send dummy events
+// #define SIMULATION // don't initialize, send dummy events
 #define LOADSIMULATION // if set simulate continous stream, if not set simulate SPS conditions
 
 using eudaq::StringEvent;
 using eudaq::RawDataEvent;
 
 static const std::string EVENT_TYPE = "pALPIDEfsRAW";
+
+unsigned int Bitmask(int width)
+{
+  unsigned int tmp = 0;
+  for (int i=0; i<width; i++)
+    tmp |= 1 << i;
+  return tmp;
+}
+
+void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool readwrite)
+{
+  // readwrite (from Chip): true = read; false = write
+  
+  for (TiXmlNode* pChild = node->FirstChild("address"); pChild != 0; pChild = pChild->NextSibling("address")) 
+  {
+    if (pChild->Type() != TiXmlNode::TINYXML_ELEMENT)
+      continue;
+//     printf( "Element %d [%s] %d %d\n", pChild->Type(), pChild->Value(), base, rgn);
+    TiXmlElement* elem = pChild->ToElement();
+    if (base == -1) {
+      if (!elem->Attribute("base")) {
+	std::cout << "Base attribute not found!" << std::endl;
+	break;
+      }
+      ParseXML(daq_board, pChild, atoi(elem->Attribute("base")), -1, readwrite);
+    }
+    else if (rgn == -1) {
+      if (!elem->Attribute("rgn")) {
+	std::cout << "Rgn attribute not found!" << std::endl;
+	break;
+      }
+      ParseXML(daq_board, pChild, base, atoi(elem->Attribute("rgn")), readwrite);
+    }
+    else {
+      if (!elem->Attribute("sub")) {
+	std::cout << "Sub attribute not found!" << std::endl;
+	break;
+      }
+      int sub = atoi(elem->Attribute("sub"));
+      int address = ((rgn << 11) + (base << 8) + sub);
+
+      int value = 0;
+      
+      if (readwrite) {
+	if (daq_board->ReadChipRegister(address, &value) != 1) {
+	  std::cout << "Failure to read chip address " << address << std::endl;
+	  continue;
+	}
+      }
+      
+      for (TiXmlNode* valueChild = pChild->FirstChild("value"); valueChild != 0; valueChild = valueChild->NextSibling("value")) 
+      {
+	if (!valueChild->ToElement()->Attribute("begin")) {
+	  std::cout << "begin attribute not found!" << std::endl;
+	  break;
+	}
+	int begin = atoi(valueChild->ToElement()->Attribute("begin"));
+	
+	int width = 1;
+	if (valueChild->ToElement()->Attribute("width")) // width attribute is optional
+	  width = atoi(valueChild->ToElement()->Attribute("width"));
+	
+	if (!valueChild->FirstChild("content") && !valueChild->FirstChild("content")->FirstChild()) {
+	  std::cout << "content tag not found!" << std::endl;
+	  break;
+	}
+	
+	if (readwrite) {
+	  int subvalue = (value >> begin) & Bitmask(width);
+	  char tmp[5];
+	  sprintf(tmp, "%X", subvalue);
+	  valueChild->FirstChild("content")->FirstChild()->SetValue(tmp);
+	} else { 
+	  int content = (int) strtol(valueChild->FirstChild("content")->FirstChild()->Value(), 0, 16);
+	  
+	  if (content >= (1 << width)) {
+	    std::cout << "value too large: " << begin << " " << width << " " << content << " " << valueChild->FirstChild("content")->Value() << std::endl;
+	    break;
+	  }
+	  
+	  value += content << begin;
+	}
+      }
+      
+      if (!readwrite) {
+//       printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
+//       printf("%d %d\n", address, value);
+	if (daq_board->WriteChipRegister(address, value) != 1)
+	  std::cout << "Failure to write chip address " << address << std::endl;
+      }
+    }
+  }  
+}
 
 DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpidefs* dut) : 
   m_queue_size(0), 
@@ -279,6 +372,11 @@ bool DeviceReader::QueueFull()
   return false;
 }
 
+void DeviceReader::ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite)
+{
+  ::ParseXML(m_daq_board, node, base, rgn, readwrite);
+}
+
 // -------------------------------------------------------------------------------------------------
 
 void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param) 
@@ -290,6 +388,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   
   int delay = param.Get("QueueFullDelay", 0);
   unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
+  
+  m_full_config = param.Get("FullConfig", "");
 
 #ifndef SIMULATION
   if (!m_testsetup) {
@@ -348,23 +448,28 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     TDAQBoard* daq_board = m_testsetup->GetDAQBoard(board_no);
     m_testsetup->PowerOnBoard(board_no);
     m_testsetup->InitialiseChip(board_no);
-    
-    // noisy pixels
-    dut->SetMaskAllPixels(false); //unmask all pixels
-    sprintf(buffer, "Noisy_Pixel_File_%d", i);
-    std::string noisyPixels = param.Get(buffer, "");
-    if (noisyPixels.length() > 0) {
-      std::cout << "Setting noisy pixel file..." << std::endl;
-      dut->ReadNoisyPixelFile(noisyPixels.data());
-      dut->MaskNoisyPixels();
-    }
-    
+
     // configuration
     sprintf(buffer, "Config_File_%d", i);
     std::string configFile = param.Get(buffer, "");
     if (configFile.length() > 0) {
       // TODO maybe add this functionality to TDAQBoard?
       std::cout << "Running chip configuration..." << std::endl;
+      
+      TiXmlDocument doc(configFile.c_str());
+      if (!doc.LoadFile()) {
+	std::string msg = "Unable to open file ";
+	msg += configFile;
+	std::cerr << msg.data() << std::endl;
+	EUDAQ_ERROR(msg.data());
+	SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+	return;
+      }
+    
+      // TODO return code?
+      ParseXML(daq_board, doc.FirstChild("root")->ToElement(), -1, -1, false);
+
+      /*
       FILE *fp = fopen(configFile.data(), "r");
       if (!fp) {
 	std::string msg = "Unable to open file ";
@@ -389,8 +494,19 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	}
       }
       fclose(fp);
+      */
     }
-
+    
+    // noisy pixels
+    dut->SetMaskAllPixels(false); //unmask all pixels
+    sprintf(buffer, "Noisy_Pixel_File_%d", i);
+    std::string noisyPixels = param.Get(buffer, "");
+    if (noisyPixels.length() > 0) {
+      std::cout << "Setting noisy pixel file..." << std::endl;
+      dut->ReadNoisyPixelFile(noisyPixels.data());
+      dut->MaskNoisyPixels();
+    }
+    
     // TODO how often do we have to repeat this?
     // data taking configuration
     const int StrobeLength = 10;
@@ -438,12 +554,37 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
   
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
   bore.SetTag("Devices", m_nDevices);
+  
+  // read configuration, dump to XML string
+  for (int i=0; i<m_nDevices; i++) {
+    TiXmlDocument doc(m_full_config.c_str());
+    if (!doc.LoadFile()) {
+      std::string msg = "Failed to load config file: ";
+      msg += m_full_config;
+      std::cerr << msg.data() << std::endl;
+      EUDAQ_ERROR(msg.data());
+      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      return;
+    }
+    
+#ifndef SIMULATION  
+    m_reader[i]->ParseXML(doc.FirstChild("root")->ToElement(), -1, -1, true);
+#endif
+    
+    std::string configStr;
+    configStr << doc;
+    
+    std::cout << configStr << std::endl;
+    
+    char tmp[100];
+    sprintf(tmp, "Config_%d", i);
+    bore.SetTag(tmp, configStr);
+
+    // TODO noisy pixels
+  }
+  
   SendEvent(bore);
-  
-  // TODO read configuration
-  // noisy pixels
-  // whatever else
-  
+
   m_running = true;
   for (int i=0; i<m_nDevices; i++)
     m_reader[i]->SetRunning(true);
@@ -620,9 +761,9 @@ void PALPIDEFSProducer::PrintQueueStatus()
   for (int i=0; i<m_nDevices; i++)
     m_reader[i]->PrintQueueStatus();
 }
-    
+
 // -------------------------------------------------------------------------------------------------
-    
+
 int main(int /*argc*/, const char ** argv) {
   eudaq::OptionParser op("EUDAQ Producer", "1.0", "The pALPIDEfs Producer");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
@@ -633,6 +774,7 @@ int main(int /*argc*/, const char ** argv) {
       "The name of this Producer");
   eudaq::Option<int> debug_level(op, "d", "debug-level", 0, "int",
       "Debug level for the producer");
+
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
