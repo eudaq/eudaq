@@ -29,4 +29,6 @@ optional_add_subdirectory(ni)
 optional_add_subdirectory(taki)
 optional_add_subdirectory(timepixdummy)
 optional_add_subdirectory(tlu)
-optional_add_subdirectory(miniTLU)
+
+# ignore miniTLU for now (see issue #75)
+#optional_add_subdirectory(miniTLU)
