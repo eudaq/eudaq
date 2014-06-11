@@ -8,7 +8,9 @@ endmacro()
 
 option(BUILD_allproducer "Build all producers?" OFF)
 
-optional_add_subdirectory(altro)
+# ignore altro producer for now (see issue #72)
+#optional_add_subdirectory(altro)
+
 optional_add_subdirectory(altroUSB)
 optional_add_subdirectory(depfet)
 optional_add_subdirectory(eudrb)
