@@ -78,6 +78,9 @@ IF(BUILD_nreader)
   add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
+  INSTALL(TARGETS ${libname} RUNTIME DESTINATION bin
+                             LIBRARY DESTINATION lib
+                             ARCHIVE DESTINATION lib)
   set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
