@@ -186,7 +186,7 @@ int main(int /*argc*/, char ** argv) {
 
     for (size_t i = 0; i < op.NumArgs(); ++i) { // loop through run numbers
 
-      eudaq::FileReader reader(op.GetArg(i), ipat.Value(), false );
+      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       EUDAQ_INFO("Reading: " + reader.Filename());
 
       {
