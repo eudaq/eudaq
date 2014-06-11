@@ -3,6 +3,9 @@
 
 find_program(CTEST_GIT_COMMAND NAMES git)
 
+# set variables that describe the tests in the CDash interface
+set(CTEST_BUILD_NAME "Nightly-nreader")
+
 # clear binary dir before starting (build directory)
 SET (CTEST_START_WITH_EMPTY_BINARY_DIRECTORY TRUE)
 
