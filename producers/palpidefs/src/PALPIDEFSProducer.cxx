@@ -111,7 +111,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
       
       if (!readwrite) {
 //       printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
-//       printf("%d %d\n", address, value);
+      printf("Writing chip register %d %d\n", address, value);
 	if (daq_board->WriteChipRegister(address, value) != 1)
 	  std::cout << "Failure to write chip address " << address << std::endl;
       }
@@ -147,6 +147,7 @@ void DeviceReader::SetRunning(bool running)
   std::cout << "DeviceReader " << m_id << ": Set running: " << running << std::endl;
   SimpleLock lock(m_mutex);
   m_running = running;
+  m_daq_board->StartTrigger(); // TODO
 }
 
 SingleEvent* DeviceReader::NextEvent() 
@@ -289,11 +290,11 @@ void DeviceReader::Loop()
 #endif
 #else
     // data taking
-    const int maxDataLength = 512*32 + 64; // TODO check
+    const int maxDataLength = 1024; // 512*32 + 64; // TODO check
     unsigned char data_buf[maxDataLength];
     int length = -1;
 
-    m_daq_board->StartTrigger();
+//     m_daq_board->StartTrigger(); // TODO
     if (m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength)) {
 
       bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf);
@@ -333,7 +334,7 @@ void DeviceReader::Loop()
     }
       
     // TODO only if no data has been received
-    eudaq::mSleep(10);
+    eudaq::mSleep(1);
 #endif
   }
   Print("ThreadRunner stopping...");
@@ -432,7 +433,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     }
     
     // HACK if working with old firmware
-    board_no = i;
+//     board_no = i;
 
     if (board_no == -1) {
       char msg[100];
@@ -510,12 +511,13 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     // TODO how often do we have to repeat this?
     // data taking configuration
     const int StrobeLength = 10;
-    const int StrobeBLength = 1000;
+    const int StrobeBLength = 50;
     const int ReadoutDelay = 10;
 
     // PrepareEmptyReadout
     daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
-    daq_board->ConfigureTrigger (0, StrobeLength, 1, 1);
+//     daq_board->ConfigureTrigger (0, StrobeLength, 1, 1); // TODO
+    daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
     
     // PrepareChipReadout
     dut->SetChipMode(MODE_ALPIDE_CONFIG);
