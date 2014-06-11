@@ -135,7 +135,7 @@ namespace eudaq {
       int current_layer = -1;
       int current_rgn = -1;
 
-      bool layers_found[m_nLayers];
+      bool layers_found[10]; // TODO variable length pointer array
       for(int i=0;i<m_nLayers;i++)
 	layers_found[i] = false;
 
