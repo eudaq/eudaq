@@ -1,6 +1,7 @@
 #ifndef H_TLUController_hh
 #define H_TLUController_hh
 
+#include <cstdint>
 #include "ZestSC1.h"
 #include <string>
 #include <vector>
