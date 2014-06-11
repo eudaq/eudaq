@@ -20,7 +20,10 @@ optional_add_subdirectory(explorer)
 optional_add_subdirectory(fortis)
 optional_add_subdirectory(mimoroma)
 optional_add_subdirectory(mimosa32)
-optional_add_subdirectory(mvd)
+
+# ignore MVD producer for now (see issue #74)
+#optional_add_subdirectory(mvd)
+
 optional_add_subdirectory(ni)
 #optional_add_subdirectory(pixelmanproducer)
 optional_add_subdirectory(taki)
