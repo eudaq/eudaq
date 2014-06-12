@@ -302,7 +302,8 @@ void DeviceReader::Loop()
 //     m_daq_board->StartTrigger(); // TODO
     if (m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength)) {
 
-      bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf);
+      TEventHeader header;
+      bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
       bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
       
       if (HeaderOK && TrailerOK) {
@@ -324,9 +325,8 @@ void DeviceReader::Loop()
 	  Print(str.data());
 	}
 	
-	// TODO extract trigger ID or equivalent
-	uint64_t trigger_id = 0;
-	SingleEvent* ev = new SingleEvent(length - 28, trigger_id, 0);
+// 	std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
+	SingleEvent* ev = new SingleEvent(length - 28, header.EventId, header.TimeStamp);
 	memcpy(ev->m_buffer, data_buf+20, length - 28);
 	// add to queue
 	Push(ev);
@@ -697,7 +697,8 @@ int PALPIDEFSProducer::BuildEvent()
   
   // fill next event and check if all event fragments are there
   // NOTE a partial _last_ event is lost in this way (can be improved based on flush)
-  unsigned long trigger_id = ULONG_MAX;
+  uint64_t trigger_id = ULONG_MAX;
+  uint64_t timestamp = ULONG_MAX;
   for (int i=0; i<m_nDevices; i++) {
     if (m_next_event[i] == 0)
       m_next_event[i] = m_reader[i]->PopNextEvent();
@@ -705,6 +706,8 @@ int PALPIDEFSProducer::BuildEvent()
       return 0;
     if (trigger_id > m_next_event[i]->m_trigger_id)
       trigger_id = m_next_event[i]->m_trigger_id;
+    if (timestamp > m_next_event[i]->m_timestamp)
+      timestamp = m_next_event[i]->m_timestamp;
     if (m_debuglevel > 2)
       std::cout << "Fragment " << i << " with trigger id " << m_next_event[i]->m_trigger_id << std::endl;
   }
@@ -715,10 +718,10 @@ int PALPIDEFSProducer::BuildEvent()
   // send event with trigger id trigger_id
 #if 1
   // send all layers in one block
-  unsigned long total_size = m_nDevices*2;
+  unsigned long total_size = m_nDevices * (2 + 2 * sizeof(uint64_t));
   for (int i=0; i<m_nDevices; i++) {
     SingleEvent* single_ev = m_next_event[i];
-    if (single_ev->m_trigger_id == trigger_id)
+//     if (single_ev->m_trigger_id == trigger_id)
       total_size += single_ev->m_length;
   }
   
@@ -729,7 +732,25 @@ int PALPIDEFSProducer::BuildEvent()
     buffer[pos++] = i;
     
     SingleEvent* single_ev = m_next_event[i];
-    if (single_ev->m_trigger_id == trigger_id) {
+
+    // select by timestamp
+    if (timestamp != 0 && (float) single_ev->m_timestamp / timestamp > 1.5) {
+      char msg[100];
+      sprintf(msg, "Out of sync: Timestamp of current event is %lu while smallest is %lu.", single_ev->m_timestamp, timestamp);
+      std::cerr << msg << std::endl;
+      EUDAQ_WARN(msg);
+      SetStatus(eudaq::Status::LVL_WARN, msg);
+    }
+      
+    // select by trigger id
+//     if (single_ev->m_trigger_id == trigger_id) {
+    {
+      // event id and timestamp per layer
+      memcpy(buffer+pos, &(single_ev->m_trigger_id), sizeof(uint64_t));
+      pos += sizeof(uint64_t);
+      memcpy(buffer+pos, &(single_ev->m_timestamp), sizeof(uint64_t));
+      pos += sizeof(uint64_t);
+    
       memcpy(buffer + pos, single_ev->m_buffer, single_ev->m_length);
       pos += single_ev->m_length;
     }

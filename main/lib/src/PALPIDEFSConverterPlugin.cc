@@ -95,6 +95,11 @@ namespace eudaq {
       if(ev.IsEORE()) {
 	// TODO EORE
 	return false;
+      } 
+      
+      if (m_nLayers < 0) {
+	cout << "ERROR: Number of layers < 0 --> " << m_nLayers << ". Check BORE!" << endl;
+	return false;
       }
       
       //Reading of the RawData
@@ -103,6 +108,22 @@ namespace eudaq {
       cout << "[Number of blocks] " << rev->NumBlocks() << endl;
 #endif
 
+      //initialize everything
+      std::string sensortype = "pALPIDEfs";
+      
+      // Create a StandardPlane representing one sensor plane
+
+      // Set the number of pixels
+      unsigned int width = 1024, height = 512;
+	
+      //Create plane for all matrixes? (YES)
+      StandardPlane** planes = new StandardPlane*[m_nLayers];
+      for(int id=0 ; id<m_nLayers ; id++ ){
+        //Set planes for different types
+        planes[id] = new StandardPlane(id, EVENT_TYPE, sensortype);
+        planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
+      }
+      
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {
 	cout << "Skipping status event" << endl;
 	for (int id=0 ; id<m_nLayers ; id++) {
@@ -114,128 +135,122 @@ namespace eudaq {
 	    cout << "T (layer " << id << ") is: " << temp << endl;
 	  }
 	}
-	return false;
-      }
-      
-      //initialize everything
-      std::string sensortype = "pALPIDEfs";
-      
-      // Create a StandardPlane representing one sensor plane
-
-      // Set the number of pixels
-      unsigned int width = 1024, height = 512;
-      
-      if (m_nLayers < 0) {
-	cout << "ERROR: Number of layers < 0 --> " << m_nLayers << ". Check BORE!" << endl;
-	return false;
-      }
-	
-      //Create plane for all matrixes? (YES)
-      StandardPlane** planes = new StandardPlane*[m_nLayers];
-      for(int id=0 ; id<m_nLayers ; id++ ){
-        //Set planes for different types
-        planes[id] = new StandardPlane(id, EVENT_TYPE, sensortype);
-        planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
-      }
-      //Conversion
-
-      if (rev->NumBlocks() != 1) return false;
-      vector<unsigned char> data = rev->GetBlock(0);
+      } else {
+	//Conversion
+	if (rev->NumBlocks() == 1) { 
+	  vector<unsigned char> data = rev->GetBlock(0);
 #ifdef MYDEBUG
-      cout << "vector has size : " << data.size() << endl;
+	  cout << "vector has size : " << data.size() << endl;
 #endif
 
-      //###############################################
-      //DATA FORMAT
-      //m_nLayers times
-      //  Header        1st Byte 0xff ; 2nd Byte: Layer number (layers might be missing)
-      //  payload from chip
-      //##############################################
-      
-      unsigned int pos = 0;
-      int current_layer = -1;
-      int current_rgn = -1;
+	  //###############################################
+	  //DATA FORMAT
+	  //m_nLayers times
+	  //  Header        1st Byte 0xff ; 2nd Byte: Layer number (layers might be missing)
+	  //  Trigger id (uint64_t)
+	  //  Timestamp (uint64_t)
+	  //  payload from chip
+	  //##############################################
+	  
+	  unsigned int pos = 0;
+	  int current_layer = -1;
+	  int current_rgn = -1;
 
-      bool layers_found[100] = { false };
-//       for(int i=0;i<m_nLayers;i++)
-// 	layers_found[i] = false;
+	  bool layers_found[100] = { false };
+    //       for(int i=0;i<m_nLayers;i++)
+    // 	layers_found[i] = false;
 
-      while (pos+1 < data.size()) { // always need 2 bytes left
-#ifdef MYDEBUG
-// 	printf("%u %u %x %x\n", pos, (unsigned int) data.size(), data[pos], data[pos+1]);
-#endif
-// 	printf("%x %x ", data[pos], data[pos+1]);
-	if (current_layer == -1) {
-	  if (data[pos++] != 0xff) {
-	    cout << "ERROR: Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
-	    break;
-	  }
-	  current_layer = data[pos++];
-	  layers_found[current_layer] = true;
-	  if (current_layer == 0xff) {
-	    // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
-	    current_layer = -1;
-	    continue;
-	  }
-	  if (current_layer >= m_nLayers) {
-	    cout << "ERROR: Unexpected. Not defined layer in data " << current_layer << endl;
-	    break;
-	  }
-#ifdef MYDEBUG
-	  cout << "Now in layer " << current_layer << endl;
-#endif
-	  current_rgn = -1;
-	} else {
-	  int length = data[pos++];
-	  int rgn = data[pos++] >> 3;
-	  if (rgn != current_rgn+1) {
-	    cout << "ERROR: Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
-	    break;
-	  }
-	  if (pos+length*2 > data.size()) {
-	    cout << "ERROR: Unexpected. Not enough bytes left. Expecting " << length << " but pos = " << pos << " and size = " << data.size() << endl;
-	    break;
-	  }
-	  for (int i=0; i<length; i++) {
-	    unsigned short dataword = data[pos++];
-	    dataword |= (data[pos++] << 8);
-	    unsigned short pixeladdr = dataword & 0x3ff;
-	    unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
-	    unsigned short clustersize = (dataword >> 14) + 1;
-	    
-	    for (int j=0; j<clustersize; j++) {
-	      unsigned short current_pixel = pixeladdr + j;
-	      unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
-	      if (current_pixel & 0x2)
-		x--;
-	      unsigned int y = (current_pixel >> 2) * 2 + 1;
-	      if (current_pixel & 0x1)
-		y--;
+	  while (pos+1 < data.size()) { // always need 2 bytes left
+    #ifdef MYDEBUG
+	    printf("%u %u %x %x\n", pos, (unsigned int) data.size(), data[pos], data[pos+1]);
+    #endif
+    // 	printf("%x %x ", data[pos], data[pos+1]);
+	    if (current_layer == -1) {
+	      if (data[pos++] != 0xff) {
+		cout << "ERROR: Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
+		break;
+	      }
+	      current_layer = data[pos++];
+	      if (current_layer == 0xff) {
+		// 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
+		current_layer = -1;
+		continue;
+	      }
+	      if (current_layer >= m_nLayers) {
+		cout << "ERROR: Unexpected. Not defined layer in data " << current_layer << endl;
+		break;
+	      }
+	      layers_found[current_layer] = true;
+    #ifdef MYDEBUG
+	      cout << "Now in layer " << current_layer << endl;
+    #endif
+	      current_rgn = -1;
 	      
-	      planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
-// 	      planes[1].PushPixel(x, y, 1, (unsigned int) 0);
-// 	      planes[2].PushPixel(x, y, 1, (unsigned int) 0);
-// 	      planes[3].PushPixel(x, y, 1, (unsigned int) 0);
-#ifdef MYDEBUG
-	      cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
-#endif
+	      // extract trigger id and timestamp
+	      if (pos+2*sizeof(uint64_t) < data.size()) {
+		uint64_t trigger_id = 0;
+		for (int i=0; i<8; i++)
+		  ((unsigned char*) &trigger_id)[i] = data[pos++];
+		uint64_t timestamp = 0;
+		for (int i=0; i<8; i++)
+		  ((unsigned char*) &timestamp)[i] = data[pos++];
+    #ifdef MYDEBUG
+	      cout << "Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
+    #endif
+	      }
+	    } else {
+	      int length = data[pos++];
+	      int rgn = data[pos++] >> 3;
+	      if (rgn != current_rgn+1) {
+		cout << "ERROR: Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
+		break;
+	      }
+	      if (pos+length*2 > data.size()) {
+		cout << "ERROR: Unexpected. Not enough bytes left. Expecting " << length << " but pos = " << pos << " and size = " << data.size() << endl;
+		break;
+	      }
+	      for (int i=0; i<length; i++) {
+		unsigned short dataword = data[pos++];
+		dataword |= (data[pos++] << 8);
+		unsigned short pixeladdr = dataword & 0x3ff;
+		unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
+		unsigned short clustersize = (dataword >> 14) + 1;
+		
+		for (int j=0; j<clustersize; j++) {
+		  unsigned short current_pixel = pixeladdr + j;
+		  unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
+		  if (current_pixel & 0x2)
+		    x--;
+		  unsigned int y = (current_pixel >> 2) * 2 + 1;
+		  if (current_pixel & 0x1)
+		    y--;
+		  
+		  planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
+    // 	      planes[1].PushPixel(x, y, 1, (unsigned int) 0);
+    // 	      planes[2].PushPixel(x, y, 1, (unsigned int) 0);
+    // 	      planes[3].PushPixel(x, y, 1, (unsigned int) 0);
+    #ifdef MYDEBUG
+		  cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
+    #endif
+		}
+	      }
+	      current_rgn = rgn;
+	      if (rgn == 31)
+		current_layer = -1;
 	    }
 	  }
-	  current_rgn = rgn;
-	  if (rgn == 31)
-	    current_layer = -1;
+	  if (current_layer != -1)
+	    cout << "WARNING: data stream too short, stopped in region " << current_rgn << endl;
+	  for (int i=0;i<m_nLayers;i++)
+	    if (!layers_found[i])
+	      cout << "WARNING: layer " << i << " was missing in the data stream." << endl;
+	  
+	    
+    #ifdef MYDEBUG
+	  cout << "EOD" << endl;
+    #endif
 	}
       }
-      if (current_layer != -1)
-	cout << "WARNING: data stream too short, stopped in region " << current_rgn << endl;
-      for (int i=0;i<m_nLayers;i++)
-	if (!layers_found[i])
-	  cout << "WARNING: layer " << i << " was missing in the data stream." << endl;
-      
-	
-#ifdef MYDEBUG
-      cout << "EOD" << endl;
-#endif
       
       // Add the planes to the StandardEvent
       for(int i=0;i<m_nLayers;i++){
