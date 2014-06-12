@@ -18,7 +18,7 @@
 #include <list>
 #include <climits>
 
-// #define SIMULATION // don't initialize, send dummy events
+#define SIMULATION // don't initialize, send dummy events
 #define LOADSIMULATION // if set simulate continous stream, if not set simulate SPS conditions
 
 using eudaq::StringEvent;
@@ -147,7 +147,12 @@ void DeviceReader::SetRunning(bool running)
   std::cout << "DeviceReader " << m_id << ": Set running: " << running << std::endl;
   SimpleLock lock(m_mutex);
   m_running = running;
-  m_daq_board->StartTrigger(); // TODO
+#ifndef SIMULATION  
+  if (m_running)
+    m_daq_board->StartTrigger();
+  else
+    m_daq_board->StopTrigger();
+#endif
 }
 
 SingleEvent* DeviceReader::NextEvent() 
@@ -230,7 +235,7 @@ void DeviceReader::Loop()
     }
     
     int length = 80;
-    SingleEvent* ev = new SingleEvent(length, m_last_trigger_id);
+    SingleEvent* ev = new SingleEvent(length, m_last_trigger_id, 0);
     for (int i = 0; i < length; ++i) {
       ev->m_buffer[i] = 0; //(char) std::rand();
     }
@@ -320,8 +325,8 @@ void DeviceReader::Loop()
 	}
 	
 	// TODO extract trigger ID or equivalent
-	unsigned long trigger_id = 0;
-	SingleEvent* ev = new SingleEvent(length - 28, trigger_id);
+	uint64_t trigger_id = 0;
+	SingleEvent* ev = new SingleEvent(length - 28, trigger_id, 0);
 	memcpy(ev->m_buffer, data_buf+20, length - 28);
 	// add to queue
 	Push(ev);
@@ -371,6 +376,15 @@ bool DeviceReader::QueueFull()
     return true;
   }
   return false;
+}
+
+float DeviceReader::GetTemperature()
+{
+#ifndef SIMULATION
+  m_daq_board->GetTemperature();
+#else
+  return 0;
+#endif
 }
 
 void DeviceReader::ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite)
@@ -587,7 +601,10 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
   
   SendEvent(bore);
 
-  m_running = true;
+  {
+    SimpleLock lock(m_mutex);
+    m_running = true;
+  }
   for (int i=0; i<m_nDevices; i++)
     m_reader[i]->SetRunning(true);
 
@@ -599,6 +616,8 @@ void PALPIDEFSProducer::OnStopRun()
   std::cout << "Stop Run" << std::endl;
   for (int i=0; i<m_nDevices; i++)
     m_reader[i]->SetRunning(false);
+  
+  SimpleLock lock(m_mutex);
   m_running = false;
   m_flush = true;
 }
@@ -614,6 +633,7 @@ void PALPIDEFSProducer::OnTerminate()
   }
   // TODO does not power off the boards selected by the jumpers
   std::cout << "All boards powered off" << std::endl;
+  SimpleLock lock(m_mutex);
   m_done = true;
 }
 
@@ -638,8 +658,12 @@ void PALPIDEFSProducer::Loop()
   do {
     eudaq::mSleep(20);
     
-    if (!m_running)
+    if (!IsRunning())
+    {
+      if (IsFlushing())
+	SendEOR();
       continue;
+    }
     
     // build events
     while (1) {
@@ -651,9 +675,6 @@ void PALPIDEFSProducer::Loop()
 	  SendStatusEvent();
 	  last_status = time(0);
 	}
-	if (m_flush) {
-	  SendEOR();
-	}
 	break;
       }
       
@@ -663,7 +684,7 @@ void PALPIDEFSProducer::Loop()
 	PrintQueueStatus();
       }
     }
-  } while (!m_done);
+  } while (!IsDone());
 }
     
 int PALPIDEFSProducer::BuildEvent() 
@@ -746,16 +767,22 @@ int PALPIDEFSProducer::BuildEvent()
 void PALPIDEFSProducer::SendEOR() 
 {
   std::cout << "Sending EOR" << std::endl;
-  m_flush = false;
   SendEvent(RawDataEvent::EORE(EVENT_TYPE, m_run, m_ev++));
+  SimpleLock lock(m_mutex);
+  m_flush = false;
 }
 
 void PALPIDEFSProducer::SendStatusEvent() 
 {
   std::cout << "Sending status event" << std::endl;
-  // TODO temperature readout
-  // RawDataEvent ev(EVENT_TYPE, m_run, ++m_ev);
-  //ev.SetTag("Debug", "foo");
+  // temperature readout
+  RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
+  ev.SetTag("pALPIDEfs_Type", 1);
+  for (int i=0; i<m_nDevices; i++) {
+    float temp = m_reader[i]->GetTemperature();
+    ev.AddBlock(i, &temp, sizeof(float));
+  }
+  SendEvent(ev);
 }
 
 void PALPIDEFSProducer::PrintQueueStatus() 

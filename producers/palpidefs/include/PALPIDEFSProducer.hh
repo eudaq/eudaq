@@ -15,7 +15,7 @@
 #include "TTestsetup.h"
 
 struct SingleEvent {
-  SingleEvent(unsigned int length, unsigned int trigger_id) : m_buffer(0), m_length(length), m_trigger_id(trigger_id) {
+  SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp) : m_buffer(0), m_length(length), m_trigger_id(trigger_id), m_timestamp(timestamp) {
     m_buffer = new unsigned char[length];
   }
   ~SingleEvent() {
@@ -24,7 +24,8 @@ struct SingleEvent {
   }
   unsigned char* m_buffer;
   unsigned int m_length;
-  unsigned int m_trigger_id;
+  uint64_t m_trigger_id;
+  uint64_t m_timestamp;
 };
 
 class SimpleLock {
@@ -54,6 +55,8 @@ class DeviceReader {
     SingleEvent* PopNextEvent();
     void PrintQueueStatus();
     static void* LoopWrapper(void* arg);
+    
+    float GetTemperature();
   
     void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
 
@@ -76,7 +79,7 @@ class DeviceReader {
     bool m_running;
     int m_id;
     int m_debuglevel;
-    int m_last_trigger_id;
+    uint64_t m_last_trigger_id;
 
     TDAQBoard* m_daq_board;
     TpAlpidefs* m_dut;
@@ -89,7 +92,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_nDevices(0), m_status_interval(-1), m_full_config() {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config() {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -107,6 +110,10 @@ class PALPIDEFSProducer : public eudaq::Producer {
     void SendStatusEvent();
     void PrintQueueStatus();
     
+    bool IsRunning() {   SimpleLock lock(m_mutex); return m_running; }
+    bool IsFlushing() {  SimpleLock lock(m_mutex); return m_flush; }
+    bool IsDone() {  SimpleLock lock(m_mutex); return m_done; }
+
     unsigned m_run, m_ev;
     bool m_done;
     bool m_running;
@@ -115,6 +122,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     SingleEvent** m_next_event;
     int m_debuglevel;
     
+    eudaq::Mutex m_mutex;
     TTestSetup* m_testsetup;
     
     // config

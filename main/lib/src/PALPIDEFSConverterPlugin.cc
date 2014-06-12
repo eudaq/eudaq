@@ -88,16 +88,40 @@ namespace eudaq {
     //conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent & sev,const Event & ev) const {
   
+#ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " " << sev.GetEventNumber() << endl;
+#endif
       
       if(ev.IsEORE()) {
 	// TODO EORE
+	return false;
       }
+      
+      //Reading of the RawData
+      const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev);
+#ifdef MYDEBUG
+      cout << "[Number of blocks] " << rev->NumBlocks() << endl;
+#endif
+
+      if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {
+	cout << "Skipping status event" << endl;
+	for (int id=0 ; id<m_nLayers ; id++) {
+	  vector<unsigned char> data = rev->GetBlock(id);
+	  if (data.size() == 4) {
+	    float temp = 0;
+	    for (int i=0; i<4; i++)
+	      ((unsigned char*) (&temp))[i] = data[i];
+	    cout << "T (layer " << id << ") is: " << temp << endl;
+	  }
+	}
+	return false;
+      }
+      
       //initialize everything
       std::string sensortype = "pALPIDEfs";
       
       // Create a StandardPlane representing one sensor plane
-      int id = 0;
+
       // Set the number of pixels
       unsigned int width = 1024, height = 512;
       
@@ -106,23 +130,20 @@ namespace eudaq {
 	return false;
       }
 	
-
       //Create plane for all matrixes? (YES)
-//       StandardPlane planes[m_nLayers];
       StandardPlane** planes = new StandardPlane*[m_nLayers];
-      for( id=0 ; id<m_nLayers ; id++ ){
+      for(int id=0 ; id<m_nLayers ; id++ ){
         //Set planes for different types
         planes[id] = new StandardPlane(id, EVENT_TYPE, sensortype);
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
       //Conversion
 
-      //Reading of the RawData
-      const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev);
-      cout << "[Number of blocks] " << rev->NumBlocks() << endl;
       if (rev->NumBlocks() != 1) return false;
       vector<unsigned char> data = rev->GetBlock(0);
+#ifdef MYDEBUG
       cout << "vector has size : " << data.size() << endl;
+#endif
 
       //###############################################
       //DATA FORMAT
@@ -135,9 +156,9 @@ namespace eudaq {
       int current_layer = -1;
       int current_rgn = -1;
 
-      bool layers_found[10]; // TODO variable length pointer array
-      for(int i=0;i<m_nLayers;i++)
-	layers_found[i] = false;
+      bool layers_found[100] = { false };
+//       for(int i=0;i<m_nLayers;i++)
+// 	layers_found[i] = false;
 
       while (pos+1 < data.size()) { // always need 2 bytes left
 #ifdef MYDEBUG
@@ -211,8 +232,11 @@ namespace eudaq {
 	if (!layers_found[i])
 	  cout << "WARNING: layer " << i << " was missing in the data stream." << endl;
       
+	
+#ifdef MYDEBUG
       cout << "EOD" << endl;
-
+#endif
+      
       // Add the planes to the StandardEvent
       for(int i=0;i<m_nLayers;i++){
         //planes[i].SetTLUEvent(TluCnt);          //set TLU Event (still test)
