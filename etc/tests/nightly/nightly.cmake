@@ -4,6 +4,9 @@ set(CTEST_CONFIGURATION_TYPE "Release")
 
 set(CTEST_BUILD_OPTIONS "-DBUILD_allproducer=ON  -DBUILD_onlinemon=ON -D ReferenceDataDir=${ReferenceDataDir}")
 
+# increase the maximum number of warnings reported by ctest from the default 50
+set (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 150)
+
 # set variables that describe the tests in the CDash interface
 set(CTEST_BUILD_NAME "Nightly-${CTEST_CONFIGURATION_TYPE}")
 
