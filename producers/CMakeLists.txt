@@ -6,29 +6,25 @@ macro(optional_add_subdirectory dir)
   endif()
 endmacro()
 
+# set to build all producers -- mostly useful for tests
 option(BUILD_allproducer "Build all producers?" OFF)
 
-# ignore altro producer for now (see issue #72)
-#optional_add_subdirectory(altro)
+# some producers do not e.g. run under Windows or have missing includes/dependencies
+# with this option set to "ON" they are built anyway
+option(IGNORE_KNOWN_ISSUES "Ignore known compilation issues of producer executables and configure them anyway?" OFF)
 
-# ignore altroUSB producer for now (see issue #73)
-#optional_add_subdirectory(altroUSB)
-
+optional_add_subdirectory(altro)
+optional_add_subdirectory(altroUSB)
 optional_add_subdirectory(depfet)
 optional_add_subdirectory(eudrb)
 optional_add_subdirectory(explorer)
 optional_add_subdirectory(fortis)
 optional_add_subdirectory(mimoroma)
 optional_add_subdirectory(mimosa32)
-
-# ignore MVD producer for now (see issue #74)
-#optional_add_subdirectory(mvd)
-
+optional_add_subdirectory(mvd)
 optional_add_subdirectory(ni)
-#optional_add_subdirectory(pixelmanproducer)
+optional_add_subdirectory(pixelmanproducer)
 optional_add_subdirectory(taki)
 optional_add_subdirectory(timepixdummy)
 optional_add_subdirectory(tlu)
-
-# ignore miniTLU for now (see issue #75)
-#optional_add_subdirectory(miniTLU)
+optional_add_subdirectory(miniTLU)

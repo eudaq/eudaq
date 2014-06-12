@@ -1,0 +1,3 @@
+
+# increase the maximum number of warnings reported by ctest from the default 50
+set (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 150)

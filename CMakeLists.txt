@@ -191,7 +191,10 @@ if (${CMAKE_VERSION} VERSION_GREATER 2.8)
   # git support only available with CMake greater 2.8
   ENABLE_TESTING()
   INCLUDE(CTest)
-
+  configure_file (
+    ./CTestCustom.cmake.in   # set custom test settings (e.g. number of warnings reported)
+    ${PROJECT_BINARY_DIR}/CTestCustom.cmake
+    )
   FIND_PACKAGE(PythonInterp)
   IF(PYTHONINTERP_FOUND AND BUILD_python)
     # test for numpy package
