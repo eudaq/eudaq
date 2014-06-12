@@ -18,7 +18,7 @@
 #include <list>
 #include <climits>
 
-#define SIMULATION // don't initialize, send dummy events
+// #define SIMULATION // don't initialize, send dummy events
 #define LOADSIMULATION // if set simulate continous stream, if not set simulate SPS conditions
 
 using eudaq::StringEvent;
