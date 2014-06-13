@@ -299,7 +299,6 @@ void DeviceReader::Loop()
     unsigned char data_buf[maxDataLength];
     int length = -1;
 
-//     m_daq_board->StartTrigger(); // TODO
     if (m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength)) {
 
       TEventHeader header;
@@ -439,7 +438,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 #ifndef SIMULATION
     // find board
     int board_no = -1;
-    for (int j=0; j<m_nDevices; j++) {
+    for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
       if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
 	board_no = j;
 	break;
@@ -570,6 +569,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
   
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
   bore.SetTag("Devices", m_nDevices);
+  bore.SetTag("DataVersion", 1);
   
   // read configuration, dump to XML string
   for (int i=0; i<m_nDevices; i++) {
@@ -730,6 +730,8 @@ int PALPIDEFSProducer::BuildEvent()
   for (int i=0; i<m_nDevices; i++) {
     buffer[pos++] = 0xff;
     buffer[pos++] = i;
+    
+    // TODO add length of data here
     
     SingleEvent* single_ev = m_next_event[i];
 
