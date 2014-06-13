@@ -20,16 +20,11 @@
 #define EUDAQ_BCOPY(source,dest,NSize) bcopy(source,dest,NSize)
 #define EUDAQ_Sleep(x) sleep(x)
 #define EUDAQ_CLOSE_SOCKET(x) close(x)
-#define EUDAQ_inet_aton(inAdress,OutAddrBuffer) inet_aton(inAdress,OutAddrBuffer)
 #else
 
 #include <winsock.h>
-#pragma comment(lib, "Ws2_32.lib")
-#include "eudaq/RunControl.hh"
-#include <WS2tcpip.h>
 #define EUDAQ_Sleep(x) Sleep(x)
 #define EUDAQ_BCOPY(source,dest,NSize) memmove(dest,source,NSize)
-#define EUDAQ_inet_aton(inAdress,OutAddrBuffer) inet_pton(AF_INET,inAdress,OutAddrBuffer)
 
 #define EUDAQ_CLOSE_SOCKET(x) closesocket(x)
 
@@ -97,12 +92,13 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 	m_server = param.Get("NiIPaddr", "");
 	
 	// convert string in config into IPv4 address
-        struct in_addr inp;
-        int status = EUDAQ_inet_aton(m_server.c_str(), &inp);
-        if (status == 0) {
+	hostent * host = gethostbyname(m_server.c_str());
+	if (!host) {
           EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
           perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
-        }
+	}
+	memcpy((char *) &config.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+
 
        if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 EUDAQ_ERROR("ConfSocket: Error creating the TCP socket  " );
@@ -111,7 +107,6 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
         } else
                 printf("----TCP/NI crate: SOCKET is OK...\n");
 
-        config.sin_addr = inp;
         printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
         printf("----TCP/NI crate INET PORT is: %d \n", PORT_CONFIG );
 
@@ -128,7 +123,7 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 }
 void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len){
 	bool dbg = false;
-		if (dbg) printf("size=%lu", static_cast<uint32_t>(len));
+		if (dbg) printf("size=%zu", len);
 
 	if (EUDAQ_SEND(sock_config,text, len, 0) == -1) 	perror("Server-send() error lol!");
 
@@ -153,7 +148,7 @@ unsigned int NiController::ConfigClientSocket_ReadLength(const char * /*string[4
 		exit(1);
 	}
 	else {
-		 if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
+		 if (dbg)printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%u \n", static_cast<uint32_t>(numbytes));
 		i=0;
 		if (dbg){
 			while (i<numbytes){
@@ -188,7 +183,7 @@ std::vector<unsigned char> NiController::ConfigClientSocket_ReadData(int datalen
 			exit(1);
 		}
 		else {
-		  if (dbg) printf("|==ConfigClientSocket_ReadLength==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
+		  if (dbg) printf("|==ConfigClientSocket_ReadLength==|    numbytes=%u \n", static_cast<uint32_t>(numbytes));
 			read_bytes_left = read_bytes_left - numbytes;
 			for (int k=0; k< numbytes; k++){
 				ConfigData[stored_bytes] = Buffer_data[k];
@@ -213,12 +208,12 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 	m_server = param.Get("NiIPaddr", "");
 
 	// convert string in config into IPv4 address
-        struct in_addr inp;
-        int status = EUDAQ_inet_aton(m_server.c_str(), &inp);
-        if (status == 0) {
-          EUDAQ_ERROR("DataTransportSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
-          perror("DataTransportSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
-        }
+	hostent * host = gethostbyname(m_server.c_str());
+	if (!host) {
+          EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
+          perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
+	}
+	memcpy((char *) &config.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
 
 	if ((sock_datatransport = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		EUDAQ_ERROR("DataTransportSocket: Error creating socket " );
@@ -226,8 +221,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 		exit(1);
 	} else
 		printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
-	//sleep (5);
-	datatransport.sin_addr = inp;
+
 	printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n", inet_ntoa(datatransport.sin_addr));
 	printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %d \n", PORT_DATATRANSF );
 
@@ -253,7 +247,7 @@ unsigned int NiController::DataTransportClientSocket_ReadLength(const char * /*s
 		exit(1);
 	}
 	else {
-		 if (dbg)printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
+		 if (dbg)printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%u \n", static_cast<uint32_t>(numbytes));
 		i=0;
 		if (dbg){
 			while (i<numbytes){
@@ -289,7 +283,7 @@ std::vector<unsigned char> NiController::DataTransportClientSocket_ReadData(int 
 			exit(1);
 		}
 		else {
-		  if (dbg) printf("|==DataTransportClientSocket_ReadData==|    numbytes=%lu \n", static_cast<uint32_t>(numbytes));
+		  if (dbg) printf("|==DataTransportClientSocket_ReadData==|    numbytes=%u \n", static_cast<uint32_t>(numbytes));
 			read_bytes_left = read_bytes_left - numbytes;
 			for (int k=0; k< numbytes; k++){
 				mimosa_data[stored_bytes] = Buffer_data[k];
