@@ -23,6 +23,7 @@
 #else
 
 #include <winsock.h>
+#pragma comment(lib, "Ws2_32.lib")
 #define EUDAQ_Sleep(x) Sleep(x)
 #define EUDAQ_BCOPY(source,dest,NSize) memmove(dest,source,NSize)
 
