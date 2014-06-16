@@ -45,27 +45,7 @@ int main(int, char ** argv) {
 	
 		readProcess.SetParameter(TAGNAME_RUNCONTROL,"127.0.0.1:44000");
 		readProcess.StartRun();
-		bool running=true;
-		bool help = true;
-// 		    do {
-// 				if (help) {
-// 					help = false;
-// 				std::cout << "--- Commands ---\n"
-// 					<< "s data Send StringEvent with 'data' as payload\n"
-// 					<< "r size Send RawDataEvent with size bytes of random data (default=1k)\n"
-// 					<< "l msg  Send log message\n"
-// 					<< "o msg  Set status=OK\n"
-// 					<< "w msg  Set status=WARN\n"
-// 					<< "e msg  Set status=ERROR\n"
-// 					<< "q      Quit\n"
-// 					<< "?      \n"
-// 					<< "----------------" << std::endl;
-// 				}
-// 
-// 				
-// 				running=readProcess.processNextEvent();
-// 
-// 			}while(running);
+
 		readProcess.process();
 		readProcess.EndRun();
 
