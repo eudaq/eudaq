@@ -3,7 +3,30 @@
 #include "MultiFileReader.hh"
 
 
-
+/** Template class to read in multiple data files (raw files). 
+ *  example:
+ *  
+ *  ReadAndProcess<myNewProcessorClass> readProcess;
+ *  std::vector<unsigned> elementsOfInterest={0,1,3,4,76,666,999};
+ *  readProcess.setEventsOfInterest(elementsOfInterest);   // adds the elemts of interest
+ *  readProcess.addFileReader("myfilename01.raw");         //  adds files to read in 
+ *  readProcess.addFileReader("myfilename02.raw");         //  you can open multiple files at once
+ *  
+ *  readProcess.setWriter(new myNewProcessorClass());      // add a processor class. only one precessor is allowed. 
+ *	                                                       // in order to work the processor class needs to have the following non member functions:
+ *                                                         //  void helper_setParameter( myNewProcessorClass& writer,const std::string& tagName,const std::string& val)
+ *                                                         //  
+ *                                                         //  void helper_StartRun(multiResender& writer,unsigned runnumber);
+ *                                                         //  void helper_ProcessEvent(multiResender& writer,const DetectorEvent &ev);
+ *                                                         //  void helper_EndRun(multiResender& writer);
+ *
+ *  readProcess.SetParameter("myTagName","myTagValue");    //  gives you the possibility to give parameters to the processor class
+ *  readProcess.StartRun();                                //  begin of run
+ *  readProcess.processNextEvent()                         //  processes only the next event
+ *  readProcess.process();                                 //  Processes all events
+ *  readProcess.EndRun();                                  //  indecates the end of run 
+ *
+ */
 template <typename processClass>
 class ReadAndProcess{
 public:
