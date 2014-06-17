@@ -210,6 +210,9 @@ void DeviceReader::Loop()
     
     if (IsStopping())
       break;
+    
+    eudaq::mSleep(10);
+    SimpleLock lock(m_mutex);    
 
     if (!IsRunning()) {
       eudaq::mSleep(20); 
@@ -338,7 +341,7 @@ void DeviceReader::Loop()
     }
       
     // TODO only if no data has been received
-    eudaq::mSleep(1);
+//     eudaq::mSleep(10);
 #endif
   }
   Print("ThreadRunner stopping...");
@@ -521,16 +524,20 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       dut->MaskNoisyPixels();
     }
     
+//     eudaq::mSleep(1000);
+    
     // TODO how often do we have to repeat this?
     // data taking configuration
     const int StrobeLength = 10;
+//     const int StrobeBLength = 50;
     const int StrobeBLength = 50;
     const int ReadoutDelay = 10;
 
     // PrepareEmptyReadout
     daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
 //     daq_board->ConfigureTrigger (0, StrobeLength, 1, 1); // TODO
-    daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
+//     daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
+    daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, 50);
     
     // PrepareChipReadout
     dut->SetChipMode(MODE_ALPIDE_CONFIG);
@@ -590,7 +597,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     std::string configStr;
     configStr << doc;
     
-    std::cout << configStr << std::endl;
+//     std::cout << configStr << std::endl;
     
     char tmp[100];
     sprintf(tmp, "Config_%d", i);
@@ -738,7 +745,7 @@ int PALPIDEFSProducer::BuildEvent()
     // select by timestamp
     if (timestamp != 0 && (float) single_ev->m_timestamp / timestamp > 1.5) {
       char msg[100];
-      sprintf(msg, "Out of sync: Timestamp of current event is %lu while smallest is %lu.", single_ev->m_timestamp, timestamp);
+      sprintf(msg, "Out of sync: Timestamp of current event %d is %lu while smallest is %lu.", i,  single_ev->m_timestamp, timestamp);
       std::cerr << msg << std::endl;
       EUDAQ_WARN(msg);
       SetStatus(eudaq::Status::LVL_WARN, msg);
@@ -778,7 +785,8 @@ int PALPIDEFSProducer::BuildEvent()
   
   // clean up
   for (int i=0; i<m_nDevices; i++) {
-    if (m_next_event[i]->m_trigger_id == trigger_id) {
+//     if (m_next_event[i]->m_trigger_id == trigger_id) 
+    {
       delete m_next_event[i];
       m_next_event[i] = 0;
     }

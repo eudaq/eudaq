@@ -195,7 +195,7 @@ namespace eudaq {
 		for (int i=0; i<8; i++)
 		  ((unsigned char*) &timestamp)[i] = data[pos++];
     #ifdef MYDEBUG
-	      cout << "Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
+	      cout << "Layer " << current_layer << " Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
     #endif
 	      }
 	    } else {
