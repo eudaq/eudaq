@@ -8,10 +8,16 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <unistd.h>
+#include <iomanip>
 
 #include "SpidrController.h" 
 #include "SpidrDaq.h"
 #include "tpx3defs.h"
+
+#define error_out(str) cout<<str<<": "<<spidrctrl.errorString()<<endl
+
+using namespace std;
 
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
@@ -21,12 +27,20 @@ static const std::string EVENT_TYPE = "Example";
 class Timepix3Producer : public eudaq::Producer {
   public:
   
+  //////////////////////////////////////////////////////////////////////////////////
+  // Timepix3Producer
+  //////////////////////////////////////////////////////////////////////////////////
+
   // The constructor must call the eudaq::Producer constructor with the name
   // and the runcontrol connection string, and initialize any member variables.
   Timepix3Producer(const std::string & name, const std::string & runcontrol)
     : eudaq::Producer(name, runcontrol),
       m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
-  
+    
+  //////////////////////////////////////////////////////////////////////////////////
+  // OnConfigure
+  //////////////////////////////////////////////////////////////////////////////////
+
   // This gets called whenever the DAQ is configured
   virtual void OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Configuring: " << config.Name() << std::endl;
@@ -40,6 +54,10 @@ class Timepix3Producer : public eudaq::Producer {
     // At the end, set the status that will be displayed in the Run Control.
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
   }
+
+  //////////////////////////////////////////////////////////////////////////////////
+  // OnStartRun
+  //////////////////////////////////////////////////////////////////////////////////
   
   // This gets called whenever a new run is started
   // It receives the new run number as a parameter
@@ -61,7 +79,11 @@ class Timepix3Producer : public eudaq::Producer {
     SetStatus(eudaq::Status::LVL_OK, "Running");
     started=true;
   }
-  
+
+  //////////////////////////////////////////////////////////////////////////////////
+  // OnStopRun
+  //////////////////////////////////////////////////////////////////////////////////
+ 
   // This gets called whenever a run is stopped
   virtual void OnStopRun() {
     std::cout << "Stopping Run" << std::endl;
@@ -78,6 +100,10 @@ class Timepix3Producer : public eudaq::Producer {
     // You can also set tags on it (as with the BORE) if necessary
     SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
   }
+
+  //////////////////////////////////////////////////////////////////////////////////
+  // OnTerminate
+  //////////////////////////////////////////////////////////////////////////////////
   
   // This gets called when the Run Control is terminating,
   // we should also exit.
@@ -86,6 +112,10 @@ class Timepix3Producer : public eudaq::Producer {
     done = true;
   }
   
+  //////////////////////////////////////////////////////////////////////////////////
+  // ReadoutLoop
+  //////////////////////////////////////////////////////////////////////////////////
+
   // This is just an example, adapt it to your hardware
   void ReadoutLoop() {
     // Loop until Run Control tells us to terminate
@@ -138,6 +168,10 @@ private:
   bool stopping, done,started;
 };
 
+//////////////////////////////////////////////////////////////////////////////////
+// main
+//////////////////////////////////////////////////////////////////////////////////
+
 // The main function that will create a Producer instance and run it
 int main(int /*argc*/, const char ** argv) {
   // You can use the OptionParser to get command-line arguments
@@ -151,6 +185,8 @@ int main(int /*argc*/, const char ** argv) {
 				   "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name (op, "n", "name", "Timepix3", "string",
 				   "The name of this Producer");
+
+  /*
   try {
     // This will look through the command-line arguments and set the options
     op.Parse(argv);
@@ -166,5 +202,161 @@ int main(int /*argc*/, const char ** argv) {
     // This does some basic error handling of common exceptions
     return op.HandleMainException();
   }
+  */
+
+  std::cout << "==============> Timepix3Producer, main()..." << std::endl;
+
+  // Open a control connection to SPIDR-TPX3 module
+  // with address 192.168.100.10, default port number 50000
+  SpidrController spidrctrl( 192, 168, 100, 10 );
+
+  // Are we connected to the SPIDR-TPX3 module?
+  if( !spidrctrl.isConnected() ) 
+    {
+      std::cout << spidrctrl.ipAddressString() << ": " << spidrctrl.connectionStateString() << ", " << spidrctrl.connectionErrString() << std::endl;
+      return 1;
+    } 
+  else 
+    {
+      std::cout << "\n------------------------------" << std::endl;
+      std::cout << "SpidrController is connected!" << std::endl;
+      std::cout << "Class version: " << spidrctrl.versionToString( spidrctrl.classVersion() ) << std::endl;
+      int firmwVersion, softwVersion = 0;
+      if( spidrctrl.getFirmwVersion( &firmwVersion ) ) std::cout << "Firmware version: " << spidrctrl.versionToString( firmwVersion ) << std::endl;
+      if( spidrctrl.getSoftwVersion( &softwVersion ) ) std::cout << "Software version: " << spidrctrl.versionToString( softwVersion ) << std::endl;
+      std::cout << "------------------------------\n" << std::endl;
+    }
+
+  // Interface to Timepix3 pixel data acquisition
+  SpidrDaq spidrdaq( &spidrctrl );
+  string errstr = spidrdaq.errorString();
+  if( !errstr.empty() ) cout << "###SpidrDaq: " << errstr << endl;
+  
+  int device_nr = 0;
+  
+  // ----------------------------------------------------------
+  // DACs configuration
+  if( !spidrctrl.setDacsDflt( device_nr ) )
+    {
+      error_out( "###setDacsDflt" );
+    }
+  
+  // ----------------------------------------------------------
+  // Enable decoder
+  if( !spidrctrl.setDecodersEna( 1 ) )
+    {
+      error_out( "###setDecodersEna" );
+    }
+
+  // ----------------------------------------------------------
+  // Pixel configuration
+  if( !spidrctrl.resetPixels( device_nr ) )
+    error_out( "###resetPixels" );
+
+  // Enable test-bit in all pixels
+  spidrctrl.resetPixelConfig();
+  spidrctrl.setPixelTestEna( ALL_PIXELS, ALL_PIXELS );
+  if( !spidrctrl.setPixelConfig( device_nr ) ) 
+    {
+      error_out( "###setPixelConfig" );
+    }
+
+  // ----------------------------------------------------------
+  // Test pulse and CTPR configuration
+
+  // Timepix3 test pulse configuration
+  if( !spidrctrl.setTpPeriodPhase( device_nr, 100, 0 ) ) 
+    {
+      error_out( "###setTpPeriodPhase" );
+    }
+  if( !spidrctrl.setTpNumber( device_nr, 1 ) ) 
+    {
+      error_out( "###setTpNumber" );
+    }
+
+  // Enable test-pulses for some columns
+  int col;
+  for( col=0; col<256; ++col ) 
+    {
+      if( col >= 10 && col < 12 ) 
+	{
+	  spidrctrl.setCtprBit( col );
+	}
+    }
+  
+  if( !spidrctrl.setCtpr( device_nr ) ) 
+    {
+      error_out( "###setCtpr" );
+    }
+
+  // ----------------------------------------------------------
+  // SPIDR-TPX3 and Timepix3 timers
+  if( !spidrctrl.restartTimers() ) 
+    {
+      error_out( "###restartTimers" );
+    }
+
+  // Set Timepix3 acquisition mode
+  if( !spidrctrl.setGenConfig( device_nr,
+			       TPX3_POLARITY_HPLUS |
+			       TPX3_ACQMODE_TOA_TOT |
+			       TPX3_GRAYCOUNT_ENA |
+			       TPX3_TESTPULSE_ENA |
+			       TPX3_FASTLO_ENA |
+			       TPX3_SELECTTP_DIGITAL ) )
+    {
+      error_out( "###setGenConfig" );
+    }
+  
+  // Set Timepix3 into acquisition mode
+  if( !spidrctrl.datadrivenReadout() ) 
+    {
+      error_out( "###datadrivenReadout" );
+    }
+  
+  // ----------------------------------------------------------
+  // Configure the shutter trigger
+  int trigger_mode = 4;           // SPIDR_TRIG_AUTO;
+  int trigger_length_us = 100000; // 100 ms
+  int trigger_freq_hz = 2;        // 2 Hz
+  int trigger_count = 10;         // 10 triggers
+  if( !spidrctrl.setTriggerConfig( trigger_mode, trigger_length_us, trigger_freq_hz, trigger_count ) ) 
+    {
+      error_out( "###setTriggerConfig" );
+    }
+  
+  // Sample pixel data while writing the data to file (run number 123)
+  spidrdaq.setSampling( true );
+  spidrdaq.startRecording( "/data/test/test.dat", 123, "This is test data." );
+
+  // ----------------------------------------------------------
+  // Get data samples and display some pixel data details
+  // Start triggers
+  if( !spidrctrl.startAutoTrigger() )
+    {
+      error_out( "###startAutoTrigger" );
+    }
+  int cnt = 0, size, x, y, pixdata, timestamp;
+  bool next_sample = true;
+  while( next_sample )
+    {
+      // Get a sample of (at most) 1000 pixel data packets, waiting up to 3 s for it
+      next_sample = spidrdaq.getSample( 10*8, 3000 );
+      if( next_sample )
+	{
+	  ++cnt;
+	  size = spidrdaq.sampleSize();
+	  cout << "Sample " << cnt << " size=" << size << endl;
+	  while( spidrdaq.nextPixel( &x, &y, &pixdata, &timestamp ) ) 
+	    {
+	      cout << x << "," << y << ": " << dec << pixdata << endl;
+	    }
+	}
+      else
+	{
+	  cout << "### Timeout --> finish" << endl;
+	}
+    }
+  
   return 0;
 }
