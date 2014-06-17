@@ -123,6 +123,7 @@ DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpid
   m_queue_size(0), 
   m_stop(false), 
   m_running(false), 
+  m_flushing(false),
   m_id(id), 
   m_debuglevel(debuglevel), 
   m_daq_board(daq_board),
@@ -132,6 +133,9 @@ DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpid
   m_max_queue_size(50*1024*1024)
 { 
   m_thread.start(DeviceReader::LoopWrapper, this);
+#ifndef SIMULATION
+  m_last_trigger_id = m_daq_board->GetLastEventId();
+#endif
 }
     
 void DeviceReader::Stop() 
@@ -146,11 +150,14 @@ void DeviceReader::SetRunning(bool running)
 {
   std::cout << "DeviceReader " << m_id << ": Set running: " << running << std::endl;
   SimpleLock lock(m_mutex);
+  if (m_running && !running)
+    m_flushing = true;
   m_running = running;
+  
 #ifndef SIMULATION  
   if (m_running)
     m_daq_board->StartTrigger();
-  else
+  else 
     m_daq_board->StopTrigger();
 #endif
 }
@@ -212,10 +219,22 @@ void DeviceReader::Loop()
       break;
     
     eudaq::mSleep(10);
-    SimpleLock lock(m_mutex);    
 
-    if (!IsRunning()) {
+    if (!IsRunning() && !IsFlushing()) {
       eudaq::mSleep(20); 
+      continue;
+    }
+    
+    if (m_daq_board->GetLastEventId() <= m_last_trigger_id+1) {
+//       std::cout << "No event " << m_daq_board->GetLastEventId() << " " << m_last_trigger_id << std::endl;
+      // no event waiting
+
+      if (IsFlushing()) {
+        SimpleLock lock(m_mutex);
+        m_flushing = false;
+	std::cout << "Finished flushing " << m_daq_board->GetLastEventId() << " " << m_last_trigger_id << std::endl;
+      }
+      eudaq::mSleep(10);
       continue;
     }
     
@@ -332,6 +351,7 @@ void DeviceReader::Loop()
 	memcpy(ev->m_buffer, data_buf+20, length - 28);
 	// add to queue
 	Push(ev);
+        m_last_trigger_id = header.EventId;
       } else {
 	char msg[100];
 	sprintf(msg, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK, TrailerOK);
@@ -529,15 +549,15 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     // TODO how often do we have to repeat this?
     // data taking configuration
     const int StrobeLength = 10;
-//     const int StrobeBLength = 50;
-    const int StrobeBLength = 50;
+    const int StrobeBLength = 20;
     const int ReadoutDelay = 10;
+    const int TriggerDelay = 75;
 
     // PrepareEmptyReadout
     daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
 //     daq_board->ConfigureTrigger (0, StrobeLength, 1, 1); // TODO
 //     daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
-    daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, 50);
+    daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, TriggerDelay);
     
     // PrepareChipReadout
     dut->SetChipMode(MODE_ALPIDE_CONFIG);
@@ -723,7 +743,6 @@ int PALPIDEFSProducer::BuildEvent()
     std::cout << "Sending event with trigger id " << trigger_id << std::endl;
   
   // send event with trigger id trigger_id
-#if 1
   // send all layers in one block
   unsigned long total_size = m_nDevices * (2 + 2 * sizeof(uint64_t));
   for (int i=0; i<m_nDevices; i++) {
@@ -768,20 +787,6 @@ int PALPIDEFSProducer::BuildEvent()
   ev.AddBlock(0, buffer, total_size);
   SendEvent(ev);
   delete buffer;
-#else
-  // send one layer per Block, but rather slow this way
-  RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
-  const char* empty = "";
-  for (int i=0; i<m_nDevices; i++) {
-    SingleEvent* single_ev = m_next_event[i];
-    
-    if (single_ev->m_trigger_id == trigger_id)
-      ev.AddBlock(i, single_ev->m_buffer, single_ev->m_length);
-    else
-      ev.AddBlock(i, &empty, 0);
-  }
-  SendEvent(ev);
-#endif
   
   // clean up
   for (int i=0; i<m_nDevices; i++) {

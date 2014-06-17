@@ -66,6 +66,7 @@ class DeviceReader {
     bool Disconnect();
     bool IsStopping() {  SimpleLock lock(m_mutex); return m_stop; }
     bool IsRunning() {   SimpleLock lock(m_mutex); return m_running; }
+    bool IsFlushing() {   SimpleLock lock(m_mutex); return m_flushing; }
     void SetStopping() { SimpleLock lock(m_mutex); m_stop = true; }
     
     void Push(SingleEvent* ev);
@@ -77,6 +78,7 @@ class DeviceReader {
     eudaq::Mutex m_mutex;
     bool m_stop;
     bool m_running;
+    bool m_flushing;
     int m_id;
     int m_debuglevel;
     uint64_t m_last_trigger_id;
