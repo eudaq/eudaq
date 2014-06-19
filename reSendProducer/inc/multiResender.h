@@ -35,7 +35,7 @@ namespace eudaq{
 		if (tagName.compare(TAGNAME_RUNCONTROL)==0)
 		{
 			//std::cout<<"set output pattern to: "<<tagValue<<std::endl;
-			writer.SetRunControl(val);
+      writer.SetRunControl(val);
 			
 		}
 	}

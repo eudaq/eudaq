@@ -37,14 +37,13 @@ public:
 		m_reader.addFileReader(filename);
 	}
 	void setEventsOfInterest(std::vector<unsigned> EventsOfInterest){
-
-		std::sort(EventsOfInterest.begin(),EventsOfInterest.end());
+	  std::sort(EventsOfInterest.begin(),EventsOfInterest.end());
 		m_eventsOfInterest=EventsOfInterest;
 	}
 	void setWriter(processClass* newPrecessor){
 		if (m_processor)
 		{
-			EUDAQ_THROW("processor alredy defined");
+      EUDAQ_THROW("processor alredy defined");
 		}
 		m_processor=std::shared_ptr<processClass>(newPrecessor);
 
@@ -69,9 +68,8 @@ public:
 	void process(){
 		int event_nr=0;
 		do {
-		
-					++event_nr;
-					if (event_nr%1000==0)
+          ++event_nr;
+          if (event_nr%1000==0)
 					{
 						std::cout<<"Processing event "<< event_nr<<std::endl;
 					}
