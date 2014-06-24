@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-import PyEUDAQWrapper # load the ctypes wrapper
+from PyEUDAQWrapper import * # load the ctypes wrapper
 
 from time import sleep
 
