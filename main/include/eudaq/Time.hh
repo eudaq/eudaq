@@ -8,11 +8,19 @@
 #include <string>
 #include <cstring>
 
-#ifdef WIN32
-//# include <time.h>
-//# include <afxwin.h>
-# include <winsock2.h>
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+typedef long long int64_t
+typedef unsigned int uint32_t
+typedef int int32_t
+#else
+#include <cstdint>
+#endif
 
+#ifdef WIN32
+#ifndef __CINT__
+#include <winsock.h>
+#endif
 #else
 # include <sys/time.h>
 #endif
@@ -28,7 +36,7 @@ namespace eudaq {
 
 
       
-      explicit Time(long sec, long usec = 0) {
+      explicit Time(int32_t sec, int32_t usec = 0) {
         tv_usec = usec % 1000000;
         tv_sec = sec + usec / 1000000;
       }
@@ -74,8 +82,8 @@ namespace eudaq {
       std::string Formatted(const std::string & format = TIME_DEFAULT_FORMAT) const;
       static Time Current();
     private:
-      long tv_sec;
-      long tv_usec;
+      int32_t tv_sec;
+      int32_t tv_usec;
   };
 
   inline Time operator + (const timeval & lhs, const timeval rhs) {

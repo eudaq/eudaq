@@ -6,11 +6,18 @@
 #include <iostream>
 #include <cctype>
 
+// for cross-platform sleep:
+#include <chrono>
+#include <thread>
+
 #if EUDAQ_PLATFORM_IS(WIN32)
-# define WIN32_LEAN_AND_MEAN
-# include <Windows.h>
-# include <cstdio>  // HK
-# include <cstdlib>  // HK
+#ifndef __CINT__
+#define WIN32_LEAN_AND_MEAN // causes some rarely used includes to be ignored
+#define _WINSOCKAPI_
+#define _WINSOCK2API_
+#include <cstdio>  // HK
+#include <cstdlib>  // HK
+#endif
 #else
 # include <unistd.h>
 #endif
@@ -82,15 +89,12 @@ namespace eudaq {
   }
 
   void mSleep(unsigned ms) {
-#if EUDAQ_PLATFORM_IS(WIN32)
-    Sleep(ms);
-#else
-    usleep(ms * 1000);
-#endif
+    // use c++11 std sleep routine
+    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
   }
 
   template<>
-    long from_string(const std::string & x, const long & def) {
+  int64_t from_string(const std::string & x, const int64_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
       char * end = 0;
@@ -102,13 +106,13 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      long result = std::strtol(start, &end, base);
+      int64_t result = static_cast<int64_t>(std::strtoll(start, &end, base));
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
 
   template<>
-    unsigned long from_string(const std::string & x, const unsigned long & def) {
+    uint64_t from_string(const std::string & x, const uint64_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
       char * end = 0;
@@ -120,7 +124,7 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      unsigned long result = std::strtoul(start, &end, base);
+      uint64_t result = static_cast<uint64_t>(std::strtoull(start, &end, base));
       if (*end) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }

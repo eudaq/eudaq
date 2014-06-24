@@ -1,11 +1,3 @@
-/*
- *   This source code is part of the Eutelescope package of Marlin.
- *   You are free to use this source files for your own development as
- *   long as it stays in a public research context. You are not
- *   allowed to use it for commercial purpose. You must put this
- *   header with author names in all development based on this file.
- *
- */
 
 #ifdef USE_EUDAQ
 #ifndef EUTELNATIVEREADER_H
@@ -83,11 +75,6 @@ namespace eutelescope {
    *   EUTelMimoTelReader. To do so the <a href="http://confluence.slac.stanford.edu/display/ilc/LCIO+Command+Line+Tool">lcio</a> command line tool has
    *   been using
    *
-   *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @author  Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
-   *   @author  Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-   *   @author  Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-   *   @version $Id: EUTelNativeReader.h 2603 2013-05-13 08:25:41Z diont $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {

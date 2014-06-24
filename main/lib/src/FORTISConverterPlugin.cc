@@ -20,8 +20,8 @@
 #  include "EUTelFortisDetector.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
-#  include "EUTelSparseDataImpl.h"
-#  include "EUTelSimpleSparsePixel.h"
+#  include "EUTelTrackerDataInterfacerImpl.h"
+#  include "EUTelGenericSparsePixel.h"
 using eutelescope::EUTELESCOPE;
 #endif
 

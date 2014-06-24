@@ -247,10 +247,10 @@ namespace eudaq {
         return *(float *)&t;
       }
       static double read_double(Deserializer & ds) {
-        union { double d; unsigned long long i; unsigned char b[sizeof (double)]; } u;
+        union { double d; uint64_t i; unsigned char b[sizeof (double)]; } u;
         //unsigned char buf[sizeof (double)];
         ds.Deserialize(u.b, sizeof u.b);
-        unsigned long long t = 0;
+        uint64_t t = 0;
         for (size_t i = 0; i < sizeof t; ++i) {
           t <<= 8;
           t += u.b[sizeof t - 1 - i];

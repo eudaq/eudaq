@@ -66,7 +66,7 @@ namespace eudaq{
 
 		bool isAsync_;
 		size_t NumberOfEventsToSync_;
-		unsigned long long longTimeDiff_;
+		uint64_t longTimeDiff_;
 		
   };
 

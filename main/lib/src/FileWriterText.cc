@@ -3,7 +3,15 @@
 #include "eudaq/PluginManager.hh"
 #include <iostream>
 #include <fstream>
+
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+typedef long long int64_t
+typedef unsigned int uint32_t
+typedef int int32_t
+#else
 #include <cstdint>
+#endif
 
 uint64_t  timediff=0;
 uint64_t  timediff1=(uint64_t)-1;
@@ -14,7 +22,7 @@ namespace eudaq {
 		FileWriterText(const std::string &);
 		virtual void StartRun(unsigned);
 		virtual void WriteEvent(const DetectorEvent &);
-		virtual unsigned long long FileBytes() const;
+		virtual uint64_t FileBytes() const;
 		virtual ~FileWriterText();
 	private:
 		
@@ -140,6 +148,6 @@ namespace eudaq {
 		}
 	}
 
-	unsigned long long FileWriterText::FileBytes() const { return m_out->tellp(); }
+	uint64_t FileWriterText::FileBytes() const { return m_out->tellp(); }
 
 }
