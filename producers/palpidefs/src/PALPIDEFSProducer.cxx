@@ -418,12 +418,12 @@ void DeviceReader::ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite)
 
 void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param) 
 {
-  std::cout << "Configuring." << std::endl;
-  
-  m_nDevices = param.Get("Devices", 1);
-  m_status_interval = param.Get("StatusInterval", -1);
+  std::cout << "Configuring..." << std::endl;
   
   if (!m_configured) {
+    m_nDevices = param.Get("Devices", 1);
+    m_status_interval = param.Get("StatusInterval", -1);
+  
     int delay = param.Get("QueueFullDelay", 0);
     unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
     
@@ -469,9 +469,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	}
       }
       
-      // HACK if working with old firmware
-  //     board_no = i;
-
       if (board_no == -1) {
 	char msg[100];
 	sprintf(msg, "Device with board address %d not found", board_address);
@@ -587,6 +584,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_configured = true;
   } else {
     // reconfigure
+    
+    std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
     
     for (int i=0; i<m_nDevices; i++) {
       // only configuration

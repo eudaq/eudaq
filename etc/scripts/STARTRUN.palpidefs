@@ -54,7 +54,7 @@ xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestD
 sleep 2
 
 printf '\033[22;33m\t  PALPIDEFS Producer \033[0m \n'
-xterm -sb -sl 1000 -geom 80x20-480-300 -T 'PALPIDEFS Producer' -e './PALPIDEFSProducer.exe -r tcp://$TLUIP:$RCPORT -d 0 2>&1 | tee ../logs/palpidefs/`date +%s`' &
+xterm -sb -sl 1000 -geom 80x20-480-300 -T 'PALPIDEFS Producer' -e 'unbuffer ./PALPIDEFSProducer.exe -r tcp://$TLUIP:$RCPORT -d 0 2>&1 | tee ../logs/palpidefs/`date +%s`' &
 
 # printf '\033[22;33m\t  PALPIDEFS Producer \033[0m \n'
 # xterm -sb -sl 1000 -geom 80x20-480-300 -T 'PALPIDEFS Producer' -e './PALPIDEFSProducer.exe -r tcp://$TLUIP:$RCPORT -d 0 -n pALPIDEfs1' &
