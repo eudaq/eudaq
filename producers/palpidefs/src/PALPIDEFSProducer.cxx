@@ -423,164 +423,196 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   m_nDevices = param.Get("Devices", 1);
   m_status_interval = param.Get("StatusInterval", -1);
   
-  int delay = param.Get("QueueFullDelay", 0);
-  unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
-  
-  m_full_config = param.Get("FullConfig", "");
-
-#ifndef SIMULATION
-  if (!m_testsetup) {
-    std::cout << "Creating test setup " << std::endl;
-    m_testsetup = new TTestSetup;
-  }
-  
-  std::cout << "Searching for DAQ boards " << std::endl;
-  m_testsetup->FindDAQBoards();
-  std::cout << "Found " << m_testsetup->GetNDAQBoards() << " DAQ boards." << std::endl;
-  
-  if (m_testsetup->GetNDAQBoards() < m_nDevices) {
-    char msg[100];
-    sprintf(msg, "Not enough devices connected. Configuration requires %d devices, but only %d present.", m_nDevices, m_testsetup->GetNDAQBoards());
-    std::cerr << msg << std::endl;
-    EUDAQ_ERROR(msg);
-    SetStatus(eudaq::Status::LVL_ERROR, msg);
-    return;
-  }
-  
-  for (int i=0; i<m_nDevices; i++)
-    m_testsetup->AddDUTs(DUT_PALPIDEFS);
-#endif
-
-  m_next_event = new SingleEvent*[m_nDevices];
-  m_reader = new DeviceReader*[m_nDevices];
-  for (int i=0; i<m_nDevices; i++) {
-    char buffer[100];
-    sprintf(buffer, "BoardAddress_%d", i);
-    int board_address = param.Get(buffer, i);
-
-#ifndef SIMULATION
-    // find board
-    int board_no = -1;
-    for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
-      if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
-	board_no = j;
-	break;
-      }
+  if (!m_configured) {
+    int delay = param.Get("QueueFullDelay", 0);
+    unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
+    
+    m_full_config = param.Get("FullConfig", "");
+    
+  #ifndef SIMULATION
+    if (!m_testsetup) {
+      std::cout << "Creating test setup " << std::endl;
+      m_testsetup = new TTestSetup;
     }
     
-    // HACK if working with old firmware
-//     board_no = i;
-
-    if (board_no == -1) {
+    std::cout << "Searching for DAQ boards " << std::endl;
+    m_testsetup->FindDAQBoards();
+    std::cout << "Found " << m_testsetup->GetNDAQBoards() << " DAQ boards." << std::endl;
+    
+    if (m_testsetup->GetNDAQBoards() < m_nDevices) {
       char msg[100];
-      sprintf(msg, "Device with board address %d not found", board_address);
+      sprintf(msg, "Not enough devices connected. Configuration requires %d devices, but only %d present.", m_nDevices, m_testsetup->GetNDAQBoards());
       std::cerr << msg << std::endl;
       EUDAQ_ERROR(msg);
       SetStatus(eudaq::Status::LVL_ERROR, msg);
       return;
     }
     
-    std::cout << "Enabling device " << board_no << std::endl;
-    TpAlpidefs* dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
-    TDAQBoard* daq_board = m_testsetup->GetDAQBoard(board_no);
-    m_testsetup->PowerOnBoard(board_no);
-    m_testsetup->InitialiseChip(board_no);
+    for (int i=0; i<m_nDevices; i++)
+      m_testsetup->AddDUTs(DUT_PALPIDEFS);
+  #endif
 
-    // configuration
-    sprintf(buffer, "Config_File_%d", i);
-    std::string configFile = param.Get(buffer, "");
-    if (configFile.length() > 0) {
-      // TODO maybe add this functionality to TDAQBoard?
-      std::cout << "Running chip configuration..." << std::endl;
-      
-      TiXmlDocument doc(configFile.c_str());
-      if (!doc.LoadFile()) {
-	std::string msg = "Unable to open file ";
-	msg += configFile;
-	std::cerr << msg.data() << std::endl;
-	EUDAQ_ERROR(msg.data());
-	SetStatus(eudaq::Status::LVL_ERROR, msg.data());
-	return;
-      }
-    
-      // TODO return code?
-      ParseXML(daq_board, doc.FirstChild("root")->ToElement(), -1, -1, false);
+    m_next_event = new SingleEvent*[m_nDevices];
+    m_reader = new DeviceReader*[m_nDevices];
+    for (int i=0; i<m_nDevices; i++) {
+      char buffer[100];
+      sprintf(buffer, "BoardAddress_%d", i);
+      int board_address = param.Get(buffer, i);
 
-      /*
-      FILE *fp = fopen(configFile.data(), "r");
-      if (!fp) {
-	std::string msg = "Unable to open file ";
-	msg += configFile;
-	std::cerr << msg.data() << std::endl;
-	EUDAQ_ERROR(msg.data());
-	SetStatus(eudaq::Status::LVL_ERROR, msg.data());
-	return;
-      }
-      int address, value;
-      while (fscanf(fp, "%d %d", &address, &value) == 2)  {
-	int result = daq_board->WriteChipRegister(address, value);
-	if (result == 1) {
-	  std::cout << "Chip register " << address << " set to " << value << std::endl;
-	} else {
-	  char msg[100];
-	  sprintf(msg, "Failure %d writing chip register %d (value %d)", result, address, value);
-	  std::cerr << msg << std::endl;
-	  EUDAQ_ERROR(msg);
-	  SetStatus(eudaq::Status::LVL_ERROR, msg);
-	  return;
+  #ifndef SIMULATION
+      // find board
+      int board_no = -1;
+      for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
+	if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
+	  board_no = j;
+	  break;
 	}
       }
-      fclose(fp);
-      */
-    }
-    
-    // noisy pixels
-    dut->SetMaskAllPixels(false); //unmask all pixels
-    sprintf(buffer, "Noisy_Pixel_File_%d", i);
-    std::string noisyPixels = param.Get(buffer, "");
-    if (noisyPixels.length() > 0) {
-      std::cout << "Setting noisy pixel file..." << std::endl;
-      dut->ReadNoisyPixelFile(noisyPixels.data());
-      dut->MaskNoisyPixels();
-    }
-    
-//     eudaq::mSleep(1000);
-    
-    // TODO how often do we have to repeat this?
-    // data taking configuration
-    const int StrobeLength = 10;
-    const int StrobeBLength = 20;
-    const int ReadoutDelay = 10;
-    const int TriggerDelay = 75;
+      
+      // HACK if working with old firmware
+  //     board_no = i;
 
-    // PrepareEmptyReadout
-    daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
-//     daq_board->ConfigureTrigger (0, StrobeLength, 1, 1); // TODO
-//     daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
-    daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, TriggerDelay);
+      if (board_no == -1) {
+	char msg[100];
+	sprintf(msg, "Device with board address %d not found", board_address);
+	std::cerr << msg << std::endl;
+	EUDAQ_ERROR(msg);
+	SetStatus(eudaq::Status::LVL_ERROR, msg);
+	return;
+      }
+      
+      std::cout << "Enabling device " << board_no << std::endl;
+      TpAlpidefs* dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
+      TDAQBoard* daq_board = m_testsetup->GetDAQBoard(board_no);
+      m_testsetup->PowerOnBoard(board_no);
+      m_testsetup->InitialiseChip(board_no);
+
+      // configuration
+      sprintf(buffer, "Config_File_%d", i);
+      std::string configFile = param.Get(buffer, "");
+      if (configFile.length() > 0) {
+	// TODO maybe add this functionality to TDAQBoard?
+	std::cout << "Running chip configuration..." << std::endl;
+	
+	TiXmlDocument doc(configFile.c_str());
+	if (!doc.LoadFile()) {
+	  std::string msg = "Unable to open file ";
+	  msg += configFile;
+	  std::cerr << msg.data() << std::endl;
+	  EUDAQ_ERROR(msg.data());
+	  SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+	  return;
+	}
+      
+	// TODO return code?
+	ParseXML(daq_board, doc.FirstChild("root")->ToElement(), -1, -1, false);
+
+	/*
+	FILE *fp = fopen(configFile.data(), "r");
+	if (!fp) {
+	  std::string msg = "Unable to open file ";
+	  msg += configFile;
+	  std::cerr << msg.data() << std::endl;
+	  EUDAQ_ERROR(msg.data());
+	  SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+	  return;
+	}
+	int address, value;
+	while (fscanf(fp, "%d %d", &address, &value) == 2)  {
+	  int result = daq_board->WriteChipRegister(address, value);
+	  if (result == 1) {
+	    std::cout << "Chip register " << address << " set to " << value << std::endl;
+	  } else {
+	    char msg[100];
+	    sprintf(msg, "Failure %d writing chip register %d (value %d)", result, address, value);
+	    std::cerr << msg << std::endl;
+	    EUDAQ_ERROR(msg);
+	    SetStatus(eudaq::Status::LVL_ERROR, msg);
+	    return;
+	  }
+	}
+	fclose(fp);
+	*/
+      }
+      
+      // noisy pixels
+      dut->SetMaskAllPixels(false); //unmask all pixels
+      sprintf(buffer, "Noisy_Pixel_File_%d", i);
+      std::string noisyPixels = param.Get(buffer, "");
+      if (noisyPixels.length() > 0) {
+	std::cout << "Setting noisy pixel file..." << std::endl;
+	dut->ReadNoisyPixelFile(noisyPixels.data());
+	dut->MaskNoisyPixels();
+      }
+      
+  //     eudaq::mSleep(1000);
+      
+      // TODO how often do we have to repeat this?
+      // data taking configuration
+      const int StrobeLength = 10;
+      const int StrobeBLength = 20;
+      const int ReadoutDelay = 10;
+      const int TriggerDelay = 75;
+
+      // PrepareEmptyReadout
+      daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
+  //     daq_board->ConfigureTrigger (0, StrobeLength, 1, 1); // TODO
+  //     daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
+      daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, TriggerDelay);
+      
+      // PrepareChipReadout
+      dut->SetChipMode(MODE_ALPIDE_CONFIG);
+      dut->SetReadoutDelay     (ReadoutDelay);
+      dut->SetEnableClustering (false);
+      dut->SetStrobeTiming     (StrobeBLength);
+      dut->SetEnableOutputDrivers(true, true);
+      dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
+  #else
+      TpAlpidefs* dut = 0;
+      TDAQBoard* daq_board = 0;
+  #endif
+
+      m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
+      if (delay > 0)
+	m_reader[i]->SetQueueFullDelay(delay);
+      if (queue_size > 0)
+	m_reader[i]->SetMaxQueueSize(queue_size);
+      m_next_event[i] = 0;
+      
+      std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") intialized." << std::endl;
+
+      eudaq::mSleep(10);
+    }
     
-    // PrepareChipReadout
-    dut->SetChipMode(MODE_ALPIDE_CONFIG);
-    dut->SetReadoutDelay     (ReadoutDelay);
-    dut->SetEnableClustering (false);
-    dut->SetStrobeTiming     (StrobeBLength);
-    dut->SetEnableOutputDrivers(true, true);
-    dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
-#else
-    TpAlpidefs* dut = 0;
-    TDAQBoard* daq_board = 0;
+    m_configured = true;
+  } else {
+    // reconfigure
+    
+    for (int i=0; i<m_nDevices; i++) {
+      // only configuration
+#ifndef SIMULATION
+      char buffer[100];
+      sprintf(buffer, "Config_File_%d", i);
+      std::string configFile = param.Get(buffer, "");
+      if (configFile.length() > 0) {
+	// TODO maybe add this functionality to TDAQBoard?
+	std::cout << "Running chip configuration..." << std::endl;
+	
+	TiXmlDocument doc(configFile.c_str());
+	if (!doc.LoadFile()) {
+	  std::string msg = "Unable to open file ";
+	  msg += configFile;
+	  std::cerr << msg.data() << std::endl;
+	  EUDAQ_ERROR(msg.data());
+	  SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+	  return;
+	}
+      
+	// TODO return code?
+	ParseXML(m_reader[i]->GetDAQBoard(), doc.FirstChild("root")->ToElement(), -1, -1, false);
+      }
 #endif
-
-    m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
-    if (delay > 0)
-      m_reader[i]->SetQueueFullDelay(delay);
-    if (queue_size > 0)
-      m_reader[i]->SetMaxQueueSize(queue_size);
-    m_next_event[i] = 0;
-    
-    std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") intialized." << std::endl;
-
-    eudaq::mSleep(10);
+    }
   }
   
   EUDAQ_INFO("Configured (" + param.Name() + ")");
