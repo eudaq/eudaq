@@ -56,6 +56,8 @@ class DeviceReader {
     void PrintQueueStatus();
     static void* LoopWrapper(void* arg);
     
+    TDAQBoard* GetDAQBoard() { return m_daq_board; }
+    
     float GetTemperature();
   
     void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
@@ -94,7 +96,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config() {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config() {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -120,6 +122,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool m_done;
     bool m_running;
     bool m_flush;
+    bool m_configured;
     DeviceReader** m_reader;
     SingleEvent** m_next_event;
     int m_debuglevel;
