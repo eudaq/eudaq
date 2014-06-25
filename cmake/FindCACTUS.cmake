@@ -8,7 +8,24 @@
 #find_cactus_in_extern("")
 
 #set(CACTUS_ROOT ${PROJECT_SOURCE_DIR}/extern/cactus )
-set(CACTUS_ROOT /opt/cactus )
+
+file(GLOB_RECURSE uhal_include /opt/cactus/*uhal.hpp)
+if(uhal_include)
+    set(CACTUS_ROOT /opt/cactus )
+    MESSAGE(STATUS "Found uhal.hpp in ${uhal_include}")
+else(uhal_include)
+file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*uhal.hpp)
+if (extern_file)
+    # strip the file and 'include' path away:
+    get_filename_component(extern_lib_path "${extern_file}" PATH)
+    get_filename_component(extern_lib_path "${extern_lib_path}" PATH)
+    get_filename_component(extern_lib_path "${extern_lib_path}" PATH)
+    MESSAGE(STATUS "Found CACTUS package in 'extern' subfolder: ${extern_lib_path}")
+    set(CACTUS_ROOT ${extern_lib_path})
+endif(extern_file)
+endif(uhal_include)
+
+
 
 # could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT CACTUS_ROOT)
