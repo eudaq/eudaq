@@ -64,7 +64,7 @@ class DeviceReader {
 
   protected:
     void Loop();
-    void Print(const char* text);
+    void Print(int level, const char* text, uint64_t value1 = -1, uint64_t value2 = -1, uint64_t value3 = -1, uint64_t value4 = -1);
     bool Disconnect();
     bool IsStopping() {  SimpleLock lock(m_mutex); return m_stop; }
     bool IsRunning() {   SimpleLock lock(m_mutex); return m_running; }
@@ -96,7 +96,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config() {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true) {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -134,4 +134,5 @@ class PALPIDEFSProducer : public eudaq::Producer {
     int m_nDevices;
     int m_status_interval;
     std::string m_full_config;
+    bool m_ignore_trigger_ids;
 };

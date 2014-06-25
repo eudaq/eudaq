@@ -134,13 +134,14 @@ DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpid
 { 
   m_thread.start(DeviceReader::LoopWrapper, this);
 #ifndef SIMULATION
-  m_last_trigger_id = m_daq_board->GetLastEventId();
+  m_last_trigger_id = m_daq_board->GetNextEventId();
+  Print(0, "Starting with last event id: %lu", m_last_trigger_id);
 #endif
 }
     
 void DeviceReader::Stop() 
 {
-  Print("Stopping...");
+  Print(0, "Stopping...");
   SetStopping();
   m_thread.join();
   Disconnect();
@@ -148,7 +149,7 @@ void DeviceReader::Stop()
 
 void DeviceReader::SetRunning(bool running) 
 {
-  std::cout << "DeviceReader " << m_id << ": Set running: " << running << std::endl;
+  Print(0, "Set running: %lu", running);
   SimpleLock lock(m_mutex);
   if (m_running && !running)
     m_flushing = true;
@@ -189,18 +190,18 @@ SingleEvent* DeviceReader::PopNextEvent()
     m_queue.pop();
     m_queue_size -= ev->m_length;
     if (m_debuglevel > 3)
-      std::cout << "DeviceReader " << m_id << ":" << "Returning event. Current queue status: " << m_queue.size() << " elements. Total size:" << m_queue_size << std::endl;
+      Print(0, "Returning event. Current queue status: %lu elements. Total size: %lu", m_queue.size(), m_queue_size);
     return ev;
   }
   if (m_debuglevel > 3)
-    Print("PopNextEvent: No event available");
+    Print(0, "PopNextEvent: No event available");
   return 0;
 }
 
 void DeviceReader::PrintQueueStatus() 
 {
   SimpleLock lock(m_mutex);
-  std::cout << "DeviceReader " << m_id << ": " << "Queue status: " << m_queue.size() << " elements. Total size:" << m_queue_size << std::endl;
+  Print(0, "Queue status: %lu elements. Total size: %lu", m_queue.size(), m_queue_size);
 }
 
 void* DeviceReader::LoopWrapper(void* arg) 
@@ -212,29 +213,16 @@ void* DeviceReader::LoopWrapper(void* arg)
   
 void DeviceReader::Loop() 
 {
-  Print("Loop starting...");
+  Print(0, "Loop starting...");
   while (1) {
     
     if (IsStopping())
       break;
     
-    eudaq::mSleep(10);
+//     eudaq::mSleep(10);
 
     if (!IsRunning() && !IsFlushing()) {
       eudaq::mSleep(20); 
-      continue;
-    }
-    
-    if (m_daq_board->GetLastEventId() <= m_last_trigger_id+1) {
-//       std::cout << "No event " << m_daq_board->GetLastEventId() << " " << m_last_trigger_id << std::endl;
-      // no event waiting
-
-      if (IsFlushing()) {
-        SimpleLock lock(m_mutex);
-        m_flushing = false;
-	std::cout << "Finished flushing " << m_daq_board->GetLastEventId() << " " << m_last_trigger_id << std::endl;
-      }
-      eudaq::mSleep(10);
       continue;
     }
     
@@ -302,7 +290,7 @@ void DeviceReader::Loop()
 	  str += buffer;
 	}
 	str += "\n";
-	Print(str.data());
+	Print(0, str.data());
       }
     
       // add to queue
@@ -311,11 +299,30 @@ void DeviceReader::Loop()
       if (i % 100 == 0)
 	eudaq::mSleep(1);
     }
-    Print("One spill simulated.");
+    Print(0, "One spill simulated.");
     
     eudaq::mSleep(20000 - 2400);
 #endif
 #else
+    bool event_waiting = true;
+//     if (IsFlushing() && m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
+    if (m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
+      event_waiting = false;
+    
+    if (!event_waiting)
+    {
+//       std::cout << "No event " << m_daq_board->GetNextEventId() << " " << m_last_trigger_id << std::endl;
+      // no event waiting
+
+      if (IsFlushing()) {
+        SimpleLock lock(m_mutex);
+        m_flushing = false;
+	Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
+      }
+      eudaq::mSleep(1);
+      continue;
+    }
+    
     // data taking
     const int maxDataLength = 1024; // 512*32 + 64; // TODO check
     unsigned char data_buf[maxDataLength];
@@ -339,11 +346,11 @@ void DeviceReader::Loop()
 	  std::string str = "RAW payload: ";
 	  for (int j=0; j<length-28; j++) {
 	    char buffer[20];
-	    sprintf(buffer, "%x ", data_buf[j+20]);
+	    sprintf(buffer, "%02x ", data_buf[j+20]);
 	    str += buffer;
 	  }
 	  str += "\n";
-	  Print(str.data());
+	  Print(0, str.data());
 	}
 	
 // 	std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
@@ -351,31 +358,64 @@ void DeviceReader::Loop()
 	memcpy(ev->m_buffer, data_buf+20, length - 28);
 	// add to queue
 	Push(ev);
+	
+	// DEBUG
+	/*
+	if (header.EventId > m_last_trigger_id*2) {
+	  Print(2, "Very large id %lu %lu", header.EventId, m_last_trigger_id);
+	  std::string str = "RAW: ";
+	  for (int j=0; j<length; j++) {
+	    char buffer[20];
+	    sprintf(buffer, "%02x ", data_buf[j]);
+	    str += buffer;
+	  }
+	  str += "\n";
+	  Print(0, str.data());	  
+	}
+	*/
+	// --DEBUG
+	
         m_last_trigger_id = header.EventId;
       } else {
-	char msg[100];
-	sprintf(msg, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK, TrailerOK);
-	Print(msg);
-	EUDAQ_WARN(msg);
+	Print(2, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK, TrailerOK);
       }
     }
-      
-    // TODO only if no data has been received
-//     eudaq::mSleep(10);
 #endif
   }
-  Print("ThreadRunner stopping...");
+  Print(0, "ThreadRunner stopping...");
 }
     
-void DeviceReader::Print(const char* text) 
+void DeviceReader::Print(int level, const char* text, uint64_t value1, uint64_t value2, uint64_t value3, uint64_t value4) 
 {
-  std::cout << "DeviceReader " << m_id << ": " << text << std::endl;
+  // level:
+  //   0 -> printout
+  //   1 -> INFO
+  //   2 -> WARN
+  //   3 -> ERROR
+  
+  std::string tmp("DeviceReader %d: ");
+  tmp += text;
+  
+  char msg[1000];
+  sprintf(msg, tmp.data(), m_id, value1, value2, value3, value4);
+  
+  std::cout << msg << std::endl;
+  if (level == 1) {
+    EUDAQ_INFO(msg);
+//     SetStatus(eudaq::Status::LVL_OK, msg);
+  } else if (level == 2) {
+    EUDAQ_WARN(msg);
+//     SetStatus(eudaq::Status::LVL_WARN, msg);
+  } else if (level == 3) {
+    EUDAQ_ERROR(msg);
+//     SetStatus(eudaq::Status::LVL_ERROR, msg);
+  }
 }
 
 bool DeviceReader::Disconnect() 
 {
   // TODO move poweroff here
-  Print("Disconnecting device...");
+  Print(0, "Disconnecting device...");
 }
 
 void DeviceReader::Push(SingleEvent* ev) 
@@ -386,7 +426,7 @@ void DeviceReader::Push(SingleEvent* ev)
   m_queue.push(ev);
   m_queue_size += ev->m_length;
   if (m_debuglevel > 2)
-    std::cout << "DeviceReader" << m_id << ": Pushed events. Current queue size: " << m_queue.size() << std::endl;
+    Print(0, "Pushed events. Current queue size: %lu", m_queue.size());
 }
 
 bool DeviceReader::QueueFull() 
@@ -394,7 +434,7 @@ bool DeviceReader::QueueFull()
   SimpleLock lock(m_mutex);
   if (m_queue_size > m_max_queue_size) {
     if (m_debuglevel > 3)
-      std::cout << "DeviceReader " << m_id << ": BUSY: " << m_queue.size() << " " << m_queue_size << std::endl;
+      Print(0, "BUSY: %lu %lu", m_queue.size(), m_queue_size);
     return true;
   }
   return false;
@@ -503,33 +543,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       
 	// TODO return code?
 	ParseXML(daq_board, doc.FirstChild("root")->ToElement(), -1, -1, false);
-
-	/*
-	FILE *fp = fopen(configFile.data(), "r");
-	if (!fp) {
-	  std::string msg = "Unable to open file ";
-	  msg += configFile;
-	  std::cerr << msg.data() << std::endl;
-	  EUDAQ_ERROR(msg.data());
-	  SetStatus(eudaq::Status::LVL_ERROR, msg.data());
-	  return;
-	}
-	int address, value;
-	while (fscanf(fp, "%d %d", &address, &value) == 2)  {
-	  int result = daq_board->WriteChipRegister(address, value);
-	  if (result == 1) {
-	    std::cout << "Chip register " << address << " set to " << value << std::endl;
-	  } else {
-	    char msg[100];
-	    sprintf(msg, "Failure %d writing chip register %d (value %d)", result, address, value);
-	    std::cerr << msg << std::endl;
-	    EUDAQ_ERROR(msg);
-	    SetStatus(eudaq::Status::LVL_ERROR, msg);
-	    return;
-	  }
-	}
-	fclose(fp);
-	*/
       }
       
       // noisy pixels
@@ -542,10 +555,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	dut->MaskNoisyPixels();
       }
       
-  //     eudaq::mSleep(1000);
-      
-      // TODO how often do we have to repeat this?
       // data taking configuration
+      // TODO config
       const int StrobeLength = 10;
       const int StrobeBLength = 20;
       const int ReadoutDelay = 10;
@@ -553,8 +564,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
       // PrepareEmptyReadout
       daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
-  //     daq_board->ConfigureTrigger (0, StrobeLength, 1, 1); // TODO
-  //     daq_board->ConfigureTrigger (0, StrobeLength, 2, 1);
       daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, TriggerDelay);
       
       // PrepareChipReadout
@@ -731,16 +740,14 @@ void PALPIDEFSProducer::Loop()
       if (events_built == 0) {
 	if (m_status_interval > 0 && time(0) - last_status > m_status_interval) {
 	  SendStatusEvent();
+	  PrintQueueStatus();
 	  last_status = time(0);
 	}
 	break;
       }
       
       if (count % 20000 == 0)
-      {
 	std::cout << "Sending event " << count << std::endl;
-	PrintQueueStatus();
-      }
     }
   } while (!IsDone());
 }
@@ -778,7 +785,7 @@ int PALPIDEFSProducer::BuildEvent()
   unsigned long total_size = m_nDevices * (2 + 2 * sizeof(uint64_t));
   for (int i=0; i<m_nDevices; i++) {
     SingleEvent* single_ev = m_next_event[i];
-//     if (single_ev->m_trigger_id == trigger_id)
+    if (m_ignore_trigger_ids || single_ev->m_trigger_id == trigger_id)
       total_size += single_ev->m_length;
   }
   
@@ -795,14 +802,14 @@ int PALPIDEFSProducer::BuildEvent()
     // select by timestamp
     if (timestamp != 0 && (float) single_ev->m_timestamp / timestamp > 1.5) {
       char msg[100];
-      sprintf(msg, "Out of sync: Timestamp of current event %d is %lu while smallest is %lu.", i,  single_ev->m_timestamp, timestamp);
+      sprintf(msg, "Out of sync: Timestamp of current event (device %d) is %lu while smallest is %lu.", i,  single_ev->m_timestamp, timestamp);
       std::cerr << msg << std::endl;
       EUDAQ_WARN(msg);
       SetStatus(eudaq::Status::LVL_WARN, msg);
     }
       
     // select by trigger id
-//     if (single_ev->m_trigger_id == trigger_id) {
+    if (m_ignore_trigger_ids || single_ev->m_trigger_id == trigger_id)
     {
       // event id and timestamp per layer
       memcpy(buffer+pos, &(single_ev->m_trigger_id), sizeof(uint64_t));
@@ -821,7 +828,7 @@ int PALPIDEFSProducer::BuildEvent()
   
   // clean up
   for (int i=0; i<m_nDevices; i++) {
-//     if (m_next_event[i]->m_trigger_id == trigger_id) 
+    if (m_ignore_trigger_ids || m_next_event[i]->m_trigger_id == trigger_id) 
     {
       delete m_next_event[i];
       m_next_event[i] = 0;
