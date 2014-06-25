@@ -1,40 +1,52 @@
-#include "fileReader.h"
-//#include "..\..\Stavlet_gui\globalvars.h"
 
 
-// void StartTestbeamProducer(){
-// 
-// 
-// 	std::cout<<"bla bla"<<std::endl;
-// }
 
-
+#include "ROOTProducer.h"
 
 #include "eudaq/Producer.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/Configuration.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/OptionParser.hh"
-#include "eudaq/ExampleHardware.hh"
-#include <iostream>
+
+
+
 #include <ostream>
 #include <vector>
 #include <time.h>
-#include "../inc/ROOTProducer.h"
-
-#include "eudaq/Event.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/Producer.hh"
 #include <string>
 #include <condition_variable>
 #include <memory>
 #include <chrono>
-#include <thread>
 
 
-void * workerthread_thread(void * arg);
 
+
+inline	void bool2uchar1(const bool* inBegin,const bool* inEnd,std::vector<unsigned char>& out){
+
+  int j=0;
+  unsigned char dummy=0;
+  //bool* d1=&in[0];
+  size_t size=(inEnd-inBegin);
+  if (size%8)
+  {
+    size+=8;
+  }
+  size/=8;
+  out.reserve(size);
+  for (auto i=inBegin;i<inEnd;++i)
+  {
+    dummy+=(unsigned char)(*i)<<(j%8);
+
+    if ((j%8)==7)
+    {
+      out.push_back(dummy);
+      dummy=0;
+    }
+    ++j;
+  }
+}
 
 
 //static const std::string EVENT_TYPE = "SCTupgrade";
@@ -42,14 +54,15 @@ void * workerthread_thread(void * arg);
 class ROOTProducer::Producer_PImpl : public eudaq::Producer {
 public:
 	Producer_PImpl(const std::string & name, const std::string & runcontrol): eudaq::Producer(name, runcontrol),
-		m_run(0), m_ev(0), isConfigured(false),readoutThread(),ProducerName(name) {
+		m_run(0), m_ev(0), isConfigured(false),m_ProducerName(name),onConfigure_(false),onStart_(false),onStop_(false),OnTerminate_(false) {
 			std::cout<< "hallo from "<<name<<" producer"<<std::endl;
 		
 	}
 	// This gets called whenever the DAQ is configured
 	virtual void OnConfigure(const eudaq::Configuration & config)  {
 		m_config=config;
-		isConfigured=true;
+		
+    setConfStatus(true);
 		std::cout << "Configuring: " << getConfiguration().Name() << std::endl;
 
 		//m_interface->send_onConfigure();
@@ -75,7 +88,7 @@ public:
 	// It receives the new run number as a parameter
 virtual	void OnStartRun(unsigned param) {
 		// version 0.1 Susanne from LatencyScan.cpp
-		std::cout<<"virtual void OnStartRun(unsigned param)"<<std::endl;
+	//	std::cout<<"virtual void OnStartRun(unsigned param)"<<std::endl;
 
 		m_run =param;
 		m_ev=0;
@@ -84,23 +97,20 @@ virtual	void OnStartRun(unsigned param) {
 
 		startTime_=clock();
 
-	//	m_interface->send_onStart();
-
-		setOnStart(true);
-
 		
 
 		// It must send a BORE to the Data Collector
-		eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(ProducerName, m_run));
-		// You can set tags on the BORE that will be saved in the data file
-		// and can be used later to help decoding
-		bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleparam));
+		eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_ProducerName, m_run));
+
+
+
 		// Send the event to the Data Collector
 		SendEvent(bore);
 
 		// At the end, set the status that will be displayed in the Run Control.
 		SetStatus(eudaq::Status::LVL_OK, "Running");
 
+    setOnStart(true);
     int j=0;
     while (getOnStart()&&++j<500)
     {
@@ -128,7 +138,7 @@ virtual	void OnStopRun() {
 		std::cout<<m_ev << " Events Processed" << std::endl;
 		// Send an EORE after all the real events have been sent
 		// You can also set tags on it (as with the BORE) if necessary
-		SendEvent(eudaq::RawDataEvent::EORE(ProducerName, m_run, ++m_ev));
+		SendEvent(eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev));
 	}
 
 	// This gets called when the Run Control is terminating,
@@ -147,7 +157,7 @@ virtual	void OnTerminate() {
 
 	void createNewEvent()
 	{
-		ev= std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(ProducerName, m_run, m_ev));
+		ev= std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(m_ProducerName, m_run, m_ev));
 	}
 
 	void setTimeStamp( unsigned long long TimeStamp )
@@ -190,11 +200,23 @@ virtual	void OnTerminate() {
 		// Send the event to the Data Collector     
 		if (ev==nullptr)
 		{
+      if (!m_data.empty())
+      {
+        createNewEvent();
+      }else{
 			std::cout<< " you have to create the an event before you can send it"<<std::endl;
 			return;		
+      }
 		}
+
+    for(auto& e:m_data){
+
+    e.addDataBlock2Event(*ev);
+   // ev->AddBlock(e.m_plane,e.m_inputVector,e.m_Elements);
+    }
+
 		SendEvent(*ev);
-		//push2sendQueue(std::move(ev));
+		
 		// clean up 
 		ev.reset(nullptr);
 		
@@ -202,7 +224,12 @@ virtual	void OnTerminate() {
 
 		++m_ev;
 	}
+  void setConfStatus(bool newStat){
+    std::unique_lock<std::mutex> lck (m_stautus_change);
+    isConfigured=newStat;
+  }
 	bool ConfigurationSatus(){
+    std::unique_lock<std::mutex> lck (m_stautus_change);
 		return isConfigured;
 	}
 
@@ -245,19 +272,48 @@ virtual	void OnTerminate() {
 
 
 
-	// This is just a dummy class representing the hardware
-	// It here basically that the example code will compile
-	// but it also generates example raw data to help illustrate the decoder
+   void addDataPointer(unsigned plane,const bool* inputVector,size_t Elements){
+   //  std::cout<<"<m_data.emplace_back(plane,inputVector,Elements);> \n";
+     m_data.emplace_back(plane,inputVector,Elements);
+   //  std::cout<<"</m_data.emplace_back(plane,inputVector,Elements);> \n";
+   }
+
+  struct Data_pointer
+  {
+    Data_pointer(unsigned plane,const bool* inputVector,size_t Elements):
+      m_plane(plane),
+      m_inputVector(inputVector),
+      m_Elements(Elements)
+    {}
+    void addDataBlock2Event(eudaq::RawDataEvent& rev){
+      try{
+        std::vector<unsigned char> out;
+        bool2uchar1(m_inputVector ,m_inputVector+m_Elements,out);
+        rev.AddBlock(m_plane,out);
+        
+      }
+      catch(...){
+        std::cout<<"unable to Add plane to Event"<<std::endl;
+      }
+    }
+    unsigned m_plane;
+    const bool* m_inputVector;
+    size_t m_Elements;
+  };
+  
+
+  std::vector<Data_pointer> m_data;
+
 	clock_t startTime_;
 
-	unsigned m_run, m_ev, m_exampleparam;
+	unsigned m_run, m_ev;
 	bool isConfigured;
-	std::thread readoutThread;
+
 	std::unique_ptr<eudaq::RawDataEvent> ev;
 		
 	
 	eudaq::Configuration  m_config;
-	const std::string ProducerName;
+	const std::string m_ProducerName;
 
 	
 	
@@ -279,30 +335,7 @@ virtual	void OnTerminate() {
 
 
 
-inline	void bool2uchar1(const bool* inBegin,const bool* inEnd,std::vector<unsigned char>& out){
 
-	int j=0;
-	unsigned char dummy=0;
-	//bool* d1=&in[0];
-	size_t size=(inEnd-inBegin);
-	if (size%8)
-	{
-		size+=8;
-	}
-	size/=8;
-	out.reserve(size);
-	for (auto i=inBegin;i<inEnd;++i)
-	{
-		dummy+=(unsigned char)(*i)<<(j%8);
-
-		if ((j%8)==7)
-		{
-			out.push_back(dummy);
-			dummy=0;
-		}
-		++j;
-	}
-}
 
 // The constructor must call the eudaq::Producer constructor with the name
 // and the runcontrol connection string, and initialize any member variables.
@@ -356,10 +389,10 @@ void ROOTProducer::createNewEvent()
 	
 }
 
-void ROOTProducer::setTimeStamp( unsigned long long TimeStamp )
+void ROOTProducer::setTimeStamp( ULong64_t TimeStamp )
 {
 	try{
-	m_prod->setTimeStamp(TimeStamp);
+	m_prod->setTimeStamp(static_cast<unsigned long long>(TimeStamp));
 	}
 	catch(...){
 		std::cout<<"unable to set time Stamp"<<std::endl;
@@ -409,13 +442,14 @@ void ROOTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned cha
  
 void ROOTProducer::sendEvent()
 {
+
 	try {
 	m_prod->sendEvent();
 	}catch (...)
 	{
 		std::cout<<"unable to send Event"<<std::endl;
 	}
-
+  checkStatus();
 }
 
 void ROOTProducer::send_onConfigure()
@@ -426,11 +460,6 @@ void ROOTProducer::send_onConfigure()
 void ROOTProducer::send_onStop()
 {
 	Emit("send_onStop()");
-}
-
-void ROOTProducer::send_start_run()
-{
-	Emit("send_start_run()");
 }
 
 
@@ -487,6 +516,19 @@ int ROOTProducer::getConfiguration( const char* tag, const char* defaultValue,ch
 	}
 }
 
+void ROOTProducer::getConfiguration( const char* tag )
+{
+  std::string defaultValue="error";
+  std::string dummy(tag);
+  std::string ret= m_prod->getConfiguration().Get(dummy,defaultValue );
+  emitConfiguration(ret.c_str());
+}
+
+void ROOTProducer::emitConfiguration( const char* answer )
+{
+  Emit("emitConfiguration(const char*)",answer);
+}
+
 // 	TString SCTProducer::getConfiguration_TString( const char* tag, const char* defaultValue )
 // 	{
 // 		TString ReturnValue(m_prod->getConfiguration().Get(tag,defaultValue));
@@ -520,10 +562,7 @@ bool ROOTProducer::getOnStart()
 	return m_prod->getOnStart();
 }
 
-void ROOTProducer::getOnStart( bool* onStart )
-{
-  *onStart=getOnStart();
-}
+
 
 void ROOTProducer::setOnStart( bool newStat )
 {
@@ -535,10 +574,7 @@ bool ROOTProducer::getOnConfigure()
 	return m_prod->getOnConfigure();
 }
 
-void ROOTProducer::getOnConfigure( bool* onConfig )
-{
-  //*onConfig=getConfiguration();
-}
+
 
 void ROOTProducer::setOnconfigure( bool newStat )
 {
@@ -550,10 +586,7 @@ bool ROOTProducer::getOnStop()
 	return m_prod->getOnStop();
 }
 
-void ROOTProducer::getOnStop( bool* onStop )
-{
-  *onStop=getOnStop();
-}
+
 
 void ROOTProducer::setOnStop( bool newStat )
 {
@@ -565,10 +598,7 @@ bool ROOTProducer::getOnTerminate()
 	return m_prod->getOnTerminate();
 }
 
-void ROOTProducer::getOnTerminate( bool* onTerminate )
-{
-  *onTerminate=getOnTerminate();
-}
+
 
 void ROOTProducer::setOnTerminate( bool newStat )
 {
@@ -602,6 +632,11 @@ void ROOTProducer::checkStatus()
 		setOnTerminate(false);
 		eudaq::mSleep(20);
 	}
+}
+
+void ROOTProducer::addDataPointer( unsigned plane,const bool* inputVector,size_t Elements )
+{
+  m_prod->addDataPointer(plane,inputVector,Elements);
 }
 
 // The main function that will create a Producer instance and run it

@@ -116,6 +116,8 @@ IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
+
+
 # build native reader used for data conversion into LCIO
 IF(BUILD_nreader)
   add_subdirectory(nreader)
@@ -132,6 +134,20 @@ option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
   add_subdirectory(onlinemon)
 ENDIF()
+
+# build ROOT Interface 
+option(BUILD_ROOT_Interface "Compile Producer interface for ROOT Interpreter (requires ROOT)?" OFF)
+IF(BUILD_ROOT_Interface)
+  add_subdirectory(RootInterface)
+ENDIF()
+
+# build Offline Monitor
+option(BUILD_Offline_monitor "Compile Offline Monitor executable (requires ROOT)?" OFF)
+IF(BUILD_Offline_monitor)
+  add_subdirectory(OfflineMonitor)
+ENDIF()
+
+
 
 ###############################################
 # LaTeX target to compile the PDF user manual #
@@ -166,3 +182,6 @@ add_subdirectory(producers)
 # Print out system information useful for bug reports #
 ############################################### #######
 include(PrintSystemInformation)
+
+
+

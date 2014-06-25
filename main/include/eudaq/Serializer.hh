@@ -9,6 +9,7 @@
 #include "eudaq/Time.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Platform.hh"
+#include <stdint.h>
 
 namespace eudaq {
 

@@ -152,7 +152,7 @@ namespace eudaq{
 	return compareTLU2DUT(tlu_triggerID,triggerID);
 	  }
 
-	  virtual void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu){
+	  virtual void SetCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu){
 		  ev.SetTag("tlu_trigger_id",tlu.GetEventNumber());
 	  }
 	  virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {}
