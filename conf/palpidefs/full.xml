@@ -21,29 +21,29 @@ Syntax rules:
 	<value begin="0" width="2">
 	  <title>Chip Mode</title>
 	  <description>0 Configuration Mode, 1 Readout Mode A(STROBE_B always asserted), 2 Readout Mode B (STROBE_B asserted after trigger), 3 Pattern Generator Mode</description>
-	<content>0</content></value>
+	<content>-1</content></value>
 	<value begin="2">
 	  <title>Clustering</title>
 	  <default>1</default>
-	<content>1</content></value>
+	<content>-1</content></value>
 	<value begin="3">
 	  <title>Start Self Test</title>
 	  <description>(Only if Chip Mode is 0). Reset automatically after 1 clock cycle.</description>
-	<content>0</content></value>
+	<content>-1</content></value>
 	<value begin="4">
 	  <title>Enable Row Select</title>
 	  <description>Strobe of pixel configuration, enable row selection. Automatically self-resetting after 16 clock cycles</description>
-	<content>0</content></value>
+	<content>-1</content></value>
 	<value begin="5">
 	  <title>EVT_DATA_PORT_OEN1</title>
-	<content>0</content></value>
+	<content>-1</content></value>
 	<value begin="6">
 	  <title>EVT_DATA_PORT_OEN2</title>
-	<content>0</content></value>
+	<content>-1</content></value>
 	<value begin="8" width="8">
 	  <title>Matrix Readout Start Delay</title>
 	  <description>Delay time between STROBE_B deassertion and beginning of the readout of Priority Encoders (number of CLK clock cycles. Applies to Readout Mode A and Readout Mode B)</description>
-	<content>0</content></value>
+	<content>-1</content></value>
       </address>
       <address sub="1">
 	<title>Region disable Register 15-0</title>
@@ -55,12 +55,12 @@ Syntax rules:
 	<title>Region disable Register 31-16</title>
 	<value begin="0" width="16">
 	  <display>bits</display>
-	<content>0</content></value>
+	<content>-1</content></value>
       </address>
       <address sub="3">
 	<title>STROBE_B Timing Register</title>
 	<description>Readout Mode A: delay between end of matrix readout and the automatic re-assertion of STROBE_B (number of CLK clock cycles). Readout Mode B: duration of the STROBE_B pulse applied to the matrix after the trigger arrival (number of CLK clock cycles)</description>
-	<value begin="0" width="16"><content>0</content></value>
+	<value begin="0" width="16"><content>-1</content></value>
       </address>
     </address>
   </address>
@@ -71,34 +71,34 @@ Syntax rules:
 	  <value begin="0" width="9">
 	    <title>Pixel row select address</title>
 	    <description>Selects the row of pixels needs to be addressed, i.e. for which row the CFG_ROWSEL line will be asserted</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="9" width="1">
 	    <title>All Pixel row selected</title>
 	    <description>If set to one the row address field [8:0] is ignored and all rows are enabled simultaneously for configuration.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="10" width="1">
 	    <title>PIXCNFG_REGSEL</title>
 	    <description>Selection of the in-pixel register to be addressed: 0 for the Pulse Enable register, 1 for the Mask register.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="11" width="1">
 	    <title>PIXCNFG_DATA</title>
 	    <description>Data to be written in the target register</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
 	<address sub="1">
 	  <title>Base 5 - Pixel CFG Register 2</title>
 	  <value begin="0" width="10">
 	    <title>Pixel column select address</title>
 	    <description>Selects which column of pixels needs to be addressed, i.e. for which column the CFG_COLSEL line is asserted.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="10" width="1">
 	    <title>All Pixel column selected</title>
 	    <description>If set to one the column address field [9:0] is ignored and all columns are enabled simultaneously for configuration.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="11" width="1">
 	    <title>PULSE_TYPE</title>
 	    <description>Controls the type of test pulse functionality enabled in the pixel circuits: 0 for digital pulsing, 1 for analog pulsing. Applied simultaneously to the whole matrix.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   </address>
@@ -107,32 +107,32 @@ Syntax rules:
     <address rgn="0">
 	<address sub="0">
 	  <title>VAUX / VRESET</title>
-	  <value begin="0" width="8"><content>0</content></value>
-	  <value begin="8" width="8"><content>0</content></value>
+	  <value begin="0" width="8"><content>-1</content></value>
+	  <value begin="8" width="8"><content>-1</content></value>
 	</address>
 	<address sub="1">
 	  <title>VCASN / VCASP</title>
-	  <value begin="0" width="8"><content>0</content></value>
-	  <value begin="8" width="8"><content>0</content></value>
+	  <value begin="0" width="8"><content>-1</content></value>
+	  <value begin="8" width="8"><content>-1</content></value>
 	</address>
 	<address sub="2">
 	  <title>VPULSEL / VPULSEH</title>
-	  <value begin="0" width="8"><content>0</content></value>
-	  <value begin="8" width="8"><content>0</content></value>
+	  <value begin="0" width="8"><content>-1</content></value>
+	  <value begin="8" width="8"><content>-1</content></value>
 	</address>
 	<address sub="3">
 	  <title>IAUX1 / IAUX2</title>
-	  <value begin="0" width="8"><content>0</content></value>
-	  <value begin="8" width="8"><content>0</content></value>
+	  <value begin="0" width="8"><content>-1</content></value>
+	  <value begin="8" width="8"><content>-1</content></value>
 	</address>
 	<address sub="4">
 	  <title>IBIAS / IDB</title>
-	  <value begin="0" width="8"><content>0</content></value>
-	  <value begin="8" width="8"><content>0</content></value>
+	  <value begin="0" width="8"><content>-1</content></value>
+	  <value begin="8" width="8"><content>-1</content></value>
 	</address>
 	<address sub="5">
 	  <title>ITHR</title>
-	  <value begin="0" width="8"><content>0</content></value>
+	  <value begin="0" width="8"><content>-1</content></value>
 	</address>
 	<address sub="6">
 	  <title>Current/Voltage Monitor reg</title>
@@ -140,19 +140,19 @@ Syntax rules:
 	  <value begin="0" width="3">
 	    <title>Voltage DAC selection field</title>
 	    <description>Contains a code selecting the voltage DAC to be monitored or overridden by the DACMONV pad</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <title>Current DAC selection field</title>
 	    <description>Contains a code selecting the current DAC to be monitored or overridden by the DACMONV pad</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="1">
 	    <title>SWCNTL_DACMONI</title>
 	    <description>Configures the DAC block to enable the overriding of the selected current DAC. 0 for monitoring, 1 for Overriding.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="7" width="1">
 	    <title>SWCNTL_DACMONV</title>
 	    <description>Configures the DAC block to enable the overriding of the selected voltage DAC. 0 for monitoring, 1 for Overriding.</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   </address>
@@ -164,7 +164,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="1">
@@ -172,7 +172,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="2">
@@ -180,7 +180,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="3">
@@ -188,7 +188,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="4">
@@ -196,7 +196,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="5">
@@ -204,7 +204,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="6">
@@ -212,7 +212,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="7">
@@ -220,7 +220,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="8">
@@ -228,7 +228,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="9">
@@ -236,7 +236,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="10">
@@ -244,7 +244,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="11">
@@ -252,7 +252,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="12">
@@ -260,7 +260,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="13">
@@ -268,7 +268,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="14">
@@ -276,7 +276,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="15">
@@ -284,7 +284,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="16">
@@ -292,7 +292,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="17">
@@ -300,7 +300,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="18">
@@ -308,7 +308,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="19">
@@ -316,7 +316,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="20">
@@ -324,7 +324,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="21">
@@ -332,7 +332,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="22">
@@ -340,7 +340,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="23">
@@ -348,7 +348,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="24">
@@ -356,7 +356,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="25">
@@ -364,7 +364,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="26">
@@ -372,7 +372,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="27">
@@ -380,7 +380,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="28">
@@ -388,7 +388,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="29">
@@ -396,7 +396,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="30">
@@ -404,7 +404,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="31">
@@ -412,7 +412,7 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0" width="16">
 	    <display>bits</display>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   </address>
@@ -423,22 +423,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="1">
@@ -446,22 +446,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="2">
@@ -469,22 +469,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="3">
@@ -492,22 +492,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="4">
@@ -515,22 +515,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="5">
@@ -538,22 +538,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="6">
@@ -561,22 +561,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="7">
@@ -584,22 +584,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="8">
@@ -607,22 +607,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="9">
@@ -630,22 +630,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="10">
@@ -653,22 +653,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="11">
@@ -676,22 +676,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="12">
@@ -699,22 +699,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="13">
@@ -722,22 +722,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="14">
@@ -745,22 +745,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="15">
@@ -768,22 +768,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="16">
@@ -791,22 +791,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="17">
@@ -814,22 +814,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="18">
@@ -837,22 +837,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="19">
@@ -860,22 +860,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="20">
@@ -883,22 +883,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="21">
@@ -906,22 +906,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="22">
@@ -929,22 +929,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="23">
@@ -952,22 +952,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="24">
@@ -975,22 +975,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="25">
@@ -998,22 +998,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="26">
@@ -1021,22 +1021,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="27">
@@ -1044,22 +1044,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="28">
@@ -1067,22 +1067,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="29">
@@ -1090,22 +1090,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="30">
@@ -1113,22 +1113,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   <address rgn="31">
@@ -1136,22 +1136,22 @@ Syntax rules:
 	<address sub="0">
 	  <value begin="0">
 	    <description>Region Self Test Pixel Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="1">
 	    <description>Region Self Test Memory Status</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="2">
 	    <description>Region Asserted if all column disabled</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="3" width="3">
 	    <description>Region Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="6" width="2">
 	    <description>Region Memory Self Test SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	  <value begin="8" width="3">
 	    <description>Periphery Readout SM State</description>
-	  <content>0</content></value>
+	  <content>-1</content></value>
 	</address>
     </address>
   </address>
