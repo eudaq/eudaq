@@ -54,7 +54,7 @@ namespace eudaq {
     FileWriterTree(const std::string &);
     virtual void StartRun(unsigned);
     virtual void WriteEvent(const DetectorEvent &);
-    virtual unsigned long long FileBytes() const;
+    virtual uint64_t FileBytes() const;
     virtual ~FileWriterTree();
   private:
     TFile * m_tfile; // book the pointer to a file (to store the otuput)
@@ -298,7 +298,7 @@ namespace eudaq {
     //delete m_tfile;
   }
 
-  unsigned long long FileWriterTree::FileBytes() const { return 0; }
+  uint64_t FileWriterTree::FileBytes() const { return 0; }
 
 }
 #endif // ROOT_FOUND

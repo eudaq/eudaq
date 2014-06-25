@@ -9,7 +9,7 @@
 
 
 
-
+using namespace std;
 
 OnlineMonConfiguration::OnlineMonConfiguration()
 {

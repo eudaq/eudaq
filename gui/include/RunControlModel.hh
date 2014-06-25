@@ -1,6 +1,5 @@
 #include "eudaq/TransportBase.hh"
 #include "eudaq/CommandReceiver.hh"
-//#include "eudaq/counted_ptr.hh"
 #include <QAbstractListModel>
 #include <vector>
 #include <memory>

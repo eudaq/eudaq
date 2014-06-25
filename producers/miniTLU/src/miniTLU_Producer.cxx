@@ -3,12 +3,12 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-//#include "eudaq/counted_ptr.hh"
 #include "tlu/miniTLUController.hh"
-//#include "tlu/USBTracer.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>
+#include <memory>
+
 
 typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
@@ -78,8 +78,8 @@ public:
 	//std::cout << "--------" << std::endl;
 // 	for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
 // 	  m_ev = m_tlu->GetEntry(i).Eventnum();
-// 	  unsigned long long t = m_tlu->GetEntry(i).Timestamp();
-// 	  long long d = t - lasttime;
+// 	  uint64_t t = m_tlu->GetEntry(i).Timestamp();
+// 	  int64_t d = t - lasttime;
 // 	  //float freq= 1./(d*20./1000000000);
 // 	  float freq = 1. / Timestamp2Seconds(d);
 // 	  if (m_ev < 10 || m_ev % 1000 == 0) {
@@ -116,7 +116,7 @@ public:
     try {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       if (m_tlu)
-	m_tlu = 0;
+	m_tlu = nullptr;
       //	int errorhandler = param.Get("ErrorHandler", 2);
 
      
@@ -280,14 +280,14 @@ public:
 private:
   unsigned m_run, m_ev;
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask;
-  unsigned long strobe_period, strobe_width;
+  uint32_t strobe_period, strobe_width;
   unsigned enable_dut_veto;
   unsigned trig_rollover, readout_delay;
   bool timestamps, done, timestamp_per_run;
   bool TLUStarted;
   bool TLUJustStopped;
-  unsigned long long lasttime;
   std::unique_ptr<miniTLUController> m_tlu;
+  uint64_t lasttime;
 };
 
 int main(int /*argc*/, const char ** argv) {

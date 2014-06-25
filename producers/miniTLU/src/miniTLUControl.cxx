@@ -3,7 +3,6 @@
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
-//#include "eudaq/counted_ptr.hh"
 #ifndef WIN32
 #include <unistd.h>
 #endif
@@ -120,7 +119,7 @@ int main(int /*argc*/, char ** argv) {
     /*
     counted_ptr<std::ofstream> sfile;
     if (sname.Value() != "") {
-      sfile = new std::ofstream(sname.Value().c_str());
+      sfile = std::make_shared<std::ofstream>(sname.Value().c_str());
       if (!sfile->is_open()) EUDAQ_THROW("Unable to open file: " + sname.Value());
     }
     */
@@ -177,7 +176,7 @@ int main(int /*argc*/, char ** argv) {
     TLU.Start();
     std::cout << "TLU Started!" << std::endl;
 
-    unsigned long total = 0;
+    uint32_t total = 0;
     while (!g_done) {
       TLU.Update(!nots.IsSet());
       std::cout << std::endl;

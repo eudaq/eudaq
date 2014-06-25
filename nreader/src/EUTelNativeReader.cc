@@ -1,13 +1,3 @@
-// Version $Id: EUTelNativeReader.cc 2603 2013-05-13 08:25:41Z diont $
-/*
- *   This source code is part of the Eutelescope package of Marlin.
- *   You are free to use this source files for your own development as
- *   long as it stays in a public research context. You are not
- *   allowed to use it for commercial purpose. You must put this
- *   header with author names in all development based on this file.
- *
- */
-
 #ifdef USE_EUDAQ
 // in this case, read immediately the info
 #include <eudaq/Info.hh>
@@ -28,8 +18,6 @@
 #include "EUTelMimosa26Detector.h"
 #include "EUTelTLUDetector.h"
 #include "EUTelDEPFETDetector.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelSimpleSparsePixel.h"
 #include "EUTelSetupDescription.h"
 
 // marlin includes
@@ -56,6 +44,9 @@
 #include <iostream>
 #include <cassert>
 #include <memory>
+
+
+#include "config.h" // for version symbols
 
 using namespace std;
 using namespace marlin;
@@ -114,9 +105,6 @@ EUTelNativeReader::EUTelNativeReader ():
   registerOptionalParameter("EUDRBSparsePixelType",
                             "Type of sparsified pixel data structure (use SparsePixelType enumerator)",
                             _eudrbSparsePixelType , static_cast<int> ( 1 ) );
-
-  registerProcessorParameter("SyncTriggerID", "Resynchronize the events based on the TLU trigger ID",
-                             _syncTriggerID, false );
 }
 
 EUTelNativeReader * EUTelNativeReader::newProcessor () {
@@ -126,6 +114,7 @@ EUTelNativeReader * EUTelNativeReader::newProcessor () {
 void EUTelNativeReader::init () {
   printParameters ();
   ::eudaq::GetLogger().SetErrLevel("WARN"); // send only eudaq messages above (or equal?) "warn" level to stderr
+  streamlog_out(MESSAGE5) << "Initializing EUDAQ native reader Marlin library " << PACKAGE_VERSION << endl;
 }
 
 void EUTelNativeReader::readDataSource(int numEvents) {
@@ -147,7 +136,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   eudaq::FileReader * reader = 0;
   // open the input file with the eudaq reader
   try{
-    reader = new eudaq::FileReader( _fileName, "", _syncTriggerID );
+    reader = new eudaq::FileReader( _fileName, "");
   }
   catch(...){
     streamlog_out( ERROR5 ) << "eudaq::FileReader could not read the input file ' " << _fileName << " '. Please verify that the path and file name are correct." << endl;
@@ -245,8 +234,3 @@ void EUTelNativeReader::processBORE( const eudaq::DetectorEvent & bore ) {
 
 #endif
 #endif
-
-//  LocalWords:  serialiazer EUTelNativeReader MIMOTEL rawdata eudrb zsdata
-//  LocalWords:  EUBRDRawModeOutputCollection EUDRBZSModeOutputCollection xMin
-//  LocalWords:  EUDRBSparsePixelType sensorID xMax yMin yMax EUDRBBoard
-//  LocalWords:  EUDRBDecoder TrackerRawData

@@ -161,12 +161,41 @@ It may also be told to listen on a non-standard port, using the \texttt{-a \para
 
 \subsubsection{Data Collector}
 The Data Collector is the process that collects all the raw data from the Producers,
-merges all the incoming streams into a single data stream, and writes it to file.
+merges all the connected incoming streams into a single data stream, and writes it to file.
 
 Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine,
 and it may also be told to listen on a non-standard port, with the \texttt{-r} and \texttt{-a} options respectively, for example:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -r eudet
+$[./TestDataCollector.exe]$ -r eudet -a tcp://55001
+\end{listing}
+
+It is also possible to run multiple Data Collector instances within
+one EUDAQ session. This can be useful to reduce network traffic and
+e.g. write the output of one producer to a locally attached disk. When running
+several Data Collectors simultaneously, Run Controls assigns a
+Producer to a Data Collector by name: if the name of a Data Collector
+matches that of a Producer, the latter will be given the address and
+port of the former. There can be only one instance of an \emph{unnamed} Data
+Collector which serves as the default for any non-matching Producer;
+if no unnamed Data Collector is present, the first one connecting will
+serve as the default.
+
+The name of a Data Collector can be set with the
+\texttt{-n} option, for example:
+\begin{listing}[mybash]
+$[./TestDataCollector.exe]$ -n myproducer
+\end{listing}
+
+Should you wish to run several instances of the Data Collector on one
+machine, you need to make sure that they listen to different addresses
+using the \texttt{-a} option as described above. Furthermore, you need
+to make each Data Collector write to a different file by including the
+\texttt{FilePattern} option in the corresponding section of your
+configuration file (also see section \ref{sec:ConfigFiles}):
+
+\begin{listing}[conf]
+[DataCollector.myproducer]
+FilePattern = "../data/run$6R_myproducer$X"
 \end{listing}
 
 \subsubsection{TestProducer}
@@ -248,6 +277,41 @@ This will run it in offline mode, opening the file corresponding to run 5432
 To run it in online mode, simply omit the \texttt{-f} option,
 then the \texttt{-r} option may be used if the RunControl
 is running on a different computer or using a non-standard port.
+
+\subsubsection{Python Interface and Wrapper for Core EUDAQ Components}
+A Python interface is provided for selected EUDAQ components:
+RunControl, DataCollector and a Producer, that can be extended
+on the Python side. The interface is realized through the
+\texttt{ctypes} package that is part of every standard Python
+installation. The interface code for all components is located in the
+\texttt{main/python} directory. 
+
+To use the interface and access the components as Python objects, the
+wrapper must be loaded inside your Python script:
+
+\begin{listing}[python]
+  #!/usr/bin/env python2 
+  execfile('PyEUDAQWrapper.py') # load ctypes wrapper
+
+  prc = PyRunControl() # start run control with default settings
+  # wait for more than one active connection to appear
+  while prc.NumConnections < 2:
+      sleep(1)
+  prc.Configure("ExampleConfig") # load configuration file
+  while not prc.AllOk:
+      sleep(1) # sleep while waiting for all connected producers
+  prc.StartRun()
+\end{listing}
+
+This little scripts creates a RunControl instance, sends a
+configuration to all connected producers, waits for their reply, and
+starts a new run. Several more extensive examples for using Python
+with EUDAQ are located in the \texttt{python} directory in the main
+EUDAQ directory.
+
+Please note that the wrapper requires the \texttt{numpy} Python package to be
+installed.
+
 
 \subsection{Running the DAQ}
 To start the DAQ, all the necessary processes must be started in the correct order.

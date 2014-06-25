@@ -14,7 +14,7 @@ namespace eudaq {
     EUDAQ_DECLARE_EVENT(DetectorEvent);
     public:
     virtual void Serialize(Serializer &) const;
-    explicit DetectorEvent(unsigned runnumber, unsigned eventnumber, unsigned long long timestamp) :
+    explicit DetectorEvent(unsigned runnumber, unsigned eventnumber, uint64_t timestamp) :
       Event(runnumber, eventnumber, timestamp)
     {}
     //     explicit DetectorEvent(const TLUEvent & tluev) :

@@ -35,8 +35,8 @@
 #include "EUTelTakiDetector.h"
 #include "EUTelSetupDescription.h"
 #include "EUTelEventImpl.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelSimpleSparsePixel.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelGenericSparsePixel.h"
 #endif
 
 
@@ -162,7 +162,7 @@ bool Mupix2ConverterPlugin::GetStandardSubEvent(
 #if USE_LCIO && USE_EUTELESCOPE
 
 bool Mupix2ConverterPlugin::GetLCIOSubEvent(
-    LCEvent & dest,
+    lcio::LCEvent & dest,
     const eudaq::Event & source) const
 {
     using lcio::CellIDEncoder;
@@ -170,8 +170,8 @@ bool Mupix2ConverterPlugin::GetLCIOSubEvent(
     using lcio::LCCollectionVec;
     using lcio::TrackerDataImpl;
     using eutelescope::EUTELESCOPE;
-    using eutelescope::EUTelSparseDataImpl;
-    using eutelescope::EUTelSimpleSparsePixel;
+    using eutelescope::EUTelTrackerDataInterfacerImpl;
+    using eutelescope::EUTelGenericSparsePixel;
     
     // raw input data stream
     const unsigned char * raw_buffer;
@@ -182,7 +182,7 @@ bool Mupix2ConverterPlugin::GetLCIOSubEvent(
     bool collection_exists = false;
     LCCollectionVec * collection;
     std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel> > pixels;
+    std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
     
     if (source.IsBORE()) {
         // this should never happen. BORE event should be handled
@@ -219,21 +219,21 @@ bool Mupix2ConverterPlugin::GetLCIOSubEvent(
     CellIDEncoder<TrackerDataImpl>
         cell_encoder(EUTELESCOPE::ZSDATADEFAULTENCODING, collection);
     cell_encoder["sensorID"] = MUPIX2_SENSOR_ID;
-    cell_encoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+    cell_encoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
     
     // the lcio object that stores the hit data for a single readout frame
     frame.reset(new TrackerDataImpl);
     cell_encoder.setCellID(frame.get());
     // a convenience object that encodes the sparse pixel data into an
     // eutelescope-specific format and stores it in the given readout frame
-    pixels.reset(new EUTelSparseDataImpl<EUTelSimpleSparsePixel>(frame.get()));
+    pixels.reset(new EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel>(frame.get()));
     
     // extract hits from the raw buffer into the lcio readout frame
     unsigned col;
     unsigned row;
     for (unsigned i = 0; i < ExtractNumberOfHits(raw_buffer); ++i) {
         ExtractHit(raw_buffer, i, col, row);
-        EUTelSimpleSparsePixel pixel(col, row, MUPIX2_FAKE_SIGNAL);
+        EUTelGenericSparsePixel pixel(col, row, MUPIX2_FAKE_SIGNAL);
         pixels->addSparsePixel(&pixel);
     }
     

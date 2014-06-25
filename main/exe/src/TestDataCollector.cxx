@@ -12,9 +12,9 @@
 #endif
 class TestDataCollector : public eudaq::DataCollector {
   public:
-    TestDataCollector(const std::string & runcontrol,
-        const std::string & listenaddress)
-      : eudaq::DataCollector(runcontrol, listenaddress),
+  TestDataCollector(const std::string & name, const std::string & runcontrol,
+		    const std::string & listenaddress, const std::string & runnumberfile)
+    : eudaq::DataCollector(name, runcontrol, listenaddress, runnumberfile),
       done(false)
   {}
     void OnConnect(const eudaq::ConnectionInfo & id) {
@@ -73,10 +73,14 @@ int main(int /*argc*/, const char ** argv) {
       "The address on which to listen for Data connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
+  eudaq::Option<std::string> name (op, "n", "name", "", "string",
+      "The name of this DataCollector");
+  eudaq::Option<std::string> runnumberfile (op, "f", "runnumberfile", "../data/runnumber.dat", "string",
+      "The path and name of the file containing the run number of the last run.");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    TestDataCollector fw(rctrl.Value(), addr.Value());
+    TestDataCollector fw(name.Value(), rctrl.Value(), addr.Value(), runnumberfile.Value());
     //g_ptr = &fw;
     //std::signal(SIGINT, &ctrlc_handler);
     do {

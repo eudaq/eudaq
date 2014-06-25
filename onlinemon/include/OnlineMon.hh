@@ -13,12 +13,14 @@
 #include <TStopwatch.h>
 
 //EUDAQ includes
+#ifndef __CINT__
 #include "eudaq/Monitor.hh"
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/TLUEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#endif
 
 //Project Includes
 
@@ -42,6 +44,7 @@
 
 //STL includes
 #include <string>
+#include <memory>
 
 #ifdef WIN32
 #define EUDAQ_SLEEP(x) Sleep(x*1000)
@@ -104,7 +107,7 @@ class RootMonitor : private eudaq::Holder<int>,
       virtual void OnStartRun(unsigned param);
       virtual void OnEvent(const eudaq::StandardEvent & ev);
 
-      virtual void OnBadEvent(counted_ptr<eudaq::Event> ev) {
+      virtual void OnBadEvent(std::shared_ptr<eudaq::Event> ev) {
         EUDAQ_ERROR("Bad event type found in data file");
         std::cout << "Bad Event: " << *ev << std::endl;
       }

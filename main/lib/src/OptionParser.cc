@@ -143,14 +143,14 @@ namespace eudaq {
 			  unsigned v = from_string(ranges[i], 0);
 			  result.push_back(v);
 		  } else {
-			  long min = from_string(ranges[i].substr(0, j), 0);
-			  long max = from_string(ranges[i].substr(j+1), 0);
+			  int32_t min = from_string(ranges[i].substr(0, j), 0);
+			  int32_t max = from_string(ranges[i].substr(j+1), 0);
 			  if (j == 0 && max == 1) {
 				  result.push_back((unsigned)-1);
 			  } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
 				  EUDAQ_THROW("Bad range");
 			  } else {
-				  for (long n = min; n <= max; ++n) {
+				  for (int32_t n = min; n <= max; ++n) {
 					  result.push_back(n);
 				  }
 			  }

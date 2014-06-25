@@ -13,7 +13,7 @@ class AltroUSBProducer : public eudaq::Producer
 
 // Just send the plain chars
 //    /** Send an recorded event from the physmem.
-//     *  The length is the number of unsigned long words.
+//     *  The length is the number of uint32_t words.
 //     *  This function ensures little endian raw data. Use SendEvent to skip 
 //     *  the conversion, which is faster (memory does not have to be allocated and
 //     *  released).

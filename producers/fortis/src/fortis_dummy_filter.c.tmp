@@ -53,7 +53,7 @@ int main ( int argc,
   char *endp;
   double trigger_cut_float = strtod(argv[3], &endp);
 
-  long int frame_interval = strtol(argv[4], &endp , 0 );
+  int32_t frame_interval = strtol(argv[4], &endp , 0 );
 
   int short_size = sizeof(short);
 
