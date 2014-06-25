@@ -22,7 +22,10 @@ namespace eudaq {
   class DLLEXPORT DataCollector : public CommandReceiver {
     public:
       DataCollector(const std::string & runcontrol,
-          const std::string & listenaddress);
+		    const std::string & listenaddress);
+      DataCollector(const std::string & name, 
+		    const std::string & runcontrol,
+		    const std::string & listenaddress);
 
       virtual void OnConnect(const ConnectionInfo & id);
       virtual void OnDisconnect(const ConnectionInfo & id);
