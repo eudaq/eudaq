@@ -25,7 +25,7 @@ bool eudaq::multiFileReader::NextEvent( size_t skip /*= 0*/ )
 	{
 	
 	do{
-		for (int fileID = 0; fileID < m_fileReaders.size(); ++fileID)
+		for (size_t fileID = 0; fileID < m_fileReaders.size(); ++fileID)
 		{
 			if (!m_fileReaders[fileID]->NextEvent()&&m_sync.SubEventQueueIsEmpty(fileID))
 			{
