@@ -606,7 +606,6 @@ namespace eudaq {
     int ntrg;
     int bxid;
     int firstbxid[16];
-    int oldbxid[16];
     int bxdiff;
     for (int i=0;i<16;i++){
       oldl1id[i]=-1;
