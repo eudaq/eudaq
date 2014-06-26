@@ -603,7 +603,7 @@ namespace eudaq {
     int oldl1id[16];
     int link=-1;
     int l1id;
-    int ntrg;
+    int ntrg=0;
     int bxid;
     int firstbxid[16];
     int bxdiff;
