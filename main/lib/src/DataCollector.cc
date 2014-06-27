@@ -204,7 +204,7 @@ namespace eudaq {
   void DataCollector::WriteEvent( const DetectorEvent & ev ) {
 	  EventPacket packet( ev );
 	  WritePacket( packet );
-	  //std::cout << ev << std::endl;
+	  // std::cout << ev << std::endl;
 	  ++m_eventnumber;
   }
 
@@ -289,7 +289,7 @@ namespace eudaq {
           ev.id.SetState(1); // successfully identified
           OnConnect(ev.id);
         } else {
-        	if ( ev.packet.find( AidaPacket::marker2str() ) == 0 ) {
+        	if ( ev.packet.find( AidaPacket::identifier().string ) == 0 ) {
         		// this is a packet
         	} else {
         		//std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;

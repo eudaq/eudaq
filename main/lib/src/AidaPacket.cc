@@ -5,6 +5,7 @@
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/AidaPacket.hh"
 
+using std::cout;
 
 namespace eudaq {
 	EUDAQ_DEFINE_PACKET(EventPacket, str2type( "-EVWRAP-") );
@@ -14,6 +15,10 @@ namespace eudaq {
 		uint64_t* arr = (uint64_t *)&m_header;
 		for ( int i = 0; i < sizeof( m_header ) / sizeof( uint64_t ); i++ )
 			s.write( arr[i] );
+	}
+
+	void AidaPacket::SerializeMetaData( Serializer& s ) const {
+		  s.write( m_meta_data.v );
 	}
 
 	AidaPacket::PacketHeader AidaPacket::DeserializeHeader( Deserializer& ds ) {
@@ -40,20 +45,22 @@ namespace eudaq {
 
   uint64_t AidaPacket::str2type(const std::string & str) {
     uint64_t result = 0;
-    for (size_t i = 0; i < 4; ++i) {
-      if (i < str.length()) result |= str[i] << (8*i);
+    for (size_t i = str.length(); i > 0; i-- ) {
+    	result <<= 8;
+    	result |= str[ i - 1 ];
     }
+    cout << "str2type: str=>" << str << "< uint64=" << std::hex << result << std::endl;
     return result;
   }
 
   std::string AidaPacket::type2str(uint64_t id) {
     //std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
-    std::string result(4, '\0');
-    for (int i = 0; i < 4; ++i) {
+    std::string result(8, '\0');
+    for (int i = 0; i < 8; ++i) {
       result[i] = (char)(id & 0xff);
       id >>= 8;
     }
-    for (int i = 3; i >= 0; --i) {
+    for (int i = 7; i >= 0; --i) {
       if (result[i] == '\0') {
         result.erase(i);
         break;
@@ -77,29 +84,28 @@ namespace eudaq {
 
 
   EventPacket::EventPacket( const Event & ev ) : m_ev( &ev ) {
-    	m_header.marker        = PACKET_MARKER;
     	m_header.packetType    = get_type();
     	m_header.packetSubType = 0;
     	m_header.packetNumber  = m_ev->GetEventNumber();
 
-    	m_meta_data.push_back( buildMetaData( false, META_DATA.TYPE::RUN_NUMBER, m_ev->GetRunNumber() ) );
-    	m_meta_data.push_back( buildMetaData( false, META_DATA.TYPE::TRIGGER_COUNTER, m_ev->GetEventNumber() ) );
-    	m_meta_data.push_back( buildMetaData( false, META_DATA.TYPE::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() ) );
+    	m_meta_data.add( false, MetaData::RUN_NUMBER(), m_ev->GetRunNumber() );
+    	m_meta_data.add( false, MetaData::TRIGGER_COUNTER(), m_ev->GetEventNumber() );
+    	m_meta_data.add( false, MetaData::TRIGGER_TIMESTAMP(), m_ev->GetTimestamp() );
   }
 
 
   EventPacket::EventPacket( PacketHeader& header, Deserializer & ds) {
 		m_header = header;
-		ds.read( m_meta_data );
+//		ds.read( m_meta_data );
 		m_ev = EventFactory::Create( ds );
 		ds.read( checksum );
   }
 
 
   void EventPacket::Serialize(Serializer & ser) const {
-	  std::cout << "Serialize ev# = " << std::hex << GetPacketNumber() << std::endl;
+	  // std::cout << "Serialize ev# = " << std::hex << GetPacketNumber() << std::endl;
 	  SerializeHeader( ser );
-	  ser.write( m_meta_data );
+	  SerializeMetaData( ser );
 	  m_ev->Serialize( ser );
 	  ser.write( ser.GetCheckSum() );
   }
