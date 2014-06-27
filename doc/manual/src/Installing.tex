@@ -230,7 +230,7 @@ rm -rf *
 to start from scratch.
 
 
-\subsection{Compiling}
+\subsection{Compilation on Linux/OSX}
 You should just have to run the command:
 \begin{listing}[mybash]
 make install
@@ -246,7 +246,7 @@ The executable binaries and the common shared library will be installed by defau
 respectively. If you would like to install into a different location,
 please set the respective parameter during the CMake configuration.
 
-\subsection{Compiling the main library and GUI on Windows using Visual~Studio}
+\subsection{Setup and Compilation on Windows using Visual~Studio}
 
 This section gives a short overview on the steps needed to compile the
 project under Windows (tested under Windows 7, 32-bit). For a more
@@ -268,7 +268,8 @@ page~\pageref{app:compileOnWindows}.
 \item Start the Visual Studio \emph{Developer Command Prompt} from the
   Start~Menu entries for Visual~Studio (Tools subfolder) which opens a
   \texttt{cmd.exe} session with the necessary environment variables
-  already set. Now execute the \texttt{qtenv2.bat} batch file (or similar) in the Qt folder, e.g.
+  already set. If your Qt installation has not been added to the
+  global \texttt{\%PATH\%} variable, you need to execute the \texttt{qtenv2.bat} batch file (or similar) in the Qt folder, e.g.
   
   \begin{listing}[mybash]
 C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
