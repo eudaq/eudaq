@@ -2,23 +2,42 @@
 #+options: num:nil toc:2
 Changelog and Versions 
 
-* Version 1.3 (under development)
+* Version 1.3
 ** New user-provided producers/converters:
    - miniTLU (Francesco Crescioli/David Cussans)
    - MuPix converter (Moritz Kiehn)
 ** Changes to existing Producers/converters:
    - updated APIX FEI4 converter
    - updated all converter plugins to work with the new EUTelescope pixel structures
+   - modified producers to use fixed-width integers where made
+     necessary due to core library changes
 ** New Tools
 *** FileChecker (by Moritz Kiehn)
     a small utility to check raw data files (see manual for a description)
 *** OfflineMonitor (by Richard Peschke)
+** Python Interface
+   - provides Python instances of RunControl, DataCollector,
+     LogCollector and a generic Producer
+   - allows for Python-side extensions to Producer
+   - provides interface for scripted data taking sessions
+** Multiple (named) DataCollectors
+   - it is now possible to start up several DataCollectors
+   - named DataCollectors will be assigned to a Producer with the same
+     name allowing for locally running data sinks
+** Regression tests
+   - includes first tests for core EUDAQ components based on Python wrapper
+   - starts a (dummy) DAQ session and verifies the output against a reference file
+   - tests run via CTest
+   - scripts for automated nightly tests provided
 ** Notes on updating
 *** EUDAQ now requires a compiler which fully implements C++11
     - GCC version > 4.6
     - Clang version > 3.1
     - MSVC12 or later
 *** counted_ptr class removed (superseded by C++11-featured shared_ptr)
+*** EUDAQThreads class removed (superseded by C++11 std::threads)
+*** core library now uses fixed-width integers consistently -- this might require changes to existing producers
+*** FileReader interface changed: only takes two arguments now, omitting the "synctrigger" flag 
 * Version 1.2.2
 ** Updated EUTelescope-dependent parts to work with newest development version
 * Version 1.2.1
