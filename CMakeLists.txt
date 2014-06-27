@@ -141,14 +141,14 @@ ENDIF()
 # build OnlineMon executable
 option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
-  add_subdirectory(onlinemon)
+  add_subdirectory(monitors/onlinemon)
 ENDIF()
 
 
 # build Offline Monitor
 option(BUILD_Offline_monitor "Compile Offline Monitor executable (requires ROOT)?" OFF)
-IF(BUILD_Offline_monitor)
-  add_subdirectory(OfflineMonitor)
+IF(BUILD_offlinemon)
+  add_subdirectory(monitors/offlinemon)
 ENDIF()
 
 
