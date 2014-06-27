@@ -13,6 +13,7 @@
 #include "eudaq/Event.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/SmartEnum.hh"
 #include "eudaq/Platform.hh"
 
 #define EUDAQ_DECLARE_PACKET()                  \
@@ -62,48 +63,69 @@ namespace eudaq {
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
-	struct Metadata {
-	  enum TYPE { RUN_NUMBER, TRIGGER_COUNTER, TRIGGER_TIMESTAMP };
-	  Metadata() {
-		  type2string[ RUN_NUMBER ] = "RUN_NUMBER";
-		  type2string[ TRIGGER_COUNTER ] = "TRIGGER_COUNTER";
-		  type2string[ TRIGGER_TIMESTAMP ] = "TRIGGER_TIMESTAMP";
-	  };
-	  std::map<TYPE,std::string> type2string;
-	} META_DATA;
-
-
-
+    //
+    // packet header
+    //
 
 	typedef struct {
-		  uint64_t marker; 				// 0xDEADBADFADEDCAFE
+		uint64_t 	number;
+		std::string string;
+	} PacketIdentifier;
+
+	static const PacketIdentifier& identifier() {
+		static PacketIdentifier packet_identifier;
+		if ( packet_identifier.string.empty() ) {
+			packet_identifier.string = "#PACKET#";
+			packet_identifier.number = str2type( packet_identifier.string );
+		}
+		return packet_identifier;
+	}
+
+	typedef struct {
+		  uint64_t marker; 				// 8 byte string: #PACKET#
 		  uint64_t packetType;			// 8 byte string
 		  uint64_t packetSubType;		// 8 byte string
 		  uint64_t packetNumber;
 	  } PacketHeader;
 
-    virtual void Print(std::ostream & os) const;
-
-    // packet header methods
     inline uint64_t GetPacketNumber() const { return m_header.packetNumber; };
     inline void SetPacketNumber( uint64_t n ) { m_header.packetNumber = n; };
     inline int GetPacketType() const { return m_header.packetType; };
     inline void SetPacketType( int type ) { m_header.packetType = type; };
 
-    // meta data methods
+
+    //
+    // meta data
+    //
+
+	#define MAKE_META_DATA_TYPE( x, v ) class x : public MetaDataType { public: x() : MetaDataType( v, #x ) {} }
+
+    class MetaData {
+      public:
+    	typedef SmartEnum MetaDataType;
+    	MAKE_META_DATA_TYPE(RUN_NUMBER, 1);
+    	MAKE_META_DATA_TYPE(TRIGGER_COUNTER, 2);
+    	MAKE_META_DATA_TYPE(TRIGGER_TIMESTAMP, 3);
+
+    	std::vector<uint64_t> v;
+
+    	void add( bool tlu, MetaDataType type, uint64_t data ) {
+        		uint64_t meta_data = 0;
+        		SetType( meta_data, type.asInt() );
+        		SetCounter( meta_data, data );
+        		v.push_back( meta_data );
+    	};
+    };
+
+    MetaData& GetMetaData() {
+    	return m_meta_data;
+    }
+
     static inline int GetType( uint64_t meta_data ) { return getBits(ENTRY_TYPE, meta_data ); };
     static inline void SetType( uint64_t& meta_data, int type ) { setBits(ENTRY_TYPE,  meta_data, type ); };
     static inline bool IsTLUBitSet( uint64_t meta_data ) { return getBits(TLU, meta_data ); };
     static inline uint64_t GetCounter( uint64_t meta_data ) { return getBits(COUNTER, meta_data ); };
     static inline void SetCounter( uint64_t& meta_data, uint64_t data ) { setBits(COUNTER, meta_data, data ); };
-
-
-    static uint64_t buildMetaData( bool tlu, Metadata::TYPE type, uint64_t data ) {
-    	uint64_t meta_data = 0;
-    	SetType( meta_data, type );
-    	SetCounter( meta_data, data );
-    	return meta_data;
-    };
 
     template <int shift, int bits> static uint64_t getBitsTemplate( uint64_t from ) {
     	return shift > 0 ? (from >> shift) & bit_mask()[bits] : from & bit_mask()[bits];
@@ -113,10 +135,16 @@ class DLLEXPORT AidaPacket : public Serializable {
     	dest |= shift > 0 ? (val & bit_mask()[bits]) << shift : val & bit_mask()[bits];
     };
 
+    virtual void Print(std::ostream & os) const;
+
   protected:
     friend class PacketFactory;
+    AidaPacket() {
+    	m_header.marker = identifier().number;
+    };
 
     void SerializeHeader( Serializer & ) const;
+    void SerializeMetaData( Serializer & ) const;
 
     static PacketHeader DeserializeHeader( Deserializer & );
     static const uint64_t * const bit_mask();
@@ -124,7 +152,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     static std::string type2str(uint64_t id);
 
     PacketHeader m_header;
-    std::vector<uint64_t> m_meta_data;
+    MetaData m_meta_data;
     uint64_t checksum;
 };
 
