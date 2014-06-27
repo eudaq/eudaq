@@ -9,13 +9,15 @@ namespace eudaq {
 
   class DLLEXPORT AidaFileWriter {
     public:
-      AidaFileWriter();
       virtual void StartRun(unsigned runnumber) = 0;
       virtual void WritePacket(const AidaPacket &) = 0;
       virtual unsigned long long FileBytes() const = 0;
       void SetFilePattern(const std::string & p) { m_filepattern = p; }
       virtual ~AidaFileWriter() {}
     protected:
+      friend class AidaFileWriterFactory;
+      AidaFileWriter();
+
       std::string m_filepattern;
   };
 
