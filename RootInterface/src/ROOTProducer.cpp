@@ -552,8 +552,27 @@ void ROOTProducer::setTag( const char* tag,const char* Value )
 	m_prod->setTag(tag,Value);
 	}catch(...){
 
-		std::cout<<"unable setTag( "<<tag<< " , "<<Value<<" )" <<std::endl;
+		std::cout<<"error in: setTag( "<<tag<< " , "<<Value<<" )" <<std::endl;
 	}
+
+}
+
+void ROOTProducer::setTag( const char* tagNameTagValue )
+{
+  std::string dummy(tagNameTagValue);
+
+  size_t equalsymbol=dummy.find_first_of("=");
+  if (equalsymbol!=std::string::npos&&equalsymbol>0)
+  {
+    std::string tagName=dummy.substr(0,equalsymbol-1);
+    std::string tagValue=dummy.substr(equalsymbol+1);
+    setTag(tagName.c_str(),tagValue.c_str());
+
+  }else{
+
+    std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
+  }
+
 
 }
 

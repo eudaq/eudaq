@@ -48,6 +48,10 @@ public:
 	void setTimeStamp(ULong64_t TimeStamp);
 	void setTimeStamp2Now();
 	void setTag(const char* tag,const char* Value);
+  void setTag(const char* tagNameTagValue); // to use the signal slot mechanism use this function.
+                                            // example:
+                                            // setTag("tagName=tagValue");
+                                            // the equal symbol is mandatory.
 	void AddPlane2Event(unsigned plane,const std::vector<unsigned char>& inputVector);
 	void AddPlane2Event(unsigned plane,const bool* inputVector,size_t Elements);
   void AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK , bool* evtr_strm0,bool* evtr_strm1);
