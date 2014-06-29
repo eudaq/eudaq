@@ -227,7 +227,7 @@ if (is_MIMOSA26)
 }
 }
 
-void SimpleStandardPlane::setPixelType(string name)
+void SimpleStandardPlane::setPixelType(std::string name)
 {
   if (name=="MIMOSA26")
   {

@@ -283,7 +283,7 @@ namespace eudaq {
 
     if (m_runnumber >=0){
       // we have set the run number value before
-      if (m_runnumber != static_cast<long>(thisRunNumber)){
+      if (m_runnumber != static_cast<int32_t>(thisRunNumber)){
 	EUDAQ_THROW("DataCollector run number mismatch! Previously received run number does not match run number reported by newly connected DataCollector "+id.GetName());
       }
     } else {

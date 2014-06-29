@@ -25,8 +25,8 @@
 #  include "EUTelMimosa26Detector.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
-#  include "EUTelSparseDataImpl.h"
-#  include "EUTelSimpleSparsePixel.h"
+#  include "EUTelTrackerDataInterfacerImpl.h"
+#  include "EUTelGenericSparsePixel.h"
 #  include "EUTelRunHeaderImpl.h"
 using eutelescope::EUTELESCOPE;
 #endif
@@ -411,7 +411,7 @@ namespace eudaq {
 
       if (plane.GetFlags(StandardPlane::FLAG_ZS)) {
         zsDataEncoder["sensorID"] = plane.ID();
-        zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelSimpleSparsePixel;
+        zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
         // get the total number of pixel. This is written in the
         // eudrbBoard and to get it in a easy way pass through the eudrbDecoder
@@ -422,11 +422,11 @@ namespace eudaq {
         zsDataEncoder.setCellID( zsFrame.get() );
 
         // this is the structure that will host the sparse pixel
-        std::auto_ptr< eutelescope::EUTelSparseDataImpl< eutelescope::EUTelSimpleSparsePixel > >
-          sparseFrame( new eutelescope::EUTelSparseDataImpl< eutelescope::EUTelSimpleSparsePixel > ( zsFrame.get() ) );
+        std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+          sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
         // prepare a sparse pixel to be added to the sparse data
-        std::auto_ptr< eutelescope::EUTelSimpleSparsePixel > sparsePixel( new eutelescope::EUTelSimpleSparsePixel );
+        std::auto_ptr< eutelescope::EUTelGenericSparsePixel > sparsePixel( new eutelescope::EUTelGenericSparsePixel );
         for ( size_t iPixel = 0; iPixel < nPixel; ++iPixel ) {
 
           // the data contain also the markers, so we have to strip

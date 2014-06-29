@@ -184,7 +184,9 @@ at some places we have constructions like:
 
 // print debug messages that are optimized out if DEBUG_TRANSPORT is not set:
 // source and details: http://stackoverflow.com/questions/1644868/c-define-macro-for-debug-printing
-#define DEBUG_TRANSPORT 1
+#ifndef DEBUG_TRANSPORT
+#define DEBUG_TRANSPORT 0
+#endif
 #define debug_transport(fmt, ...) \
   do { if (DEBUG_TRANSPORT) fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__, \
 					  __LINE__, __FUNCTION__, __VA_ARGS__); } while (0)
@@ -275,7 +277,7 @@ namespace eudaq {
       //if (length > 500000) std::cout << "Done send packet" << std::endl;
     }
 
-    //     static void send_data(SOCKET sock, unsigned long data) {
+    //     static void send_data(SOCKET sock, uint32_t data) {
     //       std::string str;
     //       for (int i = 0; i < 4; ++i) {
     //         str += static_cast<char>(data & 0xff);
@@ -599,7 +601,7 @@ namespace eudaq {
 #endif
 
 
-        //std::cout << "Select result=" << result << std::endl;
+	//std::cout << "Select result=" << result << std::endl;
 
         bool donereading = false;
         do {
@@ -610,7 +612,7 @@ namespace eudaq {
           } while (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Interrupted_function_call);
 
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable) {
-	    //debug_transport("Client, return=%d, WSAError:%d (%s) Nothing to do\n",result,errno,strerror(errno));
+	    debug_transport("Client, return=%d, WSAError:%d (%s) Nothing to do\n",result,errno,strerror(errno));
             donereading = true;
           }else if(result == EUDAQ_ERROR_NO_DATA_RECEIVED&& LastSockError()== EUDAQ_ERROR_CONNECTION_RESET){
 
@@ -643,7 +645,7 @@ namespace eudaq {
 #endif
         //std::cout << "Remaining time in ProcessEvents(): " << t_remain << (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
 	if ( !(t_remain > Time(0))){
-	  //debug_transport("%s\n","Reached Timeout in ProcessEvents().");
+	  debug_transport("%s\n","Reached Timeout in ProcessEvents().");
 	}
       } while (!done && t_remain > Time(0));
       //std::cout << "done" << std::endl;

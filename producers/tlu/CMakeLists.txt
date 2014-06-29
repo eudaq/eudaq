@@ -1,5 +1,4 @@
 FIND_PACKAGE(ZestSC1 REQUIRED)
-#find_package(libusb-1.0 REQUIRED)
 find_package(LIBUSB REQUIRED)
 find_package(TLUFirmware REQUIRED)
 

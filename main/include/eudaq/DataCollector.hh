@@ -21,11 +21,10 @@ namespace eudaq {
    */
   class DLLEXPORT DataCollector : public CommandReceiver {
     public:
-      DataCollector(const std::string & runcontrol,
-		    const std::string & listenaddress);
       DataCollector(const std::string & name, 
 		    const std::string & runcontrol,
-		    const std::string & listenaddress);
+		    const std::string & listenaddress,
+		    const std::string & runnumberfile = "../data/runnumber.dat");
 
       virtual void OnConnect(const ConnectionInfo & id);
       virtual void OnDisconnect(const ConnectionInfo & id);
@@ -46,6 +45,7 @@ namespace eudaq {
         std::list<std::shared_ptr<Event> > events;
       };
 
+      const std::string m_runnumberfile; // path to the file containing the run number
       void DataHandler(TransportEvent & ev);
       size_t GetInfo(const ConnectionInfo & id);
 

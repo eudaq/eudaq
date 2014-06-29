@@ -164,16 +164,16 @@ int main(int /*argc*/, char ** argv) {
     std::ofstream timestampStream( textfile.Value().c_str());
     timestampStream << "# Run\tEvent\tTLUTimestamp\tFrame\tPivotRow" << std::endl; //print out header
 
-    unsigned long long previousTimestamp = 0 ;
-    unsigned long long startTimestamp = 0 ;
+    uint64_t previousTimestamp = 0 ;
+    uint64_t startTimestamp = 0 ;
 
     int previousFortisFrameNumber =0 ;
     int startFortisFrameNumber =0 ;
 
     // int previousPivotRow = 0;
 
-    unsigned long int  previousFortisTimestamp = 0 ;
-    unsigned long int  startFortisTimestamp = 0 ;
+    uint32_t  previousFortisTimestamp = 0 ;
+    uint32_t  startFortisTimestamp = 0 ;
 
     int previousDeltaTimestamp = 0;
 
@@ -186,7 +186,7 @@ int main(int /*argc*/, char ** argv) {
 
     for (size_t i = 0; i < op.NumArgs(); ++i) { // loop through run numbers
 
-      eudaq::FileReader reader(op.GetArg(i), ipat.Value(), false );
+      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
       EUDAQ_INFO("Reading: " + reader.Filename());
 
       {
@@ -234,11 +234,11 @@ int main(int /*argc*/, char ** argv) {
 	    if (rev && rev->GetSubType() == "FORTIS" ) {
 	      
 	      unsigned eventNumber = dev->GetEventNumber();
-	      unsigned long long Timestamp = (dev->GetTimestamp() == eudaq::NOTIMESTAMP) ? 0 : dev->GetTimestamp();
+	      uint64_t Timestamp = (dev->GetTimestamp() == eudaq::NOTIMESTAMP) ? 0 : dev->GetTimestamp();
 
 	      int fortisFrameNumber = from_string(rev->GetTag( "FRAMENUMBER"),-1);
 	      int fortisPivotRow = from_string(rev->GetTag("PIVOTROW"),-1);
-	      long int FortisTimestamp = fortisFrameNumber*numRows + fortisPivotRow;
+	      int32_t FortisTimestamp = fortisFrameNumber*numRows + fortisPivotRow;
 
 	      if ( rev->NumBlocks() ) {
 		 if ( ! pivotRows.empty() ) {

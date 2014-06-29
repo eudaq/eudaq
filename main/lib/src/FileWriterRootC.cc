@@ -17,7 +17,7 @@ namespace eudaq {
       FileWriterRootC(const std::string &);
       virtual void StartRun(unsigned);
       virtual void WriteEvent(const DetectorEvent &);
-      virtual unsigned long long FileBytes() const;
+      virtual uint64_t FileBytes() const;
       virtual ~FileWriterRootC();
     private:
       TFile * m_tfile; // book the pointer to a file (to store the otuput)
@@ -28,7 +28,7 @@ namespace eudaq {
       unsigned i_tlu; // a trigger id
       unsigned i_run; // a run  number 
       unsigned i_event; // an event number 
-      unsigned long long int i_time_stamp,DUT_time; // the time stamp
+      uint64_t i_time_stamp,DUT_time; // the time stamp
   };
 
   namespace {
@@ -106,7 +106,7 @@ namespace eudaq {
 	  delete m_tfile;
   }
 
-  unsigned long long FileWriterRootC::FileBytes() const { return 0; }
+  uint64_t FileWriterRootC::FileBytes() const { return 0; }
 
 }
 
