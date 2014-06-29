@@ -128,7 +128,7 @@ public:
       }
       if (!ev) {
         //ev = new eudaq::RawDataEvent("DEPFET", m_run, itrg); 
-        ev = new eudaq::RawDataEvent("DEPFET", m_run, m_evt); // -- fsv:: send local counter instead TLU number
+        ev = make_shared<eudaq::RawDataEvent>("DEPFET", m_run, m_evt); // -- fsv:: send local counter instead TLU number
       }
       ev->AddBlock(id++, buffer, lenevent*4);
 

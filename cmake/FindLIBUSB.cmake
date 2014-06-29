@@ -38,8 +38,8 @@ IF(MSVC)
   # for this version you need to have installed the lib usb driver to your system
   # Windows with Microsoft Visual C++ 
   FIND_PATH(LIBUSB_INCLUDE_DIRS 
-    NAMES usb.h lusb0_usb.h 
-    PATHS "$ENV{ProgramFiles}/LibUSB-Win32/include" "${extern_lib_path}/include")
+    NAMES lusb0_usb.h
+    PATHS "${extern_lib_path}/include" "$ENV{ProgramFiles}/LibUSB-Win32/include")
   if (${EX_PLATFORM} EQUAL 64)
     # on x64 (win64)
     FIND_LIBRARY(LIBUSB_LIBRARIES NAMES libusb PATHS "$ENV{ProgramFiles}/LibUSB-Win32/lib/msvc_x64" "${extern_lib_path}/lib/msvc_x64")
@@ -64,7 +64,7 @@ ENDIF(NOT LIBUSB_FOUND)
 
 IF(LIBUSB_FOUND)
   IF(NOT LIBUSB_FIND_QUIETLY)
-    MESSAGE(STATUS "Found LIBUSB: ${LIBUSB_LIBRARIES}")
+    MESSAGE(STATUS "Found LIBUSB: ${LIBUSB_LIBRARIES} (lib) and ${LIBUSB_INCLUDE_DIRS} (header)")
   ENDIF (NOT LIBUSB_FIND_QUIETLY)
 ELSE(LIBUSB_FOUND)
   IF(LIBUSB_FIND_REQUIRED)

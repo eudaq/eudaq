@@ -100,7 +100,7 @@ public:
     int iTrigger = (iTriggerMSB<<16)+iTriggerLSB;
 
     const size_t headerSize = 28;
-    long int header[ headerSize ];
+    int32_t header[ headerSize ];
     header[0] = 0x0;
     header[1] = m_ev;
     header[2] = m_ev;

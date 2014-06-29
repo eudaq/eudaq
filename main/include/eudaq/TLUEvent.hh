@@ -10,9 +10,9 @@ namespace eudaq {
   class DLLEXPORT TLUEvent : public Event {
     EUDAQ_DECLARE_EVENT(TLUEvent);
     public:
-    typedef std::vector<unsigned long long> vector_t;
+    typedef std::vector<uint64_t> vector_t;
     virtual void Serialize(Serializer &) const;
-    explicit TLUEvent(unsigned run, unsigned event, unsigned long long timestamp,
+    explicit TLUEvent(unsigned run, unsigned event, uint64_t timestamp,
         const vector_t & extratimes = vector_t()) :
       Event(run, event, timestamp),
       m_extratimes(extratimes) {}

@@ -18,8 +18,6 @@
 #include "EUTelMimosa26Detector.h"
 #include "EUTelTLUDetector.h"
 #include "EUTelDEPFETDetector.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelSimpleSparsePixel.h"
 #include "EUTelSetupDescription.h"
 
 // marlin includes
@@ -46,6 +44,9 @@
 #include <iostream>
 #include <cassert>
 #include <memory>
+
+
+#include "config.h" // for version symbols
 
 using namespace std;
 using namespace marlin;
@@ -113,6 +114,7 @@ EUTelNativeReader * EUTelNativeReader::newProcessor () {
 void EUTelNativeReader::init () {
   printParameters ();
   ::eudaq::GetLogger().SetErrLevel("WARN"); // send only eudaq messages above (or equal?) "warn" level to stderr
+  streamlog_out(MESSAGE5) << "Initializing EUDAQ native reader Marlin library " << PACKAGE_VERSION << endl;
 }
 
 void EUTelNativeReader::readDataSource(int numEvents) {

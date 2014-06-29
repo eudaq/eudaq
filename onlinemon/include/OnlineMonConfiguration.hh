@@ -16,29 +16,26 @@
 #include <iostream>
 #include <sstream>
 
-
-using namespace std;
-
 class OnlineMonConfiguration
 {
   public:
-    OnlineMonConfiguration();
-    OnlineMonConfiguration(string confname);
-    virtual ~OnlineMonConfiguration();
-    int ReadConfigurationFile();
-    void SetDefaults();
-    void PrintConfiguration();
+  OnlineMonConfiguration();
+  OnlineMonConfiguration(std::string confname);
+  virtual ~OnlineMonConfiguration();
+  int ReadConfigurationFile();
+  void SetDefaults();
+  void PrintConfiguration();
 
 
 
-    string getConfigurationFileName() const;
-    void setConfigurationFileName(string ConfigurationFileName);
+  std::string getConfigurationFileName() const;
+  void setConfigurationFileName(std::string ConfigurationFileName);
 
-    string getSnapShotDir() const;
-    void setSnapShotDir(string SnapShotDir);
+  std::string getSnapShotDir() const;
+  void setSnapShotDir(std::string SnapShotDir);
 
-    string getSnapShotFormat() const;
-    void setSnapShotFormat(string SnapShotFormat);
+  std::string getSnapShotFormat() const;
+  void setSnapShotFormat(std::string SnapShotFormat);
 
     double getHotpixelcut() const;
     void setHotpixelcut(double hotpixelcut);
@@ -51,21 +48,21 @@ class OnlineMonConfiguration
 
     int getCorrel_minclustersize() const;
     void setCorrel_minclustersize(int correl_minclustersize);
-    vector<int> getPlanes_to_be_skipped() const;
-    void setPlanes_to_be_skipped(vector<int> planes_to_be_skipped);
+  std::vector<int> getPlanes_to_be_skipped() const;
+  void setPlanes_to_be_skipped(std::vector<int> planes_to_be_skipped);
 
   private:
 
     //general settings
-    string ConfigurationFileName;
-    string SnapShotDir;
-    string SnapShotFormat;
+    std::string ConfigurationFileName;
+    std::string SnapShotDir;
+    std::string SnapShotFormat;
     //MIMOSA26 Settings
     unsigned int mimosa26_max_sections;
     unsigned int mimosa26_section_boundary;
     //Correlation settings
     std::map <int,bool> correlation_xy_flip;
-    vector <int> planes_to_be_skipped;
+  std::vector <int> planes_to_be_skipped;
     int correl_minclustersize;
     //Clusterizer settings
 
@@ -74,14 +71,14 @@ class OnlineMonConfiguration
 
     //helper functions
     //Removes a specifici character from a string
-    string remove_this_character(string s,char c);
+  std::string remove_this_character(std::string s,char c);
     //splits a string into its elements
-    unsigned int stringsplit(string str, char c, vector<string>& v);
+  unsigned int stringsplit(std::string str, char c, std::vector<std::string>& v);
 
     //taken from http://www.cplusplus.com/forum/articles/9645/
-    template <typename T> T StringToNumber(string Text ) //Text not by constANT reference so that the function can be used with a character array as argument
+  template <typename T> T StringToNumber(std::string Text ) //Text not by constANT reference so that the function can be used with a character array as argument
     {
-      stringstream ss(Text);
+      std::stringstream ss(Text);
       T result;
       return ss >> result ? result : 0;
     }

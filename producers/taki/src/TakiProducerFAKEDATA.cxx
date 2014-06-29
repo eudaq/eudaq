@@ -31,7 +31,7 @@ TakiProducerFAKEDATA::TakiProducerFAKEDATA(const std::string & name, const std::
 
 }
 
-void TakiProducerFAKEDATA::send(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const unsigned long long& r_ull_triggerID)
+void TakiProducerFAKEDATA::send(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint64_t& r_ull_triggerID)
 {
     cout << "[TakiProducerFAKEDATA::send()] !! Sending " << r_i_numBytes << " bytes !!\n";
     cout << "[TakiProducerFAKEDATA::send()] ==== DATA BEGIN ==== \n";
@@ -50,7 +50,7 @@ void TakiProducerFAKEDATA::send(const char* const p_c_buffer_TCP, const int& r_i
     cout << "[TakiProducerFAKEDATA::send()] !! DONE Sending !! m_u_ev=" << m_u_ev <<".\n\n";
 }
 
-void TakiProducerFAKEDATA::sendCorrupt(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const unsigned long long& r_ull_triggerID)
+void TakiProducerFAKEDATA::sendCorrupt(const char* const p_c_buffer_TCP, const int& r_i_numBytes, const uint64_t& r_ull_triggerID)
 {
     cout << "[TakiProducerFAKEDATA::sendCorrupt()] !! Sending " << r_i_numBytes << " bytes !!\n";
     cout << "[TakiProducerFAKEDATA::sendCorrupt()] ==== DATA BEGIN ==== \n";

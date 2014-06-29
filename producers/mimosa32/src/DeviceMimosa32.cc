@@ -1,4 +1,4 @@
-#include "eudaq/DeviceMimosa32.hh"
+#include "DeviceMimosa32.hh"
 #include <sys/types.h>
 #include <fcntl.h> // File control definitions
 #include <errno.h> // Error number definitions

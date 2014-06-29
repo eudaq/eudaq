@@ -19,8 +19,8 @@
 #  include "EUTelTakiDetector.h"
 #  include "EUTelSetupDescription.h"
 #  include "EUTelEventImpl.h"
-#  include "EUTelSparseDataImpl.h"
-#  include "EUTelSimpleSparsePixel.h"
+#  include "EUTelTrackerDataInterfacerImpl.h"
+#  include "EUTelGenericSparsePixel.h"
 using eutelescope::EUTELESCOPE;
 #endif
 
@@ -229,10 +229,10 @@ namespace eudaq {
     StandardPlane plane(id, "Taki", "Taki");
 
     unsigned tlu_eventnumber = 
-      (( ((unsigned long) data[5])       ) & 0x000000FF)
-      | (( ((unsigned long) data[4]) << 8  ) & 0x0000FF00)
-      | (( ((unsigned long) data[3]) << 16 ) & 0x00FF0000)
-      | (( ((unsigned long) data[2]) << 24 ) & 0xFF000000);
+      (( ((uint32_t) data[5])       ) & 0x000000FF)
+      | (( ((uint32_t) data[4]) << 8  ) & 0x0000FF00)
+      | (( ((uint32_t) data[3]) << 16 ) & 0x00FF0000)
+      | (( ((uint32_t) data[2]) << 24 ) & 0xFF000000);
     /*
        tlu_eventnumber =     (( ((unsigned) *(dataPtr+5))       ) & 0x000000FF) //!only unsigned int available instead of ULL or UL!
        | (( ((unsigned) *(dataPtr+4)) << 8  ) & 0x0000FF00);

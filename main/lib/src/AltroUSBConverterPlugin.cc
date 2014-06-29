@@ -51,7 +51,7 @@ namespace eudaq
 
       /** Helper function to get a 40 bit word out of the byte vector.
        */
-      unsigned long long int Get40bitWord(unsigned int index40bit) const;
+      uint64_t Get40bitWord(unsigned int index40bit) const;
   };
 
   /** Implementation of the DataConverterPlugin to convert an eudaq::Event
@@ -127,21 +127,21 @@ namespace eudaq
   }
 
 
-  unsigned long long int UCharAltroUSBVec::Get40bitWord(unsigned int index40bit) const
+  uint64_t UCharAltroUSBVec::Get40bitWord(unsigned int index40bit) const
   {
     // we have to pick the first two 10-bit words from the first 32 bits and the 
     // 3. and 4. 10-bit word from the second 32 bits
 
     size_t index8bit = index40bit*8; // there are 8 bytes (64 bits) per 40 bit word;
 
-    unsigned long long int retval = 
-      static_cast<unsigned long long int>( _bytedata[ index8bit ] )  |
-      static_cast<unsigned long long int>( _bytedata[ index8bit + 1 ] ) << 8  |
-      static_cast<unsigned long long int>( _bytedata[ index8bit + 2 ] & 0xf ) << 16 | 
+    uint64_t retval = 
+      static_cast<uint64_t>( _bytedata[ index8bit ] )  |
+      static_cast<uint64_t>( _bytedata[ index8bit + 1 ] ) << 8  |
+      static_cast<uint64_t>( _bytedata[ index8bit + 2 ] & 0xf ) << 16 | 
       //--- the second 32 bit word
-      static_cast<unsigned long long int>( _bytedata[ index8bit + 4 ] ) << 20 |
-      static_cast<unsigned long long int>( _bytedata[ index8bit + 5 ] ) << 28 |
-      static_cast<unsigned long long int>( _bytedata[ index8bit + 6 ] & 0xf) << 36 ;
+      static_cast<uint64_t>( _bytedata[ index8bit + 4 ] ) << 20 |
+      static_cast<uint64_t>( _bytedata[ index8bit + 5 ] ) << 28 |
+      static_cast<uint64_t>( _bytedata[ index8bit + 6 ] & 0xf) << 36 ;
 
     return retval;
   }
@@ -215,7 +215,7 @@ namespace eudaq
             previous_altrotrailer = altrotrailerposition;
           }
 
-          unsigned long long int altrotrailer 
+          uint64_t altrotrailer 
             = altrodatavec.Get40bitWord(altrotrailerposition);
 
           // bool channel_is_broken = false;

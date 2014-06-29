@@ -17,7 +17,7 @@ using namespace UTIL;
 #endif
 #include "TLUEvent.hh"
 
-#define NOTIMESTAMPSET (unsigned long long)-1
+#define NOTIMESTAMPSET (uint64_t)-1
 #define NOTIMEDURATIONSET 0
 
 
