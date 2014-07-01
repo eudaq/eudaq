@@ -34,6 +34,12 @@ namespace eudaq {
     i0 = i1+1;
     i1 = packet.find(' ', i0);
     part = std::string(packet, i0, i1-i0);
+    if (part == "DataCollector" )
+    	m_packetreceiver = false;
+    else if (part == "DataCollectorV2" )
+    	m_packetreceiver = true;
+    else
+    	EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
     if (part != "DataCollector" ) EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
 
     m_dataclient->SendPacket("OK EUDAQ DATA " + m_type + " " + m_name);
@@ -45,12 +51,28 @@ namespace eudaq {
 
   void DataSender::SendEvent(const Event &ev) {
     if (!m_dataclient) EUDAQ_THROW("Transport not connected error");
-    //EUDAQ_DEBUG("Serializing event");
+    if ( m_packetreceiver ) {
+    	EventPacket packet( ev );
+    	SendPacket( packet );
+    } else {
+    	//EUDAQ_DEBUG("Serializing event");
+    	BufferSerializer ser;
+    	ev.Serialize(ser);
+    	//EUDAQ_DEBUG("Sending event");
+    	m_dataclient->SendPacket(ser);
+    	//EUDAQ_DEBUG("Sent event");
+    }
+  }
+
+
+  void DataSender::SendPacket(const AidaPacket &packet) {
+    if (!m_dataclient) EUDAQ_THROW("Transport not connected error");
+    EUDAQ_DEBUG("Serializing packet");
     BufferSerializer ser;
-    ev.Serialize(ser);
-    //EUDAQ_DEBUG("Sending event");
+    packet.Serialize(ser);
+    EUDAQ_DEBUG("Sending packet");
     m_dataclient->SendPacket(ser);
-    //EUDAQ_DEBUG("Sent event");
+    EUDAQ_DEBUG("Sent packet");
   }
 
 
