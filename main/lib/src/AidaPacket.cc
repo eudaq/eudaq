@@ -88,9 +88,9 @@ namespace eudaq {
     	m_header.packetSubType = 0;
     	m_header.packetNumber  = m_ev->GetEventNumber();
 
-    	m_meta_data.add( false, MetaData::RUN_NUMBER(), m_ev->GetRunNumber() );
-    	m_meta_data.add( false, MetaData::TRIGGER_COUNTER(), m_ev->GetEventNumber() );
-    	m_meta_data.add( false, MetaData::TRIGGER_TIMESTAMP(), m_ev->GetTimestamp() );
+    	m_meta_data.add( false, MetaDataType::RUN_NUMBER, m_ev->GetRunNumber() );
+    	m_meta_data.add( false, MetaDataType::TRIGGER_COUNTER, m_ev->GetEventNumber() );
+    	m_meta_data.add( false, MetaDataType::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() );
   }
 
 

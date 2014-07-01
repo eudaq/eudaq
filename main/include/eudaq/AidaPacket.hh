@@ -98,20 +98,15 @@ class DLLEXPORT AidaPacket : public Serializable {
     // meta data
     //
 
-	#define MAKE_META_DATA_TYPE( x, v ) class x : public MetaDataType { public: x() : MetaDataType( v, #x ) {} }
+	DECLARE_ENUM_CLASS( MetaDataType, RUN_NUMBER, TRIGGER_COUNTER, TRIGGER_TIMESTAMP );
 
     class MetaData {
       public:
-    	typedef SmartEnum MetaDataType;
-    	MAKE_META_DATA_TYPE(RUN_NUMBER, 1);
-    	MAKE_META_DATA_TYPE(TRIGGER_COUNTER, 2);
-    	MAKE_META_DATA_TYPE(TRIGGER_TIMESTAMP, 3);
-
     	std::vector<uint64_t> v;
 
-    	void add( bool tlu, MetaDataType type, uint64_t data ) {
+    	void add( bool tlu, MetaDataType::Value type, uint64_t data ) {
         		uint64_t meta_data = 0;
-        		SetType( meta_data, type.asInt() );
+        		SetType( meta_data, type );
         		SetCounter( meta_data, data );
         		v.push_back( meta_data );
     	};
