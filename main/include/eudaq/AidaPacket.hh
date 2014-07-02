@@ -63,6 +63,14 @@ namespace eudaq {
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
+	AidaPacket( uint64_t type, uint64_t subtype ) {
+    	m_header.marker = identifier().number;
+		m_header.packetType = type;
+		m_header.packetSubType = subtype;
+		m_header.packetNumber = -1;
+		m_data_length = 0;
+	};
+
     //
     // packet header
     //
@@ -88,11 +96,13 @@ class DLLEXPORT AidaPacket : public Serializable {
 		  uint64_t packetNumber;
 	  } PacketHeader;
 
+
     inline uint64_t GetPacketNumber() const { return m_header.packetNumber; };
     inline void SetPacketNumber( uint64_t n ) { m_header.packetNumber = n; };
-    inline int GetPacketType() const { return m_header.packetType; };
-    inline void SetPacketType( int type ) { m_header.packetType = type; };
-
+    inline uint64_t GetPacketType() const { return m_header.packetType; };
+    inline void SetPacketType( uint64_t type ) { m_header.packetType = type; };
+    inline uint64_t GetPacketSubType() const { return m_header.packetSubType; };
+    inline void SetPacketSubType( uint64_t type ) { m_header.packetSubType = type; };
 
     //
     // meta data
@@ -130,6 +140,11 @@ class DLLEXPORT AidaPacket : public Serializable {
     	dest |= shift > 0 ? (val & bit_mask()[bits]) << shift : val & bit_mask()[bits];
     };
 
+    void SetData( uint64_t length, uint64_t* data ) {
+    	m_data_length = length;
+    	m_data = data;
+    }
+
     virtual void Print(std::ostream & os) const;
 
   protected:
@@ -148,6 +163,8 @@ class DLLEXPORT AidaPacket : public Serializable {
 
     PacketHeader m_header;
     MetaData m_meta_data;
+    uint64_t m_data_length;	// in 64bit words
+    uint64_t *m_data;
     uint64_t checksum;
 };
 
