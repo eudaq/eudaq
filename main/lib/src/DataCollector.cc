@@ -290,6 +290,9 @@ namespace eudaq {
           OnConnect(ev.id);
         } else {
         	if ( ev.packet.find( AidaPacket::identifier().string ) == 0 ) {
+        		BufferSerializer ser(ev.packet.begin(), ev.packet.end());
+        		std::shared_ptr<AidaPacket> packet( PacketFactory::Create( ser ) );
+        		OnReceive( ev.id, packet );
         		// this is a packet
         	} else {
         		//std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
