@@ -114,7 +114,7 @@ class DLLEXPORT AidaPacket : public Serializable {
       public:
     	std::vector<uint64_t> v;
 
-    	void add( bool tlu, MetaDataType::Value type, uint64_t data ) {
+    	void add( bool tlu, int type, uint64_t data ) {
         		uint64_t meta_data = 0;
         		SetType( meta_data, type );
         		SetCounter( meta_data, data );
