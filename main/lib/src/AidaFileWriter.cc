@@ -4,7 +4,7 @@
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Exception.hh"
 
-#include "eudaq/config.h"
+#include "config.h"
 #include "jsoncons/json.hpp"
 
 using std::string;
