@@ -3,13 +3,12 @@
 #include <time.h>
 
 #include "eudaq/BufferSerializer.hh"
-#include "eudaq/AidaPacket.hh"
+#include "eudaq/TLU2Packet.hh"
 
 using std::cout;
 
 namespace eudaq {
 	EUDAQ_DEFINE_PACKET(EventPacket, str2type( "-EVWRAP-") );
-
 
 	void AidaPacket::SerializeHeader( Serializer& s ) const {
 		uint64_t* arr = (uint64_t *)&m_header;
@@ -49,7 +48,7 @@ namespace eudaq {
     	result <<= 8;
     	result |= str[ i - 1 ];
     }
-    cout << "str2type: str=>" << str << "< uint64=" << std::hex << result << std::endl;
+    //cout << "str2type: str=>" << str << "< uint64=" << std::hex << result << std::endl;
     return result;
   }
 
@@ -109,8 +108,6 @@ namespace eudaq {
 	  m_ev->Serialize( ser );
 	  ser.write( ser.GetCheckSum() );
   }
-
-
 
 
   AidaPacket * PacketFactory::Create( Deserializer & ds) {
