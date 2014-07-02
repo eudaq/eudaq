@@ -57,9 +57,10 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
     static inline void SetCounter( uint64_t& meta_data, uint64_t data ) { setBits(COUNTER, meta_data, data ); };
 	*/
 
-    void SetData( uint64_t length, uint64_t* data ) {
-    	m_data_length = length;
+    void SetData( std::vector<uint64_t>* data ) {
     	m_data = data;
+    	if ( data )
+    		m_data_length = data->size();
     }
 
 	virtual void Serialize(Serializer &) const;
@@ -67,6 +68,7 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
   protected:
   	  template <typename T_Packet> friend struct RegisterPacketType;
   	  TLU2Packet( PacketHeader& header, Deserializer & ds);
+  	  std::vector<uint64_t>* m_data;
 };
 
 

@@ -158,8 +158,7 @@ class DLLEXPORT AidaPacket : public Serializable {
 
     PacketHeader m_header;
     MetaData m_meta_data;
-    uint64_t m_data_length;	// in 64bit words
-    uint64_t *m_data;
+    uint64_t m_data_length;
     uint64_t checksum;
 };
 
