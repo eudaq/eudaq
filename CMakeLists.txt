@@ -7,7 +7,7 @@ PROJECT( EUDAQ )
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 3 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 1 )
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -141,7 +141,7 @@ ENDIF()
 # build OnlineMon executable
 option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
-  add_subdirectory(onlinemon)
+  add_subdirectory(monitors/onlinemon)
 ENDIF()
 
 # build ROOT Interface 
@@ -154,6 +154,14 @@ ENDIF()
 option(BUILD_Offline_monitor "Compile Offline Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_Offline_monitor)
   add_subdirectory(OfflineMonitor)
+ENDIF()
+
+
+
+# build Offline Monitor
+option(BUILD_Offline_monitor "Compile Offline Monitor executable (requires ROOT)?" OFF)
+IF(BUILD_Offline_monitor)
+  add_subdirectory(monitors/offlinemon)
 ENDIF()
 
 

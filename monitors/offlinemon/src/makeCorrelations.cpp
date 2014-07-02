@@ -14,9 +14,9 @@
 #include "Planes.h"
 #include "CorrelationPlots.h"
 #include "CorrelationVSTimePlots.h"
-#include "eudaq\PluginManager.hh"
-#include "eudaq\StandardEvent.hh"
-#include "eudaq\FileNamer.hh"
+#include "eudaq/PluginManager.hh"
+#include "eudaq/StandardEvent.hh"
+#include "eudaq/FileNamer.hh"
 
 using namespace std;
 using namespace eudaq;
