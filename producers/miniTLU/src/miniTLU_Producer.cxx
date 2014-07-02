@@ -3,6 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/TLU2Packet.hh"
 #include "tlu/miniTLUController.hh"
 #include <iostream>
 #include <ostream>
@@ -40,14 +41,8 @@ public:
 	//	std::cout << "Executing main loop" << std::endl;
 	m_tlu->CheckEventFIFO();
 	m_tlu->ReadEventFIFO();
+/*
 	for (int i = 0; i < m_tlu->GetNEvent();) {
-	  /*
-	  uint64_t word = m_tlu->GetEvent(i);
-	  //	  std::cout << "Word " << i << " : " << word << std::endl;
-	  TLUEvent ev(m_run, m_ev++, word&0xFFFFFFFF);
-	  ev.SetTag("loBits",to_string(word&0xFFFFFFFF));
-	  ev.SetTag("hiBits",to_string(word>>32));
-	  */
 	  uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
 	  uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
 	  uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
@@ -66,8 +61,17 @@ public:
 	  ev.SetTag("SC3", to_string(SC3));
 	  SendEvent(ev);	  
 	}
+*/
+	if (m_tlu->GetNEvent()) {
+		uint32_t evtType = (m_tlu->GetEvent(0) >> 60)&0xf;
+		uint32_t inputTrig = (m_tlu->GetEvent(0) >> 48)&0xfff;
+		uint64_t timeStamp = (m_tlu->GetEvent(0))&0xffffffffffff;
+		eudaq::TLU2Packet packet(0);
+		packet.GetMetaData().add(true, evtType, timeStamp);
+		SendPacket( packet );
+		m_tlu->DumpEvents();
+	}
 	//std::cout << "eventFifoCSR " << m_tlu->GetEventFifoCSR() << std::endl;
-	m_tlu->DumpEvents();
 	m_tlu->ClearEventFIFO();
 	//m_tlu->Update(timestamps); // get new events
 // 	if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
@@ -166,6 +170,10 @@ public:
 
   virtual void OnStartRun(unsigned param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
+    if(!m_tlu) {
+	SetStatus(eudaq::Status::LVL_ERROR, "miniTLU connection not present!");
+	return;
+    }
     try {
       m_run = param;
       m_ev = 0;
