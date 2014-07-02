@@ -47,6 +47,7 @@ class DeviceReader {
     
     void SetMaxQueueSize(unsigned long size) { m_max_queue_size = size; }
     void SetQueueFullDelay(int delay) { m_queuefull_delay = delay; }
+    void SetHighRateMode(bool flag) { m_high_rate_mode = flag; }
     
     void Stop();
     void SetRunning(bool running);
@@ -91,6 +92,7 @@ class DeviceReader {
     // config
     int m_queuefull_delay; // milliseconds
     unsigned long m_max_queue_size; // queue size in B
+    bool m_high_rate_mode; // decides if is is checked if data is available before requesting an event
 };
 
 class PALPIDEFSProducer : public eudaq::Producer {

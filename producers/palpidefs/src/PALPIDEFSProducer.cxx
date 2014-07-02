@@ -130,7 +130,8 @@ DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpid
   m_dut(dut),
   m_last_trigger_id(0),
   m_queuefull_delay(100),
-  m_max_queue_size(50*1024*1024)
+  m_max_queue_size(50*1024*1024),
+  m_high_rate_mode(false)
 { 
   m_thread.start(DeviceReader::LoopWrapper, this);
 #ifndef SIMULATION
@@ -305,8 +306,7 @@ void DeviceReader::Loop()
 #endif
 #else
     bool event_waiting = true;
-//     if (IsFlushing() && m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
-    if (m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
+    if (!m_high_rate_mode && m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
       event_waiting = false;
     
     if (!event_waiting)
@@ -464,8 +464,18 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_nDevices = param.Get("Devices", 1);
     m_status_interval = param.Get("StatusInterval", -1);
   
-    int delay = param.Get("QueueFullDelay", 0);
-    unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
+    const int delay = param.Get("QueueFullDelay", 0);
+    const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
+    
+    const int StrobeLength =  param.Get("StrobeLength",  10);
+    const int StrobeBLength = param.Get("StrobeBLength", 20);
+    const int ReadoutDelay =  param.Get("ReadoutDelay",  10);
+    const int TriggerDelay =  param.Get("TriggerDelay",  75);
+    
+    if (param.Get("CheckTriggerIDs", 0) == 1)
+      m_ignore_trigger_ids = false;
+    
+    const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
     
     m_full_config = param.Get("FullConfig", "");
     
@@ -556,11 +566,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       }
       
       // data taking configuration
-      // TODO config
-      const int StrobeLength = 10;
-      const int StrobeBLength = 20;
-      const int ReadoutDelay = 10;
-      const int TriggerDelay = 75;
 
       // PrepareEmptyReadout
       daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
@@ -583,6 +588,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	m_reader[i]->SetQueueFullDelay(delay);
       if (queue_size > 0)
 	m_reader[i]->SetMaxQueueSize(queue_size);
+      m_reader[i]->SetHighRateMode(high_rate_mode);
       m_next_event[i] = 0;
       
       std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") intialized." << std::endl;
