@@ -140,11 +140,6 @@ class DLLEXPORT AidaPacket : public Serializable {
     	dest |= shift > 0 ? (val & bit_mask()[bits]) << shift : val & bit_mask()[bits];
     };
 
-    void SetData( uint64_t length, uint64_t* data ) {
-    	m_data_length = length;
-    	m_data = data;
-    }
-
     virtual void Print(std::ostream & os) const;
 
   protected:
