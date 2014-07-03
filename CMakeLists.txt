@@ -152,7 +152,7 @@ ENDIF()
 
 
 # build Offline Monitor
-option(BUILD_Offline_monitor "Compile Offline Monitor executable (requires ROOT)?" OFF)
+option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
 ENDIF()
