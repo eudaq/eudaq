@@ -7,6 +7,7 @@
 #include <map>
 #include <iosfwd>
 #include <iostream>
+#include <memory>
 
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
@@ -63,12 +64,11 @@ namespace eudaq {
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
-	AidaPacket( uint64_t type, uint64_t subtype ) {
+	AidaPacket( uint64_t type, uint64_t subtype ) : m_data_size( 0 ) {
     	m_header.marker = identifier().number;
 		m_header.packetType = type;
 		m_header.packetSubType = subtype;
 		m_header.packetNumber = -1;
-		m_data_length = 0;
 	};
 
     //
@@ -140,26 +140,50 @@ class DLLEXPORT AidaPacket : public Serializable {
     	dest |= shift > 0 ? (val & bit_mask()[bits]) << shift : val & bit_mask()[bits];
     };
 
+
+    void SetData( uint64_t* data, uint64_t size ) {
+    	m_data = data;
+    	m_data_size = size;
+    }
+
+    void SetData( std::vector<uint64_t>& data ) {
+    	m_data = data.data();
+    	m_data_size = data.size();
+    }
+
+    void SetData( std::vector<uint64_t>* data ) {
+    	m_data = data->data();
+    	m_data_size = data->size();
+    }
+
+
+	virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream & os) const;
+
+    static uint64_t str2type(const std::string & str);
+    static std::string type2str(uint64_t id);
 
   protected:
     friend class PacketFactory;
-    AidaPacket() {
+    AidaPacket() : m_data_size( 0 ) {
     	m_header.marker = identifier().number;
     };
+
+    AidaPacket( PacketHeader& header, Deserializer & ds);
 
     void SerializeHeader( Serializer & ) const;
     void SerializeMetaData( Serializer & ) const;
 
     static PacketHeader DeserializeHeader( Deserializer & );
     static const uint64_t * const bit_mask();
-    static uint64_t str2type(const std::string & str);
-    static std::string type2str(uint64_t id);
 
     PacketHeader m_header;
     MetaData m_meta_data;
-    uint64_t m_data_length;
     uint64_t checksum;
+  private:
+    std::unique_ptr<uint64_t[]> placeholder;
+    uint64_t  m_data_size;
+    uint64_t* m_data;
 };
 
 class DLLEXPORT EventPacket : public AidaPacket {

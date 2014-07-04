@@ -3,12 +3,24 @@
 #include <time.h>
 
 #include "eudaq/BufferSerializer.hh"
-#include "eudaq/TLU2Packet.hh"
+#include "eudaq/AidaPacket.hh"
 
 using std::cout;
 
+
 namespace eudaq {
 	EUDAQ_DEFINE_PACKET(EventPacket, str2type( "-EVWRAP-") );
+
+	AidaPacket::AidaPacket( PacketHeader& header, Deserializer & ds) {
+		m_header = header;
+		ds.read( m_meta_data.v );
+		ds.read( m_data_size );
+		uint64_t* tmp = new uint64_t[ m_data_size ];
+		ds.read( (unsigned char*)tmp, m_data_size * sizeof(uint64_t) );
+		placeholder = std::unique_ptr<uint64_t[]>( tmp );
+		m_data = placeholder.get();
+		ds.read( checksum );
+	}
 
 	void AidaPacket::SerializeHeader( Serializer& s ) const {
 		uint64_t* arr = (uint64_t *)&m_header;
@@ -20,6 +32,15 @@ namespace eudaq {
 		  s.write( m_meta_data.v );
 	}
 
+	void AidaPacket::Serialize(Serializer & ser) const {
+	  // std::cout << "Serialize ev# = " << std::hex << GetPacketNumber() << std::endl;
+	  SerializeHeader( ser );
+	  SerializeMetaData( ser );
+	  ser.write( m_data_size );
+	  ser.append( (const unsigned char*)m_data, m_data_size * sizeof(uint64_t) );
+	  ser.write( ser.GetCheckSum() );
+	}
+
 	AidaPacket::PacketHeader AidaPacket::DeserializeHeader( Deserializer& ds ) {
 		PacketHeader header;
 		uint64_t* arr = (uint64_t *)&header;
@@ -27,6 +48,8 @@ namespace eudaq {
 			ds.read( arr[i] );
 		return header;
 	}
+
+
 
     const uint64_t * const AidaPacket::bit_mask() {
     	static uint64_t* array = NULL;
@@ -115,8 +138,9 @@ namespace eudaq {
 	  int id = header.packetType;
       //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       packet_creator cr = GetCreator(id);
-      if (!cr) EUDAQ_THROW("Unrecognised packet type (" + to_string(id) + ")");
-      return cr( header, ds);
+      if ( cr )
+    	  return cr( header, ds);
+      return new AidaPacket( header, ds );
   };
 
   PacketFactory::map_t & PacketFactory::get_map() {

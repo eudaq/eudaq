@@ -88,12 +88,9 @@ if prc.RunNumber == runnr:
     print "ERROR: new run number identical to previous one!"
     abort()
     
-# main run loop
-i = 0
-while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 1000:
-    # prepare an array of dim (1,60) for data storage
-    data = numpy.ndarray(shape=[1,60], dtype=numpy.uint64)
-    data[0] = ([31415926535,271828182845,124567890,
+# prepare an array of dim (1,60) for data storage
+data = numpy.ndarray(shape=[1,60], dtype=numpy.uint64)
+data[0] = ([31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890,
@@ -113,9 +110,21 @@ while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 1000:
                 31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890,
                 31415926535,271828182845,124567890
-                ]) # add some (dummy) data
+]) # add some (dummy) data
 
+
+# main run loop
+i = 0
+while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 1:
     pp.SendEvent(data)        # send event with some (fixed) dummy data off
+    sleep(0.01) # wait a little while
+    i+=1
+
+i = 0
+metadata = numpy.ndarray(shape=[1,3], dtype=numpy.uint64)
+metadata[0] = ([31415926535,271828182845,124567890])
+while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < 10:
+    pp.SendPacket( metadata, data )    
     sleep(0.01) # wait a little while
     i+=1
 

@@ -22,7 +22,6 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
 			m_header.packetType = get_type();
 			m_header.packetSubType = subtype;
 			m_header.packetNumber = -1;
-			m_data_length = 0;
     };
 
     /*
@@ -57,18 +56,9 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
     static inline void SetCounter( uint64_t& meta_data, uint64_t data ) { setBits(COUNTER, meta_data, data ); };
 	*/
 
-    void SetData( std::vector<uint64_t>* data ) {
-    	m_data = data;
-    	if ( data )
-    		m_data_length = data->size();
-    }
-
-	virtual void Serialize(Serializer &) const;
-
   protected:
   	  template <typename T_Packet> friend struct RegisterPacketType;
-  	  TLU2Packet( PacketHeader& header, Deserializer & ds);
-  	  std::vector<uint64_t>* m_data;
+  	  TLU2Packet( PacketHeader& header, Deserializer & ds) : AidaPacket( header, ds ) {};
 };
 
 
