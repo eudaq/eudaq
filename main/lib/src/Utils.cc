@@ -98,7 +98,7 @@ namespace eudaq {
   int64_t from_string(const std::string & x, const int64_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
-      size_t * end = 0;
+      size_t end = 0;
       int base = 10;
       std::string bases("box");
       if (x.length() > 2 && x[0] == '0' && bases.find(x[1]) != std::string::npos) {
@@ -107,8 +107,8 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      int64_t result = static_cast<int64_t>(std::stoll(start, end, base));
-      if (*end) throw std::invalid_argument("Invalid argument: " + x);
+      int64_t result = static_cast<int64_t>(std::stoll(start, &end, base));
+      if (!x.substr(end).empty()) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
 
@@ -116,7 +116,7 @@ namespace eudaq {
     uint64_t from_string(const std::string & x, const uint64_t & def) {
       if (x == "") return def;
       const char * start = x.c_str();
-      size_t * end = 0;
+      size_t end = 0;
       int base = 10;
       std::string bases("box");
       if (x.length() > 2 && x[0] == '0' && bases.find(x[1]) != std::string::npos) {
@@ -125,8 +125,8 @@ namespace eudaq {
         else if (x[1] == 'x') base = 16;
         start += 2;
       }
-      uint64_t result = static_cast<uint64_t>(std::stoull(start, end, base));
-      if (*end) throw std::invalid_argument("Invalid argument: " + x);
+      uint64_t result = static_cast<uint64_t>(std::stoull(start, &end, base));
+      if (!x.substr(end).empty()) throw std::invalid_argument("Invalid argument: " + x);
       return result;
     }
 
