@@ -45,6 +45,7 @@ public:
 
 
 	void createNewEvent();
+	void createNewEvent(int eventNR);
 	void setTimeStamp(ULong64_t TimeStamp);
 	void setTimeStamp2Now();
 	void setTag(const char* tag,const char* Value);
@@ -60,6 +61,7 @@ public:
 
 
 	void sendEvent();
+	void sendEvent(int eventNR);
 
 	// signals
 

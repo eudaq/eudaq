@@ -159,7 +159,16 @@ virtual	void OnTerminate() {
 	{
 		ev= std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(m_ProducerName, m_run, m_ev));
 	}
+	void createNewEvent(int eventNr){
+		if (!isCorrectEventNR(eventNr))
+		{
+			std::cout<<"void ROOTProducer::createNewEvent(int eventNr) "<<std::endl;
+			std::cout<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
+		}
+		createNewEvent();
+		ev->SetTag("eventNr",eventNr);
 
+	}
 	void setTimeStamp( unsigned long long TimeStamp )
 	{
 		if (ev==nullptr)
@@ -224,6 +233,14 @@ virtual	void OnTerminate() {
 
 		++m_ev;
 	}
+	void sendEvent(int eventNr){
+		if (!isCorrectEventNR(eventNr))
+		{
+			std::cout<<"void ROOTProducer::sendEvent(int eventNr) "<<std::endl;
+			std::cout<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
+		}
+		sendEvent();
+	}
   void setConfStatus(bool newStat){
     std::unique_lock<std::mutex> lck (m_stautus_change);
     isConfigured=newStat;
@@ -270,7 +287,10 @@ virtual	void OnTerminate() {
 		OnTerminate_=newStat;
 	}
 
+	bool isCorrectEventNR(int evNummer){
 
+		return m_ev==static_cast<unsigned>(evNummer);
+	}
 
    void addDataPointer(unsigned plane,const bool* inputVector,size_t Elements){
    //  std::cout<<"<m_data.emplace_back(plane,inputVector,Elements);> \n";
@@ -325,6 +345,7 @@ virtual	void OnTerminate() {
 		onConfigure_,
 		onStop_,
 		OnTerminate_;
+	
 
 };
 
@@ -389,6 +410,19 @@ void ROOTProducer::createNewEvent()
 	
 }
 
+void ROOTProducer::createNewEvent( int eventNR )
+{
+	try
+	{
+		m_prod->createNewEvent();
+		
+	}
+	catch (...)
+	{
+		std::cout<<"unable to connect create new event"<<std::endl;
+	}
+}
+
 void ROOTProducer::setTimeStamp( ULong64_t TimeStamp )
 {
 	try{
@@ -450,6 +484,17 @@ void ROOTProducer::sendEvent()
 		std::cout<<"unable to send Event"<<std::endl;
 	}
   checkStatus();
+}
+
+void ROOTProducer::sendEvent( int eventNR )
+{
+	try {
+		m_prod->sendEvent(eventNR);
+	}catch (...)
+	{
+		std::cout<<"unable to send Event"<<std::endl;
+	}
+	checkStatus();
 }
 
 void ROOTProducer::send_onConfigure()
