@@ -1,3 +1,7 @@
+#ifdef WIN32
+#include <Windows4Root.h>
+#endif
+
 #include "makeCorrelations.h"
 #include "TFile.h"
 #include "TTree.h"
