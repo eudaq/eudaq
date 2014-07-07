@@ -5,11 +5,11 @@ SET(OfflineMon_name OfflineMonitor)
 INCLUDE_DIRECTORIES( . inc ${ROOT_INCLUDE_DIR} ../../extern/rapidxml-1.13)
 
 SET (OfflineMon_SOURCES
+  src/OfflineMonitor.cxx
   src/CorrelationPlots.cpp
   src/CorrelationPlots_interface.cpp
   src/CorrelationVSTimePlots.cpp
   src/makeCorrelations.cpp
-  src/OfflineMonitor.cxx
   src/Planes.cpp
   )
 
