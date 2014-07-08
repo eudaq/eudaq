@@ -64,11 +64,9 @@ namespace eudaq {
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
-	AidaPacket( uint64_t type, uint64_t subtype ) : m_data_size( 0 ) {
-    	m_header.marker = identifier().number;
+	AidaPacket( uint64_t type, uint64_t subtype ) : AidaPacket() {
 		m_header.packetType = type;
 		m_header.packetSubType = subtype;
-		m_header.packetNumber = -1;
 	};
 
     //
@@ -97,8 +95,9 @@ class DLLEXPORT AidaPacket : public Serializable {
 	  } PacketHeader;
 
 
-    inline uint64_t GetPacketNumber() const { return m_header.packetNumber; };
-    inline void SetPacketNumber( uint64_t n ) { m_header.packetNumber = n; };
+	void SerializeHeader( Serializer & ) const;
+
+	inline uint64_t GetPacketNumber() const { return m_header.packetNumber; };
     inline uint64_t GetPacketType() const { return m_header.packetType; };
     inline void SetPacketType( uint64_t type ) { m_header.packetType = type; };
     inline uint64_t GetPacketSubType() const { return m_header.packetSubType; };
@@ -125,6 +124,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     MetaData& GetMetaData() {
     	return m_meta_data;
     }
+    void SerializeMetaData( Serializer & ) const;
 
     static inline int GetType( uint64_t meta_data ) { return getBits(ENTRY_TYPE, meta_data ); };
     static inline void SetType( uint64_t& meta_data, int type ) { setBits(ENTRY_TYPE,  meta_data, type ); };
@@ -167,15 +167,18 @@ class DLLEXPORT AidaPacket : public Serializable {
     friend class PacketFactory;
     AidaPacket() : m_data_size( 0 ) {
     	m_header.marker = identifier().number;
+    	m_header.packetNumber = getNextPacketNumber();
     };
 
     AidaPacket( PacketHeader& header, Deserializer & ds);
 
-    void SerializeHeader( Serializer & ) const;
-    void SerializeMetaData( Serializer & ) const;
 
     static PacketHeader DeserializeHeader( Deserializer & );
     static const uint64_t * const bit_mask();
+    static uint64_t getNextPacketNumber() {
+    	static uint64_t packetCounter = 0;
+    	return ++packetCounter;
+    }
 
     PacketHeader m_header;
     MetaData m_meta_data;
@@ -184,6 +187,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     std::unique_ptr<uint64_t[]> placeholder;
     uint64_t  m_data_size;
     uint64_t* m_data;
+
 };
 
 class DLLEXPORT EventPacket : public AidaPacket {
@@ -205,9 +209,9 @@ DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);
 
 class DLLEXPORT PacketFactory {
     public:
-      static AidaPacket * Create( Deserializer & ds);
+      static std::shared_ptr<AidaPacket> Create( Deserializer & ds);
 
-      typedef AidaPacket * (* packet_creator)(AidaPacket::PacketHeader& header, Deserializer & ds);
+      typedef std::shared_ptr<AidaPacket>  (* packet_creator)(AidaPacket::PacketHeader& header, Deserializer & ds);
       static void Register(uint64_t id, packet_creator func);
       static packet_creator GetCreator(int id);
 
@@ -224,8 +228,8 @@ struct RegisterPacketType {
   RegisterPacketType() {
     PacketFactory::Register(T_Packet::eudaq_static_type(), &factory_func);
   }
-  static AidaPacket * factory_func( AidaPacket::PacketHeader& header, Deserializer & ds) {
-    return new T_Packet( header, ds );
+  static std::shared_ptr<AidaPacket> factory_func( AidaPacket::PacketHeader& header, Deserializer & ds) {
+    return std::shared_ptr<AidaPacket>( new T_Packet( header, ds ) );
   }
 };
 

@@ -43,7 +43,7 @@ namespace eudaq {
       void DataThread();
     protected:
       void WriteEvent( const DetectorEvent & ev );
-      void WritePacket( const AidaPacket & packet );
+      void WritePacket( std::shared_ptr<AidaPacket> packet );
 
     private:
       struct Info {

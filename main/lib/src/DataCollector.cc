@@ -109,7 +109,7 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<AidaPacket> packet ) {
-	  WritePacket( *packet );
+	  WritePacket( packet );
   }
 
 
@@ -202,14 +202,14 @@ namespace eudaq {
 
 
   void DataCollector::WriteEvent( const DetectorEvent & ev ) {
-	  EventPacket packet( ev );
+	  auto packet = std::shared_ptr<AidaPacket>( new EventPacket( ev ) );
 	  WritePacket( packet );
 	  // std::cout << ev << std::endl;
 	  ++m_eventnumber;
   }
 
 
-  void DataCollector::WritePacket( const AidaPacket & packet ) {
+  void DataCollector::WritePacket( std::shared_ptr<AidaPacket> packet ) {
 	  if (m_writer.get()) {
 		  try {
 			  m_writer->WritePacket( packet );

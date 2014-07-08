@@ -67,12 +67,12 @@ namespace eudaq {
 
   void DataSender::SendPacket(const AidaPacket &packet) {
     if (!m_dataclient) EUDAQ_THROW("Transport not connected error");
-    EUDAQ_DEBUG("Serializing packet");
+//    EUDAQ_DEBUG("Serializing packet");
     BufferSerializer ser;
     packet.Serialize(ser);
-    EUDAQ_DEBUG("Sending packet");
+//    EUDAQ_DEBUG("Sending packet");
     m_dataclient->SendPacket(ser);
-    EUDAQ_DEBUG("Sent packet");
+//    EUDAQ_DEBUG("Sent packet");
   }
 
 
