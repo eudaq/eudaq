@@ -177,6 +177,30 @@ _wrap_PyEudaqIndexReader_RunNumber(PyEudaqIndexReader *self)
 
 
 PyObject *
+_wrap_PyEudaqIndexReader_data2json(PyEudaqIndexReader *self)
+{
+    PyObject *py_retval;
+    std::string retval;
+
+    retval = self->obj->data2json();
+    py_retval = Py_BuildValue((char *) "s#", (retval).c_str(), (retval).size());
+    return py_retval;
+}
+
+
+PyObject *
+_wrap_PyEudaqIndexReader_readNext(PyEudaqIndexReader *self)
+{
+    PyObject *py_retval;
+    bool retval;
+
+    retval = self->obj->readNext();
+    py_retval = Py_BuildValue((char *) "N", PyBool_FromLong(retval));
+    return py_retval;
+}
+
+
+PyObject *
 _wrap_PyEudaqIndexReader_getJsonConfig(PyEudaqIndexReader *self)
 {
     PyObject *py_retval;
@@ -213,6 +237,8 @@ _wrap_PyEudaqIndexReader__copy__(PyEudaqIndexReader *self)
 
 static PyMethodDef PyEudaqIndexReader_methods[] = {
     {(char *) "RunNumber", (PyCFunction) _wrap_PyEudaqIndexReader_RunNumber, METH_NOARGS, NULL },
+    {(char *) "data2json", (PyCFunction) _wrap_PyEudaqIndexReader_data2json, METH_NOARGS, NULL },
+    {(char *) "readNext", (PyCFunction) _wrap_PyEudaqIndexReader_readNext, METH_NOARGS, NULL },
     {(char *) "getJsonConfig", (PyCFunction) _wrap_PyEudaqIndexReader_getJsonConfig, METH_NOARGS, NULL },
     {(char *) "Filename", (PyCFunction) _wrap_PyEudaqIndexReader_Filename, METH_NOARGS, NULL },
     {(char *) "__copy__", (PyCFunction) _wrap_PyEudaqIndexReader__copy__, METH_NOARGS, NULL},

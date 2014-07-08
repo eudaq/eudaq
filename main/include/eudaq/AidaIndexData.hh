@@ -12,24 +12,26 @@ namespace eudaq {
 class DLLEXPORT AidaIndexData : public Serializable {
   public:
 
-	AidaIndexData( const AidaPacket & packet, uint64_t fileNo, uint64_t offsetInFile )
-  	  	  : m_packet( &packet ), m_fileNo( fileNo ), m_offsetInFile( offsetInFile ) {};
+	AidaIndexData( const AidaPacket & packet, uint64_t fileNo, uint64_t offsetInFile );
+	AidaIndexData( Deserializer & ds );
 
-	AidaIndexData( Deserializer & ds ) : m_packet( 0 ) {
-		m_header = AidaPacket::DeserializeHeader( ds );
-		ds.read( m_meta_data );
-		ds.read( m_fileNo );
-		ds.read( m_offsetInFile );
+	virtual void Serialize(Serializer & ser ) const;
+
+	const AidaPacket::PacketHeader& getHeader() const {
+		return m_header;
 	}
 
-	virtual void Serialize(Serializer & ser ) const {
-		if ( !m_packet )
-			EUDAQ_THROW("AidaIndexData: Attempt to serialize invalid index data");
-		m_packet->SerializeHeader( ser );
-		m_packet->SerializeMetaData( ser );
-		ser.write( m_fileNo );
-		ser.write( m_offsetInFile );
-	};
+	const std::vector<uint64_t> & getMetaData() const {
+		return m_meta_data;
+	}
+
+	uint64_t getFileNumber() const {
+		return m_fileNo;
+	}
+
+	uint64_t getOffsetInFile() const {
+		return m_offsetInFile;
+	}
 
   protected:
     const AidaPacket * m_packet;
@@ -40,7 +42,5 @@ class DLLEXPORT AidaIndexData : public Serializable {
 };
 
 }
-
-
 
 #endif // EUDAQ_INCLUDED_AidaIndexData

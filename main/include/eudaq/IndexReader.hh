@@ -7,6 +7,7 @@
 namespace eudaq {
 
 class FileDeserializer;
+class AidaIndexData;
 
   class DLLEXPORT IndexReader {
     public:
@@ -17,11 +18,16 @@ class FileDeserializer;
       unsigned long long RunNumber() const { return m_runNumber; };
       std::string getJsonConfig() { return m_json_config; };
       
+      bool readNext();
+
+      std::string data2json();
+
     private:
       std::string m_filename;
       unsigned long long m_runNumber;
       FileDeserializer * m_des;
       std::string m_json_config;
+      AidaIndexData * m_data;
   };
  
 

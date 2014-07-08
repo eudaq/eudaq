@@ -158,6 +158,9 @@ class DLLEXPORT AidaPacket : public Serializable {
 
 
 	virtual void Serialize(Serializer &) const;
+
+    static PacketHeader DeserializeHeader( Deserializer & );
+
     virtual void Print(std::ostream & os) const;
 
     static uint64_t str2type(const std::string & str);
@@ -173,7 +176,6 @@ class DLLEXPORT AidaPacket : public Serializable {
     AidaPacket( PacketHeader& header, Deserializer & ds);
 
 
-    static PacketHeader DeserializeHeader( Deserializer & );
     static const uint64_t * const bit_mask();
     static uint64_t getNextPacketNumber() {
     	static uint64_t packetCounter = 0;

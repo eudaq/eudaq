@@ -58,8 +58,14 @@ def register_EudaqIndexReader_methods(root_module, cls):
                    'long long unsigned int', 
                    [], 
                    is_const=True)
+    cls.add_method('data2json', 
+                   'std::string', 
+                   [])
     cls.add_method('getJsonConfig', 
                    'std::string', 
+                   [])
+    cls.add_method('readNext', 
+                   'bool', 
                    [])
     return
 
