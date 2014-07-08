@@ -4,6 +4,7 @@ ADD_LIBRARY( PyEUDAQ SHARED
   src/PyProducer.cpp
   src/PyDataCollector.cpp
   src/PyLogCollector.cpp
+  src/py_eudaq.cpp
 )
 
 target_link_libraries(PyEUDAQ      EUDAQ ${EUDAQ_THREADS_LIB})
