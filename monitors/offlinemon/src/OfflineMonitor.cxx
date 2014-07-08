@@ -1,3 +1,7 @@
+#ifdef WIN32
+#include <Windows4Root.h>
+#endif
+
 #include "eudaq/FileReader.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/OptionParser.hh"

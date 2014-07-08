@@ -6,7 +6,7 @@ PROJECT( EUDAQ )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 3 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined to keep compatability with CMake 2.6
@@ -25,19 +25,25 @@ IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
   FIND_PACKAGE(Git QUIET)
   IF(GIT_FOUND)
-    EXEC_PROGRAM(${GIT_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR} ARGS describe --tags HEAD OUTPUT_VARIABLE EUDAQ_LIB_VERSION)
-    STRING(REGEX REPLACE "([v0-9.]+[-a-zA-Z0-9]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
-    STRING(REGEX REPLACE "v([v0-9.]+)(.*)" "\\1" EUDAQ_LIB_BASEVERSION ${EUDAQ_LIB_VERSION})
-    IF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
-      MESSAGE(WARNING "Your do not seem to have fetched the latest tags in your git repository -- please consider running 'git fetch upstream'")
-    ENDIF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
-    EXEC_PROGRAM(git ARGS status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_MAIN_STATUS)
-    IF(EUDAQ_MAIN_STATUS STREQUAL "")
-      MESSAGE(STATUS "Main EUDAQ library directory is clean (all changes have been commited).")
-    ELSE(EUDAQ_MAIN_STATUS STREQUAL "")
-      MESSAGE(STATUS "Main EUDAQ library directory is dirty (uncommitted changes present):\n ${EUDAQ_MAIN_STATUS}.")
-      SET(EUDAQ_LIB_VERSION "${EUDAQ_LIB_VERSION}*")
-    ENDIF(EUDAQ_MAIN_STATUS STREQUAL "")
+    EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} describe --tags HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE EUDAQ_LIB_VERSION ERROR_VARIABLE GIT_ERROR)
+    IF(GIT_ERROR) # git execution resulted in error message -- cannot trust result but construct version from hard-set variable
+      MESSAGE(WARNING "Could not determine EUDAQ version from git -- git execution resulted in error: ${GIT_ERROR}")
+      SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
+    ELSE(GIT_ERROR)
+      STRING(REGEX REPLACE "([v0-9.]+[-a-zA-Z0-9]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
+      STRING(REGEX REPLACE "\n" "" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION}) # remove potential line breaks
+      STRING(REGEX REPLACE "v([v0-9.]+)(.*)" "\\1" EUDAQ_LIB_BASEVERSION ${EUDAQ_LIB_VERSION})
+      IF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
+	MESSAGE(WARNING "Your do not seem to have fetched the latest tags in your git repository -- please consider running 'git fetch upstream'")
+      ENDIF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
+      EXEC_PROGRAM(git ARGS status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_MAIN_STATUS)
+      IF(EUDAQ_MAIN_STATUS STREQUAL "")
+	MESSAGE(STATUS "Main EUDAQ library directory is clean (all changes have been commited).")
+      ELSE(EUDAQ_MAIN_STATUS STREQUAL "")
+	MESSAGE(STATUS "Main EUDAQ library directory is dirty (uncommitted changes present):\n ${EUDAQ_MAIN_STATUS}.")
+	SET(EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION}*)
+      ENDIF(EUDAQ_MAIN_STATUS STREQUAL "")
+    ENDIF(GIT_ERROR)
   ELSE(GIT_FOUND)
     # If we don't have git we take the hard-set version.
     SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
@@ -141,8 +147,16 @@ ENDIF()
 # build OnlineMon executable
 option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
-  add_subdirectory(onlinemon)
+  add_subdirectory(monitors/onlinemon)
 ENDIF()
+
+
+# build Offline Monitor
+option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OFF)
+IF(BUILD_offlinemon)
+  add_subdirectory(monitors/offlinemon)
+ENDIF()
+
 
 
 ###############################################

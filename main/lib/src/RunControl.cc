@@ -57,7 +57,7 @@ namespace eudaq {
     m_done = false;
     m_cmdserver = TransportFactory::CreateServer(listenaddress);
     m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
-	m_thread.start(RunControl_thread, this);
+	m_thread=std::unique_ptr<std::thread>(new std::thread(RunControl_thread, this));
     //pthread_attr_init(&m_threadattr);
     //pthread_create(&m_thread, &m_threadattr, RunControl_thread, this);
     std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString() << std::endl;
@@ -66,7 +66,7 @@ namespace eudaq {
   void RunControl::StopServer() {
     m_done = true;
     ///*if (m_thread)*/ pthread_join(m_thread, 0);
-	m_thread.join();
+	m_thread->join();
     delete m_cmdserver;
   }
 
