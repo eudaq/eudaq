@@ -2,43 +2,36 @@
 #ifndef EUDAQ_INCLUDED_AidaIndexData
 #define EUDAQ_INCLUDED_AidaIndexData
 
-
 #include "eudaq/Serializable.hh"
-#include "eudaq/Serializer.hh"
-#include "eudaq/AidaPacket.hh"
 
 namespace eudaq {
+
+class AidaPacket;
+class PacketHeader;
+class Deserializer;
+class MetaData;
 
 class DLLEXPORT AidaIndexData : public Serializable {
   public:
 
-	AidaIndexData( const AidaPacket & packet, uint64_t fileNo, uint64_t offsetInFile );
+	AidaIndexData( AidaPacket & packet, uint64_t fileNo, uint64_t offsetInFile );
 	AidaIndexData( Deserializer & ds );
+	virtual ~AidaIndexData();
 
 	virtual void Serialize(Serializer & ser ) const;
 
-	const AidaPacket::PacketHeader& getHeader() const {
-		return m_header;
+	AidaPacket::PacketHeader& getHeader();
+
+	MetaData & getMetaData() {
+		return m_packet->GetMetaData();
 	}
 
-	const std::vector<uint64_t> & getMetaData() const {
-		return m_meta_data;
-	}
-
-	uint64_t getFileNumber() const {
-		return m_fileNo;
-	}
-
-	uint64_t getOffsetInFile() const {
-		return m_offsetInFile;
-	}
+	uint64_t getFileNumber() const;
+	uint64_t getOffsetInFile() const;
 
   protected:
-    const AidaPacket * m_packet;
-    uint64_t m_fileNo;
-    uint64_t m_offsetInFile;
-    AidaPacket::PacketHeader m_header;
-    std::vector<uint64_t> m_meta_data;
+    AidaPacket * m_packet;
+    std::vector<uint64_t> fileNumberOffset;
 };
 
 }

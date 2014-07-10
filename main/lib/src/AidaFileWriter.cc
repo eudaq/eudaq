@@ -41,7 +41,7 @@ namespace eudaq {
   void AidaFileWriterNative::StartRun(unsigned runnumber) {
 	delete m_ser;
 	delete m_idx;
-    m_ser   = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw2").Set('R', runnumber));
+    m_ser   = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw2").Set( 'S', "_" ).Set('N', 0 ).Set('R', runnumber));
     m_idx = new FileSerializer(FileNamer(m_filepattern).Set('X', ".idx").Set('R', runnumber));
 
     json header;
@@ -59,7 +59,7 @@ namespace eudaq {
   void AidaFileWriterNative::WritePacket( std::shared_ptr<AidaPacket> packet ) {
 	if ( !m_idx )
 		EUDAQ_THROW("AidaFileWriterNative: Attempt to write unopened index file");
-	m_idx->write( AidaIndexData( *packet, 0 /* fileNo */, m_ser->FileBytes() ) );
+	m_idx->write( AidaIndexData( *packet, 42 /* fileNo */, m_ser->FileBytes() ) );
 	m_idx->Flush();
 
     if (!m_ser)
