@@ -1,3 +1,4 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/StringEvent.hh"
@@ -27,7 +28,7 @@ class PyProducer : public eudaq::Producer {
     void SendPacket( uint64_t* meta_data, size_t meta_data_size, uint64_t* data, size_t data_size ) {
     	AidaPacket packet( AidaPacket::str2type( "-pytest-" ), 0 );
     	for ( int i = 0; i < meta_data_size; i++ )
-    		packet.GetMetaData().v.push_back( meta_data[i] );
+    		packet.GetMetaData().getArray().push_back( meta_data[i] );
     	packet.SetData( data, data_size );
         eudaq::DataSender::SendPacket(packet);
       }
