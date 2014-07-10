@@ -18,21 +18,21 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
   public:
 
     TLU2Packet( uint64_t subtype ) {
-			m_header.marker = identifier().number;
-			m_header.packetType = get_type();
-			m_header.packetSubType = subtype;
-			m_header.packetNumber = -1;
+			m_header.data.marker = identifier().number;
+			m_header.data.packetType = get_type();
+			m_header.data.packetSubType = subtype;
+			m_header.data.packetNumber = -1;
     };
 
     /*
     * packet header
     *
 	* methods inherited from AidaPacket:
-    inline uint64_t GetPacketNumber() const { return m_header.packetNumber; };
-    inline void SetPacketNumber( uint64_t n ) { m_header.packetNumber = n; };
-    inline uint64_t GetPacketType() const { return m_header.packetType; };
-    inline uint64_t GetPacketSubType() const { return m_header.packetSubType; };
-    inline void SetPacketSubType( uint64_t type ) { m_header.packetSubType = type; };
+    inline uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
+    inline void SetPacketNumber( uint64_t n ) { m_header.data.packetNumber = n; };
+    inline uint64_t GetPacketType() const { return m_header.data.packetType; };
+    inline uint64_t GetPacketSubType() const { return m_header.data.packetSubType; };
+    inline void SetPacketSubType( uint64_t type ) { m_header.data.packetSubType = type; };
     */
 
     //
