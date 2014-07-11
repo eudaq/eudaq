@@ -8,6 +8,7 @@ ADD_LATEX_DOCUMENT(
          src/glossary.tex
          src/Installing.tex
          src/Introduction.tex
+         src/License.tex
          src/OnlineMonConfig.tex
          src/OtherParts.tex
          src/preamble.tex
