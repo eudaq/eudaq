@@ -26,6 +26,9 @@ typedef int int32_t
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <climits>
+#include <cfloat>
+
 using namespace std;
 
 namespace eudaq {
@@ -149,18 +152,19 @@ namespace eudaq {
         double avped[m_nExplorers*2]   = { 0., 0., 0., 0., 0., 0., 0., 0. };
         double avnoise[m_nExplorers*2] = { 0., 0., 0., 0., 0., 0., 0., 0. };
         // containers for pedestal and noise which are going to be written to disk
-        vector<float>peds;
-        vector<float>noise;
+        vector<double>peds;
+        vector<double>noise;
         // reserve the needed amount of memory
         peds.reserve(m_nPixels);
         noise.reserve(m_nPixels);
 
         // average all the runs
-        double div = 1./(float)m_noe;
+        double div = 1./(double)m_noe;
+        int iPrev = 0;
         for(unsigned int i=0; i<m_Ped.size(); ++i){
-          peds.push_back(m_Ped[i]*div);
+          peds.push_back((double)m_Ped[i]*div);
           avped[2*(i/11700)+((i%11700)/8100)]+=peds[peds.size()-1];
-          noise.push_back(sqrt(m_Ped_sq[i]*div-m_Ped[i]*div*m_Ped[i]*div));
+          noise.push_back(sqrt((double)m_Ped_sq[i]*div-(double)m_Ped[i]*div*(double)m_Ped[i]*div));
           avnoise[2*(i/11700)+((i%11700)/8100)]+=noise[noise.size()-1];
         }
         // normalise the matrix means
@@ -172,7 +176,7 @@ namespace eudaq {
 
         // write the pedestal and the noise to the corresponding files
         ofstream out_ped(m_PedFile.c_str());
-        ostream_iterator<float> out_ped_it(out_ped, "\n");
+        ostream_iterator<double> out_ped_it(out_ped, "\n");
         copy(peds.begin(), peds.end(), out_ped_it);
         cout<<"Pedestal Filename: "<<m_PedFile<<endl;
         cout<<"Average Pedestal: "<<endl;
@@ -344,7 +348,9 @@ namespace eudaq {
 
       //Pedestal
       vector<float> pedestal;         //vector for the pedestal values
+      vector<long> pedestalCalc;         //vector for the pedestal values
       pedestal.reserve(m_nPixels);
+      pedestalCalc.reserve(m_nPixels);
       vector<float>::iterator pedit;
       if(m_UsePed){ //set pedestal value in case of a Measurement using Pedestal
         ifstream in(m_PedFile.c_str());
@@ -356,9 +362,10 @@ namespace eudaq {
         if(pedestal.size()!= 4*(60*60+90*90)) std::cout << "Wrong pedestal data size!" << pedestal.size() << " instead of " << 4*(60*60+90*90) << std::endl;
       }
 
-      float pixpedvalue[4];     //buffer to store and calculate the pedestal values
+      int pixpedvalue[4];     //buffer to store and calculate the pedestal values
 
       uint64_t buffer;  //buffer for the 6 byte containers
+      int adccInt;
       float adcc;       //adc counts (using float, as we subtract the pedestal)
       nframes=0;                //reset
       unsigned int type=0;              //20x20 or 30x30
@@ -374,8 +381,8 @@ namespace eudaq {
           for( unsigned int k=0 ; k<2 ; k++ ){                  //mem
             unpack_b(it,buffer,6);                              //Get Data
             for( unsigned int l=0 ; l<4 ; l++ ){                //fill matrixes
-              adcc=(float)((buffer>>(12*l)) & 0x0FFF);          //mask + shift of Data value
-
+              adccInt=(int)((buffer>>(12*l)) & 0x0FFF);          //mask + shift of Data value
+              adcc = (float)adccInt;
               // zero supression
               if(m_UsePed && k==0 && pedestal.size()>0){adcc-=*pedit; pedit++;}         //iterate the pedestal values
 	      // MEM1 - pedestal
@@ -385,10 +392,10 @@ namespace eudaq {
               //fill planes (i<-->j ??)
 
               if(m_PedMeas){                            //calculate pedestals
-                if(k==0) pixpedvalue[l]=adcc;
+                if(k==0) pixpedvalue[l]=adccInt;
                 else {
-                  pixpedvalue[l]-=adcc;
-                  pedestal.push_back(pixpedvalue[l]);
+                  pixpedvalue[l]-=adccInt;
+                  pedestalCalc.push_back(pixpedvalue[l]);
                 }
               }
               // pedestal = MEM1-MEM2
@@ -411,15 +418,15 @@ namespace eudaq {
 
       if(m_PedMeas){  //sum up pedestals in a vector and sum up square of pedestals
         if(m_noe==1){ //create pedestal and noise vectors
-          m_Ped=pedestal;
-          for(unsigned int i=0;i<pedestal.size();i++){
-            m_Ped_sq.push_back(pedestal[i]*pedestal[i]);
+          m_Ped=pedestalCalc;
+          for(unsigned int i=0;i<pedestalCalc.size();i++){
+            m_Ped_sq.push_back(pedestalCalc[i]*pedestalCalc[i]);
           }
         }
         else {
           for(unsigned int i=0;i<m_Ped.size();i++){  //summing up
-            m_Ped[i]    += pedestal[i];
-            m_Ped_sq[i] += pedestal[i]*pedestal[i];
+            m_Ped[i]    += pedestalCalc[i];
+            m_Ped_sq[i] += pedestalCalc[i]*pedestalCalc[i];
           }
         }
       }
@@ -540,8 +547,8 @@ namespace eudaq {
 
 
     mutable unsigned int m_noe; //# of converted events and with the events the added pedestal values
-    mutable vector<float>m_Ped;
-    mutable vector<float>m_Ped_sq;
+    mutable vector<long>m_Ped;
+    mutable vector<long>m_Ped_sq;
 
     // The single instance of this converter plugin
     static ExplorerConverterPlugin m_instance;
