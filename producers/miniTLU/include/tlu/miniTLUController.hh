@@ -108,6 +108,7 @@ namespace tlu {
 
     uint32_t GetNEvent() { return m_nEvtInFIFO/2; }
     uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
+    std::vector<uint64_t>* GetEventData() { return &m_dataFromTLU; }
     void ClearEventFIFO() { m_dataFromTLU.resize(0); }
 
     unsigned GetScaler(unsigned) const;

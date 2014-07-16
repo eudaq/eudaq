@@ -62,12 +62,49 @@ public:
 	  SendEvent(ev);	  
 	}
 */
+
+	/* aida packet event types used:
+	   0	time stamp of first trigger (internal)
+	   1	time stamp of first trigger (external)
+	   4    event number of first trigger (internal)
+	   5    event number of first trigger (external)
+	   2	time stamp of last trigger (internal)
+	   3	time stamp of last trigger (external)
+	   6    event number of last trigger (internal)
+	   7    event number of last trigger (external)
+	*/
 	if (m_tlu->GetNEvent()) {
-		uint32_t evtType = (m_tlu->GetEvent(0) >> 60)&0xf;
-		uint32_t inputTrig = (m_tlu->GetEvent(0) >> 48)&0xfff;
-		uint64_t timeStamp = (m_tlu->GetEvent(0))&0xffffffffffff;
+		int i = 0;
+		uint32_t nevt = m_tlu->GetNEvent();
 		eudaq::TLU2Packet packet(0);
-		packet.GetMetaData().add(true, evtType, timeStamp);
+		while(i < nevt*2) {
+			uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
+			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
+			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
+			uint32_t evtNumber = (m_tlu->GetEvent(i+1))&0xffffffff;
+			if(evtType == 0 | evtType == 1) {
+				packet.GetMetaData().add(true, evtType, timeStamp);
+				packet.GetMetaData().add(true, 0x4 | evtType, evtNumber);
+				break;
+			} else {
+				i += 2;
+			}
+		} 
+		i = m_tlu->GetNEvent() - 1;
+		while(i >= 0) {
+			uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
+			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
+			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
+			uint32_t evtNumber = (m_tlu->GetEvent(i+1))&0xffffffff;
+			if(evtType == 0 | evtType == 1) {
+				packet.GetMetaData().add(true, 0x2 | evtType, timeStamp);
+				packet.GetMetaData().add(true, 0x6 | evtType, evtNumber);
+				break;
+			} else {
+				i -= 2;
+			}
+		} 
+		//packet.SetData(m_tlu->GetEventData());
 		SendPacket( packet );
 		m_tlu->DumpEvents();
 	}
