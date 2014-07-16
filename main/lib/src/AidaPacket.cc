@@ -3,30 +3,68 @@
 #include <time.h>
 
 #include "eudaq/BufferSerializer.hh"
-#include "eudaq/TLU2Packet.hh"
+#include "eudaq/AidaPacket.hh"
 
 using std::cout;
+
 
 namespace eudaq {
 	EUDAQ_DEFINE_PACKET(EventPacket, str2type( "-EVWRAP-") );
 
+	AidaPacket::AidaPacket( Deserializer & ds) {
+		m_header = DeserializeHeader( ds );
+		m_meta_data = MetaData( ds );
+		DeserializeData( ds );
+		ds.read( checksum );
+	}
+
+	AidaPacket::AidaPacket( PacketHeader& header, Deserializer & ds) {
+		m_header = header;
+		m_meta_data = MetaData( ds );
+		DeserializeData( ds );
+		ds.read( checksum );
+	}
+
+	AidaPacket::AidaPacket( const PacketHeader& header, const MetaData& meta ) {
+		m_header = header;
+		m_meta_data = meta;
+	}
+
 	void AidaPacket::SerializeHeader( Serializer& s ) const {
-		uint64_t* arr = (uint64_t *)&m_header;
-		for ( int i = 0; i < sizeof( m_header ) / sizeof( uint64_t ); i++ )
+		uint64_t* arr = (uint64_t *)&m_header.data;
+		for ( int i = 0; i < sizeof( m_header.data ) / sizeof( uint64_t ); i++ )
 			s.write( arr[i] );
 	}
 
 	void AidaPacket::SerializeMetaData( Serializer& s ) const {
-		  s.write( m_meta_data.v );
+		  m_meta_data.Serialize( s );
+	}
+
+	void AidaPacket::Serialize(Serializer & ser) const {
+	  SerializeHeader( ser );
+	  SerializeMetaData( ser );
+	  ser.write( m_data_size );
+	  ser.append( (const unsigned char*)m_data, m_data_size * sizeof(uint64_t) );
+	  ser.write( ser.GetCheckSum() );
+	}
+
+	void AidaPacket::DeserializeData( Deserializer& ds ) {
+		ds.read( m_data_size );
+		uint64_t* tmp = new uint64_t[ m_data_size ];
+		ds.read( (unsigned char*)tmp, m_data_size * sizeof(uint64_t) );
+		placeholder = std::unique_ptr<uint64_t[]>( tmp );
+		m_data = placeholder.get();
 	}
 
 	AidaPacket::PacketHeader AidaPacket::DeserializeHeader( Deserializer& ds ) {
 		PacketHeader header;
-		uint64_t* arr = (uint64_t *)&header;
-		for ( int i = 0; i < sizeof( header ) / sizeof( uint64_t ); i++ )
+		uint64_t* arr = (uint64_t *)&header.data;
+		for ( int i = 0; i < sizeof( header.data ) / sizeof( uint64_t ); i++ )
 			ds.read( arr[i] );
 		return header;
 	}
+
+
 
     const uint64_t * const AidaPacket::bit_mask() {
     	static uint64_t* array = NULL;
@@ -69,6 +107,16 @@ namespace eudaq {
     return result;
   }
 
+  const AidaPacket::PacketIdentifier& AidaPacket::identifier() {
+	  static PacketIdentifier packet_identifier;
+	  if ( packet_identifier.string.empty() ) {
+			packet_identifier.string = "#PACKET#";
+			packet_identifier.number = str2type( packet_identifier.string );
+	  }
+	  return packet_identifier;
+  }
+
+
   void AidaPacket::Print(std::ostream & os) const {
     os << "Type=" << type2str( GetPacketType() )
       << ", packet#=" << GetPacketNumber();
@@ -83,13 +131,12 @@ namespace eudaq {
 
 
   EventPacket::EventPacket( const Event & ev ) : m_ev( &ev ) {
-    	m_header.packetType    = get_type();
-    	m_header.packetSubType = 0;
-    	m_header.packetNumber  = m_ev->GetEventNumber();
+    	m_header.data.packetType    = get_type();
+    	m_header.data.packetSubType = 0;
+    	m_header.data.packetNumber  = m_ev->GetEventNumber();
 
-    	m_meta_data.add( false, MetaDataType::RUN_NUMBER, m_ev->GetRunNumber() );
-    	m_meta_data.add( false, MetaDataType::TRIGGER_COUNTER, m_ev->GetEventNumber() );
-    	m_meta_data.add( false, MetaDataType::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() );
+    	m_meta_data.add( false, MetaData::Type::TRIGGER_COUNTER, m_ev->GetEventNumber() );
+    	m_meta_data.add( false, MetaData::Type::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() );
   }
 
 
@@ -110,13 +157,14 @@ namespace eudaq {
   }
 
 
-  AidaPacket * PacketFactory::Create( Deserializer & ds) {
+  std::shared_ptr<AidaPacket> PacketFactory::Create( Deserializer & ds) {
 	  AidaPacket::PacketHeader header = AidaPacket::DeserializeHeader( ds );
-	  int id = header.packetType;
+	  int id = header.data.packetType;
       //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       packet_creator cr = GetCreator(id);
-      if (!cr) EUDAQ_THROW("Unrecognised packet type (" + to_string(id) + ")");
-      return cr( header, ds);
+      if ( cr )
+    	  return cr( header, ds);
+      return std::shared_ptr<AidaPacket>( new AidaPacket( header, ds ) );
   };
 
   PacketFactory::map_t & PacketFactory::get_map() {

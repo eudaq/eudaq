@@ -24,15 +24,15 @@ namespace eudaq {
     CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
      ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0) {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
-      m_thread.start(DataCollector_thread,this);
       EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
+      m_thread=std::unique_ptr<std::thread>(new std::thread(DataCollector_thread,this));
       EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
       CommandReceiver::StartThread();
     }
 
   DataCollector::~DataCollector() {
     m_done = true;
-    m_thread.join();
+    m_thread->join();
     delete m_dataserver;
   }
 
@@ -109,7 +109,7 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<AidaPacket> packet ) {
-	  WritePacket( *packet );
+	  WritePacket( packet );
   }
 
 
@@ -202,14 +202,14 @@ namespace eudaq {
 
 
   void DataCollector::WriteEvent( const DetectorEvent & ev ) {
-	  EventPacket packet( ev );
+	  auto packet = std::shared_ptr<AidaPacket>( new EventPacket( ev ) );
 	  WritePacket( packet );
 	  // std::cout << ev << std::endl;
 	  ++m_eventnumber;
   }
 
 
-  void DataCollector::WritePacket( const AidaPacket & packet ) {
+  void DataCollector::WritePacket( std::shared_ptr<AidaPacket> packet ) {
 	  if (m_writer.get()) {
 		  try {
 			  m_writer->WritePacket( packet );

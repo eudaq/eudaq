@@ -2,12 +2,14 @@
 #define EUDAQ_INCLUDED_Status
 
 #include "eudaq/Serializable.hh"
-#include "eudaq/Serializer.hh"
 #include <string>
 #include <ostream>
 #include "eudaq/Platform.hh"
 
 namespace eudaq {
+
+class Serializer;
+class Deserializer;
 
   class DLLEXPORT Status : public Serializable {
     public:

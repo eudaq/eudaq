@@ -1,3 +1,7 @@
+#ifdef WIN32
+#include <Windows4Root.h>
+#endif
+
 #include "makeCorrelations.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -14,9 +18,9 @@
 #include "Planes.h"
 #include "CorrelationPlots.h"
 #include "CorrelationVSTimePlots.h"
-#include "eudaq\PluginManager.hh"
-#include "eudaq\StandardEvent.hh"
-#include "eudaq\FileNamer.hh"
+#include "eudaq/PluginManager.hh"
+#include "eudaq/StandardEvent.hh"
+#include "eudaq/FileNamer.hh"
 
 using namespace std;
 using namespace eudaq;

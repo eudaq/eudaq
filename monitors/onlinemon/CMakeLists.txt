@@ -35,7 +35,7 @@ set(OnlineMon_HEADERS
   CheckEOF.hh
 )
 
-SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/onlinemon/include/ ${PROJECT_SOURCE_DIR}/onlinemon ${PROJECT_SOURCE_DIR}/main/include ${ROOT_INCLUDE_DIR} )
+SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/monitors/onlinemon/include/ ${PROJECT_SOURCE_DIR}/monitors/onlinemon ${PROJECT_SOURCE_DIR}/main/include ${ROOT_INCLUDE_DIR} )
 
 # set everything needed for the root dictonary and create the
 # dictionary

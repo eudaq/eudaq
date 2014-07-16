@@ -1,16 +1,21 @@
 #ifndef EUDAQ_INCLUDED_CommandReceiver
 #define EUDAQ_INCLUDED_CommandReceiver
 
-#include "eudaq/TransportClient.hh"
-#include "eudaq/Configuration.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/EudaqThread.hh"
+
+
+#include <thread>
+#include <memory>
 //#include <pthread.h>
 #include <string>
 #include <iosfwd>
 
 namespace eudaq {
+
+class TransportClient;
+class TransportEvent;
+class Configuration;
 
   class DLLEXPORT CommandReceiver {
     public:
@@ -19,7 +24,7 @@ namespace eudaq {
       void SetStatus(Status::Level level, const std::string & info = "");
       virtual ~CommandReceiver();
 
-      virtual void OnConfigure(const Configuration & param) { std::cout << "Config:\n" << param << std::endl; }
+      virtual void OnConfigure(const Configuration & param);
       virtual void OnPrepareRun(unsigned /*runnumber*/) {}
       virtual void OnStartRun(unsigned /*runnumber*/) {}
       virtual void OnStopRun() {}
@@ -44,7 +49,7 @@ namespace eudaq {
       bool m_done;
       std::string m_type, m_name;
       void CommandHandler(TransportEvent &);
-      eudaqThread m_thread;
+      std::unique_ptr<std::thread> m_thread;
       bool m_threadcreated;
   };
 
