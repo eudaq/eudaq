@@ -1,14 +1,18 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Timer.hh"
 #include "eudaq/TLUEvent.hh" // for the TLU event
 #include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/TLU2Packet.hh"
 #include "tlu/miniTLUController.hh"
 #include <iostream>
 #include <ostream>
-#include <cctype>
-#include <memory>
+#include <vector>
+//#include <cctype>
+//#include <memory>
 
 
 typedef eudaq::TLUEvent TLUEvent;
@@ -82,27 +86,9 @@ public:
 			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
 			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
 			uint32_t evtNumber = (m_tlu->GetEvent(i+1))&0xffffffff;
-			if(evtType == 0 | evtType == 1) {
-				packet.GetMetaData().add(true, evtType, timeStamp);
-				packet.GetMetaData().add(true, 0x4 | evtType, evtNumber);
-				break;
-			} else {
-				i += 2;
-			}
-		} 
-		i = m_tlu->GetNEvent() - 1;
-		while(i >= 0) {
-			uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
-			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
-			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
-			uint32_t evtNumber = (m_tlu->GetEvent(i+1))&0xffffffff;
-			if(evtType == 0 | evtType == 1) {
-				packet.GetMetaData().add(true, 0x2 | evtType, timeStamp);
-				packet.GetMetaData().add(true, 0x6 | evtType, evtNumber);
-				break;
-			} else {
-				i -= 2;
-			}
+			packet.GetMetaData().add(true, evtType, timeStamp);
+			packet.GetMetaData().add(true, 0x4 | evtType, evtNumber);
+			i += 2;
 		} 
 		//packet.SetData(m_tlu->GetEventData());
 		SendPacket( packet );
@@ -181,6 +167,12 @@ public:
 	m_tlu->SetThresholdValue(1, param.Get("DACThreshold1",1.3));
 	m_tlu->SetThresholdValue(2, param.Get("DACThreshold2",1.3));
 	m_tlu->SetThresholdValue(3, param.Get("DACThreshold3",1.3));
+      }
+      if(param.Get("resetClocks",0)) {
+	m_tlu->ResetBoard();
+      }
+      if(param.Get("resetSerdes",0)) {
+        m_tlu->ResetSerdes();
       }
       m_tlu->ConfigureInternalTriggerInterval(param.Get("InternalTriggerInterval",42));
       m_tlu->SetTriggerMask(param.Get("TriggerMask",0x0));
