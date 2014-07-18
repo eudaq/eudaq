@@ -56,19 +56,23 @@ class DLLEXPORT AidaPacket : public Serializable {
 	class PacketHeader {
 	  public:
 		struct {
-			  uint64_t marker; 				// 8 byte string: #PACKET#
+			  uint64_t marker; 			// 8 byte string: #PACKET#
 			  uint64_t packetType;			// 8 byte string
 			  uint64_t packetSubType;		// 8 byte string
 			  uint64_t packetNumber;
 		  } data;
 	};
 
-	void SerializeHeader( Serializer & ) const;
+    void SerializeHeader( Serializer & ) const;
 
-	uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
+    uint64_t GetPacketMarker() const { return m_header.data.marker; };
     uint64_t GetPacketType() const { return m_header.data.packetType; };
-    void SetPacketType( uint64_t type ) { m_header.data.packetType = type; };
     uint64_t GetPacketSubType() const { return m_header.data.packetSubType; };
+    uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
+
+    uint64_t GetPacketDataSize() const {return  m_data_size; };
+
+    void SetPacketType( uint64_t type ) { m_header.data.packetType = type; };
     void SetPacketSubType( uint64_t type ) { m_header.data.packetSubType = type; };
 
     //
@@ -103,7 +107,7 @@ class DLLEXPORT AidaPacket : public Serializable {
 
     virtual void DeserializeData( Deserializer & );
 
-	virtual void Serialize(Serializer &) const;
+    virtual void Serialize(Serializer &) const;
 
     static PacketHeader DeserializeHeader( Deserializer & );
 
