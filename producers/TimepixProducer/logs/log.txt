@@ -1,0 +1,44 @@
+[Mon May 27 10:36:26.6787 2013]
+mpxmgr:
+MpxCtrl message: No HW library was found in ./hwlibs (msg. type: -101).
+
+[Mon May 27 10:36:26.6788 2013]
+mpxmgr:
+MpxCtrl message: Number of successfully initialized devices (FileDevice): 0 (msg. type: 0).
+
+[Wed Jun  5 15:35:03.7712 2013]
+mpxmgr:
+MpxCtrl message: No HW library was found in ./hwlibs (msg. type: -101).
+
+[Wed Jun  5 15:35:03.7838 2013]
+mpxmgr:
+MpxCtrl message: Number of successfully initialized devices (FileDevice): 0 (msg. type: 0).
+
+[Wed Jun  5 15:35:04.7842 2013]
+mpxmgr:
+Frame 0 was not found.
+
+[Wed Jun  5 15:35:11.2232 2013]
+mpxmgr:
+MpxCtrl message: No HW library was found in ./hwlibs (msg. type: -101).
+
+[Wed Jun  5 15:35:11.2233 2013]
+mpxmgr:
+MpxCtrl message: Number of successfully initialized devices (FileDevice): 0 (msg. type: 0).
+
+[Wed Jun  5 15:35:12.2235 2013]
+mpxmgr:
+Frame 0 was not found.
+
+[Sun Aug 11 09:33:35.8727 2013]
+mpxmgr:
+MpxCtrl message: No HW library was found in ./hwlibs (msg. type: -101).
+
+[Sun Aug 11 09:33:35.8818 2013]
+mpxmgr:
+MpxCtrl message: Number of successfully initialized devices (FileDevice): 0 (msg. type: 0).
+
+[Sun Aug 11 09:33:36.8822 2013]
+mpxmgr:
+Frame 0 was not found.
+
