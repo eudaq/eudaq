@@ -29,7 +29,7 @@ if( NOT BUILD_WITH_QT4 )
         endmacro()
 	# setup Qt5 libaries and include paths
 	set (my_qt_libraries ${Qt5Widgets_LIBRARIES})
-	include_directories(${Qt5Widgets_INCLUDES_DIRS})
+	include_directories(${Qt5Widgets_INCLUDE_DIRS})
 	ADD_DEFINITIONS(${Qt5Widgets_DEFINITIONS})
     endif()
 endif()
