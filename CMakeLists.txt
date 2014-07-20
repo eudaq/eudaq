@@ -9,6 +9,9 @@ SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
+LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
+LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
+
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
