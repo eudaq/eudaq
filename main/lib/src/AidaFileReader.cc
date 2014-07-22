@@ -1,39 +1,54 @@
-#include "eudaq/AidaFileReader.hh"
+#include <list>
+#include "jsoncons/json.hpp"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/Logger.hh"
-#include <list>
 #include "eudaq/FileSerializer.hh"
+#include "eudaq/AidaFileReader.hh"
+
+using jsoncons::json;
 
 namespace eudaq {
 
-  AidaFileReader::AidaFileReader(const std::string & file, const std::string & filepattern)
-    : m_filename(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
-    m_des(m_filename),
-    m_ev(PacketFactory::Create(m_des))
-    {
+  AidaFileReader::AidaFileReader(const std::string & file )
+    : m_filename( file ), m_runNumber( -1 )
+  {
+	  m_des = new FileDeserializer( m_filename );
+	  m_des->read( m_json_config );
   }
 
   AidaFileReader::~AidaFileReader() {
+	  if ( m_des )
+		  delete m_des;
   }
 
-  bool AidaFileReader::NextPacket(size_t skip) {
-	  return false;
-/*
-    std::shared_ptr<eudaq::AidaPacket> packet = nullptr;
-    bool result = m_des.ReadPacket(m_ver, ev, skip);
-    if (ev) m_ev =  ev;
-    return result;
-*/
+  bool AidaFileReader::readNext() {
+	  if ( !m_des || !m_des->HasData() )
+		  return false;
+	  m_packet = PacketFactory::Create( *m_des );
+	  return true;
   }
 
-  unsigned AidaFileReader::RunNumber() const {
-    return -1; //m_ev->GetRunNumber();
+  std::string AidaFileReader::getJsonPacketInfo() {
+	  if ( !m_packet )
+		  return "";
+	  json data;
+
+	  json json_header;
+	  json_header["packetType"] = AidaPacket::type2str( m_packet->GetPacketType() );
+	  json_header["packetSubType"] = AidaPacket::type2str( m_packet->GetPacketSubType() );
+	  json_header["packetNumber"] = m_packet->GetPacketNumber();
+	  data["header"] = json_header;
+
+	  json json_metaData( json::an_array );
+	  for ( auto data : m_packet->GetMetaData().getArray() ) {
+		  json_metaData.add( data );
+	  }
+	  data["meta"] = json_metaData;
+
+	  return data.to_string();
   }
 
-  const AidaPacket & AidaFileReader::GetPacket() const {
-    return *m_ev;
-  }
 
 
 }
