@@ -2,6 +2,8 @@
 #include <iostream>
 #include <time.h>
 
+#include "jsoncons/json.hpp"
+#include "eudaq/JSON.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/AidaPacket.hh"
 
@@ -116,6 +118,19 @@ namespace eudaq {
 	  return packet_identifier;
   }
 
+
+  void AidaPacket::toJson( JSON& my ) {
+	  jsoncons::json& json = my.get();
+
+	  json["header"] = jsoncons::json::an_object;
+	  jsoncons::json& json_header = json["header"];
+	  json_header["marker"] = AidaPacket::type2str( m_header.data.marker );
+	  json_header["packetType"] = AidaPacket::type2str( GetPacketType() );
+//	  json_header["packetSubType"] = header.data.packetSubType;
+	  json_header["packetNumber"] = GetPacketNumber();
+
+	  GetMetaData().toJson( my, "meta" );
+  }
 
   void AidaPacket::Print(std::ostream & os) const {
     os << "Type=" << type2str( GetPacketType() )

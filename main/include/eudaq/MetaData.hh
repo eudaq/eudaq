@@ -8,9 +8,11 @@
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/SmartEnum.hh"
 
+
 namespace eudaq {
 
 class Deserializer;
+class JSON;
 
 class DLLEXPORT MetaData : public Serializable {
   public:
@@ -31,6 +33,7 @@ class DLLEXPORT MetaData : public Serializable {
     };
 
 	virtual void Serialize(Serializer &) const;
+    virtual void toJson( JSON&, const std::string & objectName = "" );
 
   protected:
     std::vector<uint64_t> m_metaData;

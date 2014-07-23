@@ -2,7 +2,7 @@
 #include <map>
 
 #include "jsoncons/json.hpp"
-
+#include "eudaq/JSON.hh"
 #include "eudaq/MetaData.hh"
 #include "eudaq/AidaPacket.hh"
 
@@ -64,6 +64,29 @@ void MetaData::add( bool tlu, int type, uint64_t data ) {
 
 void MetaData::Serialize( Serializer & ser ) const {
 	ser.write( m_metaData );
+}
+
+void MetaData::toJson( JSON& my, const std::string & objectName ) {
+	json& json_metaData = my.json;
+	if ( objectName.empty() ) {
+		for ( auto data : m_metaData ) {
+			json json_data;
+			json_data["tlu"] = MetaData::IsTLUBitSet( data );
+			json_data["type"] = MetaData::GetType( data );
+			json_data["counter"] = MetaData::GetCounter( data );
+			json_metaData.add( json_data );
+		}
+	}
+	else {
+		json_metaData[objectName] = jsoncons::json::an_array;
+		for ( auto data : m_metaData ) {
+			json json_data;
+			json_data["tlu"] = MetaData::IsTLUBitSet( data );
+			json_data["type"] = MetaData::GetType( data );
+			json_data["counter"] = MetaData::GetCounter( data );
+			json_metaData[objectName].add( json_data );
+		}
+	}
 }
 
 }

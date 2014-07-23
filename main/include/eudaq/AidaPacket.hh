@@ -40,6 +40,8 @@
 
 namespace eudaq {
 
+class JSON;
+
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
@@ -108,6 +110,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     static PacketHeader DeserializeHeader( Deserializer & );
 
     virtual void Print(std::ostream & os) const;
+    virtual void toJson( JSON& );
 
     //
     //	static helper methods
