@@ -3,6 +3,7 @@
 
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/AidaPacket.hh"
+#include "IndexReader.hh"
 
 #include <string>
 

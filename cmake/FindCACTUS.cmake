@@ -11,7 +11,7 @@
 
 file(GLOB_RECURSE uhal_include /opt/cactus/*uhal.hpp)
 if(uhal_include)
-    set(CACTUS_ROOT /opt/cactus )
+    set(CACTUS_ROOT /opt/cactus/2.3 )
     MESSAGE(STATUS "Found uhal.hpp in ${uhal_include}")
 else(uhal_include)
 file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*uhal.hpp)

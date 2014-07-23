@@ -63,7 +63,7 @@ namespace eudaq {
 	  }
 
 	  *m_out<<"=============================================================================="<<std::endl;
-	  for (int i=0;i<devent.NumEvents();++i)
+	  for (size_t i=0;i<devent.NumEvents();++i)
 	  {
 		  auto raw=std::dynamic_pointer_cast<RawDataEvent>(devent.GetEventPtr(i));
 

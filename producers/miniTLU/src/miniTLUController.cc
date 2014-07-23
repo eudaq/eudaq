@@ -49,6 +49,7 @@ namespace tlu {
   }
 
   void miniTLUController::SetRWRegister(const std::string & name, int value) {
+    try {
     m_hw->getNode(name).write(static_cast< uint32_t >(value));
     m_hw->dispatch();
 
@@ -60,14 +61,22 @@ namespace tlu {
 	  std::cout << name << " = " << std::hex << test.value() << std::endl;
       } else std::cout << "Error writing " << name << std::endl;
     }
+    } catch (...) {
+       return;
+    }
   }
 
   void miniTLUController::SetWRegister(const std::string & name, int value) {
+    try {
     m_hw->getNode(name).write(static_cast< uint32_t >(value));
     m_hw->dispatch();
+    } catch (...) {
+       return;
+    }
   }
 
   uint32_t miniTLUController::ReadRRegister(const std::string & name) {
+    try {
     ValWord< uint32_t > test = m_hw->getNode(name).read();
     m_hw->dispatch();
     if(test.valid()) {
@@ -77,6 +86,9 @@ namespace tlu {
     } else {
       std::cout << "Error reading " << name << std::endl;
       return 0;
+    }
+    } catch (...) {
+       return 0;
     }
   }
 
@@ -89,26 +101,31 @@ namespace tlu {
   void miniTLUController::ReadEventFIFO() {
     if(m_nEvtInFIFO) {
       if (!(m_nEvtInFIFO)) std::cout << "Warning odd words in fifo!" << std::endl;
-      ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
-      m_hw->dispatch();
-      if(fifoContent.valid()) {
-	bool lowBits = false;
-	uint64_t word = 0;
+      try {
+        ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
+        m_hw->dispatch();
+        if(fifoContent.valid()) {
+       	  bool lowBits = false;
+	  uint64_t word = 0;
 	//	std::cout << "Dump event FIFO" << std::endl;
-	for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
-	  // std::cout << "-- " << std::hex << *i << std::endl;
-	  if(lowBits) {
-	    word = (((uint64_t)(word))<<32) | *i;
-	    m_dataFromTLU.push_back(word);
-	    lowBits = false;
-	  } else {
-	    word = *i;
-	    lowBits = true;
+	  for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
+	    // std::cout << "-- " << std::hex << *i << std::endl;
+	    if(lowBits) {
+	      word = (((uint64_t)(word))<<32) | *i;
+	      m_dataFromTLU.push_back(word);
+	      lowBits = false;
+	    } else {
+	      word = *i;
+	      lowBits = true;
+	    }
 	  }
-	}
-      } else {
-	std::cout << "Error reading FIFO" << std::endl;
-      }      
+        } else {
+	  std::cout << "Error reading FIFO" << std::endl;
+        }      
+      } catch (...) {
+        m_nEvtInFIFO = 0;
+        return;
+      }
     }
   }
 

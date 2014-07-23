@@ -1,3 +1,4 @@
+#include "eudaq/TransportClient.hh"
 #include "eudaq/Producer.hh"
 
 namespace eudaq {

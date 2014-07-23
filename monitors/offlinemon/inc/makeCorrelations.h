@@ -2,7 +2,7 @@
 #define makeCorrelations_h__
 #include <vector>
 #include "Rtypes.h"
-#include "eudaq\DetectorEvent.hh"
+#include "eudaq/DetectorEvent.hh"
 #include "rapidxml_utils.hpp"
 #include "CorrelationPlots_interface.h"
 

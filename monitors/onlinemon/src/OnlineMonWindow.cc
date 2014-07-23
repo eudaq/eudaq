@@ -47,7 +47,7 @@ OnlineMonWindow::OnlineMonWindow(const TGWindow* p, UInt_t w, UInt_t h)
     // counter for toolbar
     int i=1;
     //directory root for Icons
-    string icondir_root="../onlinemon/icons/" ;  //FIXME can we fix the hard-coding ?
+    string icondir_root(PACKAGE_SOURCE_DIR); icondir_root+= "/monitors/onlinemon/icons/" ;
     // build tool bar
     tb = new TGToolBar(Hfrm_left,180,80);
     if (tb!=NULL)

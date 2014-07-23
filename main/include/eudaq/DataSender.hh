@@ -1,14 +1,15 @@
 #ifndef EUDAQ_INCLUDED_DataSender
 #define EUDAQ_INCLUDED_DataSender
 
-#include "eudaq/AidaPacket.hh"
-#include "eudaq/Event.hh"
-#include "eudaq/TransportClient.hh"
-#include "eudaq/Serializer.hh"
+
 #include "eudaq/Platform.hh"
 #include <string>
 
 namespace eudaq {
+
+class TransportClient;
+class Event;
+class AidaPacket;
 
   class DLLEXPORT DataSender {
     public:
@@ -19,7 +20,6 @@ namespace eudaq {
       void SendPacket(const AidaPacket &);
     private:
       std::string m_type, m_name;
-      bool m_packetreceiver;
       TransportClient * m_dataclient;
   };
 

@@ -1,9 +1,11 @@
-#include "eudaq/CommandReceiver.hh"
+#include "eudaq/TransportClient.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/BufferSerializer.hh"
+#include "eudaq/Configuration.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/CommandReceiver.hh"
 #include <iostream>
 #include <ostream>
 
@@ -69,7 +71,8 @@ namespace eudaq {
   }
 
   void CommandReceiver::StartThread() {
-	  m_thread.start(CommandReceiver_thread, this);
+	m_thread=std::unique_ptr<std::thread>(new std::thread(CommandReceiver_thread, this));
+	  //m_thread.start(CommandReceiver_thread, this);
 	   m_threadcreated = true;
 //     pthread_attr_init(&m_threadattr);
 //     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
@@ -83,6 +86,10 @@ namespace eudaq {
 
   void CommandReceiver::Process(int timeout) {
     m_cmdclient->Process(timeout);
+  }
+
+  void CommandReceiver::OnConfigure(const Configuration & param) {
+	  std::cout << "Config:\n" << param << std::endl;
   }
 
   void CommandReceiver::OnClear() {
@@ -153,7 +160,7 @@ namespace eudaq {
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
-    if (m_threadcreated) m_thread.join();
+    if (m_threadcreated) m_thread->join();
     delete m_cmdclient;
   }
 

@@ -279,12 +279,14 @@ then the \texttt{-r} option may be used if the RunControl
 is running on a different computer or using a non-standard port.
 
 \subsubsection{Python Interface and Wrapper for Core EUDAQ Components}
+\label{sssec:pywrapper}
 A Python interface is provided for selected EUDAQ components:
-RunControl, DataCollector and a Producer, that can be extended
-on the Python side. The interface is realized through the
-\texttt{ctypes} package that is part of every standard Python
-installation. The interface code for all components is located in the
-\texttt{main/python} directory. 
+RunControl, DataCollector and a Producer, that can be extended on the
+Python side. The interface is realized through the \texttt{ctypes}
+package that is part of every standard Python installation and
+requires the \texttt{numpy} Python package to be installed. The
+interface code for all components is located in the
+\texttt{main/python} directory.
 
 To use the interface and access the components as Python objects, the
 wrapper must be loaded inside your Python script:
@@ -308,9 +310,6 @@ configuration to all connected producers, waits for their reply, and
 starts a new run. Several more extensive examples for using Python
 with EUDAQ are located in the \texttt{python} directory in the main
 EUDAQ directory.
-
-Please note that the wrapper requires the \texttt{numpy} Python package to be
-installed.
 
 
 \subsection{Running the DAQ}

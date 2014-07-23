@@ -33,6 +33,13 @@ namespace tlu {
       miniTLUController::SetSerdesRst(0x0);
     };
 
+    void ResetSerdes() {
+      miniTLUController::SetSerdesRst(0x3);
+      miniTLUController::SetSerdesRst(0x0);
+      miniTLUController::SetSerdesRst(0x4);
+      miniTLUController::SetSerdesRst(0x0);
+    };
+
     void SetDUTInterfaces(int value) { miniTLUController::SetRWRegister("DUTInterfaces",value); };
     void SetInternalTriggerInterval(int value) { miniTLUController::SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
     uint32_t GetInternalTriggerInterval() { return miniTLUController::ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
@@ -52,6 +59,7 @@ namespace tlu {
     void ResetEventFIFO() { miniTLUController::SetEventFifoCSR(0x0); };
 
     void SetLogicClocksCSR(int value) { miniTLUController::SetRWRegister("logic_clocks.LogicClocksCSR",value); };
+    uint32_t GetLogicClocksCSR() { return miniTLUController::ReadRRegister("logic_clocks.LogicClocksCSR"); };
 
     void SetTriggerLength(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TriggerLength",value); };
     void SetTrigStartupDeadTime(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TrigStartupDeadTime",value); };
@@ -108,6 +116,7 @@ namespace tlu {
 
     uint32_t GetNEvent() { return m_nEvtInFIFO/2; }
     uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
+    std::vector<uint64_t>* GetEventData() { return &m_dataFromTLU; }
     void ClearEventFIFO() { m_dataFromTLU.resize(0); }
 
     unsigned GetScaler(unsigned) const;

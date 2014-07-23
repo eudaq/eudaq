@@ -1,3 +1,4 @@
+#include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Utils.hh"
