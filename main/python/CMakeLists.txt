@@ -6,6 +6,16 @@ IF(PYTHONLIBS_FOUND)
 	  src/PyIndexReader.cpp
   )
   target_link_libraries(PyIndexReader EUDAQ ${EUDAQ_THREADS_LIB})
+  ADD_LIBRARY( PyAidaFileReader SHARED 
+	  src/PyAidaFileReader.cpp
+  )
+  target_link_libraries(PyAidaFileReader EUDAQ ${EUDAQ_THREADS_LIB})
+  
+  INSTALL(TARGETS PyAidaFileReader PyIndexReader
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
+  
 ENDIF(PYTHONLIBS_FOUND)
 
 ADD_LIBRARY( PyEUDAQ SHARED 
