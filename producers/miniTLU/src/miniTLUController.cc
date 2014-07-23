@@ -49,6 +49,7 @@ namespace tlu {
   }
 
   void miniTLUController::SetRWRegister(const std::string & name, int value) {
+    try {
     m_hw->getNode(name).write(static_cast< uint32_t >(value));
     m_hw->dispatch();
 
@@ -60,14 +61,22 @@ namespace tlu {
 	  std::cout << name << " = " << std::hex << test.value() << std::endl;
       } else std::cout << "Error writing " << name << std::endl;
     }
+    } catch (...) {
+       return;
+    }
   }
 
   void miniTLUController::SetWRegister(const std::string & name, int value) {
+    try {
     m_hw->getNode(name).write(static_cast< uint32_t >(value));
     m_hw->dispatch();
+    } catch (...) {
+       return;
+    }
   }
 
   uint32_t miniTLUController::ReadRRegister(const std::string & name) {
+    try {
     ValWord< uint32_t > test = m_hw->getNode(name).read();
     m_hw->dispatch();
     if(test.valid()) {
@@ -78,37 +87,45 @@ namespace tlu {
       std::cout << "Error reading " << name << std::endl;
       return 0;
     }
+    } catch (...) {
+       return 0;
+    }
   }
 
   void miniTLUController::CheckEventFIFO() {
     m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
     //   m_nEvtInFIFO = 2;
-    if (m_nEvtInFIFO) std::cout << "nEvt : " << m_nEvtInFIFO << std::endl;
+    if (m_nEvtInFIFO) std::cout << "words in FIFO : " << m_nEvtInFIFO << std::endl;
   }
 
   void miniTLUController::ReadEventFIFO() {
     if(m_nEvtInFIFO) {
       if (!(m_nEvtInFIFO)) std::cout << "Warning odd words in fifo!" << std::endl;
-      ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
-      m_hw->dispatch();
-      if(fifoContent.valid()) {
-	bool highBits = false;
-	uint64_t word = 0;
+      try {
+        ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
+        m_hw->dispatch();
+        if(fifoContent.valid()) {
+       	  bool lowBits = false;
+	  uint64_t word = 0;
 	//	std::cout << "Dump event FIFO" << std::endl;
-	for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
-	  //	  std::cout << "-- " << std::hex << *i << std::endl;
-	  if(highBits) {
-	    word = (((uint64_t)(*i))<<32) | word;
-	    m_dataFromTLU.push_back(word);
-	    highBits = false;
-	  } else {
-	    word = *i;
-	    highBits = true;
+	  for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
+	    // std::cout << "-- " << std::hex << *i << std::endl;
+	    if(lowBits) {
+	      word = (((uint64_t)(word))<<32) | *i;
+	      m_dataFromTLU.push_back(word);
+	      lowBits = false;
+	    } else {
+	      word = *i;
+	      lowBits = true;
+	    }
 	  }
-	}
-      } else {
-	std::cout << "Error reading FIFO" << std::endl;
-      }      
+        } else {
+	  std::cout << "Error reading FIFO" << std::endl;
+        }      
+      } catch (...) {
+        m_nEvtInFIFO = 0;
+        return;
+      }
     }
   }
 
@@ -227,17 +244,18 @@ namespace tlu {
     return GetI2CRX();
   }
 
-  unsigned TLUController::GetScaler(unsigned i) const {
+  unsigned miniTLUController::GetScaler(unsigned i) const {
     if (i >= (unsigned)TLU_TRIGGER_INPUTS) EUDAQ_THROW("Scaler number out of range");
-    m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
+    //m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
 
     //return m_scalers[i];
+    return 0;
   }
 
   void miniTLUController::SetDACValue(unsigned char channel, uint32_t value) {
     unsigned char chrsToSend[2];
 
-    std::cout << "Setting DAC channel " << channel << " = " << value << std::endl;
+    std::cout << "Setting DAC channel " << (unsigned int)channel << " = " << value << std::endl;
 
     // enter vref-off mode: ( very early TLU versions needed Vref mode on. )
     chrsToSend[0] = 0x0;
@@ -253,7 +271,7 @@ namespace tlu {
 
   void miniTLUController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
 
-    std::cout << "Setting threshold for channel " << channel << " to " << thresholdVoltage << " Volts" << std::endl;
+    std::cout << "Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
     float vref = 1.300 ; // Reference voltage is 1.3V on newer TLU
     float vdac = ( thresholdVoltage + vref ) / 2;
     float dacCode =  0xFFFF * vdac / vref;
@@ -264,4 +282,33 @@ namespace tlu {
       
   }
 
+  void miniTLUController::ConfigureInternalTriggerInterval(unsigned int value) {
+    std::cout << "Setting internal trigger interval to " << value << std::endl;
+    SetInternalTriggerInterval(value);
+    std::cout << "Read back " << GetInternalTriggerInterval() << std::endl;
+  }
+
+  void miniTLUController::DumpEvents() {
+    if (m_nEvtInFIFO) std::cout << "Called dump events. " << m_nEvtInFIFO << " 64 bit words in the buffer." << std::endl;
+    for(int i = 0; i < m_nEvtInFIFO/2; ) {
+      std::cout << "Word 0" << m_dataFromTLU[i] << std::endl;
+      uint32_t evtType = (m_dataFromTLU[i] >> 60)&0xf;
+      uint32_t inputTrig = (m_dataFromTLU[i] >> 48)&0xfff;
+      uint32_t input0 = (inputTrig>>9)&0x7;
+      uint32_t input1 = (inputTrig>>6)&0x7;
+      uint32_t input2 = (inputTrig>>3)&0x7;
+      uint32_t input3 = (inputTrig)&0x7;
+      uint64_t timeStamp = (m_dataFromTLU[i])&0xffffffffffff;
+      i++;
+      std::cout << "Word 1" << m_dataFromTLU[i] << std::endl;
+      uint32_t SC0 = (m_dataFromTLU[i] >> 56)&0xff;
+      uint32_t SC1 = (m_dataFromTLU[i] >> 48)&0xff;
+      uint32_t SC2 = (m_dataFromTLU[i] >> 40)&0xff;
+      uint32_t SC3 = (m_dataFromTLU[i] >> 32)&0xff;
+      uint32_t evtNumber = (m_dataFromTLU[i])&0xffffffff;
+      i++;
+      std::cout << "Event number " << evtNumber << " type " << evtType << " input triggers 0: " << input0 << " 1: " << input1 << " 2: " << input2 << " 3: " << input3 << std::endl;
+      std::cout << "Timestamp " << timeStamp << " SC0[" << SC0 << "] SC1["  << SC1 << "] SC2["  << SC2 << "] SC3[" << SC3 << "]" << std::endl; 
+    }
+  }
 }

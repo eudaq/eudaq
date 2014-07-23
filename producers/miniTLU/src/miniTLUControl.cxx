@@ -3,9 +3,6 @@
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
-#include <memory>
-
-
 #ifndef WIN32
 #include <unistd.h>
 #endif
@@ -119,11 +116,13 @@ int main(int /*argc*/, char ** argv) {
               << "Save file = '" << sname.Value() << "'" << (sname.Value() == "" ? " (none)" : "") << "\n"
               << std::endl;
 
-    std::shared_ptr<std::ofstream> sfile;
+    /*
+    counted_ptr<std::ofstream> sfile;
     if (sname.Value() != "") {
       sfile = std::make_shared<std::ofstream>(sname.Value().c_str());
       if (!sfile->is_open()) EUDAQ_THROW("Unable to open file: " + sname.Value());
     }
+    */
     signal(SIGINT, ctrlchandler);
 
     //TODO

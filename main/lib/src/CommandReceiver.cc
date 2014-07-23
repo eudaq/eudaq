@@ -1,9 +1,11 @@
-#include "eudaq/CommandReceiver.hh"
+#include "eudaq/TransportClient.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/BufferSerializer.hh"
+#include "eudaq/Configuration.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/CommandReceiver.hh"
 #include <iostream>
 #include <ostream>
 
@@ -84,6 +86,10 @@ namespace eudaq {
 
   void CommandReceiver::Process(int timeout) {
     m_cmdclient->Process(timeout);
+  }
+
+  void CommandReceiver::OnConfigure(const Configuration & param) {
+	  std::cout << "Config:\n" << param << std::endl;
   }
 
   void CommandReceiver::OnClear() {
