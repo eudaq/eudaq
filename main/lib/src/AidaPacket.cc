@@ -142,7 +142,7 @@ namespace eudaq {
 
   EventPacket::EventPacket( PacketHeader& header, Deserializer & ds) {
 		m_header = header;
-//		ds.read( m_meta_data );
+		m_meta_data = MetaData( ds );
 		m_ev = EventFactory::Create( ds );
 		ds.read( checksum );
   }

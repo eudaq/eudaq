@@ -1,34 +1,34 @@
 #ifndef EUDAQ_INCLUDED_AidaFileReader
 #define EUDAQ_INCLUDED_AidaFileReader
 
-#include "eudaq/FileSerializer.hh"
-#include "eudaq/AidaPacket.hh"
-#include "IndexReader.hh"
 
 #include <string>
-
 #include <memory>
+#include "eudaq/Platform.hh"
 
 namespace eudaq {
 
+class FileDeserializer;
+class AidaPacket;
 
   class DLLEXPORT AidaFileReader {
     public:
-      AidaFileReader(const std::string & filename, const std::string & filepattern = "");
+      AidaFileReader(const std::string & filename );
 
-      ~AidaFileReader();
-      bool NextPacket(size_t skip = 0);
+      virtual ~AidaFileReader();
+      bool readNext();
       std::string Filename() const { return m_filename; }
-      unsigned RunNumber() const;
-      const eudaq::AidaPacket & GetPacket() const;
-      void Interrupt() { m_des.Interrupt(); }
+      unsigned RunNumber() const { return m_runNumber; }
+      std::string getJsonConfig() { return m_json_config; }
+      std::string getJsonPacketInfo();
+      std::shared_ptr<eudaq::AidaPacket> GetPacket() const { return m_packet; };
       
     private:
       std::string m_filename;
-      FileDeserializer m_des;
-     std::shared_ptr<eudaq::AidaPacket> m_ev;
-      unsigned m_ver;
-
+      unsigned long long m_runNumber;
+      FileDeserializer * m_des;
+      std::string m_json_config;
+      std::shared_ptr<eudaq::AidaPacket> m_packet;
   };
  
 
