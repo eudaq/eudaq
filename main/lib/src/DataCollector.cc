@@ -1,3 +1,6 @@
+#include <iostream>
+#include <ostream>
+#include <thread>
 #include "eudaq/DataCollector.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/BufferSerializer.hh"
@@ -5,8 +8,6 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/PluginManager.hh"
-#include <iostream>
-#include <ostream>
 
 namespace eudaq {
 
@@ -22,7 +23,7 @@ namespace eudaq {
 
   DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
     CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
-     ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0) {
+     ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0), m_packetNumberLastPacket( 0 ) {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
       EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
       m_thread=std::unique_ptr<std::thread>(new std::thread(DataCollector_thread,this));
@@ -203,6 +204,7 @@ namespace eudaq {
 
   void DataCollector::WriteEvent( const DetectorEvent & ev ) {
 	  auto packet = std::shared_ptr<AidaPacket>( new EventPacket( ev ) );
+	  packet->SetPacketNumber( ++m_packetNumberLastPacket );
 	  WritePacket( packet );
 	  // std::cout << ev << std::endl;
 	  ++m_eventnumber;
@@ -212,6 +214,7 @@ namespace eudaq {
   void DataCollector::WritePacket( std::shared_ptr<AidaPacket> packet ) {
 	  if (m_writer.get()) {
 		  try {
+			  m_packetNumberLastPacket = packet->GetPacketNumber();
 			  m_writer->WritePacket( packet );
 		  } catch(const Exception & e) {
 			  std::string msg = "Exception writing to file: ";

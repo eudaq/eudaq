@@ -68,6 +68,7 @@ class DLLEXPORT AidaPacket : public Serializable {
 	void SerializeHeader( Serializer & ) const;
 
 	uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
+    void SetPacketNumber( uint64_t n ) { m_header.data.packetNumber = n; };
     uint64_t GetPacketType() const { return m_header.data.packetType; };
     void SetPacketType( uint64_t type ) { m_header.data.packetType = type; };
     uint64_t GetPacketSubType() const { return m_header.data.packetSubType; };
