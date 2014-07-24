@@ -1,4 +1,7 @@
 You need to add the driver location as a variable to cmake with
 cmake -DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=<<DRIVER LOCATION>> .
 
-You need to install tinyxml (Ubuntu package: libtinyxml-dev)
+You need to install tinyxml and unbuffer (Ubuntu package: libtinyxml-dev expect-dev)
+
+
+Compile pALPIDEfs-software with 'make lib'
