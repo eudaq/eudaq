@@ -27,6 +27,7 @@ class ClassName : public SmartEnumBase {\
       if ( map.empty() )\
         for ( int i = 0; i < sizeof(val) / sizeof(Value); i++ )\
           map[val[i]] = str[i];\
+      return map;\
     }\
 };
 

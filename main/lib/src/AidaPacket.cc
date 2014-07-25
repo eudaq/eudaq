@@ -122,6 +122,7 @@ namespace eudaq {
   void AidaPacket::toJson( JSON& my ) {
 	  jsoncons::json& json = my.get();
 
+	  json["className"] = getClassName();
 	  json["header"] = jsoncons::json::an_object;
 	  jsoncons::json& json_header = json["header"];
 	  json_header["marker"] = AidaPacket::type2str( m_header.data.marker );
