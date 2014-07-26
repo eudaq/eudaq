@@ -2,10 +2,10 @@
 #ifndef EUDAQ_INCLUDED_MetaData
 #define EUDAQ_INCLUDED_MetaData
 
+#include <inttypes.h> /* uint64_t */
 #include <string>
 #include "eudaq/Platform.hh"
 #include "eudaq/Serializable.hh"
-#include "eudaq/BufferSerializer.hh"
 #include "eudaq/SmartEnum.hh"
 
 

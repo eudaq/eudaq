@@ -1,4 +1,6 @@
 
+#include "eudaq/BufferSerializer.hh"
+#include "eudaq/MetaData.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/AidaIndexData.hh"
 

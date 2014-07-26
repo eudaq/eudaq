@@ -5,6 +5,7 @@
 #include "jsoncons/json.hpp"
 #include "eudaq/JSON.hh"
 #include "eudaq/BufferSerializer.hh"
+#include "eudaq/Event.hh"
 #include "eudaq/AidaPacket.hh"
 
 using std::cout;

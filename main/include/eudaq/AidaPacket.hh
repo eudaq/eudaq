@@ -10,11 +10,6 @@
 #include <memory>
 
 #include "eudaq/Serializable.hh"
-#include "eudaq/Serializer.hh"
-#include "eudaq/Event.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/SmartEnum.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/MetaData.hh"
 
@@ -48,12 +43,14 @@
 
 namespace eudaq {
 
+class Serializer;
 class JSON;
+class Event;
 
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
-	AidaPacket( uint64_t type, uint64_t subtype ) : AidaPacket() {
+	AidaPacket( uint64_t type, uint64_t subtype ) {
 		m_header.data.packetType = type;
 		m_header.data.packetSubType = subtype;
 	};
@@ -146,7 +143,6 @@ class DLLEXPORT AidaPacket : public Serializable {
     friend class AidaIndexData;
     AidaPacket() : m_data_size( 0 ) {
     	m_header.data.marker = identifier().number;
-    	m_header.data.packetNumber = getNextPacketNumber();
     };
 
     AidaPacket( const PacketHeader& header, const MetaData& meta );
@@ -186,6 +182,7 @@ class DLLEXPORT EventPacket : public AidaPacket {
 DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);
 
 
+
 class DLLEXPORT PacketFactory {
     public:
       static std::shared_ptr<AidaPacket> Create( Deserializer & ds);
@@ -199,8 +196,8 @@ class DLLEXPORT PacketFactory {
       static map_t & get_map();
 };
 
-/** A utility template class for registering an Packet type.
- */
+// A utility template class for registering an Packet type.
+
 
 template <typename T_Packet>
 struct RegisterPacketType {
@@ -211,6 +208,7 @@ struct RegisterPacketType {
     return std::shared_ptr<AidaPacket>( new T_Packet( header, ds ) );
   }
 };
+
 
 
 }
