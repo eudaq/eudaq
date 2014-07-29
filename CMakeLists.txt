@@ -133,6 +133,12 @@ IF(BUILD_python)
   add_subdirectory(main/python)
 ENDIF()
 
+# build EUDAQ pybindgen bindings
+option(BUILD_pybindgen "Compile pybindgen binding libraries?" OFF)
+IF(BUILD_pybindgen)
+  add_subdirectory(etc/pybindgen)
+ENDIF()
+
 # build native reader used for data conversion into LCIO
 IF(BUILD_nreader)
   add_subdirectory(nreader)
