@@ -93,6 +93,24 @@ class DeviceReader {
     int m_queuefull_delay; // milliseconds
     unsigned long m_max_queue_size; // queue size in B
     bool m_high_rate_mode; // decides if is is checked if data is available before requesting an event
+
+    // packet based readout variables
+    int          m_count_word_header;
+    int          m_count_word_data;
+    int          m_Header[4];
+    int16_t      m_Data[8192];
+    int          m_Trailer[2];
+    int          m_last_word;
+    int16_t      m_last_word0;
+    int16_t      m_last_word1;
+    uint64_t     m_lastEventID;
+    TEventHeader m_header;
+    TEventHeader m_trailer;
+    bool         m_HeaderOK,m_TrailerOK,m_EventOK;
+    bool         m_isHeader,m_isTrailer,m_isData;
+    bool         m_endHeader,m_eventIDOK;
+    int          m_size;
+
 };
 
 class PALPIDEFSProducer : public eudaq::Producer {

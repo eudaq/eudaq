@@ -34,6 +34,21 @@ unsigned int Bitmask(int width)
   return tmp;
 }
 
+int16_t GetChipWord (unsigned char *Data)
+{
+    int16_t       Data16 = 0;
+    unsigned char LSByte, MSByte;
+
+    LSByte = Data[0];
+    MSByte = Data[1];
+
+    Data16 += ((int16_t)MSByte) << 8;
+    Data16 += LSByte;
+
+    return Data16;
+}
+
+
 void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool readwrite)
 {
   // readwrite (from Chip): true = read; false = write
@@ -138,6 +153,18 @@ DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpid
   m_last_trigger_id = m_daq_board->GetNextEventId();
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
 #endif
+  // packet based readout variables
+  // global variables needed since information can be distribitued over multiple readouts
+  m_count_word_header = 0;
+  m_count_word_data = 0;
+  m_last_word=0;
+  m_last_word0=0;
+  m_last_word1=0;
+  m_lastEventID = 0;
+  m_size=0;
+  m_HeaderOK = m_EventOK = m_isTrailer = m_isData = m_endHeader=false;
+  m_isHeader = m_eventIDOK=true;
+
 }
     
 void DeviceReader::Stop() 
@@ -159,7 +186,7 @@ void DeviceReader::SetRunning(bool running)
 #ifndef SIMULATION  
   if (m_running)
     m_daq_board->StartTrigger();
-  else 
+  else
     m_daq_board->StopTrigger();
 #endif
 }
@@ -305,80 +332,174 @@ void DeviceReader::Loop()
     eudaq::mSleep(20000 - 2400);
 #endif
 #else
+
     bool event_waiting = true;
     if (!m_high_rate_mode && m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
-      event_waiting = false;
+        event_waiting = false;
     
     if (!event_waiting)
     {
 //       std::cout << "No event " << m_daq_board->GetNextEventId() << " " << m_last_trigger_id << std::endl;
-      // no event waiting
-
-      if (IsFlushing()) {
-        SimpleLock lock(m_mutex);
-        m_flushing = false;
-	Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
-      }
-      eudaq::mSleep(1);
-      continue;
+        // no event waiting
+        /*
+        // flushing moved at the end of the loop. correct?
+        if (IsFlushing()) {
+            SimpleLock lock(m_mutex);
+            m_flushing = false;
+            Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
+        }
+        */
+        eudaq::mSleep(1);
+        continue;
     }
-    
+
     // data taking
     const int maxDataLength = 1024; // 512*32 + 64; // TODO check
     unsigned char data_buf[maxDataLength];
-    int length = -1;
+    int Length;
+    std::vector<TPixHit> Hits;
 
-    if (m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength)) {
+    int count_byte=0;
+    char buffer[20];
+    float byte_packet;
+    int j;
 
-      TEventHeader header;
-      bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
-      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
-      
-      if (HeaderOK && TrailerOK) {
-	if (m_debuglevel > 2) {
-	  std::vector<TPixHit> hits;
-	  if (!m_dut->DecodeEvent(data_buf+20, length - 28, &hits)) {
-	    std::cerr << "ERROR decoding event payload. " << std::endl;
-	  } else {
-	    m_dut->DumpHitData(hits);
-	  }
-	  
-	  std::string str = "RAW payload: ";
-	  for (int j=0; j<length-28; j++) {
-	    char buffer[20];
-	    sprintf(buffer, "%02x ", data_buf[j+20]);
-	    str += buffer;
-	  }
-	  str += "\n";
-	  Print(0, str.data());
-	}
-	
-// 	std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
-	SingleEvent* ev = new SingleEvent(length - 28, header.EventId, header.TimeStamp);
-	memcpy(ev->m_buffer, data_buf+20, length - 28);
-	// add to queue
-	Push(ev);
-	
-	// DEBUG
-	/*
-	if (header.EventId > m_last_trigger_id*2) {
-	  Print(2, "Very large id %lu %lu", header.EventId, m_last_trigger_id);
-	  std::string str = "RAW: ";
-	  for (int j=0; j<length; j++) {
-	    char buffer[20];
-	    sprintf(buffer, "%02x ", data_buf[j]);
-	    str += buffer;
-	  }
-	  str += "\n";
-	  Print(0, str.data());	  
-	}
-	*/
-	// --DEBUG
-	
-        m_last_trigger_id = header.EventId;
-      } else {
-	Print(2, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK, TrailerOK);
-      }
+    if (m_daq_board->ReadChipEvent(data_buf, &Length, maxDataLength)) {
+        count_byte =0;
+        while (count_byte < Length){
+            // Last Word of buffer
+            if (count_byte==0 && m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte)==0xabfeabfe && m_isHeader==false && m_endHeader==false) { 
+                m_Trailer[0] = m_last_word;
+                m_Trailer[1] = m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte) ;
+                count_byte+=4;
+                if(m_debuglevel > 2) {
+                    m_EventOK = m_dut->DecodeEventNew(m_Data,m_count_word_data, &Hits);
+                    if(m_EventOK)
+                        std::cerr << "ERROR decoding event payload. " << std::endl;
+                    else
+                        m_dut->DumpHitData(Hits);
+                }
+                SingleEvent* ev = new SingleEvent(m_count_word_data, m_header.EventId, m_header.TimeStamp);
+                memcpy(ev->m_buffer, m_Data, m_count_word_data);
+                Push(ev); // add to queue
+                m_last_trigger_id = m_header.EventId;
+                m_TrailerOK = m_daq_board->DecodeEventTrailerNew(m_Trailer,&m_trailer);
+                m_count_word_data=0;
+                m_isData = false;
+                m_isTrailer = false;
+                m_isHeader = true;
+                m_lastEventID = m_header.EventId;
+                m_size += m_trailer.EventSize;
+            }
+            if (count_byte==0 && m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte) != 0xabfeabfe && m_isHeader==false && m_endHeader==false){
+                m_Data[m_count_word_data]= m_last_word0;
+                m_count_word_data++;
+                m_Data[m_count_word_data]= m_last_word1;
+                m_count_word_data++;
+            } 
+            // Read Header
+            if (m_endHeader == true) m_endHeader = false;
+            if (m_isHeader == true){
+                m_Header[m_count_word_header] = m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte);
+                m_count_word_header++;
+                count_byte+=4;
+                if ( m_count_word_header == 5){
+                    m_HeaderOK = m_daq_board->DecodeEventHeaderNew(m_Header, &m_header);
+                    m_count_word_header = 0;
+                    m_isHeader = false;
+                    m_endHeader= true;
+                }
+            }
+            if (count_byte + 4 < Length){
+                if (m_isHeader==false){
+                    if (m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte +4) != 0xabfeabfe ) {m_isData = true;m_endHeader=false;}
+                    else {m_isData=false; m_isTrailer=true;m_endHeader=false;}
+                }
+                //Read Data
+                if ( m_isData == true ){   
+                    m_Data[m_count_word_data]= GetChipWord(data_buf+count_byte);
+                    m_count_word_data++;
+                    count_byte+=2;
+                }
+                // Read Trailer
+                if(m_isTrailer == true){
+                    m_Trailer[0]= m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte);
+                    count_byte+=4;
+                    m_Trailer[1]= m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte);
+                    count_byte+=4;
+                    if(m_debuglevel > 2) {
+                        m_EventOK = m_dut->DecodeEventNew(m_Data,m_count_word_data, &Hits);
+                        if(m_EventOK)
+                            std::cerr << "ERROR decoding event payload. " << std::endl;
+                        else
+                            m_dut->DumpHitData(Hits);
+                    }
+                    SingleEvent* ev = new SingleEvent(m_count_word_data, m_header.EventId, m_header.TimeStamp);
+                    memcpy(ev->m_buffer, m_Data, m_count_word_data);
+                    // add to queue
+                    Push(ev);
+                    m_last_trigger_id = m_header.EventId;
+
+                    m_count_word_data=0;
+                    m_TrailerOK = m_daq_board->DecodeEventTrailerNew(m_Trailer,&m_trailer);
+                    m_size += m_trailer.EventSize;
+                    m_isData = false;
+                    m_isTrailer = false;
+                    m_isHeader = true;
+                    // TODO:
+                    // OUT OF SYNC is currently checked via timestamps; consider substituting it with the following code
+                    /*
+                    // Check if the event is corrupted
+                    if (m_trigger_id > 0) {
+                        if (header.EventId > lastEventID + 1) {
+                            std::cout << "It seems that an event was missed. Last id: " << lastEventID << " Current id: " << header.EventId << std::endl;
+                            eventIDOK = false;
+                        }
+                    }
+                    */
+                    m_lastEventID = m_header.EventId;
+                    if (m_debuglevel > 2 || !m_HeaderOK || !m_TrailerOK || !m_eventIDOK) {
+                        Print(2, "ERROR decoding event. Header: %d Trailer: %d", m_HeaderOK, m_TrailerOK);
+                        std::cerr << "DEBUG/ERROR in data stream: Header: " << m_HeaderOK << " Event: " << m_EventOK << " Trailer: " << m_TrailerOK<<"ID: "<< m_eventIDOK<<std::endl;
+                        std::string str = "RAW dump: ";
+                        for (j=0; j<Length; j++) {
+                            sprintf(buffer, "%02x ", data_buf[j]);
+                            str += buffer;
+                        }
+                        str += "\n";
+                        std::cerr << str.data() << std::endl;
+                    }
+                    if (m_eventIDOK == false) m_eventIDOK = true;
+                }
+            }
+            else{
+                if (m_isHeader == false && m_endHeader == false){
+                    m_last_word=m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte);
+                    m_last_word0=GetChipWord(data_buf + count_byte);
+                    m_last_word1=GetChipWord(data_buf + count_byte + 2);
+                    count_byte+=4;
+                }
+            }
+            if (IsFlushing() && m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte) == 0xebfeebfe){
+                count_byte += 4;
+                Print(0, "Flushing %lu", m_last_trigger_id);
+                SimpleLock lock(m_mutex);
+                m_flushing = false;
+                Print(0, "Sending EndOfRun word");
+                m_daq_board->EndOfRun();
+
+                m_count_word_header = 0;
+                m_count_word_data = 0;
+                m_last_word=0;
+                m_last_word0=0;
+                m_last_word1=0;
+                m_lastEventID = 0;
+                m_size=0;
+                m_HeaderOK = m_EventOK = m_isTrailer = m_isData = m_endHeader=false;
+                m_isHeader = m_eventIDOK=true;
+
+            }
+        }
     }
 #endif
   }
@@ -443,7 +564,7 @@ bool DeviceReader::QueueFull()
 float DeviceReader::GetTemperature()
 {
 #ifndef SIMULATION
-  m_daq_board->GetTemperature();
+    return m_daq_board->GetTemperature();
 #else
   return 0;
 #endif
@@ -726,36 +847,36 @@ void PALPIDEFSProducer::OnUnrecognised(const std::string & cmd, const std::strin
 
 void PALPIDEFSProducer::Loop() 
 {
-  unsigned long count = 0;
-  time_t last_status = time(0);
-  do {
-    eudaq::mSleep(20);
+    unsigned long count = 0;
+    time_t last_status = time(0);
+    do {
+        eudaq::mSleep(20);
     
-    if (!IsRunning())
-    {
-      if (IsFlushing())
-	SendEOR();
-      continue;
-    }
+        if (!IsRunning())
+        {
+            if (IsFlushing())
+                SendEOR();
+            continue;
+        }
     
-    // build events
-    while (1) {
-      int events_built = BuildEvent();
-      count += events_built;
-
-      if (events_built == 0) {
-	if (m_status_interval > 0 && time(0) - last_status > m_status_interval) {
-	  SendStatusEvent();
-	  PrintQueueStatus();
-	  last_status = time(0);
-	}
-	break;
-      }
-      
-      if (count % 20000 == 0)
-	std::cout << "Sending event " << count << std::endl;
-    }
-  } while (!IsDone());
+        // build events
+        while (1) {
+            int events_built = BuildEvent();
+            count += events_built;
+        
+            if (events_built == 0) {
+                if (m_status_interval > 0 && time(0) - last_status > m_status_interval) {
+                    SendStatusEvent();
+                    PrintQueueStatus();
+                    last_status = time(0);
+                }
+                break;
+            }
+        
+            if (count % 20000 == 0)
+                std::cout << "Sending event " << count << std::endl;
+        }
+    } while (!IsDone());
 }
     
 int PALPIDEFSProducer::BuildEvent() 
