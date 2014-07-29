@@ -98,7 +98,7 @@ class DeviceReader {
     int          m_count_word_header;
     int          m_count_word_data;
     int          m_Header[4];
-    int16_t      m_Data[8192];
+    unsigned char      m_Data[8192];
     int          m_Trailer[2];
     int          m_last_word;
     int16_t      m_last_word0;

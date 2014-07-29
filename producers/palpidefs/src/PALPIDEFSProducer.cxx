@@ -373,7 +373,7 @@ void DeviceReader::Loop()
                 m_Trailer[1] = m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte) ;
                 count_byte+=4;
                 if(m_debuglevel > 2) {
-                    m_EventOK = m_dut->DecodeEventNew(m_Data,m_count_word_data, &Hits);
+                    m_EventOK = m_dut->DecodeEvent(m_Data,m_count_word_data, &Hits);
                     if(m_EventOK)
                         std::cerr << "ERROR decoding event payload. " << std::endl;
                     else
@@ -392,10 +392,11 @@ void DeviceReader::Loop()
                 m_size += m_trailer.EventSize;
             }
             if (count_byte==0 && m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte) != 0xabfeabfe && m_isHeader==false && m_endHeader==false){
-                m_Data[m_count_word_data]= m_last_word0;
+                m_Data[m_count_word_data]=m_last_word;
+//                m_Data[m_count_word_data]= m_last_word0;
                 m_count_word_data++;
-                m_Data[m_count_word_data]= m_last_word1;
-                m_count_word_data++;
+//                m_Data[m_count_word_data]= m_last_word1;
+//                m_count_word_data++;
             } 
             // Read Header
             if (m_endHeader == true) m_endHeader = false;
@@ -417,9 +418,10 @@ void DeviceReader::Loop()
                 }
                 //Read Data
                 if ( m_isData == true ){   
-                    m_Data[m_count_word_data]= GetChipWord(data_buf+count_byte);
+                    m_Data[m_count_word_data]= m_daq_board->GetIntFromBinaryStringReversed(4, data_buf+count_byte);
+//                    m_Data[m_count_word_data]= GetChipWord(data_buf+count_byte);
                     m_count_word_data++;
-                    count_byte+=2;
+                    count_byte+=4;
                 }
                 // Read Trailer
                 if(m_isTrailer == true){
@@ -428,7 +430,7 @@ void DeviceReader::Loop()
                     m_Trailer[1]= m_daq_board->GetIntFromBinaryStringReversed(4, data_buf + count_byte);
                     count_byte+=4;
                     if(m_debuglevel > 2) {
-                        m_EventOK = m_dut->DecodeEventNew(m_Data,m_count_word_data, &Hits);
+                        m_EventOK = m_dut->DecodeEvent(m_Data,m_count_word_data, &Hits);
                         if(m_EventOK)
                             std::cerr << "ERROR decoding event payload. " << std::endl;
                         else
