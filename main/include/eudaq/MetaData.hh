@@ -4,9 +4,9 @@
 
 #include <inttypes.h> /* uint64_t */
 #include <string>
+#include <vector>
 #include "eudaq/Platform.hh"
 #include "eudaq/Serializable.hh"
-#include "eudaq/SmartEnum.hh"
 
 
 namespace eudaq {
@@ -16,7 +16,6 @@ class JSON;
 
 class DLLEXPORT MetaData : public Serializable {
   public:
-	DECLARE_ENUM_CLASS( Type, TRIGGER_COUNTER, TRIGGER_TIMESTAMP );
 
 	MetaData() {};
 	MetaData( Deserializer & ds );

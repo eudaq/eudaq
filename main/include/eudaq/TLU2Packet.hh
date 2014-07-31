@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <iostream>
 
+#include "eudaq/SmartEnum.hh"
 #include "eudaq/AidaPacket.hh"
 
 
