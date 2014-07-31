@@ -50,7 +50,7 @@ class Event;
 class DLLEXPORT AidaPacket : public Serializable {
   public:
 
-	AidaPacket( uint64_t type, uint64_t subtype ) {
+	AidaPacket( uint64_t type, uint64_t subtype ) : AidaPacket() {
 		m_header.data.packetType = type;
 		m_header.data.packetSubType = subtype;
 	};
@@ -143,6 +143,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     friend class AidaIndexData;
     AidaPacket() : m_data_size( 0 ) {
     	m_header.data.marker = identifier().number;
+    	m_header.data.packetNumber = 0;
     };
 
     AidaPacket( const PacketHeader& header, const MetaData& meta );
