@@ -62,14 +62,14 @@ namespace eudaq {
 
 
   void DataSender::SendPacket( AidaPacket &packet ) {
+	  m_packetCounter += 1;
+	  if ( packet.GetPacketNumber() == 0 )
+		  packet.SetPacketNumber( m_packetCounter );
 //    EUDAQ_DEBUG("Serializing packet");
-    BufferSerializer ser;
-    packet.Serialize(ser);
+	  BufferSerializer ser;
+	  packet.Serialize(ser);
 //    EUDAQ_DEBUG("Sending packet");
-    m_packetCounter += 1;
-    if ( packet.GetPacketNumber() == 0 )
-    	packet.SetPacketNumber( m_packetCounter );
-    m_dataclient->SendPacket(ser);
+	  m_dataclient->SendPacket(ser);
 //    EUDAQ_DEBUG("Sent packet");
   }
 
