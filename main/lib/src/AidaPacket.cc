@@ -6,7 +6,7 @@
 #include "eudaq/JSON.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Event.hh"
-#include "eudaq/AidaPacket.hh"
+#include "eudaq/TLU2Packet.hh"
 
 using std::cout;
 
@@ -103,7 +103,6 @@ namespace eudaq {
     for (int i = 7; i >= 0; --i) {
       if (result[i] == '\0') {
         result.erase(i);
-        break;
       }
     }
     //std::cout << " = " << result << std::endl;
@@ -152,8 +151,8 @@ namespace eudaq {
     	m_header.data.packetSubType = 0;
     	m_header.data.packetNumber  = m_ev->GetEventNumber();
 
-    	m_meta_data.add( false, MetaData::Type::TRIGGER_COUNTER, m_ev->GetEventNumber() );
-    	m_meta_data.add( false, MetaData::Type::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::EVENT_NUMBER, m_ev->GetEventNumber() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::TIMESTAMP, m_ev->GetTimestamp() );
   }
 
 
