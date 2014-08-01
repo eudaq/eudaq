@@ -94,7 +94,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     // data
     //
 
-    void SetData( uint64_t* data, uint64_t size ) {
+	std::vector<uint64_t> & GetData();
+
+	void SetData( uint64_t* data, uint64_t size ) {
     	m_data = data;
     	m_data_size = size;
     }
@@ -116,10 +118,18 @@ class DLLEXPORT AidaPacket : public Serializable {
     static PacketHeader DeserializeHeader( Deserializer & );
 
     virtual void Print(std::ostream & os) const;
-    virtual void toJson( JSON& );
+    virtual void toJson( std::shared_ptr<JSON> );
 	virtual const std::string & getClassName() const {
 		static std::string name = "AidaPacket";
 		return name;
+	}
+
+	static const std::string & getCurrentSchema();
+	static void setCurrentSchema( const std::string & );
+
+	static const std::string & getDefaultSchema() {
+		static std::string schema = "header:4 meta:[] data:[]";
+		return schema;
 	}
 
     //
@@ -162,6 +172,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     std::unique_ptr<uint64_t[]> placeholder;
     uint64_t  m_data_size;
     uint64_t* m_data;
+    std::vector<uint64_t> m_data_vector;
 
 };
 
