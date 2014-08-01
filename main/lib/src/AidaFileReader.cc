@@ -1,7 +1,7 @@
 #include <list>
 #include <iostream>
 #include "jsoncons/json.hpp"
-#include "eudaq/JSON.hh"
+#include "eudaq/JSONimpl.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/Logger.hh"
@@ -34,11 +34,15 @@ namespace eudaq {
 	  if ( !m_packet )
 		  return "";
 
-	  JSON json;
+	  auto json = JSON::Create();
 	  m_packet->toJson( json );
-	  return json.get().to_string();
+	  return json->to_string();
   }
 
+
+  std::vector<uint64_t> AidaFileReader::getData() {
+	  return m_packet->GetData();
+  }
 
 
 }
