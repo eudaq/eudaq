@@ -32,7 +32,7 @@ class DLLEXPORT MetaData : public Serializable {
     };
 
 	virtual void Serialize(Serializer &) const;
-    virtual void toJson( JSON&, const std::string & objectName = "" );
+    virtual void toJson( std::shared_ptr<JSON>, const std::string & objectName = "" );
 
   protected:
     std::vector<uint64_t> m_metaData;
