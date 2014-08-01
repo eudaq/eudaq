@@ -21,6 +21,10 @@ def module_init():
 def register_types(module):
     root_module = module.get_root()
     
+    module.add_container('DataVector', 'long unsigned int', container_type=u'vector')
+    typehandlers.add_type_alias(u'std::vector< unsigned long, std::allocator< unsigned long > >', u'DataVector')
+    typehandlers.add_type_alias(u'std::vector< unsigned long, std::allocator< unsigned long > >*', u'DataVector*')
+    typehandlers.add_type_alias(u'std::vector< unsigned long, std::allocator< unsigned long > >&', u'DataVector&')
     
     ## Register a nested module for the namespace eudaq
     
@@ -38,6 +42,7 @@ def register_types_eudaq(module):
     root_module = module.get_root()
     
     module.add_class('AidaFileReader')
+    module.add_container('std::vector< unsigned long >', 'long unsigned int', container_type=u'vector')
 
 def register_types_std(module):
     root_module = module.get_root()
@@ -58,6 +63,9 @@ def register_EudaqAidaFileReader_methods(root_module, cls):
                    'unsigned int', 
                    [], 
                    is_const=True)
+    cls.add_method('getData', 
+                   'std::vector< unsigned long >', 
+                   [])
     cls.add_method('getJsonConfig', 
                    'std::string', 
                    [])
@@ -71,6 +79,9 @@ def register_EudaqAidaFileReader_methods(root_module, cls):
 
 def register_functions(root_module):
     module = root_module
+    module.add_function('data', 
+                        'DataVector', 
+                        [param('eudaq::AidaFileReader &', 'f')])
     register_functions_eudaq(module.get_submodule('eudaq'), root_module)
     register_functions_std(module.get_submodule('std'), root_module)
     return

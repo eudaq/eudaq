@@ -38,6 +38,7 @@ def register_types_eudaq(module):
     root_module = module.get_root()
     
     module.add_class('PyPacket')
+    module.add_container('std::vector< long unsigned int >', 'long unsigned int', container_type=u'vector')
 
 def register_types_std(module):
     root_module = module.get_root()
@@ -60,6 +61,12 @@ def register_EudaqPyPacket_methods(root_module, cls):
     cls.add_method('nextToSend', 
                    'void', 
                    [])
+    cls.add_method('setData', 
+                   'void', 
+                   [param('std::vector< long unsigned int > &', 'arg0')])
+    cls.add_method('setTags', 
+                   'void', 
+                   [param('std::string const &', 'jsonString')])
     cls.add_instance_attribute('packet', 'eudaq::AidaPacket *', is_const=False)
     return
 
