@@ -1,10 +1,13 @@
 #ifndef EUDAQ_INCLUDED_AidaFileReader
 #define EUDAQ_INCLUDED_AidaFileReader
 
-
+#include <inttypes.h> /* uint64_t */
 #include <string>
 #include <memory>
+#include <vector>
 #include "eudaq/Platform.hh"
+
+typedef std::vector<uint64_t> DataVector;
 
 namespace eudaq {
 
@@ -21,6 +24,7 @@ class AidaPacket;
       unsigned RunNumber() const { return m_runNumber; }
       std::string getJsonConfig() { return m_json_config; }
       std::string getJsonPacketInfo();
+      std::vector<uint64_t> getData();
       std::shared_ptr<eudaq::AidaPacket> GetPacket() const { return m_packet; };
       
     private:
@@ -31,8 +35,12 @@ class AidaPacket;
       std::shared_ptr<eudaq::AidaPacket> m_packet;
   };
  
-
-
 }
+
+
+DataVector data( eudaq::AidaFileReader& f ) {
+	return f.getData();
+}
+
 
 #endif // EUDAQ_INCLUDED_AidaFileReader
