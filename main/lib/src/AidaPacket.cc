@@ -68,7 +68,8 @@ namespace eudaq {
 	}
 
 	std::vector<uint64_t> & AidaPacket::GetData() {
-		std::copy( m_data, m_data + m_data_size, m_data_vector.begin() );
+		if ( m_data_size > 0 )
+			std::copy( m_data, m_data + m_data_size, m_data_vector.begin() );
 		return m_data_vector;
 	}
 
@@ -137,11 +138,12 @@ namespace eudaq {
 	  jsoncons::json& json = JSONimpl::get( my.get() );
 
 	  json["className"] = getClassName();
+	  json["dataLength"] = m_data_size;
 	  json["header"] = jsoncons::json::an_object;
 	  jsoncons::json& json_header = json["header"];
 	  json_header["marker"] = AidaPacket::type2str( m_header.data.marker );
 	  json_header["packetType"] = AidaPacket::type2str( GetPacketType() );
-//	  json_header["packetSubType"] = header.data.packetSubType;
+	  json_header["packetSubType"] = AidaPacket::type2str( GetPacketSubType() );
 	  json_header["packetNumber"] = GetPacketNumber();
 
 	  GetMetaData().toJson( my, "meta" );
