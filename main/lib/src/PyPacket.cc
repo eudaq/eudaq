@@ -27,6 +27,14 @@ static PyPacket * next = NULL;
 	 packet->GetMetaData().add( tlu, type, data );
   }
 
+  void PyPacket::setTags( const std::string & jsonString ) {
+
+  }
+
+  void PyPacket::setData( std::vector<uint64_t>& data ) {
+	 packet->SetData( data );
+  }
+
   void PyPacket::nextToSend() {
 	  next = this;
   }
