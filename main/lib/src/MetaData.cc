@@ -3,7 +3,7 @@
 #include <map>
 
 #include "jsoncons/json.hpp"
-#include "eudaq/JSON.hh"
+#include "eudaq/JSONimpl.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/MetaData.hh"
 #include "eudaq/AidaPacket.hh"
@@ -68,8 +68,8 @@ void MetaData::Serialize( Serializer & ser ) const {
 	ser.write( m_metaData );
 }
 
-void MetaData::toJson( JSON& my, const std::string & objectName ) {
-	json& json_metaData = my.json;
+void MetaData::toJson( std::shared_ptr<JSON> my, const std::string & objectName ) {
+	json& json_metaData = JSONimpl::get( my.get() );
 	if ( objectName.empty() ) {
 		for ( auto data : m_metaData ) {
 			json json_data;
