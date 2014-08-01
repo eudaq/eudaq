@@ -91,21 +91,21 @@ extern PyTypeObject PyEudaqAidaFileReader_Type;
 
 typedef struct {
     PyObject_HEAD
-    std::vector< long unsigned int > *obj;
-} Pystd__vector__lt___long_unsigned_int___gt__;
+    eudaq::DataVector *obj;
+} Pyeudaq__DataVector;
 
 
 typedef struct {
     PyObject_HEAD
-    Pystd__vector__lt___long_unsigned_int___gt__ *container;
-    std::vector< long unsigned int >::iterator *iterator;
-} Pystd__vector__lt___long_unsigned_int___gt__Iter;
+    Pyeudaq__DataVector *container;
+    eudaq::DataVector::iterator *iterator;
+} Pyeudaq__DataVectorIter;
 
 
-extern PyTypeObject Pystd__vector__lt___long_unsigned_int___gt___Type;
-extern PyTypeObject Pystd__vector__lt___long_unsigned_int___gt__Iter_Type;
+extern PyTypeObject Pyeudaq__DataVector_Type;
+extern PyTypeObject Pyeudaq__DataVectorIter_Type;
 
-int _wrap_convert_py2c__std__vector__lt___long_unsigned_int___gt__(PyObject *arg, std::vector< long unsigned int > *container);
+int _wrap_convert_py2c__eudaq__DataVector(PyObject *arg, eudaq::DataVector *container);
 
 int _wrap_convert_py2c__long_unsigned_int(PyObject *value, long unsigned int *address);
 
@@ -249,13 +249,13 @@ PyObject *
 _wrap_PyEudaqAidaFileReader_getData(PyEudaqAidaFileReader *self)
 {
     PyObject *py_retval;
-    std::vector< long unsigned int > retval;
-    Pystd__vector__lt___long_unsigned_int___gt__ *py_std__vector__lt___long_unsigned_int___gt__;
+    DataVector retval;
+    Pyeudaq__DataVector *py_DataVector;
 
     retval = self->obj->getData();
-    py_std__vector__lt___long_unsigned_int___gt__ = PyObject_New(Pystd__vector__lt___long_unsigned_int___gt__, &Pystd__vector__lt___long_unsigned_int___gt___Type);
-    py_std__vector__lt___long_unsigned_int___gt__->obj = new std::vector< long unsigned int >(retval);
-    py_retval = Py_BuildValue((char *) "N", py_std__vector__lt___long_unsigned_int___gt__);
+    py_DataVector = PyObject_New(Pyeudaq__DataVector, &Pyeudaq__DataVector_Type);
+    py_DataVector->obj = new eudaq::DataVector(retval);
+    py_retval = Py_BuildValue((char *) "N", py_DataVector);
     return py_retval;
 }
 
@@ -382,7 +382,7 @@ PyTypeObject PyEudaqAidaFileReader_Type = {
 
 
 static void
-Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_clear(Pystd__vector__lt___long_unsigned_int___gt__Iter *self)
+Pyeudaq__DataVectorIter__tp_clear(Pyeudaq__DataVectorIter *self)
 {
     Py_CLEAR(self->container);
     delete self->iterator;
@@ -392,7 +392,7 @@ Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_clear(Pystd__vector__lt___l
 
 
 static int
-Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_traverse(Pystd__vector__lt___long_unsigned_int___gt__Iter *self, visitproc visit, void *arg)
+Pyeudaq__DataVectorIter__tp_traverse(Pyeudaq__DataVectorIter *self, visitproc visit, void *arg)
 {
     Py_VISIT((PyObject *) self->container);
     return 0;
@@ -400,7 +400,7 @@ Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_traverse(Pystd__vector__lt_
 
 
 static void
-_wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_dealloc(Pystd__vector__lt___long_unsigned_int___gt__ *self)
+_wrap_Pyeudaq__DataVector__tp_dealloc(Pyeudaq__DataVector *self)
 {
     delete self->obj;
     self->obj = NULL;
@@ -410,7 +410,7 @@ _wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_dealloc(Pystd__vector__lt
 
 
 static void
-_wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_dealloc(Pystd__vector__lt___long_unsigned_int___gt__Iter *self)
+_wrap_Pyeudaq__DataVectorIter__tp_dealloc(Pyeudaq__DataVectorIter *self)
 {
     Py_CLEAR(self->container);
     delete self->iterator;
@@ -421,27 +421,27 @@ _wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_dealloc(Pystd__vector
 
 
 static PyObject*
-_wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_iter(Pystd__vector__lt___long_unsigned_int___gt__ *self)
+_wrap_Pyeudaq__DataVector__tp_iter(Pyeudaq__DataVector *self)
 {
-    Pystd__vector__lt___long_unsigned_int___gt__Iter *iter = PyObject_GC_New(Pystd__vector__lt___long_unsigned_int___gt__Iter, &Pystd__vector__lt___long_unsigned_int___gt__Iter_Type);
+    Pyeudaq__DataVectorIter *iter = PyObject_GC_New(Pyeudaq__DataVectorIter, &Pyeudaq__DataVectorIter_Type);
     Py_INCREF(self);
     iter->container = self;
-    iter->iterator = new std::vector< long unsigned int >::iterator(self->obj->begin());
+    iter->iterator = new eudaq::DataVector::iterator(self->obj->begin());
     return (PyObject*) iter;
 }
 
 
 static PyObject*
-_wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_iter(Pystd__vector__lt___long_unsigned_int___gt__Iter *self)
+_wrap_Pyeudaq__DataVectorIter__tp_iter(Pyeudaq__DataVectorIter *self)
 {
     Py_INCREF(self);
     return (PyObject*) self;
 }
 
-static PyObject* _wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_iternext(Pystd__vector__lt___long_unsigned_int___gt__Iter *self)
+static PyObject* _wrap_Pyeudaq__DataVectorIter__tp_iternext(Pyeudaq__DataVectorIter *self)
 {
     PyObject *py_retval;
-    std::vector< long unsigned int >::iterator iter;
+    eudaq::DataVector::iterator iter;
 
     iter = *self->iterator;
     if (iter == self->container->obj->end()) {
@@ -467,10 +467,10 @@ int _wrap_convert_py2c__long_unsigned_int(PyObject *value, long unsigned int *ad
 }
 
 
-int _wrap_convert_py2c__std__vector__lt___long_unsigned_int___gt__(PyObject *arg, std::vector< long unsigned int > *container)
+int _wrap_convert_py2c__eudaq__DataVector(PyObject *arg, eudaq::DataVector *container)
 {
-    if (PyObject_IsInstance(arg, (PyObject*) &Pystd__vector__lt___long_unsigned_int___gt___Type)) {
-        *container = *((Pystd__vector__lt___long_unsigned_int___gt__*)arg)->obj;
+    if (PyObject_IsInstance(arg, (PyObject*) &Pyeudaq__DataVector_Type)) {
+        *container = *((Pyeudaq__DataVector*)arg)->obj;
     } else if (PyList_Check(arg)) {
         container->clear();
         Py_ssize_t size = PyList_Size(arg);
@@ -482,7 +482,7 @@ int _wrap_convert_py2c__std__vector__lt___long_unsigned_int___gt__(PyObject *arg
             container->push_back(item);
         }
     } else {
-        PyErr_SetString(PyExc_TypeError, "parameter must be None, a Std__vector__lt___long_unsigned_int___gt__ instance, or a list of long unsigned int");
+        PyErr_SetString(PyExc_TypeError, "parameter must be None, a DataVector instance, or a list of long unsigned int");
         return 0;
     }
     return 1;
@@ -490,7 +490,7 @@ int _wrap_convert_py2c__std__vector__lt___long_unsigned_int___gt__(PyObject *arg
 
 
 static int
-_wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_init(Pystd__vector__lt___long_unsigned_int___gt__ *self, PyObject *args, PyObject *kwargs)
+_wrap_Pyeudaq__DataVector__tp_init(Pyeudaq__DataVector *self, PyObject *args, PyObject *kwargs)
 {
     const char *keywords[] = {"arg", NULL};
     PyObject *arg = NULL;
@@ -499,12 +499,12 @@ _wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_init(Pystd__vector__lt___
         return -1;
     }
 
-    self->obj = new std::vector< long unsigned int >;
+    self->obj = new eudaq::DataVector;
 
     if (arg == NULL)
         return 0;
 
-    if (!_wrap_convert_py2c__std__vector__lt___long_unsigned_int___gt__(arg, self->obj)) {
+    if (!_wrap_convert_py2c__eudaq__DataVector(arg, self->obj)) {
         delete self->obj;
         self->obj = NULL;
         return -1;
@@ -512,13 +512,13 @@ _wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_init(Pystd__vector__lt___
     return 0;
 }
 
-PyTypeObject Pystd__vector__lt___long_unsigned_int___gt___Type = {
+PyTypeObject Pyeudaq__DataVector_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    (char *) "libPyAidaFileReader.eudaq.Std__vector__lt___long_unsigned_int___gt__",            /* tp_name */
-    sizeof(Pystd__vector__lt___long_unsigned_int___gt__),                  /* tp_basicsize */
+    (char *) "libPyAidaFileReader.eudaq.DataVector",            /* tp_name */
+    sizeof(Pyeudaq__DataVector),                  /* tp_basicsize */
     0,                                 /* tp_itemsize */
     /* methods */
-    (destructor)_wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_dealloc,        /* tp_dealloc */
+    (destructor)_wrap_Pyeudaq__DataVector__tp_dealloc,        /* tp_dealloc */
     (printfunc)0,                      /* tp_print */
     (getattrfunc)NULL,       /* tp_getattr */
     (setattrfunc)NULL,       /* tp_setattr */
@@ -539,7 +539,7 @@ PyTypeObject Pystd__vector__lt___long_unsigned_int___gt___Type = {
     (inquiry)NULL,             /* tp_clear */
     (richcmpfunc)NULL,   /* tp_richcompare */
     0,             /* tp_weaklistoffset */
-    (getiterfunc)_wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_iter,          /* tp_iter */
+    (getiterfunc)_wrap_Pyeudaq__DataVector__tp_iter,          /* tp_iter */
     (iternextfunc)NULL,     /* tp_iternext */
     (struct PyMethodDef*)NULL, /* tp_methods */
     (struct PyMemberDef*)0,              /* tp_members */
@@ -549,7 +549,7 @@ PyTypeObject Pystd__vector__lt___long_unsigned_int___gt___Type = {
     (descrgetfunc)NULL,    /* tp_descr_get */
     (descrsetfunc)NULL,    /* tp_descr_set */
     0,                 /* tp_dictoffset */
-    (initproc)_wrap_Pystd__vector__lt___long_unsigned_int___gt____tp_init,             /* tp_init */
+    (initproc)_wrap_Pyeudaq__DataVector__tp_init,             /* tp_init */
     (allocfunc)PyType_GenericAlloc,           /* tp_alloc */
     (newfunc)PyType_GenericNew,               /* tp_new */
     (freefunc)0,             /* tp_free */
@@ -562,13 +562,13 @@ PyTypeObject Pystd__vector__lt___long_unsigned_int___gt___Type = {
     (destructor) NULL                  /* tp_del */
 };
 
-PyTypeObject Pystd__vector__lt___long_unsigned_int___gt__Iter_Type = {
+PyTypeObject Pyeudaq__DataVectorIter_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    (char *) "libPyAidaFileReader.eudaq.Std__vector__lt___long_unsigned_int___gt__Iter",            /* tp_name */
-    sizeof(Pystd__vector__lt___long_unsigned_int___gt__Iter),                  /* tp_basicsize */
+    (char *) "libPyAidaFileReader.eudaq.DataVectorIter",            /* tp_name */
+    sizeof(Pyeudaq__DataVectorIter),                  /* tp_basicsize */
     0,                                 /* tp_itemsize */
     /* methods */
-    (destructor)_wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_dealloc,        /* tp_dealloc */
+    (destructor)_wrap_Pyeudaq__DataVectorIter__tp_dealloc,        /* tp_dealloc */
     (printfunc)0,                      /* tp_print */
     (getattrfunc)NULL,       /* tp_getattr */
     (setattrfunc)NULL,       /* tp_setattr */
@@ -585,12 +585,12 @@ PyTypeObject Pystd__vector__lt___long_unsigned_int___gt__Iter_Type = {
     (PyBufferProcs*)NULL,  /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_HAVE_GC,                      /* tp_flags */
     NULL,                        /* Documentation string */
-    (traverseproc)Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_traverse,     /* tp_traverse */
-    (inquiry)Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_clear,             /* tp_clear */
+    (traverseproc)Pyeudaq__DataVectorIter__tp_traverse,     /* tp_traverse */
+    (inquiry)Pyeudaq__DataVectorIter__tp_clear,             /* tp_clear */
     (richcmpfunc)NULL,   /* tp_richcompare */
     0,             /* tp_weaklistoffset */
-    (getiterfunc)_wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_iter,          /* tp_iter */
-    (iternextfunc)_wrap_Pystd__vector__lt___long_unsigned_int___gt__Iter__tp_iternext,     /* tp_iternext */
+    (getiterfunc)_wrap_Pyeudaq__DataVectorIter__tp_iter,          /* tp_iter */
+    (iternextfunc)_wrap_Pyeudaq__DataVectorIter__tp_iternext,     /* tp_iternext */
     (struct PyMethodDef*)NULL, /* tp_methods */
     (struct PyMemberDef*)0,              /* tp_members */
     NULL,                     /* tp_getset */
@@ -640,15 +640,15 @@ initlibPyAidaFileReader_eudaq(void)
         return NULL;
     }
     PyModule_AddObject(m, (char *) "AidaFileReader", (PyObject *) &PyEudaqAidaFileReader_Type);
-    /* Register the 'std::vector< long unsigned int >' class */
-    if (PyType_Ready(&Pystd__vector__lt___long_unsigned_int___gt___Type)) {
+    /* Register the 'eudaq::DataVector' class */
+    if (PyType_Ready(&Pyeudaq__DataVector_Type)) {
         return NULL;
     }
-    if (PyType_Ready(&Pystd__vector__lt___long_unsigned_int___gt__Iter_Type)) {
+    if (PyType_Ready(&Pyeudaq__DataVectorIter_Type)) {
         return NULL;
     }
-    PyModule_AddObject(m, (char *) "Std__vector__lt___long_unsigned_int___gt__", (PyObject *) &Pystd__vector__lt___long_unsigned_int___gt___Type);
-    PyModule_AddObject(m, (char *) "Std__vector__lt___long_unsigned_int___gt__Iter", (PyObject *) &Pystd__vector__lt___long_unsigned_int___gt__Iter_Type);
+    PyModule_AddObject(m, (char *) "DataVector", (PyObject *) &Pyeudaq__DataVector_Type);
+    PyModule_AddObject(m, (char *) "DataVectorIter", (PyObject *) &Pyeudaq__DataVectorIter_Type);
     return m;
 }
 static PyMethodDef libPyAidaFileReader_std_functions[] = {
