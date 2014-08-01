@@ -2,8 +2,8 @@
 #include <iostream>
 #include <time.h>
 
+#include "eudaq/JSONimpl.hh"
 #include "jsoncons/json.hpp"
-#include "eudaq/JSON.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Event.hh"
 #include "eudaq/TLU2Packet.hh"
@@ -67,7 +67,10 @@ namespace eudaq {
 		return header;
 	}
 
-
+	std::vector<uint64_t> & AidaPacket::GetData() {
+		std::copy( m_data, m_data + m_data_size, m_data_vector.begin() );
+		return m_data_vector;
+	}
 
     const uint64_t * const AidaPacket::bit_mask() {
     	static uint64_t* array = NULL;
@@ -118,9 +121,20 @@ namespace eudaq {
 	  return packet_identifier;
   }
 
+  static std::string currentSchema = AidaPacket::getDefaultSchema();
 
-  void AidaPacket::toJson( JSON& my ) {
-	  jsoncons::json& json = my.get();
+  const std::string & AidaPacket::getCurrentSchema() {
+	  return currentSchema;
+  }
+
+  void AidaPacket::setCurrentSchema( const std::string & schema ) {
+	  currentSchema = schema;
+  }
+
+
+
+  void AidaPacket::toJson( std::shared_ptr<JSON> my ) {
+	  jsoncons::json& json = JSONimpl::get( my.get() );
 
 	  json["className"] = getClassName();
 	  json["header"] = jsoncons::json::an_object;
