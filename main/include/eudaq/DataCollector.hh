@@ -17,6 +17,8 @@
 #include <memory>
 namespace eudaq {
 
+class JSON;
+
   /** Implements the functionality of the File Writer application.
    *
    */
@@ -44,6 +46,8 @@ namespace eudaq {
     protected:
       void WriteEvent( const DetectorEvent & ev );
       void WritePacket( std::shared_ptr<AidaPacket> packet );
+      std::shared_ptr<JSON> buildJsonConfigHeader( unsigned int runnumber );
+
 
     private:
       struct Info {

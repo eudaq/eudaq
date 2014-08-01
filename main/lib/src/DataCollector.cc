@@ -8,6 +8,9 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/PluginManager.hh"
+#include "eudaq/JSONimpl.hh"
+
+#include "config.h"
 
 namespace eudaq {
 
@@ -82,7 +85,7 @@ namespace eudaq {
       if (!m_writer) {
         EUDAQ_THROW("You must configure before starting a run");
       }
-      m_writer->StartRun(runnumber);
+      m_writer->StartRun( runnumber, buildJsonConfigHeader( runnumber ) );
       WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
@@ -327,6 +330,28 @@ namespace eudaq {
     } catch (...) {
       std::cout << "Error: Uncaught unrecognised exception: \n" << "DataThread is dying..." << std::endl;
     }
+  }
+
+
+  std::shared_ptr<JSON> DataCollector::buildJsonConfigHeader( unsigned int runnumber ) {
+	  auto J = JSON::Create();
+
+	  jsoncons::json& header = JSONimpl::get( J.get() );
+	  header["runnumber"] = runnumber;
+	  header["package_name"] = PACKAGE_NAME;
+	  header["package_version"] = PACKAGE_VERSION;
+	  header["date"] = Time::Current().Formatted();
+	  header["schema"] = AidaPacket::getCurrentSchema();
+
+	  header["sources"] = jsoncons::json::an_array;
+	  for ( auto info : m_buffer ) {
+		  jsoncons::json src;
+		  src["type"] = info.id->GetType();
+		  src["name"] = info.id->GetName();
+		  header["sources"].add( src );
+	  }
+
+	  return J;
   }
 
 }
