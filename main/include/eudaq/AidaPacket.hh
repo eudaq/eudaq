@@ -159,6 +159,10 @@ class DLLEXPORT AidaPacket : public Serializable {
     AidaPacket( const PacketHeader& header, const MetaData& meta );
     AidaPacket( PacketHeader& header, Deserializer & ds );
 
+    void SetMetaData( MetaData& m ) {
+    	m_meta_data = m;
+    }
+
 
     static uint64_t getNextPacketNumber() {
     	static uint64_t packetCounter = 0;
