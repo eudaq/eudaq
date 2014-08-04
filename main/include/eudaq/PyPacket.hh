@@ -20,7 +20,7 @@ class DLLEXPORT PyPacket {
 
 	void addMetaData(  bool tlu, int type, uint64_t data );
 	void setTags( const std::string & jsonString );
-	void setData( std::vector<uint64_t>& );
+	void SetData( uint64_t* data, uint64_t size );
 	void nextToSend();
 
 	static PyPacket * getNextToSend();
