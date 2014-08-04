@@ -17,6 +17,7 @@ namespace eudaq {
 	  std::string jsonString;
   };
 
+  typedef std::shared_ptr<JSON> JSONp;
 
 }
 
