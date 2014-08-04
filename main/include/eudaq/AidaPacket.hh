@@ -45,6 +45,7 @@ namespace eudaq {
 
 class Serializer;
 class JSON;
+typedef std::shared_ptr<JSON> JSONp;
 class Event;
 
 class DLLEXPORT AidaPacket : public Serializable {
@@ -117,8 +118,8 @@ class DLLEXPORT AidaPacket : public Serializable {
 
     static PacketHeader DeserializeHeader( Deserializer & );
 
-    virtual void Print(std::ostream & os) const;
-    virtual void toJson( std::shared_ptr<JSON> );
+    enum { JSON_HEADER = 1, JSON_METADATA, JSON_DATA };
+    JSONp toJson( int whatToAdd );
 	virtual const std::string & getClassName() const {
 		static std::string name = "AidaPacket";
 		return name;
@@ -162,6 +163,10 @@ class DLLEXPORT AidaPacket : public Serializable {
     void SetMetaData( MetaData& m ) {
     	m_meta_data = m;
     }
+
+    std::shared_ptr<JSON> HeaderToJson();
+    void HeaderToJson( std::shared_ptr<JSON>, const std::string & objectName );
+    virtual void DataToJson( std::shared_ptr<JSON>, const std::string & objectName = "" );
 
 
     static uint64_t getNextPacketNumber() {
