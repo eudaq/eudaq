@@ -7,8 +7,6 @@
 #include <vector>
 #include "eudaq/Platform.hh"
 
-typedef std::vector<uint64_t> DataVector;
-
 namespace eudaq {
 
 class FileDeserializer;
@@ -35,11 +33,6 @@ class AidaPacket;
       std::shared_ptr<eudaq::AidaPacket> m_packet;
   };
  
-}
-
-
-DataVector data( eudaq::AidaFileReader& f ) {
-	return f.getData();
 }
 
 
