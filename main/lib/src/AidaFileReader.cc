@@ -34,8 +34,7 @@ namespace eudaq {
 	  if ( !m_packet )
 		  return "";
 
-	  auto json = JSON::Create();
-	  m_packet->toJson( json );
+	  auto json = m_packet->toJson( AidaPacket::JSON_HEADER | AidaPacket::JSON_METADATA | AidaPacket::JSON_DATA );
 	  return json->to_string();
   }
 
