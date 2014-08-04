@@ -38,7 +38,6 @@ def register_types_eudaq(module):
     root_module = module.get_root()
     
     module.add_class('PyPacket')
-    module.add_container('std::vector< long unsigned int >', 'long unsigned int', container_type=u'vector')
 
 def register_types_std(module):
     root_module = module.get_root()
@@ -51,6 +50,9 @@ def register_methods(root_module):
 def register_EudaqPyPacket_methods(root_module, cls):
     cls.add_constructor([param('eudaq::PyPacket const &', 'arg0')])
     cls.add_constructor([param('std::string const &', 'type'), param('std::string const &', 'subType')])
+    cls.add_method('SetData', 
+                   'void', 
+                   [param('uint64_t *', 'data'), param('uint64_t', 'size')])
     cls.add_method('addMetaData', 
                    'void', 
                    [param('bool', 'tlu'), param('int', 'type'), param('uint64_t', 'data')])
@@ -61,9 +63,6 @@ def register_EudaqPyPacket_methods(root_module, cls):
     cls.add_method('nextToSend', 
                    'void', 
                    [])
-    cls.add_method('setData', 
-                   'void', 
-                   [param('std::vector< long unsigned int > &', 'arg0')])
     cls.add_method('setTags', 
                    'void', 
                    [param('std::string const &', 'jsonString')])
