@@ -36,27 +36,6 @@ namespace eudaq {
   }
 
 
-  std::string IndexReader::data2json() {
-	  if ( !m_data )
-		  return "";
-	  json data;
-
-	  json json_header;
-	  const AidaPacket::PacketHeader& header = m_data->getHeader();
-	  json_header["marker"] = AidaPacket::type2str( header.data.marker );
-	  json_header["packetType"] = AidaPacket::type2str( header.data.packetType );
-	  json_header["packetSubType"] = header.data.packetSubType;
-	  json_header["packetNumber"] = header.data.packetNumber;
-	  data["header"] = json_header;
-
-//	  data["meta"] =  m_data->getMetaData().toJson().get();
-
-	  data["fileNumber"] = m_data->getFileNumber();
-	  data["offset"] = m_data->getOffsetInFile();
-
-	  return data.to_string();
-  }
-
 /*
     std::shared_ptr<eudaq::AidaPacket> packet = nullptr;
     bool result = m_des.ReadPacket(m_ver, ev, skip);
