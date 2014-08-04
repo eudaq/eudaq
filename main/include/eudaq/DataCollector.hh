@@ -17,6 +17,8 @@
 #include <memory>
 namespace eudaq {
 
+class JSON;
+
   /** Implements the functionality of the File Writer application.
    *
    */
@@ -44,6 +46,8 @@ namespace eudaq {
     protected:
       void WriteEvent( const DetectorEvent & ev );
       void WritePacket( std::shared_ptr<AidaPacket> packet );
+      std::shared_ptr<JSON> buildJsonConfigHeader( unsigned int runnumber );
+
 
     private:
       struct Info {
@@ -64,7 +68,7 @@ namespace eudaq {
       std::vector<Info> m_buffer;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
-      unsigned m_runnumber, m_eventnumber;
+      unsigned m_runnumber, m_eventnumber, m_packetNumberLastPacket;
       std::shared_ptr<AidaFileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;

@@ -4,13 +4,7 @@
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Exception.hh"
-
-#include "config.h"
-#include "jsoncons/json.hpp"
-
-using std::string;
-using jsoncons::null_type;
-using jsoncons::json;
+#include "eudaq/JSON.hh"
 
 
 namespace eudaq {
@@ -21,7 +15,7 @@ namespace eudaq {
   class AidaFileWriterNative : public AidaFileWriter {
     public:
       AidaFileWriterNative(const std::string &);
-      virtual void StartRun(unsigned);
+      virtual void StartRun( unsigned int runnumber, std::shared_ptr<JSON> config );
       virtual void WritePacket( std::shared_ptr<AidaPacket> );
       virtual unsigned long long FileBytes() const;
       virtual ~AidaFileWriterNative();
@@ -38,21 +32,19 @@ namespace eudaq {
     //EUDAQ_DEBUG("Constructing AidaFileWriterNative(" + to_string(param) + ")");
   }
 
-  void AidaFileWriterNative::StartRun(unsigned runnumber) {
+  void AidaFileWriterNative::StartRun( unsigned int runnumber, std::shared_ptr<JSON> config ) {
 	delete m_ser;
 	delete m_idx;
     m_ser   = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw2").Set( 'S', "_" ).Set('N', 0 ).Set('R', runnumber));
     m_idx = new FileSerializer(FileNamer(m_filepattern).Set('X', ".idx").Set('R', runnumber));
 
-    json header;
-    header["runnumber"] = runnumber;
-    header["package_name"] = PACKAGE_NAME;
-    header["package_version"] = PACKAGE_VERSION;
-    header["date"] = Time::Current().Formatted();
     // std::cout << "JSON: " << header << std::endl;
-    m_ser->write( header.to_string() );
+    std::string header = config->to_string();
+    while ( header.length() % 8 )
+    	header += ' ';
+    m_ser->write( header );
     m_ser->Flush();
-    m_idx->write( header.to_string() );
+    m_idx->write( header );
     m_idx->Flush();
   }
 

@@ -1,12 +1,13 @@
 
+#include <iostream>
+#include <list>
 #include "jsoncons/json.hpp"
-
+#include "eudaq/JSON.hh"
 #include "eudaq/IndexReader.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/AidaIndexData.hh"
 #include "eudaq/Logger.hh"
-#include <list>
 #include "eudaq/FileSerializer.hh"
 
 using jsoncons::json;
@@ -48,11 +49,7 @@ namespace eudaq {
 	  json_header["packetNumber"] = header.data.packetNumber;
 	  data["header"] = json_header;
 
-	  json json_metaData( json::an_array );
-	  for ( auto data : m_data->getMetaData().getArray() ) {
-		  json_metaData.add( data );
-	  }
-	  data["meta"] = json_metaData;
+//	  data["meta"] =  m_data->getMetaData().toJson().get();
 
 	  data["fileNumber"] = m_data->getFileNumber();
 	  data["offset"] = m_data->getOffsetInFile();

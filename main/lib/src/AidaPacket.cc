@@ -2,8 +2,11 @@
 #include <iostream>
 #include <time.h>
 
+#include "eudaq/JSONimpl.hh"
+#include "jsoncons/json.hpp"
 #include "eudaq/BufferSerializer.hh"
-#include "eudaq/AidaPacket.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/TLU2Packet.hh"
 
 using std::cout;
 
@@ -64,7 +67,11 @@ namespace eudaq {
 		return header;
 	}
 
-
+	std::vector<uint64_t> & AidaPacket::GetData() {
+		if ( m_data_size > 0 )
+			std::copy( m_data, m_data + m_data_size, m_data_vector.begin() );
+		return m_data_vector;
+	}
 
     const uint64_t * const AidaPacket::bit_mask() {
     	static uint64_t* array = NULL;
@@ -100,7 +107,6 @@ namespace eudaq {
     for (int i = 7; i >= 0; --i) {
       if (result[i] == '\0') {
         result.erase(i);
-        break;
       }
     }
     //std::cout << " = " << result << std::endl;
@@ -116,6 +122,32 @@ namespace eudaq {
 	  return packet_identifier;
   }
 
+  static std::string currentSchema = AidaPacket::getDefaultSchema();
+
+  const std::string & AidaPacket::getCurrentSchema() {
+	  return currentSchema;
+  }
+
+  void AidaPacket::setCurrentSchema( const std::string & schema ) {
+	  currentSchema = schema;
+  }
+
+
+
+  void AidaPacket::toJson( std::shared_ptr<JSON> my ) {
+	  jsoncons::json& json = JSONimpl::get( my.get() );
+
+	  json["className"] = getClassName();
+	  json["dataLength"] = m_data_size;
+	  json["header"] = jsoncons::json::an_object;
+	  jsoncons::json& json_header = json["header"];
+	  json_header["marker"] = AidaPacket::type2str( m_header.data.marker );
+	  json_header["packetType"] = AidaPacket::type2str( GetPacketType() );
+	  json_header["packetSubType"] = AidaPacket::type2str( GetPacketSubType() );
+	  json_header["packetNumber"] = GetPacketNumber();
+
+	  GetMetaData().toJson( my, "meta" );
+  }
 
   void AidaPacket::Print(std::ostream & os) const {
     os << "Type=" << type2str( GetPacketType() )
@@ -135,8 +167,8 @@ namespace eudaq {
     	m_header.data.packetSubType = 0;
     	m_header.data.packetNumber  = m_ev->GetEventNumber();
 
-    	m_meta_data.add( false, MetaData::Type::TRIGGER_COUNTER, m_ev->GetEventNumber() );
-    	m_meta_data.add( false, MetaData::Type::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::EVENT_NUMBER, m_ev->GetEventNumber() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::TIMESTAMP, m_ev->GetTimestamp() );
   }
 
 
