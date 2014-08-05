@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include "XMLextractorHelpers.h"
 using namespace std;
 
