@@ -38,7 +38,6 @@ def register_types_eudaq(module):
     root_module = module.get_root()
     
     module.add_class('AidaFileReader')
-    module.add_container('std::vector< long unsigned int >', 'long unsigned int', container_type=u'vector')
 
 def register_types_std(module):
     root_module = module.get_root()
@@ -59,9 +58,6 @@ def register_EudaqAidaFileReader_methods(root_module, cls):
                    'unsigned int', 
                    [], 
                    is_const=True)
-    cls.add_method('getData', 
-                   'std::vector< long unsigned int >', 
-                   [])
     cls.add_method('getJsonConfig', 
                    'std::string', 
                    [])
