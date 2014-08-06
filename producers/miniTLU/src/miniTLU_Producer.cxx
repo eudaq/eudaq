@@ -86,7 +86,7 @@ public:
 		m_tlu->DumpEvents();
 	}
 	//std::cout << "eventFifoCSR " << m_tlu->GetEventFifoCSR() << std::endl;
-	//m_tlu->ClearEventFIFO();
+	m_tlu->ClearEventFIFO();
 	//m_tlu->Update(timestamps); // get new events
 // 	if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
 // 	  bool inhibit = m_tlu->InhibitTriggers();
