@@ -6,6 +6,7 @@
 #include "jsoncons/json.hpp"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Event.hh"
+#include "eudaq/AidaIndexData.hh"
 #include "eudaq/TLU2Packet.hh"
 
 using std::cout;
@@ -133,33 +134,51 @@ namespace eudaq {
   }
 
 
-
-  void AidaPacket::toJson( std::shared_ptr<JSON> my ) {
+  std::shared_ptr<JSON> AidaPacket::HeaderToJson() {
+	  auto my = JSON::Create();
 	  jsoncons::json& json = JSONimpl::get( my.get() );
-
 	  json["className"] = getClassName();
-	  json["dataLength"] = m_data_size;
-	  json["header"] = jsoncons::json::an_object;
-	  jsoncons::json& json_header = json["header"];
-	  json_header["marker"] = AidaPacket::type2str( m_header.data.marker );
-	  json_header["packetType"] = AidaPacket::type2str( GetPacketType() );
-	  json_header["packetSubType"] = AidaPacket::type2str( GetPacketSubType() );
-	  json_header["packetNumber"] = GetPacketNumber();
-
-	  GetMetaData().toJson( my, "meta" );
+	  json["marker"] = AidaPacket::type2str( m_header.data.marker );
+	  json["packetType"] = AidaPacket::type2str( GetPacketType() );
+	  json["packetSubType"] = AidaPacket::type2str( GetPacketSubType() );
+	  json["packetNumber"] = GetPacketNumber();
+	  return my;
   }
 
-  void AidaPacket::Print(std::ostream & os) const {
-    os << "Type=" << type2str( GetPacketType() )
-      << ", packet#=" << GetPacketNumber();
+  void AidaPacket::HeaderToJson( JSONp my, const std::string & objectName ) {
+	  JSONp header = HeaderToJson();
+	  jsoncons::json& json = JSONimpl::get( my.get() );
+	  json[objectName] = std::move( JSONimpl::get( header.get() ) );
   }
 
-  std::ostream & operator << (std::ostream &os, const AidaPacket &packet) {
-    packet.Print(os);
-    return os;
+  void AidaPacket::DataToJson( std::shared_ptr<JSON> my, const std::string & objectName ) {
+	  jsoncons::json& json = JSONimpl::get( my.get() );
+	  if ( !objectName.empty() ) {
+		  json[objectName] = jsoncons::json::an_array;
+		  for ( int i = 0; i < m_data_size; i++ )
+			  json[objectName].add( m_data[i] );
+	  } else {
+		  for ( int i = 0; i < m_data_size; i++ )
+			  json.add( m_data[i] );
+	  }
   }
 
+  JSONp AidaPacket::toJson( int whatToAdd ) {
+	  auto my = JSON::Create();
+	  if ( whatToAdd & JSON_HEADER )
+		  HeaderToJson( my, "header" );
 
+	  if ( whatToAdd & JSON_METADATA )
+		  GetMetaData().toJson( my, "meta" );
+
+	  if ( whatToAdd & JSON_DATA )
+		  DataToJson( my, "data" );
+	  else {
+		  jsoncons::json& json = JSONimpl::get( my.get() );
+		  json["dataLength"] = m_data_size;
+	  }
+	  return my;
+  }
 
 
   EventPacket::EventPacket( const Event & ev ) : m_ev( &ev ) {
@@ -190,7 +209,9 @@ namespace eudaq {
 
 
   std::shared_ptr<AidaPacket> PacketFactory::Create( Deserializer & ds) {
-	  AidaPacket::PacketHeader header = AidaPacket::DeserializeHeader( ds );
+	  auto header = AidaPacket::DeserializeHeader( ds );
+      if ( header.data.marker == AidaIndexData::identifier().number )
+          return std::make_shared<AidaIndexData>( header, ds );
 	  int id = header.data.packetType;
       //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       packet_creator cr = GetCreator(id);

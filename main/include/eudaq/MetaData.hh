@@ -23,6 +23,7 @@ class DLLEXPORT MetaData : public Serializable {
     static int GetType( uint64_t meta_data );
     static void SetType( uint64_t& meta_data, int type );
     static bool IsTLUBitSet( uint64_t meta_data );
+    static void SetTLUBit( uint64_t& meta_data );
     static uint64_t GetCounter( uint64_t meta_data );
     static void SetCounter( uint64_t& meta_data, uint64_t data );
 

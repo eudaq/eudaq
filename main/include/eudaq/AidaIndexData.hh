@@ -22,7 +22,11 @@ class DLLEXPORT AidaIndexData : public AidaPacket {
 	uint64_t getFileNumber() const;
 	uint64_t getOffsetInFile() const;
 
+	static const PacketIdentifier& identifier();
+
   protected:
+    virtual void DataToJson( std::shared_ptr<JSON>, const std::string & objectName = "" );
+
     std::vector<uint64_t> fileNumberOffset;
 };
 

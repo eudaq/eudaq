@@ -31,8 +31,8 @@ static PyPacket * next = NULL;
 
   }
 
-  void PyPacket::setData( std::vector<uint64_t>& data ) {
-	 packet->SetData( data );
+  void PyPacket::SetData( uint64_t * data, uint64_t size ) {
+	 packet->SetData( data, size );
   }
 
   void PyPacket::nextToSend() {
