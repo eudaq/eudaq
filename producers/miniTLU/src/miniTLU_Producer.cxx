@@ -74,7 +74,7 @@ public:
 			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
 			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
 			i++;
-			uint32_t evtNumber = (m_tlu->GetEvent(i+1))&0xffffffff;
+			uint32_t evtNumber = (m_tlu->GetEvent(i))&0xffffffff;
 			i++;
 			packet.GetMetaData().add(true, 0x1, evtType);
 			packet.GetMetaData().add(true, 0x2, inputTrig);
