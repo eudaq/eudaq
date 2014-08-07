@@ -50,19 +50,20 @@ namespace tlu {
 
   void miniTLUController::SetRWRegister(const std::string & name, int value) {
     try {
-    m_hw->getNode(name).write(static_cast< uint32_t >(value));
-    m_hw->dispatch();
-
-    if (m_checkConfig) {
-      ValWord< uint32_t > test = m_hw->getNode(name).read();
+      m_hw->getNode(name).write(static_cast< uint32_t >(value));
       m_hw->dispatch();
-      if(test.valid()) {
-	if (m_ipbus_verbose) 
-	  std::cout << name << " = " << std::hex << test.value() << std::endl;
-      } else std::cout << "Error writing " << name << std::endl;
-    }
+
+      if (m_checkConfig) {
+	ValWord< uint32_t > test = m_hw->getNode(name).read();
+	m_hw->dispatch();
+	if(test.valid()) {
+	  if (m_ipbus_verbose) 
+	    std::cout << name << " = " << std::hex << test.value() << std::endl;
+	} else std::cout << "Error writing " << name << std::endl;
+      }
     } catch (...) {
-       return;
+      std::cout << "Error writing " << name << " catched error " << std::endl;
+      return;
     }
   }
 
@@ -77,18 +78,19 @@ namespace tlu {
 
   uint32_t miniTLUController::ReadRRegister(const std::string & name) {
     try {
-    ValWord< uint32_t > test = m_hw->getNode(name).read();
-    m_hw->dispatch();
-    if(test.valid()) {
-      if (m_ipbus_verbose) 
-	std::cout << name << " = " << std::hex << test.value() << std::endl;
-      return test.value();
-    } else {
-      std::cout << "Error reading " << name << std::endl;
-      return 0;
-    }
+      ValWord< uint32_t > test = m_hw->getNode(name).read();
+      m_hw->dispatch();
+      if(test.valid()) {
+	if (m_ipbus_verbose) 
+	  std::cout << name << " = " << std::hex << test.value() << std::endl;
+	return test.value();
+      } else {
+	std::cout << "Error reading " << name << std::endl;
+	return 0;
+      }
     } catch (...) {
-       return 0;
+      std::cout << "Error reading " << name << " catched error " << std::endl;
+      return 0;
     }
   }
 
@@ -123,6 +125,8 @@ namespace tlu {
 	  std::cout << "Error reading FIFO" << std::endl;
         }      
       } catch (...) {
+	std::cout << "Error reading FIFO, catched error, reset to 0" << std::endl;
+	m_dataFromTLU.resize(0);
         m_nEvtInFIFO = 0;
         return;
       }
