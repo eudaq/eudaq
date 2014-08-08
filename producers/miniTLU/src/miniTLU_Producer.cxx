@@ -146,6 +146,7 @@ public:
 
       readout_delay = param.Get("ReadoutDelay",100);
       dump_events = param.Get("DumpEvents",0);
+      if (dump_events) std::cout << "Dump of events enabled. Expect bandwidth issues." << std::endl;
       m_tlu->AllTriggerVeto();
       m_tlu->InitializeI2C(param.Get("I2C_DAC_Addr",0x1f),
 			   param.Get("I2C_ID_Addr",0x50));
