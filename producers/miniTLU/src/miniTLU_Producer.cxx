@@ -23,7 +23,7 @@ using namespace tlu;
 class miniTLUProducer: public eudaq::Producer {
 public:
   miniTLUProducer(const std::string & runcontrol) :
-    eudaq::Producer("miniTLU", runcontrol), m_tlu(nullptr), readout_delay(100), TLUJustStopped(false) {
+    eudaq::Producer("miniTLU", runcontrol), m_tlu(nullptr), readout_delay(100), dump_events(0), TLUJustStopped(false) {
   }
 
   void MainLoop() {
@@ -83,7 +83,7 @@ public:
 		} 
 		packet.SetData(m_tlu->GetEventData());
 		SendPacket( packet );
-		m_tlu->DumpEvents();
+		if (dump_events) m_tlu->DumpEvents();
 	}
 	//std::cout << "eventFifoCSR " << m_tlu->GetEventFifoCSR() << std::endl;
 	m_tlu->ClearEventFIFO();
@@ -145,6 +145,7 @@ public:
       m_tlu->SetCheckConfig(param.Get("CheckConfig",1));
 
       readout_delay = param.Get("ReadoutDelay",100);
+      dump_events = param.Get("DumpEvents",0);
       m_tlu->AllTriggerVeto();
       m_tlu->InitializeI2C(param.Get("I2C_DAC_Addr",0x1f),
 			   param.Get("I2C_ID_Addr",0x50));
@@ -310,7 +311,7 @@ private:
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask;
   uint32_t strobe_period, strobe_width;
   unsigned enable_dut_veto;
-  unsigned trig_rollover, readout_delay;
+  unsigned trig_rollover, readout_delay, dump_events;
   bool timestamps, done, timestamp_per_run;
   bool TLUStarted;
   bool TLUJustStopped;

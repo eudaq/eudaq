@@ -130,9 +130,13 @@ namespace tlu {
     void ConfigureInternalTriggerInterval(unsigned int value);
 
     void DumpEvents();
+
+    void SetCatchedError() { m_catchedError = true; }
+    void ClearCatchedError() { m_catchedError = false; }
   private:
     HwInterface * m_hw;
     bool m_checkConfig;
+    bool m_catchedError;
     void SetRWRegister(const std::string & name, int value);
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
