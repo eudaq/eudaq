@@ -57,6 +57,8 @@ class JSON;
       };
 
       const std::string m_runnumberfile; // path to the file containing the run number
+      const std::string m_name; // name provided in ctor
+
       void DataHandler(TransportEvent & ev);
       size_t GetInfo(const ConnectionInfo & id);
 
