@@ -147,14 +147,14 @@ IF(BUILD_gui)
 ENDIF()
 
 # build OnlineMon executable
-option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
+option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_onlinemon)
   add_subdirectory(monitors/onlinemon)
 ENDIF()
 
 
 # build Offline Monitor
-option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" ON)
+option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
 ENDIF()
