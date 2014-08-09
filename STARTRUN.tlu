@@ -1,0 +1,135 @@
+#!/bin/bash
+
+export RCPORT=44000
+export RCPORT1=44001
+export RCPORT2=44444 
+
+[ "$1" != "" ] && RCPORT=$1
+
+export HOSTIP=127.0.0.1
+export TLUIP=127.0.0.1
+export HOSTNAME=127.0.0.1
+
+cd `dirname $0`
+export LD_LIBRARY_PATH="`pwd`/bin:$LD_LIBRARY_PATH"
+
+printf '\033[1;32;48m \t STARTING DAQ LOCALLY\033[0m \n'
+echo $(date)
+printf '\033[22;33m\t Cleaning up first...  \033[0m \n'
+
+if [ -f KILLRUN.local ]
+then
+    sh KILLRUN.local
+else
+    sh KILLRUN
+fi
+
+printf '\033[22;31m\t End of killall \033[0m \n'
+
+sleep 1
+
+######################################################################
+if [ -n "`ls data/run*.raw`" ]
+then
+    printf '\033[22;33m\t Making sure all data files are properly writeprotected \033[0m \n'
+    chmod a=rw data/run*.raw
+    printf '\033[22;32m\t ...Done!\033[0m \n'
+fi
+
+#cd bin
+#=====================================================================
+printf '\033[22;33m\t Starting Subprocesses \033[0m \n'
+#=====================================================================
+######################################################################
+# euRun
+###############
+printf '\033[22;33m\t RunControl \033[0m \n'
+xterm -e "cd bin;./euRun.exe -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT" &
+sleep 1
+######################################################################
+# euLog
+###############
+printf '\033[22;33m\t Logger  \033[0m \n'
+xterm -e "cd bin;./euLog.exe -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:$RCPORT" &
+sleep 2
+######################################################################
+# DataCollector
+###############
+printf '\033[22;33m\t TestDataCollector \033[0m \n'
+#echo xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e "./TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT" 
+#xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e "./TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT" &
+
+# echo ./TestDataCollector.exe -n NAME1 -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT1 
+
+xterm -e "cd bin;./TestDataCollector.exe -n TLU -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT1" &
+sleep 2
+
+#xterm -e "cd bin;./ExampleProducer.exe -n Example1 -r tcp://$HOSTIP:$RCPORT " &
+sleep 2
+
+#xterm -e "cd bin;./TestDataCollector.exe -n miniTLU -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT2" &
+sleep 2
+
+#xterm -e "cd bin;./ExampleProducer.exe -n Example2 -r tcp://$HOSTIP:$RCPORT " &
+sleep 2
+
+
+
+sleep 2
+######################################################################
+# NI Producer
+###############
+if [ -f "bin/NiProducer.exe" ]
+then
+    printf '\033[22;33m\t  NiProducer for linux  \033[0m \n'
+    xterm -sb -sl 1000 -geom 80x10-480-700 -T 'Ni Producer for Linux' -e 'cd bin;./NiProducer.exe -r tcp://$HOSTIP:$RCPORT' &
+    sleep 1
+else
+    printf '\033[22;31m\t  NiProducer for linux not found!  \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_ni=ON" and re-run "make install" to install.'
+fi
+######################################################################
+# miniTLU_ producer
+###############
+if [ -f "bin/miniTLU_Producer.exe" ]
+then
+#    printf '\033[22;33m\t  miniTLU_Producer  \033[0m \n'
+#    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'TLU Producer' -e '. producers/miniTLU/etc/start_minitlu.sh' &
+#    sleep 1
+#else
+    printf '\033[22;31m\t  TLUProducer not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_tlu=ON" and re-run "make install" to install.'
+fi
+
+######################################################################
+# TLU producer
+###############
+if [ -f "bin/TLUProducer.exe" ]
+then
+    printf '\033[22;33m\t  TLUProducer  \033[0m \n'
+    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'TLU Producer' -e 'cd bin;./TLUProducer.exe  -r tcp://$TLUIP:$RCPORT' &
+    sleep 1
+else
+    printf '\033[22;31m\t  TLUProducer not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_tlu=ON" and re-run "make install" to install.'
+fi
+#####################################################################
+######################################################################
+# Online Monitor
+###############
+if [ -f "OnlineMon.exe" ]
+then
+    printf '\033[22;33m\t  Online Monitor  \033[0m \n'
+    ./OnlineMon.exe  -sc 10 -s 0 -tc 0 -r tcp://$HOSTIP:$RCPORT &
+else
+    printf '\033[22;31m\t  Online monitor not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_onlinemon=ON" and re-run "make install" to install.'
+fi
+#####################################################################
+
+
+printf ' \n'
+printf ' \n'
+printf ' \n'
+printf '\033[1;32;48m\t ...Done!\033[0m \n'
+printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'
