@@ -32,7 +32,7 @@ pp = PyProducer("testproducer")
 
 print "Starting DataCollector"
 # create PyDataCollector instance with default options
-pdc = PyDataCollector() # create main data collector
+pdc = PyDataCollector( "testCollector") # create main data collector
 
 
 # wait for more than one active connection to appear
