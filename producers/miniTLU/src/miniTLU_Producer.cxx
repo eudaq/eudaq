@@ -11,6 +11,10 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <queue>
 //#include <cctype>
 //#include <memory>
 
@@ -24,6 +28,20 @@ class miniTLUProducer: public eudaq::Producer {
 public:
   miniTLUProducer(const std::string & runcontrol) :
     eudaq::Producer("miniTLU", runcontrol), m_tlu(nullptr), readout_delay(100), dump_events(0), TLUJustStopped(false) {
+  }
+
+  void FIFOReadout() {
+    while (TLUStarted) {
+      eudaq::mSleep(readout_delay);
+      m_tlu->CheckEventFIFO();
+      m_tlu->ReadEventFIFO();
+      if (m_tlu->GetNEvent()) {
+	m_evtqueue.push(m_tlu->GetEventData());
+	m_queuecheck.notify_one();
+	if (dump_events) m_tlu->DumpEvents();
+	m_tlu->ClearEventFIFO();
+      }
+    }
   }
 
   void MainLoop() {
@@ -41,10 +59,6 @@ public:
       }
       if (TLUStarted || JustStopped) {
 	//	std::cout << "... " << TLUStarted << " - " << JustStopped << std::endl;
-	eudaq::mSleep(readout_delay);
-	//	std::cout << "Executing main loop" << std::endl;
-	m_tlu->CheckEventFIFO();
-	m_tlu->ReadEventFIFO();
 /*
 	for (int i = 0; i < m_tlu->GetNEvent();) {
 	  uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
@@ -66,59 +80,27 @@ public:
 	  SendEvent(ev);	  
 	}
 */
-
-	if (m_tlu->GetNEvent()) {
-		eudaq::TLU2Packet packet(0);
-		for (int i = 0; i < m_tlu->GetNEvent();) {
-			uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
-			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
-			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
-			i++;
-			uint32_t evtNumber = (m_tlu->GetEvent(i))&0xffffffff;
-			i++;
-			packet.GetMetaData().add(true, 0x1, evtType);
-			packet.GetMetaData().add(true, 0x2, inputTrig);
-			packet.GetMetaData().add(true, 0x3, timeStamp);
-			packet.GetMetaData().add(true, 0x4, evtNumber);
-		} 
-		packet.SetData(m_tlu->GetEventData());
-		SendPacket( packet );
-		if (dump_events) m_tlu->DumpEvents();
+	std::unique_lock<std::mutex> locker(m_lockqueue);
+	m_queuecheck.wait(locker);
+	while (!m_evtqueue.empty()) {
+	  eudaq::TLU2Packet packet(0);
+	  std::vector<uint64_t> * mydump = m_evtqueue.front();
+	  
+	  for (int i = 0; i < mydump->size();) {
+	    uint32_t evtType = (mydump->at(i) >> 60)&0xf;
+	    uint32_t inputTrig = (mydump->at(i) >> 48)&0xfff;
+	    uint64_t timeStamp = (mydump->at(i))&0xffffffffffff;
+	    i++;
+	    uint32_t evtNumber = (mydump->at(i))&0xffffffff;
+	    i++;
+	    packet.GetMetaData().add(true, 0x1, evtType);
+	    packet.GetMetaData().add(true, 0x2, inputTrig);
+	    packet.GetMetaData().add(true, 0x3, timeStamp);
+	    packet.GetMetaData().add(true, 0x4, evtNumber);
+	  } 
+	  packet.SetData(mydump);
+	  SendPacket( packet );
 	}
-	//std::cout << "eventFifoCSR " << m_tlu->GetEventFifoCSR() << std::endl;
-	m_tlu->ClearEventFIFO();
-	//m_tlu->Update(timestamps); // get new events
-// 	if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
-// 	  bool inhibit = m_tlu->InhibitTriggers();
-// 	  m_tlu->ResetTriggerCounter();
-// 	  m_tlu->InhibitTriggers(inhibit);
-// 	}
-	//std::cout << "--------" << std::endl;
-// 	for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
-// 	  m_ev = m_tlu->GetEntry(i).Eventnum();
-// 	  uint64_t t = m_tlu->GetEntry(i).Timestamp();
-// 	  int64_t d = t - lasttime;
-// 	  //float freq= 1./(d*20./1000000000);
-// 	  float freq = 1. / Timestamp2Seconds(d);
-// 	  if (m_ev < 10 || m_ev % 1000 == 0) {
-// 	    std::cout << "  " << m_tlu->GetEntry(i) << ", diff=" << d << (d <= 0 ? "  ***" : "") << ", freq=" << freq << std::endl;
-// 	  }
-// 	  lasttime = t;
-// 	  TLUEvent ev(m_run, m_ev, t);
-// 	  if (i == m_tlu->NumEntries() - 1) {
-// 	    ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
-// 	    for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
-// 	      ev.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
-// 	    }
-// 	  }
-// 	  SendEvent(ev);
-// 	}
-// 	//         if (m_tlu->NumEntries()) {
-// 	//           std::cout << "========" << std::endl;
-// 	//         } else {
-// 	//           std::cout << "." << std::flush;
-// 	//         }
-// 			}
       }
       if (JustStopped) {
 	// 	m_tlu->Update(timestamps);
@@ -234,6 +216,8 @@ public:
       m_tlu->NoneTriggerVeto();
       
       SetStatus(eudaq::Status::LVL_OK, "Started");
+      std::thread readout_thread(&miniTLUProducer::FIFOReadout, this);
+      readout_thread.detach();
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
@@ -318,6 +302,9 @@ private:
   bool TLUJustStopped;
   std::unique_ptr<miniTLUController> m_tlu;
   uint64_t lasttime;
+  std::mutex              m_lockqueue;
+  std::queue<std::vector<uint64_t> *>         m_evtqueue;
+  std::condition_variable m_queuecheck;
 };
 
 int main(int /*argc*/, const char ** argv) {
