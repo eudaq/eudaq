@@ -9,7 +9,7 @@
 
 namespace eudaq {
 
-#define MAX_FILE_SIZE  200000000000
+#define MAX_FILE_SIZE  (100 * 1000000)
 
   AidaFileWriter::AidaFileWriter() : m_filepattern(FileNamer::default_pattern) {}
 
