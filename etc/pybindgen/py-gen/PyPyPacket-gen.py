@@ -50,9 +50,6 @@ def register_methods(root_module):
 def register_EudaqPyPacket_methods(root_module, cls):
     cls.add_constructor([param('eudaq::PyPacket const &', 'arg0')])
     cls.add_constructor([param('std::string const &', 'type'), param('std::string const &', 'subType')])
-    cls.add_method('SetData', 
-                   'void', 
-                   [param('uint64_t *', 'data'), param('uint64_t', 'size')])
     cls.add_method('addMetaData', 
                    'void', 
                    [param('bool', 'tlu'), param('int', 'type'), param('uint64_t', 'data')])
@@ -63,6 +60,12 @@ def register_EudaqPyPacket_methods(root_module, cls):
     cls.add_method('nextToSend', 
                    'void', 
                    [])
+    cls.add_method('setData', 
+                   'void', 
+                   [param('uint64_t *', 'data'), param('uint64_t', 'size')])
+    cls.add_method('setDataSize', 
+                   'void', 
+                   [param('uint64_t', 'size')])
     cls.add_method('setTags', 
                    'void', 
                    [param('std::string const &', 'jsonString')])
