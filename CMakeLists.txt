@@ -157,8 +157,6 @@ IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
 ENDIF()
 
-
-
 ###############################################
 # LaTeX target to compile the PDF user manual #
 ###############################################

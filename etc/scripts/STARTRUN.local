@@ -53,7 +53,7 @@ sleep 1
 # DataCollector
 ###############
 printf '\033[22;33m\t TestDataCollector \033[0m \n'
-xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
+xterm -sb -sl 1000 -geom 80x10-480-550 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
 sleep 1
 ######################################################################
 # NI Producer
@@ -80,6 +80,8 @@ else
     echo 'Configure EUDAQ with the CMake option "-D BUILD_tlu=ON" and re-run "make install" to install.'
 fi
 #####################################################################
+
+
 ######################################################################
 # Online Monitor
 ###############

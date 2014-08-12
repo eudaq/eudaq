@@ -13,6 +13,11 @@ option(BUILD_allproducer "Build all producers?" OFF)
 # with this option set to "ON" they are built anyway
 option(IGNORE_KNOWN_ISSUES "Ignore known compilation issues of producer executables and configure them anyway?" OFF)
 
+IF(BUILD_cmspixel)
+  FIND_PACKAGE(PXAR)
+  MESSAGE( STATUS "PXAR include dir: ${PXAR_INCLUDE_DIR}" )
+ENDIF()
+
 optional_add_subdirectory(altro)
 optional_add_subdirectory(altroUSB)
 optional_add_subdirectory(depfet)
@@ -29,3 +34,4 @@ optional_add_subdirectory(timepixdummy)
 optional_add_subdirectory(tlu)
 optional_add_subdirectory(miniTLU)
 optional_add_subdirectory(cmspixel)
+

@@ -1,13 +1,15 @@
 #!/bin/bash
 # cleanup of DAQ
-PROCESSES="TestDataCollector.exe TLUProducer.exe TLUControl.exe NiProducer.exe OnlineMon.exe euLog.exe euRun.exe"
+PROCESSES="TestDataCollect TLUProducer.exe TLUControl.exe NiProducer.exe OnlineMon.exe euLog.exe euRun.exe CMSPixelProduce"
 for thisprocess in $PROCESSES
 do
     #echo "Checking if $thisprocess is running... "
     if [ -n "`pgrep $thisprocess`" ]
     then
-	echo "Killing $thisprocess"
-	killall $thisprocess
+    pid=$(pgrep $thisprocess)
+	echo "Killing $thisprocess with PID $pid"
+  kill $pid
+#	killall $thisprocess
     fi
 done
 # exit with status message if any process has been killed
