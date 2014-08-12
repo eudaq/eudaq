@@ -71,7 +71,7 @@ class JSON;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber, m_packetNumberLastPacket;
-      std::shared_ptr<AidaFileWriter> m_writer;
+      std::unique_ptr<AidaFileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;
   };

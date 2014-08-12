@@ -76,7 +76,7 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
-    m_writer =  std::shared_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
+    m_writer =  std::unique_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
