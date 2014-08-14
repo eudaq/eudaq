@@ -34,7 +34,7 @@ def takeData():
                 rate = (i - prev_i) / dt
             else:
                 rate = 0
-            print '{:5d} {:.0f}Hz'.format( i, rate )
+            print '{0:5d} {1:.0f}Hz'.format( i, rate )
             prev_t = now
             prev_i = i
 
