@@ -11,7 +11,7 @@ class JSON;
 
   class DLLEXPORT AidaFileWriter {
     public:
-      virtual void StartRun( unsigned int runnumber, std::shared_ptr<JSON> config ) = 0;
+      virtual void StartRun( const std::string & name, unsigned int runnumber, std::shared_ptr<JSON> config ) = 0;
       virtual void WritePacket( std::shared_ptr<AidaPacket>) = 0;
       virtual unsigned long long FileBytes() const = 0;
       void SetFilePattern(const std::string & p) { m_filepattern = p; }
@@ -21,6 +21,10 @@ class JSON;
       AidaFileWriter();
 
       std::string m_filepattern;
+      std::string m_name;
+      std::shared_ptr<JSON> m_config;
+      unsigned int m_runNumber;
+      unsigned int m_fileNumber;
   };
 
 
