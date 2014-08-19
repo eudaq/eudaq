@@ -95,7 +95,7 @@ else
 fi
 #####################################################################
 
-./../bin/CMSPixelProducer.exe -r tcp://$HOSTIP:$RCPORT &
+./CMSPixelProducer.exe -r tcp://$HOSTIP:$RCPORT &
 
 printf ' \n'
 printf ' \n'

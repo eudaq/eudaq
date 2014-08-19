@@ -4,6 +4,7 @@
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Configuration.hh"
 
 #include "api.h"
 #include "ConfigParameters.hh"
@@ -17,37 +18,58 @@
 using namespace pxar; 
 using namespace std; 
 
+// define buffer read out scheme
+// 1 read out full buffer when full
+// 2 read out single events withing eudaq loop
+#define BUFFER_RO_SCHEME 2
+// Write output to binary 1 or ASCII 2
+#define OUTPUT_FILE_SCHEME 2
+
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
-static const std::string EVENT_TYPE = "CMSPixelEvent";
+// static const std::string EVENT_TYPE = "CMSPixelEvent";
 
 // Declare a new class that inherits from eudaq::Producer
 class CMSPixelProducer : public eudaq::Producer {
   public:
-//-------------------------------------------------
+    //-------------------------------------------------
     CMSPixelProducer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
       : eudaq::Producer(name, runcontrol),
-      m_run(0), m_ev(0), stopping(false), done(false),started(0), m_api(0), m_verbosity(verbosity), m_dacsFromConf(false), m_pixelsFromConf(false), m_pattern_delay(0), m_fout(0), m_perFull(0)
-
-    {
-      m_api = new pxar::pxarCore("*", m_verbosity);
-    }
-//-------------------------------------------------
+      m_run(0),
+      m_ev(0),
+      stopping(false),
+      done(false),
+      started(0),
+      m_api(0),
+      m_verbosity(verbosity),
+      m_dacsFromConf(false),
+      m_trimmingFromConf(false),
+      m_pattern_delay(0),
+      m_fout(0),
+      m_perFull(0),
+      triggering(false)
+  {
+    m_t = new eudaq::Timer;
+    m_api = new pxar::pxarCore("*", m_verbosity);
+  }// Constructor
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
     std::vector<std::pair<std::string,uint8_t> > GetConfDACs()
     {
       std::vector<std::pair<std::string,uint8_t> >  dacs; 
-
       RegisterDictionary * dict = RegisterDictionary::getInstance();
       std::vector<std::string> DACnames =  dict -> getAllROCNames();
       std::cout << " looping over DAC names \n ";
       m_dacsFromConf = true;
+
       for (std::vector<std::string>::iterator idac = DACnames.begin(); idac != DACnames.end(); ++idac) {
         if(m_config.Get(*idac, -1) == -1){
           EUDAQ_WARN(string("Roc DAC ") + *idac + string(" not defined in config file ") + m_config.Name() +
               string(". Using default values.\n"));
           std::cout << "WARNING: Roc DAC " << *idac << " not defined in config file " << m_config.Name() 
             << ". Using default values." << std::endl;
-            m_dacsFromConf = false;
+          m_dacsFromConf = false;
         }
         else{
           uint8_t dacVal = m_config.Get(*idac, 0);
@@ -55,14 +77,18 @@ class CMSPixelProducer : public eudaq::Producer {
           dacs.push_back(make_pair(*idac, dacVal));
         }
       }
-      return dacs;
+      if(m_dacsFromConf)
+        //        EUDAQ_USER(string("All DACs successfully read from ") + m_config.Name());
+        return dacs;
     } // GetConfDACs
-//-------------------------------------------------
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
     std::vector<pxar::pixelConfig> GetConfTrimming(std::string filename)
     {
       std::vector<pxar::pixelConfig> pixels;
-
       std::ifstream file(filename);
+
       if(!file.fail()){
         std::string line;
         while(std::getline(file, line))
@@ -73,20 +99,24 @@ class CMSPixelProducer : public eudaq::Producer {
           linestream >> trim >> dummy >> col >> row;
           pixels.push_back(pxar::pixelConfig(col,row,trim));
         }
-        m_pixelsFromConf = true;
+        m_trimmingFromConf = true;
       }
       else{
-        std::cout << "file not found" << endl;
+        std::cout << "Couldn't read trim parameters from " << string(filename) << ". Setting all to 15." << std::endl;
         EUDAQ_WARN(string("Couldn't read trim parameters from ") + string(filename) + (". Setting all to 15."));
         for(int col = 0; col < 52; col++) {
           for(int row = 0; row < 80; row++) {
             pixels.push_back(pxar::pixelConfig(col,row,15));
           }
         }
-        m_pixelsFromConf = false;
+        m_trimmingFromConf = false;
       }
+      if(m_trimmingFromConf)
+        EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": ") + string(filename));
       return pixels;
     }
+    //-------------------------------------------------
+    //
     //-------------------------------------------------
     virtual void OnConfigure(const eudaq::Configuration & config)
     {
@@ -103,7 +133,6 @@ class CMSPixelProducer : public eudaq::Producer {
       std::vector<std::vector<pxar::pixelConfig> > rocPixels;
 
       uint8_t hubid = config.Get("hubid", 31); 
-
 
       // DTB delays
       sig_delays.push_back( std::make_pair("clk",config.Get("clk",4)) );
@@ -125,17 +154,17 @@ class CMSPixelProducer : public eudaq::Producer {
         pg_setup.push_back(std::make_pair("calibrate",config.Get("calibrate",105)) ); // PG_CAL
         pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );    // PG_TRG
         pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));     // PG_TOK
-        m_pattern_delay = config.Get("patternDelay", 10000);
+        m_pattern_delay = config.Get("patternDelay", 100) * 10;
       }
       else{
         pg_setup.push_back(std::make_pair("trigger",46));    // PG_TRG
         pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
-        m_pattern_delay = 100;
+        m_pattern_delay = config.Get("patternDelay", 100);
       }
       std::cout << "m_pattern_delay = " << m_pattern_delay << std::endl;
 
       // read dacs and trimming from config
-      std::string trimFile = config.Get("trimFile", "");
+      std::string trimFile = config.Get("trimDir", "") + string("/trimParameters.dat");
       rocDACs.push_back(GetConfDACs());
       rocPixels.push_back(GetConfTrimming(trimFile));
 
@@ -144,16 +173,15 @@ class CMSPixelProducer : public eudaq::Producer {
 
       try {
         m_api -> initTestboard(sig_delays, power_settings, pg_setup);
-        //FIXME tbmtype tbm08???
-        m_api->initDUT(hubid,"tbm08",tbmDACs,roctype,rocDACs,rocPixels);
+        m_api -> initDUT(hubid,"tbm08",tbmDACs,roctype,rocDACs,rocPixels);
 
-          // Read current:
+        // Read current:
         std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
         std::cout << "Digital current: " << m_api->getTBid()*1000 << "mA" << std::endl;
 
         m_api -> HVon();
         // m_api -> Pon();
-
+        EUDAQ_USER("API set up succesfully...");
       }
       catch (pxar::InvalidConfig &e){
         SetStatus(eudaq::Status::LVL_ERROR, string("Configure Error: pxar caught an exception due to invalid configuration settings: ") + e.what());
@@ -189,49 +217,56 @@ class CMSPixelProducer : public eudaq::Producer {
 
       if(!m_dacsFromConf)
         SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".\n");
-      else if(!m_pixelsFromConf)
-        SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trim parameters from config file " + config.Name() + ".\n");
+      else if(!m_trimmingFromConf)
+        SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".\n");
       else
         SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
 
     }//end On Configure
-//-------------------------------------------------
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_ev = 0;
       std::cout << "Start Run: " << m_run << std::endl;
 
-
-//			eudaq::RawDataEvent ev(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
-      //ev.SetTag("key", "val");
-//			SendEvent(ev);
+      // eudaq::RawDataEvent ev(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
+      // ev.SetTag("key", "val");
+      // SendEvent(ev);
 
       std::ostringstream filename;
+
       filename << m_config.Get("outputFileTrunk", "../data/defaultOutput") << m_run << ".dat" ;
       EUDAQ_INFO(string("Writing CMS pixel data into: ") + filename.str());
-      std::cout << "Writing CMS pixel data into: " << filename.str();
+      std::cout << "Writing CMS pixel data into: " << filename.str() << std::endl;
       m_fout.open(filename.str().c_str(), std::ios::out | std::ios::binary);
-   
-			m_api -> daqStart();
+
+      m_api -> daqStart();
       m_api -> daqTriggerLoop(m_pattern_delay);   
-      
+      triggering = true;
+
       started = true; 
       SetStatus(eudaq::Status::LVL_OK, "Started");
     }// OnStartRun
+    //-------------------------------------------------
+    //
     //-------------------------------------------------
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
       stopping = true;
       std::cout << "Stopping Run" << std::endl;
       try {
-        m_api->daqTriggerLoopHalt();
+        m_api -> daqTriggerLoopHalt();
+        triggering = false;
         while(stopping){
           eudaq::mSleep(20);
         }
-        m_api->daqStop();
+        m_api -> daqStop();
+
         eudaq::mSleep(100);
         m_fout.close();
-              
+
         //SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
 
         SetStatus(eudaq::Status::LVL_OK, "Stopped");
@@ -243,60 +278,199 @@ class CMSPixelProducer : public eudaq::Producer {
         SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
       }
     }// OnStopRun
-//-------------------------------------------------
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
     virtual void OnTerminate() {
       std::cout << "Terminating..." << std::endl;
       m_api -> HVoff();
       // m_api -> Poff();
       done = true;
     }// OnTerminate
-//-------------------------------------------------
-    void ReadoutLoop() {
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
+   void ReadoutLoop() {
       // Loop until Run Control tells us to terminate
       while (!done) {
         if(!started){
-        	eudaq::mSleep(50);
+          eudaq::mSleep(50);
           continue;
         } else {
-          std::cout << int(m_perFull);
-          m_api -> daqStatus(m_perFull);
-          if(int(m_perFull) > 10 || stopping){
-            std::cout << "\nStart reading data from DTB RAM." << std::endl;
-            std::vector<uint16_t> daqdat = m_api->daqGetBuffer();
-            std::cout << "Read " << daqdat.size() << " words of data: ";
-            if(daqdat.size() > 550000) std::cout << (daqdat.size()/524288) << "MB." << std::endl;
-            else std::cout << (daqdat.size()/512) << "kB." << std::endl;
-            m_fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
-            if(stopping){
-              stopping = false;
-              started = false;
-            }
+          if(m_t -> Seconds() > 120){
+            m_api -> daqStatus(m_perFull);
+            m_t -> Restart();
+            std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
           }
-//          eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
-//          pxar::rawEvent rawPxarEvent = m_api -> daqGetRawEvent();
-//          ev.AddBlock(0, "0", 1); //needs vector<char>
-//          SendEvent(ev);
+#if BUFFER_RO_SCHEME == 1
+    #if OUTPUT_FILE_SCHEME == 1
+          ReadInFullBufferWriteBinary();
+    #else
+          ReadInFullBufferWriteASCII();
+    #endif
+#else
+    #if OUTPUT_FILE_SCHEME == 1
+          ReadInSingleEventWriteBinary();
+    #else
+          ReadInSingleEventWriteASCII();
+    #endif
+#endif
           
+          //          eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
+          //          pxar::rawEvent rawPxarEvent = m_api -> daqGetRawEvent();
+          //          ev.AddBlock(0, "0", 1); //needs vector<char>
+          //          SendEvent(ev); 
         } 
       }
     }    
-
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
   private:
-    // This is just a dummy class representing the hardware
-    // It here basically that the example code will compile
-    // but it also generates example raw data to help illustrate the decoder
-    unsigned m_run, m_ev, m_exampleparam;
-    string m_configDir, m_verbosity;
-    bool stopping, done,started;
-    bool m_dacsFromConf, m_pixelsFromConf;
+    void ReadInSingleEventWriteBinary()
+    {
+      if(int(m_perFull) > 80){
+        std::cout << "Warning: Buffer almost full. Please stop the run!" << std::endl;
+        SetStatus(eudaq::Status::LVL_WARN, "BUFFER almost full. Stop run!");
+        // OnStopRun(); // FIXME this doesn't seem to work (yet)
+      }
+      pxar::rawEvent daqEvent = m_api -> daqGetRawEvent();
+      m_fout.write(reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+      if(stopping){
+        std::cout << "Reading remaining data from buffer." << std::endl;
+//        while(triggering)  // avoid using USB twice and producing an error
+//          eudaq::mSleep(10); 
+        std::vector<uint16_t> daqdat = m_api->daqGetBuffer();
+        m_fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
+        eudaq::mSleep(10);         
+        stopping = false;
+        started = false;
+      }
+    }
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
+    void ReadInSingleEventWriteASCII(){
+      if(int(m_perFull) > 80){
+        std::cout << "Warning: Buffer almost full. Please stop the run!" << std::endl;
+        SetStatus(eudaq::Status::LVL_WARN, "BUFFER almost full. Stop run!");
+        // OnStopRun(); // FIXME this doesn't seem to work (yet)
+      }
+      pxar::Event daqEvent = m_api -> daqGetEvent();
+      m_fout << hex << daqEvent.header << "\t";
+      int col, row;
+      double value;
+      for(std::vector<pxar::pixel>::iterator it = daqEvent.pixels.begin(); it != daqEvent.pixels.end(); ++it){
+        col = (int) it -> getColumn();
+        row = (int) it -> getRow();
+        value = it -> getValue();
+        m_fout << col << "\t" << row << "\t" << value << "\t";
+      } 
+      m_fout << std::endl;
+      // if OnStopRun has been called read out remaining buffer
+      if(stopping){
+//        while(triggering)
+  //        eudaq::mSleep(10); 
+        std::vector<pxar::Event> daqdat = m_api->daqGetEventBuffer();
+        for(std::vector<pxar::Event>::iterator daqEventIt = daqdat.begin(); daqEventIt != daqdat.end(); ++daqEventIt){
+          m_fout << hex << daqEventIt -> header << "\t";
+          for(std::vector<pxar::pixel>::iterator it = daqEventIt->pixels.begin(); it != daqEventIt->pixels.end(); ++it){
+            col = (int) it -> getColumn();
+            row = (int) it -> getRow();
+            value = it -> getValue();
+            m_fout << col << "\t" << row << "\t" << value << "\t";
+          } 
+          m_fout << std::endl;
+        }
+        std::cout << "Read " << daqdat.size() << " remaining events." << std::endl;
+        stopping = false;
+        started = false;
+      }
+
+    }
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
+    void ReadInFullBufferWriteBinary()
+    {
+      if(int(m_perFull) > 80 || stopping){
+        std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl;     
+        std::cout << "Start reading data from DTB RAM." << std::endl;
+        std::cout << "Halting trigger loop." << std::endl;
+        m_api -> daqTriggerLoopHalt();
+        std::vector<uint16_t> daqdat = m_api->daqGetBuffer();
+        std::cout << "Read " << daqdat.size() << " words of data: ";
+        if(daqdat.size() > 550000) std::cout << (daqdat.size()/524288) << "MB." << std::endl;
+        else std::cout << (daqdat.size()/512) << "kB." << std::endl;
+        m_fout.write(reinterpret_cast<const char*>(&daqdat[0]), sizeof(daqdat[0])*daqdat.size());
+        if(stopping){
+//          while(triggering)
+//            eudaq::mSleep(10); 
+          stopping = false;
+          started = false;
+        }
+        else{
+          std::cout << "Continuing trigger loop.\n";
+          m_api -> daqTriggerLoop(m_pattern_delay);
+        }
+        m_api -> daqStatus(m_perFull);    
+      }
+      eudaq::mSleep(1000);
+    }
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
+    void ReadInFullBufferWriteASCII()
+    {
+      if(int(m_perFull) > 10 || stopping){
+        std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl;     
+        std::cout << "Start reading data from DTB RAM." << std::endl;
+        std::cout << "Halting trigger loop." << std::endl;
+        m_api -> daqTriggerLoopHalt();
+        std::vector<pxar::Event> daqdat = m_api->daqGetEventBuffer();
+        std::cout << "Read " << daqdat.size() << " events." << std::endl;
+        for(std::vector<pxar::Event>::iterator daqEventIt = daqdat.begin(); daqEventIt != daqdat.end(); ++daqEventIt){
+          m_fout << hex << daqEventIt -> header << "\t";
+          int col, row;
+          double value;
+          for(std::vector<pxar::pixel>::iterator it = daqEventIt->pixels.begin(); it != daqEventIt->pixels.end(); ++it){
+            col = (int) it -> getColumn();
+            row = (int) it -> getRow();
+            value = it -> getValue();
+            m_fout << col << "\t" << row << "\t" << value << "\t";
+          } 
+          m_fout << std::endl;
+        }
+        if(stopping){
+          while(triggering)
+            eudaq::mSleep(10); 
+//          stopping = false;
+//          started = false;
+        }
+        else{
+          std::cout << "Continuing trigger loop.\n";
+          m_api -> daqTriggerLoop(m_pattern_delay);
+        }
+        m_api -> daqStatus(m_perFull);    
+      }
+      eudaq::mSleep(1000);
+    }
+    //-------------------------------------------------
+    //
+    //-------------------------------------------------
+    unsigned m_run, m_ev;
+    string m_verbosity;
+    bool stopping, done, started, triggering;
+    bool m_dacsFromConf, m_trimmingFromConf;
     eudaq::Configuration m_config;
     pxar::pxarCore *m_api;
     int m_pattern_delay;
     uint8_t m_perFull;
     std::ofstream m_fout;
+    eudaq::Timer* m_t;
 
-   std::vector<char> VecUint6_tToChar(std::vector<uint16_t> u6vector){
-     std::vector<char> charvector;
+    std::vector<char> VecUint6_tToChar(std::vector<uint16_t> u6vector){
+      std::vector<char> charvector;
       for (std::vector<uint16_t>::iterator it = u6vector.begin(); it != u6vector.end(); ++it) {
         char lo = *it & 0xFF;
         char hi = *it >> 8;
@@ -304,9 +478,9 @@ class CMSPixelProducer : public eudaq::Producer {
         charvector.push_back(lo);
       }
       return charvector;
-   }
+    }
 
-    
+
 
 };
 
