@@ -42,6 +42,7 @@ namespace tlu {
     m_checkConfig = false;
     m_ipbus_verbose = false;
     m_nEvtInFIFO = 0;
+    m_maxRead = 0x2000;
   }
 
 
@@ -104,26 +105,36 @@ namespace tlu {
     if(m_nEvtInFIFO) {
       if (!(m_nEvtInFIFO)) std::cout << "Warning odd words in fifo!" << std::endl;
       try {
-        ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
-        m_hw->dispatch();
-        if(fifoContent.valid()) {
-       	  bool lowBits = false;
-	  uint64_t word = 0;
+	for (unsigned int nwords = m_nEvtInFIFO; nwords > 0;) {
+		unsigned int nwtoread;
+		if (nwords > m_maxRead) {
+			nwtoread = m_maxRead;
+		} else {
+			nwtoread = nwords;
+		}
+		nwords -= nwtoread;
+
+        	ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nwtoread);
+	        m_hw->dispatch();
+ 	       if(fifoContent.valid()) {
+       		  bool lowBits = false;
+	 	 uint64_t word = 0;
 	//	std::cout << "Dump event FIFO" << std::endl;
-	  for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
+	 	 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
 	    // std::cout << "-- " << std::hex << *i << std::endl;
-	    if(lowBits) {
-	      word = (((uint64_t)(word))<<32) | *i;
-	      m_dataFromTLU.push_back(word);
-	      lowBits = false;
-	    } else {
-	      word = *i;
-	      lowBits = true;
-	    }
-	  }
-        } else {
-	  std::cout << "Error reading FIFO" << std::endl;
-        }      
+	  	  if(lowBits) {
+	   	   word = (((uint64_t)(word))<<32) | *i;
+	    	  m_dataFromTLU.push_back(word);
+	  	    lowBits = false;
+		    } else {
+		      word = *i;
+		      lowBits = true;
+		    }
+		  }
+    	    } else {
+		  std::cout << "Error reading FIFO" << std::endl;
+     	   }      
+	}
       } catch (...) {
 	std::cout << "Error reading FIFO, catched error, reset to 0" << std::endl;
 	m_dataFromTLU.resize(0);
