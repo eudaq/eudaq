@@ -9,11 +9,15 @@ from libPyPyPacket import *
 
 
 def takeData():
-    delay = 1.0 / args.rate
+    delay = 1.0 / args.rate - 0.0002
+    if delay < 0 :
+        delay = 0
     i = 0
     data = arange( args.data_size, dtype=uint64 )
 #   data = data.astype(numpy.uint64)
     data_p = data.ctypes.data_as(POINTER(c_uint64))
+    prev_t = time.time()
+    prev_i = 0
     while not pp.Error and not pp.StoppingRun and not pp.Terminating and i < args.packets:
         p = eudaq.PyPacket( '-TLU2-', 'test' )
         p.addMetaData( True, 4, i )
@@ -24,7 +28,15 @@ def takeData():
         sleep( delay )
         i += 1
         if i % args.rate == 0:
-            print str(i)
+            now = time.time()
+            dt = now - prev_t
+            if dt > 0 :
+                rate = (i - prev_i) / dt
+            else:
+                rate = 0
+            print '{0:5d} {1:.0f}Hz'.format( i, rate )
+            prev_t = now
+            prev_i = i
 
 
 

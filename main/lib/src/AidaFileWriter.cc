@@ -45,7 +45,7 @@ namespace eudaq {
 
 	OpenNextRaw2();
 	delete m_idx;
-    m_idx = new FileSerializer(FileNamer(m_filepattern).Set('X', ".idx").Set('R', runnumber));
+    m_idx = new FileSerializer(FileNamer(m_filepattern).Set('X', ".idx").Set( 's', "" ).Set('R', runnumber).Set('N', m_name));
     std::string header = config->to_string();
     while ( header.length() % 8 )
     	header += ' ';
