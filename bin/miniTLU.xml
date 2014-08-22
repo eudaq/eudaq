@@ -3,8 +3,8 @@
 <node id="miniTLU">
 
 <node id="DUTInterfaces" address="0x020" description="DUT Interfaces control registers">
-<node id="DutMaskW" address="0x0" permission="r" description="" />
-<node id="DutMaskR" address="0x1" permission="w" description="" />
+<node id="DutMaskW" address="0x0" permission="w" description="" />
+<node id="DutMaskR" address="0x1" permission="r" description="" />
 </node>
 
 <node id="triggerInputs" address="0x040" description="Inputs configuration">
