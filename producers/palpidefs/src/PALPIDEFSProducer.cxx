@@ -418,10 +418,10 @@ void DeviceReader::Loop()
                 }
                 //Read Data
                 if ( m_isData == true ){   
-                    m_Data[m_count_word_data]= m_daq_board->GetIntFromBinaryStringReversed(4, data_buf+count_byte);
-//                    m_Data[m_count_word_data]= GetChipWord(data_buf+count_byte);
-                    m_count_word_data++;
-                    count_byte+=4;
+                    m_Data[m_count_word_data] = data_buf[count_byte];
+                    m_Data[m_count_word_data+1] = data_buf[count_byte+1];
+                    m_count_word_data+=2;
+                    count_byte+=2;
                 }
                 // Read Trailer
                 if(m_isTrailer == true){
