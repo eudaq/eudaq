@@ -4,12 +4,13 @@ export RCPORT=44000
 export RCPORT1=44441
 export RCPORT2=44442 
 export RCPORT3=44443 
+export RCPORT4=44444 
 
 [ "$1" != "" ] && RCPORT=$1
 
-export HOSTIP=127.0.0.1
-export TLUIP=127.0.0.1
-export HOSTNAME=127.0.0.1
+export HOSTIP=192.168.5.251
+export TLUIP=192.168.5.251
+export HOSTNAME=192.168.5.251
 
 cd `dirname $0`
 export LD_LIBRARY_PATH="`pwd`/bin:$LD_LIBRARY_PATH"
@@ -68,8 +69,18 @@ printf '\033[22;33m\t TestDataCollector \033[0m \n'
 #xterm -e "cd bin;./ExampleProducer.exe -n Example1 -r tcp://$HOSTIP:$RCPORT " &
 #sleep 1
 
+#xterm -e "cd bin;./TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT1" &
+#sleep 3
+
 xterm -e "cd bin;./TestDataCollector.exe -n miniTLU -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT1" &
 sleep 3
+xterm -e "cd bin;./TestDataCollector.exe -n TLU -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT2" &
+sleep 3
+xterm -e "cd bin;./TestDataCollector.exe -n MimosaNI -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT3" &
+sleep 3
+xterm -e "cd bin;./TestDataCollector.exe -n Timepix3 -r tcp://$HOSTIP:$RCPORT -a tcp://$RCPORT4" &
+sleep 3
+
 
 #xterm -e "cd bin;./ExampleProducer.exe -n Example2 -r tcp://$HOSTIP:$RCPORT " &
 #sleep 1
