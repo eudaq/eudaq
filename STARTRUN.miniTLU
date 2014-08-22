@@ -1,8 +1,9 @@
 #!/bin/bash
 
 export RCPORT=44000
-export RCPORT1=44001
-export RCPORT2=44444 
+export RCPORT1=44441
+export RCPORT2=44442 
+export RCPORT3=44443 
 
 [ "$1" != "" ] && RCPORT=$1
 
@@ -94,7 +95,10 @@ fi
 if [ -f "bin/miniTLU_Producer.exe" ]
 then
     printf '\033[22;33m\t  miniTLU_Producer  \033[0m \n'
-    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'TLU Producer' -e 'cd bin;. ../start_minitlu.sh' &
+    cd bin
+    bash  ../start_minitlu.sh &
+    cd -
+#    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'TLU Producer' -e 'cd bin;. ../start_minitlu.sh' &
     sleep 1
 else
     printf '\033[22;31m\t  TLUProducer not found! \033[0m \n'
