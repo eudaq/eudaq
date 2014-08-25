@@ -14,7 +14,9 @@ namespace eudaq {
       "EORE",
       "HITS",
       "FAKE",
-      "SIMU"
+      "SIMU",
+      "BROKEN",
+      "STATUS"
     };
 
   }

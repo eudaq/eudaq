@@ -27,13 +27,17 @@ typedef unsigned __int64 uint64_t;
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <climits>
+
 using namespace std;
 
 #if USE_EUTELESCOPE
 #  include <EUTELESCOPE.h>
 #endif
 
-// #define MYDEBUG
+// #define MYDEBUG  // dumps decoding information
+// #define DEBUGRAWDUMP // dumps all raw events
+#define CHECK_TIMESTAMPS // if timestamps are not consistent marks event as broken
 
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -55,7 +59,6 @@ namespace eudaq {
                             const Configuration & /*cnf*/) {    //GetConfig
 
       m_nLayers = bore.GetTag<int>("Devices", -1);
-//       m_nLayers = 4;
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
       
       for (int i=0; i<m_nLayers; i++) {
@@ -126,6 +129,7 @@ namespace eudaq {
       
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {
 	cout << "Skipping status event" << endl;
+	sev.SetFlags(Event::FLAG_STATUS);
 	for (int id=0 ; id<m_nLayers ; id++) {
 	  vector<unsigned char> data = rev->GetBlock(id);
 	  if (data.size() == 4) {
@@ -157,8 +161,16 @@ namespace eudaq {
 	  int current_rgn = -1;
 
 	  bool layers_found[100] = { false };
-    //       for(int i=0;i<m_nLayers;i++)
-    // 	layers_found[i] = false;
+	  uint64_t trigger_ids[100] = { (uint64_t) ULONG_MAX };
+	  uint64_t timestamps[100] = { (uint64_t) ULONG_MAX };
+	  
+	  // RAW dump
+#ifdef DEBUGRAWDUMP
+	  printf("Event %d: ", ev.GetEventNumber());
+	  for (int i=0; i<data.size(); i++)
+	    printf("%x ", data[i]);
+	  printf("\n");
+#endif
 
 	  while (pos+1 < data.size()) { // always need 2 bytes left
     #ifdef MYDEBUG
@@ -194,6 +206,8 @@ namespace eudaq {
 		uint64_t timestamp = 0;
 		for (int i=0; i<8; i++)
 		  ((unsigned char*) &timestamp)[i] = data[pos++];
+		trigger_ids[current_layer] = trigger_id;
+		timestamps[current_layer] = timestamp;
     #ifdef MYDEBUG
 	      cout << "Layer " << current_layer << " Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
     #endif
@@ -226,9 +240,6 @@ namespace eudaq {
 		    y--;
 		  
 		  planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
-    // 	      planes[1].PushPixel(x, y, 1, (unsigned int) 0);
-    // 	      planes[2].PushPixel(x, y, 1, (unsigned int) 0);
-    // 	      planes[3].PushPixel(x, y, 1, (unsigned int) 0);
     #ifdef MYDEBUG
 		  cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
     #endif
@@ -249,13 +260,26 @@ namespace eudaq {
     #ifdef MYDEBUG
 	  cout << "EOD" << endl;
     #endif
-	}
+	
+	  // check timestamps
+	  bool ok = true;
+	  for (int i=0;i<m_nLayers-1;i++) {
+	    if (timestamps[i+1] == 0 || fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.1)
+	      ok = false;
+	  }
+	  if (!ok) {
+	    printf("Timestamps not consistent (event %d)!\n", ev.GetEventNumber());
+	    for (int i=0;i<m_nLayers;i++)
+	      printf("%d %lu %lu\n", i, trigger_ids[i], timestamps[i]);
+#ifdef CHECK_TIMESTAMPS
+	    sev.SetFlags(Event::FLAG_BROKEN);
+#endif  
+	  }
+	}	
       }
       
       // Add the planes to the StandardEvent
       for(int i=0;i<m_nLayers;i++){
-        //planes[i].SetTLUEvent(TluCnt);          //set TLU Event (still test)
-        //sev.SetTimestamp(EvTS-TrTS);
         sev.AddPlane(*planes[i]);
 	delete planes[i];
       }
