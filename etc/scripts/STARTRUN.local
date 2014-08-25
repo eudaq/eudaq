@@ -94,8 +94,8 @@ else
     echo 'Configure EUDAQ with the CMake option "-D BUILD_onlinemon=ON" and re-run "make install" to install.'
 fi
 #####################################################################
-
-./CMSPixelProducer.exe -r tcp://$HOSTIP:$RCPORT &
+./CMSPixelProducer.exe -v  DEBUGAPI 
+#./CMSPixelProducer.exe -r tcp://$HOSTIP:$RCPORT &
 
 printf ' \n'
 printf ' \n'

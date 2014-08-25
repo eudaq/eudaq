@@ -15,7 +15,7 @@ option(IGNORE_KNOWN_ISSUES "Ignore known compilation issues of producer executab
 
 IF(BUILD_cmspixel)
   FIND_PACKAGE(PXAR)
-  MESSAGE( STATUS "PXAR include dir: ${PXAR_INCLUDE_DIR}" )
+  MESSAGE( STATUS "PXAR dir: ${PXAR_PATH}" )
 ENDIF()
 
 optional_add_subdirectory(altro)
