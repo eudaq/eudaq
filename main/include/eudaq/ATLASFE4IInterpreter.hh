@@ -1,120 +1,126 @@
 #ifndef ATLASFE4IINTERPRETER_H
 #define ATLASFE4IINTERPRETER_H
 
-/*
- * macros & defines for for FE-I4 raw data and trigger data processing
+typedef unsigned int uint;
+
+/*FEI4A
+ *  DATA_HEADER_LV1ID_MASK	0x00007F00
+ *  DATA_HEADER_BCID_MASK	0x000000FF
+ *
+ *FEI4B
+ *  DATA_HEADER_LV1ID_MASK	0x00007C00
+ *  DATA_HEADER_BCID_MASK	0x000003FF
  */
 
-/*
- * unformatted records
- */
+template <uint dh_lv1id_msk, uint dh_bcid_msk>
 class ATLASFEI4Interpreter
 {
-
-typedef std::bitset<32> bitfield;
-typedef unsigned int uint;
+private:
 //-----------------
-// Data Header (DH)
+// Data Header (dh)
 //-----------------
-bitfield dataHeader (0x00E90000);
-//#define DATA_HEADER				0x00E90000
-bitfield dataHeaderMask (0xFFFF0000);
-//#define DATA_HEADER_MASK			0xFFFF0000
-bitfield dataHeaderFlagMask (0x00008000);
-//#define DATA_HEADER_FLAG_MASK			0x00008000
-bitfield dataHeaderLVL1IDMask (0x00007F00);
-//#define DATA_HEADER_LV1ID_MASK		0x00007F00
-bitfield dataHeaderBCIDMask (0x000000FF);
-//#define DATA_HEADER_BCID_MASK			0x000000FF
+const uint dh_wrd =		0x00E90000;
+const uint dh_msk =		0xFFFF0000;
+const uint dh_flag_msk =	0x00008000;
 
-bool isDataHeader(uint X) {return dataHeaderMask & bitfield(X) == dataHeader;}
-//#define DATA_HEADER_MACRO(X)			((DATA_HEADER_MASK & X) == DATA_HEADER ? true : false)
-bool isDataHeaderFlag(unit X) {return dataHeaderFlagMask & bitfield(X) >> 15}
-#define DATA_HEADER_FLAG_MACRO(X)		((DATA_HEADER_FLAG_MASK & X) >> 15)
-#define DATA_HEADER_FLAG_SET_MACRO(X)	((DATA_HEADER_FLAG_MASK & X) == DATA_HEADER_FLAG_MASK ? true : false)
-#define DATA_HEADER_LV1ID_MACRO(X)		((DATA_HEADER_LV1ID_MASK & X) >> 8)
-#define DATA_HEADER_BCID_MACRO(X)		(DATA_HEADER_BCID_MASK & X)
+inline bool is_dh(uint X)		{return (dh_msk & X) == dh_wrd;} 
+inline uint get_dh_flag(uint X) 	{return (dh_flag_msk & X) >> 15;}
+inline bool is_dh_flag_set(uint X) 	{return (dh_flag_msk & X) == dh_flag_msk;}
+inline uint get_dh_lv1id(uint X) 	{return (dh_lv1id_msk & X) >> determineShift(dh_lv1id_msk);}
+inline uint get_dh_bcid(uint X)		{return (dh_bcid_msk & X;)}
 
-// Data Record (DR)
-#define DATA_RECORD_COLUMN_MASK			0x00FE0000
-#define DATA_RECORD_ROW_MASK			0x0001FF00
-#define DATA_RECORD_TOT1_MASK			0x000000F0
-#define DATA_RECORD_TOT2_MASK			0x0000000F
+//-----------------
+// Data Record (dr)
+//-----------------
+const uint dr_col_msk =		0x00FE0000; 
+const uint dr_row_msk =		0x0001FF00;
+const uint dr_tot1_msk =	0x000000F0;
+const uint dr_tot2_msk =	0x0000000F;
+//Raw Data (rd)
+const uint rd_min_col = 1;
+const uint rd_max_col = 80;
+const uint rd_min_row =	1;
+const uint rd_max_row =	336;
 
-#define RAW_DATA_MIN_COLUMN				0x00000001 // 1
-#define RAW_DATA_MAX_COLUMN				0x00000050 // 80
-#define RAW_DATA_MIN_ROW				0x00000001 // 1
-#define RAW_DATA_MAX_ROW				0x00000150 // 336
-#define DATA_RECORD_MIN_COLUMN			(RAW_DATA_MIN_COLUMN << 17)
-#define DATA_RECORD_MAX_COLUMN			(RAW_DATA_MAX_COLUMN << 17)
-#define DATA_RECORD_MIN_ROW				(RAW_DATA_MIN_ROW << 8)
-#define DATA_RECORD_MAX_ROW				(RAW_DATA_MAX_ROW << 8)
+const uint dr_min_col = rd_min_col << 17;
+const uint dr_max_col = rd_max_col << 17;
+const uint dr_min_row = rd_min_row << 8;
+const uint dr_max_row = rd_max_row << 8;
 
-#define DATA_RECORD_MACRO(X)			(((DATA_RECORD_COLUMN_MASK & X) <= DATA_RECORD_MAX_COLUMN) && ((DATA_RECORD_COLUMN_MASK & X) >= DATA_RECORD_MIN_COLUMN) && ((DATA_RECORD_ROW_MASK & X) <= DATA_RECORD_MAX_ROW) && ((DATA_RECORD_ROW_MASK & X) >= DATA_RECORD_MIN_ROW) ? true : false)
-#define DATA_RECORD_COLUMN1_MACRO(X)	((DATA_RECORD_COLUMN_MASK & X) >> 17)
-#define DATA_RECORD_ROW1_MACRO(X)		((DATA_RECORD_ROW_MASK & X) >> 8)
-#define DATA_RECORD_TOT1_MACRO(X)		((DATA_RECORD_TOT1_MASK & X) >> 4)
-#define DATA_RECORD_COLUMN2_MACRO(X)	((DATA_RECORD_COLUMN_MASK & X) >> 17)
-#define DATA_RECORD_ROW2_MACRO(X)		(((DATA_RECORD_ROW_MASK & X) >> 8) + 1)
-#define DATA_RECORD_TOT2_MACRO(X)		(DATA_RECORD_TOT2_MASK & X)
+inline bool is_dr(uint X)
+{
+//check if 
+return(	((dr_col_msk & X) <= dr_max_col) &&	
+	((dr_col_msk & X) >= dr_min_col) &&
+	((dr_row_msk & X) <= dr_max_row) &&
+	((dr_row_msk & X) >= dr_min_row) );
+}
+//#define DATA_RECORD_MACRO(X)			(((DATA_RECORD_COLUMN_MASK & X) <= DATA_RECORD_MAX_COLUMN) && ((DATA_RECORD_COLUMN_MASK & X) >= DATA_RECORD_MIN_COLUMN) && ((DATA_RECORD_ROW_MASK & X) <= DATA_RECORD_MAX_ROW) && ((DATA_RECORD_ROW_MASK & X) >= DATA_RECORD_MIN_ROW) ? true : false)
 
-// Address Record (AR)
-#define ADDRESS_RECORD					0x00EA0000
-#define ADDRESS_RECORD_MASK				0xFFFF0000
-#define ADDRESS_RECORD_TYPE_MASK		0x00008000
-#define ADDRESS_RECORD_ADDRESS_MASK		0x00007FFF
+//#define DATA_RECORD_COLUMN1_MACRO(X)	((DATA_RECORD_COLUMN_MASK & X) >> 17)
+inline uint get_dr_col1(uint X)		{return (dr_col_msk & X) >> 17;}
+//#define DATA_RECORD_ROW1_MACRO(X)		((DATA_RECORD_ROW_MASK & X) >> 8)
+inline uint get_dr_row1(uint X)		{return (dr_row_msk & X) >> 8;}
+//#define DATA_RECORD_TOT1_MACRO(X)		((DATA_RECORD_TOT1_MASK & X) >> 4)
+inline uint get_dr_tot1(uint X)		{return (dr_tot1_msk & X) >> 4;}
+//#define DATA_RECORD_COLUMN2_MACRO(X)	((DATA_RECORD_COLUMN_MASK & X) >> 17)
+inline uint get_dr_col2(uint X)		{return (dr_col_msk & X) >> 17;}
+//#define DATA_RECORD_ROW2_MACRO(X)		(((DATA_RECORD_ROW_MASK & X) >> 8) + 1)
+inline uint get_dr_row2(uint X)		{return ((dr_row_msk & X) >> 8)+1;}
+//#define DATA_RECORD_TOT2_MACRO(X)		(DATA_RECORD_TOT2_MASK & X)
+inline uint get_dr_tot2(uint X)		{return (dr_tot2_msk & X);}
 
-#define ADDRESS_RECORD_MACRO(X)			((ADDRESS_RECORD_MASK & X) == ADDRESS_RECORD ? true : false)
-#define ADDRESS_RECORD_TYPE_MACRO(X)	((ADDRESS_RECORD_TYPE_MASK & X) >> 15)
-#define ADDRESS_RECORD_TYPE_SET_MACRO(X)((ADDRESS_RECORD_TYPE_MASK & X) == ADDRESS_RECORD_TYPE_MASK ? true : false)
-#define ADDRESS_RECORD_ADDRESS_MACRO(X)	(ADDRESS_RECORD_ADDRESS_MASK & X)
+//-----------------
+// Trigger Data (tr)
+//-----------------
+const uint tr_wrd_hdr_v10 =	0x00FFFF00;
+const uint tr_wrd_hdr_msk_v10 =	0xFFFFFF00;
+const uint tr_wrd_hdr =		0x00F80000; // tolerant to 1-bit flips and not equal to control/comma symbols
+const uint tr_wrd_hdr_msk =	0xFFFF0000;
 
-// Value Record (VR)
-#define VALUE_RECORD					0x00EC0000
-#define VALUE_RECORD_MASK				0xFFFF0000
-#define VALUE_RECORD_VALUE_MASK			0x0000FFFF
+const uint tr_no_31_24_msk =	0x000000FF;
+const uint tr_no_23_0_msk =	0x00FFFFFF;
 
-#define VALUE_RECORD_MACRO(X)			((VALUE_RECORD_MASK & X) == VALUE_RECORD ? true : false)
-#define VALUE_RECORD_VALUE_MACRO(X)		(VALUE_RECORD_VALUE_MASK & X)
+const uint tr_data_msk =	0x0000FF00; // trigger error + trigger mode
+const uint tr_mode_msk =	0x0000E000; // trigger mode
+const uint tr_err_msk = 	0x00001F00; // error code: bit 0: wrong number of dh, bit 1 service record recieved
 
-// Service Record (SR)
-#define SERVICE_RECORD					0x00EF0000
-#define SERVICE_RECORD_MASK				0xFFFF0000
-#define SERVICE_RECORD_CODE_MASK		0x0000FC00
-#define SERVICE_RECORD_COUNTER_MASK		0x000003FF
+//#define TRIGGER_WORD_MACRO(X)			((((TRIGGER_WORD_HEADER_MASK & X) == TRIGGER_WORD_HEADER)  || ((TRIGGER_WORD_HEADER_MASK_V10 & X) == TRIGGER_WORD_HEADER_V10))? true : false)
+inline bool is_tr(uint X)
+{
+return	((tr_wrd_hdr_msk & X) == tr_wrd_hdr) ||
+	((tr_wrd_hdr_msk_v10 & X) == tr_wrd_hdr_v10);
+}
 
-#define SERVICE_RECORD_MACRO(X)			((SERVICE_RECORD_MASK & X) == SERVICE_RECORD ? true : false)
-#define SERVICE_RECORD_CODE_MACRO(X)	((SERVICE_RECORD_CODE_MASK & X) >> 10)
-#define SERVICE_RECORD_COUNTER_MACRO(X)	(SERVICE_RECORD_COUNTER_MASK & X)
+//#define TRIGGER_NUMBER_MACRO2(X, Y)		(((TRIGGER_NUMBER_31_24_MASK & X) << 24) | (TRIGGER_NUMBER_23_0_MASK & Y)) // returns full trigger number; reference and dereference of following array element
+inline uint get_tr_no_2(uint X, uint Y)	{return ((tr_no_31_24_msk & X) << 24) | (tr_no_23_0_msk & Y);}
 
-// Empty Record (ER)
-#define EMPTY_RECORD					0x00000000
-#define EMPTY_RECORD_MASK				0xFFFFFFFF
+//#define TRIGGER_ERROR_OCCURRED_MACRO(X)	(((((TRIGGER_ERROR_MASK & X) >> 8) == 0x00000000) || ((TRIGGER_WORD_HEADER_MASK_V10 & X) == TRIGGER_WORD_HEADER_V10)) ? false : true)
+inline bool get_tr_err_occurred(uint X) 
+{
+return	(((tr_err_msk & X) >> 8) == 0x0) ||
+	((tr_wrd_dre_msk_v10 & X) == tr_wrd_hdr_v10);
+}
 
-#define EMPTY_RECORD_MACRO(X)			((EMPTY_RECORD_MASK & X) == EMPTY_RECORD ? true : false)
+//#define TRIGGER_DATA_MACRO(X)			((TRIGGER_DATA_MASK & X) >> 8)
+inline uint get_tr_data(uint X)		{return (tr_data_msk & X) >> 8;}
+//#define TRIGGER_ERROR_MACRO(X)			((TRIGGER_ERROR_MASK & X) >> 8)
+inline uint get_tr_err(uint X)		{return (tr_err_msk & X) >> 8};
+//#define TRIGGER_MODE_MACRO(X)			((TRIGGER_MODE_MASK & X) >> 13)
+inline uint get_tr_mode(uint X)		{return (tr_mode_msk & X) >> 13;}
 
-/*
- * trigger data
- */
 
-#define TRIGGER_WORD_HEADER_V10			0x00FFFF00
-#define TRIGGER_WORD_HEADER_MASK_V10	0xFFFFFF00
+constexpr uint determineShift(uint mask)
+{
+	uint count = 0;
+	std::bitset<32> maskField(mask);
 
-#define TRIGGER_WORD_HEADER				0x00F80000 // tolerant to 1-bit flips and not equal to control/comma symbols
-#define TRIGGER_WORD_HEADER_MASK		0xFFFF0000
-#define TRIGGER_NUMBER_31_24_MASK		0x000000FF
-#define TRIGGER_NUMBER_23_0_MASK		0x00FFFFFF
+	while(maskField[count] != true)
+	{
+		count++;
+	}
+	return count;
+}
 
-#define TRIGGER_DATA_MASK				0x0000FF00 // trigger error + trigger mode
-#define TRIGGER_MODE_MASK				0x0000E000 // trigger mode
-#define TRIGGER_ERROR_MASK				0x00001F00 // error code: bit 0: wrong number of dh, bit 1 service record recieved
-
-#define TRIGGER_WORD_MACRO(X)			((((TRIGGER_WORD_HEADER_MASK & X) == TRIGGER_WORD_HEADER)  || ((TRIGGER_WORD_HEADER_MASK_V10 & X) == TRIGGER_WORD_HEADER_V10))? true : false)
-#define TRIGGER_NUMBER_MACRO2(X, Y)		(((TRIGGER_NUMBER_31_24_MASK & X) << 24) | (TRIGGER_NUMBER_23_0_MASK & Y)) // returns full trigger number; reference and dereference of following array element
-
-#define TRIGGER_ERROR_OCCURRED_MACRO(X)	(((((TRIGGER_ERROR_MASK & X) >> 8) == 0x00000000) || ((TRIGGER_WORD_HEADER_MASK_V10 & X) == TRIGGER_WORD_HEADER_V10)) ? false : true)
-#define TRIGGER_DATA_MACRO(X)			((TRIGGER_DATA_MASK & X) >> 8)
-#define TRIGGER_ERROR_MACRO(X)			((TRIGGER_ERROR_MASK & X) >> 8)
-#define TRIGGER_MODE_MACRO(X)			((TRIGGER_MODE_MASK & X) >> 13)
-
+}
 #endif //ATLASFE4IINTERPRETER_H
