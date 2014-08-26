@@ -38,7 +38,8 @@ namespace eudaq {
 
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
-  static const int FEI4A_CHIP_ID_OFFSET = 30;
+  //change these values to set a offset in the sensorID
+  static const int FEI4A_CHIP_ID_OFFSET = 20;
   static const int FEI4B_CHIP_ID_OFFSET = 20;
  
 template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE> 
@@ -378,7 +379,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 
 			std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
 
-			zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + first_sensor_id; //formerly 14
+			zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + this->first_sensor_id; //formerly 14
 			zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
 			//prepare a new TrackerData object for the ZS data
@@ -408,14 +409,14 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 				else
 				{
 					//First Hit
-					if(getHitData(Word, false, Col, Row, ToT))
+					if(this->getHitData(Word, false, Col, Row, ToT))
 					{
 						eutelescope::EUTelGenericSparsePixel* thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
 						sparseFrame->addSparsePixel( thisHit );
 						tmphits.push_back( thisHit );
 					}
 					//Second Hit
-					if(getHitData(Word, true, Col, Row, ToT)) 
+					if(this->getHitData(Word, true, Col, Row, ToT)) 
 					{
 						eutelescope::EUTelGenericSparsePixel* thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
 						sparseFrame->addSparsePixel( thisHit );
@@ -467,6 +468,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 			}
 			return true;
 		}
+	}
 #endif
 
   protected:
