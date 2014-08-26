@@ -36,7 +36,7 @@ namespace eudaq {
   static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	//Maximum ROW normalized (starting with 0)
   static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
 
-  static std::string USBPIX_FEI4_NAME = "USBPIXI4";
+  static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
 
 #if USE_LCIO && USE_EUTELESCOPE
@@ -268,7 +268,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		(void)cnf; //just to suppress a warning about unused parameter cnf
 		#endif
 
-		getBOREparameters(bore);
+		this->getBOREparameters(bore);
 	}
 
 	//This should return the trigger ID (as provided by the TLU)
@@ -287,7 +287,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 
 			if(rev->NumBlocks() > 0)
 			{
-				return getTrigger(rev->GetBlock(0));
+				return this->getTrigger(rev->GetBlock(0));
 			} 
 			else 
 			{
@@ -317,7 +317,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
 		for(size_t i = 0; i < ev_raw.NumBlocks(); ++i)
 		{
-			sev.AddPlane(ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
+			sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
 		}
 	return true;
 	}
@@ -487,15 +487,14 @@ class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF, &US
   private:
 	USBPixFEI4AConverter(){};
 	static USBPixFEI4AConverter m_instance;
-}
+};
 
 class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF, &USBPIX_FEI4B_NAME>
 {
   private:
 	USBPixFEI4BConverter(){};
 	static USBPixFEI4BConverter m_instance;
-}
-
+};
 
 //Instantiate the converter plugin instance
 USBPixFEI4AConverter USBPixFEI4AConverter::m_instance;
