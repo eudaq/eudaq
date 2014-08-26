@@ -91,7 +91,7 @@ class ATLASFEI4Interpreter
 	}
 
 	inline uint get_tr_no_2(uint X, uint Y) const	{return ((tr_no_31_24_msk & X) << 24) | (tr_no_23_0_msk & Y);}
-	inline bool get_tr_err_occurred(uint X) 
+	inline bool get_tr_err_occurred(uint X) const 
 	{
 		return	(((tr_err_msk & X) >> 8) == 0x0) ||
 			((tr_wrd_hdr_msk_v10 & X) == tr_wrd_hdr_v10);

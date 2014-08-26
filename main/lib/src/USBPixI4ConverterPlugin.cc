@@ -38,10 +38,8 @@ namespace eudaq {
 
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
-
-#if USE_LCIO && USE_EUTELESCOPE
-  static const int chip_id_offset = 30;
-#endif
+  static const int FEI4A_CHIP_ID_OFFSET = 30;
+  static const int FEI4B_CHIP_ID_OFFSET = 20;
  
 template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE> 
 class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_msk>{
@@ -255,7 +253,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 };
 
 //Declare a new class that inherits from DataConverterPlugin
-template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE> 
+template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE, int chip_id_offset> 
 class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4ConverterBase<dh_lv1id_msk, dh_bcid_msk, EVENT_TYPE> {
 
   public:
@@ -472,24 +470,20 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 #endif
 
   protected:
-	//The constructor can be private, only one static instance is created
-	//The DataConverterPlugin constructor must be passed the event type
-	//in order to register this converter for the corresponding conversions
-	//Member variables should also be initialized to default values here.
 	USBPixI4ConverterPlugin(): DataConverterPlugin(*EVENT_TYPE){}
-
-	//The single instance of this converter plugin
-//	static USBPixI4ConverterPlugin m_instance;
 };
 
-class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF, &USBPIX_FEI4A_NAME>
+class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF, &USBPIX_FEI4A_NAME, FEI4A_CHIP_ID_OFFSET>
 {
   private:
+ 	//The constructor can be private, only one static instance is created
+	//The DataConverterPlugin constructor must be passed the event type
+	//in order to register this converter for the corresponding conversions
 	USBPixFEI4AConverter(){};
 	static USBPixFEI4AConverter m_instance;
 };
 
-class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF, &USBPIX_FEI4B_NAME>
+class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF, &USBPIX_FEI4B_NAME, FEI4B_CHIP_ID_OFFSET>
 {
   private:
 	USBPixFEI4BConverter(){};
