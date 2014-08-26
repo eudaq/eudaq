@@ -4,7 +4,6 @@
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/PluginManager.hh"
 #include <iostream>
 #include <ostream>
 
@@ -153,15 +152,6 @@ namespace eudaq {
       for (size_t i = 0; i < m_buffer.size(); ++i) {
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
-        }
-        if (i == 0) {
-          tluev = PluginManager::GetTriggerID(*m_buffer[i].events.front());
-        } else {
-          unsigned tluev2 = PluginManager::GetTriggerID(*m_buffer[i].events.front());
-          if (tluev2 != tluev) {
-            //EUDAQ_ERROR("Trigger number mismatch: " + to_string(tluev) + " != " + to_string(tluev2) +
-            //            " in " + m_buffer[i].id->GetName());
-          }
         }
         if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
           if (ev.GetEventNumber() % 1000 == 0) {
