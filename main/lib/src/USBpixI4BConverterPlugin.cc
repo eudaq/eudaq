@@ -3,7 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
-#include "eudaq/USBpix_i4B.hh"
+#include "eudaq/ATLASFE4IInterpreter.hh"
 
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
@@ -25,12 +25,11 @@
 #  include "EUTelGenericSparsePixel.h"
 #  include "EUTelAPIXMCDetector.h"
 #  include "EUTelRunHeaderImpl.h"
-using eutelescope::EUTELESCOPE;
+//using eutelescope::EUTELESCOPE;
 #endif
 
 namespace eudaq {
   // The event type for which this converter plugin will be registered
-  // Modify this to match your actual event type (from the Producer)
   static const char* EVENT_TYPE = "USBPIXI4B";
 
   static const unsigned int CHIP_MIN_COL = 1;
@@ -43,53 +42,69 @@ namespace eudaq {
 #if USE_LCIO && USE_EUTELESCOPE
   static const int chip_id_offset = 30;
 #endif
+ 
+template<uint dh_lv1id_msk, uint dh_bcid_msk> 
+class USBpixI4BConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_msk>{
 
-  class USBpixI4BConverterBase {
-    private:
-      unsigned int count_boards;
-      std::vector<unsigned int> board_ids;
+  protected:
+	unsigned int count_boards;
+	std::vector<unsigned int> board_ids;
 
-    public:
-      unsigned int consecutive_lvl1;
-      unsigned int tot_mode;
-      int first_sensor_id;
+	unsigned int consecutive_lvl1;
+	unsigned int tot_mode;
+	int first_sensor_id;
 
-      int getCountBoards() {
-        return count_boards;
-      }
+	int getCountBoards() 
+	{
+		return count_boards;
+	}
 
-      std::vector<unsigned int> getBoardIDs () {
-        return board_ids;
-      }
+	std::vector<unsigned int> getBoardIDs()
+	{
+		return board_ids;
+	}
 
-      unsigned int getBoardID (unsigned int board_index) const {
-        if (board_index >= board_ids.size()) return (unsigned) -1;
-        return board_ids[board_index];
-      }
+	unsigned int getBoardID(unsigned int board_index) const 
+	{
+		if (board_index >= board_ids.size()) return (unsigned) -1;
+		return board_ids[board_index];
+	}
 
-      void getBOREparameters (const Event & ev) {
-        count_boards = ev.GetTag ("boards", -1);
+	void getBOREparameters(const Event & ev)
+	{
+		count_boards = ev.GetTag("boards", -1);
         board_ids.clear();
 
-        consecutive_lvl1 = ev.GetTag ("consecutive_lvl1", 16);
-        if (consecutive_lvl1>16) consecutive_lvl1=16;
-        first_sensor_id = ev.GetTag ("first_sensor_id", 0);
-        tot_mode = ev.GetTag ("tot_mode", 0);
-        if (tot_mode>2) tot_mode=0;
+        consecutive_lvl1 = ev.GetTag("consecutive_lvl1", 16);
+        if(consecutive_lvl1>16)
+		{
+			consecutive_lvl1=16;
+		}
 
-        if (count_boards == (unsigned) -1) return;
+        first_sensor_id = ev.GetTag("first_sensor_id", 0);
 
-        for (unsigned int i=0; i<count_boards; i++) {
-          board_ids.push_back(ev.GetTag ("boardid_" + to_string(i), -1));
+        tot_mode = ev.GetTag("tot_mode", 0);
+        
+		if(tot_mode>2)
+		{
+			tot_mode=0;
+		}
+
+        if(count_boards == (unsigned) -1) return;
+
+		for (unsigned int i=0; i<count_boards; i++) 
+		{
+			board_ids.push_back(ev.GetTag ("boardid_" + to_string(i), -1));
         }
-      }
+	}
 
-      bool isEventValid(const std::vector<unsigned char> & data) const {
-        // ceck data consistency
+	bool isEventValid(const std::vector<unsigned char> & data) const
+	{
+		//ceck data consistency
         unsigned int dh_found = 0;
         for (unsigned int i=0; i < data.size()-8; i += 4) {
           unsigned word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
-          if (DATA_HEADER_MACRO(word))	{
+          if ( this->is_dh(word) )	{
             dh_found++;
           }
         }
@@ -105,27 +120,26 @@ namespace eudaq {
         if (Trigger_word1==(unsigned)-1) return (unsigned)-1;
         unsigned Trigger_word2 = (((unsigned int)data[i + 7]) << 24) | (((unsigned int)data[i + 6]) << 16) | (((unsigned int)data[i + 5]) << 8) | (unsigned int)data[i + 4];
 
-        unsigned int trigger_number = TRIGGER_NUMBER_MACRO2(Trigger_word1, Trigger_word2);
-        //std::cout << "Trigger: " << trigger_number << std::endl;
+        unsigned int trigger_number = this->get_tr_no_2(Trigger_word1, Trigger_word2);
         return trigger_number;
       }
 
       bool getHitData (unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
 
-        if ( !DATA_RECORD_MACRO(Word) ) return false;	// No Data Record
+        if ( !this->is_dr(Word) ) return false;	// No Data Record
 
         unsigned int t_Col=0;
         unsigned int t_Row=0;
         unsigned int t_ToT=15;
 
         if (!second_hit) {
-          t_ToT = DATA_RECORD_TOT1_MACRO(Word);
-          t_Col = DATA_RECORD_COLUMN1_MACRO(Word);
-          t_Row = DATA_RECORD_ROW1_MACRO(Word);
+          t_ToT = this->get_dr_tot1(Word);
+          t_Col = this->get_dr_col1(Word);
+          t_Row = this->get_dr_row1(Word);
         } else {
-          t_ToT = DATA_RECORD_TOT2_MACRO(Word);
-          t_Col = DATA_RECORD_COLUMN2_MACRO(Word);
-          t_Row = DATA_RECORD_ROW2_MACRO(Word);
+          t_ToT = this->get_dr_tot2(Word);
+          t_Col = this->get_dr_col2(Word);
+          t_Row = this->get_dr_row2(Word);
         }
 
         // translate FE-I4 ToT code into tot
@@ -185,7 +199,7 @@ namespace eudaq {
         for (unsigned int i=0; i < data.size()-8; i += 4) {
           unsigned int Word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
 
-          if (DATA_HEADER_MACRO(Word)) {
+          if ( this->is_dh(Word)) {
             lvl1++;
           } else {
             // First Hit
@@ -205,7 +219,7 @@ namespace eudaq {
   };
 
   // Declare a new class that inherits from DataConverterPlugin
-  class USBPixI4BConverterPlugin : public DataConverterPlugin , public USBpixI4BConverterBase {
+  class USBPixI4BConverterPlugin : public DataConverterPlugin , public USBpixI4BConverterBase<0x00007C00, 0x000003FF> {
 
     public:
 
@@ -334,7 +348,7 @@ namespace eudaq {
           for (unsigned int i=0; i < buffer.size()-4; i += 4) {
             unsigned int Word = (((unsigned int)buffer[i + 3]) << 24) | (((unsigned int)buffer[i + 2]) << 16) | (((unsigned int)buffer[i + 1]) << 8) | (unsigned int)buffer[i];
 
-            if (DATA_HEADER_MACRO(Word)) {
+            if ( this->is_dh(Word)) {
               lvl1++;
             } else {
               // First Hit
