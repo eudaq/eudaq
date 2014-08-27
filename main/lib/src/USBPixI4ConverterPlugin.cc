@@ -94,7 +94,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		for (unsigned int i=0; i<count_boards; i++) 
 		{
 			board_ids.push_back(ev.GetTag ("boardid_" + to_string(i), -1));
-        }
+		}
 	}
 
 	bool isEventValid(const std::vector<unsigned char> & data) const
@@ -110,11 +110,11 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 			}
 		}
 
-        if(dh_found != consecutive_lvl1)
+		if(dh_found != consecutive_lvl1)
 		{
 			return false;
 		}
-        else
+		else
 		{
 			return true;
 		}
@@ -123,17 +123,17 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 	unsigned getTrigger(const std::vector<unsigned char> & data) const
 	{
 		//Get Trigger Number and check for errors
-        unsigned int i = data.size() - 8; //splitted in 2x 32bit words
-        unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+		unsigned int i = data.size() - 8; //splitted in 2x 32bit words
+		unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
         
 		if(Trigger_word1==(unsigned) -1)
 		{
 			return (unsigned)-1;
 		}
 
-        unsigned Trigger_word2 = (((unsigned int)data[i + 7]) << 24) | (((unsigned int)data[i + 6]) << 16) | (((unsigned int)data[i + 5]) << 8) | (unsigned int)data[i + 4];
-        unsigned int trigger_number = this->get_tr_no_2(Trigger_word1, Trigger_word2);
-        return trigger_number;
+		unsigned Trigger_word2 = (((unsigned int)data[i + 7]) << 24) | (((unsigned int)data[i + 6]) << 16) | (((unsigned int)data[i + 5]) << 8) | (unsigned int)data[i + 4];
+		unsigned int trigger_number = this->get_tr_no_2(Trigger_word1, Trigger_word2);
+		return trigger_number;
 	}
 
 	bool getHitData(unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const 
@@ -148,7 +148,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		unsigned int t_Row=0;
 		unsigned int t_ToT=15;
 
-        if(!second_hit)
+		if(!second_hit)
 		{
 			t_ToT = this->get_dr_tot1(Word);
 			t_Col = this->get_dr_col1(Word);
@@ -161,7 +161,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 			t_Row = this->get_dr_row2(Word);
 		}
 
-        //translate FE-I4 ToT code into tot
+		//translate FE-I4 ToT code into tot
 		if (tot_mode==1) 
 		{
 			if (t_ToT==15) return false;
@@ -185,8 +185,8 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		{
 			std::cout << "Invalid row: " << t_Row << std::endl;
 			return false;
-        }
-        if(t_Col > CHIP_MAX_COL || t_Col < CHIP_MIN_COL)
+		}
+		if(t_Col > CHIP_MAX_COL || t_Col < CHIP_MIN_COL)
 		{
 			std::cout << "Invalid col: " << t_Col << std::endl;
 			return false;
@@ -318,12 +318,12 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		{
 			sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
 		}
-	return true;
+		return true;
 	}
 
 	#if USE_LCIO && USE_EUTELESCOPE
-    //This is where the conversion to LCIO is done
-    virtual lcio::LCEvent* GetLCIOEvent(const Event * /*ev*/) const 
+	//This is where the conversion to LCIO is done
+	virtual lcio::LCEvent* GetLCIOEvent(const Event * /*ev*/) const 
 	{
         return nullptr;
 	}
