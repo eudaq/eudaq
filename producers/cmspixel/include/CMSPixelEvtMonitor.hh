@@ -13,6 +13,7 @@
 #include "TString.h"
 #include "TGWindow.h"
 #include "TGFrame.h"
+#include "TGraph.h"
 #include <TRootEmbeddedCanvas.h>
 
 #include "api.h"
@@ -42,13 +43,18 @@ class CMSPixelEvtMonitor {
 
 		void DrawMap(std::vector<pxar::pixel> pixels, char* name);
 
+    void TrackROTiming(unsigned int n_ev, double t);
+
+    void DrawROTiming();
+
 	private:
 
 		TApplication* m_theApp;
 		TProfile2D* m_h2_map;
 		TCanvas* m_canv;
+    TCanvas* m_c_timing;
 		MyMainFrame* m_MF;
-
+    TGraph* m_g_ROTiming;
 		static CMSPixelEvtMonitor* m_instance;
 
 		CMSPixelEvtMonitor();

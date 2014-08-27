@@ -218,3 +218,15 @@ ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
   MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
 ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
 
+#NEW
+###############################################
+# BUILD CMS Pixle Producer
+###############################################
+IF(BUILD_cmspixel)
+  FIND_PACKAGE(PXAR)
+  MESSAGE( STATUS "PXAR dir: ${PXAR_PATH}" )
+ENDIF()
+# Needed by CMSPixelDecoder
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
+#
+

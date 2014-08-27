@@ -10,6 +10,11 @@ endif (USE_ROOT)
 
 AUX_SOURCE_DIRECTORY( src library_sources )
 
+#NEW
+#PXAR
+INCLUDE_DIRECTORIES(include ${PXAR_PATH}/core/api ${PXAR_PATH}/core/utils ${PXAR_PATH}/util ${ROOT_INCLUDE_DIR})
+#
+
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} )
 SOURCE_GROUP(plugins .*Plugin.*cc)
 SOURCE_GROUP(FileIO .*File.*cc)
@@ -18,8 +23,9 @@ SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\CommandRecei
 SOURCE_GROUP(Event .*Event.*cc)
 SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 
-target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-
+#MODIFIED
+target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES} ${PXAR_LIBRARY})
+#
 
 INSTALL(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin

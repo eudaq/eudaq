@@ -8,12 +8,12 @@
 
 FIND_PATH(PXAR_PATH
 	NAMES core/api/api.h
-	PATHS /home/aebolz/cmspix/pxar
+	PATHS ~/pxar
 )
 
 FIND_LIBRARY(PXAR_LIBRARY
 NAMES libpxar.so 
-PATHS /home/aebolz/cmspix/pxar/lib
+PATHS ~/pxar/lib
       /usr/lib
       /usr/local/lib
       /opt/local/lib

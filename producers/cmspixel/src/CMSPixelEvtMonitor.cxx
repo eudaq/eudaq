@@ -5,10 +5,7 @@
 
 using namespace std;
 
-
-
 CMSPixelEvtMonitor* CMSPixelEvtMonitor::m_instance = NULL;
-
 
 void CMSPixelEvtMonitor::DrawFromFile(std::string filename)
 {
@@ -25,6 +22,7 @@ void CMSPixelEvtMonitor::DrawFromFile(std::string filename)
 			while ((linestream.peek()!='\n') && (linestream >> col >> row >> value))
 				m_h2_map -> Fill(col,row,value);
 		}
+  	m_canv -> cd(2) -> Clear();
 		m_h2_map -> Draw("COLZ");
 		m_canv -> Modified();
 		m_canv -> Update();
@@ -44,20 +42,43 @@ void CMSPixelEvtMonitor::DrawMap(std::vector<pxar::pixel> pixels, char* name)
 		double value = it -> getValue();
 		h2_temp -> Fill(col,row,value);
 	} 
-	m_canv -> cd() -> Clear();
+	m_canv -> cd(1) -> Clear();
 	h2_temp -> Draw("colz");
 	m_canv -> Modified();
 	m_canv -> Update();
 }
 
+void CMSPixelEvtMonitor::TrackROTiming(unsigned int n_ev, double t)
+{
+  if(n_ev == 1)
+    m_g_ROTiming -> Set(0);
+  m_g_ROTiming -> SetPoint(m_g_ROTiming -> GetN(), n_ev, t);
+}
+
+void CMSPixelEvtMonitor::DrawROTiming()
+{
+  m_canv -> cd(3) -> Clear();
+  m_g_ROTiming -> Draw("AC*");
+  m_g_ROTiming -> GetHistogram() -> GetXaxis() -> SetTitle("event number");
+  m_g_ROTiming -> GetHistogram() -> GetYaxis() -> SetTitle("time [us]");
+  
+	m_canv -> Modified();
+	m_canv -> Update();
+}
+
+
 CMSPixelEvtMonitor::CMSPixelEvtMonitor()
 {
-	m_h2_map = new TProfile2D("m_h2_map","Hit Map;col;row",52,-0.5,51.5,80,-0.5,79.5);
 	m_theApp = new TApplication("m_theApp",NULL,NULL);
+  m_g_ROTiming = new TGraph();
+
+	m_h2_map = new TProfile2D("m_h2_map","Hit Map;col;row",52,-0.5,51.5,80,-0.5,79.5);
+
 
 	m_MF = new MyMainFrame( gClient->GetRoot(  ), 800, 600 );	
 	
 	m_canv = m_MF->GetCanvas(  );
+  m_canv -> Divide(2,2);
 	m_theApp -> SetReturnFromRun(true);
 	gSystem -> ProcessEvents();
 	gStyle -> SetOptStat(0);
