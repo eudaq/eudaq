@@ -333,6 +333,7 @@ void DeviceReader::Loop()
 #endif
 #else
 
+    // Not needed for packet based!
     bool event_waiting = true;
     if (!m_high_rate_mode && m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
         event_waiting = false;
@@ -489,6 +490,9 @@ void DeviceReader::Loop()
                 m_flushing = false;
                 Print(0, "Sending EndOfRun word");
                 m_daq_board->EndOfRun();
+		
+		// gets resetted by EndOfRun
+		m_last_trigger_id = m_daq_board->GetNextEventId();
 
                 m_count_word_header = 0;
                 m_count_word_data = 0;
@@ -499,7 +503,6 @@ void DeviceReader::Loop()
                 m_size=0;
                 m_HeaderOK = m_EventOK = m_isTrailer = m_isData = m_endHeader=false;
                 m_isHeader = m_eventIDOK=true;
-
             }
         }
     }
