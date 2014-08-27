@@ -4,6 +4,9 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/ATLASFE4IInterpreter.hh"
+#include <cstdlib>
+#include <cstring>
+#include <exception>
 
 //All LCIO-specific parts are put in conditional compilation blocks
 //so that the other parts may still be used if LCIO is not available.
@@ -48,6 +51,11 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
   protected:
 	unsigned int count_boards;
 	std::vector<unsigned int> board_ids;
+
+	std::vector<int> moduleConfig;
+	std::vector<int> moduleCount;
+	std::vector<int> moduleIndex;
+	bool advancedConfig = false;
 
 	unsigned int consecutive_lvl1;
 	unsigned int tot_mode;
@@ -95,15 +103,76 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		{
 			board_ids.push_back(ev.GetTag ("boardid_" + to_string(i), -1));
 		}
-	}
 
+		const char* module_setup = ev.GetTag("modules", "").c_str();
+		char* module_setup_copy = strdup(module_setup);
+		char* subptr = nullptr;
+		subptr = strtok(module_setup_copy, " ,");
+		while(subptr != nullptr)
+		{
+			moduleConfig.push_back( atoi(subptr) );
+			subptr = strtok(module_setup_copy, " ,");
+		}
+
+		if( moduleConfig.size() > 0)
+		{
+			int previousModule = moduleConfig.at(0);
+			int counter = 0;
+			for(int i: moduleConfig)
+			{
+				if( i == previousModule)
+				{
+					counter++;
+					previousModule = i;
+				}
+				else
+				{
+					moduleCount.push_back(counter);
+					counter=1;
+				}
+			}
+			//sanity check
+			if(moduleCount.size() != moduleConfig.back() )
+			{
+				std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+				std::cout << "~~~~~sanity check failed~~~~~" << std::endl;
+				std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+			}
+			else
+			{	
+				std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+				std::cout << "~~~~~sanity check passed~~~~~" << std::endl;
+				std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+				advancedConfig = true;
+			}
+
+			for(int value: moduleCount)
+			{
+				for(int j = 1; j <= value; j++)
+				{
+					if(j>4)
+					{
+						std::cerr << "ERROR: USBPixI4ConverterPlugin: Your setup contains chips which are larger than 4!" << std::endl;
+						throw std::runtime_error("USBPixI4ConverterPlugin: Your setup contains chips which are larger than 4!");
+					}
+					moduleIndex.push_back(j);
+				}
+			}
+		}
+		else
+		{
+				std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+				std::cout << "~~~old style module config~~~" << std::endl;
+				std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
+		}
+	}
 	bool isEventValid(const std::vector<unsigned char> & data) const
 	{
 		//ceck data consistency
 		unsigned int dh_found = 0;
-		for (unsigned int i=0; i < data.size()-8; i += 4)
+		for (size_t i=0; i < data.size()-8; i += 4)
 		{
-			unsigned word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+			unsigned word = getWord(data, i);
 			if(this->is_dh(word))
 			{
 				dh_found++;
@@ -124,22 +193,22 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 	{
 		//Get Trigger Number and check for errors
 		unsigned int i = data.size() - 8; //splitted in 2x 32bit words
-		unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+		unsigned Trigger_word1 = getWord(data, i);
         
 		if(Trigger_word1==(unsigned) -1)
 		{
 			return (unsigned)-1;
 		}
 
-		unsigned Trigger_word2 = (((unsigned int)data[i + 7]) << 24) | (((unsigned int)data[i + 6]) << 16) | (((unsigned int)data[i + 5]) << 8) | (unsigned int)data[i + 4];
+		unsigned Trigger_word2 = getWord(data, i+4);
 		unsigned int trigger_number = this->get_tr_no_2(Trigger_word1, Trigger_word2);
 		return trigger_number;
 	}
 
 	bool getHitData(unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const 
 	{
-
-		if( !this->is_dr(Word) ) //No data record 
+		//No data record
+		if( !this->is_dr(Word) )
 		{
 			return false;
 		}	
@@ -213,7 +282,25 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		//FE-I4: DH with lv1 before Data Record
 		unsigned int lvl1 = 0;
 
-		plane.SetSizeZS(CHIP_MAX_COL_NORM + 1, CHIP_MAX_ROW_NORM + 1, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE); //
+		int colMult = 1;
+		int rowMult = 1;
+
+		if(advancedConfig)
+		{
+			int chipCount = moduleCount.at(id);
+			if(chipCount > 2)
+			{
+				colMult = 2;
+				rowMult = 2;
+			}
+			else if(chipCount == 2)
+			{
+				colMult = 2;
+			}
+		}
+		
+		plane.SetSizeZS((CHIP_MAX_COL_NORM + 1)*colMult, (CHIP_MAX_ROW_NORM + 1)*rowMult, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+		
 		//Get Trigger Number
 		unsigned int trigger_number = getTrigger(data);
 		plane.SetTLUEvent(trigger_number);
@@ -222,12 +309,11 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		{
 			return plane;
 		}
-		unsigned int eventnr = 0;
 
 		//Get Events
 		for(size_t i=0; i < data.size()-8; i += 4) 
 		{
-			unsigned int Word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
+			unsigned int Word = getWord(data, i);
 
 			if(this->is_dh(Word)) 
 			{
@@ -238,18 +324,39 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 				//First Hit
 				if(getHitData(Word, false, Col, Row, ToT))
 				{
+					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id) );
 					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
-					eventnr++;
 				}
 				//Second Hit
 				if(getHitData(Word, true, Col, Row, ToT))
 				{
+					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id) );
 					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
-					eventnr++;
 				}
 			}
 		}
 		return plane;
+	}
+	
+	void transformChipsToModule(unsigned int& col, unsigned int& row, int chip) const
+	{
+		switch(chip)
+		{
+			default:
+			case 2:
+				col += 80;
+			case 3:
+				col = 179 - col;
+				row = 671 - row;
+			case 4:
+				col =  79 - col;
+				row = 671 - row;
+		}
+	}
+
+	inline unsigned int getWord(const std::vector<unsigned char>& data, size_t index) const
+	{
+		return (((unsigned int)data[index + 3]) << 24) | (((unsigned int)data[index + 2]) << 16) | (((unsigned int)data[index + 1]) << 8) | (unsigned int)data[index];
 	}
 };
 
@@ -261,12 +368,8 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 	//This is called once at the beginning of each run.
 	//You may extract information from the BORE and/or configuration
 	//and store it in member variables to use during the decoding later.
-	virtual void Initialize(const Event & bore, const Configuration & cnf)
+	virtual void Initialize(const Event& bore, const Configuration& /*cnf*/)
 	{
-		#ifndef WIN32
-		(void)cnf; //just to suppress a warning about unused parameter cnf
-		#endif
-
 		this->getBOREparameters(bore);
 	}
 
@@ -302,42 +405,39 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 	//Again, this is just an example, adapted it for the actual data layout.
 	virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const
 	{
-		if(ev.IsBORE())
+		if(ev.IsBORE() || ev.IsEORE())
 		{
 			return true;
 		}
-		else if(ev.IsEORE())
-		{
-			//nothing to do
-			return true;
-  		}
 
 		//If we get here it must be a data event
 		const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
+
 		for(size_t i = 0; i < ev_raw.NumBlocks(); ++i)
 		{
-			sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
+			if(this->advancedConfig) 
+			{
+				sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), this->moduleConfig.at(i)));
+			}
+			else
+			{
+				sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
+			}
 		}
 		return true;
 	}
 
 	#if USE_LCIO && USE_EUTELESCOPE
 	//This is where the conversion to LCIO is done
-	virtual lcio::LCEvent* GetLCIOEvent(const Event * /*ev*/) const 
+	virtual lcio::LCEvent* GetLCIOEvent(const Event* /*ev*/) const 
 	{
         return nullptr;
 	}
 
 	virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const 
 	{
-        if(eudaqEvent.IsBORE())
+        if(eudaqEvent.IsBORE() || eudaqEvent.IsEORE())
 		{
-			//shouldn't happen
-			return true;
-		}
-		else if(eudaqEvent.IsEORE())
-		{
-			//nothing to do
 			return true;
 		}
 
@@ -362,35 +462,44 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		CellIDEncoder<TrackerDataImpl> zsDataEncoder   ( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  );
 
 		//this is an event as we sent from Producer, needs to be converted to concrete type RawDataEvent
-		const RawDataEvent & ev_raw = dynamic_cast <const RawDataEvent &> (eudaqEvent);
+		const RawDataEvent& ev_raw = dynamic_cast<const RawDataEvent&>(eudaqEvent);
 
 		std::vector<eutelescope::EUTelSetupDescription*>  setupDescription;
 
 		for(size_t chip = 0; chip < ev_raw.NumBlocks(); ++chip)
 		{
 			const std::vector <unsigned char>& buffer=dynamic_cast<const std::vector<unsigned char>&> (ev_raw.GetBlock(chip));
-
+/*
 			if(lcioEvent.getEventNumber() == 0)
 			{
 				eutelescope::EUTelPixelDetector* currentDetector = new eutelescope::EUTelAPIXMCDetector(2);
 				currentDetector->setMode( "ZS" );
 				setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
 			}
-
+*/
 			std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
 
-			zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset + this->first_sensor_id; //formerly 14
+			int sensorID = 0;
+			if(this->advancedConfig)
+			{
+				sensorID = this->moduleConfig.at(chip)+chip_id_offset;
+			}
+			else
+			{
+				sensorID = ev_raw.GetID(chip) + chip_id_offset + this->first_sensor_id;
+			}
+			zsDataEncoder["sensorID"] = sensorID;
 			zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
 			//prepare a new TrackerData object for the ZS data
 			//it contains all the hits for a particular sensor in one event
-			std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+			std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
 			zsDataEncoder.setCellID( zsFrame.get() );
 
 			//this is the structure that will host the sparse pixel
 			//it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
 			//a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-			std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+			std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
 			sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
 			unsigned int ToT = 0;
@@ -398,9 +507,9 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 			unsigned int Row = 0;
 			unsigned int lvl1 = 0;
 
-			for(unsigned int i=0; i < buffer.size()-4; i += 4)
+			for(size_t i=0; i < buffer.size()-4; i += 4)
 			{
-				unsigned int Word = (((unsigned int)buffer[i + 3]) << 24) | (((unsigned int)buffer[i + 2]) << 16) | (((unsigned int)buffer[i + 1]) << 8) | (unsigned int)buffer[i];
+				unsigned int Word = this->getWord(buffer, i);
 
 				if( this->is_dh(Word))
 				{
@@ -411,6 +520,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 					//First Hit
 					if(this->getHitData(Word, false, Col, Row, ToT))
 					{
+						if(this->advancedConfig) this->transformChipsToModule(Col, Row, this->moduleIndex.at(chip));
 						eutelescope::EUTelGenericSparsePixel* thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
 						sparseFrame->addSparsePixel( thisHit );
 						tmphits.push_back( thisHit );
@@ -418,6 +528,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 					//Second Hit
 					if(this->getHitData(Word, true, Col, Row, ToT)) 
 					{
+						if(this->advancedConfig) this->transformChipsToModule(Col, Row, this->moduleIndex.at(chip));
 						eutelescope::EUTelGenericSparsePixel* thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
 						sparseFrame->addSparsePixel( thisHit );
 						tmphits.push_back( thisHit );
@@ -429,7 +540,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 			zsDataCollection->push_back( zsFrame.release() );
 
 			//clean up
-			for( std::list<eutelescope::EUTelGenericSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ )
+			for( auto it = tmphits.begin(); it != tmphits.end(); it++ )
 			{
 				delete (*it);
 			}
@@ -440,7 +551,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		{
 			lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
 		}
-
+/*
 		if(lcioEvent.getEventNumber() == 0) 
 		{
 			//do this only in the first event
@@ -459,7 +570,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 
 			for( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane )
 			{
-				apixSetupCollection->push_back( setupDescription.at( iPlane ) );
+				apixSetupCollection->push_back( setupDescription.at(iPlane) );
 			}
 
 			if(!apixSetupExists)
@@ -468,6 +579,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 			}
 			return true;
 		}
+*/
 	}
 #endif
 
