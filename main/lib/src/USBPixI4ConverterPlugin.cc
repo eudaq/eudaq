@@ -31,7 +31,8 @@
 #endif
 
 namespace eudaq {
-  //The event type for which this converter plugin will be registered
+  
+  //Constants for one FE-I4 chip
   static const unsigned int CHIP_MIN_COL = 1;
   static const unsigned int CHIP_MAX_COL = 80;
   static const unsigned int CHIP_MIN_ROW = 1;
@@ -39,12 +40,16 @@ namespace eudaq {
   static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	//Maximum ROW normalized (starting with 0)
   static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
 
+  //Will be set as the EVENT_TYPE for the different versions of this producer
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
+
   //change these values to set a offset in the sensorID
   static const int FEI4A_CHIP_ID_OFFSET = 20;
   static const int FEI4B_CHIP_ID_OFFSET = 20;
  
+/** Base converter class for the conversion of EUDAQ data into StandardEvent/LCIO data format
+ *  Provides methods to retreive data from raw data words and similar.*/
 template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE> 
 class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_msk>{
 
@@ -591,8 +596,6 @@ class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF, &US
 {
   private:
  	//The constructor can be private, only one static instance is created
-	//The DataConverterPlugin constructor must be passed the event type
-	//in order to register this converter for the corresponding conversions
 	USBPixFEI4AConverter(){};
 	static USBPixFEI4AConverter m_instance;
 };
