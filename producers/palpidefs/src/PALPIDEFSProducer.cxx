@@ -347,16 +347,8 @@ void DeviceReader::Loop()
 
       TEventHeader header;
       
-      bool HeaderOK = false;
-      bool TrailerOK = false;
-      
-//       if (m_readout_mode == 0) {
-	HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
-	TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
-//       } else if (m_readout_mode == 1) {
-// 	HeaderOK = m_daq_board->DecodeEventHeaderNew(data_buf, &header);
-// 	TrailerOK = m_daq_board->DecodeEventTrailerNew(data_buf + length - 8);
-//       }
+      bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
+      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
       
       if (HeaderOK && TrailerOK) {
 	if (m_debuglevel > 2) {
@@ -536,6 +528,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
     
+    m_readout_mode = param.Get("ReadoutMode", 0);
     m_full_config = param.Get("FullConfig", "");
     
   #ifndef SIMULATION
