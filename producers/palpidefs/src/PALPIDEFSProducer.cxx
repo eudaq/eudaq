@@ -340,8 +340,8 @@ void DeviceReader::Loop()
 	  Print(0, "Sending EndOfRun word");
 	  // gets resetted by EndOfRun
 	  m_last_trigger_id = m_daq_board->GetNextEventId();
-	}
-	Print(3, "Unexpected: 0 event received but trigger has not been stopped.");
+	} else
+	  Print(3, "UNEXPECTED: 0 event received but trigger has not been stopped.");
 	continue;
       }
 
