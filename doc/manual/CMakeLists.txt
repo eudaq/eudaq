@@ -8,6 +8,7 @@ ADD_LATEX_DOCUMENT(
          src/glossary.tex
          src/Installing.tex
          src/Introduction.tex
+         src/License.tex
          src/OnlineMonConfig.tex
          src/OtherParts.tex
          src/preamble.tex
@@ -19,7 +20,7 @@ ADD_LATEX_DOCUMENT(
 	 ../../main/exe/src/OptionExample.cxx
 	 ../../conf/ExampleConfig.conf
 	 ../../main/exe/src/ExampleProducer.cxx
-	 ../../main/lib/src/ExampleConverterPlugin.cc
+	 ../../main/lib/plugins/ExampleConverterPlugin.cc
 	 ../../main/exe/src/ExampleReader.cxx
   BIBFILES src/References.bib
   USE_GLOSSARY
