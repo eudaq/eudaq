@@ -15,7 +15,7 @@
 #include "TTestsetup.h"
 
 struct SingleEvent {
-  SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp) : m_buffer(0), m_length(length), m_trigger_id(trigger_id), m_timestamp(timestamp) {
+  SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp) : m_buffer(0), m_length(length), m_trigger_id(trigger_id), m_timestamp(timestamp), m_timestamp_corrected(timestamp) {
     m_buffer = new unsigned char[length];
   }
   ~SingleEvent() {
@@ -26,6 +26,7 @@ struct SingleEvent {
   unsigned int m_length;
   uint64_t m_trigger_id;
   uint64_t m_timestamp;
+  uint64_t m_timestamp_corrected;
 };
 
 class SimpleLock {
@@ -48,6 +49,7 @@ class DeviceReader {
     void SetMaxQueueSize(unsigned long size) { m_max_queue_size = size; }
     void SetQueueFullDelay(int delay) { m_queuefull_delay = delay; }
     void SetHighRateMode(bool flag) { m_high_rate_mode = flag; }
+    void SetReadoutMode(int mode) { m_readout_mode = mode; }
     
     void Stop();
     void SetRunning(bool running);
@@ -58,6 +60,7 @@ class DeviceReader {
     static void* LoopWrapper(void* arg);
     
     TDAQBoard* GetDAQBoard() { return m_daq_board; }
+    TpAlpidefs* GetDUT() { return m_dut; }
     
     float GetTemperature();
   
@@ -93,30 +96,13 @@ class DeviceReader {
     int m_queuefull_delay; // milliseconds
     unsigned long m_max_queue_size; // queue size in B
     bool m_high_rate_mode; // decides if is is checked if data is available before requesting an event
-
-    // packet based readout variables
-    int          m_count_word_header;
-    int          m_count_word_data;
-    int          m_Header[4];
-    unsigned char      m_Data[8192];
-    int          m_Trailer[2];
-    int          m_last_word;
-    int16_t      m_last_word0;
-    int16_t      m_last_word1;
-    uint64_t     m_lastEventID;
-    TEventHeader m_header;
-    TEventHeader m_trailer;
-    bool         m_HeaderOK,m_TrailerOK,m_EventOK;
-    bool         m_isHeader,m_isTrailer,m_isData;
-    bool         m_endHeader,m_eventIDOK;
-    int          m_size;
-
+    bool m_readout_mode;
 };
 
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true) {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(1) {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -129,6 +115,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     void Loop();
     
   protected:
+    bool ConfigChip(int id, TDAQBoard* daq_board, std::string configFile);
     int BuildEvent();
     void SendEOR();
     void SendStatusEvent();
@@ -143,6 +130,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool m_running;
     bool m_flush;
     bool m_configured;
+    bool m_firstevent;
     DeviceReader** m_reader;
     SingleEvent** m_next_event;
     int m_debuglevel;
@@ -155,4 +143,6 @@ class PALPIDEFSProducer : public eudaq::Producer {
     int m_status_interval;
     std::string m_full_config;
     bool m_ignore_trigger_ids;
+    bool m_recover_outofsync;
+    bool m_readout_mode;
 };
