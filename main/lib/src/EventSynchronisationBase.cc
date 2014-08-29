@@ -288,10 +288,14 @@ void SyncBase::PrepareForEvents()
 	if (!m_sync)
 	{
 		std::cout << "events not synchronized" << std::endl;
-		for (auto& e:m_ProducerId2Eventqueue)
+		if (m_TLUs_found==0)
 		{
-			e.second--;
+			for (auto& e : m_ProducerId2Eventqueue)
+			{
+				e.second--;
+			}
 		}
+
 	}
 	else
 	{
