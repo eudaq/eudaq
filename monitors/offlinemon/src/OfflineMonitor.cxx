@@ -25,7 +25,7 @@ int main(int, char ** argv) {
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<std::string> opat(op, "o", "outpattern", "test$6R$X", "string", "Output filename pattern");
   eudaq::Option<std::string> confFile(op, "c", "confFile", "../conf/offlinemonconf.xml", "string", "load the file that contains all the information about the correlations plots");
-  eudaq::OptionFlag sync(op, "s", "synctlu", "Resynchronize subevents based on TLU event number");
+  eudaq::OptionFlag async(op, "a", "nosync", "Disables Synchronisation with TLU events");
   eudaq::Option<size_t> syncEvents(op, "n" ,"syncevents",0,"size_t","Number of events that need to be synchronous before they are used");
   eudaq::Option<uint64_t> syncDelay(op, "d" ,"longDelay",20,"uint64_t","us time long time delay");
   eudaq::Option<size_t> skipEvents(op, "k" ,"skipEvents",0,"size_t","Number of events to skip");
@@ -37,12 +37,11 @@ int main(int, char ** argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
 	std::cout<<"syncEvents"<<syncEvents.Value()<<std::endl;
-//	eudaq::multiFileReader reader;
-  eudaq::FileReader reader(op.GetArg(0), ipat.Value());
-//	for (size_t i = 0; i < op.NumArgs(); ++i) {
+	eudaq::multiFileReader reader(!async.Value());
+	for (size_t i = 0; i < op.NumArgs(); ++i) {
 
-	//	reader.addFileReader(op.GetArg(i), ipat.Value());
-	//}
+		reader.addFileReader(op.GetArg(i), ipat.Value());
+	}
       mCorrelations correlator;
 	  correlator.open_confFile(confFile.Value().c_str());
 	  correlator.SetFilePattern(opat.Value());

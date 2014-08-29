@@ -20,6 +20,8 @@ IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)
 ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
+SET(CMAKE_CXX_FLAGS "-std=c++0x" )
+
 # Set package version
 IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
@@ -90,6 +92,18 @@ IF(BUILD_nreader)
   set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
+#NEW
+###############################################
+# BUILD CMS Pixle Producer
+###############################################
+IF(BUILD_cmspixel)
+  FIND_PACKAGE(PXAR)
+  MESSAGE( STATUS "PXAR dir: ${PXAR_PATH}" )
+  # Needed by CMSPixelDecoder
+  CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
+  set(ADDITIONAL_LIBRARIES ${PXAR_LIBRARY})
+ENDIF()
+#
 
 # SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
 # see http://www.cmake.org/Wiki/CMake_RPATH_handling
@@ -217,16 +231,3 @@ if (${CMAKE_VERSION} VERSION_GREATER 2.8)
 ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
   MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
 ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
-
-#NEW
-###############################################
-# BUILD CMS Pixle Producer
-###############################################
-IF(BUILD_cmspixel)
-  FIND_PACKAGE(PXAR)
-  MESSAGE( STATUS "PXAR dir: ${PXAR_PATH}" )
-ENDIF()
-# Needed by CMSPixelDecoder
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
-#
-

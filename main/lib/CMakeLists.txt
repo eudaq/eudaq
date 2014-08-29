@@ -9,13 +9,14 @@ if (USE_ROOT)
 endif (USE_ROOT)
 
 AUX_SOURCE_DIRECTORY( src library_sources )
+AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
 #NEW
 #PXAR
 INCLUDE_DIRECTORIES(include ${PXAR_PATH}/core/api ${PXAR_PATH}/core/utils ${PXAR_PATH}/util ${ROOT_INCLUDE_DIR})
 #
 
-ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} )
+ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} ${plugins_sources})
 SOURCE_GROUP(plugins .*Plugin.*cc)
 SOURCE_GROUP(FileIO .*File.*cc)
 SOURCE_GROUP(TCPIP .*Transport.*cc)
