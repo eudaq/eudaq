@@ -285,9 +285,17 @@ void SyncBase::clearDetectorQueue()
 void SyncBase::PrepareForEvents()
 {
 
-	if (m_sync)
+	if (!m_sync)
 	{
-		std::cout << "events not synchronised" << std::endl;
+		std::cout << "events not synchronized" << std::endl;
+		if (m_TLUs_found==0)
+		{
+			for (auto& e : m_ProducerId2Eventqueue)
+			{
+				e.second--;
+			}
+		}
+
 	}
 	else
 	{
