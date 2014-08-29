@@ -39,7 +39,8 @@ class CMSPixelEvtMonitor {
 			return m_instance;
 		}
 
-		void DrawFromFile(std::string filename);
+		void DrawFromASCIIFile(std::string filename);
+		void DrawFromBinaryFile(std::string filename, std::string roctype);
 
 		void DrawMap(std::vector<pxar::pixel> pixels, char* name);
 

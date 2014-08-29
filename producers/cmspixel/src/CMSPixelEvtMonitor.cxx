@@ -3,11 +3,15 @@
 #include <TGFrame.h>
 #include <TClass.h>
 
+#include "eudaq/CMSPixelDecoder.h"
+#include "dictionaries.h"
+
+
 using namespace std;
 
 CMSPixelEvtMonitor* CMSPixelEvtMonitor::m_instance = NULL;
 
-void CMSPixelEvtMonitor::DrawFromFile(std::string filename)
+void CMSPixelEvtMonitor::DrawFromASCIIFile(std::string filename)
 {
 	std::ifstream file(filename);		
 	if(!file.fail()){
@@ -29,6 +33,32 @@ void CMSPixelEvtMonitor::DrawFromFile(std::string filename)
 	}
 	else
 		std::cout<<"Couldn't open file..."<<std::endl;
+}
+
+void CMSPixelEvtMonitor::DrawFromBinaryFile(std::string filename, std::string roctype)
+{
+  DeviceDictionary* devDict;
+  CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
+
+  m_h2_map -> Clear();
+  CMSPixel::CMSPixelFileDecoderPSI_DTB fileDecoder(filename.c_str(), 1, FLAG_12BITS_PER_WORD, 
+      devDict->getInstance()->getDevCode(roctype), "");
+  CMSPixel::timing dectime;
+  std::vector<CMSPixel::pixel>* decevt = new std::vector<CMSPixel::pixel>;
+  fileDecoder.get_event(decevt, dectime);
+  for(std::vector<CMSPixel::pixel>::iterator it = decevt->begin(); it != decevt->end(); ++it){
+    int col = it->col;
+    int row = it->row;
+    int value = it->raw;
+	  m_h2_map -> Fill(col,row,value);
+    
+  }
+  delete decevt;
+
+  m_canv -> cd(2) -> Clear();
+  m_h2_map -> Draw("COLZ");
+  m_canv -> Modified();
+  m_canv -> Update();
 }
 
 

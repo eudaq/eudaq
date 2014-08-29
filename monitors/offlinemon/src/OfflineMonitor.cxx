@@ -37,11 +37,12 @@ int main(int, char ** argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
 	std::cout<<"syncEvents"<<syncEvents.Value()<<std::endl;
-	eudaq::multiFileReader reader;
-	for (size_t i = 0; i < op.NumArgs(); ++i) {
+//	eudaq::multiFileReader reader;
+  eudaq::FileReader reader(op.GetArg(0), ipat.Value());
+//	for (size_t i = 0; i < op.NumArgs(); ++i) {
 
-		reader.addFileReader(op.GetArg(i), ipat.Value());
-	}
+	//	reader.addFileReader(op.GetArg(i), ipat.Value());
+	//}
       mCorrelations correlator;
 	  correlator.open_confFile(confFile.Value().c_str());
 	  correlator.SetFilePattern(opat.Value());

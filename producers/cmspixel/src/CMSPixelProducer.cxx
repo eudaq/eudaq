@@ -26,9 +26,9 @@ using namespace std;
 // 1 read out full buffer when full
 // 2 read out single events withing eudaq loop
 // 3 read out via eudaq data collector
-#define BUFFER_RO_SCHEME 3
+#define BUFFER_RO_SCHEME 1
 // Write output to binary 1 or ASCII 2 for R/O schemes 1 or 2
-#define OUTPUT_FILE_SCHEME 2
+#define OUTPUT_FILE_SCHEME 1
 /*========================================================================*/
 
 // event type name, needed for readout with eudaq. Links to /main/lib/src/CMSPixelConverterPlugin.cc:
@@ -55,10 +55,12 @@ class CMSPixelProducer : public eudaq::Producer {
       m_foutName(""),
       m_perFull(0),
       triggering(false),
-      m_roctype("")
+      m_roctype(""),
+      m_usbId(""),
+      m_producerId(0)
   {
     m_t = new eudaq::Timer;
-    m_api = new pxar::pxarCore("*", m_verbosity);
+    m_api = NULL;//new pxar::pxarCore("*", m_verbosity);
   }// Constructor
 //-------------------------------------------------
 //
@@ -77,7 +79,17 @@ class CMSPixelProducer : public eudaq::Producer {
       std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
       std::vector<std::vector<pxar::pixelConfig> > rocPixels;
 
-      uint8_t hubid = config.Get("hubid", 31); 
+      // create api
+      if(m_api)
+        delete m_api;
+      
+      m_usbId = config.Get("usbId","*");
+      EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+      m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+
+      m_producerId = config.Get("producerId", 0);
+
+      uint8_t hubid = config.Get("hubid", 31);
 
       // DTB delays
       sig_delays.push_back( std::make_pair("clk",config.Get("clk",4)) );
@@ -100,13 +112,14 @@ class CMSPixelProducer : public eudaq::Producer {
         pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );    // PG_TRG
         pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));     // PG_TOK
         m_pattern_delay = config.Get("patternDelay", 100) * 10;
+        EUDAQ_USER("Using testpulses...\n");
       }
       else{
         pg_setup.push_back(std::make_pair("trigger",46));    // PG_TRG
         pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
         m_pattern_delay = config.Get("patternDelay", 100);
       }
-      std::cout << "m_pattern_delay = " << m_pattern_delay << std::endl;
+      EUDAQ_USER("m_pattern_delay = " +eudaq::to_string(m_pattern_delay) + "\n");
 
       // read dacs and trimming from config
       std::string trimFile = config.Get("trimDir", "") + string("/trimParameters.dat");
@@ -115,8 +128,6 @@ class CMSPixelProducer : public eudaq::Producer {
 
       // Set the type of the ROC correctly:
       m_roctype = config.Get("roctype","psi46digv2");  
-
-      std::cout << "roctype " << m_roctype << std::endl;
 
       try {
         m_api -> initTestboard(sig_delays, power_settings, pg_setup);
@@ -128,7 +139,7 @@ class CMSPixelProducer : public eudaq::Producer {
 
         m_api -> HVon();
         // m_api -> Pon();
-        EUDAQ_USER("API set up succesfully...");
+        EUDAQ_USER("API set up succesfully...\n");
       }
       catch (pxar::InvalidConfig &e){
         SetStatus(eudaq::Status::LVL_ERROR, string("Configure Error: pxar caught an exception due to invalid configuration settings: ") + e.what());
@@ -157,16 +168,14 @@ class CMSPixelProducer : public eudaq::Producer {
         char mapName[256] = "efficiency map";
         std::vector<pxar::pixel> effMap = m_api->getEfficiencyMap(0, 100);
         CMSPixelEvtMonitor::Instance()->DrawMap(effMap, mapName);
-
         m_api->_dut->testAllPixels(false);
 
         std::cout << "Setting up pixels for calibrate pulses..." << std::endl << "col \t row" << std::endl;
-        for(int i = 0; i < 3; i++) 
-          for(int j = 0; j < 3; j++){
-            m_api->_dut->testPixel(i,j,true);
-            std::cout << i << "\t" << j << std::endl;
-          }
+        for(int i = 40; i < 45; i++){
+          m_api->_dut->testPixel(25,i,true);
         }
+    
+      }
         // Read DUT info, should print above filled information:
         m_api->_dut->info();
 
@@ -192,18 +201,18 @@ class CMSPixelProducer : public eudaq::Producer {
 #if BUFFER_RO_SCHEME == 3
         eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
         bore.SetTag("ROCTYPE", m_roctype);
-
+        bore.SetTag("PRODUCER_ID", m_producerId);
         SendEvent(bore);
 #else
         // Get output file
         std::ostringstream filename;
         std::cout << std::endl << m_run << std::endl;
-        filename << m_config.Get("outputFileTrunk", "../data/defaultOutput") << setfill('0') << setw(5) << (int)m_run << ".dat" ;
+        filename << m_config.Get("outputFileTrunk", "../data/defaultOutput") 
+          << setfill('0') << setw(5) << (int)m_run << ".dat" ;
         m_foutName = filename.str();
 
-        EUDAQ_INFO(string("Writing CMS pixel data into: ") + m_foutName);
+        EUDAQ_INFO(string("Writing CMS pixel data into: ") + m_foutName + "\n");
         std::cout << "Writing CMS pixel data into: " << m_foutName << std::endl;
-
         m_fout.open(m_foutName.c_str(), std::ios::out | std::ios::binary);
 #endif
         m_api -> daqStart();
@@ -212,9 +221,9 @@ class CMSPixelProducer : public eudaq::Producer {
         started = true;
         SetStatus(eudaq::Status::LVL_OK, "Running");
       }// OnStartRun
-      //-------------------------------------------------
-      //
-      //-------------------------------------------------
+//-------------------------------------------------
+//
+//-------------------------------------------------
       // This gets called whenever a run is stopped
       virtual void OnStopRun() {
         stopping = true;
@@ -234,22 +243,19 @@ class CMSPixelProducer : public eudaq::Producer {
           SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
 #else
           m_fout.close();
-#endif
-
-#if OUTPUT_FILE_SCHEME == 2
           std::cout << "Trying to run root application and show run summary." << std::endl;
           try{
-            CMSPixelEvtMonitor::Instance() -> DrawFromFile(m_foutName); 
-#if BUFFER_RO_SCHEME == 2
-          CMSPixelEvtMonitor::Instance() -> DrawROTiming();           
-#endif
-         }
+#if OUTPUT_FILE_SCHEME == 1       
+            CMSPixelEvtMonitor::Instance() -> DrawFromBinaryFile(m_foutName, m_roctype); 
+#else       
+            CMSPixelEvtMonitor::Instance() -> DrawFromASCIIFile(m_foutName); 
+#endif      
+            CMSPixelEvtMonitor::Instance() -> DrawROTiming();
+          }
           catch(...){
             std::cout << "Didn't work..." << std::endl;
           }
-
 #endif
-
           std::cout << "Stopped" << std::endl;
 
           SetStatus(eudaq::Status::LVL_OK, "Stopped");
@@ -301,8 +307,7 @@ class CMSPixelProducer : public eudaq::Producer {
 #else 
             eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
             pxar::rawEvent daqEvent = m_api -> daqGetRawEvent();
-            uint16_t rocHeader = 0;
-            ev.AddBlock(rocHeader, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+            ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 /*
             const std::vector<uint8_t> & block = ev.GetBlock(0);
             const uint8_t* data(block.data());
@@ -337,7 +342,10 @@ class CMSPixelProducer : public eudaq::Producer {
           SetStatus(eudaq::Status::LVL_WARN, "BUFFER almost full. Stop run!");
           // OnStopRun(); // FIXME asking eudaq to stop the run doesn't to work (yet)
         }
-        pxar::rawEvent daqEvent = m_api -> daqGetRawEvent(); //FIXME Raw event vs normal event, which one to use
+        double_t t_0 = m_t -> uSeconds();
+        pxar::rawEvent daqEvent = m_api -> daqGetRawEvent(); 
+        CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
+
         m_fout.write(reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
         if(stopping){
           // assure trigger has stopped before attempting readout.
@@ -367,14 +375,14 @@ class CMSPixelProducer : public eudaq::Producer {
         CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
       
         LOG(logDEBUGAPI) << "Number of decoder errors: "<< m_api -> daqGetNDecoderErrors();
-        m_fout << hex << daqEvent.header << "\t";
+        m_fout << std::hex << daqEvent.header << "\t";
         int col, row;
         double value;
         for(std::vector<pxar::pixel>::iterator it = daqEvent.pixels.begin(); it != daqEvent.pixels.end(); ++it){
           col = (int) it -> getColumn();
           row = (int) it -> getRow();
           value = it -> getValue();
-          m_fout << dec << col << "\t" << row << "\t" << value << "\t";
+          m_fout << std::dec << col << "\t" << row << "\t" << value << "\t";
         } 
         m_fout << "\n";
         // if OnStopRun has been called read out remaining buffer
@@ -517,7 +525,7 @@ class CMSPixelProducer : public eudaq::Producer {
         }
         else{
           std::cout << "Couldn't read trim parameters from " << string(filename) << ". Setting all to 15." << std::endl;
-          EUDAQ_WARN(string("Couldn't read trim parameters from ") + string(filename) + (". Setting all to 15."));
+          EUDAQ_WARN(string("Couldn't read trim parameters from ") + string(filename) + (". Setting all to 15.\n"));
           for(int col = 0; col < 52; col++) {
             for(int row = 0; row < 80; row++) {
               pixels.push_back(pxar::pixelConfig(col,row,15));
@@ -526,19 +534,20 @@ class CMSPixelProducer : public eudaq::Producer {
           m_trimmingFromConf = false;
         }
         if(m_trimmingFromConf)
-          EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": ") + string(filename));
+          EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": ") + string(filename) + string("\n"));
         return pixels;
       } // GetConfTrimming
       //-------------------------------------------------
       //
       //-------------------------------------------------
       unsigned m_run, m_ev;
-      std::string m_verbosity, m_foutName, m_roctype;
+      std::string m_verbosity, m_foutName, m_roctype, m_usbId;
       bool stopping, done, started, triggering;
       bool m_dacsFromConf, m_trimmingFromConf;
       eudaq::Configuration m_config;
       pxar::pxarCore *m_api;
       int m_pattern_delay;
+      int m_producerId; 
       uint8_t m_perFull;
       std::ofstream m_fout;
       eudaq::Timer* m_t;
@@ -551,10 +560,9 @@ class CMSPixelProducer : public eudaq::Producer {
       eudaq::OptionParser op("EUDAQ Example Producer", "1.0",
           "Just an example, modify it to suit your own needs");
       eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
-          "tcp://localhost:44000", "address",
-          "The address of the RunControl.");
+          "tcp://localhost:44000", "address", "The address of the RunControl.");
       eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
-          "The minimum level for displaying log messages locally");
+      "The minimum level for displaying log messages locally");
       eudaq::Option<std::string> name (op, "n", "name", "CMSPixel", "string",
           "The name of this Producer");
       eudaq::Option<std::string> verbosity(op, "v", "verbosity mode", "INFO", "string");
