@@ -18,6 +18,8 @@
 #include <list>
 #include <climits>
 
+#include "config.h"
+
 // #define SIMULATION // don't initialize, send dummy events
 #define LOADSIMULATION // if set simulate continous stream, if not set simulate SPS conditions
 
@@ -679,6 +681,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 #ifndef SIMULATION  
   bore.SetTag("Driver_GITVersion", m_testsetup->GetGITVersion());
 #endif
+  bore.SetTag("EUDAQ_GITVersion", PACKAGE_VERSION);
 
   // read configuration, dump to XML string
   for (int i=0; i<m_nDevices; i++) {
