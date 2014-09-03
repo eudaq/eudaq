@@ -65,7 +65,12 @@ namespace eudaq {
 	char tmp[100];
 	sprintf(tmp, "Config_%d", i);
 	std::string config = bore.GetTag<std::string>(tmp, "");
-	cout << "Config of layer " << i << " is: " << config.c_str() << endl;
+	// cout << "Config of layer " << i << " is: " << config.c_str() << endl;
+	
+	// get masked pixels
+	sprintf(tmp, "MaskedPixels_%d", i);
+	std::string pixels = bore.GetTag<std::string>(tmp, "");
+	//cout << "Masked pixels of layer " << i << " is: " << pixels.c_str() << endl;
       }
     }
     //##############################################################################
