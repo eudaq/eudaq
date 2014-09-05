@@ -133,6 +133,8 @@ namespace tlu {
 
     void SetCatchedError() { m_catchedError = true; }
     void ClearCatchedError() { m_catchedError = false; }
+
+    void SetMaxReadSize(unsigned int value) { m_maxRead = value; }
   private:
     HwInterface * m_hw;
     bool m_checkConfig;
@@ -144,6 +146,7 @@ namespace tlu {
     void WriteI2CChar(char deviceAddr, char memAddr, char value);
     void WriteI2CCharArray(char deviceAddr, char memAddr, unsigned char *values, unsigned int len);
     uint32_t m_nEvtInFIFO;
+    unsigned int m_maxRead;
 
     bool m_ipbus_verbose;
 

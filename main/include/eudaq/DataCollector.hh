@@ -57,6 +57,8 @@ class JSON;
       };
 
       const std::string m_runnumberfile; // path to the file containing the run number
+      const std::string m_name; // name provided in ctor
+
       void DataHandler(TransportEvent & ev);
       size_t GetInfo(const ConnectionInfo & id);
 
@@ -69,7 +71,7 @@ class JSON;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber, m_packetNumberLastPacket;
-      std::shared_ptr<AidaFileWriter> m_writer;
+      std::unique_ptr<AidaFileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;
   };

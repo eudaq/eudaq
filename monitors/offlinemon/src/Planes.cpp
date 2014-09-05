@@ -173,8 +173,8 @@ void plane::HotPixelsuppression()
 	while (!ev_.empty())
 	{
 		hit current=ev_.back();
-		if (find( dummy.begin(), dummy.end(),current)== dummy.end()){
-			entries.push_back(std::count(ev_.begin(),ev_.end(),current));
+		if ( std::find( dummy.begin(), dummy.end(), current)== dummy.end()){
+			entries.push_back( std::count(ev_.begin(),ev_.end(),current));
 			dummy.push_back(current);
 
 		}

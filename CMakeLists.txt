@@ -20,6 +20,8 @@ IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)
 ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
+ADD_DEFINITIONS( "-std=c++11 " )
+
 # Set package version
 IF(NOT SOURCE_PACKAGE)
   # Get the version from last git tag plus numer of additional commits:
@@ -161,6 +163,12 @@ ENDIF()
 option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
+ENDIF()
+
+# build Metadata Monitor
+option(BUILD_metamon "Compile MetaData Monitor executable" OFF)
+IF(BUILD_metamon)
+  add_subdirectory(monitors/metamon)
 ENDIF()
 
 
