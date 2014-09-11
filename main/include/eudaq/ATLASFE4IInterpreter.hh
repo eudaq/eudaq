@@ -30,7 +30,8 @@ class ATLASFEI4Interpreter
 	inline bool is_dh(uint X) const			{return (dh_msk & X) == dh_wrd;} 
 	inline uint get_dh_flag(uint X) const 		{return (dh_flag_msk & X) >> 15;}
 	inline bool is_dh_flag_set(uint X) const 	{return (dh_flag_msk & X) == dh_flag_msk;}
-	inline uint get_dh_lv1id(uint X) const		{return (dh_lv1id_msk & X) >> determineShift(dh_lv1id_msk);}
+//	inline uint get_dh_lv1id(uint X) const		{return (dh_lv1id_msk & X) >> determineShift(dh_lv1id_msk);}
+	inline uint get_dh_lv1id(uint X) const		{return (dh_lv1id_msk & X) >> myBitMask<dh_lv1id_msk>::shiftValue;}
 	inline uint get_dh_bcid(uint X) const 		{return (dh_bcid_msk & X);}
 
 	//-----------------
@@ -102,7 +103,7 @@ class ATLASFEI4Interpreter
 	inline uint get_tr_mode(uint X) const	{return (tr_mode_msk & X) >> 13;}
 
 	//determine necessary bitshift from a bitmask
-	constexpr uint determineShift(uint mask) const
+/*	constexpr uint determineShift(uint mask) const
 	{
 		uint count = 0;
 		std::bitset<32> maskField(mask);
@@ -113,6 +114,24 @@ class ATLASFEI4Interpreter
 		}
 		return count;
 	}
+*/
+	template<uint bitmask>
+    struct myBitMask
+	{
+		uint getShift()
+		{
+			uint count = 0;
+    	    std::bitset<32> maskField(bitmask);
+
+        	while(maskField[count] != true)
+        	{
+            	count++;
+        	}
+        	return count;
+    	}
+		
+		enum{ shiftValue = getShift()};
+	};
 
 }; //class ATLASFEI4Interpreter
 
