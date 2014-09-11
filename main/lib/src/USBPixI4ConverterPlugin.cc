@@ -54,7 +54,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 	std::vector<int> moduleConfig;
 	std::vector<int> moduleCount;
 	std::vector<int> moduleIndex;
-	bool advancedConfig = false;
+	bool advancedConfig;
 
 	unsigned int consecutive_lvl1;
 	unsigned int tot_mode;
@@ -62,7 +62,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 
 	std::string EVENT_TYPE;
 
-	USBPixI4ConverterBase(const std::string& event_type): EVENT_TYPE(event_type){}
+	USBPixI4ConverterBase(const std::string& event_type): advancedConfig(false), EVENT_TYPE(event_type){}
 
 	int getCountBoards() 
 	{
