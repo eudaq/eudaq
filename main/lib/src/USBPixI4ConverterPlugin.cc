@@ -83,24 +83,24 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 	void getBOREparameters(const Event & ev)
 	{
 		count_boards = ev.GetTag("boards", -1);
-        board_ids.clear();
-
-        consecutive_lvl1 = ev.GetTag("consecutive_lvl1", 16);
-        if(consecutive_lvl1>16)
+		board_ids.clear();
+		consecutive_lvl1 = ev.GetTag("consecutive_lvl1", 16);
+		
+		if(consecutive_lvl1>16)
 		{
 			consecutive_lvl1=16;
 		}
 
-        first_sensor_id = ev.GetTag("first_sensor_id", 0);
+		first_sensor_id = ev.GetTag("first_sensor_id", 0);
 
-        tot_mode = ev.GetTag("tot_mode", 0);
-        
+		tot_mode = ev.GetTag("tot_mode", 0);
+
 		if(tot_mode>2)
 		{
 			tot_mode=0;
 		}
 
-        if(count_boards == (unsigned) -1) return;
+		if(count_boards == (unsigned) -1) return;
 
 		for (unsigned int i=0; i<count_boards; i++) 
 		{

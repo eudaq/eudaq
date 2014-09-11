@@ -116,19 +116,19 @@ class ATLASFEI4Interpreter
 	}
 */
 	template<uint bitmask>
-    struct myBitMask
+	struct myBitMask
 	{
 		uint getShift()
 		{
 			uint count = 0;
-    	    std::bitset<32> maskField(bitmask);
+			std::bitset<32> maskField(bitmask);
 
-        	while(maskField[count] != true)
-        	{
-            	count++;
-        	}
-        	return count;
-    	}
+        		while(maskField[count] != true)
+        		{
+				count++;
+        		}
+        		return count;
+    		}
 		
 		enum{ shiftValue = getShift()};
 	};
