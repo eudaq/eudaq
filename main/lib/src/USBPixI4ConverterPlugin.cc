@@ -30,29 +30,24 @@
 #endif
 
 namespace eudaq {
-  
-  //Constants for one FE-I4 chip
-  static const unsigned int CHIP_MIN_COL = 1;
-  static const unsigned int CHIP_MAX_COL = 80;
-  static const unsigned int CHIP_MIN_ROW = 1;
-  static const unsigned int CHIP_MAX_ROW = 336;
-  static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	//Maximum ROW normalized (starting with 0)
-  static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
-
   //Will be set as the EVENT_TYPE for the different versions of this producer
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
 
-  //change these values to set a offset in the sensorID
-  static const int FEI4A_CHIP_ID_OFFSET = 20;
-  static const int FEI4B_CHIP_ID_OFFSET = 20;
- 
 /** Base converter class for the conversion of EUDAQ data into StandardEvent/LCIO data format
  *  Provides methods to retreive data from raw data words and similar.*/
-template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE> 
+template<uint dh_lv1id_msk, uint dh_bcid_msk> 
 class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_msk>{
 
   protected:
+	//Constants for one FE-I4 chip
+	static const unsigned int CHIP_MIN_COL = 1;
+	static const unsigned int CHIP_MAX_COL = 80;
+	static const unsigned int CHIP_MIN_ROW = 1;
+	static const unsigned int CHIP_MAX_ROW = 336;
+	static const unsigned int CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;	//Maximum ROW normalized (starting with 0)
+	static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
+
 	unsigned int count_boards;
 	std::vector<unsigned int> board_ids;
 
@@ -64,6 +59,10 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 	unsigned int consecutive_lvl1;
 	unsigned int tot_mode;
 	int first_sensor_id;
+
+	std::string EVENT_TYPE;
+
+	USBPixI4ConverterBase(const std::string& event_type): EVENT_TYPE(event_type){}
 
 	int getCountBoards() 
 	{
@@ -280,7 +279,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 
 	StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const
 	{
-		StandardPlane plane(id, *EVENT_TYPE, *EVENT_TYPE);
+		StandardPlane plane(id, EVENT_TYPE, EVENT_TYPE);
 
 		//check for consistency
 		bool valid = isEventValid(data);
@@ -378,8 +377,11 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 };
 
 //Declare a new class that inherits from DataConverterPlugin
-template<uint dh_lv1id_msk, uint dh_bcid_msk, std::string* EVENT_TYPE, int chip_id_offset> 
-class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4ConverterBase<dh_lv1id_msk, dh_bcid_msk, EVENT_TYPE> {
+template<uint dh_lv1id_msk, uint dh_bcid_msk> 
+class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4ConverterBase<dh_lv1id_msk, dh_bcid_msk> {
+
+  protected:
+	int chip_id_offset;
 
   public:
 	//This is called once at the beginning of each run.
@@ -588,21 +590,21 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 #endif
 
   protected:
-	USBPixI4ConverterPlugin(): DataConverterPlugin(*EVENT_TYPE){}
+	USBPixI4ConverterPlugin(const std::string& event_type): DataConverterPlugin(event_type), USBPixI4ConverterBase<dh_lv1id_msk, dh_bcid_msk>(event_type), chip_id_offset(20) {}
 };
 
-class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF, &USBPIX_FEI4A_NAME, FEI4A_CHIP_ID_OFFSET>
+class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF>
 {
   private:
  	//The constructor can be private, only one static instance is created
-	USBPixFEI4AConverter(){};
+	USBPixFEI4AConverter():  USBPixI4ConverterPlugin<0x00007F00, 0x000000FF>(USBPIX_FEI4A_NAME) {};
 	static USBPixFEI4AConverter m_instance;
 };
 
-class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF, &USBPIX_FEI4B_NAME, FEI4B_CHIP_ID_OFFSET>
+class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>
 {
   private:
-	USBPixFEI4BConverter(){};
+	USBPixFEI4BConverter():  USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>(USBPIX_FEI4B_NAME){};
 	static USBPixFEI4BConverter m_instance;
 };
 
