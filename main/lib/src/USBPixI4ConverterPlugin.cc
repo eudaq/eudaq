@@ -26,7 +26,6 @@
 #include "EUTelEventImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
-#include "EUTelAPIXMCDetector.h"
 #include "EUTelRunHeaderImpl.h"
 #endif
 
@@ -113,29 +112,33 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		char* module_setup_copy = strdup(module_setup);
 		char* subptr = nullptr;
 		subptr = strtok(module_setup_copy, " ,");
+
 		while(subptr != nullptr)
 		{
 			moduleConfig.push_back( atoi(subptr) );
-			subptr = strtok(module_setup_copy, " ,");
+			subptr = strtok(nullptr, " ,");
 		}
 
 		if( moduleConfig.size() > 0)
 		{
 			int previousModule = moduleConfig.at(0);
 			int counter = 0;
+		
 			for(int i: moduleConfig)
 			{
 				if( i == previousModule)
 				{
 					counter++;
-					previousModule = i;
 				}
 				else
 				{
 					moduleCount.push_back(counter);
 					counter=1;
 				}
+				previousModule = i;
 			}
+			moduleCount.push_back(counter);
+		
 			//sanity check
 			if(moduleCount.size() != moduleConfig.back() )
 			{
@@ -271,6 +274,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		t_Row -= CHIP_MIN_ROW;
 		Col = t_Col;
 		Row = t_Row;
+		
 		return true;
 	}
 
@@ -348,14 +352,22 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		switch(chip)
 		{
 			default:
+				break;
+			case 1:
+				row = 335-row;
+				break;
 			case 2:
+				row = 335-row;
 				col += 80;
+				break;
 			case 3:
-				col = 179 - col;
-				row = 671 - row;
+				col = 159-col;
+				row += 336;
+				break;
 			case 4:
-				col =  79 - col;
-				row = 671 - row;
+				col = 79-col;
+				row += 336;
+				break;
 		}
 	}
 
@@ -470,41 +482,57 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		const RawDataEvent& ev_raw = dynamic_cast<const RawDataEvent&>(eudaqEvent);
 
 		std::vector<eutelescope::EUTelSetupDescription*>  setupDescription;
+	
+	
+		int previousSensorID = -1;
+
+		if(this->advancedConfig) previousSensorID = this->moduleConfig.at(0)+chip_id_offset-1;
+		else previousSensorID = ev_raw.GetID(0) + chip_id_offset + this->first_sensor_id;
+
+		std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
+
+		zsDataEncoder["sensorID"] = previousSensorID;
+		zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+		//prepare a new TrackerData object for the ZS data
+		//it contains all the hits for a particular sensor in one event
+		std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+		zsDataEncoder.setCellID( zsFrame.get() );
 
 		for(size_t chip = 0; chip < ev_raw.NumBlocks(); ++chip)
 		{
 			const std::vector <unsigned char>& buffer=dynamic_cast<const std::vector<unsigned char>&> (ev_raw.GetBlock(chip));
-/*
-			if(lcioEvent.getEventNumber() == 0)
-			{
-				eutelescope::EUTelPixelDetector* currentDetector = new eutelescope::EUTelAPIXMCDetector(2);
-				currentDetector->setMode( "ZS" );
-				setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
-			}
-*/
-			std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
-
-			int sensorID = 0;
+			
+			int sensorID = -1;
+			
 			if(this->advancedConfig)
 			{
-				sensorID = this->moduleConfig.at(chip)+chip_id_offset;
+				sensorID = this->moduleConfig.at(chip)+chip_id_offset-1;
 			}
 			else
 			{
 				sensorID = ev_raw.GetID(chip) + chip_id_offset + this->first_sensor_id;
 			}
-			zsDataEncoder["sensorID"] = sensorID;
-			zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
-			//prepare a new TrackerData object for the ZS data
-			//it contains all the hits for a particular sensor in one event
-			std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
-			zsDataEncoder.setCellID( zsFrame.get() );
+
+			if(previousSensorID != sensorID)
+			{
+				//write TrackerData object that contains info from one sensor to LCIO collection
+				zsDataCollection->push_back( zsFrame.release() );
+
+				std::unique_ptr<lcio::TrackerDataImpl> newZsFrame( new lcio::TrackerDataImpl);
+				zsFrame = std::move(newZsFrame);				
+
+				zsDataEncoder["sensorID"] = sensorID;
+				zsDataEncoder.setCellID( zsFrame.get() );
+				
+				previousSensorID = sensorID;
+			}
 
 			//this is the structure that will host the sparse pixel
 			//it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
 			//a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-			std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+			std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > > 
 			sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
 			unsigned int ToT = 0;
@@ -541,14 +569,14 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 				}
 			}
 
-			//write TrackerData object that contains info from one sensor to LCIO collection
-			zsDataCollection->push_back( zsFrame.release() );
+		}
 
-			//clean up
-			for( auto it = tmphits.begin(); it != tmphits.end(); it++ )
-			{
-				delete (*it);
-			}
+		zsDataCollection->push_back( zsFrame.release() );
+
+		//clean up
+		for( auto it = tmphits.begin(); it != tmphits.end(); it++ )
+		{
+			delete (*it);
 		}
 
 		//add this collection to lcio event
@@ -556,35 +584,6 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		{
 			lcioEvent.addCollection( zsDataCollection, "zsdata_apix" );
 		}
-/*
-		if(lcioEvent.getEventNumber() == 0) 
-		{
-			//do this only in the first event
-			LCCollectionVec* apixSetupCollection = nullptr;
-
-			bool apixSetupExists = false;
-			try
-			{
-				apixSetupCollection = static_cast< LCCollectionVec* > ( lcioEvent.getCollection( "apix_setup" ) ) ;
-				apixSetupExists = true;
-			}
-			catch(...)
-			{
-				apixSetupCollection = new LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
-			}
-
-			for( size_t iPlane = 0 ; iPlane < setupDescription.size() ; ++iPlane )
-			{
-				apixSetupCollection->push_back( setupDescription.at(iPlane) );
-			}
-
-			if(!apixSetupExists)
-			{
-				lcioEvent.addCollection( apixSetupCollection, "apix_setup" );
-			}
-			return true;
-		}
-*/
 	}
 #endif
 
