@@ -23,8 +23,12 @@ void CMSPixelEvtMonitor::DrawFromASCIIFile(std::string filename)
 			int                 col, row, value; 
 			string							dummy;
 			linestream >> dummy;
-			while ((linestream.peek()!='\n') && (linestream >> col >> row >> value))
+      std::cout << "dummy " << dummy;
+			while ((linestream.peek()!='\n') && (linestream >> col >> row >> value)){
 				m_h2_map -> Fill(col,row,value);
+        std::cout << " col " << col << " row " << row << " val " << value;
+      }
+      std::cout << std::endl;
 		}
   	m_canv -> cd(2) -> Clear();
 		m_h2_map -> Draw("COLZ");
@@ -41,6 +45,7 @@ void CMSPixelEvtMonitor::DrawFromBinaryFile(std::string filename, std::string ro
   CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
 
   m_h2_map -> Clear();
+  std::cout << "ROC_TYPE: " << (int)devDict->getInstance()->getDevCode(roctype) << std::endl;
   CMSPixel::CMSPixelFileDecoderPSI_DTB fileDecoder(filename.c_str(), 1, FLAG_12BITS_PER_WORD, 
       devDict->getInstance()->getDevCode(roctype), "");
   CMSPixel::timing dectime;
@@ -51,7 +56,6 @@ void CMSPixelEvtMonitor::DrawFromBinaryFile(std::string filename, std::string ro
     int row = it->row;
     int value = it->raw;
 	  m_h2_map -> Fill(col,row,value);
-    
   }
   delete decevt;
 
@@ -105,16 +109,16 @@ CMSPixelEvtMonitor::CMSPixelEvtMonitor()
 	m_h2_map = new TProfile2D("m_h2_map","Hit Map;col;row",52,-0.5,51.5,80,-0.5,79.5);
 
 
-	m_MF = new MyMainFrame( gClient->GetRoot(  ), 800, 600 );	
+	//m_MF = new MyMainFrame( gClient->GetRoot(  ), 800, 600 );	
 	
-	m_canv = m_MF->GetCanvas(  );
+	m_canv = new TCanvas("m_canv", "run status");//m_MF->GetCanvas(  );
   m_canv -> Divide(2,2);
 	m_theApp -> SetReturnFromRun(true);
 	gSystem -> ProcessEvents();
 	gStyle -> SetOptStat(0);
 }
 
-
+/*
 MyMainFrame::MyMainFrame( const TGWindow * p, UInt_t w, UInt_t h )
 :TGMainFrame( p, w, h )
 {
@@ -133,12 +137,7 @@ MyMainFrame::MyMainFrame( const TGWindow * p, UInt_t w, UInt_t h )
 			"TestDialog", this,
 			"HandleEmbeddedCanvas(Int_t,Int_t,Int_t,TObject*)");
 
-	
-	
 	GetCanvas()->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)","PixTab",this, "UpdateCanvas(Int_t,Int_t,Int_t,TObject*)");
-
-
-
 
  // Set a name to the main frame:
   fMain->SetWindowName( "cmspixelProducer" );
@@ -175,4 +174,4 @@ void MyMainFrame::HandleEmbeddedCanvas(Int_t event, Int_t x, Int_t y,
 		printf("event = %d, x = %d, y = %d, obj = %s::%s\n", event, x, y,
 				sel->IsA()->GetName(), sel->GetName());
 }
-
+*/

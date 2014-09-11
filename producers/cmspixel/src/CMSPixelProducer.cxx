@@ -28,14 +28,14 @@ using namespace std;
 // 3 read out via eudaq data collector
 #define BUFFER_RO_SCHEME 1
 // Write output to binary 1 or ASCII 2 for R/O schemes 1 or 2
-#define OUTPUT_FILE_SCHEME 1
+#define OUTPUT_FILE_SCHEME 2
 /*========================================================================*/
 
 // event type name, needed for readout with eudaq. Links to /main/lib/src/CMSPixelConverterPlugin.cc:
 static const std::string EVENT_TYPE = "CMSPixel";
 
 /*========================================================================*/
-// CMSPixelProducer class (direct implementatio)
+// CMSPixelProducer class (direct implementation)
 class CMSPixelProducer : public eudaq::Producer {
   public:
 //-------------------------------------------------
@@ -57,10 +57,10 @@ class CMSPixelProducer : public eudaq::Producer {
       triggering(false),
       m_roctype(""),
       m_usbId(""),
-      m_producerId(0)
+      m_producerName(name)
   {
     m_t = new eudaq::Timer;
-    m_api = NULL;//new pxar::pxarCore("*", m_verbosity);
+    m_api = NULL;
   }// Constructor
 //-------------------------------------------------
 //
@@ -70,7 +70,6 @@ class CMSPixelProducer : public eudaq::Producer {
       std::cout << "Configuring: " << config.Name() << std::endl;
       m_config = config;
       bool confTrimming(false), confDacs(false);
-      // config.Get(name, defaultVal);
       // declare config vectors
       std::vector<std::pair<std::string,uint8_t> > sig_delays;
       std::vector<std::pair<std::string,double> > power_settings;
@@ -86,8 +85,6 @@ class CMSPixelProducer : public eudaq::Producer {
       m_usbId = config.Get("usbId","*");
       EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
       m_api = new pxar::pxarCore(m_usbId, m_verbosity);
-
-      m_producerId = config.Get("producerId", 0);
 
       uint8_t hubid = config.Get("hubid", 31);
 
@@ -141,6 +138,7 @@ class CMSPixelProducer : public eudaq::Producer {
         // m_api -> Pon();
         EUDAQ_USER("API set up succesfully...\n");
       }
+
       catch (pxar::InvalidConfig &e){
         SetStatus(eudaq::Status::LVL_ERROR, string("Configure Error: pxar caught an exception due to invalid configuration settings: ") + e.what());
         delete m_api;
@@ -188,6 +186,7 @@ class CMSPixelProducer : public eudaq::Producer {
           SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".\n");
         else
           SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+        std::cout << "=============================\nCONFIGURED\n=============================" << std::endl;
 
       }//end On Configure
 //-------------------------------------------------
@@ -201,13 +200,12 @@ class CMSPixelProducer : public eudaq::Producer {
 #if BUFFER_RO_SCHEME == 3
         eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
         bore.SetTag("ROCTYPE", m_roctype);
-        bore.SetTag("PRODUCER_ID", m_producerId);
         SendEvent(bore);
 #else
         // Get output file
         std::ostringstream filename;
         std::cout << std::endl << m_run << std::endl;
-        filename << m_config.Get("outputFileTrunk", "../data/defaultOutput") 
+        filename << m_config.Get("outputFilePath", "../data/") << m_producerName.c_str() 
           << setfill('0') << setw(5) << (int)m_run << ".dat" ;
         m_foutName = filename.str();
 
@@ -250,7 +248,7 @@ class CMSPixelProducer : public eudaq::Producer {
 #else       
             CMSPixelEvtMonitor::Instance() -> DrawFromASCIIFile(m_foutName); 
 #endif      
-            CMSPixelEvtMonitor::Instance() -> DrawROTiming();
+            //CMSPixelEvtMonitor::Instance() -> DrawROTiming();
           }
           catch(...){
             std::cout << "Didn't work..." << std::endl;
@@ -308,17 +306,7 @@ class CMSPixelProducer : public eudaq::Producer {
             eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
             pxar::rawEvent daqEvent = m_api -> daqGetRawEvent();
             ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
-/*
-            const std::vector<uint8_t> & block = ev.GetBlock(0);
-            const uint8_t* data(block.data());
-            int size = block.size();
-            int i = 0;
-            while(i < size-1){
-              uint16_t value = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];
-              std::cout << "new event " << hex << daqEvent.data[i/2] << " " << value << std::endl;
-              i+=2;
-            }
-*/
+
             SendEvent(ev);
             m_ev++;
             if(stopping){
@@ -396,7 +384,7 @@ class CMSPixelProducer : public eudaq::Producer {
               col = (int) it -> getColumn();
               row = (int) it -> getRow();
               value = it -> getValue();
-              m_fout << dec << col << "\t" << row << "\t" << value << "\t";
+              m_fout << std::dec << col << "\t" << row << "\t" << value << "\t";
             } 
             m_fout << std::endl;
           }
@@ -458,7 +446,7 @@ class CMSPixelProducer : public eudaq::Producer {
               col = (int) it -> getColumn();
               row = (int) it -> getRow();
               value = it -> getValue();
-              m_fout << col << "\t" << row << "\t" << value << "\t";
+              m_fout << std::dec << col << "\t" << row << "\t" << value << "\t";
             } 
             m_fout << "\n";
           }
@@ -541,13 +529,12 @@ class CMSPixelProducer : public eudaq::Producer {
       //
       //-------------------------------------------------
       unsigned m_run, m_ev;
-      std::string m_verbosity, m_foutName, m_roctype, m_usbId;
+      std::string m_verbosity, m_foutName, m_roctype, m_usbId, m_producerName;
       bool stopping, done, started, triggering;
       bool m_dacsFromConf, m_trimmingFromConf;
       eudaq::Configuration m_config;
       pxar::pxarCore *m_api;
       int m_pattern_delay;
-      int m_producerId; 
       uint8_t m_perFull;
       std::ofstream m_fout;
       eudaq::Timer* m_t;
@@ -557,8 +544,8 @@ class CMSPixelProducer : public eudaq::Producer {
     int main(int /*argc*/, const char ** argv) {
       // You can use the OptionParser to get command-line arguments
       // then they will automatically be described in the help (-h) option
-      eudaq::OptionParser op("EUDAQ Example Producer", "1.0",
-          "Just an example, modify it to suit your own needs");
+      eudaq::OptionParser op("CMS Pixel Producer", "0.0",
+          "Run options");
       eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
           "tcp://localhost:44000", "address", "The address of the RunControl.");
       eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",

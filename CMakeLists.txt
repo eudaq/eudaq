@@ -15,6 +15,8 @@ include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 # Determine platform- and compiler-specific settings
 include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 
+SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+MESSAGE(STATUS "BUILD TYPE" ${CMAKE_BUILD_TYPE})
 # Check if this is a source tarball build
 IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)

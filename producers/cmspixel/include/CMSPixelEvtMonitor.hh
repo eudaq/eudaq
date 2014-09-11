@@ -64,17 +64,18 @@ class CMSPixelEvtMonitor {
 };
 
 
-
+/*
 class MyMainFrame:public TGMainFrame {
 
 	private:
 		TGMainFrame * fMain;
 		TRootEmbeddedCanvas *fEcanvas;
+
 	public:
 		MyMainFrame( const TGWindow * p, UInt_t w, UInt_t h );
 		virtual ~ MyMainFrame(  );
 		TCanvas *GetCanvas(  );
 		void HandleEmbeddedCanvas(Int_t event, Int_t x, Int_t y, TObject *sel);
-};
+};*/
 
 #endif
