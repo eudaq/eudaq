@@ -44,6 +44,7 @@ namespace eudaq {
     m_idata((size_t)-1),
     m_ilog((size_t)-1),
     m_runsizelimit(0),
+    m_nextconfigonfilelimit(false),
     m_stopping(false),
     m_busy(false),
     m_producerbusy(false)
@@ -80,8 +81,10 @@ namespace eudaq {
     SendCommand("CONFIG", to_string(config));
     if (config.SetSection("RunControl")) {
       m_runsizelimit = config.Get("RunSizeLimit", 0LL);
+      m_nextconfigonfilelimit = config.Get("NextConfigFileOnFileLimit", false);
     } else {
       m_runsizelimit = 0;
+      m_nextconfigonfilelimit = false;
     }
   }
 

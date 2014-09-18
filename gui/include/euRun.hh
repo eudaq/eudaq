@@ -122,7 +122,17 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
           while (m_producerbusy) {
             eudaq::mSleep(50);
           }
-          on_btnStart_clicked(true);
+          if (m_nextconfigonfilelimit) {
+	    if (cmbConfig->currentIndex()+1 < cmbConfig->count()) {
+	      EUDAQ_INFO("Moving to next config file and starting a new run");
+	      cmbConfig->setCurrentIndex(cmbConfig->currentIndex()+1);
+	      on_btnConfig_clicked();
+	      eudaq::mSleep(5000);
+	      on_btnStart_clicked(false);
+	    } else
+	      EUDAQ_INFO("All config files processed.");
+	  } else
+	    on_btnStart_clicked(true);
         } else if (dostatus) {
           GetStatus();
         }

@@ -268,7 +268,7 @@ void DeviceReader::Loop()
     for (int i=0; i<eventsPerSpill; i++) {
       const int kPixelsHit = 1;
       int length = 64 + kPixelsHit*2;
-      SingleEvent* ev = new SingleEvent(length, m_last_trigger_id++);
+      SingleEvent* ev = new SingleEvent(length, m_last_trigger_id++, 0);
       // empty headers
       int pos = 0;
       for (int j = 0; j < 32; ++j) {
@@ -719,8 +719,8 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     
     sprintf(tmp, "MaskedPixels_%d", i);
     bore.SetTag(tmp, pixelStr);
-  }
 #endif
+  }
 
   SendEvent(bore);
 
