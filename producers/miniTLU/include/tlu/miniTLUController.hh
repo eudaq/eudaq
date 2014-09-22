@@ -11,6 +11,8 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Time.hh"
 #include "uhal/uhal.hpp"
+
+#include "tlu/RawDataQueue.hh"
  
 #include <boost/filesystem.hpp>
 
@@ -113,10 +115,12 @@ namespace tlu {
 
     void CheckEventFIFO();
     void ReadEventFIFO();
+    void ReadEventFIFO(RawDataQueue &queue);
 
     uint32_t GetNEvent() { return m_nEvtInFIFO/2; }
     uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
     std::vector<uint64_t>* GetEventData() { return &m_dataFromTLU; }
+    std::vector<uint64_t> GetEventDataV() { return m_dataFromTLU; }
     void ClearEventFIFO() { m_dataFromTLU.resize(0); }
 
     unsigned GetScaler(unsigned) const;
@@ -135,6 +139,10 @@ namespace tlu {
     void ClearCatchedError() { m_catchedError = false; }
 
     void SetMaxReadSize(unsigned int value) { m_maxRead = value; }
+
+    std::string & GetConnectionFile() { return m_filename; }
+    std::string & GetDeviceName() { return m_devicename; }
+
   private:
     HwInterface * m_hw;
     bool m_checkConfig;
@@ -160,6 +168,7 @@ namespace tlu {
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat;
 
+    std::string m_filename, m_devicename;
   };
 }
 
