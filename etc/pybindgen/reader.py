@@ -81,6 +81,6 @@ fileName = sys.argv[1]
 f = eudaq.AidaFileReader( fileName )
 config = json.loads( f.getJsonConfig() )
 print 'run# {0} started at {1}'.format( config['runnumber'], config['date'] )
-
+printMeta(f)
 
 

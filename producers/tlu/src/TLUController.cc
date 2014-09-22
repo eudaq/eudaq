@@ -707,7 +707,14 @@ namespace tlu {
                     " (expecting " + to_string(old_triggernum) + ")");
       }
       for (unsigned i = 0; i < entries; ++i) {
-        m_buffer.push_back(TLUEntry(timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP, trig++,trigger_buffer[i]));
+        
+        
+		  m_buffer.push_back(
+			  TLUEntry(
+			  timestamp_buffer ? timestamp_buffer[i] : NOTIMESTAMP,
+			  trig++, 
+			  trigger_buffer ? trigger_buffer[i]:0)
+			  );
       }
     }
     //mSleep(1);
