@@ -142,7 +142,7 @@ public:
       eudaq::mSleep(1000);
 
       for (; m_senderthreads < param.Get("SenderThreads",0xf); m_senderthreads++) {
-	std::thread packet_sender0(&miniTLUProducer::PacketSender, this, i, std::ref(m_evtqueue));
+	std::thread packet_sender0(&miniTLUProducer::PacketSender, this, m_senderthreads, std::ref(m_evtqueue));
 	packet_sender0.detach();
       }
 
