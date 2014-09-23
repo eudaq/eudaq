@@ -326,11 +326,11 @@ void DeviceReader::Loop()
     }
     
     // data taking
-    const int maxDataLength = 1024;
+    const int maxDataLength = 258*2*32+28; // 256 words per region, region header (2 words) per region, header (20 bytes), trailer (8 bytes)
     unsigned char data_buf[maxDataLength];
     int length = -1;
 
-    if (m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength)) {
+    if (m_daq_board->ReadChipEvent(data_buf, &length, (m_readout_mode == 0) ? 1024 : maxDataLength)) {
       
       if (length == 0) {
 	// EOR
@@ -613,7 +613,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       daq_board->SetReadoutMode(m_readout_mode);
 
       // PrepareEmptyReadout
-      daq_board->ConfigureReadout (1, false);       // buffer depth = 1, sampling on rising edge
+      daq_board->ConfigureReadout (1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
       daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, TriggerDelay);
       
       // PrepareChipReadout
