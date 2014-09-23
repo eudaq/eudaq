@@ -122,15 +122,13 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
   }
   viewConn->setModel(&m_run);
   viewConn->setItemDelegate(&m_delegate);
-  cmbConfig->setEditText("default");
   QDir dir("../conf/", "*.conf");
   for (size_t i = 0; i < dir.count(); ++i) {
     QString item = dir[i];
     item.chop(5);
     cmbConfig->addItem(item);
-    if (i == 0)
-      cmbConfig->setEditText(item);
   }
+  cmbConfig->setEditText("default");
   QSize fsize = frameGeometry().size();
   if (geom.x() == -1) geom.setX(x());
   if (geom.y() == -1) geom.setY(y());
