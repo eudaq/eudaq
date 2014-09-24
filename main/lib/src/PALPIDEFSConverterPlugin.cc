@@ -176,6 +176,10 @@ namespace eudaq {
 	    printf("%x ", data[i]);
 	  printf("\n");
 #endif
+	  
+	  int last_rgn = -1;
+	  int last_pixeladdr = -1;
+	  int last_doublecolumnaddr = -1;
 
 	  while (pos+1 < data.size()) { // always need 2 bytes left
     #ifdef MYDEBUG
@@ -202,6 +206,9 @@ namespace eudaq {
 	      cout << "Now in layer " << current_layer << endl;
     #endif
 	      current_rgn = -1;
+	      last_rgn = -1;
+	      last_pixeladdr = -1;
+	      last_doublecolumnaddr = -1;
 	      
 	      // extract trigger id and timestamp
 	      if (pos+2*sizeof(uint64_t) < data.size()) {
@@ -225,7 +232,7 @@ namespace eudaq {
 		break;
 	      }
 	      if (pos+length*2 > data.size()) {
-		cout << "ERROR: Unexpected. Not enough bytes left. Expecting " << length << " but pos = " << pos << " and size = " << data.size() << endl;
+		cout << "ERROR: Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
 		break;
 	      }
 	      for (int i=0; i<length; i++) {
@@ -234,6 +241,14 @@ namespace eudaq {
 		unsigned short pixeladdr = dataword & 0x3ff;
 		unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
 		unsigned short clustersize = (dataword >> 14) + 1;
+		
+		// consistency check
+		if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr && pixeladdr <= last_pixeladdr) {
+		  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". Strict ordering violated. Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
+		}
+		last_rgn = rgn;
+		last_pixeladdr = pixeladdr;
+		last_doublecolumnaddr = doublecolumnaddr;
 		
 		for (int j=0; j<clustersize; j++) {
 		  unsigned short current_pixel = pixeladdr + j;
