@@ -261,10 +261,14 @@ void CMSPixelProducer::OnStopRun() {
 }
 
 void CMSPixelProducer::OnTerminate() {
-  std::cout << "Terminating..." << std::endl;
-  m_api -> HVoff();
+  std::cout << "CMSPixelProducer terminating..." << std::endl;
+  // If we already have a pxarCore instance, shut it down cleanly:
+  if(m_api) {
+    m_api->HVoff();
+    delete m_api;
+  }
   done = true;
-  //FIXME delete API? what is termination?
+  std::cout << "CMSPixelProducer terminated." << std::endl;
 }
 
 void CMSPixelProducer::ReadoutLoop() {
