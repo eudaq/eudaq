@@ -42,7 +42,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     stopping(false),
     done(false),
     started(0),
-    m_api(0),
+    m_api(NULL),
     m_verbosity(verbosity),
     m_dacsFromConf(false),
     m_trimmingFromConf(false),
@@ -56,11 +56,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_producerName(name)
 {
   m_t = new eudaq::Timer;
-  m_api = NULL;
-}// Constructor
-//-------------------------------------------------
-//
-//-------------------------------------------------
+}
+
 void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
   std::cout << "Configuring: " << config.Name() << std::endl;
@@ -261,19 +258,15 @@ void CMSPixelProducer::OnStopRun() {
     SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
   }
 
-}// OnStopRun
-//-------------------------------------------------
-//
-//-------------------------------------------------
+}
+
 void CMSPixelProducer::OnTerminate() {
   std::cout << "Terminating..." << std::endl;
   m_api -> HVoff();
   done = true;
   //FIXME delete API? what is termination?
-}// OnTerminate
-//-------------------------------------------------
-//
-//-------------------------------------------------
+}
+
 void CMSPixelProducer::ReadoutLoop() {
   // Loop until Run Control tells us to terminate
   while (!done) {
