@@ -80,11 +80,11 @@ namespace eudaq {
 
     //Get TLU trigger ID from your RawData or better from a different block
     //example: has to be fittet to our needs depending on block managing etc.
-    virtual unsigned GetTriggerID(const Event & ev) const {
+    virtual unsigned GetTriggerID(const Event & /*ev*/) const {
       // Make sure the event is of class RawDataEvent
-      if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
+      //if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
 	// TODO get trigger id. probably common code with producer. try to factor out somewhere.
-      }
+      //}
       // If we are unable to extract the Trigger ID, signal with (unsigned)-1
       return (unsigned)-1;
     }
@@ -244,7 +244,12 @@ namespace eudaq {
 		
 		// consistency check
 		if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr && pixeladdr <= last_pixeladdr) {
-		  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". Strict ordering violated. Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
+		  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". ";
+		  if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr && pixeladdr == last_pixeladdr)
+		    cout << "Pixel duplicated. ";
+		  else
+		    cout << "Strict ordering violated. ";
+		  cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
 		}
 		last_rgn = rgn;
 		last_pixeladdr = pixeladdr;
