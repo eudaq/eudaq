@@ -157,6 +157,19 @@
          </property>
         </widget>
        </item>
+       <item row="5" column="2" >
+        <widget class="QPushButton" name="btnTerminate" >
+         <property name="enabled" >
+          <bool>false</bool>
+         </property>
+         <property name="toolTip" >
+          <string>Terminate the DAQ session</string>
+         </property>
+         <property name="text" >
+          <string>Terminate</string>
+         </property>
+        </widget>
+       </item>
        <item row="4" column="0" >
         <widget class="QLabel" name="lblGeoID" >
          <property name="text" >
