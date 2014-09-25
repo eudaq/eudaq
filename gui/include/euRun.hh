@@ -64,6 +64,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
         event->ignore();
       } else {
         Terminate();
+	eudaq::mSleep(500);
         event->accept();
       }
     }
