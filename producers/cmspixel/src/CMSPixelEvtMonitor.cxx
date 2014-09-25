@@ -71,10 +71,10 @@ void CMSPixelEvtMonitor::DrawMap(std::vector<pxar::pixel> pixels, char* name)
 {
 	TH2D* h2_temp = new TH2D("h2_temp",Form("%s;col;row", name),52,-0.5,51.5,80,-0.5,79.5);
 	for(std::vector<pxar::pixel>::iterator it = pixels.begin(); it != pixels.end(); ++it){
-		int col = (int) it -> getColumn();
-		int row = (int) it -> getRow();
-		double value = it -> getValue();
-		h2_temp -> Fill(col,row,value);
+	  int col = (int)it->column();
+	  int row = (int)it->row();
+	  double value = it->value();
+	  h2_temp -> Fill(col,row,value);
 	} 
 	m_canv -> cd(1) -> Clear();
 	h2_temp -> Draw("colz");
