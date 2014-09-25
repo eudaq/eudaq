@@ -1,5 +1,5 @@
 set(name "CMSPixelProducer.exe")
-set(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelEvtMonitor.cxx)
+set(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelEvtMonitor.cxx src/CMSPixelConfigParser.cc)
 
 include(FindROOT.cmake)
 MESSAGE("-- PXAR_PATH ${PXAR_PATH}")
