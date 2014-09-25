@@ -78,14 +78,6 @@ public:
     std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
     std::vector<std::vector<pxar::pixelConfig> > rocPixels;
 
-    // create api
-    if(m_api)
-      delete m_api;
-      
-    m_usbId = config.Get("usbId","*");
-    EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
-    m_api = new pxar::pxarCore(m_usbId, m_verbosity);
-
     uint8_t hubid = config.Get("hubid", 31);
 
     // DTB delays
@@ -126,7 +118,16 @@ public:
     // Set the type of the ROC correctly:
     m_roctype = config.Get("roctype","psi46digv2");  
 
+      
     try {
+      // create api
+      if(m_api)
+	delete m_api;
+      
+      m_usbId = config.Get("usbId","*");
+      EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+      m_api = new pxar::pxarCore(m_usbId, m_verbosity);
+
       m_api -> initTestboard(sig_delays, power_settings, pg_setup);
       m_api -> initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
 
@@ -140,17 +141,17 @@ public:
     }
 
     catch (pxar::InvalidConfig &e){
-      SetStatus(eudaq::Status::LVL_ERROR, string("Configure Error: pxar caught an exception due to invalid configuration settings: ") + e.what());
+      SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
       delete m_api;
       return;
     }
     catch (pxar::pxarException &e){
-      SetStatus(eudaq::Status::LVL_ERROR, string("Configure Error: pxar caught an internal exception: ") + e.what());
+      SetStatus(eudaq::Status::LVL_ERROR, string("pxarCore Error: ") + e.what());
       delete m_api;
       return;
     }
     catch (...) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Configure Error: pxar caught an unknown exception.");
+      SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
       delete m_api;
       return;
     }
