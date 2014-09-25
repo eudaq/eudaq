@@ -42,22 +42,35 @@ void CMSPixelEvtMonitor::DrawFromASCIIFile(std::string filename)
 void CMSPixelEvtMonitor::DrawFromBinaryFile(std::string filename, std::string roctype)
 {
   DeviceDictionary* devDict;
-  CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
+  // Shut up the decoder:
+  CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("SUMMARY");
 
   m_h2_map -> Clear();
   std::cout << "ROC_TYPE: " << (int)devDict->getInstance()->getDevCode(roctype) << std::endl;
-  CMSPixel::CMSPixelFileDecoderPSI_DTB fileDecoder(filename.c_str(), 1, FLAG_12BITS_PER_WORD, 
-      devDict->getInstance()->getDevCode(roctype), "");
-  CMSPixel::timing dectime;
-  std::vector<CMSPixel::pixel>* decevt = new std::vector<CMSPixel::pixel>;
-  fileDecoder.get_event(decevt, dectime);
-  for(std::vector<CMSPixel::pixel>::iterator it = decevt->begin(); it != decevt->end(); ++it){
-    int col = it->col;
-    int row = it->row;
-    int value = it->raw;
-	  m_h2_map -> Fill(col,row,value);
+  CMSPixel::CMSPixelFileDecoderPSI_DTB * fileDecoder = new CMSPixel::CMSPixelFileDecoderPSI_DTB(filename.c_str(), 1, FLAG_12BITS_PER_WORD, devDict->getInstance()->getDevCode(roctype), "");
+
+  int status = 0;
+  size_t max_events = 999999999;
+  size_t events = 0;
+
+  while(1) {
+    CMSPixel::timing dectime;
+    std::vector<CMSPixel::pixel>* decevt = new std::vector<CMSPixel::pixel>;
+    status = fileDecoder->get_event(decevt, dectime);
+    if(status <= DEC_ERROR_NO_MORE_DATA) { break; }
+    if(events > max_events) { break; }
+
+    for(std::vector<CMSPixel::pixel>::iterator it = decevt->begin(); it != decevt->end(); ++it){
+      int col = it->col;
+      int row = it->row;
+      int value = it->raw;
+      m_h2_map -> Fill(col,row,value);
+    }
+    delete decevt;
+    events++;
   }
-  delete decevt;
+
+  delete fileDecoder;
 
   m_canv -> cd(2) -> Clear();
   m_h2_map -> Draw("COLZ");
