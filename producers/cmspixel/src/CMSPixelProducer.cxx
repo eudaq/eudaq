@@ -96,28 +96,27 @@ public:
     // Pattern Generator:
     bool testpulses = config.Get("testpulses", false);
     if(testpulses) {
-      pg_setup.push_back(std::make_pair("resetroc",config.Get("resetroc",25)) );    // PG_RESR
-      pg_setup.push_back(std::make_pair("calibrate",config.Get("calibrate",106)) ); // PG_CAL
-      pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );    // PG_TRG
-      pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));     // PG_TOK
+      pg_setup.push_back(std::make_pair("resetroc",config.Get("resetroc",25)) );
+      pg_setup.push_back(std::make_pair("calibrate",config.Get("calibrate",106)) );
+      pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );
+      pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));
       m_pattern_delay = config.Get("patternDelay", 100) * 10;
       EUDAQ_USER("Using testpulses...\n");
     }
-    else{
-      pg_setup.push_back(std::make_pair("trigger",46));    // PG_TRG
-      pg_setup.push_back(std::make_pair("token",0));     // PG_TOK
+    else {
+      pg_setup.push_back(std::make_pair("trigger",46));
+      pg_setup.push_back(std::make_pair("token",0));
       m_pattern_delay = config.Get("patternDelay", 100);
     }
     EUDAQ_USER("m_pattern_delay = " +eudaq::to_string(m_pattern_delay) + "\n");
 
-    // read dacs and trimming from config
+    // Read DACs and trimming from config
     std::string trimFile = config.Get("trimDir", "") + string("/trimParameters.dat");
     rocDACs.push_back(GetConfDACs());
     rocPixels.push_back(GetConfTrimming(trimFile));
 
     // Set the type of the ROC correctly:
     m_roctype = config.Get("roctype","psi46digv2");  
-
       
     try {
       // create api
