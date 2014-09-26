@@ -61,6 +61,8 @@ namespace eudaq {
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
       
+      m_DataVersion = bore.GetTag<int>("DataVersion", 1);
+      
       for (int i=0; i<m_nLayers; i++) {
 	char tmp[100];
 	sprintf(tmp, "Config_%d", i);
@@ -95,7 +97,7 @@ namespace eudaq {
 
     //conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent & sev,const Event & ev) const {
-  
+
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " " << sev.GetEventNumber() << endl;
 #endif
@@ -156,6 +158,7 @@ namespace eudaq {
 	  //DATA FORMAT
 	  //m_nLayers times
 	  //  Header        1st Byte 0xff ; 2nd Byte: Layer number (layers might be missing)
+	  //  Length (uint16_t) length of data block for this layer [only for DataVersion >= 2]
 	  //  Trigger id (uint64_t)
 	  //  Timestamp (uint64_t)
 	  //  payload from chip
@@ -210,8 +213,25 @@ namespace eudaq {
 	      last_pixeladdr = -1;
 	      last_doublecolumnaddr = -1;
 	      
+	      // length
+	      if (m_DataVersion >= 2) {
+		if (pos+sizeof(uint16_t) <= data.size()) {
+		  uint16_t length = 0;
+		  for (int i=0; i<2; i++)
+		    ((unsigned char*) &length)[i] = data[pos++];
+#ifdef MYDEBUG
+		  cout << "Layer " << current_layer << " has data of length " << length << endl;
+#endif
+		  if (length == 0) {
+		    // no data for this layer
+		    current_layer = -1;
+		    continue;
+		  }
+		}
+	      }
+	      
 	      // extract trigger id and timestamp
-	      if (pos+2*sizeof(uint64_t) < data.size()) {
+	      if (pos+2*sizeof(uint64_t) <= data.size()) {
 		uint64_t trigger_id = 0;
 		for (int i=0; i<8; i++)
 		  ((unsigned char*) &trigger_id)[i] = data[pos++];
@@ -365,6 +385,7 @@ namespace eudaq {
 
   protected:
     int m_nLayers;
+    int m_DataVersion;
 
   private:
 

@@ -675,7 +675,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
   
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
   bore.SetTag("Devices", m_nDevices);
-  bore.SetTag("DataVersion", 1);
+  bore.SetTag("DataVersion", 2);
   
   // driver version
 #ifndef SIMULATION  
@@ -890,23 +890,35 @@ int PALPIDEFSProducer::BuildEvent()
   
   // send event with trigger id trigger_id
   // send all layers in one block
-  unsigned long total_size = m_nDevices * (2 + 2 * sizeof(uint64_t));
+  unsigned long total_size = 0;
   for (int i=0; i<m_nDevices; i++) {
+    total_size += 2 + sizeof(uint16_t);
     SingleEvent* single_ev = m_next_event[i];
-    if (m_ignore_trigger_ids || single_ev->m_trigger_id == trigger_id)
+    if (layer_selected[i]) {
+      total_size += 2 * sizeof(uint64_t);
       total_size += single_ev->m_length;
+    }
   }
   
-  char* buffer = new char[total_size+m_nDevices*2];
+  char* buffer = new char[total_size];
   unsigned long pos = 0;
   for (int i=0; i<m_nDevices; i++) {
     buffer[pos++] = 0xff;
     buffer[pos++] = i;
     
-    if (layer_selected[i])
-    {
+    if (!layer_selected[i]) {
+      // data length
+      uint16_t length = 0;
+      memcpy(buffer+pos, &length, sizeof(uint16_t));
+      pos += sizeof(uint16_t);
+    } else {
       SingleEvent* single_ev = m_next_event[i];
-      // TODO add length of data here
+      
+      // data length
+      uint16_t length = sizeof(uint64_t) * 2 + single_ev->m_length;
+      memcpy(buffer+pos, &length, sizeof(uint16_t));
+      pos += sizeof(uint16_t);
+      
       // event id and timestamp per layer
       memcpy(buffer+pos, &(single_ev->m_trigger_id), sizeof(uint64_t));
       pos += sizeof(uint64_t);
