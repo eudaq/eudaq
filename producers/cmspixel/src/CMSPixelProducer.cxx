@@ -133,6 +133,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
 
+    // Output the trigger signal to probe D1:
+    m_api->SignalProbe("d1","pgtrg");
+
     EUDAQ_USER("API set up succesfully...\n");
 
     // All on!
@@ -209,10 +212,13 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   m_fout.open(m_foutName.c_str(), std::ios::out | std::ios::binary);
 #endif
   m_api -> daqStart();
-  m_api -> daqTriggerLoop(m_pattern_delay);   
+  //m_api -> daqTriggerLoop(m_pattern_delay);   
   triggering = true;
-  started = true;
   SetStatus(eudaq::Status::LVL_OK, "Running");
+  // Wait some time and then activate...
+  eudaq::mSleep(3000);
+  m_api -> daqTriggerLoop(m_pattern_delay);
+  started = true;
 }
 
 // This gets called whenever a run is stopped
