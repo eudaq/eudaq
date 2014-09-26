@@ -128,14 +128,52 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Digital current: " << m_api->getTBid()*1000 << "mA" << std::endl;
 
     m_api -> HVon();
-    // m_api -> Pon();
+    
+    if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
+      throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
+    }
+
     EUDAQ_USER("API set up succesfully...\n");
+
+    // All on!
+    m_api->_dut->maskAllPixels(false);
+    m_api->_dut->testAllPixels(false);
+
+    // test pixels
+    if(testpulses) {
+      m_api->_dut->testAllPixels(true);
+      //efficiency map
+      char mapName[256] = "efficiency map";
+      std::vector<pxar::pixel> effMap = m_api->getEfficiencyMap(0, 100);
+      CMSPixelEvtMonitor::Instance()->DrawMap(effMap, mapName);
+      m_api->_dut->testAllPixels(false);
+
+      std::cout << "Setting up pixels for calibrate pulses..." << std::endl << "col \t row" << std::endl;
+      for(int i = 40; i < 45; i++){
+	m_api->_dut->testPixel(25,i,true);
+      }
+    
+    }
+    // Read DUT info, should print above filled information:
+    m_api->_dut->info();
+
+    std::cout << "Current DAC settings:" << std::endl;
+    m_api->_dut->printDACs(0);
+
+    if(!m_dacsFromConf)
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");
+    else if(!m_trimmingFromConf)
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
+    else
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+    std::cout << "=============================\nCONFIGURED\n=============================" << std::endl;
+
   }
 
   catch (pxar::InvalidConfig &e){
     SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
     delete m_api;
-    return;
+    //return;
   }
   catch (pxar::pxarException &e){
     SetStatus(eudaq::Status::LVL_ERROR, string("pxarCore Error: ") + e.what());
@@ -147,44 +185,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     delete m_api;
     return;
   }
+}
 
-  // All on!
-  m_api->_dut->maskAllPixels(false);
-  m_api->_dut->testAllPixels(false);
-
-  // test pixels
-  if(testpulses) {
-    m_api->_dut->testAllPixels(true);
-    //efficiency map
-    char mapName[256] = "efficiency map";
-    std::vector<pxar::pixel> effMap = m_api->getEfficiencyMap(0, 100);
-    CMSPixelEvtMonitor::Instance()->DrawMap(effMap, mapName);
-    m_api->_dut->testAllPixels(false);
-
-    std::cout << "Setting up pixels for calibrate pulses..." << std::endl << "col \t row" << std::endl;
-    for(int i = 40; i < 45; i++){
-      m_api->_dut->testPixel(25,i,true);
-    }
-    
-  }
-  // Read DUT info, should print above filled information:
-  m_api->_dut->info();
-
-  std::cout << "Current DAC settings:" << std::endl;
-  m_api->_dut->printDACs(0);
-
-  if(!m_dacsFromConf)
-    SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");
-  else if(!m_trimmingFromConf)
-    SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
-  else
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
-  std::cout << "=============================\nCONFIGURED\n=============================" << std::endl;
-
-}//end On Configure
-//-------------------------------------------------
-//
-//-------------------------------------------------
 void CMSPixelProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
@@ -211,10 +213,8 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   triggering = true;
   started = true;
   SetStatus(eudaq::Status::LVL_OK, "Running");
-}// OnStartRun
-//-------------------------------------------------
-//
-//-------------------------------------------------
+}
+
 // This gets called whenever a run is stopped
 void CMSPixelProducer::OnStopRun() {
   stopping = true;
