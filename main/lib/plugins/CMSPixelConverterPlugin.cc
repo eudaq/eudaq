@@ -34,8 +34,7 @@ namespace eudaq {
        
       }
 
-      virtual bool GetStandardSubEvent(StandardEvent & out, const Event & in) const 
-      {
+      virtual bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
         std::cout << "Call CMSPixelConverterPlugin::GetStandardSubEvent" << std::endl;
 
         // transform data of form char* to vector<int16_t>
@@ -48,23 +47,18 @@ namespace eudaq {
           // Set the number of pixels
           plane.SetSizeRaw(ROC_NUMCOLS, ROC_NUMROWS);
 
-          std::vector<uint16_t> rawData = TransformRawData(in);
+	  std::vector<uint16_t> rawdata = TransformRawData(in);
           std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
-          int status = evtDecoder.get_event(rawData, evt);
+          int status = evtDecoder.get_event(rawdata, evt);
           EUDAQ_DEBUG("Decoding status: " + status);
-          int i = 0;     
+
+	  // Store all decoded pixels:
           for(std::vector<CMSPixel::pixel>::iterator it = evt->begin(); it != evt->end(); ++it){
-            int roc = it->roc;
-            int col = it->col;
-            int row = it->row;
-            int raw = it->raw;
-            plane.PushPixel(col, row, raw);
-            std::cout <<"Adding pixel to plane..."  << "roc " << roc << " col " << col << " row " << row 
-              << " val " << raw << "==" << plane.GetPixel(i-1) << std::endl;
+            plane.PushPixel(it->col, it->row, it->raw);
           }
+
 	  plane.SetTLUEvent(GetTriggerID(in));
           out.AddPlane(plane);
-          std::cout << "plane added" <<std::endl;
           delete evt;
           return true;
         }
@@ -81,8 +75,7 @@ namespace eudaq {
       std::cout<<"CMSPixelConverterPlugin Event_Type: "<<EVENT_TYPE << std::endl;
 
     }
-      static std::vector<uint16_t> TransformRawData(const RawDataEvent & in)
-      {
+      static std::vector<uint16_t> TransformRawData(const RawDataEvent & in) {
         // transform data of form char* to vector<int16_t>
         std::vector<uint16_t> rawData;
 
@@ -103,7 +96,6 @@ namespace eudaq {
         int i = 0;
         while(i < size-1){
           uint16_t temp = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];
-          std::cout << (std::bitset<16>) temp << "==" << (std::bitset<8>) block.data()[i+1] << (std::bitset<8>) block.data()[i] << std::endl;
           rawData.push_back(temp);
           i+=2;
         }
