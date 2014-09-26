@@ -37,19 +37,16 @@ namespace eudaq {
       {
         std::cout << "Call CMSPixelConverterPlugin::GetStandardSubEvent" << std::endl;
 
-   
-
         // transform data of form char* to vector<int16_t>
-
         EUDAQ_DEBUG("m_roctype " + eudaq::to_string((int) m_roctype));
         if(m_roctype != 0x0){
           //CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
           CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
 
-          StandardPlane plane(0, EVENT_TYPE);
+          StandardPlane plane(7, EVENT_TYPE);
           // Set the number of pixels
           int cols = 52, rows = 80;
-          plane.SetSizeRaw(rows, cols);
+          plane.SetSizeRaw(cols, rows);
 
 
           std::vector<uint16_t> rawData = TransformRawData(in);
@@ -62,10 +59,11 @@ namespace eudaq {
             int col = it->col;
             int row = it->row;
             int raw = it->raw;
-            plane.SetPixel(i++,row, col, raw);
+            plane.PushPixel(col, row, raw);
             std::cout <<"Adding pixel to plane..."  << "roc " << roc << " col " << col << " row " << row 
               << " val " << raw << "==" << plane.GetPixel(i-1) << std::endl;
           }
+	  plane.SetTLUEvent(GetTriggerID(in));
           out.AddPlane(plane);
           std::cout << "plane added" <<std::endl;
           delete evt;
