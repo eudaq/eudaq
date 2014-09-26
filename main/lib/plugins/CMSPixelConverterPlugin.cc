@@ -5,6 +5,7 @@
 
 #include "eudaq/CMSPixelDecoder.h"
 #include "dictionaries.h"
+#include "constants.h"
 
 #include "iostream"
 #include "bitset"
@@ -45,9 +46,7 @@ namespace eudaq {
 
           StandardPlane plane(7, EVENT_TYPE);
           // Set the number of pixels
-          int cols = 52, rows = 80;
-          plane.SetSizeRaw(cols, rows);
-
+          plane.SetSizeRaw(ROC_NUMCOLS, ROC_NUMROWS);
 
           std::vector<uint16_t> rawData = TransformRawData(in);
           std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
