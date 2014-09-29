@@ -94,19 +94,6 @@ IF(BUILD_nreader)
   set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
-#NEW
-###############################################
-# BUILD CMS Pixle Producer
-###############################################
-IF(BUILD_cmspixel)
-  FIND_PACKAGE(PXAR)
-  MESSAGE( STATUS "PXAR dir: ${PXAR_PATH}" )
-  # Needed by CMSPixelDecoder
-  CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/version.h" @ONLY)
-  set(ADDITIONAL_LIBRARIES ${PXAR_LIBRARY})
-ENDIF()
-#
-
 # SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
 # see http://www.cmake.org/Wiki/CMake_RPATH_handling
 # enable @rpath in the install name for any shared library being built

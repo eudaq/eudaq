@@ -11,10 +11,7 @@ endif (USE_ROOT)
 AUX_SOURCE_DIRECTORY( src library_sources )
 AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
-#NEW
-#PXAR
-INCLUDE_DIRECTORIES(include ${PXAR_PATH}/core/api ${PXAR_PATH}/core/utils ${PXAR_PATH}/util ${ROOT_INCLUDE_DIR})
-#
+INCLUDE_DIRECTORIES(include $ENV{PXAR_PATH}/core/utils)
 
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} ${plugins_sources})
 SOURCE_GROUP(plugins .*Plugin.*cc)
@@ -25,7 +22,7 @@ SOURCE_GROUP(Event .*Event.*cc)
 SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 
 #MODIFIED
-target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES} ${PXAR_LIBRARY})
+target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES} $ENV{PXAR_PATH}/lib/libpxar.so)
 #
 
 INSTALL(TARGETS ${PROJECT_NAME}
