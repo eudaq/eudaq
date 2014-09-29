@@ -892,26 +892,20 @@ int PALPIDEFSProducer::BuildEvent()
   // send all layers in one block
   unsigned long total_size = 0;
   for (int i=0; i<m_nDevices; i++) {
-    total_size += 2 + sizeof(uint16_t);
-    SingleEvent* single_ev = m_next_event[i];
     if (layer_selected[i]) {
+      total_size += 2 + sizeof(uint16_t);
       total_size += 2 * sizeof(uint64_t);
-      total_size += single_ev->m_length;
+      total_size += m_next_event[i]->m_length;
     }
   }
   
   char* buffer = new char[total_size];
   unsigned long pos = 0;
   for (int i=0; i<m_nDevices; i++) {
-    buffer[pos++] = 0xff;
-    buffer[pos++] = i;
+    if (layer_selected[i]) {
+      buffer[pos++] = 0xff;
+      buffer[pos++] = i;
     
-    if (!layer_selected[i]) {
-      // data length
-      uint16_t length = 0;
-      memcpy(buffer+pos, &length, sizeof(uint16_t));
-      pos += sizeof(uint16_t);
-    } else {
       SingleEvent* single_ev = m_next_event[i];
       
       // data length
