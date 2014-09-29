@@ -12,6 +12,9 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
+# include macro for easy handling of distributed source files of plugins:
+include(${PROJECT_SOURCE_DIR}/cmake/MacroAddPluginSources.cmake)
+
 # Determine platform- and compiler-specific settings
 include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 
@@ -120,9 +123,6 @@ IF("${isSystemDir}" STREQUAL "-1")
    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
-# build main EUDAQ library
-add_subdirectory(main/lib)
-
 # build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
 option(BUILD_main "Compile main EUDAQ executables?" ON)
 IF(BUILD_main)
@@ -159,6 +159,11 @@ IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
 ENDIF()
 
+# include processors (will not be included in target 'all')
+add_subdirectory(producers)
+
+# build main EUDAQ library
+add_subdirectory(main/lib)
 
 
 ###############################################
@@ -186,15 +191,10 @@ IF(DOXYGEN_FOUND)
     )
 ENDIF(DOXYGEN_FOUND)
 
-
-# include processors (will not be included in target 'all')
-add_subdirectory(producers)
-
 #######################################################
 # Print out system information useful for bug reports #
 ############################################### #######
 include(PrintSystemInformation)
-
 
 ###############################################
 # Python-based regression tests
@@ -221,4 +221,3 @@ if (${CMAKE_VERSION} VERSION_GREATER 2.8)
 ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
   MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
 ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
-
