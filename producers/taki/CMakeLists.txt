@@ -4,6 +4,10 @@ IF(NOT IGNORE_KNOWN_ISSUES AND WIN32) # issues compiling under WINDOWS only
     MESSAGE(WARNING "There are known issues compiling ${name} on your platform. Set the IGNORE_KNOWN_ISSUES option to configure this producer to be build anyway.")
   ENDIF(NOT BUILD_allproducer)
 ELSE(NOT IGNORE_KNOWN_ISSUES AND WIN32)
+
+  # Add Converter plugin to the list of plugins to be baked into the main EUDAQ library:
+  add_plugin_sources(src/TAKIConverterPlugin.cc)
+
   set(sourcefiles src/TakiProducer.cxx)
   set(ext_libraries "" )
   set(ext_lib_paths "" )

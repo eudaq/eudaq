@@ -4,6 +4,9 @@ find_package(TLUFirmware REQUIRED)
 
 add_definitions(${TLUFIRMWARE_DEFINITIONS})
 
+# Add Converter plugin to the list of plugins to be baked into the main EUDAQ library:
+add_plugin_sources(src/TLUConverterPlugin.cc)
+
 INCLUDE_DIRECTORIES( include ${ZESTSC1_INCLUDE_DIRS} ${LIBUSB_INCLUDE_DIRS})
 
 add_executable(TLUControl.exe src/TLUControl.cxx src/TLUController.cc src/TLU_USB.cc src/USBTracer.cc src/TLUAddresses1.cc src/TLUAddresses2.cc src/win_uSleep.cc)
