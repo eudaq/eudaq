@@ -7,6 +7,9 @@ ELSE(NOT IGNORE_KNOWN_ISSUES AND WIN32)
   FIND_PACKAGE( ROOT REQUIRED)
   INCLUDE_DIRECTORIES( ${ROOT_INCLUDE_DIR} )
 
+  # Add Converter plugin to the list of plugins to be baked into the main EUDAQ library:
+  add_plugin_sources(src/FORTISConverterPlugin.cc)
+
   set(sourcefiles src/FORTISPackData.cc src/startExecutableThread.cc)
   set(ext_libraries "" )
   set(ext_lib_paths "" )

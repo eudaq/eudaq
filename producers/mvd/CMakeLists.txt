@@ -4,6 +4,10 @@ IF(NOT IGNORE_KNOWN_ISSUES)
     MESSAGE(WARNING "There are known issues compiling ${name} (see https://github.com/eudaq/eudaq/issues/74). Set the IGNORE_KNOWN_ISSUES option to configure this producer to be build anyway.")
   ENDIF(NOT BUILD_allproducer)
 ELSE(NOT IGNORE_KNOWN_ISSUES)
+
+  # Add Converter plugin to the list of plugins to be baked into the main EUDAQ library:
+  add_plugin_sources(src/MVDConverterPlugin.cc)
+
   set(sourcefiles src/MVDProducer.cxx src/MVDController.cc src/ModV551.cc src/ModV550.cc)
   set(ext_libraries "vme" )
   set(ext_lib_paths "" )

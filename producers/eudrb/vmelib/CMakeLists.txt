@@ -22,5 +22,3 @@ INSTALL(TARGETS ${libname} VMEReset.exe VMETest.exe Scaler.exe
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
 
-# also install the vmelib as it is only build when needed but not copied to the lib dir
-install(FILES ${CMAKE_BINARY_DIR}/extern/vmelib/libvmelib.so DESTINATION lib)
