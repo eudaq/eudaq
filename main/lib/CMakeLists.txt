@@ -9,9 +9,28 @@ if (USE_ROOT)
 endif (USE_ROOT)
 
 AUX_SOURCE_DIRECTORY( src library_sources )
-AUX_SOURCE_DIRECTORY( plugins plugins_sources )
+AUX_SOURCE_DIRECTORY( plugins local_plugin_sources )
 
-ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources}  ${plugins_sources})
+# Preprocess source files for converter plugins from subdirectories:
+set(PREP_PLUGIN_SRCS)
+get_property(PLUGIN_SRCS GLOBAL PROPERTY PLUGIN_SRCS_LIST)
+foreach(s IN LISTS PLUGIN_SRCS)
+  file(RELATIVE_PATH rs "${CMAKE_CURRENT_SOURCE_DIR}" "${s}")
+  string(REGEX REPLACE "r$" "" o "${CMAKE_CURRENT_BINARY_DIR}/${rs}")
+  add_custom_command(
+    OUTPUT "${o}"
+    COMMAND ${CMAKE_COMMAND} -E copy "${s}" "${o}"
+    DEPENDS "${s}"
+    COMMENT "Creating ${o}"
+    VERBATIM
+    )
+  list(APPEND PREP_PLUGIN_SRCS "${o}")
+endforeach()
+
+MESSAGE(STATUS "Converter plugin files: ${PREP_PLUGIN_SRCS}")
+MESSAGE(STATUS "Converter plugins in main: ${local_plugin_sources}")
+
+ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} ${local_plugin_sources} ${PREP_PLUGIN_SRCS} ${plugins_sources})
 SOURCE_GROUP(plugins .*Plugin.*cc)
 SOURCE_GROUP(FileIO .*File.*cc)
 SOURCE_GROUP(TCPIP .*Transport.*cc)
