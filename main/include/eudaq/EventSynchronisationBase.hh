@@ -37,10 +37,11 @@ namespace eudaq{
 	 void event_queue_pop_TLU_event();
 	 void makeDetectorEvent();
 	 void clearDetectorQueue();
+
       /** The empty destructor. Need to add it to make it virtual.
        */
 	 virtual ~SyncBase() {}
-	 SyncBase();
+	 SyncBase(bool sync=true);
 	 void addBOREEvent(int fileIndex,const eudaq::DetectorEvent& BOREvent);
 	 void PrepareForEvents();
 
@@ -68,6 +69,7 @@ namespace eudaq{
 		size_t NumberOfEventsToSync_;
 		uint64_t longTimeDiff_;
 		
+		bool m_sync;
   };
 
 }//namespace eudaq

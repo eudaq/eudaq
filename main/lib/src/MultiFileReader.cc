@@ -55,7 +55,7 @@ const eudaq::Event & eudaq::multiFileReader::GetEvent() const
     return *m_ev;
 }
 
-eudaq::multiFileReader::multiFileReader(): m_eventsToSync(0),m_preaparedForEvents(0)
+eudaq::multiFileReader::multiFileReader(bool sync) :m_sync(sync), m_eventsToSync(0), m_preaparedForEvents(0)
 {
 	
 }
