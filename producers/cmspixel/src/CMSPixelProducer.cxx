@@ -235,6 +235,16 @@ void CMSPixelProducer::OnStopRun() {
     m_api->HVoff();
 
 #if BUFFER_RO_SCHEME == 3
+    // Read the rest of events from DTB buffer:
+    std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
+    std::cout << "Post run read-out: sending " << daqEvents.size() << " evt." << std::endl;
+    for(size_t i = 0; i < daqEvents.size(); i++) {
+      eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
+      ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
+      SendEvent(ev);
+      m_ev++;
+    }
+    // Sending the final end-of-run event:
     SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
 #else
     m_fout.close();
