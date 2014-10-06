@@ -142,13 +142,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
     // test pixels
     if(testpulses) {
-      m_api->_dut->testAllPixels(true);
-      //efficiency map
-      char mapName[256] = "efficiency map";
-      std::vector<pxar::pixel> effMap = m_api->getEfficiencyMap(0, 100);
-      CMSPixelEvtMonitor::Instance()->DrawMap(effMap, mapName);
-      m_api->_dut->testAllPixels(false);
-
       std::cout << "Setting up pixels for calibrate pulses..." << std::endl << "col \t row" << std::endl;
       for(int i = 40; i < 45; i++){
 	m_api->_dut->testPixel(25,i,true);
