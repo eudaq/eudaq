@@ -127,8 +127,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << m_api->getTBid()*1000 << "mA" << std::endl;
 
-    m_api -> HVon();
-    
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
@@ -193,6 +191,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 void CMSPixelProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
+
+  EUDAQ_INFO("Switching Sensor Bias HV ON.");
+  m_api->HVon();
+
   std::cout << "Start Run: " << m_run << std::endl;
 
 #if BUFFER_RO_SCHEME == 3
@@ -216,7 +218,7 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   triggering = true;
   SetStatus(eudaq::Status::LVL_OK, "Running");
   // Wait some time and then activate...
-  eudaq::mSleep(3000);
+  eudaq::mSleep(9000);
   m_api -> daqTriggerLoop(m_pattern_delay);
   started = true;
 }
@@ -235,6 +237,9 @@ void CMSPixelProducer::OnStopRun() {
     }
     m_api -> daqStop();
     eudaq::mSleep(100);
+    
+    EUDAQ_INFO("Switching Sensor Bias HV OFF.");
+    m_api->HVoff();
 
 #if BUFFER_RO_SCHEME == 3
     SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
@@ -270,7 +275,6 @@ void CMSPixelProducer::OnTerminate() {
   std::cout << "CMSPixelProducer terminating..." << std::endl;
   // If we already have a pxarCore instance, shut it down cleanly:
   if(m_api) {
-    m_api->HVoff();
     delete m_api;
   }
   done = true;
