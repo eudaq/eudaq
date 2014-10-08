@@ -127,8 +127,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << m_api->getTBid()*1000 << "mA" << std::endl;
 
-    m_api -> HVon();
-    
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
@@ -144,13 +142,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
     // test pixels
     if(testpulses) {
-      m_api->_dut->testAllPixels(true);
-      //efficiency map
-      char mapName[256] = "efficiency map";
-      std::vector<pxar::pixel> effMap = m_api->getEfficiencyMap(0, 100);
-      CMSPixelEvtMonitor::Instance()->DrawMap(effMap, mapName);
-      m_api->_dut->testAllPixels(false);
-
       std::cout << "Setting up pixels for calibrate pulses..." << std::endl << "col \t row" << std::endl;
       for(int i = 40; i < 45; i++){
 	m_api->_dut->testPixel(25,i,true);
@@ -193,6 +184,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 void CMSPixelProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
+
+  EUDAQ_INFO("Switching Sensor Bias HV ON.");
+  m_api->HVon();
+
   std::cout << "Start Run: " << m_run << std::endl;
 
 #if BUFFER_RO_SCHEME == 3
@@ -216,7 +211,7 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   triggering = true;
   SetStatus(eudaq::Status::LVL_OK, "Running");
   // Wait some time and then activate...
-  eudaq::mSleep(3000);
+  eudaq::mSleep(9000);
   m_api -> daqTriggerLoop(m_pattern_delay);
   started = true;
 }
@@ -235,8 +230,21 @@ void CMSPixelProducer::OnStopRun() {
     }
     m_api -> daqStop();
     eudaq::mSleep(100);
+    
+    EUDAQ_INFO("Switching Sensor Bias HV OFF.");
+    m_api->HVoff();
 
 #if BUFFER_RO_SCHEME == 3
+    // Read the rest of events from DTB buffer:
+    std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
+    std::cout << "Post run read-out: sending " << daqEvents.size() << " evt." << std::endl;
+    for(size_t i = 0; i < daqEvents.size(); i++) {
+      eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
+      ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
+      SendEvent(ev);
+      m_ev++;
+    }
+    // Sending the final end-of-run event:
     SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
 #else
     m_fout.close();
@@ -270,7 +278,6 @@ void CMSPixelProducer::OnTerminate() {
   std::cout << "CMSPixelProducer terminating..." << std::endl;
   // If we already have a pxarCore instance, shut it down cleanly:
   if(m_api) {
-    m_api->HVoff();
     delete m_api;
   }
   done = true;
