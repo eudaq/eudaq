@@ -120,8 +120,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
-    m_api -> initTestboard(sig_delays, power_settings, pg_setup);
-    m_api -> initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
+    if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { throw pxar::pxarException("Firmware mismatch"); }
+    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
 
     // Read current:
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
@@ -192,8 +192,19 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
 
 #if BUFFER_RO_SCHEME == 3
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
+  // Set the ROC type for decoding:
   bore.SetTag("ROCTYPE", m_roctype);
+
+  // Set the detector for correct plane assignment:
+  std::string detector;
+  if(m_producerName.find("REF") != std::string::npos) { detector = "REF"; }
+  else { detector = "DUT"; }
+  bore.SetTag("DETECTOR", detector);
+
+  // Send the event out:
   SendEvent(bore);
+
+  std::cout << "BORE with detector " << detector << " and ROC type " << m_roctype << std::endl;
 #else
   // Get output file
   std::ostringstream filename;
@@ -311,7 +322,7 @@ void CMSPixelProducer::ReadoutLoop() {
 #endif
 #else 
       eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
-      pxar::rawEvent daqEvent = m_api -> daqGetRawEvent();
+      pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
       ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
       SendEvent(ev);
