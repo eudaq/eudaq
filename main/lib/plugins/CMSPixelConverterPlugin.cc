@@ -34,37 +34,56 @@ namespace eudaq {
        
     }
 
+    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
+
+      // FIXME: use "sensor" to distinguish DUT and REF?
+      StandardPlane plane(7, EVENT_TYPE, "DUT");
+
+      // Initialize the plane size (zero suppressed), set the number of pixels
+      plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0);
+
+      // Set trigger id:
+      plane.SetTLUEvent(id);
+
+      // Transform data of from EUDAQ data format to int16_t vector for processing:
+      std::vector<uint16_t> rawdata = TransformRawData(data);
+      std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
+      if(rawdata.empty()) { return plane; }
+
+      CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
+      int status = evtDecoder.get_event(rawdata, evt);
+
+      EUDAQ_DEBUG("Decoding status: " + status);
+      // Check for serious decoding problems and return empty plane:
+      if(status <= DEC_ERROR_NO_TBM_HEADER) { return plane; }
+
+      // Store all decoded pixels:
+      for(std::vector<CMSPixel::pixel>::iterator it = evt->begin(); it != evt->end(); ++it){
+	plane.PushPixel(it->col, it->row, it->raw);
+      }
+
+      delete evt;
+      return plane;
+    }
+
     virtual bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
 
-      // transform data of form char* to vector<int16_t>
-      EUDAQ_DEBUG("m_roctype " + eudaq::to_string((int) m_roctype));
-      if(m_roctype != 0x0){
-	//CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
-	CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
+      // Check if we have BORE or EORE:
+      if (in.IsBORE() || in.IsEORE()) { return true; }
 
-	StandardPlane plane(7, EVENT_TYPE);
-	// Set the number of pixels
-	plane.SetSizeRaw(ROC_NUMCOLS, ROC_NUMROWS);
-
-	std::vector<uint16_t> rawdata = TransformRawData(in);
-	std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
-	int status = evtDecoder.get_event(rawdata, evt);
-	EUDAQ_DEBUG("Decoding status: " + status);
-
-	// Store all decoded pixels:
-	for(std::vector<CMSPixel::pixel>::iterator it = evt->begin(); it != evt->end(); ++it){
-	  plane.PushPixel(it->col, it->row, it->raw);
-	}
-
-	plane.SetTLUEvent(GetTriggerID(in));
-	out.AddPlane(plane);
-	delete evt;
-	return true;
-      }
-      else{
+      // Check ROC type from event tags:
+      if(m_roctype == 0x0){
 	EUDAQ_ERROR("Invalid ROC type\n");
 	return false;
       }
+
+      //CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
+      const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
+      for (size_t i = 0; i < in_raw.NumBlocks(); ++i) {
+	out.AddPlane(ConvertPlane(in_raw.GetBlock(i), in_raw.GetID(i)));
+      }
+
+      return true;
     }
 
   private:
@@ -75,24 +94,14 @@ namespace eudaq {
 
     }
 
-    static std::vector<uint16_t> TransformRawData(const RawDataEvent & in) {
-      // transform data of form char* to vector<int16_t>
+    static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
+
+      // Transform data of form char* to vector<int16_t>
       std::vector<uint16_t> rawData;
 
-      if(in.NumBlocks() != 1){
-	EUDAQ_WARN("event " + to_string(in.GetEventNumber())
-		   + ": invalid number of data blocks ");        
-	return rawData;
-      }
-
-      const std::vector<uint8_t> & block = in.GetBlock(0);
-
       int size = block.size();
-      if(size < 2) {
-	EUDAQ_WARN("event " + to_string(in.GetEventNumber())
-		   + ": data block is too small");
-	return rawData;
-      }
+      if(size < 2) { return rawData; }
+
       int i = 0;
       while(i < size-1) {
 	uint16_t temp = ((uint16_t)block.data()[i+1] << 8) | block.data()[i];
@@ -100,11 +109,6 @@ namespace eudaq {
 	i+=2;
       }
       return rawData;
-    }
-
-    static std::vector<uint16_t> TransformRawData(const Event & in)
-    {
-      return TransformRawData(dynamic_cast<const RawDataEvent &>(in));
     }
 
     static CMSPixelConverterPlugin m_instance;
