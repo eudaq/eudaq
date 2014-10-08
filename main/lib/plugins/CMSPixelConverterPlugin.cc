@@ -2,6 +2,7 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/Configuration.hh"
 
 #include "eudaq/CMSPixelDecoder.h"
 #include "dictionaries.h"
@@ -24,26 +25,27 @@ namespace eudaq {
 
     virtual void Initialize(const Event & bore, const Configuration & cnf)
     {
-      std::cout<<"CMSPixelConverterPlugin::Initialize" << std::endl;
-        
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
+      m_detector = bore.GetTag("DETECTOR","");
+
       m_roctype = devDict->getInstance()->getDevCode(roctype);
       if (m_roctype == 0x0)
 	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
-       
+
+      std::cout<<"CMSPixelConverterPlugin initialized with detector " << m_detector << ", ROC type " << static_cast<int>(m_roctype) << std::endl;       
     }
 
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
 
       // FIXME: use "sensor" to distinguish DUT and REF?
-      StandardPlane plane(7, EVENT_TYPE, "DUT");
+      StandardPlane plane(id, EVENT_TYPE, m_detector);
 
       // Initialize the plane size (zero suppressed), set the number of pixels
       plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0);
 
       // Set trigger id:
-      plane.SetTLUEvent(id);
+      plane.SetTLUEvent(0);
 
       // Transform data of from EUDAQ data format to int16_t vector for processing:
       std::vector<uint16_t> rawdata = TransformRawData(data);
@@ -57,6 +59,7 @@ namespace eudaq {
       // Check for serious decoding problems and return empty plane:
       if(status <= DEC_ERROR_NO_TBM_HEADER) { return plane; }
 
+      std::cout << "Decoding plane for " << m_detector << ", " << evt->size() << " px" << std::endl;
       // Store all decoded pixels:
       for(std::vector<CMSPixel::pixel>::iterator it = evt->begin(); it != evt->end(); ++it){
 	plane.PushPixel(it->col, it->row, it->raw);
@@ -77,10 +80,11 @@ namespace eudaq {
 	return false;
       }
 
-      //CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG3");
+      CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("INFO");
       const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
       for (size_t i = 0; i < in_raw.NumBlocks(); ++i) {
-	out.AddPlane(ConvertPlane(in_raw.GetBlock(i), in_raw.GetID(i)));
+	//out.AddPlane(ConvertPlane(in_raw.GetBlock(i), in_raw.GetID(i)));
+	out.AddPlane(ConvertPlane(in_raw.GetBlock(i), (m_detector == "REF" ? 8 : 7)));
       }
 
       return true;
@@ -88,11 +92,7 @@ namespace eudaq {
 
   private:
     CMSPixelConverterPlugin() : DataConverterPlugin(EVENT_TYPE),
-				m_roctype(0)
-    {
-      std::cout<<"CMSPixelConverterPlugin Event_Type: "<<EVENT_TYPE << std::endl;
-
-    }
+				m_roctype(0), m_detector("") {}
 
     static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
 
@@ -113,6 +113,7 @@ namespace eudaq {
 
     static CMSPixelConverterPlugin m_instance;
     uint8_t m_roctype;
+    std::string m_detector;
   };
 
   CMSPixelConverterPlugin CMSPixelConverterPlugin::m_instance;
