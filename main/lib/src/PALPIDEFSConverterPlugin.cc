@@ -135,8 +135,8 @@ namespace eudaq {
       }
       
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {
+#ifdef MYDEBUG
 	cout << "Skipping status event" << endl;
-	sev.SetFlags(Event::FLAG_STATUS);
 	for (int id=0 ; id<m_nLayers ; id++) {
 	  vector<unsigned char> data = rev->GetBlock(id);
 	  if (data.size() == 4) {
@@ -146,6 +146,8 @@ namespace eudaq {
 	    cout << "T (layer " << id << ") is: " << temp << endl;
 	  }
 	}
+#endif
+	sev.SetFlags(Event::FLAG_STATUS);
       } else {
 	//Conversion
 	if (rev->NumBlocks() == 1) { 
@@ -268,7 +270,10 @@ namespace eudaq {
 		  if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr && pixeladdr == last_pixeladdr)
 		    cout << "Pixel duplicated. ";
 		  else
+                  {
 		    cout << "Strict ordering violated. ";
+                    sev.SetFlags(Event::FLAG_BROKEN);
+                  }
 		  cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
 		}
 		last_rgn = rgn;
@@ -295,11 +300,16 @@ namespace eudaq {
 		current_layer = -1;
 	    }
 	  }
-	  if (current_layer != -1)
-	    cout << "WARNING: data stream too short, stopped in region " << current_rgn << endl;
-	  for (int i=0;i<m_nLayers;i++)
-	    if (!layers_found[i])
-	      cout << "WARNING: layer " << i << " was missing in the data stream." << endl;
+	  if (current_layer != -1) {
+	    cout << "ERROR: data stream too short, stopped in region " << current_rgn << endl;
+            sev.SetFlags(Event::FLAG_BROKEN);
+	  }
+	  for (int i=0;i<m_nLayers;i++) {
+	    if (!layers_found[i]) {
+	      cout << "ERROR: layer " << i << " was missing in the data stream." << endl;
+              sev.SetFlags(Event::FLAG_BROKEN);
+	    }
+	  }
 	  
 	    
     #ifdef MYDEBUG
@@ -309,17 +319,22 @@ namespace eudaq {
 	  // check timestamps
 	  bool ok = true;
 	  for (int i=0;i<m_nLayers-1;i++) {
-	    if (timestamps[i+1] == 0 || fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.1)
+	    if (timestamps[i+1] == 0 || (fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.0001 && fabs((double)timestamps[i] - (double)timestamps[i+1]) > 4))
 	      ok = false;
 	  }
 	  if (!ok) {
+#ifdef MYDEBUG	    
 	    printf("Timestamps not consistent (event %d)!\n", ev.GetEventNumber());
 	    for (int i=0;i<m_nLayers;i++)
 	      printf("%d %lu %lu\n", i, trigger_ids[i], timestamps[i]);
+#endif
 #ifdef CHECK_TIMESTAMPS
 	    sev.SetFlags(Event::FLAG_BROKEN);
-#endif  
+#endif 
+            sev.SetTimestamp(0); 
 	  }
+          else 
+	    sev.SetTimestamp(timestamps[0]);
 	}	
       }
       
@@ -347,6 +362,8 @@ namespace eudaq {
       unsigned int nplanes=sev.NumPlanes();             //deduce number of planes from StandardEvent
       
       lev.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE,eutelescope::kDE);
+      lev.parameters().setValue("TIMESTAMP",(int) sev.GetTimestamp());
+      lev.parameters().setValue("FLAG", (int) sev.GetFlags());
       LCCollectionVec *zsDataCollection;
       try {
 	zsDataCollection=static_cast<LCCollectionVec*>(lev.getCollection("zsdata_pALPIDEfs"));
