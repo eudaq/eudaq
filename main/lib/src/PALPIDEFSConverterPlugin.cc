@@ -193,7 +193,7 @@ namespace eudaq {
     // 	printf("%x %x ", data[pos], data[pos+1]);
 	    if (current_layer == -1) {
 	      if (data[pos++] != 0xff) {
-		cout << "ERROR: Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
+		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
 		break;
 	      }
 	      current_layer = data[pos++];
@@ -203,7 +203,7 @@ namespace eudaq {
 		continue;
 	      }
 	      if (current_layer >= m_nLayers) {
-		cout << "ERROR: Unexpected. Not defined layer in data " << current_layer << endl;
+		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << endl;
 		break;
 	      }
 	      layers_found[current_layer] = true;
@@ -250,11 +250,11 @@ namespace eudaq {
 	      int length = data[pos++];
 	      int rgn = data[pos++] >> 3;
 	      if (rgn != current_rgn+1) {
-		cout << "ERROR: Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
+		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
 		break;
 	      }
 	      if (pos+length*2 > data.size()) {
-		cout << "ERROR: Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
+		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
 		break;
 	      }
 	      for (int i=0; i<length; i++) {
@@ -301,16 +301,15 @@ namespace eudaq {
 	    }
 	  }
 	  if (current_layer != -1) {
-	    cout << "ERROR: data stream too short, stopped in region " << current_rgn << endl;
+	    cout << "ERROR: Event " << ev.GetEventNumber() << " data stream too short, stopped in region " << current_rgn << endl;
             sev.SetFlags(Event::FLAG_BROKEN);
 	  }
 	  for (int i=0;i<m_nLayers;i++) {
 	    if (!layers_found[i]) {
-	      cout << "ERROR: layer " << i << " was missing in the data stream." << endl;
+	      cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << i << " was missing in the data stream." << endl;
               sev.SetFlags(Event::FLAG_BROKEN);
 	    }
 	  }
-	  
 	    
     #ifdef MYDEBUG
 	  cout << "EOD" << endl;
@@ -323,8 +322,8 @@ namespace eudaq {
 	      ok = false;
 	  }
 	  if (!ok) {
-#ifdef MYDEBUG	    
-	    printf("Timestamps not consistent (event %d)!\n", ev.GetEventNumber());
+	    cout << "ERROR: Event " << ev.GetEventNumber() << " Timestamps not consistent." << endl;
+#ifdef MYDEBUG  
 	    for (int i=0;i<m_nLayers;i++)
 	      printf("%d %lu %lu\n", i, trigger_ids[i], timestamps[i]);
 #endif
