@@ -45,6 +45,7 @@ namespace eudaq {
       static void ConvertStandardSubEvent(StandardEvent &, const Event &);
       static void ConvertLCIOSubEvent(lcio::LCEvent &, const Event &);
 
+	  static std::shared_ptr<eudaq::Event> ExtractNextEvent(const eudaq::AidaPacket&);
       /** Get the correct plugin implementation according to the event type.
        */
       DataConverterPlugin & GetPlugin(t_eventid eventtype);

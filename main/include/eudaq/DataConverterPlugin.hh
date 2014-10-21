@@ -3,6 +3,8 @@
 
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/AidaPacket.hh"
+
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -39,6 +41,7 @@ namespace lcio { using namespace EVENT; }
 #include <algorithm>
 
 namespace eudaq{
+
 
 	  inline int compareTLU2DUT(unsigned TLU_Trigger_Number, unsigned DUT_Trigger_number){
 	  if (DUT_Trigger_number==TLU_Trigger_Number)
@@ -138,7 +141,7 @@ namespace eudaq{
 
   class DataConverterPlugin {
     public:
-      typedef std::pair<unsigned, std::string> t_eventid;
+      typedef Event::t_eventid t_eventid;
 
       virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
 
@@ -169,6 +172,8 @@ namespace eudaq{
       /** Returns the type of event this plugin can convert to lcio as a pair of Event type id and subtype string.
        */
       virtual t_eventid const & GetEventType() const { return m_eventtype; }
+
+	  virtual std::shared_ptr<eudaq::Event> ExtractNextEvent(const eudaq::AidaPacket& ) { return nullptr; }
 
       /** The empty destructor. Need to add it to make it virtual.
        */

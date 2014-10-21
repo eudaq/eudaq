@@ -160,6 +160,12 @@ namespace eudaq {
 	  GetInstance().GetPlugin(ev).setCurrentTLUEvent(ev,tlu);
   }
 
+  std::shared_ptr<eudaq::Event> PluginManager::ExtractNextEvent(const eudaq::AidaPacket& pac)
+  {
+	  return GetInstance().GetPlugin(Event::t_eventid(pac.GetPacketType(),AidaPacket::type2str(pac.GetPacketSubType()))).ExtractNextEvent(pac);
+	  
+  }
+
 
 
 
