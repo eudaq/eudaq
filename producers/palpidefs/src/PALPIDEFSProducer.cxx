@@ -159,10 +159,14 @@ void DeviceReader::SetRunning(bool running)
   m_running = running;
   
 #ifndef SIMULATION  
-  if (m_running)
+  if (m_running) {
     m_daq_board->StartTrigger();
-  else 
+    m_daq_board->WriteBusyOverrideReg(true);
+  }
+  else {
+    m_daq_board->WriteBusyOverrideReg(false);
     m_daq_board->StopTrigger();
+  }
 #endif
 }
 
@@ -608,6 +612,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       }
       
       // data taking configuration
+
+      // Assert busy
+      daq_board->WriteBusyOverrideReg(false);
       
       // Readout mode
       daq_board->SetReadoutMode(m_readout_mode);
@@ -923,6 +930,7 @@ int PALPIDEFSProducer::BuildEvent()
       pos += single_ev->m_length;
     }
   }
+  
   RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
   ev.AddBlock(0, buffer, total_size);
   SendEvent(ev);
