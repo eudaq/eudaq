@@ -50,8 +50,11 @@ class Event;
 
 class DLLEXPORT AidaPacket : public Serializable {
   public:
-
-	AidaPacket( uint64_t type, uint64_t subtype ) : AidaPacket() {
+	  using data_t = uint64_t;
+	  using  MainType_t = data_t;
+	  using SubType_t = data_t;
+	  using t_Packetid = std::pair < MainType_t, SubType_t > ;
+	  AidaPacket(MainType_t type, SubType_t  subtype) : AidaPacket() {
 		m_header.data.packetType = type;
 		m_header.data.packetSubType = subtype;
 	};
@@ -65,8 +68,8 @@ class DLLEXPORT AidaPacket : public Serializable {
 	  public:
 		struct {
 			  uint64_t marker; 			// 8 byte string: #PACKET#
-			  uint64_t packetType;			// 8 byte string
-			  uint64_t packetSubType;		// 8 byte string
+			  MainType_t packetType;			// 8 byte string
+			  SubType_t packetSubType;		// 8 byte string
 			  uint64_t packetNumber;
 		  } data;
 	};
@@ -74,8 +77,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     void SerializeHeader( Serializer & ) const;
 
     uint64_t GetPacketMarker() const { return m_header.data.marker; };
-    uint64_t GetPacketType() const { return m_header.data.packetType; };
-    uint64_t GetPacketSubType() const { return m_header.data.packetSubType; };
+	MainType_t GetPacketType() const { return m_header.data.packetType; };
+	SubType_t GetPacketSubType() const { return m_header.data.packetSubType; };
+
     uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
     void SetPacketNumber( uint64_t n ) { m_header.data.packetNumber = n; };
 
