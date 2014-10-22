@@ -34,7 +34,7 @@ private:
   std::vector<pxar::pixelConfig> GetConfTrimming(std::string filename);
 
   unsigned m_run, m_ev;
-  std::string m_verbosity, m_foutName, m_roctype, m_usbId, m_producerName;
+  std::string m_verbosity, m_foutName, m_roctype, m_usbId, m_producerName, m_detector, m_event_type;
   bool stopping, done, started, triggering;
   bool m_dacsFromConf, m_trimmingFromConf;
   eudaq::Configuration m_config;
