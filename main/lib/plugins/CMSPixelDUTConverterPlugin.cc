@@ -12,9 +12,9 @@
 
 namespace eudaq {
 
-  static const char* EVENT_TYPE = "CMSPixel";
+  static const char* EVENT_TYPE = "CMSPixelDUT";
 
-  class CMSPixelConverterPlugin : public DataConverterPlugin {
+  class CMSPixelDUTConverterPlugin : public DataConverterPlugin {
   public:
     // virtual unsigned GetTriggerID(const Event & ev) const{}; 
 
@@ -27,11 +27,11 @@ namespace eudaq {
     }
 
   private:
-    CMSPixelConverterPlugin() : DataConverterPlugin(EVENT_TYPE),
+    CMSPixelDUTConverterPlugin() : DataConverterPlugin(EVENT_TYPE),
 				   m_converter(EVENT_TYPE) {}
 
     CMSPixelHelper m_converter;
-    static CMSPixelConverterPlugin m_instance;
+    static CMSPixelDUTConverterPlugin m_instance;
   };
-  CMSPixelConverterPlugin CMSPixelConverterPlugin::m_instance;
+  CMSPixelDUTConverterPlugin CMSPixelDUTConverterPlugin::m_instance;
 }
