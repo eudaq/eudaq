@@ -26,11 +26,11 @@ SyncBase::SyncBase():
 
 
 
-void SyncBase::addBOREEvent(int fileIndex, const eudaq::DetectorEvent& BOREvent )
+void SyncBase::addBOREDetectorEvent(int fileIndex, const eudaq::DetectorEvent& BOREvent )
 {
-	m_registertProducer+=BOREvent.NumEvents();
+	
 
-	m_EventsProFileReader.push_back(BOREvent.NumEvents());
+	
 	
 	eudaq::Configuration conf(BOREvent.GetTag("CONFIG"));
 	conf.SetSection("EventStruct");
@@ -45,26 +45,44 @@ void SyncBase::addBOREEvent(int fileIndex, const eudaq::DetectorEvent& BOREvent 
 	NumberOfEventsToSync_=BOREvent.GetTag("NumberOfEvents",NumberOfEventsToSync_);//from command line
 
 
-	const unsigned int TLU_ID=Event::str2id("_TLU");
-	static size_t id=1;
-	
-	for (unsigned i=0;i<BOREvent.NumEvents();++i)
-	{
-		if (TLU_ID==BOREvent.GetEvent(i)->get_id())
-		{
-			if (m_TLUs_found==0)
-			{
-				m_ProducerId2Eventqueue[getUniqueID(fileIndex,i)]=0;
-			}else{
-			 m_ProducerId2Eventqueue[getUniqueID(fileIndex,i)]=id++; //only the first TLU gets threated differently all others are just producers
-			}
-			 ++m_TLUs_found;
-		}else{
 
-			m_ProducerId2Eventqueue[getUniqueID(fileIndex,i)]=id++;
-		}
-		
+
+	
+	for (unsigned i = 0; i < BOREvent.NumEvents(); ++i)
+	{
+		addBORE_Event(fileIndex, *BOREvent.GetEvent(i));
 	}
+
+}
+
+void SyncBase::addBORE_Event(int fileIndex, const eudaq::Event& BOREEvent)
+{
+	++m_registertProducer;
+	static size_t id = 1;
+	const unsigned int TLU_ID = Event::str2id("_TLU");
+	
+	if (m_EventsProFileReader.size()<fileIndex+1)
+	{ 
+		m_EventsProFileReader.push_back(0);
+	}
+	m_EventsProFileReader[fileIndex]++;
+	auto identifier = PluginManager::getUniqueIdentifier(BOREEvent);
+	if (PluginManager::isTLU(BOREEvent))
+	{
+		if (m_TLUs_found == 0)
+		{
+			m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = 0;
+		}
+		else{
+			m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = id++; //only the first TLU gets threated differently all others are just producers
+		}
+		++m_TLUs_found;
+	}
+	else{
+
+		m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = id++;
+	}
+
 
 }
 
@@ -195,15 +213,22 @@ void SyncBase::makeDetectorEvent()
 	det->AddEvent(TLU);
 	for (size_t i=1;i<m_ProducerEventQueue.size();++i)
 	{
-
-		det->AddEvent(m_ProducerEventQueue[i].front());
+		if (!m_ProducerEventQueue[i].empty())
+		{
+			det->AddEvent(m_ProducerEventQueue[i].front());
+		}
+		else
+		{
+			det->AddEvent(std::shared_ptr<Event>(nullptr));
+		}
+		
 
 	}
 
 	
 	m_DetectorEventQueue.push(det);
-	//event_queue_pop_TLU_event();
-	event_queue_pop();
+	event_queue_pop_TLU_event();
+	//event_queue_pop();
 	
 }
 
@@ -229,7 +254,7 @@ bool SyncBase::compareTLUwithEventQueue( std::shared_ptr<eudaq::Event>& tlu_even
 {
 	int ReturnValue=Event_IS_Sync;
 
-	std::shared_ptr<TLUEvent> tlu=std::dynamic_pointer_cast<TLUEvent>(tlu_event);
+	//std::shared_ptr<TLUEvent> tlu=std::dynamic_pointer_cast<TLUEvent>(tlu_event);
 
 	
 
@@ -237,7 +262,7 @@ bool SyncBase::compareTLUwithEventQueue( std::shared_ptr<eudaq::Event>& tlu_even
 	{
 		auto& currentEvent=event_queue.front();
 
-		ReturnValue=PluginManager::IsSyncWithTLU(*currentEvent,*tlu);
+		ReturnValue=PluginManager::IsSyncWithTLU(*currentEvent,*tlu_event);
 		if (ReturnValue== Event_IS_Sync )
 		{
 			
@@ -292,7 +317,7 @@ void SyncBase::PrepareForEvents()
 	}else if (m_TLUs_found>1)
 	{
 		//EUDAQ_THROW("to many TLUs in the data stream.\n the sync mechanism only works with 1 TLU");
-		std::cout<< "more than one TLU detected only the first TLU is used for synchronisation "<<std::endl;
+		std::cout<< "more than one TLU detected only the first TLU is used for synchronization "<<std::endl;
 	}
 	m_ProducerEventQueue.resize(m_registertProducer);
 }
@@ -304,7 +329,7 @@ unsigned SyncBase::getUniqueID( unsigned fileIndex,unsigned eventIndex )
 
 unsigned SyncBase::getTLU_UniqueID( unsigned fileIndex )
 {
-	return getUniqueID(0,fileIndex);
+	return getUniqueID(fileIndex,0);
 }
 
 void SyncBase::storeCurrentOrder()
@@ -318,24 +343,24 @@ void SyncBase::storeCurrentOrder()
 	
 }
 
-int SyncBase::AddDetectorElementToProducerQueue( int fileIndex,std::shared_ptr<eudaq::DetectorEvent> detEvent )
+int SyncBase::AddDetectorEventToProducerQueue( int fileIndex,std::shared_ptr<eudaq::DetectorEvent> detEvent )
 {
-	if (detEvent)
-	{
-	
-	
-
-
-			
+	if (detEvent){
 			for(size_t i=0;i< detEvent->NumEvents();++i){
-			
-				auto &q=getQueuefromId(fileIndex,i);
-				q.push(detEvent->GetEventPtr(i));
+			    AddEventToProducerQueue(fileIndex, detEvent->GetEventPtr(i));
 			}
-
+	}
+	return true;
+}
+int SyncBase::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev)
+{
+	if (Ev)
+	{
+		auto identifier = PluginManager::getUniqueIdentifier(*Ev);
+		auto &q = getQueuefromId(fileIndex, identifier);
+		q.push(Ev);
 		
 	}
 	return true;
 }
-
 }
