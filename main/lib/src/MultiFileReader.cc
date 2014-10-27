@@ -1,11 +1,19 @@
 #include "eudaq/MultiFileReader.hh"
-
+#include "eudaq/AidaFileReader.hh"
 void eudaq::multiFileReader::addFileReader( const std::string & filename, const std::string & filepattern /*= ""*/ )
 {
-	m_fileReaders.emplace_back(std::make_shared<FileReader>(filename,  filepattern));
+//	m_fileReaders.emplace_back(std::make_shared<FileReader>(filename,  filepattern));
+	m_fileReaders.emplace_back(std::make_shared<eudaq::AidaFileReader>(filename));
+
+
 	auto ev = m_fileReaders.back()->GetNextEvent();
-	while (!ev->IsBORE())
+	while (ev->IsBORE())
 	{
+		if (!m_ev)
+		{
+			
+			m_ev = std::make_shared<DetectorEvent>(ev->GetRunNumber(),ev->GetEventNumber(),ev->GetTimestamp());
+		}
 		m_sync.addBORE_Event(m_fileReaders.size() - 1, *ev);
 		m_ev->AddEvent(ev);
 
