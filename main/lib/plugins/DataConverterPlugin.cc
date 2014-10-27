@@ -18,7 +18,7 @@ namespace eudaq {
   DataConverterPlugin::DataConverterPlugin(unsigned type, std::string subtype)
 	  : m_eventtype(make_pair(type, subtype)), m_thisCount(m_count)
   {
-    std::cout << "DEBUG: Registering DataConverterPlugin: " << Event::id2str(m_eventtype.first) << ":" << m_eventtype.second << " unique identifier "<< m_thisCount << " number of instances " <<m_count << std::endl;
+  //  std::cout << "DEBUG: Registering DataConverterPlugin: " << Event::id2str(m_eventtype.first) << ":" << m_eventtype.second << " unique identifier "<< m_thisCount << " number of instances " <<m_count << std::endl;
     PluginManager::GetInstance().RegisterPlugin(this);
 	m_count+=10;
   }
