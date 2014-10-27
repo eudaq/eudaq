@@ -10,6 +10,7 @@
 #include "FileReader.hh"
 #include "Platform.hh"
 #include "EventSynchronisationBase.hh"
+#include "eudaq/baseFileReader.hh"
 
 
 
@@ -31,7 +32,7 @@ namespace eudaq{
 	private:
 		std::string m_filename;
 		std::shared_ptr<eudaq::DetectorEvent> m_ev;
-		std::vector<std::shared_ptr<eudaq::FileReader>> m_fileReaders;
+		std::vector<std::shared_ptr<eudaq::baseFileReader>> m_fileReaders;
 		SyncBase m_sync;
 		size_t m_eventsToSync;
 		bool m_preaparedForEvents;
