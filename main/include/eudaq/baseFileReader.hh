@@ -2,11 +2,12 @@
 #define baseFileReader_h__
 #include <string>
 #include <memory>
+#include "Platform.hh"
 
 
 namespace eudaq{
 	class Event;
-	class baseFileReader{
+	class DLLEXPORT baseFileReader{
 	public:
 		baseFileReader(std::string fileName) :m_fileName(std::move(fileName)){}
 		std::string Filename()const  { return m_fileName; };
