@@ -146,12 +146,12 @@ namespace eudaq{
       virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
 
       virtual unsigned GetTriggerID(eudaq::Event const &) const;
-	  virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
+	  virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const {
 		  // dummy comparator. it is just checking if the event numbers are the same.
-		  
+		  const TLUEvent *tlu = dynamic_cast<const eudaq::TLUEvent*>(&tluEvent);
 		  //auto triggerID=ev.GetEventNumber();
 		  unsigned triggerID=ev.GetTag<unsigned>("tlu_trigger_id",0);
-	  auto tlu_triggerID=tlu.GetEventNumber();
+	  auto tlu_triggerID=tlu->GetEventNumber();
 	return compareTLU2DUT(tlu_triggerID,triggerID);
 	  }
 
@@ -173,7 +173,13 @@ namespace eudaq{
        */
       virtual t_eventid const & GetEventType() const { return m_eventtype; }
 
-	  virtual std::shared_ptr<eudaq::Event> ExtractNextEvent(const eudaq::AidaPacket& ) { return nullptr; }
+	  virtual std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::AidaPacket> ev, size_t NumberOfROF) {
+		  return nullptr; }
+
+	  virtual bool isTLU(const Event&){ return false; }
+
+	  virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev){ return m_thisCount; }
+	  virtual size_t GetNumberOfROF(const eudaq::AidaPacket& pac){ return 1; }
 
       /** The empty destructor. Need to add it to make it virtual.
        */
@@ -192,19 +198,20 @@ namespace eudaq{
        */
       DataConverterPlugin(std::string subtype);
       DataConverterPlugin(unsigned type, std::string subtype = "");
-
+	  static unsigned m_count;
+	  unsigned m_thisCount;
     private:
       /** The private copy constructor and assignment operator. They are not used anywhere, so there is not
        *  even an implementation. Even if the childs default copy constructor is public
        *  the code will not compile if it is called, since it cannot acces this cc, which the
        *  the default cc does.
        */
-      DataConverterPlugin(DataConverterPlugin &);
-      DataConverterPlugin & operator = (const DataConverterPlugin &);
+		DataConverterPlugin(DataConverterPlugin &) = delete;
+		DataConverterPlugin & operator = (const DataConverterPlugin &) = delete;
   };
 
 
-  
+
 
 
 }//namespace eudaq
