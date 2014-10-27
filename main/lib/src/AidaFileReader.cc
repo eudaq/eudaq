@@ -7,14 +7,15 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/AidaFileReader.hh"
+#include "eudaq/PluginManager.hh"
 
 
 namespace eudaq {
 
-  AidaFileReader::AidaFileReader(const std::string & file )
-    : m_filename( file ), m_runNumber( -1 )
+	AidaFileReader::AidaFileReader(const std::string & file) :baseFileReader(file),
+	  m_runNumber( -1 )
   {
-	  m_des = new FileDeserializer( m_filename );
+	  m_des = new FileDeserializer(Filename() );
 	  m_des->read( m_json_config );
   }
 
@@ -41,6 +42,28 @@ namespace eudaq {
 
   std::vector<uint64_t> AidaFileReader::getData() {
 	  return m_packet->GetData();
+  }
+
+  std::shared_ptr<eudaq::Event> AidaFileReader::GetNextEvent() 
+  {
+	  static size_t itter = 0;
+	  if (itter< PluginManager::GetNumberOfROF(*m_packet))
+	  {
+		  return PluginManager::ExtractEventN(m_packet, itter++);
+	  }
+	  // else
+
+	  itter = 0;
+
+	  if (readNext())
+	  {
+		  return GetNextEvent();
+	  }
+	  //else
+	
+	  return nullptr;
+	
+
   }
 
 

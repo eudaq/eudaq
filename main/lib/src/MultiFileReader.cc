@@ -3,8 +3,18 @@
 void eudaq::multiFileReader::addFileReader( const std::string & filename, const std::string & filepattern /*= ""*/ )
 {
 	m_fileReaders.emplace_back(std::make_shared<FileReader>(filename,  filepattern));
-	m_ev=m_fileReaders.back()->GetDetectorEvent_ptr();
-	m_sync.addBOREEvent(m_fileReaders.size()-1,*m_ev);
+	auto ev = m_fileReaders.back()->GetNextEvent();
+	while (!ev->IsBORE())
+	{
+		m_sync.addBORE_Event(m_fileReaders.size() - 1, *ev);
+		m_ev->AddEvent(ev);
+
+		ev = m_fileReaders.back()->GetNextEvent();
+
+	} 
+	
+	
+	
 }
 
 void eudaq::multiFileReader::Interrupt()
@@ -27,13 +37,16 @@ bool eudaq::multiFileReader::NextEvent( size_t skip /*= 0*/ )
 	do{
 		for (size_t fileID = 0; fileID < m_fileReaders.size(); ++fileID)
 		{
-			if (!m_fileReaders[fileID]->NextEvent()&&m_sync.SubEventQueueIsEmpty(fileID))
+
+			auto ev = m_fileReaders[fileID]->GetNextEvent();
+
+			if (ev==nullptr&&m_sync.SubEventQueueIsEmpty(fileID))
 			{
 				return false;
 			}
-			m_sync.AddDetectorElementToProducerQueue(fileID,m_fileReaders[fileID]->GetDetectorEvent_ptr());
+			m_sync.AddEventToProducerQueue(fileID,ev);
 		}
-		m_sync.storeCurrentOrder();
+		//m_sync.storeCurrentOrder();
 	}while (!m_sync.SyncNEvents(m_eventsToSync));
 	
 	if (!m_sync.getNextEvent(m_ev))
