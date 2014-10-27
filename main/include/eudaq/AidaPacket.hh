@@ -205,13 +205,14 @@ class DLLEXPORT EventPacket : public AidaPacket {
   public:
 	  EventPacket(const Event & ev );	// wrapper for old-style events
 	  virtual void Serialize(Serializer &) const;
-
+	  const Event* getEvent() const;
+	  std::shared_ptr<Event> getEventPointer();
   protected:
 	  template <typename T_Packet> friend struct RegisterPacketType;
 
 	  EventPacket( PacketHeader& header, Deserializer & ds);
 	  const Event* m_ev;
-
+	  std::shared_ptr<Event> m_owned_ev;
 };
 
 DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);

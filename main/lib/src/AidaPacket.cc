@@ -187,17 +187,17 @@ namespace eudaq {
   EventPacket::EventPacket( const Event & ev ) : m_ev( &ev ) {
     	m_header.data.packetType    = get_type();
     	m_header.data.packetSubType = 0;
-    	m_header.data.packetNumber  = m_ev->GetEventNumber();
-
-    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::EVENT_NUMBER, m_ev->GetEventNumber() );
-    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::TIMESTAMP, m_ev->GetTimestamp() );
+    	m_header.data.packetNumber  = getEvent()->GetEventNumber();
+	
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::EVENT_NUMBER, getEvent()->GetEventNumber() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::TIMESTAMP, getEvent()->GetTimestamp() );
   }
 
 
   EventPacket::EventPacket( PacketHeader& header, Deserializer & ds) {
 		m_header = header;
 		m_meta_data = MetaData( ds );
-		m_ev = EventFactory::Create( ds );
+		m_owned_ev = std::shared_ptr<Event>( EventFactory::Create( ds ));
 		ds.read( checksum );
   }
 
@@ -206,8 +206,36 @@ namespace eudaq {
 	  // std::cout << "Serialize ev# = " << std::hex << GetPacketNumber() << std::endl;
 	  SerializeHeader( ser );
 	  SerializeMetaData( ser );
-	  m_ev->Serialize( ser );
+	  getEvent()->Serialize( ser );
 	  ser.write( ser.GetCheckSum() );
+  }
+
+  const Event* EventPacket::getEvent() const
+  {
+	  if (m_ev)
+	  {
+		  return m_ev;
+	  }
+	  else if (m_owned_ev)
+	  {
+		  return m_owned_ev.get();
+	  }
+	  return nullptr;
+  }
+
+  std::shared_ptr<Event> EventPacket::getEventPointer()
+  {
+	  if (m_owned_ev)
+	  {
+		  return m_owned_ev;
+	  } else if (m_ev)
+	  {
+		  // no copy constructor for Event class therefore one cannot copy the event into a nev ownd event...
+		  
+		  return nullptr;
+	  }
+	  
+	  return nullptr;
   }
 
 

@@ -8,6 +8,7 @@
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/AidaFileReader.hh"
 #include "eudaq/PluginManager.hh"
+#include <memory>
 
 
 namespace eudaq {
@@ -17,6 +18,7 @@ namespace eudaq {
   {
 	  m_des = new FileDeserializer(Filename() );
 	  m_des->read( m_json_config );
+	  readNext();
   }
 
   AidaFileReader::~AidaFileReader() {
@@ -46,24 +48,61 @@ namespace eudaq {
 
   std::shared_ptr<eudaq::Event> AidaFileReader::GetNextEvent() 
   {
+	 
+	  auto evPack = std::dynamic_pointer_cast<EventPacket>(m_packet);
+	  if (evPack!=nullptr)
+	  {
+		  return GetNextEventFromEventPacket(evPack);
+	  }
+	  
+	  return GetNextEventFromPacket();
+	
+
+  }
+
+  std::shared_ptr<eudaq::Event> AidaFileReader::GetNextEventFromPacket()
+  {
 	  static size_t itter = 0;
-	  if (itter< PluginManager::GetNumberOfROF(*m_packet))
+	  if (itter < PluginManager::GetNumberOfROF(*m_packet))
 	  {
 		  return PluginManager::ExtractEventN(m_packet, itter++);
 	  }
-	  // else
-
-	  itter = 0;
-
-	  if (readNext())
+	  else
 	  {
-		  return GetNextEvent();
-	  }
-	  //else
-	
-	  return nullptr;
-	
 
+		  itter = 0;
+
+		  if (readNext())
+		  {
+			  return GetNextEvent();
+		  }
+	  }
+
+	  return nullptr;
+  }
+
+  std::shared_ptr<eudaq::Event> AidaFileReader::GetNextEventFromEventPacket(std::shared_ptr<EventPacket>& eventPack)
+  {
+	  static size_t itter = 0;
+	  auto ev = std::dynamic_pointer_cast<DetectorEvent>(eventPack->getEventPointer());
+	  if (ev==nullptr )
+	  {
+		  return eventPack->getEventPointer();
+	  }
+	  
+	  if (itter<ev->NumEvents())
+	  {
+		  return ev->GetEventPtr(itter++);
+	  }
+	  else
+	  {
+		  itter = 0;
+		  if (readNext())
+		  {
+			  return GetNextEvent();
+		  }
+	  }
+	  return nullptr;
   }
 
 

@@ -8,10 +8,12 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/baseFileReader.hh"
 
+
 namespace eudaq {
 
 class FileDeserializer;
 class AidaPacket;
+class EventPacket;
 
   class DLLEXPORT AidaFileReader :public baseFileReader{
     public:
@@ -19,9 +21,9 @@ class AidaPacket;
 
       virtual ~AidaFileReader();
       bool readNext();
-	  std::shared_ptr<eudaq::Event> GetNextEvent();
+	  virtual std::shared_ptr<eudaq::Event> GetNextEvent();
 	 // std::string Filename() const { return m_filename; }
-      unsigned RunNumber() const { return m_runNumber; }
+      virtual unsigned RunNumber() const { return m_runNumber; }
       std::string getJsonConfig() { return m_json_config; }
       std::string getJsonPacketInfo();
       std::vector<uint64_t> getData();
@@ -29,12 +31,15 @@ class AidaPacket;
 	 
     private:
       //std::string m_filename;
+		std::shared_ptr<eudaq::Event> GetNextEventFromPacket();
+		std::shared_ptr<eudaq::Event> GetNextEventFromEventPacket(std::shared_ptr<EventPacket>& eventPack);
       unsigned long long m_runNumber;
       FileDeserializer * m_des;
       std::string m_json_config;
       std::shared_ptr<eudaq::AidaPacket> m_packet;
   };
  
+  
 }
 
 
