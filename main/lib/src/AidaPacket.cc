@@ -69,8 +69,11 @@ namespace eudaq {
 	}
 
 	std::vector<uint64_t> & AidaPacket::GetData() {
-		if ( m_data_size > 0 )
-			std::copy( m_data, m_data + m_data_size, m_data_vector.begin() );
+		if (m_data_vector.empty()&& m_data_size>0)
+		{	
+				std::copy(m_data, m_data + m_data_size, m_data_vector.begin());
+		}
+
 		return m_data_vector;
 	}
 

@@ -95,6 +95,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     MetaData& GetMetaData() {
     	return m_meta_data;
     }
+	size_t GetSizeOFMetaData() const {
+		return m_meta_data.size();
+	}
 
     void SerializeMetaData( Serializer & ) const;
 
@@ -119,6 +122,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     	m_data = data->data();
     	m_data_size = data->size();
     }
+	void setDataCopy( std::vector<uint64_t>& data){
+		m_data_vector = data;
+	}
 
     virtual void DeserializeData( Deserializer & );
 
