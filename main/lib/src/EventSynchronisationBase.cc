@@ -59,7 +59,7 @@ void SyncBase::addBORE_Event(int fileIndex, const eudaq::Event& BOREEvent)
 {
 	++m_registertProducer;
 	static size_t id = 1;
-	const unsigned int TLU_ID = Event::str2id("_TLU");
+
 	
 	if (m_EventsProFileReader.size()<fileIndex+1)
 	{ 
