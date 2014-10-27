@@ -611,6 +611,19 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	dut->MaskNoisyPixels();
       }
       
+      // triggering configuration per layer
+      sprintf(buffer, "StrobeLength_%d", i);
+      const int LayerStrobeLength = param.Get(buffer, StrobeLength);
+      
+      sprintf(buffer, "StrobeBLength_%d", i);
+      const int LayerStrobeBLength = param.Get(buffer, StrobeBLength);
+
+      sprintf(buffer, "ReadoutDelay_%d", i);
+      const int LayerReadoutDelay = param.Get(buffer, ReadoutDelay);
+
+      sprintf(buffer, "TriggerDelay_%d", i);
+      const int LayerTriggerDelay = param.Get(buffer, TriggerDelay);
+
       // data taking configuration
 
       // Assert busy
@@ -621,13 +634,13 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
       // PrepareEmptyReadout
       daq_board->ConfigureReadout (1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
-      daq_board->ConfigureTrigger (0, StrobeLength, 2, 0, TriggerDelay);
+      daq_board->ConfigureTrigger (0, LayerStrobeLength, 2, 0, LayerTriggerDelay);
       
       // PrepareChipReadout
       dut->SetChipMode(MODE_ALPIDE_CONFIG);
-      dut->SetReadoutDelay     (ReadoutDelay);
+      dut->SetReadoutDelay     (LayerReadoutDelay);
       dut->SetEnableClustering (false);
-      dut->SetStrobeTiming     (StrobeBLength);
+      dut->SetStrobeTiming     (LayerStrobeBLength);
       dut->SetEnableOutputDrivers(true, true);
       dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
   #else
