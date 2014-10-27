@@ -101,12 +101,19 @@ bool SyncBase::Event_Queue_Is_Empty()
 
 bool SyncBase::SubEventQueueIsEmpty( int FileID )
 {
-	for (size_t eventNR=0;eventNR<m_EventsProFileReader[FileID];++eventNR)
+
+	for (auto& e:m_ProducerId2Eventqueue)
 	{
-		if(getQueuefromId(FileID,eventNR).empty()){
-			return true;
+		if (e.first >= getUniqueID(FileID,0) && e.first < getUniqueID(FileID+1,0))
+		{
+			if (m_ProducerEventQueue[e.second].empty()){
+				return true;
+			}
 		}
+		
 	}
+
+
 	return false;
 }
 
@@ -156,11 +163,22 @@ bool SyncBase::SyncFirstEvent()
 		
 		EUDAQ_THROW("Producer Event queue is empty");
 	}
+	else if (m_ProducerEventQueue.size() == 1)
+	{
+		// only one producer involved no need to sync anything 
+		if (!Event_Queue_Is_Empty())
+		{
+			makeDetectorEvent();
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+
 	auto& TLU_queue=getFirstTLUQueue();
-
-
-
-
 
 	while (!Event_Queue_Is_Empty())
 	{
