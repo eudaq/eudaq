@@ -7,6 +7,7 @@
 #include <iosfwd>
 #include <iostream>
 
+
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Exception.hh"
@@ -35,7 +36,7 @@ static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
 namespace eudaq {
 
-	using EventP = std::shared_ptr < Event > ;
+
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable {
@@ -56,7 +57,7 @@ namespace eudaq {
       uint64_t GetTimestamp() const { return m_timestamp; }
 
       /** Returns the type string of the event implementation.
-       *  Used by the plugin mechanism to identfy the event type.
+       *  Used by the plugin mechanism to identify the event type.
        */
       virtual SubType_t GetSubType() const { return ""; }
 
