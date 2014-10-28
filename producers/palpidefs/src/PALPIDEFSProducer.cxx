@@ -599,8 +599,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	if (!ConfigChip(i, daq_board, configFile))
 	  return;
 	
-      // noisy pixels
+      // noisy and broken pixels
       dut->SetMaskAllPixels(false); //unmask all pixels
+      dut->ClearNoisyPixels();
+      bool mask_pixels = false;
       sprintf(buffer, "Noisy_Pixel_File_%d", i);
       std::string noisyPixels = param.Get(buffer, "");
       if (noisyPixels.length() > 0) {
@@ -608,8 +610,20 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 	std::cout << buffer << std::endl;
 	EUDAQ_INFO(buffer);
 	dut->ReadNoisyPixelFile(noisyPixels.data());
-	dut->MaskNoisyPixels();
+	mask_pixels = true;
       }
+      sprintf(buffer, "Broken_Pixel_File_%d", i);
+      std::string brokenPixels = param.Get(buffer, "");
+      if (brokenPixels.length() > 0) {
+	sprintf(buffer, "Device %d: Reading noisy pixels from file %s", i, brokenPixels.data());
+	std::cout << buffer << std::endl;
+	EUDAQ_INFO(buffer);
+	dut->ReadNoisyPixelFile(brokenPixels.data(), true);
+	mask_pixels = true;
+      }
+      
+      if (mask_pixels)
+	dut->MaskNoisyPixels();
       
       // triggering configuration per layer
       sprintf(buffer, "StrobeLength_%d", i);
