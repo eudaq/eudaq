@@ -514,17 +514,17 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 {
   std::cout << "Configuring..." << std::endl;
   
+  const int StrobeLength =  param.Get("StrobeLength",  10);
+  const int StrobeBLength = param.Get("StrobeBLength", 20);
+  const int ReadoutDelay =  param.Get("ReadoutDelay",  10);
+  const int TriggerDelay =  param.Get("TriggerDelay",  75);
+    
   if (!m_configured) {
     m_nDevices = param.Get("Devices", 1);
     m_status_interval = param.Get("StatusInterval", -1);
   
     const int delay = param.Get("QueueFullDelay", 0);
     const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
-    
-    const int StrobeLength =  param.Get("StrobeLength",  10);
-    const int StrobeBLength = param.Get("StrobeBLength", 20);
-    const int ReadoutDelay =  param.Get("ReadoutDelay",  10);
-    const int TriggerDelay =  param.Get("TriggerDelay",  75);
     
     if (param.Get("CheckTriggerIDs", 0) == 1)
       m_ignore_trigger_ids = false;
@@ -669,6 +669,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     
     std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
     
+    // TODO there is some code repetition here. this could be improved
+    
     for (int i=0; i<m_nDevices; i++) {
       // only configuration
 #ifndef SIMULATION
@@ -678,6 +680,23 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       if (configFile.length() > 0)
 	if (!ConfigChip(i, m_reader[i]->GetDAQBoard(), configFile))
 	  return;
+
+      // triggering configuration per layer
+      sprintf(buffer, "StrobeLength_%d", i);
+      const int LayerStrobeLength = param.Get(buffer, StrobeLength);
+      
+      sprintf(buffer, "StrobeBLength_%d", i);
+      const int LayerStrobeBLength = param.Get(buffer, StrobeBLength);
+
+      sprintf(buffer, "ReadoutDelay_%d", i);
+      const int LayerReadoutDelay = param.Get(buffer, ReadoutDelay);
+
+      sprintf(buffer, "TriggerDelay_%d", i);
+      const int LayerTriggerDelay = param.Get(buffer, TriggerDelay);
+
+      m_reader[i]->GetDAQBoard()->ConfigureTrigger (0, LayerStrobeLength, 2, 0, LayerTriggerDelay);
+      m_reader[i]->GetDUT()->SetReadoutDelay     (LayerReadoutDelay);
+      m_reader[i]->GetDUT()->SetStrobeTiming     (LayerStrobeBLength);
 #endif
     }
   }
