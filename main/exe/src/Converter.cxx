@@ -1,4 +1,3 @@
-#include "eudaq/FileReader.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
