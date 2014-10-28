@@ -1,21 +1,23 @@
 #ifndef MuliFileReader_h__
 #define MuliFileReader_h__
 
-#include "Event.hh"
-#include "DetectorEvent.hh"
+#include "Platform.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 
 
 #include <string>
 #include <memory>
-#include "FileReader.hh"
-#include "Platform.hh"
-#include "EventSynchronisationBase.hh"
-#include "eudaq/baseFileReader.hh"
+#include <vector>
+
+
 
 
 
 namespace eudaq{
+	class baseFileReader;
 
+	class Event;
+	class DetectorEvent;
 	class DLLEXPORT multiFileReader{
 	public:
 		multiFileReader();

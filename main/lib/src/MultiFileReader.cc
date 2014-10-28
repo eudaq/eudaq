@@ -1,5 +1,10 @@
 #include "eudaq/MultiFileReader.hh"
 #include "eudaq/AidaFileReader.hh"
+#include "eudaq/FileReader.hh"
+#include "eudaq/baseFileReader.hh"
+
+#include "eudaq/Event.hh"
+#include "eudaq/DetectorEvent.hh"
 void eudaq::multiFileReader::addFileReader( const std::string & filename, const std::string & filepattern /*= ""*/ )
 {
 //	m_fileReaders.emplace_back(std::make_shared<FileReader>(filename,  filepattern));
