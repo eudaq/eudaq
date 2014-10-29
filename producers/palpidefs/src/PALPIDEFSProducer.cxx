@@ -519,25 +519,26 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   const int ReadoutDelay =  param.Get("ReadoutDelay",  10);
   const int TriggerDelay =  param.Get("TriggerDelay",  75);
     
+  m_status_interval = param.Get("StatusInterval", -1);
+
+  const int delay = param.Get("QueueFullDelay", 0);
+  const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
+  
+  if (param.Get("CheckTriggerIDs", 0) == 1)
+    m_ignore_trigger_ids = false;
+  
+  if (param.Get("DisableRecoveryOutOfSync", 0) == 1)
+    m_recover_outofsync = false;
+
+  const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
+  
+  m_readout_mode = param.Get("ReadoutMode", 0);
+  m_full_config = param.Get("FullConfig", "");
+    
   if (!m_configured) {
     m_nDevices = param.Get("Devices", 1);
-    m_status_interval = param.Get("StatusInterval", -1);
-  
-    const int delay = param.Get("QueueFullDelay", 0);
-    const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
     
-    if (param.Get("CheckTriggerIDs", 0) == 1)
-      m_ignore_trigger_ids = false;
-    
-    if (param.Get("DisableRecoveryOutOfSync", 0) == 1)
-      m_recover_outofsync = false;
-
-    const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
-    
-    m_readout_mode = param.Get("ReadoutMode", 0);
-    m_full_config = param.Get("FullConfig", "");
-    
-  #ifndef SIMULATION
+    #ifndef SIMULATION
     if (!m_testsetup) {
       std::cout << "Creating test setup " << std::endl;
       m_testsetup = new TTestSetup;
@@ -558,16 +559,23 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     
     for (int i=0; i<m_nDevices; i++)
       m_testsetup->AddDUTs(DUT_PALPIDEFS);
-  #endif
+    #endif
 
     m_next_event = new SingleEvent*[m_nDevices];
     m_reader = new DeviceReader*[m_nDevices];
-    for (int i=0; i<m_nDevices; i++) {
-      char buffer[1000];
+  }
+
+  for (int i=0; i<m_nDevices; i++) {
+    
+    TpAlpidefs* dut = 0;
+    TDAQBoard* daq_board = 0;
+    char buffer[100];
+    
+    #ifndef SIMULATION
+    if (!m_configured) {
       sprintf(buffer, "BoardAddress_%d", i);
       int board_address = param.Get(buffer, i);
 
-  #ifndef SIMULATION
       // find board
       int board_no = -1;
       for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
@@ -587,132 +595,104 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       }
       
       std::cout << "Enabling device " << board_no << std::endl;
-      TpAlpidefs* dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
-      TDAQBoard* daq_board = m_testsetup->GetDAQBoard(board_no);
+      dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
+      daq_board = m_testsetup->GetDAQBoard(board_no);
       m_testsetup->PowerOnBoard(board_no);
       m_testsetup->InitialiseChip(board_no);
 
-      // configuration
-      sprintf(buffer, "Config_File_%d", i);
-      std::string configFile = param.Get(buffer, "");
-      if (configFile.length() > 0)
-	if (!ConfigChip(i, daq_board, configFile))
-	  return;
-	
-      // noisy and broken pixels
-      dut->SetMaskAllPixels(false); //unmask all pixels
-      dut->ClearNoisyPixels();
-      bool mask_pixels = false;
-      sprintf(buffer, "Noisy_Pixel_File_%d", i);
-      std::string noisyPixels = param.Get(buffer, "");
-      if (noisyPixels.length() > 0) {
-	sprintf(buffer, "Device %d: Reading noisy pixels from file %s", i, noisyPixels.data());
-	std::cout << buffer << std::endl;
-	EUDAQ_INFO(buffer);
-	dut->ReadNoisyPixelFile(noisyPixels.data());
-	mask_pixels = true;
-      }
-      sprintf(buffer, "Broken_Pixel_File_%d", i);
-      std::string brokenPixels = param.Get(buffer, "");
-      if (brokenPixels.length() > 0) {
-	sprintf(buffer, "Device %d: Reading noisy pixels from file %s", i, brokenPixels.data());
-	std::cout << buffer << std::endl;
-	EUDAQ_INFO(buffer);
-	dut->ReadNoisyPixelFile(brokenPixels.data(), true);
-	mask_pixels = true;
-      }
-      
-      if (mask_pixels)
-	dut->MaskNoisyPixels();
-      
-      // triggering configuration per layer
-      sprintf(buffer, "StrobeLength_%d", i);
-      const int LayerStrobeLength = param.Get(buffer, StrobeLength);
-      
-      sprintf(buffer, "StrobeBLength_%d", i);
-      const int LayerStrobeBLength = param.Get(buffer, StrobeBLength);
-
-      sprintf(buffer, "ReadoutDelay_%d", i);
-      const int LayerReadoutDelay = param.Get(buffer, ReadoutDelay);
-
-      sprintf(buffer, "TriggerDelay_%d", i);
-      const int LayerTriggerDelay = param.Get(buffer, TriggerDelay);
-
-      // data taking configuration
-
-      // Assert busy
-      daq_board->WriteBusyOverrideReg(false);
-      
-      // Readout mode
-      daq_board->SetReadoutMode(m_readout_mode);
-
-      // PrepareEmptyReadout
-      daq_board->ConfigureReadout (1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
-      daq_board->ConfigureTrigger (0, LayerStrobeLength, 2, 0, LayerTriggerDelay);
-      
-      // PrepareChipReadout
-      dut->SetChipMode(MODE_ALPIDE_CONFIG);
-      dut->SetReadoutDelay     (LayerReadoutDelay);
-      dut->SetEnableClustering (false);
-      dut->SetStrobeTiming     (LayerStrobeBLength);
-      dut->SetEnableOutputDrivers(true, true);
-      dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
-  #else
-      TpAlpidefs* dut = 0;
-      TDAQBoard* daq_board = 0;
-  #endif
+      std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
 
       m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
-      if (delay > 0)
-	m_reader[i]->SetQueueFullDelay(delay);
-      if (queue_size > 0)
-	m_reader[i]->SetMaxQueueSize(queue_size);
-      m_reader[i]->SetHighRateMode(high_rate_mode);
-      m_reader[i]->SetReadoutMode(m_readout_mode);
       m_next_event[i] = 0;
+    } else {
+      std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
       
-      std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") intialized." << std::endl;
-
-      eudaq::mSleep(10);
+      dut = m_reader[i]->GetDUT();
+      daq_board = m_reader[i]->GetDAQBoard();
     }
+
+    // configuration
+    sprintf(buffer, "Config_File_%d", i);
+    std::string configFile = param.Get(buffer, "");
+    if (configFile.length() > 0)
+      if (!ConfigChip(i, daq_board, configFile))
+	return;
+      
+    // noisy and broken pixels
+    dut->SetMaskAllPixels(false); //unmask all pixels
+    dut->ClearNoisyPixels();
+    bool mask_pixels = false;
+    sprintf(buffer, "Noisy_Pixel_File_%d", i);
+    std::string noisyPixels = param.Get(buffer, "");
+    if (noisyPixels.length() > 0) {
+      sprintf(buffer, "Device %d: Reading noisy pixels from file %s", i, noisyPixels.data());
+      std::cout << buffer << std::endl;
+      EUDAQ_INFO(buffer);
+      dut->ReadNoisyPixelFile(noisyPixels.data());
+      mask_pixels = true;
+    }
+    sprintf(buffer, "Broken_Pixel_File_%d", i);
+    std::string brokenPixels = param.Get(buffer, "");
+    if (brokenPixels.length() > 0) {
+      sprintf(buffer, "Device %d: Reading noisy pixels from file %s", i, brokenPixels.data());
+      std::cout << buffer << std::endl;
+      EUDAQ_INFO(buffer);
+      dut->ReadNoisyPixelFile(brokenPixels.data(), true);
+      mask_pixels = true;
+    }
+      
+    if (mask_pixels)
+      dut->MaskNoisyPixels();
+      
+    // triggering configuration per layer
+    sprintf(buffer, "StrobeLength_%d", i);
+    const int LayerStrobeLength = param.Get(buffer, StrobeLength);
     
+    sprintf(buffer, "StrobeBLength_%d", i);
+    const int LayerStrobeBLength = param.Get(buffer, StrobeBLength);
+
+    sprintf(buffer, "ReadoutDelay_%d", i);
+    const int LayerReadoutDelay = param.Get(buffer, ReadoutDelay);
+
+    sprintf(buffer, "TriggerDelay_%d", i);
+    const int LayerTriggerDelay = param.Get(buffer, TriggerDelay);
+
+    // data taking configuration
+
+    // Assert busy
+    daq_board->WriteBusyOverrideReg(false);
+    
+    // Readout mode
+    daq_board->SetReadoutMode(m_readout_mode);
+
+    // PrepareEmptyReadout
+    daq_board->ConfigureReadout (1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
+    daq_board->ConfigureTrigger (0, LayerStrobeLength, 2, 0, LayerTriggerDelay);
+    
+    // PrepareChipReadout
+    dut->SetChipMode(MODE_ALPIDE_CONFIG);
+    dut->SetReadoutDelay     (LayerReadoutDelay);
+    dut->SetEnableClustering (false);
+    dut->SetStrobeTiming     (LayerStrobeBLength);
+    dut->SetEnableOutputDrivers(true, true);
+    dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
+    #endif
+
+    if (delay > 0)
+      m_reader[i]->SetQueueFullDelay(delay);
+    if (queue_size > 0)
+      m_reader[i]->SetMaxQueueSize(queue_size);
+    m_reader[i]->SetHighRateMode(high_rate_mode);
+    m_reader[i]->SetReadoutMode(m_readout_mode);
+    
+    std::cout << "Device " << i << " configured." << std::endl;
+
+    eudaq::mSleep(10);
+  } 
+  
+  if (!m_configured) {
     m_configured = true;
     m_firstevent = true;
-  } else {
-    // reconfigure
-    
-    std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
-    
-    // TODO there is some code repetition here. this could be improved
-    
-    for (int i=0; i<m_nDevices; i++) {
-      // only configuration
-#ifndef SIMULATION
-      char buffer[100];
-      sprintf(buffer, "Config_File_%d", i);
-      std::string configFile = param.Get(buffer, "");
-      if (configFile.length() > 0)
-	if (!ConfigChip(i, m_reader[i]->GetDAQBoard(), configFile))
-	  return;
-
-      // triggering configuration per layer
-      sprintf(buffer, "StrobeLength_%d", i);
-      const int LayerStrobeLength = param.Get(buffer, StrobeLength);
-      
-      sprintf(buffer, "StrobeBLength_%d", i);
-      const int LayerStrobeBLength = param.Get(buffer, StrobeBLength);
-
-      sprintf(buffer, "ReadoutDelay_%d", i);
-      const int LayerReadoutDelay = param.Get(buffer, ReadoutDelay);
-
-      sprintf(buffer, "TriggerDelay_%d", i);
-      const int LayerTriggerDelay = param.Get(buffer, TriggerDelay);
-
-      m_reader[i]->GetDAQBoard()->ConfigureTrigger (0, LayerStrobeLength, 2, 0, LayerTriggerDelay);
-      m_reader[i]->GetDUT()->SetReadoutDelay     (LayerReadoutDelay);
-      m_reader[i]->GetDUT()->SetStrobeTiming     (LayerStrobeBLength);
-#endif
-    }
   }
   
   EUDAQ_INFO("Configured (" + param.Name() + ")");
