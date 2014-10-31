@@ -214,7 +214,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
           EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address!" );
           perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 address: ");
 	}
-	memcpy((char *) &config.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+	memcpy((char *) &datatransport.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
 
 	if ((sock_datatransport = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		EUDAQ_ERROR("DataTransportSocket: Error creating socket " );
