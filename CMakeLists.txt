@@ -9,6 +9,9 @@ SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
+LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
+LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
+
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
@@ -147,7 +150,7 @@ IF(BUILD_gui)
 ENDIF()
 
 # build OnlineMon executable
-option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
+option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
 IF(BUILD_onlinemon)
   add_subdirectory(monitors/onlinemon)
 ENDIF()
@@ -222,3 +225,6 @@ ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
   MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
 ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
 
+MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
+MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
+MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
