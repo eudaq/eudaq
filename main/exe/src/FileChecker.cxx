@@ -58,6 +58,7 @@ int main(int /*argc*/, const char ** argv) {
     Option<string> opt_input_pattern(opt,
         "i", "input-pattern", "../data/run$6R.raw",
         "STRING", "input filepath pattern");
+    OptionFlag async(opt, "a", "nosync", "Disables Synchronisation with TLU events");
 
     try {
         opt.Parse(argv);
@@ -92,7 +93,7 @@ int main(int /*argc*/, const char ** argv) {
 
         try {
             // always synchronize based on the trigger id
-            multiFileReader reader;
+	  multiFileReader reader(!async.Value());
             reader.addFileReader(run, input_pattern);
 
             const DetectorEvent & bore = reader.GetDetectorEvent();
@@ -117,9 +118,8 @@ int main(int /*argc*/, const char ** argv) {
             }
 
             if (num_events <= 0) errors += "no events in the file. ";
-        } catch(...) {
-            errors += "read error. ";
-//            op.HandleMainException();
+        } catch(const eudaq::Exception & e) {
+	  errors += e.what();
         }
 
         // subevents should have the same count as the detector events
