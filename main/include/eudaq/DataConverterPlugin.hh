@@ -149,8 +149,7 @@ namespace eudaq{
 	  virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const {
 		  // dummy comparator. it is just checking if the event numbers are the same.
 		  const TLUEvent *tlu = dynamic_cast<const eudaq::TLUEvent*>(&tluEvent);
-		  //auto triggerID=ev.GetEventNumber();
-		  unsigned triggerID=ev.GetTag<unsigned>("tlu_trigger_id",0);
+		  unsigned triggerID = ev.GetEventNumber();
 	  auto tlu_triggerID=tlu->GetEventNumber();
 	return compareTLU2DUT(tlu_triggerID,triggerID);
 	  }
