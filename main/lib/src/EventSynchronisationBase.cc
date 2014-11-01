@@ -375,8 +375,14 @@ int SyncBase::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Even
 	if (Ev)
 	{
 		auto identifier = PluginManager::getUniqueIdentifier(*Ev);
-		auto &q = getQueuefromId(fileIndex, identifier);
-		q.push(Ev);
+		try{
+			auto &q = getQueuefromId(fileIndex, identifier);
+			q.push(Ev);
+		}
+		catch(...){
+			std::cerr << " error in SyncBase::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev) \n unkown event id: " << identifier <<"\n for the event: \n";
+			Ev->Print(cout);
+		}
 		
 	}
 	return true;
