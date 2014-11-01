@@ -37,9 +37,10 @@ class EventPacket;
       FileDeserializer * m_des;
       std::string m_json_config;
       std::shared_ptr<eudaq::AidaPacket> m_packet;
+	  size_t itter = 0;
   };
  
-  
+  bool FileIsAIDA(const std::string& in);
 }
 
 

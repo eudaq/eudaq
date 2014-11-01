@@ -39,7 +39,7 @@ namespace eudaq {
 
   };
  
-
+  bool FileIsEUDET(const std::string& in);
 
 }
 

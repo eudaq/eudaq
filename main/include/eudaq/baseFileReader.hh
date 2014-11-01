@@ -19,6 +19,10 @@ namespace eudaq{
 		std::string m_fileName;
 
 	};
+
+
+
+	std::shared_ptr<baseFileReader> Factory_file_reader(const std::string & filename, const std::string & filepattern );
 }
 
 #endif // baseFileReader_h__
