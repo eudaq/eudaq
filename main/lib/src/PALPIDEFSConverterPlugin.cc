@@ -170,14 +170,20 @@ namespace eudaq {
 	  int current_layer = -1;
 	  int current_rgn = -1;
 
-	  bool layers_found[100] = { false };
-	  uint64_t trigger_ids[100] = { (uint64_t) ULONG_MAX };
-	  uint64_t timestamps[100] = { (uint64_t) ULONG_MAX };
+	  const int maxLayers = 100;
+	  bool layers_found[maxLayers];
+	  uint64_t trigger_ids[maxLayers];
+	  uint64_t timestamps[maxLayers];
+	  for (int i=0; i<maxLayers; i++) { 
+	    layers_found[i] = false;
+	    trigger_ids[i] = (uint64_t) ULONG_MAX;
+	    timestamps[i] = (uint64_t) ULONG_MAX;
+	  }
 	  
 	  // RAW dump
 #ifdef DEBUGRAWDUMP
 	  printf("Event %d: ", ev.GetEventNumber());
-	  for (int i=0; i<data.size(); i++)
+	  for (unsigned int i=0; i<data.size(); i++)
 	    printf("%x ", data[i]);
 	  printf("\n");
 #endif
@@ -257,6 +263,9 @@ namespace eudaq {
 		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
 		break;
 	      }
+    #ifdef MYDEBUG
+	      cout << "Now in region " << rgn << ". Going to read " << length << " pixels. " << endl;
+    #endif	      
 	      for (int i=0; i<length; i++) {
 		unsigned short dataword = data[pos++];
 		dataword |= (data[pos++] << 8);
