@@ -752,6 +752,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     
     sprintf(tmp, "MaskedPixels_%d", i);
     bore.SetTag(tmp, pixelStr);
+    
+    // firmware version
+    bore.SetTag("FirmwareVersion", m_reader[i]->GetDAQBoard()->GetFirmwareVersion());
 #endif
   }
 
@@ -886,9 +889,10 @@ int PALPIDEFSProducer::BuildEvent()
       continue;
     
     SingleEvent* single_ev = m_next_event[i];
-    if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.1) {
-      char msg[100];
-      sprintf(msg, "Out of sync: Timestamp of current event (device %d) is %lu while smallest is %lu.", i,  single_ev->m_timestamp_corrected, timestamp);
+    
+    if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.0001 && single_ev->m_timestamp_corrected - timestamp > 4) {
+      char msg[200];
+      sprintf(msg, "Event %d. Out of sync: Timestamp of current event (device %d) is %lu while smallest is %lu.", m_ev, i,  single_ev->m_timestamp_corrected, timestamp);
       std::string str(msg);
       
       if (m_firstevent) {
@@ -972,10 +976,11 @@ int PALPIDEFSProducer::BuildEvent()
   }
   
   if (timestamp_error && m_recover_outofsync) {
-    printf("Trying to recover from out of sync error by adding %lu to next event in layer ", timestamp);
+    printf("Event %d. Trying to recover from out of sync error by adding %lu to next event in layer ", m_ev-1, timestamp);
     for (int i=0; i<m_nDevices; i++)
       if (layer_selected[i])
-	printf("%d, ", i);
+	printf("%d (%lu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
+    
     printf("\n");
     
     for (int i=0; i<m_nDevices; i++) {
