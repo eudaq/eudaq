@@ -7,7 +7,10 @@ PROJECT( EUDAQ )
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 1 )
+
+LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
+LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -66,6 +69,7 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -151,7 +155,7 @@ IF(BUILD_gui)
 ENDIF()
 
 # build OnlineMon executable
-option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
+option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
 IF(BUILD_onlinemon)
   add_subdirectory(monitors/onlinemon)
 ENDIF()
@@ -242,3 +246,6 @@ ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
   MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
 ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
 
+MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
+MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
+MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )

@@ -14,10 +14,10 @@ using std::endl;
 using std::shared_ptr;
 using namespace std;
 namespace eudaq{
-SyncBase::SyncBase():
+SyncBase::SyncBase(bool sync):
 	m_registertProducer(0),
 	m_ProducerEventQueue(0),
-	NumberOfEventsToSync_(1),longTimeDiff_(0),isAsync_(false),m_TLUs_found(0)
+	NumberOfEventsToSync_(1), longTimeDiff_(0), isAsync_(false), m_TLUs_found(0), m_sync(sync)
 {
 
 
@@ -176,7 +176,13 @@ bool SyncBase::SyncFirstEvent()
 			return false;
 		}
 
+	}else if (!m_sync)
+	{
+		makeDetectorEvent();
+		
+		return true;
 	}
+	
 
 	auto& TLU_queue=getFirstTLUQueue();
 
@@ -204,22 +210,14 @@ bool SyncBase::SyncFirstEvent()
 
 bool SyncBase::SyncNEvents( size_t N )
 {
+
 	while (m_DetectorEventQueue.size()<=N)
 	{
 		if (!SyncFirstEvent())
 		{
 			return false;
 		}
-// 		if (isAsync_)
-// 		{
-// 			isAsync_=false;
-// 			auto last_element=m_DetectorEventQueue.back(); //buffering the last event. because this is sync.
-// 		
-// 		
-// 			clearDetectorQueue();
-// 		
-// 			m_DetectorEventQueue.push(last_element);
-// 		}
+
 	}
 	return true;
 }
@@ -329,13 +327,29 @@ void SyncBase::clearDetectorQueue()
 
 void SyncBase::PrepareForEvents()
 {
-	if (m_TLUs_found==0)
+
+	if (!m_sync)
 	{
-		EUDAQ_THROW("no TLU events found in the data\n for the resynchronisation it is nessasary to have a TLU in the data stream \n for now the synchrounsation only works with the old TLU (date 12.2013)");
-	}else if (m_TLUs_found>1)
+		std::cout << "events not synchronized" << std::endl;
+		if (m_TLUs_found==0)
+		{
+			for (auto& e : m_ProducerId2Eventqueue)
+			{
+				e.second--;
+			}
+		}
+
+	}
+	else
 	{
-		//EUDAQ_THROW("to many TLUs in the data stream.\n the sync mechanism only works with 1 TLU");
-		std::cout<< "more than one TLU detected only the first TLU is used for synchronization "<<std::endl;
+		if (m_TLUs_found == 0)
+		{
+			EUDAQ_THROW("no TLU events found in the data\n for the resynchronisation it is nessasary to have a TLU in the data stream \n for now the synchrounsation only works with the old TLU (date 12.2013)");
+		}
+		else if (m_TLUs_found > 1)
+		{
+			std::cout << "more than one TLU detected only the first TLU is used for synchronisation " << std::endl;
+		}
 	}
 	m_ProducerEventQueue.resize(m_registertProducer);
 }

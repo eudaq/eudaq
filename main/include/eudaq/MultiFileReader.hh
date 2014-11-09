@@ -20,7 +20,7 @@ namespace eudaq{
 	class DetectorEvent;
 	class DLLEXPORT multiFileReader{
 	public:
-		multiFileReader();
+		multiFileReader(bool sync=true);
 
 		 unsigned RunNumber() const;
 
@@ -38,6 +38,7 @@ namespace eudaq{
 		SyncBase m_sync;
 		size_t m_eventsToSync;
 		bool m_preaparedForEvents;
+		
 	};
 
 
