@@ -3,8 +3,9 @@ SET(SyncTest_name SyncTest)
 INCLUDE_DIRECTORIES( . inc )
 
 SET (SyncTest_SOURCES
-  src/*.cc
-  src/*.cxx
+  src/paketProducer.cc
+  src/dataQueue.cc
+  src/syncTest.cxx
   )
 
 add_executable(${SyncTest_name} ${SyncTest_SOURCES} )
