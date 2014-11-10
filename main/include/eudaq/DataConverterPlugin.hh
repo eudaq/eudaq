@@ -76,53 +76,59 @@ namespace eudaq{
 
 
 
-	  if (eventBegin<=TLUEnd)
-	  {
-		  if (EventEnd>=TLUStart)
-		  {
+	  if (TLUStart <= EventEnd
+					&&
+		  eventBegin <= TLUEnd){
 
-			  	  /*
+		  /*
 
-	                    | event start  |event End
-	  ----------------------------------------->
-	                                           t
+						  | event start  |event End
+		  ----------------------------------------->
+		  t
 
-                 | tlu start  | tlu End
-	  ------------------------------------------>
-											   t
+				  | tlu start  | tlu End
+		  ------------------------------------------>
+		  t
 
-	  */
-			  return Event_IS_Sync;
-		  }
+		  */
 
-		  	  /*
+		  return Event_IS_Sync;
 
-	    | event start  |event End
-	  ----------------------------------------->
-	                                           t
-
-                               | tlu start  | tlu End
-	  ------------------------------------------>
-											   t
-
-	  */
-		  return Event_IS_EARLY;
 	  }
+	  else if (EventEnd<TLUStart){
+		  /*
 
-	 
-	  /*
+		  | event start  |event End
+		  ----------------------------------------->
+												  t
 
-	                     | event start  |event End
-	  ----------------------------------------->
-	                                           t
+								  | tlu start  | tlu End
+		  ------------------------------------------>
+												  t
 
-        | tlu start  | tlu End
-	  ------------------------------------------>
-											   t
+		  */
+		  return Event_IS_LATE;
+	  }else if (eventBegin>TLUEnd)
+	  {
 
-	  */
+		  /*
 
-	  return  Event_IS_LATE;
+								| event start  |event End
+		  ----------------------------------------->
+												t
+
+		  | tlu start  | tlu End
+		  ------------------------------------------>
+												t
+
+		  */
+		  return Event_IS_EARLY;
+
+	  }
+		  
+	  EUDAQ_THROW("unforseen case this shold not happen");
+
+	  return -666;
   }
 
 
