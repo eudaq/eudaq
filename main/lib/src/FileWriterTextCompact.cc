@@ -75,8 +75,12 @@ namespace eudaq {
 		  	 
 				  *m_out<<"i_time_stamp; id_plane; i_tlu; i_event; DUT_time_stamp; "<<std::endl;
 		  }
-				  
-				DUT_start_time=std::stoull(sev.GetTag("DUT_time"));
+		  try{
+			  DUT_start_time = std::stoull(sev.GetTag("DUT_time"));
+		  }
+		  catch (...){
+			  DUT_start_time = 0;
+		  }
 		  firstEvent=false;
 	  }
 	  if (sev.NumPlanes()==0)// only TLU Events
