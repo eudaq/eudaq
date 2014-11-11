@@ -80,6 +80,7 @@ namespace eudaq {
       void SetFlags(unsigned f) { m_flags |= f; }
 	  void SetTimeStampToNow();
 	  void setTimeStamp(uint64_t timeStamp){m_timestamp=timeStamp; }
+	  void setRunNumber(unsigned newRunNumber){m_runnumber=newRunNumber;}
       void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
       virtual unsigned get_id() const = 0;
     protected:
