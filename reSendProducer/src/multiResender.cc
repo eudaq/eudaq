@@ -29,9 +29,8 @@ void eudaq::multiResender::ProcessEvent(const DetectorEvent & devent)
     {
 
       m_producer[i]->resendEvent(devent.GetEventPtr(i));
-      Sleep(10);
     }
-    Sleep(20);
+    
   }
 }
 std::string getProducerName(const std::string& eventName, const std::string& subEventName){
