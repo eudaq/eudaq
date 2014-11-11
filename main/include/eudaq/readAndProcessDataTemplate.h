@@ -30,6 +30,10 @@
 template <typename processClass>
 class ReadAndProcess{
 public:
+  
+  ReadAndProcess(bool SyncEvents) :m_reader(SyncEvents){
+  
+  }
   void addFileReader(const std::string & filename, const std::string & filepattern){
     m_reader.addFileReader(filename, filepattern);
   }
@@ -38,7 +42,7 @@ public:
   }
   void setEventsOfInterest(std::vector<unsigned> EventsOfInterest){
     std::sort(EventsOfInterest.begin(), EventsOfInterest.end());
-    m_eventsOfInterest = EventsOfInterest;
+    m_eventsOfInterest = std::move(EventsOfInterest);
   }
   void setWriter(processClass* newPrecessor){
     if (m_processor)
