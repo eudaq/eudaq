@@ -16,7 +16,7 @@
 
 #ifdef WIN32
 #define DLLEXPORT  __declspec( dllexport ) 
-
+#include <stdint.h>
 
 
 #else
