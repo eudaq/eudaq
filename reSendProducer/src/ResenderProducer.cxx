@@ -33,7 +33,7 @@ int main(int, char ** argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
 
-    ReadAndProcess<eudaq::multiResender> readProcess;
+    ReadAndProcess<eudaq::multiResender> readProcess(sync.Value());
     readProcess.setEventsOfInterest(parsenumbers(events.Value()));
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
