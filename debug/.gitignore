@@ -1,0 +1,6 @@
+# ./debug
+# Default debug directory.
+
+*
+!.gitignore
+!*.bat
