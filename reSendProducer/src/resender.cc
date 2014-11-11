@@ -1,5 +1,5 @@
 #include "resender.h"
-
+#include "eudaq/Configuration.hh"
 
 
 
