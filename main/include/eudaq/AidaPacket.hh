@@ -50,8 +50,11 @@ class Event;
 
 class DLLEXPORT AidaPacket : public Serializable {
   public:
-
-	AidaPacket( uint64_t type, uint64_t subtype ) : AidaPacket() {
+	  using data_t = uint64_t;
+	  using  MainType_t = data_t;
+	  using SubType_t = data_t;
+	  using t_Packetid = std::pair < MainType_t, SubType_t > ;
+	  AidaPacket(MainType_t type, SubType_t  subtype) : AidaPacket() {
 		m_header.data.packetType = type;
 		m_header.data.packetSubType = subtype;
 	};
@@ -65,8 +68,8 @@ class DLLEXPORT AidaPacket : public Serializable {
 	  public:
 		struct {
 			  uint64_t marker; 			// 8 byte string: #PACKET#
-			  uint64_t packetType;			// 8 byte string
-			  uint64_t packetSubType;		// 8 byte string
+			  MainType_t packetType;			// 8 byte string
+			  SubType_t packetSubType;		// 8 byte string
 			  uint64_t packetNumber;
 		  } data;
 	};
@@ -74,8 +77,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     void SerializeHeader( Serializer & ) const;
 
     uint64_t GetPacketMarker() const { return m_header.data.marker; };
-    uint64_t GetPacketType() const { return m_header.data.packetType; };
-    uint64_t GetPacketSubType() const { return m_header.data.packetSubType; };
+	MainType_t GetPacketType() const { return m_header.data.packetType; };
+	SubType_t GetPacketSubType() const { return m_header.data.packetSubType; };
+
     uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
     void SetPacketNumber( uint64_t n ) { m_header.data.packetNumber = n; };
 
@@ -91,6 +95,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     MetaData& GetMetaData() {
     	return m_meta_data;
     }
+	size_t GetSizeOFMetaData() const {
+		return m_meta_data.size();
+	}
 
     void SerializeMetaData( Serializer & ) const;
 
@@ -115,6 +122,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     	m_data = data->data();
     	m_data_size = data->size();
     }
+	void setDataCopy( std::vector<uint64_t>& data){
+		m_data_vector = data;
+	}
 
     virtual void DeserializeData( Deserializer & );
 
@@ -195,13 +205,14 @@ class DLLEXPORT EventPacket : public AidaPacket {
   public:
 	  EventPacket(const Event & ev );	// wrapper for old-style events
 	  virtual void Serialize(Serializer &) const;
-
+	  const Event* getEvent() const;
+	  std::shared_ptr<Event> getEventPointer();
   protected:
 	  template <typename T_Packet> friend struct RegisterPacketType;
 
 	  EventPacket( PacketHeader& header, Deserializer & ds);
 	  const Event* m_ev;
-
+	  std::shared_ptr<Event> m_owned_ev;
 };
 
 DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);

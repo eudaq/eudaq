@@ -34,12 +34,12 @@
 
 
 void uchar2bool(const std::vector<unsigned char>& in,int lOffset,int hOffset, std::vector<bool>& out){
-	for (auto i=in.begin()+lOffset;i!=in.begin()+hOffset;++i)
-	{
-		for(int j=0;j<8;++j){
-			out.push_back((*i)&(1<<j));
-		}
-	}
+    for (auto i=in.begin()+lOffset;i!=in.begin()+hOffset;++i)
+    {
+        for(int j=0;j<8;++j){
+            out.push_back((*i)&(1<<j));
+        }
+    }
 
 
 }
@@ -48,75 +48,75 @@ int numberOfEvents_inplane;
 
 namespace eudaq {
 
-	void puschDataInStandartPlane(const std::vector<unsigned char>& inputVector,int moduleNr, StandardPlane& plane){
-		int y_pos=(moduleNr-1)*2+1;
+    void puschDataInStandartPlane(const std::vector<unsigned char>& inputVector,int moduleNr, StandardPlane& plane){
+        int y_pos=(moduleNr-1)*2+1;
 
-		for (int streamNr=0;streamNr<2;++streamNr)
-		{
-		
-		std::vector<bool> outputStream0;
-
-
-
-
-		uchar2bool(inputVector,
-			STREAMSTART(streamNr) +(moduleNr-1)*TOTALMODULSIZE,
-			STREAMEND(streamNr)   +(moduleNr-1)*TOTALMODULSIZE,
-			outputStream0);
+        for (int streamNr=0;streamNr<2;++streamNr)
+        {
+        
+        std::vector<bool> outputStream0;
 
 
 
-	size_t x_pos=0;
-		for (size_t i=0; i<outputStream0.size();++i)
-		{
-			
 
-			
-				if (outputStream0.at(i))
-				{
-					if (streamNr==1)
-					{
-						x_pos=i/STRIPSPERCHIP;
+        uchar2bool(inputVector,
+            STREAMSTART(streamNr) +(moduleNr-1)*TOTALMODULSIZE,
+            STREAMEND(streamNr)   +(moduleNr-1)*TOTALMODULSIZE,
+            outputStream0);
 
-						plane.PushPixel(2*x_pos*STRIPSPERCHIP-i+STRIPSPERCHIP,y_pos+streamNr,1);
-					}else{
-					plane.PushPixel(i,y_pos+streamNr,1);
-					}
-					++numberOfEvents_inplane;
-					break;
-				}
 
-				
-		}
+
+    size_t x_pos=0;
+        for (size_t i=0; i<outputStream0.size();++i)
+        {
+            
+
+            
+                if (outputStream0.at(i))
+                {
+                    if (streamNr==1)
+                    {
+                        x_pos=i/STRIPSPERCHIP;
+
+                        plane.PushPixel(2*x_pos*STRIPSPERCHIP-i+STRIPSPERCHIP,y_pos+streamNr,1);
+                    }else{
+                    plane.PushPixel(i,y_pos+streamNr,1);
+                    }
+                    ++numberOfEvents_inplane;
+                    break;
+                }
+
+                
+        }
 }
-	
+    
 
-	}
-	void pushHeaderInStundartplane(const std::vector<unsigned char>& inputVector, StandardPlane& plane){
+    }
+    void pushHeaderInStundartplane(const std::vector<unsigned char>& inputVector, StandardPlane& plane){
 
-		int trigger_id=eudaq::getlittleendian<int>(&inputVector[0]);
-		short scan_type=eudaq::getlittleendian<short>(&inputVector[4]);
-		float scan_current=static_cast<float>(eudaq::getlittleendian<int>(&inputVector[6]))/1000;
-	}
-	int GetTriggerCounter(const eudaq::RawDataEvent &ev){
-			int trigger_id=eudaq::getlittleendian<int>(&(ev.GetBlock(0).at(0)));
-			return trigger_id;
-	}
-	void processImputVector(const std::vector<unsigned char>& inputVector, StandardPlane& plane){
+        int trigger_id=eudaq::getlittleendian<int>(&inputVector[0]);
+        short scan_type=eudaq::getlittleendian<short>(&inputVector[4]);
+        float scan_current=static_cast<float>(eudaq::getlittleendian<int>(&inputVector[6]))/1000;
+    }
+    int GetTriggerCounter(const eudaq::RawDataEvent &ev){
+            int trigger_id=eudaq::getlittleendian<int>(&(ev.GetBlock(0).at(0)));
+            return trigger_id;
+    }
+    void processImputVector(const std::vector<unsigned char>& inputVector, StandardPlane& plane){
 
-		int noModules=(inputVector.size()-EVENTHEADERSIZE)/TOTALMODULSIZE;
-		int y_pos=0;
+        int noModules=(inputVector.size()-EVENTHEADERSIZE)/TOTALMODULSIZE;
+        int y_pos=0;
 
-		int width = 1280, height = noModules*2;
-		plane.SetSizeRaw(width, height);
+        int width = 1280, height = noModules*2;
+        plane.SetSizeRaw(width, height);
 
-		for (size_t k=1;k<=noModules;++k)
-		{
+        for (size_t k=1;k<=noModules;++k)
+        {
 
-			puschDataInStandartPlane(inputVector,k,plane);
+            puschDataInStandartPlane(inputVector,k,plane);
 
-		}
-	}
+        }
+    }
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
   static const char* EVENT_TYPE = "SCTupgrade";
@@ -124,7 +124,7 @@ namespace eudaq {
   // Declare a new class that inherits from DataConverterPlugin
   class SCTupgradeConverterPlugin : public DataConverterPlugin {
 
-	 
+     
 
     public:
 
@@ -134,33 +134,33 @@ namespace eudaq {
       virtual void Initialize(const Event & bore,
           const Configuration & cnf) {
         m_exampleparam = bore.GetTag("SCTupgrade", 0);
-		auto longdelay=cnf.Get("timeDelay","0");
-		cnf.SetSection("EventStruct");
+        auto longdelay=cnf.Get("timeDelay","0");
+        cnf.SetSection("EventStruct");
 
-		auto configFile_long_time=cnf.Get("LongBusyTime","0");
-	//	std::cout<<" longdelay "<< longdelay<<std::endl;
-		int32_t longPause_time_from_command_line=0;
-		
-		try{
+        auto configFile_long_time=cnf.Get("LongBusyTime","0");
+    //	std::cout<<" longdelay "<< longdelay<<std::endl;
+        int32_t longPause_time_from_command_line=0;
+        
+        try{
 
-			longPause_time_from_command_line=std::stol(longdelay);
-			longPause_time=std::stol(configFile_long_time);
+            longPause_time_from_command_line=std::stol(longdelay);
+            longPause_time=std::stol(configFile_long_time);
 
-		}
-		catch(...)
-		{
+        }
+        catch(...)
+        {
 
-			std::string errorMsg="error in SCT Upgrade plugin \n unable to convert " + to_string(longdelay) +"to uint64_t";
-			EUDAQ_THROW(errorMsg);
-		}
-		if (longPause_time_from_command_line>0)
-		{
-			
-		}
-		longPause_time=longPause_time_from_command_line;
-		std::cout <<"longPause_time: "<<longPause_time<<std::endl;
+            std::string errorMsg="error in SCT Upgrade plugin \n unable to convert " + to_string(longdelay) +"to uint64_t";
+            EUDAQ_THROW(errorMsg);
+        }
+        if (longPause_time_from_command_line>0)
+        {
+            
+        }
+        longPause_time=longPause_time_from_command_line;
+        std::cout <<"longPause_time: "<<longPause_time<<std::endl;
 #ifndef WIN32  //some linux Stuff //$$change
-		(void)cnf; // just to suppress a warning about unused parameter cnf
+        (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
         
       }
@@ -182,19 +182,19 @@ namespace eudaq {
         return (unsigned)-1;
       }
 
-	   virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
-		   int returnValue=Event_IS_Sync;
+       virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
+           int returnValue=Event_IS_Sync;
 
-		   uint64_t tluTime=tlu.GetTimestamp();
-	         int32_t tluEv=(int32_t)tlu.GetEventNumber();
-		   	 const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-			// int32_t trigger_id=(int32_t)GetTriggerCounter(rawev );
-			 int32_t trigger_id=ev.GetEventNumber();
-			 if (oldDUTid>trigger_id)
-			 {
-				 std::cout<<" if (oldDUTid>trigger_id)"<<std::endl;
-			 }
-		  returnValue=compareTLU2DUT(tluEv,trigger_id);
+           uint64_t tluTime=tlu.GetTimestamp();
+             int32_t tluEv=(int32_t)tlu.GetEventNumber();
+             const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
+            // int32_t trigger_id=(int32_t)GetTriggerCounter(rawev );
+             int32_t trigger_id=ev.GetEventNumber();
+             if (oldDUTid>trigger_id)
+             {
+                 std::cout<<" if (oldDUTid>trigger_id)"<<std::endl;
+             }
+          returnValue=compareTLU2DUT(tluEv,trigger_id);
 
 // 		  if (returnValue==Event_IS_EARLY)
 // 		  {
@@ -204,10 +204,10 @@ namespace eudaq {
 // 			  std::cout<<"SCT event is Late Event ID= "<<trigger_id<<std::endl;
 // 		  }
 
-		   return returnValue;
-	   
-	   
-	   }
+           return returnValue;
+       
+       
+       }
       // Here, the data from the RawDataEvent is extracted into a StandardEvent.
       // The return value indicates whether the conversion was successful.
       // Again, this is just an example, adapted it for the actual data layout.
@@ -215,34 +215,34 @@ namespace eudaq {
           const Event & ev) const {
         // If the event type is used for different sensors
         // they can be differentiated here
-			
+            
         numberOfEvents_inplane=0;
         // Create a StandardPlane representing one sensor plane
  
        
         // Set the number of pixels
-		 const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-		 
-		 sev.SetTag("DUT_time",rawev.GetTimestamp());
-		 int id = 8;
-		 std::string sensortype = "SCT";
-		 StandardPlane plane(id, EVENT_TYPE, sensortype);
+         const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
+         
+         sev.SetTag("DUT_time",rawev.GetTimestamp());
+         int id = 8;
+         std::string sensortype = "SCT";
+         StandardPlane plane(id, EVENT_TYPE, sensortype);
 
-		 
-		 std::vector<unsigned char> inputVector=rawev.GetBlock(0);
-		 
+         
+         std::vector<unsigned char> inputVector=rawev.GetBlock(0);
+         
 
-		 processImputVector(inputVector,plane);
+         processImputVector(inputVector,plane);
 
-		 // Set the trigger ID
-		
-		 pushHeaderInStundartplane(inputVector,plane);
+         // Set the trigger ID
+        
+         pushHeaderInStundartplane(inputVector,plane);
 
-		  plane.SetTLUEvent(GetTriggerID(ev));
-		  
-		//  std::cout<<"length of plane " <<numberOfEvents_inplane<<std::endl;
-		 // Add the plane to the StandardEvent	
-		 sev.AddPlane(plane);
+          plane.SetTLUEvent(GetTriggerID(ev));
+          
+        //  std::cout<<"length of plane " <<numberOfEvents_inplane<<std::endl;
+         // Add the plane to the StandardEvent	
+         sev.AddPlane(plane);
        // Indicate that data was successfully converted
         return true;
       }
@@ -266,10 +266,10 @@ namespace eudaq {
 
       // Information extracted in Initialize() can be stored here:
       unsigned m_exampleparam;
-	  int32_t oldDUTid;
-	 mutable  uint64_t last_TLU_time,Last_DUT_Time;
-		int32_t longPause_time;
-		mutable std::vector<std::vector<unsigned char>> m_event_queue;
+      int32_t oldDUTid;
+     mutable  uint64_t last_TLU_time,Last_DUT_Time;
+        int32_t longPause_time;
+        mutable std::vector<std::vector<unsigned char>> m_event_queue;
       // The single instance of this converter plugin
       static SCTupgradeConverterPlugin m_instance;
   }; // class ExampleConverterPlugin

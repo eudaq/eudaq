@@ -27,11 +27,17 @@ class DLLEXPORT MetaData : public Serializable {
     static uint64_t GetCounter( uint64_t meta_data );
     static void SetCounter( uint64_t& meta_data, uint64_t data );
 
+	uint64_t getCounterAt(size_t i){
+		return GetCounter(getArray().at(i));
+	}
     void add( bool tlu, int type, uint64_t data );
     std::vector<uint64_t> & getArray() {
     	return m_metaData;
     };
 
+	size_t size() const {
+		return m_metaData.size();
+	}
 	virtual void Serialize(Serializer &) const;
     virtual void toJson( std::shared_ptr<JSON>, const std::string & objectName = "" );
 

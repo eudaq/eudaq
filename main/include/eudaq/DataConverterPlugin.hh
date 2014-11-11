@@ -3,6 +3,8 @@
 
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/AidaPacket.hh"
+
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -40,6 +42,7 @@ namespace lcio { using namespace EVENT; }
 
 namespace eudaq{
 
+
 	  inline int compareTLU2DUT(unsigned TLU_Trigger_Number, unsigned DUT_Trigger_number){
 	  if (DUT_Trigger_number==TLU_Trigger_Number)
 	  {
@@ -73,53 +76,59 @@ namespace eudaq{
 
 
 
-	  if (eventBegin<=TLUEnd)
-	  {
-		  if (EventEnd>=TLUStart)
-		  {
+	  if (TLUStart <= EventEnd
+					&&
+		  eventBegin <= TLUEnd){
 
-			  	  /*
+		  /*
 
-	                    | event start  |event End
-	  ----------------------------------------->
-	                                           t
+						  | event start  |event End
+		  ----------------------------------------->
+		  t
 
-                 | tlu start  | tlu End
-	  ------------------------------------------>
-											   t
+				  | tlu start  | tlu End
+		  ------------------------------------------>
+		  t
 
-	  */
-			  return Event_IS_Sync;
-		  }
+		  */
 
-		  	  /*
+		  return Event_IS_Sync;
 
-	    | event start  |event End
-	  ----------------------------------------->
-	                                           t
-
-                               | tlu start  | tlu End
-	  ------------------------------------------>
-											   t
-
-	  */
-		  return Event_IS_EARLY;
 	  }
+	  else if (EventEnd<TLUStart){
+		  /*
 
-	 
-	  /*
+		  | event start  |event End
+		  ----------------------------------------->
+												  t
 
-	                     | event start  |event End
-	  ----------------------------------------->
-	                                           t
+								  | tlu start  | tlu End
+		  ------------------------------------------>
+												  t
 
-        | tlu start  | tlu End
-	  ------------------------------------------>
-											   t
+		  */
+		  return Event_IS_LATE;
+	  }else if (eventBegin>TLUEnd)
+	  {
 
-	  */
+		  /*
 
-	  return  Event_IS_LATE;
+								| event start  |event End
+		  ----------------------------------------->
+												t
+
+		  | tlu start  | tlu End
+		  ------------------------------------------>
+												t
+
+		  */
+		  return Event_IS_EARLY;
+
+	  }
+		  
+	  EUDAQ_THROW("unforseen case this shold not happen");
+
+	  return -666;
   }
 
 
@@ -138,17 +147,16 @@ namespace eudaq{
 
   class DataConverterPlugin {
     public:
-      typedef std::pair<unsigned, std::string> t_eventid;
+      typedef Event::t_eventid t_eventid;
 
       virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
 
       virtual unsigned GetTriggerID(eudaq::Event const &) const;
-	  virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
+	  virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const {
 		  // dummy comparator. it is just checking if the event numbers are the same.
-		  
-		  //auto triggerID=ev.GetEventNumber();
-		  unsigned triggerID=ev.GetTag<unsigned>("tlu_trigger_id",0);
-	  auto tlu_triggerID=tlu.GetEventNumber();
+		  const TLUEvent *tlu = dynamic_cast<const eudaq::TLUEvent*>(&tluEvent);
+		  unsigned triggerID = ev.GetEventNumber();
+	  auto tlu_triggerID=tlu->GetEventNumber();
 	return compareTLU2DUT(tlu_triggerID,triggerID);
 	  }
 
@@ -170,6 +178,14 @@ namespace eudaq{
        */
       virtual t_eventid const & GetEventType() const { return m_eventtype; }
 
+	  virtual std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::AidaPacket> ev, size_t NumberOfROF) {
+		  return nullptr; }
+
+	  virtual bool isTLU(const Event&){ return false; }
+
+	  virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev){ return m_thisCount; }
+	  virtual size_t GetNumberOfROF(const eudaq::AidaPacket& pac){ return 1; }
+
       /** The empty destructor. Need to add it to make it virtual.
        */
       virtual ~DataConverterPlugin() {}
@@ -187,19 +203,20 @@ namespace eudaq{
        */
       DataConverterPlugin(std::string subtype);
       DataConverterPlugin(unsigned type, std::string subtype = "");
-
+	  static unsigned m_count;
+	  unsigned m_thisCount;
     private:
       /** The private copy constructor and assignment operator. They are not used anywhere, so there is not
        *  even an implementation. Even if the childs default copy constructor is public
        *  the code will not compile if it is called, since it cannot acces this cc, which the
        *  the default cc does.
        */
-      DataConverterPlugin(DataConverterPlugin &);
-      DataConverterPlugin & operator = (const DataConverterPlugin &);
+		DataConverterPlugin(DataConverterPlugin &) = delete;
+		DataConverterPlugin & operator = (const DataConverterPlugin &) = delete;
   };
 
 
-  
+
 
 
 }//namespace eudaq

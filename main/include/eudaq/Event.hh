@@ -7,6 +7,7 @@
 #include <iosfwd>
 #include <iostream>
 
+
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Exception.hh"
@@ -16,16 +17,16 @@
 
 #define EUDAQ_DECLARE_EVENT(type)           \
   public:                                   \
-static unsigned eudaq_static_id();      \
-virtual unsigned get_id() const {       \
+static  MainType_t eudaq_static_id();      \
+virtual  MainType_t get_id() const {       \
   return eudaq_static_id();             \
 }                                       \
 private:                                  \
 static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
 #define EUDAQ_DEFINE_EVENT(type, id)       \
-  unsigned type::eudaq_static_id() {       \
-    static const unsigned id_(id);         \
+   type::MainType_t type::eudaq_static_id() {       \
+    static const  type::MainType_t id_(id);         \
     return id_;                            \
   }                                        \
 namespace _eudaq_dummy_ {                \
@@ -35,10 +36,16 @@ static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
 
 namespace eudaq {
 
+
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable {
     public:
+		using  MainType_t = unsigned;
+		using SubType_t = std::string;
+		using t_eventid = std::pair < MainType_t, SubType_t > ;
+
+
       enum Flags { FLAG_BORE=1, FLAG_EORE=2, FLAG_HITS=4, FLAG_FAKE=8, FLAG_SIMU=16, FLAG_ALL=(unsigned)-1 }; // Matches FLAGNAMES in .cc file
       Event(unsigned run, unsigned event, uint64_t timestamp = NOTIMESTAMP, unsigned flags=0)
         : m_flags(flags), m_runnumber(run), m_eventnumber(event), m_timestamp(timestamp) {}
@@ -50,9 +57,9 @@ namespace eudaq {
       uint64_t GetTimestamp() const { return m_timestamp; }
 
       /** Returns the type string of the event implementation.
-       *  Used by the plugin mechanism to identfy the event type.
+       *  Used by the plugin mechanism to identify the event type.
        */
-      virtual std::string GetSubType() const { return ""; }
+      virtual SubType_t GetSubType() const { return ""; }
 
       virtual void Print(std::ostream & os) const = 0;
 
@@ -125,5 +132,6 @@ namespace eudaq {
       }
     };
 }
+
 
 #endif // EUDAQ_INCLUDED_Event

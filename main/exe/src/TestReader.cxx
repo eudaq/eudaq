@@ -1,4 +1,4 @@
-#include "eudaq/FileReader.hh"
+#include "eudaq/MultiFileReader.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Logger.hh"
@@ -124,9 +124,14 @@ int main(int /*argc*/, char ** argv) {
 
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
-      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
-      EUDAQ_INFO("Reading: " + reader.Filename());
+      
+      
+	  eudaq::multiFileReader reader;
+	  for (size_t i = 0; i < op.NumArgs(); ++i) {
 
+		  reader.addFileReader(op.GetArg(i), ipat.Value());
+	  }
+	  EUDAQ_INFO("Reading: " + reader.Filename());
       //    cout << i << " " << reader.Filename()  << endl;
 
       unsigned ndata = 0, ndatalast = 0, nnondet = 0, nbore = 0, neore = 0;

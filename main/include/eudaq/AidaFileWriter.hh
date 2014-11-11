@@ -1,5 +1,5 @@
-#ifndef EUDAQ_INCLUDED_FileWriter
-#define EUDAQ_INCLUDED_FileWriter
+#ifndef AIDA_INCLUDED_FileWriter
+#define AIDA_INCLUDED_FileWriter
 
 #include "eudaq/AidaPacket.hh"
 #include <vector>
@@ -55,4 +55,4 @@ class JSON;
 
 }
 
-#endif // EUDAQ_INCLUDED_AidaFileWriter
+#endif // AIDA_INCLUDED_AidaFileWriter

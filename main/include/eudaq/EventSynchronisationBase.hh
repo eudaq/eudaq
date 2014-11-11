@@ -22,7 +22,8 @@ namespace eudaq{
      	 typedef std::queue<std::shared_ptr<eudaq::Event>> eventqueue_t ;
 
 
-	 int AddDetectorElementToProducerQueue(int fileIndex,std::shared_ptr<eudaq::DetectorEvent> dev );
+	 int AddDetectorEventToProducerQueue(int fileIndex,std::shared_ptr<eudaq::DetectorEvent> dev );
+	 int AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev);
 	 virtual bool SyncFirstEvent();
 	 virtual bool SyncNEvents(size_t N);
 	 virtual bool getNextEvent( std::shared_ptr<eudaq::DetectorEvent>  & ev);
@@ -42,7 +43,8 @@ namespace eudaq{
        */
 	 virtual ~SyncBase() {}
 	 SyncBase(bool sync=true);
-	 void addBOREEvent(int fileIndex,const eudaq::DetectorEvent& BOREvent);
+	 void addBOREDetectorEvent(int fileIndex,const eudaq::DetectorEvent& BOREvent);
+	 void addBORE_Event(int fileIndex, const eudaq::Event& BOREEvent);
 	 void PrepareForEvents();
 
     protected:
