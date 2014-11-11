@@ -163,9 +163,8 @@ bool SyncBase::SyncFirstEvent()
     
     EUDAQ_THROW("Producer Event queue is empty");
   }
-  else if (m_ProducerEventQueue.size() == 1)
+  else if (!m_sync)
   {
-    // only one producer involved no need to sync anything 
     if (!Event_Queue_Is_Empty())
     {
       makeDetectorEvent();
@@ -176,11 +175,6 @@ bool SyncBase::SyncFirstEvent()
       return false;
     }
 
-  }else if (!m_sync)
-  {
-    makeDetectorEvent();
-    
-    return true;
   }
   
 
@@ -243,8 +237,17 @@ void SyncBase::makeDetectorEvent()
 
   
   m_DetectorEventQueue.push(det);
-  event_queue_pop_TLU_event();
-  //event_queue_pop();
+
+  if (m_sync)
+  {
+    event_queue_pop_TLU_event();
+  }
+  else
+  {
+    event_queue_pop();
+  }
+  
+  
   
 }
 
@@ -327,7 +330,10 @@ void SyncBase::clearDetectorQueue()
 
 void SyncBase::PrepareForEvents()
 {
-
+  if (m_ProducerEventQueue.size() == 1)
+  {
+    m_sync = false; // there is no need to sync anything in this case
+  }
   if (!m_sync)
   {
     std::cout << "events not synchronized" << std::endl;
