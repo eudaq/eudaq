@@ -20,7 +20,7 @@ int main(int, char ** argv) {
   eudaq::Option<std::string> events(op, "e", "events", "", "numbers", "Event numbers to convert (eg. '1-10,99' default is all)");
   eudaq::Option<std::string> ipat(op, "i", "inpattern", "../data/run$6R.raw", "string", "Input filename pattern");
   eudaq::Option<std::string> opat(op, "o", "outpattern", "test$6R$X", "string", "Output filename pattern");
-  eudaq::OptionFlag async(op, "a", "nosync", "Disables Synchronisation with TLU events");
+  eudaq::OptionFlag async(op, "a", "nosync", "Disables Synchronization with TLU events");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
     "The minimum level for displaying log messages locally");
   op.ExtraHelpText("Available output types are: " + to_string(eudaq::FileWriterFactory::GetTypes(), ", "));
