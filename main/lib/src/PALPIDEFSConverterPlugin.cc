@@ -73,6 +73,11 @@ namespace eudaq {
 	sprintf(tmp, "MaskedPixels_%d", i);
 	std::string pixels = bore.GetTag<std::string>(tmp, "");
 	//cout << "Masked pixels of layer " << i << " is: " << pixels.c_str() << endl;
+
+	// firmware version
+	sprintf(tmp, "FirmwareVersion_%d", i);
+	std::string version = bore.GetTag<std::string>(tmp, "");
+// 	cout << "Firmware version on card " << i << " is: " << version.c_str() << endl;
       }
     }
     //##############################################################################
