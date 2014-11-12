@@ -365,14 +365,14 @@ void DeviceReader::Loop()
 	    m_dut->DumpHitData(hits);
 	  }
 	  
-	  std::string str = "RAW payload: ";
+	  std::string str = "RAW payload (length %d): ";
 	  for (int j=0; j<length-28; j++) {
 	    char buffer[20];
 	    sprintf(buffer, "%02x ", data_buf[j+20]);
 	    str += buffer;
 	  }
 	  str += "\n";
-	  Print(0, str.data());
+	  Print(0, str.data(), length);
 	}
 	
 // 	std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
@@ -427,8 +427,9 @@ void DeviceReader::Print(int level, const char* text, uint64_t value1, uint64_t 
   std::string tmp("DeviceReader %d: ");
   tmp += text;
   
-  char msg[10000];
-  sprintf(msg, tmp.data(), m_id, value1, value2, value3, value4);
+  const int maxLength = 100000;
+  char msg[maxLength];
+  snprintf(msg, maxLength, tmp.data(), m_id, value1, value2, value3, value4);
   
   std::cout << msg << std::endl;
   if (level == 1) {
@@ -557,8 +558,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       return;
     }
     
-    for (int i=0; i<m_nDevices; i++)
-      m_testsetup->AddDUTs(DUT_PALPIDEFS);
+    m_testsetup->AddDUTs(DUT_PALPIDEFS);
     #endif
 
     m_next_event = new SingleEvent*[m_nDevices];
