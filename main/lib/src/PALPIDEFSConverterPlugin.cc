@@ -77,7 +77,7 @@ namespace eudaq {
 	// firmware version
 	sprintf(tmp, "FirmwareVersion_%d", i);
 	std::string version = bore.GetTag<std::string>(tmp, "");
-// 	cout << "Firmware version on card " << i << " is: " << version.c_str() << endl;
+	cout << "Firmware version on card " << i << " is: " << version.c_str() << endl;
       }
     }
     //##############################################################################
