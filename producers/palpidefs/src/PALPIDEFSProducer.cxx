@@ -755,7 +755,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     
     // firmware version
     sprintf(tmp, "FirmwareVersion_%d", i);
-    bore.SetTag(tmp, m_reader[i]->GetDAQBoard()->GetFirmwareVersion());
+    bore.SetTag(tmp, m_reader[i]->GetDAQBoard()->GetFirmwareName());
 #endif
   }
 
