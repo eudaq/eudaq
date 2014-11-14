@@ -19,6 +19,24 @@ SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\CommandRecei
 SOURCE_GROUP(Event .*Event.*cc)
 SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 
+
+find_package(Protobuf)
+option(GEN_proto "Gennerate protobuf files?" OFF)
+if (PROTOBUF_FOUND)
+    if (GEN_proto)
+        add_custom_target(
+            GEN_PROTO ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${PROJECT_SOURCE_DIR}/main/include/eudaq --cpp_out=${PROJECT_SOURCE_DIR}/main/lib/plugins --python_out=${PROJECT_SOURCE_DIR}/python ${PROJECT_SOURCE_DIR}/main/include/eudaq/StandardEvent.proto
+            COMMAND mv ${PROJECT_SOURCE_DIR}/main/lib/plugins/StandardEvent.pb.h ${PROJECT_SOURCE_DIR}/main/include/eudaq
+            COMMAND sed -i 's/StandardEvent.pb.h/eudaq\\/StandardEvent.pb.h/g' ${PROJECT_SOURCE_DIR}/main/lib/plugins/StandardEvent.pb.cc
+        )
+        add_dependencies(${PROJECT_NAME} GEN_PROTO)    
+    endif()
+        
+    SOURCE_GROUP(proto_plugin .*.pb.cc)
+    SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ${PROTOBUF_LIBRARIES})
+endif ()
+
+
 target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 
 
