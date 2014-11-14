@@ -40,7 +40,7 @@ namespace eudaq {
         pb::StandardEvent event;
         event.ParseFromArray( data.data(), data.size());
         
-        cout << event.DebugString() << endl;
+        //cout << event.DebugString() << endl;
 
         for (int i = 0; i < event.plane_size(); i++) {
             const pb::StandardPlane& pb_plane = event.plane(i);
