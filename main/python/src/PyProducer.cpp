@@ -18,7 +18,7 @@ class PyProducer : public eudaq::Producer {
     PyProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
   void SendEvent(uint64_t* data, size_t size) {
-    RawDataEvent ev("Test", m_run, ++m_evt);
+    RawDataEvent ev(m_name, m_run, ++m_evt);
       ev.AddBlock(0, data, size);
       eudaq::DataSender::SendEvent(ev);
     }
@@ -51,7 +51,7 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Running) {
-	eudaq::DataSender::SendEvent(RawDataEvent::BORE("Test", m_run));
+	eudaq::DataSender::SendEvent(RawDataEvent::BORE(m_name, m_run));
 	SetStatus(eudaq::Status::LVL_OK, "");
       }
     }
@@ -64,7 +64,7 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Stopped) {
-	eudaq::DataSender::SendEvent(RawDataEvent::EORE("Test", m_run, ++m_evt));
+	eudaq::DataSender::SendEvent(RawDataEvent::EORE(m_name, m_run, ++m_evt));
 	SetStatus(eudaq::Status::LVL_OK);
       }
     }
