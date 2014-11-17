@@ -68,7 +68,7 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
-    m_writer =  std::shared_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
+    m_writer =  std::shared_ptr<eudaq::FileWriter>(FileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
@@ -107,15 +107,8 @@ namespace eudaq {
     //m_ser = counted_ptr<FileSerializer>();
   }
 
-  void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<AidaPacket> packet ) {
-	  WritePacket( packet );
-  }
-
-
-
-  void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev ) {
+  void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev) {
     //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
-
     Info & inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
     bool tmp = false;
@@ -126,7 +119,6 @@ namespace eudaq {
       }
     }
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
-
     if (tmp)
       OnCompleteEvent();
   }
@@ -140,7 +132,6 @@ namespace eudaq {
     if (m_writer.get())
       m_status.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
   }
-
 
   void DataCollector::OnCompleteEvent() {
     bool more = true;
@@ -186,35 +177,22 @@ namespace eudaq {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
         EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
       }
-      WriteEvent( ev );
+      if (m_writer.get()) {
+	try{
+	  m_writer->WriteEvent(ev);
+	}
+	catch(const Exception & e){
+	  std::string msg = "Exception writing to file: "; msg+= e.what();
+	  EUDAQ_ERROR(msg);
+	  SetStatus(Status::LVL_ERROR, msg);
+	}
+      } else {
+        EUDAQ_ERROR("Event received before start of run");
+      }
+      //std::cout << ev << std::endl;
+      ++m_eventnumber;
     }
   }
-
-
-  void DataCollector::WriteEvent( const DetectorEvent & ev ) {
-	  auto packet = std::shared_ptr<AidaPacket>( new EventPacket( ev ) );
-	  WritePacket( packet );
-	  // std::cout << ev << std::endl;
-	  ++m_eventnumber;
-  }
-
-
-  void DataCollector::WritePacket( std::shared_ptr<AidaPacket> packet ) {
-	  if (m_writer.get()) {
-		  try {
-			  m_writer->WritePacket( packet );
-		  } catch(const Exception & e) {
-			  std::string msg = "Exception writing to file: ";
-			  msg += e.what();
-			  EUDAQ_ERROR(msg);
-			  SetStatus(Status::LVL_ERROR, msg);
-		  }
-	  } else {
-		  EUDAQ_ERROR("Event received before start of run");
-	  }
-  }
-
-
 
   size_t DataCollector::GetInfo(const ConnectionInfo & id) {
     for (size_t i = 0; i < m_buffer.size(); ++i) {
@@ -279,24 +257,17 @@ namespace eudaq {
           ev.id.SetState(1); // successfully identified
           OnConnect(ev.id);
         } else {
-        	if ( ev.packet.find( AidaPacket::identifier().string ) == 0 ) {
-        		BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-        		std::shared_ptr<AidaPacket> packet( PacketFactory::Create( ser ) );
-        		OnReceive( ev.id, packet );
-        		// this is a packet
-        	} else {
-        		//std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
-        		//for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
-        		//    std::cout << to_hex(ev.packet[i], 2) << ' ';
-        		//}
-        		//std::cout << ")" << std::endl;
-        		BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-        		//std::cout << "Deserializing" << std::endl;
-        		std::shared_ptr<Event> event(EventFactory::Create(ser));
-        		//std::cout << "Done" << std::endl;
-        		OnReceive(ev.id, event );
-        		//std::cout << "End" << std::endl;
-        	}
+          //std::cout << "Receive: " << ev.id << " " << ev.packet.size() << std::endl;
+          //for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
+          //    std::cout << to_hex(ev.packet[i], 2) << ' ';
+          //}
+          //std::cout << ")" << std::endl;
+          BufferSerializer ser(ev.packet.begin(), ev.packet.end());
+          //std::cout << "Deserializing" << std::endl;
+          std::shared_ptr<Event> event(EventFactory::Create(ser));
+          //std::cout << "Done" << std::endl;
+          OnReceive(ev.id, event);
+          //std::cout << "End" << std::endl;
         }
         break;
       default:

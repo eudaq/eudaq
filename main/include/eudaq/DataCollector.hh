@@ -8,9 +8,8 @@
 
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/AidaPacket.hh"
-#include "eudaq/AidaFileWriter.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
@@ -34,22 +33,16 @@ namespace eudaq {
       virtual void OnConfigure(const Configuration & param);
       virtual void OnPrepareRun(unsigned runnumber);
       virtual void OnStopRun();
-      virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev );
-      virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<AidaPacket> packet );
+      virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev);
       virtual void OnCompleteEvent();
       virtual void OnStatus();
       virtual ~DataCollector();
 
       void DataThread();
-    protected:
-      void WriteEvent( const DetectorEvent & ev );
-      void WritePacket( std::shared_ptr<AidaPacket> packet );
-
     private:
       struct Info {
        std::shared_ptr<ConnectionInfo> id;
-       std::list<std::shared_ptr<Event> > events;
-       std::list<std::shared_ptr<AidaPacket> > packets;
+        std::list<std::shared_ptr<Event> > events;
       };
 
       const std::string m_runnumberfile; // path to the file containing the run number
@@ -65,7 +58,7 @@ namespace eudaq {
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber;
-      std::shared_ptr<AidaFileWriter> m_writer;
+      std::shared_ptr<FileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;
   };

@@ -1,5 +1,5 @@
-#ifndef EUDAQ_INCLUDED_FileWriter
-#define EUDAQ_INCLUDED_FileWriter
+#ifndef EUDAQ_INCLUDED_AidaFileWriter
+#define EUDAQ_INCLUDED_AidaFileWriter
 
 #include "eudaq/AidaPacket.hh"
 #include <vector>
