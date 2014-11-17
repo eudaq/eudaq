@@ -67,6 +67,12 @@ class PyProducer(object):
         data = data.astype(numpy.uint64)
         data_p = data.ctypes.data_as(POINTER(c_uint64))
         lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.size)
+    def SendPacket(self,metadata, data):
+        metadata = metadata.astype(numpy.uint64)
+        metadata_p = metadata.ctypes.data_as(POINTER(c_uint64))
+        data = data.astype(numpy.uint64)
+        data_p = data.ctypes.data_as(POINTER(c_uint64))
+        lib.PyProducer_SendPacket(c_void_p(self.obj), metadata_p, metadata.size, data_p,data.size)
     def GetConfigParameter(self, item):
         return c_char_p(lib.PyProducer_GetConfigParameter(c_void_p(self.obj),create_string_buffer(item))).value
     @property
