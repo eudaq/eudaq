@@ -7,7 +7,7 @@ PROJECT( EUDAQ )
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 3 )
 
 LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
 LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
@@ -71,6 +71,7 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
