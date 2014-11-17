@@ -1,7 +1,11 @@
+
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Timer.hh"
 #include "eudaq/TLUEvent.hh" // for the TLU event
 #include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 
 #include "tlu/TLUController.hh"

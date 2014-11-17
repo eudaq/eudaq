@@ -8,6 +8,7 @@
 #include <iosfwd>
 #include <iostream>
 
+#include "eudaq/SmartEnum.hh"
 #include "eudaq/AidaPacket.hh"
 
 
@@ -21,7 +22,6 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
 			m_header.data.marker = identifier().number;
 			m_header.data.packetType = get_type();
 			m_header.data.packetSubType = subtype;
-			m_header.data.packetNumber = -1;
     };
 
     /*
@@ -39,7 +39,7 @@ class DLLEXPORT TLU2Packet : public AidaPacket {
     // meta data
     //
 
-	DECLARE_ENUM_CLASS( TLU2MetaDataType, RUN_NUMBER, TRIGGER_COUNTER, TRIGGER_TIMESTAMP );
+	DECLARE_ENUM_CLASS( TLU2MetaDataType, EVENT_TYPE, INPUT_TRIGGER, TIMESTAMP, EVENT_NUMBER );
 
 
 	/*

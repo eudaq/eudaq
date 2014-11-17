@@ -1,8 +1,10 @@
 
+#include <iostream>
 #include <map>
 
 #include "jsoncons/json.hpp"
-
+#include "eudaq/JSONimpl.hh"
+#include "eudaq/BufferSerializer.hh"
 #include "eudaq/MetaData.hh"
 #include "eudaq/AidaPacket.hh"
 
@@ -47,6 +49,10 @@ bool MetaData::IsTLUBitSet( uint64_t meta_data ) {
 	return getBits(TLU, meta_data );
 };
 
+void MetaData::SetTLUBit( uint64_t& meta_data ) {
+	setBits(TLU, meta_data, 1 );
+};
+
 uint64_t MetaData::GetCounter( uint64_t meta_data ) {
 	return getBits(COUNTER, meta_data );
 };
@@ -57,13 +63,39 @@ void MetaData::SetCounter( uint64_t& meta_data, uint64_t data ) {
 
 void MetaData::add( bool tlu, int type, uint64_t data ) {
 	uint64_t meta_data = 0;
+	if ( tlu )
+		SetTLUBit( meta_data );
 	SetType( meta_data, type );
 	SetCounter( meta_data, data );
+	//std::cout << "tlu: " << tlu << " data: " <<  std::hex << meta_data << std::dec << std::endl;
 	m_metaData.push_back( meta_data );
 };
 
 void MetaData::Serialize( Serializer & ser ) const {
 	ser.write( m_metaData );
+}
+
+void MetaData::toJson( std::shared_ptr<JSON> my, const std::string & objectName ) {
+	json& json_metaData = JSONimpl::get( my.get() );
+	if ( objectName.empty() ) {
+		for ( auto data : m_metaData ) {
+			json json_data;
+			json_data["tlu"] = MetaData::IsTLUBitSet( data );
+			json_data["type"] = MetaData::GetType( data );
+			json_data["counter"] = MetaData::GetCounter( data );
+			json_metaData.add( json_data );
+		}
+	}
+	else {
+		json_metaData[objectName] = jsoncons::json::an_array;
+		for ( auto data : m_metaData ) {
+			json json_data;
+			json_data["tlu"] = MetaData::IsTLUBitSet( data );
+			json_data["type"] = MetaData::GetType( data );
+			json_data["counter"] = MetaData::GetCounter( data );
+			json_metaData[objectName].add( json_data );
+		}
+	}
 }
 
 }

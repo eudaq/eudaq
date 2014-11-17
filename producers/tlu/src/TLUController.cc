@@ -228,12 +228,13 @@ namespace tlu {
   }
 
   void TLUController::OpenTLU() {
+    
     // Request information about the system
-    uint64_t NumCards = 0;
-    uint64_t CardIDs[256] = {0};
-    uint64_t SerialNumbers[256] = {0};
+    unsigned long NumCards = 0;
+    unsigned long CardIDs[256] = {0};
+    unsigned long SerialNumbers[256] = {0};
     ZESTSC1_FPGA_TYPE FPGATypes[256] = {ZESTSC1_FPGA_UNKNOWN};
-    int status = ZestSC1CountCards(&NumCards, CardIDs, SerialNumbers, FPGATypes);
+	int status = ZestSC1CountCards( &NumCards, CardIDs, SerialNumbers, FPGATypes);
     if (status != 0) throw TLUException("ZestSC1CountCards", status);
 
     if ( m_debug_level & TLU_DEBUG_CONFIG ) {

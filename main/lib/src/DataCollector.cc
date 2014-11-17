@@ -1,11 +1,16 @@
+#include <iostream>
+#include <ostream>
+#include <thread>
 #include "eudaq/DataCollector.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
-#include <iostream>
-#include <ostream>
+#include "eudaq/PluginManager.hh"
+#include "eudaq/JSONimpl.hh"
+
+#include "config.h"
 
 namespace eudaq {
 
@@ -20,14 +25,17 @@ namespace eudaq {
   } // anonymous namespace
 
   DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
-    CommandReceiver("DataCollector", name, runcontrol, false), m_runnumberfile(runnumberfile), m_done(false), m_listening(true), m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber(
-     ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0) {
+    CommandReceiver("DataCollector", name, runcontrol, false),
+    m_runnumberfile(runnumberfile), m_name( name ), m_done(false), m_listening(true),
+    m_dataserver(TransportFactory::CreateServer(listenaddress)),
+    m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber( ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0), m_packetNumberLastPacket( 0 )
+  {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
       EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
       m_thread=std::unique_ptr<std::thread>(new std::thread(DataCollector_thread,this));
       EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
       CommandReceiver::StartThread();
-    }
+  }
 
   DataCollector::~DataCollector() {
     m_done = true;
@@ -68,7 +76,7 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration & param) {
     m_config = param;
-    m_writer =  std::shared_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
+    m_writer =  std::unique_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
@@ -80,7 +88,7 @@ namespace eudaq {
       if (!m_writer) {
         EUDAQ_THROW("You must configure before starting a run");
       }
-      m_writer->StartRun(runnumber);
+      m_writer->StartRun( m_name, runnumber, buildJsonConfigHeader( runnumber ) );
       WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
@@ -193,6 +201,7 @@ namespace eudaq {
 
   void DataCollector::WriteEvent( const DetectorEvent & ev ) {
 	  auto packet = std::shared_ptr<AidaPacket>( new EventPacket( ev ) );
+	  packet->SetPacketNumber( ++m_packetNumberLastPacket );
 	  WritePacket( packet );
 	  // std::cout << ev << std::endl;
 	  ++m_eventnumber;
@@ -202,6 +211,7 @@ namespace eudaq {
   void DataCollector::WritePacket( std::shared_ptr<AidaPacket> packet ) {
 	  if (m_writer.get()) {
 		  try {
+			  m_packetNumberLastPacket = packet->GetPacketNumber();
 			  m_writer->WritePacket( packet );
 		  } catch(const Exception & e) {
 			  std::string msg = "Exception writing to file: ";
@@ -314,6 +324,28 @@ namespace eudaq {
     } catch (...) {
       std::cout << "Error: Uncaught unrecognised exception: \n" << "DataThread is dying..." << std::endl;
     }
+  }
+
+
+  std::shared_ptr<JSON> DataCollector::buildJsonConfigHeader( unsigned int runnumber ) {
+	  auto J = JSON::Create();
+
+	  jsoncons::json& header = JSONimpl::get( J.get() );
+	  header["runnumber"] = runnumber;
+	  header["package_name"] = PACKAGE_NAME;
+	  header["package_version"] = PACKAGE_VERSION;
+	  header["date"] = Time::Current().Formatted();
+	  header["schema"] = AidaPacket::getCurrentSchema();
+
+	  header["sources"] = jsoncons::json::an_array;
+	  for ( auto info : m_buffer ) {
+		  jsoncons::json src;
+		  src["type"] = info.id->GetType();
+		  src["name"] = info.id->GetName();
+		  header["sources"].add( src );
+	  }
+
+	  return J;
   }
 
 }

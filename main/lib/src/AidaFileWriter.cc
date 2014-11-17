@@ -4,16 +4,12 @@
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Exception.hh"
-
-#include "config.h"
-#include "jsoncons/json.hpp"
-
-using std::string;
-using jsoncons::null_type;
-using jsoncons::json;
+#include "eudaq/JSON.hh"
 
 
 namespace eudaq {
+
+#define MAX_FILE_SIZE  (100 * 1000000)
 
   AidaFileWriter::AidaFileWriter() : m_filepattern(FileNamer::default_pattern) {}
 
@@ -21,11 +17,13 @@ namespace eudaq {
   class AidaFileWriterNative : public AidaFileWriter {
     public:
       AidaFileWriterNative(const std::string &);
-      virtual void StartRun(unsigned);
+      virtual void StartRun( const std::string & name, unsigned int runnumber, std::shared_ptr<JSON> config );
       virtual void WritePacket( std::shared_ptr<AidaPacket> );
       virtual unsigned long long FileBytes() const;
       virtual ~AidaFileWriterNative();
     private:
+      void OpenNextRaw2();
+
       FileSerializer * m_ser;
       FileSerializer * m_idx;
   };
@@ -38,35 +36,38 @@ namespace eudaq {
     //EUDAQ_DEBUG("Constructing AidaFileWriterNative(" + to_string(param) + ")");
   }
 
-  void AidaFileWriterNative::StartRun(unsigned runnumber) {
-	delete m_ser;
-	delete m_idx;
-    m_ser   = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw2").Set( 'S', "_" ).Set('N', 0 ).Set('R', runnumber));
-    m_idx = new FileSerializer(FileNamer(m_filepattern).Set('X', ".idx").Set('R', runnumber));
+  void AidaFileWriterNative::StartRun( const std::string & name, unsigned int runnumber, std::shared_ptr<JSON> config )
+  {
+	m_name = name;
+	m_runNumber = runnumber;
+	m_config = config;
+	m_fileNumber = 0;
 
-    json header;
-    header["runnumber"] = runnumber;
-    header["package_name"] = PACKAGE_NAME;
-    header["package_version"] = PACKAGE_VERSION;
-    header["date"] = Time::Current().Formatted();
-    // std::cout << "JSON: " << header << std::endl;
-    m_ser->write( header.to_string() );
-    m_ser->Flush();
-    m_idx->write( header.to_string() );
+	OpenNextRaw2();
+	delete m_idx;
+    m_idx = new FileSerializer(FileNamer(m_filepattern).Set('X', ".idx").Set( 's', "" ).Set('R', runnumber).Set('N', m_name));
+    std::string header = config->to_string();
+    while ( header.length() % 8 )
+    	header += ' ';
+    m_idx->write( header );
     m_idx->Flush();
   }
 
   void AidaFileWriterNative::WritePacket( std::shared_ptr<AidaPacket> packet ) {
-	if ( !m_idx )
-		EUDAQ_THROW("AidaFileWriterNative: Attempt to write unopened index file");
-	m_idx->write( AidaIndexData( *packet, 42 /* fileNo */, m_ser->FileBytes() ) );
-	m_idx->Flush();
 
-    if (!m_ser)
-    	EUDAQ_THROW("AidaFileWriterNative: Attempt to write unopened file");
+	if (!m_ser)
+		EUDAQ_THROW("AidaFileWriterNative: Attempt to write unopened file");
+
+    if ( m_ser->FileBytes() > MAX_FILE_SIZE )
+    	OpenNextRaw2();
+
     m_ser->write( *packet );
-	m_ser->Flush();
+    m_ser->Flush();
 
+    if ( !m_idx )
+		EUDAQ_THROW("AidaFileWriterNative: Attempt to write unopened index file");
+	m_idx->write( AidaIndexData( *packet, m_fileNumber, m_ser->FileBytes() ) );
+	m_idx->Flush();
   }
 
   AidaFileWriterNative::~AidaFileWriterNative() {
@@ -79,6 +80,22 @@ namespace eudaq {
 	  return m_ser ? m_ser->FileBytes() : 0;
   }
 
+
+  void AidaFileWriterNative::OpenNextRaw2() {
+	m_fileNumber += 1;
+	if ( m_ser ) {
+		m_ser->Flush();
+		delete m_ser;
+	}
+    m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw2").Set( 's', "_" ).Set('i', m_fileNumber ).Set('R', m_runNumber).Set('N', m_name));
+
+    // std::cout << "JSON: " << header << std::endl;
+    std::string header = m_config->to_string();
+    while ( header.length() % 8 )
+    	header += ' ';
+    m_ser->write( header );
+    m_ser->Flush();
+  }
 
 
   namespace {

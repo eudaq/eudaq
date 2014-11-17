@@ -2,8 +2,12 @@
 #include <iostream>
 #include <time.h>
 
+#include "eudaq/JSONimpl.hh"
+#include "jsoncons/json.hpp"
 #include "eudaq/BufferSerializer.hh"
-#include "eudaq/AidaPacket.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/AidaIndexData.hh"
+#include "eudaq/TLU2Packet.hh"
 
 using std::cout;
 
@@ -64,7 +68,11 @@ namespace eudaq {
 		return header;
 	}
 
-
+	std::vector<uint64_t> & AidaPacket::GetData() {
+		if ( m_data_size > 0 )
+			std::copy( m_data, m_data + m_data_size, m_data_vector.begin() );
+		return m_data_vector;
+	}
 
     const uint64_t * const AidaPacket::bit_mask() {
     	static uint64_t* array = NULL;
@@ -100,7 +108,6 @@ namespace eudaq {
     for (int i = 7; i >= 0; --i) {
       if (result[i] == '\0') {
         result.erase(i);
-        break;
       }
     }
     //std::cout << " = " << result << std::endl;
@@ -116,18 +123,62 @@ namespace eudaq {
 	  return packet_identifier;
   }
 
+  static std::string currentSchema = AidaPacket::getDefaultSchema();
 
-  void AidaPacket::Print(std::ostream & os) const {
-    os << "Type=" << type2str( GetPacketType() )
-      << ", packet#=" << GetPacketNumber();
+  const std::string & AidaPacket::getCurrentSchema() {
+	  return currentSchema;
   }
 
-  std::ostream & operator << (std::ostream &os, const AidaPacket &packet) {
-    packet.Print(os);
-    return os;
+  void AidaPacket::setCurrentSchema( const std::string & schema ) {
+	  currentSchema = schema;
   }
 
 
+  std::shared_ptr<JSON> AidaPacket::HeaderToJson() {
+	  auto my = JSON::Create();
+	  jsoncons::json& json = JSONimpl::get( my.get() );
+	  json["className"] = getClassName();
+	  json["marker"] = AidaPacket::type2str( m_header.data.marker );
+	  json["packetType"] = AidaPacket::type2str( GetPacketType() );
+	  json["packetSubType"] = AidaPacket::type2str( GetPacketSubType() );
+	  json["packetNumber"] = GetPacketNumber();
+	  return my;
+  }
+
+  void AidaPacket::HeaderToJson( JSONp my, const std::string & objectName ) {
+	  JSONp header = HeaderToJson();
+	  jsoncons::json& json = JSONimpl::get( my.get() );
+	  json[objectName] = std::move( JSONimpl::get( header.get() ) );
+  }
+
+  void AidaPacket::DataToJson( std::shared_ptr<JSON> my, const std::string & objectName ) {
+	  jsoncons::json& json = JSONimpl::get( my.get() );
+	  if ( !objectName.empty() ) {
+		  json[objectName] = jsoncons::json::an_array;
+		  for ( int i = 0; i < m_data_size; i++ )
+			  json[objectName].add( m_data[i] );
+	  } else {
+		  for ( int i = 0; i < m_data_size; i++ )
+			  json.add( m_data[i] );
+	  }
+  }
+
+  JSONp AidaPacket::toJson( int whatToAdd ) {
+	  auto my = JSON::Create();
+	  if ( whatToAdd & JSON_HEADER )
+		  HeaderToJson( my, "header" );
+
+	  if ( whatToAdd & JSON_METADATA )
+		  GetMetaData().toJson( my, "meta" );
+
+	  if ( whatToAdd & JSON_DATA )
+		  DataToJson( my, "data" );
+	  else {
+		  jsoncons::json& json = JSONimpl::get( my.get() );
+		  json["dataLength"] = m_data_size;
+	  }
+	  return my;
+  }
 
 
   EventPacket::EventPacket( const Event & ev ) : m_ev( &ev ) {
@@ -135,8 +186,8 @@ namespace eudaq {
     	m_header.data.packetSubType = 0;
     	m_header.data.packetNumber  = m_ev->GetEventNumber();
 
-    	m_meta_data.add( false, MetaData::Type::TRIGGER_COUNTER, m_ev->GetEventNumber() );
-    	m_meta_data.add( false, MetaData::Type::TRIGGER_TIMESTAMP, m_ev->GetTimestamp() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::EVENT_NUMBER, m_ev->GetEventNumber() );
+    	m_meta_data.add( false, TLU2Packet::TLU2MetaDataType::TIMESTAMP, m_ev->GetTimestamp() );
   }
 
 
@@ -158,7 +209,9 @@ namespace eudaq {
 
 
   std::shared_ptr<AidaPacket> PacketFactory::Create( Deserializer & ds) {
-	  AidaPacket::PacketHeader header = AidaPacket::DeserializeHeader( ds );
+	  auto header = AidaPacket::DeserializeHeader( ds );
+      if ( header.data.marker == AidaIndexData::identifier().number )
+          return std::make_shared<AidaIndexData>( header, ds );
 	  int id = header.data.packetType;
       //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       packet_creator cr = GetCreator(id);

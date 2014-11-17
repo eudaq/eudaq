@@ -11,7 +11,11 @@
 
 file(GLOB_RECURSE uhal_include /opt/cactus/*uhal.hpp)
 if(uhal_include)
-    set(CACTUS_ROOT /opt/cactus/2.3 )
+    # strip the file and 'include' path away:
+    get_filename_component(opt_lib_path "${uhal_include}" PATH)
+    get_filename_component(opt_lib_path "${opt_lib_path}" PATH)
+    get_filename_component(opt_lib_path "${opt_lib_path}" PATH)
+    set(CACTUS_ROOT ${opt_lib_path})
     MESSAGE(STATUS "Found uhal.hpp in ${uhal_include}")
 else(uhal_include)
 file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*uhal.hpp)

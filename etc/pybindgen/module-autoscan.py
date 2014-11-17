@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys
+import sys,os
 
 from pybindgen import FileCodeSink
 from pybindgen.gccxmlparser import ModuleParser
@@ -13,4 +13,8 @@ def my_module_gen():
     module_parser.parse([includeFile], includes=['"' + includeFile + '"'], pygen_sink=FileCodeSink(sys.stdout))
 
 if __name__ == '__main__':
+    savedPath = os.getcwd()
+    os.chdir( '../../main/include')
     my_module_gen()
+    os.chdir( savedPath )
+

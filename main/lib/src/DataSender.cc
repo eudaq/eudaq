@@ -12,7 +12,8 @@ namespace eudaq {
   DataSender::DataSender(const std::string & type, const std::string & name)
     : m_type(type),
     m_name(name),
-    m_dataclient(0) {}
+    m_dataclient(0),
+    m_packetCounter(0) {}
 
   void DataSender::Connect(const std::string & server) {
     delete m_dataclient;
@@ -54,17 +55,21 @@ namespace eudaq {
     BufferSerializer ser;
     ev.Serialize(ser);
     //EUDAQ_DEBUG("Sending event");
+    m_packetCounter += 1;
     m_dataclient->SendPacket(ser);
     //EUDAQ_DEBUG("Sent event");
   }
 
 
-  void DataSender::SendPacket(const AidaPacket &packet) {
+  void DataSender::SendPacket( AidaPacket &packet ) {
+	  m_packetCounter += 1;
+	  if ( packet.GetPacketNumber() == 0 )
+		  packet.SetPacketNumber( m_packetCounter );
 //    EUDAQ_DEBUG("Serializing packet");
-    BufferSerializer ser;
-    packet.Serialize(ser);
+	  BufferSerializer ser;
+	  packet.Serialize(ser);
 //    EUDAQ_DEBUG("Sending packet");
-    m_dataclient->SendPacket(ser);
+	  m_dataclient->SendPacket(ser);
 //    EUDAQ_DEBUG("Sent packet");
   }
 

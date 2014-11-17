@@ -1,12 +1,13 @@
 #include <list>
+#include <iostream>
 #include "jsoncons/json.hpp"
+#include "eudaq/JSONimpl.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/AidaFileReader.hh"
 
-using jsoncons::json;
 
 namespace eudaq {
 
@@ -32,23 +33,15 @@ namespace eudaq {
   std::string AidaFileReader::getJsonPacketInfo() {
 	  if ( !m_packet )
 		  return "";
-	  json data;
 
-	  json json_header;
-	  json_header["packetType"] = AidaPacket::type2str( m_packet->GetPacketType() );
-	  json_header["packetSubType"] = AidaPacket::type2str( m_packet->GetPacketSubType() );
-	  json_header["packetNumber"] = m_packet->GetPacketNumber();
-	  data["header"] = json_header;
-
-	  json json_metaData( json::an_array );
-	  for ( auto data : m_packet->GetMetaData().getArray() ) {
-		  json_metaData.add( data );
-	  }
-	  data["meta"] = json_metaData;
-
-	  return data.to_string();
+	  auto json = m_packet->toJson( AidaPacket::JSON_HEADER | AidaPacket::JSON_METADATA | AidaPacket::JSON_DATA );
+	  return json->to_string();
   }
 
+
+  std::vector<uint64_t> AidaFileReader::getData() {
+	  return m_packet->GetData();
+  }
 
 
 }

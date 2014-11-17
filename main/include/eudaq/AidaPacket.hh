@@ -10,19 +10,18 @@
 #include <memory>
 
 #include "eudaq/Serializable.hh"
-#include "eudaq/Serializer.hh"
-#include "eudaq/Event.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/SmartEnum.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/MetaData.hh"
 
 #define EUDAQ_DECLARE_PACKET()                  \
   public:                                       \
   	  static uint64_t eudaq_static_type();      \
+  	  static const std::string & eudaq_static_className(); \
   	  virtual uint64_t get_type() const {       \
   		  return eudaq_static_type();           \
+  	  }											\
+  	  virtual const std::string & getClassName() const { \
+  		  return eudaq_static_className();      \
   	  }
 //  private:                                    \
 //static const int EUDAQ_DUMMY_VAR_DONT_USE = 0
@@ -33,12 +32,21 @@
     static const uint64_t type_(name);       \
     return type_;                            \
   }										     \
+  const std::string & type::eudaq_static_className() {       \
+    static const std::string type_( #type );       \
+    return type_;                            \
+  }										     \
   namespace _eudaq_dummy_ {                  \
   	  static eudaq::RegisterPacketType<type> eudaq_packet_reg;	\
   }
 
 
 namespace eudaq {
+
+class Serializer;
+class JSON;
+typedef std::shared_ptr<JSON> JSONp;
+class Event;
 
 class DLLEXPORT AidaPacket : public Serializable {
   public:
@@ -69,6 +77,7 @@ class DLLEXPORT AidaPacket : public Serializable {
     uint64_t GetPacketType() const { return m_header.data.packetType; };
     uint64_t GetPacketSubType() const { return m_header.data.packetSubType; };
     uint64_t GetPacketNumber() const { return m_header.data.packetNumber; };
+    void SetPacketNumber( uint64_t n ) { m_header.data.packetNumber = n; };
 
     uint64_t GetPacketDataSize() const {return  m_data_size; };
 
@@ -90,7 +99,9 @@ class DLLEXPORT AidaPacket : public Serializable {
     // data
     //
 
-    void SetData( uint64_t* data, uint64_t size ) {
+	std::vector<uint64_t> & GetData();
+
+	void SetData( uint64_t* data, uint64_t size ) {
     	m_data = data;
     	m_data_size = size;
     }
@@ -111,7 +122,20 @@ class DLLEXPORT AidaPacket : public Serializable {
 
     static PacketHeader DeserializeHeader( Deserializer & );
 
-    virtual void Print(std::ostream & os) const;
+    enum { JSON_HEADER = 1, JSON_METADATA, JSON_DATA };
+    JSONp toJson( int whatToAdd );
+	virtual const std::string & getClassName() const {
+		static std::string name = "AidaPacket";
+		return name;
+	}
+
+	static const std::string & getCurrentSchema();
+	static void setCurrentSchema( const std::string & );
+
+	static const std::string & getDefaultSchema() {
+		static std::string schema = "header:4 meta:[] data:[]";
+		return schema;
+	}
 
     //
     //	static helper methods
@@ -134,11 +158,19 @@ class DLLEXPORT AidaPacket : public Serializable {
     friend class AidaIndexData;
     AidaPacket() : m_data_size( 0 ) {
     	m_header.data.marker = identifier().number;
-    	m_header.data.packetNumber = getNextPacketNumber();
+    	m_header.data.packetNumber = 0;
     };
 
     AidaPacket( const PacketHeader& header, const MetaData& meta );
     AidaPacket( PacketHeader& header, Deserializer & ds );
+
+    void SetMetaData( MetaData& m ) {
+    	m_meta_data = m;
+    }
+
+    std::shared_ptr<JSON> HeaderToJson();
+    void HeaderToJson( std::shared_ptr<JSON>, const std::string & objectName );
+    virtual void DataToJson( std::shared_ptr<JSON>, const std::string & objectName = "" );
 
 
     static uint64_t getNextPacketNumber() {
@@ -153,8 +185,10 @@ class DLLEXPORT AidaPacket : public Serializable {
     std::unique_ptr<uint64_t[]> placeholder;
     uint64_t  m_data_size;
     uint64_t* m_data;
+    std::vector<uint64_t> m_data_vector;
 
 };
+
 
 class DLLEXPORT EventPacket : public AidaPacket {
   EUDAQ_DECLARE_PACKET();
@@ -173,6 +207,7 @@ class DLLEXPORT EventPacket : public AidaPacket {
 DLLEXPORT std::ostream &  operator << (std::ostream &, const AidaPacket &);
 
 
+
 class DLLEXPORT PacketFactory {
     public:
       static std::shared_ptr<AidaPacket> Create( Deserializer & ds);
@@ -186,8 +221,8 @@ class DLLEXPORT PacketFactory {
       static map_t & get_map();
 };
 
-/** A utility template class for registering an Packet type.
- */
+// A utility template class for registering an Packet type.
+
 
 template <typename T_Packet>
 struct RegisterPacketType {
@@ -198,6 +233,7 @@ struct RegisterPacketType {
     return std::shared_ptr<AidaPacket>( new T_Packet( header, ds ) );
   }
 };
+
 
 
 }

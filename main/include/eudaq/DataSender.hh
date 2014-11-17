@@ -17,10 +17,11 @@ class AidaPacket;
       ~DataSender();
       void Connect(const std::string & server);
       void SendEvent(const Event &);
-      void SendPacket(const AidaPacket &);
+      void SendPacket( AidaPacket & );
     private:
       std::string m_type, m_name;
       TransportClient * m_dataclient;
+      uint64_t m_packetCounter;
   };
 
 }

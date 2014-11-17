@@ -2,35 +2,31 @@
 #ifndef EUDAQ_INCLUDED_AidaIndexData
 #define EUDAQ_INCLUDED_AidaIndexData
 
-#include "eudaq/Serializable.hh"
+#include "eudaq/AidaPacket.hh"
 
 namespace eudaq {
 
-class AidaPacket;
-class PacketHeader;
 class Deserializer;
 class MetaData;
 
-class DLLEXPORT AidaIndexData : public Serializable {
+class DLLEXPORT AidaIndexData : public AidaPacket {
+  EUDAQ_DECLARE_PACKET();
   public:
 
 	AidaIndexData( AidaPacket & packet, uint64_t fileNo, uint64_t offsetInFile );
-	AidaIndexData( Deserializer & ds );
-	virtual ~AidaIndexData();
+	AidaIndexData( Deserializer & ds ) : AidaPacket( ds ) {};
+	AidaIndexData( PacketHeader& header, Deserializer & ds ) : AidaPacket( header, ds ) {};
 
-	virtual void Serialize(Serializer & ser ) const;
-
-	AidaPacket::PacketHeader& getHeader();
-
-	MetaData & getMetaData() {
-		return m_packet->GetMetaData();
-	}
+//	AidaPacket::PacketHeader& getHeader();
 
 	uint64_t getFileNumber() const;
 	uint64_t getOffsetInFile() const;
 
+	static const PacketIdentifier& identifier();
+
   protected:
-    AidaPacket * m_packet;
+    virtual void DataToJson( std::shared_ptr<JSON>, const std::string & objectName = "" );
+
     std::vector<uint64_t> fileNumberOffset;
 };
 

@@ -29,8 +29,10 @@ using eudaq::ucase;
 using namespace uhal;
 
 namespace tlu {
-  miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_dataFromTLU(0), m_DACaddr(0), m_IDaddr(0) {
+  miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_filename(""), m_devicename(""), m_hw(0), m_dataFromTLU(0), m_DACaddr(0), m_IDaddr(0) {
 
+    m_filename = connectionFilename;
+    m_devicename = deviceName;
     std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
@@ -42,6 +44,7 @@ namespace tlu {
     m_checkConfig = false;
     m_ipbus_verbose = false;
     m_nEvtInFIFO = 0;
+    m_maxRead = 0x2000;
   }
 
 
@@ -50,19 +53,20 @@ namespace tlu {
 
   void miniTLUController::SetRWRegister(const std::string & name, int value) {
     try {
-    m_hw->getNode(name).write(static_cast< uint32_t >(value));
-    m_hw->dispatch();
-
-    if (m_checkConfig) {
-      ValWord< uint32_t > test = m_hw->getNode(name).read();
+      m_hw->getNode(name).write(static_cast< uint32_t >(value));
       m_hw->dispatch();
-      if(test.valid()) {
-	if (m_ipbus_verbose) 
-	  std::cout << name << " = " << std::hex << test.value() << std::endl;
-      } else std::cout << "Error writing " << name << std::endl;
-    }
+
+      if (m_checkConfig) {
+	ValWord< uint32_t > test = m_hw->getNode(name).read();
+	m_hw->dispatch();
+	if(test.valid()) {
+	  if (m_ipbus_verbose) 
+	    std::cout << name << " = " << std::hex << test.value() << std::endl;
+	} else std::cout << "Error writing " << name << std::endl;
+      }
     } catch (...) {
-       return;
+      std::cout << "Error writing " << name << " catched error " << std::endl;
+      return;
     }
   }
 
@@ -77,52 +81,110 @@ namespace tlu {
 
   uint32_t miniTLUController::ReadRRegister(const std::string & name) {
     try {
-    ValWord< uint32_t > test = m_hw->getNode(name).read();
-    m_hw->dispatch();
-    if(test.valid()) {
-      if (m_ipbus_verbose) 
-	std::cout << name << " = " << std::hex << test.value() << std::endl;
-      return test.value();
-    } else {
-      std::cout << "Error reading " << name << std::endl;
-      return 0;
-    }
+      ValWord< uint32_t > test = m_hw->getNode(name).read();
+      m_hw->dispatch();
+      if(test.valid()) {
+	if (m_ipbus_verbose) 
+	  std::cout << name << " = " << std::hex << test.value() << std::endl;
+	return test.value();
+      } else {
+	std::cout << "Error reading " << name << std::endl;
+	return 0;
+      }
     } catch (...) {
-       return 0;
+      std::cout << "Error reading " << name << " catched error " << std::endl;
+      return 0;
     }
   }
 
   void miniTLUController::CheckEventFIFO() {
     m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
     //   m_nEvtInFIFO = 2;
-    if (m_nEvtInFIFO) std::cout << "words in FIFO : " << m_nEvtInFIFO << std::endl;
+    //if (m_nEvtInFIFO) std::cout << "words in FIFO : " << m_nEvtInFIFO << std::endl;
+    if (m_nEvtInFIFO == 0x7D00) std::cout << "WARNING! miniTLU hardware FIFO is full" << std::endl;
   }
 
   void miniTLUController::ReadEventFIFO() {
     if(m_nEvtInFIFO) {
       if (!(m_nEvtInFIFO)) std::cout << "Warning odd words in fifo!" << std::endl;
       try {
-        ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
-        m_hw->dispatch();
-        if(fifoContent.valid()) {
-       	  bool lowBits = false;
-	  uint64_t word = 0;
+	for (unsigned int nwords = m_nEvtInFIFO; nwords > 0;) {
+		unsigned int nwtoread;
+		if (nwords > m_maxRead) {
+			nwtoread = m_maxRead;
+		} else {
+			nwtoread = nwords;
+		}
+		nwords -= nwtoread;
+
+        	ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nwtoread);
+	        m_hw->dispatch();
+ 	       if(fifoContent.valid()) {
+       		  bool lowBits = false;
+	 	 uint64_t word = 0;
 	//	std::cout << "Dump event FIFO" << std::endl;
-	  for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
+	 	 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
 	    // std::cout << "-- " << std::hex << *i << std::endl;
-	    if(lowBits) {
-	      word = (((uint64_t)(word))<<32) | *i;
-	      m_dataFromTLU.push_back(word);
-	      lowBits = false;
-	    } else {
-	      word = *i;
-	      lowBits = true;
-	    }
-	  }
-        } else {
-	  std::cout << "Error reading FIFO" << std::endl;
-        }      
+	  	  if(lowBits) {
+	   	   word = (((uint64_t)(word))<<32) | *i;
+	    	  m_dataFromTLU.push_back(word);
+	  	    lowBits = false;
+		    } else {
+		      word = *i;
+		      lowBits = true;
+		    }
+		  }
+    	    } else {
+		  std::cout << "Error reading FIFO" << std::endl;
+     	   }      
+	}
       } catch (...) {
+	std::cout << "Error reading FIFO, catched error, reset to 0" << std::endl;
+	m_dataFromTLU.resize(0);
+        m_nEvtInFIFO = 0;
+        return;
+      }
+    }
+  }
+
+  void miniTLUController::ReadEventFIFO(RawDataQueue &queue) {
+    if(m_nEvtInFIFO) {
+      if ((m_nEvtInFIFO % 2)) std::cout << "Warning odd words in fifo!" << std::endl;
+      try {
+        for (unsigned int nwords = m_nEvtInFIFO; nwords > 0;) {
+                unsigned int nwtoread;
+                if (nwords > m_maxRead) {
+                        nwtoread = m_maxRead;
+                } else {
+                        nwtoread = nwords;
+                }
+                nwords -= nwtoread;
+
+                ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nwtoread);
+                m_hw->dispatch();
+               if(fifoContent.valid()) {
+                  bool lowBits = false;
+                 uint64_t word = 0;
+        //      std::cout << "Dump event FIFO" << std::endl;
+                 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
+            // std::cout << "-- " << std::hex << *i << std::endl;
+                  if(lowBits) {
+                   word = (((uint64_t)(word))<<32) | *i;
+                   m_dataFromTLU.push_back(word);
+                    lowBits = false;
+                    } else {
+                      word = *i;
+                      lowBits = true;
+                    }
+                  }
+		queue.deposit(m_dataFromTLU);
+            } else {
+                  std::cout << "Error reading FIFO" << std::endl;
+           }
+        }
+      } catch (...) {
+        std::cout << "Error reading FIFO, catched error, reset to 0" << std::endl;
+        //m_dataFromTLU.resize(0);
         m_nEvtInFIFO = 0;
         return;
       }

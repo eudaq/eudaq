@@ -11,6 +11,8 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Time.hh"
 #include "uhal/uhal.hpp"
+
+#include "tlu/RawDataQueue.hh"
  
 #include <boost/filesystem.hpp>
 
@@ -113,10 +115,12 @@ namespace tlu {
 
     void CheckEventFIFO();
     void ReadEventFIFO();
+    void ReadEventFIFO(RawDataQueue &queue);
 
     uint32_t GetNEvent() { return m_nEvtInFIFO/2; }
     uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
     std::vector<uint64_t>* GetEventData() { return &m_dataFromTLU; }
+    std::vector<uint64_t> GetEventDataV() { return m_dataFromTLU; }
     void ClearEventFIFO() { m_dataFromTLU.resize(0); }
 
     unsigned GetScaler(unsigned) const;
@@ -130,9 +134,19 @@ namespace tlu {
     void ConfigureInternalTriggerInterval(unsigned int value);
 
     void DumpEvents();
+
+    void SetCatchedError() { m_catchedError = true; }
+    void ClearCatchedError() { m_catchedError = false; }
+
+    void SetMaxReadSize(unsigned int value) { m_maxRead = value; }
+
+    std::string & GetConnectionFile() { return m_filename; }
+    std::string & GetDeviceName() { return m_devicename; }
+
   private:
     HwInterface * m_hw;
     bool m_checkConfig;
+    bool m_catchedError;
     void SetRWRegister(const std::string & name, int value);
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
@@ -140,6 +154,7 @@ namespace tlu {
     void WriteI2CChar(char deviceAddr, char memAddr, char value);
     void WriteI2CCharArray(char deviceAddr, char memAddr, unsigned char *values, unsigned int len);
     uint32_t m_nEvtInFIFO;
+    unsigned int m_maxRead;
 
     bool m_ipbus_verbose;
 
@@ -153,6 +168,7 @@ namespace tlu {
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat;
 
+    std::string m_filename, m_devicename;
   };
 }
 

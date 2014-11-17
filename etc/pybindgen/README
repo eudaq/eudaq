@@ -1,0 +1,15 @@
+
+README for pybindgen
+
+pybindgen is a tool to generate C++ wrapper files to ease C++ access from python
+
+In the advanced mode C++ include files are parsed creating a python script which in the next step creates C++ code. 
+This mode works only for simple class files w/o any C++11 in it. That means this mode can not be used for any automatic
+processing. Start it by hand by running:
+
+python module-autoscan.py eudaq PyPacket > py-gen/PyPyPacket-gen.py
+
+When a Py*-gen.py file is changed, cmake runs python Py*-gen.py to generate a new Py*.cpp file in the src directory
+
+
+ 

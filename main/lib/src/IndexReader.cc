@@ -1,12 +1,13 @@
 
+#include <iostream>
+#include <list>
 #include "jsoncons/json.hpp"
-
+#include "eudaq/JSON.hh"
 #include "eudaq/IndexReader.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/AidaIndexData.hh"
 #include "eudaq/Logger.hh"
-#include <list>
 #include "eudaq/FileSerializer.hh"
 
 using jsoncons::json;
@@ -34,31 +35,6 @@ namespace eudaq {
 	  return true;
   }
 
-
-  std::string IndexReader::data2json() {
-	  if ( !m_data )
-		  return "";
-	  json data;
-
-	  json json_header;
-	  const AidaPacket::PacketHeader& header = m_data->getHeader();
-	  json_header["marker"] = AidaPacket::type2str( header.data.marker );
-	  json_header["packetType"] = AidaPacket::type2str( header.data.packetType );
-	  json_header["packetSubType"] = header.data.packetSubType;
-	  json_header["packetNumber"] = header.data.packetNumber;
-	  data["header"] = json_header;
-
-	  json json_metaData( json::an_array );
-	  for ( auto data : m_data->getMetaData().getArray() ) {
-		  json_metaData.add( data );
-	  }
-	  data["meta"] = json_metaData;
-
-	  data["fileNumber"] = m_data->getFileNumber();
-	  data["offset"] = m_data->getOffsetInFile();
-
-	  return data.to_string();
-  }
 
 /*
     std::shared_ptr<eudaq::AidaPacket> packet = nullptr;

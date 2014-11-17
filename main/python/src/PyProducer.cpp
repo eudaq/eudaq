@@ -4,6 +4,7 @@
 #include "eudaq/StringEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/AidaPacket.hh"
+#include "eudaq/PyPacket.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 
@@ -31,6 +32,11 @@ class PyProducer : public eudaq::Producer {
     		packet.GetMetaData().getArray().push_back( meta_data[i] );
     	packet.SetData( data, data_size );
         eudaq::DataSender::SendPacket(packet);
+      }
+    void sendPacket() {
+    	eudaq::PyPacket * p = eudaq::PyPacket::getNextToSend();
+    	if ( p )
+    		eudaq::DataSender::SendPacket( *(p->packet) );
       }
     virtual void OnConfigure(const eudaq::Configuration & param) {
       std::cout << "[PyProducer] Received Configuration" << std::endl;
@@ -155,6 +161,9 @@ extern "C" {
   DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint64_t* buffer, size_t size){pp->SendEvent(buffer,size);}
   DLLEXPORT void PyProducer_SendPacket(PyProducer *pp, uint64_t* meta_data, size_t meta_data_size, uint64_t* data, size_t data_size ) {
 	  pp->SendPacket( meta_data, meta_data_size, data, data_size );
+  }
+  DLLEXPORT void PyProducer_sendPacket(PyProducer *pp ) {
+	  pp->sendPacket();
   }
   DLLEXPORT char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){
     std::string value = pp->GetConfigParameter(std::string(item));

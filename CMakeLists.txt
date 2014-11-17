@@ -7,7 +7,7 @@ PROJECT( EUDAQ )
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 3 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 4 )
 
 LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
 LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
@@ -22,8 +22,6 @@ include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)
 ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-
-ADD_DEFINITIONS( "-std=c++11 " )
 
 # Set package version
 IF(NOT SOURCE_PACKAGE)
@@ -71,6 +69,7 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -138,6 +137,12 @@ IF(BUILD_python)
   add_subdirectory(main/python)
 ENDIF()
 
+# build EUDAQ pybindgen bindings
+option(BUILD_pybindgen "Compile pybindgen binding libraries?" OFF)
+IF(BUILD_pybindgen)
+  add_subdirectory(etc/pybindgen)
+ENDIF()
+
 # build native reader used for data conversion into LCIO
 IF(BUILD_nreader)
   add_subdirectory(nreader)
@@ -155,11 +160,22 @@ IF(BUILD_onlinemon)
   add_subdirectory(monitors/onlinemon)
 ENDIF()
 
+# build resender Producer
+option(BUILD_resender "Compile resender Producer?" OFF)
+IF(BUILD_resender)
+  add_subdirectory(reSendProducer)
+ENDIF()
 
 # build Offline Monitor
 option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OFF)
 IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
+ENDIF()
+
+# build Metadata Monitor
+option(BUILD_metamon "Compile MetaData Monitor executable" OFF)
+IF(BUILD_metamon)
+  add_subdirectory(monitors/metamon)
 ENDIF()
 
 
