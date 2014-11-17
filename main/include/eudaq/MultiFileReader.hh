@@ -1,20 +1,23 @@
 #ifndef MuliFileReader_h__
 #define MuliFileReader_h__
 
-#include "Event.hh"
-#include "DetectorEvent.hh"
+#include "Platform.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 
 
 #include <string>
 #include <memory>
-#include "FileReader.hh"
-#include "Platform.hh"
-#include "EventSynchronisationBase.hh"
+#include <vector>
+
+
 
 
 
 namespace eudaq{
+	class baseFileReader;
 
+	class Event;
+	class DetectorEvent;
 	class DLLEXPORT multiFileReader{
 	public:
 		multiFileReader(bool sync=true);
@@ -31,7 +34,7 @@ namespace eudaq{
 	private:
 		std::string m_filename;
 		std::shared_ptr<eudaq::DetectorEvent> m_ev;
-		std::vector<std::shared_ptr<eudaq::FileReader>> m_fileReaders;
+		std::vector<std::shared_ptr<eudaq::baseFileReader>> m_fileReaders;
 		SyncBase m_sync;
 		size_t m_eventsToSync;
 		bool m_preaparedForEvents;

@@ -14,8 +14,8 @@ namespace eudaq {
 
 
   FileReader::FileReader(const std::string & file, const std::string & filepattern)
-    : m_filename(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
-    m_des(m_filename),
+    : baseFileReader(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
+    m_des(Filename()),
     m_ev(EventFactory::Create(m_des)),
     m_ver(1)
     {
@@ -69,6 +69,36 @@ namespace eudaq {
 
   const StandardEvent & FileReader::GetStandardEvent() const {
     return dynamic_cast<const StandardEvent &>(*m_ev);
+  }
+
+  std::shared_ptr<eudaq::Event> FileReader::GetNextEvent(){
+	  static size_t i = 0;
+	  auto ev = std::dynamic_pointer_cast<eudaq::DetectorEvent>(m_ev);
+	  if (i == ev->NumEvents()){
+		  i = 0;
+		  if (!NextEvent()) {
+			  return nullptr;
+		  }
+		  ev = std::dynamic_pointer_cast<eudaq::DetectorEvent>(m_ev);
+	  }
+	   
+	  return ev->GetEventPtr(i++);
+	  
+  }
+
+  bool FileIsEUDET(const std::string& in)
+  {
+	  auto pos_of_Dot = in.find_last_of('.');
+	  if (pos_of_Dot<in.size())
+	  {
+		  auto sub = in.substr(pos_of_Dot+1);
+		  if (sub.compare("raw")==0)
+		  {
+			  return true;
+		  }
+	  }
+
+	  return false;
   }
 
  

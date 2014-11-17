@@ -178,6 +178,11 @@ IF(BUILD_metamon)
   add_subdirectory(monitors/metamon)
 ENDIF()
 
+# build Sync Test
+option(BUILD_SyncTest "Compile Sync test" OFF)
+IF(BUILD_SyncTest)
+  add_subdirectory(syncTest)
+ENDIF()
 
 
 ###############################################

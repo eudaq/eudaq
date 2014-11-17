@@ -53,7 +53,7 @@ namespace eudaq {
 
     virtual void Initialize(const Event & bore, const Configuration & /*c*/) {
 
-		
+    
 
       m_boards = from_string(bore.GetTag("BOARDS"), 0);
       if( m_boards == 255 ) { m_boards = 6; }
@@ -142,7 +142,7 @@ namespace eudaq {
         //        for(unsigned i=0;i<len0;i++) std::cout << "0:i="<<i << hexdec(GET(it0, i)) << std::endl;
         //        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i << hexdec(GET(it1, i)) << std::endl;
 
-	
+  
         if ( len0*4 + 12 > data0.end()-it0) {
           EUDAQ_WARN("Bad length in first frame");
           break;

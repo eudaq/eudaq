@@ -33,7 +33,7 @@ namespace eudaq {
 
       static unsigned GetTriggerID(const Event &);
 
-	  static int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu);
+	  static int IsSyncWithTLU(eudaq::Event const & ev,eudaq::Event const & tlu);
 	  static t_eventid getEventId( eudaq::Event const & ev);
 
 	  static void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu);
@@ -45,8 +45,13 @@ namespace eudaq {
       static void ConvertStandardSubEvent(StandardEvent &, const Event &);
       static void ConvertLCIOSubEvent(lcio::LCEvent &, const Event &);
 
+	  static std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::AidaPacket>,size_t NumberOfROF);
+	  static unsigned getUniqueIdentifier(const Event &);
+	  static bool isTLU(const Event&);
+	  static size_t GetNumberOfROF(const eudaq::AidaPacket& pac);
       /** Get the correct plugin implementation according to the event type.
        */
+	  DataConverterPlugin & GetPlugin(const AidaPacket & pack);
       DataConverterPlugin & GetPlugin(t_eventid eventtype);
       DataConverterPlugin & GetPlugin(const Event & event);
 

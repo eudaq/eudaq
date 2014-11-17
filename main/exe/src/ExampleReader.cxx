@@ -1,4 +1,4 @@
-#include "eudaq/FileReader.hh"
+#include "eudaq/MultiFileReader.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/OptionParser.hh"
 #include <iostream>
@@ -18,10 +18,11 @@ int main(int /*argc*/, const char ** argv) {
     op.Parse(argv);
 
     // Loop over all filenames
-    for (size_t i = 0; i < op.NumArgs(); ++i) {
+	eudaq::multiFileReader reader;
+	for (size_t i = 0; i < op.NumArgs(); ++i) {
 
-      // Create a reader for this file
-      eudaq::FileReader reader(op.GetArg(i));
+		reader.addFileReader(op.GetArg(i));
+	}
 
       // Display the actual filename (argument could have been a run number)
       std::cout << "Opened file: " << reader.Filename() << std::endl;
@@ -33,40 +34,41 @@ int main(int /*argc*/, const char ** argv) {
       }
 
       // Now loop over all events in the file
-      while (reader.NextEvent()) {
-        if (reader.GetDetectorEvent().IsEORE()) {
-          std::cout << "End of run detected" << std::endl;
-          // Don't try to process if it is an EORE
-          break;
-        }
+	  while (reader.NextEvent()) {
+		  if (reader.GetDetectorEvent().IsEORE()) {
+			  std::cout << "End of run detected" << std::endl;
+			  // Don't try to process if it is an EORE
+			  break;
+		  }
 
-        if (doraw.IsSet()) {
-          // Display summary of raw event
-          //std::cout << reader.GetDetectorEvent() << std::endl;
+		  if (doraw.IsSet()) {
+			  // Display summary of raw event
+			  //std::cout << reader.GetDetectorEvent() << std::endl;
 
-          try {
-            // Look for a specific RawDataEvent, will throw an exception if not found
-            const eudaq::RawDataEvent & rev =
-              reader.GetDetectorEvent().GetRawSubEvent(EVENT_TYPE);
-            // Display summary of the Example RawDataEvent
-            std::cout << rev << std::endl;
-          } catch (const eudaq::Exception & e) {
-            std::cout << "No " << EVENT_TYPE << " subevent in event "
-              << reader.GetDetectorEvent().GetEventNumber()
-              << std::endl;
-          }
-        }
+			  try {
+				  // Look for a specific RawDataEvent, will throw an exception if not found
+				  const eudaq::RawDataEvent & rev =
+					  reader.GetDetectorEvent().GetRawSubEvent(EVENT_TYPE);
+				  // Display summary of the Example RawDataEvent
+				  std::cout << rev << std::endl;
+			  }
+			  catch (const eudaq::Exception & e) {
+				  std::cout << "No " << EVENT_TYPE << " subevent in event "
+					  << reader.GetDetectorEvent().GetEventNumber()
+					  << std::endl;
+			  }
+		  }
 
-        if (docon.IsSet()) {
-          // Convert the RawDataEvent into a StandardEvent
-          eudaq::StandardEvent sev =
-            eudaq::PluginManager::ConvertToStandard(reader.GetDetectorEvent());
+		  if (docon.IsSet()) {
+			  // Convert the RawDataEvent into a StandardEvent
+			  eudaq::StandardEvent sev =
+				  eudaq::PluginManager::ConvertToStandard(reader.GetDetectorEvent());
 
-          // Display summary of converted event
-          std::cout << sev << std::endl;
-        }
-      }
-    }
+			  // Display summary of converted event
+			  std::cout << sev << std::endl;
+		  }
+	  }
+    
 
   } catch (...) {
     // This does some basic error handling of common exceptions

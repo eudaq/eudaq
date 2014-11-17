@@ -73,7 +73,7 @@ class ExampleProducer : public eudaq::Producer {
 
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
-      SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
+      SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
     }
 
     // This gets called when the Run Control is terminating,

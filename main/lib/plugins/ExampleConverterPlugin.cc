@@ -21,7 +21,7 @@ namespace eudaq {
   class ExampleConverterPlugin : public DataConverterPlugin {
 
     public:
-
+		virtual bool isTLU(const Event&){ return true; }
       // This is called once at the beginning of each run.
       // You may extract information from the BORE and/or configuration
       // and store it in member variables to use during the decoding later.
