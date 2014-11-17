@@ -1,12 +1,12 @@
 
+#include <iostream>
+#include <list>
 #include "jsoncons/json.hpp"
-
 #include "eudaq/IndexReader.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/AidaPacket.hh"
 #include "eudaq/AidaIndexData.hh"
 #include "eudaq/Logger.hh"
-#include <list>
 #include "eudaq/FileSerializer.hh"
 
 using jsoncons::json;

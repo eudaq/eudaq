@@ -1,3 +1,4 @@
+#include <iostream>
 #include <list>
 #include "jsoncons/json.hpp"
 #include "eudaq/FileNamer.hh"
