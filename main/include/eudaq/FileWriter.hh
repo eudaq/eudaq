@@ -4,6 +4,8 @@
 #include "eudaq/DetectorEvent.hh"
 #include <vector>
 #include <string>
+#define TAGNAME_OUTPUTPATTER "outpattern"
+
 
 namespace eudaq {
 
@@ -18,6 +20,19 @@ namespace eudaq {
     protected:
       std::string m_filepattern;
   };
+
+ 
+  inline void helper_setParameter(FileWriter& writer,const std::string& tagName,const std::string& tagValue){
+	if (tagName.compare(TAGNAME_OUTPUTPATTER)==0)
+	{
+		//std::cout<<"set output pattern to: "<<tagValue<<std::endl;
+		writer.SetFilePattern(tagValue);
+	}
+	  
+  }
+  inline void helper_ProcessEvent(FileWriter& writer,const DetectorEvent &ev){writer.WriteEvent(ev);}
+  inline void helper_StartRun(FileWriter& writer,unsigned runnumber){writer.StartRun(runnumber);}
+  inline void helper_EndRun(FileWriter& writer){};
 
 
   class DLLEXPORT FileWriterFactory {
