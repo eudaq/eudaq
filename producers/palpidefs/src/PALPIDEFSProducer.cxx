@@ -696,7 +696,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
   snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", BackBiasVoltage);
   if (system(buffer)!=0) {
-      std::cout << "Failed to configure the back-bias voltage"
+    std::cout << "Failed to configure the back-bias voltage" << std::endl;
   }
   system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
 
