@@ -689,17 +689,24 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     eudaq::mSleep(10);
   }
+
+//#ifndef SIMULATION
   // Set back-bias voltage
-  const float BackBiasVoltage =  param.Get("BackBiasVoltage",  0.0);
+  const float BackBiasVoltage =  param.Get("BackBiasVoltage",  -1.);
+  const int MonitorPSU        =  param.Get("MonitorPSU",       -1.);
   const size_t buffer_size = 100;
   char buffer[buffer_size];
-  system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
-  snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", BackBiasVoltage);
-  if (system(buffer)!=0) {
-    std::cout << "Failed to configure the back-bias voltage" << std::endl;
+  if (BackBiasVoltage>=0.) {
+    system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
+    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", BackBiasVoltage);
+    if (system(buffer)!=0) {
+      std::cout << "Failed to configure the back-bias voltage" << std::endl;
+    }
   }
-  system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
-
+  if (MonitorPSU>0) {
+    system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
+  }
+//#endif
   if (!m_configured) {
     m_configured = true;
     m_firstevent = true;
