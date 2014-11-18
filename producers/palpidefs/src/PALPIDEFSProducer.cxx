@@ -690,7 +690,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     eudaq::mSleep(10);
   }
 
-//#ifndef SIMULATION
+  #ifndef SIMULATION
   // Set back-bias voltage
   const float BackBiasVoltage =  param.Get("BackBiasVoltage",  -1.);
   const int MonitorPSU        =  param.Get("MonitorPSU",       -1.);
@@ -706,7 +706,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   if (MonitorPSU>0) {
     system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
   }
-//#endif
+  #endif
   if (!m_configured) {
     m_configured = true;
     m_firstevent = true;
