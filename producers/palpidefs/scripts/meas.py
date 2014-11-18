@@ -14,9 +14,7 @@ def main():
             h.measure_all(sour, of)
             for sec in range(int(h.measurement_interval)):
                 if h.check_trip(sour):
-                    tf = open("TRIPPED.txt", "a")
-                    tf.write("%d\n" % int(time.time()))
-                    tf.close()
+                    print "Tripped at %s (%d)\n" % (time.strftime("%Y-%m-%d_%H-%M-%S"), int(time.time()))
                     sys.exit(1)
                 time.sleep(1.)
         except KeyboardInterrupt:
