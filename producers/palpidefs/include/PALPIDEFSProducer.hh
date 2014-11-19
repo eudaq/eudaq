@@ -102,7 +102,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0) {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0), m_back_bias_voltage(-1.) {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -145,4 +145,5 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool m_ignore_trigger_ids;
     bool m_recover_outofsync;
     bool m_readout_mode;
+    float m_back_bias_voltage;
 };

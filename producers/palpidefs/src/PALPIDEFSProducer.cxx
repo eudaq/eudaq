@@ -692,7 +692,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
   #ifndef SIMULATION
   // Set back-bias voltage
-  const float BackBiasVoltage =  param.Get("BackBiasVoltage",  -1.);
+  m_back_bias_voltage =  param.Get("BackBiasVoltage",  -1.);
   const int MonitorPSU        =  param.Get("MonitorPSU",       -1.);
   const size_t buffer_size = 100;
   char buffer[buffer_size];
@@ -778,6 +778,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     bore.SetTag(tmp, m_reader[i]->GetDAQBoard()->GetFirmwareName());
 #endif
   }
+
+  // back-bias voltage
+  bore.SetTag("BackBiasVoltage", m_back_bias_voltage);
 
   SendEvent(bore);
 
