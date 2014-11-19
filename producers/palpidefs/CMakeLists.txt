@@ -6,6 +6,14 @@ set(ext_inc_paths "include" "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}")
 # config files to be installed
 #set(ConfigFiles ni_autotrig_explorer_pedestalmeas.conf ni_coins_explorer_wpedestal.conf)
 
+if (NOT CMAKE_PALPIDEFS_DRIVER_INCLUDE)
+  message(FATAL_ERROR "Path to pALPIDEfs driver not set - you need to set CMAKE_PALPIDEFS_DRIVER_INCLUDE")
+endif(NOT CMAKE_PALPIDEFS_DRIVER_INCLUDE)
+
+if (NOT EXISTS "${ext_lib_paths}/TTestsetup.h")
+  message(FATAL_ERROR "Path to pALPIDEfs driver is wrong - Could not find ${ext_lib_paths}/TTestsetup.h")
+endif (NOT EXISTS "${ext_lib_paths}/TTestsetup.h")
+
 ADD_DEFINITIONS()
 LINK_DIRECTORIES( ${ext_lib_paths} )
 INCLUDE_DIRECTORIES( ${ext_inc_paths})
