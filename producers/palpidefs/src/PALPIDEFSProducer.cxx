@@ -696,9 +696,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   const int MonitorPSU        =  param.Get("MonitorPSU",       -1.);
   const size_t buffer_size = 100;
   char buffer[buffer_size];
-  if (BackBiasVoltage>=0.) {
+  if (m_back_bias_voltage>=0.) {
     system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
-    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", BackBiasVoltage);
+    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", m_back_bias_voltage);
     if (system(buffer)!=0) {
       const char* error_msg = "Failed to configure the back-bias voltage";
       std::cout << error_msg << std::endl;
