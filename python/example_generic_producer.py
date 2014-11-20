@@ -22,7 +22,7 @@ while i<maxwait and not pp.Configuring:
 if pp.Configuring:
     print "Ready to configure, received config string 'Parameter'=",pp.GetConfigParameter("Parameter")
     # .... do your config stuff here ...
-    sleep(5)
+    sleep(2)
     pp.Configuring = True
 # check for start of run cmd from RunControl
 while i<maxwait and not pp.StartingRun:
@@ -33,7 +33,7 @@ while i<maxwait and not pp.StartingRun:
 if pp.StartingRun:
     print "Ready to run!"
     # ... prepare your system for the immanent run start
-    sleep(5)
+    sleep(2)
     pp.StartingRun = True # set status and send BORE
 # starting to run
 
@@ -43,14 +43,14 @@ while not pp.Error and not pp.StoppingRun and not pp.Terminating:
     event = StandardEvent()
     plane = event.plane.add() #add one plane
 
-    plane.type = "EXAMPLE_SENSOR"
+    plane.type = "OO"
     plane.id = 0
     plane.tluevent = tluevent
     plane.xsize = 64
     plane.ysize = 32
 
     frame = plane.frame.add()
-    for _ in range(11):
+    for _ in range(random.randint(1,16)):
         pix = frame.pixel.add()
         pix.x = random.randint(0,63)
         pix.y = random.randint(0,31)

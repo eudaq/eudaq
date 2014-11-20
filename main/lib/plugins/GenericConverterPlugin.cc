@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "eudaq/StandardEvent.pb.h"
+#include "StandardEvent.pb.h"
 using namespace std;
 
 // All LCIO-specific parts are put in conditional compilation blocks
@@ -31,16 +31,26 @@ namespace eudaq {
             return true;
         }
 
+        cout << "GENERIC" << endl;
+
         const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
         if (ev_raw.NumBlocks() != 1)
             return false;
-
+        
         const std::vector<unsigned char> & data = ev_raw.GetBlock(0);
+    
+        for( int i =0; i < data.size() ; i++)
+            cout << (int)data[i] << " ";
 
+        cout << " -- " << endl; 
+
+       
+
+        
         pb::StandardEvent event;
         event.ParseFromArray( data.data(), data.size());
         
-        //cout << event.DebugString() << endl;
+        cout << event.DebugString() << endl;
 
         for (int i = 0; i < event.plane_size(); i++) {
             const pb::StandardPlane& pb_plane = event.plane(i);
