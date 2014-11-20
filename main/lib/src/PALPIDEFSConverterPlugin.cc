@@ -417,7 +417,7 @@ namespace eudaq {
         snprintf(tmp, n_bs, "Vcasp_%d", id);
         lev.parameters().setValue(tmp, m_Vcasp[id]);
         snprintf(tmp, n_bs, "Ithr_%d", id);
-        lev.parameters().setValue(tmp,.m_Ithr[id]);
+        lev.parameters().setValue(tmp, m_Ithr[id]);
       }
 
       LCCollectionVec *zsDataCollection;
