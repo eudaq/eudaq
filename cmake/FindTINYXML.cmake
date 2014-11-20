@@ -1,6 +1,8 @@
 # - Find TinyXML
 # Find the native TinyXML includes and library
 #
+# Taken from: https://github.com/evemuproject/evemu_server
+#
 # TINYXML_FOUND - True if TinyXML found.
 # TINYXML_INCLUDE_DIRS - where to find tinyxml.h, etc.
 # TINYXML_LIBRARIES - List of libraries when using TinyXML.
