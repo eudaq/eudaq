@@ -405,19 +405,19 @@ namespace eudaq {
       lev.parameters().setValue("TIMESTAMP",(int) sev.GetTimestamp());
       lev.parameters().setValue("FLAG", (int) sev.GetFlags());
       lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
-      const Int_t n_bs=100;
+      const int n_bs=100;
       char tmp[n_bs];
       for (int id=0 ; id<m_nLayers ; id++) {
-        snprintf(tmp, n_bs, "Vaux_%d", i);
-        lev.parameters().setValue(tmp, m_Vaux[i]);
-        snprintf(tmp, n_bs, "Vreset_%d", i);
-        lev.parameters().setValue(tmp, m_Vreset[i]);
-        snprintf(tmp, n_bs, "Vcasn_%d", i);
-        lev.parameters().setValue(tmp, m_Vcasn[i]);
-        snprintf(tmp, n_bs, "Vcasp_%d", i);
-        lev.parameters().setValue(tmp, m_Vcasp[i]);
-        snprintf(tmp, n_bs, "Ithr_%d", i);
-        lev.parameters().setValue(tmp,.m_Ithr[i]);
+        snprintf(tmp, n_bs, "Vaux_%d", id);
+        lev.parameters().setValue(tmp, m_Vaux[id]);
+        snprintf(tmp, n_bs, "Vreset_%d", id);
+        lev.parameters().setValue(tmp, m_Vreset[id]);
+        snprintf(tmp, n_bs, "Vcasn_%d", id);
+        lev.parameters().setValue(tmp, m_Vcasn[id]);
+        snprintf(tmp, n_bs, "Vcasp_%d", id);
+        lev.parameters().setValue(tmp, m_Vcasp[id]);
+        snprintf(tmp, n_bs, "Ithr_%d", id);
+        lev.parameters().setValue(tmp,.m_Ithr[id]);
       }
 
       LCCollectionVec *zsDataCollection;
