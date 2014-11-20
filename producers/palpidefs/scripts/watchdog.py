@@ -124,7 +124,8 @@ def main(stdscr):
 	stdscr.addstr(0,20,'==== pALPIDEfs Watchdog ====')
 	stdscr.addstr(13, 0, "Alert target: %s" % ALERT_TARGET)
 	stdscr.addstr(17, 0, "X: Mask alerts for %d seconds" % ALERT_REPEAT_TIME)
-	stdscr.addstr(18, 0, "CTRL-C: Exit")
+	stdscr.addstr(18, 0, "E: Unmask alerts")
+	stdscr.addstr(19, 0, "CTRL-C: Exit")
 
 	all_ok = True
         for pad in PADS:
@@ -135,32 +136,32 @@ def main(stdscr):
 	stdscr.addstr(15, 0, " ")
 	stdscr.clrtoeol()
 	
+	if (alert_sent > 0 and (ALERT_REPEAT_TIME - (time.time() - alert_sent) < ALERT_GRACE_TIME)):
+	  not_ok_timestamp = -1
+	  alert_sent = -1
+	  alert_masked = False
+	  
 	if (all_ok):
 	  not_ok_timestamp = -1
 	  stdscr.addstr(15, 0, "All OK", curses.color_pair(2))
 	else:
-	  if (not_ok_timestamp < 0):
-	    not_ok_timestamp = time.time()
-	    
-	  if (alert_sent > 0 and (ALERT_REPEAT_TIME - (time.time() - alert_sent) < ALERT_GRACE_TIME)):
-	    alert_sent = -1
-	    alert_masked = False
-	    not_ok_timestamp = time.time()
+	  if alert_masked == False:
+	    if (not_ok_timestamp < 0):
+	      not_ok_timestamp = time.time()
+	      
+	    if alert_sent < 0:
+	      time_to_alert = ALERT_GRACE_TIME - (time.time() - not_ok_timestamp)
+	      stdscr.addstr(15, 0, "Sending alert message in %d seconds. Press X to prevent alert for %d seconds!" % (time_to_alert, ALERT_REPEAT_TIME), curses.color_pair(1))
 	  
-	  if alert_sent < 0:
-	    time_to_alert = ALERT_GRACE_TIME - (time.time() - not_ok_timestamp)
-	    stdscr.addstr(15, 0, "Sending alert message in %d seconds. Press X to prevent alert for %d seconds!" % (time_to_alert, ALERT_REPEAT_TIME), curses.color_pair(1))
-	  
-	    if time_to_alert < 0:
-	      send_alert()
-	      alert_sent = time.time()
-	  else:
-	    if alert_masked == False:
+	      if time_to_alert < 0:
+		send_alert()
+		alert_sent = time.time()
+	    else:
 	      stdscr.addstr(15, 0, "Alert sent %d seconds ago" % (time.time() - alert_sent), curses.color_pair(1))
 	      stdscr.clrtoeol()
 
 	if alert_masked:
-	  stdscr.addstr(15, 0, "Alerts masked for %d seconds" % (ALERT_REPEAT_TIME - (time.time() - alert_sent)), curses.color_pair(1))
+	  stdscr.addstr(15, 0, "Alerts masked for %d seconds. Press E to unmask." % (ALERT_REPEAT_TIME - (time.time() - alert_sent)), curses.color_pair(1))
 	      
         print_alive(stdscr)
         stdscr.refresh()
@@ -171,6 +172,10 @@ def main(stdscr):
             if c=='X':
 	      alert_masked = True
 	      alert_sent = time.time()
+            if c=='E':
+	      alert_masked = False
+	      alert_sent = -1
+	      not_ok_timestamp = -1
 
 
 curses.wrapper(main)
