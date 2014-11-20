@@ -64,9 +64,8 @@ class PyProducer(object):
         self.obj = lib.PyProducer_new(create_string_buffer(name), 
                                       create_string_buffer(rcaddr))
     def SendEvent(self,data):
-        data = data.astype(numpy.uint8)
         data_p = data.ctypes.data_as(POINTER(c_uint8))
-        lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.size)
+        lib.PyProducer_SendEvent(c_void_p(self.obj),data_p,data.nbytes)
     def GetConfigParameter(self, item):
         return c_char_p(lib.PyProducer_GetConfigParameter(c_void_p(self.obj),create_string_buffer(item))).value
     @property
