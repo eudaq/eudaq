@@ -704,6 +704,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       std::cout << error_msg << std::endl;
       EUDAQ_ERROR(error_msg);
       SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      m_back_bias_voltage = -2.;
     }
   }
   if (MonitorPSU>0) {

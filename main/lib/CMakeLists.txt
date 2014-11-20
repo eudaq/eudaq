@@ -14,6 +14,16 @@ endif (ROOT_FOUND)
 AUX_SOURCE_DIRECTORY( src library_sources )
 AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
+option(USE_TINYXML "Compiling main library using TinyXML" OFF)
+if (USE_TINYXML)
+     FIND_PACKAGE( TINYXML REQUIRED )
+     if (TINYXML_FOUND)
+       INCLUDE_DIRECTORIES( ${TINYXML_INCLUDE_DIRS} )
+       SET(ADDITIONAL_LIBRARIES ${TINYXML_LIBRARIES} )
+       ADD_DEFINITIONS(-DUSE_TINYXML)
+     endif (TINYXML_FOUND)
+endif (USE_TINYXML)
+
 list(REMOVE_ITEM plugins_sources plugins/GenericConverterPlugin.cc)
 
 FIND_PACKAGE(PXAR)

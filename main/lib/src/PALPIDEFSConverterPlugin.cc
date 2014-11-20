@@ -21,6 +21,10 @@ typedef unsigned __int64 uint64_t;
 #  include "lcio.h"
 #endif
 
+#if USE_TINYXML
+#  include <tinyxml.h>
+#endif
+
 #include <iostream>
 #include <iterator>
 #include <fstream>
@@ -60,24 +64,47 @@ namespace eudaq {
 
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
-      
-      m_DataVersion = bore.GetTag<int>("DataVersion", 1);
-      
-      for (int i=0; i<m_nLayers; i++) {
-	char tmp[100];
-	sprintf(tmp, "Config_%d", i);
-	std::string config = bore.GetTag<std::string>(tmp, "");
-	// cout << "Config of layer " << i << " is: " << config.c_str() << endl;
-	
-	// get masked pixels
-	sprintf(tmp, "MaskedPixels_%d", i);
-	std::string pixels = bore.GetTag<std::string>(tmp, "");
-	//cout << "Masked pixels of layer " << i << " is: " << pixels.c_str() << endl;
 
-	// firmware version
-	sprintf(tmp, "FirmwareVersion_%d", i);
-	std::string version = bore.GetTag<std::string>(tmp, "");
-	cout << "Firmware version on layer " << i << " is: " << version.c_str() << endl;
+      m_DataVersion     = bore.GetTag<int>("DataVersion", 1);
+      m_BackBiasVoltage = bore.GetTag<float>("BackBiasVoltage", -4.);
+
+      m_Vaux   = new int[m_nLayers];
+      m_Vreset = new int[m_nLayers];
+      m_Vcasn  = new int[m_nLayers];
+      m_Vcasp  = new int[m_nLayers];
+      m_Ithr   = new int[m_nLayers];
+
+      m_configs = new std::string[m_nLayers];
+
+      for (int i=0; i<m_nLayers; i++) {
+        char tmp[100];
+        sprintf(tmp, "Config_%d", i);
+        std::string config = bore.GetTag<std::string>(tmp, "");
+        // cout << "Config of layer " << i << " is: " << config.c_str() << endl;
+        m_configs[i] = config;
+#if USE_TINYXML
+        m_Vaux[i]    = ParseXML(config, 6, 0, 0, 0);
+        m_Vreset[i]  = ParseXML(config, 6, 0, 0, 8);
+        m_Vcasn[i]   = ParseXML(config, 6, 0, 1, 0);
+        m_Vcasp[i]   = ParseXML(config, 6, 0, 1, 8);
+        m_Ithr[i]    = ParseXML(config, 6, 0, 5, 0);
+#else
+        m_Vaux[i]    = -10;
+        m_Vreset[i]  = -10;
+        m_Vcasn[i]   = -10;
+        m_Vcasp[i]   = -10;
+        m_Ithr[i]    = -10;
+#endif
+
+        // get masked pixels
+        sprintf(tmp, "MaskedPixels_%d", i);
+        std::string pixels = bore.GetTag<std::string>(tmp, "");
+        //cout << "Masked pixels of layer " << i << " is: " << pixels.c_str() << endl;
+
+        // firmware version
+        sprintf(tmp, "FirmwareVersion_%d", i);
+        std::string version = bore.GetTag<std::string>(tmp, "");
+        cout << "Firmware version on layer " << i << " is: " << version.c_str() << endl;
       }
     }
     //##############################################################################
@@ -90,7 +117,7 @@ namespace eudaq {
     virtual unsigned GetTriggerID(const Event & /*ev*/) const {
       // Make sure the event is of class RawDataEvent
       //if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
-	// TODO get trigger id. probably common code with producer. try to factor out somewhere.
+      // TODO get trigger id. probably common code with producer. try to factor out somewhere.
       //}
       // If we are unable to extract the Trigger ID, signal with (unsigned)-1
       return (unsigned)-1;
@@ -106,17 +133,17 @@ namespace eudaq {
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " " << sev.GetEventNumber() << endl;
 #endif
-      
+
       if(ev.IsEORE()) {
-	// TODO EORE
-	return false;
-      } 
-      
-      if (m_nLayers < 0) {
-	cout << "ERROR: Number of layers < 0 --> " << m_nLayers << ". Check BORE!" << endl;
-	return false;
+        // TODO EORE
+        return false;
       }
-      
+
+      if (m_nLayers < 0) {
+        cout << "ERROR: Number of layers < 0 --> " << m_nLayers << ". Check BORE!" << endl;
+        return false;
+      }
+
       //Reading of the RawData
       const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev);
 #ifdef MYDEBUG
@@ -125,12 +152,12 @@ namespace eudaq {
 
       //initialize everything
       std::string sensortype = "pALPIDEfs";
-      
+
       // Create a StandardPlane representing one sensor plane
 
       // Set the number of pixels
       unsigned int width = 1024, height = 512;
-	
+
       //Create plane for all matrixes? (YES)
       StandardPlane** planes = new StandardPlane*[m_nLayers];
       for(int id=0 ; id<m_nLayers ; id++ ){
@@ -138,223 +165,223 @@ namespace eudaq {
         planes[id] = new StandardPlane(id, EVENT_TYPE, sensortype);
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
-      
+
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {
 #ifdef MYDEBUG
-	cout << "Skipping status event" << endl;
-	for (int id=0 ; id<m_nLayers ; id++) {
-	  vector<unsigned char> data = rev->GetBlock(id);
-	  if (data.size() == 4) {
-	    float temp = 0;
-	    for (int i=0; i<4; i++)
-	      ((unsigned char*) (&temp))[i] = data[i];
-	    cout << "T (layer " << id << ") is: " << temp << endl;
-	  }
-	}
+        cout << "Skipping status event" << endl;
+        for (int id=0 ; id<m_nLayers ; id++) {
+          vector<unsigned char> data = rev->GetBlock(id);
+          if (data.size() == 4) {
+            float temp = 0;
+            for (int i=0; i<4; i++)
+              ((unsigned char*) (&temp))[i] = data[i];
+            cout << "T (layer " << id << ") is: " << temp << endl;
+          }
+        }
 #endif
-	sev.SetFlags(Event::FLAG_STATUS);
+        sev.SetFlags(Event::FLAG_STATUS);
       } else {
-	//Conversion
-	if (rev->NumBlocks() == 1) { 
-	  vector<unsigned char> data = rev->GetBlock(0);
+        //Conversion
+        if (rev->NumBlocks() == 1) {
+          vector<unsigned char> data = rev->GetBlock(0);
 #ifdef MYDEBUG
-	  cout << "vector has size : " << data.size() << endl;
+          cout << "vector has size : " << data.size() << endl;
 #endif
 
-	  //###############################################
-	  //DATA FORMAT
-	  //m_nLayers times
-	  //  Header        1st Byte 0xff ; 2nd Byte: Layer number (layers might be missing)
-	  //  Length (uint16_t) length of data block for this layer [only for DataVersion >= 2]
-	  //  Trigger id (uint64_t)
-	  //  Timestamp (uint64_t)
-	  //  payload from chip
-	  //##############################################
-	  
-	  unsigned int pos = 0;
-	  int current_layer = -1;
-	  int current_rgn = -1;
+          //###############################################
+          //DATA FORMAT
+          //m_nLayers times
+          //  Header        1st Byte 0xff ; 2nd Byte: Layer number (layers might be missing)
+          //  Length (uint16_t) length of data block for this layer [only for DataVersion >= 2]
+          //  Trigger id (uint64_t)
+          //  Timestamp (uint64_t)
+          //  payload from chip
+          //##############################################
 
-	  const int maxLayers = 100;
-	  bool layers_found[maxLayers];
-	  uint64_t trigger_ids[maxLayers];
-	  uint64_t timestamps[maxLayers];
-	  for (int i=0; i<maxLayers; i++) { 
-	    layers_found[i] = false;
-	    trigger_ids[i] = (uint64_t) ULONG_MAX;
-	    timestamps[i] = (uint64_t) ULONG_MAX;
-	  }
-	  
-	  // RAW dump
+          unsigned int pos = 0;
+          int current_layer = -1;
+          int current_rgn = -1;
+
+          const int maxLayers = 100;
+          bool layers_found[maxLayers];
+          uint64_t trigger_ids[maxLayers];
+          uint64_t timestamps[maxLayers];
+          for (int i=0; i<maxLayers; i++) {
+            layers_found[i] = false;
+            trigger_ids[i] = (uint64_t) ULONG_MAX;
+            timestamps[i] = (uint64_t) ULONG_MAX;
+          }
+
+          // RAW dump
 #ifdef DEBUGRAWDUMP
-	  printf("Event %d: ", ev.GetEventNumber());
-	  for (unsigned int i=0; i<data.size(); i++)
-	    printf("%x ", data[i]);
-	  printf("\n");
+          printf("Event %d: ", ev.GetEventNumber());
+          for (unsigned int i=0; i<data.size(); i++)
+            printf("%x ", data[i]);
+          printf("\n");
 #endif
-	  
-	  int last_rgn = -1;
-	  int last_pixeladdr = -1;
-	  int last_doublecolumnaddr = -1;
 
-	  while (pos+1 < data.size()) { // always need 2 bytes left
-    #ifdef MYDEBUG
-	    printf("%u %u %x %x\n", pos, (unsigned int) data.size(), data[pos], data[pos+1]);
-    #endif
-    // 	printf("%x %x ", data[pos], data[pos+1]);
-	    if (current_layer == -1) {
-	      if (data[pos++] != 0xff) {
-		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
-		break;
-	      }
-	      current_layer = data[pos++];
-	      if (current_layer == 0xff) {
-		// 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
-		current_layer = -1;
-		continue;
-	      }
-	      if (current_layer >= m_nLayers) {
-		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << endl;
-		break;
-	      }
-	      layers_found[current_layer] = true;
-    #ifdef MYDEBUG
-	      cout << "Now in layer " << current_layer << endl;
-    #endif
-	      current_rgn = -1;
-	      last_rgn = -1;
-	      last_pixeladdr = -1;
-	      last_doublecolumnaddr = -1;
-	      
-	      // length
-	      if (m_DataVersion >= 2) {
-		if (pos+sizeof(uint16_t) <= data.size()) {
-		  uint16_t length = 0;
-		  for (int i=0; i<2; i++)
-		    ((unsigned char*) &length)[i] = data[pos++];
+          int last_rgn = -1;
+          int last_pixeladdr = -1;
+          int last_doublecolumnaddr = -1;
+
+          while (pos+1 < data.size()) { // always need 2 bytes left
 #ifdef MYDEBUG
-		  cout << "Layer " << current_layer << " has data of length " << length << endl;
+            printf("%u %u %x %x\n", pos, (unsigned int) data.size(), data[pos], data[pos+1]);
 #endif
-		  if (length == 0) {
-		    // no data for this layer
-		    current_layer = -1;
-		    continue;
-		  }
-		}
-	      }
-	      
-	      // extract trigger id and timestamp
-	      if (pos+2*sizeof(uint64_t) <= data.size()) {
-		uint64_t trigger_id = 0;
-		for (int i=0; i<8; i++)
-		  ((unsigned char*) &trigger_id)[i] = data[pos++];
-		uint64_t timestamp = 0;
-		for (int i=0; i<8; i++)
-		  ((unsigned char*) &timestamp)[i] = data[pos++];
-		trigger_ids[current_layer] = trigger_id;
-		timestamps[current_layer] = timestamp;
-    #ifdef MYDEBUG
-	      cout << "Layer " << current_layer << " Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
-    #endif
-	      }
-	    } else {
-	      int length = data[pos++];
-	      int rgn = data[pos++] >> 3;
-	      if (rgn != current_rgn+1) {
-		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
-		break;
-	      }
-	      if (pos+length*2 > data.size()) {
-		cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
-		break;
-	      }
-    #ifdef MYDEBUG
-	      cout << "Now in region " << rgn << ". Going to read " << length << " pixels. " << endl;
-    #endif	      
-	      for (int i=0; i<length; i++) {
-		unsigned short dataword = data[pos++];
-		dataword |= (data[pos++] << 8);
-		unsigned short pixeladdr = dataword & 0x3ff;
-		unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
-		unsigned short clustersize = (dataword >> 14) + 1;
-		
-		// consistency check
-		if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr && pixeladdr <= last_pixeladdr) {
-		  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". ";
-		  if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr && pixeladdr == last_pixeladdr)
-		    cout << "Pixel duplicated. ";
-		  else
+            // 	printf("%x %x ", data[pos], data[pos+1]);
+            if (current_layer == -1) {
+              if (data[pos++] != 0xff) {
+                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
+                break;
+              }
+              current_layer = data[pos++];
+              if (current_layer == 0xff) {
+                // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
+                current_layer = -1;
+                continue;
+              }
+              if (current_layer >= m_nLayers) {
+                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << endl;
+                break;
+              }
+              layers_found[current_layer] = true;
+#ifdef MYDEBUG
+              cout << "Now in layer " << current_layer << endl;
+#endif
+              current_rgn = -1;
+              last_rgn = -1;
+              last_pixeladdr = -1;
+              last_doublecolumnaddr = -1;
+
+              // length
+              if (m_DataVersion >= 2) {
+                if (pos+sizeof(uint16_t) <= data.size()) {
+                  uint16_t length = 0;
+                  for (int i=0; i<2; i++)
+                    ((unsigned char*) &length)[i] = data[pos++];
+#ifdef MYDEBUG
+                  cout << "Layer " << current_layer << " has data of length " << length << endl;
+#endif
+                  if (length == 0) {
+                    // no data for this layer
+                    current_layer = -1;
+                    continue;
+                  }
+                }
+              }
+
+              // extract trigger id and timestamp
+              if (pos+2*sizeof(uint64_t) <= data.size()) {
+                uint64_t trigger_id = 0;
+                for (int i=0; i<8; i++)
+                  ((unsigned char*) &trigger_id)[i] = data[pos++];
+                uint64_t timestamp = 0;
+                for (int i=0; i<8; i++)
+                  ((unsigned char*) &timestamp)[i] = data[pos++];
+                trigger_ids[current_layer] = trigger_id;
+                timestamps[current_layer] = timestamp;
+#ifdef MYDEBUG
+                cout << "Layer " << current_layer << " Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
+#endif
+              }
+            } else {
+              int length = data[pos++];
+              int rgn = data[pos++] >> 3;
+              if (rgn != current_rgn+1) {
+                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
+                break;
+              }
+              if (pos+length*2 > data.size()) {
+                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
+                break;
+              }
+#ifdef MYDEBUG
+              cout << "Now in region " << rgn << ". Going to read " << length << " pixels. " << endl;
+#endif
+              for (int i=0; i<length; i++) {
+                unsigned short dataword = data[pos++];
+                dataword |= (data[pos++] << 8);
+                unsigned short pixeladdr = dataword & 0x3ff;
+                unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
+                unsigned short clustersize = (dataword >> 14) + 1;
+
+                // consistency check
+                if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr && pixeladdr <= last_pixeladdr) {
+                  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". ";
+                  if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr && pixeladdr == last_pixeladdr)
+                    cout << "Pixel duplicated. ";
+                  else
                   {
-		    cout << "Strict ordering violated. ";
+                    cout << "Strict ordering violated. ";
                     sev.SetFlags(Event::FLAG_BROKEN);
                   }
-		  cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
-		}
-		last_rgn = rgn;
-		last_pixeladdr = pixeladdr;
-		last_doublecolumnaddr = doublecolumnaddr;
-		
-		for (int j=0; j<clustersize; j++) {
-		  unsigned short current_pixel = pixeladdr + j;
-		  unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
-		  if (current_pixel & 0x2)
-		    x--;
-		  unsigned int y = (current_pixel >> 2) * 2 + 1;
-		  if (current_pixel & 0x1)
-		    y--;
-		  
-		  planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
-    #ifdef MYDEBUG
-		  cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
-    #endif
-		}
-	      }
-	      current_rgn = rgn;
-	      if (rgn == 31)
-		current_layer = -1;
-	    }
-	  }
-	  if (current_layer != -1) {
-	    cout << "ERROR: Event " << ev.GetEventNumber() << " data stream too short, stopped in region " << current_rgn << endl;
+                  cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
+                }
+                last_rgn = rgn;
+                last_pixeladdr = pixeladdr;
+                last_doublecolumnaddr = doublecolumnaddr;
+
+                for (int j=0; j<clustersize; j++) {
+                  unsigned short current_pixel = pixeladdr + j;
+                  unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
+                  if (current_pixel & 0x2)
+                    x--;
+                  unsigned int y = (current_pixel >> 2) * 2 + 1;
+                  if (current_pixel & 0x1)
+                    y--;
+
+                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
+#ifdef MYDEBUG
+                  cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
+#endif
+                }
+              }
+              current_rgn = rgn;
+              if (rgn == 31)
+                current_layer = -1;
+            }
+          }
+          if (current_layer != -1) {
+            cout << "ERROR: Event " << ev.GetEventNumber() << " data stream too short, stopped in region " << current_rgn << endl;
             sev.SetFlags(Event::FLAG_BROKEN);
-	  }
-	  for (int i=0;i<m_nLayers;i++) {
-	    if (!layers_found[i]) {
-	      cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << i << " was missing in the data stream." << endl;
+          }
+          for (int i=0;i<m_nLayers;i++) {
+            if (!layers_found[i]) {
+              cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << i << " was missing in the data stream." << endl;
               sev.SetFlags(Event::FLAG_BROKEN);
-	    }
-	  }
-	    
-    #ifdef MYDEBUG
-	  cout << "EOD" << endl;
-    #endif
-	
-	  // check timestamps
-	  bool ok = true;
-	  for (int i=0;i<m_nLayers-1;i++) {
-	    if (timestamps[i+1] == 0 || (fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.0001 && fabs((double)timestamps[i] - (double)timestamps[i+1]) > 4))
-	      ok = false;
-	  }
-	  if (!ok) {
-	    cout << "ERROR: Event " << ev.GetEventNumber() << " Timestamps not consistent." << endl;
-#ifdef MYDEBUG  
-	    for (int i=0;i<m_nLayers;i++)
-	      printf("%d %lu %lu\n", i, trigger_ids[i], timestamps[i]);
+            }
+          }
+
+#ifdef MYDEBUG
+          cout << "EOD" << endl;
+#endif
+
+          // check timestamps
+          bool ok = true;
+          for (int i=0;i<m_nLayers-1;i++) {
+            if (timestamps[i+1] == 0 || (fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.0001 && fabs((double)timestamps[i] - (double)timestamps[i+1]) > 4))
+              ok = false;
+          }
+          if (!ok) {
+            cout << "ERROR: Event " << ev.GetEventNumber() << " Timestamps not consistent." << endl;
+#ifdef MYDEBUG
+            for (int i=0;i<m_nLayers;i++)
+              printf("%d %lu %lu\n", i, trigger_ids[i], timestamps[i]);
 #endif
 #ifdef CHECK_TIMESTAMPS
-	    sev.SetFlags(Event::FLAG_BROKEN);
-#endif 
-            sev.SetTimestamp(0); 
-	  }
-          else 
-	    sev.SetTimestamp(timestamps[0]);
-	}	
+            sev.SetFlags(Event::FLAG_BROKEN);
+#endif
+            sev.SetTimestamp(0);
+          }
+          else
+            sev.SetTimestamp(timestamps[0]);
+        }
       }
-      
+
       // Add the planes to the StandardEvent
       for(int i=0;i<m_nLayers;i++){
         sev.AddPlane(*planes[i]);
-	delete planes[i];
+        delete planes[i];
       }
       delete[] planes;
       // Indicate that data was successfully converted
@@ -366,45 +393,61 @@ namespace eudaq {
     ///////////////////////////////////////////////////////////
 #if USE_LCIO
     virtual bool GetLCIOSubEvent(lcio::LCEvent & lev, eudaq::Event const & ev) const{
-      
+
 //       cout << "GetLCIOSubEvent..." << endl;
 
       StandardEvent sev;                //GetStandardEvent first then decode plains
       GetStandardSubEvent(sev,ev);
 
       unsigned int nplanes=sev.NumPlanes();             //deduce number of planes from StandardEvent
-      
+
       lev.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE,eutelescope::kDE);
       lev.parameters().setValue("TIMESTAMP",(int) sev.GetTimestamp());
       lev.parameters().setValue("FLAG", (int) sev.GetFlags());
+      lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
+      const Int_t n_bs=100;
+      char tmp[n_bs];
+      for (int id=0 ; id<m_nLayers ; id++) {
+        snprintf(tmp, n_bs, "Vaux_%d", i);
+        lev.parameters().setValue(tmp, m_Vaux[i]);
+        snprintf(tmp, n_bs, "Vreset_%d", i);
+        lev.parameters().setValue(tmp, m_Vreset[i]);
+        snprintf(tmp, n_bs, "Vcasn_%d", i);
+        lev.parameters().setValue(tmp, m_Vcasn[i]);
+        snprintf(tmp, n_bs, "Vcasp_%d", i);
+        lev.parameters().setValue(tmp, m_Vcasp[i]);
+        snprintf(tmp, n_bs, "Ithr_%d", i);
+        lev.parameters().setValue(tmp,.m_Ithr[i]);
+      }
+
       LCCollectionVec *zsDataCollection;
       try {
-	zsDataCollection=static_cast<LCCollectionVec*>(lev.getCollection("zsdata_pALPIDEfs"));
+        zsDataCollection=static_cast<LCCollectionVec*>(lev.getCollection("zsdata_pALPIDEfs"));
       }
       catch (lcio::DataNotAvailableException) {
-	zsDataCollection=new LCCollectionVec(lcio::LCIO::TRACKERDATA);
+        zsDataCollection=new LCCollectionVec(lcio::LCIO::TRACKERDATA);
       }
 
       for(unsigned int n=0 ; n<nplanes ; n++){  //pull out the data and put it into lcio format
         StandardPlane& plane=sev.GetPlane(n);
-	const std::vector<StandardPlane::pixel_t>& x_values = plane.XVector();
-	const std::vector<StandardPlane::pixel_t>& y_values = plane.YVector();
-	
-	CellIDEncoder<TrackerDataImpl> zsDataEncoder(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING,zsDataCollection);
-	TrackerDataImpl *zsFrame=new TrackerDataImpl();
-	zsDataEncoder["sensorID"       ]=n;
-	zsDataEncoder["sparsePixelType"]=eutelescope::kEUTelSimpleSparsePixel;
-	zsDataEncoder.setCellID(zsFrame);
-	
-	for (unsigned int i=0; i<x_values.size(); i++) {
-	  zsFrame->chargeValues().push_back((int) x_values.at(i));
-	  zsFrame->chargeValues().push_back((int) y_values.at(i));
-	  zsFrame->chargeValues().push_back(1);
-	  
+        const std::vector<StandardPlane::pixel_t>& x_values = plane.XVector();
+        const std::vector<StandardPlane::pixel_t>& y_values = plane.YVector();
+
+        CellIDEncoder<TrackerDataImpl> zsDataEncoder(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING,zsDataCollection);
+        TrackerDataImpl *zsFrame=new TrackerDataImpl();
+        zsDataEncoder["sensorID"       ]=n;
+        zsDataEncoder["sparsePixelType"]=eutelescope::kEUTelSimpleSparsePixel;
+        zsDataEncoder.setCellID(zsFrame);
+
+        for (unsigned int i=0; i<x_values.size(); i++) {
+          zsFrame->chargeValues().push_back((int) x_values.at(i));
+          zsFrame->chargeValues().push_back((int) y_values.at(i));
+          zsFrame->chargeValues().push_back(1);
+
 // 	  std::cout << x_values.size() << " " << x_values.at(i) << " " << y_values.at(i) << std::endl;
-	}
-	
-	zsDataCollection->push_back(zsFrame);
+        }
+
+        zsDataCollection->push_back(zsFrame);
       }
 
       lev.addCollection(zsDataCollection,"zsdata_pALPIDEfs");
@@ -416,6 +459,42 @@ namespace eudaq {
   protected:
     int m_nLayers;
     int m_DataVersion;
+    float m_BackBiasVoltage;
+    std::string* m_configs;
+    int* m_Vaux;
+    int* m_Vreset;
+    int* m_Vcasn;
+    int* m_Vcasp;
+    int* m_Ithr;
+
+#if USE_TINYXML
+    int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
+      TiXmlDocument conf;
+      conf.Parse(xml.c_str());
+      TiXmlElement* root = conf.FirstChildElement();
+      for (TiXmlElement* eBase = root->FirstChildElement("address"); eBase != 0; eBase = eBase->NextSiblingElement("address")) {
+        if (base!=atoi(eBase->Attribute("base"))) continue;
+        for (TiXmlElement* eRgn = eBase->FirstChildElement("address"); eRgn != 0; eRgn = eRgn->NextSiblingElement("address")) {
+          if (rgn!=atoi(eRgn->Attribute("rgn"))) continue;
+          for (TiXmlElement* eSub = eRgn->FirstChildElement("address"); eSub != 0; eSub = eSub->NextSiblingElement("address")) {
+            if (sub!=atoi(eSub->Attribute("sub"))) continue;
+            for (TiXmlElement* eBegin = eSub->FirstChildElement("value"); eBegin != 0; eBegin = eBegin->NextSiblingElement("value")) {
+              if (begin!=atoi(eBegin->Attribute("begin"))) continue;
+              if (!eBegin->FirstChildElement("content") || !eBegin->FirstChildElement("content")->FirstChild()) {
+                std::cout << "content tag not found!" << std::endl;
+                return -6;
+              }
+              return (int)strtol(eBegin->FirstChildElement("content")->FirstChild()->Value(), 0, 16);
+            }
+            return -5;
+          }
+          return -4;
+        }
+        return -3;
+      }
+      return -2;
+    }
+#endif
 
   private:
 
@@ -424,7 +503,7 @@ namespace eudaq {
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
     PALPIDEFSConverterPlugin()
-      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1)
+        : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0)
       {}
 
     // The single instance of this converter plugin
