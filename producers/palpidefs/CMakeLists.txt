@@ -10,6 +10,13 @@ if (NOT CMAKE_PALPIDEFS_DRIVER_INCLUDE)
   message(FATAL_ERROR "Path to pALPIDEfs driver not set - you need to set CMAKE_PALPIDEFS_DRIVER_INCLUDE")
 endif(NOT CMAKE_PALPIDEFS_DRIVER_INCLUDE)
 
+FIND_PACKAGE( TINYXML REQUIRED )
+if (TINYXML_FOUND)
+  INCLUDE_DIRECTORIES( ${TINYXML_INCLUDE_DIRS} )
+  SET(ADDITIONAL_LIBRARIES ${TINYXML_LIBRARIES} )
+  ADD_DEFINITIONS(-DUSE_TINYXML)
+endif (TINYXML_FOUND)
+
 if (NOT EXISTS "${ext_lib_paths}/TTestsetup.h")
   message(FATAL_ERROR "Path to pALPIDEfs driver is wrong - Could not find ${ext_lib_paths}/TTestsetup.h")
 endif (NOT EXISTS "${ext_lib_paths}/TTestsetup.h")
