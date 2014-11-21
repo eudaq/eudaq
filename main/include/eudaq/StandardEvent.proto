@@ -1,0 +1,44 @@
+package eudaq.pb;
+
+message Pixel {
+    required uint32 x = 1;
+    required uint32 y = 2;
+    required uint32 val = 3;
+    optional bool pivot = 4 [default = false];
+}
+
+message Frame {
+    repeated Pixel pixel = 1;
+}
+
+message Flags {
+	optional bool zs = 1 [default = true]; // Data are zero suppressed
+	optional bool needcds = 2 [default = false] ; // CDS needs to be calculated (data is 2 or 3 raw frames)
+	optional bool negative = 3 [default = false]; // Signal polarity is negative
+	optional bool accumulate = 4 [default = false]; // Multiple frames should be accumulated for output
+	optional bool withpivot = 5 [default = false]; // Include before/after pivot boolean per pixel
+	optional bool withsubmat = 6 [default = false]; // Include Submatrix ID per pixel
+	optional bool diffcoords = 7 [default = false]; // Each frame can have different coordinates (in ZS mode)
+}
+
+message StandardPlane {
+
+    required string type = 1;
+    optional string sensor = 2 [default = ""];
+
+    required uint32 id = 3;
+    required uint32 tluevent = 4;
+    required uint32 xsize = 5;
+    required uint32 ysize = 6;
+    optional Flags flags = 7;
+    optional uint32 pivotpixel = 8;
+
+    repeated Frame frame = 9;
+}
+
+message StandardEvent {
+  repeated StandardPlane plane = 1;
+
+}
+
+

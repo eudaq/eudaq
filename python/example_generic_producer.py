@@ -1,11 +1,14 @@
 #!/usr/bin/env python2
 from PyEUDAQWrapper import * # load the ctypes wrapper
+from StandardEvent_pb2 import StandardEvent
+
+import random
 from time import sleep
-import numpy # for data handling
+import numpy as np # for data handling
 
 print "Starting PyProducer"
 # create PyProducer instance
-pp = PyProducer("testproducer","tcp://localhost:44000")
+pp = PyProducer("GENERIC","tcp://localhost:44000")
 
 i = 0 # counter variables for wait routines
 maxwait = 100
@@ -19,7 +22,7 @@ while i<maxwait and not pp.Configuring:
 if pp.Configuring:
     print "Ready to configure, received config string 'Parameter'=",pp.GetConfigParameter("Parameter")
     # .... do your config stuff here ...
-    sleep(5)
+    sleep(2)
     pp.Configuring = True
 # check for start of run cmd from RunControl
 while i<maxwait and not pp.StartingRun:
@@ -30,15 +33,37 @@ while i<maxwait and not pp.StartingRun:
 if pp.StartingRun:
     print "Ready to run!"
     # ... prepare your system for the immanent run start
-    sleep(5)
+    sleep(2)
     pp.StartingRun = True # set status and send BORE
 # starting to run
+
+tluevent = 0
 while not pp.Error and not pp.StoppingRun and not pp.Terminating:
-    # prepare an array of dim (1,3) for data storage
-    data = numpy.ndarray(shape=[1,3], dtype=numpy.uint8)
-    data[0] = ([123,456,999]) # add some (dummy) data
+
+    event = StandardEvent()
+    plane = event.plane.add() #add one plane
+
+    plane.type = "OO"
+    plane.id = 0
+    plane.tluevent = tluevent
+    plane.xsize = 64
+    plane.ysize = 32
+
+    frame = plane.frame.add()
+    for _ in range(random.randint(1,16)):
+        pix = frame.pixel.add()
+        pix.x = random.randint(0,63)
+        pix.y = random.randint(0,31)
+        pix.val = 1
+    
+    tluevent =  tluevent + 1
+
+    data = np.fromstring(event.SerializeToString(), dtype=np.uint8)
+    print tluevent, data
+
     pp.SendEvent(data)        # send event off
     sleep(2)                  # wait for a little while
+
 # check if the run is stopping regularly
 if pp.StoppingRun:
     pp.StoppingRun=True # set status and send EORE

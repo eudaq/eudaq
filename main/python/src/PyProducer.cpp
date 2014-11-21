@@ -20,9 +20,9 @@ class PyProducer : public eudaq::Producer {
   public:
     PyProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
-
-    void SendEvent(uint64_t* data, size_t size) {
-    RawDataEvent ev(m_name, m_run, ++m_evt);
+  
+    void SendEvent(uint8_t* data, size_t size) {
+      RawDataEvent ev(m_name, m_run, ++m_evt);
       ev.AddBlock(0, data, size);
       eudaq::DataSender::SendEvent(ev);
     }
@@ -40,6 +40,7 @@ class PyProducer : public eudaq::Producer {
 	SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
       }
     }
+
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_evt = 0;
@@ -147,7 +148,7 @@ private:
 extern "C" {
   DLLEXPORT PyProducer* PyProducer_new(char *name, char *rcaddress){return new PyProducer(std::string(name),std::string(rcaddress));}
   // functions for I/O
-  DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint64_t* buffer, size_t size){pp->SendEvent(buffer,size);}
+  DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint8_t* buffer, size_t size){pp->SendEvent(buffer,size);}
   DLLEXPORT char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){
     std::string value = pp->GetConfigParameter(std::string(item));
     // convert string to char*
