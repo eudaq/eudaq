@@ -48,22 +48,22 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
     TiXmlElement* elem = pChild->ToElement();
     if (base == -1) {
       if (!elem->Attribute("base")) {
-	std::cout << "Base attribute not found!" << std::endl;
-	break;
+        std::cout << "Base attribute not found!" << std::endl;
+        break;
       }
       ParseXML(daq_board, pChild, atoi(elem->Attribute("base")), -1, readwrite);
     }
     else if (rgn == -1) {
       if (!elem->Attribute("rgn")) {
-	std::cout << "Rgn attribute not found!" << std::endl;
-	break;
+        std::cout << "Rgn attribute not found!" << std::endl;
+        break;
       }
       ParseXML(daq_board, pChild, base, atoi(elem->Attribute("rgn")), readwrite);
     }
     else {
       if (!elem->Attribute("sub")) {
-	std::cout << "Sub attribute not found!" << std::endl;
-	break;
+        std::cout << "Sub attribute not found!" << std::endl;
+        break;
       }
       int sub = atoi(elem->Attribute("sub"));
       int address = ((rgn << 11) + (base << 8) + sub);
@@ -71,63 +71,120 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
       int value = 0;
 
       if (readwrite) {
-	if (daq_board->ReadChipRegister(address, &value) != 1) {
-	  std::cout << "Failure to read chip address " << address << std::endl;
-	  continue;
-	}
+        if (daq_board->ReadChipRegister(address, &value) != 1) {
+          std::cout << "Failure to read chip address " << address << std::endl;
+          continue;
+        }
       }
 
       for (TiXmlNode* valueChild = pChild->FirstChild("value"); valueChild != 0; valueChild = valueChild->NextSibling("value"))
       {
-	if (!valueChild->ToElement()->Attribute("begin")) {
-	  std::cout << "begin attribute not found!" << std::endl;
-	  break;
-	}
-	int begin = atoi(valueChild->ToElement()->Attribute("begin"));
+        if (!valueChild->ToElement()->Attribute("begin")) {
+          std::cout << "begin attribute not found!" << std::endl;
+          break;
+        }
+        int begin = atoi(valueChild->ToElement()->Attribute("begin"));
 
-	int width = 1;
-	if (valueChild->ToElement()->Attribute("width")) // width attribute is optional
-	  width = atoi(valueChild->ToElement()->Attribute("width"));
+        int width = 1;
+        if (valueChild->ToElement()->Attribute("width")) // width attribute is optional
+          width = atoi(valueChild->ToElement()->Attribute("width"));
 
-	if (!valueChild->FirstChild("content") && !valueChild->FirstChild("content")->FirstChild()) {
-	  std::cout << "content tag not found!" << std::endl;
-	  break;
-	}
+        if (!valueChild->FirstChild("content") && !valueChild->FirstChild("content")->FirstChild()) {
+          std::cout << "content tag not found!" << std::endl;
+          break;
+        }
 
-	if (readwrite) {
-	  int subvalue = (value >> begin) & Bitmask(width);
-	  char tmp[5];
-	  sprintf(tmp, "%X", subvalue);
-	  valueChild->FirstChild("content")->FirstChild()->SetValue(tmp);
-	} else {
-	  int content = (int) strtol(valueChild->FirstChild("content")->FirstChild()->Value(), 0, 16);
+        if (readwrite) {
+          int subvalue = (value >> begin) & Bitmask(width);
+          char tmp[5];
+          sprintf(tmp, "%X", subvalue);
+          valueChild->FirstChild("content")->FirstChild()->SetValue(tmp);
+        } else {
+          int content = (int) strtol(valueChild->FirstChild("content")->FirstChild()->Value(), 0, 16);
 
-	  if (content >= (1 << width)) {
-	    std::cout << "value too large: " << begin << " " << width << " " << content << " " << valueChild->FirstChild("content")->Value() << std::endl;
-	    break;
-	  }
+          if (content >= (1 << width)) {
+            std::cout << "value too large: " << begin << " " << width << " " << content << " " << valueChild->FirstChild("content")->Value() << std::endl;
+            break;
+          }
 
-	  value += content << begin;
-	}
+          value += content << begin;
+        }
       }
 
       if (!readwrite) {
 //       printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
-      printf("Writing chip register %d %d\n", address, value);
-	if (daq_board->WriteChipRegister(address, value) != 1)
-	  std::cout << "Failure to write chip address " << address << std::endl;
+        printf("Writing chip register %d %d\n", address, value);
+        if (daq_board->WriteChipRegister(address, value) != 1)
+          std::cout << "Failure to write chip address " << address << std::endl;
       }
     }
   }
 }
 
-DeviceReader::DeviceReader(int id, int debuglevel, TDAQBoard* daq_board, TpAlpidefs* dut) :
+// Will unmask and select one pixel per region.
+// The pixels are calculated from the number of the mask stage
+void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int nPixels /* = 1 */) {
+  int FirstRegion = 0;
+  int LastRegion  = 31;
+  if (AMaskStage >= 512 * 32 / nPixels) {
+    std::cout << "PrepareMaskStage, Warning: Mask stage too big, doing nothing" << std::endl;
+    return;
+  }
+  // Mask and unselect all pixels and disable all columns, except the ones in ARegion
+  m_dut->SetChipMode     (MODE_ALPIDE_CONFIG);
+  m_dut->SetMaskAllPixels(true);
+  m_dut->SetMaskAllPixels(false, PR_PULSEENABLE);
+  for (int ireg=0; ireg<32; ++ireg) {
+    m_dut->SetDisableAllColumns(ireg, true);
+  }
+  // now calculate pixel corresponding to mask stage
+  // unmask and select this pixel in each region
+  for (int ireg = FirstRegion; ireg <= LastRegion; ireg ++) {
+    for (int pixel = 0; pixel < nPixels; pixel++) {
+      int tmp = AMaskStage * nPixels + pixel;
+      int DCol    = tmp / 1024;
+      int Address = tmp % 1024;
+      m_dut->SetDisableColumn    (ireg, DCol, false);
+      m_dut->SetMaskSinglePixel  (ireg, DCol, Address, false);
+      m_dut->SetInjectSinglePixel(ireg, DCol, Address, true, APulseType, false);
+    }
+  }
+}
+
+bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int ChStop, int ChStep, int ***Data, int *Points) {
+  int PulseMode = 2;
+  bool ReadFailure = false;
+  std::vector <TPixHit> Hits;
+  for (int istage=0; (istage<NMaskStages)&&(!ReadFailure); ++istage) {
+    if (!(istage %10)) std::cout << "Threshold scan: mask stage " << istage << std::endl;
+    PrepareMaskStage(PT_ANALOGUE, istage);
+    m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, ChStart, PulseMode);
+    int ipoint = 0;
+    for (int icharge = ChStart; icharge < ChStop; icharge += ChStep) {
+      Hits.clear();
+      m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
+      for (int ievt=0; ievt<NEvts; ++ievt) {
+        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, NEvts)) ReadFailure = false;
+      }
+      for (int ihit=0; ihit<Hits.size(); ++ihit) {
+        ++Data[Hits.at(ihit).doublecol+Hits.at(ihit).region*16][Hits.at(ihit).address][ipoint];
+      }
+      Points[ipoint++]=icharge;
+    }
+  }
+  m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
+  m_dut->SetMaskAllPixels(false);
+  return ReadFailure;
+}
+
+DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut) :
   m_queue_size(0),
   m_stop(false),
   m_running(false),
   m_flushing(false),
   m_id(id),
   m_debuglevel(debuglevel),
+  m_test_setup(test_setup),
   m_daq_board(daq_board),
   m_dut(dut),
   m_last_trigger_id(0),
@@ -246,9 +303,9 @@ void DeviceReader::Loop()
     // simulation for missing data in some layers
     if (m_debuglevel > 10) {
       if (m_id == 2 && m_last_trigger_id % 2 == 0)
-	continue;
+        continue;
       if (m_id == 3 && m_last_trigger_id % 3 == 0)
-	continue;
+        continue;
     }
 
     int length = 80;
@@ -276,35 +333,35 @@ void DeviceReader::Loop()
       // empty headers
       int pos = 0;
       for (int j = 0; j < 32; ++j) {
-	// "test" pixels are put into region m_id, all others are empty
-	ev->m_buffer[pos++] = (j == m_id) ? kPixelsHit : 0; // length of data
-	ev->m_buffer[pos++] = (j << 3); // region number (5 MSB)
-	if (j == m_id) {
-	  short pixeladdr = m_last_trigger_id % (1 << 14); // 14 bits: 10 LSB for pixel id, 4 HSB for double column address
-	  char clustering = m_id % 4;
-	  pixeladdr |= clustering << 14;
+        // "test" pixels are put into region m_id, all others are empty
+        ev->m_buffer[pos++] = (j == m_id) ? kPixelsHit : 0; // length of data
+        ev->m_buffer[pos++] = (j << 3); // region number (5 MSB)
+        if (j == m_id) {
+          short pixeladdr = m_last_trigger_id % (1 << 14); // 14 bits: 10 LSB for pixel id, 4 HSB for double column address
+          char clustering = m_id % 4;
+          pixeladdr |= clustering << 14;
 
-	  ev->m_buffer[pos++] = (char) (pixeladdr & 0xff);
-	  ev->m_buffer[pos++] = (char) (pixeladdr >> 8);
-	}
+          ev->m_buffer[pos++] = (char) (pixeladdr & 0xff);
+          ev->m_buffer[pos++] = (char) (pixeladdr >> 8);
+        }
       }
 
       if (m_debuglevel > 10) {
-	std::string str;
-	for (int j=0; j<length; j++) {
-	  char buffer[20];
-	  sprintf(buffer, "%x ", ev->m_buffer[j]);
-	  str += buffer;
-	}
-	str += "\n";
-	Print(0, str.data());
+        std::string str;
+        for (int j=0; j<length; j++) {
+          char buffer[20];
+          sprintf(buffer, "%x ", ev->m_buffer[j]);
+          str += buffer;
+        }
+        str += "\n";
+        Print(0, str.data());
       }
 
       // add to queue
       Push(ev);
 
       if (i % 100 == 0)
-	eudaq::mSleep(1);
+        eudaq::mSleep(1);
     }
     Print(0, "One spill simulated.");
 
@@ -323,7 +380,7 @@ void DeviceReader::Loop()
       if (IsFlushing()) {
         SimpleLock lock(m_mutex);
         m_flushing = false;
-	Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
+        Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
       }
       eudaq::mSleep(1);
       continue;
@@ -337,18 +394,18 @@ void DeviceReader::Loop()
     if (m_daq_board->ReadChipEvent(data_buf, &length, (m_readout_mode == 0) ? 1024 : maxDataLength)) {
 
       if (length == 0) {
-	// EOR
+        // EOR
 
-	if (IsFlushing()) {
-	  Print(0, "Flushing %lu", m_last_trigger_id);
-	  SimpleLock lock(m_mutex);
-	  m_flushing = false;
-	  Print(0, "Sending EndOfRun word");
-	  // gets resetted by EndOfRun
-	  m_last_trigger_id = m_daq_board->GetNextEventId();
-	} else
-	  Print(3, "UNEXPECTED: 0 event received but trigger has not been stopped.");
-	continue;
+        if (IsFlushing()) {
+          Print(0, "Flushing %lu", m_last_trigger_id);
+          SimpleLock lock(m_mutex);
+          m_flushing = false;
+          Print(0, "Sending EndOfRun word");
+          // gets resetted by EndOfRun
+          m_last_trigger_id = m_daq_board->GetNextEventId();
+        } else
+          Print(3, "UNEXPECTED: 0 event received but trigger has not been stopped.");
+        continue;
       }
 
       TEventHeader header;
@@ -357,58 +414,58 @@ void DeviceReader::Loop()
       bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
 
       if (HeaderOK && TrailerOK) {
-	if (m_debuglevel > 2) {
-	  std::vector<TPixHit> hits;
-	  if (!m_dut->DecodeEvent(data_buf+20, length - 28, &hits)) {
-	    std::cerr << "ERROR decoding event payload. " << std::endl;
-	  } else {
-	    m_dut->DumpHitData(hits);
-	  }
+        if (m_debuglevel > 2) {
+          std::vector<TPixHit> hits;
+          if (!m_dut->DecodeEvent(data_buf+20, length - 28, &hits)) {
+            std::cerr << "ERROR decoding event payload. " << std::endl;
+          } else {
+            m_dut->DumpHitData(hits);
+          }
 
-	  std::string str = "RAW payload (length %d): ";
-	  for (int j=0; j<length-28; j++) {
-	    char buffer[20];
-	    sprintf(buffer, "%02x ", data_buf[j+20]);
-	    str += buffer;
-	  }
-	  str += "\n";
-	  Print(0, str.data(), length);
-	}
+          std::string str = "RAW payload (length %d): ";
+          for (int j=0; j<length-28; j++) {
+            char buffer[20];
+            sprintf(buffer, "%02x ", data_buf[j+20]);
+            str += buffer;
+          }
+          str += "\n";
+          Print(0, str.data(), length);
+        }
 
 // 	std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
-	SingleEvent* ev = new SingleEvent(length - 28, header.EventId, header.TimeStamp);
-	memcpy(ev->m_buffer, data_buf+20, length - 28);
-	// add to queue
-	Push(ev);
+        SingleEvent* ev = new SingleEvent(length - 28, header.EventId, header.TimeStamp);
+        memcpy(ev->m_buffer, data_buf+20, length - 28);
+        // add to queue
+        Push(ev);
 
-	// DEBUG
-	/*
-	if (header.EventId > m_last_trigger_id*2) {
-	  Print(2, "Very large id %lu %lu", header.EventId, m_last_trigger_id);
-	  std::string str = "RAW: ";
-	  for (int j=0; j<length; j++) {
-	    char buffer[20];
-	    sprintf(buffer, "%02x ", data_buf[j]);
-	    str += buffer;
-	  }
-	  str += "\n";
-	  Print(0, str.data());
-	}
-	*/
-	// --DEBUG
+        // DEBUG
+        /*
+          if (header.EventId > m_last_trigger_id*2) {
+          Print(2, "Very large id %lu %lu", header.EventId, m_last_trigger_id);
+          std::string str = "RAW: ";
+          for (int j=0; j<length; j++) {
+          char buffer[20];
+          sprintf(buffer, "%02x ", data_buf[j]);
+          str += buffer;
+          }
+          str += "\n";
+          Print(0, str.data());
+          }
+        */
+        // --DEBUG
 
         m_last_trigger_id = header.EventId;
       } else {
-	Print(2, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK, TrailerOK);
-	char buffer[30];
-	sprintf(buffer, "RAW data (length %d): ", length);
-	std::string str(buffer);
-	for (int j=0; j<length; j++) {
-	  sprintf(buffer, "%02x ", data_buf[j]);
-	  str += buffer;
-	}
-	str += "\n";
-	Print(0, str.data());
+        Print(2, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK, TrailerOK);
+        char buffer[30];
+        sprintf(buffer, "RAW data (length %d): ", length);
+        std::string str(buffer);
+        for (int j=0; j<length; j++) {
+          sprintf(buffer, "%02x ", data_buf[j]);
+          str += buffer;
+        }
+        str += "\n";
+        Print(0, str.data());
       }
     }
 #endif
@@ -531,10 +588,20 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   m_readout_mode = param.Get("ReadoutMode", 0);
   m_full_config = param.Get("FullConfig", "");
 
+  m_SCS_charge_start  = param.Get("SCSchargeStart", 0);
+  m_SCS_charge_stop   = param.Get("SCSchargeStop", 50);
+  m_SCS_charge_step   = param.Get("SCSchargeStep",  1);
+  m_SCS_n_events      = param.Get("SCSnEvents",    50);
+  m_SCS_n_mask_stages = param.Get("SCSnMaskStages", 1);
+
+  int SCS_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
+  SCS_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? SCS_steps+1 : SCS_steps;
+
+
   if (!m_configured) {
     m_nDevices = param.Get("Devices", 1);
 
-    #ifndef SIMULATION
+#ifndef SIMULATION
     if (!m_testsetup) {
       std::cout << "Creating test setup " << std::endl;
       m_testsetup = new TTestSetup;
@@ -554,7 +621,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     }
 
     m_testsetup->AddDUTs(DUT_PALPIDEFS);
-    #endif
+#endif
 
     m_next_event = new SingleEvent*[m_nDevices];
     m_reader = new DeviceReader*[m_nDevices];
@@ -568,9 +635,34 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     TpAlpidefs* dut = 0;
     TDAQBoard* daq_board = 0;
-    char buffer[100];
+    const size_t buffer_size = 100;
+    char buffer[buffer_size];
 
-    #ifndef SIMULATION
+    sprintf(buffer, "BoardAddress_%d", i);
+    m_do_SCS[i] = (bool)param.Get("SCS_%d", 0);
+    m_SCS_hitmap = new int****[m_nDevices];
+    m_SCS_mask   = new int****[m_nDevices];
+
+    if (m_do_SCS[i]) {
+      for (int i=0; i<m_nDevices; ++i) {
+        m_SCS_hitmap[i] = new int***[512];
+        m_SCS_mask[i]   = new int***[512];
+        for (int j=0; j<512; ++j) {
+          m_SCS_hitmap[i][j] = new int**[1024];
+          m_SCS_mask[i][j]   = new int**[1024];
+          for (int k=0; k<1024; ++k) {
+            m_SCS_hitmap[i][j][k] = new int*[SCS_steps];
+            m_SCS_mask[i][j][k]   = new int*[SCS_steps];
+            for (int l=0; l<SCS_steps; ++l) {
+              m_SCS_hitmap[i][j][k][l] = 0;
+              m_SCS_mask[i][j][k][l]   = 0;
+            }
+          }
+        }
+      }
+    }
+
+#ifndef SIMULATION
     if (!m_configured) {
       sprintf(buffer, "BoardAddress_%d", i);
       int board_address = param.Get(buffer, i);
@@ -578,19 +670,19 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       // find board
       int board_no = -1;
       for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
-	if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
-	  board_no = j;
-	  break;
-	}
+        if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
+          board_no = j;
+          break;
+        }
       }
 
       if (board_no == -1) {
-	char msg[100];
-	sprintf(msg, "Device with board address %d not found", board_address);
-	std::cerr << msg << std::endl;
-	EUDAQ_ERROR(msg);
-	SetStatus(eudaq::Status::LVL_ERROR, msg);
-	return;
+        char msg[100];
+        sprintf(msg, "Device with board address %d not found", board_address);
+        std::cerr << msg << std::endl;
+        EUDAQ_ERROR(msg);
+        SetStatus(eudaq::Status::LVL_ERROR, msg);
+        return;
       }
 
       std::cout << "Enabling device " << board_no << std::endl;
@@ -601,7 +693,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
       std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
 
-      m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
+      m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
       m_next_event[i] = 0;
     } else {
       std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
@@ -615,7 +707,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     std::string configFile = param.Get(buffer, "");
     if (configFile.length() > 0)
       if (!ConfigChip(i, daq_board, configFile))
-	return;
+        return;
 
     // noisy and broken pixels
     dut->SetMaskAllPixels(false); //unmask all pixels
@@ -640,8 +732,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       mask_pixels = true;
     }
 
-    if (mask_pixels)
-      dut->MaskNoisyPixels();
+    if (mask_pixels) dut->MaskNoisyPixels();
 
     // triggering configuration per layer
     sprintf(buffer, "StrobeLength_%d", i);
@@ -665,22 +756,20 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     daq_board->SetReadoutMode(m_readout_mode);
 
     // PrepareEmptyReadout
-    daq_board->ConfigureReadout (1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
-    daq_board->ConfigureTrigger (0, m_strobe_length[i], 2, 0, m_trigger_delay[i]);
+    daq_board->ConfigureReadout(1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
+    daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0, m_trigger_delay[i]);
 
     // PrepareChipReadout
-    dut->SetChipMode(MODE_ALPIDE_CONFIG);
-    dut->SetReadoutDelay     (m_readout_delay[i]);
-    dut->SetEnableClustering (false);
-    dut->SetStrobeTiming     (m_strobeb_length[i]);
+    dut->SetChipMode           (MODE_ALPIDE_CONFIG);
+    dut->SetReadoutDelay       (m_readout_delay[i]);
+    dut->SetEnableClustering   (false);
+    dut->SetStrobeTiming       (m_strobeb_length[i]);
     dut->SetEnableOutputDrivers(true, true);
-    dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
+    dut->SetChipMode           (MODE_ALPIDE_READOUT_B);
 #endif
 
-    if (delay > 0)
-      m_reader[i]->SetQueueFullDelay(delay);
-    if (queue_size > 0)
-      m_reader[i]->SetMaxQueueSize(queue_size);
+    if (delay > 0)      m_reader[i]->SetQueueFullDelay(delay);
+    if (queue_size > 0) m_reader[i]->SetMaxQueueSize(queue_size);
     m_reader[i]->SetHighRateMode(high_rate_mode);
     m_reader[i]->SetReadoutMode(m_readout_mode);
 
@@ -693,10 +782,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   // Set back-bias voltage
   m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
   const int MonitorPSU = param.Get("MonitorPSU",       -1.);
-  const size_t buffer_size = 100;
-  char buffer[buffer_size];
   if (m_back_bias_voltage>=0.) {
     system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
+    const size_t buffer_size = 100;
+    char buffer[buffer_size];
     snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", m_back_bias_voltage);
     if (system(buffer)!=0) {
       const char* error_msg = "Failed to configure the back-bias voltage";
@@ -709,7 +798,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   if (MonitorPSU>0) {
     system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
   }
-  #endif
+#endif
   if (!m_configured) {
     m_configured = true;
     m_firstevent = true;
@@ -854,7 +943,7 @@ void PALPIDEFSProducer::Loop()
     if (!IsRunning())
     {
       if (IsFlushing())
-	SendEOR();
+        SendEOR();
       continue;
     }
 
@@ -864,16 +953,16 @@ void PALPIDEFSProducer::Loop()
       count += events_built;
 
       if (events_built == 0) {
-	if (m_status_interval > 0 && time(0) - last_status > m_status_interval) {
-	  SendStatusEvent();
-	  PrintQueueStatus();
-	  last_status = time(0);
-	}
-	break;
+        if (m_status_interval > 0 && time(0) - last_status > m_status_interval) {
+          SendStatusEvent();
+          PrintQueueStatus();
+          last_status = time(0);
+        }
+        break;
       }
 
       if (count % 20000 == 0)
-	std::cout << "Sending event " << count << std::endl;
+        std::cout << "Sending event " << count << std::endl;
     }
   } while (!IsDone());
 }
@@ -930,15 +1019,15 @@ int PALPIDEFSProducer::BuildEvent()
       std::string str(msg);
 
       if (m_firstevent) {
-	// the different layers may not have booted their FPGA at the same time, so the timestamp of the first event can be different. All subsequent ones should be identical.
-	str += " This is the first event after startup - so it might be OK.";
+        // the different layers may not have booted their FPGA at the same time, so the timestamp of the first event can be different. All subsequent ones should be identical.
+        str += " This is the first event after startup - so it might be OK.";
       } else {
-	timestamp_error = true;
+        timestamp_error = true;
 
-	if (m_recover_outofsync) {
-	  layer_selected[i] = false;
-	  str += " Excluding layer.";
-	}
+        if (m_recover_outofsync) {
+          layer_selected[i] = false;
+          str += " Excluding layer.";
+        }
       }
 
       std::cerr << str << std::endl;
@@ -951,10 +1040,10 @@ int PALPIDEFSProducer::BuildEvent()
     // recovery needs at least one more event in planes in question
     for (int i=0; i<m_nDevices; i++) {
       if (!layer_selected[i])
-	continue;
+        continue;
       if (!m_reader[i]->NextEvent()) {
-	delete[] layer_selected;
-	return 0;
+        delete[] layer_selected;
+        return 0;
       }
     }
   }
@@ -1013,14 +1102,14 @@ int PALPIDEFSProducer::BuildEvent()
     printf("Event %d. Trying to recover from out of sync error by adding %lu to next event in layer ", m_ev-1, timestamp);
     for (int i=0; i<m_nDevices; i++)
       if (layer_selected[i])
-	printf("%d (%lu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
+        printf("%d (%lu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
 
     printf("\n");
 
     for (int i=0; i<m_nDevices; i++) {
       if (layer_selected[i]) {
-	m_next_event[i] = m_reader[i]->PopNextEvent();
-	m_next_event[i]->m_timestamp_corrected += timestamp;
+        m_next_event[i] = m_reader[i]->PopNextEvent();
+        m_next_event[i]->m_timestamp_corrected += timestamp;
       }
     }
   }
@@ -1062,13 +1151,13 @@ void PALPIDEFSProducer::PrintQueueStatus()
 int main(int /*argc*/, const char ** argv) {
   eudaq::OptionParser op("EUDAQ Producer", "1.0", "The pALPIDEfs Producer");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
-      "The address of the RunControl application");
+                                   "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
-      "The minimum level for displaying log messages locally");
+                                   "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name (op, "n", "name", "pALPIDEfs", "string",
-      "The name of this Producer");
+                                   "The name of this Producer");
   eudaq::Option<int> debug_level(op, "d", "debug-level", 0, "int",
-      "Debug level for the producer");
+                                 "Debug level for the producer");
 
   try {
     op.Parse(argv);
