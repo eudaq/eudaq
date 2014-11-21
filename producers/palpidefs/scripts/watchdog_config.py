@@ -1,7 +1,8 @@
 # Watchdog configuration
 
-# comma separated list: email or phone numbers e.g. 41764875459@mail2sms.cern.ch (does not seem to work with cernmx, to be debugged)
-ALERT_TARGET = "jgrosseo@cern.ch"
+# array: email or phone numbers
+ALERT_TARGET = ( "jgrosseo@cern.ch" )
+#ALERT_TARGET = ( "jgrosseo@cern.ch", "41764875459@mail2sms.cern.ch" )
 
 # time in seconds between problem occured and alert sent
 ALERT_GRACE_TIME = 120

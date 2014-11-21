@@ -96,18 +96,19 @@ def send_alert():
       if (pad['bit'] == 0):
 	text += "%s: STATUS %d (%s)\n" % (pad['name'], pad['bit'], pad['info'] if 'info' in pad else "")
 
-    msg = MIMEText(text)
+    for target in ALERT_TARGET:
+      msg = MIMEText(text)
 
-    msg['Subject'] = "pALPIDEfs Watchdog: STATUS %d %d %d %d" % (PADS[0]['bit'], PADS[1]['bit'], PADS[2]['bit'], PADS[3]['bit'])
-    msg['From'] = "noreply@cern.ch"
-    msg['To'] = ALERT_TARGET
+      msg['Subject'] = "pALPIDEfs Watchdog: STATUS %d %d %d %d" % (PADS[0]['bit'], PADS[1]['bit'], PADS[2]['bit'], PADS[3]['bit'])
+      msg['From'] = "noreply@cern.ch"
+      msg['To'] = target
 
-    # Send the message via our own SMTP server, but don't include the
-    # envelope header.
-    s = smtplib.SMTP('cernmx.cern.ch')
-    #s.set_debuglevel(True)
-    s.sendmail(msg['From'], [ ALERT_TARGET ], msg.as_string())
-    s.quit()
+      # Send the message via our own SMTP server, but don't include the
+      # envelope header.
+      s = smtplib.SMTP('cernmx.cern.ch')
+      #s.set_debuglevel(True)
+      s.sendmail(msg['From'], [ target ], msg.as_string())
+      s.quit()
   
 
 def main(stdscr):
@@ -122,7 +123,7 @@ def main(stdscr):
     while True:
 	get_status(stdscr)
 	stdscr.addstr(0,20,'==== pALPIDEfs Watchdog ====')
-	stdscr.addstr(13, 0, "Alert target: %s" % ALERT_TARGET)
+	stdscr.addstr(13, 0, "Alert target: %s" % ",".join(ALERT_TARGET))
 	stdscr.addstr(17, 0, "X: Mask alerts for %d seconds" % ALERT_REPEAT_TIME)
 	stdscr.addstr(18, 0, "E: Unmask alerts")
 	stdscr.addstr(19, 0, "CTRL-C: Exit")
