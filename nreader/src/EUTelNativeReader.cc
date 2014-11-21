@@ -1,6 +1,7 @@
 #ifdef USE_EUDAQ
 // in this case, read immediately the info
 #include <eudaq/Info.hh>
+#include "eudaq/Event.hh"
 
 // now check if we have the new plugin mechanism, otherwise quit
 #ifdef  EUDAQ_NEW_DECODER
@@ -51,6 +52,7 @@
 using namespace std;
 using namespace marlin;
 using namespace eutelescope;
+using namespace eudaq;
 
 // initialize static members
 const unsigned short EUTelNativeReader::_eudrbOutOfSyncThr = 2;
@@ -184,6 +186,8 @@ void EUTelNativeReader::readDataSource(int numEvents) {
 				 << "Check that eudaq was compiled with LCIO and EUTELESCOPE active "<< endl;
 	throw MissingLibraryException( this, "eudaq" );
       }
+      if (lcEvent->getParameters().getIntVal("FLAG") == Event::FLAG_STATUS) {/*cout << "Skipping event " << lcEvent->getEventNumber() << ": status event" <<  endl;*/ continue;}
+      else if (lcEvent->getParameters().getIntVal("FLAG") == Event::FLAG_BROKEN) {/*cout << "Skipping event " << lcEvent->getEventNumber() << ": broken or out of sync" <<  endl;*/ continue;}
       ProcessorMgr::instance()->processEvent( lcEvent );
       delete lcEvent;
     }
