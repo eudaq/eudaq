@@ -689,10 +689,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     eudaq::mSleep(10);
   }
 
-  #ifndef SIMULATION
+#ifndef SIMULATION
   // Set back-bias voltage
-  m_back_bias_voltage =  param.Get("BackBiasVoltage",  -1.);
-  const int MonitorPSU        =  param.Get("MonitorPSU",       -1.);
+  m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
+  const int MonitorPSU = param.Get("MonitorPSU",       -1.);
   const size_t buffer_size = 100;
   char buffer[buffer_size];
   if (m_back_bias_voltage>=0.) {

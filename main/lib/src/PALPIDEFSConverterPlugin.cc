@@ -68,11 +68,15 @@ namespace eudaq {
       m_DataVersion     = bore.GetTag<int>("DataVersion", 1);
       m_BackBiasVoltage = bore.GetTag<float>("BackBiasVoltage", -4.);
 
-      m_Vaux   = new int[m_nLayers];
-      m_Vreset = new int[m_nLayers];
-      m_Vcasn  = new int[m_nLayers];
-      m_Vcasp  = new int[m_nLayers];
-      m_Ithr   = new int[m_nLayers];
+      m_Vaux           = new int[m_nLayers];
+      m_Vreset         = new int[m_nLayers];
+      m_Vcasn          = new int[m_nLayers];
+      m_Vcasp          = new int[m_nLayers];
+      m_Ithr           = new int[m_nLayers];
+      m_strobe_length  = new int[m_nLayers];
+      m_strobeb_length = new int[m_nLayers];
+      m_trigger_delay  = new int[m_nLayers];
+      m_readout_delay  = new int[m_nLayers];
 
       m_configs = new std::string[m_nLayers];
 
@@ -95,11 +99,22 @@ namespace eudaq {
         m_Vcasp[i]   = -10;
         m_Ithr[i]    = -10;
 #endif
+        sprintf(tmp, "StrobeLength_%d", i);
+        m_strobe_length[i]  = bore.GetTag<int>(tmp, -100);
+        sprintf(tmp, "StrobeBLength_%d", i);
+        m_strobeb_length[i] = bore.GetTag<int>(tmp, -100);
+        sprintf(tmp, "ReadoutDelay_%d", i);
+        m_trigger_delay[i]  = bore.GetTag<int>(tmp, -100);
+        sprintf(tmp, "TriggerDelay_%d", i);
+        m_readout_delay[i]  = bore.GetTag<int>(tmp, -100);
 
         // get masked pixels
         sprintf(tmp, "MaskedPixels_%d", i);
         std::string pixels = bore.GetTag<std::string>(tmp, "");
         //cout << "Masked pixels of layer " << i << " is: " << pixels.c_str() << endl;
+        sprintf(tmp, "run%06d-maskedPixels_%d.txt",bore.GetRunNumber(), i);
+        ofstream maskedPixelFile(tmp);
+        maskedPixelFile << pixels;
 
         // firmware version
         sprintf(tmp, "FirmwareVersion_%d", i);
@@ -402,24 +417,37 @@ namespace eudaq {
       unsigned int nplanes=sev.NumPlanes();             //deduce number of planes from StandardEvent
 
       lev.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE,eutelescope::kDE);
-      lev.parameters().setValue("TIMESTAMP",(int) sev.GetTimestamp());
+      lev.parameters().setValue("TIMESTAMP_H",(int)((sev.GetTimestamp() & 0xFFFFFFFF00000000)>>32));
+      lev.parameters().setValue("TIMESTAMP_L",(int)(sev.GetTimestamp() & 0xFFFFFFFF));
       lev.parameters().setValue("FLAG", (int) sev.GetFlags());
-      lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
-      const int n_bs=100;
-      char tmp[n_bs];
-      for (int id=0 ; id<m_nLayers ; id++) {
-        snprintf(tmp, n_bs, "Vaux_%d", id);
-        lev.parameters().setValue(tmp, m_Vaux[id]);
-        snprintf(tmp, n_bs, "Vreset_%d", id);
-        lev.parameters().setValue(tmp, m_Vreset[id]);
-        snprintf(tmp, n_bs, "Vcasn_%d", id);
-        lev.parameters().setValue(tmp, m_Vcasn[id]);
-        snprintf(tmp, n_bs, "Vcasp_%d", id);
-        lev.parameters().setValue(tmp, m_Vcasp[id]);
-        snprintf(tmp, n_bs, "Ithr_%d", id);
-        lev.parameters().setValue(tmp, m_Ithr[id]);
+      static bool parametersSaved = false;
+      if (sev.GetFlags() != Event::FLAG_BROKEN && sev.GetFlags() != Event::FLAG_STATUS && !parametersSaved)
+      {
+        parametersSaved = true;
+        lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
+        const int n_bs=100;
+        char tmp[n_bs];
+        for (int id=0 ; id<m_nLayers ; id++) {
+          snprintf(tmp, n_bs, "Vaux_%d", id);
+          lev.parameters().setValue(tmp, m_Vaux[id]);
+          snprintf(tmp, n_bs, "Vreset_%d", id);
+          lev.parameters().setValue(tmp, m_Vreset[id]);
+          snprintf(tmp, n_bs, "Vcasn_%d", id);
+          lev.parameters().setValue(tmp, m_Vcasn[id]);
+          snprintf(tmp, n_bs, "Vcasp_%d", id);
+          lev.parameters().setValue(tmp, m_Vcasp[id]);
+          snprintf(tmp, n_bs, "Ithr_%d", id);
+          lev.parameters().setValue(tmp, m_Ithr[id]);
+          snprintf(tmp, n_bs, "m_strobe_length_%d", id);
+          lev.parameters().setValue(tmp, m_strobe_length[id]);
+          snprintf(tmp, n_bs, "m_strobeb_length_%d", id);
+          lev.parameters().setValue(tmp, m_strobeb_length[id]);
+          snprintf(tmp, n_bs, "m_trigger_delay_%d", id);
+          lev.parameters().setValue(tmp, m_trigger_delay[id]);
+          snprintf(tmp, n_bs, "m_readout_delay_%d", id);
+          lev.parameters().setValue(tmp, m_readout_delay[id]);
+        }
       }
-
       LCCollectionVec *zsDataCollection;
       try {
         zsDataCollection=static_cast<LCCollectionVec*>(lev.getCollection("zsdata_pALPIDEfs"));
@@ -466,6 +494,10 @@ namespace eudaq {
     int* m_Vcasn;
     int* m_Vcasp;
     int* m_Ithr;
+    int* m_strobe_length;
+    int* m_strobeb_length;
+    int* m_trigger_delay;
+    int* m_readout_delay;
 
 #if USE_TINYXML
     int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
@@ -503,7 +535,7 @@ namespace eudaq {
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
     PALPIDEFSConverterPlugin()
-        : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0)
+        : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0)
       {}
 
     // The single instance of this converter plugin
