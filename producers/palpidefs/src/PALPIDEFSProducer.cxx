@@ -515,11 +515,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 {
   std::cout << "Configuring..." << std::endl;
 
-  const int StrobeLength =  param.Get("StrobeLength",  10);
-  const int StrobeBLength = param.Get("StrobeBLength", 20);
-  const int ReadoutDelay =  param.Get("ReadoutDelay",  10);
-  const int TriggerDelay =  param.Get("TriggerDelay",  75);
-
   m_status_interval = param.Get("StatusInterval", -1);
 
   const int delay = param.Get("QueueFullDelay", 0);
@@ -563,6 +558,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     m_next_event = new SingleEvent*[m_nDevices];
     m_reader = new DeviceReader*[m_nDevices];
+    m_strobe_length  = new int[m_nDevices];
+    m_strobeb_length = new int[m_nDevices];
+    m_trigger_delay  = new int[m_nDevices];
+    m_readout_delay  = new int[m_nDevices];
   }
 
   for (int i=0; i<m_nDevices; i++) {
@@ -646,16 +645,16 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     // triggering configuration per layer
     sprintf(buffer, "StrobeLength_%d", i);
-    const int LayerStrobeLength = param.Get(buffer, StrobeLength);
+    m_strobe_length[i]  = param.Get(buffer, param.Get("StrobeLength",  10));
 
     sprintf(buffer, "StrobeBLength_%d", i);
-    const int LayerStrobeBLength = param.Get(buffer, StrobeBLength);
+    m_strobeb_length[i] = param.Get(buffer, param.Get("StrobeBLength", 20));
 
     sprintf(buffer, "ReadoutDelay_%d", i);
-    const int LayerReadoutDelay = param.Get(buffer, ReadoutDelay);
+    m_readout_delay[i]  = param.Get(buffer, param.Get("ReadoutDelay",  10));
 
     sprintf(buffer, "TriggerDelay_%d", i);
-    const int LayerTriggerDelay = param.Get(buffer, TriggerDelay);
+    m_trigger_delay[i]  = param.Get(buffer, param.Get("TriggerDelay",  75));
 
     // data taking configuration
 
@@ -667,16 +666,16 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     // PrepareEmptyReadout
     daq_board->ConfigureReadout (1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
-    daq_board->ConfigureTrigger (0, LayerStrobeLength, 2, 0, LayerTriggerDelay);
+    daq_board->ConfigureTrigger (0, m_strobe_length[i], 2, 0, m_trigger_delay[i]);
 
     // PrepareChipReadout
     dut->SetChipMode(MODE_ALPIDE_CONFIG);
-    dut->SetReadoutDelay     (LayerReadoutDelay);
+    dut->SetReadoutDelay     (m_readout_delay[i]);
     dut->SetEnableClustering (false);
-    dut->SetStrobeTiming     (LayerStrobeBLength);
+    dut->SetStrobeTiming     (m_strobeb_length[i]);
     dut->SetEnableOutputDrivers(true, true);
     dut->SetChipMode         (MODE_ALPIDE_READOUT_B);
-    #endif
+#endif
 
     if (delay > 0)
       m_reader[i]->SetQueueFullDelay(delay);
@@ -778,6 +777,16 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     sprintf(tmp, "FirmwareVersion_%d", i);
     bore.SetTag(tmp, m_reader[i]->GetDAQBoard()->GetFirmwareName());
 #endif
+
+    // readout / triggering settings
+    sprintf(tmp, "StrobeLength_%d", i);
+    bore.SetTag(tmp, m_strobe_length[i]);
+    sprintf(tmp, "StrobeBLength_%d", i);
+    bore.SetTag(tmp, m_strobeb_length[i]);
+    sprintf(tmp, "ReadoutDelay_%d", i);
+    bore.SetTag(tmp, m_readout_delay[i]);
+    sprintf(tmp, "TriggerDelay_%d", i);
+    bore.SetTag(tmp, m_trigger_delay[i]);
   }
 
   // back-bias voltage
