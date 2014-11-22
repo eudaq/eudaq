@@ -1,15 +1,18 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Timer.hh"
 #include "eudaq/TLUEvent.hh" // for the TLU event
 #include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
-
+#include "eudaq/TLU2Packet.hh"
 #include "tlu/miniTLUController.hh"
-//#include "tlu/USBTracer.hh"
 #include <iostream>
 #include <ostream>
-#include <cctype>
-#include <memory>
+#include <vector>
+//#include <cctype>
+//#include <memory>
 
 
 typedef eudaq::TLUEvent TLUEvent;
@@ -20,7 +23,7 @@ using namespace tlu;
 class miniTLUProducer: public eudaq::Producer {
 public:
   miniTLUProducer(const std::string & runcontrol) :
-    eudaq::Producer("TLU", runcontrol), m_tlu(0), readout_delay(100), TLUJustStopped(false) {
+    eudaq::Producer("miniTLU", runcontrol), m_tlu(nullptr), readout_delay(100), TLUJustStopped(false) {
   }
 
   void MainLoop() {
@@ -42,14 +45,48 @@ public:
 	//	std::cout << "Executing main loop" << std::endl;
 	m_tlu->CheckEventFIFO();
 	m_tlu->ReadEventFIFO();
-	for (int i = 0; i < m_tlu->GetNEvent(); i++) {
-	  uint64_t word = m_tlu->GetEvent(i);
-	  TLUEvent ev(m_run, m_ev++, word&0xFFFFFFFF);
-	  ev.SetTag("loBits",to_string(word&0xFFFFFFFF));
-	  ev.SetTag("hiBits",to_string(word>>32));
+/*
+	for (int i = 0; i < m_tlu->GetNEvent();) {
+	  uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
+	  uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
+	  uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
+	  i++;
+	  uint32_t SC0 = (m_tlu->GetEvent(i) >> 56)&0xff;
+	  uint32_t SC1 = (m_tlu->GetEvent(i) >> 48)&0xff;
+	  uint32_t SC2 = (m_tlu->GetEvent(i) >> 40)&0xff;
+	  uint32_t SC3 = (m_tlu->GetEvent(i) >> 32)&0xff;
+	  uint32_t evtNumber = (m_tlu->GetEvent(i))&0xffffffff;
+	  i++;
+	  TLUEvent ev(m_run, evtNumber, timeStamp);
+	  ev.SetTag("inputTriggers", to_string(inputTrig));
+	  ev.SetTag("SC0", to_string(SC0));
+	  ev.SetTag("SC1", to_string(SC1));
+	  ev.SetTag("SC2", to_string(SC2));
+	  ev.SetTag("SC3", to_string(SC3));
 	  SendEvent(ev);	  
 	}
-	m_tlu->ClearEventFIFO();
+*/
+
+	if (m_tlu->GetNEvent()) {
+		eudaq::TLU2Packet packet(0);
+		for (int i = 0; i < m_tlu->GetNEvent();) {
+			uint32_t evtType = (m_tlu->GetEvent(i) >> 60)&0xf;
+			uint32_t inputTrig = (m_tlu->GetEvent(i) >> 48)&0xfff;
+			uint64_t timeStamp = (m_tlu->GetEvent(i))&0xffffffffffff;
+			i++;
+			uint32_t evtNumber = (m_tlu->GetEvent(i+1))&0xffffffff;
+			i++;
+			packet.GetMetaData().add(true, 0x1, evtType);
+			packet.GetMetaData().add(true, 0x2, inputTrig);
+			packet.GetMetaData().add(true, 0x3, timeStamp);
+			packet.GetMetaData().add(true, 0x4, evtNumber);
+		} 
+		packet.SetData(m_tlu->GetEventData());
+		SendPacket( packet );
+		m_tlu->DumpEvents();
+	}
+	//std::cout << "eventFifoCSR " << m_tlu->GetEventFifoCSR() << std::endl;
+	//m_tlu->ClearEventFIFO();
 	//m_tlu->Update(timestamps); // get new events
 // 	if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
 // 	  bool inhibit = m_tlu->InhibitTriggers();
@@ -101,47 +138,40 @@ public:
       //	int errorhandler = param.Get("ErrorHandler", 2);
 
      
-      m_tlu =std::make_shared<miniTLUController>(param.Get("ConnectionFile","file:///dummy_connections.xml"),param.Get("DeviceName","dummy.udp"));
+      m_tlu = std::unique_ptr<miniTLUController>(new miniTLUController(param.Get("ConnectionFile","file:///dummy_connections.xml"),param.Get("DeviceName","dummy.udp")));
 
       std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::endl;
 	
       m_tlu->SetCheckConfig(param.Get("CheckConfig",1));
 
       readout_delay = param.Get("ReadoutDelay",100);
-      /*
-      m_tlu->SetDUTInterfaces(param.Get("DUTInterfaces",42));
-      m_tlu->SetInternalTriggerInterval(param.Get("InternalTriggerInterval",42));
-      m_tlu->SetTriggerMask(param.Get("TriggerMask",42));
-      m_tlu->SetTriggerVeto(param.Get("TriggerVeto",42));
-      m_tlu->SetEventFifoCSR(param.Get("EventFifoCSR",42));
-      m_tlu->SetLogicClocksCSR(param.Get("LogicClocksCSR",42));
-      m_tlu->SetTriggerLength(param.Get("TriggerLength",42));
-      m_tlu->SetTrigInterpulseDeadTime(param.Get("TrigInterpulseDeadTime",42));
-      m_tlu->SetTriggerDelay(param.Get("TriggerDelay",42));
-      m_tlu->SetNMaxTriggers(param.Get("NMaxTriggers",42));
-      m_tlu->SetTrigRearmDeadTime(param.Get("TrigRearmDeadTime",42));
-      m_tlu->SetShutterLength(param.Get("ShutterLength",42));
-      m_tlu->SetShutInterpulseDeadTime(param.Get("ShutInterpulseDeadTime",42));
-      m_tlu->SetShutterDelay(param.Get("ShutterDelay",42));
-      m_tlu->SetNMaxShutters(param.Get("NMaxShutters",42));
-      m_tlu->SetShutRearmDeadTime(param.Get("ShutRearmDeadTime",42));
-      m_tlu->SetSpillLength(param.Get("SpillLength",42));
-      m_tlu->SetSpillInterpulseDeadTime(param.Get("SpillInterpulseDeadTime",42));
-      m_tlu->SetSpillDelay(param.Get("SpillDelay",42));
-      m_tlu->SetNMaxSpillgers(param.Get("NMaxSpillgers",42));
-      m_tlu->SetSpillRearmDeadTime(param.Get("SpillRearmDeadTime",42));
-      m_tlu->SetEnableRecordData(param.Get("Enable_Record_Data",42));
-      */
-
-      m_tlu->SetInternalTriggerInterval(param.Get("InternalTriggerInterval",0));
-       //    m_tlu->ResetBoard();
-
+      m_tlu->AllTriggerVeto();
       m_tlu->InitializeI2C(param.Get("I2C_DAC_Addr",0x1f),
 			   param.Get("I2C_ID_Addr",0x50));
-      m_tlu->SetDACValue(0, param.Get("DACThreshold0",0x4100));
-      m_tlu->SetDACValue(1, param.Get("DACThreshold1",0x4100));
-      m_tlu->SetDACValue(2, param.Get("DACThreshold2",0x4100));
-      m_tlu->SetDACValue(3, param.Get("DACThreshold3",0x4100));
+      if (param.Get("UseIntDACValues",1)) {
+	m_tlu->SetDACValue(0, param.Get("DACIntThreshold0",0x4100));
+	m_tlu->SetDACValue(1, param.Get("DACIntThreshold1",0x4100));
+	m_tlu->SetDACValue(2, param.Get("DACIntThreshold2",0x4100));
+	m_tlu->SetDACValue(3, param.Get("DACIntThreshold3",0x4100));
+      } else {
+	m_tlu->SetThresholdValue(0, param.Get("DACThreshold0",1.3));
+	m_tlu->SetThresholdValue(1, param.Get("DACThreshold1",1.3));
+	m_tlu->SetThresholdValue(2, param.Get("DACThreshold2",1.3));
+	m_tlu->SetThresholdValue(3, param.Get("DACThreshold3",1.3));
+      }
+      if(param.Get("resetClocks",0)) {
+	m_tlu->ResetBoard();
+      }
+      if(param.Get("resetSerdes",0)) {
+        m_tlu->ResetSerdes();
+      }
+      m_tlu->ConfigureInternalTriggerInterval(param.Get("InternalTriggerInterval",42));
+      m_tlu->SetTriggerMask(param.Get("TriggerMask",0x0));
+      m_tlu->SetDUTMask(param.Get("DUTMask",0x0));
+      m_tlu->SetEnableRecordData(param.Get("EnableRecordData",0x0));
+      // write DUT mask (not implemented)
+      // write DUT style (not implemented)
+
       // by dhaas
       eudaq::mSleep(1000);
 
@@ -160,6 +190,10 @@ public:
 
   virtual void OnStartRun(unsigned param) {
     SetStatus(eudaq::Status::LVL_OK, "Wait");
+    if(!m_tlu) {
+	SetStatus(eudaq::Status::LVL_ERROR, "miniTLU connection not present!");
+	return;
+    }
     try {
       m_run = param;
       m_ev = 0;
@@ -167,7 +201,7 @@ public:
       TLUEvent ev(TLUEvent::BORE(m_run));
  	ev.SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
 	ev.SetTag("BoardID", to_string(m_tlu->GetBoardID()));
- 	ev.SetTag("ReadoutDelay", to_string(readout_delay));
+	// 	ev.SetTag("ReadoutDelay", to_string(readout_delay));
 // 	ev.SetTag("TriggerInterval", to_string(trigger_interval));
 // 	ev.SetTag("DutMask", "0x" + to_hex(dut_mask));
 // 	ev.SetTag("AndMask", "0x" + to_hex(and_mask));
@@ -188,6 +222,15 @@ public:
 // 	m_tlu->Update(timestamps);
 // 	m_tlu->Start();
       TLUStarted = true;
+      
+      m_tlu->ResetCounters();
+      std::cout << "Words in FIFO before start " << m_tlu->GetEventFifoFillLevel() << std::endl;
+      m_tlu->CheckEventFIFO();
+      m_tlu->ReadEventFIFO();
+      m_tlu->ClearEventFIFO(); // software side
+      m_tlu->ResetEventFIFO(); // hardware side
+      m_tlu->NoneTriggerVeto();
+      
       SetStatus(eudaq::Status::LVL_OK, "Started");
     } catch (const std::exception & e) {
       printf("Caught exception: %s\n", e.what());
@@ -202,6 +245,7 @@ public:
   virtual void OnStopRun() {
     try {
       std::cout << "Stop Run" << std::endl;
+      m_tlu->AllTriggerVeto();
       TLUStarted = false;
       TLUJustStopped = true;
       while (TLUJustStopped) {
@@ -270,8 +314,8 @@ private:
   bool timestamps, done, timestamp_per_run;
   bool TLUStarted;
   bool TLUJustStopped;
+  std::unique_ptr<miniTLUController> m_tlu;
   uint64_t lasttime;
-  std::shared_ptr<miniTLUController> m_tlu;
 };
 
 int main(int /*argc*/, const char ** argv) {

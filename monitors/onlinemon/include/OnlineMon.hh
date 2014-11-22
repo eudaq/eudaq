@@ -14,6 +14,7 @@
 
 //EUDAQ includes
 #ifndef __CINT__
+#include "eudaq/Configuration.hh"
 #include "eudaq/Monitor.hh"
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/TLUEvent.hh"

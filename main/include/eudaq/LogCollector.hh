@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 #include "eudaq/Platform.hh"
+#include "eudaq/Configuration.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
 #include <memory>

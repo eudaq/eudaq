@@ -5,7 +5,7 @@
 
 namespace eudaq {
 
-  const std::string FileNamer::default_pattern = "../data/run$6R$X";
+  const std::string FileNamer::default_pattern = "../data/run$6R$S$3N$X";
 
   FileNamer::FileNamer(const std::string & p) {
     std::string pattern(p == "" ? default_pattern : p);

@@ -1,7 +1,9 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/StringEvent.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/AidaPacket.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 
@@ -12,16 +14,19 @@
 
 using eudaq::StringEvent;
 using eudaq::RawDataEvent;
+using eudaq::AidaPacket;
 
 class PyProducer : public eudaq::Producer {
   public:
     PyProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
-  void SendEvent(uint8_t* data, size_t size) {
-    RawDataEvent ev(m_name, m_run, ++m_evt);
+  
+    void SendEvent(uint8_t* data, size_t size) {
+      RawDataEvent ev(m_name, m_run, ++m_evt);
       ev.AddBlock(0, data, size);
       eudaq::DataSender::SendEvent(ev);
     }
+
     virtual void OnConfigure(const eudaq::Configuration & param) {
       std::cout << "[PyProducer] Received Configuration" << std::endl;
       m_config = new eudaq::Configuration(param);
@@ -35,6 +40,7 @@ class PyProducer : public eudaq::Producer {
 	SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
       }
     }
+
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_evt = 0;

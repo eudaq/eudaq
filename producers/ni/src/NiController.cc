@@ -91,6 +91,9 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
 
 	std::string m_server;
 	m_server = param.Get("NiIPaddr", "");
+
+	std::string m_config_socket_port;
+	m_config_socket_port = param.Get("NiConfigSocketPort", "49248");
 	
 	// convert string in config into IPv4 address
 	hostent * host = gethostbyname(m_server.c_str());
@@ -109,15 +112,16 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
                 printf("----TCP/NI crate: SOCKET is OK...\n");
 
         printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
-        printf("----TCP/NI crate INET PORT is: %d \n", PORT_CONFIG );
+		printf("----TCP/NI crate INET PORT is: %d \n", m_config_socket_port);
 
 	config.sin_family = AF_INET;
-	config.sin_port = htons(PORT_CONFIG);
+	int i_auto = std::stoi(m_config_socket_port, nullptr, 10);
+	config.sin_port = htons(i_auto);
 	memset(&(config.sin_zero), '\0', 8);
 	if (connect(sock_config, (struct sockaddr *) &config, sizeof(struct sockaddr)) == -1) {
 		EUDAQ_ERROR("ConfSocket: National Instruments crate doesn't appear to be running  " );
 		perror("ConfSocket Error: connect()");
-		EUDAQ_Sleep(5);
+		EUDAQ_Sleep(60);
 		exit(1);
 	} else
 		printf("----TCP/NI crate The CONNECT is OK...\n");
@@ -208,6 +212,9 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 	std::string m_server;
 	m_server = param.Get("NiIPaddr", "");
 
+	std::string m_data_transport_socket_port;
+	m_data_transport_socket_port = param.Get("NiDataTransportSocketPort", "49250");
+
 	// convert string in config into IPv4 address
 	hostent * host = gethostbyname(m_server.c_str());
 	if (!host) {
@@ -224,14 +231,16 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 		printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
 
 	printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n", inet_ntoa(datatransport.sin_addr));
-	printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %d \n", PORT_DATATRANSF );
+	printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %d \n", m_data_transport_socket_port);
 
 	datatransport.sin_family = AF_INET;
-	datatransport.sin_port = htons(PORT_DATATRANSF);
+	int i_auto = std::stoi(m_data_transport_socket_port, nullptr, 10);
+	datatransport.sin_port = htons(i_auto);	
 	memset(&(datatransport.sin_zero), '\0', 8);
 	if (connect(sock_datatransport, (struct sockaddr *) &datatransport, sizeof(struct sockaddr)) == -1) {
 		EUDAQ_ERROR("DataTransportSocket: National Instruments crate doesn't appear to be running  " );
 		perror("DataTransportSocket: connect()");
+		EUDAQ_Sleep(60);
 		exit(1);
 	} else
 		printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");

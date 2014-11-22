@@ -31,6 +31,12 @@ namespace eudaq {
       template<typename T, typename U>
         void write(const std::pair<T, U> & t);
 
+      void append( const unsigned char * data, size_t size ) {
+    	  Serialize( data, size );
+      }
+
+      virtual uint64_t GetCheckSum() { return 0; }
+
       virtual ~Serializer() {}
     private:
       template <typename T>
@@ -181,6 +187,8 @@ namespace eudaq {
           read(t);
           return t;
         }
+
+      void read( unsigned char *dst, size_t size ) { Deserialize( dst, size ); }
 
       virtual ~Deserializer() {}
     protected:
