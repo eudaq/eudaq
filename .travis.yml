@@ -13,10 +13,7 @@ branches:
   only:
     - master
     - v1.4-dev
-notifications:
-  email:
-    recipients:
-      - themperek@gmail.com
-    on_success: change
-    on_failure: always
-script: cd build && cmake -DBUILD_onlinemon=OFF -DBUILD_offlinemon=OFF -DBUILD_gui=OFF ../ && make
+script:
+ - cd build
+ - cmake -DBUILD_onlinemon=OFF -DBUILD_offlinemon=OFF -DBUILD_gui=OFF ../
+ - make
