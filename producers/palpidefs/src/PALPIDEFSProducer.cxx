@@ -123,7 +123,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
 
 // Will unmask and select one pixel per region.
 // The pixels are calculated from the number of the mask stage
-void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int nPixels /* = 1 */) {
+void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int ***Data, int steps, int nPixels /* = 1 */) {
   int FirstRegion = 0;
   int LastRegion  = 31;
   if (AMaskStage >= 512 * 32 / nPixels) {
@@ -147,6 +147,7 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
       m_dut->SetDisableColumn    (ireg, DCol, false);
       m_dut->SetMaskSinglePixel  (ireg, DCol, Address, false);
       m_dut->SetInjectSinglePixel(ireg, DCol, Address, true, APulseType, false);
+      for (int ipoint=0; ipoint<steps; ++ipoint) ++Data[DCol,ireg*16][Address][ipoint];
     }
   }
 }
@@ -154,10 +155,12 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
 bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int ChStop, int ChStep, int ***Data, int *Points) {
   int PulseMode = 2;
   bool ReadFailure = false;
+  int steps = (ChStop-ChStart)/ChStep;
+  steps = ((ChStop-ChStart)%ChStep>0) ? steps+1 : steps;
   std::vector <TPixHit> Hits;
   for (int istage=0; (istage<NMaskStages)&&(!ReadFailure); ++istage) {
     if (!(istage %10)) std::cout << "Threshold scan: mask stage " << istage << std::endl;
-    PrepareMaskStage(PT_ANALOGUE, istage);
+    PrepareMaskStage(PT_ANALOGUE, istage, Data, steps);
     m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, ChStart, PulseMode);
     int ipoint = 0;
     for (int icharge = ChStart; icharge < ChStop; icharge += ChStep) {
@@ -176,6 +179,7 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
   m_dut->SetMaskAllPixels(false);
   return ReadFailure;
 }
+//==================================================================================================
 
 DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut) :
   m_queue_size(0),
@@ -594,8 +598,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   m_SCS_n_events      = param.Get("SCSnEvents",    50);
   m_SCS_n_mask_stages = param.Get("SCSnMaskStages", 1);
 
-  int SCS_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
-  SCS_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? SCS_steps+1 : SCS_steps;
+  m_SCS_n_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
+  m_SCS_n_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? m_SCS_n_steps+1 : m_SCS_n_steps;
 
 
   if (!m_configured) {
@@ -639,27 +643,29 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     char buffer[buffer_size];
 
     sprintf(buffer, "BoardAddress_%d", i);
-    m_do_SCS[i] = (bool)param.Get("SCS_%d", 0);
-    m_SCS_hitmap = new int****[m_nDevices];
-    m_SCS_mask   = new int****[m_nDevices];
+    m_do_SCS[i]  = (bool)param.Get("SCS_%d", 0);
+    m_SCS_data = new int***[m_nDevices];
+    m_SCS_points = new int*[m_nDevices];
 
     if (m_do_SCS[i]) {
-      for (int i=0; i<m_nDevices; ++i) {
-        m_SCS_hitmap[i] = new int***[512];
-        m_SCS_mask[i]   = new int***[512];
-        for (int j=0; j<512; ++j) {
-          m_SCS_hitmap[i][j] = new int**[1024];
-          m_SCS_mask[i][j]   = new int**[1024];
-          for (int k=0; k<1024; ++k) {
-            m_SCS_hitmap[i][j][k] = new int*[SCS_steps];
-            m_SCS_mask[i][j][k]   = new int*[SCS_steps];
-            for (int l=0; l<SCS_steps; ++l) {
-              m_SCS_hitmap[i][j][k][l] = 0;
-              m_SCS_mask[i][j][k][l]   = 0;
-            }
+      m_SCS_data[i] = new int**[512];
+      m_SCS_points[i] = new int[m_SCS_n_steps];
+      for (int j=0; j<512; ++j) {
+        m_SCS_data[i][j] = new int*[1024];
+        for (int k=0; k<1024; ++k) {
+          m_SCS_data[i][j][k] = new int[m_SCS_n_steps];
+          for (int l=0; l<m_SCS_n_steps; ++l) {
+            m_SCS_data[i][j][k][l] = -1;
           }
         }
       }
+      for (int j=0; j<m_SCS_n_steps; ++j) {
+        m_SCS_points[i][j] = 0;
+      }
+    }
+    else {
+      m_SCS_data[i]   = 0x0;
+      m_SCS_points[i] = 0x0;
     }
 
 #ifndef SIMULATION
@@ -708,6 +714,14 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     if (configFile.length() > 0)
       if (!ConfigChip(i, daq_board, configFile))
         return;
+
+    if (m_do_SCS[i]) {
+        m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start, m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i]);
+        // reconfigure
+        if (configFile.length() > 0)
+            if (!ConfigChip(i, daq_board, configFile))
+                return;
+    }
 
     // noisy and broken pixels
     dut->SetMaskAllPixels(false); //unmask all pixels
@@ -825,6 +839,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 #endif
   bore.SetTag("EUDAQ_GITVersion", PACKAGE_VERSION);
 
+  std::vector<int> SCS_data_block;
+  std::vector<int> SCS_points_block;
+
   // read configuration, dump to XML string
   for (int i=0; i<m_nDevices; i++) {
     TiXmlDocument doc(m_full_config.c_str());
@@ -876,6 +893,33 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     bore.SetTag(tmp, m_readout_delay[i]);
     sprintf(tmp, "TriggerDelay_%d", i);
     bore.SetTag(tmp, m_trigger_delay[i]);
+
+
+    // S-curve scan data
+
+    SCS_data_block.clear();
+    SCS_data_block.reserve(512*1024*m_SCS_n_steps);
+    SCS_points_block.clear();
+    SCS_points_block.reserve(m_SCS_n_steps);
+    sprintf(tmp, "SCurveScan_%d", i);
+    if (m_do_SCS[i]) {
+      for (int j=0; j<512; ++j) {
+        for (int k=0; k<1024; ++k) {
+          for (int l=0; l<m_SCS_n_steps; ++l) {
+            SCS_data_block.push_back(m_SCS_data[i][j][k][l]);
+          }
+        }
+      }
+      for (int j=0; j<m_SCS_n_steps; ++j) {
+        SCS_points_block.push_back(m_SCS_points[i][j]);
+      }
+      bore.SetTag(tmp, (int)1);
+    }
+    else {
+      bore.SetTag(tmp, (int)0);
+    }
+    bore.AddBlock(i,   SCS_data_block);
+    bore.AddBlock(i+1, SCS_points_block);
   }
 
   // back-bias voltage

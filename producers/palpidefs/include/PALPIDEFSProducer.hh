@@ -80,7 +80,7 @@ class DeviceReader {
     void Push(SingleEvent* ev);
     bool QueueFull();
 
-    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int nPixels = 1);
+    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int ***Data, int steps, int nPixels = 1);
 
     std::queue<SingleEvent*> m_queue;
     unsigned long m_queue_size;
@@ -107,7 +107,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0), m_back_bias_voltage(-1), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_do_SCS(0x0), m_SCS_hitmap(0x0), m_SCS_mask(0x0) {}
+        : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0), m_back_bias_voltage(-1), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -125,7 +125,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     void SendEOR();
     void SendStatusEvent();
     void PrintQueueStatus();
-    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int nPixels);
+    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int nPixels, int ***Data);
 
     bool IsRunning() {   SimpleLock lock(m_mutex); return m_running; }
     bool IsFlushing() {  SimpleLock lock(m_mutex); return m_flush; }
@@ -162,9 +162,10 @@ class PALPIDEFSProducer : public eudaq::Producer {
     int m_SCS_charge_step;
     int m_SCS_n_events;
     int m_SCS_n_mask_stages;
+    int m_SCS_n_steps;
     bool* m_do_SCS;
 
     // S-Curve scan output data
-    int *****m_SCS_hitmap;
-    int *****m_SCS_mask;
+    int ****m_SCS_data;
+    int **m_SCS_points;
 };
