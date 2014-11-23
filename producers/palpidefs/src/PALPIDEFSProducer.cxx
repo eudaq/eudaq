@@ -633,6 +633,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_strobeb_length = new int[m_nDevices];
     m_trigger_delay  = new int[m_nDevices];
     m_readout_delay  = new int[m_nDevices];
+    m_do_SCS         = new bool[m_nDevices];
   }
 
   for (int i=0; i<m_nDevices; i++) {
@@ -642,8 +643,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     const size_t buffer_size = 100;
     char buffer[buffer_size];
 
-    sprintf(buffer, "BoardAddress_%d", i);
-    m_do_SCS[i]  = (bool)param.Get("SCS_%d", 0);
+    sprintf(buffer, "SCS_%d", i);
+    m_do_SCS[i]  = (bool)param.Get(buffer, 0);
     m_SCS_data = new int***[m_nDevices];
     m_SCS_points = new int*[m_nDevices];
 
@@ -896,12 +897,11 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 
 
     // S-curve scan data
-
     SCS_data_block.clear();
     SCS_data_block.reserve(512*1024*m_SCS_n_steps);
     SCS_points_block.clear();
     SCS_points_block.reserve(m_SCS_n_steps);
-    sprintf(tmp, "SCurveScan_%d", i);
+    sprintf(tmp, "SCS_%d", i);
     if (m_do_SCS[i]) {
       for (int j=0; j<512; ++j) {
         for (int k=0; k<1024; ++k) {
@@ -921,6 +921,13 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     bore.AddBlock(i,   SCS_data_block);
     bore.AddBlock(i+1, SCS_points_block);
   }
+
+  // general S-curve scan configuration
+  bore.SetTag("SCSchargeStart", m_SCS_charge_start);
+  bore.SetTag("SCSchargeStop", m_SCS_charge_stop);
+  bore.SetTag("SCSchargeStep", m_SCS_charge_step);
+  bore.SetTag("SCSnEvents", m_SCS_n_events);
+  bore.SetTag("SCSnMaskStages", m_SCS_n_mask_stages);
 
   // back-bias voltage
   bore.SetTag("BackBiasVoltage", m_back_bias_voltage);
