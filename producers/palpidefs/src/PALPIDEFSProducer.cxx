@@ -154,11 +154,10 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
 
 bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points) {
   int PulseMode = 2;
-  bool ReadFailure = false;
   int steps = (ChStop-ChStart)/ChStep;
   steps = ((ChStop-ChStart)%ChStep>0) ? steps+1 : steps;
   std::vector <TPixHit> Hits;
-  for (int istage=0; (istage<NMaskStages)&&(!ReadFailure); ++istage) {
+  for (int istage=0; istage<NMaskStages; ++istage) {
     if (!(istage %10)) std::cout << "Threshold scan: mask stage " << istage << std::endl;
     PrepareMaskStage(PT_ANALOGUE, istage, Data, steps);
     m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, ChStart, PulseMode);
@@ -184,7 +183,7 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
     m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
   }
   m_dut->SetMaskAllPixels(false);
-  return ReadFailure;
+  return true;
 }
 //==================================================================================================
 
@@ -684,7 +683,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
         const size_t buffer_size = 100;
         char buffer[buffer_size];
-        snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 0 2 %f", m_dut_pos);
+        snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
         if (system(buffer)!=0) move_failed=true;
       }
       else move_failed=true;
