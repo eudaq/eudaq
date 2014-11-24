@@ -1111,8 +1111,7 @@ int PALPIDEFSProducer::BuildEvent()
   if (timestamp_error && m_recover_outofsync) {
     // recovery needs at least one more event in planes in question
     for (int i=0; i<m_nDevices; i++) {
-      if (!layer_selected[i])
-        continue;
+      if (!layer_selected[i]) continue;
       if (!m_reader[i]->NextEvent()) {
         delete[] layer_selected;
         return 0;

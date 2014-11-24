@@ -119,16 +119,13 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
           eudaq::mSleep(1000);
           StopRun(false);
           eudaq::mSleep(8000);
-          while (m_producerbusy) {
-            eudaq::mSleep(50);
-          }
           if (m_nextconfigonfilelimit) {
 	    if (cmbConfig->currentIndex()+1 < cmbConfig->count()) {
 	      EUDAQ_INFO("Moving to next config file and starting a new run");
 	      cmbConfig->setCurrentIndex(cmbConfig->currentIndex()+1);
 	      on_btnConfig_clicked();
-	      eudaq::mSleep(5000);
-	      on_btnStart_clicked(false);
+	      eudaq::mSleep(1000);
+	      m_startrunwhenready = true;
 	    } else
 	      EUDAQ_INFO("All config files processed.");
 	  } else
@@ -136,6 +133,10 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
         } else if (dostatus) {
           GetStatus();
         }
+      }
+      if (m_startrunwhenready && !m_producer_not_ok) {
+	m_startrunwhenready = false;
+	on_btnStart_clicked(false);
       }
     }
     void ChangeStatus(const QString & name, const QString & value) {
@@ -163,4 +164,6 @@ signals:
     double m_prevtime, m_runstarttime;
     int64_t m_filebytes;
     bool dostatus;
+    bool m_producer_not_ok;
+    bool m_startrunwhenready;
 };
