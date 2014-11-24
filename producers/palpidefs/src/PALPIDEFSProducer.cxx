@@ -739,11 +739,16 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
         return;
 
     if (m_do_SCS[i]) {
-        m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start, m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i]);
-        // reconfigure
-        if (configFile.length() > 0)
-            if (!ConfigChip(i, daq_board, configFile))
-                return;
+      if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start, m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i])) {
+         sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
+         std::cout << buffer << std::endl;
+         EUDAQ_ERROR(buffer);
+         SetStatus(eudaq::Status::LVL_ERROR, buffer);
+       }
+       // reconfigure
+       if (configFile.length() > 0)
+         if (!ConfigChip(i, daq_board, configFile))
+           return;
     }
 
     // noisy and broken pixels
