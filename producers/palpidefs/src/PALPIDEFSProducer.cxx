@@ -656,6 +656,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
   const int MonitorPSU = param.Get("MonitorPSU",       -1.);
   if (m_back_bias_voltage>=0.) {
+    std::cout << "Setting back-bias voltage..." << std::endl;
     system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
     const size_t buffer_size = 100;
     char buffer[buffer_size];
@@ -667,6 +668,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       SetStatus(eudaq::Status::LVL_ERROR, error_msg);
       m_back_bias_voltage = -2.;
     }
+    else {
+      std::cout << "Back-bias voltage set!" << std::endl;
+    }
   }
   if (MonitorPSU>0) {
     system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
@@ -674,20 +678,27 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   // linear stage
   m_dut_pos = param.Get("DUTposition", -1);
   if (m_dut_pos>=0.) {
+    std::cout << "Moving DUT to position..." << std::endl;
     bool move_failed=false;
-    if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 0 0")!=0) {
-      if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 0 1")!=0) {
+    if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 0")==0) {
+      if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
         const size_t buffer_size = 100;
         char buffer[buffer_size];
         snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 0 2 %f", m_dut_pos);
-        if (system(buffer)!=0) {
-          const char* error_msg = "Failed to move the linear stage";
-          std::cout << error_msg << std::endl;
-          EUDAQ_ERROR(error_msg);
-          SetStatus(eudaq::Status::LVL_ERROR, error_msg);
-          m_dut_pos = -2.;
-        }
+        if (system(buffer)!=0) move_failed=true;
       }
+      else move_failed=true;
+    }
+    else move_failed=true;
+    if (move_failed) {
+      const char* error_msg = "Failed to move the linear stage";
+      std::cout << error_msg << std::endl;
+      EUDAQ_ERROR(error_msg);
+      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      m_dut_pos = -2.;
+    }
+    else {
+      std::cout << "DUT in position!" << std::endl;
     }
   }
 

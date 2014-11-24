@@ -9,7 +9,7 @@ class ZaberConnection:
     def __init__(self,port):
         self.link=serial.Serial(port,9600)
     def init(self):
-        self.send(0,1,0) # renumber
+        self.send(0,2,0) # renumber
         time.sleep(2)
     def send(self,id,cmd,data):
         self.link.flushInput()
@@ -60,12 +60,11 @@ def main():
     elif mode==2: # move in milimeters
         lin.move_abs(int(float(sys.argv[4])/1e-3/0.09921875))
         # moved successfully
-        if abs(float(int(lin.getpos())*1e-3*0.09921875)-float(sys.argv[4]))<1.e-4:
-            return 0
-        else:
+        if abs(float(int(lin.getpos())*1e-3*0.09921875)-float(sys.argv[4]))>1.e-4:
             return 1
     elif mode==3: # receive current position
         print float(int(lin.getpos())*1e-3*0.09921875)
+    return 0
 
 ## execute the main
 if __name__ == "__main__":
