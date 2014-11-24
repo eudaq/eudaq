@@ -163,13 +163,17 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
     PrepareMaskStage(PT_ANALOGUE, istage, Data, steps);
     m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, ChStart, PulseMode);
     int ipoint = 0;
-    std::cout << "S-Curve scan ongoing, charge: " << std::endl;
+    std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
+    std::cout << "charge: ";
     for (int icharge = ChStart; icharge < ChStop; icharge += ChStep) {
       Hits.clear();
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
-      std::cout << icharge << " " << std::endl;
+      std::cout << icharge << " ";
       for (int ievt=0; ievt<NEvts; ++ievt) {
-        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, NEvts)) ReadFailure = false;
+        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, NEvts)) {
+          std::cout << "PulseAndReadEvent failed!" << std::endl;
+          return false;
+        }
       }
       for (int ihit=0; ihit<Hits.size(); ++ihit) {
         ++Data[Hits.at(ihit).doublecol+Hits.at(ihit).region*16][Hits.at(ihit).address][ipoint];
