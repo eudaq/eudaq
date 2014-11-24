@@ -636,6 +636,28 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_do_SCS         = new bool[m_nDevices];
   }
 
+#ifndef SIMULATION
+  // Set back-bias voltage
+  m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
+  const int MonitorPSU = param.Get("MonitorPSU",       -1.);
+  if (m_back_bias_voltage>=0.) {
+    system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
+    const size_t buffer_size = 100;
+    char buffer[buffer_size];
+    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", m_back_bias_voltage);
+    if (system(buffer)!=0) {
+      const char* error_msg = "Failed to configure the back-bias voltage";
+      std::cout << error_msg << std::endl;
+      EUDAQ_ERROR(error_msg);
+      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      m_back_bias_voltage = -2.;
+    }
+  }
+  if (MonitorPSU>0) {
+    system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
+  }
+#endif
+
   for (int i=0; i<m_nDevices; i++) {
 
     TpAlpidefs* dut = 0;
@@ -793,27 +815,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     eudaq::mSleep(10);
   }
 
-#ifndef SIMULATION
-  // Set back-bias voltage
-  m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
-  const int MonitorPSU = param.Get("MonitorPSU",       -1.);
-  if (m_back_bias_voltage>=0.) {
-    system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
-    const size_t buffer_size = 100;
-    char buffer[buffer_size];
-    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", m_back_bias_voltage);
-    if (system(buffer)!=0) {
-      const char* error_msg = "Failed to configure the back-bias voltage";
-      std::cout << error_msg << std::endl;
-      EUDAQ_ERROR(error_msg);
-      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
-      m_back_bias_voltage = -2.;
-    }
-  }
-  if (MonitorPSU>0) {
-    system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
-  }
-#endif
   if (!m_configured) {
     m_configured = true;
     m_firstevent = true;
