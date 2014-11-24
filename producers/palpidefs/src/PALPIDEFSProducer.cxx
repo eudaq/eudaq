@@ -163,9 +163,11 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
     PrepareMaskStage(PT_ANALOGUE, istage, Data, steps);
     m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, ChStart, PulseMode);
     int ipoint = 0;
+    std::cout << "S-Curve scan ongoing, charge: " << std::endl;
     for (int icharge = ChStart; icharge < ChStop; icharge += ChStep) {
       Hits.clear();
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
+      std::cout << icharge << " " << std::endl;
       for (int ievt=0; ievt<NEvts; ++ievt) {
         if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, NEvts)) ReadFailure = false;
       }
@@ -174,6 +176,7 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
       }
       Points[ipoint++]=icharge;
     }
+    std::cout << std::endl;
   }
   m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
   m_dut->SetMaskAllPixels(false);
