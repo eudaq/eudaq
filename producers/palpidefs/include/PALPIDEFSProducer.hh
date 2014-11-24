@@ -66,7 +66,7 @@ class DeviceReader {
 
     void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
 
-    bool ThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, int ***Data, int *Points);
+    bool ThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points);
 
   protected:
     void Loop();
@@ -80,7 +80,7 @@ class DeviceReader {
     void Push(SingleEvent* ev);
     bool QueueFull();
 
-    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int ***Data, int steps, int nPixels = 1);
+    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, unsigned char ***Data, int steps, int nPixels = 1);
 
     std::queue<SingleEvent*> m_queue;
     unsigned long m_queue_size;
@@ -166,6 +166,6 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool* m_do_SCS;
 
     // S-Curve scan output data
-    int ****m_SCS_data;
-    int **m_SCS_points;
+    unsigned char ****m_SCS_data;
+    unsigned char **m_SCS_points;
 };

@@ -123,7 +123,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
 
 // Will unmask and select one pixel per region.
 // The pixels are calculated from the number of the mask stage
-void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int ***Data, int steps, int nPixels /* = 1 */) {
+void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, unsigned char ***Data, int steps, int nPixels /* = 1 */) {
   int FirstRegion = 0;
   int LastRegion  = 31;
   if (AMaskStage >= 512 * 32 / nPixels) {
@@ -152,7 +152,7 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
   }
 }
 
-bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int ChStop, int ChStep, int ***Data, int *Points) {
+bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points) {
   int PulseMode = 2;
   bool ReadFailure = false;
   int steps = (ChStop-ChStart)/ChStep;
@@ -597,9 +597,17 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
   m_SCS_charge_start  = param.Get("SCSchargeStart", 0);
   m_SCS_charge_stop   = param.Get("SCSchargeStop", 50);
+  if (m_SCS_charge_stop > 170) {
+    m_SCS_charge_stop = 170;
+    std::cout << "Maximum charge value limited to 170!" << std::endl;
+  }
   m_SCS_charge_step   = param.Get("SCSchargeStep",  1);
   m_SCS_n_events      = param.Get("SCSnEvents",    50);
-  m_SCS_n_mask_stages = param.Get("SCSnMaskStages", 1);
+  if (m_SCS_n_events > 254) {
+    m_SCS_n_events = 254;
+    std::cout << "Number of events in a S-curve scan limited to 254!" << std::endl;
+  }
+  m_SCS_n_mask_stages = param.Get("SCSnMaskStages", 160);
 
   m_SCS_n_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
   m_SCS_n_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? m_SCS_n_steps+1 : m_SCS_n_steps;
@@ -670,18 +678,18 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     sprintf(buffer, "SCS_%d", i);
     m_do_SCS[i]  = (bool)param.Get(buffer, 0);
-    m_SCS_data = new int***[m_nDevices];
-    m_SCS_points = new int*[m_nDevices];
+    m_SCS_data = new unsigned char***[m_nDevices];
+    m_SCS_points = new unsigned char*[m_nDevices];
 
     if (m_do_SCS[i]) {
-      m_SCS_data[i] = new int**[512];
-      m_SCS_points[i] = new int[m_SCS_n_steps];
+      m_SCS_data[i] = new unsigned char**[512];
+      m_SCS_points[i] = new unsigned char[m_SCS_n_steps];
       for (int j=0; j<512; ++j) {
-        m_SCS_data[i][j] = new int*[1024];
+        m_SCS_data[i][j] = new unsigned char*[1024];
         for (int k=0; k<1024; ++k) {
-          m_SCS_data[i][j][k] = new int[m_SCS_n_steps];
+          m_SCS_data[i][j][k] = new unsigned char[m_SCS_n_steps];
           for (int l=0; l<m_SCS_n_steps; ++l) {
-            m_SCS_data[i][j][k][l] = -1;
+            m_SCS_data[i][j][k][l] = 255;
           }
         }
       }
@@ -849,8 +857,8 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 #endif
   bore.SetTag("EUDAQ_GITVersion", PACKAGE_VERSION);
 
-  std::vector<int> SCS_data_block;
-  std::vector<int> SCS_points_block;
+  std::vector<char> SCS_data_block;
+  std::vector<char> SCS_points_block;
 
   // read configuration, dump to XML string
   for (int i=0; i<m_nDevices; i++) {
@@ -927,8 +935,8 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     else {
       bore.SetTag(tmp, (int)0);
     }
-    bore.AddBlock(i,   SCS_data_block);
-    bore.AddBlock(i+1, SCS_points_block);
+    bore.AddBlock(2*i,   SCS_data_block);
+    bore.AddBlock(2*i+1, SCS_points_block);
   }
 
   // general S-curve scan configuration
