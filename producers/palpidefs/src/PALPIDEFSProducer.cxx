@@ -181,8 +181,8 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
       Points[ipoint++]=icharge;
     }
     std::cout << std::endl;
+    m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
   }
-  m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
   m_dut->SetMaskAllPixels(false);
   return ReadFailure;
 }
