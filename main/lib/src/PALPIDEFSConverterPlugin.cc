@@ -65,8 +65,13 @@ namespace eudaq {
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
 
-      m_DataVersion     = bore.GetTag<int>("DataVersion", 1);
-      m_BackBiasVoltage = bore.GetTag<float>("BackBiasVoltage", -4.);
+      m_DataVersion       = bore.GetTag<int>("DataVersion", 1);
+      m_BackBiasVoltage   = bore.GetTag<float>("BackBiasVoltage", -4.);
+      m_SCS_charge_start  = bore.GetTag<int>("SCSchargeStart", -1);
+      m_SCS_charge_stop   = bore.GetTag<int>("SCSchargeStop",  -1);
+      m_SCS_charge_step   = bore.GetTag<int>("SCSchargeStep",  -1);
+      m_SCS_n_events      = bore.GetTag<int>("SCSnEvents",     -1);
+      m_SCS_n_mask_stages = bore.GetTag<int>("SCSnMaskStages", -1);
 
       m_Vaux           = new int[m_nLayers];
       m_Vreset         = new int[m_nLayers];
@@ -79,6 +84,10 @@ namespace eudaq {
       m_readout_delay  = new int[m_nLayers];
 
       m_configs = new std::string[m_nLayers];
+
+      m_do_SCS  = new bool[m_nLayers];
+      m_SCS_points = new const std::vector<unsigned char>*[m_nLayers];
+      m_SCS_data   = new const std::vector<unsigned char>*[m_nLayers];
 
       for (int i=0; i<m_nLayers; i++) {
         char tmp[100];
@@ -107,6 +116,18 @@ namespace eudaq {
         m_trigger_delay[i]  = bore.GetTag<int>(tmp, -100);
         sprintf(tmp, "TriggerDelay_%d", i);
         m_readout_delay[i]  = bore.GetTag<int>(tmp, -100);
+
+        sprintf(tmp, "SCS_%d", i);
+        m_do_SCS[i]  = (bool)bore.GetTag<int>(tmp, 0);
+
+        if (m_do_SCS[i]) {
+          m_SCS_points[i] = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i  );
+          m_SCS_data[i]   = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i+1);
+        }
+        else {
+          m_SCS_points[i] = 0x0;
+          m_SCS_data[i]   = 0x0;
+        }
 
         // get masked pixels
         sprintf(tmp, "MaskedPixels_%d", i);
@@ -419,6 +440,7 @@ namespace eudaq {
       lev.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE,eutelescope::kDE);
       lev.parameters().setValue("TIMESTAMP_H",(int)((sev.GetTimestamp() & 0xFFFFFFFF00000000)>>32));
       lev.parameters().setValue("TIMESTAMP_L",(int)(sev.GetTimestamp() & 0xFFFFFFFF));
+      (dynamic_cast <LCEventImpl&>(lev)).setTimeStamp(sev.GetTimestamp());
       lev.parameters().setValue("FLAG", (int) sev.GetFlags());
       static bool parametersSaved = false;
       if (sev.GetFlags() != Event::FLAG_BROKEN && sev.GetFlags() != Event::FLAG_STATUS && !parametersSaved)
@@ -498,6 +520,14 @@ namespace eudaq {
     int* m_strobeb_length;
     int* m_trigger_delay;
     int* m_readout_delay;
+    bool* m_do_SCS;
+    int m_SCS_charge_start;
+    int m_SCS_charge_stop;
+    int m_SCS_charge_step;
+    int m_SCS_n_events;
+    int m_SCS_n_mask_stages;
+    const std::vector<unsigned char>** m_SCS_points;
+    const std::vector<unsigned char>** m_SCS_data;
 
 #if USE_TINYXML
     int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
@@ -535,7 +565,7 @@ namespace eudaq {
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
     PALPIDEFSConverterPlugin()
-        : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0)
+      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0)
       {}
 
     // The single instance of this converter plugin
