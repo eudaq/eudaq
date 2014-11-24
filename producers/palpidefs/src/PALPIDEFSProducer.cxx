@@ -170,7 +170,7 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
       std::cout << icharge << " " << std::flush;
       for (int ievt=0; ievt<NEvts; ++ievt) {
-        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits) {
+        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits)) {
           std::cout << "PulseAndReadEvent failed!" << std::endl;
           return false;
         }
