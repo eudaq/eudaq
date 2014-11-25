@@ -40,8 +40,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
 {
   // readwrite (from Chip): true = read; false = write
 
-  for (TiXmlNode* pChild = node->FirstChild("address"); pChild != 0; pChild = pChild->NextSibling("address"))
-  {
+  for (TiXmlNode* pChild = node->FirstChild("address"); pChild != 0; pChild = pChild->NextSibling("address")) {
     if (pChild->Type() != TiXmlNode::TINYXML_ELEMENT)
       continue;
 //     printf( "Element %d [%s] %d %d\n", pChild->Type(), pChild->Value(), base, rgn);
@@ -147,7 +146,7 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
       m_dut->SetDisableColumn    (ireg, DCol, false);
       m_dut->SetMaskSinglePixel  (ireg, DCol, Address, false);
       m_dut->SetInjectSinglePixel(ireg, DCol, Address, true, APulseType, false);
-      for (int ipoint=0; ipoint<steps; ++ipoint) ++Data[DCol,ireg*16][Address][ipoint];
+      for (int ipoint=0; ipoint<steps; ++ipoint) ++Data[DCol+ireg*16][Address][ipoint];
     }
   }
 }
@@ -641,13 +640,15 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_testsetup->AddDUTs(DUT_PALPIDEFS);
 #endif
 
-    m_next_event = new SingleEvent*[m_nDevices];
-    m_reader = new DeviceReader*[m_nDevices];
+    m_next_event     = new SingleEvent*[m_nDevices];
+    m_reader         = new DeviceReader*[m_nDevices];
     m_strobe_length  = new int[m_nDevices];
     m_strobeb_length = new int[m_nDevices];
     m_trigger_delay  = new int[m_nDevices];
     m_readout_delay  = new int[m_nDevices];
     m_do_SCS         = new bool[m_nDevices];
+    m_SCS_data       = new unsigned char***[m_nDevices];
+    m_SCS_points     = new unsigned char*[m_nDevices];
   }
 
 #ifndef SIMULATION
@@ -700,11 +701,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       std::cout << "DUT in position!" << std::endl;
     }
   }
-
 #endif
 
   for (int i=0; i<m_nDevices; i++) {
-
     TpAlpidefs* dut = 0;
     TDAQBoard* daq_board = 0;
     const size_t buffer_size = 100;
@@ -712,8 +711,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     sprintf(buffer, "SCS_%d", i);
     m_do_SCS[i]  = (bool)param.Get(buffer, 0);
-    m_SCS_data = new unsigned char***[m_nDevices];
-    m_SCS_points = new unsigned char*[m_nDevices];
 
     if (m_do_SCS[i]) {
       m_SCS_data[i] = new unsigned char**[512];
@@ -785,15 +782,15 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     if (m_do_SCS[i]) {
       if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start, m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i])) {
-         sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
-         std::cout << buffer << std::endl;
-         EUDAQ_ERROR(buffer);
-         SetStatus(eudaq::Status::LVL_ERROR, buffer);
-       }
-       // reconfigure
-       if (configFile.length() > 0)
-         if (!ConfigChip(i, daq_board, configFile))
-           return;
+        sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
+        std::cout << buffer << std::endl;
+        EUDAQ_ERROR(buffer);
+        SetStatus(eudaq::Status::LVL_ERROR, buffer);
+      }
+      // reconfigure
+      if (configFile.length() > 0)
+        if (!ConfigChip(i, daq_board, configFile))
+          return;
     }
 
     // noisy and broken pixels
