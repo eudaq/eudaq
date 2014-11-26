@@ -768,12 +768,25 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
         SetStatus(eudaq::Status::LVL_ERROR, msg);
         return;
       }
-
       std::cout << "Enabling device " << board_no << std::endl;
       dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
       daq_board = m_testsetup->GetDAQBoard(board_no);
-      m_testsetup->PowerOnBoard(board_no);
-      m_testsetup->InitialiseChip(board_no);
+      if (!m_testsetup->PowerOnBoard(board_no)) {
+        char msg[100];
+        sprintf(msg, "Powering device with board address %d failed", board_address);
+        std::cerr << msg << std::endl;
+        EUDAQ_ERROR(msg);
+        SetStatus(eudaq::Status::LVL_ERROR, msg);
+        return;
+      }
+      if (!m_testsetup->InitialiseChip(board_no)) {
+        char msg[100];
+        sprintf(msg, "Initialising device with board address %d failed", board_address);
+        std::cerr << msg << std::endl;
+        EUDAQ_ERROR(msg);
+        SetStatus(eudaq::Status::LVL_ERROR, msg);
+        return;
+      }
 
       std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
 
