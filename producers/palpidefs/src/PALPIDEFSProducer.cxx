@@ -610,10 +610,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     std::cout << "Number of events in a S-curve scan limited to 254!" << std::endl;
   }
   m_SCS_n_mask_stages = param.Get("SCSnMaskStages", 160);
-
   m_SCS_n_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
   m_SCS_n_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? m_SCS_n_steps+1 : m_SCS_n_steps;
-
 
   if (!m_configured) {
     m_nDevices = param.Get("Devices", 1);
@@ -639,7 +637,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     m_testsetup->AddDUTs(DUT_PALPIDEFS);
 #endif
-
     m_next_event     = new SingleEvent*[m_nDevices];
     m_reader         = new DeviceReader*[m_nDevices];
     m_strobe_length  = new int[m_nDevices];
@@ -711,7 +708,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     sprintf(buffer, "SCS_%d", i);
     m_do_SCS[i]  = (bool)param.Get(buffer, 0);
-
     if (m_do_SCS[i]) {
       m_SCS_data[i] = new unsigned char**[512];
       m_SCS_points[i] = new unsigned char[m_SCS_n_steps];
@@ -733,7 +729,12 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       m_SCS_points[i] = 0x0;
     }
 
-#ifndef SIMULATION
+#ifdef SIMULATION
+    if (!m_configured) {
+      m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
+      m_next_event[i] = 0;
+    }
+#else
     if (!m_configured) {
       sprintf(buffer, "BoardAddress_%d", i);
       int board_address = param.Get(buffer, i);
@@ -772,6 +773,19 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       dut = m_reader[i]->GetDUT();
       daq_board = m_reader[i]->GetDAQBoard();
     }
+  }
+
+  for (int i=0; i<m_nDevices; i++) {
+    TpAlpidefs* dut = m_reader[i]->GetDUT();
+    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+    daq_board->WriteBusyOverrideReg(false);
+  }
+
+  for (int i=0; i<m_nDevices; i++) {
+    TpAlpidefs* dut = m_reader[i]->GetDUT();
+    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+    const size_t buffer_size = 100;
+    char buffer[buffer_size];
 
     // configuration
     sprintf(buffer, "Config_File_%d", i);
@@ -781,16 +795,21 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
         return;
 
     if (m_do_SCS[i]) {
-      if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start, m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i])) {
+      daq_board->WriteBusyOverrideReg(false);
+      daq_board->ConfigureReadout(1, false, false);
+      if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
+                                      m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
+                                      m_SCS_points[i])) {
         sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
         std::cout << buffer << std::endl;
         EUDAQ_ERROR(buffer);
         SetStatus(eudaq::Status::LVL_ERROR, buffer);
       }
+      daq_board->WriteBusyOverrideReg(false);
       // reconfigure
-      if (configFile.length() > 0)
-        if (!ConfigChip(i, daq_board, configFile))
-          return;
+      //if (configFile.length() > 0)
+      //  if (!ConfigChip(i, daq_board, configFile))
+      //    return;
     }
 
     // noisy and broken pixels
