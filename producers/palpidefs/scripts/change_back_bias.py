@@ -9,6 +9,8 @@ def main():
     vbb_dst=float(sys.argv[1]) # value to which the back-bias should be ramped
     sour=serial.Serial(h.dev, h.baud_rate, rtscts=h.rtscts)
     vbb_src=h.meas_voltage(sour, h.vbb_chan)
+    if abs(vbb_dst - vbb_src) < 1.3e-3:
+        return 0
     h.ramp_from_to(sour, h.vbb_chan, (vbb_src, vbb_dst), 100)
     time.sleep(1)
     vbb_meas=h.meas_voltage(sour, h.vbb_chan)
