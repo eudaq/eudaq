@@ -644,8 +644,18 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_trigger_delay  = new int[m_nDevices];
     m_readout_delay  = new int[m_nDevices];
     m_do_SCS         = new bool[m_nDevices];
-    m_SCS_data       = new unsigned char***[m_nDevices];
-    m_SCS_points     = new unsigned char*[m_nDevices];
+    if (!m_SCS_data){
+      m_SCS_data       = new unsigned char***[m_nDevices];
+      for (int i=0; i<m_nDevices; i++) {
+        m_SCS_data[i] = 0x0;
+      }
+    }
+    if (!m_SCS_points) {
+      m_SCS_points     = new unsigned char*[m_nDevices];
+      for (int i=0; i<m_nDevices; i++) {
+        m_SCS_points[i] = 0x0;
+      }
+    }
   }
 
 #ifndef SIMULATION
@@ -709,12 +719,14 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     sprintf(buffer, "SCS_%d", i);
     m_do_SCS[i]  = (bool)param.Get(buffer, 0);
     if (m_do_SCS[i]) {
-      m_SCS_data[i] = new unsigned char**[512];
-      m_SCS_points[i] = new unsigned char[m_SCS_n_steps];
+      bool generate_arrays = false;
+      if (!m_SCS_data[i]) generate_arrays = true;
+      if (generate_arrays) m_SCS_data[i] = new unsigned char**[512];
+      if (generate_arrays) m_SCS_points[i] = new unsigned char[m_SCS_n_steps];
       for (int j=0; j<512; ++j) {
-        m_SCS_data[i][j] = new unsigned char*[1024];
+        if (generate_arrays) m_SCS_data[i][j] = new unsigned char*[1024];
         for (int k=0; k<1024; ++k) {
-          m_SCS_data[i][j][k] = new unsigned char[m_SCS_n_steps];
+          if (generate_arrays) m_SCS_data[i][j][k] = new unsigned char[m_SCS_n_steps];
           for (int l=0; l<m_SCS_n_steps; ++l) {
             m_SCS_data[i][j][k][l] = 255;
           }
