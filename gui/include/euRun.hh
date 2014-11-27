@@ -64,7 +64,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
         event->ignore();
       } else {
         Terminate();
-	eudaq::mSleep(500);
+	eudaq::mSleep(1);
         event->accept();
       }
     }
@@ -116,7 +116,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
       if (!m_stopping) {
         if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
           EUDAQ_INFO("File limit reached: " + to_string(m_filebytes) + " > " + to_string(m_runsizelimit));
-          eudaq::mSleep(1000);
+          eudaq::mSleep(1);
           StopRun(false);
           eudaq::mSleep(8000);
           while (m_producerbusy) {
