@@ -853,7 +853,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     sprintf(buffer, "Broken_Pixel_File_%d", i);
     std::string brokenPixels = param.Get(buffer, "");
     if (brokenPixels.length() > 0) {
-      sprintf(buffer, "Device %d: Reading noisy pixels from file %s", i, brokenPixels.data());
+      sprintf(buffer, "Device %d: Reading broken pixels from file %s", i, brokenPixels.data());
       std::cout << buffer << std::endl;
       EUDAQ_INFO(buffer);
       dut->ReadNoisyPixelFile(brokenPixels.data(), true);
