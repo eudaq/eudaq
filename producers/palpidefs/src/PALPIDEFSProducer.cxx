@@ -1012,6 +1012,11 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     }
     bore.AddBlock(2*i,   SCS_data_block);
     bore.AddBlock(2*i+1, SCS_points_block);
+
+    SingleEvent* ev;
+    while(ev = m_reader[i]->PopNextEvent()) {
+      std::cout << "Removed event " << ev->m_trigger_id << "\t" << i << std::endl;
+    }
   }
 
   // general S-curve scan configuration
