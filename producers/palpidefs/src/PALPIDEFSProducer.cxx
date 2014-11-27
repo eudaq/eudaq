@@ -901,7 +901,9 @@ bool PALPIDEFSProducer::PowerOffTestSetup()
     libusb_exit(context);
     m_configured = false;
   }
-  eudaq::mSleep(10000);
+  eudaq::mSleep(1000);
+  system("${SCRIPT_DIR}/fx3/program.sh");
+  eudaq::mSleep(1000);
   return true;
 }
 

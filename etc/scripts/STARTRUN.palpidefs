@@ -16,6 +16,7 @@ export LOG_DIR="`pwd`/logs/palpidefs"
 export LOG_PREFIX=$(date +%s)
 producers/palpidefs/scripts/store_git_info.sh ${LOG_DIR}/${LOG_PREFIX} ${CURR_DIR} # store the git information
 producers/palpidefs/scripts/fx3/build_linux.sh # compile the fx3 programming tool
+producers/palpidefs/scripts/fx3/program.sh # program the fx3 chips
 
 printf '\033[1;32;48m \t STARTING DAQ \033[0m \n'
 echo $(date)
