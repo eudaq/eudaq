@@ -156,6 +156,7 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
   int steps = (ChStop-ChStart)/ChStep;
   steps = ((ChStop-ChStart)%ChStep>0) ? steps+1 : steps;
   std::vector <TPixHit> Hits;
+  TEventHeader Header;
   for (int istage=0; istage<NMaskStages; ++istage) {
     if (!(istage %10)) std::cout << "Threshold scan: mask stage " << istage << std::endl;
     PrepareMaskStage(PT_ANALOGUE, istage, Data, steps);
@@ -168,7 +169,7 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
       std::cout << icharge << " " << std::flush;
       for (int ievt=0; ievt<NEvts; ++ievt) {
-        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits)) {
+        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, 1, &Header)) {
           std::cout << "PulseAndReadEvent failed!" << std::endl;
           return false;
         }
@@ -184,7 +185,6 @@ bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int Ch
   m_dut->SetMaskAllPixels(false);
   return true;
 }
-//==================================================================================================
 
 DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut) :
   m_queue_size(0),
@@ -409,7 +409,7 @@ void DeviceReader::Loop()
           Print(0, "Flushing %lu", m_last_trigger_id);
           SimpleLock lock(m_mutex);
           m_flushing = false;
-          Print(0, "Sending EndOfRun word");
+          // Print(0, "Sending EndOfRun word");
           // gets resetted by EndOfRun
           m_last_trigger_id = m_daq_board->GetNextEventId();
         } else
@@ -592,6 +592,19 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   if (param.Get("DisableRecoveryOutOfSync", 0) == 1)
     m_recover_outofsync = false;
 
+  if (param.Get("MonitorPSU", 0) == 1)
+    m_monitor_PSU = true;
+
+  const int nDevices = param.Get("Devices", 1);
+  if (m_nDevices==0 || m_nDevices==nDevices) m_nDevices = nDevices;
+  else {
+    const char* error_msg = "Unsupported attempt to change the number of devices!";
+    std::cout << error_msg << std::endl;
+    EUDAQ_ERROR(error_msg);
+    SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+    return;
+  }
+
   const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
 
   m_readout_mode = param.Get("ReadoutMode", 0);
@@ -613,106 +626,43 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   m_SCS_n_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
   m_SCS_n_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? m_SCS_n_steps+1 : m_SCS_n_steps;
 
-  if (!m_configured) {
-    m_nDevices = param.Get("Devices", 1);
-
-#ifndef SIMULATION
-    if (!m_testsetup) {
-      std::cout << "Creating test setup " << std::endl;
-      m_testsetup = new TTestSetup;
+  if (!m_next_event)     m_next_event     = new SingleEvent*[m_nDevices];
+  if (!m_strobe_length)  m_strobe_length  = new int[m_nDevices];
+  if (!m_strobeb_length) m_strobeb_length = new int[m_nDevices];
+  if (!m_trigger_delay)  m_trigger_delay  = new int[m_nDevices];
+  if (!m_readout_delay)  m_readout_delay  = new int[m_nDevices];
+  if (!m_reader) {
+    m_reader = new DeviceReader*[m_nDevices];
+    for (int i=0; i<m_nDevices; i++) {
+      m_reader[i] = 0x0;
     }
-
-    std::cout << "Searching for DAQ boards " << std::endl;
-    m_testsetup->FindDAQBoards();
-    std::cout << "Found " << m_testsetup->GetNDAQBoards() << " DAQ boards." << std::endl;
-
-    if (m_testsetup->GetNDAQBoards() < m_nDevices) {
-      char msg[100];
-      sprintf(msg, "Not enough devices connected. Configuration requires %d devices, but only %d present.", m_nDevices, m_testsetup->GetNDAQBoards());
-      std::cerr << msg << std::endl;
-      EUDAQ_ERROR(msg);
-      SetStatus(eudaq::Status::LVL_ERROR, msg);
-      return;
+  }
+  if (!m_do_SCS)         m_do_SCS         = new bool[m_nDevices];
+  if (!m_SCS_data){
+    m_SCS_data       = new unsigned char***[m_nDevices];
+    for (int i=0; i<m_nDevices; i++) {
+      m_SCS_data[i] = 0x0;
     }
-
-    m_testsetup->AddDUTs(DUT_PALPIDEFS);
-#endif
-    m_next_event     = new SingleEvent*[m_nDevices];
-    m_reader         = new DeviceReader*[m_nDevices];
-    m_strobe_length  = new int[m_nDevices];
-    m_strobeb_length = new int[m_nDevices];
-    m_trigger_delay  = new int[m_nDevices];
-    m_readout_delay  = new int[m_nDevices];
-    m_do_SCS         = new bool[m_nDevices];
-    if (!m_SCS_data){
-      m_SCS_data       = new unsigned char***[m_nDevices];
-      for (int i=0; i<m_nDevices; i++) {
-        m_SCS_data[i] = 0x0;
-      }
-    }
-    if (!m_SCS_points) {
-      m_SCS_points     = new unsigned char*[m_nDevices];
-      for (int i=0; i<m_nDevices; i++) {
-        m_SCS_points[i] = 0x0;
-      }
+  }
+  if (!m_SCS_points) {
+    m_SCS_points     = new unsigned char*[m_nDevices];
+    for (int i=0; i<m_nDevices; i++) {
+      m_SCS_points[i] = 0x0;
     }
   }
 
 #ifndef SIMULATION
   // Set back-bias voltage
-  m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
-  const int MonitorPSU = param.Get("MonitorPSU",       -1.);
-  if (m_back_bias_voltage>=0.) {
-    std::cout << "Setting back-bias voltage..." << std::endl;
-    system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
-    const size_t buffer_size = 100;
-    char buffer[buffer_size];
-    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", m_back_bias_voltage);
-    if (system(buffer)!=0) {
-      const char* error_msg = "Failed to configure the back-bias voltage";
-      std::cout << error_msg << std::endl;
-      EUDAQ_ERROR(error_msg);
-      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
-      m_back_bias_voltage = -2.;
-    }
-    else {
-      std::cout << "Back-bias voltage set!" << std::endl;
-    }
-  }
-  if (MonitorPSU>0) {
+  SetBackBiasVoltage(param);
+  // Power supply monitoring
+  if (m_monitor_PSU) {
     system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
   }
-  // linear stage
-  m_dut_pos = param.Get("DUTposition", -1);
-  if (m_dut_pos>=0.) {
-    std::cout << "Moving DUT to position..." << std::endl;
-    bool move_failed=false;
-    if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 0")==0) {
-      if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
-        const size_t buffer_size = 100;
-        char buffer[buffer_size];
-        snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
-        if (system(buffer)!=0) move_failed=true;
-      }
-      else move_failed=true;
-    }
-    else move_failed=true;
-    if (move_failed) {
-      const char* error_msg = "Failed to move the linear stage";
-      std::cout << error_msg << std::endl;
-      EUDAQ_ERROR(error_msg);
-      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
-      m_dut_pos = -2.;
-    }
-    else {
-      std::cout << "DUT in position!" << std::endl;
-    }
-  }
+  // Move the linear stage
+  ControlLinearStage(param);
 #endif
 
   for (int i=0; i<m_nDevices; i++) {
-    TpAlpidefs* dut = 0;
-    TDAQBoard* daq_board = 0;
     const size_t buffer_size = 100;
     char buffer[buffer_size];
 
@@ -740,66 +690,11 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       m_SCS_data[i]   = 0x0;
       m_SCS_points[i] = 0x0;
     }
-
-#ifdef SIMULATION
-    if (!m_configured) {
-      m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
-      m_next_event[i] = 0;
-    }
-#else
-    if (!m_configured) {
-      sprintf(buffer, "BoardAddress_%d", i);
-      int board_address = param.Get(buffer, i);
-
-      // find board
-      int board_no = -1;
-      for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
-        if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
-          board_no = j;
-          break;
-        }
-      }
-
-      if (board_no == -1) {
-        char msg[100];
-        sprintf(msg, "Device with board address %d not found", board_address);
-        std::cerr << msg << std::endl;
-        EUDAQ_ERROR(msg);
-        SetStatus(eudaq::Status::LVL_ERROR, msg);
-        return;
-      }
-      std::cout << "Enabling device " << board_no << std::endl;
-      dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
-      daq_board = m_testsetup->GetDAQBoard(board_no);
-      if (!m_testsetup->PowerOnBoard(board_no)) {
-        char msg[100];
-        sprintf(msg, "Powering device with board address %d failed", board_address);
-        std::cerr << msg << std::endl;
-        EUDAQ_ERROR(msg);
-        SetStatus(eudaq::Status::LVL_ERROR, msg);
-        return;
-      }
-      if (!m_testsetup->InitialiseChip(board_no)) {
-        char msg[100];
-        sprintf(msg, "Initialising device with board address %d failed", board_address);
-        std::cerr << msg << std::endl;
-        EUDAQ_ERROR(msg);
-        SetStatus(eudaq::Status::LVL_ERROR, msg);
-        return;
-      }
-
-      std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
-
-      m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
-      m_next_event[i] = 0;
-    } else {
-      std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
-
-      dut = m_reader[i]->GetDUT();
-      daq_board = m_reader[i]->GetDAQBoard();
-    }
   }
+  if (!DoSCurveScan(param)) return;
+  if (!InitialiseTestSetup(param)) return;
 
+#ifndef SIMULATION
   for (int i=0; i<m_nDevices; i++) {
     TpAlpidefs* dut = m_reader[i]->GetDUT();
     TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
@@ -818,24 +713,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     if (configFile.length() > 0)
       if (!ConfigChip(i, daq_board, configFile))
         return;
-
-    if (m_do_SCS[i]) {
-      daq_board->WriteBusyOverrideReg(false);
-      daq_board->ConfigureReadout(1, false, false);
-      if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
-                                      m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
-                                      m_SCS_points[i])) {
-        sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
-        std::cout << buffer << std::endl;
-        EUDAQ_ERROR(buffer);
-        SetStatus(eudaq::Status::LVL_ERROR, buffer);
-      }
-      daq_board->WriteBusyOverrideReg(false);
-      // reconfigure
-      //if (configFile.length() > 0)
-      //  if (!ConfigChip(i, daq_board, configFile))
-      //    return;
-    }
 
     // noisy and broken pixels
     dut->SetMaskAllPixels(false); //unmask all pixels
@@ -865,23 +742,14 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     // triggering configuration per layer
     sprintf(buffer, "StrobeLength_%d", i);
     m_strobe_length[i]  = param.Get(buffer, param.Get("StrobeLength",  10));
-
     sprintf(buffer, "StrobeBLength_%d", i);
     m_strobeb_length[i] = param.Get(buffer, param.Get("StrobeBLength", 20));
-
     sprintf(buffer, "ReadoutDelay_%d", i);
     m_readout_delay[i]  = param.Get(buffer, param.Get("ReadoutDelay",  10));
-
     sprintf(buffer, "TriggerDelay_%d", i);
     m_trigger_delay[i]  = param.Get(buffer, param.Get("TriggerDelay",  75));
 
     // data taking configuration
-
-    // Assert busy
-    daq_board->WriteBusyOverrideReg(false);
-
-    // Readout mode
-    daq_board->SetReadoutMode(m_readout_mode);
 
     // PrepareEmptyReadout
     daq_board->ConfigureReadout(1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
@@ -894,7 +762,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     dut->SetStrobeTiming       (m_strobeb_length[i]);
     dut->SetEnableOutputDrivers(true, true);
     dut->SetChipMode           (MODE_ALPIDE_READOUT_B);
-#endif
 
     if (delay > 0)      m_reader[i]->SetQueueFullDelay(delay);
     if (queue_size > 0) m_reader[i]->SetMaxQueueSize(queue_size);
@@ -905,6 +772,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
     eudaq::mSleep(10);
   }
+#endif
 
   if (!m_configured) {
     m_configured = true;
@@ -913,6 +781,224 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
   EUDAQ_INFO("Configured (" + param.Name() + ")");
   SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+}
+
+bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
+{
+  if (!m_configured) {
+    m_nDevices = param.Get("Devices", 1);
+
+    const int delay = param.Get("QueueFullDelay", 0);
+    const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
+
+#ifndef SIMULATION
+    if (!m_testsetup) {
+      std::cout << "Creating test setup " << std::endl;
+      m_testsetup = new TTestSetup;
+    }
+
+    std::cout << "Searching for DAQ boards " << std::endl;
+    m_testsetup->FindDAQBoards();
+    std::cout << "Found " << m_testsetup->GetNDAQBoards() << " DAQ boards." << std::endl;
+
+    if (m_testsetup->GetNDAQBoards() < m_nDevices) {
+      char msg[100];
+      sprintf(msg, "Not enough devices connected. Configuration requires %d devices, but only %d present.", m_nDevices, m_testsetup->GetNDAQBoards());
+      std::cerr << msg << std::endl;
+      EUDAQ_ERROR(msg);
+      SetStatus(eudaq::Status::LVL_ERROR, msg);
+      return false;
+    }
+
+    m_testsetup->AddDUTs(DUT_PALPIDEFS);
+#endif
+    for (int i=0; i<m_nDevices; i++) {
+      TpAlpidefs* dut = 0;
+      TDAQBoard* daq_board = 0;
+      const size_t buffer_size = 100;
+      char buffer[buffer_size];
+
+#ifdef SIMULATION
+      if (!m_configured) {
+        m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
+        m_next_event[i] = 0;
+      }
+#else
+      if (!m_configured) {
+        sprintf(buffer, "BoardAddress_%d", i);
+        int board_address = param.Get(buffer, i);
+
+        // find board
+        int board_no = -1;
+        for (int j=0; j<m_testsetup->GetNDAQBoards(); j++) {
+          if (m_testsetup->GetDAQBoard(j)->GetBoardAddress() == board_address) {
+            board_no = j;
+            break;
+          }
+        }
+
+        if (board_no == -1) {
+          char msg[100];
+          sprintf(msg, "Device with board address %d not found", board_address);
+          std::cerr << msg << std::endl;
+          EUDAQ_ERROR(msg);
+          SetStatus(eudaq::Status::LVL_ERROR, msg);
+          return false;
+        }
+        std::cout << "Enabling device " << board_no << std::endl;
+        dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
+        daq_board = m_testsetup->GetDAQBoard(board_no);
+        if (!m_testsetup->PowerOnBoard(board_no)) {
+          char msg[100];
+          sprintf(msg, "Powering device with board address %d failed", board_address);
+          std::cerr << msg << std::endl;
+          EUDAQ_ERROR(msg);
+          SetStatus(eudaq::Status::LVL_ERROR, msg);
+          return false;
+        }
+
+        if (!m_testsetup->InitialiseChip(board_no)) {
+          char msg[100];
+          sprintf(msg, "Initialising device with board address %d failed", board_address);
+          std::cerr << msg << std::endl;
+          EUDAQ_ERROR(msg);
+          SetStatus(eudaq::Status::LVL_ERROR, msg);
+          return false;
+        }
+
+        std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
+
+        m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+        m_next_event[i] = 0;
+      } else {
+          std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
+      }
+    }
+#endif
+  }
+  return true;
+}
+
+bool PALPIDEFSProducer::PowerOffTestSetup()
+{
+  for (int i=0; i<m_nDevices; i++) {
+    if (m_reader[i]) {
+      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+      m_reader[i]->Stop();
+      delete m_reader[i];
+      m_reader[i] = 0x0;
+      // power of the DAQboard
+      std::vector <SFieldReg> ADCConfigReg0 = daq_board->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
+      daq_board->SetPowerOnSequence (1, 0, 0, 0);
+      daq_board->SendADCControlReg  (ADCConfigReg0, 1, 0);   // register 0, self shutdown = 1, off = 0
+      daq_board->ResetBoard(10);
+    }
+  }
+  if (m_testsetup) {
+    struct libusb_context *context = m_testsetup->GetContext();
+    delete m_testsetup;
+    m_testsetup = 0x0;
+    libusb_exit(context);
+    m_configured = false;
+  }
+  eudaq::mSleep(10000);
+  return true;
+}
+
+bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
+{
+#ifndef SIMULATION
+  bool doScan = false;
+  for (int i=0; i<m_nDevices; i++) {
+    if (m_do_SCS[i]) doScan = true;
+  }
+  if (doScan) {
+    if (!PowerOffTestSetup()) return false;
+    if (!InitialiseTestSetup(param)) return false;
+    for (int i=0; i<m_nDevices; i++) {
+      TpAlpidefs* dut = m_reader[i]->GetDUT();
+      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+      const size_t buffer_size = 100;
+      char buffer[buffer_size];
+      if (m_do_SCS[i]) {
+        // configuration
+        sprintf(buffer, "Config_File_%d", i);
+        std::string configFile = param.Get(buffer, "");
+        if (configFile.length() > 0)
+          if (!ConfigChip(i, daq_board, configFile))
+            return false;
+
+        daq_board->ConfigureReadout(1, false, false);
+        if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
+                                        m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
+                                        m_SCS_points[i])) {
+          sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
+          std::cout << buffer << std::endl;
+          EUDAQ_ERROR(buffer);
+          SetStatus(eudaq::Status::LVL_ERROR, buffer);
+        }
+      }
+    }
+    return PowerOffTestSetup();
+  }
+#endif
+  return true;
+}
+
+void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration & param)
+{
+#ifndef SIMULATION
+  m_back_bias_voltage  = param.Get("BackBiasVoltage",  -1.);
+  if (m_back_bias_voltage>=0.) {
+    std::cout << "Setting back-bias voltage..." << std::endl;
+    system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat ${SCRIPT_DIR}/meas-pid.txt); fi");
+    const size_t buffer_size = 100;
+    char buffer[buffer_size];
+    snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f", m_back_bias_voltage);
+    if (system(buffer)!=0) {
+      const char* error_msg = "Failed to configure the back-bias voltage";
+      std::cout << error_msg << std::endl;
+      EUDAQ_ERROR(error_msg);
+      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      m_back_bias_voltage = -2.;
+    }
+    else {
+      std::cout << "Back-bias voltage set!" << std::endl;
+    }
+  }
+#endif
+}
+
+void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration & param)
+{
+#ifndef SIMULATION
+  // linear stage
+  m_dut_pos = param.Get("DUTposition", -1);
+  if (m_dut_pos>=0.) {
+    std::cout << "Moving DUT to position..." << std::endl;
+    bool move_failed=false;
+    if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 0")==0) {
+      if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
+        const size_t buffer_size = 100;
+        char buffer[buffer_size];
+        snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
+        if (system(buffer)!=0) move_failed=true;
+      }
+      else move_failed=true;
+    }
+    else move_failed=true;
+    if (move_failed) {
+      const char* error_msg = "Failed to move the linear stage";
+      std::cout << error_msg << std::endl;
+      EUDAQ_ERROR(error_msg);
+      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      m_dut_pos = -2.;
+    }
+    else {
+      std::cout << "DUT in position!" << std::endl;
+    }
+  }
+#endif
 }
 
 void PALPIDEFSProducer::OnStartRun(unsigned param)

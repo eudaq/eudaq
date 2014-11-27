@@ -107,7 +107,7 @@ class DeviceReader {
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-        : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0), m_back_bias_voltage(-1), m_dut_pos(-1), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
+        : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_monitor_PSU(false), m_back_bias_voltage(-1), m_dut_pos(-1), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -120,6 +120,11 @@ class PALPIDEFSProducer : public eudaq::Producer {
     void Loop();
 
   protected:
+    bool InitialiseTestSetup(const eudaq::Configuration & param);
+    bool PowerOffTestSetup();
+    bool DoSCurveScan(const eudaq::Configuration & param);
+    void SetBackBiasVoltage(const eudaq::Configuration & param);
+    void ControlLinearStage(const eudaq::Configuration & param);
     bool ConfigChip(int id, TDAQBoard* daq_board, std::string configFile);
     int BuildEvent();
     void SendEOR();
@@ -155,6 +160,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     int* m_strobeb_length;
     int* m_trigger_delay;
     int* m_readout_delay;
+    bool m_monitor_PSU;
     float m_back_bias_voltage;
     float m_dut_pos;
     // S-Curve scan settings
