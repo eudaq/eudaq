@@ -41,33 +41,40 @@ def power_on(hameg, i_max, voltages):
     #print idn
     #print "maximum current: %f %f %f" % i_max
     hameg.write("*RST\n")
+    time.sleep(1)
     # activate digital fuse and set outputs to 0V
+    # CH3
+    hameg.write("INST OUT3\n");
+    hameg.write("OUTP OFF\n")
+    hameg.write("FUSE:LINK 1\n")
+    hameg.write("FUSE:LINK 2\n")
+    hameg.write("FUSE on\n")
+    hameg.write("FUSE:DEL 50\n")
+    hameg.write("SOUR:VOLT %f\n" % voltages[2])
+    hameg.write("SOUR:CURR %f\n" % (float(i_max[2])/1000.))
+    time.sleep(0.5)
+    hameg.write("OUTP ON\n")
     # CH1
     hameg.write("INST OUT1\n");
+    hameg.write("OUTP OFF\n")
     hameg.write("FUSE:LINK 2\n")
     hameg.write("FUSE:LINK 3\n")
-    hameg.write("FUSE:DEL 200\n")
+    hameg.write("FUSE:DEL 50\n")
     hameg.write("FUSE on\n")
     hameg.write("SOUR:VOLT %f\n" % voltages[0])
     hameg.write("SOUR:CURR %f\n" % (float(i_max[0])/1000.))
+    time.sleep(0.5)
     hameg.write("OUTP ON\n")
     # CH2
     hameg.write("INST OUT2\n");
+    hameg.write("OUTP OFF\n")
     hameg.write("FUSE:LINK 1\n")
     hameg.write("FUSE:LINK 3\n")
-    hameg.write("FUSE:DEL 200\n")
+    hameg.write("FUSE:DEL 50\n")
     hameg.write("FUSE on\n")
     hameg.write("SOUR:VOLT %f\n" % voltages[1])
     hameg.write("SOUR:CURR %f\n" % (float(i_max[1])/1000.))
-    hameg.write("OUTP ON\n")
-    # CH3
-    hameg.write("INST OUT3\n");
-    hameg.write("FUSE:LINK 1\n")
-    hameg.write("FUSE:LINK 2\n")
-    hameg.write("FUSE:DEL 200\n")
-    hameg.write("FUSE on\n")
-    hameg.write("SOUR:VOLT %f\n" % voltages[2])
-    hameg.write("SOUR:CURR %f\n" % (float(i_max[2])/1000.))
+    time.sleep(0.5)
     hameg.write("OUTP ON\n")
 
 ###############################################################################
