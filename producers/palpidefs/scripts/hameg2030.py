@@ -46,7 +46,7 @@ def power_on(hameg, i_max, voltages):
     hameg.write("INST OUT1\n");
     hameg.write("FUSE:LINK 2\n")
     hameg.write("FUSE:LINK 3\n")
-    hameg.write("FUSE:DEL 150\n")
+    hameg.write("FUSE:DEL 200\n")
     hameg.write("FUSE on\n")
     hameg.write("SOUR:VOLT %f\n" % voltages[0])
     hameg.write("SOUR:CURR %f\n" % (float(i_max[0])/1000.))
@@ -55,7 +55,7 @@ def power_on(hameg, i_max, voltages):
     hameg.write("INST OUT2\n");
     hameg.write("FUSE:LINK 1\n")
     hameg.write("FUSE:LINK 3\n")
-    hameg.write("FUSE:DEL 150\n")
+    hameg.write("FUSE:DEL 200\n")
     hameg.write("FUSE on\n")
     hameg.write("SOUR:VOLT %f\n" % voltages[1])
     hameg.write("SOUR:CURR %f\n" % (float(i_max[1])/1000.))
@@ -64,7 +64,7 @@ def power_on(hameg, i_max, voltages):
     hameg.write("INST OUT3\n");
     hameg.write("FUSE:LINK 1\n")
     hameg.write("FUSE:LINK 2\n")
-    hameg.write("FUSE:DEL 150\n")
+    hameg.write("FUSE:DEL 200\n")
     hameg.write("FUSE on\n")
     hameg.write("SOUR:VOLT %f\n" % voltages[2])
     hameg.write("SOUR:CURR %f\n" % (float(i_max[2])/1000.))
