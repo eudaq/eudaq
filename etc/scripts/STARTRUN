@@ -35,7 +35,7 @@ fi
 
 cd bin/
 
-../etc/scripts/STARTRUN.local
+../etc/scripts/STARTRUN.gui
 #../etc/scripts/STARTRUN.DataCollector
 ../etc/scripts/STARTRUN.exampleProducer2in1
 ../etc/scripts/STARTRUN.exampleTLUProducer
