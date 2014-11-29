@@ -64,7 +64,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
         event->ignore();
       } else {
         Terminate();
-	eudaq::mSleep(1);
+	eudaq::mSleep(1000);
         event->accept();
       }
     }
@@ -79,7 +79,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
 			btnStop->setEnabled(state == ST_RUNNING);
 		}
 
-  void on_btnTerminate_clicked() { close(); }
+    void on_btnTerminate_clicked() { close(); }
 
     void on_btnConfig_clicked() {
         std::string settings = cmbConfig->currentText().toStdString();

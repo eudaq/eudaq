@@ -8,15 +8,7 @@ export RCPORT2=44442
 
 
 ######################################################################
-# DataCollector
-###############
-printf '\033[22;33m\t TestDataCollector \033[0m \n'
-echo xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e ./TestDataCollector.exe -n $Producer1 -r tcp://$HOSTIP:$RCPORT  -a $RCPORT1 >> start.log
-#xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e "./TestDataCollector.exe -n $Producer1 -r tcp://$HOSTIP:$RCPORT -a $RCPORT1 " &
-sleep 2
-
-######################################################################
-# DataCollector
+# Default Data Collector
 ###############
 printf '\033[22;33m\t TestDataCollector \033[0m \n'
 echo xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e ./TestDataCollector.exe  -r tcp://$HOSTIP:$RCPORT  -a $RCPORT1 >> start.log
@@ -26,12 +18,12 @@ sleep 2
 
 
 ######################################################################
-# ExampleProducer
+# ExampleProducer 1
 ###############
 if [ -f "ExampleProducer.exe" ]
 then
     printf '\033[22;33m\t  ExampleProducer  \033[0m \n'
-    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'ExampleProducer' -e './ExampleProducer.exe -n $Producer1 -r tcp://$HOSTIP:$RCPORT' &
+    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'ExampleProducer1' -e './ExampleProducer.exe -n $Producer1 -r tcp://$HOSTIP:$RCPORT' &
     sleep 1
 else
     printf '\033[22;31m\t  ExampleProducer not found! \033[0m \n'
@@ -42,7 +34,7 @@ fi
 
 
 ######################################################################
-# ExampleProducer
+# ExampleProducer 2
 ###############
 if [ -f "ExampleProducer.exe" ]
 then

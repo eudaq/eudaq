@@ -73,12 +73,16 @@ class ExampleProducer : public eudaq::Producer {
 
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
-      SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
-    }
+      SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
+ 
+      // At the end, set the status that will be displayed in the Run Control.
+      SetStatus(eudaq::Status::LVL_OK, "Stopped");
+   }
 
     // This gets called when the Run Control is terminating,
     // we should also exit.
     virtual void OnTerminate() {
+      SetStatus(eudaq::Status::LVL_OK, "Terminating");
       std::cout << "Terminating..." << std::endl;
       done = true;
     }

@@ -23,8 +23,8 @@ char *ZestSC1_ErrorStrings[]={"bla bla","blub"};
 
 class TLUProducer: public eudaq::Producer {
 public:
-	TLUProducer(const std::string & runcontrol) :
-	  eudaq::Producer("TLU", runcontrol), m_run(0), m_ev(0), trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
+	TLUProducer(const std::string & name, const std::string & runcontrol) :
+	  eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
 	  or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0), enable_dut_veto(0), trig_rollover(0), readout_delay(100),
 	  timestamps(true), done(false), timestamp_per_run(false), TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0) {
 	  for(int i = 0; i < TLU_PMTS; i++)
@@ -285,13 +285,15 @@ int main(int /*argc*/, const char ** argv) {
 	eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address", "The address of the RunControl application");
 	eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level", "The minimum level for displaying log messages locally");
 	eudaq::Option<std::string> op_trace(op, "t", "tracefile", "", "filename", "Log file for tracing USB access");
-	try {
+        eudaq::Option<std::string> name (op, "n", "name", "TLU", "string", "The name of this Producer");
+
+        try {
 		op.Parse(argv);
 		EUDAQ_LOG_LEVEL(level.Value());
 		if (op_trace.Value() != "") {
 			setusbtracefile(op_trace.Value());
 		}
-		TLUProducer producer(rctrl.Value());
+		TLUProducer producer(name.Value(), rctrl.Value());
 		producer.MainLoop();
 		std::cout << "Quitting" << std::endl;
 		eudaq::mSleep(300);

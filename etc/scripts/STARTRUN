@@ -35,11 +35,13 @@ fi
 
 cd bin/
 
-../STARTRUN.local
-../STARTRUN.exampleProducer2
-../STARTRUN.ni
-../STARTRUN.tlu
-../STARTRUN.onlinemon
+../etc/scripts/STARTRUN.local
+#../etc/scripts/STARTRUN.DataCollector
+../etc/scripts/STARTRUN.exampleProducer2in1
+../etc/scripts/STARTRUN.exampleTLUProducer
+#../etc/scripts/STARTRUN.ni
+#../etc/scripts/STARTRUN.tlu
+#../etc/scripts/STARTRUN.onlinemon
 
 
 cd ../
