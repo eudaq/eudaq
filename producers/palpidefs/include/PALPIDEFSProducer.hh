@@ -19,7 +19,7 @@ struct SingleEvent {
     m_buffer = new unsigned char[length];
   }
   ~SingleEvent() {
-    delete m_buffer;
+    delete[] m_buffer;
     m_buffer = 0;
   }
   unsigned char* m_buffer;
