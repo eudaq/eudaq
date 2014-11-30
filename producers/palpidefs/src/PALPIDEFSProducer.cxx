@@ -231,6 +231,7 @@ void DeviceReader::SetRunning(bool running)
   }
   else {
     m_daq_board->WriteBusyOverrideReg(false);
+    //eudaq::mSleep(1000);
     m_daq_board->StopTrigger();
   }
 #endif
@@ -696,8 +697,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       m_SCS_points[i] = 0x0;
     }
   }
-  if (!DoSCurveScan(param)) return;
+  //if (!DoSCurveScan(param)) return; // needed with powering off/on
   if (!InitialiseTestSetup(param)) return;
+  if (!DoSCurveScan(param)) return;
 
 #ifndef SIMULATION
   for (int i=0; i<m_nDevices; i++) {
@@ -825,7 +827,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
 
 #ifdef SIMULATION
       if (!m_configured) {
-        m_reader[i] = new DeviceReader(i, m_debuglevel, daq_board, dut);
+        m_reader[i] = new DeviceReader(i, m_debuglevel, 0x0, daq_board, dut);
         m_next_event[i] = 0;
       }
 #else
@@ -887,29 +889,29 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
 
 bool PALPIDEFSProducer::PowerOffTestSetup()
 {
-  for (int i=0; i<m_nDevices; i++) {
-    if (m_reader[i]) {
-      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-      m_reader[i]->Stop();
-      delete m_reader[i];
-      m_reader[i] = 0x0;
-      // power of the DAQboard
-      std::vector <SFieldReg> ADCConfigReg0 = daq_board->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
-      daq_board->SetPowerOnSequence (1, 0, 0, 0);
-      daq_board->SendADCControlReg  (ADCConfigReg0, 1, 0);   // register 0, self shutdown = 1, off = 0
-      daq_board->ResetBoard(10);
-    }
-  }
-  if (m_testsetup) {
-    struct libusb_context *context = m_testsetup->GetContext();
-    delete m_testsetup;
-    m_testsetup = 0x0;
-    libusb_exit(context);
-    m_configured = false;
-  }
-  eudaq::mSleep(1000);
-  system("${SCRIPT_DIR}/fx3/program.sh");
-  eudaq::mSleep(1000);
+  //for (int i=0; i<m_nDevices; i++) {
+  //  if (m_reader[i]) {
+  //    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+  //    m_reader[i]->Stop();
+  //    delete m_reader[i];
+  //    m_reader[i] = 0x0;
+  //    // power of the DAQboard
+  //    std::vector <SFieldReg> ADCConfigReg0 = daq_board->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
+  //    daq_board->SetPowerOnSequence (1, 0, 0, 0);
+  //    daq_board->SendADCControlReg  (ADCConfigReg0, 1, 0);   // register 0, self shutdown = 1, off = 0
+  //    daq_board->ResetBoard(10);
+  //  }
+  //}
+  //if (m_testsetup) {
+  //  struct libusb_context *context = m_testsetup->GetContext();
+  //  delete m_testsetup;
+  //  m_testsetup = 0x0;
+  //  libusb_exit(context);
+  //  m_configured = false;
+  //}
+  //eudaq::mSleep(1000);
+  //system("${SCRIPT_DIR}/fx3/program.sh");
+  //eudaq::mSleep(1000);
   return true;
 }
 
@@ -921,13 +923,16 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
     if (m_do_SCS[i]) doScan = true;
   }
   if (doScan) {
-    if (!PowerOffTestSetup()) return false;
-    if (!InitialiseTestSetup(param)) return false;
+    //if (!PowerOffTestSetup()) return false;
+    //if (!InitialiseTestSetup(param)) return false;
     for (int i=0; i<m_nDevices; i++) {
       TpAlpidefs* dut = m_reader[i]->GetDUT();
       TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
       const size_t buffer_size = 100;
       char buffer[buffer_size];
+      //m_reader[i]->Stop();
+      //delete m_reader[i];
+      //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
       if (m_do_SCS[i]) {
         // configuration
         sprintf(buffer, "Config_File_%d", i);
@@ -946,8 +951,13 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
           SetStatus(eudaq::Status::LVL_ERROR, buffer);
         }
       }
+      //m_reader[i]->Stop();
+      //delete m_reader[i];
+      //m_next_event[i] = 0;
+      //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
     }
-    return PowerOffTestSetup();
+    m_firstevent = true; // needed without power cycle
+    return true; //PowerOffTestSetup();
   }
 #endif
   return true;
