@@ -626,7 +626,12 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   m_SCS_n_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
   m_SCS_n_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step>0) ? m_SCS_n_steps+1 : m_SCS_n_steps;
 
-  if (!m_next_event)     m_next_event     = new SingleEvent*[m_nDevices];
+  if (!m_next_event) {
+    m_next_event     = new SingleEvent*[m_nDevices];
+    for (int i=0; i<m_nDevices; i++) {
+      m_next_event[i] = 0;
+    }
+  }
   if (!m_strobe_length)  m_strobe_length  = new int[m_nDevices];
   if (!m_strobeb_length) m_strobeb_length = new int[m_nDevices];
   if (!m_trigger_delay)  m_trigger_delay  = new int[m_nDevices];
@@ -869,6 +874,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
         std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
 
         m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+        if (m_next_event[i]) delete m_next_event[i];
         m_next_event[i] = 0;
       } else {
           std::cout << "Already initialized and powered. Doing only reconfiguration..." << std::endl;
