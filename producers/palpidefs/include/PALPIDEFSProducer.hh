@@ -66,21 +66,25 @@ class DeviceReader {
 
     void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
 
-    bool ThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points);
+    void RequestThresholdScan() { SimpleLock lock(m_mutex); m_threshold_scan_rqst = true; }
+    bool GetThresholdScanState() { SimpleLock lock(m_mutex); return m_threshold_scan_rqst; }
+    void SetupThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points);
 
   protected:
     void Loop();
     void Print(int level, const char* text, uint64_t value1 = -1, uint64_t value2 = -1, uint64_t value3 = -1, uint64_t value4 = -1);
-    bool Disconnect();
     bool IsStopping() {  SimpleLock lock(m_mutex); return m_stop; }
     bool IsRunning() {   SimpleLock lock(m_mutex); return m_running; }
     bool IsFlushing() {   SimpleLock lock(m_mutex); return m_flushing; }
     void SetStopping() { SimpleLock lock(m_mutex); m_stop = true; }
+    bool IsThresholdScanRqsted() {  SimpleLock lock(m_mutex); return m_threshold_scan_rqst; }
 
     void Push(SingleEvent* ev);
     bool QueueFull();
 
-    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, unsigned char ***Data, int steps, int nPixels = 1);
+    bool ThresholdScan();
+
+    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int steps, int nPixels = 1);
 
     std::queue<SingleEvent*> m_queue;
     unsigned long m_queue_size;
@@ -89,6 +93,7 @@ class DeviceReader {
     bool m_stop;
     bool m_running;
     bool m_flushing;
+    bool m_threshold_scan_rqst;
     int m_id;
     int m_debuglevel;
     uint64_t m_last_trigger_id;
@@ -102,12 +107,58 @@ class DeviceReader {
     unsigned long m_max_queue_size; // queue size in B
     bool m_high_rate_mode; // decides if is is checked if data is available before requesting an event
     bool m_readout_mode;
+
+    // S-Curve scan
+    int m_n_mask_stages;
+    int m_n_events;
+    int m_ch_start;
+    int m_ch_stop;
+    int m_ch_step;
+    unsigned char ***m_data;
+    unsigned char *m_points;
 };
 
 class PALPIDEFSProducer : public eudaq::Producer {
   public:
     PALPIDEFSProducer(const std::string & name, const std::string & runcontrol, int debuglevel = 0)
-        : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_running(false), m_flush(false), m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0), m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0), m_status_interval(-1), m_full_config(), m_ignore_trigger_ids(true), m_recover_outofsync(true), m_readout_mode(0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_monitor_PSU(false), m_back_bias_voltage(-1), m_dut_pos(-1), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
+        : eudaq::Producer(name, runcontrol)
+        , m_run(0)
+        , m_ev(0)
+        , m_done(false)
+        , m_running(false)
+        , m_flush(false)
+        , m_configured(false)
+        , m_firstevent(false)
+        , m_stage_homed(false)
+        , m_reader(0)
+        , m_next_event(0)
+        , m_debuglevel(debuglevel)
+        , m_testsetup(0)
+        , m_mutex()
+        , m_nDevices(0)
+        , m_status_interval(-1)
+        , m_full_config()
+        , m_ignore_trigger_ids(true)
+        , m_recover_outofsync(true)
+        , m_readout_mode(0)
+        , m_strobe_length(0x0)
+        , m_strobeb_length(0x0)
+        , m_trigger_delay(0x0)
+        , m_readout_delay(0x0)
+        , m_monitor_PSU(false)
+        , m_back_bias_voltage(-1)
+        , m_dut_pos(-1)
+        , m_SCS_charge_start(-1)
+        , m_SCS_charge_stop(-1)
+        , m_SCS_charge_step(-1)
+        , m_SCS_n_events(-1)
+        , m_SCS_n_mask_stages(-1)
+        , m_SCS_n_steps(-1)
+        , m_do_SCS(0x0)
+        , m_SCS_data(0x0)
+        , m_SCS_points(0x0)
+        {}
+    ~PALPIDEFSProducer() { PowerOffTestSetup(); }
 
     virtual void OnConfigure(const eudaq::Configuration & param);
     virtual void OnStartRun(unsigned param);
@@ -142,6 +193,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool m_flush;
     bool m_configured;
     bool m_firstevent;
+    bool m_stage_homed;
     DeviceReader** m_reader;
     SingleEvent** m_next_event;
     int m_debuglevel;

@@ -122,7 +122,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
 
 // Will unmask and select one pixel per region.
 // The pixels are calculated from the number of the mask stage
-void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, unsigned char ***Data, int steps, int nPixels /* = 1 */) {
+void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int steps, int nPixels /* = 1 */) {
   int FirstRegion = 0;
   int LastRegion  = 31;
   if (AMaskStage >= 512 * 32 / nPixels) {
@@ -146,66 +146,84 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
       m_dut->SetDisableColumn    (ireg, DCol, false);
       m_dut->SetMaskSinglePixel  (ireg, DCol, Address, false);
       m_dut->SetInjectSinglePixel(ireg, DCol, Address, true, APulseType, false);
-      for (int ipoint=0; ipoint<steps; ++ipoint) ++Data[DCol+ireg*16][Address][ipoint];
+      for (int ipoint=0; ipoint<steps; ++ipoint) ++m_data[DCol+ireg*16][Address][ipoint];
     }
   }
 }
 
-bool DeviceReader::ThresholdScan(int NMaskStages, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points) {
+void DeviceReader::SetupThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points) {
+  m_n_mask_stages = NMaskStage;
+  m_n_events      = NEvts;
+  m_ch_start      = ChStart;
+  m_ch_stop       = ChStop;
+  m_ch_step       = ChStep;
+  m_data          = Data;
+  m_points        = Points;
+}
+
+bool DeviceReader::ThresholdScan() {
   int PulseMode = 2;
-  int steps = (ChStop-ChStart)/ChStep;
-  steps = ((ChStop-ChStart)%ChStep>0) ? steps+1 : steps;
+  int steps = (m_ch_stop-m_ch_start)/m_ch_step;
+  steps = ((m_ch_stop-m_ch_start)%m_ch_step>0) ? steps+1 : steps;
   std::vector <TPixHit> Hits;
   TEventHeader Header;
-  for (int istage=0; istage<NMaskStages; ++istage) {
+  for (int istage=0; istage<m_n_mask_stages; ++istage) {
     if (!(istage %10)) std::cout << "Threshold scan: mask stage " << istage << std::endl;
-    PrepareMaskStage(PT_ANALOGUE, istage, Data, steps);
-    m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, ChStart, PulseMode);
+    PrepareMaskStage(PT_ANALOGUE, istage, steps);
+    m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
     int ipoint = 0;
-    std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
-    std::cout << "charge: ";
-    for (int icharge = ChStart; icharge < ChStop; icharge += ChStep) {
+    //std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
+    //std::cout << "charge: ";
+    for (int icharge = m_ch_start; icharge < m_ch_stop; icharge += m_ch_step) {
       Hits.clear();
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
-      std::cout << icharge << " " << std::flush;
-      for (int ievt=0; ievt<NEvts; ++ievt) {
+      //std::cout << icharge << " " << std::flush;
+      for (int ievt=0; ievt<m_n_events; ++ievt) {
         if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, 1, &Header)) {
           std::cout << "PulseAndReadEvent failed!" << std::endl;
           return false;
         }
       }
       for (int ihit=0; ihit<Hits.size(); ++ihit) {
-        ++Data[Hits.at(ihit).doublecol+Hits.at(ihit).region*16][Hits.at(ihit).address][ipoint];
+        ++m_data[Hits.at(ihit).doublecol+Hits.at(ihit).region*16][Hits.at(ihit).address][ipoint];
       }
-      Points[ipoint++]=icharge;
+      m_points[ipoint++]=icharge;
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
     m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
   }
   m_dut->SetMaskAllPixels(false);
   return true;
 }
 
-DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut) :
-  m_queue_size(0),
-  m_stop(false),
-  m_running(false),
-  m_flushing(false),
-  m_id(id),
-  m_debuglevel(debuglevel),
-  m_test_setup(test_setup),
-  m_daq_board(daq_board),
-  m_dut(dut),
-  m_last_trigger_id(0),
-  m_queuefull_delay(100),
-  m_max_queue_size(50*1024*1024),
-  m_high_rate_mode(false)
+DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut)
+  : m_queue_size(0)
+  , m_stop(false)
+  , m_running(false)
+  , m_flushing(false)
+  , m_threshold_scan_rqst(false)
+  , m_id(id)
+  , m_debuglevel(debuglevel)
+  , m_test_setup(test_setup)
+  , m_daq_board(daq_board)
+  , m_dut(dut)
+  , m_last_trigger_id(0)
+  , m_queuefull_delay(100)
+  , m_max_queue_size(50*1024*1024)
+  , m_high_rate_mode(false)
+  , m_n_mask_stages(0)
+  , m_n_events(0)
+  , m_ch_start(0)
+  , m_ch_stop(0)
+  , m_ch_step(0)
+  , m_data(0x0)
+  , m_points(0x0)
 {
-  m_thread.start(DeviceReader::LoopWrapper, this);
 #ifndef SIMULATION
   m_last_trigger_id = m_daq_board->GetNextEventId();
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
 #endif
+  m_thread.start(DeviceReader::LoopWrapper, this);
 }
 
 void DeviceReader::Stop()
@@ -213,7 +231,6 @@ void DeviceReader::Stop()
   Print(0, "Stopping...");
   SetStopping();
   m_thread.join();
-  Disconnect();
 }
 
 void DeviceReader::SetRunning(bool running)
@@ -231,7 +248,7 @@ void DeviceReader::SetRunning(bool running)
   }
   else {
     m_daq_board->WriteBusyOverrideReg(false);
-    //eudaq::mSleep(1000);
+    eudaq::mSleep(100);
     m_daq_board->StopTrigger();
   }
 #endif
@@ -289,15 +306,26 @@ void DeviceReader::Loop()
 {
   Print(0, "Loop starting...");
   while (1) {
-
     if (IsStopping())
       break;
 
-//     eudaq::mSleep(10);
+    //eudaq::mSleep(10);
 
     if (!IsRunning() && !IsFlushing()) {
-      eudaq::mSleep(20);
-      continue;
+      if (IsThresholdScanRqsted()) {
+        if (!ThresholdScan()) {
+          std::cout << "Threshold scan failed!" << std::endl;
+          m_threshold_scan_rqst = true;
+        }
+        else {
+          m_threshold_scan_rqst = false;
+        }
+        continue;
+      }
+      else {
+        eudaq::mSleep(20);
+        continue;
+      }
     }
 
     if (m_debuglevel > 10)
@@ -330,7 +358,7 @@ void DeviceReader::Loop()
     // achieve 25 Hz
     eudaq::mSleep(1000 / 25);
 
-#else
+#else // not LOADSIMULATION
     // simulate 100 kHz for 2.4s spill, every 20 seconds
 
     int eventsPerSpill = 240000;
@@ -376,15 +404,15 @@ void DeviceReader::Loop()
     Print(0, "One spill simulated.");
 
     eudaq::mSleep(20000 - 2400);
-#endif
-#else
+#endif // not LOADSIMULATION
+#else // not SIMULATION
     bool event_waiting = true;
     if (m_readout_mode == 0 && (!m_high_rate_mode || IsFlushing()) && m_daq_board->GetNextEventId() <= m_last_trigger_id+1)
       event_waiting = false;
 
     if (!event_waiting)
     {
-//       std::cout << "No event " << m_daq_board->GetNextEventId() << " " << m_last_trigger_id << std::endl;
+      //std::cout << "No event " << m_daq_board->GetNextEventId() << " " << m_last_trigger_id << std::endl;
       // no event waiting
 
       if (IsFlushing()) {
@@ -442,7 +470,7 @@ void DeviceReader::Loop()
           Print(0, str.data(), length);
         }
 
-// 	std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
+        //std::cout << (uint64_t) m_daq_board << " " << header.EventId << " " << header.TimeStamp << std::endl;
         SingleEvent* ev = new SingleEvent(length - 28, header.EventId, header.TimeStamp);
         memcpy(ev->m_buffer, data_buf+20, length - 28);
         // add to queue
@@ -509,12 +537,6 @@ void DeviceReader::Print(int level, const char* text, uint64_t value1, uint64_t 
     EUDAQ_ERROR(msg);
 //     SetStatus(eudaq::Status::LVL_ERROR, msg);
   }
-}
-
-bool DeviceReader::Disconnect()
-{
-  // TODO move poweroff here
-  Print(0, "Disconnecting device...");
 }
 
 void DeviceReader::Push(SingleEvent* ev)
@@ -697,7 +719,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       m_SCS_points[i] = 0x0;
     }
   }
-  //if (!DoSCurveScan(param)) return; // needed with powering off/on
   if (!InitialiseTestSetup(param)) return;
   if (!DoSCurveScan(param)) return;
 
@@ -757,7 +778,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     m_trigger_delay[i]  = param.Get(buffer, param.Get("TriggerDelay",  75));
 
     // data taking configuration
-
     // PrepareEmptyReadout
     daq_board->ConfigureReadout(1, false, (m_readout_mode == 1));       // buffer depth = 1, sampling on rising edge
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0, m_trigger_delay[i]);
@@ -889,29 +909,29 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
 
 bool PALPIDEFSProducer::PowerOffTestSetup()
 {
-  //for (int i=0; i<m_nDevices; i++) {
-  //  if (m_reader[i]) {
-  //    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-  //    m_reader[i]->Stop();
-  //    delete m_reader[i];
-  //    m_reader[i] = 0x0;
-  //    // power of the DAQboard
-  //    std::vector <SFieldReg> ADCConfigReg0 = daq_board->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
-  //    daq_board->SetPowerOnSequence (1, 0, 0, 0);
-  //    daq_board->SendADCControlReg  (ADCConfigReg0, 1, 0);   // register 0, self shutdown = 1, off = 0
-  //    daq_board->ResetBoard(10);
-  //  }
-  //}
-  //if (m_testsetup) {
-  //  struct libusb_context *context = m_testsetup->GetContext();
-  //  delete m_testsetup;
-  //  m_testsetup = 0x0;
-  //  libusb_exit(context);
-  //  m_configured = false;
-  //}
-  //eudaq::mSleep(1000);
-  //system("${SCRIPT_DIR}/fx3/program.sh");
-  //eudaq::mSleep(1000);
+  for (int i=0; i<m_nDevices; i++) {
+    if (m_reader[i]) {
+      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+      m_reader[i]->Stop();
+      delete m_reader[i];
+      m_reader[i] = 0x0;
+      // power of the DAQboard
+      std::vector <SFieldReg> ADCConfigReg0 = daq_board->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
+      daq_board->SetPowerOnSequence (1, 0, 0, 0);
+      daq_board->SendADCControlReg  (ADCConfigReg0, 1, 0);   // register 0, self shutdown = 1, off = 0
+      daq_board->ResetBoard(10);
+    }
+  }
+  if (m_testsetup) {
+    struct libusb_context *context = m_testsetup->GetContext();
+    delete m_testsetup;
+    m_testsetup = 0x0;
+    libusb_exit(context);
+    m_configured = false;
+  }
+  eudaq::mSleep(1000);
+  system("${SCRIPT_DIR}/fx3/program.sh");
+  eudaq::mSleep(1000);
   return true;
 }
 
@@ -925,14 +945,14 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
   if (doScan) {
     //if (!PowerOffTestSetup()) return false;
     //if (!InitialiseTestSetup(param)) return false;
+    const size_t buffer_size = 100;
+    char buffer[buffer_size];
     for (int i=0; i<m_nDevices; i++) {
       TpAlpidefs* dut = m_reader[i]->GetDUT();
       TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-      const size_t buffer_size = 100;
-      char buffer[buffer_size];
-      //m_reader[i]->Stop();
-      //delete m_reader[i];
-      //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+      m_reader[i]->Stop();
+      delete m_reader[i];
+      m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
       if (m_do_SCS[i]) {
         // configuration
         sprintf(buffer, "Config_File_%d", i);
@@ -942,19 +962,26 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
             return false;
 
         daq_board->ConfigureReadout(1, false, false);
-        if (!m_reader[i]->ThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
+        m_reader[i]->SetupThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
                                         m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
-                                        m_SCS_points[i])) {
-          sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
-          std::cout << buffer << std::endl;
-          EUDAQ_ERROR(buffer);
-          SetStatus(eudaq::Status::LVL_ERROR, buffer);
-        }
+                                        m_SCS_points[i]);
+        m_reader[i]->RequestThresholdScan();
       }
-      //m_reader[i]->Stop();
-      //delete m_reader[i];
-      //m_next_event[i] = 0;
-      //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+    }
+    eudaq::mSleep(1000);
+    for (int i=0; i<m_nDevices; i++) {
+      TpAlpidefs* dut = m_reader[i]->GetDUT();
+      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+      m_reader[i]->Stop();
+      if (m_reader[i]->GetThresholdScanState()) {
+        sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
+        std::cout << buffer << std::endl;
+        EUDAQ_ERROR(buffer);
+        SetStatus(eudaq::Status::LVL_ERROR, buffer);
+      }
+      delete m_reader[i];
+      m_next_event[i] = 0;
+      m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
     }
     m_firstevent = true; // needed without power cycle
     return true; //PowerOffTestSetup();
@@ -996,13 +1023,16 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration & param)
     std::cout << "Moving DUT to position..." << std::endl;
     bool move_failed=false;
     if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 0")==0) {
-      if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
+      if (m_stage_homed || system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
+        m_stage_homed=true;
         const size_t buffer_size = 100;
         char buffer[buffer_size];
         snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
         if (system(buffer)!=0) move_failed=true;
       }
-      else move_failed=true;
+      else {
+        move_failed=true;
+      }
     }
     else move_failed=true;
     if (move_failed) {
@@ -1148,8 +1178,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 void PALPIDEFSProducer::OnStopRun()
 {
   std::cout << "Stop Run" << std::endl;
-  for (int i=0; i<m_nDevices; i++)
+  for (int i=0; i<m_nDevices; i++) {
     m_reader[i]->SetRunning(false);
+  }
 
   SimpleLock lock(m_mutex);
   m_running = false;
@@ -1159,13 +1190,7 @@ void PALPIDEFSProducer::OnStopRun()
 void PALPIDEFSProducer::OnTerminate()
 {
   std::cout << "Terminate" << std::endl;
-  for (int i=0; i<m_nDevices; i++) {
-    if (m_reader[i] != 0)
-      m_reader[i]->Stop();
-    // PowerOff Boards (TODO move to DeviceReader)
-    m_testsetup->PowerOffBoard(i);
-  }
-  // TODO does not power off the boards selected by the jumpers
+  PowerOffTestSetup();
   std::cout << "All boards powered off" << std::endl;
   SimpleLock lock(m_mutex);
   m_done = true;
@@ -1194,8 +1219,15 @@ void PALPIDEFSProducer::Loop()
 
     if (!IsRunning())
     {
-      if (IsFlushing())
+      if (IsFlushing()) {
+        eudaq::mSleep(500);
+        int events_built = 0;
+        do {
+          events_built = BuildEvent(); // Get the last events
+          count += events_built;
+        } while(events_built!=0);
         SendEOR();
+      }
       continue;
     }
 
@@ -1260,8 +1292,7 @@ int PALPIDEFSProducer::BuildEvent()
   // time stamp check & recovery
   bool timestamp_error = false;
   for (int i=0; i<m_nDevices; i++) {
-    if (!layer_selected[i])
-      continue;
+    if (!layer_selected[i]) continue;
 
     SingleEvent* single_ev = m_next_event[i];
 
