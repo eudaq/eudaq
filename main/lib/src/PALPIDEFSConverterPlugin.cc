@@ -25,10 +25,12 @@ typedef unsigned __int64 uint64_t;
 #  include <tinyxml.h>
 #endif
 
-#if USE_ROOT
+#if ROOT_FOUND
 #  include "TF1.h"
 #  include "TGraph.h"
 #  include "TMath.h"
+#  include "TFitResultPtr.h"
+#  include "TFitResult.h"
 #endif
 
 #include <iostream>
@@ -76,6 +78,9 @@ namespace eudaq {
       m_SCS_charge_start  = bore.GetTag<int>("SCSchargeStart", -1);
       m_SCS_charge_stop   = bore.GetTag<int>("SCSchargeStop",  -1);
       m_SCS_charge_step   = bore.GetTag<int>("SCSchargeStep",  -1);
+
+      unsigned int SCS_steps = (m_SCS_charge_stop-m_SCS_charge_start)/m_SCS_charge_step;
+      SCS_steps = ((m_SCS_charge_stop-m_SCS_charge_start)%m_SCS_charge_step) ? SCS_steps+1 : SCS_steps;
       m_SCS_n_events      = bore.GetTag<int>("SCSnEvents",     -1);
       m_SCS_n_mask_stages = bore.GetTag<int>("SCSnMaskStages", -1);
 
@@ -132,14 +137,22 @@ namespace eudaq {
 
 
         if (m_do_SCS[i]) {
-          m_SCS_points[i] = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i  );
-          m_SCS_data[i]   = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i+1);
-
+          m_SCS_data[i]   = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i  );
+          m_SCS_points[i] = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i+1);
           if (!analyse_threshold_scan(m_SCS_data[i]->data(), m_SCS_points[i]->data(),
                                       &m_SCS_thr[i], &m_SCS_thr_rms[i],
                                       &m_SCS_noise[i], &m_SCS_noise_rms[i],
-                                      m_SCS_n_events)) {
-            std::cout << "Failed doing S-Curve scan analysis!" << std::endl;
+                                      SCS_steps, m_SCS_n_events)) {
+            std::cout << std::endl;
+            std::cout << "Results of the failed S-Curve scan in ADC counts" << std::endl;
+            std::cout << "Thr\tThrRMS\tNoise\tNoiseRMS" << std::endl;
+            for (unsigned int i_sector=0; i_sector<4; ++i_sector) {
+              std::cout << m_SCS_thr[i][i_sector]       << '\t'
+                        << m_SCS_thr_rms[i][i_sector]   << '\t'
+                        << m_SCS_noise[i][i_sector]     << '\t'
+                        << m_SCS_noise_rms[i][i_sector] << std::endl;
+            }
+            std::cout << std::endl << std::endl;
           }
         }
         else {
@@ -490,7 +503,18 @@ namespace eudaq {
           lev.parameters().setValue(tmp, m_trigger_delay[id]);
           snprintf(tmp, n_bs, "m_readout_delay_%d", id);
           lev.parameters().setValue(tmp, m_readout_delay[id]);
-
+          if (m_do_SCS[id]) {
+            for (int i_sector=0; i_sector<4; ++i_sector) {
+              snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
+              lev.parameters().setValue(tmp, m_SCS_thr[id][i_sector]);
+              snprintf(tmp, n_bs, "ThrRMS_%d_%d", id, i_sector);
+              lev.parameters().setValue(tmp, m_SCS_thr_rms[id][i_sector]);
+              snprintf(tmp, n_bs, "Noise_%d_%d", id, i_sector);
+              lev.parameters().setValue(tmp, m_SCS_noise[id][i_sector]);
+              snprintf(tmp, n_bs, "NoiseRMS_%d_%d", id, i_sector);
+              lev.parameters().setValue(tmp, m_SCS_noise_rms[id][i_sector]);
+            }
+          }
         }
       }
       LCCollectionVec *zsDataCollection;
@@ -590,6 +614,7 @@ namespace eudaq {
                                 double** thr, double** thr_rms,
                                 double** noise, double** noise_rms,
                                 const unsigned int n_points  = 50,
+                                const unsigned int n_events  = 50,
                                 const unsigned int n_sectors = 4,
                                 const unsigned int n_pixels  = 512*1024) {
       *thr       = new double[n_sectors];
@@ -604,48 +629,96 @@ namespace eudaq {
         (*noise_rms)[i_sector] = 0.;
       }
 
-#ifdef USE_ROOT
+#ifdef ROOT_FOUND
       double* x = new double[n_points];
       double* y = new double[n_points];
 
       for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-        y[i_point] = (double)points[i_point];
+        x[i_point] = (double)points[i_point];
       }
 
       TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", y[0], y[n_points-1]);
       TGraph* g = 0x0;
 
       // TODO add further variables identifying the pixel in the chip
-      unsigned int sector     =  4; // valid range: 0-3
+      unsigned int sector     =  n_sectors; // valid range: 0-3
 
-      unsigned int unsuccessful_fits = 0;
+      unsigned int* unsuccessful_fits = new unsigned int[n_sectors];
+      unsigned int* successful_fits   = new unsigned int[n_sectors];
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        unsuccessful_fits[i_sector] = 0;
+        successful_fits[i_sector]   = 0;
+      }
+
+      //std::cout << "n_events=" << n_events << std::endl;
 
       for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
-        sector = i_pixel*4/1024/512;
+        if (data[i_pixel*n_points] != 255) {
+          sector = i_pixel*4/1024/512;
 
-        for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-          x[i_point] = data[i_pixel*n_point+i_point];
+          int i_thr_point = -1;
+          for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+            y[i_point] = ((double)data[i_pixel*n_points+i_point])/((double)n_events);
+            if (y[i_point]>=0.5 && i_thr_point==-1) i_thr_point=i_point;
+          }
+          if (i_thr_point==0) {
+            ++unsuccessful_fits[sector];
+            continue;
+          }
+
+          f_sc.SetParLimits(0, x[0], x[n_points-1]);
+          f_sc.SetParameter(0, x[i_thr_point]);
+          f_sc.SetParLimits(1, 0.01, 10.);
+          f_sc.SetParameter(1, 0.1);
+
+          g = new TGraph(n_points, x, y);
+          TFitResultPtr r = g->Fit(&f_sc, "QRSW");
+          if (r->IsValid()) {
+            (*thr)[sector]       += f_sc.GetParameter(0);
+            (*thr_rms)[sector]   += f_sc.GetParameter(0)*f_sc.GetParameter(0);
+            (*noise)[sector]     += f_sc.GetParameter(1);
+            (*noise_rms)[sector] += f_sc.GetParameter(1)*f_sc.GetParameter(1);
+            //if (i_pixel<10) {
+            //  std::cout <<  f_sc.GetParameter(0) << '\t' <<  f_sc.GetParameter(1) << '\t' << r->Status() << '\t' << x[i_thr_point] << '\t' << y[i_thr_point] << std::endl;
+            //}
+            ++successful_fits[sector];
+          }
+          else {
+            ++unsuccessful_fits[sector];
+          }
+          delete g;
+          g = 0x0;
         }
-        g = new TGraph(n_points, x, y);
-            TFitResultPTr r = g->Fit(&f_sc, "QRSWW");
-            if (r->IsValid()) {
-              (*thr)[sector] += f_sc.GetParameter(0);
-              (*thr_rms)[sector] += f_sc.GetParameter(0)*f_sc.GetParameter(0);
-              (*noise)[sector] += f_sc.GetParameter(1);
-              (*noiserms)[sector] += f_sc.GetParameter(1)*f_sc.GetParameter(1);
-            }
-            else {
-              ++unsuccessful_fits;
-            }
       }
 
       for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        (*thr_rms)[i_sector]   = TMath::Sqrt((*thr_rms)[i_sector]-(*thr)[i_sector]*(*thr)[i_sector]);
-        (*noise_rms)[i_sector] = TMath::Sqrt((*noise_rms)[i_sector]-(*noise)[i_sector]*(*noise)[i_sector]);
+        (*thr_rms)[i_sector]   = TMath::Sqrt((*thr_rms)[i_sector]/(double)successful_fits[i_sector]-
+                                             (*thr)[i_sector]*(*thr)[i_sector]/(double)successful_fits[i_sector]/(double)successful_fits[i_sector]);
+        (*noise_rms)[i_sector] = TMath::Sqrt((*noise_rms)[i_sector]/(double)successful_fits[i_sector]-
+                                             (*noise)[i_sector]*(*noise)[i_sector]/(double)successful_fits[i_sector]/(double)successful_fits[i_sector]);
+        (*thr)[i_sector] /= (double)successful_fits[i_sector];
+        (*noise)[i_sector] /= (double)successful_fits[i_sector];
+        //std::cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t' << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector] << std::endl;
       }
 
-      if (unsuccesful_fits) {
-        std::cout << unsucessful_fits << " fits failed" << std::endl;
+      unsigned int sum_unsuccessful_fits = 0;
+      unsigned int sum_successful_fits   = 0;
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        sum_unsuccessful_fits += unsuccessful_fits[i_sector];
+        sum_successful_fits += successful_fits[i_sector];
+      }
+
+      if (sum_unsuccessful_fits>(double)sum_successful_fits/100.) {
+        std::cout << std::endl << std::endl;
+        std::cout << "Error during S-Curve scan analysis: " << sum_unsuccessful_fits
+                  << " (" << (double)sum_unsuccessful_fits/(double)(sum_unsuccessful_fits+sum_successful_fits)*100.
+                  << "%) fits failed in total" << std::endl;
+        for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+          std::cout << "Sector " << i_sector << ":\t" << unsuccessful_fits[i_sector] << " ("
+                    << (double)unsuccessful_fits[i_sector]/(double)(successful_fits[i_sector]+unsuccessful_fits[i_sector])*100.
+                    << "%) fits failed" << std::endl;
+          sum_successful_fits += successful_fits[i_sector];
+        }
       }
       else return true;
 #endif
