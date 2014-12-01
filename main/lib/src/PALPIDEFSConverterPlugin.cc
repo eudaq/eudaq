@@ -25,6 +25,12 @@ typedef unsigned __int64 uint64_t;
 #  include <tinyxml.h>
 #endif
 
+#if USE_ROOT
+#  include "TF1.h"
+#  include "TGraph.h"
+#  include "TMath.h"
+#endif
+
 #include <iostream>
 #include <iterator>
 #include <fstream>
@@ -85,9 +91,13 @@ namespace eudaq {
 
       m_configs = new std::string[m_nLayers];
 
-      m_do_SCS  = new bool[m_nLayers];
-      m_SCS_points = new const std::vector<unsigned char>*[m_nLayers];
-      m_SCS_data   = new const std::vector<unsigned char>*[m_nLayers];
+      m_do_SCS        = new bool[m_nLayers];
+      m_SCS_points    = new const std::vector<unsigned char>*[m_nLayers];
+      m_SCS_data      = new const std::vector<unsigned char>*[m_nLayers];
+      m_SCS_thr       = new double*[m_nLayers];
+      m_SCS_thr_rms   = new double*[m_nLayers];
+      m_SCS_noise     = new double*[m_nLayers];
+      m_SCS_noise_rms = new double*[m_nLayers];
 
       for (int i=0; i<m_nLayers; i++) {
         char tmp[100];
@@ -120,13 +130,25 @@ namespace eudaq {
         sprintf(tmp, "SCS_%d", i);
         m_do_SCS[i]  = (bool)bore.GetTag<int>(tmp, 0);
 
+
         if (m_do_SCS[i]) {
           m_SCS_points[i] = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i  );
           m_SCS_data[i]   = &(dynamic_cast<const RawDataEvent*>(&bore))->GetBlock(2*i+1);
+
+          if (!analyse_threshold_scan(m_SCS_data[i]->data(), m_SCS_points[i]->data(),
+                                      &m_SCS_thr[i], &m_SCS_thr_rms[i],
+                                      &m_SCS_noise[i], &m_SCS_noise_rms[i],
+                                      m_SCS_n_events)) {
+            std::cout << "Failed doing S-Curve scan analysis!" << std::endl;
+          }
         }
         else {
-          m_SCS_points[i] = 0x0;
-          m_SCS_data[i]   = 0x0;
+          m_SCS_points[i]    = 0x0;
+          m_SCS_data[i]      = 0x0;
+          m_SCS_thr[i]       = 0x0;
+          m_SCS_thr_rms[i]   = 0x0;
+          m_SCS_noise[i]     = 0x0;
+          m_SCS_noise_rms[i] = 0x0;
         }
 
         // get masked pixels
@@ -468,6 +490,7 @@ namespace eudaq {
           lev.parameters().setValue(tmp, m_trigger_delay[id]);
           snprintf(tmp, n_bs, "m_readout_delay_%d", id);
           lev.parameters().setValue(tmp, m_readout_delay[id]);
+
         }
       }
       LCCollectionVec *zsDataCollection;
@@ -528,6 +551,10 @@ namespace eudaq {
     int m_SCS_n_mask_stages;
     const std::vector<unsigned char>** m_SCS_points;
     const std::vector<unsigned char>** m_SCS_data;
+    double** m_SCS_thr;
+    double** m_SCS_thr_rms;
+    double** m_SCS_noise;
+    double** m_SCS_noise_rms;
 
 #if USE_TINYXML
     int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
@@ -557,6 +584,74 @@ namespace eudaq {
       return -2;
     }
 #endif
+
+    bool analyse_threshold_scan(const unsigned char* const data,
+                                const unsigned char* const points,
+                                double** thr, double** thr_rms,
+                                double** noise, double** noise_rms,
+                                const unsigned int n_points  = 50,
+                                const unsigned int n_sectors = 4,
+                                const unsigned int n_pixels  = 512*1024) {
+      *thr       = new double[n_sectors];
+      *thr_rms   = new double[n_sectors]; // used for the some of squares
+      *noise     = new double[n_sectors];
+      *noise_rms = new double[n_sectors]; // used for the some of squares
+
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        (*thr)[i_sector]       = 0.;
+        (*thr_rms)[i_sector]   = 0.;
+        (*noise)[i_sector]     = 0.;
+        (*noise_rms)[i_sector] = 0.;
+      }
+
+#ifdef USE_ROOT
+      double* x = new double[n_points];
+      double* y = new double[n_points];
+
+      for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+        y[i_point] = (double)points[i_point];
+      }
+
+      TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", y[0], y[n_points-1]);
+      TGraph* g = 0x0;
+
+      // TODO add further variables identifying the pixel in the chip
+      unsigned int sector     =  4; // valid range: 0-3
+
+      unsigned int unsuccessful_fits = 0;
+
+      for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
+        sector = i_pixel*4/1024/512;
+
+        for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+          x[i_point] = data[i_pixel*n_point+i_point];
+        }
+        g = new TGraph(n_points, x, y);
+            TFitResultPTr r = g->Fit(&f_sc, "QRSWW");
+            if (r->IsValid()) {
+              (*thr)[sector] += f_sc.GetParameter(0);
+              (*thr_rms)[sector] += f_sc.GetParameter(0)*f_sc.GetParameter(0);
+              (*noise)[sector] += f_sc.GetParameter(1);
+              (*noiserms)[sector] += f_sc.GetParameter(1)*f_sc.GetParameter(1);
+            }
+            else {
+              ++unsuccessful_fits;
+            }
+      }
+
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        (*thr_rms)[i_sector]   = TMath::Sqrt((*thr_rms)[i_sector]-(*thr)[i_sector]*(*thr)[i_sector]);
+        (*noise_rms)[i_sector] = TMath::Sqrt((*noise_rms)[i_sector]-(*noise)[i_sector]*(*noise)[i_sector]);
+      }
+
+      if (unsuccesful_fits) {
+        std::cout << unsucessful_fits << " fits failed" << std::endl;
+      }
+      else return true;
+#endif
+      return false;
+    }
+
 
   private:
 

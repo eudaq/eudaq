@@ -17,6 +17,8 @@ if (TINYXML_FOUND)
   ADD_DEFINITIONS(-DUSE_TINYXML)
 endif (TINYXML_FOUND)
 
+find_package(libusb-1.0 REQUIRED)
+
 if (NOT EXISTS "${ext_lib_paths}/TTestsetup.h")
   message(FATAL_ERROR "Path to pALPIDEfs driver is wrong - Could not find ${ext_lib_paths}/TTestsetup.h")
 endif (NOT EXISTS "${ext_lib_paths}/TTestsetup.h")
@@ -26,7 +28,7 @@ LINK_DIRECTORIES( ${ext_lib_paths} )
 INCLUDE_DIRECTORIES( ${ext_inc_paths})
 ADD_EXECUTABLE(${name} ${sourcefiles})
 
-TARGET_LINK_LIBRARIES(${name}   EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${ext_libraries})
+TARGET_LINK_LIBRARIES(${name} EUDAQ ${CMAKE_THREAD_LIBS_INIT} ${ext_libraries} ${LIBUSB_1_LIBRARIES})
 
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin
