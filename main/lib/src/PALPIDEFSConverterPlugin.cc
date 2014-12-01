@@ -123,9 +123,9 @@ namespace eudaq {
         sprintf(tmp, "StrobeBLength_%d", i);
         m_strobeb_length[i] = bore.GetTag<int>(tmp, -100);
         sprintf(tmp, "ReadoutDelay_%d", i);
-        m_trigger_delay[i]  = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "TriggerDelay_%d", i);
         m_readout_delay[i]  = bore.GetTag<int>(tmp, -100);
+        sprintf(tmp, "TriggerDelay_%d", i);
+        m_trigger_delay[i]  = bore.GetTag<int>(tmp, -100);
 
         sprintf(tmp, "SCS_%d", i);
         m_do_SCS[i]  = (bool)bore.GetTag<int>(tmp, 0);
