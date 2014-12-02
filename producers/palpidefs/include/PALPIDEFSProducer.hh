@@ -57,6 +57,8 @@ class DeviceReader {
     void DeleteNextEvent();
     SingleEvent* PopNextEvent();
     void PrintQueueStatus();
+    int GetQueueLength() { SimpleLock lock(m_mutex); return m_queue.size(); } 
+    
     static void* LoopWrapper(void* arg);
 
     TDAQBoard* GetDAQBoard() { return m_daq_board; }
