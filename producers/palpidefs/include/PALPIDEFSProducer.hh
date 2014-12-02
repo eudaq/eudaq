@@ -70,6 +70,8 @@ class DeviceReader {
     bool GetThresholdScanState() { SimpleLock lock(m_mutex); return m_threshold_scan_rqst; }
     void SetupThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points);
 
+    bool IsWaitingForEOR() { SimpleLock lock(m_mutex); return m_waiting_for_eor; }
+
   protected:
     void Loop();
     void Print(int level, const char* text, uint64_t value1 = -1, uint64_t value2 = -1, uint64_t value3 = -1, uint64_t value4 = -1);
@@ -93,6 +95,7 @@ class DeviceReader {
     bool m_stop;
     bool m_running;
     bool m_flushing;
+    bool m_waiting_for_eor;
     bool m_threshold_scan_rqst;
     int m_id;
     int m_debuglevel;

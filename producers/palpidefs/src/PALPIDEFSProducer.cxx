@@ -201,6 +201,7 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQB
   , m_stop(false)
   , m_running(false)
   , m_flushing(false)
+  , m_waiting_for_eor(false)
   , m_threshold_scan_rqst(false)
   , m_id(id)
   , m_debuglevel(debuglevel)
@@ -237,8 +238,11 @@ void DeviceReader::SetRunning(bool running)
 {
   Print(0, "Set running: %lu", running);
   SimpleLock lock(m_mutex);
-  if (m_running && !running)
+  if (m_running && !running) {
     m_flushing = true;
+    if (m_readout_mode) // packet based
+      m_waiting_for_eor = true;
+  }
   m_running = running;
 
 #ifndef SIMULATION
@@ -438,7 +442,8 @@ void DeviceReader::Loop()
           Print(0, "Flushing %lu", m_last_trigger_id);
           SimpleLock lock(m_mutex);
           m_flushing = false;
-          // Print(0, "Sending EndOfRun word");
+	  Print(0, "EOR event received");
+	  m_waiting_for_eor = false;
           // gets resetted by EndOfRun
           m_last_trigger_id = m_daq_board->GetNextEventId();
         } else
@@ -1220,15 +1225,19 @@ void PALPIDEFSProducer::Loop()
     if (!IsRunning())
     {
       if (IsFlushing()) {
-        eudaq::mSleep(500);
-        int events_built = 0;
-        do {
-          events_built = BuildEvent(); // Get the last events
-          count += events_built;
-        } while(events_built!=0);
-        SendEOR();
+	// check if any producer is waiting for EOR
+	bool waiting_for_eor = false;
+	for (int i=0; i<m_nDevices; i++) {
+	  if (m_reader[i]->IsWaitingForEOR())
+	    waiting_for_eor = true;
+	}
+	if (!waiting_for_eor) {
+	  SendEOR();
+	  continue;
+	}
       }
-      continue;
+      else
+	continue;
     }
 
     // build events
