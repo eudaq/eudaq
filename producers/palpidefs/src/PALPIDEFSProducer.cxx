@@ -1228,10 +1228,12 @@ void PALPIDEFSProducer::Loop()
 	// check if any producer is waiting for EOR
 	bool waiting_for_eor = false;
 	for (int i=0; i<m_nDevices; i++) {
-	  if (m_reader[i]->IsWaitingForEOR() || m_reader[i]->GetQueueLength() > 0)
+	  if (m_reader[i]->IsWaitingForEOR())
 	    waiting_for_eor = true;
 	}
 	if (!waiting_for_eor) {
+	  // write out last events
+	  while (BuildEvent() > 0) { }
 	  SendEOR();
 	  continue;
 	}
