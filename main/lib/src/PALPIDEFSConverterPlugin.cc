@@ -637,7 +637,7 @@ namespace eudaq {
         x[i_point] = (double)points[i_point];
       }
 
-      TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", y[0], y[n_points-1]);
+      TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", x[0], x[n_points-1]);
       TGraph* g = 0x0;
 
       // TODO add further variables identifying the pixel in the chip
@@ -661,7 +661,7 @@ namespace eudaq {
             y[i_point] = ((double)data[i_pixel*n_points+i_point])/((double)n_events);
             if (y[i_point]>=0.5 && i_thr_point==-1) i_thr_point=i_point;
           }
-          if (i_thr_point==0) {
+          if (i_thr_point==0 || i_thr_point==-1) {
             ++unsuccessful_fits[sector];
             continue;
           }
@@ -678,9 +678,6 @@ namespace eudaq {
             (*thr_rms)[sector]   += f_sc.GetParameter(0)*f_sc.GetParameter(0);
             (*noise)[sector]     += f_sc.GetParameter(1);
             (*noise_rms)[sector] += f_sc.GetParameter(1)*f_sc.GetParameter(1);
-            //if (i_pixel<10) {
-            //  std::cout <<  f_sc.GetParameter(0) << '\t' <<  f_sc.GetParameter(1) << '\t' << r->Status() << '\t' << x[i_thr_point] << '\t' << y[i_thr_point] << std::endl;
-            //}
             ++successful_fits[sector];
           }
           else {
@@ -692,13 +689,21 @@ namespace eudaq {
       }
 
       for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        (*thr_rms)[i_sector]   = TMath::Sqrt((*thr_rms)[i_sector]/(double)successful_fits[i_sector]-
-                                             (*thr)[i_sector]*(*thr)[i_sector]/(double)successful_fits[i_sector]/(double)successful_fits[i_sector]);
-        (*noise_rms)[i_sector] = TMath::Sqrt((*noise_rms)[i_sector]/(double)successful_fits[i_sector]-
-                                             (*noise)[i_sector]*(*noise)[i_sector]/(double)successful_fits[i_sector]/(double)successful_fits[i_sector]);
-        (*thr)[i_sector] /= (double)successful_fits[i_sector];
-        (*noise)[i_sector] /= (double)successful_fits[i_sector];
-        //std::cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t' << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector] << std::endl;
+        if (successful_fits[sector]>0) {
+          (*thr_rms)[i_sector]   = TMath::Sqrt((*thr_rms)[i_sector]/(double)successful_fits[i_sector]-
+                                               (*thr)[i_sector]*(*thr)[i_sector]/(double)successful_fits[i_sector]/(double)successful_fits[i_sector]);
+          (*noise_rms)[i_sector] = TMath::Sqrt((*noise_rms)[i_sector]/(double)successful_fits[i_sector]-
+                                               (*noise)[i_sector]*(*noise)[i_sector]/(double)successful_fits[i_sector]/(double)successful_fits[i_sector]);
+          (*thr)[i_sector] /= (double)successful_fits[i_sector];
+          (*noise)[i_sector] /= (double)successful_fits[i_sector];
+          std::cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t' << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector] << std::endl;
+        }
+        else {
+          (*thr)[i_sector]       = 0;
+          (*thr_rms)[i_sector]   = 0;
+          (*noise)[i_sector]     = 0;
+          (*noise_rms)[i_sector] = 0;
+        }
       }
 
       unsigned int sum_unsuccessful_fits = 0;
