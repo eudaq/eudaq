@@ -145,7 +145,7 @@ def main(stdscr):
 	if (all_ok):
 	  not_ok_timestamp = -1
 	  stdscr.addstr(15, 0, "All OK", curses.color_pair(2))
-	else:
+	elif (len(ALERT_TARGET) > 0):
 	  if alert_masked == False:
 	    if (not_ok_timestamp < 0):
 	      not_ok_timestamp = time.time()
