@@ -731,14 +731,14 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     }
   }
   if (!InitialiseTestSetup(param)) return;
-  if (!DoSCurveScan(param)) return;
 
 #ifndef SIMULATION
   for (int i=0; i<m_nDevices; i++) {
-    TpAlpidefs* dut = m_reader[i]->GetDUT();
     TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
     daq_board->WriteBusyOverrideReg(false);
   }
+
+  if (!DoSCurveScan(param)) return;
 
   for (int i=0; i<m_nDevices; i++) {
     TpAlpidefs* dut = m_reader[i]->GetDUT();
@@ -1328,7 +1328,6 @@ int PALPIDEFSProducer::BuildEvent()
       std::cerr << str << std::endl;
       if (m_firstevent) {
 	EUDAQ_INFO(str);
-	SetStatus(eudaq::Status::LVL_INFO, str);
       } else {
 	EUDAQ_WARN(str);
 	SetStatus(eudaq::Status::LVL_WARN, str);
