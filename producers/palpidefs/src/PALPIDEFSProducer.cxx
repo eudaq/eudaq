@@ -968,6 +968,9 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
   }
 
   for (int i=0; i<m_nDevices; i++) {
+    if (!m_do_SCS[i])
+      continue;
+    
     while (m_reader[i]->GetThresholdScanState() <= 1)
       eudaq::mSleep(500);
     
