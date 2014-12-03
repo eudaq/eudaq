@@ -942,7 +942,6 @@ bool PALPIDEFSProducer::PowerOffTestSetup()
   }
   eudaq::mSleep(1000);
   system("${SCRIPT_DIR}/fx3/program.sh");
-  eudaq::mSleep(1000);
   return true;
 }
 
