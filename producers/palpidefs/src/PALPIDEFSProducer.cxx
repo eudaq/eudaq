@@ -166,10 +166,10 @@ bool DeviceReader::ThresholdScan() {
   steps = ((m_ch_stop-m_ch_start)%m_ch_step>0) ? steps+1 : steps;
   std::vector <TPixHit> Hits;
   TEventHeader Header;
-  m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
   for (int istage=0; istage<m_n_mask_stages; ++istage) {
     if (!(istage %10)) Print(0, "Threshold scan: mask stage %d", istage);
     PrepareMaskStage(PT_ANALOGUE, istage, steps);
+    m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
     int ipoint = 0;
     //std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
     //std::cout << "charge: ";
