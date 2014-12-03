@@ -319,9 +319,12 @@ void DeviceReader::Loop()
       if (IsThresholdScanRqsted()) {
         if (!ThresholdScan()) {
           std::cout << "Threshold scan failed!" << std::endl;
-          m_threshold_scan_rqst = true;
+	  // TODO next 2 lines can maybe be skipped
+	  SimpleLock lock(m_mutex);
+          m_threshold_scan_rqst = true; // this status is read out to see if it was succesful
         }
         else {
+	  SimpleLock lock(m_mutex);
           m_threshold_scan_rqst = false;
         }
         continue;
@@ -1061,6 +1064,18 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
   m_run = param;
   m_ev = 0;
 
+  // the queues should be empty at this stage
+  PrintQueueStatus();
+  bool queues_empty = true;
+  for (int i=0; i<m_nDevices; i++)
+    if (m_reader[i]->GetQueueLength() > 0)
+      queues_empty = false;
+
+  if (!queues_empty) {
+    SetStatus(eudaq::Status::LVL_ERROR, "Queues not empty on SOR");
+    return;
+  }
+
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
   bore.SetTag("Devices", m_nDevices);
   bore.SetTag("DataVersion", 2);
@@ -1151,11 +1166,6 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     }
     bore.AddBlock(2*i,   SCS_data_block);
     bore.AddBlock(2*i+1, SCS_points_block);
-
-    SingleEvent* ev;
-    while(ev = m_reader[i]->PopNextEvent()) {
-      std::cout << "Removed event " << ev->m_trigger_id << "\t" << i << std::endl;
-    }
   }
 
   // general S-curve scan configuration
@@ -1234,6 +1244,7 @@ void PALPIDEFSProducer::Loop()
 	if (!waiting_for_eor) {
 	  // write out last events
 	  while (BuildEvent() > 0) { }
+	  PrintQueueStatus();
 	  SendEOR();
 	  continue;
 	}
