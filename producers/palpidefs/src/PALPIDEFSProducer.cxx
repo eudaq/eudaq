@@ -122,10 +122,10 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
 
 // Will unmask and select one pixel per region.
 // The pixels are calculated from the number of the mask stage
-void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int steps, int nPixels /* = 1 */) {
+void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int steps) {
   int FirstRegion = 0;
   int LastRegion  = 31;
-  if (AMaskStage >= 512 * 32 / nPixels) {
+  if (AMaskStage >= 512 * 32) {
     std::cout << "PrepareMaskStage, Warning: Mask stage too big, doing nothing" << std::endl;
     return;
   }
@@ -138,16 +138,15 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
   }
   // now calculate pixel corresponding to mask stage
   // unmask and select this pixel in each region
+  int tmp = AMaskStage + 764*(AMaskStage/4)+4*(AMaskStage/256);
+  tmp = tmp % (16*1024); // maximum is total number of pixels per region
+  int DCol    = tmp / 1024;
+  int Address = tmp % 1024;
   for (int ireg = FirstRegion; ireg <= LastRegion; ireg ++) {
-    for (int pixel = 0; pixel < nPixels; pixel++) {
-      int tmp = AMaskStage * nPixels + pixel;
-      int DCol    = tmp / 1024;
-      int Address = tmp % 1024;
-      m_dut->SetDisableColumn    (ireg, DCol, false);
-      m_dut->SetMaskSinglePixel  (ireg, DCol, Address, false);
-      m_dut->SetInjectSinglePixel(ireg, DCol, Address, true, APulseType, false);
-      for (int ipoint=0; ipoint<steps; ++ipoint) ++m_data[DCol+ireg*16][Address][ipoint];
-    }
+    m_dut->SetDisableColumn    (ireg, DCol, false);
+    m_dut->SetMaskSinglePixel  (ireg, DCol, Address, false);
+    m_dut->SetInjectSinglePixel(ireg, DCol, Address, true, APulseType, false);
+    for (int ipoint=0; ipoint<steps; ++ipoint) ++m_data[DCol+ireg*16][Address][ipoint];
   }
 }
 
@@ -167,10 +166,10 @@ bool DeviceReader::ThresholdScan() {
   steps = ((m_ch_stop-m_ch_start)%m_ch_step>0) ? steps+1 : steps;
   std::vector <TPixHit> Hits;
   TEventHeader Header;
+  m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
   for (int istage=0; istage<m_n_mask_stages; ++istage) {
     if (!(istage %10)) Print(0, "Threshold scan: mask stage %d", istage);
     PrepareMaskStage(PT_ANALOGUE, istage, steps);
-    m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
     int ipoint = 0;
     //std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
     //std::cout << "charge: ";

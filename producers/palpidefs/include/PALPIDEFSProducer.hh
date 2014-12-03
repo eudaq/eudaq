@@ -88,7 +88,7 @@ class DeviceReader {
 
     bool ThresholdScan();
 
-    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int steps, int nPixels = 1);
+    void PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage, int steps);
 
     std::queue<SingleEvent*> m_queue;
     unsigned long m_queue_size;
