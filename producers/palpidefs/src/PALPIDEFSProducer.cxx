@@ -958,37 +958,18 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
   if (!doScan) 
     return true;
 
-  //if (!PowerOffTestSetup()) return false;
-  //if (!InitialiseTestSetup(param)) return false;
   const size_t buffer_size = 100;
   char buffer[buffer_size];
   for (int i=0; i<m_nDevices; i++) {
-    //TpAlpidefs* dut = m_reader[i]->GetDUT();
-    //TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-    //m_reader[i]->Stop();
-    //delete m_reader[i];
-    //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
-    if (m_do_SCS[i]) {
-      // configuration
-      //sprintf(buffer, "Config_File_%d", i);
-      //std::string configFile = param.Get(buffer, "");
-      //if (configFile.length() > 0)
-      //  if (!ConfigChip(i, daq_board, configFile))
-      //    return false;
-
-      //daq_board->ConfigureReadout(1, false, false);
-      m_reader[i]->SetupThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
-				      m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
-				      m_SCS_points[i]);
-      m_reader[i]->RequestThresholdScan();
-    }
+    if (!m_do_SCS[i])
+      continue;
+    m_reader[i]->SetupThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
+				    m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
+				    m_SCS_points[i]);
+    m_reader[i]->RequestThresholdScan();
   }
-  eudaq::mSleep(1000);
+
   for (int i=0; i<m_nDevices; i++) {
-    //TpAlpidefs* dut = m_reader[i]->GetDUT();
-    //TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-    //m_reader[i]->Stop();
-    
     while (m_reader[i]->GetThresholdScanState() <= 1)
       eudaq::mSleep(500);
     
@@ -999,11 +980,8 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
       SetStatus(eudaq::Status::LVL_ERROR, buffer);
       result = false;
     }
-    //delete m_reader[i];
-    //m_next_event[i] = 0;
-    //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
   }
-  m_firstevent = true; // needed without power cycle
+  m_firstevent = true; // needed without power cycle, as one out of sync is "allowed" after S curve scan
 #endif
   return result;
 }
