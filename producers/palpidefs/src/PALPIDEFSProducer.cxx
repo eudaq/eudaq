@@ -168,7 +168,7 @@ bool DeviceReader::ThresholdScan() {
   std::vector <TPixHit> Hits;
   TEventHeader Header;
   for (int istage=0; istage<m_n_mask_stages; ++istage) {
-    if (!(istage %10)) std::cout << "Threshold scan: mask stage " << istage << std::endl;
+    if (!(istage %10)) Print(0, "Threshold scan: mask stage %d", istage);
     PrepareMaskStage(PT_ANALOGUE, istage, steps);
     m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
     int ipoint = 0;
