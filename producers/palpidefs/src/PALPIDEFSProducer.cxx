@@ -203,6 +203,7 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQB
   , m_flushing(false)
   , m_waiting_for_eor(false)
   , m_threshold_scan_rqst(false)
+  , m_threshold_scan_result(0)
   , m_id(id)
   , m_debuglevel(debuglevel)
   , m_test_setup(test_setup)
@@ -313,26 +314,29 @@ void DeviceReader::Loop()
     if (IsStopping())
       break;
 
-    //eudaq::mSleep(10);
+    if (IsThresholdScanRqsted()) {
 
-    if (!IsRunning() && !IsFlushing()) {
-      if (IsThresholdScanRqsted()) {
-        if (!ThresholdScan()) {
-          std::cout << "Threshold scan failed!" << std::endl;
-	  // TODO next 2 lines can maybe be skipped
-	  SimpleLock lock(m_mutex);
-          m_threshold_scan_rqst = true; // this status is read out to see if it was succesful
-        }
-        else {
-	  SimpleLock lock(m_mutex);
-          m_threshold_scan_rqst = false;
-        }
-        continue;
+      {
+	SimpleLock lock(m_mutex);
+	m_threshold_scan_rqst = false;
+	m_threshold_scan_result = 1;
+      }
+      
+      if (!ThresholdScan()) {
+	SimpleLock lock(m_mutex);
+	m_threshold_scan_result = 2;
+	Print(3, "Threshold scan failed!");
       }
       else {
-        eudaq::mSleep(20);
-        continue;
+	SimpleLock lock(m_mutex);
+	m_threshold_scan_result = 3;
+	Print(0, "Threshold scan finished!");
       }
+    }
+    
+    if (!IsRunning() && !IsFlushing()) {
+      eudaq::mSleep(20);
+      continue;
     }
 
     if (m_debuglevel > 10)
@@ -945,57 +949,63 @@ bool PALPIDEFSProducer::PowerOffTestSetup()
 
 bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
 {
+  bool result = true;
 #ifndef SIMULATION
   bool doScan = false;
   for (int i=0; i<m_nDevices; i++) {
     if (m_do_SCS[i]) doScan = true;
   }
-  if (doScan) {
-    //if (!PowerOffTestSetup()) return false;
-    //if (!InitialiseTestSetup(param)) return false;
-    const size_t buffer_size = 100;
-    char buffer[buffer_size];
-    for (int i=0; i<m_nDevices; i++) {
-      TpAlpidefs* dut = m_reader[i]->GetDUT();
-      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-      m_reader[i]->Stop();
-      delete m_reader[i];
-      m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
-      if (m_do_SCS[i]) {
-        // configuration
-        sprintf(buffer, "Config_File_%d", i);
-        std::string configFile = param.Get(buffer, "");
-        if (configFile.length() > 0)
-          if (!ConfigChip(i, daq_board, configFile))
-            return false;
+  if (!doScan) 
+    return true;
 
-        daq_board->ConfigureReadout(1, false, false);
-        m_reader[i]->SetupThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
-                                        m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
-                                        m_SCS_points[i]);
-        m_reader[i]->RequestThresholdScan();
-      }
+  //if (!PowerOffTestSetup()) return false;
+  //if (!InitialiseTestSetup(param)) return false;
+  const size_t buffer_size = 100;
+  char buffer[buffer_size];
+  for (int i=0; i<m_nDevices; i++) {
+    //TpAlpidefs* dut = m_reader[i]->GetDUT();
+    //TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+    //m_reader[i]->Stop();
+    //delete m_reader[i];
+    //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+    if (m_do_SCS[i]) {
+      // configuration
+      //sprintf(buffer, "Config_File_%d", i);
+      //std::string configFile = param.Get(buffer, "");
+      //if (configFile.length() > 0)
+      //  if (!ConfigChip(i, daq_board, configFile))
+      //    return false;
+
+      //daq_board->ConfigureReadout(1, false, false);
+      m_reader[i]->SetupThresholdScan(m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
+				      m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i],
+				      m_SCS_points[i]);
+      m_reader[i]->RequestThresholdScan();
     }
-    eudaq::mSleep(1000);
-    for (int i=0; i<m_nDevices; i++) {
-      TpAlpidefs* dut = m_reader[i]->GetDUT();
-      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
-      m_reader[i]->Stop();
-      if (m_reader[i]->GetThresholdScanState()) {
-        sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
-        std::cout << buffer << std::endl;
-        EUDAQ_ERROR(buffer);
-        SetStatus(eudaq::Status::LVL_ERROR, buffer);
-      }
-      delete m_reader[i];
-      m_next_event[i] = 0;
-      m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
-    }
-    m_firstevent = true; // needed without power cycle
-    return true; //PowerOffTestSetup();
   }
+  eudaq::mSleep(1000);
+  for (int i=0; i<m_nDevices; i++) {
+    //TpAlpidefs* dut = m_reader[i]->GetDUT();
+    //TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
+    //m_reader[i]->Stop();
+    
+    while (m_reader[i]->GetThresholdScanState() <= 1)
+      eudaq::mSleep(500);
+    
+    if (m_reader[i]->GetThresholdScanState() != 3) {
+      sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
+      std::cout << buffer << std::endl;
+      EUDAQ_ERROR(buffer);
+      SetStatus(eudaq::Status::LVL_ERROR, buffer);
+      result = false;
+    }
+    //delete m_reader[i];
+    //m_next_event[i] = 0;
+    //m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+  }
+  m_firstevent = true; // needed without power cycle
 #endif
-  return true;
+  return result;
 }
 
 void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration & param)
@@ -1336,8 +1346,13 @@ int PALPIDEFSProducer::BuildEvent()
       }
 
       std::cerr << str << std::endl;
-      EUDAQ_WARN(str);
-      SetStatus(eudaq::Status::LVL_WARN, str);
+      if (m_firstevent) {
+	EUDAQ_INFO(str);
+	SetStatus(eudaq::Status::LVL_INFO, str);
+      } else {
+	EUDAQ_WARN(str);
+	SetStatus(eudaq::Status::LVL_WARN, str);
+      }
     }
   }
 

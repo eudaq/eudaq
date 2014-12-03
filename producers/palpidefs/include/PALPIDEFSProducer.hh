@@ -68,8 +68,8 @@ class DeviceReader {
 
     void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
 
-    void RequestThresholdScan() { SimpleLock lock(m_mutex); m_threshold_scan_rqst = true; }
-    bool GetThresholdScanState() { SimpleLock lock(m_mutex); return m_threshold_scan_rqst; }
+    void RequestThresholdScan() { SimpleLock lock(m_mutex); m_threshold_scan_result = 0; m_threshold_scan_rqst = true; }
+    int GetThresholdScanState() { SimpleLock lock(m_mutex); return m_threshold_scan_result; }
     void SetupThresholdScan(int NMaskStage, int NEvts, int ChStart, int ChStop, int ChStep, unsigned char ***Data, unsigned char *Points);
 
     bool IsWaitingForEOR() { SimpleLock lock(m_mutex); return m_waiting_for_eor; }
@@ -99,6 +99,7 @@ class DeviceReader {
     bool m_flushing;
     bool m_waiting_for_eor;
     bool m_threshold_scan_rqst;
+    int m_threshold_scan_result; // 0 = not running, 1 = running, 2 = error, 3 = success
     int m_id;
     int m_debuglevel;
     uint64_t m_last_trigger_id;
