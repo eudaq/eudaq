@@ -958,8 +958,6 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
   if (!doScan) 
     return true;
 
-  const size_t buffer_size = 100;
-  char buffer[buffer_size];
   for (int i=0; i<m_nDevices; i++) {
     if (!m_do_SCS[i])
       continue;
@@ -974,7 +972,9 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
       eudaq::mSleep(500);
     
     if (m_reader[i]->GetThresholdScanState() != 3) {
-      sprintf(buffer, "S-Curve scan of DUT %d failed!", i);
+      const size_t buffer_size = 100;
+      char buffer[buffer_size];
+      snprintf(buffer, buffer_size, "S-Curve scan of DUT %d failed!", i);
       std::cout << buffer << std::endl;
       EUDAQ_ERROR(buffer);
       SetStatus(eudaq::Status::LVL_ERROR, buffer);
