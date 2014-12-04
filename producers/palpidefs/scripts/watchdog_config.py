@@ -1,8 +1,11 @@
 # Watchdog configuration
 
 # array: email or phone numbers
-ALERT_TARGET = ( "jgrosseo@cern.ch" )
-#ALERT_TARGET = ( "jgrosseo@cern.ch", "41764875459@mail2sms.cern.ch" )
+# put an empty array for no alerts
+#ALERT_TARGET = [ ]
+
+ALERT_TARGET = [ "jgrosseo@cern.ch", "freidt@cern.ch" ]
+#ALERT_TARGET = [ "jgrosseo@cern.ch", "41764875459@mail2sms.cern.ch" ]
 
 # time in seconds between problem occured and alert sent
 ALERT_GRACE_TIME = 120
@@ -11,7 +14,7 @@ ALERT_GRACE_TIME = 120
 ALERT_REPEAT_TIME = 3600
 
 # time in seconds allowed since the raw data file has been touched last
-LAST_EVENT_TIME = 60
+LAST_EVENT_TIME = 300
 
 # maximum allowed file size in bytes for raw data file
 FILE_SIZE_LIMIT = 2 * 1000 * 1000 * 1000
