@@ -1,0 +1,20 @@
+language: cpp
+compiler:
+  - gcc
+before_install:
+# We need this line to have g++4.8 available in apt
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install -qq gcc-4.8 g++-4.8 cmake qt4-dev-tools
+# We want to compile with g++ 4.8 when rather than the default g++
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+branches:
+  only:
+    - master
+    - v1.4-dev
+before_script:
+ - cd build
+ - cmake -DBUILD_onlinemon=OFF -DBUILD_offlinemon=OFF ..
+script:
+ - make
