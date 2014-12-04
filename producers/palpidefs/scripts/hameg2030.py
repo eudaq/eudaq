@@ -117,3 +117,16 @@ def measure_all(sour, of):
              ( int(time.time()), voltage[0], current[0], voltage[1],
                current[1], voltage[2], current[2]))
     of.flush()
+
+###############################################################################
+def measure_all_print(sour):
+    current=([0.0, 0.0, 0.0])
+    voltage=([0.0, 0.0, 0.0])
+    for c in range(3):
+        sour.write("INST OUT%d\n" % (c+1))
+        sour.write("MEAS:CURR?\n")
+        current[c] = float(sour.readline())
+        sour.write("MEAS:VOLT?\n")
+        voltage[c] = float(sour.readline())
+    print "V1 (4DUTs)\tI1\t| V2 (3DUTs)\tI2\t| Vbb\t\tIbb"
+    print "%0.4fV\t\t%0.4fA\t| %0.4fV\t%0.4fA\t| %0.4fV\t%0.4fA\n" % ( voltage[0], current[0], voltage[1], current[1], voltage[2], current[2])
