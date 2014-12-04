@@ -832,13 +832,15 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
     const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
 
 #ifndef SIMULATION
+    TConfig* config = new TConfig("");
+
     if (!m_testsetup) {
       std::cout << "Creating test setup " << std::endl;
       m_testsetup = new TTestSetup;
     }
 
     std::cout << "Searching for DAQ boards " << std::endl;
-    m_testsetup->FindDAQBoards();
+    m_testsetup->FindDAQBoards(config->GetBoardConfig());
     std::cout << "Found " << m_testsetup->GetNDAQBoards() << " DAQ boards." << std::endl;
 
     if (m_testsetup->GetNDAQBoards() < m_nDevices) {
@@ -850,7 +852,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
       return false;
     }
 
-    m_testsetup->AddDUTs(DUT_PALPIDEFS);
+    m_testsetup->AddDUTs(DUT_PALPIDEFS, config->GetChipConfig());
 #endif
     for (int i=0; i<m_nDevices; i++) {
       TpAlpidefs* dut = 0;
@@ -888,18 +890,19 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
         std::cout << "Enabling device " << board_no << std::endl;
         dut = (TpAlpidefs *) m_testsetup->GetDUT(board_no);
         daq_board = m_testsetup->GetDAQBoard(board_no);
-        if (!m_testsetup->PowerOnBoard(board_no)) {
+        int overflow = 0x0;
+        if (!m_testsetup->PowerOnBoard(board_no, overflow)) {
           char msg[100];
-          sprintf(msg, "Powering device with board address %d failed", board_address);
+          sprintf(msg, "Powering device with board address %d failed, overflow=0x%x", board_address, overflow);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
           SetStatus(eudaq::Status::LVL_ERROR, msg);
           return false;
         }
 
-        if (!m_testsetup->InitialiseChip(board_no)) {
+        if (!m_testsetup->InitialiseChip(board_no, overflow)) {
           char msg[100];
-          sprintf(msg, "Initialising device with board address %d failed", board_address);
+          sprintf(msg, "Initialising device with board address %d failed, overflow=0x%x", board_address, overflow);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
           SetStatus(eudaq::Status::LVL_ERROR, msg);
