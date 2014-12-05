@@ -189,6 +189,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       if (lcEvent->getParameters().getIntVal("FLAG") == Event::FLAG_STATUS) {/*cout << "Skipping event " << lcEvent->getEventNumber() << ": status event" <<  endl;*/ continue;}
       else if (lcEvent->getParameters().getIntVal("FLAG") == Event::FLAG_BROKEN) {/*cout << "Skipping event " << lcEvent->getEventNumber() << ": broken or out of sync" <<  endl;*/ continue;}
       ProcessorMgr::instance()->processEvent( lcEvent );
+      if (eventCounter==0) streamlog_out (MESSAGE5) << "Place of telescope:\t" << lcEvent->getParameters().getFloatVal("DUTposition") << endl;
       delete lcEvent;
     }
     ++eventCounter;
