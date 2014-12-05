@@ -746,6 +746,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     const size_t buffer_size = 100;
     char buffer[buffer_size];
 
+    daq_board->WriteBusyOverrideReg(false);
+
     // configuration
     sprintf(buffer, "Config_File_%d", i);
     std::string configFile = param.Get(buffer, "");
@@ -925,6 +927,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
 
 bool PALPIDEFSProducer::PowerOffTestSetup()
 {
+  std::cout << "Powering off test setup" << std::endl;
   for (int i=0; i<m_nDevices; i++) {
     if (m_reader[i]) {
       TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
@@ -945,7 +948,7 @@ bool PALPIDEFSProducer::PowerOffTestSetup()
     libusb_exit(context);
     m_configured = false;
   }
-  eudaq::mSleep(1000);
+  eudaq::mSleep(5000);
   system("${SCRIPT_DIR}/fx3/program.sh");
   return true;
 }
@@ -987,7 +990,20 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration & param)
       result = false;
     }
   }
-  m_firstevent = true; // needed without power cycle, as one out of sync is "allowed" after S curve scan
+  if (!PowerOffTestSetup()) {
+    char buffer[] = "Powering off the DAQ boards failed!";
+    std::cout << buffer << std::endl;
+    EUDAQ_ERROR(buffer);
+    SetStatus(eudaq::Status::LVL_ERROR, buffer);
+    result = false;
+  }
+  if (!InitialiseTestSetup(param)) {
+    char buffer[] = "Reinitialising the DAQ boards failed!";
+    std::cout << buffer << std::endl;
+    EUDAQ_ERROR(buffer);
+    SetStatus(eudaq::Status::LVL_ERROR, buffer);
+    result = false;
+  }
 #endif
   return result;
 }
