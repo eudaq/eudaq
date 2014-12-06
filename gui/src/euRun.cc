@@ -99,6 +99,7 @@ RunControlGUI::RunControlGUI(const std::string & listenaddress,
   m_prevtime(0.0),
   m_runstarttime(0.0),
   m_filebytes(0),
+  m_events(0),
   dostatus(false),
   m_producer_not_ok(false),
   m_startrunwhenready(false)
@@ -159,6 +160,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, std::shared_ptr<
   }
   if (id.GetType() == "DataCollector") {
     m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
+    m_events    = from_string(status->GetTag("EVENT"),     0LL);
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer") {
