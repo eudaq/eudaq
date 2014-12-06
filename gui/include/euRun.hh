@@ -119,7 +119,7 @@ class RunControlGUI : public QMainWindow, public Ui::wndRun, public eudaq::RunCo
           }
           eudaq::mSleep(1000);
           StopRun(false);
-          eudaq::mSleep(8000);
+          eudaq::mSleep(20000);
           if (m_nextconfigonfilelimit) {
             if (cmbConfig->currentIndex()+1 < cmbConfig->count()) {
               EUDAQ_INFO("Moving to next config file and starting a new run");

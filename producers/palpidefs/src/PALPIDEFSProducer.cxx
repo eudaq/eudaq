@@ -814,7 +814,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   }
 #endif
 
-  eudaq::mSleep(500); // TODO remove this again - trying to protect from starting problems
+  eudaq::mSleep(5000); // TODO remove this again - trying to protect from starting problems
 
   if (!m_configured) {
     m_configured = true;
