@@ -1187,6 +1187,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 
   // back-bias voltage
   bore.SetTag("BackBiasVoltage", m_back_bias_voltage);
+  bore.SetTag("DUTposition", m_dut_pos);
 
   SendEvent(bore);
 
