@@ -29,7 +29,7 @@ using eudaq::ucase;
 using namespace uhal;
 
 namespace tlu {
-  miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_filename(""), m_devicename(""), m_hw(0), m_dataFromTLU(0), m_DACaddr(0), m_IDaddr(0) {
+  miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_filename(""), m_devicename(""), m_hw(0), m_dataFromTLU(0), m_leftoverFromTLU(0), m_DACaddr(0), m_IDaddr(0) {
 
     m_filename = connectionFilename;
     m_devicename = deviceName;
@@ -101,14 +101,17 @@ namespace tlu {
     m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
     //   m_nEvtInFIFO = 2;
     //if (m_nEvtInFIFO) std::cout << "words in FIFO : " << m_nEvtInFIFO << std::endl;
+    if (m_nEvtInFIFO%2) std::cout << "Warning odd words in fifo!" << std::endl;
     if (m_nEvtInFIFO == 0x7D00) std::cout << "WARNING! miniTLU hardware FIFO is full" << std::endl;
   }
 
   void miniTLUController::ReadEventFIFO() {
     if(m_nEvtInFIFO) {
-      if (!(m_nEvtInFIFO)) std::cout << "Warning odd words in fifo!" << std::endl;
       try {
 	for (unsigned int nwords = m_nEvtInFIFO; nwords > 0;) {
+	        m_dataFromTLU.reserve(m_leftoverFromTLU.size());
+		m_dataFromTLU.insert(m_dataFromTLU.begin(),m_leftoverFromTLU.begin(),m_leftoverFromTLU.end());
+		m_leftoverFromTLU.clear();
 		unsigned int nwtoread;
 		if (nwords > m_maxRead) {
 			nwtoread = m_maxRead;
@@ -127,9 +130,14 @@ namespace tlu {
 	    // std::cout << "-- " << std::hex << *i << std::endl;
 	  	  if(lowBits) {
 	   	   word = (((uint64_t)(word))<<32) | *i;
-	    	  m_dataFromTLU.push_back(word);
-	  	    lowBits = false;
-		    } else {
+		   if((std::distance(i,fifoContent.end()) == 1) && // last 64 bit word
+		      ((word>>61)&0x7 == 0x0)) { // if it is a 2-word type (0001 or 0000, I shift one bit more and check 0 on the 3 MSB)
+	    	   	m_leftoverFromTLU.push_back(word);
+		   } else {
+	    	        m_dataFromTLU.push_back(word);
+		   }
+	  	   lowBits = false;
+		   } else {
 		      word = *i;
 		      lowBits = true;
 		    }

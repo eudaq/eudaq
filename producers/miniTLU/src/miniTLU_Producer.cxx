@@ -38,21 +38,29 @@ public:
         	std::cout << "[" << id << "] Received data in the queue: " << std::hex << mydump.size() << " (" << queue.size() << " )" << std::endl;
 		int len = mydump.size();
 		for (int i = 0; i < len;) {
+/*
 			if (i + 1 == len) {
 				std::cout << "Error! Strange packet: " << mydump.at(i) << std::endl;
 				i++;
 				continue;
 			}
+*/
 			uint32_t evtType = (mydump.at(i) >> 60)&0xf;
 			uint32_t inputTrig = (mydump.at(i) >> 48)&0xfff;
 			uint64_t timeStamp = (mydump.at(i))&0xffffffffffff;
 			i++;
-			uint32_t evtNumber = (mydump.at(i))&0xffffffff;
-			i++;
 			packet.GetMetaData().add(true, 0x1, evtType);
 			packet.GetMetaData().add(true, 0x2, inputTrig);
 			packet.GetMetaData().add(true, 0x3, timeStamp);
-			packet.GetMetaData().add(true, 0x4, evtNumber);
+			if (evtType == 0x0 || evtType == 0x1) { 
+			       	if (i == len) {
+                                	std::cout << "Error! Strange packet: " << mydump.at(i-1) << std::endl;
+                        	} else {
+					uint32_t evtNumber = (mydump.at(i))&0xffffffff;
+					packet.GetMetaData().add(true, 0x4, evtNumber);
+					i++;
+				}
+			}
 		} 
         	packet.SetData(&mydump);
 		{

@@ -164,6 +164,7 @@ namespace tlu {
     uint64_t m_BoardID;
 
     std::vector<uint64_t> m_dataFromTLU;
+    std::vector<uint64_t> m_leftoverFromTLU;
 
     unsigned m_scalers[TLU_TRIGGER_INPUTS];
     unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat;
