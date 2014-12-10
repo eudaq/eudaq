@@ -20,6 +20,10 @@ typedef int int32_t
 #  include "lcio.h"
 #endif
 
+#if USE_EUTELESCOPE
+#  include "EUTELESCOPE.h"
+#endif
+
 #include <iostream>
 #include <iterator>
 #include <fstream>
@@ -557,13 +561,16 @@ namespace eudaq {
             unsigned int SI;          //StatusInfo
 
 
-            it=framepos[nframes].first + framepos[nframes].second-24; // beginning of the trailer
-            unpack_fn(it,EvTS);               //unpack stuff
-            unpack_fn(it,TrTS);
-            unpack_fn(it,TrCnt);
-            unpack_b(it,TluCnt,2);
-            unpack_b(it,SI,2);
-
+      // use the data from the HLVDS FEC
+      vector<unsigned char> data_HLVDS = rev->GetBlock(0);
+      //data iterator and element access number
+      std::vector<unsigned char>::iterator it_HLVDS=data_HLVDS.begin();
+      it_HLVDS+=20 ; // 4 byte event size, 4 frame size, 12 byte frame header, then the trailer startrs 
+      unpack_fn(it_HLVDS,EvTS);               //unpack stuff
+      unpack_fn(it_HLVDS,TrTS);
+      unpack_fn(it_HLVDS,TrCnt);
+      unpack_b(it_HLVDS,TluCnt,2);
+      unpack_b(it_HLVDS,SI,2);
 //      if(m_noe<10 || m_noe%100==0){
 //      cout<<"---------------------------"<<endl;
 //      cout<<"\nEvent Count\t"<<m_noe<<endl;
@@ -587,11 +594,14 @@ namespace eudaq {
 #if USE_LCIO
         virtual bool GetLCIOSubEvent(lcio::LCEvent & lev, eudaq::Event const & ev) const{
 
+//            cerr << "GetLCIOSubEvent " << endl;
+
             StandardEvent sev;                //GetStandardEvent first then decode plains
             GetStandardSubEvent(sev,ev);
 
             unsigned int nplanes=sev.NumPlanes();             //deduce number of planes from StandardEvent
             StandardPlane plane;
+//            cerr << "After GetStandardSubEvent" << endl;
 
             for(unsigned int n=0 ; n<nplanes ; n++){  //pull out the data and put it into lcio format
 
@@ -601,17 +611,33 @@ namespace eudaq {
                 explorerlciodata->setCellID0(0);
                 explorerlciodata->setCellID1(n);
                 explorerlciodata->setADCValues(plane.GetPixels<short>());
-
+                lcio::LCCollectionVec * explorerCollection;
+                lcio::LCCollectionVec * explorerTrackerDataCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERDATA);
                 try{
+//                    cerr << "try" << endl;
                     // if the collection is already existing add the current data
-                    lcio::LCCollectionVec * explorerCollection = dynamic_cast<lcio::LCCollectionVec *>(lev.getCollection("ExplorerRawData"));
+                    explorerCollection = dynamic_cast<lcio::LCCollectionVec *>(lev.getCollection("ExplorerRawData"));
                     explorerCollection->addElement(explorerlciodata);
+                    explorerTrackerDataCollection = dynamic_cast<lcio::LCCollectionVec *>(lev.getCollection("ExplorerTrackerData"));
+                    CellIDEncoder<lcio::TrackerDataImpl> explorerEncoder(eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING,explorerTrackerDataCollection);
+                    TrackerDataImpl *Frame=new TrackerDataImpl();
+                    explorerEncoder["sensorID"]=6+n;
+                    explorerEncoder["xMax"]=plane.XSize();
+                    explorerEncoder["yMax"]=plane.YSize();
+                    explorerEncoder.setCellID(Frame);
+                    for (unsigned i=0; i<plane.XSize(); i++)
+                      for (unsigned j=0; j<plane.YSize(); j++)
+                      {
+                        Frame->chargeValues().push_back(plane.GetPixel(j*plane.XSize()+i));
+//                        cerr << plane.GetPixel(j*plane.XSize()+i) << endl;
+                      }
+                      explorerTrackerDataCollection->addElement(Frame);
                 }
                 catch(lcio::DataNotAvailableException &)
                 {
+//                    cerr << "catch" << endl;
                     // collection does not exist, create it and add it to the event
-                    lcio::LCCollectionVec * explorerCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERRAWDATA);
-
+                    explorerCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERRAWDATA);
                     // set the flags that cellID1 should be stored
                     lcio::LCFlagImpl trkFlag(0) ;
                     trkFlag.setBit( lcio::LCIO::TRAWBIT_ID1 ) ;
@@ -620,9 +646,23 @@ namespace eudaq {
                     explorerCollection->addElement(explorerlciodata);
 
                     lev.addCollection(explorerCollection,"ExplorerRawData");
+                    CellIDEncoder<lcio::TrackerDataImpl> explorerEncoder(eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING,explorerTrackerDataCollection);
+                    TrackerDataImpl *Frame=new TrackerDataImpl();
+                    explorerEncoder["sensorID"]=6+n;
+                    explorerEncoder["xMax"]=plane.XSize();
+                    explorerEncoder["yMax"]=plane.YSize();
+                    explorerEncoder.setCellID(Frame);
+                    for (unsigned i=0; i<plane.XSize(); i++)
+                      for (unsigned j=0; j<plane.YSize(); j++)
+                      { 
+                        Frame->chargeValues().push_back(plane.GetPixel(j*plane.XSize()+i));
+                      }
+                    explorerTrackerDataCollection->addElement(Frame);
+                    lev.addCollection(explorerTrackerDataCollection,"ExplorerTrackerData");
                 }
             }
-
+            lev.parameters().setValue("TRGTIME",(int) sev.GetTimestamp()); 
+//            cerr << "End" << endl;
             return 0;
         }
 #endif
