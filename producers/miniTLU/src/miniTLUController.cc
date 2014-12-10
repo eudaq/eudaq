@@ -124,6 +124,7 @@ namespace tlu {
 	        m_hw->dispatch();
  	       if(fifoContent.valid()) {
        		  bool lowBits = false;
+		  bool trigType = false;
 	 	 uint64_t word = 0;
 	//	std::cout << "Dump event FIFO" << std::endl;
 	 	 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
@@ -131,7 +132,7 @@ namespace tlu {
 	  	  if(lowBits) {
 	   	   word = (((uint64_t)(word))<<32) | *i;
 		   if((std::distance(i,fifoContent.end()) == 1) && // last 64 bit word
-		      ((word>>61)&0x7 == 0x0)) { // if it is a 2-word type (0001 or 0000, I shift one bit more and check 0 on the 3 MSB)
+		      (trigType = true)) { // and it's a 2-word trigger type
 	    	   	m_leftoverFromTLU.push_back(word);
 		   } else {
 	    	        m_dataFromTLU.push_back(word);
@@ -140,6 +141,10 @@ namespace tlu {
 		   } else {
 		      word = *i;
 		      lowBits = true;
+		      if((((word>>28)&0xf) == 0x1) || (((word>>28)&0xf) == 0x0) && (trigType == false))
+			trigType = true;
+		      else
+			trigType = false;
 		    }
 		  }
     	    } else {
