@@ -125,6 +125,7 @@ namespace tlu {
  	       if(fifoContent.valid()) {
        		  bool lowBits = false;
 		  bool trigType = false;
+		  if(m_dataFromTLU.size()%2) trigType = true;
 	 	 uint64_t word = 0;
 	//	std::cout << "Dump event FIFO" << std::endl;
 	 	 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
@@ -132,7 +133,7 @@ namespace tlu {
 	  	  if(lowBits) {
 	   	   word = (((uint64_t)(word))<<32) | *i;
 		   if((std::distance(i,fifoContent.end()) == 1) && // last 64 bit word
-		      (trigType = true)) { // and it's a 2-word trigger type
+		      (trigType == true)) { // and it's a 2-word trigger type
 	    	   	m_leftoverFromTLU.push_back(word);
 		   } else {
 	    	        m_dataFromTLU.push_back(word);
@@ -165,32 +166,47 @@ namespace tlu {
       if ((m_nEvtInFIFO % 2)) std::cout << "Warning odd words in fifo!" << std::endl;
       try {
         for (unsigned int nwords = m_nEvtInFIFO; nwords > 0;) {
-                unsigned int nwtoread;
-                if (nwords > m_maxRead) {
-                        nwtoread = m_maxRead;
-                } else {
-                        nwtoread = nwords;
-                }
-                nwords -= nwtoread;
+	        m_dataFromTLU.reserve(m_leftoverFromTLU.size());
+		m_dataFromTLU.insert(m_dataFromTLU.begin(),m_leftoverFromTLU.begin(),m_leftoverFromTLU.end());
+		m_leftoverFromTLU.clear();
+		unsigned int nwtoread;
+		if (nwords > m_maxRead) {
+			nwtoread = m_maxRead;
+		} else {
+			nwtoread = nwords;
+		}
+		nwords -= nwtoread;
 
-                ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nwtoread);
-                m_hw->dispatch();
-               if(fifoContent.valid()) {
-                  bool lowBits = false;
-                 uint64_t word = 0;
-        //      std::cout << "Dump event FIFO" << std::endl;
-                 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
-            // std::cout << "-- " << std::hex << *i << std::endl;
-                  if(lowBits) {
-                   word = (((uint64_t)(word))<<32) | *i;
-                   m_dataFromTLU.push_back(word);
-                    lowBits = false;
-                    } else {
-                      word = *i;
-                      lowBits = true;
-                    }
-                  }
+        	ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nwtoread);
+	        m_hw->dispatch();
+ 	       if(fifoContent.valid()) {
+       		  bool lowBits = false;
+		  bool trigType = false;
+		  if(m_dataFromTLU.size()%2) trigType = true;
+	 	 uint64_t word = 0;
+	//	std::cout << "Dump event FIFO" << std::endl;
+	 	 for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
+	    // std::cout << "-- " << std::hex << *i << std::endl;
+	  	  if(lowBits) {
+	   	   word = (((uint64_t)(word))<<32) | *i;
+		   if((std::distance(i,fifoContent.end()) == 1) && // last 64 bit word
+		      (trigType == true)) { // and it's a 2-word trigger type
+	    	   	m_leftoverFromTLU.push_back(word);
+		   } else {
+	    	        m_dataFromTLU.push_back(word);
+		   }
+	  	   lowBits = false;
+		   } else {
+		      word = *i;
+		      lowBits = true;
+		      if((((word>>28)&0xf) == 0x1) || (((word>>28)&0xf) == 0x0) && (trigType == false))
+			trigType = true;
+		      else
+			trigType = false;
+		    }
+		  }
 		queue.deposit(m_dataFromTLU);
+		m_dataFromTLU.clear();
             } else {
                   std::cout << "Error reading FIFO" << std::endl;
            }
