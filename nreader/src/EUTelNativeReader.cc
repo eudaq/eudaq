@@ -147,7 +147,14 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   }
 
   if ( reader->Event().IsBORE() ) {
-    eudaq::PluginManager::Initialize(  reader->Event() );
+//    eudaq::PluginManager::Initialize(  reader->Event() );
+    
+    const eudaq::DetectorEvent & ev = reader->Event();
+    string config = ev.GetTag<std::string>("CONFIG","Config not found");
+    size_t dutPosPlace = config.find("DUTposition = ");
+    string dutPosStr = config.substr(dutPosPlace+14,3);
+    cout << "Place of telescope from config file:\t" << dutPosStr << endl;
+    eudaq::PluginManager::Initialize( ev );
     // this is the case in which the eudaq event is a Begin Of Run
     // Event. This is translating into a RunHeader in the case of
     // LCIO
@@ -189,7 +196,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       if (lcEvent->getParameters().getIntVal("FLAG") == Event::FLAG_STATUS) {/*cout << "Skipping event " << lcEvent->getEventNumber() << ": status event" <<  endl;*/ continue;}
       else if (lcEvent->getParameters().getIntVal("FLAG") == Event::FLAG_BROKEN) {/*cout << "Skipping event " << lcEvent->getEventNumber() << ": broken or out of sync" <<  endl;*/ continue;}
       ProcessorMgr::instance()->processEvent( lcEvent );
-      if (eventCounter==0) streamlog_out (MESSAGE5) << "Place of telescope:\t" << lcEvent->getParameters().getFloatVal("DUTposition") << endl;
+//      if (eventCounter==0) streamlog_out (MESSAGE5) << "Place of telescope:\t" << lcEvent->getParameters().getFloatVal("DUTposition") << endl;
       delete lcEvent;
     }
     ++eventCounter;

@@ -75,6 +75,8 @@ namespace eudaq {
 
       m_DataVersion       = bore.GetTag<int>("DataVersion", 1);
       m_BackBiasVoltage   = bore.GetTag<float>("BackBiasVoltage", -4.);
+      m_dut_pos           = bore.GetTag<float>("DUTposition", -100.);
+      cout << "Place of telescope:\t" << m_dut_pos << endl;
       m_SCS_charge_start  = bore.GetTag<int>("SCSchargeStart", -1);
       m_SCS_charge_stop   = bore.GetTag<int>("SCSchargeStop",  -1);
       m_SCS_charge_step   = bore.GetTag<int>("SCSchargeStep",  -1);
@@ -99,10 +101,10 @@ namespace eudaq {
       m_do_SCS        = new bool[m_nLayers];
       m_SCS_points    = new const std::vector<unsigned char>*[m_nLayers];
       m_SCS_data      = new const std::vector<unsigned char>*[m_nLayers];
-      m_SCS_thr       = new double*[m_nLayers];
-      m_SCS_thr_rms   = new double*[m_nLayers];
-      m_SCS_noise     = new double*[m_nLayers];
-      m_SCS_noise_rms = new double*[m_nLayers];
+      m_SCS_thr       = new float*[m_nLayers];
+      m_SCS_thr_rms   = new float*[m_nLayers];
+      m_SCS_noise     = new float*[m_nLayers];
+      m_SCS_noise_rms = new float*[m_nLayers];
 
       for (int i=0; i<m_nLayers; i++) {
         char tmp[100];
@@ -482,6 +484,7 @@ namespace eudaq {
       {
         parametersSaved = true;
         lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
+        lev.parameters().setValue("DUTposition", m_dut_pos);
         const int n_bs=100;
         char tmp[n_bs];
         for (int id=0 ; id<m_nLayers ; id++) {
@@ -557,6 +560,7 @@ namespace eudaq {
     int m_nLayers;
     int m_DataVersion;
     float m_BackBiasVoltage;
+    float m_dut_pos;
     std::string* m_configs;
     int* m_Vaux;
     int* m_Vreset;
@@ -575,10 +579,10 @@ namespace eudaq {
     int m_SCS_n_mask_stages;
     const std::vector<unsigned char>** m_SCS_points;
     const std::vector<unsigned char>** m_SCS_data;
-    double** m_SCS_thr;
-    double** m_SCS_thr_rms;
-    double** m_SCS_noise;
-    double** m_SCS_noise_rms;
+    float** m_SCS_thr;
+    float** m_SCS_thr_rms;
+    float** m_SCS_noise;
+    float** m_SCS_noise_rms;
 
 #if USE_TINYXML
     int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
@@ -611,16 +615,16 @@ namespace eudaq {
 
     bool analyse_threshold_scan(const unsigned char* const data,
                                 const unsigned char* const points,
-                                double** thr, double** thr_rms,
-                                double** noise, double** noise_rms,
+                                float** thr, float** thr_rms,
+                                float** noise, float** noise_rms,
                                 const unsigned int n_points  = 50,
                                 const unsigned int n_events  = 50,
                                 const unsigned int n_sectors = 4,
                                 const unsigned int n_pixels  = 512*1024) {
-      *thr       = new double[n_sectors];
-      *thr_rms   = new double[n_sectors]; // used for the some of squares
-      *noise     = new double[n_sectors];
-      *noise_rms = new double[n_sectors]; // used for the some of squares
+      *thr       = new float[n_sectors];
+      *thr_rms   = new float[n_sectors]; // used for the some of squares
+      *noise     = new float[n_sectors];
+      *noise_rms = new float[n_sectors]; // used for the some of squares
 
       for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
         (*thr)[i_sector]       = 0.;
@@ -738,7 +742,7 @@ namespace eudaq {
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
     PALPIDEFSConverterPlugin()
-      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0)
+      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0)
       {}
 
     // The single instance of this converter plugin
