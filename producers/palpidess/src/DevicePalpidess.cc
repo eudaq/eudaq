@@ -83,13 +83,13 @@ int DevicePalpidess::get_SD(){	//get socket descriptors of fecs
 ////call python scripts to steer SRS
 bool DevicePalpidess::Configure(std::string arg){
   if(sc>=0) StopDAQ();
-  std::string cmd = "../producers/palpidess/srs-software/ConfigurePalpidess.sh" + arg;
+  std::string cmd = "${PALPIDESS_SCRIPTS}/ConfigurePalpidess.sh" + arg;
   if(cmdRdy){ system(cmd.c_str()); return true; }
   else return false;
 }
 
 bool DevicePalpidess::ConfigureDAQ(){
-  if(cmdRdy){ system("../producers/palpidess/srs-software/ConfigureDAQ.sh"); }
+  if(cmdRdy){ system("${PALPIDESS_SCRIPTS}/ConfigureDAQ.sh"); }
   else return false;
   cmdRdy = false;
   if (create_server_udp(SC_PORT) < 0) {

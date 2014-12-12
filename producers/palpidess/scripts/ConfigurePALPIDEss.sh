@@ -5,11 +5,9 @@
 # setup environment
 
 
-#DATE=`date +%Y-%m-%d_%H-%M`
-RUN=`expr $(cat ../data/runnumber.dat) + 1`
-echo "$RUN"
-DATA=../data/SRS/run$RUN
-echo "PATHSRS=$PATHSRS"
+echo "EUDAQ_DIR=${EUDAQ_DIR}"
+echo "PALPIDESS_LOGS=${PALPIDESS_LOGS}"
+echo "PALPIDESS_SCRIPTS=${PALPIDESS_SCRIPTS}"
 
 ###############################################################################
 ### check command line arguments
@@ -46,11 +44,19 @@ echo "V_BB=${V_BB}"
 echo "TRIG_DELAY=${TRIG_DELAY}"
 
 ###############################################################################
+
+# list of threshold currents (2.05uA = 0.98V, 1.02uA = 1.155V)
+I_THR_LIST=( 0.98 1.155 1.265 1.35 )
+declare -A I_THR_NAMES_LIST=( ["0.98"]=2.05 ["1.155"]=1.02 ["1.265"]=0.6 ["1.35"]=0.3 )
+V_I_THR=${I_THR_NAMES_LIST["${I_THR}"]}
+echo "V_I_THR=${V_I_THR}"
+
+###############################################################################
 ### execution
 
 # create output folder
-mkdir -p ${DATA}
-if [ ! -d ${DATA} ]
+mkdir -p ${PALPIDESS_LOGS}
+if [ ! -d ${PALPIDESS_LOGS} ]
 then
     echo "ERROR: could not create output folder"
     exit 2
@@ -71,28 +77,28 @@ echo ""
 
 # determine GIT version
 echo "Determine firmware versions of the FECs"
-${PATHSRS}/slow_control/determine_firmware_version.py 0 > ${DATA}/fec_0_firmware.txt
+${PALPIDESS_SCRIPTS}/slow_control/determine_firmware_version.py 0 > ${PALPIDESS_LOGS}/fec_0_firmware.txt
 echo ""
 
 # configure the SRS
 echo "Configuring the SRS"
-${PATHSRS}/slow_control/config_pALPIDE_driver.py
+${PALPIDESS_SCRIPTS}/slow_control/config_pALPIDE_driver.py
 
 
 # TODO handle the trigger delay
 
 # determine configuration
 echo "Dump the application registers of the FECs"
-${PATHSRS}/slow_control/read_pALPIDE_config.py > ${DATA}/configuration.txt
+${PALPIDESS_SCRIPTS}/slow_control/read_pALPIDE_config.py > ${PALPIDESS_LOGS}/configuration.txt
 
 # power on the proximity board
-if ${PATHSRS}/power_on.py
+if ${PALPIDESS_SCRIPTS}/power_on.py
 then
     exit 4
 fi
 
 # set back-bias voltage
-if ${PATHSRS}/change_back_bias.py ${V_BB}
+if ${PALPIDESS_SCRIPTS}/change_back_bias.py ${V_BB}
 then
     exit 5
 fi
@@ -105,21 +111,21 @@ fi
 
 # Vreset
 echo "V_RST=${V_RST}"
-${PATHSRS}/slow_control/biasDAC.py 12 ${V_RST}
+${PALPIDESS_SCRIPTS}/slow_control/biasDAC.py 12 ${V_RST}
 
 # Vcasn
 echo "V_CASN=${V_CASN}"
-${PATHSRS}/slow_control/biasDAC.py 8 ${V_CASN}
+${PALPIDESS_SCRIPTS}/slow_control/biasDAC.py 8 ${V_CASN}
 
 # Vcasp
 echo "V_CASP=${V_CASP}"
-${PATHSRS}/slow_control/biasDAC.py 10 ${V_CASP}
+${PALPIDESS_SCRIPTS}/slow_control/biasDAC.py 10 ${V_CASP}
 
 # Ithr
-echo "I_THR=${I_THR}"
-${PATHSRS}/slow_control/biasDAC.py 4 ${I_THR}
+echo "I_THR=${I_THR} / V_I_THR=${V_I_THR}"
+${PALPIDESS_SCRIPTS}/slow_control/biasDAC.py 4 ${V_I_THR}
 
 # TODO - can/should we reset?
-#${PATHSRS}/slow_control/reset_FEC_HLVDS.py
-#sleep 10
+${PALPIDESS_SCRIPTS}/slow_control/reset_FEC_HLVDS.py
+sleep 10
 echo "Configuration done"

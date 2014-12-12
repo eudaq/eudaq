@@ -358,3 +358,4 @@ int main(int /*argc*/, const char ** argv) {
 }
 
 std::string const PalpidessProducer::param_str[] = { "PalpidessNumber", "Vrst", "Vcasn", "Vcasp", "Ithr", "Vlight", "AcqTime", "Vbb", "TrigDelay" }; // crosscheck n_param!
+std::string const PalpidessProducer::param_default[] = { "0", "1.6", "0.4", "0.6", "Ithr", "Vlight", "AcqTime", "Vbb", "TrigDelay" }; // crosscheck n_param!
