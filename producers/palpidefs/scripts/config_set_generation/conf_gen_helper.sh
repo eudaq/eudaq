@@ -1,6 +1,6 @@
 #! /bin/bash
 
-if [ "$#" -ne 9 ]
+if [ "$#" -ne 10 ]
 then
     echo "not enough arguments!"
     exit 1
@@ -14,6 +14,7 @@ vrst=$6
 idb=$7
 dut_pos=$8
 scs=$9
+trg_dly=${10}
 
 # generate folder structure
 mkdir -p conf/palpidefs/conf
@@ -36,8 +37,9 @@ threshold_file='threshold_VCASN'${vcasn}'_ITHR'${ithr}'_VAUX'${vaux}'_VRST'${vrs
 cp palpidefs_template.conf ${config_file}
 sed -i -e 's/thresholdTmp/'${threshold_file}'/g' ${config_file}
 sed -i -e 's/VBBtmp/'${vbb}'/g' ${config_file}
-sed -i -e 's/DUTposTmp/'$dut_pos'/g' ${config_file}
-sed -i -e 's/SCStmp/'$scs'/g' ${config_file}
+sed -i -e 's/DUTposTmp/'${dut_pos}'/g' ${config_file}
+sed -i -e 's/SCStmp/'${scs}'/g' ${config_file}
+sed -i -e 's/trgDlyTmp/'${trg_dly}'/g' ${config_file}
 mv ${config_file} conf/
 
 # XML config file
