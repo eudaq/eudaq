@@ -1,7 +1,7 @@
 You need to add the driver location as a variable to cmake with
 
 cd <<EUDAQ_ROOT>>/build
-cmake -DBUILD_palpidefs=on -DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=<<DRIVER LOCATION>> -DUSE_TINYXML=on -DUSE_ROOT=on ../
+cmake -DBUILD_palpidefs=on -DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=<<DRIVER LOCATION>> -DUSE_TINYXML=on -DUSE_ROOT=on -DBUILD_nreader=ON ../
 make install
 
 You need to install tinyxml libusb-1.0-0 and unbuffer (Ubuntu package: libtinyxml-dev expect-dev libusb-1.0-0-dev)
