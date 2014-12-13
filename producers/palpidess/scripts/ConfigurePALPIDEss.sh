@@ -4,10 +4,10 @@
 #
 # setup environment
 
-
 echo "EUDAQ_DIR=${EUDAQ_DIR}"
 echo "PALPIDESS_LOGS=${PALPIDESS_LOGS}"
 echo "PALPIDESS_SCRIPTS=${PALPIDESS_SCRIPTS}"
+echo "PYTHONPATH=${PYTHONPATH}"
 
 ###############################################################################
 ### check command line arguments
@@ -46,11 +46,15 @@ echo "TRIG_DELAY=${TRIG_DELAY}"
 ###############################################################################
 
 # list of threshold currents (2.05uA = 0.98V, 1.02uA = 1.155V)
-I_THR_LIST=( 0.98 1.155 1.265 1.35 )
-declare -A I_THR_NAMES_LIST=( ["0.98"]=2.05 ["1.155"]=1.02 ["1.265"]=0.6 ["1.35"]=0.3 )
+declare -A I_THR_NAMES_LIST=( ["2.05"]=0.98 ["1.02"]=1.155 ["0.6"]=1.265 ["0.3"]=1.35 )
 V_I_THR=${I_THR_NAMES_LIST["${I_THR}"]}
 echo "V_I_THR=${V_I_THR}"
 
+if [ "${#V_I_THR}" -eq 0 ]
+then
+    echo "Could not find DAC setting for selection I_THR=${I_THR}, using 2.05uA"
+    V_I_THR=0.98
+fi
 ###############################################################################
 ### execution
 
@@ -77,7 +81,7 @@ echo ""
 
 # determine GIT version
 echo "Determine firmware versions of the FECs"
-${PALPIDESS_SCRIPTS}/slow_control/determine_firmware_version.py 0 > ${PALPIDESS_LOGS}/fec_0_firmware.txt
+${PALPIDESS_SCRIPTS}/slow_control/determine_firmware_version.py 0 > ${PALPIDESS_LOGS}/${PALPIDESS_LOGS}_fec_0_firmware.txt
 echo ""
 
 # configure the SRS
@@ -89,23 +93,26 @@ ${PALPIDESS_SCRIPTS}/slow_control/config_pALPIDE_driver.py
 
 # determine configuration
 echo "Dump the application registers of the FECs"
-${PALPIDESS_SCRIPTS}/slow_control/read_pALPIDE_config.py > ${PALPIDESS_LOGS}/configuration.txt
+${PALPIDESS_SCRIPTS}/slow_control/read_pALPIDE_config.py > ${PALPIDESS_LOGS}/${PALPIDESS_LOGS}_configuration.txt
 
 # power on the proximity board
-if ${PALPIDESS_SCRIPTS}/power_on.py
+if ! ${PALPIDESS_SCRIPTS}/power_on.py
 then
+    echo "Failed powering on proximity board"
     exit 4
 fi
 
 # set back-bias voltage
-if ${PALPIDESS_SCRIPTS}/change_back_bias.py ${V_BB}
+if ! ${PALPIDESS_SCRIPTS}/change_back_bias.py ${V_BB}
 then
+    echo "Failed setting back-bias voltage"
     exit 5
 fi
 
 # set light voltage
-if ${PATHSRS/change_light.py ${V_LIGHT}
+if ! ${PALPIDESS_SCRIPTS}/change_light.py ${V_LIGHT}
 then
+    echo "Failed changing light voltage"
     exit 6
 fi
 
@@ -125,7 +132,5 @@ ${PALPIDESS_SCRIPTS}/slow_control/biasDAC.py 10 ${V_CASP}
 echo "I_THR=${I_THR} / V_I_THR=${V_I_THR}"
 ${PALPIDESS_SCRIPTS}/slow_control/biasDAC.py 4 ${V_I_THR}
 
-# TODO - can/should we reset?
-${PALPIDESS_SCRIPTS}/slow_control/reset_FEC_HLVDS.py
 sleep 10
 echo "Configuration done"

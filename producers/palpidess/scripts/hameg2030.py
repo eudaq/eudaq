@@ -15,7 +15,7 @@ vlight_chan=( 0 ) # LED supply channel, counting starts with 0
 measurement_interval=60 # in seconds
 
 # set up serial port
-dev="/dev/ttyHAMEG1"
+dev="/dev/ttyHAMEG2"
 baud_rate=int(9600)
 rtscts=True # needed, otherwise Hameg might miss a command
 

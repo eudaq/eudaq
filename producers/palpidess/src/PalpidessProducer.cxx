@@ -84,7 +84,7 @@ public:
     std::stringstream config_cmd_arg;
     for (int i_param = 1; i_param < n_param; ++i_param) {
       options[i_param].first  = param_str[i_param];
-      options[i_param].second = param.Get(options[i_param].first, "1.6");
+      options[i_param].second = param.Get(options[i_param].first, param_default[i_param]);
       ss << options[i_param].first << "_" << options[0].second;
       options[i_param].second = param.Get(ss.str(), options[i_param].second);
       std::cout << options[i_param].first << "=" << options[i_param].second
@@ -117,7 +117,7 @@ public:
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
 
     //attache tags to bore
-    for(int i=0;i<6;i++){ // TODO use constant here
+    for(int i=0;i<n_param;i++){ // TODO use constant here
       bore.SetTag(options[i].first,options[i].second);
     }
 
@@ -162,7 +162,7 @@ public:
 
   // This is just an example, adapt it to your hardware
   void ReadoutLoop() {
-    int sd0, sd1; // socket Descriptor
+    int sd; // socket Descriptor
 
     const unsigned int buffer_size = 9000;
     unsigned char data_packet[buffer_size]; // buffer for the UDP frame
@@ -195,9 +195,9 @@ public:
         std::vector<unsigned char> bufferEvent_ADC;
         bufferEvent_LVDS.reserve(70000); // 65656 is necessary
 
-        sd0 = fPalpidess->get_SD();     //socketdescriptors
+        sd = fPalpidess->get_SD();     // get socket descriptor
 
-        while(!check_socket(sd0, timeout) && !stopping) {
+        while(!check_socket(sd, timeout) && !stopping) {
           //std::cout << "Requested event - waiting for its arrival"
           //          << std::endl;
         }
@@ -209,9 +209,9 @@ public:
           evt_status   = 0x0;
           max_frame_id = -1;
           bufferEvent_LVDS.reserve(70000); // 65656 is necessary
-          while ((!evt_finished || evt_bad) && check_socket(sd0, timeout)) {
+          while ((!evt_finished || evt_bad) && check_socket(sd, timeout)) {
             // exploting the short-circuiting here!
-            num_byte_rcv = recvfrom(sd0, data_packet, buffer_size, 0, NULL, NULL);
+            num_byte_rcv = recvfrom(sd, data_packet, buffer_size, 0, NULL, NULL);
             if (!evt_bad) {
               // append data to the event buffer
               pack(bufferEvent_LVDS, num_byte_rcv);  // add frame length first
@@ -279,8 +279,8 @@ public:
       if (stopping) {
 	//in case the run is stopped: finish event and send EORE
 	std::cout << "[PalpidessProducer] Sent EORE " << std::endl;
-	while(check_socket(sd0, 1.)) { //read LVDS until empty
-	  recvfrom(sd0, data_packet, buffer_size, 0, NULL, NULL);
+	while(check_socket(sd, 1.)) { //read LVDS until empty
+	  recvfrom(sd, data_packet, buffer_size, 0, NULL, NULL);
 	}
 	fPalpidess->StopDAQ();
 	stopping = false;
@@ -301,6 +301,7 @@ private:
 
   //Config values
   static std::string const param_str[];
+  static std::string const param_default[];
   static int const n_param = 9;
   config options[PalpidessProducer::n_param];
 
@@ -358,4 +359,4 @@ int main(int /*argc*/, const char ** argv) {
 }
 
 std::string const PalpidessProducer::param_str[] = { "PalpidessNumber", "Vrst", "Vcasn", "Vcasp", "Ithr", "Vlight", "AcqTime", "Vbb", "TrigDelay" }; // crosscheck n_param!
-std::string const PalpidessProducer::param_default[] = { "0", "1.6", "0.4", "0.6", "Ithr", "Vlight", "AcqTime", "Vbb", "TrigDelay" }; // crosscheck n_param!
+std::string const PalpidessProducer::param_default[] = { "0", "1.6", "0.4", "0.6", "2.05", "0.0", "1.54", "0.0", "0.0" }; // crosscheck n_param!

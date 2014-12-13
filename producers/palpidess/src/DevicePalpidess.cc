@@ -83,7 +83,7 @@ int DevicePalpidess::get_SD(){	//get socket descriptors of fecs
 ////call python scripts to steer SRS
 bool DevicePalpidess::Configure(std::string arg){
   if(sc>=0) StopDAQ();
-  std::string cmd = "${PALPIDESS_SCRIPTS}/ConfigurePalpidess.sh" + arg;
+  std::string cmd = "${PALPIDESS_SCRIPTS}/ConfigurePALPIDEss.sh" + arg;
   if(cmdRdy){ system(cmd.c_str()); return true; }
   else return false;
 }
@@ -97,11 +97,14 @@ bool DevicePalpidess::ConfigureDAQ(){
     return false;
   }
   struct sockaddr_in dstAddr;
+
+  // slow control (actually event request)
   bzero(&dstAddr,sizeof(dstAddr));
   dstAddr.sin_family = AF_INET;
-  dstAddr.sin_port   = htons((u_short)APP_PORT);
+  dstAddr.sin_port   = htons((u_short)DATA_PORT);
   dstAddr.sin_addr.s_addr = inet_addr("10.0.0.2");
   connect(sc,(struct sockaddr *)&dstAddr,sizeof(dstAddr));
+
   return true;
 }
 
@@ -120,9 +123,9 @@ bool DevicePalpidess::GetSingleEvent(){
                                    0xFF, 0xFF, 0xFF, 0xFF,
                                    0xAA, 0xBB, 0xFF, 0xFF,
                                    0x00, 0x00, 0x00, 0x16,
-                                   0x00, 0x00, 0x00, 0x06
+                                   0x00, 0x00, 0x00, 0x04
     }; // rising edge for the event request
-    if(send(data, re, sizeof(re),0) < 0) {
+    if(send(sc, re, sizeof(re),0) < 0) {
       perror("failed sending the rising edge");
       return false;
     }
