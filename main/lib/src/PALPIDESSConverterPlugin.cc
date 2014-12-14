@@ -257,7 +257,7 @@ namespace eudaq {
       unsigned int nrealhit = 0;
       for (unsigned int ihit=0; ihit<nhit; ++ihit) {
         unpack_b(it, buffer, 2);
-        if (buffer&0x1000) {
+        if (buffer&0x8000) {
           unsigned int row = buffer&0x1FF;
           unsigned int col = buffer>>9&0x3F;
           plane.SetPixel(nrealhit, col, row, 1);
