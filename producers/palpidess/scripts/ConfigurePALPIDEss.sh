@@ -81,7 +81,7 @@ echo ""
 
 # determine GIT version
 echo "Determine firmware versions of the FECs"
-${PALPIDESS_SCRIPTS}/slow_control/determine_firmware_version.py 0 > ${PALPIDESS_LOGS}/${PALPIDESS_LOGS}_fec_0_firmware.txt
+${PALPIDESS_SCRIPTS}/slow_control/determine_firmware_version.py 0 > ${PALPIDESS_LOGS}/${LOG_PREFIX}_fec_0_firmware.txt
 echo ""
 
 # configure the SRS
@@ -93,7 +93,7 @@ ${PALPIDESS_SCRIPTS}/slow_control/config_pALPIDE_driver.py
 
 # determine configuration
 echo "Dump the application registers of the FECs"
-${PALPIDESS_SCRIPTS}/slow_control/read_pALPIDE_config.py > ${PALPIDESS_LOGS}/${PALPIDESS_LOGS}_configuration.txt
+${PALPIDESS_SCRIPTS}/slow_control/read_pALPIDE_config.py > ${PALPIDESS_LOGS}/${LOG_PREFIX}_configuration.txt
 
 # power on the proximity board
 if ! ${PALPIDESS_SCRIPTS}/power_on.py
