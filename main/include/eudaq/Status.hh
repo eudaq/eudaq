@@ -3,6 +3,7 @@
 
 #include "eudaq/Serializable.hh"
 #include <string>
+#include <map>
 #include <ostream>
 #include "eudaq/Platform.hh"
 
