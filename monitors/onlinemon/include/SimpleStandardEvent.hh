@@ -9,6 +9,7 @@ typedef unsigned long long int uint64_t;
 #include <string>
 #include <vector>
 #include <iostream>
+#include <stdint.h>
 
 #if ((defined WIN32) && (defined __CINT__))
 typedef unsigned long long uint64_t

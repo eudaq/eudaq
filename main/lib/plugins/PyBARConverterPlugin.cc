@@ -3,7 +3,9 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
-#include "eudaq/USBpix_i4B.hh"
+#include "eudaq/PyBAR.hh"
+
+#include <stdlib.h>
 
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
@@ -31,7 +33,7 @@ using eutelescope::EUTELESCOPE;
 namespace eudaq {
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const char* EVENT_TYPE = "USBPIXI4B";
+  static const char* EVENT_TYPE = "PyBAR";
 
   static const unsigned int CHIP_MIN_COL = 1;
   static const unsigned int CHIP_MAX_COL = 80;
@@ -41,10 +43,10 @@ namespace eudaq {
   static const unsigned int CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
 
 #if USE_LCIO && USE_EUTELESCOPE
-  static const int chip_id_offset = 30;
+  static const int chip_id_offset = 20;
 #endif
 
-  class USBpixI4BConverterBase {
+  class PyBARConverterBase {
     private:
       unsigned int count_boards;
       std::vector<unsigned int> board_ids;
@@ -74,7 +76,10 @@ namespace eudaq {
         consecutive_lvl1 = ev.GetTag ("consecutive_lvl1", 16);
         if (consecutive_lvl1>16) consecutive_lvl1=16;
         first_sensor_id = ev.GetTag ("first_sensor_id", 0);
-        tot_mode = ev.GetTag ("tot_mode", 0);
+        tot_mode = ev.GetTag ("tot_mode", 1);
+        //printf("totmode=%d\n");
+        //exit(0);
+        //tot_mode =1;
         if (tot_mode>2) tot_mode=0;
 
         if (count_boards == (unsigned) -1) return;
@@ -87,46 +92,61 @@ namespace eudaq {
       bool isEventValid(const std::vector<unsigned char> & data) const {
         // ceck data consistency
         unsigned int dh_found = 0;
-        for (unsigned int i=0; i < data.size()-8; i += 4) {
-          unsigned word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
-          if (DATA_HEADER_MACRO(word))	{
+        for (unsigned int i=4; i < data.size(); i += 4) {   // 8->4 trigger from pybar is 32bits
+          unsigned word = (((unsigned int)data[i]) << 24) | (((unsigned int)data[i +1]) << 16) | (((unsigned int)data[i + 2]) << 8) | (unsigned int)data[i+3];
+          //printf("isEventValid word=%08x,masked=%08x, %d\n",word,(PYBAR_DATA_HEADER_MASK & word),int(PYBAR_DATA_HEADER_MACRO(word)));
+          if (PYBAR_DATA_HEADER_MACRO(word))	{
             dh_found++;
           }
         }
+        //printf("isEventValid db_found=%d\n",dh_found);
 
-        if (dh_found != consecutive_lvl1) return false;
-        else return true;
+        if (dh_found != consecutive_lvl1){
+            //exit(0);
+            return false;
+        }
+        else{
+            //printf("isEventValid ================GOOD DATA!!==============\n");
+            //exit(0);
+            return true;
+        }
       }
 
       unsigned getTrigger(const std::vector<unsigned char> & data) const {
         //Get Trigger Number and check for errors
-        unsigned int i = data.size() - 8; // splitted in 2x 32bit words
-        unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
-        if (Trigger_word1==(unsigned)-1) return (unsigned)-1;
-        unsigned Trigger_word2 = (((unsigned int)data[i + 7]) << 24) | (((unsigned int)data[i + 6]) << 16) | (((unsigned int)data[i + 5]) << 8) | (unsigned int)data[i + 4];
+        //printf("\ngetTrigger() %d: ",data.size());
+        //for (int ii=0;ii<data.size();ii++){
+        //    printf("%02x ",data[ii]);
+        //}
+        //printf("\n");
+        //unsigned int i = data.size() - 4; // 8->4 hirono //splitted in 2x 32bit words
+        unsigned Trigger_word1 = (((unsigned int)data[0]) << 24) | (((unsigned int)data[1]) << 16) | (((unsigned int)data[2]) << 8) | (unsigned int)data[3];
+        //unsigned Trigger_word1 = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
 
-        unsigned int trigger_number = TRIGGER_NUMBER_MACRO2(Trigger_word1, Trigger_word2);
-        //std::cout << "Trigger: " << trigger_number << std::endl;
+        unsigned int trigger_number = 0x7FFFFFFF & Trigger_word1;  //hirono 
+        //std::cout << "getTrigger(): " << trigger_number << std::endl;
         return trigger_number;
       }
 
       bool getHitData (unsigned int &Word, bool second_hit, unsigned int &Col, unsigned int &Row, unsigned int &ToT) const {
-
-        if ( !DATA_RECORD_MACRO(Word) ) return false;	// No Data Record
+        //printf("getHitData word=%08x col_masked=%08x %d\n",Word,PYBAR_DATA_RECORD_COLUMN_MASK & Word,PYBAR_DATA_RECORD_MACRO(Word));
+        if ( !PYBAR_DATA_RECORD_MACRO(Word) ) return false;	// No Data Record
 
         unsigned int t_Col=0;
         unsigned int t_Row=0;
         unsigned int t_ToT=15;
 
         if (!second_hit) {
-          t_ToT = DATA_RECORD_TOT1_MACRO(Word);
-          t_Col = DATA_RECORD_COLUMN1_MACRO(Word);
-          t_Row = DATA_RECORD_ROW1_MACRO(Word);
+          t_ToT = PYBAR_DATA_RECORD_TOT1_MACRO(Word);
+          t_Col = PYBAR_DATA_RECORD_COLUMN1_MACRO(Word);
+          t_Row = PYBAR_DATA_RECORD_ROW1_MACRO(Word);
         } else {
-          t_ToT = DATA_RECORD_TOT2_MACRO(Word);
-          t_Col = DATA_RECORD_COLUMN2_MACRO(Word);
-          t_Row = DATA_RECORD_ROW2_MACRO(Word);
+          t_ToT = PYBAR_DATA_RECORD_TOT2_MACRO(Word);
+          t_Col = PYBAR_DATA_RECORD_COLUMN2_MACRO(Word);
+          t_Row = PYBAR_DATA_RECORD_ROW2_MACRO(Word);
         }
+        //printf("getHitData() t_Col=%d,t_Row=%d,t_ToT=%d\n",t_Col,t_Row,t_ToT);
+        //exit(0);
 
         // translate FE-I4 ToT code into tot
         if (tot_mode==1) {
@@ -158,15 +178,17 @@ namespace eudaq {
         t_Row -= CHIP_MIN_ROW;
         Col = t_Col;
         Row = t_Row;
+        //printf("getHitData col=%d,row=%d,tot=%d\n",Col,Row,ToT);
+        //exit(0);
         return true;
       }
 
       StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
-        StandardPlane plane(id, EVENT_TYPE, "USBPIXI4B");
+        StandardPlane plane(id, EVENT_TYPE, "PyBAR");
 
         // check for consistency
         bool valid=isEventValid(data);
-
+        //printf("ConvertPlane() valid=%d\n",valid);
         unsigned int ToT = 0;
         unsigned int Col = 0;
         unsigned int Row = 0;
@@ -182,30 +204,33 @@ namespace eudaq {
         unsigned int eventnr=0;
 
         // Get Events
-        for (unsigned int i=0; i < data.size()-8; i += 4) {
-          unsigned int Word = (((unsigned int)data[i + 3]) << 24) | (((unsigned int)data[i + 2]) << 16) | (((unsigned int)data[i + 1]) << 8) | (unsigned int)data[i];
-
-          if (DATA_HEADER_MACRO(Word)) {
+        for (unsigned int i=4; i < data.size(); i += 4) {
+          unsigned int Word = (((unsigned int)data[i]) << 24) | (((unsigned int)data[i+1]) << 16) | (((unsigned int)data[i+2]) << 8) | (unsigned int)data[i+3];
+          //printf("ConvertPlane() word=%08x masked=%08x %d\n",Word,(PYBAR_DATA_HEADER_MASK & Word),PYBAR_DATA_HEADER_MACRO(Word));
+          if (PYBAR_DATA_HEADER_MACRO(Word)) {
             lvl1++;
           } else {
             // First Hit
             if (getHitData(Word, false, Col, Row, ToT)) {
-              plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+              //printf("ConvertPlane() First Hit %d, %d %d %d\n",Col,Row,ToT,lvl1);
+              plane.PushPixel(Col, Row, ToT, true, lvl1 - 1);
               eventnr++;
             }
             // Second Hit
             if (getHitData(Word, true, Col, Row, ToT)) {
-              plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+              //printf("ConvertPlane() Second Hit %08x, %d, %d %d %d\n",Word,Col,Row,ToT,lvl1);
+              plane.PushPixel(Col, Row, ToT, true, lvl1 - 1);
               eventnr++;
             }
           }
         }
+        //printf("ConvertPlane() eventnr=%d plane=%d\n",eventnr);
         return plane;
       }
   };
 
   // Declare a new class that inherits from DataConverterPlugin
-  class USBPixI4BConverterPlugin : public DataConverterPlugin , public USBpixI4BConverterBase {
+  class PyBARConverterPlugin : public DataConverterPlugin , public PyBARConverterBase {
 
     public:
 
@@ -214,10 +239,10 @@ namespace eudaq {
       // and store it in member variables to use during the decoding later.
       virtual void Initialize(const Event & bore,
           const Configuration & cnf) {
+
 #ifndef WIN32
 			  (void)cnf; // just to suppress a warning about unused parameter cnf
 #endif
-      
         getBOREparameters (bore);
       }
 
@@ -253,7 +278,9 @@ namespace eudaq {
 
         // If we get here it must be a data event
         const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
+        //printf("PyBARConverterPlugin NumBlocks=%d\n",ev_raw.NumBlocks());
         for (size_t i = 0; i < ev_raw.NumBlocks(); ++i) {
+          //printf("GetId=%d",ev_raw.GetID(i));
           sev.AddPlane(ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
         }
 
@@ -331,21 +358,21 @@ namespace eudaq {
           unsigned int Row = 0;
           unsigned int lvl1 = 0;
 
-          for (unsigned int i=0; i < buffer.size()-4; i += 4) {
-            unsigned int Word = (((unsigned int)buffer[i + 3]) << 24) | (((unsigned int)buffer[i + 2]) << 16) | (((unsigned int)buffer[i + 1]) << 8) | (unsigned int)buffer[i];
+          for (unsigned int i=4; i < buffer.size(); i += 4) {
+            unsigned int Word = (((unsigned int)buffer[i]) << 24) | (((unsigned int)buffer[i+1]) << 16) | (((unsigned int)buffer[i+2]) << 8) | (unsigned int)buffer[i+3];
 
-            if (DATA_HEADER_MACRO(Word)) {
+            if (PYBAR_DATA_HEADER_MACRO(Word)) {
               lvl1++;
             } else {
               // First Hit
               if (getHitData(Word, false, Col, Row, ToT)) {
-                eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
+               eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
                 sparseFrame->addSparsePixel( thisHit );
                 tmphits.push_back( thisHit );
               }
               // Second Hit
               if (getHitData(Word, true, Col, Row, ToT)) {
-                eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
+               eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
                 sparseFrame->addSparsePixel( thisHit );
                 tmphits.push_back( thisHit );
               }
@@ -393,15 +420,15 @@ namespace eudaq {
       // The DataConverterPlugin constructor must be passed the event type
       // in order to register this converter for the corresponding conversions
       // Member variables should also be initialized to default values here.
-      USBPixI4BConverterPlugin()
+      PyBARConverterPlugin()
         : DataConverterPlugin(EVENT_TYPE)
       {}
 
       // The single instance of this converter plugin
-      static USBPixI4BConverterPlugin m_instance;
+      static PyBARConverterPlugin m_instance;
   };
 
   // Instantiate the converter plugin instance
-  USBPixI4BConverterPlugin USBPixI4BConverterPlugin::m_instance;
+  PyBARConverterPlugin PyBARConverterPlugin::m_instance;
 
 } // namespace eudaq

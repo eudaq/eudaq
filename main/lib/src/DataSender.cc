@@ -1,8 +1,11 @@
-#include "eudaq/DataSender.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/AidaPacket.hh"
+#include "eudaq/TransportClient.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Logger.hh"
+#include "eudaq/DataSender.hh"
 
 namespace eudaq {
 
@@ -34,6 +37,8 @@ namespace eudaq {
     i0 = i1+1;
     i1 = packet.find(' ', i0);
     part = std::string(packet, i0, i1-i0);
+    if (part != "DataCollector" )
+    	EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
     if (part != "DataCollector" ) EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
 
     m_dataclient->SendPacket("OK EUDAQ DATA " + m_type + " " + m_name);
@@ -51,6 +56,16 @@ namespace eudaq {
     //EUDAQ_DEBUG("Sending event");
     m_dataclient->SendPacket(ser);
     //EUDAQ_DEBUG("Sent event");
+  }
+
+
+  void DataSender::SendPacket(const AidaPacket &packet) {
+//    EUDAQ_DEBUG("Serializing packet");
+    BufferSerializer ser;
+    packet.Serialize(ser);
+//    EUDAQ_DEBUG("Sending packet");
+    m_dataclient->SendPacket(ser);
+//    EUDAQ_DEBUG("Sent packet");
   }
 
 

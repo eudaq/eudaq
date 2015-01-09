@@ -35,7 +35,7 @@ if pp.StartingRun:
 # starting to run
 while not pp.Error and not pp.StoppingRun and not pp.Terminating:
     # prepare an array of dim (1,3) for data storage
-    data = numpy.ndarray(shape=[1,3], dtype=numpy.uint64)
+    data = numpy.ndarray(shape=[1,3], dtype=numpy.uint8)
     data[0] = ([123,456,999]) # add some (dummy) data
     pp.SendEvent(data)        # send event off
     sleep(2)                  # wait for a little while

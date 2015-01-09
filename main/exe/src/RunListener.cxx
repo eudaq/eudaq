@@ -1,3 +1,4 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"

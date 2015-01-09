@@ -1,3 +1,4 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/StringEvent.hh"

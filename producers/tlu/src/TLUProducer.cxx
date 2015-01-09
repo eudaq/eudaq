@@ -1,3 +1,4 @@
+#include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/TLUEvent.hh" // for the TLU event
 #include "eudaq/Utils.hh"

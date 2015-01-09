@@ -27,15 +27,17 @@ class TestLogCollector : public eudaq::LogCollector {
     virtual void OnReceive(const eudaq::LogMessage & ev) {
       if (ev.GetLevel() >= m_loglevel) std::cout << ev << std::endl;
     }
-    virtual void OnConfigure(const std::string & param) {
+    virtual void OnConfigure(const eudaq::Configuration & param) {
       std::cout << "Configure: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
       std::cout << "Start Run: " << param << std::endl;
+      SetStatus(eudaq::Status::LVL_OK);
     }
     virtual void OnStopRun() {
       std::cout << "Stop Run" << std::endl;
+      SetStatus(eudaq::Status::LVL_OK);
     }
     virtual void OnTerminate() {
       std::cout << "Terminating" << std::endl;

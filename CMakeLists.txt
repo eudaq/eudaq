@@ -7,7 +7,10 @@ PROJECT( EUDAQ )
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 3 )
+
+LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
+LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -15,14 +18,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 # Determine platform- and compiler-specific settings
 include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
 
-SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
-MESSAGE(STATUS "BUILD TYPE" ${CMAKE_BUILD_TYPE})
 # Check if this is a source tarball build
 IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
   SET(SOURCE_PACKAGE 1)
 ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-
-SET(CMAKE_CXX_FLAGS "-std=c++0x" )
 
 # Set package version
 IF(NOT SOURCE_PACKAGE)
@@ -70,6 +69,7 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
+INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -92,6 +92,12 @@ IF(BUILD_nreader)
                                       LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
   set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
+ENDIF()
+
+find_package(Protobuf)
+option(GEN_proto "Gennerate protobuf files?" OFF)
+IF(GEN_proto)
+  SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ${PROTOBUF_LIBRARIES})
 ENDIF()
 
 # SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
@@ -148,7 +154,7 @@ IF(BUILD_gui)
 ENDIF()
 
 # build OnlineMon executable
-option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" OFF)
+option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
 IF(BUILD_onlinemon)
   add_subdirectory(monitors/onlinemon)
 ENDIF()
@@ -159,6 +165,8 @@ option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OF
 IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
 ENDIF()
+
+
 
 ###############################################
 # LaTeX target to compile the PDF user manual #
@@ -220,3 +228,7 @@ if (${CMAKE_VERSION} VERSION_GREATER 2.8)
 ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
   MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
 ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
+
+MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
+MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
+MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
