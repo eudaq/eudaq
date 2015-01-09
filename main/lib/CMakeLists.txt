@@ -11,6 +11,8 @@ endif (USE_ROOT)
 AUX_SOURCE_DIRECTORY( src library_sources )
 AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
+list(REMOVE_ITEM plugins_sources plugins/GenericConverterPlugin.cc)
+
 INCLUDE_DIRECTORIES(include $ENV{PXAR_PATH}/core/utils)
 
 if (PROTOBUF_FOUND AND GEN_proto)

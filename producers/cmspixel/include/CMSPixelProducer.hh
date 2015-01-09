@@ -4,6 +4,7 @@
 // EUDAQ includes:
 #include "eudaq/Producer.hh"
 #include "eudaq/Timer.hh"
+#include "eudaq/Configuration.hh"
 
 // pxarCore includes:
 #include "api.h"

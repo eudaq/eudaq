@@ -9,7 +9,10 @@
 /* (at your option) any later version. */
 /*==========================================================================*/
 #include "eudaq/CMSPixelDecoder.h"
-#include "version.h"
+//#include "version.h"
+// CMake uses version.cmake.h to generate version.h within the build folder.
+#define DECODER_VERSION "3.8.0"
+
 #include <cstring>
 #include <string>
 #include <cstdlib>
