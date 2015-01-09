@@ -33,7 +33,8 @@ using namespace std;
 /*========================================================================*/
 
 // event type name, needed for readout with eudaq. Links to /main/lib/src/CMSPixelConverterPlugin.cc:
-static const std::string EVENT_TYPE = "CMSPixel";
+static const std::string EVENT_TYPE_DUT = "CMSPixelDUT";
+static const std::string EVENT_TYPE_REF = "CMSPixelREF";
 
 CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
   : eudaq::Producer(name, runcontrol),
@@ -53,9 +54,19 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     triggering(false),
     m_roctype(""),
     m_usbId(""),
-    m_producerName(name)
+    m_producerName(name),
+    m_detector(""),
+    m_event_type("")
 {
   m_t = new eudaq::Timer;
+  if(m_producerName.find("REF") != std::string::npos) {
+    m_detector = "REF";
+    m_event_type = EVENT_TYPE_REF;
+  }
+  else {
+    m_detector = "DUT";
+    m_event_type = EVENT_TYPE_DUT;
+  }
 }
 
 void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
@@ -120,8 +131,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
-    m_api -> initTestboard(sig_delays, power_settings, pg_setup);
-    m_api -> initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
+    if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { throw pxar::pxarException("Firmware mismatch"); }
+    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
 
     // Read current:
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
@@ -191,9 +202,17 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   std::cout << "Start Run: " << m_run << std::endl;
 
 #if BUFFER_RO_SCHEME == 3
-  eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
+  eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
+  // Set the ROC type for decoding:
   bore.SetTag("ROCTYPE", m_roctype);
+
+  // Set the detector for correct plane assignment:
+  bore.SetTag("DETECTOR", m_detector);
+
+  // Send the event out:
   SendEvent(bore);
+
+  std::cout << "BORE with detector " << m_detector << " (event type " << m_event_type << ") and ROC type " << m_roctype << std::endl;
 #else
   // Get output file
   std::ostringstream filename;
@@ -239,13 +258,13 @@ void CMSPixelProducer::OnStopRun() {
     std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
     std::cout << "Post run read-out: sending " << daqEvents.size() << " evt." << std::endl;
     for(size_t i = 0; i < daqEvents.size(); i++) {
-      eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
+      eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
       ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
       SendEvent(ev);
       m_ev++;
     }
     // Sending the final end-of-run event:
-    SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
+    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, ++m_ev));
 #else
     m_fout.close();
     std::cout << "Trying to run root application and show run summary." << std::endl;
@@ -310,8 +329,8 @@ void CMSPixelProducer::ReadoutLoop() {
       ReadInSingleEventWriteASCII();
 #endif
 #else 
-      eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
-      pxar::rawEvent daqEvent = m_api -> daqGetRawEvent();
+      eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+      pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
       ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
       SendEvent(ev);
