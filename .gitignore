@@ -24,6 +24,9 @@ conf/*.conf
 \#*#
 *~
 
+# ignore hidden files:
+.*
+
 # ignore git mergetool backup files
 *.orig
 
