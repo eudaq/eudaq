@@ -20,7 +20,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs()
 
   for (std::vector<std::string>::iterator idac = DACnames.begin(); idac != DACnames.end(); ++idac) {
     if(m_config.Get(*idac, -1) == -1){
-      EUDAQ_WARN(string("Roc DAC ") + *idac + string(" not defined in config file ") + m_config.Name() +
+      EUDAQ_EXTRA(string("Roc DAC ") + *idac + string(" not defined in config file ") + m_config.Name() +
 		 string(". Using default values.\n"));
       std::cout << "WARNING: Roc DAC " << *idac << " not defined in config file " << m_config.Name() 
 		<< ". Using default values." << std::endl;
@@ -32,9 +32,10 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs()
       dacs.push_back(make_pair(*idac, dacVal));
     }
   }
-  if(m_dacsFromConf)
-    //        EUDAQ_USER(string("All DACs successfully read from ") + m_config.Name());
-    return dacs;
+  if(m_dacsFromConf) {
+    EUDAQ_USER(string("All DACs successfully read from ") + m_config.Name());
+  }
+  return dacs;
 }
 
 std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::string filename)
@@ -64,7 +65,8 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::string fil
     }
     m_trimmingFromConf = false;
   }
-  if(m_trimmingFromConf)
+  if(m_trimmingFromConf) {
     EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": ") + string(filename) + string("\n"));
+  }
   return pixels;
 } // GetConfTrimming
