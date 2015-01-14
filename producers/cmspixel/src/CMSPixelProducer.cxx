@@ -138,6 +138,13 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
     std::cout << "Digital current: " << m_api->getTBid()*1000 << "mA" << std::endl;
 
+    if(m_api->getTBid()*1000 < 15) EUDAQ_ERROR(string("Digital current too low: " + std::to_string(1000*m_api->getTBid()) + "mA"));
+    else EUDAQ_INFO(string("Digital current: " + std::to_string(1000*m_api->getTBid()) + "mA"));
+
+    if(m_api->getTBia()*1000 < 15) EUDAQ_ERROR(string("Analog current too low: " + std::to_string(1000*m_api->getTBia()) + "mA"));
+    else EUDAQ_INFO(string("Analog current: " + std::to_string(1000*m_api->getTBia()) + "mA"));
+
+    // Switching to external clock if requested and check if DTB returns TRUE status:
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
@@ -295,12 +302,16 @@ void CMSPixelProducer::OnStopRun() {
 
 void CMSPixelProducer::OnTerminate() {
   std::cout << "CMSPixelProducer terminating..." << std::endl;
+
+  // Stop the readout loop:
+  done = true;
+
   // If we already have a pxarCore instance, shut it down cleanly:
   if(m_api) {
     delete m_api;
   }
-  done = true;
-  std::cout << "CMSPixelProducer terminated." << std::endl;
+
+  std::cout << "CMSPixelProducer " << m_producerName << " terminated." << std::endl;
 }
 
 void CMSPixelProducer::ReadoutLoop() {
