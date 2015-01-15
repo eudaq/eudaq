@@ -131,7 +131,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
-    if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { throw pxar::pxarException("Firmware mismatch"); }
+    if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { 
+      EUDAQ_ERROR(string("Firmware mismatch."));
+      throw pxar::pxarException("Firmware mismatch");
+    }
     m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
 
     // Read current:
@@ -183,19 +186,19 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   }
 
   catch (pxar::InvalidConfig &e){
+    EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
     delete m_api;
-    //return;
   }
   catch (pxar::pxarException &e){
+    EUDAQ_ERROR(string("pxarCore Error: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("pxarCore Error: ") + e.what());
     delete m_api;
-    return;
   }
   catch (...) {
+    EUDAQ_ERROR(string("Unknown exception."));
     SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
     delete m_api;
-    return;
   }
 }
 
