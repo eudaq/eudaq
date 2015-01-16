@@ -85,16 +85,17 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   uint8_t hubid = config.Get("hubid", 31);
 
   // DTB delays
-  sig_delays.push_back( std::make_pair("clk",config.Get("clk",4)) );
-  sig_delays.push_back( std::make_pair("ctr",config.Get("ctr",4)) );
-  sig_delays.push_back( std::make_pair("sda",config.Get("sda",19)) );
-  sig_delays.push_back( std::make_pair("tin",config.Get("tin",9)) );
-  sig_delays.push_back( std::make_pair("deser160phase",4) );
+  sig_delays.push_back(std::make_pair("clk",config.Get("clk",4)));
+  sig_delays.push_back(std::make_pair("ctr",config.Get("ctr",4)));
+  sig_delays.push_back(std::make_pair("sda",config.Get("sda",19)));
+  sig_delays.push_back(std::make_pair("tin",config.Get("tin",9)));
+  sig_delays.push_back(std::make_pair("deser160phase",config.Get("deser160phase",4)));
+  sig_delays.push_back(std::make_pair("level",config.Get("level",15)));
 
   //Power settings:
   power_settings.push_back( std::make_pair("va",config.Get("va",1.8)) );
   power_settings.push_back( std::make_pair("vd",config.Get("vd",2.5)) );
-  power_settings.push_back( std::make_pair("ia",config.Get("ia",1.190)) );
+  power_settings.push_back( std::make_pair("ia",config.Get("ia",1.10)) );
   power_settings.push_back( std::make_pair("id",config.Get("id",1.10)) );
 
   // Pattern Generator:
