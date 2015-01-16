@@ -116,7 +116,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   EUDAQ_USER("m_pattern_delay = " +eudaq::to_string(m_pattern_delay) + "\n");
 
   // Read DACs and trimming from config
-  std::string trimFile = config.Get("trimDir", "") + string("/trimParameters.dat");
+  std::string trimFile;
+  if(config.Get("trimFile", "") != "") { trimFile = config.Get("trimFile", ""); }
+  else { trimFile = config.Get("trimDir", "") + string("/trimParameters.dat"); }
+
   rocDACs.push_back(GetConfDACs());
   rocPixels.push_back(GetConfTrimming(trimFile));
 
