@@ -198,7 +198,7 @@ namespace eudaq {
           if(unpack_fn(it,evn)==EVENT_NUM){
             framepos[8]=make_pair(data.end(),FRAME_LENGTH);
             iframe++;
-            nframe=(unsigned int)(*it);
+            nframe=(unsigned int)(*it)+1;
             it++;
           }
           else{
@@ -231,7 +231,7 @@ namespace eudaq {
         }
       }
 
-      unsigned int nhit=((EVENT_LENGTH)-iframe*(12+4)-24-(9+4))/2; // estimate the number of hits
+      unsigned int nhit=((EVENT_LENGTH)-nframe*(12+4)-24-(9+4))/2; // estimate the number of hits
 
       /////////////////////////////////////////////////////////////////////////////////////////////
       // Payload Decoding /////////////////////////////////////////////////////////////////////////
