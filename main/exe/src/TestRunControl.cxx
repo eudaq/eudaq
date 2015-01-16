@@ -78,7 +78,7 @@ int main(int /*argc*/, const char ** argv) {
       "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level",      "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::OptionFlag automatic(op, "a", "automatic", "runs the test run control in automatic mode");
+  eudaq::OptionFlag automatic(op, "s", "scripted", "runs the test run control in automatic mode");
   eudaq::Option<std::string> configName(op, "c", "cnf", "", "configuration",
     "determines which configuration gets loaded automatically");
   eudaq::Option<uint64_t> duration(op, "d", "duration", 60, "uint64_t", "determines the length of a run in seconds");
