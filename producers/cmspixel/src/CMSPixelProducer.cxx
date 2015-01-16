@@ -106,14 +106,13 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );
     pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));
     m_pattern_delay = config.Get("patternDelay", 100) * 10;
-    EUDAQ_USER("Using testpulses...\n");
+    EUDAQ_USER("Using testpulses, pattern delay " + eudaq::to_string(m_pattern_delay) + "\n");
   }
   else {
     pg_setup.push_back(std::make_pair("trigger",46));
     pg_setup.push_back(std::make_pair("token",0));
     m_pattern_delay = config.Get("patternDelay", 100);
   }
-  EUDAQ_USER("m_pattern_delay = " +eudaq::to_string(m_pattern_delay) + "\n");
 
   // Read DACs and trimming from config
   std::string trimFile;
