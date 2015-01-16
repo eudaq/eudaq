@@ -152,8 +152,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
 
-    // Output the trigger signal to probe D1:
-    m_api->SignalProbe("d1","pgtrg");
+    // Output the configured signal to the probes:
+    m_api->SignalProbe("d1", config.Get("signalprobe_d1","ctr"));
+    EUDAQ_USER("Setting scope output D1 to \"" + config.Get("signalprobe_d1","ctr") + "\"\n");
+    m_api->SignalProbe("d2", config.Get("signalprobe_d2","tout"));
+    EUDAQ_USER("Setting scope output D2 to \"" + config.Get("signalprobe_d2","tout") + "\"\n");
 
     EUDAQ_USER("API set up succesfully...\n");
 
