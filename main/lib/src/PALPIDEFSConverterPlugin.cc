@@ -90,6 +90,7 @@ namespace eudaq {
       m_Vreset         = new int[m_nLayers];
       m_Vcasn          = new int[m_nLayers];
       m_Vcasp          = new int[m_nLayers];
+      m_Idb            = new int[m_nLayers];
       m_Ithr           = new int[m_nLayers];
       m_strobe_length  = new int[m_nLayers];
       m_strobeb_length = new int[m_nLayers];
@@ -117,12 +118,14 @@ namespace eudaq {
         m_Vreset[i]  = ParseXML(config, 6, 0, 0, 8);
         m_Vcasn[i]   = ParseXML(config, 6, 0, 1, 0);
         m_Vcasp[i]   = ParseXML(config, 6, 0, 1, 8);
+        m_Idb[i]     = ParseXML(config, 6, 0, 4, 8);
         m_Ithr[i]    = ParseXML(config, 6, 0, 5, 0);
 #else
         m_Vaux[i]    = -10;
         m_Vreset[i]  = -10;
         m_Vcasn[i]   = -10;
         m_Vcasp[i]   = -10;
+        m_Idb[i]     = -10;
         m_Ithr[i]    = -10;
 #endif
         sprintf(tmp, "StrobeLength_%d", i);
@@ -496,6 +499,8 @@ namespace eudaq {
           lev.parameters().setValue(tmp, m_Vcasn[id]);
           snprintf(tmp, n_bs, "Vcasp_%d", id);
           lev.parameters().setValue(tmp, m_Vcasp[id]);
+          snprintf(tmp, n_bs, "Idb_%d", id);
+          lev.parameters().setValue(tmp, m_Idb[id]);
           snprintf(tmp, n_bs, "Ithr_%d", id);
           lev.parameters().setValue(tmp, m_Ithr[id]);
           snprintf(tmp, n_bs, "m_strobe_length_%d", id);
@@ -566,6 +571,7 @@ namespace eudaq {
     int* m_Vreset;
     int* m_Vcasn;
     int* m_Vcasp;
+    int* m_Idb;
     int* m_Ithr;
     int* m_strobe_length;
     int* m_strobeb_length;
@@ -742,7 +748,7 @@ namespace eudaq {
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
     PALPIDEFSConverterPlugin()
-      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0)
+      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2), m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_Vreset(0x0), m_Vcasn(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0), m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1), m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0)
       {}
 
     // The single instance of this converter plugin
