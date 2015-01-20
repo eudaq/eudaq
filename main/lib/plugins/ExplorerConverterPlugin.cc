@@ -33,6 +33,8 @@ typedef int int32_t
 #include <climits>
 #include <cfloat>
 
+#include "ExplorerConverterPluginHelpers.h"
+
 using namespace std;
 
 namespace eudaq {
@@ -103,6 +105,44 @@ namespace eudaq {
                 <<(m_UseThr==true?"1":"0")<<"\t"
                 <<m_Thr<<endl;
 
+#if USE_LCIO // GC works only with LCIO
+            if(!m_PedMeas) { // if not pedestal measurement, perform GC
+                int rn; float vbb; char gcorr_file[100];
+                bool vbb_found=false;
+                ifstream vbb_file;
+                vbb_file.open("../data/vbb_info.txt");
+                if(!vbb_file.good()) cerr << "\nERROR: VBB file not found!!! (../data/vbb_info.txt)\n\n";
+                while(vbb_file.good() && !vbb_found) {
+                    vbb_file >> rn >> vbb >> gcorr_file; // run number, V_bb, path to g_corr.root file
+                    if(rn == bore.GetRunNumber()) vbb_found = true;
+                }
+                vbb_file.close();
+                if(!vbb_found) cerr << "\nERROR: VBB value not found for this run!!! (run " << bore.GetRunNumber() << ")\n\n";
+                else {
+                    cout << "Loading gain correction..." << endl;
+                    // cout << "RN: " << rn << " VBB: " << vbb << endl;
+                    for(int ich=0; ich<4; ++ich) {
+                        gCorr_90_mem[ich] = new GainCorrection();
+                        gCorr_90_mem[ich]->SetDataFile(gcorr_file);
+                        gCorr_90_mem[ich]->SetPitch(0);       // 0 = 90x90, 1=60x60
+                        gCorr_90_mem[ich]->SetVbb(vbb);       // back-bias voltage
+                        gCorr_90_mem[ich]->SetChan(ich);      // channel of the readout (0 = E4, 3 = E1!)
+                        gCorr_90_mem[ich]->SetVrstRef(0.7);   // current standard reference gain
+                        gCorr_90_mem[ich]->SetMem(1);         // 0 -> memory 1, 1 -> memory 2
+                        gCorr_90_mem[ich]->SetVsig(0.11);     // current standard fit range
+
+                        gCorr_60_mem[ich] = new GainCorrection();
+                        gCorr_60_mem[ich]->SetDataFile(gcorr_file);
+                        gCorr_60_mem[ich]->SetPitch(1);       // 0 = 90x90, 1=60x60
+                        gCorr_60_mem[ich]->SetVbb(vbb);       // back-bias voltage
+                        gCorr_60_mem[ich]->SetChan(ich);      // channel of the readout (0 = E4, 3 = E1!)
+                        gCorr_60_mem[ich]->SetVrstRef(0.7);   // current standard reference gain
+                        gCorr_60_mem[ich]->SetMem(1);         // 0 -> memory 1, 1 -> memory 2
+                        gCorr_60_mem[ich]->SetVsig(0.11);     // current standard fit range
+                    }
+                }
+            }
+#endif
         }
         //##############################################################################
         ///////////////////////////////////////
@@ -148,6 +188,7 @@ namespace eudaq {
 
         //conversion from Raw to StandardPlane format
         virtual bool GetStandardSubEvent(StandardEvent & sev,const Event & ev) const {
+
 
             if(ev.IsEORE() && m_PedMeas){ // generate output pedestals and noise
                 cout<<"Calculating Pedestals & Noise ..."<<endl;
@@ -219,7 +260,7 @@ namespace eudaq {
                 for (int i=0; i<m_nExplorers; ++i) {
                     cout<<i<<'\t'<<avnoise[2*i]<<'\t'<<avnoise[2*i+1]<<endl;
                 }
-            } // END IF - if(ev.IsEORE() && m_PedMeas) nepismeni seljaci - ako IF ima pet milijuna redova koda onda napisi gdje zavrsava
+            } // END IF - if(ev.IsEORE() && m_PedMeas)
 
             //initialize everything
             std::string sensortype1 = "Explorer20x20";
@@ -369,11 +410,11 @@ namespace eudaq {
             //assumption data is complete for mem1 and 2 else i need to add exceptions
 
 
-            // CMC variables - who cares about the order of variable declaration, code is a complete mess
+            // CMC variables
             short cds_array[4][2][9][30*30]; // [channel][matrix size - 90=0 or 60=1][sector][pixel]
-            float sec_wm[4][2][9];         // sector winsorized means, see above
+            float sec_wm[4][2][9];           // sector winsorized means, see above
             vector<short> raw_values;        // plain raw values read from file
-            raw_values.reserve(m_nPixels*2);
+            raw_values.reserve(m_nPixels*2); // tmp data holder
 
             //Pedestal
             vector<float> pedestal;         //vector for the pedestal values
@@ -394,7 +435,7 @@ namespace eudaq {
             float pixpedvalue[4];     //buffer to store and calculate the pedestal values
 
             uint64_t buffer;  //buffer for the 6 byte containers
-            short adccInt;
+            short adccInt;    //adc counts integer value
             float adcc;       //adc counts (using float, as we subtract the pedestal)
             nframes=0;                //reset
             unsigned int type=0;              //20x20 or 30x30
@@ -412,10 +453,11 @@ namespace eudaq {
                     for( unsigned int k=0 ; k<2 ; k++ ){                  //mem
                         unpack_b(it,buffer,6);                              //Get Data
                         for( unsigned int l=0 ; l<4 ; l++ ){                //fill matrixes
-                            adccInt=(short)((buffer>>(12*l)) & 0x0FFF);          //mask + shift of Data value
+                            adccInt=(short)((buffer>>(12*l)) & 0x0FFF);     //mask + shift of Data value
+                            raw_values.push_back(adccInt);                  //fill vector containing raw values 
 
-                            raw_values.push_back(adccInt);
-                            if (matrix_size == 90) { // i know, probably there is some variable that defines pixel/matrix size but I am not in the mood for guessing its name
+                            // CMC part 1 - grouping pixels by sector
+                            if (matrix_size == 90) {
                                 short sec = 3*floor(i/30)+floor(j/30);
                                 if (k==0) {
                                     cds_array[l][0][sec][(j%30)*30+(i%30)] = adccInt; // set to MEM1
@@ -432,13 +474,14 @@ namespace eudaq {
                                 else {
                                     cds_array[l][1][sec][(j%20)*20+(i%20)] -= adccInt; // subtract MEM2
                                 }
-                            }
+                            } // END CMC part 1
                         }
                     }
-
+                    
+                    // reset the variables to re-use the for loop
                     if(it==end){
                         nframes++;
-                        it=framepos[nframes].first;                         //change frame // and what the hell is frame???
+                        it=framepos[nframes].first;                         //change frame
                         end=it+framepos[nframes].second;
                     }
                     if( i==matrix_size-1 && j==matrix_size-1 && matrix_size!=(int)height2 ){      //change matrix size
@@ -448,9 +491,9 @@ namespace eudaq {
                         type=1;
                     }
                 }
-            }
+            } // END FOR i
 
-            // CMC part
+            // CMC part 2
             // calculate Winsorized mean for each sector
             for (int ich=0; ich<4; ++ich) { // channels
                 for (int ips=0; ips<2; ++ips) { // pixel size - 90 and 60 matrices
@@ -471,11 +514,10 @@ namespace eudaq {
                     }
                 }
             }
-//            cout << sec_wm[2][0][4] << endl;
-
+            // END CMC part 2
 
             // second loop over pixel values
-            // correct the values for the CM and do whatever it need to be done with them
+            // correct the values for the CM and do whatever needs to be done with them
             type=0;
             matrix_size = (int)height1;
             unsigned int ipix=0;
@@ -484,12 +526,13 @@ namespace eudaq {
                     for( unsigned int k=0 ; k<2 ; k++ ){                  //mem
                         for( unsigned int l=0 ; l<4 ; l++ ){                //fill matrixes
                             adcc = (float)raw_values[ipix++];
-
+                                                        
                             // zero supression
                             if(m_UsePed && k==0 && pedestal.size()>0){adcc-=*pedit; pedit++;}         //iterate the pedestal values
                             // MEM1 - pedestal
                             if(m_UseThr && k==0) adcc-=m_Thr;
-                            // cmc
+                                                        
+                            // CMC part 3 - Apply CMC
                             if(k==0) {
                                 if(matrix_size == 90) {
                                     short sec = 3*floor(i/30)+floor(j/30);
@@ -500,11 +543,13 @@ namespace eudaq {
                                     adcc -= sec_wm[l][1][sec];
                                 }
                             }
-//                            if ( i == 39 && j==38 && l ==2) cout << adcc << endl;
-                            planes[2*l+type].SetPixel( j+i*matrix_size , i , j , adcc , k);
-                            //fill planes (i<-->j ??)
+                            // END CMC part 3
+
+                            // if ( i == 39 && j==38 && l ==2) cout << adcc << endl; // old debug line
+                            planes[2*l+type].SetPixel( j+i*matrix_size , i , j , adcc , k); // add value to StandardPlane
+                            //fill planes (i<-->j ?? // should be ok
                             
-                            if(m_PedMeas){                            //calculate pedestals
+                            if(m_PedMeas){                    //calculate pedestals
                                 if(k==0) pixpedvalue[l]=adcc;
                                 else {
                                     pixpedvalue[l]-=adcc;
@@ -515,6 +560,7 @@ namespace eudaq {
                         }
                     }
 
+                    // reset the variables to re-use the FOR loops
                     if( i==matrix_size-1 && j==matrix_size-1 && matrix_size!=(int)height2 ){      //change matrix size
                         i=0;
                         j=-1;
@@ -522,7 +568,7 @@ namespace eudaq {
                         type=1;
                     }
                 }
-            }
+            } // END FOR i
             
             if(m_PedMeas){  //sum up pedestals in a vector and sum up square of pedestals
                 if(m_noe==1){ //create pedestal and noise vectors
@@ -561,16 +607,16 @@ namespace eudaq {
             unsigned int SI;          //StatusInfo
 
 
-      // use the data from the HLVDS FEC
-      vector<unsigned char> data_HLVDS = rev->GetBlock(0);
-      //data iterator and element access number
-      std::vector<unsigned char>::iterator it_HLVDS=data_HLVDS.begin();
-      it_HLVDS+=20 ; // 4 byte event size, 4 frame size, 12 byte frame header, then the trailer startrs 
-      unpack_fn(it_HLVDS,EvTS);               //unpack stuff
-      unpack_fn(it_HLVDS,TrTS);
-      unpack_fn(it_HLVDS,TrCnt);
-      unpack_b(it_HLVDS,TluCnt,2);
-      unpack_b(it_HLVDS,SI,2);
+            // use the data from the HLVDS FEC
+            vector<unsigned char> data_HLVDS = rev->GetBlock(0);
+            //data iterator and element access number
+            std::vector<unsigned char>::iterator it_HLVDS=data_HLVDS.begin();
+            it_HLVDS+=20 ; // 4 byte event size, 4 frame size, 12 byte frame header, then the trailer startrs 
+            unpack_fn(it_HLVDS,EvTS);               //unpack stuff
+            unpack_fn(it_HLVDS,TrTS);
+            unpack_fn(it_HLVDS,TrCnt);
+            unpack_b(it_HLVDS,TluCnt,2);
+            unpack_b(it_HLVDS,SI,2);
 //      if(m_noe<10 || m_noe%100==0){
 //      cout<<"---------------------------"<<endl;
 //      cout<<"\nEvent Count\t"<<m_noe<<endl;
@@ -626,12 +672,19 @@ namespace eudaq {
                     explorerEncoder["yMax"]=plane.YSize();
                     explorerEncoder.setCellID(Frame);
                     for (unsigned i=0; i<plane.XSize(); i++)
-                      for (unsigned j=0; j<plane.YSize(); j++)
-                      {
-                        Frame->chargeValues().push_back(plane.GetPixel(j*plane.XSize()+i));
+                        for (unsigned j=0; j<plane.YSize(); j++)
+                        {
+                            // Apply GC
+                            float adcc = plane.GetPixel(j*plane.XSize()+i);
+                            if(n % 2) // n = plane num, n%2 = matrix size, n/2 = channel
+                                adcc = gCorr_60_mem[n/2]->CorrectValue(adcc, j, i, true);
+                            else
+                                adcc = gCorr_90_mem[n/2]->CorrectValue(adcc, j, i, true);
+                            // END GC
+                            Frame->chargeValues().push_back(adcc);
 //                        cerr << plane.GetPixel(j*plane.XSize()+i) << endl;
-                      }
-                      explorerTrackerDataCollection->addElement(Frame);
+                        }
+                    explorerTrackerDataCollection->addElement(Frame);
                 }
                 catch(lcio::DataNotAvailableException &)
                 {
@@ -653,10 +706,18 @@ namespace eudaq {
                     explorerEncoder["yMax"]=plane.YSize();
                     explorerEncoder.setCellID(Frame);
                     for (unsigned i=0; i<plane.XSize(); i++)
-                      for (unsigned j=0; j<plane.YSize(); j++)
-                      { 
-                        Frame->chargeValues().push_back(plane.GetPixel(j*plane.XSize()+i));
-                      }
+                        for (unsigned j=0; j<plane.YSize(); j++)
+                        { 
+                            // Apply GC
+                            float adcc = plane.GetPixel(j*plane.XSize()+i);
+                            if(n % 2) // n = plane num, n%2 = matrix size, n/2 = channel
+                                adcc = gCorr_60_mem[n/2]->CorrectValue(adcc, j, i, true);
+                            else
+                                adcc = gCorr_90_mem[n/2]->CorrectValue(adcc, j, i, true);
+                            // END GC
+                            Frame->chargeValues().push_back(adcc);
+//                            Frame->chargeValues().push_back(plane.GetPixel(j*plane.XSize()+i));
+                        }
                     explorerTrackerDataCollection->addElement(Frame);
                     lev.addCollection(explorerTrackerDataCollection,"ExplorerTrackerData");
                 }
@@ -677,7 +738,7 @@ namespace eudaq {
         ExplorerConverterPlugin()
             : DataConverterPlugin(EVENT_TYPE), m_ExNum(0), m_PedMeas(0), m_UsePed(0), m_PedFile(""), m_UseThr(0), m_Thr(0),m_noe(0)
             {}
-
+        
         // Information extracted in Initialize() can be stored here:
         unsigned int m_ExNum;
         bool m_PedMeas;
@@ -688,6 +749,11 @@ namespace eudaq {
         static const int m_nExplorers = 4;
         static const int m_nPixels    = m_nExplorers*11700;
 
+#if USE_LCIO // GC works only with LCIO
+        // GC variables
+        GainCorrection* gCorr_90_mem[4];
+        GainCorrection* gCorr_60_mem[4];
+#endif
 
         mutable unsigned int m_noe; //# of converted events and with the events the added pedestal values
         mutable vector<double>m_Ped;
