@@ -3,23 +3,25 @@
   <address base="6">
     <title>Base %base%</title>
     <address rgn="0">
-        <address sub="0">
-	  <title>VAUX / VRESET</title>
-	  <value begin="0" width="8"><content>vauxTmp</content></value>
-	  <value begin="8" width="8"><content>vrstTmp</content></value>
-	</address>
-	<address sub="1">
-	  <title>VCASN / VCASP</title>
-	  <value begin="0" width="8"><content>vcasnTmp</content></value>
-	  <value begin="8" width="8"><content>0x56</content></value>
-	</address>
-	  <title>IBIAS / IDB</title>
-	  <value begin="0" width="8"><content>0x40</content></value>
-	  <value begin="8" width="8"><content>idbTmp</content></value>
-	</address>
-	<address sub="5">
-	  <title>ITHR</title>
-	  <value begin="0" width="8"><content>ithrTmp</content></value>
-	</address>
+      <address sub="0">
+	    <title>VAUX / VRESET</title>
+	    <value begin="0" width="8"><content>vauxTmp</content></value>
+	    <value begin="8" width="8"><content>vrstTmp</content></value>
+	  </address>
+	  <address sub="1">
+	    <title>VCASN / VCASP</title>
+	    <value begin="0" width="8"><content>vcasnTmp</content></value>
+	    <value begin="8" width="8"><content>0x56</content></value>
+	  </address>
+      <address sub="4">
+	    <title>IBIAS / IDB</title>
+	    <value begin="0" width="8"><content>0x40</content></value>
+	    <value begin="8" width="8"><content>idbTmp</content></value>
+	  </address>
+	  <address sub="5">
+	    <title>ITHR</title>
+	    <value begin="0" width="8"><content>ithrTmp</content></value>
+	  </address>
+    </address>
   </address>
 </root>
