@@ -342,7 +342,7 @@ namespace eudaq {
       bool pALPIDEssDataCollectionExists = false;
 
       try {
-        pALPIDEssDataCollection = static_cast<LCCollectionVec*>(le.getCollection("zsdata_pALPIDEss"));
+        pALPIDEssDataCollection = static_cast<LCCollectionVec*>(lev.getCollection("zsdata_pALPIDEss"));
         pALPIDEssDataCollectionExists = true;
       }
       catch (lcio::DataNotAvailableException &) {
@@ -352,17 +352,17 @@ namespace eudaq {
 
       CellIDEncoder<lcio::TrackerDataImpl> pALPIDEssDataEncoder(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING,pALPIDEssDataCollection);
       lcio::TrackerDataImpl *pALPIDEssFrame = new lcio::TrackerDataImpl();
-      pALPIDEssDataEncoder["sensorID"       ]=0;
-      pALPIDEssDataEncoder["sparsePixelType"]=lcio::eutelescope::kEUTelSimpleSparsePixel;
+      pALPIDEssDataEncoder["sensorID"       ]=6;
+      pALPIDEssDataEncoder["sparsePixelType"]=eutelescope::kEUTelSimpleSparsePixel;
       pALPIDEssDataEncoder.setCellID(pALPIDEssFrame);
 
       const vector<StandardPlane::pixel_t>& x_values = plane.XVector();
       const vector<StandardPlane::pixel_t>& y_values = plane.YVector();
 
       for (unsigned int ihit = 0; ihit < x_values.size(); ++ihit) {
-        pALPIDEssFrame->chargeValues().push_back((int)x_values.at(i));
-        pALPIDEssFrame->chargeValues().push_back((int)y_values.at(i));
-        pAlPIDEssFrame->chargeValues().push_back(1);
+        pALPIDEssFrame->chargeValues().push_back((int)x_values.at(ihit));
+        pALPIDEssFrame->chargeValues().push_back((int)y_values.at(ihit));
+        pALPIDEssFrame->chargeValues().push_back(1);
       }
       pALPIDEssDataCollection->push_back(pALPIDEssFrame);
       if (pALPIDEssDataCollection->size()!=0) lev.addCollection(pALPIDEssDataCollection, "zsdata_pALPIDEss");
