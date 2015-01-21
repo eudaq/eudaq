@@ -28,6 +28,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #include <iostream>
+#include <iomanip>
 #include <iterator>
 #include <fstream>
 #include <vector>
@@ -37,7 +38,10 @@ typedef unsigned __int64 uint64_t;
 #include <cfloat>
 
 using std::cout;
+using std::cerr;
 using std::endl;
+using std::hex;
+using std::dec;
 using std::vector;
 using std::pair;
 using std::string;
@@ -141,7 +145,7 @@ namespace eudaq {
       //cout << "vector has size : " << data.size() << endl;
 
       //data iterator and element access number
-      std::vector<unsigned char>::iterator it=data.begin();
+      vector<unsigned char>::iterator it=data.begin();
 
       /////////////////////////////////////////////////////////////////////////////////////////////
       // DATA CONSISTENCY CHECK ///////////////////////////////////////////////////////////////////
@@ -204,20 +208,25 @@ namespace eudaq {
           else{
             cout<<"EOE ERROR:"<<endl<<"\tEvent Number not correct!"<<endl<<"\tFound: "<<evn<<" instead of "<<EVENT_NUM<<endl
                 <<"Dropping Event"<<endl;
+            sev.SetFlags(Event::FLAG_BROKEN);
             return false;
           }
         }
         else{
           if(unpack_fn(it,evn)!=EVENT_NUM){             //EvNum exception
             cout<<"Event Number ERROR: "<<endl<<"\tEventnumber mismatch!"<<endl<<"\tDropping Event!"<<endl;
+            sev.SetFlags(Event::FLAG_BROKEN);
             return false;
           }
           if( unpack_b(it,ds,3)!=DS ){
             cout<<"Data Specifier ERROR:\n"<<"\tData specifier do not fit!"<<endl<<"\tDropping Event!"<<endl;
+            sev.SetFlags(Event::FLAG_BROKEN);
+            return false;
           }
           //if everything went correct up to here the next byte should be the Framecount
           if((int)*it<=0 || (int)*it>7){
             cout<<"Frame Counter ERROR:\n"<<"\tFramecount not possible! Range: 0..7 + EoE-frame"<<endl<<"\tDropping Event"<<endl;
+            sev.SetFlags(Event::FLAG_BROKEN);
             return false;
           }
           framepos[(int)*it]=make_pair(it+1,FRAME_LENGTH-12);   //Set FrameInfo
@@ -225,6 +234,7 @@ namespace eudaq {
           iframe++;
           if(iframe>7){               //this should not be possible but anyway
             cout<<"Frame ERROR:\n\tToo many frames!"<<endl<<"\tDropping Event"<<endl;
+            sev.SetFlags(Event::FLAG_BROKEN);
             return false;
           }
           it+=FRAME_LENGTH-12;  //Set iterator to begin of next frame
@@ -236,11 +246,12 @@ namespace eudaq {
       /////////////////////////////////////////////////////////////////////////////////////////////
       // Payload Decoding /////////////////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////////////////////////
-      uint16_t buffer = 0x0;
+      uint16_t buffer     = 0x0;
+      uint16_t buffer_old = 0x0;
       iframe=0;
 
       //initialize everything
-      std::string sensortype = "pALPIDEss";
+      string sensortype = "pALPIDEss";
       // create a StandardPlane representing one sensor plane
       int id = 0;
       // plane dimensions
@@ -248,7 +259,7 @@ namespace eudaq {
       unsigned int height = 512;
 
       StandardPlane plane(id, EVENT_TYPE, sensortype);
-      plane.SetSizeZS(width, height, nhit);
+      plane.SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
 
       vector<unsigned char>::iterator end;
       it=framepos[iframe].first;
@@ -257,18 +268,32 @@ namespace eudaq {
       unsigned int nrealhit = 0;
       for (unsigned int ihit=0; ihit<nhit; ++ihit) {
         unpack_b(it, buffer, 2);
+        if (buffer>0 && buffer<=buffer_old) {
+          cerr << "Priority violated!" << endl;
+          sev.SetFlags(Event::FLAG_BROKEN);
+        }
         if (buffer&0x8000) {
           unsigned int row = buffer&0x1FF;
           unsigned int col = buffer>>9&0x3F;
-          plane.SetPixel(nrealhit, col, row, 1);
+          //cout << "good 0x" << hex << (unsigned int)buffer << dec << '\t' << col << '\t' << row << endl;
+          plane.PushPixel(col, row, 1, 0U);
           ++nrealhit;
         }
+        //else {
+        //  cout << "bad  0x" << hex << (unsigned int)buffer << dec << endl;
+        //}
         if(it==end){
           iframe++;
           it=framepos[iframe].first;
           end=it+framepos[iframe].second;
         }
+        buffer_old = buffer;
       }
+      //if (nrealhit==0) cerr << "Empty pALPIDEss event!" << endl;
+      //else {
+      //  cout << nhit << '\t' << nrealhit << endl;
+      //  cout << endl << endl;
+      //}
 
       /////////////////////////////////////////////////////////////////////////////////////////////
       // Trailer Conversion ///////////////////////////////////////////////////////////////////////
