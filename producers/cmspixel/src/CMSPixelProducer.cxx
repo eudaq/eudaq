@@ -136,6 +136,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       
     m_usbId = config.Get("usbId","*");
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+
+    // Allow overwriting of verbosity level via command line:
+    m_verbosity = config.Get("verbosity", m_verbosity);
+
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
     if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { 
