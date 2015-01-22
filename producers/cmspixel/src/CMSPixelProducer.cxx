@@ -162,6 +162,21 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
     }
+    else {
+      EUDAQ_INFO(string("Clock set to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal")));
+    }
+
+    // Switching to the selected trigger source and check if DTB returns TRUE:
+    std::string triggersrc = config.Get("trigger_source","pg_dir");
+    if(!m_api->daqTriggerSource(triggersrc)) {
+      throw InvalidConfig("Couldn't select trigger source " + string(triggersrc));
+    }
+    else {
+      if(triggersrc == "pg" || triggersrc == "pg_dir" || triggersrc == "patterngenerator") {
+	m_trigger_is_pg = true;
+      }
+      EUDAQ_INFO(string("Trigger source selected: " + triggersrc));
+    }
 
     // Output the configured signal to the probes:
     m_api->SignalProbe("d1", config.Get("signalprobe_d1","ctr"));
