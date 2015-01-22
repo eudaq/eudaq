@@ -40,6 +40,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   : eudaq::Producer(name, runcontrol),
     m_run(0),
     m_ev(0),
+    m_ev_filled(0),
     stopping(false),
     done(false),
     started(0),
@@ -48,6 +49,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_dacsFromConf(false),
     m_trimmingFromConf(false),
     m_pattern_delay(0),
+    m_trigger_is_pg(false),
     m_fout(0),
     m_foutName(""),
     m_perFull(0),
@@ -181,9 +183,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Current DAC settings:" << std::endl;
     m_api->_dut->printDACs(0);
 
-    if(!m_dacsFromConf)
-      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");
-    else if(!m_trimmingFromConf)
+    /*if(!m_dacsFromConf)
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");*/
+    if(!m_trimmingFromConf)
       SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
     else
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
@@ -211,6 +213,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 void CMSPixelProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
+  m_ev_filled = 0;
 
   EUDAQ_INFO("Switching Sensor Bias HV ON.");
   m_api->HVon();
@@ -242,12 +245,14 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   m_fout.open(m_foutName.c_str(), std::ios::out | std::ios::binary);
 #endif
   m_api -> daqStart();
-  //m_api -> daqTriggerLoop(m_pattern_delay);   
-  triggering = true;
+
+  // If we run on Pattern Generator, activate the PG loop:
+  if(m_trigger_is_pg) {
+    m_api -> daqTriggerLoop(m_pattern_delay);
+    triggering = true;
+  }
+
   SetStatus(eudaq::Status::LVL_OK, "Running");
-  // Wait some time and then activate...
-  eudaq::mSleep(9000);
-  m_api -> daqTriggerLoop(m_pattern_delay);
   started = true;
 }
 
@@ -257,8 +262,13 @@ void CMSPixelProducer::OnStopRun() {
   std::cout << "Stopping Run" << std::endl;
   try {
     eudaq::mSleep(20);
-    m_api -> daqTriggerLoopHalt();
-    triggering = false;
+
+    // If running with PG, halt the loop:
+    if(m_trigger_is_pg) {
+      m_api -> daqTriggerLoopHalt();
+      triggering = false;
+    }
+
     // assure single threading, wait till data is read out
     while(stopping){
       eudaq::mSleep(20);
