@@ -118,7 +118,7 @@ class ATLASFEI4Interpreter
 	template<uint bitmask>
 	struct myBitMask
 	{
-		uint getShift()
+		static uint getShift()
 		{
 			uint count = 0;
 			std::bitset<32> maskField(bitmask);
