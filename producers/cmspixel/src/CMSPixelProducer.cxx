@@ -349,12 +349,24 @@ void CMSPixelProducer::ReadoutLoop() {
       ReadInSingleEventWriteASCII();
 #endif
 #else 
-      eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-      pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
-      ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+      // Trying to get the next event, daqGetRawEvent throws exception if none is available:
+      try {
+	pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
 
-      SendEvent(ev);
-      m_ev++;
+	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+
+	SendEvent(ev);
+	m_ev++;
+	if(daqEvent.data.size() > 1) m_ev_filled++;
+
+	if(m_ev%1000 == 0) {
+	  std::cout << "CMSPIX EVT " << m_ev << " " << m_ev_filled << " w/ px" << std::endl;
+	  std::cout << " this: " << daqEvent.data.size() << std::endl;
+	}
+      }
+      catch(...) {}
+
       if(stopping){
 	while(triggering)
 	  eudaq::mSleep(20);

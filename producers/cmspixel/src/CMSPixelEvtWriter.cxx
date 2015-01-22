@@ -20,10 +20,17 @@ void CMSPixelProducer::ReadInSingleEventWriteBinary() {
     // OnStopRun(); // FIXME asking eudaq to stop the run doesn't to work (yet)
   }
   double_t t_0 = m_t -> uSeconds();
-  pxar::rawEvent daqEvent = m_api -> daqGetRawEvent(); 
-  CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
 
-  m_fout.write(reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+  try {
+    pxar::rawEvent daqEvent = m_api -> daqGetRawEvent(); 
+    //CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
+
+    m_fout.write(reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+    m_ev++;
+    if(m_ev%10 == 0) std::cout << "CMSPIX EVT " << m_ev << std::endl;
+  }
+  catch(...) {}
+
   if(stopping){
     // assure trigger has stopped before attempting readout.
     while(triggering)
@@ -46,20 +53,26 @@ void CMSPixelProducer::ReadInSingleEventWriteASCII(){
     // OnStopRun(); 
   }
   double_t t_0 = m_t -> uSeconds();
-  pxar::Event daqEvent = m_api -> daqGetEvent();
-  CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
-      
-  LOG(logDEBUGAPI) << "Number of decoder errors: "<< m_api -> daqGetNDecoderErrors();
-  m_fout << std::hex << daqEvent.header << "\t";
   int col, row;
   double value;
-  for(std::vector<pxar::pixel>::iterator it = daqEvent.pixels.begin(); it != daqEvent.pixels.end(); ++it){
-    col = (int)it->column();
-    row = (int)it->row();
-    value = it->value();
-    m_fout << std::dec << col << "\t" << row << "\t" << value << "\t";
-  } 
-  m_fout << "\n";
+
+  try {
+    pxar::Event daqEvent = m_api -> daqGetEvent();
+    CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
+      
+    LOG(logDEBUGAPI) << "Number of decoder errors: "<< m_api -> daqGetNDecoderErrors();
+    m_fout << std::hex << daqEvent.header << "\t";
+
+    for(std::vector<pxar::pixel>::iterator it = daqEvent.pixels.begin(); it != daqEvent.pixels.end(); ++it){
+      col = (int)it->column();
+      row = (int)it->row();
+      value = it->value();
+      m_fout << std::dec << col << "\t" << row << "\t" << value << "\t";
+    }
+    m_fout << "\n";
+  }
+  catch(...) {}
+
   // if OnStopRun has been called read out remaining buffer
   if(stopping){
     while(triggering)
