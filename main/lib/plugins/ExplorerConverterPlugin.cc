@@ -33,7 +33,7 @@ typedef int int32_t
 #include <climits>
 #include <cfloat>
 
-#include "ExplorerConverterPluginHelpers.h"
+#include "eudaq/ExplorerConverterPluginHelpers.h"
 
 using namespace std;
 
