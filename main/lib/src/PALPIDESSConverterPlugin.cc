@@ -101,15 +101,15 @@ namespace eudaq {
     virtual void Initialize(const Event & bore,
                             const Configuration & /*cnf*/) {    //GetConfig
       //TODO Take care of all the tags
-      m_PalpidessNum = bore.GetTag<float>("PalpidessNumber", "-4.");
-      m_Vbb          = bore.GetTag<float>("Vbb",             "-4.");
-      m_Vrst         = bore.GetTag<float>("Vrst",            "-4.");
-      m_Vcasn        = bore.GetTag<float>("Vcasn",           "-4.");
-      m_Vcasp        = bore.GetTag<float>("Vcasp",           "-4.");
-      m_Ithr         = bore.GetTag<float>("Ithr" ,           "-4.");
-      m_Vlight       = bore.GetTag<float>("Vlight",          "-4.");
-      m_AcqTime      = bore.GetTag<float>("AcqTime",         "-4.");
-      m_TrigDelay    = bore.GetTag<float>("TrigDelay",       "-4.");
+      m_PalpidessNum = bore.GetTag<string>("PalpidessNumber", "-4.");
+      m_Vbb          = bore.GetTag<string>("Vbb",             "-4.");
+      m_Vrst         = bore.GetTag<string>("Vrst",            "-4.");
+      m_Vcasn        = bore.GetTag<string>("Vcasn",           "-4.");
+      m_Vcasp        = bore.GetTag<string>("Vcasp",           "-4.");
+      m_Ithr         = bore.GetTag<string>("Ithr" ,           "-4.");
+      m_Vlight       = bore.GetTag<string>("Vlight",          "-4.");
+      m_AcqTime      = bore.GetTag<string>("AcqTime",         "-4.");
+      m_TrigDelay    = bore.GetTag<string>("TrigDelay",       "-4.");
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // GetTRIGGER ID //////////////////////////////////////////////////////////////////////////////
