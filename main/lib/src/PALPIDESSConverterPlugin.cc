@@ -101,7 +101,15 @@ namespace eudaq {
     virtual void Initialize(const Event & bore,
                             const Configuration & /*cnf*/) {    //GetConfig
       //TODO Take care of all the tags
-      //m_ExNum   = bore.GetTag<unsigned int>("ExplorerNumber", 0);
+      m_PalpidessNum = bore.GetTag<float>("PalpidessNumber", "-4.");
+      m_Vbb          = bore.GetTag<float>("Vbb",             "-4.");
+      m_Vrst         = bore.GetTag<float>("Vrst",            "-4.");
+      m_Vcasn        = bore.GetTag<float>("Vcasn",           "-4.");
+      m_Vcasp        = bore.GetTag<float>("Vcasp",           "-4.");
+      m_Ithr         = bore.GetTag<float>("Ithr" ,           "-4.");
+      m_Vlight       = bore.GetTag<float>("Vlight",          "-4.");
+      m_AcqTime      = bore.GetTag<float>("AcqTime",         "-4.");
+      m_TrigDelay    = bore.GetTag<float>("TrigDelay",       "-4.");
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // GetTRIGGER ID //////////////////////////////////////////////////////////////////////////////
@@ -368,8 +376,21 @@ namespace eudaq {
       if (pALPIDEssDataCollection->size()!=0) lev.addCollection(pALPIDEssDataCollection, "zsdata_pALPIDEss");
       else if (!pALPIDEssDataCollectionExists) { delete pALPIDEssDataCollection; pALPIDEssDataCollection = 0x0; }
 
+      static bool parametersSaved = false;
+      if (sev.GetFlags() != Event::FLAG_BROKEN && sev.GetFlags() != Event::FLAG_STATUS && !parametersSaved)
+      {
+        parametersSaved = true;
+        lev.parameters().setValue("PalpidessNumber", m_PalpidessNum);
+        lev.parameters().setValue("Vbb"            , m_Vbb         );
+        lev.parameters().setValue("Vrst"           , m_Vrst        );
+        lev.parameters().setValue("Vcasn"          , m_Vcasn       );
+        lev.parameters().setValue("Vcasp"          , m_Vcasp       );
+        lev.parameters().setValue("Ithr"           , m_Ithr        );
+        lev.parameters().setValue("Vlight"         , m_Vlight      );
+        lev.parameters().setValue("AcqTime"        , m_AcqTime     );
+        lev.parameters().setValue("TrigDelay"      , m_TrigDelay   );
+      }
       // TODO add all the option and so on
-      // TODO do we need the setup
       return true;
     }
 #endif
@@ -380,6 +401,15 @@ namespace eudaq {
     // Member variables should also be initialized to default values here.
     PALPIDESSConverterPlugin()
       : DataConverterPlugin(EVENT_TYPE)
+      , m_PalpidessNum()
+      , m_Vbb()
+      , m_Vrst()
+      , m_Vcasn()
+      , m_Vcasp()
+      , m_Ithr()
+      , m_Vlight()
+      , m_AcqTime()
+      , m_TrigDelay()
       {}
 
     // Information extracted in Initialize() can be stored here:
@@ -387,9 +417,17 @@ namespace eudaq {
 
     // The single instance of this converter plugin
     static PALPIDESSConverterPlugin m_instance;
+    string m_PalpidessNum;
+    string m_Vbb;
+    string m_Vrst;
+    string m_Vcasn;
+    string m_Vcasp;
+    string m_Ithr;
+    string m_Vlight;
+    string m_AcqTime;
+    string m_TrigDelay;
   }; // class ExampleConverterPlugin
 
   // Instantiate the converter plugin instance
   PALPIDESSConverterPlugin PALPIDESSConverterPlugin::m_instance;
-
 } // namespace eudaq
