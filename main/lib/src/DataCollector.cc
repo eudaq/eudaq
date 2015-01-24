@@ -140,7 +140,7 @@ namespace eudaq {
   void DataCollector::OnCompleteEvent() {
     bool more = true;
     while (more) {
-      if (m_eventnumber < 10 || m_eventnumber % 100 == 0) {
+      if (m_eventnumber < 10 || m_eventnumber % 1000 == 0) {
         std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
       }
       unsigned n_run = m_runnumber, n_ev = m_eventnumber;
