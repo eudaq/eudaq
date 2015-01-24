@@ -319,7 +319,7 @@ void CMSPixelProducer::OnStopRun() {
       m_ev++;
     }
     // Sending the final end-of-run event:
-    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, ++m_ev));
+    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
 #else
     m_fout.close();
     std::cout << "Trying to run root application and show run summary." << std::endl;
