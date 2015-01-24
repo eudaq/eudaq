@@ -4,6 +4,8 @@
 #ifdef __CINT__
 #undef __GNUC__
 typedef unsigned long long int uint64_t; 
+typedef char __signed;
+typedef char int8_t;
 #endif
 
 #include <string>
