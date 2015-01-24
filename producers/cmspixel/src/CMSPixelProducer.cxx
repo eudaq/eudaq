@@ -41,6 +41,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_run(0),
     m_ev(0),
     m_ev_filled(0),
+    m_ev_runningavg_filled(0),
     stopping(false),
     done(false),
     started(0),
@@ -243,6 +244,7 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
   m_ev_filled = 0;
+  m_ev_runningavg_filled = 0;
 
   EUDAQ_INFO("Switching Sensor Bias HV ON.");
   m_api->HVon();
@@ -397,15 +399,19 @@ void CMSPixelProducer::ReadoutLoop() {
 
 	SendEvent(ev);
 	m_ev++;
-	if(daqEvent.data.size() > 1) m_ev_filled++;
+	if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
 
 	if(m_ev%1000 == 0) {
-	  std::cout << "CMSPIX " << m_detector << " EVT " << m_ev << " " << m_ev_filled << " w/ px" << std::endl;
-	  std::cout << " this: " << daqEvent.data.size() << std::endl;
-	  for(int i = 0; i < daqEvent.data.size(); i++) {
+	  std::cout << "CMSPixel " << m_detector 
+		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
+	  std::cout << "\t Total average:  \t" << (100*m_ev_filled/m_ev) << "%" << std::endl;
+	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
+	  //std::cout << " this: " << daqEvent.data.size() << std::endl;
+	  /*for(int i = 0; i < daqEvent.data.size(); i++) {
 	    std::cout << std::hex << daqEvent.data[i] << " " << std::dec;
-	  }
-	  std::cout << std::endl;
+	    }
+	    std::cout << std::endl;*/
+	  m_ev_runningavg_filled = 0;
 	}
       }
       catch(...) {}

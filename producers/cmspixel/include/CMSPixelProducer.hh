@@ -34,7 +34,7 @@ private:
   std::vector<std::pair<std::string,uint8_t> > GetConfDACs();
   std::vector<pxar::pixelConfig> GetConfTrimming(std::string filename);
 
-  unsigned m_run, m_ev, m_ev_filled;
+  unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
   std::string m_verbosity, m_foutName, m_roctype, m_usbId, m_producerName, m_detector, m_event_type;
   bool stopping, done, started, triggering;
   bool m_dacsFromConf, m_trimmingFromConf, m_trigger_is_pg;
