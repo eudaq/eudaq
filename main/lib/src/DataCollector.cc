@@ -179,6 +179,15 @@ namespace eudaq {
       }
       if (ev.IsEORE()) {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
+
+	std::cout << "EORE event received. EORE IDs for producers with waiting buffers: " << std::endl;
+	for (size_t i = 0; i < m_buffer.size(); ++i) {
+	  if(!m_buffer[i].events.empty()) {
+	    std::cout << "\t" << m_buffer[i].events.back()->GetSubType() << ": \t"
+		      << m_buffer[i].events.back()->GetEventNumber() << std::endl;
+	  }
+	}
+
         EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
       }
       if (m_writer.get()) {
