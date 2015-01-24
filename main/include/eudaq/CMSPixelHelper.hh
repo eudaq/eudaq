@@ -37,8 +37,8 @@ namespace eudaq {
       std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
       if(rawdata.empty()) { return plane; }
 
-      // Enable lower debugging verbosity level for the decoder module (very verbose!)
-      //CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG4");
+      // Enable lower debugging verbosity level for the decoder module (very verbose!): DEBUG4
+      CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("WARNING");
       CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
       int status = evtDecoder.get_event(rawdata, evt);
       EUDAQ_DEBUG("Decoding status: " + status);
