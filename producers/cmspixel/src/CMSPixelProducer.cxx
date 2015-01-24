@@ -348,8 +348,10 @@ void CMSPixelProducer::OnStopRun() {
     std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
 	      << "\t Total triggers:   \t" << m_ev << std::endl
 	      << "\t Total filled evt: \t" << m_ev_filled << std::endl;
-    std::cout << "\t " << m_detector << " yield: \t" << (100*m_ev_filled/m_ev) << "%" << std::endl;
-    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", detector " + m_detector + " yield: " + std::to_string(100*m_ev_filled/m_ev) 
+    std::cout << "\t " << m_detector << " yield: \t" 
+	      << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
+    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", detector " + m_detector 
+		      + " yield: " + (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") 
 		      + "% (" + std::to_string(m_ev_filled) + "/" + std::to_string(m_ev) + ")"));
     
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
@@ -417,7 +419,7 @@ void CMSPixelProducer::ReadoutLoop() {
 	if(m_ev%1000 == 0) {
 	  std::cout << "CMSPixel " << m_detector 
 		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
-	  std::cout << "\t Total average:  \t" << (100*m_ev_filled/m_ev) << "%" << std::endl;
+	  std::cout << "\t Total average:  \t" << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
 	  m_ev_runningavg_filled = 0;
 	}
