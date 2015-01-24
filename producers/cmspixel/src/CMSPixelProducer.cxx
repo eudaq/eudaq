@@ -321,6 +321,7 @@ void CMSPixelProducer::OnStopRun() {
       eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
       ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
       SendEvent(ev);
+      if(daqEvents.at(i).data.size() > 1) { m_ev_filled++; }
       m_ev++;
     }
     // Sending the final end-of-run event:
@@ -343,6 +344,14 @@ void CMSPixelProducer::OnStopRun() {
 #endif
     std::cout << "Stopped" << std::endl;
 
+    // Output information for the logbook:
+    std::cout << "RUN " << m_run << " CMSPixel " << m_detector << std::endl
+	      << "\t Total triggers:   \t" << m_ev << std::endl
+	      << "\t Total filled evt: \t" << m_ev_filled << std::endl;
+    std::cout << "\t " << m_detector << " yield: \t" << (100*m_ev_filled/m_ev) << "%" << std::endl;
+    EUDAQ_USER(string("Run " + std::to_string(m_run) + ", detector " + m_detector + " yield: " + std::to_string(100*m_ev_filled/m_ev) 
+		      + "% (" + std::to_string(m_ev_filled) + "/" + std::to_string(m_ev) + ")"));
+    
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   } catch (const std::exception & e) {
     printf("While Stopping: Caught exception: %s\n", e.what());
@@ -410,11 +419,6 @@ void CMSPixelProducer::ReadoutLoop() {
 		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
 	  std::cout << "\t Total average:  \t" << (100*m_ev_filled/m_ev) << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
-	  //std::cout << " this: " << daqEvent.data.size() << std::endl;
-	  /*for(int i = 0; i < daqEvent.data.size(); i++) {
-	    std::cout << std::hex << daqEvent.data[i] << " " << std::dec;
-	    }
-	    std::cout << std::endl;*/
 	  m_ev_runningavg_filled = 0;
 	}
       }
