@@ -158,6 +158,14 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(m_api->getTBia()*1000 < 15) EUDAQ_ERROR(string("Analog current too low: " + std::to_string(1000*m_api->getTBia()) + "mA"));
     else EUDAQ_INFO(string("Analog current: " + std::to_string(1000*m_api->getTBia()) + "mA"));
 
+    // Send a single RESET to the ROC to initialize its status:
+    if(!m_api->daqSingleSignal("resetroc")) {
+      throw InvalidConfig("Unable to send ROC reset signal!");
+    }
+    else {
+      EUDAQ_INFO(string("ROC Reset signal issued."));
+    }
+
     // Switching to external clock if requested and check if DTB returns TRUE status:
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
