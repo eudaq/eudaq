@@ -240,8 +240,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   }
 }
 
-void CMSPixelProducer::OnStartRun(unsigned param) {
-  m_run = param;
+void CMSPixelProducer::OnStartRun(unsigned runnumber) {
+  m_run = runnumber;
   m_ev = 0;
   m_ev_filled = 0;
   m_ev_runningavg_filled = 0;
