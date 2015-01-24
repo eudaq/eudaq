@@ -400,8 +400,12 @@ void CMSPixelProducer::ReadoutLoop() {
 	if(daqEvent.data.size() > 1) m_ev_filled++;
 
 	if(m_ev%1000 == 0) {
-	  std::cout << "CMSPIX EVT " << m_ev << " " << m_ev_filled << " w/ px" << std::endl;
+	  std::cout << "CMSPIX " << m_detector << " EVT " << m_ev << " " << m_ev_filled << " w/ px" << std::endl;
 	  std::cout << " this: " << daqEvent.data.size() << std::endl;
+	  for(int i = 0; i < daqEvent.data.size(); i++) {
+	    std::cout << std::hex << daqEvent.data[i] << " " << std::dec;
+	  }
+	  std::cout << std::endl;
 	}
       }
       catch(...) {}
