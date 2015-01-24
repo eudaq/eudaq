@@ -108,9 +108,12 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev) {
-    //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
     Info & inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
+
+    // Print if the received event is the EORE of this producer:
+    if(inf.events.back()->IsEORE()) std::cout << "Received EORE Event from " << id << ": " << *ev << std::endl;
+
     bool tmp = false;
     if (inf.events.size() == 1) {
       m_numwaiting++;
@@ -118,6 +121,7 @@ namespace eudaq {
         tmp = true;
       }
     }
+
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
     if (tmp)
       OnCompleteEvent();
@@ -175,6 +179,15 @@ namespace eudaq {
       }
       if (ev.IsEORE()) {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
+
+	std::cout << "EORE event received. EORE IDs for producers with waiting buffers: " << std::endl;
+	for (size_t i = 0; i < m_buffer.size(); ++i) {
+	  if(!m_buffer[i].events.empty()) {
+	    std::cout << "\t" << m_buffer[i].events.back()->GetSubType() << ": \t"
+		      << m_buffer[i].events.back()->GetEventNumber() << std::endl;
+	  }
+	}
+
         EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
       }
       if (m_writer.get()) {

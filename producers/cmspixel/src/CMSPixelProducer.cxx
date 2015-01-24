@@ -40,6 +40,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   : eudaq::Producer(name, runcontrol),
     m_run(0),
     m_ev(0),
+    m_ev_filled(0),
+    m_ev_runningavg_filled(0),
     stopping(false),
     done(false),
     started(0),
@@ -48,6 +50,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_dacsFromConf(false),
     m_trimmingFromConf(false),
     m_pattern_delay(0),
+    m_trigger_is_pg(false),
     m_fout(0),
     m_foutName(""),
     m_perFull(0),
@@ -91,6 +94,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   sig_delays.push_back(std::make_pair("tin",config.Get("tin",9)));
   sig_delays.push_back(std::make_pair("deser160phase",config.Get("deser160phase",4)));
   sig_delays.push_back(std::make_pair("level",config.Get("level",15)));
+  sig_delays.push_back(std::make_pair("triggerlatency",config.Get("triggerlatency",120)));
+  //sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
 
   //Power settings:
   power_settings.push_back( std::make_pair("va",config.Get("va",1.8)) );
@@ -106,14 +111,13 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     pg_setup.push_back(std::make_pair("trigger",config.Get("trigger", 16)) );
     pg_setup.push_back(std::make_pair("token",config.Get("token", 0)));
     m_pattern_delay = config.Get("patternDelay", 100) * 10;
-    EUDAQ_USER("Using testpulses...\n");
+    EUDAQ_USER("Using testpulses, pattern delay " + eudaq::to_string(m_pattern_delay) + "\n");
   }
   else {
     pg_setup.push_back(std::make_pair("trigger",46));
     pg_setup.push_back(std::make_pair("token",0));
     m_pattern_delay = config.Get("patternDelay", 100);
   }
-  EUDAQ_USER("m_pattern_delay = " +eudaq::to_string(m_pattern_delay) + "\n");
 
   // Read DACs and trimming from config
   std::string trimFile;
@@ -133,6 +137,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       
     m_usbId = config.Get("usbId","*");
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
+
+    // Allow overwriting of verbosity level via command line:
+    m_verbosity = config.Get("verbosity", m_verbosity);
+
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
     if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { 
@@ -151,9 +159,32 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(m_api->getTBia()*1000 < 15) EUDAQ_ERROR(string("Analog current too low: " + std::to_string(1000*m_api->getTBia()) + "mA"));
     else EUDAQ_INFO(string("Analog current: " + std::to_string(1000*m_api->getTBia()) + "mA"));
 
+    // Send a single RESET to the ROC to initialize its status:
+    if(!m_api->daqSingleSignal("resetroc")) {
+      throw InvalidConfig("Unable to send ROC reset signal!");
+    }
+    else {
+      EUDAQ_INFO(string("ROC Reset signal issued."));
+    }
+
     // Switching to external clock if requested and check if DTB returns TRUE status:
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
+    }
+    else {
+      EUDAQ_INFO(string("Clock set to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal")));
+    }
+
+    // Switching to the selected trigger source and check if DTB returns TRUE:
+    std::string triggersrc = config.Get("trigger_source","pg_dir");
+    if(!m_api->daqTriggerSource(triggersrc)) {
+      throw InvalidConfig("Couldn't select trigger source " + string(triggersrc));
+    }
+    else {
+      if(triggersrc == "pg" || triggersrc == "pg_dir" || triggersrc == "patterngenerator") {
+	m_trigger_is_pg = true;
+      }
+      EUDAQ_INFO(string("Trigger source selected: " + triggersrc));
     }
 
     // Output the configured signal to the probes:
@@ -182,9 +213,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Current DAC settings:" << std::endl;
     m_api->_dut->printDACs(0);
 
-    if(!m_dacsFromConf)
-      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");
-    else if(!m_trimmingFromConf)
+    /*if(!m_dacsFromConf)
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");*/
+    if(!m_trimmingFromConf)
       SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
     else
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
@@ -212,6 +243,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 void CMSPixelProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
+  m_ev_filled = 0;
+  m_ev_runningavg_filled = 0;
 
   EUDAQ_INFO("Switching Sensor Bias HV ON.");
   m_api->HVon();
@@ -243,12 +276,14 @@ void CMSPixelProducer::OnStartRun(unsigned param) {
   m_fout.open(m_foutName.c_str(), std::ios::out | std::ios::binary);
 #endif
   m_api -> daqStart();
-  //m_api -> daqTriggerLoop(m_pattern_delay);   
-  triggering = true;
+
+  // If we run on Pattern Generator, activate the PG loop:
+  if(m_trigger_is_pg) {
+    m_api -> daqTriggerLoop(m_pattern_delay);
+    triggering = true;
+  }
+
   SetStatus(eudaq::Status::LVL_OK, "Running");
-  // Wait some time and then activate...
-  eudaq::mSleep(9000);
-  m_api -> daqTriggerLoop(m_pattern_delay);
   started = true;
 }
 
@@ -258,8 +293,13 @@ void CMSPixelProducer::OnStopRun() {
   std::cout << "Stopping Run" << std::endl;
   try {
     eudaq::mSleep(20);
-    m_api -> daqTriggerLoopHalt();
-    triggering = false;
+
+    // If running with PG, halt the loop:
+    if(m_trigger_is_pg) {
+      m_api -> daqTriggerLoopHalt();
+      triggering = false;
+    }
+
     // assure single threading, wait till data is read out
     while(stopping){
       eudaq::mSleep(20);
@@ -281,7 +321,7 @@ void CMSPixelProducer::OnStopRun() {
       m_ev++;
     }
     // Sending the final end-of-run event:
-    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, ++m_ev));
+    SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
 #else
     m_fout.close();
     std::cout << "Trying to run root application and show run summary." << std::endl;
@@ -350,12 +390,32 @@ void CMSPixelProducer::ReadoutLoop() {
       ReadInSingleEventWriteASCII();
 #endif
 #else 
-      eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-      pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
-      ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+      // Trying to get the next event, daqGetRawEvent throws exception if none is available:
+      try {
+	pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
 
-      SendEvent(ev);
-      m_ev++;
+	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
+
+	SendEvent(ev);
+	m_ev++;
+	if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
+
+	if(m_ev%1000 == 0) {
+	  std::cout << "CMSPixel " << m_detector 
+		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
+	  std::cout << "\t Total average:  \t" << (100*m_ev_filled/m_ev) << "%" << std::endl;
+	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
+	  //std::cout << " this: " << daqEvent.data.size() << std::endl;
+	  /*for(int i = 0; i < daqEvent.data.size(); i++) {
+	    std::cout << std::hex << daqEvent.data[i] << " " << std::dec;
+	    }
+	    std::cout << std::endl;*/
+	  m_ev_runningavg_filled = 0;
+	}
+      }
+      catch(...) {}
+
       if(stopping){
 	while(triggering)
 	  eudaq::mSleep(20);

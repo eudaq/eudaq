@@ -25,7 +25,6 @@ namespace eudaq {
 
       // FIXME: use "sensor" to distinguish DUT and REF?
       StandardPlane plane(id, m_event_type, m_detector);
-      std::cout << "Attempting to decode plane " << id << " for " << m_detector << std::endl;
 
       // Initialize the plane size (zero suppressed), set the number of pixels
       plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0);
@@ -38,10 +37,15 @@ namespace eudaq {
       std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
       if(rawdata.empty()) { return plane; }
 
+      // Enable lower debugging verbosity level for the decoder module (very verbose!)
+      //CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("DEBUG4");
       CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
       int status = evtDecoder.get_event(rawdata, evt);
-
       EUDAQ_DEBUG("Decoding status: " + status);
+
+      // Print the decoder statistics (very verbose!)
+      //evtDecoder.statistics.print();
+
       // Check for serious decoding problems and return empty plane:
       if(status <= DEC_ERROR_NO_TBM_HEADER) { return plane; }
 
