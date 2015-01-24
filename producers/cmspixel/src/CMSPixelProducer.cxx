@@ -304,8 +304,11 @@ void CMSPixelProducer::OnStopRun() {
     while(stopping){
       eudaq::mSleep(20);
     }
+
+    // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
+    // otherwise the last triggers get lost.
+    eudaq::mSleep(1500);
     m_api -> daqStop();
-    eudaq::mSleep(100);
     
     EUDAQ_INFO("Switching Sensor Bias HV OFF.");
     m_api->HVoff();
@@ -313,7 +316,7 @@ void CMSPixelProducer::OnStopRun() {
 #if BUFFER_RO_SCHEME == 3
     // Read the rest of events from DTB buffer:
     std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
-    std::cout << "Post run read-out: sending " << daqEvents.size() << " evt." << std::endl;
+    std::cout << "CMSPixel " << m_detector << " Post run read-out, sending " << daqEvents.size() << " evt." << std::endl;
     for(size_t i = 0; i < daqEvents.size(); i++) {
       eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
       ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
@@ -322,6 +325,7 @@ void CMSPixelProducer::OnStopRun() {
     }
     // Sending the final end-of-run event:
     SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
+    std::cout << "CMSPixel " << m_detector << " Post run read-out finished." << std::endl;
 #else
     m_fout.close();
     std::cout << "Trying to run root application and show run summary." << std::endl;
