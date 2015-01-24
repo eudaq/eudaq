@@ -13,7 +13,16 @@ AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
 list(REMOVE_ITEM plugins_sources plugins/GenericConverterPlugin.cc)
 
-INCLUDE_DIRECTORIES(include $ENV{PXAR_PATH}/core/utils)
+FIND_PACKAGE(PXAR)
+IF(PXARCORE_FOUND)
+  INCLUDE_DIRECTORIES(${PXARCORE_INCLUDE_DIRS})
+ELSE(PXARCORE_FOUND)
+  MESSAGE(STATUS "NOT building converter plugin for CMSPixel.")
+  list(REMOVE_ITEM plugins_sources plugins/CMSPixelDecoder.cc)
+  list(REMOVE_ITEM plugins_sources plugins/CMSPixelConverterPlugin.cc)
+  list(REMOVE_ITEM plugins_sources plugins/CMSPixelREFConverterPlugin.cc)
+  list(REMOVE_ITEM plugins_sources plugins/CMSPixelDUTConverterPlugin.cc)
+ENDIF(PXARCORE_FOUND)
 
 if (PROTOBUF_FOUND AND GEN_proto)
     FILE(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/pb_gen )

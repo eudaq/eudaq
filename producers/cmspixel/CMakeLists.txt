@@ -1,28 +1,20 @@
-set(name "CMSPixelProducer.exe")
+SET(name "CMSPixelProducer.exe")
 
-IF("$ENV{PXAR_PATH}" STREQUAL "")
-  MESSAGE(FATAL_ERROR "Could not find pxar. Please setup the environment variable PXAR_PATH to point to your pxar installation.")
-ELSE("$ENV{PXAR_PATH}" STREQUAL "")
-  MESSAGE(STATUS "pxarCore path: $ENV{PXAR_PATH}")
-  FIND_LIBRARY(PXAR_LIBRARY
-    NAMES libpxar.so
-    PATHS "$ENV{PXAR_PATH}/lib")
-  IF(PXAR_LIBRARY)
-    MESSAGE(STATUS "pxarCore library: ${PXAR_LIBRARY}")
-  ELSE(PXAR_LIBRARY)
-    MESSAGE(FATAL_ERROR "Could not find pxarCore library. Please compile pxar.")
-  ENDIF(PXAR_LIBRARY)
-ENDIF("$ENV{PXAR_PATH}" STREQUAL "")
+FIND_PACKAGE(PXAR REQUIRED)
 
-set(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelEvtMonitor.cxx src/CMSPixelConfigParser.cxx src/CMSPixelEvtWriter.cxx)
+IF(PXARCORE_FOUND)
+ELSE(PXARCORE_FOUND)
+  MESSAGE(FATAL_ERROR "Could not find CMSPixel pxarCore! Make sure to set the environment variable $PXARPATH to the path of your pxar installation!")
+ENDIF(PXARCORE_FOUND)
 
-include(FindROOT.cmake)
+FIND_PACKAGE(ROOT REQUIRED)
 
+SET(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelEvtMonitor.cxx src/CMSPixelConfigParser.cxx src/CMSPixelEvtWriter.cxx)
 
-INCLUDE_DIRECTORIES(include $ENV{PXAR_PATH}/core/api $ENV{PXAR_PATH}/core/utils $ENV{PXAR_PATH}/util ${ROOT_INCLUDE_DIR})
-add_executable(${name} ${sourcefiles})
+INCLUDE_DIRECTORIES(include ${PXARCORE_INCLUDE_DIRS} ${ROOT_INCLUDE_DIR})
+ADD_EXECUTABLE(${name} ${sourcefiles})
 
-target_link_libraries(${name} EUDAQ ${EUDAQ_THREADS_LIB} $ENV{PXAR_PATH}/lib/libpxar.so ${ROOT_LIBRARIES})
+TARGET_LINK_LIBRARIES(${name} EUDAQ ${EUDAQ_THREADS_LIB} ${PXARCORE_LIBRARIES} ${ROOT_LIBRARIES})
 
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin
