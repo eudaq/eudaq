@@ -112,7 +112,7 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration & param){
                 printf("----TCP/NI crate: SOCKET is OK...\n");
 
         printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
-		printf("----TCP/NI crate INET PORT is: %d \n", m_config_socket_port);
+	printf("----TCP/NI crate INET PORT is: %s \n", m_config_socket_port);
 
 	config.sin_family = AF_INET;
 	int i_auto = std::stoi(m_config_socket_port, nullptr, 10);
@@ -231,7 +231,7 @@ void NiController::DatatransportClientSocket_Open(const eudaq::Configuration & p
 		printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
 
 	printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n", inet_ntoa(datatransport.sin_addr));
-	printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %d \n", m_data_transport_socket_port);
+	printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %s \n", m_data_transport_socket_port);
 
 	datatransport.sin_family = AF_INET;
 	int i_auto = std::stoi(m_data_transport_socket_port, nullptr, 10);
