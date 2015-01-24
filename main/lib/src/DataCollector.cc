@@ -108,9 +108,12 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev) {
-    //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
     Info & inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
+
+    // Print if the received event is the EORE of this producer:
+    if(inf.events.back()->IsEORE()) std::cout << "Received EORE Event from " << id << ": " << *ev << std::endl;
+
     bool tmp = false;
     if (inf.events.size() == 1) {
       m_numwaiting++;
@@ -118,6 +121,7 @@ namespace eudaq {
         tmp = true;
       }
     }
+
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
     if (tmp)
       OnCompleteEvent();
