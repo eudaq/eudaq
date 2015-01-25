@@ -60,7 +60,7 @@ void CMSPixelProducer::ReadInSingleEventWriteASCII(){
     pxar::Event daqEvent = m_api -> daqGetEvent();
     CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
       
-    LOG(logDEBUGAPI) << "Number of decoder errors: "<< m_api -> daqGetNDecoderErrors();
+    //LOG(logDEBUGAPI) << "Number of data decoding errors: "<< m_api->getStatistics().errors();
     m_fout << std::hex << daqEvent.header << "\t";
 
     for(std::vector<pxar::pixel>::iterator it = daqEvent.pixels.begin(); it != daqEvent.pixels.end(); ++it){
