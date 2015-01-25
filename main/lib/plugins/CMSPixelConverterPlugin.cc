@@ -26,6 +26,16 @@ namespace eudaq {
       return m_converter.GetStandardSubEvent(out,in);
     }
 
+#if USE_LCIO && USE_EUTELESCOPE
+    virtual void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & bore, eudaq::Configuration const & conf) const {
+      return m_converter.GetLCIORunHeader(header, bore, conf);
+    }
+
+    virtual bool GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const {
+      return m_converter.GetLCIOSubEvent(result, source);
+    }
+#endif
+
   private:
     CMSPixelConverterPlugin() : DataConverterPlugin(EVENT_TYPE),
 				   m_converter(EVENT_TYPE) {}
