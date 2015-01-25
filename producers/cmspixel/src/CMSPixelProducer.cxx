@@ -13,7 +13,6 @@
 #include "dictionaries.h"
 #include "log.h"
 
-#include "CMSPixelEvtMonitor.hh"
 #include "CMSPixelProducer.hh"
 
 #include <iostream>
@@ -329,19 +328,8 @@ void CMSPixelProducer::OnStopRun() {
     std::cout << "CMSPixel " << m_detector << " Post run read-out finished." << std::endl;
 #else
     m_fout.close();
-    std::cout << "Trying to run root application and show run summary." << std::endl;
-    try{
-#if OUTPUT_FILE_SCHEME == 1       
-      CMSPixelEvtMonitor::Instance() -> DrawFromBinaryFile(m_foutName, m_roctype); 
-#else       
-      CMSPixelEvtMonitor::Instance() -> DrawFromASCIIFile(m_foutName); 
-#endif      
-      //CMSPixelEvtMonitor::Instance() -> DrawROTiming();
-    }
-    catch(...){
-      std::cout << "Didn't work..." << std::endl;
-    }
 #endif
+
     std::cout << "Stopped" << std::endl;
 
     // Output information for the logbook:

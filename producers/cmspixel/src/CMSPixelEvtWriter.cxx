@@ -2,7 +2,6 @@
 #include "log.h"
 
 // producer includes:
-#include "CMSPixelEvtMonitor.hh"
 #include "CMSPixelProducer.hh"
 
 // system includes:
@@ -23,7 +22,6 @@ void CMSPixelProducer::ReadInSingleEventWriteBinary() {
 
   try {
     pxar::rawEvent daqEvent = m_api -> daqGetRawEvent(); 
-    //CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
 
     m_fout.write(reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
     m_ev++;
@@ -58,7 +56,6 @@ void CMSPixelProducer::ReadInSingleEventWriteASCII(){
 
   try {
     pxar::Event daqEvent = m_api -> daqGetEvent();
-    CMSPixelEvtMonitor::Instance() -> TrackROTiming(++m_ev, m_t -> uSeconds() - t_0); 
       
     //LOG(logDEBUGAPI) << "Number of data decoding errors: "<< m_api->getStatistics().errors();
     m_fout << std::hex << daqEvent.header << "\t";

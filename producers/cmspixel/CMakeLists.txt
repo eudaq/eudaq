@@ -7,14 +7,12 @@ ELSE(PXARCORE_FOUND)
   MESSAGE(FATAL_ERROR "Could not find CMSPixel pxarCore! Make sure to set the environment variable $PXARPATH to the path of your pxar installation!")
 ENDIF(PXARCORE_FOUND)
 
-FIND_PACKAGE(ROOT REQUIRED)
+SET(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelConfigParser.cxx src/CMSPixelEvtWriter.cxx)
 
-SET(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelEvtMonitor.cxx src/CMSPixelConfigParser.cxx src/CMSPixelEvtWriter.cxx)
-
-INCLUDE_DIRECTORIES(include ${PXARCORE_INCLUDE_DIRS} ${ROOT_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(include ${PXARCORE_INCLUDE_DIRS})
 ADD_EXECUTABLE(${name} ${sourcefiles})
 
-TARGET_LINK_LIBRARIES(${name} EUDAQ ${EUDAQ_THREADS_LIB} ${PXARCORE_LIBRARIES} ${ROOT_LIBRARIES})
+TARGET_LINK_LIBRARIES(${name} EUDAQ ${EUDAQ_THREADS_LIB} ${PXARCORE_LIBRARIES})
 
 INSTALL(TARGETS ${name}
   RUNTIME DESTINATION bin
