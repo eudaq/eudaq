@@ -18,12 +18,12 @@ namespace eudaq {
       if (m_roctype == 0x0)
 	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
 
-      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type << ", ROC type " << static_cast<int>(m_roctype) << std::endl;
+      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
     }
 
     StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
 
-      // FIXME: use "sensor" to distinguish DUT and REF?
+      // We are using the event's "sensor" (m_detector) to distinguish DUT and REF:
       StandardPlane plane(id, m_event_type, m_detector);
 
       // Initialize the plane size (zero suppressed), set the number of pixels
@@ -41,7 +41,6 @@ namespace eudaq {
       CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("WARNING");
       CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
       int status = evtDecoder.get_event(rawdata, evt);
-      EUDAQ_DEBUG("Decoding status: " + status);
 
       // Print the decoder statistics (very verbose!)
       //evtDecoder.statistics.print();
@@ -69,7 +68,6 @@ namespace eudaq {
 	return false;
       }
 
-      CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("INFO");
       const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
       for (size_t i = 0; i < in_raw.NumBlocks(); ++i) {
 	//out.AddPlane(ConvertPlane(in_raw.GetBlock(i), in_raw.GetID(i)));
