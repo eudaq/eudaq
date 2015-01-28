@@ -73,7 +73,7 @@ public:
 
     printf("\n--------------------- Get Config --------------------\n");
     //read from config
-    options[0].first="PalpidessNumber";              //SetOptionTags
+    options[0].first="PalpidessPlaneNo";
     options[1].first="Vrst";
     options[2].first="Vcasn";
     options[3].first="Vcasp";
@@ -83,9 +83,9 @@ public:
     options[7].first="Vbb";
     options[8].first="TrigDelay";
 
-    std::stringstream ss;
-    const int PalpidessNum = param.Get(param_str[0], 0);
-    ss << PalpidessNum;
+    stringstream ss;
+    const int PalpidessPlaneNo = param.Get(param_str[0], 0);
+    ss << PalpidessPlaneNo;
     options[0].first  = param_str[0];
     options[0].second = ss.str();
     ss.str("");
