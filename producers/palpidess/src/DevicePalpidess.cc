@@ -84,7 +84,10 @@ int DevicePalpidess::get_SD(){	//get socket descriptors of fecs
 bool DevicePalpidess::Configure(std::string arg){
   if(sc>=0) StopDAQ();
   std::string cmd = "${PALPIDESS_SCRIPTS}/ConfigurePALPIDEss.sh" + arg;
-  if(cmdRdy){ system(cmd.c_str()); return true; }
+  if(cmdRdy){
+    if(system(cmd.c_str())==0) return true;
+    else return false;
+  }
   else return false;
 }
 
