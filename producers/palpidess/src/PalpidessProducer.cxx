@@ -106,7 +106,7 @@ public:
     else printf("Server 0 for FEC HLVDS has already been up\n");
 
     printf("\n--------------------- Configure Palpidess --------------------\n");
-    if (fPalpidess->Configure(config_cmd_arg.str())) {
+    if (fPalpidess->Configure(config_cmd_arg.str())==0) {
       SetStatus(eudaq::Status::LVL_OK, "Configured");
     }
     else {
