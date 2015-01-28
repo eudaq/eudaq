@@ -16,20 +16,29 @@
 #include <sstream>
 #include <vector>
 
+using std::cout;
+using std::cerr;
+using std::dec;
+using std::endl;
+using std::hex;
+using std::pair;
+using std::string;
+using std::stringstream;
+using std::vector;
 
 template <typename T>
-inline void pack (std::vector< unsigned char >& dst, T& data) {
+inline void pack (vector< unsigned char >& dst, T& data) {
   unsigned char * src =
     static_cast < unsigned char* >(static_cast < void * >(&data));
   dst.insert (dst.end (), src, src + sizeof (T));
 }
 
 template <typename T>
-inline void unpack (std::vector <unsigned char >& src, int index, T& data) {
+inline void unpack (vector <unsigned char >& src, int index, T& data) {
   copy (&src[index], &src[index + sizeof (T)], &data);
 }
 
-typedef std::pair<std::string,std::string> config;
+typedef pair<string,string> config;
 
 unsigned long extract_event_id(unsigned char* event) {
   unsigned long id = 0x0;
@@ -42,7 +51,7 @@ unsigned long extract_event_id(unsigned char* event) {
 // A name to identify the raw data format of the events generate.
 
 // Modify this to something appropriate for your producer.
-static const std::string EVENT_TYPE = "pALPIDEssRaw";
+static const string EVENT_TYPE = "pALPIDEssRaw";
 
 // Declare a new class that inherits from eudaq::Producer
 class PalpidessProducer : public eudaq::Producer {
@@ -50,7 +59,7 @@ public:
 
   // The constructor must call the eudaq::Producer constructor with the name
   // and the runcontrol connection string, and initialize any member variables.
-  PalpidessProducer(const std::string & name, const std::string & runcontrol)
+  PalpidessProducer(const string & name, const string & runcontrol)
     : eudaq::Producer(name, runcontrol),
       m_run(0), m_ev(0), stopping(false), running(false), done(false),
       request_sent(false) {
@@ -59,7 +68,7 @@ public:
 
   // This gets called whenever the DAQ is configured
   virtual void OnConfigure(const eudaq::Configuration & param) {
-    std::cout << "Configuring: " << param.Name() << std::endl;
+    cout << "Configuring: " << param.Name() << endl;
     SetStatus(eudaq::Status::LVL_OK, "Wait");
 
     printf("\n--------------------- Get Config --------------------\n");
@@ -81,14 +90,13 @@ public:
     options[0].second = ss.str();
     ss.str("");
 
-    std::stringstream config_cmd_arg;
+    stringstream config_cmd_arg;
     for (int i_param = 1; i_param < n_param; ++i_param) {
       options[i_param].first  = param_str[i_param];
       options[i_param].second = param.Get(options[i_param].first, param_default[i_param]);
       ss << options[i_param].first << "_" << options[0].second;
       options[i_param].second = param.Get(ss.str(), options[i_param].second);
-      std::cout << options[i_param].first << "=" << options[i_param].second
-                << std::endl;
+      cout << options[i_param].first << "=" << options[i_param].second << endl;
       ss.str("");
       config_cmd_arg << " " << options[i_param].second;
     }
@@ -126,7 +134,7 @@ public:
 
     // Send the event to the Data Collector
     SendEvent(bore);
-    std::cout << "[pALPIDEssProducer] Sent BORE " << std::endl;
+    cout << "[pALPIDEssProducer] Sent BORE " << endl;
 
     stopping = false;
     request_sent = false;
@@ -137,7 +145,7 @@ public:
 
   // This gets called whenever a run is stopped
   virtual void OnStopRun() {
-    std::cout << "Stopping Run" << std::endl;
+    cout << "Stopping Run" << endl;
 
     // Set a flag to signal to the polling loop that the run is over
     stopping = true;
@@ -145,7 +153,7 @@ public:
     while (stopping) {
       eudaq::mSleep(100);
     }
-    std::cout << "Stopped Run" << std::endl;
+    cout << "Stopped Run" << endl;
   }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -167,7 +175,7 @@ public:
     const unsigned int buffer_size = 9000;
     unsigned char data_packet[buffer_size]; // buffer for the UDP frame
     unsigned int num_byte_rcv = 0;          // number of received bytes
-    std::vector<unsigned char> evt_size;    // number of bytes in the event,
+    vector<unsigned char> evt_size;         // number of bytes in the event,
                                             // including data, header and
                                             // frame sizes as byte vector
     bool evt_bad = false;                   // flag to indicate something
@@ -191,15 +199,14 @@ public:
         while (!request_sent) {
           request_sent = fPalpidess->GetSingleEvent();
         }
-        std::vector<unsigned char> bufferEvent_LVDS;              //Eventbuffer
-        std::vector<unsigned char> bufferEvent_ADC;
+        vector<unsigned char> bufferEvent_LVDS;              //Eventbuffer
+        vector<unsigned char> bufferEvent_ADC;
         bufferEvent_LVDS.reserve(70000); // 65656 is necessary
 
         sd = fPalpidess->get_SD();     // get socket descriptor
 
         while(!check_socket(sd, timeout) && !stopping) {
-          //std::cout << "Requested event - waiting for its arrival"
-          //          << std::endl;
+          //cout << "Requested event - waiting for its arrival" << endl;
         }
 
         if (!stopping) {
@@ -223,10 +230,10 @@ public:
                 evt_id = extract_event_id(data_packet);
               else if (evt_id != extract_event_id(data_packet)) {
                 evt_bad = true;
-                std::cout << "** found wrong event id "
-                          << extract_event_id(data_packet)
-                          << " instead of " << evt_id
-                          << " in the LVDS event " << std::endl;
+                cout << "** found wrong event id "
+                     << extract_event_id(data_packet)
+                     << " instead of " << evt_id
+                     << " in the LVDS event " << endl;
               }
               // handle the frame id
               if (num_byte_rcv == 9) {
@@ -253,10 +260,10 @@ public:
             // TODO TODO
           }
           else {
-            std::cout << "** LVDS event not finished" << std::endl
-                      << "** maximum frame id: " << max_frame_id << std::endl
-                      << "** event status:     0x" << std::hex << evt_status
-                      << std::dec << std::endl;
+            cout << "** LVDS event not finished" << endl
+                 << "** maximum frame id: "      << max_frame_id << endl
+                 << "** event status:     0x"    << hex << evt_status
+                 << dec << endl;
           }
 
           //Print number of Event
@@ -278,7 +285,7 @@ public:
       }
       if (stopping) {
 	//in case the run is stopped: finish event and send EORE
-	std::cout << "[PalpidessProducer] Sent EORE " << std::endl;
+	cout << "[PalpidessProducer] Sent EORE " << endl;
 	while(check_socket(sd, 1.)) { //read LVDS until empty
 	  recvfrom(sd, data_packet, buffer_size, 0, NULL, NULL);
 	}
@@ -300,8 +307,8 @@ private:
   DevicePalpidess* fPalpidess;   //pointer to the device object
 
   //Config values
-  static std::string const param_str[];
-  static std::string const param_default[];
+  static string const param_str[];
+  static string const param_default[];
   static int const n_param = 9;
   config options[PalpidessProducer::n_param];
 
@@ -317,7 +324,7 @@ private:
       int select_retval = select( fd+1, &fdset, NULL, NULL, &tv_timeout );
 
       if ( select_retval == -1 ) {
-        std::cout << "Could not read from the socket!" << std::endl; // ERROR!
+        cerr << "Could not read from the socket!" << endl; // ERROR!
       }
 
       if ( FD_ISSET( fd, &fdset ) )
@@ -333,13 +340,12 @@ int main(int /*argc*/, const char ** argv) {
   // then they will automatically be described in the help (-h) option
   eudaq::OptionParser op("EUDAQ pALPIDEss Producer", "1.0",
                          "Just an example, modify it to suit your own needs");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
-                                   "tcp://localhost:44000", "address",
-                                   "The address of the RunControl.");
-  eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
-                                   "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> name (op, "n", "", "pALPIDEss", "string",
-                                   "The name of this Producer");
+  eudaq::Option<string> rctrl(op, "r", "runcontrol",
+                              "tcp://localhost:44000", "address",
+                              "The address of the RunControl.");
+  eudaq::Option<string> level(op, "l", "log-level", "NONE", "level",
+                              "The minimum level for displaying log messages locally");
+  eudaq::Option<string> name (op, "n", "", "pALPIDEss", "string", "The name of this Producer");
   try {
     // This will look through the command-line arguments and set the options
     op.Parse(argv);
@@ -350,7 +356,7 @@ int main(int /*argc*/, const char ** argv) {
     // And set it running...
     producer.ReadoutLoop();
     // When the readout loop terminates, it is time to go
-    std::cout << "Quitting" << std::endl;
+    cout << "Quitting" << endl;
   } catch (...) {
     // This does some basic error handling of common exceptions
     return op.HandleMainException();
@@ -358,5 +364,5 @@ int main(int /*argc*/, const char ** argv) {
   return 0;
 }
 
-std::string const PalpidessProducer::param_str[] = { "PalpidessNumber", "Vrst", "Vcasn", "Vcasp", "Ithr", "Vlight", "AcqTime", "Vbb", "TrigDelay" }; // crosscheck n_param!
-std::string const PalpidessProducer::param_default[] = { "0", "1.6", "0.4", "0.6", "2.05", "0.0", "1.54", "0.0", "0.0" }; // crosscheck n_param!
+string const PalpidessProducer::param_str[] = { "PalpidessPlaneNo", "Vrst", "Vcasn", "Vcasp", "Ithr", "Vlight", "AcqTime", "Vbb", "TrigDelay" }; // crosscheck n_param!
+string const PalpidessProducer::param_default[] = { "0", "1.6", "0.4", "0.6", "2.05", "0.0", "1.54", "0.0", "0.0" }; // crosscheck n_param!
