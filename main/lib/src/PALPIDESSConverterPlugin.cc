@@ -101,15 +101,24 @@ namespace eudaq {
     virtual void Initialize(const Event & bore,
                             const Configuration & /*cnf*/) {    //GetConfig
       //TODO Take care of all the tags
-      m_PalpidessNum = bore.GetTag<string>("PalpidessNumber", "-4.");
-      m_Vbb          = bore.GetTag<string>("Vbb",             "-4.");
-      m_Vrst         = bore.GetTag<string>("Vrst",            "-4.");
-      m_Vcasn        = bore.GetTag<string>("Vcasn",           "-4.");
-      m_Vcasp        = bore.GetTag<string>("Vcasp",           "-4.");
-      m_Ithr         = bore.GetTag<string>("Ithr" ,           "-4.");
-      m_Vlight       = bore.GetTag<string>("Vlight",          "-4.");
-      m_AcqTime      = bore.GetTag<string>("AcqTime",         "-4.");
-      m_TrigDelay    = bore.GetTag<string>("TrigDelay",       "-4.");
+      m_PalpidessPlaneNo = bore.GetTag<int>("PalpidessPlaneNo", 0);
+      m_Vbb              = bore.GetTag<string>("Vbb",       "-4.");
+      m_Vrst             = bore.GetTag<string>("Vrst",      "-4.");
+      m_Vcasn            = bore.GetTag<string>("Vcasn",     "-4.");
+      m_Vcasp            = bore.GetTag<string>("Vcasp",     "-4.");
+      m_Ithr             = bore.GetTag<string>("Ithr" ,     "-4.");
+      m_Vlight           = bore.GetTag<string>("Vlight",    "-4.");
+      m_AcqTime          = bore.GetTag<string>("AcqTime",   "-4.");
+      m_TrigDelay        = bore.GetTag<string>("TrigDelay", "-4.");
+      cout << "PalpidessPlaneNo=" << m_PalpidessPlaneNo << endl;
+      cout << "Vbb="              << m_Vbb          << endl;
+      cout << "Vrst="             << m_Vrst         << endl;
+      cout << "Vcasn="            << m_Vcasn        << endl;
+      cout << "Vcasp="            << m_Vcasp        << endl;
+      cout << "Ithr="             << m_Ithr         << endl;
+      cout << "Vlight="           << m_Vlight       << endl;
+      cout << "AcqTime="          << m_AcqTime      << endl;
+      cout << "TrigDelay="        << m_TrigDelay    << endl;
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // GetTRIGGER ID //////////////////////////////////////////////////////////////////////////////
@@ -360,7 +369,7 @@ namespace eudaq {
 
       CellIDEncoder<lcio::TrackerDataImpl> pALPIDEssDataEncoder(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING,pALPIDEssDataCollection);
       lcio::TrackerDataImpl *pALPIDEssFrame = new lcio::TrackerDataImpl();
-      pALPIDEssDataEncoder["sensorID"       ]=6;
+      pALPIDEssDataEncoder["sensorID"       ]=m_PalpidessPlaneNo;
       pALPIDEssDataEncoder["sparsePixelType"]=eutelescope::kEUTelSimpleSparsePixel;
       pALPIDEssDataEncoder.setCellID(pALPIDEssFrame);
 
@@ -380,15 +389,15 @@ namespace eudaq {
       if (sev.GetFlags() != Event::FLAG_BROKEN && sev.GetFlags() != Event::FLAG_STATUS && !parametersSaved)
       {
         parametersSaved = true;
-        lev.parameters().setValue("PalpidessNumber", m_PalpidessNum);
-        lev.parameters().setValue("Vbb"            , m_Vbb         );
-        lev.parameters().setValue("Vrst"           , m_Vrst        );
-        lev.parameters().setValue("Vcasn"          , m_Vcasn       );
-        lev.parameters().setValue("Vcasp"          , m_Vcasp       );
-        lev.parameters().setValue("Ithr"           , m_Ithr        );
-        lev.parameters().setValue("Vlight"         , m_Vlight      );
-        lev.parameters().setValue("AcqTime"        , m_AcqTime     );
-        lev.parameters().setValue("TrigDelay"      , m_TrigDelay   );
+        lev.parameters().setValue("PalpidessPlaneNo", m_PalpidessPlaneNo);
+        lev.parameters().setValue("Vbb"             , m_Vbb         );
+        lev.parameters().setValue("Vrst"            , m_Vrst        );
+        lev.parameters().setValue("Vcasn"           , m_Vcasn       );
+        lev.parameters().setValue("Vcasp"           , m_Vcasp       );
+        lev.parameters().setValue("Ithr"            , m_Ithr        );
+        lev.parameters().setValue("Vlight"          , m_Vlight      );
+        lev.parameters().setValue("AcqTime"         , m_AcqTime     );
+        lev.parameters().setValue("TrigDelay"       , m_TrigDelay   );
       }
       // TODO add all the option and so on
       return true;
@@ -401,7 +410,7 @@ namespace eudaq {
     // Member variables should also be initialized to default values here.
     PALPIDESSConverterPlugin()
       : DataConverterPlugin(EVENT_TYPE)
-      , m_PalpidessNum()
+      , m_PalpidessPlaneNo(0)
       , m_Vbb()
       , m_Vrst()
       , m_Vcasn()
@@ -417,7 +426,7 @@ namespace eudaq {
 
     // The single instance of this converter plugin
     static PALPIDESSConverterPlugin m_instance;
-    string m_PalpidessNum;
+    int m_PalpidessPlaneNo;
     string m_Vbb;
     string m_Vrst;
     string m_Vcasn;
