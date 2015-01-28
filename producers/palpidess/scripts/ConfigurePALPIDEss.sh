@@ -86,10 +86,7 @@ echo ""
 
 # configure the SRS
 echo "Configuring the SRS"
-${PALPIDESS_SCRIPTS}/slow_control/config_pALPIDE_driver.py
-
-
-# TODO handle the trigger delay
+${PALPIDESS_SCRIPTS}/slow_control/config_pALPIDE_driver.py ${T_ACQ} ${TRIG_DELAY}
 
 # determine configuration
 echo "Dump the application registers of the FECs"

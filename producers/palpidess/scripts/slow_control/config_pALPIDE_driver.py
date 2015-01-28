@@ -11,11 +11,17 @@ import biasDAC     # special code to setup up the voltage biases
 m = SlowControl.SlowControl(0) # HLVDS FEC (master)
 
 # was the integration time given as a commandline argument?
-if len(sys.argv) == 2:
+if len(sys.argv) >= 2:
     integration_time = int(float(sys.argv[1])/0.00625)
     # Acquisition time is expected to specified in micro seconds (us)
 else:
-    integration_time = 0xf6               # default value
+    integration_time = 0xf600 # default value
+
+if len(sys.argv) >= 3:
+    trigger_delay = int(float(sys.argv[2])/0.00625)
+    # Acquisition time is expected to specified in micro seconds (us)
+else:
+    trigger_delay = 0         # default value
 
 # 0x16 (22) readout control
 #
@@ -46,7 +52,7 @@ values_HLVDS = [
                       #           repeat global reset (2), activate mem_wr_en (3)
     0x10,             # 0x01 ( 1) length of GRSTb signal [init_dly_t]
     0xa0,             # 0x02 ( 2) length of the analog pulser reference pulse [dly_t]
-    0x0,              # 0x03 ( 3) pre-acqusition delay (in between trigger and acqs start)
+    trigger_delay,    # 0x03 ( 3) pre-acqusition delay (in between trigger and acqs start)
                       #           [pre_acq_dly_t]
     integration_time, # 0x04 ( 4) integration time [acq_time_t]
     0x0,              # 0x05 ( 5) delay in between acquisition and readout [rdo_dly_t]
