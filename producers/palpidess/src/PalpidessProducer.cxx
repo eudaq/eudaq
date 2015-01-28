@@ -106,10 +106,13 @@ public:
     else printf("Server 0 for FEC HLVDS has already been up\n");
 
     printf("\n--------------------- Configure Palpidess --------------------\n");
-    fPalpidess->Configure(config_cmd_arg.str());
-
-    // At the end, set the status that will be displayed in the Run Control.
-    SetStatus(eudaq::Status::LVL_OK, "Configured");
+    if (fPalpidess->Configure(config_cmd_arg.str())) {
+      SetStatus(eudaq::Status::LVL_OK, "Configured");
+    }
+    else {
+      SetStatus(eudaq::Status::LVL_ERROR, "Configuration failed");
+      EUDAQ_ERROR("pALPIDEss configuration failed");
+    }
   }
 
   // This gets called whenever a new run is started
