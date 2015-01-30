@@ -91,12 +91,6 @@ namespace eudaq {
         id_x = plane.GetX(ipix);
         id_y = plane.GetY(ipix);
         i_time_stamp =  sev.GetTimestamp();
-		try{ 
-		i_tlu= std::stoull(sev.GetTag("TLU_trigger","15"));
-		}catch(...){
-			std::cout<<" error during converting "<<sev.GetTag("TLU_trigger","15") << " to ull"<<std::endl;
-		}
-
         i_run = sev.GetRunNumber();
         i_event = sev.GetEventNumber();                  
         m_ttree->Fill(); 
