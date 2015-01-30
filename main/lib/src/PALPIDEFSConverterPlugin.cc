@@ -190,12 +190,25 @@ namespace eudaq {
 
     //Get TLU trigger ID from your RawData or better from a different block
     //example: has to be fittet to our needs depending on block managing etc.
-    virtual unsigned GetTriggerID(const Event & /*ev*/) const {
+    virtual unsigned GetTriggerID(const Event & ev) const {
       // Make sure the event is of class RawDataEvent
-      //if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
-      // TODO get trigger id. probably common code with producer. try to factor out somewhere.
-      //}
-      // If we are unable to extract the Trigger ID, signal with (unsigned)-1
+      if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
+        if (rev->NumBlocks() > 0) {
+          vector<unsigned char> data = rev->GetBlock(0);
+          if (data.size() > 12) {
+            unsigned int id_l = 0x0;
+            unsigned int id_h = 0x0;
+            for (int i=0; i<3; ++i) {
+              id_l |= data[4+i]<<8*i;
+              id_h |= data[8+i]<<8*i;
+            }
+            //std::cout << std::hex << id_l << std::dec << " " << id_l <<std::endl;
+            //std::cout << std::hex << id_h << std::dec << " " << id_h <<std::endl;
+            uint64_t trig_id =(id_h<<24 | id_l);
+            return (unsigned)trig_id;
+          }
+        }
+      }
       return (unsigned)-1;
     }
 
