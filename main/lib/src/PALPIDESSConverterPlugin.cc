@@ -134,12 +134,12 @@ namespace eudaq {
         // length has to be taken in to account:
         // - eoe frame = 9 byte + 4 byte
         // - 2 byte after the trigger id => 4 including the tlu id
-        const unsigned int offset = 9 + 4 + 4;
+        const unsigned int offset = 9 + 4 + 4 + 4;
         if (rev->NumBlocks() < 1) return (unsigned)(-1);
         unsigned int size = rev->GetBlock(0).size();
         if (size < offset) return (unsigned)(-1);
         unsigned int pos = size - offset;
-        unsigned short id = getbigendian<unsigned short>(&rev->GetBlock(0)[pos]);
+        unsigned int id = getbigendian<unsigned int>(&rev->GetBlock(0)[pos]);
         return (unsigned)id;
       }
       // If we are unable to extract the Trigger ID, signal with (unsigned)-1
