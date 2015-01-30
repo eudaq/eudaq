@@ -192,6 +192,7 @@ namespace eudaq {
     //example: has to be fittet to our needs depending on block managing etc.
     virtual unsigned GetTriggerID(const Event & ev) const {
       // Make sure the event is of class RawDataEvent
+      static unsigned trig_offset = (unsigned)-1;
       if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
         if (rev->NumBlocks() > 0) {
           vector<unsigned char> data = rev->GetBlock(0);
@@ -205,7 +206,10 @@ namespace eudaq {
             //std::cout << std::hex << id_l << std::dec << " " << id_l <<std::endl;
             //std::cout << std::hex << id_h << std::dec << " " << id_h <<std::endl;
             uint64_t trig_id =(id_h<<24 | id_l);
-            return (unsigned)trig_id;
+            if (trig_offset==(unsigned)-1) {
+              trig_offset=trig_id;
+            }
+            return (unsigned)(trig_id-trig_offset);
           }
         }
       }

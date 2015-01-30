@@ -127,6 +127,7 @@ namespace eudaq {
     //example: has to be fittet to our needs depending on block managing etc.
     virtual unsigned GetTriggerID(const Event & ev) const {
       // Make sure the event is of class RawDataEvent
+      static unsigned trig_offset = (unsigned)-1;
       if (const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> (&ev)) {
         // TLU ID is contained in the trailer of the last data frame in the 4th and
         // 3rd byte from the end
@@ -140,7 +141,10 @@ namespace eudaq {
         if (size < offset) return (unsigned)(-1);
         unsigned int pos = size - offset;
         unsigned int id = getbigendian<unsigned int>(&rev->GetBlock(0)[pos]);
-        return (unsigned)id;
+        if (trig_offset==(unsigned)-1) {
+          trig_offset=id;
+        }
+        return (unsigned)(id-trig_offset);
       }
       // If we are unable to extract the Trigger ID, signal with (unsigned)-1
       return (unsigned)-1;
