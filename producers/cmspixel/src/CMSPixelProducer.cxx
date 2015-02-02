@@ -18,6 +18,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <sched.h>
+
 using namespace pxar; 
 using namespace std; 
 
@@ -371,7 +373,9 @@ void CMSPixelProducer::ReadoutLoop() {
   // Loop until Run Control tells us to terminate
   while (!done) {
     if(!started){
-      eudaq::mSleep(50);
+      // Move this thread to the end of the scheduler queue:
+      sched_yield();
+
       continue;
     } else {
       if(m_t -> Seconds() > 120){
@@ -411,14 +415,17 @@ void CMSPixelProducer::ReadoutLoop() {
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
 	  m_ev_runningavg_filled = 0;
 	}
-      }
-      catch(...) {}
 
-      if(stopping){
-	while(triggering)
-	  eudaq::mSleep(20);
-	stopping = false;
-	started = false;
+	if(stopping){
+	  while(triggering)
+	    eudaq::mSleep(20);
+	  stopping = false;
+	  started = false;
+	}
+      }
+      catch(...) {
+	// No event available in derandomize buffers (DTB RAM), return to scheduler:
+	sched_yield();
       }
 #endif
     } 
