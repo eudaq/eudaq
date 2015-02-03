@@ -315,16 +315,22 @@ void CMSPixelProducer::OnStopRun() {
     m_api->HVoff();
 
 #if BUFFER_RO_SCHEME == 3
-    // Read the rest of events from DTB buffer:
-    std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
-    std::cout << "CMSPixel " << m_detector << " Post run read-out, sending " << daqEvents.size() << " evt." << std::endl;
-    for(size_t i = 0; i < daqEvents.size(); i++) {
-      eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
-      ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
-      SendEvent(ev);
-      if(daqEvents.at(i).data.size() > 1) { m_ev_filled++; }
-      m_ev++;
+    try {
+      // Read the rest of events from DTB buffer:
+      std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
+      std::cout << "CMSPixel " << m_detector << " Post run read-out, sending " << daqEvents.size() << " evt." << std::endl;
+      for(size_t i = 0; i < daqEvents.size(); i++) {
+	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
+	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
+	SendEvent(ev);
+	if(daqEvents.at(i).data.size() > 1) { m_ev_filled++; }
+	m_ev++;
+      }
     }
+    catch(pxar::DataNoEvent &) {
+      // No event available in derandomize buffers (DTB RAM), 
+    }
+
     // Sending the final end-of-run event:
     SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
     std::cout << "CMSPixel " << m_detector << " Post run read-out finished." << std::endl;
@@ -352,12 +358,11 @@ void CMSPixelProducer::OnStopRun() {
     printf("While Stopping: Unknown exception\n");
     SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
   }
-
 }
 
 void CMSPixelProducer::OnTerminate() {
-  std::cout << "CMSPixelProducer terminating..." << std::endl;
 
+  std::cout << "CMSPixelProducer terminating..." << std::endl;
   // Stop the readout loop:
   done = true;
 
@@ -423,12 +428,12 @@ void CMSPixelProducer::ReadoutLoop() {
 	  started = false;
 	}
       }
-      catch(...) {
+      catch(pxar::DataNoEvent &) {
 	// No event available in derandomize buffers (DTB RAM), return to scheduler:
 	sched_yield();
       }
 #endif
-    } 
+    }
   }
 }
 
