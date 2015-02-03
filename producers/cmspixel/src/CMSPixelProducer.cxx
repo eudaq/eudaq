@@ -23,16 +23,6 @@
 using namespace pxar; 
 using namespace std; 
 
-/*========================================================================*/
-// Define buffer readout scheme via setting flags:
-// 1 read out full buffer when full
-// 2 read out single events withing eudaq loop
-// 3 read out via eudaq data collector
-#define BUFFER_RO_SCHEME 3
-// Write output to binary 1 or ASCII 2 for R/O schemes 1 or 2
-#define OUTPUT_FILE_SCHEME 1
-/*========================================================================*/
-
 // event type name, needed for readout with eudaq. Links to /main/lib/src/CMSPixelConverterPlugin.cc:
 static const std::string EVENT_TYPE_DUT = "CMSPixelDUT";
 static const std::string EVENT_TYPE_REF = "CMSPixelREF";
@@ -252,7 +242,6 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
 
   std::cout << "Start Run: " << m_run << std::endl;
 
-#if BUFFER_RO_SCHEME == 3
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
   // Set the ROC type for decoding:
   bore.SetTag("ROCTYPE", m_roctype);
@@ -264,18 +253,8 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   SendEvent(bore);
 
   std::cout << "BORE with detector " << m_detector << " (event type " << m_event_type << ") and ROC type " << m_roctype << std::endl;
-#else
-  // Get output file
-  std::ostringstream filename;
-  std::cout << std::endl << m_run << std::endl;
-  filename << m_config.Get("outputFilePath", "../data/") << m_producerName.c_str() 
-	   << setfill('0') << setw(5) << (int)m_run << ".dat" ;
-  m_foutName = filename.str();
 
-  EUDAQ_INFO(string("Writing CMS pixel data into: ") + m_foutName + "\n");
-  std::cout << "Writing CMS pixel data into: " << m_foutName << std::endl;
-  m_fout.open(m_foutName.c_str(), std::ios::out | std::ios::binary);
-#endif
+  // Start the Data Acquisition:
   m_api -> daqStart();
 
   // If we run on Pattern Generator, activate the PG loop:
@@ -314,7 +293,6 @@ void CMSPixelProducer::OnStopRun() {
     EUDAQ_INFO("Switching Sensor Bias HV OFF.");
     m_api->HVoff();
 
-#if BUFFER_RO_SCHEME == 3
     try {
       // Read the rest of events from DTB buffer:
       std::vector<pxar::rawEvent> daqEvents = m_api->daqGetRawEventBuffer();
@@ -334,10 +312,6 @@ void CMSPixelProducer::OnStopRun() {
     // Sending the final end-of-run event:
     SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
     std::cout << "CMSPixel " << m_detector << " Post run read-out finished." << std::endl;
-#else
-    m_fout.close();
-#endif
-
     std::cout << "Stopped" << std::endl;
 
     // Output information for the logbook:
@@ -389,19 +363,6 @@ void CMSPixelProducer::ReadoutLoop() {
 	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
       }
 
-#if BUFFER_RO_SCHEME == 1
-#if OUTPUT_FILE_SCHEME == 1
-      ReadInFullBufferWriteBinary();
-#else
-      ReadInFullBufferWriteASCII();
-#endif
-#elif BUFFER_RO_SCHEME == 2
-#if OUTPUT_FILE_SCHEME == 1
-      ReadInSingleEventWriteBinary();
-#else
-      ReadInSingleEventWriteASCII();
-#endif
-#else 
       // Trying to get the next event, daqGetRawEvent throws exception if none is available:
       try {
 	pxar::rawEvent daqEvent = m_api->daqGetRawEvent();
@@ -432,7 +393,6 @@ void CMSPixelProducer::ReadoutLoop() {
 	// No event available in derandomize buffers (DTB RAM), return to scheduler:
 	sched_yield();
       }
-#endif
     }
   }
 }

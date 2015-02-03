@@ -7,7 +7,7 @@ ELSE(PXARCORE_FOUND)
   MESSAGE(FATAL_ERROR "Could not find CMSPixel pxarCore! Make sure to set the environment variable $PXARPATH to the path of your pxar installation!")
 ENDIF(PXARCORE_FOUND)
 
-SET(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelConfigParser.cxx src/CMSPixelEvtWriter.cxx)
+SET(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelConfigParser.cxx)
 
 INCLUDE_DIRECTORIES(include ${PXARCORE_INCLUDE_DIRS})
 ADD_EXECUTABLE(${name} ${sourcefiles})
