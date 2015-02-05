@@ -153,7 +153,8 @@ namespace eudaq {
     virtual int IsSyncWithTLU(eudaq::Event const & ev,eudaq::TLUEvent const & tlu) const {
       unsigned triggerID=GetTriggerID(ev);
       auto tlu_triggerID=tlu.GetEventNumber();
-      return compareTLU2DUT(tlu_triggerID,triggerID);
+      if (triggerID==(unsigned)-1) return Event_IS_LATE;
+      else return compareTLU2DUT(tlu_triggerID,triggerID);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
