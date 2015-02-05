@@ -301,8 +301,8 @@ namespace eudaq {
           sev.SetFlags(Event::FLAG_BROKEN);
         }
         if (buffer&0x8000) {
-          unsigned int row = buffer&0x1FF;
-          unsigned int col = buffer>>9&0x3F;
+          unsigned int row = width-1-buffer&0x1FF;
+          unsigned int col = height-1-buffer>>9&0x3F;
           //cout << "good 0x" << hex << (unsigned int)buffer << dec << '\t' << col << '\t' << row << endl;
           plane.PushPixel(col, row, 1, 0U);
           ++nrealhit;
