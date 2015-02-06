@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!-- Derived using MOSO Xmplify 1.6.6 by Felix Reidt on 2015-02-06 13:06:55 +0000 -->
+<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' elementFormDefault='qualified'>
+    <xs:element name='root'>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element maxOccurs='unbounded' ref='address'/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name='address'>
+        <xs:complexType>
+            <xs:sequence minOccurs='0'>
+                <xs:choice maxOccurs='unbounded'>
+                    <xs:element ref='address'/>
+                    <xs:element ref='description'/>
+                    <xs:element ref='title'/>
+                </xs:choice>
+                <xs:element maxOccurs='unbounded' ref='value'/>
+            </xs:sequence>
+            <xs:attribute name='base' type='xs:integer'/>
+            <xs:attribute name='rgn' type='xs:integer'/>
+            <xs:attribute name='sub' type='xs:integer'/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name='value'>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element minOccurs='0' ref='display'/>
+                <xs:element minOccurs='0' ref='title'/>
+                <xs:choice minOccurs='0'>
+                    <xs:element ref='description'/>
+                    <xs:element ref='default'/>
+                </xs:choice>
+                <xs:element ref='content'/>
+            </xs:sequence>
+            <xs:attribute name='begin' use='required' type='xs:integer'/>
+            <xs:attribute name='width' type='xs:integer'/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name='display' type='xs:NCName'/>
+    <xs:element name='default' type='xs:integer'/>
+    <xs:element name='content' type='xs:NMTOKEN'/>
+    <xs:element name='title' type='xs:string'/>
+    <xs:element name='description' type='xs:string'/>
+</xs:schema>
