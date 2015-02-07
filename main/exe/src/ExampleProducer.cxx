@@ -9,6 +9,7 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <ctime>
 
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
@@ -73,12 +74,16 @@ class ExampleProducer : public eudaq::Producer {
 
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
-      SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
-    }
+      SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
+ 
+      // At the end, set the status that will be displayed in the Run Control.
+      SetStatus(eudaq::Status::LVL_OK, "Stopped");
+   }
 
     // This gets called when the Run Control is terminating,
     // we should also exit.
     virtual void OnTerminate() {
+      SetStatus(eudaq::Status::LVL_OK, "Terminating");
       std::cout << "Terminating..." << std::endl;
       done = true;
     }
@@ -108,7 +113,7 @@ class ExampleProducer : public eudaq::Producer {
         // If we get here, there must be data to read out
         // Create a RawDataEvent to contain the event data to be sent
         eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
-
+        ev.setTimeStamp( clock() ); 
         for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
           // Read out a block of raw data from the hardware
           std::vector<unsigned char> buffer = hardware.ReadSensor(plane);

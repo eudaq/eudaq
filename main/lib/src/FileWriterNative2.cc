@@ -10,10 +10,12 @@ namespace eudaq {
     public:
       FileWriterNative2(const std::string &);
       virtual void StartRun(unsigned);
+      virtual void StartRun( const std::string & name, unsigned int runnumber );
       virtual void WriteEvent(const DetectorEvent &);
       virtual uint64_t FileBytes() const;
       virtual ~FileWriterNative2();
     private:
+      void OpenNextRaw2();
       BufferSerializer m_buf;
       FileSerializer * m_ser;
   };
@@ -29,9 +31,31 @@ namespace eudaq {
   void FileWriterNative2::StartRun(unsigned runnumber) {
     delete m_ser;
     m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
+
     unsigned versiontag = Event::str2id("VER2");
     m_ser->write(versiontag);
   }
+
+  void FileWriterNative2::StartRun( const std::string & name, unsigned int runnumber )
+  {
+       m_name = name;
+       m_runNumber = runnumber;
+       m_fileNumber = 0;
+
+       OpenNextRaw2();
+  }
+
+  void FileWriterNative2::OpenNextRaw2() {
+       m_fileNumber += 1;
+       if ( m_ser ) {
+               m_ser->Flush();
+               delete m_ser;
+       }
+    m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw2").Set( 's', "_" ).Set('i', m_fileNumber ).Set('R', m_runNumber).Set('N', m_name));
+
+    m_ser->Flush();
+  }
+
 
   void FileWriterNative2::WriteEvent(const DetectorEvent & ev) {
     if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");

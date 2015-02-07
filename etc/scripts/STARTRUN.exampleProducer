@@ -1,0 +1,19 @@
+#!/bin/bash
+
+
+######################################################################
+# ExampleProducer
+###############
+if [ -f "ExampleProducer.exe" ]
+then
+    printf '\033[22;33m\t  ExampleProducer  \033[0m \n'
+    xterm -sb -sl 1000 -geom 80x10-480-500 -T 'ExampleProducer' -e './ExampleProducer.exe -r tcp://$TLUIP:$RCPORT' &
+    sleep 1
+else
+    printf '\033[22;31m\t  ExampleProducer not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_tlu=ON" and re-run "make install" to install.'
+fi
+#####################################################################
+
+
+

@@ -70,7 +70,7 @@ namespace eudaq {
     setlittleendian<unsigned short>(&result[0], m_width);
     setlittleendian<unsigned short>(&result[2], m_height);
     setlittleendian<unsigned short>(&result[4], m_triggerid);
-    if (sensorid % 2 == 0) {
+    if ( false ) {
       // Raw Data
       setlittleendian(&result[6], static_cast<unsigned short>(0));
       std::vector<unsigned char> data = MakeRawEvent(m_width, m_height);

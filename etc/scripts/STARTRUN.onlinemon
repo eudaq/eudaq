@@ -1,0 +1,18 @@
+#!/bin/bash
+
+######################################################################
+# Online Monitor
+###############
+if [ -f "OnlineMon.exe" ]
+then
+    printf '\033[22;33m\t  Online Monitor  \033[0m \n'
+    echo ./OnlineMon.exe  -sc 10 -s 0 -tc 0 -r tcp://$HOSTIP:$RCPORT >> start.log
+    ./OnlineMon.exe  -sc 10 -s 0 -tc 0 -r tcp://$HOSTIP:$RCPORT &
+else
+    printf '\033[22;31m\t  Online monitor not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_onlinemon=ON" and re-run "make install" to install.'
+fi
+#####################################################################
+
+
+
