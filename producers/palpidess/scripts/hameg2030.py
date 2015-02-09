@@ -8,7 +8,7 @@ import sys
 # configuration
 ###############
 
-current_limit=( 300., 900, 1 ) # in mA
+current_limit=( 80., 900, 1 ) # in mA
 voltages=( 0.0, 7.0, 0.0 ) # in V
 vbb_chan=( 2 ) # back-bias voltage channel, counting starts with 0
 vlight_chan=( 0 ) # LED supply channel, counting starts with 0
