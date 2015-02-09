@@ -190,7 +190,8 @@ public:
     bool evt_finished        = false;
     bool request_sent        = false;
 
-    float timeout = 0.1;    // (in s) will be only used if data is expected
+    float timeout = -1.; // (in s) will be only used if data is expected
+                         // negative number leads to indefinite wait
 
     // Loop until Run Control tells us to terminate
     while (!done) {
@@ -324,7 +325,7 @@ private:
 
       struct timeval tv_timeout = { (int)timeout, (int)(timeout*1000000.)%1000000 };
 
-      int select_retval = select( fd+1, &fdset, NULL, NULL, &tv_timeout );
+      int select_retval = select( fd+1, &fdset, NULL, NULL, (timeout<0) ? NULL : &tv_timeout );
 
       if ( select_retval == -1 ) {
         cerr << "Could not read from the socket!" << endl; // ERROR!
