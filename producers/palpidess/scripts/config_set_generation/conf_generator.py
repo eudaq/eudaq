@@ -109,7 +109,7 @@ s.trig_delay_prio=[  0 ]
 ### apply modifications
 s.vlight_prio=[  0  ]
 
-s.acq_time_list=[ 10. ]
+s.acq_time_list=[ 3. ]
 
 s.generate_files()
 
