@@ -8,7 +8,7 @@ import sys
 # configuration
 ###############
 
-current_limit=( 6*700., 5*700, 1 ) # in mA
+current_limit=( 7*700., 6*700., 1 ) # in mA
 voltages=( 5.0, 5.0, 0.0 ) # in V
 vbb_chan=( 2 ) # back-bias voltage channel, counting starts with 0
 measurement_interval=60 # in seconds
