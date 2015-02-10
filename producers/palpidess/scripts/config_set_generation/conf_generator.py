@@ -101,12 +101,15 @@ s.vlight_prio=[  0,     1 ]
 # Acq_time
 s.acq_time_list=[ 1.54 ]
 s.acq_time_prio=[    0 ]
+
 # Trig_delay
 s.trig_delay_list=[ 0. ]
 s.trig_delay_prio=[  0 ]
 
 ### apply modifications
 s.vlight_prio=[  0  ]
+
+s.acq_time_list=[ 10. ]
 
 s.generate_files()
 
