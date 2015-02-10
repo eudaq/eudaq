@@ -23,33 +23,33 @@ static const char * statuses[] = {
 };
  
 euRunApplication::euRunApplication(int& argc, char** argv) :
-    QApplication(argc, argv) {}
+  QApplication(argc, argv) {}
     
     
 bool euRunApplication::notify(QObject* receiver, QEvent* event) {
-    bool done = true;
-    try {
-        done = QApplication::notify(receiver, event);
-    } catch (const std::exception& ex) {
-      //get current date
-      QDate date = QDate::currentDate();
-      std::cout << date.toString().toStdString() << ": euRun GUI caught (and ignored) exception: " << ex.what() << std::endl;
+  bool done = true;
+  try {
+    done = QApplication::notify(receiver, event);
+  } catch (const std::exception& ex) {
+    //get current date
+    QDate date = QDate::currentDate();
+    std::cout << date.toString().toStdString() << ": euRun GUI caught (and ignored) exception: " << ex.what() << std::endl;
         
-    } catch (...) {
-      //get current date
-      QDate date = QDate::currentDate();
-      std::cout << date.toString().toStdString() << ": euRun GUI caught (and ignored) unspecified exception " << std::endl;
-    }
-    return done;
+  } catch (...) {
+    //get current date
+    QDate date = QDate::currentDate();
+    std::cout << date.toString().toStdString() << ": euRun GUI caught (and ignored) unspecified exception " << std::endl;
+  }
+  return done;
 } 
 
 int main(int argc, char ** argv) {
   euRunApplication app(argc, argv);
   eudaq::OptionParser op("EUDAQ Run Control", PACKAGE_VERSION, "A Qt version of the Run Control");
   eudaq::Option<std::string>  addr(op, "a", "listen-address", "tcp://44000", "address",
-      "The address on which to listen for connections");
+				   "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
-      "The minimum level for displaying log messages locally");
+				   "The minimum level for displaying log messages locally");
   eudaq::Option<int>             x(op, "x", "left",   0, "pos");
   eudaq::Option<int>             y(op, "y", "top",    0, "pos");
   eudaq::Option<int>             w(op, "w", "width",  150, "pos");
@@ -89,20 +89,21 @@ void RunConnectionDelegate::paint(QPainter * painter, const QStyleOptionViewItem
 }
 
 RunControlGUI::RunControlGUI(const std::string & listenaddress,
-    QRect geom,
-    QWidget *parent,
-    Qt::WindowFlags flags)
-: QMainWindow(parent, flags),
-  eudaq::RunControl(listenaddress),
-  m_delegate(&m_run),
-  m_prevtrigs(0),
-  m_prevtime(0.0),
-  m_runstarttime(0.0),
-  m_filebytes(0),
-  m_events(0),
-  dostatus(false),
-  m_producer_not_ok(false),
-  m_startrunwhenready(false)
+			     QRect geom,
+			     QWidget *parent,
+			     Qt::WindowFlags flags)
+  : QMainWindow(parent, flags),
+    eudaq::RunControl(listenaddress),
+    m_delegate(&m_run),
+    m_prevtrigs(0),
+    m_prevtime(0.0),
+    m_runstarttime(0.0),
+    m_filebytes(0),
+    m_events(0),
+    dostatus(false),
+    m_producer_pALPIDEfs_not_ok(false),
+    m_producer_pALPIDEss_not_ok(false),
+    m_startrunwhenready(false)
 {
   setupUi(this);
   if (!grpStatus->layout()) grpStatus->setLayout(new QGridLayout(grpStatus));
@@ -206,8 +207,12 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo & id, std::shared_ptr<
 	}
       }
     }
-    // TODO this only catches the status of the last producer in case there is more than one...
-    m_producer_not_ok = (status->GetLevel() != 1);
+    else if (id.GetName() == "pALPIDEfs") {
+      m_producer_pALPIDEfs_not_ok = (status->GetLevel() != 1);
+    }
+    else if (id.GetName() == "pALPIDEss") {
+      m_producer_pALPIDEss_not_ok = (status->GetLevel() != 1);
+    }
   }
 
   m_run.SetStatus(id, *status);
@@ -227,7 +232,7 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo & id) {
     SetState(ST_NONE);
   }
   if (id.GetType() == "LogCollector") {
-  	 btnLogSetStatus(true);
+    btnLogSetStatus(true);
   }
 }
 
