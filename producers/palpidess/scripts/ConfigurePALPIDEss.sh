@@ -26,14 +26,14 @@ then
     echo "                        <AcqTime> <Vbb> <TrigDelay>"
     exit 1
 fi
-V_RST=$1
-V_CASN=$2
-V_CASP=$3
-I_THR=$4
-V_LIGHT=$5
-T_ACQ=$6
-V_BB=$7
-TRIG_DELAY=$8
+V_RST=$(printf "%0.2f" $1)
+V_CASN=$(printf "%0.2f" $2)
+V_CASP=$(printf "%0.2f" $3)
+I_THR=$(printf "%0.2f" $4)
+V_LIGHT=$(printf "%0.2f" $5)
+T_ACQ=$(printf "%0.2f" $6)
+V_BB=$(printf "%0.2f" $7)
+TRIG_DELAY=$(printf "%0.2f" $8)
 echo "V_RST=${V_RST}"
 echo "V_CASN=${V_CASN}"
 echo "V_CASP=${V_CASP}"
@@ -46,7 +46,7 @@ echo "TRIG_DELAY=${TRIG_DELAY}"
 ###############################################################################
 
 # list of threshold currents (2.05uA = 0.98V, 1.02uA = 1.155V)
-declare -A I_THR_NAMES_LIST=( ["2.05"]=0.98 ["1.02"]=1.155 ["0.6"]=1.265 ["0.3"]=1.35 )
+declare -A I_THR_NAMES_LIST=( ["2.05"]=0.98 ["1.02"]=1.155 ["0.6"]=1.265 ["0.3"]=1.35 ["1.54"]=1.06 ["2.87"]=0.96 )
 V_I_THR=${I_THR_NAMES_LIST["${I_THR}"]}
 echo "V_I_THR=${V_I_THR}"
 
