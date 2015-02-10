@@ -6,14 +6,14 @@ then
     exit 1
 fi
 n_file=$1
-vbb=$2
-vrst=$3
-vcasn=$4
-vcasp=$5
-ithr=$6
-vlight=$7
-acq_time=$8
-trg_dly=${9}
+vbb=$(printf "%0.2f" $2)
+vrst=$(printf "%0.2f" $3)
+vcasn=$(printf "%0.2f" $4)
+vcasp=$(printf "%0.2f" $5)
+ithr=$(printf "%0.2f" $6)
+vlight=$(printf "%0.2f" $7)
+acq_time=$(printf "%0.2f" $8)
+trg_dly=$(printf "%0.2f" ${9})
 
 # wide number string for the config file name
 n_file_str=$(printf "%06d" $n_file)
