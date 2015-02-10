@@ -190,8 +190,8 @@ public:
     bool evt_finished        = false;
     bool request_sent        = false;
 
-    float timeout = -1.; // (in s) will be only used if data is expected
-                         // negative number leads to indefinite wait
+    float timeout = 1.; // (in s) will be only used if data is expected
+                        // negative number leads to indefinite wait
 
     // Loop until Run Control tells us to terminate
     while (!done) {
