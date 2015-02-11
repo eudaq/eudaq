@@ -297,7 +297,7 @@ namespace eudaq {
       for (unsigned int ihit=0; ihit<nhit; ++ihit) {
         unpack_b(it, buffer, 2);
         if (buffer>0 && buffer<=buffer_old) {
-          cerr << "Priority violated!" << endl;
+//          cerr << "Priority violated!" << endl;
           sev.SetFlags(Event::FLAG_BROKEN);
         }
         if (buffer&0x8000) {
