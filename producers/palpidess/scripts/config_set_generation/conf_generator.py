@@ -144,6 +144,10 @@ s.trig_delay_list=[ 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 
 s.trig_delay_prio=[   0,   1,   2,   3,   4,   5,   6,   7,    8,  9,  10,  11, 12 ]
 s.generate_files()
 
+# fine delay scan without light
+s.vlight_prio=[  0  ]
+s.generate_files()
+
 
 print "%d config files produced" % s.i_file
 print "Estimated measurement time %d min (%0.1f h) assuming 7.5 min per config file" % (s.i_file*7.5, s.i_file*7.5/60.)
