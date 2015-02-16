@@ -13,6 +13,7 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <mutex>
 
 // CMSPixelProducer
 class CMSPixelProducer : public eudaq::Producer {
@@ -36,10 +37,14 @@ private:
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
   std::string m_verbosity, m_foutName, m_roctype, m_usbId, m_producerName, m_detector, m_event_type;
-  bool stopping, done, started, triggering;
+  bool m_terminated, m_running, triggering;
   bool m_dacsFromConf, m_trimmingFromConf, m_trigger_is_pg;
   eudaq::Configuration m_config;
+
+  // Add one mutex to protect calls to pxarCore:
+  std::mutex m_mutex;
   pxar::pxarCore *m_api;
+
   int m_pattern_delay;
   uint8_t m_perFull;
   std::ofstream m_fout;

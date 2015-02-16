@@ -33,9 +33,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_ev(0),
     m_ev_filled(0),
     m_ev_runningavg_filled(0),
-    stopping(false),
-    done(false),
-    started(0),
+    m_terminated(false),
+    m_running(false),
     m_api(NULL),
     m_verbosity(verbosity),
     m_dacsFromConf(false),
@@ -264,15 +263,18 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   }
 
   SetStatus(eudaq::Status::LVL_OK, "Running");
-  started = true;
+  m_running = true;
 }
 
 // This gets called whenever a run is stopped
 void CMSPixelProducer::OnStopRun() {
-  stopping = true;
+  // Break the readout loop
+  m_running = false;
   std::cout << "Stopping Run" << std::endl;
+
   try {
-    eudaq::mSleep(20);
+    // Acquire lock for pxarCore instance:
+    std::lock_guard<std::mutex> lck(m_mutex);
 
     // If running with PG, halt the loop:
     if(m_trigger_is_pg) {
@@ -280,15 +282,12 @@ void CMSPixelProducer::OnStopRun() {
       triggering = false;
     }
 
-    // assure single threading, wait till data is read out
-    while(stopping){
-      eudaq::mSleep(20);
-    }
-
     // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
     // otherwise the last triggers get lost.
-    eudaq::mSleep(1500);
-    m_api -> daqStop();
+    eudaq::mSleep(1800);
+
+    // Stop the Data Acquisition:
+    m_api->daqStop();
     
     EUDAQ_INFO("Switching Sensor Bias HV OFF.");
     m_api->HVoff();
@@ -305,9 +304,8 @@ void CMSPixelProducer::OnStopRun() {
 	m_ev++;
       }
     }
-    catch(pxar::DataNoEvent &) {
-      // No event available in derandomize buffers (DTB RAM), 
-    }
+    // No event available in derandomize buffers (DTB RAM):
+    catch(pxar::DataNoEvent &) {}
 
     // Sending the final end-of-run event:
     SendEvent(eudaq::RawDataEvent::EORE(m_event_type, m_run, m_ev));
@@ -337,8 +335,8 @@ void CMSPixelProducer::OnStopRun() {
 void CMSPixelProducer::OnTerminate() {
 
   std::cout << "CMSPixelProducer terminating..." << std::endl;
-  // Stop the readout loop:
-  done = true;
+  // Stop the readout loop, force routine to return:
+  m_terminated = true;
 
   // If we already have a pxarCore instance, shut it down cleanly:
   if(m_api) {
@@ -350,16 +348,20 @@ void CMSPixelProducer::OnTerminate() {
 
 void CMSPixelProducer::ReadoutLoop() {
   // Loop until Run Control tells us to terminate
-  while (!done) {
-    if(!started){
+  while (!m_terminated) {
+    // No run is m_running, cycle and wait:
+    if(!m_running) {
       // Move this thread to the end of the scheduler queue:
       sched_yield();
-
       continue;
-    } else {
-      if(m_t -> Seconds() > 120){
-	m_api -> daqStatus(m_perFull);
-	m_t -> Restart();
+    }
+    else {
+      // Acquire lock for pxarCore object access:
+      std::lock_guard<std::mutex> lck(m_mutex);
+
+      if(m_t->Seconds() > 60){
+	m_api->daqStatus(m_perFull);
+	m_t->Restart();
 	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
       }
 
@@ -380,13 +382,6 @@ void CMSPixelProducer::ReadoutLoop() {
 	  std::cout << "\t Total average:  \t" << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
 	  m_ev_runningavg_filled = 0;
-	}
-
-	if(stopping){
-	  while(triggering)
-	    eudaq::mSleep(20);
-	  stopping = false;
-	  started = false;
 	}
       }
       catch(pxar::DataNoEvent &) {
