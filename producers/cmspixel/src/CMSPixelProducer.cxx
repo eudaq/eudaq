@@ -266,7 +266,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     }
 
     SetStatus(eudaq::Status::LVL_OK, "Running");
-    started = true;
+    m_running = true;
   }
   catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
