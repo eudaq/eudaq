@@ -123,8 +123,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       
   try {
     // create api
-    if(m_api)
-      delete m_api;
+    if(m_api != NULL) { delete m_api; }
       
     m_usbId = config.Get("usbId","*");
     EUDAQ_USER("Trying to connect to USB id: " + m_usbId + "\n");
@@ -218,16 +217,19 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
     delete m_api;
+    m_api = NULL;
   }
   catch (pxar::pxarException &e){
     EUDAQ_ERROR(string("pxarCore Error: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("pxarCore Error: ") + e.what());
     delete m_api;
+    m_api = NULL;
   }
   catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
     SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
     delete m_api;
+    m_api = NULL;
   }
 }
 
@@ -237,34 +239,42 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   m_ev_filled = 0;
   m_ev_runningavg_filled = 0;
 
-  EUDAQ_INFO("Switching Sensor Bias HV ON.");
-  m_api->HVon();
+  try {
+    EUDAQ_INFO("Switching Sensor Bias HV ON.");
+    m_api->HVon();
 
-  std::cout << "Start Run: " << m_run << std::endl;
+    std::cout << "Start Run: " << m_run << std::endl;
 
-  eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-  // Set the ROC type for decoding:
-  bore.SetTag("ROCTYPE", m_roctype);
+    eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
+    // Set the ROC type for decoding:
+    bore.SetTag("ROCTYPE", m_roctype);
 
-  // Set the detector for correct plane assignment:
-  bore.SetTag("DETECTOR", m_detector);
+    // Set the detector for correct plane assignment:
+    bore.SetTag("DETECTOR", m_detector);
 
-  // Send the event out:
-  SendEvent(bore);
+    // Send the event out:
+    SendEvent(bore);
 
-  std::cout << "BORE with detector " << m_detector << " (event type " << m_event_type << ") and ROC type " << m_roctype << std::endl;
+    std::cout << "BORE with detector " << m_detector << " (event type " << m_event_type << ") and ROC type " << m_roctype << std::endl;
 
-  // Start the Data Acquisition:
-  m_api -> daqStart();
+    // Start the Data Acquisition:
+    m_api -> daqStart();
 
-  // If we run on Pattern Generator, activate the PG loop:
-  if(m_trigger_is_pg) {
-    m_api -> daqTriggerLoop(m_pattern_delay);
-    triggering = true;
+    // If we run on Pattern Generator, activate the PG loop:
+    if(m_trigger_is_pg) {
+      m_api -> daqTriggerLoop(m_pattern_delay);
+      triggering = true;
+    }
+
+    SetStatus(eudaq::Status::LVL_OK, "Running");
+    started = true;
   }
-
-  SetStatus(eudaq::Status::LVL_OK, "Running");
-  started = true;
+  catch (...) {
+    EUDAQ_ERROR(string("Unknown exception."));
+    SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
+    delete m_api;
+    m_api = NULL;
+  }
 }
 
 // This gets called whenever a run is stopped
@@ -276,7 +286,7 @@ void CMSPixelProducer::OnStopRun() {
 
     // If running with PG, halt the loop:
     if(m_trigger_is_pg) {
-      m_api -> daqTriggerLoopHalt();
+      m_api->daqTriggerLoopHalt();
       triggering = false;
     }
 
@@ -288,7 +298,7 @@ void CMSPixelProducer::OnStopRun() {
     // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
     // otherwise the last triggers get lost.
     eudaq::mSleep(1500);
-    m_api -> daqStop();
+    m_api->daqStop();
     
     EUDAQ_INFO("Switching Sensor Bias HV OFF.");
     m_api->HVoff();
@@ -341,8 +351,9 @@ void CMSPixelProducer::OnTerminate() {
   done = true;
 
   // If we already have a pxarCore instance, shut it down cleanly:
-  if(m_api) {
+  if(m_api != NULL) {
     delete m_api;
+    m_api = NULL;
   }
 
   std::cout << "CMSPixelProducer " << m_producerName << " terminated." << std::endl;
@@ -357,9 +368,9 @@ void CMSPixelProducer::ReadoutLoop() {
 
       continue;
     } else {
-      if(m_t -> Seconds() > 120){
-	m_api -> daqStatus(m_perFull);
-	m_t -> Restart();
+      if(m_t->Seconds() > 120){
+	m_api->daqStatus(m_perFull);
+	m_t->Restart();
 	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
       }
 
