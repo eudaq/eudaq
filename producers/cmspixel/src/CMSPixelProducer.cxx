@@ -294,7 +294,7 @@ void CMSPixelProducer::OnStopRun() {
 
     // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
     // otherwise the last triggers get lost.
-    eudaq::mSleep(1800);
+    eudaq::mSleep(3000);
 
     // Stop the Data Acquisition:
     m_api->daqStop();
