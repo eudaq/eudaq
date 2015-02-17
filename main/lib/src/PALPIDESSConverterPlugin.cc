@@ -396,20 +396,16 @@ namespace eudaq {
       if (pALPIDEssDataCollection->size()!=0) lev.addCollection(pALPIDEssDataCollection, "zsdata_pALPIDEss");
       else if (!pALPIDEssDataCollectionExists) { delete pALPIDEssDataCollection; pALPIDEssDataCollection = 0x0; }
 
-      static bool parametersSaved = false;
-      if (sev.GetFlags() != Event::FLAG_BROKEN && sev.GetFlags() != Event::FLAG_STATUS && !parametersSaved)
-      {
-        parametersSaved = true;
-        lev.parameters().setValue("PalpidessPlaneNo", m_PalpidessPlaneNo);
-        lev.parameters().setValue("Vbb"             , m_Vbb         );
-        lev.parameters().setValue("Vrst"            , m_Vrst        );
-        lev.parameters().setValue("Vcasn"           , m_Vcasn       );
-        lev.parameters().setValue("Vcasp"           , m_Vcasp       );
-        lev.parameters().setValue("Ithr"            , m_Ithr        );
-        lev.parameters().setValue("Vlight"          , m_Vlight      );
-        lev.parameters().setValue("AcqTime"         , m_AcqTime     );
-        lev.parameters().setValue("TrigDelay"       , m_TrigDelay   );
-      }
+      lev.parameters().setValue("FLAG", (int) sev.GetFlags());
+      lev.parameters().setValue("PalpidessPlaneNo", m_PalpidessPlaneNo);
+      lev.parameters().setValue("Vbb"             , m_Vbb         );
+      lev.parameters().setValue("Vrst"            , m_Vrst        );
+      lev.parameters().setValue("Vcasn"           , m_Vcasn       );
+      lev.parameters().setValue("Vcasp"           , m_Vcasp       );
+      lev.parameters().setValue("Ithr"            , m_Ithr        );
+      lev.parameters().setValue("Vlight"          , m_Vlight      );
+      lev.parameters().setValue("AcqTime"         , m_AcqTime     );
+      lev.parameters().setValue("TrigDelay"       , m_TrigDelay   );
       // TODO add all the option and so on
       return true;
     }

@@ -506,48 +506,43 @@ namespace eudaq {
       lev.parameters().setValue("TIMESTAMP_L",(int)(sev.GetTimestamp() & 0xFFFFFFFF));
       (dynamic_cast <LCEventImpl&>(lev)).setTimeStamp(sev.GetTimestamp());
       lev.parameters().setValue("FLAG", (int) sev.GetFlags());
-      static bool parametersSaved = false;
-      if (sev.GetFlags() != Event::FLAG_BROKEN && sev.GetFlags() != Event::FLAG_STATUS && !parametersSaved)
-      {
-        parametersSaved = true;
-        lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
-        lev.parameters().setValue("DUTposition", m_dut_pos);
-        const int n_bs=100;
-        char tmp[n_bs];
-        for (int id=0 ; id<m_nLayers ; id++) {
-          snprintf(tmp, n_bs, "Vaux_%d", id);
-          lev.parameters().setValue(tmp, m_Vaux[id]);
-          snprintf(tmp, n_bs, "Vreset_%d", id);
-          lev.parameters().setValue(tmp, m_Vreset[id]);
-          snprintf(tmp, n_bs, "Vcasn_%d", id);
-          lev.parameters().setValue(tmp, m_Vcasn[id]);
-          snprintf(tmp, n_bs, "Vcasp_%d", id);
-          lev.parameters().setValue(tmp, m_Vcasp[id]);
-          snprintf(tmp, n_bs, "Idb_%d", id);
-          lev.parameters().setValue(tmp, m_Idb[id]);
-          snprintf(tmp, n_bs, "Ithr_%d", id);
-          lev.parameters().setValue(tmp, m_Ithr[id]);
-          snprintf(tmp, n_bs, "m_strobe_length_%d", id);
-          lev.parameters().setValue(tmp, m_strobe_length[id]);
-          snprintf(tmp, n_bs, "m_strobeb_length_%d", id);
-          lev.parameters().setValue(tmp, m_strobeb_length[id]);
-          snprintf(tmp, n_bs, "m_trigger_delay_%d", id);
-          lev.parameters().setValue(tmp, m_trigger_delay[id]);
-          snprintf(tmp, n_bs, "m_readout_delay_%d", id);
-          lev.parameters().setValue(tmp, m_readout_delay[id]);
-          if (m_do_SCS[id]) {
-            for (int i_sector=0; i_sector<4; ++i_sector) {
-              snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
-              lev.parameters().setValue(tmp, m_SCS_thr[id][i_sector]);
-              snprintf(tmp, n_bs, "ThrRMS_%d_%d", id, i_sector);
-              lev.parameters().setValue(tmp, m_SCS_thr_rms[id][i_sector]);
-              snprintf(tmp, n_bs, "Noise_%d_%d", id, i_sector);
-              lev.parameters().setValue(tmp, m_SCS_noise[id][i_sector]);
-              snprintf(tmp, n_bs, "NoiseRMS_%d_%d", id, i_sector);
-              lev.parameters().setValue(tmp, m_SCS_noise_rms[id][i_sector]);
-            }
-          }
-        }
+      lev.parameters().setValue("BackBiasVoltage", m_BackBiasVoltage);
+      lev.parameters().setValue("DUTposition", m_dut_pos);
+      const int n_bs=100;
+      char tmp[n_bs];
+      for (int id=0 ; id<m_nLayers ; id++) {
+	snprintf(tmp, n_bs, "Vaux_%d", id);
+	lev.parameters().setValue(tmp, m_Vaux[id]);
+	snprintf(tmp, n_bs, "Vreset_%d", id);
+	lev.parameters().setValue(tmp, m_Vreset[id]);
+	snprintf(tmp, n_bs, "Vcasn_%d", id);
+	lev.parameters().setValue(tmp, m_Vcasn[id]);
+	snprintf(tmp, n_bs, "Vcasp_%d", id);
+	lev.parameters().setValue(tmp, m_Vcasp[id]);
+	snprintf(tmp, n_bs, "Idb_%d", id);
+	lev.parameters().setValue(tmp, m_Idb[id]);
+	snprintf(tmp, n_bs, "Ithr_%d", id);
+	lev.parameters().setValue(tmp, m_Ithr[id]);
+	snprintf(tmp, n_bs, "m_strobe_length_%d", id);
+	lev.parameters().setValue(tmp, m_strobe_length[id]);
+	snprintf(tmp, n_bs, "m_strobeb_length_%d", id);
+	lev.parameters().setValue(tmp, m_strobeb_length[id]);
+	snprintf(tmp, n_bs, "m_trigger_delay_%d", id);
+	lev.parameters().setValue(tmp, m_trigger_delay[id]);
+	snprintf(tmp, n_bs, "m_readout_delay_%d", id);
+	lev.parameters().setValue(tmp, m_readout_delay[id]);
+	if (m_do_SCS[id]) {
+	  for (int i_sector=0; i_sector<4; ++i_sector) {
+	    snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
+	    lev.parameters().setValue(tmp, m_SCS_thr[id][i_sector]);
+	    snprintf(tmp, n_bs, "ThrRMS_%d_%d", id, i_sector);
+	    lev.parameters().setValue(tmp, m_SCS_thr_rms[id][i_sector]);
+	    snprintf(tmp, n_bs, "Noise_%d_%d", id, i_sector);
+	    lev.parameters().setValue(tmp, m_SCS_noise[id][i_sector]);
+	    snprintf(tmp, n_bs, "NoiseRMS_%d_%d", id, i_sector);
+	    lev.parameters().setValue(tmp, m_SCS_noise_rms[id][i_sector]);
+	  }
+	}
       }
       LCCollectionVec *zsDataCollection;
       try {
