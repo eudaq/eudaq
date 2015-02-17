@@ -33,6 +33,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_ev(0),
     m_ev_filled(0),
     m_ev_runningavg_filled(0),
+    m_tlu_waiting_time(4000),
     m_terminated(false),
     m_running(false),
     m_api(NULL),
@@ -76,6 +77,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   std::vector<std::vector<pxar::pixelConfig> > rocPixels;
 
   uint8_t hubid = config.Get("hubid", 31);
+
+  // Store waiting time in ms before the DAQ is stopped in OnRunStop():
+  m_tlu_waiting_time = config.Get("tlu_waiting_time", 4000);
+  EUDAQ_INFO(string("Waiting " + std::to_string(m_tlu_waiting_time) + "ms before stopping DAQ after run stop."));
 
   // DTB delays
   sig_delays.push_back(std::make_pair("clk",config.Get("clk",4)));
@@ -294,7 +299,7 @@ void CMSPixelProducer::OnStopRun() {
 
     // Wait before we stop the DAQ because TLU takes some time to pick up the OnRunStop signal
     // otherwise the last triggers get lost.
-    eudaq::mSleep(3000);
+    eudaq::mSleep(m_tlu_waiting_time);
 
     // Stop the Data Acquisition:
     m_api->daqStop();
