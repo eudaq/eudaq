@@ -33,7 +33,10 @@ class settings:
         self.dut_pos_list=[]
         self.scs_list    =[]
         # trigger delay for the DUTs
-        self.trg_dly=int(75)
+        #self.trg_dly=int(75)
+        self.trg_dly_list=[75]
+        # strobeBlength for the DUTs
+        self.strbB_len=int(20)
 
     def generate_files( self ):
         for i_vbb in range(len(self.vbb_prio)):
@@ -51,10 +54,13 @@ class settings:
                             for i_dut_pos in range(len(self.dut_pos_list)):
                                 dut_pos=self.dut_pos_list[i_dut_pos]
                                 scs    =self.scs_list    [i_dut_pos]
-                                args   =(self.i_file, vbb, vcasn, ithr, vaux, vrst, idb, dut_pos, scs, self.trg_dly)
-                                cmd    ="/bin/bash conf_gen_helper.sh %d %d %d %d %d %d %d %d %d %d"%args
-                                os.system(cmd)
-                                self.i_file+=1
+                                for i_trg_dly in range(len(self.trg_dly_list)):
+                                    trg_dly=self.trg_dly_list[i_trg_dly]
+                                     
+                                    args   =(self.i_file, vbb, vcasn, ithr, vaux, vrst, idb, dut_pos, scs, trg_dly , self.strbB_len)
+                                    cmd    ="/bin/bash conf_gen_helper.sh %d %d %d %d %d %d %d %d %d %d %d"%args
+                                    os.system(cmd)
+                                    self.i_file+=1
 
 ####################################################################################################
 ####################################################################################################
@@ -89,9 +95,12 @@ s.vaux_list=[[117],[118],[122],[125],[132],[139],[145]]
 s.vrst_list=[[117],[118],[122],[125],[132],[139],[145]]
 s.vauxrst_prio=[0]
 
+
 # dut position and position related settings (mm)
-s.dut_pos_list=[97,295] # 97 = in the beam, 295 out of the beam
-s.scs_list    =[ 0,  1] # 0  = no S-Curve scan, 1 = do S-Curve scan
+#s.dut_pos_list=[97,295] # 97 = in the beam, 295 out of the beam
+#s.scs_list    =[ 0,  1] # 0  = no S-Curve scan, 1 = do S-Curve scan
+s.dut_pos_list=[ 0] # 97 = in the beam, 295 out of the beam
+s.scs_list    =[ 0] # 0  = no S-Curve scan, 1 = do S-Curve scan
 #
 #### apply modifications
 #s.vbb_prio=[4] # -4V only
@@ -111,9 +120,32 @@ s.scs_list    =[ 0,  1] # 0  = no S-Curve scan, 1 = do S-Curve scan
 #
 #s.vbb_prio=[0,3]
 
-#s.i_file=154
-#s.idb_list=[128,196]
-#s.idb_prio=[  1,  0]
+
+
+#############################################
+
+s.i_file=92
+s.vbb_prio=[0]
+s.vcasn_prio=[0]
+s.ithr_prio=[0,2,3,4,5] # omit Ithr=70DAC
+s.idb_list=[128,196]
+s.idb_prio=[  1,  0]
+
+s.vbb_list=[0] # just 0v
+s.vcasn_list=[[57]]
+s.generate_files()
+
+s.vbb_list=[3] # just 0v
+s.vcasn_list=[[135]]
+s.generate_files()
+
+
+## golden settings
+#############################################
+#s.i_file=92
+#
+#s.idb_list=[64,128,196]
+#s.idb_prio=[ 2,  1,  0]
 #s.vbb_prio=[0]
 #s.vcasn_prio=[0]
 #s.ithr_prio=[0]
@@ -121,81 +153,151 @@ s.scs_list    =[ 0,  1] # 0  = no S-Curve scan, 1 = do S-Curve scan
 #s.vrst_list=[[117]]
 #s.vauxrst_prio=[0]
 ## dut position and position related settings (mm)
-#s.dut_pos_list=[97,295] # 97 = in the beam, 295 out of the beam
-#s.scs_list    =[ 0,  1] # 0  = no S-Curve scan, 1 = do S-Curve scan
-#
-#
+#s.dut_pos_list=[0] # 97 = in the beam, 295 out of the beam
+#s.scs_list    =[0] # 0  = no S-Curve scan, 1 = do S-Curve scan
+
 #s.vbb_list=[0]
 #s.vcasn_list=[[67]]
 #s.ithr_list=[30]
-#s.trg_dly=61
-#s.generate_files()
-#
-#s.vbb_list=[0]
-#s.vcasn_list=[[70]]
-#s.ithr_list=[35]
-#s.trg_dly=61
+##s.trg_dly=61
+#s.trg_dly_list=[61]
 #s.generate_files()
 #
 #s.vbb_list=[0]
 #s.vcasn_list=[[67]]
 #s.ithr_list=[40]
-#s.trg_dly=53
+##s.trg_dly=53
+#s.trg_dly_list=[53]
+#s.generate_files()
+#
+#s.vbb_list=[0]
+#s.vcasn_list=[[70]]
+#s.ithr_list=[35]
+##s.trg_dly=61
+#s.trg_dly_list=[61]
 #s.generate_files()
 #
 #s.vbb_list=[0]
 #s.vcasn_list=[[70]]
 #s.ithr_list=[55]
-#s.trg_dly=45
+##s.trg_dly=45
+#s.trg_dly_list=[45]
 #s.generate_files()
 #
 #
-#s.vaux_list=[[125]]
-#s.vrst_list=[[125]]
+####s.vaux_list=[[125]]
+####s.vrst_list=[[125]]
 #
 #s.vbb_list=[3]
 #s.vcasn_list=[[145]]
 #s.ithr_list=[30]
-#s.trg_dly=81
-#s.generate_files()
-#
-#s.vbb_list=[3]
-#s.vcasn_list=[[150]]
-#s.ithr_list=[45]
-#s.trg_dly=61
+##s.trg_dly=81
+#s.trg_dly_list=[81]
 #s.generate_files()
 #
 #s.vbb_list=[3]
 #s.vcasn_list=[[145]]
 #s.ithr_list=[50]
-#s.trg_dly=45
+##s.trg_dly=45
+#s.trg_dly_list=[45]
+#s.generate_files()
+#
+#s.vbb_list=[3]
+#s.vcasn_list=[[150]]
+#s.ithr_list=[45]
+##s.trg_dly=61
+#s.trg_dly_list=[61]
 #s.generate_files()
 #
 #s.vbb_list=[3]
 #s.vcasn_list=[[150]]
 #s.ithr_list=[70]
-#s.trg_dly=41
+##s.trg_dly=41
+#s.trg_dly_list=[41]
 #s.generate_files()
 #
-#s.i_file-=154
+## extreme settings
+#s.vbb_list=[3]
+#s.vcasn_list=[[155]]
+#s.ithr_list=[70]
+##s.trg_dly=41
+#s.trg_dly_list=[41]
+#s.generate_files()
+#
+#s.vbb_list=[3]
+#s.vcasn_list=[[160]]
+#s.ithr_list=[80]
+##s.trg_dly=41
+#s.trg_dly_list=[41]
+#s.generate_files()
+#
+#s.vbb_list=[3]
+#s.vcasn_list=[[165]]
+#s.ithr_list=[95]
+##s.trg_dly=41
+#s.trg_dly_list=[41]
+#s.generate_files()
 
-s.i_file=186
-s.vbb_prio=[4] # -4V only
-s.ithr_prio=[4,5] # omit Ithr=70DAC
-s.vcasn_prio=[4]
-s.generate_files()
+#s.vbb_list=[3]
+#s.vcasn_list=[[170]]
+#s.ithr_list=[95]
+#s.trg_dly_list=[35]
+#s.generate_files()
 
-s.vbb_prio=[0,1,2,3,4,5,6] # all back-bias voltages
-s.vcasn_prio=[2,3,4,0,1]
-s.ithr_prio=[6]
-s.generate_files()
+#s.idb_list=[64]
+#s.idb_prio=[  0]
+#s.vbb_list=[3]
+#s.vcasn_list=[[135]]
+#s.ithr_list=[51]
+#s.trg_dly_list=[75]
+#s.generate_files()
 
-s.vbb_prio=[6] # -6V only
-s.vcasn_prio=[0,1,3,4]    # central value was already measured
-s.ithr_prio=[0,1,2,3,4,5] # 10-51 DAC
-s.generate_files()
+## delay scan
+#############################################
+#s.vbb_list=[3]
+#s.vcasn_list=[[160]]
+#s.ithr_list=[80]
+#s.idb_list=[128]
+#s.idb_prio=[  0]
+#s.trg_dly_list=[0,16,31,47,71,97,111,151,191,231,271,311,351,391,431]
+#s.generate_files()
+#
+#s.vcasn_list=[[165]]
+#s.ithr_list=[95]
+#s.idb_list=[128]
+#s.idb_prio=[  0]
+#s.trg_dly_list=[0,16,31,47,71,97,111,151,191,231,271,311,351,391,431]
+#s.generate_files()
+#
+#s.vcasn_list=[[170]]
+#s.ithr_list=[95]
+#s.idb_list=[128]
+#s.idb_prio=[  0]
+#s.trg_dly_list=[0,16,31,47,71,97,111,151,191,231,271,311,351,391,431]
+#s.generate_files()
 
-s.i_file-=186
+
+
+## some other stuff
+#############################################
+
+#s.i_file=186
+#s.vbb_prio=[4] # -4V only
+#s.ithr_prio=[4,5] # omit Ithr=70DAC
+#s.vcasn_prio=[4]
+#s.generate_files()
+#
+#s.vbb_prio=[0,1,2,3,4,5,6] # all back-bias voltages
+#s.vcasn_prio=[2,3,4,0,1]
+#s.ithr_prio=[6]
+#s.generate_files()
+#
+#s.vbb_prio=[6] # -6V only
+#s.vcasn_prio=[0,1,3,4]    # central value was already measured
+#s.ithr_prio=[0,1,2,3,4,5] # 10-51 DAC
+#s.generate_files()
+
+s.i_file-=92
 
 print "%d config files produced" % s.i_file
 print "Estimated measurement time %d min (%0.1f h) assuming 7.5 min per config file" % (s.i_file*7.5, s.i_file*7.5/60.)
