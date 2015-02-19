@@ -1,6 +1,6 @@
 #! /bin/bash
 
-if [ "$#" -ne 10 ]
+if [ "$#" -ne 11 ]
 then
     echo "not enough arguments!"
     exit 1
@@ -15,6 +15,7 @@ idb=$7
 dut_pos=$8
 scs=$9
 trg_dly=${10}
+strbB_len=${11}
 
 # generate folder structure
 mkdir -p conf/palpidefs/conf
@@ -30,7 +31,7 @@ idb_hex=$(printf "0x%X\n" ${idb})
 n_file_str=$(printf "%06d" $n_file)
 
 # assemble file names
-config_file='palpidefs_'${n_file_str}'_VCASN'${vcasn}'_ITHR'${ithr}'_VBB'${vbb}'_DUTpos'$dut_pos'_VAUX'${vaux}'_VRST'${vrst}'_IDB'${idb}'.conf'
+config_file='palpidefs_'${n_file_str}'_VCASN'${vcasn}'_ITHR'${ithr}'_VBB'${vbb}'_DUTpos'$dut_pos'_VAUX'${vaux}'_VRST'${vrst}'_IDB'${idb}'_TRGDLY'${trg_dly}'.conf'
 threshold_file='threshold_VCASN'${vcasn}'_ITHR'${ithr}'_VAUX'${vaux}'_VRST'${vrst}'_IDB'${idb}'.xml'
 
 # EUDAQ config file
@@ -40,6 +41,7 @@ sed -i -e 's/VBBtmp/'${vbb}'/g' ${config_file}
 sed -i -e 's/DUTposTmp/'${dut_pos}'/g' ${config_file}
 sed -i -e 's/SCStmp/'${scs}'/g' ${config_file}
 sed -i -e 's/trgDlyTmp/'${trg_dly}'/g' ${config_file}
+sed -i -e 's/strbBlenTmp/'${strbB_len}'/g' ${config_file}
 mv ${config_file} conf/
 
 # XML config file
@@ -54,3 +56,4 @@ mv ${threshold_file} conf/palpidefs/conf
 # remove sed tmp files (on MAC only?)
 rm -f ${config_file}-e
 rm -f ${threshold_file}-e
+
