@@ -127,8 +127,8 @@ public:
 				m_tlu->SelectDUT(param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i, false);
 			}
 			m_tlu->SetTriggerInterval(trigger_interval);
-			m_tlu->SetPMTVcntl(pmtvcntl, pmt_gain_error, pmt_offset_error);
 			m_tlu->SetPMTVcntlMod(pmtvcntlmod);
+			m_tlu->SetPMTVcntl(pmtvcntl, pmt_gain_error, pmt_offset_error);
 			m_tlu->SetDUTMask(dut_mask);
 			m_tlu->SetVetoMask(veto_mask);
 			m_tlu->SetAndMask(and_mask);
