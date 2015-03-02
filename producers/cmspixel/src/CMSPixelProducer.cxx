@@ -264,6 +264,14 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Start the Data Acquisition:
     m_api -> daqStart();
 
+    // Send additional ROC Reset signal at run start:
+    if(!m_api->daqSingleSignal("resetroc")) {
+      throw InvalidConfig("Unable to send ROC reset signal!");
+    }
+    else {
+      EUDAQ_INFO(string("ROC Reset signal issued."));
+    }
+
     // If we run on Pattern Generator, activate the PG loop:
     if(m_trigger_is_pg) {
       m_api -> daqTriggerLoop(m_pattern_delay);
