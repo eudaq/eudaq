@@ -105,6 +105,12 @@ class LogCollectorGUI : public QMainWindow,
         CheckRegistered();
         emit RecMessage(msg);
       }
+      virtual void OnTerminate() {
+	SetStatus(eudaq::Status::LVL_OK,"LC Terminating");
+	std::cout << "terminating!" << std::endl;
+	QApplication::quit();
+	exit(0);
+      }
       void AddSender(const std::string & type, const std::string & name = "");
       void closeEvent(QCloseEvent *) {
         std::cout << "Closing!" << std::endl;
