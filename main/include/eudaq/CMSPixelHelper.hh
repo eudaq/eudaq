@@ -35,6 +35,8 @@ namespace eudaq {
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
       m_detector = bore.GetTag("DETECTOR","");
+      std::string pcbtype = bore.GetTag("PCBTYPE", "");
+      m_rotated_pcb = (pcbtype.find("-rot") != std::string::npos ? true : false);  
 
       m_roctype = devDict->getInstance()->getDevCode(roctype);
       if (m_roctype == 0x0)
@@ -49,7 +51,9 @@ namespace eudaq {
       StandardPlane plane(id, m_event_type, m_detector);
 
       // Initialize the plane size (zero suppressed), set the number of pixels
-      plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0);
+      // Check which carrier PCB has been used and book planes accordingly:
+      if(m_rotated_pcb) { plane.SetSizeZS(ROC_NUMROWS, ROC_NUMCOLS, 0); }
+      else { plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0); }
 
       // Set trigger id:
       plane.SetTLUEvent(0);
@@ -72,7 +76,8 @@ namespace eudaq {
 
       // Store all decoded pixels:
       for(std::vector<CMSPixel::pixel>::iterator it = evt->begin(); it != evt->end(); ++it){
-	plane.PushPixel(it->col, it->row, it->raw);
+	if(m_rotated_pcb) { plane.PushPixel(it->row, it->col, it->raw); }
+	else { plane.PushPixel(it->col, it->row, it->raw); }
       }
 
       delete evt;
@@ -213,6 +218,7 @@ namespace eudaq {
     uint8_t m_roctype;
     size_t m_planeid;
     std::string m_detector;
+    bool m_rotated_pcb;
     std::string m_event_type;
 
     static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {

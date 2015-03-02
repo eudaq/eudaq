@@ -47,6 +47,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_perFull(0),
     triggering(false),
     m_roctype(""),
+    m_pcbtype(""),
     m_usbId(""),
     m_producerName(name),
     m_detector(""),
@@ -124,7 +125,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
   // Set the type of the ROC correctly:
   m_roctype = config.Get("roctype","psi46digv2");  
-      
+
+  // Read the type of carrier PCB used ("desytb", "desytb-rot"):
+  m_pcbtype = config.Get("pcbtype","desytb");
+
   try {
     // create api
     if(m_api != NULL) { delete m_api; }
@@ -252,6 +256,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
     // Set the ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
+
+    // Set the PCB mount type for correct coordinate transformation:
+    bore.SetTag("PCBTYPE", m_pcbtype);
 
     // Set the detector for correct plane assignment:
     bore.SetTag("DETECTOR", m_detector);
