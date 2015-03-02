@@ -26,6 +26,7 @@ using namespace std;
 // event type name, needed for readout with eudaq. Links to /main/lib/src/CMSPixelConverterPlugin.cc:
 static const std::string EVENT_TYPE_DUT = "CMSPixelDUT";
 static const std::string EVENT_TYPE_REF = "CMSPixelREF";
+static const std::string EVENT_TYPE_TRP = "CMSPixelTRP";
 
 CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
   : eudaq::Producer(name, runcontrol),
@@ -57,6 +58,10 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
     m_event_type = EVENT_TYPE_REF;
+  }
+  else if(m_producerName.find("TRP") != std::string::npos) {
+    m_detector = "TRP";
+    m_event_type = EVENT_TYPE_TRP;
   }
   else {
     m_detector = "DUT";

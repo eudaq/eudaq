@@ -96,9 +96,13 @@ namespace eudaq {
       }
 
       const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
+      unsigned plane_id;
+      if(m_detector == "TRP") { plane_id = 6; }      // TRP
+      else if(m_detector == "DUT") { plane_id = 7; } // DUT
+      else { plane_id = 8; }                         // REF
       for (size_t i = 0; i < in_raw.NumBlocks(); ++i) {
 	//out.AddPlane(ConvertPlane(in_raw.GetBlock(i), in_raw.GetID(i)));
-	out.AddPlane(ConvertPlane(in_raw.GetBlock(i), (m_detector == "REF" ? 8 : 7)));
+	out.AddPlane(ConvertPlane(in_raw.GetBlock(i), plane_id));
       }
     }
 
@@ -149,7 +153,7 @@ namespace eudaq {
 
 	// The current detector is ...
 	eutelescope::EUTelPixelDetector * currentDetector = 0x0;
-	if(plane.Sensor() == "DUT" || plane.Sensor() == "REF") {
+	if(plane.Sensor() == "DUT" || plane.Sensor() == "REF" || plane.sensor() == "TRP") {
 
 	  currentDetector = new eutelescope::EUTelCMSPixelDetector;
 	  // FIXME what is that mode used for?
