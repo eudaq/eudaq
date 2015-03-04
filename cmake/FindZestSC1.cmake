@@ -42,13 +42,15 @@ ENDIF(WIN32)
 if (WIN32) 
   if (${EX_PLATFORM} EQUAL 64)
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-      HINTS "${extern_lib_path}/windows_7/Lib/amd64"
+      HINTS "${extern_lib_path}/Lib/amd64"
+            "${extern_lib_path}/windows_7/Lib/amd64"
       	    "${extern_lib_path}/windows 7/Lib/amd64"
       ${arg}
       )
   else() #32bit
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1 SetupAPI Ws2_32
-      HINTS "${extern_lib_path}/windows_7/Lib/x86"
+      HINTS "${extern_lib_path}/Lib/x86"
+            "${extern_lib_path}/windows_7/Lib/x86"
       	    "${extern_lib_path}/windows 7/Lib/x86"
       ${arg})
   endif(${EX_PLATFORM} EQUAL 64)
