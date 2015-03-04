@@ -293,12 +293,6 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
       }
       SimpleStandardPlane simpPlane(sensorname,plane.ID(),plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
 
-
-      if (simpPlane.is_UNKNOWN)
-      {
-        cout << "Unknown Plane found "<<  plane.ID()<< " "<< sensorname<< endl;
-      }
-
       for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); lvl1++)
       {
         // if (lvl1 > 2 && plane.HitPixels(lvl1) > 0) std::cout << "LVLHits: " << lvl1 << ": " << plane.HitPixels(lvl1) << std::endl;

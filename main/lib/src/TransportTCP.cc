@@ -570,7 +570,7 @@ namespace eudaq {
 #endif
 
 
-	//std::cout << "Select result=" << result << std::endl;
+//	std::cout << "Select result=" << result << std::endl;
 
         bool donereading = false;
         do {

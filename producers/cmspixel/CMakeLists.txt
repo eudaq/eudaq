@@ -1,0 +1,20 @@
+SET(name "CMSPixelProducer.exe")
+
+FIND_PACKAGE(PXAR REQUIRED)
+
+IF(PXARCORE_FOUND)
+ELSE(PXARCORE_FOUND)
+  MESSAGE(FATAL_ERROR "Could not find CMSPixel pxarCore! Make sure to set the environment variable $PXARPATH to the path of your pxar installation!")
+ENDIF(PXARCORE_FOUND)
+
+SET(sourcefiles src/CMSPixelProducer.cxx src/CMSPixelConfigParser.cxx)
+
+INCLUDE_DIRECTORIES(include ${PXARCORE_INCLUDE_DIRS})
+ADD_EXECUTABLE(${name} ${sourcefiles})
+
+TARGET_LINK_LIBRARIES(${name} EUDAQ ${EUDAQ_THREADS_LIB} ${PXARCORE_LIBRARIES})
+
+INSTALL(TARGETS ${name}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
