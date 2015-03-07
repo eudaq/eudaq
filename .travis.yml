@@ -1,0 +1,22 @@
+language: cpp
+compiler:
+  - clang
+  - gcc
+before_install:
+  - echo $LANG
+  - echo $LC_ALL
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install python libusb homebrew/science/root && easy_install pip && pip install numpy; fi
+before_script:
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget http://downloads.sourceforge.net/project/cernrootdebs/latest-recommended/root_5.34.07-1_amd64.deb && sudo dpkg --install root_5.34.07-1_amd64.deb && source /usr/local/bin/thisroot.sh; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
+script: 
+  - mkdir build && cd build/
+  - cmake -DBUILD_python=OFF ..
+  - make install
+branches:
+  only:
+    - v1.4-dev
+os:
+  - linux
+  - osx
