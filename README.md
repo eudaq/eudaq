@@ -1,4 +1,4 @@
-eudaq
+eudaq [![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=v1.4-dev)](https://travis-ci.org/eudaq/eudaq)
 =====
 
 A Generic Multi-platform Data Acquisition Framework
