@@ -18,8 +18,6 @@ before_install:
   # Linux: add toolchain repository and update:
   # g++4.8.1
   - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "g++" ]; then sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test; fi
-  # clang 3.4
-  - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "clang++" ]; then sudo apt-add-repository -y ppa:h-rayflood/llvm; fi
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update; fi
 
   # Linux: grab ROOT deb package since it's not in the repos for this Ubuntu version:
@@ -32,7 +30,6 @@ install:
   # Install package dependencies for Linux:
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools; fi
   - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "g++" ]; then sudo apt-get install -qq gcc-4.8 g++-4.8; fi
-  - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "clang++" ]; then sudo apt-get install  --allow-unauthenticated -qq clang-3.4; fi
 
   # Install ROOT on Linux:
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo dpkg --install root_5.34.07-1_amd64.deb && source /usr/local/bin/thisroot.sh; fi
@@ -46,8 +43,6 @@ before_script:
   # We want to compile with g++4.8 rather than the default g++
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
   - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" = "g++" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90; fi
-  # Clang 3.4 build:
-  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
   # For Mac OS X we still need to source the root environment:
   - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
