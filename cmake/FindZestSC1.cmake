@@ -32,6 +32,7 @@ IF(WIN32)
  find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
     HINTS "${extern_lib_path}/windows_7/Inc"
           "${extern_lib_path}/windows 7/Inc"
+		  "${extern_lib_path}/Inc"
     ${arg}
 	  )
 ELSE(WIN32)
