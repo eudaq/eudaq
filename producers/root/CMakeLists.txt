@@ -1,0 +1,41 @@
+FIND_PACKAGE( ROOT REQUIRED)
+
+INCLUDE_DIRECTORIES( . inc ${ROOT_INCLUDE_DIR} )
+
+SET(ROOTProducer_name ROOTProducer)
+
+
+SET (ROOTProducer_SOURCES
+     
+src/ROOTProducer.cpp      
+
+  )
+
+
+set(ROOTProducer_HEADERS 
+  ${PROJECT_SOURCE_DIR}/producers/root/inc/ROOTProducer.h
+ )
+ 
+ SET(MY_INCLUDE_DIRECTORIES 
+     inc
+     ${PROJECT_SOURCE_DIR}/producers/root/inc
+     ${PROJECT_SOURCE_DIR}/main/include 
+     ${ROOT_INCLUDE_DIR} )
+ 
+ set(ROOTProducer_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ROOTProducer_Dict.cxx) 
+ 
+ ROOT_GENERATE_DICTIONARY_OLD("${ROOTProducer_HEADERS}" "${ROOTProducer_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
+
+
+
+ADD_LIBRARY( ${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_DICTIONARY})
+
+
+
+target_link_libraries(${ROOTProducer_name} EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+
+INSTALL(TARGETS ${ROOTProducer_name}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+)
