@@ -49,7 +49,6 @@ inline	void bool2uchar1(const bool* inBegin,const bool* inEnd,std::vector<unsign
 }
 
 
-//static const std::string EVENT_TYPE = "SCTupgrade";
 
 class ROOTProducer::Producer_PImpl : public eudaq::Producer {
 public:
@@ -703,26 +702,3 @@ void ROOTProducer::addDataPointer( unsigned plane,const bool* inputVector,size_t
   m_prod->addDataPointer(plane,inputVector,Elements);
 }
 
-// The main function that will create a Producer instance and run it
-bool StartTestbeamProducer(const char* nameIn,const char* IP_AdresseIn) {
-	std::string name(nameIn);//"SCTProducer";
-	std::string rctrl(IP_AdresseIn);//"tcp://127.0.0.1:44000";
-
-	try {
-		// This will look through the command-line arguments and set the options
-
-		// Set the Log level for displaying messages based on command-line
-		//		EUDAQ_LOG_LEVEL(level.Value());
-		// Create a producer
-		ROOTProducer producer(name.c_str(), rctrl.c_str());
-		// And set it running...
-		//	producer.ReadoutLoop();
-		// When the readout loop terminates, it is time to go
-		std::cout << "Quitting" << std::endl;
-	} catch (...) {
-		// This does some basic error handling of common exceptions
-		std::cout<<"an error had occurred"<<std::endl;
-		return false;
-	}
-	return true;
-}
