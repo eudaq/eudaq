@@ -20,8 +20,8 @@
 #include <chrono>
 #include <mutex>
 
-
-
+const int gTimeout_delay = 1000; //milli seconds 
+const int gTimeout_wait = 20; //milli seconds 
 
 inline	void bool2uchar1(const bool* inBegin,const bool* inEnd,std::vector<unsigned char>& out){
 
@@ -69,9 +69,9 @@ public:
 
 		setOnconfigure(true);
 		int j=0;
-		while (getOnConfigure()&&++j<500)
+		while (getOnConfigure()&&++j<gTimeout_delay/gTimeout_wait)
 		{
-			eudaq::mSleep(20);
+      eudaq::mSleep(gTimeout_wait);
 		}
 		setOnconfigure(false);
 		// Do any configuration of the hardware here
@@ -107,16 +107,16 @@ virtual	void OnStartRun(unsigned param) {
 		// Send the event to the Data Collector
 		SendEvent(bore);
 
-		// At the end, set the status that will be displayed in the Run Control.
-		SetStatus(eudaq::Status::LVL_OK, "Running");
 
     setOnStart(true);
     int j=0;
-    while (getOnStart()&&++j<500)
+    while (getOnStart()&&++j<gTimeout_delay/gTimeout_wait)
     {
-      eudaq::mSleep(20);
+      eudaq::mSleep(gTimeout_wait);
     }
     setOnStart(false);
+		// At the end, set the status that will be displayed in the Run Control.
+		SetStatus(eudaq::Status::LVL_OK, "Running");
 
 	}
 	// This gets called whenever a run is stopped
@@ -126,9 +126,9 @@ virtual	void OnStopRun() {
 
 		setOnStop(true);
 		int j=0;
-		while (getOnStop()&&++j<500)
+		while (getOnStop()&&++j<gTimeout_delay/gTimeout_wait)
 		{
-			eudaq::mSleep(20);
+			eudaq::mSleep(gTimeout_wait);
 		}
 		setOnStop(false);
 		// Set a flag to signal to the polling loop that the run is over
@@ -148,9 +148,9 @@ virtual	void OnTerminate() {
 		//m_interface->send_OnTerminate();
 		setOnTerminate(true);
 		int j=0;
-		while (getOnTerminate()&&++j<500)
+		while (getOnTerminate()&&++j<gTimeout_delay/gTimeout_wait)
 		{
-			eudaq::mSleep(20);
+			eudaq::mSleep(gTimeout_wait);
 		}
 		setOnTerminate(false);
 	}
@@ -675,26 +675,26 @@ void ROOTProducer::checkStatus()
 		
 		send_onStart();
 		setOnStart(false);
-		eudaq::mSleep(20);
+		eudaq::mSleep(gTimeout_wait);
 	}
 
 	if(getOnConfigure()){
 		
 		send_onConfigure();
 		setOnconfigure(false);
-		eudaq::mSleep(20);
+		eudaq::mSleep(gTimeout_wait);
 	}
 
 	if(getOnStop()){
 		send_onStop();
 		setOnStop(false);
-		eudaq::mSleep(20);
+		eudaq::mSleep(gTimeout_wait);
 	}
 
 	if(getOnTerminate()){
 		send_OnTerminate();
 		setOnTerminate(false);
-		eudaq::mSleep(20);
+		eudaq::mSleep(gTimeout_wait);
 	}
 }
 
