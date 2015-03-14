@@ -9,12 +9,16 @@
 
 
 
-
-#ifndef  __CINT__
-#define  DLLEXPORT  __declspec( dllexport ) 
+#ifdef WIN32
+  #ifndef  __CINT__
+    #define  DLLEXPORT  __declspec( dllexport ) 
+  #else
+    #define  DLLEXPORT
+  #endif
 #else
-#define  DLLEXPORT
+  #define  DLLEXPORT
 #endif
+
 
 
 
