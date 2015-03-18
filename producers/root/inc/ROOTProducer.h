@@ -4,7 +4,7 @@
 
 
 #include "RQ_OBJECT.h"
-#include "RTypes.h"
+#include "Rtypes.h"
 
 
 
@@ -97,9 +97,10 @@ public:
 	void setOnTerminate(bool newStat);
 
 private:
+#ifndef __CINT__
 	class Producer_PImpl;
 	Producer_PImpl* m_prod;
-
+#endif
 	ClassDef(ROOTProducer,1)
 };
 
