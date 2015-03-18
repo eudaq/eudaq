@@ -137,7 +137,7 @@ IF(BUILD_main)
 ENDIF()
 
 # build EUDAQ python exe bindings
-option(BUILD_python "Compile Python EUDAQ binding library?" ON)
+option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
 IF(BUILD_python)
   add_subdirectory(main/python)
 ENDIF()
