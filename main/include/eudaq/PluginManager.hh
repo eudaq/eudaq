@@ -45,13 +45,14 @@ namespace eudaq {
       static void ConvertStandardSubEvent(StandardEvent &, const Event &);
       static void ConvertLCIOSubEvent(lcio::LCEvent &, const Event &);
 
-	  static std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::AidaPacket>,size_t NumberOfROF);
+	
+    static std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::Event>, size_t NumberOfROF);
 	  static unsigned getUniqueIdentifier(const Event &);
 	  static bool isTLU(const Event&);
-	  static size_t GetNumberOfROF(const eudaq::AidaPacket& pac);
+	
+    static size_t GetNumberOfROF(const eudaq::Event& pac);
       /** Get the correct plugin implementation according to the event type.
        */
-	  DataConverterPlugin & GetPlugin(const AidaPacket & pack);
       DataConverterPlugin & GetPlugin(t_eventid eventtype);
       DataConverterPlugin & GetPlugin(const Event & event);
 
