@@ -9,15 +9,13 @@
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/AidaPacket.hh"
-#include "eudaq/AidaFileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 #include <memory>
 namespace eudaq {
-
-class JSON;
+  class FileWriter;
+  class JSON;
 
   /** Implements the functionality of the File Writer application.
    *
@@ -37,7 +35,6 @@ class JSON;
       virtual void OnPrepareRun(unsigned runnumber);
       virtual void OnStopRun();
       virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev );
-      virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<AidaPacket> packet );
       virtual void OnCompleteEvent();
       virtual void OnStatus();
       virtual ~DataCollector();
@@ -45,7 +42,6 @@ class JSON;
       void DataThread();
     protected:
       void WriteEvent( const DetectorEvent & ev );
-      void WritePacket( std::shared_ptr<AidaPacket> packet );
       std::shared_ptr<JSON> buildJsonConfigHeader( unsigned int runnumber );
 
 
@@ -53,7 +49,6 @@ class JSON;
       struct Info {
        std::shared_ptr<ConnectionInfo> id;
        std::list<std::shared_ptr<Event> > events;
-       std::list<std::shared_ptr<AidaPacket> > packets;
       };
 
       const std::string m_runnumberfile; // path to the file containing the run number
@@ -71,7 +66,7 @@ class JSON;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber, m_packetNumberLastPacket;
-      std::unique_ptr<AidaFileWriter> m_writer;
+      std::unique_ptr<FileWriter> m_writer;
       Configuration m_config;
       Time m_runstart;
   };
