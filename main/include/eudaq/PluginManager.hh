@@ -21,7 +21,7 @@ namespace eudaq {
 
     public:
       typedef DataConverterPlugin::t_eventid t_eventid;
-
+      using timeStamp_t = DataConverterPlugin::timeStamp_t;
       /** Register a new plugin to the plugin manager.
        */
       void RegisterPlugin(DataConverterPlugin * plugin);
@@ -32,12 +32,14 @@ namespace eudaq {
       static PluginManager & GetInstance();
 
       static unsigned GetTriggerID(const Event &);
-
+      static timeStamp_t GetTimeStamp(const Event &,size_t index);
+      static size_t GetTimeStamp_size(const Event &);
 	  static int IsSyncWithTLU(eudaq::Event const & ev,eudaq::Event const & tlu);
 	  static t_eventid getEventId( eudaq::Event const & ev);
 
 	  static void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu);
       static void Initialize(const DetectorEvent &);
+      static void InitializeSubEvent(const Event&, const Configuration&);
       static lcio::LCRunHeader * GetLCRunHeader(const DetectorEvent &);
       static StandardEvent ConvertToStandard(const DetectorEvent &);
       static lcio::LCEvent * ConvertToLCIO(const DetectorEvent &);
@@ -51,8 +53,10 @@ namespace eudaq {
 	  static bool isTLU(const Event&);
 	
     static size_t GetNumberOfROF(const eudaq::Event& pac);
+
       /** Get the correct plugin implementation according to the event type.
        */
+
       DataConverterPlugin & GetPlugin(t_eventid eventtype);
       DataConverterPlugin & GetPlugin(const Event & event);
 

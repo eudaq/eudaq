@@ -31,9 +31,7 @@ namespace eudaq {
 		m_pluginmap[plugin->GetEventType()] = plugin;
 	}
 
-	DataConverterPlugin & PluginManager::GetPlugin(const AidaPacket & pack) {
-		return GetPlugin(Event::t_eventid(pack.GetPacketType(), AidaPacket::type2str(pack.GetPacketSubType())));
-	}
+
 	DataConverterPlugin & PluginManager::GetPlugin(const Event & event) {
 		return GetPlugin(std::make_pair(event.get_id(), event.GetSubType()));
 	}
@@ -44,6 +42,7 @@ namespace eudaq {
 
 		if (pluginiter == m_pluginmap.end()) {
 			EUDAQ_THROW("PluginManager::GetPlugin(): Unkown event type " + Event::id2str(eventtype.first) + ":" + eventtype.second);
+
 		}
 
 		return *pluginiter->second;
@@ -51,26 +50,25 @@ namespace eudaq {
 
 	void PluginManager::Initialize(const DetectorEvent & dev) {
 		eudaq::Configuration conf(dev.GetTag("CONFIG"));
-		conf.Set("timeDelay", dev.GetTag("longTimeDelay", "0"));
 		for (size_t i = 0; i < dev.NumEvents(); ++i) {
 			const eudaq::Event & subev = *dev.GetEvent(i);
-			GetInstance().GetPlugin(subev).Initialize(subev, conf);
+      InitializeSubEvent(subev, conf);
 		}
 	}
+
+  void PluginManager::InitializeSubEvent(const Event& subev, const Configuration& conf)
+  {
+    GetInstance().GetPlugin(subev).Initialize(subev, conf);
+  }
+
+
+
 
 	unsigned PluginManager::GetTriggerID(const Event & ev) {
 		return GetInstance().GetPlugin(ev).GetTriggerID(ev);
 	}
 
-	//   uint64_t PluginManager::GetTimeStamp( const Event& ev)
-	//   {
-	// 	  return GetInstance().GetPlugin(ev).GetTimeStamp(ev);
-	//   }
-	// 
-	//   uint64_t PluginManager::GetTimeDuration( const Event& ev )
-	//   {
-	// 	  return GetInstance().GetPlugin(ev).GetTimeDuration(ev);
-	//   }
+
 	int PluginManager::IsSyncWithTLU(eudaq::Event const & ev, eudaq::Event const & tlu)
 	{
 		return GetInstance().GetPlugin(ev).IsSyncWithTLU(ev, tlu);
@@ -164,17 +162,18 @@ namespace eudaq {
 		GetInstance().GetPlugin(ev).setCurrentTLUEvent(ev, tlu);
 	}
 
-	std::shared_ptr<eudaq::Event> PluginManager::ExtractEventN(std::shared_ptr<eudaq::AidaPacket> pac, size_t NumberOfROF)
-	{
-		return GetInstance().GetPlugin(*pac).ExtractEventN(pac,NumberOfROF);
 
-	}
 
-	size_t PluginManager::GetNumberOfROF(const eudaq::AidaPacket& pac)
-	{
-		return GetInstance().GetPlugin(pac).GetNumberOfROF(pac);
+  std::shared_ptr<eudaq::Event> PluginManager::ExtractEventN(std::shared_ptr<eudaq::Event> pac, size_t NumberOfROF)
+  {
+    return GetInstance().GetPlugin(*pac).ExtractEventN(pac, NumberOfROF);
+  }
 
-	}
+  size_t PluginManager::GetNumberOfROF(const eudaq::Event& pac)
+  {
+    return GetInstance().GetPlugin(pac).GetNumberOfROF(pac);
+
+  }
 	unsigned PluginManager::getUniqueIdentifier(const Event &ev)
 	{
 		return GetInstance().GetPlugin(ev).getUniqueIdentifier(ev);
@@ -185,7 +184,14 @@ namespace eudaq {
 		return GetInstance().GetPlugin(ev).isTLU(ev);
 	}
 
+  PluginManager::timeStamp_t PluginManager::GetTimeStamp(const Event& ev, size_t index)
+  {
+    return GetInstance().GetPlugin(ev).GetTimeStamp(ev, index);
+  }
 
-
+  size_t PluginManager::GetTimeStamp_size(const Event & ev)
+  {
+    return GetInstance().GetPlugin(ev).GetTimeStamp_size(ev);
+  }
 
 }//namespace eudaq
