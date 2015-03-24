@@ -25,8 +25,14 @@ using namespace UTIL;
 
 //////////////////////////////////////////////////////////////////////////
 // Compare Time stamps
-#define Event_IS_EARLY -1
+
+// DUT_Trigger_number > TLU_Trigger_Number
+#define Event_IS_EARLY -1              
+
+// TLU_Trigger_Number > DUT_Trigger_number
 #define Event_IS_LATE 1
+
+// DUT_Trigger_number == TLU_Trigger_Number
 #define Event_IS_Sync 0
 
 
