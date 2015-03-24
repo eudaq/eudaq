@@ -1,11 +1,12 @@
+#include <list>
 #include "eudaq/FileReader.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Event.hh"
 #include "eudaq/Logger.hh"
-#include <list>
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/factory.hh"
 
 namespace eudaq {
 
@@ -18,32 +19,17 @@ namespace eudaq {
     m_des(Filename()),
     m_ev(EventFactory::Create(m_des)),
     m_ver(1)
-    {
+  {
 
-// 		m_ev->SetTag("longTimeDelay",longTimeDelay);
-// 		m_ev->SetTag("NumberOfEvents",syncEvents);
+  }
 
-		eudaq::Configuration conf(GetDetectorEvent().GetTag("CONFIG"));
-		conf.SetSection("EventStruct");
+  FileReader::FileReader(Parameter_ref param) :FileReader(param.Get(getKeyFileName(),""),param.Get(getKeyInputPattern(),""))
+  {
 
+  }
 
-
-		
-//       if (synctriggerid) {
-// 
-// 	// saves this information in the BOR event. the DataConverterPlugins can extract this information during initializing.
-// 		m_sync =std::make_shared<eudaq::SyncBase>(GetDetectorEvent());
-// 
-// 
-//       }
-    }
-//   FileReader::FileReader(FileReader&& fileR):m_filename(fileR.Filename()),
-// 	  m_des(m_filename){
-// 
-// 
-//   }
   FileReader::~FileReader() {
-    
+
   }
 
   bool FileReader::NextEvent(size_t skip) {
@@ -51,7 +37,7 @@ namespace eudaq {
 
 
     bool result = m_des.ReadEvent(m_ver, ev, skip);
-    if (ev) m_ev =  ev;
+    if (ev) m_ev = ev;
     return result;
   }
 
@@ -72,35 +58,20 @@ namespace eudaq {
   }
 
   std::shared_ptr<eudaq::Event> FileReader::GetNextEvent(){
-	  static size_t i = 0;
-	  auto ev = std::dynamic_pointer_cast<eudaq::DetectorEvent>(m_ev);
-	  if (i == ev->NumEvents()){
-		  i = 0;
-		  if (!NextEvent()) {
-			  return nullptr;
-		  }
-		  ev = std::dynamic_pointer_cast<eudaq::DetectorEvent>(m_ev);
-	  }
-	   
-	  return ev->GetEventPtr(i++);
-	  
+
+    if (!NextEvent()) {
+      return nullptr;
+    }
+
+    return m_ev;
+
+
   }
 
-  bool FileIsEUDET(const std::string& in)
-  {
-	  auto pos_of_Dot = in.find_last_of('.');
-	  if (pos_of_Dot<in.size())
-	  {
-		  auto sub = in.substr(pos_of_Dot+1);
-		  if (sub.compare("raw")==0)
-		  {
-			  return true;
-		  }
-	  }
 
-	  return false;
-  }
 
- 
+
+
+  RegisterFileReader(FileReader, "raw");
 
 }
