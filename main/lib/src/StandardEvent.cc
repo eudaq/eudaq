@@ -346,7 +346,7 @@ namespace eudaq {
   }
 
   void StandardEvent::SetTimestamp(uint64_t val) {
-    m_timestamp = val;
+    Event::setTimeStamp(val);
   }
 
   void StandardEvent::Print(std::ostream & os) const {
