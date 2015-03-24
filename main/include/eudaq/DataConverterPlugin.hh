@@ -3,7 +3,6 @@
 
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/AidaPacket.hh"
 
 
 #if USE_LCIO
@@ -178,14 +177,15 @@ namespace eudaq{
        */
       virtual t_eventid const & GetEventType() const { return m_eventtype; }
 
-	  virtual std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::AidaPacket> ev, size_t NumberOfROF) {
-		  return nullptr; }
 
+    virtual std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::Event> ev, size_t NumberOfROF) {
+      return nullptr;
+    }
 	  virtual bool isTLU(const Event&){ return false; }
 
 	  virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev){ return m_thisCount; }
-	  virtual size_t GetNumberOfROF(const eudaq::AidaPacket& pac){ return 1; }
 
+    virtual size_t GetNumberOfROF(const eudaq::Event& pac){ return 1; }
       /** The empty destructor. Need to add it to make it virtual.
        */
       virtual ~DataConverterPlugin() {}
