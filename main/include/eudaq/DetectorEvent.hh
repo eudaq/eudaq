@@ -6,8 +6,10 @@
 #include <memory>
 
 
-namespace eudaq {
 
+namespace eudaq {
+  static const char* DetectorEventMaintype = "_DET";
+  static const char* DetectorEventSubtype = "DetectorEvent";
   class RawDataEvent;
 
   class DLLEXPORT DetectorEvent : public Event {
@@ -15,7 +17,7 @@ namespace eudaq {
     public:
     virtual void Serialize(Serializer &) const;
     explicit DetectorEvent(unsigned runnumber, unsigned eventnumber, uint64_t timestamp) :
-      Event(runnumber, eventnumber, timestamp)
+      Event(runnumber, eventnumber, timestamp,Event::FLAG_PACKET)
     {}
     //     explicit DetectorEvent(const TLUEvent & tluev) :
     //       Event(tluev.GetRunNumber(), tluev.GetEventNumber(), tluev.GetTimestamp())
@@ -25,7 +27,7 @@ namespace eudaq {
     virtual void Print(std::ostream &) const;
 
     /// Return "DetectorEvent" as type.
-    virtual std::string GetType() const {return "DetectorEvent";}
+    virtual std::string GetType() const {return DetectorEventSubtype;}
 
     size_t NumEvents() const { return m_events.size(); }
     Event * GetEvent(size_t i) { return m_events[i].get(); }
@@ -49,7 +51,8 @@ namespace eudaq {
     private:
     std::vector<std::shared_ptr<Event> > m_events;
   };
-
+  using ContainerEvent = DetectorEvent;
+  
 }
 
 #endif // EUDAQ_INCLUDED_TLUEvent
