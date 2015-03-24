@@ -88,6 +88,23 @@ at some places we have constructions like:
 
 
 #define EUDAQ_ERROR_NO_DATA_RECEIVED -1
+
+
+// Connection reset by peer.
+// An existing connection was forcibly closed 
+// by the remote host. This normally results 
+// if the peer application on the remote host 
+// is suddenly stopped, the host is rebooted, 
+// the host or remote network interface is disabled, 
+// or the remote host uses a hard close (see setsockopt 
+// for more information on the SO_LINGER option on the 
+// remote socket). This error may also result if a 
+// connection was broken due to keep-alive activity 
+// detecting a failure while one or more operations 
+// are in progress. Operations that were in 
+// progress fail with WSAENETRESET. 
+// Subsequent operations fail with WSAECONNRESET.
+#define  EUDAQ_ERROR_CONNECTION_RESET WSAECONNRESET
 #else
 
 
@@ -158,6 +175,10 @@ at some places we have constructions like:
 
 
 #define EUDAQ_ERROR_NO_DATA_RECEIVED -1
+
+
+/* Connection reset by peer */
+#define  EUDAQ_ERROR_CONNECTION_RESET ECONNRESET
 
 #endif
 
@@ -470,7 +491,11 @@ namespace eudaq {
               m.Disable();
               closesocket(j);
               FD_CLR(j, &m_fdset);
-            }
+			}else if(result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_CONNECTION_RESET)
+			{
+				  debug_transport( "Server #%d, return=%d, WSAError:%d (%s) No Data Received.\n", j, result, errno, strerror(errno));
+				  EUDAQ_THROW_NOLOG("TCP Connection Closed");
+			}
             else if (result == EUDAQ_ERROR_NO_DATA_RECEIVED ){
               debug_transport( "Server #%d, return=%d, WSAError:%d (%s) No Data Received.\n", j, result, errno, strerror(errno));
             }
@@ -583,7 +608,10 @@ namespace eudaq {
           if (result == EUDAQ_ERROR_NO_DATA_RECEIVED && LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable) {
 	    debug_transport("Client, return=%d, WSAError:%d (%s) Nothing to do\n",result,errno,strerror(errno));
             donereading = true;
-          }
+          }else if(result == EUDAQ_ERROR_NO_DATA_RECEIVED&& LastSockError()== EUDAQ_ERROR_CONNECTION_RESET){
+
+			  	EUDAQ_THROW_NOLOG(LastSockErrorString("SocketClient Error (" + to_string(LastSockError()) + ")"));
+		  }
           else if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
             debug_transport("Client, return=%d, WSAError:%d (%s) Time Out\n",result,errno,strerror(errno));
           }
