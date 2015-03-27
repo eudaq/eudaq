@@ -103,7 +103,7 @@ namespace eudaq {
   }
 
   FileWriterRoot::~FileWriterRoot() {
-
+    m_tfile->Write();
 	  m_tfile->Close();
 	  delete m_tfile;
   }
