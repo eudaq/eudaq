@@ -7,15 +7,14 @@
 
 namespace eudaq{
   class dataQueue;
-
+  class RawDataEvent;
 
   class paketProducer{
   public:
-    paketProducer(const char* name, int type) :
+    paketProducer(const char* name) :
       m_paketName(name),
       m_running(true), 
-      m_dataqueue(nullptr),
-      m_type(type)
+      m_dataqueue(nullptr)
     {
     }
     ~paketProducer(){
@@ -39,7 +38,7 @@ namespace eudaq{
     dataQueue* m_dataqueue;
     std::mutex m_mutex;
     std::unique_ptr<std::thread> m_thread;
-    std::shared_ptr<AidaPacket> m_pack=nullptr;
+    std::shared_ptr<RawDataEvent> m_pack=nullptr;
     struct data_struc
     {
       data_struc(uint64_t* meta_data,size_t meta_data_size,uint64_t* data,size_t data_size):
@@ -57,7 +56,7 @@ namespace eudaq{
     };
     std::vector<data_struc> m_data;
     bool m_running;
-    int m_type;
+  
   };
 
 }
