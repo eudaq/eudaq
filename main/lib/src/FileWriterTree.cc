@@ -77,10 +77,9 @@ namespace eudaq {
     unsigned short SI;                //StatusInfo
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTree> reg("tree");
-  }
-
+  
+  registerFileWriter(FileWriterTree, "tree");
+  
   FileWriterTree::FileWriterTree(const std::string & /*param*/)
     : m_tfile(0), m_ttree(0),m_noe(0),chan(4),n_pixels(90*90+60*60)
   {

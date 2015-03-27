@@ -26,9 +26,9 @@ namespace eudaq {
       
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterMeta> reg("meta");
-  }
+ 
+  
+  registerFileWriter(FileWriterMeta, "meta");
 
   FileWriterMeta::FileWriterMeta(const std::string & /*param*/)  {
   }

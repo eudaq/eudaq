@@ -31,10 +31,8 @@ namespace eudaq {
       uint64_t i_time_stamp,DUT_time; // the time stamp
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterRootC> reg("rootc");
-  }
-
+  
+  registerFileWriter(FileWriterRootC, "rootc");
   FileWriterRootC::FileWriterRootC(const std::string & /*param*/)
     : m_tfile(0), m_ttree(0),
     id_plane(0),

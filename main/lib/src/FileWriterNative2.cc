@@ -18,10 +18,11 @@ namespace eudaq {
       FileSerializer * m_ser;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterNative2> reg("native2");
-  }
+  
 
+  registerFileWriter(FileWriterNative2, "native2");
+  
+  
   FileWriterNative2::FileWriterNative2(const std::string & /*param*/) : m_ser(0) {
     //EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
   }

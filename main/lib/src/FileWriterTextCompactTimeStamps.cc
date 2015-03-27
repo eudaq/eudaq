@@ -23,10 +23,9 @@ namespace eudaq {
 	  vector<uint64_t> m_start_time;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTextTimeStamps> reg("textTS");
-  }
-
+  
+  registerFileWriter(FileWriterTextTimeStamps, "textTS");
+  
   FileWriterTextTimeStamps::FileWriterTextTimeStamps(const std::string & param)
     :firstEvent(false),m_out(nullptr)
   {

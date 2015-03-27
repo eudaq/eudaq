@@ -22,10 +22,9 @@ namespace eudaq {
 	  uint64_t DUT_start_time;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTextCompact> reg("textc");
-  }
-
+  
+  registerFileWriter(FileWriterTextCompact, "textc");
+  
   FileWriterTextCompact::FileWriterTextCompact(const std::string & param)
     :firstEvent(false),m_out(nullptr),DUT_start_time(0)
   {
