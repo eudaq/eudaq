@@ -129,7 +129,7 @@ plane::plane(rapidxml::xml_node<> *node):m_Ignore_percentage(1){
 }
 bool plane::nextEntry() 
 {
-	return (++current_pos>=pos.end());
+	return (++current_pos!=pos.end());
 }
 
 void plane::firstEntry() 
