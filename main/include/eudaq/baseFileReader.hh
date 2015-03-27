@@ -21,7 +21,7 @@ namespace eudaq{
     using MainType = std::string;
     using Parameter_t = eudaq::Configuration;
     using Parameter_ref = const Parameter_t&;
-    baseFileReader(Parameter_ref fileName);
+    baseFileReader(Parameter_ref config);
     baseFileReader(const std::string&  fileName);
     std::string Filename()const;
     std::string InputPattern() const;

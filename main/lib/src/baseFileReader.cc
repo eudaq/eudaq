@@ -10,20 +10,20 @@ namespace eudaq {
 
 
 
-  baseFileReader::baseFileReader(Parameter_ref fileName) :
-    m_fileName(fileName)
+  baseFileReader::baseFileReader(Parameter_ref config) :
+    m_config(config)
   {
     
   }
 
   baseFileReader::baseFileReader(const std::string& fileName)  
   {
-    m_fileName.Set(getKeyFileName(), fileName);
+    m_config.Set(getKeyFileName(), fileName);
   }
 
   std::string baseFileReader::Filename() const
   {
-    return m_fileName.Get(getKeyFileName(), "");
+    return m_config.Get(getKeyFileName(), "");
   }
 
   void baseFileReader::Interrupt()
@@ -33,7 +33,7 @@ namespace eudaq {
 
   std::string baseFileReader::InputPattern() const
   {
-    return m_fileName.Get(getKeyInputPattern(),"");
+    return m_config.Get(getKeyInputPattern(),"");
   }
 
   const char* baseFileReader::getKeyFileName()
@@ -51,14 +51,14 @@ namespace eudaq {
     return "FileReaderConfig";
   }
 
-  baseFileReader::Parameter_ref baseFileReader::getParameter() const
+  baseFileReader::Parameter_ref baseFileReader::getConfiguration() const
   {
-    return m_fileName;
+    return m_config;
   }
 
-  baseFileReader::Parameter_t& baseFileReader::getParameter()
+  baseFileReader::Parameter_t& baseFileReader::getConfiguration()
   {
-    return m_fileName;
+    return m_config;
   }
 
 
