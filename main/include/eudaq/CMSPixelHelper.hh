@@ -153,7 +153,7 @@ namespace eudaq {
 
 	// The current detector is ...
 	eutelescope::EUTelPixelDetector * currentDetector = 0x0;
-	if(plane.Sensor() == "DUT" || plane.Sensor() == "REF" || plane.sensor() == "TRP") {
+	if(plane.Sensor() == "DUT" || plane.Sensor() == "REF" || plane.Sensor() == "TRP") {
 
 	  currentDetector = new eutelescope::EUTelCMSPixelDetector;
 	  // FIXME what is that mode used for?
