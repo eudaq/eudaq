@@ -23,7 +23,7 @@ namespace eudaq {
     //       Event(tluev.GetRunNumber(), tluev.GetEventNumber(), tluev.GetTimestamp())
     //       {}
     explicit DetectorEvent(Deserializer&);
-    void AddEvent(std::shared_ptr<Event>& evt);
+    void AddEvent(std::shared_ptr<Event> evt);
     virtual void Print(std::ostream &) const;
 
     /// Return "DetectorEvent" as type.
