@@ -58,7 +58,7 @@ namespace EUDAQ_Utilities{
     using MainType = typename baseClass::MainType;
 
     Registerbase(const MainType & name) {
-      Factory<baseClass>::Register<DerivedClass>(name);
+      Factory<baseClass>::template Register<DerivedClass>(name);
     }
   };
 
