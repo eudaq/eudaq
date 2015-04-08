@@ -65,19 +65,18 @@ public:
     SendEvent(bore);
 
     // At the end, set the status that will be displayed in the Run Control.
+    m_stat = started;
     SetStatus(eudaq::Status::LVL_OK, "Running");
-    started = true;
+    
   }
 
   // This gets called whenever a run is stopped
   virtual void OnStopRun() {
     std::cout << "Stopping Run" << std::endl;
-    started = false;
-    // Set a flag to signal to the polling loop that the run is over
-    stopping = true;
 
+    m_stat = stopping;
     // wait until all events have been read out from the hardware
-    while (stopping) {
+    while (m_stat == stopping) {
       eudaq::mSleep(20);
     }
 
@@ -90,7 +89,7 @@ public:
   // we should also exit.
   virtual void OnTerminate() {
     std::cout << "Terminating..." << std::endl;
-    done = true;
+    m_stat = doTerminat;
   }
 
   // This is just an example, adapt it to your hardware
@@ -99,16 +98,16 @@ public:
     while (m_stat != doTerminat) {
       if (!hardware.EventsPending()) {
         // No events are pending, so check if the run is stopping
-        if (stopping) {
+        if (m_stat=stopping) {
           // if so, signal that there are no events left
-          stopping = false;
+          m_stat = configured;
         }
         // Now sleep for a bit, to prevent chewing up all the CPU
         eudaq::mSleep(20);
         // Then restart the loop
         continue;
       }
-      if (!started)
+      if (m_stat!=started&&m_stat!=stopping)
       {
         // Now sleep for a bit, to prevent chewing up all the CPU
         eudaq::mSleep(20);
