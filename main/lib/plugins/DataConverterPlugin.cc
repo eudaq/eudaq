@@ -3,6 +3,12 @@
 
 #include <iostream>
 
+
+#ifdef  USE_LCIO
+#include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelGenericSparsePixel.h"
+#endif //  USE_LCIO
+
 namespace eudaq {
 
   unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const &) const {
@@ -22,5 +28,17 @@ namespace eudaq {
     //std::cout << "DEBUG: Registering DataConverterPlugin: " << Event::id2str(m_eventtype.first) << ":" << m_eventtype.second << std::endl;
     PluginManager::GetInstance().RegisterPlugin(this);
   }
+#ifdef USE_LCIO
+  void ConvertPlaneToLCIOGenericPixel(StandardPlane & plane, lcio::TrackerDataImpl& zsFrame)
+  {
+     // helper object to fill the TrakerDater object 
+    auto sparseFrame =eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>(&zsFrame);
 
+    for (size_t iPixel = 0; iPixel < plane.HitPixels(); ++iPixel) {
+      eutelescope::EUTelGenericSparsePixel thisHit1(plane.GetX(iPixel), plane.GetY(iPixel), plane.GetPixel(iPixel), 0);
+      sparseFrame.addSparsePixel(&thisHit1);
+    }
+  
+  }
+#endif // USE_LCIO
 }//namespace eudaq

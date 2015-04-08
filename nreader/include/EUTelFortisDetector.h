@@ -13,6 +13,7 @@
 #include <vector>
 #include <string>
 
+#include "eudaq/Platform.hh"
 namespace eutelescope {
 
   //! This is the SUSHVPIX / FORTIS detector
@@ -22,7 +23,7 @@ namespace eutelescope {
    */
 
   //class EUTelSUSHVPIXDetector : public EUTelPixelDetector {
-  class EUTelFortisDetector : public EUTelPixelDetector {
+  class DLLEXPORT EUTelFortisDetector : public EUTelPixelDetector {
 
   public:
     //! Default constructor

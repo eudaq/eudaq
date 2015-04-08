@@ -11,7 +11,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-
+#include "eudaq/Platform.hh"
 namespace eutelescope {
 
 
@@ -22,7 +22,7 @@ namespace eutelescope {
    *  @version $Id$
    */
 
-  class EUTelMimosa26Detector : public EUTelPixelDetector {
+  class  DLLEXPORT  EUTelMimosa26Detector : public EUTelPixelDetector {
 
   public:
     //! Default constructor

@@ -10,6 +10,7 @@
 // system includes <>
 #include <iostream>
 #include <string>
+#include "eudaq/Platform.hh"
 
 namespace eutelescope {
 
@@ -19,7 +20,7 @@ namespace eutelescope {
    *
    */
 
-  class EUTelBaseDetector {
+  class DLLEXPORT EUTelBaseDetector {
 
   public:
     //! Default constructor

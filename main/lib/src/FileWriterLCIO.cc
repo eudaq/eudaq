@@ -13,6 +13,8 @@
 #include "lcio.h"
 
 #include <iostream>
+#include "EUTelEventImpl.h"
+#include "EUTELESCOPE.h"
 
 namespace eudaq {
 
@@ -60,20 +62,38 @@ namespace eudaq {
   void FileWriterLCIO::WriteEvent(const DetectorEvent & devent) {
     if (devent.IsBORE()) {
       PluginManager::Initialize(devent);
+      auto x= std::unique_ptr<lcio::LCRunHeader>( PluginManager::GetLCRunHeader(devent));
+      
+      m_lcwriter->writeRunHeader(x.get());
+      
+      return;
+    }else if (devent.IsEORE())
+    {
+
+      std::cout << "Found a EORE, so adding an EORE to the LCIO file as well" << std::endl;
+      auto  lcioEvent = std::unique_ptr<eutelescope::EUTelEventImpl>(new eutelescope::EUTelEventImpl);
+      lcioEvent->setEventType(eutelescope::kEORE);
+      lcioEvent->setTimeStamp(devent.GetTimestamp());
+      lcioEvent->setRunNumber(devent.GetRunNumber());
+      lcioEvent->setEventNumber(devent.GetEventNumber());
+
+      // sent the lcioEvent to the processor manager for further processing
+      m_lcwriter->writeEvent(lcioEvent.get());
       return;
     }
-    std::cout << "EUDAQ_DEBUG: FileWriterLCIO::WriteEvent() processing event "
-      <<  devent.GetRunNumber () <<"." << devent.GetEventNumber () << std::endl;
+  //  std::cout << "EUDAQ_DEBUG: FileWriterLCIO::WriteEvent() processing event "
+  //    <<  devent.GetRunNumber () <<"." << devent.GetEventNumber () << std::endl;
 
-    lcio::LCEvent * lcevent = PluginManager::ConvertToLCIO(devent);
+    auto lcevent = std::unique_ptr<lcio::LCEvent>(PluginManager::ConvertToLCIO(devent));
 
     // only write non-empty events
-    if (!lcevent->getCollectionNames()->empty()) {
-      // std::cout << " FileWriterLCIO::WriteEvent() : doing the actual writing : " <<std::flush;
-      m_lcwriter->writeEvent(lcevent);
-      // std::cout << " done" <<std::endl;
+    //std::cout << lcevent->getDetectorName() << std::endl;
+     if (!lcevent->getCollectionNames()->empty()) {
+     //  std::cout << " FileWriterLCIO::WriteEvent() : doing the actual writing : " <<std::flush;
+      m_lcwriter->writeEvent(lcevent.get());
+     //  std::cout << " done" <<std::endl;
     }
-    delete lcevent;
+    
   }
 
   FileWriterLCIO::~FileWriterLCIO() {

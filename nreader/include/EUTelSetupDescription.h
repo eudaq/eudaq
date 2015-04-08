@@ -13,6 +13,9 @@
 // system includes <>
 #include <string>
 
+
+#include "eudaq/Platform.hh"
+
 namespace eutelescope {
 
   //! An object for detector description
@@ -35,7 +38,7 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
    */
-  class EUTelSetupDescription : public IMPL::LCGenericObjectImpl {
+  class  DLLEXPORT  EUTelSetupDescription : public IMPL::LCGenericObjectImpl {
 
   public:
     //! Default constructor with detector type and r/o mode

@@ -14,6 +14,7 @@
 #  include "lcio.h"
 using namespace IMPL;
 using namespace UTIL;
+using lcio::TrackerDataImpl;
 #endif
 #include "TLUEvent.hh"
 
@@ -39,6 +40,12 @@ namespace lcio { using namespace EVENT; }
 #include <algorithm>
 
 namespace eudaq{
+
+#ifdef USE_LCIO
+
+  void ConvertPlaneToLCIOGenericPixel(StandardPlane & plane, lcio::TrackerDataImpl& zsFrame);
+#endif // USE_LCIO
+
 
 	  inline int compareTLU2DUT(unsigned TLU_Trigger_Number, unsigned DUT_Trigger_number){
 	  if (DUT_Trigger_number==TLU_Trigger_Number)
