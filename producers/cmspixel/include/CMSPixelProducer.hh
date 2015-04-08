@@ -32,7 +32,11 @@ private:
   void ReadInFullBufferWriteBinary();
   void ReadInFullBufferWriteASCII();
 
+  // Helper function to read DACs from the eudaq config object:
   std::vector<std::pair<std::string,uint8_t> > GetConfDACs();
+  // Helper function to read DACs from file which is provided via eudaq config:
+  std::vector<std::pair<std::string,uint8_t> > GetConfDACs(std::string filename);
+
   std::vector<pxar::pixelConfig> GetConfTrimming(std::string filename);
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
