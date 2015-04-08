@@ -52,7 +52,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_usbId(""),
     m_producerName(name),
     m_detector(""),
-    m_event_type("")
+    m_event_type(""),
+    m_alldacs("")
 {
   m_t = new eudaq::Timer;
   if(m_producerName.find("REF") != std::string::npos) {
@@ -264,6 +265,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
     // Set the ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
+
+    // Store all DAC settings in one BORE tag:
+    bore.SetTag("DACS", m_alldacs);
 
     // Set the PCB mount type for correct coordinate transformation:
     bore.SetTag("PCBTYPE", m_pcbtype);

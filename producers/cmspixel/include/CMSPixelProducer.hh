@@ -41,7 +41,7 @@ private:
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
   unsigned m_tlu_waiting_time;
-  std::string m_verbosity, m_foutName, m_roctype, m_pcbtype, m_usbId, m_producerName, m_detector, m_event_type;
+  std::string m_verbosity, m_foutName, m_roctype, m_pcbtype, m_usbId, m_producerName, m_detector, m_event_type, m_alldacs;
   bool m_terminated, m_running, triggering;
   bool m_dacsFromConf, m_trimmingFromConf, m_trigger_is_pg;
   eudaq::Configuration m_config;

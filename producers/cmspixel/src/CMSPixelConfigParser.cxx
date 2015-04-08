@@ -78,10 +78,15 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs() {
       uint8_t dacVal = m_config.Get(*idac, 0);
       std::cout << *idac << " " << (int)dacVal << std::endl;
       dacs.push_back(make_pair(*idac, dacVal));
+      m_alldacs.append(*idac + " " + std::to_string(dacVal) + "; ");
     }
   }
+
   if(m_dacsFromConf) {
-    EUDAQ_USER(string("All DACs successfully read from ") + m_config.Name());
+    EUDAQ_USER(string("All DACs successfully read from config."));
+  }
+  else {
+    EUDAQ_USER(std::to_string(dacs.size()) + string(" DACs successfully read from config."));
   }
   return dacs;
 }
