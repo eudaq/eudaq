@@ -6,6 +6,7 @@
 
 #ifdef  USE_LCIO
 #include "EUTelTrackerDataInterfacerImpl.h"
+#include "EUTelGenericSparsePixel.h"
 #endif //  USE_LCIO
 
 namespace eudaq {

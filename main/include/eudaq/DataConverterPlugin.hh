@@ -14,6 +14,7 @@
 #  include "lcio.h"
 using namespace IMPL;
 using namespace UTIL;
+using lcio::TrackerDataImpl;
 #endif
 #include "TLUEvent.hh"
 
