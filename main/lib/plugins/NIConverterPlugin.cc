@@ -117,7 +117,7 @@ namespace eudaq {
       if (sync2 == Event_IS_Sync)
       {
      
-        out << ev.GetTimestamp() << " " << m_TimestampComparer.get_DUT_begin() << "   " << m_TimestampComparer.get_CLock_diff() << "   "<<m_comparer_no_sync_events.get_DUT_begin() << "   " << m_comparer_no_sync_events.get_CLock_diff()<< std::endl;
+       // out << ev.GetTimestamp() << " " << m_TimestampComparer.get_DUT_begin() << "   " << m_TimestampComparer.get_CLock_diff() << "   "<<m_comparer_no_sync_events.get_DUT_begin() << "   " << m_comparer_no_sync_events.get_CLock_diff()<< std::endl;
       }
       return sync2;
 #else 
@@ -393,7 +393,7 @@ namespace eudaq {
     mutable int m_offset = 0, m_syncEvent = 0;
 
     CompareTimeStampsWithJitter m_TimestampComparer, m_comparer_no_sync_events;
-    mutable std::ofstream out = std::ofstream("debug.txt");
+    //mutable std::ofstream out; = std::ofstream("debug.txt");
   };
 
   NIConverterPlugin const NIConverterPlugin::m_instance;
