@@ -120,21 +120,24 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_pattern_delay = config.Get("patternDelay", 100);
   }
 
-  // Read DACs and trimming from config
-  std::string trimFile;
-  if(config.Get("trimFile", "") != "") { trimFile = config.Get("trimFile", ""); }
-  else { trimFile = config.Get("trimDir", "") + string("/trimParameters.dat"); }
-
-  rocDACs.push_back(GetConfDACs());
-  rocPixels.push_back(GetConfTrimming(trimFile));
-
-  // Set the type of the ROC correctly:
-  m_roctype = config.Get("roctype","psi46digv2");  
-
-  // Read the type of carrier PCB used ("desytb", "desytb-rot"):
-  m_pcbtype = config.Get("pcbtype","desytb");
-
   try {
+    // Read DACs and trimming from config
+    std::string trimFile;
+    if(config.Get("trimFile", "") != "") { trimFile = config.Get("trimFile", ""); }
+    else { trimFile = config.Get("trimDir", "") + string("/trimParameters.dat"); }
+    rocPixels.push_back(GetConfTrimming(trimFile));
+
+    // If a DAC file is provided we read the DAC settings from there:
+    if(config.Get("dacFile", "") != "") { rocDACs.push_back(GetConfDACs(config.Get("dacFile", ""))); }
+    // If no file is provided, we try to use the DACs defined in the config file directly:
+    else { rocDACs.push_back(GetConfDACs()); }
+
+    // Set the type of the ROC correctly:
+    m_roctype = config.Get("roctype","psi46digv2");
+
+    // Read the type of carrier PCB used ("desytb", "desytb-rot"):
+    m_pcbtype = config.Get("pcbtype","desytb");
+
     // create api
     if(m_api != NULL) { delete m_api; }
       
