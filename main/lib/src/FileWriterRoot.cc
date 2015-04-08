@@ -92,7 +92,6 @@ namespace eudaq {
 
         i_tlu= sev.GetTag("TLU_trigger",(unsigned)15);
 
-
         i_run = sev.GetRunNumber();
         i_event = sev.GetEventNumber();                  
         m_ttree->Fill(); 
