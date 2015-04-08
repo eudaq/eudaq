@@ -14,6 +14,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(std::
 
   std::vector<std::pair<std::string,uint8_t> > dacs;
   std::ifstream file(filename);
+  size_t overwritten_dacs = 0;
 
   if(!file.fail()) {
     EUDAQ_INFO(string("Reading DAC settings from file \"") + filename + string("\"."));
@@ -33,18 +34,32 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(std::
 	newstream >> name >> value;
       }
 
+      // Convert to lower case for cross-checking with eduaq config:
+      std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+
       // Check if reading was correct:
       if(name.empty()) {
-	EUDAQ_EXTRA(string("Problem reading DACs from file ") + filename + string(": DAC name appears to be empty.\n"));
-	std::cout << "WARNING: Problem reading DACs from file " << filename << ": DAC name appears to be empty." << std::endl;
+	EUDAQ_ERROR(string("Problem reading DACs from file \"") + filename + string("\": DAC name appears to be empty.\n"));
+	throw pxar::InvalidConfig("WARNING: Problem reading DACs from file \"" + filename + "\": DAC name appears to be empty.");
       }
-      else {
-	dacs.push_back(make_pair(name, value));
-	m_alldacs.append(name + " " + std::to_string(value) + "; ");
+
+      // Skip the current limits that are wrongly placed in the DAC file sometimes (belong to the DTB!)
+      if(name == "vd" || name == "va") { continue; }
+
+      // Check if this DAC is overwritten by directly specifying it in the config file:
+      if(m_config.Get(name, -1) != -1) {
+	std::cout << "Overwriting DAC " << name << " from file: " << value;
+	value = m_config.Get(name, -1);
+	std::cout << " -> " << value << std::endl;
+	overwritten_dacs++;
       }
+
+      dacs.push_back(make_pair(name, value));
+      m_alldacs.append(name + " " + std::to_string(value) + "; ");
     }
-    m_dacsFromConf = true;
-    EUDAQ_USER(string("DACs successfully read from DAC file."));
+
+    EUDAQ_USER(string("Successfully read ") + std::to_string(dacs.size()) 
+	       + string(" DACs from file, ") + std::to_string(overwritten_dacs) + string(" overwritten by config."));
   }
   else {
     EUDAQ_ERROR(string("Could not open DAC file \"") + filename + string("\"."));
@@ -52,42 +67,6 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(std::
     throw pxar::InvalidConfig("Could not open DAC file.");
   }
 
-  return dacs;
-}
-
-std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs() {
-
-  EUDAQ_INFO(string("Reading DAC settings from eudaq config \"") + m_config.Name() + string("\"."));
-  std::cout << "Reading DAC settings from eudaq config \"" << m_config.Name() << "\".";
-
-  std::vector<std::pair<std::string,uint8_t> >  dacs; 
-  RegisterDictionary * dict = RegisterDictionary::getInstance();
-  std::vector<std::string> DACnames =  dict -> getAllROCNames();
-  std::cout << " looping over DAC names \n ";
-  m_dacsFromConf = true;
-
-  for (std::vector<std::string>::iterator idac = DACnames.begin(); idac != DACnames.end(); ++idac) {
-    if(m_config.Get(*idac, -1) == -1){
-      EUDAQ_EXTRA(string("Roc DAC ") + *idac + string(" not defined in config file ") + m_config.Name() +
-		 string(". Using default values.\n"));
-      std::cout << "WARNING: Roc DAC " << *idac << " not defined in config file " << m_config.Name() 
-		<< ". Using default values." << std::endl;
-      m_dacsFromConf = false;
-    }
-    else{
-      uint8_t dacVal = m_config.Get(*idac, 0);
-      std::cout << *idac << " " << (int)dacVal << std::endl;
-      dacs.push_back(make_pair(*idac, dacVal));
-      m_alldacs.append(*idac + " " + std::to_string(dacVal) + "; ");
-    }
-  }
-
-  if(m_dacsFromConf) {
-    EUDAQ_USER(string("All DACs successfully read from config."));
-  }
-  else {
-    EUDAQ_USER(std::to_string(dacs.size()) + string(" DACs successfully read from config."));
-  }
   return dacs;
 }
 

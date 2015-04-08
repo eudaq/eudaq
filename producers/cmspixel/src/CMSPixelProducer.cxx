@@ -39,7 +39,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_running(false),
     m_api(NULL),
     m_verbosity(verbosity),
-    m_dacsFromConf(false),
     m_trimmingFromConf(false),
     m_pattern_delay(0),
     m_trigger_is_pg(false),
@@ -128,10 +127,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     else { trimFile = config.Get("trimDir", "") + string("/trimParameters.dat"); }
     rocPixels.push_back(GetConfTrimming(trimFile));
 
-    // If a DAC file is provided we read the DAC settings from there:
-    if(config.Get("dacFile", "") != "") { rocDACs.push_back(GetConfDACs(config.Get("dacFile", ""))); }
-    // If no file is provided, we try to use the DACs defined in the config file directly:
-    else { rocDACs.push_back(GetConfDACs()); }
+    // Read the DAC file, but update the vector with single DAC settings provided in the config:
+    rocDACs.push_back(GetConfDACs(config.Get("dacFile", "")));
 
     // Set the type of the ROC correctly:
     m_roctype = config.Get("roctype","psi46digv2");
@@ -220,8 +217,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Current DAC settings:" << std::endl;
     m_api->_dut->printDACs(0);
 
-    /*if(!m_dacsFromConf)
-      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all DAC parameters from config file " + config.Name() + ".");*/
     if(!m_trimmingFromConf)
       SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
     else
