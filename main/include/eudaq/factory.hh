@@ -25,8 +25,11 @@ namespace EUDAQ_Utilities{
     using Parameter_ref = typename baseClassType::Parameter_ref;
     using u_pointer = std::unique_ptr < baseClassType > ;
     typedef u_pointer (*factoryfunc)(Parameter_ref);
-    using map_t = std::map < typename MainType, typename Factory<baseClassType>::factoryfunc > ;
-
+#ifdef WIN32
+    using map_t = std::map <typename MainType,typename  Factory<baseClassType>::factoryfunc > ;
+#else
+    using map_t = std::map < MainType, Factory<baseClassType>::factoryfunc >;
+#endif
 
 
     static u_pointer Create(const MainType & name, Parameter_ref params);
