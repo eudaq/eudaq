@@ -13,6 +13,8 @@
 #include <vector>
 #include <string>
 
+#include "eudaq/Platform.hh"
+
 namespace eutelescope {
 
   //! This is the SUSHVPIX / Taki detector
@@ -21,7 +23,7 @@ namespace eutelescope {
    */
 
   //class EUTelSUSHVPIXDetector : public EUTelPixelDetector {
-  class EUTelTakiDetector : public EUTelPixelDetector {
+  class  DLLEXPORT  EUTelTakiDetector : public EUTelPixelDetector {
 
   public:
     //! Default constructor
