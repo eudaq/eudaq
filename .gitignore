@@ -41,6 +41,10 @@ extern/tlufirmware
 extern/pthread*
 extern/libusb*
 
+
+#ignore debug folder 
+debug/*
+
 # ignore python byte code
 *.pyc
 
