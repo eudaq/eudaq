@@ -28,7 +28,7 @@ namespace eudaq {
     //std::cout << "DEBUG: Registering DataConverterPlugin: " << Event::id2str(m_eventtype.first) << ":" << m_eventtype.second << std::endl;
     PluginManager::GetInstance().RegisterPlugin(this);
   }
-
+#ifdef USE_LCIO
   void ConvertPlaneToLCIOGenericPixel(StandardPlane & plane, lcio::TrackerDataImpl& zsFrame)
   {
      // helper object to fill the TrakerDater object 
@@ -40,5 +40,5 @@ namespace eudaq {
     }
   
   }
-
+#endif // USE_LCIO
 }//namespace eudaq

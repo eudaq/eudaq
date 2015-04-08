@@ -57,6 +57,7 @@ int numberOfEvents_inplane;
 
 namespace eudaq {
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
+#if USE_LCIO
   bool Collection_createIfNotExist(lcio::LCCollectionVec** zsDataCollection, const lcio::LCEvent & lcioEvent, const char * name){
 
     bool zsDataCollectionExists = false;
@@ -72,7 +73,7 @@ namespace eudaq {
 
     return zsDataCollectionExists;
   }
-
+#endif
   void puschDataInStandartPlane(const std::vector<unsigned char>& inputVector, int moduleNr, StandardPlane& plane){
     int y_pos = (moduleNr - 1) * 2 + 1;
 
