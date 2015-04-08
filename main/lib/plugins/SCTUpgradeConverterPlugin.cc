@@ -16,6 +16,7 @@
 using eutelescope::EUTELESCOPE;
 using eutelescope::EUTelTrackerDataInterfacerImpl;
 using eutelescope::EUTelGenericSparsePixel;
+
 #endif
 #include <iostream>
 #include <string>
@@ -56,17 +57,17 @@ int numberOfEvents_inplane;
 
 namespace eudaq {
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
-  bool Collection_createIfNotExist(LCCollectionVec** zsDataCollection, const lcio::LCEvent & lcioEvent, const char * name){
+  bool Collection_createIfNotExist(lcio::LCCollectionVec** zsDataCollection, const lcio::LCEvent & lcioEvent, const char * name){
 
     bool zsDataCollectionExists = false;
     try
     {
-      *zsDataCollection = static_cast<LCCollectionVec*> (lcioEvent.getCollection(name));
+      *zsDataCollection = static_cast<lcio::LCCollectionVec*> (lcioEvent.getCollection(name));
       zsDataCollectionExists = true;
     }
     catch (lcio::DataNotAvailableException& e)
     {
-      *zsDataCollection = new LCCollectionVec(lcio::LCIO::TRACKERDATA);
+      *zsDataCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERDATA);
     }
 
     return zsDataCollectionExists;
