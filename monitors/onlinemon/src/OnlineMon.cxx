@@ -52,7 +52,7 @@ using namespace std;
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-: eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline){
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false) {
 
   if (_offline <= 0)
   {
@@ -217,15 +217,14 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   if (reduce)
   {
     unsigned int num = (unsigned int) ev.NumPlanes();
-    // some simple consistency checks
-    if (ev.GetEventNumber() < 1)
-    {
+    // Initialize the geometry with the first event received:
+    if(!_planesInitialized) {
       myevent.setNPlanes(num);
+      _planesInitialized = true;
+      std::cout << "Initialized geometry." << std::endl;
     }
-    else
-    {
-      if (myevent.getNPlanes()!=num)
-      {
+    else {
+      if (myevent.getNPlanes()!=num) {
 
         cout << "Plane Mismatch on " <<ev.GetEventNumber()<<endl;
         cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
@@ -235,8 +234,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
         EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
 
       }
-      else
-      {
+      else {
         myevent.setNPlanes(num);
       }
     }
