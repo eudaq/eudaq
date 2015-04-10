@@ -139,6 +139,8 @@ namespace eudaq {
 
   void DataCollector::OnCompleteEvent() {
     bool more = true;
+    bool found_bore = false;
+
     while (more) {
       if (m_eventnumber < 10 || m_eventnumber % 1000 == 0) {
         std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
@@ -176,6 +178,7 @@ namespace eudaq {
       if (ev.IsBORE()) {
         ev.SetTag("STARTTIME", m_runstart.Formatted());
         ev.SetTag("CONFIG", to_string(m_config));
+	found_bore = true;
       }
       if (ev.IsEORE()) {
         ev.SetTag("STOPTIME", Time::Current().Formatted());
@@ -193,8 +196,11 @@ namespace eudaq {
       } else {
         EUDAQ_ERROR("Event received before start of run");
       }
-      //std::cout << ev << std::endl;
-      ++m_eventnumber;
+
+      // Only increase the internal event counter for non-BORE events.
+      // This is required since all producers start sending data with event ID 0
+      // but the data collector would already be at 1, since BORE was 0.
+      if(!found_bore) ++m_eventnumber;
     }
   }
 

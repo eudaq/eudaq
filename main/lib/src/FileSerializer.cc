@@ -52,13 +52,11 @@ namespace eudaq {
     if (fseek(m_file, 0L, SEEK_END) != 0) {
         EUDAQ_THROWX(FileReadException, "seek to end failed: " + fname);
     }
-    if (ftell(m_file) == 0) {
-        EUDAQ_THROWX(FileReadException, "file is empty: " + fname);
-    }
     // go back to the beginning of the file
     if (fseek(m_file, 0L, SEEK_SET) != 0) {
         EUDAQ_THROWX(FileReadException, "seek to begin failed: " + fname);
     }
+
   }
 
   bool FileDeserializer::HasData() {

@@ -76,6 +76,7 @@ class RootMonitor : private eudaq::Holder<int>,
       int _offline;
       CheckEOF _checkEOF;
 
+      bool _planesInitialized;
       //bool _autoReset;
 
     public:
