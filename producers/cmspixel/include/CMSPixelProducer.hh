@@ -39,6 +39,7 @@ private:
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
   unsigned m_tlu_waiting_time;
+  unsigned m_roc_resetperiod;
   std::string m_verbosity, m_foutName, m_roctype, m_pcbtype, m_usbId, m_producerName, m_detector, m_event_type, m_alldacs;
   bool m_terminated, m_running, triggering;
   bool m_trimmingFromConf, m_trigger_is_pg;
@@ -51,6 +52,6 @@ private:
   int m_pattern_delay;
   uint8_t m_perFull;
   std::ofstream m_fout;
-  eudaq::Timer* m_t;
+  eudaq::Timer* m_t, *m_reset_timer;
 };
 #endif /*CMSPIXELPRODUCER_HH*/

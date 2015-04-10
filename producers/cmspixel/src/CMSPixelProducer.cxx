@@ -35,6 +35,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_ev_filled(0),
     m_ev_runningavg_filled(0),
     m_tlu_waiting_time(4000),
+    m_roc_resetperiod(0),
     m_terminated(false),
     m_running(false),
     m_api(NULL),
@@ -103,6 +104,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   power_settings.push_back( std::make_pair("vd",config.Get("vd",2.5)) );
   power_settings.push_back( std::make_pair("ia",config.Get("ia",1.10)) );
   power_settings.push_back( std::make_pair("id",config.Get("id",1.10)) );
+
+  // Periodic ROC resets:
+  m_roc_resetperiod = config.Get("rocresetperiod", 0);
+  if(m_roc_resetperiod > 0) { EUDAQ_USER("Sending periodic ROC resets every " + eudaq::to_string(m_roc_resetperiod) + "ms\n"); }
 
   // Pattern Generator:
   bool testpulses = config.Get("testpulses", false);
@@ -292,6 +297,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
       triggering = true;
     }
 
+    // Start the timer for period ROC reset:
+    m_reset_timer = new eudaq::Timer;
+
     SetStatus(eudaq::Status::LVL_OK, "Running");
     m_running = true;
   }
@@ -402,6 +410,12 @@ void CMSPixelProducer::ReadoutLoop() {
 	m_api->daqStatus(m_perFull);
 	m_t->Restart();
 	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
+      }
+
+      // Send periodic ROC Reset
+      if(m_roc_resetperiod > 0 && m_reset_timer->mSeconds() > m_roc_resetperiod) {
+	if(!m_api->daqSingleSignal("resetroc")) { EUDAQ_ERROR(string("Unable to send ROC reset signal!\n")); }
+	m_reset_timer->Restart();
       }
 
       // Trying to get the next event, daqGetRawEvent throws exception if none is available:
