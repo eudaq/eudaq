@@ -47,6 +47,16 @@ namespace eudaq {
   {
     m_file = fopen(fname.c_str(), "rb");
     if (!m_file) EUDAQ_THROWX(FileNotFoundException, "Unable to open file: " + fname);
+    // check if the file actually contains data. otherwise it will hang
+    // later on while trying to sync the events
+    if (fseek(m_file, 0L, SEEK_END) != 0) {
+        EUDAQ_THROWX(FileReadException, "seek to end failed: " + fname);
+    }
+    // go back to the beginning of the file
+    if (fseek(m_file, 0L, SEEK_SET) != 0) {
+        EUDAQ_THROWX(FileReadException, "seek to begin failed: " + fname);
+    }
+
   }
 
   bool FileDeserializer::HasData() {
