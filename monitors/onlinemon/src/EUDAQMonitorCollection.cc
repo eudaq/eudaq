@@ -30,7 +30,7 @@ void EUDAQMonitorCollection::fillHistograms(const SimpleStandardEvent & ev)
 
 void EUDAQMonitorCollection::Reset()
 {
-  mymonhistos->Reset();
+  if(mymonhistos != NULL) mymonhistos->Reset();
 }
 
 
