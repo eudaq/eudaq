@@ -52,12 +52,12 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
 
     sprintf(out,"%s %i Raw Hitmap X-Projection",_sensor.c_str(), _id);
     sprintf(out2,"h_hitXmap_%s_%i",_sensor.c_str(), _id);
-    _hitXmap = new TH1I(out2, out,_maxX+1,0,_max);
+    _hitXmap = new TH1I(out2, out,_maxX+1,0,_maxX);
     SetHistoAxisLabelx(_clusterSize,"X");
 
     sprintf(out,"%s %i Raw Hitmap Y-Projection",_sensor.c_str(), _id);
     sprintf(out2,"h_hitYmap_%s_%i",_sensor.c_str(), _id);
-    _hitYmap = new TH1I(out2, out,_maxY+1,0,_maxY,);
+    _hitYmap = new TH1I(out2, out,_maxY+1,0,_maxY);
     SetHistoAxisLabelx(_clusterSize,"Y");
 
     sprintf(out,"%s %i Cluster Hitmap",_sensor.c_str(),_id);
