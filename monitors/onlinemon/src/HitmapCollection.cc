@@ -192,6 +192,13 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
 #endif
     _mon->getOnlineMon()->addTreeItemSummary(folder,tree);
 
+    sprintf(tree,"%s/Sensor %i/Hitmap X Projection",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getHitXmapHisto());
+
+    sprintf(tree,"%s/Sensor %i/Hitmap Y Projection",p.getName().c_str(),p.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(tree,getHitmapHistos(p.getName(),p.getID())->getHitYmapHisto());
 
     sprintf(tree,"%s/Sensor %i/Clustermap",p.getName().c_str(),p.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
