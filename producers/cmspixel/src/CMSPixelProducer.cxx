@@ -5,6 +5,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
+#include "config.h" // Version symbols
 
 #include "api.h"
 #include "ConfigParameters.hh"
@@ -202,7 +203,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api->SignalProbe("d2", config.Get("signalprobe_d2","tout"));
     EUDAQ_USER("Setting scope output D2 to \"" + config.Get("signalprobe_d2","tout") + "\"\n");
 
-    EUDAQ_USER("API set up succesfully...\n");
+    EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
 
     // All on!
     m_api->_dut->maskAllPixels(false);
@@ -274,6 +275,11 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
 
     // Set the detector for correct plane assignment:
     bore.SetTag("DETECTOR", m_detector);
+
+    // Store the pxarCore version this has been recorded with:
+    bore.SetTag("PXARCORE", m_api->getVersion());
+    // Store eudaq library version:
+    bore.SetTag("EUDAQ", PACKAGE_VERSION);
 
     // Send the event out:
     SendEvent(bore);
