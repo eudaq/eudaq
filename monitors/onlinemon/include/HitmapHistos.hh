@@ -30,6 +30,8 @@ class HitmapHistos {
     int _maxY;
     bool _wait;
     TH2I * _hitmap;
+    TH1I * _hitXmap;
+    TH1I * _hitYmap;
     TH2I * _clusterMap;
     TH2D * _HotPixelMap;
     TH1I * _lvl1Distr;
@@ -67,6 +69,8 @@ class HitmapHistos {
 
 
     TH2I * getHitmapHisto() { return _hitmap; }
+    TH1I * getHitXmapHisto() { return _hitXmap; }
+    TH1I * getHitYmapHisto() { return _hitYmap; }
     TH1I * getHitmapSectionsHisto() { return _hitmapSections; }
     TH2I * getClusterMapHisto() { return _clusterMap; }
     TH2D * getHotPixelMapHisto() { return _HotPixelMap; }
