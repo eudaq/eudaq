@@ -193,10 +193,23 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Output the configured signal to the probes:
-    m_api->SignalProbe("d1", config.Get("signalprobe_d1","ctr"));
-    EUDAQ_USER("Setting scope output D1 to \"" + config.Get("signalprobe_d1","ctr") + "\"\n");
-    m_api->SignalProbe("d2", config.Get("signalprobe_d2","tout"));
-    EUDAQ_USER("Setting scope output D2 to \"" + config.Get("signalprobe_d2","tout") + "\"\n");
+    std::string signal_d1 = config.Get("signalprobe_d1","off");
+    std::string signal_d2 = config.Get("signalprobe_d2","off");
+    std::string signal_a1 = config.Get("signalprobe_a1","off");
+    std::string signal_a2 = config.Get("signalprobe_a2","off");
+    
+    if(m_api->SignalProbe("d1", signal_d1) && signal_d1 != "off") {
+      EUDAQ_USER("Setting scope output D1 to \"" + signal_d1 + "\"\n");
+    }
+    if(m_api->SignalProbe("d2", signal_d2) && signal_d2 != "off") {
+      EUDAQ_USER("Setting scope output D2 to \"" + signal_d2 + "\"\n");
+    }
+    if(m_api->SignalProbe("a1", signal_a1) && signal_a1 != "off") {
+      EUDAQ_USER("Setting scope output A1 to \"" + signal_a1 + "\"\n");
+    }
+    if(m_api->SignalProbe("a2", signal_a2) && signal_a2 != "off") {
+      EUDAQ_USER("Setting scope output A2 to \"" + signal_a2 + "\"\n");
+    }
 
     EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
 
