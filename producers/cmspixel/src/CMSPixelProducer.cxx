@@ -224,13 +224,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api->_dut->printDACs(0);
 
     if(!m_trimmingFromConf)
-      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read trim parameters from \"" + config.Name() + "\".");
     else
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
     std::cout << "=============================\nCONFIGURED\n=============================" << std::endl;
-
   }
-
   catch (pxar::InvalidConfig &e){
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
@@ -306,7 +304,7 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Start the timer for period ROC reset:
     m_reset_timer = new eudaq::Timer;
 
-    SetStatus(eudaq::Status::LVL_OK, "Running");
+    SetStatus(eudaq::Status::LVL_USER, "Running - HV ON!");
     m_running = true;
   }
   catch (...) {
