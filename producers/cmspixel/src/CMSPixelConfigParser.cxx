@@ -10,18 +10,18 @@
 using namespace pxar; 
 using namespace std; 
 
-std::vector<uint8_t> &CMSPixelProducer::split(const std::string &s, char delim, std::vector<uint8_t> &elems) {
+std::vector<int32_t> &CMSPixelProducer::split(const std::string &s, char delim, std::vector<int32_t> &elems) {
   std::stringstream ss(s);
   std::string item;
-  uint32_t def = 0;
+  int32_t def = 0;
   while (std::getline(ss, item, delim)) {
-    elems.push_back(static_cast<uint8_t>(eudaq::from_string(item,def)));
+    elems.push_back(eudaq::from_string(item,def));
   }
   return elems;
 }
 
-std::vector<uint8_t> CMSPixelProducer::split(const std::string &s, char delim) {
-  std::vector<uint8_t> elems;
+std::vector<int32_t> CMSPixelProducer::split(const std::string &s, char delim) {
+  std::vector<int32_t> elems;
   split(s, delim, elems);
   return elems;
 }

@@ -34,8 +34,8 @@ private:
 
   // Helper function to read DACs from file which is provided via eudaq config:
   std::vector<std::pair<std::string,uint8_t> > GetConfDACs(int16_t i2c = -1);
-  std::vector<uint8_t> &split(const std::string &s, char delim, std::vector<uint8_t> &elems);
-  std::vector<uint8_t> split(const std::string &s, char delim);
+  std::vector<int32_t> &split(const std::string &s, char delim, std::vector<int32_t> &elems);
+  std::vector<int32_t> split(const std::string &s, char delim);
 
   std::vector<pxar::pixelConfig> GetConfTrimming(int16_t i2c = -1);
 
