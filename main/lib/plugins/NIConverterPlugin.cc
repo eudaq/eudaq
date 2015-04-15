@@ -38,7 +38,7 @@ using eutelescope::EUTELESCOPE;
 #include <memory>
 #include <iomanip>
 #include <algorithm>
-#include <xfunctional>
+#include <functional>
 
 #define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
 
