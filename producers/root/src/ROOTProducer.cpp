@@ -23,30 +23,7 @@
 const int gTimeout_delay = 1000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
 
-inline	void bool2uchar1(const bool* inBegin,const bool* inEnd,std::vector<unsigned char>& out){
 
-  int j=0;
-  unsigned char dummy=0;
-  //bool* d1=&in[0];
-  size_t size=(inEnd-inBegin);
-  if (size%8)
-  {
-    size+=8;
-  }
-  size/=8;
-  out.reserve(size);
-  for (auto i=inBegin;i<inEnd;++i)
-  {
-    dummy+=(unsigned char)(*i)<<(j%8);
-
-    if ((j%8)==7)
-    {
-      out.push_back(dummy);
-      dummy=0;
-    }
-    ++j;
-  }
-}
 
 
 
@@ -307,7 +284,7 @@ virtual	void OnTerminate() {
     void addDataBlock2Event(eudaq::RawDataEvent& rev){
       try{
         std::vector<unsigned char> out;
-        bool2uchar1(m_inputVector ,m_inputVector+m_Elements,out);
+        eudaq::bool2uchar(m_inputVector ,m_inputVector+m_Elements,out);
         rev.AddBlock(m_plane,out);
         
       }
@@ -458,7 +435,7 @@ void ROOTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned cha
 
 	 try{
 		 std::vector<unsigned char> out;
-		 bool2uchar1(inputVector ,inputVector+Elements,out);
+		 eudaq::bool2uchar(inputVector ,inputVector+Elements,out);
 		 m_prod->AddPlane2Event(plane, out);
 	 }
 	 catch(...){

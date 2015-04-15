@@ -42,13 +42,17 @@ using eutelescope::EUTelGenericSparsePixel;
 
 
 
-void uchar2bool(const std::vector<unsigned char>& in, int lOffset, int hOffset, std::vector<bool>& out){
-  for (auto i = in.begin() + lOffset; i != in.begin() + hOffset; ++i)
-  {
-    for (int j = 0; j < 8; ++j){
-      out.push_back((*i)&(1 << j));
-    }
-  }
+inline void helper_uchar2bool(const std::vector<unsigned char>& in, int lOffset, int hOffset, std::vector<bool>& out){
+ 
+  
+  eudaq::uchar2bool(in.data() + lOffset, in.data() + hOffset, out);
+  
+//   for (auto i = in.begin() + lOffset; i != in.begin() + hOffset; ++i)
+//   {
+//     for (int j = 0; j < 8; ++j){
+//       out.push_back((*i)&(1 << j));
+//     }
+//   }
 
 
 }
@@ -85,7 +89,7 @@ namespace eudaq {
 
 
 
-      uchar2bool(inputVector,
+      helper_uchar2bool(inputVector,
         STREAMSTART(streamNr) + (moduleNr - 1)*TOTALMODULSIZE,
         STREAMEND(streamNr) + (moduleNr - 1)*TOTALMODULSIZE,
         outputStream0);
