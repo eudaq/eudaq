@@ -33,9 +33,13 @@ private:
   void ReadInFullBufferWriteASCII();
 
   // Helper function to read DACs from file which is provided via eudaq config:
-  std::vector<std::pair<std::string,uint8_t> > GetConfDACs(std::string filename);
+  std::vector<std::pair<std::string,uint8_t> > GetConfDACs(int16_t i2c = -1);
+  std::vector<uint8_t> &split(const std::string &s, char delim, std::vector<uint8_t> &elems);
+  std::vector<uint8_t> split(const std::string &s, char delim);
 
-  std::vector<pxar::pixelConfig> GetConfTrimming(std::string filename);
+  std::vector<pxar::pixelConfig> GetConfTrimming(int16_t i2c = -1);
+
+  std::string prepareFilename(std::string filename, int16_t n);
 
   unsigned m_run, m_ev, m_ev_filled, m_ev_runningavg_filled;
   unsigned m_tlu_waiting_time;

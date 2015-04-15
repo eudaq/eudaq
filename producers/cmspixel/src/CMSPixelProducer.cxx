@@ -13,6 +13,7 @@
 #include "constants.h"
 #include "dictionaries.h"
 #include "log.h"
+#include "helper.h"
 
 #include "CMSPixelProducer.hh"
 
@@ -127,14 +128,24 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   }
 
   try {
-    // Read DACs and trimming from config
-    std::string trimFile;
-    if(config.Get("trimFile", "") != "") { trimFile = config.Get("trimFile", ""); }
-    else { trimFile = config.Get("trimDir", "") + string("/trimParameters.dat"); }
-    rocPixels.push_back(GetConfTrimming(trimFile));
+    // Check for multiple ROCs using the I2C parameter:
+    std::vector<uint8_t> i2c_addresses = split(config.Get("i2c","i2caddresses","0"),' ');
+    std::cout << "Found " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
 
-    // Read the DAC file, but update the vector with single DAC settings provided in the config:
-    rocDACs.push_back(GetConfDACs(config.Get("dacFile", "")));
+    // For single ROCs assume the file names are given as they are:
+    if(i2c_addresses.size() == 1) {
+      rocPixels.push_back(GetConfTrimming());
+      rocDACs.push_back(GetConfDACs());
+    }
+    // Read DACs and Trim settings for all ROCs, one for each I2C address:
+    else {
+      for(uint8_t i2c : i2c_addresses) {
+	// Read trimming from config:
+	rocPixels.push_back(GetConfTrimming(static_cast<int16_t>(i2c)));
+	// Read the DAC file and update the vector with overwrite DAC settings from config:
+	rocDACs.push_back(GetConfDACs(static_cast<int16_t>(i2c)));
+      }
+    }
 
     // Set the type of the ROC correctly:
     m_roctype = config.Get("roctype","psi46digv2");
@@ -157,7 +168,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       EUDAQ_ERROR(string("Firmware mismatch."));
       throw pxar::pxarException("Firmware mismatch");
     }
-    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
+
+    // Initialize the DUT as configured above:
+    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels,i2c_addresses);
 
     // Read current:
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
