@@ -8,8 +8,6 @@
 #include "config.h" // Version symbols
 
 #include "api.h"
-#include "ConfigParameters.hh"
-#include "PixTestParameters.hh"
 #include "constants.h"
 #include "dictionaries.h"
 #include "log.h"
@@ -162,8 +160,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     // Allow overwriting of verbosity level via command line:
     m_verbosity = config.Get("verbosity", m_verbosity);
 
+    // Get a new pxar instance:
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
+    // Initialize the testboard:
     if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { 
       EUDAQ_ERROR(string("Firmware mismatch."));
       throw pxar::pxarException("Firmware mismatch");
