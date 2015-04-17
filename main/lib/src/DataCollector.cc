@@ -13,6 +13,7 @@
 #include "eudaq/FileWriter.hh"
 #include "eudaq/EventSynchronisationBase.hh"
 
+
 #include "config.h"
 
 namespace eudaq {
@@ -60,6 +61,7 @@ namespace eudaq {
     Info info;
     info.id = std::shared_ptr<ConnectionInfo>(id.Clone());
     m_buffer.push_back(info);
+
   }
 
   void DataCollector::OnDisconnect(const ConnectionInfo & id) {
@@ -88,12 +90,11 @@ namespace eudaq {
       if (!m_writer) {
         EUDAQ_THROW("You must configure before starting a run");
       }
-      m_writer->StartRun(  runnumber );
+      m_writer->StartRun(runnumber);
       WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
-
-
+            
       SetStatus(Status::LVL_OK);
     } catch (const Exception & e) {
       std::string msg = "Error preparing for run " + to_string(runnumber) + ": " + e.what();
@@ -106,6 +107,14 @@ namespace eudaq {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
     // Leave the file open, more events could still arrive
     //m_ser = counted_ptr<FileSerializer>();
+    while (!m_sync->OutputIsEmpty())
+    {
+      std::cout << "waiting for Outputqueue " << std::endl;
+      eudaq::mSleep(20);
+    }
+    m_sync.reset();
+    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, "");
+    std::cout << "stopping " << std::endl;
   }
 
 
@@ -136,7 +145,7 @@ namespace eudaq {
         return;
       }
     }
-    //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
+
 
     if (m_numOfBoreEvents < m_expected_data_streams)
     {
@@ -185,10 +194,6 @@ namespace eudaq {
       m_status.SetTag("SYNC", m_nameOfSyncAlgorithm);
     }
   }
-
-
-
-
 
 
   size_t DataCollector::GetInfo(const ConnectionInfo & id) {
