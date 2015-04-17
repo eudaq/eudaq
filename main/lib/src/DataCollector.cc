@@ -142,6 +142,27 @@ namespace eudaq {
     {
       EUDAQ_WARN("to many bore events ");
     }
+
+    std::shared_ptr<Event> dev;
+    while(m_sync->getNextEvent(dev)&&m_writer){
+      if (dev->IsBORE()) {
+        dev->SetTag("STARTTIME", m_runstart.Formatted());
+        dev->SetTag("CONFIG", to_string(m_config));
+      }
+      if (dev->IsEORE()) {
+        dev->SetTag("STOPTIME", Time::Current().Formatted());
+        EUDAQ_INFO("Run " + to_string(dev->GetRunNumber()) + ", EORE = " + to_string(dev->GetEventNumber()));
+      }
+
+      m_writer->WriteBaseEvent(*dev);
+      
+      if (m_eventnumber <= 10 || m_eventnumber % 100 == 0) {
+        std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
+      }
+      ++m_eventnumber;
+
+    }
+      
   }
 
   void DataCollector::OnStatus() {
