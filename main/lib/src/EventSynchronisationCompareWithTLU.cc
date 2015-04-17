@@ -75,19 +75,16 @@ namespace eudaq{
 
     if (PluginManager::isTLU(*BOREEvent))
     {
-      if (m_TLUs_found == 0)
+      if (m_TLUs_found>0)
       {
-        m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = 0;
+      m_TLU_pos = m_event_id;
       }
-      else{
-        m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = m_event_id++; //only the first TLU gets threated differently all others are just producers
-      }
+     
       ++m_TLUs_found;
     }
-    else{
 
-      m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = m_event_id++;
-    }
+    m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = m_event_id++;
+
 
     size_t elements = 0;
     for (auto&e1:m_ProducerId2Eventqueue)
