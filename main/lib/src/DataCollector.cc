@@ -113,7 +113,10 @@ namespace eudaq {
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev ) {
     //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
+    if (!m_sync->pushEvent(ev, GetInfo(id))){
+      EUDAQ_WARN("no more data from producer: " + id.GetName()); 
 
+    }
       }
     }
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
