@@ -86,6 +86,8 @@ namespace eudaq{
     void event_queue_pop();
     eventqueue_t& getQueuefromId(unsigned producerID);
     eventqueue_t& getQueuefromId(unsigned fileIndex, unsigned eventIndex);
+    bool ProducerQueueExist(unsigned producerID);
+
 
     eventqueue_t& getFirstTLUQueue();
     unsigned getUniqueID(unsigned fileIndex, unsigned eventIndex) const ;

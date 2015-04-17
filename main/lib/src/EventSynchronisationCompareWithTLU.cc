@@ -181,9 +181,24 @@ namespace eudaq{
 
 
   Sync2TLU::eventqueue_t& Sync2TLU::getQueuefromId(unsigned producerID)
+  bool Sync2TLU::ProducerQueueExist(unsigned producerID)
   {
     if (m_ProducerId2Eventqueue.find(producerID) == m_ProducerId2Eventqueue.end()){
 
+      return false;
+    }
+
+
+    if (m_ProducerEventQueue.size() <= m_ProducerId2Eventqueue[producerID]){
+      return false;
+    }
+
+    return true;
+  }
+
+  Sync2TLU::eventqueue_t& Sync2TLU::getQueuefromId(unsigned producerID)
+  {
+    if (!ProducerQueueExist(producerID)){
       EUDAQ_THROW("unknown Producer ID " + std::to_string(producerID));
     }
     return m_ProducerEventQueue[m_ProducerId2Eventqueue[producerID]];
