@@ -72,7 +72,7 @@ namespace eudaq{
     virtual void storeCurrentOrder(){}
     virtual void makeDetectorEvent(){}
 
-
+    Event_sp m_bore;
     size_t  m_event_id = 0;
     /** The empty destructor. Need to add it to make it virtual.
      */
