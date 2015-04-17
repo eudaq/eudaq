@@ -16,7 +16,7 @@
 namespace eudaq {
   class FileWriter;
   class JSON;
-
+  class SyncBase;
   /** Implements the functionality of the File Writer application.
    *
    */
@@ -63,6 +63,8 @@ namespace eudaq {
 //       pthread_attr_t m_threadattr;
 	  std::unique_ptr<std::thread> m_thread;
       std::vector<Info> m_buffer;
+      std::unique_ptr<SyncBase> m_sync;
+      std::string m_nameOfSyncAlgorithm;
       size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
       size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       unsigned m_runnumber, m_eventnumber, m_packetNumberLastPacket;
