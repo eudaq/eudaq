@@ -199,7 +199,7 @@ namespace eudaq{
 
   Sync2TLU::eventqueue_t& Sync2TLU::getFirstTLUQueue()
   {
-    return m_ProducerEventQueue[0];
+    return m_ProducerEventQueue[m_TLU_pos];
   }
 
 
@@ -282,9 +282,13 @@ namespace eudaq{
 
   bool Sync2TLU::compareTLUwithEventQueues(Event_sp& tlu_event)
   {
-    for (size_t i = 1; i < m_ProducerEventQueue.size(); ++i)
+    for (auto& ev_queue: m_ProducerEventQueue)
     {
-      if (!compareTLUwithEventQueue(tlu_event, m_ProducerEventQueue[i])){
+      if (ev_queue==getFirstTLUQueue())
+      {
+        continue;
+      }
+      if (!compareTLUwithEventQueue(tlu_event, ev_queue)){
         // could not sync event.
         // TLU event is to early or event queue is empty;
         return false;
