@@ -117,10 +117,31 @@ namespace eudaq {
       EUDAQ_WARN("no more data from producer: " + id.GetName()); 
 
     }
+    if (ev->IsBORE())
+    {
+      ++m_numOfBoreEvents;
+      if (m_numOfBoreEvents == m_expected_data_streams)
+      {
+        //all bore events seen yet 
+        // since the merging of bore events happens only when the sync base has
+        //seen a real event in this data stream one has to skip this event.
+        // it will be processed in the when the next events comes in. it is not lost just waiting in the queue
+
+        return;
       }
     }
     //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
 
+    if (m_numOfBoreEvents < m_expected_data_streams)
+    {
+      //not all bore events seen yet 
+      return;
+    }
+
+    if (m_numOfBoreEvents>m_expected_data_streams)
+    {
+      EUDAQ_WARN("to many bore events ");
+    }
   }
 
   void DataCollector::OnStatus() {
