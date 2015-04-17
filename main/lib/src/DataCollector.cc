@@ -179,9 +179,10 @@ namespace eudaq {
     m_status.SetTag("RUN", to_string(m_runnumber));
     if (m_writer.get())
       m_status.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
-  }
 
-
+    if (m_sync)
+    {
+      m_status.SetTag("SYNC", m_nameOfSyncAlgorithm);
     }
   }
 
