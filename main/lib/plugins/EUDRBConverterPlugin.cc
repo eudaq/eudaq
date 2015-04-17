@@ -33,6 +33,7 @@ using eutelescope::EUTELESCOPE;
 #include <vector>
 #include <memory>
 #include <iomanip>
+#include <functional>
 
 namespace eudaq {
 
