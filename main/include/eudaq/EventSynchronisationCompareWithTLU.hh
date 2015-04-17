@@ -64,6 +64,7 @@ namespace eudaq{
     bool SyncFirstEvent();
     bool outputQueueIsEmpty() const;
     
+    virtual int   CompareEvents(eudaq::Event const & Current_event, eudaq::Event const & tlu_reference_event);
     virtual void Process_Event_is_sync(Event_sp ev, eudaq::Event const & tlu) {}
     virtual void Process_Event_is_late(Event_sp ev, eudaq::Event const & tlu) {}
     virtual void Process_Event_is_early(Event_sp ev, eudaq::Event const & tlu) {}
@@ -100,7 +101,6 @@ namespace eudaq{
 
     
     int m_TLUs_found = 0;
-
     size_t m_TLU_pos = 0;
     bool isAsync_ = false ,m_firstConfig=true;
     size_t NumberOfEventsToSync_;

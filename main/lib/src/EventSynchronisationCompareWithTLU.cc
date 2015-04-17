@@ -8,6 +8,8 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/EventSynchronisationCompareWithTLU.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/DataConverterPlugin.hh"
 
 
 #define FILEINDEX_OFFSET 10000
@@ -148,7 +150,6 @@ namespace eudaq{
 
   bool Sync2TLU::Event_Queue_Is_Empty() const
   {
-
     for (auto& q : m_ProducerEventQueue)
     {
       if (q.empty())
@@ -173,10 +174,7 @@ namespace eudaq{
           return true;
         }
       }
-
     }
-
-
     return false;
   }
 
@@ -188,7 +186,6 @@ namespace eudaq{
 
       EUDAQ_THROW("unknown Producer ID " + std::to_string(producerID));
     }
-    auto converions = m_ProducerId2Eventqueue[producerID];
     return m_ProducerEventQueue[m_ProducerId2Eventqueue[producerID]];
   }
 
@@ -242,40 +239,30 @@ namespace eudaq{
 
   bool Sync2TLU::compareTLUwithEventQueue(Event_sp& tlu_event, eudaq::Sync2TLU::eventqueue_t& event_queue)
   {
-    int ReturnValue = Event_IS_Sync;
-
-    //std::shared_ptr<TLUEvent> tlu=std::dynamic_pointer_cast<TLUEvent>(tlu_event);
-
-
+    int SyncStatus = Event_IS_Sync;
 
     while (!event_queue.empty())
     {
       auto currentEvent = event_queue.front();
 
-      ReturnValue = PluginManager::IsSyncWithTLU(*currentEvent, *tlu_event);
-      if (ReturnValue == Event_IS_Sync)
+      SyncStatus = CompareEvents(*currentEvent, *tlu_event);
+      if (SyncStatus == Event_IS_Sync)
       {
         Process_Event_is_sync(currentEvent, *tlu_event);
         return true;
-
       }
-      else if (ReturnValue == Event_IS_LATE)
+      else if (SyncStatus == Event_IS_LATE)
       {
-
         Process_Event_is_late(currentEvent, *tlu_event);
         isAsync_ = true;
         event_queue.pop();
-
       }
-      else if (ReturnValue == Event_IS_EARLY)
+      else if (SyncStatus == Event_IS_EARLY)
       {
         Process_Event_is_early(currentEvent, *tlu_event);
         isAsync_ = true;
         return false;
       }
-
-
-
     }
     return false;
   }
@@ -349,34 +336,19 @@ namespace eudaq{
 
       EUDAQ_THROW("Producer Event queue is empty");
     }
-    if (m_ProducerEventQueue.size() == 1)
-    {
-      m_sync = false; // there is no need to sync anything in this case
-    }
-    if (!m_sync)
-    {
-      std::cout << "events not synchronized" << std::endl;
-      if (m_TLUs_found == 0)
-      {
-        for (auto& e : m_ProducerId2Eventqueue)
-        {
-          e.second--;
-        }
-      }
 
-    }
-    else
-    {
       if (m_TLUs_found == 0)
       {
-        EUDAQ_THROW("no TLU events found in the data\n for the resynchronisation it is nessasary to have a TLU in the data stream \n for now the synchrounsation only works with the old TLU (date 12.2013)");
+        
+        m_TLU_pos = 1;
+        EUDAQ_WARN("no TLU events found in the data\n synchrounsation on event numbers \n");
       }
       else if (m_TLUs_found > 1)
       {
         std::cout << "more than one TLU detected only the first TLU is used for synchronisation " << std::endl;
       }
   
-    }
+    
  
 
     clearOutputQueue();
@@ -400,6 +372,10 @@ namespace eudaq{
 
   bool Sync2TLU::getNextEvent(Event_sp&   ev)
   {
+    if (!m_preparedforEvents)
+    {
+      return false;
+    }
     SyncFirstEvent();
     if (!m_outPutQueue.empty())
     {
@@ -480,6 +456,16 @@ namespace eudaq{
   bool Sync2TLU::InputIsEmpty(size_t fileId) const
   {
     return SubEventQueueIsEmpty(fileId);
+  }
+
+  int Sync2TLU::CompareEvents(eudaq::Event const & Current_event, eudaq::Event const & tlu_reference_event)
+  {
+    if (m_TLUs_found)
+    {
+      return PluginManager::IsSyncWithTLU(Current_event, tlu_reference_event);
+    }
+    
+    return  compareTLU2DUT(tlu_reference_event.GetEventNumber(), Current_event.GetEventNumber());
   }
 
 }
