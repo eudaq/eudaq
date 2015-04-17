@@ -366,9 +366,17 @@ namespace eudaq{
       }
   
     
+ if (!outputQueueIsEmpty())
+ {
+   // bore events are buffered in the output queue
  
+   mergeBoreEvent(m_bore);
+   clearOutputQueue();
+   
 
-    clearOutputQueue();
+ }
+
+ 
    
     m_preparedforEvents = true;
 
