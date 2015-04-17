@@ -184,7 +184,6 @@ namespace eudaq{
 
 
 
-  Sync2TLU::eventqueue_t& Sync2TLU::getQueuefromId(unsigned producerID)
   bool Sync2TLU::ProducerQueueExist(unsigned producerID)
   {
     if (m_ProducerId2Eventqueue.find(producerID) == m_ProducerId2Eventqueue.end()){
@@ -203,6 +202,7 @@ namespace eudaq{
   Sync2TLU::eventqueue_t& Sync2TLU::getQueuefromId(unsigned producerID)
   {
     if (!ProducerQueueExist(producerID)){
+
       EUDAQ_THROW("unknown Producer ID " + std::to_string(producerID));
     }
     return m_ProducerEventQueue[m_ProducerId2Eventqueue[producerID]];
@@ -358,9 +358,7 @@ namespace eudaq{
 
       if (m_TLUs_found == 0)
       {
-        
-        m_TLU_pos = 1;
-        EUDAQ_WARN("no TLU events found in the data\n synchrounsation on event numbers \n");
+          EUDAQ_WARN("no TLU events found in the data\n synchrounsation on event numbers \n");
       }
       else if (m_TLUs_found > 1)
       {
