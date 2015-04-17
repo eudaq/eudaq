@@ -39,9 +39,12 @@ public:
     // Do any configuration of the hardware here
     // Configuration file values are accessible as config.Get(name, default)
     m_exampleparam = config.Get("Parameter", 0);
+    m_send_bore_delay = config.Get("boreDelay", 0);
+    m_maxEventNR = config.Get("numberOfEvents", 100);
+    m_ID = config.Get("ID", 0);
     std::cout << "Example Parameter = " << m_exampleparam << std::endl;
     hardware.Setup(m_exampleparam);
-
+    m_TLU = config.Get("TLU", 1);
     // At the end, set the status that will be displayed in the Run Control.
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
     m_stat = configured;
@@ -53,7 +56,7 @@ public:
   virtual void OnStartRun(unsigned param) {
     m_run = param;
     m_ev = 0;
-
+    eudaq::mSleep(m_send_bore_delay);
     std::cout << "Start Run: " << m_run << std::endl;
 
     // It must send a BORE to the Data Collector
@@ -61,6 +64,8 @@ public:
     // You can set tags on the BORE that will be saved in the data file
     // and can be used later to help decoding
     bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleparam));
+    bore.SetTag("TLU", m_TLU);
+    bore.SetTag("ID", m_ID);
     // Send the event to the Data Collector
     SendEvent(bore);
 
@@ -114,10 +119,17 @@ public:
         // Then restart the loop
         continue;
       }
+
+      if (m_maxEventNR<m_ev)
+      {
+        eudaq::mSleep(1000);
+        continue;
+      }
       // If we get here, there must be data to read out
       // Create a RawDataEvent to contain the event data to be sent
       eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
-
+      ev.SetTag("TLU", m_TLU);
+      ev.SetTag("ID", m_ID);
       for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
         // Read out a block of raw data from the hardware
         std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
@@ -140,7 +152,8 @@ private:
   // It here basically that the example code will compile
   // but it also generates example raw data to help illustrate the decoder
   eudaq::ExampleHardware hardware;
-  unsigned m_run, m_ev, m_exampleparam;
+  unsigned m_run, m_ev, m_exampleparam , m_send_bore_delay,m_ID ,m_maxEventNR;
+  bool m_TLU;
   status_enum m_stat = unconfigured;
 
 };
