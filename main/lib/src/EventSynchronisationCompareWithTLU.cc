@@ -59,7 +59,12 @@ namespace eudaq{
 
     if (m_EventsProFileReader.size() < fileIndex + 1)
     {
-      m_EventsProFileReader.push_back(0);
+      auto oldsize = m_EventsProFileReader.size();
+      m_EventsProFileReader.resize(fileIndex+1);
+      for (auto i = oldsize; i< fileIndex + 1; ++i){
+        m_EventsProFileReader[i] = 0;
+      }
+      
     }
     m_EventsProFileReader[fileIndex]++;
     auto identifier = PluginManager::getUniqueIdentifier(*BOREEvent);
@@ -67,6 +72,7 @@ namespace eudaq{
     {
       EUDAQ_THROW("the Unique identifier for this Event is to larg. Increase the value of FILEINDEX_OFFSET or return a smaler number from PluginManager::getUniqueIdentifier(BOREEvent)");
     }
+
     if (PluginManager::isTLU(*BOREEvent))
     {
       if (m_TLUs_found == 0)
