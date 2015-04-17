@@ -114,6 +114,11 @@ namespace eudaq {
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev ) {
     //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
+    if (!m_sync||!m_writer)
+    {
+      EUDAQ_WARN("data collector: not ready ");
+      return;
+    }
     if (!m_sync->pushEvent(ev, GetInfo(id))){
       EUDAQ_WARN("no more data from producer: " + id.GetName()); 
 
