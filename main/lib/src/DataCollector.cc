@@ -74,6 +74,9 @@ namespace eudaq {
       
       // std::unique_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
+    m_expected_data_streams = m_config.Get("expected_data_streams", m_buffer.size());
+    m_nameOfSyncAlgorithm = m_config.Get("SyncAlgorithm", "DetectorEvents");
+    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, "");
   }
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
