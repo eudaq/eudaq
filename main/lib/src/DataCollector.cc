@@ -11,6 +11,7 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/JSONimpl.hh"
 #include "eudaq/FileWriter.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 
 #include "config.h"
 
