@@ -136,11 +136,12 @@ namespace eudaq{
   {
     if (Ev)
     {
-      if (!m_preparedforEvents)
+      auto identifier = PluginManager::getUniqueIdentifier(*Ev);
+      if (!ProducerQueueExist(getUniqueID(fileIndex,identifier)))
       {
         PrepareForEvents();
       }
-      auto identifier = PluginManager::getUniqueIdentifier(*Ev);
+     
       try{
         auto &q = getQueuefromId(fileIndex, identifier);
         q.push(Ev);
