@@ -401,12 +401,6 @@ namespace eudaq{
     {
       return false;
     }
-   if (m_bore)
-   {
-     ev = m_bore;
-     m_bore.reset();
-     return true;
-   }
     SyncFirstEvent();
     if (!m_outPutQueue.empty())
     {
@@ -424,25 +418,22 @@ namespace eudaq{
     {
       auto firstEV = m_outPutQueue.front();
       ev = std::make_shared<DetectorEvent>(firstEV->GetRunNumber(), firstEV->GetEventNumber(), firstEV->GetTimestamp());
-      ev->SetFlags(Event::FLAG_BORE);
     }
     DetectorEvent* det = dynamic_cast<DetectorEvent*>(ev.get());
     while (!m_outPutQueue.empty())
     {
-
-      auto con = m_outPutQueue.front()->GetTag("CONFIG","");
-
-      if (m_firstConfig&&!con.empty())
+      if (m_firstConfig)
       {
+        auto con = m_outPutQueue.front()->GetTag("CONFIG");
+        if (con.size() > 0)
+        {
           det->SetTag("CONFIG", con);
           m_firstConfig = false;
-          // the file  reader also add the Detector event to the buffer. this detector event does not need to be in the output collection 
+        }
       }
-      else
-      {
-          det->AddEvent(m_outPutQueue.front());
+      else{
+        det->AddEvent(m_outPutQueue.front());
       }
-     
       m_outPutQueue.pop();
     
     }
@@ -453,8 +444,6 @@ namespace eudaq{
   {
     if (ev)
     {
-
-      std::cout << " adding event ID " << getUniqueID(Index, PluginManager::getUniqueIdentifier(*ev)) << " isBore = " << ev->IsBORE() << " event NR: " << ev->GetEventNumber() << std::endl;
 
       if (ev->IsBORE())
       {
