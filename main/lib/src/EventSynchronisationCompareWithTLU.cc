@@ -401,6 +401,12 @@ namespace eudaq{
     {
       return false;
     }
+   if (m_bore)
+   {
+     ev = m_bore;
+     m_bore.reset();
+     return true;
+   }
     SyncFirstEvent();
     if (!m_outPutQueue.empty())
     {
