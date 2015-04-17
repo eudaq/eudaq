@@ -73,7 +73,7 @@ namespace eudaq{
     virtual void makeDetectorEvent(){}
 
 
-    size_t  m_event_id = 1;
+    size_t  m_event_id = 0;
     /** The empty destructor. Need to add it to make it virtual.
      */
 
