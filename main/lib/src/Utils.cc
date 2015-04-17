@@ -149,4 +149,42 @@ namespace eudaq {
     return result;
   }
 
+  void bool2uchar(const bool* inBegin, const bool* inEnd, std::vector<unsigned char>& out)
+  {
+    int j = 0;
+    unsigned char dummy = 0;
+    //bool* d1=&in[0];
+    size_t size = (inEnd - inBegin);
+    if (size % 8)
+    {
+      size += 8;
+    }
+    size /= 8;
+    out.reserve(size);
+    for (auto i = inBegin; i < inEnd; ++i)
+    {
+      dummy += (unsigned char)(*i) << (j % 8);
+
+      if ((j % 8) == 7)
+      {
+        out.push_back(dummy);
+        dummy = 0;
+      }
+      ++j;
+    }
+  }
+
+  void DLLEXPORT uchar2bool(const unsigned char* inBegin, const unsigned char* inEnd, std::vector<bool>& out)
+  {
+    auto distance = inEnd - inBegin;
+    out.reserve(distance * 8);
+    for (auto i = inBegin; i != inEnd; ++i)
+    {
+      for (int j = 0; j < 8; ++j){
+        out.push_back((*i)&(1 << j));
+      }
+    }
+
+  }
+
 }
