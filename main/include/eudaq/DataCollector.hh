@@ -35,7 +35,7 @@ namespace eudaq {
       virtual void OnPrepareRun(unsigned runnumber);
       virtual void OnStopRun();
       virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev );
-      virtual void OnCompleteEvent();
+
       virtual void OnStatus();
       virtual ~DataCollector();
 
@@ -48,9 +48,8 @@ namespace eudaq {
     private:
       struct Info {
        std::shared_ptr<ConnectionInfo> id;
-       std::list<std::shared_ptr<Event> > events;
-      };
-
+     };
+      
       const std::string m_runnumberfile; // path to the file containing the run number
       const std::string m_name; // name provided in ctor
 
@@ -64,9 +63,13 @@ namespace eudaq {
 	  std::unique_ptr<std::thread> m_thread;
       std::vector<Info> m_buffer;
       std::unique_ptr<SyncBase> m_sync;
+
       std::string m_nameOfSyncAlgorithm;
-      size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
-      size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
+      size_t m_numOfBoreEvents =0;
+
+     // size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
+    //  size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
+      size_t m_expected_data_streams;
       unsigned m_runnumber, m_eventnumber, m_packetNumberLastPacket;
       std::unique_ptr<FileWriter> m_writer;
       Configuration m_config;
