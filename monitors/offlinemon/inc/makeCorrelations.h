@@ -61,5 +61,18 @@ Int_t m_plane_id,m_event_id,m_CalibrationEvents,NumberOfEvents;
 };
 
 
+inline void helper_ProcessEvent(mCorrelations& writer, const eudaq::Event &ev){ 
+  writer.ProcessDetectorEvent(dynamic_cast<const eudaq::DetectorEvent&>(ev)); 
+}
+inline void helper_StartRun(mCorrelations& writer, unsigned runnumber){
+  writer.SetFilePattern("test$6R$X");
+  writer.setRunNumber(runnumber);
+  writer.open_outFile();
+  writer.createHistograms();
+}
+inline void helper_EndRun(mCorrelations& writer){ 
+  writer.savePlotsAsPicture(); 
 
+};
+inline void helper_setParameter(mCorrelations &m_processor, const std::string &TagName, const std::string & TagValue){ m_processor.open_confFile(TagValue.c_str()); }
 #endif // makeCorrelations_h__

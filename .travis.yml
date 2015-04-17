@@ -1,0 +1,40 @@
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+before_install:
+  - echo $LANG
+  - echo $LC_ALL
+
+  # Install package dependencies for Linux:
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy; fi
+
+  # Install package dependencies for Mac OS X:
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb homebrew/science/root; fi
+  # Install numpy via pip:
+  - if [ $TRAVIS_OS_NAME == osx ]; then easy_install pip && pip install numpy; fi
+
+before_script:
+  # Install ROOT
+  # grabbing deb package since it's not in the repos for this Ubuntu version:
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget http://downloads.sourceforge.net/project/cernrootdebs/latest-recommended/root_5.34.07-1_amd64.deb; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo dpkg --install root_5.34.07-1_amd64.deb && source /usr/local/bin/thisroot.sh; fi
+
+  # For Mac OS X we still need to source the root environment:
+  - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
+
+script: 
+  - mkdir build && cd build/
+  - make install
+
+branches:
+  only:
+    - v1.4-dev
+
+os:
+  - linux
+  - osx

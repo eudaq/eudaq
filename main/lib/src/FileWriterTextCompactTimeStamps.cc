@@ -23,10 +23,9 @@ namespace eudaq {
 	  vector<uint64_t> m_start_time;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTextTimeStamps> reg("textTS");
-  }
-
+  
+  registerFileWriter(FileWriterTextTimeStamps, "textTS");
+  
   FileWriterTextTimeStamps::FileWriterTextTimeStamps(const std::string & param)
     :firstEvent(false),m_out(nullptr)
   {
@@ -39,6 +38,7 @@ namespace eudaq {
 	if (m_out)
 	{
 		m_out->close();
+    delete m_out;
 		m_out=nullptr;
 
 	}
@@ -70,21 +70,38 @@ namespace eudaq {
 
 		  for (size_t i = 0; i < devent.NumEvents();++i)
 		  {
-			  auto ts = devent.GetEventPtr(i)->GetTimestamp();
-			  m_start_time.push_back(ts);
+        for (size_t j = 0; j< PluginManager::GetTimeStamp_size(*devent.GetEvent(i));++j)
+        {
 
+          auto ts = PluginManager::GetTimeStamp(*devent.GetEvent(i),j);
+			    m_start_time.push_back(ts);
+          *m_out << Event::id2str(devent.GetEventPtr(i)->get_id()) << "_" << devent.GetEventPtr(i)->GetSubType() <<"_TS_" << j<< "; ";
+
+        }
+			  
+        if (PluginManager::isTLU(*devent.GetEvent(i)))
+        {
+          *m_out << "TLU_trigger; ";
+        }
 		  }
-		 
+      *m_out << '\n';
 		  firstEvent=false;
 	  }
 	
 	  for (size_t i = 0; i < devent.NumEvents(); ++i)
 	  {
-		  auto ts = devent.GetEventPtr(i)->GetTimestamp();
-		  *m_out << ts - m_start_time.at(i) << "; " ;
+      for (size_t j = 0; j< PluginManager::GetTimeStamp_size(*devent.GetEvent(i)); ++j)
+      {
+        auto ts = PluginManager::GetTimeStamp(*devent.GetEvent(i), j);
+        *m_out << ts - m_start_time.at(i+j) << "; ";
+      }
 
+      if (PluginManager::isTLU(*devent.GetEvent(i)))
+      {
+        *m_out << devent.GetEvent(i)->GetTag("trigger", 0) << "; ";
+      }
 	  }
-	  *m_out << std::endl;
+	  *m_out << '\n';
 
 	  
   }
@@ -92,7 +109,7 @@ namespace eudaq {
   FileWriterTextTimeStamps::~FileWriterTextTimeStamps() {
     if (m_out) {
 		m_out->close();
-      
+      delete m_out;
       m_out=nullptr;
     }
   }

@@ -48,15 +48,124 @@ namespace eudaq {
   class NIConverterPlugin : public DataConverterPlugin {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
-    public:
+  public:
     virtual ~NIConverterPlugin(){ }
 
-    virtual void Initialize(const Event & bore, const Configuration & /*c*/) {
+    virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const{
+      
+      switch (index)
+      {
+      case 0:
+        return ev.GetTimestamp(0);
+        break;
+      case 1:
+        return m_comparer_no_sync_events.calc_Corrected_DUT_TIME(ev.GetTimestamp(0));
+        break;
+      default:
+        return 0;
+      }
 
-    
+    }
+    virtual size_t GetTimeStamp_size(const Event & ev) const {
+      return 2;
+    }
+    virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const {
 
-      m_boards = from_string(bore.GetTag("BOARDS"), 0);
-      if( m_boards == 255 ) { m_boards = 6; }
+#ifdef TWOTLUSETUP
+      if (m_offset > 0)
+      {
+        --m_offset;
+        return Event_IS_EARLY;
+      }
+      else if (m_offset < 0){
+        ++m_offset;
+        return Event_IS_LATE;
+      }
+
+#ifdef _DEBUG
+      if (m_tlu_begin == 0 && m_dut_begin == 0)
+      {
+        m_dut_begin = ev.GetTimestamp() - 4040;
+        m_tlu_begin = tluEvent.GetTimestamp() - 2 * 4040;
+      }
+      auto evnr = tluEvent.GetEventNumber();
+      auto DUT_TimeStamp = ev.GetTimestamp() - m_dut_begin;
+      auto TLU_TimeStamp = tluEvent.GetTimestamp() - m_tlu_begin;
+      auto diff1 = static_cast<__int64>(DUT_TimeStamp) -static_cast<__int64>(TLU_TimeStamp);
+      //   std::cout << "DUT Ev: " << ev.GetEventNumber() << " TLU Ev: "<< tluEvent.GetEventNumber() << " diff: "<< static_cast<__int64>(DUT_TimeStamp) -static_cast<__int64>(TLU_TimeStamp) ;
+  //    std::cout << "old " << std::endl;
+      //auto sync = m_TimestampComparer.compareDUT2TLU(ev, tluEvent);
+
+      if (m_lastEventNR!=ev.GetEventNumber())
+      {
+        m_lastEventNR = ev.GetEventNumber();
+        m_syncEvent = 1;
+      }
+
+ //     std::cout << "new " << std::endl;
+      auto sync2 = m_comparer_no_sync_events.compareDUT2TLU(ev, tluEvent);
+      auto dummy = m_syncEvent;
+      if (sync2==Event_IS_Sync)
+      {
+        m_syncEvent = 0;
+      }
+//        if (dummy==1&&sync2==Event_IS_Sync)
+//        {
+//          sync2 = Event_IS_EARLY; //skip sync events
+//        }
+      //  std::cout << " sync: " << sync << std::endl;
+      if (sync2 == Event_IS_Sync)
+      {
+     
+       // out << ev.GetTimestamp() << " " << m_TimestampComparer.get_DUT_begin() << "   " << m_TimestampComparer.get_CLock_diff() << "   "<<m_comparer_no_sync_events.get_DUT_begin() << "   " << m_comparer_no_sync_events.get_CLock_diff()<< std::endl;
+      }
+      return sync2;
+#else 
+      //Release
+      return  m_comparer_no_sync_events.compareDUT2TLU(ev, tluEvent);
+#endif // _DEBUG
+#else
+      auto trigID = GetTriggerID(ev);
+      auto evNR = ev.GetEventNumber();
+      // std::cout << "event nr: " << evNR << "  trig nr: " << trigID << std::endl;
+      return compareTLU2DUT(tluEvent.GetEventNumber(), trigID);
+#endif
+    }
+    virtual void Initialize(const Event & bore, const Configuration & c) {
+
+      c.SetSection("DoubleTluSetup");
+      auto default_timeDiff = c.Get("default_timeDiff", (uint64_t) 8080);
+      auto TLU_jitter = c.Get("TLU_jitter", 160000);
+      auto sync_trigger_mask = c.Get("Sync_trigger", 1);
+      int64_t dut_activeTime = 44168;
+      m_TimestampComparer.set_default_delta_timestamp(default_timeDiff);
+      m_TimestampComparer.set_DUT_active_time(dut_activeTime); //680000 - 2 * default_timeDiff
+      // 90000 -50000   682861
+      // m_TimestampComparer.set_Jitter_denominator(TLU_jitter * 8 / 10);
+      m_TimestampComparer.set_Jitter_offset(400);
+      m_TimestampComparer.set_Clock_diff(0);
+      m_TimestampComparer.set_isSyncEventFunction(
+        [sync_trigger_mask](const Event & tlu)->bool
+      {
+        return (tlu.GetTag("trigger", 0) == sync_trigger_mask);
+      }
+      );
+
+      m_comparer_no_sync_events.set_default_delta_timestamp(0);
+      m_comparer_no_sync_events.set_DUT_active_time(dut_activeTime);
+      m_comparer_no_sync_events.set_Jitter_offset(1000);
+      m_comparer_no_sync_events.set_Clock_diff(0);
+      auto x = &m_syncEvent;
+     m_comparer_no_sync_events.set_isSyncEventFunction([x](const Event & tlu)->bool{
+
+        return *x != 0;
+     }
+     );
+
+     
+
+        m_boards = from_string(bore.GetTag("BOARDS"), 0);
+      if (m_boards == 255) { m_boards = 6; }
 
       m_ids.clear();
       for (unsigned i = 0; i < m_boards; ++i) {
@@ -67,7 +176,7 @@ namespace eudaq {
 
     virtual unsigned GetTriggerID(Event const & ev) const {
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-      if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8) return (unsigned)-1;
+      if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8) return (unsigned) -1;
       return GET(rawev.GetBlock(0), 1) >> 16;
     }
 
@@ -78,13 +187,15 @@ namespace eudaq {
         std::cout << "GetStandardSubEvent : got BORE" << std::endl;
         // shouldn't happen
         return true;
-      } else if (source.IsEORE()) {
+      }
+      else if (source.IsEORE()) {
         std::cout << "GetStandardSubEvent : got EORE" << std::endl;
         // nothing to do
         return true;
       }
-
-      if(dbg>0) std::cout << "GetStandardSubEvent : data" << std::endl;
+      result.SetTag("ni_time", source.GetTimestamp());
+      result.SetTag("ni_event_nr", source.GetEventNumber());
+      if (dbg > 0) std::cout << "GetStandardSubEvent : data" << std::endl;
 
       // If we get here it must be a data event
       const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(source);
@@ -125,7 +236,7 @@ namespace eudaq {
           << ", " << hexdec(len0 >> 16, 4) << std::endl;
         if ((len0 & 0xffff) != (len0 >> 16)) {
           EUDAQ_WARN("Mismatched lengths decoding first frame (" +
-              to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
+                     to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
           len0 = std::max(len0 & 0xffff, len0 >> 16);
         }
         len0 &= 0xffff;
@@ -134,7 +245,7 @@ namespace eudaq {
           << ", " << hexdec(len1 >> 16, 4) << std::endl;
         if ((len1 & 0xffff) != (len1 >> 16)) {
           EUDAQ_WARN("Mismatched lengths decoding second frame (" +
-              to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) + ")");
+                     to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) + ")");
           len1 = std::max(len1 & 0xffff, len1 >> 16);
         }
         len1 &= 0xffff;
@@ -142,12 +253,12 @@ namespace eudaq {
         //        for(unsigned i=0;i<len0;i++) std::cout << "0:i="<<i << hexdec(GET(it0, i)) << std::endl;
         //        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i << hexdec(GET(it1, i)) << std::endl;
 
-  
-        if ( len0*4 + 12 > data0.end()-it0) {
+
+        if (len0 * 4 + 12 > data0.end() - it0) {
           EUDAQ_WARN("Bad length in first frame");
           break;
         }
-        if ( len1*4 + 12 > data1.end()-it1) {
+        if (len1 * 4 + 12 > data1.end() - it1) {
           EUDAQ_WARN("Bad length in second frame");
           break;
         }
@@ -155,13 +266,13 @@ namespace eudaq {
         plane.SetSizeZS(1152, 576, 0, 2, StandardPlane::FLAG_WITHPIVOT | StandardPlane::FLAG_DIFFCOORDS);
         plane.SetTLUEvent(tluid);
         plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
-        DecodeFrame(plane, len0, it0+8, 0);
-        DecodeFrame(plane, len1, it1+8, 1);
+        DecodeFrame(plane, len0, it0 + 8, 0);
+        DecodeFrame(plane, len1, it1 + 8, 1);
         result.AddPlane(plane);
 
-        if (dbg) std::cout << "Mimosa_trailer0 = " << hexdec(GET(it0, len0+2)) << std::endl;
+        if (dbg) std::cout << "Mimosa_trailer0 = " << hexdec(GET(it0, len0 + 2)) << std::endl;
         //        if (dbg) std::cout << "Mimosa        0 = " << hexdec(GET(it0, 0)) << " len0 = " << len0 << " by " << (len0*4+16) <<std::endl;      
-        if (dbg) std::cout << "Mimosa_trailer1 = " << hexdec(GET(it1, len1+2)) << std::endl;
+        if (dbg) std::cout << "Mimosa_trailer1 = " << hexdec(GET(it1, len1 + 2)) << std::endl;
         //        if (dbg) std::cout << "Mimosa        1 = " << hexdec(GET(it1, 0)) << " len1 = " << len1 << " by " << (len1*4+16) <<std::endl;
 
         //      it0  = it0 + len0*4 + 16; std::cout << " done 0 \n";
@@ -172,30 +283,30 @@ namespace eudaq {
         bool advance_one_block_0 = false;
         bool advance_one_block_1 = false;
 
-        if( it0 < data0.end() - (len0+4)*4 ) 
+        if (it0 < data0.end() - (len0 + 4) * 4)
         {
-          advance_one_block_0 = true; 
-        } 
+          advance_one_block_0 = true;
+        }
 
-        if( it1 < data1.end() - (len1+4)*4 ) 
+        if (it1 < data1.end() - (len1 + 4) * 4)
         {
-          advance_one_block_1 = true; 
-        } 
+          advance_one_block_1 = true;
+        }
 
 
-        if( advance_one_block_0 && advance_one_block_1)
+        if (advance_one_block_0 && advance_one_block_1)
         {
-          it0  = it0 + (len0+4)*4 ; if(dbg) std::cout << " done 0 \n";
+          it0 = it0 + (len0 + 4) * 4; if (dbg) std::cout << " done 0 \n";
           if (it0 <= data0.end()) header0 = GET(it0, -1);
 
-          it1  = it1 + (len1+4)*4 ; if(dbg) std::cout << " done 1 \n";
+          it1 = it1 + (len1 + 4) * 4; if (dbg) std::cout << " done 1 \n";
           if (it1 <= data1.end()) header1 = GET(it1, -1);
         }
         else
         {
-          if(dbg) std::cout << "advance_one_block_0 = " << advance_one_block_0 << std::endl;
-          if(dbg) std::cout << "advance_one_block_1 = " << advance_one_block_1 << std::endl;
-          if(dbg) std::cout << "break the block" << std::endl;
+          if (dbg) std::cout << "advance_one_block_0 = " << advance_one_block_0 << std::endl;
+          if (dbg) std::cout << "advance_one_block_1 = " << advance_one_block_1 << std::endl;
+          if (dbg) std::cout << "break the block" << std::endl;
           break;
         }
 
@@ -222,8 +333,8 @@ namespace eudaq {
         //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
         if (i == vec.size() - 1) break;
         unsigned numstates = vec[i] & 0xf;
-        unsigned row = vec[i]>>4 & 0x7ff;
-        if (numstates+1 > vec.size()-i) {
+        unsigned row = vec[i] >> 4 & 0x7ff;
+        if (numstates + 1 > vec.size() - i) {
           // Ignoring bad line
           //std::cout << "Ignoring bad line " << row << " (too many states)" << std::endl;
           break;
@@ -233,12 +344,12 @@ namespace eudaq {
         bool pivot = (row >= (plane.PivotPixel() / 16));
         for (unsigned s = 0; s < numstates; ++s) {
           unsigned v = vec.at(++i);
-          unsigned column = v>>2 & 0x7ff;
+          unsigned column = v >> 2 & 0x7ff;
           unsigned num = v & 3;
           if (dbg>2) std::cout << (s ? "," : " ") << column;
-          if (dbg>2) if ((v&3) > 0) std::cout << "-" << (column + num);
-          for (unsigned j = 0; j < num+1; ++j) {
-            plane.PushPixel(column+j, row, 1, pivot, frame);
+          if (dbg > 2) if ((v & 3) > 0) std::cout << "-" << (column + num);
+          for (unsigned j = 0; j < num + 1; ++j) {
+            plane.PushPixel(column + j, row, 1, pivot, frame);
           }
           npixels += num + 1;
         }
@@ -255,7 +366,7 @@ namespace eudaq {
     virtual bool GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const;
 #endif
 
-    protected:
+  protected:
     //static size_t GetID(const Event & event, size_t i) {
     //  if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent *>(&event)) {
     //    return ev->GetID(i);
@@ -272,11 +383,17 @@ namespace eudaq {
     //    offset += len + 4;
     //  }
     //}
-    private:
+  private:
     NIConverterPlugin() : DataConverterPlugin("NI"), m_boards(0) {}
     unsigned m_boards;
     std::vector<int> m_ids;
     static NIConverterPlugin const m_instance;
+
+    mutable uint64_t m_dut_begin = 0, m_tlu_begin = 0, m_last_tlu = 0,m_lastEventNR=-1;
+    mutable int m_offset = 0, m_syncEvent = 0;
+
+    CompareTimeStampsWithJitter m_TimestampComparer, m_comparer_no_sync_events;
+    //mutable std::ofstream out; = std::ofstream("debug.txt");
   };
 
   NIConverterPlugin const NIConverterPlugin::m_instance;
@@ -466,7 +583,7 @@ namespace eudaq {
                streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
                <<")  on a marker column. Not adding it to the frame" << endl
                << (* (sparsePixel.get() ) ) << endl;
-             */
+               */
 
           }
 
@@ -648,11 +765,11 @@ namespace eudaq {
         result.addCollection( zs2DataCollection, "zsdata_m26" );
       else
         delete zs2DataCollection; // clean up if not storing the collection here
-    }
+  }
 
 
     return true;
-  }
+}
 
 #endif
 

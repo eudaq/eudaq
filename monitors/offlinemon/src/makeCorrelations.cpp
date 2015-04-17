@@ -294,13 +294,13 @@ void mCorrelations::savePlotsAsPicture()
 	for (size_t i=0;i<m_planes.size();++i)
 	{
 		c1.cd(j++);
-		m_planes.at(i).Draw();
+		m_planes.at(i).Draw("colz");
 
 	}
-	for (size_t i=0;i<m_planes.size();++i)
+  for (size_t i = 0; i<m_corr.size(); ++i)
 	{
 		c1.cd(j++);
-		m_corr.at(i)->Draw();
+		m_corr.at(i)->Draw("colz");
 
 	}
 	c1.cd(0);

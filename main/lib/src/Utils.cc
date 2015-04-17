@@ -18,10 +18,16 @@
 #define _WINSOCK2API_
 #include <cstdio>  // HK
 #include <cstdlib>  // HK
+#if(_MSC_VER<1800)
+#define strtoll _strtoi64
+#define strtoull _strtoui64
+#endif
+
 #endif
 #else
 # include <unistd.h>
 #endif
+using namespace std;
 
 namespace eudaq {
 

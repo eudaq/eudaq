@@ -295,7 +295,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 
 		if(advancedConfig)
 		{
-			int chipCount = moduleCount.at(id);
+			int chipCount = moduleCount.at(id-1);
 			if(chipCount > 2)
 			{
 				colMult = 2;
@@ -332,13 +332,13 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 				//First Hit
 				if(getHitData(Word, false, Col, Row, ToT))
 				{
-					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id) );
+					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id-1) );
 					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
 				}
 				//Second Hit
 				if(getHitData(Word, true, Col, Row, ToT))
 				{
-					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id) );
+					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id-1) );
 					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
 				}
 			}

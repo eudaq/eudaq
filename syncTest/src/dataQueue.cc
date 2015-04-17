@@ -1,6 +1,8 @@
 #include "dataQueue.h"
-#include "eudaq\AidaFileWriter.hh"
+
 #include "paketProducer.h"
+#include "eudaq/RawDataEvent.hh"
+#include "eudaq/FileWriter.hh"
 #include <chrono>
 using namespace std;
 using std::chrono::microseconds;
@@ -10,14 +12,14 @@ namespace eudaq {
 
 
 
-  void dataQueue::pushPacket( std::shared_ptr<AidaPacket> packet )
+  void dataQueue::pushPacket( std::shared_ptr<RawDataEvent> packet )
   {
     std::lock_guard<std::mutex> lock(m_queueMutex);
     m_queue.push(packet);
 
   }
 
-  std::shared_ptr<AidaPacket> dataQueue::getPacket()
+  std::shared_ptr<RawDataEvent> dataQueue::getPacket()
   {
     std::lock_guard<std::mutex> lock(m_queueMutex);
     auto ret=m_queue.front();
@@ -27,12 +29,12 @@ namespace eudaq {
 
   void dataQueue::writeToFile( const char* filename )
   {
-    m_writer = std::shared_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create("metaData"));
+    m_writer = FileWriterFactory::Create("metaDaten"); 
 //    m_writer->StartRun(1001); $$
     m_writer->SetFilePattern("");
   }
 
-  void dataQueue::WritePacket(std::shared_ptr<AidaPacket>  packet )
+  void dataQueue::WritePacket(std::shared_ptr<RawDataEvent>  packet )
   {
 //     if (m_writer.get()) {
 //       try {

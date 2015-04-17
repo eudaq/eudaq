@@ -6,13 +6,14 @@
 
 namespace eudaq {
 
-  EUDAQ_DEFINE_EVENT(DetectorEvent, str2id("_DET"));
+  EUDAQ_DEFINE_EVENT(DetectorEvent, str2id(DetectorEventMaintype));
 
   DetectorEvent::DetectorEvent(Deserializer & ds) :
     Event(ds)
   {
     unsigned n;
     ds.read(n);
+    SetFlags(Event::FLAG_PACKET);
     //std::cout << "Num=" << n << std::endl;
     for (size_t i = 0; i < n; ++i) {
       std::shared_ptr<Event> ev(EventFactory::Create(ds));
@@ -20,10 +21,11 @@ namespace eudaq {
     }
   }
 
-  void DetectorEvent::AddEvent(std::shared_ptr<Event>& evt) {
+  void DetectorEvent::AddEvent(std::shared_ptr<Event> evt) {
     if (!evt.get()) EUDAQ_THROW("Adding null event!");
-    m_events.push_back(evt);
     SetFlags(evt->GetFlags());
+    m_events.push_back(std::move(evt));
+    
   }
 
   void DetectorEvent::Print(std::ostream & os) const {

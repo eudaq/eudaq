@@ -15,8 +15,13 @@ namespace eudaq{
 	  virtual bool isTLU(const Event&){ return true; }
       virtual bool GetStandardSubEvent(eudaq::StandardEvent & result, const eudaq::Event & source) const {
         result.SetTimestamp(source.GetTimestamp());
-		result.SetTag("TLU_trigger",source.GetTag("trigger"));
+		    result.SetTag("TLU_trigger",source.GetTag("trigger"));
+        result.SetTag("TLU_event_nr", source.GetEventNumber());
         return true;
+      }
+      virtual void Initialize(eudaq::Event const & tlu, eudaq::Configuration const &) {
+      
+        m_tlu_begin = tlu.GetTimestamp();
       }
       virtual unsigned GetTriggerID(const eudaq::Event & ev) const {
         return ev.GetEventNumber();
@@ -24,11 +29,18 @@ namespace eudaq{
 	  virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const {
 		  // dummy comparator. it is just checking if the event numbers are the same.
 		  
-		  auto DUT_TimeStamp = ev.GetTimestamp() - 10002032121 ;
-		  auto TLU_TimeStamp = tluEvent.GetTimestamp() - 10763879393;
+      if (m_tlu_begin==0&&m_dut_begin==0)
+      {
+        m_dut_begin = ev.GetTimestamp();
+        m_tlu_begin = tluEvent.GetTimestamp();
+      }
+		  auto DUT_TimeStamp = ev.GetTimestamp() - m_dut_begin ;
+		  auto TLU_TimeStamp = tluEvent.GetTimestamp() - m_tlu_begin;
 
 
 		  return hasTimeOVerlaping(DUT_TimeStamp, DUT_TimeStamp + 96000, TLU_TimeStamp, TLU_TimeStamp + 1);
+
+
 	  }
 
 #if USE_LCIO
@@ -42,6 +54,8 @@ namespace eudaq{
 
     private:
       static TLUConverterPlugin const m_instance;
+      
+     mutable uint64_t m_tlu_begin=0,m_dut_begin=0;
   };
 
   TLUConverterPlugin const TLUConverterPlugin::m_instance;

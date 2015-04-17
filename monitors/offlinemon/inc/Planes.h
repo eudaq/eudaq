@@ -61,7 +61,7 @@ public:
 	int m_plane_id,m_hit_x,m_hit_y,m_current_plane_id;
 
 
-	TH2D *Hitmap;
+	TH2D *Hitmap=nullptr;
 	std::vector<hit> ev_,ignor_;
 	std::vector<Double_t> ignor_x,ignor_y;
 };

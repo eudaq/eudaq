@@ -30,11 +30,10 @@ namespace eudaq {
 		bool firstEvent;
 	};
 
-	namespace {
-		static RegisterFileWriter<FileWriterText> reg("text");
-	}
-
-	FileWriterText::FileWriterText(const std::string & param)
+	
+  registerFileWriter(FileWriterText, "text");
+	
+  FileWriterText::FileWriterText(const std::string & param)
 		:firstEvent(false),m_out(nullptr)
 	{
 		std::cout << "EUDAQ_DEBUG: This is FileWriterText::FileWriterText("<< param <<")"<< std::endl;

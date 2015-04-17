@@ -15,8 +15,7 @@ namespace eudaq {
       virtual uint64_t FileBytes() const { return 0; }
   };
 
-  namespace {
-    RegisterFileWriter<FileWriterNull> reg("null");
-  }
+  
 
+  registerFileWriter(FileWriterNull, "null");
 }

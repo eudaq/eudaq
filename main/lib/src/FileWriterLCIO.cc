@@ -28,9 +28,8 @@ namespace eudaq {
       bool m_fileopened; /// We have to keep track whether a file is open ourselves
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterLCIO> reg("lcio");
-  }
+
+  registerFileWriter(FileWriterLCIO, "lcio");
 
   FileWriterLCIO::FileWriterLCIO(const std::string & /*param*/)
     : m_lcwriter(lcio::LCFactory::getInstance()->createLCWriter()), // get an LCWriter from the factory

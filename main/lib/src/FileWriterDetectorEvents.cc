@@ -22,9 +22,8 @@ namespace eudaq {
 	  uint64_t DUT_start_time;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTextdetector> reg("detector");
-  }
+
+  registerFileWriter(FileWriterTextdetector, "detector");
 
   FileWriterTextdetector::FileWriterTextdetector(const std::string & param)
     :firstEvent(false),m_out(nullptr),DUT_start_time(0)

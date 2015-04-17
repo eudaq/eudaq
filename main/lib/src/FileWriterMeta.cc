@@ -6,7 +6,7 @@
 #include "eudaq/Logger.hh"
 #include <iostream>
 #include <fstream>
-#include "eudaq/baseReadOutFrameEvent.hh"
+
 
 
 namespace eudaq {
@@ -26,9 +26,9 @@ namespace eudaq {
       
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterMeta> reg("meta");
-  }
+ 
+  
+  registerFileWriter(FileWriterMeta, "meta");
 
   FileWriterMeta::FileWriterMeta(const std::string & /*param*/)  {
   }
@@ -52,21 +52,21 @@ namespace eudaq {
     }
 	for (size_t i = 0; i<ev.NumEvents();++i)
    {
-		auto e = ev.GetEvent(i);
-		const baseReadOutFrame* rof = dynamic_cast<const baseReadOutFrame*>(e);
+		auto rof = ev.GetEvent(i);
+
 		if (rof)
 		{
-			*m_out << AidaPacket::type2str(e->get_id()) << "  " << e->GetSubType() << " <timeStamps>";
-			for (size_t j = 0; j < rof->GetMultiTimeStampSize();++j)
+      *m_out << Event::id2str(rof->get_id()) << "  " << rof->GetSubType() << " <timeStamps>";
+			for (size_t j = 0; j < rof->GetSizeOfTimeStamps();++j)
 				{
-				*m_out << rof->GetMultiTimestamp(j) << " ";
+				*m_out << rof->GetTimestamp(j) << " ";
 				}
 				
-				*m_out<< "</timestamps>" << e->GetTag("eventID") << "||";
+      *m_out << "</timestamps>" << rof->GetTag("eventID") << "||";
 		}
 		else
 		{
-			*m_out << AidaPacket::type2str(e->get_id()) << "  " << e->GetSubType() << " " << e->GetTimestamp() << "  " << e->GetTag("eventID") << "||";
+      *m_out <<Event::id2str(rof->get_id()) << "  " << rof->GetSubType() << " " << rof->GetTimestamp() << "  " << rof->GetTag("eventID") << "||";
 		}
 		
    }

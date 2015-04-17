@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include "eudaq/SmartEnum.hh"
-#include "eudaq/AidaPacket.hh"
+//#include "eudaq/AidaPacket.hh"
 
 
 namespace eudaq {
