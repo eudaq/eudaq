@@ -483,7 +483,14 @@ namespace eudaq{
   {
     if (m_TLUs_found)
     {
-      return PluginManager::IsSyncWithTLU(Current_event, tlu_reference_event);
+      try{
+        return PluginManager::IsSyncWithTLU(Current_event, tlu_reference_event);
+      }
+      catch (...){
+
+        return  compareTLU2DUT(tlu_reference_event.GetEventNumber(), Current_event.GetEventNumber());
+      }
+
     }
     
     return  compareTLU2DUT(tlu_reference_event.GetEventNumber(), Current_event.GetEventNumber());
