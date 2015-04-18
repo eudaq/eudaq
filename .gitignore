@@ -7,6 +7,7 @@ lib/*
 # Ignore data files:
 *.raw
 *.raw2
+*.raw3
 *.idx
 *.dat
 runnumber.dat
