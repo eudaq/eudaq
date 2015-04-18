@@ -6,6 +6,8 @@
 #include <string>
 #include "eudaq/factory.hh"
 #include "Platform.hh"
+#include "eudaq/Configuration.hh"
+
 // base class for all Synchronization Plugins
 // it is desired to be as modular es possible with this approach.
 // first step is to separate the events from different Producers. 
@@ -23,7 +25,7 @@ namespace eudaq{
   class DLLEXPORT SyncBase {
   public:
     using MainType = std::string;
-    using Parameter_t = std::string;
+    using Parameter_t = eudaq::Configuration;
     using Parameter_ref = const Parameter_t&;
 
     using Event_sp = std::shared_ptr < eudaq::Event > ;

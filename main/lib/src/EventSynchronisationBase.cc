@@ -50,8 +50,8 @@ namespace eudaq{
 
   std::unique_ptr<SyncBase> EventSyncFactory::create()
   {
-    
-    return create(getDefaultSync(),"");
+      
+    return create(getDefaultSync(), SyncBase::Parameter_t(""));
   }
 
   std::vector<std::string> EventSyncFactory::GetTypes()
