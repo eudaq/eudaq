@@ -156,58 +156,44 @@ namespace eudaq{
   class DataConverterPlugin {
     public:
       using timeStamp_t = Eudaq_types::timeStamp_t;
-      typedef Event::t_eventid t_eventid;
+      using t_eventid = Event::t_eventid;
 
-      virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &) {}
+      virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &);
 
       virtual unsigned GetTriggerID(eudaq::Event const &) const;
 
-      virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const{
-        return ev.GetTimestamp(index);
-      }
-      virtual size_t GetTimeStamp_size(const Event & ev) const{
-        return ev.GetSizeOfTimeStamps();
-      }
+      virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const;
+      virtual size_t GetTimeStamp_size(const Event & ev) const;
 
-	  virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const {
-		  // dummy comparator. it is just checking if the event numbers are the same.
-		  
-		  unsigned triggerID = ev.GetEventNumber();
-      auto tlu_triggerID = tluEvent.GetEventNumber();
-	return compareTLU2DUT(tlu_triggerID,triggerID);
-	  }
+	  virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const;
 
-	  virtual void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu){
-		  ev.SetTag("tlu_trigger_id",tlu.GetEventNumber());
-	  }
-	  virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {}
+	  virtual void setCurrentTLUEvent(eudaq::Event & ev,eudaq::TLUEvent const & tlu);
+	  virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const;
 	  
 
       /** Returns the LCIO version of the event.
        */
-      virtual bool GetLCIOSubEvent(lcio::LCEvent & /*result*/, eudaq::Event const & /*source*/) const { return false; }
+      virtual bool GetLCIOSubEvent(lcio::LCEvent & /*result*/, eudaq::Event const & /*source*/) const;
 
       /** Returns the StandardEvent version of the event.
        */
-      virtual bool GetStandardSubEvent(StandardEvent & /*result*/, eudaq::Event const & /*source*/) const { return false; };
+      virtual bool GetStandardSubEvent(StandardEvent & /*result*/, eudaq::Event const & /*source*/) const;
 
       /** Returns the type of event this plugin can convert to lcio as a pair of Event type id and subtype string.
        */
-      virtual t_eventid const & GetEventType() const { return m_eventtype; }
+      virtual t_eventid const & GetEventType() const;
 
 
-    virtual std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::Event> ev, size_t NumberOfROF) {
-      return nullptr;
-    }
+    virtual std::shared_ptr<eudaq::Event> ExtractEventN(std::shared_ptr<eudaq::Event> ev, size_t NumberOfROF);
 
-	  virtual bool isTLU(const Event&){ return false; }
+	  virtual bool isTLU(const Event&);
 
-	  virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev){ return m_thisCount; }
+	  virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev);
 
-    virtual size_t GetNumberOfROF(const eudaq::Event& pac){ return 1; }
+    virtual size_t GetNumberOfROF(const eudaq::Event& pac);
       /** The empty destructor. Need to add it to make it virtual.
        */
-      virtual ~DataConverterPlugin() {}
+      virtual ~DataConverterPlugin();
 
     protected:
       /** The string storing the event type this plugin can convert to lcio.
