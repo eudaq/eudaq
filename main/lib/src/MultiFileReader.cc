@@ -120,24 +120,12 @@ const  Event &  multiFileReader::GetEvent() const
     return *m_ev;
 }
 
- multiFileReader::multiFileReader(bool sync) : baseFileReader(""), m_eventsToSync(0), m_preaparedForEvents(0)
-{
- // m_sync = factory_sync_class("aida", sync);
-  
-}
 
  multiFileReader::multiFileReader(baseFileReader::Parameter_ref parameterList) :baseFileReader(parameterList)
  {
 
-   if (parameterList.Get("sync","").size()>1 )
-   {
-     m_sync = EventSyncFactory::create(parameterList.Get("sync",""),"");
-   }
-   else
-   {
-     m_sync = EventSyncFactory::create();
-   }
-   
+     m_sync = EventSyncFactory::create(parameterList.Get("sync", ""), parameterList);
+
    std::string delimiter = ",";
 
 
