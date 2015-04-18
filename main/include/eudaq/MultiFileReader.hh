@@ -19,7 +19,7 @@ namespace eudaq{
 
   class DLLEXPORT multiFileReader :public baseFileReader{
   public:
-    multiFileReader(bool sync = true);
+    
     multiFileReader(baseFileReader::Parameter_ref parameterList);
     virtual unsigned RunNumber() const;
     virtual bool NextEvent(size_t skip = 0);
@@ -42,8 +42,6 @@ namespace eudaq{
     std::shared_ptr<eudaq::Event> m_ev;
     std::vector<std::unique_ptr<eudaq::baseFileReader>> m_fileReaders;
     std::unique_ptr<SyncBase> m_sync;
-    size_t m_eventsToSync;
-    bool m_preaparedForEvents;
     bool m_firstEvent=true;
   };
 
