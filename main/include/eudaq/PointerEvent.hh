@@ -22,7 +22,7 @@ namespace eudaq {
     PointerEvent(Deserializer &);
 
       virtual void Print(std::ostream & os) const { 
-        os << "PointerEvent";
+        os << "PointerEvent \n";
         os << "reference = " << getReference() <<"\n" << "counter = "<< getCounter() <<"\n";
       
       };
