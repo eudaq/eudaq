@@ -125,8 +125,8 @@ int main(int /*argc*/, char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
       
-      
-	  eudaq::multiFileReader reader;
+      eudaq::baseFileReader::Parameter_t p;
+	  eudaq::multiFileReader reader(p);
 	  for (size_t i = 0; i < op.NumArgs(); ++i) {
 
 		  reader.addFileReader(op.GetArg(i), ipat.Value());
