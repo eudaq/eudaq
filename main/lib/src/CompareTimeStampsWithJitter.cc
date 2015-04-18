@@ -1,4 +1,6 @@
 #include "eudaq/CompareTimeStampsWithJitter.hh"
+#include "eudaq/DataConverterPlugin.hh"
+#include "eudaq/Event.hh"
 namespace eudaq{
 
 
