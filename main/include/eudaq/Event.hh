@@ -7,6 +7,7 @@
 #include <iosfwd>
 #include <iostream>
 
+#include <memory>
 
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
@@ -18,8 +19,9 @@
 
 
 namespace eudaq {
+  class Event;
 
-
+  using event_sp = std::shared_ptr < eudaq::Event > ;
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable {
