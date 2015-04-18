@@ -31,6 +31,7 @@ namespace eudaq {
 
     size_t NumEvents() const { return m_events.size(); }
     Event * GetEvent(size_t i) { return m_events[i].get(); }
+    void clearEvents() { m_events.clear(); }
     const Event * GetEvent(size_t i) const { return m_events[i].get(); }
     std::shared_ptr<Event> GetEventPtr(size_t i) const { return m_events[i]; } 
     const RawDataEvent & GetRawSubEvent(const std::string & subtype, int n = 0) const;
