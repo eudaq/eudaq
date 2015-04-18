@@ -88,6 +88,7 @@ namespace eudaq{
     eventqueue_t& getQueuefromId(unsigned fileIndex, unsigned eventIndex);
     bool ProducerQueueExist(unsigned producerID);
 
+    bool CheckAndRegisterProducer(unsigned producerID);
 
     eventqueue_t& getFirstTLUQueue();
     unsigned getUniqueID(unsigned fileIndex, unsigned eventIndex) const ;
@@ -101,6 +102,7 @@ namespace eudaq{
 
     std::queue<std::shared_ptr<eudaq::Event>> m_outPutQueue;
 
+   std::vector<unsigned> m_registered_producer;
     
     int m_TLUs_found = 0;
     size_t m_TLU_pos = 0;
@@ -108,7 +110,7 @@ namespace eudaq{
     size_t NumberOfEventsToSync_;
     uint64_t longTimeDiff_;
 
-    bool m_sync=true,m_preparedforEvents=false;
+    bool m_sync=true;
   };
 
 
