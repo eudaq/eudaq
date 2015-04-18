@@ -26,6 +26,8 @@ namespace eudaq {
 
       virtual void OnConnect(const ConnectionInfo & /*id*/) {}
       virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
+      virtual void OnStopRun(unsigned /*runnumber*/) { eudaq::mSleep(1000); }
+      virtual void OnTerminate() { eudaq::mSleep(1000); }
       virtual void OnServer();
       virtual void OnReceive(const LogMessage & msg) = 0;
       virtual ~LogCollector();
