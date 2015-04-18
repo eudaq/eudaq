@@ -79,6 +79,7 @@ namespace eudaq {
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
     m_expected_data_streams = m_config.Get("expected_data_streams", m_buffer.size());
     m_nameOfSyncAlgorithm = m_config.Get("SyncAlgorithm", "DetectorEvents");
+    m_EndOfRunTimeout = m_config.Get("EndOfRunTimeOut", 1000);
     m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, m_config);
   }
 
@@ -107,11 +108,20 @@ namespace eudaq {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
     // Leave the file open, more events could still arrive
     //m_ser = counted_ptr<FileSerializer>();
-    while (!m_sync->OutputIsEmpty())
+    clock_t startTime = std::clock();
+    while (!m_sync->OutputIsEmpty() 
+           ||
+           !m_sync->InputIsEmpty()
+           || 
+           m_numOfBoreEvents!=m_numOfEoreEvents
+           )
     {
-      std::cout << "waiting for Outputqueue " << std::endl;
-      eudaq::mSleep(20);
+      if ((std::clock() - startTime) > m_EndOfRunTimeout){
+        break;
+      }
+      eudaq::mSleep(100);
     }
+    eudaq::mSleep(1000);
     m_sync.reset();
     m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, m_config);
     std::cout << "stopping " << std::endl;
