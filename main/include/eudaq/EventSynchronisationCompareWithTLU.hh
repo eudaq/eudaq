@@ -100,8 +100,8 @@ namespace eudaq{
 
     std::vector<eventqueue_t> m_ProducerEventQueue;
 
-    std::queue<std::shared_ptr<eudaq::Event>> m_outPutQueue;
-
+    eventqueue_t m_outPutQueue;
+    eventqueue_t m_Bore_buffer;
    std::vector<unsigned> m_registered_producer;
     
     int m_TLUs_found = 0;

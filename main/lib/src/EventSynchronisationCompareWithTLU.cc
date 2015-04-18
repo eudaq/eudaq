@@ -104,7 +104,7 @@ namespace eudaq{
     {
       EUDAQ_THROW("Duplication in the producer event queue id");
     }
-    m_outPutQueue.push(BOREEvent);
+    m_Bore_buffer.push(BOREEvent);
   }
 
   int Sync2TLU::AddBaseEventToProducerQueue(int fileIndex, Event_sp Ev)
@@ -195,6 +195,7 @@ namespace eudaq{
     if (m_ProducerEventQueue.size() <= m_ProducerId2Eventqueue[producerID]){
       return false;
     }
+
 
     return true;
   }
@@ -366,18 +367,20 @@ namespace eudaq{
       }
   
     
- if (!outputQueueIsEmpty())
+ if (!m_Bore_buffer.empty())
  {
    // bore events are buffered in the output queue
  
    mergeBoreEvent(m_bore);
-   clearOutputQueue();
+   
+   
    
 
  }
 
- 
+ clearOutputQueue();
    
+    
 
   }
 
@@ -396,6 +399,7 @@ namespace eudaq{
 
   bool Sync2TLU::getNextEvent(Event_sp&   ev)
   {
+
    if (m_bore)
    {
      ev = m_bore;
@@ -417,15 +421,15 @@ namespace eudaq{
   {
     if(!ev)
     {
-      auto firstEV = m_outPutQueue.front();
+      auto firstEV = m_Bore_buffer.front();
       ev = std::make_shared<DetectorEvent>(firstEV->GetRunNumber(), firstEV->GetEventNumber(), firstEV->GetTimestamp());
       ev->SetFlags(Event::FLAG_BORE);
     }
     DetectorEvent* det = dynamic_cast<DetectorEvent*>(ev.get());
-    while (!m_outPutQueue.empty())
+    while (!m_Bore_buffer.empty())
     {
 
-      auto con = m_outPutQueue.front()->GetTag("CONFIG","");
+      auto con = m_Bore_buffer.front()->GetTag("CONFIG", "");
 
       if (m_firstConfig&&!con.empty())
       {
@@ -435,10 +439,10 @@ namespace eudaq{
       }
       else
       {
-          det->AddEvent(m_outPutQueue.front());
+        det->AddEvent(m_Bore_buffer.front());
       }
      
-      m_outPutQueue.pop();
+      m_Bore_buffer.pop();
     
     }
     return true;
