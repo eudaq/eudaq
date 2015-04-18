@@ -48,6 +48,8 @@ namespace eudaq {
     private:
       struct Info {
        std::shared_ptr<ConnectionInfo> id;
+       unsigned m_counter;
+       static unsigned s_counter ;
      };
       
       const std::string m_runnumberfile; // path to the file containing the run number
@@ -55,6 +57,8 @@ namespace eudaq {
 
       void DataHandler(TransportEvent & ev);
       size_t GetInfo(const ConnectionInfo & id);
+      size_t GetInfoCounter(const ConnectionInfo & id);
+
 
       bool m_done, m_listening;
       TransportServer * m_dataserver; ///< Transport for receiving data packets

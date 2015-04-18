@@ -28,6 +28,9 @@ namespace eudaq {
 
   } // anonymous namespace
 
+  unsigned DataCollector::Info::s_counter= 0;
+
+
   DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
     CommandReceiver("DataCollector", name, runcontrol, false),
     m_runnumberfile(runnumberfile), m_name( name ), m_done(false), m_listening(true),
@@ -60,6 +63,7 @@ namespace eudaq {
     EUDAQ_INFO("Connection from " + to_string(id));
     Info info;
     info.id = std::shared_ptr<ConnectionInfo>(id.Clone());
+    info.m_counter = Info::s_counter++;
     m_buffer.push_back(info);
 
   }
@@ -138,7 +142,7 @@ namespace eudaq {
       EUDAQ_WARN("data collector: not ready ");
       return;
     }
-    if (!m_sync->pushEvent(ev, GetInfo(id))){
+    if (!m_sync->pushEvent(ev, GetInfoCounter(id))){
       EUDAQ_WARN("no more data from producer: " + id.GetName()); 
 
     }
@@ -209,6 +213,19 @@ namespace eudaq {
     }
     EUDAQ_THROW("Unrecognised connection id");
   }
+
+  size_t DataCollector::GetInfoCounter(const ConnectionInfo & id)
+  {
+    for (size_t i = 0; i < m_buffer.size(); ++i) {
+      //std::cout << "Checking " << *m_buffer[i].id << " == " << id<< std::endl;
+      if (m_buffer[i].id->Matches(id))
+        return m_buffer[i].m_counter;
+    }
+    EUDAQ_THROW("Unrecognised connection id");
+  }
+
+
+
 
   void DataCollector::DataHandler(TransportEvent & ev) {
     //std::cout << "Event: ";
