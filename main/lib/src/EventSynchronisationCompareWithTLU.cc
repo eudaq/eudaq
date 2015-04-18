@@ -57,16 +57,16 @@ namespace eudaq{
 
 
 
-    if (m_EventsProFileReader.size() < fileIndex + 1)
+    if (m_ProducerProFileReader.size() < fileIndex + 1)
     {
-      auto oldsize = m_EventsProFileReader.size();
-      m_EventsProFileReader.resize(fileIndex+1);
+      auto oldsize = m_ProducerProFileReader.size();
+      m_ProducerProFileReader.resize(fileIndex+1);
       for (auto i = oldsize; i< fileIndex + 1; ++i){
-        m_EventsProFileReader[i] = 0;
+        m_ProducerProFileReader[i] = 0;
       }
       
     }
-    m_EventsProFileReader[fileIndex]++;
+    m_ProducerProFileReader[fileIndex]++;
     auto identifier = PluginManager::getUniqueIdentifier(*BOREEvent);
     if (identifier > FILEINDEX_OFFSET)
     {
