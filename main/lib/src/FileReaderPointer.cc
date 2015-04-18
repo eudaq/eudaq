@@ -58,29 +58,21 @@ namespace eudaq {
     while (!m_sync->getNextEvent(m_ev))
     {
       auto ev = m_read->GetNextEvent();
-      if (!ev)
-      {
+      if (!m_sync->pushEvent(ev)){
         return false;
       }
-      m_sync->pushEvent(ev);
     }
-
     return true;
   }
 
   unsigned FileReaderPointer::RunNumber() const {
     return m_ev->GetRunNumber();
   }
-
   std::shared_ptr<eudaq::Event> FileReaderPointer::GetNextEvent(){
-
     if (!NextEvent()) {
       return nullptr;
     }
-
     return m_ev;
-
-
   }
 
   const eudaq::Event & FileReaderPointer::GetEvent() const

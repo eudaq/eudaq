@@ -56,6 +56,14 @@ namespace eudaq{
 
   bool EventSyncPointer::pushEvent(Event_sp ev, size_t Index /*= 0*/)
   {
+    if (!ev)
+    {
+      if (!OutputIsEmpty())
+      {
+        return true;
+      }
+      return false;
+    }
     if (isDataEvent(*ev))
     {
       ++m_ref;
