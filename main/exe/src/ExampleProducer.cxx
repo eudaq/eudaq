@@ -142,7 +142,11 @@ public:
       }
       ev.SetTimeStampToNow();
       hardware.CompletedEvent();
-      // Send the event to the Data Collector      
+      // Send the event to the Data Collector 
+      if (m_ev%1000==0)
+      {
+        std::cout << "sending Event: " << m_ev << std::endl;
+      }
       SendEvent(ev);
       // Now increment the event number
       m_ev++;
