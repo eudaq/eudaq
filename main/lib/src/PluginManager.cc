@@ -33,7 +33,7 @@ namespace eudaq {
 
 
 	DataConverterPlugin & PluginManager::GetPlugin(const Event & event) {
-		return GetPlugin(std::make_pair(event.get_id(), event.GetSubType()));
+    return GetPlugin(getEventId(event));
 	}
 
 	DataConverterPlugin & PluginManager::GetPlugin(PluginManager::t_eventid eventtype) {
@@ -41,8 +41,9 @@ namespace eudaq {
 			= m_pluginmap.find(eventtype);
 
 		if (pluginiter == m_pluginmap.end()) {
-			EUDAQ_THROW("PluginManager::GetPlugin(): Unkown event type " + Event::id2str(eventtype.first) + ":" + eventtype.second);
-
+			//EUDAQ_THROW("PluginManager::GetPlugin(): Unkown event type " + Event::id2str(eventtype.first) + ":" + eventtype.second);
+      
+      return GetPlugin(DataConverterPlugin::getDefault());
 		}
 
 		return *pluginiter->second;
@@ -77,7 +78,7 @@ namespace eudaq {
 
 	PluginManager::t_eventid PluginManager::getEventId(eudaq::Event const & ev)
 	{
-		return GetInstance().GetPlugin(ev).GetEventType();
+    return std::make_pair(ev.get_id(), ev.GetSubType());
 	}
 
 #if USE_LCIO && USE_EUTELESCOPE
