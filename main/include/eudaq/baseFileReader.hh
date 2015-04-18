@@ -47,7 +47,7 @@ namespace eudaq{
     
     static std::unique_ptr<baseFileReader> create(const std::string & filename, const std::string & filepattern);
     static std::unique_ptr<baseFileReader> create(const std::string & filename);
-
+    static std::unique_ptr<baseFileReader> create(baseFileReader::MainType type, baseFileReader::Parameter_ref  param);
     static std::unique_ptr<baseFileReader> create(eudaq::OptionParser & op);
 
 
