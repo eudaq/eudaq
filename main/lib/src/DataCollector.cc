@@ -89,6 +89,8 @@ namespace eudaq {
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
     //if (runnumber == m_runnumber && m_ser.get()) return false;
+    m_numOfBoreEvents = 0;
+    m_numOfEoreEvents = 0;
     EUDAQ_INFO("Preparing for run " + to_string(runnumber));
     m_runstart = Time::Current();
     try {
@@ -311,8 +313,5 @@ namespace eudaq {
       std::cout << "Error: Uncaught unrecognised exception: \n" << "DataThread is dying..." << std::endl;
     }
   }
-
-
-
 
 }
