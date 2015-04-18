@@ -6,7 +6,6 @@
 #include <map>
 #include <iosfwd>
 #include <iostream>
-
 #include <memory>
 
 #include "eudaq/Serializable.hh"
@@ -32,20 +31,14 @@ namespace eudaq {
     using timeStamp_t = uint64_t;
 
     enum Flags { FLAG_BORE = 1, FLAG_EORE = 2, FLAG_HITS = 4, FLAG_FAKE = 8, FLAG_SIMU = 16, FLAG_EUDAQ2 = 32, FLAG_PACKET = 64, FLAG_ALL = (unsigned) -1 }; // Matches FLAGNAMES in .cc file
-    Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0)
-      : m_flags(flags|FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
-      m_runnumber(run),
-      m_eventnumber(event)  
-    {
-      m_timestamp.push_back(timestamp);
-    }
+    Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0);
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const = 0;
 
-    unsigned GetRunNumber() const { return m_runnumber; }
-    unsigned GetEventNumber() const { return m_eventnumber; }
-    timeStamp_t GetTimestamp(size_t i=0) const { return m_timestamp[i]; }
-    size_t   GetSizeOfTimeStamps() const { return m_timestamp.size(); }
+    unsigned GetRunNumber() const;
+    unsigned GetEventNumber() const;
+    timeStamp_t GetTimestamp(size_t i=0) const;
+    size_t   GetSizeOfTimeStamps() const;
 
     /** Returns the type string of the event implementation.
      *  Used by the plugin mechanism to identify the event type.
