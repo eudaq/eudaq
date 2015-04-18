@@ -15,9 +15,9 @@ namespace eudaq{
 
 
 
-  void PointerEvent::Serialize(Serializer &) const
+  void PointerEvent::Serialize(Serializer & ser) const
   {
-
+    Event::Serialize(ser);
   }
 
 }
