@@ -4,7 +4,7 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/PointerEvent.hh"
 #include <map>
-#include <iosfwd>
+
 //#include "eudaq/Logger.hh"
 
 namespace eudaq {
@@ -25,7 +25,7 @@ namespace eudaq {
       reference_t Write_Event_Pointer(const PointerEvent&);
       reference_t findReference(const event_sp ev);
       void removeReference(const event_sp ev);
-      std::ofstream out;
+
       FileSerializer * m_ser;
       std::map < event_sp, reference_t> m_buffer;
       reference_t m_ref =0;
@@ -42,7 +42,6 @@ namespace eudaq {
   void FileWriterNativePointer::StartRun(unsigned runnumber) {
     delete m_ser;
     m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw3").Set('R', runnumber),true);
-    out.open(FileNamer(m_filepattern).Set('X', ".txt").Set('R', runnumber));
   }
 
   void FileWriterNativePointer::WriteEvent(const DetectorEvent & ev) {
@@ -109,9 +108,6 @@ namespace eudaq {
     if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
     m_ser->write(ev);
     m_ser->Flush();
-    out << "\n <EventBody ref= \"" << m_ref << "\" >\n";
-    ev.Print(out);
-    out << "\n </EventBody>\n";
     return m_ref;
   }
 
@@ -120,10 +116,6 @@ namespace eudaq {
     if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
     m_ser->write(ev);
     m_ser->Flush();
-
-    out << "\n <EventPointer>\n";
-    ev.Print(out);
-    out << "\n </EventPointer>\n";
   }
 
   FileWriterNativePointer::reference_t FileWriterNativePointer::findReference(const event_sp ev)
