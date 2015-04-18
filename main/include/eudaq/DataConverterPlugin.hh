@@ -145,7 +145,7 @@ namespace eudaq{
     public:
       using timeStamp_t = Eudaq_types::timeStamp_t;
       using t_eventid = Event::t_eventid;
-
+      static const t_eventid& getDefault();
       virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &);
 
       virtual unsigned GetTriggerID(eudaq::Event const &) const;

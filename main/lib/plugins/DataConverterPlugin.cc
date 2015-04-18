@@ -97,6 +97,12 @@ namespace eudaq {
 
   }
 
+  const DataConverterPlugin::t_eventid& DataConverterPlugin::getDefault()
+  {
+   static DataConverterPlugin::t_eventid defaultID(Event::str2id("_RAW"), "Default");
+    return defaultID;
+  }
+
   unsigned DataConverterPlugin::m_count = 0;
 
 }//namespace eudaq
