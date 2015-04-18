@@ -42,6 +42,7 @@ public:
     m_send_bore_delay = config.Get("boreDelay", 0);
     m_maxEventNR = config.Get("numberOfEvents", 100);
     m_ID = config.Get("ID", 0);
+    m_Skip = config.Get("skip", 0);
     std::cout << "Example Parameter = " << m_exampleparam << std::endl;
     hardware.Setup(m_exampleparam);
     m_TLU = config.Get("TLU", 1);
@@ -135,6 +136,7 @@ public:
       eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
       ev.SetTag("TLU", m_TLU);
       ev.SetTag("ID", m_ID);
+      
       for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
         // Read out a block of raw data from the hardware
         std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
@@ -151,6 +153,14 @@ public:
       {
         std::cout << "sending Event: " << m_ev << std::endl;
       }
+      if (m_Skip!=0)
+      {
+        if (m_ev%m_Skip==0)
+        {
+          ++m_ev;
+          continue;
+        }
+      }
       SendEvent(ev);
       // Now increment the event number
       m_ev++;
@@ -162,7 +172,7 @@ private:
   // It here basically that the example code will compile
   // but it also generates example raw data to help illustrate the decoder
   eudaq::ExampleHardware hardware;
-  unsigned m_run, m_ev, m_exampleparam , m_send_bore_delay,m_ID ,m_maxEventNR;
+  unsigned m_run, m_ev, m_exampleparam, m_send_bore_delay, m_ID, m_maxEventNR, m_Skip;
   bool m_TLU;
   status_enum m_stat = unconfigured;
 
