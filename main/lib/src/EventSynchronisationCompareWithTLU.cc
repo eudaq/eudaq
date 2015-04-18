@@ -54,7 +54,7 @@ namespace eudaq{
   {
 
     ++m_registertProducer;
-
+    m_ProducerEventQueue.resize(m_registertProducer);
 
 
     if (m_ProducerProFileReader.size() < fileIndex + 1)
@@ -350,7 +350,7 @@ namespace eudaq{
 
   void Sync2TLU::PrepareForEvents()
   {
-    m_ProducerEventQueue.resize(m_registertProducer);
+
     if (m_ProducerEventQueue.empty())
     {
 
