@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include "eudaq/factory.hh"
+#include "Platform.hh"
 // base class for all Synchronization Plugins
 // it is desired to be as modular es possible with this approach.
 // first step is to separate the events from different Producers. 
