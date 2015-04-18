@@ -66,6 +66,7 @@ public:
     bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleparam));
     bore.SetTag("TLU", m_TLU);
     bore.SetTag("ID", m_ID);
+    bore.SetTimeStampToNow();
     // Send the event to the Data Collector
     SendEvent(bore);
 
@@ -139,6 +140,7 @@ public:
         // Add the block of raw data to the event
         ev.AddBlock(plane, buffer);
       }
+      ev.SetTimeStampToNow();
       hardware.CompletedEvent();
       // Send the event to the Data Collector      
       SendEvent(ev);
