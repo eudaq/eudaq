@@ -93,7 +93,12 @@ int main(int /*argc*/, const char ** argv) {
 
         try {
             // always synchronize based on the trigger id
-	  multiFileReader reader(!async.Value());
+          FileReader::Parameter_t p;
+          if (async.Value())
+          {
+            p.Set("sync", "noSync");
+          }
+	          multiFileReader reader(p);
             reader.addFileReader(run, input_pattern);
 
             const DetectorEvent & bore = reader.GetDetectorEvent();
