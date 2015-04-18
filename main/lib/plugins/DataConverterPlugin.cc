@@ -28,7 +28,7 @@ namespace eudaq {
 
   }
 
-  timeStamp_t DataConverterPlugin::GetTimeStamp(const Event& ev, size_t index) const
+  DataConverterPlugin::timeStamp_t DataConverterPlugin::GetTimeStamp(const Event& ev, size_t index) const
   {
     return ev.GetTimestamp(index);
   }
@@ -67,7 +67,7 @@ namespace eudaq {
     return false;
   }
 
-  t_eventid const & DataConverterPlugin::GetEventType() const
+  DataConverterPlugin::t_eventid const & DataConverterPlugin::GetEventType() const
   {
     return m_eventtype;
   }
