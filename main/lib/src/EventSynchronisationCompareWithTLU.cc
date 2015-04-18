@@ -140,7 +140,7 @@ namespace eudaq{
         q.push(Ev);
       }
       catch (...){
-        std::cerr << " error in Sync2TLU::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev) \n unkown event id: " << identifier << "\n for the event: \n";
+        std::cerr << "\n error in Sync2TLU::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev) \n unkown event id: " << identifier << "\n for the event: \n";
         Ev->Print(cout);
       }
 
