@@ -168,7 +168,11 @@ namespace eudaq {
       ++m_eventnumber;
 
     }
-      
+    if (ev->IsEORE())
+    {
+      std::cout << "end of run event " << std::endl;
+      ++m_numOfEoreEvents;
+    }
   }
 
   void DataCollector::OnStatus() {
