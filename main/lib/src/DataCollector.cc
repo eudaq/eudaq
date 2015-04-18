@@ -79,7 +79,7 @@ namespace eudaq {
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
     m_expected_data_streams = m_config.Get("expected_data_streams", m_buffer.size());
     m_nameOfSyncAlgorithm = m_config.Get("SyncAlgorithm", "DetectorEvents");
-    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, "");
+    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, m_config);
   }
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
@@ -113,7 +113,7 @@ namespace eudaq {
       eudaq::mSleep(20);
     }
     m_sync.reset();
-    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, "");
+    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, m_config);
     std::cout << "stopping " << std::endl;
   }
 
