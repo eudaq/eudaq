@@ -58,7 +58,12 @@ namespace eudaq {
   }
 
   bool ExampleHardware::EventsPending() const {
+    if (running)
+    {
     return m_timer.Seconds() > m_nextevent;
+    }
+
+    return false;
   }
 
   unsigned ExampleHardware::NumSensors() const {

@@ -69,7 +69,7 @@ public:
     bore.SetTimeStampToNow();
     // Send the event to the Data Collector
     SendEvent(bore);
-
+    hardware.Start();
     // At the end, set the status that will be displayed in the Run Control.
     m_stat = started;
     SetStatus(eudaq::Status::LVL_OK, "Running");
@@ -79,7 +79,7 @@ public:
   // This gets called whenever a run is stopped
   virtual void OnStopRun() {
     std::cout << "Stopping Run" << std::endl;
-
+    hardware.Stop();
     m_stat = stopping;
     // wait until all events have been read out from the hardware
     while (m_stat == stopping) {
@@ -89,6 +89,7 @@ public:
     // Send an EORE after all the real events have been sent
     // You can also set tags on it (as with the BORE) if necessary
     SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
+    std::cout << "Stopped" << std::endl;
   }
 
   // This gets called when the Run Control is terminating,
