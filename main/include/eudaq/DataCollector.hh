@@ -65,8 +65,8 @@ namespace eudaq {
       std::unique_ptr<SyncBase> m_sync;
 
       std::string m_nameOfSyncAlgorithm;
-      size_t m_numOfBoreEvents =0;
-
+      size_t m_numOfBoreEvents =0 ,m_numOfEoreEvents =0;
+      clock_t m_EndOfRunTimeout;
      // size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
     //  size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
       size_t m_expected_data_streams;
