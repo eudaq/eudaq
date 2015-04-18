@@ -95,7 +95,7 @@ namespace eudaq{
     //unsigned getTLU_UniqueID(unsigned fileIndex);
     std::map<unsigned, size_t> m_ProducerId2Eventqueue;
     size_t m_registertProducer = 0;
-    std::vector<size_t> m_EventsProFileReader;
+    std::vector<size_t> m_ProducerProFileReader;
     /* This vector saves for each producer an event queue */
 
     std::vector<eventqueue_t> m_ProducerEventQueue;
