@@ -134,11 +134,7 @@ namespace eudaq{
     if (Ev)
     {
       auto identifier = PluginManager::getUniqueIdentifier(*Ev);
-      if (!CheckAndRegisterProducer(getUniqueID(fileIndex, identifier)) )
-      {
-        PrepareForEvents();
-      }
-     
+  
       try{
         auto &q = getQueuefromId(fileIndex, identifier);
         q.push(Ev);
@@ -399,13 +395,13 @@ namespace eudaq{
 
   bool Sync2TLU::getNextEvent(Event_sp&   ev)
   {
-
-   if (m_bore)
-   {
-     ev = m_bore;
-     m_bore.reset();
-     return true;
-   }
+ 
+    if (!m_Bore_buffer.empty())
+    {
+      PrepareForEvents();
+      ev = m_bore;
+      return true;
+    }
     SyncFirstEvent();
     if (!m_outPutQueue.empty())
     {
@@ -501,14 +497,6 @@ namespace eudaq{
     return  compareTLU2DUT(tlu_reference_event.GetEventNumber(), Current_event.GetEventNumber());
   }
 
-  bool Sync2TLU::CheckAndRegisterProducer(unsigned producerID)
-  {
-    if (std::find(m_registered_producer.begin(), m_registered_producer.end(), producerID) == m_registered_producer.end())
-    {
-      m_registered_producer.push_back(producerID);
-      return false;
-    }
-    return true;
-  }
+
 
 }
