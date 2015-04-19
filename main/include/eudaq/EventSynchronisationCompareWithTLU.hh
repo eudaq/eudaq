@@ -109,7 +109,7 @@ namespace eudaq{
     bool isAsync_ = false ,m_firstConfig=true;
     size_t NumberOfEventsToSync_;
     uint64_t longTimeDiff_;
-
+    bool m_BOREeventWasEmtpy = false;
     bool m_sync=true;
   };
 

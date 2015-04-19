@@ -55,6 +55,7 @@ namespace eudaq{
 
     ++m_registertProducer;
     m_ProducerEventQueue.resize(m_registertProducer);
+    std::cout << "m_ProducerEventQueue.resize(" << m_registertProducer << ");" << std::endl;
 
 
     if (m_ProducerProFileReader.size() < fileIndex + 1)
@@ -415,8 +416,10 @@ namespace eudaq{
 
   bool Sync2TLU::mergeBoreEvent(Event_sp& ev)
   {
+   
     if(!ev)
     {
+      m_BOREeventWasEmtpy = true;
       auto firstEV = m_Bore_buffer.front();
       ev = std::make_shared<DetectorEvent>(firstEV->GetRunNumber(), firstEV->GetEventNumber(), firstEV->GetTimestamp());
       ev->SetFlags(Event::FLAG_BORE);
@@ -426,6 +429,17 @@ namespace eudaq{
     {
 
       auto con = m_Bore_buffer.front()->GetTag("CONFIG", "");
+      if (m_BOREeventWasEmtpy && PluginManager::isTLU(*(m_Bore_buffer.front())))
+      {
+        // overwrite event number if TLU was found later on
+
+        ev->setEventNumber(m_Bore_buffer.front()->GetEventNumber());
+        ev->setRunNumber(m_Bore_buffer.front()->GetRunNumber());
+        ev->setTimeStamp(m_Bore_buffer.front()->GetTimestamp());
+
+        // only first TLU is used
+        m_BOREeventWasEmtpy = false;
+      }
 
       if (m_firstConfig&&!con.empty())
       {
