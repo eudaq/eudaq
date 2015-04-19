@@ -74,9 +74,10 @@ namespace eudaq {
     void SetFlags(unsigned f) { m_flags |= f; }
     void SetTimeStampToNow(size_t i=0);
     void pushTimeStampToNow();
-    void setTimeStamp(timeStamp_t timeStamp,size_t i=0){ m_timestamp[i]=timeStamp; }
+    void setTimeStamp(timeStamp_t timeStamp,size_t i=0);
     void pushTimeStamp(timeStamp_t timeStamp){ m_timestamp.push_back(timeStamp); }
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
+    void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
     virtual unsigned get_id() const = 0;
   protected:

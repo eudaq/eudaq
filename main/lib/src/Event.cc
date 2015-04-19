@@ -167,6 +167,21 @@ namespace eudaq {
     return m_timestamp.size();
   }
 
+  void Event::setTimeStamp(timeStamp_t timeStamp, size_t i/*=0*/)
+  {
+    if (i>=m_timestamp.size())
+    {
+      size_t oldSize = m_timestamp.size();
+      m_timestamp.resize(i + 1);
+      for (auto j = oldSize; j < m_timestamp.size();++j)
+      {
+        m_timestamp[j] = NOTIMESTAMP;
+      }
+
+    }
+    m_timestamp[i] = timeStamp;
+  }
+
   std::ostream & operator << (std::ostream &os, const Event &ev) {
     ev.Print(os);
     return os;
