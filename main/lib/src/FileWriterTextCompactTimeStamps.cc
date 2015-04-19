@@ -105,7 +105,10 @@ namespace eudaq {
 	  }
 	  *m_out << '\n';
 
-	  
+#ifdef _DEBUG
+    m_out->flush();
+#endif // _DEBUG
+
   }
 
   FileWriterTextTimeStamps::~FileWriterTextTimeStamps() {
