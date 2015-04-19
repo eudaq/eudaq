@@ -37,6 +37,10 @@ namespace eudaq {
     const counter_t& getCounter()const {
       return m_eventnumber;
     }
+
+    void setCounter(unsigned newCounter){
+      m_eventnumber = newCounter;
+    }
   private:
 
       

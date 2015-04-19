@@ -10,7 +10,7 @@ namespace eudaq{
     // is no need to store a vector of timestamps. 
     // This statement resets the EUDAQ 2 flag an by this only the
     // first timestamp gets stored. 
-    ClearFlags(); 
+   // ClearFlags(); 
   }
 
   PointerEvent::PointerEvent(Deserializer & des) :Event(des)
