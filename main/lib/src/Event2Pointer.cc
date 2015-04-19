@@ -17,7 +17,7 @@ namespace eudaq{
 
     Event2Pointer(Parameter_ref param):SyncBase(param){}
     virtual bool pushEvent(event_sp ev, size_t Index = 0) ;
-    virtual bool getNextEvent(event_sp& ev){ return false; }
+    virtual bool getNextEvent(event_sp& ev);
      virtual bool OutputIsEmpty() const;
     virtual bool InputIsEmpty() const;
     virtual bool InputIsEmpty(size_t FileID) const;
@@ -137,6 +137,18 @@ namespace eudaq{
     }
 
     return pushDataEvent(std::move(ev));
+  }
+
+  bool Event2Pointer::getNextEvent(event_sp& ev)
+  {
+    if (OutputIsEmpty())
+    {
+      return false;
+    }
+    ev = m_output.front();
+    m_output.pop();
+    
+    return true;
   }
 
   registerSyncClass(Event2Pointer, "dePointer");
