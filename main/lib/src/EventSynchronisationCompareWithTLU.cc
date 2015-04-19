@@ -29,7 +29,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_BaseEvent(int fileIndex, Event_sp BOREEvent)
+  void Sync2TLU::addBORE_BaseEvent(int fileIndex, event_sp BOREEvent)
   {
     
     if (BOREEvent->IsPacket())
@@ -50,7 +50,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_Event(int fileIndex, Event_sp BOREEvent)
+  void Sync2TLU::addBORE_Event(int fileIndex, event_sp BOREEvent)
   {
 
     ++m_registertProducer;
@@ -108,7 +108,7 @@ namespace eudaq{
     m_Bore_buffer.push(BOREEvent);
   }
 
-  int Sync2TLU::AddBaseEventToProducerQueue(int fileIndex, Event_sp Ev)
+  int Sync2TLU::AddBaseEventToProducerQueue(int fileIndex, event_sp Ev)
   {
     if (!Ev)
     {
@@ -130,7 +130,7 @@ namespace eudaq{
   }
   
 
-  int Sync2TLU::AddEventToProducerQueue(int fileIndex, Event_sp Ev)
+  int Sync2TLU::AddEventToProducerQueue(int fileIndex, event_sp Ev)
   {
     if (Ev)
     {
@@ -238,7 +238,7 @@ namespace eudaq{
   }
 
 
-  bool Sync2TLU::compareTLUwithEventQueue(Event_sp& tlu_event, eudaq::Sync2TLU::eventqueue_t& event_queue)
+  bool Sync2TLU::compareTLUwithEventQueue(event_sp& tlu_event, eudaq::Sync2TLU::eventqueue_t& event_queue)
   {
     int SyncStatus = Event_IS_Sync;
 
@@ -268,7 +268,7 @@ namespace eudaq{
     return false;
   }
 
-  bool Sync2TLU::compareTLUwithEventQueues(Event_sp& tlu_event)
+  bool Sync2TLU::compareTLUwithEventQueues(event_sp& tlu_event)
   {
     for (auto& ev_queue: m_ProducerEventQueue)
     {
@@ -324,7 +324,7 @@ namespace eudaq{
   void Sync2TLU::clearOutputQueue()
   {
 
-    std::queue<Event_sp> empty;
+    std::queue<event_sp> empty;
     std::swap(m_outPutQueue, empty);
     
   }
@@ -378,7 +378,7 @@ namespace eudaq{
 
   }
 
-  bool Sync2TLU::getNextEvent(Event_sp&   ev)
+  bool Sync2TLU::getNextEvent(event_sp&   ev)
   {
  
     if (!m_Bore_buffer.empty())
@@ -398,7 +398,7 @@ namespace eudaq{
     return false;
   }
 
-  bool Sync2TLU::mergeBoreEvent(Event_sp& ev)
+  bool Sync2TLU::mergeBoreEvent(event_sp& ev)
   {
    
     if(!ev)
@@ -442,7 +442,7 @@ namespace eudaq{
     return true;
   }
 
-  bool Sync2TLU::pushEvent(Event_sp ev,size_t Index)
+  bool Sync2TLU::pushEvent(event_sp ev,size_t Index)
   {
     if (ev)
     {

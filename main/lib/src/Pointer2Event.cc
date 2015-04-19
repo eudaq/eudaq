@@ -15,9 +15,8 @@ namespace eudaq{
    // public interface
 
     Pointer2Event(Parameter_ref param);
-    virtual bool pushEvent(Event_sp ev, size_t Index = 0) ;
-    virtual bool getNextEvent(Event_sp& ev);
-    virtual bool mergeBoreEvent(Event_sp& ev) { return false; };
+    virtual bool pushEvent(event_sp ev, size_t Index = 0) ;
+    virtual bool getNextEvent(event_sp& ev);
     virtual bool OutputIsEmpty() const;
     virtual bool InputIsEmpty() const;
     virtual bool InputIsEmpty(size_t FileID) const;
@@ -54,7 +53,7 @@ namespace eudaq{
     return m_output.empty();
   }
 
-  bool Pointer2Event::pushEvent(Event_sp ev, size_t Index /*= 0*/)
+  bool Pointer2Event::pushEvent(event_sp ev, size_t Index /*= 0*/)
   {
     if (!ev)
     {
@@ -105,7 +104,7 @@ namespace eudaq{
     return dummy;
   }
 
-  bool Pointer2Event::getNextEvent(Event_sp& ev)
+  bool Pointer2Event::getNextEvent(event_sp& ev)
   {
     if (OutputIsEmpty())
     {

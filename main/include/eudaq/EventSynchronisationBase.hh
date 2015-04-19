@@ -7,6 +7,7 @@
 #include "eudaq/factory.hh"
 #include "Platform.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Event.hh"
 
 // base class for all Synchronization Plugins
 // it is desired to be as modular es possible with this approach.
@@ -19,7 +20,7 @@
 
 namespace eudaq{
 
-
+ 
   class OptionParser;
   class Event;
   class DLLEXPORT SyncBase {
@@ -28,12 +29,13 @@ namespace eudaq{
     using Parameter_t = eudaq::Configuration;
     using Parameter_ref = const Parameter_t&;
 
-    using Event_sp = std::shared_ptr < eudaq::Event > ;
+
     // public interface
 
     SyncBase(Parameter_ref param);
-    virtual bool pushEvent(Event_sp ev,size_t Index=0) = 0;
-    virtual bool getNextEvent(Event_sp& ev) = 0;
+    virtual bool pushEvent(event_sp ev,size_t Index=0) = 0;
+    virtual bool getNextEvent(event_sp& ev) = 0;
+
     virtual bool OutputIsEmpty() const = 0;
     virtual bool InputIsEmpty() const = 0;
     virtual bool InputIsEmpty(size_t FileID) const = 0;
