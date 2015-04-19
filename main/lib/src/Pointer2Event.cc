@@ -29,7 +29,6 @@ namespace eudaq{
     event_sp replaceReferenceByDataEvent(const Event& pev);
     std::map< reference_t, event_sp> m_buffer;
     std::queue<event_sp> m_output;
-    reference_t m_ref=0;
   };
 
 
@@ -65,9 +64,9 @@ namespace eudaq{
     }
     if (isDataEvent(*ev))
     {
-      ++m_ref;
 
-      m_buffer[m_ref] = ev;
+
+      m_buffer[ev->getUniqueID()] = ev;
       return true;
     }
 
