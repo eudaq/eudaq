@@ -44,6 +44,7 @@ namespace eudaq{
       counter_t externalReference(reference_t ev_id) const;
       bool ReferenceFound(const Event& ev);
       reference_t push(event_sp && ev);
+      reference_t push(reference_t ev);
       size_t size()const;
       void pop_front(event_sp& ev);
       void setCounterForPointerEvents(Event* ev);
@@ -74,6 +75,13 @@ namespace eudaq{
     reference_t id = ev->getUniqueID();
     m_buffer.push_back(id);
     m_output.push(ev);
+    return id;
+  }
+
+  Event2Pointer::reference_t Event2Pointer::Buffer_struckt::push(reference_t id)
+  {
+    m_buffer.push_back(id);
+    m_output.push(nullptr);
     return id;
   }
 
@@ -178,7 +186,8 @@ namespace eudaq{
     {
       return m_buf.push(std::move(ev));
     }
-    return ev->getUniqueID();
+    
+    return m_buf.push(ev->getUniqueID());
 
   }
 
@@ -210,6 +219,7 @@ namespace eudaq{
       return false;
     }
     m_buf.pop_front(ev);
+  
     return true;
   }
 
