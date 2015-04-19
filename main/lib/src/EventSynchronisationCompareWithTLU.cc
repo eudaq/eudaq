@@ -75,7 +75,7 @@ namespace eudaq{
 
     if (PluginManager::isTLU(*BOREEvent))
     {
-      if (m_TLUs_found>0)
+      if (m_TLUs_found==0)
       {
       m_TLU_pos = m_event_id;
       }
