@@ -26,12 +26,15 @@ void  multiFileReader::addFileReader(std::unique_ptr<baseFileReader> FileReader)
   m_fileReaders.push_back(std::move(FileReader));
 
   event_sp ev;
+  ev = m_fileReaders.back()->getEventPtr();
+  m_sync->pushEvent(ev, m_fileReaders.size() - 1);
 
-  do
+  while (ev->IsBORE())
   {
-    ev = m_fileReaders.back()->getEventPtr();
+    ev = m_fileReaders.back()->GetNextEvent();
     m_sync->pushEvent(ev, m_fileReaders.size() - 1);
-  } while (ev->IsBORE());
+    
+  } 
 
 }
 
