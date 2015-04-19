@@ -127,10 +127,9 @@ int main(int /*argc*/, char ** argv) {
       
       eudaq::baseFileReader::Parameter_t p;
 	  eudaq::multiFileReader reader(p);
-	  for (size_t i = 0; i < op.NumArgs(); ++i) {
-
 		  reader.addFileReader(op.GetArg(i), ipat.Value());
-	  }
+      reader.NextEvent();
+
 	  EUDAQ_INFO("Reading: " + reader.Filename());
       //    cout << i << " " << reader.Filename()  << endl;
 
