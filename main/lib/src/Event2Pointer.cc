@@ -122,7 +122,6 @@ namespace eudaq{
       auto pev = dynamic_cast<PointerEvent*>(ev);
       auto id = pev->getReference();
       auto mycount= externalReference(id);
-      std::cout << mycount << std::endl;
       pev->setCounter(mycount);
     }
     if (ev->get_id() == DetectorEvent::eudaq_static_id())
