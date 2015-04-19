@@ -3,10 +3,9 @@
 #include <time.h>
 
 #include "eudaq/Event.hh"
-#include <atomic>
 #include "eudaq/PluginManager.hh"
 
-std::atomic<uint64_t> gEventCounter =0;
+
 
 namespace eudaq {
 
