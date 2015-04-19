@@ -34,7 +34,6 @@ namespace eudaq{
     SyncBase(Parameter_ref param);
     virtual bool pushEvent(Event_sp ev,size_t Index=0) = 0;
     virtual bool getNextEvent(Event_sp& ev) = 0;
-    virtual bool mergeBoreEvent(Event_sp& ev) = 0;
     virtual bool OutputIsEmpty() const = 0;
     virtual bool InputIsEmpty() const = 0;
     virtual bool InputIsEmpty(size_t FileID) const = 0;

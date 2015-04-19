@@ -42,7 +42,7 @@ namespace eudaq{
     virtual bool InputIsEmpty() const override;
     virtual bool InputIsEmpty(size_t fileId) const override;
 
-    virtual bool mergeBoreEvent(Event_sp& ev);
+    
     //////////////////////////////////////////////////////////////////////////
 
 
@@ -54,6 +54,7 @@ namespace eudaq{
 
     int AddEventToProducerQueue(int fileIndex, Event_sp Ev);
     int AddBaseEventToProducerQueue(int fileIndex, Event_sp Ev);
+    bool mergeBoreEvent(event_sp& ev);
     void clearOutputQueue();
 
     void addBORE_Event(int fileIndex, Event_sp BOREEvent);
