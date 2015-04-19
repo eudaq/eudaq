@@ -57,6 +57,10 @@ namespace eudaq{
 
   bool Event2Pointer::Buffer_struckt::ReferenceFound(const Event& ev)
   {
+    if (ev.get_id()==PointerEvent::eudaq_static_id())
+    {
+      return false;
+    }
     return  (std::find(m_buffer.begin(), m_buffer.end(), ev.getUniqueID()) != m_buffer.end());
   }
 
