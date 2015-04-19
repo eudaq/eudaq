@@ -125,7 +125,7 @@ public:
         // Then restart the loop
         continue;
       }
-
+      ++m_ev;
       if (m_maxEventNR<m_ev)
       {
         eudaq::mSleep(1000);
@@ -157,13 +157,13 @@ public:
       {
         if (m_ev%m_Skip==0)
         {
-          ++m_ev;
+          
           continue;
         }
       }
       SendEvent(ev);
       // Now increment the event number
-      m_ev++;
+     
     }
   }
 
