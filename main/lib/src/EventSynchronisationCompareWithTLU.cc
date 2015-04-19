@@ -220,22 +220,6 @@ namespace eudaq{
   bool Sync2TLU::SyncFirstEvent()
   {
 
-
-    if (!m_sync)
-    {
-      if (!Event_Queue_Is_Empty())
-      {
-        makeDetectorEvent();
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-
-    }
-
-
     auto& TLU_queue = getFirstTLUQueue();
 
     while (!Event_Queue_Is_Empty())

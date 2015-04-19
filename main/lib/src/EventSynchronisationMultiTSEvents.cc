@@ -76,19 +76,13 @@ namespace eudaq{
   {
 
 
-    if (!m_sync)
-    {
+
       for (auto& e : m_ProducerEventQueue)
       {
         m_outPutQueue.push(e.front());
         e.pop();
       }
       event_queue_pop();
-    }
-    else
-    {
-      event_queue_pop_TLU_event();
-    }
 
 
   }

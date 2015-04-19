@@ -30,14 +30,7 @@ namespace eudaq{
     
     m_outPutQueue.push(det);
 
-    if (m_sync)
-    {
       event_queue_pop_TLU_event();
-    }
-    else
-    {
-      event_queue_pop();
-    }
 
 
 
