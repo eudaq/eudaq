@@ -35,7 +35,7 @@ public:
   // This gets called whenever the DAQ is configured
   virtual void OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Configuring: " << config.Name() << std::endl;
-
+    config.Print();
     // Do any configuration of the hardware here
     // Configuration file values are accessible as config.Get(name, default)
     m_exampleparam = config.Get("Parameter", 0);
