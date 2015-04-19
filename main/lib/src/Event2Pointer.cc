@@ -151,5 +151,5 @@ namespace eudaq{
     return true;
   }
 
-  registerSyncClass(Event2Pointer, "dePointer");
+  registerSyncClass(Event2Pointer, "Events2Pointer");
 }
