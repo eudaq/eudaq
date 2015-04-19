@@ -25,10 +25,11 @@ namespace eudaq{
   private:
     
     bool isDataEvent(const Event& ev);
-
+    bool detectorEventReplacePointer(event_sp& ev);
     event_sp replaceReferenceByDataEvent(const Event& pev);
     std::map< reference_t, event_sp> m_buffer;
     std::queue<event_sp> m_output;
+
   };
 
 
@@ -72,22 +73,7 @@ namespace eudaq{
 
     event_sp outevent = replaceReferenceByDataEvent(*ev);
 
-    if (outevent->get_id() == DetectorEvent::eudaq_static_id())
-    {
-      DetectorEvent *det = dynamic_cast<DetectorEvent*> (outevent.get());
-      std::vector<event_sp> dummy_vec;
-      for (size_t i = 0; i < det->NumEvents(); ++i)
-      {
-        auto subEvent = det->GetEvent(i);
-        dummy_vec.push_back(replaceReferenceByDataEvent(*subEvent));
-      }
-      det->clearEvents();
-      for (auto& e:dummy_vec)
-      {
-        det->AddEvent(e);
-      }
-    }
-
+ 
     m_output.push(outevent);
     return true;
   }
@@ -98,8 +84,9 @@ namespace eudaq{
     event_sp dummy = m_buffer[pev.getReference()];
     if (pev.getCounter()==0)
     {
-      m_buffer.erase(pev.getReference());
+     // m_buffer.erase(pev.getReference());
     }
+    detectorEventReplacePointer(dummy);
     return dummy;
   }
 
@@ -120,5 +107,28 @@ namespace eudaq{
 
   }
 
-  registerSyncClass(Pointer2Event, "dePointer");
+  bool Pointer2Event::detectorEventReplacePointer(event_sp& ev)
+  {
+    if (ev->get_id() != DetectorEvent::eudaq_static_id())
+    {
+      return true; // nothing to do
+    }
+
+    DetectorEvent *det = dynamic_cast<DetectorEvent*> (ev.get());
+    std::vector<event_sp> dummy_vec;
+    for (size_t i = 0; i < det->NumEvents(); ++i)
+    {
+      auto subEvent = det->GetEvent(i);
+      dummy_vec.push_back(replaceReferenceByDataEvent(*subEvent));
+    }
+    det->clearEvents();
+    for (auto& e : dummy_vec)
+    {
+      det->AddEvent(e);
+    }
+
+    return true;
+  }
+
+  registerSyncClass(Pointer2Event, "Pointer2Events");
 }
