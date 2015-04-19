@@ -66,7 +66,7 @@ namespace eudaq{
 
   Event2Pointer::counter_t Event2Pointer::Buffer_struckt::externalReference(reference_t ev_id) const
   {
-    return  (std::find(m_buffer.begin(), m_buffer.end(), ev_id) != m_buffer.end());
+    return  std::count(m_buffer.begin(), m_buffer.end(), ev_id);
   }
 
   Event2Pointer::counter_t Event2Pointer::Buffer_struckt::externalReference(const Event& ev) const
@@ -121,7 +121,7 @@ namespace eudaq{
     {
       auto pev = dynamic_cast<PointerEvent*>(ev);
       auto id = pev->getReference();
-      auto mycount = std::count(m_buffer.begin(), m_buffer.end(), id);
+      auto mycount= externalReference(id);
       std::cout << mycount << std::endl;
       pev->setCounter(mycount);
     }
