@@ -8,13 +8,13 @@
 
 namespace eudaq{
 
-  class EventSyncPointer : public SyncBase {
+  class Pointer2Event : public SyncBase {
   public:
 
     using reference_t = PointerEvent::reference_t;
    // public interface
 
-    EventSyncPointer(Parameter_ref param);
+    Pointer2Event(Parameter_ref param);
     virtual bool pushEvent(Event_sp ev, size_t Index = 0) ;
     virtual bool getNextEvent(Event_sp& ev);
     virtual bool mergeBoreEvent(Event_sp& ev) { return false; };
@@ -28,33 +28,33 @@ namespace eudaq{
     bool isDataEvent(const Event& ev);
 
     event_sp replaceReferenceByDataEvent(const Event& pev);
-    std::map<reference_t, event_sp> m_buffer;
+    std::map< reference_t, event_sp> m_buffer;
     std::queue<event_sp> m_output;
     reference_t m_ref=0;
   };
 
 
 
-  bool EventSyncPointer::isDataEvent(const Event& ev){
+  bool Pointer2Event::isDataEvent(const Event& ev){
     return ev.get_id() != PointerEvent::eudaq_static_id();
   }
 
-  bool EventSyncPointer::InputIsEmpty() const
+  bool Pointer2Event::InputIsEmpty() const
   {
     return m_buffer.empty();
   }
 
-  bool EventSyncPointer::InputIsEmpty(size_t FileID) const
+  bool Pointer2Event::InputIsEmpty(size_t FileID) const
   {
     return InputIsEmpty();
   }
 
-  bool EventSyncPointer::OutputIsEmpty() const
+  bool Pointer2Event::OutputIsEmpty() const
   {
     return m_output.empty();
   }
 
-  bool EventSyncPointer::pushEvent(Event_sp ev, size_t Index /*= 0*/)
+  bool Pointer2Event::pushEvent(Event_sp ev, size_t Index /*= 0*/)
   {
     if (!ev)
     {
@@ -94,7 +94,7 @@ namespace eudaq{
     return true;
   }
 
-  event_sp EventSyncPointer::replaceReferenceByDataEvent(const Event &ev)
+  event_sp Pointer2Event::replaceReferenceByDataEvent(const Event &ev)
   {
     const PointerEvent& pev = dynamic_cast<const PointerEvent&> (ev);
     event_sp dummy = m_buffer[pev.getReference()];
@@ -105,7 +105,7 @@ namespace eudaq{
     return dummy;
   }
 
-  bool EventSyncPointer::getNextEvent(Event_sp& ev)
+  bool Pointer2Event::getNextEvent(Event_sp& ev)
   {
     if (OutputIsEmpty())
     {
@@ -117,10 +117,10 @@ namespace eudaq{
     return true;
   }
 
-  EventSyncPointer::EventSyncPointer(Parameter_ref param) :SyncBase(param)
+  Pointer2Event::Pointer2Event(Parameter_ref param) :SyncBase(param)
   {
 
   }
 
-  registerSyncClass(EventSyncPointer, "dePointer");
+  registerSyncClass(Pointer2Event, "dePointer");
 }
