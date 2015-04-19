@@ -86,7 +86,7 @@ namespace eudaq{
     counter_t counter = externalReference(ev);
     auto ref = pushDataEvent(std::move(ev));
     
-    pushDataEvent(std::move(std::make_shared<PointerEvent>(ref,counter)));
+    return pushDataEvent(std::move(std::make_shared<PointerEvent>(ref,counter)));
 
   }
 
