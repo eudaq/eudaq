@@ -94,10 +94,16 @@ namespace eudaq{
 
   void Event2Pointer::Buffer_struckt::pop_front(event_sp& ev)
   {
-    ev = m_output.front();
+    do 
+    {
+      ev = m_output.front();
+      m_output.pop();
+      m_buffer.erase(m_buffer.begin());
+    } while (!ev);
+     
     setCounterForPointerEvents(ev.get());
-    m_output.pop();
-    m_buffer.erase(m_buffer.begin());
+
+
     
   }
 
