@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include "eudaq/DetectorEvent.hh"
+#include "eudaq/PluginManager.hh"
 
 
 namespace eudaq{
@@ -24,20 +25,98 @@ namespace eudaq{
 
 
   private:
-    bool InternalPushEvent(event_sp&& ev);
+    reference_t InternalPushEvent(event_sp&& ev);
     bool isDataEvent(const Event& ev);
-    bool pushDetectorEvent(event_sp&& ev);
+    reference_t pushDetectorEvent(event_sp&& ev);
     reference_t pushDataEvent(event_sp&& ev);
     bool pushPointerEvent(event_sp&& ev);
     event_sp replaceReferenceByDataEvent(const Event& pev);
-    bool ReferenceFound(const Event& ev);
-    counter_t externalReference(const event_sp& ev);
+    
     void removeReference(const Event& ev);
-   std::vector<reference_t> m_buffer;
-    std::queue<event_sp> m_output;
+    bool bufferEmpty() const;
+    void setCounterForPointerEvents(Event* ev);
+
+    struct Buffer_struckt 
+    {
+      std::vector<reference_t> m_buffer;
+      std::queue<event_sp> m_output;
+      counter_t externalReference(const Event& ev) const;
+      counter_t externalReference(reference_t ev_id) const;
+      bool ReferenceFound(const Event& ev);
+      reference_t push(event_sp && ev);
+      size_t size()const;
+      void pop_front(event_sp& ev);
+      void setCounterForPointerEvents(Event* ev);
+    } m_buf;
+
     reference_t m_ref=0;
     static const counter_t m_internalRef = 2;
+    size_t m_bufferSize = 100;
   };
+
+  bool Event2Pointer::Buffer_struckt::ReferenceFound(const Event& ev)
+  {
+    return  (std::find(m_buffer.begin(), m_buffer.end(), ev.getUniqueID()) != m_buffer.end());
+  }
+
+  Event2Pointer::counter_t Event2Pointer::Buffer_struckt::externalReference(reference_t ev_id) const
+  {
+    return  (std::find(m_buffer.begin(), m_buffer.end(), ev_id) != m_buffer.end());
+  }
+
+  Event2Pointer::counter_t Event2Pointer::Buffer_struckt::externalReference(const Event& ev) const
+  {
+    return externalReference(ev.getUniqueID());
+  }
+
+  Event2Pointer::reference_t Event2Pointer::Buffer_struckt::push(event_sp && ev)
+  {
+    reference_t id = ev->getUniqueID();
+    m_buffer.push_back(id);
+    m_output.push(ev);
+    return id;
+  }
+
+  size_t Event2Pointer::Buffer_struckt::size() const
+  {
+    return m_buffer.size();
+  }
+
+
+
+  void Event2Pointer::Buffer_struckt::pop_front(event_sp& ev)
+  {
+    ev = m_output.front();
+    setCounterForPointerEvents(ev.get());
+    m_output.pop();
+    m_buffer.erase(m_buffer.begin());
+    
+  }
+
+  void Event2Pointer::Buffer_struckt::setCounterForPointerEvents(Event* ev)
+  {
+    if (!ev)
+    {
+      return;
+    }
+    if (ev->get_id() == PointerEvent::eudaq_static_id())
+    {
+      auto pev = dynamic_cast<PointerEvent*>(ev);
+      auto id = pev->getReference();
+      auto mycount = std::count(m_buffer.begin(), m_buffer.end(), id);
+      std::cout << mycount << std::endl;
+      pev->setCounter(mycount);
+    }
+    if (ev->get_id() == DetectorEvent::eudaq_static_id())
+    {
+      auto det = dynamic_cast<DetectorEvent*>(ev);
+      for (size_t i = 0; i < det->NumEvents(); ++i)
+      {
+        setCounterForPointerEvents(det->GetEventPtr(i).get());
+      }
+    }
+
+  }
 
 
 
@@ -47,7 +126,7 @@ namespace eudaq{
 
   bool Event2Pointer::InputIsEmpty() const
   {
-    return m_buffer.empty();
+    return true; // m_buffer.empty();
   }
 
   bool Event2Pointer::InputIsEmpty(size_t FileID) const
@@ -57,11 +136,15 @@ namespace eudaq{
 
   bool Event2Pointer::OutputIsEmpty() const
   {
-    return m_output.empty();
+    return m_buf.size()==0;
   }
 
+  bool Event2Pointer::bufferEmpty() const {
+    return m_buf.size() < m_bufferSize;
 
-  bool Event2Pointer::pushDetectorEvent(event_sp&& ev)
+  }
+
+  Event2Pointer::reference_t Event2Pointer::pushDetectorEvent(event_sp&& ev)
   {
     DetectorEvent* det = dynamic_cast<DetectorEvent*>(ev.get());
       if (!det)
@@ -72,9 +155,8 @@ namespace eudaq{
     for (size_t i = 0; i < det->NumEvents(); ++i)
     {
       auto subPointer = det->GetEventPtr(i);
-      counter_t counter = externalReference(subPointer);
       auto ref = InternalPushEvent(std::move(subPointer));
-      dummy.push_back(std::make_shared<PointerEvent> (ref, counter));
+      dummy.push_back(std::make_shared<PointerEvent> (ref, 0));
     }
 
     det->clearEvents();
@@ -83,54 +165,36 @@ namespace eudaq{
     {
       det->AddEvent(e);
     }
-    counter_t counter = externalReference(ev);
+   
     auto ref = pushDataEvent(std::move(ev));
     
-    return pushDataEvent(std::move(std::make_shared<PointerEvent>(ref,counter)));
+    return pushDataEvent(std::move(std::make_shared<PointerEvent>(ref,0)));
 
   }
 
   Event2Pointer::reference_t Event2Pointer::pushDataEvent(event_sp&& ev)
   {
-    if (!ReferenceFound(*ev))
+    if (!m_buf.ReferenceFound(*ev))
     {
-      m_buffer.push_back(ev->getUniqueID());
-      m_output.push(ev);
+      return m_buf.push(std::move(ev));
     }
-    if (!externalReference(ev))
-    {
-      removeReference(*ev);
-    }
-
     return ev->getUniqueID();
 
   }
 
-  bool Event2Pointer::ReferenceFound(const Event& ev)
-  {
-    return (std::find(m_buffer.begin(), m_buffer.end(), ev.getUniqueID())  != m_buffer.end());
-  }
-
-  void Event2Pointer::removeReference(const Event& ev)
-  {
-    auto it = std::find(m_buffer.begin(), m_buffer.end(), ev.getUniqueID());
-    if (it != m_buffer.end()){
-      m_buffer.erase(it);
-    }
-  }
-
-  Event2Pointer::counter_t Event2Pointer::externalReference(const event_sp& ev)
-  {
-   
-    return (ev.use_count() - m_internalRef);
-  }
-
   bool Event2Pointer::pushEvent(event_sp ev, size_t Index /*= 0*/)
   {
-    return InternalPushEvent(std::move(ev));
+    if (ev)
+    {
+
+     InternalPushEvent(std::move(ev));
+     return true;
+    }
+    m_bufferSize = 0;
+    return false;
   }
 
-  bool Event2Pointer::InternalPushEvent(event_sp&& ev)
+  Event2Pointer::reference_t Event2Pointer::InternalPushEvent(event_sp&& ev)
   {
     if (ev->get_id() == DetectorEvent::eudaq_static_id()){
       return pushDetectorEvent(std::move(ev));
@@ -141,15 +205,15 @@ namespace eudaq{
 
   bool Event2Pointer::getNextEvent(event_sp& ev)
   {
-    if (OutputIsEmpty())
+    if (OutputIsEmpty() ||bufferEmpty() )
     {
       return false;
     }
-    ev = m_output.front();
-    m_output.pop();
-    
+    m_buf.pop_front(ev);
     return true;
   }
+
+
 
   registerSyncClass(Event2Pointer, "Events2Pointer");
 }
