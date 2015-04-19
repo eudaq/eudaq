@@ -79,14 +79,12 @@ namespace eudaq {
     void pushTimeStamp(timeStamp_t timeStamp){ m_timestamp.push_back(timeStamp); }
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
     void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
-    void setUniquePointer(uint64_t newUniqueID);
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
     virtual unsigned get_id() const = 0;
   protected:
     typedef std::map<std::string, std::string> map_t;
 
     unsigned m_flags, m_runnumber, m_eventnumber;
-    uint64_t m_uniqueEventID;
     std::vector<timeStamp_t> m_timestamp;
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };
