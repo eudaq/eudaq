@@ -21,6 +21,15 @@ namespace eudaq {
   class ExampleConverterPlugin : public DataConverterPlugin {
 
     public:
+      virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event & tluEvent)  const{
+     //   std::cout << "ev: " << ev.GetEventNumber() << " tlu: " <<tluEvent.GetEventNumber();
+        auto sync_status = compareTLU2DUT(tluEvent.GetEventNumber(), ev.GetEventNumber());
+        if ( sync_status ==Event_IS_LATE)
+        {
+          return Event_IS_LATE;
+        }
+        return Event_IS_Sync;
+      }
 		virtual bool isTLU(const Event& ev){ 
       return ev.GetTag("TLU", 1);
     }
