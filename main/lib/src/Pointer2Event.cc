@@ -84,7 +84,7 @@ namespace eudaq{
     event_sp dummy = m_buffer[pev.getReference()];
     if (pev.getCounter()==0)
     {
-     // m_buffer.erase(pev.getReference());
+      m_buffer.erase(pev.getReference());
     }
     detectorEventReplacePointer(dummy);
     return dummy;
