@@ -3,7 +3,9 @@
 #include <time.h>
 
 #include "eudaq/Event.hh"
+#include <atomic>
 
+std::atomic<uint64_t> gEventCounter =0;
 
 namespace eudaq {
 
@@ -28,9 +30,11 @@ namespace eudaq {
     if (IsEUDAQ2())
     {
       ds.read(m_timestamp);
+      ds.read(m_uniqueEventID);
     }
     else
     {
+      m_uniqueEventID = ++gEventCounter;
       uint64_t timestamp;
       ds.read(timestamp);
       m_timestamp.push_back(timestamp);
@@ -40,7 +44,8 @@ namespace eudaq {
 
   Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/) : m_flags(flags | FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
     m_runnumber(run),
-    m_eventnumber(event)
+    m_eventnumber(event),
+    m_uniqueEventID(++gEventCounter)
   {
     m_timestamp.push_back(timestamp);
   }
@@ -67,6 +72,7 @@ namespace eudaq {
     if (IsEUDAQ2())
     {
       ser.write(m_timestamp);
+      ser.write(m_uniqueEventID);
     }
     else
     {
@@ -180,6 +186,20 @@ namespace eudaq {
 
     }
     m_timestamp[i] = timeStamp;
+  }
+
+  void Event::setUniquePointer(uint64_t newUniqueID)
+  {
+    m_uniqueEventID = newUniqueID;
+    if (gEventCounter<newUniqueID+100)
+    {
+      gEventCounter = newUniqueID + 200;
+    }
+  }
+
+  uint64_t Event::getUniqueID() const
+  {
+    return m_uniqueEventID;
   }
 
   std::ostream & operator << (std::ostream &os, const Event &ev) {

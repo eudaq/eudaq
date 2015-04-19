@@ -39,7 +39,7 @@ namespace eudaq {
     unsigned GetEventNumber() const;
     timeStamp_t GetTimestamp(size_t i=0) const;
     size_t   GetSizeOfTimeStamps() const;
-
+    uint64_t getUniqueID() const;
     /** Returns the type string of the event implementation.
      *  Used by the plugin mechanism to identify the event type.
      */
@@ -74,21 +74,24 @@ namespace eudaq {
     void SetFlags(unsigned f) { m_flags |= f; }
     void SetTimeStampToNow(size_t i=0);
     void pushTimeStampToNow();
-    void setTimeStamp(timeStamp_t timeStamp,size_t i=0);
+    void setTimeStamp(timeStamp_t timeStamp, size_t i = 0);
+   
     void pushTimeStamp(timeStamp_t timeStamp){ m_timestamp.push_back(timeStamp); }
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
     void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
+    void setUniquePointer(uint64_t newUniqueID);
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
     virtual unsigned get_id() const = 0;
   protected:
     typedef std::map<std::string, std::string> map_t;
 
     unsigned m_flags, m_runnumber, m_eventnumber;
+    uint64_t m_uniqueEventID;
     std::vector<timeStamp_t> m_timestamp;
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };
 
-  DLLEXPORT std::ostream &  operator << (std::ostream &, const Event &);
+  DLLEXPORT std::ostream &  operator<< (std::ostream &, const Event &);
 
   class DLLEXPORT EventFactory {
   public:
