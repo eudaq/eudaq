@@ -42,7 +42,7 @@ namespace eudaq {
   FileReaderPointer::FileReaderPointer(Parameter_ref param) : baseFileReader(param)
   {
     m_read = FileReaderFactory::create("raw", param);
-    m_sync = EventSyncFactory::create("dePointer", param);
+    m_sync = EventSyncFactory::create("Pointer2Events", param);
 
     auto ev = m_read->getEventPtr();
     m_sync->pushEvent(ev);
