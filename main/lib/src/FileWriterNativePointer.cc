@@ -1,9 +1,8 @@
 #include "eudaq/FileNamer.hh"
 #include "eudaq/FileWriter.hh"
-#include "eudaq/FileSerializer.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/PointerEvent.hh"
-#include <map>
+#include "eudaq/EventSynchronisationBase.hh"
 
 //#include "eudaq/Logger.hh"
 
@@ -18,119 +17,57 @@ namespace eudaq {
       virtual void WriteEvent(const DetectorEvent &); // used for detector events 
       virtual void WriteBaseEvent(const Event&);      // used as handle for base classes 
       virtual uint64_t FileBytes() const;
-      virtual ~FileWriterNativePointer();
+      virtual ~FileWriterNativePointer(){}
     private:
 
-      reference_t Write_Event_Body(const Event&);  
-      reference_t Write_Event_Pointer(const PointerEvent&);
-      reference_t findReference(const event_sp ev);
-      void removeReference(const event_sp ev);
 
-      FileSerializer * m_ser;
-      std::map < event_sp, reference_t> m_buffer;
-      reference_t m_ref =0;
-      const counter_t m_internalRef = 3;
+      std::unique_ptr<SyncBase> m_sync;
+      std::unique_ptr<FileWriter> m_writer;
+     
   };
 
   
   registerFileWriter(FileWriterNativePointer, "nativePointer");
   
-  FileWriterNativePointer::FileWriterNativePointer(const std::string & /*param*/) : m_ser(0) {
+  FileWriterNativePointer::FileWriterNativePointer(const std::string & param)  {
     //EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
+    SyncBase::Parameter_t p("");
+    m_sync = EventSyncFactory::create("Events2Pointer", p);
+    m_writer = FileWriterFactory::Create("native", "raw3");
+
   }
 
   void FileWriterNativePointer::StartRun(unsigned runnumber) {
-    delete m_ser;
-    m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw3").Set('R', runnumber),true);
+    m_writer->StartRun(runnumber);
   }
 
   void FileWriterNativePointer::WriteEvent(const DetectorEvent & ev) {
-    if (ev.IsBORE()) {
-      eudaq::PluginManager::Initialize(ev);
-    }
     
+    event_sp det = DetectorEvent::ShallowCopy(ev);
 
-    for (size_t i = 0; i < ev.NumEvents(); ++i)
+    m_sync->pushEvent(det);
+    event_sp dummy;
+    while (m_sync->getNextEvent(dummy))
     {
-      auto subPointer = ev.GetEventPtr(i);
-      reference_t ref;
-     
-      ref = findReference(subPointer);
-      if (ref==0)
-      {
-        ref= Write_Event_Body(*subPointer);
-        m_buffer[subPointer] = ref;
-      }
-      
-      counter_t counter = subPointer.use_count();
-      Event* subRawPointer = subPointer.get();
-      subRawPointer->~Event();
-      
-      new(subRawPointer) PointerEvent(ref, counter - m_internalRef);
-      if (counter-m_internalRef == 0)
-      {
-        removeReference(subPointer);
-      }
-
+      m_writer->WriteBaseEvent(*dummy);
     }
-
-    auto ref = Write_Event_Body(ev);
-    PointerEvent pointerEvent(ref, 0);
-    Write_Event_Pointer(pointerEvent);
   }
   void FileWriterNativePointer::WriteBaseEvent(const Event& ev){
-   
-    auto det = dynamic_cast<const DetectorEvent*>(&ev);
-    if (det)
+    if (ev.get_id()==DetectorEvent::eudaq_static_id())
     {
+      auto det = dynamic_cast<const DetectorEvent*>(&ev);
       WriteEvent(*det);
       return;
     }
 
-
-
-    auto file_ref=Write_Event_Body(ev);
-
-    PointerEvent p(file_ref, 0);
-    Write_Event_Pointer(p);
+    m_writer->WriteBaseEvent(ev);
   }
 
-  FileWriterNativePointer::~FileWriterNativePointer() {
-    delete m_ser;
-  }
 
-  uint64_t FileWriterNativePointer::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }
 
-  FileWriterNativePointer::reference_t FileWriterNativePointer::Write_Event_Body(const Event& ev)
-  {
-    ++m_ref;
-    
-    if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
-    m_ser->write(ev);
-    m_ser->Flush();
-    return m_ref;
-  }
+  uint64_t FileWriterNativePointer::FileBytes() const { return m_writer->FileBytes(); }
 
-  FileWriterNativePointer::reference_t FileWriterNativePointer::Write_Event_Pointer(const PointerEvent& ev)
-  {
-    if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
-    m_ser->write(ev);
-    m_ser->Flush();
-  }
 
-  FileWriterNativePointer::reference_t FileWriterNativePointer::findReference(const event_sp ev)
-  {
-    auto index = m_buffer.find(ev);
-    if (index!=m_buffer.end())
-    {
-      return index->second;
-    }
-    return 0;
-  }
 
-  void FileWriterNativePointer::removeReference(const event_sp ev)
-  {
-    m_buffer.erase(ev);
-  }
 
 }
