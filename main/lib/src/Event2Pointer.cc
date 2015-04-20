@@ -157,6 +157,10 @@ namespace eudaq{
   }
 
   bool Event2Pointer::bufferEmpty() const {
+    if (m_bufferSize<0)
+    {
+      return m_buf.size() == 0;
+    }
     return m_buf.size() < m_bufferSize;
 
   }
@@ -202,13 +206,25 @@ namespace eudaq{
 
   bool Event2Pointer::pushEvent(event_sp ev, size_t Index /*= 0*/)
   {
-    if (ev)
-    {
 
+    if (!ev)
+    {
+      --m_bufferSize ;
+      if (!OutputIsEmpty())
+      {
+        return true;
+      }
+    }
+    else
+    {
+      if (ev->IsEORE())
+      {
+        m_bufferSize = 0;
+      }
      InternalPushEvent(std::move(ev));
      return true;
     }
-    m_bufferSize = 0;
+ 
     return false;
   }
 
