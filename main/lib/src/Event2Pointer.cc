@@ -52,7 +52,7 @@ namespace eudaq{
 
     reference_t m_ref=0;
     static const counter_t m_internalRef = 2;
-    size_t m_bufferSize = 100;
+    int m_bufferSize = 100;
   };
 
   bool Event2Pointer::Buffer_struckt::ReferenceFound(const Event& ev)
