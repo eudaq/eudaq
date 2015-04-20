@@ -59,9 +59,7 @@ namespace eudaq {
 		  eudaq::PluginManager::Initialize(devent);
 		  firstEvent =true;
 		  return;
-	  } else if (devent.IsEORE()) {
-		return;
-	  }
+	  } 
 	 
 
 
