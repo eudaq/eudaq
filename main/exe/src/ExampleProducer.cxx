@@ -89,10 +89,11 @@ public:
 
     // Send an EORE after all the real events have been sent
     // You can also set tags on it (as with the BORE) if necessary
-    auto BOREvent = eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev);
-    BOREvent.SetTag("TLU", m_TLU);
-    BOREvent.SetTag("ID", m_ID);
-    SendEvent(BOREvent);
+    auto EOREvent = eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev);
+    EOREvent.SetTag("TLU", m_TLU);
+    EOREvent.SetTag("ID", m_ID);
+    EOREvent.SetTimeStampToNow();
+    SendEvent(EOREvent);
     std::cout << "Stopped" << std::endl;
   }
 
