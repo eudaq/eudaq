@@ -25,7 +25,7 @@ namespace eudaq {
     explicit DetectorEvent(Deserializer&);
     void AddEvent(std::shared_ptr<Event> evt);
     virtual void Print(std::ostream &) const;
-
+    static event_sp ShallowCopy(const DetectorEvent& det);
     /// Return "DetectorEvent" as type.
     virtual std::string GetType() const {return DetectorEventSubtype;}
 
@@ -51,6 +51,7 @@ namespace eudaq {
       }
     private:
     std::vector<std::shared_ptr<Event> > m_events;
+    DetectorEvent(const DetectorEvent& det);
   };
   using ContainerEvent = DetectorEvent;
   
