@@ -15,35 +15,25 @@ namespace eudaq {
     EUDAQ_DECLARE_EVENT(PointerEvent);
     public:
     using reference_t = uint64_t;
-    using counter_t = unsigned;
+    using counter_t = uint32_t;
 
     PointerEvent(reference_t filePointer, counter_t counter);
     
     PointerEvent(Deserializer &);
 
-      virtual void Print(std::ostream & os) const { 
-        os << "PointerEvent \n";
-        os << "reference = " << getReference() <<"\n" << "counter = "<< getCounter() <<"\n";
-      
-      };
+    virtual void Print(std::ostream & os) const;
     virtual void Serialize(Serializer &) const;
 
-    /// Return the type string.
-    virtual std::string GetSubType() const { return ""; }
+    virtual std::string GetSubType() const;
 
-    const reference_t& getReference()const {
-      return m_timestamp[0];
-    }
-    const counter_t& getCounter()const {
-      return m_eventnumber;
-    }
-
-    void setCounter(unsigned newCounter){
-      m_eventnumber = newCounter;
-    }
+    reference_t getReference()const;
+    counter_t getCounter()const;
+    void setReference(reference_t ref);
+    void setCounter(counter_t newCounter);
   private:
-
-      
+    
+    reference_t m_ref;
+    counter_t m_counter;
  
   };
 
