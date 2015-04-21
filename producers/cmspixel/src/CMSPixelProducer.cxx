@@ -36,6 +36,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_ev_runningavg_filled(0),
     m_tlu_waiting_time(4000),
     m_roc_resetperiod(0),
+    m_nplanes(1),
     m_terminated(false),
     m_running(false),
     m_api(NULL),
@@ -168,6 +169,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
 
     // Initialize the DUT as configured above:
     m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
+    // Store the number of configured ROCs to be stored in a BORE tag:
+    m_nplanes = rocDACs.size();
 
     // Read current:
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
@@ -282,6 +285,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
     // Set the ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
+
+    // Set the number of planes (ROCs):
+    bore.SetTag("PLANES", m_nplanes);
 
     // Store all DAC settings in one BORE tag:
     bore.SetTag("DACS", m_alldacs);
