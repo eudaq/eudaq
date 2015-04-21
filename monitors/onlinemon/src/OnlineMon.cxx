@@ -220,7 +220,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     // Initialize the geometry with the first event received:
     if(!_planesInitialized) {
       myevent.setNPlanes(num);
-      std::cout << "Initialized geometry." << std::endl;
+      std::cout << "Initialized geometry: " << num << " planes." << std::endl;
     }
     else {
       if (myevent.getNPlanes()!=num) {

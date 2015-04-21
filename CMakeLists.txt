@@ -67,6 +67,13 @@ SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to
 # optional debug defines
 # add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
 
+# Set the correct build type and allow command line options:
+# Set a default build type if none was specified
+IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  MESSAGE(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+ENDIF()
+
 # include directories
 INCLUDE_DIRECTORIES( ./main/include )
 INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
