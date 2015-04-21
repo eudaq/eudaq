@@ -1,5 +1,6 @@
 #include "dictionaries.h"
 #include "constants.h"
+#include "datasource_evt.h"
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
@@ -34,54 +35,22 @@ namespace eudaq {
     void Initialize(const Event & bore, const Configuration & cnf) {
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
+      std::string tbmtype = bore.GetTag("TBMTYPE", "tbmemulator");
+
       m_detector = bore.GetTag("DETECTOR","");
       std::string pcbtype = bore.GetTag("PCBTYPE", "");
       m_rotated_pcb = (pcbtype.find("-rot") != std::string::npos ? true : false);  
 
+      // Get the number of planes:
+      m_nplanes = bore.GetTag("PLANES", 1);
+
       m_roctype = devDict->getInstance()->getDevCode(roctype);
+      m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
+
       if (m_roctype == 0x0)
 	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
 
       std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
-    }
-
-    StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const {
-
-      // We are using the event's "sensor" (m_detector) to distinguish DUT and REF:
-      StandardPlane plane(id, m_event_type, m_detector);
-
-      // Initialize the plane size (zero suppressed), set the number of pixels
-      // Check which carrier PCB has been used and book planes accordingly:
-      if(m_rotated_pcb) { plane.SetSizeZS(ROC_NUMROWS, ROC_NUMCOLS, 0); }
-      else { plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0); }
-
-      // Set trigger id:
-      plane.SetTLUEvent(0);
-
-      // Transform data of from EUDAQ data format to int16_t vector for processing:
-      std::vector<uint16_t> rawdata = TransformRawData(data);
-      std::vector<CMSPixel::pixel> * evt = new std::vector<CMSPixel::pixel>;
-      if(rawdata.empty()) { return plane; }
-
-      // Enable lower debugging verbosity level for the decoder module (very verbose!): DEBUG4
-      CMSPixel::Log::ReportingLevel() = CMSPixel::Log::FromString("WARNING");
-      CMSPixel::CMSPixelEventDecoderDigital evtDecoder(1, FLAG_12BITS_PER_WORD, m_roctype);
-      int status = evtDecoder.get_event(rawdata, evt);
-
-      // Print the decoder statistics (very verbose!)
-      //evtDecoder.statistics.print();
-
-      // Check for serious decoding problems and return empty plane:
-      if(status <= DEC_ERROR_NO_TBM_HEADER) { return plane; }
-
-      // Store all decoded pixels:
-      for(std::vector<CMSPixel::pixel>::iterator it = evt->begin(); it != evt->end(); ++it){
-	if(m_rotated_pcb) { plane.PushPixel(it->row, it->col, it->raw); }
-	else { plane.PushPixel(it->col, it->row, it->raw); }
-      }
-
-      delete evt;
-      return plane;
     }
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
@@ -96,13 +65,58 @@ namespace eudaq {
       }
 
       const RawDataEvent & in_raw = dynamic_cast<const RawDataEvent &>(in);
+      // Check of we have more than one data block:
+      if(in_raw.NumBlocks() > 1) {
+	EUDAQ_ERROR("Only one data block is expected!");
+	return false;
+      }
+
       unsigned plane_id;
       if(m_detector == "TRP") { plane_id = 6; }      // TRP
       else if(m_detector == "DUT") { plane_id = 7; } // DUT
       else { plane_id = 8; }                         // REF
-      for (size_t i = 0; i < in_raw.NumBlocks(); ++i) {
-	//out.AddPlane(ConvertPlane(in_raw.GetBlock(i), in_raw.GetID(i)));
-	out.AddPlane(ConvertPlane(in_raw.GetBlock(i), plane_id));
+
+      // Set decoder to reasonable verbosity (still informing about problems:
+      pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
+
+      // The pipeworks:
+      evtSource src;
+      passthroughSplitter splitter;
+      dtbEventDecoder decoder;
+      dataSink<pxar::Event*> Eventpump;
+
+      // Connect the data source and set up the pipe:
+      src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
+      src >> splitter >> decoder >> Eventpump;
+
+      // Transform from EUDAQ data, add it to the datasource:
+      src.AddData(TransformRawData(in_raw.GetBlock(0)));
+      // ...and pull it out at the other end:
+      pxar::Event* evt = Eventpump.Get();
+
+      // Iterate over all planes and check for pixel hits:
+      for(size_t roc = 0; roc < m_nplanes; roc++) {
+
+	// We are using the event's "sensor" (m_detector) to distinguish DUT and REF:
+	StandardPlane plane(plane_id + roc, m_event_type, m_detector);
+
+	// Initialize the plane size (zero suppressed), set the number of pixels
+	// Check which carrier PCB has been used and book planes accordingly:
+	if(m_rotated_pcb) { plane.SetSizeZS(ROC_NUMROWS, ROC_NUMCOLS, 0); }
+	else { plane.SetSizeZS(ROC_NUMCOLS, ROC_NUMROWS, 0); }
+	plane.SetTLUEvent(0);
+
+	// Store all decoded pixels belonging to this plane:
+	for(std::vector<pxar::pixel>::iterator it = evt->pixels.begin(); it != evt->pixels.end(); ++it){
+	  // Check if current pixel belongs on this plane:
+	  if(it->roc() == roc) {
+	    if(m_rotated_pcb) { plane.PushPixel(it->row(), it->column(), it->value()); }
+	    else { plane.PushPixel(it->column(), it->row(), it->value()); }
+	  }
+	}
+
+	// Add plane to the output event:
+	out.AddPlane(plane);
       }
     }
 
@@ -219,8 +233,9 @@ namespace eudaq {
 #endif
 
   private:
-    uint8_t m_roctype;
+    uint8_t m_roctype, m_tbmtype;
     size_t m_planeid;
+    size_t m_nplanes;
     std::string m_detector;
     bool m_rotated_pcb;
     std::string m_event_type;
