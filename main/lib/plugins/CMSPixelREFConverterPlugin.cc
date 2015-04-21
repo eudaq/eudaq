@@ -4,7 +4,6 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/Configuration.hh"
 
-#include "eudaq/CMSPixelDecoder.h"
 #include "eudaq/CMSPixelHelper.hh"
 
 #include "iostream"
