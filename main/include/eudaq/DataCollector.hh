@@ -41,7 +41,7 @@ namespace eudaq {
 
       void DataThread();
     protected:
-      void WriteEvent( const DetectorEvent & ev );
+      
       std::shared_ptr<JSON> buildJsonConfigHeader( unsigned int runnumber );
 
 
