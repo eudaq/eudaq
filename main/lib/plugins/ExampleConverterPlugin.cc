@@ -21,7 +21,18 @@ namespace eudaq {
   class ExampleConverterPlugin : public DataConverterPlugin {
 
     public:
-		virtual bool isTLU(const Event&){ return true; }
+      virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event & tluEvent)  const{
+     //   std::cout << "ev: " << ev.GetEventNumber() << " tlu: " <<tluEvent.GetEventNumber();
+        auto sync_status = compareTLU2DUT(tluEvent.GetEventNumber(), ev.GetEventNumber());
+        if ( sync_status ==Event_IS_LATE)
+        {
+          return Event_IS_LATE;
+        }
+        return Event_IS_Sync;
+      }
+		virtual bool isTLU(const Event& ev){ 
+      return ev.GetTag("TLU", 1);
+    }
       // This is called once at the beginning of each run.
       // You may extract information from the BORE and/or configuration
       // and store it in member variables to use during the decoding later.
@@ -33,7 +44,11 @@ namespace eudaq {
 #endif
         
       }
-
+      virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev){ 
+        
+        
+        return m_thisCount + ev.GetTag("ID", 0);
+      }
       // This should return the trigger ID (as provided by the TLU)
       // if it was read out, otherwise it can either return (unsigned)-1,
       // or be left undefined as there is already a default version.

@@ -22,6 +22,10 @@ namespace eudaq{
       virtual void Initialize(eudaq::Event const & tlu, eudaq::Configuration const &) {
       
         m_tlu_begin = tlu.GetTimestamp();
+        
+        
+        double defaultClock_speed_In_ns = 2.603488;
+          TLUClockSpeed = static_cast<uint64_t>(tlu.GetTag("TLUClockSpeed", defaultClock_speed_In_ns) *1e6);
       }
       virtual unsigned GetTriggerID(const eudaq::Event & ev) const {
         return ev.GetEventNumber();
@@ -43,6 +47,26 @@ namespace eudaq{
 
 	  }
 
+    DataConverterPlugin::timeStamp_t GetTimeStamp(const Event& ev, size_t index) const
+    {
+      switch (index)
+      {
+      case 0:
+        return ev.GetTimestamp(0);
+      	break;
+
+      case 1:
+        return (ev.GetTimestamp(0)*TLUClockSpeed) / 1e6;
+        break;
+      }
+      return ev.GetTimestamp(index);
+    }
+
+    size_t GetTimeStamp_size(const Event & ev) const
+    {
+      return 2;
+  }
+
 #if USE_LCIO
       virtual bool GetLCIOSubEvent(lcio::LCEvent & result, const eudaq::Event & source) const {
         dynamic_cast<lcio::LCEventImpl &>(result).setTimeStamp(source.GetTimestamp());
@@ -56,6 +80,7 @@ namespace eudaq{
       static TLUConverterPlugin const m_instance;
       
      mutable uint64_t m_tlu_begin=0,m_dut_begin=0;
+     uint64_t TLUClockSpeed;
   };
 
   TLUConverterPlugin const TLUConverterPlugin::m_instance;

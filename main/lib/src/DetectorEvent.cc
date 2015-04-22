@@ -21,6 +21,13 @@ namespace eudaq {
     }
   }
 
+  DetectorEvent::DetectorEvent(const DetectorEvent& det) :Event(det.GetRunNumber(), det.GetEventNumber(), det.GetTimestamp(), det.GetFlags()), m_events(det.m_events)
+  {
+    m_tags = det.m_tags;
+    m_timestamp = det.m_timestamp;
+
+  }
+
   void DetectorEvent::AddEvent(std::shared_ptr<Event> evt) {
     if (!evt.get()) EUDAQ_THROW("Adding null event!");
     SetFlags(evt->GetFlags());
@@ -57,6 +64,11 @@ namespace eudaq {
       }
     }
     EUDAQ_THROW("DetectorEvent::GetRawSubEvent: could not find " + subtype + ":" + to_string(n));
+  }
+
+  event_sp DetectorEvent::ShallowCopy(const DetectorEvent& det)
+  {
+    return  event_sp(new DetectorEvent(det));
   }
 
 }

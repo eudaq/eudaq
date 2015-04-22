@@ -24,6 +24,10 @@ typedef int int32_t
 #include <cstdint>
 #endif
 
+namespace Eudaq_types{
+  using timeStamp_t = int64_t;
+
+}
 namespace eudaq {
 
   std::string DLLEXPORT ucase(const std::string &);

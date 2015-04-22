@@ -3,6 +3,8 @@
 #include <time.h>
 
 #include "eudaq/Event.hh"
+#include "eudaq/PluginManager.hh"
+
 
 
 namespace eudaq {
@@ -28,6 +30,8 @@ namespace eudaq {
     if (IsEUDAQ2())
     {
       ds.read(m_timestamp);
+
+
     }
     else
     {
@@ -36,6 +40,13 @@ namespace eudaq {
       m_timestamp.push_back(timestamp);
     }
     ds.read(m_tags);
+  }
+
+  Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/) : m_flags(flags | FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
+    m_runnumber(run),
+    m_eventnumber(event)
+  {
+    m_timestamp.push_back(timestamp);
   }
 
   void Event::Serialize(Serializer & ser) const {
@@ -60,6 +71,7 @@ namespace eudaq {
     if (IsEUDAQ2())
     {
       ser.write(m_timestamp);
+      
     }
     else
     {
@@ -138,6 +150,51 @@ namespace eudaq {
   void Event::pushTimeStampToNow()
   {
     m_timestamp.push_back(static_cast<uint64_t>(clock()));
+  }
+
+  unsigned Event::GetRunNumber() const
+  {
+    return m_runnumber;
+  }
+
+  unsigned Event::GetEventNumber() const
+  {
+    return m_eventnumber;
+  }
+
+  Event::timeStamp_t Event::GetTimestamp(size_t i/*=0*/) const
+  {
+    return m_timestamp[i];
+  }
+
+  size_t Event::GetSizeOfTimeStamps() const
+  {
+    return m_timestamp.size();
+  }
+
+  void Event::setTimeStamp(timeStamp_t timeStamp, size_t i/*=0*/)
+  {
+    if (i>=m_timestamp.size())
+    {
+      size_t oldSize = m_timestamp.size();
+      m_timestamp.resize(i + 1);
+      for (auto j = oldSize; j < m_timestamp.size();++j)
+      {
+        m_timestamp[j] = NOTIMESTAMP;
+      }
+
+    }
+    m_timestamp[i] = timeStamp;
+  }
+
+
+
+  uint64_t Event::getUniqueID() const
+  {
+    uint64_t id = PluginManager::getUniqueIdentifier(*this);
+    id = id << 32;
+    id |= GetEventNumber();
+    return id;
   }
 
   std::ostream & operator << (std::ostream &os, const Event &ev) {

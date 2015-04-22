@@ -11,6 +11,8 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/JSONimpl.hh"
 #include "eudaq/FileWriter.hh"
+#include "eudaq/EventSynchronisationBase.hh"
+
 
 #include "config.h"
 
@@ -26,11 +28,14 @@ namespace eudaq {
 
   } // anonymous namespace
 
+  unsigned DataCollector::Info::s_counter= 0;
+
+
   DataCollector::DataCollector(const std::string & name, const std::string & runcontrol, const std::string & listenaddress, const std::string & runnumberfile) :
     CommandReceiver("DataCollector", name, runcontrol, false),
     m_runnumberfile(runnumberfile), m_name( name ), m_done(false), m_listening(true),
     m_dataserver(TransportFactory::CreateServer(listenaddress)),
-    m_thread(), m_numwaiting(0), m_itlu((size_t) -1), m_runnumber( ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0), m_packetNumberLastPacket( 0 )
+    m_thread(),  m_runnumber( ReadFromFile(runnumberfile, 0U)), m_eventnumber(0), m_runstart(0), m_packetNumberLastPacket( 0 )
   {
       m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
       EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
@@ -58,20 +63,14 @@ namespace eudaq {
     EUDAQ_INFO("Connection from " + to_string(id));
     Info info;
     info.id = std::shared_ptr<ConnectionInfo>(id.Clone());
+    info.m_counter = Info::s_counter++;
     m_buffer.push_back(info);
-    if (id.GetType() == "Producer" && id.GetName() == "TLU") {
-      m_itlu = m_buffer.size() - 1;
-    }
+
   }
 
   void DataCollector::OnDisconnect(const ConnectionInfo & id) {
     EUDAQ_INFO("Disconnected: " + to_string(id));
     size_t i = GetInfo(id);
-    if (i == m_itlu) {
-      m_itlu = (size_t) -1;
-    } else if (i < m_itlu) {
-      --m_itlu;
-    }
     m_buffer.erase(m_buffer.begin() + i);
     // if (during run) THROW
   }
@@ -82,29 +81,27 @@ namespace eudaq {
       
       // std::unique_ptr<eudaq::AidaFileWriter>(AidaFileWriterFactory::Create(m_config.Get("FileType", "")));
     m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
+    m_expected_data_streams = m_config.Get("expected_data_streams", m_buffer.size());
+    m_nameOfSyncAlgorithm = m_config.Get("SyncAlgorithm", "DetectorEvents");
+    m_EndOfRunTimeout = m_config.Get("EndOfRunTimeOut", 1000);
+    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, m_config);
   }
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
     //if (runnumber == m_runnumber && m_ser.get()) return false;
+    m_numOfBoreEvents = 0;
+    m_numOfEoreEvents = 0;
     EUDAQ_INFO("Preparing for run " + to_string(runnumber));
     m_runstart = Time::Current();
     try {
       if (!m_writer) {
         EUDAQ_THROW("You must configure before starting a run");
       }
-      m_writer->StartRun(  runnumber );
+      m_writer->StartRun(runnumber);
       WriteToFile(m_runnumberfile, runnumber);
       m_runnumber = runnumber;
       m_eventnumber = 0;
-
-      for (size_t i = 0; i < m_buffer.size(); ++i) {
-        if (m_buffer[i].events.size() > 0) {
-          EUDAQ_WARN("Buffer " + to_string(*m_buffer[i].id) + " has " + to_string(m_buffer[i].events.size()) + " events remaining.");
-          m_buffer[i].events.clear();
-        }
-      }
-      m_numwaiting = 0;
-
+            
       SetStatus(Status::LVL_OK);
     } catch (const Exception & e) {
       std::string msg = "Error preparing for run " + to_string(runnumber) + ": " + e.what();
@@ -117,6 +114,23 @@ namespace eudaq {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
     // Leave the file open, more events could still arrive
     //m_ser = counted_ptr<FileSerializer>();
+    clock_t startTime = std::clock();
+    while (!m_sync->OutputIsEmpty() 
+           ||
+           !m_sync->InputIsEmpty()
+           || 
+           m_numOfBoreEvents!=m_numOfEoreEvents
+           )
+    {
+      if ((std::clock() - startTime) > m_EndOfRunTimeout){
+        break;
+      }
+      eudaq::mSleep(100);
+    }
+    eudaq::mSleep(1000);
+    m_sync.reset();
+    m_sync = eudaq::EventSyncFactory::create(m_nameOfSyncAlgorithm, m_config);
+    std::cout << "stopping " << std::endl;
   }
 
 
@@ -125,20 +139,56 @@ namespace eudaq {
 
   void DataCollector::OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev ) {
     //std::cout << "Received Event from " << id << ": " << *ev << std::endl;
-
-    Info & inf = m_buffer[GetInfo(id)];
-    inf.events.push_back(ev);
-    bool tmp = false;
-    if (inf.events.size() == 1) {
-      m_numwaiting++;
-      if (m_numwaiting == m_buffer.size()) {
-        tmp = true;
-      }
+    if (!m_sync||!m_writer)
+    {
+      EUDAQ_WARN("data collector: not ready ");
+      return;
     }
-    //std::cout << "Waiting buffers: " << m_numwaiting << " out of " << m_buffer.size() << std::endl;
+    if (!m_sync->pushEvent(ev, GetInfoCounter(id))){
+      EUDAQ_WARN("no more data from producer: " + id.GetName()); 
 
-    if (tmp)
-      OnCompleteEvent();
+    }
+    if (ev->IsBORE())
+    {
+      ++m_numOfBoreEvents;
+    }
+
+
+    if (m_numOfBoreEvents < m_expected_data_streams)
+    {
+      //not all bore events seen yet 
+      return;
+    }
+
+    if (m_numOfBoreEvents>m_expected_data_streams)
+    {
+      EUDAQ_WARN("to many bore events ");
+    }
+
+    std::shared_ptr<Event> dev;
+    while(m_sync->getNextEvent(dev)&&m_writer){
+      if (dev->IsBORE()) {
+        dev->SetTag("STARTTIME", m_runstart.Formatted());
+        dev->SetTag("CONFIG", to_string(m_config));
+      }
+      if (dev->IsEORE()) {
+        dev->SetTag("STOPTIME", Time::Current().Formatted());
+        EUDAQ_INFO("Run " + to_string(dev->GetRunNumber()) + ", EORE = " + to_string(dev->GetEventNumber()));
+      }
+
+      m_writer->WriteBaseEvent(*dev);
+      
+      if (m_eventnumber <= 10 || m_eventnumber % 100 == 0) {
+        std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
+      }
+      ++m_eventnumber;
+
+    }
+    if (ev->IsEORE())
+    {
+      std::cout << "end of run event " << std::endl;
+      ++m_numOfEoreEvents;
+    }
   }
 
   void DataCollector::OnStatus() {
@@ -149,74 +199,12 @@ namespace eudaq {
     m_status.SetTag("RUN", to_string(m_runnumber));
     if (m_writer.get())
       m_status.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
-  }
 
-
-  void DataCollector::OnCompleteEvent() {
-    bool more = true;
-    while (more) {
-      if (m_eventnumber < 10 || m_eventnumber % 100 == 0) {
-        std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber << std::endl;
-      }
-      unsigned n_run = m_runnumber, n_ev = m_eventnumber;
-      uint64_t n_ts = (uint64_t) -1;
-      if (m_itlu != (size_t) -1) {
-        TLUEvent * ev = static_cast<TLUEvent *>(m_buffer[m_itlu].events.front().get());
-        n_run = ev->GetRunNumber();
-        n_ev = ev->GetEventNumber();
-        n_ts = ev->GetTimestamp();
-      }
-      DetectorEvent ev(n_run, n_ev, n_ts);
-      unsigned tluev = 0;
-      for (size_t i = 0; i < m_buffer.size(); ++i) {
-        if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
-          EUDAQ_ERROR("Run number mismatch in event " + to_string(ev.GetEventNumber()));
-        }
-        if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) && (m_buffer[i].events.front()->GetEventNumber() != m_eventnumber - 1)) {
-          if (ev.GetEventNumber() % 1000 == 0) {
-            // dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out
-            if (m_buffer[i].events.front()->GetEventNumber() != 0)
-              EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()) + " " + to_string(m_buffer[i].events.front()->GetEventNumber()) + " " + to_string(m_eventnumber));
-            if (m_buffer[i].events.front()->GetEventNumber() == 0)
-              EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()));
-          }
-        }
-        ev.AddEvent(m_buffer[i].events.front());
-        m_buffer[i].events.pop_front();
-        if (m_buffer[i].events.size() == 0) {
-          m_numwaiting--;
-          more = false;
-        }
-      }
-      if (ev.IsBORE()) {
-        ev.SetTag("STARTTIME", m_runstart.Formatted());
-        ev.SetTag("CONFIG", to_string(m_config));
-      }
-      if (ev.IsEORE()) {
-        ev.SetTag("STOPTIME", Time::Current().Formatted());
-        EUDAQ_INFO("Run " + to_string(ev.GetRunNumber()) + ", EORE = " + to_string(ev.GetEventNumber()));
-      }
-      if (m_writer.get()) {
-        try{
-          m_writer->WriteEvent(ev);
-        }
-        catch (const Exception & e){
-          std::string msg = "Exception writing to file: "; msg += e.what();
-          EUDAQ_ERROR(msg);
-          SetStatus(Status::LVL_ERROR, msg);
-        }
-      }
-      else {
-        EUDAQ_ERROR("Event received before start of run");
-      }
-      //std::cout << ev << std::endl;
-      ++m_eventnumber;
+    if (m_sync)
+    {
+      m_status.SetTag("SYNC", m_nameOfSyncAlgorithm);
     }
   }
-
-
-
-
 
 
   size_t DataCollector::GetInfo(const ConnectionInfo & id) {
@@ -227,6 +215,19 @@ namespace eudaq {
     }
     EUDAQ_THROW("Unrecognised connection id");
   }
+
+  size_t DataCollector::GetInfoCounter(const ConnectionInfo & id)
+  {
+    for (size_t i = 0; i < m_buffer.size(); ++i) {
+      //std::cout << "Checking " << *m_buffer[i].id << " == " << id<< std::endl;
+      if (m_buffer[i].id->Matches(id))
+        return m_buffer[i].m_counter;
+    }
+    EUDAQ_THROW("Unrecognised connection id");
+  }
+
+
+
 
   void DataCollector::DataHandler(TransportEvent & ev) {
     //std::cout << "Event: ";
@@ -312,8 +313,5 @@ namespace eudaq {
       std::cout << "Error: Uncaught unrecognised exception: \n" << "DataThread is dying..." << std::endl;
     }
   }
-
-
-
 
 }

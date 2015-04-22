@@ -25,16 +25,17 @@ void  multiFileReader::addFileReader(std::unique_ptr<baseFileReader> FileReader)
 {
   m_fileReaders.push_back(std::move(FileReader));
 
-  auto ev = m_fileReaders.back()->getEventPtr();
+  event_sp ev;
+  ev = m_fileReaders.back()->getEventPtr();
+  m_sync->pushEvent(ev, m_fileReaders.size() - 1);
 
   while (ev->IsBORE())
   {
-    m_sync->pushEvent(ev, m_fileReaders.size() - 1);
     ev = m_fileReaders.back()->GetNextEvent();
-  }
+    m_sync->pushEvent(ev, m_fileReaders.size() - 1);
+    
+  } 
 
-
-  m_sync->mergeBoreEvent(m_ev);
 }
 
 void  multiFileReader::Interrupt()
@@ -50,30 +51,13 @@ bool  multiFileReader::readFiles()
   {
     if (m_sync->InputIsEmpty(fileID))
     {
-
-      std::shared_ptr<eudaq::Event> ev;
-      if (m_firstEvent)
-      {
-        ev = m_fileReaders[fileID]->getEventPtr();
-
-      }
-      else
-      {
-        ev = m_fileReaders[fileID]->GetNextEvent();
-
-      }
-
+      auto ev = m_fileReaders[fileID]->GetNextEvent();
       if (!m_sync->pushEvent(ev, fileID))
       {
         return false;
       }
 
     }
-  }
-  if (m_firstEvent)
-  {
-    m_firstEvent = false;
-
   }
 
   return true;
@@ -120,24 +104,12 @@ const  Event &  multiFileReader::GetEvent() const
     return *m_ev;
 }
 
- multiFileReader::multiFileReader(bool sync) : baseFileReader(""), m_eventsToSync(0), m_preaparedForEvents(0)
-{
- // m_sync = factory_sync_class("aida", sync);
-  
-}
 
  multiFileReader::multiFileReader(baseFileReader::Parameter_ref parameterList) :baseFileReader(parameterList)
  {
 
-   if (parameterList.Get("sync","").size()>1 )
-   {
-     m_sync = EventSyncFactory::create(parameterList.Get("sync",""),"");
-   }
-   else
-   {
-     m_sync = EventSyncFactory::create();
-   }
-   
+     m_sync = EventSyncFactory::create(parameterList.Get("sync", ""), parameterList);
+
    std::string delimiter = ",";
 
 
@@ -150,7 +122,7 @@ const  Event &  multiFileReader::GetEvent() const
          addFileReader(i);
        }
      }
-   
+     NextEvent();
  }
 
 unsigned  multiFileReader::RunNumber() const

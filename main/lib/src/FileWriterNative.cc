@@ -16,19 +16,28 @@ namespace eudaq {
       virtual ~FileWriterNative();
     private:
       FileSerializer * m_ser;
-
+      std::string m_ending;
   };
 
   
   registerFileWriter(FileWriterNative, "native");
   
-  FileWriterNative::FileWriterNative(const std::string & /*param*/) : m_ser(0) {
+  FileWriterNative::FileWriterNative(const std::string & param) : m_ser(0){
     //EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
+    
+    if (param.empty())
+    {
+      m_ending = ".raw";
+    }
+    else
+    {
+      m_ending = param;
+    }
   }
 
   void FileWriterNative::StartRun(unsigned runnumber) {
     delete m_ser;
-    m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber),true);
+    m_ser = new FileSerializer(FileNamer(m_filepattern).Set('X', m_ending).Set('R', runnumber), true);
   }
 
   void FileWriterNative::WriteEvent(const DetectorEvent & ev) {
@@ -48,7 +57,6 @@ namespace eudaq {
         eudaq::PluginManager::Initialize(*det);
 
       }
-
     }
     if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
     m_ser->write(ev);

@@ -30,14 +30,7 @@ namespace eudaq{
     
     m_outPutQueue.push(det);
 
-    if (m_sync)
-    {
       event_queue_pop_TLU_event();
-    }
-    else
-    {
-      event_queue_pop();
-    }
 
 
 
@@ -47,10 +40,14 @@ namespace eudaq{
 
   void syncToDetectorEvents::storeCurrentOrder()
   {
-    shared_ptr<TLUEvent> tlu = std::dynamic_pointer_cast<TLUEvent>(getFirstTLUQueue().back());
-    for (size_t i = 1; i < m_ProducerEventQueue.size(); ++i)
+    auto tlu = std::dynamic_pointer_cast<TLUEvent>(getFirstTLUQueue().back());
+    for (auto& event_queue:m_ProducerEventQueue)
     {
-      shared_ptr<Event> currentEvent = m_ProducerEventQueue[i].back();
+      if (event_queue==getFirstTLUQueue())
+      {
+        continue;
+      }
+      auto currentEvent = event_queue.back();
       eudaq::PluginManager::setCurrentTLUEvent(*currentEvent, *tlu);
     }
 

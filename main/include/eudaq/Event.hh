@@ -6,7 +6,7 @@
 #include <map>
 #include <iosfwd>
 #include <iostream>
-
+#include <memory>
 
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
@@ -18,8 +18,9 @@
 
 
 namespace eudaq {
+  class Event;
 
-
+  using event_sp = std::shared_ptr < eudaq::Event > ;
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable {
@@ -30,21 +31,15 @@ namespace eudaq {
     using timeStamp_t = uint64_t;
 
     enum Flags { FLAG_BORE = 1, FLAG_EORE = 2, FLAG_HITS = 4, FLAG_FAKE = 8, FLAG_SIMU = 16, FLAG_EUDAQ2 = 32, FLAG_PACKET = 64, FLAG_ALL = (unsigned) -1 }; // Matches FLAGNAMES in .cc file
-    Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0)
-      : m_flags(flags|FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
-      m_runnumber(run),
-      m_eventnumber(event)  
-    {
-      m_timestamp.push_back(timestamp);
-    }
+    Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0);
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const = 0;
 
-    unsigned GetRunNumber() const { return m_runnumber; }
-    unsigned GetEventNumber() const { return m_eventnumber; }
-    timeStamp_t GetTimestamp(size_t i=0) const { return m_timestamp[i]; }
-    size_t   GetSizeOfTimeStamps() const { return m_timestamp.size(); }
-
+    unsigned GetRunNumber() const;
+    unsigned GetEventNumber() const;
+    timeStamp_t GetTimestamp(size_t i=0) const;
+    size_t   GetSizeOfTimeStamps() const;
+    uint64_t getUniqueID() const;
     /** Returns the type string of the event implementation.
      *  Used by the plugin mechanism to identify the event type.
      */
@@ -79,9 +74,11 @@ namespace eudaq {
     void SetFlags(unsigned f) { m_flags |= f; }
     void SetTimeStampToNow(size_t i=0);
     void pushTimeStampToNow();
-    void setTimeStamp(timeStamp_t timeStamp,size_t i=0){ m_timestamp[i]=timeStamp; }
+    void setTimeStamp(timeStamp_t timeStamp, size_t i = 0);
+   
     void pushTimeStamp(timeStamp_t timeStamp){ m_timestamp.push_back(timeStamp); }
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
+    void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
     virtual unsigned get_id() const = 0;
   protected:
@@ -92,7 +89,7 @@ namespace eudaq {
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };
 
-  DLLEXPORT std::ostream &  operator << (std::ostream &, const Event &);
+  DLLEXPORT std::ostream &  operator<< (std::ostream &, const Event &);
 
   class DLLEXPORT EventFactory {
   public:

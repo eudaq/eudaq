@@ -59,9 +59,7 @@ namespace eudaq {
 		  eudaq::PluginManager::Initialize(devent);
 		  firstEvent =true;
 		  return;
-	  } else if (devent.IsEORE()) {
-		return;
-	  }
+	  } 
 	 
 
 
@@ -70,6 +68,7 @@ namespace eudaq {
 
 		  for (size_t i = 0; i < devent.NumEvents();++i)
 		  {
+        *m_out << Event::id2str(devent.GetEvent(i)->get_id()) << "_" << devent.GetEvent(i)->GetSubType() << "_EvNr_" << "; ";
         for (size_t j = 0; j< PluginManager::GetTimeStamp_size(*devent.GetEvent(i));++j)
         {
 
@@ -90,6 +89,7 @@ namespace eudaq {
 	
 	  for (size_t i = 0; i < devent.NumEvents(); ++i)
 	  {
+      *m_out << devent.GetEvent(i)->GetEventNumber() << "; ";
       for (size_t j = 0; j< PluginManager::GetTimeStamp_size(*devent.GetEvent(i)); ++j)
       {
         auto ts = PluginManager::GetTimeStamp(*devent.GetEvent(i), j);
@@ -103,7 +103,10 @@ namespace eudaq {
 	  }
 	  *m_out << '\n';
 
-	  
+#ifdef _DEBUG
+    m_out->flush();
+#endif // _DEBUG
+
   }
 
   FileWriterTextTimeStamps::~FileWriterTextTimeStamps() {

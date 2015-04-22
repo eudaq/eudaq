@@ -125,12 +125,11 @@ int main(int /*argc*/, char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
       
-      
-	  eudaq::multiFileReader reader;
-	  for (size_t i = 0; i < op.NumArgs(); ++i) {
-
+      eudaq::baseFileReader::Parameter_t p;
+	  eudaq::multiFileReader reader(p);
 		  reader.addFileReader(op.GetArg(i), ipat.Value());
-	  }
+      reader.NextEvent();
+
 	  EUDAQ_INFO("Reading: " + reader.Filename());
       //    cout << i << " " << reader.Filename()  << endl;
 
@@ -172,7 +171,7 @@ int main(int /*argc*/, char ** argv) {
             bool dump = (do_dump.IsSet());
             shown = DoEvent(ndata, *dev, proc, show, do_zs.IsSet(), dump);
             if (showlast && !shown) {
-              lastevent = std::shared_ptr<eudaq::Event>(new eudaq::DetectorEvent(*dev));
+              lastevent = std::shared_ptr<eudaq::Event>(eudaq::DetectorEvent::ShallowCopy(*dev));
             }
           } else if (const StandardEvent * sev = dynamic_cast<const StandardEvent *>(&ev)) {
             bool show = std::find(displaynumbers.begin(), displaynumbers.end(), ndata) != displaynumbers.end();

@@ -8,6 +8,8 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/EventSynchronisationCompareWithTLU.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/DataConverterPlugin.hh"
 
 
 #define FILEINDEX_OFFSET 10000
@@ -27,7 +29,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_BaseEvent(int fileIndex, Event_sp BOREEvent)
+  void Sync2TLU::addBORE_BaseEvent(int fileIndex, event_sp BOREEvent)
   {
     
     if (BOREEvent->IsPacket())
@@ -48,38 +50,42 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_Event(int fileIndex, Event_sp BOREEvent)
+  void Sync2TLU::addBORE_Event(int fileIndex, event_sp BOREEvent)
   {
 
     ++m_registertProducer;
+    m_ProducerEventQueue.resize(m_registertProducer);
+    std::cout << "m_ProducerEventQueue.resize(" << m_registertProducer << ");" << std::endl;
 
 
-
-    if (m_EventsProFileReader.size() < fileIndex + 1)
+    if (m_ProducerProFileReader.size() < fileIndex + 1)
     {
-      m_EventsProFileReader.push_back(0);
+      auto oldsize = m_ProducerProFileReader.size();
+      m_ProducerProFileReader.resize(fileIndex+1);
+      for (auto i = oldsize; i< fileIndex + 1; ++i){
+        m_ProducerProFileReader[i] = 0;
+      }
+      
     }
-    m_EventsProFileReader[fileIndex]++;
+    m_ProducerProFileReader[fileIndex]++;
     auto identifier = PluginManager::getUniqueIdentifier(*BOREEvent);
     if (identifier > FILEINDEX_OFFSET)
     {
       EUDAQ_THROW("the Unique identifier for this Event is to larg. Increase the value of FILEINDEX_OFFSET or return a smaler number from PluginManager::getUniqueIdentifier(BOREEvent)");
     }
+
     if (PluginManager::isTLU(*BOREEvent))
     {
-      if (m_TLUs_found == 0)
+      if (m_TLUs_found==0)
       {
-        m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = 0;
+      m_TLU_pos = m_event_id;
       }
-      else{
-        m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = m_event_id++; //only the first TLU gets threated differently all others are just producers
-      }
+     
       ++m_TLUs_found;
     }
-    else{
 
-      m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = m_event_id++;
-    }
+    m_ProducerId2Eventqueue[getUniqueID(fileIndex, identifier)] = m_event_id++;
+
 
     size_t elements = 0;
     for (auto&e1:m_ProducerId2Eventqueue)
@@ -99,10 +105,10 @@ namespace eudaq{
     {
       EUDAQ_THROW("Duplication in the producer event queue id");
     }
-    m_outPutQueue.push(BOREEvent);
+    m_Bore_buffer.push(BOREEvent);
   }
 
-  int Sync2TLU::AddBaseEventToProducerQueue(int fileIndex, Event_sp Ev)
+  int Sync2TLU::AddBaseEventToProducerQueue(int fileIndex, event_sp Ev)
   {
     if (!Ev)
     {
@@ -124,21 +130,18 @@ namespace eudaq{
   }
   
 
-  int Sync2TLU::AddEventToProducerQueue(int fileIndex, Event_sp Ev)
+  int Sync2TLU::AddEventToProducerQueue(int fileIndex, event_sp Ev)
   {
     if (Ev)
     {
-      if (!m_preparedforEvents)
-      {
-        PrepareForEvents();
-      }
       auto identifier = PluginManager::getUniqueIdentifier(*Ev);
+  
       try{
         auto &q = getQueuefromId(fileIndex, identifier);
         q.push(Ev);
       }
       catch (...){
-        std::cerr << " error in Sync2TLU::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev) \n unkown event id: " << identifier << "\n for the event: \n";
+        std::cerr << "\n error in Sync2TLU::AddEventToProducerQueue(int fileIndex, std::shared_ptr<eudaq::Event> Ev) \n unkown event id: " << identifier << "\n for the event: \n";
         Ev->Print(cout);
       }
 
@@ -148,7 +151,6 @@ namespace eudaq{
 
   bool Sync2TLU::Event_Queue_Is_Empty() const
   {
-
     for (auto& q : m_ProducerEventQueue)
     {
       if (q.empty())
@@ -173,22 +175,34 @@ namespace eudaq{
           return true;
         }
       }
-
     }
-
-
     return false;
   }
 
 
 
-  Sync2TLU::eventqueue_t& Sync2TLU::getQueuefromId(unsigned producerID)
+  bool Sync2TLU::ProducerQueueExist(unsigned producerID)
   {
     if (m_ProducerId2Eventqueue.find(producerID) == m_ProducerId2Eventqueue.end()){
 
+      return false;
+    }
+
+
+    if (m_ProducerEventQueue.size() <= m_ProducerId2Eventqueue[producerID]){
+      return false;
+    }
+
+
+    return true;
+  }
+
+  Sync2TLU::eventqueue_t& Sync2TLU::getQueuefromId(unsigned producerID)
+  {
+    if (!ProducerQueueExist(producerID)){
+
       EUDAQ_THROW("unknown Producer ID " + std::to_string(producerID));
     }
-    auto converions = m_ProducerId2Eventqueue[producerID];
     return m_ProducerEventQueue[m_ProducerId2Eventqueue[producerID]];
   }
 
@@ -199,28 +213,12 @@ namespace eudaq{
 
   Sync2TLU::eventqueue_t& Sync2TLU::getFirstTLUQueue()
   {
-    return m_ProducerEventQueue[0];
+    return m_ProducerEventQueue[m_TLU_pos];
   }
 
 
   bool Sync2TLU::SyncFirstEvent()
   {
-
-
-    if (!m_sync)
-    {
-      if (!Event_Queue_Is_Empty())
-      {
-        makeDetectorEvent();
-        return true;
-      }
-      else
-      {
-        return false;
-      }
-
-    }
-
 
     auto& TLU_queue = getFirstTLUQueue();
 
@@ -240,51 +238,45 @@ namespace eudaq{
   }
 
 
-  bool Sync2TLU::compareTLUwithEventQueue(Event_sp& tlu_event, eudaq::Sync2TLU::eventqueue_t& event_queue)
+  bool Sync2TLU::compareTLUwithEventQueue(event_sp& tlu_event, eudaq::Sync2TLU::eventqueue_t& event_queue)
   {
-    int ReturnValue = Event_IS_Sync;
-
-    //std::shared_ptr<TLUEvent> tlu=std::dynamic_pointer_cast<TLUEvent>(tlu_event);
-
-
+    int SyncStatus = Event_IS_Sync;
 
     while (!event_queue.empty())
     {
       auto currentEvent = event_queue.front();
 
-      ReturnValue = PluginManager::IsSyncWithTLU(*currentEvent, *tlu_event);
-      if (ReturnValue == Event_IS_Sync)
+      SyncStatus = CompareEvents(*currentEvent, *tlu_event);
+      if (SyncStatus == Event_IS_Sync)
       {
         Process_Event_is_sync(currentEvent, *tlu_event);
         return true;
-
       }
-      else if (ReturnValue == Event_IS_LATE)
+      else if (SyncStatus == Event_IS_LATE)
       {
-
         Process_Event_is_late(currentEvent, *tlu_event);
         isAsync_ = true;
         event_queue.pop();
-
       }
-      else if (ReturnValue == Event_IS_EARLY)
+      else if (SyncStatus == Event_IS_EARLY)
       {
         Process_Event_is_early(currentEvent, *tlu_event);
         isAsync_ = true;
         return false;
       }
-
-
-
     }
     return false;
   }
 
-  bool Sync2TLU::compareTLUwithEventQueues(Event_sp& tlu_event)
+  bool Sync2TLU::compareTLUwithEventQueues(event_sp& tlu_event)
   {
-    for (size_t i = 1; i < m_ProducerEventQueue.size(); ++i)
+    for (auto& ev_queue: m_ProducerEventQueue)
     {
-      if (!compareTLUwithEventQueue(tlu_event, m_ProducerEventQueue[i])){
+      if (ev_queue==getFirstTLUQueue())
+      {
+        continue;
+      }
+      if (!compareTLUwithEventQueue(tlu_event, ev_queue)){
         // could not sync event.
         // TLU event is to early or event queue is empty;
         return false;
@@ -332,52 +324,44 @@ namespace eudaq{
   void Sync2TLU::clearOutputQueue()
   {
 
-    std::queue<Event_sp> empty;
+    std::queue<event_sp> empty;
     std::swap(m_outPutQueue, empty);
     
   }
 
   void Sync2TLU::PrepareForEvents()
   {
-    m_ProducerEventQueue.resize(m_registertProducer);
+
     if (m_ProducerEventQueue.empty())
     {
 
       EUDAQ_THROW("Producer Event queue is empty");
     }
-    if (m_ProducerEventQueue.size() == 1)
-    {
-      m_sync = false; // there is no need to sync anything in this case
-    }
-    if (!m_sync)
-    {
-      std::cout << "events not synchronized" << std::endl;
-      if (m_TLUs_found == 0)
-      {
-        for (auto& e : m_ProducerId2Eventqueue)
-        {
-          e.second--;
-        }
-      }
 
-    }
-    else
-    {
       if (m_TLUs_found == 0)
       {
-        EUDAQ_THROW("no TLU events found in the data\n for the resynchronisation it is nessasary to have a TLU in the data stream \n for now the synchrounsation only works with the old TLU (date 12.2013)");
+          EUDAQ_WARN("no TLU events found in the data\n synchrounsation on event numbers \n");
       }
       else if (m_TLUs_found > 1)
       {
         std::cout << "more than one TLU detected only the first TLU is used for synchronisation " << std::endl;
       }
   
-    }
+    
+ if (!m_Bore_buffer.empty())
+ {
+   // bore events are buffered in the output queue
  
-
-    clearOutputQueue();
+   mergeBoreEvent(m_bore);
    
-    m_preparedforEvents = true;
+   
+   
+
+ }
+
+ clearOutputQueue();
+   
+    
 
   }
 
@@ -394,8 +378,15 @@ namespace eudaq{
 
   }
 
-  bool Sync2TLU::getNextEvent(Event_sp&   ev)
+  bool Sync2TLU::getNextEvent(event_sp&   ev)
   {
+ 
+    if (!m_Bore_buffer.empty())
+    {
+      PrepareForEvents();
+      ev = m_bore;
+      return true;
+    }
     SyncFirstEvent();
     if (!m_outPutQueue.empty())
     {
@@ -407,38 +398,55 @@ namespace eudaq{
     return false;
   }
 
-  bool Sync2TLU::mergeBoreEvent(Event_sp& ev)
+  bool Sync2TLU::mergeBoreEvent(event_sp& ev)
   {
+   
     if(!ev)
     {
-      auto firstEV = m_outPutQueue.front();
+      m_BOREeventWasEmtpy = true;
+      auto firstEV = m_Bore_buffer.front();
       ev = std::make_shared<DetectorEvent>(firstEV->GetRunNumber(), firstEV->GetEventNumber(), firstEV->GetTimestamp());
+      ev->SetFlags(Event::FLAG_BORE);
     }
     DetectorEvent* det = dynamic_cast<DetectorEvent*>(ev.get());
-    while (!m_outPutQueue.empty())
+    while (!m_Bore_buffer.empty())
     {
-      if (m_firstConfig)
+
+      auto con = m_Bore_buffer.front()->GetTag("CONFIG", "");
+      if (m_BOREeventWasEmtpy && PluginManager::isTLU(*(m_Bore_buffer.front())))
       {
-        auto con = m_outPutQueue.front()->GetTag("CONFIG");
-        if (con.size() > 0)
-        {
+        // overwrite event number if TLU was found later on
+
+        ev->setEventNumber(m_Bore_buffer.front()->GetEventNumber());
+        ev->setRunNumber(m_Bore_buffer.front()->GetRunNumber());
+        ev->setTimeStamp(m_Bore_buffer.front()->GetTimestamp());
+
+        // only first TLU is used
+        m_BOREeventWasEmtpy = false;
+      }
+
+      if (m_firstConfig&&!con.empty())
+      {
           det->SetTag("CONFIG", con);
           m_firstConfig = false;
-        }
+          // the file  reader also add the Detector event to the buffer. this detector event does not need to be in the output collection 
       }
-      else{
-        det->AddEvent(m_outPutQueue.front());
+      else
+      {
+        det->AddEvent(m_Bore_buffer.front());
       }
-      m_outPutQueue.pop();
+     
+      m_Bore_buffer.pop();
     
     }
     return true;
   }
 
-  bool Sync2TLU::pushEvent(Event_sp ev,size_t Index)
+  bool Sync2TLU::pushEvent(event_sp ev,size_t Index)
   {
     if (ev)
     {
+
 
       if (ev->IsBORE())
       {
@@ -477,5 +485,16 @@ namespace eudaq{
   {
     return SubEventQueueIsEmpty(fileId);
   }
+
+  int Sync2TLU::CompareEvents(eudaq::Event const & Current_event, eudaq::Event const & tlu_reference_event)
+  {
+    if (m_TLUs_found)
+    {
+        return PluginManager::IsSyncWithTLU(Current_event, tlu_reference_event);
+    }
+    return  compareTLU2DUT(tlu_reference_event.GetEventNumber(), Current_event.GetEventNumber());
+  }
+
+
 
 }

@@ -35,13 +35,17 @@ public:
   // This gets called whenever the DAQ is configured
   virtual void OnConfigure(const eudaq::Configuration & config) {
     std::cout << "Configuring: " << config.Name() << std::endl;
-
+    config.Print();
     // Do any configuration of the hardware here
     // Configuration file values are accessible as config.Get(name, default)
     m_exampleparam = config.Get("Parameter", 0);
+    m_send_bore_delay = config.Get("boreDelay", 0);
+    m_maxEventNR = config.Get("numberOfEvents", 100);
+    m_ID = config.Get("ID", 0);
+    m_Skip = config.Get("skip", 0);
     std::cout << "Example Parameter = " << m_exampleparam << std::endl;
     hardware.Setup(m_exampleparam);
-
+    m_TLU = config.Get("TLU", 1);
     // At the end, set the status that will be displayed in the Run Control.
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
     m_stat = configured;
@@ -53,7 +57,7 @@ public:
   virtual void OnStartRun(unsigned param) {
     m_run = param;
     m_ev = 0;
-
+    eudaq::mSleep(m_send_bore_delay);
     std::cout << "Start Run: " << m_run << std::endl;
 
     // It must send a BORE to the Data Collector
@@ -61,9 +65,12 @@ public:
     // You can set tags on the BORE that will be saved in the data file
     // and can be used later to help decoding
     bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleparam));
+    bore.SetTag("TLU", m_TLU);
+    bore.SetTag("ID", m_ID);
+    bore.SetTimeStampToNow();
     // Send the event to the Data Collector
     SendEvent(bore);
-
+    hardware.Start();
     // At the end, set the status that will be displayed in the Run Control.
     m_stat = started;
     SetStatus(eudaq::Status::LVL_OK, "Running");
@@ -73,7 +80,7 @@ public:
   // This gets called whenever a run is stopped
   virtual void OnStopRun() {
     std::cout << "Stopping Run" << std::endl;
-
+    hardware.Stop();
     m_stat = stopping;
     // wait until all events have been read out from the hardware
     while (m_stat == stopping) {
@@ -82,7 +89,12 @@ public:
 
     // Send an EORE after all the real events have been sent
     // You can also set tags on it (as with the BORE) if necessary
-    SendEvent(eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev));
+    auto EOREvent = eudaq::RawDataEvent::EORE(EVENT_TYPE, m_run, ++m_ev);
+    EOREvent.SetTag("TLU", m_TLU);
+    EOREvent.SetTag("ID", m_ID);
+    EOREvent.SetTimeStampToNow();
+    SendEvent(EOREvent);
+    std::cout << "Stopped" << std::endl;
   }
 
   // This gets called when the Run Control is terminating,
@@ -114,10 +126,18 @@ public:
         // Then restart the loop
         continue;
       }
+      ++m_ev;
+      if (m_maxEventNR<m_ev)
+      {
+        eudaq::mSleep(1000);
+        continue;
+      }
       // If we get here, there must be data to read out
       // Create a RawDataEvent to contain the event data to be sent
       eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
-
+      ev.SetTag("TLU", m_TLU);
+      ev.SetTag("ID", m_ID);
+      
       for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
         // Read out a block of raw data from the hardware
         std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
@@ -127,11 +147,24 @@ public:
         // Add the block of raw data to the event
         ev.AddBlock(plane, buffer);
       }
+      ev.SetTimeStampToNow();
       hardware.CompletedEvent();
-      // Send the event to the Data Collector      
+      // Send the event to the Data Collector 
+      if (m_ev%1000==0)
+      {
+        std::cout << "sending Event: " << m_ev << std::endl;
+      }
+      if (m_Skip!=0)
+      {
+        if (m_ev%m_Skip==0)
+        {
+          
+          continue;
+        }
+      }
       SendEvent(ev);
       // Now increment the event number
-      m_ev++;
+     
     }
   }
 
@@ -140,7 +173,8 @@ private:
   // It here basically that the example code will compile
   // but it also generates example raw data to help illustrate the decoder
   eudaq::ExampleHardware hardware;
-  unsigned m_run, m_ev, m_exampleparam;
+  unsigned m_run, m_ev, m_exampleparam, m_send_bore_delay, m_ID, m_maxEventNR, m_Skip;
+  bool m_TLU;
   status_enum m_stat = unconfigured;
 
 };

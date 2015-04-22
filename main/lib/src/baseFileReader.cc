@@ -159,7 +159,7 @@ namespace eudaq {
    
    // std::cout << ss << std::endl;
     baseFileReader::Parameter_t m(ss, baseFileReader::getKeySectionName());
-    return EUDAQ_Utilities::Factory<baseFileReader>::Create(type, m);
+    return create(type, m);
 
 
 
@@ -193,6 +193,13 @@ namespace eudaq {
         return eudaq::FileReaderFactory::create(combinedFiles);
     }
 
+  }
+
+
+
+  std::unique_ptr<baseFileReader> FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
+  {
+    return EUDAQ_Utilities::Factory<baseFileReader>::Create(type, param);
   }
 
   std::string FileReaderFactory::Help_text()
