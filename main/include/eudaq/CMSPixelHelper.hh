@@ -203,21 +203,17 @@ namespace eudaq {
 	  sparsePixel->setXCoord((size_t)plane.GetX(iPixel));
 	  sparsePixel->setYCoord((size_t)plane.GetY(iPixel));
 	  // Fill the pixel charge:
-	  sparsePixel->setSignal( (size_t)plane.GetPixel(iPixel) );
+	  sparsePixel->setSignal((int32_t)plane.GetPixel(iPixel));
 	  
 	  // Add the pixel to the readout frame:
 	  sparseFrame->addSparsePixel(sparsePixel.get());
 	}
-
-	// FIXME find out about difference between ZS and ZS2!
 
 	// Now add the TrackerData to the collection
 	zsDataCollection->push_back(zsFrame.release());
 	delete currentDetector;
 
       } // loop over all planes
-
-
 
       // Add the collection to the event only if not empty and not yet there
       if(!zsDataCollectionExists){
