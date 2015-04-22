@@ -33,7 +33,7 @@ namespace eudaq {
     //EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
     SyncBase::Parameter_t p("");
     m_sync = EventSyncFactory::create("Events2Pointer", p);
-    m_writer = FileWriterFactory::Create("native", "raw3");
+    m_writer = FileWriterFactory::Create("native", ".raw3");
 
   }
 

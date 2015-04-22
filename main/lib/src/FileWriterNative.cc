@@ -27,7 +27,7 @@ namespace eudaq {
     
     if (param.empty())
     {
-      m_ending = "raw";
+      m_ending = ".raw";
     }
     else
     {
