@@ -62,9 +62,9 @@ public:
   void AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK , bool* evtr_strm0,bool* evtr_strm1);
     
   void addDataPointer_bool(unsigned Block_id, const bool* inputVector,size_t Elements);
-  void addDataPointer_UChar_t(unsigned Block_id, const UChar_t* inputVector, size_t Elements);
-  void addDataPointer_Uint_t(unsigned Block_id, const UInt_t* inputVector, size_t Elements);
-  void addDataPointer_ULong64_t(unsigned Block_id, const ULong64_t* inputVector, size_t Elements);
+  void addDataPointer_UChar_t(unsigned Block_id, const unsigned char* inputVector, size_t Elements);
+  void addDataPointer_Uint_t(unsigned Block_id, const unsigned int* inputVector, size_t Elements);
+  void addDataPointer_ULong64_t(unsigned Block_id, const unsigned long long* inputVector, size_t Elements);
 
 	void sendEvent();
 	void sendEvent(int eventNR);
