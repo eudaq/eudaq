@@ -11,8 +11,7 @@ namespace eudaq {
 
   void LogSender::Connect(const std::string & type, const std::string & name, const std::string & server) {
     MutexLock m(m_mutex);
-    if (isConnected)
-    {
+    if (isConnected){
       return;
     }
     isConnected = true;
@@ -50,8 +49,7 @@ namespace eudaq {
   }
 
 
-  void LogSender::disconnect()
-  {
+  void LogSender::Disconnect(){
     MutexLock m(m_mutex);
     delete m_logclient;
     isConnected = false;

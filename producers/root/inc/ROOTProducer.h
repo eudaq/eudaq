@@ -49,7 +49,7 @@ public:
 
 
 	void createNewEvent();
-	void createNewEvent(int eventNR);
+	void createNewEvent(int);
 	void setTimeStamp(ULong64_t TimeStamp);
 	void setTimeStamp2Now();
 	void setTag(const char* tag,const char* Value);
@@ -67,7 +67,7 @@ public:
   void addDataPointer_ULong64_t(unsigned Block_id, const unsigned long long* inputVector, size_t Elements);
 
 	void sendEvent();
-	void sendEvent(int eventNR);
+	void sendEvent(int);
 
 	// signals
 
