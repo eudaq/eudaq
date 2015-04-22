@@ -220,8 +220,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     // Initialize the geometry with the first event received:
     if(!_planesInitialized) {
       myevent.setNPlanes(num);
-      _planesInitialized = true;
-      std::cout << "Initialized geometry." << std::endl;
+      std::cout << "Initialized geometry: " << num << " planes." << std::endl;
     }
     else {
       if (myevent.getNPlanes()!=num) {
@@ -347,7 +346,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     my_event_inner_operations_time.Stop();
     previous_event_clustering_time = my_event_inner_operations_time.RealTime();
 
-    if (ev.GetEventNumber() < 1)
+    if(!_planesInitialized)
     {
 #ifdef DEBUG
       cout << "Waiting for booking of Histograms..." << endl;
@@ -356,6 +355,7 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
 #ifdef DEBUG
       cout << "...long enough"<< endl;
 #endif
+      _planesInitialized = true;
     }
 
     //stop the Stop watch
@@ -457,6 +457,9 @@ void RootMonitor::OnStartRun(unsigned param) {
     onlinemon->setRunNumber(runnumber);
     onlinemon->setRootFileName(rootfilename);
   }
+
+  // Reset the planes initializer on new run start:
+  _planesInitialized = false;
 
   SetStatus(eudaq::Status::LVL_OK);
 }

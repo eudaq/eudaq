@@ -10,7 +10,7 @@
 #include <cstdlib>
 
 HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()), _maxY(p.getMaxY()), _wait(false),
-  _hitmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
+								     _hitmap(NULL),_hitXmap(NULL),_hitYmap(NULL),_clusterMap(NULL),_lvl1Distr(NULL), _lvl1Width(NULL),_lvl1Cluster(NULL),_totSingle(NULL),_totCluster(NULL),
   _hitOcc(NULL), _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), _clusterYWidth(NULL),_nbadHits(NULL),_nHotPixels(NULL),_hitmapSections(NULL),
   is_MIMOSA26(false), is_APIX(false), is_USBPIX(false),is_USBPIXI4(false)
 {
@@ -49,6 +49,16 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
     _hitmap = new TH2I(out2, out, _maxX+1,0,_maxX, _maxY+1,0,_maxY);
     SetHistoAxisLabels(_hitmap,"X","Y");
     //std::cout << "Created Histogram " << out2 << std::endl;
+
+    sprintf(out,"%s %i Raw Hitmap X-Projection",_sensor.c_str(), _id);
+    sprintf(out2,"h_hitXmap_%s_%i",_sensor.c_str(), _id);
+    _hitXmap = new TH1I(out2, out,_maxX+1,0,_maxX);
+    SetHistoAxisLabelx(_hitXmap,"X");
+
+    sprintf(out,"%s %i Raw Hitmap Y-Projection",_sensor.c_str(), _id);
+    sprintf(out2,"h_hitYmap_%s_%i",_sensor.c_str(), _id);
+    _hitYmap = new TH1I(out2, out,_maxY+1,0,_maxY);
+    SetHistoAxisLabelx(_hitYmap,"Y");
 
     sprintf(out,"%s %i Cluster Hitmap",_sensor.c_str(),_id);
     sprintf(out2,"h_clustermap_%s_%i",_sensor.c_str(), _id);
@@ -257,6 +267,8 @@ void HitmapHistos::Fill(const SimpleStandardHit & hit)
   if (_HotPixelMap->GetBinContent(pixel_x+1,pixel_y+1)>_mon->mon_configdata.getHotpixelcut()) pixelIsHot=true;
 
   if (_hitmap != NULL && !pixelIsHot) _hitmap->Fill(pixel_x,pixel_y);
+  if (_hitXmap != NULL && !pixelIsHot) _hitXmap->Fill(pixel_x);
+  if (_hitYmap != NULL && !pixelIsHot) _hitYmap->Fill(pixel_y);
   if ((is_MIMOSA26) && (_hitmapSections != NULL) && (!pixelIsHot))
     //&& _hitOcc->GetEntries()>0) // only fill histogram when occupancies and hotpixels have been determined
   {
@@ -360,6 +372,8 @@ void HitmapHistos::Fill(const SimpleStandardCluster & cluster)
 
 void HitmapHistos::Reset() {
   _hitmap->Reset();
+  _hitXmap->Reset();
+  _hitYmap->Reset();
   _totSingle->Reset();
   _lvl1Distr->Reset();
   _clusterMap->Reset();
@@ -462,6 +476,8 @@ void HitmapHistos::Calculate(const int currentEventNum)
 void HitmapHistos::Write()
 {
   _hitmap->Write();
+  _hitXmap->Write();
+  _hitYmap->Write();
   _totSingle->Write();
   _lvl1Distr->Write();
   _clusterMap->Write();
