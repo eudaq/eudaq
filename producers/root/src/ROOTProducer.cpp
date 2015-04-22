@@ -140,6 +140,7 @@ virtual	void OnTerminate() {
 		{
 			std::cout<<"void ROOTProducer::createNewEvent(int eventNr) "<<std::endl;
 			std::cout<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
+      m_ev = eventNr;
 		}
 		createNewEvent();
 		ev->SetTag("eventNr",eventNr);
