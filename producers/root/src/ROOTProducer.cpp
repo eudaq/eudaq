@@ -22,7 +22,7 @@
 
 const int gTimeout_delay = 1000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
-
+const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
 
 
 
@@ -651,26 +651,26 @@ void ROOTProducer::checkStatus()
 		
 		send_onStart();
 		setOnStart(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 
 	if(getOnConfigure()){
 		
 		send_onConfigure();
 		setOnconfigure(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 
 	if(getOnStop()){
 		send_onStop();
 		setOnStop(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 
 	if(getOnTerminate()){
 		send_OnTerminate();
 		setOnTerminate(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 }
 
