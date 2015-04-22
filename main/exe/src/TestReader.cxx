@@ -171,7 +171,7 @@ int main(int /*argc*/, char ** argv) {
             bool dump = (do_dump.IsSet());
             shown = DoEvent(ndata, *dev, proc, show, do_zs.IsSet(), dump);
             if (showlast && !shown) {
-              lastevent = std::shared_ptr<eudaq::Event>(new eudaq::DetectorEvent(*dev));
+              lastevent = std::shared_ptr<eudaq::Event>(eudaq::DetectorEvent::ShallowCopy(*dev));
             }
           } else if (const StandardEvent * sev = dynamic_cast<const StandardEvent *>(&ev)) {
             bool show = std::find(displaynumbers.begin(), displaynumbers.end(), ndata) != displaynumbers.end();
