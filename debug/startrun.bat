@@ -4,7 +4,7 @@ taskkill /f /im TestLogCollector.exe.exe
 taskkill /f /im TestDataCollector.exe.exe 
 taskkill /f /im ExampleProducer.exe.exe 
 Timeout /t 1 
-start TestRunControl.exe.exe -s -c test -d 300
+start TestRunControl.exe.exe -s -c test -d 30
 Timeout /t 1 
 start TestLogCollector.exe.exe 
 Timeout /t 1 
