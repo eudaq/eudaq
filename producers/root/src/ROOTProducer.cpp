@@ -130,7 +130,7 @@ virtual	void OnStopRun() {
 		// Send an EORE after all the real events have been sent
 		// You can also set tags on it (as with the BORE) if necessary
 		SendEvent(eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev));
-    m_ev = 0; // prepare for nect run 
+  
 	}
 
 	// This gets called when the Run Control is terminating,
