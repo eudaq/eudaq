@@ -67,8 +67,8 @@ void * worker_automatic_run(void * arg) {
 
   std::cout << "stopping thread" << std::endl;
   rc->Terminate();
-  eudaq::mSleep(1000);
- 
+  eudaq::mSleep(5000);
+  exit(0);
   return 0;
 }
 
