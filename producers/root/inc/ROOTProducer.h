@@ -75,7 +75,7 @@ public:
 	void send_onConfigure();  // sync
 	void send_onStop();       // sync
 	void send_OnTerminate();  //sync 
-	
+  void send_statusChanged(); //sync
 
 
 

@@ -46,7 +46,7 @@ public:
 
 		setOnconfigure(true);
 		int j=0;
-		while (getOnConfigure()&&++j<gTimeout_delay/gTimeout_wait)
+		while (getOnConfigure()&&!timeout(++j))
 		{
       eudaq::mSleep(gTimeout_wait);
 		}
@@ -87,7 +87,7 @@ virtual	void OnStartRun(unsigned param) {
 
     setOnStart(true);
     int j=0;
-    while (getOnStart()&&++j<gTimeout_delay/gTimeout_wait)
+    while (getOnStart()&&!timeout(++j))
     {
       eudaq::mSleep(gTimeout_wait);
     }
@@ -97,13 +97,27 @@ virtual	void OnStartRun(unsigned param) {
 
 	}
 	// This gets called whenever a run is stopped
+bool timeout(int tries){
+
+  if (tries > (gTimeout_delay / gTimeout_wait))
+  {
+    std::cout << "status changed timed out: \n status: "
+      <<  "\n OnStart = " << getOnStart() 
+      << "\n OnConfigure = " << getOnConfigure()
+      << "\n OnStop = " << getOnStop()
+      << "\n OnTerminate = " <<getOnTerminate()
+      << std::endl;
+    return true;
+  }
+  return false;
+}
 virtual	void OnStopRun() {
 		std::cout << "virtual void OnStopRun()" << std::endl;
 	//	m_interface->send_onStop();
 
 		setOnStop(true);
 		int j=0;
-		while (getOnStop()&&++j<gTimeout_delay/gTimeout_wait)
+		while (getOnStop()&&!timeout(++j))
 		{
 			eudaq::mSleep(gTimeout_wait);
 		}
@@ -116,7 +130,7 @@ virtual	void OnStopRun() {
 		// Send an EORE after all the real events have been sent
 		// You can also set tags on it (as with the BORE) if necessary
 		SendEvent(eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev));
-    m_ev = 0; // prepare for nect run 
+  
 	}
 
 	// This gets called when the Run Control is terminating,
@@ -126,7 +140,7 @@ virtual	void OnTerminate() {
 		//m_interface->send_OnTerminate();
 		setOnTerminate(true);
 		int j=0;
-		while (getOnTerminate()&&++j<gTimeout_delay/gTimeout_wait)
+		while (getOnTerminate()&&!timeout(++j))
 		{
 			eudaq::mSleep(gTimeout_wait);
 		}
@@ -528,6 +542,11 @@ void ROOTProducer::send_OnTerminate()
 
 
 
+void ROOTProducer::send_statusChanged()
+{
+  Emit("send_statusChanged()");
+}
+
 bool ROOTProducer::getConnectionStatus()
 {
 	return !(m_prod==nullptr);
@@ -682,7 +701,9 @@ void ROOTProducer::checkStatus()
 		
 		send_onStart();
 		setOnStart(false);
+    
     eudaq::mSleep(gTimeout_statusChanged);
+    send_statusChanged();
 	}
 
 	if(getOnConfigure()){
@@ -690,18 +711,21 @@ void ROOTProducer::checkStatus()
 		send_onConfigure();
 		setOnconfigure(false);
     eudaq::mSleep(gTimeout_statusChanged);
+    send_statusChanged();
 	}
 
 	if(getOnStop()){
 		send_onStop();
 		setOnStop(false);
     eudaq::mSleep(gTimeout_statusChanged);
+    send_statusChanged();
 	}
 
 	if(getOnTerminate()){
 		send_OnTerminate();
 		setOnTerminate(false);
     eudaq::mSleep(gTimeout_statusChanged);
+    send_statusChanged();
 	}
 }
 
