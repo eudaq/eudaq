@@ -4,9 +4,10 @@
 #include "eudaq/TransportClient.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
+#include "eudaq/Mutex.hh"
 #include "Platform.hh"
-
 #include <string>
+
 
 namespace eudaq {
 
@@ -17,6 +18,7 @@ namespace eudaq {
       LogSender();
       ~LogSender();
       void Connect(const std::string & type, const std::string & name, const std::string & server);
+      void Disconnect();
       void SendLogMessage(const LogMessage &);
       void SetLevel(int level) { m_level = level; }
       void SetLevel(const std::string & level) { SetLevel(Status::String2Level(level)); }
@@ -29,6 +31,8 @@ namespace eudaq {
       int m_level;
       int m_errlevel;
       bool m_shownotconnected;
+      bool isConnected = false;
+      Mutex m_mutex;
   };
 
 }

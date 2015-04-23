@@ -22,6 +22,7 @@
 
 const int gTimeout_delay = 1000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
+const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
 
 
 
@@ -115,6 +116,7 @@ virtual	void OnStopRun() {
 		// Send an EORE after all the real events have been sent
 		// You can also set tags on it (as with the BORE) if necessary
 		SendEvent(eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev));
+    m_ev = 0; // prepare for nect run 
 	}
 
 	// This gets called when the Run Control is terminating,
@@ -140,6 +142,7 @@ virtual	void OnTerminate() {
 		{
 			std::cout<<"void ROOTProducer::createNewEvent(int eventNr) "<<std::endl;
 			std::cout<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
+      m_ev = eventNr;
 		}
 		createNewEvent();
 		ev->SetTag("eventNr",eventNr);
@@ -170,22 +173,25 @@ virtual	void OnTerminate() {
 		ev->SetTag(tag,Value);
 	}
 
-	void AddPlane2Event( unsigned plane,const std::vector<unsigned char>& inputVector )
+	void AddPlane2Event( unsigned Block_id,const std::vector<unsigned char>& inputVector )
 	{
 		if (ev==nullptr)
 		{
 			createNewEvent();
 		}
 		
-		ev->AddBlock(plane, inputVector);
+		ev->AddBlock(Block_id, inputVector);
 	}
 
 	void sendEvent()
 	{
 		// Send the event to the Data Collector     
+   
 		if (ev==nullptr)
 		{
-      if (!m_data.empty())
+      if (!m_data_bool.empty() 
+		        || 
+		  !m_data_char.empty())
       {
         createNewEvent();
       }else{
@@ -194,10 +200,11 @@ virtual	void OnTerminate() {
       }
 		}
 
-    for(auto& e:m_data){
-
-    e.addDataBlock2Event(*ev);
-   // ev->AddBlock(e.m_plane,e.m_inputVector,e.m_Elements);
+    for(auto& e:m_data_bool){
+      e.addDataBlock2Event(*ev);
+    }
+    for (auto& e : m_data_char){
+      e.addDataBlock2Event(*ev);
     }
 
 		SendEvent(*ev);
@@ -268,16 +275,19 @@ virtual	void OnTerminate() {
 		return m_ev==static_cast<unsigned>(evNummer);
 	}
 
-   void addDataPointer(unsigned plane,const bool* inputVector,size_t Elements){
-   //  std::cout<<"<m_data.emplace_back(plane,inputVector,Elements);> \n";
-     m_data.emplace_back(plane,inputVector,Elements);
-   //  std::cout<<"</m_data.emplace_back(plane,inputVector,Elements);> \n";
+   void addDataPointer(unsigned Block_id,const bool* inputVector,size_t Elements){
+     m_data_bool.emplace_back(Block_id,inputVector,Elements);
    }
 
-  struct Data_pointer
+   void addDataPointer(unsigned Block_id, const UChar_t* inputVector, size_t Elements){
+	   m_data_char.emplace_back(Block_id, inputVector, Elements);
+   }
+
+
+  struct Data_pointer_bool
   {
-    Data_pointer(unsigned plane,const bool* inputVector,size_t Elements):
-      m_plane(plane),
+	  Data_pointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements) :
+      m_Block_id(Block_id),
       m_inputVector(inputVector),
       m_Elements(Elements)
     {}
@@ -285,20 +295,41 @@ virtual	void OnTerminate() {
       try{
         std::vector<unsigned char> out;
         eudaq::bool2uchar(m_inputVector ,m_inputVector+m_Elements,out);
-        rev.AddBlock(m_plane,out);
+        rev.AddBlock(m_Block_id,out);
         
       }
       catch(...){
-        std::cout<<"unable to Add plane to Event"<<std::endl;
+        std::cout<<"[Data_pointer_bool] unable to Add plane to Event"<<std::endl;
       }
     }
-    unsigned m_plane;
+    unsigned m_Block_id;
     const bool* m_inputVector;
     size_t m_Elements;
   };
   
+  struct Data_pointer_char
+  {
+	  Data_pointer_char(unsigned Block_id, const UChar_t* inputVector, size_t Elements) :
+		  m_Block_id(Block_id),
+		  m_inputVector(inputVector),
+		  m_Elements(Elements)
+	  {}
+	  void addDataBlock2Event(eudaq::RawDataEvent& rev){
+		  try{
+			  rev.AddBlock(m_Block_id, m_inputVector,m_Elements);
+		  }
+		  catch (...){
+			  std::cout << "[Data_pointer_char] unable to Add plane to Event" << std::endl;
+		  }
+	  }
+	  unsigned m_Block_id;
+	  const UChar_t* m_inputVector;
+	  size_t m_Elements;
+  };
 
-  std::vector<Data_pointer> m_data;
+  std::vector<Data_pointer_bool> m_data_bool;
+  std::vector<Data_pointer_char> m_data_char;
+
 
 	clock_t startTime_;
 
@@ -390,7 +421,7 @@ void ROOTProducer::createNewEvent( int eventNR )
 {
 	try
 	{
-		m_prod->createNewEvent();
+		m_prod->createNewEvent(eventNR);
 		
 	}
 	catch (...)
@@ -418,10 +449,10 @@ void ROOTProducer::setTimeStamp2Now()
 
 
 
-void ROOTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned char>& inputVector )
+void ROOTProducer::AddPlane2Event( unsigned Block_id,const std::vector<unsigned char>& inputVector )
 {
 	try{
-	m_prod->AddPlane2Event(plane, inputVector);
+	m_prod->AddPlane2Event(Block_id, inputVector);
 	}
 	catch(...){
 		std::cout<<"unable to Add plane to Event"<<std::endl;
@@ -431,12 +462,12 @@ void ROOTProducer::AddPlane2Event( unsigned plane,const std::vector<unsigned cha
 }
 
 
- void ROOTProducer::AddPlane2Event(unsigned plane,const bool* inputVector,size_t Elements){
+ void ROOTProducer::AddPlane2Event(unsigned Block_id,const bool* inputVector,size_t Elements){
 
 	 try{
 		 std::vector<unsigned char> out;
 		 eudaq::bool2uchar(inputVector ,inputVector+Elements,out);
-		 m_prod->AddPlane2Event(plane, out);
+     m_prod->AddPlane2Event(Block_id, out);
 	 }
 	 catch(...){
 		 std::cout<<"unable to Add plane to Event"<<std::endl;
@@ -651,31 +682,46 @@ void ROOTProducer::checkStatus()
 		
 		send_onStart();
 		setOnStart(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 
 	if(getOnConfigure()){
 		
 		send_onConfigure();
 		setOnconfigure(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 
 	if(getOnStop()){
 		send_onStop();
 		setOnStop(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 
 	if(getOnTerminate()){
 		send_OnTerminate();
 		setOnTerminate(false);
-		eudaq::mSleep(gTimeout_wait);
+    eudaq::mSleep(gTimeout_statusChanged);
 	}
 }
 
-void ROOTProducer::addDataPointer( unsigned plane,const bool* inputVector,size_t Elements )
+void ROOTProducer::addDataPointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements)
 {
-  m_prod->addDataPointer(plane,inputVector,Elements);
+  m_prod->addDataPointer(Block_id, inputVector, Elements);
+}
+
+void ROOTProducer::addDataPointer_UChar_t(unsigned Block_id, const UChar_t* inputVector, size_t Elements)
+{
+	m_prod->addDataPointer(Block_id, inputVector, Elements);
+}
+
+void ROOTProducer::addDataPointer_Uint_t(unsigned Block_id, const UInt_t* inputVector, size_t Elements)
+{
+	m_prod->addDataPointer(Block_id, reinterpret_cast<const UChar_t*>(inputVector), Elements * sizeof(UInt_t));
+}
+
+void ROOTProducer::addDataPointer_ULong64_t(unsigned Block_id, const ULong64_t* inputVector, size_t Elements){
+
+	m_prod->addDataPointer(Block_id, reinterpret_cast<const UChar_t*>(inputVector), Elements * sizeof(ULong64_t));
 }
 

@@ -10,6 +10,11 @@ namespace eudaq {
     m_logclient(0), m_errlevel(Status::LVL_DEBUG), m_shownotconnected(false) {}
 
   void LogSender::Connect(const std::string & type, const std::string & name, const std::string & server) {
+    MutexLock m(m_mutex);
+    if (isConnected){
+      return;
+    }
+    isConnected = true;
     m_shownotconnected = true;
     delete m_logclient;
     m_name = type + " " + name;
@@ -43,7 +48,15 @@ namespace eudaq {
     if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by LogCollector server: " + packet);
   }
 
+
+  void LogSender::Disconnect(){
+    MutexLock m(m_mutex);
+    delete m_logclient;
+    isConnected = false;
+  }
+
   void LogSender::SendLogMessage(const LogMessage & msg) {
+    MutexLock m(m_mutex);
     //std::cout << "Sending: " << msg << std::endl;
     if (msg.GetLevel() >= m_level) {
       if (msg.GetLevel() >= m_errlevel) {
@@ -80,6 +93,7 @@ namespace eudaq {
   }
 
   LogSender::~LogSender() {
+    
     delete m_logclient;
   }
 

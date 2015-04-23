@@ -49,7 +49,7 @@ public:
 
 
 	void createNewEvent();
-	void createNewEvent(int eventNR);
+	void createNewEvent(int);
 	void setTimeStamp(ULong64_t TimeStamp);
 	void setTimeStamp2Now();
 	void setTag(const char* tag,const char* Value);
@@ -57,15 +57,17 @@ public:
                                             // example:
                                             // setTag("tagName=tagValue");
                                             // the equal symbol is mandatory.
-	void AddPlane2Event(unsigned plane,const std::vector<unsigned char>& inputVector);
-	void AddPlane2Event(unsigned plane,const bool* inputVector,size_t Elements);
+	void AddPlane2Event(unsigned Block_id,const std::vector<unsigned char>& inputVector);
+	void AddPlane2Event(unsigned Block_id,const bool* inputVector,size_t Elements);
   void AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK , bool* evtr_strm0,bool* evtr_strm1);
     
-  void addDataPointer(unsigned plane,const bool* inputVector,size_t Elements);
-
+  void addDataPointer_bool(unsigned Block_id, const bool* inputVector,size_t Elements);
+  void addDataPointer_UChar_t(unsigned Block_id, const unsigned char* inputVector, size_t Elements);
+  void addDataPointer_Uint_t(unsigned Block_id, const unsigned int* inputVector, size_t Elements);
+  void addDataPointer_ULong64_t(unsigned Block_id, const unsigned long long* inputVector, size_t Elements);
 
 	void sendEvent();
-	void sendEvent(int eventNR);
+	void sendEvent(int);
 
 	// signals
 
