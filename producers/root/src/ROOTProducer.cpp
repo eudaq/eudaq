@@ -542,6 +542,11 @@ void ROOTProducer::send_OnTerminate()
 
 
 
+void ROOTProducer::send_statusChanged()
+{
+  Emit("send_statusChanged()");
+}
+
 bool ROOTProducer::getConnectionStatus()
 {
 	return !(m_prod==nullptr);
@@ -696,7 +701,9 @@ void ROOTProducer::checkStatus()
 		
 		send_onStart();
 		setOnStart(false);
+    
     eudaq::mSleep(gTimeout_statusChanged);
+    checkStatus();
 	}
 
 	if(getOnConfigure()){
@@ -704,18 +711,21 @@ void ROOTProducer::checkStatus()
 		send_onConfigure();
 		setOnconfigure(false);
     eudaq::mSleep(gTimeout_statusChanged);
+    checkStatus();
 	}
 
 	if(getOnStop()){
 		send_onStop();
 		setOnStop(false);
     eudaq::mSleep(gTimeout_statusChanged);
+    checkStatus();
 	}
 
 	if(getOnTerminate()){
 		send_OnTerminate();
 		setOnTerminate(false);
     eudaq::mSleep(gTimeout_statusChanged);
+    checkStatus();
 	}
 }
 
