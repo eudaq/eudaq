@@ -20,7 +20,7 @@
 #include <chrono>
 #include <mutex>
 
-const int gTimeout_delay = 10000; //milli seconds 
+const int gTimeout_delay = 1000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
 const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
 
@@ -703,7 +703,7 @@ void ROOTProducer::checkStatus()
 		setOnStart(false);
     
     eudaq::mSleep(gTimeout_statusChanged);
-    checkStatus();
+    send_statusChanged();
 	}
 
 	if(getOnConfigure()){
@@ -711,21 +711,21 @@ void ROOTProducer::checkStatus()
 		send_onConfigure();
 		setOnconfigure(false);
     eudaq::mSleep(gTimeout_statusChanged);
-    checkStatus();
+    send_statusChanged();
 	}
 
 	if(getOnStop()){
 		send_onStop();
 		setOnStop(false);
     eudaq::mSleep(gTimeout_statusChanged);
-    checkStatus();
+    send_statusChanged();
 	}
 
 	if(getOnTerminate()){
 		send_OnTerminate();
 		setOnTerminate(false);
     eudaq::mSleep(gTimeout_statusChanged);
-    checkStatus();
+    send_statusChanged();
 	}
 }
 
