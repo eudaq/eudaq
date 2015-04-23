@@ -20,7 +20,7 @@
 #include <chrono>
 #include <mutex>
 
-const int gTimeout_delay = 1000; //milli seconds 
+const int gTimeout_delay = 10000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
 const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
 
@@ -46,7 +46,7 @@ public:
 
 		setOnconfigure(true);
 		int j=0;
-		while (getOnConfigure()&&++j<gTimeout_delay/gTimeout_wait)
+		while (getOnConfigure()&&!timeout(++j))
 		{
       eudaq::mSleep(gTimeout_wait);
 		}
@@ -87,7 +87,7 @@ virtual	void OnStartRun(unsigned param) {
 
     setOnStart(true);
     int j=0;
-    while (getOnStart()&&++j<gTimeout_delay/gTimeout_wait)
+    while (getOnStart()&&!timeout(++j))
     {
       eudaq::mSleep(gTimeout_wait);
     }
@@ -97,13 +97,27 @@ virtual	void OnStartRun(unsigned param) {
 
 	}
 	// This gets called whenever a run is stopped
+bool timeout(int tries){
+
+  if (tries > (gTimeout_delay / gTimeout_wait))
+  {
+    std::cout << "status changed timed out: \n status: "
+      <<  "\n OnStart = " << getOnStart() 
+      << "\n OnConfigure = " << getOnConfigure()
+      << "\n OnStop = " << getOnStop()
+      << "\n OnTerminate = " <<getOnTerminate()
+      << std::endl;
+    return true;
+  }
+  return false;
+}
 virtual	void OnStopRun() {
 		std::cout << "virtual void OnStopRun()" << std::endl;
 	//	m_interface->send_onStop();
 
 		setOnStop(true);
 		int j=0;
-		while (getOnStop()&&++j<gTimeout_delay/gTimeout_wait)
+		while (getOnStop()&&!timeout(++j))
 		{
 			eudaq::mSleep(gTimeout_wait);
 		}
@@ -126,7 +140,7 @@ virtual	void OnTerminate() {
 		//m_interface->send_OnTerminate();
 		setOnTerminate(true);
 		int j=0;
-		while (getOnTerminate()&&++j<gTimeout_delay/gTimeout_wait)
+		while (getOnTerminate()&&!timeout(++j))
 		{
 			eudaq::mSleep(gTimeout_wait);
 		}
