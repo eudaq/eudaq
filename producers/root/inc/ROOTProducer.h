@@ -71,7 +71,7 @@ public:
 
 	// signals
 
-	void send_onStart();      //sync 
+	void send_onStart(int);      //sync 	void send_onStart(int RunNumber);    
 	void send_onConfigure();  // sync
 	void send_onStop();       // sync
 	void send_OnTerminate();  //sync 

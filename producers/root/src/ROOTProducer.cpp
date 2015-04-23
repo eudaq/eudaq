@@ -19,6 +19,7 @@
 #include <memory>
 #include <chrono>
 #include <mutex>
+#include <atomic>
 
 const int gTimeout_delay = 1000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
@@ -61,6 +62,9 @@ public:
 	eudaq::Configuration& getConfiguration(){
 		return m_config;
 	}
+  unsigned getRunNumber(){
+    return m_run;
+  }
 	// This gets called whenever a new run is started
 	// It receives the new run number as a parameter
 virtual	void OnStartRun(unsigned param) {
@@ -347,7 +351,8 @@ virtual	void OnTerminate() {
 
 	clock_t startTime_;
 
-	unsigned m_run, m_ev;
+  std::atomic<unsigned> m_run;
+	unsigned  m_ev;
 	bool isConfigured;
 
 	std::unique_ptr<eudaq::RawDataEvent> ev;
@@ -529,9 +534,9 @@ void ROOTProducer::send_onStop()
 }
 
 
-void ROOTProducer::send_onStart()
+void ROOTProducer::send_onStart(int RunNumber)
 {
-	Emit("send_onStart()");
+	Emit("send_onStart(int)",RunNumber);
 }
 
 
@@ -699,7 +704,7 @@ void ROOTProducer::checkStatus()
 {
 	if(getOnStart()){
 		
-		send_onStart();
+		send_onStart(m_prod->getRunNumber());
 		setOnStart(false);
     
     eudaq::mSleep(gTimeout_statusChanged);
