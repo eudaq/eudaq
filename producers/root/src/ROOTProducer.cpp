@@ -9,6 +9,7 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
 
 
 
@@ -105,12 +106,27 @@ bool timeout(int tries){
 
   if (tries > (gTimeout_delay / gTimeout_wait))
   {
-    std::cout << "status changed timed out: \n status: "
-      <<  "\n OnStart = " << getOnStart() 
-      << "\n OnConfigure = " << getOnConfigure()
-      << "\n OnStop = " << getOnStop()
-      << "\n OnTerminate = " <<getOnTerminate()
-      << std::endl;
+    
+    std::string timeoutWaring;
+    timeoutWaring +="[Producer."+ m_ProducerName +"] waring: status changed timed out: ";
+    if (getOnStart())
+    {
+      timeoutWaring += " onStart timed out";
+    }
+    if (getOnConfigure())
+    {
+      timeoutWaring += " onConfigure timed out";
+    }
+    if (getOnStop())
+    {
+      timeoutWaring += " onStop timed out";
+    }
+    if (getOnTerminate())
+    {
+      timeoutWaring += " OnTerminate timed out";
+    }
+    std::cout << timeoutWaring << std::endl;
+      EUDAQ_WARN(timeoutWaring);
     return true;
   }
   return false;
