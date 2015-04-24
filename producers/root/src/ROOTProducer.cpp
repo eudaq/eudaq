@@ -174,8 +174,10 @@ virtual	void OnTerminate() {
 	void createNewEvent(int eventNr){
 		if (!isCorrectEventNR(eventNr))
 		{
-			std::cout<<"void ROOTProducer::createNewEvent(int eventNr) "<<std::endl;
-			std::cout<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
+
+      std::string waring = m_ProducerName + ": Event number mismatch. Expected event: " + std::to_string(m_ev) + "  received event: " + std::to_string(eventNr);
+      
+      EUDAQ_WARN(waring);
       m_ev = eventNr;
 		}
 		createNewEvent();
