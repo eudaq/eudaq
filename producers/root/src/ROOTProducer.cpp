@@ -21,20 +21,22 @@
 #include <chrono>
 #include <mutex>
 #include <atomic>
+#include <sstream>
+
 
 const int gTimeout_delay = 1000; //milli seconds 
 const int gTimeout_wait = 20; //milli seconds 
 const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
 
 
-
+#define  streamOut m_streamOut <<"[" << m_ProducerName<<"]: "
 
 
 class ROOTProducer::Producer_PImpl : public eudaq::Producer {
 public:
 	Producer_PImpl(const std::string & name, const std::string & runcontrol): eudaq::Producer(name, runcontrol),
 		m_run(0), m_ev(0), isConfigured(false),m_ProducerName(name),onConfigure_(false),onStart_(false),onStop_(false),OnTerminate_(false) {
-			std::cout<< "hallo from "<<name<<" producer"<<std::endl;
+			streamOut<< "hallo from "<<name<<" producer"<<std::endl;
 		
 	}
 	// This gets called whenever the DAQ is configured
@@ -42,8 +44,10 @@ public:
 		m_config=config;
 		
     setConfStatus(true);
-		std::cout << "Configuring: " << getConfiguration().Name() << std::endl;
-
+		streamOut << "Configuring: " << getConfiguration().Name() << std::endl;
+    
+    
+    config.Print(m_streamOut);
 		//m_interface->send_onConfigure();
 
 		setOnconfigure(true);
@@ -70,8 +74,8 @@ public:
 	// It receives the new run number as a parameter
 virtual	void OnStartRun(unsigned param) {
 		// version 0.1 Susanne from LatencyScan.cpp
-	//	std::cout<<"virtual void OnStartRun(unsigned param)"<<std::endl;
-
+	//	streamOut<<"virtual void OnStartRun(unsigned param)"<<std::endl;
+    streamOut << "starting Run:" << m_run;
 		m_run =param;
 		m_ev=0;
 
@@ -125,14 +129,14 @@ bool timeout(int tries){
     {
       timeoutWaring += " OnTerminate timed out";
     }
-    std::cout << timeoutWaring << std::endl;
+    streamOut << timeoutWaring << std::endl;
       EUDAQ_WARN(timeoutWaring);
     return true;
   }
   return false;
 }
 virtual	void OnStopRun() {
-		std::cout << "virtual void OnStopRun()" << std::endl;
+		streamOut << "virtual void OnStopRun()" << std::endl;
 	//	m_interface->send_onStop();
 
 		setOnStop(true);
@@ -146,7 +150,7 @@ virtual	void OnStopRun() {
 		
 
 
-		std::cout<<m_ev << " Events Processed" << std::endl;
+		streamOut<<m_ev << " Events Processed" << std::endl;
 		// Send an EORE after all the real events have been sent
 		// You can also set tags on it (as with the BORE) if necessary
 		SendEvent(eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev));
@@ -156,7 +160,7 @@ virtual	void OnStopRun() {
 	// This gets called when the Run Control is terminating,
 	// we should also exit.
 virtual	void OnTerminate() {
-		std::cout << "virtual void OnTerminate()" << std::endl;
+		streamOut << "virtual void OnTerminate()" << std::endl;
 		//m_interface->send_OnTerminate();
 		setOnTerminate(true);
 		int j=0;
@@ -231,7 +235,7 @@ virtual	void OnTerminate() {
       {
         createNewEvent();
       }else{
-			std::cout<< " you have to create the an event before you can send it"<<std::endl;
+			streamOut<< " you have to create the an event before you can send it"<<std::endl;
 			return;		
       }
 		}
@@ -255,8 +259,8 @@ virtual	void OnTerminate() {
 	void sendEvent(int eventNr){
 		if (!isCorrectEventNR(eventNr))
 		{
-			std::cout<<"void ROOTProducer::sendEvent(int eventNr) "<<std::endl;
-			std::cout<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
+			streamOut<<"void ROOTProducer::sendEvent(int eventNr) "<<std::endl;
+			streamOut<<"event nr mismatch. expected event "<<m_ev<< " received event "<< eventNr<<std::endl;
 		}
 		sendEvent();
 	}
@@ -358,7 +362,7 @@ virtual	void OnTerminate() {
 			  rev.AddBlock(m_Block_id, m_inputVector,m_Elements);
 		  }
 		  catch (...){
-			  std::cout << "[Data_pointer_char] unable to Add plane to Event" << std::endl;
+			 std::cout<< "[Data_pointer_char] unable to Add plane to Event" << std::endl;
 		  }
 	  }
 	  unsigned m_Block_id;
@@ -393,7 +397,7 @@ virtual	void OnTerminate() {
 		onStop_,
 		OnTerminate_;
 	
-
+  std::stringstream m_streamOut;
 };
 
 
@@ -759,6 +763,13 @@ void ROOTProducer::checkStatus()
     eudaq::mSleep(gTimeout_statusChanged);
     send_statusChanged();
 	}
+
+  if (m_prod&&!m_prod->m_streamOut.str().empty())
+  {
+    std::cout << m_prod->m_streamOut.str() << std::endl;
+    m_prod->m_streamOut.str("");
+    send_statusChanged();
+  }
 }
 
 void ROOTProducer::addDataPointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements)
