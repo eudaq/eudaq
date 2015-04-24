@@ -304,6 +304,9 @@ virtual	void OnTerminate() {
 		OnTerminate_=newStat;
 	}
 
+  const std::string& getName() const{
+    return m_ProducerName;
+  }
 	bool isCorrectEventNR(int evNummer){
 
 		return m_ev==static_cast<unsigned>(evNummer);
@@ -573,7 +576,13 @@ bool ROOTProducer::getConnectionStatus()
 	return !(m_prod==nullptr);
 }
 
-int ROOTProducer::getConfiguration( const char* tag, int DefaultValue )
+
+const char* ROOTProducer::getProducerName()
+{
+ return m_prod->getName().c_str();
+}
+
+int ROOTProducer::getConfiguration(const char* tag, int DefaultValue)
 {
 	try{
 	return m_prod->getConfiguration().Get(tag,DefaultValue);

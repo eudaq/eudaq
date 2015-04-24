@@ -37,7 +37,7 @@ public:
 	bool getConnectionStatus();
 
 	
-
+ const char* getProducerName();
 
 
 	bool ConfigurationSatus();
