@@ -161,12 +161,17 @@ uint64_t Configuration::Get(const std::string & key, uint64_t def) const {
     return def;
   }
 
-  void Configuration::Print(){
+  void Configuration::Print(std::ostream& out) const{
       for (section_t::iterator it = m_cur->begin(); it!=m_cur->end(); ++it){
-      std::cout << it->first << " : " << it->second << std::endl;
+     out << it->first << " : " << it->second << std::endl;
     }
   }
 
+
+  void Configuration::Print() const 
+  {
+    Print(std::cout);
+  }
 
   std::string Configuration::GetString(const std::string & key) const {
     section_t::const_iterator i = m_cur->find(key);
