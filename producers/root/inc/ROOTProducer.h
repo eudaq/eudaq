@@ -94,7 +94,7 @@ public:
 
   bool getOnStop();
 	void setOnStop(bool newStat);
-
+  void setStatusToStopped();
 
   bool getOnTerminate();
 	void setOnTerminate(bool newStat);

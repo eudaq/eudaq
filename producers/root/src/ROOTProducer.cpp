@@ -50,6 +50,8 @@ virtual	void OnStopRun();
 	// we should also exit.
 virtual	void OnTerminate();
 
+
+void setTimeOutTime(int timeout);
 	void createNewEvent();
 	void createNewEvent(int eventNr);
 	void setTimeStamp( unsigned long long TimeStamp );
@@ -73,12 +75,14 @@ virtual	void OnTerminate();
 	bool getOnStop();
 	void setOnStop(bool newStat);
 
+  bool getDoStop();
+  void setDoStop(bool);
+
 	bool getOnTerminate();
 	void setOnTerminate(bool newStat);
 
-  const std::string& getName() const{
-    return m_ProducerName;
-  }
+
+  const std::string& getName() const;
 	bool isCorrectEventNR(int evNummer);
 
    void addDataPointer(unsigned Block_id,const bool* inputVector,size_t Elements);
@@ -129,7 +133,7 @@ virtual	void OnTerminate();
 
 	bool onStart_,
 		onConfigure_,
-		onStop_,
+		onStop_,doStop_,
 		OnTerminate_;
   int m_Timeout_delay = 1000; //milli seconds
   std::stringstream m_streamOut;
@@ -284,10 +288,11 @@ void ROOTProducer::Producer_PImpl::OnStopRun()
 {
   streamOut << "virtual void OnStopRun()" << std::endl;
   //	m_interface->send_onStop();
-
+  streamOut << "received at event: "<< m_ev << std::endl;
   setOnStop(true);
+  setDoStop(false);
   int j = 0;
-  while (getOnStop() && !timeout(++j))
+  while (!getDoStop() && !timeout(++j))
   {
     eudaq::mSleep(gTimeout_wait);
   }
@@ -465,6 +470,19 @@ void ROOTProducer::Producer_PImpl::setOnStop(bool newStat)
   onStop_ = newStat;
 }
 
+bool ROOTProducer::Producer_PImpl::getDoStop() 
+{
+  std::unique_lock<std::mutex> lck(m_stautus_change);
+  return doStop_;
+}
+
+
+void ROOTProducer::Producer_PImpl::setDoStop(bool newStatus)
+{
+  std::unique_lock<std::mutex> lck(m_stautus_change);
+  doStop_ = newStatus;
+}
+
 bool ROOTProducer::Producer_PImpl::getOnTerminate()
 {
   std::unique_lock<std::mutex> lck(m_stautus_change);
@@ -492,6 +510,21 @@ void ROOTProducer::Producer_PImpl::addDataPointer(unsigned Block_id, const UChar
   m_data_char.emplace_back(Block_id, inputVector, Elements);
 }
 
+const std::string& ROOTProducer::Producer_PImpl::getName() const
+{
+  return m_ProducerName;
+}
+
+void ROOTProducer::Producer_PImpl::setTimeOutTime(int timeOut)
+{
+  if (timeOut > 0){
+    m_Timeout_delay = timeOut;
+  }
+  else
+  {
+    m_streamOut << "unable to set timeout to " << timeOut << std::endl;
+  }
+}
 
 // The constructor must call the eudaq::Producer constructor with the name
 // and the runcontrol connection string, and initialize any member variables.
@@ -803,6 +836,13 @@ void ROOTProducer::setOnStop( bool newStat )
 	m_prod->setOnStop(newStat);
 }
 
+
+void ROOTProducer::setStatusToStopped()
+{
+  std::cout << "void ROOTProducer::setStatusToStopped()" << std::endl;
+ m_prod->setDoStop(true);
+}
+
 bool ROOTProducer::getOnTerminate()
 {
 	return m_prod->getOnTerminate();
@@ -836,7 +876,7 @@ void ROOTProducer::checkStatus()
 
 	if(getOnStop()){
 		send_onStop();
-		
+    setOnStop(false);
     eudaq::mSleep(gTimeout_statusChanged);
     send_statusChanged();
 	}
@@ -857,9 +897,12 @@ void ROOTProducer::checkStatus()
 }
 
 
-void ROOTProducer::setTimeOut(int timeout)
+void ROOTProducer::setTimeOut(int timeOut)
 {
-
+  if (m_prod)
+  {
+    m_prod->setTimeOutTime(timeOut);
+  }
 }
 
 void ROOTProducer::addDataPointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements)
