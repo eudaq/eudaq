@@ -24,7 +24,7 @@
 #include <sstream>
 
 
-const int gTimeout_delay = 1000; //milli seconds 
+ 
 const int gTimeout_wait = 20; //milli seconds 
 const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
 
@@ -108,7 +108,7 @@ virtual	void OnStartRun(unsigned param) {
 	// This gets called whenever a run is stopped
 bool timeout(int tries){
 
-  if (tries > (gTimeout_delay / gTimeout_wait))
+  if (tries > (m_Timeout_delay / gTimeout_wait))
   {
     
     std::string timeoutWaring;
@@ -368,6 +368,7 @@ virtual	void OnTerminate() {
 	  unsigned m_Block_id;
 	  const UChar_t* m_inputVector;
 	  size_t m_Elements;
+    int m_Timeout_delay = 1000; //milli seconds
   };
 
   std::vector<Data_pointer_bool> m_data_bool;
@@ -752,7 +753,7 @@ void ROOTProducer::checkStatus()
 
 	if(getOnStop()){
 		send_onStop();
-		setOnStop(false);
+		
     eudaq::mSleep(gTimeout_statusChanged);
     send_statusChanged();
 	}
@@ -770,6 +771,12 @@ void ROOTProducer::checkStatus()
     m_prod->m_streamOut.str("");
     send_statusChanged();
   }
+}
+
+
+void ROOTProducer::setTimeOut(int timeout)
+{
+
 }
 
 void ROOTProducer::addDataPointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements)

@@ -82,6 +82,7 @@ public:
 	//status flags
 	void checkStatus();
 
+  void setTimeOut(int);
 
   bool getOnStart();
 	void setOnStart(bool newStat);
