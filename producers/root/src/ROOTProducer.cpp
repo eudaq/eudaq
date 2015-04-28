@@ -23,7 +23,8 @@
 #include <atomic>
 #include <sstream>
 
-
+#define Producer_warning(msg) EUDAQ_WARN_STREAMOUT(msg,m_streamOut,m_streamOut); \
+                              m_errors.push_back(msg)
  
 const int gTimeout_wait = 20; //milli seconds 
 const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
@@ -130,7 +131,8 @@ void setTimeOutTime(int timeout);
 	std::mutex m_stautus_change;
 
 
-
+  std::vector<std::string> m_errors;
+  
 	bool onStart_,
 		onConfigure_,
 		onStop_,doStop_,
@@ -227,6 +229,7 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param)
   streamOut << "starting Run:" << m_run;
   m_run = param;
   m_ev = 0;
+  m_errors.clear();
 
 
 
@@ -278,7 +281,7 @@ bool ROOTProducer::Producer_PImpl::timeout(int tries)
       timeoutWaring += " OnTerminate timed out";
     }
     streamOut << timeoutWaring << std::endl;
-    EUDAQ_WARN(timeoutWaring);
+    Producer_warning(timeoutWaring);
     return true;
   }
   return false;
@@ -302,9 +305,21 @@ void ROOTProducer::Producer_PImpl::OnStopRun()
 
 
   streamOut << m_ev << " Events Processed" << std::endl;
+
+
+  auto EORE = eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev);
+  if (!m_errors.empty())
+  {
+    streamOut << "warnings recorded:" << std::endl;
+    for (auto& e : m_errors)
+    {
+      streamOut << e << std::endl;
+    }
+    EORE.SetTag("recorded_messages", m_streamOut.str());
+  }
   // Send an EORE after all the real events have been sent
   // You can also set tags on it (as with the BORE) if necessary
-  SendEvent(eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev));
+  SendEvent(EORE);
 }
 
 void ROOTProducer::Producer_PImpl::OnTerminate()
@@ -332,7 +347,7 @@ void ROOTProducer::Producer_PImpl::createNewEvent(int eventNr)
 
     std::string waring = m_ProducerName + ": Event number mismatch. Expected event: " + std::to_string(m_ev) + "  received event: " + std::to_string(eventNr);
 
-    EUDAQ_WARN(waring);
+    Producer_warning(waring);
     m_ev = eventNr;
   }
   createNewEvent();
