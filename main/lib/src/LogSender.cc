@@ -26,20 +26,20 @@ namespace eudaq {
     if (i1 == std::string::npos) EUDAQ_THROW("Invalid response from LogCollector server");
     std::string part(packet, i0, i1);
     if (part != "OK") EUDAQ_THROW("Invalid response from LogCollector server: " + packet);
-    i0 = i1+1;
+    i0 = i1 + 1;
     i1 = packet.find(' ', i0);
     if (i1 == std::string::npos) EUDAQ_THROW("Invalid response from LogCollector server");
-    part = std::string(packet, i0, i1-i0);
+    part = std::string(packet, i0, i1 - i0);
     if (part != "EUDAQ") EUDAQ_THROW("Invalid response from LogCollector server, part=" + part);
-    i0 = i1+1;
+    i0 = i1 + 1;
     i1 = packet.find(' ', i0);
     if (i1 == std::string::npos) EUDAQ_THROW("Invalid response from LogCollector server");
-    part = std::string(packet, i0, i1-i0);
+    part = std::string(packet, i0, i1 - i0);
     if (part != "LOG") EUDAQ_THROW("Invalid response from LogCollector server, part=" + part);
-    i0 = i1+1;
+    i0 = i1 + 1;
     i1 = packet.find(' ', i0);
-    part = std::string(packet, i0, i1-i0);
-    if (part != "LogCollector" ) EUDAQ_THROW("Invalid response from LogCollector server, part=" + part);
+    part = std::string(packet, i0, i1 - i0);
+    if (part != "LogCollector") EUDAQ_THROW("Invalid response from LogCollector server, part=" + part);
 
     m_logclient->SendPacket("OK EUDAQ LOG " + m_name);
     packet = "";
@@ -56,44 +56,56 @@ namespace eudaq {
   }
 
   void LogSender::SendLogMessage(const LogMessage & msg) {
+    
+    SendLogMessage(msg, std::cout, std::cerr);
+  }
+
+
+    void LogSender::SendLogMessage(const LogMessage & msg, std::ostream& out, std::ostream& error_out)
+  {
+
     MutexLock m(m_mutex);
     //std::cout << "Sending: " << msg << std::endl;
     if (msg.GetLevel() >= m_level) {
       if (msg.GetLevel() >= m_errlevel) {
-	if (m_name != "")
-	  std::cerr << "[" << m_name << "] ";
-	std::cerr << msg << std::endl;
-      } else {
-	if (m_name != "")
-	  std::cout << "[" << m_name << "] ";
-	std::cout << msg << std::endl;
+        if (m_name != "")
+          error_out << "[" << m_name << "] ";
+        error_out << msg << std::endl;
+      }
+      else {
+        if (m_name != "")
+         out << "[" << m_name << "] ";
+        out << msg << std::endl;
       }
     }
 
     if (!m_logclient) {
       if (m_shownotconnected)
-	std::cerr << "### Log message triggered but Logger not connected ###\n";
-    } else {
+        error_out << "### Log message triggered but Logger not connected ###\n";
+    }
+    else {
       BufferSerializer ser;
       msg.Serialize(ser);
       try {
-	m_logclient->SendPacket(ser);
-      } catch (const eudaq::Exception & e) {
-	std::cerr << "Caught exception trying to log message '" << msg << "': " << e.what() << std::endl;
-	std::cerr << " -> will delete LogClient" << std::endl;
-	delete m_logclient;
-	m_logclient = 0;
-      } catch (...) {
-	std::cerr << "Caught exception trying to log message '" << msg << "'! " << std::endl;
-	std::cerr << " -> will delete LogClient" << std::endl;
-	delete m_logclient;
-	m_logclient = 0;
+        m_logclient->SendPacket(ser);
+      }
+      catch (const eudaq::Exception & e) {
+        error_out << "Caught exception trying to log message '" << msg << "': " << e.what() << std::endl;
+        error_out << " -> will delete LogClient" << std::endl;
+        delete m_logclient;
+        m_logclient = 0;
+      }
+      catch (...) {
+        error_out << "Caught exception trying to log message '" << msg << "'! " << std::endl;
+        error_out << " -> will delete LogClient" << std::endl;
+        delete m_logclient;
+        m_logclient = 0;
       }
     }
   }
 
   LogSender::~LogSender() {
-    
+
     delete m_logclient;
   }
 
