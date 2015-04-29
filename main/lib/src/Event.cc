@@ -23,7 +23,16 @@ namespace eudaq {
     ds.read(m_flags);
     ds.read(m_runnumber);
     ds.read(m_eventnumber);
-    ds.read(m_timestamp);
+    if ((m_flags& Event::FLAG_EUDAQ2) != 0)
+    {
+      std::vector<uint64_t> timestamps;
+      ds.read(timestamps);
+      m_timestamp = timestamps[0];
+    }
+    else{
+
+      ds.read(m_timestamp);
+    }
     ds.read(m_tags);
   }
 
