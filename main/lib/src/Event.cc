@@ -31,7 +31,10 @@ namespace eudaq {
       m_timestamp = timestamps[0];
 
       for (auto& e:timestamps)
+      {if (e==timestamps.front())
       {
+        continue;
+      }
         additional_timeStamps += to_string(e) + ", ";
       }
     }
