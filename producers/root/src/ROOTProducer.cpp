@@ -89,7 +89,7 @@ void setTimeOutTime(int timeout);
    void addDataPointer(unsigned Block_id,const bool* inputVector,size_t Elements);
 
    void addDataPointer(unsigned Block_id, const UChar_t* inputVector, size_t Elements);
-
+   void resetDataPointer();
 
   struct Data_pointer_bool
   {
@@ -541,6 +541,12 @@ void ROOTProducer::Producer_PImpl::setTimeOutTime(int timeOut)
   }
 }
 
+void ROOTProducer::Producer_PImpl::resetDataPointer()
+{
+  m_data_bool.clear();
+  m_data_char.clear();
+}
+
 // The constructor must call the eudaq::Producer constructor with the name
 // and the runcontrol connection string, and initialize any member variables.
 ROOTProducer::ROOTProducer(const char* name,const char* runcontrol):m_prod(nullptr) {
@@ -938,5 +944,13 @@ void ROOTProducer::addDataPointer_Uint_t(unsigned Block_id, const UInt_t* inputV
 void ROOTProducer::addDataPointer_ULong64_t(unsigned Block_id, const ULong64_t* inputVector, size_t Elements){
 
 	m_prod->addDataPointer(Block_id, reinterpret_cast<const UChar_t*>(inputVector), Elements * sizeof(ULong64_t));
+}
+
+void ROOTProducer::resetDataPointer()
+{
+  if (m_prod)
+  {
+    m_prod->resetDataPointer();
+  }
 }
 
