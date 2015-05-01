@@ -238,12 +238,12 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param)
 
 
   // It must send a BORE to the Data Collector
-  eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_ProducerName, m_run));
-
-
+  auto bore=eudaq::RawDataEvent::BORE(m_ProducerName, m_run);
+  ev = std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(bore));
+  
 
   // Send the event to the Data Collector
-  SendEvent(bore);
+
 
 
   setOnStart(true);
@@ -253,7 +253,10 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param)
     eudaq::mSleep(gTimeout_wait);
   }
   setOnStart(false);
+ 
+ 
   // At the end, set the status that will be displayed in the Run Control.
+  
   SetStatus(eudaq::Status::LVL_OK, "Running");
 }
 
@@ -304,22 +307,7 @@ void ROOTProducer::Producer_PImpl::OnStopRun()
 
 
 
-  streamOut << m_ev << " Events Processed" << std::endl;
-
-
-  auto EORE = eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev);
-  if (!m_errors.empty())
-  {
-    streamOut << "warnings recorded:" << std::endl;
-    for (auto& e : m_errors)
-    {
-      streamOut << e << std::endl;
-    }
-    EORE.SetTag("recorded_messages", m_streamOut.str());
-  }
-  // Send an EORE after all the real events have been sent
-  // You can also set tags on it (as with the BORE) if necessary
-  SendEvent(EORE);
+ 
 }
 
 void ROOTProducer::Producer_PImpl::OnTerminate()
@@ -374,6 +362,8 @@ void ROOTProducer::Producer_PImpl::setTimeStamp2Now()
 
 void ROOTProducer::Producer_PImpl::setTag(const char* tag, const char* Value)
 {
+
+
   if (ev == nullptr)
   {
     createNewEvent();
@@ -458,6 +448,10 @@ bool ROOTProducer::Producer_PImpl::getOnStart()
 void ROOTProducer::Producer_PImpl::setOnStart(bool newStat)
 {
   std::unique_lock<std::mutex> lck(m_stautus_change);
+  if (ev&&newStat!=onStart_)
+  {
+    sendEvent();
+  }
   onStart_ = newStat;
 }
 
@@ -482,6 +476,28 @@ bool ROOTProducer::Producer_PImpl::getOnStop()
 void ROOTProducer::Producer_PImpl::setOnStop(bool newStat)
 {
   std::unique_lock<std::mutex> lck(m_stautus_change);
+  if (newStat==false && newStat!=onStart_)
+  {
+
+    streamOut << m_ev << " Events Processed" << std::endl;
+
+
+    auto EORE = eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev);
+    if (!m_errors.empty())
+    {
+      streamOut << "warnings recorded:" << std::endl;
+      for (auto& e : m_errors)
+      {
+        streamOut << e << std::endl;
+      }
+      EORE.SetTag("recorded_messages", m_streamOut.str());
+    }
+    // Send an EORE after all the real events have been sent
+    // You can also set tags on it (as with the BORE) if necessary
+    SendEvent(EORE);
+  }
+
+
   onStop_ = newStat;
 }
 
@@ -809,7 +825,7 @@ void ROOTProducer::setTag( const char* tagNameTagValue )
   size_t equalsymbol=dummy.find_first_of("=");
   if (equalsymbol!=std::string::npos&&equalsymbol>0)
   {
-    std::string tagName=dummy.substr(0,equalsymbol-1);
+    std::string tagName=dummy.substr(0,equalsymbol);
     std::string tagValue=dummy.substr(equalsymbol+1);
     setTag(tagName.c_str(),tagValue.c_str());
 
@@ -860,7 +876,7 @@ void ROOTProducer::setOnStop( bool newStat )
 
 void ROOTProducer::setStatusToStopped()
 {
-  std::cout << "void ROOTProducer::setStatusToStopped()" << std::endl;
+
  m_prod->setDoStop(true);
 }
 
