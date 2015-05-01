@@ -66,6 +66,8 @@ public:
   void addDataPointer_Uint_t(unsigned Block_id, const unsigned int* inputVector, size_t Elements);
   void addDataPointer_ULong64_t(unsigned Block_id, const unsigned long long* inputVector, size_t Elements);
 
+  void resetDataPointer();
+
 	void sendEvent();
 	void sendEvent(int);
 
