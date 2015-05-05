@@ -77,9 +77,10 @@ namespace eudaq {
         plane.SetSizeZS(channels.size(), 1,0);
         unsigned x = 0;
         unsigned y = 0;
-        for(auto & e:channels){
+
+        for (size_t i = 0; i < channels.size(); ++i){
           ++x;
-          if (e==true)
+          if (channels[i] == true)
           {
             plane.PushPixel(x,y,1);
           }
@@ -305,9 +306,10 @@ namespace eudaq {
       plane.SetSizeZS(channels.size(), 1, 0);
       unsigned x = 0;
       unsigned y = 0;
-      for (auto & e : channels){
+
+      for (size_t i = 0; i < channels.size();++i){
         ++x;
-        if (e == true)
+        if (channels[i] == true)
         {
           plane.PushPixel(x, y, 1);
         }
