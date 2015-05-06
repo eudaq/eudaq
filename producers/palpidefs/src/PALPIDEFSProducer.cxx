@@ -10,6 +10,7 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Configuration.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>
@@ -197,6 +198,7 @@ bool DeviceReader::ThresholdScan() {
 
 DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut)
   : m_queue_size(0)
+  , m_thread(&DeviceReader::LoopWrapper, this)
   , m_stop(false)
   , m_running(false)
   , m_flushing(false)
@@ -224,7 +226,6 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQB
   m_last_trigger_id = m_daq_board->GetNextEventId();
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
 #endif
-  m_thread.start(DeviceReader::LoopWrapper, this);
 }
 
 void DeviceReader::Stop()

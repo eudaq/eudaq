@@ -5,8 +5,8 @@
 
 #include "eudaq/Producer.hh"
 
-#include "eudaq/Mutex.hh"
-#include "eudaq/EudaqThread.hh"
+#include <mutex>
+#include <thread>
 #include <queue>
 
 #include <tinyxml.h>
@@ -31,14 +31,14 @@ struct SingleEvent {
 
 class SimpleLock {
   public:
-    SimpleLock(eudaq::Mutex& mutex) : m_mutex(mutex) {
-      mutex.Lock();
+    SimpleLock(std::mutex& mutex) : m_mutex(mutex) {
+      mutex.lock();
     }
     ~SimpleLock() {
-      m_mutex.UnLock();
+      m_mutex.unlock();
     }
   protected:
-    eudaq::Mutex& m_mutex;
+    std::mutex& m_mutex;
 };
 
 class DeviceReader {
@@ -92,8 +92,8 @@ class DeviceReader {
 
     std::queue<SingleEvent*> m_queue;
     unsigned long m_queue_size;
-    eudaq::eudaqThread m_thread;
-    eudaq::Mutex m_mutex;
+    std::thread m_thread;
+    std::mutex m_mutex;
     bool m_stop;
     bool m_running;
     bool m_flushing;
@@ -204,7 +204,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     SingleEvent** m_next_event;
     int m_debuglevel;
 
-    eudaq::Mutex m_mutex;
+    std::mutex m_mutex;
     TTestSetup* m_testsetup;
 
     // config
