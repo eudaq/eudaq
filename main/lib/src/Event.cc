@@ -15,6 +15,8 @@ namespace eudaq {
       "HITS",
       "FAKE",
       "SIMU",
+      "EUDAQ2",
+      "PACKET",
       "BROKEN",
       "STATUS"
     };
