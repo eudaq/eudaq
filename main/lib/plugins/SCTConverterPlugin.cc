@@ -5,10 +5,18 @@
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
-#  include "IMPL/LCEventImpl.h"
-#  include "IMPL/TrackerRawDataImpl.h"
-#  include "IMPL/LCCollectionVec.h"
-#  include "lcio.h"
+#include "IMPL/LCEventImpl.h"
+#include "IMPL/TrackerRawDataImpl.h"
+#include "IMPL/LCCollectionVec.h"
+#include "lcio.h"
+#include "EUTELESCOPE.h"
+#include "EUTelRunHeaderImpl.h"
+#include "EUTelSetupDescription.h"
+#include "EUTelTrackerDataInterfacerImpl.h"
+using eutelescope::EUTELESCOPE;
+using eutelescope::EUTelTrackerDataInterfacerImpl;
+using eutelescope::EUTelGenericSparsePixel;
+
 #endif
 #ifdef USE_EUDAQ2_VERSION
 #include "eudaq/Processor.hh"
