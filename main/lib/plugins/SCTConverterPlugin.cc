@@ -285,6 +285,7 @@ namespace eudaq {
     virtual bool GetStandardSubEvent(StandardEvent & sev,
       const Event & ev) const {
 
+
       if (ev.IsBORE())
       {
         return true;
@@ -296,24 +297,28 @@ namespace eudaq {
         return false;
       }
 
-
-      auto block=raw->GetBlock(0);
-
-      std::vector<bool> channels;
-      eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
-
       StandardPlane plane(PlaneID, EVENT_TYPE_ITS_ABC);
-      plane.SetSizeZS(channels.size(), 1, 0);
-      unsigned x = 0;
-      unsigned y = 0;
+      auto size_x = raw->GetBlock(0).size() * 8;
 
-      for (size_t i = 0; i < channels.size();++i){
-        ++x;
-        if (channels[i] == true)
-        {
-          plane.PushPixel(x, y, 1);
+      plane.SetSizeZS(size_x, raw->NumBlocks(), 0);
+      for (size_t i = 0; i < raw->NumBlocks(); ++i)
+      {
+
+        auto block = raw->GetBlock(i);
+
+        std::vector<bool> channels;
+        eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
+
+        unsigned x = 0;
+        unsigned y = 0;
+        for (auto & e : channels){
+          ++x;
+          if (e == true)
+          {
+            plane.PushPixel(x, i, 1);
+          }
+
         }
-
       }
       sev.AddPlane(plane);
 
@@ -328,9 +333,80 @@ namespace eudaq {
       return true;
     }
 #if USE_LCIO
-    // This is where the conversion to LCIO is done
-    virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
-      return 0;
+    void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/, eudaq::Configuration const & /*conf*/) const {
+      eutelescope::EUTelRunHeaderImpl runHeader(&header);
+      runHeader.setDAQHWName(EUTELESCOPE::EUDRB); // should be:
+      //runHeader.setDAQHWName(EUTELESCOPE::NI);
+
+      // the information below was used by EUTelescope before the
+      // introduction of the BUI. Now all these parameters shouldn't be
+      // used anymore but they are left here for backward compatibility.
+
+      runHeader.setEUDRBMode("ZS");
+      runHeader.setEUDRBDet("SCT");
+      runHeader.setNoOfDetector(m_boards);
+      std::vector<int> xMin(m_boards, 0), xMax(m_boards, 1280), yMin(m_boards, 0), yMax(m_boards, 4);
+      runHeader.setMinX(xMin);
+      runHeader.setMaxX(xMax);
+      runHeader.setMinY(yMin);
+      runHeader.setMaxY(yMax);
+  }
+
+
+    bool GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const {
+
+
+      if (source.IsBORE()) {
+        if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
+        // shouldn't happen
+        return true;
+      }
+      else if (source.IsEORE()) {
+        if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
+        // nothing to do
+        return true;
+      }
+      // If we get here it must be a data event
+
+      if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent data " << std::endl;
+      result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
+
+
+      LCCollectionVec *zsDataCollection = nullptr;
+      auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name);
+
+
+
+      StandardEvent tmp_evt;
+      GetStandardSubEvent(tmp_evt, source);
+      auto plane = tmp_evt.GetPlane(0);
+
+
+      // set the proper cell encoder
+      auto  zsDataEncoder = CellIDEncoder<TrackerDataImpl>(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+      zsDataEncoder["sensorID"] = plane.ID();
+      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+
+      // prepare a new TrackerData for the ZS data
+      auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
+      zsDataEncoder.setCellID(zsFrame.get());
+
+
+      ConvertPlaneToLCIOGenericPixel(plane, *zsFrame);
+
+      // perfect! Now add the TrackerData to the collection
+      zsDataCollection->push_back(zsFrame.release());
+
+
+      if (!zsDataCollectionExists){
+        if (zsDataCollection->size() != 0)
+          result.addCollection(zsDataCollection, LCIO_collection_name);
+        else
+          delete zsDataCollection; // clean up if not storing the collection here
+      }
+
+      return true;
     }
 #endif
 
