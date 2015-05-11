@@ -43,7 +43,7 @@ class SimpleLock {
 
 class DeviceReader {
   public:
-    DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut);
+    DeviceReader(int id, int debuglevel, TTestSetup* test_setup, int boardid, TDAQBoard* daq_board, TpAlpidefs* dut);
     ~DeviceReader() { }
 
     void SetMaxQueueSize(unsigned long size) { m_max_queue_size = size; }
@@ -101,6 +101,7 @@ class DeviceReader {
     bool m_threshold_scan_rqst;
     int m_threshold_scan_result; // 0 = not running, 1 = running, 2 = error, 3 = success
     int m_id;
+    int m_boardid;    // id of the DAQ board as used by TTestSetup::GetDAQBoard()...
     int m_debuglevel;
     uint64_t m_last_trigger_id;
 

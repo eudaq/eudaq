@@ -170,7 +170,7 @@ bool DeviceReader::ThresholdScan() {
   for (int istage=0; istage<m_n_mask_stages; ++istage) {
     if (!(istage %10)) Print(0, "Threshold scan: mask stage %d", istage);
     PrepareMaskStage(PT_ANALOGUE, istage, steps);
-    m_test_setup->PrepareAnalogueInjection(m_daq_board, m_dut, m_ch_start, PulseMode);
+    m_test_setup->PrepareAnalogueInjection(m_boardid, m_ch_start, PulseMode);
     int ipoint = 0;
     //std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
     //std::cout << "charge: ";
@@ -196,7 +196,7 @@ bool DeviceReader::ThresholdScan() {
   return true;
 }
 
-DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQBoard* daq_board, TpAlpidefs* dut)
+DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, int boardid, TDAQBoard* daq_board, TpAlpidefs* dut)
   : m_queue_size(0)
   , m_thread(&DeviceReader::LoopWrapper, this)
   , m_stop(false)
@@ -205,6 +205,7 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup, TDAQB
   , m_waiting_for_eor(false)
   , m_threshold_scan_rqst(false)
   , m_threshold_scan_result(0)
+  , m_boardid(id)
   , m_id(id)
   , m_debuglevel(debuglevel)
   , m_test_setup(test_setup)
@@ -835,15 +836,35 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
     const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
 
 #ifndef SIMULATION
-    TConfig* config = new TConfig("");
+    TConfig* config = new TConfig(TYPE_TELESCOPE, m_nDevices);
 
     if (!m_testsetup) {
       std::cout << "Creating test setup " << std::endl;
       m_testsetup = new TTestSetup;
     }
 
+    char mybuffer[100];
+    for (int idev = 0; idev < m_nDevices; idev ++) {
+        sprintf(mybuffer, "BoardAddress_%d", idev);
+        int board_address = param.Get(mybuffer, -1);
+
+        sprintf(mybuffer, "ChipType_%d", idev);
+	std::string ChipType = param.Get(mybuffer, "");
+
+        config->GetBoardConfig(idev)->GeoAdd = board_address;
+
+        if (!ChipType.compare ("PALPIDEFS1")) {
+          config->GetBoardConfig(idev)->BoardType = 1;
+          config->GetChipConfig (idev)->ChipType  = DUT_PALPIDEFS1;
+	}
+        else if (!ChipType.compare("PALPIDEFS2")) {
+          config->GetBoardConfig(idev)->BoardType = 2;
+          config->GetChipConfig (idev)->ChipType  = DUT_PALPIDEFS2;
+	}
+    }
+
     std::cout << "Searching for DAQ boards " << std::endl;
-    m_testsetup->FindDAQBoards(config->GetBoardConfig());
+    m_testsetup->FindDAQBoards(config);
     std::cout << "Found " << m_testsetup->GetNDAQBoards() << " DAQ boards." << std::endl;
 
     if (m_testsetup->GetNDAQBoards() < m_nDevices) {
@@ -855,7 +876,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
       return false;
     }
 
-    m_testsetup->AddDUTs(DUT_PALPIDEFS, config->GetChipConfig());
+    m_testsetup->AddDUTs(config);
 #endif
     for (int i=0; i<m_nDevices; i++) {
       TpAlpidefs* dut = 0;
@@ -865,7 +886,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
 
 #ifdef SIMULATION
       if (!m_configured) {
-        m_reader[i] = new DeviceReader(i, m_debuglevel, 0x0, daq_board, dut);
+        m_reader[i] = new DeviceReader(i, m_debuglevel, 0x0, 0, daq_board, dut);
         m_next_event[i] = 0;
       }
 #else
@@ -914,7 +935,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
 
         std::cout << "Device " << i << " with board address " << board_address << " (delay " << delay << " - queue size " << queue_size << ") powered." << std::endl;
 
-        m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, daq_board, dut);
+        m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, board_no, daq_board, dut);
         if (m_next_event[i]) delete m_next_event[i];
         m_next_event[i] = 0;
       } else {
