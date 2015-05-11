@@ -86,6 +86,7 @@ namespace eudaq {
       m_SCS_n_events      = bore.GetTag<int>("SCSnEvents",     -1);
       m_SCS_n_mask_stages = bore.GetTag<int>("SCSnMaskStages", -1);
 
+      m_chip_type      = new int[m_nLayers];
       m_Vaux           = new int[m_nLayers];
       m_Vreset         = new int[m_nLayers];
       m_Vcasn          = new int[m_nLayers];
@@ -128,6 +129,8 @@ namespace eudaq {
         m_Idb[i]     = -10;
         m_Ithr[i]    = -10;
 #endif
+        sprintf(tmp, "ChipType_%d", i);
+        m_chip_type[i] = bore.GetTag<int>(tmp, 1);
         sprintf(tmp, "StrobeLength_%d", i);
         m_strobe_length[i]  = bore.GetTag<int>(tmp, -100);
         sprintf(tmp, "StrobeBLength_%d", i);
@@ -586,6 +589,7 @@ namespace eudaq {
     float m_BackBiasVoltage;
     float m_dut_pos;
     std::string* m_configs;
+    int* m_chip_type;
     int* m_Vaux;
     int* m_Vreset;
     int* m_Vcasn;
