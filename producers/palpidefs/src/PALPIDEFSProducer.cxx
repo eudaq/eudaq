@@ -668,6 +668,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
       m_next_event[i] = 0;
     }
   }
+  if (!m_chip_type)      m_chip_type      = new int[m_nDevices];
   if (!m_strobe_length)  m_strobe_length  = new int[m_nDevices];
   if (!m_strobeb_length) m_strobeb_length = new int[m_nDevices];
   if (!m_trigger_delay)  m_trigger_delay  = new int[m_nDevices];
@@ -798,12 +799,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0, m_trigger_delay[i]);
 
     // PrepareChipReadout
-    dut->SetChipMode           (MODE_ALPIDE_CONFIG);
-    dut->SetReadoutDelay       (m_readout_delay[i]);
-    dut->SetEnableClustering   (false);
-    dut->SetStrobeTiming       (m_strobeb_length[i]);
-    dut->SetEnableOutputDrivers(true, true);
-    dut->SetChipMode           (MODE_ALPIDE_READOUT_B);
+    dut->PrepareReadout(m_strobeb_length[i], m_readout_delay[i], MODE_ALPIDE_READOUT_B);
 
     if (delay > 0)      m_reader[i]->SetQueueFullDelay(delay);
     if (queue_size > 0) m_reader[i]->SetMaxQueueSize(queue_size);
@@ -854,10 +850,12 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration & param)
         config->GetBoardConfig(idev)->GeoAdd = board_address;
 
         if (!ChipType.compare ("PALPIDEFS1")) {
+          m_chip_type[idev]                       = 1;
           config->GetBoardConfig(idev)->BoardType = 1;
           config->GetChipConfig (idev)->ChipType  = DUT_PALPIDEFS1;
 	}
         else if (!ChipType.compare("PALPIDEFS2")) {
+          m_chip_type[idev]                       = 2;
           config->GetBoardConfig(idev)->BoardType = 2;
           config->GetChipConfig (idev)->ChipType  = DUT_PALPIDEFS2;
 	}
@@ -1163,6 +1161,8 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
     bore.SetTag(tmp, m_reader[i]->GetDAQBoard()->GetFirmwareName());
 #endif
 
+    sprintf(tmp, "ChipType_%d", i);
+    bore.SetTag(tmp, m_chip_type[i]);
     // readout / triggering settings
     sprintf(tmp, "StrobeLength_%d", i);
     bore.SetTag(tmp, m_strobe_length[i]);
