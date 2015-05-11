@@ -54,6 +54,14 @@ namespace eudaq {
     }
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
+
+      // If we receive the EORE print the collected statistics:
+      if (in.IsEORE()) {
+	// Set decoder to INFO level for statistics printout:
+	std::cout << "Decoding statistics for detector " << m_detector << std::endl;
+	pxar::Log::ReportingLevel() = pxar::Log::FromString("INFO");
+	decoding_stats.dump();
+      }
           
       // Check if we have BORE or EORE:
       if (in.IsBORE() || in.IsEORE()) { return true; }
@@ -93,6 +101,7 @@ namespace eudaq {
       src.AddData(TransformRawData(in_raw.GetBlock(0)));
       // ...and pull it out at the other end:
       pxar::Event* evt = Eventpump.Get();
+      decoding_stats += decoder.getStatistics();
 
       // Iterate over all planes and check for pixel hits:
       for(size_t roc = 0; roc < m_nplanes; roc++) {
@@ -235,6 +244,7 @@ namespace eudaq {
     std::string m_detector;
     bool m_rotated_pcb;
     std::string m_event_type;
+    mutable pxar::statistics decoding_stats;
 
     static std::vector<uint16_t> TransformRawData(const std::vector<unsigned char> & block) {
 
