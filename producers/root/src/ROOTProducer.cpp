@@ -456,9 +456,10 @@ bool ROOTProducer::Producer_PImpl::getOnStart()
 void ROOTProducer::Producer_PImpl::setOnStart(bool newStat)
 {
   std::unique_lock<std::mutex> lck(m_stautus_change);
-  if (ev&&newStat!=onStart_)
+  if (ev&&newStat!=onStart_&&newStat==false)
   {
     sendEvent();
+	m_ev = 0; // bore event and first event have both event nr 0
   }
   onStart_ = newStat;
 }
