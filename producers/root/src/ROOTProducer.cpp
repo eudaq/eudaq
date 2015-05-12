@@ -55,6 +55,7 @@ virtual	void OnTerminate();
 void setTimeOutTime(int timeout);
 	void createNewEvent();
 	void createNewEvent(int eventNr);
+	void createEOREvent();
 	void setTimeStamp( unsigned long long TimeStamp );
 
 	void setTimeStamp2Now();
@@ -238,8 +239,8 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param)
 
 
   // It must send a BORE to the Data Collector
-  auto bore=eudaq::RawDataEvent::BORE(m_ProducerName, m_run);
-  ev = std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(bore));
+  
+  ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newBORE(m_ProducerName,m_run));
   
 
   // Send the event to the Data Collector
@@ -342,6 +343,13 @@ void ROOTProducer::Producer_PImpl::createNewEvent(int eventNr)
   ev->SetTag("eventNr", eventNr);
 }
 
+
+void ROOTProducer::Producer_PImpl::createEOREvent(){
+
+	ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newEORE(m_ProducerName, m_run, m_ev));
+
+
+}
 void ROOTProducer::Producer_PImpl::setTimeStamp(unsigned long long TimeStamp)
 {
   if (ev == nullptr)
@@ -476,28 +484,8 @@ bool ROOTProducer::Producer_PImpl::getOnStop()
 void ROOTProducer::Producer_PImpl::setOnStop(bool newStat)
 {
   std::unique_lock<std::mutex> lck(m_stautus_change);
-  if (newStat==false && newStat!=onStart_)
-  {
 
-    streamOut << m_ev << " Events Processed" << std::endl;
-
-
-    auto EORE = eudaq::RawDataEvent::EORE(m_ProducerName, m_run, ++m_ev);
-    if (!m_errors.empty())
-    {
-      streamOut << "warnings recorded:" << std::endl;
-      for (auto& e : m_errors)
-      {
-        streamOut << e << std::endl;
-      }
-      EORE.SetTag("recorded_messages", m_streamOut.str());
-    }
-    // Send an EORE after all the real events have been sent
-    // You can also set tags on it (as with the BORE) if necessary
-    SendEvent(EORE);
-  }
-
-
+  m_errors.clear();
   onStop_ = newStat;
 }
 
@@ -511,6 +499,35 @@ bool ROOTProducer::Producer_PImpl::getDoStop()
 void ROOTProducer::Producer_PImpl::setDoStop(bool newStatus)
 {
   std::unique_lock<std::mutex> lck(m_stautus_change);
+
+
+
+  if ( newStatus == true && newStatus != doStop_)
+  {
+
+	  if (!ev || !ev->IsEORE())
+	  {
+		  createEOREvent();
+	  }
+
+	  streamOut << m_ev << " Events Processed" << std::endl;
+
+
+	  
+	  if (!m_errors.empty())
+	  {
+		  streamOut << "warnings recorded:" << std::endl;
+		  for (auto& e : m_errors)
+		  {
+			  streamOut << e << std::endl;
+		  }
+		  ev->SetTag("recorded_messages", m_streamOut.str());
+	  }
+	  // Send an EORE after all the real events have been sent
+	  // You can also set tags on it (as with the BORE) if necessary
+	  sendEvent();
+  }
+
   doStop_ = newStatus;
 }
 
@@ -601,7 +618,17 @@ void ROOTProducer::Connect2RunControl( const char* name,const char* runcontrol )
 		std::cout<<"unable to connect to runcontrol: "<<runcontrol<<std::endl;
 	}
 }
+void ROOTProducer::createEOREvent(){
 
+	try
+	{
+		m_prod->createEOREvent();
+	}
+	catch (...)
+	{
+		std::cout << "unable to connect create new event" << std::endl;
+	}
+}
 void ROOTProducer::createNewEvent()
 {
 	try
