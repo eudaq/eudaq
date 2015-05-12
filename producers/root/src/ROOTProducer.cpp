@@ -138,7 +138,7 @@ void setTimeOutTime(int timeout);
 		onConfigure_,
 		onStop_,doStop_,
 		OnTerminate_;
-  int m_Timeout_delay = 1000; //milli seconds
+  int m_Timeout_delay = 100000; //milli seconds
   std::stringstream m_streamOut;
 };
 
@@ -246,7 +246,7 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param)
   // Send the event to the Data Collector
 
 
-
+  eudaq::mSleep(gTimeout_wait);
   setOnStart(true);
   int j = 0;
   while (getOnStart() && !timeout(++j))
@@ -304,11 +304,9 @@ void ROOTProducer::Producer_PImpl::OnStopRun()
     eudaq::mSleep(gTimeout_wait);
   }
   setOnStop(false);
+  setDoStop(false);
   // Set a flag to signal to the polling loop that the run is over
-
-
-
- 
+  
 }
 
 void ROOTProducer::Producer_PImpl::OnTerminate()
