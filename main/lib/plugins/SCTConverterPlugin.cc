@@ -1,7 +1,7 @@
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
-
+static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
@@ -16,7 +16,6 @@
 using eutelescope::EUTELESCOPE;
 using eutelescope::EUTelTrackerDataInterfacerImpl;
 using eutelescope::EUTelGenericSparsePixel;
-
 #endif
 #ifdef USE_EUDAQ2_VERSION
 #include "eudaq/Processor.hh"
@@ -31,6 +30,7 @@ namespace eudaq {
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
   static const char* EVENT_TYPE_ITS_ABC = "ITS_ABC";
+  static const char* LCIO_collection_name = "zsdata_strip";
   static const int PlaneID = 8;   
   namespace sct{
     std::string TDC_L0ID(){ return "TDC.L0ID"; }
@@ -90,7 +90,7 @@ namespace eudaq {
           ++x;
           if (channels[i] == true)
           {
-            plane.PushPixel(x,y,1);
+            plane.PushPixel(x,1,1);
           }
 
         }
@@ -99,8 +99,80 @@ namespace eudaq {
       }
 #if USE_LCIO
       // This is where the conversion to LCIO is done
-    virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
-        return 0;
+      void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/, eudaq::Configuration const & /*conf*/) const {
+        eutelescope::EUTelRunHeaderImpl runHeader(&header);
+        runHeader.setDAQHWName(EUTELESCOPE::EUDRB); // should be:
+        //runHeader.setDAQHWName(EUTELESCOPE::NI);
+
+        // the information below was used by EUTelescope before the
+        // introduction of the BUI. Now all these parameters shouldn't be
+        // used anymore but they are left here for backward compatibility.
+
+        runHeader.setEUDRBMode("ZS");
+        runHeader.setEUDRBDet("SCT");
+        runHeader.setNoOfDetector(m_boards);
+        std::vector<int> xMin(m_boards, 0), xMax(m_boards, 1280), yMin(m_boards, 0), yMax(m_boards, 4);
+        runHeader.setMinX(xMin);
+        runHeader.setMaxX(xMax);
+        runHeader.setMinY(yMin);
+        runHeader.setMaxY(yMax);
+      }
+
+
+      bool GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const {
+
+
+        if (source.IsBORE()) {
+          if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
+          // shouldn't happen
+          return true;
+        }
+        else if (source.IsEORE()) {
+          if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
+          // nothing to do
+          return true;
+        }
+        // If we get here it must be a data event
+
+        if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent data " << std::endl;
+        result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
+
+
+        LCCollectionVec *zsDataCollection = nullptr;
+        auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name);
+
+
+
+        StandardEvent tmp_evt;
+        GetStandardSubEvent(tmp_evt,source);
+        auto plane = tmp_evt.GetPlane(0);
+
+
+        // set the proper cell encoder
+        auto  zsDataEncoder = CellIDEncoder<TrackerDataImpl>(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+        zsDataEncoder["sensorID"] = 8;
+        zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+
+        // prepare a new TrackerData for the ZS data
+        auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
+        zsDataEncoder.setCellID(zsFrame.get());
+
+
+        ConvertPlaneToLCIOGenericPixel(plane, *zsFrame);
+
+        // perfect! Now add the TrackerData to the collection
+        zsDataCollection->push_back(zsFrame.release());
+
+
+        if (!zsDataCollectionExists){
+          if (zsDataCollection->size() != 0)
+            result.addCollection(zsDataCollection, LCIO_collection_name);
+          else
+            delete zsDataCollection; // clean up if not storing the collection here
+        }
+
+        return true;
       }
 #endif
 
@@ -109,7 +181,7 @@ namespace eudaq {
 
       SCTConverterPlugin_ITS_ABC(): DataConverterPlugin(EVENT_TYPE_ITS_ABC) {}
 
-
+      unsigned m_boards = 1;
    
       // The single instance of this converter plugin
   }; // class SCTConverterPlugin
@@ -248,7 +320,7 @@ namespace eudaq {
     // in order to register this converter for the corresponding conversions
     // Member variables should also be initialized to default values here.
     SCTConverterPlugin_ITS_TTC() : DataConverterPlugin(EVENT_TYPE_ITS_TTC) {}
-
+    unsigned m_boards = 1;  
     // Information extracted in Initialize() can be stored here:
 
     // The single instance of this converter plugin
@@ -319,11 +391,11 @@ namespace eudaq {
 
         unsigned x = 0;
         unsigned y = 0;
-        for (auto & e : channels){
+        for (size_t i = 0; i < channels.size(); ++i){
           ++x;
-          if (e == true)
+          if (channels[i] == true)
           {
-            plane.PushPixel(x, i, 1);
+            plane.PushPixel(x, y, 1);
           }
 
         }
@@ -406,7 +478,7 @@ namespace eudaq {
       // perfect! Now add the TrackerData to the collection
       zsDataCollection->push_back(zsFrame.release());
 
-
+      std::cout<<zsDataCollection->size()<<std::endl;
       if (!zsDataCollectionExists){
         if (zsDataCollection->size() != 0)
           result.addCollection(zsDataCollection, LCIO_collection_name);
@@ -421,7 +493,7 @@ namespace eudaq {
     static SCTConverterPlugin m_instance;
 
   private:
-
+    unsigned m_boards = 1;
     // The constructor can be private, only one static instance is created
     // The DataConverterPlugin constructor must be passed the event type
     // in order to register this converter for the corresponding conversions
