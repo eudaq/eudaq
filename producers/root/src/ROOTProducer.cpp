@@ -343,7 +343,7 @@ void ROOTProducer::Producer_PImpl::createNewEvent(int eventNr)
 
 
 void ROOTProducer::Producer_PImpl::createEOREvent(){
-
+	//streamOut << "creating end of run event" << std::endl;
 	ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newEORE(m_ProducerName, m_run, m_ev));
 
 
@@ -372,9 +372,11 @@ void ROOTProducer::Producer_PImpl::setTag(const char* tag, const char* Value)
 
   if (ev == nullptr)
   {
+	  streamOut << "creating new event " << std::endl;
+	  streamOut << tag << " = " << Value<<std::endl;
     createNewEvent();
   }
-
+  //streamOut << "set tag for event " << ev->GetEventNumber() << " flags " << ev->GetFlags() << "  " << tag << " = " << Value << std::endl;
   ev->SetTag(tag, Value);
 }
 
@@ -504,12 +506,19 @@ void ROOTProducer::Producer_PImpl::setDoStop(bool newStatus)
   if ( newStatus == true && newStatus != doStop_)
   {
 
-	  if (!ev || !ev->IsEORE())
+	  if (!ev){
+		  streamOut << "no event was created before stopping" << std::endl;
+
+		  createEOREvent();
+	  }
+	   
+	  if( !ev->IsEORE())
 	  {
+		  streamOut << "no end of run event was created before stopping" << std::endl;
 		  createEOREvent();
 	  }
 
-	  streamOut << m_ev << " Events Processed" << std::endl;
+	  streamOut << m_ev << "\"setDoStop\": Events Processed" << std::endl;
 
 
 	  
@@ -853,6 +862,8 @@ void ROOTProducer::setTag( const char* tagNameTagValue )
   {
     std::string tagName=dummy.substr(0,equalsymbol);
     std::string tagValue=dummy.substr(equalsymbol+1);
+	tagName = eudaq::trim(tagName);
+	tagValue = eudaq::trim(tagValue);
     setTag(tagName.c_str(),tagValue.c_str());
 
   }else{
