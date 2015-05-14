@@ -10,7 +10,23 @@
 #endif //  USE_LCIO
 
 namespace eudaq {
+#if USE_LCIO
+  bool Collection_createIfNotExist(lcio::LCCollectionVec** zsDataCollection, const lcio::LCEvent & lcioEvent, const char * name){
 
+    bool zsDataCollectionExists = false;
+    try
+    {
+      *zsDataCollection = static_cast<lcio::LCCollectionVec*> (lcioEvent.getCollection(name));
+      zsDataCollectionExists = true;
+    }
+    catch (lcio::DataNotAvailableException& e)
+    {
+      *zsDataCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERDATA);
+    }
+
+    return zsDataCollectionExists;
+  }
+#endif
   unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const &) const {
     return (unsigned)-1;
   }

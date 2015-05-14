@@ -42,7 +42,7 @@ namespace lcio { using namespace EVENT; }
 namespace eudaq{
 
 #ifdef USE_LCIO
-
+  bool Collection_createIfNotExist(lcio::LCCollectionVec** zsDataCollection, const lcio::LCEvent & lcioEvent, const char * name);
   void ConvertPlaneToLCIOGenericPixel(StandardPlane & plane, lcio::TrackerDataImpl& zsFrame);
 #endif // USE_LCIO
 

@@ -23,8 +23,31 @@ namespace eudaq {
     ds.read(m_flags);
     ds.read(m_runnumber);
     ds.read(m_eventnumber);
-    ds.read(m_timestamp);
+    std::string additional_timeStamps;
+    if ((m_flags& Event::FLAG_EUDAQ2) != 0)
+    {
+      std::vector<uint64_t> timestamps;
+      ds.read(timestamps);
+      m_timestamp = timestamps[0];
+
+      for (auto& e:timestamps)
+      {if (e==timestamps.front())
+      {
+        continue;
+      }
+        additional_timeStamps += to_string(e) + ", ";
+      }
+    }
+    else{
+
+      ds.read(m_timestamp);
+    }
     ds.read(m_tags);
+
+    if (!additional_timeStamps.empty())
+    {
+      SetTag("TimeStamps", additional_timeStamps);
+    }
   }
 
   void Event::Serialize(Serializer & ser) const {

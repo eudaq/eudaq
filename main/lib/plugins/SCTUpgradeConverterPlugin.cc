@@ -61,23 +61,7 @@ int numberOfEvents_inplane;
 
 namespace eudaq {
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
-#if USE_LCIO
-  bool Collection_createIfNotExist(lcio::LCCollectionVec** zsDataCollection, const lcio::LCEvent & lcioEvent, const char * name){
 
-    bool zsDataCollectionExists = false;
-    try
-    {
-      *zsDataCollection = static_cast<lcio::LCCollectionVec*> (lcioEvent.getCollection(name));
-      zsDataCollectionExists = true;
-    }
-    catch (lcio::DataNotAvailableException& e)
-    {
-      *zsDataCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERDATA);
-    }
-
-    return zsDataCollectionExists;
-  }
-#endif
   void puschDataInStandartPlane(const std::vector<unsigned char>& inputVector, int moduleNr, StandardPlane& plane){
     int y_pos = (moduleNr - 1) * 2 + 1;
 
@@ -333,7 +317,7 @@ namespace eudaq {
 
       // set the proper cell encoder
       auto  zsDataEncoder = CellIDEncoder<TrackerDataImpl>(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
-      zsDataEncoder["sensorID"] = plane.ID();
+      zsDataEncoder["sensorID"] = 8;
       zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
 
