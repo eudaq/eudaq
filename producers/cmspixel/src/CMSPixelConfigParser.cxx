@@ -27,31 +27,37 @@ std::vector<int32_t> CMSPixelProducer::split(const std::string &s, char delim) {
   return elems;
 }
 
-std::string CMSPixelProducer::prepareFilename(std::string filename, int16_t n) {
+std::string CMSPixelProducer::prepareFilename(std::string filename, std::string n) {
 
   size_t datpos = filename.find(".dat");
   if(datpos != std::string::npos) {
-    filename.insert(datpos,string("_C") + std::to_string(n));
+    filename.insert(datpos,string("_C") + n);
   }
-  else { filename += string("_C") + std::to_string(n) + string(".dat"); }
+  else { filename += string("_C") + n + string(".dat"); }
   return filename;
 }
 
-std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16_t i2c) {
+std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16_t i2c, bool tbm) {
+
+  std::string regname = (tbm ? "TBM" : "DAC");
 
   std::string filename;
-  // No I2C address indicator is given, assuming filename is correct "as is":
-  if(i2c < 0) { filename = m_config.Get("dacFile", ""); }
-  // I2C address is given, appending a "_Cx" with x = I2C:
-  else { filename = prepareFilename(m_config.Get("dacFile",""),i2c); }
+  // Read TBM register file, Core A:
+  if(tbm && i2c < 1) { filename = prepareFilename(m_config.Get("tbmFile",""),"0a"); }
+  // Read TBM register file, Core B:
+  else if(tbm && i2c >= 1) { filename = prepareFilename(m_config.Get("tbmFile",""),"0b"); }
+  // Read ROC DAC file, no I2C address indicator is given, assuming filename is correct "as is":
+  else if(i2c < 0) { filename = m_config.Get("dacFile", ""); }
+  // Read ROC DAC file, I2C address is given, appending a "_Cx" with x = I2C:
+  else { filename = prepareFilename(m_config.Get("dacFile",""),std::to_string(i2c)); }
 
   std::vector<std::pair<std::string,uint8_t> > dacs;
   std::ifstream file(filename);
   size_t overwritten_dacs = 0;
 
   if(!file.fail()) {
-    EUDAQ_INFO(string("Reading DAC settings from file \"") + filename + string("\"."));
-    std::cout << "Reading DAC settings from file \"" << filename << "\"." << std::endl;
+    EUDAQ_INFO(string("Reading ") + regname + string(" settings from file \"") + filename + string("\"."));
+    std::cout << "Reading " << regname << " settings from file \"" << filename << "\"." << std::endl;
 
     std::string line;
     while(std::getline(file, line)) {
@@ -61,7 +67,7 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
       linestream >> dummy >> name >> value;
 
       // Check if the first part read was really the register:
-      if(dummy == 0) {
+      if(name == "") {
 	// Rereading with only DAC name and value, no register:
 	std::stringstream newstream(line);
 	newstream >> name >> value;
@@ -95,10 +101,12 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
 	       + string(" DACs from file, ") + std::to_string(overwritten_dacs) + string(" overwritten by config."));
   }
   else {
-    std::cout << "Could not open DAC file \"" << string(filename) << "\"." << std::endl;
-    EUDAQ_ERROR(string("Could not open DAC file \"") + filename + string("\"."));
+    if(tbm) throw pxar::InvalidConfig("Could not open " + regname + " file.");
+
+    std::cout << "Could not open " << regname << " file \"" << string(filename) << "\"." << std::endl;
+    EUDAQ_ERROR(string("Could not open ") + regname + string(" file \"") + filename + string("\"."));
     EUDAQ_INFO(string("If DACs from configuration should be used, remove dacFile path."));
-    throw pxar::InvalidConfig("Could not open DAC file.");
+    throw pxar::InvalidConfig("Could not open " + regname + " file.");
   }
 
   return dacs;
@@ -142,7 +150,7 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::vector<pxa
   // No I2C address indicator is given, assuming filename is correct "as is":
   if(i2c < 0) { filename = m_config.Get("trimFile", ""); }
   // I2C address is given, appending a "_Cx" with x = I2C:
-  else { filename = prepareFilename(m_config.Get("trimFile",""),i2c); }
+  else { filename = prepareFilename(m_config.Get("trimFile",""),std::to_string(i2c)); }
 
   std::vector<pxar::pixelConfig> pixels;
   std::ifstream file(filename);

@@ -132,6 +132,20 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::vector<int32_t> i2c_addresses = split(config.Get("i2c","i2caddresses","-1"),' ');
     std::cout << "Found " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
 
+    // Set the type of the TBM and read registers if any:
+    m_tbmtype = config.Get("tbmtype","notbm");
+    try {
+      tbmDACs.push_back(GetConfDACs(0,true));
+      tbmDACs.push_back(GetConfDACs(1,true));
+    }
+    catch(pxar::InvalidConfig) {}
+
+    // Set the type of the ROC correctly:
+    m_roctype = config.Get("roctype","psi46digv21respin");
+
+    // Read the type of carrier PCB used ("desytb", "desytb-rot"):
+    m_pcbtype = config.Get("pcbtype","desytb");
+
     // Read the mask file if existent:
     std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits();
 
@@ -146,11 +160,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       else { rocI2C.push_back(static_cast<uint8_t>(0)); }
     }
 
-    // Set the type of the ROC correctly:
-    m_roctype = config.Get("roctype","psi46digv2");
-
-    // Read the type of carrier PCB used ("desytb", "desytb-rot"):
-    m_pcbtype = config.Get("pcbtype","desytb");
 
     // create api
     if(m_api != NULL) { delete m_api; }
@@ -171,7 +180,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Initialize the DUT as configured above:
-    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
+    m_api->initDUT(hubid,m_tbmtype,tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
     // Store the number of configured ROCs to be stored in a BORE tag:
     m_nplanes = rocDACs.size();
 
@@ -197,7 +206,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Switching to the selected trigger source and check if DTB returns TRUE:
-    std::string triggersrc = config.Get("trigger_source","pg_dir");
+    std::string triggersrc = config.Get("trigger_source","extern");
     if(!m_api->daqTriggerSource(triggersrc)) {
       throw InvalidConfig("Couldn't select trigger source " + string(triggersrc));
     }
@@ -282,8 +291,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     std::cout << "Start Run: " << m_run << std::endl;
 
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    // Set the ROC type for decoding:
+    // Set the TBM & ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
+    bore.SetTag("TBMTYPE", m_tbmtype);
 
     // Set the number of planes (ROCs):
     bore.SetTag("PLANES", m_nplanes);
