@@ -37,7 +37,8 @@ private:
   std::vector<int32_t> &split(const std::string &s, char delim, std::vector<int32_t> &elems);
   std::vector<int32_t> split(const std::string &s, char delim);
 
-  std::vector<pxar::pixelConfig> GetConfTrimming(int16_t i2c = -1);
+  std::vector<pxar::pixelConfig> GetConfMaskBits();
+  std::vector<pxar::pixelConfig> GetConfTrimming(std::vector<pxar::pixelConfig> maskbits, int16_t i2c = -1);
 
   std::string prepareFilename(std::string filename, int16_t n);
 

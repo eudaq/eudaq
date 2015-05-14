@@ -1,6 +1,7 @@
 #include "CMSPixelProducer.hh"
 
 #include "dictionaries.h"
+#include "helper.h"
 #include "eudaq/Logger.hh"
 
 #include <iostream>
@@ -103,7 +104,39 @@ std::vector<std::pair<std::string,uint8_t> > CMSPixelProducer::GetConfDACs(int16
   return dacs;
 }
 
-std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(int16_t i2c) {
+std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfMaskBits() {
+  
+  // Read in the mask bits:
+  std::vector<pxar::pixelConfig> maskbits;
+
+  std::string filename = m_config.Get("maskFile", "");
+  if(filename == "") {
+    EUDAQ_INFO(string("No mask file specified. Not masking anything.\n"));
+    return maskbits;
+  }
+
+  std::ifstream file(filename);
+
+  if(!file.fail()) {
+    std::string line;
+    while(std::getline(file, line)) {
+      std::stringstream   linestream(line);
+      std::string         dummy;
+      int                 roc, col, row;
+      linestream >> dummy >> roc >> col >> row;
+      maskbits.push_back(pxar::pixelConfig(roc,col,row,15,true,false));
+    }
+  }
+  else {
+    std::cout << "Couldn't read mask bits from \"" << string(filename) << "\". Not masking anything." << std::endl;
+    EUDAQ_INFO(string("Couldn't read mask bits from \"") + string(filename) + ("\". Not masking anything.\n"));
+  }
+
+  EUDAQ_USER(string("Found ") + std::to_string(maskbits.size()) + string(" masked pixels in ") + m_config.Name() + string(": \"") + string(filename) + string("\"\n"));
+  return maskbits;
+}
+
+std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(std::vector<pxar::pixelConfig> maskbits, int16_t i2c) {
 
   std::string filename;
   // No I2C address indicator is given, assuming filename is correct "as is":
@@ -114,28 +147,39 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfTrimming(int16_t i2c) {
   std::vector<pxar::pixelConfig> pixels;
   std::ifstream file(filename);
 
-  if(!file.fail()){
+  if(!file.fail()) {
     std::string line;
-    while(std::getline(file, line))
-      {
-	std::stringstream   linestream(line);
-	std::string         dummy;
-	int                 trim, col, row;
-	linestream >> trim >> dummy >> col >> row;
-	pixels.push_back(pxar::pixelConfig(col,row,trim));
-      }
+    while(std::getline(file, line)) {
+      std::stringstream   linestream(line);
+      std::string         dummy;
+      int                 trim, col, row;
+      linestream >> trim >> dummy >> col >> row;
+      pixels.push_back(pxar::pixelConfig(col,row,trim,false,false));
+    }
     m_trimmingFromConf = true;
   }
-  else{
+  else {
     std::cout << "Couldn't read trim parameters from \"" << string(filename) << "\". Setting all to 15." << std::endl;
     EUDAQ_WARN(string("Couldn't read trim parameters from \"") + string(filename) + ("\". Setting all to 15.\n"));
     for(int col = 0; col < 52; col++) {
       for(int row = 0; row < 80; row++) {
-	pixels.push_back(pxar::pixelConfig(col,row,15));
+	pixels.push_back(pxar::pixelConfig(col,row,15,false,false));
       }
     }
     m_trimmingFromConf = false;
   }
+
+  // Process the mask bit list:
+  for(std::vector<pxar::pixelConfig>::iterator px = pixels.begin(); px != pixels.end(); px++) {
+
+    // Check if this pixel is part of the maskbit vector:
+    std::vector<pxar::pixelConfig>::iterator maskpx = std::find_if(maskbits.begin(),
+								   maskbits.end(),
+								   findPixelXY(px->column(), px->row(), i2c < 0 ? 0 : i2c));
+    // Pixel is part of mask vector, set the mask bit:
+    if(maskpx != maskbits.end()) { px->setMask(true); }
+  }
+
   if(m_trimmingFromConf) {
     EUDAQ_USER(string("Trimming successfully read from ") + m_config.Name() + string(": \"") + string(filename) + string("\"\n"));
   }

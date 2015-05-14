@@ -132,10 +132,13 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     std::vector<int32_t> i2c_addresses = split(config.Get("i2c","i2caddresses","-1"),' ');
     std::cout << "Found " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
 
+    // Read the mask file if existent:
+    std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits();
+
     // Read DACs and Trim settings for all ROCs, one for each I2C address:
     for(int32_t i2c : i2c_addresses) {
-      // Read trimming from config:
-      rocPixels.push_back(GetConfTrimming(static_cast<int16_t>(i2c)));
+      // Read trim bits from config:
+      rocPixels.push_back(GetConfTrimming(maskbits,static_cast<int16_t>(i2c)));
       // Read the DAC file and update the vector with overwrite DAC settings from config:
       rocDACs.push_back(GetConfDACs(static_cast<int16_t>(i2c)));
       // Add the I2C address to the vector:
@@ -225,10 +228,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
-
-    // All on!
-    m_api->_dut->maskAllPixels(false);
-    m_api->_dut->testAllPixels(false);
 
     // test pixels
     if(testpulses) {
