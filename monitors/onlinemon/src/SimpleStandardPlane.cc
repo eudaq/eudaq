@@ -269,6 +269,10 @@ void SimpleStandardPlane::setPixelType(std::string name)
     is_UNKNOWN=false;
     AnalogPixelType=true;
   }
+  else if(name=="CLICpix" || name=="timepix3")
+  {
+    is_UNKNOWN=false;
+  }
   else
   {
     is_UNKNOWN=true;
