@@ -13,8 +13,8 @@ lib/*
 # ignore log files
 *.log
 
-# ignore conf files
-conf/*.conf
+# ignore everything in conf:
+conf/*
 
 # ignore ROOT files
 *.root
