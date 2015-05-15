@@ -46,7 +46,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_trigger_is_pg(false),
     m_fout(0),
     m_foutName(""),
-    m_perFull(0),
     triggering(false),
     m_roctype(""),
     m_pcbtype(""),
@@ -56,7 +55,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_event_type(""),
     m_alldacs("")
 {
-  m_t = new eudaq::Timer;
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
     m_event_type = EVENT_TYPE_REF;
@@ -450,12 +448,6 @@ void CMSPixelProducer::ReadoutLoop() {
       // Acquire lock for pxarCore object access:
       std::lock_guard<std::mutex> lck(m_mutex);
 
-      if(m_t->Seconds() > 60){
-	m_api->daqStatus(m_perFull);
-	m_t->Restart();
-	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
-      }
-
       // Send periodic ROC Reset
       if(m_roc_resetperiod > 0 && m_reset_timer->mSeconds() > m_roc_resetperiod) {
 	if(!m_api->daqSingleSignal("resetroc")) { EUDAQ_ERROR(string("Unable to send ROC reset signal!\n")); }
@@ -471,13 +463,17 @@ void CMSPixelProducer::ReadoutLoop() {
 
 	SendEvent(ev);
 	m_ev++;
-	if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
+	if(daqEvent.data.size() > 5) { m_ev_filled++; m_ev_runningavg_filled++; }
 
+	// Print every 1k evt:
 	if(m_ev%1000 == 0) {
+	  uint8_t filllevel = 0;
+	  m_api->daqStatus(filllevel);
 	  std::cout << "CMSPixel " << m_detector 
 		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
 	  std::cout << "\t Total average:  \t" << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
+	  std::cout << "\t RAM fill level: \t" << static_cast<int>(filllevel) << "%" << std::endl;
 	  m_ev_runningavg_filled = 0;
 	}
       }

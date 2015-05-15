@@ -56,8 +56,7 @@ private:
   pxar::pxarCore *m_api;
 
   int m_pattern_delay;
-  uint8_t m_perFull;
   std::ofstream m_fout;
-  eudaq::Timer* m_t, *m_reset_timer;
+  eudaq::Timer *m_reset_timer;
 };
 #endif /*CMSPIXELPRODUCER_HH*/
