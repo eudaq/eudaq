@@ -50,7 +50,9 @@ namespace eudaq {
       if (m_roctype == 0x0)
 	EUDAQ_ERROR("Roctype" + to_string((int) m_roctype) + " not propagated correctly to CMSPixelConverterPlugin");
 
-      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
+      std::cout<<"CMSPixel Converter initialized with detector " << m_detector << ", Event Type " << m_event_type 
+	       << ", TBM type " << tbmtype << " (" << static_cast<int>(m_tbmtype) << ")"
+	       << ", ROC type " << roctype << " (" << static_cast<int>(m_roctype) << ")" << std::endl;
     }
 
     bool GetStandardSubEvent(StandardEvent & out, const Event & in) const {
