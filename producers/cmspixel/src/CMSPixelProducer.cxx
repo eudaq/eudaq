@@ -211,6 +211,13 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       throw InvalidConfig("Couldn't select trigger source " + string(triggersrc));
     }
     else {
+      // Update the TBM setting according to the selected trigger source.
+      // Switches to TBM_EMU if we selected a trigger source using the TBM EMU.
+      TriggerDictionary* trgDict;
+      if(m_tbmtype == "notbm" && trgDict->getInstance()->getEmulationState(triggersrc)) {
+	m_tbmtype = "tbmemulator";
+      }
+
       if(triggersrc == "pg" || triggersrc == "pg_dir" || triggersrc == "patterngenerator") {
 	m_trigger_is_pg = true;
       }
