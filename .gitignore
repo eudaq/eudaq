@@ -14,7 +14,7 @@ lib/*
 *.log
 
 # ignore conf files
-conf/*.conf
+#conf/*.conf
 
 # ignore ROOT files
 *.root
