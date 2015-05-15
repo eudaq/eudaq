@@ -463,7 +463,8 @@ void CMSPixelProducer::ReadoutLoop() {
 
 	SendEvent(ev);
 	m_ev++;
-	if(daqEvent.data.size() > 5) { m_ev_filled++; m_ev_runningavg_filled++; }
+	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
+	if(daqEvent.data.size() > (4 + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
 
 	// Print every 1k evt:
 	if(m_ev%1000 == 0) {
