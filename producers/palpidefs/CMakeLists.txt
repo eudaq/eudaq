@@ -1,10 +1,6 @@
 set(name "PALPIDEFSProducer.exe")
 set(sourcefiles src/PALPIDEFSProducer.cxx)
-set(ext_libraries "palpidefs.so" "tinyxml.so")
-set(ext_lib_paths "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}")
-set(ext_inc_paths "include" "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}")
 # config files to be installed
-#set(ConfigFiles ni_autotrig_explorer_pedestalmeas.conf ni_coins_explorer_wpedestal.conf)
 
 if (NOT CMAKE_PALPIDEFS_DRIVER_INCLUDE)
   message(FATAL_ERROR "Path to pALPIDEfs driver not set - you need to set CMAKE_PALPIDEFS_DRIVER_INCLUDE")
