@@ -4,7 +4,7 @@ set(ext_libraries "" )
 set(ext_lib_paths "" )
 set(ext_inc_paths "include" )
 # config files to be installed
-#set(ConfigFiles ni_autotrig_explorer_pedestalmeas.conf ni_coins_explorer_wpedestal.conf)
+set(ConfigFiles palpidess.conf palpideteam.conf)
 
 ADD_DEFINITIONS()
 LINK_DIRECTORIES( ${ext_lib_paths} )
