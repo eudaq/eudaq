@@ -59,6 +59,8 @@ namespace eudaq {
   //Detector/Eventtype ID
   static const char* EVENT_TYPE = "pALPIDEfsRAW";
 
+  enum TDataType        {DT_IDLE, DT_NOP, DT_CHIPHEADER, DT_CHIPTRAILER, DT_REGHEADER, DT_DATASHORT, DT_DATALONG, DT_BUSYON, DT_BUSYOFF, DT_UNKNOWN};
+
   //Plugin inheritance
   class PALPIDEFSConverterPlugin : public DataConverterPlugin {
 
@@ -227,6 +229,360 @@ namespace eudaq {
     }
 
     ///////////////////////////////////////
+    // EVENT HEADER DECODER
+    ///////////////////////////////////////
+
+    bool DecodeLayerHeader (const Event           &ev, 
+                            vector<unsigned char> data, 
+                            unsigned int          &pos, 
+                            int                   &current_layer,           
+                            bool                  *layers_found,
+			    uint64_t              *trigger_ids,
+                            uint64_t              *timestamps) const 
+    {
+      if (data[pos++] != 0xff) {
+        cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
+        return false;
+      }
+      current_layer = data[pos++];
+      if (current_layer == 0xff) {
+        // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
+        current_layer = -1;
+        return true;
+      }
+      if (current_layer >= m_nLayers) {
+         cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << endl;
+         return false;
+      }
+      layers_found[current_layer] = true;
+#ifdef MYDEBUG
+      cout << "Now in layer " << current_layer << endl;
+#endif
+      // length
+      if (m_DataVersion >= 2) {
+        if (pos+sizeof(uint16_t) <= data.size()) {
+          uint16_t length = 0;
+          for (int i=0; i<2; i++)
+            ((unsigned char*) &length)[i] = data[pos++];
+#ifdef MYDEBUG
+          cout << "Layer " << current_layer << " has data of length " << length << endl;
+#endif
+          if (length == 0) {
+            // no data for this layer
+            current_layer = -1;
+            return true;
+	  }
+	}
+      }
+
+      // extract trigger id and timestamp
+      if (pos+2*sizeof(uint64_t) <= data.size()) {
+        uint64_t trigger_id = 0;
+        for (int i=0; i<8; i++)
+          ((unsigned char*) &trigger_id)[i] = data[pos++];
+        uint64_t timestamp = 0;
+        for (int i=0; i<8; i++)
+          ((unsigned char*) &timestamp)[i] = data[pos++];
+        trigger_ids[current_layer] = trigger_id;
+        timestamps[current_layer] = timestamp;
+#ifdef MYDEBUG
+        cout << "Layer " << current_layer << " Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
+#endif
+      }
+
+      return true;
+    }
+
+    ///////////////////////////////////////
+    // CHIP DATA DECODER
+    ///////////////////////////////////////
+
+    bool DecodeChipData(const Event           &ev, 
+                        StandardEvent         &sev,
+                        vector<unsigned char> data, 
+                        unsigned int          &pos, 
+                        StandardPlane**       planes,
+			int                   &current_layer, 
+                        int                   &current_rgn, 
+                        int                   &last_rgn, 
+                        int                   &last_pixeladdr, 
+                        int                   &last_doublecolumnaddr ) const 
+    {
+      return DecodeAlpide1Data(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr);
+    }
+
+
+
+    bool DecodeAlpide1Data(const Event           &ev, 
+                           StandardEvent         &sev,
+                           vector<unsigned char> data, 
+                           unsigned int          &pos, 
+                           StandardPlane**       planes,
+			   int                   &current_layer, 
+                           int                   &current_rgn, 
+                           int                   &last_rgn, 
+                           int                   &last_pixeladdr, 
+                           int                   &last_doublecolumnaddr ) const 
+    {
+              int length = data[pos++];
+              int rgn = data[pos++] >> 3;
+              if (rgn != current_rgn+1) {
+                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
+                return false;
+              }
+
+              if (pos+length*2 > data.size()) {
+                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
+                return false;
+              }
+#ifdef MYDEBUG
+              cout << "Now in region " << rgn << ". Going to read " << length << " pixels. " << endl;
+#endif
+
+              for (int i=0; i<length; i++) {
+                unsigned short dataword         = data[pos++];
+                dataword                       |= (data[pos++] << 8);
+                unsigned short pixeladdr        = dataword & 0x3ff;
+                unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
+                unsigned short clustersize      = (dataword >> 14) + 1;
+
+                // consistency check
+                if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr && pixeladdr <= last_pixeladdr) {
+                  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". ";
+                  if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr && pixeladdr == last_pixeladdr)
+                    cout << "Pixel duplicated. ";
+                  else
+                  {
+                    cout << "Strict ordering violated. ";
+                    sev.SetFlags(Event::FLAG_BROKEN);
+                  }
+                  cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
+                }
+                last_rgn              = rgn;
+                last_pixeladdr        = pixeladdr;
+                last_doublecolumnaddr = doublecolumnaddr;
+
+                for (int j=0; j<clustersize; j++) {
+                  unsigned short current_pixel = pixeladdr + j;
+                  unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
+                  if (current_pixel & 0x2)
+                    x--;
+                  unsigned int y = (current_pixel >> 2) * 2 + 1;
+                  if (current_pixel & 0x1)
+                    y--;
+
+                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
+#ifdef MYDEBUG
+                  cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
+#endif
+                }   // for (int j = 0; j < clustersize; j++)
+              }     // for (int i = 0; i < length; i++)
+              current_rgn = rgn;
+
+	      return true;
+    }
+
+
+    // Warning: the data type is not unambiguous if called with byte of a dataword, 
+    // which is not the most significant byte (in case of DATA SHORT or DATA LONG)
+    TDataType CheckAlpide2DataType (unsigned char DataWord) const
+    {
+      if      (DataWord == 0xf0)          return DT_IDLE;
+      else if (DataWord == 0xff)          return DT_NOP;
+      else if (DataWord == 0xf1)          return DT_BUSYON;
+      else if (DataWord == 0xf2)          return DT_BUSYOFF;
+      else if ((DataWord & 0xf0) == 0xa0) return DT_CHIPHEADER;
+      else if ((DataWord & 0xf0) == 0xb0) return DT_CHIPTRAILER;
+      else if ((DataWord & 0xe0) == 0xc0) return DT_REGHEADER;
+      else if ((DataWord & 0xc0) == 0)    return DT_DATASHORT;
+      else if ((DataWord & 0xc0) == 0x40) return DT_DATALONG;
+      else return DT_UNKNOWN;
+    }
+
+
+    bool DecodeAlpide2RegionHeader (const char Data, int &Region) const 
+    {
+      int NewRegion = Data & 0x1f;
+      if (NewRegion != Region + 1) {
+        std::cout << "Corrupt region header, expected region " << Region +1 << ", found " << NewRegion << std::endl;
+        return false;
+      }
+      else {
+        Region = NewRegion;
+        return true;
+      }
+    }
+
+
+    bool DecodeAlpide2ChipHeader (const char Data, int ChipId) const 
+    {
+      if (CheckAlpide2DataType(Data) != DT_CHIPHEADER) {
+        std::cout << "Error, data word 0x" << std::hex << (int) Data << std::dec << " is no chip header" << std::endl;
+        return false;
+      }
+      int FoundChipId = Data & 0xf;
+        if (FoundChipId != (ChipId & 0xf)) {
+        std::cout << "Error, found wrong chip ID " << FoundChipId << " in header." << std::endl;
+        return false;
+      }
+      return true;
+    }
+
+
+    bool DecodeAlpide2DataWord (const Event &ev, vector<unsigned char> Data, int pos, int current_layer, int Region, StandardPlane**planes, bool Long, int &last_rgn, int &last_pixeladdr, int &last_doublecolumnaddr) const
+    {
+        int     ClusterSize;
+        int     DoubleCol;
+        int     Pixel;
+
+        int16_t data_field = (((int16_t) Data[pos]) << 8) + Data[pos + 1];
+
+        DoubleCol   = (data_field & 0x3c00) >> 10;
+        Pixel       = (data_field & 0x03ff);
+    
+
+        // consistency check
+        if (Region <= last_rgn && DoubleCol <= last_doublecolumnaddr && Pixel <= last_pixeladdr) {
+          cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". ";
+          if (Region == last_rgn && DoubleCol == last_doublecolumnaddr && Pixel == last_pixeladdr)
+             cout << "Pixel duplicated. ";
+          else
+          {
+             cout << "Strict ordering violated. ";
+             // sev.SetFlags(Event::FLAG_BROKEN);  -> return false, set flag outside...
+          }
+          cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << Region << "/" << DoubleCol << "/" << Pixel << endl;
+        }
+        last_rgn              = Region;
+        last_pixeladdr        = Pixel;
+        last_doublecolumnaddr = DoubleCol;
+
+
+        if (Long) {
+          ClusterSize = (Data[pos + 2] & 0xc0) >> 6;
+        }
+        else {
+          ClusterSize = 0;
+        }
+    
+        for (int i = 0; i <= ClusterSize; i ++) {
+          unsigned short current_pixel = Pixel + i;
+          unsigned int   x             = Region * 32 + DoubleCol * 2 + 1;
+          unsigned int   y             = (current_pixel >> 2) * 2 + 1;
+          if (current_pixel & 0x2)
+            x--;
+          if (current_pixel & 0x1)
+            y--;
+
+          planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
+#ifdef MYDEBUG
+          cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
+#endif
+        }
+        return true;
+    }
+
+
+    bool DecodeAlpide2ChipTrailer (const char Data, int ChipId) 
+    {
+      if (CheckAlpide2DataType(Data) != DT_CHIPTRAILER) {
+        std::cout << "Error, data word 0x" << std::hex << (int)Data << std::dec << " is no chip trailer" << std::endl;
+        return false;
+      }
+      int FoundChipId = Data & 0xf;
+      if (FoundChipId != ChipId) {
+        std::cout << "Error, found wrong chip ID " << FoundChipId << " in trailer." << std::endl;
+        return false;
+      }
+      return true;
+    }
+
+
+    bool DecodeAlpide2Data(const Event           &ev, 
+                           StandardEvent         &sev,
+                           vector<unsigned char> data, 
+                           unsigned int          &byte, 
+                           StandardPlane**       planes,
+			   int                   &current_layer,  
+                           int                   &last_rgn, 
+                           int                   &last_pixeladdr, 
+                           int                   &last_doublecolumnaddr) const 
+    {
+      int       region  = -1;
+      int       chip    = 0;    // to be fixed!
+      bool      started = false; // event has started, i.e. chip header has been found
+      bool      ended   = false; // trailer has been found
+      TDataType type;
+  
+      while ((byte+1 < data.size()) && (!ended)) {
+        type = CheckAlpide2DataType (data[byte]);
+        switch (type) {
+        case DT_IDLE:
+          byte +=1;
+          break;
+        case DT_NOP:
+          byte += 1;
+          break;
+        case DT_BUSYON:
+          byte += 1;
+          break;
+        case DT_BUSYOFF:
+          byte += 1;
+          break;
+        case DT_CHIPHEADER:
+          started = true;
+          if (!DecodeAlpide2ChipHeader (data[byte], chip)) return false;
+          byte += 1;
+          break;
+        case DT_CHIPTRAILER:
+          if (!started) {
+	    std::cout << "Error, chip trailer found before chip header" << std::endl;
+            return false;
+          }
+          if (region < 31) {
+	    std::cout << "Error, chip trailer found before last region, current region = " << region << std::endl;
+            return false;
+          }
+          started = false;
+          ended   = true;
+          byte += 1;
+          break;
+        case DT_REGHEADER:
+          if (!started) {
+	    std::cout << "Error, region header found before chip header or after chip trailer" << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide2RegionHeader (data[byte], region)) return false;
+          byte +=1;
+          break;
+        case DT_DATASHORT:
+          if (!started) {
+	    std::cout << "Error, hit data found before chip header or after chip trailer" << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, region, planes, false, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
+          byte += 2;
+          break;
+        case DT_DATALONG:
+          if (!started) {
+	    std::cout << "Error, hit data found before chip header or after chip trailer" << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, region, planes, true, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
+          byte += 3;
+          break;
+
+        }
+      }
+      if (started) {
+        std::cout << "Warning, event not finished at end of data" << std::endl;
+      }
+
+      return true;
+    }
+
+
+    ///////////////////////////////////////
     //STANDARD SUBEVENT
     ///////////////////////////////////////
 
@@ -269,7 +625,7 @@ namespace eudaq {
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
 
-      if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {
+      if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) {  // is status event
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
         for (int id=0 ; id<m_nLayers ; id++) {
@@ -283,7 +639,7 @@ namespace eudaq {
         }
 #endif
         sev.SetFlags(Event::FLAG_STATUS);
-      } else {
+      } else {                                          // is real event
         //Conversion
         if (rev->NumBlocks() == 1) {
           vector<unsigned char> data = rev->GetBlock(0);
@@ -301,18 +657,18 @@ namespace eudaq {
           //  payload from chip
           //##############################################
 
-          unsigned int pos = 0;
-          int current_layer = -1;
-          int current_rgn = -1;
+          unsigned int pos           = 0;
+          int          current_layer = -1;
+          int          current_rgn   = -1;
 
           const int maxLayers = 100;
-          bool layers_found[maxLayers];
-          uint64_t trigger_ids[maxLayers];
-          uint64_t timestamps[maxLayers];
+          bool     layers_found[maxLayers];
+          uint64_t trigger_ids [maxLayers];
+          uint64_t timestamps  [maxLayers];
           for (int i=0; i<maxLayers; i++) {
             layers_found[i] = false;
-            trigger_ids[i] = (uint64_t) ULONG_MAX;
-            timestamps[i] = (uint64_t) ULONG_MAX;
+            trigger_ids[i]  = (uint64_t) ULONG_MAX;
+            timestamps[i]   = (uint64_t) ULONG_MAX;
           }
 
           // RAW dump
@@ -323,127 +679,44 @@ namespace eudaq {
           printf("\n");
 #endif
 
-          int last_rgn = -1;
-          int last_pixeladdr = -1;
+          int last_rgn              = -1;
+          int last_pixeladdr        = -1;
           int last_doublecolumnaddr = -1;
 
           while (pos+1 < data.size()) { // always need 2 bytes left
 #ifdef MYDEBUG
             printf("%u %u %x %x\n", pos, (unsigned int) data.size(), data[pos], data[pos+1]);
 #endif
-            // 	printf("%x %x ", data[pos], data[pos+1]);
+
+            // Logic of the following lines: 
+            // The loop runs over the complete event data. As long as current_layer is -1 it expects a header
+            // Decoding of the header sets current_layer, such that in the next loop it should enter DecodeChipData
+            // For pAlpide1 DecodeChipData decodes 1 region, then returns to this loop until region ==31
+            // For pAlpide2 this will not (reasonably) work, since the region header does not contain the length anymore
+            // -> Decode whole chip at once and set region to 31...
+
             if (current_layer == -1) {
-              if (data[pos++] != 0xff) {
-                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Next byte not 0xff but " << (unsigned int) data[pos-1] << endl;
+
+              if (!DecodeLayerHeader(ev, data, pos, current_layer, layers_found, trigger_ids, timestamps)) {
+                sev.SetFlags(Event::FLAG_BROKEN);
                 break;
-              }
-              current_layer = data[pos++];
-              if (current_layer == 0xff) {
-                // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
-                current_layer = -1;
-                continue;
-              }
-              if (current_layer >= m_nLayers) {
-                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << endl;
-                break;
-              }
-              layers_found[current_layer] = true;
-#ifdef MYDEBUG
-              cout << "Now in layer " << current_layer << endl;
-#endif
-              current_rgn = -1;
-              last_rgn = -1;
-              last_pixeladdr = -1;
+	      }              
+              current_rgn           = -1;
+              last_rgn              = -1;
+              last_pixeladdr        = -1;
               last_doublecolumnaddr = -1;
 
-              // length
-              if (m_DataVersion >= 2) {
-                if (pos+sizeof(uint16_t) <= data.size()) {
-                  uint16_t length = 0;
-                  for (int i=0; i<2; i++)
-                    ((unsigned char*) &length)[i] = data[pos++];
-#ifdef MYDEBUG
-                  cout << "Layer " << current_layer << " has data of length " << length << endl;
-#endif
-                  if (length == 0) {
-                    // no data for this layer
-                    current_layer = -1;
-                    continue;
-                  }
-                }
-              }
-
-              // extract trigger id and timestamp
-              if (pos+2*sizeof(uint64_t) <= data.size()) {
-                uint64_t trigger_id = 0;
-                for (int i=0; i<8; i++)
-                  ((unsigned char*) &trigger_id)[i] = data[pos++];
-                uint64_t timestamp = 0;
-                for (int i=0; i<8; i++)
-                  ((unsigned char*) &timestamp)[i] = data[pos++];
-                trigger_ids[current_layer] = trigger_id;
-                timestamps[current_layer] = timestamp;
-#ifdef MYDEBUG
-                cout << "Layer " << current_layer << " Trigger ID: " << trigger_id << " Timestamp: " << timestamp << endl;
-#endif
-              }
             } else {
-              int length = data[pos++];
-              int rgn = data[pos++] >> 3;
-              if (rgn != current_rgn+1) {
-                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Wrong region order. Previous " << current_rgn << " Next " << rgn << endl;
+              if (!DecodeChipData(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr)) {
+                sev.SetFlags(Event::FLAG_BROKEN);
                 break;
-              }
-              if (pos+length*2 > data.size()) {
-                cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not enough bytes left. Expecting " << length*2 << " but pos = " << pos << " and size = " << data.size() << endl;
-                break;
-              }
-#ifdef MYDEBUG
-              cout << "Now in region " << rgn << ". Going to read " << length << " pixels. " << endl;
-#endif
-              for (int i=0; i<length; i++) {
-                unsigned short dataword = data[pos++];
-                dataword |= (data[pos++] << 8);
-                unsigned short pixeladdr = dataword & 0x3ff;
-                unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
-                unsigned short clustersize = (dataword >> 14) + 1;
-
-                // consistency check
-                if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr && pixeladdr <= last_pixeladdr) {
-                  cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << current_layer << ". ";
-                  if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr && pixeladdr == last_pixeladdr)
-                    cout << "Pixel duplicated. ";
-                  else
-                  {
-                    cout << "Strict ordering violated. ";
-                    sev.SetFlags(Event::FLAG_BROKEN);
-                  }
-                  cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr << "/" << last_pixeladdr << " current: " << rgn << "/" << doublecolumnaddr << "/" << pixeladdr << endl;
-                }
-                last_rgn = rgn;
-                last_pixeladdr = pixeladdr;
-                last_doublecolumnaddr = doublecolumnaddr;
-
-                for (int j=0; j<clustersize; j++) {
-                  unsigned short current_pixel = pixeladdr + j;
-                  unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
-                  if (current_pixel & 0x2)
-                    x--;
-                  unsigned int y = (current_pixel >> 2) * 2 + 1;
-                  if (current_pixel & 0x1)
-                    y--;
-
-                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int) 0);
-#ifdef MYDEBUG
-                  cout << "Added pixel to layer " << current_layer << " with x = " << x << " and y = " << y << endl;
-#endif
-                }
-              }
-              current_rgn = rgn;
-              if (rgn == 31)
+	      }
+              if (current_rgn == 31)
                 current_layer = -1;
-            }
-          }
+            }     // else (i.e. current layer != -1)
+          }       // while (pos+1 < data.size())
+
+
           if (current_layer != -1) {
             cout << "ERROR: Event " << ev.GetEventNumber() << " data stream too short, stopped in region " << current_rgn << endl;
             sev.SetFlags(Event::FLAG_BROKEN);
