@@ -97,6 +97,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   sig_delays.push_back(std::make_pair("deser160phase",config.Get("deser160phase",4)));
   sig_delays.push_back(std::make_pair("level",config.Get("level",15)));
   sig_delays.push_back(std::make_pair("triggerlatency",config.Get("triggerlatency",86)));
+  sig_delays.push_back(std::make_pair("tindelay",config.Get("tindelay",13)));
+  sig_delays.push_back(std::make_pair("toutdelay",config.Get("toutdelay",8)));
   //sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
 
   //Power settings:
@@ -192,9 +194,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(m_api->getTBia()*1000 < 15) EUDAQ_ERROR(string("Analog current too low: " + std::to_string(1000*m_api->getTBia()) + "mA"));
     else EUDAQ_INFO(string("Analog current: " + std::to_string(1000*m_api->getTBia()) + "mA"));
 
-    // Send a single RESET to the ROC to initialize its status:
-    if(!m_api->daqSingleSignal("resetroc")) { throw InvalidConfig("Unable to send ROC reset signal!"); }
-
     // Switching to external clock if requested and check if DTB returns TRUE status:
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
@@ -221,6 +220,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
       }
       EUDAQ_INFO(string("Trigger source selected: " + triggersrc));
     }
+
+    // Send a single RESET to the ROC to initialize its status:
+    if(!m_api->daqSingleSignal("resetroc")) { throw InvalidConfig("Unable to send ROC reset signal!"); }
+    if(m_tbmtype != "notbm" && !m_api->daqSingleSignal("resettbm")) { throw InvalidConfig("Unable to send TBM reset signal!"); }
 
     // Output the configured signal to the probes:
     std::string signal_d1 = config.Get("signalprobe_d1","off");
@@ -461,6 +464,11 @@ void CMSPixelProducer::ReadoutLoop() {
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
+	// Compare event ID with TBM trigger counter:
+	if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
+	  EUDAQ_ERROR("Unexpected trigger number: " + std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " + std::to_string(m_ev) + ")");
+	}
+	
 	SendEvent(ev);
 	m_ev++;
 	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
