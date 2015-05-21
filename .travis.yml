@@ -6,6 +6,7 @@ compiler:
 branches:
   only:
     - v1.4-dev
+    - v1.5-dev
 
 os:
   - linux
