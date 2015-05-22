@@ -147,14 +147,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   }
 
   if ( reader->Event().IsBORE() ) {
-//    eudaq::PluginManager::Initialize(  reader->Event() );
-    
-    const eudaq::DetectorEvent & ev = reader->Event();
-    string config = ev.GetTag<std::string>("CONFIG","Config not found");
-    size_t dutPosPlace = config.find("DUTposition = ");
-    string dutPosStr = config.substr(dutPosPlace+14,3);
-    cout << "Place of telescope from config file:\t" << dutPosStr << endl;
-    eudaq::PluginManager::Initialize( ev );
+    eudaq::PluginManager::Initialize(  reader->Event() );
     // this is the case in which the eudaq event is a Begin Of Run
     // Event. This is translating into a RunHeader in the case of
     // LCIO
