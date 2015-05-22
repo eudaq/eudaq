@@ -167,8 +167,8 @@ private:
   status_t m_status;
   int m_prevtrigs;
   double m_prevtime, m_runstarttime;
-  long long m_filebytes;
-  long long m_events;
+  int64_t m_filebytes;
+  int64_t m_events;
   bool dostatus;
   bool m_producer_pALPIDEfs_not_ok;
   bool m_producer_pALPIDEss_not_ok;
