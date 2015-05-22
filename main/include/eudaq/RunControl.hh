@@ -61,7 +61,7 @@ namespace eudaq {
       std::map<size_t,std::string> m_dataaddr; // map of data collector addresses
       int64_t m_runsizelimit;
       int64_t m_runeventlimit;
-      bool m_nextconfigonfilelimit;
+      bool m_nextconfigonrunchange;
       bool m_stopping, m_busy, m_producerbusy;
   };
 

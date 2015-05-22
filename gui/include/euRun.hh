@@ -120,7 +120,7 @@ private slots:
 	eudaq::mSleep(1000);
 	StopRun(false);
 	eudaq::mSleep(20000);
-	if (m_nextconfigonfilelimit) {
+	if (m_nextconfigonrunchange) {
 	  if (cmbConfig->currentIndex()+1 < cmbConfig->count()) {
 	    EUDAQ_INFO("Moving to next config file and starting a new run");
 	    cmbConfig->setCurrentIndex(cmbConfig->currentIndex()+1);
