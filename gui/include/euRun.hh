@@ -73,9 +73,13 @@ private slots:
 
   void SetStateSlot(int state) {
     btnConfig->setEnabled(state != ST_RUNNING);
+    btnTerminate->setEnabled(state != ST_RUNNING);
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
   }
+
+  void on_btnTerminate_clicked() { close(); }
+
   void on_btnConfig_clicked() {
     std::string settings = cmbConfig->currentText().toStdString();
     Configure(settings, txtGeoID->text().toInt());
