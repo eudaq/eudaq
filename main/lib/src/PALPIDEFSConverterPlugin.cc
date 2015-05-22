@@ -308,7 +308,13 @@ namespace eudaq {
                         int                   &last_pixeladdr, 
                         int                   &last_doublecolumnaddr ) const 
     {
-      return DecodeAlpide1Data(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr);
+      if (m_chip_type[current_layer] == 1) {
+        return DecodeAlpide1Data(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr);
+      }
+      else if (m_chip_type[current_layer] == 2) {
+        return DecodeAlpide2Data(ev, sev, data, pos, planes, current_layer, last_rgn, last_pixeladdr, last_doublecolumnaddr);
+      }
+      else return false;
     }
 
 
