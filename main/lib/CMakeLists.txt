@@ -25,7 +25,7 @@ if (USE_TINYXML OR BUILD_palpidefs)
      endif (TINYXML_FOUND)
 endif (USE_TINYXML OR BUILD_palpidefs)
 
-list(REMOVE_ITEM plugins_sources plugins/GenericConverterPlugin.cc library_sources)
+list(REMOVE_ITEM plugins_sources plugins/GenericConverterPlugin.cc)
 
 FIND_PACKAGE(PXAR)
 IF(PXARCORE_FOUND)
