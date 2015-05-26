@@ -163,9 +163,9 @@ namespace eudaq {
           if (ev.GetEventNumber() % 1000 == 0) {
             // dhaas: added if-statement to filter out TLU event number 0, in case of bad clocking out
             if (m_buffer[i].events.front()->GetEventNumber() != 0)
-              EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()) + " " + to_string(m_buffer[i].events.front()->GetEventNumber()) + " " + to_string(m_eventnumber));
+              EUDAQ_WARN("Event number mismatch > 1 in event " + to_string(ev.GetEventNumber()) + " " + to_string(m_buffer[i].events.front()->GetEventNumber()) + " " + to_string(m_eventnumber));
             if (m_buffer[i].events.front()->GetEventNumber() == 0)
-              EUDAQ_WARN("Event number mismatch > 2 in event " + to_string(ev.GetEventNumber()));
+              EUDAQ_WARN("Event number mismatch > 1 in event " + to_string(ev.GetEventNumber()));
           }
         }
         ev.AddEvent(m_buffer[i].events.front());
