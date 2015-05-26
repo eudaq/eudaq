@@ -5,13 +5,13 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
+#include "config.h" // Version symbols
 
 #include "api.h"
-#include "ConfigParameters.hh"
-#include "PixTestParameters.hh"
 #include "constants.h"
 #include "dictionaries.h"
 #include "log.h"
+#include "helper.h"
 
 #include "CMSPixelProducer.hh"
 
@@ -35,6 +35,8 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_ev_filled(0),
     m_ev_runningavg_filled(0),
     m_tlu_waiting_time(4000),
+    m_roc_resetperiod(0),
+    m_nplanes(1),
     m_terminated(false),
     m_running(false),
     m_api(NULL),
@@ -44,7 +46,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_trigger_is_pg(false),
     m_fout(0),
     m_foutName(""),
-    m_perFull(0),
     triggering(false),
     m_roctype(""),
     m_pcbtype(""),
@@ -54,7 +55,6 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_event_type(""),
     m_alldacs("")
 {
-  m_t = new eudaq::Timer;
   if(m_producerName.find("REF") != std::string::npos) {
     m_detector = "REF";
     m_event_type = EVENT_TYPE_REF;
@@ -81,6 +81,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   std::vector<std::vector<std::pair<std::string,uint8_t> > > tbmDACs;
   std::vector<std::vector<std::pair<std::string,uint8_t> > > rocDACs;
   std::vector<std::vector<pxar::pixelConfig> > rocPixels;
+  std::vector<uint8_t> rocI2C;
 
   uint8_t hubid = config.Get("hubid", 31);
 
@@ -96,6 +97,8 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   sig_delays.push_back(std::make_pair("deser160phase",config.Get("deser160phase",4)));
   sig_delays.push_back(std::make_pair("level",config.Get("level",15)));
   sig_delays.push_back(std::make_pair("triggerlatency",config.Get("triggerlatency",86)));
+  sig_delays.push_back(std::make_pair("tindelay",config.Get("tindelay",13)));
+  sig_delays.push_back(std::make_pair("toutdelay",config.Get("toutdelay",8)));
   //sig_delays.push_back(std::make_pair("triggertimeout",config.Get("triggertimeout",65000)));
 
   //Power settings:
@@ -103,6 +106,10 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   power_settings.push_back( std::make_pair("vd",config.Get("vd",2.5)) );
   power_settings.push_back( std::make_pair("ia",config.Get("ia",1.10)) );
   power_settings.push_back( std::make_pair("id",config.Get("id",1.10)) );
+
+  // Periodic ROC resets:
+  m_roc_resetperiod = config.Get("rocresetperiod", 0);
+  if(m_roc_resetperiod > 0) { EUDAQ_USER("Sending periodic ROC resets every " + eudaq::to_string(m_roc_resetperiod) + "ms\n"); }
 
   // Pattern Generator:
   bool testpulses = config.Get("testpulses", false);
@@ -121,20 +128,38 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
   }
 
   try {
-    // Read DACs and trimming from config
-    std::string trimFile;
-    if(config.Get("trimFile", "") != "") { trimFile = config.Get("trimFile", ""); }
-    else { trimFile = config.Get("trimDir", "") + string("/trimParameters.dat"); }
-    rocPixels.push_back(GetConfTrimming(trimFile));
+    // Check for multiple ROCs using the I2C parameter:
+    std::vector<int32_t> i2c_addresses = split(config.Get("i2c","i2caddresses","-1"),' ');
+    std::cout << "Found " << i2c_addresses.size() << " I2C addresses: " << pxar::listVector(i2c_addresses) << std::endl;
 
-    // Read the DAC file, but update the vector with single DAC settings provided in the config:
-    rocDACs.push_back(GetConfDACs(config.Get("dacFile", "")));
+    // Set the type of the TBM and read registers if any:
+    m_tbmtype = config.Get("tbmtype","notbm");
+    try {
+      tbmDACs.push_back(GetConfDACs(0,true));
+      tbmDACs.push_back(GetConfDACs(1,true));
+    }
+    catch(pxar::InvalidConfig) {}
 
     // Set the type of the ROC correctly:
-    m_roctype = config.Get("roctype","psi46digv2");
+    m_roctype = config.Get("roctype","psi46digv21respin");
 
     // Read the type of carrier PCB used ("desytb", "desytb-rot"):
     m_pcbtype = config.Get("pcbtype","desytb");
+
+    // Read the mask file if existent:
+    std::vector<pxar::pixelConfig> maskbits = GetConfMaskBits();
+
+    // Read DACs and Trim settings for all ROCs, one for each I2C address:
+    for(int32_t i2c : i2c_addresses) {
+      // Read trim bits from config:
+      rocPixels.push_back(GetConfTrimming(maskbits,static_cast<int16_t>(i2c)));
+      // Read the DAC file and update the vector with overwrite DAC settings from config:
+      rocDACs.push_back(GetConfDACs(static_cast<int16_t>(i2c)));
+      // Add the I2C address to the vector:
+      if(i2c > -1) { rocI2C.push_back(static_cast<uint8_t>(i2c)); }
+      else { rocI2C.push_back(static_cast<uint8_t>(0)); }
+    }
+
 
     // create api
     if(m_api != NULL) { delete m_api; }
@@ -145,13 +170,19 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     // Allow overwriting of verbosity level via command line:
     m_verbosity = config.Get("verbosity", m_verbosity);
 
+    // Get a new pxar instance:
     m_api = new pxar::pxarCore(m_usbId, m_verbosity);
 
+    // Initialize the testboard:
     if(!m_api->initTestboard(sig_delays, power_settings, pg_setup)) { 
       EUDAQ_ERROR(string("Firmware mismatch."));
       throw pxar::pxarException("Firmware mismatch");
     }
-    m_api->initDUT(hubid,"tbm08",tbmDACs,m_roctype,rocDACs,rocPixels);
+
+    // Initialize the DUT as configured above:
+    m_api->initDUT(hubid,m_tbmtype,tbmDACs,m_roctype,rocDACs,rocPixels,rocI2C);
+    // Store the number of configured ROCs to be stored in a BORE tag:
+    m_nplanes = rocDACs.size();
 
     // Read current:
     std::cout << "Analog current: " << m_api->getTBia()*1000 << "mA" << std::endl;
@@ -163,14 +194,6 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     if(m_api->getTBia()*1000 < 15) EUDAQ_ERROR(string("Analog current too low: " + std::to_string(1000*m_api->getTBia()) + "mA"));
     else EUDAQ_INFO(string("Analog current: " + std::to_string(1000*m_api->getTBia()) + "mA"));
 
-    // Send a single RESET to the ROC to initialize its status:
-    if(!m_api->daqSingleSignal("resetroc")) {
-      throw InvalidConfig("Unable to send ROC reset signal!");
-    }
-    else {
-      EUDAQ_INFO(string("ROC Reset signal issued."));
-    }
-
     // Switching to external clock if requested and check if DTB returns TRUE status:
     if(!m_api->setExternalClock(config.Get("external_clock",1) != 0 ? true : false)) {
       throw InvalidConfig("Couldn't switch to " + string(config.Get("external_clock",1) != 0 ? "external" : "internal") + " clock.");
@@ -180,28 +203,48 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     }
 
     // Switching to the selected trigger source and check if DTB returns TRUE:
-    std::string triggersrc = config.Get("trigger_source","pg_dir");
+    std::string triggersrc = config.Get("trigger_source","extern");
     if(!m_api->daqTriggerSource(triggersrc)) {
       throw InvalidConfig("Couldn't select trigger source " + string(triggersrc));
     }
     else {
+      // Update the TBM setting according to the selected trigger source.
+      // Switches to TBM_EMU if we selected a trigger source using the TBM EMU.
+      TriggerDictionary* trgDict;
+      if(m_tbmtype == "notbm" && trgDict->getInstance()->getEmulationState(triggersrc)) {
+	m_tbmtype = "tbmemulator";
+      }
+
       if(triggersrc == "pg" || triggersrc == "pg_dir" || triggersrc == "patterngenerator") {
 	m_trigger_is_pg = true;
       }
       EUDAQ_INFO(string("Trigger source selected: " + triggersrc));
     }
 
+    // Send a single RESET to the ROC to initialize its status:
+    if(!m_api->daqSingleSignal("resetroc")) { throw InvalidConfig("Unable to send ROC reset signal!"); }
+    if(m_tbmtype != "notbm" && !m_api->daqSingleSignal("resettbm")) { throw InvalidConfig("Unable to send TBM reset signal!"); }
+
     // Output the configured signal to the probes:
-    m_api->SignalProbe("d1", config.Get("signalprobe_d1","ctr"));
-    EUDAQ_USER("Setting scope output D1 to \"" + config.Get("signalprobe_d1","ctr") + "\"\n");
-    m_api->SignalProbe("d2", config.Get("signalprobe_d2","tout"));
-    EUDAQ_USER("Setting scope output D2 to \"" + config.Get("signalprobe_d2","tout") + "\"\n");
+    std::string signal_d1 = config.Get("signalprobe_d1","off");
+    std::string signal_d2 = config.Get("signalprobe_d2","off");
+    std::string signal_a1 = config.Get("signalprobe_a1","off");
+    std::string signal_a2 = config.Get("signalprobe_a2","off");
+    
+    if(m_api->SignalProbe("d1", signal_d1) && signal_d1 != "off") {
+      EUDAQ_USER("Setting scope output D1 to \"" + signal_d1 + "\"\n");
+    }
+    if(m_api->SignalProbe("d2", signal_d2) && signal_d2 != "off") {
+      EUDAQ_USER("Setting scope output D2 to \"" + signal_d2 + "\"\n");
+    }
+    if(m_api->SignalProbe("a1", signal_a1) && signal_a1 != "off") {
+      EUDAQ_USER("Setting scope output A1 to \"" + signal_a1 + "\"\n");
+    }
+    if(m_api->SignalProbe("a2", signal_a2) && signal_a2 != "off") {
+      EUDAQ_USER("Setting scope output A2 to \"" + signal_a2 + "\"\n");
+    }
 
-    EUDAQ_USER("API set up succesfully...\n");
-
-    // All on!
-    m_api->_dut->maskAllPixels(false);
-    m_api->_dut->testAllPixels(false);
+    EUDAQ_USER(m_api->getVersion() + string(" API set up successfully...\n"));
 
     // test pixels
     if(testpulses) {
@@ -218,13 +261,11 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     m_api->_dut->printDACs(0);
 
     if(!m_trimmingFromConf)
-      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read all trimming parameters from config file " + config.Name() + ".");
+      SetStatus(eudaq::Status::LVL_WARN, "Couldn't read trim parameters from \"" + config.Name() + "\".");
     else
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
     std::cout << "=============================\nCONFIGURED\n=============================" << std::endl;
-
   }
-
   catch (pxar::InvalidConfig &e){
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
     SetStatus(eudaq::Status::LVL_ERROR, string("Invalid configuration settings: ") + e.what());
@@ -258,8 +299,12 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     std::cout << "Start Run: " << m_run << std::endl;
 
     eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(m_event_type, m_run));
-    // Set the ROC type for decoding:
+    // Set the TBM & ROC type for decoding:
     bore.SetTag("ROCTYPE", m_roctype);
+    bore.SetTag("TBMTYPE", m_tbmtype);
+
+    // Set the number of planes (ROCs):
+    bore.SetTag("PLANES", m_nplanes);
 
     // Store all DAC settings in one BORE tag:
     bore.SetTag("DACS", m_alldacs);
@@ -269,6 +314,11 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
 
     // Set the detector for correct plane assignment:
     bore.SetTag("DETECTOR", m_detector);
+
+    // Store the pxarCore version this has been recorded with:
+    bore.SetTag("PXARCORE", m_api->getVersion());
+    // Store eudaq library version:
+    bore.SetTag("EUDAQ", PACKAGE_VERSION);
 
     // Send the event out:
     SendEvent(bore);
@@ -292,7 +342,10 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
       triggering = true;
     }
 
-    SetStatus(eudaq::Status::LVL_OK, "Running");
+    // Start the timer for period ROC reset:
+    m_reset_timer = new eudaq::Timer;
+
+    SetStatus(eudaq::Status::LVL_USER, "Running - HV ON!");
     m_running = true;
   }
   catch (...) {
@@ -398,10 +451,10 @@ void CMSPixelProducer::ReadoutLoop() {
       // Acquire lock for pxarCore object access:
       std::lock_guard<std::mutex> lck(m_mutex);
 
-      if(m_t->Seconds() > 60){
-	m_api->daqStatus(m_perFull);
-	m_t->Restart();
-	std::cout << "DAQ buffer is " << int(m_perFull) << "\% full." << std::endl; 
+      // Send periodic ROC Reset
+      if(m_roc_resetperiod > 0 && m_reset_timer->mSeconds() > m_roc_resetperiod) {
+	if(!m_api->daqSingleSignal("resetroc")) { EUDAQ_ERROR(string("Unable to send ROC reset signal!\n")); }
+	m_reset_timer->Restart();
       }
 
       // Trying to get the next event, daqGetRawEvent throws exception if none is available:
@@ -411,15 +464,25 @@ void CMSPixelProducer::ReadoutLoop() {
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
+	// Compare event ID with TBM trigger counter:
+	if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
+	  EUDAQ_ERROR("Unexpected trigger number: " + std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " + std::to_string(m_ev) + ")");
+	}
+	
 	SendEvent(ev);
 	m_ev++;
-	if(daqEvent.data.size() > 1) { m_ev_filled++; m_ev_runningavg_filled++; }
+	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
+	if(daqEvent.data.size() > (4 + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
 
+	// Print every 1k evt:
 	if(m_ev%1000 == 0) {
+	  uint8_t filllevel = 0;
+	  m_api->daqStatus(filllevel);
 	  std::cout << "CMSPixel " << m_detector 
 		    << " EVT " << m_ev << " / " << m_ev_filled << " w/ px" << std::endl;
 	  std::cout << "\t Total average:  \t" << (m_ev > 0 ? std::to_string(100*m_ev_filled/m_ev) : "(inf)") << "%" << std::endl;
 	  std::cout << "\t 1k Trg average: \t" << (100*m_ev_runningavg_filled/1000) << "%" << std::endl;
+	  std::cout << "\t RAM fill level: \t" << static_cast<int>(filllevel) << "%" << std::endl;
 	  m_ev_runningavg_filled = 0;
 	}
       }
