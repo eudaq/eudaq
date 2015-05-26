@@ -465,9 +465,9 @@ void CMSPixelProducer::ReadoutLoop() {
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvent.data[0]), sizeof(daqEvent.data[0])*daqEvent.data.size());
 
 	// Compare event ID with TBM trigger counter:
-	if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
+	/*if(m_tbmtype != "notbm" && (daqEvent.data[0] & 0xff) != (m_ev%256)) {
 	  EUDAQ_ERROR("Unexpected trigger number: " + std::to_string((daqEvent.data[0] & 0xff)) + " (expecting " + std::to_string(m_ev) + ")");
-	}
+	  }*/
 	
 	SendEvent(ev);
 	m_ev++;
