@@ -836,7 +836,7 @@ namespace eudaq {
         CellIDEncoder<TrackerDataImpl> zsDataEncoder(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING,zsDataCollection);
         TrackerDataImpl *zsFrame=new TrackerDataImpl();
         zsDataEncoder["sensorID"       ]=n;
-        zsDataEncoder["sparsePixelType"]=eutelescope::kEUTelSimpleSparsePixel;
+        zsDataEncoder["sparsePixelType"]=eutelescope::kEUTelGenericSparsePixel;
         zsDataEncoder.setCellID(zsFrame);
 
         for (unsigned int i=0; i<x_values.size(); i++) {
