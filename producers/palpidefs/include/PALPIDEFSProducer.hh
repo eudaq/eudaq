@@ -148,6 +148,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
         , m_ignore_trigger_ids(true)
         , m_recover_outofsync(true)
         , m_readout_mode(0)
+        , m_chip_type (0x0)
         , m_strobe_length(0x0)
         , m_strobeb_length(0x0)
         , m_trigger_delay(0x0)
