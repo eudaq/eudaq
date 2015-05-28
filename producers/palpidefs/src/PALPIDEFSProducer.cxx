@@ -179,7 +179,7 @@ bool DeviceReader::ThresholdScan() {
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170-icharge);
       //std::cout << icharge << " " << std::flush;
       for (int ievt=0; ievt<m_n_events; ++ievt) {
-        if (!m_test_setup->PulseAndReadEvent(m_daq_board, m_dut, PULSELENGTH_ANALOGUE, &Hits, 1, &Header)) {
+        if (!m_test_setup->PulseAndReadEvent(m_boardid, PULSELENGTH_ANALOGUE, &Hits, 1, &Header)) {
           std::cout << "PulseAndReadEvent failed!" << std::endl;
           return false;
         }
@@ -190,7 +190,7 @@ bool DeviceReader::ThresholdScan() {
       m_points[ipoint++]=icharge;
     }
     //std::cout << std::endl;
-    m_test_setup->FinaliseAnalogueInjection(m_daq_board, PulseMode);
+    m_test_setup->FinaliseAnalogueInjection(m_boardid, PulseMode);
   }
   m_dut->SetMaskAllPixels(false);
   return true;
@@ -695,7 +695,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
 
 #ifndef SIMULATION
   // Set back-bias voltage
-  SetBackBiasVoltage(param);
+  SetBackBiasVoltage(param); 
   // Power supply monitoring
   if (m_monitor_PSU) {
     system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date +%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log ${SCRIPT_DIR}/meas-pid.txt");
