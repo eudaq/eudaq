@@ -1089,8 +1089,6 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration & param)
 
 void PALPIDEFSProducer::OnStartRun(unsigned param)
 {
-  std::cout << "Start Run: " << param << std::endl;
-
   m_run = param;
   m_ev = 0;
 
