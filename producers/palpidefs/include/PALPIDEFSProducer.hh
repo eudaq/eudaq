@@ -184,7 +184,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool DoSCurveScan(const eudaq::Configuration & param);
     void SetBackBiasVoltage(const eudaq::Configuration & param);
     void ControlLinearStage(const eudaq::Configuration & param);
-    bool ConfigChip(int id, TDAQBoard* daq_board, std::string configFile);
+    bool ConfigChip(int id, TpAlpidefs* dut, std::string configFile);
     int BuildEvent();
     void SendEOR();
     void SendStatusEvent();

@@ -37,7 +37,7 @@ unsigned int Bitmask(int width)
   return tmp;
 }
 
-void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool readwrite)
+void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn, bool readwrite)   //TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool readwrite)
 {
   // readwrite (from Chip): true = read; false = write
 
@@ -51,14 +51,14 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
         std::cout << "Base attribute not found!" << std::endl;
         break;
       }
-      ParseXML(daq_board, pChild, atoi(elem->Attribute("base")), -1, readwrite);
+      ParseXML(dut, pChild, atoi(elem->Attribute("base")), -1, readwrite);
     }
     else if (rgn == -1) {
       if (!elem->Attribute("rgn")) {
         std::cout << "Rgn attribute not found!" << std::endl;
         break;
       }
-      ParseXML(daq_board, pChild, base, atoi(elem->Attribute("rgn")), readwrite);
+      ParseXML(dut, pChild, base, atoi(elem->Attribute("rgn")), readwrite);
     }
     else {
       if (!elem->Attribute("sub")) {
@@ -71,7 +71,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
       int value = 0;
 
       if (readwrite) {
-        if (daq_board->ReadChipRegister(address, &value) != 1) {
+        if (dut->ReadRegister(address, &value) != 1) {
           std::cout << "Failure to read chip address " << address << std::endl;
           continue;
         }
@@ -114,7 +114,7 @@ void ParseXML(TDAQBoard* daq_board, TiXmlNode* node, int base, int rgn, bool rea
       if (!readwrite) {
 //       printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
         printf("Writing chip register %d %d\n", address, value);
-        if (daq_board->WriteChipRegister(address, value) != 1)
+        if (dut->WriteRegister(address, value) != 1)
           std::cout << "Failure to write chip address " << address << std::endl;
       }
     }
@@ -585,12 +585,12 @@ float DeviceReader::GetTemperature()
 
 void DeviceReader::ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite)
 {
-  ::ParseXML(m_daq_board, node, base, rgn, readwrite);
+  ::ParseXML(m_dut, node, base, rgn, readwrite);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-bool PALPIDEFSProducer::ConfigChip(int id, TDAQBoard* daq_board, std::string configFile)
+bool PALPIDEFSProducer::ConfigChip(int id, TpAlpidefs *dut, std::string configFile)
 {
   // TODO maybe add this functionality to TDAQBoard?
   char buffer[1000];
@@ -609,7 +609,7 @@ bool PALPIDEFSProducer::ConfigChip(int id, TDAQBoard* daq_board, std::string con
   }
 
   // TODO return code?
-  ParseXML(daq_board, doc.FirstChild("root")->ToElement(), -1, -1, false);
+  ParseXML(dut, doc.FirstChild("root")->ToElement(), -1, -1, false);
   return true;
 }
 
@@ -755,7 +755,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
     sprintf(buffer, "Config_File_%d", i);
     std::string configFile = param.Get(buffer, "");
     if (configFile.length() > 0)
-      if (!ConfigChip(i, daq_board, configFile))
+      if (!ConfigChip(i, dut, configFile))
         return;
 
     // noisy and broken pixels
