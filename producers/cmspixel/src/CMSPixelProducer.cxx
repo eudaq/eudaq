@@ -390,7 +390,7 @@ void CMSPixelProducer::OnStopRun() {
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
 	SendEvent(ev);
-	if(daqEvents.at(i).data.size() > 1) { m_ev_filled++; }
+	if(daqEvents.at(i).data.size() > (4 + m_nplanes)) { m_ev_filled++; }
 	m_ev++;
       }
     }
