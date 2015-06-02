@@ -44,6 +44,8 @@ namespace eudaq {
     m_idata((size_t)-1),
     m_ilog((size_t)-1),
     m_runsizelimit(0),
+    m_runeventlimit(0),
+    m_nextconfigonrunchange(false),
     m_stopping(false),
     m_busy(false),
     m_producerbusy(false)
@@ -80,8 +82,12 @@ namespace eudaq {
     SendCommand("CONFIG", to_string(config));
     if (config.SetSection("RunControl")) {
       m_runsizelimit = config.Get("RunSizeLimit", 0LL);
+      m_runeventlimit = config.Get("RunEventLimit", 0LL);
+      m_nextconfigonrunchange = config.Get("NextConfigFileOnRunChange", config.Get("NextConfigFileOnFileLimit", false));
     } else {
       m_runsizelimit = 0;
+      m_runeventlimit = 0;
+      m_nextconfigonrunchange = false;
     }
   }
 
@@ -136,6 +142,7 @@ namespace eudaq {
   void RunControl::Terminate() {
     EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE");
+    mSleep(5000);
   }
 
   void RunControl::SendCommand(const std::string & cmd, const std::string & param,

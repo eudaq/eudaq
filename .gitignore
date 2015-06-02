@@ -10,6 +10,9 @@ lib/*
 *.idx
 *.dat
 
+# ignore everything in logs
+logs/*
+
 # ignore log files
 *.log
 
@@ -42,7 +45,7 @@ extern/pthread*
 extern/libusb*
 
 
-#ignore debug folder 
+#ignore debug folder
 debug/*
 
 # ignore python byte code
