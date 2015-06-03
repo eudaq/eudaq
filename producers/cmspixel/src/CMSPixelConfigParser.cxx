@@ -129,10 +129,16 @@ std::vector<pxar::pixelConfig> CMSPixelProducer::GetConfMaskBits() {
     std::string line;
     while(std::getline(file, line)) {
       std::stringstream   linestream(line);
-      std::string         dummy;
-      int                 roc, col, row;
-      linestream >> dummy >> roc >> col >> row;
-      maskbits.push_back(pxar::pixelConfig(roc,col,row,15,true,false));
+      std::string         dummy, rowpattern;
+      int                 roc, col;
+      linestream >> dummy >> roc >> col >> rowpattern;
+      if(rowpattern.find(":") != std::string::npos) {
+	std::vector<int32_t> row = split(rowpattern,':');
+	for(size_t i = row.front(); i <= row.back(); i++) {
+	  maskbits.push_back(pxar::pixelConfig(roc,col,i,15,true,false));
+	}
+      }
+      else { maskbits.push_back(pxar::pixelConfig(roc,col,std::stoi(rowpattern),15,true,false)); }
     }
   }
   else {
