@@ -286,7 +286,7 @@ namespace eudaq {
 
     static inline uint16_t roc_to_mod_row(uint8_t roc, uint16_t row) {
       if(roc < 8) return row;
-      else return (2*ROC_NUMROWS - row);
+      else return (2*ROC_NUMROWS - row - 1);
     };
 
     static inline uint16_t roc_to_mod_col(uint8_t roc, uint16_t col) {
