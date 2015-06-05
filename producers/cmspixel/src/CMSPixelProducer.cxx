@@ -37,6 +37,7 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
     m_tlu_waiting_time(4000),
     m_roc_resetperiod(0),
     m_nplanes(1),
+    m_channels(1),
     m_terminated(false),
     m_running(false),
     m_api(NULL),
@@ -137,6 +138,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration & config) {
     try {
       tbmDACs.push_back(GetConfDACs(0,true));
       tbmDACs.push_back(GetConfDACs(1,true));
+      m_channels = 2;
     }
     catch(pxar::InvalidConfig) {}
 
@@ -390,7 +392,7 @@ void CMSPixelProducer::OnStopRun() {
 	eudaq::RawDataEvent ev(m_event_type, m_run, m_ev);
 	ev.AddBlock(0, reinterpret_cast<const char*>(&daqEvents.at(i).data[0]), sizeof(daqEvents.at(i).data[0])*daqEvents.at(i).data.size());
 	SendEvent(ev);
-	if(daqEvents.at(i).data.size() > (4 + m_nplanes)) { m_ev_filled++; }
+	if(daqEvents.at(i).data.size() > (4*m_channels + m_nplanes)) { m_ev_filled++; }
 	m_ev++;
       }
     }
@@ -472,7 +474,7 @@ void CMSPixelProducer::ReadoutLoop() {
 	SendEvent(ev);
 	m_ev++;
 	// Events with pixel data have more than 4 words for TBM header/trailer and 1 for each ROC header:
-	if(daqEvent.data.size() > (4 + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
+	if(daqEvent.data.size() > (4*m_channels + m_nplanes)) { m_ev_filled++; m_ev_runningavg_filled++; }
 
 	// Print every 1k evt:
 	if(m_ev%1000 == 0) {
