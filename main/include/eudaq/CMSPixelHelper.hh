@@ -95,9 +95,11 @@ namespace eudaq {
       passthroughSplitter splitter;
       dtbEventDecoder decoder;
       dataSink<pxar::Event*> Eventpump;
-
+      std::vector<uint8_t> tokenchain;
+      tokenchain.push_back(m_nplanes);
+      
       // Connect the data source and set up the pipe:
-      src = evtSource(0, m_nplanes, m_tbmtype, m_roctype);
+      src = evtSource(0, tokenchain, m_tbmtype, m_roctype);
       src >> splitter >> decoder >> Eventpump;
 
       // Transform from EUDAQ data, add it to the datasource:
