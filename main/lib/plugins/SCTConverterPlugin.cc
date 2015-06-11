@@ -98,24 +98,18 @@ namespace eudaq {
     }
 
     void add_Timestamp_data(lcio::LCEvent & result, const StandardEvent& tmp_evt){
-      add_data(result, 10, tmp_evt.GetTag(Timestamp_data(), -1));
+      add_data(result, 10, tmp_evt.GetTag(Timestamp_data(), 0ULL));
     }
     void Timestamp_L0ID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
       add_data(result, 11, tmp_evt.GetTag(Timestamp_L0ID(), -1));
     }
 
-    void add_Event_L0ID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
-      add_data(result, 12, tmp_evt.GetTag(Event_L0ID(), -1));
-    }
-    void add_Event_BCID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
-      add_data(result, 13, tmp_evt.GetTag(Event_BCID(), -1));
-    }
 
     void add_TDC_L0ID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
-      add_data(result, 14, tmp_evt.GetTag(TDC_L0ID(), -1));
+      add_data(result, 12, tmp_evt.GetTag(TDC_L0ID(), -1));
     }
     void add_TLU_TLUID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
-      add_data(result, 15, tmp_evt.GetTag(TLU_TLUID(), -1));
+      add_data(result, 13, tmp_evt.GetTag(TLU_TLUID(), -1));
     }
 
 
@@ -175,6 +169,8 @@ namespace eudaq {
 
         }
         sev.AddPlane(plane);
+
+
         return true;
       }
 #if USE_LCIO
@@ -324,7 +320,7 @@ namespace eudaq {
       ProcessTTC(block, sev);
 
 
-
+      std::cout << sev.GetTag(Event_L0ID(), -1) << std::endl;
       
       return true;
     }
@@ -440,15 +436,14 @@ namespace eudaq {
       add_Timestamp_data(result,tmp_evt);
       Timestamp_L0ID(result,tmp_evt);
 
-      add_Event_L0ID(result,tmp_evt);
-      add_Event_BCID(result,tmp_evt);
+
 
       add_TDC_L0ID(result,tmp_evt);
       add_TLU_TLUID(result,tmp_evt);
-      add_Event_BCID(result,tmp_evt);
 
-      add_data(result,17,m_threshold);
-      add_data(result,18,m_Voltage);
+
+      add_data(result,14,m_threshold);
+      add_data(result,15,m_Voltage);
       return true;
       }
     
