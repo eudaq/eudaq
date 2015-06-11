@@ -88,7 +88,7 @@ namespace eudaq {
         id_plane = plane.ID();         
         i_time_stamp =  sev.GetTimestamp();
 		try{ 
-		i_tlu= std::stoull(sev.GetTag("TLU_trigger","15"));
+		i_tlu= std::stoul(sev.GetTag("TLU_trigger","15"));
 		}catch(...){
 			std::cout<<" error during converting "<<sev.GetTag("TLU_trigger","15") << " to ull"<<std::endl;
 		}

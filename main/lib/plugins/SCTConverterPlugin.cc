@@ -240,6 +240,17 @@ namespace eudaq {
       
       ProcessTTC(block, sev);
 
+
+      StandardPlane plane(9, EVENT_TYPE_ITS_TTC);
+      plane.SetSizeZS(70, 1, 0);
+      unsigned x = 0;
+      unsigned y = 0;
+
+
+      plane.PushPixel( sev.GetTag(TDC_data(),-1), 1, 1);
+
+      sev.AddPlane(plane);
+
       return true;
     }
     template<typename T>
@@ -282,8 +293,8 @@ namespace eudaq {
       uint32_t hsioID = (uint32_t)(data >> 40) & 0xffff;
       uint64_t TLUID = data & 0xffff;
 
-      sev.SetTag(TLU_TLUID(), to_hex(TLUID, 4));
-      sev.SetTag(TDC_data(), to_hex(hsioID, 4));
+      sev.SetTag(TLU_TLUID(), TLUID);
+      sev.SetTag(TDC_data(), hsioID);
 
     }
     template<typename T>
@@ -291,8 +302,8 @@ namespace eudaq {
 
       uint32_t L0ID = (uint32_t)(data >> 40) & 0xffff;
       uint64_t TDC = data & 0xfffff;
-      sev.SetTag(TDC_data(), to_hex(TDC, 5));
-      sev.SetTag(TDC_L0ID(), to_hex(L0ID, 4));
+      sev.SetTag(TDC_data(), TDC);
+      sev.SetTag(TDC_L0ID(), L0ID);
     }
     template<typename T>
     static void ProcessTimeStamp_data(uint64_t data, T & sev) {
@@ -300,16 +311,89 @@ namespace eudaq {
        
         uint64_t  timestamp = data & 0x000000ffffffffffULL;
         uint32_t L0ID = (uint32_t)(data >> 40) & 0xffff;
-        sev.SetTag(Timestamp_data(), to_hex(timestamp, 10));
-        sev.SetTag(Timestamp_L0ID(), to_hex(L0ID ,4));
+        sev.SetTag(Timestamp_data(), timestamp);
+        sev.SetTag(Timestamp_L0ID(), L0ID);
      
 
     }
 #if USE_LCIO
+
     // This is where the conversion to LCIO is done
-    virtual lcio::LCEvent * GetLCIOEvent(const Event * /*ev*/) const {
-      return 0;
-    }
+    void GetLCIORunHeader(lcio::LCRunHeader & header, eudaq::Event const & /*bore*/, eudaq::Configuration const & /*conf*/) const {
+      eutelescope::EUTelRunHeaderImpl runHeader(&header);
+      runHeader.setDAQHWName(EUTELESCOPE::EUDRB); // should be:
+      //runHeader.setDAQHWName(EUTELESCOPE::NI);
+
+      // the information below was used by EUTelescope before the
+      // introduction of the BUI. Now all these parameters shouldn't be
+      // used anymore but they are left here for backward compatibility.
+
+      runHeader.setEUDRBMode("ZS");
+      runHeader.setEUDRBDet("SCT_TTC");
+      runHeader.setNoOfDetector(m_boards);
+      std::vector<int> xMin(m_boards, 0), xMax(m_boards, 1280), yMin(m_boards, 0), yMax(m_boards, 4);
+      runHeader.setMinX(xMin);
+      runHeader.setMaxX(xMax);
+      runHeader.setMinY(yMin);
+      runHeader.setMaxY(yMax);
+      }
+
+    bool GetLCIOSubEvent(lcio::LCEvent & result, const Event & source) const {
+
+
+      if (source.IsBORE()) {
+        if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
+        // shouldn't happen
+        return true;
+      }
+      else if (source.IsEORE()) {
+        if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
+        // nothing to do
+        return true;
+      }
+      // If we get here it must be a data event
+
+      if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent data " << std::endl;
+      result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
+
+
+      LCCollectionVec *zsDataCollection = nullptr;
+      auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name);
+
+
+
+      StandardEvent tmp_evt;
+      GetStandardSubEvent(tmp_evt,source);
+      auto plane = tmp_evt.GetPlane(0);
+
+
+      // set the proper cell encoder
+      auto  zsDataEncoder = CellIDEncoder<TrackerDataImpl>(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+      zsDataEncoder["sensorID"] = 9;
+      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+
+      // prepare a new TrackerData for the ZS data
+      auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
+      zsDataEncoder.setCellID(zsFrame.get());
+
+
+      ConvertPlaneToLCIOGenericPixel(plane, *zsFrame);
+
+      // perfect! Now add the TrackerData to the collection
+      zsDataCollection->push_back(zsFrame.release());
+
+
+      if (!zsDataCollectionExists){
+        if (zsDataCollection->size() != 0)
+          result.addCollection(zsDataCollection, LCIO_collection_name);
+        else
+          delete zsDataCollection; // clean up if not storing the collection here
+      }
+
+      return true;
+      }
+    
 #endif
     static SCTConverterPlugin_ITS_TTC m_instance;
 
