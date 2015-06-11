@@ -117,9 +117,7 @@ namespace eudaq {
     void add_TLU_TLUID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
       add_data(result, 15, tmp_evt.GetTag(TLU_TLUID(), -1));
     }
-    void add_Event_BCID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
-      add_data(result, 16, tmp_evt.GetTag(Event_BCID(), -1));
-    }
+
 
 
 
