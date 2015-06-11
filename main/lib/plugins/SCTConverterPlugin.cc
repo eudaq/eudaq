@@ -49,12 +49,7 @@ namespace eudaq {
 #if USE_LCIO
 
 
-  void push_to_lcio_event(lcio::LCEvent & result){
 
-    if (gDet.NumEvents()!=2)
-    {
-      return;
-    }
 
 
     void add_data(lcio::LCEvent & result , int ID, double value){
@@ -95,7 +90,7 @@ namespace eudaq {
           delete zsDataCollection; // clean up if not storing the collection here
       }
 
-}
+    }
     void addTTC_data(lcio::LCEvent & result, const StandardEvent& tmp_evt){
 
       add_data(result, 9, tmp_evt.GetTag(TDC_data(), -1));
