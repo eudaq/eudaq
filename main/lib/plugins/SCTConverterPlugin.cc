@@ -378,10 +378,10 @@ namespace eudaq {
       zsDataEncoder.setCellID(zsFrame.get());
 
       zsFrame->chargeValues().resize(4);
-      zsFrame->chargeValues()[0](plane.GetX(0));
-      zsFrame->chargeValues()[1](1);
-      zsFrame->chargeValues()[2](1);
-      zsFrame->chargeValues()[3](0);
+      zsFrame->chargeValues()[0]=plane.GetX(0);
+      zsFrame->chargeValues()[1]=1;
+      zsFrame->chargeValues()[2]=1;
+      zsFrame->chargeValues()[3]=0;
 
 
       // perfect! Now add the TrackerData to the collection
