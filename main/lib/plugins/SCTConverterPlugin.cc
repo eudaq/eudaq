@@ -122,7 +122,7 @@ namespace eudaq {
     }
 
 
-}
+
 
 #endif
 
