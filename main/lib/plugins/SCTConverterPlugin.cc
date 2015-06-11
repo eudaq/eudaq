@@ -319,8 +319,7 @@ namespace eudaq {
       
       ProcessTTC(block, sev);
 
-
-      std::cout << sev.GetTag(Event_L0ID(), -1) << std::endl;
+         
       
       return true;
     }
