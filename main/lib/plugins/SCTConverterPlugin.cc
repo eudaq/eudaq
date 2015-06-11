@@ -28,8 +28,26 @@ using eutelescope::EUTelGenericSparsePixel;
 
 
 namespace eudaq {
+
+  // The event type for which this converter plugin will be registered
+  // Modify this to match your actual event type (from the Producer)
+  static const char* EVENT_TYPE_ITS_ABC = "ITS_ABC";
+  static const char* LCIO_collection_name = "zsdata_strip";
+  static const int PlaneID = 8;   
+  namespace sct{
+    std::string TDC_L0ID(){ return "TDC.L0ID"; }
+    std::string TLU_TLUID(){ return "TLU.TLUID"; }
+    std::string TDC_data(){ return "TDC.data"; }
+    std::string TLU_L0ID(){ return "TLU.L0ID"; }
+    std::string Timestamp_data(){ return "Timestamp.data"; }
+    std::string Timestamp_L0ID(){ return "Timestamp.L0ID"; }
+    std::string Event_L0ID(){ return "Event.L0ID"; }
+    std::string Event_BCID(){ return "Event.BCID"; }
+  }
+
+  using namespace sct;
 #if USE_LCIO
-  DetectorEvent gDet(0,0,0);
+
 
   void push_to_lcio_event(lcio::LCEvent & result){
 
@@ -112,23 +130,7 @@ namespace eudaq {
 }
 
 #endif
-  // The event type for which this converter plugin will be registered
-  // Modify this to match your actual event type (from the Producer)
-  static const char* EVENT_TYPE_ITS_ABC = "ITS_ABC";
-  static const char* LCIO_collection_name = "zsdata_strip";
-  static const int PlaneID = 8;   
-  namespace sct{
-    std::string TDC_L0ID(){ return "TDC.L0ID"; }
-    std::string TLU_TLUID(){ return "TLU.TLUID"; }
-    std::string TDC_data(){ return "TDC.data"; }
-    std::string TLU_L0ID(){ return "TLU.L0ID"; }
-    std::string Timestamp_data(){ return "Timestamp.data"; }
-    std::string Timestamp_L0ID(){ return "Timestamp.L0ID"; }
-    std::string Event_L0ID(){ return "Event.L0ID"; }
-    std::string Event_BCID(){ return "Event.BCID"; }
-  }
 
-  using namespace sct;
   // Declare a new class that inherits from DataConverterPlugin
   class SCTConverterPlugin_ITS_ABC : public DataConverterPlugin {
 
