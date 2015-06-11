@@ -294,7 +294,7 @@ namespace eudaq {
       uint64_t TLUID = data & 0xffff;
 
       sev.SetTag(TLU_TLUID(), TLUID);
-      sev.SetTag(TDC_data(), hsioID);
+      sev.SetTag(TLU_L0ID(), hsioID);
 
     }
     template<typename T>
