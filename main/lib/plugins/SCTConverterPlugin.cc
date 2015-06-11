@@ -33,6 +33,7 @@ namespace eudaq {
   // Modify this to match your actual event type (from the Producer)
   static const char* EVENT_TYPE_ITS_ABC = "ITS_ABC";
   static const char* LCIO_collection_name = "zsdata_strip";
+  static const char* LCIO_collection_name_TTC = "zsdata_strip_TTC";
   static const int PlaneID = 8;   
   namespace sct{
     std::string TDC_L0ID(){ return "TDC.L0ID"; }
@@ -58,7 +59,7 @@ namespace eudaq {
 
 
       LCCollectionVec *zsDataCollection = nullptr;
-      auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name);
+      auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name_TTC);
 
 
 
@@ -85,7 +86,7 @@ namespace eudaq {
 
       if (!zsDataCollectionExists){
         if (zsDataCollection->size() != 0)
-          result.addCollection(zsDataCollection, LCIO_collection_name);
+          result.addCollection(zsDataCollection, LCIO_collection_name_TTC);
         else
           delete zsDataCollection; // clean up if not storing the collection here
       }
