@@ -762,7 +762,7 @@ int ROOTProducer::getConfiguration( const char* tag, const char* defaultValue,ch
 	std::string dummy(tag);
 	std::string ret= m_prod->getConfiguration().Get(dummy,defaultValue );
 
-	if (sizeOfReturnBuffer<ret.size()+1)
+	if (sizeOfReturnBuffer<static_cast<Int_t>(ret.size()+1))
 	{
 		return 0;
 	}

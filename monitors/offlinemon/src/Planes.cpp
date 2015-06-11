@@ -183,7 +183,7 @@ void plane::HotPixelsuppression()
 
   }
   std::cout << " sizeOfInput: " << sizeOfInput << std::endl;
-  for (int i = 0; i < entries.size(); i++)
+  for (size_t i = 0; i < entries.size(); i++)
   {
     if (entries.at(i) > sizeOfInput*m_Ignore_percentage)
     {

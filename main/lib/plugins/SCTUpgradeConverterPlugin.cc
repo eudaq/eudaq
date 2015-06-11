@@ -125,7 +125,7 @@ namespace eudaq {
     int width = 1280, height = noModules * 2;
     plane.SetSizeZS(width, height, 0);
 
-    for (size_t k = 1; k <= noModules; ++k)
+    for (size_t k = 1; k <= static_cast<size_t>(noModules); ++k)
     {
 
       puschDataInStandartPlane(inputVector, k, plane);
