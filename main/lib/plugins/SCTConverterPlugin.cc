@@ -26,8 +26,92 @@ using eutelescope::EUTelGenericSparsePixel;
 #include "eudaq/SCT_defs.hh"
 #include "eudaq/Configuration.hh"
 
-namespace eudaq {
 
+namespace eudaq {
+#if USE_LCIO
+  DetectorEvent gDet(0,0,0);
+
+  void push_to_lcio_event(lcio::LCEvent & result){
+
+    if (gDet.NumEvents()!=2)
+    {
+      return;
+    }
+
+
+    void add_data(lcio::LCEvent & result , int ID, double value){
+      if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent data " << std::endl;
+      result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
+
+
+      LCCollectionVec *zsDataCollection = nullptr;
+      auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name);
+
+
+
+      // set the proper cell encoder
+      auto  zsDataEncoder = CellIDEncoder<TrackerDataImpl>(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+      zsDataEncoder["sensorID"] = ID;
+      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+
+
+      // prepare a new TrackerData for the ZS data
+      auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
+      zsDataEncoder.setCellID(zsFrame.get());
+
+      zsFrame->chargeValues().resize(4);
+      zsFrame->chargeValues()[0] = value;
+      zsFrame->chargeValues()[1] = 1;
+      zsFrame->chargeValues()[2] = 1;
+      zsFrame->chargeValues()[3] = 0;
+
+
+      // perfect! Now add the TrackerData to the collection
+      zsDataCollection->push_back(zsFrame.release());
+
+
+      if (!zsDataCollectionExists){
+        if (zsDataCollection->size() != 0)
+          result.addCollection(zsDataCollection, LCIO_collection_name);
+        else
+          delete zsDataCollection; // clean up if not storing the collection here
+      }
+
+}
+    void addTTC_data(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+
+      add_data(result, 9, tmp_evt.GetTag(TDC_data(), -1));
+
+    }
+
+    void add_Timestamp_data(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 10, tmp_evt.GetTag(Timestamp_data(), -1));
+    }
+    void Timestamp_L0ID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 11, tmp_evt.GetTag(Timestamp_L0ID(), -1));
+    }
+
+    void add_Event_L0ID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 12, tmp_evt.GetTag(Event_L0ID(), -1));
+    }
+    void add_Event_BCID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 13, tmp_evt.GetTag(Event_BCID(), -1));
+    }
+
+    void add_TDC_L0ID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 14, tmp_evt.GetTag(TDC_L0ID(), -1));
+    }
+    void add_TLU_TLUID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 15, tmp_evt.GetTag(TLU_TLUID(), -1));
+    }
+    void add_Event_BCID(lcio::LCEvent & result, const StandardEvent& tmp_evt){
+      add_data(result, 16, tmp_evt.GetTag(Event_BCID(), -1));
+    }
+
+
+}
+
+#endif
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
   static const char* EVENT_TYPE_ITS_ABC = "ITS_ABC";
@@ -334,74 +418,7 @@ namespace eudaq {
       runHeader.setMaxY(yMax);
       }
 
-    void add_data(lcio::LCEvent & result , int ID, double value){
-      if (dbg > 0) std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent data " << std::endl;
-      result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE, eutelescope::kDE);
 
-
-      LCCollectionVec *zsDataCollection = nullptr;
-      auto zsDataCollectionExists = Collection_createIfNotExist(&zsDataCollection, result, LCIO_collection_name);
-
-
-
-      // set the proper cell encoder
-      auto  zsDataEncoder = CellIDEncoder<TrackerDataImpl>(eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
-      zsDataEncoder["sensorID"] = ID;
-      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
-
-
-      // prepare a new TrackerData for the ZS data
-      auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
-      zsDataEncoder.setCellID(zsFrame.get());
-
-      zsFrame->chargeValues().resize(4);
-      zsFrame->chargeValues()[0]=value;
-      zsFrame->chargeValues()[1]=1;
-      zsFrame->chargeValues()[2]=1;
-      zsFrame->chargeValues()[3]=0;
-
-
-      // perfect! Now add the TrackerData to the collection
-      zsDataCollection->push_back(zsFrame.release());
-
-
-      if (!zsDataCollectionExists){
-        if (zsDataCollection->size() != 0)
-          result.addCollection(zsDataCollection, LCIO_collection_name);
-        else
-          delete zsDataCollection; // clean up if not storing the collection here
-      }
-
-    }
-    void addTTC_data(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-    
-      add_data(result,9,tmp_evt.GetTag(TDC_data(),-1));
-
-    }
-
-    void add_Timestamp_data(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,10,tmp_evt.GetTag(Timestamp_data(),-1));
-    }
-    void Timestamp_L0ID(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,11,tmp_evt.GetTag(Timestamp_L0ID(),-1));
-    }
-
-    void add_Event_L0ID(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,12,tmp_evt.GetTag(Event_L0ID(),-1));
-    }
-    void add_Event_BCID(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,13,tmp_evt.GetTag(Event_BCID(),-1));
-    }
-
-    void add_TDC_L0ID(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,14,tmp_evt.GetTag(TDC_L0ID(),-1));
-    }
-    void add_TLU_TLUID(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,15,tmp_evt.GetTag(TLU_TLUID(),-1));
-    }
-    void add_Event_BCID(lcio::LCEvent & result,const StandardEvent& tmp_evt){
-      add_data(result,16,tmp_evt.GetTag(Event_BCID(),-1));
-    }
     
 
  
