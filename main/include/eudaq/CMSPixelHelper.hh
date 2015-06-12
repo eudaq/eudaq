@@ -84,7 +84,8 @@ namespace eudaq {
       unsigned plane_id;
       if(m_detector == "TRP") { plane_id = 6; }      // TRP
       else if(m_detector == "DUT") { plane_id = 7; } // DUT
-      else { plane_id = 8; }                         // REF
+      else if(m_detector == "REF") { plane_id = 8; } // REF
+      else { plane_id = 9; }                         // QUAD
 
       // Set decoder to reasonable verbosity (still informing about problems:
       pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
