@@ -27,6 +27,7 @@ using namespace std;
 static const std::string EVENT_TYPE_DUT = "CMSPixelDUT";
 static const std::string EVENT_TYPE_REF = "CMSPixelREF";
 static const std::string EVENT_TYPE_TRP = "CMSPixelTRP";
+static const std::string EVENT_TYPE_QUAD = "CMSPixelQUAD";
 
 CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string & runcontrol, const std::string & verbosity)
   : eudaq::Producer(name, runcontrol),
@@ -63,6 +64,10 @@ CMSPixelProducer::CMSPixelProducer(const std::string & name, const std::string &
   else if(m_producerName.find("TRP") != std::string::npos) {
     m_detector = "TRP";
     m_event_type = EVENT_TYPE_TRP;
+  }
+  else if(m_producerName.find("QUAD") != std::string::npos) {
+    m_detector = "QUAD";
+    m_event_type = EVENT_TYPE_QUAD;
   }
   else {
     m_detector = "DUT";
