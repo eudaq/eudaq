@@ -1,0 +1,16 @@
+#!/bin/bash
+# cleanup of DAQ
+printf 'Killing DAQ\n'
+printf '\t Cleaning up...\n'
+killall RootMonitor.exe
+killall TestDataCollector.exe
+killall TLUProducer.exe
+killall TLUControl.exe
+killall NiProducer.exe
+killall OnlineMon.exe
+killall PALPIDEFSProducer.exe
+killall PalpidessProducer.exe
+killall euLog.exe
+sleep 1
+killall euRun.exe
+printf '\033[1;32;48mKILLING DAQ COMPLETE, type STARTRUN to relaunch\033[0m \n'
