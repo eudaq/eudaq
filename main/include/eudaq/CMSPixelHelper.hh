@@ -35,7 +35,7 @@ namespace eudaq {
     void Initialize(const Event & bore, const Configuration & cnf) {
       DeviceDictionary* devDict;
       std::string roctype = bore.GetTag("ROCTYPE", "");
-      std::string tbmtype = bore.GetTag("TBMTYPE", "tbmemulator");
+      std::string tbmtype = bore.GetTag("TBMTYPE", "notbm");
 
       m_detector = bore.GetTag("DETECTOR","");
       std::string pcbtype = bore.GetTag("PCBTYPE", "");
