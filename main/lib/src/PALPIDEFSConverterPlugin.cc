@@ -849,6 +849,7 @@ namespace eudaq {
           zsFrame->chargeValues().push_back((int) x_values.at(i));
           zsFrame->chargeValues().push_back((int) y_values.at(i));
           zsFrame->chargeValues().push_back(1);
+          zsFrame->chargeValues().push_back(1);
 
 // 	  std::cout << x_values.size() << " " << x_values.at(i) << " " << y_values.at(i) << std::endl;
         }
