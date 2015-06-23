@@ -43,12 +43,11 @@ namespace eudaq {
         << std::endl;
     }
 
-    if(skip > 0 && (evt_number % 100 >= skip))  //-s functionality
+    if(skip > 0 && (evt_number % 100 >= skip)) {  //-s functionality
       return true;
-
-    else if (skip_events_with_counter > 0)      //-sc functionality, you cant have both
-    {
-      if(++counter_for_skipping < skip_events_with_counter && evt_number > 0)
+    }
+    else if (skip_events_with_counter > 0) {  //-sc functionality, you cant have both
+      if(++counter_for_skipping < skip_events_with_counter && evt_number > 0 && !m_reader->GetDetectorEvent().IsBORE() && !m_reader->GetDetectorEvent().IsEORE())
         return true;
       else
         counter_for_skipping = 0;
