@@ -44,6 +44,7 @@ Clang (at least version 3.1), or MSVC (Visual Studio 2012 and later).
 ### Linux
 ------------------
 - Install Qt4 or later, e.g. by using the package manager of your distribution: ```apt-get install qt4-devel```
+- In Ubuntu 12: ```sudo apt-get install qt-sdk``` and ```apt-cache search qtcreator```
 
 ### OS X
 ------------------
