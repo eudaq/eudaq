@@ -11,7 +11,10 @@ the Free Software Foundation, either version 3 of the License, or
 
 ### First steps
 
-Please check out the online documentation at http://eudaq.github.io/
+Please check out the online documentation at 
+- http://eudaq.github.io/ or 
+- https://telescopes.desy.de/EUDAQ or
+- the manual, see below
 
 ### Other sources of documentation
 
