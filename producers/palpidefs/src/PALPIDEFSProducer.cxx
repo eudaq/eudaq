@@ -113,7 +113,6 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn, bool readwrit
 
       if (!readwrite) {
 //       printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
-        printf("Writing chip register %d %d\n", address, value);
         if (dut->WriteRegister(address, value) != 1)
           std::cout << "Failure to write chip address " << address << std::endl;
       }
@@ -1349,7 +1348,7 @@ int PALPIDEFSProducer::BuildEvent()
 
     SingleEvent* single_ev = m_next_event[i];
 
-    if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.0001 && single_ev->m_timestamp_corrected - timestamp > 4) {
+    if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.01 && single_ev->m_timestamp_corrected - timestamp >= 20) {
       char msg[200];
       sprintf(msg, "Event %d. Out of sync: Timestamp of current event (device %d) is %lu while smallest is %lu.", m_ev, i,  single_ev->m_timestamp_corrected, timestamp);
       std::string str(msg);
