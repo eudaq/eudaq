@@ -1350,7 +1350,7 @@ int PALPIDEFSProducer::BuildEvent()
 
     if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.01 && single_ev->m_timestamp_corrected - timestamp >= 20) {
       char msg[200];
-      sprintf(msg, "Event %d. Out of sync: Timestamp of current event (device %d) is %lu while smallest is %lu.", m_ev, i,  single_ev->m_timestamp_corrected, timestamp);
+      sprintf(msg, "Event %d. Out of sync: Timestamp of current event (device %d) is %llu while smallest is %llu.", m_ev, i,  single_ev->m_timestamp_corrected, timestamp);
       std::string str(msg);
 
       if (m_firstevent) {
@@ -1437,10 +1437,10 @@ int PALPIDEFSProducer::BuildEvent()
   }
 
   if (timestamp_error && m_recover_outofsync) {
-    printf("Event %d. Trying to recover from out of sync error by adding %lu to next event in layer ", m_ev-1, timestamp);
+    printf("Event %d. Trying to recover from out of sync error by adding %llu to next event in layer ", m_ev-1, timestamp);
     for (int i=0; i<m_nDevices; i++)
       if (layer_selected[i])
-        printf("%d (%lu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
+        printf("%d (%llu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
 
     printf("\n");
 
