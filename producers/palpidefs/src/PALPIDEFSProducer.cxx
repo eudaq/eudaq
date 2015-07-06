@@ -643,7 +643,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
 
   m_readout_mode = param.Get("ReadoutMode", 0);
-  m_full_config = param.Get("FullConfig", "");
+  m_full_config_v1 = param.Get("FullConfigV1", param.Get("FullConfig", ""));
+  m_full_config_v2 = param.Get("FullConfigV2", "");
 
   m_SCS_charge_start  = param.Get("SCSchargeStart", 0);
   m_SCS_charge_stop   = param.Get("SCSchargeStop", 50);
@@ -1118,10 +1119,10 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 
   // read configuration, dump to XML string
   for (int i=0; i<m_nDevices; i++) {
-    TiXmlDocument doc(m_full_config.c_str());
+      TiXmlDocument doc((m_chip_type[i]==2) ? m_full_config_v2.c_str() : m_full_config_v1.c_str());
     if (!doc.LoadFile()) {
       std::string msg = "Failed to load config file: ";
-      msg += m_full_config;
+      msg += (m_chip_type[i]==2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
       EUDAQ_ERROR(msg.data());
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
