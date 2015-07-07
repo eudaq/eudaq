@@ -1,0 +1,108 @@
+#!/bin/bash
+
+export RCPORT=44000
+[ "$1" != "" ] && RCPORT=$1
+
+export HOSTIP=192.168.5.252
+export TLUIP=127.0.0.1
+export HOSTNAME=192.168.5.252
+
+cd `dirname $0`
+export LD_LIBRARY_PATH="`pwd`/bin:$LD_LIBRARY_PATH"
+
+printf '\033[1;32;48m \t STARTING DAQ LOCALLY\033[0m \n'
+echo $(date)
+printf '\033[22;33m\t Cleaning up first...  \033[0m \n'
+
+if [ -f myKILLRUN.local ]
+then
+    sh myKILLRUN.local
+else
+    sh myKILLRUN
+fi
+
+printf '\033[22;31m\t End of killall \033[0m \n'
+
+sleep 1
+
+cd bin
+#=====================================================================
+printf '\033[22;33m\t Starting Subprocesses \033[0m \n'
+#=====================================================================
+######################################################################
+# euRun
+###############
+printf '\033[22;33m\t RunControl \033[0m \n'
+ ./euRun.exe -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT &
+sleep 2
+######################################################################
+# euLog
+###############
+printf '\033[22;33m\t Logger  \033[0m \n'
+ ./euLog.exe -x 0 -y 600 -w 1500 -g 450 -r tcp://$HOSTIP:44000 &
+sleep 2
+######################################################################
+# DataCollector
+###############
+printf '\033[22;33m\t TestDataCollector \033[0m \n'
+ xterm -sb -sl 1000 -geom 120x10+800+280 -fn fixed -T "Data Collector" -e "./TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT" &
+sleep 2
+######################################################################
+# NI Producer
+##############
+#if [ -f "NiProducer.exe" ]
+#then
+#    printf '\033[22;33m\t  NiProducer for linux  \033[0m \n'
+#    xterm -sb -sl 1000 -geom 120x10+800+450 -T 'Ni Producer for Linux' -e './NiProducer.exe -r tcp://$HOSTIP:$RCPORT 2>&1 | tee ni.log' &
+#    sleep 1
+#else
+#    printf '\033[22;31m\t  NiProducer for linux not found!  \033[0m \n'
+#    echo 'Configure EUDAQ with the CMake option "-D BUILD_ni=ON" and re-run "make install" to install.'
+#fi
+######################################################################
+# TLU producer
+###############
+if [ -f "TLUProducer.exe" ]
+then
+    printf '\033[22;33m\t  TLUProducer  \033[0m \n'
+    xterm -sb -sl 1000 -geom 120x10+800+650 -T 'TLU Producer' -e './TLUProducer.exe' &
+    sleep 1
+else
+    printf '\033[22;31m\t  TLUProducer not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_tlu=ON" and re-run "make install" to install.'
+fi
+#sleep 2
+#####################################################################
+######################################################################
+# Online Monitor
+###############
+#if [ -f "OnlineMon.exe" ]
+#then
+#    printf '\033[22;33m\t  Online Monitor  \033[0m \n'
+#    ./OnlineMon.exe  -sc 10 -s 0 -tc 0 -r tcp://$HOSTIP:$RCPORT &
+#else
+#    printf '\033[22;31m\t  Online monitor not found! \033[0m \n'
+#    echo 'Configure EUDAQ with the CMake option "-D BUILD_onlinemon=ON" and re-run "make install" to install.'
+#fi
+#####################################################################
+######################################################################
+# Timepix3
+###############
+if [ -f "Timepix3Producer.exe" ]
+then
+    printf '\033[22;33m\t  Time Pix Three  \033[0m \n'
+    xterm -sb -sl 1000 -geom 120x15+800+0 -T 'TiMe piX ThrEE Producer' -e "./Timepix3Producer.exe  -r tcp://$HOSTIP:$RCPORT" &
+else
+    printf '\033[22;31m\t  Timepix3 Producer not found! \033[0m \n'
+    echo 'Configure EUDAQ with the CMake option "-D BUILD_onlinemon=ON" and re-run "make install" to install.'
+fi
+#####################################################################
+
+
+
+
+printf ' \n'
+printf ' \n'
+printf ' \n'
+printf '\033[1;32;48m\t ...Done!\033[0m \n'
+printf '\033[1;32;48mSTART OF DAQ COMPLETE\033[0m \n'
