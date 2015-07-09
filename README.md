@@ -38,17 +38,12 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 
 1.1. Main Library, Executables and GUI
 --------------------------------------
-EUDAQ requires a C++11 compliant compiler such as GCC (4.6 and later),
-Clang (at least version 3.1), or MSVC (Visual Studio 2012 and later).
+EUDAQ requires a C++11 compliant compiler and a Qt version 4 or higher to build GUIs.
 
 ### Linux
 ------------------
-#### Qt 
-Install Qt4 or later, e.g. by using the package manager of your distribution: ```apt-get install qt4-devel```
-(In Ubuntu 12: ```sudo apt-get install qt-sdk``` and ```apt-cache search qtcreator```)
-
 #### gcc
-Version (```gcc --version```): It is observed using older versions of gcc (4.6.3 e.g), it is not working. We recommend version 4.9:
+Version (```gcc --version```): It is observed using older versions of gcc (4.6.3 e.g), it is not working. We recommend version 4.9 or later:
 ``` 
 sudo apt-get install gcc-4.9-multilib
 ```
@@ -61,15 +56,31 @@ Setting gcc version (symlink):
 http://askubuntu.com/questions/26498/choose-gcc-and-g-version
 
 
+#### Qt 
+Install Qt4 or later, e.g. by using the package manager of your distribution: ```apt-get install qt4-devel```
+(In Ubuntu 12: ```sudo apt-get install qt-sdk``` and ```apt-cache search qtcreator```)
 
-### OS X
-------------------
-- Install Qt4 or later, e.g. by using MacPorts (http://www.macports.org/): ```sudo port install qt4-mac-devel```
+
+
 
 ### Windows
 ------------------
+#### MSVC
+- The recommende windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2012 and later
+- Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
+- If you are using MSVC 2010, please make sure that you also install Service Pack 1 (SP1)
+#### QT
 - Download and install Qt4 or later
-For full description on how to set up the development environment for Windows, see section below.
+- Use the binaries compatible with your version of MSVC
+- For full description on how to set up the development environment for Windows, see section below (2. WIndows).
+
+
+### OS X
+------------------
+#### Clang
+Clang (at least version 3.1)
+#### Qt
+Install Qt4 or later, e.g. by using MacPorts (http://www.macports.org/): ```sudo port install qt4-mac-devel```
 
 
 1.2. Specific Producers and Components
@@ -94,79 +105,57 @@ install libusb development package, e.g. ```apt-get install libusb-dev```
 2. Configuring and installation/compiling EUDAQ
 ----------------------------------
 
-cmake will configure the installation and prepare the makefiles. It searches for all the required files. It will be executed in the ```build``` folder. If cmake is successful, EUDAQ can be installed.
+cmake will configure the installation and prepare the makefiles. It searches for all the required files. It has to be executed in the ```build``` folder, however the relevant CMakeLists.txt is in the main level, thus, the command is ```cmake ..```. If cmake is successful, EUDAQ can be installed. Variables set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
-cmake has several options to activate or deactivate programs which will be built: https://telescopes.desy.de/EUDAQ#Cmake_options
+cmake has several options to activate or deactivate programs which will be built. The main library (libEUDAQ.so) is always built, while the rest of the package is optional. Defaults are to build the main executables and
+(if Qt is found) the GUI application. Disable this behavior by setting
+e.g. ```-DBUILD_main=OFF`` (disabling main executables) or enable
+e.g. producers using ```-DBUILD_tlu=ON``` to enable setting up the
+configuration and compilation environment of tlu producer and
+executables. Example: ```cmake -DBUILD_tlu=ON ..```. More options:
+https://telescopes.desy.de/EUDAQ#Cmake_options
 
-If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder, before a new try.
+If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder, before a new try, e.g. .
+
+If problems occur during installation, please have a look in the issues, if a similiar problem already occured. If not, feel free to create a new ticket: https://github.com/eudaq/eudaq/issues
 
 ### Linux/OSX:
 
+Configuring:
 ```
 cd build
 cmake ..
+```
+Installing:
+```
 make install
 ```
-
-The main library (libEUDAQ.so) is always built, while the rest of the
-package is optional. Defaults are to build the main executables and
-(if Qt is found) the GUI application. Disable this behavior by setting
-e.g. ```BUILD_main=OFF`` (disabling main executables) or enable
-e.g. producers using BUILD_tlu=ON to enable setting up the
-configuration and compilation environment of tlu producer and
-executables.
-
-Example:
+Cleaning:
 ```
-cd build
-cmake -D BUILD_tlu=ON ..
-make install
+rm -rf *
 ```
-Variables thus set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
+### Windows
 
-### Setting up and Compiling EUDAQ on Windows
-
-- Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
-  If you are using MSVC 2010, please make sure that you also install Service Pack 1 (SP1)
-- Download Qt4 or Qt5 (use the binaries compatible with your version of MSVC)
-
-Install both packages.
-
-Start the Visual Studio "Developer Command Prompt" from the Start Menu
-entries for Visual Studio (Tools subfolder) which opens a cmd.exe
-session with the necessary environment variables already set. If your
-Qt installation path has not been added to the global %PATH% variable, you need to execute the "qtenv2.bat" batch file in the Qt folder, e.g.
+Start the Visual Studio "Developer Command Prompt" from the Start Menu entries for Visual Studio (Tools subfolder) which opens a ```cmd.exe``` session with the necessary environment variables already set. If your Qt installation path has not been added to the global %PATH% variable, you need to execute the "qtenv2.bat" batch file in the Qt folder, e.g.
 ```
 C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
 ```
-Replace "5.1.1" with the version string of your Qt installation.
+(Replace "5.1.1" with the version string of your Qt installation.)
 
-Now checkout the EUDAQ version and enter the build directory on the prompt, e.g. by entering
+Go to the EUDAQ folder and configure:
 ```
-cd c:\Users\[username]\Documents\GitHub\eudaq\build
-```
-Now enter
-
-```
+cd c:\[...]\eudaq\build
 cmake ..
 ```
+(This generates the VS project files.)
 
-to generate the VS project files.
-
-Compile by calling
-
-```
-MSBUILD.exe EUDAQ.sln /p:Configuration=Release
-```
-
-or install into eudaq\bin by running
-
+Installing into eudaq\bin:
 ```
 MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
 ```
+(Alternative: ```MSBUILD.exe EUDAQ.sln /p:Configuration=Release```)
 
-Note on "moc.exe - System Error: The program can't start because MSVCP110.dll is missing from your computer.": when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download (either x86 or x64) from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.
+(Note on "moc.exe - System Error: The program can't start because MSVCP110.dll is missing from your computer.": when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download (either x86 or x64) from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.)
 
 This will compile the main library and the GUI; for the remaining processors, please check the individual documentation.
-
