@@ -77,12 +77,13 @@ For full description on how to set up the development environment for Windows, s
 
 ### TLU producer
 ------------------
-#### Windows
-------------
-install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki) into ./extern/libusb-w32
-- (Linux) install libusb development package, e.g. ```apt-get install libusb-dev```
 - install ZestSC1 driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
 - install firmware bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
+
+#### Windows
+install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki) into ./extern/libusb-w32
+#### Linux
+install libusb development package, e.g. ```apt-get install libusb-dev```
 
 ### Online Monitor
 --------------------
