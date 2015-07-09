@@ -43,15 +43,24 @@ Clang (at least version 3.1), or MSVC (Visual Studio 2012 and later).
 
 ### Linux
 ------------------
-- Qt: 
+#### Qt 
 Install Qt4 or later, e.g. by using the package manager of your distribution: ```apt-get install qt4-devel```
-In Ubuntu 12: ```sudo apt-get install qt-sdk``` and ```apt-cache search qtcreator```
-- gcc-compiler version: It is observed using gcc 4.6.3, e.g, it is not working. Use at least 4.7 or higher, e.g.
+(In Ubuntu 12: ```sudo apt-get install qt-sdk``` and ```apt-cache search qtcreator```)
+
+#### gcc
+Version (```gcc --version```): It is observed using older versions of gcc (4.6.3 e.g), it is not working. We recommend version 4.9:
 ``` 
 sudo apt-get install gcc-4.9-multilib
+```
+Setting environment variables:
+``` 
 export CXX=/usr/bin/g++-4.9
 export CC=/usr/bin/gcc-4.9
 ```
+Setting gcc version (symlink):
+http://askubuntu.com/questions/26498/choose-gcc-and-g-version
+
+
 
 ### OS X
 ------------------
