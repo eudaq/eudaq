@@ -109,7 +109,7 @@ cmake will configure the installation and prepare the makefiles. It searches for
 
 cmake has several options to activate or deactivate programs which will be built. The main library (libEUDAQ.so) is always built, while the rest of the package is optional. Defaults are to build the main executables and
 (if Qt is found) the GUI application. Disable this behavior by setting
-e.g. ```-DBUILD_main=OFF`` (disabling main executables) or enable
+e.g. ```-DBUILD_main=OFF``` (disabling main executables) or enable
 e.g. producers using ```-DBUILD_tlu=ON``` to enable setting up the
 configuration and compilation environment of tlu producer and
 executables. Example: ```cmake -DBUILD_tlu=ON ..```. More options:
