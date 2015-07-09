@@ -115,7 +115,7 @@ private slots:
     if (!m_stopping) {
       if ((m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) ||
 	  (m_runeventlimit >= 1 && m_events >= m_runeventlimit)) {
-	if (m_filebytes >= m_runsizelimit) {
+	if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
 	  EUDAQ_INFO("File limit reached: " + to_string(m_filebytes) + " > " + to_string(m_runsizelimit));
 	}
 	else {
