@@ -91,19 +91,21 @@ install libusb development package, e.g. ```apt-get install libusb-dev```
 - (Windows) Make sure that you have installed the corresponding version of MSVC with which your downloaded ROOT binaries have been compiled!
 
 
-2. Compiling and Installing on Linux/OSX:
-------------------------
+2. Configuring and installation/compiling EUDAQ
+----------------------------------
+
+cmake will configure the installation and prepare the makefiles. It searches for all the required files. It will be executed in the ```build``` folder. If cmake is successful, EUDAQ can be installed.
+
+cmake has several options to activate or deactivate programs which will be built: https://telescopes.desy.de/EUDAQ#Cmake_options
+
+If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder, before a new try.
+
+### Linux/OSX:
 
 ```
 cd build
 cmake ..
 make install
-```
-
-will build main library, executables and gui (if Qt is found) and install into the source directory (./lib and ./bin). The install prefix can be changed by setting ```INSTALL_PREFIX``` option, e.g.:
-
-```
-cmake -DINSTALL_PREFIX=/usr/local ..
 ```
 
 The main library (libEUDAQ.so) is always built, while the rest of the
@@ -123,8 +125,8 @@ make install
 Variables thus set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
 
-2.1. Setting up and Compiling EUDAQ on Windows
------------------------------------------------------------------------------
+### Setting up and Compiling EUDAQ on Windows
+
 - Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
   If you are using MSVC 2010, please make sure that you also install Service Pack 1 (SP1)
 - Download Qt4 or Qt5 (use the binaries compatible with your version of MSVC)
@@ -140,7 +142,7 @@ C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
 ```
 Replace "5.1.1" with the version string of your Qt installation.
 
-Now clone the EUDAQ repository (or download using GitHub) and enter the build directory on the prompt, e.g. by entering
+Now checkout the EUDAQ version and enter the build directory on the prompt, e.g. by entering
 ```
 cd c:\Users\[username]\Documents\GitHub\eudaq\build
 ```
