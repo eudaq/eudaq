@@ -22,8 +22,6 @@ IGNORE_SET=(
 ####################################################################################
 
 function join { local IFS="$1"; shift; echo "$*"; }
-
-IGNORE_SET=(${IGNORE_SET[@]/#/^src/})
 IGNORE_STRING=$(join \| "${IGNORE_SET[@]}")
 
 SOURCES=$(find . | egrep -v ${IGNORE_STRING} | egrep "\.h$|\.hh$|\.c$|\.cc$")
