@@ -76,11 +76,7 @@ namespace eudaq {
       std::vector<double> cds = plane.GetPixels<double>();
 	  
 
-	 try{ 
-		 	 DUT_time= std::stoull(sev.GetTag("DUT_time"));
-	 }catch(...){
-		 std::cout<<" error during converting DUT time "<<sev.GetTag("DUT_time") << " to ull"<<std::endl;
-	 }
+     DUT_time = sev.GetTag("DUT_time", (uint64_t)0);
   
 
    
