@@ -53,7 +53,8 @@ namespace eudaq {
 
   /** Represents an event such as a connection, or receipt of data on a Transport.
    */
-  struct TransportEvent {
+  class TransportEvent {
+  public:
     enum EventType { CONNECT, DISCONNECT, RECEIVE };
     TransportEvent(EventType et, ConnectionInfo & i, const std::string & p = "")
       : etype(et), id(i), packet(p) {}

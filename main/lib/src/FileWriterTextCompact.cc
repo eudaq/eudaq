@@ -76,7 +76,8 @@ namespace eudaq {
 				  *m_out<<"i_time_stamp; id_plane; i_tlu; i_event; DUT_time_stamp; "<<std::endl;
 		  }
 				  
-				DUT_start_time=std::stoull(sev.GetTag("DUT_time"));
+	 
+				DUT_start_time=sev.GetTag("DUT_time",(uint64_t)0);
 		  firstEvent=false;
 	  }
 	  if (sev.NumPlanes()==0)// only TLU Events
@@ -97,7 +98,7 @@ namespace eudaq {
 				  *m_out<<plane.ID()<<"; ";
 				  *m_out<<plane.TLUEvent()<<"; ";
 				   *m_out<<sev.GetEventNumber()<<"; ";
-				  *m_out<<std::stoull(sev.GetTag("DUT_time"))<<"; ";
+           *m_out << sev.GetTag("DUT_time", (uint64_t)0) << "; ";
 				  //std::string dummy=sev.GetTag("TLU_input");
 		//		*m_out<<std::stoi(sev.GetTag("TLU_input"))<<"; ";
 				  *m_out<<std::endl;
