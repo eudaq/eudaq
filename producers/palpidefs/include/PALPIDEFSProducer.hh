@@ -144,7 +144,8 @@ class PALPIDEFSProducer : public eudaq::Producer {
         , m_mutex()
         , m_nDevices(0)
         , m_status_interval(-1)
-        , m_full_config()
+        , m_full_config_v1()
+        , m_full_config_v2()
         , m_ignore_trigger_ids(true)
         , m_recover_outofsync(true)
         , m_readout_mode(0)
@@ -212,7 +213,8 @@ class PALPIDEFSProducer : public eudaq::Producer {
     // config
     int m_nDevices;
     int m_status_interval;
-    std::string m_full_config;
+    std::string m_full_config_v1;
+    std::string m_full_config_v2;
     bool m_ignore_trigger_ids;
     bool m_recover_outofsync;
     bool m_readout_mode;

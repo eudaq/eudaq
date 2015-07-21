@@ -245,13 +245,17 @@ namespace eudaq {
         return false;
       }
       current_layer = data[pos++];
-      if (current_layer == 0xff) {
+      while ((current_layer == 0xff) && (pos+1 < data.size())) {
         // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data stream
+        current_layer = data[pos++];
+      }
+
+      if (current_layer == 0xff) {  // reached end of data;
         current_layer = -1;
         return true;
       }
       if (current_layer >= m_nLayers) {
-         cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << endl;
+	cout << "ERROR: Event " << ev.GetEventNumber() << " Unexpected. Not defined layer in data " << current_layer << ", pos = " << pos << endl;
          return false;
       }
       layers_found[current_layer] = true;
@@ -312,7 +316,7 @@ namespace eudaq {
         return DecodeAlpide1Data(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr);
       }
       else if (m_chip_type[current_layer] == 2) {
-        return DecodeAlpide2Data(ev, sev, data, pos, planes, current_layer, last_rgn, last_pixeladdr, last_doublecolumnaddr);
+        return DecodeAlpide2Data(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr);
       }
       else return false;
     }
@@ -510,11 +514,11 @@ namespace eudaq {
                            unsigned int          &byte, 
                            StandardPlane**       planes,
 			   int                   &current_layer,  
+                           int                   &current_region,
                            int                   &last_rgn, 
                            int                   &last_pixeladdr, 
                            int                   &last_doublecolumnaddr) const 
     {
-      int       region  = -1;
       int       chip    = 0;    // to be fixed!
       bool      started = false; // event has started, i.e. chip header has been found
       bool      ended   = false; // trailer has been found
@@ -542,11 +546,11 @@ namespace eudaq {
           break;
         case DT_CHIPTRAILER:
           if (!started) {
-	    std::cout << "Error, chip trailer found before chip header" << std::endl;
+            std::cout << "Error, chip trailer found before chip header" << std::endl;
             return false;
           }
-          if (region < 31) {
-	    std::cout << "Error, chip trailer found before last region, current region = " << region << std::endl;
+          if (current_region < 31) {
+            std::cout << "Error, chip trailer found before last region, current region = " << current_region << std::endl;
             return false;
           }
           started = false;
@@ -555,29 +559,33 @@ namespace eudaq {
           break;
         case DT_REGHEADER:
           if (!started) {
-	    std::cout << "Error, region header found before chip header or after chip trailer" << std::endl;
+            std::cout << "Error, region header found before chip header or after chip trailer" << std::endl;
             return false;
           }
-          if (!DecodeAlpide2RegionHeader (data[byte], region)) return false;
+          if (!DecodeAlpide2RegionHeader (data[byte], current_region)) return false;
           byte +=1;
           break;
         case DT_DATASHORT:
           if (!started) {
-	    std::cout << "Error, hit data found before chip header or after chip trailer" << std::endl;
+            std::cout << "Error, hit data found before chip header or after chip trailer, offending word = " << std::hex << (int)data[byte] << std::dec<< ", byte = " << byte << std::endl;
             return false;
           }
-          if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, region, planes, false, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
+          if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, current_region, planes, false, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
           byte += 2;
           break;
         case DT_DATALONG:
           if (!started) {
-	    std::cout << "Error, hit data found before chip header or after chip trailer" << std::endl;
+            std::cout << "Error, hit data found before chip header or after chip trailer, offending word = " << std::hex << (int)data[byte] << std::dec<< ", byte = " << byte << std::endl;
             return false;
           }
-          if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, region, planes, true, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
+          if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, current_region, planes, true, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
           byte += 3;
           break;
-
+        default:
+          if (started) std::cout << "Error, found unexpected data after the chip header!" << std::endl;
+          //else         std::cout << "Error, unrecognized data words found before the chip header!" << std::endl;
+          byte += 1; // skip this byte
+          break;
         }
       }
       if (started) {
@@ -713,6 +721,7 @@ namespace eudaq {
               last_doublecolumnaddr = -1;
 
             } else {
+              int startpos = pos;
               if (!DecodeChipData(ev, sev, data, pos, planes, current_layer, current_rgn, last_rgn, last_pixeladdr, last_doublecolumnaddr)) {
                 sev.SetFlags(Event::FLAG_BROKEN);
                 break;
@@ -724,7 +733,7 @@ namespace eudaq {
 
 
           if (current_layer != -1) {
-            cout << "ERROR: Event " << ev.GetEventNumber() << " data stream too short, stopped in region " << current_rgn << endl;
+            cout << "ERROR: Event " << ev.GetEventNumber() << " data stream too short, stopped in region " << current_rgn << ", Current layer  = " << current_layer << endl;
             sev.SetFlags(Event::FLAG_BROKEN);
           }
           for (int i=0;i<m_nLayers;i++) {
@@ -741,7 +750,7 @@ namespace eudaq {
           // check timestamps
           bool ok = true;
           for (int i=0;i<m_nLayers-1;i++) {
-            if (timestamps[i+1] == 0 || (fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.0001 && fabs((double)timestamps[i] - (double)timestamps[i+1]) > 4))
+            if (timestamps[i+1] == 0 || (fabs(1.0 - (double) timestamps[i] / timestamps[i+1]) > 0.0001 && fabs((double)timestamps[i] - (double)timestamps[i+1]) > 20))
               ok = false;
           }
           if (!ok) {
@@ -848,6 +857,7 @@ namespace eudaq {
         for (unsigned int i=0; i<x_values.size(); i++) {
           zsFrame->chargeValues().push_back((int) x_values.at(i));
           zsFrame->chargeValues().push_back((int) y_values.at(i));
+          zsFrame->chargeValues().push_back(1);
           zsFrame->chargeValues().push_back(1);
 
 // 	  std::cout << x_values.size() << " " << x_values.at(i) << " " << y_values.at(i) << std::endl;

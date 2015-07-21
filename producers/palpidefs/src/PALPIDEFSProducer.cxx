@@ -113,7 +113,6 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn, bool readwrit
 
       if (!readwrite) {
 //       printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
-        printf("Writing chip register %d %d\n", address, value);
         if (dut->WriteRegister(address, value) != 1)
           std::cout << "Failure to write chip address " << address << std::endl;
       }
@@ -644,7 +643,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration & param)
   const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
 
   m_readout_mode = param.Get("ReadoutMode", 0);
-  m_full_config = param.Get("FullConfig", "");
+  m_full_config_v1 = param.Get("FullConfigV1", param.Get("FullConfig", ""));
+  m_full_config_v2 = param.Get("FullConfigV2", "");
 
   m_SCS_charge_start  = param.Get("SCSchargeStart", 0);
   m_SCS_charge_stop   = param.Get("SCSchargeStop", 50);
@@ -1119,10 +1119,10 @@ void PALPIDEFSProducer::OnStartRun(unsigned param)
 
   // read configuration, dump to XML string
   for (int i=0; i<m_nDevices; i++) {
-    TiXmlDocument doc(m_full_config.c_str());
+      TiXmlDocument doc((m_chip_type[i]==2) ? m_full_config_v2.c_str() : m_full_config_v1.c_str());
     if (!doc.LoadFile()) {
       std::string msg = "Failed to load config file: ";
-      msg += m_full_config;
+      msg += (m_chip_type[i]==2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
       EUDAQ_ERROR(msg.data());
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
@@ -1349,9 +1349,9 @@ int PALPIDEFSProducer::BuildEvent()
 
     SingleEvent* single_ev = m_next_event[i];
 
-    if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.0001 && single_ev->m_timestamp_corrected - timestamp > 4) {
+    if (timestamp != 0 && (float) single_ev->m_timestamp_corrected / timestamp > 1.01 && single_ev->m_timestamp_corrected - timestamp >= 20) {
       char msg[200];
-      sprintf(msg, "Event %d. Out of sync: Timestamp of current event (device %d) is %lu while smallest is %lu.", m_ev, i,  single_ev->m_timestamp_corrected, timestamp);
+      sprintf(msg, "Event %d. Out of sync: Timestamp of current event (device %d) is %llu while smallest is %llu.", m_ev, i,  single_ev->m_timestamp_corrected, timestamp);
       std::string str(msg);
 
       if (m_firstevent) {
@@ -1438,10 +1438,10 @@ int PALPIDEFSProducer::BuildEvent()
   }
 
   if (timestamp_error && m_recover_outofsync) {
-    printf("Event %d. Trying to recover from out of sync error by adding %lu to next event in layer ", m_ev-1, timestamp);
+    printf("Event %d. Trying to recover from out of sync error by adding %llu to next event in layer ", m_ev-1, timestamp);
     for (int i=0; i<m_nDevices; i++)
       if (layer_selected[i])
-        printf("%d (%lu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
+        printf("%d (%llu), ", i, m_reader[i]->NextEvent()->m_timestamp_corrected);
 
     printf("\n");
 

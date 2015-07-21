@@ -89,9 +89,9 @@ def print_alive(scr):
 
 print_alive.n=0
 
-def send_alert():
+def send_alert(prefix=""):
 
-    text = ""
+    text = prefix
     for pad in PADS:
       if (pad['bit'] == 0):
 	text += "%s: STATUS %d (%s)\n" % (pad['name'], pad['bit'], pad['info'] if 'info' in pad else "")
@@ -126,7 +126,8 @@ def main(stdscr):
 	stdscr.addstr(13, 0, "Alert target: %s" % ",".join(ALERT_TARGET))
 	stdscr.addstr(17, 0, "X: Mask alerts for %d seconds" % ALERT_REPEAT_TIME)
 	stdscr.addstr(18, 0, "E: Unmask alerts")
-	stdscr.addstr(19, 0, "CTRL-C: Exit")
+	stdscr.addstr(19, 0, "S: Send test email/text message")
+	stdscr.addstr(20, 0, "CTRL-C: Exit")
 
 	all_ok = True
         for pad in PADS:
@@ -177,7 +178,8 @@ def main(stdscr):
 	      alert_masked = False
 	      alert_sent = -1
 	      not_ok_timestamp = -1
+            if c=='S':
+	      send_alert("TEST: ")
 
 
 curses.wrapper(main)
-
