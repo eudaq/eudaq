@@ -10,5 +10,4 @@ namespace eudaq {
   };
 
   TestConverterPlugin TestConverterPlugin::m_instance;
-
 }
