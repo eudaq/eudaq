@@ -7,7 +7,10 @@
 #include <string>
 #include <cstdlib>
 
+#ifdef WIN32
 #include "Windows4Root.h"
+#endif
+
 #include "TCanvas.h"
 #include "TMath.h"
 #include "TF1.h"
