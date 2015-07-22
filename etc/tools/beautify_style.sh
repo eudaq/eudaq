@@ -15,8 +15,10 @@ CLANG_FORMAT=clang-format-3.6
 # add all the files and directories that may not be reformatted, 
 # relative to the project's root directory
 IGNORE_SET=(
+    main/lib/plugins
     extern
     etc
+    producers
 )
 
 ####################################################################################
