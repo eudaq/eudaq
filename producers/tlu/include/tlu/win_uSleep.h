@@ -3,8 +3,7 @@
 
 #ifdef WIN32
 
-void uSleep(int waitTime) ;
+void uSleep(int waitTime);
 #endif
-
 
 #endif // new_Usleep_h__

@@ -17,9 +17,5 @@ namespace tlu {
 
 #define EUDAQ_TLU_REG(r) r,
 
-  TLUAddresses v0_2 = {
-    EUDAQ_TLU_REGISTERS
-    0
-  };
-
+  TLUAddresses v0_2 = {EUDAQ_TLU_REGISTERS 0};
 }
