@@ -144,11 +144,11 @@ namespace eudaq {
         //        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i << hexdec(GET(it1, i)) << std::endl;
 
 	
-        if ( len0*4 + 12 > data0.end()-it0) {
+        if ( len0*4 + 12 > static_cast<unsigned>(data0.end()-it0)) {
           EUDAQ_WARN("Bad length in first frame");
           break;
         }
-        if ( len1*4 + 12 > data1.end()-it1) {
+        if ( len1*4 + 12 > static_cast<unsigned>( data1.end()-it1)) {
           EUDAQ_WARN("Bad length in second frame");
           break;
         }

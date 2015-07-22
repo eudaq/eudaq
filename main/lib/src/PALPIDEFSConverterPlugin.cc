@@ -546,11 +546,11 @@ namespace eudaq {
           break;
         case DT_CHIPTRAILER:
           if (!started) {
-	    std::cout << "Error, chip trailer found before chip header" << std::endl;
+            std::cout << "Error, chip trailer found before chip header" << std::endl;
             return false;
           }
           if (current_region < 31) {
-	    std::cout << "Error, chip trailer found before last region, current region = " << current_region << std::endl;
+            std::cout << "Error, chip trailer found before last region, current region = " << current_region << std::endl;
             return false;
           }
           started = false;
@@ -559,7 +559,7 @@ namespace eudaq {
           break;
         case DT_REGHEADER:
           if (!started) {
-	    std::cout << "Error, region header found before chip header or after chip trailer" << std::endl;
+            std::cout << "Error, region header found before chip header or after chip trailer" << std::endl;
             return false;
           }
           if (!DecodeAlpide2RegionHeader (data[byte], current_region)) return false;
@@ -567,7 +567,7 @@ namespace eudaq {
           break;
         case DT_DATASHORT:
           if (!started) {
-	    std::cout << "Error, hit data found before chip header or after chip trailer, offending word = " << std::hex << (int)data[byte] << std::dec<< ", byte = " << byte << std::endl;
+            std::cout << "Error, hit data found before chip header or after chip trailer, offending word = " << std::hex << (int)data[byte] << std::dec<< ", byte = " << byte << std::endl;
             return false;
           }
           if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, current_region, planes, false, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
@@ -575,13 +575,17 @@ namespace eudaq {
           break;
         case DT_DATALONG:
           if (!started) {
-	    std::cout << "Error, hit data found before chip header or after chip trailer, offending word = " << std::hex << (int)data[byte] << std::dec<< ", byte = " << byte << std::endl;
+            std::cout << "Error, hit data found before chip header or after chip trailer, offending word = " << std::hex << (int)data[byte] << std::dec<< ", byte = " << byte << std::endl;
             return false;
           }
           if (!DecodeAlpide2DataWord (ev, data, byte , current_layer, current_region, planes, true, last_rgn, last_pixeladdr, last_doublecolumnaddr)) return false;
           byte += 3;
           break;
-
+        default:
+          if (started) std::cout << "Error, found unexpected data after the chip header!" << std::endl;
+          //else         std::cout << "Error, unrecognized data words found before the chip header!" << std::endl;
+          byte += 1; // skip this byte
+          break;
         }
       }
       if (started) {

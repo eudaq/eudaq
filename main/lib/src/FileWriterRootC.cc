@@ -76,11 +76,7 @@ namespace eudaq {
       std::vector<double> cds = plane.GetPixels<double>();
 	  
 
-	 try{ 
-		 	 DUT_time= std::stoull(sev.GetTag("DUT_time"));
-	 }catch(...){
-		 std::cout<<" error during converting DUT time "<<sev.GetTag("DUT_time") << " to ull"<<std::endl;
-	 }
+     DUT_time = sev.GetTag("DUT_time", (uint64_t)0);
   
 
    
@@ -88,7 +84,7 @@ namespace eudaq {
         id_plane = plane.ID();         
         i_time_stamp =  sev.GetTimestamp();
 		try{ 
-		i_tlu= std::stoull(sev.GetTag("TLU_trigger","15"));
+		i_tlu= std::stoul(sev.GetTag("TLU_trigger","15"));
 		}catch(...){
 			std::cout<<" error during converting "<<sev.GetTag("TLU_trigger","15") << " to ull"<<std::endl;
 		}

@@ -50,6 +50,7 @@ public:
 
 	void createNewEvent();
 	void createNewEvent(int);
+	void createEOREvent();
 	void setTimeStamp(ULong64_t TimeStamp);
 	void setTimeStamp2Now();
 	void setTag(const char* tag,const char* Value);
