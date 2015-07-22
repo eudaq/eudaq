@@ -29,79 +29,86 @@ EUTelMimosa26Detector::EUTelMimosa26Detector() : EUTelPixelDetector() {
 
   // prepare and add the subchannels starting from the one with
   // markers in it
-  EUTelROI ch0wm(   0,  0, 287, 575 );
-  EUTelROI ch1wm( 288,  0, 575, 575 );
-  EUTelROI ch2wm( 576,  0, 863, 575 );
-  EUTelROI ch3wm( 864,  0,1151, 575 );
+  EUTelROI ch0wm(0, 0, 287, 575);
+  EUTelROI ch1wm(288, 0, 575, 575);
+  EUTelROI ch2wm(576, 0, 863, 575);
+  EUTelROI ch3wm(864, 0, 1151, 575);
 
-  _subChannelsWithMarkers.push_back( ch0wm );
-  _subChannelsWithMarkers.push_back( ch1wm );
-  _subChannelsWithMarkers.push_back( ch2wm );
-  _subChannelsWithMarkers.push_back( ch3wm );
+  _subChannelsWithMarkers.push_back(ch0wm);
+  _subChannelsWithMarkers.push_back(ch1wm);
+  _subChannelsWithMarkers.push_back(ch2wm);
+  _subChannelsWithMarkers.push_back(ch3wm);
 
-  _subChannelsWithoutMarkers.push_back( ch0wm );
-  _subChannelsWithoutMarkers.push_back( ch1wm );
-  _subChannelsWithoutMarkers.push_back( ch2wm );
-  _subChannelsWithoutMarkers.push_back( ch3wm );
-
-
+  _subChannelsWithoutMarkers.push_back(ch0wm);
+  _subChannelsWithoutMarkers.push_back(ch1wm);
+  _subChannelsWithoutMarkers.push_back(ch2wm);
+  _subChannelsWithoutMarkers.push_back(ch3wm);
 }
 
-void EUTelMimosa26Detector::setMode( string mode ) {
-
-  _mode = mode;
-
-}
+void EUTelMimosa26Detector::setMode(string mode) { _mode = mode; }
 
 bool EUTelMimosa26Detector::hasSubChannels() const {
 
-  if (  _subChannelsWithoutMarkers.size() != 0 ) return true;
-  else return false;
-
+  if (_subChannelsWithoutMarkers.size() != 0)
+    return true;
+  else
+    return false;
 }
 
-std::vector< EUTelROI > EUTelMimosa26Detector::getSubChannels( bool withMarker ) const {
+std::vector<EUTelROI>
+EUTelMimosa26Detector::getSubChannels(bool withMarker) const {
 
-  if ( withMarker ) return _subChannelsWithMarkers;
-  else  return _subChannelsWithoutMarkers;
-
+  if (withMarker)
+    return _subChannelsWithMarkers;
+  else
+    return _subChannelsWithoutMarkers;
 }
 
-EUTelROI EUTelMimosa26Detector::getSubChannelBoundary( size_t iChan, bool withMarker ) const {
-  if ( withMarker ) return _subChannelsWithMarkers.at( iChan );
-  else return _subChannelsWithoutMarkers.at( iChan );
-
+EUTelROI EUTelMimosa26Detector::getSubChannelBoundary(size_t iChan,
+                                                      bool withMarker) const {
+  if (withMarker)
+    return _subChannelsWithMarkers.at(iChan);
+  else
+    return _subChannelsWithoutMarkers.at(iChan);
 }
 
-void EUTelMimosa26Detector::print( ostream& os ) const {
+void EUTelMimosa26Detector::print(ostream &os) const {
 
   size_t w = 35;
 
   string pol = "negative";
-  if ( _signalPolarity > 0 ) pol = "positive";
+  if (_signalPolarity > 0)
+    pol = "positive";
 
-  os << resetiosflags(ios::right)
-     << setiosflags(ios::left)
-     << setfill('.') << setw( w ) << setiosflags(ios::left) << "Detector name " << resetiosflags(ios::left) << " " << _name << endl
-     << setw( w ) << setiosflags(ios::left) << "Mode " << resetiosflags(ios::left) << " " << _mode << endl
-     << setw( w ) << setiosflags(ios::left) << "Pixel along x " << resetiosflags(ios::left) << " from " << _xMin << " to " << _xMax << endl
-     << setw( w ) << setiosflags(ios::left) << "Pixel along y " << resetiosflags(ios::left) << " from " << _yMin << " to " << _yMax << endl
-     << setw( w ) << setiosflags(ios::left) << "Pixel pitch along x " << resetiosflags(ios::left) << " " << _xPitch << "  mm  "  << endl
-     << setw( w ) << setiosflags(ios::left) << "Pixel pitch along y " << resetiosflags(ios::left) << " " << _yPitch << "  mm  "  << endl
-     << setw( w ) << setiosflags(ios::left) << "Signal polarity " << resetiosflags(ios::left) << " " << pol <<  setfill(' ') << endl;
+  os << resetiosflags(ios::right) << setiosflags(ios::left) << setfill('.')
+     << setw(w) << setiosflags(ios::left) << "Detector name "
+     << resetiosflags(ios::left) << " " << _name << endl
+     << setw(w) << setiosflags(ios::left) << "Mode " << resetiosflags(ios::left)
+     << " " << _mode << endl
+     << setw(w) << setiosflags(ios::left) << "Pixel along x "
+     << resetiosflags(ios::left) << " from " << _xMin << " to " << _xMax << endl
+     << setw(w) << setiosflags(ios::left) << "Pixel along y "
+     << resetiosflags(ios::left) << " from " << _yMin << " to " << _yMax << endl
+     << setw(w) << setiosflags(ios::left) << "Pixel pitch along x "
+     << resetiosflags(ios::left) << " " << _xPitch << "  mm  " << endl
+     << setw(w) << setiosflags(ios::left) << "Pixel pitch along y "
+     << resetiosflags(ios::left) << " " << _yPitch << "  mm  " << endl
+     << setw(w) << setiosflags(ios::left) << "Signal polarity "
+     << resetiosflags(ios::left) << " " << pol << setfill(' ') << endl;
 
-  if ( hasMarker() ) {
+  if (hasMarker()) {
 
-    os << resetiosflags( ios::right ) << setiosflags( ios::left );
-    os << "Detector has the following columns (" << _markerPos.size() << ")  used as markers: "<< endl;
+    os << resetiosflags(ios::right) << setiosflags(ios::left);
+    os << "Detector has the following columns (" << _markerPos.size()
+       << ")  used as markers: " << endl;
 
-    vector< size_t >::const_iterator iter = _markerPos.begin();
-    while ( iter != _markerPos.end() ) {
+    vector<size_t>::const_iterator iter = _markerPos.begin();
+    while (iter != _markerPos.end()) {
 
-      os << "x = " << setw( 15 ) << setiosflags(ios::right) << (*iter) << resetiosflags(ios::right) << endl;
+      os << "x = " << setw(15) << setiosflags(ios::right) << (*iter)
+         << resetiosflags(ios::right) << endl;
 
       ++iter;
     }
-
   }
 }

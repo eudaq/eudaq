@@ -20,49 +20,50 @@ namespace eudaq {
    *
    */
   class DLLEXPORT DataCollector : public CommandReceiver {
-    public:
-      DataCollector(const std::string & name, 
-		    const std::string & runcontrol,
-		    const std::string & listenaddress,
-		    const std::string & runnumberfile = "../data/runnumber.dat");
+  public:
+    DataCollector(const std::string &name, const std::string &runcontrol,
+                  const std::string &listenaddress,
+                  const std::string &runnumberfile = "../data/runnumber.dat");
 
-      virtual void OnConnect(const ConnectionInfo & id);
-      virtual void OnDisconnect(const ConnectionInfo & id);
-      virtual void OnServer();
-      virtual void OnGetRun();
-      virtual void OnConfigure(const Configuration & param);
-      virtual void OnPrepareRun(unsigned runnumber);
-      virtual void OnStopRun();
-      virtual void OnReceive(const ConnectionInfo & id, std::shared_ptr<Event> ev);
-      virtual void OnCompleteEvent();
-      virtual void OnStatus();
-      virtual ~DataCollector();
+    virtual void OnConnect(const ConnectionInfo &id);
+    virtual void OnDisconnect(const ConnectionInfo &id);
+    virtual void OnServer();
+    virtual void OnGetRun();
+    virtual void OnConfigure(const Configuration &param);
+    virtual void OnPrepareRun(unsigned runnumber);
+    virtual void OnStopRun();
+    virtual void OnReceive(const ConnectionInfo &id, std::shared_ptr<Event> ev);
+    virtual void OnCompleteEvent();
+    virtual void OnStatus();
+    virtual ~DataCollector();
 
-      void DataThread();
-    private:
-      struct Info {
-       std::shared_ptr<ConnectionInfo> id;
-        std::list<std::shared_ptr<Event> > events;
-      };
+    void DataThread();
 
-      const std::string m_runnumberfile; // path to the file containing the run number
-      void DataHandler(TransportEvent & ev);
-      size_t GetInfo(const ConnectionInfo & id);
+  private:
+    struct Info {
+      std::shared_ptr<ConnectionInfo> id;
+      std::list<std::shared_ptr<Event>> events;
+    };
 
-      bool m_done, m_listening;
-      TransportServer * m_dataserver; ///< Transport for receiving data packets
-//       pthread_t m_thread;
-//       pthread_attr_t m_threadattr;
-	  std::unique_ptr<std::thread> m_thread;
-      std::vector<Info> m_buffer;
-      size_t m_numwaiting; ///< The number of producers with events waiting in the buffer
-      size_t m_itlu; ///< Index of TLU in m_buffer vector, or -1 if no TLU
-      unsigned m_runnumber, m_eventnumber;
-      std::shared_ptr<FileWriter> m_writer;
-      Configuration m_config;
-      Time m_runstart;
+    const std::string
+        m_runnumberfile; // path to the file containing the run number
+    void DataHandler(TransportEvent &ev);
+    size_t GetInfo(const ConnectionInfo &id);
+
+    bool m_done, m_listening;
+    TransportServer *m_dataserver; ///< Transport for receiving data packets
+                                   //       pthread_t m_thread;
+                                   //       pthread_attr_t m_threadattr;
+    std::unique_ptr<std::thread> m_thread;
+    std::vector<Info> m_buffer;
+    size_t m_numwaiting; ///< The number of producers with events waiting in the
+                         ///buffer
+    size_t m_itlu;       ///< Index of TLU in m_buffer vector, or -1 if no TLU
+    unsigned m_runnumber, m_eventnumber;
+    std::shared_ptr<FileWriter> m_writer;
+    Configuration m_config;
+    Time m_runstart;
   };
-
 }
 
 #endif // EUDAQ_INCLUDED_DataCollector

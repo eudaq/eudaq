@@ -7,25 +7,26 @@
 
 namespace eudaq {
 
-  inline std::ostream & operator << (std::ostream & os, const OptionBase & opt) {
+  inline std::ostream &operator<<(std::ostream &os, const OptionBase &opt) {
     opt.Print(os);
     return os;
   }
 
-  void OptionParser::AddOption(OptionBase * opt) {
+  void OptionParser::AddOption(OptionBase *opt) {
     m_options.push_back(opt);
     for (size_t i = 0; i < opt->m_names.size(); ++i) {
       m_names[opt->m_names[i]] = m_options.size() - 1;
     }
   }
 
-  OptionParser & OptionParser::Parse(const char ** args) {
+  OptionParser &OptionParser::Parse(const char **args) {
     m_cmd = *args;
     bool argsonly = false;
     while (*++args) {
       std::string str = *args;
       if (argsonly) {
-        if (m_minargs == (size_t)-1 || (m_maxargs != (size_t)-1 && m_args.size() >= m_maxargs))
+        if (m_minargs == (size_t)-1 ||
+            (m_maxargs != (size_t)-1 && m_args.size() >= m_maxargs))
           throw OptionException("Too many arguments: " + str);
         m_args.push_back(str);
       } else {
@@ -42,14 +43,17 @@ namespace eudaq {
           } else if (str == "-v" || str == "--version") {
             throw MessageException(m_name + " version " + m_ver);
           }
-          if (str[0] == '-') throw OptionException("Unrecognised option: " + str);
-          if (m_minargs == (size_t)-1 || (m_maxargs != (size_t)-1 && m_args.size() >= m_maxargs))
+          if (str[0] == '-')
+            throw OptionException("Unrecognised option: " + str);
+          if (m_minargs == (size_t)-1 ||
+              (m_maxargs != (size_t)-1 && m_args.size() >= m_maxargs))
             throw OptionException("Too many arguments: " + str);
           m_args.push_back(str);
         } else {
           std::string arg = "";
           if (m_options[it->second]->m_hasarg) {
-            if (!*++args) throw OptionException("Missing argument for option: " + str);
+            if (!*++args)
+              throw OptionException("Missing argument for option: " + str);
             arg = *args;
           }
           m_options[it->second]->ParseOption(it->first, arg);
@@ -62,13 +66,12 @@ namespace eudaq {
     return *this;
   }
 
-  void OptionParser::ExtraHelpText(const std::string & str) {
-    m_extra += str;
-  }
+  void OptionParser::ExtraHelpText(const std::string &str) { m_extra += str; }
 
-  void OptionParser::ShowHelp(std::ostream & os) {
+  void OptionParser::ShowHelp(std::ostream &os) {
     os << m_name << " version " << m_ver << "\n";
-    if (m_desc != "") os << m_desc << "\n\n";
+    if (m_desc != "")
+      os << m_desc << "\n\n";
     os << "usage: " << m_cmd << " [options]";
     if (m_minargs != (size_t)-1 && m_maxargs != 0) {
       os << " [" << m_minargs;
@@ -88,42 +91,44 @@ namespace eudaq {
     }
   }
 
-  void OptionBase::Print(std::ostream & os) const {
+  void OptionBase::Print(std::ostream &os) const {
     for (size_t j = 0; j < m_names.size(); ++j) {
       os << " " << m_names[j];
     }
     if (m_hasarg) {
       os << " <" << m_argname << ">\t(default = " << m_deflt << ")";
     }
-    if (m_desc != "") os << "\n     " << m_desc;
+    if (m_desc != "")
+      os << "\n     " << m_desc;
   }
 
-  void OptionParser::LogException(const std::string & msg, std::ostream & os) const {
+  void OptionParser::LogException(const std::string &msg,
+                                  std::ostream &os) const {
     {
       std::ofstream logfile("crashlog.txt", std::ios::app);
       logfile << "===============================================\n"
-        << "Abnormal exit of " << m_name << "(" << m_ver << ") at " << Time::Current().Formatted() << "\n"
-        << msg << "\n"
-        << "-----------------------------------------------" << std::endl;
+              << "Abnormal exit of " << m_name << "(" << m_ver << ") at "
+              << Time::Current().Formatted() << "\n" << msg << "\n"
+              << "-----------------------------------------------" << std::endl;
     }
     GetLogger().SendLogMessage(LogMessage(msg, LogMessage::LVL_ERROR));
     os << msg << "\n"
-      << "Please report this to the developers." << std::endl;
-    //std::string str;
-    //std::getline(std::cin, str);
+       << "Please report this to the developers." << std::endl;
+    // std::string str;
+    // std::getline(std::cin, str);
   }
 
-  int OptionParser::HandleMainException(std::ostream & err, std::ostream & out) {
+  int OptionParser::HandleMainException(std::ostream &err, std::ostream &out) {
     try {
       throw;
-    } catch (const eudaq::MessageException & e) {
+    } catch (const eudaq::MessageException &e) {
       out << e.what() << std::endl;
-    } catch (const eudaq::OptionException & e) {
+    } catch (const eudaq::OptionException &e) {
       err << e.what() << "\n\n";
       ShowHelp(err);
       err << std::endl;
       return 1;
-    } catch (const std::exception & e) {
+    } catch (const std::exception &e) {
       LogException("Uncaught exception:\n" + std::string(e.what()));
       return 1;
     } catch (...) {
@@ -133,30 +138,29 @@ namespace eudaq {
     return 0;
   }
 
-  std::vector<unsigned> parsenumbers( const std::string & s )
-  {
-	  std::vector<unsigned> result;
-	  std::vector<std::string> ranges = split(s, ",");
-	  for (size_t i = 0; i < ranges.size(); ++i) {
-		  size_t j = ranges[i].find('-');
-		  if (j == std::string::npos) {
-			  unsigned v = from_string(ranges[i], 0);
-			  result.push_back(v);
-		  } else {
-			  int32_t min = from_string(ranges[i].substr(0, j), 0);
-			  int32_t max = from_string(ranges[i].substr(j+1), 0);
-			  if (j == 0 && max == 1) {
-				  result.push_back((unsigned)-1);
-			  } else if (j == 0 || j == ranges[i].length()-1 || min < 0 || max < min) {
-				  EUDAQ_THROW("Bad range");
-			  } else {
-				  for (int32_t n = min; n <= max; ++n) {
-					  result.push_back(n);
-				  }
-			  }
-		  }
-	  }
-	  return result;
+  std::vector<unsigned> parsenumbers(const std::string &s) {
+    std::vector<unsigned> result;
+    std::vector<std::string> ranges = split(s, ",");
+    for (size_t i = 0; i < ranges.size(); ++i) {
+      size_t j = ranges[i].find('-');
+      if (j == std::string::npos) {
+        unsigned v = from_string(ranges[i], 0);
+        result.push_back(v);
+      } else {
+        int32_t min = from_string(ranges[i].substr(0, j), 0);
+        int32_t max = from_string(ranges[i].substr(j + 1), 0);
+        if (j == 0 && max == 1) {
+          result.push_back((unsigned)-1);
+        } else if (j == 0 || j == ranges[i].length() - 1 || min < 0 ||
+                   max < min) {
+          EUDAQ_THROW("Bad range");
+        } else {
+          for (int32_t n = min; n <= max; ++n) {
+            result.push_back(n);
+          }
+        }
+      }
+    }
+    return result;
   }
-
 }

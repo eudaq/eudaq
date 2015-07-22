@@ -11,30 +11,40 @@ namespace eudaq {
 
   //   namespace {
   //     static const int temp_order_0[] = { 0, 1, 2, 3 };
-  //     static const std::vector<int> order_default(temp_order_0, temp_order_0+4);
+  //     static const std::vector<int> order_default(temp_order_0,
+  //     temp_order_0+4);
 
   //     static const int temp_order_1[] = { 3, 1, 2, 0 };
-  //     static const std::vector<int> order_swap03(temp_order_1, temp_order_1+4);
+  //     static const std::vector<int> order_swap03(temp_order_1,
+  //     temp_order_1+4);
 
   //     template <typename T_coord, typename T_adc>
-  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawMTEL(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
-  //       const size_t datasize = 2 * inf.m_rows * inf.m_cols * inf.m_mats * inf.NumFrames();
-  //       const size_t datasize2 = 2 * (inf.m_rows * inf.m_cols - 1) * inf.m_mats * inf.NumFrames();
+  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawMTEL(const
+  //     EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+  //       const size_t datasize = 2 * inf.m_rows * inf.m_cols * inf.m_mats *
+  //       inf.NumFrames();
+  //       const size_t datasize2 = 2 * (inf.m_rows * inf.m_cols - 1) *
+  //       inf.m_mats * inf.NumFrames();
   //       const bool missingpixel = brd.DataSize() == datasize2;
   //       if (brd.DataSize() != datasize && brd.DataSize() != datasize2) {
-  //         EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
+  //         EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize())
+  //         +
   //                     ", expecting " + to_string(datasize));
   //       }
-  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(inf.NumPixels(brd), inf.NumFrames());
+  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(inf.NumPixels(brd),
+  //       inf.NumFrames());
   //       const unsigned char * data = brd.GetData();
   //       unsigned pivot = brd.PivotPixel();
 
-  //       unsigned nxpixel = inf.m_cols*inf.m_mats; //number of pixels in x direction
-  //       //unsigned nypixel = b.m_rows;          //number of pixels in y direction
+  //       unsigned nxpixel = inf.m_cols*inf.m_mats; //number of pixels in x
+  //       direction
+  //       //unsigned nypixel = b.m_rows;          //number of pixels in y
+  //       direction
 
   //       for (size_t row = 0; row < inf.m_rows; ++row) {
   //         for (size_t col = 0; col < inf.m_cols; ++col) {
-  //           if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1) break; // last pixel is not transferred
+  //           if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1)
+  //           break; // last pixel is not transferred
   //           for (size_t frame = 0; frame < inf.NumFrames(); ++frame) {
   //             for (size_t mat = 0; mat < inf.m_mats; ++mat) {
   //               unsigned x = col + inf.m_order[mat]*inf.m_cols;
@@ -61,10 +71,13 @@ namespace eudaq {
   //     }
 
   //     template <typename T_coord, typename T_adc>
-  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysZSMTEL(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysZSMTEL(const
+  //     EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
   //       unsigned pixels = inf.NumPixels(brd);
-  //       //std::cout << "board datasize = " << brd.DataSize() << ", pixels = " << pixels << ", frames = " << NumFrames(brd) << std::endl;
-  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, inf.NumFrames());
+  //       //std::cout << "board datasize = " << brd.DataSize() << ", pixels = "
+  //       << pixels << ", frames = " << NumFrames(brd) << std::endl;
+  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels,
+  //       inf.NumFrames());
   //       const unsigned char * data = brd.GetData();
   //       for (unsigned i = 0; i < pixels; ++i) {
   //         int mat = 3 - (data[4*i] >> 6), row = 0, col = 0;
@@ -84,14 +97,18 @@ namespace eudaq {
   //     }
 
   //     template <typename T_coord, typename T_adc>
-  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawM18(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysRawM18(const
+  //     EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
   //       const bool missingpixel = true;
-  //       const size_t datasize = 2 * (inf.m_rows * inf.m_cols - missingpixel) * inf.m_mats * inf.NumFrames();
+  //       const size_t datasize = 2 * (inf.m_rows * inf.m_cols - missingpixel)
+  //       * inf.m_mats * inf.NumFrames();
   //       if (brd.DataSize() != datasize) {
-  //         EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize()) +
+  //         EUDAQ_THROW("EUDRB data size mismatch " + to_string(brd.DataSize())
+  //         +
   //                     ", expecting " + to_string(datasize));
   //       }
-  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(inf.NumPixels(brd), inf.NumFrames());
+  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(inf.NumPixels(brd),
+  //       inf.NumFrames());
   //       const unsigned char * data = brd.GetData();
   //       unsigned pivot = brd.PivotPixel();
 
@@ -100,7 +117,8 @@ namespace eudaq {
 
   //       for (size_t row = 0; row < inf.m_rows; ++row) {
   //         for (size_t col = 0; col < inf.m_cols; ++col) {
-  //           if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1) break; // last pixel is not transferred
+  //           if (missingpixel && row == inf.m_rows-1 && col == inf.m_cols-1)
+  //           break; // last pixel is not transferred
   //           for (size_t frame = 0; frame < inf.NumFrames(); ++frame) {
   //             for (size_t mat = 0; mat < inf.m_mats; ++mat) {
   //               unsigned x = 0;
@@ -141,9 +159,11 @@ namespace eudaq {
   //     }
 
   //     template <typename T_coord, typename T_adc>
-  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysZSM18(const EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
+  //     static EUDRBDecoder::arrays_t<T_coord, T_adc> GetArraysZSM18(const
+  //     EUDRBBoard & brd, const EUDRBDecoder::BoardInfo & inf) {
   //       unsigned pixels = inf.NumPixels(brd);
-  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels, inf.NumFrames());
+  //       EUDRBDecoder::arrays_t<T_coord, T_adc> result(pixels,
+  //       inf.NumFrames());
   //       const unsigned char * data = brd.GetData();
   //       for (unsigned i = 0; i < pixels; ++i) {
   //         int mat = 3 - (data[4*i] >> 6);
@@ -175,12 +195,12 @@ namespace eudaq {
 
   //   }
 
-  EUDRBBoard::EUDRBBoard(Deserializer & ds) {
+  EUDRBBoard::EUDRBBoard(Deserializer &ds) {
     ds.read(m_id);
     ds.read(m_data);
   }
 
-  void EUDRBBoard::Serialize(Serializer & ser) const {
+  void EUDRBBoard::Serialize(Serializer &ser) const {
     ser.write(m_id);
     ser.write(m_data);
   }
@@ -233,7 +253,7 @@ namespace eudaq {
   //     EUDAQ_THROW("Don't know the height of this sensor");
   //   }
 
-  void EUDRBBoard::Print(std::ostream & os) const {
+  void EUDRBBoard::Print(std::ostream &os) const {
     os << "  ID            = " << m_id << "\n";
     //        << "  LocalEventNum = " << LocalEventNumber() << "\n"
     //        << "  TLUEventNum   = " << TLUEventNumber() << "\n"
@@ -243,13 +263,9 @@ namespace eudaq {
     //        << "  DataSize      = " << DataSize() << "\n";
   }
 
-  EUDRBEvent::EUDRBEvent(Deserializer & ds) :
-    Event(ds)
-  {
-    ds.read(m_boards);
-  }
+  EUDRBEvent::EUDRBEvent(Deserializer &ds) : Event(ds) { ds.read(m_boards); }
 
-  void EUDRBEvent::Print(std::ostream & os) const {
+  void EUDRBEvent::Print(std::ostream &os) const {
     Event::Print(os);
     os << ", " << m_boards.size() << " boards";
   }
@@ -260,14 +276,15 @@ namespace eudaq {
     }
   }
 
-  void EUDRBEvent::Serialize(Serializer & ser) const {
+  void EUDRBEvent::Serialize(Serializer &ser) const {
     Event::Serialize(ser);
     ser.write(m_boards);
   }
 
   //   EUDRBDecoder::EUDRBDecoder(const DetectorEvent & bore) {
   //     for (size_t i = 0; i < bore.NumEvents(); ++i) {
-  //       const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent *>(bore.GetEvent(i));
+  //       const EUDRBEvent * ev = dynamic_cast<const EUDRBEvent
+  //       *>(bore.GetEvent(i));
   //       //std::cout << "SubEv " << i << (ev ? " is EUDRB" : "") << std::endl;
   //       if (ev) {
   //         unsigned nboards = from_string(ev->GetTag("BOARDS"), 0);
@@ -283,7 +300,8 @@ namespace eudaq {
   //   }
 
   //   EUDRBDecoder::BoardInfo::BoardInfo()
-  //     : m_det(DET_MIMOTEL), m_mode(MODE_RAW3), m_rows(0), m_cols(0), m_mats(0), m_order(order_swap03), m_version(0)
+  //     : m_det(DET_MIMOTEL), m_mode(MODE_RAW3), m_rows(0), m_cols(0),
+  //     m_mats(0), m_order(order_swap03), m_version(0)
   //   {
   //   }
 
@@ -296,7 +314,8 @@ namespace eudaq {
   //     if (det == "MIMOTEL") m_det = DET_MIMOTEL;
   //     else if (det == "MIMOSTAR2") m_det = DET_MIMOSTAR2;
   //     else if (det == "MIMOSA18") m_det = DET_MIMOSA18;
-  //     else if (det == "MIMOSA1") m_det = DET_MIMOSA18; // DEBUGGING (can be removed)
+  //     else if (det == "MIMOSA1") m_det = DET_MIMOSA18; // DEBUGGING (can be
+  //     removed)
   //     else EUDAQ_THROW("Unknown detector in EUDRBDecoder: " + det);
 
   //     std::string mode = ev.GetTag("MODE" + to_string(brd));
@@ -318,7 +337,8 @@ namespace eudaq {
   //       } else {
   //         m_version = 2;
   //       }
-  //       EUDAQ_WARN("No EUDRB Version tag, guessing VERSION=" + to_string(m_version));
+  //       EUDAQ_WARN("No EUDRB Version tag, guessing VERSION=" +
+  //       to_string(m_version));
   //     }
 
   //     Check();
@@ -351,9 +371,12 @@ namespace eudaq {
   //       EUDAQ_THROW("Unknown mode in EUDRBDecoder");
   //   }
 
-  //   const EUDRBDecoder::BoardInfo & EUDRBDecoder::GetInfo(const EUDRBBoard & brd) const {
-  //     std::map<unsigned, BoardInfo>::const_iterator it = m_info.find(brd.GetID());
-  //     if (it == m_info.end()) EUDAQ_THROW("Unrecognised board ID: " + to_string(brd.GetID()) + ", cannot decode event");
+  //   const EUDRBDecoder::BoardInfo & EUDRBDecoder::GetInfo(const EUDRBBoard &
+  //   brd) const {
+  //     std::map<unsigned, BoardInfo>::const_iterator it =
+  //     m_info.find(brd.GetID());
+  //     if (it == m_info.end()) EUDAQ_THROW("Unrecognised board ID: " +
+  //     to_string(brd.GetID()) + ", cannot decode event");
   //     return it->second;
   //   }
 
@@ -361,14 +384,16 @@ namespace eudaq {
   //     return 3 - m_mode; // RAW3=0 -> 3, RAW2=1 -> 2, ZS=2 -> 1
   //   }
 
-  //   unsigned EUDRBDecoder::BoardInfo::NumPixels(const EUDRBBoard & brd) const {
+  //   unsigned EUDRBDecoder::BoardInfo::NumPixels(const EUDRBBoard & brd) const
+  //   {
   //     if (m_mode != MODE_ZS) return m_rows * m_cols * m_mats;
   //     int padding = *(unsigned *)(brd.GetData() + brd.DataSize() - 4) == 0;
   //     return brd.DataSize() / 4 - padding;
   //   }
 
   //   template <typename T_coord, typename T_adc>
-  //   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArrays(const EUDRBBoard & brd) const {
+  //   EUDRBDecoder::arrays_t<T_coord, T_adc> EUDRBDecoder::GetArrays(const
+  //   EUDRBBoard & brd) const {
   //     const BoardInfo & inf = GetInfo(brd);
   //     switch (inf.m_det) {
   //     case DET_MIMOSTAR2:
@@ -394,11 +419,11 @@ namespace eudaq {
   //   }
 
   // #define MAKE_DECODER_TYPE(TCOORD, TADC)
-  //   template EUDRBDecoder::arrays_t<TCOORD, TADC> EUDRBDecoder::GetArrays<>(const EUDRBBoard & brd) const
+  //   template EUDRBDecoder::arrays_t<TCOORD, TADC>
+  //   EUDRBDecoder::GetArrays<>(const EUDRBBoard & brd) const
 
   //   MAKE_DECODER_TYPE(short, short);
   //   MAKE_DECODER_TYPE(double, double);
 
   // #undef MAKE_DECODER_TYPE
-
 }

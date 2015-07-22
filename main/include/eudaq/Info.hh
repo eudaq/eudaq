@@ -2,7 +2,8 @@
 #define EUDAQ_INCLUDED_Info
 
 /*
- * This file contains information about which capabilities this version of EUDAQ supports,
+ * This file contains information about which capabilities this version of EUDAQ
+ * supports,
  * to enable users of the library to conditionally enable functionality.
  */
 

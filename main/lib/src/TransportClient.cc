@@ -2,7 +2,5 @@
 
 namespace eudaq {
 
-  TransportClient::~TransportClient() {
-  }
-
+  TransportClient::~TransportClient() {}
 }

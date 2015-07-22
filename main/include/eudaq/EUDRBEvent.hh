@@ -8,44 +8,45 @@
 namespace eudaq {
 
   class DLLEXPORT EUDRBBoard : public Serializable {
-    public:
-      typedef std::vector<unsigned char> vec_t;
-      EUDRBBoard(unsigned id = 0) : m_id(id) {}
-      //     template <typename T>
-      //     EUDRBBoard(unsigned id, const std::vector<T> & data) :
-      //       m_id(id), m_data(make_vector(data)) {}
-      //     template <typename T>
-      //     EUDRBBoard(unsigned id, const T * data, size_t bytes) :
-      //       m_id(id), m_data(make_vector(data, bytes)) {}
-      EUDRBBoard(Deserializer &);
-      virtual void Serialize(Serializer &) const;
-      unsigned GetID() const { return m_id; }
-      //     unsigned LocalEventNumber() const;
-      //     unsigned TLUEventNumber() const;
-      //     unsigned FrameNumber() const;
-      //     unsigned PivotPixel() const;
-      //     unsigned WordCount() const;
-      //     size_t   DataSize() const;
-      //     const unsigned char * GetData() const { return &m_data[8]; }
-      const vec_t & GetDataVector() const { return m_data; }
-      void Print(std::ostream &) const;
-    private:
-      //     unsigned char GetByte(size_t i) const { return m_data[i]; }
-      template <typename T>
-        static vec_t make_vector(const T * data, size_t bytes) {
-          const unsigned char * ptr = reinterpret_cast<const unsigned char *>(data);
-          return vec_t(ptr, ptr + bytes);
-        }
-      template <typename T>
-        static vec_t make_vector(const std::vector<T> & data) {
-          const unsigned char * ptr = reinterpret_cast<const unsigned char *>(&data[0]);
-          return vec_t(ptr, ptr + data.size() * sizeof(T));
-        }
-      unsigned m_id;
-      vec_t m_data;
+  public:
+    typedef std::vector<unsigned char> vec_t;
+    EUDRBBoard(unsigned id = 0) : m_id(id) {}
+    //     template <typename T>
+    //     EUDRBBoard(unsigned id, const std::vector<T> & data) :
+    //       m_id(id), m_data(make_vector(data)) {}
+    //     template <typename T>
+    //     EUDRBBoard(unsigned id, const T * data, size_t bytes) :
+    //       m_id(id), m_data(make_vector(data, bytes)) {}
+    EUDRBBoard(Deserializer &);
+    virtual void Serialize(Serializer &) const;
+    unsigned GetID() const { return m_id; }
+    //     unsigned LocalEventNumber() const;
+    //     unsigned TLUEventNumber() const;
+    //     unsigned FrameNumber() const;
+    //     unsigned PivotPixel() const;
+    //     unsigned WordCount() const;
+    //     size_t   DataSize() const;
+    //     const unsigned char * GetData() const { return &m_data[8]; }
+    const vec_t &GetDataVector() const { return m_data; }
+    void Print(std::ostream &) const;
+
+  private:
+    //     unsigned char GetByte(size_t i) const { return m_data[i]; }
+    template <typename T>
+    static vec_t make_vector(const T *data, size_t bytes) {
+      const unsigned char *ptr = reinterpret_cast<const unsigned char *>(data);
+      return vec_t(ptr, ptr + bytes);
+    }
+    template <typename T> static vec_t make_vector(const std::vector<T> &data) {
+      const unsigned char *ptr =
+          reinterpret_cast<const unsigned char *>(&data[0]);
+      return vec_t(ptr, ptr + data.size() * sizeof(T));
+    }
+    unsigned m_id;
+    vec_t m_data;
   };
 
-  inline std::ostream & operator << (std::ostream & os, const EUDRBBoard & fr) {
+  inline std::ostream &operator<<(std::ostream &os, const EUDRBBoard &fr) {
     fr.Print(os);
     return os;
   }
@@ -55,16 +56,19 @@ namespace eudaq {
    */
   class DLLEXPORT EUDRBEvent : public Event {
     EUDAQ_DECLARE_EVENT(EUDRBEvent);
-    public:
+
+  public:
     virtual void Serialize(Serializer &) const;
     //     EUDRBEvent(unsigned run, unsigned event) :
     //       Event(run, event) {}
     //     template <typename T>
-    //     EUDRBEvent(unsigned run, unsigned event, const std::vector<T> & data) :
+    //     EUDRBEvent(unsigned run, unsigned event, const std::vector<T> & data)
+    //     :
     //       Event(run, event),
     //       m_boards(1, EUDRBBoard(data)) {}
     //     template <typename T>
-    //     EUDRBEvent(unsigned run, unsigned event, const T * data, size_t bytes) :
+    //     EUDRBEvent(unsigned run, unsigned event, const T * data, size_t
+    //     bytes) :
     //       Event(run, event),
     //       m_boards(1, EUDRBBoard(data, bytes)) {}
     EUDRBEvent(Deserializer &);
@@ -78,11 +82,11 @@ namespace eudaq {
     //     }
     virtual void Print(std::ostream &) const;
 
-    //virtual std::string GetSubType() const { return ""; }
+    // virtual std::string GetSubType() const { return ""; }
 
     unsigned NumBoards() const { return m_boards.size(); }
-    EUDRBBoard & GetBoard(unsigned i) { return m_boards[i]; }
-    const EUDRBBoard & GetBoard(unsigned i) const { return m_boards[i]; }
+    EUDRBBoard &GetBoard(unsigned i) { return m_boards[i]; }
+    const EUDRBBoard &GetBoard(unsigned i) const { return m_boards[i]; }
     void Debug();
     //     static EUDRBEvent BORE(unsigned run) {
     //       return EUDRBEvent((void*)0, run);
@@ -90,24 +94,28 @@ namespace eudaq {
     //     static EUDRBEvent EORE(unsigned run, unsigned event) {
     //       return EUDRBEvent((void*)0, run, event);
     //     }
-    private:
+  private:
     //     EUDRBEvent(void *, unsigned run, unsigned event = 0)
-    //       : Event(run, event, NOTIMESTAMP, event ? Event::FLAG_EORE : Event::FLAG_BORE)
+    //       : Event(run, event, NOTIMESTAMP, event ? Event::FLAG_EORE :
+    //       Event::FLAG_BORE)
     //       {}
-    //void Analyze();
-    //bool m_analyzed;
+    // void Analyze();
+    // bool m_analyzed;
     std::vector<EUDRBBoard> m_boards;
   };
 
   //   class EUDRBDecoder {
   //   public:
-  //     enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER, DET_MIMOSA18, DET_MIMOSA5 };
+  //     enum E_DET  { DET_MIMOSTAR2, DET_MIMOTEL, DET_MIMOTEL_NEWORDER,
+  //     DET_MIMOSA18, DET_MIMOSA5 };
   //     enum E_MODE { MODE_RAW3, MODE_RAW2, MODE_ZS };
 
   //     EUDRBDecoder(const DetectorEvent & bore);
 
-  //     unsigned NumFrames(const EUDRBBoard & brd) const { return GetInfo(brd).NumFrames(); }
-  //     unsigned NumPixels(const EUDRBBoard & brd) const { return GetInfo(brd).NumPixels(brd); }
+  //     unsigned NumFrames(const EUDRBBoard & brd) const { return
+  //     GetInfo(brd).NumFrames(); }
+  //     unsigned NumPixels(const EUDRBBoard & brd) const { return
+  //     GetInfo(brd).NumPixels(brd); }
   //     unsigned Width(const EUDRBBoard & brd) const;
   //     unsigned Height(const EUDRBBoard & brd) const;
 
@@ -147,7 +155,6 @@ namespace eudaq {
   //     const BoardInfo & GetInfo(const EUDRBBoard & brd) const;
   //     std::map<unsigned, BoardInfo> m_info;
   //   };
-
 }
 
 #endif // EUDAQ_INCLUDED_EUDRBEvent

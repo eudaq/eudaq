@@ -1,5 +1,3 @@
 #include "eudaq/Serializable.hh"
 
-namespace eudaq {
-
-}
+namespace eudaq {}

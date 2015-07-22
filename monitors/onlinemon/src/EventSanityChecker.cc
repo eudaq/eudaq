@@ -7,36 +7,16 @@
 
 #include "EventSanityChecker.hh"
 
-//default constructor
-EventSanityChecker::EventSanityChecker()
-{
-  NPlanes=0;
+// default constructor
+EventSanityChecker::EventSanityChecker() { NPlanes = 0; }
 
-}
+// set the number of planes and frames
+EventSanityChecker::EventSanityChecker(int nplanes) { NPlanes = nplanes; }
 
-//set the number of planes and frames
-EventSanityChecker::EventSanityChecker(int nplanes)
-{
-
-  NPlanes=nplanes;
-}
-
-EventSanityChecker::~EventSanityChecker()
-{
+EventSanityChecker::~EventSanityChecker() {
   // TODO Auto-generated destructor stub
 }
 
+unsigned int EventSanityChecker::getNPlanes() const { return NPlanes; }
 
-unsigned int EventSanityChecker::getNPlanes() const
-{
-  return NPlanes;
-}
-
-
-
-void EventSanityChecker::setNPlanes(int NPlanes)
-{
-  this->NPlanes = NPlanes;
-}
-
-
+void EventSanityChecker::setNPlanes(int NPlanes) { this->NPlanes = NPlanes; }

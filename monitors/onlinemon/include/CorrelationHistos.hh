@@ -16,34 +16,35 @@
 using namespace std;
 
 class CorrelationHistos {
-  protected:
-    std::string _sensor1;
-    std::string _sensor2;
-    int _id1;
-    int _id2;
-    int _maxX1;
-    int _maxX2;
-    int _maxY1;
-    int _maxY2;
-    int _fills;
-    TH2I * _2dcorrX;
-    TH2I * _2dcorrY;
-  public:
-    CorrelationHistos(SimpleStandardPlane p1, SimpleStandardPlane p2);
+protected:
+  std::string _sensor1;
+  std::string _sensor2;
+  int _id1;
+  int _id2;
+  int _maxX1;
+  int _maxX2;
+  int _maxY1;
+  int _maxY2;
+  int _fills;
+  TH2I *_2dcorrX;
+  TH2I *_2dcorrY;
 
-    void Fill(const SimpleStandardCluster &cluster1, const SimpleStandardCluster &cluster2);
+public:
+  CorrelationHistos(SimpleStandardPlane p1, SimpleStandardPlane p2);
 
-    void Reset();
+  void Fill(const SimpleStandardCluster &cluster1,
+            const SimpleStandardCluster &cluster2);
 
-    TH2I * getCorrXHisto();
-    TH2I * getCorrYHisto();
-    int getFills() const ;
-    void resetFills();
-    void Write();
+  void Reset();
 
+  TH2I *getCorrXHisto();
+  TH2I *getCorrYHisto();
+  int getFills() const;
+  void resetFills();
+  void Write();
 };
 #ifdef __CINT__
-#pragma link C++ class CorrelationHistos-;
+#pragma link C++ class CorrelationHistos - ;
 #endif
 
 #endif /* CORRELATIONHISTOS_HH_ */
