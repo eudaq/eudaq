@@ -136,7 +136,6 @@ class PALPIDEFSProducer : public eudaq::Producer {
         , m_flush(false)
         , m_configured(false)
         , m_firstevent(false)
-        , m_stage_homed(false)
         , m_reader(0)
         , m_next_event(0)
         , m_debuglevel(debuglevel)
@@ -202,7 +201,6 @@ class PALPIDEFSProducer : public eudaq::Producer {
     bool m_flush;
     bool m_configured;
     bool m_firstevent;
-    bool m_stage_homed;
     DeviceReader** m_reader;
     SingleEvent** m_next_event;
     int m_debuglevel;

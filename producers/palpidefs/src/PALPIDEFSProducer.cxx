@@ -1061,16 +1061,10 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration & param)
     std::cout << "Moving DUT to position..." << std::endl;
     bool move_failed=false;
     if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 0")==0) {
-      if (m_stage_homed || system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")==0) {
-        m_stage_homed=true;
-        const size_t buffer_size = 100;
-        char buffer[buffer_size];
-        snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
-        if (system(buffer)!=0) move_failed=true;
-      }
-      else {
-        move_failed=true;
-      }
+      const size_t buffer_size = 100;
+      char buffer[buffer_size];
+      snprintf(buffer, buffer_size, "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
+      if (system(buffer)!=0) move_failed=true;
     }
     else move_failed=true;
     if (move_failed) {
