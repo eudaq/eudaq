@@ -100,12 +100,15 @@ private slots:
   //  Reset();
   //}
 
-/*The function on_btnStart_clicked handles the event of the start button being pressed. The list of connections is accessed via the RunControlModel class. In the case that not all of the connections are configured, the code returns without doing anything. Otherwise ....
+/*The function on_btnStart_clicked handles the event of the start button being pressed. The list of connections is accessed via the RunControlModel class. In the case that not all of the connections are configured, the program displays a message prompting the user to configure all connections. Otherwise ....
 */
   void on_btnStart_clicked(bool cont = false) { 
     std::cout << "DEBUG: Start Button Pressed \n";
-    if(!m_run.CheckConfigured())
-        return;
+    if(!m_run.CheckConfigured()){
+	QMessageBox msgBox;
+        msgBox.setText("Please Configure Connections Before Running.");
+        msgBox.exec();
+        return;}
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
