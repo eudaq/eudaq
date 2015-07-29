@@ -81,6 +81,9 @@ namespace {
 RunConnectionDelegate::RunConnectionDelegate(RunControlModel *model)
     : m_model(model) {}
 
+void RunConnectionDelegate::GetModelData(){
+   std::cout<<"DEBUG: Function works: \n";
+}
 void RunConnectionDelegate::paint(QPainter *painter,
                                   const QStyleOptionViewItem &option,
                                   const QModelIndex &index) const {
@@ -234,13 +237,18 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
   // QMessageBox::information(this, "EUDAQ Run Control",
   //                         "This will reset all connected Producers etc.");
   m_run.newconnection(id);
+  std::cout<< "DEBUG: Have bool:" << have_Collector << "\n"; 
   if (id.GetType() == "DataCollector") {
+    have_Collector= true;
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
+    std::cout<<"DEBUG: Found a Data Collector \n";
     SetState(ST_NONE);
   }
-  if (id.GetType() == "LogCollector") {
+  else if (id.GetType() == "LogCollector") {
+    std::cout<<"DEBUG: Found a Log Collector \n";
     btnLogSetStatus(true);
   }
+  
 }
 
 bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {

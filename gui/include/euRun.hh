@@ -34,7 +34,7 @@ inline std::string to_bytes(const std::string &val) {
 class RunConnectionDelegate : public QItemDelegate {
 public:
   RunConnectionDelegate(RunControlModel *model);
-
+  void GetModelData();
 private:
   void paint(QPainter *painter, const QStyleOptionViewItem &option,
              const QModelIndex &index) const;
@@ -50,7 +50,8 @@ public:
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
 private:
-  enum state_t { ST_NONE, ST_READY, ST_RUNNING };
+  enum state_t { ST_NONE, ST_READY, ST_RUNNING};
+  bool have_Collector=false;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
     m_run.disconnected(id);
@@ -78,6 +79,7 @@ private:
 private slots:
 
   void SetStateSlot(int state) {
+    //std::cout << "DEBUG: Current State is: "; std::cout<< state ; std::cout<<"\n";
     btnConfig->setEnabled(state != ST_RUNNING);
     btnTerminate->setEnabled(state != ST_RUNNING);
     btnStart->setEnabled(state == ST_READY);
@@ -87,6 +89,8 @@ private slots:
   void on_btnTerminate_clicked() { close(); }
 
   void on_btnConfig_clicked() {
+
+    //std::cout << "DEBUG: Configure Button Pressed \n";
     std::string settings = cmbConfig->currentText().toStdString();
     Configure(settings, txtGeoID->text().toInt());
     SetState(ST_READY);
@@ -95,7 +99,13 @@ private slots:
   // void on_btnReset_clicked() {
   //  Reset();
   //}
-  void on_btnStart_clicked(bool cont = false) {
+
+/*The function on_btnStart_clicked handles the event of the start button being pressed. The list of connections is accessed via the RunControlModel class. In the case that not all of the connections are configured, the code returns without doing anything. Otherwise ....
+*/
+  void on_btnStart_clicked(bool cont = false) { 
+    std::cout << "DEBUG: Start Button Pressed \n";
+    if(!m_run.CheckConfigured())
+        return;
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -110,10 +120,13 @@ private slots:
   }
   void on_btnStop_clicked() {
     StopRun();
+    //std::cout << "DEBUG: Stop Button Pressed \n";
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
     SetState(ST_READY);
   }
   void on_btnLog_clicked() {
+    //std::cout << "DEBUG: Log Button Pressed \n" ;
+    //std::cout <<" Is Configured? "<<m_run.CheckConfigured()<<"\n";
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
   }
@@ -158,11 +171,13 @@ private slots:
       i->second->setText(value);
     }
   }
-  void btnLogSetStatusSlot(bool status) { btnLog->setEnabled(status); }
+  void btnLogSetStatusSlot(bool status) { std::cout<<"DEBUG: Got Logger";btnLog->setEnabled(status); }
+  void btnStartSetStatusSlot(bool status) { std::cout<< "DEBUG: Called Start Status reset \n"; btnStart->setEnabled(status); std::cout<< "DEBUG: Current State of start button: "; std::cout<<btnStart->isEnabled(); std::cout<< "\n";  }
 
 signals:
   void StatusChanged(const QString &, const QString &);
   void btnLogSetStatus(bool status);
+  void btnStartSetStatus(bool status);
   void SetState(int status);
 
 private:

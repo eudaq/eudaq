@@ -94,7 +94,22 @@ void RunControlModel::UpdateDisplayed() {
     emit dataChanged(createIndex(0, 0), createIndex(m_data.size() - 1, 0));
   }
 }
-
+/*Check Configured is a function of RunControlModel that goes through the list of connections stored in m_data and determines if they are all configured.
+In the case that all are configured this function returns true,
+In the case that one of the connections is not configured this function returns false.
+*/
+bool RunControlModel::CheckConfigured() {
+     std::string connectionState = ""; 
+     for(RunControlConnection i: m_data){
+        connectionState = i[2].toStdString();
+        //std::cout<<"Status is: "<< stdString<<" Bool Test:"<<(stdString.size()<5) <<"\n";
+        //Currently the test for configuration is based on the length of the state string. This could be
+	//implemeted differently
+	if(connectionState.size()<5)
+	    return false;
+     }
+     return true;
+}
 int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
   return m_data.size();
 }
