@@ -10,10 +10,11 @@ If you use gcc > 4.7 you may need to apply the patch producers/miniTLU/etc/boost
 
 Then:
 
+```
 cd build
-cmake -D BUILD_miniTLU=ON ..
-make
+cmake -DBUILD_miniTLU=ON ..
 make install
+```
 
 === To start the program
 
