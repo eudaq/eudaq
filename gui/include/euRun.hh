@@ -51,7 +51,6 @@ public:
 
 private:
   enum state_t { ST_NONE, ST_READY, ST_RUNNING};
-  bool have_Collector=false;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
     m_run.disconnected(id);
@@ -78,6 +77,8 @@ private:
   bool eventFilter(QObject *object, QEvent *event);
 private slots:
 
+/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal: (?) is emmited, this function is triggered. This function takes a variable state, which corresponds to one of the three states which the program can be in. Depending on which state the program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
+
   void SetStateSlot(int state) {
     //std::cout << "DEBUG: Current State is: "; std::cout<< state ; std::cout<<"\n";
     btnConfig->setEnabled(state != ST_RUNNING);
@@ -85,7 +86,7 @@ private slots:
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
     if(state == ST_NONE)
-       lblCurrent->setText(QString("<font size=12 ace='Courier New' color='red'><b>Current State: NONE </b></font>"));
+       lblCurrent->setText(QString("<font size=12 face='Courier New' color='red'><b>Current State: NONE </b></font>"));
     else if (state == ST_READY)
        lblCurrent->setText(QString("<font size=12 face='Courier New' color='orange'><b>Current State: READY </b></font>"));
     else if (state ==ST_RUNNING)
@@ -106,7 +107,9 @@ private slots:
   //  Reset();
   //}
 
-/*The function on_btnStart_clicked handles the event of the start button being pressed. The list of connections is accessed via the RunControlModel class. In the case that not all of the connections are configured, the program displays a message prompting the user to configure all connections. Otherwise ....
+/*The function on_btnStart_clicked handles the event of the start button being pressed. The list of connections is accessed via the RunControlModel class. In the case that not all of the connections are configured, the program displays a message prompting the user to configure all connections. Otherwise the function begins the run. 
+
+Starting the run includes resetting the following variables from the previous run : trigger, time, and start time. It then starts the run, emits the status changed, and sets the state to running.
 */
   void on_btnStart_clicked(bool cont = false) { 
     std::cout << "DEBUG: Start Button Pressed \n";
@@ -131,7 +134,7 @@ private slots:
     StopRun();
     //std::cout << "DEBUG: Stop Button Pressed \n";
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-    SetState(ST_READY);
+    SetState(ST_NONE);
   }
   void on_btnLog_clicked() {
     //std::cout << "DEBUG: Log Button Pressed \n" ;

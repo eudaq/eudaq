@@ -238,9 +238,7 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
   // QMessageBox::information(this, "EUDAQ Run Control",
   //                         "This will reset all connected Producers etc.");
   m_run.newconnection(id);
-  std::cout<< "DEBUG: Have bool:" << have_Collector << "\n"; 
   if (id.GetType() == "DataCollector") {
-    have_Collector= true;
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
     std::cout<<"DEBUG: Found a Data Collector \n";
     SetState(ST_NONE);
@@ -249,6 +247,8 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
     std::cout<<"DEBUG: Found a Log Collector \n";
     btnLogSetStatus(true);
   }
+  else if (id.GetType() == "Producer")
+    SetState(ST_NONE);
   
 }
 
