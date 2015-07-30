@@ -350,7 +350,7 @@ namespace eudaq {
       if (roc < 8)
         return (col + roc * ROC_NUMCOLS);
       else
-        return ((16 - roc) * ROC_NUMCOLS - col);
+        return ((16 - roc) * ROC_NUMCOLS - col - 1);
     };
 
     static std::vector<uint16_t>
