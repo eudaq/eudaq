@@ -49,7 +49,7 @@ namespace eudaq {
       m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
 
       if (m_roctype == 0x0)
-        EUDAQ_ERROR("Roctype" + to_string((int)m_roctype) +
+        EUDAQ_ERROR("Roctype " + roctype + " " + to_string((int)m_roctype) +
                     " not propagated correctly to CMSPixelConverterPlugin");
 
       std::cout << "CMSPixel Converter initialized with detector " << m_detector
@@ -350,7 +350,7 @@ namespace eudaq {
       if (roc < 8)
         return (col + roc * ROC_NUMCOLS);
       else
-        return ((16 - roc) * ROC_NUMCOLS - col);
+        return ((16 - roc) * ROC_NUMCOLS - col - 1);
     };
 
     static std::vector<uint16_t>
