@@ -84,6 +84,12 @@ private slots:
     btnTerminate->setEnabled(state != ST_RUNNING);
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
+    if(state == ST_NONE)
+       lblCurrent->setText(QString("<font size=12 ace='Courier New' color='red'><b>Current State: NONE </b></font>"));
+    else if (state == ST_READY)
+       lblCurrent->setText(QString("<font size=12 face='Courier New' color='orange'><b>Current State: READY </b></font>"));
+    else if (state ==ST_RUNNING)
+       lblCurrent->setText(QString("<font size=12 face='Courier New' color='green'><b>Current State: RUNNING </b></font>"));
   }
 
   void on_btnTerminate_clicked() { close(); }
