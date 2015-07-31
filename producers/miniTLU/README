@@ -12,7 +12,7 @@ Then:
 
 ```
 cd build
-cmake -DBUILD_miniTLU=ON ..
+cmake -DBUILD_miniTLU=ON -DIGNORE_KNOWN_ISSUES=ON ..
 make install
 ```
 
