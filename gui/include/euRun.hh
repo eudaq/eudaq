@@ -51,6 +51,7 @@ public:
 
 private:
   enum state_t { ST_NONE, ST_READY, ST_RUNNING};
+  const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
     m_run.disconnected(id);
@@ -86,11 +87,11 @@ private slots:
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
     if(state == ST_NONE)
-       lblCurrent->setText(QString("<font size=12 face='Courier New' color='red'><b>Current State: NONE </b></font>"));
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: NOT READY </b></font>").arg(FONT_SIZE));
     else if (state == ST_READY)
-       lblCurrent->setText(QString("<font size=12 face='Courier New' color='orange'><b>Current State: READY </b></font>"));
+       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: READY </b></font>").arg(FONT_SIZE));
     else if (state ==ST_RUNNING)
-       lblCurrent->setText(QString("<font size=12 face='Courier New' color='green'><b>Current State: RUNNING </b></font>"));
+       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: RUNNING </b></font>").arg(FONT_SIZE));
   }
 
   void on_btnTerminate_clicked() { close(); }

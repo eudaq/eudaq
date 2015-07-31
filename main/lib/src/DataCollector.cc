@@ -76,6 +76,8 @@ namespace eudaq {
     // if (during run) THROW
   }
 
+/* Upon recieving the Configure command the DataCollector function uses Configure object to obtain configuration setting from the .conf file. The important settings that it aquires are the file Type and Pattern that the DataCollector will write. These settings are stored in the varible m_writer which is an instance of the std File Writer Class. 
+*/
   void DataCollector::OnConfigure(const Configuration &param) {
     m_config = param;
     m_writer = std::shared_ptr<eudaq::FileWriter>(

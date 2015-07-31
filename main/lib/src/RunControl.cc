@@ -68,7 +68,8 @@ namespace eudaq {
   }
 
   RunControl::~RunControl() { StopServer(); }
-
+/*Impelmentation of the Configure function. This function recieves a Configuration object, which is a representation and a handler for the .conf files. If the section RunControl exists in the scope of the .conf file, the RunControl adopts these configurations, namely the size and event limit of the run. Then the function gets the next Configure File
+*/
   void RunControl::Configure(const Configuration &config) {
     SendCommand("CLEAR");
     mSleep(500);
