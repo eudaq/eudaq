@@ -1056,7 +1056,7 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration & param)
 {
 #ifndef SIMULATION
   // linear stage
-  m_dut_pos = param.Get("DUTposition", -1);
+  m_dut_pos = param.Get("DUTposition", -1.);
   if (m_dut_pos>=0.) {
     std::cout << "Moving DUT to position..." << std::endl;
     bool move_failed=false;

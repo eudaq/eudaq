@@ -155,7 +155,7 @@ class PALPIDEFSProducer : public eudaq::Producer {
         , m_readout_delay(0x0)
         , m_monitor_PSU(false)
         , m_back_bias_voltage(-1)
-        , m_dut_pos(-1)
+        , m_dut_pos(-1.)
         , m_SCS_charge_start(-1)
         , m_SCS_charge_stop(-1)
         , m_SCS_charge_step(-1)
