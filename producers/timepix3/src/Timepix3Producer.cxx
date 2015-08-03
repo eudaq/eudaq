@@ -134,6 +134,9 @@ class Timepix3Producer : public eudaq::Producer {
     // Reset Device
     if( !spidrctrl->reinitDevice( device_nr ) ) error_out( "###reinitDevice" );
 
+    //Due to timing issue, set readout speed at 320 Mbps
+    if( !spidrctrl->setReadoutSpeed( device_nr, 320) ) error_out( "###setReadoutSpeed");
+    
     // Are we connected to the SPIDR-TPX3 module?
     if( !spidrctrl->isConnected() ) {
       std::cout << spidrctrl->ipAddressString() << ": " << spidrctrl->connectionStateString() << ", " << spidrctrl->connectionErrString() << std::endl;
