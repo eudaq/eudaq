@@ -166,6 +166,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
     qRegisterMetaType<QModelIndex>("QModelIndex");
     registered = true;
   }
+
   if (id.GetType() == "DataCollector") {
     m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
     m_events = from_string(status->GetTag("EVENT"), 0LL);
@@ -238,9 +239,11 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
   // QMessageBox::information(this, "EUDAQ Run Control",
   //                         "This will reset all connected Producers etc.");
   m_run.newconnection(id);
+  needsConfigureCheck=true; 
   if (id.GetType() == "DataCollector") {
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
     std::cout<<"DEBUG: Found a Data Collector \n";
+    hasCollector= true;
     SetState(ST_NONE);
   }
   else if (id.GetType() == "LogCollector") {

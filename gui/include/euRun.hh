@@ -50,6 +50,8 @@ public:
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
 private:
+  bool hasCollector= false;
+  bool needsConfigureCheck = true; 
   enum state_t { ST_NONE, ST_READY, ST_RUNNING};
   const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
@@ -82,7 +84,7 @@ private slots:
 
   void SetStateSlot(int state) {
     //std::cout << "DEBUG: Current State is: "; std::cout<< state ; std::cout<<"\n";
-    btnConfig->setEnabled(state != ST_RUNNING);
+    btnConfig->setEnabled(state != ST_RUNNING && hasCollector);
     btnTerminate->setEnabled(state != ST_RUNNING);
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
@@ -114,11 +116,12 @@ Starting the run includes resetting the following variables from the previous ru
 */
   void on_btnStart_clicked(bool cont = false) { 
     std::cout << "DEBUG: Start Button Pressed \n";
-    if(!m_run.CheckConfigured()){
+    if(needsConfigureCheck && !m_run.CheckConfigured()){
 	QMessageBox msgBox;
         msgBox.setText("Please Configure Connections Before Running.");
         msgBox.exec();
         return;}
+    needsConfigureCheck=false;
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -135,7 +138,7 @@ Starting the run includes resetting the following variables from the previous ru
     StopRun();
     //std::cout << "DEBUG: Stop Button Pressed \n";
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-    SetState(ST_NONE);
+    SetState(ST_READY);
   }
   void on_btnLog_clicked() {
     //std::cout << "DEBUG: Log Button Pressed \n" ;
