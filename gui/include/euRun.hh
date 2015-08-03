@@ -105,6 +105,7 @@ private slots:
     Configure(settings, txtGeoID->text().toInt());
     SetState(ST_READY);
     dostatus = true;
+    needsConfigureCheck=false;
   }
   // void on_btnReset_clicked() {
   //  Reset();
@@ -121,7 +122,6 @@ Starting the run includes resetting the following variables from the previous ru
         msgBox.setText("Please Configure Connections Before Running.");
         msgBox.exec();
         return;}
-    needsConfigureCheck=false;
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
