@@ -14,14 +14,22 @@ ADD_EXECUTABLE( ${name} ${sourcefiles} )
 
 ADD_EXECUTABLE( TestXMLReader src/testXMLread.cxx src/Timepix3Config.cxx )
 
+## Start Changes ##
+ADD_EXECUTABLE( FormatData src/FormatData.cxx )
+## End Changes ##
+
 TARGET_LINK_LIBRARIES( ${name} EUDAQ ${EUDAQ_THREADS_LIB} ${ext_libraries} ${my_qt_libraries} ${ROOT_LIBRARIES} )
 TARGET_LINK_LIBRARIES( TestXMLReader ${ext_libraries} ${ROOT_LIBRARIES} )
 
-INSTALL(TARGETS ${name} TestXMLReader
+## Start Changes ##
+TARGET_LINK_LIBRARIES( FormatData EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+#### INSTALL(TARGETS ${name} TestXMLReader rr
+## End Changes ##
+
+INSTALL(TARGETS ${name} TestXMLReader FormatData
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
-
 
 # set(name "Timepix3Producer.exe")
 # set(sourcefiles src/Timepix3Producer.cxx src/Timepix3Config.cxx)
