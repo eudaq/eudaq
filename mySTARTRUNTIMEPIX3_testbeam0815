@@ -4,7 +4,7 @@ export RCPORT=44000
 [ "$1" != "" ] && RCPORT=$1
 
 export HOSTIP=192.168.5.252
-export TLUIP=127.0.0.1
+export TLUIP=192.168.5.252
 export HOSTNAME=192.168.5.252
 
 cd `dirname $0`
@@ -65,7 +65,7 @@ sleep 2
 if [ -f "TLUProducer.exe" ]
 then
     printf '\033[22;33m\t  TLUProducer  \033[0m \n'
-    xterm -sb -sl 1000 -geom 120x10+800+650 -T 'TLU Producer' -e './TLUProducer.exe' &
+    xterm -sb -sl 1000 -geom 120x10+800+650 -T 'TLU Producer' -e "./TLUProducer.exe -r tcp://$TLUIP:$RCPORT" &
     sleep 1
 else
     printf '\033[22;31m\t  TLUProducer not found! \033[0m \n'
