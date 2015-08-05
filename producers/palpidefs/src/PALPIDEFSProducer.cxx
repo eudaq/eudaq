@@ -866,13 +866,18 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
 
 #ifndef SIMULATION
     TConfig *config = new TConfig(TYPE_TELESCOPE, m_nDevices);
+    char mybuffer[100];
+    for (int idev = 0; idev < m_nDevices; idev++) {
+      snprintf(mybuffer, 100, "DataPort_%d", idev);
+      TDataPort dataPort = (TDataPort)param.Get(mybuffer, (int)PORT_SERIAL);
+      config->SetDataPort(idev, dataPort);
+    }
 
     if (!m_testsetup) {
       std::cout << "Creating test setup " << std::endl;
       m_testsetup = new TTestSetup;
     }
 
-    char mybuffer[100];
     for (int idev = 0; idev < m_nDevices; idev++) {
       sprintf(mybuffer, "BoardAddress_%d", idev);
       int board_address = param.Get(mybuffer, -1);
