@@ -8,13 +8,15 @@ import sys
 # configuration
 ###############
 
-current_limit=( 7*700., 6*700., 1 ) # in mA
-voltages=( 5.0, 5.0, 0.0 ) # in V
+#current_limit=( 3000., 3000., 100. ) # in mA
+current_limit=( 7*700., 1., 15. ) # in mA
+voltages=( 5.0, 3.0, 0.0 ) # in V
+#voltages=( 5.0, 3.0, 0.0 ) # in V
 vbb_chan=( 2 ) # back-bias voltage channel, counting starts with 0
 measurement_interval=60 # in seconds
 
 # set up serial port
-dev="/dev/ttyHAMEG3"
+dev="/dev/ttyHAMEG0" #main PSU CH1: 5V DAQ board, CH2 Vbb Tracking, CH3 Vbb DUT
 baud_rate=int(9600)
 rtscts=True # needed, otherwise Hameg might miss a command
 
