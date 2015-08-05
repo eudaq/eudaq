@@ -38,12 +38,18 @@ int main(int /*argc*/, const char ** argv)
             // Display the actual filename (argument could have been a run number)
             std::cout << "Opened file: " << reader.Filename() << std::endl;
 
+//            std::cout << "Opened file: " << reader.Filename() << std::endl; 
+//            std::cout << "BORE:\n" << reader.GetDetectorEvent() << std::endl; 
+//            while (reader.NextEvent()) 
+//            {
+//                std::cout << reader.GetDetectorEvent() << std::endl;
+//            }
+
             // The PluginManager should be initialized with the BORE
             eudaq::PluginManager::Initialize(reader.GetDetectorEvent());
 
             long int numberOfEvents(0);
             std::ofstream outFile;
-
             // Now loop over all events in the file
             while (reader.NextEvent() && (numberOfEvents < eventsToProcess.Value())) 
             {
@@ -77,6 +83,8 @@ int main(int /*argc*/, const char ** argv)
                 const eudaq::StandardEvent standardEvent = eudaq::PluginManager::ConvertToStandard(reader.GetDetectorEvent());
                 unsigned int numberOfPlanes = (unsigned int) standardEvent.NumPlanes();
 
+//                std::cout << "Number of planes in event is : " << numberOfPlanes << std::endl;
+
                 int mimosaCounter = 0;
 
                 for (unsigned int i = 0; i < numberOfPlanes; i++)
@@ -84,6 +92,7 @@ int main(int /*argc*/, const char ** argv)
                     const eudaq::StandardPlane & standardPlane = standardEvent.GetPlane(i);
 //                    outFile << getHeader(standardPlane.Type(), mimosaCounter, standardPlane.TLUEvent()) << "\n";
                     outFile << getHeader(standardPlane.Type(), mimosaCounter, numberOfEvents) << "\n";
+//                    std::cout << "Plane Type : " << standardPlane.Type() << std::endl;
 
                     if ("CCPX" == standardPlane.Type()) // CLICPIX
                     {
@@ -100,7 +109,7 @@ int main(int /*argc*/, const char ** argv)
                         }
                         mimosaCounter++;
                     }
-                    else if ("TimepixRaw" == standardPlane.Type()) // TimePix 
+                    else if ("Timepix3Raw" == standardPlane.Type()) // TimePix 
                     {
                         for(unsigned int j = 0; j < standardPlane.HitPixels(); j++)
                         {
@@ -140,7 +149,7 @@ std::string getHeader(std::string standardPlanType, int mimosaCounter, long int 
     std::string deviceID;
     if(strcmp(standardPlanType.c_str(),"NI")==0) deviceID = "Mim-osa0" + makestring(mimosaCounter);
     if(strcmp(standardPlanType.c_str(),"CCPX")==0) deviceID = "CLi-CPix";
-    if(strcmp(standardPlanType.c_str(),"TimepixRaw")==0) deviceID = "TimePix3";
+    if(strcmp(standardPlanType.c_str(),"Timepix3Raw")==0) deviceID = "TimePix3";
 
     std::string time = getTimeString(eventNum);
     long int timestamp = getTime(eventNum);
