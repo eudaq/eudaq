@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export RCPORT=44000
-export HOSTIP=`hostname -I`
+export HOSTIP=localhost
 export TLUIP=$HOSTIP
 
 [ "$1" != "" ] && RCPORT=$1
