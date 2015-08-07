@@ -14,13 +14,11 @@
 
 #if USE_EUTELESCOPE
 #include "EUTELESCOPE.h"
-#include "EUTelSetupDescription.h"
 #include "EUTelEventImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelRunHeaderImpl.h"
 
-#include "EUTelCMSPixelDetector.h"
 using eutelescope::EUTELESCOPE;
 #endif
 
@@ -174,9 +172,6 @@ namespace eudaq {
       CellIDEncoder<TrackerDataImpl> zsDataEncoder(
           eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
 
-      // Prepare a description of the setup
-      std::vector<eutelescope::EUTelSetupDescription *> setupDescription;
-
       // Decode the raw data and retrieve the eudaq StandardEvent:
       StandardEvent tmp_evt;
       GetStandardSubEvent(tmp_evt, source);
@@ -185,25 +180,6 @@ namespace eudaq {
       for (size_t iPlane = 0; iPlane < tmp_evt.NumPlanes(); ++iPlane) {
         StandardPlane plane =
             static_cast<StandardPlane>(tmp_evt.GetPlane(iPlane));
-
-        // The current detector is ...
-        eutelescope::EUTelPixelDetector *currentDetector = 0x0;
-        if (plane.Sensor() == "DUT" || plane.Sensor() == "REF" ||
-            plane.Sensor() == "TRP") {
-
-          currentDetector = new eutelescope::EUTelCMSPixelDetector;
-          // FIXME what is that mode used for?
-          std::string mode = "ZS";
-          currentDetector->setMode(mode);
-          if (result.getEventNumber() == 0) {
-            setupDescription.push_back(
-                new eutelescope::EUTelSetupDescription(currentDetector));
-          }
-        } else {
-          EUDAQ_ERROR("Unrecognised sensor type in LCIO converter: " +
-                      plane.Sensor());
-          return true;
-        }
 
         zsDataEncoder["sensorID"] = plane.ID();
         zsDataEncoder["sparsePixelType"] =
@@ -239,7 +215,6 @@ namespace eudaq {
 
         // Now add the TrackerData to the collection
         zsDataCollection->push_back(zsFrame.release());
-        delete currentDetector;
 
       } // loop over all planes
 
