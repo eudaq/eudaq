@@ -46,15 +46,36 @@ namespace eudaq {
       m_roctype = devDict->getInstance()->getDevCode(roctype);
       m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
 
-      if (m_roctype == 0x0)
-        EUDAQ_ERROR("Roctype " + roctype + " " + to_string((int)m_roctype) +
-                    " not propagated correctly to CMSPixelConverterPlugin");
+      if (m_roctype == 0x0) {
+        EUDAQ_THROW("Data contains invalid ROC type: " + roctype);
+      }
 
       std::cout << "CMSPixel Converter initialized with detector " << m_detector
                 << ", Event Type " << m_event_type << ", TBM type " << tbmtype
                 << " (" << static_cast<int>(m_tbmtype) << ")"
                 << ", ROC type " << roctype << " ("
                 << static_cast<int>(m_roctype) << ")" << std::endl;
+
+      if (m_detector == "TRP") {
+        m_planeid = 6;
+      } // TRP
+      else if (m_detector == "DUT") {
+        m_planeid = 7;
+      } // DUT
+      else if (m_detector == "REF") {
+        m_planeid = 8;
+      } // REF
+      else {
+        m_planeid = 9;
+      } // QUAD
+
+      // Set decoder to reasonable verbosity (still informing about problems:
+      pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
+      //pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
+
+      // Connect the data source and set up the pipe:
+      src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
+      src >> splitter >> decoder >> Eventpump;
     }
 
     bool GetStandardSubEvent(StandardEvent &out, const Event &in) const {
@@ -65,18 +86,12 @@ namespace eudaq {
         std::cout << "Decoding statistics for detector " << m_detector
                   << std::endl;
         pxar::Log::ReportingLevel() = pxar::Log::FromString("INFO");
-        decoding_stats.dump();
+	decoder.getStatistics().dump();
+	return true;
       }
-
-      // Check if we have BORE or EORE:
-      if (in.IsBORE() || in.IsEORE()) {
-        return true;
-      }
-
-      // Check ROC type from event tags:
-      if (m_roctype == 0x0) {
-        EUDAQ_ERROR("Invalid ROC type\n");
-        return false;
+      // Check if we have BORE:
+      else if (in.IsBORE()) {
+	return true;
       }
 
       const RawDataEvent &in_raw = dynamic_cast<const RawDataEvent &>(in);
@@ -86,48 +101,19 @@ namespace eudaq {
         return false;
       }
 
-      unsigned plane_id;
-      if (m_detector == "TRP") {
-        plane_id = 6;
-      } // TRP
-      else if (m_detector == "DUT") {
-        plane_id = 7;
-      } // DUT
-      else if (m_detector == "REF") {
-        plane_id = 8;
-      } // REF
-      else {
-        plane_id = 9;
-      } // QUAD
-
-      // Set decoder to reasonable verbosity (still informing about problems:
-      pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
-      // pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
-
-      // The pipeworks:
-      evtSource src;
-      passthroughSplitter splitter;
-      dtbEventDecoder decoder;
-      dataSink<pxar::Event *> Eventpump;
-
-      // Connect the data source and set up the pipe:
-      src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
-      src >> splitter >> decoder >> Eventpump;
-
       // Transform from EUDAQ data, add it to the datasource:
       src.AddData(TransformRawData(in_raw.GetBlock(0)));
       // ...and pull it out at the other end:
       pxar::Event *evt = Eventpump.Get();
-      decoding_stats += decoder.getStatistics();
 
       // If we have no TBM or a TBM Emulator, assume this is
       // some sort of multi-plane telescope:
       if (m_tbmtype <= TBM_EMU)
-        GetMultiPlanes(out, plane_id, evt);
+        GetMultiPlanes(out, m_planeid, evt);
       // If we have a real TBM attached, this is probably
       // a module with just one sensor plane:
       else
-        GetSinglePlane(out, plane_id, evt);
+        GetSinglePlane(out, m_planeid, evt);
     }
 
 #if USE_LCIO && USE_EUTELESCOPE
@@ -239,7 +225,11 @@ namespace eudaq {
     std::string m_detector;
     bool m_rotated_pcb;
     std::string m_event_type;
-    mutable pxar::statistics decoding_stats;
+    // The pipeworks:
+    mutable evtSource src;
+    mutable passthroughSplitter splitter;
+    mutable dtbEventDecoder decoder;
+    mutable dataSink<pxar::Event *> Eventpump;
 
     void GetMultiPlanes(StandardEvent &out, unsigned plane_id,
                         pxar::Event *evt) const {
