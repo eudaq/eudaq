@@ -49,6 +49,9 @@ namespace eudaq {
       if (m_roctype == 0x0) {
         EUDAQ_THROW("Data contains invalid ROC type: " + roctype);
       }
+      if(m_tbmtype == 0x0) {
+	EUDAQ_THROW("Data contains invalid TBM type: " + tbmtype);
+      }
 
       std::cout << "CMSPixel Converter initialized with detector " << m_detector
                 << ", Event Type " << m_event_type << ", TBM type " << tbmtype
