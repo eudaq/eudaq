@@ -246,8 +246,7 @@ namespace eudaq {
       // Iterate over all planes and check for pixel hits:
       for (size_t roc = 0; roc < m_nplanes; roc++) {
 
-        // We are using the event's "sensor" (m_detector) to distinguish DUT and
-        // REF:
+	// Create a new StandardPlane object:
         StandardPlane plane(plane_id + roc, m_event_type, m_detector);
 
         // Initialize the plane size (zero suppressed), set the number of pixels
@@ -280,8 +279,7 @@ namespace eudaq {
     void GetSinglePlane(StandardEvent &out, unsigned plane_id,
                         pxar::Event *evt) const {
 
-      // We are using the event's "sensor" (m_detector) to distinguish DUT and
-      // REF:
+      // Create a new StandardPlane object:
       StandardPlane plane(plane_id, m_event_type, m_detector);
 
       // More than 16 ROCs on one module?! Impossible!
