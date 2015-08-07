@@ -24,6 +24,7 @@ before_install:
 
   # OS X: update brew cache:
   - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ]]; then CC=gcc-4.9; fi
   
 install:
   # Install package dependencies for Linux:
