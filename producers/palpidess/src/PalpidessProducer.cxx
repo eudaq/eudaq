@@ -299,10 +299,10 @@ public:
         request_sent = false;
       }
     } // end while
-  } // end Readout loop
+  }   // end Readout loop
 
 private:
-  unsigned m_run, m_ev; // run and event number of the instance
+  unsigned m_run, m_ev;         // run and event number of the instance
   bool stopping, running, done; // run information booleans
   bool request_sent; // ensure that we don't send a double request to the DUT
   DevicePalpidess *fPalpidess; // pointer to the device object
