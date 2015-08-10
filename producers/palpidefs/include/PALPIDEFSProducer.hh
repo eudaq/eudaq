@@ -53,6 +53,8 @@ public:
 
   void Stop();
   void SetRunning(bool running);
+  void StartDAQ();
+  void StopDAQ();
   SingleEvent *NextEvent();
   void DeleteNextEvent();
   SingleEvent *PopNextEvent();
@@ -89,6 +91,11 @@ public:
     return m_waiting_for_eor;
   }
 
+  bool IsReading() {
+    SimpleLock lock(m_mutex);
+    return m_reading;
+  }
+
 protected:
   void Loop();
   void Print(int level, const char *text, uint64_t value1 = -1,
@@ -100,6 +107,10 @@ protected:
   bool IsRunning() {
     SimpleLock lock(m_mutex);
     return m_running;
+  }
+  void SetReading(bool reading) {
+    SimpleLock lock(m_mutex);
+    m_reading = reading;
   }
   bool IsFlushing() {
     SimpleLock lock(m_mutex);
@@ -128,6 +139,7 @@ protected:
   bool m_stop;
   bool m_running;
   bool m_flushing;
+  bool m_reading;
   bool m_waiting_for_eor;
   bool m_threshold_scan_rqst;
   int m_threshold_scan_result; // 0 = not running, 1 = running, 2 = error, 3 =

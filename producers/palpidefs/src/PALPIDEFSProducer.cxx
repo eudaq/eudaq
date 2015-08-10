@@ -239,22 +239,30 @@ void DeviceReader::Stop() {
 void DeviceReader::SetRunning(bool running) {
   Print(0, "Set running: %lu", running);
   SimpleLock lock(m_mutex);
-  if (m_running && !running) {
-    m_flushing = true;
+  if (m_running && !running && m_readout_mode) {
     if (m_readout_mode) // packet based
+      m_flushing = true;
       m_waiting_for_eor = true;
   }
   m_running = running;
+}
 
+void DeviceReader::StartDAQ() {
 #ifndef SIMULATION
-  if (m_running) {
-    m_daq_board->StartTrigger();
-    m_daq_board->WriteBusyOverrideReg(true);
-  } else {
-    m_daq_board->WriteBusyOverrideReg(false);
-    eudaq::mSleep(100);
-    m_daq_board->StopTrigger();
+  m_daq_board->StartTrigger();
+  m_daq_board->WriteBusyOverrideReg(true);
+#endif
+}
+
+
+void DeviceReader::StopDAQ() {
+#ifndef SIMULATION
+  while (IsReading()) {
+    eudaq::mSleep(10);
   }
+  m_daq_board->WriteBusyOverrideReg(false);
+  eudaq::mSleep(100);
+  m_daq_board->StopTrigger();
 #endif
 }
 
@@ -441,12 +449,15 @@ void DeviceReader::Loop() {
     unsigned char data_buf[maxDataLength];
     int length = -1;
 
-    if (m_daq_board->ReadChipEvent(
-            data_buf, &length, (m_readout_mode == 0) ? 1024 : maxDataLength)) {
+    SetReading(true);
+    bool readEvent =
+      m_daq_board->ReadChipEvent(data_buf, &length,
+				 (m_readout_mode == 0) ? 1024 : maxDataLength);
+    SetReading(false);
 
+    if (readEvent) {
       if (length == 0) {
         // EOR
-
         if (IsFlushing()) {
           Print(0, "Flushing %lu", m_last_trigger_id);
           SimpleLock lock(m_mutex);
@@ -1261,16 +1272,24 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     SimpleLock lock(m_mutex);
     m_running = true;
   }
-  for (int i = 0; i < m_nDevices; i++)
+  for (int i = 0; i < m_nDevices; i++) {
     m_reader[i]->SetRunning(true);
+    m_reader[i]->StartDAQ();
+  }
 
   SetStatus(eudaq::Status::LVL_OK, "Running");
 }
 
 void PALPIDEFSProducer::OnStopRun() {
   std::cout << "Stop Run" << std::endl;
-  for (int i = 0; i < m_nDevices; i++) {
+  for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     m_reader[i]->SetRunning(false);
+  }
+  for (int i = 0; i < m_nDevices; i++) { // wait until all read transactions are done
+    while (m_reader[i]->IsReading()) eudaq::mSleep(20);
+  }
+  for (int i = 0; i < m_nDevices; i++) { // stop the DAQ board
+    m_reader[i]->StopDAQ();
   }
 
   SimpleLock lock(m_mutex);
