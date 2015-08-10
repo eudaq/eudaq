@@ -88,8 +88,8 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
         int begin = atoi(valueChild->ToElement()->Attribute("begin"));
 
         int width = 1;
-        if (valueChild->ToElement()->Attribute(
-                "width")) // width attribute is optional
+        if (valueChild->ToElement()->Attribute("width")) // width attribute is
+                                                         // optional
           width = atoi(valueChild->ToElement()->Attribute("width"));
 
         if (!valueChild->FirstChild("content") &&
@@ -242,7 +242,7 @@ void DeviceReader::SetRunning(bool running) {
   if (m_running && !running && m_readout_mode) {
     if (m_readout_mode) // packet based
       m_flushing = true;
-      m_waiting_for_eor = true;
+    m_waiting_for_eor = true;
   }
   m_running = running;
 }
@@ -253,7 +253,6 @@ void DeviceReader::StartDAQ() {
   m_daq_board->WriteBusyOverrideReg(true);
 #endif
 }
-
 
 void DeviceReader::StopDAQ() {
 #ifndef SIMULATION
@@ -450,9 +449,8 @@ void DeviceReader::Loop() {
     int length = -1;
 
     SetReading(true);
-    bool readEvent =
-      m_daq_board->ReadChipEvent(data_buf, &length,
-				 (m_readout_mode == 0) ? 1024 : maxDataLength);
+    bool readEvent = m_daq_board->ReadChipEvent(
+        data_buf, &length, (m_readout_mode == 0) ? 1024 : maxDataLength);
     SetReading(false);
 
     if (readEvent) {
@@ -635,11 +633,11 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   }
   std::cout << "Configuring..." << std::endl;
 
-  long wait_cnt=0;
-  while (IsRunning()) {
+  long wait_cnt = 0;
+  while (IsRunning() || IsFlushing() || IsStopping()) {
     eudaq::mSleep(10);
     ++wait_cnt;
-    if (wait_cnt % 100 ==0) {
+    if (wait_cnt % 100 == 0) {
       std::string msg = "Still running, waiting to configure";
       std::cout << msg << std::endl;
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
@@ -1312,6 +1310,12 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
 
 void PALPIDEFSProducer::OnStopRun() {
   std::cout << "Stop Run" << std::endl;
+  {
+    SimpleLock lock(m_mutex);
+    m_running  = false;
+    m_stopping = true;
+    if (!m_readout_mode) m_flush = false;
+  }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     m_reader[i]->SetRunning(false);
   }
@@ -1321,10 +1325,9 @@ void PALPIDEFSProducer::OnStopRun() {
   for (int i = 0; i < m_nDevices; i++) { // stop the DAQ board
     m_reader[i]->StopDAQ();
   }
-
   SimpleLock lock(m_mutex);
-  m_running = false;
-  m_flush = true;
+  m_flush    = true;
+  m_stopping = false;
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1526,7 +1529,7 @@ int PALPIDEFSProducer::BuildEvent() {
 
   RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
   ev.AddBlock(0, buffer, total_size);
-  SendEvent(ev);
+  if (IsRunning()) SendEvent(ev);
   delete[] buffer;
   m_firstevent = false;
 
@@ -1578,7 +1581,7 @@ void PALPIDEFSProducer::SendStatusEvent() {
     float temp = m_reader[i]->GetTemperature();
     ev.AddBlock(i, &temp, sizeof(float));
   }
-  SendEvent(ev);
+  if (IsRunning()) SendEvent(ev);
 }
 
 void PALPIDEFSProducer::PrintQueueStatus() {
