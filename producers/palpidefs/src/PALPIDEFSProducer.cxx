@@ -1166,11 +1166,11 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
 
-  long wait_cnt=0;
+  long wait_cnt = 0;
   while (IsConfiguring()) {
     eudaq::mSleep(10);
     ++wait_cnt;
-    if (wait_cnt % 100 ==0) {
+    if (wait_cnt % 100 == 0) {
       std::string msg = "Still configuring, waiting to run";
       std::cout << msg << std::endl;
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
@@ -1193,7 +1193,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   bore.SetTag("Devices", m_nDevices);
   bore.SetTag("DataVersion", 2);
 
-// driver version
+  // driver version
 #ifndef SIMULATION
   bore.SetTag("Driver_GITVersion", m_testsetup->GetGITVersion());
 #endif
@@ -1226,7 +1226,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     sprintf(tmp, "Config_%d", i);
     bore.SetTag(tmp, configStr);
 
-// store masked pixels
+    // store masked pixels
 #ifndef SIMULATION
     const std::vector<TPixHit> pixels = m_reader[i]->GetDUT()->GetNoisyPixels();
 
@@ -1312,21 +1312,24 @@ void PALPIDEFSProducer::OnStopRun() {
   std::cout << "Stop Run" << std::endl;
   {
     SimpleLock lock(m_mutex);
-    m_running  = false;
+    m_running = false;
     m_stopping = true;
-    if (!m_readout_mode) m_flush = false;
+    if (!m_readout_mode)
+      m_flush = false;
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     m_reader[i]->SetRunning(false);
   }
-  for (int i = 0; i < m_nDevices; i++) { // wait until all read transactions are done
-    while (m_reader[i]->IsReading()) eudaq::mSleep(20);
+  for (int i = 0; i < m_nDevices;
+       i++) { // wait until all read transactions are done
+    while (m_reader[i]->IsReading())
+      eudaq::mSleep(20);
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the DAQ board
     m_reader[i]->StopDAQ();
   }
   SimpleLock lock(m_mutex);
-  m_flush    = true;
+  m_flush = true;
   m_stopping = false;
 }
 
@@ -1386,12 +1389,15 @@ void PALPIDEFSProducer::Loop() {
       if (events_built == 0) {
         if (m_status_interval > 0 &&
             time(0) - last_status > m_status_interval) {
-          SendStatusEvent();
+          if (IsRunning())
+            SendStatusEvent();
           PrintQueueStatus();
           last_status = time(0);
         }
         break;
       }
+      if (!IsRunning())
+        break;
 
       if (count % 20000 == 0)
         std::cout << "Sending event " << count << std::endl;
@@ -1529,7 +1535,8 @@ int PALPIDEFSProducer::BuildEvent() {
 
   RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
   ev.AddBlock(0, buffer, total_size);
-  if (IsRunning()) SendEvent(ev);
+  if (IsRunning())
+    SendEvent(ev);
   delete[] buffer;
   m_firstevent = false;
 
@@ -1581,7 +1588,8 @@ void PALPIDEFSProducer::SendStatusEvent() {
     float temp = m_reader[i]->GetTemperature();
     ev.AddBlock(i, &temp, sizeof(float));
   }
-  if (IsRunning()) SendEvent(ev);
+  if (IsRunning())
+    SendEvent(ev);
 }
 
 void PALPIDEFSProducer::PrintQueueStatus() {
