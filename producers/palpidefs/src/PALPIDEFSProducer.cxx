@@ -1328,9 +1328,22 @@ void PALPIDEFSProducer::OnStopRun() {
   for (int i = 0; i < m_nDevices; i++) { // stop the DAQ board
     m_reader[i]->StopDAQ();
   }
-  SimpleLock lock(m_mutex);
-  m_flush = true;
-  m_stopping = false;
+  {
+    SimpleLock lock(m_mutex);
+    m_flush = true;
+    m_stopping = false;
+  }
+
+  long wait_cnt = 0;
+  while (IsFlushing()) {
+    eudaq::mSleep(10);
+    ++wait_cnt;
+    if (wait_cnt % 100 == 0) {
+      std::string msg = "Still flushing...";
+      std::cout << msg << std::endl;
+      SetStatus(eudaq::Status::LVL_WARN, msg.data());
+    }
+  }
 }
 
 void PALPIDEFSProducer::OnTerminate() {
