@@ -629,7 +629,22 @@ bool PALPIDEFSProducer::ConfigChip(int id, TpAlpidefs *dut,
 }
 
 void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
+  {
+    SimpleLock lock(m_mutex);
+    m_configuring = true;
+  }
   std::cout << "Configuring..." << std::endl;
+
+  long wait_cnt=0;
+  while (IsRunning()) {
+    eudaq::mSleep(10);
+    ++wait_cnt;
+    if (wait_cnt % 100 ==0) {
+      std::string msg = "Still running, waiting to configure";
+      std::cout << msg << std::endl;
+      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+    }
+  }
 
   m_status_interval = param.Get("StatusInterval", -1);
 
@@ -866,6 +881,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
   EUDAQ_INFO("Configured (" + param.Name() + ")");
   SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+  {
+    SimpleLock lock(m_mutex);
+    m_configuring = false;
+  }
 }
 
 bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
@@ -1148,6 +1167,17 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
 void PALPIDEFSProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
+
+  long wait_cnt=0;
+  while (IsConfiguring()) {
+    eudaq::mSleep(10);
+    ++wait_cnt;
+    if (wait_cnt % 100 ==0) {
+      std::string msg = "Still configuring, waiting to run";
+      std::cout << msg << std::endl;
+      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+    }
+  }
 
   // the queues should be empty at this stage
   PrintQueueStatus();

@@ -224,10 +224,15 @@ protected:
     SimpleLock lock(m_mutex);
     return m_done;
   }
+  bool IsConfiguring() {
+    SimpleLock lock(m_mutex);
+    return m_configuring;
+  }
 
   unsigned m_run, m_ev;
   bool m_done;
   bool m_running;
+  bool m_configuring;
   bool m_flush;
   bool m_configured;
   bool m_firstevent;
