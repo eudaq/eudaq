@@ -1163,9 +1163,6 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
 }
 
 void PALPIDEFSProducer::OnStartRun(unsigned param) {
-  m_run = param;
-  m_ev = 0;
-
   long wait_cnt = 0;
   while (IsConfiguring()) {
     eudaq::mSleep(10);
@@ -1176,6 +1173,8 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
     }
   }
+  m_run = param;
+  m_ev = 0;
 
   // the queues should be empty at this stage
   PrintQueueStatus();
@@ -1395,7 +1394,7 @@ void PALPIDEFSProducer::Loop() {
     }
 
     // build events
-    while (1) {
+    while (IsRunning()) {
       int events_built = BuildEvent();
       count += events_built;
 
@@ -1409,8 +1408,6 @@ void PALPIDEFSProducer::Loop() {
         }
         break;
       }
-      if (!IsRunning())
-        break;
 
       if (count % 20000 == 0)
         std::cout << "Sending event " << count << std::endl;
@@ -1586,7 +1583,10 @@ int PALPIDEFSProducer::BuildEvent() {
 }
 
 void PALPIDEFSProducer::SendEOR() {
-  std::cout << "Sending EOR" << std::endl;
+  char msg[100];
+  snprintf(msg, 100, "Sending EOR, Run %d, Event %d", m_run, m_ev);
+  std::cout << msg << std::endl;
+  SetStatus(eudaq::Status::LVL_INFO, msg);
   SendEvent(RawDataEvent::EORE(EVENT_TYPE, m_run, m_ev++));
   SimpleLock lock(m_mutex);
   m_flush = false;
