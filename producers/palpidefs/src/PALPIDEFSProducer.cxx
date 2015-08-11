@@ -640,7 +640,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     if (wait_cnt % 100 == 0) {
       std::string msg = "Still running, waiting to configure";
       std::cout << msg << std::endl;
-      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      EUDAQ_ERROR(msg.data());
     }
   }
 
@@ -1170,7 +1170,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     if (wait_cnt % 100 == 0) {
       std::string msg = "Still configuring, waiting to run";
       std::cout << msg << std::endl;
-      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      EUDAQ_ERROR(msg.data());
     }
   }
   m_run = param;
@@ -1343,6 +1343,7 @@ void PALPIDEFSProducer::OnStopRun() {
       SetStatus(eudaq::Status::LVL_WARN, msg.data());
     }
   }
+  SetStatus(eudaq::Status::LVL_OK, "OK");
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1586,7 +1587,7 @@ void PALPIDEFSProducer::SendEOR() {
   char msg[100];
   snprintf(msg, 100, "Sending EOR, Run %d, Event %d", m_run, m_ev);
   std::cout << msg << std::endl;
-  SetStatus(eudaq::Status::LVL_INFO, msg);
+  EUDAQ_INFO(msg);
   SendEvent(RawDataEvent::EORE(EVENT_TYPE, m_run, m_ev++));
   SimpleLock lock(m_mutex);
   m_flush = false;
