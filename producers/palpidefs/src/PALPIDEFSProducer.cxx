@@ -643,6 +643,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
       EUDAQ_ERROR(msg.data());
     }
   }
+  EUDAQ_INFO("Configuring (" + param.Name() + ")");
+  SetStatus(eudaq::Status::LVL_OK, "Configuring (" + param.Name() + ")");
 
   m_status_interval = param.Get("StatusInterval", -1);
 
@@ -1176,16 +1178,17 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   m_run = param;
   m_ev = 0;
 
-  // the queues should be empty at this stage
+  // the queues should be empty at this stage, if not flush them
   PrintQueueStatus();
   bool queues_empty = true;
-  for (int i = 0; i < m_nDevices; i++)
-    if (m_reader[i]->GetQueueLength() > 0)
+  for (int i = 0; i < m_nDevices; i++) {
+    while (m_reader[i]->GetQueueLength() > 0) {
+      m_reader[i]->DeleteNextEvent();
       queues_empty = false;
-
+    }
+  }
   if (!queues_empty) {
-    SetStatus(eudaq::Status::LVL_ERROR, "Queues not empty on SOR");
-    return;
+    EUDAQ_WARN( "Queues not empty on SOR");
   }
 
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
@@ -1305,6 +1308,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   }
 
   SetStatus(eudaq::Status::LVL_OK, "Running");
+  EUDAQ_INFO("Running");
 }
 
 void PALPIDEFSProducer::OnStopRun() {
@@ -1314,7 +1318,7 @@ void PALPIDEFSProducer::OnStopRun() {
     m_running = false;
     m_stopping = true;
     if (!m_readout_mode)
-      m_flush = false;
+      m_flush = true;
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     m_reader[i]->SetRunning(false);
@@ -1329,12 +1333,15 @@ void PALPIDEFSProducer::OnStopRun() {
   }
   {
     SimpleLock lock(m_mutex);
-    m_flush = true;
-    m_stopping = false;
+    if (m_readout_mode)
+      m_flush = true;
   }
 
   long wait_cnt = 0;
-  while (IsFlushing()) {
+  eudaq::mSleep(100);
+
+
+  while (IsFlushing() || IsStopping()) {
     eudaq::mSleep(10);
     ++wait_cnt;
     if (wait_cnt % 100 == 0) {
@@ -1343,7 +1350,7 @@ void PALPIDEFSProducer::OnStopRun() {
       SetStatus(eudaq::Status::LVL_WARN, msg.data());
     }
   }
-  SetStatus(eudaq::Status::LVL_OK, "OK");
+  SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1376,18 +1383,26 @@ void PALPIDEFSProducer::Loop() {
 
     if (!IsRunning()) {
       if (IsFlushing()) {
+        if (IsStopping()) {
+          EUDAQ_INFO("SendEOR");
+          SendEOR();
+        }
+        EUDAQ_INFO("Flushing");
         // check if any producer is waiting for EOR
         bool waiting_for_eor = false;
         for (int i = 0; i < m_nDevices; i++) {
-          if (m_reader[i]->IsWaitingForEOR())
+          if (m_reader[i]->IsWaitingForEOR()) {
             waiting_for_eor = true;
+             EUDAQ_INFO("WAITING FOR EOR");
+           }
         }
         if (!waiting_for_eor) {
           // write out last events
+          eudaq::mSleep(1000);
           while (BuildEvent() > 0) {
           }
           PrintQueueStatus();
-          SendEOR();
+          m_flush = false ;
           continue;
         }
       } else
@@ -1590,7 +1605,7 @@ void PALPIDEFSProducer::SendEOR() {
   EUDAQ_INFO(msg);
   SendEvent(RawDataEvent::EORE(EVENT_TYPE, m_run, m_ev++));
   SimpleLock lock(m_mutex);
-  m_flush = false;
+  m_stopping = false;
 }
 
 void PALPIDEFSProducer::SendStatusEvent() {
