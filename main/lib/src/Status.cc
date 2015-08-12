@@ -1,6 +1,7 @@
 #include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Exception.hh"
+#include "eudaq/MachineState.hh"
 #include "eudaq/Utils.hh"
 
 namespace eudaq {
@@ -9,7 +10,8 @@ namespace eudaq {
     ds.read(m_level);
     ds.read(m_msg);
     ds.read(m_tags);
-  }
+  } 
+
 
   void Status::Serialize(Serializer &ser) const {
     ser.write(m_level);

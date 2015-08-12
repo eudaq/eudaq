@@ -29,6 +29,7 @@ namespace eudaq {
     Status(int level = LVL_OK, const std::string &msg = "")
         : m_level(level), m_msg(msg) {}
     Status(Deserializer &);
+
     virtual void Serialize(Serializer &) const;
 
     Status &SetTag(const std::string &name, const std::string &val);
@@ -38,6 +39,7 @@ namespace eudaq {
     static int String2Level(const std::string &);
     virtual ~Status() {}
     virtual void print(std::ostream &) const;
+
     int GetLevel() const { return m_level; }
 
   protected:

@@ -1,5 +1,6 @@
 #include "eudaq/TransportBase.hh"
 #include "eudaq/CommandReceiver.hh"
+#include "eudaq/MachineState.hh"
 #include <QAbstractListModel>
 #include <vector>
 #include <memory>
@@ -16,10 +17,12 @@ public:
   void SetConnected(bool con) { m_id->SetState(2 * con - 1); }
   const eudaq::ConnectionInfo &GetId() const { return *m_id; }
   void SetStatus(const eudaq::Status &status) { m_status = status; }
+  void SetMachineState (const eudaq::MachineState state) { m_machstate = state; }
 
 private:
   std::shared_ptr<eudaq::ConnectionInfo> m_id;
   eudaq::Status m_status;
+  eudaq::MachineState m_machstate;
 };
 
 class ConnectionSorter {

@@ -35,6 +35,8 @@ namespace eudaq {
     virtual void StopRun(bool listen = true); ///< Send 'StopRun' command
     void Terminate();                         ///< Send 'Terminate' command
 
+
+    void TestCommand();		//Test Command
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
     virtual void OnReceive(const ConnectionInfo & /*id*/,

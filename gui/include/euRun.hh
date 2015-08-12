@@ -143,6 +143,8 @@ Starting the run includes resetting the following variables from the previous ru
   void on_btnLog_clicked() {
     //std::cout << "DEBUG: Log Button Pressed \n" ;
     //std::cout <<" Is Configured? "<<m_run.CheckConfigured()<<"\n";
+    //MachineState state = MachineState(eudaq::MachineState::ST_CONFIG, "");
+    TestCommand();
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
   }

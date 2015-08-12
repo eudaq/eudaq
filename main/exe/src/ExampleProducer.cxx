@@ -35,6 +35,7 @@ class ExampleProducer : public eudaq::Producer {
       hardware.Setup(m_exampleparam);
 
       // At the end, set the status that will be displayed in the Run Control.
+      // and set the state of the machine.
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
     }
 

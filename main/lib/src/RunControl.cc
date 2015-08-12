@@ -137,6 +137,12 @@ namespace eudaq {
     m_listening = listen;
   }
 
+  void RunControl::TestCommand(){
+
+    SendCommand("TEST");
+
+   }
+
   void RunControl::Terminate() {
     EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE");
@@ -239,9 +245,13 @@ namespace eudaq {
           InitOther(ev.id);
         }
         OnConnect(ev.id);
-      } else {
+      } 
+      else {
+        
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
+        
         std::shared_ptr<Status> status(new Status(ser));
+        
         if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
           ev.id.SetState(2);
         } else if (status->GetLevel() != Status::LVL_BUSY &&
@@ -263,6 +273,8 @@ namespace eudaq {
         }
         // std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" <<
         // std::endl;
+        
+
       }
       break;
     default:

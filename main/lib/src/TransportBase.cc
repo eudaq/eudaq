@@ -5,6 +5,7 @@
 namespace eudaq {
 
   const ConnectionInfo ConnectionInfo::ALL("ALL");
+  //const ConnectionInfo ConnectionInfo::MACH_STATE("MACHINESTATE", "Machine State");
   static const int DEFAULT_TIMEOUT = 1000;
 
   void ConnectionInfo::Print(std::ostream &os) const {

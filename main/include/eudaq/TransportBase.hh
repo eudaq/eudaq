@@ -23,6 +23,11 @@ namespace eudaq {
   public:
     explicit ConnectionInfo(const std::string &name = "")
         : m_state(0), m_name(name) {}
+
+    ConnectionInfo(const std::string &name, const std::string type)
+        : m_state(0), m_name(name), m_type(type) {}
+
+
     virtual ~ConnectionInfo() {}
     virtual void Print(std::ostream &) const;
     virtual bool Matches(const ConnectionInfo &other) const;

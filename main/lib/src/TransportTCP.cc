@@ -195,7 +195,20 @@ namespace eudaq {
       (void)sig;
     }
 #endif
+/*
+do_send_data handles the sending of data among components of the program via the socket system. 
+It takes a socket, a char of data and a size_t length as parameters. 
 
+This function maintains a record of how much data has been send via the socket. It loops through the following statements so long as the amount of data that has been sent is less than the length given as a parameter. 
+
+	The function attempts to send the data via the given socket
+	The result of this send is stored in an int labled result
+	If the result is >1 , then it is added to sent
+	If the result is <0 and the resource is only temporarily unavalible, it tries again
+	If the result is =0 the program throws an error for the connection being reset
+	If the result is <0 the program throws an error for sending data.
+
+*/
     static void do_send_data(SOCKET sock, const unsigned char *data,
                              size_t len) {
       // if (len > 500000) std::cout << "Starting send" << std::endl;
@@ -219,6 +232,16 @@ namespace eudaq {
       // if (len > 500000) std::cout << "Done send" << std::endl;
     }
 
+/*
+do_send_packet handles the sending of packets via the do_send_data function. 
+It takes a socket, a char for data, and a size_t for the length.
+
+
+If the packet is smaller than 1020, The function packs the data into a buffer with signed chars and passes it to do_send_data cast as unsigned char.
+
+Otherwise pack the data into a buffer using unsigned chars. The function passes the buffer to do_send_data and then the data to do_send_data. 
+ 
+*/
     static void do_send_packet(SOCKET sock, const unsigned char *data,
                                size_t length) {
       // if (length > 500000) std::cout << "Starting send packet" << std::endl;
