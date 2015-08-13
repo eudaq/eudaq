@@ -10,6 +10,7 @@ namespace eudaq {
     ds.read(m_level);
     ds.read(m_msg);
     ds.read(m_tags);
+    ds.read(m_state);
   } 
 
 
@@ -17,6 +18,7 @@ namespace eudaq {
     ser.write(m_level);
     ser.write(m_msg);
     ser.write(m_tags);
+    ser.write(m_state);
   }
 
   std::string Status::Level2String(int level) {
@@ -28,10 +30,26 @@ namespace eudaq {
     return strings[level];
   }
 
+  std::string Status::State2String(int state) {
+    static const char *const strings[] = {"UNCONF","CONF","RUNNING","ERROR"};
+    return strings[state];
+  }
+
   int Status::String2Level(const std::string &str) {
     int lvl = 0;
     std::string tmpstr1, tmpstr2 = ucase(str);
     while ((tmpstr1 = Level2String(lvl)) != "") {
+      if (tmpstr1 == tmpstr2)
+        return lvl;
+      lvl++;
+    }
+    EUDAQ_THROW("Unrecognised level: " + str);
+  }
+
+  int Status::String2State(const std::string &str) {
+    int lvl = 0;
+    std::string tmpstr1, tmpstr2 = ucase(str);
+    while ((tmpstr1 = State2String(lvl)) != "") {
       if (tmpstr1 == tmpstr2)
         return lvl;
       lvl++;

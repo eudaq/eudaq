@@ -26,8 +26,16 @@ namespace eudaq {
       LVL_BUSY,
       LVL_NONE // The last value, any additions should go before this
     };
-    Status(int level = LVL_OK, const std::string &msg = "")
-        : m_level(level), m_msg(msg) {}
+
+    enum State {
+      ST_UNCONF,
+      ST_CONF,
+      ST_RUNNING,
+      ST_ERROR
+    };
+
+    Status(int level = LVL_OK, const std::string &msg = "",int state = ST_UNCONF)
+        : m_level(level), m_msg(msg), m_state(state) {}
     Status(Deserializer &);
 
     virtual void Serialize(Serializer &) const;
@@ -35,16 +43,24 @@ namespace eudaq {
     Status &SetTag(const std::string &name, const std::string &val);
     std::string GetTag(const std::string &name,
                        const std::string &def = "") const;
+
     static std::string Level2String(int level);
+    static std::string State2String(int state);
+
     static int String2Level(const std::string &);
+    static int String2State(const std::string &);
+
     virtual ~Status() {}
     virtual void print(std::ostream &) const;
 
     int GetLevel() const { return m_level; }
+    int GetState() const { return m_state; }
+
 
   protected:
     typedef std::map<std::string, std::string> map_t;
     int m_level;
+    int m_state;
     std::string m_msg;
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };

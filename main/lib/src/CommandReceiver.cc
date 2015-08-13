@@ -122,8 +122,9 @@ namespace eudaq {
   }
 
   void CommandReceiver::SetStatus(Status::Level level,
-                                  const std::string &info) {
-    m_status = Status(level, info);
+                                  const std::string &info,
+                                  Status::State state) {
+    m_status = Status(level, info, state);
   }
 
   void CommandReceiver::Process(int timeout) { m_cmdclient->Process(timeout); }
