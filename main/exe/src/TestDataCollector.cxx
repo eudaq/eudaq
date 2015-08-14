@@ -25,11 +25,11 @@ class TestDataCollector : public eudaq::DataCollector {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       DataCollector::OnConfigure(param);
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")", eudaq::Status::ST_CONF);
     }
     virtual void OnStartRun(unsigned param) {
       DataCollector::OnStartRun(param);
-      SetStatus(eudaq::Status::LVL_OK);
+      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_RUNNING);
     }
     //   virtual bool OnStartRun(unsigned param) {
     //     std::cout << "Start Run: " << param << std::endl;
@@ -45,7 +45,7 @@ class TestDataCollector : public eudaq::DataCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_UNCONF);
     }
     //   virtual void OnStatus() {
     //     DataCollector::OnStatus();

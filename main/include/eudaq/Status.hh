@@ -59,8 +59,10 @@ namespace eudaq {
 
   protected:
     typedef std::map<std::string, std::string> map_t;
+
     int m_level;
     int m_state;
+
     std::string m_msg;
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
   };

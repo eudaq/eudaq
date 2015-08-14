@@ -95,5 +95,8 @@ namespace eudaq {
     EUDAQ_INFO("Starting run " + to_string(m_run));
   }
 
-  void Monitor::OnStopRun() { m_reader->Interrupt(); }
+  void Monitor::OnStopRun() { 
+    m_reader->Interrupt(); 
+    SetStatus(Status::LVL_OK, "", Status::ST_CONF);
+  }
 }

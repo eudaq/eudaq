@@ -25,18 +25,18 @@ class RunListener : public eudaq::CommandReceiver {
       unsigned someparam = config.Get("Parameter", 0);
       std::cout << "Configuring: " << config.Name() << std::endl
         << "Some Parameter = " << someparam << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")" , eudaq::Status::ST_CONF);
     }
     virtual void OnStartRun(unsigned param) {
       // This gets called whenever a new run is started
       // It receives the new run number as a parameter
       std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Running");
+      SetStatus(eudaq::Status::LVL_OK, "Running", eudaq::Status::ST_RUNNING);
     }
     virtual void OnStopRun() {
       // This gets called whenever a run is stopped
       std::cout << "Stopping Run" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Stopped");
+      SetStatus(eudaq::Status::LVL_OK, "Stopped", eudaq::Status::ST_CONF);
     }
     virtual void OnTerminate() {
       // This gets called when we are asked by Run Control to terminate

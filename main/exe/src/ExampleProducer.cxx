@@ -36,7 +36,7 @@ class ExampleProducer : public eudaq::Producer {
 
       // At the end, set the status that will be displayed in the Run Control.
       // and set the state of the machine.
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")", eudaq::Status::ST_CONF);
     }
 
     // This gets called whenever a new run is started
@@ -56,22 +56,24 @@ class ExampleProducer : public eudaq::Producer {
       SendEvent(bore);
 
       // At the end, set the status that will be displayed in the Run Control.
-      SetStatus(eudaq::Status::LVL_OK, "Running");
-	  started=true;
+      SetStatus(eudaq::Status::LVL_OK, "Running", eudaq::Status::ST_RUNNING);
+      started=true;
     }
 
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
-      std::cout << "Stopping Run" << std::endl;
-	  started=false;
+      std::cout << "Stopping Run From Producer" << std::endl;
+      started=false;
       // Set a flag to signal to the polling loop that the run is over
       stopping = true;
 
       // wait until all events have been read out from the hardware
-      while (stopping) {
+      /*while (stopping) {
         eudaq::mSleep(20);
-      }
+        //std::cout<<"Does hardware have pending? "<<hardware.EventsPending()<<"\n";
+      }*/
 
+      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_CONF);
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
       SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));

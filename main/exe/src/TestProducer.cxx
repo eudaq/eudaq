@@ -45,18 +45,19 @@ class TestProducer : public eudaq::Producer {
       eventsize = param.Get("EventSize", 1);
       eudaq::mSleep(2000);
       EUDAQ_INFO("Configured (" + param.Name() + ")");
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")", eudaq::Status::ST_CONF);
     }
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_ev = 0;
       SendEvent(RawDataEvent::BORE("Test", m_run));
       std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "");
+      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_RUNNING);
     }
     virtual void OnStopRun() {
       SendEvent(RawDataEvent::EORE("Test", m_run, ++m_ev));
       std::cout << "Stop Run" << std::endl;
+      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_CONF);
     }
     virtual void OnTerminate() {
       std::cout << "Terminate (press enter)" << std::endl;
@@ -64,7 +65,7 @@ class TestProducer : public eudaq::Producer {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      SetStatus(eudaq::Status::LVL_OK, "",eudaq::Status::ST_UNCONF);
     }
     virtual void OnStatus() {
       //std::cout << "Status - " << m_status << std::endl;

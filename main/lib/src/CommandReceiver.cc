@@ -124,7 +124,7 @@ namespace eudaq {
   void CommandReceiver::SetStatus(Status::Level level,
                                   const std::string &info,
                                   Status::State state) {
-    m_status = Status(level, info, state);
+    m_status = Status(Status::LVL_NONE, info, state);
   }
 
   void CommandReceiver::Process(int timeout) { m_cmdclient->Process(timeout); }
@@ -133,7 +133,7 @@ namespace eudaq {
     std::cout << "Config:\n" << param << std::endl;
   }
 
-  void CommandReceiver::OnClear() { SetStatus(Status::LVL_NONE, "Wait"); }
+  void CommandReceiver::OnClear() { SetStatus(Status::LVL_NONE, "Wait", Status::ST_UNCONF); }
 
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);

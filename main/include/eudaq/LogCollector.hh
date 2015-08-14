@@ -29,6 +29,8 @@ namespace eudaq {
     virtual void OnReceive(const LogMessage &msg) = 0;
     virtual ~LogCollector();
 
+    virtual void OnStopRun(){ SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_CONF); }
+
     void LogThread();
 
   private:
