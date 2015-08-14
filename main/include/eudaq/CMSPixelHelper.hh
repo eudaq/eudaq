@@ -149,7 +149,6 @@ namespace eudaq {
       LCCollectionVec *zsDataCollection;
       bool zsDataCollectionExists = false;
       try {
-        /// FIXME choose another name for the collection!
         zsDataCollection =
             static_cast<LCCollectionVec *>(result.getCollection(m_event_type));
         zsDataCollectionExists = true;
