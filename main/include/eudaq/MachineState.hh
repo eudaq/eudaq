@@ -22,6 +22,8 @@ namespace eudaq
 		void SetState(ConnectionInfo id, Status* state); // Sets the connection associated with id to state. 
 														//if the connection does not exist, add it to the array
 
+		void RemoveState(ConnectionInfo id); //Removes a connection when it is disconnected....
+
 		void Print();
 	private:
 		

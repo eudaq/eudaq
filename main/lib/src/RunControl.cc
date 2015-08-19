@@ -199,6 +199,8 @@ namespace eudaq {
         m_idata = (size_t)-1;
       if (m_ilog != (size_t)-1 && ev.id.Matches(GetConnection(m_ilog)))
         m_ilog = (size_t)-1;
+
+      current_State.RemoveState(ev.id);
       break;
     case (TransportEvent::RECEIVE):
       // std::cout << "Receive: " << ev.packet << std::endl;

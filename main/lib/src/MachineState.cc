@@ -61,6 +61,11 @@ namespace eudaq {
 		return;
 	}
 
+	void MachineState::RemoveState(ConnectionInfo id)
+	{
+		connection_status_info.erase(id);
+	}
+
 	void MachineState::Print()
 	{
 		std::cout<<"----------------Current State---------------- \n";
@@ -71,7 +76,10 @@ namespace eudaq {
 				std::cout<<" Connection From: "<< to_string(s.first)<< "   In State: "<< s.second.GetState()<< "\n";
 		}
 
-		std::cout<<" The State of the FSM: "<< GetState()<< "\n";
+		std::cout<<"------------------------\n";
+		std::cout<<" The State of the FSM: "<< GetState()<< "\n ";
+		std::cout<<"------------------------------------------- \n \n";
+
 	}
 
 }
