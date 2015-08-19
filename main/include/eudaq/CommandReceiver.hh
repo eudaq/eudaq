@@ -20,7 +20,10 @@ namespace eudaq {
   public:
     CommandReceiver(const std::string &type, const std::string &name,
                     const std::string &runcontrol, bool startthread = true);
-    void SetStatus(Status::Level level, const std::string &info = "", Status::State state = Status::ST_UNCONF);
+    void SetStatus(Status::State state = Status::ST_UNCONF, const std::string &info = "");
+
+    int GetStatus() { return m_status.GetState();}
+
     virtual ~CommandReceiver();
 
     virtual void OnConfigure(const Configuration &param);

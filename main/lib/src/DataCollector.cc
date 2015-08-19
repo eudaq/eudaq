@@ -108,19 +108,19 @@ namespace eudaq {
       }
       m_numwaiting = 0;
 
-      SetStatus(Status::LVL_OK,"",Status::ST_RUNNING);
+      SetStatus(Status::ST_RUNNING);
     } catch (const Exception &e) {
       std::string msg =
           "Error preparing for run " + to_string(runnumber) + ": " + e.what();
       EUDAQ_ERROR(msg);
-      SetStatus(Status::LVL_ERROR, msg, Status::ST_ERROR);
+      SetStatus(Status::ST_ERROR);
     }
   }
 
   void DataCollector::OnStopRun() {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
     std::cout<<"Stop Run for datacollector called \n";
-    SetStatus(Status::LVL_OK, "", Status::ST_CONF);
+    SetStatus(Status::ST_CONF);
     // Leave the file open, more events could still arrive
     // m_ser = counted_ptr<FileSerializer>();
   }
@@ -225,7 +225,7 @@ namespace eudaq {
           std::string msg = "Exception writing to file: ";
           msg += e.what();
           EUDAQ_ERROR(msg);
-          SetStatus(Status::LVL_ERROR, msg, Status::ST_ERROR);
+          SetStatus(Status::ST_ERROR);
         }
       } else {
         EUDAQ_ERROR("Event received before start of run");

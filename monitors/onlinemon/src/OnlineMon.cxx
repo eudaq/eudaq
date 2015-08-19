@@ -461,7 +461,7 @@ void RootMonitor::OnStartRun(unsigned param) {
   // Reset the planes initializer on new run start:
   _planesInitialized = false;
 
-  SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_RUNNING);
+  SetStatus(eudaq::Status::ST_RUNNING);
 }
 
 void RootMonitor::setUpdate(const unsigned int up) {

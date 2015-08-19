@@ -25,7 +25,7 @@ class TestMonitor : public eudaq::Monitor {
     }
     virtual void OnConfigure(const std::string & param) {
       std::cout << "Configure: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_CONF);
+      SetStatus(eudaq::Status::ST_CONF);
     }
     virtual void OnTerminate() {
       std::cout << "Terminating" << std::endl;
@@ -33,13 +33,12 @@ class TestMonitor : public eudaq::Monitor {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_UNCONF);
+      SetStatus(eudaq::Status::ST_UNCONF);
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::LVL_ERROR, "Just testing", eudaq::Status::ST_ERROR);
     }
     bool done;
 };

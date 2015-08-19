@@ -252,7 +252,11 @@ namespace eudaq {
         
         std::shared_ptr<Status> status(new Status(ser));
         
-        std::cout<<"Current State: "<< status->GetState()<< " From: "<< ev.id.GetType()<<"\n";
+        //std::cout<<"Current State: "<< status->GetState()<< " From: "<< to_string(ev.id)<< " With Remote: "<< ev.id.GetRemote()<<"\n";
+
+        current_State.SetState(ev.id , status.get());
+        current_State.Print();
+
         if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
           ev.id.SetState(2);
         } else if (status->GetLevel() != Status::LVL_BUSY &&

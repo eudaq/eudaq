@@ -45,19 +45,19 @@ class TestProducer : public eudaq::Producer {
       eventsize = param.Get("EventSize", 1);
       eudaq::mSleep(2000);
       EUDAQ_INFO("Configured (" + param.Name() + ")");
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")", eudaq::Status::ST_CONF);
+      SetStatus( eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_ev = 0;
       SendEvent(RawDataEvent::BORE("Test", m_run));
       std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_RUNNING);
+      SetStatus(eudaq::Status::ST_RUNNING);
     }
     virtual void OnStopRun() {
       SendEvent(RawDataEvent::EORE("Test", m_run, ++m_ev));
       std::cout << "Stop Run" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_CONF);
+      SetStatus(eudaq::Status::ST_CONF);
     }
     virtual void OnTerminate() {
       std::cout << "Terminate (press enter)" << std::endl;
@@ -65,7 +65,7 @@ class TestProducer : public eudaq::Producer {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "",eudaq::Status::ST_UNCONF);
+      SetStatus(eudaq::Status::ST_UNCONF);
     }
     virtual void OnStatus() {
       //std::cout << "Status - " << m_status << std::endl;
@@ -75,7 +75,7 @@ class TestProducer : public eudaq::Producer {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::LVL_WARN, "Just testing");
+      //SetStatus(eudaq::Status::LVL_WARN, "Just testing");
     }
     unsigned m_run, m_ev;
     bool done;
@@ -132,13 +132,13 @@ int main(int /*argc*/, const char ** argv) {
           EUDAQ_USER(line);
           break;
         case 'o':
-          producer.SetStatus(eudaq::Status::LVL_OK, line);
+          EUDAQ_LOG(OK, line);
           break;
         case 'w':
-          producer.SetStatus(eudaq::Status::LVL_WARN, line);
+          EUDAQ_LOG(WARN, line);
           break;
         case 'e':
-          producer.SetStatus(eudaq::Status::LVL_ERROR, line);
+          EUDAQ_LOG(ERROR, line);
           break;
         case 'q':
           producer.done = true;

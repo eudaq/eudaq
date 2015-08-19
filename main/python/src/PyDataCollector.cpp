@@ -21,11 +21,11 @@ class PyDataCollector : public eudaq::DataCollector {
       std::cout << "[PyDataCollector] Configuring (" << param.Name() << ")..." << std::endl;
       DataCollector::OnConfigure(param);
       std::cout << "[PyDataCollector] ...Configured (" << param.Name() << ")" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")", eudaq::Status::ST_CONF);
+      SetStatus(eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
       DataCollector::OnStartRun(param);
-      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_RUNNING);
+      SetStatus(eudaq::Status::ST_RUNNING);
     }
     //   virtual bool OnStartRun(unsigned param) {
     //     std::cout << "Start Run: " << param << std::endl;
@@ -41,7 +41,7 @@ class PyDataCollector : public eudaq::DataCollector {
 
     virtual void OnReset() {
       std::cout << "[PyDataCollector] Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_UNCONF);
+      SetStatus(eudaq::Status::ST_UNCONF);
     }
     //   virtual void OnStatus() {
     //     DataCollector::OnStatus();
@@ -51,7 +51,7 @@ class PyDataCollector : public eudaq::DataCollector {
       std::cout << "[PyDataCollector] Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::LVL_WARN, "Just testing");
+      //SetStatus(eudaq::Status::LVL_WARN, "Just testing");
     }
 };
 

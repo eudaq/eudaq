@@ -94,11 +94,11 @@ protected:
     std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
     LogCollector::OnConfigure(param);
     std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")", eudaq::Status::ST_CONF);
+    SetStatus(eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
   }
   virtual void OnStartRun(unsigned param) {
     LogCollector::OnStartRun(param);
-    SetStatus(eudaq::Status::LVL_OK, "", eudaq::Status::ST_RUNNING);
+    SetStatus(eudaq::Status::ST_RUNNING);
   }
   virtual void OnConnect(const eudaq::ConnectionInfo &id) {
     eudaq::mSleep(100);
@@ -114,7 +114,7 @@ protected:
     emit RecMessage(msg);
   }
   virtual void OnTerminate() {
-    SetStatus(eudaq::Status::LVL_OK, "LC Terminating", eudaq::Status::ST_UNCONF);
+    //SetStatus(eudaq::Status::LVL_OK, "LC Terminating", eudaq::Status::ST_UNCONF);
     std::cout << "terminating!" << std::endl;
     QApplication::quit();
     exit(0);

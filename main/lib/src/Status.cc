@@ -1,7 +1,6 @@
 #include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/MachineState.hh"
 #include "eudaq/Utils.hh"
 
 namespace eudaq {

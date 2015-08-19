@@ -6,6 +6,7 @@
 #include "eudaq/Status.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Platform.hh"
+#include "eudaq/MachineState.hh"
 
 #include <string>
 #include <memory>
@@ -61,6 +62,10 @@ namespace eudaq {
     void CommandHandler(TransportEvent &ev);
     bool m_done;
     bool m_listening;
+
+    MachineState current_State;
+
+
 
   protected:
     int32_t m_runnumber;          ///< The current run number

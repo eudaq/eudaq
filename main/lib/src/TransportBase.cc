@@ -25,6 +25,16 @@ namespace eudaq {
     return true;
   }
 
+  int ConnectionInfo::GetRemoteInfo() const
+  {
+    std::string info = m_host.substr(m_host.find(":")+1);
+    //std::cout<<info<<"\n";
+    if( info.compare("") != 0)
+      return std::stoi(info);
+
+    return (0);
+  }
+
   TransportBase::TransportBase() : m_callback(0) {}
 
   void TransportBase::SetCallback(const TransportCallback &callback) {
