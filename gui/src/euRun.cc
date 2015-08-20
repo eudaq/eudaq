@@ -105,7 +105,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   setupUi(this);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
-  lblCurrent->setText(QString("<font size=%1  color='red'><b>Current State: NONE </b></font>").arg(FONT_SIZE));
+  lblCurrent->setText(QString("<font size=%1  color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
   QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
   int row = 0, col = 0;
   for (const char **st = statuses; st[0] && st[1]; st += 2) {
@@ -239,19 +239,12 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
   // QMessageBox::information(this, "EUDAQ Run Control",
   //                         "This will reset all connected Producers etc.");
   m_run.newconnection(id);
-  needsConfigureCheck=true; 
   if (id.GetType() == "DataCollector") {
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-    std::cout<<"DEBUG: Found a Data Collector \n";
-    hasCollector= true;
-    SetState(ST_NONE);
   }
   else if (id.GetType() == "LogCollector") {
-    std::cout<<"DEBUG: Found a Log Collector \n";
     btnLogSetStatus(true);
   }
-  else if (id.GetType() == "Producer")
-    SetState(ST_NONE);
   
 }
 

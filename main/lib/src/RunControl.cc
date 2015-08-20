@@ -258,6 +258,7 @@ namespace eudaq {
 
         current_State.SetState(ev.id , status.get());
         current_State.Print();
+        SendState(current_State.GetState());
 
         if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
           ev.id.SetState(2);

@@ -30,7 +30,7 @@ namespace eudaq {
   }
 
   std::string Status::State2String(int state) {
-    static const char *const strings[] = {"UNCONF","CONF","RUNNING","ERROR"};
+    static const char *const strings[] = {"Unconfigured","Configured","Running","Error"};
     return strings[state];
   }
 

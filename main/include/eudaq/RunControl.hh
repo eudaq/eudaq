@@ -42,6 +42,9 @@ namespace eudaq {
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
     virtual void OnReceive(const ConnectionInfo & /*id*/,
                            std::shared_ptr<Status>) {}
+
+    virtual void SendState(int state){}
+    
     virtual ~RunControl();
 
     void CommandThread();

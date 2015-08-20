@@ -20,7 +20,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
+    return m_id->IsEnabled() ? m_status.State2String(m_status.GetState()).c_str() : "DEAD";
   case 3:
     return m_id->GetRemote().c_str();
   default:
@@ -57,7 +57,7 @@ void RunControlModel::newconnection(const eudaq::ConnectionInfo &id) {
   size_t pos = it - m_disp.begin();
   beginInsertRows(QModelIndex(), pos, pos);
   m_disp.insert(it, m_data.size() - 1);
-  endInsertRows();
+  endInsertRows(); 
 }
 
 void RunControlModel::disconnected(const eudaq::ConnectionInfo &id) {
@@ -66,18 +66,19 @@ void RunControlModel::disconnected(const eudaq::ConnectionInfo &id) {
       m_data[i].SetConnected(false);
       break;
     }
-  }
+  } 
   UpdateDisplayed();
 }
 
 void RunControlModel::SetStatus(const eudaq::ConnectionInfo &id,
                                 eudaq::Status status) {
+  
   for (size_t i = 0; i < m_data.size(); ++i) {
     if (id.Matches(m_data[i].GetId())) {
       m_data[i].SetStatus(status);
       break;
     }
-  }
+  } 
   UpdateDisplayed();
 }
 
@@ -99,7 +100,7 @@ In the case that all are configured this function returns true,
 In the case that one of the connections is not configured this function returns false.
 */
 bool RunControlModel::CheckConfigured() {
-  std::string connectionState = ""; 
+  std::string connectionState; 
   for(RunControlConnection i: m_data){
     connectionState = i[2].toStdString();
     //std::cout<<"Status is: "<< stdString<<" Bool Test:"<<(stdString.size()<5) <<"\n";
@@ -112,8 +113,10 @@ bool RunControlModel::CheckConfigured() {
   
     return true;
 }
-int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
+int RunControlModel::rowCount(const QModelIndex & /*parent*/) const 
+{
   return m_data.size();
+
 }
 
 int RunControlModel::columnCount(const QModelIndex & /*parent*/) const {
@@ -123,7 +126,7 @@ int RunControlModel::columnCount(const QModelIndex & /*parent*/) const {
 int RunControlModel::GetLevel(const QModelIndex &index) const {
   const RunControlConnection &conn = m_data[m_disp[index.row()]];
   if (conn.IsConnected())
-    return conn.GetLevel();
+    return conn.GetLevel(); 
   return eudaq::Status::LVL_DEBUG;
 }
 

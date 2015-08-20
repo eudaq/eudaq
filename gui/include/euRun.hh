@@ -50,9 +50,7 @@ public:
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
 private:
-  bool hasCollector= false;
-  bool needsConfigureCheck = true; 
-  enum state_t { ST_NONE, ST_READY, ST_RUNNING};
+  enum state_t { ST_UNCONF, ST_CONF, ST_RUNNING, ST_ERROR};
   const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
@@ -60,6 +58,8 @@ private:
   }
   virtual void OnReceive(const eudaq::ConnectionInfo &id,
                          std::shared_ptr<eudaq::Status> status);
+
+  void SendState(int state){SetState(state); }
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
       return;
@@ -80,20 +80,26 @@ private:
   bool eventFilter(QObject *object, QEvent *event);
 private slots:
 
-/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal: (?) is emmited, this function is triggered. This function takes a variable state, which corresponds to one of the three states which the program can be in. Depending on which state the program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
+/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal: (?) is emmited, this function is triggered. 
+This function takes a variable state, which corresponds to one of the three states which the program can be in. Depending on which state the 
+program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
     //std::cout << "DEBUG: Current State is: "; std::cout<< state ; std::cout<<"\n";
-    btnConfig->setEnabled(state != ST_RUNNING && hasCollector);
+    btnConfig->setEnabled(state != ST_RUNNING);
     btnTerminate->setEnabled(state != ST_RUNNING);
-    btnStart->setEnabled(state == ST_READY);
+    btnStart->setEnabled(state == ST_CONF);
+
     btnStop->setEnabled(state == ST_RUNNING);
-    if(state == ST_NONE)
-       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: NOT READY </b></font>").arg(FONT_SIZE));
-    else if (state == ST_READY)
-       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: READY </b></font>").arg(FONT_SIZE));
+    if(state == ST_UNCONF)
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
+    else if (state == ST_CONF)
+       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
     else if (state ==ST_RUNNING)
-       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: RUNNING </b></font>").arg(FONT_SIZE));
+       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
+     else
+       lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
+
   }
 
   void on_btnTerminate_clicked() { close(); }
@@ -103,25 +109,18 @@ private slots:
     //std::cout << "DEBUG: Configure Button Pressed \n";
     std::string settings = cmbConfig->currentText().toStdString();
     Configure(settings, txtGeoID->text().toInt());
-    SetState(ST_READY);
     dostatus = true;
-    needsConfigureCheck=false;
   }
   // void on_btnReset_clicked() {
   //  Reset();
   //}
 
-/*The function on_btnStart_clicked handles the event of the start button being pressed. The list of connections is accessed via the RunControlModel class. In the case that not all of the connections are configured, the program displays a message prompting the user to configure all connections. Otherwise the function begins the run. 
-
-Starting the run includes resetting the following variables from the previous run : trigger, time, and start time. It then starts the run, emits the status changed, and sets the state to running.
-*/
   void on_btnStart_clicked(bool cont = false) { 
-    std::cout << "DEBUG: Start Button Pressed \n";
-    if(needsConfigureCheck && !m_run.CheckConfigured()){
+  /*  if( //connections aren't config){
 	QMessageBox msgBox;
         msgBox.setText("Please Configure Connections Before Running.");
         msgBox.exec();
-        return;}
+        return;}*/
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -132,18 +131,13 @@ Starting the run includes resetting the following variables from the previous ru
     emit StatusChanged("PARTICLES", "0");
     emit StatusChanged("RATE", "");
     emit StatusChanged("MEANRATE", "");
-    SetState(ST_RUNNING);
   }
   void on_btnStop_clicked() {
     StopRun();
     //std::cout << "DEBUG: Stop Button Pressed \n";
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-    SetState(ST_READY);
   }
   void on_btnLog_clicked() {
-    //std::cout << "DEBUG: Log Button Pressed \n" ;
-    //std::cout <<" Is Configured? "<<m_run.CheckConfigured()<<"\n";
-    //MachineState state = MachineState(eudaq::MachineState::ST_CONFIG, "");
     TestCommand();
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
