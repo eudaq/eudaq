@@ -14,13 +14,11 @@
 
 #if USE_EUTELESCOPE
 #include "EUTELESCOPE.h"
-#include "EUTelSetupDescription.h"
 #include "EUTelEventImpl.h"
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelRunHeaderImpl.h"
 
-#include "EUTelCMSPixelDetector.h"
 using eutelescope::EUTELESCOPE;
 #endif
 
@@ -48,15 +46,39 @@ namespace eudaq {
       m_roctype = devDict->getInstance()->getDevCode(roctype);
       m_tbmtype = devDict->getInstance()->getDevCode(tbmtype);
 
-      if (m_roctype == 0x0)
-        EUDAQ_ERROR("Roctype " + roctype + " " + to_string((int)m_roctype) +
-                    " not propagated correctly to CMSPixelConverterPlugin");
+      if (m_roctype == 0x0) {
+        EUDAQ_THROW("Data contains invalid ROC type: " + roctype);
+      }
+      if(m_tbmtype == 0x0) {
+	EUDAQ_THROW("Data contains invalid TBM type: " + tbmtype);
+      }
 
       std::cout << "CMSPixel Converter initialized with detector " << m_detector
                 << ", Event Type " << m_event_type << ", TBM type " << tbmtype
                 << " (" << static_cast<int>(m_tbmtype) << ")"
                 << ", ROC type " << roctype << " ("
                 << static_cast<int>(m_roctype) << ")" << std::endl;
+
+      if (m_detector == "TRP") {
+        m_planeid = 6;
+      } // TRP
+      else if (m_detector == "DUT") {
+        m_planeid = 7;
+      } // DUT
+      else if (m_detector == "REF") {
+        m_planeid = 8;
+      } // REF
+      else {
+        m_planeid = 9;
+      } // QUAD
+
+      // Set decoder to reasonable verbosity (still informing about problems:
+      pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
+      //pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
+
+      // Connect the data source and set up the pipe:
+      src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
+      src >> splitter >> decoder >> Eventpump;
     }
 
     bool GetStandardSubEvent(StandardEvent &out, const Event &in) const {
@@ -67,18 +89,12 @@ namespace eudaq {
         std::cout << "Decoding statistics for detector " << m_detector
                   << std::endl;
         pxar::Log::ReportingLevel() = pxar::Log::FromString("INFO");
-        decoding_stats.dump();
+	decoder.getStatistics().dump();
+	return true;
       }
-
-      // Check if we have BORE or EORE:
-      if (in.IsBORE() || in.IsEORE()) {
-        return true;
-      }
-
-      // Check ROC type from event tags:
-      if (m_roctype == 0x0) {
-        EUDAQ_ERROR("Invalid ROC type\n");
-        return false;
+      // Check if we have BORE:
+      else if (in.IsBORE()) {
+	return true;
       }
 
       const RawDataEvent &in_raw = dynamic_cast<const RawDataEvent &>(in);
@@ -88,48 +104,19 @@ namespace eudaq {
         return false;
       }
 
-      unsigned plane_id;
-      if (m_detector == "TRP") {
-        plane_id = 6;
-      } // TRP
-      else if (m_detector == "DUT") {
-        plane_id = 7;
-      } // DUT
-      else if (m_detector == "REF") {
-        plane_id = 8;
-      } // REF
-      else {
-        plane_id = 9;
-      } // QUAD
-
-      // Set decoder to reasonable verbosity (still informing about problems:
-      pxar::Log::ReportingLevel() = pxar::Log::FromString("WARNING");
-      // pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
-
-      // The pipeworks:
-      evtSource src;
-      passthroughSplitter splitter;
-      dtbEventDecoder decoder;
-      dataSink<pxar::Event *> Eventpump;
-
-      // Connect the data source and set up the pipe:
-      src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
-      src >> splitter >> decoder >> Eventpump;
-
       // Transform from EUDAQ data, add it to the datasource:
       src.AddData(TransformRawData(in_raw.GetBlock(0)));
       // ...and pull it out at the other end:
       pxar::Event *evt = Eventpump.Get();
-      decoding_stats += decoder.getStatistics();
 
       // If we have no TBM or a TBM Emulator, assume this is
       // some sort of multi-plane telescope:
       if (m_tbmtype <= TBM_EMU)
-        GetMultiPlanes(out, plane_id, evt);
+        GetMultiPlanes(out, m_planeid, evt);
       // If we have a real TBM attached, this is probably
       // a module with just one sensor plane:
       else
-        GetSinglePlane(out, plane_id, evt);
+        GetSinglePlane(out, m_planeid, evt);
     }
 
 #if USE_LCIO && USE_EUTELESCOPE
@@ -162,7 +149,6 @@ namespace eudaq {
       LCCollectionVec *zsDataCollection;
       bool zsDataCollectionExists = false;
       try {
-        /// FIXME choose another name for the collection!
         zsDataCollection =
             static_cast<LCCollectionVec *>(result.getCollection(m_event_type));
         zsDataCollectionExists = true;
@@ -174,9 +160,6 @@ namespace eudaq {
       CellIDEncoder<TrackerDataImpl> zsDataEncoder(
           eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
 
-      // Prepare a description of the setup
-      std::vector<eutelescope::EUTelSetupDescription *> setupDescription;
-
       // Decode the raw data and retrieve the eudaq StandardEvent:
       StandardEvent tmp_evt;
       GetStandardSubEvent(tmp_evt, source);
@@ -185,25 +168,6 @@ namespace eudaq {
       for (size_t iPlane = 0; iPlane < tmp_evt.NumPlanes(); ++iPlane) {
         StandardPlane plane =
             static_cast<StandardPlane>(tmp_evt.GetPlane(iPlane));
-
-        // The current detector is ...
-        eutelescope::EUTelPixelDetector *currentDetector = 0x0;
-        if (plane.Sensor() == "DUT" || plane.Sensor() == "REF" ||
-            plane.Sensor() == "TRP") {
-
-          currentDetector = new eutelescope::EUTelCMSPixelDetector;
-          // FIXME what is that mode used for?
-          std::string mode = "ZS";
-          currentDetector->setMode(mode);
-          if (result.getEventNumber() == 0) {
-            setupDescription.push_back(
-                new eutelescope::EUTelSetupDescription(currentDetector));
-          }
-        } else {
-          EUDAQ_ERROR("Unrecognised sensor type in LCIO converter: " +
-                      plane.Sensor());
-          return true;
-        }
 
         zsDataEncoder["sensorID"] = plane.ID();
         zsDataEncoder["sparsePixelType"] =
@@ -239,7 +203,6 @@ namespace eudaq {
 
         // Now add the TrackerData to the collection
         zsDataCollection->push_back(zsFrame.release());
-        delete currentDetector;
 
       } // loop over all planes
 
@@ -264,15 +227,18 @@ namespace eudaq {
     std::string m_detector;
     bool m_rotated_pcb;
     std::string m_event_type;
-    mutable pxar::statistics decoding_stats;
+    // The pipeworks:
+    mutable evtSource src;
+    mutable passthroughSplitter splitter;
+    mutable dtbEventDecoder decoder;
+    mutable dataSink<pxar::Event *> Eventpump;
 
     void GetMultiPlanes(StandardEvent &out, unsigned plane_id,
                         pxar::Event *evt) const {
       // Iterate over all planes and check for pixel hits:
       for (size_t roc = 0; roc < m_nplanes; roc++) {
 
-        // We are using the event's "sensor" (m_detector) to distinguish DUT and
-        // REF:
+	// Create a new StandardPlane object:
         StandardPlane plane(plane_id + roc, m_event_type, m_detector);
 
         // Initialize the plane size (zero suppressed), set the number of pixels
@@ -305,8 +271,7 @@ namespace eudaq {
     void GetSinglePlane(StandardEvent &out, unsigned plane_id,
                         pxar::Event *evt) const {
 
-      // We are using the event's "sensor" (m_detector) to distinguish DUT and
-      // REF:
+      // Create a new StandardPlane object:
       StandardPlane plane(plane_id, m_event_type, m_detector);
 
       // More than 16 ROCs on one module?! Impossible!
