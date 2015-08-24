@@ -36,12 +36,16 @@ class ExampleProducer : public eudaq::Producer {
 
       // At the end, set the status that will be displayed in the Run Control.
       // and set the state of the machine.
-      SetStatus(eudaq::Status::ST_CONF, "Configured (" + config.Name() + ")");
+      SetStatus(eudaq::Status::STATE_CONF, "Configured (" + config.Name() + ")");
     }
 
     // This gets called whenever a new run is started
     // It receives the new run number as a parameter
     virtual void OnStartRun(unsigned param) {
+
+      //For Debugging the Error state of producers:
+      //SetStatus(eudaq::Status::STATE_ERROR);
+
       m_run = param;
       m_ev = 0;
 	  
@@ -57,7 +61,7 @@ class ExampleProducer : public eudaq::Producer {
       SendEvent(bore);
 
       // At the end, set the status that will be displayed in the Run Control.
-      SetStatus(eudaq::Status::ST_RUNNING, "Running");
+      //SetStatus(eudaq::Status::STATE_RUNNING, "Running");
       started=true;
     }
 
@@ -74,7 +78,9 @@ class ExampleProducer : public eudaq::Producer {
         eudaq::mSleep(20);
         //std::cout<<"Does hardware have pending? "<<hardware.EventsPending()<<"\n";
       }
-      SetStatus(eudaq::Status::ST_CONF);
+      
+      if (m_status.GetState() != eudaq::Status::STATE_ERROR)
+        SetStatus(eudaq::Status::STATE_CONF);
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
       SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
@@ -105,7 +111,7 @@ class ExampleProducer : public eudaq::Producer {
         }
 
 
-    		if (GetStatus() != eudaq::Status::ST_RUNNING)
+    		if (GetStatus() != eudaq::Status::STATE_RUNNING)
     		{
     			// Now sleep for a bit, to prevent chewing up all the CPU
     			eudaq::mSleep(20);

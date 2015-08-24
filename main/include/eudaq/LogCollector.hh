@@ -29,7 +29,11 @@ namespace eudaq {
     virtual void OnReceive(const LogMessage &msg) = 0;
     virtual ~LogCollector();
 
-    virtual void OnStopRun(){ SetStatus(eudaq::Status::ST_CONF); }
+    virtual void OnStopRun()
+    { 
+      if (m_status.GetState() != eudaq::Status::STATE_ERROR)
+        SetStatus(eudaq::Status::STATE_CONF); 
+    }
 
     void LogThread();
 

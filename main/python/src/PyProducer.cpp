@@ -31,13 +31,13 @@ class PyProducer : public eudaq::Producer {
       std::cout << "[PyProducer] Received Configuration" << std::endl;
       m_config = new eudaq::Configuration(param);
       m_internalstate = Configuring;
-      SetStatus(eudaq::Status::ST_UNCONF, "Waiting for Python-side configure");
+      SetStatus(eudaq::Status::STATE_UNCONF, "Waiting for Python-side configure");
       // now wait until the python side has everything configured and called SetConfigured()
       while (m_internalstate != Configured){
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Configured) {
-	SetStatus(eudaq::Status::ST_CONF, "Configured (" + m_config->Name() + ")");
+	SetStatus(eudaq::Status::STATE_CONF, "Configured (" + m_config->Name() + ")");
       }
     }
 
@@ -46,11 +46,11 @@ class PyProducer : public eudaq::Producer {
       m_evt = 0;
       // check if we are beyond the configuration stage
       if (!(m_internalstate==Configured || m_internalstate==Stopped)) {
-	SetStatus(eudaq::Status::ST_ERROR, "Cannot start run/unconfigured!");
+	SetStatus(eudaq::Status::STATE_ERROR, "Cannot start run/unconfigured!");
 	m_internalstate = Error;
       } else {
 	m_internalstate = StartingRun;
-	SetStatus(eudaq::Status::ST_CONF, "Waiting for Python-side run start" );
+	SetStatus(eudaq::Status::STATE_CONF, "Waiting for Python-side run start" );
       }
       // now wait until the python side is ready to start and called SendBORE()
       while (m_internalstate != Running){
@@ -58,12 +58,12 @@ class PyProducer : public eudaq::Producer {
       }
       if (m_internalstate == Running) {
 	eudaq::DataSender::SendEvent(RawDataEvent::BORE(m_name, m_run));
-	SetStatus(eudaq::Status::ST_RUNNING);
+	SetStatus(eudaq::Status::STATE_RUNNING);
       }
     }
     virtual void OnStopRun() {
       std::cout << "[PyProducer] Stop Run received" << std::endl;
-      SetStatus(eudaq::Status::ST_RUNNING, "Waiting for Python-side run stop");
+      SetStatus(eudaq::Status::STATE_RUNNING, "Waiting for Python-side run stop");
       m_internalstate = StoppingRun;
       // now wait until the python side is ready to start and called SendEORE()
       while (m_internalstate != Stopped){
@@ -71,7 +71,8 @@ class PyProducer : public eudaq::Producer {
       }
       if (m_internalstate == Stopped) {
 	eudaq::DataSender::SendEvent(RawDataEvent::EORE(m_name, m_run, ++m_evt));
-	SetStatus(eudaq::Status::ST_CONF);
+  if(m_status != eudaq::Status::STATE_ERROR)
+	 SetStatus(eudaq::Status::STATE_CONF);
       }
     }
     virtual void OnTerminate() {
@@ -85,7 +86,7 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Init) {
-	SetStatus(eudaq::Status::ST_UNCONF);
+	SetStatus(eudaq::Status::STATE_UNCONF);
       }
     }
     virtual void OnStatus() {

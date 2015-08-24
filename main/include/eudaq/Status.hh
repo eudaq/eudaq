@@ -28,13 +28,13 @@ namespace eudaq {
     };
 
     enum State {
-      ST_UNCONF,
-      ST_CONF,
-      ST_RUNNING,
-      ST_ERROR
+      STATE_UNCONF,
+      STATE_CONF,
+      STATE_RUNNING,
+      STATE_ERROR
     };
 
-    Status(int level = LVL_OK, const std::string &msg = "",int state = ST_UNCONF)
+    Status(int level = LVL_OK, const std::string &msg = "",int state = STATE_UNCONF)
         : m_level(level), m_msg(msg), m_state(state) {}
     Status(Deserializer &);
 

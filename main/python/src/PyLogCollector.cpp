@@ -29,7 +29,7 @@ class PyLogCollector : public eudaq::LogCollector {
     }
     virtual void OnConfigure(const std::string & param) {
       std::cout << "Configure: " << param << std::endl;
-      SetStatus(eudaq::Status::ST_CONF);
+      SetStatus(eudaq::Status::STATE_CONF);
     }
     virtual void OnStartRun(unsigned param) {
       std::cout << "Start Run: " << param << std::endl;
@@ -43,7 +43,7 @@ class PyLogCollector : public eudaq::LogCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::ST_UNCONF);
+      SetStatus(eudaq::Status::STATE_UNCONF);
     }
     virtual void OnStatus() {
       std::cout << "Status - " << m_status << std::endl;

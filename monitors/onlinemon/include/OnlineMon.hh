@@ -95,7 +95,7 @@ public:
 
   virtual void OnConfigure(const eudaq::Configuration &param) {
     std::cout << "Configure: " << param.Name() << std::endl;
-    SetStatus(eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
+    SetStatus(eudaq::Status::STATE_CONF, "Configured (" + param.Name() + ")");
   }
   virtual void OnTerminate() {
     std::cout << "Terminating" << std::endl;
@@ -104,7 +104,7 @@ public:
   }
   virtual void OnReset() {
     std::cout << "Reset" << std::endl;
-    SetStatus(eudaq::Status::ST_UNCONF);
+    SetStatus(eudaq::Status::STATE_UNCONF);
   }
   virtual void OnStartRun(unsigned param);
   virtual void OnEvent(const eudaq::StandardEvent &ev);

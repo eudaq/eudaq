@@ -132,7 +132,7 @@ namespace eudaq {
     std::cout << "Config:\n" << param << std::endl;
   }
 
-  void CommandReceiver::OnClear() { SetStatus(Status::ST_UNCONF, "Wait"); }
+  void CommandReceiver::OnClear() { SetStatus(Status::STATE_UNCONF, "Wait"); }
 
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);

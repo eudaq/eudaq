@@ -19,20 +19,20 @@ namespace eudaq {
 		{
 			state = s.second.GetState();
 
-			if(state == eudaq::Status::ST_ERROR)
-				return (eudaq::Status::ST_ERROR);
+			if(state == eudaq::Status::STATE_ERROR)
+				return (eudaq::Status::STATE_ERROR);
 
-			isUnconf = (state == eudaq::Status::ST_UNCONF) || isUnconf;
-			isRunning = (state == eudaq::Status::ST_RUNNING) || isRunning;
+			isUnconf = (state == eudaq::Status::STATE_UNCONF) || isUnconf;
+			isRunning = (state == eudaq::Status::STATE_RUNNING) || isRunning;
 
 		}
 
 		if (isRunning)
-			return eudaq::Status::ST_RUNNING;
+			return eudaq::Status::STATE_RUNNING;
 		else if(isUnconf)
-			return eudaq::Status::ST_UNCONF;
+			return eudaq::Status::STATE_UNCONF;
 		
-		return eudaq::Status::ST_CONF; 
+		return eudaq::Status::STATE_CONF; 
 
 	}
 

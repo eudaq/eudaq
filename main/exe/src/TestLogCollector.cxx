@@ -29,15 +29,16 @@ class TestLogCollector : public eudaq::LogCollector {
     }
     virtual void OnConfigure(const eudaq::Configuration & param) {
       std::cout << "Configure: " << param << std::endl;
-      SetStatus(eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
+      SetStatus(eudaq::Status::STATE_CONF, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
       std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::ST_RUNNING);
+      SetStatus(eudaq::Status::STATE_RUNNING);
     }
     virtual void OnStopRun() {
       std::cout << "Stop Run" << std::endl;
-      SetStatus(eudaq::Status::ST_CONF);
+      if(m_status.GetState() != eudaq::Status::STATE_ERROR)
+        SetStatus(eudaq::Status::STATE_CONF);
     }
     virtual void OnTerminate() {
       std::cout << "Terminating" << std::endl;
@@ -45,7 +46,7 @@ class TestLogCollector : public eudaq::LogCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::ST_UNCONF);
+      SetStatus(eudaq::Status::STATE_UNCONF);
     }
     virtual void OnStatus() {
       std::cout << "Status - " << m_status << std::endl;
@@ -55,7 +56,7 @@ class TestLogCollector : public eudaq::LogCollector {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::ST_ERROR);
+      SetStatus(eudaq::Status::STATE_ERROR);
     }
     int m_loglevel;
     bool done;

@@ -97,6 +97,7 @@ namespace eudaq {
 
   void Monitor::OnStopRun() { 
     m_reader->Interrupt(); 
-    SetStatus(Status::ST_CONF);
+    if(m_status.GetState() != Status::STATE_ERROR)
+      SetStatus(Status::STATE_CONF);
   }
 }

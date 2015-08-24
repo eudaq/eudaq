@@ -50,7 +50,7 @@ public:
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
 private:
-  enum state_t { ST_UNCONF, ST_CONF, ST_RUNNING, ST_ERROR};
+  enum state_t { STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};
   const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
@@ -80,22 +80,28 @@ private:
   bool eventFilter(QObject *object, QEvent *event);
 private slots:
 
-/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal: (?) is emmited, this function is triggered. 
+/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal is emmited, this function is triggered. 
 This function takes a variable state, which corresponds to one of the three states which the program can be in. Depending on which state the 
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
     //std::cout << "DEBUG: Current State is: "; std::cout<< state ; std::cout<<"\n";
-    btnConfig->setEnabled(state != ST_RUNNING);
-    btnTerminate->setEnabled(state != ST_RUNNING);
-    btnStart->setEnabled(state == ST_CONF);
+    if(state == STATE_ERROR && !error_stop)
+      {
+        error_stop = true;
+        StopRun();
+      }
 
-    btnStop->setEnabled(state == ST_RUNNING);
-    if(state == ST_UNCONF)
+    btnConfig->setEnabled(state != STATE_RUNNING);
+    btnTerminate->setEnabled(state != STATE_RUNNING);
+    btnStart->setEnabled(state == STATE_CONF);
+
+    btnStop->setEnabled(state == STATE_RUNNING);
+    if(state == STATE_UNCONF)
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
-    else if (state == ST_CONF)
+    else if (state == STATE_CONF)
        lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
-    else if (state ==ST_RUNNING)
+    else if (state ==STATE_RUNNING)
        lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
      else
        lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
@@ -121,6 +127,8 @@ program is currently in the function will enable and disable certain buttons, an
         msgBox.setText("Please Configure Connections Before Running.");
         msgBox.exec();
         return;}*/
+
+    error_stop =false;
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -203,6 +211,7 @@ private:
   int64_t m_filebytes;
   int64_t m_events;
   bool dostatus;
+  bool error_stop = false;
   // Using automatic configuration file changes, the two variables below are
   // needed to ensure that the producers finished their configuration, before
   // the next run is started. If that is covered by the control FSM in a later
