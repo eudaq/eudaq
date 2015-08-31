@@ -52,7 +52,9 @@ public:
   void disconnected(const eudaq::ConnectionInfo &id);
 
   int GetLevel(const QModelIndex &index) const;
+  
   void UpdateDisplayed();
+
   
   bool CheckConfigured();
 

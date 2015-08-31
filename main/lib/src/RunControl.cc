@@ -132,6 +132,7 @@ namespace eudaq {
 
   void RunControl::StopRun(bool listen) {
     EUDAQ_INFO("Stopping Run " + to_string(m_runnumber));
+    std::cout<<"Run Stop called \n";
     SendCommand("STOP");
     m_stopping = true;
     m_listening = listen;

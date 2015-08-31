@@ -20,7 +20,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return m_id->IsEnabled() ? m_status.State2String(m_status.GetState()).c_str() : "DEAD";
+    return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
   case 3:
     return m_id->GetRemote().c_str();
   default:
