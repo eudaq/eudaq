@@ -61,7 +61,7 @@ class ExampleProducer : public eudaq::Producer {
       SendEvent(bore);
 
       // At the end, set the status that will be displayed in the Run Control.
-      //SetStatus(eudaq::Status::STATE_RUNNING, "Running");
+      SetStatus(eudaq::Status::STATE_RUNNING, "Running");
       started=true;
     }
 
