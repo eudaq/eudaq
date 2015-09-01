@@ -45,7 +45,7 @@ class TestDataCollector : public eudaq::DataCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::STATE_UNCONF);
+     // SetStatus(eudaq::Status::STATE_UNCONF);
     }
     //   virtual void OnStatus() {
     //     DataCollector::OnStatus();

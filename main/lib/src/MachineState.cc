@@ -12,7 +12,7 @@ namespace eudaq {
 
 	int MachineState::GetState()
 	{
-		bool isUnconf = false, isRunning = false; 
+		bool isUnconf = false, isRunning = true; 
 		
 		int state = -1;
 		for(std::pair <const eudaq::ConnectionInfo, eudaq::Status> s: connection_status_info)
@@ -21,9 +21,8 @@ namespace eudaq {
 
 			if(state == eudaq::Status::STATE_ERROR)
 				return (eudaq::Status::STATE_ERROR);
-
 			isUnconf = (state == eudaq::Status::STATE_UNCONF) || isUnconf;
-			isRunning = (state == eudaq::Status::STATE_RUNNING) || isRunning;
+			isRunning = (state == eudaq::Status::STATE_RUNNING) && isRunning;
 
 		}
 
@@ -59,6 +58,20 @@ namespace eudaq {
 		//std::cout<<" From GetRemoteInfo: "<< id.GetRemoteInfo()<< "\n";
 		connection_status_info[id] = *state;
 		return;
+	}
+
+	bool MachineState::HasRunning()
+	{
+		int state = -1;
+		for(std::pair <const eudaq::ConnectionInfo, eudaq::Status> s: connection_status_info)
+		{
+			state = s.second.GetState();
+
+			if(state == eudaq::Status::STATE_RUNNING)
+				return true;
+
+		}
+		return false;
 	}
 
 	void MachineState::RemoveState(ConnectionInfo id)

@@ -132,7 +132,13 @@ namespace eudaq {
     std::cout << "Config:\n" << param << std::endl;
   }
 
-  void CommandReceiver::OnClear() { SetStatus(Status::STATE_UNCONF, "Wait"); }
+  void CommandReceiver::OnClear() { 
+
+    if(m_status.GetState()== eudaq::Status::STATE_RUNNING)
+      OnStopRun();
+    SetStatus(Status::STATE_UNCONF, "Wait"); 
+
+  }
 
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
@@ -169,9 +175,11 @@ namespace eudaq {
       } else if (cmd == "PREPARE") {
         OnPrepareRun(from_string(param, 0));
       } else if (cmd == "START") {
-        OnStartRun(from_string(param, 0));
+        //if (m_status.GetState() == eudaq::Status::STATE_CONF)
+          OnStartRun(from_string(param, 0));
       } else if (cmd == "STOP") {
-        OnStopRun();
+        if(m_status.GetState() == eudaq::Status::STATE_RUNNING)
+          OnStopRun();
       } else if (cmd == "TERMINATE") {
         OnTerminate();
       } else if (cmd == "RESET") {

@@ -46,7 +46,7 @@ class TestLogCollector : public eudaq::LogCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::STATE_UNCONF);
+      //SetStatus(eudaq::Status::STATE_UNCONF);
     }
     virtual void OnStatus() {
       std::cout << "Status - " << m_status << std::endl;

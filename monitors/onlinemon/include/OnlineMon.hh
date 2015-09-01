@@ -104,7 +104,7 @@ public:
   }
   virtual void OnReset() {
     std::cout << "Reset" << std::endl;
-    SetStatus(eudaq::Status::STATE_UNCONF);
+    //SetStatus(eudaq::Status::STATE_UNCONF);
   }
   virtual void OnStartRun(unsigned param);
   virtual void OnEvent(const eudaq::StandardEvent &ev);

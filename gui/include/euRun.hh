@@ -85,13 +85,6 @@ This function takes a variable state, which corresponds to one of the three stat
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
-    //std::cout << "DEBUG: Current State is: "; std::cout<< state ; std::cout<<"\n";
-    if(state == STATE_ERROR && !error_stop)
-      {
-        error_stop = true;
-        StopRun();
-      }
-
     btnConfig->setEnabled(state != STATE_RUNNING);
     btnTerminate->setEnabled(state != STATE_RUNNING);
     btnStart->setEnabled(state == STATE_CONF);
@@ -122,13 +115,6 @@ program is currently in the function will enable and disable certain buttons, an
   //}
 
   void on_btnStart_clicked(bool cont = false) { 
-  /*  if( //connections aren't config){
-	QMessageBox msgBox;
-        msgBox.setText("Please Configure Connections Before Running.");
-        msgBox.exec();
-        return;}*/
-
-    error_stop =false;
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -211,7 +197,6 @@ private:
   int64_t m_filebytes;
   int64_t m_events;
   bool dostatus;
-  bool error_stop = false;
   // Using automatic configuration file changes, the two variables below are
   // needed to ensure that the producers finished their configuration, before
   // the next run is started. If that is covered by the control FSM in a later

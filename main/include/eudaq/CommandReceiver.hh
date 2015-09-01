@@ -28,7 +28,7 @@ namespace eudaq {
 
     virtual void OnConfigure(const Configuration &param);
     virtual void OnPrepareRun(unsigned /*runnumber*/) {}
-    virtual void OnStartRun(unsigned /*runnumber*/) {}
+    virtual void OnStartRun(unsigned /*runnumber*/) { SetStatus(eudaq::Status::STATE_CONF);}
     virtual void OnStopRun() {}
     virtual void OnTerminate() {}
     virtual void OnReset() {}

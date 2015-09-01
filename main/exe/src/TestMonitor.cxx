@@ -33,7 +33,7 @@ class TestMonitor : public eudaq::Monitor {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::STATE_UNCONF);
+      //SetStatus(eudaq::Status::STATE_UNCONF);
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;

@@ -53,6 +53,8 @@ namespace eudaq {
       return m_cmdserver->GetConnection(i);
     }
 
+    int GetFSMState(){return current_State.GetState();}
+
   private:
     void InitLog(const ConnectionInfo &id);
     void InitData(const ConnectionInfo &id);
