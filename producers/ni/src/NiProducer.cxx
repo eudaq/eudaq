@@ -139,18 +139,18 @@ public:
       if (NiConfig) {
         std::cout << "NI crate was Configured with ERRORs " << param.Name()
                   << " " << std::endl;
-        SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+        SetStatus(eudaq::Status::ST_ERROR, "Configuration Error");
       } else {
         std::cout << "... was Configured " << param.Name() << " " << std::endl;
         EUDAQ_INFO("Configured (" + param.Name() + ")");
-        SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+        SetStatus(eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
       }
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      SetStatus(eudaq::Status::ST_ERROR, "Configuration Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      SetStatus(eudaq::Status::ST_ERROR, "Configuration Error");
     }
   }
   virtual void OnStartRun(unsigned param) {
@@ -174,13 +174,13 @@ public:
       ni_control->Start();
       running = true;
 
-      SetStatus(eudaq::Status::LVL_OK, "Started");
+      SetStatus(eudaq::Status::ST_RUNNING, "Started");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+      SetStatus(eudaq::Status::ST_ERROR, "Start Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+      SetStatus(eudaq::Status::ST_ERROR, "Start Error");
     }
   }
   virtual void OnStopRun() {
@@ -193,15 +193,15 @@ public:
       eudaq::mSleep(100);
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
-      SetStatus(eudaq::Status::LVL_OK, "Stopped");
+      SetStatus(eudaq::Status::ST_CONF, "Stopped");
       SendEvent(eudaq::RawDataEvent::EORE("NI", m_run, m_ev));
 
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetStatus(eudaq::Status::ST_ERROR, "Stop Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetStatus(eudaq::Status::ST_ERROR, "Stop Error");
     }
   }
   virtual void OnTerminate() {
