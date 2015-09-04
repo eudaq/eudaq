@@ -34,9 +34,9 @@ class ExampleProducer : public eudaq::Producer {
       std::cout << "Example Parameter = " << m_exampleparam << std::endl;
       hardware.Setup(m_exampleparam);
 
-      // At the end, set the status that will be displayed in the Run Control.
+      // At the end, set the ConnectionState that will be displayed in the Run Control.
       // and set the state of the machine.
-      SetStatus(eudaq::Status::STATE_CONF, "Configured (" + config.Name() + ")");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
     }
 
     // This gets called whenever a new run is started
@@ -44,7 +44,7 @@ class ExampleProducer : public eudaq::Producer {
     virtual void OnStartRun(unsigned param) {
 
       //For Debugging the Error state of producers:
-      //SetStatus(eudaq::Status::STATE_ERROR);
+      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR);
 
       m_run = param;
       m_ev = 0;
@@ -60,8 +60,8 @@ class ExampleProducer : public eudaq::Producer {
       // Send the event to the Data Collector
       SendEvent(bore);
 
-      // At the end, set the status that will be displayed in the Run Control.
-      SetStatus(eudaq::Status::STATE_RUNNING, "Running");
+      // At the end, set the ConnectionState that will be displayed in the Run Control.
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Running");
       started=true;
     }
 
@@ -79,8 +79,8 @@ class ExampleProducer : public eudaq::Producer {
         //std::cout<<"Does hardware have pending? "<<hardware.EventsPending()<<"\n";
       }
       
-      if (m_status.GetState() != eudaq::Status::STATE_ERROR)
-        SetStatus(eudaq::Status::STATE_CONF);
+      if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF);
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
       SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
@@ -111,7 +111,7 @@ class ExampleProducer : public eudaq::Producer {
         }
 
 
-    		if (GetStatus() != eudaq::Status::STATE_RUNNING)
+    		if (GetConnectionState() != eudaq::ConnectionState::STATE_RUNNING)
     		{
     			// Now sleep for a bit, to prevent chewing up all the CPU
     			eudaq::mSleep(20);

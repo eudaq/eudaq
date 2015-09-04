@@ -60,7 +60,7 @@ namespace eudaq {
       EUDAQ_ERROR("Oops");
     // std::cout << "OnServer: " << m_logserver->ConnectionString() <<
     // std::endl;
-    m_status.SetTag("_SERVER", m_logserver->ConnectionString());
+    m_connectionstate.SetTag("_SERVER", m_logserver->ConnectionString());
   }
 
   void LogCollector::DoReceive(const LogMessage &ev) {

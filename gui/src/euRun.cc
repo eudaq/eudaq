@@ -6,7 +6,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "Colours.hh"
-#include "eudaq/Status.hh"
+#include "eudaq/ConnectionState.hh"
 #include <exception>
 #include "config.h" // for version symbols
 
@@ -89,7 +89,7 @@ void RunConnectionDelegate::paint(QPainter *painter,
                                   const QModelIndex &index) const {
   // std::cout << __FUNCTION__ << std::endl;
   // painter->save();
-  int level = m_model->GetLevel(index);
+  int level = m_model->GetState(index);
   painter->fillRect(option.rect, QBrush(level_colours[level]));
   QItemDelegate::paint(painter, option, index);
   // painter->restore();
@@ -160,29 +160,30 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
-                              std::shared_ptr<eudaq::Status> status) {
+                              std::shared_ptr<eudaq::ConnectionState> connectionstate) 
+{
+
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");
     registered = true;
   }
-
   if (id.GetType() == "DataCollector") {
-    m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
-    m_events = from_string(status->GetTag("EVENT"), 0LL);
-    EmitStatus("EVENT", status->GetTag("EVENT"));
-    EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
+    m_filebytes = from_string(connectionstate->GetTag("FILEBYTES"), 0LL);
+    m_events = from_string(connectionstate->GetTag("EVENT"), 0LL);
+    EmitStatus("EVENT", connectionstate->GetTag("EVENT"));
+    EmitStatus("FILEBYTES", to_bytes(connectionstate->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer") {
     if (id.GetName() == "TLU") {
-      EmitStatus("TRIG", status->GetTag("TRIG"));
-      EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
-      EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
-      EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
-      EmitStatus("TLUSTAT", status->GetTag("STATUS"));
+      EmitStatus("TRIG", connectionstate->GetTag("TRIG"));
+      EmitStatus("PARTICLES", connectionstate->GetTag("PARTICLES"));
+      EmitStatus("TIMESTAMP", connectionstate->GetTag("TIMESTAMP"));
+      EmitStatus("LASTTIME", connectionstate->GetTag("LASTTIME"));
+      EmitStatus("TLUSTAT", connectionstate->GetTag("STATUS"));
       bool ok = true;
       std::string scalers;
       for (int i = 0; i < 4; ++i) {
-        std::string s = status->GetTag("SCALER" + to_string(i));
+        std::string s = connectionstate->GetTag("SCALER" + to_string(i));
         if (s == "") {
           ok = false;
           break;
@@ -193,8 +194,8 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
       }
       if (ok)
         EmitStatus("SCALERS", scalers);
-      int trigs = from_string(status->GetTag("TRIG"), -1);
-      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
+      int trigs = from_string(connectionstate->GetTag("TRIG"), -1);
+      double time = from_string(connectionstate->GetTag("TIMESTAMP"), 0.0);
       if (trigs >= 0) {
         bool dorate = true;
         if (m_runstarttime == 0.0) {
@@ -221,13 +222,12 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
         }
       }
     } else if (id.GetName() == "pALPIDEfs") {
-      m_producer_pALPIDEfs_not_ok = (status->GetLevel() != 1);
+      m_producer_pALPIDEfs_not_ok = (connectionstate->GetState() == 0);
     } else if (id.GetName() == "pALPIDEss") {
-      m_producer_pALPIDEss_not_ok = (status->GetLevel() != 1);
+      m_producer_pALPIDEss_not_ok = (connectionstate->GetState() == 0);
     }
   }
-
-  m_run.SetStatus(id, *status);
+  m_run.SetConnectionState(id, *connectionstate);
 }
 
 void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
@@ -261,4 +261,5 @@ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
     return true;
   }
   return false;
+
 }

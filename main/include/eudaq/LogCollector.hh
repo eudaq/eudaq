@@ -31,8 +31,8 @@ namespace eudaq {
 
     virtual void OnStopRun()
     { 
-      if (m_status.GetState() != eudaq::Status::STATE_ERROR)
-        SetStatus(eudaq::Status::STATE_CONF); 
+      if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF); 
     }
 
     void LogThread();

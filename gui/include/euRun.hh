@@ -57,7 +57,7 @@ private:
     m_run.disconnected(id);
   }
   virtual void OnReceive(const eudaq::ConnectionInfo &id,
-                         std::shared_ptr<eudaq::Status> status);
+                         std::shared_ptr<eudaq::ConnectionState> connectionstate);
 
   void SendState(int state){SetState(state); }
   void EmitStatus(const char *name, const std::string &val) {
@@ -162,7 +162,7 @@ program is currently in the function will enable and disable certain buttons, an
         } else
           on_btnStart_clicked(true);
       } else if (dostatus) {
-        GetStatus();
+        GetConnectionState();
       }
     }
     if (m_startrunwhenready && !m_producer_pALPIDEfs_not_ok &&

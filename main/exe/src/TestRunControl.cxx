@@ -17,8 +17,8 @@ class TestRunControl : public eudaq::RunControl {
     TestRunControl(const std::string & listenaddress)
       : eudaq::RunControl(listenaddress)
     {}
-    void OnReceive(const eudaq::ConnectionInfo & id, std::shared_ptr<eudaq::Status> status) {
-      std::cout << "Receive:    " << *status << " from " << id << std::endl;
+    void OnReceive(const eudaq::ConnectionInfo & id, std::shared_ptr<eudaq::ConnectionState> connectionstate) {
+      std::cout << "Receive:    " << *connectionstate << " from " << id << std::endl;
     }
     void OnConnect(const eudaq::ConnectionInfo & id) {
       std::cout << "Connect:    " << id << std::endl;
@@ -114,7 +114,7 @@ int main(int /*argc*/, const char ** argv) {
           << "l [msg] Send log message\n"
           << "c [cnf] Configure clients (with configuration 'cnf')\n"
           << "r       Reset\n"
-          << "s       Status\n"
+          << "s       Connection State\n"
           << "b [msg] Begin Run (with run comment 'msg')\n"
           << "e       End Run\n"
           << "x       Terminate clients\n"
@@ -145,7 +145,7 @@ int main(int /*argc*/, const char ** argv) {
           rc.Reset();
           break;
         case 's':
-          rc.GetStatus();
+          rc.GetConnectionState();
           break;
         case 'b':
           rc.StartRun(line);

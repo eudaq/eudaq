@@ -20,7 +20,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
+    return m_id->IsEnabled() ? to_string(m_connectionstate).c_str() : "DEAD";
   case 3:
     return m_id->GetRemote().c_str();
   default:
@@ -70,12 +70,12 @@ void RunControlModel::disconnected(const eudaq::ConnectionInfo &id) {
   UpdateDisplayed();
 }
 
-void RunControlModel::SetStatus(const eudaq::ConnectionInfo &id,
-                                eudaq::Status status) {
+void RunControlModel::SetConnectionState(const eudaq::ConnectionInfo &id,
+                                eudaq::ConnectionState connectionstate) {
   
   for (size_t i = 0; i < m_data.size(); ++i) {
     if (id.Matches(m_data[i].GetId())) {
-      m_data[i].SetStatus(status);
+      m_data[i].SetConnectionState(connectionstate);
       break;
     }
   } 
@@ -103,7 +103,7 @@ bool RunControlModel::CheckConfigured() {
   std::string connectionState; 
   for(RunControlConnection i: m_data){
     connectionState = i[2].toStdString();
-    //std::cout<<"Status is: "<< stdString<<" Bool Test:"<<(stdString.size()<5) <<"\n";
+    //std::cout<<"ConnectionState is: "<< stdString<<" Bool Test:"<<(stdString.size()<5) <<"\n";
     //Currently the test for configuration is based on the length of the state string. This should be
     //implemeted differently
     if(connectionState.size()<5)
@@ -123,11 +123,11 @@ int RunControlModel::columnCount(const QModelIndex & /*parent*/) const {
   return RunControlConnection::NumColumns();
 }
 
-int RunControlModel::GetLevel(const QModelIndex &index) const {
+int RunControlModel::GetState(const QModelIndex &index) const {
   const RunControlConnection &conn = m_data[m_disp[index.row()]];
   if (conn.IsConnected())
-    return conn.GetLevel(); 
-  return eudaq::Status::LVL_DEBUG;
+    return conn.GetState(); 
+  return eudaq::ConnectionState::STATE_ERROR;
 }
 
 QVariant RunControlModel::data(const QModelIndex &index, int role) const {

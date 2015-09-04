@@ -110,7 +110,7 @@ namespace eudaq {
     SendCommand("RESET");
   }
 
-  void RunControl::GetStatus() { SendCommand("STATUS"); }
+  void RunControl::GetConnectionState() { SendCommand("STATUS"); }
 
   void RunControl::StartRun(const std::string &msg) {
     m_listening = false;
@@ -253,20 +253,20 @@ namespace eudaq {
         
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         
-        std::shared_ptr<Status> status(new Status(ser));
+        std::shared_ptr<ConnectionState> connectionstate(new ConnectionState(ser));
         
-        //std::cout<<"Current State: "<< status->GetState()<< " From: "<< to_string(ev.id)<< " With Remote: "<< ev.id.GetRemote()<<"\n";
+        //std::cout<<"Current State: "<< connectionstate->GetState()<< " From: "<< to_string(ev.id)<< " With Remote: "<< ev.id.GetRemote()<<"\n";
 
-        current_State.SetState(ev.id , status.get());
+        current_State.SetState(ev.id , connectionstate.get());
         current_State.Print();
-        if(current_State.GetState()== eudaq::Status::STATE_ERROR && current_State.HasRunning())
+        if(current_State.GetState()== eudaq::ConnectionState::STATE_ERROR && current_State.HasRunning())
           StopRun();
 
         SendState(current_State.GetState());
 
-        if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
+        if (!connectionstate->isBusy() && ev.id.GetState() == 1) {
           ev.id.SetState(2);
-        } else if (status->GetLevel() != Status::LVL_BUSY &&
+        } else if (!connectionstate->isBusy() &&
                    ev.id.GetState() == 2) {
           ev.id.SetState(1);
         }
@@ -278,10 +278,11 @@ namespace eudaq {
           }
         }
         m_producerbusy = busy;
-        if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
-          // We ignore status messages that are marked with a previous run
+        if (from_string(connectionstate->GetTag("RUN"), m_runnumber) == m_runnumber) {
+          // We ignore connectionstate messages that are marked with a previous run
           // number
-          OnReceive(ev.id, status);
+          OnReceive(ev.id, connectionstate);
+          //std::cout<<"DEBUG: Post Call to OnReceive \n";
         }
         // std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" <<
         // std::endl;
@@ -318,9 +319,9 @@ namespace eudaq {
                 << "' is connecting" << std::endl;
     }
 
-    eudaq::Status status =
-        m_cmdserver->SendReceivePacket<eudaq::Status>("GETRUN", id, 1000000);
-    std::string part = status.GetTag("_RUN");
+    eudaq::ConnectionState connectionstate =
+        m_cmdserver->SendReceivePacket<eudaq::ConnectionState>("GETRUN", id, 1000000);
+    std::string part = connectionstate.GetTag("_RUN");
 
     if (part == "")
       EUDAQ_THROW("Bad response from DataCollector");
@@ -370,9 +371,9 @@ namespace eudaq {
     if (isDefaultDC)
       m_idata = thisDCIndex;
 
-    status =
-        m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
-    std::string dsAddrReported = status.GetTag("_SERVER");
+    connectionstate =
+        m_cmdserver->SendReceivePacket<eudaq::ConnectionState>("SERVER", id, 1000000);
+    std::string dsAddrReported = connectionstate.GetTag("_SERVER");
     if (dsAddrReported == "")
       EUDAQ_THROW("Invalid response from DataCollector");
 
@@ -454,10 +455,10 @@ namespace eudaq {
     }
     if (m_ilog == (size_t)-1)
       EUDAQ_THROW("No LogCollector is connected");
-    eudaq::Status status =
-        m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
+    eudaq::ConnectionState connectionstate =
+        m_cmdserver->SendReceivePacket<eudaq::ConnectionState>("SERVER", id, 1000000);
 
-    m_logaddr = status.GetTag("_SERVER");
+    m_logaddr = connectionstate.GetTag("_SERVER");
     std::cout << "LogServer responded: " << m_logaddr << std::endl;
     if (m_logaddr == "")
       EUDAQ_THROW("Invalid response from LogCollector");

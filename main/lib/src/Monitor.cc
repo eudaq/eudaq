@@ -97,7 +97,7 @@ namespace eudaq {
 
   void Monitor::OnStopRun() { 
     m_reader->Interrupt(); 
-    if(m_status.GetState() != Status::STATE_ERROR)
-      SetStatus(Status::STATE_CONF);
+    if(m_connectionstate.GetState() != ConnectionState::STATE_ERROR)
+      SetConnectionState(ConnectionState::STATE_CONF);
   }
 }

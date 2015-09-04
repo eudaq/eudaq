@@ -1,7 +1,7 @@
 	#ifndef EUDAQ_INCLUDED_CommandReceiver
 	#define EUDAQ_INCLUDED_CommandReceiver
 
-#include "eudaq/Status.hh"
+#include "eudaq/ConnectionState.hh"
 #include "eudaq/Platform.hh"
 
 #include <thread>
@@ -20,15 +20,15 @@ namespace eudaq {
   public:
     CommandReceiver(const std::string &type, const std::string &name,
                     const std::string &runcontrol, bool startthread = true);
-    void SetStatus(Status::State state = Status::STATE_UNCONF, const std::string &info = "");
+    void SetConnectionState(ConnectionState::State state = ConnectionState::STATE_UNCONF, const std::string &info = "");
 
-    int GetStatus() { return m_status.GetState();}
+    int GetConnectionState() { return m_connectionstate.GetState();}
 
     virtual ~CommandReceiver();
 
     virtual void OnConfigure(const Configuration &param);
     virtual void OnPrepareRun(unsigned /*runnumber*/) {}
-    virtual void OnStartRun(unsigned /*runnumber*/) { SetStatus(eudaq::Status::STATE_CONF);}
+    virtual void OnStartRun(unsigned /*runnumber*/) { SetConnectionState(eudaq::ConnectionState::STATE_CONF);}
     virtual void OnStopRun() {}
     virtual void OnTerminate() {}
     virtual void OnReset() {}
@@ -47,7 +47,7 @@ namespace eudaq {
     void StartThread();
 
   protected:
-    Status m_status;
+    ConnectionState m_connectionstate;
     TransportClient *m_cmdclient;
 
   private:

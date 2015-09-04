@@ -121,9 +121,9 @@ namespace eudaq {
     //     }
   }
 
-  void CommandReceiver::SetStatus(Status::State state,
+  void CommandReceiver::SetConnectionState(ConnectionState::State state,
                                   const std::string &info) {
-    m_status = Status(Status::LVL_NONE, info, state);
+    m_connectionstate = ConnectionState(info, state);
   }
 
   void CommandReceiver::Process(int timeout) { m_cmdclient->Process(timeout); }
@@ -134,9 +134,9 @@ namespace eudaq {
 
   void CommandReceiver::OnClear() { 
 
-    if(m_status.GetState()== eudaq::Status::STATE_RUNNING)
+    if(m_connectionstate.GetState()== eudaq::ConnectionState::STATE_RUNNING)
       OnStopRun();
-    SetStatus(Status::STATE_UNCONF, "Wait"); 
+    SetConnectionState(ConnectionState::STATE_UNCONF, "Wait"); 
 
   }
 
@@ -175,10 +175,10 @@ namespace eudaq {
       } else if (cmd == "PREPARE") {
         OnPrepareRun(from_string(param, 0));
       } else if (cmd == "START") {
-        //if (m_status.GetState() == eudaq::Status::STATE_CONF)
+        //if (m_connectionstate.GetState() == eudaq::ConnectionState::STATE_CONF)
           OnStartRun(from_string(param, 0));
       } else if (cmd == "STOP") {
-        if(m_status.GetState() == eudaq::Status::STATE_RUNNING)
+        if(m_connectionstate.GetState() == eudaq::ConnectionState::STATE_RUNNING)
           OnStopRun();
       } else if (cmd == "TERMINATE") {
         OnTerminate();
@@ -199,11 +199,11 @@ namespace eudaq {
       } else {
         OnUnrecognised(cmd, param);
       }
-      // std::cout << "Response = " << m_status << std::endl;
+      // std::cout << "Response = " << m_ConnectionState << std::endl;
       BufferSerializer ser;
 
-      //std::cout<<"Sending Status "<< time(0)<< "\n";
-      m_status.Serialize(ser);
+      //std::cout<<"Sending ConnectionState "<< time(0)<< "\n";
+      m_connectionstate.Serialize(ser);
       m_cmdclient->SendPacket(ser);
     }
   }

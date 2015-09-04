@@ -29,16 +29,16 @@ class TestLogCollector : public eudaq::LogCollector {
     }
     virtual void OnConfigure(const eudaq::Configuration & param) {
       std::cout << "Configure: " << param << std::endl;
-      SetStatus(eudaq::Status::STATE_CONF, "Configured (" + param.Name() + ")");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
       std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::STATE_RUNNING);
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING);
     }
     virtual void OnStopRun() {
       std::cout << "Stop Run" << std::endl;
-      if(m_status.GetState() != eudaq::Status::STATE_ERROR)
-        SetStatus(eudaq::Status::STATE_CONF);
+      if(m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF);
     }
     virtual void OnTerminate() {
       std::cout << "Terminating" << std::endl;
@@ -46,17 +46,17 @@ class TestLogCollector : public eudaq::LogCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      //SetStatus(eudaq::Status::STATE_UNCONF);
+      //SetConnectionState(eudaq::ConnectionState::STATE_UNCONF);
     }
     virtual void OnStatus() {
-      std::cout << "Status - " << m_status << std::endl;
-      //SetStatus(eudaq::Status::LVL_WARNING, "Only joking");
+      std::cout << "ConnectionState - " << m_connectionstate << std::endl;
+      //SetConnectionState(eudaq::ConnectionState::LVL_WARNING, "Only joking");
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::STATE_ERROR);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR);
     }
     int m_loglevel;
     bool done;

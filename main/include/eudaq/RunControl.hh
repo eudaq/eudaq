@@ -3,7 +3,7 @@
 
 #include "eudaq/TransportServer.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/Status.hh"
+#include "eudaq/ConnectionState.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/MachineState.hh"
@@ -29,7 +29,7 @@ namespace eudaq {
     void Configure(const std::string &settings,
                    int geoid = 0); ///< Send 'Configure' command with settings
     void Reset();                  ///< Send 'Reset' command
-    void GetStatus();              ///< Send 'Status' command to get status
+    void GetConnectionState();              ///< Send 'ConnectionState' command to get state
     virtual void StartRun(const std::string &msg = ""); ///< Send 'StartRun'
                                                         ///command with run
                                                         ///number
@@ -41,7 +41,7 @@ namespace eudaq {
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
     virtual void OnReceive(const ConnectionInfo & /*id*/,
-                           std::shared_ptr<Status>) {}
+                           std::shared_ptr<ConnectionState>) {}
 
     virtual void SendState(int state){}
     
