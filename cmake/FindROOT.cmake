@@ -29,10 +29,14 @@ FIND_PROGRAM(ROOT_CONFIG_EXECUTABLE NAMES root-config PATHS
    ${ROOT_CONFIG_SEARCHPATH}
    NO_DEFAULT_PATH)
     
-IF (${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
-  MESSAGE( FATAL_ERROR "ROOT not installed in the searchpath and ROOTSYS is not set. Please
+ IF (${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
+   IF (ROOT_FIND_REQUIRED)
+     MESSAGE( FATAL_ERROR "ROOT not installed in the searchpath and ROOTSYS is not set. Please
  set ROOTSYS or add the path to your ROOT installation in the Macro FindROOT.cmake in the
  subdirectory cmake/modules.")
+   ELSE(ROOT_FIND_REQUIRED)
+     MESSAGE( STATUS "Could not find ROOT.")
+   ENDIF(ROOT_FIND_REQUIRED)
 ELSE (${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
   STRING(REGEX REPLACE "(^.*)/bin/root-config" "\\1" test ${ROOT_CONFIG_EXECUTABLE}) 
   SET( ENV{ROOTSYS} ${test})
