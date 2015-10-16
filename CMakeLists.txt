@@ -88,11 +88,10 @@ set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
 IF(BUILD_nreader)
-  FIND_PACKAGE(LCIO REQUIRED)
-  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
+  SET(USE_LCIO ON)
   FIND_PACKAGE(EUTelescope REQUIRED)
   INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
-  add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
+  add_definitions(${EUTELESCOPE_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
   INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
