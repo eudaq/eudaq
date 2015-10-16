@@ -90,21 +90,13 @@ namespace eudaq {
 #endif //USE_EUTELESCOPE
       return;
     }
-    //  std::cout << "EUDAQ_DEBUG: FileWriterLCIO::WriteEvent() processing event
-    //  "
-    //    <<  devent.GetRunNumber () <<"." << devent.GetEventNumber () <<
-    //    std::endl;
 
     auto lcevent =
         std::unique_ptr<lcio::LCEvent>(PluginManager::ConvertToLCIO(devent));
 
     // only write non-empty events
-    // std::cout << lcevent->getDetectorName() << std::endl;
     if (!lcevent->getCollectionNames()->empty()) {
-      //  std::cout << " FileWriterLCIO::WriteEvent() : doing the actual writing
-      //  : " <<std::flush;
       m_lcwriter->writeEvent(lcevent.get());
-      //  std::cout << " done" <<std::endl;
     }
   }
 
