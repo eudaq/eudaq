@@ -1,6 +1,6 @@
 #ifndef EXPLORER_CONVERTER_PLUGIN_HELPERS_H
 #define EXPLORER_CONVERTER_PLUGIN_HELPERS_H
-
+#if ROOT_FOUND
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -677,4 +677,5 @@ public:
   }
 };
 
+#endif
 #endif
