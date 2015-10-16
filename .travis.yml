@@ -10,10 +10,11 @@ branches:
 
 os:
   - linux
-  - osx
+#  - osx
 
 before_install:
-  - echo $CXX
+  - $CXX --version
+  - $CC --version
 
   # Linux: add toolchain repository and update:
   - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "g++" ]; then sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test; fi
@@ -43,9 +44,13 @@ before_script:
   # We want to compile with g++4.8 rather than the default g++
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
   - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" = "g++" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90; fi
-
+  - if [ $TRAVIS_OS_NAME == osx ] && [ "$CC" == "gcc" ]; then CC=gcc-4.9; $CC --version; fi
+  
   # For Mac OS X we still need to source the root environment:
   - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
+
+  - $CXX --version
+  - $CC --version
 
   - cd build
 
