@@ -13,8 +13,11 @@
 #include "lcio.h"
 
 #include <iostream>
+
+#if USE_EUTELESCOPE
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
+#endif //USE_EUTELESCOPE
 
 namespace eudaq {
 
@@ -72,7 +75,7 @@ namespace eudaq {
 
       return;
     } else if (devent.IsEORE()) {
-
+#if USE_EUTELESCOPE
       std::cout << "Found a EORE, so adding an EORE to the LCIO file as well"
                 << std::endl;
       auto lcioEvent = std::unique_ptr<eutelescope::EUTelEventImpl>(
@@ -84,6 +87,7 @@ namespace eudaq {
 
       // sent the lcioEvent to the processor manager for further processing
       m_lcwriter->writeEvent(lcioEvent.get());
+#endif //USE_EUTELESCOPE
       return;
     }
     //  std::cout << "EUDAQ_DEBUG: FileWriterLCIO::WriteEvent() processing event

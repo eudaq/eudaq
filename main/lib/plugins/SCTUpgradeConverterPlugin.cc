@@ -4,7 +4,7 @@
 #include "eudaq/Configuration.hh"
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
 #include "IMPL/LCEventImpl.h"
 #include "IMPL/TrackerRawDataImpl.h"
 #include "IMPL/LCCollectionVec.h"
@@ -235,7 +235,7 @@ namespace eudaq {
       return true;
     }
 
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
     // This is where the conversion to LCIO is done
     void GetLCIORunHeader(lcio::LCRunHeader &header,
                           eudaq::Event const & /*bore*/,

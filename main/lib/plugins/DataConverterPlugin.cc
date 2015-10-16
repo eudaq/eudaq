@@ -3,10 +3,10 @@
 
 #include <iostream>
 
-#ifdef USE_LCIO
+#ifdef USE_EUTELESCOPE
 #include "EUTelTrackerDataInterfacerImpl.h"
 #include "EUTelGenericSparsePixel.h"
-#endif //  USE_LCIO
+#endif //  USE_EUTELESCOPE
 
 namespace eudaq {
 #if USE_LCIO
@@ -45,7 +45,8 @@ namespace eudaq {
     // std::endl;
     PluginManager::GetInstance().RegisterPlugin(this);
   }
-#ifdef USE_LCIO
+
+#ifdef USE_EUTELESCOPE
   void ConvertPlaneToLCIOGenericPixel(StandardPlane &plane,
                                       lcio::TrackerDataImpl &zsFrame) {
     // helper object to fill the TrakerDater object
@@ -58,5 +59,5 @@ namespace eudaq {
       sparseFrame.addSparsePixel(&thisHit1);
     }
   }
-#endif // USE_LCIO
+#endif // USE_EUTELESCOPE
 } // namespace eudaq

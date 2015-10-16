@@ -4,7 +4,7 @@
 static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
 #include "IMPL/LCEventImpl.h"
 #include "IMPL/TrackerRawDataImpl.h"
 #include "IMPL/LCCollectionVec.h"
@@ -46,7 +46,7 @@ namespace eudaq {
   }
 
   using namespace sct;
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
 
   void add_data(lcio::LCEvent &result, int ID, double value) {
     if (dbg > 0)
@@ -154,7 +154,7 @@ namespace eudaq {
 
       return true;
     }
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
     // This is where the conversion to LCIO is done
     void GetLCIORunHeader(lcio::LCRunHeader &header,
                           eudaq::Event const & /*bore*/,
@@ -349,7 +349,7 @@ namespace eudaq {
       sev.SetTag(Timestamp_data(), timestamp);
       sev.SetTag(Timestamp_L0ID(), L0ID);
     }
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
 
     // This is where the conversion to LCIO is done
     void GetLCIORunHeader(lcio::LCRunHeader &header,
@@ -488,7 +488,7 @@ namespace eudaq {
 
       return true;
     }
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
     void GetLCIORunHeader(lcio::LCRunHeader &header,
                           eudaq::Event const & /*bore*/,
                           eudaq::Configuration const & /*conf*/) const {
