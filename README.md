@@ -98,7 +98,7 @@ install libusb development package, e.g. ```apt-get install libusb-dev```
 
 ### Online Monitor
 --------------------
-- requires ROOT (download from http://root.cern.ch/drupal/content/downloading-root)
+- requires ROOT (download from http://root.cern.ch/drupal/content/downloading-root) with the `-lPhysics` library compiled
 - (Windows) Make sure that you have installed the corresponding version of MSVC with which your downloaded ROOT binaries have been compiled!
 
 
