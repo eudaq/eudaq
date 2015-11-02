@@ -77,7 +77,7 @@ namespace eudaq {
       //pxar::Log::ReportingLevel() = pxar::Log::FromString("DEBUGPIPES");
 
       // Connect the data source and set up the pipe:
-      src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype);
+      src = evtSource(0, m_nplanes, 0, m_tbmtype, m_roctype, FLAG_DISABLE_EVENTID_CHECK);
       src >> splitter >> decoder >> Eventpump;
     }
 
