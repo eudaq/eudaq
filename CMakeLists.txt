@@ -90,14 +90,15 @@ option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTele
 IF(BUILD_nreader)
   SET(USE_LCIO ON)
   FIND_PACKAGE(EUTelescope REQUIRED)
-  INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
-  add_definitions(${EUTELESCOPE_DEFINITIONS})
+  FIND_PACKAGE(LCIO REQUIRED)
+  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS} ${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
+  add_definitions(${LCIO_DEFINITIONS} ${EUTELESCOPE_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
   INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
                                       LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
-  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
+  set(ADDITIONAL_LIBRARIES ${LCIO_LIBRARIES} ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
 find_package(Protobuf)
