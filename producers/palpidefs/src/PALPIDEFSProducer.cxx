@@ -450,20 +450,8 @@ void DeviceReader::Loop() {
     int length = -1;
 
     SetReading(true);
-//    int tmpevtcounterv = -1;
-//    int errrror=-1;
-//    errrror = ((TDAQBoard2*)m_daq_board)->ReadChipRegister(9, &tmpevtcounterv, 16);
-//    std::cout << "EVENTCOUNTER : " << tmpevtcounterv << "ERROR : " << errrror <<std::endl;
     bool readEvent = m_daq_board->ReadChipEvent(
         data_buf, &length, (m_readout_mode == 0) ? 1024 : maxDataLength);
-/*    if (length == -9) {
-      ((TpAlpidefs3* )m_dut)->ReadAllRegisters(1);
-      ((TDAQBoard2*)m_daq_board)->ReadAllADCs(1);
-    }
-    else {
-      ((TpAlpidefs3*)m_dut)->ReadAllRegisters(0);
-      ((TDAQBoard2*)m_daq_board)->ReadAllADCs(0);
-    }*/
 
     SetReading(false);
 
@@ -1238,15 +1226,15 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   // read configuration, dump to XML string
   for (int i = 0; i < m_nDevices; i++) {
     std::string configstr;
-//    TiXmlDocument doc((m_chip_type[i] == 2) ? m_full_config_v2.c_str()
-//                                            : m_full_config_v1.c_str());
+    
     if (m_chip_type[i] == 3) configstr = m_full_config_v3;
     else if (m_chip_type[i] == 2) configstr = m_full_config_v2;
+    
     else configstr = m_full_config_v1;
     TiXmlDocument doc(configstr.c_str());
     if (!doc.LoadFile()) {
       std::string msg = "Failed to load config file: ";
-//      msg += (m_chip_type[i] == 2) ? m_full_config_v2 : m_full_config_v1;
+      
       if (m_chip_type[i] == 3) msg += m_full_config_v3;
       else msg += (m_chip_type[i] == 2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
