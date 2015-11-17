@@ -105,7 +105,7 @@ namespace eudaq {
       m_SCS_n_mask_stages = bore.GetTag<int>("SCSnMaskStages", -1);
 
       m_chip_type = new int[m_nLayers];
-//      m_Vaux = new int[m_nLayers];
+      m_Vaux = new int[m_nLayers];
       m_VresetP = new int[m_nLayers];
       m_VresetD = new int[m_nLayers];
       m_Vcasn = new int[m_nLayers];
@@ -135,28 +135,7 @@ namespace eudaq {
         std::string config = bore.GetTag<std::string>(tmp, "");
         // cout << "Config of layer " << i << " is: " << config.c_str() << endl;
         m_configs[i] = config;
-#if USE_TINYXML
-//        m_Vaux[i] = ParseXML(config, 6, 0, 1, 0);
-        m_VresetP[i] = ParseXML(config, 6, 0, 1, 0);
-        m_VresetD[i] = ParseXML(config, 6, 0, 2, 0);
-        m_Vcasn[i] = ParseXML(config, 6, 0, 4, 0);
-        m_Vcasp[i] = ParseXML(config, 6, 0, 3, 0);
-        m_Vcasn2[i] = ParseXML(config, 6, 0, 7, 0);
-        m_Vclip[i] = ParseXML(config, 6, 0, 8, 0);
-        m_Idb[i] = ParseXML(config, 6, 0, 12, 0);
-        m_Ithr[i] = ParseXML(config, 6, 0, 14, 0);
-#else
-//        m_Vaux[i] = -10;
-        m_VresetP[i] = -10;
-        m_VresetD[i] = -10;
-        m_Vcasn[i] = -10;
-        m_Vcasp[i] = -10;
-        m_Vclip[i] = -10;
-        m_Idb[i] = -10;
-        m_Ithr[i] = -10;
-        m_Vcasn2[i] = -10;
-        m_Vclip[i] = -10;
-#endif
+        
         sprintf(tmp, "ChipType_%d", i);
         m_chip_type[i] = bore.GetTag<int>(tmp, 1);
         sprintf(tmp, "StrobeLength_%d", i);
@@ -170,6 +149,41 @@ namespace eudaq {
 
         sprintf(tmp, "SCS_%d", i);
         m_do_SCS[i] = (bool)bore.GetTag<int>(tmp, 0);
+
+#if USE_TINYXML
+        if (m_chip_type == 3){
+          m_Vaux[i] = -10;
+          m_VresetP[i] = ParseXML(config, 6, 0, 1, 0);
+          m_VresetD[i] = ParseXML(config, 6, 0, 2, 0);
+          m_Vcasn[i] = ParseXML(config, 6, 0, 4, 0);
+          m_Vcasp[i] = ParseXML(config, 6, 0, 3, 0);
+          m_Vcasn2[i] = ParseXML(config, 6, 0, 7, 0);
+          m_Vclip[i] = ParseXML(config, 6, 0, 8, 0);
+          m_Idb[i] = ParseXML(config, 6, 0, 12, 0);
+          m_Ithr[i] = ParseXML(config, 6, 0, 14, 0);
+        } else {
+          m_Vaux[i] = ParseXML(config, 6, 0, 0, 0);
+          m_VresetP[i] = ParseXML(config, 6, 0, 0, 8);
+          m_Vcasn[i] = ParseXML(config, 6, 0, 1, 0);
+          m_Vcasp[i] = ParseXML(config, 6, 0, 1, 8);
+          m_Idb[i] = ParseXML(config, 6, 0, 4, 8);
+          m_Ithr[i] = ParseXML(config, 6, 0, 5, 0);
+          m_VresetD[i] = -10;
+          m_Vclip[i] = -10;
+          m_Vcasn2[i] = -10;
+        }
+#else
+        m_Vaux[i] = -10;
+        m_VresetP[i] = -10;
+        m_VresetD[i] = -10;
+        m_Vcasn[i] = -10;
+        m_Vcasp[i] = -10;
+        m_Vclip[i] = -10;
+        m_Idb[i] = -10;
+        m_Ithr[i] = -10;
+        m_Vcasn2[i] = -10;
+        m_Vclip[i] = -10;
+#endif
 
         if (m_do_SCS[i]) {
           m_SCS_data[i] =
