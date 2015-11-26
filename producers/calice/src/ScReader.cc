@@ -33,7 +33,6 @@ namespace eudaq {
     const char *msg = "STOP";
     _producer->SendCommand(msg);
     sleep(waitQueueTimeS);
-    //_producer->CloseConnection();
   }
 
   void ScReader::Read(std::deque<char> & buf, std::deque<eudaq::RawDataEvent *> & deqEvent)
@@ -70,9 +69,6 @@ namespace eudaq {
 	  RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _cycleNo);
 	  string s = "EUDAQDataScCAL";
 	  nev->AddBlock(0,s.c_str(), s.length());
-	  //        s = "i:cycle,i:bx,i:chipid,i:mem,i:cell,i:adc,i:tdc,i:trig,i:gain";
-	  // Changed! 141203
-	  //changed 19052015  
 	  s = "i:CycleNr;i:BunchXID;i:ChipID;i:EvtNr;i:Channel;i:TDC;i:ADC;i:HitBit;i:GainBit";
 	  nev->AddBlock(1,s.c_str(), s.length());
 	  unsigned int times[2];
@@ -81,7 +77,7 @@ namespace eudaq {
 	  times[0] = tv.tv_sec;
 	  times[1] = tv.tv_usec;
 	  nev->AddBlock(2, times, sizeof(times));
-	  nev->AddBlock(3, vector<int>()); // dummy block to be filled later
+	  nev->AddBlock(3, vector<int>()); // dummy block to be filled later with temperature
 	  deqEvent.push_back(nev);
 	}
 
@@ -116,12 +112,8 @@ namespace eudaq {
 	}
       
 	if(!(status & 0x40)){
-	  //changed 19052015  cout << "We'll drop non-data packet." << endl;
-	  // remove used buffer
-
-	  //	cout << "Removing " << length + e_sizeLdaHeader << " bytes from " << buf.size() << " bytes." << endl;
+	  //We'll drop non-data packet;
 	  buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
-	  //cout << "Removed: " << buf.size() << " bytes remaining." << endl;
 	  continue;
 	}
 
@@ -145,41 +137,40 @@ namespace eudaq {
 
 	int chipId = (unsigned char)it[length-3] * 256 + (unsigned char)it[length-4];
 
-	const int npixel = 36;
-	int nscai = (length-8) / (npixel * 4 + 2);
+	const int InvertedChannel = 36;
+	int nscai = (length-8) / (InvertedChannel * 4 + 2);
 
 	it += 8;
 	// list hits to add
 	for(int tr=0;tr<nscai;tr++){
 	  // binary data: 128 words
-	  short adc[npixel], tdc[npixel];
-	  short trig[npixel], gain[npixel];
-	  for(int np = 0; np < npixel; np ++){
+	  short adc[InvertedChannel], tdc[InvertedChannel];
+	  short trig[InvertedChannel], gain[InvertedChannel];
+	  for(int np = 0; np < InvertedChannel; np ++){
 	    unsigned short data = (unsigned char)it[np * 2] + ((unsigned char)it[np * 2 + 1] << 8);
-	    tdc[np]  = data % 4096;
-	    gain[np] = data / 8192;
-	    trig[np] = (data / 4096)%2;
-	    unsigned short data2 = (unsigned char)it[np * 2 + npixel * 2] + ((unsigned char)it[np * 2 + 1 + npixel * 2] << 8);
-	    adc[np]  = data2 % 4096;
+            tdc[np]  = data % 4096;
+            gain[np] = (data & 0x2000)/8192;//data / 8192;
+            trig[np] = (data & 0x1000)/4096;//(data / 4096)%2;
+            unsigned short data2 = (unsigned char)it[np * 2 + InvertedChannel * 2] + ((unsigned char)it[np * 2 + 1 + InvertedChannel * 2] << 8);
+            adc[np]  = data2 % 4096;
+
 	  }
-	  it += npixel * 4;
+	  it += InvertedChannel * 4;
 
 	  int bxididx = e_sizeLdaHeader + length - 4 - (nscai-tr) * 2;
 	  int bxid = (unsigned char)buf[bxididx + 1] * 256 + (unsigned char)buf[bxididx];
-	  for(int n=0;n<npixel;n++){
+	  for(int n=0;n<InvertedChannel;n++){
 	    vector<int> data;
 	    data.push_back((int)_cycleNo);
 	    data.push_back(bxid);
 	    data.push_back(chipId);
 	    data.push_back(nscai - tr - 1);
-	    data.push_back(npixel - n - 1);
-	    //changed 19052015 data.push_back(adc[n]);
+	    data.push_back(InvertedChannel - n - 1);
 	    data.push_back(tdc[n]);
-	    //changed 19052015 data.push_back(tdc[n]);
 	    data.push_back(adc[n]);
 	    data.push_back(trig[n]);
 	    data.push_back(gain[n]);
-	
+
 	    outbuf.push_back(data);
 	  }
 	}

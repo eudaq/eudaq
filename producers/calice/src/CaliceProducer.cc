@@ -34,17 +34,10 @@ namespace eudaq {
 
   void CaliceProducer::OnConfigure(const eudaq::Configuration & param)
   {
-    // file mode
-    //    _filemode = param.Get("FileMode", false);
     // file name
     _filename = param.Get("FileName", "");
     _waitmsFile = param.Get("WaitMillisecForFile", 100);
     _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 5);
-
-    // raw output
-    _dumpRaw = param.Get("DumpRawOutput", 0);
-    _writeRaw = param.Get("WriteRawOutput", 0);
-    _rawFilename = param.Get("RawFileName", "run%d.raw");
 
     // port
     _port = param.Get("Port", 9011);
@@ -64,11 +57,8 @@ namespace eudaq {
     } // for scintillator we open at start
     
     _configured = true;
-
-    //    cout << "Calice Producer configured: FileMode = " << _filemode << ", file = " << _filename;
-    cout << ", port = " << _port << ", ipAddr = " << _ipAddress << ", reader = " << _reader << endl;
-    
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+   
+    SetConnectionState(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
 
   }
 
@@ -76,39 +66,11 @@ namespace eudaq {
       _runNo = param;
       _eventNo = 0;
 
-      // // raw file open
-      if(_writeRaw){
-
-      	//	read the local time and save into the string myString
-      	time_t  ltime;
-      	struct tm *Tm;
-      	ltime=time(NULL);
-      	Tm=localtime(&ltime);
-      	char file_timestamp[25];
-      	sprintf(file_timestamp,"__%02dp%02dp%02d__%02dp%02dp%02d.raw",
-      		Tm->tm_mday,
-      		Tm->tm_mon+1,
-      		Tm->tm_year+1900,
-      		Tm->tm_hour,
-      		Tm->tm_min,
-      		Tm->tm_sec);
-      	std::string myString;
-      	myString.assign(file_timestamp, 26);
-	
-      	std::string _rawFilenameTimeStamp;
-      	//add the local time to the filename
-      	_rawFilenameTimeStamp=_rawFilename;//+myString;
-	
-      	char rawFilename[256];
-      	sprintf(rawFilename, _rawFilenameTimeStamp.c_str(), (int)param);
-      	_rawFile.open(rawFilename);
-      }
-
       _reader->OnStart(param);
 
       SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
       std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "");
+      SetConnectionState(eudaq::Status::LVL_OK, "");
       _running = true;
 
   }
@@ -121,34 +83,21 @@ namespace eudaq {
     _reader->OnStop(_waitsecondsForQueuedEvents);
     _running = false;
     sleep(1); 
-    // Fixed bug.
+    // Sleep added to fix a bug.
     // Error:  uncaught exception: Deserialize asked for X only have Y
     // sometimes appears when stopping the run and events are in the queue are being read
     // this crashes the Labview
     // seems to be a race condition, 
     // for the moment fixed with this extra time after (1s) of sleep after the stop.
     // following https://github.com/eudaq/eudaq/issues/29
-
-    if(_writeRaw)
-      _rawFile.close();
-    
+   
     SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
     
-    SetStatus(eudaq::Status::LVL_OK, "");
+    SetConnectionState(eudaq::Status::LVL_OK, "");
   }
 
   void CaliceProducer::OpenConnection()
   {
-    // if(_filemode){
-
-    //   pthread_mutex_lock(&_mufd);
-    //   _fd = open(_filename.c_str(), O_RDONLY);
-    //   pthread_mutex_unlock(&_mufd);
-    //   if(_fd <= 0){
-    //     return;
-    //   }
-    // }else{
-
       // open socket
       struct sockaddr_in dstAddr;
       memset(&dstAddr, 0, sizeof(dstAddr));
@@ -255,14 +204,9 @@ namespace eudaq {
 	continue;
       }
 
-      if(_writeRaw && _rawFile.is_open()){
-      	_rawFile.write(buf, size);
-      }
-        
+      
       // C array to vector
       copy(buf, buf + size, back_inserter(bufRead));
-      //bufRead.append(buf, size);
-
 
       if(_reader){
 	_reader->Read(bufRead, deqEvent);

@@ -21,7 +21,6 @@ namespace eudaq {
       while(buf.size() > 1 && (buf[0] != head_marker[0] || buf[1] != head_marker[1])){
         buf.pop_front();ndrop ++;
       }   
-      //if(ndrop>0)cout << "SiReader::Read(); " << ndrop << " bytes dropped before SPILL header marker found." << endl;
       if(buf.size() <= e_sizeSpillHeader) throw 0; // all data read
    
       unsigned int acqId = ((unsigned char)buf[3] << 24) + ((unsigned char)buf[2] << 16) + ((unsigned char)buf[5] << 8) + (unsigned char)buf[4];
@@ -31,7 +30,7 @@ namespace eudaq {
         //cout << "First acqId " << acqId << " come. Remember this to subtract." << endl;
       }
       acqId -= _acqStart;
-      cout << "acqId = " << acqId << endl;
+      //cout << "acqId = " << acqId << endl;
       
       const char *spilltag = "SPIL  ";
       if(strstr(&buf[6], spilltag) != &buf[6]){
