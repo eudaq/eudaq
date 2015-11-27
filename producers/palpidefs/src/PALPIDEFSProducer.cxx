@@ -856,10 +856,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     // data taking configuration
     // PrepareEmptyReadout
     
-//    if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) daq_board->ConfigureReadout( 
-//        1, true, (m_readout_mode == 1)); // buffer depth = 1, 'sampling on rising edge (changed for pALPIDE3)'
-//    else daq_board->ConfigureReadout(1, false, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
-    daq_board->ConfigureReadout(1, true, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
+    if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) daq_board->ConfigureReadout( 
+        1, true, (m_readout_mode == 1)); // buffer depth = 1, 'sampling on rising edge (changed for pALPIDE3)'
+    else daq_board->ConfigureReadout(1, false, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
+//    daq_board->ConfigureReadout(1, true, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0,
                                 m_trigger_delay[i]);
 
@@ -1226,7 +1226,10 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   // read configuration, dump to XML string
   for (int i = 0; i < m_nDevices; i++) {
     std::string configstr;
+<<<<<<< HEAD
     
+=======
+>>>>>>> df42e56... synchronized to testbeam version
     if (m_chip_type[i] == 3) configstr = m_full_config_v3;
     else if (m_chip_type[i] == 2) configstr = m_full_config_v2;
     
@@ -1234,7 +1237,10 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     TiXmlDocument doc(configstr.c_str());
     if (!doc.LoadFile()) {
       std::string msg = "Failed to load config file: ";
+<<<<<<< HEAD
       
+=======
+>>>>>>> df42e56... synchronized to testbeam version
       if (m_chip_type[i] == 3) msg += m_full_config_v3;
       else msg += (m_chip_type[i] == 2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
