@@ -24,14 +24,20 @@ namespace eudaq {
       
       void setTags(std::string &s){_dataDescription = s;}
       std::string getTags()const{return _dataDescription;}
-      
+     
       void setDataInt(std::vector<int> &vec){
         _intVec.resize(vec.size());
         std::copy(vec.begin(), vec.end(), _intVec.begin());
       }
-      
+
+      void setDataInt(std::vector<short> &vec){
+        _intVec.resize(vec.size());
+        std::copy(vec.begin(), vec.end(), _intVec.begin());
+      }
+        
       const std::vector<int> & getDataInt()const{return _intVec;}
   };
+
 #endif
 
 } // namespace eudaq

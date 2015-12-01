@@ -58,7 +58,7 @@ namespace eudaq {
       // first two blocks should be string, 3rd is time, time_usec
       const RawDataEvent::data_t & bl = rawev->GetBlock(nblock++);
       string colName((char *)&bl.front(), bl.size());
-      //  cout << "colName = " << colName << endl;
+      // cout << "colName = " << colName << endl;
       const RawDataEvent::data_t & bl2 = rawev->GetBlock(nblock++);
       string dataDesc((char *)&bl2.front(), bl2.size());
       // cout << "dataDesc = " << dataDesc << endl;
@@ -160,12 +160,11 @@ namespace eudaq {
     
       while(nblock < rawev->NumBlocks()){
 	// further blocks should be data (currently limited to integer)
-	vector<int> v;
-	const RawDataEvent::data_t & bl2 = rawev->GetBlock(nblock++);
-	v.resize(bl2.size() / sizeof(int));
-	memcpy(&v[0], &bl2[0],bl2.size());
+	vector<short> v;
+	const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
+	v.resize(bl5.size() / sizeof(short));
+	memcpy(&v[0], &bl5[0],bl5.size());
 
-	// creating LCIO object
 	CaliceLCGenericObject *obj = new CaliceLCGenericObject;
 	obj->setDataInt(v);
 	try{
@@ -175,22 +174,20 @@ namespace eudaq {
 	  delete obj;
 	}
       }
-      //    cout << nblock-2 << " elements added to " << colName << endl;
-    
       return true;
     }
 #endif
-
+    
   private:
     CaliceGenericConverterPlugin()
       : DataConverterPlugin(EVENT_TYPE)
     {}
-
+    
     static CaliceGenericConverterPlugin m_instance;
   };
   // Instantiate the converter plugin instance
   CaliceGenericConverterPlugin CaliceGenericConverterPlugin::m_instance;
-
-
+  
+  
   
 } // namespace eudaq

@@ -1,4 +1,4 @@
-#if USE_LCIO
+//#if USE_LCIO
 #include "eudaq/FileNamer.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/FileWriter.hh"
@@ -15,7 +15,7 @@
 #include <iostream>
 #include <time.h>
 
-//#include "eudaq/DataCollector.hh"
+#include "CaliceDataCollector.hh"
 
 namespace eudaq {
 
@@ -34,7 +34,7 @@ namespace eudaq {
   };
 
   namespace {
-    static RegisterFileWriter<FileWriterLCIOC> reg("calice");
+    static RegisterFileWriter<FileWriterLCIOC> reg("lcio_c");
   }
 
   FileWriterLCIOC::FileWriterLCIOC(const std::string & /*param*/)
@@ -72,25 +72,28 @@ namespace eudaq {
       m_fileopened=true;
     } catch(const lcio::IOException & e) {
       std::cout << e.what() << std::endl ;
+      ///FIXME Error message to run control and logger
     }
   }
 
   void FileWriterLCIOC::WriteEvent(const DetectorEvent & devent) {
     
     // changed 19052015 std::cout << "FileWriterLCIOC: Send data to network." << std::endl;
-    //    g_dc->SendEvent(devent);
+    g_dc->SendEvent(devent);
     
     if (devent.IsBORE()) {
       PluginManager::Initialize(devent);
       return;
     }
     
-    auto lcevent = std::unique_ptr<lcio::LCEvent>(PluginManager::ConvertToLCIO(devent));
+    lcio::LCEvent * lcevent = PluginManager::ConvertToLCIO(devent);
     
     // only write non-empty events
     if (!lcevent->getCollectionNames()->empty()) {
-      m_lcwriter->writeEvent(lcevent.get());
+      m_lcwriter->writeEvent(lcevent);
     }
+    //    m_runnumber= devent.GetEventNumber();
+    delete lcevent;
   }
   
   FileWriterLCIOC::~FileWriterLCIOC() {
@@ -104,4 +107,4 @@ namespace eudaq {
 
 }
 
-#endif // USE_LCIO
+//#endif // USE_LCIO
