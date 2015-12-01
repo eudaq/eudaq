@@ -177,6 +177,12 @@ namespace eudaq {
     /** The empty destructor. Need to add it to make it virtual.
      */
     virtual ~DataConverterPlugin() {}
+    /** Ask for a free Sensor ID to be assigned and registered
+    */
+    static int getNewlyAssignedSensorID(int desiredSensorID = -1, int desiredSensorIDoffset = -1, std::string type = "", int instance = 0, std::string identifier = "", std::string description = "");
+    /** Ask for an assigned and registered Sensor ID to be released into pool
+    */
+    static void returnAssignedSensorID(int sensorID);
 
   protected:
     /** The string storing the event type this plugin can convert to lcio.
@@ -186,7 +192,7 @@ namespace eudaq {
      */
     t_eventid m_eventtype;
 
-    /** The protected constructor which automatically registeres the plugin
+    /** The protected constructor which automatically registers the plugin
      *  at the pluginManager.
      */
     DataConverterPlugin(std::string subtype);
@@ -195,14 +201,25 @@ namespace eudaq {
   private:
     /** The private copy constructor and assignment operator. They are not used
      * anywhere, so there is not
-     *  even an implementation. Even if the childs default copy constructor is
+     *  even an implementation. Even if the child's default copy constructor is
      * public
-     *  the code will not compile if it is called, since it cannot acces this
+     *  the code will not compile if it is called, since it cannot access this
      * cc, which the
      *  the default cc does.
      */
     DataConverterPlugin(DataConverterPlugin &);
     DataConverterPlugin &operator=(const DataConverterPlugin &);
+
+    typedef struct{
+	        int desiredSensorID;
+    		int desiredSensorIDoffset;
+    		std::string type;
+    		int instance;
+    		std::string identifier;
+    		std::string description;
+    } sensorIDType;
+    static std::map<int,sensorIDType> _sensorIDsTaken;
+
   };
 
 } // namespace eudaq
