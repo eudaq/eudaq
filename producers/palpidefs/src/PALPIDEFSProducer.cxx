@@ -124,7 +124,13 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
       if (!readwrite) {
 //	      printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
 	      if (dut->WriteRegister(address, value) != 1)
-		      std::cout << "Failure to write chip address " << address << std::endl;     
+		      std::cout << "Failure to write chip address " << address << std::endl;   
+        int valuecompare = -1;
+        if (dut->ReadRegister(address, valuecompare) != 1)
+          std::cout << "Failure to read chip address after writing chip address " << address << std::endl;
+        if (value != valuecompare)
+          std::cout << "Register read back error : write value is : " << value << " and read value is : "<< valuecompare << std::endl;
+
       }
     }
   }
