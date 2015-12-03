@@ -18,7 +18,7 @@ namespace eudaq {
         : Event(run, event, timestamp), m_extratimes(extratimes) {}
     explicit TLUEvent(Deserializer &);
     virtual void Print(std::ostream &) const;
-
+    virtual void Print(std::ostream &os, size_t offset) const;
     /// Return "TLUEvent" as type.
     virtual std::string GetType() const { return "TLUEvent"; }
 
