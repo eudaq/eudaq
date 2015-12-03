@@ -43,7 +43,7 @@ private:
 
 
   DetectorEventConverterPlugin()
-    : DataConverterPlugin(Event::str2id(DetectorEventMaintype), "") {
+    : DataConverterPlugin(DetectorEvent::eudaq_static_id(), "") {
   }
 
 
