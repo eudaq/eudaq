@@ -21,9 +21,8 @@ namespace eudaq {
     uint64_t DUT_start_time;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTextdetector> reg("detector");
-  }
+
+registerFileWriter(FileWriterTextdetector, "detector");
 
   FileWriterTextdetector::FileWriterTextdetector(const std::string &param)
       : firstEvent(false), m_out(nullptr), DUT_start_time(0) {
@@ -60,8 +59,7 @@ namespace eudaq {
       return;
     }
 
-    *m_out << "================================================================"
-              "==============" << std::endl;
+  *m_out << "==============================================================================" << std::endl;
     for (size_t i = 0; i < devent.NumEvents(); ++i) {
       auto raw = std::dynamic_pointer_cast<RawDataEvent>(devent.GetEventPtr(i));
 
@@ -77,15 +75,15 @@ namespace eudaq {
       }
 
       *m_out << std::endl;
+
     }
-    *m_out << "================================================================"
-              "==============" << std::endl;
+  *m_out << "==============================================================================" << std::endl;
   }
 
   FileWriterTextdetector::~FileWriterTextdetector() {
     if (m_out) {
       m_out->close();
-
+      delete m_out;
       m_out = nullptr;
     }
   }
