@@ -9,8 +9,38 @@
 #include <iostream>
 #include <ostream>
 
-namespace eudaq {
+#define CHECK_RECIVED_PACKET(packet,position,expectedString) \
+  if(packet[position] != std::string(expectedString))\
+   EUDAQ_THROW("Invalid response from RunControl server. Expected: " + std::string(expectedString) + "  recieved: " +packet[position])
 
+#define CHECK_FOR_REFUSE_CONNECTION(packet,position,expectedString) \
+  if(packet[position] != std::string(expectedString))\
+   EUDAQ_THROW("Connection refused by RunControl server: " + packet[position])
+
+namespace eudaq {
+TransportClient* make_client(const std::string & runcontrol, const std::string & type, const std::string & name) {
+  TransportClient* ret =  TransportFactory::CreateClient(runcontrol);
+  if (!ret->IsNull()) {
+    std::string packet;
+    if (!ret->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+    // check packet is OK ("EUDAQ.CMD.RunControl nnn")
+    auto splitted = split(packet, " ");
+    if (splitted.size() < 4) {
+      EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
+    }
+    CHECK_RECIVED_PACKET(splitted, 0, "OK");
+    CHECK_RECIVED_PACKET(splitted, 1, "EUDAQ");
+    CHECK_RECIVED_PACKET(splitted, 2, "CMD");
+    CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
+    ret->SendPacket("OK EUDAQ CMD " + type + " " + name);
+    packet = "";
+    if (!ret->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+
+    auto splitted_res = split(packet, " ");
+    CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
+    return ret;
+  }
+}
   namespace {
 
     void *CommandReceiver_thread(void *arg) {
@@ -29,58 +59,47 @@ namespace eudaq {
 
   } // anonymous namespace
 
-  CommandReceiver::CommandReceiver(const std::string &type,
-                                   const std::string &name,
-                                   const std::string &runcontrol,
-                                   bool startthread)
-      : m_cmdclient(TransportFactory::CreateClient(runcontrol)), m_done(false),
-        m_type(type), m_name(name), m_threadcreated(false) {
-    if (!m_cmdclient->IsNull()) {
-      std::string packet;
-      if (!m_cmdclient->ReceivePacket(&packet, 1000000))
-        EUDAQ_THROW("No response from RunControl server");
-      // check packet is OK ("EUDAQ.CMD.RunControl nnn")
-      size_t i0 = 0, i1 = packet.find(' ');
-      if (i1 == std::string::npos)
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
-      std::string part(packet, i0, i1);
-      if (part != "OK")
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
-      i0 = i1 + 1;
-      i1 = packet.find(' ', i0);
-      if (i1 == std::string::npos)
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
-      part = std::string(packet, i0, i1 - i0);
-      if (part != "EUDAQ")
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
-      i0 = i1 + 1;
-      i1 = packet.find(' ', i0);
-      if (i1 == std::string::npos)
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
-      part = std::string(packet, i0, i1 - i0);
-      if (part != "CMD")
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
-      i0 = i1 + 1;
-      i1 = packet.find(' ', i0);
-      part = std::string(packet, i0, i1 - i0);
-      if (part != "RunControl")
-        EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
-                    "'");
+  CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
+      const std::string & runcontrol, bool startthread)
+    : m_done(false),
+    m_type(type),
+    m_name(name),
+    m_threadcreated(false)
+  {
+    int i = 0;
+    while (true) {
 
-      m_cmdclient->SendPacket("OK EUDAQ CMD " + m_type + " " + m_name);
-      packet = "";
-      if (!m_cmdclient->ReceivePacket(&packet, 1000000))
-        EUDAQ_THROW("No response from RunControl server");
-      i1 = packet.find(' ');
-      if (std::string(packet, 0, i1) != "OK")
-        EUDAQ_THROW("Connection refused by RunControl server: " + packet);
+    try {
+      m_cmdclient = std::unique_ptr<TransportClient>( TransportFactory::CreateClient(runcontrol));
+      if (!m_cmdclient->IsNull()) {
+        std::string packet;
+        if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+        // check packet is OK ("EUDAQ.CMD.RunControl nnn")
+        auto splitted = split(packet, " ");
+        if (splitted.size() < 4) {
+          EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
+        }
+        CHECK_RECIVED_PACKET(splitted, 0, "OK");
+        CHECK_RECIVED_PACKET(splitted, 1, "EUDAQ");
+        CHECK_RECIVED_PACKET(splitted, 2, "CMD");
+        CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
+        m_cmdclient->SendPacket("OK EUDAQ CMD " + type + " " + name);
+        packet = "";
+        if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
+
+        auto splitted_res = split(packet, " ");
+        CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
+      }
+      break;
+    } catch (...) {
+      std::cout << "easdasdasd\n";
+      if (++i>10)
+      {
+        throw;
+      }
     }
+    }
+    //m_cmdclient = make_client(runcontrol, name, type);
 
     m_cmdclient->SetCallback(
         TransportCallback(this, &CommandReceiver::CommandHandler));
@@ -90,15 +109,13 @@ namespace eudaq {
   }
 
   void CommandReceiver::StartThread() {
-    m_thread = std::unique_ptr<std::thread>(
-        new std::thread(CommandReceiver_thread, this));
-    // m_thread.start(CommandReceiver_thread, this);
-    m_threadcreated = true;
-    //     pthread_attr_init(&m_threadattr);
-    //     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread,
-    //     this) != 0) {
-    //       m_threadcreated = true;
-    //     }
+	m_thread=std::unique_ptr<std::thread>(new std::thread(CommandReceiver_thread, this));
+	  //m_thread.start(CommandReceiver_thread, this);
+	   m_threadcreated = true;
+//     pthread_attr_init(&m_threadattr);
+//     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
+//       m_threadcreated = true;
+//     }
   }
 
   void CommandReceiver::SetStatus(Status::Level level,
@@ -177,8 +194,8 @@ namespace eudaq {
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
-    if (m_threadcreated)
-      m_thread->join();
-    delete m_cmdclient;
+    if (m_threadcreated) m_thread->join();
+   
   }
+
 }
