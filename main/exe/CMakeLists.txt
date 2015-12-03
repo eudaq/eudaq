@@ -13,8 +13,7 @@ add_executable(TestMonitor         src/TestMonitor.cxx       )
 add_executable(TestProducer        src/TestProducer.cxx      )
 add_executable(TestReader          src/TestReader.cxx        )
 add_executable(TestRunControl      src/TestRunControl.cxx    )
-add_executable(SCT_Comparer        src/SCT_Comparer.cxx      )
-add_executable(getConfiguration    src/getConfiguration.cxx  )
+
 set_property(TARGET ClusterExtractor   PROPERTY PROJECT_LABEL "bin_ClusterExtractor") 
 set_property(TARGET Converter          PROPERTY PROJECT_LABEL "bin_Converter") 
 set_property(TARGET ExampleProducer    PROPERTY PROJECT_LABEL "bin_ExampleProducer") 
@@ -30,8 +29,7 @@ set_property(TARGET TestMonitor        PROPERTY PROJECT_LABEL "bin_TestMonitor")
 set_property(TARGET TestProducer       PROPERTY PROJECT_LABEL "bin_TestProducer") 
 set_property(TARGET TestReader         PROPERTY PROJECT_LABEL "bin_TestReader") 
 set_property(TARGET TestRunControl     PROPERTY PROJECT_LABEL "bin_TestRunControl") 
-set_property(TARGET SCT_Comparer       PROPERTY PROJECT_LABEL "bin_SCT_Comparer") 
-set_property(TARGET getConfiguration   PROPERTY PROJECT_LABEL "bin_getConfiguration")
+
 
 
 
@@ -51,10 +49,9 @@ target_link_libraries(TestMonitor         EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONA
 target_link_libraries(TestProducer        EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestReader          EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestRunControl      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-target_link_libraries(SCT_Comparer      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-target_link_libraries(getConfiguration      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 
-INSTALL(TARGETS ClusterExtractor  Converter  ExampleProducer  ExampleReader  FileChecker  IPHCConverter  MagicLogBook  OptionExample  RunListener  TestDataCollector  TestLogCollector  TestMonitor  TestProducer  TestReader  TestRunControl SCT_Comparer getConfiguration
+
+INSTALL(TARGETS ClusterExtractor  Converter  ExampleProducer  ExampleReader  FileChecker  IPHCConverter  MagicLogBook  OptionExample  RunListener  TestDataCollector  TestLogCollector  TestMonitor  TestProducer  TestReader  TestRunControl 
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
