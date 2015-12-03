@@ -7,6 +7,7 @@
 
 namespace eudaq {
 
+
   class RawDataEvent;
 
   class DLLEXPORT DetectorEvent : public Event {
@@ -15,25 +16,27 @@ namespace eudaq {
   public:
     virtual void Serialize(Serializer &) const;
     explicit DetectorEvent(unsigned runnumber, unsigned eventnumber,
-                           uint64_t timestamp)
-        : Event(runnumber, eventnumber, timestamp) {}
-    //     explicit DetectorEvent(const TLUEvent & tluev) :
-    //       Event(tluev.GetRunNumber(), tluev.GetEventNumber(),
-    //       tluev.GetTimestamp())
-    //       {}
+                           uint64_t timestamp);
+
     explicit DetectorEvent(Deserializer &);
-    void AddEvent(std::shared_ptr<Event> &evt);
+    void AddEvent(std::shared_ptr<Event> evt);
     virtual void Print(std::ostream &) const;
+    virtual void Print(std::ostream &os,size_t offset) const;
+    static event_sp ShallowCopy(const DetectorEvent& det);
 
-    /// Return "DetectorEvent" as type.
-    virtual std::string GetType() const { return "DetectorEvent"; }
 
-    size_t NumEvents() const { return m_events.size(); }
-    Event *GetEvent(size_t i) { return m_events[i].get(); }
-    const Event *GetEvent(size_t i) const { return m_events[i].get(); }
-    std::shared_ptr<Event> GetEventPtr(size_t i) const { return m_events[i]; }
+    virtual std::string GetType() const;
+    
+
+    size_t NumEvents() const;
+    Event *GetEvent(size_t i);
+    const Event *GetEvent(size_t i) const;
+    std::shared_ptr<Event> GetEventPtr(size_t i) const;
     const RawDataEvent &GetRawSubEvent(const std::string &subtype,
                                        int n = 0) const;
+
+    void clearEvents();
+
     template <typename T> const T *GetSubEvent(int n = 0) const {
       for (size_t i = 0; i < NumEvents(); i++) {
         const T *sev = dynamic_cast<const T *>(GetEvent(i));
@@ -48,9 +51,13 @@ namespace eudaq {
       return 0;
     }
 
+
   private:
     std::vector<std::shared_ptr<Event>> m_events;
+    DetectorEvent(const DetectorEvent& det);
   };
+  using ContainerEvent = DetectorEvent;
+  
 }
 
 #endif // EUDAQ_INCLUDED_TLUEvent
