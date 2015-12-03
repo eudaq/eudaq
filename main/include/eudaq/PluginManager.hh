@@ -20,6 +20,7 @@ namespace eudaq {
   class DLLEXPORT PluginManager {
 
   public:
+    using timeStamp_t = DataConverterPlugin::timeStamp_t;
     typedef DataConverterPlugin::t_eventid t_eventid;
 
     /** Register a new plugin to the plugin manager.
