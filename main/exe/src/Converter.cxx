@@ -4,7 +4,7 @@
 #include "eudaq/Logger.hh"
 
 #include "eudaq/MultiFileReader.hh"
-#include "eudaq/readAndProcessDataTemplate.h"
+
 #include <iostream>
 #include "eudaq/EventSynchronisationDetectorEvents.hh"
 
@@ -16,7 +16,12 @@
 using namespace eudaq;
 using namespace Processors;
 unsigned dbg = 0;
+std::unique_ptr<eudaq::Option<std::string>>  add_Command_line_option_EventsOfInterest(eudaq::OptionParser & op) {
 
+  return std::unique_ptr<eudaq::Option<std::string>>(new eudaq::Option<std::string>(op, "e", "events", "", "numbers", "Event numbers to process (eg. '1-10,99' default is all)"));
+
+
+}
 
 
 int main(int, char ** argv) {
@@ -25,7 +30,7 @@ int main(int, char ** argv) {
 
     eudaq::OptionParser op("EUDAQ File Converter", "1.0", "", 1);
 
-    auto events = ReadAndProcess<eudaq::FileWriter>::add_Command_line_option_EventsOfInterest(op);
+    auto events = add_Command_line_option_EventsOfInterest(op);
 
 
     FileWriterFactory::addComandLineOptions(op);
