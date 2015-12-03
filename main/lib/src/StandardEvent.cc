@@ -59,13 +59,12 @@ namespace eudaq {
     Print(os, 0);
   }
 
-  void StandardPlane::SetSizeRaw(unsigned w, unsigned h, unsigned frames,
-                                 int flags) {
-  void StandardPlane::Print(std::ostream &os, size_t offset) const
-  {
+  void StandardPlane::Print(std::ostream &os, size_t offset) const  {
     os << std::string(offset, ' ') << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_pix.size()
       << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent << ", pivot=" << m_pivotpixel;
   }
+  void StandardPlane::SetSizeRaw(unsigned w, unsigned h, unsigned frames,
+                                 int flags) {
 
     m_flags = flags;
     SetSizeZS(w, h, w * h, frames, flags);
