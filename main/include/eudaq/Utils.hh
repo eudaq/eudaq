@@ -22,7 +22,11 @@ typedef unsigned long long uint64_t typedef long long
 #include <cstdint>
 #endif
 
-    namespace eudaq {
+namespace Eudaq_types{
+  using timeStamp_t = int64_t;
+
+}
+namespace eudaq {
 
   std::string DLLEXPORT ucase(const std::string &);
   std::string DLLEXPORT lcase(const std::string &);
@@ -90,6 +94,7 @@ typedef unsigned long long uint64_t typedef long long
     s << std::hex << std::setfill('0') << std::setw(digits) << x;
     return s.str();
   }
+  uint64_t hex2uint_64(const std::string& hex_string);
 
   template <> inline std::string to_hex(const unsigned char &x, int digits) {
     return to_hex((int)x, digits);
