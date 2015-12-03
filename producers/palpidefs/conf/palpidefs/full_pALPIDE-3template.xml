@@ -162,7 +162,7 @@
           <description/>
           <content>0x8</content>
         </value>
-        <value begin="8">
+<!--        <value begin="8">
           <title>PLL Reset</title>
           <description/>
           <content>0x0</content>
@@ -171,7 +171,7 @@
           <title>Unknown OPCODE error counter</title>
           <description/>
           <content>0x0</content>
-        </value>
+        </value> -->
       </address>
 
       <address sub="15">
@@ -634,7 +634,7 @@
           <content>0x1</content>
         </value>
       </address>
-      <address sub="3">
+      <address sub="2">
         <title>Pixel CFG Register 3</title>
         <value begin="0">
           <title>Pixel CFG Register 3</title>
