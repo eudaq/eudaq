@@ -67,8 +67,12 @@ ProcessorBase::ReturnParam Processor_WaitForEORE::ProcessEvent(event_sp ev, Conn
 void Processor_WaitForEORE::wait() {
 
  while (true) {
+   eudaq::mSleep(100);
    if (m_status != runnning) {
      break;
+   }
+   if (m_numOfBoreEvents==0)   {
+     continue;
    }
    if (m_numOfBoreEvents == m_numOfEoreEvents)  {
      break;
@@ -78,7 +82,7 @@ void Processor_WaitForEORE::wait() {
       std::cout << "timeout" << std::endl;
       break;
     }
-    eudaq::mSleep(100);
+  
   }
 }
 Processors::processor_up Processors::waitForEORE(int timeIn_ms/*=200*/) {
