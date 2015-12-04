@@ -3,7 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 
-#include "eudaq/MultiFileReader.hh"
+#include "eudaq/baseFileReader.hh"
 
 #include <iostream>
 #include "eudaq/EventSynchronisationDetectorEvents.hh"

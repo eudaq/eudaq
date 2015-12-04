@@ -1,4 +1,4 @@
-#include "eudaq/MultiFileReader.hh"
+#include "eudaq/baseFileReader.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Logger.hh"
@@ -184,13 +184,13 @@ int main(int /*argc*/, char ** argv) {
 
     eudaq::Processor_batch batch;
 
-    batch.pushProcessor(eudaq::Processors::fileReader(op));
+    batch>>Processors::fileReader(op);
     if (sync.IsSet()) {
-      batch.pushProcessor(eudaq::Processors::merger("DetectorEvents"));
+      batch>>Processors::merger("DetectorEvents");
     }
     batch >> make_Processor_up<countBORE_AND_EORE>()
-      >>eudaq::Processors::ShowEventNR(1000)
-      >>eudaq::Processors::eventSelector(parsenumbers(do_data.Value()), do_bore.IsSet(), do_eore.IsSet())
+      >>Processors::ShowEventNR(1000)
+      >>Processors::eventSelector(parsenumbers(do_data.Value()), do_bore.IsSet(), do_eore.IsSet())
       >> make_Processor_up<displayEvent>();
     if (do_dump.IsSet()) {
       batch>> make_Processor_up<displayEventDump>();
