@@ -141,6 +141,29 @@
           <content>-1</content>
         </value>
       </address>
+      <address sub="12">
+        <title>CMU and DMU configuration Register</title>
+        <value begin="0" width="4">
+          <title>Previous Chip ID</title>
+          <description></description>
+          <content>-1</content>
+        </value>
+        <value begin="5">
+          <title>Initial Token</title>
+          <description></description>
+          <content>-1</content>
+        </value>
+        <value begin="6">
+          <title>Disable Manchester Encoding</title>
+          <description>0:CMU Manchester Encoding Enabled 1:Disabled</description>
+          <content>-1</content>
+        </value>
+        <value begin="7">
+          <title>Enable Double Data Rate</title>
+          <description>0:Disable DDR on Local Bus 1:Enable DDR</description>
+          <content>-1</content>
+        </value>
+      </address>
       <address sub="14">
         <title>DTU Configuration Register</title>
         <value begin="0" width="4">
@@ -162,7 +185,7 @@
           <title>Unknown OPCODE error counter</title>
           <description></description>
           <content>-1</content>
-        </value> 
+        </value>
       </address>
       
       <address sub="15">

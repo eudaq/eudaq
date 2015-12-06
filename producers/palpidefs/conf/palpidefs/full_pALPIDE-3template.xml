@@ -150,26 +150,49 @@
           <content>0xA</content>
         </value>
       </address>
+      <address sub="12">
+        <title>CMU and DMU configuration Register</title>
+        <value begin="0" width="4">
+          <title>Previous Chip ID</title>
+          <description></description>
+          <content>0xF</content>
+        </value>
+        <value begin="5">
+          <title>Initial Token</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="6">
+          <title>Disable Manchester Encoding</title>
+          <description>0:CMU Manchester Encoding Enabled 1:Disabled</description>
+          <content>0x1</content>
+        </value>
+        <value begin="7">
+          <title>Enable Double Data Rate</title>
+          <description>0:Disable DDR on Local Bus 1:Enable DDR</description>
+          <content>0x0</content>
+        </value>
+      </address>
       <address sub="14">
         <title>DTU Configuration Register</title>
         <value begin="0" width="4">
           <title>PLL Configuration</title>
-          <description/>
+          <description></description>
           <content>0xD</content>
         </value>
         <value begin="4" width="4">
           <title>Serializer Phase</title>
-          <description/>
+          <description></description>
           <content>0x8</content>
         </value>
         <value begin="8">
           <title>PLL Reset</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="9" width="3">
           <title>Unknown OPCODE error counter</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
       </address>
@@ -178,32 +201,32 @@
         <title>DTU DACs Register</title>
         <value begin="0" width="4">
           <title>PLL</title>
-          <description/>
+          <description></description>
           <content>0x8</content>
         </value>
         <value begin="4" width="4">
           <title>Driver</title>
-          <description/>
+          <description></description>
           <content>0x8</content>
         </value>
         <value begin="8" width="4">
           <title>Pre-emphasis</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
       </address>
 
       <address sub="17">
         <title>DTU PLL Lock Register 2</title>
-        <description/>
+        <description></description>
         <value begin="0" width="8">
           <title>Lock Wait Cycles</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="8" width="8">
           <title>Unlock Wait Cycles</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
       </address>
@@ -211,62 +234,62 @@
         <title>DTU Test Register 1</title>
         <value begin="0">
           <title>Test Enable</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="1">
           <title>Internal Pattern Enable</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="2">
           <title>Prbs Enable</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="3">
           <title>Bypass 8b10b</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="4" width="2">
           <title>BDIN8b10b0</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="6" width="2">
           <title>BDIN8b10b1</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="8" width="2">
           <title>BDIN8b10b2</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="10">
           <title>K0</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="11">
           <title>K1</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="12">
           <title>K2</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="13">
           <title>Force Set Load enable</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="14">
           <title>Force Unset Load enable</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
       </address>
@@ -274,12 +297,12 @@
         <title>DTU Test Register 2</title>
         <value begin="0" width="8">
           <title>DIN0</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
         <value begin="8" width="8">
           <title>DIN1</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
       </address>
@@ -287,13 +310,13 @@
         <title>DTU Test Register 3</title>
         <value begin="0" width="8">
           <title>DIN2</title>
-          <description/>
+          <description></description>
           <content>0x0</content>
         </value>
       </address>
       <address sub="21">
         <title>BUSY min width</title>
-        <description/>
+        <description></description>
         <content>0x8</content>
       </address>
     </address>
@@ -758,7 +781,7 @@
         <title>IRESET</title>
         <value begin="0" width="16">
           <title>IRESET</title>
-          <content>0x32</content>
+          <content>iresetTmp</content>
         </value>
       </address>
       <address sub="12">
