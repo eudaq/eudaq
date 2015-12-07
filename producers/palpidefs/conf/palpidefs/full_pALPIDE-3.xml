@@ -143,11 +143,6 @@
       </address>
       <address sub="12">
         <title>CMU and DMU configuration Register</title>
-        <value begin="0" width="4">
-          <title>Previous Chip ID</title>
-          <description></description>
-          <content>-1</content>
-        </value>
         <value begin="5">
           <title>Initial Token</title>
           <description></description>
