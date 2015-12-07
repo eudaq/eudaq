@@ -862,8 +862,11 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     // data taking configuration
     // PrepareEmptyReadout
     
-    if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) daq_board->ConfigureReadout( 
-        1, true, (m_readout_mode == 1)); // buffer depth = 1, 'sampling on rising edge (changed for pALPIDE3)'
+    if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) {
+      std::cout << "This is " << dut->GetClassName() << std::endl;
+      daq_board->ConfigureReadout(1, true, (m_readout_mode == 1));
+      // buffer depth = 1, 'sampling on rising edge (changed for pALPIDE3)'
+    }
     else daq_board->ConfigureReadout(1, false, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
 //    daq_board->ConfigureReadout(1, true, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0,
@@ -879,7 +882,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
       m_reader[i]->SetMaxQueueSize(queue_size);
     m_reader[i]->SetHighRateMode(high_rate_mode);
     m_reader[i]->SetReadoutMode(m_readout_mode);
-//std::cout << " ho " << std::endl;
 
     std::cout << "Device " << i << " configured." << std::endl;
 
