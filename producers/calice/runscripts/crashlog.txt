@@ -1,0 +1,76 @@
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:36:04.498
+Uncaught exception:
+no TLU events found in the data
+ for the resynchronisation it is nessasary to have a TLU in the data stream 
+ for now the synchrounsation only works with the old TLU (date 12.2013)
+  From /home/calice/eudaq-calice-devel/main/lib/src/EventSynchronisationBase.cc:236
+  In void eudaq::SyncBase::PrepareForEvents()
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:36:10.810
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:37:14.226
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:37:55.682
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:38:08.419
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:38:51.890
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:39:30.972
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:40:03.381
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 15:40:25.763
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 16:06:36.458
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 16:12:29.712
+Uncaught exception:
+Unable to open file: Run_00122__01p12p2015__16p11p51.raw
+  From /home/calice/eudaq-calice-devel/main/lib/src/FileSerializer.cc:50
+  In eudaq::FileDeserializer::FileDeserializer(const string&, bool, size_t)
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 16:12:43.064
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 16:19:42.411
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
+===============================================
+Abnormal exit of EUDAQ File Converter(1.0) at 2015-12-01 16:31:56.430
+Uncaught exception:
+vector::_M_range_check
+-----------------------------------------------
