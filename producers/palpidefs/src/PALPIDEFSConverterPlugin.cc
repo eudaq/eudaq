@@ -285,14 +285,15 @@ namespace eudaq {
                            unsigned int &pos, int &current_layer,
                            bool *layers_found, uint64_t *trigger_ids,
                            uint64_t *timestamps) const {
-      if (data[pos++] != 0xff && data[pos] != 0x4 ) {
+      if (data[pos++] != 0xff && data[pos-1] != 0x4 ) {
         cout << "ERROR: Event " << ev.GetEventNumber()
              << " Unexpected. Next byte not 0xff but "
              << (unsigned int)data[pos - 1] << endl;
         return false;
       } //We wanted to use data even there was no 0xff in the begining of the layer data for layer 4 it happened for pALPIDE3 first runs.
       //Not very strict, but it's better than not using it..
-      current_layer = data[pos++]; 
+     if (data[pos-1] == 0xff) current_layer = data[pos++]; 
+     else if (data[pos-1] == 0x4) current_layer = data[pos-1]; 
  
 
 /*      if (data[pos++] == 0xff) {
