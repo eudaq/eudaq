@@ -157,6 +157,26 @@ Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
    return batch;
  }
 
+ DLLEXPORT Processor_batch_up operator>>(Processor_batch_up batch, Processor_up_splitter proc) {
+  
+   batch->pushProcessor(std::move(proc));
+   return batch;
+ }
+
+ Processor_up_splitter operator+(Processor_up first_, Processor_up secound_) {
+   return Processor_up_splitter(new Processor_batch_splitter(std::move(first_), std::move(secound_)));
+ }
+
+ Processor_up_splitter operator+(Processor_up_splitter first_, Processor_up secound_) {
+   first_->pushProcessor(std::move(secound_));
+   return first_;
+ }
+
+ Processor_up_splitter operator+(Processor_up_splitter first_, Processor_rp secound_) {
+   first_->pushProcessor(secound_);
+   return first_;
+ }
+
  std::unique_ptr<Processor_batch> make_batch() {
    return std::unique_ptr<Processor_batch>(new Processor_batch());
  }
@@ -221,6 +241,15 @@ Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
  }
 
 
+
+ void Processor_batch_splitter::pushProcessor(Processor_up processor) {
+   push_to_vector(*m_processors, m_processors_rp, std::move(processor));
+ }
+
+ void Processor_batch_splitter::pushProcessor(Processor_rp processor) {
+   push_to_vector(*m_processors, m_processors_rp,processor);
+
+ }
 
  void Processor_batch_splitter::init() {
    for (auto& e : reverse(m_processors_rp)) {

@@ -8,9 +8,9 @@
 
 
 
-#define ADD_LAMBDA_PROZESSOR0() [](const eudaq::Event&, ProcessorBase::ConnectionName_ref )
-#define ADD_LAMBDA_PROZESSOR1(event_ref) [](const eudaq::Event& event_ref, ProcessorBase::ConnectionName_ref )
-#define ADD_LAMBDA_PROZESSOR2(event_ref,COnnectionName)  [](const eudaq::Event& event_ref, ProcessorBase::ConnectionName_ref COnnectionName)
+#define ADD_LAMBDA_PROZESSOR0() ___hidden::lamda_dummy()* [](const eudaq::Event&, ProcessorBase::ConnectionName_ref )
+#define ADD_LAMBDA_PROZESSOR1(event_ref)___hidden::lamda_dummy()* [](const eudaq::Event& event_ref, ProcessorBase::ConnectionName_ref )
+#define ADD_LAMBDA_PROZESSOR2(event_ref,COnnectionName)  ___hidden::lamda_dummy()* [](const eudaq::Event& event_ref, ProcessorBase::ConnectionName_ref COnnectionName)
 
 namespace eudaq {
 
@@ -59,5 +59,16 @@ namespace eudaq {
 
 
 
+}
+
+namespace ___hidden {
+class lamda_dummy {
+
+};
+template<typename T>
+eudaq::Processor_up operator*(lamda_dummy&, T&& lamda) {
+  return eudaq::make_Processor(std::forward<T>(lamda));
+
+}
 }
 #endif // Processor_inspector_h__

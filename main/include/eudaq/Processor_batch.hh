@@ -9,6 +9,8 @@
 namespace eudaq {
 using processor_i_up = std::unique_ptr<Processor_Inspector>;
 using processor_i_rp = Processor_Inspector*;
+class Processor_batch_splitter;
+using Processor_up_splitter = std::unique_ptr<Processor_batch_splitter>;
 class DLLEXPORT Processor_batch :public ProcessorBase {
 
 public:
@@ -42,19 +44,13 @@ DLLEXPORT Processor_batch_up operator>> (Processor_batch_up batch, Processor_rp 
 DLLEXPORT Processor_batch_up operator>> (Processor_batch_up batch, Processor_up proc);
 DLLEXPORT Processor_batch_up operator>> (Processor_batch_up batch, processor_i_up proc);
 
-DLLEXPORT std::unique_ptr<Processor_batch> make_batch();
-template <typename T>
-Processor_batch& operator>> (Processor_batch& batch, T&& lamdbaProcessor) {
-  return batch >> make_Processor(std::forward<T>(lamdbaProcessor));
-}
 
-template <typename T>
-Processor_batch_up operator>> (Processor_up proc1, T&& lamdbaProcessor) {
-  auto batch = Processor_batch_up(new Processor_batch());
-  batch->pushProcessor(std::move(proc1));
-  *batch>>std::forward<T>(lamdbaProcessor);
-  return batch;
-}
+DLLEXPORT Processor_batch_up operator>> (Processor_batch_up batch, Processor_up_splitter proc);
+
+
+
+DLLEXPORT std::unique_ptr<Processor_batch> make_batch();
+
 template <typename T>
 Processor_batch& operator>> (Processor_batch& batch, T* Processor) {
   return batch >> dynamic_cast<Processor_rp> (Processor);
@@ -77,6 +73,10 @@ private:
   std::vector<processor_i_rp> m_processors_rp;
   Processor_rp m_last = nullptr, m_first = nullptr;
 };
+
+
+
+
 template<typename... Proc>
 inline void push_to_vector(std::vector<Processor_up>& processors, std::vector<Processor_rp>& processors_rp, Proc&&... p) {
 
@@ -152,15 +152,24 @@ public:
     }
     return processNext(std::move(ev),con);
   }
+  void pushProcessor(Processor_up processor);
+  void pushProcessor(Processor_rp processor);
   std::unique_ptr<std::vector<Processor_up>> m_processors;
   std::vector<Processor_rp> m_processors_rp;
   void init() override;
   void end() override;
 };
 
+
 template<typename... Proc>
 Processor_up splitter(Proc&&... p) {
   return Processor_up(new Processor_batch_splitter(std::forward<Proc>(p)...));
 }
+
+DLLEXPORT  Processor_up_splitter operator+(Processor_up first_, Processor_up secound_);
+
+DLLEXPORT Processor_up_splitter operator+(Processor_up_splitter first_, Processor_up secound_);
+DLLEXPORT Processor_up_splitter operator+(Processor_up_splitter first_, Processor_rp secound_);
+
 }
 #endif // Processor_batch_h__
