@@ -87,9 +87,13 @@ ELSE(WIN32)
     STRING(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\/([0-9][0-9]+).*" "\\1" found_root_patch_vers "${ROOTVERSION}")
 
     IF (found_root_major_vers LESS 5)
-      MESSAGE( FATAL_ERROR "Invalid ROOT version \"${ROOTERSION}\", at least major version 4 is required, e.g. \"5.00/00\"")
+      MESSAGE( FATAL_ERROR "Invalid ROOT version \"${ROOTVERSION}\", at least major version 4 is required, e.g. \"5.00/00\"")
     ENDIF (found_root_major_vers LESS 5)
 
+    IF (found_root_major_vers EQUAL 6)
+      add_definitions(-DEUDAQ_LIB_ROOT6)
+    ENDIF (found_root_major_vers EQUAL 6)
+    
     # compute an overall version number which can be compared at once
     MATH(EXPR req_vers "${req_root_major_vers}*10000 + ${req_root_minor_vers}*100 + ${req_root_patch_vers}")
     MATH(EXPR found_vers "${found_root_major_vers}*10000 + ${found_root_minor_vers}*100 + ${found_root_patch_vers}")
@@ -105,7 +109,7 @@ ELSE(WIN32)
 
 
   IF (ROOT_FOUND)
-
+    
     # ask root-config for the library dir
     # Set ROOT_LIBRARY_DIR
 
