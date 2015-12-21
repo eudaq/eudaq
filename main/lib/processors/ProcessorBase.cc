@@ -1,6 +1,8 @@
 #include "eudaq/ProcessorBase.hh"
 #include "eudaq/factoryDef.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Processor_inspector.hh"
+#include "eudaq/Processor_batch.hh"
 
 namespace eudaq{
   
@@ -39,6 +41,38 @@ ProcessorBase::ConnectionName_t default_connection() {
 ProcessorBase::ConnectionName_t random_connection() {
   static ProcessorBase::ConnectionName_t  i = 100;
   return ++i;
+}
+
+
+
+processor_view::processor_view(ProcessorBase* base_r) :m_proc_rp(base_r) {
+
+}
+
+processor_view::processor_view(std::unique_ptr<ProcessorBase> base_u) : m_proc_up(std::move(base_u)) {
+
+}
+
+
+processor_view::processor_view(std::unique_ptr<Processor_batch_splitter> batch_split) {
+  m_proc_up = Processor_up(dynamic_cast<Processor_rp>(batch_split.release()));
+  if (!m_proc_up) {
+    EUDAQ_THROW("unable to convert");
+  }
+}
+
+processor_view::processor_view(std::unique_ptr<Processor_i_batch> proc) {
+  m_proc_up = Processor_up(dynamic_cast<Processor_rp>(proc.release()));
+  if (!m_proc_up) {
+    EUDAQ_THROW("unable to convert");
+  }
+}
+
+processor_view::processor_view(std::unique_ptr<Processor_Inspector> proc) {
+  m_proc_up = Processor_up(dynamic_cast<Processor_rp>(proc.release()));
+  if (!m_proc_up) {
+    EUDAQ_THROW("unable to convert");
+  }
 }
 
 }

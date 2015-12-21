@@ -10,6 +10,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include "Exception.hh"
 
 
 
@@ -19,7 +20,10 @@ namespace eudaq {
 
 
 class ProcessorBase;
-
+class Processor_batch_splitter;
+class inspector_view;
+class Processor_i_batch;
+class Processor_Inspector;
 
 using Processor_sp = std::shared_ptr < ProcessorBase >;
 using Processor_up = std::unique_ptr < ProcessorBase >;
@@ -60,7 +64,6 @@ public:
   
 protected:
   ReturnParam processNext(event_sp ev, ConnectionName_ref con);
-private:
   Processor_rp m_next = nullptr;
 };
 
@@ -72,6 +75,33 @@ Processor_up make_Processor_up(Args&&... args) {
   auto p = new T(std::forward<Args>(args)...);
   return Processor_up(p);
 }
+
+
+
+
+
+
+class DLLEXPORT processor_view {
+public:
+  processor_view(ProcessorBase* base_r);
+  processor_view(std::unique_ptr<ProcessorBase> base_u);
+  processor_view(std::unique_ptr<Processor_batch_splitter> batch_split);
+  processor_view(std::unique_ptr<Processor_i_batch> proc);
+  processor_view(std::unique_ptr<Processor_Inspector> proc);
+  template <typename T>
+  void getValue(T& t) {
+    if (m_proc_rp) {
+      helper_push_r_pointer(t ,m_proc_rp);
+    } else if (m_proc_up) {
+      helper_push_u_pointer(t, std::move(m_proc_up));
+    } else {
+      EUDAQ_THROW("unable to extract pointer");
+    }
+  }
+  Processor_up m_proc_up;
+  Processor_rp m_proc_rp = nullptr;
+};
+
 
 }
 #endif // ProcessorBase_h__

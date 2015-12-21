@@ -1,4 +1,7 @@
 #include "eudaq/Processor_inspector.hh"
+#include <utility>
+#include <memory>
+#include "eudaq/Processor_batch.hh"
 
 
 
@@ -29,5 +32,34 @@ namespace eudaq{
   }
 
 
+  inspector_view::inspector_view(std::unique_ptr<ProcessorBase> proc) {
+    
+    auto dummy = proc.release();
+    m_proc_up = std::unique_ptr<Processor_Inspector>( dynamic_cast<Processor_Inspector*>( dummy));
+
+    if (!m_proc_up)
+    {
+      EUDAQ_THROW("unable to convert pointer");
+    }
+  }
+
 }
 
+eudaq::inspector_view::inspector_view(ProcessorBase* proc) {
+  m_proc_rp = dynamic_cast<Processor_Inspector*>(proc);
+  if (!m_proc_rp) {
+    EUDAQ_THROW("unable to convert pointer");
+  }
+}
+
+eudaq::inspector_view::inspector_view(std::unique_ptr<Processor_Inspector> proc) :m_proc_up(std::move(proc)) {
+
+}
+
+eudaq::inspector_view::inspector_view(Processor_Inspector* proc) : m_proc_rp(proc) {
+  
+}
+
+eudaq::inspector_view::inspector_view(std::unique_ptr<Processor_i_batch> proc) {
+  m_proc_up = std::unique_ptr<Processor_Inspector> (dynamic_cast<Processor_Inspector*>(proc.release()));
+}

@@ -14,7 +14,9 @@
 
 namespace eudaq {
 
-
+class Processor_batch;
+class Processor_i_batch;
+class Processor_i_batch; 
 
   class DLLEXPORT Processor_Inspector :public ProcessorBase {
   public:
@@ -57,6 +59,31 @@ namespace eudaq {
     return  Processor_up(new processor_T<T>(std::forward<T>(proc_)));
   }
 
+
+  class DLLEXPORT inspector_view {
+  public:
+    inspector_view(Processor_Inspector* proc);
+    inspector_view(std::unique_ptr<Processor_Inspector> proc);
+
+    inspector_view(ProcessorBase* proc);
+
+    inspector_view(std::unique_ptr<ProcessorBase> proc);
+
+    inspector_view(std::unique_ptr<Processor_i_batch> proc);
+    template<typename T>
+    void getValue(T& t) {
+      if (m_proc_rp) {
+        helper_push_i_r_pointer(t, m_proc_rp);
+      } else if (m_proc_up) {
+        helper_push_i_u_pointer(t, std::move(m_proc_up));
+      } else {
+        EUDAQ_THROW("unable to extract pointer");
+      }
+    }
+
+    Processor_Inspector* m_proc_rp = nullptr;
+    std::unique_ptr<Processor_Inspector> m_proc_up;
+  };
 
 
 }
