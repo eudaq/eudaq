@@ -2,6 +2,9 @@
 #define EUDAQ_INCLUDED_Platform
 #include <memory>
 
+template <typename T, typename... Args> 
+T __check(Args&&... args); 
+
 #ifndef EUDAQ_PLATFORM
 #define EUDAQ_PLATFORM PF_WIN32
 #endif
@@ -22,6 +25,10 @@
 #define DLLEXPORT
 
 #endif
+
+// used for reference counted TObject 
+// Use this only if you know the object is counted somewehere else
+#define T_NEW new
 template <class T, class... Args>
 std::unique_ptr<T> __make_unique(Args&&... args){
   return std::unique_ptr<T>(new T(args...));
