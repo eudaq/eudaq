@@ -62,7 +62,7 @@ namespace eudaq{
   }
 
   Processors::processor_i_up Processors::ShowEventNR(size_t repetition) {
-    return  Processors::processor_i_up (new eudaq::ShowEventNR(repetition));
+    return __make_unique<eudaq::ShowEventNR>(repetition);
   }
 
 

@@ -93,7 +93,7 @@ namespace eudaq {
         FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
     m_tfile = new TFile(foutput.c_str(), "RECREATE");
-    m_ttree = new TTree("raw", "a simple Tree with simple variables");
+    m_ttree = T_NEW TTree("raw", "a simple Tree with simple variables");
 
     m_ttree->Branch("runnumber", &runnumber, "channel/I");
     m_ttree->Branch("channel", &chan, "channel/S");

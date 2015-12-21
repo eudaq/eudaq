@@ -22,7 +22,7 @@ namespace eudaq{
     {
       eudaq::PluginManager::Initialize(*devent);
     }
-    auto sev = event_sp(new StandardEvent(std::move(eudaq::PluginManager::ConvertToStandard(*devent))));
+    auto sev = PluginManager::ConvertToStandard_ptr(*devent);
     return processNext(sev,con);
   }
   

@@ -128,14 +128,14 @@ Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
  }
 
  Processor_batch_up operator>>(Processor_up proc1, Processor_rp proc2) {
-   auto ret = Processor_batch_up(new Processor_batch());
+   auto ret = make_batch();
    ret->pushProcessor(std::move(proc1));
    ret->pushProcessor(proc2);
    return ret;
  }
 
  Processor_batch_up operator>>(Processor_up proc1, Processor_up proc2) {
-   auto ret = Processor_batch_up(new Processor_batch());
+   auto ret = make_batch();
    ret->pushProcessor(std::move(proc1));
    ret->pushProcessor(std::move(proc2));
    return ret;
@@ -178,7 +178,7 @@ Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
  }
 
  std::unique_ptr<Processor_batch> make_batch() {
-   return std::unique_ptr<Processor_batch>(new Processor_batch());
+   return __make_unique<Processor_batch>();
  }
 
  ReturnParam Processor_i_batch::inspectEvent(const Event& ev, ConnectionName_ref con) {

@@ -8,7 +8,8 @@
 
 namespace eudaq{
 Processors::processor_i_up Processors::eventSelector(const std::vector<unsigned>& eventsOfIntresst, bool doBore, bool doEORE) {
-  return Processors::processor_i_up(new select_events (eventsOfIntresst, doBore, doEORE));
+  return __make_unique<select_events>(eventsOfIntresst, doBore, doEORE);
+  
 
 }
 

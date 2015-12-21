@@ -19,7 +19,7 @@ namespace eudaq {
 class processor_data_collector :public ProcessorBase {
 public:
   processor_data_collector(const std::string& listAdress);
-  processor_data_collector(const std::string& listAdress, std::string& outPut_connectionName);
+  processor_data_collector(const std::string& listAdress, eudaq_types::outPutString outPut_connectionName);
   ~processor_data_collector();
   virtual void init();
   virtual ReturnParam ProcessEvent(event_sp ev, ConnectionName_ref con);
@@ -58,13 +58,12 @@ private:
 
 
 Processors::processor_up Processors::dataReciver(const std::string& listAdrrs) {
-  return std::unique_ptr<ProcessorBase>(new processor_data_collector(listAdrrs));
+  return __make_unique<processor_data_collector>(listAdrrs);
+
 }
 Processors::processor_up  Processors::dataReciver(const std::string& listAdrrs, eudaq_types::outPutString outPut_connectionName) {
-  
-  auto ret = new processor_data_collector( listAdrrs);
-  necessary_CONVERSION(outPut_connectionName) = ret->ConnectionString();
-  return  std::unique_ptr<ProcessorBase>(ret);
+    
+  return  __make_unique<processor_data_collector>(listAdrrs, outPut_connectionName);
 
   
 }
@@ -80,12 +79,13 @@ processor_data_collector::processor_data_collector(const std::string& listAdress
   ) {
   m_dataServer->SetCallback(TransportCallback(this, &processor_data_collector::DataHandler));
 
-  m_thread = std::unique_ptr<std::thread>(new std::thread(DataCollector_thread, this));
+  m_thread = __make_unique<std::thread>(DataCollector_thread, this);
+  
   
 }
 
-processor_data_collector::processor_data_collector(const std::string& listAdress, std::string& outPut_connectionName):processor_data_collector(listAdress) {
-  outPut_connectionName = m_dataServer->ConnectionString();
+processor_data_collector::processor_data_collector(const std::string& listAdress, eudaq_types::outPutString outPut_connectionName):processor_data_collector(listAdress) {
+  necessary_CONVERSION(outPut_connectionName) = m_dataServer->ConnectionString();
 }
 
 processor_data_collector::~processor_data_collector() {

@@ -46,7 +46,7 @@ namespace eudaq {
         FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
     m_tfile = new TFile(foutput.c_str(), "RECREATE");
-    m_ttree = new TTree("tree", "a simple Tree with simple variables");
+    m_ttree = T_NEW TTree("tree", "a simple Tree with simple variables");
 
     i_run = runnumber;
     i_event = 0;

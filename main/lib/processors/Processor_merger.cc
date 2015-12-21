@@ -60,8 +60,7 @@ void Processor_merger::end() {
 
 
 Processors::processor_up Processors::merger(const SyncBase::MainType& type_, SyncBase::Parameter_ref param_ /*= SyncBase::Parameter_t()*/) {
-  return   Processors::processor_up(new Processor_merger(type_, param_));
-
+  return __make_unique<Processor_merger>(type_, param_);
 }
 
 }

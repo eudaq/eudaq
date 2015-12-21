@@ -73,11 +73,12 @@ ProcessorBase::ReturnParam processor_data_sender::inspectEvent(const Event &ev, 
   BufferSerializer ser;
   ev.Serialize(ser);
   m_dataclient->SendPacket(ser);
+  return sucess;
 }
 
 
 Processors::processor_i_up Processors::dataSender(const std::string& serverAdress, const std::string& type_, const std::string& name_) {
-  return Processors::processor_i_up(new processor_data_sender(serverAdress, type_, name_));
+  return __make_unique<processor_data_sender>(serverAdress, type_, name_);
 }
 
 }
