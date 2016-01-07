@@ -151,7 +151,7 @@ namespace eudaq {
         m_do_SCS[i] = (bool)bore.GetTag<int>(tmp, 0);
 
 #if USE_TINYXML
-        if (m_chip_type == 3){
+        if (m_chip_type[i] == 3){
           m_Vaux[i] = -10;
           m_VresetP[i] = ParseXML(config, 6, 0, 1, 0);
           m_VresetD[i] = ParseXML(config, 6, 0, 2, 0);
