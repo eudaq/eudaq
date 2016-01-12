@@ -1336,13 +1336,13 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   bore.SetTag("BackBiasVoltage", m_back_bias_voltage);
   bore.SetTag("DUTposition", m_dut_pos);
 
-  //Configuration is done, Read DAC Values and send to log
-  
+  //Configuration is done, Read DAC Values and send to log  
+
   for (int i = 0; i < m_nDevices; i++) {
     TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
     std::cout << "Reading Device:" << i << " ADCs" <<  std::endl;
     daq_board->ReadAllADCs();
-  }
+  } 
 
   SendEvent(bore);
 
