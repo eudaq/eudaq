@@ -1,7 +1,7 @@
 
 // CaliceReceiver.cc
 
-#include "CaliceProducer.hh"
+#include "CaliceReceiver.hh"
 
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
@@ -24,23 +24,25 @@
 using namespace eudaq;
 using namespace std;
 
-namespace eudaq {
+namespace calice_eudaq {
 
-  CaliceProducer::CaliceProducer(const std::string & name, const std::string & runcontrol) :
+  CaliceReceiver::CaliceReceiver(const std::string & name, const std::string & runcontrol) :
     Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
   {
     pthread_mutex_init(&_mufd,NULL);
   }
 
-  void CaliceProducer::OnConfigure(const eudaq::Configuration & param)
+  void CaliceReceiver::OnConfigure(const eudaq::Configuration & param)
   {
+    // file mode
+    _filemode = param.Get("FileMode", false);
     // file name
     _filename = param.Get("FileName", "");
     _waitmsFile = param.Get("WaitMillisecForFile", 100);
     _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 5);
 
     // raw output
-    //    _dumpRaw = param.Get("DumpRawOutput", 0);
+    _dumpRaw = param.Get("DumpRawOutput", 0);
     _writeRaw = param.Get("WriteRawOutput", 0);
     _rawFilename = param.Get("RawFileName", "run%d.raw");
 
@@ -62,15 +64,19 @@ namespace eudaq {
     } // for scintillator we open at start
     
     _configured = true;
-   
+
+    cout << "Calice Receiver configured: FileMode = " << _filemode << ", file = " << _filename;
+    cout << ", port = " << _port << ", ipAddr = " << _ipAddress << ", reader = " << _reader << endl;
+    
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
 
   }
 
-  void CaliceProducer::OnStartRun(unsigned param) {
+  void CaliceReceiver::OnStartRun(unsigned param) {
       _runNo = param;
       _eventNo = 0;
-    // raw file open
+
+      // raw file open
       if(_writeRaw){
 
 	//	read the local time and save into the string myString
@@ -100,38 +106,49 @@ namespace eudaq {
 
       _reader->OnStart(param);
 
-      SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
+      SendEvent(RawDataEvent::BORE("Test", _runNo));
       std::cout << "Start Run: " << param << std::endl;
       SetStatus(eudaq::Status::LVL_OK, "");
       _running = true;
 
   }
 
-  void CaliceProducer::OnPrepareRun(unsigned param) {
+  void CaliceReceiver::OnPrepareRun(unsigned param) {
     cout << "OnPrepareRun: runID " << param << " set." << endl;
   }
   
-  void CaliceProducer::OnStopRun() {
+  void CaliceReceiver::OnStopRun() {
     _reader->OnStop(_waitsecondsForQueuedEvents);
     _running = false;
     sleep(1); 
-    // Sleep added to fix a bug.
+    // Fixed bug.
     // Error:  uncaught exception: Deserialize asked for X only have Y
     // sometimes appears when stopping the run and events are in the queue are being read
     // this crashes the Labview
     // seems to be a race condition, 
     // for the moment fixed with this extra time after (1s) of sleep after the stop.
     // following https://github.com/eudaq/eudaq/issues/29
+
     if(_writeRaw)
       _rawFile.close();
-
-    SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+    
+    SendEvent(RawDataEvent::EORE("Test", _runNo, _eventNo));
     
     SetStatus(eudaq::Status::LVL_OK, "");
   }
 
-  void CaliceProducer::OpenConnection()
+  void CaliceReceiver::OpenConnection()
   {
+    if(_filemode){
+
+      pthread_mutex_lock(&_mufd);
+      _fd = open(_filename.c_str(), O_RDONLY);
+      pthread_mutex_unlock(&_mufd);
+      if(_fd <= 0){
+        return;
+      }
+    }else{
+
       // open socket
       struct sockaddr_in dstAddr;
       memset(&dstAddr, 0, sizeof(dstAddr));
@@ -147,10 +164,10 @@ namespace eudaq {
       if(ret != 0){
         return;
       }
-      //}
+    }
   }
   
-  void CaliceProducer::CloseConnection()
+  void CaliceReceiver::CloseConnection()
   {
 
       pthread_mutex_lock(&_mufd);
@@ -162,7 +179,7 @@ namespace eudaq {
   }
   
   // send a string without any handshaking
-  void CaliceProducer::SendCommand(const char *command, int size){
+  void CaliceReceiver::SendCommand(const char *command, int size){
 
     if(size == 0)size = strlen(command);
 
@@ -171,12 +188,12 @@ namespace eudaq {
     // event thread, which is same as thread of open/close the socket
 
     //pthread_mutex_lock(&_mufd);
-    if(_fd <= 0)cout << "CaliceProducer::SendCommand(): cannot send command because connection is not open." << endl;
+    if(_fd <= 0)cout << "CaliceReceiver::SendCommand(): cannot send command because connection is not open." << endl;
     else write(_fd, command, size);
     //pthread_mutex_unlock(&_mufd);
   }
   
-  void CaliceProducer::MainLoop()
+  void CaliceReceiver::MainLoop()
   {
 
     deque<char> bufRead;
@@ -203,16 +220,15 @@ namespace eudaq {
 	}
       }
 
-      //      if file is not ready or not running in file mode: just wait
-      //	if(_fd <= 0 || (!_running && _filemode)){
-      if(_fd <= 0 || !_running ){
+      // file is not ready or not running in file mode: just wait
+      if(_fd <= 0 || (!_running && _filemode)){
 	pthread_mutex_unlock(&_mufd);
 	::usleep(1000);
 	continue;
       }
 
       // in file mode we need some wait
-      // if(_filemode) ::usleep(1000 * _waitmsFile);   // put some wait on filemode
+      if(_filemode) ::usleep(1000 * _waitmsFile);   // put some wait on filemode
         
       // system call: from socket to C array
       size = ::read(_fd, buf, bufsize);
@@ -226,9 +242,9 @@ namespace eudaq {
         _fd = -1;
         pthread_mutex_unlock(&_mufd);
 
-	// if(_filemode)
-        //  break;
-        //else
+        if(_filemode)
+          break;
+        else
           continue;
       }
         
@@ -241,9 +257,11 @@ namespace eudaq {
       if(_writeRaw && _rawFile.is_open()){
 	_rawFile.write(buf, size);
       }
-
+        
       // C array to vector
       copy(buf, buf + size, back_inserter(bufRead));
+      //bufRead.append(buf, size);
+
 
       if(_reader){
 	_reader->Read(bufRead, deqEvent);
@@ -268,7 +286,7 @@ namespace eudaq {
 int main(int /*argc*/, const char ** argv) {
   // You can use the OptionParser to get command-line arguments
   // then they will automatically be described in the help (-h) option
-  eudaq::OptionParser op("Calice Producer Producer", "1.0",
+  eudaq::OptionParser op("Calice Receiver Producer", "1.0",
                          "hogehoge");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
                                    "tcp://localhost:44000", "address",
@@ -284,8 +302,8 @@ int main(int /*argc*/, const char ** argv) {
     EUDAQ_LOG_LEVEL(level.Value());
     // Create a producer
     cout << name.Value() << " " << rctrl.Value() << endl;
-    eudaq::CaliceProducer producer(name.Value(), rctrl.Value());
-    //producer.SetReader(new eudaq::SiReader(0));
+    calice_eudaq::CaliceReceiver producer(name.Value(), rctrl.Value());
+    //producer.SetReader(new calice_eudaq::SiReader(0));
     // And set it running...
     producer.MainLoop();
     // When the readout loop terminates, it is time to go
