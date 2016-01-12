@@ -225,12 +225,16 @@ namespace eudaq {
         ofstream maskedPixelFile(tmp);
         maskedPixelFile << pixels;
 
+
         // firmware version
         sprintf(tmp, "FirmwareVersion_%d", i);
         std::string version = bore.GetTag<std::string>(tmp, "");
         cout << "Firmware version on layer " << i << " is: " << version.c_str()
              << endl;
       }
+      char tmp[100];
+      sprintf(tmp, "run%06d-temperature.txt", bore.GetRunNumber());
+      m_temperatureFile = new ostream(tmp);
     }
     //##############################################################################
     ///////////////////////////////////////
@@ -998,16 +1002,18 @@ namespace eudaq {
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) { // is status event
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
+#endif 
         for (int id = 0; id < m_nLayers; id++) {
           vector<unsigned char> data = rev->GetBlock(id);
           if (data.size() == 4) {
             float temp = 0;
             for (int i = 0; i < 4; i++)
               ((unsigned char *)(&temp))[i] = data[i];
-            cout << "T (layer " << id << ") is: " << temp << endl;
+              *m_temperatureFile << "Layer " id << " Temp is : " << temp - 273.15 << endl;
+//            cout << "T (layer " << id << ") is: " << temp << endl;
           }
         }
-#endif
+// #endif //Original Status Event
         sev.SetFlags(Event::FLAG_STATUS);
       } else { // is real event
         // Conversion
@@ -1282,6 +1288,7 @@ namespace eudaq {
     int *m_Vcasp;
     int *m_Idb;
     int *m_Ithr;
+    vector<vector<float> > m_Temp;
     int *m_strobe_length;
     int *m_strobeb_length;
     int *m_trigger_delay;
@@ -1298,6 +1305,8 @@ namespace eudaq {
     float **m_SCS_thr_rms;
     float **m_SCS_noise;
     float **m_SCS_noise_rms;
+    ofstream *m_temperatureFile;
+    
 
 #if USE_TINYXML
     int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
