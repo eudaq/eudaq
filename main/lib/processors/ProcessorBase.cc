@@ -61,12 +61,7 @@ processor_view::processor_view(std::unique_ptr<Processor_batch_splitter> batch_s
   }
 }
 
-processor_view::processor_view(std::unique_ptr<Processor_i_batch> proc) {
-  m_proc_up = Processor_up(dynamic_cast<Processor_rp>(proc.release()));
-  if (!m_proc_up) {
-    EUDAQ_THROW("unable to convert");
-  }
-}
+
 
 processor_view::processor_view(std::unique_ptr<Processor_Inspector> proc) {
   m_proc_up = Processor_up(dynamic_cast<Processor_rp>(proc.release()));

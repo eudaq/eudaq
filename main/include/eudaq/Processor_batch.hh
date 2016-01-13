@@ -11,8 +11,8 @@ using processor_i_up = std::unique_ptr<Processor_Inspector>;
 using processor_i_rp = Processor_Inspector*;
 class Processor_batch_splitter;
 using Processor_up_splitter = std::unique_ptr<Processor_batch_splitter>;
-class Processor_i_batch;
-using Processor_i_batch_up = std::unique_ptr<Processor_i_batch>;
+
+
 
 class DLLEXPORT Processor_batch :public ProcessorBase {
 
@@ -37,14 +37,6 @@ using Processor_batch_up = std::unique_ptr<Processor_batch>;
 
 
 
-// template<typename T>
-// auto  operator>>(Processor_batch& batch, T* proc) ->decltype(__check<Processor_batch&>(batch.pushProcessor(proc))) {
-//   batch.pushProcessor(proc);
-//   return batch;
-// }
-
-DLLEXPORT void  helper_push_r_pointer(Processor_batch& batch,Processor_rp);
-DLLEXPORT void  helper_push_u_pointer(Processor_batch& batch,Processor_up);
 
 
 DLLEXPORT Processor_batch_up operator>>(processor_view first_, processor_view second_);
@@ -58,28 +50,9 @@ DLLEXPORT std::unique_ptr<Processor_batch> make_batch();
 
 
 
-class DLLEXPORT Processor_i_batch :public Processor_Inspector {
-public:
-  virtual ReturnParam inspectEvent(const Event& ev, ConnectionName_ref con) override;
-  Processor_i_batch();
-  void init() override;
-  void end() override;
-  void wait() override;
-  void pushProcessor(processor_i_up processor);
-  void pushProcessor(processor_i_rp processor);
-
-  void reset();
-private:
-  std::unique_ptr<std::vector<processor_i_up>> m_processors;
-  std::vector<processor_i_rp> m_processors_rp;
-};
 
 
-DLLEXPORT void  helper_push_i_r_pointer(Processor_i_batch& batch,processor_i_rp);
-DLLEXPORT void  helper_push_i_u_pointer(Processor_i_batch& batch,processor_i_up);
 
-DLLEXPORT Processor_i_batch_up operator*(inspector_view first_,inspector_view second_);
-DLLEXPORT Processor_i_batch_up operator*(Processor_i_batch_up first_,inspector_view second_);
 
 
 
@@ -99,8 +72,7 @@ public:
   void end() override;
 };
 
-DLLEXPORT void  helper_push_r_pointer(Processor_batch_splitter& batch,Processor_rp);
-DLLEXPORT void  helper_push_u_pointer(Processor_batch_splitter& batch,Processor_up);
+
 
 DLLEXPORT Processor_up_splitter splitter();
 

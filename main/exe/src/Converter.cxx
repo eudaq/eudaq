@@ -55,16 +55,18 @@ int main(int, char ** argv) {
 
     for (size_t i = 0; i < op.NumArgs(); ++i)
     {
-      batch>>Processors::fileReader(fileConfig(op.GetArg(i)));
+        batch>>Processors::fileReader(fileConfig(op.GetArg(i)));
 
     }
     if (op.NumArgs()>1|| EventSyncFactory::DefaultIsSet())
     {
       batch>>Processors::merger(EventSyncFactory::getDefaultSync());
     }
-    batch>>Processors::ShowEventNR(1000)
-      >>Processors::eventSelector(parsenumbers(events->Value()))
-      >> Processors::fileWriter();
+
+    processor_view P(Processors::ShowEventNR(1000) );
+    batch >> Processors::ShowEventNR(1000) 
+          >> Processors::eventSelector(parsenumbers(events->Value()))
+          >>  Processors::fileWriter() ;
 
     batch.init();
     batch.run();

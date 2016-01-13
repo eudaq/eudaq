@@ -60,6 +60,4 @@ eudaq::inspector_view::inspector_view(Processor_Inspector* proc) : m_proc_rp(pro
   
 }
 
-eudaq::inspector_view::inspector_view(std::unique_ptr<Processor_i_batch> proc) {
-  m_proc_up = std::unique_ptr<Processor_Inspector> (dynamic_cast<Processor_Inspector*>(proc.release()));
-}
+

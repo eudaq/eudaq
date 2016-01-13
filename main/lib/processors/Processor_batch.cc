@@ -116,61 +116,7 @@ void Processor_batch::reset() {
 
 
 
-Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
-  batch.pushProcessor(std::move(proc));
-  return batch;
-}
 
- Processor_batch& operator>>(Processor_batch& batch, Processor_rp proc) {
-   batch.pushProcessor(proc);
-   return batch;
-}
-
- Processor_batch& operator>>(Processor_batch& batch, processor_i_up proc) {
-   batch.pushProcessor(std::move(proc));
-   return batch;
- }
-
- Processor_batch_up operator>>(Processor_up proc1, Processor_rp proc2) {
-   auto ret = make_batch();
-   ret->pushProcessor(std::move(proc1));
-   ret->pushProcessor(proc2);
-   return ret;
- }
-
- Processor_batch_up operator>>(Processor_up proc1, Processor_up proc2) {
-   auto ret = make_batch();
-   ret->pushProcessor(std::move(proc1));
-   ret->pushProcessor(std::move(proc2));
-   return ret;
- }
-
- 
- Processor_batch_up operator>>(Processor_batch_up batch, Processor_rp proc) {
-   batch->pushProcessor(proc);
-   return batch;
- }
-
- Processor_batch_up operator>>(Processor_batch_up batch, Processor_up proc) {
-   batch->pushProcessor(std::move(proc));
-   return batch;
- }
-
- Processor_batch_up operator>>(Processor_batch_up batch, processor_i_up proc) {
-   batch->pushProcessor(std::move(proc));
-   return batch;
- }
-
- Processor_batch_up operator>>(Processor_batch_up batch, Processor_up_splitter proc) {
-  
-   batch->pushProcessor(std::move(proc));
-   return batch;
- }
-
- Processor_batch_up operator>>(Processor_batch_up batch, Processor_i_batch_up proc) {
-   batch->pushProcessor(std::move(proc));
-   return batch;
- }
 
  Processor_batch& operator>>(Processor_batch& batch, processor_view proc) {
    proc.getValue(batch);
@@ -189,55 +135,9 @@ Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
    return batch;
  }
 
- Processor_i_batch_up operator*(processor_i_up first_, processor_i_up second_) {
-   auto ret = __make_unique<Processor_i_batch>();
-   ret->pushProcessor(std::move(first_));
-   ret->pushProcessor(std::move(second_));
-   return ret;
- }
-
- Processor_i_batch_up operator*(Processor_i_batch_up first_, processor_i_up second_) {
-   first_->pushProcessor(std::move(second_));
-   return first_;
- }
-
- Processor_i_batch_up operator*(inspector_view first_, inspector_view second_) {
-   auto ret = __make_unique<Processor_i_batch>();
-   first_.getValue(*ret);
-   second_.getValue(*ret);
-   return ret;
- }
-
- Processor_i_batch_up operator*(Processor_i_batch_up first_, inspector_view second_) {
-
-   second_.getValue(*first_);
-   return first_;
- }
 
 
 
- void helper_push_r_pointer(Processor_batch& batch, Processor_rp proc) {
-    batch.pushProcessor(proc);
- }
- void helper_push_u_pointer(Processor_batch& batch, Processor_up proc) {
-   batch.pushProcessor(std::move(proc));
- }
-
- void helper_push_r_pointer(Processor_batch_splitter& batch, Processor_rp proc) {
-   batch.pushProcessor(proc);
- }
-
-
- void helper_push_i_r_pointer(Processor_i_batch& batch, processor_i_rp proc) {
-   batch.pushProcessor(proc);
- }
- void helper_push_i_u_pointer(Processor_i_batch& batch, processor_i_up proc) {
-   batch.pushProcessor(std::move(proc));
- }
-
- void helper_push_u_pointer(Processor_batch_splitter& batch, Processor_up proc) {
-   batch.pushProcessor(std::move(proc));
- }
  Processor_up_splitter splitter() {
   
    return __make_unique<Processor_batch_splitter>();
@@ -264,63 +164,7 @@ Processor_batch& operator>>(Processor_batch& batch, Processor_up proc) {
    return __make_unique<Processor_batch>();
  }
 
- ReturnParam Processor_i_batch::inspectEvent(const Event& ev, ConnectionName_ref con) {
-   for (auto e:m_processors_rp) {
-     auto ret = e->inspectEvent(ev, con);
-     if (ret!=sucess) {
-       return ret;
-     }
-   }
-   return ProcessorBase::sucess;
- }
 
- Processor_i_batch::Processor_i_batch() {
-   m_processors = __make_unique<std::vector<processor_i_up>>();
-   
- }
-
- void Processor_i_batch::init() {
-   for (auto& e : reverse(m_processors_rp)) {
-     e->init();
-   }
- 
- }
-
- void Processor_i_batch::end() {
-   for (auto& e : m_processors_rp) {
-     e->end();
-   }
- }
-
- void Processor_i_batch::wait() {
-   for (auto& e : m_processors_rp) {
-     e->wait();
-   }
- }
-
- void Processor_i_batch::pushProcessor(processor_i_up processor) {
-   if (!processor) {
-     EUDAQ_THROW("trying to push Empty Processor to batch");
-   }
-   pushProcessor(processor.get());
-   m_processors->push_back(std::move(processor));
- }
-
- void Processor_i_batch::pushProcessor(processor_i_rp processor) {
-   if (!processor) {
-     EUDAQ_THROW("trying to push Empty Processor to batch");
-   }
-
-   m_processors_rp.push_back(processor);
- }
-
- void Processor_i_batch::reset() {
-   for (auto& e : m_processors_rp) {
-     e->wait();
-   }
-   m_processors->clear();
-   m_processors_rp.clear();
- }
 
 
 
