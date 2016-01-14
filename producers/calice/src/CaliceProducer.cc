@@ -31,9 +31,7 @@ namespace eudaq {
   CaliceProducer::CaliceProducer(const std::string & name, const std::string & runcontrol) :
     Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
   {
-    //airqui pthread_mutex_init(&_mufd,NULL);
-    // std::thread thread1 ;
-    //.join();
+    //airqui  14/01/2016 //pthread_mutex_init(&_mufd,NULL);
   }
 
   void CaliceProducer::OnConfigure(const eudaq::Configuration & param)
@@ -59,7 +57,7 @@ namespace eudaq {
 
     if(reader == "Silicon"){
       SetReader(new SiReader(this,difId));
-      OpenConnection_t(); // for silicon we open at configuration
+      OpenConnection(); // for silicon we open at configuration
     }
     else {
       SetReader(new ScReader(this)); // in sc dif ID is not specified
@@ -142,14 +140,12 @@ namespace eudaq {
       dstAddr.sin_port = htons(_port);
       dstAddr.sin_family = AF_INET;
       dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
+      std::lock_guard<std::mutex> myLock(_mufd);
       _fd = socket(AF_INET, SOCK_STREAM, 0);
-
-      //airqui pthread_mutex_lock(&_mufd);
-      _mufd.lock();
-
+      //airqui 14/01/2016 // pthread_mutex_lock(&_mufd);
       int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-      //airqui pthread_mutex_unlock(&_mufd);
-      _mufd.unlock();
+      // std::lock_guard<std::mutex> unlock(_mufd);
+      //airqui  14/01/2016 //pthread_mutex_unlock(&_mufd);
 
 
       if(ret != 0){
@@ -161,12 +157,11 @@ namespace eudaq {
   void CaliceProducer::CloseConnection()
   {
 
-     //airqui  pthread_mutex_lock(&_mufd);
-    _mufd.lock();
-     close(_fd);
+     //airqui  14/01/2016 //pthread_mutex_lock(&_mufd);
+    std::lock_guard<std::mutex> myLock(_mufd);
+    close(_fd);
      _fd = 0;
-    //airqui  pthread_mutex_unlock(&_mufd);
-      _mufd.unlock();
+    //airqui   14/01/2016 // pthread_mutex_unlock(&_mufd);
     
     
   }
@@ -196,8 +191,8 @@ namespace eudaq {
     while(true){
 
       // wait until configured and connected
-     //airqui  pthread_mutex_lock(&_mufd);
-      _mufd.lock();
+     //airqui 14/01/2016 //pthread_mutex_lock(&_mufd);      
+      std::lock_guard<std::mutex> myLock(_mufd);
 
       const int bufsize = 4096;
 
@@ -216,17 +211,12 @@ namespace eudaq {
 
       //      if file is not ready or not running in file mode: just wait
       //	if(_fd <= 0 || (!_running && _filemode)){
-      if(_fd <= 0 || !_running ){
-//airqui 	pthread_mutex_unlock(&_mufd);
-      _mufd.unlock();
-
+      if(_fd <= 0 ){//|| !_running ){
+	//airqui 14/01/2016 //	pthread_mutex_unlock(&_mufd);
 	::usleep(1000);
 	continue;
       }
-
-      // in file mode we need some wait
-      // if(_filemode) ::usleep(1000 * _waitmsFile);   // put some wait on filemode
-        
+       
       // system call: from socket to C array
       size = ::read(_fd, buf, bufsize);
       if(size == -1 || size == 0){
@@ -237,20 +227,13 @@ namespace eudaq {
           
         close(_fd);
         _fd = -1;
-    //airqui     pthread_mutex_unlock(&_mufd);
-      _mufd.unlock();
-
-	// if(_filemode)
-        //  break;
-        //else
+	//airqui 14/01/2016 //pthread_mutex_unlock(&_mufd);
           continue;
       }
         
       if(!_running){
 	bufRead.clear();
-//airqui 	pthread_mutex_unlock(&_mufd);
-      _mufd.unlock();
-
+	//airqui 14/01/2016 //pthread_mutex_unlock(&_mufd);
 	continue;
       }
 
@@ -272,11 +255,8 @@ namespace eudaq {
 	deqEvent.pop_front();
       }
 
-
       
-     //airqui  pthread_mutex_unlock(&_mufd);
-      _mufd.unlock();
-
+     //airqui 14/01/2016 // pthread_mutex_unlock(&_mufd);
     }
   }
 
@@ -304,7 +284,7 @@ int main(int /*argc*/, const char ** argv) {
     eudaq::CaliceProducer producer(name.Value(), rctrl.Value());
     //producer.SetReader(new eudaq::SiReader(0));
     // And set it running...
-    producer.MainLoop_t();
+    producer.MainLoop();
     // When the readout loop terminates, it is time to go
     std::cout << "Quitting" << std::endl;
   } catch (...) {

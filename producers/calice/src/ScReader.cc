@@ -18,7 +18,7 @@ namespace eudaq {
     _tempmode = false;
     
     // set the connection and send "start runNo"
-    _producer->OpenConnection_t();
+    _producer->OpenConnection();
 
     // using characters to send the run number
     ostringstream os;

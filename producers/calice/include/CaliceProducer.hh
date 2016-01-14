@@ -39,23 +39,9 @@ namespace eudaq {
     virtual void OnStopRun();
     virtual void OnConfigure(const eudaq::Configuration & param);
     
-    void MainLoop();//
-    void MainLoop_t(){
-      std::thread mainloopthread (&CaliceProducer::MainLoop,this);
-      mainloopthread.join();
-    }
-       
+    void MainLoop();//  
     void OpenConnection();//
-    void OpenConnection_t(){
-      std::thread openthread (&CaliceProducer::OpenConnection,this);
-      openthread.join();
-
-    }
     void CloseConnection();//
-    void CloseConnection_t(){
-      std::thread closethread (&CaliceProducer::CloseConnection,this);
-      closethread.join();
-    }
 
     void SendCommand(const char *command,int size = 0);
       
@@ -63,7 +49,8 @@ namespace eudaq {
     int _runNo;
     int _eventNo;
     int _fd;
-    //airqui pthread_mutex_t _mufd;
+    //airqui 
+    //pthread_mutex_t _mufd;
     std::mutex _mufd;
       
     bool _running;
