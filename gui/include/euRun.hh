@@ -85,7 +85,7 @@ private slots:
 
   void SetStateSlot(int state) {
     btnLoad->setEnabled(state != ST_RUNNING);
-    btnConfig->setEnabled((state == ST_CONFIGLOADED)||(state==ST_READY));
+    btnConfig->setEnabled((state == ST_CONFIGLOADED) || (state == ST_READY));
     btnTerminate->setEnabled(state != ST_RUNNING);
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
@@ -94,13 +94,13 @@ private slots:
   void on_btnTerminate_clicked() { close(); }
 
   void on_btnConfig_clicked() {
-   QDir dir(lastUsedDirectory, "*.conf");
-   //allConfigFiles
-   for (size_t i = 0; i < dir.count(); ++i) {
-     QString item = dir[i];
-     item.chop(5);
-     allConfigFiles.append(item);
-   }
+    QDir dir(lastUsedDirectory, "*.conf");
+    // allConfigFiles
+    for (size_t i = 0; i < dir.count(); ++i) {
+      QString item = dir[i];
+      item.chop(5);
+      allConfigFiles.append(item);
+    }
     std::string settings = txtConfigFileName->text().toStdString();
     Configure(settings, txtGeoID->text().toInt());
     SetState(ST_READY);
@@ -132,16 +132,17 @@ private slots:
     EUDAQ_USER(msg);
   }
   void on_btnLoad_clicked() {
-    //QString tempLastFileName;
-    //tempLastFileName = txtConfigFileName->text();
-	  
-    QString temporaryFileName = QFileDialog::getOpenFileName(this, tr("Open File"),lastUsedDirectory,tr("*.conf (*.conf)"));
+    // QString tempLastFileName;
+    // tempLastFileName = txtConfigFileName->text();
 
-    if (!temporaryFileName.isNull())
-   {
-     txtConfigFileName->setText(temporaryFileName);
-     lastUsedDirectory = QFileInfo(temporaryFileName).path(); // store path for next time
-     SetState(ST_CONFIGLOADED);
+    QString temporaryFileName = QFileDialog::getOpenFileName(
+        this, tr("Open File"), lastUsedDirectory, tr("*.conf (*.conf)"));
+
+    if (!temporaryFileName.isNull()) {
+      txtConfigFileName->setText(temporaryFileName);
+      lastUsedDirectory =
+          QFileInfo(temporaryFileName).path(); // store path for next time
+      SetState(ST_CONFIGLOADED);
     }
   }
   void timer() {
@@ -159,14 +160,18 @@ private slots:
         StopRun(false);
         eudaq::mSleep(20000);
         if (m_nextconfigonrunchange) {
-          if (allConfigFiles.indexOf(QRegExp("^" + QRegExp::escape(txtConfigFileName->text()))) + 1 < allConfigFiles.count()) {
+          if (allConfigFiles.indexOf(
+                  QRegExp("^" + QRegExp::escape(txtConfigFileName->text()))) +
+                  1 <
+              allConfigFiles.count()) {
             EUDAQ_INFO("Moving to next config file and starting a new run");
-	    txtConfigFileName->setText(allConfigFiles.at(allConfigFiles.indexOf(QRegExp("^" + QRegExp::escape(txtConfigFileName->text())))));
+            txtConfigFileName->setText(allConfigFiles.at(allConfigFiles.indexOf(
+                QRegExp("^" + QRegExp::escape(txtConfigFileName->text())))));
             on_btnConfig_clicked();
             eudaq::mSleep(1000);
             m_startrunwhenready = true;
           } else
-	  EUDAQ_INFO("All config files processed.");
+            EUDAQ_INFO("All config files processed.");
         } else
           on_btnStart_clicked(true);
       } else if (dostatus) {
