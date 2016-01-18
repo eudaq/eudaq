@@ -42,8 +42,10 @@ namespace eudaq {
     void MainLoop();//  
     void OpenConnection();//
     void CloseConnection();//
-
     void SendCommand(const char *command,int size = 0);
+
+    virtual void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
+    virtual std::deque<eudaq::RawDataEvent *> sendallevents(std::deque<eudaq::RawDataEvent *> deqEvent, int minimumsize=0);
       
   private:
     int _runNo;
@@ -60,6 +62,7 @@ namespace eudaq {
     bool _dumpRaw;
     bool _writeRaw;
     std::string _rawFilename;
+    bool _writerawfilename_timestamp;
     std::ofstream _rawFile;
       
     bool _filemode; // true: input from file: false: input from network
@@ -68,6 +71,10 @@ namespace eudaq {
     int _waitsecondsForQueuedEvents; // period to wait after each run to read the queued events
     int _port; // input port at network mode
     std::string _ipAddress; // input address at network mode
+
+     std::deque<eudaq::RawDataEvent *> deqEvent;
+
+
 
     CaliceReader * _reader;
   };

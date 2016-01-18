@@ -31,29 +31,31 @@ namespace eudaq {
   CaliceProducer::CaliceProducer(const std::string & name, const std::string & runcontrol) :
     Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
   {
-    //airqui  14/01/2016 //pthread_mutex_init(&_mufd,NULL);
+    // std::unique_lock<std::mutex> myLock(_mufd);
+    //pthread_mutex_init(&_mufd,NULL);
   }
 
   void CaliceProducer::OnConfigure(const eudaq::Configuration & param)
   {
+
+    //  std::unique_lock<std::mutex> myLock(_mufd);
+
     // file name
     _filename = param.Get("FileName", "");
     _waitmsFile = param.Get("WaitMillisecForFile", 100);
     _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 5);
 
     // raw output
-    //    _dumpRaw = param.Get("DumpRawOutput", 0);
     _writeRaw = param.Get("WriteRawOutput", 0);
     _rawFilename = param.Get("RawFileName", "run%d.raw");
+    _writerawfilename_timestamp = param.Get("WriteRawFileNameTimestamp",0);
 
     // port
     _port = param.Get("Port", 9011);
     _ipAddress = param.Get("IPAddress", "127.0.0.1");
     
     string reader = param.Get("Reader", "Silicon");
-
     int difId = param.Get("DIFID", 0);
-
 
     if(reader == "Silicon"){
       SetReader(new SiReader(this,difId));
@@ -66,48 +68,52 @@ namespace eudaq {
     _configured = true;
    
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-
   }
 
   void CaliceProducer::OnStartRun(unsigned param) {
-      _runNo = param;
-      _eventNo = 0;
+    _runNo = param;
+    _eventNo = 0;
     // raw file open
-      if(_writeRaw){
+    if(_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
 
-	//	read the local time and save into the string myString
-	time_t  ltime;
-	struct tm *Tm;
-	ltime=time(NULL);
-	Tm=localtime(&ltime);
-	char file_timestamp[25];
-	sprintf(file_timestamp,"__%02dp%02dp%02d__%02dp%02dp%02d.raw",
-		Tm->tm_mday,
-		Tm->tm_mon+1,
-		Tm->tm_year+1900,
-		Tm->tm_hour,
-		Tm->tm_min,
-		Tm->tm_sec);
-	std::string myString;
-	myString.assign(file_timestamp, 26);
-	
-	std::string _rawFilenameTimeStamp;
-	//add the local time to the filename
-	_rawFilenameTimeStamp=_rawFilename+myString;
-	
-	char rawFilename[256];
-	sprintf(rawFilename, _rawFilenameTimeStamp.c_str(), (int)param);
-	_rawFile.open(rawFilename);
-      }
+    _reader->OnStart(param);
 
-      _reader->OnStart(param);
-
-      SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
-      std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "");
-      _running = true;
+    SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
+    std::cout << "Start Run: " << param << std::endl;
+    SetStatus(eudaq::Status::LVL_OK, "");
+    _running = true;
 
   }
+
+  void CaliceProducer::OpenRawFile(unsigned param, bool _writerawfilename_timestamp) {
+
+    //	read the local time and save into the string myString
+    time_t  ltime;
+    struct tm *Tm;
+    ltime=time(NULL);
+    Tm=localtime(&ltime);
+    char file_timestamp[25];
+    std::string myString;
+    if(_writerawfilename_timestamp==1) {
+      sprintf(file_timestamp,"__%02dp%02dp%02d__%02dp%02dp%02d.raw",
+	      Tm->tm_mday,
+	      Tm->tm_mon+1,
+	      Tm->tm_year+1900,
+	      Tm->tm_hour,
+	      Tm->tm_min,
+	      Tm->tm_sec);
+      myString.assign(file_timestamp, 26);
+    } else myString=".raw";
+	
+    std::string _rawFilenameTimeStamp;
+    //if chosen like this, add the local time to the filename
+    _rawFilenameTimeStamp=_rawFilename+myString;
+    char _rawFilename[256];
+    sprintf(_rawFilename, _rawFilenameTimeStamp.c_str(), (int)param);
+	
+    _rawFile.open(_rawFilename);
+  }
+
 
   void CaliceProducer::OnPrepareRun(unsigned param) {
     cout << "OnPrepareRun: runID " << param << " set." << endl;
@@ -134,33 +140,36 @@ namespace eudaq {
 
   void CaliceProducer::OpenConnection()
   {
-      // open socket
-      struct sockaddr_in dstAddr;
-      memset(&dstAddr, 0, sizeof(dstAddr));
-      dstAddr.sin_port = htons(_port);
-      dstAddr.sin_family = AF_INET;
-      dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
-      std::lock_guard<std::mutex> myLock(_mufd);
-      _fd = socket(AF_INET, SOCK_STREAM, 0);
-      //airqui 14/01/2016 // pthread_mutex_lock(&_mufd);
-      int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-      // std::lock_guard<std::mutex> unlock(_mufd);
-      //airqui  14/01/2016 //pthread_mutex_unlock(&_mufd);
+    // open socket
+    cout<<" entering open Con "<< endl;
 
+    struct sockaddr_in dstAddr;
+    memset(&dstAddr, 0, sizeof(dstAddr));
+    dstAddr.sin_port = htons(_port);
+    dstAddr.sin_family = AF_INET;
+    dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 
-      if(ret != 0){
-        return;
-      }
-      //}
+    cout<<" entering open Con 2 -- "<< endl;
+
+    std::mutex _mufdOpenConnection;
+    std::unique_lock<std::mutex> myLock(_mufdOpenConnection);
+    _fd = socket(AF_INET, SOCK_STREAM, 0);
+    //airqui 14/01/2016 //  pthread_mutex_lock(&_mufd);
+    int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
+    // std::lock_guard<std::mutex> unlock(_mufd);
+    //airqui  14/01/2016 //pthread_mutex_unlock(&_mufd);
+
+    cout<<" open "<< endl;
+
+    if(ret != 0)  return;
   }
   
   void CaliceProducer::CloseConnection()
   {
-
-     //airqui  14/01/2016 //pthread_mutex_lock(&_mufd);
-    std::lock_guard<std::mutex> myLock(_mufd);
+    //airqui  14/01/2016 // pthread_mutex_lock(&_mufd);
+    std::unique_lock<std::mutex> myLock(_mufd);
     close(_fd);
-     _fd = 0;
+    _fd = 0;
     //airqui   14/01/2016 // pthread_mutex_unlock(&_mufd);
     
     
@@ -175,44 +184,46 @@ namespace eudaq {
     // open/close of socket because it's considered to be called from 
     // event thread, which is same as thread of open/close the socket
 
-    //pthread_mutex_lock(&_mufd);
+    //
+    // pthread_mutex_lock(&_mufd);
+    //std::lock_guard<std::mutex> myLock(_mufd);
     if(_fd <= 0)cout << "CaliceProducer::SendCommand(): cannot send command because connection is not open." << endl;
     else write(_fd, command, size);
-    //pthread_mutex_unlock(&_mufd);
+    //
+    // pthread_mutex_unlock(&_mufd);
   }
-  
+
+  deque<eudaq::RawDataEvent *>  CaliceProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
+    while(deqEvent.size() > minimumsize){
+      SendEvent(*(deqEvent.front()));
+      delete deqEvent.front();
+      deqEvent.pop_front();
+    }
+    return deqEvent;
+  }
+
   void CaliceProducer::MainLoop()
   {
-
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
 
     while(true){
-
       // wait until configured and connected
-     //airqui 14/01/2016 //pthread_mutex_lock(&_mufd);      
-      std::lock_guard<std::mutex> myLock(_mufd);
+      //airqui 14/01/2016 //
+      //  pthread_mutex_lock(&_mufd);      
+      std::unique_lock<std::mutex> myLock(_mufd);
 
       const int bufsize = 4096;
-
       // copy to C array, then to vector
       char buf[bufsize];
       int size = 0;
-      if(!_running && deqEvent.size()){
-
-	// send all events
-	while(deqEvent.size() > 0){
-	  SendEvent(*(deqEvent.front()));
-	  delete deqEvent.front();
-	  deqEvent.pop_front();
-	}
-      }
-
-      //      if file is not ready or not running in file mode: just wait
-      //	if(_fd <= 0 || (!_running && _filemode)){
+      if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
+    
+      //      if file is not ready  just wait
       if(_fd <= 0 ){//|| !_running ){
-	//airqui 14/01/2016 //	pthread_mutex_unlock(&_mufd);
+	//airqui 14/01/2016 //	
+	//	pthread_mutex_unlock(&_mufd);
 	::usleep(1000);
 	continue;
       }
@@ -223,44 +234,37 @@ namespace eudaq {
         if(size == -1)
           std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << endl;
         else
-          std::cout << "Socket disconnected. going to the waiting mode." << endl;
-          
+          std::cout << "Socket disconnected. going to the waiting mode." << endl;         
         close(_fd);
         _fd = -1;
-	//airqui 14/01/2016 //pthread_mutex_unlock(&_mufd);
-          continue;
+	//airqui 14/01/2016 //
+	//	pthread_mutex_unlock(&_mufd);
+	continue;
       }
         
       if(!_running){
 	bufRead.clear();
-	//airqui 14/01/2016 //pthread_mutex_unlock(&_mufd);
+	//airqui 14/01/2016 //
+	//	pthread_mutex_unlock(&_mufd);
 	continue;
       }
 
-      if(_writeRaw && _rawFile.is_open()){
-	_rawFile.write(buf, size);
-      }
+      if(_writeRaw && _rawFile.is_open()) _rawFile.write(buf, size);
 
       // C array to vector
       copy(buf, buf + size, back_inserter(bufRead));
 
-      if(_reader){
-	_reader->Read(bufRead, deqEvent);
-      }
+      if(_reader)_reader->Read(bufRead, deqEvent);
         
       // send events : remain the last event
-      while(deqEvent.size() > 1){
-	SendEvent(*(deqEvent.front()));
-	delete deqEvent.front();
-	deqEvent.pop_front();
-      }
-
-      
-     //airqui 14/01/2016 // pthread_mutex_unlock(&_mufd);
+      deqEvent=sendallevents(deqEvent,1);
+       
+      //airqui 14/01/2016 // 
+      //  pthread_mutex_unlock(&_mufd);
     }
   }
 
-}
+}//end namespace eudaq
 
 int main(int /*argc*/, const char ** argv) {
   // You can use the OptionParser to get command-line arguments
