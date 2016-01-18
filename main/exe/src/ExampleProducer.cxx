@@ -56,13 +56,13 @@ class ExampleProducer : public eudaq::Producer {
 
       // At the end, set the status that will be displayed in the Run Control.
       SetStatus(eudaq::Status::LVL_OK, "Running");
-	  started=true;
+      started=true;
     }
 
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
       std::cout << "Stopping Run" << std::endl;
-	  started=false;
+      started=false;
       // Set a flag to signal to the polling loop that the run is over
       stopping = true;
 
@@ -73,7 +73,9 @@ class ExampleProducer : public eudaq::Producer {
 
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
-      SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
+      SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, m_ev));
+      // At the end, set the status that will be displayed in the Run Control.
+      SetStatus(eudaq::Status::LVL_OK, "Stopped");
     }
 
     // This gets called when the Run Control is terminating,
