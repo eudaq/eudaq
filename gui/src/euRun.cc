@@ -9,6 +9,8 @@
 #include "eudaq/Status.hh"
 #include <exception>
 #include "config.h" // for version symbols
+#include <QWindow>
+#include <QScreen>
 
 static const char *statuses[] = {
     "RUN",       "Run Number", "EVENT",    "Events Built", "FULLRATE",
@@ -121,13 +123,8 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   }
   viewConn->setModel(&m_run);
   viewConn->setItemDelegate(&m_delegate);
-  QDir dir("../conf/", "*.conf");
-  for (size_t i = 0; i < dir.count(); ++i) {
-    QString item = dir[i];
-    item.chop(5);
-    cmbConfig->addItem(item);
-  }
-  cmbConfig->setEditText("default");
+
+  //cmbConfig->setEditText("default");
   QSize fsize = frameGeometry().size();
   if (geom.x() == -1)
     geom.setX(x());
@@ -142,6 +139,15 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   // else geom.setHeight(geom.height() - MAGIC_NUMBER);
   move(geom.topLeft());
   resize(geom.size());
+    QSettings settings("EUDAQ collaboration", "EUDAQ");
+
+    settings.beginGroup("MainWindow");
+    resize(settings.value("size", geom.size()).toSize());
+    move(settings.value("pos", geom.topLeft()).toPoint());
+    lastUsedDirectory = settings.value("lastConfigFileDirectory","../conf").toString();
+    txtConfigFileName->setText(settings.value("lastConfigFile","config file not set").toString());
+    settings.endGroup();
+  
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
           SLOT(ChangeStatus(const QString &, const QString &)));
   connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
@@ -256,4 +262,16 @@ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
     return true;
   }
   return false;
+}
+
+RunControlGUI::~RunControlGUI(){
+    QSettings settings("EUDAQ collaboration", "EUDAQ");
+  
+    settings.beginGroup("MainWindow");
+    settings.setValue("size", size());
+    settings.setValue("pos", pos());
+    //settings.setValue("screen", windowHandle()->screen()->screenNumber());
+    settings.setValue("lastConfigFileDirectory",lastUsedDirectory);
+    settings.setValue("lastConfigFile",txtConfigFileName->text());
+    settings.endGroup();
 }
