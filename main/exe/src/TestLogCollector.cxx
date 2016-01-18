@@ -18,40 +18,44 @@ class TestLogCollector : public eudaq::LogCollector {
       : eudaq::LogCollector(runcontrol, listenaddress),
       m_loglevel(loglevel), done(false)
   {}
-    void OnConnect(const eudaq::ConnectionInfo & id) {
+    void OnConnect(const eudaq::ConnectionInfo & id) override{
       std::cout << "Connect:    " << id << std::endl;
     }
-    void OnDisconnect(const eudaq::ConnectionInfo & id) {
+    void OnDisconnect(const eudaq::ConnectionInfo & id) override{
       std::cout << "Disconnect: " << id << std::endl;
     }
-    virtual void OnReceive(const eudaq::LogMessage & ev) {
+
+    virtual void OnReceive(const eudaq::LogMessage & ev) override{
       if (ev.GetLevel() >= m_loglevel) std::cout << ev << std::endl;
     }
-    virtual void OnConfigure(const eudaq::Configuration & param) {
-      std::cout << "Configure: " << param << std::endl;
+    virtual void OnConfigure(const eudaq::Configuration & param) override {
+      std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+      LogCollector::OnConfigure(param);
+      std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
-      std::cout << "Start Run: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      LogCollector::OnStartRun(param);
+      SetStatus(eudaq::Status::LVL_OK, "Running");
     }
-    virtual void OnStopRun() {
+    virtual void OnStopRun()override {
       std::cout << "Stop Run" << std::endl;
       SetStatus(eudaq::Status::LVL_OK);
     }
-    virtual void OnTerminate() {
+    virtual void OnTerminate() override {
+      SetStatus(eudaq::Status::LVL_OK, "LC Terminating");
       std::cout << "Terminating" << std::endl;
       done = true;
     }
-    virtual void OnReset() {
+    virtual void OnReset() override {
       std::cout << "Reset" << std::endl;
       SetStatus(eudaq::Status::LVL_OK);
     }
-    virtual void OnStatus() {
-      std::cout << "Status - " << m_status << std::endl;
-      //SetStatus(eudaq::Status::LVL_WARNING, "Only joking");
+    virtual void OnStatus() override {
+     // std::cout << "Status - " << m_status << std::endl;
+    
     }
-    virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
+    virtual void OnUnrecognised(const std::string & cmd, const std::string & param) override {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
@@ -74,9 +78,11 @@ int main(int /*argc*/, const char ** argv) {
       "The address on which to listen for Log connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
       "The minimum level for displaying log messages");
+  eudaq::mSleep(2000);
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("NONE");
+    std::cout << "Log Collector  Connected to \"" << rctrl.Value() << "\"" << std::endl;
     TestLogCollector fw(rctrl.Value(), addr.Value(), eudaq::Status::String2Level(level.Value()));
     //g_ptr = &fw;
     //std::signal(SIGINT, &ctrlc_handler);

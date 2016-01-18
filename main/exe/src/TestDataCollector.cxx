@@ -17,10 +17,7 @@ class TestDataCollector : public eudaq::DataCollector {
     : eudaq::DataCollector(name, runcontrol, listenaddress, runnumberfile),
       done(false)
   {}
-    void OnConnect(const eudaq::ConnectionInfo & id) {
-      DataCollector::OnConnect(id);
-      std::cout << "Connect:    " << id << std::endl;
-    }
+
     virtual void OnConfigure(const eudaq::Configuration & param) {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
       DataCollector::OnConfigure(param);
@@ -77,9 +74,12 @@ int main(int /*argc*/, const char ** argv) {
       "The name of this DataCollector");
   eudaq::Option<std::string> runnumberfile (op, "f", "runnumberfile", "../data/runnumber.dat", "string",
       "The path and name of the file containing the run number of the last run.");
+  eudaq::mSleep(1000);
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
+    std::cout << "Data Collector \"" << name.Value() << "\" Connected to \"" << rctrl.Value() << "\"" << std::endl;
+
     TestDataCollector fw(name.Value(), rctrl.Value(), addr.Value(), runnumberfile.Value());
     //g_ptr = &fw;
     //std::signal(SIGINT, &ctrlc_handler);

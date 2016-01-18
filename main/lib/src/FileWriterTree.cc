@@ -80,9 +80,8 @@ namespace eudaq {
     unsigned short SI; // StatusInfo
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterTree> reg("tree");
-  }
+  
+  registerFileWriter(FileWriterTree, "tree");
 
   FileWriterTree::FileWriterTree(const std::string & /*param*/)
       : m_tfile(0), m_ttree(0), m_noe(0), chan(4), n_pixels(90 * 90 + 60 * 60) {
@@ -94,7 +93,7 @@ namespace eudaq {
         FileNamer(m_filepattern).Set('X', ".root").Set('R', runnumber));
     EUDAQ_INFO("Preparing the outputfile: " + foutput);
     m_tfile = new TFile(foutput.c_str(), "RECREATE");
-    m_ttree = new TTree("raw", "a simple Tree with simple variables");
+    m_ttree = T_NEW TTree("raw", "a simple Tree with simple variables");
 
     m_ttree->Branch("runnumber", &runnumber, "channel/I");
     m_ttree->Branch("channel", &chan, "channel/S");
