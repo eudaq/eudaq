@@ -72,14 +72,16 @@ ELSE()
   include_directories(./include ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
 
   # here we instruct CMake to build "sample" executable from all of the source files
-  ADD_EXECUTABLE(euRun.exe src/euRun.cc src/euRun.rc src/RunControlModel.cc ${euRun_MOCSrcs} ${euRun_UISrcs} )
-  ADD_EXECUTABLE(euProd.exe src/euProd.cc src/euProd.rc ${euProd_MOCSrcs} ${euProd_UISrcs} )
-  ADD_EXECUTABLE(euLog.exe src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
-
+  ADD_EXECUTABLE(euRun  src/euRun.cc src/euRun.rc src/RunControlModel.cc ${euRun_MOCSrcs} ${euRun_UISrcs} )
+  ADD_EXECUTABLE(euProd  src/euProd.cc src/euProd.rc ${euProd_MOCSrcs} ${euProd_UISrcs} )
+  ADD_EXECUTABLE(euLog  src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
+  set_property(TARGET euRun   PROPERTY PROJECT_LABEL "BinEuRun") 
+  set_property(TARGET euProd   PROPERTY PROJECT_LABEL "BinEuProd") 
+  set_property(TARGET euLog   PROPERTY PROJECT_LABEL "BinEuLog") 
   # last thing we have to do is to tell CMake what libraries our executable needs
-  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
-  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
-  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euRun   EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euProd  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euLog   EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
 
   # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
   IF(WIN32) # Check if we are on Windows
@@ -99,7 +101,7 @@ ELSE()
     message(SEND_ERROR "You are on an unsupported platform! (Not Win32 or Unix)")
   ENDIF()
 
-INSTALL(TARGETS euRun.exe euProd.exe euLog.exe
+INSTALL(TARGETS euRun  euProd  euLog 
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

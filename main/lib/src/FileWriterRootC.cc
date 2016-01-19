@@ -32,10 +32,8 @@ namespace eudaq {
     uint64_t i_time_stamp, DUT_time; // the time stamp
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterRootC> reg("rootc");
-  }
-
+  
+  registerFileWriter(FileWriterRootC, "rootc");
   FileWriterRootC::FileWriterRootC(const std::string & /*param*/)
       : m_tfile(0), m_ttree(0), id_plane(0), i_tlu(0), i_run(0), i_event(0),
         i_time_stamp(0) {}
@@ -76,12 +74,8 @@ namespace eudaq {
 
       id_plane = plane.ID();
       i_time_stamp = sev.GetTimestamp();
-      try {
-        i_tlu = std::stoul(sev.GetTag("TLU_trigger", "15"));
-      } catch (...) {
-        std::cout << " error during converting "
-                  << sev.GetTag("TLU_trigger", "15") << " to ull" << std::endl;
-      }
+      i_tlu = sev.GetTag("TLU_trigger", unsigned(15));
+
 
       i_run = sev.GetRunNumber();
       i_event = sev.GetEventNumber();
@@ -90,7 +84,7 @@ namespace eudaq {
   }
 
   FileWriterRootC::~FileWriterRootC() {
-
+    m_tfile->Write();
     m_tfile->Close();
     delete m_tfile;
   }

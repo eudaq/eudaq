@@ -5,10 +5,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 PROJECT( EUDAQ )
 
 # project version
-SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 5 )
+SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
+ADD_DEFINITIONS(-DUSE_EUDAQ2_VERSION)
 LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
 LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
 
@@ -173,6 +174,23 @@ IF(BUILD_offlinemon)
   add_subdirectory(monitors/offlinemon)
 ENDIF()
 
+# build Metadata Monitor
+option(BUILD_metamon "Compile MetaData Monitor executable" OFF)
+IF(BUILD_metamon)
+  add_subdirectory(monitors/metamon)
+ENDIF()
+
+# build Sync Test
+option(BUILD_SyncTest "Compile Sync test" OFF)
+IF(BUILD_SyncTest)
+  add_subdirectory(syncTest)
+ENDIF()
+
+option(BUILD_Tests "Compile tests" OFF)
+IF(BUILD_Tests)
+  add_subdirectory(tests/network)
+  add_subdirectory(tests/tasks)
+ENDIF()
 
 
 ###############################################

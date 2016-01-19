@@ -19,12 +19,12 @@ namespace eudaq {
     std::ofstream *m_file;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterMimoloop> reg("mimoloop");
-  }
 
-  FileWriterMimoloop::FileWriterMimoloop(const std::string & /*param*/)
-      : m_file(0) {
+  
+  registerFileWriter(FileWriterMimoloop, "mimoloop");
+  
+  
+  FileWriterMimoloop::FileWriterMimoloop(const std::string & /*param*/) : m_file(0) {
     // EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
   }
 

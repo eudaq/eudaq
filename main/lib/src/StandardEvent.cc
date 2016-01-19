@@ -48,22 +48,24 @@ namespace eudaq {
     ser.write(m_mat);
   }
 
-  // StandardPlane::StandardPlane(size_t pixels, size_t frames)
+  // StandardPlane::StandardPlane(size_t pixels, size_t frames) 
   //   : m_pix(frames, std::vector<pixel_t>(pixels)), m_x(pixels), m_y(pixels),
   //   m_pivot(pixels)
   // {
   //   //
   // }
 
-  void StandardPlane::Print(std::ostream &os) const {
-    os << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x"
-       << m_ysize << "x" << m_pix.size() << " ("
-       << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent
-       << ", pivot=" << m_pivotpixel;
+  void StandardPlane::Print(std::ostream & os) const {
+    Print(os, 0);
   }
 
+  void StandardPlane::Print(std::ostream &os, size_t offset) const  {
+    os << std::string(offset, ' ') << m_id << ", " << m_type << ":" << m_sensor << ", " << m_xsize << "x" << m_ysize << "x" << m_pix.size()
+      << " (" << (m_pix.size() ? m_pix[0].size() : 0) << "), tlu=" << m_tluevent << ", pivot=" << m_pivotpixel;
+  }
   void StandardPlane::SetSizeRaw(unsigned w, unsigned h, unsigned frames,
                                  int flags) {
+
     m_flags = flags;
     SetSizeZS(w, h, w * h, frames, flags);
     m_flags &= ~FLAG_ZS;
@@ -338,13 +340,20 @@ namespace eudaq {
     ser.write(m_planes);
   }
 
-  void StandardEvent::SetTimestamp(uint64_t val) { m_timestamp = val; }
+  void StandardEvent::SetTimestamp(uint64_t val) {
+    Event::setTimeStamp(val);
+  }
 
-  void StandardEvent::Print(std::ostream &os) const {
-    Event::Print(os);
-    os << ", " << m_planes.size() << " planes:\n";
+  void StandardEvent::Print(std::ostream & os) const {
+    Print(os, 0);
+  }
+
+  void StandardEvent::Print(std::ostream & os, size_t offset) const
+  {
+    Event::Print(os,offset);
+    os << std::string(offset, ' ') << ", " << m_planes.size() << " planes:\n";
     for (size_t i = 0; i < m_planes.size(); ++i) {
-      os << "  " << m_planes[i] << "\n";
+      os << std::string(offset, ' ') << "  " << m_planes[i] << "\n";
     }
   }
 

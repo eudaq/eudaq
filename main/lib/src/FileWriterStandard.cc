@@ -18,13 +18,11 @@ namespace eudaq {
     FileSerializer *m_ser;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterStandard> reg("standard");
-  }
+  
+  registerFileWriter(FileWriterStandard, "standard");
 
-  FileWriterStandard::FileWriterStandard(const std::string & /*param*/)
-      : m_ser(0) {
-    // EUDAQ_DEBUG("Constructing FileWriterStandard(" + to_string(param) + ")");
+  FileWriterStandard::FileWriterStandard(const std::string & /*param*/) : m_ser(0) {
+    //EUDAQ_DEBUG("Constructing FileWriterStandard(" + to_string(param) + ")");
   }
 
   void FileWriterStandard::StartRun(unsigned runnumber) {

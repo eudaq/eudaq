@@ -1,7 +1,8 @@
 #include "eudaq/FileNamer.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/FileSerializer.hh"
-//#include "eudaq/Logger.hh"
+#include "eudaq/PluginManager.hh"
+//#include "eudaq/Logger.hh"!
 
 namespace eudaq {
 
@@ -10,6 +11,7 @@ namespace eudaq {
     FileWriterNative(const std::string &);
     virtual void StartRun(unsigned);
     virtual void WriteEvent(const DetectorEvent &);
+    virtual void WriteBaseEvent(const Event&);
     virtual uint64_t FileBytes() const;
     virtual ~FileWriterNative();
 
@@ -17,12 +19,11 @@ namespace eudaq {
     FileSerializer *m_ser;
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterNative> reg("native");
-  }
-
-  FileWriterNative::FileWriterNative(const std::string & /*param*/) : m_ser(0) {
-    // EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
+  
+  registerFileWriter(FileWriterNative, "native");
+  
+  FileWriterNative::FileWriterNative(const std::string & param) : m_ser(0){
+    //EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
   }
 
   void FileWriterNative::StartRun(unsigned runnumber) {
@@ -34,13 +35,32 @@ namespace eudaq {
   void FileWriterNative::WriteEvent(const DetectorEvent &ev) {
     if (!m_ser)
       EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
+    if (ev.IsBORE()) {
+      eudaq::PluginManager::Initialize(ev);
+    }
+    if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
+    m_ser->write(ev);
+    m_ser->Flush();
+  }
+  void FileWriterNative::WriteBaseEvent(const Event& ev){
+    
+    if (ev.IsBORE()) {
+      auto det = dynamic_cast<const DetectorEvent*>(&ev);
+      if (det)
+      {
+        eudaq::PluginManager::Initialize(*det);
+
+      }
+    }
+    if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
     m_ser->write(ev);
     m_ser->Flush();
   }
 
-  FileWriterNative::~FileWriterNative() { delete m_ser; }
-
-  uint64_t FileWriterNative::FileBytes() const {
-    return m_ser ? m_ser->FileBytes() : 0;
+  FileWriterNative::~FileWriterNative() {
+    delete m_ser;
   }
+
+  uint64_t FileWriterNative::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }
+
 }
