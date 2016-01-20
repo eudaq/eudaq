@@ -23,58 +23,62 @@ std::unique_ptr<eudaq::Option<std::string>>  add_Command_line_option_EventsOfInt
 
 }
 
+void add_merger(Processor_batch& batch, eudaq::OptionParser& op) {
+  if (op.NumArgs() > 1 || EventSyncFactory::DefaultIsSet())
+  {
+    batch >> Processors::merger(EventSyncFactory::getDefaultSync());
+  }
+}
+void add_files(Processor_batch& batch, eudaq::OptionParser& op) {
+  for (size_t i = 0; i < op.NumArgs(); ++i)
+  {
+    batch >> Processors::fileReader(fileConfig(op.GetArg(i)));
 
+  }
+}
 int main(int, char ** argv) {
 
 
 
-    eudaq::OptionParser op("EUDAQ File Converter", "1.0", "", 1);
+  eudaq::OptionParser op("EUDAQ File Converter", "1.0", "", 1);
 
-    auto events = add_Command_line_option_EventsOfInterest(op);
-
-
-    FileWriterFactory::addComandLineOptions(op);
-    op.ExtraHelpText(FileWriterFactory::Help_text());
+  auto events = add_Command_line_option_EventsOfInterest(op);
 
 
-    FileReaderFactory::addComandLineOptions(op);
+  FileWriterFactory::addComandLineOptions(op);
+  op.ExtraHelpText(FileWriterFactory::Help_text());
 
-    op.ExtraHelpText(FileReaderFactory::Help_text());
 
-    EventSyncFactory::addComandLineOptions(op);
+  FileReaderFactory::addComandLineOptions(op);
 
-    eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
-                                     "The minimum level for displaying log messages locally");
+  op.ExtraHelpText(FileReaderFactory::Help_text());
 
-    std::clock_t    start = std::clock();
+  EventSyncFactory::addComandLineOptions(op);
+
+  eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
+    "The minimum level for displaying log messages locally");
+
+  std::clock_t    start = std::clock();
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
 
     Processor_batch batch;
 
-    for (size_t i = 0; i < op.NumArgs(); ++i)
-    {
-        batch>>Processors::fileReader(fileConfig(op.GetArg(i)));
 
-    }
-    if (op.NumArgs()>1|| EventSyncFactory::DefaultIsSet())
-    {
-      batch>>Processors::merger(EventSyncFactory::getDefaultSync());
-    }
-
-    processor_view P(Processors::ShowEventNR(1000) );
-    batch >> Processors::ShowEventNR(1000) 
-          >> Processors::eventSelector(parsenumbers(events->Value()))
-          >>  Processors::fileWriter() ;
+    add_files(batch, op);
+    add_merger(batch, op);
+    batch >> Processors::ShowEventNR(1000)
+      >> Processors::eventSelector(parsenumbers(events->Value()))
+      >> Processors::fileWriter();
 
     batch.init();
     batch.run();
     batch.end();
-    
+
   }
   catch (...) {
-    std::cout << "Time: " << (std::clock() - start) / (double) (CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
     return op.HandleMainException();
   }
 
