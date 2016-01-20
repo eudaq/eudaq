@@ -1009,7 +1009,7 @@ namespace eudaq {
             float temp = 0;
             for (int i = 0; i < 4; i++)
               ((unsigned char *)(&temp))[i] = data[i];
-              *m_temperatureFile << "Layer " id << " Temp is : " << temp - 273.15 << endl;
+//              *m_temperatureFile << "Layer "<< id << " Temp is : " << temp - 273.15 << endl;
 //            cout << "T (layer " << id << ") is: " << temp << endl;
           }
         }
