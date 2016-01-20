@@ -234,7 +234,7 @@ namespace eudaq {
       }
       char tmp[100];
       sprintf(tmp, "run%06d-temperature.txt", bore.GetRunNumber());
-      m_temperatureFile = new ostream(tmp);
+      m_temperatureFile = new ofstream(tmp);
     }
     //##############################################################################
     ///////////////////////////////////////
