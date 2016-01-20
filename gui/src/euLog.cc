@@ -14,6 +14,8 @@ int main(int argc, char **argv) {
   eudaq::Option<std::string> addr(
       op, "a", "listen-address", "tcp://44002", "address",
       "The address on which to listen for Log connections");
+  eudaq::Option<std::string> directory (op, "d", "directory", "../logs", "directory",
+				   "The path in which the log files should be stored");
   eudaq::Option<std::string> level(
       op, "l", "log-level", "INFO", "level",
       "The initial level for displaying log messages");
@@ -28,7 +30,7 @@ int main(int argc, char **argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
     QRect rect(x.Value(), y.Value(), w.Value(), h.Value());
-    LogCollectorGUI gui(rctrl.Value(), addr.Value(), rect, file.Value(),
+    LogCollectorGUI gui(rctrl.Value(), addr.Value(), directory.Value(), rect, file.Value(),
                         eudaq::Status::String2Level(level.Value()));
     gui.show();
     return app.exec();

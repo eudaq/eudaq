@@ -21,7 +21,8 @@ namespace eudaq {
   class DLLEXPORT LogCollector : public CommandReceiver {
   public:
     LogCollector(const std::string &runcontrol,
-                 const std::string &listenaddress);
+                 const std::string &listenaddress,
+		 const std::string & logdirectory = "../logs");
 
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}

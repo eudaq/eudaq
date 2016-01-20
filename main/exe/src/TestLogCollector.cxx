@@ -13,9 +13,10 @@
 class TestLogCollector : public eudaq::LogCollector {
   public:
     TestLogCollector(const std::string & runcontrol,
-        const std::string & listenaddress,
-        int loglevel)
-      : eudaq::LogCollector(runcontrol, listenaddress),
+		     const std::string & listenaddress,
+		     const std::string & directory,
+		     int loglevel)
+      : eudaq::LogCollector(runcontrol, listenaddress, directory),
       m_loglevel(loglevel), done(false)
   {}
     void OnConnect(const eudaq::ConnectionInfo & id) override{
@@ -76,6 +77,8 @@ int main(int /*argc*/, const char ** argv) {
       "The address of the RunControl application");
   eudaq::Option<std::string> addr (op, "a", "listen-address", "tcp://44002", "address",
       "The address on which to listen for Log connections");
+  eudaq::Option<std::string> directory (op, "d", "directory", "logs", "directory",
+				   "The path in which the log files should be stored");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
       "The minimum level for displaying log messages");
   eudaq::mSleep(2000);
@@ -83,7 +86,7 @@ int main(int /*argc*/, const char ** argv) {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL("NONE");
     std::cout << "Log Collector  Connected to \"" << rctrl.Value() << "\"" << std::endl;
-    TestLogCollector fw(rctrl.Value(), addr.Value(), eudaq::Status::String2Level(level.Value()));
+    TestLogCollector fw(rctrl.Value(), addr.Value(), directory.Value(), eudaq::Status::String2Level(level.Value()));
     //g_ptr = &fw;
     //std::signal(SIGINT, &ctrlc_handler);
     do {

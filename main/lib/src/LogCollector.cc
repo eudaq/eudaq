@@ -20,16 +20,18 @@ namespace eudaq {
   } // anonymous namespace
 
   LogCollector::LogCollector(const std::string &runcontrol,
-                             const std::string &listenaddress)
+                             const std::string &listenaddress,
+			     const std::string &logdirectory)
       : CommandReceiver("LogCollector", "", runcontrol, false), m_done(false),
         m_listening(true),
         m_logserver(TransportFactory::CreateServer(listenaddress)),
-        m_filename("../logs/" + Time::Current().Formatted("%Y-%m-%d.log")),
+        m_filename(logdirectory + "/" + Time::Current().Formatted("%Y-%m-%d.log")),
         m_file(m_filename.c_str(), std::ios_base::app) {
     if (!m_file.is_open())
       EUDAQ_THROWX(FileWriteException, "Unable to open log file (" +
-                                           m_filename +
-                                           ") is there a logs directory?");
+		   m_filename +
+		   ") is there a logs directory?");
+    else std::cout << "LogCollector opened \"" << m_filename << "\" for logging." << std::endl;
     m_logserver->SetCallback(
         TransportCallback(this, &LogCollector::LogHandler));
     // pthread_attr_init(&m_threadattr);

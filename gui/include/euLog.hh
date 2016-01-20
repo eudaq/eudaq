@@ -29,11 +29,14 @@ class LogCollectorGUI : public QMainWindow,
   Q_OBJECT
 public:
   LogCollectorGUI(const std::string &runcontrol,
-                  const std::string &listenaddress, QRect geom,
-                  const std::string &filename, int loglevel,
+                  const std::string &listenaddress,
+		  const std::string &directory,
+		  QRect geom,
+                  const std::string &filename,
+		  int loglevel,
                   QWidget *parent = 0, Qt::WindowFlags flags = 0)
       : QMainWindow(parent, flags),
-        eudaq::LogCollector(runcontrol, listenaddress), m_delegate(&m_model) {
+        eudaq::LogCollector(runcontrol, listenaddress, directory), m_delegate(&m_model) {
     setupUi(this);
     viewLog->setModel(&m_model);
     viewLog->setItemDelegate(&m_delegate);
