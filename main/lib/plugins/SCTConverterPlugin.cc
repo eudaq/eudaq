@@ -41,6 +41,7 @@ namespace eudaq {
     std::string Timestamp_L0ID() { return "Timestamp.L0ID"; }
     std::string Event_L0ID() { return "Event.L0ID"; }
     std::string Event_BCID() { return "Event.BCID"; }
+#if USE_LCIO && USE_EUTELESCOPE
   void ConvertPlaneToLCIOGenericPixel(StandardPlane &plane,
                                       lcio::TrackerDataImpl &zsFrame) {
     // helper object to fill the TrakerDater object
@@ -68,7 +69,9 @@ namespace eudaq {
 
     return zsDataCollectionExists;
   }
+#endif
   }
+
 
   using namespace sct;
 #if USE_LCIO && USE_EUTELESCOPE

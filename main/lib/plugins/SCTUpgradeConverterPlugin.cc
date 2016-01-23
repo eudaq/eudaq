@@ -57,6 +57,7 @@ inline void helper_uchar2bool(const std::vector<unsigned char> &in, int lOffset,
 int numberOfEvents_inplane;
 
 namespace eudaq {
+#if USE_LCIO && USE_EUTELESCOPE
   void ConvertPlaneToLCIOGenericPixel(StandardPlane &plane,
                                       lcio::TrackerDataImpl &zsFrame) {
     // helper object to fill the TrakerDater object
@@ -84,7 +85,7 @@ namespace eudaq {
 
     return zsDataCollectionExists;
   }
-
+#endif
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
 
   void puschDataInStandartPlane(const std::vector<unsigned char> &inputVector,
