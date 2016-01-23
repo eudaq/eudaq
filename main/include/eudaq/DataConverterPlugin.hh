@@ -186,6 +186,12 @@ protected:
    */
   t_eventid m_eventtype;
 
+  /** Ask for a free Sensor ID to be assigned and registered
+    */
+    static int getNewlyAssignedSensorID(int desiredSensorID = -1, int desiredSensorIDoffset = -1, std::string type = "", int instance = 0, std::string identifier = "", std::string description = "");
+    /** Ask for an assigned and registered Sensor ID to be released into pool
+    */
+    static void returnAssignedSensorID(int sensorID);
 
   /** The protected constructor which automatically registers the plugin
    *  at the pluginManager.
@@ -202,6 +208,16 @@ private:
    */
   DataConverterPlugin(DataConverterPlugin &) = delete;
   DataConverterPlugin & operator = (const DataConverterPlugin &) = delete;
+
+  typedef struct{
+	        int desiredSensorID;
+    		int desiredSensorIDoffset;
+    		std::string type;
+    		int instance;
+    		std::string identifier;
+    		std::string description;
+  } sensorIDType;
+  static std::map<int,sensorIDType> _sensorIDsTaken;
 };
 
 
