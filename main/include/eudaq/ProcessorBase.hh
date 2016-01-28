@@ -93,7 +93,7 @@ namespace eudaq {
       if (m_proc_rp) {
         batch.pushProcessor(m_proc_rp);
       } else if (m_proc_up) {
-        batch.pushProcessor(std::move(m_proc_rp));
+        batch.pushProcessor(std::move(m_proc_up));
       }
       else {
         EUDAQ_THROW("unable to extract pointer");
