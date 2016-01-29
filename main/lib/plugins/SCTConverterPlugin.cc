@@ -41,7 +41,37 @@ namespace eudaq {
     std::string Timestamp_L0ID() { return "Timestamp.L0ID"; }
     std::string Event_L0ID() { return "Event.L0ID"; }
     std::string Event_BCID() { return "Event.BCID"; }
+#if USE_LCIO && USE_EUTELESCOPE
+  void ConvertPlaneToLCIOGenericPixel(StandardPlane &plane,
+                                      lcio::TrackerDataImpl &zsFrame) {
+    // helper object to fill the TrakerDater object
+    auto sparseFrame = eutelescope::EUTelTrackerDataInterfacerImpl<
+        eutelescope::EUTelGenericSparsePixel>(&zsFrame);
+
+    for (size_t iPixel = 0; iPixel < plane.HitPixels(); ++iPixel) {
+      eutelescope::EUTelGenericSparsePixel thisHit1(
+          plane.GetX(iPixel), plane.GetY(iPixel), plane.GetPixel(iPixel), 0);
+      sparseFrame.addSparsePixel(&thisHit1);
+    }
   }
+  bool Collection_createIfNotExist(lcio::LCCollectionVec **zsDataCollection,
+                                   const lcio::LCEvent &lcioEvent,
+                                   const char *name) {
+
+    bool zsDataCollectionExists = false;
+    try {
+      *zsDataCollection =
+          static_cast<lcio::LCCollectionVec *>(lcioEvent.getCollection(name));
+      zsDataCollectionExists = true;
+    } catch (lcio::DataNotAvailableException &e) {
+      *zsDataCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERDATA);
+    }
+
+    return zsDataCollectionExists;
+  }
+#endif
+  }
+
 
   using namespace sct;
 #if USE_LCIO && USE_EUTELESCOPE

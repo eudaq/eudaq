@@ -9,6 +9,9 @@
 #  include "IMPL/TrackerRawDataImpl.h"
 #  include "IMPL/LCCollectionVec.h"
 #  include "lcio.h"
+#endif
+
+#if USE_EUTELESCOPE
 #include "EUTELESCOPE.h"
 #include "EUTelGenericSparsePixel.h"
 #include "EUTelTrackerDataInterfacerImpl.h"

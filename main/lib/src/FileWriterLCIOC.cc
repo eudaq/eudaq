@@ -33,9 +33,7 @@ namespace eudaq {
     // int m_runnumber; 
   };
 
-  namespace {
-    static RegisterFileWriter<FileWriterLCIOC> reg("calice");
-  }
+  registerFileWriter(FileWriterLCIOC, "calice");
 
   FileWriterLCIOC::FileWriterLCIOC(const std::string & /*param*/)
     : m_lcwriter(lcio::LCFactory::getInstance()->createLCWriter()), // get an LCWriter from the factory
