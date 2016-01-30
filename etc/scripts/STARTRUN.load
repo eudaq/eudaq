@@ -38,19 +38,19 @@ printf '\033[22;33m\t Starting Subprocesses \033[0m \n'
 # euRun
 ###############
 printf '\033[22;33m\t RunControl \033[0m \n'
-./euRun.exe -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT &
+./euRun -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT &
 sleep 2
 ######################################################################
 # euLog
 ###############
 printf '\033[22;33m\t Logger  \033[0m \n'
-./euLog.exe -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:44000 &
+./euLog -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:44000 &
 sleep 2
 ######################################################################
 # DataCollector
 ###############
 printf '\033[22;33m\t TestDataCollector \033[0m \n'
-xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
+xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestDataCollector -r tcp://$HOSTIP:$RCPORT' &
 sleep 2
 
 
@@ -60,7 +60,7 @@ while [ "$I" -lt "1" ]
 do
   let I=$I+1
   let Y=$I*100
-  xterm -sb -sl 1000 -geom 80x10-600-$Y -T 'Load Producer' -e './LoadProducer.exe -r tcp://$TLUIP:$RCPORT' &
+  xterm -sb -sl 1000 -geom 80x10-600-$Y -T 'Load Producer' -e './LoadProducer -r tcp://$TLUIP:$RCPORT' &
 #   sleep 1
 done
 
