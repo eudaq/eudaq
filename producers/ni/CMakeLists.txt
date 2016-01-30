@@ -1,4 +1,4 @@
-set(name "NiProducer.exe")
+set(name "NiProducer")
 set(sourcefiles src/NiProducer.cxx src/NiController.cc)
 
 INCLUDE_DIRECTORIES( include )
