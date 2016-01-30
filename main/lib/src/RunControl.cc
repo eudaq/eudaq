@@ -87,8 +87,7 @@ namespace eudaq {
   }
 
   void RunControl::Configure(const std::string &param, int geoid) {
-    std::string filename =
-        "../conf/" + (param == "" ? "default" : param) + ".conf";
+    std::string filename = (param == "" ? "../conf/default.conf" : param);
     EUDAQ_INFO("Configuring (" + param + ")");
     // EUDAQ_EXTRA("Loading configuration from: " + filename);
     std::ifstream file(filename.c_str());
