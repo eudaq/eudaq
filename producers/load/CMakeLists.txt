@@ -1,4 +1,4 @@
-set(name "LoadProducer.exe")
+set(name "LoadProducer")
 set(sourcefiles src/LoadProducer.cxx)
 set(ext_libraries "" )
 set(ext_lib_paths "" )
