@@ -21,11 +21,11 @@ cd `dirname $0`
 printf 'STARTING DAQ\n'
 printf '\t Cleaning up first...\n'
 
-killall TestDataCollector.exe
+killall TestDataCollector
 
-killall TLUProducer.exe
-ssh eudet@$TLUIP "killall TLUProducer.exe" &
-killall FORTISProducer.exe
+killall TLUProducer
+ssh eudet@$TLUIP "killall TLUProducer" &
+killall FORTISProducer
 killall euLog
 killall euRun
 
@@ -50,15 +50,15 @@ $EUDAQBIN/euLog -x 0 -y 450 -w 350 -g 550 -r tcp://$RCIP:$RCPORT  2>&1 | tee /tm
 sleep 3
 
 printf '\t\t  DataCollector\n'
-$XBIN/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -T "Data Collector" -e "./TestDataCollector.exe -r tcp://$RCIP:$RCPORT 2>&1 | tee /tmp/euData_$$.log" &
+$XBIN/xterm -sb -sl 1000 -geom 80x10-500-290 -fn fixed -T "Data Collector" -e "./TestDataCollector -r tcp://$RCIP:$RCPORT 2>&1 | tee /tmp/euData_$$.log" &
 sleep 2
 
 printf '\t\t  TLU\n'
-ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -T 'TLU Producer' -e 'cd eudaq/bin/; sudo ./TLUProducer.exe -r tcp://$RCIP:$RCPORT')" &
+ssh -X -Y eudet@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-160 -T 'TLU Producer' -e 'cd eudaq/bin/; sudo ./TLUProducer -r tcp://$RCIP:$RCPORT')" &
 
 printf '\t\t  FORTIS\n'
-$XBIN/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -T 'FORTIS Producer' -e "  ./FORTISProducer.exe -r tcp://$RCIP:$RCPORT 2>&1 | tee /tmp/euFortis_$$.log" &
-#$XBIN/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -T 'FORTIS Producer' -e "gdb ./FORTISProducer.exe  2>&1 | tee /tmp/euFortis_$$.log" &
+$XBIN/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -T 'FORTIS Producer' -e "  ./FORTISProducer -r tcp://$RCIP:$RCPORT 2>&1 | tee /tmp/euFortis_$$.log" &
+#$XBIN/xterm -sb -sl 1000 -geom 80x40-700-290 -fn fixed -T 'FORTIS Producer' -e "gdb ./FORTISProducer  2>&1 | tee /tmp/euFortis_$$.log" &
 
 cd -
 printf '\033[1;32;48m\t ...Done!\033[0m \n'
