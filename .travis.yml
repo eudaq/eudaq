@@ -5,12 +5,11 @@ compiler:
 
 branches:
   only:
-    - v1.4-dev
+    - master
     - v1.5-dev
 
 os:
   - linux
-  - osx
 
 before_install:
   - $CXX --version
