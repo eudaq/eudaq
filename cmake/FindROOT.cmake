@@ -17,6 +17,7 @@ SET(ROOT_CONFIG_SEARCHPATH
   $ENV{ROOTSYS}/bin
   /opt/local/bin
   /root/bin
+  /usr/bin
 )
 
 SET(ROOT_DEFINITIONS "")
@@ -139,7 +140,6 @@ ELSE(WIN32)
 
     # ask root-config for the library varaibles
     EXEC_PROGRAM( ${ROOT_CONFIG_EXECUTABLE}
-      #    ARGS "--noldflags --noauxlibs --libs" 
       ARGS "--glibs" 
       OUTPUT_VARIABLE root_flags )
 
