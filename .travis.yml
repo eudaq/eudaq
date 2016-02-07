@@ -45,6 +45,6 @@ before_script:
   - cd build
 
 script:
-  - cmake ..
+  - cmake -DBUILD_onlinemon=OFF ..
   - make install
 
