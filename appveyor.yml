@@ -3,7 +3,8 @@ pull_requests:
   do_not_increment_build_number: true
 branches:
   only:
-  - master_travis
+  - master
+  - v1.5-dev
 os: Visual Studio 2013
 configuration: Release
 environment:
