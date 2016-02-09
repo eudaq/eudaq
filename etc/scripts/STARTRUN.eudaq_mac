@@ -10,15 +10,15 @@ cd `dirname $0`/bin
 
 echo 'STARTING DAQ'
 echo '    Cleaning up first...'
-killall RootMonitor.exe
-killall TestDataCollector.exe
-killall TLUProducer.exe
-killall TLUControl.exe
-ssh eudet@$TLUIP "killall TLUProducer.exe" &
-ssh eudet@$TLUIP "killall TLUControl.exe" &
-ssh eudet@$EUDRBIP1 "killall EUDRBProducer.exe" &
-ssh eudet@$EUDRBIP2 "killall EUDRBProducer.exe" &
-killall DEPFETProducerTCP.exe
+killall RootMonitor
+killall TestDataCollector
+killall TLUProducer
+killall TLUControl
+ssh eudet@$TLUIP "killall TLUProducer" &
+ssh eudet@$TLUIP "killall TLUControl" &
+ssh eudet@$EUDRBIP1 "killall EUDRBProducer." &
+ssh eudet@$EUDRBIP2 "killall EUDRBProducer" &
+killall DEPFETProducerTCP
 killall euLog
 killall euRun
 sleep 1
@@ -41,24 +41,24 @@ echo '        LogCollector'
 sleep 3
 
 echo '        DataCollector'
-#./TestDataCollector.exe &
-/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-440 -fn fixed -T "Data Collector" -e './TestDataCollector.exe' &
+#./TestDataCollector &
+/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-440 -fn fixed -T "Data Collector" -e './TestDataCollector' &
 sleep 2
 
 echo '        RootMonitor'
-#/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-500 -fn fixed -T "Root Monitor" -e 'gdb ./RootMonitor.exe' &
-./RootMonitor.exe -x 350 -y 0 -w 1330 -g 900 -r localhost &
+#/usr/X11R6/bin/xterm -sb -sl 1000 -geom 80x10-500-500 -fn fixed -T "Root Monitor" -e 'gdb ./RootMonitor' &
+./RootMonitor -x 350 -y 0 -w 1330 -g 900 -r localhost &
 
 echo '        TLU'
-ssh -X -Y root@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-290 -T 'TLU Producer' -e 'cd eudaq/bin/; ./TLUProducer.exe -r tcp://eudet:$RCPORT')" &
+ssh -X -Y root@$TLUIP "(xterm -sb -sl 1000 -geom 80x10-500-290 -T 'TLU Producer' -e 'cd eudaq/bin/; ./TLUProducer -r tcp://eudet:$RCPORT')" &
 
 echo '        EUDRB 1'
-ssh -X -Y eudet@$EUDRBIP1 "(xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'EUDRB Producer 1' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -n EUDRB1 -r eudet | tee log')" &
+ssh -X -Y eudet@$EUDRBIP1 "(xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'EUDRB Producer 1' -e 'cd eudaq/bin/; ./EUDRBProducer -n EUDRB1 -r eudet | tee log')" &
 
 sleep 1
 
 #echo '        EUDRB 2'
-#ssh -X -Y eudet@$EUDRBIP2 "(xterm -sb -sl 1000 -geom 80x10-500-20 -fn fixed -T 'EUDRB Producer 2' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -n EUDRB2 -r eudet | tee log')" &
+#ssh -X -Y eudet@$EUDRBIP2 "(xterm -sb -sl 1000 -geom 80x10-500-20 -fn fixed -T 'EUDRB Producer 2' -e 'cd eudaq/bin/; ./EUDRBProducer -n EUDRB2 -r eudet | tee log')" &
 
 
 

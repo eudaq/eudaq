@@ -1,4 +1,4 @@
-set(name "PALPIDEFSProducer.exe")
+set(name "PALPIDEFSProducer")
 set(sourcefiles src/PALPIDEFSProducer.cxx)
 # config files to be installed
 

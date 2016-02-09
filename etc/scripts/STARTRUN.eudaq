@@ -31,22 +31,22 @@ echo '        LogCollector'
 sleep 3
 
 echo '        DataCollector'
-./TestDataCollector.exe -r tcp://$HOSTNAME:$RCPORT &
+./TestDataCollector -r tcp://$HOSTNAME:$RCPORT &
 sleep 2
 
 echo '        OnlineMonitor'
-./OnlineMon.exe -tc 0 -r tcp://$HOSTNAME:$RCPORT  &
+./OnlineMon -tc 0 -r tcp://$HOSTNAME:$RCPORT  &
 
 echo '        TLU'
-./TLUProducer.exe -r tcp://$HOSTNAME:$RCPORT &
+./TLUProducer -r tcp://$HOSTNAME:$RCPORT &
 
 #echo '        EUDRB 1'
-#ssh -X -Y eudet@$EUDRBIP1 "(xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'EUDRB Producer 1' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -n EUDRB1 -r $HOSTNAME:$RCPORT | tee log')" &
+#ssh -X -Y eudet@$EUDRBIP1 "(xterm -sb -sl 1000 -geom 80x10-500-169 -fn fixed -T 'EUDRB Producer 1' -e 'cd eudaq/bin/; ./EUDRBProducer -n EUDRB1 -r $HOSTNAME:$RCPORT | tee log')" &
 
 #sleep 1
 
 echo '        EUDRB 2'
-ssh -X -Y eudet@$EUDRBIP2 "(xterm -sb -sl 1000 -geom 80x10-500-20 -fn fixed -T 'EUDRB Producer 2' -e 'cd eudaq/bin/; ./EUDRBProducer.exe -n EUDRB2 -r $HOSTNAME:$RCPORT | tee log')" &
+ssh -X -Y eudet@$EUDRBIP2 "(xterm -sb -sl 1000 -geom 80x10-500-20 -fn fixed -T 'EUDRB Producer 2' -e 'cd eudaq/bin/; ./EUDRBProducer -n EUDRB2 -r $HOSTNAME:$RCPORT | tee log')" &
 
 
 cd -
