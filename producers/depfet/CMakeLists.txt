@@ -1,4 +1,4 @@
-set(name "DEPFETProducerTCP.exe")
+set(name "DEPFETProducerTCP")
 IF(NOT IGNORE_KNOWN_ISSUES AND WIN32) # issues compiling under WINDOWS only
   IF(NOT BUILD_allproducer) # only warn if not configuring all producers at the same time (for testing)
     MESSAGE(WARNING "There are known issues compiling ${name} on your platform. Set the IGNORE_KNOWN_ISSUES option to configure this producer to be build anyway.")

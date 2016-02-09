@@ -3,9 +3,9 @@
 EUDRBIP2=192.168.3.4
 printf 'Killing DAQ\n'
 printf '\t Cleaning up...\n'
-killall TestDataCollector.exe
-ssh -Y $EUDRBIP "killall EUDRBProducer.exe" &
-killall TLUProducer.exe
+killall TestDataCollector
+ssh -Y $EUDRBIP "killall EUDRBProducer" &
+killall TLUProducer
 killall euLog
 sleep 1
 killall euRun
