@@ -18,7 +18,10 @@ os:
 before_install:
   - $CXX --version
   - $CC --version
-
+  
+  - wget https://root.cern.ch/download/root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+  - tar -xvf root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+  - source root/bin/thisroot.sh 
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get -qq update; fi
 
   # OS X: update brew cache:
@@ -27,7 +30,7 @@ before_install:
   
 install:
   # Install package dependencies for Linux:
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools root-system; fi
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools; fi
 
   # Install package dependencies for Mac OS X:
   - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb homebrew/science/root; fi
@@ -45,6 +48,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DBUILD_onlinemon=OFF ..
+  - cmake -DBUILD_onlinemon=ON ..
   - make install
 

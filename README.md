@@ -1,5 +1,8 @@
-eudaq [![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=v1.4-dev)](https://travis-ci.org/eudaq/eudaq)
+eudaq 
 =====
+
+[![Build Status](https://travis-ci.org/eudaq/eudaq.svg?branch=master)](https://travis-ci.org/eudaq/eudaq)
+[![Build status](https://ci.appveyor.com/api/projects/status/n3tq45kkupyvjihg?svg=true)](https://ci.appveyor.com/project/simonspa/eudaq)
 
 A Generic Multi-platform Data Acquisition Framework
 

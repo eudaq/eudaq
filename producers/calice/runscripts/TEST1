@@ -36,17 +36,17 @@ printf '\033[22;33m\t Starting Subprocesses \033[0m \n'
 # euRun
 ###############
 printf '\033[22;33m\t RunControl \033[0m \n'
-$EUDAQBIN/euRun.exe -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT &
+$EUDAQBIN/euRun -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT &
 sleep 1
 ######################################################################
 # euLog
 ###############
 printf '\033[22;33m\t Logger  \033[0m \n'
-$EUDAQBIN/euLog.exe -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:44000 | tee $LOGFILE &
+$EUDAQBIN/euLog -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:44000 | tee $LOGFILE &
 sleep 3
 
 #printf '\033[22;33m\t OnlineMonitor  \033[0m \n'
-#$EUDAQBIN/OnlineMon.exe  -r tcp://$HOSTIP:$RCPORT &
+#$EUDAQBIN/OnlineMon  -r tcp://$HOSTIP:$RCPORT &
 #sleep 3
 
 ######################################################################
@@ -54,11 +54,11 @@ sleep 3
 ###############
 printf '\033[22;33m\t TestDataCollector \033[0m \n'
 #xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e "./caliceDataCollector -r tcp://$HOSTIP:$RCPORT" &
-$EUDAQBIN/TestDataCollector.exe -n CaliceDataCollector -r tcp://$HOSTIP:$RCPORT &
+$EUDAQBIN/TestDataCollector -n CaliceDataCollector -r tcp://$HOSTIP:$RCPORT &
 sleep 3
 
 printf '\033[22;33m\t  caliceProducer-scintillator  \033[0m \n'
-$EUDAQBIN/caliceProducer.exe -n CaliceSc -r tcp://$TLUIP:$RCPORT &
+$EUDAQBIN/caliceProducer -n CaliceSc -r tcp://$TLUIP:$RCPORT &
 #-r tcp://$HOSTIP:$RCPORT &
 sleep 3
 
@@ -66,7 +66,7 @@ sleep 3
 #printf '\033[22;33m\t  caliceProducer-scintillator  \033[0m \n'
 #$CALEUDAQ/caliceProducer -n CaliceSc -r tcp://$TLUIP:$RCPORT &
 
-#$EUDAQBIN/Converter.exe -t calice -a -r tcp://$TLUIP:$RCPORT &
+#$EUDAQBIN/Converter -t calice -a -r tcp://$TLUIP:$RCPORT &
 #sleep 3
 
 

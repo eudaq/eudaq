@@ -1,4 +1,4 @@
-set(name "PalpidessProducer.exe")
+set(name "PalpidessProducer")
 set(sourcefiles src/DevicePalpidess.cc src/PalpidessProducer.cxx)
 set(ext_libraries "" )
 set(ext_lib_paths "" )
