@@ -1,0 +1,33 @@
+version: 1.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+branches:
+  only:
+  - master_travis
+os: Visual Studio 2013
+configuration: Release
+environment:
+  ROOTSYS: C:\root
+  PATH: '%ROOTSYS%\bin;C:\Qt\5.5\msvc2013;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
+before_build:
+- cmd: >-
+    conda config --set always_yes yes --set changeps1 no
+
+    conda update -q conda
+
+    conda info -a
+
+    conda create -q -n test-environment numpy
+
+    activate test-environment
+
+    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.34.win32.vc12.zip\",\"C:\\root_v5.34.34.win32.vc12.zip\")"
+
+    7z -y x C:\\root_v5.34.34.win32.vc12.zip -oC:\
+
+    cd build
+
+    cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF ..
+build:
+  project: C:/projects/eudaq/build/INSTALL.vcxproj
+  verbosity: minimal
