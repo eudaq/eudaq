@@ -58,11 +58,14 @@ namespace eudaq {
     	// for the temperature data we should ignore the cycle # because it's invalid.
     	bool tempcome = (status == 0xa0 && buf[10] == 0x41 && buf[11] == 0x43 && buf[12] == 0x7a && buf[13] == 0);
 
-	deqEvent=NewEvent_createRawDataEvent(deqEvent, tempcome, cycle);
+  
+	deqEvent = NewEvent_createRawDataEvent(deqEvent, tempcome, cycle);
         
-	readTemperature(buf, deqEvent, tempcome);
-       
-    	if(!(status & 0x40)){
+	if(tempcome == true )
+	  readTemperature(buf);
+	else if (_vecTemp.size()>0) AppendBlockTemperature( deqEvent);
+
+	if(!(status & 0x40)){
     	  //We'll drop non-data packet;
     	  buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
     	  continue;
@@ -73,14 +76,11 @@ namespace eudaq {
 	// 0x4341 0x4148
 	if(it[1] != 0x43 || it[0] != 0x41 || it[3] != 0x41 || it[2] != 0x48){
 	  cout << "ScReader: header invalid." << endl;
-	  //  for(int i=0;i<4;i++){
-	  //    cout << (int)it[i] << " ";
-	  // }
-	  //  cout << endl;
 	  buf.pop_front();
 	  continue;
 	}
- 	if(readSpirocData(buf,deqEvent)==false) continue;
+
+ 	if(readSpirocData_AddBlock(buf,deqEvent)==false) continue;
 
     	// remove used buffer
     	buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
@@ -89,7 +89,65 @@ namespace eudaq {
    
   }
 
-  bool ScReader::readSpirocData(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent)
+  std::deque<eudaq::RawDataEvent *> ScReader::NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *>  deqEvent, bool tempcome, int cycle)
+  {
+
+   if( deqEvent.size()==0 || (!tempcome && ((_cycleNo +256) % 256) != cycle)  ){
+      // new event arrived: create RawDataEvent
+      _cycleNo ++;
+      // cout<<length <<" "<<_cycleNo<<" "<< cycle<<" "<< buf[6]<<" "<<buf.size()<<endl;
+      RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _cycleNo);
+      string s = "EUDAQDataScCAL";
+      nev->AddBlock(0,s.c_str(), s.length());
+      s = "i:CycleNr:i:BunchXID;i:EvtNr;i:ChipID;i:NChannels:i:TDC14bit[NC];i:ADC14bit[NC]";
+      nev->AddBlock(1,s.c_str(), s.length());
+      unsigned int times[2];
+      struct timeval tv;
+      ::gettimeofday(&tv, NULL);
+      times[0] = tv.tv_sec;
+      times[1] = tv.tv_usec;
+      nev->AddBlock(2, times, sizeof(times));
+      nev->AddBlock(3, vector<int>()); // dummy block to be filled later with temperature
+      deqEvent.push_back(nev);
+    } 
+   return deqEvent;
+  }
+
+  void ScReader::readTemperature(std::deque<char> buf)
+  {
+      
+      int lda = buf[6];
+      int port = buf[7];
+      short data = ((unsigned char)buf[23] << 8) + (unsigned char)buf[22];
+      
+      _vecTemp.push_back(make_pair(make_pair(lda,port),data));
+  }
+
+  void ScReader::AppendBlockTemperature(std::deque<eudaq::RawDataEvent *> deqEvent)
+
+  {
+
+    // tempmode finished; store to the rawdataevent 
+    RawDataEvent *ev = deqEvent.back();
+    vector<int> output;
+    for(unsigned int i=0;i<_vecTemp.size();i++){
+      int lda,port,data;
+      lda = _vecTemp[i].first.first;
+      port = _vecTemp[i].first.second;
+      data = _vecTemp[i].second;
+      output.push_back(lda);
+      output.push_back(port);
+      output.push_back(data);
+    }
+    ev->AppendBlock(3, output);
+    _tempmode = false;
+    output.clear();
+    _vecTemp.clear();
+    
+  }
+
+
+  bool ScReader::readSpirocData_AddBlock(std::deque<char> buf, std::deque<eudaq::RawDataEvent *>  deqEvent)
   {
 
     // temporary output buffer
@@ -139,7 +197,7 @@ namespace eudaq {
       infodata.push_back(bxid);
       infodata.push_back(nscai - tr - 1);// memory cell is inverted
       infodata.push_back(chipId);
-      infodata.push_back(NChannel);//channel ordering is inverted
+      infodata.push_back(NChannel);
 
       for(short n=0;n<NChannel;n++)
 	infodata.push_back(tdc[NChannel - n - 1]);//channel ordering was inverted, now is correct
@@ -150,69 +208,15 @@ namespace eudaq {
       outbuf.push_back(infodata);
 
       // commit events
-      if(outbuf.size()){
+      if(outbuf.size()>0){
 	for(unsigned int ib=0;ib<outbuf.size();ib++)
 	  ev->AddBlock(ev->NumBlocks(), outbuf[ib]);
-	outbuf.clear();
       }
+
+      outbuf.clear();
     }
     return true;
   }
 
-
-  deque<eudaq::RawDataEvent *> ScReader::NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *>  deqEvent, bool tempcome, int cycle)
-  {
-    while(deqEvent.size() == 0|| (!tempcome && ((_cycleNo +256) % 256) != cycle) ){
-      // new event arrived: create RawDataEvent
-      _cycleNo ++;
-      // cout<<length <<" "<<_cycleNo<<" "<< cycle<<" "<< buf[6]<<" "<<buf.size()<<endl;
-      RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _cycleNo);
-      string s = "EUDAQDataScCAL";
-      nev->AddBlock(0,s.c_str(), s.length());
-      s = "i:CycleNr:i:BunchXID;i:EvtNr;i:ChipID;i:NChannels:i:TDC14bit[NC];i:ADC14bit[NC]";
-      nev->AddBlock(1,s.c_str(), s.length());
-      unsigned int times[2];
-      struct timeval tv;
-      ::gettimeofday(&tv, NULL);
-      times[0] = tv.tv_sec;
-      times[1] = tv.tv_usec;
-      nev->AddBlock(2, times, sizeof(times));
-      nev->AddBlock(3, vector<int>()); // dummy block to be filled later with temperature
-      deqEvent.push_back(nev);
-    } 
-    return deqEvent;
-  }
-
-  void ScReader::readTemperature(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent, bool tempcome)
-  {
-    if(tempcome == true ){
-      
-      // cout << "DIF-ADC packet found." << endl;
-      int lda = buf[6];
-      int port = buf[7];
-      short data = ((unsigned char)buf[23] << 8) + (unsigned char)buf[22];
-      // cout << "LDA " << lda << " PORT " << port << " DATA " << data << endl;
-      
-      _vecTemp.push_back(make_pair(make_pair(lda,port),data));
-      
-    } else if (_vecTemp.size()>0){
-      // tempmode finished; store to the rawdataevent 
-      RawDataEvent *ev = deqEvent.back();
-      vector<int> output;
-      for(unsigned int i=0;i<_vecTemp.size();i++){
-	int lda,port,data;
-	lda = _vecTemp[i].first.first;
-	port = _vecTemp[i].first.second;
-	data = _vecTemp[i].second;
-	output.push_back(lda);
-	output.push_back(port);
-	output.push_back(data);
-      }
-      ev->AppendBlock(3, output);
-      _tempmode = false;
-      output.clear();
-      _vecTemp.clear();
-    }
-  }
-
+  
 }

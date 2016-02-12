@@ -13,8 +13,10 @@ namespace eudaq {
     virtual void OnStop(int waitQueueTimeS);
 
     virtual std::deque<eudaq::RawDataEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *>  deqEvent, bool tempcome, int cycle);
-    virtual void readTemperature(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent, bool tempcome);
-    virtual bool readSpirocData(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent);
+    virtual void readTemperature(std::deque<char> buf);
+    virtual void AppendBlockTemperature(std::deque<eudaq::RawDataEvent *> deqEvent);
+
+    virtual bool readSpirocData_AddBlock(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent);
     
     ScReader(CaliceProducer *r) : CaliceReader(r) {_runNo = -1;}
     ~ScReader(){}

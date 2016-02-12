@@ -31,14 +31,11 @@ namespace eudaq {
   CaliceProducer::CaliceProducer(const std::string & name, const std::string & runcontrol) :
     Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
   {
-    // std::unique_lock<std::mutex> myLock(_mufd);
-    //pthread_mutex_init(&_mufd,NULL);
+
   }
 
   void CaliceProducer::OnConfigure(const eudaq::Configuration & param)
   {
-
-    //  std::unique_lock<std::mutex> myLock(_mufd);
 
     // file name
     _filename = param.Get("FileName", "");
@@ -141,7 +138,6 @@ namespace eudaq {
   void CaliceProducer::OpenConnection()
   {
     // open socket
-    cout<<" entering open Con "<< endl;
 
     struct sockaddr_in dstAddr;
     memset(&dstAddr, 0, sizeof(dstAddr));
@@ -149,17 +145,10 @@ namespace eudaq {
     dstAddr.sin_family = AF_INET;
     dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 
-    cout<<" entering open Con 2 -- "<< endl;
-
     std::mutex _mufdOpenConnection;
     std::unique_lock<std::mutex> myLock(_mufdOpenConnection);
     _fd = socket(AF_INET, SOCK_STREAM, 0);
-    //airqui 14/01/2016 //  pthread_mutex_lock(&_mufd);
     int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-    // std::lock_guard<std::mutex> unlock(_mufd);
-    //airqui  14/01/2016 //pthread_mutex_unlock(&_mufd);
-
-    cout<<" open "<< endl;
 
     if(ret != 0)  return;
   }
@@ -184,13 +173,9 @@ namespace eudaq {
     // open/close of socket because it's considered to be called from 
     // event thread, which is same as thread of open/close the socket
 
-    //
-    // pthread_mutex_lock(&_mufd);
-    //std::lock_guard<std::mutex> myLock(_mufd);
     if(_fd <= 0)cout << "CaliceProducer::SendCommand(): cannot send command because connection is not open." << endl;
     else write(_fd, command, size);
-    //
-    // pthread_mutex_unlock(&_mufd);
+
   }
 
   deque<eudaq::RawDataEvent *>  CaliceProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
@@ -210,20 +195,16 @@ namespace eudaq {
 
     while(true){
       // wait until configured and connected
-      //airqui 14/01/2016 //
-      //  pthread_mutex_lock(&_mufd);      
       std::unique_lock<std::mutex> myLock(_mufd);
 
       const int bufsize = 4096;
       // copy to C array, then to vector
       char buf[bufsize];
-      int size = 0;
+      int size = 0;        
       if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
-    
+
       //      if file is not ready  just wait
-      if(_fd <= 0 ){//|| !_running ){
-	//airqui 14/01/2016 //	
-	//	pthread_mutex_unlock(&_mufd);
+      if(_fd <= 0 || !_running ){
 	::usleep(1000);
 	continue;
       }
@@ -237,15 +218,11 @@ namespace eudaq {
           std::cout << "Socket disconnected. going to the waiting mode." << endl;         
         close(_fd);
         _fd = -1;
-	//airqui 14/01/2016 //
-	//	pthread_mutex_unlock(&_mufd);
 	continue;
       }
         
       if(!_running){
 	bufRead.clear();
-	//airqui 14/01/2016 //
-	//	pthread_mutex_unlock(&_mufd);
 	continue;
       }
 
@@ -258,9 +235,6 @@ namespace eudaq {
         
       // send events : remain the last event
       deqEvent=sendallevents(deqEvent,1);
-       
-      //airqui 14/01/2016 // 
-      //  pthread_mutex_unlock(&_mufd);
     }
   }
 
