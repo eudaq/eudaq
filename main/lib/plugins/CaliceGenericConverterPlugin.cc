@@ -13,6 +13,8 @@
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"
 #  include "IMPL/LCGenericObjectImpl.h"
+#  include "IMPL/TrackerRawDataImpl.h"
+#  include "IMPL/TrackerDataImpl.h"
 #  include "IMPL/LCCollectionVec.h"
 #  include "lcio.h"
 #endif
@@ -25,6 +27,32 @@ using namespace lcio;
 namespace eudaq {
 
   static const char* EVENT_TYPE = "CaliceObject";
+
+
+// #if USE_LCIO
+//   // LCIO class
+//   class CaliceTrackerObject : public lcio::TrackerRawDataImpl {
+//   public:
+//     CaliceTrackerObject() : lcio::CaliceTrackerObject() {_typeName = EVENT_TYPE;}
+//     virtual ~CaliceTrackerObject(){}
+      
+//     void setTags(std::string &s){_dataDescription = s;}
+//     std::string getTags()const{return _dataDescription;}
+     
+//     void setDataInt(std::vector<int> &vec){
+//       _intVec.resize(vec.size());
+//       std::copy(vec.begin(), vec.end(), _intVec.begin());
+//     }
+
+//     void setDataInt(std::vector<short> &vec){
+//       _intVec.resize(vec.size());
+//       std::copy(vec.begin(), vec.end(), _intVec.begin());
+//     }
+        
+//     const std::vector<int> & getDataInt()const{return _intVec;}
+//   };
+
+// #endif
 
 #if USE_LCIO
   // LCIO class
@@ -159,15 +187,17 @@ namespace eudaq {
 
 	    LCCollectionVec *col2 = 0;
 	    col2=createCollectionVec(result,"TempSensor", "i:LDA;i:port;i:T1;i:T2;i:T3;i:T4;i:T5;i:T6;i:TDIF;i:TPWR", timestamp);
-	    getTemperatureSubEvent(col2, vec);
+	    getScCalTemperatureSubEvent(col2, vec);
 	  }
 	}
 	
 	//-------------------
 	// READ/WRITE SPIROC DATA
 	LCCollectionVec *col = 0;
-	col=createCollectionVec(result,colName,dataDesc, timestamp);
-	getSpirocSubEvent(rawev,col,nblock);
+	//	col=createRawCollectionVec(result,colName,dataDesc, timestamp);
+	col=createRawCollectionVec(result,colName,dataDesc, timestamp);
+	getDataTrackerRawData(rawev,col,nblock);
+//getDataLCIOGenericObject(rawev,col,nblock);
 	//-------------------
 
       }
@@ -175,8 +205,23 @@ namespace eudaq {
     }
 
 
+    virtual LCCollectionVec* createRawCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
+      LCCollectionVec *col = 0;
+      try{
+	// looking for existing collection
+	col = dynamic_cast<IMPL::LCCollectionVec *>(result.getCollection(colName));
+	//cout << "collection found." << endl;
+      }catch(DataNotAvailableException &e){
+	// create new collection
+	//cout << "Creating TempSensor collection..." << endl;
+	col = new IMPL::LCCollectionVec(LCIO::TRACKERRAWDATA);
+	result.addCollection(col,colName);
+	//  cout << "collection added." << endl;
+      }
+        return col;
+    }
+
     virtual LCCollectionVec* createCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
-      const char *colName2 = "TempSensor";
       LCCollectionVec *col = 0;
       try{
 	// looking for existing collection
@@ -200,8 +245,7 @@ namespace eudaq {
       return col;
     }
 
-    virtual void getTemperatureSubEvent(LCCollectionVec *col2, vector<int> vec) const{
-
+    virtual void getScCalTemperatureSubEvent(LCCollectionVec *col2, vector<int> vec) const{
 
       vector<int> output;
       int lda = -1;
@@ -238,7 +282,7 @@ namespace eudaq {
       }
     }
 
-    virtual void getSpirocSubEvent(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
+    virtual void getDataLCIOGenericObject(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
    
        
       while(nblock < rawev->NumBlocks()){
@@ -250,6 +294,30 @@ namespace eudaq {
 
 	CaliceLCGenericObject *obj = new CaliceLCGenericObject;
 	obj->setDataInt(v);
+	try{
+	  col->addElement(obj);
+	}catch(ReadOnlyException &e){
+	  cout << "CaliceGenericConverterPlugin: the collection to add is read only! skipped..." << endl;
+	  delete obj;
+	}
+      }
+    }
+
+    virtual void getDataTrackerRawData(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
+   
+      while(nblock < rawev->NumBlocks()){
+	// further blocks should be data (currently limited to integer)
+	vector<short> v;
+	const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
+	v.resize(bl5.size() / sizeof(short));
+	memcpy(&v[0], &bl5[0],bl5.size());
+
+	TrackerRawDataImpl *obj = new TrackerRawDataImpl;
+	obj->setCellID0(int(v[0]));
+	obj->setCellID1(int(v[1]));
+	obj->setTime(int(v[2]));
+	obj->setADCValues ( v );
+
 	try{
 	  col->addElement(obj);
 	}catch(ReadOnlyException &e){
