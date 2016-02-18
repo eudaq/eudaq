@@ -84,7 +84,7 @@ namespace eudaq {
     // Take specific run data or configuration data from BORE
     virtual void Initialize(const Event &bore,
                             const Configuration & /*cnf*/) { // GetConfig
-
+      cout << " HO!" << endl;
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
 
@@ -471,19 +471,17 @@ namespace eudaq {
         return DT_NOP;
       else if (DataWord == 0xf1)
         return DT_BUSYON;
-      else if (DataWord == 0xf0)
+      else if (DataWord == 0xf2)
         return DT_BUSYOFF;
       else if ((DataWord & 0xf0) == 0xa0)
         return DT_CHIPHEADER;
       else if ((DataWord & 0xf0) == 0xb0)
         return DT_CHIPTRAILER;
-      else if ((DataWord & 0xf0) == 0xe0) 
-        return DT_EMPTYFRAME;
       else if ((DataWord & 0xe0) == 0xc0)
         return DT_REGHEADER;
-      else if ((DataWord & 0xc0) == 0x40)
-        return DT_DATASHORT;
       else if ((DataWord & 0xc0) == 0x0)
+        return DT_DATASHORT;
+      else if ((DataWord & 0xc0) == 0x40)
         return DT_DATALONG;
       else
         return DT_UNKNOWN;
