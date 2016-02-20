@@ -153,7 +153,7 @@ namespace eudaq {
 
   std::shared_ptr<AidaPacket> PacketFactory::Create(Deserializer &ds) {
     AidaPacket::PacketHeader header = AidaPacket::DeserializeHeader(ds);
-    int id = header.data.packetType;
+    int long long id = header.data.packetType;
     // std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
     packet_creator cr = GetCreator(id);
     if (cr)
