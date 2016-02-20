@@ -5,8 +5,10 @@ branches:
   only:
   - master
   - v1.5-dev
+
 os: Visual Studio 2013
 configuration: Release
+
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.5\msvc2013;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
@@ -32,3 +34,4 @@ before_build:
 build:
   project: C:/projects/eudaq/build/INSTALL.vcxproj
   verbosity: minimal
+
