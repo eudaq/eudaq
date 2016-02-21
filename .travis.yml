@@ -19,10 +19,11 @@ os:
 before_install:
   - $CXX --version
   - $CC --version
-  
-  - wget https://root.cern.ch/download/root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-  - tar -xvf root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-  - source root/bin/thisroot.sh 
+
+  - if [ $TRAVIS_OS_NAME == linux ]; then wget https://root.cern.ch/download/root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && tar -xvf root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi  
+
+  - if [ $TRAVIS_OS_NAME == osx ]; then wget https://root.cern.ch/download/root_v5.34.34.macosx64-10.9-clang60.tar.gz && tar -xvf root_v5.34.34.macosx64-10.9-clang60.tar.gz && source root/bin/thisroot.sh; fi  
+
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get -qq update; fi
 
   # OS X: update brew cache:
@@ -38,14 +39,14 @@ install:
 
   # Install package dependencies for Mac OS X:
   - if [ $TRAVIS_OS_NAME == osx ]; then brew unlink cmake; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb homebrew/science/root; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb; fi
   # Install numpy via pip:
   - if [ $TRAVIS_OS_NAME == osx ]; then easy_install pip && pip install numpy; fi
 
 before_script:
   
   # For Mac OS X we still need to source the root environment:
-  - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
+  # - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
 
   - $CXX --version
   - $CC --version
