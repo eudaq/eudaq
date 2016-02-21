@@ -4,6 +4,7 @@
 #include "eudaq/factoryDef.hh"
 #include "eudaq/OptionParser.hh"
 
+template class Class_factory_Utilities::Factory<eudaq::FileWriter>;
 
 namespace eudaq {
 

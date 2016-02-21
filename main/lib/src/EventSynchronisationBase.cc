@@ -17,6 +17,7 @@ using std::endl;
 using std::shared_ptr;
 using namespace std;
 
+template class Class_factory_Utilities::Factory<eudaq::SyncBase>;
 
 namespace eudaq{
  
