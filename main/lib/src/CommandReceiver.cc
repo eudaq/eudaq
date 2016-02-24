@@ -41,7 +41,7 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
     return ret;
   } else {
     EUDAQ_THROW("Could not create client for: '" + runcontrol + "'");
-    return std::nullptr_t;
+    return ret;
   }
 }
   namespace {
