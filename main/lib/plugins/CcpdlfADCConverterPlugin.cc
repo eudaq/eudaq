@@ -84,7 +84,6 @@ namespace eudaq {
 
         // If we get here it must be a data event
         const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
-        unsigned int cnt;
         unsigned int cnt_max=0;
         
         for (size_t i = 0; i < ev_raw.NumBlocks(); ++i) {
