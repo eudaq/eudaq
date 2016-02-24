@@ -27,7 +27,7 @@ protected:
   double _yLimitMax;
   double _yLimitMin;
 
-  float _starttime;
+  double _starttime;
   bool _nodata;
   TGraph *GetTGraph(std::string name);
   std::string GetUnit(std::string name);

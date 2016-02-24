@@ -29,7 +29,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_BaseEvent(int fileIndex, event_sp BOREEvent)
+  void Sync2TLU::addBORE_BaseEvent(unsigned int fileIndex, event_sp BOREEvent)
   {
     
     if (BOREEvent->IsPacket())
@@ -50,7 +50,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_Event(int fileIndex, event_sp BOREEvent)
+  void Sync2TLU::addBORE_Event(unsigned int fileIndex, event_sp BOREEvent)
   {
 
     ++m_registertProducer;
@@ -70,7 +70,7 @@ namespace eudaq{
     auto identifier = PluginManager::getUniqueIdentifier(*BOREEvent);
     if (identifier > FILEINDEX_OFFSET)
     {
-      EUDAQ_THROW("the Unique identifier for this Event is to larg. Increase the value of FILEINDEX_OFFSET or return a smaler number from PluginManager::getUniqueIdentifier(BOREEvent)");
+      EUDAQ_THROW("The unique identifier for this Event is too large. Increase the value of FILEINDEX_OFFSET or return a smaller number from PluginManager::getUniqueIdentifier(BOREEvent)");
     }
 
     if (PluginManager::isTLU(*BOREEvent))
@@ -102,7 +102,7 @@ namespace eudaq{
 
     if (elements!=m_ProducerId2Eventqueue.size())
     {
-      EUDAQ_THROW("Duplication in the producer event queue id");
+      EUDAQ_THROW("Duplication in the producer event queue id.");
     }
     m_Bore_buffer.push(BOREEvent);
   }
@@ -339,11 +339,11 @@ namespace eudaq{
 
       if (m_TLUs_found == 0)
       {
-          EUDAQ_WARN("no TLU events found in the data\n synchrounsation on event numbers \n");
+          EUDAQ_WARN("No TLU events found in the data\n synchrounsation on event numbers \n");
       }
       else if (m_TLUs_found > 1)
       {
-        std::cout << "more than one TLU detected only the first TLU is used for synchronisation " << std::endl;
+        std::cout << "More than one TLU detected only the first TLU is used for synchronisation " << std::endl;
       }
   
     

@@ -39,6 +39,9 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
     auto splitted_res = split(packet, " ");
     CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
     return ret;
+  } else {
+    EUDAQ_THROW("Could not create client for: '" + runcontrol + "'");
+    return ret;
   }
 }
   namespace {

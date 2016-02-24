@@ -4,6 +4,7 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/OptionParser.hh"
 
+template class Class_factory_Utilities::Factory<eudaq::baseFileReader>;
 namespace eudaq {
 
 
