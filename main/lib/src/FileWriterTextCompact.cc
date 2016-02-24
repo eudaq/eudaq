@@ -77,10 +77,12 @@ private:
       m_dut_createdAtTime = 0,
       m_dut_sendAtTime =0;
 
+    double DUT_start_time = 0;
+
 
     std::ofstream *m_out=nullptr;
     bool firstEvent=false;
-    uint64_t DUT_start_time = 0,TLU_start_Time=0;
+    uint64_t TLU_start_Time=0;
   };
 
   
