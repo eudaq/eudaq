@@ -154,7 +154,7 @@ private:
       firstEvent = false;
     }
 
-    m_tlu_time_stamp = sev.GetTimestamp() - TLU_start_Time;
+    m_tlu_time_stamp = (double) (sev.GetTimestamp() - TLU_start_Time);
     m_TLU_event_nr = sev.GetTag("TLU_event_nr", (double)0);
     m_tlu_trigger = sev.GetTag("TLU_trigger", 0);
     m_DUT_TDC = sev.GetTag("TDC.data", double(0));
