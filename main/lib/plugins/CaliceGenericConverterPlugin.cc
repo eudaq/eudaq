@@ -29,31 +29,6 @@ namespace eudaq {
   static const char* EVENT_TYPE = "CaliceObject";
 
 
-// #if USE_LCIO
-//   // LCIO class
-//   class CaliceTrackerObject : public lcio::TrackerRawDataImpl {
-//   public:
-//     CaliceTrackerObject() : lcio::CaliceTrackerObject() {_typeName = EVENT_TYPE;}
-//     virtual ~CaliceTrackerObject(){}
-      
-//     void setTags(std::string &s){_dataDescription = s;}
-//     std::string getTags()const{return _dataDescription;}
-     
-//     void setDataInt(std::vector<int> &vec){
-//       _intVec.resize(vec.size());
-//       std::copy(vec.begin(), vec.end(), _intVec.begin());
-//     }
-
-//     void setDataInt(std::vector<short> &vec){
-//       _intVec.resize(vec.size());
-//       std::copy(vec.begin(), vec.end(), _intVec.begin());
-//     }
-        
-//     const std::vector<int> & getDataInt()const{return _intVec;}
-//   };
-
-// #endif
-
 #if USE_LCIO
   // LCIO class
   class CaliceLCGenericObject : public lcio::LCGenericObjectImpl {
@@ -194,31 +169,12 @@ namespace eudaq {
 	//-------------------
 	// READ/WRITE SPIROC DATA
 	LCCollectionVec *col = 0;
-	//	col=createRawCollectionVec(result,colName,dataDesc, timestamp);
-	col=createRawCollectionVec(result,colName,dataDesc, timestamp);
-	getDataTrackerRawData(rawev,col,nblock);
-//getDataLCIOGenericObject(rawev,col,nblock);
+	col=createCollectionVec(result,colName,dataDesc, timestamp);
+	getDataLCIOGenericObject(rawev,col,nblock);
 	//-------------------
 
       }
       return true;
-    }
-
-
-    virtual LCCollectionVec* createRawCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
-      LCCollectionVec *col = 0;
-      try{
-	// looking for existing collection
-	col = dynamic_cast<IMPL::LCCollectionVec *>(result.getCollection(colName));
-	//cout << "collection found." << endl;
-      }catch(DataNotAvailableException &e){
-	// create new collection
-	//cout << "Creating TempSensor collection..." << endl;
-	col = new IMPL::LCCollectionVec(LCIO::TRACKERRAWDATA);
-	result.addCollection(col,colName);
-	//  cout << "collection added." << endl;
-      }
-        return col;
     }
 
     virtual LCCollectionVec* createCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
@@ -302,31 +258,6 @@ namespace eudaq {
 	}
       }
     }
-
-    virtual void getDataTrackerRawData(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
-   
-      while(nblock < rawev->NumBlocks()){
-	// further blocks should be data (currently limited to integer)
-	vector<short> v;
-	const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
-	v.resize(bl5.size() / sizeof(short));
-	memcpy(&v[0], &bl5[0],bl5.size());
-
-	TrackerRawDataImpl *obj = new TrackerRawDataImpl;
-	obj->setCellID0(int(v[0]));
-	obj->setCellID1(int(v[1]));
-	obj->setTime(int(v[2]));
-	obj->setADCValues ( v );
-
-	try{
-	  col->addElement(obj);
-	}catch(ReadOnlyException &e){
-	  cout << "CaliceGenericConverterPlugin: the collection to add is read only! skipped..." << endl;
-	  delete obj;
-	}
-      }
-    }
-
 
 #endif
     
