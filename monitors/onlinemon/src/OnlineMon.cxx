@@ -522,7 +522,7 @@ int main(int argc, const char ** argv) {
       gStyle->SetPalette(1);
       gStyle->SetNumberContours(99);
       gStyle->SetOptStat(1111);
-      gStyle->SetStatH(0.15);
+      gStyle->SetStatH((Float_t)0.15);
     }
     else
     {
