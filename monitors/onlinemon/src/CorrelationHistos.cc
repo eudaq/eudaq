@@ -25,12 +25,12 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     _2dcorrX = new TH2I(out2, out, _maxX1, 0, _maxX1, _maxX2, 0, _maxX2);
     if (_2dcorrX != NULL) {
       _2dcorrX->GetXaxis()->SetTitle(out_x);
-      _2dcorrX->GetXaxis()->SetLabelSize((Float_t)0.03);
-      _2dcorrX->GetXaxis()->SetTitleSize((Float_t)0.03);
+      _2dcorrX->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
+      _2dcorrX->GetXaxis()->SetTitleSize(static_cast<Float_t>(0.03));
       _2dcorrX->GetXaxis()->SetTitleOffset(1);
       _2dcorrX->GetYaxis()->SetTitle(out_y);
-      _2dcorrX->GetYaxis()->SetTitleSize((Float_t)0.03);
-      _2dcorrX->GetXaxis()->SetLabelSize((Float_t)0.03);
+      _2dcorrX->GetYaxis()->SetTitleSize(static_cast<Float_t>(0.03));
+      _2dcorrX->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
       _2dcorrX->GetXaxis()->SetTitleOffset(1);
     }
   }
@@ -45,12 +45,12 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     _2dcorrY = new TH2I(out2, out, _maxY1, 0, _maxY1, _maxY2, 0, _maxY2);
     if (_2dcorrY != NULL) {
       _2dcorrY->GetXaxis()->SetTitle(out_x);
-      _2dcorrY->GetXaxis()->SetLabelSize((Float_t)0.03);
-      _2dcorrY->GetXaxis()->SetTitleSize((Float_t)0.03);
+      _2dcorrY->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
+      _2dcorrY->GetXaxis()->SetTitleSize(static_cast<Float_t>(0.03));
       _2dcorrY->GetXaxis()->SetTitleOffset(1);
       _2dcorrY->GetYaxis()->SetTitle(out_y);
-      _2dcorrY->GetYaxis()->SetTitleSize((Float_t)0.03);
-      _2dcorrY->GetXaxis()->SetLabelSize((Float_t)0.03);
+      _2dcorrY->GetYaxis()->SetTitleSize(static_cast<Float_t>(0.03));
+      _2dcorrY->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
       _2dcorrY->GetXaxis()->SetTitleOffset(1);
     }
   }
