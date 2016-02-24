@@ -29,7 +29,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_BaseEvent(int fileIndex, event_sp BOREEvent)
+  void Sync2TLU::addBORE_BaseEvent(unsigned int fileIndex, event_sp BOREEvent)
   {
     
     if (BOREEvent->IsPacket())
@@ -50,7 +50,7 @@ namespace eudaq{
 
 
 
-  void Sync2TLU::addBORE_Event(int fileIndex, event_sp BOREEvent)
+  void Sync2TLU::addBORE_Event(unsigned int fileIndex, event_sp BOREEvent)
   {
 
     ++m_registertProducer;
@@ -70,7 +70,7 @@ namespace eudaq{
     auto identifier = PluginManager::getUniqueIdentifier(*BOREEvent);
     if (identifier > FILEINDEX_OFFSET)
     {
-      EUDAQ_THROW("The unique identifier for this Event is to large. Increase the value of FILEINDEX_OFFSET or return a smaller number from PluginManager::getUniqueIdentifier(BOREEvent)");
+      EUDAQ_THROW("The unique identifier for this Event is too large. Increase the value of FILEINDEX_OFFSET or return a smaller number from PluginManager::getUniqueIdentifier(BOREEvent)");
     }
 
     if (PluginManager::isTLU(*BOREEvent))

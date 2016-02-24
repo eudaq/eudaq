@@ -56,8 +56,8 @@ namespace eudaq{
     int AddBaseEventToProducerQueue(int fileIndex, event_sp Ev);
     void clearOutputQueue();
 
-    void addBORE_Event(int fileIndex, event_sp BOREEvent);
-    void addBORE_BaseEvent(int fileIndex, event_sp BOREEvent);
+    void addBORE_Event(unsigned int fileIndex, event_sp BOREEvent);
+    void addBORE_BaseEvent(unsigned int fileIndex, event_sp BOREEvent);
     bool SyncNEvents(size_t N);
     void PrepareForEvents();
     bool SubEventQueueIsEmpty(int i) const;
