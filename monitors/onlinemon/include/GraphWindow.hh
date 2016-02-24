@@ -47,7 +47,7 @@ public:
   void SetTGraphSet(TGraphSet *s) { set = s; }
 };
 
-#ifndef __CINT__
+#ifdef __CINT__
 #pragma link C++ class GraphWindow - ;
 #endif
 
