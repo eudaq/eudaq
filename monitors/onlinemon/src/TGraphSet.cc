@@ -48,7 +48,7 @@ void TGraphSet::AddPoint(const std::string name, const double time,
     _yMax = value + 0.1;
     _xMin = time - 0.1;
     _xMax = time + 0.1;
-    SetLimits((int)(time - 0.1), (int)(time + 0.1), (int)(value - 0.1), (int)(value + 0.1));
+    SetLimits(static_cast<int>(time - 0.1), static_cast<int>(time + 0.1), static_cast<int>(value - 0.1), static_cast<int>(value + 0.1));
     _starttime = time;
     _nodata = false;
   } else {
