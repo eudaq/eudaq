@@ -38,12 +38,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef WIN32
-#define EUDAQ_SLEEP(x) Sleep(x*1000)
-#else
-#define EUDAQ_SLEEP(x) sleep(x)
-#endif
-
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
 
