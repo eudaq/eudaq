@@ -1105,12 +1105,12 @@ namespace eudaq {
 
       for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
         if (successful_fits[sector] > 0) {
-          (*thr_rms)[i_sector] = TMath::Sqrt(
+          (*thr_rms)[i_sector] = (float)TMath::Sqrt(
               (*thr_rms)[i_sector] / (float)successful_fits[i_sector] -
               (*thr)[i_sector] * (*thr)[i_sector] /
                   (float)successful_fits[i_sector] /
                   (float)successful_fits[i_sector]);
-          (*noise_rms)[i_sector] = TMath::Sqrt(
+          (*noise_rms)[i_sector] = (float)TMath::Sqrt(
               (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
               (*noise)[i_sector] * (*noise)[i_sector] /
                   (float)successful_fits[i_sector] /
