@@ -215,7 +215,7 @@ namespace eudaq {
     // example: has to be fittet to our needs depending on block managing etc.
     virtual unsigned GetTriggerID(const Event &ev) const {
       // Make sure the event is of class RawDataEvent
-      static unsigned trig_offset = (unsigned)-1;
+      static uint64_t trig_offset = (unsigned)-1;
       if (const RawDataEvent *rev = dynamic_cast<const RawDataEvent *>(&ev)) {
         if (rev->NumBlocks() > 0) {
           vector<unsigned char> data = rev->GetBlock(0);
@@ -1090,10 +1090,10 @@ namespace eudaq {
           g = new TGraph(n_points, x, y);
           TFitResultPtr r = g->Fit(&f_sc, "QRSW");
           if (r->IsValid()) {
-            (*thr)[sector] += f_sc.GetParameter(0);
-            (*thr_rms)[sector] += f_sc.GetParameter(0) * f_sc.GetParameter(0);
-            (*noise)[sector] += f_sc.GetParameter(1);
-            (*noise_rms)[sector] += f_sc.GetParameter(1) * f_sc.GetParameter(1);
+            (*thr)[sector] += (float)f_sc.GetParameter(0);
+            (*thr_rms)[sector] += (float)f_sc.GetParameter(0) * (float)f_sc.GetParameter(0);
+            (*noise)[sector] += (float)f_sc.GetParameter(1);
+            (*noise_rms)[sector] += (float)f_sc.GetParameter(1) * (float)f_sc.GetParameter(1);
             ++successful_fits[sector];
           } else {
             ++unsuccessful_fits[sector];
@@ -1108,15 +1108,15 @@ namespace eudaq {
           (*thr_rms)[i_sector] = TMath::Sqrt(
               (*thr_rms)[i_sector] / (double)successful_fits[i_sector] -
               (*thr)[i_sector] * (*thr)[i_sector] /
-                  (double)successful_fits[i_sector] /
-                  (double)successful_fits[i_sector]);
+                  (float)successful_fits[i_sector] /
+                  (float)successful_fits[i_sector]);
           (*noise_rms)[i_sector] = TMath::Sqrt(
-              (*noise_rms)[i_sector] / (double)successful_fits[i_sector] -
+              (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
               (*noise)[i_sector] * (*noise)[i_sector] /
-                  (double)successful_fits[i_sector] /
-                  (double)successful_fits[i_sector]);
-          (*thr)[i_sector] /= (double)successful_fits[i_sector];
-          (*noise)[i_sector] /= (double)successful_fits[i_sector];
+                  (float)successful_fits[i_sector] /
+                  (float)successful_fits[i_sector]);
+          (*thr)[i_sector] /= (float)successful_fits[i_sector];
+          (*noise)[i_sector] /= (float)successful_fits[i_sector];
           std::cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t'
                     << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector]
                     << std::endl;
