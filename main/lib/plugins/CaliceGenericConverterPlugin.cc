@@ -64,7 +64,7 @@ namespace eudaq {
       const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> ( &ev );
       // std::cout << "[Number of blocks] " << rev->NumBlocks() <<    std::endl;
 
-      int nblock =4; // the first 4 blocks contain information
+      unsigned int nblock =4; // the first 4 blocks contain information
       StandardPlane plane0(0, EVENT_TYPE, sensortype);
       plane0.SetSizeRaw( 36, 8);//36 channels, 4 chips
 
