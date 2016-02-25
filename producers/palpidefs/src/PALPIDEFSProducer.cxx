@@ -78,8 +78,6 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
         }
       }
 	
-//	std::cout << std::hex << address << std::dec << "value : " << value << std::endl;
-
       for (TiXmlNode *valueChild = pChild->FirstChild("value"); valueChild != 0;
            valueChild = valueChild->NextSibling("value")) {
         if (!valueChild->ToElement()->Attribute("begin")) {
@@ -92,8 +90,6 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
         if (valueChild->ToElement()->Attribute("width")) // width attribute is
                                                          // optional
           width = atoi(valueChild->ToElement()->Attribute("width"));
-	
-//	std::cout << "begin " << begin << " width " << width << std::endl;
 
         if (!valueChild->FirstChild("content") &&
             !valueChild->FirstChild("content")->FirstChild()) {
@@ -434,8 +430,8 @@ void DeviceReader::Loop() {
       event_waiting = false;
 
     if (!event_waiting) {
-      std::cout << "No event " << m_daq_board->GetNextEventId() << " " <<
-        m_last_trigger_id << std::endl;
+//      std::cout << "No event " << m_daq_board->GetNextEventId() << " " <<
+//        m_last_trigger_id << std::endl;
       // no event waiting
 
       if (IsFlushing()) {
@@ -898,10 +894,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_firstevent = true;
   }
 
-//  TDAQBoard2 *tmpdaq = (TDAQBoard2*)m_reader[0]->GetDAQBoard();
-//  int eeervalue = -1;
-//  int eeer = tmpdaq->ReadChipRegister(1537, &eeervalue, 16);
-//  std::cout << "VRESETP : " << eeervalue << std::endl;
   
   EUDAQ_INFO("Configured (" + param.Name() + ")");
   SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");

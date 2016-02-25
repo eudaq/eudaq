@@ -84,7 +84,6 @@ namespace eudaq {
     // Take specific run data or configuration data from BORE
     virtual void Initialize(const Event &bore,
                             const Configuration & /*cnf*/) { // GetConfig
-      cout << " HO!" << endl;
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
 
@@ -193,7 +192,7 @@ namespace eudaq {
           if (!analyse_threshold_scan(
                   m_SCS_data[i]->data(), m_SCS_points[i]->data(), &m_SCS_thr[i],
                   &m_SCS_thr_rms[i], &m_SCS_noise[i], &m_SCS_noise_rms[i],
-                  SCS_steps, m_SCS_n_events)) {
+                  SCS_steps, m_SCS_n_events, m_chip_type[i] == 3 ? 8 : 4)) {
             std::cout << std::endl;
             std::cout << "Results of the failed S-Curve scan in ADC counts"
                       << std::endl;
@@ -256,10 +255,6 @@ namespace eudaq {
               id_l |= data[4 + i] << 8 * i;
               id_h |= data[8 + i] << 8 * i;
             }
-             std::cout << std::hex << id_l << std::dec << " " << id_l
-             <<std::endl;
-             std::cout << std::hex << id_h << std::dec << " " << id_h
-             <<std::endl;
             uint64_t trig_id = (id_h << 24 | id_l);
             if (trig_offset == (unsigned)-1) {
               trig_offset = trig_id;
@@ -791,7 +786,6 @@ namespace eudaq {
 
     bool DecodeAlpide3ChipTrailer(vector<unsigned char>::iterator Data, int ChipId) const {
       int16_t trailer = (((int16_t) *Data) << 8) + *(Data+1);
-//      std::cout <<"Trailer : " <<  std::hex << trailer <<std::dec << std::endl;
       if (CheckAlpide3DataType((unsigned char)*Data) != DT_CHIPTRAILER) {
         std::cout << "Error, data word 0x" << std::hex << (int)*Data << std::dec
                   << " is no chip trailer" << std::endl;
@@ -827,7 +821,6 @@ namespace eudaq {
           false;          // event has started, i.e. chip header has been found
       bool ended = false; // trailer has been found
       TDataType type;
-//      std::cout << "Size of the data is : " << data.size() << std::endl;
 
       while ((byte + 1 < data.size()) && (!ended)) {
         type = CheckAlpide3DataType(data[byte]);
@@ -1216,8 +1209,9 @@ namespace eudaq {
         lev.parameters().setValue(tmp, m_trigger_delay[id]);
         snprintf(tmp, n_bs, "m_readout_delay_%d", id);
         lev.parameters().setValue(tmp, m_readout_delay[id]);
+        int nSectors = (m_chip_type == 3 ? 8 : 4);
         if (m_do_SCS[id]) {
-          for (int i_sector = 0; i_sector < 8; ++i_sector) {
+          for (int i_sector = 0; i_sector < nSectors; ++i_sector) {
             snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
             lev.parameters().setValue(tmp, m_SCS_thr[id][i_sector]);
             snprintf(tmp, n_bs, "ThrRMS_%d_%d", id, i_sector);
