@@ -1386,7 +1386,7 @@ namespace eudaq {
 
       for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
         if (data[i_pixel * n_points] != 255) {
-          sector = i_pixel * 8 / 1024 / 512;
+          sector = i_pixel * n_sectors / 1024 / 512;
 
           int i_thr_point = -1;
           for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
