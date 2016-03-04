@@ -1209,7 +1209,7 @@ namespace eudaq {
         lev.parameters().setValue(tmp, m_trigger_delay[id]);
         snprintf(tmp, n_bs, "m_readout_delay_%d", id);
         lev.parameters().setValue(tmp, m_readout_delay[id]);
-        int nSectors = (m_chip_type == 3 ? 8 : 4);
+        int nSectors = (m_chip_type[id] == 3 ? 8 : 4);
         if (m_do_SCS[id]) {
           for (int i_sector = 0; i_sector < nSectors; ++i_sector) {
             snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
