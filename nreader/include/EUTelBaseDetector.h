@@ -14,7 +14,6 @@
 
 namespace eutelescope {
 
-
   //! Virtual class to describe detector in the EUTelescope framework
   /*!
    *
@@ -24,17 +23,17 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelBaseDetector() : _name("") { }
+    EUTelBaseDetector() : _name("") {}
 
     //! Default destructor
-    virtual ~EUTelBaseDetector() {;}
+    virtual ~EUTelBaseDetector() { ; }
 
     //! Print
     /*! This method is used to print out the detector
      *
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const                            = 0;
+    virtual void print(std::ostream &os) const = 0;
 
     //! Overload of operator<<
     /*! This friend function is the overload of the operator << for
@@ -46,18 +45,18 @@ namespace eutelescope {
      *  @param clu The detector to be stream out
      *  @return The output stream
      */
-    friend std::ostream& operator<< (std::ostream& os , const EUTelBaseDetector & clu )  { clu.print(os); return os; }
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const EUTelBaseDetector &clu) {
+      clu.print(os);
+      return os;
+    }
 
   protected:
-
     // data members
 
     //! This is the detector name!
     std::string _name;
-
-
   };
-
 }
 
 #endif

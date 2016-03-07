@@ -1,3 +1,4 @@
+#if FOUND_ROOT
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
@@ -774,3 +775,4 @@ namespace eudaq {
     ExplorerConverterPlugin ExplorerConverterPlugin::m_instance;
 
 } // namespace eudaq
+#endif

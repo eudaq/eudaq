@@ -7,38 +7,37 @@
 #include <iostream>
 #include <string>
 
-
 //#include "OnlineHistograms.hh"
 #include "BaseCollection.hh"
 class BaseCollection;
 
-
 class CheckEOF {
-  //RQ_OBJECT("CheckEOF")
-  protected:
-    bool _isEOF;
-    TTimer *timer;
-    std::vector <BaseCollection*> _colls;
-    std::string _rootfilename;
-  public:
-    CheckEOF();
+  // RQ_OBJECT("CheckEOF")
+protected:
+  bool _isEOF;
+  TTimer *timer;
+  std::vector<BaseCollection *> _colls;
+  std::string _rootfilename;
 
-    void TimerLoop();
+public:
+  CheckEOF();
 
-    void EventReceived() {
-      //std::cout << "Called event received!" << std::endl;
-      _isEOF = false;
-    }
+  void TimerLoop();
 
-    void setCollections(std::vector <BaseCollection*> colls);
+  void EventReceived() {
+    // std::cout << "Called event received!" << std::endl;
+    _isEOF = false;
+  }
 
-    void startChecking(int mtime = 10000);
+  void setCollections(std::vector<BaseCollection *> colls);
 
-    void setRootFileName(std::string name) { _rootfilename = name; }
+  void startChecking(int mtime = 10000);
+
+  void setRootFileName(std::string name) { _rootfilename = name; }
 };
 
 #ifdef __CINT__
-#pragma link C++ class CheckEOF-;
+#pragma link C++ class CheckEOF - ;
 #endif
 
 #endif

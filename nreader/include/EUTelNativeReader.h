@@ -24,8 +24,6 @@
 #include <string>
 #include <vector>
 
-
-
 namespace eutelescope {
 
   //!  Reads the data produced by the EUDAQ software
@@ -51,7 +49,7 @@ namespace eutelescope {
    *   also the DEPFET detector
    *
    *   @since The DEPFET capability has been implemented the minimum
-   *   version of EUDAQ required is 469. 
+   *   version of EUDAQ required is 469.
    *   <b>What to do to add a new sensor</b>
    *
    *   First of all, you need to derive EUTelBaseDector into your own
@@ -69,27 +67,28 @@ namespace eutelescope {
    *   If you need to add private data members, carefully describe
    *   them and respect the naming convention.
    *
-   *   <b>Testing</b> 
+   *   <b>Testing</b>
    *   This native reader has been tested and the output results have
    *   been compared with the one obtained using the
-   *   EUTelMimoTelReader. To do so the <a href="http://confluence.slac.stanford.edu/display/ilc/LCIO+Command+Line+Tool">lcio</a> command line tool has
+   *   EUTelMimoTelReader. To do so the <a
+   *href="http://confluence.slac.stanford.edu/display/ilc/LCIO+Command+Line+Tool">lcio</a>
+   *command line tool has
    *   been using
    *
    *
    */
-  class EUTelNativeReader : public marlin::DataSourceProcessor    {
+  class EUTelNativeReader : public marlin::DataSourceProcessor {
 
   public:
-
     //! Default constructor
-    EUTelNativeReader ();
+    EUTelNativeReader();
 
     //! New processor
     /*! Return a new instance of a EUTelNativeReader. It is
      *  called by the Marlin execution framework and shouldn't be used
      *  by the final user.
      */
-    virtual EUTelNativeReader * newProcessor ();
+    virtual EUTelNativeReader *newProcessor();
 
     //! Creates events from the eudaq software
     /*! This is the real method. This is looping over all the events
@@ -101,18 +100,18 @@ namespace eutelescope {
      *
      *  @param numEvents The number of events to be read out.
      */
-    virtual void readDataSource (int numEvents);
+    virtual void readDataSource(int numEvents);
 
     //! Init method
     /*! It is called at the beginning of the cycle and it prints out
      *  the parameters.
      */
-    virtual void init ();
+    virtual void init();
 
     //! End method
     /*! It prints out a good bye message
      */
-    virtual void end ();
+    virtual void end();
 
     //! Process BORE
     /*! This method is called whenever in the input data stream a
@@ -121,7 +120,7 @@ namespace eutelescope {
      *
      *  @param bore The eudaq event containg the BORE
      */
-    void processBORE( const eudaq::DetectorEvent & bore );
+    void processBORE(const eudaq::DetectorEvent &bore);
 
     //! Process EORE
     /*! This method is called whenever in the input data stream an
@@ -130,8 +129,7 @@ namespace eutelescope {
      *
      *  @param eore The eudaq event contaning the EORE
      */
-    void processEORE( const eudaq::DetectorEvent & eore );
-
+    void processEORE(const eudaq::DetectorEvent &eore);
 
     //! Process TLU data event
     /*! This method is called whenever a TLU data event is found in
@@ -140,7 +138,8 @@ namespace eutelescope {
      *  @param tluEvent The TLUEvent with the input information
      *  @param eutelEvent The output EUTelEventImpl
      */
-    void processTLUDataEvent( eudaq::TLUEvent * tluEvent, EUTelEventImpl * eutelEvent );
+    void processTLUDataEvent(eudaq::TLUEvent *tluEvent,
+                             EUTelEventImpl *eutelEvent);
 
     //! Process EUDRB data event
     /*! This method is called whenever a EUDRB data event is found in
@@ -149,7 +148,8 @@ namespace eutelescope {
      *  @param eudrbEvent The EUDRBEvent with the input information
      *  @param eutelEvent The output EUTelEventImpl
      */
-    void processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, EUTelEventImpl * eutelEvent) ;
+    void processEUDRBDataEvent(eudaq::EUDRBEvent *eudrbEvent,
+                               EUTelEventImpl *eutelEvent);
 
     //! Process DEPFET data event
     /*! This method is called whenever a DEPFET data event is found in
@@ -158,11 +158,10 @@ namespace eutelescope {
      *  @param depfetEvent The DEPFETEvent with the input information
      *  @param eutelEvent The output EUTelEventImpl
      */
-    void processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent, EUTelEventImpl * eutelEvent );
-
+    void processDEPFETDataEvent(eudaq::DEPFETEvent *depfetEvent,
+                                EUTelEventImpl *eutelEvent);
 
   protected:
-
     //! The depfet output collection name
     std::string _depfetOutputCollectionName;
 
@@ -170,7 +169,7 @@ namespace eutelescope {
     /*! This is the name of the eudrb output collection.
      */
     std::string _eudrbRawModeOutputCollectionName;
-    
+
     //! The eudrb output collection name for ZS data
     /*! This is the name of the eudrb output collection when the
      *  detector was readout in ZS mode
@@ -193,7 +192,8 @@ namespace eutelescope {
     int _geoID;
 
     //! Synchronize input events.
-    /*! If set to true, this causes the events in the input file to be resynchronized
+    /*! If set to true, this causes the events in the input file to be
+     * resynchronized
      *  based on the TLU trigger ID.
      */
     bool _syncTriggerID;
@@ -202,14 +202,13 @@ namespace eutelescope {
     // from here below only private data members
 
     //! Vector of detectors readout by the DEPFETProducer
-    std::vector<EUTelPixelDetector * > _depfetDetectors;
+    std::vector<EUTelPixelDetector *> _depfetDetectors;
 
     //! Vector of detectors readout by the EUDRBProducer
-    std::vector<EUTelPixelDetector * > _eudrbDetectors;
+    std::vector<EUTelPixelDetector *> _eudrbDetectors;
 
     //! Vector of detectors readout by the TLUProducer
-    std::vector<EUTelBaseDetector * > _tluDetectors;
-
+    std::vector<EUTelBaseDetector *> _tluDetectors;
 
     // detector specific...................................
 
@@ -249,9 +248,9 @@ namespace eutelescope {
   //! A global instance of the processor
   EUTelNativeReader gEUTelNativeReader;
 
-}                               // end namespace eutelescope
+} // end namespace eutelescope
 
-# endif
+#endif
 #endif
 
 //  LocalWords:  eudrb

@@ -9,8 +9,6 @@
 #include "ZestSC1.h"
 #include "Local.h"
 
-
-
 namespace tlu {
 
   int do_usb_reset(ZESTSC1_HANDLE Handle) {
@@ -18,5 +16,4 @@ namespace tlu {
     usb_reset(Struct->DeviceHandle);
     return 0;
   }
-
 }

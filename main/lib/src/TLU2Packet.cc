@@ -8,5 +8,5 @@
 using std::cout;
 
 namespace eudaq {
-	EUDAQ_DEFINE_PACKET(TLU2Packet, str2type( "-TLU2-") );
+  EUDAQ_DEFINE_PACKET(TLU2Packet, str2type("-TLU2-"));
 }

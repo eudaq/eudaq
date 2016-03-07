@@ -6,17 +6,17 @@
 
 namespace eudaq {
 
-  /** Creates Transport instances from a name without needing to know the concrete type at compile time.
+  /** Creates Transport instances from a name without needing to know the
+   * concrete type at compile time.
    */
   class TransportFactory {
-    public:
-      static TransportServer * CreateServer(const std::string & name);
-      static TransportClient * CreateClient(const std::string & name);
+  public:
+    static TransportServer *CreateServer(const std::string &name);
+    static TransportClient *CreateClient(const std::string &name);
 
-      struct TransportInfo;
-      static void Register(const TransportInfo & info);
+    struct TransportInfo;
+    static void Register(const TransportInfo &info);
   };
-
 }
 
 #endif // EUDAQ_INCLUDED_TransportFactory

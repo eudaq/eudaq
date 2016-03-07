@@ -32,7 +32,7 @@ IF(WIN32)
  find_path(ZESTSC1_INCLUDE_DIR ZestSC1.h
     HINTS "${extern_lib_path}/windows_7/Inc"
           "${extern_lib_path}/windows 7/Inc"
-		  "${extern_lib_path}/Inc"
+	  "${extern_lib_path}/Inc"
     ${arg}
 	  )
 ELSE(WIN32)
@@ -56,12 +56,16 @@ if (WIN32)
       ${arg})
   endif(${EX_PLATFORM} EQUAL 64)
   elseif (UNIX)
+    MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
+    
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
 	HINTS "${extern_lib_path}/macosx/Lib" ${arg})
     else()
       find_library(ZESTSC1_LIBRARY NAMES ZestSC1
-	HINTS "${extern_lib_path}/linux/Lib" ${arg})
+	HINTS "${extern_lib_path}/Lib" 
+	      "${extern_lib_path}/linux/Lib" 
+        ${arg})
     endif()
   else()
     MESSAGE( "WARNING: Platform not defined in FindZestSC1.txt -- assuming Unix/Linux (good luck)." )

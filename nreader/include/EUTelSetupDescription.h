@@ -13,7 +13,6 @@
 // system includes <>
 #include <string>
 
-
 #include "eudaq/Platform.hh"
 
 namespace eutelescope {
@@ -38,7 +37,7 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
    */
-  class  DLLEXPORT  EUTelSetupDescription : public IMPL::LCGenericObjectImpl {
+  class DLLEXPORT EUTelSetupDescription : public IMPL::LCGenericObjectImpl {
 
   public:
     //! Default constructor with detector type and r/o mode
@@ -58,8 +57,7 @@ namespace eutelescope {
      *
      *  @param detector A EUTelPixelDetector.
      */
-    EUTelSetupDescription(EUTelPixelDetector * detector);
-
+    EUTelSetupDescription(EUTelPixelDetector *detector);
 
     //! Default constructor without arguments.
     /*! This constructor requires the user to set the detector type
@@ -68,7 +66,9 @@ namespace eutelescope {
     EUTelSetupDescription();
 
     //! Default destructor
-    virtual ~EUTelSetupDescription() { /* NO-OP */ ; }
+    virtual ~EUTelSetupDescription() { /* NO-OP */
+      ;
+    }
 
     //! Set the detector type
     /*! This method can be used to set the detector type using the
@@ -91,25 +91,18 @@ namespace eutelescope {
      *
      *  @return The detector type
      */
-    EUTelDetectorType getDetectorType() ;
+    EUTelDetectorType getDetectorType();
 
     //! Get the readout mode
     /*! Returns the readout mode
      *
      *  @return The readout mode
      */
-    EUTelReadoutMode getReadoutMode() ;
-
+    EUTelReadoutMode getReadoutMode();
 
   protected:
-
-
-
   private:
-
-
   };
-
 }
 
 #endif // EUTELSETUPDESCRIPTION_H

@@ -1,16 +1,13 @@
 ########################################################
-CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
 PROJECT( EUDAQ )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 4 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 5 )
-
-LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC -O2" )
-LIST ( APPEND CMAKE_LD_FLAGS "-fPIC -O2" )
+SET( ${PROJECT_NAME}_VERSION_MINOR 5 )
+SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -88,17 +85,17 @@ set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
 IF(BUILD_nreader)
-  FIND_PACKAGE(LCIO REQUIRED)
-  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS})
+  SET(USE_LCIO ON)
   FIND_PACKAGE(EUTelescope REQUIRED)
-  INCLUDE_DIRECTORIES(${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
-  add_definitions(${EUTELESCOPE_DEFINITIONS} ${LCIO_DEFINITIONS})
+  FIND_PACKAGE(LCIO REQUIRED)
+  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS} ${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
+  add_definitions(${LCIO_DEFINITIONS} ${EUTELESCOPE_DEFINITIONS})
   AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
   ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
   INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
                                       LIBRARY DESTINATION lib
                                       ARCHIVE DESTINATION lib)
-  set(ADDITIONAL_LIBRARIES ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
+  set(ADDITIONAL_LIBRARIES ${LCIO_LIBRARIES} ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
 ENDIF()
 
 find_package(Protobuf)
@@ -206,9 +203,24 @@ add_subdirectory(producers)
 
 #######################################################
 # Print out system information useful for bug reports #
-############################################### #######
+#######################################################
 include(PrintSystemInformation)
 
+
+####################
+# Uninstall Target #
+####################
+
+IF(NOT TARGET uninstall)
+  # uninstall target
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+ENDIF(NOT TARGET uninstall)
 
 ###############################################
 # Python-based regression tests

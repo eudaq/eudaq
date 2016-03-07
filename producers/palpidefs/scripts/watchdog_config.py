@@ -23,4 +23,4 @@ FILE_SIZE_LIMIT = 2 * 1000 * 1000 * 1000
 OUT_OF_SYNC_TIME = 60
 
 # number of allowed out of syncs in the given time period
-OUT_OF_SYNC_LIMIT = 100
+OUT_OF_SYNC_LIMIT = 10

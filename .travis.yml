@@ -1,11 +1,15 @@
 language: cpp
 
+sudo: required
+
+dist: trusty
+
 compiler:
   - gcc
 
 branches:
   only:
-    - v1.4-dev
+    - master
     - v1.5-dev
 
 os:
@@ -13,42 +17,42 @@ os:
   - osx
 
 before_install:
-  - echo $CXX
-
-  # Linux: add toolchain repository and update:
-  - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "g++" ]; then sudo apt-add-repository -y ppa:ubuntu-toolchain-r/test; fi
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update; fi
-
-  # Linux: grab ROOT deb package since it's not in the repos for this Ubuntu version:
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo wget http://downloads.sourceforge.net/project/cernrootdebs/latest-recommended/root_5.34.07-1_amd64.deb; fi
+  - $CXX --version
+  - $CC --version
+  
+  - wget https://root.cern.ch/download/root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+  - tar -xvf root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+  - source root/bin/thisroot.sh 
+  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get -qq update; fi
 
   # OS X: update brew cache:
   - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ]]; then CC=gcc-4.9; fi
+  - if [ $TRAVIS_OS_NAME == "osx" ]; then wget https://cmake.org/files/v3.4/cmake-3.4.3-Darwin-x86_64.tar.gz && tar xfz cmake-3.4.3-Darwin-x86_64.tar.gz && export PATH="`pwd`/cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin":$PATH:; fi
+  - if [ $TRAVIS_OS_NAME == "osx" ]; then echo $PATH; fi
+
   
 install:
   # Install package dependencies for Linux:
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools; fi
-  - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" == "g++" ]; then sudo apt-get install -qq gcc-4.8 g++-4.8; fi
-
-  # Install ROOT on Linux:
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo dpkg --install root_5.34.07-1_amd64.deb && source /usr/local/bin/thisroot.sh; fi
 
   # Install package dependencies for Mac OS X:
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew unlink cmake; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb homebrew/science/root; fi
   # Install numpy via pip:
   - if [ $TRAVIS_OS_NAME == osx ]; then easy_install pip && pip install numpy; fi
 
 before_script:
-  # We want to compile with g++4.8 rather than the default g++
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
-  - if [ $TRAVIS_OS_NAME == linux ] && [ "$CXX" = "g++" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90; fi
-
+  
   # For Mac OS X we still need to source the root environment:
   - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
+
+  - $CXX --version
+  - $CC --version
 
   - cd build
 
 script:
-  - cmake ..
+  - cmake -DBUILD_onlinemon=ON ..
   - make install
 

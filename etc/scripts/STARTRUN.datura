@@ -1,8 +1,6 @@
 #!/bin/sh
-
 export RCPORT=44000
-export HOSTIP=192.168.2.5
-export TLUIP=192.168.2.5
+export HOSTIP=192.168.21.1
 
 [ "$1" != "" ] && RCPORT=$1
 
@@ -22,48 +20,55 @@ printf '\033[22;31m\t End of killall \033[0m \n'
 sleep 1
 
 ######################################################################
-printf '\033[22;33m\t Making sure all data files are properly writeprotected \033[0m \n'
-chmod a=rw data/run*.raw
-printf '\033[22;32m\t ...Done!\033[0m \n'
+#printf '\033[22;33m\t Making sure all data files are properly writeprotected \033[0m \n'
+#chmod a=rw data/run*.raw
+#printf '\033[22;32m\t ...Done!\033[0m \n'
+
 cd bin
+
 ######################################################################
 #printf '\033[22;33m\t Making sure TLU is accessible  \033[0m \n'
 #./tlunoroot.exe
 #sleep 1
+
 ######################################################################
 #=====================================================================
 printf '\033[22;33m\t Starting Subprocesses \033[0m \n'
 #=====================================================================
+
 ######################################################################
 # euRun
 ###############
 printf '\033[22;33m\t RunControl \033[0m \n'
 ./euRun.exe -x 0 -y 0 -w 650 -g 550 -a tcp://$RCPORT &
-sleep 1
+sleep 2
+
 ######################################################################
 # euLog
 ###############
 printf '\033[22;33m\t Logger  \033[0m \n'
 ./euLog.exe -x 0 -y 550 -w 1500 -g 450 -r tcp://$HOSTIP:44000 &
-sleep 1
+sleep 2
 ######################################################################
 # DataCollector
 ###############
 printf '\033[22;33m\t TestDataCollector \033[0m \n'
 xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
-sleep 1
+sleep 2
+
 ######################################################################
 # NI Producer
 ###############
-printf '\033[22;33m\t  NiProducer for linux  \033[0m \n'
-xterm -sb -sl 1000 -geom 80x10-480-700 -T 'Ni Producer for Linux' -e './NiProducer.exe -r tcp://$HOSTIP:$RCPORT' &
-sleep 1
+#printf '\033[22;33m\t  NiProducer for linux  \033[0m \n'
+#xterm -sb -sl 1000 -geom 80x10-480-700 -T 'Ni Producer for Linux' -e './NiProducer.exe -r tcp://$HOSTIP:$RCPORT' &
+#sleep 1
 ######################################################################
 # TLU producer
 ###############
-printf '\033[22;33m\t  TLUProducer  \033[0m \n'
-xterm -sb -sl 1000 -geom 80x10-480-500 -T 'TLU Producer' -e './TLUProducer.exe -r tcp://$TLUIP:$RCPORT' &
-sleep 1
+#printf '\033[22;33m\t  TLUProducer  \033[0m \n'
+#xterm -sb -sl 1000 -geom 80x10-480-500 -T 'TLU Producer' -e './TLUProducer.exe -r tcp://$TLUIP:$RCPORT' &
+#sleep 1
+
 #####################################################################
 ######################################################################
 # Online Monitor
@@ -73,6 +78,8 @@ printf '\033[22;33m\t  Online Monitor  \033[0m \n'
 #sleep 1
 #####################################################################
 
+
+printf '\033[22;33m\t  Please start the NiProducer and the TLUProducer on the NI crate  \033[0m \n'
 
 printf ' \n'
 printf ' \n'

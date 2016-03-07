@@ -12,49 +12,43 @@
 #include "TGraphSet.hh"
 #include <TLegend.h>
 
-
-
 class TGWindow;
 class TGMainFrame;
 class TRootEmbeddedCanvas;
 
-
 class GraphWindow : public TGMainFrame {
-  protected:
-    TGHorizontalFrame *Hfrm_Graph;
-    TGHorizontalFrame *Hfrm_Slider;
+protected:
+  TGHorizontalFrame *Hfrm_Graph;
+  TGHorizontalFrame *Hfrm_Slider;
 
-    TRootEmbeddedCanvas *ECvs_Graph;
+  TRootEmbeddedCanvas *ECvs_Graph;
 
-    TGDoubleHSlider *TimeSlider;
-    TGDoubleVSlider *GraphSlider;
+  TGDoubleHSlider *TimeSlider;
+  TGDoubleVSlider *GraphSlider;
 
-    TGraph *graph;
+  TGraph *graph;
 
-    TGStatusBar *fStatusBar;
-    TGraphSet* set;
-    TLegend *leg;
+  TGStatusBar *fStatusBar;
+  TGraphSet *set;
+  TLegend *leg;
 
-    float TimeSliderMin, TimeSliderMax;
-    float GraphSliderMin, GraphSliderMax;
+  float TimeSliderMin, TimeSliderMax;
+  float GraphSliderMin, GraphSliderMax;
 
-  public:
-    GraphWindow(const TGWindow *p, UInt_t w, UInt_t h);
-    virtual ~GraphWindow();
-    void Update(bool firsttime=false);
-    void DoSlider();
-    void Selected(Int_t event, Int_t x, Int_t y, TObject* selected);
-    TLegend * getLegend() { return leg; }
+public:
+  GraphWindow(const TGWindow *p, UInt_t w, UInt_t h);
+  virtual ~GraphWindow();
+  void Update(bool firsttime = false);
+  void DoSlider();
+  void Selected(Int_t event, Int_t x, Int_t y, TObject *selected);
+  TLegend *getLegend() { return leg; }
 
-    TCanvas * GetCanvas();
-    void SetTGraphSet(TGraphSet *s) { set = s; } 
-
+  TCanvas *GetCanvas();
+  void SetTGraphSet(TGraphSet *s) { set = s; }
 };
 
 #ifndef __CINT__
-#pragma link C++ class GraphWindow-;
+#pragma link C++ class GraphWindow - ;
 #endif
-
-
 
 #endif
