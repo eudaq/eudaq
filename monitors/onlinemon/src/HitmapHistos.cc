@@ -117,7 +117,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor* mon): _sensor(p.g
 
     sprintf(out,"%s %i Clustersize",_sensor.c_str(), _id);
     sprintf(out2,"h_clustersize_%s_%i",_sensor.c_str(), _id);
-    _clusterSize= new TH1I(out2, out,10,0,10);
+    _clusterSize= new TH1I(out2, out,51,-0.5,50.5);
     SetHistoAxisLabelx(_clusterSize,"Cluster Size");
 
     sprintf(out,"%s %i Number of Hits",_sensor.c_str(), _id);
