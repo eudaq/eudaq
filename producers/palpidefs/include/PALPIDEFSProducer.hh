@@ -64,6 +64,7 @@ public:
     return m_queue.size();
   }
 
+
   static void *LoopWrapper(void *arg);
 
   TDAQBoard *GetDAQBoard() { return m_daq_board; }
@@ -179,7 +180,7 @@ public:
         m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
         m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
         m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
-        m_ignore_trigger_ids(true), m_recover_outofsync(true),
+        m_full_config_v3(), m_ignore_trigger_ids(true), m_recover_outofsync(true),
         m_readout_mode(0), m_chip_type(0x0), m_strobe_length(0x0),
         m_strobeb_length(0x0), m_trigger_delay(0x0), m_readout_delay(0x0),
         m_monitor_PSU(false), m_back_bias_voltage(-1), m_dut_pos(-1.),
@@ -253,6 +254,7 @@ protected:
   int m_status_interval;
   std::string m_full_config_v1;
   std::string m_full_config_v2;
+  std::string m_full_config_v3;
   bool m_ignore_trigger_ids;
   bool m_recover_outofsync;
   bool m_readout_mode;

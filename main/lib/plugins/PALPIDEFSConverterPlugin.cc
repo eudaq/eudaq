@@ -69,6 +69,8 @@ namespace eudaq {
     DT_DATALONG,
     DT_BUSYON,
     DT_BUSYOFF,
+    DT_COMMA,
+    DT_EMPTYFRAME,
     DT_UNKNOWN
   };
 
@@ -82,11 +84,10 @@ namespace eudaq {
     // Take specific run data or configuration data from BORE
     virtual void Initialize(const Event &bore,
                             const Configuration & /*cnf*/) { // GetConfig
-
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
 
-      m_DataVersion = bore.GetTag<int>("DataVersion", 1);
+      m_DataVersion = bore.GetTag<int>("DataVersion", 2);
       m_BackBiasVoltage = bore.GetTag<float>("BackBiasVoltage", -4.);
       m_dut_pos = bore.GetTag<float>("DUTposition", -100.);
       cout << "Place of telescope:\t" << m_dut_pos << endl;
@@ -104,11 +105,14 @@ namespace eudaq {
 
       m_chip_type = new int[m_nLayers];
       m_Vaux = new int[m_nLayers];
-      m_Vreset = new int[m_nLayers];
+      m_VresetP = new int[m_nLayers];
+      m_VresetD = new int[m_nLayers];
       m_Vcasn = new int[m_nLayers];
       m_Vcasp = new int[m_nLayers];
       m_Idb = new int[m_nLayers];
       m_Ithr = new int[m_nLayers];
+      m_Vcasn2 = new int[m_nLayers];
+      m_Vclip = new int[m_nLayers];
       m_strobe_length = new int[m_nLayers];
       m_strobeb_length = new int[m_nLayers];
       m_trigger_delay = new int[m_nLayers];
@@ -130,21 +134,7 @@ namespace eudaq {
         std::string config = bore.GetTag<std::string>(tmp, "");
         // cout << "Config of layer " << i << " is: " << config.c_str() << endl;
         m_configs[i] = config;
-#if USE_TINYXML
-        m_Vaux[i] = ParseXML(config, 6, 0, 0, 0);
-        m_Vreset[i] = ParseXML(config, 6, 0, 0, 8);
-        m_Vcasn[i] = ParseXML(config, 6, 0, 1, 0);
-        m_Vcasp[i] = ParseXML(config, 6, 0, 1, 8);
-        m_Idb[i] = ParseXML(config, 6, 0, 4, 8);
-        m_Ithr[i] = ParseXML(config, 6, 0, 5, 0);
-#else
-        m_Vaux[i] = -10;
-        m_Vreset[i] = -10;
-        m_Vcasn[i] = -10;
-        m_Vcasp[i] = -10;
-        m_Idb[i] = -10;
-        m_Ithr[i] = -10;
-#endif
+        
         sprintf(tmp, "ChipType_%d", i);
         m_chip_type[i] = bore.GetTag<int>(tmp, 1);
         sprintf(tmp, "StrobeLength_%d", i);
@@ -159,6 +149,41 @@ namespace eudaq {
         sprintf(tmp, "SCS_%d", i);
         m_do_SCS[i] = (bool)bore.GetTag<int>(tmp, 0);
 
+#if USE_TINYXML
+        if (m_chip_type[i] == 3){
+          m_Vaux[i] = -10;
+          m_VresetP[i] = ParseXML(config, 6, 0, 1, 0);
+          m_VresetD[i] = ParseXML(config, 6, 0, 2, 0);
+          m_Vcasn[i] = ParseXML(config, 6, 0, 4, 0);
+          m_Vcasp[i] = ParseXML(config, 6, 0, 3, 0);
+          m_Vcasn2[i] = ParseXML(config, 6, 0, 7, 0);
+          m_Vclip[i] = ParseXML(config, 6, 0, 8, 0);
+          m_Idb[i] = ParseXML(config, 6, 0, 12, 0);
+          m_Ithr[i] = ParseXML(config, 6, 0, 14, 0);
+        } else {
+          m_Vaux[i] = ParseXML(config, 6, 0, 0, 0);
+          m_VresetP[i] = ParseXML(config, 6, 0, 0, 8);
+          m_Vcasn[i] = ParseXML(config, 6, 0, 1, 0);
+          m_Vcasp[i] = ParseXML(config, 6, 0, 1, 8);
+          m_Idb[i] = ParseXML(config, 6, 0, 4, 8);
+          m_Ithr[i] = ParseXML(config, 6, 0, 5, 0);
+          m_VresetD[i] = -10;
+          m_Vclip[i] = -10;
+          m_Vcasn2[i] = -10;
+        }
+#else
+        m_Vaux[i] = -10;
+        m_VresetP[i] = -10;
+        m_VresetD[i] = -10;
+        m_Vcasn[i] = -10;
+        m_Vcasp[i] = -10;
+        m_Vclip[i] = -10;
+        m_Idb[i] = -10;
+        m_Ithr[i] = -10;
+        m_Vcasn2[i] = -10;
+        m_Vclip[i] = -10;
+#endif
+
         if (m_do_SCS[i]) {
           m_SCS_data[i] =
               &(dynamic_cast<const RawDataEvent *>(&bore))->GetBlock(2 * i);
@@ -167,7 +192,7 @@ namespace eudaq {
           if (!analyse_threshold_scan(
                   m_SCS_data[i]->data(), m_SCS_points[i]->data(), &m_SCS_thr[i],
                   &m_SCS_thr_rms[i], &m_SCS_noise[i], &m_SCS_noise_rms[i],
-                  SCS_steps, m_SCS_n_events)) {
+                  SCS_steps, m_SCS_n_events, m_chip_type[i] == 3 ? 8 : 4)) {
             std::cout << std::endl;
             std::cout << "Results of the failed S-Curve scan in ADC counts"
                       << std::endl;
@@ -199,12 +224,16 @@ namespace eudaq {
         ofstream maskedPixelFile(tmp);
         maskedPixelFile << pixels;
 
+
         // firmware version
         sprintf(tmp, "FirmwareVersion_%d", i);
         std::string version = bore.GetTag<std::string>(tmp, "");
         cout << "Firmware version on layer " << i << " is: " << version.c_str()
              << endl;
       }
+      char tmp[100];
+      sprintf(tmp, "run%06d-temperature.txt", bore.GetRunNumber());
+      m_temperatureFile = new ofstream(tmp);
     }
     //##############################################################################
     ///////////////////////////////////////
@@ -226,10 +255,6 @@ namespace eudaq {
               id_l |= data[4 + i] << 8 * i;
               id_h |= data[8 + i] << 8 * i;
             }
-            // std::cout << std::hex << id_l << std::dec << " " << id_l
-            // <<std::endl;
-            // std::cout << std::hex << id_h << std::dec << " " << id_h
-            // <<std::endl;
             uint64_t trig_id = (id_h << 24 | id_l);
             if (trig_offset == (unsigned)-1) {
               trig_offset = trig_id;
@@ -259,13 +284,22 @@ namespace eudaq {
                            unsigned int &pos, int &current_layer,
                            bool *layers_found, uint64_t *trigger_ids,
                            uint64_t *timestamps) const {
-      if (data[pos++] != 0xff) {
+      if (data[pos++] != 0xff && data[pos-1] != 0x4 ) {
         cout << "ERROR: Event " << ev.GetEventNumber()
              << " Unexpected. Next byte not 0xff but "
              << (unsigned int)data[pos - 1] << endl;
         return false;
-      }
-      current_layer = data[pos++];
+      } //We wanted to use data even there was no 0xff in the begining of the layer data for layer 4 it happened for pALPIDE3 first runs.
+      //Not very strict, but it's better than not using it..
+     if (data[pos-1] == 0xff) current_layer = data[pos++]; 
+     else if (data[pos-1] == 0x4) current_layer = data[pos-1]; 
+ 
+
+/*      if (data[pos++] == 0xff) {
+        current_layer = data[pos++];
+      } else current_layer = data[pos -1];
+      */
+
       while ((current_layer == 0xff) && (pos + 1 < data.size())) {
         // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data
         // stream
@@ -340,7 +374,11 @@ namespace eudaq {
         return DecodeAlpide2Data(ev, sev, data, pos, planes, current_layer,
                                  current_rgn, last_rgn, last_pixeladdr,
                                  last_doublecolumnaddr);
-      } else
+      } else if (m_chip_type[current_layer] == 3) {
+        return DecodeAlpide3Data(ev, sev, data, pos, planes, current_layer,
+                                 current_rgn, last_rgn, last_pixeladdr,
+                                 last_doublecolumnaddr);
+      } else 
         return false;
     }
 
@@ -436,13 +474,14 @@ namespace eudaq {
         return DT_CHIPTRAILER;
       else if ((DataWord & 0xe0) == 0xc0)
         return DT_REGHEADER;
-      else if ((DataWord & 0xc0) == 0)
+      else if ((DataWord & 0xc0) == 0x0)
         return DT_DATASHORT;
       else if ((DataWord & 0xc0) == 0x40)
         return DT_DATALONG;
       else
         return DT_UNKNOWN;
     }
+
 
     bool DecodeAlpide2RegionHeader(const char Data, int &Region) const {
       int NewRegion = Data & 0x1f;
@@ -648,6 +687,263 @@ namespace eudaq {
       return true;
     }
 
+    /////////////////////////////////////////////////////
+    ////                                          ////
+    ////            pALPIDE3 converter            ////
+    ////                                          ////
+    //////////////////////////////////////////////////
+    
+    bool DecodeAlpide3RegionHeader(const char Data, int &Region) const {
+      int NewRegion = Data & 0x1f;
+      if (NewRegion <= Region) {
+        std::cout << "Corrupt region header, expected region " << Region + 1
+                  << ", found " << NewRegion << std::endl;
+        return false;
+      } else {
+        Region = NewRegion;
+        return true;
+      }
+    }
+
+    bool DecodeAlpide3ChipHeader(vector<unsigned char>::iterator Data, int ChipId) const {
+
+      int16_t header = (((int16_t) *Data) << 8) + *(Data+1);
+//      std::cout << "Header : " << std::hex << header << std::dec << std::endl;
+      
+      if (CheckAlpide3DataType((unsigned char)*Data) != DT_CHIPHEADER) {
+        std::cout << "Error, data word 0x" << std::hex << header << std::dec
+                  << " is no chip header" << std::endl;
+        return false;
+      }
+      int FoundChipId = header & 0xf00;
+
+//      std::cout << "FoundChipId in header : " << FoundChipId << std::endl;
+//      int FoundChipId = Data & 0xf;
+      if (FoundChipId != (ChipId & 0xf00)) {
+        std::cout << "Error, found wrong chip ID " << FoundChipId
+                  << " in header." << std::endl;
+        return false;
+      }
+      return true;
+    }
+
+    bool DecodeAlpide3DataWord(const Event &ev, vector<unsigned char> Data,
+                               int pos, int current_layer, int Region,
+                               StandardPlane **planes, bool Long, int &last_rgn,
+                               int &last_pixeladdr,
+                               int &last_doublecolumnaddr) const {
+      int ClusterSize;
+      int DoubleCol;
+      int Pixel;
+      int16_t data_field = (((int16_t)Data[pos]) << 8) + Data[pos + 1];
+
+      DoubleCol = (data_field & 0x3c00) >> 10;
+      Pixel = (data_field & 0x03ff);
+
+      // consistency check
+      if (Region <= last_rgn && DoubleCol <= last_doublecolumnaddr &&
+          Pixel <= last_pixeladdr) {
+        cout << "ERROR: Event " << ev.GetEventNumber() << " layer "
+             << current_layer << ". ";
+        if (Region == last_rgn && DoubleCol == last_doublecolumnaddr &&
+            Pixel == last_pixeladdr)
+          cout << "Pixel duplicated. ";
+        else {
+          cout << "Strict ordering violated. ";
+          // sev.SetFlags(Event::FLAG_BROKEN);  -> return false, set flag
+          // outside...
+        }
+        cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr
+             << "/" << last_pixeladdr << " current: " << Region << "/"
+             << DoubleCol << "/" << Pixel << endl;
+      }
+      last_rgn = Region;
+      last_pixeladdr = Pixel;
+      last_doublecolumnaddr = DoubleCol;
+
+      if (Long) {
+        ClusterSize = 7;
+      } else {
+        ClusterSize = 0;
+      }
+
+      for (int i = 0; i <= ClusterSize; i++) {
+        if ((i > 0) && ((Data[2] >> (i-1)) & 0x1)) continue;
+        unsigned short current_pixel = Pixel + i;
+        unsigned int x = Region * 32 + DoubleCol * 2;
+        unsigned int lr = ((((current_pixel % 4) == 1) || ((current_pixel %4) == 2))? 1:0);
+        x += lr;
+        unsigned int y = current_pixel/2;
+
+        planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+#ifdef MYDEBUG
+        cout << "Added pixel to layer " << current_layer << " with x = " << x
+             << " and y = " << y << endl;
+#endif
+      }
+      return true;
+    }
+
+    bool DecodeAlpide3ChipTrailer(vector<unsigned char>::iterator Data, int ChipId) const {
+      int16_t trailer = (((int16_t) *Data) << 8) + *(Data+1);
+      if (CheckAlpide3DataType((unsigned char)*Data) != DT_CHIPTRAILER) {
+        std::cout << "Error, data word 0x" << std::hex << (int)*Data << std::dec
+                  << " is no chip trailer" << std::endl;
+        return false;
+      }
+      if (CheckAlpide3DataType((unsigned char)*(Data+1)) != DT_IDLE) {
+        std::cout << "Warning, second byte of trailer not idle" << std::endl;
+      }
+      if (trailer & 0xf00) {
+        std::cout << "Warning, readout flags not 0. Found " << (trailer & 0x800 ? "BUSY_VIOLATION ":"")
+                                                            << (trailer & 0x400 ? "FLUSHED_INCOMPLETE ":"")
+                                                            << (trailer & 0x200 ? "FATAL ":"")
+                                                            << (trailer & 0x100 ? "BUSY_TRANSITION":"")
+                                                            << std::endl;
+      }
+      int FoundChipId = trailer & 0xf00;
+      if (FoundChipId != (ChipId & 0xf))  {
+        std::cout << "Error, found wrong chip ID " << FoundChipId
+                  << " in trailer." << std::endl;
+        return false;
+      }
+      return true;
+    }
+
+    bool DecodeAlpide3Data(const Event &ev, StandardEvent &sev,
+                           vector<unsigned char> data, unsigned int &byte,
+                           StandardPlane **planes, int &current_layer,
+                           int &current_region, int &last_rgn,
+                           int &last_pixeladdr,
+                           int &last_doublecolumnaddr) const {
+      int chip = 0; // to be fixed!
+      bool started =
+          false;          // event has started, i.e. chip header has been found
+      bool ended = false; // trailer has been found
+      TDataType type;
+
+      while ((byte + 1 < data.size()) && (!ended)) {
+        type = CheckAlpide3DataType(data[byte]);
+        switch (type) {
+        case DT_IDLE:
+          byte += 1;
+          break;
+        case DT_COMMA:
+          byte += 1;
+          break;
+        case DT_BUSYON:
+          byte += 1;
+          break;
+        case DT_BUSYOFF:
+          byte += 1;
+          break;
+        case DT_EMPTYFRAME:
+          started = false;
+          ended = true;
+          byte += 3;
+          break;
+        case DT_CHIPHEADER:
+          started = true;
+          if (!DecodeAlpide3ChipHeader(data.begin() + byte, chip))
+            return false;
+          byte += 2;
+          break;
+        case DT_CHIPTRAILER:
+          if (!started) {
+            std::cout << "Error, chip trailer found before chip header"
+                      << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide3ChipTrailer(data.begin() + byte, chip)) return false;
+          started = false;
+          ended = true;
+          byte += 2;
+          break;
+        case DT_REGHEADER:
+          if (!started) {
+            std::cout << "Error, region header found before chip header or "
+                         "after chip trailer" << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide3RegionHeader(data[byte], current_region))
+            return false;
+          byte += 1;
+          break;
+        case DT_DATASHORT:
+          if (!started) {
+            std::cout << "Error, hit data found before chip header or after "
+                         "chip trailer, offending word = " << std::hex
+                      << (int)data[byte] << std::dec << ", byte = " << byte
+                      << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide3DataWord(ev, data, byte, current_layer,
+                                     current_region, planes, false, last_rgn,
+                                     last_pixeladdr, last_doublecolumnaddr))
+            return false;
+          byte += 2;
+          break;
+        case DT_DATALONG:
+          if (!started) {
+            std::cout << "Error, hit data found before chip header or after "
+                         "chip trailer, offending word = " << std::hex
+                      << (int)data[byte] << std::dec << ", byte = " << byte
+                      << std::endl;
+            return false;
+          }
+          if (!DecodeAlpide3DataWord(ev, data, byte, current_layer,
+                                     current_region, planes, true, last_rgn,
+                                     last_pixeladdr, last_doublecolumnaddr))
+            return false;
+          byte += 3;
+          break;
+        default:
+          if (started)
+            std::cout << "Error, found unexpected data after the chip header!"
+                      << std::endl;
+          // else         std::cout << "Error, unrecognized data words found
+          // before the chip header!" << std::endl;
+          byte += 1; // skip this byte
+          break;
+        }
+      }
+      if (started) {
+        std::cout << "Warning, event not finished at end of data" << std::endl;
+      }
+
+      return true;
+    }
+    
+    
+    // Warning: the data type is not unambiguous if called with byte of a
+    // dataword,
+    // which is not the most significant byte (in case of DATA SHORT or DATA
+    // LONG)
+    TDataType CheckAlpide3DataType(unsigned char DataWord) const {
+      if (DataWord == 0xff)
+        return DT_IDLE;
+      else if (DataWord == 0xb9)
+        return DT_COMMA;
+      else if (DataWord == 0xf1)
+        return DT_BUSYON;
+      else if (DataWord == 0xf0)
+        return DT_BUSYOFF;
+      else if ((DataWord & 0xf0) == 0xa0)
+        return DT_CHIPHEADER;
+      else if ((DataWord & 0xf0) == 0xb0)
+        return DT_CHIPTRAILER;
+      else if ((DataWord & 0xf0) == 0xe0)
+        return DT_EMPTYFRAME;
+      else if ((DataWord & 0xe0) == 0xc0)
+        return DT_REGHEADER;
+      else if ((DataWord & 0xc0) == 0x40)
+        return DT_DATASHORT;
+      else if ((DataWord & 0xc0) == 0x0)
+        return DT_DATALONG;
+      else
+        return DT_UNKNOWN;
+    }
+
     ///////////////////////////////////////
     // STANDARD SUBEVENT
     ///////////////////////////////////////
@@ -697,16 +993,18 @@ namespace eudaq {
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) { // is status event
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
+#endif 
         for (int id = 0; id < m_nLayers; id++) {
           vector<unsigned char> data = rev->GetBlock(id);
           if (data.size() == 4) {
             float temp = 0;
             for (int i = 0; i < 4; i++)
               ((unsigned char *)(&temp))[i] = data[i];
-            cout << "T (layer " << id << ") is: " << temp << endl;
+//              *m_temperatureFile << "Layer "<< id << " Temp is : " << temp - 273.15 << endl;
+//            cout << "T (layer " << id << ") is: " << temp << endl;
           }
         }
-#endif
+// #endif //Original Status Event
         sev.SetFlags(Event::FLAG_STATUS);
       } else { // is real event
         // Conversion
@@ -784,7 +1082,11 @@ namespace eudaq {
               last_doublecolumnaddr = -1;
 
             } else {
-              int startpos = pos;
+ /*             int startpos = pos;
+              cout << endl << "DECODEDATA START POS : " << pos << endl;
+              cout << "Decode DATA CURRENT REGION = " << current_rgn << "  Decode DATA last rgn " << last_rgn << endl;
+
+              std::cout << current_layer << " and chip type : " << m_chip_type[current_layer] << std::endl; */
               if (!DecodeChipData(ev, sev, data, pos, planes, current_layer,
                                   current_rgn, last_rgn, last_pixeladdr,
                                   last_doublecolumnaddr)) {
@@ -793,6 +1095,9 @@ namespace eudaq {
               }
               if (current_rgn == 31)
                 current_layer = -1;
+              if (current_layer ==3 )
+                current_layer = -1;
+              // Maybe have to think how to check data stream length!
             } // else (i.e. current layer != -1)
           }   // while (pos+1 < data.size())
 
@@ -880,8 +1185,10 @@ namespace eudaq {
       for (int id = 0; id < m_nLayers; id++) {
         snprintf(tmp, n_bs, "Vaux_%d", id);
         lev.parameters().setValue(tmp, m_Vaux[id]);
-        snprintf(tmp, n_bs, "Vreset_%d", id);
-        lev.parameters().setValue(tmp, m_Vreset[id]);
+        snprintf(tmp, n_bs, "VresetP_%d", id);
+        lev.parameters().setValue(tmp, m_VresetP[id]);
+        snprintf(tmp, n_bs, "VresetD_%d", id);
+        lev.parameters().setValue(tmp, m_VresetD[id]);
         snprintf(tmp, n_bs, "Vcasn_%d", id);
         lev.parameters().setValue(tmp, m_Vcasn[id]);
         snprintf(tmp, n_bs, "Vcasp_%d", id);
@@ -890,6 +1197,10 @@ namespace eudaq {
         lev.parameters().setValue(tmp, m_Idb[id]);
         snprintf(tmp, n_bs, "Ithr_%d", id);
         lev.parameters().setValue(tmp, m_Ithr[id]);
+        snprintf(tmp, n_bs, "Vcasn2_%d", id);
+        lev.parameters().setValue(tmp, m_Vcasn2[id]);
+        snprintf(tmp, n_bs, "Vclip_%d", id);
+        lev.parameters().setValue(tmp, m_Vclip[id]);
         snprintf(tmp, n_bs, "m_strobe_length_%d", id);
         lev.parameters().setValue(tmp, m_strobe_length[id]);
         snprintf(tmp, n_bs, "m_strobeb_length_%d", id);
@@ -898,8 +1209,9 @@ namespace eudaq {
         lev.parameters().setValue(tmp, m_trigger_delay[id]);
         snprintf(tmp, n_bs, "m_readout_delay_%d", id);
         lev.parameters().setValue(tmp, m_readout_delay[id]);
+        int nSectors = (m_chip_type[id] == 3 ? 8 : 4);
         if (m_do_SCS[id]) {
-          for (int i_sector = 0; i_sector < 4; ++i_sector) {
+          for (int i_sector = 0; i_sector < nSectors; ++i_sector) {
             snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
             lev.parameters().setValue(tmp, m_SCS_thr[id][i_sector]);
             snprintf(tmp, n_bs, "ThrRMS_%d_%d", id, i_sector);
@@ -960,11 +1272,15 @@ namespace eudaq {
     std::string *m_configs;
     int *m_chip_type;
     int *m_Vaux;
-    int *m_Vreset;
+    int *m_VresetP;
+    int *m_VresetD;
     int *m_Vcasn;
+    int *m_Vcasn2;
+    int *m_Vclip;
     int *m_Vcasp;
     int *m_Idb;
     int *m_Ithr;
+    vector<vector<float> > m_Temp;
     int *m_strobe_length;
     int *m_strobeb_length;
     int *m_trigger_delay;
@@ -981,6 +1297,8 @@ namespace eudaq {
     float **m_SCS_thr_rms;
     float **m_SCS_noise;
     float **m_SCS_noise_rms;
+    ofstream *m_temperatureFile;
+    
 
 #if USE_TINYXML
     int ParseXML(std::string xml, int base, int rgn, int sub, int begin) {
@@ -1028,7 +1346,7 @@ namespace eudaq {
                                 float **noise_rms,
                                 const unsigned int n_points = 50,
                                 const unsigned int n_events = 50,
-                                const unsigned int n_sectors = 4,
+                                const unsigned int n_sectors = 8,
                                 const unsigned int n_pixels = 512 * 1024) {
       *thr = new float[n_sectors];
       *thr_rms = new float[n_sectors]; // used for the some of squares
@@ -1068,7 +1386,7 @@ namespace eudaq {
 
       for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
         if (data[i_pixel * n_points] != 255) {
-          sector = i_pixel * 4 / 1024 / 512;
+          sector = i_pixel * n_sectors / 1024 / 512;
 
           int i_thr_point = -1;
           for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
@@ -1165,8 +1483,9 @@ namespace eudaq {
     // Member variables should also be initialized to default values here.
     PALPIDEFSConverterPlugin()
         : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2),
-          m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_Vreset(0x0),
-          m_Vcasn(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0),
+          m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_VresetP(0x0),
+          m_Vcasn(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0), m_Vcasn2(0x0),
+          m_Vclip(0x0), m_VresetD(0x0),
           m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
           m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1),
           m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1),
