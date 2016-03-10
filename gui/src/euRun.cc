@@ -124,7 +124,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   viewConn->setModel(&m_run);
   viewConn->setItemDelegate(&m_delegate);
 
-  //cmbConfig->setEditText("default");
+  // cmbConfig->setEditText("default");
   QSize fsize = frameGeometry().size();
   if (geom.x() == -1)
     geom.setX(x());
@@ -139,15 +139,17 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   // else geom.setHeight(geom.height() - MAGIC_NUMBER);
   move(geom.topLeft());
   resize(geom.size());
-    QSettings settings("EUDAQ collaboration", "EUDAQ");
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
 
-    settings.beginGroup("MainWindow");
-    resize(settings.value("size", geom.size()).toSize());
-    move(settings.value("pos", geom.topLeft()).toPoint());
-    lastUsedDirectory = settings.value("lastConfigFileDirectory","../conf").toString();
-    txtConfigFileName->setText(settings.value("lastConfigFile","config file not set").toString());
-    settings.endGroup();
-  
+  settings.beginGroup("MainWindow");
+  resize(settings.value("size", geom.size()).toSize());
+  move(settings.value("pos", geom.topLeft()).toPoint());
+  lastUsedDirectory =
+      settings.value("lastConfigFileDirectory", "").toString();
+  txtConfigFileName->setText(
+      settings.value("lastConfigFile", "config file not set").toString());
+  settings.endGroup();
+
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
           SLOT(ChangeStatus(const QString &, const QString &)));
   connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
@@ -159,6 +161,17 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   txtGeoID->installEventFilter(this);
   setWindowIcon(QIcon("../images/Icon_euRun.png"));
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
+
+  if(txtConfigFileName->text()!="config file not set") {
+   QFile file(txtConfigFileName->text());
+   if(file.exists()){
+     SetState(ST_CONFIGLOADED);
+   } else {
+     SetState(ST_NONE);
+     txtConfigFileName->setText("config file not set");
+   }
+   file.close();
+  }
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
@@ -264,14 +277,14 @@ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
   return false;
 }
 
-RunControlGUI::~RunControlGUI(){
-    QSettings settings("EUDAQ collaboration", "EUDAQ");
-  
-    settings.beginGroup("MainWindow");
-    settings.setValue("size", size());
-    settings.setValue("pos", pos());
-    //settings.setValue("screen", windowHandle()->screen()->screenNumber());
-    settings.setValue("lastConfigFileDirectory",lastUsedDirectory);
-    settings.setValue("lastConfigFile",txtConfigFileName->text());
-    settings.endGroup();
+RunControlGUI::~RunControlGUI() {
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
+
+  settings.beginGroup("MainWindow");
+  settings.setValue("size", size());
+  settings.setValue("pos", pos());
+  // settings.setValue("screen", windowHandle()->screen()->screenNumber());
+  settings.setValue("lastConfigFileDirectory", lastUsedDirectory);
+  settings.setValue("lastConfigFile", txtConfigFileName->text());
+  settings.endGroup();
 }
