@@ -284,10 +284,7 @@ namespace eudaq {
                            unsigned int &pos, unsigned int &data_end, int &current_layer,
                            bool *layers_found, uint64_t *trigger_ids,
                            uint64_t *timestamps) const {
-#ifdef MYDEBUG
-      if (pos==0) cout << "xx\t" << hex                   << (int)data[pos] << '\t' << (int)data[pos+1] << '\t' << (int)data[pos+2] << '\t' << (int)data[pos+3] << dec << endl;
-      else        cout << hex << (int)data[pos-1] << '\t' << (int)data[pos] << '\t' << (int)data[pos+1] << '\t' << (int)data[pos+2] << '\t' << (int)data[pos+3] << dec << endl;
-#endif
+
       if (data[pos++] != 0xff) {
         cout << "ERROR: Event " << ev.GetEventNumber()
              << " Unexpected. Next byte not 0xff but "
@@ -1097,30 +1094,8 @@ namespace eudaq {
               last_pixeladdr = -1;
               last_doublecolumnaddr = -1;
 
-#ifdef MYDEBUG
-              cout << "Decoded region: " << current_rgn << ", last region: " << last_rgn << endl;
-#endif
-
             } else {
               int startpos = pos;
-#ifdef MYDEBUG
-              cout << endl << "DECODEDATA START POS : " << pos << endl;
-              cout << "Decode DATA CURRENT REGION = " << current_rgn << "  Decode DATA last rgn " << last_rgn << endl;
-              cout << "Layer: " << current_layer << " and chip type: " << m_chip_type[current_layer] << endl;
-
-              if (m_DataVersion >= 2) {
-                cout << "Layer data:\t" << hex;
-                for (unsigned int ipos=pos; ipos<data_end+1; ++ipos) {
-                  cout << (unsigned int)data[ipos] << "\t";
-                }
-                cout << dec << endl;
-                cout << hex << "data[data_end-1]..:" << (unsigned int)data[data_end-1]
-                     << '\t' << (unsigned int)data[data_end]
-                     << '\t' << (unsigned int)data[data_end+1]
-                     << '\t' << (unsigned int)data[data_end+2]
-                     << dec << endl;
-              }
-#endif
 
               if (!DecodeChipData(ev, sev, data, pos, data_end, planes, current_layer,
                                   current_rgn, last_rgn, last_pixeladdr,
@@ -1128,9 +1103,7 @@ namespace eudaq {
                 sev.SetFlags(Event::FLAG_BROKEN);
                 break;
               }
-#ifdef MYDEBUG
-              cout << "m_DataVersion " << m_DataVersion << endl;
-#endif
+
               if (m_DataVersion >= 2) { // new data format (>=2)
                 if (pos > data_end+1) { // read more data than expected
                   cout << "ERROR: Data inconsistend, current position " << pos
@@ -1155,9 +1128,6 @@ namespace eudaq {
                   pos = data_end+1; // skip non-decoded data
                   current_layer = -1; // finished decoding a layer
                 }
-#ifdef MYDEBUG
-                cout << "END END END END END END END END END" << endl;
-#endif
               }
               else { // old data format
                 if (current_rgn == 31)
