@@ -21,8 +21,8 @@ int main(int argc, char **argv) {
       "The initial level for displaying log messages");
   eudaq::Option<std::string> file(op, "f", "log-file", "", "filename",
                                   "A log file to load at startup");
-  eudaq::Option<int> x(op, "x", "left", 0, "pos");
-  eudaq::Option<int> y(op, "y", "top", 0, "pos");
+  eudaq::Option<int> x(op, "x", "left", -1, "pos");
+  eudaq::Option<int> y(op, "y", "top", -1, "pos");
   eudaq::Option<int> w(op, "w", "width", 100, "pos");
   eudaq::Option<int> h(op, "g", "height", 100, "pos",
                        "The initial position of the window");

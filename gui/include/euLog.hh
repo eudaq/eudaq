@@ -9,6 +9,7 @@
 #include <QPainter>
 
 #include <iostream>
+#include <QSettings>
 
 // To make Qt behave on OSX (to be checked on other OSes)
 #define MAGIC_NUMBER 22
@@ -55,20 +56,29 @@ public:
       level++;
     }
     cmbLevel->setCurrentIndex(loglevel);
+
+    QRect geom_from_last_program_run;
+    QSettings settings("EUDAQ collaboration", "EUDAQ");
+
+    settings.beginGroup("MainWindowEuLog");
+    geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
+    geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
+    settings.endGroup();
+
     QSize fsize = frameGeometry().size();
-    if (geom.x() == -1)
-      geom.setX(x());
-    if (geom.y() == -1)
+  if ((geom.x() == -1)||(geom.y() == -1)||(geom.width() == -1)||(geom.height() == -1)) {
+    if ((geom_from_last_program_run.x() == -1)||(geom_from_last_program_run.y() == -1)||(geom_from_last_program_run.width() == -1)||(geom_from_last_program_run.height() == -1)) {
+      geom.setX(x()); 
       geom.setY(y());
-    else
-      geom.setY(geom.y() + MAGIC_NUMBER);
-    if (geom.width() == -1)
       geom.setWidth(fsize.width());
-    if (geom.height() == -1)
       geom.setHeight(fsize.height());
-    // else geom.setHeight(geom.height() - MAGIC_NUMBER);
-    move(geom.topLeft());
-    resize(geom.size());
+      move(geom.topLeft());
+      resize(geom.size());
+    } else {
+      move(geom_from_last_program_run.topLeft());
+      resize(geom_from_last_program_run.size());
+    }
+  }
     connect(this, SIGNAL(RecMessage(const eudaq::LogMessage &)), this,
             SLOT(AddMessage(const eudaq::LogMessage &)));
     try {
@@ -78,6 +88,15 @@ public:
       // probably file not found: ignore
     }
     setWindowIcon(QIcon("../images/Icon_euLog.png"));
+  }
+
+  ~LogCollectorGUI(){
+    QSettings settings("EUDAQ collaboration", "EUDAQ");
+    settings.beginGroup("MainWindowEuLog");
+    settings.setValue("size", size());
+    settings.setValue("pos", pos());
+    // settings.setValue("screen", windowHandle()->screen()->screenNumber());
+    settings.endGroup();
   }
 
 protected:
