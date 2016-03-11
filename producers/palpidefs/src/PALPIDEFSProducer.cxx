@@ -71,13 +71,13 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
       int value = 0;
 //	std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
 
-      if (readwrite) {	
+      if (readwrite) {
         if (dut->ReadRegister(address, &value) != 1) {
           std::cout << "Failure to read chip address " << address << std::endl;
           continue;
         }
       }
-	
+
       for (TiXmlNode *valueChild = pChild->FirstChild("value"); valueChild != 0;
            valueChild = valueChild->NextSibling("value")) {
         if (!valueChild->ToElement()->Attribute("begin")) {
@@ -104,9 +104,9 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
         } else {
           int content = (int)strtol(
               valueChild->FirstChild("content")->FirstChild()->Value(), 0, 16);
-	
 
-          
+
+
           if (content >= (1 << width)) {
             std::cout << "value too large: " << begin << " " << width << " "
                       << content << " "
@@ -120,7 +120,7 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
       if (!readwrite) {
 //	      printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
 	      if (dut->WriteRegister(address, value) != 1)
-		      std::cout << "Failure to write chip address " << address << std::endl;   
+		      std::cout << "Failure to write chip address " << address << std::endl;
         int valuecompare = -1;
         if (dut->ReadRegister(address, &valuecompare) != 1)
           std::cout << "Failure to read chip address after writing chip address " << address << std::endl;
@@ -430,8 +430,6 @@ void DeviceReader::Loop() {
       event_waiting = false;
 
     if (!event_waiting) {
-//      std::cout << "No event " << m_daq_board->GetNextEventId() << " " <<
-//        m_last_trigger_id << std::endl;
       // no event waiting
 
       if (IsFlushing()) {
@@ -482,7 +480,6 @@ void DeviceReader::Loop() {
 
       if (HeaderOK && TrailerOK) {
         if (m_debuglevel > 2) {
-//        if (1) {
           std::vector<TPixHit> hits;
 
           if (!m_dut->DecodeEvent(data_buf + 20, length - 28, &hits)) {
@@ -503,8 +500,6 @@ void DeviceReader::Loop() {
           Print(0, str.data(), length);
         }
 
-        // std::cout << (uint64_t) m_daq_board << " " << header.EventId << " "
-        // << header.TimeStamp << std::endl;
         SingleEvent *ev =
           new SingleEvent(length - 28, header.EventId, header.TimeStamp);
         memcpy(ev->m_buffer, data_buf + 20, length - 28);
@@ -858,7 +853,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
     // data taking configuration
     // PrepareEmptyReadout
-    
+
     if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) {
       std::cout << "This is " << dut->GetClassName() << std::endl;
       daq_board->ConfigureReadout(1, true, (m_readout_mode == 1));
@@ -894,7 +889,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_firstevent = true;
   }
 
-  
+
   EUDAQ_INFO("Configured (" + param.Name() + ")");
   SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   {
@@ -1227,15 +1222,15 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   // read configuration, dump to XML string
   for (int i = 0; i < m_nDevices; i++) {
     std::string configstr;
-    
+
     if (m_chip_type[i] == 3) configstr = m_full_config_v3;
     else if (m_chip_type[i] == 2) configstr = m_full_config_v2;
-    
+
     else configstr = m_full_config_v1;
     TiXmlDocument doc(configstr.c_str());
     if (!doc.LoadFile()) {
       std::string msg = "Failed to load config file: ";
-      
+
       if (m_chip_type[i] == 3) msg += m_full_config_v3;
       else msg += (m_chip_type[i] == 2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
@@ -1323,13 +1318,13 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   bore.SetTag("BackBiasVoltage", m_back_bias_voltage);
   bore.SetTag("DUTposition", m_dut_pos);
 
-  //Configuration is done, Read DAC Values and send to log  
+  //Configuration is done, Read DAC Values and send to log
 
   for (int i = 0; i < m_nDevices; i++) {
     TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
     std::cout << "Reading Device:" << i << " ADCs" <<  std::endl;
     daq_board->ReadAllADCs();
-  } 
+  }
 
   SendEvent(bore);
 
@@ -1362,7 +1357,7 @@ void PALPIDEFSProducer::OnStopRun() {
        i++) { // wait until all read transactions are done
     while (m_reader[i]->IsReading())
       eudaq::mSleep(20);
-    
+
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the DAQ board
     m_reader[i]->StopDAQ();
