@@ -197,7 +197,7 @@ bool DeviceReader::ThresholdScan() {
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170 - icharge);
       // std::cout << icharge << " " << std::flush;
       for (int ievt = 0; ievt < m_n_events; ++ievt) {
-        if (!m_test_setup->PulseAndReadEvent(m_boardid, 255,
+        if (!m_test_setup->PulseAndReadEvent(m_boardid, PULSELENGTH_ANALOGUE,
                                              &Hits, 1, &Header)) {
           std::cout << "PulseAndReadEvent failed!" << std::endl;
           return false;
@@ -481,7 +481,7 @@ void DeviceReader::Loop() {
       bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
 
       if (HeaderOK && TrailerOK) {
-                if (m_debuglevel > 2) {
+        if (m_debuglevel > 2) {
 //        if (1) {
           std::vector<TPixHit> hits;
 
