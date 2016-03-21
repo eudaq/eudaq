@@ -18,8 +18,12 @@ namespace eudaq {
     typedef unsigned char byte_t;
     typedef std::vector<byte_t> data_t;
     struct DLLEXPORT block_t : public Serializable {
-      block_t(unsigned id = (unsigned)-1, data_t data = data_t())
+      block_t(unsigned id, const data_t& data)
           : id(id), data(data) {}
+      block_t(unsigned id, data_t&& data)
+	: id(id), data(std::move(data)) {}
+      block_t()
+	: id(-1), data(data_t()) {}
       block_t(Deserializer &);
       void Serialize(Serializer &) const;
       void Append(const data_t &data);
@@ -32,7 +36,7 @@ namespace eudaq {
 
     /// Add an empty block
     size_t AddBlock(unsigned id) {
-      m_blocks.push_back(block_t(id));
+      m_blocks.push_back(block_t(id, data_t()));
       return m_blocks.size() - 1;
     }
 
@@ -76,12 +80,20 @@ namespace eudaq {
     size_t NumBlocks() const { return m_blocks.size(); }
 
     virtual void Print(std::ostream &) const;
-    virtual void Print(std::ostream & ,size_t offset) const;
     static RawDataEvent BORE(std::string type, unsigned run) {
       return RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
     }
+    static RawDataEvent *newBORE(std::string type, unsigned run) {
+
+      return new RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
+    }
     static RawDataEvent EORE(std::string type, unsigned run, unsigned event) {
       return RawDataEvent(type, run, event, Event::FLAG_EORE);
+    }
+    static RawDataEvent *newEORE(std::string type, unsigned run,
+                                 unsigned event) {
+
+      return new RawDataEvent(type, run, event, Event::FLAG_EORE);
     }
     virtual void Serialize(Serializer &) const;
 
@@ -91,9 +103,9 @@ namespace eudaq {
   private:
     // private constructor to create BORE and EORE
     // make sure that event number is 0 for BORE
-    RawDataEvent(std::string type, unsigned run, unsigned event, Event::Flags flag)
-      : Event(run, event, NOTIMESTAMP, flag) ,  m_type(type)
-    {}
+    RawDataEvent(std::string type, unsigned run, unsigned event,
+                 Event::Flags flag)
+        : Event(run, event, NOTIMESTAMP, flag), m_type(type) {}
 
     template <typename T>
     static data_t make_vector(const T *data, size_t bytes) {
