@@ -1,5 +1,5 @@
-#ifndef SCT_PRODUCER_H__
-#define SCT_PRODUCER_H__
+#ifndef ROOT_PRODUCER_H__
+#define ROOT_PRODUCER_H__
 
 #include "RQ_OBJECT.h"
 #include "Rtypes.h"
@@ -14,6 +14,19 @@
 #define DLLEXPORT
 #endif
 
+
+/* #if ((defined WIN32) && (defined __CINT__)) */
+/* typedef unsigned long long uint64_t */
+/* typedef long long int64_t */
+/* typedef unsigned int uint32_t */
+/* typedef int int32_t */
+/* #else */
+/* #include <cstdint> */
+/* #endif */
+
+/* #include <cstdint> */
+
+
 class DLLEXPORT ROOTProducer {
   RQ_OBJECT("ROOTProducer")
 public:
@@ -22,87 +35,70 @@ public:
   ~ROOTProducer();
 
   void Connect2RunControl(const char *name, const char *runcontrol);
-  bool getConnectionStatus();
+  bool isNetConnected();
 
   const char *getProducerName();
 
-  bool ConfigurationSatus();
   int getConfiguration(const char *tag, int DefaultValue);
   int getConfiguration(const char *tag, const char *defaultValue,
                        char *returnBuffer, Int_t sizeOfReturnBuffer);
-  void getConfiguration(const char *tag);
-  void emitConfiguration(const char *answer);
+  /* int getConfiguration(const char *tag); */
 
-  void createNewEvent();
-  void createNewEvent(int);
+  void createNewEvent(unsigned nev);
   void createEOREvent();
+  void addData2Event(unsigned dataid,const std::vector<unsigned char>& data);
+  void addData2Event(unsigned dataid,const unsigned char* data, size_t size);
+  void sendEvent();
+
   void setTimeStamp(ULong64_t TimeStamp);
   void setTimeStamp2Now();
+  
   void setTag(const char *tag, const char *Value);
-  void setTag(const char *tagNameTagValue); // to use the signal slot mechanism
-                                            // use this function.
-                                            // example:
-                                            // setTag("tagName=tagValue");
-                                            // the equal symbol is mandatory.
-  void AddPlane2Event(unsigned Block_id,
-                      const std::vector<unsigned char> &inputVector);
-  void AddPlane2Event(unsigned Block_id, const bool *inputVector,
-                      size_t Elements);
-  void AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK,
-                      bool *evtr_strm0, bool *evtr_strm1);
+  void setTag(const char *tagNameTagValue); //"tag=value"
 
-  void addDataPointer_bool(unsigned Block_id, const bool *inputVector,
-                           size_t Elements);
-  void addDataPointer_UChar_t(unsigned Block_id,
-                              const unsigned char *inputVector,
-                              size_t Elements);
-  void addDataPointer_Uint_t(unsigned Block_id, const unsigned int *inputVector,
-                             size_t Elements);
-  void addDataPointer_ULong64_t(unsigned Block_id,
-                                const unsigned long long *inputVector,
-                                size_t Elements);
 
-  void resetDataPointer();
+  //signal
+  void send_OnStartRun(unsigned);
+  void send_OnConfigure();
+  void send_OnStopRun();
+  void send_OnTerminate();
 
-  void sendEvent();
-  void sendEvent(int);
-
-  // signals
-
-  void send_onStart(int); // sync 	void send_onStart(int RunNumber);
-  void send_onConfigure(); // sync
-  void send_onStop();      // sync
-  void send_OnTerminate(); // sync
-  void send_statusChanged(); // sync
-
-  // status flags
+  
   void checkStatus();
-
-  void setTimeOut(int);
-
-  bool getOnStart();
-  void setOnStart(bool newStat);
-
-  bool getOnConfigure();
-  void setOnconfigure(bool newStat);
-
-  bool getOnStop();
-  void setOnStop(bool newStat);
   void setStatusToStopped();
 
-  bool getOnTerminate();
-  void setOnTerminate(bool newStat);
-
+  //TODO:: remove them, only for test
+  void createNewEvent(int nev){createNewEvent(unsigned(nev));};
+  void addData2Event(int nev, int mid, int len, ULong64_t* ptr){
+    addData2Event((unsigned)mid, reinterpret_cast<unsigned char*>(ptr), 
+		  sizeof(ULong64_t)*(unsigned)len);}
+  void sendEvent(int){sendEvent();};
+  
+  void addDataPointer_bool(unsigned bid, bool* data, size_t size);
+  void addDataPointer_uchar(unsigned bid, unsigned char* data, size_t size);
+  void addDataPointer_ULong64_t(unsigned bid, ULong64_t* data, size_t size);
+  
 private:
+  std::vector<bool*> m_vpoint_bool;
+  std::vector<size_t> m_vsize_bool;
+  std::vector<unsigned> m_vblockid_bool;
+
+  std::vector<unsigned char*> m_vpoint_uchar;
+  std::vector<size_t> m_vsize_uchar;
+  std::vector<unsigned> m_vblockid_uchar;
+
+  
 #ifndef __CINT__
   class Producer_PImpl;
   Producer_PImpl *m_prod;
 #endif
-  ClassDef(ROOTProducer, 1)
+  ClassDef(ROOTProducer, 0)
 };
+
+
 
 #ifdef __CINT__
 #pragma link C++ class ROOTProducer;
 #endif
 
-#endif // SCT_PRODUCER_H__
+#endif // ROOT_PRODUCER_H__
