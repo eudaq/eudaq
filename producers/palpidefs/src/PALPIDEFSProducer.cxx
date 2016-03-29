@@ -21,10 +21,6 @@
 
 #include "config.h"
 
-// #define SIMULATION // don't initialize, send dummy events
-#define LOADSIMULATION // if set simulate continous stream, if not set simulate
-                       // SPS conditions
-
 using eudaq::StringEvent;
 using eudaq::RawDataEvent;
 
@@ -227,10 +223,8 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup *test_setup,
       m_queuefull_delay(100), m_max_queue_size(50 * 1024 * 1024),
       m_high_rate_mode(false), m_n_mask_stages(0), m_n_events(0), m_ch_start(0),
       m_ch_stop(0), m_ch_step(0), m_data(0x0), m_points(0x0) {
-#ifndef SIMULATION
   m_last_trigger_id = m_daq_board->GetNextEventId();
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
-#endif
 }
 
 void DeviceReader::Stop() {
@@ -251,21 +245,17 @@ void DeviceReader::SetRunning(bool running) {
 }
 
 void DeviceReader::StartDAQ() {
-#ifndef SIMULATION
   m_daq_board->StartTrigger();
   m_daq_board->WriteBusyOverrideReg(true);
-#endif
 }
 
 void DeviceReader::StopDAQ() {
-#ifndef SIMULATION
   while (IsReading()) {
     eudaq::mSleep(10);
   }
   m_daq_board->WriteBusyOverrideReg(false);
   eudaq::mSleep(100);
   m_daq_board->StopTrigger();
-#endif
 }
 
 SingleEvent *DeviceReader::NextEvent() {
@@ -347,83 +337,6 @@ void DeviceReader::Loop() {
     if (m_debuglevel > 10)
       eudaq::mSleep(1000);
 
-#ifdef SIMULATION
-#ifdef LOADSIMULATION
-    // simulate constantly events to test max throughput
-
-    // process data
-    m_last_trigger_id++;
-
-    // simulation for missing data in some layers
-    if (m_debuglevel > 10) {
-      if (m_id == 2 && m_last_trigger_id % 2 == 0)
-        continue;
-      if (m_id == 3 && m_last_trigger_id % 3 == 0)
-        continue;
-    }
-
-    int length = 80;
-    SingleEvent *ev = new SingleEvent(length, m_last_trigger_id, 0);
-    for (int i = 0; i < length; ++i) {
-      ev->m_buffer[i] = 0; //(char) std::rand();
-    }
-
-    // add to queue
-    Push(ev);
-
-    // achieve 25 Hz
-    eudaq::mSleep(1000 / 25);
-
-#else  // not LOADSIMULATION
-    // simulate 100 kHz for 2.4s spill, every 20 seconds
-
-    int eventsPerSpill = 240000;
-    if (m_debuglevel > 10)
-      eventsPerSpill = 10;
-    for (int i = 0; i < eventsPerSpill; i++) {
-      const int kPixelsHit = 1;
-      int length = 64 + kPixelsHit * 2;
-      SingleEvent *ev = new SingleEvent(length, m_last_trigger_id++, 0);
-      // empty headers
-      int pos = 0;
-      for (int j = 0; j < 32; ++j) {
-        // "test" pixels are put into region m_id, all others are empty
-        ev->m_buffer[pos++] = (j == m_id) ? kPixelsHit : 0; // length of data
-        ev->m_buffer[pos++] = (j << 3); // region number (5 MSB)
-        if (j == m_id) {
-          short pixeladdr =
-            m_last_trigger_id % (1 << 14); // 14 bits: 10 LSB for pixel id, 4
-          // HSB for double column address
-          char clustering = m_id % 4;
-          pixeladdr |= clustering << 14;
-
-          ev->m_buffer[pos++] = (char)(pixeladdr & 0xff);
-          ev->m_buffer[pos++] = (char)(pixeladdr >> 8);
-        }
-      }
-
-      if (m_debuglevel > 10) {
-        std::string str;
-        for (int j = 0; j < length; j++) {
-          char buffer[20];
-          sprintf(buffer, "%x ", ev->m_buffer[j]);
-          str += buffer;
-        }
-        str += "\n";
-        Print(0, str.data());
-      }
-
-      // add to queue
-      Push(ev);
-
-      if (i % 100 == 0)
-        eudaq::mSleep(1);
-    }
-    Print(0, "One spill simulated.");
-
-    eudaq::mSleep(20000 - 2400);
-#endif // not LOADSIMULATION
-#else  // not SIMULATION
     bool event_waiting = true;
     if (m_readout_mode == 0 && (!m_high_rate_mode || IsFlushing()) &&
         m_daq_board->GetNextEventId() <= m_last_trigger_id + 1)
@@ -537,9 +450,6 @@ void DeviceReader::Loop() {
         Print(0, str.data());
       }
       }
-
-
-#endif
     }
     Print(0, "ThreadRunner stopping...");
   }
@@ -595,11 +505,7 @@ bool DeviceReader::QueueFull() {
 }
 
 float DeviceReader::GetTemperature() {
-#ifndef SIMULATION
   return m_daq_board->GetTemperature();
-#else
-  return 0;
-#endif
 }
 
 void DeviceReader::ParseXML(TiXmlNode *node, int base, int rgn,
@@ -707,7 +613,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (!m_next_event) {
     m_next_event = new SingleEvent *[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
-      m_next_event[i] = 0;
+      m_next_event[i] = 0x0;
     }
   }
   if (!m_chip_type)
@@ -741,7 +647,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     }
   }
 
-#ifndef SIMULATION
   // Set back-bias voltage
   SetBackBiasVoltage(param);
   // Power supply monitoring
@@ -751,9 +656,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
            "${SCRIPT_DIR}/meas-pid.txt");
   }
   // Move the linear stage
-//  ControlLinearStage(param);
+  //ControlLinearStage(param);
   ControlRotaryStages(param);
-#endif
 
   for (int i = 0; i < m_nDevices; i++) {
     const size_t buffer_size = 100;
@@ -791,7 +695,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (!InitialiseTestSetup(param))
     return;
 
-#ifndef SIMULATION
   for (int i = 0; i < m_nDevices; i++) {
     TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
     daq_board->WriteBusyOverrideReg(false);
@@ -880,7 +783,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
     eudaq::mSleep(10);
   }
-#endif
 
   eudaq::mSleep(5000); // TODO remove this again - trying to protect from
                        // starting problems
@@ -906,7 +808,6 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
     const int delay = param.Get("QueueFullDelay", 0);
     const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
 
-#ifndef SIMULATION
     TConfig *config = new TConfig(TYPE_TELESCOPE, m_nDevices);
     char mybuffer[100];
     for (int idev = 0; idev < m_nDevices; idev++) {
@@ -962,19 +863,12 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
     }
 
     m_testsetup->AddDUTs(config);
-#endif
     for (int i = 0; i < m_nDevices; i++) {
       TpAlpidefs *dut = 0;
       TDAQBoard *daq_board = 0;
       const size_t buffer_size = 100;
       char buffer[buffer_size];
 
-#ifdef SIMULATION
-      if (!m_configured) {
-        m_reader[i] = new DeviceReader(i, m_debuglevel, 0x0, 0, daq_board, dut);
-        m_next_event[i] = 0;
-      }
-#else
       if (!m_configured) {
         sprintf(buffer, "BoardAddress_%d", i);
         int board_address = param.Get(buffer, i);
@@ -1038,7 +932,6 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
             << std::endl;
       }
     }
-#endif
   }
   return true;
 }
@@ -1076,7 +969,6 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
 
 bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration &param) {
   bool result = true;
-#ifndef SIMULATION
   bool doScan = false;
   for (int i = 0; i < m_nDevices; i++) {
     if (m_do_SCS[i])
@@ -1125,12 +1017,10 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration &param) {
     SetStatus(eudaq::Status::LVL_ERROR, buffer);
     result = false;
   }
-#endif
   return result;
 }
 
 void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration &param) {
-#ifndef SIMULATION
   m_back_bias_voltage = param.Get("BackBiasVoltage", -1.);
   if (m_back_bias_voltage >= 0.) {
     std::cout << "Setting back-bias voltage..." << std::endl;
@@ -1150,7 +1040,6 @@ void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration &param) {
       std::cout << "Back-bias voltage set!" << std::endl;
     }
   }
-#endif
 }
 
 void PALPIDEFSProducer::ControlRotaryStages(const eudaq::Configuration &param) {
@@ -1164,7 +1053,7 @@ void PALPIDEFSProducer::ControlRotaryStages(const eudaq::Configuration &param) {
   int nsteps1 = (int)(m_dut_angle1/180.*3.14159/(4.091/1e6));
   std::cout << "   nsteps1: " << nsteps1 << std::endl;
 
-  m_dut_angle2 = param.Get("DUTangle2", -1.); 
+  m_dut_angle2 = param.Get("DUTangle2", -1.);
   std::cout << "angle 2: " << m_dut_angle2 << " deg" << std::endl;
 
   int nsteps2 = (int)(m_dut_angle2/180.*3.14159/(4.091/1e6));
@@ -1177,8 +1066,8 @@ void PALPIDEFSProducer::ControlRotaryStages(const eudaq::Configuration &param) {
       // rotate both stages to home position
       //system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")
       //system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 2 1")
-      
-      // rotate stages 
+
+      // rotate stages
       const size_t buffer_size = 100;
       char buffer[buffer_size];
       // rotate stage 1
@@ -1212,7 +1101,6 @@ void PALPIDEFSProducer::ControlRotaryStages(const eudaq::Configuration &param) {
 }
 
 void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
-#ifndef SIMULATION
   // linear stage
   m_dut_pos = param.Get("DUTposition", -1.);
   if (m_dut_pos >= 0.) {
@@ -1237,7 +1125,6 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
       std::cout << "DUT in position!" << std::endl;
     }
   }
-#endif
 }
 
 void PALPIDEFSProducer::OnStartRun(unsigned param) {
@@ -1271,9 +1158,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   bore.SetTag("DataVersion", 2);
 
   // driver version
-#ifndef SIMULATION
   bore.SetTag("Driver_GITVersion", m_testsetup->GetGITVersion());
-#endif
   bore.SetTag("EUDAQ_GITVersion", PACKAGE_VERSION);
 
   std::vector<char> SCS_data_block;
@@ -1298,11 +1183,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
       return;
     }
-#ifndef SIMULATION
 	std::cout << "PARSEXML READTRUE" << std::endl;
     m_reader[i]->ParseXML(doc.FirstChild("root")->ToElement(), -1, -1, true);
 
-#endif
     std::string configStr;
     configStr << doc;
 
@@ -1311,7 +1194,6 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     bore.SetTag(tmp, configStr);
 
     // store masked pixels
-#ifndef SIMULATION
     const std::vector<TPixHit> pixels = m_reader[i]->GetDUT()->GetNoisyPixels();
 
     std::string pixelStr;
@@ -1328,7 +1210,6 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     // firmware version
     sprintf(tmp, "FirmwareVersion_%d", i);
     bore.SetTag(tmp, m_reader[i]->GetDAQBoard()->GetFirmwareName());
-#endif
 
     sprintf(tmp, "ChipType_%d", i);
     bore.SetTag(tmp, m_chip_type[i]);
