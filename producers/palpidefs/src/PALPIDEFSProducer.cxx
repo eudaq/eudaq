@@ -338,23 +338,35 @@ void DeviceReader::Loop() {
 
     // no event waiting
 
+
+    const int maxDataLength =
+        258 * 2 * 32 + 28; // 256 words per region, region header (2 words) per
+    // region, header (20 bytes), trailer (8 bytes)
+    unsigned char data_buf[maxDataLength];
+    int length = -1;
+    TEventHeader header;
+
     if (IsFlushing()) {
       SimpleLock lock(m_mutex);
+
+      // read events left in the queue of the DAQ board
+      while (m_daq_board->GetNextEventId() > m_last_trigger_id) {
+        m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
+        if (length==0) break; // end-of-readout package => stop
+        bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
+        bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8, &header);
+
+        m_last_trigger_id = header.EventId;
+      }
+
       m_flushing = false;
       Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(),
             m_last_trigger_id);
     }
 
     // data taking
-    const int maxDataLength =
-      258 * 2 * 32 + 28; // 256 words per region, region header (2 words) per
-    // region, header (20 bytes), trailer (8 bytes)
-    unsigned char data_buf[maxDataLength];
-    int length = -1;
-
     SetReading(true);
-    bool readEvent = m_daq_board->ReadChipEvent(
-        data_buf, &length, maxDataLength);
+    bool readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
 
     SetReading(false);
 
@@ -376,16 +388,14 @@ void DeviceReader::Loop() {
         continue;
       }
 
-      TEventHeader header;
-
       bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
-      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8);
+      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8, &header);
 
       if (HeaderOK && TrailerOK) {
         if (m_debuglevel > 2) {
           std::vector<TPixHit> hits;
 
-          if (!m_dut->DecodeEvent(data_buf + 20, length - 28, &hits)) {
+          if (!m_dut->DecodeEvent(data_buf + 36, length - 36 - 8, &hits)) { // TODO DAQ BOARD HEADER / DAQ BOARD TRAILER LENGTH
             std::cerr << "ERROR decoding event payload. " << std::endl;
           } else {
             m_dut->DumpHitData(hits);
@@ -394,9 +404,9 @@ void DeviceReader::Loop() {
           m_test_setup->DumpRawData(data_buf, length);
 
           std::string str = "RAW payload (length %d): ";
-          for (int j = 0; j < length - 28; j++) {
+          for (int j = 0; j < length - 36 - 8; j++) {
             char buffer[20];
-            sprintf(buffer, "%02x ", data_buf[j + 20]);
+            sprintf(buffer, "%02x ", data_buf[j + 36]);
             str += buffer;
           }
           str += "\n";
@@ -404,8 +414,8 @@ void DeviceReader::Loop() {
         }
 
         SingleEvent* ev =
-          new SingleEvent(length - 28, header.EventId, header.TimeStamp);
-        memcpy(ev->m_buffer, data_buf + 20, length - 28);
+          new SingleEvent(length, header.EventId, header.TimeStamp);
+        memcpy(ev->m_buffer, data_buf, length);
         // add to queue
         Push(ev);
 
@@ -1139,7 +1149,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   }
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
   bore.SetTag("Devices", m_nDevices);
-  bore.SetTag("DataVersion", 2);
+  bore.SetTag("DataVersion", 3); // complete DAQ board event
 
   // driver version
   bore.SetTag("Driver_GITVersion", m_testsetup->GetGITVersion());
