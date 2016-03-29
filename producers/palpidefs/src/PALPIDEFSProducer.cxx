@@ -33,18 +33,18 @@ unsigned int Bitmask(int width) {
   return tmp;
 }
 
-void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
+void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
               bool readwrite) // TDAQBoard* daq_board, TiXmlNode* node, int
                               // base, int rgn, bool readwrite)
 {
   // readwrite (from Chip): true = read; false = write
-  for (TiXmlNode *pChild = node->FirstChild("address"); pChild != 0;
+  for (TiXmlNode* pChild = node->FirstChild("address"); pChild != 0;
        pChild = pChild->NextSibling("address")) {
     if (pChild->Type() != TiXmlNode::TINYXML_ELEMENT)
       continue;
 //         printf( "Element %d [%s] %d %d\n", pChild->Type(), pChild->Value(),
 //         base, rgn);
-    TiXmlElement *elem = pChild->ToElement();
+    TiXmlElement* elem = pChild->ToElement();
     if (base == -1) {
       if (!elem->Attribute("base")) {
         std::cout << "Base attribute not found!" << std::endl;
@@ -74,7 +74,7 @@ void ParseXML(TpAlpidefs *dut, TiXmlNode *node, int base, int rgn,
         }
       }
 
-      for (TiXmlNode *valueChild = pChild->FirstChild("value"); valueChild != 0;
+      for (TiXmlNode* valueChild = pChild->FirstChild("value"); valueChild != 0;
            valueChild = valueChild->NextSibling("value")) {
         if (!valueChild->ToElement()->Attribute("begin")) {
           std::cout << "begin attribute not found!" << std::endl;
@@ -163,8 +163,8 @@ void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
 
 void DeviceReader::SetupThresholdScan(int NMaskStage, int NEvts, int ChStart,
                                       int ChStop, int ChStep,
-                                      unsigned char ***Data,
-                                      unsigned char *Points) {
+                                      unsigned char*** Data,
+                                      unsigned char* Points) {
   m_n_mask_stages = NMaskStage;
   m_n_events = NEvts;
   m_ch_start = ChStart;
@@ -212,8 +212,8 @@ bool DeviceReader::ThresholdScan() {
   return true;
 }
 
-DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup *test_setup,
-                           int boardid, TDAQBoard *daq_board, TpAlpidefs *dut)
+DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
+                           int boardid, TDAQBoard* daq_board, TpAlpidefs* dut)
     : m_queue_size(0), m_thread(&DeviceReader::LoopWrapper, this),
       m_stop(false), m_running(false), m_flushing(false),
       m_waiting_for_eor(false), m_threshold_scan_rqst(false),
@@ -257,7 +257,7 @@ void DeviceReader::StopDAQ() {
   m_daq_board->StopTrigger();
 }
 
-SingleEvent *DeviceReader::NextEvent() {
+SingleEvent* DeviceReader::NextEvent() {
   SimpleLock lock(m_mutex);
   if (m_queue.size() > 0)
     return m_queue.front();
@@ -268,16 +268,16 @@ void DeviceReader::DeleteNextEvent() {
   SimpleLock lock(m_mutex);
   if (m_queue.size() == 0)
     return;
-  SingleEvent *ev = m_queue.front();
+  SingleEvent* ev = m_queue.front();
   m_queue.pop();
   m_queue_size -= ev->m_length;
   delete ev;
 }
 
-SingleEvent *DeviceReader::PopNextEvent() {
+SingleEvent* DeviceReader::PopNextEvent() {
   SimpleLock lock(m_mutex);
   if (m_queue.size() > 0) {
-    SingleEvent *ev = m_queue.front();
+    SingleEvent* ev = m_queue.front();
     m_queue.pop();
     m_queue_size -= ev->m_length;
     if (m_debuglevel > 3)
@@ -297,8 +297,8 @@ void DeviceReader::PrintQueueStatus() {
         m_queue_size);
 }
 
-void *DeviceReader::LoopWrapper(void *arg) {
-  DeviceReader *ptr = static_cast<DeviceReader *>(arg);
+void* DeviceReader::LoopWrapper(void* arg) {
+  DeviceReader* ptr = static_cast<DeviceReader* >(arg);
   ptr->Loop();
   return 0;
 }
@@ -403,7 +403,7 @@ void DeviceReader::Loop() {
           Print(0, str.data(), length);
         }
 
-        SingleEvent *ev =
+        SingleEvent* ev =
           new SingleEvent(length - 28, header.EventId, header.TimeStamp);
         memcpy(ev->m_buffer, data_buf + 20, length - 28);
         // add to queue
@@ -446,7 +446,7 @@ void DeviceReader::Loop() {
 
 
 
-void DeviceReader::Print(int level, const char *text, uint64_t value1,
+void DeviceReader::Print(int level, const char* text, uint64_t value1,
                          uint64_t value2, uint64_t value3, uint64_t value4) {
   // level:
   //   0 -> printout
@@ -474,7 +474,7 @@ void DeviceReader::Print(int level, const char *text, uint64_t value1,
   }
 }
 
-void DeviceReader::Push(SingleEvent *ev) {
+void DeviceReader::Push(SingleEvent* ev) {
   while (QueueFull())
     eudaq::mSleep(m_queuefull_delay);
   SimpleLock lock(m_mutex);
@@ -498,14 +498,14 @@ float DeviceReader::GetTemperature() {
   return m_daq_board->GetTemperature();
 }
 
-void DeviceReader::ParseXML(TiXmlNode *node, int base, int rgn,
+void DeviceReader::ParseXML(TiXmlNode* node, int base, int rgn,
                             bool readwrite) {
   ::ParseXML(m_dut, node, base, rgn, readwrite);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-bool PALPIDEFSProducer::ConfigChip(int id, TpAlpidefs *dut,
+bool PALPIDEFSProducer::ConfigChip(int id, TpAlpidefs* dut,
                                    std::string configFile) {
   // TODO maybe add this functionality to TDAQBoard?
   char buffer[1000];
@@ -565,7 +565,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (m_nDevices == 0 || m_nDevices == nDevices)
     m_nDevices = nDevices;
   else {
-    const char *error_msg =
+    const char* error_msg =
         "Unsupported attempt to change the number of devices!";
     std::cout << error_msg << std::endl;
     EUDAQ_ERROR(error_msg);
@@ -598,7 +598,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
           : m_SCS_n_steps;
 
   if (!m_next_event) {
-    m_next_event = new SingleEvent *[m_nDevices];
+    m_next_event = new SingleEvent*[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
       m_next_event[i] = 0x0;
     }
@@ -614,7 +614,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (!m_readout_delay)
     m_readout_delay = new int[m_nDevices];
   if (!m_reader) {
-    m_reader = new DeviceReader *[m_nDevices];
+    m_reader = new DeviceReader*[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
       m_reader[i] = 0x0;
     }
@@ -622,13 +622,13 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (!m_do_SCS)
     m_do_SCS = new bool[m_nDevices];
   if (!m_SCS_data) {
-    m_SCS_data = new unsigned char ***[m_nDevices];
+    m_SCS_data = new unsigned char***[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
       m_SCS_data[i] = 0x0;
     }
   }
   if (!m_SCS_points) {
-    m_SCS_points = new unsigned char *[m_nDevices];
+    m_SCS_points = new unsigned char*[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
       m_SCS_points[i] = 0x0;
     }
@@ -657,12 +657,12 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
       if (!m_SCS_data[i])
         generate_arrays = true;
       if (generate_arrays)
-        m_SCS_data[i] = new unsigned char **[512];
+        m_SCS_data[i] = new unsigned char**[512];
       if (generate_arrays)
         m_SCS_points[i] = new unsigned char[m_SCS_n_steps];
       for (int j = 0; j < 512; ++j) {
         if (generate_arrays)
-          m_SCS_data[i][j] = new unsigned char *[1024];
+          m_SCS_data[i][j] = new unsigned char*[1024];
         for (int k = 0; k < 1024; ++k) {
           if (generate_arrays)
             m_SCS_data[i][j][k] = new unsigned char[m_SCS_n_steps];
@@ -683,7 +683,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     return;
 
   for (int i = 0; i < m_nDevices; i++) {
-    TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
+    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
     daq_board->WriteBusyOverrideReg(false);
     }
 
@@ -691,8 +691,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     return;
 
   for (int i = 0; i < m_nDevices; i++) {
-    TpAlpidefs *dut = m_reader[i]->GetDUT();
-    TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
+    TpAlpidefs* dut = m_reader[i]->GetDUT();
+    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
     const size_t buffer_size = 100;
     char buffer[buffer_size];
 
@@ -792,7 +792,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
     const int delay = param.Get("QueueFullDelay", 0);
     const unsigned long queue_size = param.Get("QueueSize", 0) * 1024 * 1024;
 
-    TConfig *config = new TConfig(TYPE_TELESCOPE, m_nDevices);
+    TConfig* config = new TConfig(TYPE_TELESCOPE, m_nDevices);
     char mybuffer[100];
     for (int idev = 0; idev < m_nDevices; idev++) {
       snprintf(mybuffer, 100, "DataPort_%d", idev);
@@ -848,8 +848,8 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
 
     m_testsetup->AddDUTs(config);
     for (int i = 0; i < m_nDevices; i++) {
-      TpAlpidefs *dut = 0;
-      TDAQBoard *daq_board = 0;
+      TpAlpidefs* dut = 0;
+      TDAQBoard* daq_board = 0;
       const size_t buffer_size = 100;
       char buffer[buffer_size];
 
@@ -875,7 +875,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
           return false;
         }
         std::cout << "Enabling device " << board_no << std::endl;
-        dut = (TpAlpidefs *)m_testsetup->GetDUT(board_no);
+        dut = (TpAlpidefs*)m_testsetup->GetDUT(board_no);
         daq_board = m_testsetup->GetDAQBoard(board_no);
         int overflow = 0x0;
         if (!m_testsetup->PowerOnBoard(board_no, overflow)) {
@@ -924,7 +924,7 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
   std::cout << "Powering off test setup" << std::endl;
   for (int i = 0; i < m_nDevices; i++) {
     if (m_reader[i]) {
-      TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
+      TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
       m_reader[i]->Stop();
       delete m_reader[i];
       m_reader[i] = 0x0;
@@ -940,7 +940,7 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
     }
   }
   if (m_testsetup) {
-    struct libusb_context *context = m_testsetup->GetContext();
+    struct libusb_context* context = m_testsetup->GetContext();
     delete m_testsetup;
     m_testsetup = 0x0;
     libusb_exit(context);
@@ -1015,7 +1015,7 @@ void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration &param) {
     snprintf(buffer, buffer_size, "${SCRIPT_DIR}/change_back_bias.py %f",
              m_back_bias_voltage);
     if (system(buffer) != 0) {
-      const char *error_msg = "Failed to configure the back-bias voltage";
+      const char* error_msg = "Failed to configure the back-bias voltage";
       std::cout << error_msg << std::endl;
       EUDAQ_ERROR(error_msg);
       SetStatus(eudaq::Status::LVL_ERROR, error_msg);
@@ -1100,7 +1100,7 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
     } else
       move_failed = true;
     if (move_failed) {
-      const char *error_msg = "Failed to move the linear stage";
+      const char* error_msg = "Failed to move the linear stage";
       std::cout << error_msg << std::endl;
       EUDAQ_ERROR(error_msg);
       SetStatus(eudaq::Status::LVL_ERROR, error_msg);
@@ -1246,7 +1246,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   //Configuration is done, Read DAC Values and send to log
 
   for (int i = 0; i < m_nDevices; i++) {
-    TDAQBoard *daq_board = m_reader[i]->GetDAQBoard();
+    TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
     std::cout << "Reading Device:" << i << " ADCs" <<  std::endl;
     daq_board->ReadAllADCs();
   }
@@ -1412,7 +1412,7 @@ int PALPIDEFSProducer::BuildEvent() {
   if (m_debuglevel > 2)
     std::cout << "Sending event with trigger id " << trigger_id << std::endl;
 
-  bool *layer_selected = new bool[m_nDevices];
+  bool* layer_selected = new bool[m_nDevices];
   for (int i = 0; i < m_nDevices; i++)
     layer_selected[i] = false;
 
@@ -1428,7 +1428,7 @@ int PALPIDEFSProducer::BuildEvent() {
     if (!layer_selected[i])
       continue;
 
-    SingleEvent *single_ev = m_next_event[i];
+    SingleEvent* single_ev = m_next_event[i];
 
     if (timestamp != 0 &&
         (float)single_ev->m_timestamp_corrected / timestamp > 1.01 &&
@@ -1486,14 +1486,14 @@ int PALPIDEFSProducer::BuildEvent() {
     }
   }
 
-  char *buffer = new char[total_size];
+  char* buffer = new char[total_size];
   unsigned long pos = 0;
   for (int i = 0; i < m_nDevices; i++) {
     if (layer_selected[i]) {
       buffer[pos++] = 0xff;
       buffer[pos++] = i;
 
-      SingleEvent *single_ev = m_next_event[i];
+      SingleEvent* single_ev = m_next_event[i];
 
       // data length
       uint16_t length = sizeof(uint64_t) * 2 + single_ev->m_length;
@@ -1580,7 +1580,7 @@ void PALPIDEFSProducer::PrintQueueStatus() {
 
 // -------------------------------------------------------------------------------------------------
 
-int main(int /*argc*/, const char **argv) {
+int main(int /*argc*/, const char** argv) {
   eudaq::OptionParser op("EUDAQ Producer", "1.0", "The pALPIDEfs Producer");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
                                    "tcp://localhost:44000", "address",
