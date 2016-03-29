@@ -221,7 +221,7 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup *test_setup,
       m_debuglevel(debuglevel), m_test_setup(test_setup),
       m_daq_board(daq_board), m_dut(dut), m_last_trigger_id(0),
       m_queuefull_delay(100), m_max_queue_size(50 * 1024 * 1024),
-      m_high_rate_mode(false), m_n_mask_stages(0), m_n_events(0), m_ch_start(0),
+      m_n_mask_stages(0), m_n_events(0), m_ch_start(0),
       m_ch_stop(0), m_ch_step(0), m_data(0x0), m_points(0x0) {
   m_last_trigger_id = m_daq_board->GetNextEventId();
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
@@ -236,8 +236,7 @@ void DeviceReader::Stop() {
 void DeviceReader::SetRunning(bool running) {
   Print(0, "Set running: %lu", running);
   SimpleLock lock(m_mutex);
-  if (m_running && !running && m_readout_mode) {
-    if (m_readout_mode) // packet based
+  if (m_running && !running) {
       m_flushing = true;
     m_waiting_for_eor = true;
   }
@@ -337,22 +336,13 @@ void DeviceReader::Loop() {
     if (m_debuglevel > 10)
       eudaq::mSleep(1000);
 
-    bool event_waiting = true;
-    if (m_readout_mode == 0 && (!m_high_rate_mode || IsFlushing()) &&
-        m_daq_board->GetNextEventId() <= m_last_trigger_id + 1)
-      event_waiting = false;
+    // no event waiting
 
-    if (!event_waiting) {
-      // no event waiting
-
-      if (IsFlushing()) {
-        SimpleLock lock(m_mutex);
-        m_flushing = false;
-        Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(),
+    if (IsFlushing()) {
+      SimpleLock lock(m_mutex);
+      m_flushing = false;
+      Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(),
             m_last_trigger_id);
-      }
-      eudaq::mSleep(1);
-      continue;
     }
 
     // data taking
@@ -364,7 +354,7 @@ void DeviceReader::Loop() {
 
     SetReading(true);
     bool readEvent = m_daq_board->ReadChipEvent(
-        data_buf, &length, (m_readout_mode == 0) ? 1024 : maxDataLength);
+        data_buf, &length, maxDataLength);
 
     SetReading(false);
 
@@ -583,9 +573,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     return;
   }
 
-  const bool high_rate_mode = (param.Get("HighRateMode", 0) == 1);
-
-  m_readout_mode = param.Get("ReadoutMode", 0);
   m_full_config_v1 = param.Get("FullConfigV1", param.Get("FullConfig", ""));
   m_full_config_v2 = param.Get("FullConfigV2", "");
   m_full_config_v3 = param.Get("FullConfigV3", "");
@@ -760,11 +747,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
     if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) {
       std::cout << "This is " << dut->GetClassName() << std::endl;
-      daq_board->ConfigureReadout(1, true, (m_readout_mode == 1));
-      // buffer depth = 1, 'sampling on rising edge (changed for pALPIDE3)'
+      daq_board->ConfigureReadout(3, true, true);
+      // buffer depth = 3, 'sampling on rising edge (changed for pALPIDE3)', packet-based mode
     }
-    else daq_board->ConfigureReadout(1, false, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
-//    daq_board->ConfigureReadout(1, true, (m_readout_mode == 1)); //buffer depth = 1, sampling on rising edge
+    else daq_board->ConfigureReadout(1, false, true); //buffer depth = 1, sampling on rising edge, packet-based mode
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0,
                                 m_trigger_delay[i]);
 
@@ -776,8 +762,6 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
       m_reader[i]->SetQueueFullDelay(delay);
     if (queue_size > 0)
       m_reader[i]->SetMaxQueueSize(queue_size);
-    m_reader[i]->SetHighRateMode(high_rate_mode);
-    m_reader[i]->SetReadoutMode(m_readout_mode);
 
     std::cout << "Device " << i << " configured." << std::endl;
 
@@ -1288,8 +1272,6 @@ void PALPIDEFSProducer::OnStopRun() {
     SimpleLock lock(m_mutex);
     m_running = false;
     m_stopping = true;
-    if (!m_readout_mode)
-      m_flush = true;
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     m_reader[i]->SetRunning(false);
@@ -1305,8 +1287,7 @@ void PALPIDEFSProducer::OnStopRun() {
   }
   {
     SimpleLock lock(m_mutex);
-    if (m_readout_mode)
-      m_flush = true;
+    m_flush = true;
   }
 
   long wait_cnt = 0;

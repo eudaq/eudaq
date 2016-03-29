@@ -48,8 +48,6 @@ public:
 
   void SetMaxQueueSize(unsigned long size) { m_max_queue_size = size; }
   void SetQueueFullDelay(int delay) { m_queuefull_delay = delay; }
-  void SetHighRateMode(bool flag) { m_high_rate_mode = flag; }
-  void SetReadoutMode(int mode) { m_readout_mode = mode; }
 
   void Stop();
   void SetRunning(bool running);
@@ -156,9 +154,6 @@ protected:
   // config
   int m_queuefull_delay;          // milliseconds
   unsigned long m_max_queue_size; // queue size in B
-  bool m_high_rate_mode; // decides if is is checked if data is available before
-                         // requesting an event
-  bool m_readout_mode;
 
   // S-Curve scan
   int m_n_mask_stages;
@@ -180,7 +175,7 @@ public:
         m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
         m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
         m_full_config_v3(), m_ignore_trigger_ids(true),
-        m_recover_outofsync(true), m_readout_mode(0), m_chip_type(0x0),
+        m_recover_outofsync(true), m_chip_type(0x0),
         m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
         m_readout_delay(0x0), m_monitor_PSU(false), m_back_bias_voltage(-1),
         m_dut_pos(-1.), m_dut_angle1(-1.), m_dut_angle2(-1.), 
