@@ -150,6 +150,8 @@ protected:
   TTestSetup* m_test_setup;
   TDAQBoard* m_daq_board;
   TpAlpidefs* m_dut;
+  int m_daq_board_header_length;
+  int m_daq_board_trailer_length;
 
   // config
   int m_queuefull_delay;          // milliseconds

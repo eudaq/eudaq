@@ -219,7 +219,10 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
       m_waiting_for_eor(false), m_threshold_scan_rqst(false),
       m_threshold_scan_result(0), m_boardid(id), m_id(id),
       m_debuglevel(debuglevel), m_test_setup(test_setup),
-      m_daq_board(daq_board), m_dut(dut), m_last_trigger_id(0),
+      m_daq_board(daq_board), m_dut(dut),
+      m_daq_board_header_length(daq_board->GetEventHeaderLength()),
+      m_daq_board_trailer_length(daq_board->GetEventTrailerLength()),
+      m_last_trigger_id(0),
       m_queuefull_delay(100), m_max_queue_size(50 * 1024 * 1024),
       m_n_mask_stages(0), m_n_events(0), m_ch_start(0),
       m_ch_stop(0), m_ch_step(0), m_data(0x0), m_points(0x0) {
@@ -354,7 +357,7 @@ void DeviceReader::Loop() {
         m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
         if (length==0) break; // end-of-readout package => stop
         bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
-        bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8, &header);
+        bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
 
         m_last_trigger_id = header.EventId;
       }
@@ -389,13 +392,13 @@ void DeviceReader::Loop() {
       }
 
       bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
-      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - 8, &header);
+      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
 
       if (HeaderOK && TrailerOK) {
         if (m_debuglevel > 2) {
           std::vector<TPixHit> hits;
 
-          if (!m_dut->DecodeEvent(data_buf + 36, length - 36 - 8, &hits)) { // TODO DAQ BOARD HEADER / DAQ BOARD TRAILER LENGTH
+          if (!m_dut->DecodeEvent(data_buf + m_daq_board_header_length, length - m_daq_board_header_length - m_daq_board_trailer_length, &hits)) {
             std::cerr << "ERROR decoding event payload. " << std::endl;
           } else {
             m_dut->DumpHitData(hits);
@@ -404,9 +407,9 @@ void DeviceReader::Loop() {
           m_test_setup->DumpRawData(data_buf, length);
 
           std::string str = "RAW payload (length %d): ";
-          for (int j = 0; j < length - 36 - 8; j++) {
+          for (int j = 0; j < length - m_daq_board_header_length - m_daq_board_trailer_length; j++) {
             char buffer[20];
-            sprintf(buffer, "%02x ", data_buf[j + 36]);
+            sprintf(buffer, "%02x ", data_buf[j + m_daq_board_header_length]);
             str += buffer;
           }
           str += "\n";
