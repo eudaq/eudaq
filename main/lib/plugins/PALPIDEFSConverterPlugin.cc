@@ -40,6 +40,12 @@ typedef unsigned __int64 uint64_t;
 #include <cmath>
 #include <climits>
 
+#ifdef PALPIDEFS
+#include "TConfig.h"
+#include "TPalpidefs.h"
+#include "TDaqboard.h"
+#endif
+
 using namespace std;
 
 #if USE_EUTELESCOPE
@@ -50,6 +56,7 @@ using namespace std;
 //#define DEBUGRAWDUMP // dumps all raw events
 #define CHECK_TIMESTAMPS // if timestamps are not consistent marks event as
                          // broken
+#define WRITE_TEMPERATURE_LOG // write NTC values to a text file
 
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -104,6 +111,7 @@ namespace eudaq {
       m_SCS_n_mask_stages = bore.GetTag<int>("SCSnMaskStages", -1);
 
       m_chip_type = new int[m_nLayers];
+      m_fw_version = new unsigned int[m_nLayers];
       m_Vaux = new int[m_nLayers];
       m_VresetP = new int[m_nLayers];
       m_VresetD = new int[m_nLayers];
@@ -127,6 +135,15 @@ namespace eudaq {
       m_SCS_thr_rms = new float *[m_nLayers];
       m_SCS_noise = new float *[m_nLayers];
       m_SCS_noise_rms = new float *[m_nLayers];
+
+
+#ifdef PALPIDEFS
+      TConfig* conf = new TConfig(TYPE_CHIP, 1);
+      m_dut = new TDUT*[m_nLayers];
+      m_daq_board = new TDAQBoard*[m_nLayers];
+      m_daq_header_length = new int[m_nLayers];
+      m_daq_trailer_length = new int[m_nLayers];
+#endif
 
       for (int i = 0; i < m_nLayers; i++) {
         char tmp[100];
@@ -230,10 +247,43 @@ namespace eudaq {
         string version = bore.GetTag<string>(tmp, "");
         cout << "Firmware version on layer " << i << " is: " << version.c_str()
              << endl;
+        version = string(version, 0, version.find(' '));
+        unsigned long verTmp = stol(version);
+        m_fw_version[i] = (unsigned int)verTmp;
+
+#ifdef PALPIDEFS
+        // create DUT
+        switch(m_chip_type[i]) {
+        case 1:
+          m_dut[i] = new TpALPIDEfs1((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
+          m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
+          break;
+        case 2:
+          m_dut[i] = new TpALPIDEfs2((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
+          m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
+          break;
+        case 3:
+          m_dut[i] = new TpALPIDEfs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
+          m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
+          break;
+        default:
+          cout << "Unknown chip type, assuming pALPIDE-3" << endl;
+          m_dut[i] = new TpALPIDEfs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
+          m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
+        }
+        m_daq_header_length[i]  = m_daq_board[i]->GetEventHeaderLength();
+        m_daq_trailer_length[i] = m_daq_board[i]->GetEventTrailerLength();
+#endif
       }
+#ifdef WRITE_TEMPERATURE_FILE
       char tmp[100];
       sprintf(tmp, "run%06d-temperature.txt", bore.GetRunNumber());
-      m_temperatureFile = new ofstream(tmp);
+      m_temperature_file = new ofstream(tmp);
+#endif
     }
     //##############################################################################
     ///////////////////////////////////////
@@ -364,605 +414,18 @@ namespace eudaq {
     }
 
     ///////////////////////////////////////
-    // CHIP DATA DECODER
-    ///////////////////////////////////////
-
-    bool DecodeChipData(const Event &ev, StandardEvent &sev,
-                        vector<unsigned char> data, unsigned int &pos, unsigned int &data_end,
-                        StandardPlane **planes, int &current_layer,
-                        int &current_rgn, int &last_rgn, int &last_pixeladdr,
-                        int &last_doublecolumnaddr) const {
-      if (m_chip_type[current_layer] == 1) {
-        return DecodeAlpide1Data(ev, sev, data, pos, data_end, planes, current_layer,
-                                 current_rgn, last_rgn, last_pixeladdr,
-                                 last_doublecolumnaddr);
-      } else if (m_chip_type[current_layer] == 2) {
-        return DecodeAlpide2Data(ev, sev, data, pos, data_end, planes, current_layer,
-                                 current_rgn, last_rgn, last_pixeladdr,
-                                 last_doublecolumnaddr);
-      } else if (m_chip_type[current_layer] == 3) {
-        return DecodeAlpide3Data(ev, sev, data, pos, data_end, planes, current_layer,
-                                 current_rgn, last_rgn, last_pixeladdr,
-                                 last_doublecolumnaddr);
-      } else
-        return false;
-    }
-
-    bool DecodeAlpide1Data(const Event &ev, StandardEvent &sev,
-                           vector<unsigned char> data, unsigned int &pos,
-                           unsigned int &data_end,
-                           StandardPlane **planes, int &current_layer,
-                           int &current_rgn, int &last_rgn, int &last_pixeladdr,
-                           int &last_doublecolumnaddr) const {
-      int length = data[pos++];
-      int rgn = data[pos++] >> 3;
-      if (rgn != current_rgn + 1) {
-        cout << "ERROR: Event " << ev.GetEventNumber()
-             << " Unexpected. Wrong region order. Previous " << current_rgn
-             << " Next " << rgn << endl;
-        return false;
-      }
-
-      if (pos + length * 2 > data.size()) {
-        cout << "ERROR: Event " << ev.GetEventNumber()
-             << " Unexpected. Not enough bytes left. Expecting " << length * 2
-             << " but pos = " << pos << " and size = " << data.size() << endl;
-        return false;
-      }
-#ifdef MYDEBUG
-      cout << "Now in region " << rgn << ". Going to read " << length
-           << " pixels. " << endl;
-#endif
-
-      for (int i = 0; i < length; i++) {
-        unsigned short dataword = data[pos++];
-        dataword |= (data[pos++] << 8);
-        unsigned short pixeladdr = dataword & 0x3ff;
-        unsigned short doublecolumnaddr = (dataword >> 10) & 0xf;
-        unsigned short clustersize = (dataword >> 14) + 1;
-
-        // consistency check
-        if (rgn <= last_rgn && doublecolumnaddr <= last_doublecolumnaddr &&
-            pixeladdr <= last_pixeladdr) {
-          cout << "ERROR: Event " << ev.GetEventNumber() << " layer "
-               << current_layer << ". ";
-          if (rgn == last_rgn && doublecolumnaddr == last_doublecolumnaddr &&
-              pixeladdr == last_pixeladdr)
-            cout << "Pixel duplicated. ";
-          else {
-            cout << "Strict ordering violated. ";
-            sev.SetFlags(Event::FLAG_BROKEN);
-          }
-          cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr
-               << "/" << last_pixeladdr << " current: " << rgn << "/"
-               << doublecolumnaddr << "/" << pixeladdr << endl;
-        }
-        last_rgn = rgn;
-        last_pixeladdr = pixeladdr;
-        last_doublecolumnaddr = doublecolumnaddr;
-
-        for (int j = 0; j < clustersize; j++) {
-          unsigned short current_pixel = pixeladdr + j;
-          unsigned int x = rgn * 32 + doublecolumnaddr * 2 + 1;
-          if (current_pixel & 0x2)
-            x--;
-          unsigned int y = (current_pixel >> 2) * 2 + 1;
-          if (current_pixel & 0x1)
-            y--;
-
-          planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
-#ifdef MYDEBUG
-          cout << "Added pixel to layer " << current_layer << " with x = " << x
-               << " and y = " << y << endl;
-#endif
-        } // for (int j = 0; j < clustersize; j++)
-      }   // for (int i = 0; i < length; i++)
-      current_rgn = rgn;
-
-      return true;
-    }
-
-    // Warning: the data type is not unambiguous if called with byte of a
-    // dataword,
-    // which is not the most significant byte (in case of DATA SHORT or DATA
-    // LONG)
-    TDataType CheckAlpide2DataType(unsigned char DataWord) const {
-      if (DataWord == 0xf0)
-        return DT_IDLE;
-      else if (DataWord == 0xff)
-        return DT_NOP;
-      else if (DataWord == 0xf1)
-        return DT_BUSYON;
-      else if (DataWord == 0xf2)
-        return DT_BUSYOFF;
-      else if ((DataWord & 0xf0) == 0xa0)
-        return DT_CHIPHEADER;
-      else if ((DataWord & 0xf0) == 0xb0)
-        return DT_CHIPTRAILER;
-      else if ((DataWord & 0xe0) == 0xc0)
-        return DT_REGHEADER;
-      else if ((DataWord & 0xc0) == 0x0)
-        return DT_DATASHORT;
-      else if ((DataWord & 0xc0) == 0x40)
-        return DT_DATALONG;
-      else
-        return DT_UNKNOWN;
-    }
-
-
-    bool DecodeAlpide2RegionHeader(const char Data, int &Region) const {
-      int NewRegion = Data & 0x1f;
-      if (NewRegion != Region + 1) {
-        cout << "Corrupt region header, expected region " << Region + 1
-                  << ", found " << NewRegion << endl;
-        return false;
-      } else {
-        Region = NewRegion;
-        return true;
-      }
-    }
-
-    bool DecodeAlpide2ChipHeader(const char Data, int ChipId) const {
-      if (CheckAlpide2DataType(Data) != DT_CHIPHEADER) {
-        cout << "Error, data word 0x" << hex << (int)Data << dec
-                  << " is no chip header" << endl;
-        return false;
-      }
-      int FoundChipId = Data & 0xf;
-      if (FoundChipId != (ChipId & 0xf)) {
-        cout << "Error, found wrong chip ID " << FoundChipId
-                  << " in header." << endl;
-        return false;
-      }
-      return true;
-    }
-
-    bool DecodeAlpide2DataWord(const Event &ev, vector<unsigned char> Data,
-                               int pos, int current_layer, int Region,
-                               StandardPlane **planes, bool Long, int &last_rgn,
-                               int &last_pixeladdr,
-                               int &last_doublecolumnaddr) const {
-      int ClusterSize;
-      int DoubleCol;
-      int Pixel;
-
-      int16_t data_field = (((int16_t)Data[pos]) << 8) + Data[pos + 1];
-
-      DoubleCol = (data_field & 0x3c00) >> 10;
-      Pixel = (data_field & 0x03ff);
-
-      // consistency check
-      if (Region <= last_rgn && DoubleCol <= last_doublecolumnaddr &&
-          Pixel <= last_pixeladdr) {
-        cout << "ERROR: Event " << ev.GetEventNumber() << " layer "
-             << current_layer << ". ";
-        if (Region == last_rgn && DoubleCol == last_doublecolumnaddr &&
-            Pixel == last_pixeladdr)
-          cout << "Pixel duplicated. ";
-        else {
-          cout << "Strict ordering violated. ";
-          // sev.SetFlags(Event::FLAG_BROKEN);  -> return false, set flag
-          // outside...
-        }
-        cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr
-             << "/" << last_pixeladdr << " current: " << Region << "/"
-             << DoubleCol << "/" << Pixel << endl;
-      }
-      last_rgn = Region;
-      last_pixeladdr = Pixel;
-      last_doublecolumnaddr = DoubleCol;
-
-      if (Long) {
-        ClusterSize = (Data[pos + 2] & 0xc0) >> 6;
-      } else {
-        ClusterSize = 0;
-      }
-
-      for (int i = 0; i <= ClusterSize; i++) {
-        unsigned short current_pixel = Pixel + i;
-        unsigned int x = Region * 32 + DoubleCol * 2 + 1;
-        unsigned int y = (current_pixel >> 2) * 2 + 1;
-        if (current_pixel & 0x2)
-          x--;
-        if (current_pixel & 0x1)
-          y--;
-
-        planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
-#ifdef MYDEBUG
-        cout << "Added pixel to layer " << current_layer << " with x = " << x
-             << " and y = " << y << endl;
-#endif
-      }
-      return true;
-    }
-
-    bool DecodeAlpide2ChipTrailer(const char Data, int ChipId) {
-      if (CheckAlpide2DataType(Data) != DT_CHIPTRAILER) {
-        cout << "Error, data word 0x" << hex << (int)Data << dec
-                  << " is no chip trailer" << endl;
-        return false;
-      }
-      int FoundChipId = Data & 0xf;
-      if (FoundChipId != ChipId) {
-        cout << "Error, found wrong chip ID " << FoundChipId
-                  << " in trailer." << endl;
-        return false;
-      }
-      return true;
-    }
-
-    bool DecodeAlpide2Data(const Event &ev, StandardEvent &sev,
-                           vector<unsigned char> data,
-                           unsigned int &byte,
-                           unsigned int &data_end,
-                           StandardPlane **planes, int &current_layer,
-                           int &current_region, int &last_rgn,
-                           int &last_pixeladdr,
-                           int &last_doublecolumnaddr) const {
-      int chip = 0; // to be fixed!
-      bool started =
-        false;          // event has started, i.e. chip header has been found
-      bool ended = false; // trailer has been found
-      TDataType type;
-
-      while ((byte + 1 < data.size()) && (!ended) && (byte < data_end)) {
-        type = CheckAlpide2DataType(data[byte]);
-        switch (type) {
-        case DT_IDLE:
-          byte += 1;
-          break;
-        case DT_NOP:
-          byte += 1;
-          break;
-        case DT_BUSYON:
-          byte += 1;
-          break;
-        case DT_BUSYOFF:
-          byte += 1;
-          break;
-        case DT_CHIPHEADER:
-          started = true;
-          if (!DecodeAlpide2ChipHeader(data[byte], chip))
-            return false;
-          byte += 1;
-          break;
-        case DT_CHIPTRAILER:
-          if (!started) {
-            cout << "Error, chip trailer found before chip header"
-                      << endl;
-            return false;
-          }
-          if (current_region < 31) {
-            cout << "Error, chip trailer found before last region, "
-              "current region = " << current_region << endl;
-            return false;
-          }
-          started = false;
-          ended = true;
-          byte += 1;
-          break;
-        case DT_REGHEADER:
-          if (!started) {
-            cout << "Error, region header found before chip header or "
-              "after chip trailer" << endl;
-            return false;
-          }
-          if (!DecodeAlpide2RegionHeader(data[byte], current_region))
-            return false;
-          byte += 1;
-          break;
-        case DT_DATASHORT:
-          if (!started) {
-            cout << "Error, hit data found before chip header or after "
-              "chip trailer, offending word = " << hex
-                      << (int)data[byte] << dec << ", byte = " << byte
-                      << endl;
-            return false;
-          }
-          if (!DecodeAlpide2DataWord(ev, data, byte, current_layer,
-                                     current_region, planes, false, last_rgn,
-                                     last_pixeladdr, last_doublecolumnaddr))
-            return false;
-          byte += 2;
-          break;
-        case DT_DATALONG:
-          if (!started) {
-            cout << "Error, hit data found before chip header or after "
-              "chip trailer, offending word = " << hex
-                      << (int)data[byte] << dec << ", byte = " << byte
-                      << endl;
-            return false;
-          }
-          if (!DecodeAlpide2DataWord(ev, data, byte, current_layer,
-                                     current_region, planes, true, last_rgn,
-                                     last_pixeladdr, last_doublecolumnaddr))
-            return false;
-          byte += 3;
-          break;
-        default:
-          if (started)
-            cout << "Error, found unexpected data after the chip header!"
-                      << endl;
-          // else         cout << "Error, unrecognized data words found
-          // before the chip header!" << endl;
-          byte += 1; // skip this byte
-          break;
-        }
-      }
-      if (started) {
-        cout << "Warning, event not finished at end of data" << endl;
-      }
-
-      return true;
-    }
-
-    /////////////////////////////////////////////////////
-    ////                                          ////
-    ////            pALPIDE3 converter            ////
-    ////                                          ////
-    //////////////////////////////////////////////////
-
-    bool DecodeAlpide3RegionHeader(const char Data, int &Region) const {
-      int NewRegion = Data & 0x1f;
-      if (NewRegion <= Region) {
-        cout << "Corrupt region header, expected region " << Region + 1
-                  << ", found " << NewRegion << endl;
-        return false;
-      } else {
-        Region = NewRegion;
-        return true;
-      }
-    }
-
-    bool DecodeAlpide3ChipHeader(vector<unsigned char>::iterator Data, int ChipId) const {
-
-      int16_t header = (((int16_t) *Data) << 8) + *(Data+1);
-//      cout << "Header : " << hex << header << dec << endl;
-
-      if (CheckAlpide3DataType((unsigned char)*Data) != DT_CHIPHEADER) {
-        cout << "Error, data word 0x" << hex << header << dec
-                  << " is no chip header" << endl;
-        return false;
-      }
-      int FoundChipId = header & 0xf00;
-
-//      cout << "FoundChipId in header : " << FoundChipId << endl;
-//      int FoundChipId = Data & 0xf;
-      if (FoundChipId != (ChipId & 0xf00)) {
-        cout << "Error, found wrong chip ID " << FoundChipId
-                  << " in header." << endl;
-        return false;
-      }
-      return true;
-    }
-
-    bool DecodeAlpide3DataWord(const Event &ev, vector<unsigned char> Data,
-                               int pos, int current_layer, int Region,
-                               StandardPlane **planes, bool Long, int &last_rgn,
-                               int &last_pixeladdr,
-                               int &last_doublecolumnaddr) const {
-      int ClusterSize;
-      int DoubleCol;
-      int Pixel;
-      int16_t data_field = (((int16_t)Data[pos]) << 8) + Data[pos + 1];
-
-      DoubleCol = (data_field & 0x3c00) >> 10;
-      Pixel = (data_field & 0x03ff);
-
-      // consistency check
-      if (Region <= last_rgn && DoubleCol <= last_doublecolumnaddr &&
-          Pixel <= last_pixeladdr) {
-        cout << "ERROR: Event " << ev.GetEventNumber() << " layer "
-             << current_layer << ". ";
-        if (Region == last_rgn && DoubleCol == last_doublecolumnaddr &&
-            Pixel == last_pixeladdr)
-          cout << "Pixel duplicated. ";
-        else {
-          cout << "Strict ordering violated. ";
-          // sev.SetFlags(Event::FLAG_BROKEN);  -> return false, set flag
-          // outside...
-        }
-        cout << "Last pixel was: " << last_rgn << "/" << last_doublecolumnaddr
-             << "/" << last_pixeladdr << " current: " << Region << "/"
-             << DoubleCol << "/" << Pixel << endl;
-      }
-      last_rgn = Region;
-      last_pixeladdr = Pixel;
-      last_doublecolumnaddr = DoubleCol;
-
-      if (Long) {
-        ClusterSize = 7;
-      } else {
-        ClusterSize = 0;
-      }
-
-      for (int i = 0; i <= ClusterSize; i++) {
-        if ((i > 0) && ((Data[2] >> (i-1)) & 0x1)) continue;
-        unsigned short current_pixel = Pixel + i;
-        unsigned int x = Region * 32 + DoubleCol * 2;
-        unsigned int lr = ((((current_pixel % 4) == 1) || ((current_pixel %4) == 2))? 1:0);
-        x += lr;
-        unsigned int y = current_pixel/2;
-
-        planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
-#ifdef MYDEBUG
-        cout << "Added pixel to layer " << current_layer << " with x = " << x
-             << " and y = " << y << endl;
-#endif
-      }
-      return true;
-    }
-
-    bool DecodeAlpide3ChipTrailer(vector<unsigned char>::iterator Data, int ChipId) const {
-      int16_t trailer = (((int16_t) *Data) << 8) + *(Data+1);
-      if (CheckAlpide3DataType((unsigned char)*Data) != DT_CHIPTRAILER) {
-        cout << "Error, data word 0x" << hex << (int)*Data << dec
-                  << " is no chip trailer" << endl;
-        return false;
-      }
-      if (CheckAlpide3DataType((unsigned char)*(Data+1)) != DT_IDLE) {
-        cout << "Warning, second byte of trailer not idle" << endl;
-      }
-      if (trailer & 0xf00) {
-        cout << "Warning, readout flags not 0. Found " << (trailer & 0x800 ? "BUSY_VIOLATION ":"")
-                  << (trailer & 0x400 ? "FLUSHED_INCOMPLETE ":"")
-                  << (trailer & 0x200 ? "FATAL ":"")
-                  << (trailer & 0x100 ? "BUSY_TRANSITION":"")
-                  << endl;
-      }
-      int FoundChipId = trailer & 0xf00;
-      if (FoundChipId != (ChipId & 0xf))  {
-        cout << "Error, found wrong chip ID " << FoundChipId
-                  << " in trailer." << endl;
-        return false;
-      }
-      return true;
-    }
-
-    bool DecodeAlpide3Data(const Event &ev, StandardEvent &sev,
-                           vector<unsigned char> data,
-                           unsigned int &byte, unsigned int &data_end,
-                           StandardPlane **planes, int &current_layer,
-                           int &current_region, int &last_rgn,
-                           int &last_pixeladdr,
-                           int &last_doublecolumnaddr) const {
-      int chip = 0; // to be fixed!
-      bool started =
-        false;          // event has started, i.e. chip header has been found
-      bool ended = false; // trailer has been found
-      TDataType type;
-
-      while ((byte + 1 < data.size()) && (!ended) && (byte < data_end+1)) {
-        type = CheckAlpide3DataType(data[byte]);
-        switch (type) {
-        case DT_IDLE:
-          byte += 1;
-          break;
-        case DT_COMMA:
-          byte += 1;
-          break;
-        case DT_BUSYON:
-          byte += 1;
-          break;
-        case DT_BUSYOFF:
-          byte += 1;
-          break;
-        case DT_EMPTYFRAME:
-          started = false;
-          ended = true;
-          byte += 3;
-          break;
-        case DT_CHIPHEADER:
-          started = true;
-          if (!DecodeAlpide3ChipHeader(data.begin() + byte, chip))
-            return false;
-          byte += 2;
-          break;
-        case DT_CHIPTRAILER:
-          if (!started) {
-            cout << "Error, chip trailer found before chip header"
-                      << endl;
-            return false;
-          }
-          if (!DecodeAlpide3ChipTrailer(data.begin() + byte, chip)) return false;
-          started = false;
-          ended = true;
-          // trailer consists of 1 byte + 1 ILDE byte which can be stripped
-          if (byte < data_end) byte += 2;
-          else                 byte += 1;
-          break;
-        case DT_REGHEADER:
-          if (!started) {
-            cout << "Error, region header found before chip header or "
-              "after chip trailer" << endl;
-            return false;
-          }
-          if (!DecodeAlpide3RegionHeader(data[byte], current_region))
-            return false;
-          byte += 1;
-          break;
-        case DT_DATASHORT:
-          if (!started) {
-            cout << "Error, hit data found before chip header or after "
-              "chip trailer, offending word = " << hex
-                      << (int)data[byte] << dec << ", byte = " << byte
-                      << endl;
-            return false;
-          }
-          if (!DecodeAlpide3DataWord(ev, data, byte, current_layer,
-                                     current_region, planes, false, last_rgn,
-                                     last_pixeladdr, last_doublecolumnaddr))
-            return false;
-          byte += 2;
-          break;
-        case DT_DATALONG:
-          if (!started) {
-            cout << "Error, hit data found before chip header or after "
-              "chip trailer, offending word = " << hex
-                      << (int)data[byte] << dec << ", byte = " << byte
-                      << endl;
-            return false;
-          }
-          if (!DecodeAlpide3DataWord(ev, data, byte, current_layer,
-                                     current_region, planes, true, last_rgn,
-                                     last_pixeladdr, last_doublecolumnaddr))
-            return false;
-          byte += 3;
-          break;
-        default:
-          if (started)
-            cout << "Error, found unexpected data after the chip header!"
-                      << endl;
-          // else         cout << "Error, unrecognized data words found
-          // before the chip header!" << endl;
-          byte += 1; // skip this byte
-          break;
-        }
-      }
-      if (started) {
-        cout << "Warning, event not finished at end of data" << endl;
-      }
-
-      return true;
-    }
-
-
-    // Warning: the data type is not unambiguous if called with byte of a
-    // dataword,
-    // which is not the most significant byte (in case of DATA SHORT or DATA
-    // LONG)
-    TDataType CheckAlpide3DataType(unsigned char DataWord) const {
-      if (DataWord == 0xff)
-        return DT_IDLE;
-      else if (DataWord == 0xb9)
-        return DT_COMMA;
-      else if (DataWord == 0xf1)
-        return DT_BUSYON;
-      else if (DataWord == 0xf0)
-        return DT_BUSYOFF;
-      else if ((DataWord & 0xf0) == 0xa0)
-        return DT_CHIPHEADER;
-      else if ((DataWord & 0xf0) == 0xb0)
-        return DT_CHIPTRAILER;
-      else if ((DataWord & 0xf0) == 0xe0)
-        return DT_EMPTYFRAME;
-      else if ((DataWord & 0xe0) == 0xc0)
-        return DT_REGHEADER;
-      else if ((DataWord & 0xc0) == 0x40)
-        return DT_DATASHORT;
-      else if ((DataWord & 0xc0) == 0x0)
-        return DT_DATALONG;
-      else
-        return DT_UNKNOWN;
-    }
-
-    ///////////////////////////////////////
     // STANDARD SUBEVENT
     ///////////////////////////////////////
 
     // conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent &sev,
                                      const Event &ev) const {
+
+#ifndef PALPIDEFS
+      cout << "EUDAQ was not compiled with the pALPIDEfs software and driver library. Not decoding the raw data!" << endl;
+      return false;
+#else
+
 
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " "
@@ -1006,17 +469,18 @@ namespace eudaq {
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
 #endif
+#ifdef WRITE_TEMPERATURE_FILE
         for (int id = 0; id < m_nLayers; id++) {
           vector<unsigned char> data = rev->GetBlock(id);
           if (data.size() == 4) {
             float temp = 0;
             for (int i = 0; i < 4; i++)
               ((unsigned char *)(&temp))[i] = data[i];
-//              *m_temperatureFile << "Layer "<< id << " Temp is : " << temp - 273.15 << endl;
-//            cout << "T (layer " << id << ") is: " << temp << endl;
+              *m_temperature_file << "Layer "<< id << " Temp is : " << temp - 273.15 << endl;
+              cout << "T (layer " << id << ") is: " << temp << endl;
           }
         }
-// #endif //Original Status Event
+#endif
         sev.SetFlags(Event::FLAG_STATUS);
       } else { // is real event
         // Conversion
@@ -1026,22 +490,20 @@ namespace eudaq {
           cout << "vector has size : " << data.size() << endl;
 #endif
 
-          //###############################################
+          //###################################################################
           // DATA FORMAT
           // m_nLayers times
-          //  Header        1st Byte 0xff ; 2nd Byte: Layer number (layers might
-          //  be missing)
-          //  Length (uint16_t) length of data block for this layer [only for
-          //  DataVersion >= 2]
+          //  Header
+          //  1st Byte 0xff ; 2nd Byte: Layer number (layers might be missing)
+          //  Length (uint16_t) length of data block for this layer
+          //  (only for DataVersion >= 2)
           //  Trigger id (uint64_t)
           //  Timestamp (uint64_t)
-          //  payload from chip
-          //##############################################
+          //  payload from chip (DataVersion<=2), complete DAQ board event
+          //###################################################################
 
           unsigned int pos = 0;
           unsigned int data_end = 0; // layer data end marker
-          int current_layer = -1;
-          int current_rgn = -1;
 
           const int maxLayers = 100;
           bool layers_found[maxLayers];
@@ -1061,60 +523,67 @@ namespace eudaq {
           printf("\n");
 #endif
 
-          int last_rgn = -1;
-          int last_pixeladdr = -1;
-          int last_doublecolumnaddr = -1;
-
           while (pos + 1 < data.size()) { // always need 2 bytes left
 #ifdef MYDEBUG
             printf("%u %u %x %x\n", pos, (unsigned int)data.size(), data[pos],
                    data[pos + 1]);
 #endif
 
-            // Logic of the following lines:
-            // The loop runs over the complete event data. As long as
-            // current_layer is -1 it expects a header
-            // Decoding of the header sets current_layer, such that in the next
-            // loop it should enter DecodeChipData
-            // For pAlpide1 DecodeChipData decodes 1 region, then returns to
-            // this loop until region ==31
-            // For pAlpide2 this will not (reasonably) work, since the region
-            // header does not contain the length anymore
-            // -> Decode whole chip at once and set region to 31...
+            if (!DecodeLayerHeader(ev, data, pos, data_end, current_layer, layers_found,
+                                   trigger_ids, timestamps)) {
+              sev.SetFlags(Event::FLAG_BROKEN);
+              break;
+            }
 
-            if (((pos == data_end+1) && (m_DataVersion >= 2)) || current_layer == -1) {
+            std::vector<TPixHit> hits;
+            TEventHeader header;
 
-              if (!DecodeLayerHeader(ev, data, pos, data_end, current_layer, layers_found,
-                                     trigger_ids, timestamps)) {
-                sev.SetFlags(Event::FLAG_BROKEN);
-                break;
+            bool headerOK  = true;
+            bool eventOK   = false;
+            bool trailerOK = true;
+
+            if (m_DataVersion<3) {
+              eventOK =  m_dut[current_layer]->DecodeEvent(data, data_end+1, &hits);
+            }
+            else { // complete event stored
+              headerOK  = m_daq_board->DecodeEventHeader(dataf, &header);
+              eventOK   =  m_dut[current_layer]->DecodeEvent(data, data_end+1-m_daq_trailer_length[current_layer]-m_daq_header[current_layer], &hits);
+              trailerOK = m_daq_boardboard->DecodeEventTrailer(data + data_end+1 - m_daq_trailer_length[current_layer], &header);
+            }
+
+            if (!headerOK || !eventOK || !trailerOK) {
+              sev.SetFlags(Event::FLAG_BROKEN);
+              break;
+            }
+            else {
+              // add hits to the hit map
+              for (unsigned long iHit = 0; iHit< hits.size(); ++iHit) {
+                // Double columns before ADoubleCol
+                int x  = hits[iHit].region * 32 + hits[iHit].doublecol * 2;
+                // Left or right column within the double column
+                x+= ((hits[iHit].address % 4) < 2 ? 1:0); // left or right?
+
+                int y = hits[iHit].address / 2;
+                // adjust the top-left pixel
+                if ((hits[iHit].address % 4) == 3) y -= 1;
+                // adjust the bottom-right pixel
+                if ((hits[iHit].address % 4) == 0) y += 1;
+
+                planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
               }
-              current_rgn = -1;
-              last_rgn = -1;
-              last_pixeladdr = -1;
-              last_doublecolumnaddr = -1;
+            }
 
-            } else {
-              int startpos = pos;
+            if (m_DataVersion >= 2) { // new data format (>=2)
+              if (pos > data_end+1) { // read more data than expected
+                cout << "ERROR: Data inconsistend, current position " << pos
+                     << " after end of the layer data at " << data_end <<  "." << endl << endl;
 
-              if (!DecodeChipData(ev, sev, data, pos, data_end, planes, current_layer,
-                                  current_rgn, last_rgn, last_pixeladdr,
-                                  last_doublecolumnaddr)) {
+                cout << "ERROR: Event " << ev.GetEventNumber()
+                     << " data stream too short, stopped in region " << current_rgn
+                     << ", Current layer  = " << current_layer << endl;
                 sev.SetFlags(Event::FLAG_BROKEN);
-                break;
               }
-
-              if (m_DataVersion >= 2) { // new data format (>=2)
-                if (pos > data_end+1) { // read more data than expected
-                  cout << "ERROR: Data inconsistend, current position " << pos
-                       << " after end of the layer data at " << data_end <<  "." << endl << endl;
-
-                  cout << "ERROR: Event " << ev.GetEventNumber()
-                       << " data stream too short, stopped in region " << current_rgn
-                       << ", Current layer  = " << current_layer << endl;
-                  sev.SetFlags(Event::FLAG_BROKEN);
-                }
-                else if ((pos < data_end+1) && ((m_chip_type[current_layer] > 1) || (current_rgn==31))) { // read less data than expected
+              else if ((pos < data_end+1) && (m_chip_type[current_layer] > 1)) { // read less data than expected
                   while ((pos < data_end+1) && (data[pos]==0xff)) ++pos; // skip padding 0xff
                   if (pos < data_end+1) {
                     cout << endl << pos << '\t' << data_end << '\t' << m_chip_type[current_layer] << endl;
@@ -1126,12 +595,7 @@ namespace eudaq {
                     cout << dec << endl;
                   }
                   pos = data_end+1; // skip non-decoded data
-                  current_layer = -1; // finished decoding a layer
                 }
-              }
-              else { // old data format
-                if (current_rgn == 31)
-                  current_layer = -1;
               }
             }
           }
@@ -1182,12 +646,13 @@ namespace eudaq {
       delete[] planes;
       // Indicate that data was successfully converted
       return true;
+#endif
     }
 
 ////////////////////////////////////////////////////////////
 // LCIO Converter
 ///////////////////////////////////////////////////////////
-#if USE_LCIO && USE_EUTELESCOPE
+#if USE_LCIO && USE_EUTELESCOPE && PALPIDEFS
     virtual bool GetLCIOSubEvent(lcio::LCEvent &lev,
                                  eudaq::Event const &ev) const {
 
@@ -1301,6 +766,7 @@ namespace eudaq {
     float m_dut_pos;
     string *m_configs;
     int *m_chip_type;
+    unsigned int *m_fw_version;
     int *m_Vaux;
     int *m_VresetP;
     int *m_VresetD;
@@ -1327,7 +793,15 @@ namespace eudaq {
     float **m_SCS_thr_rms;
     float **m_SCS_noise;
     float **m_SCS_noise_rms;
-    ofstream *m_temperatureFile;
+#ifdef WRITE_TEMPERATURE_FILE
+    ofstream *m_temperature_file;
+#endif
+#ifdef PALPIDEFS
+    TDaqboard** m_daq_board;
+    TDUT** m_dut;
+    int* m_daq_header_length;
+    int* m_daq_trailer_length;
+#endif
 
 
 #if USE_TINYXML
