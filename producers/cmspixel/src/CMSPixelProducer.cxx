@@ -66,6 +66,7 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration &config) {
   std::vector<std::pair<std::string, uint8_t>> pg_setup;
   std::vector<std::vector<std::pair<std::string, uint8_t>>> tbmDACs;
   std::vector<std::vector<std::pair<std::string, uint8_t>>> rocDACs;
+  m_alldacs = "";
   std::vector<std::vector<pxar::pixelConfig>> rocPixels;
   std::vector<uint8_t> rocI2C;
 
