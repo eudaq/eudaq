@@ -122,6 +122,9 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration &config) {
   }
 
   try {
+    // Acquire lock for pxarCore instance:
+    std::lock_guard<std::mutex> lck(m_mutex);
+
     // Check for multiple ROCs using the I2C parameter:
     std::vector<int32_t> i2c_addresses =
         split(config.Get("i2c", "i2caddresses", "-1"), ' ');
@@ -322,6 +325,9 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
   m_ev_runningavg_filled = 0;
 
   try {
+    // Acquire lock for pxarCore instance:
+    std::lock_guard<std::mutex> lck(m_mutex);
+
     EUDAQ_INFO("Switching Sensor Bias HV ON.");
     m_api->HVon();
 
@@ -466,6 +472,9 @@ void CMSPixelProducer::OnTerminate() {
   std::cout << "CMSPixelProducer terminating..." << std::endl;
   // Stop the readout loop, force routine to return:
   m_terminated = true;
+
+  // Acquire lock for pxarCore instance:
+  std::lock_guard<std::mutex> lck(m_mutex);
 
   // If we already have a pxarCore instance, shut it down cleanly:
   if (m_api != NULL) {
