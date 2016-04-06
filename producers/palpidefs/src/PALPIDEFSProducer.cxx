@@ -417,7 +417,7 @@ void DeviceReader::Loop() {
         }
 
         SingleEvent* ev =
-          new SingleEvent(length, header.EventId, header.TimeStamp);
+          new SingleEvent(length, header.EventId, header.TimeStamp, header.TimeStamp);
         memcpy(ev->m_buffer, data_buf, length);
         // add to queue
         Push(ev);
@@ -758,7 +758,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_readout_delay[i] = param.Get(buffer, param.Get("ReadoutDelay", 10));
     sprintf(buffer, "TriggerDelay_%d", i);
     m_trigger_delay[i] = param.Get(buffer, param.Get("TriggerDelay", 75));
-    spritnf(buffer, "ChipReadoutMode_%d", i);
+    sprintf(buffer, "ChipReadoutMode_%d", i);
     m_chip_readoutmode[i] = param.Get(buffer, param.Get("ChipReadoutMode", 2));
 
     // data taking configuration
@@ -775,7 +775,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
     // PrepareChipReadout
     dut->PrepareReadout(m_strobeb_length[i], m_readout_delay[i],
-                        m_chip_readoutmode[i]);       // chip_readoutmode = 1 : triggered ; 2 : continuous mode;
+                        (TAlpideMode)m_chip_readoutmode[i]);       // chip_readoutmode = 1 : triggered ; 2 : continuous mode;
 
     if (delay > 0)
       m_reader[i]->SetQueueFullDelay(delay);
@@ -1546,7 +1546,7 @@ int PALPIDEFSProducer::BuildEvent() {
       memcpy(buffer + pos, single_ev->m_buffer, single_ev->m_length);
       pos += single_ev->m_length;
     }
-  printf("Event %d, reference_timestamp : %llu ; current_timestamp : %llu" , reference_timestamp[i], timestamp); // just for debugging
+  printf("Event %d, reference_timestamp : %lu ; current_timestamp : %llu" ,m_ev, m_timestamp_reference[i], timestamp); // just for debugging
   }
 
 
