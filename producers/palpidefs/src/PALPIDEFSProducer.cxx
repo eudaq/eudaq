@@ -626,6 +626,10 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_trigger_delay = new int[m_nDevices];
   if (!m_readout_delay)
     m_readout_delay = new int[m_nDevices];
+  if (!m_timestamp_reference)
+    m_timestamp_reference = new unsigned long[m_nDevices];
+  if (!m_chip_readoutmode)
+    m_chip_readoutmode = new int[m_nDevices];
   if (!m_reader) {
     m_reader = new DeviceReader*[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
@@ -754,6 +758,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_readout_delay[i] = param.Get(buffer, param.Get("ReadoutDelay", 10));
     sprintf(buffer, "TriggerDelay_%d", i);
     m_trigger_delay[i] = param.Get(buffer, param.Get("TriggerDelay", 75));
+    spritnf(buffer, "ChipReadoutMode_%d", i);
+    m_chip_readoutmode[i] = param.Get(buffer, param.Get("ChipReadoutMode", 2));
 
     // data taking configuration
     // PrepareEmptyReadout
@@ -769,7 +775,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
     // PrepareChipReadout
     dut->PrepareReadout(m_strobeb_length[i], m_readout_delay[i],
-                        MODE_ALPIDE_READOUT_B);
+                        m_chip_readoutmode[i]);       // chip_readoutmode = 1 : triggered ; 2 : continuous mode;
 
     if (delay > 0)
       m_reader[i]->SetQueueFullDelay(delay);
@@ -863,6 +869,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
     for (int i = 0; i < m_nDevices; i++) {
       TpAlpidefs* dut = 0;
       TDAQBoard* daq_board = 0;
+
       const size_t buffer_size = 100;
       char buffer[buffer_size];
 
@@ -896,6 +903,14 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
           sprintf(msg,
                   "Powering device with board address %d failed, overflow=0x%x",
                   board_address, overflow);
+          std::cerr << msg << std::endl;
+          EUDAQ_ERROR(msg);
+          SetStatus(eudaq::Status::LVL_ERROR, msg);
+          return false;
+        }
+        if (!daq_board->DisableTimeStampReset(true)) {
+          char msg[100];
+          sprintf(msg, "Disabling TimeStamp Reset failed at board %d", board_address);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
           SetStatus(eudaq::Status::LVL_ERROR, msg);
@@ -959,6 +974,7 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
     libusb_exit(context);
     m_configured = false;
   }
+  
   eudaq::mSleep(5000);
   system("${SCRIPT_DIR}/fx3/program.sh");
   return true;
@@ -1180,7 +1196,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
       return;
     }
-	std::cout << "PARSEXML READTRUE" << std::endl;
+  	std::cout << "PARSEXML READTRUE" << std::endl;
     m_reader[i]->ParseXML(doc.FirstChild("root")->ToElement(), -1, -1, true);
 
     std::string configStr;
@@ -1258,6 +1274,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
 
   //Configuration is done, Read DAC Values and send to log
 
+
   for (int i = 0; i < m_nDevices; i++) {
     TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
     std::cout << "Reading Device:" << i << " ADCs" <<  std::endl;
@@ -1273,7 +1290,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   for (int i = 0; i < m_nDevices; i++) {
     m_reader[i]->SetRunning(true);
     m_reader[i]->StartDAQ();
+    m_timestamp_reference[i] = 0;
   }
+
 
   SetStatus(eudaq::Status::LVL_OK, "Running");
   EUDAQ_INFO("Running");
@@ -1474,6 +1493,11 @@ int PALPIDEFSProducer::BuildEvent() {
         SetStatus(eudaq::Status::LVL_WARN, str);
       }
     }
+
+    if (!m_timestamp_reference[i]) 
+      m_timestamp_reference[i] = timestamp;
+
+    single_ev->m_timestamp_reference = m_timestamp_reference[i];
   }
 
   if (timestamp_error && m_recover_outofsync) {
@@ -1522,7 +1546,9 @@ int PALPIDEFSProducer::BuildEvent() {
       memcpy(buffer + pos, single_ev->m_buffer, single_ev->m_length);
       pos += single_ev->m_length;
     }
+  printf("Event %d, reference_timestamp : %llu ; current_timestamp : %llu" , reference_timestamp[i], timestamp); // just for debugging
   }
+
 
   RawDataEvent ev(EVENT_TYPE, m_run, m_ev++);
   ev.AddBlock(0, buffer, total_size);

@@ -15,9 +15,9 @@
 #include "TTestsetup.h"
 
 struct SingleEvent {
-  SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp)
+  SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp, uint64_t timestamp_reference)
       : m_buffer(0), m_length(length), m_trigger_id(trigger_id),
-        m_timestamp(timestamp), m_timestamp_corrected(timestamp) {
+        m_timestamp(timestamp), m_timestamp_corrected(timestamp), m_timestamp_reference(timestamp_reference) {
     m_buffer = new unsigned char[length];
   }
   ~SingleEvent() {
@@ -29,6 +29,7 @@ struct SingleEvent {
   uint64_t m_trigger_id;
   uint64_t m_timestamp;
   uint64_t m_timestamp_corrected;
+  uint64_t m_timestamp_reference;
 };
 
 class SimpleLock {
@@ -179,7 +180,8 @@ public:
         m_full_config_v3(), m_ignore_trigger_ids(true),
         m_recover_outofsync(true), m_chip_type(0x0),
         m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
-        m_readout_delay(0x0), m_monitor_PSU(false), m_back_bias_voltage(-1),
+        m_readout_delay(0x0), m_chip_readoutmode(0x0),
+        m_monitor_PSU(false), m_back_bias_voltage(-1),
         m_dut_pos(-1.), m_dut_angle1(-1.), m_dut_angle2(-1.),
         m_SCS_charge_start(-1), m_SCS_charge_stop(-1),
         m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1),
@@ -233,6 +235,7 @@ protected:
   }
 
   unsigned m_run, m_ev;
+  unsigned long *m_timestamp_reference;
   bool m_done;
   bool m_running;
   bool m_stopping;
@@ -243,6 +246,7 @@ protected:
   DeviceReader** m_reader;
   SingleEvent** m_next_event;
   int m_debuglevel;
+
 
   std::mutex m_mutex;
   TTestSetup* m_testsetup;
@@ -260,6 +264,7 @@ protected:
   int* m_strobeb_length;
   int* m_trigger_delay;
   int* m_readout_delay;
+  int* m_chip_readoutmode;
   bool m_monitor_PSU;
   float m_back_bias_voltage;
   float m_dut_pos;
