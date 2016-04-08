@@ -32,8 +32,8 @@ protected:
   TGraphSet *set;
   TLegend *leg;
 
-  float TimeSliderMin, TimeSliderMax;
-  float GraphSliderMin, GraphSliderMax;
+  double TimeSliderMin, TimeSliderMax;
+  double GraphSliderMin, GraphSliderMax;
 
 public:
   GraphWindow(const TGWindow *p, UInt_t w, UInt_t h);
@@ -47,7 +47,7 @@ public:
   void SetTGraphSet(TGraphSet *s) { set = s; }
 };
 
-#ifndef __CINT__
+#ifdef __CINT__
 #pragma link C++ class GraphWindow - ;
 #endif
 

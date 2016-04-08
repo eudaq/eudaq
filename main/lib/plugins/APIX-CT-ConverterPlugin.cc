@@ -532,7 +532,7 @@ namespace eudaq {
     //std::cout<<"eudet ID "<<eudetTrig<<std::endl;
     std::map<int, StandardPlane> planes; //sensor id to plane
     for(std::size_t i=0;i<m_sensorids.size();i++){
-      for(std::size_t sm=0;sm<m_smult[i];sm++){
+      for(int sm=0;sm<m_smult[i];sm++){
 	int sensorid=m_sensorids[i];
 	StandardPlane plane(sensorid+sm, "APIX", "APIX");
 	if(m_nFeSensor[sensorid]!=3){
@@ -554,7 +554,7 @@ namespace eudaq {
     ConvertPlanes(ev, planes);
     for (size_t i = 0; i < m_sensorids.size(); i++) {
       int sensorid=m_sensorids[i];
-      for(size_t sm=0;sm<m_smult[i];sm++){
+      for(int sm=0;sm<m_smult[i];sm++){
 	result.AddPlane(planes[sensorid+sm]);
       }
     }
