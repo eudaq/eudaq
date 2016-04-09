@@ -24,6 +24,9 @@ using eutelescope::EUTelGenericSparsePixel;
 #include "eudaq/SCT_defs.hh"
 #include "eudaq/Configuration.hh"
 
+#include <algorithm>
+
+
 namespace eudaq {
 
   // The event type for which this converter plugin will be registered
@@ -31,7 +34,6 @@ namespace eudaq {
   static const char *EVENT_TYPE_ITS_ABC = "ITS_ABC";
   static const char *LCIO_collection_name = "zsdata_strip";
   static const char *LCIO_collection_name_TTC = "zsdata_strip_TTC";
-  static const int PlaneID = 8;
   namespace sct {
     std::string TDC_L0ID() { return "TDC.L0ID"; }
     std::string TLU_TLUID() { return "TLU.TLUID"; }
@@ -152,7 +154,7 @@ namespace eudaq {
 
   
 #endif
-
+ 
   // Declare a new class that inherits from DataConverterPlugin
   class SCTConverterPlugin_ITS_ABC : public DataConverterPlugin {
 
@@ -160,7 +162,24 @@ namespace eudaq {
     // This is called once at the beginning of each run.
     // You may extract information from the BORE and/or configuration
     // and store it in member variables to use during the decoding later.
-    virtual void Initialize(const Event &bore, const Configuration &cnf) {}
+    virtual void Initialize(const Event &bore, const Configuration &cnf) {
+      cnf.SetSection("Converter.ITS");
+      m_swap_xy = cnf.Get("SWAP_XY", 0);  //TODO: set to 0, now testing
+
+      m_tlu_blockid = bore.GetTag("TLU_BLOCKID", -1);
+      int abc_nblocks = bore.GetTag("ABC_N_BLOCKS", 0);
+      for(int i = 0; i< abc_nblocks; i++){
+	std::stringstream ss;
+	ss <<"ABC_BLOCKID_"<<i;
+	int id=bore.GetTag(ss.str().c_str(), -1);
+	ss.str("");
+	ss <<"ABC_BLOCKTYPE_"<<i;
+	std::string type=bore.GetTag(ss.str().c_str(), std::string(""));
+	if(id!=-1){
+	  m_abc_ids_types[id] = type;
+	}
+      }
+    }
 
     virtual int IsSyncWithTLU(eudaq::Event const &ev,
                               const eudaq::Event &tluEvent) const {
@@ -179,25 +198,49 @@ namespace eudaq {
       if (!raw) {
         return false;
       }
-
-      auto block = raw->GetBlock(0);
-
-      std::vector<bool> channels;
-      eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
-
-      StandardPlane plane(PlaneID, EVENT_TYPE_ITS_ABC);
-      plane.SetSizeZS(channels.size(), 1, 0);
-      unsigned x = 0;
-      unsigned y = 0;
-
-      for (size_t i = 0; i < channels.size(); ++i) {
-        ++x;
-        if (channels[i] == true) {
-          plane.PushPixel(x, 1, 1);
-        }
+      size_t  nblocks= raw->NumBlocks();
+      if(!nblocks){
+	std::cout<< "SCTConverterPlugin: Error, no block in RawdataEvent"<<std::endl;
+	return false;
       }
-      sev.AddPlane(plane);
+      
+      for(size_t n = 0; n<nblocks; n++){
+	std::vector<unsigned char> block = raw->GetBlock(n);
+	unsigned  blockid = raw->GetID(n);
+	std::string type;
+	if(!m_abc_ids_types.empty()&&m_abc_ids_types.find(blockid)==m_abc_ids_types.end()){
+	  continue; // not empty and not find
+	}
+	if(m_abc_ids_types.empty()){ //empty
+	  type.assign("ABC");
+	}
+	else{//not empty but find
+	  type = m_abc_ids_types.find(blockid)->second;
+	  if(type.empty())
+	    type.assign("ABC");
+	}	
+	
+	std::vector<bool> channels;
+	eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
+	std::string sensor_type;
+	StandardPlane plane(blockid, EVENT_TYPE_ITS_ABC, type.c_str());
+	if(m_swap_xy)
+	  plane.SetSizeZS(1,channels.size(),0);
+	else
+	  plane.SetSizeZS(channels.size(), 1, 0);
 
+	unsigned x = 0;	// TODO:: swap x and y axises
+	for (size_t i = 0; i < channels.size(); ++i) {
+	  ++x;
+	  if (channels[i] == true) {
+	    if(m_swap_xy)
+	      plane.PushPixel(1, x, 1);
+	    else
+	    plane.PushPixel(x, 1 , 1);
+	  }
+	}
+	sev.AddPlane(plane);
+      }
       return true;
     }
 #if USE_LCIO && USE_EUTELESCOPE
@@ -253,30 +296,31 @@ namespace eudaq {
 
       StandardEvent tmp_evt;
       GetStandardSubEvent(tmp_evt, source);
-      auto plane = tmp_evt.GetPlane(0);
-
-      // set the proper cell encoder
-      auto zsDataEncoder = CellIDEncoder<TrackerDataImpl>(
-          eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
-      zsDataEncoder["sensorID"] = 8;
-      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
-
-      // prepare a new TrackerData for the ZS data
-      auto zsFrame =
-          std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
-      zsDataEncoder.setCellID(zsFrame.get());
-
-      ConvertPlaneToLCIOGenericPixel(plane, *zsFrame);
-
-      // perfect! Now add the TrackerData to the collection
-      zsDataCollection->push_back(zsFrame.release());
-
-      if (!zsDataCollectionExists) {
-        if (zsDataCollection->size() != 0)
-          result.addCollection(zsDataCollection, LCIO_collection_name);
-        else
-          delete zsDataCollection; // clean up if not storing the collection
-                                   // here
+      size_t nplanes = tmp_evt.NumPlanes();
+      for(size_t n =0; n<nplanes; n++){
+	auto plane = tmp_evt.GetPlane(n);
+	//TODO:: remove some code ouside of loop, talk to EUTelescope
+	// set the proper cell encoder
+	auto zsDataEncoder = CellIDEncoder<TrackerDataImpl>
+	  (eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+	zsDataEncoder["sensorID"] = plane.ID();  //TODO: sensor name string?
+	zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
+	
+	// prepare a new TrackerData for the ZS data
+	auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
+	zsDataEncoder.setCellID(zsFrame.get());
+	
+	ConvertPlaneToLCIOGenericPixel(plane, *zsFrame);
+	
+	// perfect! Now add the TrackerData to the collection
+	zsDataCollection->push_back(zsFrame.release());
+	
+	if (!zsDataCollectionExists) {
+	  if (zsDataCollection->size() != 0)
+	    result.addCollection(zsDataCollection, LCIO_collection_name);
+	  else
+	    delete zsDataCollection; // clean up if not storing the collection here
+	}
       }
 
       return true;
@@ -286,10 +330,13 @@ namespace eudaq {
     static SCTConverterPlugin_ITS_ABC m_instance;
 
   private:
-    SCTConverterPlugin_ITS_ABC() : DataConverterPlugin(EVENT_TYPE_ITS_ABC) {}
+    SCTConverterPlugin_ITS_ABC() : DataConverterPlugin(EVENT_TYPE_ITS_ABC), m_swap_xy(0),  m_tlu_blockid(-1) {}
 
-    unsigned m_boards = 1;
+    unsigned m_boards = 1;  //TODO:: remove
+    unsigned m_swap_xy;
 
+    int m_tlu_blockid;
+    std::map<int, std::string> m_abc_ids_types;
     // The single instance of this converter plugin
   }; // class SCTConverterPlugin
 
@@ -324,7 +371,6 @@ namespace eudaq {
     // Again, this is just an example, adapted it for the actual data layout.
     virtual bool GetStandardSubEvent(StandardEvent &sev,
                                      const Event &ev) const {
-
       if (ev.IsBORE()) {
         return true;
       }
@@ -484,169 +530,160 @@ namespace eudaq {
   // Instantiate the converter plugin instance
   SCTConverterPlugin_ITS_TTC SCTConverterPlugin_ITS_TTC::m_instance;
 
-  // The event type for which this converter plugin will be registered
-  // Modify this to match your actual event type (from the Producer)
-  static const char *EVENT_TYPE_SCT = "SCT";
+#ifdef USE_EUDAQ2_VERSION
 
-  // Declare a new class that inherits from DataConverterPlugin
-  class SCTConverterPlugin : public DataConverterPlugin {
-
+  class mergeITSDAQStreams : public Processor {
   public:
-    virtual void Initialize(const Event &bore, const Configuration &cnf) {}
-    virtual int IsSyncWithTLU(eudaq::Event const &ev,
-                              const eudaq::Event &tluEvent) const {
-      unsigned triggerID = GetTriggerID(ev);
-      auto tlu_triggerID = tluEvent.GetEventNumber();
-      return compareTLU2DUT(tlu_triggerID, triggerID + 1);
-    }
+    mergeITSDAQStreams(Parameter_ref conf) : Processor(conf) {}
+    virtual ReturnParam ProcessorEvent(event_sp ev) override {
+      if (!ev) {
+        return ProcessorBase::stop;
+      }
+      if (ev->IsBORE()) {
+        return ProcessNext(ev);
+      }
+      if (ev->IsEORE()) {
+        return ProcessNext(ev);
+      }
+      auto det = dynamic_cast<DetectorEvent *>(ev.get());
 
-    // Here, the data from the RawDataEvent is extracted into a StandardEvent.
-    // The return value indicates whether the conversion was successful.
-    // Again, this is just an example, adapted it for the actual data layout.
-    virtual bool GetStandardSubEvent(StandardEvent &sev,
-                                     const Event &ev) const {
-
-      if (ev.IsBORE()) {
-        return true;
+      if (!det) {
+        return ProcessorBase::ret_error;
       }
 
-      auto raw = dynamic_cast<const RawDataEvent *>(&ev);
-      if (!raw) {
-        return false;
-      }
+      event_sp abc, ttc;
+      std::vector<event_sp> dummy;
+      for (int i = 0; i < det->NumEvents(); ++i) {
+        auto currentEvent = det->GetEventPtr(i);
 
-      StandardPlane plane(PlaneID, EVENT_TYPE_ITS_ABC);
-      auto size_x = raw->GetBlock(0).size() * 8;
+        if (PluginManager::getUniqueIdentifier(*currentEvent) ==
+            SCTConverterPlugin_ITS_TTC::m_instance.getUniqueIdentifier(*ev)) {
+          ttc = currentEvent;
 
-      plane.SetSizeZS(size_x, raw->NumBlocks(), 0);
-      for (size_t i = 0; i < raw->NumBlocks(); ++i) {
-
-        auto block = raw->GetBlock(i);
-
-        std::vector<bool> channels;
-        eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
-
-        unsigned x = 0;
-        unsigned y = 0;
-        for (size_t i = 0; i < channels.size(); ++i) {
-          ++x;
-          if (channels[i] == true) {
-            plane.PushPixel(x, y, 1);
-          }
+        } else if (PluginManager::getUniqueIdentifier(*currentEvent) ==
+                   SCTConverterPlugin_ITS_ABC::m_instance.getUniqueIdentifier(
+                       *ev)) {
+          abc = currentEvent;
+        } else {
+          dummy.push_back(currentEvent);
         }
       }
-      sev.AddPlane(plane);
 
-      sev.SetTag(TDC_data(), ev.GetTag(TDC_data(), ""));
-      sev.SetTag(TDC_L0ID(), ev.GetTag(TDC_L0ID(), ""));
-      sev.SetTag(TLU_TLUID(), ev.GetTag(TLU_TLUID(), ""));
-      sev.SetTag(TDC_data(), ev.GetTag(TDC_data(), ""));
+      auto rawTTC = dynamic_cast<RawDataEvent *>(ttc.get());
 
-      sev.SetTag(Timestamp_data(), ev.GetTag(Timestamp_data(), ""));
-      sev.SetTag(Timestamp_L0ID(), ev.GetTag(Timestamp_L0ID(), ""));
-
-      return true;
-    }
-#if USE_LCIO && USE_EUTELESCOPE
-    void GetLCIORunHeader(lcio::LCRunHeader &header,
-                          eudaq::Event const & /*bore*/,
-                          eudaq::Configuration const & /*conf*/) const {
-      eutelescope::EUTelRunHeaderImpl runHeader(&header);
-      runHeader.setDAQHWName(EUTELESCOPE::EUDRB); // should be:
-      // runHeader.setDAQHWName(EUTELESCOPE::NI);
-
-      // the information below was used by EUTelescope before the
-      // introduction of the BUI. Now all these parameters shouldn't be
-      // used anymore but they are left here for backward compatibility.
-
-      runHeader.setEUDRBMode("ZS");
-      runHeader.setEUDRBDet("SCT");
-      runHeader.setNoOfDetector(m_boards);
-      std::vector<int> xMin(m_boards, 0), xMax(m_boards, 1280),
-          yMin(m_boards, 0), yMax(m_boards, 4);
-      runHeader.setMinX(xMin);
-      runHeader.setMaxX(xMax);
-      runHeader.setMinY(yMin);
-      runHeader.setMaxY(yMax);
-    }
-
-    bool GetLCIOSubEvent(lcio::LCEvent &result, const Event &source) const {
-
-      if (source.IsBORE()) {
-        if (dbg > 0)
-          std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent BORE "
-                    << std::endl;
-        // shouldn't happen
-        return true;
-      } else if (source.IsEORE()) {
-        if (dbg > 0)
-          std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent EORE "
-                    << std::endl;
-        // nothing to do
-        return true;
+      if (!rawTTC) {
+        return ProcessorBase::ret_error;
       }
-      // If we get here it must be a data event
 
-      if (dbg > 0)
-        std::cout << "SCTUpgradeConverterPlugin::GetLCIOSubEvent data "
+      det->clearEvents();
+      SCTConverterPlugin_ITS_TTC::ProcessTTC(rawTTC->GetBlock(0), *abc);
+      det->AddEvent(abc);
+      for (auto &e : dummy) {
+        det->AddEvent(e);
+      }
+      return ProcessNext(ev);
+    }
+  };
+
+  std::string sct::mergeITSDAQStreamsName() { return "mergeITSDAQStreams"; }
+
+  RegisterProcessor(mergeITSDAQStreams, sct::mergeITSDAQStreamsName());
+
+  class SCT_COMPARE : public Processor {
+  public:
+    SCT_COMPARE(Parameter_ref conf) : Processor(conf) {}
+    virtual ReturnParam ProcessorEvent(event_sp ev) override {
+      bool same = true;
+      if (ev->IsBORE()) {
+        return ProcessNext(ev);
+      }
+      if (ev->IsEORE()) {
+        return ProcessNext(ev);
+      }
+
+      if (m_ev != ev->GetEventNumber()) {
+        // new event
+        m_first = ev;
+        m_ev = ev->GetEventNumber();
+        return ProcessorBase::sucess;
+      }
+      m_second = ev;
+      if (ev->GetEventNumber() == 5) {
+        same = false;
+      }
+
+      auto raw1 = dynamic_cast<RawDataEvent *>(
+          dynamic_cast<DetectorEvent *>(m_first.get())->GetEvent(0));
+      auto raw2 = dynamic_cast<RawDataEvent *>(
+          dynamic_cast<DetectorEvent *>(m_second.get())->GetEvent(0));
+
+      auto block1 = raw1->GetBlock(0);
+      auto block2 = raw2->GetBlock(0);
+
+      if (block1.size() != block2.size()) {
+        //       same = false;
+        //       std::cout << "different block sizes \n block1: " <<
+        //       block1.size() << "\n block2: " << block2.size() << std::endl;
+      }
+
+      auto min_s = min(block1.size(), block2.size());
+      std::vector<size_t> errors;
+      for (size_t i = 0; i < min_s; i++) {
+        if (block1[i] != block2[2]) {
+          same = false;
+          errors.push_back(i);
+          std::cout << "block difference at: " << i << std::endl;
+        }
+      }
+
+      if (Is_unequal(raw1, raw2, TDC_L0ID()) ||
+          Is_unequal(raw1, raw2, TLU_TLUID()) ||
+          Is_unequal(raw1, raw2, TDC_data()) ||
+          Is_unequal(raw1, raw2, TDC_data()) ||
+          Is_unequal(raw1, raw2, Timestamp_data()) ||
+          Is_unequal(raw1, raw2, Timestamp_L0ID())) {
+
+        same = false;
+      }
+
+      if (same == true) {
+        return ProcessorBase::sucess;
+      }
+
+      auto ret = ProcessNext(m_first);
+
+      if (ret != ProcessorBase::sucess) {
+        return ret;
+      }
+
+      return ProcessNext(m_second);
+    }
+
+    virtual void initialize(Configuration_ref conf) override {
+
+      m_first.reset();
+      m_second.reset();
+      m_ev = 121234;
+    }
+
+    event_sp m_first, m_second;
+    unsigned m_ev;
+    static bool Is_unequal(RawDataEvent *raw1, RawDataEvent *raw2,
+                           const std::string &name) {
+      if (hex2uint_64(raw1->GetTag(name, "0")) !=
+          hex2uint_64(raw2->GetTag(name, "0"))) {
+        std::cout << "block difference at: " << name << " "
+                  << raw1->GetTag(name, "") << " " << raw2->GetTag(name, "")
                   << std::endl;
-      result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE,
-                                   eutelescope::kDE);
-
-      LCCollectionVec *zsDataCollection = nullptr;
-      auto zsDataCollectionExists = Collection_createIfNotExist(
-          &zsDataCollection, result, LCIO_collection_name);
-
-      StandardEvent tmp_evt;
-      GetStandardSubEvent(tmp_evt, source);
-      auto plane = tmp_evt.GetPlane(0);
-
-      // set the proper cell encoder
-      auto zsDataEncoder = CellIDEncoder<TrackerDataImpl>(
-          eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
-      zsDataEncoder["sensorID"] = plane.ID();
-      zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
-
-      // prepare a new TrackerData for the ZS data
-      auto zsFrame =
-          std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
-      zsDataEncoder.setCellID(zsFrame.get());
-
-      ConvertPlaneToLCIOGenericPixel(plane, *zsFrame);
-
-      // perfect! Now add the TrackerData to the collection
-      zsDataCollection->push_back(zsFrame.release());
-
-      std::cout << zsDataCollection->size() << std::endl;
-      if (!zsDataCollectionExists) {
-        if (zsDataCollection->size() != 0)
-          result.addCollection(zsDataCollection, LCIO_collection_name);
-        else
-          delete zsDataCollection; // clean up if not storing the collection
-                                   // here
+        return true;
       }
-
-      return true;
+      return false;
     }
-#endif
+  };
 
-    static SCTConverterPlugin m_instance;
+  std::string sct::SCT_COMPARE_Name() { return "SCT_COMPARE"; }
 
-  private:
-    unsigned m_boards = 1;
-    // The constructor can be private, only one static instance is created
-    // The DataConverterPlugin constructor must be passed the event type
-    // in order to register this converter for the corresponding conversions
-    // Member variables should also be initialized to default values here.
-    SCTConverterPlugin() : DataConverterPlugin(EVENT_TYPE_SCT) {}
-
-    // Information extracted in Initialize() can be stored here:
-
-    // The single instance of this converter plugin
-  }; // class SCTConverterPlugin
-
-  // Instantiate the converter plugin instance
-  SCTConverterPlugin SCTConverterPlugin::m_instance;
-
+  RegisterProcessor(SCT_COMPARE, sct::SCT_COMPARE_Name());
+#endif // USE_EUDAQ2_VERSION
 
 } // namespace eudaq
