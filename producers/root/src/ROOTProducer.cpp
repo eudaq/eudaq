@@ -198,6 +198,7 @@ void ROOTProducer::Producer_PImpl::OnStopRun(){
     ev->SetTag("recorded_messages", m_streamOut.str()); //but cleared by status_check
     sendEvent();
     m_errors.clear();
+    SetStatus(eudaq::Status::LVL_OK, "Stopped");
     EUDAQ_INFO(std::to_string(m_ev) + " Events Processed" );
     EUDAQ_INFO("End of run " + std::to_string(m_run));
   }
