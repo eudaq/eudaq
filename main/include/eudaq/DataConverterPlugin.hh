@@ -169,6 +169,10 @@ namespace eudaq {
       return false;
     };
 
+    /** Returns each data converter instance first number of a ten sized block of reserved sensor IDs
+     */
+    virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev);    
+    
     /** Returns the type of event this plugin can convert to lcio as a pair of
      * Event type id and subtype string.
      */
@@ -191,6 +195,8 @@ namespace eudaq {
      */
     DataConverterPlugin(std::string subtype);
     DataConverterPlugin(unsigned type, std::string subtype = "");
+    static unsigned m_count;
+    unsigned m_thisCount;
 
   private:
     /** The private copy constructor and assignment operator. They are not used

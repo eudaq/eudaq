@@ -39,12 +39,19 @@ namespace eudaq {
   }
 
   DataConverterPlugin::DataConverterPlugin(unsigned type, std::string subtype)
-      : m_eventtype(make_pair(type, subtype)) {
+      : m_eventtype(make_pair(type, subtype)), m_thisCount(m_count) {
     // std::cout << "DEBUG: Registering DataConverterPlugin: " <<
     // Event::id2str(m_eventtype.first) << ":" << m_eventtype.second <<
     // std::endl;
     PluginManager::GetInstance().RegisterPlugin(this);
+    m_count += 10;
   }
+  
+  unsigned DataConverterPlugin::getUniqueIdentifier(const eudaq::Event & ev) {
+   return m_thisCount;
+  }  
+  
+  unsigned DataConverterPlugin::m_count = 0;  
 
 #ifdef USE_EUTELESCOPE
   void ConvertPlaneToLCIOGenericPixel(StandardPlane &plane,
