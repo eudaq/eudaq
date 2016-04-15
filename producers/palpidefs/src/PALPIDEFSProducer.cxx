@@ -237,8 +237,9 @@ void DeviceReader::Stop() {
 }
 
 void DeviceReader::SetRunning(bool running) {
-  Print(0, "Set running: %lu", running);
+  Print(0, "Set running: %lu, m_running : %lu, m_waiting_for_eor : %lu, m_flushing : %lu", running, m_running, m_waiting_for_eor, m_flushing);
   SimpleLock lock(m_mutex);
+//  m_flushing_second = false;
   if (m_running && !running) {
       m_flushing = true;
     m_waiting_for_eor = true;
@@ -252,9 +253,9 @@ void DeviceReader::StartDAQ() {
 }
 
 void DeviceReader::StopDAQ() {
-  while (IsReading()) {
-    eudaq::mSleep(10);
-  }
+//  while (IsReading()) {
+//    eudaq::mSleep(10);
+//  }
   m_daq_board->WriteBusyOverrideReg(false);
   eudaq::mSleep(100);
   m_daq_board->StopTrigger();
@@ -348,35 +349,90 @@ void DeviceReader::Loop() {
     unsigned char data_buf[maxDataLength];
     int length = -1;
     TEventHeader header;
-
-    if (IsFlushing()) {
+    
+/*    if (IsFlushing()) {
       SimpleLock lock(m_mutex);
+      uint64_t nexteventid = m_daq_board->GetNextEventId();
 
       // read events left in the queue of the DAQ board
-      while (m_daq_board->GetNextEventId() > m_last_trigger_id) {
+      while (nexteventid > m_last_trigger_id) {
+        nexteventid = m_daq_board->GetNextEventId();
         m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
-        if (length==0) break; // end-of-readout package => stop
-        bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
-        bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
-
-        m_last_trigger_id = header.EventId;
-      }
-
-      m_flushing = false;
+        if (length==0 || nexteventid - m_last_trigger_id > 10) {
+          bool HeaderOK = m_daq_board->DecodeEventTrailer(data_buf, &header);
+          bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
+          m_flushing_second = true;
+          break; // end-of-readout package => stop
+        } 
+        else {
+          bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
+          bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
+          m_last_trigger_id = header.EventId;
+        }
+      }      
+//      m_flushing = false;
       Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(),
             m_last_trigger_id);
-    }
+    }*/
 
     // data taking
     SetReading(true);
     bool readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
-
     SetReading(false);
 
-    if (readEvent && length != -9) {
-      if (length == 0) {
+    if ((readEvent && length != -9) || (!readEvent && length == 0)){
+/*      if (m_flushing_second == true ) {
+        SimpleLock lock(m_mutex);
+        uint64_t next_event_id = m_daq_board->GetNextEventId();
+        while (next_event_id > m_last_trigger_id) {
+          std::cout << "Second flush / current trigger id : " << m_last_trigger_id << " length : " << length << std::endl;
+          next_event_id = m_daq_board->GetNextEventId();
+          m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
+          if (length == 0)
+            break;
+          else {
+            bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
+            bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
+            m_last_trigger_id = header.EventId;
+          }          
+        }
+        m_flushing_second = false;
+        Print(0, "Second Flushing Completed %lu", m_last_trigger_id);
+      } */
+      
+      if (IsFlushing()) {
+        uint64_t next_event_id = m_daq_board->GetNextEventId();
+          std::cout << "First Flush / current trigger id : " << m_last_trigger_id << " length : " << length << std::endl;
+        while (next_event_id > m_last_trigger_id) {
+//          std::cout << "First Flush / current trigger id : " << m_last_trigger_id << " length : " << length << std::endl;
+          next_event_id = m_daq_board->GetNextEventId();
+          m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
+          if (length == 0) { //|| next_event_id - m_last_trigger_id > 20) {
+ //           m_flushing_second = true;
+            break;
+          }
+          else {
+          bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
+          bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
+          m_last_trigger_id = header.EventId;
+          }
+        }
+        SimpleLock lock(m_mutex);
+        m_flushing = false;
+        Print(0, "EOR event received");
+        m_waiting_for_eor = false;
+        Print(0, "Flushing %lu", m_last_trigger_id);
+        m_last_trigger_id = m_daq_board->GetNextEventId();
+        continue;        
+      } /*else if (length == 0 && !IsFlushing())
+        Print(3, "UNEXPECTED: 0 event received but trigger has not been stopped.");*/
+     
+       
+            
+
+/*          
+        if (length == 0) {
         // EOR
-        if (IsFlushing()) {
           Print(0, "Flushing %lu", m_last_trigger_id);
           SimpleLock lock(m_mutex);
           m_flushing = false;
@@ -389,7 +445,7 @@ void DeviceReader::Loop() {
               3,
               "UNEXPECTED: 0 event received but trigger has not been stopped.");
         continue;
-      }
+      }*/
 
       bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
       bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
@@ -452,10 +508,10 @@ void DeviceReader::Loop() {
         str += "\n";
         Print(0, str.data());
       }
-      }
     }
-    Print(0, "ThreadRunner stopping...");
   }
+    Print(0, "ThreadRunner stopping...");
+}
 
 
 
@@ -772,7 +828,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     else daq_board->ConfigureReadout(1, false, true); //buffer depth = 1, sampling on rising edge, packet-based mode
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0,
                                 m_trigger_delay[i]);
-
+    std::cout << m_chip_readoutmode[i] << std::endl;
     // PrepareChipReadout
     dut->PrepareReadout(m_strobeb_length[i], m_readout_delay[i],
                         (TAlpideMode)m_chip_readoutmode[i]);       // chip_readoutmode = 1 : triggered ; 2 : continuous mode;
@@ -908,14 +964,14 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
           SetStatus(eudaq::Status::LVL_ERROR, msg);
           return false;
         }
-        if (!daq_board->DisableTimeStampReset(true)) {
+/*        if (!daq_board->DisableTimeStampReset(true)) {
           char msg[100];
           sprintf(msg, "Disabling TimeStamp Reset failed at board %d", board_address);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
           SetStatus(eudaq::Status::LVL_ERROR, msg);
           return false;
-        }
+        }*/
 
         if (!m_testsetup->InitialiseChip(board_no, overflow)) {
           char msg[100];
@@ -1196,7 +1252,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
       return;
     }
-  	std::cout << "PARSEXML READTRUE" << std::endl;
+ // 	std::cout << "PARSEXML READTRUE" << std::endl;
     m_reader[i]->ParseXML(doc.FirstChild("root")->ToElement(), -1, -1, true);
 
     std::string configStr;
@@ -1306,16 +1362,18 @@ void PALPIDEFSProducer::OnStopRun() {
     m_stopping = true;
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
+    std::cout << "Stopping DAQ " << std::endl;
+    m_reader[i]->StopDAQ();
     m_reader[i]->SetRunning(false);
   }
-  for (int i = 0; i < m_nDevices;
-       i++) { // wait until all read transactions are done
-    while (m_reader[i]->IsReading())
-      eudaq::mSleep(20);
+  std::cout << "Set Running to False completed" << std::endl;
 
-  }
-  for (int i = 0; i < m_nDevices; i++) { // stop the DAQ board
-    m_reader[i]->StopDAQ();
+  for (int i = 0; i < m_nDevices; i++) { // wait until all read transactions are done
+    while (m_reader[i]->IsReading()) {
+      std::cout << "Reader is still reading, waiting 20msec.. " << std::endl;
+      eudaq::mSleep(20);
+    }
+
   }
   {
     SimpleLock lock(m_mutex);
@@ -1325,17 +1383,20 @@ void PALPIDEFSProducer::OnStopRun() {
   long wait_cnt = 0;
   eudaq::mSleep(100);
 
-
+  std::cout << "Starting to flush.. " << std::endl;
   while (IsFlushing() || IsStopping()) {
     eudaq::mSleep(10);
     ++wait_cnt;
+//    std::cout << "flushing .." << std::endl;
     if (wait_cnt % 100 == 0) {
       std::string msg = "Still flushing...";
       std::cout << msg << std::endl;
       SetStatus(eudaq::Status::LVL_WARN, msg.data());
     }
   }
+  
   SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
+  
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1546,7 +1607,7 @@ int PALPIDEFSProducer::BuildEvent() {
       memcpy(buffer + pos, single_ev->m_buffer, single_ev->m_length);
       pos += single_ev->m_length;
     }
-  printf("Event %d, reference_timestamp : %lu ; current_timestamp : %llu" ,m_ev, m_timestamp_reference[i], timestamp); // just for debugging
+//    printf("Event %d, reference_timestamp : %lu ; current_timestamp : %llu \n" ,m_ev, m_timestamp_reference[i], timestamp); // just for debugging
   }
 
 
