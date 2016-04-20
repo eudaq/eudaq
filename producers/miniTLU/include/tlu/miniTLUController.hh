@@ -1,6 +1,7 @@
 #ifndef H_MINITLUCONTROLLER_HH
 #define H_MINITLUCONTROLLER_HH
 
+#include <deque>
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -8,152 +9,160 @@
 #include <ostream>
 #include <memory>
 
-#include "eudaq/Utils.hh"
-#include "eudaq/Time.hh"
 #include "uhal/uhal.hpp"
- 
-#include <boost/filesystem.hpp>
+
+typedef unsigned char uchar_t;
 
 using namespace uhal;
 
 namespace tlu {
 
-  static const int TLU_TRIGGER_INPUTS = 4;
-  static const int TLU_PMTS = TLU_TRIGGER_INPUTS ;
-
-
+  class minitludata;
+  
   class miniTLUController {
   public:
     miniTLUController(const std::string & connectionFilename, const std::string & deviceName);
-    ~miniTLUController();
+    ~miniTLUController(){ResetEventsBuffer();};
 
-    void SetSerdesRst(int value) { miniTLUController::SetWRegister("triggerInputs.SerdesRst",value); };
+    void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
+    void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
+    void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
+    void SetTriggerVeto(int value) { SetWRegister("triggerLogic.TriggerVetoW",value); };
+
+
+    void SetDUTMask(int value) { SetWRegister("DUTInterfaces.DUTMaskW",value); };
+    void SetDUTMaskMode(int value) { SetWRegister("DUTInterfaces.DUTInterfaceModeW",value); };
+    void SetDUTMaskModeModifier(int value) { SetWRegister("DUTInterfaces.DUTInterfaceModeModifierW",value); };
+    void SetDUTIgnoreBusy(int value){ SetWRegister("DUTInterfaces.IgnoreDUTBusyW",value); };
+    void SetDUTIgnoreShutterVeto(int value){ SetWRegister("DUTInterfaces.IgnoreShutterVetoW",value); };
+
+
+    uint32_t GetDUTMask() { return ReadRRegister("DUTInterfaces.DUTMaskR"); };
+
+    void SetEventFifoCSR(int value) { SetWRegister("eventBuffer.EventFifoCSR",value); };
+    void SetLogicClocksCSR(int value) { SetWRegister("logic_clocks.LogicClocksCSR",value); };
+
+    void SetEnableRecordData(int value) { SetWRegister("Event_Formatter.Enable_Record_Data",value); };
+
+    uint32_t GetLogicClocksCSR() { return ReadRRegister("logic_clocks.LogicClocksCSR"); };
+    uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
+    uint32_t GetTriggerVeto() { return ReadRRegister("triggerLogic.TriggerVetoR"); };
+    uint32_t GetPreVetoTriggers() { return ReadRRegister("triggerLogic.PreVetoTriggersR"); };
+    uint32_t GetPostVetoTriggers() { return ReadRRegister("triggerLogic.PostVetoTriggersR"); };
+    
+    uint32_t GetEventFifoCSR() { return ReadRRegister("eventBuffer.EventFifoCSR"); };
+    uint32_t GetEventFifoFillLevel() { return ReadRRegister("eventBuffer.EventFifoFillLevel"); };
+    uint32_t GetI2CStatus() { return ReadRRegister("i2c_master.i2c_cmdstatus"); };
+    uint32_t GetI2CRX() { return ReadRRegister("i2c_master.i2c_rxtx"); };
+    uint32_t GetFirmwareVersion() { return ReadRRegister("version"); };
+    
+
+    void SetI2CClockPrescale(int value) {
+      SetWRegister("i2c_master.i2c_pre_lo", value&0xff);
+      SetWRegister("i2c_master.i2c_pre_hi", (value>>8)&0xff);
+    };
+    void SetI2CControl(int value) { SetWRegister("i2c_master.i2c_ctrl", value&0xff); };
+    void SetI2CCommand(int value) { SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
+    void SetI2CTX(int value) { SetWRegister("i2c_master.i2c_rxtx", value&0xff); };
+
+    void ResetBoard() { SetWRegister("logic_clocks.LogicRst", 1); };
+
+
+    bool I2CCommandIsDone() { return ((GetI2CStatus())>>1)&0x1; };
+    uint32_t GetBoardID() { return m_BoardID; }
+    void ResetFIFO() { SetEventFifoCSR(0x0); };
+
+    
     void ResetCounters() {
-      miniTLUController::SetSerdesRst(0x2);
-      miniTLUController::SetSerdesRst(0x0);
+      SetSerdesRst(0x2);
+      SetSerdesRst(0x0);
     };
 
     void ResetSerdes() {
-      miniTLUController::SetSerdesRst(0x3);
-      miniTLUController::SetSerdesRst(0x0);
-      miniTLUController::SetSerdesRst(0x4);
-      miniTLUController::SetSerdesRst(0x0);
+      SetSerdesRst(0x3);
+      SetSerdesRst(0x0);
+      SetSerdesRst(0x4);
+      SetSerdesRst(0x0);
     };
 
-    void SetDUTInterfaces(int value) { miniTLUController::SetRWRegister("DUTInterfaces",value); };
-    void SetInternalTriggerInterval(int value) { miniTLUController::SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
-    uint32_t GetInternalTriggerInterval() { return miniTLUController::ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
-    void SetTriggerMask(int value) { miniTLUController::SetWRegister("triggerLogic.TriggerMaskW",value); };
-    uint32_t GetTriggerMask() { return miniTLUController::ReadRRegister("triggerLogic.TriggerMaskR"); };
-
-    void SetDUTMask(int value) { miniTLUController::SetWRegister("DUTInterfaces.DutMaskW",value); };
-    uint32_t GetDUTMask() { return miniTLUController::ReadRRegister("DUTInterfaces.DutMaskR"); };
-
-    void SetTriggerVeto(int value) { miniTLUController::SetWRegister("triggerLogic.TriggerVetoW",value); };
-    uint32_t GetTriggerVeto() { return miniTLUController::ReadRRegister("triggerLogic.TriggerVetoR"); };
-    void AllTriggerVeto() { miniTLUController::SetTriggerVeto(1); };
-    void NoneTriggerVeto() { miniTLUController::SetTriggerVeto(0); };
-
-    void SetEventFifoCSR(int value) { miniTLUController::SetRWRegister("eventBuffer.EventFifoCSR",value); };
-    uint32_t GetEventFifoCSR() { return miniTLUController::ReadRRegister("eventBuffer.EventFifoCSR"); };
-    void ResetEventFIFO() { miniTLUController::SetEventFifoCSR(0x0); };
-
-    void SetLogicClocksCSR(int value) { miniTLUController::SetRWRegister("logic_clocks.LogicClocksCSR",value); };
-    uint32_t GetLogicClocksCSR() { return miniTLUController::ReadRRegister("logic_clocks.LogicClocksCSR"); };
-
-    void SetTriggerLength(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TriggerLength",value); };
-    void SetTrigStartupDeadTime(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TrigStartupDeadTime",value); };
-    void SetTrigInterpulseDeadTime(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TrigInterpulseDeadTime",value); };
-    void SetTriggerDelay(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TriggerDelay",value); };
-    void SetNMaxTriggers(int value) { miniTLUController::SetRWRegister("Trigger_Generator.NMaxTriggers",value); };
-    void SetTrigRearmDeadTime(int value) { miniTLUController::SetRWRegister("Trigger_Generator.TrigRearmDeadTime",value); };
-
-    void SetShutterLength(int value) { miniTLUController::SetRWRegister("Shutter_Generator.ShutterLength",value); };
-    void SetShutStartupDeadTime(int value) { miniTLUController::SetRWRegister("Shutter_Generator.ShutStartupDeadTime",value); };
-    void SetShutInterpulseDeadTime(int value) { miniTLUController::SetRWRegister("Shutter_Generator.ShutInterpulseDeadTime",value); };
-    void SetShutterDelay(int value) { miniTLUController::SetRWRegister("Shutter_Generator.ShutterDelay",value); };
-    void SetNMaxShutters(int value) { miniTLUController::SetRWRegister("Shutter_Generator.NMaxShutters",value); };
-    void SetShutRearmDeadTime(int value) { miniTLUController::SetRWRegister("Shutter_Generator.ShutRearmDeadTime",value); };
-
-    void SetSpillLength(int value) { miniTLUController::SetRWRegister("Spill_Generator.SpillLength",value); };
-    void SetSpillStartupDeadTime(int value) { miniTLUController::SetRWRegister("Spill_Generator.SpillStartupDeadTime",value); };
-    void SetSpillInterpulseDeadTime(int value) { miniTLUController::SetRWRegister("Spill_Generator.SpillInterpulseDeadTime",value); };
-    void SetSpillDelay(int value) { miniTLUController::SetRWRegister("Spill_Generator.SpillDelay",value); };
-    void SetNMaxSpillgers(int value) { miniTLUController::SetRWRegister("Spill_Generator.NMaxSpills",value); };
-    void SetSpillRearmDeadTime(int value) { miniTLUController::SetRWRegister("Spill_Generator.SpillRearmDeadTime",value); };
-
-    void SetEnableRecordData(int value) { miniTLUController::SetRWRegister("Event_Formatter.Enable_Record_Data",value); };
-
-    uint32_t GetEventFifoFillLevel() { return miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel"); };
-
-    void SetCheckConfig(bool value) { m_checkConfig = value; };
-
-    void SetI2CClockPrescale(int value) {
-      miniTLUController::SetRWRegister("i2c_master.i2c_pre_lo", value&0xff);
-      miniTLUController::SetRWRegister("i2c_master.i2c_pre_hi", (value>>8)&0xff);
-    };
-
-    void SetI2CControl(int value) { miniTLUController::SetRWRegister("i2c_master.i2c_ctrl", value&0xff); };
-
-    void SetI2CCommand(int value) { miniTLUController::SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
-
-    uint32_t GetI2CStatus() { return miniTLUController::ReadRRegister("i2c_master.i2c_cmdstatus"); };
-
-    bool I2CCommandIsDone() { return ((GetI2CStatus())>>1)&0x1; };
-
-    void SetI2CTX(int value) { miniTLUController::SetWRegister("i2c_master.i2c_rxtx", value&0xff); };
-
-    uint32_t GetI2CRX() { return miniTLUController::ReadRRegister("i2c_master.i2c_rxtx"); };
-
-    uint32_t GetFirmwareVersion() { return miniTLUController::ReadRRegister("version"); };
-
-    uint32_t GetBoardID() { return m_BoardID; }
-
-    void ResetBoard() { miniTLUController::SetWRegister("logic_clocks.LogicRst", 1); };
-
-    void CheckEventFIFO();
-    void ReadEventFIFO();
-
-    uint32_t GetNEvent() { return m_nEvtInFIFO/2; }
-    uint64_t GetEvent(int i) { return m_dataFromTLU[i]; }
-    std::vector<uint64_t>* GetEventData() { return &m_dataFromTLU; }
-    void ClearEventFIFO() { m_dataFromTLU.resize(0); }
-
-    unsigned GetScaler(unsigned) const;
+    minitludata* PopFrontEvent();
+    bool IsBufferEmpty(){return m_data.empty();};
+    void ReceiveEvents();
+    void ResetEventsBuffer();
+    void DumpEventsBuffer();
 
     void InitializeI2C(char DACaddr, char IDaddr);
-
     void SetDACValue(unsigned char channel, uint32_t value);
-
     void SetThresholdValue(unsigned char channel, float thresholdVoltage);
-
-    void ConfigureInternalTriggerInterval(unsigned int value);
-
-    void DumpEvents();
   private:
-    HwInterface * m_hw;
-    bool m_checkConfig;
-    void SetRWRegister(const std::string & name, int value);
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
     char ReadI2CChar(char deviceAddr, char memAddr);
     void WriteI2CChar(char deviceAddr, char memAddr, char value);
     void WriteI2CCharArray(char deviceAddr, char memAddr, unsigned char *values, unsigned int len);
-    uint32_t m_nEvtInFIFO;
 
-    bool m_ipbus_verbose;
+    HwInterface * m_hw;
 
     char m_DACaddr;
     char m_IDaddr;
-
     uint64_t m_BoardID;
 
-    std::vector<uint64_t> m_dataFromTLU;
-
-    unsigned m_scalers[TLU_TRIGGER_INPUTS];
-    unsigned m_vetostatus, m_fsmstatus, m_dutbusy, m_clockstat;
+    std::deque<minitludata*> m_data;
 
   };
+
+  class minitludata{
+  public:
+    minitludata(uint64_t wl, uint64_t wh):  // wl -> wh
+      eventtype((wl>>60)&0xf),
+      input0((wl>>57)&0x7),
+      input1((wl>>54)&0x7),
+      input2((wl>>51)&0x7),
+      input3((wl>>48)&0x7),
+      timestamp(wl&0xffffffffffff),
+      sc0((wh>>56)&0xff),
+      sc1((wh>>48)&0xff),
+      sc2((wh>>40)&0xff),
+      sc3((wh>>32)&0xff),
+      eventnumber(wh&0xffffffff){
+    }
+
+    minitludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3): // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3 
+      eventtype((w0>>28)&0xf),
+      input0((w0>>25)&0x7),
+      input1((w0>>22)&0x7),
+      input2((w0>>19)&0x7),
+      input3((w0>>16)&0x7),
+      timestamp(((uint64_t(w0&0xffff))<<32) + w1),
+      // timestamp(w1),
+      sc0((w2>>24)&0xff),
+      sc1((w2>>16)&0xff),
+      sc2((w2>>8)&0xff),
+      sc3(w2&0xff),
+      eventnumber(w3),
+      timestamp1(w0&0xffff)
+    {
+    }
+	  
+    uchar_t eventtype;
+    uchar_t input0;
+    uchar_t input1;
+    uchar_t input2;
+    uchar_t input3;
+    uint64_t timestamp;
+    uchar_t sc0;
+    uchar_t sc1;
+    uchar_t sc2;
+    uchar_t sc3;
+    uint32_t eventnumber;
+    uint64_t timestamp1;
+    
+  };
+
+  std::ostream &operator<<(std::ostream &s, minitludata &d);
+
+    
 }
 
 #endif
