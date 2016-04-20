@@ -28,7 +28,7 @@ void ctrlchandler(int) {
 }
 
 int main(int /*argc*/, char ** argv) {
-  float vthresh_values[TLU_PMTS];
+  float vthresh_values[4];
 
   eudaq::OptionParser op("TLU Control Utility", "1.1", "A comand-line tool for controlling the AIDA mini-TLU Trigger Logic Unit");
 
@@ -81,7 +81,7 @@ int main(int /*argc*/, char ** argv) {
 
 
     // read the discriminator threshold values into an array
-    for(int i = 0; i < TLU_PMTS; i++)
+    for(int i = 0; i < 4; i++)
     {
 	 vthresh_values[i] = vthresh.Value() == -1 ? 0 : vthresh.Value();
     }
