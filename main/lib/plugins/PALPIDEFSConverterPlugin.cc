@@ -333,7 +333,7 @@ namespace eudaq {
     bool DecodeLayerHeader(const Event &ev, vector<unsigned char> data,
                            unsigned int &pos, unsigned int &data_end, int &current_layer,
                            bool *layers_found, uint64_t *trigger_ids,
-                           uint64_t *timestamps) const {
+                           uint64_t *timestamps, uint64_t *timestamps_reference) const {
 
       if (data[pos++] != 0xff) {
         cout << "ERROR: Event " << ev.GetEventNumber()
@@ -402,11 +402,16 @@ namespace eudaq {
         uint64_t timestamp = 0;
         for (int i = 0; i < 8; i++)
           ((unsigned char *)&timestamp)[i] = data[pos++];
+        uint64_t timestamp_reference = 0;
+        if (m_DataVersion >= 3)
+          for (int i = 0; i < 8; i++) 
+            ((unsigned char *)&timestamp_reference)[i] = data[pos++];
         trigger_ids[current_layer] = trigger_id;
         timestamps[current_layer] = timestamp;
+        timestamps_reference[current_layer] = timestamp_reference;
 #ifdef MYDEBUG
         cout << "Layer " << current_layer << " Trigger ID: " << trigger_id
-             << " Timestamp: " << timestamp << endl;
+             << " Timestamp: " << timestamp << " Reference Timestamp : " << timestamp_reference <<  endl;
 #endif
       }
 
@@ -499,6 +504,7 @@ namespace eudaq {
           //  (only for DataVersion >= 2)
           //  Trigger id (uint64_t)
           //  Timestamp (uint64_t)
+          //  Reference Timestamp (uint64_t)
           //  payload from chip (DataVersion<=2), complete DAQ board event
           //###################################################################
 
@@ -509,10 +515,12 @@ namespace eudaq {
           bool layers_found[maxLayers];
           uint64_t trigger_ids[maxLayers];
           uint64_t timestamps[maxLayers];
+          uint64_t timestamps_reference[maxLayers];
           for (int i = 0; i < maxLayers; i++) {
             layers_found[i] = false;
             trigger_ids[i] = (uint64_t)ULONG_MAX;
             timestamps[i] = (uint64_t)ULONG_MAX;
+            timestamps_reference[i] = (uint64_t)ULONG_MAX;
           }
 
 // RAW dump

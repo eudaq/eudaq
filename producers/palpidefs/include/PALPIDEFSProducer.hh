@@ -235,7 +235,7 @@ protected:
   }
 
   unsigned m_run, m_ev;
-  unsigned long *m_timestamp_reference;
+  uint64_t *m_timestamp_reference;
   bool m_done;
   bool m_running;
   bool m_stopping;
