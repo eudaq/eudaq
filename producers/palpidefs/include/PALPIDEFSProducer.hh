@@ -172,7 +172,8 @@ class PALPIDEFSProducer : public eudaq::Producer {
 public:
   PALPIDEFSProducer(const std::string &name, const std::string &runcontrol,
                     int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false),
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0),
+        m_timestamp_reference(0x0), m_done(false),
         m_running(false), m_stopping(false), m_flush(false),
         m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
         m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),

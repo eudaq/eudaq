@@ -424,10 +424,14 @@ void DeviceReader::Loop() {
         m_last_trigger_id = m_daq_board->GetNextEventId();
         continue;        
       } else if (length == 0 && !IsFlushing() && readEvent) {
-        SimpleLock lock(m_mutex);
+        {
+            SimpleLock lock(m_mutex);
 //        eudaq::mSleep(1);
-        Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
+             Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
+        }
         continue;
+      } else if (length == 0 && !IsFlushing() && !readEvent) {
+          continue;
       }
                 
 
@@ -1333,6 +1337,10 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   bore.SetTag("DUTposition", m_dut_pos);
 
   //Configuration is done, Read DAC Values and send to log
+  
+  for (int i = 0; i < m_nDevices; i++) {
+    m_timestamp_reference[i] = 0;
+  }
 
 
   for (int i = 0; i < m_nDevices; i++) {
@@ -1350,7 +1358,6 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   for (int i = 0; i < m_nDevices; i++) {
     m_reader[i]->SetRunning(true);
     m_reader[i]->StartDAQ();
-    m_timestamp_reference[i] = 0;
   }
 
 
