@@ -1,4 +1,4 @@
-#include "tlu/miniTLUController.hh"
+#include "miniTLUController.hh"
 
 
 # include <cstdio>
