@@ -56,10 +56,14 @@ namespace tlu {
   void miniTLUController::ReceiveEvents(){
     // std::cout<<"miniTLUController::ReceiveEvents"<<std::endl;
     uint32_t nevent = GetEventFifoFillLevel()/4;
+    // std::cout<< "fifo "<<GetEventFifoFillLevel()<<std::endl;
+    if (nevent*4 == 0x7D00) std::cout << "WARNING! miniTLU hardware FIFO is full" << std::endl;
+    // if(0){ // no read
     if(nevent){
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*4);
       m_hw->dispatch();    
       if(fifoContent.valid()) {
+	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/4<<std::endl;
 	if(fifoContent.size()%4 !=0){
 	  std::cout<<"receive error"<<std::endl;
 	}

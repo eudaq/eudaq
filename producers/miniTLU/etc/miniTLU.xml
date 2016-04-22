@@ -32,18 +32,14 @@
     <node id="TriggerVetoW" address="0x4" permission="w" description="" />
     <node id="PulseStretchW" address="0x6" permission="w" description="" />
     <node id="PulseDelayW" address="0x7" permission="w" description="" />
-    <node id="TriggerHoldOffW" address="0x8" permission="w" description="" />
-
-    <node id="PostVetoTriggersR" address="0x10" permission="r" description="" />
-    <node id="PreVetoTriggersR" address="0x11" permission="r" description="" />
-    <node id="InternalTriggerIntervalR" address="0x12" permission="r" description="" />
-    <node id="TriggerMaskR" address="0x13" permission="r" description="TriggerPatternR" />
-    <node id="TriggerVetoR" address="0x14" permission="r" description="" />
-    <node id="ExternalTriggerVetoR" address="0x15" permission="r" description="" />
-    <node id="PulseStretchR" address="0x16" permission="r" description="" />
-    <node id="PulseDelayR" address="0x17" permission="r" description="" />
-    <node id="TriggerHoldOffR" address="0x18" permission="r" description="" />
-    <node id="AuxTriggerCountR" address="0x19" permission="r" description="" />
+    <node id="PostVetoTriggersR" address="0x8" permission="r" description="" />
+    <node id="PreVetoTriggersR" address="0x9" permission="r" description="" />
+    <node id="InternalTriggerIntervalR" address="0xa" permission="r" description="" />
+    <node id="TriggerMaskR" address="0xb" permission="r" description="TriggerPatternR" />
+    <node id="TriggerVetoR" address="0xc" permission="r" description="" />
+    <node id="ExternalTriggerVetoR" address="0xd" permission="r" description="" />
+    <node id="PulseStretchR" address="0xe" permission="r" description="" />
+    <node id="PulseDelayR" address="0xf" permission="r" description="" />
   </node>
 
   <node id="eventBuffer" address="0x080" description="Event buffer">

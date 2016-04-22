@@ -174,7 +174,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer") {
-    if (id.GetName() == "TLU") {
+    if (id.GetName() == "TLU" || id.GetName() == "miniTLU") {
       EmitStatus("TRIG", status->GetTag("TRIG"));
       EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
       EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
