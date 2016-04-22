@@ -111,7 +111,7 @@ namespace tlu {
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
 
-
+    void SetUhalLogLevel(uchar_t l);
   private:
     char ReadI2CChar(char deviceAddr, char memAddr);
     void WriteI2CChar(char deviceAddr, char memAddr, char value);

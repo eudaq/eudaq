@@ -6,7 +6,6 @@
 #include "eudaq/TLUEvent.hh" // for the TLU event
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/TLU2Packet.hh"
 
 #include "miniTLUController.hh"
 #include <iostream>
