@@ -7,7 +7,8 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/TLU2Packet.hh"
-#include "tlu/miniTLUController.hh"
+
+#include "miniTLUController.hh"
 #include <iostream>
 #include <ostream>
 #include <vector>
