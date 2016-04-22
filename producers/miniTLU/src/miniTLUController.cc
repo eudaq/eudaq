@@ -234,6 +234,36 @@ namespace tlu {
   }
 
 
+  void miniTLUController::SetUhalLogLevel(uchar_t l){
+    switch(l){
+    case 0:
+      uhal::disableLogging();
+      break;
+    case 1:
+      uhal::setLogLevelTo(uhal::Fatal());
+      break;
+    case 2:
+      uhal::setLogLevelTo(uhal::Error());
+      break;
+    case 3:
+      uhal::setLogLevelTo(uhal::Warning());
+      break;
+    case 4:
+      uhal::setLogLevelTo(uhal::Notice());
+      break;
+    case 5:
+      uhal::setLogLevelTo(uhal::Info());
+      break;
+    case 6:
+      uhal::setLogLevelTo(uhal::Debug());
+      break;
+    default:
+      uhal::setLogLevelTo(uhal::Debug());      
+    }
+  }
+
+
+  
   std::ostream &operator<<(std::ostream &s, minitludata &d) {
     s << "eventnumber: " << d.eventnumber << " type: " << int(d.eventtype) <<" timestamp: 0x" <<std::hex<< d.timestamp <<std::dec<<std::endl
       <<" input0: " << int(d.input0) << " input1: " << int(d.input1) << " input2: " << int(d.input2) << " input3: " << int(d.input3) <<std::endl
