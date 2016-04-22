@@ -3,20 +3,13 @@
 
 #include <deque>
 #include <string>
-#include <vector>
-#include <stdexcept>
 #include <iostream>
-#include <ostream>
-#include <memory>
-
-#include <thread>
-#include <chrono>
-
-
-#include "uhal/uhal.hpp"
 
 typedef unsigned char uchar_t;
 
+namespace uhal{
+class HwInterface;
+}
 using namespace uhal;
 
 namespace tlu {
@@ -124,6 +117,7 @@ namespace tlu {
     void WriteI2CChar(char deviceAddr, char memAddr, char value);
     void WriteI2CCharArray(char deviceAddr, char memAddr, unsigned char *values, unsigned int len);
 
+    
     HwInterface * m_hw;
 
     char m_DACaddr;

@@ -1,20 +1,10 @@
 #include "miniTLUController.hh"
 
-
-# include <cstdio>
-
-#include <iostream>
-#include <ostream>
-#include <fstream>
 #include <iomanip>
-#include <cstdlib>
-#include <cmath>
-
-
 #include <thread>
 #include <chrono>
 
-using namespace uhal;
+#include "uhal/uhal.hpp"
 
 namespace tlu {
   miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_DACaddr(0), m_IDaddr(0) {
