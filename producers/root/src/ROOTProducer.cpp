@@ -123,12 +123,23 @@ private:
 };
 
 void ROOTProducer::Producer_PImpl::addTimerTag2Events(const char* tag, const char* Value, size_t freq){
-  timertags.push_back(tag);
-  timervalues.push_back(Value);
-  timerfreqs.push_back(freq);
-  lasttagtimes.push_back(std::chrono::high_resolution_clock::now());
+  bool done= false;
+  size_t ntags = timertags.size(); // TODO:: thread safe
+  for(size_t i = 0; i< ntags; i++){
+    std::string tag = timertags[i];
+    if(tag.compare(tag)==0){
+      timervalues[i] = Value;
+      timerfreqs[i] = freq;
+      done = true;
+    }
+  }
+  if(!done){
+    timertags.push_back(tag);
+    timervalues.push_back(Value);
+    timerfreqs.push_back(freq);
+    lasttagtimes.push_back(std::chrono::high_resolution_clock::now());
+  }
 }
-
 
 ROOTProducer::Producer_PImpl::Producer_PImpl(const std::string & name, const std::string & runcontrol) :
   eudaq::Producer(name, runcontrol),m_fsmstate(STATE_UNCONF), m_ProducerName(name){
@@ -355,7 +366,7 @@ void ROOTProducer::Producer_PImpl::appendData2Event(unsigned dataid,const unsign
 void ROOTProducer::Producer_PImpl::sendEvent(){
   size_t ntags = timertags.size(); // TODO:: thread safe
   auto timenow = std::chrono::high_resolution_clock::now();
-    for(size_t i = 0; i< ntags; i++){
+  for(size_t i = 0; i< ntags; i++){
     auto timelast = lasttagtimes[i];
     auto freq = timerfreqs[i];
     std::chrono::duration<double, std::milli> d(timenow-timelast);
