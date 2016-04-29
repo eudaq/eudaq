@@ -49,7 +49,6 @@ class RootMonitor;
 
 class OnlineMonWindow : public TGMainFrame {
 
-  RQ_OBJECT("OnlineMonWindow")
 #ifndef __CINT__
 protected:
   //#ifndef __CINT__

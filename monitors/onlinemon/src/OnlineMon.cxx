@@ -37,6 +37,8 @@
 #include <cstring>
 #include <stdio.h>
 #include <string.h>
+#include <chrono>
+#include <thread>
 
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
@@ -46,7 +48,7 @@ using namespace std;
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false) {
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
 
   if (_offline <= 0)
   {
@@ -164,6 +166,10 @@ void RootMonitor::setReduce(const unsigned int red) {
 }
 
 void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
+  while(_offline <= 0 && onlinemon==NULL){
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+    
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
   cout << "Number of Planes " << ev.NumPlanes()<< endl;
@@ -204,8 +210,6 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
   {
     reduce = (ev.GetEventNumber() % onlinemon->getReduce() == 0);
   }
-
-
 
 
   if (reduce)
@@ -415,6 +419,10 @@ void RootMonitor::autoReset(const bool reset) {
 
 void RootMonitor::OnStopRun()
 {
+  while(_offline <= 0 && onlinemon==NULL){
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   if (_writeRoot)
   {
     TFile *f = new TFile(rootfilename.c_str(),"RECREATE");
@@ -428,6 +436,9 @@ void RootMonitor::OnStopRun()
 }
 
 void RootMonitor::OnStartRun(unsigned param) {
+  while(_offline <= 0 && onlinemon==NULL){
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
 
   if (onlinemon->getAutoReset())
   {
