@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<connections>
-
-  <!-- DUMMY UDP -->
-  <connection id="minitlu" uri="ipbusudp-1.3://192.168.200.16:50001"	address_table="file://miniTLU.xml" />
-
-</connections>
-
