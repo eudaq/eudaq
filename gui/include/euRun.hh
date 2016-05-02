@@ -94,13 +94,6 @@ private slots:
   void on_btnTerminate_clicked() { close(); }
 
   void on_btnConfig_clicked() {
-    QDir dir(lastUsedDirectory, "*.conf");
-    // allConfigFiles
-    for (size_t i = 0; i < dir.count(); ++i) {
-      QString item = dir[i];
-      item.chop(5);
-      allConfigFiles.append(item);
-    }
     std::string settings = txtConfigFileName->text().toStdString();
     Configure(settings, txtGeoID->text().toInt());
     SetState(ST_READY);
@@ -157,17 +150,35 @@ private slots:
                      to_string(m_runeventlimit));
         }
         eudaq::mSleep(1000);
-        StopRun(false);
+	if(m_lastconfigonrunchange) {
+          EUDAQ_INFO("All config files processed.");
+	  m_startrunwhenready = false;
+	  on_btnStop_clicked();
+	  return;
+	} else {	
+          StopRun(false);
+	}
         eudaq::mSleep(20000);
         if (m_nextconfigonrunchange) {
+          QDir dir(lastUsedDirectory, "*.conf");
+	  
+          // allConfigFiles
+          for (size_t i = 0; i < dir.count(); ++i) {
+            QString item = dir[i];
+            allConfigFiles.append(dir.absoluteFilePath(item));
+          }
+	  
           if (allConfigFiles.indexOf(
                   QRegExp("^" + QRegExp::escape(txtConfigFileName->text()))) +
                   1 <
               allConfigFiles.count()) {
             EUDAQ_INFO("Moving to next config file and starting a new run");
             txtConfigFileName->setText(allConfigFiles.at(allConfigFiles.indexOf(
-                QRegExp("^" + QRegExp::escape(txtConfigFileName->text())))));
+                QRegExp("^" + QRegExp::escape(txtConfigFileName->text())))+1));
             on_btnConfig_clicked();
+	    if(!m_nextconfigonrunchange) {
+	      m_lastconfigonrunchange=true;
+	    }
             eudaq::mSleep(1000);
             m_startrunwhenready = true;
           } else
@@ -216,4 +227,5 @@ private:
   bool m_producer_pALPIDEfs_not_ok;
   bool m_producer_pALPIDEss_not_ok;
   bool m_startrunwhenready;
+  bool m_lastconfigonrunchange;
 };

@@ -100,7 +100,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
       m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
       m_filebytes(0), m_events(0), dostatus(false),
       m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
-      m_startrunwhenready(false) {
+      m_startrunwhenready(false),m_lastconfigonrunchange(false) {
   setupUi(this);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
