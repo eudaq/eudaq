@@ -52,7 +52,7 @@ using namespace std;
 #include <EUTELESCOPE.h>
 #endif
 
-//#define MYDEBUG  // dumps decoding information
+#define MYDEBUG  // dumps decoding information
 //#define DEBUGRAWDUMP // dumps all raw events
 #define CHECK_TIMESTAMPS // if timestamps are not consistent marks event as
                          // broken
@@ -79,43 +79,6 @@ namespace eudaq {
     DT_COMMA,
     DT_EMPTYFRAME,
     DT_UNKNOWN
-  };
-
-  class LayerPixHits {
-    public:
-      LayerPixHits() :
-        layerid(0), eventid(0), isstatusevent(false) {}
-      ~LayerPixHits() {}
-
-      vector<int> GetX() {
-        return hit_x;
-      }
-      vector<int> GetY() {
-        return hit_y;
-      }
-      int GetLayerID() {
-        return layerid;
-      }
-      bool IsStatusEvent() {
-        return isstatusevent;
-      }
-      unsigned int GetEventID() {
-        return eventid;
-      }
-      void DiscardData() {
-        hit_x.clear();
-        hit_y.clear();
-        layerid = 0;
-        eventid = 0;
-        isstatusevent = false;
-      }
-
-    private:
-      vector<int> hit_x;
-      vector<int> hit_y;
-      int layerid;
-      unsigned int eventid;
-      bool isstatusevent;
   };
 
   // Plugin inheritance
@@ -173,14 +136,10 @@ namespace eudaq {
       m_SCS_noise = new float *[m_nLayers];
       m_SCS_noise_rms = new float *[m_nLayers];
 
-      if (m_prev_hits.size()) 
-        m_prev_hits.clear();
-      m_prev_hits.resize(m_nLayers);
-
 
 #ifdef PALPIDEFS
       TConfig* conf = new TConfig(TYPE_CHIP, 1);
-      m_dut = new TDUT*[m_nLayers];
+      m_dut = new TpAlpidefs*[m_nLayers];
       m_daq_board = new TDAQBoard*[m_nLayers];
       m_daq_header_length = new int[m_nLayers];
       m_daq_trailer_length = new int[m_nLayers];
@@ -253,16 +212,16 @@ namespace eudaq {
                 SCS_steps, m_SCS_n_events, m_chip_type[i] == 3 ? 8 : 4)) {
             cout << endl;
             cout << "Results of the failed S-Curve scan in ADC counts"
-                      << endl;
+                 << endl;
             cout << "Thr\tThrRMS\tNoise\tNoiseRMS" << endl;
             for (unsigned int i_sector = 0; i_sector < 4; ++i_sector) {
               cout << m_SCS_thr[i][i_sector] << '\t'
-                        << m_SCS_thr_rms[i][i_sector] << '\t'
-                        << m_SCS_noise[i][i_sector] << '\t'
-                        << m_SCS_noise_rms[i][i_sector] << endl;
+                   << m_SCS_thr_rms[i][i_sector] << '\t'
+                   << m_SCS_noise[i][i_sector] << '\t'
+                   << m_SCS_noise_rms[i][i_sector] << endl;
             }
             cout << endl
-                      << endl;
+                 << endl;
           }
         } else {
           m_SCS_points[i] = 0x0;
@@ -444,8 +403,8 @@ namespace eudaq {
         for (int i = 0; i < 8; i++)
           ((unsigned char *)&timestamp)[i] = data[pos++];
         uint64_t timestamp_reference = 0;
-        if (m_DataVersion >= 3)
-          for (int i = 0; i < 8; i++) 
+//        if (m_DataVersion >= 3)
+          for (int i = 0; i < 8; i++)
             ((unsigned char *)&timestamp_reference)[i] = data[pos++];
         trigger_ids[current_layer] = trigger_id;
         timestamps[current_layer] = timestamp;
@@ -472,7 +431,6 @@ namespace eudaq {
       return false;
 #else
 
-      unsigned int eventid = ev.GetEventNumber();
 
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " "
@@ -512,12 +470,7 @@ namespace eudaq {
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
 
-      vector<LayerPixHits> temp_hits(m_nLayers);
-
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) { // is status event
-        for (int id = 0; id < m_nLayers; id++) {
-          m_prev_hits[id].isstatusevent = true;
-        }
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
 #endif
@@ -526,10 +479,11 @@ namespace eudaq {
           vector<unsigned char> data = rev->GetBlock(id);
           if (data.size() == 4) {
             float temp = 0;
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++) {
               ((unsigned char *)(&temp))[i] = data[i];
               *m_temperature_file << "Layer "<< id << " Temp is : " << temp - 273.15 << endl;
               cout << "T (layer " << id << ") is: " << temp << endl;
+            }
           }
         }
 #endif
@@ -551,7 +505,6 @@ namespace eudaq {
           //  (only for DataVersion >= 2)
           //  Trigger id (uint64_t)
           //  Timestamp (uint64_t)
-          //  Reference Timestamp (uint64_t)
           //  payload from chip (DataVersion<=2), complete DAQ board event
           //###################################################################
 
@@ -559,6 +512,7 @@ namespace eudaq {
           unsigned int data_end = 0; // layer data end marker
 
           const int maxLayers = 100;
+          int current_layer = -1;
           bool layers_found[maxLayers];
           uint64_t trigger_ids[maxLayers];
           uint64_t timestamps[maxLayers];
@@ -585,27 +539,25 @@ namespace eudaq {
 #endif
 
             if (!DecodeLayerHeader(ev, data, pos, data_end, current_layer, layers_found,
-                                   trigger_ids, timestamps)) {
+                                   trigger_ids, timestamps, timestamps_reference)) {
               sev.SetFlags(Event::FLAG_BROKEN);
               break;
             }
 
             std::vector<TPixHit> hits;
             TEventHeader header;
-            unsigned int strobecounter;
-            unsigned int bunchcounter;
 
             bool headerOK  = true;
             bool eventOK   = false;
             bool trailerOK = true;
 
             if (m_DataVersion<3) {
-              eventOK =  m_dut[current_layer]->DecodeEvent(data, data_end+1, &hits);
+              eventOK =  m_dut[current_layer]->DecodeEvent(&data[0], data_end+1, &hits);
             }
             else { // complete event stored
-              headerOK  = m_daq_board[current_layer]->DecodeEventHeader(data, &header);
-              eventOK   =  m_dut[current_layer]->DecodeEvent(data, data_end+1-m_daq_trailer_length[current_layer]-m_daq_header[current_layer], &hits, &strobecounter, &bunchcounter);
-              trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(data + data_end+1 - m_daq_trailer_length[current_layer], &header);
+              headerOK  = m_daq_board[current_layer]->DecodeEventHeader(&data[0], &header);
+              eventOK   =  m_dut[current_layer]->DecodeEvent(&data[0], data_end+1-m_daq_trailer_length[current_layer]-m_daq_header_length[current_layer], &hits);
+              trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(&data[0] + data_end+1 - m_daq_trailer_length[current_layer], &header);
             }
 
             if (!headerOK || !eventOK || !trailerOK) {
@@ -626,37 +578,7 @@ namespace eudaq {
                 // adjust the bottom-right pixel
                 if ((hits[iHit].address % 4) == 0) y += 1;
 
-                if (FLAG_CHECKDELTA && current_layer != 3 &&
-                    ( (m_prev_hits[current_layer].eventid - eventid == 1 && 
-                       m_prev_hits[current_layer].isstatusevent == false) || 
-                      (m_prev_hits[current_layer].eventid - eventid > 1 && 
-                       m_prev_hits[current_layer].isstatusevent == true) ) ) {
-                  bool issamelocation = false;
-                  for (jHit = 0; jHit < m_prev_hits[current_layer]->hit_x.size(); ++jHit) {
-                    if (m_prev_hits[current_layer]->hit_x[jHit] == x && m_prev_hits[current_layer]->hit_y[jHit] == y) {
-                      issamelocation = true;
-                      break;
-                    }
-                  }
-                  if (!issamelocation) {
-                    planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
-                    temp_hits[current_layer].hit_x[jHit].push_back(x);
-                    temp_hits[current_layer].hit_y[jHit].push_back(y);
-                    temp_hits[current_layer].layerid = current_layer;
-                    temp_hits[current_layer].eventid = ev.GetEventNumber();
-                    temp_hits[current_layer].isstatusevent = false;
-                  }
-                } 
-                else if (FLAG_CHECKDELTA && current_layer != 3) {
-                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
-                  temp_hits[current_layer].hit_x[jHit].push_back(x);
-                  temp_hits[current_layer].hit_y[jHit].push_back(y);
-                  temp_hits[current_layer].layerid = current_layer;
-                  temp_hits[current_layer].eventid = ev.GetEventNumber();
-                  temp_hits[current_layer].isstatusevent = false;
-                } 
-                else
-                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+                planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
               }
             }
 
@@ -666,23 +588,21 @@ namespace eudaq {
                      << " after end of the layer data at " << data_end <<  "." << endl << endl;
 
                 cout << "ERROR: Event " << ev.GetEventNumber()
-                     << " data stream too short, stopped in region " << current_rgn
-                     << ", Current layer  = " << current_layer << endl;
+                     << " data stream too short, current layer  = " << current_layer << endl;
                 sev.SetFlags(Event::FLAG_BROKEN);
               }
               else if ((pos < data_end+1) && (m_chip_type[current_layer] > 1)) { // read less data than expected
-                  while ((pos < data_end+1) && (data[pos]==0xff)) ++pos; // skip padding 0xff
-                  if (pos < data_end+1) {
-                    cout << endl << pos << '\t' << data_end << '\t' << m_chip_type[current_layer] << endl;
-                    cout << "Found trailing words which not have been decoded" << endl;
-                    cout << hex << "0x\t";
-                    for (unsigned int ipos=pos-2; ipos<data_end+2; ++ipos) {
-                      cout << (int)data[ipos] << "\t";
-                    }
-                    cout << dec << endl;
+                while ((pos < data_end+1) && (data[pos]==0xff)) ++pos; // skip padding 0xff
+                if (pos < data_end+1) {
+                  cout << endl << pos << '\t' << data_end << '\t' << m_chip_type[current_layer] << endl;
+                  cout << "Found trailing words which not have been decoded" << endl;
+                  cout << hex << "0x\t";
+                  for (unsigned int ipos=pos-2; ipos<data_end+2; ++ipos) {
+                    cout << (int)data[ipos] << "\t";
                   }
-                  pos = data_end+1; // skip non-decoded data
+                  cout << dec << endl;
                 }
+                pos = data_end+1; // skip non-decoded data
               }
             }
           }
@@ -721,26 +641,28 @@ namespace eudaq {
 #endif
             sev.SetTimestamp(0);
           } else {
-            sev.SetTimestamp(timestamps[0]);       
-            m_prev_hits = temp_hits; //If we're not 
-          } // if(timestamp okay) 
-        
-      }
+            sev.SetTimestamp(timestamps[0]);
+          }
 
-      // Add the planes to the StandardEvent
-      for (int i = 0; i < m_nLayers; i++) {
-        sev.AddPlane(*planes[i]);
-        delete planes[i];
+
+          // Add the planes to the StandardEvent
+          for (int i = 0; i < m_nLayers; i++) {
+            sev.AddPlane(*planes[i]);
+            delete planes[i];
+          }
+          delete[] planes;
+          // Indicate that data was successfully converted
+          return true;
+        }
       }
-      delete[] planes;
-      // Indicate that data was successfully converted
-      return true;
 #endif
+      return false;
     }
 
-////////////////////////////////////////////////////////////
-// LCIO Converter
-///////////////////////////////////////////////////////////
+
+  ////////////////////////////////////////////////////////////
+  // LCIO Converter
+  ///////////////////////////////////////////////////////////
 #if USE_LCIO && USE_EUTELESCOPE && PALPIDEFS
     virtual bool GetLCIOSubEvent(lcio::LCEvent &lev,
                                  eudaq::Event const &ev) const {
@@ -848,248 +770,247 @@ namespace eudaq {
     }
 #endif
 
-  protected:
-    int m_nLayers;
-    int m_DataVersion;
-    float m_BackBiasVoltage;
-    float m_dut_pos;
-    string *m_configs;
-    int *m_chip_type;
-    unsigned int *m_fw_version;
-    vector<LayerPixHits> m_prev_hits;
-    int *m_Vaux;
-    int *m_VresetP;
-    int *m_VresetD;
-    int *m_Vcasn;
-    int *m_Vcasn2;
-    int *m_Vclip;
-    int *m_Vcasp;
-    int *m_Idb;
-    int *m_Ithr;
-    vector<vector<float> > m_Temp;
-    int *m_strobe_length;
-    int *m_strobeb_length;
-    int *m_trigger_delay;
-    int *m_readout_delay;
-    bool *m_do_SCS;
-    int m_SCS_charge_start;
-    int m_SCS_charge_stop;
-    int m_SCS_charge_step;
-    int m_SCS_n_events;
-    int m_SCS_n_mask_stages;
-    const vector<unsigned char> **m_SCS_points;
-    const vector<unsigned char> **m_SCS_data;
-    float **m_SCS_thr;
-    float **m_SCS_thr_rms;
-    float **m_SCS_noise;
-    float **m_SCS_noise_rms;
+protected:
+  int m_nLayers;
+  int m_DataVersion;
+  float m_BackBiasVoltage;
+  float m_dut_pos;
+  string *m_configs;
+  int *m_chip_type;
+  unsigned int *m_fw_version;
+  int *m_Vaux;
+  int *m_VresetP;
+  int *m_VresetD;
+  int *m_Vcasn;
+  int *m_Vcasn2;
+  int *m_Vclip;
+  int *m_Vcasp;
+  int *m_Idb;
+  int *m_Ithr;
+  vector<vector<float> > m_Temp;
+  int *m_strobe_length;
+  int *m_strobeb_length;
+  int *m_trigger_delay;
+  int *m_readout_delay;
+  bool *m_do_SCS;
+  int m_SCS_charge_start;
+  int m_SCS_charge_stop;
+  int m_SCS_charge_step;
+  int m_SCS_n_events;
+  int m_SCS_n_mask_stages;
+  const vector<unsigned char> **m_SCS_points;
+  const vector<unsigned char> **m_SCS_data;
+  float **m_SCS_thr;
+  float **m_SCS_thr_rms;
+  float **m_SCS_noise;
+  float **m_SCS_noise_rms;
 #ifdef WRITE_TEMPERATURE_FILE
-    ofstream *m_temperature_file;
+  ofstream *m_temperature_file;
 #endif
 #ifdef PALPIDEFS
-    TDAQBoard** m_daq_board;
-    TDUT** m_dut;
-    int* m_daq_header_length;
-    int* m_daq_trailer_length;
+  TDAQBoard** m_daq_board;
+  TpAlpidefs** m_dut;
+  int* m_daq_header_length;
+  int* m_daq_trailer_length;
 #endif
 
 
 #if USE_TINYXML
-    int ParseXML(string xml, int base, int rgn, int sub, int begin) {
-      TiXmlDocument conf;
-      conf.Parse(xml.c_str());
-      TiXmlElement *root = conf.FirstChildElement();
-      for (TiXmlElement *eBase = root->FirstChildElement("address"); eBase != 0;
-           eBase = eBase->NextSiblingElement("address")) {
-        if (base != atoi(eBase->Attribute("base")))
+  int ParseXML(string xml, int base, int rgn, int sub, int begin) {
+    TiXmlDocument conf;
+    conf.Parse(xml.c_str());
+    TiXmlElement *root = conf.FirstChildElement();
+    for (TiXmlElement *eBase = root->FirstChildElement("address"); eBase != 0;
+         eBase = eBase->NextSiblingElement("address")) {
+      if (base != atoi(eBase->Attribute("base")))
+        continue;
+      for (TiXmlElement *eRgn = eBase->FirstChildElement("address");
+           eRgn != 0; eRgn = eRgn->NextSiblingElement("address")) {
+        if (rgn != atoi(eRgn->Attribute("rgn")))
           continue;
-        for (TiXmlElement *eRgn = eBase->FirstChildElement("address");
-             eRgn != 0; eRgn = eRgn->NextSiblingElement("address")) {
-          if (rgn != atoi(eRgn->Attribute("rgn")))
+        for (TiXmlElement *eSub = eRgn->FirstChildElement("address");
+             eSub != 0; eSub = eSub->NextSiblingElement("address")) {
+          if (sub != atoi(eSub->Attribute("sub")))
             continue;
-          for (TiXmlElement *eSub = eRgn->FirstChildElement("address");
-               eSub != 0; eSub = eSub->NextSiblingElement("address")) {
-            if (sub != atoi(eSub->Attribute("sub")))
+          for (TiXmlElement *eBegin = eSub->FirstChildElement("value");
+               eBegin != 0; eBegin = eBegin->NextSiblingElement("value")) {
+            if (begin != atoi(eBegin->Attribute("begin")))
               continue;
-            for (TiXmlElement *eBegin = eSub->FirstChildElement("value");
-                 eBegin != 0; eBegin = eBegin->NextSiblingElement("value")) {
-              if (begin != atoi(eBegin->Attribute("begin")))
-                continue;
-              if (!eBegin->FirstChildElement("content") ||
-                  !eBegin->FirstChildElement("content")->FirstChild()) {
-                cout << "content tag not found!" << endl;
-                return -6;
-              }
-              return (int)strtol(
-                eBegin->FirstChildElement("content")->FirstChild()->Value(),
-                0, 16);
+            if (!eBegin->FirstChildElement("content") ||
+                !eBegin->FirstChildElement("content")->FirstChild()) {
+              cout << "content tag not found!" << endl;
+              return -6;
             }
-            return -5;
+            return (int)strtol(
+              eBegin->FirstChildElement("content")->FirstChild()->Value(),
+              0, 16);
           }
-          return -4;
+          return -5;
         }
-        return -3;
+        return -4;
       }
-      return -2;
+      return -3;
     }
+    return -2;
+  }
 #endif
 
-    bool analyse_threshold_scan(const unsigned char *const data,
-                                const unsigned char *const points, float **thr,
-                                float **thr_rms, float **noise,
-                                float **noise_rms,
-                                const unsigned int n_points = 50,
-                                const unsigned int n_events = 50,
-                                const unsigned int n_sectors = 8,
-                                const unsigned int n_pixels = 512 * 1024) {
-      *thr = new float[n_sectors];
-      *thr_rms = new float[n_sectors]; // used for the some of squares
-      *noise = new float[n_sectors];
-      *noise_rms = new float[n_sectors]; // used for the some of squares
+  bool analyse_threshold_scan(const unsigned char *const data,
+                              const unsigned char *const points, float **thr,
+                              float **thr_rms, float **noise,
+                              float **noise_rms,
+                              const unsigned int n_points = 50,
+                              const unsigned int n_events = 50,
+                              const unsigned int n_sectors = 8,
+                              const unsigned int n_pixels = 512 * 1024) {
+    *thr = new float[n_sectors];
+    *thr_rms = new float[n_sectors]; // used for the some of squares
+    *noise = new float[n_sectors];
+    *noise_rms = new float[n_sectors]; // used for the some of squares
 
-      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        (*thr)[i_sector] = 0.;
-        (*thr_rms)[i_sector] = 0.;
-        (*noise)[i_sector] = 0.;
-        (*noise_rms)[i_sector] = 0.;
-      }
+    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+      (*thr)[i_sector] = 0.;
+      (*thr_rms)[i_sector] = 0.;
+      (*noise)[i_sector] = 0.;
+      (*noise_rms)[i_sector] = 0.;
+    }
 
 #ifdef ROOT_FOUND
-      double *x = new double[n_points];
-      double *y = new double[n_points];
+    double *x = new double[n_points];
+    double *y = new double[n_points];
 
-      for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-        x[i_point] = (double)points[i_point];
-      }
-
-      TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", x[0],
-               x[n_points - 1]);
-      TGraph *g = 0x0;
-
-      // TODO add further variables identifying the pixel in the chip
-      unsigned int sector = n_sectors; // valid range: 0-3
-
-      unsigned int *unsuccessful_fits = new unsigned int[n_sectors];
-      unsigned int *successful_fits = new unsigned int[n_sectors];
-      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        unsuccessful_fits[i_sector] = 0;
-        successful_fits[i_sector] = 0;
-      }
-
-      // cout << "n_events=" << n_events << endl;
-
-      for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
-        if (data[i_pixel * n_points] != 255) {
-          sector = i_pixel * n_sectors / 1024 / 512;
-
-          int i_thr_point = -1;
-          for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-            y[i_point] = ((double)data[i_pixel * n_points + i_point]) /
-              ((double)n_events);
-            if (y[i_point] >= 0.5 && i_thr_point == -1)
-              i_thr_point = i_point;
-          }
-          if (i_thr_point == 0 || i_thr_point == -1) {
-            ++unsuccessful_fits[sector];
-            continue;
-          }
-
-          f_sc.SetParLimits(0, x[0], x[n_points - 1]);
-          f_sc.SetParameter(0, x[i_thr_point]);
-          f_sc.SetParLimits(1, 0.01, 10.);
-          f_sc.SetParameter(1, 0.1);
-
-          g = new TGraph(n_points, x, y);
-          TFitResultPtr r = g->Fit(&f_sc, "QRSW");
-          if (r->IsValid()) {
-            (*thr)[sector] += (float)f_sc.GetParameter(0);
-            (*thr_rms)[sector] += (float)f_sc.GetParameter(0) * (float)f_sc.GetParameter(0);
-            (*noise)[sector] += (float)f_sc.GetParameter(1);
-            (*noise_rms)[sector] += (float)f_sc.GetParameter(1) * (float)f_sc.GetParameter(1);
-            ++successful_fits[sector];
-          } else {
-            ++unsuccessful_fits[sector];
-          }
-          delete g;
-          g = 0x0;
-        }
-      }
-
-      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        if (successful_fits[sector] > 0) {
-          (*thr_rms)[i_sector] = (float)TMath::Sqrt(
-            (*thr_rms)[i_sector] / (float)successful_fits[i_sector] -
-            (*thr)[i_sector] * (*thr)[i_sector] /
-            (float)successful_fits[i_sector] /
-            (float)successful_fits[i_sector]);
-          (*noise_rms)[i_sector] = (float)TMath::Sqrt(
-            (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
-            (*noise)[i_sector] * (*noise)[i_sector] /
-            (float)successful_fits[i_sector] /
-            (float)successful_fits[i_sector]);
-          (*thr)[i_sector] /= (float)successful_fits[i_sector];
-          (*noise)[i_sector] /= (float)successful_fits[i_sector];
-          cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t'
-                    << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector]
-                    << endl;
-        } else {
-          (*thr)[i_sector] = 0;
-          (*thr_rms)[i_sector] = 0;
-          (*noise)[i_sector] = 0;
-          (*noise_rms)[i_sector] = 0;
-        }
-      }
-
-      unsigned int sum_unsuccessful_fits = 0;
-      unsigned int sum_successful_fits = 0;
-      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        sum_unsuccessful_fits += unsuccessful_fits[i_sector];
-        sum_successful_fits += successful_fits[i_sector];
-      }
-
-      if (sum_unsuccessful_fits > (double)sum_successful_fits / 100.) {
-        cout << endl
-                  << endl;
-        cout << "Error during S-Curve scan analysis: "
-                  << sum_unsuccessful_fits << " ("
-                  << (double)sum_unsuccessful_fits /
-          (double)(sum_unsuccessful_fits + sum_successful_fits) *
-          100. << "%) fits failed in total" << endl;
-        for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-          cout << "Sector " << i_sector << ":\t"
-                    << unsuccessful_fits[i_sector] << " ("
-                    << (double)unsuccessful_fits[i_sector] /
-            (double)(successful_fits[i_sector] +
-                     unsuccessful_fits[i_sector]) *
-            100. << "%) fits failed" << endl;
-          sum_successful_fits += successful_fits[i_sector];
-        }
-      } else
-        return true;
-#endif
-      return false;
+    for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+      x[i_point] = (double)points[i_point];
     }
 
-  private:
-    // The constructor can be private, only one static instance is created
-    // The DataConverterPlugin constructor must be passed the event type
-    // in order to register this converter for the corresponding conversions
-    // Member variables should also be initialized to default values here.
-    PALPIDEFSConverterPlugin()
-      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2),
-        m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_VresetP(0x0),
-        m_Vcasn(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0), m_Vcasn2(0x0),
-        m_Vclip(0x0), m_VresetD(0x0),
-        m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
-        m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1),
-        m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1),
-        m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0) {}
+    TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", x[0],
+             x[n_points - 1]);
+    TGraph *g = 0x0;
 
-    // The single instance of this converter plugin
-    static PALPIDEFSConverterPlugin m_instance;
-  }; // class ExampleConverterPlugin
+    // TODO add further variables identifying the pixel in the chip
+    unsigned int sector = n_sectors; // valid range: 0-3
 
-  // Instantiate the converter plugin instance
-  PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
+    unsigned int *unsuccessful_fits = new unsigned int[n_sectors];
+    unsigned int *successful_fits = new unsigned int[n_sectors];
+    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+      unsuccessful_fits[i_sector] = 0;
+      successful_fits[i_sector] = 0;
+    }
+
+    // cout << "n_events=" << n_events << endl;
+
+    for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
+      if (data[i_pixel * n_points] != 255) {
+        sector = i_pixel * n_sectors / 1024 / 512;
+
+        int i_thr_point = -1;
+        for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+          y[i_point] = ((double)data[i_pixel * n_points + i_point]) /
+            ((double)n_events);
+          if (y[i_point] >= 0.5 && i_thr_point == -1)
+            i_thr_point = i_point;
+        }
+        if (i_thr_point == 0 || i_thr_point == -1) {
+          ++unsuccessful_fits[sector];
+          continue;
+        }
+
+        f_sc.SetParLimits(0, x[0], x[n_points - 1]);
+        f_sc.SetParameter(0, x[i_thr_point]);
+        f_sc.SetParLimits(1, 0.01, 10.);
+        f_sc.SetParameter(1, 0.1);
+
+        g = new TGraph(n_points, x, y);
+        TFitResultPtr r = g->Fit(&f_sc, "QRSW");
+        if (r->IsValid()) {
+          (*thr)[sector] += (float)f_sc.GetParameter(0);
+          (*thr_rms)[sector] += (float)f_sc.GetParameter(0) * (float)f_sc.GetParameter(0);
+          (*noise)[sector] += (float)f_sc.GetParameter(1);
+          (*noise_rms)[sector] += (float)f_sc.GetParameter(1) * (float)f_sc.GetParameter(1);
+          ++successful_fits[sector];
+        } else {
+          ++unsuccessful_fits[sector];
+        }
+        delete g;
+        g = 0x0;
+      }
+    }
+
+    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+      if (successful_fits[sector] > 0) {
+        (*thr_rms)[i_sector] = (float)TMath::Sqrt(
+          (*thr_rms)[i_sector] / (float)successful_fits[i_sector] -
+          (*thr)[i_sector] * (*thr)[i_sector] /
+          (float)successful_fits[i_sector] /
+          (float)successful_fits[i_sector]);
+        (*noise_rms)[i_sector] = (float)TMath::Sqrt(
+          (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
+          (*noise)[i_sector] * (*noise)[i_sector] /
+          (float)successful_fits[i_sector] /
+          (float)successful_fits[i_sector]);
+        (*thr)[i_sector] /= (float)successful_fits[i_sector];
+        (*noise)[i_sector] /= (float)successful_fits[i_sector];
+        cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t'
+             << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector]
+             << endl;
+      } else {
+        (*thr)[i_sector] = 0;
+        (*thr_rms)[i_sector] = 0;
+        (*noise)[i_sector] = 0;
+        (*noise_rms)[i_sector] = 0;
+      }
+    }
+
+    unsigned int sum_unsuccessful_fits = 0;
+    unsigned int sum_successful_fits = 0;
+    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+      sum_unsuccessful_fits += unsuccessful_fits[i_sector];
+      sum_successful_fits += successful_fits[i_sector];
+    }
+
+    if (sum_unsuccessful_fits > (double)sum_successful_fits / 100.) {
+      cout << endl
+           << endl;
+      cout << "Error during S-Curve scan analysis: "
+           << sum_unsuccessful_fits << " ("
+           << (double)sum_unsuccessful_fits /
+        (double)(sum_unsuccessful_fits + sum_successful_fits) *
+        100. << "%) fits failed in total" << endl;
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        cout << "Sector " << i_sector << ":\t"
+             << unsuccessful_fits[i_sector] << " ("
+             << (double)unsuccessful_fits[i_sector] /
+          (double)(successful_fits[i_sector] +
+                   unsuccessful_fits[i_sector]) *
+          100. << "%) fits failed" << endl;
+        sum_successful_fits += successful_fits[i_sector];
+      }
+    } else
+      return true;
+#endif
+    return false;
+  }
+
+private:
+  // The constructor can be private, only one static instance is created
+  // The DataConverterPlugin constructor must be passed the event type
+  // in order to register this converter for the corresponding conversions
+  // Member variables should also be initialized to default values here.
+  PALPIDEFSConverterPlugin()
+    : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2),
+      m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_VresetP(0x0),
+      m_Vcasn(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0), m_Vcasn2(0x0),
+      m_Vclip(0x0), m_VresetD(0x0),
+      m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
+      m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1),
+      m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1),
+      m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0) {}
+
+  // The single instance of this converter plugin
+  static PALPIDEFSConverterPlugin m_instance;
+}; // class ExampleConverterPlugin
+
+// Instantiate the converter plugin instance
+PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
 
 } // namespace eudaq
