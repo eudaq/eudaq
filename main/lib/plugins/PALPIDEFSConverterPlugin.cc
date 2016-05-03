@@ -424,7 +424,7 @@ namespace eudaq {
 
     // conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent &sev,
-                                     const Event &ev) const {
+        const Event &ev) const {
 
 #ifndef PALPIDEFS
       cout << "EUDAQ was not compiled with the pALPIDEfs software and driver library. Not decoding the raw data!" << endl;
@@ -434,7 +434,7 @@ namespace eudaq {
 
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " "
-           << sev.GetEventNumber() << endl;
+        << sev.GetEventNumber() << endl;
 #endif
 
       if (ev.IsEORE()) {
@@ -444,7 +444,7 @@ namespace eudaq {
 
       if (m_nLayers < 0) {
         cout << "ERROR: Number of layers < 0 --> " << m_nLayers
-             << ". Check BORE!" << endl;
+          << ". Check BORE!" << endl;
         return false;
       }
 
@@ -469,6 +469,8 @@ namespace eudaq {
         planes[id] = new StandardPlane(id, EVENT_TYPE, sensortype);
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
+
+      cout << "version : " << m_DataVersion << endl;
 
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) { // is status event
 #ifdef MYDEBUG

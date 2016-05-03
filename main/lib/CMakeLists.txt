@@ -26,14 +26,27 @@ AUX_SOURCE_DIRECTORY( plugins plugins_sources )
 
 option(USE_TINYXML "Compiling main library using TinyXML" OFF)
 if (USE_TINYXML OR BUILD_palpidefs)
-     FIND_PACKAGE( TINYXML REQUIRED )
-     if (TINYXML_FOUND)
-       INCLUDE_DIRECTORIES( ${TINYXML_INCLUDE_DIRS} )
-       SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ${TINYXML_LIBRARIES} )
-       ADD_DEFINITIONS(-DUSE_TINYXML)
-       message("Compiling main library using TinyXML")
-     endif (TINYXML_FOUND)
+  FIND_PACKAGE( TINYXML REQUIRED )
+  if (TINYXML_FOUND)
+    INCLUDE_DIRECTORIES( ${TINYXML_INCLUDE_DIRS} )
+    SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ${TINYXML_LIBRARIES} )
+    ADD_DEFINITIONS(-DUSE_TINYXML)
+    INCLUDE_DIRECTORIES( "include" ${CMAKE_PALPIDEFS_DRIVER_INCLUDE})
+    message("Compiling main library using TinyXML")
+  endif (TINYXML_FOUND)
 endif (USE_TINYXML OR BUILD_palpidefs)
+
+if (BUILD_palpidefs)
+  if (NOT EXISTS "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/TTestsetup.h")
+    message(FATAL_ERROR "Path to pALPIDEfs driver is wrong - Could not find ${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/TTestsetup.h")
+  endif (NOT EXISTS "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/TTestsetup.h")
+  if (NOT EXISTS "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/libpalpidefs.so")
+    message(FATAL_ERROR "Path to pALPIDEfs driver is wrong - Could not find ${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/libpalpidefs.so")
+  endif (NOT EXISTS "${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/libpalpidefs.so")
+INCLUDE_DIRECTORIES(${CMAKE_PALPIDEFS_DRIVER_INCLUDE})
+SET(ADDITIONAL_LIBRARIES ${ADDITIONAL_LIBRARIES} ${TINYXML_LIBRARIES} ${CMAKE_PALPIDEFS_DRIVER_INCLUDE}/libpalpidefs.so )
+  ADD_DEFINITIONS(-DPALPIDEFS)
+endif (BUILD_palpidefs)
 
 list(REMOVE_ITEM plugins_sources plugins/GenericConverterPlugin.cc)
 
@@ -57,9 +70,9 @@ if (PROTOBUF_FOUND AND GEN_proto)
             #COMMAND mv ${PROJECT_SOURCE_DIR}/main/lib/plugins/StandardEvent.pb.h ${PROJECT_SOURCE_DIR}/main/include/eudaq
             #COMMAND sed -i 's/StandardEvent.pb.h/eudaq\\/StandardEvent.pb.h/g' ${PROJECT_SOURCE_DIR}/main/lib/plugins/StandardEvent.pb.cc
         )
-    list(APPEND plugins_sources plugins/GenericConverterPlugin.cc)    
-    
-    list(APPEND plugins_sources ${CMAKE_BINARY_DIR}/pb_gen/StandardEvent.pb.cc)    
+    list(APPEND plugins_sources plugins/GenericConverterPlugin.cc)
+
+    list(APPEND plugins_sources ${CMAKE_BINARY_DIR}/pb_gen/StandardEvent.pb.cc)
     set_source_files_properties(${CMAKE_BINARY_DIR}/pb_gen/StandardEvent.pb.cc PROPERTIES GENERATED TRUE)
     INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/pb_gen)
 
@@ -68,7 +81,7 @@ endif()
 ADD_LIBRARY( ${PROJECT_NAME} SHARED ${library_sources} ${plugins_sources})
 
 if (PROTOBUF_FOUND AND GEN_proto)
-    add_dependencies(${PROJECT_NAME} GEN_PROTO)   
+    add_dependencies(${PROJECT_NAME} GEN_PROTO)
 endif ()
 
 SOURCE_GROUP(plugins .*Plugin.*cc)
