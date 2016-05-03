@@ -81,6 +81,43 @@ namespace eudaq {
     DT_UNKNOWN
   };
 
+  class LayerPixHits {
+    public:
+      LayerPixHits() :
+        layerid(0), eventid(0), isstatusevent(false) {}
+      ~LayerPixHits() {}
+
+      vector<int> GetX() {
+        return hit_x;
+      }
+      vector<int> GetY() {
+        return hit_y;
+      }
+      int GetLayerID() {
+        return layerid;
+      }
+      bool IsStatusEvent() {
+        return isstatusevent;
+      }
+      unsigned int GetEventID() {
+        return eventid;
+      }
+      void DiscardData() {
+        hit_x.clear();
+        hit_y.clear();
+        layerid = 0;
+        eventid = 0;
+        isstatusevent = false;
+      }
+
+    private:
+      vector<int> hit_x;
+      vector<int> hit_y;
+      int layerid;
+      unsigned int eventid;
+      bool isstatusevent;
+  };
+
   // Plugin inheritance
   class PALPIDEFSConverterPlugin : public DataConverterPlugin {
 
@@ -135,6 +172,10 @@ namespace eudaq {
       m_SCS_thr_rms = new float *[m_nLayers];
       m_SCS_noise = new float *[m_nLayers];
       m_SCS_noise_rms = new float *[m_nLayers];
+
+      if (m_prev_hits.size()) 
+        m_prev_hits.clear();
+      m_prev_hits.resize(m_nLayers);
 
 
 #ifdef PALPIDEFS
@@ -255,23 +296,23 @@ namespace eudaq {
         // create DUT
         switch(m_chip_type[i]) {
         case 1:
-          m_dut[i] = new TpALPIDEfs1((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_dut[i] = new TpAlpidefs1((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
           m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
           break;
         case 2:
-          m_dut[i] = new TpALPIDEfs2((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_dut[i] = new TpAlpidefs2((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
           m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
           break;
         case 3:
-          m_dut[i] = new TpALPIDEfs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_dut[i] = new TpAlpidefs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
           m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
           break;
         default:
           cout << "Unknown chip type, assuming pALPIDE-3" << endl;
-          m_dut[i] = new TpALPIDEfs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_dut[i] = new TpAlpidefs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
           m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
         }
@@ -431,6 +472,7 @@ namespace eudaq {
       return false;
 #else
 
+      unsigned int eventid = ev.GetEventNumber();
 
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " "
@@ -470,7 +512,12 @@ namespace eudaq {
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
 
+      vector<LayerPixHits> temp_hits(m_nLayers);
+
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) { // is status event
+        for (int id = 0; id < m_nLayers; id++) {
+          m_prev_hits[id].isstatusevent = true;
+        }
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
 #endif
@@ -554,9 +601,9 @@ namespace eudaq {
               eventOK =  m_dut[current_layer]->DecodeEvent(data, data_end+1, &hits);
             }
             else { // complete event stored
-              headerOK  = m_daq_board->DecodeEventHeader(dataf, &header);
+              headerOK  = m_daq_board[current_layer]->DecodeEventHeader(data, &header);
               eventOK   =  m_dut[current_layer]->DecodeEvent(data, data_end+1-m_daq_trailer_length[current_layer]-m_daq_header[current_layer], &hits);
-              trailerOK = m_daq_boardboard->DecodeEventTrailer(data + data_end+1 - m_daq_trailer_length[current_layer], &header);
+              trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(data + data_end+1 - m_daq_trailer_length[current_layer], &header);
             }
 
             if (!headerOK || !eventOK || !trailerOK) {
@@ -577,7 +624,37 @@ namespace eudaq {
                 // adjust the bottom-right pixel
                 if ((hits[iHit].address % 4) == 0) y += 1;
 
-                planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+                if (FLAG_CHECKDELTA && 
+                    ( (m_prev_hits[current_layer].eventid - eventid == 1 && 
+                       m_prev_hits[current_layer].isstatusevent == false) || 
+                      (m_prev_hits[current_layer].eventid - eventid > 1 && 
+                       m_prev_hits[current_layer].isstatusevent == true) ) ) {
+                  bool issamelocation = false;
+                  for (jHit = 0; jHit < m_prev_hits[current_layer]->hit_x.size(); ++jHit) {
+                    if (m_prev_hits[current_layer]->hit_x[jHit] == x && m_prev_hits[current_layer]->hit_y[jHit] == y) {
+                      issamelocation = true;
+                      break;
+                    }
+                  }
+                  if (!issamelocation) {
+                    planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+                    temp_hits[current_layer].hit_x[jHit].push_back(x);
+                    temp_hits[current_layer].hit_y[jHit].push_back(y);
+                    temp_hits[current_layer].layerid = current_layer;
+                    temp_hits[current_layer].eventid = ev.GetEventNumber();
+                    temp_hits[current_layer].isstatusevent = false;
+                  }
+                } 
+                else if (FLAG_CHECKDELTA) {
+                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+                  temp_hits[current_layer].hit_x[jHit].push_back(x);
+                  temp_hits[current_layer].hit_y[jHit].push_back(y);
+                  temp_hits[current_layer].layerid = current_layer;
+                  temp_hits[current_layer].eventid = ev.GetEventNumber();
+                  temp_hits[current_layer].isstatusevent = false;
+                } 
+                else
+                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
               }
             }
 
@@ -641,9 +718,11 @@ namespace eudaq {
             sev.SetFlags(Event::FLAG_BROKEN);
 #endif
             sev.SetTimestamp(0);
-          } else
-            sev.SetTimestamp(timestamps[0]);
-        }
+          } else {
+            sev.SetTimestamp(timestamps[0]);       
+            m_prev_hits = temp_hits; //If we're not 
+          } // if(timestamp okay) 
+        
       }
 
       // Add the planes to the StandardEvent
@@ -775,6 +854,7 @@ namespace eudaq {
     string *m_configs;
     int *m_chip_type;
     unsigned int *m_fw_version;
+    vector<LayerPixHits> m_prev_hits;
     int *m_Vaux;
     int *m_VresetP;
     int *m_VresetD;
@@ -805,7 +885,7 @@ namespace eudaq {
     ofstream *m_temperature_file;
 #endif
 #ifdef PALPIDEFS
-    TDaqboard** m_daq_board;
+    TDAQBoard** m_daq_board;
     TDUT** m_dut;
     int* m_daq_header_length;
     int* m_daq_trailer_length;
