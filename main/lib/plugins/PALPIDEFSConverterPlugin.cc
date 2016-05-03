@@ -592,6 +592,8 @@ namespace eudaq {
 
             std::vector<TPixHit> hits;
             TEventHeader header;
+            unsigned int strobecounter;
+            unsigned int bunchcounter;
 
             bool headerOK  = true;
             bool eventOK   = false;
@@ -602,7 +604,7 @@ namespace eudaq {
             }
             else { // complete event stored
               headerOK  = m_daq_board[current_layer]->DecodeEventHeader(data, &header);
-              eventOK   =  m_dut[current_layer]->DecodeEvent(data, data_end+1-m_daq_trailer_length[current_layer]-m_daq_header[current_layer], &hits);
+              eventOK   =  m_dut[current_layer]->DecodeEvent(data, data_end+1-m_daq_trailer_length[current_layer]-m_daq_header[current_layer], &hits, &strobecounter, &bunchcounter);
               trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(data + data_end+1 - m_daq_trailer_length[current_layer], &header);
             }
 
@@ -624,7 +626,7 @@ namespace eudaq {
                 // adjust the bottom-right pixel
                 if ((hits[iHit].address % 4) == 0) y += 1;
 
-                if (FLAG_CHECKDELTA && 
+                if (FLAG_CHECKDELTA && current_layer != 3 &&
                     ( (m_prev_hits[current_layer].eventid - eventid == 1 && 
                        m_prev_hits[current_layer].isstatusevent == false) || 
                       (m_prev_hits[current_layer].eventid - eventid > 1 && 
@@ -645,7 +647,7 @@ namespace eudaq {
                     temp_hits[current_layer].isstatusevent = false;
                   }
                 } 
-                else if (FLAG_CHECKDELTA) {
+                else if (FLAG_CHECKDELTA && current_layer != 3) {
                   planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
                   temp_hits[current_layer].hit_x[jHit].push_back(x);
                   temp_hits[current_layer].hit_y[jHit].push_back(y);
