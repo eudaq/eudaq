@@ -52,7 +52,7 @@ using namespace std;
 #include <EUTELESCOPE.h>
 #endif
 
-#define MYDEBUG  // dumps decoding information
+//#define MYDEBUG  // dumps decoding information
 //#define DEBUGRAWDUMP // dumps all raw events
 #define CHECK_TIMESTAMPS // if timestamps are not consistent marks event as
                          // broken
@@ -424,7 +424,7 @@ namespace eudaq {
 
     // conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent &sev,
-        const Event &ev) const {
+                                     const Event &ev) const {
 
 #ifndef PALPIDEFS
       cout << "EUDAQ was not compiled with the pALPIDEfs software and driver library. Not decoding the raw data!" << endl;
@@ -434,7 +434,7 @@ namespace eudaq {
 
 #ifdef MYDEBUG
       cout << "GetStandardSubEvent " << ev.GetEventNumber() << " "
-        << sev.GetEventNumber() << endl;
+           << sev.GetEventNumber() << endl;
 #endif
 
       if (ev.IsEORE()) {
@@ -444,7 +444,7 @@ namespace eudaq {
 
       if (m_nLayers < 0) {
         cout << "ERROR: Number of layers < 0 --> " << m_nLayers
-          << ". Check BORE!" << endl;
+             << ". Check BORE!" << endl;
         return false;
       }
 
@@ -487,7 +487,6 @@ namespace eudaq {
               cout << "T (layer " << id << ") is: " << temp << endl;
             }
           }
-        }
 #endif
         sev.SetFlags(Event::FLAG_STATUS);
       } else { // is real event
