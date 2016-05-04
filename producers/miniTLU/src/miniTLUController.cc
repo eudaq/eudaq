@@ -1,70 +1,22 @@
-#include "tlu/miniTLUController.hh"
+#include "miniTLUController.hh"
 
-#include "eudaq/Platform.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Timer.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
-
-
-#if EUDAQ_PLATFORM_IS(WIN32)
-# include <cstdio>  // HK
-#else
-# include <unistd.h>
-#endif
-
-#include <iostream>
-#include <ostream>
-#include <fstream>
 #include <iomanip>
-#include <cstdlib>
-#include <cmath>
+#include <thread>
+#include <chrono>
 
-using eudaq::mSleep;
-using eudaq::hexdec;
-using eudaq::to_string;
-using eudaq::to_hex;
-using eudaq::ucase;
-
-using namespace uhal;
+#include "uhal/uhal.hpp"
 
 namespace tlu {
-  miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_dataFromTLU(0), m_DACaddr(0), m_IDaddr(0) {
+  miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_DACaddr(0), m_IDaddr(0) {
 
     std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
       m_hw = new uhal::HwInterface(manager.getDevice( deviceName ));
 
-      // HwInterface hw = manager.getDevice( deviceName );
-      // m_hw = counted_ptr<HwInterface>( new HwInterface(hw) );
-    }
-    m_checkConfig = false;
-    m_ipbus_verbose = false;
-    m_nEvtInFIFO = 0;
-  }
-
-
-  miniTLUController::~miniTLUController() {
-  }
-
-  void miniTLUController::SetRWRegister(const std::string & name, int value) {
-    try {
-    m_hw->getNode(name).write(static_cast< uint32_t >(value));
-    m_hw->dispatch();
-
-    if (m_checkConfig) {
-      ValWord< uint32_t > test = m_hw->getNode(name).read();
-      m_hw->dispatch();
-      if(test.valid()) {
-	if (m_ipbus_verbose) 
-	  std::cout << name << " = " << std::hex << test.value() << std::endl;
-      } else std::cout << "Error writing " << name << std::endl;
-    }
-    } catch (...) {
-       return;
     }
   }
+
 
   void miniTLUController::SetWRegister(const std::string & name, int value) {
     try {
@@ -80,8 +32,6 @@ namespace tlu {
     ValWord< uint32_t > test = m_hw->getNode(name).read();
     m_hw->dispatch();
     if(test.valid()) {
-      if (m_ipbus_verbose) 
-	std::cout << name << " = " << std::hex << test.value() << std::endl;
       return test.value();
     } else {
       std::cout << "Error reading " << name << std::endl;
@@ -92,43 +42,43 @@ namespace tlu {
     }
   }
 
-  void miniTLUController::CheckEventFIFO() {
-    m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
-    //   m_nEvtInFIFO = 2;
-    if (m_nEvtInFIFO) std::cout << "words in FIFO : " << m_nEvtInFIFO << std::endl;
-  }
 
-  void miniTLUController::ReadEventFIFO() {
-    if(m_nEvtInFIFO) {
-      if (!(m_nEvtInFIFO)) std::cout << "Warning odd words in fifo!" << std::endl;
-      try {
-        ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(m_nEvtInFIFO);
-        m_hw->dispatch();
-        if(fifoContent.valid()) {
-       	  bool lowBits = false;
-	  uint64_t word = 0;
-	//	std::cout << "Dump event FIFO" << std::endl;
-	  for ( ValVector< uint32_t >::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); ++i ) {
-	    // std::cout << "-- " << std::hex << *i << std::endl;
-	    if(lowBits) {
-	      word = (((uint64_t)(word))<<32) | *i;
-	      m_dataFromTLU.push_back(word);
-	      lowBits = false;
-	    } else {
-	      word = *i;
-	      lowBits = true;
-	    }
-	  }
-        } else {
-	  std::cout << "Error reading FIFO" << std::endl;
-        }      
-      } catch (...) {
-        m_nEvtInFIFO = 0;
-        return;
-      }
+  void miniTLUController::ReceiveEvents(){
+    // std::cout<<"miniTLUController::ReceiveEvents"<<std::endl;
+    uint32_t nevent = GetEventFifoFillLevel()/4;
+    // std::cout<< "fifo "<<GetEventFifoFillLevel()<<std::endl;
+    if (nevent*4 == 0x7D00) std::cout << "WARNING! miniTLU hardware FIFO is full" << std::endl;
+    // if(0){ // no read
+    if(nevent){
+      ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*4);
+      m_hw->dispatch();    
+      if(fifoContent.valid()) {
+	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/4<<std::endl;
+	if(fifoContent.size()%4 !=0){
+	  std::cout<<"receive error"<<std::endl;
+	}
+	for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=4 ) { //0123
+	  m_data.push_back(new minitludata(*i, *(i+1), *(i+2), *(i+3)));
+	  std::cout<< *(m_data.back());
+	}
+      }	
     }
   }
+  
+  void miniTLUController::ResetEventsBuffer(){
+    for(auto &&i: m_data){
+      delete i;
+    }
+    m_data.clear();
+  }
 
+  minitludata* miniTLUController::PopFrontEvent(){
+    minitludata *e = m_data.front();
+    m_data.pop_front();
+    return e;
+  }
+
+  
   void miniTLUController::InitializeI2C(char DACaddr, char IDaddr) {
     SetI2CClockPrescale(0x30);
     SetI2CClockPrescale(0x30);
@@ -138,31 +88,31 @@ namespace tlu {
     std::cout << "Scan I2C bus:" << std::endl;
     for(int myaddr = 0; myaddr < 128; myaddr++) {
       SetI2CTX((myaddr<<1)|0x0);
-      SetI2CCommand(0x90);
-      while(I2CCommandIsDone()) {
-	eudaq::mSleep(1000);
+      SetI2CCommand(0x90); // 10010000
+      while(I2CCommandIsDone()) { // xxxxxx1x   TODO:: isDone or notDone
+	std::this_thread::sleep_for(std::chrono::seconds(1));
       }
-      bool isConnected = (((GetI2CStatus()>>7)&0x1) == 0);
+      bool isConnected = (((GetI2CStatus()>>7)&0x1) == 0);  // 0xxxxxxx connected
       if(myaddr == DACaddr) {
 	if (isConnected) { 
-	  std::cout << "DAC at addr " << std::hex << myaddr << " is connected" << std::endl;
+	  std::cout << "DAC at addr 0x" << std::hex << myaddr << std::dec<< " is connected" << std::endl;
 	  m_DACaddr = myaddr;
 	} else {
-	  std::cout << "DAC at addr " << std::hex << DACaddr << " is NOT connected" << std::endl;
+	  std::cout << "DAC at addr 0x" << std::hex << DACaddr << std::dec<<" is NOT connected" << std::endl;
 	}
       } else if (myaddr == IDaddr) {
 	if (isConnected) { 
-	  std::cout << "ID at addr " << std::hex << myaddr << " is connected" << std::endl;
+	  std::cout << "ID at addr 0x" << std::hex << myaddr << std::dec<<" is connected" << std::endl;
 	  m_IDaddr = myaddr;
 	} else {
-	  std::cout << "ID at addr " << std::hex << DACaddr << " is NOT connected" << std::endl;
+	  std::cout << "ID at addr 0x" << std::hex << DACaddr << std::dec<<" is NOT connected" << std::endl;
 	}
       } else if (isConnected) 
-	std::cout << "Device " << std::hex << myaddr << " is connected" << std::endl;
+	std::cout << "Device 0x" << std::hex << myaddr << std::dec<<" is connected" << std::endl;
       SetI2CTX(0x0);
-      SetI2CCommand(0x50);
+      SetI2CCommand(0x50); // 01010000
       while(I2CCommandIsDone()) {
-	eudaq::mSleep(1000);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
   
@@ -180,17 +130,17 @@ namespace tlu {
     SetI2CTX((deviceAddr<<1)|0x0);
     SetI2CCommand(0x90);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     SetI2CTX(memAddr);
     SetI2CCommand(0x10);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     SetI2CTX(value);
     SetI2CCommand(0x50);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
 
@@ -200,24 +150,24 @@ namespace tlu {
     SetI2CTX((deviceAddr<<1)|0x0);
     SetI2CCommand(0x90);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     SetI2CTX(memAddr);
     SetI2CCommand(0x10);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     for(i = 0; i < len-1; ++i) {
       SetI2CTX(values[i]);
       SetI2CCommand(0x10);
       while(I2CCommandIsDone()) {
-	eudaq::mSleep(1000);
+	std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
     SetI2CTX(values[len-1]);
     SetI2CCommand(0x50);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
 
@@ -225,39 +175,31 @@ namespace tlu {
     SetI2CTX((deviceAddr<<1)|0x0);
     SetI2CCommand(0x90);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     SetI2CTX(memAddr);
     SetI2CCommand(0x10);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     SetI2CTX((deviceAddr<<1)|0x1);
     SetI2CCommand(0x90);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     SetI2CCommand(0x28);
     while(I2CCommandIsDone()) {
-      eudaq::mSleep(1000);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     return GetI2CRX();
   }
 
-  unsigned miniTLUController::GetScaler(unsigned i) const {
-    if (i >= (unsigned)TLU_TRIGGER_INPUTS) EUDAQ_THROW("Scaler number out of range");
-    //m_nEvtInFIFO = miniTLUController::ReadRRegister("eventBuffer.EventFifoFillLevel");
-
-    //return m_scalers[i];
-    return 0;
-  }
 
   void miniTLUController::SetDACValue(unsigned char channel, uint32_t value) {
     unsigned char chrsToSend[2];
 
     std::cout << "Setting DAC channel " << (unsigned int)channel << " = " << value << std::endl;
 
-    // enter vref-off mode: ( very early TLU versions needed Vref mode on. )
     chrsToSend[0] = 0x0;
     chrsToSend[1] = 0x0;
     //chrsToSend[1] = 0x1;
@@ -276,39 +218,58 @@ namespace tlu {
     float vdac = ( thresholdVoltage + vref ) / 2;
     float dacCode =  0xFFFF * vdac / vref;
 
-    if ( std::abs(thresholdVoltage) > vref )  EUDAQ_THROW("Threshold voltage must be > -1.3V and < 1.3V");
+    if ( std::abs(thresholdVoltage) > vref )
+      std::cout<<"Threshold voltage must be > -1.3V and < 1.3V"<<std::endl;
 
     SetDACValue(channel , int(dacCode) );
       
   }
 
-  void miniTLUController::ConfigureInternalTriggerInterval(unsigned int value) {
-    std::cout << "Setting internal trigger interval to " << value << std::endl;
-    SetInternalTriggerInterval(value);
-    std::cout << "Read back " << GetInternalTriggerInterval() << std::endl;
+  void miniTLUController::DumpEventsBuffer() {
+    std::cout<<"miniTLUController::DumpEvents......"<<std::endl;
+    for(auto&& i: m_data){
+      std::cout<<i<<std::endl;
+    }
+    std::cout<<"miniTLUController::DumpEvents end"<<std::endl;
   }
 
-  void miniTLUController::DumpEvents() {
-    if (m_nEvtInFIFO) std::cout << "Called dump events. " << m_nEvtInFIFO << " 64 bit words in the buffer." << std::endl;
-    for(int i = 0; i < m_nEvtInFIFO/2; ) {
-      std::cout << "Word 0" << m_dataFromTLU[i] << std::endl;
-      uint32_t evtType = (m_dataFromTLU[i] >> 60)&0xf;
-      uint32_t inputTrig = (m_dataFromTLU[i] >> 48)&0xfff;
-      uint32_t input0 = (inputTrig>>9)&0x7;
-      uint32_t input1 = (inputTrig>>6)&0x7;
-      uint32_t input2 = (inputTrig>>3)&0x7;
-      uint32_t input3 = (inputTrig)&0x7;
-      uint64_t timeStamp = (m_dataFromTLU[i])&0xffffffffffff;
-      i++;
-      std::cout << "Word 1" << m_dataFromTLU[i] << std::endl;
-      uint32_t SC0 = (m_dataFromTLU[i] >> 56)&0xff;
-      uint32_t SC1 = (m_dataFromTLU[i] >> 48)&0xff;
-      uint32_t SC2 = (m_dataFromTLU[i] >> 40)&0xff;
-      uint32_t SC3 = (m_dataFromTLU[i] >> 32)&0xff;
-      uint32_t evtNumber = (m_dataFromTLU[i])&0xffffffff;
-      i++;
-      std::cout << "Event number " << evtNumber << " type " << evtType << " input triggers 0: " << input0 << " 1: " << input1 << " 2: " << input2 << " 3: " << input3 << std::endl;
-      std::cout << "Timestamp " << timeStamp << " SC0[" << SC0 << "] SC1["  << SC1 << "] SC2["  << SC2 << "] SC3[" << SC3 << "]" << std::endl; 
+
+  void miniTLUController::SetUhalLogLevel(uchar_t l){
+    switch(l){
+    case 0:
+      uhal::disableLogging();
+      break;
+    case 1:
+      uhal::setLogLevelTo(uhal::Fatal());
+      break;
+    case 2:
+      uhal::setLogLevelTo(uhal::Error());
+      break;
+    case 3:
+      uhal::setLogLevelTo(uhal::Warning());
+      break;
+    case 4:
+      uhal::setLogLevelTo(uhal::Notice());
+      break;
+    case 5:
+      uhal::setLogLevelTo(uhal::Info());
+      break;
+    case 6:
+      uhal::setLogLevelTo(uhal::Debug());
+      break;
+    default:
+      uhal::setLogLevelTo(uhal::Debug());      
     }
   }
+
+
+  
+  std::ostream &operator<<(std::ostream &s, minitludata &d) {
+    s << "eventnumber: " << d.eventnumber << " type: " << int(d.eventtype) <<" timestamp: 0x" <<std::hex<< d.timestamp <<std::dec<<std::endl
+      <<" input0: " << int(d.input0) << " input1: " << int(d.input1) << " input2: " << int(d.input2) << " input3: " << int(d.input3) <<std::endl
+      <<" sc0: " << int(d.sc0) << " sc1: "  << int(d.sc1) << " sc2: "  << int(d.sc2) << " sc3: " << int(d.sc3) <<std::endl;
+    return s;
+  } 
+  
+
 }
