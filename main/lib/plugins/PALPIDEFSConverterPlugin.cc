@@ -346,18 +346,6 @@ namespace eudaq {
         current_layer = data[pos++];
       }
 
-      if (m_DataVersion<2) {
-        while ((current_layer == 0xff) && (pos + 1 < data.size())) {
-          // 0xff 0xff is used as fill bytes to fill up to a 4 byte wide data
-          // stream
-          current_layer = data[pos++];
-        }
-
-        if (current_layer == 0xff) { // reached end of data;
-          current_layer = -1;
-          return true;
-        }
-      }
       if (current_layer >= m_nLayers) {
         cout << "ERROR: Event " << ev.GetEventNumber()
              << " Unexpected. Not defined layer in data " << current_layer
@@ -369,27 +357,22 @@ namespace eudaq {
       cout << "Now in layer " << current_layer << endl;
 #endif
       // length
-      if (m_DataVersion >= 2) {
-        if (pos + sizeof(uint16_t) <= data.size()) {
-          uint16_t length = 0;
-          for (int i = 0; i < 2; i++)
-            ((unsigned char *)&length)[i] = data[pos++];
+      if (pos + sizeof(uint16_t) <= data.size()) {
+        uint16_t length = 0;
+        for (int i = 0; i < 2; i++)
+          ((unsigned char *)&length)[i] = data[pos++];
 #ifdef MYDEBUG
-          cout << "Layer " << current_layer << " has data of length " << length
-               << endl;
+        cout << "Layer " << current_layer << " has data of length " << length
+             << endl;
 #endif
-          if (length == 0) {
-            // no data for this layer
-            current_layer = -1;
+        if (length == 0) {
+          // no data for this layer
+          current_layer = -1;
             return true;
-          }
-          else {
-            data_end = pos + length - 1;
-          }
         }
-      }
-      else {
-        data_end = (unsigned int)-1; // old data (version 1) doesn't contain this information
+        else {
+          data_end = pos + length - 1;
+        }
       }
 #ifdef MYDEBUG
       cout << "data_end=" << data_end << endl;
@@ -431,6 +414,11 @@ namespace eudaq {
     // conversion from Raw to StandardPlane format
     virtual bool GetStandardSubEvent(StandardEvent &sev,
                                      const Event &ev) const {
+
+      if (m_DataVersion<2 || m_DataVersion>3) {
+        cout << "pALPIDE data version not supported, raw data can not be converted!" << endl;
+        return false;
+      }
 
 #ifndef PALPIDEFS
       cout << "EUDAQ was not compiled with the pALPIDEfs software and driver library. Not decoding the raw data!" << endl;
@@ -565,11 +553,11 @@ namespace eudaq {
             bool eventOK   = false;
             bool trailerOK = true;
 
-            if (m_DataVersion<3) {
+            if (m_DataVersion==2) {
               eventOK =  m_dut[current_layer]->DecodeEvent(&data[0]+pos, data_end+1-pos, &hits);
               pos = data_end+1;
             }
-            else { // complete event stored
+            else if (m_DataVersion==3) { // complete event stored
               unsigned int header_begin   = pos;
               unsigned int header_end     = pos + m_daq_header_length[current_layer] - 1;
               unsigned int payload_begin  = pos + m_daq_header_length[current_layer];
@@ -613,28 +601,26 @@ namespace eudaq {
               }
             }
 
-            if (m_DataVersion >= 2) { // new data format (>=2)
-              if (pos > data_end+1) { // read more data than expected
-                cout << "ERROR: Data inconsistend, current position " << pos
-                     << " after end of the layer data at " << data_end <<  "." << endl << endl;
+            if (pos > data_end+1) { // read more data than expected
+              cout << "ERROR: Data inconsistend, current position " << pos
+                   << " after end of the layer data at " << data_end <<  "." << endl << endl;
 
-                cout << "ERROR: Event " << ev.GetEventNumber()
-                     << " data stream too short, current layer  = " << current_layer << endl;
-                sev.SetFlags(Event::FLAG_BROKEN);
-              }
-              else if ((pos < data_end+1) && (m_chip_type[current_layer] > 1)) { // read less data than expected
-                while ((pos < data_end+1) && (data[pos]==0xff)) ++pos; // skip padding 0xff
-                if (pos < data_end+1) {
-                  cout << endl << pos << '\t' << data_end << '\t' << m_chip_type[current_layer] << endl;
-                  cout << "Found trailing words which not have been decoded" << endl;
-                  cout << hex << "0x\t";
-                  for (unsigned int ipos=pos-2; ipos<data_end+2; ++ipos) {
-                    cout << (int)data[ipos] << "\t";
-                  }
-                  cout << dec << endl;
+              cout << "ERROR: Event " << ev.GetEventNumber()
+                   << " data stream too short, current layer  = " << current_layer << endl;
+              sev.SetFlags(Event::FLAG_BROKEN);
+            }
+            else if ((pos < data_end+1) && (m_chip_type[current_layer] > 1)) { // read less data than expected
+              while ((pos < data_end+1) && (data[pos]==0xff)) ++pos; // skip padding 0xff
+              if (pos < data_end+1) {
+                cout << endl << pos << '\t' << data_end << '\t' << m_chip_type[current_layer] << endl;
+                cout << "Found trailing words which not have been decoded" << endl;
+                cout << hex << "0x\t";
+                for (unsigned int ipos=pos-2; ipos<data_end+2; ++ipos) {
+                  cout << (int)data[ipos] << "\t";
                 }
-                pos = data_end+1; // skip non-decoded data
+                cout << dec << endl;
               }
+              pos = data_end+1; // skip non-decoded data
             }
           }
 
