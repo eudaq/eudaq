@@ -476,8 +476,6 @@ namespace eudaq {
         planes[id]->SetSizeZS(width, height, 0, 1, StandardPlane::FLAG_ZS);
       }
 
-      cout << "version : " << m_DataVersion << endl;
-
       if (ev.GetTag<int>("pALPIDEfs_Type", -1) == 1) { // is status event
 #ifdef MYDEBUG
         cout << "Skipping status event" << endl;
