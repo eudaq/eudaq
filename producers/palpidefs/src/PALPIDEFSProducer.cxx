@@ -1596,9 +1596,9 @@ int PALPIDEFSProducer::BuildEvent() {
   unsigned long total_size = 0;
   for (int i = 0; i < m_nDevices; i++) {
     if (layer_selected[i]) {
-      total_size += 2 + sizeof(uint16_t);
-      total_size += 3 * sizeof(uint64_t);
-      total_size += m_next_event[i]->m_length;
+      total_size += 2 + sizeof(uint16_t); //  0 - 3
+      total_size += 3 * sizeof(uint64_t); //  4 - 27 (28 bytes)
+      total_size += m_next_event[i]->m_length; // X
     }
   }
 
@@ -1606,22 +1606,22 @@ int PALPIDEFSProducer::BuildEvent() {
   unsigned long pos = 0;
   for (int i = 0; i < m_nDevices; i++) {
     if (layer_selected[i]) {
-      buffer[pos++] = 0xff;
-      buffer[pos++] = i;
+      buffer[pos++] = 0xff; // 0
+      buffer[pos++] = i;    // 1
 
       SingleEvent* single_ev = m_next_event[i];
 
       // data length
-      uint16_t length = sizeof(uint64_t) * 2 + single_ev->m_length;
-      memcpy(buffer + pos, &length, sizeof(uint16_t));
+      uint16_t length = sizeof(uint64_t) * 3 + single_ev->m_length; // 3x64bit: trigger_id, timestamp, timestamp_reference
+      memcpy(buffer + pos, &length, sizeof(uint16_t)); // 2, 3
       pos += sizeof(uint16_t);
 
       // event id and timestamp per layer
-      memcpy(buffer + pos, &(single_ev->m_trigger_id), sizeof(uint64_t));
+      memcpy(buffer + pos, &(single_ev->m_trigger_id), sizeof(uint64_t)); //  4 - 11
       pos += sizeof(uint64_t);
-      memcpy(buffer + pos, &(single_ev->m_timestamp), sizeof(uint64_t));
+      memcpy(buffer + pos, &(single_ev->m_timestamp), sizeof(uint64_t));  // 12 - 19
       pos += sizeof(uint64_t);
-      memcpy(buffer + pos, &(single_ev->m_timestamp_reference), sizeof(uint64_t));
+      memcpy(buffer + pos, &(single_ev->m_timestamp_reference), sizeof(uint64_t)); // 20 - 27
       pos += sizeof(uint64_t);
 
       memcpy(buffer + pos, single_ev->m_buffer, single_ev->m_length);
