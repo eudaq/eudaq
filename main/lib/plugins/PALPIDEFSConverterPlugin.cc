@@ -491,6 +491,7 @@ namespace eudaq {
               cout << "T (layer " << id << ") is: " << temp << endl;
             }
           }
+        }
 #endif
         sev.SetFlags(Event::FLAG_STATUS);
       } else { // is real event
@@ -657,10 +658,11 @@ namespace eudaq {
           // check timestamps
           bool ok = true;
           for (int i = 0; i < m_nLayers - 1; i++) {
-            if (timestamps[i + 1] == 0 ||
-                (fabs(1.0 - (double)timestamps[i] / (double)timestamps[i + 1]) >
-                 0.0001 &&
-                 fabs((double)timestamps[i] - (double)timestamps[i + 1]) > 20))
+            if ((timestamps[i + 1] == 0 && timestamps[i]!=0) ||
+                (timestamps[i + 1] != 0 &&
+                 (fabs(1.0 - (double)timestamps[i] / (double)timestamps[i + 1]) >
+                  0.0001 &&
+                  fabs((double)timestamps[i] - (double)timestamps[i + 1]) > 20)))
               ok = false;
           }
           if (!ok) {
@@ -677,20 +679,17 @@ namespace eudaq {
           } else {
             sev.SetTimestamp(timestamps[0]);
           }
-
-
-          // Add the planes to the StandardEvent
-          for (int i = 0; i < m_nLayers; i++) {
-            sev.AddPlane(*planes[i]);
-            delete planes[i];
-          }
-          delete[] planes;
-          // Indicate that data was successfully converted
-          return true;
         }
       }
+      // Add the planes to the StandardEvent
+      for (int i = 0; i < m_nLayers; i++) {
+        sev.AddPlane(*planes[i]);
+        delete planes[i];
+      }
+      delete[] planes;
+      // Indicate that data was successfully converted
+      return true;
 #endif
-      return false;
     }
 
 
