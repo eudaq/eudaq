@@ -651,11 +651,16 @@ namespace eudaq {
           cout << "EOD" << endl;
 #endif
 
+          // subtract reference from the timestamps
+          for (int i = 0; i < m_nLayers; i++) {
+            timestamps[i]-=timestamps_reference[i];
+          }
+
           // check timestamps
           bool ok = true;
           for (int i = 0; i < m_nLayers - 1; i++) {
             if (timestamps[i + 1] == 0 ||
-                (fabs(1.0 - (double)timestamps[i] / timestamps[i + 1]) >
+                (fabs(1.0 - (double)timestamps[i] / (double)timestamps[i + 1]) >
                  0.0001 &&
                  fabs((double)timestamps[i] - (double)timestamps[i + 1]) > 20))
               ok = false;
@@ -665,7 +670,7 @@ namespace eudaq {
                  << " Timestamps not consistent." << endl;
 #ifdef MYDEBUG
             for (int i = 0; i < m_nLayers; i++)
-              printf("%d %llu %llu\n", i, trigger_ids[i], timestamps[i]);
+              printf("%d %llu %llu %llu\n", i, trigger_ids[i], timestamps[i], timestamps_reference[i]);
 #endif
 #ifdef CHECK_TIMESTAMPS
             sev.SetFlags(Event::FLAG_BROKEN);
