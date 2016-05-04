@@ -18,8 +18,12 @@ namespace eudaq {
     typedef unsigned char byte_t;
     typedef std::vector<byte_t> data_t;
     struct DLLEXPORT block_t : public Serializable {
-      block_t(unsigned id = (unsigned)-1, data_t data = data_t())
+      block_t(unsigned id, const data_t& data)
           : id(id), data(data) {}
+      block_t(unsigned id, data_t&& data)
+	: id(id), data(std::move(data)) {}
+      block_t()
+	: id(-1), data(data_t()) {}
       block_t(Deserializer &);
       void Serialize(Serializer &) const;
       void Append(const data_t &data);
@@ -32,7 +36,7 @@ namespace eudaq {
 
     /// Add an empty block
     size_t AddBlock(unsigned id) {
-      m_blocks.push_back(block_t(id));
+      m_blocks.push_back(block_t(id, data_t()));
       return m_blocks.size() - 1;
     }
 
