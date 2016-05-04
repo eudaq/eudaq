@@ -19,7 +19,7 @@ Compile pALPIDEfs-software with `make lib'`.
 
 You need to add the driver location as a variable to cmake with
 `cd <<EUDAQ_ROOT>>/-build`
-`cmake -DBUILD_palpidefs=on -DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=<<DRIVER LOCATION>> -DUSE_TINYXML=on -DUSE_ROOT=on -DBUILD_nreader=ON ../`
+`cmake -DBUILD_palpidefs=on -DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=<<DRIVER LOCATION>> -DUSE_TINYXML=on -DUSE_ROOT=on ../`
 `make install`
 
 Configuration
