@@ -36,6 +36,7 @@ typedef unsigned __int64 uint64_t;
 #include <iterator>
 #include <fstream>
 #include <vector>
+#include <cstdlib>
 #include <algorithm>
 #include <cmath>
 #include <climits>
@@ -248,7 +249,7 @@ namespace eudaq {
         cout << "Firmware version on layer " << i << " is: " << version.c_str()
              << endl;
         version = string(version, 0, version.find(' '));
-        unsigned long verTmp = stol(version);
+        unsigned long verTmp = strtoul(version.c_str(), NULL, 16);
         m_fw_version[i] = (unsigned int)verTmp;
 
 #ifdef PALPIDEFS
