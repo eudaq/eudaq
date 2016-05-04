@@ -34,8 +34,7 @@ unsigned int Bitmask(int width) {
 }
 
 void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
-              bool readwrite) // TDAQBoard* daq_board, TiXmlNode* node, int
-                              // base, int rgn, bool readwrite)
+              bool readwrite)
 {
   // readwrite (from Chip): true = read; false = write
   for (TiXmlNode* pChild = node->FirstChild("address"); pChild != 0;
@@ -65,7 +64,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
       int sub = atoi(elem->Attribute("sub"));
       int address = ((rgn << 11) + (base << 8) + sub);
       int value = 0;
-//	std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
+      //std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
 
       if (readwrite) {
         if (dut->ReadRegister(address, &value) != 1) {
@@ -99,7 +98,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
           valueChild->FirstChild("content")->FirstChild()->SetValue(tmp);
         } else {
           int content = (int)strtol(
-              valueChild->FirstChild("content")->FirstChild()->Value(), 0, 16);
+            valueChild->FirstChild("content")->FirstChild()->Value(), 0, 16);
 
 
 
@@ -111,10 +110,10 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
             break;
           }
           value += content << begin;
-	}
+        }
       }
       if (!readwrite) {
-//	      printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
+        //printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
 	      if (dut->WriteRegister(address, value) != 1)
 		      std::cout << "Failure to write chip address " << address << std::endl;
         int valuecompare = -1;
@@ -127,6 +126,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
     }
   }
 }
+
 // Will unmask and select one pixel per region.
 // The pixels are calculated from the number of the mask stage
 void DeviceReader::PrepareMaskStage(TAlpidePulseType APulseType, int AMaskStage,
@@ -186,12 +186,12 @@ bool DeviceReader::ThresholdScan() {
     PrepareMaskStage(PT_ANALOGUE, istage, steps);
     m_test_setup->PrepareAnalogueInjection(m_boardid, m_ch_start, PulseMode);
     int ipoint = 0;
-    // std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
-    // std::cout << "charge: ";
+    //std::cout << "S-Curve scan ongoing, stage: " << istage << std::endl;
+    //std::cout << "charge: ";
     for (int icharge = m_ch_start; icharge < m_ch_stop; icharge += m_ch_step) {
       Hits.clear();
       m_dut->SetDAC(DAC_ALPIDE_VPULSEL, 170 - icharge);
-      // std::cout << icharge << " " << std::flush;
+      //std::cout << icharge << " " << std::flush;
       for (int ievt = 0; ievt < m_n_events; ++ievt) {
         if (!m_test_setup->PulseAndReadEvent(m_boardid, PULSELENGTH_ANALOGUE,
                                              &Hits, 1, &Header)) {
@@ -205,7 +205,7 @@ bool DeviceReader::ThresholdScan() {
       }
       m_points[ipoint++] = icharge;
     }
-    // std::cout << std::endl;
+    //std::cout << std::endl;
     m_test_setup->FinaliseAnalogueInjection(m_boardid, PulseMode);
   }
   m_dut->SetMaskAllPixels(false);
@@ -214,18 +214,18 @@ bool DeviceReader::ThresholdScan() {
 
 DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
                            int boardid, TDAQBoard* daq_board, TpAlpidefs* dut)
-    : m_queue_size(0), m_thread(&DeviceReader::LoopWrapper, this),
-      m_stop(false), m_running(false), m_flushing(false),
-      m_waiting_for_eor(false), m_threshold_scan_rqst(false),
-      m_threshold_scan_result(0), m_boardid(id), m_id(id),
-      m_debuglevel(debuglevel), m_test_setup(test_setup),
-      m_daq_board(daq_board), m_dut(dut),
-      m_daq_board_header_length(daq_board->GetEventHeaderLength()),
-      m_daq_board_trailer_length(daq_board->GetEventTrailerLength()),
-      m_last_trigger_id(0),
-      m_queuefull_delay(100), m_max_queue_size(50 * 1024 * 1024),
-      m_n_mask_stages(0), m_n_events(0), m_ch_start(0),
-      m_ch_stop(0), m_ch_step(0), m_data(0x0), m_points(0x0) {
+  : m_queue_size(0), m_thread(&DeviceReader::LoopWrapper, this),
+    m_stop(false), m_running(false), m_flushing(false),
+    m_waiting_for_eor(false), m_threshold_scan_rqst(false),
+    m_threshold_scan_result(0), m_boardid(id), m_id(id),
+    m_debuglevel(debuglevel), m_test_setup(test_setup),
+    m_daq_board(daq_board), m_dut(dut),
+    m_daq_board_header_length(daq_board->GetEventHeaderLength()),
+    m_daq_board_trailer_length(daq_board->GetEventTrailerLength()),
+    m_last_trigger_id(0),
+    m_queuefull_delay(100), m_max_queue_size(50 * 1024 * 1024),
+    m_n_mask_stages(0), m_n_events(0), m_ch_start(0),
+    m_ch_stop(0), m_ch_step(0), m_data(0x0), m_points(0x0) {
   m_last_trigger_id = m_daq_board->GetNextEventId();
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
 }
@@ -240,9 +240,8 @@ void DeviceReader::SetRunning(bool running) {
   Print(0, "Set running: %lu, m_running : %lu, m_waiting_for_eor : %lu, m_flushing : %lu", running, m_running, m_waiting_for_eor, m_flushing);
   {
     SimpleLock lock(m_mutex);
-//  m_flushing_second = false;
     if (m_running && !running) {
-        m_flushing = true;
+      m_flushing = true;
       m_waiting_for_eor = true;
     }
     m_running = running;
@@ -255,9 +254,6 @@ void DeviceReader::StartDAQ() {
 }
 
 void DeviceReader::StopDAQ() {
-//  while (IsReading()) {
-//    eudaq::mSleep(10);
-//  }
   m_daq_board->WriteBusyOverrideReg(false);
   eudaq::mSleep(100);
   m_daq_board->StopTrigger();
@@ -288,7 +284,7 @@ SingleEvent* DeviceReader::PopNextEvent() {
     m_queue_size -= ev->m_length;
     if (m_debuglevel > 3)
       Print(0, "Returning event. Current queue status: %lu elements. Total "
-               "size: %lu",
+            "size: %lu",
             m_queue.size(), m_queue_size);
     return ev;
   }
@@ -346,7 +342,7 @@ void DeviceReader::Loop() {
 
 
     const int maxDataLength =
-        258 * 2 * 32 + 28; // 256 words per region, region header (2 words) per
+      258 * 2 * 32 + 28; // 256 words per region, region header (2 words) per
     // region, header (20 bytes), trailer (8 bytes)
     unsigned char data_buf[maxDataLength];
     int length = -1;
@@ -367,32 +363,11 @@ void DeviceReader::Loop() {
         SimpleLock lock(m_mutex);
         m_flushing = false;
         Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(),
-            m_last_trigger_id);
+              m_last_trigger_id);
       }
       eudaq::mSleep(1);
       continue;
     }
-
-/* // Previous method?
-    if (IsFlushing()) {
-//      SimpleLock lock(m_mutex);
-      uint64_t nexteventid = m_daq_board->GetNextEventId();
-
-      // read events left in the queue of the DAQ board
-      while (m_daq_board->GetNextEventId() > m_last_trigger_id) {
-        m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
-        if (length==0) break; // end-of-readout package => stop
-        bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
-        bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
-        m_last_trigger_id = header.EventId;
-      }
-      {
-        SimpleLock lock(m_mutex)
-        m_flushing = false;
-      }
-      Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(),
-            m_last_trigger_id);
-    } */
 
     // data taking
     SetReading(true);
@@ -401,17 +376,17 @@ void DeviceReader::Loop() {
 
     if ((readEvent && length != -9) || (!readEvent && length == 0)){
       if (IsFlushing()) {
-          uint64_t next_event_id = m_daq_board->GetNextEventId();
-          std::cout << "First Flush / current trigger id : " << m_last_trigger_id << " length : " << length << std::endl;
+        uint64_t next_event_id = m_daq_board->GetNextEventId();
+        std::cout << "First Flush / current trigger id : " << m_last_trigger_id << " length : " << length << std::endl;
         while (next_event_id > m_last_trigger_id) {
           next_event_id = m_daq_board->GetNextEventId();
           m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
           if (length == 0)
             break;
           else {
-          bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
-          bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
-          m_last_trigger_id = header.EventId;
+            bool HeaderOK  = m_daq_board->DecodeEventHeader(data_buf, &header);
+            bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
+            m_last_trigger_id = header.EventId;
           }
         }
         {
@@ -422,35 +397,16 @@ void DeviceReader::Loop() {
           Print(0, "Flushing %lu", m_last_trigger_id);
         }
         m_last_trigger_id = m_daq_board->GetNextEventId();
-        continue;        
+        continue;
       } else if (length == 0 && !IsFlushing() && readEvent) {
         {
-            SimpleLock lock(m_mutex);
-//        eudaq::mSleep(1);
-             Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
+          SimpleLock lock(m_mutex);
+          Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
         }
         continue;
       } else if (length == 0 && !IsFlushing() && !readEvent) {
-          continue;
-      }
-                
-
-/*          
-        if (length == 0) {
-        // EOR
-          Print(0, "Flushing %lu", m_last_trigger_id);
-          SimpleLock lock(m_mutex);
-          m_flushing = false;
-          Print(0, "EOR event received");
-          m_waiting_for_eor = false;
-          // gets resetted by EndOfRun
-          m_last_trigger_id = m_daq_board->GetNextEventId();
-        } else
-          Print(
-              3,
-              "UNEXPECTED: 0 event received but trigger has not been stopped.");
         continue;
-      }*/
+      }
 
       bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
       bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
@@ -485,27 +441,27 @@ void DeviceReader::Loop() {
 
         // DEBUG
         /*
-           if (header.EventId > m_last_trigger_id*2) {
-           Print(2, "Very large id %lu %lu", header.EventId, m_last_trigger_id);
-           std::string str = "RAW: ";
-           for (int j=0; j<length; j++) {
-           char buffer[20];
-           sprintf(buffer, "%02x ", data_buf[j]);
-           str += buffer;
-           }
-           str += "\n";
-           Print(0, str.data());
-           }
-         */
+          if (header.EventId > m_last_trigger_id*2) {
+          Print(2, "Very large id %lu %lu", header.EventId, m_last_trigger_id);
+          std::string str = "RAW: ";
+          for (int j=0; j<length; j++) {
+          char buffer[20];
+          sprintf(buffer, "%02x ", data_buf[j]);
+          str += buffer;
+          }
+          str += "\n";
+          Print(0, str.data());
+          }
+        */
         // --DEBUG
 
         m_last_trigger_id = header.EventId;
       } else {
-//        char message[300];
-//        sprintf(message, "DeviceReader %d: ERROR decoding event. Header: %d Trailer: %d", m_id, HeaderOK, TrailerOK);
-//        EUDAQ_WARN(message);
+        //char message[300];
+        //sprintf(message, "DeviceReader %d: ERROR decoding event. Header: %d Trailer: %d", m_id, HeaderOK, TrailerOK);
+        //EUDAQ_WARN(message);
         Print(0, "ERROR decoding event. Header: %d Trailer: %d", HeaderOK,
-            TrailerOK);
+              TrailerOK);
         char buffer[30];
         sprintf(buffer, "RAW data (length %d): ", length);
         std::string str(buffer);
@@ -518,7 +474,7 @@ void DeviceReader::Loop() {
       }
     }
   }
-    Print(0, "ThreadRunner stopping...");
+  Print(0, "ThreadRunner stopping...");
 }
 
 
@@ -643,7 +599,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_nDevices = nDevices;
   else {
     const char* error_msg =
-        "Unsupported attempt to change the number of devices!";
+      "Unsupported attempt to change the number of devices!";
     std::cout << error_msg << std::endl;
     EUDAQ_ERROR(error_msg);
     SetStatus(eudaq::Status::LVL_ERROR, error_msg);
@@ -670,9 +626,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   m_SCS_n_mask_stages = param.Get("SCSnMaskStages", 160);
   m_SCS_n_steps = (m_SCS_charge_stop - m_SCS_charge_start) / m_SCS_charge_step;
   m_SCS_n_steps =
-      ((m_SCS_charge_stop - m_SCS_charge_start) % m_SCS_charge_step > 0)
-          ? m_SCS_n_steps + 1
-          : m_SCS_n_steps;
+    ((m_SCS_charge_stop - m_SCS_charge_start) % m_SCS_charge_step > 0)
+    ? m_SCS_n_steps + 1
+    : m_SCS_n_steps;
 
   if (!m_next_event) {
     m_next_event = new SingleEvent*[m_nDevices];
@@ -766,7 +722,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   for (int i = 0; i < m_nDevices; i++) {
     TDAQBoard* daq_board = m_reader[i]->GetDAQBoard();
     daq_board->WriteBusyOverrideReg(false);
-    }
+  }
 
   if (!DoSCurveScan(param))
     return;
@@ -921,7 +877,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
     if (m_testsetup->GetNDAQBoards() < m_nDevices) {
       char msg[100];
       sprintf(msg, "Not enough devices connected. Configuration requires %d "
-                   "devices, but only %d present.",
+              "devices, but only %d present.",
               m_nDevices, m_testsetup->GetNDAQBoards());
       std::cerr << msg << std::endl;
       EUDAQ_ERROR(msg);
@@ -972,21 +928,13 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
           SetStatus(eudaq::Status::LVL_ERROR, msg);
           return false;
         }
-/*        if (!daq_board->DisableTimeStampReset(true)) {
-          char msg[100];
-          sprintf(msg, "Disabling TimeStamp Reset failed at board %d", board_address);
-          std::cerr << msg << std::endl;
-          EUDAQ_ERROR(msg);
-          SetStatus(eudaq::Status::LVL_ERROR, msg);
-          return false;
-        }*/
 
         if (!m_testsetup->InitialiseChip(board_no, overflow)) {
           char msg[100];
           sprintf(
-              msg,
-              "Initialising device with board address %d failed, overflow=0x%x",
-              board_address, overflow);
+            msg,
+            "Initialising device with board address %d failed, overflow=0x%x",
+            board_address, overflow);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
           SetStatus(eudaq::Status::LVL_ERROR, msg);
@@ -1004,8 +952,8 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
         m_next_event[i] = 0;
       } else {
         std::cout
-            << "Already initialized and powered. Doing only reconfiguration..."
-            << std::endl;
+          << "Already initialized and powered. Doing only reconfiguration..."
+          << std::endl;
       }
     }
   }
@@ -1022,8 +970,8 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
       m_reader[i] = 0x0;
       // power of the DAQboard
       std::vector<SFieldReg> ADCConfigReg0 =
-          daq_board
-              ->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
+        daq_board
+        ->GetADCConfigReg0(); // Get Descriptor Register ADCConfigReg0
       daq_board->SetPowerOnSequence(1, 0, 0, 0);
       daq_board->SendADCControlReg(ADCConfigReg0, 1,
                                    0); // register 0, self shutdown = 1, off = 0
@@ -1038,7 +986,7 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
     libusb_exit(context);
     m_configured = false;
   }
-  
+
   eudaq::mSleep(5000);
   system("${SCRIPT_DIR}/fx3/program.sh");
   return true;
@@ -1058,8 +1006,8 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration &param) {
     if (!m_do_SCS[i])
       continue;
     m_reader[i]->SetupThresholdScan(
-        m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
-        m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i]);
+      m_SCS_n_mask_stages, m_SCS_n_events, m_SCS_charge_start,
+      m_SCS_charge_stop, m_SCS_charge_step, m_SCS_data[i], m_SCS_points[i]);
     m_reader[i]->RequestThresholdScan();
   }
 
@@ -1260,7 +1208,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
       SetStatus(eudaq::Status::LVL_ERROR, msg.data());
       return;
     }
- // 	std::cout << "PARSEXML READTRUE" << std::endl;
+    // 	std::cout << "PARSEXML READTRUE" << std::endl;
     m_reader[i]->ParseXML(doc.FirstChild("root")->ToElement(), -1, -1, true);
 
     std::string configStr;
@@ -1337,7 +1285,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   bore.SetTag("DUTposition", m_dut_pos);
 
   //Configuration is done, Read DAC Values and send to log
-  
+
   for (int i = 0; i < m_nDevices; i++) {
     m_timestamp_reference[i] = 0;
   }
@@ -1398,16 +1346,15 @@ void PALPIDEFSProducer::OnStopRun() {
   while (IsFlushing() || IsStopping()) {
     eudaq::mSleep(10);
     ++wait_cnt;
-//    std::cout << "flushing .." << std::endl;
     if (wait_cnt % 100 == 0) {
       std::string msg = "Still flushing...";
       std::cout << msg << std::endl;
       SetStatus(eudaq::Status::LVL_WARN, msg.data());
     }
   }
-  
+
   SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
-  
+
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1452,8 +1399,8 @@ void PALPIDEFSProducer::Loop() {
         for (int i = 0; i < m_nDevices; i++) {
           if (m_reader[i]->IsWaitingForEOR()) {
             waiting_for_eor = true;
-             EUDAQ_INFO("WAITING FOR EOR");
-           }
+            EUDAQ_INFO("WAITING FOR EOR");
+          }
         }
         if (!waiting_for_eor) {
           // write out last events
@@ -1484,7 +1431,7 @@ void PALPIDEFSProducer::Loop() {
       }
 
       if (count % 20000 == 0)
-       std::cout << "Sending event " << count << std::endl;
+        std::cout << "Sending event " << count << std::endl;
     }
   } while (!IsDone());
 }
@@ -1550,7 +1497,7 @@ int PALPIDEFSProducer::BuildEvent() {
         single_ev->m_timestamp_corrected - timestamp >= 20) {
       char msg[200];
       sprintf(msg, "Event %d. Out of sync: Timestamp of current event "
-                   "(device %d) is %llu while smallest is %llu. Current reference : %llu",
+              "(device %d) is %llu while smallest is %llu. Current reference : %llu",
               m_ev, i, single_ev->m_timestamp_corrected, timestamp, m_timestamp_reference[i]);
       std::string str(msg);
 
@@ -1628,7 +1575,7 @@ int PALPIDEFSProducer::BuildEvent() {
       memcpy(buffer + pos, single_ev->m_buffer, single_ev->m_length);
       pos += single_ev->m_length;
     }
-//    printf("Event %d, reference_timestamp : %lu ; current_timestamp : %llu \n" ,m_ev, m_timestamp_reference[i], timestamp); // just for debugging
+    //printf("Event %d, reference_timestamp : %lu ; current_timestamp : %llu \n" ,m_ev, m_timestamp_reference[i], timestamp); // just for debugging
   }
 
 
@@ -1709,8 +1656,8 @@ int main(int /*argc*/, const char** argv) {
                                    "tcp://localhost:44000", "address",
                                    "The address of the RunControl application");
   eudaq::Option<std::string> level(
-      op, "l", "log-level", "NONE", "level",
-      "The minimum level for displaying log messages locally");
+    op, "l", "log-level", "NONE", "level",
+    "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name(op, "n", "name", "pALPIDEfs", "string",
                                   "The name of this Producer");
   eudaq::Option<int> debug_level(op, "d", "debug-level", 0, "int",
