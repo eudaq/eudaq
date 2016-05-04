@@ -11,7 +11,7 @@
 
 file(GLOB_RECURSE uhal_include /opt/cactus/*uhal.hpp)
 if(uhal_include)
-    set(CACTUS_ROOT /opt/cactus/2.3 )
+    set(CACTUS_ROOT /opt/cactus)
     MESSAGE(STATUS "Found uhal.hpp in ${uhal_include}")
 else(uhal_include)
 file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*uhal.hpp)
@@ -32,16 +32,16 @@ if (NOT CACTUS_ROOT)
   MESSAGE(WARNING "Could not find CACTUS package required by miniTLU producer. Please refer to the documentation on how to obtain the software.")
 endif()
 
-set(EXTERN_ERLANG_PREFIX ${CACTUS_ROOT}/lib/erlang )
-set(EXTERN_ERLANG_BIN_PREFIX ${EXTERN_ERLANG_PREFIX}/bin )
+# set(EXTERN_ERLANG_PREFIX ${CACTUS_ROOT}/lib/erlang )
+# set(EXTERN_ERLANG_BIN_PREFIX ${EXTERN_ERLANG_PREFIX}/bin )
 
-set(EXTERN_BOOST_PREFIX ${CACTUS_ROOT} )
-set(EXTERN_BOOST_INCLUDE_PREFIX ${EXTERN_BOOST_PREFIX}/include )
-set(EXTERN_BOOST_LIB_PREFIX ${EXTERN_BOOST_PREFIX}/lib )
+# set(EXTERN_BOOST_PREFIX ${CACTUS_ROOT} )
+# set(EXTERN_BOOST_INCLUDE_PREFIX ${EXTERN_BOOST_PREFIX}/include )
+# set(EXTERN_BOOST_LIB_PREFIX ${EXTERN_BOOST_PREFIX}/lib )
 
-set(EXTERN_PUGIXML_PREFIX ${CACTUS_ROOT}  )
-set(EXTERN_PUGIXML_INCLUDE_PREFIX ${EXTERN_PUGIXML_PREFIX}/include/pugixml )
-set(EXTERN_PUGIXML_LIB_PREFIX ${EXTERN_PUGIXML_PREFIX}/lib )
+# set(EXTERN_PUGIXML_PREFIX ${CACTUS_ROOT}  )
+# set(EXTERN_PUGIXML_INCLUDE_PREFIX ${EXTERN_PUGIXML_PREFIX}/include/pugixml )
+# set(EXTERN_PUGIXML_LIB_PREFIX ${EXTERN_PUGIXML_PREFIX}/lib )
 
 set(UHAL_GRAMMARS_PREFIX ${CACTUS_ROOT} )
 set(UHAL_GRAMMARS_INCLUDE_PREFIX ${UHAL_GRAMMARS_PREFIX}/include/uhal/grammars )

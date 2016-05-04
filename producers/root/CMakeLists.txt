@@ -2,35 +2,40 @@ FIND_PACKAGE( ROOT REQUIRED)
 
 INCLUDE_DIRECTORIES( . inc ${ROOT_INCLUDE_DIR} )
 
+SET(MY_INCLUDE_DIRECTORIES 
+  inc
+  ${PROJECT_SOURCE_DIR}/producers/root/inc
+  ${PROJECT_SOURCE_DIR}/main/include 
+  ${ROOT_INCLUDE_DIR} )
+
 SET(ROOTProducer_name ROOTProducer)
 
-
-SET (ROOTProducer_SOURCES
-     
-src/ROOTProducer.cpp      
-
+SET (ROOTProducer_SOURCES   
+  src/ROOTProducer.cpp
   )
 
-
-set(ROOTProducer_HEADERS 
+SET(ROOTProducer_HEADERS 
   ${PROJECT_SOURCE_DIR}/producers/root/inc/ROOTProducer.h
- )
- 
- SET(MY_INCLUDE_DIRECTORIES 
-     inc
-     ${PROJECT_SOURCE_DIR}/producers/root/inc
-     ${PROJECT_SOURCE_DIR}/main/include 
-     ${ROOT_INCLUDE_DIR} )
- 
- set(ROOTProducer_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ROOTProducer_Dict.cxx) 
- 
- ROOT_GENERATE_DICTIONARY_OLD("${ROOTProducer_HEADERS}" "${ROOTProducer_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
+  )
 
+SET(ROOTProducer_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ROOTProducer_Dict.cxx)
 
+ROOT_GENERATE_DICTIONARY_OLD("${ROOTProducer_HEADERS}" "${ROOTProducer_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
+# ADD_LIBRARY( ${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_DICTIONARY})
 
-ADD_LIBRARY( ${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_DICTIONARY})
+SET (ROOTDEMOHD_SOURCES   
+  src/DemoHardware.cpp
+  )
 
+SET(ROOTDEMOHD_HEADERS 
+  ${PROJECT_SOURCE_DIR}/producers/root/inc/DemoHardware.h
+  )
 
+SET(ROOTDEMOHD_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/ROOTDemoHardware_Dict.cxx)
+
+ROOT_GENERATE_DICTIONARY_OLD("${ROOTDEMOHD_HEADERS}" "${ROOTDEMOHD_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
+
+ADD_LIBRARY( ${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_DICTIONARY} ${ROOTDEMOHD_SOURCES} ${ROOTDEMOHD_DICTIONARY})
 
 target_link_libraries(${ROOTProducer_name} EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
@@ -39,3 +44,4 @@ INSTALL(TARGETS ${ROOTProducer_name}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
 )
+# TODO: in the case of ROOT6, additional <name>_rdict.pcm file should be copied to library dir.

@@ -33,6 +33,7 @@ namespace eudaq {
   //Will be set as the EVENT_TYPE for the different versions of this producer
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
+  static std::string USBPIX_CCPD_NAME = "USBPIXCCPD";
 
 /** Base converter class for the conversion of EUDAQ data into StandardEvent/LCIO data format
  *  Provides methods to retreive data from raw data words and similar.*/
@@ -488,10 +489,8 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 	
 		int previousSensorID = -1;
 
-		if(this->advancedConfig) previousSensorID = this->moduleConfig.at(0)+chip_id_offset-1;
+		if(this->advancedConfig) previousSensorID = this->moduleConfig.at(0)+chip_id_offset-1+this->first_sensor_id;
 		else previousSensorID = ev_raw.GetID(0) + chip_id_offset + this->first_sensor_id;
-
-		std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
 
 		zsDataEncoder["sensorID"] = previousSensorID;
 		zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
@@ -509,7 +508,7 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 			
 			if(this->advancedConfig)
 			{
-				sensorID = this->moduleConfig.at(chip)+chip_id_offset-1;
+				sensorID = this->moduleConfig.at(chip)+chip_id_offset-1+this->first_sensor_id;
 			}
 			else
 			{
@@ -556,17 +555,15 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 					if(this->getHitData(Word, false, Col, Row, ToT))
 					{
 						if(this->advancedConfig) this->transformChipsToModule(Col, Row, this->moduleIndex.at(chip));
-						eutelescope::EUTelGenericSparsePixel* thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
-						sparseFrame->addSparsePixel( thisHit );
-						tmphits.push_back( thisHit );
+						eutelescope::EUTelGenericSparsePixel thisHit( Col, Row, ToT, lvl1-1);
+						sparseFrame->addSparsePixel( &thisHit );
 					}
 					//Second Hit
 					if(this->getHitData(Word, true, Col, Row, ToT)) 
 					{
 						if(this->advancedConfig) this->transformChipsToModule(Col, Row, this->moduleIndex.at(chip));
-						eutelescope::EUTelGenericSparsePixel* thisHit = new eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
-						sparseFrame->addSparsePixel( thisHit );
-						tmphits.push_back( thisHit );
+						eutelescope::EUTelGenericSparsePixel thisHit( Col, Row, ToT, lvl1-1);
+						sparseFrame->addSparsePixel( &thisHit );
 					}
 				}
 			}
@@ -574,12 +571,6 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 		}
 
 		zsDataCollection->push_back( zsFrame.release() );
-
-		//clean up
-		for( auto it = tmphits.begin(); it != tmphits.end(); it++ )
-		{
-			delete (*it);
-		}
 
 		//add this collection to lcio event
 		if( ( !zsDataCollectionExists )  && ( zsDataCollection->size() != 0 ) ) 
@@ -608,8 +599,15 @@ class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>
 	static USBPixFEI4BConverter m_instance;
 };
 
+class USBPixCCPDConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>
+{
+  private:
+       USBPixCCPDConverter():  USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>(USBPIX_CCPD_NAME){};
+       static USBPixCCPDConverter m_instance;
+};
+
 //Instantiate the converter plugin instance
 USBPixFEI4AConverter USBPixFEI4AConverter::m_instance;
 USBPixFEI4BConverter USBPixFEI4BConverter::m_instance;
-
+USBPixCCPDConverter USBPixCCPDConverter::m_instance;
 } //namespace eudaq

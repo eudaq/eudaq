@@ -72,23 +72,23 @@ void GraphWindow::Update(bool firsttime) {
   double min, max;
   float oldminTime, oldmaxTime, oldminGraph, oldmaxGraph;
   set->GetXLimits(min, max);
-  TimeSlider->SetRange(min, max);
+  TimeSlider->SetRange(static_cast<Float_t>(min),static_cast<Float_t>(max));
   TimeSlider->GetPosition(oldminTime, oldmaxTime);
   // although the range itself changes the distance between the lower position
   // and the left range should be fix. right side analogue
 
-  TimeSlider->SetPosition(oldminTime - TimeSliderMin + min,
-                          oldmaxTime - TimeSliderMax + max);
+  TimeSlider->SetPosition(static_cast<Float_t>(oldminTime - TimeSliderMin + min),
+                          static_cast<Float_t>(oldmaxTime - TimeSliderMax + max));
   TimeSliderMin = min;
   TimeSliderMax = max;
 
   set->GetYLimits(min, max);
   GraphSlider->GetPosition(oldminGraph, oldmaxGraph);
-  GraphSlider->SetRange(min, max);
+  GraphSlider->SetRange(static_cast<Float_t>(min), static_cast<Float_t>(max));
 
   // here it is the same //somethig is strange in this line.... hmn
-  GraphSlider->SetPosition(oldminGraph - GraphSliderMin + min,
-                           oldmaxGraph - GraphSliderMax + max);
+  GraphSlider->SetPosition(static_cast<Float_t>(oldminGraph - GraphSliderMin + min),
+                           static_cast<Float_t>(oldmaxGraph - GraphSliderMax + max));
   std::cout << "Pos: " << oldminGraph << " / " << GraphSliderMin << " / " << min
             << std::endl;
   // std::cout << "Setting to: " << oldminGraph-GraphSliderMin+min << " / " <<
@@ -100,7 +100,7 @@ void GraphWindow::Update(bool firsttime) {
   std::cout << "GraphSlider: " << oldminGraph << " / " << oldmaxGraph
             << std::endl;
 
-  set->SetZoom(oldminTime, oldmaxTime, oldminGraph, oldmaxGraph);
+  set->SetZoom(static_cast<int>(oldminTime), static_cast<int>(oldmaxTime), static_cast<int>(oldminGraph), static_cast<int>(oldmaxGraph));
   // set->SetLimitsFromSlider(oldminTime,oldmaxTime,oldminGraph,oldmaxGraph);
 
   TCanvas *fCanvas = ECvs_Graph->GetCanvas();
@@ -115,7 +115,7 @@ void GraphWindow::DoSlider() {
   TimeSlider->GetPosition(x1, x2);
   GraphSlider->GetPosition(y1, y2);
 
-  set->SetLimitsFromSlider(x1, x2, y1, y2);
+  set->SetLimitsFromSlider(static_cast<int>(x1), static_cast<int>(x2), static_cast<int>(y1), static_cast<int>(y2));
   set->Redraw(ECvs_Graph->GetCanvas());
 }
 
