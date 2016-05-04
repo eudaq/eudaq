@@ -267,13 +267,13 @@ namespace eudaq {
           break;
         case 3:
           m_dut[i] = new TpAlpidefs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
-          m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
+          m_daq_board[i] = new TDAQBoard2(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
           break;
         default:
           cout << "Unknown chip type, assuming pALPIDE-3" << endl;
           m_dut[i] = new TpAlpidefs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
-          m_daq_board[i] = new TDAQBoard(0x0, conf->GetBoardConfig());
+          m_daq_board[i] = new TDAQBoard2(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
         }
         m_daq_header_length[i]  = m_daq_board[i]->GetEventHeaderLength();
@@ -404,9 +404,14 @@ namespace eudaq {
         for (int i = 0; i < 8; i++)
           ((unsigned char *)&timestamp)[i] = data[pos++];
         uint64_t timestamp_reference = 0;
-//        if (m_DataVersion >= 3)
-          for (int i = 0; i < 8; i++)
+        if (m_DataVersion >= 3) {
+          for (int i = 0; i < 8; i++) {
             ((unsigned char *)&timestamp_reference)[i] = data[pos++];
+          }
+        }
+        else {
+          timestamp_reference = 0x0;
+        }
         trigger_ids[current_layer] = trigger_id;
         timestamps[current_layer] = timestamp;
         timestamps_reference[current_layer] = timestamp_reference;
@@ -528,10 +533,18 @@ namespace eudaq {
 
 // RAW dump
 #ifdef DEBUGRAWDUMP
-          printf("Event %d: ", ev.GetEventNumber());
-          for (unsigned int i = 0; i < data.size(); i++)
-            printf("%x ", data[i]);
+          printf("Event %d: \n", ev.GetEventNumber());
+          for (unsigned int i = 0; i < data.size(); i++) {
+            if (i%8==0) {
+              printf("%0.8d\t", i);
+            }
+            printf("%0.2x ", data[i]);
+            if (i%8==7) {
+              printf("\n");
+            }
+          }
           printf("\n");
+
 #endif
 
           while (pos + 1 < data.size()) { // always need 2 bytes left
@@ -554,12 +567,28 @@ namespace eudaq {
             bool trailerOK = true;
 
             if (m_DataVersion<3) {
-              eventOK =  m_dut[current_layer]->DecodeEvent(&data[0], data_end+1, &hits);
+              eventOK =  m_dut[current_layer]->DecodeEvent(&data[0]+pos, data_end+1, &hits);
             }
             else { // complete event stored
-              headerOK  = m_daq_board[current_layer]->DecodeEventHeader(&data[0], &header);
-              eventOK   =  m_dut[current_layer]->DecodeEvent(&data[0], data_end+1-m_daq_trailer_length[current_layer]-m_daq_header_length[current_layer], &hits);
-              trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(&data[0] + data_end+1 - m_daq_trailer_length[current_layer], &header);
+              unsigned int header_begin   = pos;
+              unsigned int header_end     = pos + m_daq_header_length[current_layer] - 1;
+              unsigned int payload_begin  = pos + m_daq_header_length[current_layer];
+              unsigned int payload_end    = data_end + 1 - m_daq_trailer_length[current_layer] - 1;
+              unsigned int trailer_begin  = data_end + 1 - m_daq_trailer_length[current_layer];
+              unsigned int trailer_end    = data_end;
+
+              unsigned int payload_length = payload_end+1-payload_begin;
+
+              // HEADER
+              headerOK  = m_daq_board[current_layer]->DecodeEventHeader(&data[0]+pos, &header);
+
+              // PAYLOAD
+              eventOK   = m_dut[current_layer]->DecodeEvent(&data[0]+payload_begin, payload_length, &hits);
+
+              // TRAILER
+              trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(&data[0]+trailer_begin, &header);
+
+              pos = trailer_end+1; // proceed to the next event;
             }
 
             if (!headerOK || !eventOK || !trailerOK) {
