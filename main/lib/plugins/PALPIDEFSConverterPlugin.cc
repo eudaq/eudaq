@@ -566,7 +566,8 @@ namespace eudaq {
             bool trailerOK = true;
 
             if (m_DataVersion<3) {
-              eventOK =  m_dut[current_layer]->DecodeEvent(&data[0]+pos, data_end+1, &hits);
+              eventOK =  m_dut[current_layer]->DecodeEvent(&data[0]+pos, data_end+1-pos, &hits);
+              pos = data_end+1;
             }
             else { // complete event stored
               unsigned int header_begin   = pos;
