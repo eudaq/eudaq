@@ -191,7 +191,7 @@
        <item row="4" column="3">
         <widget class="QPushButton" name="btnTerminate">
          <property name="enabled">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="toolTip">
           <string>Terminate the DAQ session</string>

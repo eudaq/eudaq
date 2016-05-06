@@ -52,8 +52,8 @@ int main(int argc, char **argv) {
   eudaq::Option<std::string> level(
       op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<int> x(op, "x", "left", 0, "pos");
-  eudaq::Option<int> y(op, "y", "top", 0, "pos");
+  eudaq::Option<int> x(op, "x", "left", -1, "pos");
+  eudaq::Option<int> y(op, "y", "top", -1, "pos");
   eudaq::Option<int> w(op, "w", "width", 150, "pos");
   eudaq::Option<int> h(op, "g", "height", 200, "pos",
                        "The initial position of the window");
@@ -100,7 +100,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
       m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
       m_filebytes(0), m_events(0), dostatus(false),
       m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
-      m_startrunwhenready(false) {
+      m_startrunwhenready(false),m_lastconfigonrunchange(false) {
   setupUi(this);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
@@ -124,30 +124,34 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   viewConn->setModel(&m_run);
   viewConn->setItemDelegate(&m_delegate);
 
-  //cmbConfig->setEditText("default");
-  QSize fsize = frameGeometry().size();
-  if (geom.x() == -1)
-    geom.setX(x());
-  if (geom.y() == -1)
-    geom.setY(y());
-  else
-    geom.setY(geom.y() + MAGIC_NUMBER);
-  if (geom.width() == -1)
-    geom.setWidth(fsize.width());
-  if (geom.height() == -1)
-    geom.setHeight(fsize.height());
-  // else geom.setHeight(geom.height() - MAGIC_NUMBER);
-  move(geom.topLeft());
-  resize(geom.size());
-    QSettings settings("EUDAQ collaboration", "EUDAQ");
+  // cmbConfig->setEditText("default");
+  QRect geom_from_last_program_run;
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
 
-    settings.beginGroup("MainWindow");
-    resize(settings.value("size", geom.size()).toSize());
-    move(settings.value("pos", geom.topLeft()).toPoint());
-    lastUsedDirectory = settings.value("lastConfigFileDirectory","../conf").toString();
-    txtConfigFileName->setText(settings.value("lastConfigFile","config file not set").toString());
-    settings.endGroup();
-  
+  settings.beginGroup("MainWindowEuRun");
+  geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
+  geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
+  lastUsedDirectory =
+      settings.value("lastConfigFileDirectory", "").toString();
+  txtConfigFileName->setText(
+      settings.value("lastConfigFile", "config file not set").toString());
+  settings.endGroup();
+
+  QSize fsize = frameGeometry().size();
+  if ((geom.x() == -1)||(geom.y() == -1)||(geom.width() == -1)||(geom.height() == -1)) {
+    if ((geom_from_last_program_run.x() == -1)||(geom_from_last_program_run.y() == -1)||(geom_from_last_program_run.width() == -1)||(geom_from_last_program_run.height() == -1)) {
+      geom.setX(x()); 
+      geom.setY(y());
+      geom.setWidth(fsize.width());
+      geom.setHeight(fsize.height());
+      move(geom.topLeft());
+      resize(geom.size());
+    } else {
+      move(geom_from_last_program_run.topLeft());
+      resize(geom_from_last_program_run.size());
+    }
+  }
+
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
           SLOT(ChangeStatus(const QString &, const QString &)));
   connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
@@ -159,6 +163,17 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   txtGeoID->installEventFilter(this);
   setWindowIcon(QIcon("../images/Icon_euRun.png"));
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
+
+  if(txtConfigFileName->text()!="config file not set") {
+   QFile file(txtConfigFileName->text());
+   if(file.exists()){
+     SetState(ST_CONFIGLOADED);
+   } else {
+     SetState(ST_NONE);
+     txtConfigFileName->setText("config file not set");
+   }
+   file.close();
+  }
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
@@ -174,7 +189,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer") {
-    if (id.GetName() == "TLU") {
+    if (id.GetName() == "TLU" || id.GetName() == "miniTLU") {
       EmitStatus("TRIG", status->GetTag("TRIG"));
       EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
       EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
@@ -264,14 +279,14 @@ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
   return false;
 }
 
-RunControlGUI::~RunControlGUI(){
-    QSettings settings("EUDAQ collaboration", "EUDAQ");
-  
-    settings.beginGroup("MainWindow");
-    settings.setValue("size", size());
-    settings.setValue("pos", pos());
-    //settings.setValue("screen", windowHandle()->screen()->screenNumber());
-    settings.setValue("lastConfigFileDirectory",lastUsedDirectory);
-    settings.setValue("lastConfigFile",txtConfigFileName->text());
-    settings.endGroup();
+RunControlGUI::~RunControlGUI() {
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
+
+  settings.beginGroup("MainWindowEuRun");
+  settings.setValue("size", size());
+  settings.setValue("pos", pos());
+  // settings.setValue("screen", windowHandle()->screen()->screenNumber());
+  settings.setValue("lastConfigFileDirectory", lastUsedDirectory);
+  settings.setValue("lastConfigFile", txtConfigFileName->text());
+  settings.endGroup();
 }

@@ -77,10 +77,12 @@ private:
       m_dut_createdAtTime = 0,
       m_dut_sendAtTime =0;
 
+    double DUT_start_time = 0;
+
 
     std::ofstream *m_out=nullptr;
     bool firstEvent=false;
-    uint64_t DUT_start_time = 0,TLU_start_Time=0;
+    uint64_t TLU_start_Time=0;
   };
 
   
@@ -152,7 +154,7 @@ private:
       firstEvent = false;
     }
 
-    m_tlu_time_stamp = sev.GetTimestamp() - TLU_start_Time;
+    m_tlu_time_stamp = static_cast<double>(sev.GetTimestamp() - TLU_start_Time);
     m_TLU_event_nr = sev.GetTag("TLU_event_nr", (double)0);
     m_tlu_trigger = sev.GetTag("TLU_trigger", 0);
     m_DUT_TDC = sev.GetTag("TDC.data", double(0));

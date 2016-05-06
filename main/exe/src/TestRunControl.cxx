@@ -57,8 +57,8 @@ void * worker_automatic_run(void * arg) {
 
 
         rc->StartRun("");
-        std::cout << "sleep for " << duration << std::endl;
-        eudaq::mSleep(duration);
+        std::cout << "sleep for " << static_cast<unsigned int> (duration) << std::endl;
+        eudaq::mSleep(static_cast<unsigned int> (duration));
 
         rc->StopRun();
 
@@ -174,7 +174,7 @@ int main(int /*argc*/, const char ** argv) {
 
     if (!conf.empty())
     {
-      eudaq::mSleep(autostart.Value()*1000); 
+      eudaq::mSleep(static_cast<unsigned int> (autostart.Value()*1000)); 
       std::thread Automatic(worker_automatic_run,&rcH);
       Automatic.detach();
     }
