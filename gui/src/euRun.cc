@@ -174,7 +174,54 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer") {
-    if (id.GetName() == "TLU" || id.GetName() == "miniTLU") {
+ if (id.GetName() == "caliceahcalbif") {
+      EmitStatus("TRIG", status->GetTag("TRIG"));
+      EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
+      // EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
+      // EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
+      //  EmitStatus("TLUSTAT", status->GetTag("STATUS"));
+      // bool ok = true;
+      // std::string scalers;
+      // for (int i = 0; i < 4; ++i) {
+      //   std::string s = status->GetTag("SCALER" + to_string(i));
+      //   if (s == "") {
+      //     ok = false;
+      //     break;
+      //   }
+      //   if (scalers != "")
+      //     scalers += ", ";
+      //   scalers += s;
+      // }
+      // if (ok)
+      //   EmitStatus("SCALERS", scalers);
+      // int trigs = from_string(status->GetTag("TRIG"), -1);
+      //  double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
+      // if (trigs >= 0) {
+      //   bool dorate = true;
+      //   if (m_runstarttime == 0.0) {
+      //     if (trigs > 0)
+      //       m_runstarttime = time;
+      //     dorate = false;
+      //   } else {
+      //     EmitStatus("MEANRATE",
+      //                to_string((trigs - 1) / (time - m_runstarttime)) + " Hz");
+      //   }
+        // int dtrigs = trigs - m_prevtrigs;
+        // double dtime = time - m_prevtime;
+        // if (dtrigs >= 10 || dtime >= 1.0) {
+        //   m_prevtrigs = trigs;
+        //   m_prevtime = time;
+        //   EmitStatus("RATE", to_string(dtrigs / dtime) + " Hz");
+        // } else {
+        //   dorate = false;
+        // }
+        // if (dorate) {
+        //   EmitStatus("FULLRATE",
+        //              to_string((trigs - 1) / (time - m_runstarttime)) + " (" +
+        //                  to_string(dtrigs / dtime) + ") Hz");
+        // }
+      // }
+    } else  if (id.GetName() == "TLU" || id.GetName() == "miniTLU") {
       EmitStatus("TRIG", status->GetTag("TRIG"));
       EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
       EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
