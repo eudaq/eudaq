@@ -10,7 +10,7 @@ compiler:
 branches:
   only:
     - master
-    - v1.5-dev
+    - v1.6-dev
 
 os:
   - linux
