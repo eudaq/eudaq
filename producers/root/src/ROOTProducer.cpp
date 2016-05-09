@@ -1,6 +1,3 @@
-
-
-
 #include "ROOTProducer.h"
 
 #include "eudaq/Producer.hh"
@@ -10,7 +7,6 @@
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
-
 
 
 #include <ostream>
@@ -24,264 +20,232 @@
 #include <sstream>
 
 #define Producer_warning(msg) EUDAQ_WARN_STREAMOUT(msg,m_streamOut,m_streamOut); \
-                              m_errors.push_back(msg)
+  m_errors.push_back(msg)
  
 const int gTimeout_wait = 20; //milli seconds 
-const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds 
-
+const int gTimeout_statusChanged = gTimeout_wait* 10; //milli seconds
 
 #define  streamOut m_streamOut <<"[" << m_ProducerName<<"]: "
 
 
 class ROOTProducer::Producer_PImpl : public eudaq::Producer {
 public:
-	Producer_PImpl(const std::string & name, const std::string & runcontrol);
-	// This gets called whenever the DAQ is configured
-	virtual void OnConfigure(const eudaq::Configuration & config);
-	eudaq::Configuration& getConfiguration();
-  unsigned getRunNumber();
-	// This gets called whenever a new run is started
-	// It receives the new run number as a parameter
-virtual	void OnStartRun(unsigned param);
-	// This gets called whenever a run is stopped
-bool timeout(int tries);
-virtual	void OnStopRun();
+  Producer_PImpl(const std::string & name, const std::string & runcontrol);
 
-	// This gets called when the Run Control is terminating,
-	// we should also exit.
-virtual	void OnTerminate();
-
-
-void setTimeOutTime(int timeout);
-	void createNewEvent();
-	void createNewEvent(int eventNr);
-	void createEOREvent();
-	void setTimeStamp( unsigned long long TimeStamp );
-
-	void setTimeStamp2Now();
-	void setTag(const char* tag,const char* Value);
-
-	void AddPlane2Event( unsigned Block_id,const std::vector<unsigned char>& inputVector );
-
-	void sendEvent();
-	void sendEvent(int eventNr);
-  void setConfStatus(bool newStat);
-	bool ConfigurationSatus();
-
-	bool getOnStart();
-	void setOnStart(bool newStat);
-
-	bool getOnConfigure();
-	void setOnconfigure(bool newStat);
-
-	bool getOnStop();
-	void setOnStop(bool newStat);
-
-  bool getDoStop();
-  void setDoStop(bool);
-
-	bool getOnTerminate();
-	void setOnTerminate(bool newStat);
-
-
-  const std::string& getName() const;
-	bool isCorrectEventNR(int evNummer);
-
-   void addDataPointer(unsigned Block_id,const bool* inputVector,size_t Elements);
-
-   void addDataPointer(unsigned Block_id, const UChar_t* inputVector, size_t Elements);
-   void resetDataPointer();
-
-  struct Data_pointer_bool
-  {
-	  Data_pointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements);
-    void addDataBlock2Event(eudaq::RawDataEvent& rev);
-    unsigned m_Block_id;
-    const bool* m_inputVector;
-    size_t m_Elements;
-  };
+  //client functions
+  virtual void OnConfigure(const eudaq::Configuration & config);
+  virtual void OnStartRun(unsigned param);
+  virtual void OnStopRun();
+  virtual void OnTerminate();
+  virtual void OnIdle();
   
-  struct Data_pointer_char
-  {
-	  Data_pointer_char(unsigned Block_id, const UChar_t* inputVector, size_t Elements);
-	  void addDataBlock2Event(eudaq::RawDataEvent& rev);
-	  unsigned m_Block_id;
-	  const UChar_t* m_inputVector;
-	  size_t m_Elements;
-   
-  };
-
-  std::vector<Data_pointer_bool> m_data_bool;
-  std::vector<Data_pointer_char> m_data_char;
-
-
-	clock_t startTime_;
-
-  std::atomic<unsigned> m_run;
-	unsigned  m_ev;
-	bool isConfigured;
-
-	std::unique_ptr<eudaq::RawDataEvent> ev;
-		
-	
-	eudaq::Configuration  m_config;
-	const std::string m_ProducerName;
-
-	
-	
-	std::mutex m_stautus_change;
+  //event functions
+  void createNewEvent(unsigned nev);
+  void createNewEvent(unsigned nev, int dataid, unsigned char* data, size_t size);
+  void createBOREvent();
+  void createEOREvent();
+  void addData2Event(unsigned dataid,const std::vector<unsigned char>& data);
+  void addData2Event(unsigned dataid,const unsigned char *data, size_t size);
+  void addTag2Event(const char* tag, const char* Value);
+  void setTimeStamp2Event( unsigned long long TimeStamp );
+  void setTimeStampNow2Event();
+  void sendEvent();
 
 
-  std::vector<std::string> m_errors;
+  //
+  void waitingLockRelease(){std::unique_lock<std::mutex> lck(m_doing);};
   
-	bool onStart_,
-		onConfigure_,
-		onStop_,doStop_,
-		OnTerminate_;
-  int m_Timeout_delay = 100000; //milli seconds
+  eudaq::Configuration& getConfiguration(){return m_config;};  
+  const std::string& getName() const{ return m_ProducerName;};
+  unsigned getRunNumber(){return m_run;};
+
+  bool timeout(unsigned int tries);
+
+  //
+  bool isStateERROR(){return getState() == STATE_ERROR;};
+  bool isStateUNCONF(){return getState() == STATE_UNCONF;};
+  bool isStateGOTOCONF(){return getState() == STATE_GOTOCONF;};
+  bool isStateCONFED(){return getState() == STATE_CONFED;};
+  bool isStateGOTORUN(){return getState() == STATE_GOTORUN;};
+  bool isStateRUNNING(){return getState() == STATE_RUNNING;};
+  bool isStateGOTOSTOP(){return getState() == STATE_GOTOSTOP;};
+  bool isStateGOTOTERM(){return getState() == STATE_GOTOTERM;};
+  void setStateERROR(){setState(STATE_ERROR);};
+  void setStateUNCONF(){setState(STATE_UNCONF);};
+  void setStateGOTOCONF(){setState(STATE_GOTOCONF);};
+  void setStateCONFED(){setState(STATE_CONFED);};
+  void setStateGOTORUN(){setState(STATE_GOTORUN);};
+  void setStateRUNNING(){setState(STATE_RUNNING);};
+  void setStateGOTOSTOP(){setState(STATE_GOTOSTOP);};
+  void setStateGOTOTERM(){setState(STATE_GOTOTERM);};
+  //void stateChanged(){Emit("stateChanged()");};
+
+
+  void setLocalStop(){m_local_stop = 1;};
+
+
   std::stringstream m_streamOut;
+private:
+  eudaq::Configuration  m_config;
+  std::unique_ptr<eudaq::RawDataEvent> ev;
+
+  const std::string m_ProducerName;
+  std::mutex m_doing;
+  std::vector<std::string> m_errors;
+
+  enum FSMState {
+    STATE_ERROR,
+    STATE_UNCONF,
+    STATE_GOTOCONF,
+    STATE_CONFED,
+    STATE_GOTORUN,
+    STATE_RUNNING,
+    STATE_GOTOSTOP,
+    STATE_GOTOTERM
+  } m_fsmstate;
+
+
+  unsigned m_run, m_ev;
+  unsigned int m_Timeout_delay; //milli seconds
+  int m_local_stop;
+
+  FSMState getState(){  return m_fsmstate;};
+  void setState(FSMState s){  m_fsmstate = s;};
+  
 };
 
-ROOTProducer::Producer_PImpl::Data_pointer_char::Data_pointer_char(unsigned Block_id, const UChar_t* inputVector, size_t Elements) :
-m_Block_id(Block_id),
-m_inputVector(inputVector),
-m_Elements(Elements)
-{
 
-}
-
-void ROOTProducer::Producer_PImpl::Data_pointer_char::addDataBlock2Event(eudaq::RawDataEvent& rev)
-{
-  try{
-    rev.AddBlock(m_Block_id, m_inputVector, m_Elements);
-  }
-  catch (...){
-    std::cout << "[Data_pointer_char] unable to Add plane to Event" << std::endl;
-  }
-}
-
-ROOTProducer::Producer_PImpl::Data_pointer_bool::Data_pointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements) :
-m_Block_id(Block_id),
-m_inputVector(inputVector),
-m_Elements(Elements)
-{
-
-}
-
-void ROOTProducer::Producer_PImpl::Data_pointer_bool::addDataBlock2Event(eudaq::RawDataEvent& rev)
-{
-  try{
-    std::vector<unsigned char> out;
-    eudaq::bool2uchar(m_inputVector, m_inputVector + m_Elements, out);
-    rev.AddBlock(m_Block_id, out);
-
-  }
-  catch (...){
-    std::cout << "[Data_pointer_bool] unable to Add plane to Event" << std::endl;
-  }
-}
-
-ROOTProducer::Producer_PImpl::Producer_PImpl(const std::string & name, const std::string & runcontrol) : eudaq::Producer(name, runcontrol),
-m_run(0), m_ev(0), isConfigured(false), m_ProducerName(name), onConfigure_(false), onStart_(false), onStop_(false), OnTerminate_(false)
-{
+ROOTProducer::Producer_PImpl::Producer_PImpl(const std::string & name, const std::string & runcontrol) :
+  eudaq::Producer(name, runcontrol),m_fsmstate(STATE_UNCONF), m_ProducerName(name){
   streamOut << "hallo from " << name << " producer" << std::endl;
+
+  m_Timeout_delay = 10000; // from itsdaq
+  m_local_stop = 0;
 }
 
-void ROOTProducer::Producer_PImpl::OnConfigure(const eudaq::Configuration & config)
-{
+void ROOTProducer::Producer_PImpl::OnConfigure(const eudaq::Configuration & config){
+  std::unique_lock<std::mutex> lck(m_doing);
   m_config = config;
+  streamOut << "Configuring: " << m_config.Name() << std::endl;
+  m_config.Print(m_streamOut);
 
-  setConfStatus(true);
-  streamOut << "Configuring: " << getConfiguration().Name() << std::endl;
+  setState(STATE_GOTOCONF);
 
-
-  config.Print(m_streamOut);
-  //m_interface->send_onConfigure();
-
-  setOnconfigure(true);
+  ////waiting other thread to finish the config and set STATE to STATE_CONFED
   int j = 0;
-  while (getOnConfigure() && !timeout(++j))
-  {
+  while (getState()==STATE_GOTOCONF && !timeout(++j)){
     eudaq::mSleep(gTimeout_wait);
   }
-  setOnconfigure(false);
-  // Do any configuration of the hardware here
-  // Configuration file values are accessible as config.Get(name, default)
-
-
-  // At the end, set the status that will be displayed in the Run Control.
-  SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+  ///END waiting
+  
+  if(getState()==STATE_CONFED){
+    SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+  }
+  else{
+    SetStatus(eudaq::Status::LVL_ERROR, "OnConfigure ERROR or timeout(" + config.Name() + ")");
+    setState(STATE_ERROR);
+  }
 }
 
-eudaq::Configuration& ROOTProducer::Producer_PImpl::getConfiguration()
-{
-  return m_config;
-}
-
-unsigned ROOTProducer::Producer_PImpl::getRunNumber()
-{
-  return m_run;
-}
-
-void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param)
-{
-  // version 0.1 Susanne from LatencyScan.cpp
-  //	streamOut<<"virtual void OnStartRun(unsigned param)"<<std::endl;
-  streamOut << "starting Run:" << m_run;
+void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param){
+  std::unique_lock<std::mutex> lck(m_doing);
+  std::cout<<"OnStartRun()"<<std::endl;
   m_run = param;
   m_ev = 0;
   m_errors.clear();
+  setState(STATE_GOTORUN);
+  createBOREvent();
 
-
-
-  startTime_ = clock();
-
-
-
-  // It must send a BORE to the Data Collector
-  
-  ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newBORE(m_ProducerName,m_run));
-  
-
-  // Send the event to the Data Collector
-
-
-  eudaq::mSleep(gTimeout_wait);
-  setOnStart(true);
   int j = 0;
-  while (getOnStart() && !timeout(++j))
-  {
+  while (getState()==STATE_GOTORUN && !timeout(++j)){
     eudaq::mSleep(gTimeout_wait);
   }
-  setOnStart(false);
- 
- 
-  // At the end, set the status that will be displayed in the Run Control.
   
-  SetStatus(eudaq::Status::LVL_OK, "Running");
+  if(getState()==STATE_RUNNING){
+    //TODO:: add tag to BORE
+    sendEvent();
+    SetStatus(eudaq::Status::LVL_OK, "Running");
+  }
+  else{
+    SetStatus(eudaq::Status::LVL_ERROR, "OnStartRun ERROR");
+    setState(STATE_ERROR);
+  }
+  std::cout<<"End of OnStartRun()"<<std::endl;
 }
 
-bool ROOTProducer::Producer_PImpl::timeout(int tries)
-{
-  if (tries > (m_Timeout_delay / gTimeout_wait))
-  {
+void ROOTProducer::Producer_PImpl::OnStopRun(){
+  std::unique_lock<std::mutex> lck(m_doing);
+  setState(STATE_GOTOSTOP);
 
+  int j = 0;
+  while (getState()==STATE_GOTOSTOP && !timeout(++j)){
+    eudaq::mSleep(gTimeout_wait);
+  }
+
+  if(getState()==STATE_CONFED){
+    if(ev){
+      if(!ev->IsEORE()){ // last event is not EORE
+	sendEvent();
+      }
+    }
+    if(!ev){
+      createEOREvent();
+    }
+    //TODO::tag the m_errors
+    ev->SetTag("recorded_messages", m_streamOut.str()); //but cleared by status_check
+    sendEvent();
+    m_errors.clear();
+    EUDAQ_INFO(std::to_string(m_ev) + " Events Processed" );
+    EUDAQ_INFO("End of run " + std::to_string(m_run));
+  }
+  else{
+    SetStatus(eudaq::Status::LVL_ERROR, "OnStopRun ERROR");
+    setState(STATE_ERROR);
+  }  
+}
+
+void ROOTProducer::Producer_PImpl::OnTerminate(){
+  std::unique_lock<std::mutex> lck(m_doing);
+  setState(STATE_GOTOTERM);
+  int j = 0;
+  while (getState()==STATE_GOTOTERM && !timeout(++j)){
+    eudaq::mSleep(gTimeout_wait);
+  }
+  
+  if(getState()==STATE_UNCONF){
+    EUDAQ_INFO("Terminated");
+  }
+  else{
+    SetStatus(eudaq::Status::LVL_ERROR, "OnTerminate ERROR");
+    setState(STATE_ERROR);
+  }
+}
+
+void ROOTProducer::Producer_PImpl::OnIdle() {
+  // (static_cast<Producer*> this)->OnIdle();
+  eudaq::mSleep(500);
+  //check when STATE was set out of OnStopRun and OnTerminate
+  if(m_local_stop ==1){
+    OnStopRun();
+    m_local_stop = 0;
+  }
+  
+}
+
+bool ROOTProducer::Producer_PImpl::timeout(unsigned int tries){
+  if (tries > (m_Timeout_delay / gTimeout_wait)){
     std::string timeoutWaring;
     timeoutWaring += "[Producer." + m_ProducerName + "] waring: status changed timed out: ";
-    if (getOnStart())
-    {
+    if (isStateGOTORUN()){
       timeoutWaring += " onStart timed out";
     }
-    if (getOnConfigure())
-    {
+    if (isStateGOTOCONF()){
       timeoutWaring += " onConfigure timed out";
     }
-    if (getOnStop())
-    {
+    if (isStateGOTOSTOP()){
       timeoutWaring += " onStop timed out";
     }
-    if (getOnTerminate())
-    {
+    if (isStateGOTOTERM()){
       timeoutWaring += " OnTerminate timed out";
     }
     streamOut << timeoutWaring << std::endl;
@@ -291,719 +255,295 @@ bool ROOTProducer::Producer_PImpl::timeout(int tries)
   return false;
 }
 
-void ROOTProducer::Producer_PImpl::OnStopRun()
-{
-  streamOut << "virtual void OnStopRun()" << std::endl;
-  //	m_interface->send_onStop();
-  streamOut << "received at event: "<< m_ev << std::endl;
-  setOnStop(true);
-  setDoStop(false);
-  int j = 0;
-  while (!getDoStop() && !timeout(++j))
-  {
-    eudaq::mSleep(gTimeout_wait);
-  }
-  setOnStop(false);
-  setDoStop(false);
-  // Set a flag to signal to the polling loop that the run is over
-  
-}
 
-void ROOTProducer::Producer_PImpl::OnTerminate()
-{
-  streamOut << "virtual void OnTerminate()" << std::endl;
-  //m_interface->send_OnTerminate();
-  setOnTerminate(true);
-  int j = 0;
-  while (getOnTerminate() && !timeout(++j))
-  {
-    eudaq::mSleep(gTimeout_wait);
-  }
-  setOnTerminate(false);
-}
-
-void ROOTProducer::Producer_PImpl::createNewEvent()
-{
-  ev = std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(m_ProducerName, m_run, m_ev));
-}
-
-void ROOTProducer::Producer_PImpl::createNewEvent(int eventNr)
-{
-  if (!isCorrectEventNR(eventNr))
-  {
-
-    std::string waring = m_ProducerName + ": Event number mismatch. Expected event: " + std::to_string(m_ev) + "  received event: " + std::to_string(eventNr);
-
+void ROOTProducer::Producer_PImpl::createNewEvent(unsigned nev){
+  if (m_ev!=nev){
+    std::string waring = m_ProducerName + ": Event number mismatch. Expected event: " + std::to_string(m_ev) + "  received event: " + std::to_string(nev);    
     Producer_warning(waring);
-    m_ev = eventNr;
+    m_ev = nev;
   }
-  createNewEvent();
-  ev->SetTag("eventNr", eventNr);
+  ev = std::unique_ptr<eudaq::RawDataEvent>(new eudaq::RawDataEvent(m_ProducerName, m_run, m_ev));
+  ev->SetTag("eventNr", m_ev);
 }
 
 
 void ROOTProducer::Producer_PImpl::createEOREvent(){
-	//streamOut << "creating end of run event" << std::endl;
-	ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newEORE(m_ProducerName, m_run, m_ev));
-
-
+  ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newEORE(m_ProducerName, m_run, m_ev));
 }
-void ROOTProducer::Producer_PImpl::setTimeStamp(unsigned long long TimeStamp)
-{
-  if (ev == nullptr)
-  {
-    createNewEvent();
-  }
+
+void ROOTProducer::Producer_PImpl::createBOREvent(){
+  ev = std::unique_ptr<eudaq::RawDataEvent>(eudaq::RawDataEvent::newBORE(m_ProducerName,m_run));
+}
+
+
+void ROOTProducer::Producer_PImpl::setTimeStamp2Event(unsigned long long TimeStamp){
   ev->setTimeStamp(TimeStamp);
 }
 
-void ROOTProducer::Producer_PImpl::setTimeStamp2Now()
-{
-  if (ev == nullptr)
-  {
-    createNewEvent();
-  }
+void ROOTProducer::Producer_PImpl::setTimeStampNow2Event(){
   ev->SetTimeStampToNow();
 }
 
-void ROOTProducer::Producer_PImpl::setTag(const char* tag, const char* Value)
-{
-
-
-  if (ev == nullptr)
-  {
-	  streamOut << "creating new event " << std::endl;
-	  streamOut << tag << " = " << Value<<std::endl;
-    createNewEvent();
-  }
-  //streamOut << "set tag for event " << ev->GetEventNumber() << " flags " << ev->GetFlags() << "  " << tag << " = " << Value << std::endl;
+void ROOTProducer::Producer_PImpl::addTag2Event(const char* tag, const char* Value){
   ev->SetTag(tag, Value);
 }
 
-void ROOTProducer::Producer_PImpl::AddPlane2Event(unsigned Block_id, const std::vector<unsigned char>& inputVector)
-{
-  if (ev == nullptr)
-  {
-    createNewEvent();
-  }
-
-  ev->AddBlock(Block_id, inputVector);
+void ROOTProducer::Producer_PImpl::addData2Event(unsigned dataid,const std::vector<unsigned char>& data){
+  ev->AddBlock(dataid, data);
 }
 
-void ROOTProducer::Producer_PImpl::sendEvent()
-{
-  // Send the event to the Data Collector     
 
-  if (ev == nullptr)
-  {
-    if (!m_data_bool.empty()
-      ||
-      !m_data_char.empty())
-    {
-      createNewEvent();
-    }
-    else{
-      streamOut << " you have to create the an event before you can send it" << std::endl;
-      return;
-    }
-  }
+void ROOTProducer::Producer_PImpl::addData2Event(unsigned dataid,const unsigned char *data, size_t size){
+  ev->AddBlock(dataid, data, size);
+}
 
-  for (auto& e : m_data_bool){
-    e.addDataBlock2Event(*ev);
-  }
-  for (auto& e : m_data_char){
-    e.addDataBlock2Event(*ev);
-  }
 
+void ROOTProducer::Producer_PImpl::sendEvent(){
   SendEvent(*ev);
-
-  // clean up 
+  if(ev->IsBORE()){
+    m_ev = 0;  //Are first data_event and BORE both 0 ??
+  }
+  else{
+    ++m_ev;
+  }
   ev.reset(nullptr);
-
-  // Now increment the event number
-
-  ++m_ev;
-}
-
-void ROOTProducer::Producer_PImpl::sendEvent(int eventNr)
-{
-  if (!isCorrectEventNR(eventNr))
-  {
-    streamOut << "void ROOTProducer::sendEvent(int eventNr) " << std::endl;
-    streamOut << "event nr mismatch. expected event " << m_ev << " received event " << eventNr << std::endl;
-  }
-  sendEvent();
-}
-
-void ROOTProducer::Producer_PImpl::setConfStatus(bool newStat)
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  isConfigured = newStat;
-}
-
-bool ROOTProducer::Producer_PImpl::ConfigurationSatus()
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  return isConfigured;
-}
-
-bool ROOTProducer::Producer_PImpl::getOnStart()
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  return onStart_;
-}
-
-void ROOTProducer::Producer_PImpl::setOnStart(bool newStat)
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  if (ev&&newStat!=onStart_&&newStat==false)
-  {
-    sendEvent();
-	m_ev = 0; // bore event and first event have both event nr 0
-  }
-  onStart_ = newStat;
-}
-
-bool ROOTProducer::Producer_PImpl::getOnConfigure()
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  return onConfigure_;
-}
-
-void ROOTProducer::Producer_PImpl::setOnconfigure(bool newStat)
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  onConfigure_ = newStat;
-}
-
-bool ROOTProducer::Producer_PImpl::getOnStop()
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  return onStop_;
-}
-
-void ROOTProducer::Producer_PImpl::setOnStop(bool newStat)
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-
-  m_errors.clear();
-  onStop_ = newStat;
-}
-
-bool ROOTProducer::Producer_PImpl::getDoStop() 
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  return doStop_;
 }
 
 
-void ROOTProducer::Producer_PImpl::setDoStop(bool newStatus)
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
 
 
 
-  if ( newStatus == true && newStatus != doStop_)
-  {
+///////////////////////////////////////////
 
-	  if (!ev){
-		  streamOut << "no event was created before stopping" << std::endl;
-
-		  createEOREvent();
-	  }
-	   
-	  if( !ev->IsEORE())
-	  {
-		  streamOut << "no end of run event was created before stopping" << std::endl;
-		  createEOREvent();
-	  }
-
-	  streamOut << m_ev << "\"setDoStop\": Events Processed" << std::endl;
-
-
-	  
-	  if (!m_errors.empty())
-	  {
-		  streamOut << "warnings recorded:" << std::endl;
-		  for (auto& e : m_errors)
-		  {
-			  streamOut << e << std::endl;
-		  }
-		  ev->SetTag("recorded_messages", m_streamOut.str());
-	  }
-	  // Send an EORE after all the real events have been sent
-	  // You can also set tags on it (as with the BORE) if necessary
-	  sendEvent();
-  }
-
-  doStop_ = newStatus;
-}
-
-bool ROOTProducer::Producer_PImpl::getOnTerminate()
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  return OnTerminate_;
-}
-
-void ROOTProducer::Producer_PImpl::setOnTerminate(bool newStat)
-{
-  std::unique_lock<std::mutex> lck(m_stautus_change);
-  OnTerminate_ = newStat;
-}
-
-bool ROOTProducer::Producer_PImpl::isCorrectEventNR(int evNummer)
-{
-  return m_ev == static_cast<unsigned>(evNummer);
-}
-
-void ROOTProducer::Producer_PImpl::addDataPointer(unsigned Block_id, const bool* inputVector, size_t Elements)
-{
-  m_data_bool.emplace_back(Block_id, inputVector, Elements);
-}
-
-void ROOTProducer::Producer_PImpl::addDataPointer(unsigned Block_id, const UChar_t* inputVector, size_t Elements)
-{
-  m_data_char.emplace_back(Block_id, inputVector, Elements);
-}
-
-const std::string& ROOTProducer::Producer_PImpl::getName() const
-{
-  return m_ProducerName;
-}
-
-void ROOTProducer::Producer_PImpl::setTimeOutTime(int timeOut)
-{
-  if (timeOut > 0){
-    m_Timeout_delay = timeOut;
-  }
-  else
-  {
-    m_streamOut << "unable to set timeout to " << timeOut << std::endl;
-  }
-}
-
-void ROOTProducer::Producer_PImpl::resetDataPointer()
-{
-  m_data_bool.clear();
-  m_data_char.clear();
-}
-
-// The constructor must call the eudaq::Producer constructor with the name
-// and the runcontrol connection string, and initialize any member variables.
 ROOTProducer::ROOTProducer(const char* name,const char* runcontrol):m_prod(nullptr) {
-	//		std::cout<< "hallo from sct producer"<<std::endl;
-
-	Connect2RunControl(name,runcontrol);
+  Connect2RunControl(name,runcontrol);
 }
 
-ROOTProducer::ROOTProducer():m_prod(nullptr)
-{
-
+ROOTProducer::ROOTProducer():m_prod(nullptr){
+  
 }
 
-ROOTProducer::~ROOTProducer()
-{
-	delete m_prod;
+ROOTProducer::~ROOTProducer(){
+  if(m_prod != nullptr){
+    delete m_prod;
+  }
 }
 
 
-
-
-
-
-
-
-
-
-void ROOTProducer::Connect2RunControl( const char* name,const char* runcontrol )
-{  try {
-	std::string n="tcp://"+std::string(runcontrol);
-	m_prod=new Producer_PImpl(name,n);
-
-	}
-	catch(...){
-
-		std::cout<<"unable to connect to runcontrol: "<<runcontrol<<std::endl;
-	}
+void ROOTProducer::Connect2RunControl( const char* name,const char* runcontrol ){
+  try {
+    std::string n="tcp://"+std::string(runcontrol);
+    m_prod=new Producer_PImpl(name,n);
+    
+    // m_prod->Connect("OnConfigure()",  "ROOTProducer", this, "OnConfigure()");
+    // m_prod->Connect("OnStartRun()",  "ROOTProducer", this, "OnStartRun()");
+    // m_prod->Connect("OnStopRun()",  "ROOTProducer", this, "OnStopRun()");
+    // m_prod->Connect("OnTerminate()",  "ROOTProducer", this, "OnTerminate()");
+    // m_prod->Connect("stateChanged()",  "ROOTProducer", this, "checkStatus()");
+  }
+  catch(...){
+    std::cout<<"unable to connect to runcontrol: "<<runcontrol<<std::endl;
+  }
 }
+
 void ROOTProducer::createEOREvent(){
-
-	try
-	{
-		m_prod->createEOREvent();
-	}
-	catch (...)
-	{
-		std::cout << "unable to connect create new event" << std::endl;
-	}
-}
-void ROOTProducer::createNewEvent()
-{
-	try
-	{
-		m_prod->createNewEvent();
-	}
-	catch (...)
-	{
-		std::cout<<"unable to connect create new event"<<std::endl;
-	}
-	
+  try{
+    m_prod->createEOREvent();
+  }
+  catch (...){
+    std::cout << "unable to connect create new event" << std::endl;
+  }
 }
 
-void ROOTProducer::createNewEvent( int eventNR )
-{
-	try
-	{
-		m_prod->createNewEvent(eventNR);
-		
-	}
-	catch (...)
-	{
-		std::cout<<"unable to connect create new event"<<std::endl;
-	}
-}
+void ROOTProducer::createNewEvent(unsigned nev ){
+  // std::cout<<"createNewEvent()"<<std::endl;
 
-void ROOTProducer::setTimeStamp( ULong64_t TimeStamp )
-{
-	try{
-	m_prod->setTimeStamp(static_cast<unsigned long long>(TimeStamp));
-	}
-	catch(...){
-		std::cout<<"unable to set time Stamp"<<std::endl;
-	}
-}
-
-void ROOTProducer::setTimeStamp2Now()
-{
-	m_prod->setTimeStamp2Now();
+  try{
+    m_prod->createNewEvent(nev);		
+  }
+  catch (...){
+    std::cout<<"unable to connect create new event"<<std::endl;
+  }
 }
 
 
+// void ROOTProducer::createNewEvent(unsigned nev, unsigned dataid, unsigned char* data, size_t size){
+//   try{
+//     m_prod->createNewEvent(nev);
+//     m_prod->addData2Event(dataid, data, size);
+//   }
+//   catch (...){
+//     std::cout<<"unable to connect create new event"<<std::endl;
+//   }
+// }
 
 
 
-void ROOTProducer::AddPlane2Event( unsigned Block_id,const std::vector<unsigned char>& inputVector )
-{
-	try{
-	m_prod->AddPlane2Event(Block_id, inputVector);
-	}
-	catch(...){
-		std::cout<<"unable to Add plane to Event"<<std::endl;
-	}
-
-
+void ROOTProducer::setTimeStamp( ULong64_t TimeStamp ){
+  try{
+    m_prod->setTimeStamp2Event(static_cast<unsigned long long>(TimeStamp));
+  }
+  catch(...){
+    std::cout<<"unable to set time Stamp"<<std::endl;
+  }
 }
 
-
- void ROOTProducer::AddPlane2Event(unsigned Block_id,const bool* inputVector,size_t Elements){
-
-	 try{
-		 std::vector<unsigned char> out;
-		 eudaq::bool2uchar(inputVector ,inputVector+Elements,out);
-     m_prod->AddPlane2Event(Block_id, out);
-	 }
-	 catch(...){
-		 std::cout<<"unable to Add plane to Event"<<std::endl;
-	 }
- }
-
- void ROOTProducer::AddPlane2Event(unsigned MODULE_NR, int ST_STRIPS_PER_LINK , bool* evtr_strm0,bool* evtr_strm1){
-   AddPlane2Event((MODULE_NR*2),evtr_strm0,ST_STRIPS_PER_LINK);
-   AddPlane2Event(MODULE_NR*2+1,evtr_strm1,ST_STRIPS_PER_LINK);
-
- }
+void ROOTProducer::setTimeStamp2Now(){
+  m_prod->setTimeStampNow2Event();
+}
 
  
-void ROOTProducer::sendEvent()
-{
+void ROOTProducer::sendEvent(){
+  // std::cout<<"sendEvent()"<<std::endl;
 
-	try {
-	m_prod->sendEvent();
-	}catch (...)
-	{
-		std::cout<<"unable to send Event"<<std::endl;
-	}
+  for(size_t i = 0; i< m_vpoint_bool.size(); i++){
+    std::vector<unsigned char> out;
+    eudaq::bool2uchar(m_vpoint_bool[i], m_vpoint_bool[i] + m_vsize_bool[i], out);
+    m_prod->addData2Event(m_vblockid_bool[i], out);
+  }
+  for(size_t i = 0; i< m_vpoint_uchar.size(); i++){
+    m_prod->addData2Event(m_vblockid_uchar[i], m_vpoint_uchar[i], m_vsize_uchar[i]);
+  }
+  try {
+    m_prod->sendEvent();
+  }catch (...){
+    std::cout<<"unable to send Event"<<std::endl;
+  }
   checkStatus();
 }
 
-void ROOTProducer::sendEvent( int eventNR )
-{
-	try {
-		m_prod->sendEvent(eventNR);
-	}catch (...)
-	{
-		std::cout<<"unable to send Event"<<std::endl;
-	}
-	checkStatus();
+void ROOTProducer::send_OnConfigure(){Emit("send_OnConfigure()");}
+void ROOTProducer::send_OnStopRun(){Emit("send_OnStopRun()");}
+void ROOTProducer::send_OnStartRun(unsigned nrun){  Emit("send_OnStartRun(unsigned)",nrun);}
+void ROOTProducer::send_OnTerminate(){Emit("send_OnTerminate()");}
+bool ROOTProducer::isNetConnected(){return !(m_prod==nullptr);}
+
+const char* ROOTProducer::getProducerName(){
+  return m_prod->getName().c_str();
 }
 
-void ROOTProducer::send_onConfigure()
-{
-	Emit("send_onConfigure()");
+int ROOTProducer::getConfiguration(const char* tag, int DefaultValue){
+  try{
+    return m_prod->getConfiguration().Get(tag,DefaultValue);
+  }catch(...){
+    std::cout<<"unable to getConfiguration"<<std::endl;
+    return 0;
+  }
 }
 
-void ROOTProducer::send_onStop()
-{
-	Emit("send_onStop()");
-}
+int ROOTProducer::getConfiguration( const char* tag, const char* defaultValue,char* returnBuffer,Int_t sizeOfReturnBuffer ){
+  try{
+    std::string dummy(tag);
+    std::string ret= m_prod->getConfiguration().Get(dummy,defaultValue );
 
+    if (sizeOfReturnBuffer<static_cast<Int_t>(ret.size()+1)){
+      return 0;
+    }
 
-void ROOTProducer::send_onStart(int RunNumber)
-{
-	Emit("send_onStart(int)",RunNumber);
-}
-
-
-void ROOTProducer::send_OnTerminate()
-{
-	Emit("send_OnTerminate()");
-}
-
-
-
-void ROOTProducer::send_statusChanged()
-{
-  Emit("send_statusChanged()");
-}
-
-bool ROOTProducer::getConnectionStatus()
-{
-	return !(m_prod==nullptr);
+    strncpy(returnBuffer, ret.c_str(), ret.size());
+    returnBuffer[ret.size()]=0;
+    return ret.size();
+  }catch(...){
+    std::cout<<"unable to getConfiguration"<<std::endl;
+    return 0;
+  }
 }
 
 
-const char* ROOTProducer::getProducerName()
-{
- return m_prod->getName().c_str();
+// void ROOTProducer::getConfiguration( const char* tag ){
+//   std::string defaultValue="error";
+//   std::string dummy(tag);
+//   std::string ret= m_prod->getConfiguration().Get(dummy,defaultValue );
+// }
+
+
+void ROOTProducer::setTag( const char* tag,const char* Value ){
+  try{
+    m_prod->addTag2Event(tag,Value);
+  }catch(...){
+    std::cout<<"error in: setTag( "<<tag<< " , "<<Value<<" )" <<std::endl;
+  }
 }
 
-int ROOTProducer::getConfiguration(const char* tag, int DefaultValue)
-{
-	try{
-	return m_prod->getConfiguration().Get(tag,DefaultValue);
-	}catch(...){
-	std::cout<<"unable to getConfiguration"<<std::endl;
-	return 0;
-	}
-
-
-}
-
-
-
-int ROOTProducer::getConfiguration( const char* tag, const char* defaultValue,char* returnBuffer,Int_t sizeOfReturnBuffer )
-{
-	try{
-	std::string dummy(tag);
-	std::string ret= m_prod->getConfiguration().Get(dummy,defaultValue );
-
-	if (sizeOfReturnBuffer<static_cast<Int_t>(ret.size()+1))
-	{
-		return 0;
-	}
-
-
-	strncpy(returnBuffer, ret.c_str(), ret.size());
-	returnBuffer[ret.size()]=0;
-	return ret.size();
-	}catch(...){
-	std::cout<<"unable to getConfiguration"<<std::endl;
-		return 0;
-	}
-}
-
-void ROOTProducer::getConfiguration( const char* tag )
-{
-  std::string defaultValue="error";
-  std::string dummy(tag);
-  std::string ret= m_prod->getConfiguration().Get(dummy,defaultValue );
-  emitConfiguration(ret.c_str());
-}
-
-void ROOTProducer::emitConfiguration( const char* answer )
-{
-  Emit("emitConfiguration(const char*)",answer);
-}
-
-// 	TString SCTProducer::getConfiguration_TString( const char* tag, const char* defaultValue )
-// 	{
-// 		TString ReturnValue(m_prod->getConfiguration().Get(tag,defaultValue));
-// 		std::cout<<ReturnValue.Data()<<std::endl;
-// 		return ReturnValue;
-// 	}
-
-bool ROOTProducer::ConfigurationSatus()
-{
-	try{
-	return	m_prod->ConfigurationSatus();
-	}catch(...){
-		std::cout<<"unable to get ConfigurationSatus"<<std::endl;
-		return false;
-	}
-}
-
-void ROOTProducer::setTag( const char* tag,const char* Value )
-{
-	try{
-	m_prod->setTag(tag,Value);
-	}catch(...){
-
-		std::cout<<"error in: setTag( "<<tag<< " , "<<Value<<" )" <<std::endl;
-	}
-
-}
-
-void ROOTProducer::setTag( const char* tagNameTagValue )
-{
+void ROOTProducer::setTag( const char* tagNameTagValue ){
   std::string dummy(tagNameTagValue);
 
   size_t equalsymbol=dummy.find_first_of("=");
-  if (equalsymbol!=std::string::npos&&equalsymbol>0)
-  {
+  if (equalsymbol!=std::string::npos&&equalsymbol>0){
     std::string tagName=dummy.substr(0,equalsymbol);
     std::string tagValue=dummy.substr(equalsymbol+1);
-	tagName = eudaq::trim(tagName);
-	tagValue = eudaq::trim(tagValue);
+    tagName = eudaq::trim(tagName);
+    tagValue = eudaq::trim(tagValue);
     setTag(tagName.c_str(),tagValue.c_str());
-
   }else{
-
     std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
   }
-
-
-}
-
-bool ROOTProducer::getOnStart()
-{
-	return m_prod->getOnStart();
 }
 
 
 
-void ROOTProducer::setOnStart( bool newStat )
-{
-	m_prod->setOnStart(newStat);
-}
-
-bool ROOTProducer::getOnConfigure()
-{
-	return m_prod->getOnConfigure();
-}
-
-
-
-void ROOTProducer::setOnconfigure( bool newStat )
-{
-		m_prod->setOnconfigure(newStat);
-}
-
-bool ROOTProducer::getOnStop()
-{
-	return m_prod->getOnStop();
-}
-
-
-
-void ROOTProducer::setOnStop( bool newStat )
-{
-	m_prod->setOnStop(newStat);
-}
-
-
-void ROOTProducer::setStatusToStopped()
-{
-
- m_prod->setDoStop(true);
-}
-
-bool ROOTProducer::getOnTerminate()
-{
-	return m_prod->getOnTerminate();
-}
-
-
-
-void ROOTProducer::setOnTerminate( bool newStat )
-{
-	m_prod->setOnTerminate(newStat);
-}
-
-void ROOTProducer::checkStatus()
-{
-	if(getOnStart()){
-		
-		send_onStart(m_prod->getRunNumber());
-		setOnStart(false);
-    
-    eudaq::mSleep(gTimeout_statusChanged);
-    send_statusChanged();
-	}
-
-	if(getOnConfigure()){
-		
-		send_onConfigure();
-		setOnconfigure(false);
-    eudaq::mSleep(gTimeout_statusChanged);
-    send_statusChanged();
-	}
-
-	if(getOnStop()){
-		send_onStop();
-    setOnStop(false);
-    eudaq::mSleep(gTimeout_statusChanged);
-    send_statusChanged();
-	}
-
-	if(getOnTerminate()){
-		send_OnTerminate();
-		setOnTerminate(false);
-    eudaq::mSleep(gTimeout_statusChanged);
-    send_statusChanged();
-	}
-
-  if (m_prod&&!m_prod->m_streamOut.str().empty())
-  {
-    std::cout << m_prod->m_streamOut.str() << std::endl;
-    m_prod->m_streamOut.str("");
-    send_statusChanged();
+void ROOTProducer::checkStatus(){
+  // std::cout<<"checkStatus......"<<std::endl;
+  if(m_prod->isStateGOTORUN()){
+    std::cout<<"send_OnStartRun"<<std::endl;
+    send_OnStartRun(m_prod->getRunNumber());
+    m_prod->setStateRUNNING();
+    // eudaq::mSleep(gTimeout_statusChanged);  //TODO:: use lock
+    m_prod->waitingLockRelease();
   }
-}
 
-
-void ROOTProducer::setTimeOut(int timeOut)
-{
-  if (m_prod)
-  {
-    m_prod->setTimeOutTime(timeOut);
+  if(m_prod->isStateGOTOCONF()){
+    std::cout<<"send_OnConfigure"<<std::endl;
+    send_OnConfigure();
+    m_prod->setStateCONFED();
+    eudaq::mSleep(gTimeout_statusChanged);
+    // m_prod->waitingLockRelease();
   }
-}
 
-void ROOTProducer::addDataPointer_bool(unsigned Block_id, const bool* inputVector, size_t Elements)
-{
-  m_prod->addDataPointer(Block_id, inputVector, Elements);
-}
-
-void ROOTProducer::addDataPointer_UChar_t(unsigned Block_id, const UChar_t* inputVector, size_t Elements)
-{
-	m_prod->addDataPointer(Block_id, inputVector, Elements);
-}
-
-void ROOTProducer::addDataPointer_Uint_t(unsigned Block_id, const UInt_t* inputVector, size_t Elements)
-{
-	m_prod->addDataPointer(Block_id, reinterpret_cast<const UChar_t*>(inputVector), Elements * sizeof(UInt_t));
-}
-
-void ROOTProducer::addDataPointer_ULong64_t(unsigned Block_id, const ULong64_t* inputVector, size_t Elements){
-
-	m_prod->addDataPointer(Block_id, reinterpret_cast<const UChar_t*>(inputVector), Elements * sizeof(ULong64_t));
-}
-
-void ROOTProducer::resetDataPointer()
-{
-  if (m_prod)
-  {
-    m_prod->resetDataPointer();
+  if(m_prod->isStateGOTOSTOP()){
+    std::cout<<"send_OnStop"<<std::endl;
+    send_OnStopRun();
+    m_prod->setStateUNCONF();
+    eudaq::mSleep(gTimeout_statusChanged);
+    // m_prod->waitingLockRelease();
   }
+
+  if(m_prod->isStateGOTOTERM()){
+    send_OnTerminate();
+    m_prod->setStateUNCONF();
+    eudaq::mSleep(gTimeout_statusChanged);
+    // m_prod->waitingLockRelease();
+  }
+
+  // if (m_prod&&!m_prod->m_streamOut.str().empty()){
+  //   std::cout << m_prod->m_streamOut.str() << std::endl;
+  //   m_prod->m_streamOut.str("");
+  // }
 }
 
+void ROOTProducer::setStatusToStopped(){
+  m_prod->setLocalStop();
+}
+
+void ROOTProducer::addDataPointer_bool(unsigned bid, bool* data, size_t size){
+  m_vpoint_bool.push_back(data);
+  m_vsize_bool.push_back(size);
+  m_vblockid_bool.push_back(bid);
+}
+void ROOTProducer::addDataPointer_uchar(unsigned bid, unsigned char* data, size_t size){
+  m_vpoint_uchar.push_back(data);
+  m_vsize_uchar.push_back(size);
+  m_vblockid_uchar.push_back(bid);
+}
+
+void ROOTProducer::addDataPointer_ULong64_t(unsigned bid, ULong64_t* data, size_t size){
+  addDataPointer_uchar(bid, reinterpret_cast<unsigned char*>(data), sizeof(ULong64_t)*size);
+}
+
+
+void ROOTProducer::addData2Event(unsigned dataid,const std::vector<unsigned char>& data){
+  m_prod->addData2Event(dataid,data);
+}
+void ROOTProducer::addData2Event(unsigned dataid,const unsigned char * data, size_t size){
+  m_prod->addData2Event(dataid,data, size);
+}
