@@ -14,7 +14,7 @@
 #define DLLEXPORT
 #endif
 
-
+#include <string>
 
 class DLLEXPORT ROOTProducer {
   RQ_OBJECT("ROOTProducer")
@@ -30,11 +30,13 @@ public:
   int getConfiguration(const char *tag, int defaultValue);
   int getConfiguration(const char *tag, const char *defaultValue,
                        char *returnBuffer, Int_t sizeOfReturnBuffer);
+  std::string getConfiguration( const char* tag, const std::string &defaultValue);
 
+  
   void createNewEvent(unsigned nev);
   void createEOREvent();
   void addData2Event(unsigned dataid,const std::vector<unsigned char>& data);
-  void addData2Event(unsigned dataid,const unsigned char* data, size_t size);
+  void addData2Event(unsigned dataid, UChar_t * data, size_t size);
   void appendData2Event(unsigned dataid,const std::vector<unsigned char>& data);
   void appendData2Event(unsigned dataid,const unsigned char* data, size_t size);
 
@@ -44,7 +46,8 @@ public:
   void setTimeStamp2Now();
   
   void setTag(const char *tagNameTagValue); //"tag=value"
-
+  void setFileTag(const char *tagNameTagValue); //"tag=value"
+  void setTimerTag(const char *tagNameTagValue, size_t freq);
 
   //signal
   void send_OnStartRun(unsigned);
