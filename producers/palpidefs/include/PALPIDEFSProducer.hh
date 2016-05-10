@@ -280,6 +280,9 @@ protected:
   int m_SCS_n_steps;
   bool* m_do_SCS;
 
+  int m_n_trig;
+  float m_period;  
+
   // S-Curve scan output data
   unsigned char**** m_SCS_data;
   unsigned char** m_SCS_points;

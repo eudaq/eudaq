@@ -594,6 +594,9 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (param.Get("MonitorPSU", 0) == 1)
     m_monitor_PSU = true;
 
+  m_n_trig = param.Get("NTrig", -1);
+  m_period = param.Get("Period", -1.);
+
   const int nDevices = param.Get("Devices", 1);
   if (m_nDevices == 0 || m_nDevices == nDevices)
     m_nDevices = nDevices;
@@ -805,6 +808,14 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     std::cout << "Device " << i << " configured." << std::endl;
 
     eudaq::mSleep(10);
+  }
+
+
+  // Control pulser for continuous integration testing
+  if (m_n_trig>0 && m_period>0) {
+    char cmd[100];
+    snprintf(cmd, 100, "${SCRIPT_DIR}/pulser.py 1 %e %d", m_period, m_n_trig);
+    system(cmd);
   }
 
   eudaq::mSleep(5000); // TODO remove this again - trying to protect from
@@ -1351,6 +1362,13 @@ void PALPIDEFSProducer::OnStopRun() {
       std::cout << msg << std::endl;
       SetStatus(eudaq::Status::LVL_WARN, msg.data());
     }
+  }
+
+  // Control pulser for continuous integration testing
+  if (m_n_trig>0 && m_period>0) {
+    char cmd[100];
+    snprintf(cmd, 100, "${SCRIPT_DIR}/pulser.py 0"); // turn the pulser off
+    system(cmd);
   }
 
   SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
