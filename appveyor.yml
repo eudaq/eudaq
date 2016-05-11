@@ -34,5 +34,5 @@ before_build:
 build:
   parallel: false                  # enable MSBuild parallel builds
   project: C:/projects/eudaq/build/INSTALL.vcxproj
-  verbosity: minimal
+  verbosity: detailed
 
