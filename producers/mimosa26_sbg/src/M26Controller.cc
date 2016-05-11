@@ -1,4 +1,4 @@
-#include "NiController.hh"
+#include "M26Controller.hh"
 
 #include <string.h>
 #include <stdio.h>

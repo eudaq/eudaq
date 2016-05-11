@@ -1,4 +1,4 @@
-#include "NiController.hh"
+#include "M26Controller.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
