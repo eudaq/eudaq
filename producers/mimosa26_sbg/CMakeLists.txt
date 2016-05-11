@@ -1,0 +1,12 @@
+set(name "Mimosa26_SBG_Producer.exe")
+set(sourcefiles src/M26Producer.cxx src/M26Controller.cc)
+
+INCLUDE_DIRECTORIES( include )
+add_executable(${name} ${sourcefiles})
+
+target_link_libraries(${name}   EUDAQ ${EUDAQ_THREADS_LIB})
+
+INSTALL(TARGETS ${name}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
