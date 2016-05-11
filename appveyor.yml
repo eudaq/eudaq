@@ -32,5 +32,5 @@ before_build:
 
     cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF ..
 build_script:
-- msbuild build\INSTALL.vcxproj
+- msbuild INSTALL.vcxproj
 
