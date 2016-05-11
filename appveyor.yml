@@ -31,8 +31,6 @@ before_build:
     cd build
 
     cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF ..
-build:
-  parallel: false                  # enable MSBuild parallel builds
-  project: C:/projects/eudaq/build/INSTALL.vcxproj
-  verbosity: detailed
+build_script:
+- msbuild INSTALL.vcxproj
 
