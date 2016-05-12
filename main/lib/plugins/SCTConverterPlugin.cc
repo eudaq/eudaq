@@ -41,13 +41,19 @@ namespace eudaq {
     std::string Timestamp_L0ID() { return "Timestamp.L0ID"; }
     std::string Event_L0ID() { return "Event.L0ID"; }
     std::string Event_BCID() { return "Event.BCID"; }
+    std::string PTDC_TYPE() { return "PTDC.TYPE"; }
+    std::string PTDC_L0ID() { return "PTDC.L0ID"; }
+    std::string PTDC_TS() { return "PTDC.TS"; }
+    std::string PTDC_BIT() { return "PTDC.BIT"; }
+  }
+
 #if USE_LCIO && USE_EUTELESCOPE
   void ConvertPlaneToLCIOGenericPixel(StandardPlane &plane,
-                                      lcio::TrackerDataImpl &zsFrame) {
+				      lcio::TrackerDataImpl &zsFrame) {
     // helper object to fill the TrakerDater object
     auto sparseFrame = eutelescope::EUTelTrackerDataInterfacerImpl<
-        eutelescope::EUTelGenericSparsePixel>(&zsFrame);
-
+      eutelescope::EUTelGenericSparsePixel>(&zsFrame);
+    
     for (size_t iPixel = 0; iPixel < plane.HitPixels(); ++iPixel) {
       eutelescope::EUTelGenericSparsePixel thisHit1(
           plane.GetX(iPixel), plane.GetY(iPixel), plane.GetPixel(iPixel), 0);
@@ -66,10 +72,8 @@ namespace eudaq {
     } catch (lcio::DataNotAvailableException &e) {
       *zsDataCollection = new lcio::LCCollectionVec(lcio::LCIO::TRACKERDATA);
     }
-
+    
     return zsDataCollectionExists;
-  }
-#endif
   }
 
 
@@ -133,6 +137,20 @@ namespace eudaq {
     add_data(result, 13, tmp_evt.GetTag(TLU_TLUID(), -1));
   }
 
+  void add_PTDC_TYPE(lcio::LCEvent &result, const StandardEvent &tmp_evt) {
+    add_data(result, 14, tmp_evt.GetTag(PTDC_TYPE(), -1));
+  }
+  void add_PTDC_L0ID(lcio::LCEvent &result, const StandardEvent &tmp_evt) {
+    add_data(result, 15, tmp_evt.GetTag(PTDC_L0ID(), -1));
+  }
+  void add_PTDC_TS(lcio::LCEvent &result, const StandardEvent &tmp_evt) {
+    add_data(result, 16, tmp_evt.GetTag(PTDC_TS(), -1));
+  }
+  void add_PTDC_BIT(lcio::LCEvent &result, const StandardEvent &tmp_evt) {
+    add_data(result, 17, tmp_evt.GetTag(PTDC_BIT(), -1));
+  }
+
+  
 #endif
 
   // Declare a new class that inherits from DataConverterPlugin
@@ -338,13 +356,15 @@ namespace eudaq {
 
         uint64_t data = TTC[i];
         switch (data >> 60) {
+	case 0xc:
+          ProcessPTDC_data(data, sev);
+          break;
         case 0xd:
           ProcessTLU_data(data, sev);
           break;
         case 0xe:
           ProcessTDC_data(data, sev);
           break;
-
         case 0xf:
           ProcessTimeStamp_data(data, sev);
           break;
@@ -354,7 +374,18 @@ namespace eudaq {
         }
       }
     }
-
+    
+    template <typename T> static void ProcessPTDC_data(uint64_t data, T &sev) {
+      uint32_t TYPE = (uint32_t)(data>>52)& 0xf;
+      uint32_t L0ID = (uint32_t)(data>>48)& 0xf;
+      uint32_t TS = (uint32_t)(data>>32) & 0xffff;
+      uint32_t BIT = (uint32_t)data;
+      sev.SetTag(PTDC_TYPE(), TYPE);
+      sev.SetTag(PTDC_L0ID(), L0ID);
+      sev.SetTag(PTDC_TS(), TS);
+      sev.SetTag(PTDC_BIT(), BIT);      
+    }
+    
     template <typename T> static void ProcessTLU_data(uint64_t data, T &sev) {
       uint32_t hsioID = (uint32_t)(data >> 40) & 0xffff;
       uint64_t TLUID = data & 0xffff;
