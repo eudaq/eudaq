@@ -183,7 +183,8 @@ namespace eudaq {
         if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) &&
             (m_buffer[i].events.front()->GetEventNumber() !=
              m_eventnumber - 1)) {
-          if (ev.GetEventNumber() % 1000 == 0) {
+	  //tests 12/05  
+	  if (ev.GetEventNumber() % 1000 == 0) {
             // dhaas: added if-statement to filter out TLU event number 0, in
             // case of bad clocking out
             if (m_buffer[i].events.front()->GetEventNumber() != 0)
@@ -195,14 +196,23 @@ namespace eudaq {
             if (m_buffer[i].events.front()->GetEventNumber() == 0)
               EUDAQ_WARN("Event number mismatch > 1 in event " +
                          to_string(ev.GetEventNumber()));
-          }
+         //tests 12/05  
+	  }
         }
-        ev.AddEvent(m_buffer[i].events.front());
-        m_buffer[i].events.pop_front();
-        if (m_buffer[i].events.size() == 0) {
-          m_numwaiting--;
-          more = false;
-        }
+	//tests 12/05 (if)
+	//	if( (m_buffer[i].events.front()->GetEventNumber() == m_eventnumber -1 )  )
+	//	  {
+	    ev.AddEvent(m_buffer[i].events.front());
+	    m_buffer[i].events.pop_front();
+	    if (m_buffer[i].events.size() == 0) {
+	      m_numwaiting--;
+	      more = false;
+	    }
+	    //    } else {
+	    //	    EUDAQ_WARN("Event missed due to mismatch > 1 in event " +
+	    //		       to_string(ev.GetEventNumber()));
+	    //	}	//tests 12/05 (if)
+
       }
       if (ev.IsBORE()) {
         ev.SetTag("STARTTIME", m_runstart.Formatted());

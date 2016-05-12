@@ -413,7 +413,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
                   break;
                case 0x03: //shutter on
                   if (_ROC_started) {
-                     std::cout << "start of readout cycle received without previous stop. Readout cycle: " << _ReadoutCycle << std::endl;
+		    std::cout << std::dec << "start of readout cycle received without previous stop. Readout cycle: " << _ReadoutCycle << std::endl;
                      char errorMessage[200];
                      sprintf(errorMessage, "Another BIF Start-of-Readout-Cycle received without previous stop in Run %d, ROC %d.", m_run, _ReadoutCycle);
                      EUDAQ_WARN(errorMessage);
