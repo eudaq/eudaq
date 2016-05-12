@@ -310,10 +310,10 @@ class caliceahcalbifProducer: public eudaq::Producer {
       }
 
       virtual void OnStatus() {
-	m_status.SetTag("TRIG", to_string(_stats.triggers));//to_string(_ReadoutCycle));
+         m_status.SetTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
 //       if (m_tlu) {
-	//	m_status.SetTag("TIMESTAMP", );//to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
-	// 	m_status.SetTag("LASTTIME", );//to_string(Timestamp2Seconds(lasttime)));
+               //	m_status.SetTag("TIMESTAMP", );//to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
+               // 	m_status.SetTag("LASTTIME", );//to_string(Timestamp2Seconds(lasttime)));
          m_status.SetTag("PARTICLES", to_string(_stats.triggers));
 // 	m_status.SetTag("STATUS", m_tlu->GetStatusString());
 // 	for (int i = 0; i < 4; ++i) {
@@ -373,7 +373,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
          event_complete = true;
          uint64_t word1, word2;
 
-         /* Packet structure:
+         /* Packet structure from BIF:
           *
           * for shutter on/off only 1 word:
           * ----------------------------------------------------------------
@@ -412,11 +412,10 @@ class caliceahcalbifProducer: public eudaq::Producer {
 //                  std::cout << ".";
                   break;
                case 0x03: //shutter on
-                  //TODO write when there is something before
                   if (_ROC_started) {
                      std::cout << "start of readout cycle received without previous stop. Readout cycle: " << _ReadoutCycle << std::endl;
-                     char errorMessage[100];
-                     sprintf(errorMessage, "BIF Start-of-Readout-Cycle received without previous stop in ROC %d.", _ReadoutCycle);
+                     char errorMessage[200];
+                     sprintf(errorMessage, "Another BIF Start-of-Readout-Cycle received without previous stop in Run %d, ROC %d.", m_run, _ReadoutCycle);
                      EUDAQ_WARN(errorMessage);
                   }
                   _ROC_started = true;
@@ -437,22 +436,31 @@ class caliceahcalbifProducer: public eudaq::Producer {
                      unsigned int expected_cycle_modulo = (_ReadoutCycle & 0x0FFF);
                      std::cout << std::hex << "BIF cycle not in sequence! _ReadoutCycle: " << _ReadoutCycle << "\t expected_cycle_modulo:" << expected_cycle_modulo;
                      std::cout << "\tarrived modulo: " << arrived_cycle_modulo << std::dec << std::endl;
-                     char errorMessage[100];
-                     sprintf(errorMessage, "BIF Cycle not in sequence! expected: %04X arrived: %04X. Possible data loss", expected_cycle_modulo, arrived_cycle_modulo);
+                     char errorMessage[200];
+                     sprintf(errorMessage, "BIF Cycle not in sequence in Run %d! expected: %04X arrived: %04X. Possible data loss", m_run, expected_cycle_modulo, arrived_cycle_modulo);
                      EUDAQ_WARN(errorMessage);
                      int difference = (arrived_cycle_modulo - expected_cycle_modulo) & 0x0FFF;
                      //                                 if (difference==0x0FFF) differnece=-1;//differnece is too big for correction
-                     _ReadoutCycle += difference;
+                     while (difference) { //write out anything (or empty events) if the data is coming from wrong readout cycle
+                        std::cout << "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run " << m_run << ", ROC " << _ReadoutCycle << std::endl;
+                        char errorMessage[200];
+                        sprintf(errorMessage, "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run %d, ROC %d.", m_run, _ReadoutCycle);
+                        EUDAQ_WARN(errorMessage);
+                        WriteOutEudaqEvent();
+                        _ReadoutCycle++;
+                        difference--;
+                     }
+                     //_ReadoutCycle += difference;
                   }
                   event_complete = true;
-		  trigger_push_back(_cycleData, 0x03000000,  _acq_start_cycle, _acq_start_ts << 5);
+                  trigger_push_back(_cycleData, 0x03000000, _acq_start_cycle, _acq_start_ts << 5);
                   break;
                case 0x02: //shutter off
                   //                              std::cout << ">" << std::endl;
                   if (!_ROC_started) {
                      std::cout << "end of readout cycle received without previous start. Readout cycle: " << _ReadoutCycle << std::endl;
-                     char errorMessage[100];
-                     sprintf(errorMessage, "BIF End-of-Readout-Cycle received without previous start in ROC %d.Possible data loss", _ReadoutCycle);
+                     char errorMessage[200];
+                     sprintf(errorMessage, "BIF End-of-Readout-Cycle received without previous start in Run %d ROC %d.Possible data loss", m_run, _ReadoutCycle);
                      EUDAQ_WARN(errorMessage);
                   }
                   _ROC_started = false;
@@ -465,8 +473,8 @@ class caliceahcalbifProducer: public eudaq::Producer {
                   }
 
                   if (_acq_start_cycle != inputs) {
-                     char errorMessage[100];
-                     sprintf(errorMessage, "BIF Cycle mismatch! start: %04X stop:%04X. Possible data loss", _acq_start_cycle, inputs);
+                     char errorMessage[200];
+                     sprintf(errorMessage, "BIF Cycle mismatch in run %d! start: %04X stop:%04X. Possible data loss", m_run, _acq_start_cycle, inputs);
                      EUDAQ_WARN(errorMessage);
                   }
                   cycleLengthBxids = (timestamp_resolution_ns * ((timestamp - _acq_start_ts) << 5) - _firstBxidOffsetBins) / _bxidLengthNs;
@@ -475,7 +483,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
                         std::cout << std::dec << "ROC: " << (int) _ReadoutCycle;
                         std::cout << "\tLength[BXings]: " << (int) cycleLengthBxids;
                         std::cout << "\tTrigs: " << (int) _triggersInCycle;
-                        std::cout << "\tRawlen: " << timestamp - _acq_start_ts;
+                        std::cout << "\tlen: " << (0.00000078125) * (timestamp - _acq_start_ts) << " ms";
                         std::cout << std::endl;
                         break;
                      case 1:
@@ -487,26 +495,8 @@ class caliceahcalbifProducer: public eudaq::Producer {
                   //                              std::cout << "\tcycle: " << (int) acq_start_cycle
                   event_complete = true;
                   {
-		    trigger_push_back(_cycleData, 0x02000000, inputs, _acq_start_ts << 5);
-                     eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
-		     //                     CycleEvent.SetTag("PARTICLES", eudaq::to_string(_triggersInCycle));
-		     //                     CycleEvent.SetTag("TRIG", eudaq::to_string(_triggersInCycle));
-                     std::string s = "EUDAQDataBIF";
-                     CycleEvent.AddBlock(0, s.c_str(), s.length());
-                     s = "i:Type:i:EventCnt:i:TS_Low:i:TS_High";
-                     CycleEvent.AddBlock(1, s.c_str(), s.length());
-                     unsigned int times[2];
-                     struct timeval tv;
-                     ::gettimeofday(&tv, NULL);
-                     times[0] = tv.tv_sec;
-                     times[1] = tv.tv_usec;
-                     CycleEvent.AddBlock(2, times, sizeof(times));
-		     CycleEvent.AddBlock(3);
-		     CycleEvent.AddBlock(4);
-		     CycleEvent.AddBlock(5);
-                     CycleEvent.AddBlock(6, _cycleData);
-                     eudaq::DataSender::SendEvent(CycleEvent);
-                     _cycleData.clear();
+                     trigger_push_back(_cycleData, 0x02000000, inputs, _acq_start_ts << 5);
+                     WriteOutEudaqEvent();
                   }
                   break;
                case 0x04: //edge falling
@@ -532,7 +522,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
                   _firstTrigger = false;
                } else {
                   std::cout << "trigger not in sequence in ROC " << _ReadoutCycle << std::endl;
-                  char errorMessage[100];
+                  char errorMessage[200];
                   sprintf(errorMessage, "BIF trigger not in sequence in ROC %d. Possible data loss", _ReadoutCycle);
                   EUDAQ_WARN(errorMessage);
                }
@@ -602,8 +592,31 @@ class caliceahcalbifProducer: public eudaq::Producer {
          cycleData.push_back((uint32_t) ((Timestamp >> 32)));
       }
 
+      void WriteOutEudaqEvent()
+      {
+         eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
+         //                     CycleEvent.SetTag("PARTICLES", eudaq::to_string(_triggersInCycle));
+         //                     CycleEvent.SetTag("TRIG", eudaq::to_string(_triggersInCycle));
+         std::string s = "EUDAQDataBIF";
+         CycleEvent.AddBlock(0, s.c_str(), s.length());
+         s = "i:Type:i:EventCnt:i:TS_Low:i:TS_High";
+         CycleEvent.AddBlock(1, s.c_str(), s.length());
+         unsigned int times[2];
+         struct timeval tv;
+         ::gettimeofday(&tv, NULL);
+         times[0] = tv.tv_sec;
+         times[1] = tv.tv_usec;
+         CycleEvent.AddBlock(2, times, sizeof(times));
+         CycleEvent.AddBlock(3);
+         CycleEvent.AddBlock(4);
+         CycleEvent.AddBlock(5);
+         CycleEvent.AddBlock(6, _cycleData);
+         eudaq::DataSender::SendEvent(CycleEvent);
+         _cycleData.clear();
+      }
+
       unsigned m_run;
-//      unsigned m_ev;
+      //      unsigned m_ev;
 //      unsigned trigger_interval;
 //      unsigned dut_mask;
 //      unsigned veto_mask;
@@ -613,7 +626,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
 //      unsigned enable_dut_veto;
 //      unsigned trig_rollover;
       unsigned readout_delay;
-//      bool timestamps;
+      //      bool timestamps;
 //      bool timestamp_per_run;
       bool done;
       bool TLUStarted;
