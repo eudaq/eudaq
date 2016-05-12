@@ -7,8 +7,6 @@
 
 MESSAGE(STATUS "Looking for IPHCRC dependencies: lib and header")
 
-MESSAGE(STATUS "source dir : " ${CMAKE_CURRENT_SOURCE_DIR})
-
 SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".dll")
 
 find_path(IPHCRC_INCLUDE_DIR iphc_run_ctrl_exp.h
@@ -20,12 +18,6 @@ find_library(IPHCRC_LIBRARY NAMES iphc
 
 set(IPHCRC_LIBRARIES ${IPHCRC_LIBRARY} )
 set(IPHCRC_INCLUDE_DIRS ${IPHCRC_INCLUDE_DIR})
-
-#include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set IPHCRC_FOUND to TRUE
-# if all listed variables are TRUE
-#find_package_handle_standard_args(pxarCore
-#  REQUIRED_VARS IPHCRC_LIBRARY IPHCRC_API_INCLUDE_DIR IPHCRC_UTILS_INCLUDE_DIR PXAR_UTIL_INCLUDE_DIR)
 
 IF(IPHCRC_LIBRARY AND IPHCRC_INCLUDE_DIR)
    SET(IPHCRC_FOUND TRUE)
