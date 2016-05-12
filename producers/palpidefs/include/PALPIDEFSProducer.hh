@@ -111,10 +111,6 @@ protected:
     SimpleLock lock(m_mutex);
     m_reading = reading;
   }
-  bool IsFlushing() {
-    SimpleLock lock(m_mutex);
-    return m_flushing;
-  }
   void SetStopping() {
     SimpleLock lock(m_mutex);
     m_stop = true;
@@ -137,7 +133,6 @@ protected:
   std::mutex m_mutex;
   bool m_stop;
   bool m_running;
-  bool m_flushing;
   bool m_reading;
   bool m_waiting_for_eor;
   bool m_threshold_scan_rqst;
@@ -174,7 +169,7 @@ public:
                     int debuglevel = 0)
       : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0),
         m_timestamp_reference(0x0), m_done(false),
-        m_running(false), m_stopping(false), m_flush(false),
+        m_running(false), m_stopping(false),
         m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
         m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
         m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
@@ -222,10 +217,6 @@ protected:
     SimpleLock lock(m_mutex);
     return m_stopping;
   }
-  bool IsFlushing() {
-    SimpleLock lock(m_mutex);
-    return m_flush;
-  }
   bool IsDone() {
     SimpleLock lock(m_mutex);
     return m_done;
@@ -241,7 +232,6 @@ protected:
   bool m_running;
   bool m_stopping;
   bool m_configuring;
-  bool m_flush;
   bool m_configured;
   bool m_firstevent;
   DeviceReader** m_reader;
@@ -281,7 +271,7 @@ protected:
   bool* m_do_SCS;
 
   int m_n_trig;
-  float m_period;  
+  float m_period;
 
   // S-Curve scan output data
   unsigned char**** m_SCS_data;
