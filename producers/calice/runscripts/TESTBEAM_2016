@@ -63,7 +63,7 @@ $EUDAQBIN/AHCALProducer.exe -n CaliceSc -r tcp://$TLUIP:$RCPORT &
 
 printf '\033[22;33m\t calice ahcal bif producer \033[0m \n'                                                               
 #xterm -sb -sl 100000 -geom 80x40-480-400 -T "CALICE AHCAL BIF" -e '$EUDAQBIN/caliceahcalbif_Producer.exe -r tcp://$HOSTIP:$RCPORT'
-$EUDAQBIN/caliceahcalbif_Producer.exe -r tcp://$HOSTIP:$RCPORT &
+$EUDAQBIN/caliceahcalbif_Producer.exe -r tcp://$HOSTIP:$RCPORT |tee -a bif.log &
 sleep 3
 
 
