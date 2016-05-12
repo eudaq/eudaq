@@ -185,7 +185,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
          }
          try {
             m_run = param;
-            std::cout << "Start Run: " << param << std::endl;
+            std::cout << std::dec << "Start Run: " << param << std::endl;
 //            TLUEvent ev(TLUEvent::BORE(m_run));
             eudaq::RawDataEvent infoevent(eudaq::RawDataEvent::BORE("CaliceObject", m_run));
             std::string s = "EUDAQConfigBIF";
@@ -417,6 +417,20 @@ class caliceahcalbifProducer: public eudaq::Producer {
                      char errorMessage[200];
                      sprintf(errorMessage, "Another BIF Start-of-Readout-Cycle received without previous stop in Run %d, ROC %d.", m_run, _ReadoutCycle);
                      EUDAQ_WARN(errorMessage);
+                     unsigned int arrived_cycle_modulo = ((inputs - _firstStutterCycle) & 0x0FFF);
+                     unsigned int expected_cycle_modulo = ((_ReadoutCycle + 1) & 0x0FFF);
+                     uint16_t difference = (arrived_cycle_modulo - expected_cycle_modulo) & 0x0FFF;
+                     if (difference == 0) { //If the Readout cycle logically continues in serie
+                        std::cout << "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run " << m_run << ", ROC " << _ReadoutCycle << std::endl;
+                        char errorMessage[200];
+                        sprintf(errorMessage, "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run %d, ROC %d.", m_run, _ReadoutCycle);
+                        EUDAQ_WARN(errorMessage);
+                        WriteOutEudaqEvent();
+                     } else if ((difference >= 1) && (difference <= 500)) {
+                        WriteOutEudaqEvent();
+                     } else if (difference == 0x0FFF) {
+                        _ReadoutCycle--; //probably receiving same readoutcycledata twice. Lets fix it only if it is the same packet,
+                     }
                   }
                   _ROC_started = true;
                   _triggersInCycle = 0;
@@ -439,7 +453,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
                      char errorMessage[200];
                      sprintf(errorMessage, "BIF Cycle not in sequence in Run %d! expected: %04X arrived: %04X. Possible data loss", m_run, expected_cycle_modulo, arrived_cycle_modulo);
                      EUDAQ_WARN(errorMessage);
-                     int difference = (arrived_cycle_modulo - expected_cycle_modulo) & 0x0FFF;
+                     uint16_t difference = (arrived_cycle_modulo - expected_cycle_modulo) & 0x0FFF;
                      //                                 if (difference==0x0FFF) differnece=-1;//differnece is too big for correction
                      while (difference) { //write out anything (or empty events) if the data is coming from wrong readout cycle
                         std::cout << "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run " << m_run << ", ROC " << _ReadoutCycle << std::endl;
