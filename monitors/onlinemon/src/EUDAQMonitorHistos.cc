@@ -101,8 +101,8 @@ void EUDAQMonitorHistos::Fill(const SimpleStandardEvent &ev) {
   }
   Hits_vs_EventsTotal->Fill(event_nr, nhits_total);
 
+  std::lock_guard<std::mutex> lck(mu);
   m_EventN_vs_TimeStamp->SetPoint(m_EventN_vs_TimeStamp->GetN(),ev.getEvent_timestamp(), ev.getEvent_number());
-  
 }
 
 void EUDAQMonitorHistos::Fill(const unsigned int evt_number,

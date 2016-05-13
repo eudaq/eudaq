@@ -18,6 +18,8 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <mutex>
+#include <thread>
 
 #include "SimpleStandardEvent.hh"
 
@@ -35,6 +37,8 @@ protected:
   //    TH2I * TracksPerEvent;
   TProfile *TracksPerEvent;
   TGraph *m_EventN_vs_TimeStamp;
+
+  std::mutex mu;
 public:
   EUDAQMonitorHistos(const SimpleStandardEvent &ev);
   virtual ~EUDAQMonitorHistos();
@@ -54,6 +58,7 @@ public:
   void setPlanes_perEventHisto(TH1F *Planes_perEventHisto);
   unsigned int getNplanes() const;
   TNamed *getEventN_vs_TimeStamp() const;
+  std::mutex* getMutexEventN_vs_TimeStamp(){return &mu;};
 
 private:
   unsigned int nplanes;

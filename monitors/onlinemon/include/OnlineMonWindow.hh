@@ -78,9 +78,11 @@ protected:
   std::map<std::string, TGListTreeItem *> _treeMap;
   std::map<TGListTreeItem *, std::string> _treeBackMap;
   std::map<std::string, TNamed *> _hitmapMap;
+  std::map<std::string, TGraph *> _hitmapMapCP;
   std::map<std::string, std::vector<std::string>> _summaryMap;
   std::map<std::string, std::string> _hitmapOptions;
   std::map<std::string, unsigned int> _logScaleMap;
+  std::map<std::string, std::mutex*> _mutexMap;
   TGListTreeItem *Itm_Eudet;
   TGListTreeItem *Itm_DUT;
   TGListTreeItem *Itm_EudetHM;
@@ -110,6 +112,7 @@ public:
   void addTreeItemSummary(std::string item, std::string histoitem);
   void registerHisto(std::string tree, TNamed *h, std::string op = "",
                      const unsigned int = kLin);
+  void registerMutex(std::string tree, std::mutex *m);
   void actor(TGListTreeItem *item, Int_t btn);
   void actorMenu(TGListTreeItem *item, Int_t btn, Int_t x, Int_t y);
   void registerPlane(char *sensor, int id);
