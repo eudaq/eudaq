@@ -297,7 +297,7 @@ void OnlineMonWindow::registerTreeItem(std::string item) {
 
 void OnlineMonWindow::makeTreeItemSummary(std::string item) {
 
-  std::map<std::string, TH1 *>::iterator it;
+  std::map<std::string, TNamed *>::iterator it;
   std::vector<std::string> v;
   for (it = _hitmapMap.begin(); it != _hitmapMap.end(); ++it) {
     std::string c = std::string(it->first, 0, item.length());
@@ -322,7 +322,7 @@ void OnlineMonWindow::addTreeItemSummary(std::string item,
   _summaryMap[item] = v;
 }
 
-void OnlineMonWindow::registerHisto(std::string tree, TH1 *h, std::string op,
+void OnlineMonWindow::registerHisto(std::string tree, TNamed *h, std::string op,
                                     const unsigned int l) {
   if (h == NULL) // check if valid histogram
   {
@@ -345,6 +345,7 @@ void OnlineMonWindow::registerHisto(std::string tree, TH1 *h, std::string op,
   }
 }
 
+
 void OnlineMonWindow::autoUpdate() {
 
   _reduceUpdate++;
@@ -353,23 +354,29 @@ void OnlineMonWindow::autoUpdate() {
 
     if (activeHistoSize != 0) { //&&_hitmapMap[_activeHisto]!=NULL) {
       TCanvas *fCanvas = ECvs_right->GetCanvas();
-      if (activeHistoSize == 1)
+      if (activeHistoSize == 1){
         fCanvas->cd();
+	fCanvas->Clear();
+      }
       for (unsigned int i = 0; i < activeHistoSize; ++i) {
-        if (activeHistoSize > 1)
+        if (activeHistoSize > 1){
           fCanvas->cd(i + 1);
-        if (_hitmapMap[_activeHistos.at(i)] != NULL) {
-          _hitmapMap[_activeHistos.at(i)]->Draw(
-              _hitmapOptions[_activeHistos.at(i)].c_str());
-        }
-        if (activeHistoSize > 1) {
-
-          fCanvas->GetPad(i + 1)->Modified();
-          // fCanvas->GetPad(i+1)->Update();
+	  fCanvas->GetPad(i+1)->Clear();
+	}
+	TNamed *hg = _hitmapMap[_activeHistos.at(i)];
+        if (hg != NULL) {
+	  TH1 *h = dynamic_cast<TH1 *> (hg);
+	  if(h){
+	    h->Draw(_hitmapOptions[_activeHistos.at(i)].c_str());
+	    std::cout<< ">>> in h 3"<<std::endl;
+	  }
+	  TGraph *g = dynamic_cast<TGraph *> (hg);	  
+	  if(g){
+	    g->DrawClone(_hitmapOptions[_activeHistos.at(i)].c_str());
+	    std::cout<< ">>> in g 3"<<std::endl;
+	  }
         }
       }
-
-      // fCanvas->Modified();
       fCanvas->Update();
     }
     UpdateEventNumber(_eventnum);
@@ -415,21 +422,29 @@ void OnlineMonWindow::actor(TGListTreeItem *item, Int_t /*btn*/) {
   // cout << "Here we are acting " << btn << endl;
 
   TCanvas *fCanvas = ECvs_right->GetCanvas();
-  // fCanvas->cd();
-  // fCanvas->Divide(1,1);
   fCanvas->Clear();
+
   std::string tree = _treeBackMap[item];
 
-  fCanvas->SetLogx(bool(_logScaleMap[tree] & 0));
-  fCanvas->SetLogy(bool(_logScaleMap[tree] & 1));
-  fCanvas->SetLogz(bool(_logScaleMap[tree] & 2));
+  // fCanvas->SetLogx(bool(_logScaleMap[tree] & 0));
+  // fCanvas->SetLogy(bool(_logScaleMap[tree] & 1));
+  // fCanvas->SetLogz(bool(_logScaleMap[tree] & 2));
 
   _activeHistos.clear();
 
   if (_hitmapMap[tree] != NULL) {
-
-    _hitmapMap[tree]->Draw(_hitmapOptions[tree].c_str());
-
+    fCanvas->cd();
+    TNamed *hg = _hitmapMap[tree];
+    TH1 *h = dynamic_cast<TH1 *> (hg);
+    if(h){
+      h->Draw(_hitmapOptions[tree].c_str());
+      std::cout<< ">>> in h 0"<<std::endl;
+    }
+    TGraph *g = dynamic_cast<TGraph *> (hg);	  
+    if(g){
+      g->DrawClone(_hitmapOptions[tree].c_str());
+      std::cout<< ">>> in g 0"<<std::endl;
+    }
     _activeHistos.push_back(tree);
   }
   if (_summaryMap.find(tree) != _summaryMap.end()) {
@@ -484,17 +499,26 @@ void OnlineMonWindow::actor(TGListTreeItem *item, Int_t /*btn*/) {
       d2 = 7;
     }
     fCanvas->Divide(d2, d1);
-
     for (unsigned int i = 0; i < s; ++i) {
       fCanvas->cd(i + 1);
+      fCanvas->GetPad(i+1)->Clear();
       _activeHistos.push_back(v.at(i));
-      fCanvas->GetPad(i + 1)->SetLogx(bool(_logScaleMap[v.at(i)] & 0));
-      fCanvas->GetPad(i + 1)->SetLogy(bool(_logScaleMap[v.at(i)] & 1));
-      fCanvas->GetPad(i + 1)->SetLogz(bool(_logScaleMap[v.at(i)] & 2));
-      _hitmapMap[v.at(i)]->Draw(_hitmapOptions[v.at(i)].c_str());
+      // fCanvas->GetPad(i + 1)->SetLogx(bool(_logScaleMap[v.at(i)] & 0));
+      // fCanvas->GetPad(i + 1)->SetLogy(bool(_logScaleMap[v.at(i)] & 1));
+      // fCanvas->GetPad(i + 1)->SetLogz(bool(_logScaleMap[v.at(i)] & 2));
+      TNamed *hg = _hitmapMap[v.at(i)];
+      TH1 *h = dynamic_cast<TH1 *> (hg);
+      if(h){
+	h->Draw(_hitmapOptions[v.at(i)].c_str());
+	std::cout<< ">>> in h 1"<<std::endl;
+      }
+      TGraph *g = dynamic_cast<TGraph *> (hg);
+      if(g){
+	g->DrawClone(_hitmapOptions[v.at(i)].c_str());
+	std::cout<< ">>> in g 1"<<std::endl;
+      }
     }
   }
-
   fCanvas->Update();
 }
 
@@ -513,8 +537,6 @@ void OnlineMonWindow::UpdateEventNumber(const int event) {
 
   sprintf(out, "Curr. event: %u", event);
   fStatusBar->SetText(out, 2);
-
-  // cout << out << endl;
 }
 
 void OnlineMonWindow::UpdateTotalEventNumber(const int num) {
@@ -552,8 +574,3 @@ void OnlineMonWindow::SetOnlineMon(RootMonitor *mymon) {
             "RootMonitorObject, bailing out" << endl;
   }
 }
-
-/*
-   virtual OnlineMonWindow::~OnlineMonWindow() {
-
-   }*/

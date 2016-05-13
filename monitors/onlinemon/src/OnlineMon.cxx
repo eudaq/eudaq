@@ -64,7 +64,9 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   corrCollection = new CorrelationCollection();
   MonitorPerformanceCollection *monCollection =new MonitorPerformanceCollection();
   eudaqCollection = new EUDAQMonitorCollection();
+  // paraCollection = new ParaMonitorCollection();
 
+  
   cout << "--- Done ---"<<endl<<endl;
 
   // put collections into the vector
@@ -72,12 +74,16 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   _colls.push_back(corrCollection);
   _colls.push_back(monCollection);
   _colls.push_back(eudaqCollection);
+  // _colls.push_back(paraCollection);
+
   // set the root Monitor
   if (_offline <= 0) {
     hmCollection->setRootMonitor(this);
     corrCollection->setRootMonitor(this);
     monCollection->setRootMonitor(this);
     eudaqCollection->setRootMonitor(this);
+    // paraCollection->setRootMonitor(this);
+
     onlinemon->setCollections(_colls);
   }
 
@@ -100,7 +106,6 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
 
   // print the configuration
   mon_configdata.PrintConfiguration();
-
 
   cout << "Datafile: " << datafile << endl;
   if (datafile != "") {

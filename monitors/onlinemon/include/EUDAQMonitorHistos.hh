@@ -12,6 +12,7 @@
 #include "TH2I.h"
 #include "TProfile.h"
 #include "TFile.h"
+#include "TGraph.h"
 
 #include <map>
 #include <string>
@@ -33,7 +34,7 @@ protected:
   TProfile **TLUdelta_perEventHisto;
   //    TH2I * TracksPerEvent;
   TProfile *TracksPerEvent;
-
+  TGraph *m_EventN_vs_TimeStamp;
 public:
   EUDAQMonitorHistos(const SimpleStandardEvent &ev);
   virtual ~EUDAQMonitorHistos();
@@ -52,6 +53,7 @@ public:
 
   void setPlanes_perEventHisto(TH1F *Planes_perEventHisto);
   unsigned int getNplanes() const;
+  TNamed *getEventN_vs_TimeStamp() const;
 
 private:
   unsigned int nplanes;

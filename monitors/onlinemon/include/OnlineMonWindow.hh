@@ -28,6 +28,7 @@
 #include <TGNumberEntry.h>
 #include <TH1.h>
 #include <TH2I.h>
+#include <TGraph.h>
 #include <vector>
 #include <map>
 #include "BaseCollection.hh"
@@ -76,7 +77,7 @@ protected:
 
   std::map<std::string, TGListTreeItem *> _treeMap;
   std::map<TGListTreeItem *, std::string> _treeBackMap;
-  std::map<std::string, TH1 *> _hitmapMap;
+  std::map<std::string, TNamed *> _hitmapMap;
   std::map<std::string, std::vector<std::string>> _summaryMap;
   std::map<std::string, std::string> _hitmapOptions;
   std::map<std::string, unsigned int> _logScaleMap;
@@ -107,7 +108,7 @@ public:
   void registerTreeItem(std::string);
   void makeTreeItemSummary(std::string);
   void addTreeItemSummary(std::string item, std::string histoitem);
-  void registerHisto(std::string tree, TH1 *h, std::string op = "",
+  void registerHisto(std::string tree, TNamed *h, std::string op = "",
                      const unsigned int = kLin);
   void actor(TGListTreeItem *item, Int_t btn);
   void actorMenu(TGListTreeItem *item, Int_t btn, Int_t x, Int_t y);

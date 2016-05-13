@@ -23,6 +23,7 @@
 #include "SimpleStandardEvent.hh"
 #include "EUDAQMonitorHistos.hh"
 #include "BaseCollection.hh"
+#include "ParaMonitorHistos.hh"
 
 using namespace std;
 
@@ -45,6 +46,8 @@ public:
 
 private:
   EUDAQMonitorHistos *mymonhistos;
+  ParaMonitorHistos *mymonhistos2;
+
 };
 
 #ifdef __CINT__
