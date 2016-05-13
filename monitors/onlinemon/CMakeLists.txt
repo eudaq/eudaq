@@ -12,16 +12,18 @@ SET (OnlineMon_SOURCES
   src/EUDAQMonitorCollection.cc
   src/EUDAQMonitorHistos.cc
   src/EventSanityChecker.cc
-  src/GraphWindow.cc
+  # src/GraphWindow.cc
   src/HitmapCollection.cc
   src/HitmapHistos.cc
   src/MonitorPerformanceCollection.cc
   src/MonitorPerformanceHistos.cc
+  src/ParaMonitorCollection.cc
+  src/ParaMonitorHistos.cc
   src/OnlineHistograms.cc
   src/OnlineMonConfiguration.cc
   src/SimpleStandardEvent.cc
   src/SimpleStandardPlane.cc
-  src/TGraphSet.cc
+  # src/TGraphSet.cc
 #  src/TreeHistoRelation.cc
   )
 
