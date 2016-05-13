@@ -46,8 +46,8 @@ public:
 
 private:
   EUDAQMonitorHistos *mymonhistos;
-  ParaMonitorHistos *mymonhistos2;
-
+  
+  std::mutex mu;
 };
 
 #ifdef __CINT__
