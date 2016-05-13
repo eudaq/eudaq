@@ -62,6 +62,13 @@ void EUDAQMonitorCollection::bookHistograms(
     _mon->getOnlineMon()->registerHisto(
         (performance_folder_name + "/Hits vs. Event"),
         mymonhistos->getHits_vs_EventsTotal());
+
+    _mon->getOnlineMon()->registerTreeItem(
+        (performance_folder_name + "/EventN vs TimeStamp"));
+    _mon->getOnlineMon()->registerHisto(
+        (performance_folder_name + "/EventN vs TimeStamp"),
+        mymonhistos->getEventN_vs_TimeStamp(), "AP");
+    
     if (_mon->getUseTrack_corr()) {
       _mon->getOnlineMon()->registerTreeItem(
           (performance_folder_name + "/Tracks per Event"));
@@ -102,6 +109,7 @@ void EUDAQMonitorCollection::Calculate(
 void EUDAQMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
   if (histos_init == false) {
     mymonhistos = new EUDAQMonitorHistos(simpev);
+    mymonhistos2 = new ParaMonitorHistos();
     if (mymonhistos == NULL) {
       cout << "EUDAQMonitorCollection:: Can't book histograms " << endl;
       exit(-1);
@@ -110,4 +118,5 @@ void EUDAQMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
     histos_init = true;
   }
   mymonhistos->Fill(simpev);
+  mymonhistos2->Fill(simpev);
 }
