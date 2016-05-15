@@ -56,21 +56,34 @@ void MonitorPerformanceCollection::bookHistograms(
     _mon->getOnlineMon()->registerHisto(
         (performance_folder_name + "/Data Analysis Time"),
         mymonhistos->getAnalysisTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Data Analysis Time"),
+        mymonhistos->getMutex());
     _mon->getOnlineMon()->registerTreeItem(
         (performance_folder_name + "/Histo Fill Time"));
     _mon->getOnlineMon()->registerHisto(
         (performance_folder_name + "/Histo Fill Time"),
         mymonhistos->getFillTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Histo Fill Time"),
+        mymonhistos->getMutex());
     _mon->getOnlineMon()->registerTreeItem(
         (performance_folder_name + "/Clustering Time"));
     _mon->getOnlineMon()->registerHisto(
         (performance_folder_name + "/Clustering Time"),
         mymonhistos->getClusteringTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Clustering Time"),
+        mymonhistos->getMutex());
     _mon->getOnlineMon()->registerTreeItem(
         (performance_folder_name + "/Correlation Time"));
     _mon->getOnlineMon()->registerHisto(
         (performance_folder_name + "/Correlation Time"),
         mymonhistos->getCorrelationTimeHisto());
+    _mon->getOnlineMon()->registerMutex(
+        (performance_folder_name + "/Correlation Time"),
+        mymonhistos->getMutex());
+
     _mon->getOnlineMon()->makeTreeItemSummary(
         performance_folder_name.c_str()); // make summary page
   }

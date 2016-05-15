@@ -401,8 +401,7 @@ void HitmapHistos::Calculate(const int currentEventNum) {
   if (is_MIMOSA26) // probalbly initialize vector
   {
     nHotpixels_section.reserve(_mon->mon_configdata.getMimosa26_max_sections());
-    for (unsigned int i = 0;
-         i < _mon->mon_configdata.getMimosa26_max_sections(); i++) {
+    for (unsigned int i = 0; i < _mon->mon_configdata.getMimosa26_max_sections(); i++) {
       nHotpixels_section[i] = 0;
     }
   }
@@ -413,22 +412,16 @@ void HitmapHistos::Calculate(const int currentEventNum) {
       bin = plane_map_array[x][y];
 
       if (bin != 0) {
-        occupancy =
-            bin /
-            (double)currentEventNum; // FIXME it's not occupancy, it's frequency
+        occupancy = bin / (double)currentEventNum; // FIXME it's not occupancy, it's frequency
         _hitOcc->Fill(occupancy);
         // only count as hotpixel if occupancy larger than minimal occupancy for
         // a single hit
         if (occupancy > Hotpixelcut && ((1. / (double)(currentEventNum)) <
-                                        _mon->mon_configdata.getHotpixelcut()))
-        // if (occupancy>Hotpixelcut && )
-        {
+                                        _mon->mon_configdata.getHotpixelcut())){
           nHotpixels++;
-          _HotPixelMap->SetBinContent(x + 1, y + 1,
-                                      occupancy); // ROOT start from 1
+          _HotPixelMap->SetBinContent(x + 1, y + 1, occupancy); // ROOT start from 1
           if (is_MIMOSA26) {
-            nHotpixels_section
-                [x / _mon->mon_configdata.getMimosa26_section_boundary()]++;
+            nHotpixels_section[x / _mon->mon_configdata.getMimosa26_section_boundary()]++;
           }
         }
       }

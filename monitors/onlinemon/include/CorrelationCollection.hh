@@ -18,33 +18,11 @@
 #include <string>
 #include <utility>
 
-#include "SimpleStandardPlaneDouble.hh"
 #include "CorrelationHistos.hh"
 #include "BaseCollection.hh"
 
 using namespace std;
 class RootMonitor;
-
-// currently we do not use SimplePlaneDobule anymore due to the overhead ,,,,
-inline bool operator==(SimpleStandardPlaneDouble const &a,
-                       SimpleStandardPlaneDouble const &b) {
-  if (a.getPlane1() == b.getPlane1() && a.getPlane2() == b.getPlane2()) {
-    return true;
-  } else {
-    if (a.getPlane1() == b.getPlane2() && a.getPlane2() == b.getPlane1()) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-}
-
-inline bool
-operator<(SimpleStandardPlaneDouble const &a,
-          SimpleStandardPlaneDouble const &b) { // Needed to use struct in a map
-  return a.getPlane1() < b.getPlane1() ||
-         (a.getPlane1() == b.getPlane1() && a.getPlane2() < b.getPlane2());
-}
 
 struct SortClustersByXY {
   bool operator()(SimpleStandardCluster const &L,
@@ -67,7 +45,6 @@ struct SortClustersByXY {
  */
 class CorrelationCollection : public BaseCollection {
 protected:
-  map<SimpleStandardPlaneDouble, CorrelationHistos *> _mapOld;
   map<pair<SimpleStandardPlane, SimpleStandardPlane>, CorrelationHistos *> _map;
   vector<SimpleStandardPlane> _planes;
   bool isPlaneRegistered(SimpleStandardPlane p);
@@ -76,7 +53,6 @@ protected:
                          const bool all_mimosa);
   void fillHistograms(vector<vector<pair<int, SimpleStandardCluster>>> tracks,
                       const SimpleStandardEvent &simpEv);
-  void fillHistograms(const SimpleStandardPlaneDouble &simpPlaneDouble);
   void fillHistograms(const SimpleStandardPlane &p1,
                       const SimpleStandardPlane &p2);
 
@@ -86,7 +62,6 @@ public:
   unsigned int FillWithTracks(const SimpleStandardEvent &simpev);
   virtual void Reset();
   void setRootMonitor(RootMonitor *mon);
-  CorrelationHistos *getCorrelationHistos(SimpleStandardPlaneDouble pd);
   CorrelationHistos *getCorrelationHistos(const SimpleStandardPlane &p1,
                                           const SimpleStandardPlane &p2);
 

@@ -359,16 +359,19 @@ void OnlineMonWindow::autoUpdate() {
       TNamed *hg = _hitmapMap[tree];
       if(hg) {
 	TH1 *h = dynamic_cast<TH1 *> (hg);
+	std::mutex mu_dummy;
+	std::mutex *mu = &mu_dummy;
+	auto it = _mutexMap.find(tree);
+	if(it != _mutexMap.end())
+	  mu=it->second;
 	if(h){
-	  // std::mutex *mu = _mutexMap[tree];
-	  // std::lock_guard<std::mutex> lck(*mu);
+	  std::lock_guard<std::mutex> lck(*mu);
 	  h->Draw(_hitmapOptions[tree].c_str());
 	  gPad->Update();
 	  std::cout<< ">>> in h 3"<<std::endl;
 	}
 	TGraph *g = dynamic_cast<TGraph *> (hg);
 	if(g){
-	  std::mutex *mu = _mutexMap[tree];
 	  std::lock_guard<std::mutex> lck(*mu);
 	  g->Draw(_hitmapOptions[tree].c_str());
 	  gPad->Update();
