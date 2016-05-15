@@ -49,6 +49,7 @@ public:
   void setFileTag(const char *tagNameTagValue); //"tag=value"
   void setTimerTag(const char *tagNameTagValue, size_t freq);
 
+  void sendLog(const char *msg);
   //signal
   void send_OnStartRun(unsigned);
   void send_OnConfigure();
