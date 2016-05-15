@@ -8,6 +8,8 @@
 #ifndef CORRELATIONHISTOS_HH_
 #define CORRELATIONHISTOS_HH_
 
+#include <mutex>
+
 #include <TH2I.h>
 #include <TFile.h>
 
@@ -29,6 +31,8 @@ protected:
   TH2I *_2dcorrX;
   TH2I *_2dcorrY;
 
+  std::mutex m_mu;
+  
 public:
   CorrelationHistos(SimpleStandardPlane p1, SimpleStandardPlane p2);
 
@@ -39,6 +43,8 @@ public:
 
   TH2I *getCorrXHisto();
   TH2I *getCorrYHisto();
+  std::mutex* getMutex();
+  
   int getFills() const;
   void resetFills();
   void Write();

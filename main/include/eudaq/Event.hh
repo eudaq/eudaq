@@ -66,7 +66,8 @@ namespace eudaq {
     virtual std::string GetSubType() const { return ""; }
 
     virtual void Print(std::ostream &os) const = 0;
-
+    
+    bool HasTag(const std::string &name) const;
     Event &SetTag(const std::string &name, const std::string &val);
     template <typename T> Event &SetTag(const std::string &name, const T &val) {
       return SetTag(name, eudaq::to_string(val));

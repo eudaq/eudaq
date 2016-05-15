@@ -37,6 +37,7 @@ void MonitorPerformanceHistos::Write() {
 }
 
 void MonitorPerformanceHistos::Fill(SimpleStandardEvent ev) {
+  std::lock_guard<std::mutex> lck(m_mu);
   _AnalysisTimeHisto->Fill(ev.getMonitor_eventanalysistime());
   _FillTimeHisto->Fill(ev.getMonitor_eventfilltime());
   _ClusteringTimeHisto->Fill(ev.getMonitor_clusteringtime());

@@ -7,7 +7,7 @@ typedef unsigned long long int uint64_t;
 typedef char __signed;
 typedef char int8_t;
 #endif
-
+#include <map>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -60,7 +60,8 @@ public:
   void setEvent_number(unsigned int event_number);
   uint64_t getEvent_timestamp() const;
   void setEvent_timestamp(uint64_t event_timestamp);
-
+  void setSlow_para(std::string name, double value);
+  bool getSlow_para(std::string name, double &value) const;
 private:
   double monitor_eventfilltime; // stores the time to fill the histogram
   double monitor_eventanalysistime;
@@ -68,6 +69,7 @@ private:
   double monitor_correlationtime;
   unsigned int event_number;
   uint64_t event_timestamp;
+  std::map<std::string, double> slowpara;
 };
 
 #endif

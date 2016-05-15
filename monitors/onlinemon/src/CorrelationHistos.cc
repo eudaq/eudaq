@@ -58,12 +58,13 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
 
 void CorrelationHistos::Fill(const SimpleStandardCluster &cluster1,
                              const SimpleStandardCluster &cluster2) {
-  // std::cout << "Filling Histogram: " << _2dcorrX->GetName() << " (" <<
-  // cluster1.getX() << ", " << cluster2.getX() << ")" << std::endl;
-  if (_2dcorrX != NULL)
+  std::lock_guard<std::mutex> lckx(m_mu);
+  if (_2dcorrX != NULL){
     _2dcorrX->Fill(cluster1.getX(), cluster2.getX());
-  if (_2dcorrY != NULL)
+  }
+  if (_2dcorrY != NULL){
     _2dcorrY->Fill(cluster1.getY(), cluster2.getY());
+  }
   _fills++;
 }
 
@@ -81,3 +82,6 @@ void CorrelationHistos::Write() {
   _2dcorrX->Write();
   _2dcorrY->Write();
 }
+
+
+std::mutex* CorrelationHistos::getMutex(){return &m_mu;}

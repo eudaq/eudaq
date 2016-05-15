@@ -25,15 +25,16 @@
 
 // Project Includes
 
-#include "BaseCollection.hh"
-#include "HitmapHistos.hh"
-#include "CorrelationHistos.hh"
-#include "EUDAQMonitorHistos.hh"
+// #include "BaseCollection.hh"
+// #include "HitmapHistos.hh"
+// #include "CorrelationHistos.hh"
+// #include "EUDAQMonitorHistos.hh"
 
 #include "HitmapCollection.hh"
 #include "CorrelationCollection.hh"
 #include "MonitorPerformanceCollection.hh"
 #include "EUDAQMonitorCollection.hh"
+#include "ParaMonitorCollection.hh"
 
 #include "OnlineMonWindow.hh"
 //#include "OnlineHistograms.hh"
@@ -89,6 +90,7 @@ public:
   HitmapCollection *hmCollection;
   CorrelationCollection *corrCollection;
   EUDAQMonitorCollection *eudaqCollection;
+  ParaMonitorCollection *paraCollection;
 
   virtual void StartIdleing() {}
   OnlineMonWindow *getOnlineMon() { return onlinemon; }
