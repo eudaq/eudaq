@@ -61,7 +61,7 @@ public:
   uint64_t getEvent_timestamp() const;
   void setEvent_timestamp(uint64_t event_timestamp);
   void setSlow_para(std::string name, double value);
-  bool getSlow_para(std::string name, double &value);
+  bool getSlow_para(std::string name, double &value) const;
 private:
   double monitor_eventfilltime; // stores the time to fill the histogram
   double monitor_eventanalysistime;

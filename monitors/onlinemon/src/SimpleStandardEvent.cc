@@ -94,12 +94,13 @@ void SimpleStandardEvent::setSlow_para(std::string name, double value) {
 
 }
 
-bool SimpleStandardEvent::getSlow_para(std::string name, double &value){
-  if (slowpara.find(name) == slowpara.end()){
+bool SimpleStandardEvent::getSlow_para(std::string name, double &value) const{
+  auto it = slowpara.find(name);
+  if (it == slowpara.end()){
     return false;
   }
   else{
-    value = slowpara[name];
+    value = it->second;
     return true;
   }
 }

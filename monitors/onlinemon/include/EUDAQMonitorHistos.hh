@@ -19,8 +19,6 @@
 #include <sstream>
 #include <iostream>
 #include <mutex>
-#include <thread>
-
 #include "SimpleStandardEvent.hh"
 
 using namespace std;
@@ -34,11 +32,11 @@ protected:
   TProfile *Hits_vs_PlaneHisto;
   TH1F *Planes_perEventHisto;
   TProfile **TLUdelta_perEventHisto;
-  //    TH2I * TracksPerEvent;
   TProfile *TracksPerEvent;
   TGraph *m_EventN_vs_TimeStamp;
 
-  std::mutex mu;
+  std::mutex m_mu;
+  
 public:
   EUDAQMonitorHistos(const SimpleStandardEvent &ev);
   virtual ~EUDAQMonitorHistos();
@@ -52,13 +50,19 @@ public:
   TProfile *getHits_vs_PlaneHisto() const;
   TH1F *getPlanes_perEventHisto() const;
   TProfile *getTLUdelta_perEventHisto(unsigned int i) const;
-  //    TH2I *getTracksPerEventHisto() const;
   TProfile *getTracksPerEventHisto() const;
-
+  TNamed *getEventN_vs_TimeStamp() const;
+  
   void setPlanes_perEventHisto(TH1F *Planes_perEventHisto);
   unsigned int getNplanes() const;
-  TNamed *getEventN_vs_TimeStamp() const;
-  std::mutex* getMutexEventN_vs_TimeStamp(){return &mu;};
+
+  std::mutex* getMutexHits_vs_EventsTotal(){return &m_mu;};
+  std::mutex* getMutexHits_vs_Events(unsigned int i){return &m_mu;};
+  std::mutex* getMutexHits_vs_Plane(){return &m_mu;};
+  std::mutex* getMutexPlanes_perEvent(){return &m_mu;};
+  std::mutex* getMutexTLUdelta_perEvent(unsigned int i){return &m_mu;};
+  std::mutex* getMutexTracksPerEvent(){return &m_mu;};
+  std::mutex* getMutexEventN_vs_TimeStamp(){return &m_mu;};
 
 private:
   unsigned int nplanes;

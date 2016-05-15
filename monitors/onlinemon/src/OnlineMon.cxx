@@ -64,7 +64,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   corrCollection = new CorrelationCollection();
   MonitorPerformanceCollection *monCollection =new MonitorPerformanceCollection();
   eudaqCollection = new EUDAQMonitorCollection();
-  // paraCollection = new ParaMonitorCollection();
+  paraCollection = new ParaMonitorCollection();
 
   
   cout << "--- Done ---"<<endl<<endl;
@@ -74,7 +74,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   _colls.push_back(corrCollection);
   _colls.push_back(monCollection);
   _colls.push_back(eudaqCollection);
-  // _colls.push_back(paraCollection);
+  _colls.push_back(paraCollection);
 
   // set the root Monitor
   if (_offline <= 0) {
@@ -82,7 +82,7 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
     corrCollection->setRootMonitor(this);
     monCollection->setRootMonitor(this);
     eudaqCollection->setRootMonitor(this);
-    // paraCollection->setRootMonitor(this);
+    paraCollection->setRootMonitor(this);
 
     onlinemon->setCollections(_colls);
   }
@@ -254,7 +254,11 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     // add some info into the simple event header
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
-
+    
+    auto slowpara = ev.GetSlowPara();
+    for(auto &e: slowpara)
+      simpEv.setSlow_para(e.first, e.second);
+	
     if (skip_dodgy_event)
     {
       return; //don't process any further
