@@ -192,6 +192,13 @@ namespace eudaq {
     m_timestamp[i]=static_cast<uint64_t>(clock());
   }
 
+  bool Event::HasTag(const std::string &name) const{
+    if (m_tags.find(name) == m_tags.end())
+      return false;
+    else
+      return true;
+  }
+
   void Event::pushTimeStampToNow()
   {
     m_timestamp.push_back(static_cast<uint64_t>(clock()));

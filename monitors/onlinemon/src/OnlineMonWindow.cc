@@ -368,14 +368,12 @@ void OnlineMonWindow::autoUpdate() {
 	  std::lock_guard<std::mutex> lck(*mu);
 	  h->Draw(_hitmapOptions[tree].c_str());
 	  gPad->Update();
-	  std::cout<< ">>> in h 3"<<std::endl;
 	}
 	TGraph *g = dynamic_cast<TGraph *> (hg);
 	if(g){
 	  std::lock_guard<std::mutex> lck(*mu);
 	  g->Draw(_hitmapOptions[tree].c_str());
 	  gPad->Update();
-	  std::cout<< ">>> in g 3"<<std::endl;
 	}
       }
     }

@@ -203,6 +203,16 @@ namespace eudaq {
 	std::cout<< "SCTConverterPlugin: Error, no block in RawdataEvent"<<std::endl;
 	return false;
       }
+
+      std::string tagname;
+      tagname = "Temperature";
+      if(raw->HasTag(tagname)){
+	sev.SetTag(tagname,raw->GetTag(tagname));
+      }
+      tagname = "Voltage";
+      if(raw->HasTag(tagname)){
+	sev.SetTag(tagname,raw->GetTag(tagname));
+      }
       
       for(size_t n = 0; n<nblocks; n++){
 	std::vector<unsigned char> block = raw->GetBlock(n);
