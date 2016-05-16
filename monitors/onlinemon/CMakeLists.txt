@@ -47,3 +47,11 @@ INSTALL(TARGETS OnlineMon.exe
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+
+
+IF (found_root_major_vers GREATER 5)
+  INSTALL(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict_rdict.pcm
+  DESTINATION bin
+  )
+ENDIF (found_root_major_vers GREATER 5)

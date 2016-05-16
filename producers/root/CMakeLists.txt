@@ -43,5 +43,12 @@ INSTALL(TARGETS ${ROOTProducer_name}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
-)
-# TODO: in the case of ROOT6, additional <name>_rdict.pcm file should be copied to library dir.
+  )
+
+IF (found_root_major_vers GREATER 5)
+  INSTALL(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/ROOTProducer_Dict_rdict.pcm
+  ${CMAKE_CURRENT_BINARY_DIR}/ROOTDemoHardware_Dict_rdict.pcm
+  DESTINATION lib
+  )
+ENDIF (found_root_major_vers GREATER 5)
