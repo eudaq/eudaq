@@ -31,7 +31,6 @@ before_build:
     cd build
 
     cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF ..
-build:
-  project: C:/projects/eudaq/build/INSTALL.vcxproj
-  verbosity: minimal
 
+build_script:
+- msbuild INSTALL.vcxproj
