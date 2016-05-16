@@ -23,6 +23,13 @@ EUDAQMonitorHistos::EUDAQMonitorHistos(const SimpleStandardEvent &ev) {
   TracksPerEvent =
       new TProfile("Tracks per Event", "Tracks per Event", 1000, 0, 20000);
 
+
+  m_EventN_vs_TimeStamp = new TGraph();
+  m_EventN_vs_TimeStamp->SetTitle("event number vs timestamp");
+  m_EventN_vs_TimeStamp->GetXaxis()->SetTitle("timestamp");
+  m_EventN_vs_TimeStamp->GetYaxis()->SetTitle("event number");
+
+  
 #ifdef EUDAQ_LIB_ROOT6
   Hits_vs_EventsTotal->SetCanExtend(TH1::kAllAxes);
   TracksPerEvent->SetCanExtend(TH1::kAllAxes);
@@ -80,19 +87,20 @@ EUDAQMonitorHistos::~EUDAQMonitorHistos() {
 void EUDAQMonitorHistos::Fill(const SimpleStandardEvent &ev) {
 
   unsigned int event_nr = ev.getEvent_number();
-  Planes_perEventHisto->Fill(ev.getNPlanes());
   unsigned int nhits_total = 0;
 
+  std::lock_guard<std::mutex> lck(m_mu);
+  Planes_perEventHisto->Fill(ev.getNPlanes());
   for (unsigned int i = 0; i < nplanes; i++) {
     Hits_vs_PlaneHisto->Fill(i, ev.getPlane(i).getNHits());
     Hits_vs_Events[i]->Fill(event_nr, ev.getPlane(i).getNHits());
-    TLUdelta_perEventHisto[i]->Fill(
-        event_nr,
-        ev.getPlane(i).getTLUEvent() -
-            (event_nr % 32768)); // TLU counter can only hnadel 32768 counts
+    TLUdelta_perEventHisto[i]->Fill(event_nr,ev.getPlane(i).getTLUEvent() -
+				    (event_nr % 32768)); // TLU counter can only hnadel 32768 counts
     nhits_total += ev.getPlane(i).getNHits();
   }
   Hits_vs_EventsTotal->Fill(event_nr, nhits_total);
+
+  m_EventN_vs_TimeStamp->SetPoint(m_EventN_vs_TimeStamp->GetN(),ev.getEvent_timestamp(), ev.getEvent_number());
 }
 
 void EUDAQMonitorHistos::Fill(const unsigned int evt_number,
@@ -109,6 +117,10 @@ void EUDAQMonitorHistos::Write() {
   }
   Hits_vs_EventsTotal->Write();
   TracksPerEvent->Write();
+}
+
+TNamed *EUDAQMonitorHistos::getEventN_vs_TimeStamp() const{
+  return m_EventN_vs_TimeStamp;
 }
 
 TProfile *EUDAQMonitorHistos::getHits_vs_Events(unsigned int i) const {
@@ -131,7 +143,6 @@ TProfile *EUDAQMonitorHistos::getTLUdelta_perEventHisto(unsigned int i) const {
   return TLUdelta_perEventHisto[i];
 }
 
-// TH2I *EUDAQMonitorHistos::getTracksPerEventHisto() const
 TProfile *EUDAQMonitorHistos::getTracksPerEventHisto() const {
   return TracksPerEvent;
 }
