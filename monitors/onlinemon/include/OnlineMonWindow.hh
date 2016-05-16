@@ -104,15 +104,14 @@ protected:
 #endif
 public:
   OnlineMonWindow(const TGWindow *p, UInt_t w, UInt_t h);
-  //#ifndef __CINT__
-  // void setRootMonitor(RootMonitor *mon) {_mon = mon;}
-  //#endif
+  #ifndef __CINT__
+  void registerMutex(std::string tree, std::mutex *m);
+  #endif
   void registerTreeItem(std::string);
   void makeTreeItemSummary(std::string);
   void addTreeItemSummary(std::string item, std::string histoitem);
   void registerHisto(std::string tree, TNamed *h, std::string op = "",
                      const unsigned int = kLin);
-  void registerMutex(std::string tree, std::mutex *m);
   void actor(TGListTreeItem *item, Int_t btn);
   void actorMenu(TGListTreeItem *item, Int_t btn, Int_t x, Int_t y);
   void registerPlane(char *sensor, int id);
