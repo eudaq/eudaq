@@ -751,7 +751,14 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (m_n_trig>0 && m_period>0) {
     char cmd[100];
     snprintf(cmd, 100, "${SCRIPT_DIR}/pulser.py 1 %e %d", m_period, m_n_trig);
-    system(cmd);
+    int attempts = 0;
+    bool success = false;
+    while (!success && attempts++<5) {
+        success = (system(cmd)==0);
+    }
+    if (!success) {
+      EUDAQ_ERROR("Failed to configure the pulser!");
+    }
   }
 
   eudaq::mSleep(5000); // TODO remove this again - trying to protect from
@@ -1318,7 +1325,15 @@ void PALPIDEFSProducer::OnStopRun() {
   if (m_n_trig>0 && m_period>0) {
     char cmd[100];
     snprintf(cmd, 100, "${SCRIPT_DIR}/pulser.py 0"); // turn the pulser off
-    system(cmd);
+
+    int attempts = 0;
+    bool success = false;
+    while (!success && attempts++<5) {
+        success = (system(cmd)==0);
+    }
+    if (!success) {
+      EUDAQ_ERROR("Failed to configure the pulser!");
+    }
   }
 
   if (!PowerOffTestSetup()) {

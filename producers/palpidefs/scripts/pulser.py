@@ -48,11 +48,13 @@ def main(turnOn, period, cycles):
 
 # parameters periode
 if __name__ == "__main__":
-    if len(sys.argv)>=2 and (int(sys.argv[1])==1):
-        period = float(0.)
-        if len(sys.argv)>=4:
+    try:
+        if len(sys.argv)>=4 and (int(sys.argv[1])==1):
             period = float(sys.argv[2])
             cycles = int(sys.argv[3])
-        main(True, period, cycles)
-    else:
-        main(False, float(0.), float(0.))
+            main(True, period, cycles)
+        else:
+            main(False, float(0.), float(0.))
+        exit(0)
+    except:
+        exit(1)
