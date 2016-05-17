@@ -80,9 +80,17 @@ namespace eudaq {
     static RawDataEvent BORE(std::string type, unsigned run) {
       return RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
     }
+    static RawDataEvent *newBORE(std::string type, unsigned run) {
+      return new RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
+    }
     static RawDataEvent EORE(std::string type, unsigned run, unsigned event) {
       return RawDataEvent(type, run, event, Event::FLAG_EORE);
     }
+    static RawDataEvent *newEORE(std::string type, unsigned run,
+				 unsigned event) {
+      return new RawDataEvent(type, run, event, Event::FLAG_EORE);
+    }
+
     virtual void Serialize(Serializer &) const;
 
     /// Return the type string.
