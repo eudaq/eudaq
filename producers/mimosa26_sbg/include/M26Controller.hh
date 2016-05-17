@@ -21,6 +21,8 @@
 typedef int SOCKET;
 #endif
 
+#include "iphc_run_ctrl_exp.h"
+
 using eudaq::to_string;
 
 // the port client will be connecting to
