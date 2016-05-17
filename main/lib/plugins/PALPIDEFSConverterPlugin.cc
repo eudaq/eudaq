@@ -137,6 +137,7 @@ namespace eudaq {
       m_SCS_noise = new float *[m_nLayers];
       m_SCS_noise_rms = new float *[m_nLayers];
 
+      m_last_timestamp = new unsigned long long[m_nLayers];
 
 #ifdef PALPIDEFS
       TConfig* conf = new TConfig(TYPE_CHIP, 1);
@@ -278,6 +279,8 @@ namespace eudaq {
         }
         m_daq_header_length[i]  = m_daq_board[i]->GetEventHeaderLength();
         m_daq_trailer_length[i] = m_daq_board[i]->GetEventTrailerLength();
+
+        m_last_timestamp[i] = 0;
 #endif
       }
 #ifdef WRITE_TEMPERATURE_FILE
@@ -625,46 +628,70 @@ namespace eudaq {
           }
 
           // checking whether all layers have been found in the data stream
+          bool event_incomplete = false;
           for (int i = 0; i < m_nLayers; i++) {
             if (!layers_found[i]) {
               cout << "ERROR: Event " << ev.GetEventNumber() << " layer " << i
                    << " was missing in the data stream." << endl;
               sev.SetFlags(Event::FLAG_BROKEN);
+              event_incomplete = true;
             }
           }
 
 #ifdef MYDEBUG
           cout << "EOD" << endl;
 #endif
+          if (!event_incomplete) {
+            // subtract reference from the timestamps
+            for (int i = 0; i < m_nLayers; i++) {
+              timestamps[i]-=timestamps_reference[i];
+            }
 
-          // subtract reference from the timestamps
-          for (int i = 0; i < m_nLayers; i++) {
-            timestamps[i]-=timestamps_reference[i];
-          }
+            // check timestamps
+            bool ok_zero = true;
+            bool ok_ref = true;
+            bool ok_last = true;
+            for (int i = 0; i < m_nLayers - 1; i++) {
+              if ((timestamps[i + 1] == 0 && timestamps[i]!=0) || (timestamps[i] == 0 && timestamps[i+1]!=0)) {
+                cout << "Found plane with timestamp equal to zero, while others aren't zero!" << endl;
+                ok_zero=false;
+                break;
+              }
+              double rel_diff_ref = fabs(1.0 - (double)timestamps[i] / (double)timestamps[i + 1]);
+              double abs_diff_ref = fabs((double)timestamps[i] - (double)timestamps[i + 1]);
+              if (rel_diff_ref > 0.0001 && abs_diff_ref> 10) {
+                cout << "Relative difference to reference timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_ref <<" / " << abs_diff_ref << " in planes " << i << " and " << i+1 <<endl;
+                ok_ref=false;
+              }
+              double rel_diff_last = fabs(1.0 - ((double)timestamps[i]-(double)m_last_timestamp[i]) / ((double)timestamps[i + 1]-(double)m_last_timestamp[i + 1]));
+              double abs_diff_last = fabs(((double)timestamps[i] - (double)m_last_timestamp[i]) - ((double)timestamps[i+1] - (double)m_last_timestamp[i+1]));
+              if (rel_diff_last > 0.0001 && abs_diff_last>10 ) {
+                cout << "Relative difference to last timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_last << " / " << abs_diff_last << " in planes " << i << " and " << i+1 << endl;
+                ok_last = false;
+              }
+            }
+            if (!ok_zero || !ok_ref || !ok_last ) { // timestamps suspicious
+              cout << "ERROR: Event " << ev.GetEventNumber()
+                   << " Timestamps not consistent." << endl;
+//#ifdef MYDEBUG
+              for (int i = 0; i < m_nLayers; i++) {
+                //printf("%d %llu %llu %llu %llu\n", i, trigger_ids[i], timestamps[i], timestamps_reference[i], m_last_timestamp[i]);
+                long long diff = (long long)timestamps[i] -(long long)timestamps[0];
 
-          // check timestamps
-          bool ok = true;
-          for (int i = 0; i < m_nLayers - 1; i++) {
-            if ((timestamps[i + 1] == 0 && timestamps[i]!=0) ||
-                (timestamps[i + 1] != 0 &&
-                 (fabs(1.0 - (double)timestamps[i] / (double)timestamps[i + 1]) >
-                  0.0001 &&
-                  fabs((double)timestamps[i] - (double)timestamps[i + 1]) > 20)))
-              ok = false;
-          }
-          if (!ok) {
-            cout << "ERROR: Event " << ev.GetEventNumber()
-                 << " Timestamps not consistent." << endl;
-#ifdef MYDEBUG
-            for (int i = 0; i < m_nLayers; i++)
-              printf("%d %llu %llu %llu\n", i, trigger_ids[i], timestamps[i], timestamps_reference[i]);
-#endif
+                cout << i << '\t' << ev.GetEventNumber() << '\t' << trigger_ids[i] << '\t' << timestamps[i]+timestamps_reference[i] << '\t' << '\t' << timestamps[i] << '\t' << m_last_timestamp[i] << '\t' <<  (long long)timestamps[i]-(long long)m_last_timestamp[i] << '\t' << diff << '\t' << (double)diff/(double)timestamps[0]  << endl;
+              }
+//#endif
 #ifdef CHECK_TIMESTAMPS
-            sev.SetFlags(Event::FLAG_BROKEN);
+              sev.SetFlags(Event::FLAG_BROKEN);
 #endif
-            sev.SetTimestamp(0);
-          } else {
-            sev.SetTimestamp(timestamps[0]);
+              sev.SetTimestamp(0);
+            } else { // timestamps unsuspicious
+              sev.SetTimestamp(timestamps[0]);
+              // last timestamps
+              for (int i = 0; i < m_nLayers; i++) {
+                m_last_timestamp[i] = timestamps[i];
+              }
+            }
           }
         }
       }
@@ -812,6 +839,7 @@ protected:
   int *m_strobeb_length;
   int *m_trigger_delay;
   int *m_readout_delay;
+  unsigned long long* m_last_timestamp;
   bool *m_do_SCS;
   int m_SCS_charge_start;
   int m_SCS_charge_stop;
