@@ -17,7 +17,7 @@
 struct SingleEvent {
   SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp, uint64_t timestamp_reference)
       : m_buffer(0), m_length(length), m_trigger_id(trigger_id),
-        m_timestamp(timestamp), m_timestamp_corrected(timestamp), m_timestamp_reference(timestamp_reference) {
+        m_timestamp(timestamp), m_timestamp_reference(timestamp_reference) {
     m_buffer = new unsigned char[length];
   }
   ~SingleEvent() {
@@ -28,7 +28,6 @@ struct SingleEvent {
   unsigned int m_length;
   uint64_t m_trigger_id;
   uint64_t m_timestamp;
-  uint64_t m_timestamp_corrected;
   uint64_t m_timestamp_reference;
 };
 
@@ -142,6 +141,7 @@ protected:
   int m_boardid; // id of the DAQ board as used by TTestSetup::GetDAQBoard()...
   int m_debuglevel;
   uint64_t m_last_trigger_id;
+  uint64_t m_timestamp_reference;
 
   TTestSetup* m_test_setup;
   TDAQBoard* m_daq_board;
@@ -168,7 +168,7 @@ public:
   PALPIDEFSProducer(const std::string &name, const std::string &runcontrol,
                     int debuglevel = 0)
       : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0),
-        m_timestamp_reference(0x0), m_done(false),
+        m_timestamp_last(0x0), m_done(false),
         m_running(false), m_stopping(false),
         m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
         m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
@@ -227,7 +227,7 @@ protected:
   }
 
   unsigned m_run, m_ev;
-  uint64_t *m_timestamp_reference;
+  uint64_t *m_timestamp_last;
   bool m_done;
   bool m_running;
   bool m_stopping;
