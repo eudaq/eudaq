@@ -137,19 +137,19 @@ namespace eudaq {
     virtual void Initialize(const Event &bore, const Configuration &cnf) {
       cnf.SetSection("Converter.ITS");
       m_swap_xy = cnf.Get("SWAP_XY", 0);  //TODO: set to 0, now testing
-
-      m_tlu_blockid = bore.GetTag("TLU_BLOCKID", -1);
-      int abc_nblocks = bore.GetTag("ABC_N_BLOCKS", 0);
-      for(int i = 0; i< abc_nblocks; i++){
+      m_abc_ids_types.clear();
+      for(int i = 0;; i++){
 	std::stringstream ss;
 	ss <<"ABC_BLOCKID_"<<i;
 	int id=bore.GetTag(ss.str().c_str(), -1);
 	ss.str("");
 	ss <<"ABC_BLOCKTYPE_"<<i;
 	std::string type=bore.GetTag(ss.str().c_str(), std::string(""));
-	if(id!=-1){
+	if(id!=-1 && !type.empty()){
 	  m_abc_ids_types[id] = type;
 	}
+	else
+	  break;
       }
     }
 
@@ -190,38 +190,39 @@ namespace eudaq {
 	std::vector<unsigned char> block = raw->GetBlock(n);
 	unsigned  blockid = raw->GetID(n);
 	std::string type;
-	if(!m_abc_ids_types.empty()&&m_abc_ids_types.find(blockid)==m_abc_ids_types.end()){
-	  continue; // not empty and not find
-	}
 	if(m_abc_ids_types.empty()){ //empty
 	  type.assign("ABC");
 	}
-	else{//not empty but find
-	  type = m_abc_ids_types.find(blockid)->second;
-	  if(type.empty())
-	    type.assign("ABC");
-	}	
-	
-	std::vector<bool> channels;
-	eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
-	std::string sensor_type;
-	StandardPlane plane(blockid, EVENT_TYPE_ITS_ABC, type.c_str());
-	if(m_swap_xy)
-	  plane.SetSizeZS(1,channels.size(),0);
-	else
-	  plane.SetSizeZS(channels.size(), 1, 0);
-
-	unsigned x = 0;	// TODO:: swap x and y axises
-	for (size_t i = 0; i < channels.size(); ++i) {
-	  ++x;
-	  if (channels[i] == true) {
-	    if(m_swap_xy)
-	      plane.PushPixel(1, x, 1);
-	    else
-	    plane.PushPixel(x, 1 , 1);
+	else{
+	  if(m_abc_ids_types.find(blockid)==m_abc_ids_types.end()){
+	    continue; // not empty and not find
 	  }
+	  else{//find
+	    type = m_abc_ids_types.find(blockid)->second;
+	  }	
 	}
-	sev.AddPlane(plane);
+	if(type.substr(0, 3)=="abc" || type.substr(0, 3)=="ABC"){
+	  std::vector<bool> channels;
+	  eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
+	  std::string sensor_type;
+	  StandardPlane plane(blockid, EVENT_TYPE_ITS_ABC, type.c_str());
+	  if(m_swap_xy)
+	    plane.SetSizeZS(1,channels.size(),0);
+	  else
+	    plane.SetSizeZS(channels.size(), 1, 0);
+	  
+	  unsigned x = 0;	// TODO:: swap x and y axises
+	  for (size_t i = 0; i < channels.size(); ++i) {
+	    ++x;
+	    if (channels[i] == true) {
+	      if(m_swap_xy)
+		plane.PushPixel(1, x, 1);
+	      else
+		plane.PushPixel(x, 1 , 1);
+	    }
+	  }
+	  sev.AddPlane(plane);
+	}
       }
       return true;
     }
@@ -312,12 +313,11 @@ namespace eudaq {
     static SCTConverterPlugin_ITS_ABC m_instance;
 
   private:
-    SCTConverterPlugin_ITS_ABC() : DataConverterPlugin(EVENT_TYPE_ITS_ABC), m_swap_xy(0),  m_tlu_blockid(-1) {}
+    SCTConverterPlugin_ITS_ABC() : DataConverterPlugin(EVENT_TYPE_ITS_ABC), m_swap_xy(0){}
 
     unsigned m_boards = 1;  //TODO:: remove
     unsigned m_swap_xy;
 
-    int m_tlu_blockid;
     std::map<int, std::string> m_abc_ids_types;
     // The single instance of this converter plugin
   }; // class SCTConverterPlugin
