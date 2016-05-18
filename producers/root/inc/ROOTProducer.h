@@ -4,19 +4,9 @@
 #include "RQ_OBJECT.h"
 #include "Rtypes.h"
 
-#ifdef WIN32
-#ifndef __CINT__
-#define DLLEXPORT __declspec(dllexport)
-#else
-#define DLLEXPORT
-#endif
-#else
-#define DLLEXPORT
-#endif
-
 #include <string>
 
-class DLLEXPORT ROOTProducer {
+class ROOTProducer {
   RQ_OBJECT("ROOTProducer")
 public:
   ROOTProducer();
