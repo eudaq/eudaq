@@ -7,7 +7,7 @@
 
 MESSAGE(STATUS "Looking for IPHCRC dependencies: lib and header")
 
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".dll")
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".lib")
 
 find_path(IPHCRC_INCLUDE_DIR iphc_run_ctrl_exp.h
   HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../../extern/IPHCRC/include")
