@@ -21,6 +21,7 @@
 #define ERR_LOG_LVL_WARNINGS_ERRORS  2
 #define ERR_LOG_LVL_ERRORS           3
 
+#include <inttypes.h> 
 
 // ------------------------------------------
 // General types definition
@@ -89,11 +90,11 @@
 #else
 
   #ifndef UInt64
-    typedef unsigned __int64 UInt64;
+    typedef uint64_t UInt64;
   #endif
 
   #ifndef SInt64
-    typedef __int64 SInt64;
+    typedef int64_t SInt64;
   #endif
 
 #endif
