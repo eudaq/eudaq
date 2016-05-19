@@ -3,7 +3,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/StringEvent.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/AidaPacket.hh"
+// #include "eudaq/AidaPacket.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 
@@ -14,7 +14,7 @@
 
 using eudaq::StringEvent;
 using eudaq::RawDataEvent;
-using eudaq::AidaPacket;
+// using eudaq::AidaPacket;
 
 class PyProducer : public eudaq::Producer {
   public:
