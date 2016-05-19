@@ -86,7 +86,7 @@ class fileOpener {
 public:
   using buffer_t = std::ifstream;
   using input_buffer_t = std::string;
-  fileOpener(const std::string& name) :inf(&name) {}
+  fileOpener(const std::string name) :inf(&name) {} 
   fileOpener()  {}
   const input_buffer_t* inf = nullptr;
 };
@@ -114,7 +114,7 @@ public:
   for_each() {}
   const input_buffer_t* m_vector = nullptr;
 };
-for_each& setBuffer(const for_each::input_buffer_t& inBuffer, for_each & for_each__) {
+for_each& setBuffer(const for_each::input_buffer_t& inBuffer, for_each & for_each__) {// ? && 
   for_each__.m_vector = &inBuffer;
   return for_each__;
 }
@@ -131,7 +131,10 @@ int main(int, char ** argv) {
   std::vector<int> vec = { 1, 2, 34, 45 };
   
   runTask(setBuffer("hallo", display()));
-  runTask(setBuffer(vec, for_each()), display());
-  runTask(setBuffer(vec, for_each()), display());
-  runTask(fileOpener("d:/DEVICE_1_ASIC_on_Position_5_400V.txt"), readFile(), display());
+  for_each for_each0;
+  for_each for_each1;
+  runTask(setBuffer(vec, for_each0), display());
+  runTask(setBuffer(vec, for_each1), display());
+  fileOpener file("d:/DEVICE_1_ASIC_on_Position_5_400V.txt");
+  runTask(file, readFile(), display());
 }

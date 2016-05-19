@@ -2,6 +2,9 @@
 #include "eudaq/Processors.hh"
 #include "eudaq/baseFileReader.hh"
 #include "eudaq/OptionParser.hh"
+#include<thread>
+#include<chrono>
+
 
 using namespace eudaq;
 using namespace Processors;
@@ -13,8 +16,11 @@ int main(int, char ** argv) {
     op.Parse(argv);
     Processor_batch batch;
     batch >> fileReader(fileConfig(op.GetArg(0)))
-      >> ShowEventNR(1000) >> dataSender(dest.Value());
-    batch.init(); Sleep(1000); batch.run(); batch.end();
+	  >> ShowEventNR(1000) >> dataSender(dest.Value());
+    batch.init();
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    batch.run();
+    batch.end();
   } catch (...) {
     return op.HandleMainException();
   }
