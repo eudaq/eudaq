@@ -19,7 +19,7 @@ public:
 
     configure = false;
 
-    std::cout << "NI Producer was started successful " << std::endl;
+    std::cout << "M26_SBG_Producer was started successfully " << std::endl;
   }
   void MainLoop() {
     do {
@@ -52,22 +52,25 @@ public:
     unsigned char configur[5] = "conf";
 
     try {
+      std::cout << "Configuring ...(" << param.Name() << ")" << std::endl;
       if (!configure) {
         ni_control = std::make_shared<NiController>();
-        ni_control->Configure(param);
-        ni_control->GetProduserHostInfo();
-        ni_control->ConfigClientSocket_Open(param);
-        ni_control->DatatransportClientSocket_Open(param);
-        std::cout << " " << std::endl;
+        //ni_control->Configure(param);
+        //ni_control->GetProduserHostInfo();
+        //ni_control->ConfigClientSocket_Open(param);
+        //ni_control->DatatransportClientSocket_Open(param);
+        //std::cout << " " << std::endl;
         // ---
         ni_control->Connect(param);
         ni_control->Init(param);
+        ni_control->LoadFW(param);
+        ni_control->JTAG(param);
 
 	// ---
         configure = true;
       }
 
-      TriggerType = param.Get("TriggerType", 255);
+      /*TriggerType = param.Get("TriggerType", 255);
       Det = param.Get("Det", 255);
       Mode = param.Get("Mode", 255);
       NiVersion = param.Get("NiVersion", 255);
@@ -78,9 +81,10 @@ public:
         MimosaEn[i] = param.Get("MimosaEn_" + to_string(i + 1), 255);
       }
       OneFrame = param.Get("OneFrame", 255);
+      */
 
-      std::cout << "Configuring ...(" << param.Name() << ")" << std::endl;
 
+      /*
       conf_parameters[0] = NiVersion;
       conf_parameters[1] = TriggerType;
       conf_parameters[2] = Det;
@@ -141,8 +145,10 @@ public:
         EUDAQ_ERROR("NI crate can not be configure: FIFO_5 Start");
         NiConfig = true;
       } // FIFO_2 Start
-
-      if (NiConfig) {
+      */
+      
+      bool some_error_handler = false;
+      if (some_error_handler) { // FIXME
         std::cout << "NI crate was Configured with ERRORs " << param.Name()
                   << " " << std::endl;
         SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
@@ -151,6 +157,7 @@ public:
         EUDAQ_INFO("Configured (" + param.Name() + ")");
         SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
       }
+      
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");

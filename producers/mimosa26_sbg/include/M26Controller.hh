@@ -35,9 +35,6 @@ using eudaq::to_string;
 #define START 0x1254
 #define STOP 0x1255
 
-//#define APP_ERR_LOG_FILE "C:\opt\eudaq\log\IRC_err.txt"
-//#define APP_MSG_LOG_FILE "C:\opt\eudaq\log\IRC_msgs.txt"
-
 class NiController {
 
 public:

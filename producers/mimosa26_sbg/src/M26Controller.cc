@@ -60,16 +60,115 @@ void NiController::Connect(const eudaq::Configuration &param) {
 void NiController::Init(const eudaq::Configuration &param) {
 
   SInt32 ret = -1;
-  SInt32 SensorType = 1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
   DaqAnswer_CmdReceived = -1;
   DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+
+  SInt32 SensorType = 1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
 
   ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+    
+  std::cout << " SendCCmdInit = " << ret << std::endl;
 
-  if(!ret) EUDAQ_ERROR("SendCmdInit failed"); // FIXME make/add better error handling
- 
+  if(ret) EUDAQ_ERROR("Send CmdInit failed"); // FIXME make/add better error handling
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 5000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdInit failed"); // FIXME make/add better error handling
 }
 
+void NiController::LoadFW(const eudaq::Configuration &param) {
+
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+
+  SInt32 CmdNumber = 777;
+
+  ret = IRC_RCBT2628__FRcSendCmdFwLoad ( CmdNumber/*maybe*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+  if(ret) EUDAQ_ERROR("Send CmdLoadFW failed"); // FIXME make/add better error handling
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdLoadFW failed"); // FIXME make/add better error handling
+}
+
+void NiController::UnLoadFW() {
+  // unload FW
+  std::cout << " Unload FW " << std::endl;
+}
+
+void NiController::JTAG(const eudaq::Configuration & param) {
+  // JTAG sensors via mcf file
+  std::cout << " JTAG sensors " << std::endl;
+  std::string m_jtag;
+  m_jtag = param.Get("JTAG_file", "");
+
+  /*debug*/ std::cout << " JTAG file " << m_jtag << std::endl;
+
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+
+  SInt32 CmdNumber = 666;
+
+  ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber, (char*)(m_jtag.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+
+  if(ret) {
+    EUDAQ_ERROR("Send CmdJtagLoad failed"); // FIXME make/add better error handling
+    return;
+  }
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdJtagLoad failed"); // FIXME make/add better error handling
+}
+
+void NiController::Configure_Run(const eudaq::Configuration & /*param*/) {
+  // Configure Run
+  std::cout << " Configure Run " << std::endl;
+
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+  IRC_RCBT2628__TCmdRunConf RunConf;
+  RunConf.MapsName         = 1; // ASIC__MI26;
+  RunConf.MapsNb           = 6;
+  RunConf.RunNo            = 666; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
+  RunConf.TotEvNb          = 10000; // ? does the controller need to know?
+  RunConf.EvNbPerFile      = 1000; // should be controlled by eudaq
+  RunConf.FrameNbPerAcq    = 400;
+  RunConf.DataTransferMode = 3; // 0 = No, 1 = IPHC, 2 = EUDET2, 3 = EUDET3 // deprecated! send all data to producer!
+  RunConf.TrigMode         = 0; // ??
+  RunConf.SaveToDisk       = 0; // 0 = No, 1 = Multithreading, 2 = Normal
+  RunConf.SendOnEth        = 0; // deprecated, not need with eudaq
+  RunConf.SendOnEthPCent   = 0; // deprecated, not need with eudaq
+
+  sprintf ( RunConf.DestDir, "c:\\data\\2015_03_DESY_SALAT\\666" );
+  sprintf ( RunConf.FileNamePrefix, "RUN__" );
+  sprintf ( RunConf.JtagFileName, "C:\\CCMOS_SCTRL\\MIMOSA28_JTAG\\config_files\\beam_14chip_module8-16-11_2ref_cut10.mcf" );
+
+  SInt32 CmdNumber = 777;
+
+  ret = IRC_RCBT2628__FRcSendCmdRunConf ( CmdNumber, &RunConf, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+
+  if(ret) {
+    EUDAQ_ERROR("Send CmdRunConf failed"); // FIXME make/add better error handling
+    return;
+  }
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdRunConf failed"); // FIXME make/add better error handling
+}
 
 // --- Artem
 void NiController::Configure(const eudaq::Configuration & /*param*/) {
