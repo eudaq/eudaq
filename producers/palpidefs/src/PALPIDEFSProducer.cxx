@@ -351,8 +351,16 @@ void DeviceReader::Loop() {
     SetReading(true);
     int error = 0;
     bool readEvent = false;
+    unsigned char* debug = 0x0;
+    int debug_length = 0;
     do {
       readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength, &error, &debug, &debug_length);
+#ifdef DEBUG_USB
+      if (debug_length>0) {
+        std::vector<unsigned char> vec(&debug[0], &debug[debug_length]);
+        m_debug.insert(m_debug.end(), vec.begin(), vec.end());
+      }
+#endif
     } while (error==-7 && IsRunning() && !readEvent);
     SetReading(false);
 
@@ -1142,6 +1150,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   }
   m_run = param;
   m_ev = 0;
+  m_good_ev = 0;
+  m_oos_ev = 0;
+  m_last_oos_ev = (unsigned)-1;
 
   // the queues should be empty at this stage, if not flush them
   PrintQueueStatus();
@@ -1299,6 +1310,15 @@ void PALPIDEFSProducer::OnStopRun() {
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     std::cout << "Stopping DAQ " << std::endl;
+
+#ifdef DEBUG_USB
+    char tmp[50];
+    snprintf(tmp, 50, "debug_data_%d_%d.dat", m_run, i);
+    std::ofstream outfile(tmp, std::ios::out | std::ios::binary);
+    outfile.write((const char*)&m_reader[i]->m_debug[0], m_reader[i]->m_debug.size());
+    outfile.close();
+#endif
+
     m_reader[i]->StopDAQ();
     m_reader[i]->SetRunning(false);
   }
@@ -1380,7 +1400,6 @@ void PALPIDEFSProducer::OnUnrecognised(const std::string &cmd,
 
 void PALPIDEFSProducer::Loop() {
   unsigned long count = 0;
-  unsigned long flush_count = 0;
   time_t last_status = time(0);
   do {
     eudaq::mSleep(20);
@@ -1499,18 +1518,27 @@ int PALPIDEFSProducer::BuildEvent() {
     double abs_diff_last = fabs(((double)timestamps[i] - (double)timestamps_last[i]) - ((double)timestamps[0] - (double)timestamps_last[0]));
     if (rel_diff_last > 0.0001 && abs_diff_last>10 ) {
       std::cout << "Relative difference to last timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_last << " / " << abs_diff_last << " in planes " << planes[0] << " and " << planes[i] << std::endl;
-      std::cout << timestamps[0] << '\t' << timestamps_last[0] << '\t' << timestamps[i] << '\t' << timestamps_last[i] << std::endl;
       timestamp_error_last = true;
       bad_plane[planes[i]] = true;
     }
   }
   if (timestamp_error_zero || timestamp_error_ref || timestamp_error_last) { // timestamps suspicious
-    char msg[200];
-    sprintf(msg, "Event %d. Out of sync", m_ev);
-    std::string str(msg);
-    EUDAQ_WARN(str);
-    SetStatus(eudaq::Status::LVL_WARN, str);
+    if (m_last_oos_ev!=m_ev) {
+      m_last_oos_ev=m_ev;
+      ++m_oos_ev;
+      m_good_ev = 0;
 
+      char msg[200];
+      sprintf(msg, "Event %d. Out of sync", m_ev);
+      std::string str(msg);
+      if (m_oos_ev>5) {
+        SetStatus(eudaq::Status::LVL_WARN, str);
+        EUDAQ_WARN(str);
+      }
+      else  {
+        EUDAQ_INFO(str);
+      }
+    }
     for (int i = 0; i < m_nDevices; i++) {
       long long diff = (long long)timestamps[i] -(long long)timestamps[0];
 
@@ -1521,7 +1549,12 @@ int PALPIDEFSProducer::BuildEvent() {
                 << diff << '\t' << (double)diff/(double)timestamps[0]  << std::endl;
     }
   }
-
+  else {
+    ++m_good_ev;
+    if (m_good_ev>5) {
+      m_oos_ev = 0;
+    }
+  }
 
   bool timestamp_error = (timestamp_error_zero || timestamp_error_ref || timestamp_error_last);
 

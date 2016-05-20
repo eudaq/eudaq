@@ -14,6 +14,8 @@
 // pALPIDEfs driver
 #include "TTestsetup.h"
 
+// #define DEBUG_USB
+
 struct SingleEvent {
   SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp, uint64_t timestamp_reference)
       : m_buffer(0), m_length(length), m_trigger_id(trigger_id),
@@ -94,6 +96,10 @@ public:
     return m_reading;
   }
 
+#ifdef DEBUG_USB
+  std::vector<unsigned char> m_debug;
+#endif
+
 protected:
   void Loop();
   void Print(int level, const char* text, uint64_t value1 = -1,
@@ -167,21 +173,21 @@ class PALPIDEFSProducer : public eudaq::Producer {
 public:
   PALPIDEFSProducer(const std::string &name, const std::string &runcontrol,
                     int debuglevel = 0)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0),
-        m_timestamp_last(0x0), m_done(false),
-        m_running(false), m_stopping(false),
-        m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
-        m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
-        m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
-        m_full_config_v3(), m_ignore_trigger_ids(true),
-        m_recover_outofsync(true), m_chip_type(0x0),
-        m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
-        m_readout_delay(0x0), m_chip_readoutmode(0x0),
-        m_monitor_PSU(false), m_back_bias_voltage(-1),
-        m_dut_pos(-1.), m_dut_angle1(-1.), m_dut_angle2(-1.),
-        m_SCS_charge_start(-1), m_SCS_charge_stop(-1),
-        m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1),
-        m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
+    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_good_ev(0),
+      m_oos_ev(0), m_last_oos_ev(0), m_timestamp_last(0x0), m_done(false),
+      m_running(false), m_stopping(false),
+      m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
+      m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
+      m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
+      m_full_config_v3(), m_ignore_trigger_ids(true),
+      m_recover_outofsync(true), m_chip_type(0x0),
+      m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
+      m_readout_delay(0x0), m_chip_readoutmode(0x0),
+      m_monitor_PSU(false), m_back_bias_voltage(-1),
+      m_dut_pos(-1.), m_dut_angle1(-1.), m_dut_angle2(-1.),
+      m_SCS_charge_start(-1), m_SCS_charge_stop(-1),
+      m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1),
+      m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
   ~PALPIDEFSProducer() { PowerOffTestSetup(); }
 
   virtual void OnConfigure(const eudaq::Configuration &param);
@@ -226,7 +232,7 @@ protected:
     return m_configuring;
   }
 
-  unsigned m_run, m_ev;
+  unsigned m_run, m_ev, m_good_ev, m_oos_ev, m_last_oos_ev;
   uint64_t *m_timestamp_last;
   bool m_done;
   bool m_running;
