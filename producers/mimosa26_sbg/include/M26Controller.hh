@@ -59,7 +59,19 @@ public:
   unsigned int ConfigClientSocket_ReadLength(const char string[4]);
   std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
 
+  // -------------- SBG integration
   void Connect(const eudaq::Configuration &param);
+  void Init(const eudaq::Configuration &param);
+  void LoadFW(const eudaq::Configuration &param);
+  void UnLoadFW();
+  void JTAG(const eudaq::Configuration &param);
+  void Configure_Run(const eudaq::Configuration &param);
+  void UnConfigure_Run();
+  void Start_Run();
+  void Stop_Run();
+  void Status_Run(); // FIXME maybe not feasible with current FSM
+  void Quit();
+
 
 private:
   struct hostent *hclient, *hconfig, *hdatatransport;
@@ -100,8 +112,11 @@ private:
   //SInt8 APP_VGMsgFileLogLvl = 127;
   SInt8 APP_VGMsgUserLogLvl = 127;
 
-  char * APP_ERR_LOG_FILE = "C:/opt/eudaq/log/IRC_err.txt";
-  char * APP_MSG_LOG_FILE = "C:/opt/eudaq/log/IRC_msgs.txt";
+  char * APP_ERR_LOG_FILE = "C:/opt/eudaq/logs/IRC_err.txt";
+  char * APP_MSG_LOG_FILE = "C:/opt/eudaq/logs/IRC_msgs.txt";
+
+  SInt32 DaqAnswer_CmdReceived;
+  SInt32 DaqAnswer_CmdExecuted;
 
 };
 

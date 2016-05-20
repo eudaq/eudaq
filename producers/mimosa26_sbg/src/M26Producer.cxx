@@ -14,7 +14,7 @@ using eudaq::RawDataEvent;
 class NiProducer : public eudaq::Producer {
 public:
   NiProducer(const std::string &runcontrol)
-      : eudaq::Producer("MimosaNI", runcontrol), done(false), running(false),
+      : eudaq::Producer("Mimosa26_SBG", runcontrol), done(false), running(false),
         stopping(false) {
 
     configure = false;
@@ -55,11 +55,15 @@ public:
       if (!configure) {
         ni_control = std::make_shared<NiController>();
         ni_control->Configure(param);
-        //ni_control->Connect(param);
         ni_control->GetProduserHostInfo();
         ni_control->ConfigClientSocket_Open(param);
         ni_control->DatatransportClientSocket_Open(param);
         std::cout << " " << std::endl;
+        // ---
+        ni_control->Connect(param);
+        ni_control->Init(param);
+
+	// ---
         configure = true;
       }
 

@@ -200,7 +200,7 @@ typedef struct {
 // ---------------------------------
 
 
-//extern "C" __declspec(dllimport) SInt32 IRC__FBegin ( SInt8 ErrorLogLvl, char* ErrorLogFile, SInt8 MsgLogLvl, char* MsgLogFile );
+//extern "C" __declspec(dllimport) SInt32 IRC__FBegin ( SInt8 ErrorLogLvl, char* ErrorLogFile, SInt8 MsgLogLvl, char* MsgLogFile ); // declspec doesnt  seenm to needed
 extern "C" SInt32 IRC__FBegin ( SInt8 ErrorLogLvl, char* ErrorLogFile, SInt8 MsgLogLvl, char* MsgLogFile );
 extern "C" SInt32 IRC_RCBT2628__FRcEnd ();
 

@@ -52,22 +52,28 @@ NiController::NiController() {
 // --- SBG integration
 void NiController::Connect(const eudaq::Configuration &param) {
 
-  //IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
+  IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
  
-  //IRC_RCBT2628__FRcBegin ();
-  
+  IRC_RCBT2628__FRcBegin ();
+}
+
+void NiController::Init(const eudaq::Configuration &param) {
+
+  SInt32 ret = -1;
+  SInt32 SensorType = 1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+
+  ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+
+  if(!ret) EUDAQ_ERROR("SendCmdInit failed"); // FIXME make/add better error handling
+ 
 }
 
 
 // --- Artem
 void NiController::Configure(const eudaq::Configuration & /*param*/) {
   // NiIPaddr = param.Get("NiIPaddr", "");
-  std::cout << " Create RC steering object" << std::endl;
-  IRC_RCBT2628__TCmdRunConf RC;
-  RC.RunNo = 0;
-  IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
- 
-  IRC_RCBT2628__FRcBegin ();
 }
 
 void NiController::TagsSetting() {
