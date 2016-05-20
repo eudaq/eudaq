@@ -200,34 +200,35 @@ typedef struct {
 // ---------------------------------
 
 
-SInt32 IRC__FBegin ( SInt8 ErrorLogLvl, char* ErrorLogFile, SInt8 MsgLogLvl, char* MsgLogFile );
-SInt32 IRC_RCBT2628__FRcEnd ();
+//extern "C" __declspec(dllimport) SInt32 IRC__FBegin ( SInt8 ErrorLogLvl, char* ErrorLogFile, SInt8 MsgLogLvl, char* MsgLogFile );
+extern "C" SInt32 IRC__FBegin ( SInt8 ErrorLogLvl, char* ErrorLogFile, SInt8 MsgLogLvl, char* MsgLogFile );
+extern "C" SInt32 IRC_RCBT2628__FRcEnd ();
 
-SInt32 IRC_RCBT2628__FRcBegin ();
-SInt32 IRC_RCBT2628__FRcEnd   ();
+extern "C" SInt32 IRC_RCBT2628__FRcBegin ();
+extern "C" SInt32 IRC_RCBT2628__FRcEnd   ();
 
 
-SInt32 IRC_RCBT2628__FRcSendCmdGetLastCmdError  ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32* PtAnsLastCmdError, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdGetLastCmdError  ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32* PtAnsLastCmdError, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdInit             ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdInit             ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdEnd              ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdEnd              ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdAppQuit          ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdAppQuit          ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdFwLoad           ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdFwLoad           ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdFwUnload         ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdFwUnload         ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdRunStartStop     ( SInt32 ParS32StopStart /* 0 = Stop, 1 = Start */, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdRunStartStop     ( SInt32 ParS32StopStart /* 0 = Stop, 1 = Start */, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdStatusAcqNb      ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdStatusAcqNb      ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdJtagLoad         ( SInt32 ParamS32, char* ParamJtagFile, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdJtagLoad         ( SInt32 ParamS32, char* ParamJtagFile, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcSendCmdRunConf          ( SInt32 ParamS32, IRC_RCBT2628__TCmdRunConf* PtParamRunConf, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdRunConf          ( SInt32 ParamS32, IRC_RCBT2628__TCmdRunConf* PtParamRunConf, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
-SInt32 IRC_RCBT2628__FRcGetLastCmdError         ( SInt32* PtLastCmdError, SInt32 TimeOutMs );
+extern "C" SInt32 IRC_RCBT2628__FRcGetLastCmdError         ( SInt32* PtLastCmdError, SInt32 TimeOutMs );
 
 
 

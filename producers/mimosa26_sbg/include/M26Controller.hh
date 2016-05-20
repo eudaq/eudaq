@@ -35,6 +35,9 @@ using eudaq::to_string;
 #define START 0x1254
 #define STOP 0x1255
 
+//#define APP_ERR_LOG_FILE "C:\opt\eudaq\log\IRC_err.txt"
+//#define APP_MSG_LOG_FILE "C:\opt\eudaq\log\IRC_msgs.txt"
+
 class NiController {
 
 public:
@@ -55,6 +58,8 @@ public:
   void ConfigClientSocket_Send(unsigned char *text, size_t len);
   unsigned int ConfigClientSocket_ReadLength(const char string[4]);
   std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
+
+  void Connect(const eudaq::Configuration &param);
 
 private:
   struct hostent *hclient, *hconfig, *hdatatransport;
@@ -88,4 +93,15 @@ private:
   unsigned MimosaID[6];
   unsigned MimosaEn[6];
   bool OneFrame;
+
+  // -------------- SBG integration
+  //SInt8 APP_VGErrFileLogLvl = 1;
+  SInt8 APP_VGErrUserLogLvl = 1;
+  //SInt8 APP_VGMsgFileLogLvl = 127;
+  SInt8 APP_VGMsgUserLogLvl = 127;
+
+  char * APP_ERR_LOG_FILE = "C:/opt/eudaq/log/IRC_err.txt";
+  char * APP_MSG_LOG_FILE = "C:/opt/eudaq/log/IRC_msgs.txt";
+
 };
+

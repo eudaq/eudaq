@@ -54,6 +54,8 @@ public:
     try {
       if (!configure) {
         ni_control = std::make_shared<NiController>();
+        ni_control->Configure(param);
+        //ni_control->Connect(param);
         ni_control->GetProduserHostInfo();
         ni_control->ConfigClientSocket_Open(param);
         ni_control->DatatransportClientSocket_Open(param);

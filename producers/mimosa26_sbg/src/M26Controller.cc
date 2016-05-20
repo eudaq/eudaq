@@ -48,9 +48,28 @@ unsigned char stop[5] = "stop";
 NiController::NiController() {
   // NI_IP = "192.76.172.199";
 }
+
+// --- SBG integration
+void NiController::Connect(const eudaq::Configuration &param) {
+
+  //IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
+ 
+  //IRC_RCBT2628__FRcBegin ();
+  
+}
+
+
+// --- Artem
 void NiController::Configure(const eudaq::Configuration & /*param*/) {
   // NiIPaddr = param.Get("NiIPaddr", "");
+  std::cout << " Create RC steering object" << std::endl;
+  IRC_RCBT2628__TCmdRunConf RC;
+  RC.RunNo = 0;
+  IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
+ 
+  IRC_RCBT2628__FRcBegin ();
 }
+
 void NiController::TagsSetting() {
   // ev.SetTag("DET", 12);
 }
