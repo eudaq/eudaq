@@ -186,6 +186,13 @@ namespace eudaq {
 	sev.SetTag(tagname,raw->GetTag(tagname));
       }
       
+      std::vector<std::string> paralist = raw->GetTagList("PLOT_");
+      for(auto &e: paralist){
+	double val ;
+	val=raw->GetTag(e, val);
+	sev.SetTag(e,val);
+      }
+      
       for(size_t n = 0; n<nblocks; n++){
 	std::vector<unsigned char> block = raw->GetBlock(n);
 	unsigned  blockid = raw->GetID(n);

@@ -255,13 +255,27 @@ void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestamp());
     
+    std::string tagname;
+    tagname = "Temperature";
+    if(ev.HasTag(tagname)){
+      double val;
+      val = ev.GetTag(tagname, val);
+      simpEv.setSlow_para(tagname,val);
+    }
+    tagname = "Voltage";
+    if(ev.HasTag(tagname)){
+      double val;
+      val = ev.GetTag(tagname, val);
+      simpEv.setSlow_para(tagname,val);
+    }
+
     std::vector<std::string> paralist = ev.GetTagList("PLOT_");
     for(auto &e: paralist){
       double val ;
       val=ev.GetTag(e, val);
       simpEv.setSlow_para(e,val);
     }
-
+    
     if (skip_dodgy_event)
     {
       return; //don't process any further
