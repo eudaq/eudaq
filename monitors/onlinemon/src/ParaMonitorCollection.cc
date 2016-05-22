@@ -8,17 +8,6 @@ ParaMonitorCollection::ParaMonitorCollection()
   cout << " Initialising ParaMonitor Collection" << endl;
   CollectionType = PARAMONITOR_COLLECTION_TYPE;
 
-  std::string name;
-  TGraph *tg;
-  name="Temperature";
-  tg = new TGraph();
-  tg->SetTitle(name.c_str());
-  m_graphMap[name] = tg;    
-  
-  name="Voltage";
-  tg = new TGraph();
-  tg->SetTitle(name.c_str());
-  m_graphMap[name] = tg;
 
 }
 
@@ -28,6 +17,22 @@ ParaMonitorCollection::~ParaMonitorCollection() {
   }
   m_graphMap.clear();
 }
+
+void ParaMonitorCollection::InitPlots(const SimpleStandardEvent &simpev){
+  std::string name;
+  TGraph *tg;
+  std::vector<std::string> list = simpev.getSlowList();
+  for(auto &e: list){
+    name = e;
+    tg = new TGraph();
+    tg->SetTitle(name.c_str());
+    m_graphMap[name] = tg;    
+  }
+  
+  if(m_graphMap.size())
+    histos_init = true;
+}
+
 
 void ParaMonitorCollection::Write(TFile *file) {
   if (file == NULL) {
@@ -56,8 +61,8 @@ void ParaMonitorCollection::Reset() {
 
 void ParaMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
   if (histos_init == false) {
+    InitPlots(simpev);
     bookHistograms(simpev);
-    histos_init = true;
   }
   for(auto &e: m_graphMap){
     double value;
