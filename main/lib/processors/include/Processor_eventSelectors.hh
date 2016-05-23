@@ -1,6 +1,6 @@
 #ifndef Processor_eventSelectors_h__
 #define Processor_eventSelectors_h__
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_inspector.hh"
 namespace eudaq {
 
 

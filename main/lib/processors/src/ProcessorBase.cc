@@ -1,8 +1,8 @@
-#include "eudaq/ProcessorBase.hh"
+#include "ProcessorBase.hh"
 #include "eudaq/factoryDef.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Processor_inspector.hh"
-#include "eudaq/Processor_batch.hh"
+#include "Processor_inspector.hh"
+#include "Processor_batch.hh"
 
 namespace eudaq{
   

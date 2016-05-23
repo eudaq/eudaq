@@ -10,7 +10,7 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "Exception.hh"
+#include "eudaq/Exception.hh"
 
 
 

@@ -1,6 +1,6 @@
-#include "eudaq/ProcessorBase.hh"
-#include "eudaq/PluginManager.hh"
-#include "eudaq/StandardEvent.hh"
+#include "ProcessorBase.hh"
+#include "PluginManager.hh"
+#include "StandardEvent.hh"
 
 namespace eudaq{
 

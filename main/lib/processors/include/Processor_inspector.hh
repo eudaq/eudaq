@@ -1,7 +1,7 @@
 #ifndef Processor_inspector_h__
 #define Processor_inspector_h__
 
-#include "eudaq/ProcessorBase.hh"
+#include "ProcessorBase.hh"
 #include "eudaq/Platform.hh"
 #include <type_traits> 
 #include <utility>

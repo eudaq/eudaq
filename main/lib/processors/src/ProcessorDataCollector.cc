@@ -1,8 +1,8 @@
-#include "eudaq/ProcessorBase.hh"
+#include "ProcessorBase.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/Processors.hh"
+#include "Processors.hh"
 
 #include <thread>
 #include <memory>

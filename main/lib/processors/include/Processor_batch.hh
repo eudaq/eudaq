@@ -2,7 +2,7 @@
 #define Processor_batch_h__
 
 
-#include "eudaq/ProcessorBase.hh"
+#include "ProcessorBase.hh"
 #include "eudaq/Platform.hh"
 #include <memory>
 #include "Processor_inspector.hh"

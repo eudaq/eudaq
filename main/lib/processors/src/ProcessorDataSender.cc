@@ -1,12 +1,12 @@
-#include "eudaq/ProcessorBase.hh"
 #include "eudaq/TransportClient.hh"
 #include "eudaq/TransportFactory.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/Processors.hh"
+#include "ProcessorBase.hh"
+#include "Processors.hh"
+#include "Processor_inspector.hh"
 
 
 #include <memory>
-#include "eudaq/Processor_inspector.hh"
 // this is a macro to give throw the error from the function itself and not from a helper function 
 #define CHECK_RECIVED_PACKET(packet,position,expectedString) \
   if(packet[position] != std::string(expectedString))\

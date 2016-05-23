@@ -1,6 +1,6 @@
 #ifndef Processor_bussy_test_h__
 #define Processor_bussy_test_h__
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_inspector.hh"
 
 namespace eudaq{
   class Processor_busy_test :public Processor_Inspector{

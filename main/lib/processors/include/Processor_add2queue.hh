@@ -4,7 +4,7 @@
 
 
 
-#include "eudaq/ProcessorBase.hh"
+#include "ProcessorBase.hh"
 
 
 

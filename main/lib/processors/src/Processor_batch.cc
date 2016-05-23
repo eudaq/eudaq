@@ -1,4 +1,4 @@
-#include "eudaq/Processor_batch.hh"
+#include "Processor_batch.hh"
 #include <memory>
 
 

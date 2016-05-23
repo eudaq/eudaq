@@ -1,4 +1,4 @@
-#include "eudaq/Processor_busy_test.hh"
+#include "Processor_busy_test.hh"
 
 namespace eudaq{
 

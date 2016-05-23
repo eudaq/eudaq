@@ -1,8 +1,8 @@
 #include "eudaq/FileWriter.hh"
 #include <iostream>
 
-#include "eudaq/ProcessorFileWriter.hh"
-#include "eudaq/Processors.hh"
+#include "ProcessorFileWriter.hh"
+#include "Processors.hh"
 
 namespace eudaq{
   using ReturnParam = ProcessorBase::ReturnParam;

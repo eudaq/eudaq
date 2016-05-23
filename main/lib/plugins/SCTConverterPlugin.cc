@@ -18,7 +18,7 @@ using eutelescope::EUTelTrackerDataInterfacerImpl;
 using eutelescope::EUTelGenericSparsePixel;
 #endif
 #ifdef USE_EUDAQ2_VERSION
-#include "eudaq/Processor.hh"
+#include "Processor.hh"
 #endif // USE_EUDAQ2_VERSION
 
 #include "eudaq/PluginManager.hh"

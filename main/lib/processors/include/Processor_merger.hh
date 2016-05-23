@@ -1,7 +1,7 @@
 #ifndef Processor_merger_h__
 #define Processor_merger_h__
 
-#include "eudaq/ProcessorBase.hh"
+#include "ProcessorBase.hh"
 #include "eudaq/EventSynchronisationBase.hh"
 
 

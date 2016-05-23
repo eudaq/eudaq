@@ -1,9 +1,9 @@
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_inspector.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/Processor_eventSelectors.hh"
+#include "Processor_eventSelectors.hh"
 
-#include "eudaq/Processors.hh"
+#include "Processors.hh"
 #include <algorithm>
 
 namespace eudaq{

@@ -1,6 +1,6 @@
-#include "eudaq/Processor_merger.hh"
+#include "Processor_merger.hh"
 #include "eudaq/EventSynchronisationBase.hh"
-#include "eudaq/Processors.hh"
+#include "Processors.hh"
 
 namespace eudaq {
 

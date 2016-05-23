@@ -1,7 +1,7 @@
 #ifndef ProcessorFileReader_h__
 #define ProcessorFileReader_h__
 #include "eudaq/baseFileReader.hh"
-#include "eudaq/Processor_add2queue.hh"
+#include "Processor_add2queue.hh"
 #include "eudaq/types/fileName.hh"
 namespace eudaq{
   class DLLEXPORT ProcessorFileReader : public Processor_add2queue

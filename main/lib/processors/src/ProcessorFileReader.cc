@@ -1,10 +1,10 @@
 
 
 
-#include "eudaq/ProcessorFileReader.hh"
+#include "ProcessorFileReader.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/baseFileReader.hh"
-#include "eudaq/Processors.hh"
+#include "Processors.hh"
 
 namespace eudaq {
 using ReturnParam = ProcessorBase::ReturnParam;

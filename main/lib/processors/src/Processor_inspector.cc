@@ -1,7 +1,7 @@
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_inspector.hh"
 #include <utility>
 #include <memory>
-#include "eudaq/Processor_batch.hh"
+#include "Processor_batch.hh"
 
 
 

@@ -1,5 +1,5 @@
-#include "eudaq/ProcessorBase.hh"
-#include "eudaq/Processors.hh"
+#include "ProcessorBase.hh"
+#include "Processors.hh"
 #include <atomic>
 
 

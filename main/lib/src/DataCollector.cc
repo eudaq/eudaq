@@ -15,9 +15,9 @@
 
 
 #include "config.h"
-#include "eudaq/Processors.hh"
-#include "eudaq/ProcessorFileWriter.hh"
-#include "eudaq/Processor_batch.hh"
+#include "Processors.hh"
+#include "ProcessorFileWriter.hh"
+#include "Processor_batch.hh"
 
 
 using eudaq_types::outPutString;

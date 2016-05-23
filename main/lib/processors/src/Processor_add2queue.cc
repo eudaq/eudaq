@@ -1,4 +1,4 @@
-#include "eudaq/Processor_add2queue.hh"
+#include "Processor_add2queue.hh"
 namespace eudaq{
   using ReturnParam = ProcessorBase::ReturnParam;
   eudaq::Processor_add2queue::Processor_add2queue(ConnectionName_ref con_) : m_con(con_)

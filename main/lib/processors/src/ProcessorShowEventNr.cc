@@ -1,7 +1,7 @@
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_inspector.hh"
 #include <tuple>
-#include "eudaq/Processor_showEventNr.hh"
-#include "eudaq/Processors.hh"
+#include "Processor_showEventNr.hh"
+#include "Processors.hh"
 
 
 using namespace std;
