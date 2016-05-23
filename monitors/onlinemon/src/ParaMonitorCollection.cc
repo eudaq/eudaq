@@ -64,13 +64,14 @@ void ParaMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
     InitPlots(simpev);
     bookHistograms(simpev);
   }
+  uint clkpersec = 48000000*8;
   for(auto &e: m_graphMap){
     double value;
     std::string str = e.first;
     if(simpev.getSlow_para(str, value)){
       TGraph *tg=e.second;
       std::lock_guard<std::mutex> lck(m_mu);
-      tg->SetPoint(tg->GetN(), simpev.getEvent_timestamp(), value);
+      tg->SetPoint(tg->GetN(), simpev.getEvent_timestamp()/clkpersec, value);
     }
   }
   
