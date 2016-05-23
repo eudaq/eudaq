@@ -3,6 +3,7 @@
 
 #include "eudaq/Status.hh"
 #include "eudaq/Platform.hh"
+#include "eudaq/Configuration.hh"
 
 
 #include <thread>
@@ -15,7 +16,6 @@ namespace eudaq {
 
   class TransportClient;
   class TransportEvent;
-  class Configuration;
 
   class DLLEXPORT CommandReceiver {
   public:
