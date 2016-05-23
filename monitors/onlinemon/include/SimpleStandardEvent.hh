@@ -11,14 +11,10 @@ typedef char int8_t;
 #include <string>
 #include <vector>
 #include <iostream>
-//#include <stdint.h>
+#include <stdint.h>
 
 #if ((defined WIN32) && (defined __CINT__))
 typedef unsigned long long uint64_t
-#else
-#ifdef WIN32
-#include <cstdint>
-#endif
 #endif
 
 #include "include/SimpleStandardPlane.hh"
