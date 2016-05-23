@@ -230,7 +230,7 @@ namespace eudaq {
       // copy to C array, then to vector
       char buf[bufsize];
       int size = 0;        
-      if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,1);
+      if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
 
       //      if file is not ready  just wait
       if(_fd <= 0 || !_running ){
