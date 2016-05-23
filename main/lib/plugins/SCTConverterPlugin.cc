@@ -220,13 +220,13 @@ namespace eudaq {
 	  
 	  unsigned x = 0;	// TODO:: swap x and y axises
 	  for (size_t i = 0; i < channels.size(); ++i) {
-	    ++x;
 	    if (channels[i] == true) {
 	      if(m_swap_xy)
 		plane.PushPixel(1, x, 1);
 	      else
 		plane.PushPixel(x, 1 , 1);
 	    }
+	    ++x;
 	  }
 	  sev.AddPlane(plane);
 	}

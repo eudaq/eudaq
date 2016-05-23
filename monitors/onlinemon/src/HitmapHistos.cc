@@ -41,30 +41,30 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
   if (_maxX != -1 && _maxY != -1) {
     sprintf(out, "%s %i Raw Hitmap", _sensor.c_str(), _id);
     sprintf(out2, "h_hitmap_%s_%i", _sensor.c_str(), _id);
-    _hitmap = new TH2I(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
+    _hitmap = new TH2I(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
     SetHistoAxisLabels(_hitmap, "X", "Y");
     // std::cout << "Created Histogram " << out2 << std::endl;
 
     sprintf(out, "%s %i Raw Hitmap X-Projection", _sensor.c_str(), _id);
     sprintf(out2, "h_hitXmap_%s_%i", _sensor.c_str(), _id);
-    _hitXmap = new TH1I(out2, out, _maxX + 1, 0, _maxX);
+    _hitXmap = new TH1I(out2, out, _maxX, 0, _maxX);
     SetHistoAxisLabelx(_hitXmap, "X");
 
     sprintf(out, "%s %i Raw Hitmap Y-Projection", _sensor.c_str(), _id);
     sprintf(out2, "h_hitYmap_%s_%i", _sensor.c_str(), _id);
-    _hitYmap = new TH1I(out2, out, _maxY + 1, 0, _maxY);
+    _hitYmap = new TH1I(out2, out, _maxY, 0, _maxY);
     SetHistoAxisLabelx(_hitYmap, "Y");
 
     sprintf(out, "%s %i Cluster Hitmap", _sensor.c_str(), _id);
     sprintf(out2, "h_clustermap_%s_%i", _sensor.c_str(), _id);
-    _clusterMap = new TH2I(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
+    _clusterMap = new TH2I(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
     SetHistoAxisLabels(_clusterMap, "X", "Y");
     // std::cout << "Created Histogram " << out2 << std::endl;
 
     sprintf(out, "%s %i hot Pixel Map", _sensor.c_str(), _id);
     sprintf(out2, "h_hotpixelmap_%s_%i", _sensor.c_str(), _id);
     _HotPixelMap =
-        new TH2D(out2, out, _maxX + 1, 0, _maxX, _maxY + 1, 0, _maxY);
+        new TH2D(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
     SetHistoAxisLabels(_HotPixelMap, "X", "Y");
 
     sprintf(out, "%s %i LVL1 Pixel Distribution", _sensor.c_str(), _id);
@@ -243,8 +243,9 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
       _mon->mon_configdata.getHotpixelcut())
     pixelIsHot = true;
 
-  if (_hitmap != NULL && !pixelIsHot)
+  if (_hitmap != NULL && !pixelIsHot){
     _hitmap->Fill(pixel_x, pixel_y);
+  }
   if (_hitXmap != NULL && !pixelIsHot)
     _hitXmap->Fill(pixel_x);
   if (_hitYmap != NULL && !pixelIsHot)
