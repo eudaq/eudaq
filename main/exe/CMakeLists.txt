@@ -1,13 +1,13 @@
 # build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
 option(BUILD_main "Compile main EUDAQ executables?" ON)
 IF(BUILD_main)
-
+  add_subdirectory(iphc)
+  
   add_executable(ClusterExtractor    src/ClusterExtractor.cxx  )
   add_executable(Converter           src/Converter.cxx         )
   add_executable(ExampleProducer     src/ExampleProducer.cxx   )
   add_executable(ExampleReader       src/ExampleReader.cxx     )
   add_executable(FileChecker         src/FileChecker.cxx       )
-  add_executable(IPHCConverter       src/IPHCConverter.cxx     )
   add_executable(MagicLogBook        src/MagicLogBook.cxx      )
   add_executable(OptionExample       src/OptionExample.cxx     )
   add_executable(RunListener         src/RunListener.cxx       )
@@ -23,7 +23,6 @@ IF(BUILD_main)
   set_property(TARGET ExampleProducer    PROPERTY PROJECT_LABEL "bin_ExampleProducer") 
   set_property(TARGET ExampleReader      PROPERTY PROJECT_LABEL "bin_ExampleReader") 
   set_property(TARGET FileChecker        PROPERTY PROJECT_LABEL "bin_FileChecker") 
-  set_property(TARGET IPHCConverter      PROPERTY PROJECT_LABEL "bin_IPHCConverter") 
   set_property(TARGET MagicLogBook       PROPERTY PROJECT_LABEL "bin_MagicLogBook") 
   set_property(TARGET OptionExample      PROPERTY PROJECT_LABEL "bin_OptionExample") 
   set_property(TARGET RunListener        PROPERTY PROJECT_LABEL "bin_RunListener") 
@@ -43,7 +42,6 @@ IF(BUILD_main)
   target_link_libraries(ExampleProducer     EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(ExampleReader       EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(FileChecker         EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(IPHCConverter       EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(MagicLogBook        EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(OptionExample       EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(RunListener         EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
@@ -55,7 +53,7 @@ IF(BUILD_main)
   target_link_libraries(TestRunControl      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 
 
-  INSTALL(TARGETS ClusterExtractor  Converter  ExampleProducer  ExampleReader  FileChecker  IPHCConverter  MagicLogBook  OptionExample  RunListener  TestDataCollector  TestLogCollector  TestMonitor  TestProducer  TestReader  TestRunControl 
+  INSTALL(TARGETS ClusterExtractor  Converter  ExampleProducer  ExampleReader  FileChecker  MagicLogBook  OptionExample  RunListener  TestDataCollector  TestLogCollector  TestMonitor  TestProducer  TestReader  TestRunControl 
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)

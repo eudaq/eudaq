@@ -14,12 +14,12 @@
 #define GLB_FILE_PATH_SZ 1000
 #define GLB_CMT_SZ 1000
 #define __int64 long long
-#include "iphc/types.typ"
-#include "iphc/asic.def"
-#include "iphc/asic.typ"
-#include "iphc/maps.def"
-#include "iphc/mi26.def"
-#include "iphc/mi26.typ"
+#include "types.typ"
+#include "asic.def"
+#include "asic.typ"
+#include "maps.def"
+#include "mi26.def"
+#include "mi26.typ"
 //#include "iphc/daq_pxi.def"
 
 using namespace eudaq;
