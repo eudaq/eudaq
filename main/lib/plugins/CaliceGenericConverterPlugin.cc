@@ -39,17 +39,6 @@ namespace eudaq {
     void setTags(std::string &s){_dataDescription = s;}
     std::string getTags()const{return _dataDescription;}
    
-    //   void setUintDataInt(std::vector<uint32_t> &vec){
-    //   _intVec.resize(vec.size());
-    //    std::copy(vec.begin(), vec.end(), _intVec.begin());
-    //   }
-
- 
-    //   void setShortDataInt(std::vector<unsigned short> &vec){
-    //      _intVec.resize(vec.size());
-    //       std::copy(vec.begin(), vec.end(), _intVec.begin());
-    //    }
-
     void setIntDataInt(std::vector<int> &vec){
       _intVec.resize(vec.size());
       std::copy(vec.begin(), vec.end(), _intVec.begin());
@@ -286,27 +275,6 @@ namespace eudaq {
 	}
       }
     }
-
-    // virtual void getDataLCIOGenericObject_uint32(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
-  
-    //   while(nblock < rawev->NumBlocks() ){
-    // 	// further blocks should be data (currently limited to integer)
-    // 	vector<uint32_t> v;
-    // 	const RawDataEvent::data_t & bl = rawev->GetBlock(nblock++);
-    // 	v.resize(bl.size()/ sizeof(uint32_t) );
-    // 	memcpy(&v[0], &bl[0],bl.size());
-
-    // 	CaliceLCGenericObject *obj = new CaliceLCGenericObject;
-    // 	obj->setUintDataInt(v);
-    // 	try{
-    // 	  col->addElement(obj);
-    // 	}catch(ReadOnlyException &e){
-    // 	  cout << "CaliceGenericConverterPlugin: the collection to add is read only! skipped..." << endl;
-    // 	  delete obj;
-    // 	}
-    //   }
-    // }
-
 
     virtual LCCollectionVec* createRawCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
       LCCollectionVec *col = 0;
