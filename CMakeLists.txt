@@ -118,8 +118,9 @@ IF("${isSystemDir}" STREQUAL "-1")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
-ADD_SUBDIRECTORY(main)
+
 ADD_SUBDIRECTORY(producers)
+ADD_SUBDIRECTORY(main)
 ADD_SUBDIRECTORY(monitors)
 ADD_SUBDIRECTORY(tests)
 ADD_SUBDIRECTORY(syncTest)
@@ -127,6 +128,7 @@ ADD_SUBDIRECTORY(nreader)
 ADD_SUBDIRECTORY(gui)
 ADD_SUBDIRECTORY(doc)
 ADD_SUBDIRECTORY(python)
+
 
 
 #######################################################
