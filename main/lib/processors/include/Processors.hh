@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 #include "eudaq/Platform.hh"
-#include "EventSynchronisationBase.hh"
+#include "eudaq/EventSynchronisationBase.hh"
 #include "eudaq/eudaq_types.hh"
 namespace eudaq {
 class ProcessorBase;
