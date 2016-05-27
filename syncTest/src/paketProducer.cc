@@ -1,8 +1,15 @@
 #include "paketProducer.h"
 #include "eudaq/RawDataEvent.hh"
 #include <ctime>
-#include <windows.h>
 #include <iostream>
+
+#ifdef WIN32
+#include <windows.h>
+#else
+
+#endif
+
+
 using std::chrono::microseconds;
 using std::chrono::duration_cast;
 using namespace std;
@@ -33,10 +40,8 @@ namespace eudaq{
    }
     while (m_running)
     {
-
       newPacket();
-      Sleep(m_readoutSpeed);
-    
+      std::this_thread::sleep_for(std::chrono::milliseconds(m_readoutSpeed));
     }
   }
 

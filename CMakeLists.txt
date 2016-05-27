@@ -4,6 +4,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 # project name
 PROJECT( EUDAQ )
 
+include_directories(${PROJECT_SOURCE_DIR}/main/lib/processors/include)
+include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include)
+include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include/eudaq)
+
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
@@ -71,9 +75,6 @@ IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
 ENDIF()
 
-# include directories
-INCLUDE_DIRECTORIES( ./main/include )
-INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -117,14 +118,17 @@ IF("${isSystemDir}" STREQUAL "-1")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
-add_subdirectory(main)
-add_subdirectory(producers)
-add_subdirectory(monitors)
-add_subdirectory(tests)
-add_subdirectory(syncTest)
-add_subdirectory(nreader)
-add_subdirectory(gui)
-add_subdirectory(doc)
+
+ADD_SUBDIRECTORY(producers)
+ADD_SUBDIRECTORY(main)
+ADD_SUBDIRECTORY(monitors)
+ADD_SUBDIRECTORY(tests)
+ADD_SUBDIRECTORY(syncTest)
+ADD_SUBDIRECTORY(nreader)
+ADD_SUBDIRECTORY(gui)
+ADD_SUBDIRECTORY(doc)
+ADD_SUBDIRECTORY(python)
+
 
 
 #######################################################

@@ -9,9 +9,9 @@
 #include <iostream>
 #include <fstream>
 #include "eudaq/FileWriter.hh"
-#include "eudaq/Processor_batch.hh"
-#include "eudaq/Processors.hh"
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_batch.hh"
+#include "Processors.hh"
+#include "Processor_inspector.hh"
 
 
 using eudaq::StandardEvent;
