@@ -10,11 +10,8 @@
 #include <RQ_OBJECT.h>
 #include "Rtypes.h"
 
-//#include "OnlineHistograms.hh"
-
 #ifndef __CINT__
 #include <TTimer.h>
-
 #include <TGLayout.h>
 #include <TGWindow.h>
 #include <TRootEmbeddedCanvas.h>
@@ -34,8 +31,6 @@
 #include "BaseCollection.hh"
 #include "OnlineMon.hh"
 
-// class RootMonitor;
-
 static const unsigned int kLin = 0;
 static const unsigned int kLogX = 1;
 static const unsigned int kLogY = 2;
@@ -52,9 +47,6 @@ class OnlineMonWindow : public TGMainFrame {
 
 #ifndef __CINT__
 protected:
-  //#ifndef __CINT__
-  // RootMonitor *_mon;
-  //#endif
   std::string _rootfilename;
   std::vector<BaseCollection *> _colls;
   TTimer *timer;
@@ -146,9 +138,5 @@ public:
   void SetOnlineMon(RootMonitor *mymon);
   ClassDef(OnlineMonWindow, 0);
 };
-
-// #ifdef __CINT__
-// #pragma link C++ class OnlineMonWindow+;
-// #endif
 
 #endif
