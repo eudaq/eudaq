@@ -1,8 +1,6 @@
 #ifndef ONLINE_MON_H
 #define ONLINE_MON_H
 
-#include <cmath>
-
 // ROOT includes
 #include <TSystem.h>
 #include <TInterpreter.h>
@@ -23,12 +21,6 @@
 #include "eudaq/OptionParser.hh"
 #endif
 
-// Project Includes
-
-// #include "BaseCollection.hh"
-// #include "HitmapHistos.hh"
-// #include "CorrelationHistos.hh"
-// #include "EUDAQMonitorHistos.hh"
 
 #include "HitmapCollection.hh"
 #include "CorrelationCollection.hh"
