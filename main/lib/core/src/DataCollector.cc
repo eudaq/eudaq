@@ -121,7 +121,6 @@ void DataCollector::OnPrepareRun(unsigned runnumber) {
       EUDAQ_THROW("You must configure before starting a run");
     }
 
-    m_pwriter->StartRun(runnumber);
 
     m_batch->init();
 
