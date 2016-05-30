@@ -226,6 +226,10 @@ extern "C" SInt32 IRC_RCBT2628__FRcSendCmdStatusAcqNb      ( SInt32 ParamS32, SI
 
 extern "C" SInt32 IRC_RCBT2628__FRcSendCmdJtagLoad         ( SInt32 ParamS32, char* ParamJtagFile, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdJtagReset        ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+
+extern "C" SInt32 IRC_RCBT2628__FRcSendCmdJtagStart        ( SInt32 ParamS32, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
+
 extern "C" SInt32 IRC_RCBT2628__FRcSendCmdRunConf          ( SInt32 ParamS32, IRC_RCBT2628__TCmdRunConf* PtParamRunConf, SInt32* PtAns0S32, SInt32* PtAns1S32, SInt32 TimeOutMs );
 
 extern "C" SInt32 IRC_RCBT2628__FRcGetLastCmdError         ( SInt32* PtLastCmdError, SInt32 TimeOutMs );

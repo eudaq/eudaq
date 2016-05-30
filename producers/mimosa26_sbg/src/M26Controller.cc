@@ -45,19 +45,21 @@ int EUDAQ_SEND(SOCKET s, unsigned char *buf, int len, int flags) {
 unsigned char start[5] = "star";
 unsigned char stop[5] = "stop";
 
-NiController::NiController() {
-  // NI_IP = "192.76.172.199";
+M26Controller::M26Controller() {
+}
+
+M26Controller::~M26Controller() {
 }
 
 // --- SBG integration
-void NiController::Connect(const eudaq::Configuration &param) {
+void M26Controller::Connect(const eudaq::Configuration &param) {
 
   IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
  
   IRC_RCBT2628__FRcBegin ();
 }
 
-void NiController::Init(const eudaq::Configuration &param) {
+void M26Controller::Init(const eudaq::Configuration &param) {
 
   SInt32 ret = -1;
   DaqAnswer_CmdReceived = -1;
@@ -78,7 +80,7 @@ void NiController::Init(const eudaq::Configuration &param) {
   if(!ret) EUDAQ_ERROR("Execution of CmdInit failed"); // FIXME make/add better error handling
 }
 
-void NiController::LoadFW(const eudaq::Configuration &param) {
+void M26Controller::LoadFW(const eudaq::Configuration &param) {
 
   SInt32 ret = -1;
   DaqAnswer_CmdReceived = -1;
@@ -97,12 +99,37 @@ void NiController::LoadFW(const eudaq::Configuration &param) {
   if(!ret) EUDAQ_ERROR("Execution of CmdLoadFW failed"); // FIXME make/add better error handling
 }
 
-void NiController::UnLoadFW() {
+void M26Controller::UnLoadFW() {
   // unload FW
   std::cout << " Unload FW " << std::endl;
 }
 
-void NiController::JTAG(const eudaq::Configuration & param) {
+void M26Controller::JTAG_Reset() {
+  // JTAG sensors via mcf file
+  std::cout << " Send JTAG RESET to sensors " << std::endl;
+
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+
+  SInt32 CmdNumber = 111; // not used
+
+  ret = IRC_RCBT2628__FRcSendCmdJtagReset ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+  if(ret) {
+    EUDAQ_ERROR("Send CmdJtagReset failed"); // FIXME make/add better error handling
+    return;
+  }
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdJtagReset failed"); // FIXME make/add better error handling
+}
+
+
+void M26Controller::JTAG_Load(const eudaq::Configuration & param) {
   // JTAG sensors via mcf file
   std::cout << " JTAG sensors " << std::endl;
   std::string m_jtag;
@@ -130,7 +157,32 @@ void NiController::JTAG(const eudaq::Configuration & param) {
   if(!ret) EUDAQ_ERROR("Execution of CmdJtagLoad failed"); // FIXME make/add better error handling
 }
 
-void NiController::Configure_Run(const eudaq::Configuration & /*param*/) {
+void M26Controller::JTAG_Start() {
+  // JTAG sensors via mcf file
+  std::cout << " Send JTAG START to sensors " << std::endl;
+
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+
+  SInt32 CmdNumber = -1; // not used
+
+  ret = IRC_RCBT2628__FRcSendCmdJtagStart ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+  if(ret) {
+    EUDAQ_ERROR("Send CmdJtagStart failed"); // FIXME make/add better error handling
+    return;
+  }
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdJtagStart failed"); // FIXME make/add better error handling
+}
+
+
+void M26Controller::Configure_Run(const eudaq::Configuration & param) {
   // Configure Run
   std::cout << " Configure Run " << std::endl;
 
@@ -140,20 +192,25 @@ void NiController::Configure_Run(const eudaq::Configuration & /*param*/) {
   SInt32 VLastCmdError = -1;
   IRC_RCBT2628__TCmdRunConf RunConf;
   RunConf.MapsName         = 1; // ASIC__MI26;
-  RunConf.MapsNb           = 6;
-  RunConf.RunNo            = 666; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
-  RunConf.TotEvNb          = 10000; // ? does the controller need to know?
+  RunConf.MapsNb           = 1;
+  RunConf.RunNo            = 2; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
+  RunConf.TotEvNb          = 1000; // ? does the controller need to know?
   RunConf.EvNbPerFile      = 1000; // should be controlled by eudaq
   RunConf.FrameNbPerAcq    = 400;
-  RunConf.DataTransferMode = 3; // 0 = No, 1 = IPHC, 2 = EUDET2, 3 = EUDET3 // deprecated! send all data to producer!
+  RunConf.DataTransferMode = 2; // 0 = No, 1 = IPHC, 2 = EUDET2, 3 = EUDET3 // deprecated! send all data to producer!
   RunConf.TrigMode         = 0; // ??
   RunConf.SaveToDisk       = 0; // 0 = No, 1 = Multithreading, 2 = Normal
   RunConf.SendOnEth        = 0; // deprecated, not need with eudaq
   RunConf.SendOnEthPCent   = 0; // deprecated, not need with eudaq
 
-  sprintf ( RunConf.DestDir, "c:\\data\\2015_03_DESY_SALAT\\666" );
-  sprintf ( RunConf.FileNamePrefix, "RUN__" );
-  sprintf ( RunConf.JtagFileName, "C:\\CCMOS_SCTRL\\MIMOSA28_JTAG\\config_files\\beam_14chip_module8-16-11_2ref_cut10.mcf" );
+  sprintf ( RunConf.DestDir, "c:\\Data\\test\\1" );
+  sprintf ( RunConf.FileNamePrefix, "run_" );
+  std::string m_jtag;
+  m_jtag = param.Get("JTAG_file", "");
+  char temp[256];
+  strncpy(temp,m_jtag.c_str(),256);
+  //RunConf.JtagFileName =  temp;
+  sprintf ( RunConf.JtagFileName, temp );
 
   SInt32 CmdNumber = 777;
 
@@ -170,90 +227,141 @@ void NiController::Configure_Run(const eudaq::Configuration & /*param*/) {
   if(!ret) EUDAQ_ERROR("Execution of CmdRunConf failed"); // FIXME make/add better error handling
 }
 
-// --- Artem
-void NiController::Configure(const eudaq::Configuration & /*param*/) {
-  // NiIPaddr = param.Get("NiIPaddr", "");
-}
+void M26Controller::Start() { 
+  
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
 
-void NiController::TagsSetting() {
-  // ev.SetTag("DET", 12);
-}
-void NiController::GetProduserHostInfo() {
-  /*** get Producer information, NAME and INET ADDRESS ***/
-  gethostname(ThisHost, MAXHOSTNAME);
-  printf("----TCP/Producer running at host NAME: %s\n", ThisHost);
-  hclient = gethostbyname(ThisHost);
-  if (hclient != 0) {
-    EUDAQ_BCOPY(hclient->h_addr, &(client.sin_addr), hclient->h_length);
-    printf("----TCP/Producer INET ADDRESS is: %s \n",
-           inet_ntoa(client.sin_addr));
-  } else {
-    printf("----TCP/Producer -- Warning! -- failed at executing "
-           "gethostbyname() for: %s. Check your /etc/hosts list \n",
-           ThisHost);
+  SInt32 CmdNumber = 1; // Start the run
+
+  ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+  if(ret) {
+    EUDAQ_ERROR("Send CmdRunStartStop('Start') failed"); // FIXME make/add better error handling
+    return;
   }
-}
-void NiController::Start() { ConfigClientSocket_Send(start, sizeof(start)); }
-void NiController::Stop() { ConfigClientSocket_Send(stop, sizeof(stop)); }
 
-void NiController::ConfigClientSocket_Open(const eudaq::Configuration &param) {
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
+
+
+
+}
+
+void M26Controller::Stop() { 
+
+  SInt32 ret = -1;
+  DaqAnswer_CmdReceived = -1;
+  DaqAnswer_CmdExecuted = -1;
+  SInt32 VLastCmdError = -1;
+
+  SInt32 CmdNumber = 0; // Stop the run
+
+  ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+  if(ret) {
+    EUDAQ_ERROR("Send CmdRunStartStop('Stop') failed"); // FIXME make/add better error handling
+    return;
+  }
+
+  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
+
+  // the error logic is inverted here *argh
+  if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
+
+
+}
+
+
+
+// --- Artem
+//void NiController::Configure(const eudaq::Configuration & /*param*/) {
+  // NiIPaddr = param.Get("NiIPaddr", "");
+//}
+
+//void NiController::TagsSetting() {
+  // ev.SetTag("DET", 12);
+//}
+//void NiController::GetProduserHostInfo() {
+  /*** get Producer information, NAME and INET ADDRESS ***/
+//  gethostname(ThisHost, MAXHOSTNAME);
+//  printf("----TCP/Producer running at host NAME: %s\n", ThisHost);
+//  hclient = gethostbyname(ThisHost);
+//  if (hclient != 0) {
+//    EUDAQ_BCOPY(hclient->h_addr, &(client.sin_addr), hclient->h_length);
+//    printf("----TCP/Producer INET ADDRESS is: %s \n",
+//           inet_ntoa(client.sin_addr));
+//  } else {
+//    printf("----TCP/Producer -- Warning! -- failed at executing "
+//           "gethostbyname() for: %s. Check your /etc/hosts list \n",
+//           ThisHost);
+//  }
+//}
+//void NiController::Start() { ConfigClientSocket_Send(start, sizeof(start)); }
+//void NiController::Stop() { ConfigClientSocket_Send(stop, sizeof(stop)); }
+
+//void NiController::ConfigClientSocket_Open(const eudaq::Configuration &param) {
   /*** Network configuration for NI, NAME and INET ADDRESS ***/
 
-  std::string m_server;
-  m_server = param.Get("NiIPaddr", "");
+//  std::string m_server;
+//  m_server = param.Get("NiIPaddr", "");
 
-  std::string m_config_socket_port;
-  m_config_socket_port = param.Get("NiConfigSocketPort", "49248");
+//  std::string m_config_socket_port;
+//  m_config_socket_port = param.Get("NiConfigSocketPort", "49248");
 
-  // convert string in config into IPv4 address
-  hostent *host = gethostbyname(m_server.c_str());
-  if (!host) {
-    EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
-                "IPv4 address!");
-    perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 "
-           "address: ");
-  }
-  memcpy((char *)&config.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+//  // convert string in config into IPv4 address
+//  hostent *host = gethostbyname(m_server.c_str());
+//  if (!host) {
+//    EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
+//                "IPv4 address!");
+//    perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 "
+//           "address: ");
+//  }
+//  memcpy((char *)&config.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
 
-  if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    EUDAQ_ERROR("ConfSocket: Error creating the TCP socket  ");
-    perror("ConfSocket Error: socket()");
-    exit(1);
-  } else
-    printf("----TCP/NI crate: SOCKET is OK...\n");
+//  if ((sock_config = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+//    EUDAQ_ERROR("ConfSocket: Error creating the TCP socket  ");
+//    perror("ConfSocket Error: socket()");
+//    exit(1);
+//  } else
+//    printf("----TCP/NI crate: SOCKET is OK...\n");
 
-  printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
-  printf("----TCP/NI crate INET PORT is: %s \n", m_config_socket_port.c_str());
+//  printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
+//  printf("----TCP/NI crate INET PORT is: %s \n", m_config_socket_port.c_str());
 
-  config.sin_family = AF_INET;
-  int i_auto = std::stoi(m_config_socket_port, nullptr, 10);
-  config.sin_port = htons(i_auto);
-  memset(&(config.sin_zero), '\0', 8);
-  if (connect(sock_config, (struct sockaddr *)&config,
-              sizeof(struct sockaddr)) == -1) {
-    EUDAQ_ERROR("ConfSocket: National Instruments crate doesn't appear to be "
-                "running  ");
-    perror("ConfSocket Error: connect()");
-    EUDAQ_Sleep(60);
-    exit(1);
-  } else
-    printf("----TCP/NI crate The CONNECT is OK...\n");
-}
-void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len) {
+//  config.sin_family = AF_INET;
+//  int i_auto = std::stoi(m_config_socket_port, nullptr, 10);
+//  config.sin_port = htons(i_auto);
+//  memset(&(config.sin_zero), '\0', 8);
+//  if (connect(sock_config, (struct sockaddr *)&config,
+//              sizeof(struct sockaddr)) == -1) {
+//    EUDAQ_ERROR("ConfSocket: National Instruments crate doesn't appear to be "
+//                "running  ");
+//    perror("ConfSocket Error: connect()");
+//    EUDAQ_Sleep(60);
+//    exit(1);
+//  } else
+//    printf("----TCP/NI crate The CONNECT is OK...\n");
+//}
+/*void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len) {
   bool dbg = false;
   if (dbg)
     printf("size=%zu", len);
 
   if (EUDAQ_SEND(sock_config, text, len, 0) == -1)
     perror("Server-send() error lol!");
-}
-void NiController::ConfigClientSocket_Close() {
+}*/
+/*void NiController::ConfigClientSocket_Close() {
 
   EUDAQ_CLOSE_SOCKET(sock_config);
-}
-unsigned int
-NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
-  unsigned int datalengthTmp;
+}*/
+//unsigned int
+//NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
+/*  unsigned int datalengthTmp;
   unsigned int datalength;
   int i;
   bool dbg = false;
@@ -284,8 +392,8 @@ NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
       printf("\n");
   }
   return datalength;
-}
-std::vector<unsigned char>
+}*/
+/*std::vector<unsigned char>
 NiController::ConfigClientSocket_ReadData(int datalength) {
   std::vector<unsigned char> ConfigData(datalength);
   unsigned int stored_bytes;
@@ -321,11 +429,11 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
   if (dbg)
     printf("\n");
   return ConfigData;
-}
+}*/
 
-void NiController::DatatransportClientSocket_Open(
+/*void NiController::DatatransportClientSocket_Open(
     const eudaq::Configuration &param) {
-  /*** Creation for the data transmit socket, NAME and INET ADDRESS ***/
+  // Creation for the data transmit socket, NAME and INET ADDRESS 
   std::string m_server;
   m_server = param.Get("NiIPaddr", "");
 
@@ -369,10 +477,10 @@ void NiController::DatatransportClientSocket_Open(
     exit(1);
   } else
     printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
-}
-unsigned int
-NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
-  unsigned int datalengthTmp;
+}*/
+//unsigned int
+//NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
+/*  unsigned int datalengthTmp;
   unsigned int datalength;
   int i;
   bool dbg = false;
@@ -403,8 +511,8 @@ NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
       printf("\n");
   }
   return datalength;
-}
-std::vector<unsigned char>
+}*/
+/*std::vector<unsigned char>
 NiController::DataTransportClientSocket_ReadData(int datalength) {
 
   std::vector<unsigned char> mimosa_data(datalength);
@@ -442,10 +550,10 @@ NiController::DataTransportClientSocket_ReadData(int datalength) {
   if (dbg)
     printf("\n");
   return mimosa_data;
-}
-void NiController::DatatransportClientSocket_Close() {
-  EUDAQ_CLOSE_SOCKET(sock_datatransport);
-}
-NiController::~NiController() {
+}*/
+//void NiController::DatatransportClientSocket_Close() {
+//  EUDAQ_CLOSE_SOCKET(sock_datatransport);
+//}
+//NiController::~NiController() {
   //
-}
+//}

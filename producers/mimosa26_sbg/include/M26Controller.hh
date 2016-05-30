@@ -35,12 +35,12 @@ using eudaq::to_string;
 #define START 0x1254
 #define STOP 0x1255
 
-class NiController {
+class M26Controller {
 
 public:
-  NiController();
+  M26Controller();
   void Configure(const eudaq::Configuration &conf);
-  virtual ~NiController();
+  virtual ~M26Controller();
   void GetProduserHostInfo();
   void Start();
   void Stop();
@@ -61,7 +61,9 @@ public:
   void Init(const eudaq::Configuration &param);
   void LoadFW(const eudaq::Configuration &param);
   void UnLoadFW();
-  void JTAG(const eudaq::Configuration &param);
+  void JTAG_Reset();
+  void JTAG_Load(const eudaq::Configuration &param);
+  void JTAG_Start();
   void Configure_Run(const eudaq::Configuration &param);
   void UnConfigure_Run();
   void Start_Run();
