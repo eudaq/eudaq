@@ -73,9 +73,5 @@ namespace eudaq{
     m_pattern = p;
   }
 
-  void ProcessorFileWriter::StartRun(unsigned runNumber) {
-    m_runNumber = runNumber;
-    m_first = false;
-  }
 
 }

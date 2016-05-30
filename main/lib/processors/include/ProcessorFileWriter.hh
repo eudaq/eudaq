@@ -14,8 +14,7 @@ public:
   void end() override;
   virtual ReturnParam inspectEvent(const Event&, ConnectionName_ref con);
    uint64_t FileBytes() const ;
-   void SetFilePattern(const std::string & p); 
-   void StartRun(unsigned runNumber);
+   void SetFilePattern(const std::string & p);
 private:
   std::unique_ptr<FileWriter> m_write;
   bool m_first = true;
