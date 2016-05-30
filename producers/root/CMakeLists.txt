@@ -21,7 +21,7 @@ SET_PROPERTY(GLOBAL APPEND PROPERTY CONVERTER_PLUGIN sctupgradeplugin)
 ADD_LIBRARY(sctupgradeplugin SHARED src/SCTUpgradeConverterPlugin.cc)
 
 
-INSTALL(TARGETS ${ROOTProducer_name} sctplugin
+INSTALL(TARGETS ${ROOTProducer_name} sctplugin sctupgradeplugin
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
