@@ -3,7 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
-#include "eudaq/PyBAR.hh"
+#include "PyBAR.hh"
 
 #include <stdlib.h>
 

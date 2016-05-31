@@ -1,5 +1,5 @@
 
-#include "eudaq/MimosaConverterPlugin.hh"
+#include "MimosaConverterPlugin.hh"
 
 #define MATRIX_SIZE 65536
 

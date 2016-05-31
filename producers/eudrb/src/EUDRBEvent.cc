@@ -1,6 +1,6 @@
-#include "eudaq/EUDRBEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
+#include "EUDRBEvent.hh"
 
 #include <ostream>
 #include <iostream>

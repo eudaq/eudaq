@@ -2,7 +2,7 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/USBpix_i3.hh"
+#include "USBpix_i3.hh"
 
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.

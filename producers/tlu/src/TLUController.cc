@@ -1,6 +1,6 @@
-#include "tlu/TLUController.hh"
-#include "tlu/USBTracer.hh"
-#include "tlu/TLUAddresses.hh"
+#include "TLUController.hh"
+#include "USBTracer.hh"
+#include "TLUAddresses.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/Timer.hh"
@@ -9,7 +9,7 @@
 
 #ifdef WIN32
 #include <cstdio> // HK
-#include "tlu/win_Usleep.h"
+#include "win_Usleep.h"
 #define EUDAQ_uSLEEP(x) uSleep(x)
 
 #else

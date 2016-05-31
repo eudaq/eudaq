@@ -1,9 +1,10 @@
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/EUDRBEvent.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Logger.hh"
+
+#include "EUDRBEvent.hh"
 
 #if USE_LCIO
 #  include "IMPL/LCEventImpl.h"

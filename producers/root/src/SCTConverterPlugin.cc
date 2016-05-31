@@ -23,7 +23,7 @@ using eutelescope::EUTelGenericSparsePixel;
 
 #include "eudaq/PluginManager.hh"
 
-#include "eudaq/SCT_defs.hh"
+#include "SCT_defs.hh"
 #include "eudaq/Configuration.hh"
 
 #include <algorithm>

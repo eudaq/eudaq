@@ -1,10 +1,11 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/FileSerializer.hh"
-#include "eudaq/EUDRBEvent.hh"
 #include "eudaq/TLUEvent.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Logger.hh"
+
+#include "EUDRBEvent.hh"
 
 #include <fstream>
 #include <iostream>

@@ -1,9 +1,10 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/EUDRBEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
+
+#include "EUDRBEvent.hh"
 
 class TestMonitor : public eudaq::Monitor {
   public:

@@ -1,4 +1,4 @@
-#include "eudaq/DEPFETEvent.hh"
+#include "DEPFETEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 

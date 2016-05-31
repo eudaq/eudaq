@@ -1,4 +1,4 @@
-#include "tlu/USBTracer.hh"
+#include "USBTracer.hh"
 
 #if USB_TRACE
 

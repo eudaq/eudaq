@@ -1,5 +1,5 @@
-#include "tlu/TLUAddresses.hh"
-#include "tlu/TLU_address_map_v0-2.h"
+#include "TLUAddresses.hh"
+#include "TLU_address_map_v0-2.h"
 
 #define BEAM_TRIGGER_FSM_RESET_BIT 4
 #define DMA_CONTROLLER_RESET_BIT 5

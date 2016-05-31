@@ -3,7 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Timer.hh"
-#include "eudaq/ATLASFE4IInterpreter.hh"
+#include "ATLASFE4IInterpreter.hh"
 #include <cstdlib>
 #include <cstring>
 #include <exception>
