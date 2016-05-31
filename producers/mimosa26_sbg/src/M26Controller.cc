@@ -42,8 +42,11 @@ int EUDAQ_SEND(SOCKET s, unsigned char *buf, int len, int flags) {
 #endif
 }
 
-unsigned char start[5] = "star";
-unsigned char stop[5] = "stop";
+//unsigned char start[5] = "star"; // deprecated
+//unsigned char stop[5] = "stop";
+
+// -- Unfortunately, the interface is not a standard api that can be used to steer the hardware a la IRC::IRCsteering_object->DoFunction()
+// Instead, you can call functions that create variables in some shared memory which "internally" steer the hardware
 
 M26Controller::M26Controller() {
 }
@@ -54,225 +57,350 @@ M26Controller::~M26Controller() {
 // --- SBG integration
 void M26Controller::Connect(const eudaq::Configuration &param) {
 
-  IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
- 
-  IRC_RCBT2628__FRcBegin ();
+  std::cout << " Connecting to shared memory. " << std::endl;
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
+
+    IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
+    std::cout << "here1" << std::endl;
+    IRC_RCBT2628__FRcBegin ();
+    std::cout << "here2" << std::endl;
+
+  } catch (const std::exception &e) { 
+    printf("while connecting: Caught exeption: %s\n", e.what());
+    //SetStatus(eudaq::Status::LVL_ERROR, "Stop error"); // only the producer can SetStatus
+  } catch (...) { 
+    printf("while connecting: Caught unknown exeption:\n");
+    //SetStatus(eudaq::Status::LVL_ERROR, "Stop error");
+  }
+
 }
 
 void M26Controller::Init(const eudaq::Configuration &param) {
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
+  std::cout << " Initialising. " << std::endl;
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  SInt32 SensorType = 1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
-    
-  std::cout << " SendCCmdInit = " << ret << std::endl;
+    SInt32 SensorType = 1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
 
-  if(ret) EUDAQ_ERROR("Send CmdInit failed"); // FIXME make/add better error handling
+    ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
 
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 5000 /* TimeOutMs */ );
+    /* debug */ // std::cout << " SendCCmdInit = " << ret << std::endl;
 
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdInit failed"); // FIXME make/add better error handling
+    if(ret) EUDAQ_ERROR("Send CmdInit failed"); // FIXME make/add better error handling
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 5000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdInit failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while initialising: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while initialising: Caught unknown exeption:\n");
+  }
+
+
 }
 
 void M26Controller::LoadFW(const eudaq::Configuration &param) {
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
+  std::cout << " LoadWF. " << std::endl;
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  SInt32 CmdNumber = 777;
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  ret = IRC_RCBT2628__FRcSendCmdFwLoad ( CmdNumber/*maybe*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+    SInt32 CmdNumber = 777;
 
-  if(ret) EUDAQ_ERROR("Send CmdLoadFW failed"); // FIXME make/add better error handling
+    ret = IRC_RCBT2628__FRcSendCmdFwLoad ( CmdNumber/*maybe*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
 
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
+    if(ret) EUDAQ_ERROR("Send CmdFwLoad failed"); // FIXME make/add better error handling
 
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdLoadFW failed"); // FIXME make/add better error handling
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdLoadFW failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while loading FW: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while loading FW: Caught unknown exeption:\n");
+  }
+
+
 }
 
 void M26Controller::UnLoadFW() {
   // unload FW
   std::cout << " Unload FW " << std::endl;
+
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
+
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
+
+    SInt32 CmdNumber = -1; // not used
+
+    ret = IRC_RCBT2628__FRcSendCmdFwUnload ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+    if(ret) EUDAQ_ERROR("Send CmdFwUnloadFW failed"); // FIXME make/add better error handling
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdFwUnloadFW failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while unloading FW: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while unloading FW: Caught unknown exeption:\n");
+  }
+
+
 }
 
 void M26Controller::JTAG_Reset() {
-  // JTAG sensors via mcf file
-  std::cout << " Send JTAG RESET to sensors " << std::endl;
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  SInt32 CmdNumber = 111; // not used
+    std::cout << " Send JTAG RESET to sensors " << std::endl;
 
-  ret = IRC_RCBT2628__FRcSendCmdJtagReset ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  if(ret) {
-    EUDAQ_ERROR("Send CmdJtagReset failed"); // FIXME make/add better error handling
-    return;
+    SInt32 CmdNumber = 111; // not used
+
+    ret = IRC_RCBT2628__FRcSendCmdJtagReset ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+    if(ret) {
+      EUDAQ_ERROR("Send CmdJtagReset failed"); // FIXME make/add better error handling
+      return;
+    }
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdJtagReset failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while JTAG reset: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while JTAG reset: Caught unknown exeption:\n");
   }
 
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
 
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdJtagReset failed"); // FIXME make/add better error handling
 }
 
 
 void M26Controller::JTAG_Load(const eudaq::Configuration & param) {
   // JTAG sensors via mcf file
-  std::cout << " JTAG sensors " << std::endl;
-  std::string m_jtag;
-  m_jtag = param.Get("JTAG_file", "");
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  /*debug*/ std::cout << " JTAG file " << m_jtag << std::endl;
+    std::cout << " JTAG sensors " << std::endl;
+    std::string m_jtag;
+    m_jtag = param.Get("JTAG_file", "");
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
+    /*debug*/ std::cout << "  -- JTAG file " << m_jtag << std::endl;
 
-  SInt32 CmdNumber = 666;
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber, (char*)(m_jtag.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+    SInt32 CmdNumber = 666;
 
-  if(ret) {
-    EUDAQ_ERROR("Send CmdJtagLoad failed"); // FIXME make/add better error handling
-    return;
+    ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber, (char*)(m_jtag.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+
+    if(ret) {
+      EUDAQ_ERROR("Send CmdJtagLoad failed"); // FIXME make/add better error handling
+      return;
+    }
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdJtagLoad failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while JTAG load: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while JTAG load: Caught unknown exeption:\n");
   }
 
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
 
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdJtagLoad failed"); // FIXME make/add better error handling
 }
 
 void M26Controller::JTAG_Start() {
-  // JTAG sensors via mcf file
-  std::cout << " Send JTAG START to sensors " << std::endl;
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  SInt32 CmdNumber = -1; // not used
+    std::cout << " Send JTAG START to sensors " << std::endl;
 
-  ret = IRC_RCBT2628__FRcSendCmdJtagStart ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  if(ret) {
-    EUDAQ_ERROR("Send CmdJtagStart failed"); // FIXME make/add better error handling
-    return;
+    SInt32 CmdNumber = -1; // not used
+
+    ret = IRC_RCBT2628__FRcSendCmdJtagStart ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+    if(ret) {
+      EUDAQ_ERROR("Send CmdJtagStart failed"); // FIXME make/add better error handling
+      return;
+    }
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdJtagStart failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while JTAG start: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while JTAG start: Caught unknown exeption:\n");
   }
 
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
 
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdJtagStart failed"); // FIXME make/add better error handling
 }
 
 
 void M26Controller::Configure_Run(const eudaq::Configuration & param) {
   // Configure Run
-  std::cout << " Configure Run " << std::endl;
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
-  IRC_RCBT2628__TCmdRunConf RunConf;
-  RunConf.MapsName         = 1; // ASIC__MI26;
-  RunConf.MapsNb           = 1;
-  RunConf.RunNo            = 2; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
-  RunConf.TotEvNb          = 1000; // ? does the controller need to know?
-  RunConf.EvNbPerFile      = 1000; // should be controlled by eudaq
-  RunConf.FrameNbPerAcq    = 400;
-  RunConf.DataTransferMode = 2; // 0 = No, 1 = IPHC, 2 = EUDET2, 3 = EUDET3 // deprecated! send all data to producer!
-  RunConf.TrigMode         = 0; // ??
-  RunConf.SaveToDisk       = 0; // 0 = No, 1 = Multithreading, 2 = Normal
-  RunConf.SendOnEth        = 0; // deprecated, not need with eudaq
-  RunConf.SendOnEthPCent   = 0; // deprecated, not need with eudaq
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  sprintf ( RunConf.DestDir, "c:\\Data\\test\\1" );
-  sprintf ( RunConf.FileNamePrefix, "run_" );
-  std::string m_jtag;
-  m_jtag = param.Get("JTAG_file", "");
-  char temp[256];
-  strncpy(temp,m_jtag.c_str(),256);
-  //RunConf.JtagFileName =  temp;
-  sprintf ( RunConf.JtagFileName, temp );
+    std::cout << " Configure Run " << std::endl;
 
-  SInt32 CmdNumber = 777;
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
+    IRC_RCBT2628__TCmdRunConf RunConf;
+    RunConf.MapsName         = 1; // ASIC__MI26;
+    RunConf.MapsNb           = 1;
+    RunConf.RunNo            = 2; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
+    RunConf.TotEvNb          = 1000; // ? does the controller need to know?
+    RunConf.EvNbPerFile      = 1000; // should be controlled by eudaq
+    RunConf.FrameNbPerAcq    = 400;
+    RunConf.DataTransferMode = 2; // 0 = No, 1 = IPHC, 2 = EUDET2, 3 = EUDET3 // deprecated! send all data to producer!
+    RunConf.TrigMode         = 0; // ??
+    RunConf.SaveToDisk       = 0; // 0 = No, 1 = Multithreading, 2 = Normal
+    RunConf.SendOnEth        = 0; // deprecated, not need with eudaq
+    RunConf.SendOnEthPCent   = 0; // deprecated, not need with eudaq
 
-  ret = IRC_RCBT2628__FRcSendCmdRunConf ( CmdNumber, &RunConf, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+    sprintf ( RunConf.DestDir, "c:\\Data\\test\\1" );
+    sprintf ( RunConf.FileNamePrefix, "run_" );
+    std::string m_jtag;
+    m_jtag = param.Get("JTAG_file", "");
+    char temp[256];
+    strncpy(temp,m_jtag.c_str(),256);
+    //RunConf.JtagFileName =  temp;
+    sprintf ( RunConf.JtagFileName, temp );
 
-  if(ret) {
-    EUDAQ_ERROR("Send CmdRunConf failed"); // FIXME make/add better error handling
-    return;
+    SInt32 CmdNumber = 777;
+
+    ret = IRC_RCBT2628__FRcSendCmdRunConf ( CmdNumber, &RunConf, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+
+    if(ret) {
+      EUDAQ_ERROR("Send CmdRunConf failed"); // FIXME make/add better error handling
+      return;
+    }
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdRunConf failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while Conf run: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while Conf run: Caught unknown exeption:\n");
   }
 
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
 
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdRunConf failed"); // FIXME make/add better error handling
 }
 
 void M26Controller::Start() { 
-  
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
 
-  SInt32 CmdNumber = 1; // Start the run
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  if(ret) {
-    EUDAQ_ERROR("Send CmdRunStartStop('Start') failed"); // FIXME make/add better error handling
-    return;
+    SInt32 CmdNumber = 1; // Start the run
+
+    ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+    if(ret) {
+      EUDAQ_ERROR("Send CmdRunStartStop('Start') failed"); // FIXME make/add better error handling
+      return;
+    }
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while start run: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while start run: Caught unknown exeption:\n");
   }
-
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
-
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
-
-
 
 }
 
 void M26Controller::Stop() { 
 
-  SInt32 ret = -1;
-  DaqAnswer_CmdReceived = -1;
-  DaqAnswer_CmdExecuted = -1;
-  SInt32 VLastCmdError = -1;
+  try{
+    std::lock_guard<std::mutex> lck(m_mutex);
 
-  SInt32 CmdNumber = 0; // Stop the run
+    SInt32 ret = -1;
+    DaqAnswer_CmdReceived = -1;
+    DaqAnswer_CmdExecuted = -1;
+    SInt32 VLastCmdError = -1;
 
-  ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+    SInt32 CmdNumber = 0; // Stop the run
 
-  if(ret) {
-    EUDAQ_ERROR("Send CmdRunStartStop('Stop') failed"); // FIXME make/add better error handling
-    return;
+    ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+
+    if(ret) {
+      EUDAQ_ERROR("Send CmdRunStartStop('Stop') failed"); // FIXME make/add better error handling
+      return;
+    }
+
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
+
+    // the error logic is inverted here *argh
+    if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
+
+  } catch (const std::exception &e) { 
+    printf("while stop run: Caught exeption: %s\n", e.what());
+  } catch (...) { 
+    printf("while stop run: Caught unknown exeption:\n");
   }
-
-  ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
-
-  // the error logic is inverted here *argh
-  if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
-
 
 }
 
@@ -280,14 +408,14 @@ void M26Controller::Stop() {
 
 // --- Artem
 //void NiController::Configure(const eudaq::Configuration & /*param*/) {
-  // NiIPaddr = param.Get("NiIPaddr", "");
+// NiIPaddr = param.Get("NiIPaddr", "");
 //}
 
 //void NiController::TagsSetting() {
-  // ev.SetTag("DET", 12);
+// ev.SetTag("DET", 12);
 //}
 //void NiController::GetProduserHostInfo() {
-  /*** get Producer information, NAME and INET ADDRESS ***/
+/*** get Producer information, NAME and INET ADDRESS ***/
 //  gethostname(ThisHost, MAXHOSTNAME);
 //  printf("----TCP/Producer running at host NAME: %s\n", ThisHost);
 //  hclient = gethostbyname(ThisHost);
@@ -305,7 +433,7 @@ void M26Controller::Stop() {
 //void NiController::Stop() { ConfigClientSocket_Send(stop, sizeof(stop)); }
 
 //void NiController::ConfigClientSocket_Open(const eudaq::Configuration &param) {
-  /*** Network configuration for NI, NAME and INET ADDRESS ***/
+/*** Network configuration for NI, NAME and INET ADDRESS ***/
 
 //  std::string m_server;
 //  m_server = param.Get("NiIPaddr", "");
@@ -350,35 +478,35 @@ void M26Controller::Stop() {
 /*void NiController::ConfigClientSocket_Send(unsigned char *text, size_t len) {
   bool dbg = false;
   if (dbg)
-    printf("size=%zu", len);
+  printf("size=%zu", len);
 
   if (EUDAQ_SEND(sock_config, text, len, 0) == -1)
-    perror("Server-send() error lol!");
-}*/
+  perror("Server-send() error lol!");
+  }*/
 /*void NiController::ConfigClientSocket_Close() {
 
   EUDAQ_CLOSE_SOCKET(sock_config);
-}*/
+  }*/
 //unsigned int
 //NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
 /*  unsigned int datalengthTmp;
-  unsigned int datalength;
-  int i;
-  bool dbg = false;
-  if ((numbytes = recv(sock_config, Buffer_length, 2, 0)) == -1) {
+    unsigned int datalength;
+    int i;
+    bool dbg = false;
+    if ((numbytes = recv(sock_config, Buffer_length, 2, 0)) == -1) {
     EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
     exit(1);
-  } else {
+    } else {
     if (dbg)
-      printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%u \n",
-             static_cast<uint32_t>(numbytes));
+    printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%u \n",
+    static_cast<uint32_t>(numbytes));
     i = 0;
     if (dbg) {
-      while (i < numbytes) {
-        printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i + 1]);
-        i = i + 2;
-      }
+    while (i < numbytes) {
+    printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i + 1]);
+    i = i + 2;
+    }
     }
     datalengthTmp = 0;
     datalengthTmp = 0xFF & Buffer_length[0];
@@ -387,14 +515,14 @@ void M26Controller::Stop() {
     datalength = datalengthTmp;
 
     if (dbg)
-      printf(" data= %d", datalength);
+    printf(" data= %d", datalength);
     if (dbg)
-      printf("\n");
-  }
-  return datalength;
-}*/
+    printf("\n");
+    }
+    return datalength;
+    }*/
 /*std::vector<unsigned char>
-NiController::ConfigClientSocket_ReadData(int datalength) {
+  NiController::ConfigClientSocket_ReadData(int datalength) {
   std::vector<unsigned char> ConfigData(datalength);
   unsigned int stored_bytes;
   unsigned int read_bytes_left;
@@ -404,100 +532,100 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
   stored_bytes = 0;
   read_bytes_left = datalength;
   while (read_bytes_left > 0) {
-    if ((numbytes = recv(sock_config, Buffer_data, read_bytes_left, 0)) == -1) {
-      EUDAQ_ERROR("|==ConfigClientSocket_ReadLength==| Read data error ");
-      perror("recv()");
-      exit(1);
-    } else {
-      if (dbg)
-        printf("|==ConfigClientSocket_ReadLength==|    numbytes=%u \n",
-               static_cast<uint32_t>(numbytes));
-      read_bytes_left = read_bytes_left - numbytes;
-      for (int k = 0; k < numbytes; k++) {
-        ConfigData[stored_bytes] = Buffer_data[k];
-        stored_bytes++;
-      }
-      i = 0;
-      if (dbg) {
-        while ((int)i < numbytes) {
-          printf(" 0x%x \n", 0xFF & Buffer_data[i]);
-          i++;
-        }
-      }
-    }
+  if ((numbytes = recv(sock_config, Buffer_data, read_bytes_left, 0)) == -1) {
+  EUDAQ_ERROR("|==ConfigClientSocket_ReadLength==| Read data error ");
+  perror("recv()");
+  exit(1);
+  } else {
+  if (dbg)
+  printf("|==ConfigClientSocket_ReadLength==|    numbytes=%u \n",
+  static_cast<uint32_t>(numbytes));
+  read_bytes_left = read_bytes_left - numbytes;
+  for (int k = 0; k < numbytes; k++) {
+  ConfigData[stored_bytes] = Buffer_data[k];
+  stored_bytes++;
+  }
+  i = 0;
+  if (dbg) {
+  while ((int)i < numbytes) {
+  printf(" 0x%x \n", 0xFF & Buffer_data[i]);
+  i++;
+  }
+  }
+  }
   }
   if (dbg)
-    printf("\n");
+  printf("\n");
   return ConfigData;
-}*/
+  }*/
 
 /*void NiController::DatatransportClientSocket_Open(
-    const eudaq::Configuration &param) {
-  // Creation for the data transmit socket, NAME and INET ADDRESS 
-  std::string m_server;
-  m_server = param.Get("NiIPaddr", "");
+  const eudaq::Configuration &param) {
+// Creation for the data transmit socket, NAME and INET ADDRESS 
+std::string m_server;
+m_server = param.Get("NiIPaddr", "");
 
-  std::string m_data_transport_socket_port;
-  m_data_transport_socket_port =
-      param.Get("NiDataTransportSocketPort", "49250");
+std::string m_data_transport_socket_port;
+m_data_transport_socket_port =
+param.Get("NiDataTransportSocketPort", "49250");
 
-  // convert string in config into IPv4 address
-  hostent *host = gethostbyname(m_server.c_str());
-  if (!host) {
-    EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
-                "IPv4 address!");
-    perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 "
-           "address: ");
-  }
-  memcpy((char *)&datatransport.sin_addr.s_addr, host->h_addr_list[0],
-         host->h_length);
+// convert string in config into IPv4 address
+hostent *host = gethostbyname(m_server.c_str());
+if (!host) {
+EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
+"IPv4 address!");
+perror("ConfSocket: Bad NiIPaddr value in config file: must be legal IPv4 "
+"address: ");
+}
+memcpy((char *)&datatransport.sin_addr.s_addr, host->h_addr_list[0],
+host->h_length);
 
-  if ((sock_datatransport = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    EUDAQ_ERROR("DataTransportSocket: Error creating socket ");
-    perror("DataTransportSocket Error: socket()");
-    exit(1);
-  } else
-    printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
+if ((sock_datatransport = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+EUDAQ_ERROR("DataTransportSocket: Error creating socket ");
+perror("DataTransportSocket Error: socket()");
+exit(1);
+} else
+printf("----TCP/NI crate DATA TRANSPORT: The SOCKET is OK...\n");
 
-  printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n",
-         inet_ntoa(datatransport.sin_addr));
-  printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %s \n",
-         m_data_transport_socket_port.c_str());
+printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n",
+inet_ntoa(datatransport.sin_addr));
+printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %s \n",
+m_data_transport_socket_port.c_str());
 
-  datatransport.sin_family = AF_INET;
-  int i_auto = std::stoi(m_data_transport_socket_port, nullptr, 10);
-  datatransport.sin_port = htons(i_auto);
-  memset(&(datatransport.sin_zero), '\0', 8);
-  if (connect(sock_datatransport, (struct sockaddr *)&datatransport,
-              sizeof(struct sockaddr)) == -1) {
-    EUDAQ_ERROR("DataTransportSocket: National Instruments crate doesn't "
-                "appear to be running  ");
-    perror("DataTransportSocket: connect()");
-    EUDAQ_Sleep(60);
-    exit(1);
-  } else
-    printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
+datatransport.sin_family = AF_INET;
+int i_auto = std::stoi(m_data_transport_socket_port, nullptr, 10);
+datatransport.sin_port = htons(i_auto);
+memset(&(datatransport.sin_zero), '\0', 8);
+if (connect(sock_datatransport, (struct sockaddr *)&datatransport,
+sizeof(struct sockaddr)) == -1) {
+EUDAQ_ERROR("DataTransportSocket: National Instruments crate doesn't "
+"appear to be running  ");
+perror("DataTransportSocket: connect()");
+EUDAQ_Sleep(60);
+exit(1);
+} else
+printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
 }*/
 //unsigned int
 //NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
 /*  unsigned int datalengthTmp;
-  unsigned int datalength;
-  int i;
-  bool dbg = false;
-  if ((numbytes = recv(sock_datatransport, Buffer_length, 2, 0)) == -1) {
+    unsigned int datalength;
+    int i;
+    bool dbg = false;
+    if ((numbytes = recv(sock_datatransport, Buffer_length, 2, 0)) == -1) {
     EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
     exit(1);
-  } else {
+    } else {
     if (dbg)
-      printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%u \n",
-             static_cast<uint32_t>(numbytes));
+    printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%u \n",
+    static_cast<uint32_t>(numbytes));
     i = 0;
     if (dbg) {
-      while (i < numbytes) {
-        printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i + 1]);
-        i = i + 2;
-      }
+    while (i < numbytes) {
+    printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i + 1]);
+    i = i + 2;
+    }
     }
     datalengthTmp = 0;
     datalengthTmp = 0xFF & Buffer_length[0];
@@ -506,14 +634,14 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
     datalength = datalengthTmp;
 
     if (dbg)
-      printf(" data= %d", datalength);
+    printf(" data= %d", datalength);
     if (dbg)
-      printf("\n");
-  }
-  return datalength;
-}*/
+    printf("\n");
+    }
+    return datalength;
+    }*/
 /*std::vector<unsigned char>
-NiController::DataTransportClientSocket_ReadData(int datalength) {
+  NiController::DataTransportClientSocket_ReadData(int datalength) {
 
   std::vector<unsigned char> mimosa_data(datalength);
   unsigned int stored_bytes;
@@ -524,36 +652,36 @@ NiController::DataTransportClientSocket_ReadData(int datalength) {
   stored_bytes = 0;
   read_bytes_left = datalength;
   while (read_bytes_left > 0) {
-    if ((numbytes =
-             recv(sock_datatransport, Buffer_data, read_bytes_left, 0)) == -1) {
-      EUDAQ_ERROR("DataTransportSocket: Read data error ");
-      perror("recv()");
-      exit(1);
-    } else {
-      if (dbg)
-        printf("|==DataTransportClientSocket_ReadData==|    numbytes=%u \n",
-               static_cast<uint32_t>(numbytes));
-      read_bytes_left = read_bytes_left - numbytes;
-      for (int k = 0; k < numbytes; k++) {
-        mimosa_data[stored_bytes] = Buffer_data[k];
-        stored_bytes++;
-      }
-      i = 0;
-      if (dbg) {
-        while ((int)i < numbytes) {
-          printf(" 0x%x%x", 0xFF & Buffer_data[i], 0xFF & Buffer_data[i + 1]);
-          i = i + 2;
-        }
-      }
-    }
+  if ((numbytes =
+  recv(sock_datatransport, Buffer_data, read_bytes_left, 0)) == -1) {
+  EUDAQ_ERROR("DataTransportSocket: Read data error ");
+  perror("recv()");
+  exit(1);
+  } else {
+  if (dbg)
+  printf("|==DataTransportClientSocket_ReadData==|    numbytes=%u \n",
+  static_cast<uint32_t>(numbytes));
+  read_bytes_left = read_bytes_left - numbytes;
+  for (int k = 0; k < numbytes; k++) {
+  mimosa_data[stored_bytes] = Buffer_data[k];
+  stored_bytes++;
+  }
+  i = 0;
+  if (dbg) {
+  while ((int)i < numbytes) {
+  printf(" 0x%x%x", 0xFF & Buffer_data[i], 0xFF & Buffer_data[i + 1]);
+  i = i + 2;
+  }
+  }
+  }
   }
   if (dbg)
-    printf("\n");
+  printf("\n");
   return mimosa_data;
-}*/
+  }*/
 //void NiController::DatatransportClientSocket_Close() {
 //  EUDAQ_CLOSE_SOCKET(sock_datatransport);
 //}
 //NiController::~NiController() {
-  //
+//
 //}

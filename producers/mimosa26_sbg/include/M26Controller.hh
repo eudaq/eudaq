@@ -21,6 +21,8 @@
 typedef int SOCKET;
 #endif
 
+#include <mutex>
+
 #include "iphc_run_ctrl_exp.h"
 
 using eudaq::to_string;
@@ -116,6 +118,9 @@ private:
 
   SInt32 DaqAnswer_CmdReceived;
   SInt32 DaqAnswer_CmdExecuted;
+
+  // Add one mutex to protect calls
+  std::mutex m_mutex;
 
 };
 
