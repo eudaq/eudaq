@@ -64,7 +64,7 @@ void ParaMonitorCollection::Fill(const SimpleStandardEvent &simpev) {
     InitPlots(simpev);
     bookHistograms(simpev);
   }
-  uint clkpersec = 48000000*8;
+  unsigned int clkpersec = 48000000*8;
   for(auto &e: m_graphMap){
     double value;
     std::string str = e.first;
