@@ -54,7 +54,8 @@ protected:
   void fillHistograms(vector<vector<pair<int, SimpleStandardCluster>>> tracks,
                       const SimpleStandardEvent &simpEv);
   void fillHistograms(const SimpleStandardPlane &p1,
-                      const SimpleStandardPlane &p2);
+                      const SimpleStandardPlane &p2,
+		      const SimpleStandardEvent &simpEv);
 
 public:
   CorrelationCollection();

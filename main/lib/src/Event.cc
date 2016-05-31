@@ -125,6 +125,15 @@ namespace eudaq {
     else
       return true;
   }
+
+  std::vector<std::string> Event::GetTagList(const std::string &prefix) const{
+    std::vector<std::string> list;
+    for(auto &e:m_tags){
+      if(!e.first.compare(0, prefix.size(), prefix))
+	list.push_back(e.first);
+    }
+    return list;
+  }
   
   void Event::SetTimeStampToNow() {
     m_timestamp = static_cast<uint64_t>(clock());

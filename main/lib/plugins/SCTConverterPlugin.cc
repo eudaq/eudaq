@@ -170,11 +170,6 @@ namespace eudaq {
       if (!raw) {
         return false;
       }
-      size_t  nblocks= raw->NumBlocks();
-      if(!nblocks){
-	std::cout<< "SCTConverterPlugin: Error, no block in RawdataEvent"<<std::endl;
-	return false;
-      }
 
       std::string tagname;
       tagname = "Temperature";
@@ -184,6 +179,20 @@ namespace eudaq {
       tagname = "Voltage";
       if(raw->HasTag(tagname)){
 	sev.SetTag(tagname,raw->GetTag(tagname));
+      }
+      
+      std::vector<std::string> paralist = raw->GetTagList("PLOT_");
+      for(auto &e: paralist){
+	double val ;
+	val=raw->GetTag(e, val);
+	sev.SetTag(e,val);
+      }
+
+      size_t  nblocks= raw->NumBlocks();
+      if(!nblocks){
+	std::cout<< "SCTConverterPlugin: Warning, no block in "<<raw->GetSubType()
+		 <<", event number = "<<raw->GetEventNumber()<<"  skipped"<<std::endl;
+	return true;
       }
       
       for(size_t n = 0; n<nblocks; n++){
@@ -213,13 +222,13 @@ namespace eudaq {
 	  
 	  unsigned x = 0;	// TODO:: swap x and y axises
 	  for (size_t i = 0; i < channels.size(); ++i) {
-	    ++x;
 	    if (channels[i] == true) {
 	      if(m_swap_xy)
 		plane.PushPixel(1, x, 1);
 	      else
 		plane.PushPixel(x, 1 , 1);
 	    }
+	    ++x;
 	  }
 	  sev.AddPlane(plane);
 	}
@@ -377,9 +386,6 @@ namespace eudaq {
         TTC = reinterpret_cast<const TriggerData_t *>(block.data());
       }
       size_t j = 0;
-      // sev.SetTag(std::string("triggerData_") + to_string(j), to_hex(TTC[j],
-      // 16));
-      // sev.SetTag("triggerData_0", to_hex(TTC[0], 16));
       for (size_t i = 0; i < size_of_TTC; ++i) {
 
         uint64_t data = TTC[i];
