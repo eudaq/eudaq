@@ -4,6 +4,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
+#include "irc_exceptions.hh"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,12 +60,6 @@ class NiProducer : public eudaq::Producer {
       if (!configure) {
 	try{
 	  m26_control = std::make_shared<M26Controller>();
-	  //ni_control->Configure(param);
-	  //ni_control->GetProduserHostInfo();
-	  //ni_control->ConfigClientSocket_Open(param);
-	  //ni_control->DatatransportClientSocket_Open(param);
-	  //std::cout << " " << std::endl;
-	  // ---
 	  m26_control->Connect(param);
 	  m26_control->Init(param);
 	  m26_control->LoadFW(param);
@@ -79,18 +74,20 @@ class NiProducer : public eudaq::Producer {
 	  configure = true;
 	} catch  (const std::exception &e) { 
 	  printf("while connecting: Caught exeption: %s\n", e.what());
-	  SetStatus(eudaq::Status::LVL_ERROR, "Stop error");
 	  configure = false;
 	} catch (...) { 
-	  printf("while connecting: Caught unknown exeption:\n");
-	  SetStatus(eudaq::Status::LVL_ERROR, "Stop error");
+	  printf("while configuring: Caught unknown exeption:\n");
 	  configure = false;
 	}
 
       }
 
-      if (configure) {
-	std::cout << "... was Configured " << param.Name() << " " << std::endl;
+      if (!configure) {
+	EUDAQ_ERROR("Error during configuring.");
+	SetStatus(eudaq::Status::LVL_ERROR, "Stop error");
+      }
+      else {
+	std::cout << "... was configured " << param.Name() << " " << std::endl;
 	EUDAQ_INFO("Configured (" + param.Name() + ")");
 	SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
       }
@@ -98,20 +95,20 @@ class NiProducer : public eudaq::Producer {
     }
 
     virtual void OnStartRun(unsigned param) {
+      std::cout << "Start Run: " << param << std::endl;
       try {
 	m_run = param;
 	m_ev = 0;
-	std::cout << "Start Run: " << param << std::endl;
 
 	eudaq::RawDataEvent ev(RawDataEvent::BORE("NI", m_run));
 
 	ev.SetTag("DET", "MIMOSA26");
 	//ev.SetTag("MODE", "ZS2");
 	ev.SetTag("BOARDS", NumBoards);
-	//for (unsigned char i = 0; i < 6; i++)
-	//  ev.SetTag("ID" + to_string(i), to_string(MimosaID[i]));
-	//for (unsigned char i = 0; i < 6; i++)
-	//  ev.SetTag("MIMOSA_EN" + to_string(i), to_string(MimosaEn[i]));
+	for (unsigned char i = 0; i < 6; i++)
+	  ev.SetTag("ID" + to_string(i), to_string(MimosaID[i]));
+	for (unsigned char i = 0; i < 6; i++)
+	  ev.SetTag("MIMOSA_EN" + to_string(i), to_string(MimosaEn[i]));
 	SendEvent(ev);
 	eudaq::mSleep(500);
 

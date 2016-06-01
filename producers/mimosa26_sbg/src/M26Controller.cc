@@ -22,6 +22,9 @@
 
 #include <winsock.h>
 #pragma comment(lib, "Ws2_32.lib")
+
+#include "irc_exceptions.hh"
+
 #define EUDAQ_Sleep(x) Sleep(x)
 #define EUDAQ_BCOPY(source, dest, NSize) memmove(dest, source, NSize)
 
@@ -62,9 +65,7 @@ void M26Controller::Connect(const eudaq::Configuration &param) {
     std::lock_guard<std::mutex> lck(m_mutex);
 
     IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
-    std::cout << "here1" << std::endl;
     IRC_RCBT2628__FRcBegin ();
-    std::cout << "here2" << std::endl;
 
   } catch (const std::exception &e) { 
     printf("while connecting: Caught exeption: %s\n", e.what());
@@ -87,7 +88,14 @@ void M26Controller::Init(const eudaq::Configuration &param) {
     DaqAnswer_CmdExecuted = -1;
     SInt32 VLastCmdError = -1;
 
-    SInt32 SensorType = 1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
+    SInt32 SensorType = -1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
+    std::string m_sensorType;
+    m_sensorType = param.Get("Det", "");
+    if(m_sensorType.compare("MIMOSA26") == 0) {
+      SensorType = 1; // compare() returns 0 if equal
+      std::cout << "  -- Found matching sensor. " << std::endl;
+    }
+    else throw irc::InvalidConfig("Invalid Sensor type!");
 
     ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
 
@@ -100,10 +108,16 @@ void M26Controller::Init(const eudaq::Configuration &param) {
     // the error logic is inverted here *argh
     if(!ret) EUDAQ_ERROR("Execution of CmdInit failed"); // FIXME make/add better error handling
 
+  } catch (irc::InvalidConfig &e) { 
+    printf("while initialising: Caught exeption: %s\n", e.what());
+    // m26 CONTROLLER IS NO PRODUCER -> DOESNT KNOW ABOUT EUdaq_ERROR // EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
+    throw;
   } catch (const std::exception &e) { 
     printf("while initialising: Caught exeption: %s\n", e.what());
+    throw;
   } catch (...) { 
     printf("while initialising: Caught unknown exeption:\n");
+    throw;
   }
 
 
