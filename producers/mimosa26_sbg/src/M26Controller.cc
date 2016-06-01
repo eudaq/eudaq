@@ -111,7 +111,7 @@ void M26Controller::Init(const eudaq::Configuration &param) {
   } catch (irc::InvalidConfig &e) { 
     printf("while initialising: Caught exeption: %s\n", e.what());
     // m26 CONTROLLER IS NO PRODUCER -> DOESNT KNOW ABOUT EUdaq_ERROR // EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
-    throw;
+    throw; // propagating exception to caller
   } catch (const std::exception &e) { 
     printf("while initialising: Caught exeption: %s\n", e.what());
     throw;
@@ -354,7 +354,7 @@ void M26Controller::Configure_Run(const eudaq::Configuration & param) {
 
 }
 
-void M26Controller::Start() { 
+void M26Controller::Start_Run() { 
 
   try{
     std::lock_guard<std::mutex> lck(m_mutex);
@@ -386,7 +386,7 @@ void M26Controller::Start() {
 
 }
 
-void M26Controller::Stop() { 
+void M26Controller::Stop_Run() { 
 
   try{
     std::lock_guard<std::mutex> lck(m_mutex);

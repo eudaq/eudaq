@@ -30,6 +30,16 @@ class NiProducer : public eudaq::Producer {
 	}
 	if (running) {
 
+	  // also lock mutex here
+
+	  // structure of this part depends on how data is send from SBG LV DAQ
+	  // - likely to be package with 4 frames per trigger -> 4*n frames = 1 acquisition
+	  // ->Is "4" configurable?
+	  // - What of more than 1 trigger occurred during "4" frames
+	  // -> Data dublication? Does the FW propagate trigger into into RAM such that we know which frames to dublicate
+	  // -> Does the MAxTrigNumber influence the FW: longer BUSY? if not, the TLU does not know about this and will continue to issue triggers. 
+	  //    Hence LVDAQ might not send data on a certain trigger, but all the other systems are! I think we either need a long busy ("4" frames) or we can not limit the number of triggers so we (need to) know how to send all matching frames to the producer and the producer can dublicate them in such a way that it sends the correct package of "4" frames to the Data Collector
+
 	  //datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
 	  std::vector<unsigned char> mimosa_data_0(1);
 	  //mimosa_data_0 = ni_control->DataTransportClientSocket_ReadData(datalength1);
@@ -73,7 +83,7 @@ class NiProducer : public eudaq::Producer {
 	  // ---
 	  configure = true;
 	} catch  (const std::exception &e) { 
-	  printf("while connecting: Caught exeption: %s\n", e.what());
+	  printf("while configuring: Caught exeption: %s\n", e.what());
 	  configure = false;
 	} catch (...) { 
 	  printf("while configuring: Caught unknown exeption:\n");
@@ -112,7 +122,7 @@ class NiProducer : public eudaq::Producer {
 	SendEvent(ev);
 	eudaq::mSleep(500);
 
-	m26_control->Start();
+	m26_control->Start_Run();
 
 	running = true;
 
@@ -129,7 +139,7 @@ class NiProducer : public eudaq::Producer {
       try {
 	std::cout << "Stop Run" << std::endl;
 
-	m26_control->Stop();
+	m26_control->Stop_Run();
 	eudaq::mSleep(5000);
 	running = false;
 	eudaq::mSleep(100);

@@ -28,35 +28,35 @@ typedef int SOCKET;
 using eudaq::to_string;
 
 // the port client will be connecting to
-#define PORT_CONFIG 49248
-#define PORT_DATATRANSF 49250
+//#define PORT_CONFIG 49248
+//#define PORT_DATATRANSF 49250
 // max number of bytes we can get at once
-#define MAXDATASIZE 300
-#define MAXHOSTNAME 80
+//#define MAXDATASIZE 300
+//#define MAXHOSTNAME 80
 
-#define START 0x1254
-#define STOP 0x1255
+//#define START 0x1254
+//#define STOP 0x1255
 
 class M26Controller {
 
 public:
   M26Controller();
-  void Configure(const eudaq::Configuration &conf);
   virtual ~M26Controller();
-  void GetProduserHostInfo();
-  void Start();
-  void Stop();
-  void TagsSetting();
-  void DatatransportClientSocket_Open(const eudaq::Configuration &conf);
-  void DatatransportClientSocket_Close();
-  unsigned int DataTransportClientSocket_ReadLength(const char string[4]);
-  std::vector<unsigned char> DataTransportClientSocket_ReadData(int datalength);
+  //void Configure(const eudaq::Configuration &conf);
+  //void GetProduserHostInfo();
+  //void Start();
+  //void Stop();
+  //void TagsSetting();
+  //void DatatransportClientSocket_Open(const eudaq::Configuration &conf);
+  //void DatatransportClientSocket_Close();
+  //unsigned int DataTransportClientSocket_ReadLength(const char string[4]);
+  //std::vector<unsigned char> DataTransportClientSocket_ReadData(int datalength);
 
-  void ConfigClientSocket_Open(const eudaq::Configuration &conf);
-  void ConfigClientSocket_Close();
-  void ConfigClientSocket_Send(unsigned char *text, size_t len);
-  unsigned int ConfigClientSocket_ReadLength(const char string[4]);
-  std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
+  //void ConfigClientSocket_Open(const eudaq::Configuration &conf);
+  //void ConfigClientSocket_Close();
+  //void ConfigClientSocket_Send(unsigned char *text, size_t len);
+  //unsigned int ConfigClientSocket_ReadLength(const char string[4]);
+  //std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
 
   // -------------- SBG integration
   void Connect(const eudaq::Configuration &param);
@@ -75,26 +75,26 @@ public:
 
 
 private:
-  struct hostent *hclient, *hconfig, *hdatatransport;
-  struct sockaddr_in client;
-  struct sockaddr_in config;
-  struct sockaddr_in datatransport;
+  //struct hostent *hclient, *hconfig, *hdatatransport;
+  //struct sockaddr_in client;
+  //struct sockaddr_in config;
+  //struct sockaddr_in datatransport;
 
-  unsigned char conf_parameters[10];
+  //unsigned char conf_parameters[10];
 
-  struct timeval tv;
-  unsigned int sec;
-  unsigned int microsec;
+  //struct timeval tv;
+  //unsigned int sec;
+  //unsigned int microsec;
 
-  char ThisHost[80];
+  //char ThisHost[80];
 
-  char Buffer_data[7000];
-  char Buffer_length[7000];
+  //char Buffer_data[7000];
+  //char Buffer_length[7000];
 
-  uint32_t data_trans_addres; // = INADDR_NONE;
-  SOCKET sock_config;
-  SOCKET sock_datatransport;
-  int numbytes;
+  //uint32_t data_trans_addres; // = INADDR_NONE;
+  //SOCKET sock_config;
+  //SOCKET sock_datatransport;
+  //int numbytes;
 
   // NiIPaddr;
   unsigned TriggerType;
@@ -105,11 +105,11 @@ private:
   unsigned FPGADownload;
   unsigned MimosaID[6];
   unsigned MimosaEn[6];
-  bool OneFrame;
+  //bool OneFrame;
 
   // -------------- SBG integration
   //SInt8 APP_VGErrFileLogLvl = 1;
-  SInt8 APP_VGErrUserLogLvl = 1;
+  SInt8 APP_VGErrUserLogLvl = 2;
   //SInt8 APP_VGMsgFileLogLvl = 127;
   SInt8 APP_VGMsgUserLogLvl = 127;
 
