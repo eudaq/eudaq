@@ -96,15 +96,18 @@ private:
   //SOCKET sock_datatransport;
   //int numbytes;
 
+  // these are needed from the JTAG files, other go the private section of the producer
+  std::string m_detectorType;
+  unsigned m_numDetectors;
+  std::string m_JTAG_file;
+
   // NiIPaddr;
-  unsigned TriggerType;
-  unsigned Det;
-  unsigned Mode;
-  unsigned NiVersion;
-  unsigned NumBoards;
-  unsigned FPGADownload;
-  unsigned MimosaID[6];
-  unsigned MimosaEn[6];
+  //unsigned TriggerType;
+  //unsigned Mode;
+  //unsigned NiVersion;
+  //unsigned FPGADownload;
+  //unsigned MimosaID[6];
+  //unsigned MimosaEn[6];
   //bool OneFrame;
 
   // -------------- SBG integration
@@ -119,7 +122,7 @@ private:
   SInt32 DaqAnswer_CmdReceived;
   SInt32 DaqAnswer_CmdExecuted;
 
-  // Add one mutex to protect calls
+  // Add one mutex to be able to protect calls
   std::mutex m_mutex;
 
 };
