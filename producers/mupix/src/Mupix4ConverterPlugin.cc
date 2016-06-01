@@ -14,10 +14,11 @@
 
 #include "eudaq/DataConverterPlugin.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/Mupix.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
+
+#include "Mupix.hh"
 
 #if USE_LCIO
 #include "IMPL/LCEventImpl.h"
