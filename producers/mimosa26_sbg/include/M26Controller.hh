@@ -97,9 +97,9 @@ private:
   //int numbytes;
 
   // these are needed from the JTAG files, other go the private section of the producer
-  std::string m_detectorType;
-  unsigned m_numDetectors;
-  std::string m_JTAG_file;
+  //std::string m_detectorType;
+  //unsigned m_numDetectors;
+  //std::string m_JTAG_file;
 
   // NiIPaddr;
   //unsigned TriggerType;
@@ -112,18 +112,18 @@ private:
 
   // -------------- SBG integration
   //SInt8 APP_VGErrFileLogLvl = 1;
-  SInt8 APP_VGErrUserLogLvl = 2;
+  //SInt8 APP_VGErrUserLogLvl = 2;
   //SInt8 APP_VGMsgFileLogLvl = 127;
-  SInt8 APP_VGMsgUserLogLvl = 127;
+  //SInt8 APP_VGMsgUserLogLvl = 127;
 
-  char * APP_ERR_LOG_FILE = "C:/opt/eudaq/logs/IRC_err.txt";
-  char * APP_MSG_LOG_FILE = "C:/opt/eudaq/logs/IRC_msgs.txt";
+  //char * APP_ERR_LOG_FILE = "C:/opt/eudaq/logs/IRC_err.txt";
+  //char * APP_MSG_LOG_FILE = "C:/opt/eudaq/logs/IRC_msgs.txt";
 
-  SInt32 DaqAnswer_CmdReceived;
-  SInt32 DaqAnswer_CmdExecuted;
+  //SInt32 DaqAnswer_CmdReceived;
+  //SInt32 DaqAnswer_CmdExecuted;
 
   // Add one mutex to be able to protect calls
-  std::mutex m_mutex;
+  //std::mutex m_mutex;
 
 };
 
