@@ -52,7 +52,6 @@ void M26Producer::ReadoutLoop() {
 	std::lock_guard<std::mutex> lck(m_mutex);
 	// check an read
 	std::cout << " reading" << std::endl;
-	dummy = std::make_shared<unsigned>(); 
 
 	// structure of this part depends on how data is send from SBG LV DAQ
 	// - likely to be package with 4 frames per trigger -> 4*n frames = 1 acquisition
@@ -99,14 +98,6 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
   std::cout << "Configuring ...(" << m_config.Name() << ")" << std::endl;
   try{
     if (!m_configured) {
-      // the IRC DLL is C style and has no class "IRCcore" that can be used for steering and mutex locking
-      // use a M26Controller as a dummy instead
-
-      // starting to get rid of functionalities in Controller class and ship them to producer. 
-      //Second level is not really needed, as there are no other instances of LV DAQs that would benefit from another layer.
-
-      //m26_control = std::make_shared<M26Controller>(); // the dummy FIXME replace with something else
-      //dummy = std::make_shared<unsinged>(); 
 
       //m26_control->Connect(m_config);
       std::cout << " Connecting to shared memory. " << std::endl;
@@ -180,9 +171,8 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
       try{
 
         reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
-        //CmdNumber = 777;
 
-	ret = IRC_RCBT2628__FRcSendCmdFwLoad ( CmdNumber/*maybe*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+	ret = IRC_RCBT2628__FRcSendCmdFwLoad ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
 
 	if(ret) EUDAQ_ERROR("Send CmdFwLoad failed"); // FIXME make/add better error handling
 
@@ -203,9 +193,8 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 	std::cout << " Send JTAG RESET to sensors " << std::endl;
 
         reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
-	//CmdNumber = 111; // not used
 
-	ret = IRC_RCBT2628__FRcSendCmdJtagReset ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+	ret = IRC_RCBT2628__FRcSendCmdJtagReset ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
 
 	if(ret) {
 	  EUDAQ_ERROR("Send CmdJtagReset failed"); // FIXME make/add better error handling
@@ -236,9 +225,8 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 	/*debug*/ std::cout << "  -- JTAG file " << m_jtag << std::endl;
 
         reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
-	//CmdNumber = 666; // not used
 
-	ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber, (char*)(m_jtag.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+	ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber/*not used*/, (char*)(m_jtag.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
 
 	if(ret) {
 	  EUDAQ_ERROR("Send CmdJtagLoad failed"); // FIXME make/add better error handling
@@ -263,9 +251,8 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 	std::cout << " Send JTAG START to sensors " << std::endl;
 
         reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
-	//CmdNumber = -1; // not used
 
-	ret = IRC_RCBT2628__FRcSendCmdJtagStart ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+	ret = IRC_RCBT2628__FRcSendCmdJtagStart ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
 
 	if(ret) {
 	  EUDAQ_ERROR("Send CmdJtagStart failed"); // FIXME make/add better error handling
@@ -292,7 +279,6 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
       std::cout << " Configure Run " << std::endl;
 
       reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
-      //CmdNumber = 777;
 
       IRC_RCBT2628__TCmdRunConf RunConf;
 
@@ -318,7 +304,7 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
       sprintf ( RunConf.JtagFileName, temp );
 
 
-      ret = IRC_RCBT2628__FRcSendCmdRunConf ( CmdNumber, &RunConf, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+      ret = IRC_RCBT2628__FRcSendCmdRunConf ( CmdNumber/*not used*/, &RunConf, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
 
       if(ret) {
 	EUDAQ_ERROR("Send CmdRunConf failed"); // FIXME make/add better error handling
@@ -483,9 +469,8 @@ void M26Producer::OnTerminate() {
   try{
 
     reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
-    //CmdNumber = -1; // not used
 
-    ret = IRC_RCBT2628__FRcSendCmdFwUnload ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
+    ret = IRC_RCBT2628__FRcSendCmdFwUnload ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
 
     if(ret) EUDAQ_ERROR("Send CmdFwUnloadFW failed"); // FIXME make/add better error handling
 

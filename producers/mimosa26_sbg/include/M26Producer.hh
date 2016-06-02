@@ -53,7 +53,7 @@ private:
   eudaq::Configuration m_config;
 
   // Add one mutex to be able to protect calls
-  std::shared_ptr<unsigned> dummy;
+  //std::shared_ptr<unsigned> dummy;
   std::mutex m_mutex;
 
   eudaq::Timer *m_reset_timer;
