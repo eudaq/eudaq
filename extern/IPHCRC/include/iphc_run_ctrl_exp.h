@@ -1,4 +1,5 @@
-
+#ifndef IRC_HH
+#define IRC_HH
 // *********************************************************
 // IRC DLL header file for importing functions
 // GC - 29/04/2016
@@ -234,6 +235,6 @@ extern "C" SInt32 IRC_RCBT2628__FRcSendCmdRunConf          ( SInt32 ParamS32, IR
 
 extern "C" SInt32 IRC_RCBT2628__FRcGetLastCmdError         ( SInt32* PtLastCmdError, SInt32 TimeOutMs );
 
-
+#endif
 
 
