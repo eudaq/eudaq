@@ -30,12 +30,24 @@ M26Producer::M26Producer(const std::string &name,
     //std::cout << "M26_SBG_Producer was started successfully " << std::endl;
   }
 
-void reset_com(SInt32 &int1, SInt32 &int2, SInt32 &int3, SInt32 &int4, SInt32 &int5) {
-  int1 = -1;
-  int2 = -1;
-  int3 = -1;
-  int4 = -1;
-  int5 = -1;
+//void reset_com(SInt32 &int1, SInt32 &int2, SInt32 &int3, SInt32 &int4, SInt32 &int5, std::string &cmd) {
+void M26Producer::reset_com() {
+  ret = -1;
+  DaqAnswer_CmdReceived= -1;
+  DaqAnswer_CmdExecuted = -1;
+  VLastCmdError = -1;
+  CmdNumber = -1;
+  cmd = "";
+}
+
+void sendError(std::string cmd){
+  EUDAQ_ERROR(std::string("Send/Receive " + cmd + " failed")); 
+  throw irc::SendReceiveException(std::string("Failed to send/receive "+cmd));
+}
+
+void executeError(std::string cmd){
+  EUDAQ_ERROR(std::string("Execution of " + cmd + " failed")); 
+  throw irc::ExecuteException(std::string("Failed to execute "+cmd));
 }
 
 void M26Producer::ReadoutLoop() {
@@ -103,24 +115,33 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
       std::cout << " Connecting to shared memory. " << std::endl;
       try{
 
-	IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
-	IRC_RCBT2628__FRcBegin ();
+        reset_com();
+
+        //one could also do: if(!IRC__FBegin()) but is less readible imho
+	ret = IRC__FBegin ( APP_VGErrUserLogLvl, APP_ERR_LOG_FILE, APP_VGMsgUserLogLvl, APP_MSG_LOG_FILE );
+	if(ret) throw irc::GlobalConnectError("Failed to perform global IRC init. Is LV running?");
+
+	ret = IRC_RCBT2628__FRcBegin ();
+	if(ret) throw irc::GlobalSharedMemError("Failed to find shared memory. Is LV running?");
 
       } catch (const std::exception &e) { 
 	printf("while connecting: Caught exeption: %s\n", e.what());
 	//SetStatus(eudaq::Status::LVL_ERROR, "Stop error"); 
+	throw;
       } catch (...) { 
 	printf("while connecting: Caught unknown exeption:\n");
 	//SetStatus(eudaq::Status::LVL_ERROR, "Stop error");
+	throw;
       }
 
       //m26_control->Init(m_config);
       std::cout << " Initialising. " << std::endl;
       try {
 
-        reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+        reset_com();
+	cmd = "CmdInit";
 
-	SInt32 SensorType = -1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1 // FIXME get from config file
+	SInt32 SensorType = -1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1
 
 	m_detectorType = m_config.Get("Det", "");
 	std::cout << " this is the det type = " << m_detectorType << std::endl;
@@ -128,11 +149,7 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 	  SensorType = 1; // compare() returns 0 if equal
 	  std::cout << "  -- Found matching sensor. " << std::endl;
 	}
-	else throw irc::InvalidConfig("Invalid Sensor type: " + m_detectorType  + " !");
-
-	m_JTAG_file = m_config.Get("JTAG_file", "");
-	std::ifstream infile(m_JTAG_file.c_str());
-	if(!infile.good()) throw irc::InvalidConfig("Invalid path to JTAG file!");
+	else throw irc::InvalidConfig("Invalid Sensor type >>> " + m_detectorType  + " <<< !");
 
 	m_numDetectors = m_config.Get("NumDetectors", -1);
 	if(m_numDetectors < 1 || m_numDetectors > 16) throw irc::InvalidConfig("Invalid number of detectors!");
@@ -144,15 +161,11 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 	/*FIXME if very verbose*/ for(unsigned i = 0; i < m_numDetectors; i++) std::cout << m_MimosaEn.at(i) << std::endl;
 
 	ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
-
-	/* debug */ // std::cout << " SendCCmdInit = " << ret << std::endl;
-
-	if(ret) EUDAQ_ERROR("Send CmdInit failed"); // FIXME make/add better error handling
+	if(ret) sendError(cmd);
 
 	ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 5000 /* TimeOutMs */ );
-
 	// the error logic is inverted here *argh
-	if(!ret) EUDAQ_ERROR("Execution of CmdInit failed"); // FIXME make/add better error handling
+	if(!ret) executeError(cmd);
 
       } catch (irc::InvalidConfig &e) { 
 	printf("while initialising: Caught exeption: %s\n", e.what());
@@ -170,118 +183,111 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
       std::cout << " LoadWF. " << std::endl;
       try{
 
-        reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+        reset_com();
+	cmd = "CmdFwLoad";
 
 	ret = IRC_RCBT2628__FRcSendCmdFwLoad ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
-
-	if(ret) EUDAQ_ERROR("Send CmdFwLoad failed"); // FIXME make/add better error handling
+	if(ret) sendError(cmd);
 
 	ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
+	if(!ret) executeError(cmd);
 
-	// the error logic is inverted here *argh
-	if(!ret) EUDAQ_ERROR("Execution of CmdLoadFW failed"); // FIXME make/add better error handling
 
       } catch (const std::exception &e) { 
 	printf("while loading FW: Caught exeption: %s\n", e.what());
+	throw;
       } catch (...) { 
 	printf("while loading FW: Caught unknown exeption:\n");
+	throw;
       }
 
       //m26_control->JTAG_Reset();
+      std::cout << " Send JTAG RESET to sensors " << std::endl;
       try{
 
-	std::cout << " Send JTAG RESET to sensors " << std::endl;
-
-        reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+        reset_com();
+        cmd = "JTAGReset";
 
 	ret = IRC_RCBT2628__FRcSendCmdJtagReset ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
-
-	if(ret) {
-	  EUDAQ_ERROR("Send CmdJtagReset failed"); // FIXME make/add better error handling
-	  return;
-	}
+	if(ret) sendError(cmd);
 
 	ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
-
-	// the error logic is inverted here *argh
-	if(!ret) EUDAQ_ERROR("Execution of CmdJtagReset failed"); // FIXME make/add better error handling
+	if(!ret) executeError(cmd);
 
       } catch (const std::exception &e) { 
 	printf("while JTAG reset: Caught exeption: %s\n", e.what());
+	throw;
       } catch (...) { 
 	printf("while JTAG reset: Caught unknown exeption:\n");
+	throw;
       }
 
       eudaq::mSleep(200);
 
       //m26_control->JTAG_Load(m_config);
+      std::cout << " JTAG sensors " << std::endl;
       // JTAG sensors via mcf file
       try{
 
-	std::cout << " JTAG sensors " << std::endl;
-	std::string m_jtag;
-	m_jtag = m_config.Get("JTAG_file", "");
+	m_JTAG_file = m_config.Get("JTAG_file", "");
+	std::ifstream infile(m_JTAG_file.c_str());
+	if(!infile.good()) throw irc::InvalidConfig("Invalid path to JTAG file!");
 
-	/*debug*/ std::cout << "  -- JTAG file " << m_jtag << std::endl;
+	/*debug*/ std::cout << "  -- JTAG file " << m_JTAG_file << std::endl;
 
-        reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+        reset_com();
+	cmd = "CmdJtagLoad";
 
-	ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber/*not used*/, (char*)(m_jtag.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
-
-	if(ret) {
-	  EUDAQ_ERROR("Send CmdJtagLoad failed"); // FIXME make/add better error handling
-	  return;
-	}
+	ret = IRC_RCBT2628__FRcSendCmdJtagLoad ( CmdNumber/*not used*/, (char*)(m_JTAG_file.c_str()), &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+	if(ret) sendError(cmd);
 
 	ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
-
-	// the error logic is inverted here *argh
-	if(!ret) EUDAQ_ERROR("Execution of CmdJtagLoad failed"); // FIXME make/add better error handling
+	if(!ret) executeError(cmd);
 
       } catch (const std::exception &e) { 
 	printf("while JTAG load: Caught exeption: %s\n", e.what());
+	throw;
       } catch (...) { 
 	printf("while JTAG load: Caught unknown exeption:\n");
+	throw;
       }
 
       eudaq::mSleep(200);
       //m26_control->JTAG_Start();
+      std::cout << " Send JTAG START to sensors " << std::endl;
       try{
 
-	std::cout << " Send JTAG START to sensors " << std::endl;
 
-        reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+        reset_com();
+	cmd = "CmdJtagStart";
 
 	ret = IRC_RCBT2628__FRcSendCmdJtagStart ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
 
-	if(ret) {
-	  EUDAQ_ERROR("Send CmdJtagStart failed"); // FIXME make/add better error handling
-	  return;
-	}
+	if(ret) sendError(cmd);
 
 	ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
-
-	// the error logic is inverted here *argh
-	if(!ret) EUDAQ_ERROR("Execution of CmdJtagStart failed"); // FIXME make/add better error handling
+	if(!ret) executeError(cmd);
 
       } catch (const std::exception &e) { 
 	printf("while JTAG start: Caught exeption: %s\n", e.what());
+	throw;
       } catch (...) { 
 	printf("while JTAG start: Caught unknown exeption:\n");
+	throw;
       }
 
 
-      //m26_control->Configure_Run(m_config);
-      // Configure Run
-    }
+    } /* end if first time configured */
+    //m26_control->Configure_Run(m_config);
+    std::cout << " Configure Run " << std::endl;
     try{
 
-      std::cout << " Configure Run " << std::endl;
-
-      reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+      reset_com();
+      cmd = "CmdRunConf";
 
       IRC_RCBT2628__TCmdRunConf RunConf;
 
+      // FIXME get from m_config
       RunConf.MapsName         = 1; // ASIC__MI26;
       RunConf.MapsNb           = 1;
       RunConf.RunNo            = 2; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
@@ -296,30 +302,22 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 
       sprintf ( RunConf.DestDir, "c:\\Data\\test\\1" );
       sprintf ( RunConf.FileNamePrefix, "run_" );
-      std::string m_jtag;
-      m_jtag = m_config.Get("JTAG_file", "");
       char temp[256];
-      strncpy(temp,m_jtag.c_str(),256);
-      //RunConf.JtagFileName =  temp;
+      strncpy(temp,m_JTAG_file.c_str(),256);
       sprintf ( RunConf.JtagFileName, temp );
 
-
       ret = IRC_RCBT2628__FRcSendCmdRunConf ( CmdNumber/*not used*/, &RunConf, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
-
-      if(ret) {
-	EUDAQ_ERROR("Send CmdRunConf failed"); // FIXME make/add better error handling
-	return;
-      }
+      if(ret) sendError(cmd);
 
       ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ );
-
-      // the error logic is inverted here *argh
-      if(!ret) EUDAQ_ERROR("Execution of CmdRunConf failed"); // FIXME make/add better error handling
+      if(!ret) executeError(cmd);
 
     } catch (const std::exception &e) { 
       printf("while Conf run: Caught exeption: %s\n", e.what());
+      throw;
     } catch (...) { 
       printf("while Conf run: Caught unknown exeption:\n");
+      throw;
     }
 
     /*try {
@@ -378,25 +376,22 @@ void M26Producer::OnStartRun(unsigned param) {
     try{
       std::lock_guard<std::mutex> lck(m_mutex);
 
-      reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+      reset_com();
       CmdNumber = 1; // Start the run
+      cmd = "CmdRunStart";
 
       ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
-
-      if(ret) {
-	EUDAQ_ERROR("Send CmdRunStartStop('Start') failed"); // FIXME make/add better error handling
-	return;
-      }
+      if(ret) sendError(cmd);
 
       ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
-
-      // the error logic is inverted here *argh
-      if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
+      if(!ret) executeError(cmd);
 
     } catch (const std::exception &e) { 
       printf("while start run: Caught exeption: %s\n", e.what());
+      throw;
     } catch (...) { 
       printf("while start run: Caught unknown exeption:\n");
+      throw;
     }
 
 
@@ -420,25 +415,22 @@ void M26Producer::OnStopRun() {
     try{
       std::lock_guard<std::mutex> lck(m_mutex);
 
-      reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+      reset_com();
       CmdNumber = 0; // Stop the run
+      cmd = "CmdRunStop";
 
       ret = IRC_RCBT2628__FRcSendCmdRunStartStop ( CmdNumber, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
-
-      if(ret) {
-	EUDAQ_ERROR("Send CmdRunStartStop('Stop') failed"); // FIXME make/add better error handling
-	return;
-      }
+      if(ret) sendError(cmd);
 
       ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 20000 /* TimeOutMs */ );
-
-      // the error logic is inverted here *argh
-      if(!ret) EUDAQ_ERROR("Execution of CmdRunStartStop failed"); // FIXME make/add better error handling
+      if(!ret) executeError(cmd);
 
     } catch (const std::exception &e) { 
       printf("while stop run: Caught exeption: %s\n", e.what());
+      throw;
     } catch (...) { 
       printf("while stop run: Caught unknown exeption:\n");
+      throw;
     }
 
 
@@ -468,16 +460,14 @@ void M26Producer::OnTerminate() {
 
   try{
 
-    reset_com(ret, DaqAnswer_CmdReceived, DaqAnswer_CmdExecuted, VLastCmdError, CmdNumber);
+    reset_com();
+    cmd = "CmdFwUnload";
 
     ret = IRC_RCBT2628__FRcSendCmdFwUnload ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
-
-    if(ret) EUDAQ_ERROR("Send CmdFwUnloadFW failed"); // FIXME make/add better error handling
+    if(ret) sendError(cmd);
 
     ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
-
-    // the error logic is inverted here *argh
-    if(!ret) EUDAQ_ERROR("Execution of CmdFwUnloadFW failed"); // FIXME make/add better error handling
+    if(!ret) executeError(cmd);
 
   } catch (const std::exception &e) { 
     printf("while unloading FW: Caught exeption: %s\n", e.what());

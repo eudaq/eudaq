@@ -46,9 +46,18 @@ namespace irc {
   /**  This exception class covers connection issues with the shared memory
    *   which is allocated by the LV DAQ
    */
-  class SharedMemError : public ircException {
+  class GlobalSharedMemError : public ircException {
   public:
-    SharedMemError(const std::string& what_arg) : ircException(what_arg) {}
+    GlobalSharedMemError(const std::string& what_arg) : ircException(what_arg) {}
+  };
+
+
+  /**  This exception class covers global initialisation error
+   *   e.g. ??
+   */
+  class GlobalConnectError : public ircException {
+  public:
+    GlobalConnectError(const std::string& what_arg) : ircException(what_arg) {}
   };
 
   // not used
@@ -59,7 +68,30 @@ namespace irc {
   //  UsbConnectionTimeout(const std::string& what_arg) : ircException(what_arg) {}
   //};
 
-  /** This exception class is the base class for all irc data exceptions
+ /** This exception class is the base class for all send/receive/execute cmd error
+   */
+  class ComException : public ircException {
+  public:
+    ComException(const std::string& what_arg) : ircException(what_arg) {}
+  };
+
+ /** This exception class covers all send/receive cmd errors
+   */
+  class SendReceiveException : public ComException {
+  public:
+    SendReceiveException(const std::string& what_arg) : ComException(what_arg) {}
+  };
+
+ /** This exception class covers all execute cmd errors
+   */
+  class ExecuteException : public ComException {
+  public:
+    ExecuteException(const std::string& what_arg) : ComException(what_arg) {}
+  };
+
+
+
+ /** This exception class is the base class for all irc data exceptions
    */
   class DataException : public ircException {
   public:

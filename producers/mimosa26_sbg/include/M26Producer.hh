@@ -47,6 +47,8 @@ public:
 private:
   void ReadDataFromShrdMemory();
 
+  void reset_com();
+
   unsigned m_ev, m_run;
   std::string m_verbosity, m_producerName;
   bool m_terminated, m_configured, m_running, m_triggering, m_stopping;
@@ -79,6 +81,7 @@ private:
   SInt32 DaqAnswer_CmdExecuted;
   SInt32 VLastCmdError;
   SInt32 CmdNumber;
+  std::string cmd;
 
 };
 
