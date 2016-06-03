@@ -216,7 +216,8 @@ bool DeviceReader::ThresholdScan() {
 DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
                            int boardid, TDAQBoard* daq_board, TpAlpidefs* dut)
   : m_queue_size(0), m_thread(&DeviceReader::LoopWrapper, this),
-    m_stop(false), m_running(false), m_waiting_for_eor(false), m_threshold_scan_rqst(false),
+    m_stop(false), m_running(false), m_flushing(false),
+    m_waiting_for_eor(false), m_threshold_scan_rqst(false),
     m_threshold_scan_result(0), m_boardid(id), m_id(id),
     m_debuglevel(debuglevel), m_test_setup(test_setup),
     m_daq_board(daq_board), m_dut(dut),
@@ -241,6 +242,7 @@ void DeviceReader::SetRunning(bool running) {
   {
     SimpleLock lock(m_mutex);
     if (m_running && !running) {
+      m_flushing = true;
       m_waiting_for_eor = true;
     }
     m_running = running;
@@ -329,7 +331,7 @@ void DeviceReader::Loop() {
       }
     }
 
-    if (!IsRunning()) {
+    if (!IsRunning() && !IsFlushing()) {
       eudaq::mSleep(20);
       continue;
     }
@@ -350,21 +352,26 @@ void DeviceReader::Loop() {
     // data taking
     SetReading(true);
     int error = 0;
-    bool readEvent = false;
+    int readEvent = -1;
     unsigned char* debug = 0x0;
     int debug_length = 0;
     do {
-      readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength, &error, &debug, &debug_length);
+      readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
 #ifdef DEBUG_USB
       if (debug_length>0) {
         std::vector<unsigned char> vec(&debug[0], &debug[debug_length]);
         m_debug.insert(m_debug.end(), vec.begin(), vec.end());
       }
 #endif
-    } while (error==-7 && IsRunning() && !readEvent);
+      if (readEvent==-3) {
+        SimpleLock lock(m_mutex);
+        m_flushing = false;
+        Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
+      }
+    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3);
     SetReading(false);
 
-    if ((readEvent && length != -9) || (!readEvent && length == 0)){
+    if (readEvent==1 || (readEvent==-2 && length > 0)) {
       if (length == 0 && readEvent) {
         SimpleLock lock(m_mutex);
         Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
@@ -739,14 +746,13 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     // PrepareEmptyReadout
 
     if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) {
-      std::cout << "This is " << dut->GetClassName() << std::endl;
+      //std::cout << "This is " << dut->GetClassName() << std::endl;
       daq_board->ConfigureReadout(3, true, true);
       // buffer depth = 3, 'sampling on rising edge (changed for pALPIDE3)', packet-based mode
     }
     else daq_board->ConfigureReadout(1, false, true); //buffer depth = 1, sampling on rising edge, packet-based mode
     daq_board->ConfigureTrigger(0, m_strobe_length[i], 2, 0,
                                 m_trigger_delay[i]);
-    std::cout << m_chip_readoutmode[i] << std::endl;
     // PrepareChipReadout
     dut->PrepareReadout(m_strobeb_length[i], m_readout_delay[i],
                         (TAlpideMode)m_chip_readoutmode[i]);       // chip_readoutmode = 1 : triggered ; 2 : continuous mode;
@@ -776,8 +782,13 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     }
   }
 
-  eudaq::mSleep(5000); // TODO remove this again - trying to protect from
-                       // starting problems
+
+  if (m_debuglevel > 3) {
+    for (int i = 0; i < m_nDevices; i++) {
+      std::cout << "Reader " << i << ":" << std::endl;
+      m_reader[i]->PrintDAQboardStatus();
+    }
+  }
 
   if (!m_configured) {
     m_configured = true;
@@ -1164,7 +1175,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     }
   }
   if (!queues_empty) {
-    EUDAQ_WARN( "Queues not empty on SOR");
+    EUDAQ_INFO( "Queues not empty on SOR, queues were flushed.");
   }
   eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
   bore.SetTag("Devices", m_nDevices);
@@ -1307,6 +1318,7 @@ void PALPIDEFSProducer::OnStopRun() {
     SimpleLock lock(m_mutex);
     m_running = false;
     m_stopping = true;
+    m_flushing = true;
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
     std::cout << "Stopping DAQ " << std::endl;
@@ -1326,13 +1338,14 @@ void PALPIDEFSProducer::OnStopRun() {
 
   unsigned long count = 0;
   for (int i = 0; i < m_nDevices; i++) { // wait until all read transactions are done
-    while (m_reader[i]->IsReading()) {
+    while (m_reader[i]->IsReading() || m_reader[i]->IsFlushing()) {
       if (count++ % 250 == 0) {
 	std::cout << "Reader is still reading, waiting.. " << std::endl;
       }
       eudaq::mSleep(20);
     }
-
+    SimpleLock lock(m_mutex);
+    m_flushing = false;
   }
 
   long wait_cnt = 0;
@@ -1363,15 +1376,7 @@ void PALPIDEFSProducer::OnStopRun() {
     }
   }
 
-  if (!PowerOffTestSetup()) {
-    char buffer[] = "Powering off the DAQ boards failed!";
-    std::cout << buffer << std::endl;
-    EUDAQ_ERROR(buffer);
-    SetStatus(eudaq::Status::LVL_ERROR, buffer);
-  }
-  else {
-    SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
-  }
+  SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1404,20 +1409,27 @@ void PALPIDEFSProducer::Loop() {
   do {
     eudaq::mSleep(20);
 
-    if (!IsRunning() && IsStopping()) {
+    if (!IsRunning() && !IsFlushing() && IsStopping()) {
       SendEOR();
       count = 0;
     }
     // build events
-    while (IsRunning()) {
+    while (IsRunning() || IsFlushing()) {
       int events_built = BuildEvent();
       count += events_built;
 
       if (events_built == 0) {
         if (m_status_interval > 0 &&
             time(0) - last_status > m_status_interval) {
-          if (IsRunning())
+          if (IsRunning()) {
             SendStatusEvent();
+            if (m_debuglevel > 3){
+              for (int i = 0; i < m_nDevices; i++) {
+                std::cout << "Reader " << i << ":" << std::endl;
+                m_reader[i]->PrintDAQboardStatus();
+              }
+            }
+          }
           PrintQueueStatus();
           last_status = time(0);
         }

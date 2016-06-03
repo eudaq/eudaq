@@ -73,6 +73,10 @@ public:
 
   void ParseXML(TiXmlNode* node, int base, int rgn, bool readwrite);
 
+  void PrintDAQboardStatus() {
+    m_daq_board->ReadAllRegisters();
+  }
+
   void RequestThresholdScan() {
     SimpleLock lock(m_mutex);
     m_threshold_scan_result = 0;
@@ -95,6 +99,12 @@ public:
     SimpleLock lock(m_mutex);
     return m_reading;
   }
+
+  bool IsFlushing() {
+    SimpleLock lock(m_mutex);
+    return m_flushing;
+  }
+
 
 #ifdef DEBUG_USB
   std::vector<unsigned char> m_debug;
@@ -138,6 +148,7 @@ protected:
   std::mutex m_mutex;
   bool m_stop;
   bool m_running;
+  bool m_flushing;
   bool m_reading;
   bool m_waiting_for_eor;
   bool m_threshold_scan_rqst;
@@ -175,7 +186,7 @@ public:
                     int debuglevel = 0)
     : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_good_ev(0),
       m_oos_ev(0), m_last_oos_ev(0), m_timestamp_last(0x0), m_done(false),
-      m_running(false), m_stopping(false),
+      m_running(false), m_stopping(false), m_flushing(false),
       m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
       m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
       m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
@@ -223,6 +234,10 @@ protected:
     SimpleLock lock(m_mutex);
     return m_stopping;
   }
+  bool IsFlushing() {
+    SimpleLock lock(m_mutex);
+    return m_flushing;
+  }
   bool IsDone() {
     SimpleLock lock(m_mutex);
     return m_done;
@@ -237,6 +252,7 @@ protected:
   bool m_done;
   bool m_running;
   bool m_stopping;
+  bool m_flushing;
   bool m_configuring;
   bool m_configured;
   bool m_firstevent;
