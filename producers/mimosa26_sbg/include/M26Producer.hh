@@ -62,7 +62,9 @@ private:
 
   // info from the config file
   std::string m_detectorType;
+  unsigned m_detectorTypeCode;
   unsigned m_numDetectors;
+  unsigned m_sumEnDetectors;
   std::string m_JTAG_file;
   std::vector<unsigned> m_MimosaID;
   std::vector<unsigned> m_MimosaEn;

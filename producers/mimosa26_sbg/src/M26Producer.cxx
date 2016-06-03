@@ -26,8 +26,7 @@ M26Producer::M26Producer(const std::string &name,
     const std::string &verbosity)
   : eudaq::Producer(name, runcontrol), m_producerName(name), m_terminated(false), m_configured(false), 
   m_running(false), m_triggering(false), m_stopping(false) {
-    //m_configured = false;
-    //std::cout << "M26_SBG_Producer was started successfully " << std::endl;
+    m_sumEnDetectors = 0;
   }
 
 //void reset_com(SInt32 &int1, SInt32 &int2, SInt32 &int3, SInt32 &int4, SInt32 &int5, std::string &cmd) {
@@ -141,12 +140,12 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
         reset_com();
 	cmd = "CmdInit";
 
-	SInt32 SensorType = -1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1
+	m_detectorTypeCode = -1; // 0 = ASIC__NONE, 1 = ASIC__MI26, 2 = ASIC__ULT1
 
 	m_detectorType = m_config.Get("Det", "");
 	std::cout << " this is the det type = " << m_detectorType << std::endl;
 	if(m_detectorType.compare("MIMOSA26") == 0) {
-	  SensorType = 1; // compare() returns 0 if equal
+	  m_detectorTypeCode = 1; // compare() returns 0 if equal
 	  std::cout << "  -- Found matching sensor. " << std::endl;
 	}
 	else throw irc::InvalidConfig("Invalid Sensor type >>> " + m_detectorType  + " <<< !");
@@ -160,7 +159,9 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 	for(unsigned i = 0; i < m_numDetectors; i++) m_MimosaEn.push_back(m_config.Get("MimosaEn_"+to_string(i),-1));
 	/*FIXME if very verbose*/ for(unsigned i = 0; i < m_numDetectors; i++) std::cout << m_MimosaEn.at(i) << std::endl;
 
-	ret = IRC_RCBT2628__FRcSendCmdInit ( SensorType, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
+	for(unsigned i = 0; i < m_numDetectors; i++) if ( m_MimosaEn.at(i) == 1) m_sumEnDetectors++;
+
+	ret = IRC_RCBT2628__FRcSendCmdInit ( m_detectorTypeCode, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 100 /* TimeOutMs */ );
 	if(ret) sendError(cmd);
 
 	ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 5000 /* TimeOutMs */ );
@@ -288,14 +289,14 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
       IRC_RCBT2628__TCmdRunConf RunConf;
 
       // FIXME get from m_config
-      RunConf.MapsName         = 1; // ASIC__MI26;
-      RunConf.MapsNb           = 1;
-      RunConf.RunNo            = 2; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
-      RunConf.TotEvNb          = 1000; // ? does the controller need to know?
-      RunConf.EvNbPerFile      = 1000; // should be controlled by eudaq
-      RunConf.FrameNbPerAcq    = 400;
-      RunConf.DataTransferMode = 2; // 0 = No, 1 = IPHC, 2 = EUDET2, 3 = EUDET3 // deprecated! send all data to producer!
-      RunConf.TrigMode         = 0; // ??
+      RunConf.MapsName         = m_detectorTypeCode;
+      RunConf.MapsNb           = m_sumEnDetectors;
+      RunConf.RunNo            = 1; // FIXME If at all, must come from eudaq !! Finally, the controller does not need to know!!
+      RunConf.TotEvNb          = 0; // only used when saving to disk
+      RunConf.EvNbPerFile      = 0; // noy used by DAQ
+      RunConf.FrameNbPerAcq    = 1800; // 1800 is optimum for M26, 400 for M28
+      RunConf.DataTransferMode = 3; // 0 = No, 2 = EUDET2, 3 = EUDET3 // will steer which data is send to shrd mem. 2 ->all frames, 3-> only w/ trig
+      RunConf.TrigMode         = 0; // deprecated
       RunConf.SaveToDisk       = 0; // 0 = No, 1 = Multithreading, 2 = Normal
       RunConf.SendOnEth        = 0; // deprecated, not need with eudaq
       RunConf.SendOnEthPCent   = 0; // deprecated, not need with eudaq
