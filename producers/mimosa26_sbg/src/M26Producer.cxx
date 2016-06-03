@@ -108,6 +108,7 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 
   std::cout << "Configuring ...(" << m_config.Name() << ")" << std::endl;
   try{
+    std::lock_guard<std::mutex> lck(m_mutex);
     if (!m_configured) {
 
       //m26_control->Connect(m_config);
@@ -293,6 +294,9 @@ void M26Producer::OnConfigure(const eudaq::Configuration &param) {
 void M26Producer::OnStartRun(unsigned param) {
   std::cout << "Start Run: " << param << std::endl;
   try {
+
+    std::lock_guard<std::mutex> lck(m_mutex);
+
     m_run = param;
     m_ev = 0;
 
@@ -309,7 +313,6 @@ void M26Producer::OnStartRun(unsigned param) {
     eudaq::mSleep(500);
 
     //m26_control->Start_Run();
-    std::lock_guard<std::mutex> lck(m_mutex);
 
     reset_com();
     CmdNumber = 1; // Start the run
@@ -377,13 +380,14 @@ void M26Producer::OnTerminate() {
 
   try{
 
+    std::lock_guard<std::mutex> lck(m_mutex);
     reset_com();
     cmd = "CmdFwUnload";
 
     ret = IRC_RCBT2628__FRcSendCmdFwUnload ( CmdNumber/*not used*/, &DaqAnswer_CmdReceived, &DaqAnswer_CmdExecuted, 500 /* TimeOutMs */ );
     if(ret) sendError(cmd);
 
-    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 10000 /* TimeOutMs */ ); // orig 10000
+    ret = IRC_RCBT2628__FRcGetLastCmdError ( &VLastCmdError, 1000 /* TimeOutMs */ ); // orig 10000
     if(!ret) executeError(cmd);
 
   } catch (const std::exception &e) { 
