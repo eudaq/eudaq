@@ -8,10 +8,10 @@
 MESSAGE(STATUS "Looking for RPiController dependencies: wiringPi...")
 
 find_path(WIRINGPI_INCLUDE_DIR wiringPi.h
-  HINTS "/usr/local/include" "${PROJECT_SOURCE_DIR}/extern/wiringPi")
+  HINTS "/usr/local/include" "/usr/include" "${PROJECT_SOURCE_DIR}/extern/wiringPi")
 
 find_library(WIRINGPI_LIBRARY NAMES wiringPi
-  HINTS "/usr/local/lib" "${PROJECT_SOURCE_DIR}/extern/wiringPi")
+  HINTS "/usr/local/lib" "/usr/lib" "${PROJECT_SOURCE_DIR}/extern/wiringPi")
 
 #include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set WIRINGPI_FOUND to TRUE
