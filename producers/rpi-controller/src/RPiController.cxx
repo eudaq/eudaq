@@ -6,6 +6,7 @@
 #include "eudaq/Configuration.hh"
 
 #include "RPiController.hh"
+#include <wiringPi.h>
 
 #include <iostream>
 #include <ostream>
@@ -17,11 +18,21 @@ using namespace std;
 
 RPiController::RPiController(const std::string &name,
 			     const std::string &runcontrol)
-  : eudaq::CommandReceiver("Producer", name, runcontrol), m_terminated(false), m_name("") { }
+  : eudaq::CommandReceiver("Producer", name, runcontrol), m_terminated(false), m_name(""), m_pinnr(0), m_waiting_time(4000) { }
 
 void RPiController::OnConfigure(const eudaq::Configuration &config) {
 
   std::cout << "Configuring: " << config.Name() << std::endl;
+
+  // Read and store configured pin from eudaq config:
+  m_pinnr = config.Get("pinnr", 0);
+  EUDAQ_INFO(string("Configured pin " + std::to_string(m_pinnr) +
+                    " of rhe Raspberry Piu controller to be set to high."));
+
+  // Store waiting time in ms before the pin is set to high in OnRunStart():
+  m_waiting_time = config.Get("waiting_time", 4000);
+  EUDAQ_INFO(string("Waiting " + std::to_string(m_waiting_time) +
+                    "ms before enabling output pin at run start."));
 
   try {
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
@@ -34,8 +45,10 @@ void RPiController::OnConfigure(const eudaq::Configuration &config) {
 void RPiController::OnStartRun(unsigned runnumber) {
 
   try {
-    // Wait 4 sec before returning OK.
-    //eudaq::mSleep(4000);
+    // Wait defined time before returning OK.
+    eudaq::mSleep(m_waiting_time);
+    // Set configured pin to high:
+    digitalWrite(m_pinnr, 1);
 
     SetStatus(eudaq::Status::LVL_OK, "Running");
   } catch (...) {
@@ -48,6 +61,9 @@ void RPiController::OnStartRun(unsigned runnumber) {
 void RPiController::OnStopRun() {
 
   try {
+    // Set configured pin to low:
+    digitalWrite(m_pinnr, 0);
+    
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   } catch (const std::exception &e) {
     printf("While Stopping: Caught exception: %s\n", e.what());

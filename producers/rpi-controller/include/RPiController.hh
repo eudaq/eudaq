@@ -25,6 +25,8 @@ public:
   
 private:
   bool m_terminated;
+  int m_pinnr;
+  unsigned m_waiting_time;
   std::string m_name;
 };
 #endif /*RPICONTROLLER_HH*/
