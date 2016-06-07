@@ -26,11 +26,13 @@ void RPiController::OnConfigure(const eudaq::Configuration &config) {
 
   // Read and store configured pin from eudaq config:
   m_pinnr = config.Get("pinnr", 0);
+  std::cout << m_name << ": Configured pin " << std::to_string(m_pinnr) << " to be set to high." << std::endl;
   EUDAQ_INFO(string("Configured pin " + std::to_string(m_pinnr) +
-                    " of rhe Raspberry Piu controller to be set to high."));
+                    " of the Raspberry Pi controller to be set to high."));
 
   // Store waiting time in ms before the pin is set to high in OnRunStart():
   m_waiting_time = config.Get("waiting_time", 4000);
+  std::cout << m_name << ": Waiting " << std::to_string(m_waiting_time) << "ms for pin action." << std::endl;
   EUDAQ_INFO(string("Waiting " + std::to_string(m_waiting_time) +
                     "ms before enabling output pin at run start."));
 
@@ -46,8 +48,11 @@ void RPiController::OnStartRun(unsigned runnumber) {
 
   try {
     // Wait defined time before returning OK.
+    std::cout << "Waiting configured time of "
+	      << std::to_string(m_waiting_time) << "ms" << std::endl;
     eudaq::mSleep(m_waiting_time);
     // Set configured pin to high:
+    std::cout << "Calling digitalWrite() to set pin high" << std::endl;
     digitalWrite(m_pinnr, 1);
 
     SetStatus(eudaq::Status::LVL_OK, "Running");
@@ -62,6 +67,7 @@ void RPiController::OnStopRun() {
 
   try {
     // Set configured pin to low:
+    std::cout << "Calling digitalWrite() to set pin low" << std::endl;
     digitalWrite(m_pinnr, 0);
     
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
@@ -79,11 +85,10 @@ void RPiController::OnTerminate() {
   std::cout << "RPiController terminating..." << std::endl;
 
   m_terminated = true;
-  std::cout << "RPiController " << m_name << " terminated."
-            << std::endl;
+  std::cout << "RPiController " << m_name << " terminated." << std::endl;
 }
 
-void RPiController::ReadoutLoop() {
+void RPiController::Loop() {
 
   // Loop until Run Control tells us to terminate
   while (!m_terminated) {
@@ -105,7 +110,7 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<std::string> level(
       op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> name(op, "n", "name", "RpiControl", "string",
+  eudaq::Option<std::string> name(op, "n", "name", "RPiController", "string",
                                   "The name of this Producer");
   try {
     // This will look through the command-line arguments and set the options
@@ -113,12 +118,12 @@ int main(int /*argc*/, const char **argv) {
     // Set the Log level for displaying messages based on command-line
     EUDAQ_LOG_LEVEL(level.Value());
 
-    // Create a producer
-    RPiController producer(name.Value(), rctrl.Value());
+    // Create the instance
+    RPiController controller(name.Value(), rctrl.Value());
     // And set it running...
-    producer.ReadoutLoop();
+    controller.Loop();
 
-    // When the readout loop terminates, it is time to go
+    // When the keep-alive loop terminates, it is time to go
     std::cout << "Quitting" << std::endl;
   } catch (...) {
     // This does some basic error handling of common exceptions

@@ -21,7 +21,7 @@ public:
   virtual void OnStartRun(unsigned runnumber);
   virtual void OnStopRun();
   virtual void OnTerminate();
-  void ReadoutLoop();
+  void Loop();
   
 private:
   bool m_terminated;
