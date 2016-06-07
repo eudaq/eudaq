@@ -54,6 +54,8 @@ void RPiController::OnStartRun(unsigned runnumber) {
     // Set configured pin to high:
     std::cout << "Calling digitalWrite() to set pin high" << std::endl;
     digitalWrite(m_pinnr, 1);
+    EUDAQ_INFO(string("GPIO pin " + std::to_string(m_pinnr) + " now high."));
+
 
     SetStatus(eudaq::Status::LVL_OK, "Running");
   } catch (...) {
@@ -69,6 +71,7 @@ void RPiController::OnStopRun() {
     // Set configured pin to low:
     std::cout << "Calling digitalWrite() to set pin low" << std::endl;
     digitalWrite(m_pinnr, 0);
+    EUDAQ_INFO(string("GPIO pin " + std::to_string(m_pinnr) + " now low."));
     
     SetStatus(eudaq::Status::LVL_OK, "Stopped");
   } catch (const std::exception &e) {
