@@ -1,12 +1,26 @@
-set(name "NiProducer")
-set(sourcefiles src/NiProducer.cxx src/NiController.cc)
+GET_FILENAME_COMPONENT(DIRNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+SET(PLUGIN_NAME plugin.${DIRNAME})
+SET_PROPERTY(GLOBAL APPEND PROPERTY CONVERTER_PLUGIN ${PLUGIN_NAME})
 
-INCLUDE_DIRECTORIES( include )
-add_executable(${name} ${sourcefiles})
+INCLUDE_DIRECTORIES(include)
 
-target_link_libraries(${name}   EUDAQ ${EUDAQ_THREADS_LIB})
+SET(PLUGIN_SRC
+  src/MimosaConverterPlugin.cc
+  src/NIConverterPlugin.cc
+  )
+ADD_LIBRARY(${PLUGIN_NAME} SHARED ${PLUGIN_SRC})
 
-INSTALL(TARGETS ${name}
+
+SET(PRODUCER_NAME "NiProducer")
+SET(PRODUCER_SRC
+  src/NiProducer.cxx
+  src/NiController.cc
+  )
+ADD_EXECUTABLE(${PRODUCER_NAME} ${PRODUCER_SRC})
+
+TARGET_LINK_LIBRARIES(${PRODUCER_NAME} EUDAQ ${EUDAQ_THREADS_LIB})
+
+INSTALL(TARGETS ${PRODUCER_NAME} ${PLUGIN_NAME}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

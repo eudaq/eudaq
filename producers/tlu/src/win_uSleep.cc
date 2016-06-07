@@ -1,7 +1,7 @@
 #ifdef WIN32
 
 #include <windows.h>
-#include "tlu/win_Usleep.h"
+#include "win_Usleep.h"
 
 void uSleep(int waitTime) {
   __int64 time1 = 0, time2 = 0, freq = 0;

@@ -45,6 +45,7 @@ public:
 
 private:
   EUDAQMonitorHistos *mymonhistos;
+  
 };
 
 #ifdef __CINT__

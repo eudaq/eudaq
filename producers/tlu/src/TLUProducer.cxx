@@ -5,8 +5,8 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 
-#include "tlu/TLUController.hh"
-#include "tlu/USBTracer.hh"
+#include "TLUController.hh"
+#include "USBTracer.hh"
 #include <iostream>
 #include <ostream>
 #include <cctype>

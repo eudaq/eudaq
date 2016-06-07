@@ -60,7 +60,8 @@ int main(){
     for (int i = 0; i < 500; ++i)
     {
       dq.trigger();
-      Sleep(1);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
     }
 
 
@@ -88,14 +89,12 @@ int main(){
         sync->AddEventToProducerQueue(0, ev);
       }
     }
-
-    Sleep(1);
-
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     do
     {
 
     } while (sync->SyncFirstEvent());
-    Sleep(1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     auto writer=FileWriterFactory::Create("meta");
     writer->SetFilePattern("test.txt");
     writer->StartRun(0);

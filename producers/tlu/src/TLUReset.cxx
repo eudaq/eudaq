@@ -1,4 +1,4 @@
-#include "tlu/TLUController.hh"
+#include "TLUController.hh"
 
 #ifdef WIN32
 ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler =

@@ -10,7 +10,7 @@ compiler:
 branches:
   only:
     - master
-    - v1.5-dev
+    - v1.6-dev
 
 os:
   - linux
@@ -39,7 +39,7 @@ install:
 
   # Install package dependencies for Mac OS X:
   - if [ $TRAVIS_OS_NAME == osx ]; then brew unlink cmake; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb; fi
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb qt; fi
   # Install numpy via pip:
   - if [ $TRAVIS_OS_NAME == osx ]; then easy_install pip && pip install numpy; fi
 

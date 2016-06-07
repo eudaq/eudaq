@@ -199,7 +199,7 @@ void OnlineMonConfiguration::SetDefaults() {
   hotpixelcut = 0.01;
 
   // correl cluster settings
-  correl_minclustersize = 2;
+  correl_minclustersize = 1;
 }
 
 void OnlineMonConfiguration::setSnapShotDir(string SnapShotDir) {

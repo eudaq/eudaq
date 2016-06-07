@@ -1,13 +1,12 @@
 set(libname "vmelib" )
-set(ext_inc_paths "../../../extern/Tsi148" )
 
 MESSAGE( STATUS "Building VME library with interface classes " )
 
 ADD_DEFINITIONS("-DVME_TRACE=0")
-INCLUDE_DIRECTORIES( include ${ext_inc_paths})
+INCLUDE_DIRECTORIES(include Tsi148)
 
-AUX_SOURCE_DIRECTORY( src/lib  library_sources)
-ADD_LIBRARY( ${libname} SHARED ${library_sources} )
+AUX_SOURCE_DIRECTORY(src/lib  library_sources)
+ADD_LIBRARY(${libname} SHARED ${library_sources} )
 
 ADD_EXECUTABLE(VMEReset.exe src/exe/VMEReset.cxx)
 ADD_EXECUTABLE(VMETest.exe  src/exe/VMETest.cxx)
@@ -23,4 +22,4 @@ INSTALL(TARGETS ${libname} VMEReset.exe VMETest.exe Scaler.exe
   ARCHIVE DESTINATION lib)
 
 # also install the vmelib as it is only build when needed but not copied to the lib dir
-install(FILES ${CMAKE_BINARY_DIR}/extern/vmelib/libvmelib.so DESTINATION lib)
+# install(FILES ${CMAKE_BINARY_DIR}/extern/vmelib/libvmelib.so DESTINATION lib)

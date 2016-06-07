@@ -4,6 +4,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 # project name
 PROJECT( EUDAQ )
 
+include_directories(${PROJECT_SOURCE_DIR}/main/lib/processors/include)
+include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include)
+include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include/eudaq)
+
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
@@ -71,9 +75,6 @@ IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
 ENDIF()
 
-# include directories
-INCLUDE_DIRECTORIES( ./main/include )
-INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
@@ -82,21 +83,6 @@ LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 Find_Package(Threads REQUIRED)
 set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
-# search for the packages needed for the main library when building the native reader library
-option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
-IF(BUILD_nreader)
-  SET(USE_LCIO ON)
-  FIND_PACKAGE(EUTelescope REQUIRED)
-  FIND_PACKAGE(LCIO REQUIRED)
-  INCLUDE_DIRECTORIES(${LCIO_INCLUDE_DIRS} ${EUTELESCOPE_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/nreader/include)
-  add_definitions(${LCIO_DEFINITIONS} ${EUTELESCOPE_DEFINITIONS})
-  AUX_SOURCE_DIRECTORY( ${PROJECT_SOURCE_DIR}/nreader/detdescription detdescr_library_sources )
-  ADD_LIBRARY( DetectorDescriptons SHARED ${detdescr_library_sources} )
-  INSTALL(TARGETS DetectorDescriptons RUNTIME DESTINATION bin
-                                      LIBRARY DESTINATION lib
-                                      ARCHIVE DESTINATION lib)
-  set(ADDITIONAL_LIBRARIES ${LCIO_LIBRARIES} ${EUTELESCOPE_LIBRARIES} DetectorDescriptons)
-ENDIF()
 
 find_package(Protobuf)
 option(GEN_proto "Gennerate protobuf files?" OFF)
@@ -131,92 +117,19 @@ IF("${isSystemDir}" STREQUAL "-1")
    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
-# build main EUDAQ library
-add_subdirectory(main/lib)
-
-# build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
-option(BUILD_main "Compile main EUDAQ executables?" ON)
-IF(BUILD_main)
-  add_subdirectory(main/exe)
-ENDIF()
-
-# build EUDAQ python exe bindings
-option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
-IF(BUILD_python)
-  add_subdirectory(main/python)
-ENDIF()
-
-# build native reader used for data conversion into LCIO
-IF(BUILD_nreader)
-  add_subdirectory(nreader)
-ENDIF()
-
-# build GUI executables
-option(BUILD_gui "Compile GUI executables (requires QT4/5)?" ON)
-IF(BUILD_gui)
-  add_subdirectory(gui)
-ENDIF()
-
-# build OnlineMon executable
-option(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
-IF(BUILD_onlinemon)
-  add_subdirectory(monitors/onlinemon)
-ENDIF()
 
 
-# build Offline Monitor
-option(BUILD_offlinemon "Compile Offline Monitor executable (requires ROOT)?" OFF)
-IF(BUILD_offlinemon)
-  add_subdirectory(monitors/offlinemon)
-ENDIF()
-
-# build Metadata Monitor
-option(BUILD_metamon "Compile MetaData Monitor executable" OFF)
-IF(BUILD_metamon)
-  add_subdirectory(monitors/metamon)
-ENDIF()
-
-# build Sync Test
-option(BUILD_SyncTest "Compile Sync test" OFF)
-IF(BUILD_SyncTest)
-  add_subdirectory(syncTest)
-ENDIF()
-
-option(BUILD_Tests "Compile tests" OFF)
-IF(BUILD_Tests)
-  add_subdirectory(tests/network)
-  add_subdirectory(tests/tasks)
-ENDIF()
+ADD_SUBDIRECTORY(producers)
+ADD_SUBDIRECTORY(main)
+ADD_SUBDIRECTORY(monitors)
+ADD_SUBDIRECTORY(tests)
+ADD_SUBDIRECTORY(syncTest)
+ADD_SUBDIRECTORY(nreader)
+ADD_SUBDIRECTORY(gui)
+ADD_SUBDIRECTORY(doc)
+ADD_SUBDIRECTORY(python)
 
 
-###############################################
-# LaTeX target to compile the PDF user manual #
-###############################################
-# Information and the manual on the UseLATEX.cmake package can be found here
-# http://www.cmake.org/Wiki/CMakeUserUseLATEX
-# The code resides here:
-# https://github.com/kmorel/UseLATEX
-option(BUILD_manual "Generate user's manual as PDF? (requires LaTeX)?" OFF)
-IF(BUILD_manual)
-  add_subdirectory(doc/manual)
-ENDIF()
-
-#############################################
-# Doxygen target to generate HTML reference #
-#############################################
-FIND_PACKAGE(Doxygen)
-IF(DOXYGEN_FOUND)
-  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/Doxyfile @ONLY)
-  ADD_CUSTOM_TARGET(doxygen
-    ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doc/doxygen/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/doc/doxygen
-    COMMENT "Generating HTML documentation with Doxygen" VERBATIM
-    )
-ENDIF(DOXYGEN_FOUND)
-
-
-# include processors (will not be included in target 'all')
-add_subdirectory(producers)
 
 #######################################################
 # Print out system information useful for bug reports #

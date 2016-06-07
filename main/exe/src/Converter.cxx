@@ -10,9 +10,9 @@
 
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/Processor_batch.hh"
-#include "eudaq/Processors.hh"
-#include "eudaq/Processor_inspector.hh"
+#include "Processor_batch.hh"
+#include "Processors.hh"
+#include "Processor_inspector.hh"
 using namespace eudaq;
 using namespace Processors;
 unsigned dbg = 0;

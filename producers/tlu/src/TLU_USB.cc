@@ -1,4 +1,4 @@
-#include "tlu/TLUController.hh"
+#include "TLUController.hh"
 #ifdef WIN32
 
 #include "lusb0_usb.h"
