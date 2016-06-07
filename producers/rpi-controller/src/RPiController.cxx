@@ -1,4 +1,4 @@
-#include "eudaq/CommandReceiver.hh"
+#include "eudaq/Controller.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
@@ -18,7 +18,7 @@ using namespace std;
 
 RPiController::RPiController(const std::string &name,
 			     const std::string &runcontrol)
-  : eudaq::CommandReceiver("Producer", name, runcontrol), m_terminated(false), m_name(""), m_pinnr(0), m_waiting_time(4000) { }
+  : eudaq::Controller(name, runcontrol), m_terminated(false), m_name(name), m_pinnr(0), m_waiting_time(4000) { }
 
 void RPiController::OnConfigure(const eudaq::Configuration &config) {
 

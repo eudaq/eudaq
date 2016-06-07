@@ -2,7 +2,7 @@
 #define RPICONTROLLER_HH
 
 // EUDAQ includes:
-#include "eudaq/CommandReceiver.hh"
+#include "eudaq/Controller.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Configuration.hh"
 
@@ -13,7 +13,7 @@
 #include <mutex>
 
 // Raspberry Pi Controller
-class RPiController : public eudaq::CommandReceiver {
+class RPiController : public eudaq::Controller {
 
 public:
   RPiController(const std::string &name, const std::string &runcontrol);
