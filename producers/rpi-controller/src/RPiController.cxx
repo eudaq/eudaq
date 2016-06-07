@@ -36,6 +36,16 @@ void RPiController::OnConfigure(const eudaq::Configuration &config) {
   EUDAQ_INFO(string("Waiting " + std::to_string(m_waiting_time) +
                     "ms before enabling output pin at run start."));
 
+  if(wiringPiSetupGpio() == -1) {
+    std::cout << "WiringPi could not be set up" << std::endl;
+    throw eudaq::LoggedException("WiringPi could not be set up");
+  }
+  // Set pin mode to output:
+  pinMode(m_pinnr, OUTPUT);
+
+  // Initialize as low:
+  digitalWrite(m_pinnr, 0);
+
   try {
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
   } catch (...) {
