@@ -51,12 +51,15 @@ public:
   void appendData2Event(unsigned dataid,const std::vector<unsigned char>& data);
   void appendData2Event(unsigned dataid,const unsigned char *data, size_t size);
   void addTag2Event(const char* tag, const char* Value);
+  void addFileTag2Event(const char* tag, const char* filename);
+  void addTimerTag2Events(const char* tag, const char* Value, size_t freq);
   void setTimeStamp2Event( unsigned long long TimeStamp );
   void setTimeStampNow2Event();
   void sendEvent();
 
-
   //
+  void sendUserLog(std::string &msg){EUDAQ_USER(msg);};
+
   void waitingLockRelease(){std::unique_lock<std::mutex> lck(m_doing);};
   
   eudaq::Configuration& getConfiguration(){return m_config;};  
@@ -111,17 +114,37 @@ private:
   unsigned m_run, m_ev;
   unsigned int m_Timeout_delay; //milli seconds
   int m_local_stop;
-
+  std::vector<std::string> timertags;
+  std::vector<std::string> timervalues;
+  std::vector<size_t> timerfreqs;
+  std::vector<std::chrono::high_resolution_clock::time_point>  lasttagtimes;
+  
   FSMState getState(){  return m_fsmstate;};
   void setState(FSMState s){  m_fsmstate = s;};
   
 };
 
+void ROOTProducer::Producer_PImpl::addTimerTag2Events(const char* tag, const char* Value, size_t freq){
+  bool done= false;
+  size_t ntags = timertags.size(); // TODO:: thread safe
+  for(size_t i = 0; i< ntags; i++){
+    std::string tag = timertags[i];
+    if(tag.compare(tag)==0){
+      timervalues[i] = Value;
+      timerfreqs[i] = freq;
+      done = true;
+    }
+  }
+  if(!done){
+    timertags.push_back(tag);
+    timervalues.push_back(Value);
+    timerfreqs.push_back(freq);
+    lasttagtimes.push_back(std::chrono::high_resolution_clock::now());
+  }
+}
 
 ROOTProducer::Producer_PImpl::Producer_PImpl(const std::string & name, const std::string & runcontrol) :
   eudaq::Producer(name, runcontrol),m_fsmstate(STATE_UNCONF), m_ProducerName(name){
-  streamOut << "hallo from " << name << " producer" << std::endl;
-
   m_Timeout_delay = 10000; // from itsdaq
   m_local_stop = 0;
 }
@@ -159,6 +182,13 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param){
   setState(STATE_GOTORUN);
   createBOREvent();
 
+  //TEST ONLY!! remove later
+  // m_config.SetSection("Producer.ITS");
+  // std::string sfile = m_config.Get("st_det_file", std::string());
+  // std::cout<< ">>>>>st_det_file "<< sfile<<std::endl;
+
+  //
+  
   int j = 0;
   while (getState()==STATE_GOTORUN && !timeout(++j)){
     eudaq::mSleep(gTimeout_wait);
@@ -292,6 +322,16 @@ void ROOTProducer::Producer_PImpl::addTag2Event(const char* tag, const char* Val
   ev->SetTag(tag, Value);
 }
 
+
+void ROOTProducer::Producer_PImpl::addFileTag2Event(const char* tag, const char* filename){
+  std::ifstream fs(filename);
+  std::stringstream ss;
+  ss << fs.rdbuf();
+  ev->SetTag(tag, ss.str());
+  
+}
+
+
 void ROOTProducer::Producer_PImpl::addData2Event(unsigned dataid,const std::vector<unsigned char>& data){
   ev->AddBlock(dataid, data);
 }
@@ -324,6 +364,18 @@ void ROOTProducer::Producer_PImpl::appendData2Event(unsigned dataid,const unsign
 
 
 void ROOTProducer::Producer_PImpl::sendEvent(){
+  size_t ntags = timertags.size(); // TODO:: thread safe
+  auto timenow = std::chrono::high_resolution_clock::now();
+  for(size_t i = 0; i< ntags; i++){
+    auto timelast = lasttagtimes[i];
+    auto freq = timerfreqs[i];
+    std::chrono::duration<double, std::milli> d(timenow-timelast);
+    if(d.count()*1000 > 1./freq){
+      ev->SetTag(timertags[i], timervalues[i]);
+      lasttagtimes[i] = timenow;
+    }
+  }
+    
   SendEvent(*ev);
   if(ev->IsBORE()){
     m_ev = 0;  //Are first data_event and BORE both 0 ??
@@ -368,8 +420,6 @@ void ROOTProducer::createEOREvent(){
 }
 
 void ROOTProducer::createNewEvent(unsigned nev ){
-  // std::cout<<"createNewEvent()"<<std::endl;
-
   try{
     m_prod->createNewEvent(nev);		
   }
@@ -394,8 +444,6 @@ void ROOTProducer::setTimeStamp2Now(){
 
 
 void ROOTProducer::sendEvent(){
-  // std::cout<<"sendEvent()"<<std::endl;
-
   for(size_t i = 0; i< m_vpoint_bool.size(); i++){
     std::vector<unsigned char> out;
     eudaq::bool2uchar(m_vpoint_bool[i], m_vpoint_bool[i] + m_vsize_bool[i], out);
@@ -410,6 +458,11 @@ void ROOTProducer::sendEvent(){
     std::cout<<"unable to send Event"<<std::endl;
   }
   checkStatus();
+}
+
+void ROOTProducer::sendLog(const char* msg){
+  std::string str(msg);
+  m_prod->sendUserLog(str);
 }
 
 void ROOTProducer::send_OnConfigure(){Emit("send_OnConfigure()");}
@@ -449,6 +502,44 @@ int ROOTProducer::getConfiguration( const char* tag, const char* defaultValue,ch
   }
 }
 
+std::string ROOTProducer::getConfiguration( const char* tag, const std::string &defaultValue){
+  try{
+    return m_prod->getConfiguration().Get(tag, defaultValue );
+  }catch(...){
+    std::cout<<"unable to getConfiguration"<<std::endl;
+    return 0;
+  }
+}
+
+void ROOTProducer::setFileTag( const char* tagNameTagValue ){
+  std::string dummy(tagNameTagValue);
+  size_t equalsymbol=dummy.find_first_of("=");
+  if (equalsymbol!=std::string::npos&&equalsymbol>0){
+    std::string tagName=dummy.substr(0,equalsymbol);
+    std::string tagValue=dummy.substr(equalsymbol+1);
+    tagName = eudaq::trim(tagName);
+    tagValue = eudaq::trim(tagValue);
+    m_prod->addFileTag2Event(tagName.c_str(),tagValue.c_str());
+  }else{
+    std::cout<<"error in: setFileTag( "<<tagNameTagValue<< ")" <<std::endl;
+  }
+}
+
+void ROOTProducer::setTimerTag( const char* tagNameTagValue, size_t freq ){
+  std::string dummy(tagNameTagValue);
+  size_t equalsymbol=dummy.find_first_of("=");
+  if (equalsymbol!=std::string::npos&&equalsymbol>0){
+    std::string tagName=dummy.substr(0,equalsymbol);
+    std::string tagValue=dummy.substr(equalsymbol+1);
+    tagName = eudaq::trim(tagName);
+    tagValue = eudaq::trim(tagValue);
+    m_prod->addTimerTag2Events(tagName.c_str(),tagValue.c_str(), freq);
+  }else{
+    std::cout<<"error in: setTimerTag( "<<tagNameTagValue<< ")" <<std::endl;
+  }
+}
+
+
 
 void ROOTProducer::setTag( const char* tagNameTagValue ){
   std::string dummy(tagNameTagValue);
@@ -465,12 +556,10 @@ void ROOTProducer::setTag( const char* tagNameTagValue ){
 }
 
 void ROOTProducer::checkStatus(){
-  // std::cout<<"checkStatus......"<<std::endl;
   if(m_prod->isStateGOTORUN()){
     std::cout<<"send_OnStartRun"<<std::endl;
     send_OnStartRun(m_prod->getRunNumber());
     m_prod->setStateRUNNING();
-    // eudaq::mSleep(gTimeout_statusChanged);  //TODO:: use lock
     m_prod->waitingLockRelease();
   }
 
@@ -478,7 +567,6 @@ void ROOTProducer::checkStatus(){
     std::cout<<"send_OnConfigure"<<std::endl;
     send_OnConfigure();
     m_prod->setStateCONFED();
-    // eudaq::mSleep(gTimeout_statusChanged);
     m_prod->waitingLockRelease();
   }
 
@@ -486,14 +574,12 @@ void ROOTProducer::checkStatus(){
     std::cout<<"send_OnStop"<<std::endl;
     send_OnStopRun();
     m_prod->setStateCONFED();
-    // eudaq::mSleep(gTimeout_statusChanged);
     m_prod->waitingLockRelease();
   }
 
   if(m_prod->isStateGOTOTERM()){
     send_OnTerminate();
     m_prod->setStateUNCONF();
-    // eudaq::mSleep(gTimeout_statusChanged);
     m_prod->waitingLockRelease();
   }
 }
@@ -505,7 +591,7 @@ void ROOTProducer::setStatusToStop(){
 void ROOTProducer::addData2Event(unsigned dataid,const std::vector<unsigned char>& data){
   m_prod->addData2Event(dataid,data);
 }
-void ROOTProducer::addData2Event(unsigned dataid,const unsigned char * data, size_t size){
+void ROOTProducer::addData2Event(unsigned dataid, UChar_t * data, size_t size){
   m_prod->addData2Event(dataid,data, size);
 }
 

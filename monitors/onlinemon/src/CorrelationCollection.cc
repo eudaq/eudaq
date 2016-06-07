@@ -9,7 +9,7 @@
 #include "OnlineMon.hh"
 
 CorrelationCollection::CorrelationCollection()
-    : BaseCollection(), _mapOld(), _map(), _planes(), skip_this_plane(),
+    : BaseCollection(), _map(), _planes(), skip_this_plane(),
       correlateAllPlanes(false), selected_planes_to_skip(),
       planesNumberForCorrelation(0), windowWidthForCorrelation(0) {
   // cout << " Initializing Correlation Collection"<<endl;
@@ -63,46 +63,9 @@ bool CorrelationCollection::checkCorrelations(
   }
 }
 
-void CorrelationCollection::fillHistograms(
-    const SimpleStandardPlaneDouble &simpPlaneDouble) {
-  CorrelationHistos *corrmap = _mapOld[simpPlaneDouble];
-
-  if (corrmap != NULL) {
-    const vector<SimpleStandardCluster> aClusters =
-        simpPlaneDouble.getPlane1().getClusters();
-    const vector<SimpleStandardCluster> bClusters =
-        simpPlaneDouble.getPlane2().getClusters();
-
-    for (unsigned int acluster = 0; acluster < aClusters.size(); acluster++) {
-      const SimpleStandardCluster &oneAcluster = aClusters.at(acluster);
-      if (oneAcluster.getNPixel() <
-          _mon->mon_configdata.getCorrel_minclustersize()) // we are only
-                                                           // interested in
-                                                           // clusters with
-                                                           // several pixels
-      {
-        continue;
-      }
-      for (unsigned int bcluster = 0; bcluster < bClusters.size(); bcluster++) {
-        const SimpleStandardCluster &oneBcluster = bClusters.at(bcluster);
-        //
-        if (oneBcluster.getNPixel() <
-            _mon->mon_configdata.getCorrel_minclustersize()) {
-          continue;
-        }
-        corrmap->Fill(oneAcluster, oneBcluster);
-      }
-    }
-  }
-}
 
 void CorrelationCollection::setRootMonitor(RootMonitor *mon) { _mon = mon; }
 
-CorrelationHistos *
-CorrelationCollection::getCorrelationHistos(SimpleStandardPlaneDouble pd) {
-
-  return _mapOld[pd];
-}
 CorrelationHistos *
 CorrelationCollection::getCorrelationHistos(const SimpleStandardPlane &p1,
                                             const SimpleStandardPlane &p2) {
@@ -198,7 +161,7 @@ void CorrelationCollection::Fill(const SimpleStandardEvent &simpev) {
             (skip_this_plane[planeB]) == false) {
           const SimpleStandardPlane &p1 = simpev.getPlane(planeA);
           const SimpleStandardPlane &p2 = simpev.getPlane(planeB);
-          fillHistograms(p1, p2);
+          fillHistograms(p1, p2,simpev);
         }
       }
     }
@@ -397,13 +360,15 @@ void CorrelationCollection::fillHistograms(
         CorrelationHistos *corrmap = _map[planePair];
 
         corrmap->Fill(firstCluster, secondCluster);
+	corrmap->FillCorrVsTime(firstCluster, secondCluster, simpEv);
       }
     }
   }
 }
 
 void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
-                                           const SimpleStandardPlane &p2) {
+                                           const SimpleStandardPlane &p2,
+					   const SimpleStandardEvent &simpEv) {
 
   std::pair<SimpleStandardPlane, SimpleStandardPlane> plane(p1, p2);
   CorrelationHistos *corrmap = _map[plane];
@@ -433,11 +398,14 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
           continue;
         } else {
           corrmap->Fill(oneAcluster, oneBcluster);
+	  corrmap->FillCorrVsTime(oneAcluster, oneBcluster, simpEv);
         }
       }
     }
   }
 }
+
+
 
 void CorrelationCollection::registerPlaneCorrelations(
     const SimpleStandardPlane &p1, const SimpleStandardPlane &p2) {
@@ -449,8 +417,6 @@ void CorrelationCollection::registerPlaneCorrelations(
 
 #endif
   CorrelationHistos *tmphisto = new CorrelationHistos(p1, p2);
-  // SimpleStandardPlaneDouble planeDouble(p1,p2);
-  //_map[planeDouble] = tmphisto;
   pair<SimpleStandardPlane, SimpleStandardPlane> pdouble(p1, p2);
   _map[pdouble] = tmphisto;
 
@@ -469,18 +435,63 @@ void CorrelationCollection::registerPlaneCorrelations(
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(
         tree, getCorrelationHistos(p1, p2)->getCorrXHisto(), "COLZ", 0);
-
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    
     sprintf(tree, "%s/%s %i/%s %i in Y", dirName.c_str(), p1.getName().c_str(),
             p1.getID(), p2.getName().c_str(), p2.getID());
     _mon->getOnlineMon()->registerTreeItem(tree);
     _mon->getOnlineMon()->registerHisto(
         tree, getCorrelationHistos(p1, p2)->getCorrYHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
 
     sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
             p1.getID());
     _mon->getOnlineMon()->makeTreeItemSummary(tree);
   }
+
+
+  if (_mon != NULL) {
+    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
+    std::string dirName;
+
+    if (_mon->getUseTrack_corr() == true)
+      dirName = "Track Correlations Vs Time";
+    else
+      dirName = "Correlations Vs Time";
+
+    char tree[1024];
+    sprintf(tree, "%s/%s %i/%s %i in X Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeXHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    
+    sprintf(tree, "%s/%s %i/%s %i in Y Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeYHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+
+    sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
+            p1.getID());
+    _mon->getOnlineMon()->makeTreeItemSummary(tree);
+  }
+
+
 }
+
+
+
+
+
 
 bool CorrelationCollection::getCorrelateAllPlanes() const {
   return correlateAllPlanes;
