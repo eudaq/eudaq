@@ -58,6 +58,8 @@ public:
   void sendEvent();
 
   //
+  void sendUserLog(std::string &msg){EUDAQ_USER(msg);};
+
   void waitingLockRelease(){std::unique_lock<std::mutex> lck(m_doing);};
   
   eudaq::Configuration& getConfiguration(){return m_config;};  
@@ -143,8 +145,6 @@ void ROOTProducer::Producer_PImpl::addTimerTag2Events(const char* tag, const cha
 
 ROOTProducer::Producer_PImpl::Producer_PImpl(const std::string & name, const std::string & runcontrol) :
   eudaq::Producer(name, runcontrol),m_fsmstate(STATE_UNCONF), m_ProducerName(name){
-  streamOut << "hallo from " << name << " producer" << std::endl;
-
   m_Timeout_delay = 10000; // from itsdaq
   m_local_stop = 0;
 }
@@ -420,8 +420,6 @@ void ROOTProducer::createEOREvent(){
 }
 
 void ROOTProducer::createNewEvent(unsigned nev ){
-  // std::cout<<"createNewEvent()"<<std::endl;
-
   try{
     m_prod->createNewEvent(nev);		
   }
@@ -446,8 +444,6 @@ void ROOTProducer::setTimeStamp2Now(){
 
 
 void ROOTProducer::sendEvent(){
-  // std::cout<<"sendEvent()"<<std::endl;
-
   for(size_t i = 0; i< m_vpoint_bool.size(); i++){
     std::vector<unsigned char> out;
     eudaq::bool2uchar(m_vpoint_bool[i], m_vpoint_bool[i] + m_vsize_bool[i], out);
@@ -462,6 +458,11 @@ void ROOTProducer::sendEvent(){
     std::cout<<"unable to send Event"<<std::endl;
   }
   checkStatus();
+}
+
+void ROOTProducer::sendLog(const char* msg){
+  std::string str(msg);
+  m_prod->sendUserLog(str);
 }
 
 void ROOTProducer::send_OnConfigure(){Emit("send_OnConfigure()");}
@@ -555,12 +556,10 @@ void ROOTProducer::setTag( const char* tagNameTagValue ){
 }
 
 void ROOTProducer::checkStatus(){
-  // std::cout<<"checkStatus......"<<std::endl;
   if(m_prod->isStateGOTORUN()){
     std::cout<<"send_OnStartRun"<<std::endl;
     send_OnStartRun(m_prod->getRunNumber());
     m_prod->setStateRUNNING();
-    // eudaq::mSleep(gTimeout_statusChanged);  //TODO:: use lock
     m_prod->waitingLockRelease();
   }
 
@@ -568,7 +567,6 @@ void ROOTProducer::checkStatus(){
     std::cout<<"send_OnConfigure"<<std::endl;
     send_OnConfigure();
     m_prod->setStateCONFED();
-    // eudaq::mSleep(gTimeout_statusChanged);
     m_prod->waitingLockRelease();
   }
 
@@ -576,14 +574,12 @@ void ROOTProducer::checkStatus(){
     std::cout<<"send_OnStop"<<std::endl;
     send_OnStopRun();
     m_prod->setStateCONFED();
-    // eudaq::mSleep(gTimeout_statusChanged);
     m_prod->waitingLockRelease();
   }
 
   if(m_prod->isStateGOTOTERM()){
     send_OnTerminate();
     m_prod->setStateUNCONF();
-    // eudaq::mSleep(gTimeout_statusChanged);
     m_prod->waitingLockRelease();
   }
 }

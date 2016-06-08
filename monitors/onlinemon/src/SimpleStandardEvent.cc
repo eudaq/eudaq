@@ -87,3 +87,28 @@ void SimpleStandardEvent::setEvent_timestamp(uint64_t event_timestamp) {
 void SimpleStandardEvent::setEvent_number(unsigned int event_number) {
   this->event_number = event_number;
 }
+
+
+void SimpleStandardEvent::setSlow_para(std::string name, double value) {
+  slowpara[name] = value;
+
+}
+
+bool SimpleStandardEvent::getSlow_para(std::string name, double &value) const{
+  auto it = slowpara.find(name);
+  if (it == slowpara.end()){
+    return false;
+  }
+  else{
+    value = it->second;
+    return true;
+  }
+}
+
+
+std::vector<std::string> SimpleStandardEvent::getSlowList() const {
+    std::vector<std::string> list;
+    for(auto &e:slowpara)
+      list.push_back(e.first);
+    return list;
+  };

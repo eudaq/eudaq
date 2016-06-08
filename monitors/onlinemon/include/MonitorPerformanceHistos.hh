@@ -13,6 +13,7 @@
 
 #include <map>
 #include "SimpleStandardEvent.hh"
+#include <mutex>
 
 using namespace std;
 class RootMonitor;
@@ -24,6 +25,8 @@ protected:
   TH1I *_ClusteringTimeHisto;
   TH1I *_CorrelationTimeHisto;
 
+  std::mutex m_mu;
+  
 public:
   MonitorPerformanceHistos();
   virtual ~MonitorPerformanceHistos();
@@ -34,6 +37,8 @@ public:
   TH1I *getFillTimeHisto() { return _FillTimeHisto; }
   TH1I *getClusteringTimeHisto() { return _ClusteringTimeHisto; }
   TH1I *getCorrelationTimeHisto() { return _CorrelationTimeHisto; }
+  std::mutex* getMutex(){return &m_mu;};
+  
 };
 
 #ifdef __CINT__

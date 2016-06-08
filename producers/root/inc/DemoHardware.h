@@ -22,6 +22,7 @@ public:
   void addTag2Event(const char * v){Emit("addTag2Event(char*)", v);};
   void addTagFile2Event(const char * v){Emit("addTagFile2Event(char*)", v);};
 
+  void sendLog(const char *v){Emit("sendLog(char*)", v);};
   
   void hdConfigure();
   void hdStartRun(unsigned nrun);

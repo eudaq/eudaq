@@ -6,7 +6,7 @@ branches:
   - master
   - v1.6-dev
 
-os: Visual Studio 2013
+os: Visual Studio 2015
 configuration: Release
 
 environment:
@@ -15,8 +15,6 @@ environment:
 before_build:
 - cmd: >-
     conda config --set always_yes yes --set changeps1 no
-
-    conda update -q conda
 
     conda info -a
 
@@ -31,7 +29,6 @@ before_build:
     cd build
 
     cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF ..
-build:
-  project: C:/projects/eudaq/build/INSTALL.vcxproj
-  verbosity: minimal
 
+build_script:
+- msbuild INSTALL.vcxproj
