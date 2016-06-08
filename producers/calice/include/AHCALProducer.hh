@@ -1,5 +1,5 @@
-#ifndef CALICEPRODUCER_HH
-#define CALICEPRODUCER_HH
+#ifndef AHCALPRODUCER_HH
+#define AHCALPRODUCER_HH
 
 #include "eudaq/Producer.hh"
 
@@ -16,31 +16,32 @@
 
 namespace eudaq {
 
-  class CaliceProducer;
+  class AHCALProducer;
   
-  class CaliceReader {
+  class AHCALReader {
   public:
     virtual void Read(std::deque<char> & buf, std::deque<eudaq::RawDataEvent *> & deqEvent) = 0;
     virtual void OnStart(int runNo){}
     virtual void OnStop(int waitQueueTimeS){}
+    virtual void OnConfigLED(std::string _fname){}
   protected:
-    CaliceReader(CaliceProducer *r){_producer = r;}
-    ~CaliceReader(){}
+    AHCALReader(AHCALProducer *r){_producer = r;}
+    ~AHCALReader(){}
       
-    CaliceProducer * _producer;
+    AHCALProducer * _producer;
   };
   
-  class CaliceProducer : public eudaq::Producer {
+  class AHCALProducer : public eudaq::Producer {
   public:
-    CaliceProducer(const std::string & name, const std::string & runcontrol);
-    void SetReader(CaliceReader *r){_reader = r;}
+    AHCALProducer(const std::string & name, const std::string & runcontrol);
+    void SetReader(AHCALReader *r){_reader = r;}
     virtual void OnPrepareRun(unsigned param);
     virtual void OnStartRun(unsigned param);
     virtual void OnStopRun();
     virtual void OnConfigure(const eudaq::Configuration & param);
     
     void MainLoop();//  
-    void OpenConnection();//
+    bool OpenConnection();//
     void CloseConnection();//
     void SendCommand(const char *command,int size = 0);
 
@@ -64,6 +65,10 @@ namespace eudaq {
     std::string _rawFilename;
     bool _writerawfilename_timestamp;
     std::ofstream _rawFile;
+
+    //run type:
+    std::string _runtype;
+    std::string _fileLEDsettings;
       
     bool _filemode; // true: input from file: false: input from network
     std::string _filename; // input file name at file mode
@@ -76,10 +81,10 @@ namespace eudaq {
 
 
 
-    CaliceReader * _reader;
+    AHCALReader * _reader;
   };
 
 }
 
-#endif // CALICEPRODUCER_HH
+#endif // AHCALPRODUCER_HH
 
