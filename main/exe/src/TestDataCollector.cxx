@@ -28,14 +28,6 @@ class TestDataCollector : public eudaq::DataCollector {
       DataCollector::OnStartRun(param);
       SetStatus(eudaq::Status::LVL_OK);
     }
-    //   virtual bool OnStartRun(unsigned param) {
-    //     std::cout << "Start Run: " << param << std::endl;
-    //     return false;
-    //   }
-    //   virtual bool OnStopRun() {
-    //     std::cout << "Stop Run" << std::endl;
-    //     return false;
-    //   }
     virtual void OnTerminate() {
       std::cout << "Terminating" << std::endl;
       done = true;

@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "DetectorEvent.hh"
-#include "factory.hh"
+#include "ClassFactory.hh"
 
 #define registerFileWriter(DerivedFileWriter,ID)  REGISTER_DERIVED_CLASS(FileWriter,DerivedFileWriter,ID)
 

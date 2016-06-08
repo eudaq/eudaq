@@ -10,7 +10,6 @@
 #include <string>
 #include "eudaq/DetectorEvent.hh"
 #include "eudaq/FileSerializer.hh"
-#include "eudaq/factory.hh"
 #include "eudaq/EventSynchronisationBase.hh"
 
 // base class for all Synchronization Plugins

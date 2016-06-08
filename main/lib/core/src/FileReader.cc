@@ -6,7 +6,6 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/FileSerializer.hh"
 #include "eudaq/Configuration.hh"
-#include "eudaq/factory.hh"
 
 namespace eudaq {
 

@@ -2,7 +2,6 @@
 #include "eudaq/baseFileReader.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/OptionParser.hh"
-#include "factory.hh"
 
 template class eudaq::ClassFactory<eudaq::baseFileReader>;
 namespace eudaq {

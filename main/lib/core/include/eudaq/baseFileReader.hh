@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 #include "Platform.hh"
-#include "factory.hh"
+#include "ClassFactory.hh"
 #include "Configuration.hh"
 
 #define RegisterFileReader(derivedClass,ID) REGISTER_DERIVED_CLASS(eudaq::baseFileReader,derivedClass,ID)

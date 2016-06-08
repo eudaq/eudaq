@@ -1,14 +1,11 @@
-
-
 #include <iostream>
-
 #include <memory>
+
 #include "eudaq/Event.hh"
 #include "eudaq/EventSynchronisationBase.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/OptionParser.hh"
-#include "factory.hh"
 
 
 #define FILEINDEX_OFFSET 10000

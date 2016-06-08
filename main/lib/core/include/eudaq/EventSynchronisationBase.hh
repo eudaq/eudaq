@@ -4,7 +4,7 @@
 
 #include <memory>
 #include <string>
-#include "eudaq/factory.hh"
+#include "ClassFactory.hh"
 #include "Platform.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Event.hh"
