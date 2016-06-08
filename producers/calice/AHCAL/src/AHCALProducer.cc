@@ -1,5 +1,4 @@
-
-// CaliceReceiver.cc
+ // CaliceReceiver.cc
 
 #include "AHCALProducer.hh"
 
