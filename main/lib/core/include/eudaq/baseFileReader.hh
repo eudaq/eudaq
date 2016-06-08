@@ -3,11 +3,10 @@
 #include <string>
 #include <memory>
 #include "Platform.hh"
-#include "eudaq/factory.hh"
-#include "eudaq/Configuration.hh"
+#include "factory.hh"
+#include "Configuration.hh"
 
-#define RegisterFileReader(derivedClass,ID) registerClass(eudaq::baseFileReader,derivedClass,ID)
-
+#define RegisterFileReader(derivedClass,ID) REGISTER_DERIVED_CLASS(eudaq::baseFileReader,derivedClass,ID)
 
 namespace eudaq{
   class Event;
@@ -39,8 +38,6 @@ namespace eudaq{
 
   private:
     Parameter_t m_config;
-    
-
   };
 
 

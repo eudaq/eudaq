@@ -1,10 +1,10 @@
 #include "eudaq/FileWriter.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/factoryDef.hh"
 #include "eudaq/OptionParser.hh"
+#include "factory.hh"
 
-template class Class_factory_Utilities::Factory<eudaq::FileWriter>;
+template class eudaq::ClassFactory<eudaq::FileWriter>;
 
 namespace eudaq {
 
@@ -24,7 +24,7 @@ namespace eudaq {
   }
 
 
-  registerBaseClassDef(FileWriter);
+  REGISTER_BASE_CLASS(FileWriter);
 
   class FileWriterFactory::Impl{
   public:
@@ -34,7 +34,7 @@ namespace eudaq {
 
   std::unique_ptr<FileWriter> FileWriterFactory::Create(const std::string & name, const std::string & params /*= ""*/)
   {
-    return Class_factory_Utilities::Factory<FileWriter>::Create(name, params);
+    return ClassFactory<FileWriter>::Create(name, params);
   }
 
   std::unique_ptr<FileWriter> FileWriterFactory::Create()
@@ -47,7 +47,7 @@ namespace eudaq {
 
   std::vector<std::string> FileWriterFactory::GetTypes()
   {
-    return Class_factory_Utilities::Factory<FileWriter>::GetTypes();
+    return ClassFactory<FileWriter>::GetTypes();
   }
 
 

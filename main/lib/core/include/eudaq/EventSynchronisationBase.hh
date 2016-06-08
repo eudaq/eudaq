@@ -16,11 +16,10 @@
 // The Idea is that the user can define a condition that need to be true to define if an event is sync or not
 
 
-#define registerSyncClass(DerivedFileWriter,ID)  registerClass(SyncBase,DerivedFileWriter,ID)
+#define registerSyncClass(DerivedFileWriter,ID)  REGISTER_DERIVED_CLASS(SyncBase,DerivedFileWriter,ID)
 
 namespace eudaq{
 
- 
   class OptionParser;
   class Event;
   class DLLEXPORT SyncBase {

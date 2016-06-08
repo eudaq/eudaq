@@ -7,8 +7,8 @@
 #include "eudaq/EventSynchronisationBase.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/Configuration.hh"
-#include "eudaq/factoryDef.hh"
 #include "eudaq/OptionParser.hh"
+#include "factory.hh"
 
 
 #define FILEINDEX_OFFSET 10000
@@ -17,12 +17,10 @@ using std::endl;
 using std::shared_ptr;
 using namespace std;
 
-template class Class_factory_Utilities::Factory<eudaq::SyncBase>;
+template class eudaq::ClassFactory<eudaq::SyncBase>;
 
 namespace eudaq{
  
-
-
   SyncBase::Parameter_t SyncBase::getParameter()
   {
     return m_param;
@@ -33,7 +31,7 @@ namespace eudaq{
 
   }
 
-  registerBaseClassDef(SyncBase);
+  REGISTER_BASE_CLASS(SyncBase);
 
   class EventSyncFactory::Impl{
   public:
@@ -47,9 +45,9 @@ namespace eudaq{
   {
     if (name.empty())
     {
-      return Class_factory_Utilities::Factory<SyncBase>::Create(getDefaultSync(), sync);
+      return ClassFactory<SyncBase>::Create(getDefaultSync(), sync);
     }
-    return Class_factory_Utilities::Factory<SyncBase>::Create(name, sync);
+    return ClassFactory<SyncBase>::Create(name, sync);
   }
 
   std::unique_ptr<SyncBase> EventSyncFactory::create()
@@ -65,7 +63,7 @@ namespace eudaq{
 
   std::vector<std::string> EventSyncFactory::GetTypes()
   {
-    return Class_factory_Utilities::Factory<SyncBase>::GetTypes();
+    return ClassFactory<SyncBase>::GetTypes();
   }
 
   std::string EventSyncFactory::Help_text()

@@ -1,5 +1,5 @@
 #include "ProcessorBase.hh"
-#include "eudaq/factoryDef.hh"
+#include "factory.hh"
 #include "eudaq/OptionParser.hh"
 #include "Processor_inspector.hh"
 #include "Processor_batch.hh"

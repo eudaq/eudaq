@@ -5,12 +5,10 @@
 #include <string>
 #include <memory>
 
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/factory.hh"
+#include "DetectorEvent.hh"
+#include "factory.hh"
 
-
-
-#define registerFileWriter(DerivedFileWriter,ID)  registerClass(FileWriter,DerivedFileWriter,ID)
+#define registerFileWriter(DerivedFileWriter,ID)  REGISTER_DERIVED_CLASS(FileWriter,DerivedFileWriter,ID)
 
 namespace eudaq {
 

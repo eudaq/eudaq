@@ -1,17 +1,11 @@
 #include <list>
 #include "eudaq/baseFileReader.hh"
-#include "eudaq/factoryDef.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/OptionParser.hh"
+#include "factory.hh"
 
-template class Class_factory_Utilities::Factory<eudaq::baseFileReader>;
+template class eudaq::ClassFactory<eudaq::baseFileReader>;
 namespace eudaq {
-
-
-
-
-
-
 
   baseFileReader::baseFileReader(Parameter_ref config) :
     m_config(config)
@@ -71,9 +65,7 @@ namespace eudaq {
 
   }
 
-  registerBaseClassDef(baseFileReader);
-
-
+  REGISTER_BASE_CLASS(baseFileReader);
 
   fileConfig::fileConfig(eudaq::OptionParser & op) {
     if (op.NumArgs() == 1) {
@@ -142,9 +134,6 @@ namespace eudaq {
    
       ret.first = type;
       ret.second = name_shorted;
-
-      
-
     }
 
     return ret;
@@ -243,7 +232,7 @@ namespace eudaq {
 
   std::unique_ptr<baseFileReader> FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
   {
-    return Class_factory_Utilities::Factory<baseFileReader>::Create(type, param);
+    return ClassFactory<baseFileReader>::Create(type, param);
   }
 
   FileReader_up FileReaderFactory::create(const fileConfig& file_conf_) {
@@ -271,8 +260,7 @@ namespace eudaq {
     ret += "example:\n";
     ret += "../data/run000001.raw#raw2\n \n";
     ret += "\"file pattern\" = ../data/run$6R.raw#raw2 \n \n";
-    ret += "possible \"file readers\" are " + to_string(Class_factory_Utilities::Factory<baseFileReader>::GetTypes(), ", ")+"\n";
-
+    ret += "possible \"file readers\" are " + to_string(ClassFactory<baseFileReader>::GetTypes(), ", ")+"\n";
 
     return ret;
   }
