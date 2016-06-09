@@ -3,10 +3,10 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/OptionParser.hh"
 
-template class eudaq::ClassFactory<eudaq::FileWriter>;
+// template class eudaq::ClassFactory<eudaq::FileWriter, >;
 
 namespace eudaq {
-
+  using FileWriterClassFactory = ClassFactory<FileWriter, typename FileWriter::MainType, typename FileWriter::Parameter_t>;
   
   FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern) {}
 
@@ -33,7 +33,7 @@ namespace eudaq {
 
   std::unique_ptr<FileWriter> FileWriterFactory::Create(const std::string & name, const std::string & params /*= ""*/)
   {
-    return ClassFactory<FileWriter>::Create(name, params);
+    return FileWriterClassFactory::Create(name, params);
   }
 
   std::unique_ptr<FileWriter> FileWriterFactory::Create()
@@ -46,7 +46,7 @@ namespace eudaq {
 
   std::vector<std::string> FileWriterFactory::GetTypes()
   {
-    return ClassFactory<FileWriter>::GetTypes();
+    return FileWriterClassFactory::GetTypes();
   }
 
 

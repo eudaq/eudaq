@@ -14,10 +14,10 @@ using std::endl;
 using std::shared_ptr;
 using namespace std;
 
-template class eudaq::ClassFactory<eudaq::SyncBase>;
 
 namespace eudaq{
- 
+  using EventSyncClassFactory = ClassFactory<SyncBase, SyncBase::MainType, SyncBase::Parameter_t>;
+  
   SyncBase::Parameter_t SyncBase::getParameter()
   {
     return m_param;
@@ -42,9 +42,9 @@ namespace eudaq{
   {
     if (name.empty())
     {
-      return ClassFactory<SyncBase>::Create(getDefaultSync(), sync);
+      return EventSyncClassFactory::Create(getDefaultSync(), sync);
     }
-    return ClassFactory<SyncBase>::Create(name, sync);
+    return EventSyncClassFactory::Create(name, sync);
   }
 
   std::unique_ptr<SyncBase> EventSyncFactory::create()
@@ -60,7 +60,7 @@ namespace eudaq{
 
   std::vector<std::string> EventSyncFactory::GetTypes()
   {
-    return ClassFactory<SyncBase>::GetTypes();
+    return EventSyncClassFactory::GetTypes();
   }
 
   std::string EventSyncFactory::Help_text()
