@@ -299,8 +299,7 @@ namespace eudaq {
             if ((HEADER_MACRO(Word) == 1) && ((FLAG_MACRO(Word) & FLAG_WO_STATUS) == FLAG_WO_STATUS)) {
               lvl1++;
             } else if (getHitData(Word, Col, Row, ToT)) {
-              auto thisHit =  eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1);
-              sparseFrame->addSparsePixel( thisHit );
+              sparseFrame->emplace_back( Col, Row, ToT, lvl1 );
             }
           }
 

@@ -211,8 +211,7 @@ namespace eudaq {
                std::cout<< "GetStandardSubEvent() broken data"<<std::endl;
                return false;
           }
-          auto thisHit = eutelescope::EUTelGenericSparsePixel(53, 19, cnt_max-cnt_base, trigger_number);
-          sparseFrame->addSparsePixel( thisHit );
+          sparseFrame->emplace_back( 53, 19, cnt_max-cnt_base, trigger_number );
           // write TrackerData object that contains info from one sensor to LCIO collection
           zsDataCollection->push_back( zsFrame.release() );
         }
