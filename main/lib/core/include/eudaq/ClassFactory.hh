@@ -1,5 +1,5 @@
-#ifndef factory_h__
-#define factory_h__
+#ifndef CLASSFACTORY_H__
+#define CLASSFACTORY_H__
 
 #include <map>
 #include <vector>
@@ -29,64 +29,58 @@ namespace eudaq{
   template <typename BASE>
   class DLLEXPORT ClassFactory{
   public:
-    using MainType = typename BASE::MainType;
-    using Parameter_t = typename BASE::Parameter_t;
+    using ID_t = typename BASE::MainType;
     using Parameter_ref = typename BASE::Parameter_ref;
-    typedef std::unique_ptr<BASE> (*factoryfunc)(Parameter_ref);
-    using map_t = std::map<MainType, typename ClassFactory<BASE>::factoryfunc> ;
+    using factoryfunc = std::unique_ptr<BASE> (*)(Parameter_ref);
 
-    static std::unique_ptr<BASE> Create(const MainType& name, Parameter_ref params);
-    template <typename T>
-      static void Register(const MainType & name) {
-      do_register(name, basefactory<T>);
+    static std::unique_ptr<BASE> Create(const ID_t& name, Parameter_ref params){
+      auto it = GetInstance().find(name);
+      if (it == GetInstance().end()) {
+	CLASS_FACTORY_THROW("unknown class: <" + name + ">");
+	return nullptr;
+      }
+      return (it->second)(params); 
     }
-    static std::vector<MainType> GetTypes();
+    
+    template <typename DERIVED>
+      static void Register(const ID_t& name) {
+      do_register(name, basefactory<DERIVED>);
+    }
+    
+    static std::map<ID_t, typename ClassFactory<BASE>::factoryfunc>& GetInstance(){  //TODO: const
+      static std::map<ID_t, typename ClassFactory<BASE>::factoryfunc> m;
+      return m;
+    }
+    
+    static std::vector<ID_t> GetTypes(){ //TODO: const
+      std::vector<ID_t> result;
+      for (auto& e : GetInstance()) {
+	result.push_back(e.first);
+      }
+      return result;
+    }
+    
   private:
-    template <typename T>
+    template <typename DERIVED>
       static std::unique_ptr<BASE> basefactory(Parameter_ref params) {
-      return std::unique_ptr<BASE>(new T(params));
+      return std::unique_ptr<BASE>(new DERIVED(params));
     }
-    static void do_register(const MainType & name, factoryfunc func){
+
+    static void do_register(const ID_t& name, factoryfunc func){
       GetInstance()[name] = func;
     }
-  public:
-    static map_t& GetInstance(); 
+    
   };
-
   
   template <typename BASE, typename DERIVED>
   class DLLEXPORT RegisterDerived{
   public:
-    using MainType = typename BASE::MainType;
-    RegisterDerived(const MainType& id){
+    using ID_t = typename BASE::MainType;
+    RegisterDerived(const ID_t& id){
       ClassFactory<BASE>::template Register<DERIVED>(id);
     }
   };
   
-  template <typename BASE>
-  std::vector<typename ClassFactory<BASE>::MainType> ClassFactory<BASE>::GetTypes(){
-    std::vector<MainType> result;
-    for (auto& e : GetInstance()) {
-      result.push_back(e.first);
-    }
-    return result;
-  }
-  
-  template <typename BASE>
-  typename std::unique_ptr<BASE> ClassFactory<BASE>::Create(const MainType& name, Parameter_ref params /*= ""*/){
-    auto it = GetInstance().find(name);
-    if (it == GetInstance().end()) {
-      CLASS_FACTORY_THROW("unknown class: <" + name + ">");
-      return nullptr;
-    }
-    return (it->second)(params); 
-  }
-
-  template <typename BASE>
-  typename ClassFactory<BASE>::map_t& ClassFactory<BASE>::GetInstance(){
-    static map_t m;
-    return m;
-  }
 }
 
-#endif // factory_h__
+#endif // CLASSFACTORY_H__
