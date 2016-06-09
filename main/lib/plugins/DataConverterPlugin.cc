@@ -56,7 +56,7 @@ namespace eudaq {
     for (size_t iPixel = 0; iPixel < plane.HitPixels(); ++iPixel) {
       eutelescope::EUTelGenericSparsePixel thisHit1(
           plane.GetX(iPixel), plane.GetY(iPixel), plane.GetPixel(iPixel), 0);
-      sparseFrame.addSparsePixel(&thisHit1);
+      sparseFrame.addSparsePixel(thisHit1);
     }
   }
 #endif // USE_EUTELESCOPE
