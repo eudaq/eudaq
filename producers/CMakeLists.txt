@@ -41,3 +41,5 @@ optional_add_subdirectory(example)
 optional_add_subdirectory(apixct)
 optional_add_subdirectory(clicpix)
 optional_add_subdirectory(ccpdlf)
+
+optional_add_subdirectory(processor)
