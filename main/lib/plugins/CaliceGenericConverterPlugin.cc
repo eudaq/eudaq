@@ -120,10 +120,10 @@ namespace eudaq {
       }
 
       // no contents -ignore
-      //  if(rawev->NumBlocks() < 3) return true;
-    
+      if(rawev->NumBlocks() < 3) return true;
+           
       unsigned int nblock = 0;
-
+	
   
       if(rawev->NumBlocks() > 2) {
 
@@ -138,6 +138,8 @@ namespace eudaq {
        	const RawDataEvent::data_t & bl2 = rawev->GetBlock(nblock++);
        	time_t timestamp = *(unsigned int *)(&bl2[0]);
 
+	IMPL::LCEventImpl  & lcevent = dynamic_cast<IMPL::LCEventImpl&>(result);
+	lcevent.setTimeStamp((long int)&bl2[0]);
 
 	if ( colName ==  "EUDAQDataBIF") {
 	  //-------------------
@@ -211,6 +213,11 @@ namespace eudaq {
       char tmc[256];
       strftime(tmc, 256, "%a, %d %b %Y %T %z", tms);
       col->parameters().setValue("Timestamp", tmc);
+      long int t = (long int)timestamp;
+      // result.setTimeStamp(t);
+      // IMPL::LCEventImpl *lcevent = dynamic_cast<lcio::LCEvent>(result);
+      //lcevent->setTimeStamp(t);
+
 
       return col;
     }
