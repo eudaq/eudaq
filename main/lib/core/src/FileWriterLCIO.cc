@@ -11,7 +11,7 @@
 #include "IMPL/LCTOOLS.h"
 #include "IO/LCWriter.h"
 #include "lcio.h"
-
+#include <time.h>
 #include <iostream>
 
 #if USE_EUTELESCOPE
@@ -54,11 +54,25 @@ namespace eudaq {
 
     // open a new file
     try {
-      m_lcwriter->open(
-          FileNamer(m_filepattern).Set('X', ".slcio").Set('R', runnumber),
-          lcio::LCIO::WRITE_NEW);
-      m_fileopened = true;
-    } catch (const lcio::IOException &e) {
+     time_t  ltime;
+      struct tm *Tm;
+      ltime=time(NULL);
+      Tm=localtime(&ltime);
+
+      char file_timestamp[25];
+      sprintf(file_timestamp,"__%02dp%02dp%02d__%02dp%02dp%02d",
+	     Tm->tm_mday,
+	     Tm->tm_mon+1,
+	     Tm->tm_year+1900,
+	     Tm->tm_hour,
+	     Tm->tm_min,
+	     Tm->tm_sec);
+
+      m_lcwriter->open(FileNamer(m_filepattern).Set('X',file_timestamp ).Set('R', runnumber),
+          lcio::LCIO::WRITE_NEW) ;
+      m_fileopened=true;
+ 
+   } catch (const lcio::IOException &e) {
       std::cout << e.what() << std::endl;
       /// FIXME Error message to run control and logger
     }
@@ -67,10 +81,13 @@ namespace eudaq {
   void FileWriterLCIO::WriteEvent(const DetectorEvent &devent) {
     if (devent.IsBORE()) {
       PluginManager::Initialize(devent);
+
+#if USE_EUTELESCOPE
       auto x = std::unique_ptr<lcio::LCRunHeader>(
           PluginManager::GetLCRunHeader(devent));
 
       m_lcwriter->writeRunHeader(x.get());
+#endif
 
       return;
     } else if (devent.IsEORE()) {

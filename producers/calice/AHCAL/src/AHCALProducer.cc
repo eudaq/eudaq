@@ -1,12 +1,10 @@
+ // CaliceReceiver.cc
 
-// CaliceReceiver.cc
-
-#include "CaliceProducer.hh"
+#include "AHCALProducer.hh"
 
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Configuration.hh"
-#include "SiReader.hh"
 #include "ScReader.hh"
 #include "stdlib.h"
 #include <unistd.h>
@@ -28,17 +26,18 @@ using namespace std;
 
 namespace eudaq {
 
-  CaliceProducer::CaliceProducer(const std::string & name, const std::string & runcontrol) :
+  AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
     Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
   {
-    // std::unique_lock<std::mutex> myLock(_mufd);
-    //pthread_mutex_init(&_mufd,NULL);
+
   }
 
-  void CaliceProducer::OnConfigure(const eudaq::Configuration & param)
+  void AHCALProducer::OnConfigure(const eudaq::Configuration & param)
   {
 
-    //  std::unique_lock<std::mutex> myLock(_mufd);
+    cout<< " start congfiguration "<< endl;
+    // run rype: LED run or normal run ""
+    _fileLEDsettings = param.Get("FileLEDsettings", "");
 
     // file name
     _filename = param.Get("FileName", "");
@@ -54,23 +53,21 @@ namespace eudaq {
     _port = param.Get("Port", 9011);
     _ipAddress = param.Get("IPAddress", "127.0.0.1");
     
-    string reader = param.Get("Reader", "Silicon");
-    int difId = param.Get("DIFID", 0);
-
-    if(reader == "Silicon"){
-      SetReader(new SiReader(this,difId));
-      OpenConnection(); // for silicon we open at configuration
-    }
-    else {
-      SetReader(new ScReader(this)); // in sc dif ID is not specified
-    } // for scintillator we open at start
+    string reader = param.Get("Reader", "");
+    SetReader(new ScReader(this)); // in sc dif ID is not specified
     
+    _reader->OnConfigLED(_fileLEDsettings); //newLED
+
     _configured = true;
    
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+    cout<< " end congfiguration "<< endl;
+
   }
 
-  void CaliceProducer::OnStartRun(unsigned param) {
+  void AHCALProducer::OnStartRun(unsigned param) {
+    cout<< "  start run "<< endl;
+
     _runNo = param;
     _eventNo = 0;
     // raw file open
@@ -82,10 +79,12 @@ namespace eudaq {
     std::cout << "Start Run: " << param << std::endl;
     SetStatus(eudaq::Status::LVL_OK, "");
     _running = true;
+    cout<< "  end start run "<< endl;
+
 
   }
 
-  void CaliceProducer::OpenRawFile(unsigned param, bool _writerawfilename_timestamp) {
+  void AHCALProducer::OpenRawFile(unsigned param, bool _writerawfilename_timestamp) {
 
     //	read the local time and save into the string myString
     time_t  ltime;
@@ -115,11 +114,14 @@ namespace eudaq {
   }
 
 
-  void CaliceProducer::OnPrepareRun(unsigned param) {
+  void AHCALProducer::OnPrepareRun(unsigned param) {
     cout << "OnPrepareRun: runID " << param << " set." << endl;
+
   }
   
-  void CaliceProducer::OnStopRun() {
+  void AHCALProducer::OnStopRun() {
+    cout<< "  stop run "<< endl;
+
     _reader->OnStop(_waitsecondsForQueuedEvents);
     _running = false;
     sleep(1); 
@@ -135,13 +137,17 @@ namespace eudaq {
 
     SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
     
+    cout<< "  end stop run 0"<< endl;
     SetStatus(eudaq::Status::LVL_OK, "");
+    cout<< "  end stop run 1"<< endl;
+
   }
 
-  void CaliceProducer::OpenConnection()
+  bool AHCALProducer::OpenConnection()
   {
+    cout<< "  start open connection "<< endl;
+
     // open socket
-    cout<<" entering open Con "<< endl;
 
     struct sockaddr_in dstAddr;
     memset(&dstAddr, 0, sizeof(dstAddr));
@@ -149,34 +155,36 @@ namespace eudaq {
     dstAddr.sin_family = AF_INET;
     dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 
-    cout<<" entering open Con 2 -- "<< endl;
-
     std::mutex _mufdOpenConnection;
     std::unique_lock<std::mutex> myLock(_mufdOpenConnection);
     _fd = socket(AF_INET, SOCK_STREAM, 0);
-    //airqui 14/01/2016 //  pthread_mutex_lock(&_mufd);
     int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-    // std::lock_guard<std::mutex> unlock(_mufd);
-    //airqui  14/01/2016 //pthread_mutex_unlock(&_mufd);
 
-    cout<<" open "<< endl;
+    if(ret != 0)  return 0;
+    cout<< "  stop open connection "<< endl;
+    return 1;
 
-    if(ret != 0)  return;
   }
   
-  void CaliceProducer::CloseConnection()
+  void AHCALProducer::CloseConnection()
   {
+    cout<< "  start close connection "<< endl;
+
     //airqui  14/01/2016 // pthread_mutex_lock(&_mufd);
     std::unique_lock<std::mutex> myLock(_mufd);
     close(_fd);
     _fd = 0;
     //airqui   14/01/2016 // pthread_mutex_unlock(&_mufd);
-    
+    cout<< "  stop close connection "<< endl;
+
     
   }
   
   // send a string without any handshaking
-  void CaliceProducer::SendCommand(const char *command, int size){
+  void AHCALProducer::SendCommand(const char *command, int size){
+
+    cout<< "  start sendcommand "<<command<< endl;
+
 
     if(size == 0)size = strlen(command);
 
@@ -184,16 +192,21 @@ namespace eudaq {
     // open/close of socket because it's considered to be called from 
     // event thread, which is same as thread of open/close the socket
 
-    //
-    // pthread_mutex_lock(&_mufd);
-    //std::lock_guard<std::mutex> myLock(_mufd);
-    if(_fd <= 0)cout << "CaliceProducer::SendCommand(): cannot send command because connection is not open." << endl;
-    else write(_fd, command, size);
-    //
-    // pthread_mutex_unlock(&_mufd);
+    if(_fd <= 0)cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << endl;
+    else {
+	    size_t bytesWritten = write(_fd, command, size);
+	    if ( bytesWritten  < 0 ) {
+		    cout << "There was an error writing to the TCP socket" << endl;
+	    } else {
+		    cout << bytesWritten  << " out of " << size << " bytes is  written to the TCP socket" << endl;
+	    }
+    }
+    cout<< "  stop sendcommand "<< endl;
+
+
   }
 
-  deque<eudaq::RawDataEvent *>  CaliceProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
+  deque<eudaq::RawDataEvent *>  AHCALProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
     while(deqEvent.size() > minimumsize){
       SendEvent(*(deqEvent.front()));
       delete deqEvent.front();
@@ -202,7 +215,7 @@ namespace eudaq {
     return deqEvent;
   }
 
-  void CaliceProducer::MainLoop()
+  void AHCALProducer::MainLoop()
   {
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
@@ -210,20 +223,16 @@ namespace eudaq {
 
     while(true){
       // wait until configured and connected
-      //airqui 14/01/2016 //
-      //  pthread_mutex_lock(&_mufd);      
       std::unique_lock<std::mutex> myLock(_mufd);
 
       const int bufsize = 4096;
       // copy to C array, then to vector
       char buf[bufsize];
-      int size = 0;
+      int size = 0;        
       if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
-    
+
       //      if file is not ready  just wait
-      if(_fd <= 0 ){//|| !_running ){
-	//airqui 14/01/2016 //	
-	//	pthread_mutex_unlock(&_mufd);
+      if(_fd <= 0 || !_running ){
 	::usleep(1000);
 	continue;
       }
@@ -237,15 +246,11 @@ namespace eudaq {
           std::cout << "Socket disconnected. going to the waiting mode." << endl;         
         close(_fd);
         _fd = -1;
-	//airqui 14/01/2016 //
-	//	pthread_mutex_unlock(&_mufd);
 	continue;
       }
         
       if(!_running){
 	bufRead.clear();
-	//airqui 14/01/2016 //
-	//	pthread_mutex_unlock(&_mufd);
 	continue;
       }
 
@@ -258,9 +263,6 @@ namespace eudaq {
         
       // send events : remain the last event
       deqEvent=sendallevents(deqEvent,1);
-       
-      //airqui 14/01/2016 // 
-      //  pthread_mutex_unlock(&_mufd);
     }
   }
 
@@ -285,7 +287,7 @@ int main(int /*argc*/, const char ** argv) {
     EUDAQ_LOG_LEVEL(level.Value());
     // Create a producer
     cout << name.Value() << " " << rctrl.Value() << endl;
-    eudaq::CaliceProducer producer(name.Value(), rctrl.Value());
+    eudaq::AHCALProducer producer(name.Value(), rctrl.Value());
     //producer.SetReader(new eudaq::SiReader(0));
     // And set it running...
     producer.MainLoop();
