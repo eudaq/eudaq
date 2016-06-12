@@ -133,7 +133,28 @@ void Processor::ProduceEvent(){
   //call Processing
 }
 
-void Processor::operator()(){
+
+void Processor::RegisterProcessing(PSSP ps, EVUP ev){
+  std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
+  m_fifo_pcs.push(std::make_pair(ps, std::move(ev)));
+  m_cv_pcs.notify_all();
+}
+
+
+void Processor::HubThread(){
+  while(1){ //TODO: modify STATE enum
+    std::unique_lock<std::mutex> lk(m_mtx_pcs);
+    bool fifoempty = m_fifo_pcs.empty();
+    if(fifoempty)
+      m_cv_pcs.wait(lk);
+    PSSP ps = m_fifo_pcs.front().first;
+    EVUP ev = std::move(m_fifo_pcs.front().second);
+    m_fifo_pcs.pop();
+    ps->Processing(std::move(ev));
+  }
+}
+
+void Processor::CustomerThread(){
   // std::unique_lock<std::mutex> lk_state(m_mtx_state);
   m_state = STATE_THREAD_READY;
   // lk_state.unlock();
@@ -148,5 +169,28 @@ void Processor::operator()(){
     SyncProcessing(std::move(ev));
   }
 }
+
+
+void Processor::operator()(){
+  CustomerThread();
+}
+
+
+PSSP operator>>(PSSP psl, PSSP psr){
+  psl->AddNextProcessor(psr);
+  return psr;
+}
+
+
+PSSP operator>>(PSSP psl, std::string psr_str){
+  std::string pstype = psr_str;  //TODO: pst_str contains more info, then decode is needed.
+  uint32_t psid_mother = psl->GetID();
+  uint32_t psid = 1; //TODO: get from psr_str
+  auto psMan = ProcessorManager::GetInstance();
+  PSSP psr = psMan->CreateProcessor(pstype, psid, psid_mother);
+  return psl>>psr;
+}
+
+
 
 // static Processor ps("__base",std::numeric_limits<uint32_t>::max(), 0)
