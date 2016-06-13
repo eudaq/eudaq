@@ -20,9 +20,9 @@ before_install:
   - $CXX --version
   - $CC --version
 
-  - if [ $TRAVIS_OS_NAME == linux ]; then wget https://root.cern.ch/download/root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && tar -xvf root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi  
+  - if [ $TRAVIS_OS_NAME == linux ]; then wget https://root.cern.ch/download/root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && tar -xvf root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi  
 
-  - if [ $TRAVIS_OS_NAME == osx ]; then wget https://root.cern.ch/download/root_v5.34.34.macosx64-10.9-clang60.tar.gz && tar -xvf root_v5.34.34.macosx64-10.9-clang60.tar.gz && source root/bin/thisroot.sh; fi  
+  - if [ $TRAVIS_OS_NAME == osx ]; then wget https://root.cern.ch/download/root_v5.34.36.macosx64-10.9-clang60.tar.gz && tar -xvf root_v5.34.36.macosx64-10.9-clang60.tar.gz && source root/bin/thisroot.sh; fi  
 
   - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get -qq update; fi
 
