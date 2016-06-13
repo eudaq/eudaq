@@ -11,7 +11,7 @@ configuration: Release
 
 environment:
   ROOTSYS: C:\root
-  PATH: '%ROOTSYS%\bin;C:\Qt\5.5\msvc2013;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
+  PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
 before_build:
 - del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 - cmd: >-
@@ -23,9 +23,9 @@ before_build:
 
     activate test-environment
     
-    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.34.win32.vc12.zip\",\"C:\\root_v5.34.34.win32.vc12.zip\")"
+    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip\",\"C:\\root_v5.34.36.win32.vc12.zip\")"
 
-    7z -y x C:\\root_v5.34.34.win32.vc12.zip -oC:\
+    7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\
 
     cd build
 
