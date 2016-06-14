@@ -76,6 +76,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DBUILD_onlinemon=ON -DBUILD_allproducer=ON ..
+  - cmake -DBUILD_onlinemon=ON -DBUILD_allproducer=ON -DBUILD__palpidefs=OFF ..
   - make install
 
