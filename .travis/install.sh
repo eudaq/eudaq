@@ -5,7 +5,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		# Install package dependencies for Mac OS X:
 		brew unlink cmake
 		brew install python libusb qt5
-		brew linkapps qt5
+		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
 		easy_install pip
 		pip install numpy
