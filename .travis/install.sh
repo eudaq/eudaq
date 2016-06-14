@@ -22,10 +22,10 @@ else
 
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Linux:
-		sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python3.4 python-numpy cmake qt5-default	linux-generic openafs-client openafs-krb5
+		sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python3.4 python-numpy cmake qt5-default	linux-generic linux-headers-$(uname -r)-generic openafs-client openafs-krb5
 	else
 		# Install package dependencies for Linux:
-		sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools linux-generic openafs-client openafs-krb5
+		sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools linux-generic linux-headers-$(uname -r)-generic openafs-client openafs-krb5
 	fi
 	
 fi 
