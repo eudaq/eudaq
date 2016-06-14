@@ -76,6 +76,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DBUILD_onlinemon=ON ..
+  - cmake -DBUILD_onlinemon=ON -DBUILD_allproducer=ON ..
   - make install
 
