@@ -76,6 +76,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DBUILD_onlinemon=ON -DBUILD_depfet=ON -DBUILD_eudrb=ON -DBUILD_explorer=ON -DBUILD_fortis=ON -DBUILD_mimoroma=ON -DBUILD_mimosa32=ON  -DBUILD_ni=ON  -DBUILD_tlu=ON ..
+  - cmake -DBUILD_onlinemon=ON -DBUILD_eudrb=ON -DBUILD_explorer=ON -DBUILD_fortis=ON -DBUILD_mimoroma=ON -DBUILD_mimosa32=ON  -DBUILD_ni=ON  -DBUILD_tlu=ON ..
   - make install
 
