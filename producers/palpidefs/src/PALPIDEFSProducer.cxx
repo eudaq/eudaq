@@ -351,13 +351,15 @@ void DeviceReader::Loop() {
 
     // data taking
     SetReading(true);
-    int error = 0;
     int readEvent = -1;
-    unsigned char* debug = 0x0;
-    int debug_length = 0;
     do {
+#ifndef DEBUG_USB
       readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
-#ifdef DEBUG_USB
+#else
+      int error = 0;
+      unsigned char* debug = 0x0;
+      int debug_length = 0;
+      readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength, &error, &debug, &debug_length);
       if (debug_length>0) {
         std::vector<unsigned char> vec(&debug[0], &debug[debug_length]);
         m_debug.insert(m_debug.end(), vec.begin(), vec.end());
