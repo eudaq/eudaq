@@ -4,7 +4,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Mac OS X:
 		brew unlink cmake
-		brew install python libusb qt-5
+		brew install python libusb qt5
 		# Install numpy via pip:
 		easy_install pip
 		pip install numpy
