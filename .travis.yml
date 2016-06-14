@@ -17,9 +17,12 @@ env:
       - ROOT6_FILENAME_LINUX=root_v6.06.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT6_FILENAME_MAC=root_v6.06.04.macosx64-10.9-clang60.tar.gz
       
-      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.5/
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.5
       - CMAKE_FILENAME_LINUX=cmake-3.5.2-Linux-x86_64.tar.gz
       - CMAKE_FILENAME_MAC=cmake-3.5.2-Darwin-x86_64.tar.gz
+      
+      - OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
+      - OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
       
 # possible options:
 # Linux/Mac
@@ -76,6 +79,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DBUILD_onlinemon=ON -DBUILD_eudrb=ON -DBUILD_explorer=ON -DBUILD_fortis=ON -DBUILD_mimoroma=ON -DBUILD_mimosa32=ON  -DBUILD_ni=ON  -DBUILD_tlu=ON ..
+  - cmake -DBUILD_onlinemon=ON -DBUILD_eudrb=ON -DBUILD_explorer=ON -DBUILD_depfet=ON -DBUILD_fortis=ON -DBUILD_mimoroma=ON -DBUILD_mimosa32=ON  -DBUILD_ni=ON  -DBUILD_tlu=ON ..
   - make install
 

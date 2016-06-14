@@ -28,6 +28,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi
 	
+	echo "Installing openafs now"
+	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
+	#tar xfz $OPENAFS_FILENAME_MAC
+	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
+	#echo $PATH	
+	
 else
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
