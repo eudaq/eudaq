@@ -40,6 +40,8 @@ else
 	tar -xvf $ROOT_FILENAME
 	source root/bin/thisroot.sh
 	
+	#workaround as openafs in the normal is broken in the moment - kernel module does not compile
+	sudo add-apt-repository -y ppa:openafs/stable
 	sudo apt-get -qq update
 fi
 	
