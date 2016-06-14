@@ -4,53 +4,73 @@ sudo: required
 
 dist: trusty
 
-compiler:
-  - gcc
-
 branches:
   only:
     - master
     - v1.6-dev
 
-os:
-  - linux
-  - osx
+# set here versions / file paths
+env:
+   global:
+      - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.9-clang60.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.06.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.06.04.macosx64-10.9-clang60.tar.gz
+      
+# possible options:
+# Linux/Mac
+# gcc/clang
+# ROOT 5/6
+# QT 4/5
+# Python 2/3
+
+# in order to reduce options:
+# Linux/Mac
+# gcc/clang
+# modern (ROOT 6, QT 5, Python 3) / old (ROOT 5, QT 4, Python 2)
+# results in 8 combinations
+# documentation to be "compiled" in maximum one option branch
+
+matrix:      
+   include:
+      - os: linux
+        compiler: gcc
+        env: OPTION_BRANCH=modern
+      - os: linux      
+        compiler: gcc      
+        env: OPTION_BRANCH=old
+      - os: linux
+        compiler: clang      
+        env: OPTION_BRANCH=modern
+      - os: linux
+        compiler: clang      
+        env: OPTION_BRANCH=old
+      - os: osx      
+        compiler: gcc    
+        env: OPTION_BRANCH=modern
+      - os: osx
+        compiler: gcc      
+        env: OPTION_BRANCH=old
+      - os: osx
+        compiler: clang      
+        env: OPTION_BRANCH=modern
+      - os: osx      
+        compiler: clang      
+        env: OPTION_BRANCH=old
+
+
 
 before_install:
-  - $CXX --version
-  - $CC --version
-
-  - if [ $TRAVIS_OS_NAME == linux ]; then wget https://root.cern.ch/download/root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && tar -xvf root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi  
-
-  - if [ $TRAVIS_OS_NAME == osx ]; then wget https://root.cern.ch/download/root_v5.34.36.macosx64-10.9-clang60.tar.gz && tar -xvf root_v5.34.36.macosx64-10.9-clang60.tar.gz && source root/bin/thisroot.sh; fi  
-
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get -qq update; fi
-
-  # OS X: update brew cache:
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ]]; then CC=gcc-4.9; fi
-  - if [ $TRAVIS_OS_NAME == "osx" ]; then wget https://cmake.org/files/v3.4/cmake-3.4.3-Darwin-x86_64.tar.gz && tar xfz cmake-3.4.3-Darwin-x86_64.tar.gz && export PATH="`pwd`/cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin":$PATH:; fi
-  - if [ $TRAVIS_OS_NAME == "osx" ]; then echo $PATH; fi
-
+  - ./.travis/before_install.sh
   
 install:
-  # Install package dependencies for Linux:
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools; fi
-
-  # Install package dependencies for Mac OS X:
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew unlink cmake; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb qt; fi
-  # Install numpy via pip:
-  - if [ $TRAVIS_OS_NAME == osx ]; then easy_install pip && pip install numpy; fi
+  - ./.travis/install.sh
 
 before_script:
-  
   # For Mac OS X we still need to source the root environment:
   # - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
-
   - $CXX --version
   - $CC --version
-
   - cd build
 
 script:
