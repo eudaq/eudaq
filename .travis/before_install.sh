@@ -20,7 +20,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	echo "Installing cmake now"
 	wget ${CMAKE_DOWNLOAD_PATH}/$CMAKE_FILENAME
 	tar xfz $CMAKE_FILENAME
-	export PATH="`pwd`/${CMAKE_FILENAME%%.*}/CMake.app/Contents/bin":$PATH:	
+	export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
 	echo $PATH
 	
 	# OS X: update brew cache:
