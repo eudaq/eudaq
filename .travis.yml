@@ -17,6 +17,10 @@ env:
       - ROOT6_FILENAME_LINUX=root_v6.06.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT6_FILENAME_MAC=root_v6.06.04.macosx64-10.9-clang60.tar.gz
       
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.5/
+      - CMAKE_FILENAME_LINUX=cmake-3.5.2-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.5.2-Darwin-x86_64.tar.gz
+      
 # possible options:
 # Linux/Mac
 # gcc/clang
@@ -29,42 +33,40 @@ env:
 # gcc/clang
 # modern (ROOT 6, QT 5, Python 3) / old (ROOT 5, QT 4, Python 2)
 # results in 8 combinations
-# documentation to be "compiled" in maximum one option branch
+# documentation to be "compiled" in maximum one option
 
 matrix:      
    include:
       - os: linux
         compiler: gcc
-        env: OPTION_BRANCH=modern
+        env: OPTION=modern
       - os: linux      
         compiler: gcc      
-        env: OPTION_BRANCH=old
+        env: OPTION=old
       - os: linux
         compiler: clang      
-        env: OPTION_BRANCH=modern
+        env: OPTION=modern
       - os: linux
         compiler: clang      
-        env: OPTION_BRANCH=old
+        env: OPTION=old
       - os: osx      
         compiler: gcc    
-        env: OPTION_BRANCH=modern
+        env: OPTION=modern
       - os: osx
         compiler: gcc      
-        env: OPTION_BRANCH=old
+        env: OPTION=old
       - os: osx
         compiler: clang      
-        env: OPTION_BRANCH=modern
+        env: OPTION=modern
       - os: osx      
         compiler: clang      
-        env: OPTION_BRANCH=old
-
-
+        env: OPTION=old
 
 before_install:
-  - ./.travis/before_install.sh
+  - source .travis/before_install.sh
   
 install:
-  - ./.travis/install.sh
+  - source .travis/install.sh
 
 before_script:
   # For Mac OS X we still need to source the root environment:
