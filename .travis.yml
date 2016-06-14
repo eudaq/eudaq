@@ -63,10 +63,10 @@ matrix:
         env: OPTION=old
 
 before_install:
-  - ./.travis/before_install.sh
+  - source .travis/before_install.sh
   
 install:
-  - ./.travis/install.sh
+  - source .travis/install.sh
 
 before_script:
   # For Mac OS X we still need to source the root environment:
