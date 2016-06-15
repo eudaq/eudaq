@@ -31,7 +31,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	echo "Installing openafs now"
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
 	sudo hdiutil attach $OPENAFS_FILENAME_MAC
-	sudo installer -package /Volumes/${OPENAFS_FILENAME_MAC%%.dmg}/${OPENAFS_FILENAME_MAC%%.dmg}.pkg -target /
+	ls /Volumes/OpenAFS/
+	sudo installer -package /Volumes/OpenAFS/${OPENAFS_FILENAME_MAC%%.dmg}.pkg -target /
 	#tar xfz $OPENAFS_FILENAME_MAC
 	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
 	#echo $PATH	
