@@ -23,13 +23,13 @@ void ProcessorManager::InitProcessorPlugins(){
   //TODO:: search shared lib, get PS creater and destroyer, prepare  PSplugin map
 };
 
-PSSP ProcessorManager::CreateProcessor(std::string pstype, uint32_t psid, uint32_t psid_mother){
+PSSP ProcessorManager::CreateProcessor(std::string pstype, uint32_t psid){
   auto it = m_pslist.find(pstype);
   if(it!=m_pslist.end()){
     auto creater= it->second.first;
     auto destroyer= it->second.second;
     // PSSP ps((*creater)(), destroyer);
-    PSSP ps((*creater)(psid, psid_mother));
+    PSSP ps((*creater)(psid));
     m_pslist_instance[psid]=ps;
     return ps;
   }

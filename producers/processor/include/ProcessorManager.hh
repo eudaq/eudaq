@@ -15,7 +15,7 @@ namespace eudaq{
   class Processor;
   class ProcessorManager;
 
-  typedef Processor* (*CreatePS)(uint32_t, uint32_t);
+  typedef Processor* (*CreatePS)(uint32_t);
   typedef void (*DestroyPS)(Processor*);
   typedef RawDataEvent* (*CreateEV)();
   typedef void (*DestroyEV)(Event*);
@@ -42,7 +42,7 @@ namespace eudaq{
     
     void EventLoop();
 
-    PSSP CreateProcessor(std::string pstype, uint32_t psid, uint32_t psid_mother);
+    PSSP CreateProcessor(std::string pstype, uint32_t psid);
     EVUP CreateEvent(std::string evtype);
 
   private:
