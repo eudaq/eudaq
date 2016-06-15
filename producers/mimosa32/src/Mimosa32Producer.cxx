@@ -6,6 +6,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/ExampleHardware.hh"
 #include "eudaq/Mutex.hh"
+#include "eudaq/Configuration.hh"
 #include "DeviceMimosa32.hh"
 
 #include <iostream>
