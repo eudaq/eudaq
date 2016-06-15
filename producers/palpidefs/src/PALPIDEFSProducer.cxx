@@ -1455,7 +1455,9 @@ int PALPIDEFSProducer::BuildEvent() {
   // NOTE a partial _last_ event is lost in this way (can be improved based on
   // flush)
   uint64_t trigger_id = ULONG_MAX;
-  uint64_t timestamp = ULONG_MAX;
+  int64_t timestamp = LONG_MAX;
+
+  int64_t timestamp_mask = 0x7FFFFFFF;
 
   // local copies
   std::vector<int> planes;
@@ -1470,8 +1472,9 @@ int PALPIDEFSProducer::BuildEvent() {
       return 0;
 
     int64_t timestamp_tmp = (int64_t)m_next_event[i]->m_timestamp-(int64_t)m_next_event[i]->m_timestamp_reference;
+    timestamp_tmp &= timestamp_mask;
     if (m_firstevent) // set last timestamp if first event
-        m_timestamp_last[i] = (uint64_t)timestamp_tmp;
+        m_timestamp_last[i] = (int64_t)timestamp_tmp;
 
     planes.push_back(i);
     trigger_ids.push_back(m_next_event[i]->m_trigger_id);
@@ -1483,7 +1486,8 @@ int PALPIDEFSProducer::BuildEvent() {
   // sort the plane data, plane with largest timestamp first
   for (int i = 0; i < m_nDevices-1; i++) {
     for (int j = 0; j < m_nDevices-1; j++) {
-      if (timestamps[j]-timestamps_last[j]<timestamps[j+1]-timestamps_last[j+1]) {
+      //if ((timestamps[j]-timestamps_last[j])&timestamp_mask<(timestamps[j+1]-timestamps_last[j+1])&timestamp_mask) {
+      if (trigger_ids[j]<trigger_ids[j+1]) {
         std::iter_swap(planes.begin()+j,          planes.begin()+j+1);
         std::iter_swap(trigger_ids.begin()+j,     trigger_ids.begin()+j+1);
         std::iter_swap(timestamps.begin()+j,      timestamps.begin()+j+1);
@@ -1492,11 +1496,13 @@ int PALPIDEFSProducer::BuildEvent() {
     }
   }
 
-  //for (int i = 0; i < m_nDevices; i++) {
-  //  std::cout << m_ev << '\t' << i << '\t' << planes[i] << '\t' << trigger_ids[i] << '\t' << timestamps[i] << '\t' << timestamps_last[i] << '\t' << m_timestamp_last[i] << '\t'
-  //            << m_next_event[planes[i]]->m_timestamp << '\t' << m_next_event[planes[i]]->m_timestamp_reference
-  //            << std::endl;
-  //}
+    std::cout << "m_ev\ti\tplanes[i]\ttrigger_ids[i]\tts[i]\tts_last[i]\tm_ts_last[i]\tm_next_event[planes[i]]->m_ts\tm_next_event[planes[i]]->m_timestamp_reference" << std::endl;
+
+  for (int i = 0; i < m_nDevices; i++) {
+    std::cout << m_ev << '\t' << i << '\t' << planes[i] << '\t' << trigger_ids[i] << '\t' << timestamps[i] << '\t' << timestamps_last[i] << '\t' << m_timestamp_last[i] << '\t'
+              << m_next_event[planes[i]]->m_timestamp << '\t' << m_next_event[planes[i]]->m_timestamp_reference
+              << std::endl;
+  }
 
   // use the largest timestamp and the correponding trigger id
   trigger_id = trigger_ids[0];
@@ -1521,15 +1527,15 @@ int PALPIDEFSProducer::BuildEvent() {
       else                  bad_plane[planes[0]] = true;
       break;
     }
-    double rel_diff_ref = fabs(1.0 - (double)timestamps[i] / (double)timestamps[0]);
-    double abs_diff_ref = fabs((double)timestamps[i] - (double)timestamps[0]);
+    double abs_diff_ref = (double)(std::abs(timestamps[i]-timestamps[0])&timestamp_mask);
+    double rel_diff_ref = abs_diff_ref/(double)(timestamps[0]&timestamp_mask);
     if (rel_diff_ref > 0.0001 && abs_diff_ref> 10) {
       std::cout << "Relative difference to reference timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_ref <<" / " << abs_diff_ref << " in planes " << planes[0] << " and " << planes[i] <<std::endl;
       timestamp_error_ref = true;
       bad_plane[planes[i]] = true;
     }
-    double rel_diff_last = fabs(1.0 - ((double)timestamps[i]-(double)timestamps_last[i]) / ((double)timestamps[0]-(double)timestamps_last[0]));
-    double abs_diff_last = fabs(((double)timestamps[i] - (double)timestamps_last[i]) - ((double)timestamps[0] - (double)timestamps_last[0]));
+    double abs_diff_last = (double)(std::abs(timestamps[i]-timestamps_last[i]-(timestamps[0]-timestamps_last[0]))&timestamp_mask);
+    double rel_diff_last = abs_diff_last/(double)((timestamps[0]-timestamps_last[0])&timestamp_mask);
     if (rel_diff_last > 0.0001 && abs_diff_last>10 ) {
       std::cout << "Relative difference to last timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_last << " / " << abs_diff_last << " in planes " << planes[0] << " and " << planes[i] << std::endl;
       timestamp_error_last = true;
@@ -1554,13 +1560,14 @@ int PALPIDEFSProducer::BuildEvent() {
       }
     }
     for (int i = 0; i < m_nDevices; i++) {
-      long long diff = (long long)timestamps[i] -(long long)timestamps[0];
+      int64_t diff = (int64_t)timestamps[i] -(int64_t)timestamps[0];
+      diff&=timestamp_mask;
 
       std::cout << i << '\t' << m_ev << '\t' << trigger_ids[i] << '\t' << timestamps[i]
                 << '\t' << m_timestamp_last[i] << '\t'
-                <<  (long long)timestamps[i]-(long long)m_timestamp_last[i] << '\t'
+                << (((int64_t)timestamps[i]-(int64_t)m_timestamp_last[i])&timestamp_mask) << '\t'
                 << m_next_event[i]->m_timestamp_reference << '\t'
-                << diff << '\t' << (double)diff/(double)timestamps[0]  << std::endl;
+                << diff << '\t' << (double)diff/(double)timestamps[0] << std::endl;
     }
   }
   else {
@@ -1586,9 +1593,11 @@ int PALPIDEFSProducer::BuildEvent() {
       }
     }
     delete[] bad_plane;
+    bad_plane = 0x0;
     return 0;
   }
   delete[] bad_plane;
+  bad_plane = 0x0;
 
   // send event with trigger id trigger_id
   // send all layers in one block
