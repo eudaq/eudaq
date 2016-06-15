@@ -3,6 +3,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Configuration.hh"
 
 #include <iostream>
 #include <ostream>
