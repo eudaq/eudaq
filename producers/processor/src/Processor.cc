@@ -100,6 +100,13 @@ void Processor::CreateNextProcessor(std::string pstype, uint32_t psid){
 }
 
 
+std::set<std::string> Processor::UpdateEventWhiteList(){
+  for(auto ps: m_pslist_next){
+    auto evtype_list = ps->UpdateEventWhiteList();
+    m_evlist_white.insert(evtype_list.begin(), evtype_list.end());    
+  }
+  return m_evlist_white;
+}
 
 void Processor::AddNextProcessor(PSSP ps){
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
@@ -161,7 +168,16 @@ void Processor::operator()(){
 }
 
 
-PSSP operator>>(Processor* psl, PSSP psr){
+
+PSSP operator>>(ProcessorManager* pm, PSSP psr){
+  psr->SetPSHub(psr);
+  std::thread hub(&Processor::HubThread, psr);
+  hub.detach();
+  return psr;
+}
+
+
+PSSP operator>>(PSSP psl, PSSP psr){
   psl->AddNextProcessor(psr);
   psr->IncreaseNumUpstream();
   uint32_t nup = psr->GetNumUpstream();
@@ -173,22 +189,7 @@ PSSP operator>>(Processor* psl, PSSP psr){
     std::thread hub(&Processor::HubThread, psr);
     hub.detach();
   }
-  
   return psr;
-}
-
-
-PSSP operator>>(ProcessorManager* pm, PSSP psr){
-  psr->SetPSHub(psr);
-  std::thread hub(&Processor::HubThread, psr);
-  hub.detach();
-}
-
-
-PSSP operator>>(PSSP psl, PSSP psr){
-  auto pslp = psl.get();
-  //if not null
-  return pslp>>psr;
 }
 
 
@@ -197,7 +198,20 @@ PSSP operator>>(PSSP psl, std::string psr_str){
   uint32_t psid = 1; //TODO: get from psr_str
   auto psMan = ProcessorManager::GetInstance();
   PSSP psr = psMan->CreateProcessor(pstype, psid);
-  return psl>>psr;
+
+  psl->AddNextProcessor(psr);
+  psr->IncreaseNumUpstream();
+  uint32_t nup = psr->GetNumUpstream();
+  if(nup == 1){
+    psr->SetPSHub(psl->GetPSHub());
+  }
+  if(nup == 2){
+    psr->SetPSHub(psr);
+    std::thread hub(&Processor::HubThread, psr);
+    hub.detach();
+  }
+
+  return psr;
 }
 
 

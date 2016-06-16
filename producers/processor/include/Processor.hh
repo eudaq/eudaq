@@ -1,6 +1,7 @@
 #ifndef PROCESSOR_HH_
 #define PROCESSOR_HH_
 
+#include<set>
 #include<vector>
 #include<string>
 #include<memory>
@@ -53,7 +54,7 @@ namespace eudaq {
     
     PSSP GetPSHub(){return m_ps_hub;};
     void SetPSHub(PSSP ps); //TODO: thread safe
-    std::vector<std::string> UpdateEventWhiteList(){return m_evlist_white;};// TODO: ask next ps;
+    std::set<std::string> UpdateEventWhiteList();
     void ProcessSysEvent(EVUP ev);
     void AddNextProcessor(PSSP ps);
     void CreateNextProcessor(std::string pstype, uint32_t psid);
@@ -69,7 +70,7 @@ namespace eudaq {
     uint32_t m_num_upstream;
     std::shared_ptr<Processor> m_ps_hub;
     
-    std::vector<std::string> m_evlist_white;
+    std::set<std::string> m_evlist_white;
     std::vector<PSSP > m_pslist_next;
     std::queue<EVUP> m_fifo_events;
     std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs;
@@ -82,12 +83,14 @@ namespace eudaq {
     std::atomic<STATE> m_state;
     std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist_cache;
   };
-
-
-DLLEXPORT  PSSP operator>>(Processor* psl, PSSP psr);
-DLLEXPORT  PSSP operator>>(ProcessorManager* pm, PSSP psr);
-DLLEXPORT  PSSP operator>>(PSSP psl, PSSP psr);
-DLLEXPORT  PSSP operator>>(PSSP psl, std::string psr_str);
   
 }
+
+
+// DLLEXPORT  PSSP operator>>(Processor* psl, PSSP psr);
+DLLEXPORT  eudaq::PSSP operator>>(eudaq::ProcessorManager* pm, eudaq::PSSP psr);
+DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
+DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
+
+
 #endif
