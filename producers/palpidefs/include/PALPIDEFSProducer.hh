@@ -249,6 +249,7 @@ protected:
 
   unsigned m_run, m_ev, m_good_ev, m_oos_ev, m_last_oos_ev;
   uint64_t *m_timestamp_last;
+  uint64_t *m_timestamp_full;
   bool m_done;
   bool m_running;
   bool m_stopping;

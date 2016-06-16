@@ -407,7 +407,13 @@ void DeviceReader::Loop() {
           str += "\n";
           Print(0, str.data(), length);
         }
-        if (!m_timestamp_reference) m_timestamp_reference = header.TimeStamp;
+        if (!m_timestamp_reference) {
+          int address = 0x207;
+          uint32_t tmp_value = 0;
+          m_daq_board->ReadRegister(address, &tmp_value);
+          tmp_value &= 0xFFFF80; // keep only bits not transmitted in the header (47:31)
+          m_timestamp_reference = (tmp_value << 31) | header.TimeStamp;
+        }
 
         SingleEvent* ev =
           new SingleEvent(length, header.EventId, header.TimeStamp, m_timestamp_reference);
@@ -763,6 +769,13 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
       m_reader[i]->SetQueueFullDelay(delay);
     if (queue_size > 0)
       m_reader[i]->SetMaxQueueSize(queue_size);
+
+    int address = 0x207;
+    uint32_t tmp_value = 0;
+    m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
+    //tmp_value &= 0xFFFFFF; // narrow down to 24 bits
+    tmp_value &= 0xFFFF80; // keep only bits not transmitted in the header (47:31)
+    m_timestamp_full[i] = tmp_value << 31;
 
     std::cout << "Device " << i << " configured." << std::endl;
 
@@ -1425,11 +1438,17 @@ void PALPIDEFSProducer::Loop() {
             time(0) - last_status > m_status_interval) {
           if (IsRunning()) {
             SendStatusEvent();
-            if (m_debuglevel > 3){
-              for (int i = 0; i < m_nDevices; i++) {
+            uint32_t tmp_value = 0;
+            int address = 0x207; // timestamp upper 24bit
+            for (int i = 0; i < m_nDevices; i++) {
+              if (m_debuglevel > 3){
                 std::cout << "Reader " << i << ":" << std::endl;
                 m_reader[i]->PrintDAQboardStatus();
               }
+              m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
+              //tmp_value &= 0xFFFFFF; // narrow down to 24 bits
+              tmp_value &= 0xFFFF80; // keep only bits not transmitted in the header (47:31)
+              m_timestamp_full[i] = tmp_value << 31;
             }
           }
           PrintQueueStatus();
@@ -1457,7 +1476,7 @@ int PALPIDEFSProducer::BuildEvent() {
   uint64_t trigger_id = ULONG_MAX;
   int64_t timestamp = LONG_MAX;
 
-  int64_t timestamp_mask = 0x7FFFFFFF;
+  int64_t timestamp_mask = 0xFFFFFFFFFFFF;//0x7FFFFFFF;
 
   // local copies
   std::vector<int> planes;
@@ -1471,7 +1490,7 @@ int PALPIDEFSProducer::BuildEvent() {
     if (m_next_event[i] == 0)
       return 0;
 
-    int64_t timestamp_tmp = (int64_t)m_next_event[i]->m_timestamp-(int64_t)m_next_event[i]->m_timestamp_reference;
+    int64_t timestamp_tmp = ((int64_t)m_next_event[i]->m_timestamp | (int64_t)m_timestamp_full[i])-(int64_t)m_next_event[i]->m_timestamp_reference;
     timestamp_tmp &= timestamp_mask;
     if (m_firstevent) // set last timestamp if first event
         m_timestamp_last[i] = (int64_t)timestamp_tmp;
