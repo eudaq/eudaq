@@ -1429,7 +1429,7 @@ void PALPIDEFSProducer::Loop() {
       count = 0;
     }
     // build events
-    while (IsRunning() || IsFlushing()) {
+    while (IsRunning()) {
       int events_built = BuildEvent();
       count += events_built;
 
