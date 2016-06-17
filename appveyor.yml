@@ -26,13 +26,17 @@ before_build:
     activate test-environment
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip\",\"C:\\root_v5.34.36.win32.vc12.zip\")"
+    
     7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\
 
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://www.secure-endpoints.com/binaries/heimdal/Heimdal-i386-1-6-2-0.msi\",\"C:\\Heimdal-i386-1-6-2-0.msi\")"
+    
     powershell  -command "msiexec /i \"C:\\Heimdal-i386-1-6-2-0.msi\" /quiet /qn /norestart /log install.log"
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-en_US-1-7-3100.msi\",\"C:\\openafs-en_US-1-7-3100.msi\")"
+    
     powershell  -command "msiexec /i \"C:\\openafs-en_US-1-7-3100.msi\" /quiet /qn /norestart /log install.log"  
+    
     cd build
 
     cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
