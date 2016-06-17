@@ -48,12 +48,12 @@ before_build:
     powershell -command  "Restart-Computer -Force"
     
     powershell -command "Start-Sleep -s 10"
-    
-    cd %APPVEYOR_BUILD_FOLDER%\build
-
-    cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
 
 build_script:
+- cd %APPVEYOR_BUILD_FOLDER%\build
+
+- cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
+
 - msbuild INSTALL.vcxproj
 
 on_finish:
