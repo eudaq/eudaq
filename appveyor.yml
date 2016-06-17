@@ -43,7 +43,7 @@ before_build:
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-32bit-tools-en_US-1-7-3100.msi\",\"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\")"
     
-    powershell  -command "msiexec /i \"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\" /quiet /qn /norestart/log install.log"      
+    powershell  -command "msiexec /i \"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\" /quiet /qn /norestart /log install.log"      
     
     powershell -command  "Restart-Computer -Force"
     
