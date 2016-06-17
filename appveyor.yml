@@ -18,8 +18,11 @@ before_build:
     del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
     
     conda config --set always_yes yes --set changeps1 no
+    
     conda info -a
+    
     conda create -q -n test-environment numpy
+    
     activate test-environment
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip\",\"C:\\root_v5.34.36.win32.vc12.zip\")"
