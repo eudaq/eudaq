@@ -49,7 +49,7 @@ before_build:
     
     powershell -command "Start-Sleep -s 10"
     
-    cd build
+    cd %APPVEYOR_BUILD_FOLDER%\build
 
     cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
 
