@@ -382,10 +382,16 @@ void DeviceReader::Loop() {
         continue;
       }
 
-      bool HeaderOK = m_daq_board->DecodeEventHeader(data_buf, &header);
-      bool TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
-      bool LengthOK = (length==header.EventSize*4);
-
+      bool TrailerOK = false;
+      bool LengthOK = false;
+      if (length > m_daq_board_trailer_length) {
+        TrailerOK = m_daq_board->DecodeEventTrailer(data_buf + length - m_daq_board_trailer_length, &header);
+        LengthOK = (length==header.EventSize*4);
+      }
+      bool HeaderOK = false;
+      if (length >= header.EventSize*4) {
+        m_daq_board->DecodeEventHeader(data_buf + length - header.EventSize*4, &header);
+      }
       if (HeaderOK && TrailerOK && LengthOK) {
         if (m_debuglevel > 2) {
           std::vector<TPixHit> hits;
