@@ -51,9 +51,7 @@ before_build:
 
 build_script:
 - cd %APPVEYOR_BUILD_FOLDER%\build
-
 - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 - cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
 
 - msbuild INSTALL.vcxproj
