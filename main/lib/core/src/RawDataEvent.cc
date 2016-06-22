@@ -5,6 +5,10 @@
 
 namespace eudaq {
 
+  namespace{
+    static RegisterDerived<Event, uint32_t, RawDataEvent> reg_RawDataEvent(Event::str2id("RawDataEvent"));
+  }
+  
   EUDAQ_DEFINE_EVENT(RawDataEvent, str2id("_RAW"));
 
   RawDataEvent::block_t::block_t(Deserializer &des) {
@@ -21,6 +25,9 @@ namespace eudaq {
     data.insert(data.end(), d.begin(), d.end());
   }
 
+  RawDataEvent::RawDataEvent(){
+  }
+  
   RawDataEvent::RawDataEvent(std::string type, unsigned run, unsigned event)
       : Event(run, event), m_type(type) {}
 

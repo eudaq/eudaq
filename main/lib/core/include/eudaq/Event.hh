@@ -13,6 +13,7 @@
 #include "Exception.hh"
 #include "Utils.hh"
 #include "Platform.hh"
+#include "ClassFactory.hh"
 
 #define EUDAQ_DECLARE_EVENT(type)              \
   public:                                      \
@@ -37,6 +38,7 @@ private:                                       \
 namespace eudaq {
   class Event;
 
+  using EventClassFactory = ClassFactory<Event, uint32_t>;  
   using event_sp = std::shared_ptr < eudaq::Event > ;
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
@@ -59,6 +61,8 @@ namespace eudaq {
       FLAG_STATUS = 256, 
       FLAG_ALL = (unsigned)-1
     }; // Matches FLAGNAMES in .cc file
+
+    Event();
     Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0);
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const = 0;
@@ -72,6 +76,7 @@ namespace eudaq {
      *  Used by the plugin mechanism to identify the event type.
      */
     virtual SubType_t GetSubType() const { return ""; }
+    virtual void GetSubType(std::string){}
     virtual void Print(std::ostream &os) const = 0;
     virtual void Print(std::ostream & os,size_t i) const = 0;
     bool HasTag(const std::string &name) const;

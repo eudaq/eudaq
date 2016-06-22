@@ -2,15 +2,12 @@
 #define EUDAQ_INCLUDED_RawDataEvent
 
 #include <sstream>
-
+#include <string>
 #include <vector>
 #include "eudaq/Event.hh"
 #include "eudaq/Platform.hh"
 namespace eudaq {
 
-  /** An Event type consisting of just a vector of bytes.
-   *
-   */
   class DLLEXPORT RawDataEvent : public Event {
     EUDAQ_DECLARE_EVENT(RawDataEvent);
 
@@ -26,7 +23,7 @@ namespace eudaq {
       unsigned id;
       data_t data;
     };
-
+    RawDataEvent();
     RawDataEvent(std::string type, unsigned run, unsigned event);
     RawDataEvent(Deserializer &);
 
@@ -95,6 +92,8 @@ namespace eudaq {
 
     /// Return the type string.
     virtual std::string GetSubType() const { return m_type; }
+
+    virtual void SetSubType(std::string subtype){ m_type = subtype; }
 
   private:
     // private constructor to create BORE and EORE

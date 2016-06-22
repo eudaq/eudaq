@@ -1,21 +1,28 @@
-#ifndef PROCESSOR_HH_
-#define PROCESSOR_HH_
+#ifndef EXAMPLEPS_HH_
+#define EXAMPLEPS_HH_
 
-#include"Processor.hh"
+
 #include<string>
 
-namespce eudaq{
- class ExamplePS: public Processor{
- public:
-   ExamplePS(uint32_t psid, uint32_t psid_mother)
-     :Processor("ExamplePS", psid, psid_mother){};
-   virtual ~ExamplePS() {}; //? should it call the base destroyer?
+#include"Platform.hh"
+#include"Processor.hh"
 
-   virtual void ProcessUserEvent(EVUP ev);
-   virtual void ProcessCmdEvent(EVUP ev);
-   
-   static Processor* Create(uint32_t psid, uint32_t psid_mother);
- };
+namespace eudaq{
+
+  class ExamplePS:public Processor{
+    // class DLLEXPORT ExamplePS{
+  public:
+    ExamplePS(uint32_t psid)
+    :Processor("ExamplePS", psid){};
+    
+    virtual ~ExamplePS() {};
+    
+    virtual void ProcessUserEvent(EVUP ev);
+    virtual void ProcessCmdEvent(EVUP ev);
+    virtual void ProduceEvent();
+    
+    static Processor* Create(uint32_t psid);
+  };
 }
 
 #endif

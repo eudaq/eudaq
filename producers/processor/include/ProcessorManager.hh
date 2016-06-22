@@ -7,27 +7,14 @@
 #include<mutex>
 
 #include "Platform.hh"
-#include "Event.hh"
-#include "RawDataEvent.hh"
+#include "Processor.hh"
 
 namespace eudaq{
 
   class Processor;
   class ProcessorManager;
-
-  typedef Processor* (*CreatePS)(uint32_t);
-  typedef void (*DestroyPS)(Processor*);
-  typedef RawDataEvent* (*CreateEV)();
-  typedef void (*DestroyEV)(Event*);
-
-  // using PSSP = std::shared_ptr<Processor, DestroyPS>;
-  // using EVUP = std::unique_ptr<Event, DestroyEV>;
-  // typedef std::shared_ptr<Processor> PSSP;
-  // typedef std::unique_ptr<Event> EVUP;
-  using PSSP = std::shared_ptr<Processor>;
-  using EVUP = std::unique_ptr<RawDataEvent>;
   
-  class ProcessorManager{
+  class DLLEXPORT ProcessorManager{
   public:
     static std::shared_ptr<ProcessorManager> GetInstance();
   public:

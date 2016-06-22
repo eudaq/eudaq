@@ -5,7 +5,6 @@
 using namespace eudaq;
 
 namespace{
-  // static eudaq::RegisterDerived<Processor, typename std::string, DERIVED, uint32_t, uint32_t> reg##DERIVED(DERIVED_ID);
   void DUMMY_FUNCTION_DO_NOT_USE_PROCESSOR(){
     std::string pstype = "_DUMMY_";
     uint32_t psid = 0;
@@ -122,9 +121,13 @@ void Processor::ProduceEvent(){
 
 
 void Processor::RegisterProcessing(PSSP ps, EVUP ev){
+  std::cout<<"locking register  ";
   std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
+  std::cout<<"locked register  ";
+
   m_fifo_pcs.push(std::make_pair(ps, std::move(ev)));
   m_cv_pcs.notify_all();
+  std::cout<<"unlock register  "<<std::endl;
 }
 
 
@@ -135,13 +138,19 @@ void Processor::SetPSHub(PSSP ps){
 void Processor::HubThread(){
   
   while(1){ //TODO: modify STATE enum
+    std::cout<<"locking pcs  ";
     std::unique_lock<std::mutex> lk(m_mtx_pcs);
+    std::cout<<"locked pcs  ";
     bool fifoempty = m_fifo_pcs.empty();
-    if(fifoempty)
+    if(fifoempty){
+      std::cout<<"fifo is empty, waiting"<<std::endl;
       m_cv_pcs.wait(lk);
+      std::cout<<"end of fifo waiting"<<std::endl;
+    }
     PSSP ps = m_fifo_pcs.front().first;
     EVUP ev = std::move(m_fifo_pcs.front().second);
     m_fifo_pcs.pop();
+    lk.unlock();
     ps->Processing(std::move(ev));
   }
 }

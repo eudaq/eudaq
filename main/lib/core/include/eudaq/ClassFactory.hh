@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <sstream>
 #include <utility>
 
 #include"Platform.hh"
@@ -31,10 +32,12 @@ namespace eudaq{
   public:
     using factoryfunc = std::unique_ptr<BASE> (*)(const ARGS&...);
     
-    static std::unique_ptr<BASE> Create(const ID_t& name, const ARGS&... args){
-      auto it = GetInstance().find(name);
+    static std::unique_ptr<BASE> Create(const ID_t& id, const ARGS&... args){
+      auto it = GetInstance().find(id);
       if (it == GetInstance().end()) {
-	CLASS_FACTORY_THROW("unknown class: <" + name + ">");
+	std::stringstream ss;
+	ss<<"unknown class: <"<<id<<">";
+	CLASS_FACTORY_THROW(ss.str());
 	return nullptr;
       }
       return (it->second)(args...);

@@ -7,6 +7,7 @@ INCLUDE_DIRECTORIES(include)
 SET(PLUGIN_SRC
   src/ProcessorManager.cc
   src/Processor.cc
+  src/ExamplePS.cc
   )
 ADD_LIBRARY(${PLUGIN_NAME} SHARED ${PLUGIN_SRC})
 

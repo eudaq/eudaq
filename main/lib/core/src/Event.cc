@@ -4,13 +4,21 @@
 
 #include "eudaq/Event.hh"
 #include "eudaq/PluginManager.hh"
-
+#include "ClassFactory.hh"
 
 
 namespace eudaq {
 
+  namespace{
+    void DUMMY_FUNCTION_DO_NOT_USE_EVENT(){
+      std::string evtype = "_DUMMY_";
+      ClassFactory<Event, uint32_t>::Create(Event::str2id(evtype));
+      ClassFactory<Event, uint32_t>::GetTypes();
+      ClassFactory<Event, uint32_t>::GetInstance();
+    }
+  }
+  
   namespace {
-
     static const char * const FLAGNAMES[] = {
       "BORE",
       "EORE",
@@ -20,7 +28,6 @@ namespace eudaq {
       "EUDAQ2",
       "Packet"
     };
-
   }
 
   Event::Event(Deserializer & ds) {
@@ -42,6 +49,11 @@ namespace eudaq {
     ds.read(m_tags);
   }
 
+  Event::Event():m_flags(0), m_runnumber(0), m_eventnumber(0){
+    
+  }
+
+  
   Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/) : m_flags(flags | FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
     m_runnumber(run),
     m_eventnumber(event)
