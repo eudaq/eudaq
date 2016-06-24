@@ -13,7 +13,7 @@ namespace eudaq{
     // class DLLEXPORT ExamplePS{
   public:
     ExamplePS(uint32_t psid)
-    :Processor("ExamplePS", psid){};
+      :Processor("ExamplePS", psid){InsertEventType(Event::str2id("_RAW"));};
     
     virtual ~ExamplePS() {};
     

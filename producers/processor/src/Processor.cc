@@ -19,11 +19,19 @@ namespace{
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;
+  m_evlist_white.insert(0);
+}
+
+Processor::~Processor() {
+  std::cout<<"destructure PSID = "<<m_psid<<std::endl;
+};
+
+void Processor::InsertEventType(uint32_t evtype){
+  m_evlist_white.insert(evtype);
 }
 
 void Processor::ProcessUserEvent(EVUP ev){
   std::cout<< "ProcessUserEvent ["<<m_psid<<"] "<<ev->GetSubType()<<std::endl;
-  
   ForwardEvent(std::move(ev));
 }
 
@@ -45,19 +53,20 @@ void Processor::ProcessSysEvent(EVUP ev){
 }
 
 void Processor::Processing(EVUP ev){
-  // std::unique_lock<std::mutex> lk_state(m_mtx_state);
-  if(m_state >= STATE_THREAD_UNCONF){
-    AsyncProcessing(std::move(ev));
-  }
-  else{
-    SyncProcessing(std::move(ev));
+  //todo: check white list
+  if(m_evlist_white.find(ev->get_id())!=m_evlist_white.end()){
+    if(IsAsync()){
+      AsyncProcessing(std::move(ev));
+    }
+    else{
+      SyncProcessing(std::move(ev));
+    }
   }
 }
 
-// void Processor::SyncProcessing(EVUP ev, uint32_t psid_caller){
 void Processor::SyncProcessing(EVUP ev){
-  auto evtype = ev->GetSubType();
-  if(evtype == "SYSTEM")
+  auto evtype = ev->get_id();
+  if(evtype == 0)//sys
     ProcessSysEvent(std::move(ev));
   else
     ProcessUserEvent(std::move(ev));
@@ -68,8 +77,6 @@ void Processor::AsyncProcessing(EVUP ev){
   m_fifo_events.push(std::move(ev));
   m_cv.notify_all();
 }
-
-
 
 void Processor::ForwardEvent(EVUP ev) {
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
@@ -99,7 +106,7 @@ void Processor::CreateNextProcessor(std::string pstype, uint32_t psid){
 }
 
 
-std::set<std::string> Processor::UpdateEventWhiteList(){
+std::set<uint32_t> Processor::UpdateEventWhiteList(){
   for(auto ps: m_pslist_next){
     auto evtype_list = ps->UpdateEventWhiteList();
     m_evlist_white.insert(evtype_list.begin(), evtype_list.end());    
@@ -114,38 +121,40 @@ void Processor::AddNextProcessor(PSSP ps){
 
 
 void Processor::ProduceEvent(){
-  //TODO::
-  //producer event from hardware or network
-  //call Processing
 }
 
 
 void Processor::RegisterProcessing(PSSP ps, EVUP ev){
-  std::cout<<"locking register  ";
+  // std::cout<<"locking register  ";
   std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
-  std::cout<<"locked register  ";
+  // std::cout<<"locked register  ";
 
   m_fifo_pcs.push(std::make_pair(ps, std::move(ev)));
   m_cv_pcs.notify_all();
-  std::cout<<"unlock register  "<<std::endl;
+  // std::cout<<"unlock register  "<<std::endl;
 }
 
 
 void Processor::SetPSHub(PSSP ps){
   m_ps_hub = ps;
+  std::cout<<"PS"<<m_psid<<" HUB"<<ps->GetID()<<std::endl;
+  for(auto subps: m_pslist_next){
+    if(!subps->IsHub()){
+      subps->SetPSHub(m_ps_hub);
+    }
+  }
 }
 
-void Processor::HubThread(){
-  
-  while(1){ //TODO: modify STATE enum
-    std::cout<<"locking pcs  ";
+void Processor::HubProcessing(){
+  while(IsHub()){ //TODO: modify STATE enum
+    // std::cout<<"locking pcs  ";
     std::unique_lock<std::mutex> lk(m_mtx_pcs);
-    std::cout<<"locked pcs  ";
+    // std::cout<<"locked pcs  ";
     bool fifoempty = m_fifo_pcs.empty();
     if(fifoempty){
-      std::cout<<"fifo is empty, waiting"<<std::endl;
+      std::cout<<"HUB"<<m_psid<<": fifo is empty, waiting"<<std::endl;
       m_cv_pcs.wait(lk);
-      std::cout<<"end of fifo waiting"<<std::endl;
+      std::cout<<"HUB"<<m_psid<<": end of fifo waiting"<<std::endl;
     }
     PSSP ps = m_fifo_pcs.front().first;
     EVUP ev = std::move(m_fifo_pcs.front().second);
@@ -155,11 +164,8 @@ void Processor::HubThread(){
   }
 }
 
-void Processor::CustomerThread(){
-  // std::unique_lock<std::mutex> lk_state(m_mtx_state);
-  m_state = STATE_THREAD_READY;
-  // lk_state.unlock();
-  while(m_state>=STATE_THREAD_UNCONF){
+void Processor::ConsumeEvent(){
+  while(IsAsync()){
     std::unique_lock<std::mutex> lk(m_mtx_fifo);
     bool fifoempty = m_fifo_events.empty();
     if(fifoempty)
@@ -171,57 +177,73 @@ void Processor::CustomerThread(){
   }
 }
 
+void Processor::RunConsumerThread(){
+  std::thread t(&Processor::ConsumeEvent, this);
+  m_flag = m_flag|FLAG_CSM_RUN;//safe
+  t.detach();
+}
 
-void Processor::operator()(){
-  CustomerThread();
+
+void Processor::RunProducerThread(){
+  std::thread t(&Processor::ProduceEvent, this);
+  m_flag = m_flag|FLAG_PDC_RUN;//safe
+  t.detach();
+}
+
+void Processor::RunHubThread(){
+  std::thread t(&Processor::HubProcessing, this);
+  m_flag = m_flag|FLAG_HUB_RUN;//safe
+
+  t.detach();
 }
 
 
 
-PSSP operator>>(ProcessorManager* pm, PSSP psr){
-  psr->SetPSHub(psr);
-  std::thread hub(&Processor::HubThread, psr);
-  hub.detach();
+
+PSSP Processor::operator>>(PSSP psr){
+  AddNextProcessor(psr);
+  uint32_t nup = psr->GetNumUpstream();
+  std::cout<< nup<<std::endl;
+  if(nup == 0 && !psr->IsHub()){
+    psr->SetPSHub(GetPSHub());
+  }
+  if(nup == 1 && !psr->IsHub()){
+    psr->SetPSHub(psr);
+    // psr->UpdateDownstreamHub();//TODO
+    psr->RunHubThread(); //now, it is hub
+  }
+  psr->IncreaseNumUpstream();
+
   return psr;
 }
+
+
+Processor& Processor::operator<<(EVUP ev){
+  Processing(std::move(ev));
+  return *this;
+}
+
+
+std::set<uint32_t> SysEventBlockerPS::UpdateEventWhiteList(){
+  auto evlist = Processor::UpdateEventWhiteList();
+  auto it = evlist.find(0); //0 sys
+  evlist.erase(it);
+  return evlist;
+}
+
 
 
 PSSP operator>>(PSSP psl, PSSP psr){
-  psl->AddNextProcessor(psr);
-  psr->IncreaseNumUpstream();
-  uint32_t nup = psr->GetNumUpstream();
-  if(nup == 1){
-    psr->SetPSHub(psl->GetPSHub());
-  }
-  if(nup == 2){
-    psr->SetPSHub(psr);
-    std::thread hub(&Processor::HubThread, psr);
-    hub.detach();
-  }
-  return psr;
+  return *psl>>psr;
 }
 
 
 PSSP operator>>(PSSP psl, std::string psr_str){
-  std::string pstype = psr_str;  //TODO: pst_str contains more info, then decode is needed.
-  uint32_t psid = 1; //TODO: get from psr_str
+  std::string pstype;
+  uint32_t psid;
+  std::stringstream ss(psr_str);
+  ss>>pstype>>psid;
   auto psMan = ProcessorManager::GetInstance();
   PSSP psr = psMan->CreateProcessor(pstype, psid);
-
-  psl->AddNextProcessor(psr);
-  psr->IncreaseNumUpstream();
-  uint32_t nup = psr->GetNumUpstream();
-  if(nup == 1){
-    psr->SetPSHub(psl->GetPSHub());
-  }
-  if(nup == 2){
-    psr->SetPSHub(psr);
-    std::thread hub(&Processor::HubThread, psr);
-    hub.detach();
-  }
-
-  return psr;
+  return *psl>>psr;
 }
-
-
-// static Processor ps("__base",std::numeric_limits<uint32_t>::max(), 0)

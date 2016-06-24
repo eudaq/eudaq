@@ -32,7 +32,7 @@ namespace eudaq {
   
   class DLLEXPORT Processor{
   public:
-    enum STATE{
+    enum STATE:uint32_t{
       STATE_UNCONF,
       STATE_READY,
       STATE_ERROR,
@@ -41,32 +41,47 @@ namespace eudaq {
       STATE_THREAD_BUSY,
       STATE_THREAD_ERROR
     };
+
+    enum FLAG{
+        FLAG_HUB_RUN=1,
+	FLAG_HUB_BUSY=2,
+	FLAG_PDC_RUN=4,
+	FLAG_PDC_BUSY=8,
+	FLAG_CSM_RUN=16,
+	FLAG_CSM_BUSY=32
+    };
     
     Processor(std::string pstype, uint32_t psid);
     Processor(){};
-    virtual ~Processor() {};
+    virtual ~Processor();
     virtual void ProcessUserEvent(EVUP ev);
     virtual void ProduceEvent();
-    
-    void operator()();
+    void ConsumeEvent();
+
+
+    bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
+    bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
+
     
     std::string GetType(){return m_pstype;};
     uint32_t GetID(){return m_psid;};
     STATE GetState(){return m_state;};
+    void HubProcessing();
     void Processing(EVUP ev);
     void AsyncProcessing(EVUP ev);
     void SyncProcessing(EVUP ev);
     void ForwardEvent(EVUP ev);
 
     void RegisterProcessing(PSSP ps, EVUP ev);
-    void ProducerThread(){ProduceEvent();};
-    void CustomerThread();//TODO: operator ()
-    void HubThread();//
-    void Adapted();
+    void RunProducerThread();
+    void RunConsumerThread();
+    void RunHubThread();
     
     PSSP GetPSHub(){return m_ps_hub;};
     void SetPSHub(PSSP ps); //TODO: thread safe
-    std::set<std::string> UpdateEventWhiteList();
+    virtual std::set<uint32_t> UpdateEventWhiteList();
+    void InsertEventType(uint32_t evtype);
+    
     void ProcessSysEvent(EVUP ev);
     void AddNextProcessor(PSSP ps);
     void CreateNextProcessor(std::string pstype, uint32_t psid);
@@ -75,13 +90,18 @@ namespace eudaq {
     uint32_t GetNumUpstream(){return m_num_upstream;};
     void IncreaseNumUpstream(){m_num_upstream++;};
 
+    PSSP operator>>(PSSP psr);
+
+    Processor& operator<<(EVUP ev);
+
+    
   private:
     std::string m_pstype;
     uint32_t m_psid;
     uint32_t m_num_upstream;
     std::shared_ptr<Processor> m_ps_hub;
     
-    std::set<std::string> m_evlist_white;
+    std::set<uint32_t> m_evlist_white;
     std::vector<PSSP > m_pslist_next;
     std::queue<EVUP> m_fifo_events;
     std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs;
@@ -93,13 +113,18 @@ namespace eudaq {
     std::condition_variable m_cv_pcs;
     std::atomic<STATE> m_state;
     std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist_cache;
+    std::atomic<int> m_flag;
   };
 
+  class SysEventBlockerPS: public Processor{
+  public:
+    SysEventBlockerPS(uint32_t)
+      :Processor("SysEventBlockerPS", 0){};
+    virtual std::set<uint32_t> UpdateEventWhiteList();
+  };
+  
 }
 
-
-// DLLEXPORT  eudaq::PSSP operator>>(eudaq::Processor* psl, eudaq::PSSP psr);
-DLLEXPORT  eudaq::PSSP operator>>(eudaq::ProcessorManager* pm, eudaq::PSSP psr);
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
 

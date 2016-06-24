@@ -6,13 +6,9 @@ using namespace eudaq;
 using std::shared_ptr;
 using std::unique_ptr;
 
-shared_ptr<ProcessorManager> ProcessorManager::GetInstance(){
-  static shared_ptr<ProcessorManager>  singleton;
-  if(!singleton){
-    singleton = std::make_shared<ProcessorManager> ();  
-  }
-  shared_ptr<ProcessorManager> rt = singleton;
-  return rt;
+ProcessorManager* ProcessorManager::GetInstance(){
+  static ProcessorManager singleton;
+  return &singleton;
 }
 
 ProcessorManager::ProcessorManager(){
@@ -24,20 +20,8 @@ void ProcessorManager::InitProcessorPlugins(){
 };
 
 PSSP ProcessorManager::CreateProcessor(std::string pstype, uint32_t psid){
-  auto it = m_pslist.find(pstype);
-  if(it!=m_pslist.end()){
-    auto creater= it->second.first;
-    auto destroyer= it->second.second;
-    // PSSP ps((*creater)(), destroyer);
-    PSSP ps((*creater)(psid));
-    m_pslist_instance[psid]=ps;
-    return ps;
-  }
-  else{
-    std::cout<<"no pstype "<<pstype<<std::endl;
-    PSSP ps;
-    return ps;
-  }
+  PSSP ps(std::move(ProcessorClassFactory::Create(pstype, psid)));
+  return ps;
 }
 
 
@@ -89,4 +73,12 @@ void ProcessorManager::EventLoop(){
       m_fifo_events.pop();
     }
   }
+}
+
+
+
+PSSP ProcessorManager::operator>>(PSSP psr){
+  psr->SetPSHub(psr);
+  psr->RunHubThread();
+  return psr;
 }

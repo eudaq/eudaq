@@ -16,7 +16,7 @@ namespace eudaq{
   
   class DLLEXPORT ProcessorManager{
   public:
-    static std::shared_ptr<ProcessorManager> GetInstance();
+    static ProcessorManager* GetInstance();
   public:
     ProcessorManager();
     ~ProcessorManager(){};
@@ -32,6 +32,8 @@ namespace eudaq{
     PSSP CreateProcessor(std::string pstype, uint32_t psid);
     EVUP CreateEvent(std::string evtype);
 
+    PSSP operator>>(PSSP psr);
+    
   private:
     
     
