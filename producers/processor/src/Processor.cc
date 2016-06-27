@@ -54,14 +54,14 @@ void Processor::ProcessSysEvent(EVUP ev){
 
 void Processor::Processing(EVUP ev){
   //todo: check white list
-  if(m_evlist_white.find(ev->get_id())!=m_evlist_white.end()){
+  // if(m_evlist_white.find(ev->get_id())!=m_evlist_white.end()){
     if(IsAsync()){
       AsyncProcessing(std::move(ev));
     }
     else{
       SyncProcessing(std::move(ev));
     }
-  }
+  // }
 }
 
 void Processor::SyncProcessing(EVUP ev){

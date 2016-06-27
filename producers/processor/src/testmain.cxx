@@ -6,6 +6,8 @@
 #include"ExamplePS.hh"
 #include"EventSenderPS.hh"
 #include"EventReceiverPS.hh"
+#include"EventFileReaderPS.hh"
+
 #include <chrono>
 #include <thread>
 #include <iostream>
@@ -23,16 +25,24 @@ int main(int argn, char **argc){
   PSSP p6 = psMan->CreateProcessor("EventSenderPS", 6);
   PSSP p7 = psMan->CreateProcessor("EventReceiverPS", 7);
   PSSP p8 = psMan->CreateProcessor("ExamplePS", 8);
+  PSSP p0 = psMan->CreateProcessor("EventFileReaderPS", 0);
 
   
   std::cout<<"xxxxxxx"<<std::endl;
-  *psMan>>p1>>p2;
+
+
+  
+  *psMan>>p0>>p2;
   *psMan>>p3>>p4>>p5>>p6;
   p2>>p4;
 
   *psMan>>p7>>p8;
 
+  // *psMan>>p0;
 
+  EventFileReaderPS* pp0 =  dynamic_cast<EventFileReaderPS*> (p0.get());
+  pp0->OpenFile("/opt/eudaq/run000703.raw");
+  
   EventReceiverPS* pp7 =  dynamic_cast<EventReceiverPS*> (p7.get());
   EventSenderPS* pp6 =  dynamic_cast<EventSenderPS*> (p6.get());
   // if(!pp7)
@@ -46,7 +56,7 @@ int main(int argn, char **argc){
   pp6->Connect("Producer", "p6", "tcp://127.0.0.1:40000");
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  p1->RunProducerThread();
+  p0->RunProducerThread();
   
   std::cout<<"xxxxxxx"<<std::endl;
   

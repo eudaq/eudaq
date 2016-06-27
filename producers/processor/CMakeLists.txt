@@ -10,6 +10,7 @@ SET(PLUGIN_SRC
   src/ExamplePS.cc
   src/EventSenderPS.cc
   src/EventReceiverPS.cc
+  src/EventFileReaderPS.cc
   )
 
 ADD_LIBRARY(${PLUGIN_NAME} SHARED ${PLUGIN_SRC})
