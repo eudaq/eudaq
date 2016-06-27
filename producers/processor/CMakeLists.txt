@@ -8,7 +8,10 @@ SET(PLUGIN_SRC
   src/ProcessorManager.cc
   src/Processor.cc
   src/ExamplePS.cc
+  src/EventSenderPS.cc
+  src/EventReceiverPS.cc
   )
+
 ADD_LIBRARY(${PLUGIN_NAME} SHARED ${PLUGIN_SRC})
 
 

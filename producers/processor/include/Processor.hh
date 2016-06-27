@@ -23,11 +23,13 @@ namespace eudaq {
   
   using CreatePS  = Processor* (*)(uint32_t);
   using DestroyPS = void (*)(Processor*);
-  using CreateEV = RawDataEvent* (*)();
+  // using CreateEV = RawDataEvent* (*)();
+  using CreateEV = Event* (*)();
   using DestroyEV = void (*)(Event*);
   
   using PSSP = std::shared_ptr<Processor>;
-  using EVUP = std::unique_ptr<RawDataEvent>;
+  // using EVUP = std::unique_ptr<RawDataEvent>;
+  using EVUP = std::unique_ptr<Event>;
   using ProcessorClassFactory = ClassFactory<Processor, typename std::string, uint32_t>;
   
   class DLLEXPORT Processor{
@@ -56,7 +58,7 @@ namespace eudaq {
     virtual ~Processor();
     virtual void ProcessUserEvent(EVUP ev);
     virtual void ProduceEvent();
-    void ConsumeEvent();
+    virtual void ConsumeEvent();
 
 
     bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
@@ -70,7 +72,7 @@ namespace eudaq {
     void Processing(EVUP ev);
     void AsyncProcessing(EVUP ev);
     void SyncProcessing(EVUP ev);
-    void ForwardEvent(EVUP ev);
+    virtual void ForwardEvent(EVUP ev);
 
     void RegisterProcessing(PSSP ps, EVUP ev);
     void RunProducerThread();
