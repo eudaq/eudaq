@@ -31,7 +31,8 @@ def output_off(pulse):
 def usbtmc_open():
     #p=usbtmc.Instrument("USB0::0x0699::0x0345::C020275::INSTR")
     #p=usbtmc.Instrument("USB0::0x0699::0x0345::C022401::INSTR")
-    p=usbtmc.Instrument("USB0::0x0699::0x0345::C022766::INSTR")
+    #p=usbtmc.Instrument("USB0::0x0699::0x0345::C022766::INSTR")
+    p=usbtmc.Instrument(0x699,0x345)
     return p
 
 def main(turnOn, period, cycles):
