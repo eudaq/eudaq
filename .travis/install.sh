@@ -22,12 +22,16 @@ else
 
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Linux:
-		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev python3.4 python-numpy cmake qt5-default	linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev python3.4 python-numpy cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
 	else
 		# Install package dependencies for Linux:
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
+	fi
+	
+	if [[ $BUILD_manual == 'ON' ]]; then
+		sudo apt-get install -y texlive
 	fi
 	
 fi 
