@@ -70,7 +70,7 @@ env:
 # gcc/clang
 # ROOT 5/6
 # QT 4/5
-# Python 2/3
+# Python 2/3    not realized yet
 
 # in order to reduce options:
 # Linux/Mac
@@ -83,7 +83,7 @@ matrix:
    include:
       - os: linux
         compiler: gcc
-        env: OPTION=modern
+        env: OPTION=modern BUILD_manual=ON
       - os: linux      
         compiler: gcc      
         env: OPTION=old
@@ -113,8 +113,6 @@ install:
   - source .travis/install.sh
 
 before_script:
-  # For Mac OS X we still need to source the root environment:
-  # - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
   - $CXX --version
   - $CC --version
 
