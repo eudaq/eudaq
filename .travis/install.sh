@@ -31,6 +31,7 @@ else
 	fi
 	
 	if [[ $BUILD_manual == 'ON' ]]; then
+		echo "Installing texlive as manual will be build..."
 		sudo apt-get install -y texlive
 	fi
 	
