@@ -8,9 +8,11 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew install libusb qt5 libusb-compat
 		brew install python3
 		brew linkapps python3
+		virtualenv venv -p python3
+		source venv/bin/activate
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
-		easy_install pip
+		easy_install pip3
 		pip3 install numpy
 	else
 		# Install package dependencies for Mac OS X:
@@ -19,6 +21,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew install libusb qt libusb-compat
 		brew install python
 		brew linkapps python
+		virtualenv venv -p python3
+		source venv/bin/activate
 		# Install numpy via pip:
 		easy_install pip
 		pip install numpy	
