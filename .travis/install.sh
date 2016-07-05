@@ -3,16 +3,20 @@
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Mac OS X:
+		brew update
 		brew unlink cmake
 		brew install libusb qt5 libusb-compat
+		brew install python3
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
 		easy_install pip
 		pip install numpy
 	else
 		# Install package dependencies for Mac OS X:
+		brew update
 		brew unlink cmake
 		brew install libusb qt libusb-compat
+		brew install python
 		# Install numpy via pip:
 		easy_install pip
 		pip install numpy	
