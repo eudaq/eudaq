@@ -41,7 +41,7 @@ env:
       - BUILD_example=OFF
       - BUILD_explorer=ON
       - BUILD_fortis=ON
-      - BUILD_gui=OFF
+      - BUILD_gui=ON
       - BUILD_main=OFF
       - BUILD_manual=OFF
       - BUILD_mimoroma=ON
@@ -84,18 +84,22 @@ matrix:
       - os: linux
         compiler: gcc
         env: OPTION=modern BUILD_manual=ON
+        python: "3.5"
       - os: linux      
         compiler: gcc      
         env: OPTION=old
+        python: "2.7"        
       - os: linux
         compiler: clang      
         env: OPTION=modern
+        python: "3.5"        
       - os: linux
         compiler: clang      
         env: OPTION=old
+        python: "2.7"        
       - os: osx      
         compiler: gcc    
-        env: OPTION=modern
+        env: OPTION=modern    
       - os: osx
         compiler: gcc      
         env: OPTION=old
