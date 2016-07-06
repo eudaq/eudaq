@@ -6,27 +6,27 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew update
 		brew unlink cmake python python3
 		brew install libusb qt5 libusb-compat
+		
 		brew install python3
 		brew linkapps python3
-		virtualenv venv -p python3
-		source venv/bin/activate
-		export DYLD_FRAMEWORK_PATH=/opt/local/Library/Frameworks
+		export python_workaround = cmake -DPYTHON_LIBRARY=$(python-config --prefix)/lib/libpython2.7.dylib -DPYTHON_INCLUDE_DIR=$(python-config --prefix)/include/python2.7
+		echo $(python-config --prefix)
+		
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
-		easy_install pip3
+		pip3 install --upgrade pip3
 		pip3 install numpy
 	else
 		# Install package dependencies for Mac OS X:
 		brew update
 		brew unlink cmake python python3
 		brew install libusb qt libusb-compat
+		
 		brew install python
 		brew linkapps python
-		virtualenv venv -p python
-		source venv/bin/activate
-		export DYLD_FRAMEWORK_PATH=/opt/local/Library/Frameworks
+
 		# Install numpy via pip:
-		easy_install pip
+		pip install --upgrade pip
 		pip install numpy	
 	fi
 	
@@ -36,13 +36,13 @@ else
 		# Install package dependencies for Linux:
 		sudo apt-get install -y python3 libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
-		easy_install pip3
+		pip3 install --upgrade pip3
 		pip3 install numpy
 	else
 		# Install package dependencies for Linux:
 		sudo apt-get install -y python libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
-		easy_install pip
+		pip install --upgrade pip
 		pip install numpy
 	fi
 	
