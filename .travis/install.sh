@@ -14,8 +14,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
-		pip install --upgrade pip
-		pip install -q numpy
+		sudo pip install --upgrade pip
+		sudo pip install -q numpy
 	else
 		# Install package dependencies for Mac OS X:
 		brew update
@@ -26,8 +26,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew linkapps python
 
 		# Install numpy via pip:
-		pip install --upgrade pip
-		pip install -q numpy	
+		sudo pip install --upgrade pip
+		sudo pip install -q numpy	
 	fi
 	
 else 
