@@ -10,6 +10,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew linkapps python3
 		virtualenv venv -p python3
 		source venv/bin/activate
+		export DYLD_FRAMEWORK_PATH=/opt/local/Library/Frameworks
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
 		easy_install pip3
@@ -21,8 +22,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew install libusb qt libusb-compat
 		brew install python
 		brew linkapps python
-		virtualenv venv -p python3
+		virtualenv venv -p python
 		source venv/bin/activate
+		export DYLD_FRAMEWORK_PATH=/opt/local/Library/Frameworks
 		# Install numpy via pip:
 		easy_install pip
 		pip install numpy	
