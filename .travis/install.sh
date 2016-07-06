@@ -14,8 +14,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
-		pip3 install --upgrade pip3
-		pip3 install numpy
+		pip install --upgrade pip
+		pip install -q numpy
 	else
 		# Install package dependencies for Mac OS X:
 		brew update
@@ -27,7 +27,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 		# Install numpy via pip:
 		pip install --upgrade pip
-		pip install numpy	
+		pip install -q numpy	
 	fi
 	
 else 
@@ -36,14 +36,14 @@ else
 		# Install package dependencies for Linux:
 		sudo apt-get install -y python3 libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
-		pip3 install --upgrade pip3
-		pip3 install numpy
+		pip install --upgrade pip
+		pip install -q numpy
 	else
 		# Install package dependencies for Linux:
 		sudo apt-get install -y python libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
 		pip install --upgrade pip
-		pip install numpy
+		pip install -q numpy
 	fi
 	
 	if [[ $BUILD_manual == 'ON' ]]; then
