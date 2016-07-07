@@ -38,13 +38,14 @@ def usbtmc_open():
 def main(turnOn, period, cycles):
     p=usbtmc_open()
     time.sleep(1)
-    print "setting up pulser"
     if turnOn:
+        print "setting up pulser"
         init_pulse(p, period, cycles)
         output_on(p)
+        print "pulser setting done."
     else:
         output_off(p)
-    print "pulser setting done."
+        print "pulser turned off."
 
 
 # parameters periode
@@ -56,6 +57,6 @@ if __name__ == "__main__":
             main(True, period, cycles)
         else:
             main(False, float(0.), float(0.))
-        exit(0)
     except:
         exit(1)
+    exit(0)
