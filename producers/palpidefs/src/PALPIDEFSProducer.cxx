@@ -352,6 +352,7 @@ void DeviceReader::Loop() {
     // data taking
     SetReading(true);
     int readEvent = -1;
+    int flushCounter = 0;
     do {
 #ifndef DEBUG_USB
       readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength);
@@ -370,8 +371,19 @@ void DeviceReader::Loop() {
         m_flushing = false;
         Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
       }
-    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3);
+      else if (IsFlushing() && readEvent==-2) {
+        ++flushCounter;
+      }
+    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<5);
     SetReading(false);
+
+    if (flushCounter>=5) {
+      SimpleLock lock(m_mutex);
+      Print(0, "UNEXPECTED: did not receive stop trigger marker. Aborting flushing %lu %lu !",
+            m_daq_board->GetNextEventId(), m_last_trigger_id);
+      m_flushing = false;
+      continue;
+    }
 
     if (readEvent==1 || (readEvent==-2 && length > 0)) {
       if (length == 0 && readEvent) {
@@ -390,7 +402,7 @@ void DeviceReader::Loop() {
       }
       bool HeaderOK = false;
       if (length >= header.EventSize*4) {
-        m_daq_board->DecodeEventHeader(data_buf + length - header.EventSize*4, &header);
+        HeaderOK = m_daq_board->DecodeEventHeader(data_buf + length - header.EventSize*4, &header);
       }
       if (HeaderOK && TrailerOK && LengthOK) {
         if (m_debuglevel > 2) {
@@ -796,10 +808,12 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     int attempts = 0;
     bool success = false;
     while (!success && attempts++<5) {
-        success = (system(cmd)==0);
+      success = (system(cmd)==0);
     }
     if (!success) {
-      EUDAQ_ERROR("Failed to configure the pulser!");
+      std::string msg = "Failed to configure the pulser!";
+      EUDAQ_ERROR(msg.data());
+      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
     }
   }
 
@@ -835,9 +849,14 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
     TConfig* config = new TConfig(TYPE_TELESCOPE, m_nDevices);
     char mybuffer[100];
     for (int idev = 0; idev < m_nDevices; idev++) {
+      // data port - default: parallel
       snprintf(mybuffer, 100, "DataPort_%d", idev);
       TDataPort dataPort = (TDataPort)param.Get(mybuffer, (int)PORT_PARALLEL);
       config->SetDataPort(idev, dataPort);
+
+      // DAQ board hardware version - default: 3
+      snprintf(mybuffer, 100, "DAQboardVersion_%d", idev);
+      config->GetBoardConfig(idev)->BoardVersion = param.Get(mybuffer, 3);
     }
 
     if (!m_testsetup) {
@@ -1356,14 +1375,23 @@ void PALPIDEFSProducer::OnStopRun() {
     m_reader[i]->SetRunning(false);
   }
   std::cout << "Set Running to False completed" << std::endl;
+  SendEOR();
 
   unsigned long count = 0;
+  bool resetRequired = false;
   for (int i = 0; i < m_nDevices; i++) { // wait until all read transactions are done
-    while (m_reader[i]->IsReading() || m_reader[i]->IsFlushing()) {
+    while ((m_reader[i]->IsReading() || m_reader[i]->IsFlushing()) && count < 1000) {
       if (count++ % 250 == 0) {
         std::cout << "Reader is still reading, waiting.. " << std::endl;
       }
       eudaq::mSleep(20);
+    }
+    if (count==1000) {
+      std::string msg = "Failed to receive the EOT marker!";
+      EUDAQ_ERROR(msg.data());
+      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      m_reader[i]->PrintDAQboardStatus();
+      resetRequired = true;
     }
   }
   {
@@ -1392,12 +1420,16 @@ void PALPIDEFSProducer::OnStopRun() {
     int attempts = 0;
     bool success = false;
     while (!success && attempts++<5) {
-        success = (system(cmd)==0);
+      success = (system(cmd)==0);
     }
     if (!success) {
-      EUDAQ_ERROR("Failed to configure the pulser!");
+      std::string msg = "Failed to configure the pulser!";
+      EUDAQ_ERROR(msg.data());
+      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
     }
   }
+
+  if (resetRequired) PowerOffTestSetup();
 
   SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
 }
@@ -1428,12 +1460,12 @@ void PALPIDEFSProducer::OnUnrecognised(const std::string &cmd,
 
 void PALPIDEFSProducer::Loop() {
   unsigned long count = 0;
+  unsigned long busy_count = 0;
   time_t last_status = time(0);
   do {
     eudaq::mSleep(20);
 
-    if (!IsRunning() && !IsFlushing() && IsStopping()) {
-      SendEOR();
+    if (!IsRunning()) {
       count = 0;
     }
     // build events
@@ -1448,21 +1480,61 @@ void PALPIDEFSProducer::Loop() {
             SendStatusEvent();
             uint32_t tmp_value = 0;
             int address = 0x207; // timestamp upper 24bit
+            bool found_busy = false;
             for (int i = 0; i < m_nDevices; i++) {
               if (m_debuglevel > 3){
                 std::cout << "Reader " << i << ":" << std::endl;
                 m_reader[i]->PrintDAQboardStatus();
               }
+
+              // read upper time stamp bits
+              address = 0x207; // timestamp upper 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
-              //tmp_value &= 0xFFFFFF; // narrow down to 24 bits
-              tmp_value &= 0xFFFF80; // keep only bits not transmitted in the header (47:31)
-              m_timestamp_full[i] = tmp_value << 31;
+              tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
+              m_timestamp_full[i] = (uint64_t)tmp_value << 24;
+
+              // check busy status
+              address = 0x307;
+              m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
+              if (found_busy = (tmp_value >> 26) & 0x1) { // busy
+                std::cout << "DAQ board " << i << " is busy." << std::endl;
+              }
             }
+            if (found_busy) ++busy_count;
           }
           PrintQueueStatus();
           last_status = time(0);
+
+          std::vector<int> queueLengths;
+          for (int i = 0; i < m_nDevices; i++) {
+            queueLengths.push_back(m_reader[i]->GetQueueLength());
+          }
+          std::sort(queueLengths.begin(), queueLengths.end());
+          int diff = queueLengths[queueLengths.size()-1] - queueLengths[0];
+          if (diff > 1000) {
+            std::cout << "Queue difference: " << diff << std::endl;
+            std::string str = "DAQ boards queues differ by more than 1000 events";
+            EUDAQ_ERROR(str);
+            SetStatus(eudaq::Status::LVL_ERROR, str);
+            for (int i = 0; i < m_nDevices; i++) {
+              std::cout << "Reader " << i << ":" << std::endl;
+              m_reader[i]->PrintDAQboardStatus();
+            }
+          }
         }
         break;
+      }
+      else {
+        busy_count = 0;
+      }
+      if (busy_count>5) {
+        std::string str = "DAQ boards stay busy";
+        EUDAQ_ERROR(str);
+        SetStatus(eudaq::Status::LVL_ERROR, str);
+        for (int i = 0; i < m_nDevices; i++) {
+          std::cout << "Reader " << i << ":" << std::endl;
+          m_reader[i]->PrintDAQboardStatus();
+        }
       }
 
       if (count % 20000 == 0)
@@ -1528,8 +1600,7 @@ int PALPIDEFSProducer::BuildEvent() {
 
   for (int i = 0; i < m_nDevices; i++) {
     std::cout << m_ev << '\t' << i << '\t' << planes[i] << '\t' << trigger_ids[i] << '\t' << timestamps[i] << '\t' << timestamps_last[i] << '\t' << m_timestamp_last[i] << '\t'
-              << m_next_event[planes[i]]->m_timestamp << '\t' << m_next_event[planes[i]]->m_timestamp_reference
-              << std::endl;
+              << std::hex << "0x" << m_next_event[planes[i]]->m_timestamp << "\t0x" << m_next_event[planes[i]]->m_timestamp_reference << std::dec << std::endl;
   }
 #endif
 

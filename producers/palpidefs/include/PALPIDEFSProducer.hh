@@ -75,6 +75,7 @@ public:
 
   void PrintDAQboardStatus() {
     m_daq_board->ReadAllRegisters();
+    m_daq_board->ReadMonitorRegisters();
   }
 
   void RequestThresholdScan() {

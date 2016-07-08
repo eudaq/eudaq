@@ -7,7 +7,7 @@ import time
 
 def init_pulse(pulse, period, cycles):
     pulse.write("*RST")
-    print str(pulse.ask("*IDN?"))
+    #print str(pulse.ask("*IDN?"))
     pulse.write("TRIG:SOUR EXT")
     pulse.write(":VOLT:LOW  0.0")
     pulse.write(":VOLT:HIGH 3.3")
