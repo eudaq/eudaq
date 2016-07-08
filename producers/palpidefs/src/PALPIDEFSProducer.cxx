@@ -1496,7 +1496,8 @@ void PALPIDEFSProducer::Loop() {
               // check busy status
               address = 0x307;
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
-              if (found_busy = (tmp_value >> 26) & 0x1) { // busy
+              if ((tmp_value >> 26) & 0x1) found_busy = true;
+              if (found_busy) { // busy
                 std::cout << "DAQ board " << i << " is busy." << std::endl;
               }
             }
@@ -1527,18 +1528,17 @@ void PALPIDEFSProducer::Loop() {
       else {
         busy_count = 0;
       }
-      if (busy_count>5) {
-        std::string str = "DAQ boards stay busy";
-        EUDAQ_ERROR(str);
-        SetStatus(eudaq::Status::LVL_ERROR, str);
-        for (int i = 0; i < m_nDevices; i++) {
-          std::cout << "Reader " << i << ":" << std::endl;
-          m_reader[i]->PrintDAQboardStatus();
-        }
-      }
-
       if (count % 20000 == 0)
         std::cout << "Sending event " << count << std::endl;
+    }
+    if (busy_count>5) {
+      std::string str = "DAQ boards stay busy";
+      EUDAQ_ERROR(str);
+      SetStatus(eudaq::Status::LVL_ERROR, str);
+      for (int i = 0; i < m_nDevices; i++) {
+        std::cout << "Reader " << i << ":" << std::endl;
+            m_reader[i]->PrintDAQboardStatus();
+      }
     }
   } while (!IsDone());
 }
