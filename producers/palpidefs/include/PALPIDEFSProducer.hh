@@ -4,6 +4,7 @@
 //
 
 #include "eudaq/Producer.hh"
+#include "eudaq/Configuration.hh"
 
 #include <mutex>
 #include <thread>
@@ -189,7 +190,7 @@ public:
       m_oos_ev(0), m_last_oos_ev(0), m_timestamp_last(0x0), m_done(false),
       m_running(false), m_stopping(false), m_flushing(false),
       m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
-      m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_nDevices(0),
+      m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_param(), m_nDevices(0),
       m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
       m_full_config_v3(), m_ignore_trigger_ids(true),
       m_recover_outofsync(true), m_chip_type(0x0),
@@ -267,6 +268,7 @@ protected:
   TTestSetup* m_testsetup;
 
   // config
+  eudaq::Configuration m_param;
   int m_nDevices;
   int m_status_interval;
   std::string m_full_config_v1;

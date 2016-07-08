@@ -550,6 +550,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_configuring = true;
   }
   std::cout << "Configuring..." << std::endl;
+  if (&param!=&m_param) m_param = param; // store configuration
 
   long wait_cnt = 0;
   while (IsRunning() || IsStopping()) {
@@ -1361,7 +1362,6 @@ void PALPIDEFSProducer::OnStopRun() {
     m_flushing = true;
   }
   for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
-    std::cout << "Stopping DAQ " << std::endl;
 
 #ifdef DEBUG_USB
     char tmp[50];
@@ -1462,11 +1462,13 @@ void PALPIDEFSProducer::Loop() {
   unsigned long count = 0;
   unsigned long busy_count = 0;
   time_t last_status = time(0);
+  bool reconfigure = false;
   do {
     eudaq::mSleep(20);
 
     if (!IsRunning()) {
       count = 0;
+      reconfigure = false;
     }
     // build events
     while (IsRunning()) {
@@ -1520,6 +1522,7 @@ void PALPIDEFSProducer::Loop() {
             for (int i = 0; i < m_nDevices; i++) {
               std::cout << "Reader " << i << ":" << std::endl;
               m_reader[i]->PrintDAQboardStatus();
+              reconfigure = true;
             }
           }
         }
@@ -1537,8 +1540,47 @@ void PALPIDEFSProducer::Loop() {
       SetStatus(eudaq::Status::LVL_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
-            m_reader[i]->PrintDAQboardStatus();
+        m_reader[i]->PrintDAQboardStatus();
       }
+      reconfigure = true;
+    }
+
+    if (reconfigure) {
+      std::string msg = "Reconfiguring ...";
+      std::cout << msg << std::endl;
+      SetStatus(eudaq::Status::LVL_WARN, msg.data());
+      for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
+        m_reader[i]->StopDAQ();
+        m_reader[i]->SetRunning(false);
+      }
+      {
+        SimpleLock lock(m_mutex);
+        m_running = false;
+      }
+      // power down
+      PowerOffTestSetup();
+
+      // re-run configuration
+      OnConfigure(m_param);
+
+      // Print queue status and clear them
+      PrintQueueStatus();
+      for (int i = 0; i < m_nDevices; i++) {
+        while (m_reader[i]->GetQueueLength() > 0) {
+          m_reader[i]->DeleteNextEvent();
+        }
+      }
+      {
+        SimpleLock lock(m_mutex);
+        m_running = true;
+      }
+      for (int i = 0; i < m_nDevices; i++) {
+        m_reader[i]->SetRunning(true);
+        m_reader[i]->StartDAQ();
+      }
+      SetStatus(eudaq::Status::LVL_OK, "Running");
+      EUDAQ_INFO("Running");
+      reconfigure = false;
     }
   } while (!IsDone());
 }
