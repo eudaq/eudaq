@@ -636,6 +636,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_readout_delay = new int[m_nDevices];
   if (!m_timestamp_last)
     m_timestamp_last = new uint64_t[m_nDevices];
+  if (!m_timestamp_full)
+    m_timestamp_full = new uint64_t[m_nDevices];
   if (!m_chip_readoutmode)
     m_chip_readoutmode = new int[m_nDevices];
   if (!m_reader) {
