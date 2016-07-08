@@ -1462,14 +1462,23 @@ void PALPIDEFSProducer::OnUnrecognised(const std::string &cmd,
 
 void PALPIDEFSProducer::Loop() {
   unsigned long count = 0;
+  unsigned long reconfigure_count = 0;
   unsigned long busy_count = 0;
   time_t last_status = time(0);
   bool reconfigure = false;
   do {
     eudaq::mSleep(20);
 
+    if (reconfigure_count>5) {
+      std::string str = "Reconfigured more than 5 times - halting!";
+      EUDAQ_ERROR(str);
+      SetStatus(eudaq::Status::LVL_ERROR, str);
+      while (1) {}
+    }
+
     if (!IsRunning()) {
       count = 0;
+      reconfigure_count = 0;
       reconfigure = false;
     }
     // build events
@@ -1583,6 +1592,7 @@ void PALPIDEFSProducer::Loop() {
         m_reader[i]->StartDAQ();
       }
       EUDAQ_INFO("Reconfiguration done.");
+      ++reconfigure_count;
       SetStatus(eudaq::Status::LVL_OK, "Running");
       EUDAQ_INFO("Running");
       reconfigure = false;
