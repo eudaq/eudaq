@@ -171,6 +171,13 @@ IF(BUILD_offlinemon)
 ENDIF()
 
 
+# build Runsplitter
+option(BUILD_runsplitter "Compile Runsplitter executable?" ON)
+IF(BUILD_runsplitter)
+  add_subdirectory(etc/tools/runsplitter)
+ENDIF()
+
+
 
 ###############################################
 # LaTeX target to compile the PDF user manual #
