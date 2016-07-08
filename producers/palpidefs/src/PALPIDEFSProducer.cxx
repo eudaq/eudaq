@@ -1542,6 +1542,7 @@ void PALPIDEFSProducer::Loop() {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();
       }
+      busy_count = 0;
       reconfigure = true;
     }
 
