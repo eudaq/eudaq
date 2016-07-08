@@ -1552,6 +1552,7 @@ void PALPIDEFSProducer::Loop() {
       std::string msg = "Reconfiguring ...";
       std::cout << msg << std::endl;
       SetStatus(eudaq::Status::LVL_WARN, msg.data());
+      EUDAQ_WARN(msg);
       for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
         m_reader[i]->StopDAQ();
         m_reader[i]->SetRunning(false);
@@ -1581,6 +1582,7 @@ void PALPIDEFSProducer::Loop() {
         m_reader[i]->SetRunning(true);
         m_reader[i]->StartDAQ();
       }
+      EUDAQ_INFO("Reconfiguration done.");
       SetStatus(eudaq::Status::LVL_OK, "Running");
       EUDAQ_INFO("Running");
       reconfigure = false;
