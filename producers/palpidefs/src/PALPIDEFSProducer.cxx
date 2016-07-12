@@ -374,7 +374,7 @@ void DeviceReader::Loop() {
       else if (IsFlushing() && readEvent==-2) {
         ++flushCounter;
       }
-    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<5);
+    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<50);
     SetReading(false);
 
     if (flushCounter>=5) {
@@ -401,7 +401,7 @@ void DeviceReader::Loop() {
         LengthOK = (length==header.EventSize*4);
       }
       bool HeaderOK = false;
-      if (length >= header.EventSize*4) {
+      if (length > m_daq_board_header_length && length >= header.EventSize*4) {
         HeaderOK = m_daq_board->DecodeEventHeader(data_buf + length - header.EventSize*4, &header);
       }
       if (HeaderOK && TrailerOK && LengthOK) {
