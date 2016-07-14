@@ -119,6 +119,22 @@ namespace eudaq {
     return i->second;
   }
 
+  bool Event::HasTag(const std::string &name) const{
+    if (m_tags.find(name) == m_tags.end())
+      return false;
+    else
+      return true;
+  }
+
+  std::vector<std::string> Event::GetTagList(const std::string &prefix) const{
+    std::vector<std::string> list;
+    for(auto &e:m_tags){
+      if(!e.first.compare(0, prefix.size(), prefix))
+	list.push_back(e.first);
+    }
+    return list;
+  }
+  
   void Event::SetTimeStampToNow() {
     m_timestamp = static_cast<uint64_t>(clock());
   }

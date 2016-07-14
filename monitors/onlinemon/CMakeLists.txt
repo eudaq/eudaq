@@ -2,7 +2,7 @@ FIND_PACKAGE( ROOT REQUIRED)
 
 INCLUDE_DIRECTORIES( . include ${ROOT_INCLUDE_DIR} )
 
-SET (OnlineMon_SOURCES
+SET(OnlineMon_SOURCES
   src/OnlineMon.cxx
   src/OnlineMonWindow.cc
   src/BaseCollection.cc
@@ -12,41 +12,42 @@ SET (OnlineMon_SOURCES
   src/EUDAQMonitorCollection.cc
   src/EUDAQMonitorHistos.cc
   src/EventSanityChecker.cc
-  src/GraphWindow.cc
   src/HitmapCollection.cc
   src/HitmapHistos.cc
   src/MonitorPerformanceCollection.cc
   src/MonitorPerformanceHistos.cc
-  src/OnlineHistograms.cc
+  src/ParaMonitorCollection.cc
   src/OnlineMonConfiguration.cc
   src/SimpleStandardEvent.cc
   src/SimpleStandardPlane.cc
-  src/TGraphSet.cc
-#  src/TreeHistoRelation.cc
   )
 
-# fill list of header files 
-set(OnlineMon_HEADERS 
+SET(OnlineMon_HEADERS 
   OnlineMonWindow.hh
   SimpleStandardHit.hh
   SimpleStandardCluster.hh
   SimpleStandardPlane.hh
   OnlineMonConfiguration.hh
   CheckEOF.hh
-)
+  )
 
-SET(MY_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/monitors/onlinemon/include/ ${PROJECT_SOURCE_DIR}/monitors/onlinemon ${PROJECT_SOURCE_DIR}/main/include ${ROOT_INCLUDE_DIR} )
+SET(OnlineMon_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict.cxx) 
+ROOT_GENERATE_DICTIONARY(OnlineMonDict ${OnlineMon_HEADERS})
 
-# set everything needed for the root dictonary and create the
-# dictionary
-set(OnlineMon_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict.cxx) 
-ROOT_GENERATE_DICTIONARY_OLD("${OnlineMon_HEADERS}" "${OnlineMon_DICTIONARY}" "${MY_INCLUDE_DIRECTORIES}")
-
-add_executable(OnlineMon.exe ${OnlineMon_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict.cxx)
-
-target_link_libraries(OnlineMon.exe EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+ADD_EXECUTABLE(OnlineMon.exe ${OnlineMon_SOURCES} ${OnlineMon_DICTIONARY})
+TARGET_LINK_LIBRARIES(OnlineMon.exe EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS OnlineMon.exe
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib)
+  ARCHIVE DESTINATION lib
+  )
+
+
+IF(found_root_major_vers GREATER 5)
+  SET(OnlineMon_PCM ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict_rdict.pcm) 
+  INSTALL(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict_rdict.pcm
+    DESTINATION bin
+    )
+ENDIF(found_root_major_vers GREATER 5)

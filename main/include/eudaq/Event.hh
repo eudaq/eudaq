@@ -66,6 +66,9 @@ namespace eudaq {
     virtual std::string GetSubType() const { return ""; }
 
     virtual void Print(std::ostream &os) const = 0;
+    
+    bool HasTag(const std::string &name) const;
+    std::vector<std::string> GetTagList(const std::string &prefix) const;
 
     Event &SetTag(const std::string &name, const std::string &val);
     template <typename T> Event &SetTag(const std::string &name, const T &val) {
@@ -79,7 +82,7 @@ namespace eudaq {
     template <typename T> T GetTag(const std::string &name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }
-
+    
     bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
     bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
     bool HasHits() const { return GetFlags(FLAG_HITS) != 0; }

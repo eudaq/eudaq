@@ -29,6 +29,9 @@
 #include "EUTelRunHeaderImpl.h"
 #endif
 
+
+#include "eudaq/Configuration.hh"
+
 namespace eudaq {
   //Will be set as the EVENT_TYPE for the different versions of this producer
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
@@ -63,7 +66,7 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 
 	std::string EVENT_TYPE;
 
-	USBPixI4ConverterBase(const std::string& event_type): advancedConfig(false), EVENT_TYPE(event_type){}
+  USBPixI4ConverterBase(const std::string& event_type): advancedConfig(false), EVENT_TYPE(event_type), m_swap_xy(0){}
 
 	int getCountBoards() 
 	{
@@ -308,7 +311,10 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 			}
 		}
 		
-		plane.SetSizeZS((CHIP_MAX_COL_NORM + 1)*colMult, (CHIP_MAX_ROW_NORM + 1)*rowMult, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+		if(m_swap_xy)
+		  plane.SetSizeZS((CHIP_MAX_ROW_NORM + 1)*rowMult, (CHIP_MAX_COL_NORM + 1)*colMult, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+		else
+		  plane.SetSizeZS((CHIP_MAX_COL_NORM + 1)*colMult, (CHIP_MAX_ROW_NORM + 1)*rowMult, 0, consecutive_lvl1, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 		
 		//Get Trigger Number
 		unsigned int trigger_number = getTrigger(data);
@@ -333,14 +339,22 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 				//First Hit
 				if(getHitData(Word, false, Col, Row, ToT))
 				{
-					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id-1) );
-					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+				  if(advancedConfig) 
+				    transformChipsToModule(Col, Row, moduleIndex.at(id-1) );
+				  if(m_swap_xy)
+				    plane.PushPixel(Row, Col, ToT, false, lvl1 - 1);
+				  else
+				    plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
 				}
 				//Second Hit
 				if(getHitData(Word, true, Col, Row, ToT))
 				{
-					if(advancedConfig) transformChipsToModule(Col, Row, moduleIndex.at(id-1) );
-					plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
+				  if(advancedConfig) 
+				    transformChipsToModule(Col, Row, moduleIndex.at(id-1) );
+				  if(m_swap_xy)
+				    plane.PushPixel(Row, Col, ToT, false, lvl1 - 1);
+				  else
+				    plane.PushPixel(Col, Row, ToT, false, lvl1 - 1);
 				}
 			}
 		}
@@ -375,6 +389,10 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 	{
 		return (((unsigned int)data[index + 3]) << 24) | (((unsigned int)data[index + 2]) << 16) | (((unsigned int)data[index + 1]) << 8) | (unsigned int)data[index];
 	}
+  
+  void setSwapXY(int s){m_swap_xy = s;}
+private:
+  int m_swap_xy;
 };
 
 //Declare a new class that inherits from DataConverterPlugin
@@ -388,9 +406,11 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 	//This is called once at the beginning of each run.
 	//You may extract information from the BORE and/or configuration
 	//and store it in member variables to use during the decoding later.
-	virtual void Initialize(const Event& bore, const Configuration& /*cnf*/)
+	virtual void Initialize(const Event& bore, const Configuration& cnf)
 	{
-		this->getBOREparameters(bore);
+	  this->getBOREparameters(bore);
+	  cnf.SetSection("Converter.USBPIXI4");
+	  this->setSwapXY(cnf.Get("SWAP_XY", 0)); //TODO: set to 0, now testing
 	}
 
 	//This should return the trigger ID (as provided by the TLU)
