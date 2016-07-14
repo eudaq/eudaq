@@ -375,7 +375,6 @@ void DeviceReader::Loop() {
         ++flushCounter;
       }
     } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<50);
-    SetReading(false);
 
     if (flushCounter>=5) {
       SimpleLock lock(m_mutex);
@@ -457,6 +456,7 @@ void DeviceReader::Loop() {
         Print(0, str.data());
       }
     }
+    SetReading(false);
   }
   Print(0, "ThreadRunner stopping...");
 }
