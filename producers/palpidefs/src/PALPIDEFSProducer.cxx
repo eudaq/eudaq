@@ -573,7 +573,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (param.Get("CheckTriggerIDs", 0) == 1)
     m_ignore_trigger_ids = false;
 
-  if (param.Get("DisableRecoveryOutOfSync", 0) == 1)
+  if (param.Get("DisableRecoveryOutOfSync", 1) == 1)
     m_recover_outofsync = false;
 
   if (param.Get("MonitorPSU", 0) == 1)
