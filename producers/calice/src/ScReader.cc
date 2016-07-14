@@ -24,7 +24,6 @@ namespace eudaq {
     // using characters to send the run number
     ostringstream os;
     os << "RUN_START"; //newLED
-    //os << "START"; //newLED
     os.width(8);
     os.fill('0');
     os << runNo;
@@ -41,7 +40,7 @@ namespace eudaq {
     os<< "CONFIG_VL";
     os<< msg;
     os<< "\r\n";
-    // const char *msg = "CONFIG_VLD:\\test.ini\r\n";
+    // const char *msg = "CONFI_VLD:\\test.ini\r\n";
     // set the connection and send "start runNo"
     //_producer->OpenConnection();
     if( !msg.empty() ) {
@@ -75,11 +74,31 @@ namespace eudaq {
     try{
       while(1){
 
-    	unsigned char magic[2] = {0xcd, 0xcd};
+	std::vector<int> slowcontrol;
+
+	unsigned char magic[2] = {0xcd, 0xcd};
+	unsigned char magic_sc[2] = {0xac, 0xdc};
+
     	while(buf.size() > 1 && ((unsigned char)buf[0] != magic[0] || (unsigned char)buf[1] != magic[1])) {
+
+	  if( (unsigned char)buf[0] == magic_sc[0] || (unsigned char)buf[1] == magic_sc[1] )  {
+	    int ibuf=2;
+	    while(buf.size() > ibuf && buf[ibuf] != magic[0]) {
+	      // slowcontrol.push_back(buf[ibuf+1]);
+	      int sc = (unsigned char)buf[ibuf];
+	      slowcontrol.push_back(sc)
+	      ibuf++;    
+
+	    }	
+	    buf.pop_front();
+	    cout<<" pop front "<<endl;
+	  }
 	  buf.pop_front();
 	  cout<<" pop front "<<endl;
 	}
+	
+	//	std::cout<<"hola 6"<<std::endl;
+
 
     	if(buf.size() <= e_sizeLdaHeader) throw 0; // all data read
 
