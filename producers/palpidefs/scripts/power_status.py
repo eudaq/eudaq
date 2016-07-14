@@ -3,7 +3,7 @@
 import serial
 import sys
 import time
-import hameg2030 as h
+import hameg as h
 
 def main():
     sour=serial.Serial(h.dev, h.baud_rate, rtscts=h.rtscts)

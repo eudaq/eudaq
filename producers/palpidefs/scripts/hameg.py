@@ -32,12 +32,14 @@ def power_off(sour):
     sour.write("OUTP OFF\n")
     sour.write("INST OUT3\n")
     sour.write("OUTP OFF\n")
+    sour.write("INST OUT4\n")
+    sour.write("OUTP OFF\n")
 
 ###############################################################################
 def power_on(hameg, i_max, voltages):
     hameg.write("*IDN?\n")
     idn = hameg.readline()
-    if not ("HAMEG" and "HMP2030") in idn:
+    if not ("HAMEG" and "HMP4040") in idn:
         sys.stderr.write("WRONG DEVICE: %s" % idn)
         return
     #print idn
