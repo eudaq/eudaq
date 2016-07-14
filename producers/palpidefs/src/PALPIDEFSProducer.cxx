@@ -1345,7 +1345,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     SimpleLock lock(m_mutex);
     m_running = true;
   }
-  for (int i = 0; i < m_nDevices; i++) {
+  for (int i = m_nDevices-1; i >= 0; --i) {
     m_reader[i]->SetRunning(true);
     m_reader[i]->StartDAQ();
   }
@@ -1363,7 +1363,7 @@ void PALPIDEFSProducer::OnStopRun() {
     m_stopping = true;
     m_flushing = true;
   }
-  for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
+  for (int i = m_nDevices; i >= 0; --i) { // stop the event polling loop
 
 #ifdef DEBUG_USB
     char tmp[50];
