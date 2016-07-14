@@ -16,6 +16,7 @@
 void DemoHardware::hdConfigure(){
   //TODO::
 
+  
 }
 
 
@@ -30,15 +31,20 @@ void DemoHardware::hdStartRun(unsigned nrun){
     abc_blocktypes.push_back(std::string("ABC130"));
     std::stringstream ss;
     ss <<"ABC_N_BLOCKS"<< '=' << abc_nblocks;
-    Emit("setTag(char*)", ss.str().c_str());
+    addTag2Event( ss.str().c_str());
     for(int i =0; i<abc_nblocks; i++){
       ss.str("");
       ss <<"ABC_BLOCKID_"<<i<< '=' << abc_blockids[i];
-      Emit("setTag(char*)", ss.str().c_str());
+      addTag2Event( ss.str().c_str());
       ss.str("");
       ss <<"ABC_BLOCKTYPE_"<<i<< '=' << abc_blocktypes[i];
-      Emit("setTag(char*)", ss.str().c_str());
+      addTag2Event( ss.str().c_str());
     }
+
+    ss.str("");
+    ss << "ST_DET_FILE"<<'='<<"/opt/itsdaq-sw/config/st_system_config.dat";
+    addTagFile2Event(ss.str().c_str());
+    
     m_isStarted = 1;
 }
 
@@ -85,8 +91,10 @@ void DemoHardware::run(const char * rpro_name, const char* runctrl_addr){
   rpro->Connect("send_OnConfigure()", "DemoHardware", hd, "hdConfigure()");
   rpro->Connect("send_OnStopRun()",      "DemoHardware", hd, "hdStopRun()");  
   hd->Connect("createNewEvent(unsigned)", "ROOTProducer", rpro, "createNewEvent(unsigned)");
-  hd->Connect("addData2Event(unsigned, unsigned char*, size_t)","ROOTProducer", rpro,"addData2Event(unsigned, unsigned char*, size_t)");
+  hd->Connect("addData2Event(unsigned, UChar_t*, size_t)","ROOTProducer", rpro,"addData2Event(unsigned, unsigned char*, size_t)");
   hd->Connect("sendEvent()",   "ROOTProducer", rpro, "sendEvent()");
+  hd->Connect("addTag2Event(char*)", "ROOTProducer", rpro, "setTag(char*)");
+  hd->Connect("addTagFile2Event(char*)", "ROOTProducer", rpro, "setTagFile(char*)");
 
 
   size_t size = 256;
