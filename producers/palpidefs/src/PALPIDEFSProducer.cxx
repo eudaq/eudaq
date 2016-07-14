@@ -1486,7 +1486,10 @@ void PALPIDEFSProducer::Loop() {
       int events_built = BuildEvent();
       count += events_built;
 
-      if (events_built == 0) {
+      if (events_built == -1) { // auto-of-sync, which won't be recovered
+        reconfigure = true;
+      }
+      else if (events_built == 0) {
         if (m_status_interval > 0 &&
             time(0) - last_status > m_status_interval) {
           if (IsRunning()) {
@@ -1742,16 +1745,22 @@ int PALPIDEFSProducer::BuildEvent() {
     }
   }
 
-  if (timestamp_error && m_recover_outofsync) {
-    for (int i = 0; i < m_nDevices; i++) {
-      if (bad_plane[i] && m_next_event[i]) {
-        delete m_next_event[i];
-        m_next_event[i] = 0x0;
+  if (timestamp_error) {
+    int result = 0;
+    if (m_recover_outofsync) {
+      for (int i = 0; i < m_nDevices; i++) {
+        if (bad_plane[i] && m_next_event[i]) {
+          delete m_next_event[i];
+          m_next_event[i] = 0x0;
+        }
       }
+    }
+    else {
+      result = -1;
     }
     delete[] bad_plane;
     bad_plane = 0x0;
-    return 0;
+    return result;
   }
   delete[] bad_plane;
   bad_plane = 0x0;
