@@ -183,7 +183,8 @@ public:
         m_recover_outofsync(true), m_readout_mode(0), m_chip_type(0x0),
         m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
         m_readout_delay(0x0), m_monitor_PSU(false), m_back_bias_voltage(-1),
-        m_dut_pos(-1.), m_SCS_charge_start(-1), m_SCS_charge_stop(-1),
+        m_dut_pos(-1.), m_dut_angle1(-1.), m_dut_angle2(-1.), 
+        m_SCS_charge_start(-1), m_SCS_charge_stop(-1),
         m_SCS_charge_step(-1), m_SCS_n_events(-1), m_SCS_n_mask_stages(-1),
         m_SCS_n_steps(-1), m_do_SCS(0x0), m_SCS_data(0x0), m_SCS_points(0x0) {}
   ~PALPIDEFSProducer() { PowerOffTestSetup(); }
@@ -204,6 +205,7 @@ protected:
   bool DoSCurveScan(const eudaq::Configuration &param);
   void SetBackBiasVoltage(const eudaq::Configuration &param);
   void ControlLinearStage(const eudaq::Configuration &param);
+  void ControlRotaryStages(const eudaq::Configuration &param);
   bool ConfigChip(int id, TpAlpidefs *dut, std::string configFile);
   int BuildEvent();
   void SendEOR();
@@ -265,6 +267,8 @@ protected:
   bool m_monitor_PSU;
   float m_back_bias_voltage;
   float m_dut_pos;
+  float m_dut_angle1;
+  float m_dut_angle2;
   // S-Curve scan settings
   int m_SCS_charge_start;
   int m_SCS_charge_stop;

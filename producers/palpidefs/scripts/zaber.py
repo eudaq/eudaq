@@ -49,21 +49,39 @@ def main():
     mode=int(sys.argv[3]) if len(sys.argv)>=4 else -1;
 
     con=ZaberConnection(dev)
-    lin=Zaber(con, id)
+    stage=Zaber(con, id)
+
+    # step size for stages
+    # linear stage: 1 step = 0.09921875 um
+    # rotary stage: 1 step = 4.091 urad
+
+    print 'arguments:'
+    print sys.argv
 
     # switch mode
     if mode==0: # initialise
         con.init()
-        lin.init()
+        stage.init()
     elif mode==1: # move to home position
-        lin.home()
-    elif mode==2: # move in milimeters
-        lin.move_abs(int(float(sys.argv[4])/1e-3/0.09921875))
-        # moved successfully
-        if abs(float(int(lin.getpos())*1e-3*0.09921875)-float(sys.argv[4]))>1.e-4:
+        stage.home()
+    elif mode==2: # get current position in steps
+        #stage.getpos()
+        print stage.getpos()
+    elif mode==3: # move to absolute positon in steps
+        stage.move_abs(int(sys.argv[4]))
+        # moved successfully?
+        if (int(stage.getpos())-int(sys.argv[4]))!=0:
             return 1
-    elif mode==3: # receive current position
-        print float(int(lin.getpos())*1e-3*0.09921875)
+    elif mode==4: # move relatively in steps
+        stage.move_rel(int(sys.argv[4]))
+
+    elif mode==5: # move in milimeters
+        stage.move_abs(int(float(sys.argv[4])/1e-3/0.09921875))
+        # moved successfully?
+        if abs(float(int(stage.getpos())*1e-3*0.09921875)-float(sys.argv[4]))>1.e-4:
+            return 1
+    elif mode==6: # receive current position in mm
+        print float(int(stage.getpos())*1e-3*0.09921875)
     return 0
 
 ## execute the main
