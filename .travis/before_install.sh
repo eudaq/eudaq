@@ -45,6 +45,9 @@ else
 		pyenv install 3.5.0
 		pyenv global 3.5.0
 		pyenv versions
+		sudo pip install virtualenvwrapper
+		pyvenv  venv
+		source venv/bin/activate
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
 	fi
