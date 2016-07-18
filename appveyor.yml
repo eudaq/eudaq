@@ -14,7 +14,7 @@ environment:
   PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
 
 init:
-#- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
 - cmd: >-
@@ -35,22 +35,22 @@ before_build:
 
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://www.secure-endpoints.com/binaries/heimdal/Heimdal-AMD64-full-1-6-2-0.msi\",\"C:\\Heimdal-AMD64-full-1-6-2-0.msi\")"
     
-    powershell  -command "msiexec /i \"C:\\Heimdal-AMD64-full-1-6-2-0.msi\" /quiet /qn /norestart /log install.log"
+    powershell  -command "msiexec /i \"C:\\Heimdal-AMD64-full-1-6-2-0.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-en_US-64bit-1-7-3100.msi\",\"C:\\openafs-en_US-64bit-1-7-3100.msi\")"
     
-    powershell  -command "msiexec /i \"C:\\openafs-en_US-64bit-1-7-3100.msi\" /quiet /qn /norestart /log install.log"  
+    powershell  -command "msiexec /i \"C:\\openafs-en_US-64bit-1-7-3100.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"  
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-32bit-tools-en_US-1-7-3100.msi\",\"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\")"
     
-    powershell  -command "msiexec /i \"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\" /quiet /qn /norestart /log install.log"      
+    powershell  -command "msiexec /i \"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"      
     
     powershell -command  "Restart-Computer -Force"
     
     powershell -command "Start-Sleep -s 10"
 
 build_script:
-#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 

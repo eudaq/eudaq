@@ -24,6 +24,9 @@ env:
       - OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
       - OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
       
+      - PYTHON_VERSION_MODERN=3.5.1
+      - PYTHON_VERSION_OLD=2.7.10
+      
       - BUILD_AHCAL=OFF
       - BUILD_BIFAHCAL=OFF
       - BUILD_TESTING=OFF
@@ -80,7 +83,7 @@ env:
 # documentation to be "compiled" in maximum one option
 
 matrix:      
-   include:
+   include:   
       - os: linux
         compiler: gcc
         env: OPTION=modern BUILD_manual=ON
@@ -115,9 +118,10 @@ install:
 before_script:
   - $CXX --version
   - $CC --version
+  - echo $PATH
+  - echo $LD_LIBRARY_PATH
 
 script:
-  #- cmake -DBUILD_onlinemon=ON -DBUILD_calice=ON -DBUILD_eudrb=OFF -DBUILD_explorer=ON -DBUILD_depfet=ON -DBUILD_fortis=ON -DBUILD_mimoroma=ON -DBUILD_mimosa32=ON  -DBUILD_ni=ON  -DBUILD_tlu=ON -DBUILD_python=ON ..
   - cd build  
   - cmake $OVERRIDE_PYTHON_INTERPRETER $OVERRIDE_PYTHON_LIBRARY_PATH -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_apixct=$BUILD_apixct -DBUILD_calice=$BUILD_calice -DBUILD_ccpdlf=$BUILD_ccpdlf -DBUILD_clicpix=$BUILD_clicpix -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_eudrb=$BUILD_eudrb -DBUILD_example=$BUILD_example -DBUILD_explorer=$BUILD_explorer -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_mimosa32=$BUILD_mimosa32 -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_mupix=$BUILD_mupix -DBUILD_mvd=$BUILD_mvd -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs -DBUILD_palpidess=$BUILD_palpidess -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_pybar=$BUILD_pybar -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu -DBUILD_usbpix=$BUILD_usbpix ..
   - make install
