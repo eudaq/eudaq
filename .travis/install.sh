@@ -37,12 +37,12 @@ else
 
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Linux:
-		sudo apt-get install -y python3 python3-pip libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
 		sudo pip3 install -U setuptools
 		sudo pip3 install -U virtualenvwrapper
-		python3 -V
-		pip3 -V
+		sudo virtualenv /opt/python/3.5.0
+		source /opt/python/3.5.0/activate
 		sudo pip3 install -q numpy
 		export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/opt/python/3.5.0/bin/python"
 		export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/opt/python/3.5.0/lib/libpython3.4m.so.1"
