@@ -43,7 +43,7 @@ else
 		#sudo pip install -U virtualenvwrapper
 		#sudo virtualenv /opt/python/3.5.0
 		#source /opt/python/3.5.0/activate
-		#sudo pip install -q numpy
+		sudo pip install -q numpy
 		#export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/opt/python/3.5.0/bin/python"
 		#export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/opt/python/3.5.0/lib/libpython3.4m.so.1"
 		#export OVERRIDE_PYTHON_INCLUDE_DIR="-DPYTHON_INCLUDE_DIR=/opt/python/3.5.0/include"
@@ -55,7 +55,7 @@ else
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
 		#sudo pip install --upgrade pip
-		#sudo pip install -q numpy
+		sudo pip install -q numpy
 		#export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/opt/python/2.7.10/bin/python"
 		#export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/opt/python/2.7.10/lib/libpython2.7.so"
 		#export OVERRIDE_PYTHON_INCLUDE_DIR="-DPYTHON_LIBRARY=/opt/python/2.7.10/include"
