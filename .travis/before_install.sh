@@ -42,6 +42,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 else
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
+		pyenv install 3.5.0
+		pyenv global 3.5.0
+		pyenv versions
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
 	fi
