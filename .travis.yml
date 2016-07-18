@@ -115,6 +115,8 @@ install:
 before_script:
   - $CXX --version
   - $CC --version
+  - echo $PATH
+  - echo $LD_LIBRARY_PATH
 
 script:
   #- cmake -DBUILD_onlinemon=ON -DBUILD_calice=ON -DBUILD_eudrb=OFF -DBUILD_explorer=ON -DBUILD_depfet=ON -DBUILD_fortis=ON -DBUILD_mimoroma=ON -DBUILD_mimosa32=ON  -DBUILD_ni=ON  -DBUILD_tlu=ON -DBUILD_python=ON ..
