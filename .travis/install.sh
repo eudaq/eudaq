@@ -44,10 +44,11 @@ else
 		python3 -V
 		pip3 -V
 		sudo pip3 install -q numpy
-		#export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/usr/bin/python3"
-		#export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython3.4m.so.1"
-		PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
-		PATH=/opt/python/3.5.0/bin:$PATH
+		export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/opt/python/3.5.0/bin/python"
+		export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/opt/python/3.5.0/lib/libpython3.4m.so.1"
+		export OVERRIDE_PYTHON_INCLUDE_DIR="-DPYTHON_INCLUDE_DIR=/opt/python/3.5.0/include"
+		#PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
+		#PATH=/opt/python/3.5.0/bin:$PATH
 		
 	else
 		# Install package dependencies for Linux:
@@ -55,10 +56,11 @@ else
 		sudo service openafs-client start
 		sudo pip install --upgrade pip
 		sudo pip install -q numpy
-		#export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/usr/bin/python"
-		#export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so"
-		PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
-		PATH=/opt/python/2.7.10/bin:$PATH
+		export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/opt/python/2.7.10/bin/python"
+		export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/opt/python/2.7.10/lib/libpython2.7.so"
+		export OVERRIDE_PYTHON_INCLUDE_DIR="-DPYTHON_LIBRARY=/opt/python/2.7.10/include"
+		#PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
+		#PATH=/opt/python/2.7.10/bin:$PATH
 	fi
 	
 	if [[ $BUILD_manual == 'ON' ]]; then
