@@ -22,6 +22,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		
 		pyenv init
 		pyenv virtualenv-init
+		
+		cat "eval \"$(pyenv init -)\"" >> ~/.bashrc
+		cat "eval \"$(pyenv virtualenv-init -)\"" >> ~/.bashrc
+		cat ". ~/.bashrc" >> ~./bash_profile
+		
+		source ~/.bashrc
 		#exec $SHELL
 		
 		pyenv install 3.5.0
@@ -78,7 +84,6 @@ else
 		#eval "$(pyenv virtualenv-init -)"
 		pyenv init
 		pyenv virtualenv-init
-		source ~/.bashrc
 		#pyenv virtualenv-init -
 		
 		pyenv virtualenv 3.5.0 my-virtual-env
