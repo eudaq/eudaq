@@ -45,7 +45,8 @@ else
 		pyenv install 3.5.0
 		pyenv global 3.5.0
 		pyenv versions
-		sudo pip install virtualenvwrapper
+		sudo -H pip install --upgrade pip
+		sudo -H pip install virtualenvwrapper
 		pyvenv  venv
 		source venv/bin/activate
 	else
