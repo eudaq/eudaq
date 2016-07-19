@@ -645,7 +645,7 @@ namespace eudaq {
             // streamlog_out ( DEBUG0 ) << ( *(sparsePixel.get() ) ) << endl;
 
             // now add this pixel to the sparse frame
-            sparseFrame->addSparsePixel( sparsePixel.get() );
+            sparseFrame->addSparsePixel( *sparsePixel.get() );
           } else {
             // the original X was on a marker column, so we don't
             // need to process this pixel any further and of course

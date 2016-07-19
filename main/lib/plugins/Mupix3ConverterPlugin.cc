@@ -236,7 +236,7 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     for (unsigned i = 0; i < n_hits; ++i) {
         ExtractHit(raw_buffer, i, col, row);
         EUTelGenericSparsePixel pixel(col, row, MUPIX3_FAKE_SIGNAL);
-        pixels->addSparsePixel(&pixel);
+        pixels->addSparsePixel(pixel);
     }
     
     // hand over ownership over the readout frame to the lcio collection
