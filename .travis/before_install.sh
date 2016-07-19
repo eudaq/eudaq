@@ -16,12 +16,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
 		
 		brew upgrade pyenv
-		brew install PyenvPipRehash
-		brew install PyenvVirtualenvwrapper
+		brew install pyenv-pip-rehash
+		brew install pyenv-virtualenvwrapper
 		
 		pyenv init
 		pyenv virtualenv-init
-		exec $SHELL
+		#exec $SHELL
 		
 		pyenv install 3.5.0
 		

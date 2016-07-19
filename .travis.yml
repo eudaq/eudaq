@@ -81,30 +81,33 @@ env:
 
 matrix:      
    include:
-      - os: linux
-        compiler: gcc
-        env: OPTION=modern BUILD_manual=ON
-      - os: linux      
-        compiler: gcc      
-        env: OPTION=old    
-      - os: linux
-        compiler: clang      
-        env: OPTION=modern
-      - os: linux
-        compiler: clang      
-        env: OPTION=old
-      - os: osx      
-        compiler: gcc    
-        env: OPTION=modern    
-      - os: osx
-        compiler: gcc      
-        env: OPTION=old
       - os: osx
         compiler: clang      
-        env: OPTION=modern
-      - os: osx      
-        compiler: clang      
-        env: OPTION=old
+        env: OPTION=modern   
+#      - os: linux
+#        compiler: gcc
+#        env: OPTION=modern BUILD_manual=ON
+#      - os: linux      
+#        compiler: gcc      
+#        env: OPTION=old    
+#      - os: linux
+#        compiler: clang      
+#        env: OPTION=modern
+#      - os: linux
+#        compiler: clang      
+#        env: OPTION=old
+#      - os: osx      
+#        compiler: gcc    
+#        env: OPTION=modern    
+#      - os: osx
+#        compiler: gcc      
+#        env: OPTION=old
+#      - os: osx
+#        compiler: clang      
+#        env: OPTION=modern
+#      - os: osx      
+#        compiler: clang      
+#        env: OPTION=old
 
 before_install:
   - source .travis/before_install.sh
