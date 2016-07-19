@@ -48,7 +48,9 @@ else
 		sudo -H pip install --upgrade pip
 		sudo -H pip install virtualenvwrapper
 		pyvenv  venv
-		source venv/bin/activate
+		pyenv virtualenvs
+		#source venv/bin/activate
+		pyenv activate venv
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
 	fi
