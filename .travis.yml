@@ -84,6 +84,7 @@ matrix:
       - os: osx
         compiler: clang      
         env: OPTION=modern   
+        
 #      - os: linux
 #        compiler: gcc
 #        env: OPTION=modern BUILD_manual=ON
