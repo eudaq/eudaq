@@ -66,6 +66,8 @@ else
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
 		
+		export PIP_REQUIRE_VIRTUALENV=true
+		
 		pyenv install 3.5.0
 		pyenv global 3.5.0
 		pyenv versions
@@ -76,6 +78,7 @@ else
 		#eval "$(pyenv virtualenv-init -)"
 		pyenv init
 		pyenv virtualenv-init
+		source ~/.bashrc
 		#pyenv virtualenv-init -
 		
 		pyenv virtualenv 3.5.0 my-virtual-env
