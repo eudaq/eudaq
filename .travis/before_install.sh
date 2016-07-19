@@ -15,16 +15,15 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
 		
-		brew install pyenv
-		mkdir ~/pyenv/completions
-		cp /usr/local/Cellar/pyenv/20150601/completions/pyenv.bash ~/.pyenv/completions/pyenv.bash
-		
-		pyenv install 3.5.0
-		brew install homebrew/boneyard/pyenv-pip-rehash
-		brew install pyenv-virtualenv
+		brew upgrade pyenv
+		brew install PyenvPipRehash
+		brew install PyenvVirtualenvwrapper
 		
 		pyenv init
 		pyenv virtualenv-init
+		exec $SHELL
+		
+		pyenv install 3.5.0
 		
 		pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
