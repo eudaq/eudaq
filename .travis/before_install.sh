@@ -42,17 +42,28 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 else
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
+		
 		pyenv install 3.5.0
 		pyenv global 3.5.0
 		pyenv versions
-		sudo -H pip install --upgrade pip
-		sudo -H pip install virtualenvwrapper
-		pyvenv  venv
+		
+		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
+		git clone https://github.com/yyuu/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
+		eval "$(pyenv virtualenv-init -)"
+		
+		pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
+		pyenv activate my-virtual-env
+		
+		
+		pip install --upgrade pip
+		pip install virtualenvwrapper
+		#pyvenv  venv
+		#pyenv virtualenvs
 		#source venv/bin/activate
-		pyenv activate venv
-		sudo -H pip install -q numpy
-		pyenv rehash
+		#pyenv activate venv
+		pip install -q numpy
+		#pyenv rehash
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
 	fi
