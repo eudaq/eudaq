@@ -49,8 +49,9 @@ else
 		
 		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
 		git clone https://github.com/yyuu/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-		#eval "$(pyenv virtualenv-init -)"
-		pyenv virtualenv-init -
+		eval "$(pyenv init -)"
+		eval "$(pyenv virtualenv-init -)"
+		#pyenv virtualenv-init -
 		
 		pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
@@ -74,8 +75,9 @@ else
 		
 		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
 		git clone https://github.com/yyuu/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-		#eval "$(pyenv virtualenv-init -)"
-		pyenv virtualenv-init -
+		eval "$(pyenv init -)"
+		eval "$(pyenv virtualenv-init -)"
+		#pyenv virtualenv-init -
 		
 		pyenv virtualenv 2.7.10 my-virtual-env
 		pyenv virtualenvs
