@@ -92,3 +92,15 @@ void EventReceiverPS::DataHandler(TransportEvent &ev) {
     std::cout << "Unknown:    " << ev.id << std::endl;
   }
 }
+
+
+void EventReceiverPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+  switch(cstr2hash(cmd_name.c_str())){
+  case cstr2hash("SETSERVER"):{
+    SetServer(cmd_par);
+    break;
+  }
+  default:
+    Processor::ProcessUsrCmd(cmd_name, cmd_par);
+  }
+}

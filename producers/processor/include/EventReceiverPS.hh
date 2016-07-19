@@ -19,7 +19,8 @@ namespace eudaq{
     
     void SetServer(std::string listenaddress);
     void DataHandler(TransportEvent &ev);
-    
+    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);    
+
   private:
     std::unique_ptr<TransportServer> m_server;
     

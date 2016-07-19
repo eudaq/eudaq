@@ -15,7 +15,8 @@ namespace eudaq{
     virtual void ProcessUserEvent(EVUP ev);
     void OpenFile(std::string filename);
     virtual void ProduceEvent();
-    
+
+    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);    
   private:
     std::unique_ptr<FileDeserializer> m_des;    
   };

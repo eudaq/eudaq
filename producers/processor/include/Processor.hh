@@ -57,9 +57,10 @@ namespace eudaq {
     Processor(){};
     virtual ~Processor();
     virtual void ProcessUserEvent(EVUP ev);
+    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     virtual void ProduceEvent();
     virtual void ConsumeEvent();
-
+    
 
     bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
     bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
@@ -92,10 +93,14 @@ namespace eudaq {
     uint32_t GetNumUpstream(){return m_num_upstream;};
     void IncreaseNumUpstream(){m_num_upstream++;};
 
+    void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
+    
     PSSP operator>>(PSSP psr);
 
-    Processor& operator<<(EVUP ev);
-
+    Processor& operator<<(EVUP ev);    
+    Processor& operator<<(std::string cmd_str);
+    // Processor& operator>>(std::string evt_str);
+    
     
   private:
     std::string m_pstype;
@@ -129,6 +134,7 @@ namespace eudaq {
 
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
+DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP psl, std::string cmd_list);
 
 
 #endif

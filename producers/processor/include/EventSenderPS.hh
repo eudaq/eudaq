@@ -14,6 +14,8 @@ namespace eudaq{
     virtual void ProcessUserEvent(EVUP ev);
 
     void Connect(std::string type, std::string name, std::string server);
+
+    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     
   private:
     std::unique_ptr<DataSender> m_sender;

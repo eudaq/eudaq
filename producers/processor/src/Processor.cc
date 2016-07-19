@@ -1,6 +1,9 @@
 #include"Processor.hh"
 
+#include"Utils.hh"
 #include"ProcessorManager.hh"
+
+#include <string>
 
 using namespace eudaq;
 
@@ -34,6 +37,7 @@ void Processor::ProcessUserEvent(EVUP ev){
   std::cout<< "ProcessUserEvent ["<<m_psid<<"] "<<ev->GetSubType()<<std::endl;
   ForwardEvent(std::move(ev));
 }
+
 
 void Processor::ProcessSysEvent(EVUP ev){
   //  TODO config
@@ -198,6 +202,28 @@ void Processor::RunHubThread(){
 }
 
 
+void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
+  switch(cstr2hash(cmd_name.c_str())){
+  case cstr2hash("SYS:RUN"):{
+    RunProducerThread();
+    break;
+  }
+  case cstr2hash("SYS:STOP"):{
+    //TODO
+    break;
+  }
+
+  default:
+    Processor::ProcessUsrCmd(cmd_name, cmd_par);
+  }
+
+
+}
+
+
+void Processor::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+  
+}
 
 
 PSSP Processor::operator>>(PSSP psr){
@@ -221,6 +247,34 @@ PSSP Processor::operator>>(PSSP psr){
 Processor& Processor::operator<<(EVUP ev){
   Processing(std::move(ev));
   return *this;
+}
+
+Processor& Processor::operator<<(std::string cmd_list){ //TODO: decode
+  //val1=1,2,3;val2=xx,yy;SYS:val3=abc
+  std::stringstream ss(cmd_list);
+  std::string cmd;
+  while(getline(ss, cmd, ';')){//TODO: ProcessXXCmd(name_str,val_str)
+    std::stringstream ss_cmd(cmd);
+    std::string name_str, val_str;
+    getline(ss_cmd, name_str, '=');
+    getline(ss_cmd, val_str);
+    name_str=trim(name_str);
+    val_str=trim(val_str);
+    if(!name_str.empty()){
+      name_str=ucase(name_str);
+      if(!cmd.compare(0,3,"SYS")){	
+	ProcessSysCmd(name_str, val_str);
+      }
+      else
+	ProcessUsrCmd(name_str, val_str);
+    }
+  }
+}
+
+
+PSSP operator<<(PSSP psl, std::string cmd_list){
+  *psl<<cmd_list;
+  return psl;
 }
 
 
@@ -247,3 +301,4 @@ PSSP operator>>(PSSP psl, std::string psr_str){
   PSSP psr = psMan->CreateProcessor(pstype, psid);
   return *psl>>psr;
 }
+

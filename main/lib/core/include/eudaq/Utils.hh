@@ -43,6 +43,11 @@ namespace eudaq {
   void DLLEXPORT uchar2bool(const unsigned char *inBegin,
                             const unsigned char *inEnd, std::vector<bool> &out);
 
+
+  constexpr uint32_t cstr2hash(const char* str, int h = 0){
+    return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33) ^ str[h];
+  }
+  
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds
    */
