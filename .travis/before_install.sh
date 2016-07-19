@@ -37,7 +37,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
 		pyenv activate my-virtual-env
-		source /Users/travis/.pyenv/versions/3.5.0/bin/activate
+		cd my-virtual-env
+		source bin/activate
 		
 		pip install --upgrade pip
 		pip install -q numpy
