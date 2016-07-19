@@ -49,7 +49,8 @@ else
 		
 		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
 		git clone https://github.com/yyuu/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-		eval "$(pyenv virtualenv-init -)"
+		#eval "$(pyenv virtualenv-init -)"
+		pyenv virtualenv-init -
 		
 		pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
@@ -66,6 +67,29 @@ else
 		#pyenv rehash
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
+		
+		pyenv install 2.7.10
+		pyenv global 2.7.10
+		pyenv versions
+		
+		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
+		git clone https://github.com/yyuu/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
+		#eval "$(pyenv virtualenv-init -)"
+		pyenv virtualenv-init -
+		
+		pyenv virtualenv 2.7.10 my-virtual-env
+		pyenv virtualenvs
+		pyenv activate my-virtual-env
+		
+		
+		pip install --upgrade pip
+		pip install virtualenvwrapper
+		#pyvenv  venv
+		#pyenv virtualenvs
+		#source venv/bin/activate
+		#pyenv activate venv
+		pip install -q numpy
+		#pyenv rehash		
 	fi
 	
 	echo "Installing root now"
