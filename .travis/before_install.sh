@@ -24,9 +24,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		#exec $SHELL
 		
 		pyenv install 3.5.0
+		pyenv global 3.5.0
+		pyenv versions
 		
 		pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
+		pyenv activate my-virtual-env
 		
 		pip install --upgrade pip
 		pip install -q numpy
