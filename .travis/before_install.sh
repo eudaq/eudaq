@@ -5,8 +5,33 @@ echo $CC --version
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
+	# OS X: update brew cache:
+	brew update
+	
+	brew unlink cmake python python3
+	
+	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
+	
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
+		
+		brew install pyenv
+		mkdir ~/pyenv/completions
+		cp /usr/local/Cellar/pyenv/20150601/completions/pyenv.bash ~/.pyenv/completions/pyenv.bash
+		
+		pyenv install 3.5.0
+		brew install homebrew/boneyard/pyenv-pip-rehash
+		brew install pyenv-virtualenv
+		
+		pyenv init
+		pyenv virtualenv-init
+		
+		pyenv virtualenv 3.5.0 my-virtual-env
+		pyenv virtualenvs
+		
+		pip install --upgrade pip
+		pip install -q numpy
+		
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_MAC}
 	fi
@@ -22,11 +47,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	tar xfz $CMAKE_FILENAME
 	export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
 	echo $PATH
-	
-	# OS X: update brew cache:
-	brew update
-	
-	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi
 	
 	echo "Installing openafs now"
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
@@ -61,7 +81,7 @@ else
 		
 		
 		pip install --upgrade pip
-		pip install virtualenvwrapper
+		#pip install virtualenvwrapper
 		#pyvenv  venv
 		#pyenv virtualenvs
 		#source venv/bin/activate
@@ -77,8 +97,8 @@ else
 		
 		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
 		git clone https://github.com/yyuu/pyenv-virtualenv.git ~/.pyenv/plugins/pyenv-virtualenv
-		eval "$(pyenv init -)"
-		eval "$(pyenv virtualenv-init -)"
+		pyenv init
+		pyenv virtualenv-init
 		#pyenv virtualenv-init -
 		
 		pyenv virtualenv 2.7.10 my-virtual-env

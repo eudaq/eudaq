@@ -3,34 +3,34 @@
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Mac OS X:
-		brew update
+		#brew update
 		brew unlink cmake python python3
 		brew install libusb qt5 libusb-compat
 		
-		brew install python3
-		brew linkapps python3
+		#brew install python3
+		#brew linkapps python3
 		#export python_workaround = cmake -DPYTHON_LIBRARY=$(python-config --prefix)/lib/libpython2.7.dylib -DPYTHON_INCLUDE_DIR=$(python-config --prefix)/include/python2.7
-		export OVERRIDE_PYTHON_INTERPRETER=-DPYTHON_EXECUTABLE:FILEPATH=$(python-config --prefix)"/bin/python3"
-		export OVERRIDE_PYTHON_LIBRARY_PATH=-DPYTHON_LIBRARY=$(python-config --prefix)"/lib/libpython3.4.dylib"
+		#export OVERRIDE_PYTHON_INTERPRETER=-DPYTHON_EXECUTABLE:FILEPATH=$(python-config --prefix)"/bin/python3"
+		#export OVERRIDE_PYTHON_LIBRARY_PATH=-DPYTHON_LIBRARY=$(python-config --prefix)"/lib/libpython3.4.dylib"
 		
 		export CMAKE_PREFIX_PATH=/usr/local/opt/qt5
 		# Install numpy via pip:
-		sudo pip install --upgrade pip
-		sudo pip install -q numpy
+		#sudo pip install --upgrade pip
+		#sudo pip install -q numpy
 	else
 		# Install package dependencies for Mac OS X:
-		brew update
+		#brew update
 		brew unlink cmake python python3
 		brew install libusb qt libusb-compat
 		
-		brew install python
-		brew linkapps python
-		export OVERRIDE_PYTHON_INTERPRETER=-DPYTHON_EXECUTABLE:FILEPATH=$(python-config --prefix)"/bin/python"
-		export OVERRIDE_PYTHON_LIBRARY_PATH=-DPYTHON_LIBRARY=$(python-config --prefix)"/lib/libpython2.7.dylib"
+		#brew install python
+		#brew linkapps python
+		#export OVERRIDE_PYTHON_INTERPRETER=-DPYTHON_EXECUTABLE:FILEPATH=$(python-config --prefix)"/bin/python"
+		#export OVERRIDE_PYTHON_LIBRARY_PATH=-DPYTHON_LIBRARY=$(python-config --prefix)"/lib/libpython2.7.dylib"
 
 		# Install numpy via pip:
-		sudo pip install --upgrade pip
-		sudo pip install -q numpy	
+		#sudo pip install --upgrade pip
+		#sudo pip install -q numpy	
 	fi
 	
 else 
@@ -43,7 +43,7 @@ else
 		#sudo pip install -U virtualenvwrapper
 		#sudo virtualenv /opt/python/3.5.0
 		#source /opt/python/3.5.0/activate
-		sudo pip install -q numpy
+		#sudo pip install -q numpy
 		#export OVERRIDE_PYTHON_INTERPRETER="-DPYTHON_EXECUTABLE:FILEPATH=/opt/python/3.5.0/bin/python"
 		#export OVERRIDE_PYTHON_LIBRARY_PATH="-DPYTHON_LIBRARY=/opt/python/3.5.0/lib/libpython3.4m.so.1"
 		#export OVERRIDE_PYTHON_INCLUDE_DIR="-DPYTHON_INCLUDE_DIR=/opt/python/3.5.0/include"
