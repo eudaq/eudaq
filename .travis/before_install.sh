@@ -17,6 +17,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		
 		brew upgrade pyenv
 		brew install homebrew/boneyard/pyenv-pip-rehash
+		brew install pyenv-virtualenv
 		brew install pyenv-virtualenvwrapper
 		
 		pyenv init
