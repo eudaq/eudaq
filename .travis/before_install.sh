@@ -51,6 +51,8 @@ else
 		pyenv virtualenvs
 		#source venv/bin/activate
 		pyenv activate venv
+		sudo -H pip install -q numpy
+		pyenv rehash
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
 	fi
