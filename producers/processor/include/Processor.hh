@@ -109,7 +109,10 @@ namespace eudaq {
     std::shared_ptr<Processor> m_ps_hub;
     
     std::set<uint32_t> m_evlist_white;
-    std::vector<PSSP > m_pslist_next;
+    // std::vector<PSSP> m_pslist_next;
+    std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
+
+    
     std::queue<EVUP> m_fifo_events;
     std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs;
     std::mutex m_mtx_fifo;
