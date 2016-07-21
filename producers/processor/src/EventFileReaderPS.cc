@@ -7,6 +7,12 @@ namespace{
   static RegisterDerived<Processor, typename std::string, EventFileReaderPS, uint32_t> reg_EXAMPLEPS("EventFileReaderPS");
 }
 
+namespace{
+  static RegisterDerived<Processor, typename std::string, EventFileReaderPS, typename std::string> reg_EXAMPLEPS_str("EventFileReaderPS");
+}
+
+
+
 EventFileReaderPS::EventFileReaderPS(uint32_t psid)
   :Processor("EventFileReaderPS", psid){
   InsertEventType(Event::str2id("_RAW"));

@@ -9,6 +9,8 @@ namespace eudaq{
   class EventFileReaderPS:public Processor{
   public:
     EventFileReaderPS(uint32_t psid);
+    EventFileReaderPS(std::string cmd)
+      :Processor("EventFileReaderPS", cmd){};
 
     virtual ~EventFileReaderPS(){};
 

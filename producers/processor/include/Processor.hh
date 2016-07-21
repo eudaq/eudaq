@@ -31,6 +31,7 @@ namespace eudaq {
   // using EVUP = std::unique_ptr<RawDataEvent>;
   using EVUP = std::unique_ptr<Event>;
   using ProcessorClassFactory = ClassFactory<Processor, typename std::string, uint32_t>;
+  using PSFactory = ClassFactory<Processor, typename std::string, typename std::string>;
   
   class DLLEXPORT Processor{
   public:
@@ -54,17 +55,17 @@ namespace eudaq {
     };
     
     Processor(std::string pstype, uint32_t psid);
+    Processor(std::string pstype, std::string cmd);
+
     Processor(){};
     virtual ~Processor();
     virtual void ProcessUserEvent(EVUP ev);
     virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     virtual void ProduceEvent();
     virtual void ConsumeEvent();
-    
 
     bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
     bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
-
     
     std::string GetType(){return m_pstype;};
     uint32_t GetID(){return m_psid;};
@@ -82,7 +83,6 @@ namespace eudaq {
     
     PSSP GetPSHub(){return m_ps_hub;};
     void SetPSHub(PSSP ps); //TODO: thread safe
-    virtual std::set<uint32_t> UpdateEventWhiteList();
     void InsertEventType(uint32_t evtype);
     
     void ProcessSysEvent(EVUP ev);
@@ -101,7 +101,6 @@ namespace eudaq {
     Processor& operator<<(std::string cmd_str);
     // Processor& operator>>(std::string evt_str);
     
-    
   private:
     std::string m_pstype;
     uint32_t m_psid;
@@ -109,7 +108,6 @@ namespace eudaq {
     std::shared_ptr<Processor> m_ps_hub;
     
     std::set<uint32_t> m_evlist_white;
-    // std::vector<PSSP> m_pslist_next;
     std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
 
     
@@ -124,13 +122,6 @@ namespace eudaq {
     std::atomic<STATE> m_state;
     std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist_cache;
     std::atomic<int> m_flag;
-  };
-
-  class SysEventBlockerPS: public Processor{
-  public:
-    SysEventBlockerPS(uint32_t)
-      :Processor("SysEventBlockerPS", 0){};
-    virtual std::set<uint32_t> UpdateEventWhiteList();
   };
   
 }

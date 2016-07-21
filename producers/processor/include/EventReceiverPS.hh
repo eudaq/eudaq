@@ -10,9 +10,9 @@ namespace eudaq{
   public:
     EventReceiverPS(uint32_t psid)
       :Processor("EventReceiverPS", psid){
-      InsertEventType(Event::str2id("_RAW"));
     }
-    
+    EventReceiverPS(std::string cmd)
+      :Processor("EventReceiverPS", cmd){};
 
     virtual void ProduceEvent();
     void ProcessUserEvent(EVUP ev);

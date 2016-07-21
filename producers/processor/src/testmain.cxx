@@ -14,20 +14,18 @@
 using namespace eudaq;
 
 int main(int argn, char **argc){
-  
-
-  
+    
   ProcessorManager& psMan = *ProcessorManager::GetInstance();
 
-  PSSP p1 = psMan.CreateProcessor("ExamplePS", 1);
-  PSSP p2 = psMan.CreateProcessor("ExamplePS", 2);
-  PSSP p3 = psMan.CreateProcessor("ExamplePS", 3);
-  PSSP p4 = psMan.CreateProcessor("ExamplePS", 4);
-  PSSP p5 = psMan.CreateProcessor("ExamplePS", 5);
-  PSSP p6 = psMan.CreateProcessor("EventSenderPS", 6);
-  PSSP p7 = psMan.CreateProcessor("EventReceiverPS", 7);
-  PSSP p8 = psMan.CreateProcessor("ExamplePS", 8);
-  PSSP p0 = psMan.CreateProcessor("EventFileReaderPS", 0);
+  PSSP p0 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=0;SYS:EVTYPE:ADD=_DET");
+  PSSP p1 = psMan.MakePSSP("ExamplePS", "SYS:PSID=1;SYS:EVTYPE:ADD=_DET");
+  PSSP p2 = psMan.MakePSSP("ExamplePS", "SYS:PSID=2;SYS:EVTYPE:ADD=_DET");
+  PSSP p3 = psMan.MakePSSP("ExamplePS", "SYS:PSID=3;SYS:EVTYPE:ADD=_DET");
+  PSSP p4 = psMan.MakePSSP("ExamplePS", "SYS:PSID=4;SYS:EVTYPE:ADD=_DET");
+  PSSP p5 = psMan.MakePSSP("ExamplePS", "SYS:PSID=5;SYS:EVTYPE:ADD=_DET");
+  PSSP p6 = psMan.MakePSSP("EventSenderPS","SYS:PSID=6;SYS:EVTYPE:ADD=_DET");
+  PSSP p7 = psMan.MakePSSP("EventReceiverPS", "SYS:PSID=7;SYS:EVTYPE:ADD=_DET");
+  PSSP p8 = psMan.MakePSSP("ExamplePS", "SYS:PSID=8");
   
   std::cout<<"xxxxxxx"<<std::endl;
   
@@ -36,12 +34,10 @@ int main(int argn, char **argc){
   psMan>>p7>>p8;
   p2>>p4;
 
-  p7<<"SETSERVER=tcp://40000";
-  p7->RunProducerThread();
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  p6<<"CONNECT=Producer,p6,tcp://127.0.0.1:40000";
-  p0<<"FILE=/opt/eudaq/run000703.raw";  
-  p0->RunProducerThread();  
+  p7<<"SETSERVER=tcp://40000;SYS:PD:RUN";
+  p6<<"SYS:SLEEP=1000;CONNECT=Producer,p6,tcp://127.0.0.1:40000";
+  p0<<"SYS:SLEEP=1000;FILE=/opt/eudaq/run000703.raw;SYS:PD:RUN";
+
   std::cout<<"xxxxxxx"<<std::endl;
   
   uint32_t i;

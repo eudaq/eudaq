@@ -25,11 +25,11 @@ namespace eudaq{
     void RegisterProcessorType(std::string pstype, CreatePS c, DestroyPS d);
     void RegisterEventType(std::string evtype, CreateEV c, DestroyEV d);
     void RegisterProcessing(PSSP ps, EVUP ev);
-    void RegisterProcessing(uint32_t psid, EVUP ev);
     
     void EventLoop();
 
     PSSP CreateProcessor(std::string pstype, uint32_t psid);
+    PSSP MakePSSP(std::string pstype, std::string cmd = "");
     EVUP CreateEvent(std::string evtype);
 
     PSSP operator>>(PSSP psr);
@@ -38,7 +38,6 @@ namespace eudaq{
     
     
   private:
-    std::map<uint32_t, PSSP > m_pslist_instance;
     std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist;
     std::map<std::string, std::pair<CreatePS, DestroyPS> > m_pslist;  //std::pair<Processor * (*)(), void(*)(Processor *)>
     std::queue<std::pair<PSSP, EVUP> > m_fifo_events;

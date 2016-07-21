@@ -8,11 +8,12 @@ namespace{
   static RegisterDerived<Processor, typename std::string, EventSenderPS, uint32_t> reg_EXAMPLEPS("EventSenderPS");
 }
 
-
+namespace{
+  static RegisterDerived<Processor, typename std::string, EventSenderPS, typename std::string> reg_EXAMPLEPS_str("EventSenderPS");
+}
 
 EventSenderPS::EventSenderPS(uint32_t psid)
   :Processor("EventSenderPS", psid){
-  InsertEventType(Event::str2id("_RAW"));
 }
 
 void EventSenderPS::ProcessUserEvent(EVUP ev){
@@ -25,10 +26,7 @@ void EventSenderPS::Connect(std::string type, std::string name, std::string serv
   m_sender->Connect(server); //tcp://ipaddress:portnum
 }
 
-
-
 void EventSenderPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
-
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("CONNECT"):{
     std::stringstream ss(cmd_par);

@@ -9,6 +9,11 @@ namespace{
   static RegisterDerived<Processor, typename std::string, ExamplePS, uint32_t> reg_EXAMPLEPS("ExamplePS");
 }
 
+namespace{
+  static RegisterDerived<Processor, typename std::string, ExamplePS, typename std::string> reg_EXAMPLEPS_str("ExamplePS");
+}
+
+
 void ExamplePS::ProcessUserEvent(EVUP ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   ForwardEvent(std::move(ev));
@@ -27,7 +32,6 @@ void ExamplePS::ProduceEvent(){
     Processing(std::move(ev));
   }
 }
-
 
 
 Processor* ExamplePS::Create(uint32_t psid){

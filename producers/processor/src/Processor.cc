@@ -4,6 +4,9 @@
 #include"ProcessorManager.hh"
 
 #include <string>
+#include <chrono>
+#include <thread>
+#include <sstream>
 
 using namespace eudaq;
 
@@ -17,15 +20,32 @@ namespace{
   }
 }
 
+namespace{
+  void DUMMY_FUNCTION_DO_NOT_USE_PROCESSOR_STR(){ //type, cmd
+    eudaq::ClassFactory<Processor, typename std::string, typename std::string>::Create("_DUMMY_", "_DUMMY_");
+    eudaq::ClassFactory<Processor, typename std::string, typename std::string>::GetTypes();
+    eudaq::ClassFactory<Processor, typename std::string, typename std::string>::GetInstance();
+  }
+}
+
 
 
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;
-  m_evlist_white.insert(0);
-  m_evlist_white.insert(Event::str2id("_RAW"));
-  m_evlist_white.insert(Event::str2id("_DET"));
+  // m_evlist_white.insert(Event::str2id("_RAW"));
+  // m_evlist_white.insert(Event::str2id("_DET"));
 }
+
+
+Processor::Processor(std::string pstype, std::string cmd)
+  :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
+  m_num_upstream = 0;
+  // m_evlist_white.insert(Event::str2id("_RAW"));
+  // m_evlist_white.insert(Event::str2id("_DET"));
+  *this<<cmd;
+}
+
 
 Processor::~Processor() {
   std::cout<<"destructure PSID = "<<m_psid<<std::endl;
@@ -120,14 +140,6 @@ void Processor::CreateNextProcessor(std::string pstype, uint32_t psid){
 }
 
 
-std::set<uint32_t> Processor::UpdateEventWhiteList(){
-  for(auto& psev: m_pslist_next){
-    auto evtype_list = psev.first->UpdateEventWhiteList();
-    m_evlist_white.insert(evtype_list.begin(), evtype_list.end());    
-  }
-  return m_evlist_white;
-}
-
 void Processor::AddNextProcessor(PSSP ps){
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
@@ -208,29 +220,60 @@ void Processor::RunProducerThread(){
 void Processor::RunHubThread(){
   std::thread t(&Processor::HubProcessing, this);
   m_flag = m_flag|FLAG_HUB_RUN;//safe
-
   t.detach();
 }
 
 void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
-  case cstr2hash("SYS:RUN"):{
+  case cstr2hash("SYS:PD:RUN"):{
     RunProducerThread();
     break;
   }
-  case cstr2hash("SYS:STOP"):{
-    //TODO
+  case cstr2hash("SYS:CS:RUN"):{
+    RunConsumerThread();
     break;
   }
-  case cstr2hash("SYS:EVENT:ADD"):{
-   //TODO 
+  case cstr2hash("SYS:PD:STOP"):{
+    //TODO, setflag
     break;
-  }  
+  }
+  case cstr2hash("SYS:CS:STOP"):{
+    //TODO, setflag
+    break;
+  }
+  case cstr2hash("SYS:SLEEP"):{
+    std::stringstream ss(cmd_par);
+    uint32_t msec;
+    ss>>msec;
+    std::this_thread::sleep_for(std::chrono::milliseconds(msec));
+    break;
+  }
+  case cstr2hash("SYS:EVTYPE:ADD"):{
+    std::stringstream ss(cmd_par);
+    std::string evtype;
+    while(getline(ss, evtype, ',')){
+      m_evlist_white.insert(Event::str2id(evtype));
+    }
+    break;
+  }
+  case cstr2hash("SYS:EVTYPE:DEL"):{
+    std::stringstream ss(cmd_par);
+    std::string evtype;
+    while(getline(ss, evtype, ',')){
+      m_evlist_white.erase(Event::str2id(evtype));
+    }
+    break;
+  }
+
+  case cstr2hash("SYS:PSID"):{
+    std::stringstream ss(cmd_par);
+    ss>>m_psid;
+    break;
+  }
+
   default:
     Processor::ProcessUsrCmd(cmd_name, cmd_par);
   }
-
-
 }
 
 
@@ -275,7 +318,7 @@ Processor& Processor::operator<<(std::string cmd_list){ //TODO: decode
     val_str=trim(val_str);
     if(!name_str.empty()){
       name_str=ucase(name_str);
-      if(!cmd.compare(0,3,"SYS")){	
+      if(!cmd.compare(0,3,"SYS")){
 	ProcessSysCmd(name_str, val_str);
       }
       else
@@ -290,20 +333,9 @@ PSSP operator<<(PSSP psl, std::string cmd_list){
   return psl;
 }
 
-
-std::set<uint32_t> SysEventBlockerPS::UpdateEventWhiteList(){
-  auto evlist = Processor::UpdateEventWhiteList();
-  auto it = evlist.find(0); //0 sys
-  evlist.erase(it);
-  return evlist;
-}
-
-
-
 PSSP operator>>(PSSP psl, PSSP psr){
   return *psl>>psr;
 }
-
 
 PSSP operator>>(PSSP psl, std::string psr_str){
   std::string pstype;
@@ -314,4 +346,3 @@ PSSP operator>>(PSSP psl, std::string psr_str){
   PSSP psr = psMan->CreateProcessor(pstype, psid);
   return *psl>>psr;
 }
-

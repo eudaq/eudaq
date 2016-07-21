@@ -10,6 +10,10 @@ namespace{
 }
 
 
+namespace{
+  static RegisterDerived<Processor, typename std::string, EventReceiverPS, typename std::string> reg_EXAMPLEPS_str("EventReceiverPS");
+}
+
 void EventReceiverPS::ProcessUserEvent(EVUP ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   ForwardEvent(std::move(ev));

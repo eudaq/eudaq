@@ -25,6 +25,11 @@ PSSP ProcessorManager::CreateProcessor(std::string pstype, uint32_t psid){
 }
 
 
+PSSP ProcessorManager::MakePSSP(std::string pstype, std::string cmd){
+  PSSP ps(std::move(PSFactory::Create(pstype, cmd)));
+  return ps;
+}
+
 EVUP ProcessorManager::CreateEvent(std::string evtype){
   auto it = m_evlist.find(evtype);
   if(it!=m_evlist.end()){
@@ -54,17 +59,6 @@ void ProcessorManager::RegisterProcessing(PSSP ps, EVUP ev){
   m_fifo_events.push(std::make_pair(ps, std::move(ev)));
 }
 
-void ProcessorManager::RegisterProcessing(uint32_t psid, EVUP ev){
-  std::lock_guard<std::mutex> lk(m_mtx_fifo);
-  auto it = m_pslist_instance.find(psid);
-  if(it!=m_pslist_instance.end()){
-    PSSP ps=it->second;
-    m_fifo_events.push(std::make_pair(ps, std::move(ev)));
-  }
-  else{
-    std::cout<<"no psid "<<psid<<std::endl;
-  }
-}
 
 void ProcessorManager::EventLoop(){
   while(1){
@@ -74,7 +68,6 @@ void ProcessorManager::EventLoop(){
     }
   }
 }
-
 
 
 PSSP ProcessorManager::operator>>(PSSP psr){
