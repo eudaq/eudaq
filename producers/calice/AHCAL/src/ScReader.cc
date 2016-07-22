@@ -3,6 +3,8 @@
 #include "eudaq/RawDataEvent.hh"
 #include "AHCALProducer.hh"
 
+#include "eudaq/Logger.hh"
+
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -24,7 +26,7 @@ namespace eudaq {
     // using characters to send the run number
     ostringstream os;
     os << "RUN_START"; //newLED
-    //os << "START"; //newLED
+    // os << "START"; //newLED
     os.width(8);
     os.fill('0');
     os << runNo;
@@ -70,16 +72,54 @@ namespace eudaq {
 
   void ScReader::Read(std::deque<char> & buf, std::deque<eudaq::RawDataEvent *> & deqEvent)
   {
-
-    
     try{
       while(1){
 
-    	unsigned char magic[2] = {0xcd, 0xcd};
-    	while(buf.size() > 1 && ((unsigned char)buf[0] != magic[0] || (unsigned char)buf[1] != magic[1])) {
+        unsigned char magic_sc[2] = {0xac, 0xdc};// find slow control info
+        unsigned char magic_led[2] = {0xda, 0xc1};// find LED voltages info
+    	unsigned char magic[2] = {0xcd, 0xcd};// find data
+
+	// Look into the buffer to find settings info: LED, slow control, and the magic word that 
+	// points to the beginning of the data stream
+
+	while(buf.size() > 1 && ((unsigned char)buf[0] != magic[0] || (unsigned char)buf[1] != magic[1])) {
+
+	  if( (unsigned char)buf[0] == magic_led[0] || (unsigned char)buf[1] == magic_led[1] )  {
+
+	    //Read LED information (always present)
+	    int ibuf=2;
+	    int layerN = (unsigned char)buf[ibuf];
+	    ledInfo.push_back(layerN);//save the number of layers
+
+	    while(buf.size() > ibuf && buf[ibuf] != magic[0] && (ibuf+1) < (layerN*4) ) {
+	      ibuf++;
+	      int ledId = (unsigned char)buf[ibuf];//layer id
+	      ledInfo.push_back(ledId);
+	      ibuf++;
+	      unsigned ledV = (((unsigned char)buf[ibuf] << 8) + (unsigned char)buf[ibuf+1]);//*2;
+	      ledInfo.push_back(ledV);
+	      ibuf+=2;    
+	      int ledOnOff = (unsigned char)buf[ibuf];//led on/off
+	      ledInfo.push_back(ledOnOff);
+	      cout<< " led "<< ibuf<<endl;
+	    }        
+	    buf.pop_front();
+	  }  
+
+	  // read SlowControl Information (alway present)
+	  if( (unsigned char)buf[0] == magic_sc[0] || (unsigned char)buf[1] == magic_sc[1] )  {
+	    int ibuf=2;
+
+	    while(buf.size() > ibuf && buf[ibuf] != magic[0]) {
+	      int sc = (unsigned char)buf[ibuf];
+	      slowcontrol.push_back(sc);
+	      ibuf++;    
+	    }        
+	    buf.pop_front();
+	  }
+
 	  buf.pop_front();
-	  cout<<" pop front "<<endl;
-	}
+        }
 
     	if(buf.size() <= e_sizeLdaHeader) throw 0; // all data read
 
@@ -92,23 +132,23 @@ namespace eudaq {
  
     	// for the temperature data we should ignore the cycle # because it's invalid.
     	bool TempFlag = (status == 0xa0 && buf[10] == 0x41 && buf[11] == 0x43 && buf[12] == 0x7a && buf[13] == 0);
-	// bool LEDinfoFlag = (status == 0xa0 && buf[10] == 0x41 && buf[11] == 0x43 && buf[12] == 0x7a && buf[13] == 0);
-    	// bool SlowControlFlag = (status == 0xa0 && buf[10] == 0x41 && buf[11] == 0x43 && buf[12] == 0x7a && buf[13] == 0);
 
   
 	deqEvent = NewEvent_createRawDataEvent(deqEvent, TempFlag, cycle);
         
+	if(slowcontrol.size()>0  ) {
+	  AppendBlockGeneric(deqEvent,3,slowcontrol);
+	  slowcontrol.clear();
+	}
+
+	if(ledInfo.size()>0 ) {
+	  AppendBlockGeneric(deqEvent,4,ledInfo);
+	  ledInfo.clear();
+	}
+
 	if(TempFlag == true )
 	  readTemperature(buf);
 	else if (_vecTemp.size()>0) AppendBlockTemperature(deqEvent,5);
-
-	// if(LEDinfoFlag == true )
-	//   readLEDinfo(buf);
-	// else if (_vecLED.size()>0) AppendBlockLED(deqEvent,4);
-
-	// if(SlowControlFlag == true )
-	//   readSlowControl(buf);
-	// else if (_vecSC.size()>0) AppendBlockSC(deqEvent,3);
 
 
 	if(!(status & 0x40)){
@@ -168,6 +208,15 @@ namespace eudaq {
       
       _vecTemp.push_back(make_pair(make_pair(lda,port),data));
   }
+
+
+void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, vector<int> intVector)
+
+  {
+    RawDataEvent *ev = deqEvent.back();
+    ev->AppendBlock(nb, intVector);
+  }
+
 
   void ScReader::AppendBlockTemperature(std::deque<eudaq::RawDataEvent *> deqEvent, int nb)
 
