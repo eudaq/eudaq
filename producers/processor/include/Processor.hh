@@ -84,7 +84,8 @@ namespace eudaq {
     PSSP GetPSHub(){return m_ps_hub;};
     void SetPSHub(PSSP ps); //TODO: thread safe
     void InsertEventType(uint32_t evtype);
-    
+    void EraseEventType(uint32_t evtype);
+
     void ProcessSysEvent(EVUP ev);
     void AddNextProcessor(PSSP ps);
     void CreateNextProcessor(std::string pstype, uint32_t psid);
@@ -97,9 +98,8 @@ namespace eudaq {
     
     PSSP operator>>(PSSP psr);
 
-    Processor& operator<<(EVUP ev);    
+    Processor& operator<<(EVUP ev);
     Processor& operator<<(std::string cmd_str);
-    // Processor& operator>>(std::string evt_str);
     
   private:
     std::string m_pstype;
@@ -129,6 +129,7 @@ namespace eudaq {
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
 DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP psl, std::string cmd_list);
+
 
 
 #endif

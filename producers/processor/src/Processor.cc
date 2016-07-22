@@ -33,16 +33,12 @@ namespace{
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;
-  // m_evlist_white.insert(Event::str2id("_RAW"));
-  // m_evlist_white.insert(Event::str2id("_DET"));
 }
 
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
   m_num_upstream = 0;
-  // m_evlist_white.insert(Event::str2id("_RAW"));
-  // m_evlist_white.insert(Event::str2id("_DET"));
   *this<<cmd;
 }
 
@@ -54,6 +50,11 @@ Processor::~Processor() {
 void Processor::InsertEventType(uint32_t evtype){
   m_evlist_white.insert(evtype);
 }
+
+void Processor::EraseEventType(uint32_t evtype){
+  m_evlist_white.erase(evtype);
+}
+
 
 void Processor::ProcessUserEvent(EVUP ev){
   std::cout<< "ProcessUserEvent ["<<m_psid<<"] "<<ev->GetSubType()<<std::endl;
@@ -79,15 +80,12 @@ void Processor::ProcessSysEvent(EVUP ev){
 }
 
 void Processor::Processing(EVUP ev){
-  //todo: check white list
-  // if(m_evlist_white.find(ev->get_id())!=m_evlist_white.end()){
     if(IsAsync()){
       AsyncProcessing(std::move(ev));
     }
     else{
       SyncProcessing(std::move(ev));
     }
-  // }
 }
 
 void Processor::SyncProcessing(EVUP ev){
@@ -134,7 +132,8 @@ void Processor::CreateNextProcessor(std::string pstype, uint32_t psid){
   auto psMan = ProcessorManager::GetInstance();
   PSSP ps = psMan->CreateProcessor(pstype, psid);
   if(ps){
-    m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));  
+    m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
+    m_evlist_white.clear();
     ps->SetPSHub(GetPSHub());
   }
 }
@@ -143,6 +142,7 @@ void Processor::CreateNextProcessor(std::string pstype, uint32_t psid){
 void Processor::AddNextProcessor(PSSP ps){
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
+  m_evlist_white.clear();
 }
 
 
@@ -151,13 +151,9 @@ void Processor::ProduceEvent(){
 
 
 void Processor::RegisterProcessing(PSSP ps, EVUP ev){
-  // std::cout<<"locking register  ";
   std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
-  // std::cout<<"locked register  ";
-
   m_fifo_pcs.push(std::make_pair(ps, std::move(ev)));
   m_cv_pcs.notify_all();
-  // std::cout<<"unlock register  "<<std::endl;
 }
 
 
@@ -174,9 +170,7 @@ void Processor::SetPSHub(PSSP ps){
 
 void Processor::HubProcessing(){
   while(IsHub()){ //TODO: modify STATE enum
-    // std::cout<<"locking pcs  ";
     std::unique_lock<std::mutex> lk(m_mtx_pcs);
-    // std::cout<<"locked pcs  ";
     bool fifoempty = m_fifo_pcs.empty();
     if(fifoempty){
       std::cout<<"HUB"<<m_psid<<": fifo is empty, waiting"<<std::endl;
@@ -270,7 +264,7 @@ void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
     ss>>m_psid;
     break;
   }
-
+    
   default:
     Processor::ProcessUsrCmd(cmd_name, cmd_par);
   }
@@ -291,7 +285,6 @@ PSSP Processor::operator>>(PSSP psr){
   }
   if(nup == 1 && !psr->IsHub()){
     psr->SetPSHub(psr);
-    // psr->UpdateDownstreamHub();//TODO
     psr->RunHubThread(); //now, it is hub
   }
   psr->IncreaseNumUpstream();
@@ -325,6 +318,8 @@ Processor& Processor::operator<<(std::string cmd_list){ //TODO: decode
 	ProcessUsrCmd(name_str, val_str);
     }
   }
+
+  return *this;
 }
 
 
@@ -333,16 +328,45 @@ PSSP operator<<(PSSP psl, std::string cmd_list){
   return psl;
 }
 
+
 PSSP operator>>(PSSP psl, PSSP psr){
   return *psl>>psr;
 }
 
-PSSP operator>>(PSSP psl, std::string psr_str){
-  std::string pstype;
-  uint32_t psid;
-  std::stringstream ss(psr_str);
-  ss>>pstype>>psid;
-  auto psMan = ProcessorManager::GetInstance();
-  PSSP psr = psMan->CreateProcessor(pstype, psid);
-  return *psl>>psr;
+PSSP operator>>(PSSP psl, std::string stream_str){
+  //pstype(par)
+  //EV(ADD=ev1,ev2,ev3_)
+  std::string cmd_str;
+  std::string par_str;
+  std::stringstream ss(stream_str);
+  getline(ss, cmd_str, '(');
+  getline(ss, par_str, ')');
+  cmd_str=trim(cmd_str);
+  if(cmd_str=="EV"){
+    std::stringstream ss_par_str(par_str);
+    std::string ev_str;
+    while(getline(ss_par_str, ev_str, ';' )){
+      std::stringstream ss_ev_str(ev_str);
+      std::string ev_cmd, ev_list;
+      getline(ss_ev_str, ev_cmd, '=');
+      ev_cmd=trim(ev_cmd);
+      getline(ss_ev_str, ev_list);
+      std::stringstream ss_ev_list(ev_list);
+      std::string ev_type;
+      while(getline(ss_ev_list, ev_type, ',')){
+	ev_type=trim(ev_type);
+	if(ev_cmd=="ADD") psl->InsertEventType(Event::str2id(ev_type));
+	if(ev_cmd=="DEL") psl->EraseEventType(Event::str2id(ev_type));
+      }
+    }
+    return psl;
+  }
+  else{
+    auto psMan = ProcessorManager::GetInstance();
+    std::string ps_type = cmd_str; //TODO
+    ps_type=trim(ps_type);
+    PSSP psr = psMan->MakePSSP(ps_type, par_str);
+    return *psl>>psr;
+  }
 }
+
