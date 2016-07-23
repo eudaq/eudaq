@@ -20,8 +20,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		brew install pyenv-virtualenv
 		brew install pyenv-virtualenvwrapper
 		
-		source pyenv init
-		source pyenv virtualenv-init
+		pyenv init -
+		pyenv virtualenv-init -
 		
 		#cat "eval \"$(pyenv init -)\"" >> ~/.bashrc
 		#cat "eval \"$(pyenv virtualenv-init -)\"" >> ~/.bashrc
