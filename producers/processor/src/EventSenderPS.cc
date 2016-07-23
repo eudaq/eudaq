@@ -17,7 +17,10 @@ EventSenderPS::EventSenderPS(uint32_t psid)
 }
 
 void EventSenderPS::ProcessUserEvent(EVUP ev){
-  if (!m_sender) EUDAQ_THROW("DataSender is not created!");
+  if (!m_sender){
+    EUDAQ_THROW("DataSender is not created!");
+  }
+  // else
   m_sender->SendEvent(*ev);
 }
 
@@ -40,6 +43,6 @@ void EventSenderPS::ProcessUsrCmd(const std::string cmd_name, const std::string 
     break;
   }
   default:
-    Processor::ProcessUsrCmd(cmd_name, cmd_par);
+    std::cout<<"unkonw user cmd"<<std::endl;
   }
 }

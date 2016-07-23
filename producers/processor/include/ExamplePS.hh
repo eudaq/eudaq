@@ -15,7 +15,9 @@ namespace eudaq{
     ExamplePS(uint32_t psid)
       :Processor("ExamplePS", psid){};
     ExamplePS(std::string cmd)
-      :Processor("ExamplePS", cmd){};
+      :Processor("ExamplePS", ""){
+      *this<<cmd;
+    };
 
     
     virtual ~ExamplePS() {};

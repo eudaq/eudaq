@@ -39,7 +39,6 @@ Processor::Processor(std::string pstype, uint32_t psid)
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
   m_num_upstream = 0;
-  *this<<cmd;
 }
 
 
@@ -218,6 +217,8 @@ void Processor::RunHubThread(){
 }
 
 void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
+  std::cout<<"---------ProcessSysCmd "<<cmd_name<<"="<<cmd_par<<std::endl;
+
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("SYS:PD:RUN"):{
     RunProducerThread();
@@ -264,15 +265,13 @@ void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
     ss>>m_psid;
     break;
   }
-    
-  default:
-    Processor::ProcessUsrCmd(cmd_name, cmd_par);
   }
 }
 
 
 void Processor::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
-  
+  std::cout<<"---------default ProcessSysCmd "<<cmd_name<<"="<<cmd_par<<std::endl;
+  m_cmdlist_init.push_back(std::make_pair(cmd_name, cmd_par)); //configured
 }
 
 

@@ -109,7 +109,8 @@ namespace eudaq {
     
     std::set<uint32_t> m_evlist_white;
     std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
-
+    std::vector<std::pair<std::string, std::string>> m_cmdlist_init;
+    
     
     std::queue<EVUP> m_fifo_events;
     std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs;
