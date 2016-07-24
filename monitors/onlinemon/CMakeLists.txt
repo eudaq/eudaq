@@ -1,8 +1,14 @@
 OPTION(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
 IF(BUILD_onlinemon)  
-  FIND_PACKAGE( ROOT REQUIRED)
-  INCLUDE_DIRECTORIES( . include ${ROOT_INCLUDE_DIR} )
+  LIST(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+  FIND_PACKAGE( ROOT REQUIRED COMPONENTS Gui)
+  INCLUDE(${ROOT_USE_FILE})
+  INCLUDE_DIRECTORIES( . include)
 
+  IF(${ROOT_VERSION_MAJOR} GREATER 5)
+    ADD_DEFINITIONS(-DEUDAQ_LIB_ROOT6)
+  ENDIF()
+  
   SET(OnlineMon_SOURCES
     src/OnlineMon.cxx
     src/OnlineMonWindow.cc
@@ -24,18 +30,20 @@ IF(BUILD_onlinemon)
     )
 
   SET(OnlineMon_HEADERS 
-    OnlineMonWindow.hh
-    SimpleStandardHit.hh
-    SimpleStandardCluster.hh
-    SimpleStandardPlane.hh
-    OnlineMonConfiguration.hh
-    CheckEOF.hh
+    include/OnlineMonWindow.hh
+    include/SimpleStandardHit.hh
+    include/SimpleStandardCluster.hh
+    include/SimpleStandardPlane.hh
+    include/OnlineMonConfiguration.hh
+    include/CheckEOF.hh
     )
 
-  SET(OnlineMon_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict.cxx) 
-  ROOT_GENERATE_DICTIONARY(OnlineMonDict ${OnlineMon_HEADERS})
+  SET(OnlineMon_DICT ${CMAKE_CURRENT_BINARY_DIR}/OnlineMon_ROOT.cxx)
+  SET(OnlineMon_PCM ${CMAKE_CURRENT_BINARY_DIR}/libOnlineMon_ROOT_rdict.pcm)
+  SET(OnlineMon_MAP ${CMAKE_CURRENT_BINARY_DIR}/libOnlineMon_ROOT.rootmap)
+  ROOT_GENERATE_DICTIONARY(OnlineMon_ROOT ${OnlineMon_HEADERS})
 
-  ADD_EXECUTABLE(OnlineMon.exe ${OnlineMon_SOURCES} ${OnlineMon_DICTIONARY})
+  ADD_EXECUTABLE(OnlineMon.exe ${OnlineMon_SOURCES} ${OnlineMon_DICT})
   TARGET_LINK_LIBRARIES(OnlineMon.exe EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
   INSTALL(TARGETS OnlineMon.exe
@@ -44,13 +52,12 @@ IF(BUILD_onlinemon)
     ARCHIVE DESTINATION lib
     )
 
-
-  IF(found_root_major_vers GREATER 5)
-    SET(OnlineMon_PCM ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict_rdict.pcm) 
+  IF(${ROOT_VERSION_MAJOR} GREATER 5)
     INSTALL(FILES
-      ${CMAKE_CURRENT_BINARY_DIR}/OnlineMonDict_rdict.pcm
+      ${OnlineMon_PCM}
+      ${OnlineMon_MAP}
       DESTINATION bin
       )
-  ENDIF(found_root_major_vers GREATER 5)
-
-ENDIF(BUILD_onlinemon)
+  ENDIF()
+  
+ENDIF()

@@ -16,21 +16,19 @@ INSTALL(TARGETS ${PLUGIN_NAME}
   )
 
 
-
+LIST(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 FIND_PACKAGE(ROOT REQUIRED)
-
-INCLUDE_DIRECTORIES(include ${ROOT_INCLUDE_DIR})
+INCLUDE(${ROOT_USE_FILE})
+INCLUDE_DIRECTORIES(include)
 
 SET(ROOTProducer_name ROOTProducer)
-SET(ROOTProducer_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/${ROOTProducer_name}.cxx)
 SET(ROOTProducer_SOURCES
   src/ROOTProducer.cpp
   src/DemoHardware.cpp
   )
 
-
-ROOT_GENERATE_DICTIONARY(${ROOTProducer_name}  ROOTProducer.h DemoHardware.h)
-ADD_LIBRARY(${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_DICTIONARY})
+ROOT_GENERATE_DICTIONARY(${ROOTProducer_name}_ROOT  include/ROOTProducer.h include/DemoHardware.h)
+ADD_LIBRARY(${ROOTProducer_name} SHARED ${ROOTProducer_SOURCES} ${ROOTProducer_name}_ROOT.cxx)
 TARGET_LINK_LIBRARIES(${ROOTProducer_name} EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS ${ROOTProducer_name}
@@ -39,10 +37,12 @@ INSTALL(TARGETS ${ROOTProducer_name}
   ARCHIVE DESTINATION lib
   )
 
-IF(found_root_major_vers GREATER 5)
-  SET(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/${ROOTProducer_name}_rdict.pcm)
+IF(${ROOT_VERSION_MAJOR} GREATER 5)
+  SET(ROOTProducer_PCM ${CMAKE_CURRENT_BINARY_DIR}/lib${ROOTProducer_name}_ROOT_rdict.pcm)
+  SET(ROOTProducer_MAP ${CMAKE_CURRENT_BINARY_DIR}/lib${ROOTProducer_name}_ROOT.rootmap)
   INSTALL(FILES
     ${ROOTProducer_PCM}
+    ${ROOTProducer_MAP}
     DESTINATION lib
     )
-ENDIF(found_root_major_vers GREATER 5)
+ENDIF()
