@@ -6,7 +6,8 @@ echo $CC --version
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 	# OS X: update brew cache:
-	brew update
+	brew update || brew update
+	brew outdated openssl || brew upgrade openssl
 	
 	brew unlink cmake python python3
 	
@@ -15,13 +16,13 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
 		
-		brew upgrade pyenv
-		brew install homebrew/boneyard/pyenv-pip-rehash
-		brew install pyenv-virtualenv
-		brew install pyenv-virtualenvwrapper
+#		brew upgrade pyenv
+#		brew install homebrew/boneyard/pyenv-pip-rehash
+#		brew install pyenv-virtualenv
+#		brew install pyenv-virtualenvwrapper
 		
-		pyenv init -
-		pyenv virtualenv-init -
+#		pyenv init -
+#		pyenv virtualenv-init -
 		
 		#cat "eval \"$(pyenv init -)\"" >> ~/.bashrc
 		#cat "eval \"$(pyenv virtualenv-init -)\"" >> ~/.bashrc
@@ -30,15 +31,32 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		#source ~/.bashrc
 		#exec $SHELL
 		
-		pyenv install 3.5.0
-		pyenv global 3.5.0
-		pyenv versions
+#		echo "Installing pyenv"
+#		pyenv install 3.5.0
+#		pyenv global 3.5.0
+#		pyenv versions
 		
-		#pyenv virtualenv 3.5.0 my-virtual-env
-		pyenv virtualenvs
-		pyenv activate my-virtual-env
+#		echo "Installing virtualenv plugin"
+#		pyenv virtualenv 3.5.0 my-virtual-env
+#		pyenv virtualenvs
+#		pyenv activate my-virtual-env
 		#cd my-virtual-env
 		#source bin/activate
+
+		# install pyenv
+		git clone https://github.com/yyuu/pyenv.git ~/.pyenv
+		PYENV_ROOT="$HOME/.pyenv"
+		PATH="$PYENV_ROOT/bin:$PATH"
+		eval "$(pyenv init -)"
+		
+		pyenv install 3.5.1
+		pyenv global 3.5.1
+		
+		pyenv rehash
+		python -m pip install --user virtualenv		
+
+		python -m virtualenv ~/.venv
+		source ~/.venv/bin/activate
 		
 		pip install --upgrade pip
 		pip install -q numpy
