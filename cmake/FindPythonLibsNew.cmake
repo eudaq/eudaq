@@ -168,6 +168,7 @@ else()
         PATHS ${_PYTHON_LIBS_SEARCH}
         NO_DEFAULT_PATH)
     message(STATUS "Found Python lib ${PYTHON_LIBRARY}")
+    set(PYTHONLIBS_FOUND TRUE)
 endif()
 
 # For backward compatibility, set PYTHON_INCLUDE_PATH, but make it internal.
