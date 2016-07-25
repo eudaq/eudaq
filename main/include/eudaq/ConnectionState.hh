@@ -15,13 +15,14 @@ namespace eudaq {
   class DLLEXPORT ConnectionState : public Serializable {
   public:
     enum State {
+      STATE_UNINIT,
       STATE_UNCONF,
       STATE_CONF,
       STATE_RUNNING,
       STATE_ERROR
     };
 
-    ConnectionState(const std::string &msg = "",int state = STATE_UNCONF)
+    ConnectionState(const std::string &msg = "",int state = STATE_UNINIT)
         :m_msg(msg), m_state(state) {}
     ConnectionState(Deserializer &);
 
