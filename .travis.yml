@@ -83,7 +83,7 @@ matrix:
    include:
       - os: osx
         compiler: clang      
-        env: OPTION=modern   
+        env: OPTION=old   
         
 #      - os: linux
 #        compiler: gcc
