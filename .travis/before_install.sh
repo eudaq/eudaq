@@ -15,34 +15,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	if [[ $OPTION == 'modern' ]]; then
 		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
-		
-#		brew upgrade pyenv
-#		brew install homebrew/boneyard/pyenv-pip-rehash
-#		brew install pyenv-virtualenv
-#		brew install pyenv-virtualenvwrapper
-		
-#		pyenv init -
-#		pyenv virtualenv-init -
-		
-		#cat "eval \"$(pyenv init -)\"" >> ~/.bashrc
-		#cat "eval \"$(pyenv virtualenv-init -)\"" >> ~/.bashrc
-		#cat ". ~/.bashrc" >> ~./bash_profile
-		
-		#source ~/.bashrc
-		#exec $SHELL
-		
-#		echo "Installing pyenv"
-#		pyenv install 3.5.0
-#		pyenv global 3.5.0
-#		pyenv versions
-		
-#		echo "Installing virtualenv plugin"
-#		pyenv virtualenv 3.5.0 my-virtual-env
-#		pyenv virtualenvs
-#		pyenv activate my-virtual-env
-		#cd my-virtual-env
-		#source bin/activate
-
 		# install pyenv
 		# https://github.com/pyca/cryptography/blob/master/.travis/install.sh
 		git clone https://github.com/yyuu/pyenv.git ~/.pyenv
@@ -50,8 +22,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		PATH="$PYENV_ROOT/bin:$PATH"
 		eval "$(pyenv init -)"
 		
-		pyenv install 3.5.1
-		pyenv global 3.5.1
+		pyenv install ${PYTHON_VERSION_MODERN}
+		pyenv global ${PYTHON_VERSION_MODERN}
 		
 		pyenv rehash
 		python -m pip install --user virtualenv		
@@ -71,8 +43,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		PATH="$PYENV_ROOT/bin:$PATH"
 		eval "$(pyenv init -)"
 		
-		pyenv install 2.7.10
-		pyenv global 2.7.10
+		pyenv install ${PYTHON_VERSION_OLD}
+		pyenv global ${PYTHON_VERSION_OLD}
 		
 		pyenv rehash
 		python -m pip install --user virtualenv		
@@ -113,8 +85,8 @@ else
 		
 		export PIP_REQUIRE_VIRTUALENV=true
 		
-		pyenv install 3.5.0
-		pyenv global 3.5.0
+		pyenv install ${PYTHON_VERSION_MODERN}
+		pyenv global ${PYTHON_VERSION_MODERN}
 		pyenv versions
 		
 		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
@@ -125,7 +97,7 @@ else
 		pyenv virtualenv-init
 		#pyenv virtualenv-init -
 		
-		pyenv virtualenv 3.5.0 my-virtual-env
+		pyenv virtualenv ${PYTHON_VERSION_MODERN} my-virtual-env
 		pyenv virtualenvs
 		pyenv activate my-virtual-env
 		
@@ -141,8 +113,8 @@ else
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
 		
-		pyenv install 2.7.10
-		pyenv global 2.7.10
+		pyenv install ${PYTHON_VERSION_OLD}
+		pyenv global ${PYTHON_VERSION_OLD}
 		pyenv versions
 		
 		git clone https://github.com/yyuu/pyenv-pip-rehash.git ~/.pyenv/plugins/pyenv-pip-rehash
@@ -151,7 +123,7 @@ else
 		pyenv virtualenv-init
 		#pyenv virtualenv-init -
 		
-		pyenv virtualenv 2.7.10 my-virtual-env
+		pyenv virtualenv ${PYTHON_VERSION_OLD} my-virtual-env
 		pyenv virtualenvs
 		pyenv activate my-virtual-env
 		

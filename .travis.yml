@@ -24,6 +24,9 @@ env:
       - OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
       - OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
       
+      - PYTHON_VERSION_MODERN=3.5.1
+      - PYTHON_VERSION_OLD=2.7.10
+      
       - BUILD_AHCAL=OFF
       - BUILD_BIFAHCAL=OFF
       - BUILD_TESTING=OFF
@@ -80,35 +83,31 @@ env:
 # documentation to be "compiled" in maximum one option
 
 matrix:      
-   include:
+   include:   
+      - os: linux
+        compiler: gcc
+        env: OPTION=modern BUILD_manual=ON
+      - os: linux      
+        compiler: gcc      
+        env: OPTION=old    
+      - os: linux
+        compiler: clang      
+        env: OPTION=modern
+      - os: linux
+        compiler: clang      
+        env: OPTION=old
+      - os: osx      
+        compiler: gcc    
+        env: OPTION=modern    
+      - os: osx
+        compiler: gcc      
+        env: OPTION=old
       - os: osx
         compiler: clang      
-        env: OPTION=old   
-        
-#      - os: linux
-#        compiler: gcc
-#        env: OPTION=modern BUILD_manual=ON
-#      - os: linux      
-#        compiler: gcc      
-#        env: OPTION=old    
-#      - os: linux
-#        compiler: clang      
-#        env: OPTION=modern
-#      - os: linux
-#        compiler: clang      
-#        env: OPTION=old
-#      - os: osx      
-#        compiler: gcc    
-#        env: OPTION=modern    
-#      - os: osx
-#        compiler: gcc      
-#        env: OPTION=old
-#      - os: osx
-#        compiler: clang      
-#        env: OPTION=modern
-#      - os: osx      
-#        compiler: clang      
-#        env: OPTION=old
+        env: OPTION=modern
+      - os: osx      
+        compiler: clang      
+        env: OPTION=old
 
 before_install:
   - source .travis/before_install.sh
