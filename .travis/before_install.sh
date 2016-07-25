@@ -34,7 +34,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		pyenv global 3.5.0
 		pyenv versions
 		
-		pyenv virtualenv 3.5.0 my-virtual-env
+		#pyenv virtualenv 3.5.0 my-virtual-env
 		pyenv virtualenvs
 		pyenv activate my-virtual-env
 		#cd my-virtual-env
