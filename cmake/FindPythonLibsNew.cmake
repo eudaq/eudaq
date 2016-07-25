@@ -58,12 +58,15 @@
 # Use the Python interpreter to find the libs.
 if(PythonLibsNew_FIND_REQUIRED)
     find_package(PythonInterp REQUIRED)
+    message(STATUS "Searching for python interpreter")
 else()
     find_package(PythonInterp)
+    message(STATUS "Searching for python interpreter")
 endif()
 
 if(NOT PYTHONINTERP_FOUND)
     set(PYTHONLIBS_FOUND FALSE)
+    message(STATUS "Searching for python libs failed as searching for python interpreter failed")
     return()
 endif()
 
@@ -94,6 +97,7 @@ if(NOT _PYTHON_SUCCESS MATCHES 0)
         message(FATAL_ERROR
             "Python config failure:\n${_PYTHON_ERROR_VALUE}")
     endif()
+    message(STATUS "Python config failure:\n${_PYTHON_ERROR_VALUE}")    
     set(PYTHONLIBS_FOUND FALSE)
     return()
 endif()
