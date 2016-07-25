@@ -44,6 +44,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		#source bin/activate
 
 		# install pyenv
+		# https://github.com/pyca/cryptography/blob/master/.travis/install.sh
 		git clone https://github.com/yyuu/pyenv.git ~/.pyenv
 		PYENV_ROOT="$HOME/.pyenv"
 		PATH="$PYENV_ROOT/bin:$PATH"
@@ -63,6 +64,24 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		
 	else
 		export ROOT_FILENAME=${ROOT5_FILENAME_MAC}
+		# install pyenv
+		# https://github.com/pyca/cryptography/blob/master/.travis/install.sh
+		git clone https://github.com/yyuu/pyenv.git ~/.pyenv
+		PYENV_ROOT="$HOME/.pyenv"
+		PATH="$PYENV_ROOT/bin:$PATH"
+		eval "$(pyenv init -)"
+		
+		pyenv install 2.7.10
+		pyenv global 2.7.10
+		
+		pyenv rehash
+		python -m pip install --user virtualenv		
+
+		python -m virtualenv ~/.venv
+		source ~/.venv/bin/activate
+		
+		pip install --upgrade pip
+		pip install -q numpy		
 	fi
 	export CMAKE_FILENAME=${CMAKE_FILENAME_MAC}
 
