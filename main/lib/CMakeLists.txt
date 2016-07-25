@@ -2,7 +2,7 @@ option(USE_ROOT "Compiling main library using ROOT" OFF)
 if (USE_ROOT)
    FIND_PACKAGE( ROOT REQUIRED )
 else (USE_ROOT)
-   FIND_PACKAGE( ROOT REQUIRED )
+   # FIND_PACKAGE( ROOT REQUIRED )
 endif (USE_ROOT)
 
 if (ROOT_FOUND)

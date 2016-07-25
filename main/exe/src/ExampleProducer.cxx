@@ -61,7 +61,7 @@ class ExampleProducer : public eudaq::Producer {
       SendEvent(bore);
 
       // At the end, set the ConnectionState that will be displayed in the Run Control.
-      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Running");
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
       started=true;
     }
 
