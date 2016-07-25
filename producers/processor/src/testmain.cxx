@@ -27,26 +27,27 @@ int main(int argn, char **argc){
 
   psMan
     >>p100
-    >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
-    // >>"EV(ADD=_DET)"
-    // >>"ExamplePS(SYS:PSID=8)"
-    // >>"EV(ADD=_DET)"
+    >>p200
+  //   // >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
+  //   // >>"EV(ADD=_DET)"
+  //   // >>"ExamplePS(SYS:PSID=8)"
+  //   // >>"EV(ADD=_DET)"
     ;
   
   // p7<<"SETSERVER=tcp://40000;SYS:PD:RUN";
   // p6<<"CONNECT=Producer,p6,tcp://127.0.0.1:40000";
   
-  psMan
-    >>p200
-    >>"EventFileReaderPS(SYS:PSID=0;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN)"
-    >>"EV(ADD=_DET)"
-    // >>"ExamplePS(SYS:PSID=1)"
-    // >>"EV(ADD=_DET)"
-    // >>"ExamplePS(SYS:PSID=2222)"
-    // >>"EV(ADD=_DET)"
-    >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
-    // >>p6
-    ;
+  // psMan
+  //   >>p200
+  //   >>"EventFileReaderPS(SYS:PSID=0;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN)"
+  //   >>"EV(ADD=_DET)"
+  //   // >>"ExamplePS(SYS:PSID=1)"
+  //   // >>"EV(ADD=_DET)"
+  //   // >>"ExamplePS(SYS:PSID=2222)"
+  //   // >>"EV(ADD=_DET)"
+  //   >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
+  //   // >>p6
+  //   ;
 
   // p0<<"FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN";
 

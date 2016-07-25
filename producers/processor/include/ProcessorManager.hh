@@ -6,8 +6,10 @@
 #include<map>
 #include<mutex>
 
+#ifndef __CINT__
 #include "Platform.hh"
 #include "Processor.hh"
+#endif
 
 namespace eudaq{
 
