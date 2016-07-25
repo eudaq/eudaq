@@ -19,7 +19,7 @@ namespace eudaq {
   }
 
   std::string ConnectionState::State2String(int state) {
-    static const char *const strings[] = {"Unconfigured","Configured","Running","Error"};
+    static const char *const strings[] = {"Uninitialised","Unconfigured","Configured","Running","Error"};
     return strings[state];
   }
 
