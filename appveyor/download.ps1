@@ -37,4 +37,4 @@ function Download ($filename, $url) {
     return $filepath
 }
 
-Download(PAR_FILENAME, PAR_BASE_URL)
+Download($PAR_FILENAME, $PAR_BASE_URL)
