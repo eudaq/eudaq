@@ -52,7 +52,11 @@ before_build:
 build_script:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
+- mkdir %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
+
 - xcopy \\afs\desy.de\group\telescopes\tlu\ZestSC1 %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1 /E
+
+- mkdir %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
 
 - xcopy \\afs\desy.de\group\telescopes\tlu\tlufirmware %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware /E
 
