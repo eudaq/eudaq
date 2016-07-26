@@ -6,10 +6,8 @@
 #include<map>
 #include<mutex>
 
-#ifndef __CINT__
 #include "Platform.hh"
 #include "Processor.hh"
-#endif
 
 namespace eudaq{
 
@@ -26,10 +24,7 @@ namespace eudaq{
     void InitProcessorPlugins();
     void RegisterProcessorType(std::string pstype, CreatePS c, DestroyPS d);
     void RegisterEventType(std::string evtype, CreateEV c, DestroyEV d);
-    void RegisterProcessing(PSSP ps, EVUP ev);
-    
-    void EventLoop();
-
+ 
     PSSP CreateProcessor(std::string pstype, uint32_t psid);
     PSSP MakePSSP(std::string pstype, std::string cmd = "");
     EVUP CreateEvent(std::string evtype);
@@ -37,12 +32,9 @@ namespace eudaq{
     PSSP operator>>(PSSP psr);
     
   private:
-    
-    
-  private:
+    std::vector<PSSP> m_pslist_root;
     std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist;
     std::map<std::string, std::pair<CreatePS, DestroyPS> > m_pslist;  //std::pair<Processor * (*)(), void(*)(Processor *)>
-    std::queue<std::pair<PSSP, EVUP> > m_fifo_events;
     std::mutex m_mtx_fifo;
 
   };

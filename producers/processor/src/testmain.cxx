@@ -19,40 +19,34 @@ int main(int argn, char **argc){
 
   PSSP p0 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=0");
   PSSP p100 = psMan.MakePSSP("ExamplePS", "SYS:PSID=100");
-  PSSP p200 = psMan.MakePSSP("ExamplePS", "SYS:PSID=200");
-  // PSSP p6 = psMan.MakePSSP("EventSenderPS","SYS:PSID=6");
-  // PSSP p7 = psMan.MakePSSP("EventReceiverPS", "SYS:PSID=7");
+  // PSSP p200 = psMan.MakePSSP("ExamplePS", "SYS:PSID=200");
   
   std::cout<<"xxxxxxx"<<std::endl;
 
   psMan
     >>p100
-    >>p200
-  //   // >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
-  //   // >>"EV(ADD=_DET)"
-  //   // >>"ExamplePS(SYS:PSID=8)"
-  //   // >>"EV(ADD=_DET)"
+    >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
     ;
   
-  // p7<<"SETSERVER=tcp://40000;SYS:PD:RUN";
-  // p6<<"CONNECT=Producer,p6,tcp://127.0.0.1:40000";
-  
-  // psMan
-  //   >>p200
-  //   >>"EventFileReaderPS(SYS:PSID=0;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN)"
-  //   >>"EV(ADD=_DET)"
-  //   // >>"ExamplePS(SYS:PSID=1)"
-  //   // >>"EV(ADD=_DET)"
-  //   // >>"ExamplePS(SYS:PSID=2222)"
-  //   // >>"EV(ADD=_DET)"
-  //   >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
-  //   // >>p6
-  //   ;
 
-  // p0<<"FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN";
+  
+  psMan
+    // >>p200
+    >>p0
+    >>"EV(ADD=_DET)"
+    >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
+    ;
+
+  p0<<"FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN";
 
   std::cout<<"xxxxxxx"<<std::endl;
   
   uint32_t i;
   std::cin>>i;  
 }
+
+// "EventFileReaderPS(SYS:PSID=0;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN)"
+// "EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
+// "EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
+// "ExamplePS(SYS:PSID=2222)"
+// "EV(ADD=_DET)"

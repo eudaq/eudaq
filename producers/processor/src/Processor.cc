@@ -113,15 +113,18 @@ void Processor::ForwardEvent(EVUP ev) {
   }
   auto psMan = ProcessorManager::GetInstance();
   size_t remain_ps = pslist.size();
-  for(auto &ps: pslist){
-    if(remain_ps == 1)
-      m_ps_hub->RegisterProcessing(ps, std::move(ev));
-    else{
-      // EVUP evcp(ev->Clone(), ev.get_deleter());
-      EVUP evcp; //TODO
-      m_ps_hub->RegisterProcessing(ps, std::move(evcp));
+  auto ps_hub = m_ps_hub.lock();
+  if(ps_hub){
+    for(auto &ps: pslist){
+      if(remain_ps == 1)
+	ps_hub->RegisterProcessing(ps, std::move(ev));
+      else{
+	// EVUP evcp(ev->Clone(), ev.get_deleter());
+	EVUP evcp; //TODO
+	ps_hub->RegisterProcessing(ps, std::move(evcp));
+      }
+      remain_ps--;
     }
-    remain_ps--;
   }
 }
 
@@ -156,9 +159,9 @@ void Processor::RegisterProcessing(PSSP ps, EVUP ev){
 }
 
 
-void Processor::SetPSHub(PSSP ps){
+void Processor::SetPSHub(PSWP ps){
   m_ps_hub = ps;
-  std::cout<<"PS"<<m_psid<<" HUB"<<ps->GetID()<<std::endl;
+  // std::cout<<"PS"<<m_psid<<" HUB"<<ps->GetID()<<std::endl; //now weak_ptr
   for(auto& psev: m_pslist_next){
     auto subps = psev.first;
     if(!subps->IsHub()){

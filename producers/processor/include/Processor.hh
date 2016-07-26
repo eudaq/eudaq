@@ -28,6 +28,7 @@ namespace eudaq {
   using DestroyEV = void (*)(Event*);
   
   using PSSP = std::shared_ptr<Processor>;
+  using PSWP = std::weak_ptr<Processor>;
   // using EVUP = std::unique_ptr<RawDataEvent>;
   using EVUP = std::unique_ptr<Event>;
   using ProcessorClassFactory = ClassFactory<Processor, typename std::string, uint32_t>;
@@ -81,8 +82,8 @@ namespace eudaq {
     void RunConsumerThread();
     void RunHubThread();
     
-    PSSP GetPSHub(){return m_ps_hub;};
-    void SetPSHub(PSSP ps); //TODO: thread safe
+    PSWP GetPSHub(){return m_ps_hub;};
+    void SetPSHub(PSWP ps); //TODO: thread safe
     void InsertEventType(uint32_t evtype);
     void EraseEventType(uint32_t evtype);
 
@@ -105,7 +106,7 @@ namespace eudaq {
     std::string m_pstype;
     uint32_t m_psid;
     uint32_t m_num_upstream;
-    std::shared_ptr<Processor> m_ps_hub;
+    PSWP m_ps_hub;
     
     std::set<uint32_t> m_evlist_white;
     std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;

@@ -15,6 +15,7 @@ ProcessorManager::ProcessorManager(){
   InitProcessorPlugins();
 }
 
+
 void ProcessorManager::InitProcessorPlugins(){
   //TODO:: search shared lib, get PS creater and destroyer, prepare  PSplugin map
 };
@@ -54,23 +55,8 @@ void ProcessorManager::RegisterEventType(std::string evtype, CreateEV c, Destroy
   m_evlist[evtype]=std::make_pair(c, d);
 }
 
-void ProcessorManager::RegisterProcessing(PSSP ps, EVUP ev){
-  std::lock_guard<std::mutex> lk(m_mtx_fifo);
-  m_fifo_events.push(std::make_pair(ps, std::move(ev)));
-}
-
-
-void ProcessorManager::EventLoop(){
-  while(1){
-    if(!m_fifo_events.empty()){
-      m_fifo_events.front().first->Processing(std::move(m_fifo_events.front().second));
-      m_fifo_events.pop();
-    }
-  }
-}
-
-
 PSSP ProcessorManager::operator>>(PSSP psr){
+  //TODO: CP shared ptr to somewhere to prevent the destrure
   psr->SetPSHub(psr);
   psr->RunHubThread();
   return psr;

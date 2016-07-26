@@ -17,6 +17,7 @@ EventSenderPS::EventSenderPS(uint32_t psid)
 }
 
 void EventSenderPS::ProcessUserEvent(EVUP ev){
+  std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   if (!m_sender){
     EUDAQ_THROW("DataSender is not created!");
   }
