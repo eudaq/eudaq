@@ -12,10 +12,10 @@ function Download ($filename, $url) {
     #$basedir = $pwd.Path + "\"
     $basedir = "C:\\"
     $filepath = $basedir + $filename
-    if (Test-Path $filename) {
-        Write-Host "Reusing" $filepath
-        return $filepath
-    }
+    #if (Test-Path $filename) {
+    #    Write-Host "Reusing" $filepath
+    #    return $filepath
+    #}
 
     # Download and retry up to 5 times in case of network transient errors.
     Write-Host "Downloading" $filename "from" $url
