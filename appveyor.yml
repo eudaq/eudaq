@@ -14,7 +14,7 @@ environment:
   PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
 
 init:
-#- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
 - cmd: >-
@@ -50,8 +50,6 @@ before_build:
     powershell -command "Start-Sleep -s 10"
 
 build_script:
-#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 - mkdir %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
 
 - xcopy \\afs\desy.de\group\telescopes\tlu\ZestSC1 %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1 /E
@@ -59,6 +57,8 @@ build_script:
 - mkdir %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
 
 - xcopy \\afs\desy.de\group\telescopes\tlu\tlufirmware %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware /E
+
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
