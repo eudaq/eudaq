@@ -12,7 +12,7 @@ namespace eudaq {
 
 	int MachineState::GetState()
 	{
-		bool isUnconf = false, isRunning = true; 
+		bool isUninit = false, isUnconf = false, isRunning = true; 
 		
 		int state = -1;
 		for(std::pair <const eudaq::ConnectionInfo, eudaq::ConnectionState> s: connection_status_info)
@@ -21,6 +21,7 @@ namespace eudaq {
 
 			if(state == eudaq::ConnectionState::STATE_ERROR)
 				return (eudaq::ConnectionState::STATE_ERROR);
+            isUninit = (state == eudaq::ConnectionState::STATE_UNINIT) || isUninit;
 			isUnconf = (state == eudaq::ConnectionState::STATE_UNCONF) || isUnconf;
 			isRunning = (state == eudaq::ConnectionState::STATE_RUNNING) && isRunning;
 
@@ -28,6 +29,8 @@ namespace eudaq {
 
 		if (isRunning)
 			return eudaq::ConnectionState::STATE_RUNNING;
+        else if(isUninit)
+            return eudaq::ConnectionState::STATE_UNINIT;
 		else if(isUnconf)
 			return eudaq::ConnectionState::STATE_UNCONF;
 		
