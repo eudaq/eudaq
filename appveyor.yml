@@ -59,6 +59,7 @@ build_script:
 - xcopy \\afs\desy.de\group\telescopes\tlu\tlufirmware %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware /E
 
 #- powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip\",\"C:\\libusb-win32-bin-1.2.6.0.zip\")"
+
 - ps: appveyor\download.ps1 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0' 'libusb-win32-bin-1.2.6.0.zip'
 
 - 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip -o%APPVEYOR_BUILD_FOLDER%\extern\
