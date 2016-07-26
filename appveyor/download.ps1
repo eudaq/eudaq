@@ -9,7 +9,8 @@ $PAR_FILENAME=$args[1]
 function Download ($filename, $url) {
     $webclient = New-Object System.Net.WebClient
 
-    $basedir = $pwd.Path + "\"
+    #$basedir = $pwd.Path + "\"
+    $basedir = "C:\\"
     $filepath = $basedir + $filename
     if (Test-Path $filename) {
         Write-Host "Reusing" $filepath
