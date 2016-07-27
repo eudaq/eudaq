@@ -18,9 +18,12 @@ int main(int argn, char **argc){
   ProcessorManager& psMan = *ProcessorManager::GetInstance();
 
   PSSP p1 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=1;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000");
+
   
   std::cout<<"xxxxxxx"<<std::endl;
+  {uint32_t i; std::cin>>i;}
 
+  
   psMan
     >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
     ;

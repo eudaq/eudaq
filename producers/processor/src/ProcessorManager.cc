@@ -2,6 +2,14 @@
 
 #include"Processor.hh"
 
+#include <experimental/filesystem>
+
+#ifndef WIN32
+#include <dlfcn.h>
+#include <dirent.h> 
+
+#endif
+
 using namespace eudaq;
 using std::shared_ptr;
 using std::unique_ptr;
@@ -18,7 +26,38 @@ ProcessorManager::ProcessorManager(){
 
 void ProcessorManager::InitProcessorPlugins(){
   //TODO:: search shared lib, get PS creater and destroyer, prepare  PSplugin map
-};
+  // std::string sofile("/opt/eudaq/lib/libplugin_exampleps.so");
+  std::vector<std::string> libs;
+  std::vector<std::string> libpath;
+  libpath.emplace_back(".");
+  libpath.emplace_back("../lib");
+  for(auto &e: libpath){
+    DIR *d = opendir(e.c_str());
+    struct dirent *dir;
+    while((dir = readdir(d)) != NULL){
+      std::string fname(dir->d_name);
+      
+      if(!fname.compare(0, 12, "libeudaq_ps_")
+	 && fname.rfind(".so") != std::string::npos
+	 && fname.rfind(".pcm") == std::string::npos
+	 && fname.rfind(".rootmap") == std::string::npos){
+	fname.insert(0, "/");
+	fname.insert(0, e);
+	libs.push_back(fname);
+	// printf("%s\n", dir->d_name);
+      }
+    }      
+    closedir(d);
+  }
+
+  for(auto &e: libs){
+    void *handle = dlopen(e.c_str(), RTLD_NOW); //RTLD_LOCAL RTLD_GLOBAL
+    if(handle)
+      std::cout<<e<<"  load succ"<<std::endl;
+    else
+      std::cout<<e<<"  load fail"<<std::endl;
+  }
+}
 
 PSSP ProcessorManager::CreateProcessor(std::string pstype, uint32_t psid){
   PSSP ps(std::move(ProcessorClassFactory::Create(pstype, psid)));
