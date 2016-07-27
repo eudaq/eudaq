@@ -30,6 +30,7 @@ namespace eudaq{
     EVUP CreateEvent(std::string evtype);
 
     PSSP operator>>(PSSP psr);
+    PSSP operator>>(std::string psr_str);
     
   private:
     std::vector<PSSP> m_pslist_root;
@@ -38,6 +39,7 @@ namespace eudaq{
     std::mutex m_mtx_fifo;
 
   };
+
 }
 
 #endif

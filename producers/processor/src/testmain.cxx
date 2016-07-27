@@ -17,28 +17,25 @@ int main(int argn, char **argc){
     
   ProcessorManager& psMan = *ProcessorManager::GetInstance();
 
-  PSSP p0 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=0");
-  PSSP p100 = psMan.MakePSSP("ExamplePS", "SYS:PSID=100");
-  // PSSP p200 = psMan.MakePSSP("ExamplePS", "SYS:PSID=200");
+  PSSP p1 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=1;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000");
   
   std::cout<<"xxxxxxx"<<std::endl;
 
   psMan
-    >>p100
     >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
     ;
   
-
   
   psMan
-    // >>p200
-    >>p0
+    >>p1
     >>"EV(ADD=_DET)"
     >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
     ;
 
-  p0<<"FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN";
-
+  // p1<<"FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN";
+  p1<<"SYS:PD:RUN";
+  p1.reset();
+  
   std::cout<<"xxxxxxx"<<std::endl;
   
   uint32_t i;

@@ -56,8 +56,13 @@ void ProcessorManager::RegisterEventType(std::string evtype, CreateEV c, Destroy
 }
 
 PSSP ProcessorManager::operator>>(PSSP psr){
-  //TODO: CP shared ptr to somewhere to prevent the destrure
+  m_pslist_root.push_back(psr);
   psr->SetPSHub(psr);
   psr->RunHubThread();
   return psr;
+}
+
+PSSP ProcessorManager::operator>>(std::string psr_str){
+  PSSP ps = MakePSSP("ExamplePS", "SYS:PSID=0");//DUMMY, TODO: network command recevier PS
+  return *this >> ps >> psr_str;
 }

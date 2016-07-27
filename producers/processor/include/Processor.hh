@@ -97,10 +97,10 @@ namespace eudaq {
 
     void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
     
-    PSSP operator>>(PSSP psr);
+    virtual PSSP operator>>(PSSP psr);
 
-    Processor& operator<<(EVUP ev);
-    Processor& operator<<(std::string cmd_str);
+    virtual Processor& operator<<(EVUP ev);
+    virtual Processor& operator<<(std::string cmd_str);
     
   private:
     std::string m_pstype;
