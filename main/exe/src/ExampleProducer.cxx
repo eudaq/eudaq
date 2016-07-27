@@ -24,8 +24,16 @@ class ExampleProducer : public eudaq::Producer {
       : eudaq::Producer(name, runcontrol),
       m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
 
+    // Debug function
+    virtual void OnInitialise() {
+        std::cout << "Current state: UNINITIALISED" << std::endl;
+        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "State was changed to configured.");
+    }
+
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
+      OnInitialise();
+
       std::cout << "Configuring: " << config.Name() << std::endl;
 
       // Do any configuration of the hardware here
