@@ -50,7 +50,7 @@ public:
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
 
 private:
-  enum state_t { STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};
+  enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};
   const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
@@ -81,16 +81,20 @@ private:
 private slots:
 
 /* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal is emmited, this function is triggered. 
-This function takes a variable state, which corresponds to one of the three states which the program can be in. Depending on which state the 
+This function takes a variable state, which corresponds to one of the four states which the program can be in. Depending on which state the
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
-    btnConfig->setEnabled(state != STATE_RUNNING);
+    btnInit->setEnabled(state == STATE_UNINIT);
+    btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
     btnTerminate->setEnabled(state != STATE_RUNNING);
     btnStart->setEnabled(state == STATE_CONF);
 
     btnStop->setEnabled(state == STATE_RUNNING);
-    if(state == STATE_UNCONF)
+    std::cout<<"DEBUG FSM STATE" << state << " Supposed to be " << STATE_UNINIT << std::endl;
+    if(state == STATE_UNINIT)
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
+    else if(state == STATE_UNCONF)
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
     else if (state == STATE_CONF)
        lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
@@ -98,6 +102,10 @@ program is currently in the function will enable and disable certain buttons, an
        lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
      else
        lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
+
+  }
+
+  void on_btnInit_clicked() {
 
   }
 

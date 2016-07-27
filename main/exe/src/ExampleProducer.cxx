@@ -32,7 +32,6 @@ class ExampleProducer : public eudaq::Producer {
 
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
-      OnInitialise();
 
       std::cout << "Configuring: " << config.Name() << std::endl;
 

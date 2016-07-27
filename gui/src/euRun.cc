@@ -105,7 +105,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   setupUi(this);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
-  lblCurrent->setText(QString("<font size=%1  color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
+  lblCurrent->setText(QString("<font size=%1  color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
   QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
   int row = 0, col = 0;
   for (const char **st = statuses; st[0] && st[1]; st += 2) {

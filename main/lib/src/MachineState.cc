@@ -32,7 +32,7 @@ namespace eudaq {
         else if(isUninit)
             return eudaq::ConnectionState::STATE_UNINIT;
 		else if(isUnconf)
-			return eudaq::ConnectionState::STATE_UNCONF;
+            return eudaq::ConnectionState::STATE_UNCONF;
 		
 		return eudaq::ConnectionState::STATE_CONF; 
 
