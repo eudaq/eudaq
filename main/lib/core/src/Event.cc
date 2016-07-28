@@ -5,7 +5,7 @@
 #include "eudaq/Event.hh"
 #include "eudaq/PluginManager.hh"
 #include "ClassFactory.hh"
-
+#include "BufferSerializer.hh"
 
 namespace eudaq {
 
@@ -167,12 +167,10 @@ namespace eudaq {
     for (size_t i = 0; i < 4; ++i) {
       if (i < str.length()) result |= str[i] << (8 * i);
     }
-    //std::cout << "str2id(" << str << ") = " << std::hex << result << std::dec << std::endl;
     return result;
   }
 
   std::string Event::id2str(unsigned id) {
-    //std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
     std::string result(4, '\0');
     for (int i = 0; i < 4; ++i) {
       result[i] = (char)(id & 0xff);
@@ -184,7 +182,6 @@ namespace eudaq {
         break;
       }
     }
-    //std::cout << " = " << result << std::endl;
     return result;
   }
 
@@ -261,6 +258,12 @@ namespace eudaq {
     return id;
   }
 
+  Event* Event::Clone() const{ //TODO: clone directly
+    BufferSerializer ser;
+    Serialize(ser);
+    return EventFactory::Create(ser);
+  }
+  
   std::ostream & operator << (std::ostream &os, const Event &ev) {
     ev.Print(os);
     return os;
