@@ -167,7 +167,7 @@ namespace eudaq {
       if (cmd == "CLEAR") {
         OnClear();
       } else if (cmd == "INIT") {
-          onInitialise();
+          OnInitialise();
       } else if (cmd == "CONFIG") {
         std::string section = m_type;
         if (m_name != "")
