@@ -27,7 +27,7 @@ namespace eudaq {
 
     virtual ~CommandReceiver();
 
-    virtual void OnInitialise() { std::cout <<"I WAS THERE!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl; SetConnectionState(eudaq::ConnectionState::STATE_UNCONF);}
+    virtual void OnInitialise() { SetConnectionState(eudaq::ConnectionState::STATE_UNCONF);}
     virtual void OnConfigure(const Configuration &param);
     virtual void OnPrepareRun(unsigned /*runnumber*/) {}
     virtual void OnStartRun(unsigned /*runnumber*/) { SetConnectionState(eudaq::ConnectionState::STATE_CONF);}

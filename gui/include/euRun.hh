@@ -106,7 +106,7 @@ program is currently in the function will enable and disable certain buttons, an
   }
 
   void on_btnInit_clicked() {
-
+    Init();
   }
 
   void on_btnTerminate_clicked() { close(); }
