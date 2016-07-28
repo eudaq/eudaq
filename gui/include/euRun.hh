@@ -91,7 +91,6 @@ program is currently in the function will enable and disable certain buttons, an
     btnStart->setEnabled(state == STATE_CONF);
 
     btnStop->setEnabled(state == STATE_RUNNING);
-    std::cout<<"DEBUG FSM STATE" << state << " Supposed to be " << STATE_UNINIT << std::endl;
     if(state == STATE_UNINIT)
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
     else if(state == STATE_UNCONF)
