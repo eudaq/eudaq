@@ -86,6 +86,10 @@ namespace eudaq {
       m_nextconfigonrunchange = false;
     }
   }
+  void RunControl::Init(){
+    EUDAQ_INFO("Initialising.");
+    SendCommand("INIT");
+  }
 
   void RunControl::Configure(const std::string &param, int geoid) {
     std::string filename =
