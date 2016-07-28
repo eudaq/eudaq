@@ -1,11 +1,7 @@
 #ifndef EventSynchronisationMultiTSEvents_h__
 #define EventSynchronisationMultiTSEvents_h__
 
-
-
-
-
-#include "eudaq/EventSynchronisationCompareWithTLU.hh"
+#include "EventSynchronisationCompareWithTLU.hh"
 #include <memory>
 #include <queue>
 // base class for all Synchronization Plugins

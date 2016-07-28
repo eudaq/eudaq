@@ -6,8 +6,8 @@
 #include <string>
 #include "ClassFactory.hh"
 #include "Platform.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/Event.hh"
+#include "Configuration.hh"
+#include "Event.hh"
 
 // base class for all Synchronization Plugins
 // it is desired to be as modular es possible with this approach.

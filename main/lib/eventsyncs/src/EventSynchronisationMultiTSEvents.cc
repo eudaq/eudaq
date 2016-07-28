@@ -1,4 +1,4 @@
-#include "eudaq/EventSynchronisationMultiTSEvents.hh"
+#include "EventSynchronisationMultiTSEvents.hh"
 
 #include <memory>
 

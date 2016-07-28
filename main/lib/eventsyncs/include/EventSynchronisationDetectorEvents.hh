@@ -1,18 +1,11 @@
 #ifndef EventSynchronisationDetectorEvents_h__
 #define EventSynchronisationDetectorEvents_h__
 
-
-
-#include "eudaq/EventSynchronisationCompareWithTLU.hh"
+#include "EventSynchronisationCompareWithTLU.hh"
 #include <memory>
 #include <queue>
 
-
-
 namespace eudaq{
-
-
-
 
   class DLLEXPORT syncToDetectorEvents: public Sync2TLU {
   public:

@@ -4,9 +4,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 # project name
 PROJECT( EUDAQ )
 
-include_directories(${PROJECT_SOURCE_DIR}/main/lib/processors/include)
-include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include)
-include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include/eudaq)
+include_directories(main/lib/processors/include)
+include_directories(main/lib/eventsyncs/include)
+include_directories(main/lib/filerws/include)
+include_directories(main/lib/core/include)
+include_directories(main/lib/core/include/eudaq)
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )

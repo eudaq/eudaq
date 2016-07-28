@@ -1,12 +1,12 @@
 #include <iostream>
 #include <memory>
 
-#include "eudaq/Event.hh"
-#include "eudaq/EventSynchronisationBase.hh"
-#include "eudaq/PluginManager.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/OptionParser.hh"
+#include "EventSynchronisationBase.hh"
 
+#include "Event.hh"
+#include "PluginManager.hh"
+#include "Configuration.hh"
+#include "OptionParser.hh"
 
 #define FILEINDEX_OFFSET 10000
 using std::cout;

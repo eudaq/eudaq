@@ -1,15 +1,14 @@
+#include "EventSynchronisationCompareWithTLU.hh"
 
+#include "Event.hh"
+#include "PluginManager.hh"
+#include "Configuration.hh"
+#include "OptionParser.hh"
+#include "Logger.hh"
+#include "DataConverterPlugin.hh"
 
 #include <iostream>
-
 #include <memory>
-#include "eudaq/Event.hh"
-#include "eudaq/PluginManager.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/OptionParser.hh"
-#include "eudaq/EventSynchronisationCompareWithTLU.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/DataConverterPlugin.hh"
 
 
 #define FILEINDEX_OFFSET 10000

@@ -1,18 +1,17 @@
-#include "eudaq/FileWriter.hh"
-#include "eudaq/OptionParser.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
-
-#include "eudaq/baseFileReader.hh"
-
-#include <iostream>
-#include "eudaq/EventSynchronisationDetectorEvents.hh"
-
-#include "eudaq/RawDataEvent.hh"
-#include "eudaq/Platform.hh"
+#include "Platform.hh"
+#include "OptionParser.hh"
+#include "Utils.hh"
+#include "Logger.hh"
+#include "RawDataEvent.hh"
+#include "baseFileReader.hh"
+#include "FileWriter.hh"
+#include "EventSynchronisationDetectorEvents.hh"
 #include "Processor_batch.hh"
 #include "Processors.hh"
 #include "Processor_inspector.hh"
+
+#include <iostream>
+
 using namespace eudaq;
 using namespace Processors;
 unsigned dbg = 0;

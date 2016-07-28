@@ -1,12 +1,10 @@
 #ifndef Processor_merger_h__
 #define Processor_merger_h__
 
+#include "EventSynchronisationBase.hh"
 #include "ProcessorBase.hh"
-#include "eudaq/EventSynchronisationBase.hh"
-
 
 namespace eudaq{
-
 
   class SyncBase;
   class Processor_merger :public ProcessorBase{

@@ -8,9 +8,9 @@
 #include <queue>
 #include <memory>
 #include <string>
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/FileSerializer.hh"
-#include "eudaq/EventSynchronisationBase.hh"
+#include "DetectorEvent.hh"
+#include "FileSerializer.hh"
+#include "EventSynchronisationBase.hh"
 
 // base class for all Synchronization Plugins
 // it is desired to be as modular es possible with this approach.

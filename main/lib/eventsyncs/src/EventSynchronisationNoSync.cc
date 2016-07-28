@@ -1,6 +1,6 @@
-#include "eudaq/EventSynchronisationBase.hh"
+#include "EventSynchronisationBase.hh"
+
 #include <queue>
-#include "eudaq/Event.hh"
 
 namespace eudaq{
   

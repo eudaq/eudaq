@@ -1,17 +1,12 @@
-#include "eudaq/EventSynchronisationDetectorEvents.hh"
-#include "eudaq/DetectorEvent.hh"
-
+#include "EventSynchronisationDetectorEvents.hh"
+#include "DetectorEvent.hh"
+#include "PluginManager.hh"
 
 #include <memory>
-#include "eudaq/PluginManager.hh"
-
 
 using namespace std;
 
-
-namespace eudaq{
-
-  
+namespace eudaq{  
 
   void syncToDetectorEvents::makeDetectorEvent()
   {

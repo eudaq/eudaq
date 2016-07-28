@@ -1,16 +1,9 @@
 #include "Processor_merger.hh"
-#include "eudaq/EventSynchronisationBase.hh"
 #include "Processors.hh"
 
 namespace eudaq {
 
-
 using ReturnParam = ProcessorBase::ReturnParam;
-
-
-
-
-
 
 ReturnParam Processor_merger::ProcessEvent(event_sp ev, ConnectionName_ref name) {
   auto it = m_map.find(name);

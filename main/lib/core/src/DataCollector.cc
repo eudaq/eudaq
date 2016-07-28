@@ -11,8 +11,7 @@
 #include "eudaq/PluginManager.hh"
 
 #include "eudaq/FileWriter.hh"
-#include "eudaq/EventSynchronisationBase.hh"
-
+#include "EventSynchronisationBase.hh"
 
 #include "config.h"
 #include "Processors.hh"

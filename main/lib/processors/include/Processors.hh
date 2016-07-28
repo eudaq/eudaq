@@ -2,9 +2,9 @@
 #define Processors_h__
 #include <vector>
 #include <memory>
-#include "eudaq/Platform.hh"
-#include "eudaq/EventSynchronisationBase.hh"
-#include "eudaq/eudaq_types.hh"
+#include "Platform.hh"
+#include "EventSynchronisationBase.hh"
+#include "eudaq_types.hh"
 namespace eudaq {
 class ProcessorBase;
 class Processor_Inspector;
