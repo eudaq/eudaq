@@ -6,13 +6,14 @@
 using namespace eudaq;
 
 namespace{
-  static RegisterDerived<Processor, typename std::string, ExamplePS, uint32_t> reg_EXAMPLEPS("ExamplePS");
-}
-
-namespace{
   static RegisterDerived<Processor, typename std::string, ExamplePS, typename std::string> reg_EXAMPLEPS_str("ExamplePS");
 }
 
+
+ExamplePS::ExamplePS(std::string cmd)
+  :Processor("ExamplePS", ""){
+  *this<<cmd;
+}
 
 void ExamplePS::ProcessUserEvent(EVUP ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
@@ -21,8 +22,7 @@ void ExamplePS::ProcessUserEvent(EVUP ev){
 
 
 void ExamplePS::ProcessCmdEvent(EVUP ev){
-  
-  
+    
 }
 
 void ExamplePS::ProduceEvent(){
@@ -31,11 +31,4 @@ void ExamplePS::ProduceEvent(){
     EVUP ev(new RawDataEvent("data", 0, i));
     Processing(std::move(ev));
   }
-}
-
-
-Processor* ExamplePS::Create(uint32_t psid){
-  Processor *ps;
-  ps = new ExamplePS(psid); 
-  return ps;
 }

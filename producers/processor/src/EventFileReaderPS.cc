@@ -4,23 +4,16 @@
 using namespace eudaq;
 
 namespace{
-  static RegisterDerived<Processor, typename std::string, EventFileReaderPS, uint32_t> reg_EXAMPLEPS("EventFileReaderPS");
-}
-
-namespace{
   static RegisterDerived<Processor, typename std::string, EventFileReaderPS, typename std::string> reg_EXAMPLEPS_str("EventFileReaderPS");
 }
 
-
-
-EventFileReaderPS::EventFileReaderPS(uint32_t psid)
-  :Processor("EventFileReaderPS", psid){
-  InsertEventType(Event::str2id("_RAW"));
+EventFileReaderPS::EventFileReaderPS(std::string cmd)
+  :Processor("EventFileReaderPS", ""){
+  *this<<cmd;
 }
 
 void EventFileReaderPS::OpenFile(std::string filename){
-  m_des.reset(new FileDeserializer(filename));
-  
+  m_des.reset(new FileDeserializer(filename));  
 }
 
 void EventFileReaderPS::ProcessUserEvent(EVUP ev){

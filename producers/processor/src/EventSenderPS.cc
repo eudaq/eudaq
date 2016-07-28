@@ -5,15 +5,13 @@
 using namespace eudaq;
 
 namespace{
-  static RegisterDerived<Processor, typename std::string, EventSenderPS, uint32_t> reg_EXAMPLEPS("EventSenderPS");
-}
-
-namespace{
   static RegisterDerived<Processor, typename std::string, EventSenderPS, typename std::string> reg_EXAMPLEPS_str("EventSenderPS");
 }
 
-EventSenderPS::EventSenderPS(uint32_t psid)
-  :Processor("EventSenderPS", psid){
+
+EventSenderPS::EventSenderPS(std::string cmd)
+  :Processor("EventSenderPS", ""){
+  *this<<cmd;
 }
 
 void EventSenderPS::ProcessUserEvent(EVUP ev){

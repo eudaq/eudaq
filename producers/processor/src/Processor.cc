@@ -10,15 +10,6 @@
 
 using namespace eudaq;
 
-namespace{
-  void DUMMY_FUNCTION_DO_NOT_USE_PROCESSOR(){
-    std::string pstype = "_DUMMY_";
-    uint32_t psid = 0;
-    eudaq::ClassFactory<Processor, typename std::string, uint32_t>::Create(pstype, psid);
-    eudaq::ClassFactory<Processor, typename std::string, uint32_t>::GetTypes();
-    eudaq::ClassFactory<Processor, typename std::string, uint32_t>::GetInstance();
-  }
-}
 
 namespace{
   void DUMMY_FUNCTION_DO_NOT_USE_PROCESSOR_STR(){ //type, cmd
@@ -66,13 +57,13 @@ void Processor::ProcessSysEvent(EVUP ev){
   uint32_t psid_dst;
   psid_dst = ev->GetTag("PSDST", psid_dst);
   if(psid_dst == m_psid){
-    if(ev->HasTag("NEWPS")){
-      std::string pstype;
-      pstype = ev->GetTag("PSTYPE", pstype);
-      uint32_t psid;
-      psid = ev->GetTag("PSID", psid);
-      CreateNextProcessor(pstype, psid);
-    }
+    // if(ev->HasTag("NEWPS")){
+    //   std::string pstype;
+    //   pstype = ev->GetTag("PSTYPE", pstype);
+    //   uint32_t psid;
+    //   psid = ev->GetTag("PSID", psid);
+    //   CreateNextProcessor(pstype, psid);
+    // }
     return;
   }
   ForwardEvent(std::move(ev));
@@ -119,8 +110,7 @@ void Processor::ForwardEvent(EVUP ev) {
       if(remain_ps == 1)
 	ps_hub->RegisterProcessing(ps, std::move(ev));
       else{
-	// EVUP evcp(ev->Clone(), ev.get_deleter());
-	EVUP evcp; //TODO
+	EVUP evcp(ev->Clone(), ev.get_deleter());
 	ps_hub->RegisterProcessing(ps, std::move(evcp));
       }
       remain_ps--;
@@ -129,10 +119,10 @@ void Processor::ForwardEvent(EVUP ev) {
 }
 
 
-void Processor::CreateNextProcessor(std::string pstype, uint32_t psid){
+void Processor::CreateNextProcessor(std::string pstype){
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   auto psMan = ProcessorManager::GetInstance();
-  PSSP ps = psMan->CreateProcessor(pstype, psid);
+  PSSP ps = psMan->MakePSSP(pstype, "");
   if(ps){
     m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
     m_evlist_white.clear();
@@ -161,7 +151,6 @@ void Processor::RegisterProcessing(PSSP ps, EVUP ev){
 
 void Processor::SetPSHub(PSWP ps){
   m_ps_hub = ps;
-  // std::cout<<"PS"<<m_psid<<" HUB"<<ps->GetID()<<std::endl; //now weak_ptr
   for(auto& psev: m_pslist_next){
     auto subps = psev.first;
     if(!subps->IsHub()){
@@ -300,7 +289,7 @@ Processor& Processor::operator<<(EVUP ev){
   return *this;
 }
 
-Processor& Processor::operator<<(std::string cmd_list){ //TODO: decode
+Processor& Processor::operator<<(std::string cmd_list){
   //val1=1,2,3;val2=xx,yy;SYS:val3=abc
   std::stringstream ss(cmd_list);
   std::string cmd;

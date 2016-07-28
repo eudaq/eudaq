@@ -25,8 +25,6 @@ ProcessorManager::ProcessorManager(){
 
 
 void ProcessorManager::InitProcessorPlugins(){
-  //TODO:: search shared lib, get PS creater and destroyer, prepare  PSplugin map
-  // std::string sofile("/opt/eudaq/lib/libplugin_exampleps.so");
   std::vector<std::string> libs;
   std::vector<std::string> libpath;
   libpath.emplace_back(".");
@@ -35,16 +33,13 @@ void ProcessorManager::InitProcessorPlugins(){
     DIR *d = opendir(e.c_str());
     struct dirent *dir;
     while((dir = readdir(d)) != NULL){
-      std::string fname(dir->d_name);
-      
+      std::string fname(dir->d_name);      
       if(!fname.compare(0, 12, "libeudaq_ps_")
 	 && fname.rfind(".so") != std::string::npos
 	 && fname.rfind(".pcm") == std::string::npos
 	 && fname.rfind(".rootmap") == std::string::npos){
-	fname.insert(0, "/");
-	fname.insert(0, e);
+	fname.insert(0, e+"/");
 	libs.push_back(fname);
-	// printf("%s\n", dir->d_name);
       }
     }      
     closedir(d);
@@ -57,11 +52,6 @@ void ProcessorManager::InitProcessorPlugins(){
     else
       std::cout<<e<<"  load fail"<<std::endl;
   }
-}
-
-PSSP ProcessorManager::CreateProcessor(std::string pstype, uint32_t psid){
-  PSSP ps(std::move(ProcessorClassFactory::Create(pstype, psid)));
-  return ps;
 }
 
 

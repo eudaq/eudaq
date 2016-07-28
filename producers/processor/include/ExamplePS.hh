@@ -10,23 +10,13 @@
 namespace eudaq{
 
   class ExamplePS:public Processor{
-    // class DLLEXPORT ExamplePS{
   public:
-    ExamplePS(uint32_t psid)
-      :Processor("ExamplePS", psid){};
-    ExamplePS(std::string cmd)
-      :Processor("ExamplePS", ""){
-      *this<<cmd;
-    };
-
-    
+    ExamplePS(std::string cmd);
     virtual ~ExamplePS() {};
     
     virtual void ProcessUserEvent(EVUP ev);
     virtual void ProcessCmdEvent(EVUP ev);
     virtual void ProduceEvent();
-    
-    static Processor* Create(uint32_t psid);
   };
 }
 

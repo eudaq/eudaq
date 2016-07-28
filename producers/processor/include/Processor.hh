@@ -89,7 +89,7 @@ namespace eudaq {
 
     void ProcessSysEvent(EVUP ev);
     void AddNextProcessor(PSSP ps);
-    void CreateNextProcessor(std::string pstype, uint32_t psid);
+    void CreateNextProcessor(std::string pstype);
     void RemoveNextProcessor(uint32_t psid);
 
     uint32_t GetNumUpstream(){return m_num_upstream;};

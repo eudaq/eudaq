@@ -25,7 +25,6 @@ namespace eudaq{
     void RegisterProcessorType(std::string pstype, CreatePS c, DestroyPS d);
     void RegisterEventType(std::string evtype, CreateEV c, DestroyEV d);
  
-    PSSP CreateProcessor(std::string pstype, uint32_t psid);
     PSSP MakePSSP(std::string pstype, std::string cmd = "");
     EVUP CreateEvent(std::string evtype);
 

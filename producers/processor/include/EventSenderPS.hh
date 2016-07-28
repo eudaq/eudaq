@@ -8,12 +8,7 @@ namespace eudaq{
 
   class EventSenderPS: public Processor{
   public:
-    EventSenderPS(uint32_t psid);
-    EventSenderPS(std::string cmd)
-      :Processor("EventSenderPS", ""){
-      *this<<cmd;
-    };
-
+    EventSenderPS(std::string cmd);
     virtual ~EventSenderPS(){};
     virtual void ProcessUserEvent(EVUP ev);
 
