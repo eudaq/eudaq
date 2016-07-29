@@ -66,6 +66,8 @@ build_script:
 
 - move %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32-bin-1.2.6.0 libusb-win32
 
+- dir %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
+
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
