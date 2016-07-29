@@ -3,19 +3,11 @@
 # Authors: Olivier Grisel, Jonathan Helmus, Kyle Kastner, and Alex Willmer
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
 
-$PAR_BASE_URL=$args[0]
-$PAR_FILENAME=$args[1]
+$PAR_DOWNLOAD_LOCATION=$args[0]
+$PAR_STORAGE_LOCATION=$args[1]
 
-function Download ($filename, $url) {
+function Download ($url, $filename) {
     $webclient = New-Object System.Net.WebClient
-
-    #$basedir = $pwd.Path + "\"
-    #$basedir = "C:\\"
-    #$filepath = $basedir + $filename
-    #if (Test-Path $filename) {
-    #    Write-Host "Reusing" $filepath
-    #    return $filepath
-    #}
 
     # Download and retry up to 5 times in case of network transient errors.
     Write-Host "Downloading " $url
@@ -26,6 +18,7 @@ function Download ($filename, $url) {
             break
         }
         Catch [Exception]{
+	    Write-Host "Download attempt " $i " of " $retry_attempts " failed."
             Start-Sleep 1
         }
     }
@@ -38,4 +31,4 @@ function Download ($filename, $url) {
     return $filename
 }
 
-Download($PAR_FILENAME, $PAR_BASE_URL)
+Download($PAR_DOWNLOAD_LOCATION, $PAR_STORAGE_LOCATION)
