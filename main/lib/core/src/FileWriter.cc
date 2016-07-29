@@ -31,12 +31,12 @@ namespace eudaq {
 
   };
 
-  std::unique_ptr<FileWriter> FileWriterFactory::Create(const std::string & name, const std::string & params /*= ""*/)
+  FileWriter_up FileWriterFactory::Create(const std::string & name, const std::string & params /*= ""*/)
   {
     return FileWriterClassFactory::Create(name, params);
   }
 
-  std::unique_ptr<FileWriter> FileWriterFactory::Create()
+  FileWriter_up FileWriterFactory::Create()
   {
     auto fWriter=Create(getDefaultType());
     fWriter->SetFilePattern(getDefaultOutputPattern());

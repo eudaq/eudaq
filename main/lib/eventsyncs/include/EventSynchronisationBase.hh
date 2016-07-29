@@ -46,14 +46,14 @@ namespace eudaq{
   };
 
 
-
+  using Sync_up = std::unique_ptr<SyncBase, std::function<void(eudaq::SyncBase*)>>;
 
   class DLLEXPORT EventSyncFactory{
   public:
 
-   static std::unique_ptr<SyncBase>  create(SyncBase::MainType name, SyncBase::Parameter_ref sync);
-   static std::unique_ptr<SyncBase>  create(SyncBase::MainType name );
-   static std::unique_ptr<SyncBase> create();
+   static Sync_up create(SyncBase::MainType name, SyncBase::Parameter_ref sync);
+   static Sync_up create(SyncBase::MainType name );
+   static Sync_up create();
    static std::vector<std::string> GetTypes();
    static std::string  Help_text();
    static void addComandLineOptions(eudaq::OptionParser & op);

@@ -17,7 +17,7 @@ namespace eudaq{
   private:
     std::map<ConnectionName_t, unsigned> m_map;
     unsigned m_counter = 0;
-    std::unique_ptr < SyncBase > m_sync;
+    Sync_up m_sync;
     const ConnectionName_t  m_output = random_connection();
     SyncBase::MainType m_type;
     SyncBase::Parameter_t m_param;

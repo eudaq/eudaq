@@ -14,7 +14,7 @@ namespace eudaq{
     virtual void end() override;
   private:
 
-    std::unique_ptr<baseFileReader> m_reader;
+    FileReader_up m_reader;
     bool m_first = true;
     fileConfig m_fName;
 

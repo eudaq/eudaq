@@ -11,7 +11,7 @@
 #define registerFileWriter(DerivedFileWriter,ID)  REGISTER_DERIVED_CLASS(FileWriter,DerivedFileWriter,ID)
 
 namespace eudaq {
-
+  
   class OptionParser;
   class DLLEXPORT FileWriter {
   public:
@@ -30,10 +30,14 @@ namespace eudaq {
     std::string m_filepattern;
   };
 
+  using FileWriter_up = std::unique_ptr<FileWriter, std::function<void(FileWriter*)> >;
+
+  
   class DLLEXPORT FileWriterFactory {
   public:
-    static std::unique_ptr<FileWriter> Create(const std::string & name, const std::string & params = "");
-    static std::unique_ptr<FileWriter> Create();
+    
+    static FileWriter_up Create(const std::string & name, const std::string & params = "");
+    static FileWriter_up Create();
     static std::vector<std::string> GetTypes();
 
     static void addComandLineOptions(OptionParser & op);

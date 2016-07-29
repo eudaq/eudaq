@@ -16,7 +16,7 @@ public:
    uint64_t FileBytes() const ;
    void SetFilePattern(const std::string & p);
 private:
-  std::unique_ptr<FileWriter> m_write;
+  FileWriter_up m_write;
   bool m_first = true;
   std::string m_name, m_params,m_pattern;
   bool m_default = false;

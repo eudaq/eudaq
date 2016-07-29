@@ -38,7 +38,7 @@ namespace eudaq{
   };
 
 
-  std::unique_ptr<SyncBase> EventSyncFactory::create(SyncBase::MainType name, SyncBase::Parameter_ref sync)
+  Sync_up EventSyncFactory::create(SyncBase::MainType name, SyncBase::Parameter_ref sync)
   {
     if (name.empty())
     {
@@ -47,13 +47,13 @@ namespace eudaq{
     return EventSyncClassFactory::Create(name, sync);
   }
 
-  std::unique_ptr<SyncBase> EventSyncFactory::create()
+  Sync_up EventSyncFactory::create()
   {
       
     return create(getDefaultSync(), SyncBase::Parameter_t(""));
   }
 
-  std::unique_ptr<SyncBase> EventSyncFactory::create(SyncBase::MainType name)
+  Sync_up EventSyncFactory::create(SyncBase::MainType name)
   {
     return create(name, SyncBase::Parameter_t(""));
   }

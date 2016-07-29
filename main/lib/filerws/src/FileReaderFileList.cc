@@ -28,7 +28,7 @@ namespace eudaq {
 
   private:
 
-    std::unique_ptr<eudaq::baseFileReader> m_reader;
+    FileReader_up m_reader;
 
 
   };

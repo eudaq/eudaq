@@ -27,7 +27,7 @@ namespace eudaq {
 
   private:
     bool openFile();
-    std::unique_ptr<eudaq::baseFileReader> m_reader;
+    FileReader_up m_reader;
 
     std::vector<std::string> m_names;
   };

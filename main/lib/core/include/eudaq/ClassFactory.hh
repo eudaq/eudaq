@@ -30,9 +30,9 @@ namespace eudaq{
   template <typename BASE, typename ID_t, typename... ARGS>
   class DLLEXPORT ClassFactory{
   public:
-    using factoryfunc = std::unique_ptr<BASE> (*)(const ARGS&...);
+    using factoryfunc = std::unique_ptr<BASE, std::function<void(BASE*)> > (*)(const ARGS&...);
     
-    static std::unique_ptr<BASE> Create(const ID_t& id, const ARGS&... args){
+    static std::unique_ptr<BASE, std::function<void(BASE*)> > Create(const ID_t& id, const ARGS&... args){
       auto it = GetInstance().find(id);
       if (it == GetInstance().end()) {
 	std::stringstream ss;
@@ -63,8 +63,8 @@ namespace eudaq{
     
   private:
     template <typename DERIVED>
-      static std::unique_ptr<BASE> DerivedFactoryFun(const ARGS&... args) {
-      return std::unique_ptr<BASE>(new DERIVED(args...));
+      static std::unique_ptr<BASE, std::function<void(BASE*)>> DerivedFactoryFun(const ARGS&... args) {
+      return std::unique_ptr<BASE, std::function<void(BASE*)>>(new DERIVED(args...), [](BASE *p) {delete p; });
     }
 
     static void do_register(const ID_t& name, factoryfunc func){

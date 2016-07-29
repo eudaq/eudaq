@@ -146,7 +146,7 @@ namespace eudaq {
 
   };
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(const std::string & filename, const std::string & filepattern)
+  FileReader_up FileReaderFactory::create(const std::string & filename, const std::string & filepattern)
   {
     // return nullptr;
    
@@ -193,12 +193,12 @@ namespace eudaq {
 
   }
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(const std::string & filename)
+  FileReader_up FileReaderFactory::create(const std::string & filename)
   {
     return create(filename, getDefaultInputpattern());
   }
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(eudaq::OptionParser & op)
+  FileReader_up FileReaderFactory::create(eudaq::OptionParser & op)
   {
 
     if (op.NumArgs() == 1)
@@ -229,7 +229,7 @@ namespace eudaq {
 
 
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
+  FileReader_up FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
   {
     return FileReaderClassFactory::Create(type, param);
   }
