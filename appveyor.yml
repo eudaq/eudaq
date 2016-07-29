@@ -64,7 +64,7 @@ build_script:
 
 - 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip -o%APPVEYOR_BUILD_FOLDER%\extern\
 
-- move %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32-bin-1.2.6.0 libusb-win32
+- move %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32-bin-1.2.6.0 %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
 
 - dir %APPVEYOR_BUILD_FOLDER%\extern
 
