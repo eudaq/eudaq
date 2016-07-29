@@ -2,9 +2,14 @@
 # Based on python install script by
 # Authors: Olivier Grisel, Jonathan Helmus, Kyle Kastner, and Alex Willmer
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
-
-$PAR_DOWNLOAD_LOCATION=$args[0]
-$PAR_STORAGE_LOCATION=$args[1]
+[CmdletBinding()]
+Param(
+  [Parameter(Mandatory=$True,Position=1)]
+   [string]$downloadLocation,
+	
+   [Parameter(Mandatory=$True)]
+   [string]$storageLocation
+)
 
 function Download ($url, $filename) {
     $webclient = New-Object System.Net.WebClient
@@ -31,4 +36,4 @@ function Download ($url, $filename) {
     return $filename
 }
 
-Download($PAR_DOWNLOAD_LOCATION, $PAR_STORAGE_LOCATION)
+Download $downloadLocation $storageLocation
