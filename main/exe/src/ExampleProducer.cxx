@@ -24,8 +24,15 @@ class ExampleProducer : public eudaq::Producer {
       : eudaq::Producer(name, runcontrol),
       m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
 
+    // Debug function
+    virtual void OnInitialise() {
+        std::cout << "Current state: UNINITIALISED" << std::endl;
+        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "State was changed to configured.");
+    }
+
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
+
       std::cout << "Configuring: " << config.Name() << std::endl;
 
       // Do any configuration of the hardware here
@@ -34,13 +41,18 @@ class ExampleProducer : public eudaq::Producer {
       std::cout << "Example Parameter = " << m_exampleparam << std::endl;
       hardware.Setup(m_exampleparam);
 
-      // At the end, set the status that will be displayed in the Run Control.
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+      // At the end, set the ConnectionState that will be displayed in the Run Control.
+      // and set the state of the machine.
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
     }
 
     // This gets called whenever a new run is started
     // It receives the new run number as a parameter
     virtual void OnStartRun(unsigned param) {
+
+      //For Debugging the Error state of producers:
+      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR);
+
       m_run = param;
       m_ev = 0;
 	  
@@ -51,29 +63,35 @@ class ExampleProducer : public eudaq::Producer {
       // You can set tags on the BORE that will be saved in the data file
       // and can be used later to help decoding
       bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleparam));
+      hardware.PrepareForRun();
       // Send the event to the Data Collector
       SendEvent(bore);
 
-      // At the end, set the status that will be displayed in the Run Control.
-      SetStatus(eudaq::Status::LVL_OK, "Running");
-	  started=true;
+      // At the end, set the ConnectionState that will be displayed in the Run Control.
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
+      started=true;
     }
 
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
-      std::cout << "Stopping Run" << std::endl;
-	  started=false;
+      
+      started=false;
       // Set a flag to signal to the polling loop that the run is over
       stopping = true;
+
 
       // wait until all events have been read out from the hardware
       while (stopping) {
         eudaq::mSleep(20);
+        //std::cout<<"Does hardware have pending? "<<hardware.EventsPending()<<"\n";
       }
-
+      
+      if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF);
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
       SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
+
     }
 
     // This gets called when the Run Control is terminating,
@@ -98,31 +116,33 @@ class ExampleProducer : public eudaq::Producer {
           // Then restart the loop
           continue;
         }
-		if (!started)
-		{
-			// Now sleep for a bit, to prevent chewing up all the CPU
-			eudaq::mSleep(20);
-			// Then restart the loop
-			continue;
-		}
-        // If we get here, there must be data to read out
-        // Create a RawDataEvent to contain the event data to be sent
-        eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
 
-        for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
-          // Read out a block of raw data from the hardware
-          std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
-          // Each data block has an ID that is used for ordering the planes later
-          // If there are multiple sensors, they should be numbered incrementally
 
-          // Add the block of raw data to the event
-          ev.AddBlock(plane, buffer);
-        }
-        hardware.CompletedEvent();
-        // Send the event to the Data Collector      
-        SendEvent(ev);
-        // Now increment the event number
-        m_ev++;
+    		if (GetConnectionState() != eudaq::ConnectionState::STATE_RUNNING)
+    		{
+    			// Now sleep for a bit, to prevent chewing up all the CPU
+    			eudaq::mSleep(20);
+    			// Then restart the loop
+    			continue;
+    		}
+            // If we get here, there must be data to read out
+            // Create a RawDataEvent to contain the event data to be sent
+            eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
+
+            for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
+              // Read out a block of raw data from the hardware
+              std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
+              // Each data block has an ID that is used for ordering the planes later
+              // If there are multiple sensors, they should be numbered incrementally
+
+              // Add the block of raw data to the event
+              ev.AddBlock(plane, buffer);
+            }
+            hardware.CompletedEvent();
+            // Send the event to the Data Collector      
+            SendEvent(ev);
+            // Now increment the event number
+            m_ev++;
       }
     }
 

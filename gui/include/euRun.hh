@@ -37,7 +37,7 @@ inline std::string to_bytes(const std::string &val) {
 class RunConnectionDelegate : public QItemDelegate {
 public:
   RunConnectionDelegate(RunControlModel *model);
-
+  void GetModelData();
 private:
   void paint(QPainter *painter, const QStyleOptionViewItem &option,
              const QModelIndex &index) const;
@@ -54,15 +54,19 @@ public:
   ~RunControlGUI();
 
 private:
-  enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
+  enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADED
+  bool configLoaded = false;
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
+  const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
   virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
     m_run.disconnected(id);
   }
   virtual void OnReceive(const eudaq::ConnectionInfo &id,
-                         std::shared_ptr<eudaq::Status> status);
+                         std::shared_ptr<eudaq::ConnectionState> connectionstate);
+
+  void SendState(int state){SetState(state); }
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
       return;
@@ -83,12 +87,33 @@ private:
   bool eventFilter(QObject *object, QEvent *event);
 private slots:
 
+/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal is emmited, this function is triggered. 
+This function takes a variable state, which corresponds to one of the four states which the program can be in. Depending on which state the
+program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
+
   void SetStateSlot(int state) {
-    btnLoad->setEnabled(state != ST_RUNNING);
-    btnConfig->setEnabled((state == ST_CONFIGLOADED) || (state == ST_READY));
-    btnTerminate->setEnabled(state != ST_RUNNING);
-    btnStart->setEnabled(state == ST_READY);
-    btnStop->setEnabled(state == ST_RUNNING);
+    btnInit->setEnabled(state == STATE_UNINIT);
+    btnLoad->setEnabled(state != STATE_RUNNING);
+    btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
+    btnTerminate->setEnabled(state != STATE_RUNNING);
+    btnStart->setEnabled(state == STATE_CONF);
+    btnStop->setEnabled(state == STATE_RUNNING);
+
+    if(state == STATE_UNINIT)
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
+    else if(state == STATE_UNCONF)
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
+    else if (state == STATE_CONF)
+       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
+    else if (state ==STATE_RUNNING)
+       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
+     else
+       lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
+
+  }
+
+  void on_btnInit_clicked() {
+    Init();
   }
 
   void on_btnTerminate_clicked() { close(); }
@@ -96,13 +121,13 @@ private slots:
   void on_btnConfig_clicked() {
     std::string settings = txtConfigFileName->text().toStdString();
     Configure(settings, txtGeoID->text().toInt());
-    SetState(ST_READY);
     dostatus = true;
   }
   // void on_btnReset_clicked() {
   //  Reset();
   //}
-  void on_btnStart_clicked(bool cont = false) {
+
+  void on_btnStart_clicked(bool cont = false) { 
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -113,14 +138,14 @@ private slots:
     emit StatusChanged("PARTICLES", "0");
     emit StatusChanged("RATE", "");
     emit StatusChanged("MEANRATE", "");
-    SetState(ST_RUNNING);
   }
   void on_btnStop_clicked() {
     StopRun();
+    //std::cout << "DEBUG: Stop Button Pressed \n";
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
-    SetState(ST_READY);
   }
   void on_btnLog_clicked() {
+    TestCommand();
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
   }
@@ -186,7 +211,7 @@ private slots:
         } else
           on_btnStart_clicked(true);
       } else if (dostatus) {
-        GetStatus();
+        GetConnectionState();
       }
     }
     if (m_startrunwhenready && !m_producer_pALPIDEfs_not_ok &&
@@ -201,11 +226,13 @@ private slots:
       i->second->setText(value);
     }
   }
-  void btnLogSetStatusSlot(bool status) { btnLog->setEnabled(status); }
+  void btnLogSetStatusSlot(bool status) { std::cout<<"DEBUG: Got Logger";btnLog->setEnabled(status); }
+  void btnStartSetStatusSlot(bool status) { std::cout<< "DEBUG: Called Start Status reset \n"; btnStart->setEnabled(status); std::cout<< "DEBUG: Current State of start button: "; std::cout<<btnStart->isEnabled(); std::cout<< "\n";  }
 
 signals:
   void StatusChanged(const QString &, const QString &);
   void btnLogSetStatus(bool status);
+  void btnStartSetStatus(bool status);
   void SetState(int status);
 
 private:

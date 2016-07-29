@@ -10,16 +10,16 @@ public:
   QString operator[](int) const;
   static int NumColumns();
   static const char *ColumnName(int i);
-  eudaq::Status GetStatus() const { return m_status; }
-  int GetLevel() const { return m_status.GetLevel(); }
+  eudaq::ConnectionState GetConnectionState() const { return m_connectionstate; }
+  int GetState() const { return m_connectionstate.GetState(); }
   bool IsConnected() const { return m_id->IsEnabled(); }
   void SetConnected(bool con) { m_id->SetState(2 * con - 1); }
   const eudaq::ConnectionInfo &GetId() const { return *m_id; }
-  void SetStatus(const eudaq::Status &status) { m_status = status; }
+  void SetConnectionState(const eudaq::ConnectionState &connectionstate) {m_connectionstate = connectionstate; }
 
 private:
   std::shared_ptr<eudaq::ConnectionInfo> m_id;
-  eudaq::Status m_status;
+  eudaq::ConnectionState m_connectionstate;
 };
 
 class ConnectionSorter {
@@ -51,8 +51,12 @@ public:
   void newconnection(const eudaq::ConnectionInfo &id);
   void disconnected(const eudaq::ConnectionInfo &id);
 
-  int GetLevel(const QModelIndex &index) const;
+  int GetState(const QModelIndex &index) const;
+  
   void UpdateDisplayed();
+
+  
+  bool CheckConfigured();
 
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
@@ -60,7 +64,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const;
 
-  void SetStatus(const eudaq::ConnectionInfo &id, eudaq::Status status);
+  void SetConnectionState(const eudaq::ConnectionInfo &id, eudaq::ConnectionState connectionstate);
   void sort(int column, Qt::SortOrder order) {
     // std::cout << "sorting " << column << ", " << order << std::endl;
     m_sorter.SetSort(column, order == Qt::AscendingOrder);

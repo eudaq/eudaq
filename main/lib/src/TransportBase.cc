@@ -5,6 +5,7 @@
 namespace eudaq {
 
   const ConnectionInfo ConnectionInfo::ALL("ALL");
+  //const ConnectionInfo ConnectionInfo::MACH_STATE("MACHINESTATE", "Machine State");
   static const int DEFAULT_TIMEOUT = 1000;
 
   void ConnectionInfo::Print(std::ostream &os) const {
@@ -22,6 +23,16 @@ namespace eudaq {
   bool ConnectionInfo::Matches(const ConnectionInfo & /*other*/) const {
     // std::cout << " [Match: all] " << std::flush;
     return true;
+  }
+
+  int ConnectionInfo::GetRemoteInfo() const
+  {
+    std::string info = m_host.substr(m_host.find(":")+1);
+    //std::cout<<info<<"\n";
+    if( info.compare("") != 0)
+      return std::stoi(info);
+
+    return (0);
   }
 
   TransportBase::TransportBase() : m_callback(0) {}

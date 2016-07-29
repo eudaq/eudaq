@@ -31,13 +31,13 @@ class PyProducer : public eudaq::Producer {
       std::cout << "[PyProducer] Received Configuration" << std::endl;
       m_config = new eudaq::Configuration(param);
       m_internalstate = Configuring;
-      SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side configure");
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Waiting for Python-side configure");
       // now wait until the python side has everything configured and called SetConfigured()
       while (m_internalstate != Configured){
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Configured) {
-	SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config->Name() + ")");
+	SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + m_config->Name() + ")");
       }
     }
 
@@ -46,11 +46,11 @@ class PyProducer : public eudaq::Producer {
       m_evt = 0;
       // check if we are beyond the configuration stage
       if (!(m_internalstate==Configured || m_internalstate==Stopped)) {
-	SetStatus(eudaq::Status::LVL_ERROR, "Cannot start run/unconfigured!");
+	SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Cannot start run/unconfigured!");
 	m_internalstate = Error;
       } else {
 	m_internalstate = StartingRun;
-	SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side run start");
+	SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Waiting for Python-side run start" );
       }
       // now wait until the python side is ready to start and called SendBORE()
       while (m_internalstate != Running){
@@ -58,12 +58,12 @@ class PyProducer : public eudaq::Producer {
       }
       if (m_internalstate == Running) {
 	eudaq::DataSender::SendEvent(RawDataEvent::BORE(m_name, m_run));
-	SetStatus(eudaq::Status::LVL_OK, "");
+	SetConnectionState(eudaq::ConnectionState::STATE_RUNNING);
       }
     }
     virtual void OnStopRun() {
       std::cout << "[PyProducer] Stop Run received" << std::endl;
-      SetStatus(eudaq::Status::LVL_BUSY, "Waiting for Python-side run stop");
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Waiting for Python-side run stop");
       m_internalstate = StoppingRun;
       // now wait until the python side is ready to start and called SendEORE()
       while (m_internalstate != Stopped){
@@ -71,7 +71,8 @@ class PyProducer : public eudaq::Producer {
       }
       if (m_internalstate == Stopped) {
 	eudaq::DataSender::SendEvent(RawDataEvent::EORE(m_name, m_run, ++m_evt));
-	SetStatus(eudaq::Status::LVL_OK);
+  if(m_connectionstate != eudaq::ConnectionState::STATE_ERROR)
+	 SetConnectionState(eudaq::ConnectionState::STATE_CONF);
       }
     }
     virtual void OnTerminate() {
@@ -85,7 +86,7 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Init) {
-	SetStatus(eudaq::Status::LVL_OK);
+	SetConnectionState(eudaq::ConnectionState::STATE_UNCONF);
       }
     }
     virtual void OnStatus() {
@@ -94,7 +95,7 @@ class PyProducer : public eudaq::Producer {
       std::cout << "[PyProducer] Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::LVL_WARN, "Received Unrecognized Command");
+      //SetConnectionState(eudaq::ConnectionState::LVL_WARN, "Received Unrecognized Command");
     }
   std::string GetConfigParameter(const std::string & item){
     if (!m_config) return std::string();
@@ -116,7 +117,7 @@ class PyProducer : public eudaq::Producer {
   }
   void SetError(){
     m_internalstate = Error;
-    SetStatus(eudaq::Status::LVL_ERROR);
+    SetConnectionState(eudaq::ConnectionState::LVL_ERROR);
   }
   bool SendBORE(){
     if (m_internalstate!=StartingRun) return false;

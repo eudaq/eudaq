@@ -3,9 +3,10 @@
 
 #include "eudaq/TransportServer.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/Status.hh"
+#include "eudaq/ConnectionState.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Platform.hh"
+#include "eudaq/MachineState.hh"
 
 #include <string>
 #include <memory>
@@ -23,22 +24,28 @@ namespace eudaq {
     void StartServer(const std::string &listenaddress);
     void StopServer();
 
+    void Init();
     void Configure(const Configuration &
                        settings); ///< Send 'Configure' command with settings
     void Configure(const std::string &settings,
                    int geoid = 0); ///< Send 'Configure' command with settings
     void Reset();                  ///< Send 'Reset' command
-    void GetStatus();              ///< Send 'Status' command to get status
+    void GetConnectionState();              ///< Send 'ConnectionState' command to get state
     virtual void StartRun(const std::string &msg = ""); ///< Send 'StartRun'
                                                         ///command with run
                                                         ///number
     virtual void StopRun(bool listen = true); ///< Send 'StopRun' command
     void Terminate();                         ///< Send 'Terminate' command
 
+
+    void TestCommand();		//Test Command
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
     virtual void OnReceive(const ConnectionInfo & /*id*/,
-                           std::shared_ptr<Status>) {}
+                           std::shared_ptr<ConnectionState>) {}
+
+    virtual void SendState(int state){}
+    
     virtual ~RunControl();
 
     void CommandThread();
@@ -46,6 +53,8 @@ namespace eudaq {
     const ConnectionInfo &GetConnection(size_t i) const {
       return m_cmdserver->GetConnection(i);
     }
+
+    int GetFSMState(){return current_State.GetState();}
 
   private:
     void InitLog(const ConnectionInfo &id);
@@ -59,6 +68,10 @@ namespace eudaq {
     void CommandHandler(TransportEvent &ev);
     bool m_done;
     bool m_listening;
+
+    MachineState current_State;
+
+
 
   protected:
     int32_t m_runnumber;          ///< The current run number

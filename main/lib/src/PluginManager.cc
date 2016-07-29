@@ -91,6 +91,7 @@ namespace eudaq {
     runHeader.setDAQSWName(EUTELESCOPE::EUDAQ);
 
     const eudaq::Configuration conf(bore.GetTag("CONFIG"));
+    //Use the .conf to set the GeoID of the runHeader
     runHeader.setGeoID(conf.Get("GeoID", 0));
 
     for (size_t i = 0; i < bore.NumEvents(); ++i) {

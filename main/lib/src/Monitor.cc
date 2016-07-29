@@ -95,5 +95,9 @@ namespace eudaq {
     EUDAQ_INFO("Starting run " + to_string(m_run));
   }
 
-  void Monitor::OnStopRun() { m_reader->Interrupt(); }
+  void Monitor::OnStopRun() { 
+    m_reader->Interrupt(); 
+    if(m_connectionstate.GetState() != ConnectionState::STATE_ERROR)
+      SetConnectionState(ConnectionState::STATE_CONF);
+  }
 }
