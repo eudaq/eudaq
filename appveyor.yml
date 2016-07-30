@@ -1,13 +1,25 @@
-version: 1.0.{build}
+version: 1.7.{build}
+
 pull_requests:
   do_not_increment_build_number: true
+  
 branches:
   only:
   - master
   - v1.6-dev
 
 os: Visual Studio 2015
+
 configuration: Release
+matrix:
+- OPTION: modern
+  platform: x86
+- OPTION: modern
+  platform: x64
+- OPTION: old
+  platform: x86
+- OPTION: old
+  platform: x64
 
 environment:
   ROOTSYS: C:\root
