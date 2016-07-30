@@ -240,8 +240,6 @@ namespace eudaq {
 	setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
 	}
 	
-	std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
-	
 	int cio=chip_id_offset;
 	if(m_nFeSensor[m_sensorids[sensor]]==3)cio=0;
 	zsDataEncoder["sensorID"] = m_sensorids[sensor] + sm + cio;
@@ -285,9 +283,7 @@ namespace eudaq {
 	      int ModuleID=m_sensorids[sensor]+chip_id_offset;
 	      int lvl1=hits[i].lv1;
 	      int ToT=hits[i].tot;
-	      eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, ToT, lvl1);
-	      sparseFrame->addSparsePixel( thisHit );
-	      tmphits.push_back( thisHit );
+	      sparseFrame->emplace_back( col, row, ToT, lvl1 );
 	      /*
 	      //ganged pixels bottom
 	      if (row==329){
@@ -420,9 +416,7 @@ namespace eudaq {
 	      {
 		int col = hits[i].col;
 		int row = hits[i].row;
-		eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
-		sparseFrame->addSparsePixel( thisHit );
-		tmphits.push_back( thisHit );
+		sparseFrame->emplace_back( col, row, hits[i].tot, hits[i].lv1 );
 	      }
 	      //int col=(1+m_fepos[hits[i].link])*NCOL-1-hits[i].col; //left or right on 2-chip module
 	      // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
@@ -435,11 +429,6 @@ namespace eudaq {
       
 	// write TrackerData object that contains info from one sensor to LCIO collection
 	zsDataCollection->push_back( zsFrame.release() );
-	
-	// clean up
-	for( std::list<eutelescope::EUTelGenericSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
-	  delete (*it);
-	}
       }
     }
     
