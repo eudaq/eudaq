@@ -56,7 +56,7 @@ void ProcessorManager::InitProcessorPlugins(){
 
 
 PSSP ProcessorManager::MakePSSP(std::string pstype, std::string cmd){
-  PSSP ps(std::move(PSFactory::Create(pstype, cmd)));
+  PSSP ps(std::move(Factory_Processor::Create(cstr2hash(pstype.c_str()), cmd)));
   return ps;
 }
 

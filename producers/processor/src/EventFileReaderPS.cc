@@ -3,9 +3,7 @@
 
 using namespace eudaq;
 
-namespace{
-  static RegisterDerived<Processor, typename std::string, EventFileReaderPS, typename std::string> reg_EXAMPLEPS_str("EventFileReaderPS");
-}
+INIT_CLASS(Processor, EventFileReaderPS, std::string );
 
 EventFileReaderPS::EventFileReaderPS(std::string cmd)
   :Processor("EventFileReaderPS", ""){

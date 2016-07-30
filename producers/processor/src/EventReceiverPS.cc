@@ -1,26 +1,19 @@
 #include"EventReceiverPS.hh"
 #include"TransportFactory.hh"
 
-
 using namespace eudaq;
 
-
-namespace{
-  static RegisterDerived<Processor, typename std::string, EventReceiverPS, typename std::string> reg_EXAMPLEPS_str("EventReceiverPS");
-}
+INIT_CLASS(Processor, EventReceiverPS, std::string );
 
 EventReceiverPS::EventReceiverPS(std::string cmd)
   :Processor("EventReceiverPS", ""){
   *this<<cmd;
 }
 
-
-
 void EventReceiverPS::ProcessUserEvent(EVUP ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   ForwardEvent(std::move(ev));
 }
-
 
 void EventReceiverPS::ProduceEvent(){
   try {

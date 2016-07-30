@@ -5,10 +5,7 @@
 
 namespace eudaq {
 
-  namespace{
-    static RegisterDerived<Event, uint32_t, RawDataEvent> reg_RawDataEvent(Event::str2id("RawDataEvent"));
-  }
-  
+  INIT_CLASS_WITH_ID(Event, RawDataEvent, Event::str2id("RawDataEvent"));  
   EUDAQ_DEFINE_EVENT(RawDataEvent, str2id("_RAW"));
 
   RawDataEvent::block_t::block_t(Deserializer &des) {

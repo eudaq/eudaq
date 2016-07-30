@@ -16,22 +16,20 @@
 #include"ClassFactory.hh"
 #include"RawDataEvent.hh"
 
-
 namespace eudaq {
   class Processor;
   class ProcessorManager;
+
+  DEFINE_FACTORY_AND_PTR(Processor, std::string);
   
   using CreatePS  = Processor* (*)(uint32_t);
   using DestroyPS = void (*)(Processor*);
-  // using CreateEV = RawDataEvent* (*)();
   using CreateEV = Event* (*)();
   using DestroyEV = void (*)(Event*);
   
   using PSSP = std::shared_ptr<Processor>;
   using PSWP = std::weak_ptr<Processor>;
   using EVUP = std::unique_ptr<Event, std::function<void(Event*)> >;
-  using ProcessorClassFactory = ClassFactory<Processor, typename std::string, uint32_t>;
-  using PSFactory = ClassFactory<Processor, typename std::string, typename std::string>;
   
   class DLLEXPORT Processor{
   public:

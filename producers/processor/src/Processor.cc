@@ -10,22 +10,12 @@
 
 using namespace eudaq;
 
-
-namespace{
-  void DUMMY_FUNCTION_DO_NOT_USE_PROCESSOR_STR(){ //type, cmd
-    eudaq::ClassFactory<Processor, typename std::string, typename std::string>::Create("_DUMMY_", "_DUMMY_");
-    eudaq::ClassFactory<Processor, typename std::string, typename std::string>::GetTypes();
-    eudaq::ClassFactory<Processor, typename std::string, typename std::string>::GetInstance();
-  }
-}
-
-
+INIT_FACTORY(Processor, std::string);
 
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;
 }
-
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
@@ -34,7 +24,7 @@ Processor::Processor(std::string pstype, std::string cmd)
 
 
 Processor::~Processor() {
-  std::cout<<"destructure PSID = "<<m_psid<<std::endl;
+  std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
 };
 
 void Processor::InsertEventType(uint32_t evtype){

@@ -4,10 +4,7 @@
 
 using namespace eudaq;
 
-namespace{
-  static RegisterDerived<Processor, typename std::string, EventSenderPS, typename std::string> reg_EXAMPLEPS_str("EventSenderPS");
-}
-
+INIT_CLASS(Processor, EventSenderPS, std::string );
 
 EventSenderPS::EventSenderPS(std::string cmd)
   :Processor("EventSenderPS", ""){

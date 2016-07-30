@@ -5,10 +5,7 @@
 
 using namespace eudaq;
 
-namespace{
-  static RegisterDerived<Processor, typename std::string, ExamplePS, typename std::string> reg_EXAMPLEPS_str("ExamplePS");
-}
-
+INIT_CLASS(Processor, ExamplePS, std::string );
 
 ExamplePS::ExamplePS(std::string cmd)
   :Processor("ExamplePS", ""){
