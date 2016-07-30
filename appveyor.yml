@@ -11,19 +11,24 @@ branches:
 os: Visual Studio 2015
 
 configuration: Release
-matrix:
-- OPTION: modern
-  platform: x86
-- OPTION: modern
-  platform: x64
-- OPTION: old
-  platform: x86
-- OPTION: old
-  platform: x64
+
+platform:
+  - x86
+  - x64
 
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
+  
+#matrix:
+#- OPTION: modern
+#  platform: x86
+#- OPTION: modern
+#  platform: x64
+#- OPTION: old
+#  platform: x86
+#- OPTION: old
+#  platform: x64
 
 init:
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
