@@ -30,10 +30,10 @@ environment:
 #- OPTION: old
 #  platform: x64
 
-cache:
-  - %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
-  - %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
-  - %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
+#cache:
+#  - %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
+ # - %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
+ # - %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
   
 init:
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
