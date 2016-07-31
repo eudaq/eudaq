@@ -84,7 +84,7 @@ build_script:
 
 - cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
 
-- if [[ $PLATFORM == ' x86' ]]; then msbuild INSTALL.vcxproj; else msbuild INSTALL.vcxproj /p:Platform=x64 /p:Prefer32bit=false; fi
+- if [%PLATFORM% == 'x86' ]; then msbuild INSTALL.vcxproj; else msbuild INSTALL.vcxproj /p:Platform=x64 /p:Prefer32bit=false; fi
 
 on_finish:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
