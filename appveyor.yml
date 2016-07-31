@@ -30,6 +30,11 @@ environment:
 #- OPTION: old
 #  platform: x64
 
+cache:
+  - %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
+  - %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
+  - %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
+  
 init:
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
@@ -67,9 +72,11 @@ before_build:
     powershell -command "Start-Sleep -s 10"
 
 build_script:
-- mkdir %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
+#- mkdir %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
 
-- xcopy \\afs\desy.de\group\telescopes\tlu\ZestSC1 %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1 /E
+#- xcopy \\afs\desy.de\group\telescopes\tlu\ZestSC1 %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1 /E
+
+- ps: If (-Not Test-Path {"${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1"}) {Write-Host "Copying ZestSC1 from AFS"; } Else {Write-Host "Reusing cached ZestSC1 instead of copying from AFS"}
 
 - mkdir %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
 
