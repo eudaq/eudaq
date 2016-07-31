@@ -72,28 +72,19 @@ before_build:
     powershell -command "Start-Sleep -s 10"
 
 build_script:
-- ps: Write-Host ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
 
-- ps: Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse}
 
-- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host "Reusing cached ZestSC1 instead of copying from AFS"} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
-#- mkdir %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Copying libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip -o("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\");  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
 
-#- xcopy \\afs\desy.de\group\telescopes\tlu\ZestSC1 %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1 /E
+#- ps: appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'
 
-- mkdir %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware
+#- 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip -o%APPVEYOR_BUILD_FOLDER%\extern\
 
-- xcopy \\afs\desy.de\group\telescopes\tlu\tlufirmware %APPVEYOR_BUILD_FOLDER%\extern\tlufirmware /E
+#- move %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32-bin-1.2.6.0 %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
 
-#- powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip\",\"C:\\libusb-win32-bin-1.2.6.0.zip\")"
-
-- ps: appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'
-
-- 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip -o%APPVEYOR_BUILD_FOLDER%\extern\
-
-- move %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32-bin-1.2.6.0 %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
-
-- dir %APPVEYOR_BUILD_FOLDER%\extern
+#- dir %APPVEYOR_BUILD_FOLDER%\extern
 
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
