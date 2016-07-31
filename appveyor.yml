@@ -72,7 +72,7 @@ before_build:
     powershell -command "Start-Sleep -s 10"
 
 build_script:
-- ps: If (-Not Test-Path "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") {Write-Host "Copying ZestSC1 from AFS"; } Else {Write-Host "Reusing cached ZestSC1 instead of copying from AFS"}
+- ps: If (Test-Path {"${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1"}) {Write-Host "Reusing cached ZestSC1 instead of copying from AFS"} Else {Write-Host "Copying ZestSC1 from AFS"; }
 #- mkdir %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1
 
 #- xcopy \\afs\desy.de\group\telescopes\tlu\ZestSC1 %APPVEYOR_BUILD_FOLDER%\extern\ZestSC1 /E
