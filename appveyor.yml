@@ -1,4 +1,4 @@
-version: 1.7.{build}
+version: 1.7.0.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -78,21 +78,13 @@ build_script:
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Copying libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
 
-#- ps: appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'
-
-#- 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip -o%APPVEYOR_BUILD_FOLDER%\extern\
-
-#- move %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32-bin-1.2.6.0 %APPVEYOR_BUILD_FOLDER%\extern\libusb-win32
-
-#- dir %APPVEYOR_BUILD_FOLDER%\extern
-
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
 - cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
 
-- msbuild INSTALL.vcxproj
+- if [[ $PLATFORM == ' x86' ]]; then msbuild INSTALL.vcxproj else msbuild INSTALL.vcxproj /p:Platform=x64 /p:Prefer32bit=false fi
 
 on_finish:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
