@@ -378,7 +378,7 @@ void DeviceReader::Loop() {
       if (readEvent==-3) {
         SimpleLock lock(m_mutex);
         m_flushing = false;
-        Print(0, "Finished flushing %lu %lu", m_daq_board->GetNextEventId(), m_last_trigger_id);
+        Print(0, "Finished flushing %lu [m_daq_board->GetNextEventId()] %lu [m_last_trigger_id]", m_daq_board->GetNextEventId(), m_last_trigger_id);
       }
       else if (IsFlushing() && readEvent==-2) {
         ++flushCounter;
