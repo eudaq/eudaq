@@ -94,9 +94,6 @@ namespace eudaq {
 
     bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
     bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
-    bool HasHits() const { return GetFlags(FLAG_HITS) != 0; }
-    bool IsFake() const { return GetFlags(FLAG_FAKE) != 0; }
-    bool IsSimulation() const { return GetFlags(FLAG_SIMU) != 0; }
     bool IsEUDAQ2() const { return GetFlags(FLAG_EUDAQ2) != 0; }
     bool IsPacket() const { return GetFlags(FLAG_PACKET) != 0; }
 
@@ -129,7 +126,6 @@ namespace eudaq {
     static Event * Create(Deserializer & ds) {
       unsigned id = 0;
       ds.read(id);
-      //std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
       event_creator cr = GetCreator(id);
       if (!cr) EUDAQ_THROW("Unrecognised Event type (" + Event::id2str(id) + ")");
       return cr(ds);

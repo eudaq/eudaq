@@ -16,12 +16,12 @@
 #include"ClassFactory.hh"
 #include"RawDataEvent.hh"
 
+#include"Factory.hh"
+
 namespace eudaq {
   class Processor;
   class ProcessorManager;
 
-  DEFINE_FACTORY_AND_PTR(Processor, std::string);
-  
   using CreatePS  = Processor* (*)(uint32_t);
   using DestroyPS = void (*)(Processor*);
   using CreateEV = Event* (*)();
@@ -54,6 +54,7 @@ namespace eudaq {
     
     Processor(std::string pstype, uint32_t psid);
     Processor(std::string pstype, std::string cmd);
+    Processor(std::string pstype, uint32_t psid, std::string cmd);
 
     Processor(){};
     virtual ~Processor();

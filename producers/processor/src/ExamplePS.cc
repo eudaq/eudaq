@@ -2,13 +2,21 @@
 
 #include<iostream>
 #include"RawDataEvent.hh"
+#include "Factory.hh"
 
 using namespace eudaq;
 
-INIT_CLASS(Processor, ExamplePS, std::string );
+namespace{
+  static auto dummy_val = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
+}
 
 ExamplePS::ExamplePS(std::string cmd)
   :Processor("ExamplePS", ""){
+  *this<<cmd; 
+}
+
+ExamplePS::ExamplePS(uint32_t psid, std::string cmd)
+  :Processor("ExamplePS", psid, ""){
   *this<<cmd;
 }
 

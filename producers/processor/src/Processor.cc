@@ -8,9 +8,13 @@
 #include <thread>
 #include <sstream>
 
+#include "Factory.hh"
+
 using namespace eudaq;
 
-INIT_FACTORY(Processor, std::string);
+namespace{
+  static auto dummy_map_ps= eudaq::Factory<Processor>::GetInstance<std::string&>();
+}
 
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
@@ -19,6 +23,11 @@ Processor::Processor(std::string pstype, uint32_t psid)
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
+  m_num_upstream = 0;
+}
+
+Processor::Processor(std::string pstype, uint32_t psid, std::string cmd)
+  :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;
 }
 

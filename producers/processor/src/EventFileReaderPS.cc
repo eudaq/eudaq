@@ -3,7 +3,10 @@
 
 using namespace eudaq;
 
-INIT_CLASS(Processor, EventFileReaderPS, std::string );
+namespace{
+  static auto dummy_val = Factory<Processor>::Register<EventFileReaderPS, std::string&>(eudaq::cstr2hash("EventFileReaderPS"));
+}
+
 
 EventFileReaderPS::EventFileReaderPS(std::string cmd)
   :Processor("EventFileReaderPS", ""){

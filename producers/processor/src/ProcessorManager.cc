@@ -1,6 +1,8 @@
 #include"ProcessorManager.hh"
 
 #include"Processor.hh"
+#include"Factory.hh"
+#include"ExamplePS.hh"
 
 #include <experimental/filesystem>
 
@@ -13,6 +15,7 @@
 using namespace eudaq;
 using std::shared_ptr;
 using std::unique_ptr;
+
 
 ProcessorManager* ProcessorManager::GetInstance(){
   static ProcessorManager singleton;
@@ -56,7 +59,7 @@ void ProcessorManager::InitProcessorPlugins(){
 
 
 PSSP ProcessorManager::MakePSSP(std::string pstype, std::string cmd){
-  PSSP ps(std::move(Factory_Processor::Create(cstr2hash(pstype.c_str()), cmd)));
+  PSSP ps(std::move(Factory<Processor>::Create(cstr2hash(pstype.c_str()), cmd)));
   return ps;
 }
 

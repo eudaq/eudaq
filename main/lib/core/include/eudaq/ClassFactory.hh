@@ -104,7 +104,7 @@ namespace eudaq{
       return UP_BASE(new DERIVED(args...), [](BASE *p) {delete p; });
     }    
   };
-    
+  
 }
 
 #endif // CLASSFACTORY_H__

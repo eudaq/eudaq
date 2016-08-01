@@ -21,12 +21,12 @@ SET(PLUGIN_INC
 SET(PLUGIN_SRC
   src/ProcessorManager.cc
   src/Processor.cc
+  src/ExamplePS.cc
   )
 SET(PS_PLUGIN_SRC
   src/EventFileReaderPS.cc
   src/EventSenderPS.cc
   src/EventReceiverPS.cc
-  src/ExamplePS.cc
   )
 
 INCLUDE_DIRECTORIES(include)

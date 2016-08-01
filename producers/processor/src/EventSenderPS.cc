@@ -4,8 +4,6 @@
 
 using namespace eudaq;
 
-INIT_CLASS(Processor, EventSenderPS, std::string );
-
 EventSenderPS::EventSenderPS(std::string cmd)
   :Processor("EventSenderPS", ""){
   *this<<cmd;

@@ -8,6 +8,8 @@
 #include"EventReceiverPS.hh"
 #include"EventFileReaderPS.hh"
 
+#include"Factory.hh"
+
 #include <chrono>
 #include <thread>
 #include <iostream>
@@ -17,6 +19,10 @@ int main(int argn, char **argc){
     
   ProcessorManager& psMan = *ProcessorManager::GetInstance();
 
+  std::cout<<"xxxxxxx"<<std::endl;
+  {uint32_t i; std::cin>>i;}
+
+  PSSP P0 = psMan.MakePSSP("ExamplePS", "SYS:PSID=10");
   PSSP p1 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=1;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000");
 
   

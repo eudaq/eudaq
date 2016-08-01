@@ -3,7 +3,9 @@
 
 using namespace eudaq;
 
-INIT_CLASS(Processor, EventReceiverPS, std::string );
+namespace{
+  static auto dummy_val = Factory<Processor>::Register<EventReceiverPS, std::string&>(eudaq::cstr2hash("EventReceiverPS"));
+}
 
 EventReceiverPS::EventReceiverPS(std::string cmd)
   :Processor("EventReceiverPS", ""){
