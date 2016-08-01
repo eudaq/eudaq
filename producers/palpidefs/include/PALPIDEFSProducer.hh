@@ -46,8 +46,8 @@ protected:
 class DeviceReader {
 public:
   DeviceReader(int id, int debuglevel, TTestSetup* test_setup, int boardid,
-               TDAQBoard* daq_board, TpAlpidefs* dut);
-  ~DeviceReader() {}
+               TDAQBoard* daq_board, TpAlpidefs* dut, std::vector<unsigned char>* raw_data=0x0);
+  ~DeviceReader();
 
   void SetMaxQueueSize(unsigned long size) { m_max_queue_size = size; }
   void SetQueueFullDelay(int delay) { m_queuefull_delay = delay; }
@@ -107,11 +107,6 @@ public:
     return m_flushing;
   }
 
-
-#ifdef DEBUG_USB
-  std::vector<unsigned char> m_debug;
-#endif
-
 protected:
   void Loop();
   void Print(int level, const char* text, uint64_t value1 = -1,
@@ -148,7 +143,9 @@ protected:
   unsigned long m_queue_size;
   std::thread m_thread;
   std::mutex m_mutex;
+  std::vector<unsigned char>* m_raw_data;
   bool m_stop;
+  bool m_stopped;
   bool m_running;
   bool m_flushing;
   bool m_reading;
@@ -190,7 +187,7 @@ public:
       m_oos_ev(0), m_last_oos_ev(0), m_timestamp_last(0x0), m_timestamp_full(0x0),
       m_done(false), m_running(false), m_stopping(false), m_flushing(false),
       m_configured(false), m_firstevent(false), m_reader(0), m_next_event(0),
-      m_debuglevel(debuglevel), m_testsetup(0), m_mutex(), m_param(), m_nDevices(0),
+      m_debuglevel(debuglevel), m_testsetup(0), m_raw_data(0x0), m_mutex(), m_param(), m_nDevices(0),
       m_status_interval(-1), m_full_config_v1(), m_full_config_v2(),
       m_full_config_v3(), m_ignore_trigger_ids(true),
       m_recover_outofsync(true), m_chip_type(0x0),
@@ -266,6 +263,10 @@ protected:
 
   std::mutex m_mutex;
   TTestSetup* m_testsetup;
+
+#ifdef DEBUG_USB
+  std::vector<unsigned char>** m_raw_data;
+#endif
 
   // config
   eudaq::Configuration m_param;

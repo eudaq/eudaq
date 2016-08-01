@@ -214,13 +214,14 @@ bool DeviceReader::ThresholdScan() {
 }
 
 DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
-                           int boardid, TDAQBoard* daq_board, TpAlpidefs* dut)
-  : m_queue_size(0), m_thread(&DeviceReader::LoopWrapper, this),
-    m_stop(false), m_running(false), m_flushing(false),
-    m_waiting_for_eor(false), m_threshold_scan_rqst(false),
-    m_threshold_scan_result(0), m_boardid(id), m_id(id),
-    m_debuglevel(debuglevel), m_test_setup(test_setup),
-    m_daq_board(daq_board), m_dut(dut),
+                           int boardid, TDAQBoard* daq_board, TpAlpidefs* dut,
+                           std::vector<unsigned char>* raw_data/*=0x0*/)
+  : m_queue(), m_queue_size(0), m_thread(&DeviceReader::LoopWrapper, this),
+    m_mutex(), m_raw_data(raw_data),  m_stop(false), m_stopped(false),
+    m_running(false), m_flushing(false), m_waiting_for_eor(false),
+    m_threshold_scan_rqst(false), m_threshold_scan_result(0),
+    m_boardid(id), m_id(id), m_debuglevel(debuglevel),
+    m_test_setup(test_setup),  m_daq_board(daq_board), m_dut(dut),
     m_daq_board_header_length(daq_board->GetEventHeaderLength()),
     m_daq_board_trailer_length(daq_board->GetEventTrailerLength()),
     m_last_trigger_id(0), m_timestamp_reference(0),
@@ -231,10 +232,18 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
   Print(0, "Starting with last event id: %lu", m_last_trigger_id);
 }
 
+DeviceReader::~DeviceReader() {
+  while (IsReading() || IsFlushing() || !m_stopped) {
+    Print(0, "Device Reader still busy, cannot delete the object");
+    eudaq::mSleep(1000);
+  }
+}
+
 void DeviceReader::Stop() {
   Print(0, "Stopping...");
   SetStopping();
   m_thread.join();
+  m_stopped = true;
 }
 
 void DeviceReader::SetRunning(bool running) {
@@ -361,9 +370,9 @@ void DeviceReader::Loop() {
       unsigned char* debug = 0x0;
       int debug_length = 0;
       readEvent = m_daq_board->ReadChipEvent(data_buf, &length, maxDataLength, &error, &debug, &debug_length);
-      if (debug_length>0) {
+      if (debug_length>0 && m_raw_data) {
         std::vector<unsigned char> vec(&debug[0], &debug[debug_length]);
-        m_debug.insert(m_debug.end(), vec.begin(), vec.end());
+        m_raw_data->insert(m_raw_data->end(), vec.begin(), vec.end());
       }
 #endif
       if (readEvent==-3) {
@@ -644,6 +653,16 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_reader = new DeviceReader*[m_nDevices];
     for (int i = 0; i < m_nDevices; i++) {
       m_reader[i] = 0x0;
+    }
+  }
+  if (!m_raw_data) {
+    m_raw_data = new std::vector<unsigned char>*[m_nDevices];
+    for (int i = 0; i < m_nDevices; i++) {
+      #ifdef DEBUG_USB
+      m_raw_data[i] = new std::vector<unsigned char>();
+      #else
+      m_raw_data[i] = 0x0;
+      #endif
     }
   }
   if (!m_do_SCS)
@@ -969,7 +988,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
                   << ") powered." << std::endl;
 
         m_reader[i] = new DeviceReader(i, m_debuglevel, m_testsetup, board_no,
-                                       daq_board, dut);
+                                       daq_board, dut, m_raw_data[i]);
         if (m_next_event[i])
           delete m_next_event[i];
         m_next_event[i] = 0;
@@ -1363,13 +1382,15 @@ void PALPIDEFSProducer::OnStopRun() {
     m_stopping = true;
     m_flushing = true;
   }
-  for (int i = m_nDevices; i >= 0; --i) { // stop the event polling loop
+  for (int i = m_nDevices-1; i >= 0; --i) { // stop the event polling loop
 
 #ifdef DEBUG_USB
     char tmp[50];
     snprintf(tmp, 50, "debug_data_%d_%d.dat", m_run, i);
     std::ofstream outfile(tmp, std::ios::out | std::ios::binary);
-    outfile.write((const char*)&m_reader[i]->m_debug[0], m_reader[i]->m_debug.size());
+    if (m_raw_data[i] && m_raw_data[i]->size()>0) {
+      outfile.write(reinterpret_cast<const char*>(&m_raw_data[i]), m_raw_data[i]->size());
+    }
     outfile.close();
 #endif
 
