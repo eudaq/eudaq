@@ -2,12 +2,14 @@
 
 #include<iostream>
 #include"RawDataEvent.hh"
-#include "Factory.hh"
 
 using namespace eudaq;
 
 namespace{
-  static auto dummy_val = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
+  static auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
+  static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
+  static auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
+
 }
 
 ExamplePS::ExamplePS(std::string cmd)

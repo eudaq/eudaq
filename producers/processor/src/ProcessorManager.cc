@@ -1,15 +1,15 @@
 #include"ProcessorManager.hh"
-
 #include"Processor.hh"
-#include"Factory.hh"
 #include"ExamplePS.hh"
 
 #include <experimental/filesystem>
 
-#ifndef WIN32
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
-#include <dirent.h> 
-
+#include <dirent.h>
+#include <stdlib.h>
 #endif
 
 using namespace eudaq;
@@ -32,6 +32,10 @@ void ProcessorManager::InitProcessorPlugins(){
   std::vector<std::string> libpath;
   libpath.emplace_back(".");
   libpath.emplace_back("../lib");
+  char* env_ps_path = getenv("EUDAQ_PS_PATH");
+  if(env_ps_path){
+    libpath.emplace_back(env_ps_path);
+  }
   for(auto &e: libpath){
     DIR *d = opendir(e.c_str());
     struct dirent *dir;
@@ -49,7 +53,11 @@ void ProcessorManager::InitProcessorPlugins(){
   }
 
   for(auto &e: libs){
+#ifdef WIN32
+    HMODULE handle = LoadLibrary("SDL.dll");
+#else
     void *handle = dlopen(e.c_str(), RTLD_NOW); //RTLD_LOCAL RTLD_GLOBAL
+#endif
     if(handle)
       std::cout<<e<<"  load succ"<<std::endl;
     else
@@ -60,6 +68,8 @@ void ProcessorManager::InitProcessorPlugins(){
 
 PSSP ProcessorManager::MakePSSP(std::string pstype, std::string cmd){
   PSSP ps(std::move(Factory<Processor>::Create(cstr2hash(pstype.c_str()), cmd)));
+  // std::string cmd_mv = cmd;
+  // Factory<Processor>::Create(cstr2hash(pstype.c_str()), std::move(cmd_mv));
   return ps;
 }
 

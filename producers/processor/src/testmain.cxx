@@ -8,8 +8,6 @@
 #include"EventReceiverPS.hh"
 #include"EventFileReaderPS.hh"
 
-#include"Factory.hh"
-
 #include <chrono>
 #include <thread>
 #include <iostream>

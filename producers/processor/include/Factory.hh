@@ -1,12 +1,10 @@
 #ifndef FACTORY_HH_
 #define FACTORY_HH_
 #include <map>
-#include <vector>
 #include <memory>
 #include <iostream>
-#include <sstream>
 #include <utility>
-#include"Platform.hh"
+#include "Platform.hh"
 
 namespace eudaq{
   template <typename BASE>
@@ -19,8 +17,7 @@ namespace eudaq{
       Create(uint32_t id, ARGS&& ...args){
       auto it = GetInstance<ARGS&&...>().find(id);
       if (it == GetInstance<ARGS&&...>().end()){
-  	std::cerr<<"ClassFactory unknown class: <"<<id<<">\n";
-  	std::cout<<"map size "<< GetInstance<ARGS&&...>().size()<<std::endl;
+  	std::cerr<<"Factory unknown class: <"<<id<<">\n";
   	return nullptr;
       }
       return (it->second)(std::forward<ARGS>(args)...);
@@ -34,11 +31,11 @@ namespace eudaq{
 
     template <typename DERIVED, typename... ARGS>
       static int Register(uint32_t id){
-      std::cout<<"Register ID "<<id<<std::endl; 
+      std::cout<<"Register ID "<<id; 
       GetInstance<ARGS&&...>()[id] = &MakerFun<DERIVED, ARGS&&...>;
-      std::cout<<"map items: ";
+      std::cout<<"   map items: ";
       for(auto& e: GetInstance<ARGS&&...>())
-  	std::cout<<e.first<<"  ";
+      	std::cout<<e.first<<"  ";
       std::cout<<std::endl;
       return 0;
     }

@@ -13,7 +13,6 @@
 
 #include"Event.hh"
 #include"Configuration.hh"
-#include"ClassFactory.hh"
 #include"RawDataEvent.hh"
 
 #include"Factory.hh"
@@ -22,6 +21,10 @@ namespace eudaq {
   class Processor;
   class ProcessorManager;
 
+  extern template class Factory<Processor>;
+  extern template Factory<Processor>::UP_BASE Factory<Processor>::Create(uint32_t, std::string&);
+  extern template Factory<Processor>::UP_BASE Factory<Processor>::Create(uint32_t, std::string&&);
+  
   using CreatePS  = Processor* (*)(uint32_t);
   using DestroyPS = void (*)(Processor*);
   using CreateEV = Event* (*)();
