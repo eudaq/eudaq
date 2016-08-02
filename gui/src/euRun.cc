@@ -162,7 +162,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   txtGeoID->setText(QString::number(eudaq::ReadFromFile(GEOID_FILE, 0U)));
   txtGeoID->installEventFilter(this);
   setWindowIcon(QIcon("../images/Icon_euRun.png"));
-  setWindowTitle("eudaq Run Control ");// + PACKAGE_VERSION);
+  setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,

@@ -93,7 +93,6 @@ This function takes a variable state, which corresponds to one of the four state
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
-    std::cout<<"configLoaded " << configLoaded << std::endl;
     btnInit->setEnabled(state == STATE_UNINIT);
     btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
     btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
@@ -101,8 +100,10 @@ program is currently in the function will enable and disable certain buttons, an
     btnStart->setEnabled(state == STATE_CONF);
     btnStop->setEnabled(state == STATE_RUNNING);
 
-    if(state == STATE_UNINIT)
+    if(state == STATE_UNINIT) {
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
+       configured = false;
+    }
     else if(state == STATE_UNCONF) {
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
        configured = false;
