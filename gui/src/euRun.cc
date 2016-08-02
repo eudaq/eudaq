@@ -162,7 +162,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
   txtGeoID->setText(QString::number(eudaq::ReadFromFile(GEOID_FILE, 0U)));
   txtGeoID->installEventFilter(this);
   setWindowIcon(QIcon("../images/Icon_euRun.png"));
-  setWindowTitle("eudaq Run Control " + PACKAGE_VERSION);
+  setWindowTitle("eudaq Run Control ");// + PACKAGE_VERSION);
 }
 
 void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
@@ -181,14 +181,14 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
     EmitStatus("FILEBYTES", to_bytes(connectionstate->GetTag("FILEBYTES")));
   } else if (id.GetType() == "Producer") {
     if (id.GetName() == "caliceahcalbif") {
-      EmitStatus("TRIG", status->GetTag("TRIG"));
-      EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
+      EmitStatus("TRIG", connectionstate->GetTag("TRIG"));
+      EmitStatus("PARTICLES", connectionstate->GetTag("PARTICLES"));
     } else  if (id.GetName() == "TLU" || id.GetName() == "miniTLU") {
-      EmitStatus("TRIG", status->GetTag("TRIG"));
-      EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
-      EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
-      EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
-      EmitStatus("TLUSTAT", status->GetTag("STATUS"));
+      EmitStatus("TRIG", connectionstate->GetTag("TRIG"));
+      EmitStatus("PARTICLES", connectionstate->GetTag("PARTICLES"));
+      EmitStatus("TIMESTAMP", connectionstate->GetTag("TIMESTAMP"));
+      EmitStatus("LASTTIME", connectionstate->GetTag("LASTTIME"));
+      EmitStatus("TLUSTAT", connectionstate->GetTag("STATUS"));
 
       bool ok = true;
       std::string scalers;

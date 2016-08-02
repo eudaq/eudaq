@@ -56,6 +56,7 @@ public:
 private:
   enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADED
   bool configLoaded = false;
+  bool configured = false;
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
   const int FONT_SIZE = 12;
@@ -92,8 +93,9 @@ This function takes a variable state, which corresponds to one of the four state
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
+    std::cout<<"configLoaded " << configLoaded << std::endl;
     btnInit->setEnabled(state == STATE_UNINIT);
-    btnLoad->setEnabled(state != STATE_RUNNING);
+    btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
     btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
     btnTerminate->setEnabled(state != STATE_RUNNING);
     btnStart->setEnabled(state == STATE_CONF);
@@ -101,10 +103,13 @@ program is currently in the function will enable and disable certain buttons, an
 
     if(state == STATE_UNINIT)
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
-    else if(state == STATE_UNCONF)
+    else if(state == STATE_UNCONF) {
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
-    else if (state == STATE_CONF)
+       configured = false;
+    } else if (state == STATE_CONF) {
        lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
+       configured = true;
+    }
     else if (state ==STATE_RUNNING)
        lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
      else
@@ -152,7 +157,7 @@ program is currently in the function will enable and disable certain buttons, an
   void on_btnLoad_clicked() {
     // QString tempLastFileName;
     // tempLastFileName = txtConfigFileName->text();
-
+    std::cout << "I'm here euRun.hh" << std::endl;
     QString temporaryFileName = QFileDialog::getOpenFileName(
         this, tr("Open File"), lastUsedDirectory, tr("*.conf (*.conf)"));
 
@@ -160,7 +165,11 @@ program is currently in the function will enable and disable certain buttons, an
       txtConfigFileName->setText(temporaryFileName);
       lastUsedDirectory =
           QFileInfo(temporaryFileName).path(); // store path for next time
-      SetState(ST_CONFIGLOADED);
+      configLoaded = true;
+      // TODO
+      if(configured)
+          SetState(STATE_CONF);
+      else SetState(STATE_UNCONF);
     }
   }
   void timer() {
@@ -226,8 +235,8 @@ program is currently in the function will enable and disable certain buttons, an
       i->second->setText(value);
     }
   }
-  void btnLogSetStatusSlot(bool status) { std::cout<<"DEBUG: Got Logger";btnLog->setEnabled(status); }
-  void btnStartSetStatusSlot(bool status) { std::cout<< "DEBUG: Called Start Status reset \n"; btnStart->setEnabled(status); std::cout<< "DEBUG: Current State of start button: "; std::cout<<btnStart->isEnabled(); std::cout<< "\n";  }
+  void btnLogSetStatusSlot(bool status) { btnLog->setEnabled(status); }
+  void btnStartSetStatusSlot(bool status) { btnStart->setEnabled(status); }
 
 signals:
   void StatusChanged(const QString &, const QString &);
