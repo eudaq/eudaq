@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <utility>
+#include <functional>
 
 #include"Platform.hh"
 

@@ -4,6 +4,7 @@
 #include <memory>
 #include <iostream>
 #include <utility>
+#include <functional>
 #include "Platform.hh"
 
 namespace eudaq{
