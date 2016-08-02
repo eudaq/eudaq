@@ -115,7 +115,7 @@ program is currently in the function will enable and disable certain buttons, an
        lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
      else
        lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
-
+    m_run.UpdateDisplayed();
   }
 
   void on_btnInit_clicked() {
