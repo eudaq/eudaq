@@ -393,7 +393,7 @@ void DeviceReader::Loop() {
       continue;
     }
 
-    if (readEvent==1 || (readEvent==-2 && length > 0)) {
+    if (IsRunning() && !IsFlushing() && !IsStopping() && (readEvent==1 || (readEvent==-2 && length > 0))) {
       if (length == 0 && readEvent) {
         SimpleLock lock(m_mutex);
         Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
