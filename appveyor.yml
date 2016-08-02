@@ -14,7 +14,7 @@ configuration: Release
 
 platform:
   - x86
-  - x64
+#  - x64
 
 environment:
   ROOTSYS: C:\root
@@ -31,15 +31,15 @@ environment:
   BUILD_ccpdlf: OFF
   BUILD_clicpix: OFF
   BUILD_cmspixel: OFF
-  BUILD_depfet: ON
+  BUILD_depfet: OFF
   BUILD_eudrb: OFF
   BUILD_example: OFF
-  BUILD_explorer: ON
-  BUILD_fortis: ON
+  BUILD_explorer: OFF
+  BUILD_fortis: OFF
   BUILD_gui: ON
   BUILD_main: OFF
   BUILD_manual: OFF
-  BUILD_mimoroma: ON
+  BUILD_mimoroma: OFF
   BUILD_mimosa32: ON
   BUILD_miniTLU: OFF
   BUILD_mupix: OFF
@@ -131,7 +131,8 @@ build_script:
 
 #; Write-Host "Calling cmake with argument " $cmakeargument; try {$ErrorActionPreference = 'SilentlyContinue'; cmake $cmakeargument "${env:APPVEYOR_BUILD_FOLDER}" 2>out-null} Catch [Exception] {}
 
-- cmd: if %PLATFORM% == 'x86'  (msbuild INSTALL.vcxproj) else (msbuild INSTALL.vcxproj /p:Platform=x64 /p:Prefer32bit=false)
+#- cmd: if %PLATFORM% == 'x86'  (msbuild INSTALL.vcxproj) else (msbuild INSTALL.vcxproj /p:Platform=x64 /p:Prefer32bit=false)
+- cmd: msbuild INSTALL.vcxproj
 
 on_finish:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
