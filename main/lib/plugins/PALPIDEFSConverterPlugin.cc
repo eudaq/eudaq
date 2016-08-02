@@ -59,6 +59,9 @@ using namespace std;
                          // broken
 #define WRITE_TEMPERATURE_LOG // write NTC values to a text file
 
+#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
+                             // period, they are marked as broken
+
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
   // Converter
@@ -94,8 +97,9 @@ namespace eudaq {
                             const Configuration & /*cnf*/) { // GetConfig
       m_nLayers = bore.GetTag<int>("Devices", -1);
       cout << "BORE: m_nLayers = " << m_nLayers << endl;
-
       m_DataVersion = bore.GetTag<int>("DataVersion", 2);
+      m_period = bore.GetTag<float>("PulserPeriod",-4.);
+      m_n_trig = bore.GetTag<int>("PulserNTriggers", -3);
       m_BackBiasVoltage = bore.GetTag<float>("BackBiasVoltage", -4.);
       m_dut_pos = bore.GetTag<float>("DUTposition", -100.);
       cout << "Place of telescope:\t" << m_dut_pos << endl;
@@ -371,7 +375,7 @@ namespace eudaq {
         if (length == 0) {
           // no data for this layer
           current_layer = -1;
-            return true;
+          return true;
         }
         else {
           data_end = pos + length - 1;
@@ -651,6 +655,11 @@ namespace eudaq {
             bool ok_zero = true;
             bool ok_ref = true;
             bool ok_last = true;
+            bool ok_event_distance = true;
+            double event_distance = fabs((double)timestamps[0] - (double)m_last_timestamp[0])*12.5e-9;
+            if ((event_distance-m_period>m_period*1.e-3) && (m_period>0.)) {
+              ok_event_distance = false;
+            }
             for (int i = 0; i < m_nLayers - 1; i++) {
               if ((timestamps[i + 1] == 0 && timestamps[i]!=0) || (timestamps[i] == 0 && timestamps[i+1]!=0)) {
                 cout << "Found plane with timestamp equal to zero, while others aren't zero!" << endl;
@@ -670,6 +679,13 @@ namespace eudaq {
                 ok_last = false;
               }
             }
+#ifdef CHECK_EVENT_DISTANCE
+            if (!ok_event_distance) {
+              sev.SetFlags(Event::FLAG_BROKEN);
+              cout << "Event " << ev.GetEventNumber() << " does not have the correct event time distance: " <<  event_distance << " instead of " << m_period << endl;
+            }
+#endif
+
             if (!ok_zero || !ok_ref || !ok_last ) { // timestamps suspicious
               cout << "ERROR: Event " << ev.GetEventNumber()
                    << " Timestamps not consistent." << endl;
@@ -707,9 +723,9 @@ namespace eudaq {
     }
 
 
-  ////////////////////////////////////////////////////////////
-  // LCIO Converter
-  ///////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    // LCIO Converter
+    ///////////////////////////////////////////////////////////
 #if USE_LCIO && USE_EUTELESCOPE && PALPIDEFS
     virtual bool GetLCIOSubEvent(lcio::LCEvent &lev,
                                  eudaq::Event const &ev) const {
@@ -817,248 +833,257 @@ namespace eudaq {
     }
 #endif
 
-protected:
-  int m_nLayers;
-  int m_DataVersion;
-  float m_BackBiasVoltage;
-  float m_dut_pos;
-  string *m_configs;
-  int *m_chip_type;
-  unsigned int *m_fw_version;
-  int *m_Vaux;
-  int *m_VresetP;
-  int *m_VresetD;
-  int *m_Vcasn;
-  int *m_Vcasn2;
-  int *m_Vclip;
-  int *m_Vcasp;
-  int *m_Idb;
-  int *m_Ithr;
-  vector<vector<float> > m_Temp;
-  int *m_strobe_length;
-  int *m_strobeb_length;
-  int *m_trigger_delay;
-  int *m_readout_delay;
-  unsigned long long* m_last_timestamp;
-  bool *m_do_SCS;
-  int m_SCS_charge_start;
-  int m_SCS_charge_stop;
-  int m_SCS_charge_step;
-  int m_SCS_n_events;
-  int m_SCS_n_mask_stages;
-  const vector<unsigned char> **m_SCS_points;
-  const vector<unsigned char> **m_SCS_data;
-  float **m_SCS_thr;
-  float **m_SCS_thr_rms;
-  float **m_SCS_noise;
-  float **m_SCS_noise_rms;
+  protected:
+    int m_nLayers;
+    int m_DataVersion;
+    float m_BackBiasVoltage;
+    float m_dut_pos;
+    string *m_configs;
+    int *m_chip_type;
+    unsigned int *m_fw_version;
+    int m_n_trig;
+    float m_period;
+    int *m_Vaux;
+    int *m_VresetP;
+    int *m_VresetD;
+    int *m_Vcasn;
+    int *m_Vcasn2;
+    int *m_Vclip;
+    int *m_Vcasp;
+    int *m_Idb;
+    int *m_Ithr;
+    vector<vector<float> > m_Temp;
+    int *m_strobe_length;
+    int *m_strobeb_length;
+    int *m_trigger_delay;
+    int *m_readout_delay;
+    unsigned long long* m_last_timestamp;
+    bool *m_do_SCS;
+    int m_SCS_charge_start;
+    int m_SCS_charge_stop;
+    int m_SCS_charge_step;
+    int m_SCS_n_events;
+    int m_SCS_n_mask_stages;
+    const vector<unsigned char> **m_SCS_points;
+    const vector<unsigned char> **m_SCS_data;
+    float **m_SCS_thr;
+    float **m_SCS_thr_rms;
+    float **m_SCS_noise;
+    float **m_SCS_noise_rms;
 #ifdef WRITE_TEMPERATURE_FILE
-  ofstream *m_temperature_file;
+    ofstream *m_temperature_file;
 #endif
 #ifdef PALPIDEFS
-  TDAQBoard** m_daq_board;
-  TpAlpidefs** m_dut;
-  int* m_daq_header_length;
-  int* m_daq_trailer_length;
+    TDAQBoard** m_daq_board;
+    TpAlpidefs** m_dut;
+    int* m_daq_header_length;
+    int* m_daq_trailer_length;
 #endif
 
 
 #if USE_TINYXML
-  int ParseXML(string xml, int base, int rgn, int sub, int begin) {
-    TiXmlDocument conf;
-    conf.Parse(xml.c_str());
-    TiXmlElement *root = conf.FirstChildElement();
-    for (TiXmlElement *eBase = root->FirstChildElement("address"); eBase != 0;
-         eBase = eBase->NextSiblingElement("address")) {
-      if (base != atoi(eBase->Attribute("base")))
-        continue;
-      for (TiXmlElement *eRgn = eBase->FirstChildElement("address");
-           eRgn != 0; eRgn = eRgn->NextSiblingElement("address")) {
-        if (rgn != atoi(eRgn->Attribute("rgn")))
+    int ParseXML(string xml, int base, int rgn, int sub, int begin) {
+      TiXmlDocument conf;
+      conf.Parse(xml.c_str());
+      TiXmlElement *root = conf.FirstChildElement();
+      for (TiXmlElement *eBase = root->FirstChildElement("address"); eBase != 0;
+           eBase = eBase->NextSiblingElement("address")) {
+        if (base != atoi(eBase->Attribute("base")))
           continue;
-        for (TiXmlElement *eSub = eRgn->FirstChildElement("address");
-             eSub != 0; eSub = eSub->NextSiblingElement("address")) {
-          if (sub != atoi(eSub->Attribute("sub")))
+        for (TiXmlElement *eRgn = eBase->FirstChildElement("address");
+             eRgn != 0; eRgn = eRgn->NextSiblingElement("address")) {
+          if (rgn != atoi(eRgn->Attribute("rgn")))
             continue;
-          for (TiXmlElement *eBegin = eSub->FirstChildElement("value");
-               eBegin != 0; eBegin = eBegin->NextSiblingElement("value")) {
-            if (begin != atoi(eBegin->Attribute("begin")))
+          for (TiXmlElement *eSub = eRgn->FirstChildElement("address");
+               eSub != 0; eSub = eSub->NextSiblingElement("address")) {
+            if (sub != atoi(eSub->Attribute("sub")))
               continue;
-            if (!eBegin->FirstChildElement("content") ||
-                !eBegin->FirstChildElement("content")->FirstChild()) {
-              cout << "content tag not found!" << endl;
-              return -6;
+            for (TiXmlElement *eBegin = eSub->FirstChildElement("value");
+                 eBegin != 0; eBegin = eBegin->NextSiblingElement("value")) {
+              if (begin != atoi(eBegin->Attribute("begin")))
+                continue;
+              if (!eBegin->FirstChildElement("content") ||
+                  !eBegin->FirstChildElement("content")->FirstChild()) {
+                cout << "content tag not found!" << endl;
+                return -6;
+              }
+              return (int)strtol(
+                eBegin->FirstChildElement("content")->FirstChild()->Value(),
+                0, 16);
             }
-            return (int)strtol(
-              eBegin->FirstChildElement("content")->FirstChild()->Value(),
-              0, 16);
+            return -5;
           }
-          return -5;
+          return -4;
         }
-        return -4;
+        return -3;
       }
-      return -3;
+      return -2;
     }
-    return -2;
-  }
 #endif
 
-  bool analyse_threshold_scan(const unsigned char *const data,
-                              const unsigned char *const points, float **thr,
-                              float **thr_rms, float **noise,
-                              float **noise_rms,
-                              const unsigned int n_points = 50,
-                              const unsigned int n_events = 50,
-                              const unsigned int n_sectors = 8,
-                              const unsigned int n_pixels = 512 * 1024) {
-    *thr = new float[n_sectors];
-    *thr_rms = new float[n_sectors]; // used for the some of squares
-    *noise = new float[n_sectors];
-    *noise_rms = new float[n_sectors]; // used for the some of squares
+    bool analyse_threshold_scan(const unsigned char *const data,
+                                const unsigned char *const points, float **thr,
+                                float **thr_rms, float **noise,
+                                float **noise_rms,
+                                const unsigned int n_points = 50,
+                                const unsigned int n_events = 50,
+                                const unsigned int n_sectors = 8,
+                                const unsigned int n_pixels = 512 * 1024) {
+      *thr = new float[n_sectors];
+      *thr_rms = new float[n_sectors]; // used for the some of squares
+      *noise = new float[n_sectors];
+      *noise_rms = new float[n_sectors]; // used for the some of squares
 
-    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-      (*thr)[i_sector] = 0.;
-      (*thr_rms)[i_sector] = 0.;
-      (*noise)[i_sector] = 0.;
-      (*noise_rms)[i_sector] = 0.;
-    }
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        (*thr)[i_sector] = 0.;
+        (*thr_rms)[i_sector] = 0.;
+        (*noise)[i_sector] = 0.;
+        (*noise_rms)[i_sector] = 0.;
+      }
 
 #ifdef ROOT_FOUND
-    double *x = new double[n_points];
-    double *y = new double[n_points];
+      double *x = new double[n_points];
+      double *y = new double[n_points];
 
-    for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-      x[i_point] = (double)points[i_point];
-    }
-
-    TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", x[0],
-             x[n_points - 1]);
-    TGraph *g = 0x0;
-
-    // TODO add further variables identifying the pixel in the chip
-    unsigned int sector = n_sectors; // valid range: 0-3
-
-    unsigned int *unsuccessful_fits = new unsigned int[n_sectors];
-    unsigned int *successful_fits = new unsigned int[n_sectors];
-    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-      unsuccessful_fits[i_sector] = 0;
-      successful_fits[i_sector] = 0;
-    }
-
-    // cout << "n_events=" << n_events << endl;
-
-    for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
-      if (data[i_pixel * n_points] != 255) {
-        sector = i_pixel * n_sectors / 1024 / 512;
-
-        int i_thr_point = -1;
-        for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-          y[i_point] = ((double)data[i_pixel * n_points + i_point]) /
-            ((double)n_events);
-          if (y[i_point] >= 0.5 && i_thr_point == -1)
-            i_thr_point = i_point;
-        }
-        if (i_thr_point == 0 || i_thr_point == -1) {
-          ++unsuccessful_fits[sector];
-          continue;
-        }
-
-        f_sc.SetParLimits(0, x[0], x[n_points - 1]);
-        f_sc.SetParameter(0, x[i_thr_point]);
-        f_sc.SetParLimits(1, 0.01, 10.);
-        f_sc.SetParameter(1, 0.1);
-
-        g = new TGraph(n_points, x, y);
-        TFitResultPtr r = g->Fit(&f_sc, "QRSW");
-        if (r->IsValid()) {
-          (*thr)[sector] += (float)f_sc.GetParameter(0);
-          (*thr_rms)[sector] += (float)f_sc.GetParameter(0) * (float)f_sc.GetParameter(0);
-          (*noise)[sector] += (float)f_sc.GetParameter(1);
-          (*noise_rms)[sector] += (float)f_sc.GetParameter(1) * (float)f_sc.GetParameter(1);
-          ++successful_fits[sector];
-        } else {
-          ++unsuccessful_fits[sector];
-        }
-        delete g;
-        g = 0x0;
+      for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+        x[i_point] = (double)points[i_point];
       }
-    }
 
-    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-      if (successful_fits[sector] > 0) {
-        (*thr_rms)[i_sector] = (float)TMath::Sqrt(
-          (*thr_rms)[i_sector] / (float)successful_fits[i_sector] -
-          (*thr)[i_sector] * (*thr)[i_sector] /
-          (float)successful_fits[i_sector] /
-          (float)successful_fits[i_sector]);
-        (*noise_rms)[i_sector] = (float)TMath::Sqrt(
-          (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
-          (*noise)[i_sector] * (*noise)[i_sector] /
-          (float)successful_fits[i_sector] /
-          (float)successful_fits[i_sector]);
-        (*thr)[i_sector] /= (float)successful_fits[i_sector];
-        (*noise)[i_sector] /= (float)successful_fits[i_sector];
-        cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t'
-             << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector]
-             << endl;
-      } else {
-        (*thr)[i_sector] = 0;
-        (*thr_rms)[i_sector] = 0;
-        (*noise)[i_sector] = 0;
-        (*noise_rms)[i_sector] = 0;
-      }
-    }
+      TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", x[0],
+               x[n_points - 1]);
+      TGraph *g = 0x0;
 
-    unsigned int sum_unsuccessful_fits = 0;
-    unsigned int sum_successful_fits = 0;
-    for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-      sum_unsuccessful_fits += unsuccessful_fits[i_sector];
-      sum_successful_fits += successful_fits[i_sector];
-    }
+      // TODO add further variables identifying the pixel in the chip
+      unsigned int sector = n_sectors; // valid range: 0-3
 
-    if (sum_unsuccessful_fits > (double)sum_successful_fits / 100.) {
-      cout << endl
-           << endl;
-      cout << "Error during S-Curve scan analysis: "
-           << sum_unsuccessful_fits << " ("
-           << (double)sum_unsuccessful_fits /
-        (double)(sum_unsuccessful_fits + sum_successful_fits) *
-        100. << "%) fits failed in total" << endl;
+      unsigned int *unsuccessful_fits = new unsigned int[n_sectors];
+      unsigned int *successful_fits = new unsigned int[n_sectors];
       for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
-        cout << "Sector " << i_sector << ":\t"
-             << unsuccessful_fits[i_sector] << " ("
-             << (double)unsuccessful_fits[i_sector] /
-          (double)(successful_fits[i_sector] +
-                   unsuccessful_fits[i_sector]) *
-          100. << "%) fits failed" << endl;
+        unsuccessful_fits[i_sector] = 0;
+        successful_fits[i_sector] = 0;
+      }
+
+      // cout << "n_events=" << n_events << endl;
+
+      for (unsigned int i_pixel = 0; i_pixel < n_pixels; ++i_pixel) {
+        if (data[i_pixel * n_points] != 255) {
+          sector = i_pixel * n_sectors / 1024 / 512;
+
+          int i_thr_point = -1;
+          for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
+            y[i_point] = ((double)data[i_pixel * n_points + i_point]) /
+              ((double)n_events);
+            if (y[i_point] >= 0.5 && i_thr_point == -1)
+              i_thr_point = i_point;
+          }
+          if (i_thr_point == 0 || i_thr_point == -1) {
+            ++unsuccessful_fits[sector];
+            continue;
+          }
+
+          f_sc.SetParLimits(0, x[0], x[n_points - 1]);
+          f_sc.SetParameter(0, x[i_thr_point]);
+          f_sc.SetParLimits(1, 0.01, 10.);
+          f_sc.SetParameter(1, 0.1);
+
+          g = new TGraph(n_points, x, y);
+          TFitResultPtr r = g->Fit(&f_sc, "QRSW");
+          if (r->IsValid()) {
+            (*thr)[sector] += (float)f_sc.GetParameter(0);
+            (*thr_rms)[sector] += (float)f_sc.GetParameter(0) * (float)f_sc.GetParameter(0);
+            (*noise)[sector] += (float)f_sc.GetParameter(1);
+            (*noise_rms)[sector] += (float)f_sc.GetParameter(1) * (float)f_sc.GetParameter(1);
+            ++successful_fits[sector];
+          } else {
+            ++unsuccessful_fits[sector];
+          }
+          delete g;
+          g = 0x0;
+        }
+      }
+
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        if (successful_fits[sector] > 0) {
+          (*thr_rms)[i_sector] = (float)TMath::Sqrt(
+            (*thr_rms)[i_sector] / (float)successful_fits[i_sector] -
+            (*thr)[i_sector] * (*thr)[i_sector] /
+            (float)successful_fits[i_sector] /
+            (float)successful_fits[i_sector]);
+          (*noise_rms)[i_sector] = (float)TMath::Sqrt(
+            (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
+            (*noise)[i_sector] * (*noise)[i_sector] /
+            (float)successful_fits[i_sector] /
+            (float)successful_fits[i_sector]);
+          (*thr)[i_sector] /= (float)successful_fits[i_sector];
+          (*noise)[i_sector] /= (float)successful_fits[i_sector];
+          cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t'
+               << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector]
+               << endl;
+        } else {
+          (*thr)[i_sector] = 0;
+          (*thr_rms)[i_sector] = 0;
+          (*noise)[i_sector] = 0;
+          (*noise_rms)[i_sector] = 0;
+        }
+      }
+
+      unsigned int sum_unsuccessful_fits = 0;
+      unsigned int sum_successful_fits = 0;
+      for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+        sum_unsuccessful_fits += unsuccessful_fits[i_sector];
         sum_successful_fits += successful_fits[i_sector];
       }
-    } else
-      return true;
+
+      if (sum_unsuccessful_fits > (double)sum_successful_fits / 100.) {
+        cout << endl
+             << endl;
+        cout << "Error during S-Curve scan analysis: "
+             << sum_unsuccessful_fits << " ("
+             << (double)sum_unsuccessful_fits /
+          (double)(sum_unsuccessful_fits + sum_successful_fits) *
+          100. << "%) fits failed in total" << endl;
+        for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
+          cout << "Sector " << i_sector << ":\t"
+               << unsuccessful_fits[i_sector] << " ("
+               << (double)unsuccessful_fits[i_sector] /
+            (double)(successful_fits[i_sector] +
+                     unsuccessful_fits[i_sector]) *
+            100. << "%) fits failed" << endl;
+          sum_successful_fits += successful_fits[i_sector];
+        }
+      } else
+        return true;
 #endif
-    return false;
-  }
+      return false;
+    }
 
-private:
-  // The constructor can be private, only one static instance is created
-  // The DataConverterPlugin constructor must be passed the event type
-  // in order to register this converter for the corresponding conversions
-  // Member variables should also be initialized to default values here.
-  PALPIDEFSConverterPlugin()
-    : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2),
-      m_BackBiasVoltage(-3), m_dut_pos(-100), m_Vaux(0x0), m_VresetP(0x0),
-      m_Vcasn(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0), m_Vcasn2(0x0),
-      m_Vclip(0x0), m_VresetD(0x0),
-      m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
-      m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1),
-      m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1),
-      m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0) {}
+  private:
+    // The constructor can be private, only one static instance is created
+    // The DataConverterPlugin constructor must be passed the event type
+    // in order to register this converter for the corresponding conversions
+    // Member variables should also be initialized to default values here.
+    PALPIDEFSConverterPlugin()
+      : DataConverterPlugin(EVENT_TYPE), m_nLayers(-1), m_DataVersion(-2),
+        m_BackBiasVoltage(-3), m_dut_pos(-100), m_configs(0x0),
+        m_chip_type(0x0), m_fw_version(0x0), m_n_trig(-1), m_period(-5.),
+        m_Vaux(0x0), m_VresetP(0x0), m_VresetD(0x0), m_Vcasn(0x0),
+        m_Vcasn2(0x0), m_Vclip(0x0), m_Vcasp(0x0), m_Idb(0x0), m_Ithr(0x0),
+        m_strobe_length(0x0), m_strobeb_length(0x0), m_trigger_delay(0x0),
+        m_readout_delay(0x0), m_do_SCS(0x0), m_SCS_charge_start(-1),
+        m_SCS_charge_stop(-1), m_SCS_charge_step(-1), m_SCS_n_events(-1),
+        m_SCS_n_mask_stages(-1), m_SCS_points(0x0), m_SCS_data(0x0),
+        m_SCS_thr(0x0), m_SCS_thr_rms(0x0), m_SCS_noise(0x0),
+        m_SCS_noise_rms(0x0)
+#ifdef WRITE_TEMPERATURE_FILE
+      , m_temperature_file(0x0)
+#endif
+      {}
 
-  // The single instance of this converter plugin
-  static PALPIDEFSConverterPlugin m_instance;
-}; // class ExampleConverterPlugin
+    // The single instance of this converter plugin
+    static PALPIDEFSConverterPlugin m_instance;
+  }; // class ExampleConverterPlugin
 
 // Instantiate the converter plugin instance
-PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
+  PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
 
 } // namespace eudaq
