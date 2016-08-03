@@ -234,8 +234,8 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
 
 DeviceReader::~DeviceReader() {
   while (IsReading() || IsFlushing() || !m_stopped) {
-    Print(0, "Device Reader still busy, cannot delete the object");
-    eudaq::mSleep(1000);
+    Print(0, "still busy, cannot delete the object - %d %d %d", IsReading(), IsFlushing(), m_stopped);
+    eudaq::mSleep(5000);
   }
 }
 
@@ -318,8 +318,11 @@ void* DeviceReader::LoopWrapper(void* arg) {
 void DeviceReader::Loop() {
   Print(0, "Loop starting...");
   while (1) {
-    if (IsStopping())
+    if (IsStopping()) {
+      SimpleLock lock(m_mutex);
+      m_flushing = false;
       break;
+    }
 
 
     if (IsThresholdScanRqsted()) {
@@ -1456,7 +1459,14 @@ void PALPIDEFSProducer::OnStopRun() {
     }
   }
 
-  if (resetRequired) PowerOffTestSetup();
+  if (resetRequired) {
+    for (int i = m_nDevices-1; i >= 0; --i) { // stop the event polling loop
+      m_reader[i]->StopDAQ();
+      m_reader[i]->SetRunning(false);
+    }
+    eudaq::mSleep(1000);
+    PowerOffTestSetup();
+  }
 
   SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
 }
@@ -1513,6 +1523,7 @@ void PALPIDEFSProducer::Loop() {
 
       if (events_built == -1) { // auto-of-sync, which won't be recovered
         reconfigure = true;
+        break;
       }
       else if (events_built == 0) {
         if (m_status_interval > 0 &&
@@ -1592,7 +1603,6 @@ void PALPIDEFSProducer::Loop() {
       EUDAQ_WARN(msg);
       for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
         m_reader[i]->StopDAQ();
-        m_reader[i]->SetRunning(false);
       }
       {
         SimpleLock lock(m_mutex);
