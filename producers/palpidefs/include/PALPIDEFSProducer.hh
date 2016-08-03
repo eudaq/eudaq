@@ -264,9 +264,7 @@ protected:
   std::mutex m_mutex;
   TTestSetup* m_testsetup;
 
-#ifdef DEBUG_USB
   std::vector<unsigned char>** m_raw_data;
-#endif
 
   // config
   eudaq::Configuration m_param;
