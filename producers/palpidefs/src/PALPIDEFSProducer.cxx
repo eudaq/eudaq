@@ -1397,6 +1397,7 @@ void PALPIDEFSProducer::OnStopRun() {
     std::ofstream outfile(tmp, std::ios::out | std::ios::binary);
     if (m_raw_data[i] && m_raw_data[i]->size()>0) {
       outfile.write(reinterpret_cast<const char*>(&m_raw_data[i]), m_raw_data[i]->size());
+      m_raw_data[i]->clear();
     }
     outfile.close();
 #endif
