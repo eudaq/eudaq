@@ -12,16 +12,17 @@ namespace eudaq{
   class DLLEXPORT Factory{
   public:
     using UP_BASE = std::unique_ptr<BASE, std::function<void(BASE*)> >;
-    
     template <typename ...ARGS>
-      static std::unique_ptr<BASE, std::function<void(BASE*)> >
-    Create(uint32_t id, ARGS&& ...args);
+      static typename Factory<BASE>::UP_BASE
+      Create(uint32_t id, ARGS&& ...args);
     
     template <typename... ARGS>
-    static std::map<uint32_t, UP_BASE (*)(ARGS&&...)>& GetInstance();
+      static std::map<uint32_t, typename UP_BASE (*)(ARGS&&...)>&
+      Instance();
     
     template <typename DERIVED, typename... ARGS>
-    static int Register(uint32_t id);
+      static int
+      Register(uint32_t id);
     
   private:
     template <typename DERIVED, typename... ARGS>
@@ -32,10 +33,10 @@ namespace eudaq{
 
   template <typename BASE>
   template <typename ...ARGS>
-  std::unique_ptr<BASE, std::function<void(BASE*)> >
+  typename Factory<BASE>::UP_BASE
   Factory<BASE>::Create(uint32_t id, ARGS&& ...args){
-    auto it = GetInstance<ARGS&&...>().find(id);
-    if (it == GetInstance<ARGS&&...>().end()){
+    auto it = Instance<ARGS&&...>().find(id);
+    if (it == Instance<ARGS&&...>().end()){
       std::cerr<<"Factory unknown class: <"<<id<<">\n";
       return nullptr;
     }
@@ -45,7 +46,7 @@ namespace eudaq{
   template <typename BASE>
   template <typename... ARGS>
   std::map<uint32_t, typename Factory<BASE>::UP_BASE (*)(ARGS&&...)>&
-  Factory<BASE>::GetInstance(){
+  Factory<BASE>::Instance(){
     static std::map<uint32_t, typename Factory<BASE>::UP_BASE (*)(ARGS&&...)> m;
     return m;
   };
@@ -55,9 +56,9 @@ namespace eudaq{
   int
   Factory<BASE>::Register(uint32_t id){
     std::cout<<"Register ID "<<id; 
-    GetInstance<ARGS&&...>()[id] = &MakerFun<DERIVED, ARGS&&...>;
+    Instance<ARGS&&...>()[id] = &MakerFun<DERIVED, ARGS&&...>;
     std::cout<<"   map items: ";
-    for(auto& e: GetInstance<ARGS&&...>())
+    for(auto& e: Instance<ARGS&&...>())
       std::cout<<e.first<<"  ";
     std::cout<<std::endl;
     return 0;

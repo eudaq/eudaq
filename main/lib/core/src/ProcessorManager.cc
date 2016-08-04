@@ -17,22 +17,9 @@ using std::shared_ptr;
 using std::unique_ptr;
 
 
-template class __declspec(dllexport) Factory<Processor>;
-template __declspec(dllexport) std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
-template __declspec(dllexport) std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
-
-
-// template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
-// template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
-
-
-// namespace{
-//   // static auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
-//   // static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
-  // static auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
-
-// }
-// static ExamplePS *p;
+template class DLLEXPORT Factory<Processor>;
+template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
+template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
 
 ProcessorManager* ProcessorManager::GetInstance(){
   static ProcessorManager singleton;

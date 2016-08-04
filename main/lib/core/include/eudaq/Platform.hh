@@ -14,10 +14,10 @@ T __check(Args&&... args);
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 
-#ifndef EUDAQ_MODULE
+#ifdef EUDAQ_CORE_EXPORTS
 #define DLLEXPORT __declspec(dllexport)
 #else
-#define DLLEXPORT
+#define DLLEXPORT __declspec(dllimport)
 #endif
 
 #else
