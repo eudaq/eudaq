@@ -6,14 +6,14 @@
 using namespace eudaq;
 
 
-extern template class Factory<Processor>;
-extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
-extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
+extern template class __declspec(dllimport) Factory<Processor>;
+extern template __declspec(dllimport) std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
+extern template __declspec(dllimport) std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
 
 
 // namespace{
   static auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
-  // static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
+  static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
   // static auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
 
 // }

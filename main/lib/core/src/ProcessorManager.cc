@@ -17,9 +17,9 @@ using std::shared_ptr;
 using std::unique_ptr;
 
 
-extern template class Factory<Processor>;
-extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
-extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
+template class __declspec(dllexport) Factory<Processor>;
+template __declspec(dllexport) std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
+template __declspec(dllexport) std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
 
 
 // template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();

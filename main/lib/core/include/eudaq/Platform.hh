@@ -13,11 +13,26 @@ T __check(Args&&... args);
 #define EUDAQ_PLATFORM_IS(P) (EUDAQ_PLATFORM == PF_##P)
 
 #if EUDAQ_PLATFORM_IS(WIN32)
+
+#ifndef EUDAQ_MODULE
 #define DLLEXPORT __declspec(dllexport)
-#include <stdint.h>
 #else
 #define DLLEXPORT
 #endif
+
+#else
+
+#define DLLEXPORT
+#endif
+
+
+
+
+#if EUDAQ_PLATFORM_IS(WIN32)
+#include <stdint.h>
+#endif
+
+
 
 // used for reference counted TObject 
 // Use this only if you know the object is counted somewehere else

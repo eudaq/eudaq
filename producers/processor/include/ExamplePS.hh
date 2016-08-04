@@ -1,6 +1,7 @@
 #ifndef EXAMPLEPS_HH_
-#define EXAMPLEPS_HH_
+#define EXAMPLEPS_HH
 
+#define EUDAQ_MODULE
 
 #include<string>
 

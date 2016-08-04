@@ -26,10 +26,9 @@ using namespace eudaq;
 
 
 
-extern template class Factory<Processor>;
-extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
-extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
-
+// extern template class Factory<Processor>;
+// extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
+// extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
 
 
 Processor::Processor(std::string pstype, uint32_t psid)

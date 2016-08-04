@@ -9,7 +9,7 @@
 
 namespace eudaq{
   template <typename BASE>
-  class Factory{
+  class DLLEXPORT Factory{
   public:
     using UP_BASE = std::unique_ptr<BASE, std::function<void(BASE*)> >;
     
