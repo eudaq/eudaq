@@ -5,12 +5,18 @@
 
 using namespace eudaq;
 
-namespace{
-  static auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
-  static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
-  static auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
 
-}
+extern template class Factory<Processor>;
+extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
+extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
+
+
+// namespace{
+  static auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
+  // static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
+  // static auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
+
+// }
 
 ExamplePS::ExamplePS(std::string cmd)
   :Processor("ExamplePS", ""){

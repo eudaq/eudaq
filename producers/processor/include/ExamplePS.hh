@@ -9,7 +9,7 @@
 
 namespace eudaq{
 
-  class ExamplePS:public Processor{
+  class DLLEXPORT ExamplePS:public Processor{
   public:
     ExamplePS(std::string cmd);
     ExamplePS(uint32_t psid, std::string cmd);

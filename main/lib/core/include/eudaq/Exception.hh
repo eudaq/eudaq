@@ -23,6 +23,11 @@
 
 #define EUDAQ_EXCEPTION(name) EUDAQ_EXCEPTIONX(name, ::eudaq::Exception)
 
+#if EUDAQ_PLATFORM_IS(WIN32)
+#pragma warning(push)
+#pragma warning(disable: 4275)
+#endif
+
 namespace eudaq {
 
   class DLLEXPORT Exception : public std::exception {
@@ -84,5 +89,9 @@ namespace eudaq {
   EUDAQ_EXCEPTION(CommunicationException);
   EUDAQ_EXCEPTIONX(BusError, CommunicationException);
 }
+
+#if EUDAQ_PLATFORM_IS(WIN32)
+#pragma warning(pop)
+#endif
 
 #endif // EUDAQ_INCLUDED_Exception

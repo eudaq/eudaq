@@ -1,10 +1,10 @@
 #include"ProcessorManager.hh"
 #include"Processor.hh"
-#include"ExamplePS.hh"
+// #include"ExamplePS.hh"
 
 #include <experimental/filesystem>
 
-#ifdef WIN32
+#if EUDAQ_PLATFORM_IS(WIN32)
 #include <windows.h>
 #else
 #include <dlfcn.h>
@@ -16,6 +16,23 @@ using namespace eudaq;
 using std::shared_ptr;
 using std::unique_ptr;
 
+
+extern template class Factory<Processor>;
+extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
+extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
+
+
+// template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
+// template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
+
+
+// namespace{
+//   // static auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
+//   // static auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
+  // static auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
+
+// }
+// static ExamplePS *p;
 
 ProcessorManager* ProcessorManager::GetInstance(){
   static ProcessorManager singleton;
@@ -37,24 +54,45 @@ void ProcessorManager::InitProcessorPlugins(){
     libpath.emplace_back(env_ps_path);
   }
   for(auto &e: libpath){
+    std::vector<std::string> dir_files; 
+#if EUDAQ_PLATFORM_IS(WIN32)
+    
+#else
     DIR *d = opendir(e.c_str());
     struct dirent *dir;
     while((dir = readdir(d)) != NULL){
-      std::string fname(dir->d_name);      
-      if(!fname.compare(0, 12, "libeudaq_ps_")
-	 && fname.rfind(".so") != std::string::npos
+      dir_files.embrace_back(dir->d_name);
+    }
+    closedir(d);
+#endif
+    for(auto &fname: dir_files){
+      std::string ps_module_prefix("libeudaq_module_ps_");
+      if(!fname.compare(0, ps_module_prefix.size(), ps_module_prefix)
+	 && (fname.rfind(".so") != std::string::npos
+	     || fname.rfind(".dll") != std::string::npos)
 	 && fname.rfind(".pcm") == std::string::npos
 	 && fname.rfind(".rootmap") == std::string::npos){
 	fname.insert(0, e+"/");
 	libs.push_back(fname);
       }
     }      
-    closedir(d);
   }
 
+#if EUDAQ_PLATFORM_IS(WIN32)
+  // HMODULE handle = LoadLibrary(e.c_str());
+  std::cout<<">>>>>>>>>>====load.... "<< std::endl;
+  HMODULE handle = LoadLibrary("../lib/libeudaq_module_ps_example.dll");
+  if(handle)
+    std::cout<<"  load succ"<<std::endl;
+  else
+    std::cout<<"  load fail"<<std::endl;
+#endif
+  
   for(auto &e: libs){
-#ifdef WIN32
-    HMODULE handle = LoadLibrary("SDL.dll");
+#if EUDAQ_PLATFORM_IS(WIN32)
+    // HMODULE handle = LoadLibrary(e.c_str());
+    std::cout<<">>>>>>>>>>load..."<<std::endl;
+    HMODULE handle = LoadLibrary("libeudaq_module_ps_example.dll");
 #else
     void *handle = dlopen(e.c_str(), RTLD_NOW); //RTLD_LOCAL RTLD_GLOBAL
 #endif

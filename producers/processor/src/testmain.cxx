@@ -3,10 +3,10 @@
 #include"ProcessorManager.hh"
 #include"RawDataEvent.hh"
 
-#include"ExamplePS.hh"
-#include"EventSenderPS.hh"
-#include"EventReceiverPS.hh"
-#include"EventFileReaderPS.hh"
+// #include"ExamplePS.hh"
+// #include"EventSenderPS.hh"
+// #include"EventReceiverPS.hh"
+// #include"EventFileReaderPS.hh"
 
 #include <chrono>
 #include <thread>
@@ -21,7 +21,7 @@ int main(int argn, char **argc){
   {uint32_t i; std::cin>>i;}
 
   PSSP P0 = psMan.MakePSSP("ExamplePS", "SYS:PSID=10");
-  PSSP p1 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=1;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000");
+  PSSP p1 = psMan.MakePSSP("EventFileReaderPS", "SYS:PSID=1;FILE=../data/run000703.raw;SYS:SLEEP=1000");
 
   
   std::cout<<"xxxxxxx"<<std::endl;

@@ -30,7 +30,7 @@ namespace eudaq{
 
     PSSP operator>>(PSSP psr);
     PSSP operator>>(std::string psr_str);
-    
+   
   private:
     std::vector<PSSP> m_pslist_root;
     std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist;
