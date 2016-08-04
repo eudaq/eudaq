@@ -13,6 +13,7 @@
 #include <QTimer>
 #include <QInputDialog>
 #include <QSettings>
+#include <QRegExp>
 
 using eudaq::to_string;
 using eudaq::from_string;
@@ -123,7 +124,8 @@ program is currently in the function will enable and disable certain buttons, an
     QString loadedFile = txtConfigFileName->text();
     if(loadedFile.isNull())
         return false;
-    return loadedFile.contains(".conf");
+    QRegExp rx (".+(\\.conf$)");
+    return rx.exactMatch(loadedFile);
   }
 
   void on_btnInit_clicked() {
