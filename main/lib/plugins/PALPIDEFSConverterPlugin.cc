@@ -62,6 +62,8 @@ using namespace std;
 #define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
                              // period, they are marked as broken
 
+#define EVENT_SUBTRACTION  // subtract the previous events
+
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
   // Converter
@@ -150,6 +152,14 @@ namespace eudaq {
       m_daq_header_length = new int[m_nLayers];
       m_daq_trailer_length = new int[m_nLayers];
 #endif
+#ifdef EVENT_SUBTRACTION
+      m_event_subtraction = (m_period>0 && m_n_trig>0);
+      if (m_event_subtraction) {
+        m_hitmaps = new std::vector<int>** [m_nLayers];
+      }
+      m_i_event = 0;
+#endif
+
 
       for (int i = 0; i < m_nLayers; i++) {
         char tmp[100];
@@ -285,6 +295,14 @@ namespace eudaq {
         m_daq_trailer_length[i] = m_daq_board[i]->GetEventTrailerLength();
 
         m_last_timestamp[i] = 0;
+#endif
+#ifdef EVENT_SUBTRACTION
+      if (m_event_subtraction) {
+        m_hitmaps[i] = new std::vector<int>* [m_n_event_history];
+        for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+          m_hitmaps[i][iEvt] = new std::vector<int>();
+        }
+      }
 #endif
       }
 #ifdef WRITE_TEMPERATURE_FILE
@@ -525,6 +543,13 @@ namespace eudaq {
             timestamps_reference[i] = (uint64_t)ULONG_MAX;
           }
 
+
+#ifdef EVENT_SUBTRACTION
+          for (int i = 0; i < m_nLayers; i++) {
+            m_hitmaps[i][m_i_event%m_n_event_history]->clear();
+          }
+#endif
+
 // RAW dump
 #ifdef DEBUGRAWDUMP
           printf("Event %d: \n", ev.GetEventNumber());
@@ -604,6 +629,21 @@ namespace eudaq {
                 // adjust the bottom-right pixel
                 if ((hits[iHit].address % 4) == 0) y += 1;
 
+#ifdef EVENT_SUBTRACTION
+                bool skip_hit = false;
+                unsigned int address = (x & 0x3ff) | ((y & 0x1ff)<<10);
+                for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+                  if (iEvt == m_i_event%m_n_event_history) continue;
+                  for (unsigned long iEntry = 0; iEntry<m_hitmaps[current_layer][iEvt]->size(); ++iEntry) {
+                    if (m_hitmaps[current_layer][iEvt]->at(iEntry) == address){
+                      skip_hit = true;
+                      break;
+                    }
+                  }
+                  if (skip_hit) continue;
+                }
+                m_hitmaps[current_layer][m_i_event%m_n_event_history]->push_back(address);
+#endif
                 planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
               }
             }
@@ -681,12 +721,26 @@ namespace eudaq {
             }
 #ifdef CHECK_EVENT_DISTANCE
             if (!ok_event_distance) {
-              sev.SetFlags(Event::FLAG_BROKEN);
               cout << "Event " << ev.GetEventNumber() << " does not have the correct event time distance: " <<  event_distance << " instead of " << m_period << endl;
+              sev.SetFlags(Event::FLAG_BROKEN);
             }
 #endif
+#ifdef EVENT_SUBTRACTION
+            if (m_i_event<m_n_event_history) {
+              sev.SetFlags(Event::FLAG_BROKEN);
+              cout << "Event " << ev.GetEventNumber() << " has only " <<  m_i_event << " leading events with the correct timestamp instead of " << m_n_event_history << endl;
+            }
 
-            if (!ok_zero || !ok_ref || !ok_last ) { // timestamps suspicious
+            if (!ok_zero || !ok_ref || !ok_last || !ok_event_distance) { // event will be rejected
+              const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event = 0;
+              for (int iLayer = 0; iLayer < m_nLayers; iLayer++) {
+                for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+                  m_hitmaps[iLayer][iEvt]->clear();
+                }
+              }
+            }
+#endif
+            if (!ok_zero || !ok_ref || !ok_last) { // timestamps suspicious
               cout << "ERROR: Event " << ev.GetEventNumber()
                    << " Timestamps not consistent." << endl;
 //#ifdef MYDEBUG
@@ -707,6 +761,9 @@ namespace eudaq {
               for (int i = 0; i < m_nLayers; i++) {
                 m_last_timestamp[i] = timestamps[i];
               }
+#ifdef EVENT_SUBTRACTION
+              const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event++; // complete event, move to next history buffer
+#endif
             }
           }
         }
@@ -878,6 +935,13 @@ namespace eudaq {
     TpAlpidefs** m_dut;
     int* m_daq_header_length;
     int* m_daq_trailer_length;
+#endif
+#ifdef EVENT_SUBTRACTION
+    std::vector<int>*** m_hitmaps; // [layer][event]
+    static const float m_event_subtraction_time; // time during which events will be subtracted
+    static const int   m_n_event_history;        // number of events required to have the same time distance before an event is accepted as valid
+    int  m_i_event;                              // counter for the event history
+    bool m_event_subtraction;                     // status of the event subtration
 #endif
 
 
@@ -1085,5 +1149,10 @@ namespace eudaq {
 
 // Instantiate the converter plugin instance
   PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
+
+#ifdef EVENT_SUBTRACTION
+  const float PALPIDEFSConverterPlugin::m_event_subtraction_time = 1.e-4; // 100us
+  const int   PALPIDEFSConverterPlugin::m_n_event_history        = 10;    // number of events
+#endif
 
 } // namespace eudaq
