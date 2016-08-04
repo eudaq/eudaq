@@ -48,7 +48,7 @@ namespace eudaq {
     void CommandThread();
     void StartThread();
 
-  protected:
+  protected:    
     ConnectionState m_connectionstate;
     TransportClient *m_cmdclient;
 

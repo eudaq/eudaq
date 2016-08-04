@@ -93,6 +93,7 @@ This function takes a variable state, which corresponds to one of the four state
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
+    configLoaded = checkConfigFile();
     btnInit->setEnabled(state == STATE_UNINIT);
     btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
     btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
@@ -116,6 +117,13 @@ program is currently in the function will enable and disable certain buttons, an
      else
        lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
     m_run.UpdateDisplayed();
+  }
+
+  bool checkConfigFile() {
+    QString loadedFile = txtConfigFileName->text();
+    if(loadedFile.isNull())
+        return false;
+    return loadedFile.contains(".conf");
   }
 
   void on_btnInit_clicked() {
@@ -158,7 +166,6 @@ program is currently in the function will enable and disable certain buttons, an
   void on_btnLoad_clicked() {
     // QString tempLastFileName;
     // tempLastFileName = txtConfigFileName->text();
-    std::cout << "I'm here euRun.hh" << std::endl;
     QString temporaryFileName = QFileDialog::getOpenFileName(
         this, tr("Open File"), lastUsedDirectory, tr("*.conf (*.conf)"));
 

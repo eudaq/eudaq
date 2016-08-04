@@ -158,13 +158,13 @@ public:
       m_tlu->Update(timestamps);
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
-      SetStatus(eudaq::Status::ST_CONF, "Configured (" + param.Name() + ")");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::ST_ERROR, "Configuration Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::ST_ERROR, "Configuration Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
     }
   }
   virtual void OnStartRun(unsigned param) {
@@ -213,13 +213,13 @@ public:
       m_tlu->Update(timestamps);
       m_tlu->Start();
       TLUStarted = true;
-      SetStatus(eudaq::Status::ST_RUNNING, "Started");
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Started");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::ST_ERROR, "Start Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::ST_ERROR, "Start Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
     }
   }
   virtual void OnStopRun() {
@@ -230,13 +230,13 @@ public:
       while (TLUJustStopped) {
         eudaq::mSleep(100);
       }
-      SetStatus(eudaq::Status::ST_CONF, "Stopped");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::ST_ERROR, "Stop Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::ST_ERROR, "Stop Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
     }
   }
   virtual void OnTerminate() {
@@ -249,25 +249,25 @@ public:
       std::cout << "Reset" << std::endl;
       m_tlu->Stop();        // stop
       m_tlu->Update(false); // empty events
-      SetStatus(eudaq::Status::ST_UNCONF, "Reset");
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Reset");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::ST_ERROR, "Reset Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Reset Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::ST_ERROR, "Reset Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Reset Error");
     }
   }
-  virtual void OnStatus() {
-    m_status.SetTag("TRIG", to_string(m_ev));
+  virtual void OnStatus() {             
+    m_connectionstate.SetTag("TRIG", to_string(m_ev));
     if (m_tlu) {
-      m_status.SetTag("TIMESTAMP",
+      m_connectionstate.SetTag("TIMESTAMP",
                       to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
-      m_status.SetTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
-      m_status.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
-      m_status.SetTag("STATUS", m_tlu->GetStatusString());
+      m_connectionstate.SetTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
+      m_connectionstate.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+      m_connectionstate.SetTag("STATUS", m_tlu->GetStatusString());
       for (int i = 0; i < 4; ++i) {
-        m_status.SetTag("SCALER" + to_string(i),
+        m_connectionstate.SetTag("SCALER" + to_string(i),
                         to_string(m_tlu->GetScaler(i)));
       }
     }

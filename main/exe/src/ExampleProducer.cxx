@@ -26,7 +26,6 @@ class ExampleProducer : public eudaq::Producer {
 
     // Debug function
     virtual void OnInitialise() {
-        std::cout << "Current state: UNINITIALISED" << std::endl;
         SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "State was changed to configured.");
     }
 
