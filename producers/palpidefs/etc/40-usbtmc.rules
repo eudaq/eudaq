@@ -1,0 +1,9 @@
+# Tektronix AFG3252 waveform generator
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0699", ATTRS{idProduct}=="0345", MODE="0666", GROUP="dialout"
+SUBSYSTEM=="usb_device", ATTRS{idVendor}=="0699", ATTRS{idProduct}=="0345", MODE="0666", GROUP="dialout"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0699", ATTRS{idProduct}=="03A6", MODE="0666", GROUP="dialout"
+SUBSYSTEM=="usb_device", ATTRS{idVendor}=="0699", ATTRS{idProduct}=="03A6", MODE="0666", GROUP="dialout"
+
+# Devices
+KERNEL=="usbtmc/*",       MODE="0660", GROUP="dialout"
+KERNEL=="usbtmc[0-9]*",   MODE="0660", GROUP="dialout"
