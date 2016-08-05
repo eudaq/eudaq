@@ -234,7 +234,7 @@ DeviceReader::DeviceReader(int id, int debuglevel, TTestSetup* test_setup,
 
 DeviceReader::~DeviceReader() {
   while (IsReading() || IsFlushing() || !m_stopped) {
-    Print(0, "still busy, cannot delete the object - %d %d %d", IsReading(), IsFlushing(), m_stopped);
+    Print(0, "still busy, cannot delete the object - Reading: %d, Flushing: %d, Stopped: %d", IsReading(), IsFlushing(), m_stopped);
     eudaq::mSleep(5000);
   }
 }
@@ -393,6 +393,7 @@ void DeviceReader::Loop() {
       Print(0, "UNEXPECTED: did not receive stop trigger marker. Aborting flushing %lu %lu !",
             m_daq_board->GetNextEventId(), m_last_trigger_id);
       m_flushing = false;
+      m_reading = false;
       continue;
     }
 
@@ -400,8 +401,10 @@ void DeviceReader::Loop() {
       if (length == 0 && readEvent) {
         SimpleLock lock(m_mutex);
         Print(0, "UNEXPECTED: 0 event received but trigger has not been stopped.");
+        m_reading = false;
         continue;
       } else if (length == 0 && !readEvent) {
+        m_reading = false;
         continue;
       }
 
