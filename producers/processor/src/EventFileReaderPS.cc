@@ -4,9 +4,9 @@
 using namespace eudaq;
 
 namespace{
-  static auto dummy_val = Factory<Processor>::Register<EventFileReaderPS, std::string&>(eudaq::cstr2hash("EventFileReaderPS"));
+  auto dummy0 = Factory<Processor>::Register<EventFileReaderPS, std::string&>(eudaq::cstr2hash("EventFileReaderPS"));
+  auto dummy1 = Factory<Processor>::Register<EventFileReaderPS, std::string&&>(eudaq::cstr2hash("EventFileReaderPS"));
 }
-
 
 EventFileReaderPS::EventFileReaderPS(std::string cmd)
   :Processor("EventFileReaderPS", ""){

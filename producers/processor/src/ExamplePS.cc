@@ -5,16 +5,9 @@
 
 using namespace eudaq;
 
-
-extern template class DLLEXPORT Factory<Processor>;
-extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
-extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
-
-
 namespace{
   auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
   auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
-  auto dummy2 = Factory<Processor>::Register<ExamplePS, std::string&&>(0);
 }
 
 ExamplePS::ExamplePS(std::string cmd)

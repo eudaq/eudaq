@@ -10,27 +10,6 @@
 
 using namespace eudaq;
 
-// template class Factory<Processor>;
-// void dummy_fun(){
-//   uint32_t id = 1;
-//   std::string name("DUMP");
-//   // Factory<Processor>::UP_BASE Factory<Processor>::Create(id, name);
-//   // Factory<Processor>::UP_BASE Factory<Processor>::Create(id, std::move(name));
-//   auto dog =  Factory<Processor>::Create(id, name);
-//   auto cat =  Factory<Processor>::Create(id, std::move(name));
-//   auto mouse = Factory<Processor>::GetInstance<std::string&>();
-//   auto mouse2 = Factory<Processor>::GetInstance<std::string&&>();
-// }
-
-// template class Factory<Processor>;
-
-
-
-// extern template class Factory<Processor>;
-// extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::GetInstance<std::string&>();
-// extern template std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::GetInstance<std::string&&>();
-
-
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;

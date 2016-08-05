@@ -4,6 +4,11 @@
 
 using namespace eudaq;
 
+namespace{
+  auto dummy0 = Factory<Processor>::Register<EventSenderPS, std::string&>(eudaq::cstr2hash("EventSenderPS"));
+  auto dummy1 = Factory<Processor>::Register<EventSenderPS, std::string&&>(eudaq::cstr2hash("EventSenderPS"));
+}
+
 EventSenderPS::EventSenderPS(std::string cmd)
   :Processor("EventSenderPS", ""){
   *this<<cmd;

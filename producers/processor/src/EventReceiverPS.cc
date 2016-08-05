@@ -4,7 +4,8 @@
 using namespace eudaq;
 
 namespace{
-  static auto dummy_val = Factory<Processor>::Register<EventReceiverPS, std::string&>(eudaq::cstr2hash("EventReceiverPS"));
+  auto dummy0 = Factory<Processor>::Register<EventReceiverPS, std::string&>(eudaq::cstr2hash("EventReceiverPS"));
+  auto dummy1 = Factory<Processor>::Register<EventReceiverPS, std::string&&>(eudaq::cstr2hash("EventReceiverPS"));
 }
 
 EventReceiverPS::EventReceiverPS(std::string cmd)
