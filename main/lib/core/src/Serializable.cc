@@ -1,3 +1,6 @@
-#include "eudaq/Serializable.hh"
+#include "Serializable.hh"
 
-namespace eudaq {}
+namespace eudaq {
+  
+  Serializable::~Serializable() {};
+}
