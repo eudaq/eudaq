@@ -58,7 +58,8 @@ private:
   enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADED
   bool configLoaded = false;    // allows to disable / enable config button
                                 // depending on whether config file was loaded
-  int cur_state = STATE_UNINIT;
+  bool disableButtons = false;
+  int curState = STATE_UNINIT;
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
   const int FONT_SIZE = 12;
@@ -99,12 +100,14 @@ private:
   }
 
   void updateButtons(int state) {
+      if(state == STATE_RUNNING)
+          disableButtons = false;
       configLoaded = checkConfigFile();
-      btnInit->setEnabled(state == STATE_UNINIT);
-      btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
-      btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
+      btnInit->setEnabled(state == STATE_UNINIT && !disableButtons);
+      btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && !disableButtons);
+      btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded && !disableButtons);
       btnTerminate->setEnabled(state != STATE_RUNNING);
-      btnStart->setEnabled(state == STATE_CONF);
+      btnStart->setEnabled(state == STATE_CONF && !disableButtons);
       btnStop->setEnabled(state == STATE_RUNNING);
   }
 
@@ -115,7 +118,7 @@ This function takes a variable state, which corresponds to one of the four state
 program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
-    cur_state = state;
+    curState = state;
     updateButtons(state);
     if(state == STATE_UNINIT) {
        lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
@@ -148,6 +151,7 @@ program is currently in the function will enable and disable certain buttons, an
   //}
 
   void on_btnStart_clicked(bool cont = false) { 
+    disableButtons = true;
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -181,7 +185,7 @@ program is currently in the function will enable and disable certain buttons, an
       lastUsedDirectory =
           QFileInfo(temporaryFileName).path(); // store path for next time
       configLoaded = true;
-      updateButtons(cur_state);
+      updateButtons(curState);
     }
   }
   void timer() {
