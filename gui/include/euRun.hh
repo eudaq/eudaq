@@ -56,8 +56,9 @@ public:
 
 private:
   enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADED
-  bool configLoaded = false;
-  bool configured = false;
+  bool configLoaded = false;    // allows to disable / enable config button
+                                // depending on whether config file was loaded
+  bool configured = false;      // auxiliary stuff for the same purpose as above
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
   const int FONT_SIZE = 12;
@@ -153,7 +154,7 @@ program is currently in the function will enable and disable certain buttons, an
     emit StatusChanged("TRIG", "0");
     emit StatusChanged("PARTICLES", "0");
     emit StatusChanged("RATE", "");
-    emit StatusChanged("MEANRATE", "");
+    emit StatusChanged("MEANRATE", "");    
   }
   void on_btnStop_clicked() {
     StopRun();

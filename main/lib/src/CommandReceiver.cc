@@ -136,8 +136,7 @@ namespace eudaq {
 
     if(m_connectionstate.GetState()== eudaq::ConnectionState::STATE_RUNNING)
       OnStopRun();
-    SetConnectionState(ConnectionState::STATE_UNCONF, "Wait"); 
-
+    SetConnectionState(ConnectionState::STATE_CONF, "Wait");
   }
 
   void CommandReceiver::OnLog(const std::string &param) {

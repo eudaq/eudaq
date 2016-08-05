@@ -23,8 +23,7 @@ namespace eudaq {
 				return (eudaq::ConnectionState::STATE_ERROR);
             isUninit = (state == eudaq::ConnectionState::STATE_UNINIT) || isUninit;
 			isUnconf = (state == eudaq::ConnectionState::STATE_UNCONF) || isUnconf;
-			isRunning = (state == eudaq::ConnectionState::STATE_RUNNING) && isRunning;
-
+            isRunning = (state == eudaq::ConnectionState::STATE_RUNNING) && isRunning;
 		}
 
 		if (isRunning)
