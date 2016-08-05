@@ -58,7 +58,7 @@ private:
   enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADED
   bool configLoaded = false;    // allows to disable / enable config button
                                 // depending on whether config file was loaded
-  bool configured = false;      // auxiliary stuff for the same purpose as above
+  int cur_state = STATE_UNINIT;
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
   const int FONT_SIZE = 12;
@@ -88,38 +88,7 @@ private:
     }
   }
   bool eventFilter(QObject *object, QEvent *event);
-private slots:
 
-/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal is emmited, this function is triggered. 
-This function takes a variable state, which corresponds to one of the four states which the program can be in. Depending on which state the
-program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
-
-  void SetStateSlot(int state) {
-    configLoaded = checkConfigFile();
-    btnInit->setEnabled(state == STATE_UNINIT);
-    btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
-    btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
-    btnTerminate->setEnabled(state != STATE_RUNNING);
-    btnStart->setEnabled(state == STATE_CONF);
-    btnStop->setEnabled(state == STATE_RUNNING);
-
-    if(state == STATE_UNINIT) {
-       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
-       configured = false;
-    }
-    else if(state == STATE_UNCONF) {
-       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
-       configured = false;
-    } else if (state == STATE_CONF) {
-       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
-       configured = true;
-    }
-    else if (state ==STATE_RUNNING)
-       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
-     else
-       lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
-    m_run.UpdateDisplayed();
-  }
 
   bool checkConfigFile() {
     QString loadedFile = txtConfigFileName->text();
@@ -127,6 +96,40 @@ program is currently in the function will enable and disable certain buttons, an
         return false;
     QRegExp rx (".+(\\.conf$)");
     return rx.exactMatch(loadedFile);
+  }
+
+  void updateButtons(int state) {
+      configLoaded = checkConfigFile();
+      btnInit->setEnabled(state == STATE_UNINIT);
+      btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT);
+      btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded);
+      btnTerminate->setEnabled(state != STATE_RUNNING);
+      btnStart->setEnabled(state == STATE_CONF);
+      btnStop->setEnabled(state == STATE_RUNNING);
+  }
+
+private slots:
+
+/* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal is emmited, this function is triggered. 
+This function takes a variable state, which corresponds to one of the four states which the program can be in. Depending on which state the
+program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
+
+  void SetStateSlot(int state) {
+    cur_state = state;
+    updateButtons(state);
+    if(state == STATE_UNINIT) {
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b></font>").arg(FONT_SIZE));
+    }
+    else if(state == STATE_UNCONF) {
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></font>").arg(FONT_SIZE));
+    } else if (state == STATE_CONF) {
+       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b></font>").arg(FONT_SIZE));
+    }
+    else if (state ==STATE_RUNNING)
+       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></font>").arg(FONT_SIZE));
+     else
+       lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></font>").arg(FONT_SIZE));
+    m_run.UpdateDisplayed();
   }
 
   void on_btnInit_clicked() {
@@ -156,6 +159,7 @@ program is currently in the function will enable and disable certain buttons, an
     emit StatusChanged("RATE", "");
     emit StatusChanged("MEANRATE", "");    
   }
+
   void on_btnStop_clicked() {
     StopRun();
     //std::cout << "DEBUG: Stop Button Pressed \n";
@@ -177,10 +181,7 @@ program is currently in the function will enable and disable certain buttons, an
       lastUsedDirectory =
           QFileInfo(temporaryFileName).path(); // store path for next time
       configLoaded = true;
-      // TODO
-      if(configured)
-          SetState(STATE_CONF);
-      else SetState(STATE_UNCONF);
+      updateButtons(cur_state);
     }
   }
   void timer() {
