@@ -20,6 +20,15 @@
 namespace eudaq {
   class Processor;
   class ProcessorManager;  
+
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT
+  Factory<Processor>;
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>&
+  Factory<Processor>::Instance<std::string&>();
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>&
+  Factory<Processor>::Instance<std::string&&>();
+#endif
   
   using CreatePS  = Processor* (*)(uint32_t);
   using DestroyPS = void (*)(Processor*);

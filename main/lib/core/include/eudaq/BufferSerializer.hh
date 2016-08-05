@@ -9,9 +9,8 @@
 
 namespace eudaq {
 
-  class BufferSerializer : public Serializer,
-                           public Deserializer,
-                           public Serializable {
+  class DLLEXPORT BufferSerializer
+    : public Serializer, public Deserializer, public Serializable {
   public:
     BufferSerializer() : m_offset(0) {}
     template <typename InIt>

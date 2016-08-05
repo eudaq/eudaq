@@ -7,7 +7,7 @@
 
 namespace eudaq {
 
-  class TransportServer : public TransportBase {
+  class DLLEXPORT TransportServer : public TransportBase {
   public:
     virtual ~TransportServer();
     virtual std::string ConnectionString() const = 0;

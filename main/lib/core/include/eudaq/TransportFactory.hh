@@ -9,7 +9,7 @@ namespace eudaq {
   /** Creates Transport instances from a name without needing to know the
    * concrete type at compile time.
    */
-  class TransportFactory {
+  class DLLEXPORT TransportFactory {
   public:
     static TransportServer *CreateServer(const std::string &name);
     static TransportClient *CreateClient(const std::string &name);
