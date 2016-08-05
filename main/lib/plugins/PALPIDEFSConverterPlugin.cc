@@ -59,10 +59,10 @@ using namespace std;
                          // broken
 #define WRITE_TEMPERATURE_LOG // write NTC values to a text file
 
-#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
-                             // period, they are marked as broken
+//#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
+                               // period, they are marked as broken
 
-#define EVENT_SUBTRACTION  // subtract the previous events
+//#define EVENT_SUBTRACTION  // subtract the previous events
 
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
