@@ -25,7 +25,7 @@ void EventFileReaderPS::ProcessUserEvent(EVUP ev){
 void EventFileReaderPS::ProduceEvent(){
   if (!m_des) EUDAQ_THROW("m_des is not created!");
   while(1){
-    EVUP ev(EventFactory::Create(*m_des.get()));//TODO: check if next event
+    EVUP ev(EventFactory::Create(*m_des.get()), [](Event *p){delete p;});//TODO: check if next event
     ProcessUserEvent(std::move(ev));
     // Processing(std::move(ev));
   }

@@ -10,6 +10,10 @@
 
 using namespace eudaq;
 
+template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
+template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
+
+
 Processor::Processor(std::string pstype, uint32_t psid)
   :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
   m_num_upstream = 0;
