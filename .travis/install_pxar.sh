@@ -24,4 +24,4 @@ make install
 
 export PXAR_PATH=~/pxar
 
-cd temporary_path
+cd $temporary_path
