@@ -19,3 +19,5 @@ cd build
 cmake ..
 
 make install
+
+export PXAR_PATH=~/pxar/install
