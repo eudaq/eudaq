@@ -110,6 +110,7 @@ matrix:
         env: OPTION=old
 
 before_install:
+  - source .travis/install_pxar.sh
   - source .travis/before_install.sh
   
 install:
