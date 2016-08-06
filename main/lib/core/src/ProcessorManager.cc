@@ -13,13 +13,6 @@
 #endif
 
 using namespace eudaq;
-using std::shared_ptr;
-using std::unique_ptr;
-
-
-template class DLLEXPORT Factory<Processor>;
-template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
-template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
 
 ProcessorManager* ProcessorManager::GetInstance(){
   static ProcessorManager singleton;

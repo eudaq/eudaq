@@ -30,6 +30,8 @@ namespace eudaq {
   Factory<Processor>::Instance<std::string&&>();
 #endif
   
+
+  
   using CreatePS  = Processor* (*)(uint32_t);
   using DestroyPS = void (*)(Processor*);
   using CreateEV = Event* (*)();

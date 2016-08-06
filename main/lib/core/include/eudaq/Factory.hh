@@ -9,7 +9,7 @@
 
 namespace eudaq{
   template <typename BASE>
-  class DLLEXPORT Factory{
+  class Factory{
   public:
     using UP_BASE = std::unique_ptr<BASE, std::function<void(BASE*)> >;
     template <typename ...ARGS>
@@ -17,7 +17,7 @@ namespace eudaq{
       Create(uint32_t id, ARGS&& ...args);
     
     template <typename... ARGS>
-      static std::map<uint32_t, typename UP_BASE (*)(ARGS&&...)>&
+      static std::map<uint32_t, UP_BASE (*)(ARGS&&...)>&
       Instance();
     
     template <typename DERIVED, typename... ARGS>
@@ -55,10 +55,12 @@ namespace eudaq{
   template <typename DERIVED, typename... ARGS>
   int
   Factory<BASE>::Register(uint32_t id){
-    std::cout<<"Register ID "<<id; 
-    Instance<ARGS&&...>()[id] = &MakerFun<DERIVED, ARGS&&...>;
+    auto &ins = Instance<ARGS&&...>();
+    std::cout<<"Register ID "<<id <<"  to Factory<"
+	     <<static_cast<const void *>(&ins)<<">    ";
+    ins[id] = &MakerFun<DERIVED, ARGS&&...>;
     std::cout<<"   map items: ";
-    for(auto& e: Instance<ARGS&&...>())
+    for(auto& e: ins)
       std::cout<<e.first<<"  ";
     std::cout<<std::endl;
     return 0;
