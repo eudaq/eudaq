@@ -12,10 +12,9 @@ os: Visual Studio 2015
 
 configuration: Release
 
-platform:
-  - x86
 #  - x64
-
+platform: x86 
+      
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
@@ -58,16 +57,9 @@ environment:
   BUILD_timepixdummy: OFF
   BUILD_tlu: ON
   BUILD_usbpix: OFF
-  
-#matrix:
-#- OPTION: modern
-#  platform: x86
-#- OPTION: modern
-#  platform: x64
-#- OPTION: old
-#  platform: x86
-#- OPTION: old
-#  platform: x64
+  PYTHON: "C:\\Python35"
+  PYTHON_VERSION: "3.5.2" 
+  PYTHON_ARCH: "32"
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
@@ -77,18 +69,34 @@ cache:
 init:
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
-before_build:
-- cmd: >-
+install:
+- cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+# Install Python (from the official .msi of http://python.org) and pip when
+# not already installed.
+- ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }
+    #conda config --set always_yes yes --set changeps1 no
+    
+  # Prepend newly installed Python to the PATH of this build (this cannot be
+  # done from inside the powershell script as it would require to restart
+  # the parent CMD process).
+- "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
-    del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+  # Check that we have the expected version and architecture for Python
+- "python --version"
+- "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+
+  # Upgrade to the latest version of pip to avoid it displaying warnings
+  # about it being out of date.
+- "pip install --disable-pip-version-check --user --upgrade pip"
+
+  # Install the build dependencies of the project. If some dependencies contain
+  # compiled extensions and are not provided as pre-built wheel packages,
+  # pip will build them from source using the MSVC compiler matching the
+  # target Python version and architecture
+- "%CMD_IN_ENV% pip install -r dev-requirements.txt"    
     
-    conda config --set always_yes yes --set changeps1 no
-    
-    conda info -a
-    
-    conda create -q -n test-environment numpy
-    
-    activate test-environment
+before_build:    
+- cmd: >-
     
     powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip\",\"C:\\root_v5.34.36.win32.vc12.zip\")"
     
