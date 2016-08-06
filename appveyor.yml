@@ -13,7 +13,8 @@ os: Visual Studio 2015
 configuration: Release
 
 #  - x64
-
+platform: x86 
+      
 environment:
     ROOTSYS: C:\root
     PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
@@ -56,11 +57,11 @@ environment:
     BUILD_timepixdummy: OFF
     BUILD_tlu: ON
     BUILD_usbpix: OFF
-  matrix:
-    - PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.2" 
-      PYTHON_ARCH: "32"
-      platform: x86
+
+    PYTHON: "C:\\Python35"
+    PYTHON_VERSION: "3.5.2" 
+    PYTHON_ARCH: "32"
+
       
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
