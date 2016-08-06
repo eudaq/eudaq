@@ -38,7 +38,7 @@ env:
       - BUILD_calice=ON
       - BUILD_ccpdlf=OFF
       - BUILD_clicpix=OFF
-      - BUILD_cmspixel=OFF
+      - BUILD_cmspixel=ON
       - BUILD_depfet=ON
       - BUILD_eudrb=OFF
       - BUILD_example=OFF
