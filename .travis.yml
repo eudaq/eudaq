@@ -111,7 +111,8 @@ matrix:
 
 before_install:
   - source .travis/before_install.sh
-  - source .travis/install_pxar.sh  
+  - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
+    
   
 install:
   - source .travis/install.sh
