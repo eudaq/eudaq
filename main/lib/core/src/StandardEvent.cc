@@ -4,7 +4,7 @@
 namespace eudaq {
 
   namespace{
-    auto dummy0 = Factory<Event>::Register<StringEvent, Deserializer&>(Event::str2id("_STD"));
+    auto dummy0 = Factory<Event>::Register<StandardEvent, Deserializer&>(Event::str2id("_STD"));
   }
 
   
