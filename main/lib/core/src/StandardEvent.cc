@@ -1,8 +1,13 @@
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/Exception.hh"
+#include "StandardEvent.hh"
+#include "Exception.hh"
 
 namespace eudaq {
 
+  namespace{
+    auto dummy0 = Factory<Event>::Register<StringEvent, Deserializer&>(Event::str2id("_STD"));
+  }
+
+  
   EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
 
   StandardPlane::StandardPlane()

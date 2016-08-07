@@ -1,10 +1,15 @@
-#include "eudaq/RawDataEvent.hh"
-#include "eudaq/PluginManager.hh"
+#include "RawDataEvent.hh"
+#include "PluginManager.hh"
 
 #include <ostream>
 
 namespace eudaq {
 
+  namespace{
+    auto dummy0 = Factory<Event>::Register<RawDataEvent, Deserializer&>(Event::str2id("_RAW"));
+  }
+
+  
   INIT_CLASS_WITH_ID(Event, RawDataEvent, Event::str2id("RawDataEvent"));  
   EUDAQ_DEFINE_EVENT(RawDataEvent, str2id("_RAW"));
 

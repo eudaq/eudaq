@@ -1,11 +1,18 @@
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "DetectorEvent.hh"
+#include "RawDataEvent.hh"
 
 #include <ostream>
 #include <memory>
 
+
+
 namespace eudaq {
 
+  namespace{
+    auto dummy0 = Factory<Event>::Register<DetectorEvent, Deserializer&>(Event::str2id("_DET"));
+  }
+  
+  
   EUDAQ_DEFINE_EVENT(DetectorEvent, str2id("_DET"));
 
   DetectorEvent::DetectorEvent(Deserializer &ds) : Event(ds) {

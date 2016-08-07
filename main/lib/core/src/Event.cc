@@ -9,6 +9,12 @@
 
 namespace eudaq {
 
+  template class DLLEXPORT Factory<Event>;
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
+  Factory<Event>::Instance<Deserializer&>();
+  
+  
   namespace{
     void DUMMY_FUNCTION_DO_NOT_USE_EVENT(){
       std::string evtype = "_DUMMY_";

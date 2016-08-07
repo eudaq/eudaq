@@ -14,6 +14,7 @@
 #include "Utils.hh"
 #include "Platform.hh"
 #include "ClassFactory.hh"
+#include "Factory.hh"
 
 #define EUDAQ_DECLARE_EVENT(type)              \
   public:                                      \
@@ -38,6 +39,13 @@ private:                                       \
 namespace eudaq {
   class Event;
 
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<Event>;
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
+  Factory<Event>::Instance<Deserializer&>();
+#endif
+  
   using EventClassFactory = ClassFactory<Event, uint32_t>;  
   using event_sp = std::shared_ptr < eudaq::Event > ;
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
@@ -130,7 +138,8 @@ namespace eudaq {
       if (!cr) EUDAQ_THROW("Unrecognised Event type (" + Event::id2str(id) + ")");
       return cr(ds);
     }
-
+    // static Factory::UP_BASE  ev = Factory<Event>::Create(id, *m_des.get());
+    
     typedef Event * (*event_creator)(Deserializer & ds);
     static void Register(uint32_t id, event_creator func);
     static event_creator GetCreator(uint32_t id);

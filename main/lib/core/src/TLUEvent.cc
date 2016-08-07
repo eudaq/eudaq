@@ -4,6 +4,11 @@
 
 namespace eudaq {
 
+  namespace{
+    auto dummy0 = Factory<Event>::Register<TLUEvent, Deserializer&>(Event::str2id("_TLU"));
+  }
+
+  
   EUDAQ_DEFINE_EVENT(TLUEvent, str2id("_TLU"));
 
   TLUEvent::TLUEvent(Deserializer &ds) : Event(ds) { ds.read(m_extratimes); }

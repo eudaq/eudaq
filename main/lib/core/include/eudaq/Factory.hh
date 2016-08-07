@@ -35,9 +35,11 @@ namespace eudaq{
   template <typename ...ARGS>
   typename Factory<BASE>::UP_BASE
   Factory<BASE>::Create(uint32_t id, ARGS&& ...args){
-    auto it = Instance<ARGS&&...>().find(id);
-    if (it == Instance<ARGS&&...>().end()){
-      std::cerr<<"Factory unknown class: <"<<id<<">\n";
+    auto &ins = Instance<ARGS&&...>();
+    auto it = ins.find(id);
+    if (it == ins.end()){
+      std::cerr<<"Factory<"<<static_cast<const void *>(&ins)<<">: "
+	       <<" Unknown class ID: <"<<id<<">\n";
       return nullptr;
     }
     return (it->second)(std::forward<ARGS>(args)...);
@@ -48,6 +50,11 @@ namespace eudaq{
   std::map<uint32_t, typename Factory<BASE>::UP_BASE (*)(ARGS&&...)>&
   Factory<BASE>::Instance(){
     static std::map<uint32_t, typename Factory<BASE>::UP_BASE (*)(ARGS&&...)> m;
+    static bool init = true;
+    if(init){
+      std::cout<<"Instance a new Factory<"<<static_cast<const void *>(&m)<<">"<<std::endl;
+      init=false;
+    }
     return m;
   };
     

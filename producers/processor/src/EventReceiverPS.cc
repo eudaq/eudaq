@@ -86,7 +86,9 @@ void EventReceiverPS::DataHandler(TransportEvent &ev) {
     } else {
       std::cout<< ">>>>>>>>>> reveived"<<std::endl;;
       BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-      EVUP event(EventFactory::Create(ser), [](Event *p){delete p;});
+      uint32_t id;
+      ser.read(id);
+      EVUP event = Factory<Event>::Create<Deserializer&>(id, ser);
       Processing(std::move(event));
     }
     break;
