@@ -7,9 +7,6 @@ namespace eudaq {
     auto dummy0 = Factory<Event>::Register<StandardEvent, Deserializer&>(Event::str2id("_STD"));
   }
 
-  
-  EUDAQ_DEFINE_EVENT(StandardEvent, str2id("_STD"));
-
   StandardPlane::StandardPlane()
       : m_id(0), m_tluevent(0), m_xsize(0), m_ysize(0), m_flags(0),
         m_pivotpixel(0), m_result_pix(0), m_result_x(0), m_result_y(0) {}

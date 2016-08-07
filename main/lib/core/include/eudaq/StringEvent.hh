@@ -10,8 +10,6 @@ namespace eudaq {
  *
  */
 class DLLEXPORT StringEvent : public Event {
-  EUDAQ_DECLARE_EVENT(StringEvent);
-
 public:
   virtual void Serialize(Serializer &) const;
   StringEvent(unsigned run, unsigned event, const std::string & str);

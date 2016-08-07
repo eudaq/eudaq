@@ -11,8 +11,6 @@ namespace eudaq {
   class RawDataEvent;
 
   class DLLEXPORT DetectorEvent : public Event {
-    EUDAQ_DECLARE_EVENT(DetectorEvent);
-
   public:
     virtual void Serialize(Serializer &) const;
     explicit DetectorEvent(unsigned runnumber, unsigned eventnumber,

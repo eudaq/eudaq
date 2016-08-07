@@ -1,25 +1,21 @@
 #include <list>
-#include "eudaq/FileReader.hh"
-#include "eudaq/FileNamer.hh"
-#include "eudaq/PluginManager.hh"
-#include "eudaq/Event.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/FileSerializer.hh"
-#include "eudaq/Configuration.hh"
+#include "FileReader.hh"
+#include "FileNamer.hh"
+#include "PluginManager.hh"
+#include "Event.hh"
+#include "Logger.hh"
+#include "FileSerializer.hh"
+#include "Configuration.hh"
 
 namespace eudaq {
 
 
-
-
-
   FileReader::FileReader(const std::string & file, const std::string & filepattern)
     : baseFileReader(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
-    m_des(Filename()),
-    m_ev(EventFactory::Create(m_des)),
-    m_ver(1)
-  {
-
+    m_des(Filename()),m_ver(1){
+    uint32_t id;
+    m_des.read(id);
+    m_ev = Factory<eudaq::Event>::Create<Deserializer&>(id, m_des);
   }
 
   FileReader::FileReader(Parameter_ref param) :FileReader(param.Get(getKeyFileName(),""),param.Get(getKeyInputPattern(),""))

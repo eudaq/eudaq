@@ -1,8 +1,8 @@
-#include "eudaq/FileSerializer.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/Platform.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Event.hh"
+#include "FileSerializer.hh"
+#include "Logger.hh"
+#include "Platform.hh"
+#include "Utils.hh"
+#include "Event.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <iostream>
@@ -128,7 +128,7 @@ namespace eudaq {
     }
   }
 
-  bool FileDeserializer::ReadEvent(int ver, std::shared_ptr<eudaq::Event> &ev,
+  bool FileDeserializer::ReadEvent(int ver, EventSP &ev,
                                    size_t skip /*= 0*/) {
     if (!HasData()) {
       return false;
@@ -137,7 +137,9 @@ namespace eudaq {
       for (size_t i = 0; i <= skip; ++i) {
         if (!HasData())
           break;
-        ev = std::shared_ptr<eudaq::Event>(EventFactory::Create(*this));
+	uint32_t id;
+	read(id);
+	ev = Factory<Event>::Create<Deserializer&>(id, *this);
       }
     } else {
       BufferSerializer buf;
@@ -146,7 +148,9 @@ namespace eudaq {
           break;
         read(buf);
       }
-      ev = std::shared_ptr<eudaq::Event>(eudaq::EventFactory::Create(buf));
+      uint32_t id;
+      buf.read(id);
+      ev = Factory<Event>::Create<Deserializer&>(id, buf);
     }
     return true;
   }

@@ -9,9 +9,6 @@ namespace eudaq {
     auto dummy0 = Factory<Event>::Register<RawDataEvent, Deserializer&>(Event::str2id("_RAW"));
   }
 
-  
-  INIT_CLASS_WITH_ID(Event, RawDataEvent, Event::str2id("RawDataEvent"));  
-  EUDAQ_DEFINE_EVENT(RawDataEvent, str2id("_RAW"));
 
   RawDataEvent::block_t::block_t(Deserializer &des) {
     des.read(id);

@@ -8,8 +8,6 @@
 namespace eudaq {
 
   class DLLEXPORT TLUEvent : public Event {
-    EUDAQ_DECLARE_EVENT(TLUEvent);
-
   public:
     typedef std::vector<uint64_t> vector_t;
     virtual void Serialize(Serializer &) const;

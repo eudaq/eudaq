@@ -1,9 +1,9 @@
-#include "eudaq/DataConverterPlugin.hh"
-#include "eudaq/StandardEvent.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/Event.hh"
-#include "eudaq/PluginManager.hh"
+#include "DataConverterPlugin.hh"
+#include "StandardEvent.hh"
+#include "Utils.hh"
+#include "DetectorEvent.hh"
+#include "Event.hh"
+#include "PluginManager.hh"
 // All LCIO-specific parts are put in conditional compilation blocks
 // so that the other parts may still be used if LCIO is not available.
 #if USE_LCIO
@@ -43,7 +43,7 @@ private:
 
 
   DetectorEventConverterPlugin()
-    : DataConverterPlugin(DetectorEvent::eudaq_static_id(), "") {
+    : DataConverterPlugin(Event::str2id("_DET"), "") {
   }
 
 

@@ -12,8 +12,6 @@ namespace eudaq {
     auto dummy0 = Factory<Event>::Register<DetectorEvent, Deserializer&>(Event::str2id("_DET"));
   }
   
-  
-  EUDAQ_DEFINE_EVENT(DetectorEvent, str2id("_DET"));
 
   DetectorEvent::DetectorEvent(Deserializer &ds) : Event(ds) {
     unsigned n;
@@ -21,7 +19,9 @@ namespace eudaq {
     // std::cout << "Num=" << n << std::endl;
     SetFlags(Event::FLAG_PACKET);
     for (size_t i = 0; i < n; ++i) {
-      std::shared_ptr<Event> ev(EventFactory::Create(ds));
+      uint32_t id;
+      ds.read(id);
+      EventSP ev = Factory<Event>::Create<Deserializer&>(id, ds);
       m_events.push_back(ev);
     }
   }

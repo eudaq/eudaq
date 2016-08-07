@@ -8,8 +8,6 @@ namespace eudaq {
     auto dummy0 = Factory<Event>::Register<StringEvent, Deserializer&>(Event::str2id("_STR"));
   }
 
-  
-EUDAQ_DEFINE_EVENT(StringEvent, str2id("_STR"));
 
 StringEvent::StringEvent(Deserializer & ds) :
 Event(ds) {

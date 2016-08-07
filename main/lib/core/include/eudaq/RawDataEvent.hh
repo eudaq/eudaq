@@ -4,13 +4,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "eudaq/Event.hh"
-#include "eudaq/Platform.hh"
+#include "Event.hh"
+#include "Platform.hh"
 namespace eudaq {
 
   class DLLEXPORT RawDataEvent : public Event {
-    EUDAQ_DECLARE_EVENT(RawDataEvent);
-
   public:
     typedef unsigned char byte_t;
     typedef std::vector<byte_t> data_t;

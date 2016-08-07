@@ -2,9 +2,8 @@
 #include <iostream>
 #include <time.h>
 
-#include "eudaq/Event.hh"
-#include "eudaq/PluginManager.hh"
-#include "ClassFactory.hh"
+#include "Event.hh"
+#include "PluginManager.hh"
 #include "BufferSerializer.hh"
 
 namespace eudaq {
@@ -13,17 +12,7 @@ namespace eudaq {
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
   Factory<Event>::Instance<Deserializer&>();
-  
-  
-  namespace{
-    void DUMMY_FUNCTION_DO_NOT_USE_EVENT(){
-      std::string evtype = "_DUMMY_";
-      ClassFactory<Event, uint32_t>::Create(Event::str2id(evtype));
-      ClassFactory<Event, uint32_t>::GetTypes();
-      ClassFactory<Event, uint32_t>::GetInstance();
-    }
-  }
-  
+    
   namespace {
     static const char * const FLAGNAMES[] = {
       "BORE",
@@ -267,27 +256,15 @@ namespace eudaq {
   Event* Event::Clone() const{ //TODO: clone directly
     BufferSerializer ser;
     Serialize(ser);
-    return EventFactory::Create(ser);
+    uint32_t id;
+    ser.read(id);
+    Event* ev = Factory<Event>::Create<Deserializer&>(id, ser).release();
+    return ev;
   }
   
   std::ostream & operator << (std::ostream &os, const Event &ev) {
     ev.Print(os);
     return os;
-  }
-
-  EventFactory::map_t & EventFactory::get_map() {
-    static map_t s_map;
-    return s_map;
-  }
-
-  void EventFactory::Register(uint32_t id, EventFactory::event_creator func) {
-    // TODO: check id is not already in map
-    get_map()[id] = func;
-  }
-
-  EventFactory::event_creator EventFactory::GetCreator(uint32_t id) {
-    // TODO: check it exists...
-    return get_map()[id];
   }
 
 }
