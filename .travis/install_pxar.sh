@@ -22,6 +22,6 @@ cmake ..
 
 make install
 
-export PXAR_PATH=~/pxar
+export PXARPATH=~/pxar
 
 cd $temporary_path
