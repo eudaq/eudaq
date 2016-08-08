@@ -24,7 +24,7 @@ namespace eudaq {
 
 
     virtual std::string GetType() const;
-    
+    virtual unsigned get_id() const {return Event::str2id("_DET");};
 
     size_t NumEvents() const;
     Event *GetEvent(size_t i);

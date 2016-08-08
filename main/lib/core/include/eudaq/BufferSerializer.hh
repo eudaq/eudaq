@@ -29,6 +29,7 @@ namespace eudaq {
   private:
     virtual void Serialize(const unsigned char *data, size_t len);
     virtual void Deserialize(unsigned char *data, size_t len);
+    virtual void PreDeserialize(unsigned char *data, size_t len);
     std::vector<unsigned char> m_data;
     size_t m_offset;
   };

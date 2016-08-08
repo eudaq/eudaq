@@ -38,6 +38,7 @@ namespace eudaq {
 
   private:
     virtual void Deserialize(unsigned char *data, size_t len);
+    virtual void PreDeserialize(unsigned char *data, size_t len);
     size_t FillBuffer(size_t min = 0);
     size_t level() const { return m_stop - m_start; }
     typedef unsigned char *ptr_t;

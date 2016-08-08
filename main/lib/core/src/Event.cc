@@ -29,14 +29,10 @@ namespace eudaq {
     ds.read(m_flags);
     ds.read(m_runnumber);
     ds.read(m_eventnumber);
-    if (IsEUDAQ2())
-    {
+    if (IsEUDAQ2()){
       ds.read(m_timestamp);
-
-
     }
-    else
-    {
+    else{
       uint64_t timestamp;
       ds.read(timestamp);
       m_timestamp.push_back(timestamp);
@@ -180,6 +176,12 @@ namespace eudaq {
     return result;
   }
 
+  EventUP Event::Create(Deserializer &ds){
+    uint32_t id;
+    ds.read(id);
+    return Factory<Event>::Create<Deserializer&>(id, ds);
+  }
+  
   Event & Event::SetTag(const std::string & name, const std::string & val) {
     m_tags[name] = val;
     return *this;

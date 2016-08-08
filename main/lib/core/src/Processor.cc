@@ -51,18 +51,18 @@ void Processor::ProcessUserEvent(EVUP ev){
 
 void Processor::ProcessSysEvent(EVUP ev){
   //  TODO config
-  uint32_t psid_dst;
-  psid_dst = ev->GetTag("PSDST", psid_dst);
-  if(psid_dst == m_psid){
-    // if(ev->HasTag("NEWPS")){
-    //   std::string pstype;
-    //   pstype = ev->GetTag("PSTYPE", pstype);
-    //   uint32_t psid;
-    //   psid = ev->GetTag("PSID", psid);
-    //   CreateNextProcessor(pstype, psid);
-    // }
-    return;
-  }
+  // uint32_t psid_dst;
+  // psid_dst = ev->GetTag("PSDST", psid_dst);
+  // if(psid_dst == m_psid){
+  //   // if(ev->HasTag("NEWPS")){
+  //   //   std::string pstype;
+  //   //   pstype = ev->GetTag("PSTYPE", pstype);
+  //   //   uint32_t psid;
+  //   //   psid = ev->GetTag("PSID", psid);
+  //   //   CreateNextProcessor(pstype, psid);
+  //   // }
+  //   return;
+  // }
   ForwardEvent(std::move(ev));
 }
 
@@ -93,12 +93,15 @@ void Processor::ForwardEvent(EVUP ev) {
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   std::vector<PSSP> pslist;
   uint32_t evid = ev->get_id();
+  std::cout<< "PS NEXT num = "<< m_pslist_next.size()<<"  evid = "<<evid<<std::endl;
   for(auto &psev: m_pslist_next){
     auto evset = psev.second;
     if(evset.find(evid)!=evset.end()){
       pslist.push_back(psev.first);
     }
   }
+  std::cout<< "PS NEXT num to send = "<< pslist.size()<<"  evid = "<<evid<<std::endl;
+
   auto psMan = ProcessorManager::GetInstance();
   size_t remain_ps = pslist.size();
   auto ps_hub = m_ps_hub.lock();
@@ -158,7 +161,9 @@ void Processor::SetPSHub(PSWP ps){
 
 void Processor::HubProcessing(){
   while(IsHub()){ //TODO: modify STATE enum
+    std::cout<<"HUB"<<m_psid<<": locking "<<std::endl;
     std::unique_lock<std::mutex> lk(m_mtx_pcs);
+    std::cout<<"HUB"<<m_psid<<": locked "<<std::endl;
     bool fifoempty = m_fifo_pcs.empty();
     if(fifoempty){
       std::cout<<"HUB"<<m_psid<<": fifo is empty, waiting"<<std::endl;

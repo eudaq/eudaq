@@ -172,8 +172,21 @@ namespace eudaq {
       read(t);
       return t;
     }
-
+      
     void read(unsigned char *dst, size_t size) { Deserialize(dst, size); }
+
+    // void PreRead(uint32_t &t);    
+    void PreRead(uint32_t &t){
+      unsigned char buf[sizeof(uint32_t)];
+      PreDeserialize(buf, sizeof(uint32_t)); // 1.x serializer is little-endian (same to intel)
+      t = 0;
+      for (size_t i = 0; i < sizeof t; ++i) {
+	t <<= 8;
+	t += buf[sizeof t - 1 - i];
+      }
+      //TODO:: ntohl htonl
+    }
+    void PreRead(unsigned char *dst, size_t size) { PreDeserialize(dst, size); }
 
     virtual ~Deserializer() {}
 
@@ -183,6 +196,7 @@ namespace eudaq {
   private:
     template <typename T> friend struct ReadHelper;
     virtual void Deserialize(unsigned char *, size_t) = 0;
+    virtual void PreDeserialize(unsigned char *, size_t) = 0;
   };
 
   template <typename T> struct ReadHelper {
@@ -308,6 +322,7 @@ namespace eudaq {
     t.first = read<T>();
     t.second = read<U>();
   }
+
 }
 
 #endif // EUDAQ_INCLUDED_Serializer

@@ -27,9 +27,8 @@ namespace eudaq {
 
   using EventUP = Factory<Event>::UP_BASE; 
   using EventSP = std::shared_ptr<Event>;
-
+  using event_sp = EventSP;
   
-  using event_sp = std::shared_ptr < eudaq::Event > ;
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable {
@@ -88,6 +87,8 @@ namespace eudaq {
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
+    static EventUP Create(Deserializer &ds);
+
     unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
     void SetFlags(unsigned f) { m_flags |= f; }
     void SetTimeStampToNow(size_t i=0);
@@ -98,13 +99,15 @@ namespace eudaq {
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
     void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
-    virtual unsigned get_id() const {return 0;};//TODO: check who calls get_id
+    virtual unsigned get_id() const {return m_type_id;};//TODO: check who calls get_id
   protected:
     typedef std::map<std::string, std::string> map_t;
 
+    uint32_t m_type_id;
     unsigned m_flags, m_runnumber, m_eventnumber;
     std::vector<timeStamp_t> m_timestamp;
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
+ 
   };
 
   DLLEXPORT std::ostream &  operator<< (std::ostream &, const Event &);

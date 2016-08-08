@@ -128,6 +128,19 @@ namespace eudaq {
     }
   }
 
+  void FileDeserializer::PreDeserialize(unsigned char *data, size_t len) {
+    if (len <= level()) {
+      memcpy(data, m_start, len);
+    }
+    else{
+      size_t tmp = level();
+      FillBuffer(len - tmp);
+      memcpy(data, m_start, len);
+    }
+  }
+
+
+  
   bool FileDeserializer::ReadEvent(int ver, EventSP &ev,
                                    size_t skip /*= 0*/) {
     if (!HasData()) {
