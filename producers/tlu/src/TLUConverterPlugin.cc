@@ -1,5 +1,5 @@
-#include "eudaq/DataConverterPlugin.hh"
-#include "eudaq/TLUEvent.hh"
+#include "DataConverterPlugin.hh"
+#include "TLUEvent.hh"
 #include <string>
 
 #if USE_LCIO
@@ -8,7 +8,11 @@
 #endif
 
 namespace eudaq {
-
+  
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConvertPlugin>(Event::str2id("_TLU"));
+  }
+  
   class TLUConverterPlugin : public DataConverterPlugin {
   public:
     TLUConverterPlugin() : DataConverterPlugin(Event::str2id("_TLU")) {}
