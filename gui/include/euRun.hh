@@ -115,7 +115,7 @@ private slots:
 
 /* The function SetStateSlot is a slot function as defined by the Qt framework. When the signal is emmited, this function is triggered. 
 This function takes a variable state, which corresponds to one of the four states which the program can be in. Depending on which state the
-program is currently in the function will enable and disable certain buttons, and display the current state at the head of the GUI.*/
+program is currently in the function will enable and disable certain buttons, and display the current state at the head of the gui.*/
 
   void SetStateSlot(int state) {
     curState = state;
