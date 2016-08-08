@@ -16,11 +16,10 @@ namespace eudaq {
   DetectorEvent::DetectorEvent(Deserializer &ds) : Event(ds) {
     unsigned n;
     ds.read(n);
-    // std::cout << "Num=" << n << std::endl;
     SetFlags(Event::FLAG_PACKET);
     for (size_t i = 0; i < n; ++i) {
       uint32_t id;
-      ds.read(id);
+      ds.PreRead(id);
       EventSP ev = Factory<Event>::Create<Deserializer&>(id, ds);
       m_events.push_back(ev);
     }
@@ -30,11 +29,11 @@ namespace eudaq {
   {
     m_tags = det.m_tags;
     m_timestamp = det.m_timestamp;
-
+    m_typeid = det.m_typeid;
   }
 
   DetectorEvent::DetectorEvent(unsigned runnumber, unsigned eventnumber, uint64_t timestamp) : Event(runnumber, eventnumber, timestamp) {
-
+    m_typeid = Event::str2id("_DET");
   }
 
   void DetectorEvent::AddEvent(std::shared_ptr<Event> evt) {

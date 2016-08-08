@@ -151,7 +151,7 @@ namespace eudaq {
         if (!HasData())
           break;
 	uint32_t id;
-	read(id);
+	PreRead(id);
 	ev = Factory<Event>::Create<Deserializer&>(id, *this);
       }
     } else {
@@ -162,7 +162,7 @@ namespace eudaq {
         read(buf);
       }
       uint32_t id;
-      buf.read(id);
+      buf.PreRead(id);
       ev = Factory<Event>::Create<Deserializer&>(id, buf);
     }
     return true;

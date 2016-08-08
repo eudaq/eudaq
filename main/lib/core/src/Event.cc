@@ -26,6 +26,7 @@ namespace eudaq {
   }
 
   Event::Event(Deserializer & ds) {
+    ds.read(m_typeid);
     ds.read(m_flags);
     ds.read(m_runnumber);
     ds.read(m_eventnumber);
@@ -53,10 +54,7 @@ namespace eudaq {
   }
 
   void Event::Serialize(Serializer & ser) const {
-    //std::cout << "Serialize id = " << std::hex << get_id() << std::endl;
-
-
-    ser.write(get_id());
+    ser.write(m_typeid);
 #ifdef __FORCE_EUDAQ1_FILES___
     auto dummy = m_flags & ~Event::FLAG_EUDAQ2;
     ser.write(m_flags & ~Event::FLAG_EUDAQ2);
@@ -178,7 +176,7 @@ namespace eudaq {
 
   EventUP Event::Create(Deserializer &ds){
     uint32_t id;
-    ds.read(id);
+    ds.PreRead(id);
     return Factory<Event>::Create<Deserializer&>(id, ds);
   }
   
@@ -259,7 +257,7 @@ namespace eudaq {
     BufferSerializer ser;
     Serialize(ser);
     uint32_t id;
-    ser.read(id);
+    ser.PreRead(id);
     Event* ev = Factory<Event>::Create<Deserializer&>(id, ser).release();
     return ev;
   }

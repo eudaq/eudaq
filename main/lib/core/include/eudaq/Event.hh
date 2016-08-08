@@ -99,11 +99,11 @@ namespace eudaq {
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
     void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
-    virtual unsigned get_id() const {return m_type_id;};//TODO: check who calls get_id
+    unsigned get_id() const {return m_typeid;};
   protected:
     typedef std::map<std::string, std::string> map_t;
 
-    uint32_t m_type_id;
+    uint32_t m_typeid;
     unsigned m_flags, m_runnumber, m_eventnumber;
     std::vector<timeStamp_t> m_timestamp;
     map_t m_tags; ///< Metadata tags in (name=value) pairs of strings

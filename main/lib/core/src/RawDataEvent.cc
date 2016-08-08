@@ -25,10 +25,13 @@ namespace eudaq {
   }
 
   RawDataEvent::RawDataEvent(){
+    m_typeid = Event::str2id("_RAW");
   }
   
   RawDataEvent::RawDataEvent(std::string type, unsigned run, unsigned event)
-      : Event(run, event), m_type(type) {}
+      : Event(run, event), m_type(type) {
+    m_typeid = Event::str2id("_RAW");
+  }
 
   RawDataEvent::RawDataEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_type);

@@ -97,8 +97,9 @@ namespace eudaq {
     // private constructor to create BORE and EORE
     // make sure that event number is 0 for BORE
     RawDataEvent(std::string type, unsigned run, unsigned event, Event::Flags flag)
-      : Event(run, event, NOTIMESTAMP, flag) ,  m_type(type)
-    {}
+      : Event(run, event, NOTIMESTAMP, flag) ,  m_type(type){
+      m_typeid = Event::str2id("_RAW");
+    }
 
     template <typename T>
     static data_t make_vector(const T *data, size_t bytes) {

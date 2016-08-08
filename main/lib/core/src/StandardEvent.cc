@@ -329,9 +329,14 @@ namespace eudaq {
   template std::vector<double> StandardPlane::GetPixels<>() const;
 
   StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
-      : Event(run, evnum, timestamp) {}
+      : Event(run, evnum, timestamp) {
+    m_typeid = Event::str2id("_STD");
 
-  StandardEvent::StandardEvent(const Event &e) : Event(e) {}
+  }
+
+  StandardEvent::StandardEvent(const Event &e) : Event(e) {
+    m_typeid = Event::str2id("_STD");
+  }
 
   StandardEvent::StandardEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_planes);

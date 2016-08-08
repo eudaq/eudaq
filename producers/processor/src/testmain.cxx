@@ -24,9 +24,9 @@ int main(int argn, char **argc){
   {uint32_t i; std::cin>>i;}
 
   
-  psMan
-    >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
-    ;
+  // psMan
+  //   >>"EventReceiverPS(SYS:PSID=7;SETSERVER=tcp://40000;SYS:PD:RUN)"
+  //   ;
 
   
   
@@ -34,10 +34,14 @@ int main(int argn, char **argc){
     >>p1
     >>"EV(ADD=_DET)"
     >>p0
-    >>"EV(ADD=_DET)"
-    >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
+    // >>"EV(ADD=_DET)"
+    // >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
     ;
 
+  std::cout<<"xxxxxxx"<<std::endl;
+  {uint32_t i; std::cin>>i;}
+
+  
   p1<<"SYS:PD:RUN";
   p1.reset();
   

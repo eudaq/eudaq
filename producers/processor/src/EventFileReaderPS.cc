@@ -25,9 +25,10 @@ void EventFileReaderPS::ProcessUserEvent(EVUP ev){
 
 void EventFileReaderPS::ProduceEvent(){
   if (!m_des) EUDAQ_THROW("m_des is not created!");
-  while(1){
+  // while(1){
+  for(uint32_t i=0; i<10; i++ ){
     uint32_t id;
-    m_des->read(id);
+    m_des->PreRead(id);
     EVUP ev = Factory<Event>::Create<Deserializer&>(id, *m_des.get());
     ProcessUserEvent(std::move(ev));
     // Processing(std::move(ev));
