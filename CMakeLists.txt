@@ -4,8 +4,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 # project name
 PROJECT( EUDAQ )
 SET(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
-SET(CMAKE_SHARED_MODULE_PREFIX  libeudaq_module_)
+SET(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
 # SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
+SET(EUDAQ_CORE EUDAQ)
+
+include(CMakeDependentOption)
 
 include_directories(main/lib/processors/include)
 include_directories(main/lib/eventsyncs/include)
@@ -120,7 +123,7 @@ IF("${isSystemDir}" STREQUAL "-1")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
-
+ADD_SUBDIRECTORY(user)
 ADD_SUBDIRECTORY(producers)
 ADD_SUBDIRECTORY(main)
 ADD_SUBDIRECTORY(monitors)
