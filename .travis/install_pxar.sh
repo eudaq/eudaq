@@ -14,6 +14,8 @@ git clone https://github.com/simonspa/pxar.git
 
 cd pxar
 
+git checkout testbeam-2016
+
 mkdir build
 
 cd build
