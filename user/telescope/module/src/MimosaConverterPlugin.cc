@@ -6,6 +6,9 @@
 using namespace std;
 
 namespace eudaq {
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<MimosaConverterPlugin>(eudaq::cstr2hash("RAW_MIMOSA32Raw"));//TODO: check the name
+  }
   
     // Here, the data from the RawDataEvent is extracted into a StandardEvent.
     // The return value indicates whether the conversion was successful.

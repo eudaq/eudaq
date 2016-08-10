@@ -2,11 +2,11 @@
 #define NOMINMAX
 #endif
 
-#include "eudaq/DataConverterPlugin.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/RawDataEvent.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/Logger.hh"
+#include "DataConverterPlugin.hh"
+#include "Exception.hh"
+#include "RawDataEvent.hh"
+#include "Configuration.hh"
+#include "Logger.hh"
 
 #if USE_LCIO
 #include "IMPL/LCEventImpl.h"
@@ -43,6 +43,13 @@ using eutelescope::EUTELESCOPE;
 #define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
 
 namespace eudaq {
+  class NIConverterPlugin;
+
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<NIConverterPlugin>(eudaq::cstr2hash("RAW_NI"));//TODO: check the name
+  }
+
+  
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
   static const int PIVOTPIXELOFFSET = 64;
 
@@ -51,6 +58,7 @@ namespace eudaq {
     typedef std::vector<unsigned char>::const_iterator datait;
 
   public:
+    NIConverterPlugin() : DataConverterPlugin("NI"), m_boards(0) {}
     virtual ~NIConverterPlugin() {}
 
     virtual void Initialize(const Event &bore, const Configuration & /*c*/) {
@@ -316,13 +324,9 @@ namespace eudaq {
     //  }
     //}
   private:
-    NIConverterPlugin() : DataConverterPlugin("NI"), m_boards(0) {}
     unsigned m_boards;
     std::vector<int> m_ids;
-    static NIConverterPlugin const m_instance;
   };
-
-  NIConverterPlugin const NIConverterPlugin::m_instance;
 
 #if USE_LCIO && USE_EUTELESCOPE
   void NIConverterPlugin::GetLCIORunHeader(

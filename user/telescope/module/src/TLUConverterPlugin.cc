@@ -8,9 +8,10 @@
 #endif
 
 namespace eudaq {
+  class TLUConverterPlugin;
   
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConvertPlugin>(Event::str2id("_TLU"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConverterPlugin>(Event::str2id("_TLU"));
   }
   
   class TLUConverterPlugin : public DataConverterPlugin {
@@ -40,10 +41,6 @@ namespace eudaq {
     }
 #endif
 
-  private:
-    static TLUConverterPlugin const m_instance;
   };
-
-  TLUConverterPlugin const TLUConverterPlugin::m_instance;
 
 } // namespace eudaq

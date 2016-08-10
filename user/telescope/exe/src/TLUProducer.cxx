@@ -1,12 +1,14 @@
-#include "eudaq/Configuration.hh"
-#include "eudaq/Producer.hh"
-#include "eudaq/TLUEvent.hh" // for the TLU event
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/OptionParser.hh"
+#include "Configuration.hh"
+#include "Producer.hh"
+#include "Utils.hh"
+#include "Logger.hh"
+#include "OptionParser.hh"
 
 #include "TLUController.hh"
 #include "USBTracer.hh"
+
+#include "TLUEvent.hh"
+
 #include <iostream>
 #include <ostream>
 #include <cctype>

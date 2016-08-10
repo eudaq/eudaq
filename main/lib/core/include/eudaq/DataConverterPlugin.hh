@@ -85,7 +85,7 @@ namespace eudaq {
    *  The plugin implementations have to register with the plugin manager.
    */
 
-  class DataConverterPlugin {
+  class DLLEXPORT DataConverterPlugin {
   public:
     using timeStamp_t = Eudaq_types::timeStamp_t;
     using t_eventid = Event::t_eventid;
