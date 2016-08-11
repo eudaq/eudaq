@@ -120,7 +120,6 @@ namespace eudaq {
     m_runnumber++;
     // std::string packet;
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
-    SendCommand("CLEAR");
     mSleep(500);
     // give the data collectors time to prepare
     for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();

@@ -70,7 +70,7 @@ namespace eudaq {
     m_file.flush();
     OnReceive(ev);
   }
-
+//!!
   void LogCollector::LogHandler(TransportEvent &ev) {
     // std::cout << "LogHandler()" << std::endl;
     switch (ev.etype) {
