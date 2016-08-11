@@ -269,13 +269,6 @@ void DeviceReader::StopDAQ() {
   m_daq_board->StopTrigger();
 }
 
-SingleEvent* DeviceReader::NextEvent() {
-  SimpleLock lock(m_mutex);
-  if (m_queue.size() > 0)
-    return m_queue.front();
-  return 0;
-}
-
 void DeviceReader::DeleteNextEvent() {
   SimpleLock lock(m_mutex);
   if (m_queue.size() == 0)
@@ -357,7 +350,7 @@ void DeviceReader::Loop() {
     const int maxDataLength =
       258 * 2 * 32 + 28; // 256 words per region, region header (2 words) per
     // region, header (20 bytes), trailer (8 bytes)
-    unsigned char data_buf[maxDataLength];
+    unsigned char data_buf[maxDataLength] = { 0 };
     int length = -1;
     TEventHeader header;
 
@@ -381,12 +374,17 @@ void DeviceReader::Loop() {
       if (readEvent==-3) {
         SimpleLock lock(m_mutex);
         m_flushing = false;
-        Print(0, "Finished flushing %lu [m_daq_board->GetNextEventId()] %lu [m_last_trigger_id]", m_daq_board->GetNextEventId(), m_last_trigger_id);
+        Print(0, "Finished flushing %lu [m_daq_board->GetNextEventId()] %lu [m_last_trigger_id]",
+	      m_daq_board->GetNextEventId(), m_last_trigger_id);
       }
       else if (IsFlushing() && readEvent==-2) {
         ++flushCounter;
       }
     } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<50);
+
+    if (length < 24) {
+      Print(0, "UNEXPECTED: event length shorter than 24 Bytes");
+    }
 
     if (flushCounter>=5) {
       SimpleLock lock(m_mutex);
@@ -415,7 +413,10 @@ void DeviceReader::Loop() {
         LengthOK = (length==header.EventSize*4);
       }
       bool HeaderOK = false;
-      if (length > m_daq_board_header_length && length >= header.EventSize*4) {
+      if (TrailerOK &&
+	  length > m_daq_board_header_length &&
+	  header.EventSize*4>m_daq_board_header_length &&
+	  length >= header.EventSize*4) {
         HeaderOK = m_daq_board->DecodeEventHeader(data_buf + length - header.EventSize*4, &header);
       }
       if (HeaderOK && TrailerOK && LengthOK) {
@@ -443,8 +444,8 @@ void DeviceReader::Loop() {
           int address = 0x207;
           uint32_t tmp_value = 0;
           m_daq_board->ReadRegister(address, &tmp_value);
-          tmp_value &= 0xFFFF80; // keep only bits not transmitted in the header (47:31)
-          m_timestamp_reference = (tmp_value << 31) | header.TimeStamp;
+          tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
+          m_timestamp_reference = (tmp_value << 24) | header.TimeStamp;
         }
 
         SingleEvent* ev =
@@ -490,7 +491,7 @@ void DeviceReader::Print(int level, const char* text, uint64_t value1,
   tmp += text;
 
   const int maxLength = 100000;
-  char msg[maxLength];
+  char msg[maxLength] = { 0 };
   snprintf(msg, maxLength, tmp.data(), m_id, value1, value2, value3, value4);
 
   std::cout << msg << std::endl;
@@ -588,7 +589,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   if (param.Get("CheckTriggerIDs", 0) == 1)
     m_ignore_trigger_ids = false;
 
-  if (param.Get("DisableRecoveryOutOfSync", 1) == 1)
+  if (param.Get("DisableRecoveryOutOfSync", 0) == 1)
     m_recover_outofsync = false;
 
   if (param.Get("MonitorPSU", 0) == 1)
@@ -821,8 +822,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     uint32_t tmp_value = 0;
     m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
     //tmp_value &= 0xFFFFFF; // narrow down to 24 bits
-    tmp_value &= 0xFFFF80; // keep only bits not transmitted in the header (47:31)
-    m_timestamp_full[i] = tmp_value << 31;
+    tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
+    m_timestamp_full[i] = tmp_value << 24;
 
     std::cout << "Device " << i << " configured." << std::endl;
 
@@ -1517,7 +1518,7 @@ void PALPIDEFSProducer::Loop() {
     eudaq::mSleep(20);
 
     if (reconfigure_count>5) {
-      std::string str = "Reconfigured more than 5 times - halting!";
+      std::string str = "Reconfigured more than 5 times without taking any new events - halting!";
       EUDAQ_ERROR(str);
       SetStatus(eudaq::Status::LVL_ERROR, str);
       while (1) {}
@@ -1533,7 +1534,10 @@ void PALPIDEFSProducer::Loop() {
       int events_built = BuildEvent();
       count += events_built;
 
-      if (events_built == -1) { // auto-of-sync, which won't be recovered
+      if (events_built > 0) {
+	reconfigure_count = 0;
+      }
+      else if (events_built == -1) { // auto-of-sync, which won't be recovered
         reconfigure = true;
         break;
       }
@@ -1543,6 +1547,7 @@ void PALPIDEFSProducer::Loop() {
           if (IsRunning()) {
             SendStatusEvent();
             uint32_t tmp_value = 0;
+	    uint64_t timestamp = 0;
             int address = 0x207; // timestamp upper 24bit
             bool found_busy = false;
             for (int i = 0; i < m_nDevices; i++) {
@@ -1551,11 +1556,17 @@ void PALPIDEFSProducer::Loop() {
                 m_reader[i]->PrintDAQboardStatus();
               }
 
-              // read upper time stamp bits
-              address = 0x207; // timestamp upper 24bit
+              // read the timestamp
+              address = 0x207; // upper 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
               tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
               m_timestamp_full[i] = (uint64_t)tmp_value << 24;
+	      timestamp = (tmp_value & 0xFFFFFF) << 24;
+
+              address = 0x206; // lower 24bit
+              m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
+              timestamp |= (tmp_value & 0xFFFFFF);
+
 
               // check busy status
               address = 0x307;
@@ -1564,6 +1575,12 @@ void PALPIDEFSProducer::Loop() {
               if (found_busy) { // busy
                 std::cout << "DAQ board " << i << " is busy." << std::endl;
               }
+
+	      // read the trigger counter
+              address = 0x202; // event ID lower 24bit
+              m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
+	      std::cout << "Event ID " << i << ": 0x" << std::hex << tmp_value
+			<< "\tTimestamp: 0x" << timestamp << std::dec << std::endl;	      
             }
             if (found_busy) ++busy_count;
           }
@@ -1676,9 +1693,13 @@ int PALPIDEFSProducer::BuildEvent() {
       m_next_event[i] = m_reader[i]->PopNextEvent();
     if (m_next_event[i] == 0)
       return 0;
+  }
 
+  for (int i = 0; i < m_nDevices; i++) {
     int64_t timestamp_tmp = ((int64_t)m_next_event[i]->m_timestamp | (int64_t)m_timestamp_full[i])-(int64_t)m_next_event[i]->m_timestamp_reference;
     timestamp_tmp &= timestamp_mask;
+
+    //std::cout << i << '\t' << m_next_event[i]->m_timestamp << '\t' << m_timestamp_full[i] << '\t' << m_next_event[i]->m_timestamp_reference << '\t' << timestamp_tmp << std::endl;
     if (m_firstevent) // set last timestamp if first event
         m_timestamp_last[i] = (int64_t)timestamp_tmp;
 
@@ -1692,8 +1713,8 @@ int PALPIDEFSProducer::BuildEvent() {
   // sort the plane data, plane with largest timestamp first
   for (int i = 0; i < m_nDevices-1; i++) {
     for (int j = 0; j < m_nDevices-1; j++) {
-      if ((timestamps[j]-timestamps_last[j])&timestamp_mask<(timestamps[j+1]-timestamps_last[j+1])&timestamp_mask) {
-      //if (trigger_ids[j]<trigger_ids[j+1]) {
+      //if ((timestamps[j]-timestamps_last[j])&timestamp_mask<(timestamps[j+1]-timestamps_last[j+1])&timestamp_mask) {
+      if (trigger_ids[j]<trigger_ids[j+1]) {
         std::iter_swap(planes.begin()+j,          planes.begin()+j+1);
         std::iter_swap(trigger_ids.begin()+j,     trigger_ids.begin()+j+1);
         std::iter_swap(timestamps.begin()+j,      timestamps.begin()+j+1);

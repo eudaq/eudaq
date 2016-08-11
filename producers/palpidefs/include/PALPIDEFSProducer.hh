@@ -56,7 +56,6 @@ public:
   void SetRunning(bool running);
   void StartDAQ();
   void StopDAQ();
-  SingleEvent* NextEvent();
   void DeleteNextEvent();
   SingleEvent* PopNextEvent();
   void PrintQueueStatus();
