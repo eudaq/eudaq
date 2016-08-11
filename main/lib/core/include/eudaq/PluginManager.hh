@@ -15,7 +15,6 @@ namespace eudaq {
     using timeStamp_t = DataConverterPlugin::timeStamp_t;
     typedef DataConverterPlugin::t_eventid t_eventid;
 
-    void RegisterPlugin(DataConverterPlugin *plugin);
     static PluginManager &GetInstance();
 
     static unsigned GetTriggerID(const Event &);
@@ -48,10 +47,9 @@ namespace eudaq {
     DataConverterPlugin &GetPlugin(const Event &event);
 
   private:
-    /** The map that correlates the event type with its converter plugin.
-     */
-    std::map<t_eventid, DataConverterPlugin *> m_pluginmap;
-
+    // std::map<t_eventid, DataConverterPlugin *> m_pluginmap;
+    std::map<uint32_t, DataConverterUP> m_datacvts;
+    
     PluginManager() {}
     PluginManager(PluginManager const &) {}
     class _dummy;

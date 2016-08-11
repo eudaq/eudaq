@@ -46,9 +46,8 @@ namespace eudaq {
   class NIConverterPlugin;
 
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<NIConverterPlugin>(eudaq::cstr2hash("RAW_NI"));//TODO: check the name
+    auto dummy0 = Factory<DataConverterPlugin>::Register<NIConverterPlugin>(Event::str2id("_RAW")+eudaq::cstr2hash("NI"));
   }
-
   
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
   static const int PIVOTPIXELOFFSET = 64;
@@ -164,11 +163,6 @@ namespace eudaq {
         }
         len1 &= 0xffff;
 
-        //        for(unsigned i=0;i<len0;i++) std::cout << "0:i="<<i <<
-        //        hexdec(GET(it0, i)) << std::endl;
-        //        for(unsigned i=0;i<len1;i++) std::cout << "1:i="<<i <<
-        //        hexdec(GET(it1, i)) << std::endl;
-
         if (len0 * 4 + 12 > static_cast<unsigned>(data0.end() - it0)) {
           EUDAQ_WARN("Bad length in first frame");
           break;
@@ -189,20 +183,9 @@ namespace eudaq {
         if (dbg)
           std::cout << "Mimosa_trailer0 = " << hexdec(GET(it0, len0 + 2))
                     << std::endl;
-        //        if (dbg) std::cout << "Mimosa        0 = " << hexdec(GET(it0,
-        //        0)) << " len0 = " << len0 << " by " << (len0*4+16)
-        //        <<std::endl;
         if (dbg)
           std::cout << "Mimosa_trailer1 = " << hexdec(GET(it1, len1 + 2))
                     << std::endl;
-        //        if (dbg) std::cout << "Mimosa        1 = " << hexdec(GET(it1,
-        //        0)) << " len1 = " << len1 << " by " << (len1*4+16)
-        //        <<std::endl;
-
-        //      it0  = it0 + len0*4 + 16; std::cout << " done 0 \n";
-        //      it1  = it1 + len1*4 + 16; std::cout << " done 1 \n";
-
-        // add len*4+16 untill reching the end of data block, if reached break!
 
         bool advance_one_block_0 = false;
         bool advance_one_block_1 = false;
@@ -238,12 +221,6 @@ namespace eudaq {
             std::cout << "break the block" << std::endl;
           break;
         }
-
-        //        std::cout << " to " << hexdec(GET(data0.end(),0 )) <<
-        //        std::endl;
-        //        std::cout << " to " << hexdec(GET(data1.end(),0 )) <<
-        //        std::endl;
-
         ++board;
       }
       return true;
@@ -304,25 +281,6 @@ namespace eudaq {
     virtual bool GetLCIOSubEvent(lcio::LCEvent &result,
                                  const Event &source) const;
 #endif
-
-  protected:
-    // static size_t GetID(const Event & event, size_t i) {
-    //  if (const RawDataEvent * ev = dynamic_cast<const RawDataEvent
-    //  *>(&event)) {
-    //    return ev->GetID(i);
-    //  }
-    //  return 0;
-    //}
-    // static size_t NumPlanes(const Event & event) {
-    //  const RawDataEvent & rawev = dynamic_cast<const RawDataEvent &>(ev);
-    //  if (rawev.NumBlocks() < 1) return 0;
-    //  const std::vector<unsigned char> & data = rawev.GetBlock(0);
-    //  size_t offset = 2, result = 0;
-    //  while (data.size()/4 >= offset + 3) {
-    //    unsigned len = GET(data, offset + 1) & 0xffff;
-    //    offset += len + 4;
-    //  }
-    //}
   private:
     unsigned m_boards;
     std::vector<int> m_ids;
@@ -334,12 +292,10 @@ namespace eudaq {
       eudaq::Configuration const & /*conf*/) const {
     eutelescope::EUTelRunHeaderImpl runHeader(&header);
     runHeader.setDAQHWName(EUTELESCOPE::EUDRB); // should be:
-    // runHeader.setDAQHWName(EUTELESCOPE::NI);
 
     // the information below was used by EUTelescope before the
     // introduction of the BUI. Now all these parameters shouldn't be
     // used anymore but they are left here for backward compatibility.
-
     runHeader.setEUDRBMode("ZS2");
     runHeader.setEUDRBDet("MIMOSA26");
     runHeader.setNoOfDetector(m_boards);
@@ -529,21 +485,8 @@ namespace eudaq {
             // calculated by the EUDRB
             sparsePixel->setSignal((size_t)plane.GetPixel(iPixel));
 
-            // in case of DEBUG
-            // streamlog_out ( DEBUG0 ) << ( *(sparsePixel.get() ) ) << endl;
-
             // now add this pixel to the sparse frame
             sparseFrame->addSparsePixel(sparsePixel.get());
-          } else {
-            // the original X was on a marker column, so we don't
-            // need to process this pixel any further and of course
-            // we don't have to add it to the sparse frame.
-
-            /*
-               streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
-               <<")  on a marker column. Not adding it to the frame" << endl
-               << (* (sparsePixel.get() ) ) << endl;
-             */
           }
         }
 

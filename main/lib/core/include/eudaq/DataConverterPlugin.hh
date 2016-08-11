@@ -85,11 +85,13 @@ namespace eudaq {
    *  The plugin implementations have to register with the plugin manager.
    */
 
+
+  using DataConverterUP = Factory<DataConverterPlugin>::UP_BASE;
+  
   class DLLEXPORT DataConverterPlugin {
   public:
     using timeStamp_t = Eudaq_types::timeStamp_t;
     using t_eventid = Event::t_eventid;
-    static const t_eventid& getDefault();
     virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &);
     virtual unsigned GetTriggerID(eudaq::Event const &) const;
     virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const;
@@ -124,10 +126,6 @@ namespace eudaq {
      *  of the plugin.
      */
     t_eventid m_eventtype;
-
-    /** The protected constructor which automatically registers the plugin
-     *  at the pluginManager.
-     */
     DataConverterPlugin(std::string subtype);
     DataConverterPlugin(unsigned type, std::string subtype = "");
     static unsigned m_count;

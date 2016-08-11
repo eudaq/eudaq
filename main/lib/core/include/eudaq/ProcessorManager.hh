@@ -20,8 +20,6 @@ namespace eudaq{
   public:
     ProcessorManager();
     ~ProcessorManager(){};
-    
-    void InitProcessorPlugins();
  
     PSSP MakePSSP(std::string pstype, std::string cmd = "");
     EVUP CreateEvent(std::string evtype);
@@ -34,7 +32,6 @@ namespace eudaq{
     std::mutex m_mtx_fifo;
 
   };
-
 }
 
 #endif

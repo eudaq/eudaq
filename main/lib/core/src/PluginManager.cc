@@ -25,24 +25,19 @@ namespace eudaq {
     return manager;
   }
 
-  void PluginManager::RegisterPlugin(DataConverterPlugin *plugin) {
-    m_pluginmap[plugin->GetEventType()] = plugin;
-  }
-
-
   DataConverterPlugin & PluginManager::GetPlugin(const Event & event) {
     return GetPlugin(getEventId(event));
   }
 
   DataConverterPlugin & PluginManager::GetPlugin(PluginManager::t_eventid eventtype) {
-    std::map<t_eventid, DataConverterPlugin *>::iterator pluginiter
-      = m_pluginmap.find(eventtype);
-
-    if (pluginiter == m_pluginmap.end()) {
-      return GetPlugin(DataConverterPlugin::getDefault());
+    uint32_t id = eventtype.first;
+    if(!eventtype.second.empty()){
+      id += eudaq::cstr2hash(eventtype.second.c_str());
     }
-
-    return *pluginiter->second;
+    if (m_datacvts.find(id) == m_datacvts.end()){
+      m_datacvts[id] = Factory<DataConverterPlugin>::Create<>(id);
+    }
+    return *(m_datacvts[id].get());
   }
 
   void PluginManager::Initialize(const DetectorEvent & dev) {
@@ -175,8 +170,6 @@ namespace eudaq {
   {
     GetInstance().GetPlugin(ev).setCurrentTLUEvent(ev, tlu);
   }
-
-
 
   std::shared_ptr<eudaq::Event> PluginManager::ExtractEventN(std::shared_ptr<eudaq::Event> pac, size_t NumberOfROF)
   {

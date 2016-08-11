@@ -6,10 +6,8 @@
 namespace eudaq {
   
   template class DLLEXPORT Factory<DataConverterPlugin>;
-  template DLLEXPORT
-  std::map<uint32_t, typename Factory<DataConverterPlugin>::UP_BASE (*)()>&
+  template DLLEXPORT std::map<uint32_t, typename Factory<DataConverterPlugin>::UP_BASE (*)()>&
   Factory<DataConverterPlugin>::Instance<>();
-
   
   unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const & ev) const {
     return ev.GetEventNumber();
@@ -20,7 +18,6 @@ namespace eudaq {
 
   DataConverterPlugin::DataConverterPlugin(unsigned type, std::string subtype)
     : m_eventtype(make_pair(type, subtype)), m_thisCount(m_count) {
-    PluginManager::GetInstance().RegisterPlugin(this);
     m_count += 10;
   }
 
@@ -82,11 +79,6 @@ namespace eudaq {
 
   DataConverterPlugin::~DataConverterPlugin() {
 
-  }
-
-  const DataConverterPlugin::t_eventid& DataConverterPlugin::getDefault() {
-    static DataConverterPlugin::t_eventid defaultID(Event::str2id("_RAW"), "Default");
-    return defaultID;
   }
 
   unsigned DataConverterPlugin::m_count = 0;
