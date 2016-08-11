@@ -103,7 +103,7 @@ private:
       if(state == STATE_RUNNING)
           disableButtons = false;
       configLoaded = checkConfigFile();
-      btnInit->setEnabled(state == STATE_UNINIT && !disableButtons);
+      btnInit->setEnabled(state != STATE_RUNNING && !disableButtons);
       btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && !disableButtons);
       btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded && !disableButtons);
       btnTerminate->setEnabled(state != STATE_RUNNING);
