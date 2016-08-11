@@ -259,7 +259,7 @@ namespace eudaq {
         //std::cout<<"Current State: "<< connectionstate->GetState()<< " From: "<< to_string(ev.id)<< " With Remote: "<< ev.id.GetRemote()<<"\n";
 
         current_State.SetState(ev.id , connectionstate.get());
-        current_State.Print();
+        //current_State.Print();
         if(current_State.GetState()== eudaq::ConnectionState::STATE_ERROR && current_State.HasRunning())
           StopRun();
 
