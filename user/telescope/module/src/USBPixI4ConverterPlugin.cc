@@ -33,6 +33,13 @@
 #include "eudaq/Configuration.hh"
 
 namespace eudaq {
+  class USBPixFEI4AConverter;
+  class USBPixFEI4BConverter;
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<USBPixFEI4AConverter>(Event::str2id("_RAW")+eudaq::cstr2hash("USBPIXI4"));
+    auto dummy1 = Factory<DataConverterPlugin>::Register<USBPixFEI4BConverter>(Event::str2id("_RAW")+eudaq::cstr2hash("USBPIXI4B"));
+  }
+  
   //Will be set as the EVENT_TYPE for the different versions of this producer
   static std::string USBPIX_FEI4A_NAME = "USBPIXI4";
   static std::string USBPIX_FEI4B_NAME = "USBPIXI4B";
@@ -613,23 +620,15 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 	USBPixI4ConverterPlugin(const std::string& event_type): DataConverterPlugin(event_type), USBPixI4ConverterBase<dh_lv1id_msk, dh_bcid_msk>(event_type), chip_id_offset(20) {}
 };
 
-class USBPixFEI4AConverter : USBPixI4ConverterPlugin<0x00007F00, 0x000000FF>
-{
-  private:
- 	//The constructor can be private, only one static instance is created
-	USBPixFEI4AConverter():  USBPixI4ConverterPlugin<0x00007F00, 0x000000FF>(USBPIX_FEI4A_NAME) {};
-	static USBPixFEI4AConverter m_instance;
+class USBPixFEI4AConverter : public USBPixI4ConverterPlugin<0x00007F00, 0x000000FF>{
+public:
+  USBPixFEI4AConverter():  USBPixI4ConverterPlugin<0x00007F00, 0x000000FF>(USBPIX_FEI4A_NAME) {};
 };
 
-class USBPixFEI4BConverter : USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>
-{
-  private:
-	USBPixFEI4BConverter():  USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>(USBPIX_FEI4B_NAME){};
-	static USBPixFEI4BConverter m_instance;
+class USBPixFEI4BConverter : public USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>{
+public:
+  USBPixFEI4BConverter():  USBPixI4ConverterPlugin<0x00007C00, 0x000003FF>(USBPIX_FEI4B_NAME){};
 };
 
-//Instantiate the converter plugin instance
-USBPixFEI4AConverter USBPixFEI4AConverter::m_instance;
-USBPixFEI4BConverter USBPixFEI4BConverter::m_instance;
 
 } //namespace eudaq

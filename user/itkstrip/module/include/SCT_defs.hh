@@ -1,7 +1,7 @@
 #ifndef SCT_defs_h__
 #define SCT_defs_h__
 #include <string>
-#include "eudaq/Platform.hh"
+#include "Platform.hh"
 
 namespace eudaq {
 

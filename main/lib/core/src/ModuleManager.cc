@@ -34,6 +34,8 @@ namespace eudaq{
     // char* env_ps_path = getenv("EUDAQ_MODULE_PATH");
     filesystem::path module_dir=top/lib;
     LoadModuleDir(module_dir.native());
+    module_dir=top/bin;
+    LoadModuleDir(module_dir.native());
   }
   
   ModuleManager* ModuleManager::Instance(){

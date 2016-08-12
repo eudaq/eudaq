@@ -14,7 +14,7 @@ namespace eudaq {
     : baseFileReader(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
     m_des(Filename()),m_ver(1){
     uint32_t id;
-    m_des.read(id);
+    m_des.PreRead(id);
     m_ev = Factory<eudaq::Event>::Create<Deserializer&>(id, m_des);
   }
 

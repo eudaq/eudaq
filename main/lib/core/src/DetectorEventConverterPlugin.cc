@@ -14,9 +14,12 @@
 #endif
 
 namespace eudaq {
+  class DetectorEventConverterPlugin;
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<DetectorEventConverterPlugin>(Event::str2id("_DET"));
+  }
 
 class DetectorEventConverterPlugin : public DataConverterPlugin {
-
 public:
 
   virtual bool GetStandardSubEvent(StandardEvent &,
@@ -39,19 +42,11 @@ public:
     return nullptr;
   }
 
-private:
-
-
   DetectorEventConverterPlugin()
     : DataConverterPlugin(Event::str2id("_DET"), "") {
   }
 
-
-
-  static DetectorEventConverterPlugin m_instance;
 };
 
-// Instantiate the converter plugin instance
-DetectorEventConverterPlugin DetectorEventConverterPlugin::m_instance;
 
 } // namespace eudaq
