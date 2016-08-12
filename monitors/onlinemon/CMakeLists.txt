@@ -1,63 +1,48 @@
-OPTION(BUILD_onlinemon "Compile Online Monitor executable (requires ROOT)?" ON)
-IF(BUILD_onlinemon)  
-  LIST(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
-  FIND_PACKAGE( ROOT REQUIRED COMPONENTS Gui)
-  INCLUDE(${ROOT_USE_FILE})
-  INCLUDE_DIRECTORIES( . include)
+list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+find_package(ROOT)
 
-  IF(${ROOT_VERSION_MAJOR} GREATER 5)
-    ADD_DEFINITIONS(-DEUDAQ_LIB_ROOT6)
-  ENDIF()
-  
-  SET(OnlineMon_SOURCES
-    src/OnlineMon.cxx
-    src/OnlineMonWindow.cc
-    src/BaseCollection.cc
-    src/CheckEOF.cc
-    src/CorrelationCollection.cc
-    src/CorrelationHistos.cc
-    src/EUDAQMonitorCollection.cc
-    src/EUDAQMonitorHistos.cc
-    src/EventSanityChecker.cc
-    src/HitmapCollection.cc
-    src/HitmapHistos.cc
-    src/MonitorPerformanceCollection.cc
-    src/MonitorPerformanceHistos.cc
-    src/ParaMonitorCollection.cc
-    src/OnlineMonConfiguration.cc
-    src/SimpleStandardEvent.cc
-    src/SimpleStandardPlane.cc
-    )
+cmake_dependent_option(BUILD_onlinemon "build online monitor executable" ON
+  "ROOT_FOUND" OFF)
 
-  SET(OnlineMon_HEADERS 
-    include/OnlineMonWindow.hh
-    include/SimpleStandardHit.hh
-    include/SimpleStandardCluster.hh
-    include/SimpleStandardPlane.hh
-    include/OnlineMonConfiguration.hh
-    include/CheckEOF.hh
-    )
+IF(NOT BUILD_onlinemon)
+  message("Online monitor is not to be built")
+  return()
+ENDIF()
 
-  SET(OnlineMon_DICT ${CMAKE_CURRENT_BINARY_DIR}/OnlineMon_ROOT.cxx)
-  SET(OnlineMon_PCM ${CMAKE_CURRENT_BINARY_DIR}/libOnlineMon_ROOT_rdict.pcm)
-  SET(OnlineMon_MAP ${CMAKE_CURRENT_BINARY_DIR}/libOnlineMon_ROOT.rootmap)
-  ROOT_GENERATE_DICTIONARY(OnlineMon_ROOT ${OnlineMon_HEADERS})
+find_package(ROOT REQUIRED COMPONENTS Gui)
+include(${ROOT_USE_FILE})
+include_directories(. include)
 
-  ADD_EXECUTABLE(OnlineMon.exe ${OnlineMon_SOURCES} ${OnlineMon_DICT})
-  TARGET_LINK_LIBRARIES(OnlineMon.exe EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+IF(${ROOT_VERSION_MAJOR} GREATER 5)
+  add_definitions(-DEUDAQ_LIB_ROOT6)
+ENDIF()
 
-  INSTALL(TARGETS OnlineMon.exe
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    )
+set(DICT_INC
+  include/OnlineMonWindow.hh
+  include/SimpleStandardHit.hh
+  include/SimpleStandardCluster.hh
+  include/SimpleStandardPlane.hh
+  include/OnlineMonConfiguration.hh
+  include/CheckEOF.hh)
 
-  IF(${ROOT_VERSION_MAJOR} GREATER 5)
-    INSTALL(FILES
-      ${OnlineMon_PCM}
-      ${OnlineMon_MAP}
-      DESTINATION bin
-      )
-  ENDIF()
-  
+set(ONLINEMON OnlineMon)
+set(ONLINEMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/OnlineMon_ROOT.cxx)
+set(ONLINEMON_DICT_PCM ${CMAKE_CURRENT_BINARY_DIR}/libOnlineMon_ROOT_rdict.pcm)
+set(ONLINEMON_DICT_MAP ${CMAKE_CURRENT_BINARY_DIR}/libOnlineMon_ROOT.rootmap)
+root_generate_dictionary(OnlineMon_ROOT ${DICT_INC})
+
+aux_source_directory(src ONLINEMON_SRC)
+add_executable(${ONLINEMON} ${ONLINEMON_SRC} ${ONLINEMON_DICT_CXX})
+target_link_libraries(${ONLINEMON} ${EUDAQ_CORE} ${ROOT_LIBRARIES})
+
+install(TARGETS ${ONLINEMON}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+
+IF(${ROOT_VERSION_MAJOR} GREATER 5)
+  install(FILES
+    ${ONLINEMON_DICT_PCM}
+    ${ONLINEMON_DICT_MAP}
+    DESTINATION bin)
 ENDIF()
