@@ -73,7 +73,7 @@ namespace eudaq {
     if (size_t(end - m_stop) < min) {
       // not enough space remaining before end of buffer,
       // so shift everything back to the beginning of the buffer
-      std::memmove(m_start, &m_buf[0], level());
+      std::memmove(&m_buf[0], m_start, level()); //TODO:: FIX unkown behavior when dst and src are overlopped
       m_stop -= (m_start - &m_buf[0]);
       m_start = &m_buf[0];
       if (size_t(end - m_stop) < min) {
