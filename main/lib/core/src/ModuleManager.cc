@@ -33,9 +33,9 @@ namespace eudaq{
 
     // char* env_ps_path = getenv("EUDAQ_MODULE_PATH");
     filesystem::path module_dir=top/lib;
-    LoadModuleDir(module_dir.native());
+    LoadModuleDir(module_dir.string());
     module_dir=top/bin;
-    LoadModuleDir(module_dir.native());
+    LoadModuleDir(module_dir.string());
   }
   
   ModuleManager* ModuleManager::Instance(){
@@ -51,11 +51,11 @@ namespace eudaq{
     uint32_t n=0;
     for(auto& e: filesystem::directory_iterator(filesystem::absolute(dir))){
       filesystem::path file(e);
-      std::string fname = file.filename().native();
+      std::string fname = file.filename().string();
       if(!fname.compare(0, module_prefix.size(), module_prefix)
 	 && (fname.find(module_suffix_win) != std::string::npos ||
 	     fname.find(module_suffix_lnx) != std::string::npos)){
-	if(LoadModuleFile(file.native())){
+	if(LoadModuleFile(file.string())){
 	  n++;
 	}
       }

@@ -47,15 +47,14 @@ namespace eudaq {
     DataConverterPlugin &GetPlugin(const Event &event);
 
   private:
-    // std::map<t_eventid, DataConverterPlugin *> m_pluginmap;
     std::map<uint32_t, DataConverterUP> m_datacvts;
     
     PluginManager() {}
-    PluginManager(PluginManager const &) {}
-    class _dummy;
-    friend class _dummy; // Silence superfluous warnings in some gcc versions
-  };
 
+    PluginManager(PluginManager &) = delete;
+    PluginManager& operator = (const PluginManager &) = delete;
+  };
+  
 } // namespace eudaq
 
 #endif // EUDAQ_INCLUDED_PluginManager

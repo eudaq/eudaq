@@ -20,11 +20,8 @@
 #include "maps.def"
 #include "mi26.def"
 #include "mi26.typ"
-//#include "iphc/daq_pxi.def"
 
 using namespace eudaq;
-
-const std::string FileNamer::default_pattern = "../data/run$6R$X";
 
 inline std::string decodetime(unsigned date, unsigned time) {
   std::string result =
