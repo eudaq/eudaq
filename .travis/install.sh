@@ -52,7 +52,7 @@ else
 		
 	else
 		# Install package dependencies for Linux:
-		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-3.19.0-64 linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
 		#sudo pip install --upgrade pip
 		#sudo pip install -q numpy
