@@ -56,6 +56,10 @@ else
 		sudo service openafs-client start
 		uname -a
 		ls /etc/openafs
+		less /etc/openafs/CellServDB
+		less /etc/openafs/afs.conf
+		less /etc/openafs/afs.conf.client
+		less /etc/openafs/cacheinfo
 		#sudo pip install --upgrade pip
 		#sudo pip install -q numpy
 		#pyenv rehash
