@@ -12,6 +12,9 @@ namespace eudaq{
   class Factory{
   public:
     using UP_BASE = std::unique_ptr<BASE, std::function<void(BASE*)> >;
+    using SP_BASE = std::shared_ptr<BASE>;
+    using WP_BASE = std::weak_ptr<BASE>;
+
     template <typename ...ARGS>
       static typename Factory<BASE>::UP_BASE
       Create(uint32_t id, ARGS&& ...args);

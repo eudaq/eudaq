@@ -103,9 +103,11 @@ int main(int, char ** argv) {
         << "RejAcqNb:    " << res.RejAcqNb << std::endl
         << "StopTime:    " << decodetime(res.StopDate, res.StopTime) << std::endl
         ;
-
-      std::shared_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value()));
-      writer->SetFilePattern(opat.Value());
+      
+      std::string fwtype = type.Value();
+      std::string fwpatt = opat.Value();
+      uint32_t fwid = cstr2hash(fwtype.c_str());
+      std::shared_ptr<FileWriter> writer = Factory<FileWriter>::Create<std::string&>(fwid, fwpatt);
       writer->StartRun(runnumber);
       {
         DetectorEvent dev(runnumber, 0, NOTIMESTAMP);
