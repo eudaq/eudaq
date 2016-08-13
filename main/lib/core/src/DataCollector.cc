@@ -10,16 +10,6 @@
 
 namespace eudaq {
 
-  namespace {
-
-    void *DataCollector_thread(void *arg) {
-      DataCollector *dc = static_cast<DataCollector *>(arg);
-      dc->DataThread();
-      return 0;
-    }
-
-  } // anonymous namespace
-
   DataCollector::DataCollector(const std::string &name,
                                const std::string &runcontrol,
                                const std::string &listenaddress,
@@ -33,8 +23,9 @@ namespace eudaq {
     m_dataserver->SetCallback(
         TransportCallback(this, &DataCollector::DataHandler));
     EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
-    m_thread = std::unique_ptr<std::thread>(
-        new std::thread(DataCollector_thread, this));
+    
+    m_thread = std::unique_ptr<std::thread>(new std::thread(&DataCollector::DataThread, this));
+
     EUDAQ_DEBUG("Listen address=" +
                 to_string(m_dataserver->ConnectionString()));
     CommandReceiver::StartThread();
