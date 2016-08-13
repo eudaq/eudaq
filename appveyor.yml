@@ -67,32 +67,30 @@ cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\libusb-win32'
   
 init:
+# The following line enables the remote desktop connection and show the connection information.
 #- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
+# This is a workaround for a whole lot of annoying warnings about non-existing targets.
 - cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
-# Install Python (from the official .msi of http://python.org) and pip when
-# not already installed.
-- ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }
-    #conda config --set always_yes yes --set changeps1 no
-    
-  # Prepend newly installed Python to the PATH of this build (this cannot be
-  # done from inside the powershell script as it would require to restart
-  # the parent CMD process).
-- "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
 
-  # Check that we have the expected version and architecture for Python
+# Install Python (from the official .msi of http://python.org) and pip when not already installed.
+# This was copied from 
+- ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install.ps1 }    
+# Prepend newly installed Python to the PATH of this build (this cannot be
+# done from inside the powershell script as it would require to restart
+# the parent CMD process).
+- "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+# Check that we have the expected version and architecture for Python
 - "python --version"
 - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-
-  # Upgrade to the latest version of pip to avoid it displaying warnings
-  # about it being out of date.
+# Upgrade to the latest version of pip to avoid it displaying warnings
+# about it being out of date.
 - "pip install --disable-pip-version-check --user --upgrade pip"
-
-  # Install the build dependencies of the project. If some dependencies contain
-  # compiled extensions and are not provided as pre-built wheel packages,
-  # pip will build them from source using the MSVC compiler matching the
-  # target Python version and architecture
+# Install the build dependencies of the project. If some dependencies contain
+# compiled extensions and are not provided as pre-built wheel packages,
+# pip will build them from source using the MSVC compiler matching the
+# target Python version and architecture
 - "%CMD_IN_ENV% pip install -r dev-requirements.txt"    
     
 before_build:    
@@ -129,18 +127,25 @@ build_script:
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
-#- cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF -DBUILD_tlu=ON ..
-#- ps: $cmakeargument = (" -DBUILD_AHCAL=" + "${env:BUILD_AHCAL}"  + " -DBUILD_BIFAHCAL=" + "${env:BUILD_BIFAHCAL}" + " -DBUILD_TESTING=" + "${env:BUILD_TESTING}" + " -DBUILD_WITH_QT4=" + "${env:BUILD_WITH_QT4}" + " -DBUILD_allproducer=" + "${env:BUILD_allproducer}" + " -DBUILD_altro=" + "${env:BUILD_altro}" + " -DBUILD_altroUSB=" + "${env:BUILD_altroUSB}" + " -DBUILD_apixct=" + "${env:BUILD_apixct}" + " -DBUILD_calice=" + "${env:BUILD_calice}" +  " -DBUILD_ccpdlf=" + "${env:BUILD_ccpdlf}" + " -DBUILD_clicpix=" + "${env:BUILD_clicpix}" + " -DBUILD_cmspixel=" + "${env:BUILD_cmspixel}" +  " -DBUILD_depfet=" + "${env:BUILD_depfet}" + " -DBUILD_eudrb=" + "${env:BUILD_eudrb}" + " -DBUILD_example=" + "${env:BUILD_example}" + " -DBUILD_explorer=" + "${env:BUILD_explorer}" +  " -DBUILD_fortis=" + "${env:BUILD_fortis}" + " -DBUILD_gui=" + "${env:BUILD_gui}" + " -DBUILD_main=" + "${env:BUILD_main}" + " -DBUILD_manual=" + "${env:BUILD_manual}" +  " -DBUILD_mimoroma=" + "${env:BUILD_mimoroma}" + " -DBUILD_mimosa32=" + "${env:BUILD_mimosa32}" + " -DBUILD_miniTLU=" + "${env:BUILD_miniTLU}" + " -DBUILD_mupix=" + "${env:BUILD_mupix}" + " -DBUILD_mvd=" + "${env:BUILD_mvd}" + " -DBUILD_ni=" + "${env:BUILD_ni}" + " -DBUILD_nreader=" + "${env:BUILD_nreader}" +  " -DBUILD_offlinemon=" + "${env:BUILD_offlinemon}" + " -DBUILD_onlinemon=" + "${env:BUILD_onlinemon}" + " -DBUILD_palpidefs=" + "${env:BUILD_palpidefs}" + " -DBUILD_palpidess=" + "${env:BUILD_palpidess}" + " -DBUILD_pixelmanproducer=" + "${env:BUILD_pixelmanproducer}" + " -DBUILD_pybar=" + "${env:BUILD_pybar}" + " -DBUILD_python=" + "${env:BUILD_python}" + " -DBUILD_root=" + "${env:BUILD_root}" + " -DBUILD_taki=" + "${env:BUILD_taki}" + " -DBUILD_timepixdummy=" + "${env:BUILD_timepixdummy}" + " -DBUILD_tlu=" + "${env:BUILD_tlu}" + " -DBUILD_usbpix=" + "${env:BUILD_usbpix}"); [Environment]::SetEnvironmentVariable("CMAKEargs", $cmakeargument, "User")
-
-#- cmd: cmake %CMAKEargs% ..
 - cmd: echo -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_apixct=%BUILD_apixct% -DBUILD_calice=%BUILD_calice% -DBUILD_ccpdlf=%BUILD_ccpdlf% -DBUILD_clicpix=%BUILD_clicpix% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mupix=%BUILD_mupix% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_pybar=%BUILD_pybar% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% -DBUILD_usbpix=%BUILD_usbpix% ..
 
 - cmd: cmake -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_apixct=%BUILD_apixct% -DBUILD_calice=%BUILD_calice% -DBUILD_ccpdlf=%BUILD_ccpdlf% -DBUILD_clicpix=%BUILD_clicpix% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mupix=%BUILD_mupix% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_pybar=%BUILD_pybar% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% -DBUILD_usbpix=%BUILD_usbpix% ..
 
-#; Write-Host "Calling cmake with argument " $cmakeargument; try {$ErrorActionPreference = 'SilentlyContinue'; cmake $cmakeargument "${env:APPVEYOR_BUILD_FOLDER}" 2>out-null} Catch [Exception] {}
-
-#- cmd: if %PLATFORM% == 'x86'  (msbuild INSTALL.vcxproj) else (msbuild INSTALL.vcxproj /p:Platform=x64 /p:Prefer32bit=false)
 - cmd: msbuild INSTALL.vcxproj
 
+#artifacts:
+#  - path: _builds\*\Foo-*.tar.gz
+#    name: Releases
+
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: "FXNTEGEjMMl3FZLCp4cXO0Szn3CVs4lEf+pPxz6vbb9q/PHkD5N2gAgOR+zljtll"
+  artifact: /Foo-.*\.tar.gz/
+  draft: false
+  prerelease: false
+  on:
+    appveyor_repo_tag: true
+    
 on_finish:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

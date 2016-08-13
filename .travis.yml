@@ -82,6 +82,11 @@ env:
 # results in 8 combinations
 # documentation to be "compiled" in maximum one option
 
+# cmspixel:
+# requires pxar download and installation which is done 
+# disabled for mac, old, gcc and clang as pxar can be installed but during eudaq compilation is fails to include properly the defines from api.h
+# the reason for this behaviour is unclear
+
 matrix:      
    include:   
       - os: linux
@@ -101,19 +106,18 @@ matrix:
         env: OPTION=modern    
       - os: osx
         compiler: gcc      
-        env: OPTION=old
+        env: OPTION=old BUILD_cmspixel=OFF
       - os: osx
         compiler: clang      
         env: OPTION=modern
       - os: osx      
         compiler: clang      
-        env: OPTION=old
+        env: OPTION=old BUILD_cmspixel=OFF
 
 before_install:
   - source .travis/before_install.sh
   - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
-    
-  
+      
 install:
   - source .travis/install.sh
 
@@ -128,3 +132,17 @@ script:
   - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_apixct=$BUILD_apixct -DBUILD_calice=$BUILD_calice -DBUILD_ccpdlf=$BUILD_ccpdlf -DBUILD_clicpix=$BUILD_clicpix -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_eudrb=$BUILD_eudrb -DBUILD_example=$BUILD_example -DBUILD_explorer=$BUILD_explorer -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_mimosa32=$BUILD_mimosa32 -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_mupix=$BUILD_mupix -DBUILD_mvd=$BUILD_mvd -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs -DBUILD_palpidess=$BUILD_palpidess -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_pybar=$BUILD_pybar -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu -DBUILD_usbpix=$BUILD_usbpix ..
   - make install
 
+before_deploy:
+ - source .travis/before_deploy.sh
+
+deploy:
+  provider: releases
+  api_key:
+    - secure: "Vl1KT9zHLc/d3oBKQuS1PyD849kXOZe8mvP+BW2ocvh/SjyyFrFoPUw/0GvsO+cbqH1+HYIki5N3Tkeb5AZtehqc7oqPCLPQI6fxk3eEYugcR0wYgBprlQB5PyvobZgR8Eq9R95tlJgX1ukOlpINmENF9b9/cPzEqCUhbW0+kwdcsalxb7NsDZUBFeu3cBeTqrIDzv1eO582uUk3MssHJ+18jt7rdaQGhY2lyNdpsXTUEuYdiE2TJ4xr7Yk2akN5PSvi0PHeq+LB7t07olan2yi6EqLJHHF2Th28Qgf4YT5BUjpF4kQy2xQzRwyQIg6X0Z34OuB+Q74Ku/vcvqi/oS+oiciIaGoGKQ5TK4tDRZIs0XvyamXafXKSqYahoDD92rPQ2ewZHvb/ivKjYLAED3sB4M5EMGxrwWUlAYEj3QSYZRDugjz2FhMPIswnCiMeSxFTaWQs54hymP5xLo9gNiXrInM4HIhwYjv12uH9X3YrBi8+7As1MOsP21vDhU7VegM2/L1jQkYj+E1nEtBzG3Z3hpc4dav0opT6pGjQ6M/CKyusyIBeHAdTLU3i0JWLD0SdJQemsLd1dx0LlXPZe3Z7svww8VVX3w6xlgjRFYYtlTHyElTanxg//dcVpZBEEZNZBbArgDNtZxNjY7qgYankxitUT9Kj3DWNjnynzjo="
+  file_glob: true
+  file: 
+    - "${FILE_TO_UPLOAD_1}"
+    - "${FILE_TO_UPLOAD_2}"
+  skip_cleanup: true
+  on:
+    - tags: true
