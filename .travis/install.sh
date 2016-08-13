@@ -37,8 +37,20 @@ else
 
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Linux:
-		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		sudo add-apt-repository -y ppa:openafs/stable
+		sudo apt-get update
+		sudo apt-get install --force-yes -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		
+		# creating ThisCell file --> since some update it seems to be absolutely necessary, otherwise start up fails with
+		# "afsd: some file missing or bad in /etc/openafs"
+		# content does not matter for our purposes		
+		touch ~/ThisCell
+		echo "cern.ch" >> ~/ThisCell
+		echo "" >> ~/ThisCell
+		sudo cp ~/ThisCell /etc/openafs
 		sudo service openafs-client start
+		
+		#sudo cat /var/log/syslog
 		#sudo pip install -U setuptools
 		#sudo pip install -U virtualenvwrapper
 		#sudo virtualenv /opt/python/3.5.0
@@ -52,8 +64,20 @@ else
 		
 	else
 		# Install package dependencies for Linux:
-		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		sudo add-apt-repository -y ppa:openafs/stable
+		sudo apt-get update		
+		sudo apt-get install --force-yes -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		
+		# creating ThisCell file --> since some update it seems to be absolutely necessary, otherwise start up fails with
+		# "afsd: some file missing or bad in /etc/openafs"
+		# content does not matter for our purposes
+		touch ~/ThisCell
+		echo "cern.ch" >> ~/ThisCell
+		echo "" >> ~/ThisCell
+		sudo cp ~/ThisCell /etc/openafs		
 		sudo service openafs-client start
+		
+		#sudo cat /var/log/syslog
 		#sudo pip install --upgrade pip
 		#sudo pip install -q numpy
 		#pyenv rehash

@@ -1,4 +1,4 @@
-# Script to install libusb
+# Script to download file on several trials
 # Based on python install script by
 # Authors: Olivier Grisel, Jonathan Helmus, Kyle Kastner, and Alex Willmer
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/

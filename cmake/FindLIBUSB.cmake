@@ -28,7 +28,6 @@ IF(NOT LIBUSB_FOUND)
 # find path of libusb installation in ./extern folder
 file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*usb.h)
 if (extern_file)
-    MESSAGE(STATUS "File $Â{extern_file} found in ./exter")
     # strip the file and 'include' path away:
     get_filename_component(extern_lib_path "${extern_file}" PATH)
     get_filename_component(extern_lib_path "${extern_lib_path}" PATH)
