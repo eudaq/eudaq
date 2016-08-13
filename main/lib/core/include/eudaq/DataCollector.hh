@@ -42,22 +42,21 @@ namespace eudaq {
       std::shared_ptr<ConnectionInfo> id;
       std::list<EventSP> events;
     };
-
+    
     const std::string m_runnumberfile; // path to the file containing the run number
     void DataHandler(TransportEvent &ev);
     size_t GetInfo(const ConnectionInfo &id);
 
     bool m_done, m_listening;
-    TransportServer *m_dataserver; ///< Transport for receiving data packets
-                                   //       pthread_t m_thread;
-                                   //       pthread_attr_t m_threadattr;
+    
+    std::unique_ptr<TransportServer> m_dataserver;
     std::unique_ptr<std::thread> m_thread;
     std::vector<Info> m_buffer;
     size_t m_numwaiting; ///< The number of producers with events waiting in the
                          ///buffer
     size_t m_itlu;       ///< Index of TLU in m_buffer vector, or -1 if no TLU
     unsigned m_runnumber, m_eventnumber;
-    std::shared_ptr<FileWriter> m_writer;
+    FileWriterUP m_writer;
     Configuration m_config;
     Time m_runstart;
   };

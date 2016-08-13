@@ -16,25 +16,21 @@ namespace eudaq {
                                const std::string &runnumberfile)
       : CommandReceiver("DataCollector", name, runcontrol, false),
         m_runnumberfile(runnumberfile), m_done(false), m_listening(true),
-        m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(),
         m_numwaiting(0), m_itlu((size_t)-1),
         m_runnumber(ReadFromFile(runnumberfile, 0U)), m_eventnumber(0),
         m_runstart(0) {
-    m_dataserver->SetCallback(
-        TransportCallback(this, &DataCollector::DataHandler));
-    EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
     
+    m_dataserver.reset(TransportFactory::CreateServer(listenaddress));
+    m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
+    EUDAQ_DEBUG("Instantiated datacollector with name: " + name);
     m_thread = std::unique_ptr<std::thread>(new std::thread(&DataCollector::DataThread, this));
-
-    EUDAQ_DEBUG("Listen address=" +
-                to_string(m_dataserver->ConnectionString()));
+    EUDAQ_DEBUG("Listen address=" + to_string(m_dataserver->ConnectionString()));
     CommandReceiver::StartThread();
   }
 
   DataCollector::~DataCollector() {
     m_done = true;
     m_thread->join();
-    delete m_dataserver;
   }
 
   void DataCollector::OnServer() {
@@ -42,7 +38,6 @@ namespace eudaq {
   }
 
   void DataCollector::OnGetRun() {
-    // std::cout << "Sending run number: " << m_runnumber << std::endl;
     m_status.SetTag("_RUN", to_string(m_runnumber));
   }
 
@@ -58,14 +53,15 @@ namespace eudaq {
 
   void DataCollector::OnDisconnect(const ConnectionInfo &id) {
     EUDAQ_INFO("Disconnected: " + to_string(id));
+    
     size_t i = GetInfo(id);
     if (i == m_itlu) {
       m_itlu = (size_t)-1;
     } else if (i < m_itlu) {
       --m_itlu;
     }
+
     m_buffer.erase(m_buffer.begin() + i);
-    // if (during run) THROW
   }
 
   void DataCollector::OnConfigure(const Configuration &param) {
@@ -74,11 +70,9 @@ namespace eudaq {
     std::string fwpatt = m_config.Get("FilePattern", "");
     uint32_t fwid = cstr2hash(fwtype.c_str());
     m_writer = Factory<FileWriter>::Create<std::string&>(fwid, fwpatt);
-    // m_writer->SetFilePattern(m_config.Get("FilePattern", ""));
   }
 
   void DataCollector::OnPrepareRun(unsigned runnumber) {
-    // if (runnumber == m_runnumber && m_ser.get()) return false;
     EUDAQ_INFO("Preparing for run " + to_string(runnumber));
     m_runstart = Time::Current();
     try {
@@ -113,16 +107,10 @@ namespace eudaq {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
   }
 
-  void DataCollector::OnReceive(const ConnectionInfo &id,
-                                EventSP ev) {
+  void DataCollector::OnReceive(const ConnectionInfo &id, EventSP ev) {
     Info &inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
-
-    // Print if the received event is the EORE of this producer:
-    if (inf.events.back()->IsEORE())
-      std::cout << "Received EORE Event from " << id << ": " << *ev
-                << std::endl;
-
+    
     bool tmp = false;
     if (inf.events.size() == 1) {
       m_numwaiting++;
@@ -131,8 +119,6 @@ namespace eudaq {
       }
     }
 
-    // std::cout << "Waiting buffers: " << m_numwaiting << " out of " <<
-    // m_buffer.size() << std::endl;
     if (tmp)
       OnCompleteEvent();
   }
@@ -229,8 +215,6 @@ namespace eudaq {
 
   size_t DataCollector::GetInfo(const ConnectionInfo &id) {
     for (size_t i = 0; i < m_buffer.size(); ++i) {
-      // std::cout << "Checking " << *m_buffer[i].id << " == " << id<<
-      // std::endl;
       if (m_buffer[i].id->Matches(id))
         return i;
     }
@@ -238,10 +222,8 @@ namespace eudaq {
   }
 
   void DataCollector::DataHandler(TransportEvent &ev) {
-    // std::cout << "Event: ";
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
-      // std::cout << "Connect:    " << ev.id << std::endl;
       if (m_listening) {
         m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", ev.id, true);
       } else {
@@ -251,12 +233,10 @@ namespace eudaq {
       }
       break;
     case (TransportEvent::DISCONNECT):
-      // std::cout << "Disconnect: " << ev.id << std::endl;
       OnDisconnect(ev.id);
       break;
     case (TransportEvent::RECEIVE):
       if (ev.id.GetState() == 0) { // waiting for identification
-        // check packet
         do {
           size_t i0 = 0, i1 = ev.packet.find(' ');
           if (i1 == std::string::npos)
@@ -287,7 +267,6 @@ namespace eudaq {
           part = std::string(ev.packet, i0, i1 - i0);
           ev.id.SetName(part);
         } while (false);
-        // std::cout << "client replied, sending OK" << std::endl;
         m_dataserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
         OnConnect(ev.id);
