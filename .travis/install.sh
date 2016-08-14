@@ -54,7 +54,7 @@ else
 		# Install package dependencies for Linux:
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo touch /etc/openafs/ThisCell
-		sudo cat "desy.de" > /etc/openafs/ThisCell
+		sudo -s 'echo "desy.de" > /etc/openafs/ThisCell'
 		sudo service openafs-client start
 		uname -a
 		ls /etc/openafs
