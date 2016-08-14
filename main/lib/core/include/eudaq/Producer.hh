@@ -13,7 +13,7 @@ namespace eudaq {
    * It is both a CommandReceiver, listening to commands from RunControl,
    * and a DataSender, sending data to a DataCollector.
    */
-  class DLLEXPORT Producer : public CommandReceiver, public DataSender {
+  class DLLEXPORT Producer : public CommandReceiver{
   public:
     /**
      * The constructor.
@@ -22,10 +22,15 @@ namespace eudaq {
      */
     Producer(const std::string &name, const std::string &runcontrol);
     virtual ~Producer() {}
-
     virtual void OnData(const std::string &param);
 
+    void Connect(const std::string & server);
+    void SendEvent(const Event &);
+    
   private:
+    std::string m_name;
+    std::vector<std::unique_ptr<DataSender>> m_senders;
+
   };
 }
 
