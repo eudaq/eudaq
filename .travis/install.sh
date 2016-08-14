@@ -37,6 +37,8 @@ else
 
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Linux:
+		sudo add-apt-repository -y ppa:openafs/stable
+		sudo apt-get update
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
 		#sudo pip install -U setuptools
@@ -52,16 +54,10 @@ else
 		
 	else
 		# Install package dependencies for Linux:
+		sudo add-apt-repository -y ppa:openafs/stable
+		sudo apt-get update		
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
-		sudo touch /etc/openafs/ThisCell
-		sudo -s 'echo "desy.de" > /etc/openafs/ThisCell'
 		sudo service openafs-client start
-		uname -a
-		ls /etc/openafs
-		cat /etc/openafs/CellServDB
-		cat /etc/openafs/afs.conf
-		cat /etc/openafs/afs.conf.client
-		cat /etc/openafs/cacheinfo
 		#sudo pip install --upgrade pip
 		#sudo pip install -q numpy
 		#pyenv rehash
