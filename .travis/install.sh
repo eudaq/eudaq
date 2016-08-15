@@ -41,6 +41,7 @@ else
 		sudo apt-get update
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
+		sudo echo /var/log/syslog
 		#sudo pip install -U setuptools
 		#sudo pip install -U virtualenvwrapper
 		#sudo virtualenv /opt/python/3.5.0
@@ -58,6 +59,7 @@ else
 		sudo apt-get update		
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		sudo service openafs-client start
+		sudo echo /var/log/syslog
 		#sudo pip install --upgrade pip
 		#sudo pip install -q numpy
 		#pyenv rehash
