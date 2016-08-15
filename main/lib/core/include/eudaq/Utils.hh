@@ -44,8 +44,8 @@ namespace eudaq {
                             const unsigned char *inEnd, std::vector<bool> &out);
 
 
-  constexpr uint32_t cstr2hash(const char* str, int h = 0){
-    return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33) ^ str[h];
+  constexpr uint32_t cstr2hash(const char* str, uint32_t h = 0){
+    return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33ULL) ^ str[h];
   }
   
   /** Sleep for a specified number of milliseconds.
