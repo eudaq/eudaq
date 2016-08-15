@@ -53,6 +53,15 @@ The \texttt{Producer} base class is declared by including the following header f
 #include "eudaq/Producer.hh"
 \end{listing}
 
+\subsubsection{OnInitialise}
+This method is called whenever an initialise command is received from the Run Control.
+The method signature is:
+\begin{listing}
+virtual void OnInitialise();
+\end{listing}
+
+If you don't need the initialisation step you can simply skip it. In that case a corresponding function of the \texttt{CommandReceiver} base class will be called.
+
 \subsubsection{OnConfigure}\label{sec:OnConfigure}
 This method is called whenever a configure command is received from the Run Control.
 The method signature is:
