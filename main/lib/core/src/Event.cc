@@ -2,15 +2,18 @@
 #include <iostream>
 #include <time.h>
 
-#include "eudaq/Event.hh"
-#include "eudaq/PluginManager.hh"
-
-
+#include "Event.hh"
+#include "PluginManager.hh"
+#include "BufferSerializer.hh"
 
 namespace eudaq {
 
+  template class DLLEXPORT Factory<Event>;
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
+  Factory<Event>::Instance<Deserializer&>();
+    
   namespace {
-
     static const char * const FLAGNAMES[] = {
       "BORE",
       "EORE",
@@ -20,21 +23,17 @@ namespace eudaq {
       "EUDAQ2",
       "Packet"
     };
-
   }
 
   Event::Event(Deserializer & ds) {
+    ds.read(m_typeid);
     ds.read(m_flags);
     ds.read(m_runnumber);
     ds.read(m_eventnumber);
-    if (IsEUDAQ2())
-    {
+    if (IsEUDAQ2()){
       ds.read(m_timestamp);
-
-
     }
-    else
-    {
+    else{
       uint64_t timestamp;
       ds.read(timestamp);
       m_timestamp.push_back(timestamp);
@@ -42,6 +41,11 @@ namespace eudaq {
     ds.read(m_tags);
   }
 
+  Event::Event():m_flags(0), m_runnumber(0), m_eventnumber(0){
+    
+  }
+
+  
   Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/) : m_flags(flags | FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
     m_runnumber(run),
     m_eventnumber(event)
@@ -50,10 +54,7 @@ namespace eudaq {
   }
 
   void Event::Serialize(Serializer & ser) const {
-    //std::cout << "Serialize id = " << std::hex << get_id() << std::endl;
-
-
-    ser.write(get_id());
+    ser.write(m_typeid);
 #ifdef __FORCE_EUDAQ1_FILES___
     auto dummy = m_flags & ~Event::FLAG_EUDAQ2;
     ser.write(m_flags & ~Event::FLAG_EUDAQ2);
@@ -155,12 +156,10 @@ namespace eudaq {
     for (size_t i = 0; i < 4; ++i) {
       if (i < str.length()) result |= str[i] << (8 * i);
     }
-    //std::cout << "str2id(" << str << ") = " << std::hex << result << std::dec << std::endl;
     return result;
   }
 
   std::string Event::id2str(unsigned id) {
-    //std::cout << "id2str(" << std::hex << id << std::dec << ")" << std::flush;
     std::string result(4, '\0');
     for (int i = 0; i < 4; ++i) {
       result[i] = (char)(id & 0xff);
@@ -172,10 +171,15 @@ namespace eudaq {
         break;
       }
     }
-    //std::cout << " = " << result << std::endl;
     return result;
   }
 
+  EventUP Event::Create(Deserializer &ds){
+    uint32_t id;
+    ds.PreRead(id);
+    return Factory<Event>::Create<Deserializer&>(id, ds);
+  }
+  
   Event & Event::SetTag(const std::string & name, const std::string & val) {
     m_tags[name] = val;
     return *this;
@@ -249,24 +253,18 @@ namespace eudaq {
     return id;
   }
 
+  Event* Event::Clone() const{ //TODO: clone directly
+    BufferSerializer ser;
+    Serialize(ser);
+    uint32_t id;
+    ser.PreRead(id);
+    Event* ev = Factory<Event>::Create<Deserializer&>(id, ser).release();
+    return ev;
+  }
+  
   std::ostream & operator << (std::ostream &os, const Event &ev) {
     ev.Print(os);
     return os;
-  }
-
-  EventFactory::map_t & EventFactory::get_map() {
-    static map_t s_map;
-    return s_map;
-  }
-
-  void EventFactory::Register(uint32_t id, EventFactory::event_creator func) {
-    // TODO: check id is not already in map
-    get_map()[id] = func;
-  }
-
-  EventFactory::event_creator EventFactory::GetCreator(uint32_t id) {
-    // TODO: check it exists...
-    return get_map()[id];
   }
 
 }

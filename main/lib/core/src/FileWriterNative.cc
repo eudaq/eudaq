@@ -1,11 +1,16 @@
-#include "eudaq/FileNamer.hh"
-#include "eudaq/FileWriter.hh"
-#include "eudaq/FileSerializer.hh"
-#include "eudaq/PluginManager.hh"
-//#include "eudaq/Logger.hh"!
+#include "FileNamer.hh"
+#include "FileWriter.hh"
+#include "FileSerializer.hh"
+#include "PluginManager.hh"
 
 namespace eudaq {
+  class FileWriterNative;
 
+  namespace{
+    auto dummy0 = Factory<FileWriter>::Register<FileWriterNative, std::string&>(cstr2hash("native"));
+    auto dummy1 = Factory<FileWriter>::Register<FileWriterNative, std::string&&>(cstr2hash("native"));
+  }
+  
   class FileWriterNative : public FileWriter {
   public:
     FileWriterNative(const std::string &);
@@ -19,9 +24,6 @@ namespace eudaq {
     FileSerializer *m_ser;
   };
 
-  
-  registerFileWriter(FileWriterNative, "native");
-  
   FileWriterNative::FileWriterNative(const std::string & param) : m_ser(0){
     //EUDAQ_DEBUG("Constructing FileWriterNative(" + to_string(param) + ")");
   }
@@ -42,14 +44,12 @@ namespace eudaq {
     m_ser->write(ev);
     m_ser->Flush();
   }
-  void FileWriterNative::WriteBaseEvent(const Event& ev){
-    
+  
+  void FileWriterNative::WriteBaseEvent(const Event& ev){    
     if (ev.IsBORE()) {
       auto det = dynamic_cast<const DetectorEvent*>(&ev);
-      if (det)
-      {
+      if (det){
         eudaq::PluginManager::Initialize(*det);
-
       }
     }
     if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
@@ -62,5 +62,4 @@ namespace eudaq {
   }
 
   uint64_t FileWriterNative::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }
-
 }

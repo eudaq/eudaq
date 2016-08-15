@@ -1,10 +1,12 @@
-#include "eudaq/TLUEvent.hh"
+#include "TLUEvent.hh"
 
 #include <ostream>
 
 namespace eudaq {
 
-  EUDAQ_DEFINE_EVENT(TLUEvent, str2id("_TLU"));
+  namespace{
+    auto dummy0 = Factory<Event>::Register<TLUEvent, Deserializer&>(Event::str2id("_TLU"));
+  }
 
   TLUEvent::TLUEvent(Deserializer &ds) : Event(ds) { ds.read(m_extratimes); }
 

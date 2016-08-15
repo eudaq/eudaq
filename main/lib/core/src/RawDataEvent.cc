@@ -1,11 +1,14 @@
-#include "eudaq/RawDataEvent.hh"
-#include "eudaq/PluginManager.hh"
+#include "RawDataEvent.hh"
+#include "PluginManager.hh"
 
 #include <ostream>
 
 namespace eudaq {
 
-  EUDAQ_DEFINE_EVENT(RawDataEvent, str2id("_RAW"));
+  namespace{
+    auto dummy0 = Factory<Event>::Register<RawDataEvent, Deserializer&>(Event::str2id("_RAW"));
+  }
+
 
   RawDataEvent::block_t::block_t(Deserializer &des) {
     des.read(id);
@@ -21,8 +24,14 @@ namespace eudaq {
     data.insert(data.end(), d.begin(), d.end());
   }
 
+  RawDataEvent::RawDataEvent(){
+    m_typeid = Event::str2id("_RAW");
+  }
+  
   RawDataEvent::RawDataEvent(std::string type, unsigned run, unsigned event)
-      : Event(run, event), m_type(type) {}
+      : Event(run, event), m_type(type) {
+    m_typeid = Event::str2id("_RAW");
+  }
 
   RawDataEvent::RawDataEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_type);

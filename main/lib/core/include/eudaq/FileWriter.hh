@@ -1,23 +1,32 @@
 #ifndef EUDAQ_INCLUDED_FileWriter
 #define EUDAQ_INCLUDED_FileWriter
 
+#include "DetectorEvent.hh"
+#include "Factory.hh"
+
 #include <vector>
 #include <string>
 #include <memory>
 
-#include "DetectorEvent.hh"
-#include "ClassFactory.hh"
-
-#define registerFileWriter(DerivedFileWriter,ID)  REGISTER_DERIVED_CLASS(FileWriter,DerivedFileWriter,ID)
-
 namespace eudaq {
+  class FileWriter;
+  
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<FileWriter>;
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<FileWriter>::UP_BASE (*)(std::string&)>&
+  Factory<FileWriter>::Instance<std::string&>();
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<FileWriter>::UP_BASE (*)(std::string&&)>&
+  Factory<FileWriter>::Instance<std::string&&>();
+#endif
+  
+  using FileWriterUP = Factory<FileWriter>::UP_BASE;
+  using FileWriterSP = Factory<FileWriter>::SP_BASE;
+  using FileWriter_up = FileWriterUP;
 
-  class OptionParser;
   class DLLEXPORT FileWriter {
   public:
-    using MainType = std::string;
-    using Parameter_t = std::string;
-    using Parameter_ref = const Parameter_t&;
     FileWriter();
     virtual void StartRun(unsigned runnumber) = 0;
     virtual void WriteBaseEvent(const Event&);
@@ -30,22 +39,6 @@ namespace eudaq {
     std::string m_filepattern;
   };
 
-  class DLLEXPORT FileWriterFactory {
-  public:
-    static std::unique_ptr<FileWriter> Create(const std::string & name, const std::string & params = "");
-    static std::unique_ptr<FileWriter> Create();
-    static std::vector<std::string> GetTypes();
-
-    static void addComandLineOptions(OptionParser & op);
-    static std::string  Help_text();
-    static std::string getDefaultType();
-    static std::string getDefaultOutputPattern();
-  private:
-    class Impl;
-    static Impl& getImpl();
-
-
-  };
 }
 
 #endif // EUDAQ_INCLUDED_FileWriter

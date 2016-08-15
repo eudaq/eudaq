@@ -29,4 +29,17 @@ namespace eudaq {
     // std::cout << "Remaining: " << (end()-begin()) << /*" \"" << tmp << "\""
     // <<*/ std::endl;
   }
+
+
+  void BufferSerializer::PreDeserialize(unsigned char *data, size_t len) {
+    if (!len)
+      return;
+    if (len + m_offset > m_data.size()) {
+      EUDAQ_THROW("Deserialize asked for " + to_string(len) + ", only have " +
+                  to_string(m_data.size() - m_offset));
+    }
+    std::copy(&m_data[m_offset], &m_data[m_offset] + len, data);
+  }
+
+
 }

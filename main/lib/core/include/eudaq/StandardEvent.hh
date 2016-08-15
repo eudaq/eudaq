@@ -126,7 +126,6 @@ namespace eudaq {
   };
 
   class DLLEXPORT StandardEvent : public Event {
-    EUDAQ_DECLARE_EVENT(StandardEvent);
     public:
     StandardEvent(unsigned run = 0, unsigned evnum = 0,
         uint64_t timestamp = NOTIMESTAMP);
@@ -141,11 +140,8 @@ namespace eudaq {
     virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream &) const;
     virtual void Print(std::ostream & os,size_t offset) const;
-    // void SetSlowPara(std::string name, double value){slowpara[name] = value;};
-    // std::map<std::string, double> GetSlowPara()const {return slowpara;};
   private:
     std::vector<StandardPlane> m_planes;
-    // std::map<std::string, double> slowpara;
   };
 
   inline std::ostream &operator<<(std::ostream &os, const StandardPlane &pl) {

@@ -1,9 +1,9 @@
 #ifndef EUDAQ_INCLUDED_Configuration
 #define EUDAQ_INCLUDED_Configuration
 
-#include "eudaq/Utils.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Platform.hh"
+#include "Utils.hh"
+#include "Exception.hh"
+#include "Platform.hh"
 #include <string>
 #include <map>
 

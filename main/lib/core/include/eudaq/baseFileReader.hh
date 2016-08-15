@@ -13,7 +13,7 @@ namespace eudaq{
   class OptionParser;
   class baseFileReader;
   class fileConfig;
-  using FileReader_up = std::unique_ptr < baseFileReader > ;
+  using FileReader_up = std::unique_ptr < baseFileReader, std::function<void(baseFileReader*)> > ;
   class DLLEXPORT baseFileReader{
   public:
     static const char* getKeyFileName();

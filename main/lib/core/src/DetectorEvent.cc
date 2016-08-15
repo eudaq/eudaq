@@ -1,20 +1,26 @@
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "DetectorEvent.hh"
+#include "RawDataEvent.hh"
 
 #include <ostream>
 #include <memory>
 
+
+
 namespace eudaq {
 
-  EUDAQ_DEFINE_EVENT(DetectorEvent, str2id("_DET"));
+  namespace{
+    auto dummy0 = Factory<Event>::Register<DetectorEvent, Deserializer&>(Event::str2id("_DET"));
+  }
+  
 
   DetectorEvent::DetectorEvent(Deserializer &ds) : Event(ds) {
     unsigned n;
     ds.read(n);
-    // std::cout << "Num=" << n << std::endl;
     SetFlags(Event::FLAG_PACKET);
     for (size_t i = 0; i < n; ++i) {
-      std::shared_ptr<Event> ev(EventFactory::Create(ds));
+      uint32_t id;
+      ds.PreRead(id);
+      EventSP ev = Factory<Event>::Create<Deserializer&>(id, ds);
       m_events.push_back(ev);
     }
   }
@@ -23,11 +29,11 @@ namespace eudaq {
   {
     m_tags = det.m_tags;
     m_timestamp = det.m_timestamp;
-
+    m_typeid = det.m_typeid;
   }
 
   DetectorEvent::DetectorEvent(unsigned runnumber, unsigned eventnumber, uint64_t timestamp) : Event(runnumber, eventnumber, timestamp) {
-
+    m_typeid = Event::str2id("_DET");
   }
 
   void DetectorEvent::AddEvent(std::shared_ptr<Event> evt) {

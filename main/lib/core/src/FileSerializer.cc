@@ -1,8 +1,8 @@
-#include "eudaq/FileSerializer.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/Platform.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Event.hh"
+#include "FileSerializer.hh"
+#include "Logger.hh"
+#include "Platform.hh"
+#include "Utils.hh"
+#include "Event.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <iostream>
@@ -73,7 +73,7 @@ namespace eudaq {
     if (size_t(end - m_stop) < min) {
       // not enough space remaining before end of buffer,
       // so shift everything back to the beginning of the buffer
-      std::memmove(m_start, &m_buf[0], level());
+      std::memmove(&m_buf[0], m_start, level()); //TODO:: FIX unkown behavior when dst and src are overlopped
       m_stop -= (m_start - &m_buf[0]);
       m_start = &m_buf[0];
       if (size_t(end - m_stop) < min) {
@@ -128,7 +128,20 @@ namespace eudaq {
     }
   }
 
-  bool FileDeserializer::ReadEvent(int ver, std::shared_ptr<eudaq::Event> &ev,
+  void FileDeserializer::PreDeserialize(unsigned char *data, size_t len) {
+    if (len <= level()) {
+      memcpy(data, m_start, len);
+    }
+    else{
+      size_t tmp = level();
+      FillBuffer(len - tmp);
+      memcpy(data, m_start, len);
+    }
+  }
+
+
+  
+  bool FileDeserializer::ReadEvent(int ver, EventSP &ev,
                                    size_t skip /*= 0*/) {
     if (!HasData()) {
       return false;
@@ -137,7 +150,9 @@ namespace eudaq {
       for (size_t i = 0; i <= skip; ++i) {
         if (!HasData())
           break;
-        ev = std::shared_ptr<eudaq::Event>(EventFactory::Create(*this));
+	uint32_t id;
+	PreRead(id);
+	ev = Factory<Event>::Create<Deserializer&>(id, *this);
       }
     } else {
       BufferSerializer buf;
@@ -146,7 +161,9 @@ namespace eudaq {
           break;
         read(buf);
       }
-      ev = std::shared_ptr<eudaq::Event>(eudaq::EventFactory::Create(buf));
+      uint32_t id;
+      buf.PreRead(id);
+      ev = Factory<Event>::Create<Deserializer&>(id, buf);
     }
     return true;
   }

@@ -1,70 +1,65 @@
 #ifndef EUDAQ_INCLUDED_DataCollector
 #define EUDAQ_INCLUDED_DataCollector
 
-//#include <pthread.h>
+#include "TransportServer.hh"
+#include "CommandReceiver.hh"
+#include "Event.hh"
+#include "FileWriter.hh"
+#include "Configuration.hh"
+#include "Utils.hh"
+#include "Platform.hh"
+
 #include <string>
 #include <vector>
 #include <list>
-
-#include "eudaq/TransportServer.hh"
-#include "eudaq/CommandReceiver.hh"
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Platform.hh"
 #include <memory>
+
+
 namespace eudaq {
-  class FileWriter;
 
-  class SyncBase;
-  class Processor_batch;
-  class ProcessorBase;
-  class ProcessorFileWriter;
-  /** Implements the functionality of the File Writer application.
-   *
-   */
   class DLLEXPORT DataCollector : public CommandReceiver {
-    public:
-      DataCollector(const std::string & name, 
-		    const std::string & runcontrol,
-		    const std::string & listenaddress,
-		    const std::string & runnumberfile = "../data/runnumber.dat");
+  public:
+    DataCollector(const std::string &name, const std::string &runcontrol,
+                  const std::string &listenaddress,
+                  const std::string &runnumberfile = "../data/runnumber.dat");
 
+    virtual void OnConnect(const ConnectionInfo &id);
+    virtual void OnDisconnect(const ConnectionInfo &id);
+    virtual void OnServer();
+    virtual void OnGetRun();
+    virtual void OnConfigure(const Configuration &param);
+    virtual void OnPrepareRun(unsigned runnumber);
+    virtual void OnStopRun();
+    virtual void OnReceive(const ConnectionInfo &id, std::shared_ptr<Event> ev);
+    virtual void OnCompleteEvent();
+    virtual void OnStatus();
+    virtual ~DataCollector();
 
-      virtual void OnServer() override;
-      virtual void OnGetRun() override;
+    void DataThread();
 
-      virtual void OnConfigure(const Configuration & param) override;
-      virtual void OnPrepareRun(unsigned runnumber) override;
-      virtual void OnStopRun() override;
+  private:
+    struct Info {
+      std::shared_ptr<ConnectionInfo> id;
+      std::list<EventSP> events;
+    };
+    
+    const std::string m_runnumberfile; // path to the file containing the run number
+    void DataHandler(TransportEvent &ev);
+    size_t GetInfo(const ConnectionInfo &id);
 
-
-      virtual void OnStatus() override;
-      virtual ~DataCollector();
-
- 
-    protected:
-      
-      
-
-
-    private:
-      
-      const std::string m_runnumberfile; // path to the file containing the run number
-      const std::string m_name; // name provided in ctor
-
-
-      unsigned m_runnumber, m_eventnumber;
-
-
-
-
-      std::unique_ptr<Processor_batch> m_batch;
-      std::unique_ptr<ProcessorBase> m_dataReciever;
-      std::unique_ptr<ProcessorFileWriter> m_pwriter;
-      std::string m_ConnectionName;
+    bool m_done, m_listening;
+    
+    std::unique_ptr<TransportServer> m_dataserver;
+    std::unique_ptr<std::thread> m_thread;
+    std::vector<Info> m_buffer;
+    size_t m_numwaiting; ///< The number of producers with events waiting in the
+                         ///buffer
+    size_t m_itlu;       ///< Index of TLU in m_buffer vector, or -1 if no TLU
+    unsigned m_runnumber, m_eventnumber;
+    FileWriterUP m_writer;
+    Configuration m_config;
+    Time m_runstart;
   };
-
 }
 
 #endif // EUDAQ_INCLUDED_DataCollector

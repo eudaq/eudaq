@@ -49,7 +49,7 @@ is it from the context correct?
 #include <iostream>
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
-#include "eudaq/TransportTCP_WIN32.h" //$$ changed to ".h"
+#include "TransportTCP_WIN32.hh"
 #pragma comment(lib, "Ws2_32.lib")
 
 // defining error code more informations under
@@ -85,7 +85,7 @@ is it from the context correct?
 #define EUDAQ_ERROR_NO_DATA_RECEIVED -1
 #else
 
-#include "eudaq/TransportTCP_POSIX.inc"
+#include "eudaq/TransportTCP_POSIX.hh"
 
 // defining error code more informations under
 // http://www.gnu.org/software/libc/manual/html_node/Error-Codes.html

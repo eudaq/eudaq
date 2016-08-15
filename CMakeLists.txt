@@ -3,15 +3,25 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
 PROJECT( EUDAQ )
+SET(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
+SET(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
+# SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
+SET(EUDAQ_CORE EUDAQ)
 
-include_directories(${PROJECT_SOURCE_DIR}/main/lib/processors/include)
-include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include)
-include_directories(${PROJECT_SOURCE_DIR}/main/lib/core/include/eudaq)
+include(CMakeDependentOption)
+
+include_directories(main/lib/processors/include)
+include_directories(main/lib/eventsyncs/include)
+include_directories(main/lib/filerws/include)
+include_directories(main/lib/core/include)
+include_directories(main/lib/core/include/eudaq)
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+
+
 
 # some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
@@ -113,7 +123,7 @@ IF("${isSystemDir}" STREQUAL "-1")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
-
+ADD_SUBDIRECTORY(user)
 ADD_SUBDIRECTORY(producers)
 ADD_SUBDIRECTORY(main)
 ADD_SUBDIRECTORY(monitors)

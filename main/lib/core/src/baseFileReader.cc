@@ -3,9 +3,9 @@
 #include "eudaq/Exception.hh"
 #include "eudaq/OptionParser.hh"
 
-template class eudaq::ClassFactory<eudaq::baseFileReader>;
 namespace eudaq {
-
+  using FileReaderClassFactory = ClassFactory<baseFileReader, baseFileReader::MainType, baseFileReader::Parameter_t>;
+  
   baseFileReader::baseFileReader(Parameter_ref config) :
     m_config(config)
   {
@@ -146,7 +146,7 @@ namespace eudaq {
 
   };
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(const std::string & filename, const std::string & filepattern)
+  FileReader_up FileReaderFactory::create(const std::string & filename, const std::string & filepattern)
   {
     // return nullptr;
    
@@ -193,12 +193,12 @@ namespace eudaq {
 
   }
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(const std::string & filename)
+  FileReader_up FileReaderFactory::create(const std::string & filename)
   {
     return create(filename, getDefaultInputpattern());
   }
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(eudaq::OptionParser & op)
+  FileReader_up FileReaderFactory::create(eudaq::OptionParser & op)
   {
 
     if (op.NumArgs() == 1)
@@ -229,9 +229,9 @@ namespace eudaq {
 
 
 
-  std::unique_ptr<baseFileReader> FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
+  FileReader_up FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
   {
-    return ClassFactory<baseFileReader>::Create(type, param);
+    return FileReaderClassFactory::Create(type, param);
   }
 
   FileReader_up FileReaderFactory::create(const fileConfig& file_conf_) {
@@ -259,7 +259,7 @@ namespace eudaq {
     ret += "example:\n";
     ret += "../data/run000001.raw#raw2\n \n";
     ret += "\"file pattern\" = ../data/run$6R.raw#raw2 \n \n";
-    ret += "possible \"file readers\" are " + to_string(ClassFactory<baseFileReader>::GetTypes(), ", ")+"\n";
+    ret += "possible \"file readers\" are " + to_string(FileReaderClassFactory::GetTypes(), ", ")+"\n";
 
     return ret;
   }

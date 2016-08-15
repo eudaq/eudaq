@@ -5,10 +5,6 @@
 template <typename T, typename... Args> 
 T __check(Args&&... args); 
 
-#ifndef EUDAQ_PLATFORM
-#define EUDAQ_PLATFORM PF_WIN32
-#endif
-
 #define PF_LINUX 1
 #define PF_MACOSX 2
 #define PF_CYGWIN 3
@@ -16,15 +12,27 @@ T __check(Args&&... args);
 
 #define EUDAQ_PLATFORM_IS(P) (EUDAQ_PLATFORM == PF_##P)
 
-#ifdef WIN32
+#if EUDAQ_PLATFORM_IS(WIN32)
+
+#ifdef EUDAQ_CORE_EXPORTS
 #define DLLEXPORT __declspec(dllexport)
-#include <stdint.h>
+#else
+#define DLLEXPORT __declspec(dllimport)
+#endif
 
 #else
 
 #define DLLEXPORT
-
 #endif
+
+
+
+
+#if EUDAQ_PLATFORM_IS(WIN32)
+#include <stdint.h>
+#endif
+
+
 
 // used for reference counted TObject 
 // Use this only if you know the object is counted somewehere else

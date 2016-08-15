@@ -56,13 +56,14 @@ namespace eudaq {
   /** Represents an event such as a connection, or receipt of data on a
    * Transport.
    */
-  class TransportEvent {
+  class DLLEXPORT TransportEvent {
   public:
     enum EventType { CONNECT, DISCONNECT, RECEIVE };
     TransportEvent(EventType et, ConnectionInfo &i, const std::string &p = "")
         : etype(et), id(i), packet(p) {}
+    TransportEvent & operator = (const TransportEvent& rh){etype = rh.etype; id=rh.id;  packet = rh.packet; return *this;};
     EventType etype;    ///< The type of event
-    ConnectionInfo &id; ///< The id of the connection
+    ConnectionInfo &id; ///< The id of the connection  !! It is reference!! TODO: CHECK
     std::string packet; ///< The packet of data in case of a RECEIVE event
   };
 
@@ -144,7 +145,7 @@ namespace eudaq {
    * A Transport is a means of transferring data or commands from one
    * process to another, possibly on another machine.
    */
-  class TransportBase {
+  class DLLEXPORT TransportBase {
   public:
     TransportBase();
     virtual ~TransportBase();

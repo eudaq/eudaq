@@ -8,14 +8,14 @@
 namespace eudaq {
 
   class DLLEXPORT TLUEvent : public Event {
-    EUDAQ_DECLARE_EVENT(TLUEvent);
-
   public:
     typedef std::vector<uint64_t> vector_t;
     virtual void Serialize(Serializer &) const;
     explicit TLUEvent(unsigned run, unsigned event, uint64_t timestamp,
                       const vector_t &extratimes = vector_t())
-        : Event(run, event, timestamp), m_extratimes(extratimes) {}
+        : Event(run, event, timestamp), m_extratimes(extratimes) {
+      m_typeid = Event::str2id("_TLU");
+    }
     explicit TLUEvent(Deserializer &);
     virtual void Print(std::ostream &) const;
     virtual void Print(std::ostream &os, size_t offset) const;

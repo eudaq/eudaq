@@ -1,13 +1,16 @@
-#include "eudaq/StringEvent.hh"
+#include "StringEvent.hh"
 
 #include <ostream>
 
 namespace eudaq {
 
-EUDAQ_DEFINE_EVENT(StringEvent, str2id("_STR"));
+  namespace{
+    auto dummy0 = Factory<Event>::Register<StringEvent, Deserializer&>(Event::str2id("_STR"));
+  }
+
 
 StringEvent::StringEvent(Deserializer & ds) :
-Event(ds) {
+  Event(ds) {
   ds.read(m_str);
 }
 
@@ -15,12 +18,13 @@ StringEvent::StringEvent(unsigned run,
                          unsigned event,
                          const std::string & str
                          ) : Event(run, event), m_str(str) {
+  m_typeid = Event::str2id("_STR");
 }
 
 StringEvent::StringEvent(unsigned run,
                          unsigned event /*= 0*/
                          ) : Event(run, event, NOTIMESTAMP, event ? Event::FLAG_EORE : Event::FLAG_BORE) {
-
+  m_typeid = Event::str2id("_STR");
 }
 
 void StringEvent::Print(std::ostream & os) const {
