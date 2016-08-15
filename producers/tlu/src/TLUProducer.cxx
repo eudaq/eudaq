@@ -95,13 +95,32 @@ public:
       }
     } while (!done);
   }
+
+  virtual void OnInitialise() {
+    try {
+      std::cout << "Initialiation..." << std::endl;
+
+      if (m_tlu)
+        m_tlu = 0;
+      int errorhandler = 2;
+      m_tlu = std::make_shared<TLUController>(errorhandler);
+
+      m_tlu->SetFirmware("");
+      m_tlu->SetVersion(0);
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised");
+    } catch (...) {
+          printf("Unknown exception\n");
+          SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+    }
+  }
+
   virtual void OnConfigure(const eudaq::Configuration &param) {
     try {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
-      if (m_tlu)
+ /*     if (m_tlu)
         m_tlu = 0;
       int errorhandler = param.Get("ErrorHandler", 2);
-      m_tlu = std::make_shared<TLUController>(errorhandler);
+      m_tlu = std::make_shared<TLUController>(errorhandler);*/
 
       trigger_interval = param.Get("TriggerInterval", 0);
       dut_mask = param.Get("DutMask", 2);
@@ -131,8 +150,8 @@ public:
       timestamp_per_run = param.Get("TimestampPerRun", false);
       // ***
       m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
-      m_tlu->SetFirmware(param.Get("BitFile", ""));
-      m_tlu->SetVersion(param.Get("Version", 0));
+    /*  m_tlu->SetFirmware(param.Get("BitFile", ""));
+      m_tlu->SetVersion(param.Get("Version", 0));*/
       m_tlu->Configure();
       for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
         m_tlu->SelectDUT(
