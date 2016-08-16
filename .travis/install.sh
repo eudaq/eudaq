@@ -41,8 +41,8 @@ else
 		sudo apt-get update
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt5-default linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		touch ~/ThisCell
-		cat "cern.ch" >> ~/ThisCell
-		cat "" >> ~/ThisCell
+		echo "cern.ch" >> ~/ThisCell
+		echo "" >> ~/ThisCell
 		sudo cp ~/ThisCell /etc/openafs
 		sudo service openafs-client start
 		sudo cat /var/log/syslog
@@ -63,8 +63,8 @@ else
 		sudo apt-get update		
 		sudo apt-get install -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		touch ~/ThisCell
-		cat "cern.ch" >> ~/ThisCell
-		cat "" >> ~/ThisCell
+		echo "cern.ch" >> ~/ThisCell
+		echo "" >> ~/ThisCell
 		sudo cp ~/ThisCell /etc/openafs		
 		sudo service openafs-client start
 		sudo cat /var/log/syslog
