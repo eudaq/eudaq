@@ -386,7 +386,7 @@ void DeviceReader::Loop() {
       Print(0, "UNEXPECTED: event length shorter than 24 Bytes");
     }
 
-    if (flushCounter>=5) {
+    if (flushCounter>=15) {
       SimpleLock lock(m_mutex);
       Print(0, "UNEXPECTED: did not receive stop trigger marker. Aborting flushing %lu %lu !",
             m_daq_board->GetNextEventId(), m_last_trigger_id);
@@ -1559,9 +1559,9 @@ void PALPIDEFSProducer::Loop() {
               // read the timestamp
               address = 0x207; // upper 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
+	      timestamp = (tmp_value & 0xFFFFFF) << 24;
               tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
               m_timestamp_full[i] = (uint64_t)tmp_value << 24;
-	      timestamp = (tmp_value & 0xFFFFFF) << 24;
 
               address = 0x206; // lower 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
