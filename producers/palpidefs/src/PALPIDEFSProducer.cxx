@@ -115,8 +115,8 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
       }
       if (!readwrite) {
         //printf("%d %d %d: %d %d\n", base, rgn, sub, address, value);
-	      if (dut->WriteRegister(address, value) != 1)
-		      std::cout << "Failure to write chip address " << address << std::endl;
+        if (dut->WriteRegister(address, value) != 1)
+          std::cout << "Failure to write chip address " << address << std::endl;
         int valuecompare = -1;
         if (dut->ReadRegister(address, &valuecompare) != 1)
           std::cout << "Failure to read chip address after writing chip address " << address << std::endl;
@@ -375,7 +375,7 @@ void DeviceReader::Loop() {
         SimpleLock lock(m_mutex);
         m_flushing = false;
         Print(0, "Finished flushing %lu [m_daq_board->GetNextEventId()] %lu [m_last_trigger_id]",
-	      m_daq_board->GetNextEventId(), m_last_trigger_id);
+              m_daq_board->GetNextEventId(), m_last_trigger_id);
       }
       else if (IsFlushing() && readEvent==-2) {
         ++flushCounter;
@@ -414,9 +414,9 @@ void DeviceReader::Loop() {
       }
       bool HeaderOK = false;
       if (TrailerOK &&
-	  length > m_daq_board_header_length &&
-	  header.EventSize*4>m_daq_board_header_length &&
-	  length >= header.EventSize*4) {
+          length > m_daq_board_header_length &&
+          header.EventSize*4>m_daq_board_header_length &&
+          length >= header.EventSize*4) {
         HeaderOK = m_daq_board->DecodeEventHeader(data_buf + length - header.EventSize*4, &header);
       }
       if (HeaderOK && TrailerOK && LengthOK) {
@@ -1535,7 +1535,7 @@ void PALPIDEFSProducer::Loop() {
       count += events_built;
 
       if (events_built > 0) {
-	reconfigure_count = 0;
+        reconfigure_count = 0;
       }
       else if (events_built == -1) { // auto-of-sync, which won't be recovered
         reconfigure = true;
@@ -1547,7 +1547,7 @@ void PALPIDEFSProducer::Loop() {
           if (IsRunning()) {
             SendStatusEvent();
             uint32_t tmp_value = 0;
-	    uint64_t timestamp = 0;
+            uint64_t timestamp = 0;
             int address = 0x207; // timestamp upper 24bit
             bool found_busy = false;
             for (int i = 0; i < m_nDevices; i++) {
@@ -1559,7 +1559,7 @@ void PALPIDEFSProducer::Loop() {
               // read the timestamp
               address = 0x207; // upper 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
-	      timestamp = (tmp_value & 0xFFFFFF) << 24;
+              timestamp = (tmp_value & 0xFFFFFF) << 24;
               tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
               m_timestamp_full[i] = (uint64_t)tmp_value << 24;
 
@@ -1576,11 +1576,11 @@ void PALPIDEFSProducer::Loop() {
                 std::cout << "DAQ board " << i << " is busy." << std::endl;
               }
 
-	      // read the trigger counter
+              // read the trigger counter
               address = 0x202; // event ID lower 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
-	      std::cout << "Event ID " << i << ": 0x" << std::hex << tmp_value
-			<< "\tTimestamp: 0x" << timestamp << std::dec << std::endl;	      
+              std::cout << "Event ID " << i << ": 0x" << std::hex << tmp_value
+                        << "\tTimestamp: 0x" << timestamp << std::dec << std::endl;
             }
             if (found_busy) ++busy_count;
           }
@@ -1701,7 +1701,7 @@ int PALPIDEFSProducer::BuildEvent() {
 
     //std::cout << i << '\t' << m_next_event[i]->m_timestamp << '\t' << m_timestamp_full[i] << '\t' << m_next_event[i]->m_timestamp_reference << '\t' << timestamp_tmp << std::endl;
     if (m_firstevent) // set last timestamp if first event
-        m_timestamp_last[i] = (int64_t)timestamp_tmp;
+      m_timestamp_last[i] = (int64_t)timestamp_tmp;
 
     planes.push_back(i);
     trigger_ids.push_back(m_next_event[i]->m_trigger_id);

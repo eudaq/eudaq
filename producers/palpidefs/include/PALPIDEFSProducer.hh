@@ -19,8 +19,8 @@
 
 struct SingleEvent {
   SingleEvent(unsigned int length, uint64_t trigger_id, uint64_t timestamp, uint64_t timestamp_reference)
-      : m_buffer(0), m_length(length), m_trigger_id(trigger_id),
-        m_timestamp(timestamp), m_timestamp_reference(timestamp_reference) {
+    : m_buffer(0), m_length(length), m_trigger_id(trigger_id),
+      m_timestamp(timestamp), m_timestamp_reference(timestamp_reference) {
     m_buffer = new unsigned char[length];
   }
   ~SingleEvent() {
