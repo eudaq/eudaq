@@ -105,8 +105,10 @@ public:
       int errorhandler = 2;
       m_tlu = std::make_shared<TLUController>(errorhandler);
 
+      m_tlu->SetDebugLevel(0);
       m_tlu->SetFirmware("");
       m_tlu->SetVersion(0);
+      m_tlu->Configure();
       SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised");
     } catch (...) {
           printf("Unknown exception\n");
@@ -149,10 +151,10 @@ public:
       readout_delay = param.Get("ReadoutDelay", 1000);
       timestamp_per_run = param.Get("TimestampPerRun", false);
       // ***
-      m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
-    /*  m_tlu->SetFirmware(param.Get("BitFile", ""));
-      m_tlu->SetVersion(param.Get("Version", 0));*/
-      m_tlu->Configure();
+      /*m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
+      m_tlu->SetFirmware(param.Get("BitFile", ""));
+      m_tlu->SetVersion(param.Get("Version", 0));
+      m_tlu->Configure();*/
       for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
         m_tlu->SelectDUT(
             param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
