@@ -13,16 +13,17 @@ namespace eudaq {
   }
 
   void Producer::Connect(const std::string & server){
-    std::unique_ptr<DataSender> sender(new DataSender("Producer", m_name));
-    if(sender){
-      sender->Connect(server);
-      m_senders.push_back(std::move(sender));
+    auto it = m_senders.find(server);
+    if(it==m_senders.end()){
+      std::unique_ptr<DataSender> sender(new DataSender("Producer", m_name));
+      m_senders[server]= std::move(sender);
     }
+    m_senders[server]->Connect(server);
   }
 
   void Producer::SendEvent(const Event &ev){
     for(auto &e: m_senders){
-      e->SendEvent(ev);
+      e.second->SendEvent(ev);
     }
   }
 

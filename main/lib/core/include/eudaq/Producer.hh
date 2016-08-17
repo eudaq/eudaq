@@ -29,7 +29,8 @@ namespace eudaq {
     
   private:
     std::string m_name;
-    std::vector<std::unique_ptr<DataSender>> m_senders;
+    std::map<std::string, std::unique_ptr<DataSender>> m_senders;
+    // std::vector<std::unique_ptr<DataSender>> m_senders;
 
   };
 }
