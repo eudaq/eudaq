@@ -62,9 +62,9 @@ environment:
   PYTHON_ARCH: "32"
 
 cache:
-  '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1' -> appveyor.yml
-  '%APPVEYOR_BUILD_FOLDER%\extern\tlufirmware' -> appveyor.yml
-  '%APPVEYOR_BUILD_FOLDER%\extern\libusb-win32' -> appveyor.yml
+  - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
+  - '%APPVEYOR_BUILD_FOLDER%\extern\tlufirmware'
+  - '%APPVEYOR_BUILD_FOLDER%\extern\libusb-win32'
   
 init:
 # The following line enables the remote desktop connection and show the connection information.
