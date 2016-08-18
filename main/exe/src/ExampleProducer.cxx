@@ -24,11 +24,6 @@ class ExampleProducer : public eudaq::Producer {
       : eudaq::Producer(name, runcontrol),
       m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
 
-    // Debug function
-    virtual void OnInitialise() {
-        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "State was changed to configured.");
-    }
-
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
 

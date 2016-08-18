@@ -86,9 +86,16 @@ namespace eudaq {
       m_nextconfigonrunchange = false;
     }
   }
-  void RunControl::Init(){
-    EUDAQ_INFO("Initialising.");
-    SendCommand("INIT");
+  void RunControl::Init(const std::string &param){
+    EUDAQ_INFO("Initialising (" + param + ")");
+    std::ifstream file(param.c_str());
+    if (file.is_open()) {
+      Configuration config(file);
+      config.Set("Name", param);
+      SendCommand("INIT", to_string(config));
+    } else {
+      EUDAQ_ERROR("Unable to open file '" + param + "'");
+    }
   }
 
   void RunControl::Configure(const std::string &param, int geoid) {

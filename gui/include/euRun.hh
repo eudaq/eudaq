@@ -148,7 +148,8 @@ program is currently in the function will enable and disable certain buttons, an
   }
 
   void on_btnInit_clicked() {
-    Init();
+    std::string settings = txtInitFileName->text().toStdString();
+    Init(settings);
   }
 
   void on_btnTerminate_clicked() { close(); }

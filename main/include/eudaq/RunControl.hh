@@ -24,7 +24,7 @@ namespace eudaq {
     void StartServer(const std::string &listenaddress);
     void StopServer();
 
-    void Init();
+    void Init(const std::string &settings);
     void Configure(const Configuration &
                        settings); ///< Send 'Configure' command with settings
     void Configure(const std::string &settings,

@@ -133,9 +133,6 @@ namespace eudaq {
   }
 
   void CommandReceiver::OnClear() {
-
-    if(m_connectionstate.GetState()== eudaq::ConnectionState::STATE_RUNNING)
-      OnStopRun();
     SetConnectionState(ConnectionState::STATE_UNCONF, "Wait");
   }
 
@@ -165,8 +162,12 @@ namespace eudaq {
       //std::cout << "(" << cmd << ")(" << param << ")" << std::endl;
       if (cmd == "CLEAR") {
         OnClear();
-      } else if (cmd == "INIT") {
-          OnInitialise();
+      } else if (cmd == "INIT") {          
+          std::string section = m_type;
+          if (m_name != "")
+            section += "." + m_name;
+          Configuration conf(param, section);
+          OnInitialise(conf);
       } else if (cmd == "CONFIG") {
         std::string section = m_type;
         if (m_name != "")

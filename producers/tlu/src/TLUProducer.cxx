@@ -96,19 +96,19 @@ public:
     } while (!done);
   }
 
-  virtual void OnInitialise() {
+  virtual void OnInitialise(const eudaq::Configuration &param) {
     try {
       std::cout << "Initialiation..." << std::endl;
-
       if (m_tlu)
         m_tlu = 0;
-      int errorhandler = 2;
+      int errorhandler = param.Get("ErrorHandler", 2);
       m_tlu = std::make_shared<TLUController>(errorhandler);
 
-      m_tlu->SetDebugLevel(0);
-      m_tlu->SetFirmware("");
-      m_tlu->SetVersion(0);
+      m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
+      m_tlu->SetFirmware(param.Get("BitFile", ""));
+      m_tlu->SetVersion(param.Get("Version", 0));
       m_tlu->Configure();
+
       SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised");
     } catch (...) {
           printf("Unknown exception\n");
@@ -119,10 +119,6 @@ public:
   virtual void OnConfigure(const eudaq::Configuration &param) {
     try {
       std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
- /*     if (m_tlu)
-        m_tlu = 0;
-      int errorhandler = param.Get("ErrorHandler", 2);
-      m_tlu = std::make_shared<TLUController>(errorhandler);*/
 
       trigger_interval = param.Get("TriggerInterval", 0);
       dut_mask = param.Get("DutMask", 2);
@@ -150,11 +146,7 @@ public:
                                                  // is doubled
       readout_delay = param.Get("ReadoutDelay", 1000);
       timestamp_per_run = param.Get("TimestampPerRun", false);
-      // ***
-      /*m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
-      m_tlu->SetFirmware(param.Get("BitFile", ""));
-      m_tlu->SetVersion(param.Get("Version", 0));
-      m_tlu->Configure();*/
+
       for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
         m_tlu->SelectDUT(
             param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
