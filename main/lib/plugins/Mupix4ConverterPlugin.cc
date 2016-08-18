@@ -205,7 +205,7 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
             data.hit_row(i),
             data.hit_col(i),
             MUPIX4_SENSOR_BINARY_SIGNAL);
-        pixels->addSparsePixel(&pixel);
+        pixels->addSparsePixel(pixel);
     }
 
     // hand over ownership over the readout frame to the lcio collection

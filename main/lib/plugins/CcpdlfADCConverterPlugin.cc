@@ -171,8 +171,6 @@ namespace eudaq {
             setupDescription.push_back( new eutelescope::EUTelSetupDescription( currentDetector )) ;
           }
 
-          std::list<eutelescope::EUTelGenericSparsePixel*> tmphits;
-
           zsDataEncoder["sensorID"] = ev_raw.GetID(chip) + chip_id_offset; // 30
           zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
@@ -213,16 +211,10 @@ namespace eudaq {
                std::cout<< "GetStandardSubEvent() broken data"<<std::endl;
                return false;
           }
-          eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel(53, 19, cnt_max-cnt_base, trigger_number);
+          auto thisHit = eutelescope::EUTelGenericSparsePixel(53, 19, cnt_max-cnt_base, trigger_number);
           sparseFrame->addSparsePixel( thisHit );
-          tmphits.push_back( thisHit );
           // write TrackerData object that contains info from one sensor to LCIO collection
           zsDataCollection->push_back( zsFrame.release() );
-
-          // clean up
-          for( std::list<eutelescope::EUTelGenericSparsePixel*>::iterator it = tmphits.begin(); it != tmphits.end(); it++ ){
-            delete (*it);
-          }
         }
 
         // add this collection to lcio event
