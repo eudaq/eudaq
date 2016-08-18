@@ -139,12 +139,6 @@ namespace eudaq {
     m_listening = listen;
   }
 
-  void RunControl::TestCommand(){
-
-    SendCommand("TEST");
-
-   }
-
   void RunControl::Terminate() {
     EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE");

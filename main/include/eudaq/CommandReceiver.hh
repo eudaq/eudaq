@@ -1,5 +1,5 @@
-	#ifndef EUDAQ_INCLUDED_CommandReceiver
-	#define EUDAQ_INCLUDED_CommandReceiver
+#ifndef EUDAQ_INCLUDED_CommandReceiver
+#define EUDAQ_INCLUDED_CommandReceiver
 
 #include "eudaq/ConnectionState.hh"
 #include "eudaq/Platform.hh"

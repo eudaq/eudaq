@@ -24,7 +24,7 @@ namespace eudaq {
   class ConnectionInfoTCP : public ConnectionInfo {
   public:
     ConnectionInfoTCP(SOCKET fd, const std::string &host = "")
-        : m_fd(fd), m_len(0), m_buf("") {m_host = host ;}
+        : m_fd(fd), m_len(0), m_buf(""), m_host(host) {}
     void append(size_t length, const char *data);
     bool havepacket() const;
     std::string getpacket();
@@ -44,10 +44,9 @@ namespace eudaq {
   private:
     void update_length(bool = false);
     SOCKET m_fd;
-    //std::string m_host;
     size_t m_len;
     std::string m_buf;
-
+    std::string m_host;
   };
 
   class TCPServer : public TransportServer {

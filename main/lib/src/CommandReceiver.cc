@@ -195,8 +195,6 @@ namespace eudaq {
         OnServer();
       } else if (cmd == "GETRUN") {
         OnGetRun();
-      } else if (cmd =="TEST") {
-        std::cout<<"DEBUG: Test successful \n";
       } else {
         OnUnrecognised(cmd, param);
       }

@@ -170,7 +170,6 @@ program is currently in the function will enable and disable certain buttons, an
     EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
   }
   void on_btnLog_clicked() {
-    TestCommand();
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
   }
