@@ -134,7 +134,7 @@ build_script:
 - cmd: msbuild INSTALL.vcxproj
 
 after_build:
-- cmd: 7z a eudaq_win32_%EUDAQ_LIB_VERSION%.zip %APPVEYOR_BUILD_FOLDER%\eudaq
+- cmd: 7z a eudaq_win32_%EUDAQ_LIB_VERSION%.zip %APPVEYOR_BUILD_FOLDER%
 
 artifacts:
   - path: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
