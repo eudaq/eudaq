@@ -12,6 +12,8 @@
 #include <cctype>
 #include <memory>
 
+#include <sched.h>
+
 typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
 using eudaq::to_hex;
@@ -42,7 +44,8 @@ public:
   void MainLoop() {
     do {
       if (!m_tlu) {
-        eudaq::mSleep(50);
+        //eudaq::mSleep(50);
+	sched_yield();
         continue;
       }
       bool JustStopped = TLUJustStopped;
@@ -302,6 +305,8 @@ private:
 };
 
 int main(int /*argc*/, const char **argv) {
+  std::cout << "Start TLU Producer \n" << std::endl;
+
   eudaq::OptionParser op("EUDAQ TLU Producer", "1.0",
                          "The Producer task for the Trigger Logic Unit");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
