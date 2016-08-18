@@ -575,14 +575,12 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 					if(this->getHitData(Word, false, Col, Row, ToT))
 					{
 						if(this->advancedConfig) this->transformChipsToModule(Col, Row, this->moduleIndex.at(chip));
-						//eutelescope::EUTelGenericSparsePixel thisHit( Col, Row, ToT, lvl1-1);
 						sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
 					}
 					//Second Hit
 					if(this->getHitData(Word, true, Col, Row, ToT)) 
 					{
 						if(this->advancedConfig) this->transformChipsToModule(Col, Row, this->moduleIndex.at(chip));
-						//eutelescope::EUTelGenericSparsePixel thisHit( Col, Row, ToT, lvl1-1);
 						sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
 					}
 				}

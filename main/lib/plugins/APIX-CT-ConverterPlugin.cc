@@ -283,8 +283,7 @@ namespace eudaq {
 	      int ModuleID=m_sensorids[sensor]+chip_id_offset;
 	      int lvl1=hits[i].lv1;
 	      int ToT=hits[i].tot;
-	      auto thisHit = eutelescope::EUTelGenericSparsePixel( col, row, ToT, lvl1);
-	      sparseFrame->addSparsePixel( thisHit );
+	      sparseFrame->emplace_back( col, row, ToT, lvl1 );
 	      /*
 	      //ganged pixels bottom
 	      if (row==329){
@@ -417,8 +416,7 @@ namespace eudaq {
 	      {
 		int col = hits[i].col;
 		int row = hits[i].row;
-		auto thisHit = eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);
-		sparseFrame->addSparsePixel( thisHit );
+		sparseFrame->emplace_back( col, row, hits[i].tot, hits[i].lv1 );
 	      }
 	      //int col=(1+m_fepos[hits[i].link])*NCOL-1-hits[i].col; //left or right on 2-chip module
 	      // eutelescope::EUTelGenericSparsePixel *thisHit = new eutelescope::EUTelGenericSparsePixel( col, row, hits[i].tot, hits[i].lv1);

@@ -364,13 +364,11 @@ namespace eudaq {
             } else {
               // First Hit
               if (getHitData(Word, false, Col, Row, ToT)) {
-                auto thisHit = eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
-                sparseFrame->addSparsePixel( thisHit );
+                sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
               }
               // Second Hit
               if (getHitData(Word, true, Col, Row, ToT)) {
-                auto thisHit = eutelescope::EUTelGenericSparsePixel( Col, Row, ToT, lvl1-1);
-                sparseFrame->addSparsePixel( thisHit );
+                sparseFrame->emplace_back( Col, Row, ToT, lvl1-1 );
               }
             }
           }
