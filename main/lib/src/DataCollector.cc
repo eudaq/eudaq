@@ -204,6 +204,7 @@ namespace eudaq {
         }
         ev.AddEvent(m_buffer[i].events.front());
         m_buffer[i].events.pop_front();
+        // std::cout << "My size is " << m_buffer[i].events.size() << std::endl;
         if (m_buffer[i].events.size() == 0) {
           m_numwaiting--;
           more = false;

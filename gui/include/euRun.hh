@@ -14,6 +14,7 @@
 #include <QInputDialog>
 #include <QSettings>
 #include <QRegExp>
+#include <QString>
 
 using eudaq::to_string;
 using eudaq::from_string;
@@ -58,9 +59,11 @@ private:
   enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADED
   bool configLoaded = false;    // allows to disable / enable config button
                                 // depending on whether config file was loaded
+  bool configLoadedInit = false;
   bool disableButtons = false;
   int curState = STATE_UNINIT;
   QString lastUsedDirectory = "";
+  QString lastUsedDirectoryInit = "";
   QStringList allConfigFiles;
   const int FONT_SIZE = 12;
   virtual void OnConnect(const eudaq::ConnectionInfo &id);
@@ -90,6 +93,13 @@ private:
   }
   bool eventFilter(QObject *object, QEvent *event);
 
+  bool checkInitFile() {
+    QString loadedFile = txtInitFileName->text();
+    if(loadedFile.isNull())
+        return false;
+    QRegExp rx (".+(\\.init$)");
+    return rx.exactMatch(loadedFile);
+  }
 
   bool checkConfigFile() {
     QString loadedFile = txtConfigFileName->text();
@@ -103,7 +113,9 @@ private:
       if(state == STATE_RUNNING)
           disableButtons = false;
       configLoaded = checkConfigFile();
-      btnInit->setEnabled(state != STATE_RUNNING && !disableButtons);
+      configLoadedInit = checkInitFile();
+      btnLoadInit->setEnabled(state != STATE_RUNNING && !disableButtons);
+      btnInit->setEnabled(state != STATE_RUNNING && !disableButtons && configLoadedInit);
       btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && !disableButtons);
       btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded && !disableButtons);
       btnTerminate->setEnabled(state != STATE_RUNNING);
@@ -173,9 +185,21 @@ program is currently in the function will enable and disable certain buttons, an
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
   }
+
+  void on_btnLoadInit_clicked() {
+    QString temporaryFileNameInit = QFileDialog::getOpenFileName(
+        this, tr("Open File"), lastUsedDirectoryInit, tr("*.init (*.init)"));
+
+    if (!temporaryFileNameInit.isNull()) {
+      txtInitFileName->setText(temporaryFileNameInit);
+      lastUsedDirectoryInit =
+          QFileInfo(temporaryFileNameInit).path(); // store path for next time
+      configLoadedInit = true;
+      updateButtons(curState);
+    }
+  }
+
   void on_btnLoad_clicked() {
-    // QString tempLastFileName;
-    // tempLastFileName = txtConfigFileName->text();
     QString temporaryFileName = QFileDialog::getOpenFileName(
         this, tr("Open File"), lastUsedDirectory, tr("*.conf (*.conf)"));
 
@@ -187,6 +211,7 @@ program is currently in the function will enable and disable certain buttons, an
       updateButtons(curState);
     }
   }
+
   void timer() {
     if (!m_stopping) {
       if ((m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) ||
@@ -210,13 +235,12 @@ program is currently in the function will enable and disable certain buttons, an
         eudaq::mSleep(20000);
         if (m_nextconfigonrunchange) {
           QDir dir(lastUsedDirectory, "*.conf");
-	  
           // allConfigFiles
           for (size_t i = 0; i < dir.count(); ++i) {
             QString item = dir[i];
             allConfigFiles.append(dir.absoluteFilePath(item));
           }
-	  
+
           if (allConfigFiles.indexOf(
                   QRegExp("^" + QRegExp::escape(txtConfigFileName->text()))) +
                   1 <

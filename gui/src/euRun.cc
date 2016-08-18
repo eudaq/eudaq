@@ -150,6 +150,8 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
     move(settings.value("pos", geom.topLeft()).toPoint());
     lastUsedDirectory = settings.value("lastConfigFileDirectory","../conf").toString();
     txtConfigFileName->setText(settings.value("lastConfigFile","config file not set").toString());
+    lastUsedDirectoryInit = settings.value("lastInitFileDirectory","../conf").toString();
+    txtInitFileName->setText(settings.value("lastInitFile","config file not set").toString());
     settings.endGroup();
   
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
@@ -283,5 +285,7 @@ RunControlGUI::~RunControlGUI(){
     //settings.setValue("screen", windowHandle()->screen()->screenNumber());
     settings.setValue("lastConfigFileDirectory",lastUsedDirectory);
     settings.setValue("lastConfigFile",txtConfigFileName->text());
+    settings.setValue("lastInitFileDirectory",lastUsedDirectoryInit);
+    settings.setValue("lastInitFile",txtInitFileName->text());
     settings.endGroup();
 }
