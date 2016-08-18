@@ -1,34 +1,154 @@
-version: 1.0.{build}
+version: 1.7.0.{build}
+
 pull_requests:
   do_not_increment_build_number: true
+  
 branches:
   only:
   - master
-  - v1.6-dev
+  - v1.7-dev
 
 os: Visual Studio 2015
+
 configuration: Release
 
+#  - x64
+platform: x86 
+      
 environment:
   ROOTSYS: C:\root
-  PATH: '%ROOTSYS%\bin;C:\Qt\5.5\msvc2013;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
-before_build:
+  PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
+  BUILD_AHCAL: OFF
+  BUILD_BIFAHCAL: OFF
+  BUILD_TESTING: OFF
+  BUILD_WITH_QT4: OFF
+  BUILD_allproducer: OFF
+  BUILD_altro: OFF
+  BUILD_altroUSB: OFF
+  BUILD_apixct: OFF
+  BUILD_calice: ON
+  BUILD_ccpdlf: OFF
+  BUILD_clicpix: OFF
+  BUILD_cmspixel: OFF
+  BUILD_depfet: OFF
+  BUILD_eudrb: OFF
+  BUILD_example: OFF
+  BUILD_explorer: OFF
+  BUILD_fortis: OFF
+  BUILD_gui: ON
+  BUILD_main: OFF
+  BUILD_manual: OFF
+  BUILD_mimoroma: OFF
+  BUILD_mimosa32: ON
+  BUILD_miniTLU: OFF
+  BUILD_mupix: OFF
+  BUILD_mvd: OFF
+  BUILD_ni: ON
+  BUILD_nreader: OFF
+  BUILD_offlinemon: OFF
+  BUILD_onlinemon: ON
+  BUILD_palpidefs: OFF
+  BUILD_palpidess: OFF
+  BUILD_pixelmanproducer: OFF
+  BUILD_pybar: OFF
+  BUILD_python: ON
+  BUILD_root: OFF
+  BUILD_taki: OFF
+  BUILD_timepixdummy: OFF
+  BUILD_tlu: ON
+  BUILD_usbpix: OFF
+  PYTHON: "C:\\Python35"
+  PYTHON_VERSION: "3.5.2" 
+  PYTHON_ARCH: "32"
+
+cache:
+  - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
+  - '%APPVEYOR_BUILD_FOLDER%\extern\tlufirmware'
+  - '%APPVEYOR_BUILD_FOLDER%\extern\libusb-win32'
+  
+init:
+# The following line enables the remote desktop connection and show the connection information.
+#- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+install:
+# This is a workaround for a whole lot of annoying warnings about non-existing targets.
+- cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+
+# Install Python (from the official .msi of http://python.org) and pip when not already installed.
+# This was copied from 
+- ps: if (-not(Test-Path($env:PYTHON))) { & appveyor\install_python.ps1 }    
+# Prepend newly installed Python to the PATH of this build (this cannot be
+# done from inside the powershell script as it would require to restart
+# the parent CMD process).
+- "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+# Check that we have the expected version and architecture for Python
+- "python --version"
+- "python -c \"import struct; print(struct.calcsize('P') * 8)\""
+# Upgrade to the latest version of pip to avoid it displaying warnings
+# about it being out of date.
+- "pip install --disable-pip-version-check --user --upgrade pip"
+# Install the build dependencies of the project. If some dependencies contain
+# compiled extensions and are not provided as pre-built wheel packages,
+# pip will build them from source using the MSVC compiler matching the
+# target Python version and architecture
+- "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
+    
+before_build:    
 - cmd: >-
-    conda config --set always_yes yes --set changeps1 no
+    
+    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip\",\"C:\\root_v5.34.36.win32.vc12.zip\")"
+    
+    7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\
 
-    conda info -a
-
-    conda create -q -n test-environment numpy
-
-    activate test-environment
-
-    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.34.win32.vc12.zip\",\"C:\\root_v5.34.34.win32.vc12.zip\")"
-
-    7z -y x C:\\root_v5.34.34.win32.vc12.zip -oC:\
-
-    cd build
-
-    cmake -DBUILD_onlinemon=ON -DBUILD_python=OFF ..
+    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://www.secure-endpoints.com/binaries/heimdal/Heimdal-AMD64-full-1-6-2-0.msi\",\"C:\\Heimdal-AMD64-full-1-6-2-0.msi\")"
+    
+    powershell  -command "msiexec /i \"C:\\Heimdal-AMD64-full-1-6-2-0.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"
+    
+    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-en_US-64bit-1-7-3100.msi\",\"C:\\openafs-en_US-64bit-1-7-3100.msi\")"
+    
+    powershell  -command "msiexec /i \"C:\\openafs-en_US-64bit-1-7-3100.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"  
+    
+    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-32bit-tools-en_US-1-7-3100.msi\",\"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\")"
+    
+    powershell  -command "msiexec /i \"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"      
+    
+    powershell -command  "Restart-Computer -Force"
+    
+    powershell -command "Start-Sleep -s 10"
 
 build_script:
-- msbuild INSTALL.vcxproj
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
+
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse}
+
+- ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Downloading libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
+
+#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+- cd %APPVEYOR_BUILD_FOLDER%\build
+
+- cmd: echo -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_apixct=%BUILD_apixct% -DBUILD_calice=%BUILD_calice% -DBUILD_ccpdlf=%BUILD_ccpdlf% -DBUILD_clicpix=%BUILD_clicpix% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mupix=%BUILD_mupix% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_pybar=%BUILD_pybar% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% -DBUILD_usbpix=%BUILD_usbpix% ..
+
+- cmd: cmake -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_apixct=%BUILD_apixct% -DBUILD_calice=%BUILD_calice% -DBUILD_ccpdlf=%BUILD_ccpdlf% -DBUILD_clicpix=%BUILD_clicpix% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mupix=%BUILD_mupix% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_pybar=%BUILD_pybar% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% -DBUILD_usbpix=%BUILD_usbpix% ..
+
+- cmd: msbuild INSTALL.vcxproj
+
+after_build:
+- cmd: 7z a eudaq_win32_%EUDAQ_LIB_VERSION%.zip %APPVEYOR_BUILD_FOLDER%
+
+artifacts:
+  - path: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
+    name: Releases
+
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: "FXNTEGEjMMl3FZLCp4cXO0Szn3CVs4lEf+pPxz6vbb9q/PHkD5N2gAgOR+zljtll"
+  artifact: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
+  draft: false
+  prerelease: false
+  on:
+    appveyor_repo_tag: true
+    
+on_finish:
+#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
