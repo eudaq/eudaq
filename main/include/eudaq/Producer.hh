@@ -25,6 +25,7 @@ namespace eudaq {
 
     virtual void OnData(const std::string &param);
 
+    virtual std::string GetType() const { return "Producer"; }
   private:
   };
 }
