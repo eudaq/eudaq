@@ -1,0 +1,1643 @@
+<?xml version="1.0"?>
+<!--
+     Syntax rules:
+     1. Address tags define the value for base, rgn and sub out of which the address is calculated
+     They have to be in the order base, rgn, sub to allow proper searching of the DOM
+     2. The token %base% %rgn% %sub% are replaced in any tag content by the current value
+     3. If the title tag is present a new line with a Save/Load button in the GUI is generated. All following value tags are put in the same line until the next title tag
+     4. The optional description tag is shown as tooltip on the checkbox/edit field
+     5. Value tags need to contain the first bit (attribute begin). The width is 1 by default and can be specified to be larger.
+     One bit wide fields are shown as checkbox. Wider fields as edit field.
+     Wider fields can be forced to be shown as checkboxes by providing the <display>bits</display> tag within the value tag
+     Default values can be specified with the tag default, otherwise it is 0
+     Optional content values can be specified with the tag content. The content tag overrides the value given at the default tag.
+     6. Repetitions can be written in any address tag by adding the attributes repetition_count and  repetition_attribute. This tag and all its children are duplicated repetition_count times by increasing the attribute indicated with repetition_attribute by 1 each time. The start value is given in the attribute itself.
+     -->
+<root>
+  <address base="0">
+    <address rgn="0">
+      <title>Base 0</title>
+      <address sub="1">
+        <title>Periphery Control Register</title>
+        <value begin="0" width="2">
+          <title>Chip Mode</title>
+          <description>0 Configuration Mode, 1 Readout Triggered Mode, 2 Readout Continuous
+            Mode</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <title>Clustering</title>
+          <default>1</default>
+          <content>0x1</content>
+        </value>
+        <value begin="3">
+          <title>Start Memory Self Test</title>
+          <description>(Only if Chip Mode is 0). Reset automatically after 1 clock cycle. Memory
+            status is written on bit 1 of Region Readout Status Register</description>
+          <content>0x0</content>
+        </value>
+        <value begin="4">
+          <title>Xoff</title>
+          <description>0 DMU Enabled, 1 DMU Disabled - Datasending is paused</description>
+          <default>0</default>
+          <content>0x0</content>
+        </value>
+        <value begin="5">
+          <title>Matrix Readout Speed</title>
+          <description>0 10MHz, 1 20MHz</description>
+          <default>1</default>
+          <content>0x1</content>
+        </value>
+        <value begin="6">
+          <title>Force Busy</title>
+          <description>0 disabled, 1 BUSY line forced to the value specified in Force Busy Value
+            bit</description>
+          <default>0</default>
+          <content>0x0</content>
+        </value>
+        <value begin="7">
+          <title>Force Busy Value</title>
+          <description>Logical value forced in BUSY line when Force Busy is asserted</description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="2">
+        <title>Region disable Register 15-0</title>
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="3">
+        <title>Region disable Register 31-16</title>
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="4">
+        <title>FROMU Configuration Register 1</title>
+        <value begin="0" width="3">
+          <title>Pixel MEB Mask</title>
+          <description>1:disable given event buffer (default 000 to enable all meb slices) Setting
+            Bit0 masks Matrix slice 1, bit1 masks slice2 and bit2 masks slice3</description>
+          <default>0</default>
+          <content>0x0</content>
+        </value>
+        <value begin="3">
+          <title>Internal STROBE generation</title>
+          <description>0: disabled, 1:enable generation of a repetitive strobe pulse in continuous
+            mode.</description>
+          <content>0x0</content>
+        </value>
+        <value begin="4">
+          <title>Enable BUSY Monitoring</title>
+          <description>0: disabled, 1:FROMU will monitor external BUSY line, and reject triggers
+            when BUSY is asserted (default)</description>
+          <default>1</default>
+          <content>0x0</content>
+        </value>
+        <value begin="5">
+          <title>Test Pulse Mode</title>
+          <description>0: digital pulse to pixels(default), 1:set analog pulse as a test
+            pulse</description>
+          <default>0</default>
+          <content>0x0</content>
+        </value>
+        <value begin="6">
+          <title>Enable Test STROBE</title>
+          <description>0: digital pulse to pixels(default), 1: set analog pulse as a test
+            pulse</description>
+          <default>0</default>
+          <content>0x0</content>
+        </value>
+        <value begin="8" width="5">
+          <title>SM states(read only)</title>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="5">
+        <title>FROMU Configuration Register 2</title>
+        <value begin="0" width="16">
+          <title>STROBE signal duration</title>
+          <description>Set the duration of the STROBE signal from 0 to 1638.4us (step
+            25ns)</description>
+          <content>0x2</content>
+        </value>
+      </address>
+      <address sub="6">
+        <title>FROMU Pulsing Register 1</title>
+        <value begin="0" width="16">
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="7">
+        <title>FROMU Pulsing Register 2</title>
+        <value begin="0" width="16">
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="11">
+        <title>DAC settings for CMU I/O buffers</title>
+        <value begin="0" width="4">
+          <title>DCTRL Reciever</title>
+          <default>10</default>
+          <content>0xA</content>
+        </value>
+        <value begin="4" width="4">
+          <title>DCTRL Driver</title>
+          <default>10</default>
+          <content>0xA</content>
+        </value>
+      </address>
+      <address sub="12">
+        <title>CMU and DMU configuration Register</title>
+        <value begin="5">
+          <title>Initial Token</title>
+          <description></description>
+          <content>0x1</content>
+        </value>
+        <value begin="6">
+          <title>Disable Manchester Encoding</title>
+          <description>0:CMU Manchester Encoding Enabled 1:Disabled</description>
+          <content>0x1</content>
+        </value>
+        <value begin="7">
+          <title>Enable Double Data Rate</title>
+          <description>0:Disable DDR on Local Bus 1:Enable DDR</description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="14">
+        <title>DTU Configuration Register</title>
+        <value begin="0" width="4">
+          <title>PLL Configuration</title>
+          <description></description>
+          <content>0xD</content>
+        </value>
+        <value begin="4" width="4">
+          <title>Serializer Phase</title>
+          <description></description>
+          <content>0x8</content>
+        </value>
+        <value begin="8">
+          <title>PLL Reset</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="9" width="3">
+          <title>Unknown OPCODE error counter</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+      </address>
+
+      <address sub="15">
+        <title>DTU DACs Register</title>
+        <value begin="0" width="4">
+          <title>PLL</title>
+          <description></description>
+          <content>0x8</content>
+        </value>
+        <value begin="4" width="4">
+          <title>Driver</title>
+          <description></description>
+          <content>0x8</content>
+        </value>
+        <value begin="8" width="4">
+          <title>Pre-emphasis</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+      </address>
+
+      <address sub="17">
+        <title>DTU PLL Lock Register 2</title>
+        <description></description>
+        <value begin="0" width="8">
+          <title>Lock Wait Cycles</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="8" width="8">
+          <title>Unlock Wait Cycles</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="18">
+        <title>DTU Test Register 1</title>
+        <value begin="0">
+          <title>Test Enable</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <title>Internal Pattern Enable</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <title>Prbs Enable</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="3">
+          <title>Bypass 8b10b</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="4" width="2">
+          <title>BDIN8b10b0</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="6" width="2">
+          <title>BDIN8b10b1</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="8" width="2">
+          <title>BDIN8b10b2</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="10">
+          <title>K0</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="11">
+          <title>K1</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="12">
+          <title>K2</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="13">
+          <title>Force Set Load enable</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="14">
+          <title>Force Unset Load enable</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="19">
+        <title>DTU Test Register 2</title>
+        <value begin="0" width="8">
+          <title>DIN0</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+        <value begin="8" width="8">
+          <title>DIN1</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="20">
+        <title>DTU Test Register 3</title>
+        <value begin="0" width="8">
+          <title>DIN2</title>
+          <description></description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="21">
+        <title>BUSY min width</title>
+        <description></description>
+        <content>0x8</content>
+      </address>
+    </address>
+  </address>
+  <address base="3">
+    <title>Base 3 - Column Disable Register</title>
+    <description>Column Disable Register for selected region</description>
+    <address rgn="0">
+      <title>Region 0</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="1">
+      <title>Region 1</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="2">
+      <title>Region 2</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="3">
+      <title>Region 3</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="4">
+      <title>Region 4</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="5">
+      <title>Region 5</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="6">
+      <title>Region 6</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="7">
+      <title>Region 7</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="8">
+      <title>Region 8</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="9">
+      <title>Region 9</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="10">
+      <title>Region 10</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="11">
+      <title>Region 11</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="12">
+      <title>Region 12</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="13">
+      <title>Region 13</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="14">
+      <title>Region 14</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="15">
+      <title>Region 15</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="16">
+      <title>Region 16</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="17">
+      <title>Region 17</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="18">
+      <title>Region 18</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="19">
+      <title>Region 19</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="20">
+      <title>Region 20</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="21">
+      <title>Region 21</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="22">
+      <title>Region 22</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="23">
+      <title>Region 23</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="24">
+      <title>Region 24</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="25">
+      <title>Region 25</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="26">
+      <title>Region 26</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="27">
+      <title>Region 27</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="28">
+      <title>Region 28</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="29">
+      <title>Region 29</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="30">
+      <title>Region 30</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="31">
+      <title>Region 31</title>
+      <address sub="0">
+        <value begin="0" width="16">
+          <display>bits</display>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+  </address>
+  <address base="5">
+    <title>Base 5</title>
+    <address rgn="0">
+      <address sub="0">
+        <title>Pixel CFG Register 1</title>
+        <value begin="0" width="9">
+          <title>Pixel row select address</title>
+          <description>Selects the row of pixels needs to be addressed, i.e. for which row the
+            CFG_ROWSEL line will be asserted</description>
+          <content>0x0</content>
+        </value>
+        <value begin="9" width="1">
+          <title>All Pixel row selected</title>
+          <description>If set to one the row address field [8:0] is ignored and all rows are enabled
+            simultaneously for configuration.</description>
+          <content>0x1</content>
+        </value>
+        <value begin="10" width="1">
+          <title>PIXCNFG_REGSEL</title>
+          <description>Selection of the in-pixel register to be addressed: 0 for the Pulse Enable
+            register, 1 for the Mask register.</description>
+          <content>0x1</content>
+        </value>
+        <value begin="11" width="1">
+          <title>PIXCNFG_DATA</title>
+          <description>Data to be written in the target register</description>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="1">
+        <title>Base 5 - Pixel CFG Register 2</title>
+        <value begin="0" width="10">
+          <title>Pixel column select address</title>
+          <description>Selects which column of pixels needs to be addressed, i.e. for which column
+            the CFG_COLSEL line is asserted.</description>
+          <content>0x0</content>
+        </value>
+        <value begin="10" width="1">
+          <title>All Pixel column selected</title>
+          <description>If set to one the column address field [9:0] is ignored and all columns are
+            enabled simultaneously for configuration.</description>
+          <content>0x1</content>
+        </value>
+      </address>
+      <address sub="2">
+        <title>Pixel CFG Register 3</title>
+        <value begin="0">
+          <title>Pixel CFG Register 3</title>
+          <description>Setting the bit 0 to 1 will enable the propagation of the row and column
+            signals to the matrix. When bit is set, a subsequent write to this register will reset
+            the bit and disable the row and column selection, regardless of the value being
+            written.</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+  </address>
+  <address base="6">
+    <title>Base 6</title>
+    <address rgn="0">
+      <address sub="0">
+        <title>Analog Monitor and Override Register</title>
+        <value begin="0" width="4">
+          <title>Voltage DAC selection</title>
+          <description>Voltage selected to DACMONV pin</description>
+          <content>0x0</content>
+        </value>
+        <value begin="4" width="3">
+          <title>Current DAC selection</title>
+          <description>Current selected to DACMONI pin</description>
+          <content>0x0</content>
+        </value>
+        <value begin="7" width="1">
+          <!-- Description is wrong? or the name is wrong? -->
+          <title>SWCNTL_DACMONI</title>
+          <description>Configures the DAC block to enable the overrinding of the selected DAC. 0:
+            for monitoring, 1: for overriding</description>
+          <content>0x0</content>
+        </value>
+        <value begin="8" width="1">
+          <!-- Description is wrong? or the name is wrong? -->
+          <title>SWCNTL_DACMONV</title>
+          <description>Configures the DAC block to enable the overrinding of the selected DAC. 0:
+            for monitoring, 1: for overriding</description>
+          <content>0x0</content>
+        </value>
+        <value begin="10" width="2">
+          <title>IRef Buffer current</title>
+          <description>IRef buffer currenent 0:0.25uA, 1:0.74uA, 2:1.00uA(default),
+            3:1.25uA</description>
+          <default>0x2</default>
+          <content>0x2</content>
+        </value>
+      </address>
+      <address sub="1">
+        <title>VRESETP</title>
+        <value begin="0" width="16">
+          <title>VRESETP</title>
+          <content>vrstpTmp</content>
+        </value>
+      </address>
+      <address sub="2">
+        <title>VRESETD</title>
+        <value begin="0" width="16">
+          <title>VRESETD</title>
+          <content>vrstdTmp</content>
+        </value>
+      </address>
+      <address sub="3">
+        <title>VCASP</title>
+        <value begin="0" width="16">
+          <title>VCASP</title>
+          <content>0x56</content>
+        </value>
+      </address>
+      <address sub="4">
+        <title>VCASN</title>
+        <value begin="0" width="16">
+          <title>VCASN</title>
+          <content>vcasnTmp</content>
+        </value>
+      </address>
+      <address sub="5">
+        <title>VPULSEH</title>
+        <value begin="0" width="16">
+          <title>VPULSEH</title>
+          <content>0xFF</content>
+        </value>
+      </address>
+      <address sub="6">
+        <title>VPULSEL</title>
+        <value begin="0" width="16">
+          <title>VPULSEL</title>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="7">
+        <title>VCASN2</title>
+        <value begin="0" width="16">
+          <title>VCASN2</title>
+          <content>vcasn2Tmp</content>
+        </value>
+      </address>
+      <address sub="8">
+        <title>VCLIP</title>
+        <value begin="0" width="16">
+          <title>VCLIP</title>
+          <content>vclipTmp</content>
+        </value>
+      </address>
+      <address sub="9">
+        <title>VTEMP</title>
+        <value begin="0" width="16">
+          <title>VTEMP</title>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="10">
+        <title>IAUX2</title>
+        <value begin="0" width="16">
+          <title>IAUX2</title>
+          <content>0x0</content>
+        </value>
+      </address>
+      <address sub="11">
+        <title>IRESET</title>
+        <value begin="0" width="16">
+          <title>IRESET</title>
+          <content>iresetTmp</content>
+        </value>
+      </address>
+      <address sub="12">
+        <title>IDB</title>
+        <value begin="0" width="16">
+          <title>IDB</title>
+          <content>idbTmp</content>
+        </value>
+      </address>
+      <address sub="13">
+        <title>IBIAS</title>
+        <value begin="0" width="16">
+          <title>IBIAS</title>
+          <content>0x40</content>
+        </value>
+      </address>
+      <address sub="14">
+        <title>ITHR</title>
+        <value begin="0" width="16">
+          <title>ITHR</title>
+          <content>ithrTmp</content>
+        </value>
+      </address>
+      <address sub="15">
+        <title>Buffer Bypass Register</title>
+        <value begin="0">
+          <title>VCASN</title>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <title>VCASN2</title>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <title>VCASP</title>
+          <content>0x0</content>
+        </value>
+        <value begin="3">
+          <title>VCLIP</title>
+          <content>0x0</content>
+        </value>
+        <value begin="4">
+          <title>IRESET</title>
+          <content>0x0</content>
+        </value>
+        <value begin="5">
+          <title>IBIAS</title>
+          <content>0x0</content>
+        </value>
+        <value begin="6">
+          <title>ITHR</title>
+          <content>0x0</content>
+        </value>
+        <value begin="7">
+          <title>IDB</title>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+  </address>
+  <address base="7">
+    <title>Base 7 - Status Register</title>
+    <address rgn="0">
+      <title>Region 0</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="1">
+      <title>Region 1</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="2">
+      <title>Region 2</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="3">
+      <title>Region 3</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="4">
+      <title>Region 4</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="5">
+      <title>Region 5</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="6">
+      <title>Region 6</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="7">
+      <title>Region 7</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="8">
+      <title>Region 8</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="9">
+      <title>Region 9</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="10">
+      <title>Region 10</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="11">
+      <title>Region 11</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="12">
+      <title>Region 12</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="13">
+      <title>Region 13</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="14">
+      <title>Region 14</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="15">
+      <title>Region 15</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="16">
+      <title>Region 16</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="17">
+      <title>Region 17</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="18">
+      <title>Region 18</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="19">
+      <title>Region 19</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="20">
+      <title>Region 20</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="21">
+      <title>Region 21</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="22">
+      <title>Region 22</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="23">
+      <title>Region 23</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="24">
+      <title>Region 24</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="25">
+      <title>Region 25</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="26">
+      <title>Region 26</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="27">
+      <title>Region 27</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="28">
+      <title>Region 28</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="29">
+      <title>Region 29</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="30">
+      <title>Region 30</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+    <address rgn="31">
+      <title>Region 31</title>
+      <address sub="0">
+        <value begin="0">
+          <description>Region Self Test Pixel Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="1">
+          <description>Region Self Test Memory Status</description>
+          <content>0x0</content>
+        </value>
+        <value begin="2">
+          <description>Region Asserted if all column disabled</description>
+          <content>0x0</content>
+        </value>
+        <value begin="3" width="2">
+          <description>Region Readout SM State</description>
+          <content>0x0</content>
+        </value>
+        <value begin="5" width="2">
+          <description>FIFO Self Test SM state</description>
+          <content>0x0</content>
+        </value>
+      </address>
+    </address>
+  </address>
+</root>
