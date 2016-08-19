@@ -58,9 +58,12 @@ namespace eudaq {
     std::vector<Info> m_buffer;
     size_t m_numwaiting; ///< The number of producers with events waiting in the
                          ///buffer
+    size_t m_fastwaiting; /// number of non slow producers waiting to send data
     size_t m_itlu;       ///< Index of TLU in m_buffer vector, or -1 if no TLU
+    size_t m_slow;     /// The number of slow producers registered
     unsigned m_runnumber, m_eventnumber;
     std::shared_ptr<FileWriter> m_writer;
+    std::vector<size_t> received_mask;
     Configuration m_config;
     Time m_runstart;
   };

@@ -26,7 +26,7 @@ namespace eudaq {
       : CommandReceiver("DataCollector", name, runcontrol, false),
         m_runnumberfile(runnumberfile), m_done(false), m_listening(true),
         m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(),
-        m_numwaiting(0), m_itlu((size_t)-1),
+        m_numwaiting(0), m_itlu((size_t)-1), m_slow(0),
         m_runnumber(ReadFromFile(runnumberfile, 0U)), m_eventnumber(0),
         m_runstart(0) {
     m_dataserver->SetCallback(
@@ -62,6 +62,9 @@ namespace eudaq {
     if (id.GetType() == "Producer" && id.GetName() == "TLU") {
       m_itlu = m_buffer.size() - 1;
     }
+    if (id.GetType() == "SlowProducer") {
+      m_slow++;
+    }
   }
 
   void DataCollector::OnDisconnect(const ConnectionInfo &id) {
@@ -72,11 +75,18 @@ namespace eudaq {
     } else if (i < m_itlu) {
       --m_itlu;
     }
+    if (id.GetType() == "SlowProducer") {
+      m_slow--;
+    }
     m_buffer.erase(m_buffer.begin() + i);
     // if (during run) THROW
   }
 
-/* Upon recieving the Configure command the DataCollector function uses Configure object to obtain configuration setting from the .conf file. The important settings that it aquires are the file Type and Pattern that the DataCollector will write. These settings are stored in the varible m_writer which is an instance of the std File Writer Class. 
+/* Upon recieving the Configure command the DataCollector function uses
+ * Configure object to obtain configuration setting from the .conf file. The
+ * important settings that it aquires are the file Type and Pattern that the
+ * DataCollector will write. These settings are stored in the varible m_writer
+ * which is an instance of the std File Writer Class.
 */
   void DataCollector::OnConfigure(const Configuration &param) {
     m_config = param;
@@ -137,11 +147,22 @@ namespace eudaq {
                 << std::endl;
 
     bool tmp = false;
-    if (inf.events.size() == 1) {
+    /*if (inf.events.size() == 1) {
       m_numwaiting++;
       if (m_numwaiting == m_buffer.size()) {
         tmp = true;
       }
+    }*/
+    if(id.GetType() != "SlowProducer") {
+        if (inf.events.size() == 1) {
+          m_fastwaiting++;
+          received_mask.push_back(GetInfo(id));
+          if (m_fastwaiting >= m_buffer.size() - m_slow) {
+            tmp = true;
+          }
+        }
+    } else if (inf.events.size() == 1) {
+        received_mask.push_back(GetInfo(id));
     }
 
     // std::cout << "Waiting buffers: " << m_numwaiting << " out of " <<
@@ -163,7 +184,7 @@ namespace eudaq {
   void DataCollector::OnCompleteEvent() {
     bool more = true;
     bool found_bore = false;
-
+//std::find(vector.begin(), vector.end(), item) != vector.end()
     while (more) {
       if (m_eventnumber < 10 || m_eventnumber % 1000 == 0) {
         std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber
