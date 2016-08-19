@@ -58,7 +58,7 @@ namespace eudaq {
             if (rev->IsBORE() || rev->IsEORE()) return 0;
             if (rev->NumBlocks() <= 0)  return (unsigned) -1;
             const std::vector <unsigned char> & data=dynamic_cast<const std::vector<unsigned char> &> (rev->GetBlock(0));
-            if (data[3] & 0x80 !=0x80) return (unsigned) -1;
+            if ((data[3] & 0x80 )!=0x80) return (unsigned) -1;
             return  ((((unsigned int)data[3]) & 0x7F) << 24) |(((unsigned int)data[2]) << 16) |(((unsigned int)data[1]) << 8) | (unsigned int)data[0];
         }
         // If we are unable to extract the Trigger ID, signal with (unsigned)-1
