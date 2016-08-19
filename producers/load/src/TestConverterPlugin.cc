@@ -1,13 +1,13 @@
-#include "eudaq/DataConverterPlugin.hh"
+#include "DataConverterPlugin.hh"
 
 namespace eudaq {
-
-  // Test Events have nothing to convert
-  // This class is only here to prevent a runtime errors
+  class TestConverterPlugin;
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<TestConverterPlugin>(Event::str2id("_RAW")+eudaq::cstr2hash("Test"));
+  }
+  
   class TestConverterPlugin : public DataConverterPlugin {
+  public:
     TestConverterPlugin() : DataConverterPlugin("Test") {}
-    static TestConverterPlugin m_instance;
   };
-
-  TestConverterPlugin TestConverterPlugin::m_instance;
 }

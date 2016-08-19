@@ -66,8 +66,8 @@ namespace eudaq {
 
   void DataCollector::OnConfigure(const Configuration &param) {
     m_config = param;
-    std::string fwtype = m_config.Get("FileType", "");
-    std::string fwpatt = m_config.Get("FilePattern", "");
+    std::string fwtype = m_config.Get("FileType", "native");
+    std::string fwpatt = m_config.Get("FilePattern", "run$6R_tp$X");
     uint32_t fwid = cstr2hash(fwtype.c_str());
     m_writer = Factory<FileWriter>::Create<std::string&>(fwid, fwpatt);
   }

@@ -389,12 +389,14 @@ namespace eudaq {
     }
 
     for (size_t i = 0; i < NumConnections(); ++i) {
+      std::string name_con =  GetConnection(i).GetName();
       if (isDefaultDC) {
         // check that we do not override a previously connected DC
         bool matches = false;
         for (std::vector<std::string>::iterator it = otherDC.begin();
              it != otherDC.end(); ++it) {
-          if (GetConnection(i).GetName() == *it) {
+	  std::string name_otherDC = *it;
+          if (name_otherDC.find(name_con)!=std::string::npos) {
             matches = true;
           }
         }
@@ -404,7 +406,8 @@ namespace eudaq {
           SendCommand("DATA", thisDataAddr, GetConnection(i));
         }
       } else {
-        if (GetConnection(i).GetName() == id.GetName()) {
+	std::string name_this = id.GetName();
+        if (name_this.find(name_con) != std::string::npos) {
           // announce named DC to specific producer
           SendCommand("DATA", thisDataAddr, GetConnection(i));
         }
@@ -451,11 +454,13 @@ namespace eudaq {
       SendCommand("LOG", m_logaddr, id);
     }
 
+    std::string name_this = id.GetName();
     // search for applicable DC
     bool foundDC = false;
     for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();
          it != m_dataaddr.end(); ++it) {
-      if (GetConnection(it->first).GetName() == id.GetName()) {
+      std::string name_dc = GetConnection(it->first).GetName();
+      if (name_dc.find(name_this)!=std::string::npos) {
         foundDC = true;
         SendCommand("DATA", it->second, id);
       }
