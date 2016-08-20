@@ -94,29 +94,17 @@ install:
 - "%CMD_IN_ENV% pip install -r appveyor\\dev-requirements.txt"    
     
 before_build:    
-- cmd: >-
-    
-    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip\",\"C:\\root_v5.34.36.win32.vc12.zip\")"
-    
-    7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\
+- ps: Write-Host "Downloading root from root.cern.ch"; appveyor\download.ps1 -downloadLocation 'https://root.cern.ch/download/root_v5.34.36.win32.vc12.zip' -storageLocation 'C:\\root_v5.34.36.win32.vc12.zip'; 7z -y x C:\\root_v5.34.36.win32.vc12.zip -oC:\; 
 
-    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"https://www.secure-endpoints.com/binaries/heimdal/Heimdal-AMD64-full-1-6-2-0.msi\",\"C:\\Heimdal-AMD64-full-1-6-2-0.msi\")"
-    
-    powershell  -command "msiexec /i \"C:\\Heimdal-AMD64-full-1-6-2-0.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"
-    
-    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-en_US-64bit-1-7-3100.msi\",\"C:\\openafs-en_US-64bit-1-7-3100.msi\")"
-    
-    powershell  -command "msiexec /i \"C:\\openafs-en_US-64bit-1-7-3100.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"  
-    
-    powershell -command "$clnt = new-object System.Net.WebClient; $clnt.DownloadFile(\"http://dl.openafs.org/dl/openafs/1.7.31/winxp/openafs-32bit-tools-en_US-1-7-3100.msi\",\"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\")"
-    
-    powershell  -command "msiexec /i \"C:\\openafs-32bit-tools-en_US-1-7-3100.msi\" /quiet /qn /norestart /log install.log ADDLOCAL=ALL"      
-    
-    powershell -command  "Restart-Computer -Force"
-    
-    powershell -command "Start-Sleep -s 10"
+- ps: appveyor\install_afs.ps1;
+
+- ps: Restart-Computer -Force
+
+- ps: Start-Sleep -s 10;
 
 build_script:
+- ps: If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); }
+
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware")) {Write-Host ("Reusing cached tlufirmware " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware" + " instead of copying from AFS")} Else {Write-Host "Copying tlufirmware from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\tlufirmware" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tlufirmware") -recurse}
