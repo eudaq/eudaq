@@ -1,10 +1,10 @@
-#include "eudaq/RunControl.hh"
-#include "eudaq/TransportFactory.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/BufferSerializer.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
+#include "RunControl.hh"
+#include "TransportFactory.hh"
+#include "Configuration.hh"
+#include "BufferSerializer.hh"
+#include "Exception.hh"
+#include "Utils.hh"
+#include "Logger.hh"
 
 #include <iostream>
 #include <ostream>
@@ -29,12 +29,6 @@ namespace eudaq {
       type &m_flag;
     };
 
-    void *RunControl_thread(void *arg) {
-      RunControl *rc = static_cast<RunControl *>(arg);
-      rc->CommandThread();
-      return 0;
-    }
-
   } // anonymous namespace
 
   RunControl::RunControl(const std::string &listenaddress)
@@ -52,17 +46,13 @@ namespace eudaq {
     m_cmdserver = TransportFactory::CreateServer(listenaddress);
     m_cmdserver->SetCallback(
         TransportCallback(this, &RunControl::CommandHandler));
-    m_thread =
-        std::unique_ptr<std::thread>(new std::thread(RunControl_thread, this));
-    // pthread_attr_init(&m_threadattr);
-    // pthread_create(&m_thread, &m_threadattr, RunControl_thread, this);
+    m_thread = std::unique_ptr<std::thread>(new std::thread(&RunControl::CommandThread, this));
     std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString()
               << std::endl;
   }
 
   void RunControl::StopServer() {
     m_done = true;
-    ///*if (m_thread)*/ pthread_join(m_thread, 0);
     m_thread->join();
     delete m_cmdserver;
   }
