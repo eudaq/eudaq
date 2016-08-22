@@ -36,6 +36,9 @@ conf/*
 .project
 .cproject
 
+# Ignore path to library necessary for cmspixel option
+extern/pxar
+
 # Ignore binary data file folders downloaded for TLU producer:
 extern/ZestSC1
 extern/tlufirmware

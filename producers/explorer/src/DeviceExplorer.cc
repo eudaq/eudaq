@@ -24,7 +24,6 @@
  *                                                                                                                     *
  ***********************************************************************************************************************/
 
-using namespace std;
 //Costructor
 //----------------------------------------------------------------------------------------------
 DeviceExplorer::DeviceExplorer()
@@ -87,7 +86,7 @@ void DeviceExplorer::close_server_udp(int sd){
 int DeviceExplorer::get_SD(int fecn){	//get socket descriptors of fecs
   if(fecn==0) return data[0];
   else	if(fecn==1) return data[1];
-  else { cout<<"Wrong FEC number!"<<endl; return -1;}
+  else { std::cout<<"Wrong FEC number!"<< std::endl; return -1;}
 }
 
 //------------------------------------------------------------------------------------------------
