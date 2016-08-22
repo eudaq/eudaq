@@ -11,6 +11,7 @@ IF(BUILD_main)
   add_executable(TestLogCollector    src/TestLogCollector.cxx  )
   add_executable(TestProducer        src/TestProducer.cxx      )
   add_executable(TestRunControl      src/TestRunControl.cxx    )
+  add_executable(TestDataCollector   src/TestDataCollector.cxx    )
 
   set_property(TARGET ClusterExtractor   PROPERTY PROJECT_LABEL "bin_ClusterExtractor")  
   set_property(TARGET ExampleReader      PROPERTY PROJECT_LABEL "bin_ExampleReader") 
@@ -20,8 +21,7 @@ IF(BUILD_main)
   set_property(TARGET TestLogCollector   PROPERTY PROJECT_LABEL "bin_TestLogCollector")
   set_property(TARGET TestProducer       PROPERTY PROJECT_LABEL "bin_TestProducer") 
   set_property(TARGET TestRunControl     PROPERTY PROJECT_LABEL "bin_TestRunControl") 
-
-
+  set_property(TARGET TestDataCollector     PROPERTY PROJECT_LABEL "bin_TestDataCollector") 
 
 
   # ${ADDITIONAL_LIBRARIES} is only set if e.g. the native reader processor is built (EUTelescope/LCIO)
@@ -33,11 +33,12 @@ IF(BUILD_main)
   target_link_libraries(TestLogCollector    EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(TestProducer        EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   target_link_libraries(TestRunControl      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(TestDataCollector   EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  
 
-
-  INSTALL(TARGETS ClusterExtractor  ExampleReader  FileChecker  OptionExample  RunListener  TestLogCollector  TestProducer TestRunControl 
-    RUNTIME DESTINATION bin
+  INSTALL(TARGETS ClusterExtractor  ExampleReader  FileChecker  OptionExample  RunListener  TestLogCollector  TestProducer TestRunControl TestDataCollector
+    DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)
-
+  
 ENDIF(BUILD_main)

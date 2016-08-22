@@ -1,10 +1,10 @@
-#include "eudaq/RunControl.hh"
-#include "eudaq/TransportFactory.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/BufferSerializer.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
+#include "RunControl.hh"
+#include "TransportFactory.hh"
+#include "Configuration.hh"
+#include "BufferSerializer.hh"
+#include "Exception.hh"
+#include "Utils.hh"
+#include "Logger.hh"
 
 #include <iostream>
 #include <ostream>
@@ -29,12 +29,6 @@ namespace eudaq {
       type &m_flag;
     };
 
-    void *RunControl_thread(void *arg) {
-      RunControl *rc = static_cast<RunControl *>(arg);
-      rc->CommandThread();
-      return 0;
-    }
-
   } // anonymous namespace
 
   RunControl::RunControl(const std::string &listenaddress)
@@ -52,17 +46,13 @@ namespace eudaq {
     m_cmdserver = TransportFactory::CreateServer(listenaddress);
     m_cmdserver->SetCallback(
         TransportCallback(this, &RunControl::CommandHandler));
-    m_thread =
-        std::unique_ptr<std::thread>(new std::thread(RunControl_thread, this));
-    // pthread_attr_init(&m_threadattr);
-    // pthread_create(&m_thread, &m_threadattr, RunControl_thread, this);
+    m_thread = std::unique_ptr<std::thread>(new std::thread(&RunControl::CommandThread, this));
     std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString()
               << std::endl;
   }
 
   void RunControl::StopServer() {
     m_done = true;
-    ///*if (m_thread)*/ pthread_join(m_thread, 0);
     m_thread->join();
     delete m_cmdserver;
   }
@@ -389,12 +379,14 @@ namespace eudaq {
     }
 
     for (size_t i = 0; i < NumConnections(); ++i) {
+      std::string name_con =  GetConnection(i).GetName();
       if (isDefaultDC) {
         // check that we do not override a previously connected DC
         bool matches = false;
         for (std::vector<std::string>::iterator it = otherDC.begin();
              it != otherDC.end(); ++it) {
-          if (GetConnection(i).GetName() == *it) {
+	  std::string name_otherDC = *it;
+          if (name_otherDC.find(name_con)!=std::string::npos) {
             matches = true;
           }
         }
@@ -404,7 +396,8 @@ namespace eudaq {
           SendCommand("DATA", thisDataAddr, GetConnection(i));
         }
       } else {
-        if (GetConnection(i).GetName() == id.GetName()) {
+	std::string name_this = id.GetName();
+        if (name_this.find(name_con) != std::string::npos) {
           // announce named DC to specific producer
           SendCommand("DATA", thisDataAddr, GetConnection(i));
         }
@@ -451,11 +444,13 @@ namespace eudaq {
       SendCommand("LOG", m_logaddr, id);
     }
 
+    std::string name_this = id.GetName();
     // search for applicable DC
     bool foundDC = false;
     for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();
          it != m_dataaddr.end(); ++it) {
-      if (GetConnection(it->first).GetName() == id.GetName()) {
+      std::string name_dc = GetConnection(it->first).GetName();
+      if (name_dc.find(name_this)!=std::string::npos) {
         foundDC = true;
         SendCommand("DATA", it->second, id);
       }

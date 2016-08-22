@@ -1,11 +1,11 @@
 #ifndef EUDAQ_INCLUDED_RunControl
 #define EUDAQ_INCLUDED_RunControl
 
-#include "eudaq/TransportServer.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/Status.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/Platform.hh"
+#include "TransportServer.hh"
+#include "Logger.hh"
+#include "Status.hh"
+#include "Configuration.hh"
+#include "Platform.hh"
 
 #include <string>
 #include <memory>
