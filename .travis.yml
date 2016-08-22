@@ -87,6 +87,11 @@ env:
 # disabled for mac, old, gcc and clang as pxar can be installed but during eudaq compilation is fails to include properly the defines from api.h
 # the reason for this behaviour is unclear
 
+cache:
+  directories:
+  - $TRAVIS_BUILD_DIR/extern/ZestSC1
+  - $TRAVIS_BUILD_DIR/extern/tlufirmware
+  
 matrix:      
    include:   
       - os: linux
