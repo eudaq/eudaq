@@ -164,9 +164,9 @@ public:
       ev.SetTag("DET", "MIMOSA26");
       ev.SetTag("MODE", "ZS2");
       ev.SetTag("BOARDS", NumBoards);
-      for (unsigned char i = 0; i < 6; i++)
+      for (unsigned int i = 0; i < 6; i++)
         ev.SetTag("ID" + to_string(i), to_string(MimosaID[i]));
-      for (unsigned char i = 0; i < 6; i++)
+      for (unsigned int i = 0; i < 6; i++)
         ev.SetTag("MIMOSA_EN" + to_string(i), to_string(MimosaEn[i]));
       SendEvent(ev);
       eudaq::mSleep(500);
