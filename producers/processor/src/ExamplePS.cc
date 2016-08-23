@@ -15,20 +15,12 @@ ExamplePS::ExamplePS(std::string cmd)
   *this<<cmd; 
 }
 
-ExamplePS::ExamplePS(uint32_t psid, std::string cmd)
-  :Processor("ExamplePS", psid, ""){
-  *this<<cmd;
-}
 
 void ExamplePS::ProcessUserEvent(EVUP ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   ForwardEvent(std::move(ev));
 }
 
-
-void ExamplePS::ProcessCmdEvent(EVUP ev){
-    
-}
 
 void ExamplePS::ProduceEvent(){
   // EVUP ev = EventClassFactory::Create("RawDataEvent");

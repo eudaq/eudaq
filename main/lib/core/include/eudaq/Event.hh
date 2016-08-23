@@ -59,7 +59,7 @@ namespace eudaq {
     timeStamp_t GetTimestamp(size_t i=0) const;
     size_t   GetSizeOfTimeStamps() const;
     uint64_t getUniqueID() const;
-    Event* Clone() const;
+    EventUP Clone() const;
     /** Returns the type string of the event implementation.
      *  Used by the plugin mechanism to identify the event type.
      */

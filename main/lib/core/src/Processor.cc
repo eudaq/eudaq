@@ -1,7 +1,6 @@
 #include"Processor.hh"
 
 #include"Utils.hh"
-#include"ProcessorManager.hh"
 
 #include <string>
 #include <chrono>
@@ -14,21 +13,14 @@ template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(s
 template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
 
 
-Processor::Processor(std::string pstype, uint32_t psid)
-  :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
-  m_num_upstream = 0;
+PSSP Processor::MakePSSP(std::string pstype, std::string cmd){
+  PSSP ps(std::move(Factory<Processor>::Create(cstr2hash(pstype.c_str()), cmd)));
+  return ps;
 }
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
-  m_num_upstream = 0;
 }
-
-Processor::Processor(std::string pstype, uint32_t psid, std::string cmd)
-  :m_pstype(pstype), m_psid(psid), m_state(STATE_READY){
-  m_num_upstream = 0;
-}
-
 
 Processor::~Processor() {
   std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
@@ -42,27 +34,14 @@ void Processor::EraseEventType(uint32_t evtype){
   m_evlist_white.erase(evtype);
 }
 
-
 void Processor::ProcessUserEvent(EVUP ev){
   std::cout<< "ProcessUserEvent ["<<m_psid<<"] "<<ev->GetSubType()<<std::endl;
   ForwardEvent(std::move(ev));
 }
 
-
 void Processor::ProcessSysEvent(EVUP ev){
   //  TODO config
   // uint32_t psid_dst;
-  // psid_dst = ev->GetTag("PSDST", psid_dst);
-  // if(psid_dst == m_psid){
-  //   // if(ev->HasTag("NEWPS")){
-  //   //   std::string pstype;
-  //   //   pstype = ev->GetTag("PSTYPE", pstype);
-  //   //   uint32_t psid;
-  //   //   psid = ev->GetTag("PSID", psid);
-  //   //   CreateNextProcessor(pstype, psid);
-  //   // }
-  //   return;
-  // }
   ForwardEvent(std::move(ev));
 }
 
@@ -93,16 +72,12 @@ void Processor::ForwardEvent(EVUP ev) {
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   std::vector<PSSP> pslist;
   uint32_t evid = ev->get_id();
-  std::cout<< "PS NEXT num = "<< m_pslist_next.size()<<"  evid = "<<evid<<std::endl;
   for(auto &psev: m_pslist_next){
     auto evset = psev.second;
     if(evset.find(evid)!=evset.end()){
       pslist.push_back(psev.first);
     }
   }
-  std::cout<< "PS NEXT num to send = "<< pslist.size()<<"  evid = "<<evid<<std::endl;
-
-  auto psMan = ProcessorManager::GetInstance();
   size_t remain_ps = pslist.size();
   auto ps_hub = m_ps_hub.lock();
   if(ps_hub){
@@ -110,37 +85,45 @@ void Processor::ForwardEvent(EVUP ev) {
       if(remain_ps == 1)
 	ps_hub->RegisterProcessing(ps, std::move(ev));
       else{
-	EVUP evcp(ev->Clone(), ev.get_deleter());
-	ps_hub->RegisterProcessing(ps, std::move(evcp));
+	ps_hub->RegisterProcessing(ps, ev->Clone());
       }
       remain_ps--;
     }
   }
 }
 
-
-void Processor::CreateNextProcessor(std::string pstype){
-  std::lock_guard<std::mutex> lk_list(m_mtx_list);
-  auto psMan = ProcessorManager::GetInstance();
-  PSSP ps = psMan->MakePSSP(pstype, "");
-  if(ps){
-    m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
-    m_evlist_white.clear();
-    ps->SetPSHub(GetPSHub());
-  }
-}
-
-
 void Processor::AddNextProcessor(PSSP ps){
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
   m_evlist_white.clear();
+  
+  if(!m_ps_this.lock())
+    std::cerr<<"this is not set for root processor\n";
+  
+  if(!m_ps_hub.lock())
+    m_ps_hub = m_ps_this;
+  
+  ps->SetThisPtr(ps);
+  ps->AddUpstream(m_ps_this);
+  ps->UpdatePSHub(m_ps_hub);
 }
 
+void Processor::AddUpstream(PSWP ps){
+  m_ps_upstr.push_back(ps);
+}
+
+void Processor::UpdatePSHub(PSWP ps){
+  if(m_ps_upstr.size()<1){
+    m_ps_hub = ps;
+    for(auto &e: m_pslist_next){
+      e.first->UpdatePSHub(m_ps_this);
+    }
+  }
+  //else ignore;
+}
 
 void Processor::ProduceEvent(){
 }
-
 
 void Processor::RegisterProcessing(PSSP ps, EVUP ev){
   std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
@@ -148,16 +131,6 @@ void Processor::RegisterProcessing(PSSP ps, EVUP ev){
   m_cv_pcs.notify_all();
 }
 
-
-void Processor::SetPSHub(PSWP ps){
-  m_ps_hub = ps;
-  for(auto& psev: m_pslist_next){
-    auto subps = psev.first;
-    if(!subps->IsHub()){
-      subps->SetPSHub(m_ps_hub);
-    }
-  }
-}
 
 void Processor::HubProcessing(){
   while(IsHub()){ //TODO: modify STATE enum
@@ -262,27 +235,50 @@ void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
   }
 }
 
-
 void Processor::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
-  std::cout<<"---------default ProcessSysCmd "<<cmd_name<<"="<<cmd_par<<std::endl;
   m_cmdlist_init.push_back(std::make_pair(cmd_name, cmd_par)); //configured
 }
 
-
 PSSP Processor::operator>>(PSSP psr){
   AddNextProcessor(psr);
-  uint32_t nup = psr->GetNumUpstream();
-  std::cout<< nup<<std::endl;
-  if(nup == 0 && !psr->IsHub()){
-    psr->SetPSHub(GetPSHub());
-  }
-  if(nup == 1 && !psr->IsHub()){
-    psr->SetPSHub(psr);
-    psr->RunHubThread(); //now, it is hub
-  }
-  psr->IncreaseNumUpstream();
-
   return psr;
+}
+
+
+PSSP Processor::operator>>(std::string stream_str){
+  std::string cmd_str;
+  std::string par_str;
+  std::stringstream ss(stream_str);
+  getline(ss, cmd_str, '(');
+  getline(ss, par_str, ')');
+  cmd_str=trim(cmd_str);
+  if(cmd_str=="EV"){
+    std::stringstream ss_par_str(par_str);
+    std::string ev_str;
+    while(getline(ss_par_str, ev_str, ';' )){
+      std::stringstream ss_ev_str(ev_str);
+      std::string ev_cmd, ev_list;
+      getline(ss_ev_str, ev_cmd, '=');
+      ev_cmd=trim(ev_cmd);
+      getline(ss_ev_str, ev_list);
+      std::stringstream ss_ev_list(ev_list);
+      std::string ev_type;
+      while(getline(ss_ev_list, ev_type, ',')){
+	ev_type=trim(ev_type);
+	if(ev_cmd=="ADD") InsertEventType(Event::str2id(ev_type));
+	if(ev_cmd=="DEL") EraseEventType(Event::str2id(ev_type));
+      }
+    }
+    return m_ps_this.lock();
+  }
+  else{
+    
+    std::string ps_type = cmd_str; //TODO
+    ps_type=trim(ps_type);
+    PSSP psr(Factory<Processor>::Create(cstr2hash(ps_type.c_str()), par_str));
+    AddNextProcessor(psr);
+    return psr;
+  }
 }
 
 
@@ -321,45 +317,22 @@ PSSP operator<<(PSSP psl, std::string cmd_list){
   return psl;
 }
 
-
 PSSP operator>>(PSSP psl, PSSP psr){
   return *psl>>psr;
 }
 
-PSSP operator>>(PSSP psl, std::string stream_str){
-  //pstype(par)
-  //EV(ADD=ev1,ev2,ev3_)
-  std::string cmd_str;
-  std::string par_str;
-  std::stringstream ss(stream_str);
-  getline(ss, cmd_str, '(');
-  getline(ss, par_str, ')');
-  cmd_str=trim(cmd_str);
-  if(cmd_str=="EV"){
-    std::stringstream ss_par_str(par_str);
-    std::string ev_str;
-    while(getline(ss_par_str, ev_str, ';' )){
-      std::stringstream ss_ev_str(ev_str);
-      std::string ev_cmd, ev_list;
-      getline(ss_ev_str, ev_cmd, '=');
-      ev_cmd=trim(ev_cmd);
-      getline(ss_ev_str, ev_list);
-      std::stringstream ss_ev_list(ev_list);
-      std::string ev_type;
-      while(getline(ss_ev_list, ev_type, ',')){
-	ev_type=trim(ev_type);
-	if(ev_cmd=="ADD") psl->InsertEventType(Event::str2id(ev_type));
-	if(ev_cmd=="DEL") psl->EraseEventType(Event::str2id(ev_type));
-      }
-    }
-    return psl;
-  }
-  else{
-    auto psMan = ProcessorManager::GetInstance();
-    std::string ps_type = cmd_str; //TODO
-    ps_type=trim(ps_type);
-    PSSP psr = psMan->MakePSSP(ps_type, par_str);
-    return *psl>>psr;
-  }
+PSSP operator>>(PSSP psl, std::string psr_str){
+  return *psl>>psr_str;
 }
 
+
+
+// void ProcessorBatch::AddNextProcessor(PSSP ps){
+//   std::lock_guard<std::mutex> lk_list(m_mtx_list);
+//   m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
+//   m_evlist_white.clear();
+
+//   m_ps_root.push_back(ps);
+//   ps->UpdatePSHub(ps);
+//   ps->SetThisPtr(ps);
+// }

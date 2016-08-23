@@ -253,13 +253,12 @@ namespace eudaq {
     return id;
   }
 
-  Event* Event::Clone() const{ //TODO: clone directly
+  EventUP Event::Clone() const{ //TODO: clone directly
     BufferSerializer ser;
     Serialize(ser);
     uint32_t id;
     ser.PreRead(id);
-    Event* ev = Factory<Event>::Create<Deserializer&>(id, ser).release();
-    return ev;
+    return Factory<Event>::Create<Deserializer&>(id, ser);
   }
   
   std::ostream & operator << (std::ostream &os, const Event &ev) {

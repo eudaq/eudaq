@@ -19,7 +19,6 @@
 
 namespace eudaq {
   class Processor;
-  class ProcessorManager;  
 
 #ifndef EUDAQ_CORE_EXPORTS
   extern template class DLLEXPORT
@@ -31,15 +30,14 @@ namespace eudaq {
 #endif
   
 
+  using ProcessorUP = Factory<Processor>::UP_BASE;
+  using ProcessorSP = Factory<Processor>::SP_BASE;
+  using ProcessorWP = Factory<Processor>::WP_BASE;
+
   
-  using CreatePS  = Processor* (*)(uint32_t);
-  using DestroyPS = void (*)(Processor*);
-  using CreateEV = Event* (*)();
-  using DestroyEV = void (*)(Event*);
-  
-  using PSSP = std::shared_ptr<Processor>;
-  using PSWP = std::weak_ptr<Processor>;
-  using EVUP = std::unique_ptr<Event, std::function<void(Event*)> >;
+  using PSSP = ProcessorSP;
+  using PSWP = ProcessorWP;
+  using EVUP = EventUP;
   
   class DLLEXPORT Processor{
   public:
@@ -61,68 +59,67 @@ namespace eudaq {
 	FLAG_CSM_RUN=16,
 	FLAG_CSM_BUSY=32
     };
-    
-    Processor(std::string pstype, uint32_t psid);
-    Processor(std::string pstype, std::string cmd);
-    Processor(std::string pstype, uint32_t psid, std::string cmd);
 
-    Processor(){};
+    static PSSP MakePSSP(std::string pstype, std::string cmd);
+    
+    Processor(std::string pstype, std::string cmd);
+    
     virtual ~Processor();
     virtual void ProcessUserEvent(EVUP ev);
     virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     virtual void ProduceEvent();
-    virtual void ConsumeEvent();
-
-    bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
-    bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
+    void ConsumeEvent();
     
-    std::string GetType(){return m_pstype;};
-    uint32_t GetID(){return m_psid;};
-    STATE GetState(){return m_state;};
     void HubProcessing();
     void Processing(EVUP ev);
     void AsyncProcessing(EVUP ev);
     void SyncProcessing(EVUP ev);
-    virtual void ForwardEvent(EVUP ev);
-
+    void ForwardEvent(EVUP ev);
     void RegisterProcessing(PSSP ps, EVUP ev);
+
+    void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
+    void ProcessSysEvent(EVUP ev);
+    
     void RunProducerThread();
     void RunConsumerThread();
     void RunHubThread();
     
-    PSWP GetPSHub(){return m_ps_hub;};
-    void SetPSHub(PSWP ps); //TODO: thread safe
     void InsertEventType(uint32_t evtype);
     void EraseEventType(uint32_t evtype);
 
-    void ProcessSysEvent(EVUP ev);
-    void AddNextProcessor(PSSP ps);
-    void CreateNextProcessor(std::string pstype);
-    void RemoveNextProcessor(uint32_t psid);
 
-    uint32_t GetNumUpstream(){return m_num_upstream;};
-    void IncreaseNumUpstream(){m_num_upstream++;};
-
-    void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
+    virtual void AddNextProcessor(PSSP ps);
+    void AddUpstream(PSWP ps);
+    void UpdatePSHub(PSWP ps);
+    void SetThisPtr(PSWP ps){m_ps_this = ps;};
     
-    virtual PSSP operator>>(PSSP psr);
+    PSSP operator>>(PSSP psr);
+    PSSP operator>>(std::string stream_str);
 
-    virtual Processor& operator<<(EVUP ev);
-    virtual Processor& operator<<(std::string cmd_str);
+    Processor& operator<<(EVUP ev);
+    Processor& operator<<(std::string cmd_str);
+
+    bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
+    bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
+    std::string GetType(){return m_pstype;};
+    uint32_t GetID(){return m_psid;};
+    STATE GetState(){return m_state;};
+    PSSP GetNextPSSP(Processor *p);
+
     
   private:
     std::string m_pstype;
     uint32_t m_psid;
-    uint32_t m_num_upstream;
     PSWP m_ps_hub;
+    PSWP m_ps_this;
+    std::vector<PSWP> m_ps_upstr;
+    std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
     
     std::set<uint32_t> m_evlist_white;
-    std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
-    std::vector<std::pair<std::string, std::string>> m_cmdlist_init;
+    std::vector<std::pair<std::string, std::string>> m_cmdlist_init;    
     
-    
-    std::queue<EVUP> m_fifo_events;
-    std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs;
+    std::queue<EVUP> m_fifo_events; //fifo async
+    std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs; //fifo hub
     std::mutex m_mtx_fifo;
     std::mutex m_mtx_pcs;
     std::mutex m_mtx_state;
@@ -130,16 +127,23 @@ namespace eudaq {
     std::condition_variable m_cv;
     std::condition_variable m_cv_pcs;
     std::atomic<STATE> m_state;
-    std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist_cache;
     std::atomic<int> m_flag;
   };
-  
+
+
+  // class ProcessorBatch: public Processor{
+  // public:
+  //   virtual void AddNextProcessor(PSSP ps);
+
+  // private:
+  //   std::vector<PSSP> m_ps_root;
+  // };
+
 }
 
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
 DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP psl, std::string cmd_list);
-
 
 
 #endif
