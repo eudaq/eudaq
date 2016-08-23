@@ -158,22 +158,12 @@ namespace eudaq {
     // id of producers which sent an event are stored in ireceived array
     // in order to know which slow producers sent an event.
 
-   /* if(id.GetType() != "SlowProducer") {
-        if (inf.events.size() == 1) {
-          m_fastwaiting++;
-          ireceived.push_back(GetInfo(id));
-        }
-    } else if (inf.events.size() == 1) {
+   /* if (inf.events.size() == 1) {
         ireceived.push_back(GetInfo(id));
+        if(id.GetType() != "SlowProducer")
+          m_fastwaiting++;
+    }
     }*/
-
-    // There are two types of producers now: "fast" producer and slow producer.
-    // Before starting OnComplete function we need to receive events from all
-    // fast producers, but we don't have to wait for all slow producers.
-    // So we count only the number of fast producers enents. And if it exceeds
-    // the number of fast producers we can go to the OnComplete function. The
-    // id of producers which sent an event are stored in ireceived array
-    // in order to know which slow producers sent an event.
 
     int index = GetInfo(id);
     if (ireceived.count(index) == 0)
