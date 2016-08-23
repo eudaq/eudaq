@@ -55,10 +55,10 @@ namespace eudaq {
 	}
 
 
-	void MachineState::SetState(ConnectionInfo id, ConnectionState* state)
+    void MachineState::SetState(ConnectionInfo* id, ConnectionState* state)
 	{
-		//std::cout<<" From GetRemoteInfo: "<< id.GetRemoteInfo()<< "\n";
-		connection_status_info[id] = *state;
+        id->SetHost(id->GetRemote());
+        connection_status_info[*id] = *state;
 		return;
 	}
 

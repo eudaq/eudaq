@@ -71,7 +71,7 @@ namespace eudaq {
 /*Impelmentation of the Configure function. This function recieves a Configuration object, which is a representation and a handler for the .conf files. If the section RunControl exists in the scope of the .conf file, the RunControl adopts these configurations, namely the size and event limit of the run. Then the function gets the next Configure File
 */
   void RunControl::Configure(const Configuration &config) {
-    SendCommand("CLEAR");
+    //SendCommand("CLEAR");
     mSleep(500);
     SendCommand("CONFIG", to_string(config));
     if (config.SetSection("RunControl")) {
@@ -257,13 +257,9 @@ namespace eudaq {
         
         std::shared_ptr<ConnectionState> connectionstate(new ConnectionState(ser));
         
-        //std::cout<<"Current State: "<< connectionstate->GetState()<< " From: "<< to_string(ev.id)<< " With Remote: "<< ev.id.GetRemote()<<"\n";
-
-        current_State.SetState(ev.id , connectionstate.get());
-        //current_State.Print();
+        current_State.SetState(&(ev.id) , connectionstate.get());
         if(current_State.GetState()== eudaq::ConnectionState::STATE_ERROR && current_State.HasRunning())
           StopRun();
-
         SendState(current_State.GetState());
 
         if (!connectionstate->isBusy() && ev.id.GetState() == 1) {
