@@ -57,7 +57,6 @@ namespace eudaq {
 
     void MachineState::SetState(ConnectionInfo* id, ConnectionState* state)
 	{
-        id->SetHost(id->GetRemote());
         connection_status_info[*id] = *state;
 		return;
 	}

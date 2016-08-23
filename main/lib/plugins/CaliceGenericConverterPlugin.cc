@@ -62,7 +62,7 @@ namespace eudaq {
       // Unpack data
       const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> ( &ev );
 
-      int nblock =5; // the first 5 blocks contain information
+      unsigned int nblock =5; // the first 5 blocks contain information
       StandardPlane plane0(0, EVENT_TYPE, sensortype);
       plane0.SetSizeRaw( 36, 8);//36 channels, 4 chips
 

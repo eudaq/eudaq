@@ -319,6 +319,9 @@ namespace eudaq {
         case 0xf:
           ProcessTimeStamp_data(data, sev);
           break;
+	case 0x0:
+	  std::cout<<"[SCTConvertPlugin:] TTC type 0x00: maybe de-sync"<<std::endl;
+	  break;
         default:
           EUDAQ_THROW("unknown data type");
           break;

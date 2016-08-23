@@ -201,11 +201,11 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
     // mounting the chip with 90deg rotation and we already rotate here
     // use the analog signal as feedthrough for the per-pixel timestamp (diffs)
     for (unsigned i = 0; i < data.num_hits(); ++i) {
-        EUTelGenericSparsePixel pixel(
-            data.hit_row(i),
-            data.hit_col(i),
-            MUPIX4_SENSOR_BINARY_SIGNAL);
-        pixels->addSparsePixel(&pixel);
+        pixels->emplace_back( 
+		        data.hit_row(i),
+			data.hit_col(i),
+			MUPIX4_SENSOR_BINARY_SIGNAL
+			);
     }
 
     // hand over ownership over the readout frame to the lcio collection

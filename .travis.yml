@@ -4,56 +4,143 @@ sudo: required
 
 dist: trusty
 
-compiler:
-  - gcc
-
 branches:
   only:
     - master
-    - v1.6-dev
+    - v1.7-dev
 
-os:
-  - linux
-  - osx
+# set here versions / file paths
+env:
+   global:
+      - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.9-clang60.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.06.06.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.06.06.macosx64-10.9-clang60.tar.gz
+      
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.5
+      - CMAKE_FILENAME_LINUX=cmake-3.5.2-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.5.2-Darwin-x86_64.tar.gz
+      
+      - OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
+      - OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
+      
+      - PYTHON_VERSION_MODERN=3.5.1
+      - PYTHON_VERSION_OLD=2.7.10
+      
+      - BUILD_AHCAL=OFF
+      - BUILD_BIFAHCAL=OFF
+      - BUILD_TESTING=OFF
+      - BUILD_WITH_QT4=OFF
+      - BUILD_allproducer=OFF
+      - BUILD_altro=OFF
+      - BUILD_altroUSB=OFF
+      - BUILD_apixct=OFF
+      - BUILD_calice=ON
+      - BUILD_ccpdlf=OFF
+      - BUILD_clicpix=OFF
+      - BUILD_cmspixel=ON
+      - BUILD_depfet=ON
+      - BUILD_eudrb=OFF
+      - BUILD_example=OFF
+      - BUILD_explorer=ON
+      - BUILD_fortis=ON
+      - BUILD_gui=ON
+      - BUILD_main=OFF
+      - BUILD_manual=OFF
+      - BUILD_mimoroma=ON
+      - BUILD_mimosa32=ON
+      - BUILD_miniTLU=OFF
+      - BUILD_mupix=OFF
+      - BUILD_mvd=OFF
+      - BUILD_ni=ON
+      - BUILD_nreader=OFF
+      - BUILD_offlinemon=OFF
+      - BUILD_onlinemon=ON
+      - BUILD_palpidefs=OFF
+      - BUILD_palpidess=OFF
+      - BUILD_pixelmanproducer=OFF
+      - BUILD_pybar=OFF
+      - BUILD_python=ON
+      - BUILD_root=OFF
+      - BUILD_taki=OFF
+      - BUILD_timepixdummy=OFF
+      - BUILD_tlu=ON
+      - BUILD_usbpix=OFF
+
+      
+# possible options:
+# Linux/Mac
+# gcc/clang
+# ROOT 5/6
+# QT 4/5
+# Python 2/3    not realized yet
+
+# in order to reduce options:
+# Linux/Mac
+# gcc/clang
+# modern (ROOT 6, QT 5, Python 3) / old (ROOT 5, QT 4, Python 2)
+# results in 8 combinations
+# documentation to be "compiled" in maximum one option
+
+# cmspixel:
+# requires pxar download and installation which is done 
+# disabled for mac, old, gcc and clang as pxar can be installed but during eudaq compilation is fails to include properly the defines from api.h
+# the reason for this behaviour is unclear
+
+matrix:      
+   include:   
+      - os: linux
+        compiler: gcc
+        env: OPTION=modern BUILD_manual=ON
+      - os: linux      
+        compiler: gcc      
+        env: OPTION=old    
+      - os: linux
+        compiler: clang      
+        env: OPTION=modern
+      - os: linux
+        compiler: clang      
+        env: OPTION=old
+      - os: osx      
+        compiler: gcc    
+        env: OPTION=modern    
+      - os: osx
+        compiler: gcc      
+        env: OPTION=old BUILD_cmspixel=OFF
+      - os: osx
+        compiler: clang      
+        env: OPTION=modern
+      - os: osx      
+        compiler: clang      
+        env: OPTION=old BUILD_cmspixel=OFF
 
 before_install:
-  - $CXX --version
-  - $CC --version
-
-  - if [ $TRAVIS_OS_NAME == linux ]; then wget https://root.cern.ch/download/root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && tar -xvf root_v5.34.34.Linux-ubuntu14-x86_64-gcc4.8.tar.gz && source root/bin/thisroot.sh; fi  
-
-  - if [ $TRAVIS_OS_NAME == osx ]; then wget https://root.cern.ch/download/root_v5.34.34.macosx64-10.9-clang60.tar.gz && tar -xvf root_v5.34.34.macosx64-10.9-clang60.tar.gz && source root/bin/thisroot.sh; fi  
-
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get -qq update; fi
-
-  # OS X: update brew cache:
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" && "$CC" == "gcc" ]]; then CC=gcc-4.9; fi
-  - if [ $TRAVIS_OS_NAME == "osx" ]; then wget https://cmake.org/files/v3.4/cmake-3.4.3-Darwin-x86_64.tar.gz && tar xfz cmake-3.4.3-Darwin-x86_64.tar.gz && export PATH="`pwd`/cmake-3.4.3-Darwin-x86_64/CMake.app/Contents/bin":$PATH:; fi
-  - if [ $TRAVIS_OS_NAME == "osx" ]; then echo $PATH; fi
-
-  
+  - source .travis/before_install.sh
+  - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
+      
 install:
-  # Install package dependencies for Linux:
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get install -y libusb-1.0-0 libusb-1.0-0-dev python2.7 python-numpy cmake qt4-dev-tools; fi
-
-  # Install package dependencies for Mac OS X:
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew unlink cmake; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew install python libusb qt; fi
-  # Install numpy via pip:
-  - if [ $TRAVIS_OS_NAME == osx ]; then easy_install pip && pip install numpy; fi
+  - source .travis/install.sh
 
 before_script:
-  
-  # For Mac OS X we still need to source the root environment:
-  # - if [ $TRAVIS_OS_NAME == osx ]; then source $(brew --prefix root)/libexec/thisroot.sh; fi
-
   - $CXX --version
   - $CC --version
-
-  - cd build
+  - echo $PATH
+  - echo $LD_LIBRARY_PATH
 
 script:
-  - cmake -DBUILD_onlinemon=ON ..
+  - cd build  
+  - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_apixct=$BUILD_apixct -DBUILD_calice=$BUILD_calice -DBUILD_ccpdlf=$BUILD_ccpdlf -DBUILD_clicpix=$BUILD_clicpix -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_eudrb=$BUILD_eudrb -DBUILD_example=$BUILD_example -DBUILD_explorer=$BUILD_explorer -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_mimosa32=$BUILD_mimosa32 -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_mupix=$BUILD_mupix -DBUILD_mvd=$BUILD_mvd -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs -DBUILD_palpidess=$BUILD_palpidess -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_pybar=$BUILD_pybar -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu -DBUILD_usbpix=$BUILD_usbpix ..
   - make install
 
+before_deploy:
+ - source .travis/before_deploy.sh
+
+deploy:
+  provider: releases
+  api_key: "Vl1KT9zHLc/d3oBKQuS1PyD849kXOZe8mvP+BW2ocvh/SjyyFrFoPUw/0GvsO+cbqH1+HYIki5N3Tkeb5AZtehqc7oqPCLPQI6fxk3eEYugcR0wYgBprlQB5PyvobZgR8Eq9R95tlJgX1ukOlpINmENF9b9/cPzEqCUhbW0+kwdcsalxb7NsDZUBFeu3cBeTqrIDzv1eO582uUk3MssHJ+18jt7rdaQGhY2lyNdpsXTUEuYdiE2TJ4xr7Yk2akN5PSvi0PHeq+LB7t07olan2yi6EqLJHHF2Th28Qgf4YT5BUjpF4kQy2xQzRwyQIg6X0Z34OuB+Q74Ku/vcvqi/oS+oiciIaGoGKQ5TK4tDRZIs0XvyamXafXKSqYahoDD92rPQ2ewZHvb/ivKjYLAED3sB4M5EMGxrwWUlAYEj3QSYZRDugjz2FhMPIswnCiMeSxFTaWQs54hymP5xLo9gNiXrInM4HIhwYjv12uH9X3YrBi8+7As1MOsP21vDhU7VegM2/L1jQkYj+E1nEtBzG3Z3hpc4dav0opT6pGjQ6M/CKyusyIBeHAdTLU3i0JWLD0SdJQemsLd1dx0LlXPZe3Z7svww8VVX3w6xlgjRFYYtlTHyElTanxg//dcVpZBEEZNZBbArgDNtZxNjY7qgYankxitUT9Kj3DWNjnynzjo="
+  file_glob: true
+  file: "${FILE_TO_UPLOAD_1}"
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: "$BUILD_manual = ON"
