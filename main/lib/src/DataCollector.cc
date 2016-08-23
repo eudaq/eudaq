@@ -163,7 +163,7 @@ namespace eudaq {
         if(id.GetType() != "SlowProducer")
           m_fastwaiting++;
     }
-    }*/
+    */
 
     int index = GetInfo(id);
     if (ireceived.count(index) == 0)
