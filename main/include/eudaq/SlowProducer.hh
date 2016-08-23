@@ -26,7 +26,6 @@ namespace eudaq {
         virtual ~SlowProducer() {}
 
         virtual void OnData(const std::string &param);
-     //   virtual std::string GetType() const { return "SlowProducer"; }
 
       private:
     };
