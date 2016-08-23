@@ -38,8 +38,6 @@ namespace eudaq {
     void SetType(const std::string &type) { m_type = type; }
     std::string GetName() const { return m_name; }
     void SetName(const std::string &name) { m_name = name; }
-    void SetHost(const std::string &host) { m_host = host; }
-    std::string GetHost() const { return m_host; }
 
     int GetRemoteInfo() const;
     virtual std::string GetRemote() const { return m_host; }
