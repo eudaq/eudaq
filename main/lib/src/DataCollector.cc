@@ -118,8 +118,6 @@ namespace eudaq {
           m_buffer[i].events.clear();
         }
       }
-      m_fastwaiting = 0;
-
       SetConnectionState(ConnectionState::STATE_RUNNING);
     } catch (const Exception &e) {
       std::string msg =
@@ -155,25 +153,25 @@ namespace eudaq {
     // fast producers, but we don't have to wait for all slow producers.
     // So we count only the number of fast producers enents. And if it exceeds
     // the number of fast producers we can go to the OnComplete function. The
-    // id of producers which sent an event are stored in ireceived array
+    // id of producers which sent an event are stored in m_ireceived array
     // in order to know which slow producers sent an event.
 
    /* if (inf.events.size() == 1) {
-        ireceived.push_back(GetInfo(id));
+        m_ireceived.push_back(GetInfo(id));
         if(id.GetType() != "SlowProducer")
           m_fastwaiting++;
     }
     */
 
-    ireceived[GetInfo(id)] = id.GetType();
-    m_fastwaiting = 0;
-    for (std::map<size_t, std::string>::iterator it = ireceived.begin();
-            it != ireceived.end(); ++it) {
+    m_ireceived[GetInfo(id)] = id.GetType();
+    int fastwaiting = 0;
+    for (std::map<size_t, std::string>::iterator it = m_ireceived.begin();
+            it != m_ireceived.end(); ++it) {
       if (it->second != "SlowProducer")
-          m_fastwaiting++;
+        fastwaiting++;
     }
 
-    if (m_fastwaiting >= m_buffer.size() - m_slow)
+    if (fastwaiting >= m_buffer.size() - m_slow)
       tmp = true;
 
     if (tmp)
@@ -211,29 +209,31 @@ namespace eudaq {
       unsigned tluev = 0;
       for (size_t i = 0; i < m_buffer.size(); ++i) {
         // Checking if the producer has sent the data to read.
-        //if (std::find(ireceived.begin(), ireceived.end(), i) == ireceived.end())
+        //if (std::find(m_ireceived.begin(), m_ireceived.end(), i) == m_ireceived.end())
         //  continue;
-        if (ireceived.count(i) == 0)
+        if (m_ireceived.count(i) == 0)
           continue;
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " +
                       to_string(ev.GetEventNumber()));
         }
-        if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) &&
-            (m_buffer[i].events.front()->GetEventNumber() !=
-             m_eventnumber - 1)) {
-          if (ev.GetEventNumber() % 1000 == 0) {
-            // dhaas: added if-statement to filter out TLU event number 0, in
-            // case of bad clocking out
-            if (m_buffer[i].events.front()->GetEventNumber() != 0)
-              EUDAQ_WARN(
-                  "Event number mismatch > 1 in event " +
-                  to_string(ev.GetEventNumber()) + " " +
-                  to_string(m_buffer[i].events.front()->GetEventNumber()) +
-                  " " + to_string(m_eventnumber));
-            if (m_buffer[i].events.front()->GetEventNumber() == 0)
-              EUDAQ_WARN("Event number mismatch > 1 in event " +
-                         to_string(ev.GetEventNumber()));
+        if (m_ireceived[i] != "SlowProducer") {
+          if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) &&
+              (m_buffer[i].events.front()->GetEventNumber() !=
+               m_eventnumber - 1)) {
+            if (ev.GetEventNumber() % 1000 == 0) {
+              // dhaas: added if-statement to filter out TLU event number 0, in
+              // case of bad clocking out
+              if (m_buffer[i].events.front()->GetEventNumber() != 0)
+                EUDAQ_WARN(
+                    "Event number mismatch > 1 in event " +
+                    to_string(ev.GetEventNumber()) + " " +
+                    to_string(m_buffer[i].events.front()->GetEventNumber()) +
+                    " " + to_string(m_eventnumber));
+              if (m_buffer[i].events.front()->GetEventNumber() == 0)
+                EUDAQ_WARN("Event number mismatch > 1 in event " +
+                           to_string(ev.GetEventNumber()));
+            }
           }
         }
         ev.AddEvent(m_buffer[i].events.front());
@@ -272,8 +272,7 @@ namespace eudaq {
       if (!found_bore)
         ++m_eventnumber;
     }
-    ireceived.clear();
-    m_fastwaiting = 0;
+    m_ireceived.clear();
   }
 
   size_t DataCollector::GetInfo(const ConnectionInfo &id) {
