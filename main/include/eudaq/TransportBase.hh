@@ -4,7 +4,7 @@
 /** \file TransportBase.hh
  * Defines TransportBase along with a number of related classes.
  */
-
+#include "eudaq/Platform.hh"
 #include "eudaq/Mutex.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/BufferSerializer.hh"
@@ -19,7 +19,7 @@ namespace eudaq {
   /** Represents an individual connection on a Transport.
    *
    */
-  class ConnectionInfo {
+  class DLLEXPORT ConnectionInfo {
   public:
     explicit ConnectionInfo(const std::string &name = "")
         : m_state(0), m_name(name) { }
