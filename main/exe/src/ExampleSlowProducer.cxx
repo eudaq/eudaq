@@ -14,11 +14,11 @@
 // Modify this to something appropriate for your producer.
 static const std::string EVENT_TYPE = "Example";
 
-// Declare a new class that inherits from eudaq::Producer
+// Declare a new class that inherits from eudaq::SlowProducer
 class ExampleSlowProducer : public eudaq::SlowProducer {
   public:
 
-    // The constructor must call the eudaq::Producer constructor with the name
+    // The constructor must call the eudaq::SlowProducer constructor with the name
     // and the runcontrol connection string, and initialize any member variables.
     ExampleSlowProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::SlowProducer(name, runcontrol),
