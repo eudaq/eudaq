@@ -71,8 +71,8 @@ class PyProducer : public eudaq::Producer {
       }
       if (m_internalstate == Stopped) {
 	eudaq::DataSender::SendEvent(RawDataEvent::EORE(m_name, m_run, ++m_evt));
-  if(m_connectionstate != eudaq::ConnectionState::STATE_ERROR)
-	 SetConnectionState(eudaq::ConnectionState::STATE_CONF);
+	if(m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+	  SetConnectionState(eudaq::ConnectionState::STATE_CONF);
       }
     }
     virtual void OnTerminate() {
@@ -117,7 +117,7 @@ class PyProducer : public eudaq::Producer {
   }
   void SetError(){
     m_internalstate = Error;
-    SetConnectionState(eudaq::ConnectionState::LVL_ERROR);
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR);
   }
   bool SendBORE(){
     if (m_internalstate!=StartingRun) return false;

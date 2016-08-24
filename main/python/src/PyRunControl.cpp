@@ -63,7 +63,7 @@ public:
   bool AllOk(){
     bool ok = true;
     for (size_t i = 0; i < m_connections.size(); ++i) {
-      if (m_connections.at(i).GetState() != eudaq::ConnectionState::LVL_OK) {
+      if (m_connections.at(i).GetState() == eudaq::ConnectionState::STATE_ERROR) {
 	ok = false;
 	break;
       }
