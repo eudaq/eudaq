@@ -165,10 +165,7 @@ namespace eudaq {
     }
     */
 
-    int index = GetInfo(id);
-    if (ireceived.count(index) == 0)
-        ireceived.insert(std::pair<size_t,std::string>(index, id.GetType()));
-
+    ireceived[GetInfo(id)] = id.GetType();
     m_fastwaiting = 0;
     for (std::map<size_t, std::string>::iterator it = ireceived.begin();
             it != ireceived.end(); ++it) {
