@@ -382,7 +382,7 @@ void DeviceReader::Loop() {
       }
     } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<50);
 
-    if (length < 24) {
+    if (length>0 && length < 24) {
       Print(0, "UNEXPECTED: event length shorter than 24 Bytes");
     }
 
@@ -1512,6 +1512,7 @@ void PALPIDEFSProducer::Loop() {
   unsigned long count = 0;
   unsigned long reconfigure_count = 0;
   unsigned long busy_count = 0;
+  unsigned long out_of_sync_count = 0;
   time_t last_status = time(0);
   bool reconfigure = false;
   do {
@@ -1536,12 +1537,16 @@ void PALPIDEFSProducer::Loop() {
 
       if (events_built > 0) {
         reconfigure_count = 0;
+	out_of_sync_count = 0;
       }
       else if (events_built == -1) { // auto-of-sync, which won't be recovered
         reconfigure = true;
         break;
       }
-      else if (events_built == 0) {
+      else if (events_built == 0 || events_built == -2) {
+	if (events_built == -2) {
+	  ++out_of_sync_count;
+	}
         if (m_status_interval > 0 &&
             time(0) - last_status > m_status_interval) {
           if (IsRunning()) {
@@ -1624,6 +1629,17 @@ void PALPIDEFSProducer::Loop() {
       busy_count = 0;
       reconfigure = true;
     }
+    if (out_of_sync_count>10) {
+      std::string str = "Out-of-sync recovery fails";
+      EUDAQ_ERROR(str);
+      SetStatus(eudaq::Status::LVL_ERROR, str);
+      for (int i = 0; i < m_nDevices; i++) {
+        std::cout << "Reader " << i << ":" << std::endl;
+        m_reader[i]->PrintDAQboardStatus();
+      }
+      out_of_sync_count = 0;
+      reconfigure = true;
+    }
 
     if (reconfigure) {
       std::string msg = "Reconfiguring ...";
@@ -1668,6 +1684,11 @@ void PALPIDEFSProducer::Loop() {
 }
 
 int PALPIDEFSProducer::BuildEvent() {
+  // returns:
+  // - Number of events built
+  // - -1 for an out-of-sync which is not recovered
+  // - -2 for an out-of-sync recovery attempt
+
   if (m_debuglevel > 3)
     std::cout << "BuildEvent..." << std::endl;
 
@@ -1822,9 +1843,10 @@ int PALPIDEFSProducer::BuildEvent() {
           m_next_event[i] = 0x0;
         }
       }
+      result = -2; // recovery attempt
     }
     else {
-      result = -1;
+      result = -1; // no recovery
     }
     delete[] bad_plane;
     bad_plane = 0x0;
