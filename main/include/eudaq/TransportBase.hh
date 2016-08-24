@@ -22,7 +22,12 @@ namespace eudaq {
   class ConnectionInfo {
   public:
     explicit ConnectionInfo(const std::string &name = "")
-        : m_state(0), m_name(name) {}
+        : m_state(0), m_name(name) { }
+
+    ConnectionInfo(const std::string &name, const std::string type)
+        : m_state(0), m_name(name), m_type(type) { }
+
+
     virtual ~ConnectionInfo() {}
     virtual void Print(std::ostream &) const;
     virtual bool Matches(const ConnectionInfo &other) const;
@@ -33,15 +38,31 @@ namespace eudaq {
     void SetType(const std::string &type) { m_type = type; }
     std::string GetName() const { return m_name; }
     void SetName(const std::string &name) { m_name = name; }
-    virtual std::string GetRemote() const { return ""; }
+
+    int GetRemoteInfo() const;
+    virtual std::string GetRemote() const { return m_host; }
+
     static const ConnectionInfo ALL;
 
     virtual ConnectionInfo *Clone() const { return new ConnectionInfo(*this); }
 
+    bool operator < (const ConnectionInfo comp) const
+    {
+      return(GetRemoteInfo() < comp.GetRemoteInfo());
+      /*
+      std::string comp_host = comp.GetRemote();
+      return (
+        std::stoi(m_host.substr(m_host.find(":"))) <
+        std::stoi(comp_host.substr(comp_host.find(":")))
+        ); */
+    }
+
   protected:
     int m_state;
     std::string m_type, m_name;
+    std::string m_host;
     /*
+
        public:
        virtual bool operator = (const ClientID & other) = 0;
        virtual std::string Name() const = 0;

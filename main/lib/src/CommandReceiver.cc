@@ -28,56 +28,76 @@ namespace eudaq {
     }
 
   } // anonymous namespace
+  
 
-  CommandReceiver::CommandReceiver(const std::string &type,
+   CommandReceiver::CommandReceiver(const std::string &type,
                                    const std::string &name,
                                    const std::string &runcontrol,
                                    bool startthread)
       : m_cmdclient(TransportFactory::CreateClient(runcontrol)), m_done(false),
         m_type(type), m_name(name), m_threadcreated(false) {
+
     if (!m_cmdclient->IsNull()) {
+
       std::string packet;
       if (!m_cmdclient->ReceivePacket(&packet, 1000000))
         EUDAQ_THROW("No response from RunControl server");
+
       // check packet is OK ("EUDAQ.CMD.RunControl nnn")
       size_t i0 = 0, i1 = packet.find(' ');
+
       if (i1 == std::string::npos)
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
+
       std::string part(packet, i0, i1);
+
       if (part != "OK")
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
+
       i0 = i1 + 1;
       i1 = packet.find(' ', i0);
+
       if (i1 == std::string::npos)
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
+
       part = std::string(packet, i0, i1 - i0);
+
       if (part != "EUDAQ")
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
+
       i0 = i1 + 1;
       i1 = packet.find(' ', i0);
+
       if (i1 == std::string::npos)
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
+
       part = std::string(packet, i0, i1 - i0);
+
       if (part != "CMD")
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
+
       i0 = i1 + 1;
       i1 = packet.find(' ', i0);
       part = std::string(packet, i0, i1 - i0);
+
       if (part != "RunControl")
         EUDAQ_THROW("Invalid response from RunControl server: '" + packet +
                     "'");
 
       m_cmdclient->SendPacket("OK EUDAQ CMD " + m_type + " " + m_name);
       packet = "";
+
       if (!m_cmdclient->ReceivePacket(&packet, 1000000))
         EUDAQ_THROW("No response from RunControl server");
+
       i1 = packet.find(' ');
+
       if (std::string(packet, 0, i1) != "OK")
         EUDAQ_THROW("Connection refused by RunControl server: " + packet);
     }
@@ -101,9 +121,9 @@ namespace eudaq {
     //     }
   }
 
-  void CommandReceiver::SetStatus(Status::Level level,
+  void CommandReceiver::SetConnectionState(ConnectionState::State state,
                                   const std::string &info) {
-    m_status = Status(level, info);
+    m_connectionstate = ConnectionState(info, state);
   }
 
   void CommandReceiver::Process(int timeout) { m_cmdclient->Process(timeout); }
@@ -112,7 +132,9 @@ namespace eudaq {
     std::cout << "Config:\n" << param << std::endl;
   }
 
-  void CommandReceiver::OnClear() { SetStatus(Status::LVL_NONE, "Wait"); }
+  void CommandReceiver::OnClear() {
+    SetConnectionState(ConnectionState::STATE_UNCONF, "Wait");
+  }
 
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
@@ -127,6 +149,7 @@ namespace eudaq {
       OnIdle();
     }
   }
+  
 
   void CommandReceiver::CommandHandler(TransportEvent &ev) {
     if (ev.etype == TransportEvent::RECEIVE) {
@@ -136,9 +159,15 @@ namespace eudaq {
         param = std::string(cmd, i + 1);
         cmd = std::string(cmd, 0, i);
       }
-      // std::cout << "(" << cmd << ")(" << param << ")" << std::endl;
+      //std::cout << "(" << cmd << ")(" << param << ")" << std::endl;
       if (cmd == "CLEAR") {
         OnClear();
+      } else if (cmd == "INIT") {          
+          std::string section = m_type;
+          if (m_name != "")
+            section += "." + m_name;
+          Configuration conf(param, section);
+          OnInitialise(conf);
       } else if (cmd == "CONFIG") {
         std::string section = m_type;
         if (m_name != "")
@@ -148,9 +177,11 @@ namespace eudaq {
       } else if (cmd == "PREPARE") {
         OnPrepareRun(from_string(param, 0));
       } else if (cmd == "START") {
-        OnStartRun(from_string(param, 0));
+        //if (m_connectionstate.GetState() == eudaq::ConnectionState::STATE_CONF)
+          OnStartRun(from_string(param, 0));
       } else if (cmd == "STOP") {
-        OnStopRun();
+        if(m_connectionstate.GetState() == eudaq::ConnectionState::STATE_RUNNING)
+          OnStopRun();
       } else if (cmd == "TERMINATE") {
         OnTerminate();
       } else if (cmd == "RESET") {
@@ -168,9 +199,11 @@ namespace eudaq {
       } else {
         OnUnrecognised(cmd, param);
       }
-      // std::cout << "Response = " << m_status << std::endl;
+      // std::cout << "Response = " << m_ConnectionState << std::endl;
       BufferSerializer ser;
-      m_status.Serialize(ser);
+
+      //std::cout<<"Sending ConnectionState "<< time(0)<< "\n";
+      m_connectionstate.Serialize(ser);
       m_cmdclient->SendPacket(ser);
     }
   }

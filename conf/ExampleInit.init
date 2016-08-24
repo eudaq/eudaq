@@ -1,0 +1,14 @@
+# This is an example init file, you can adapt it to your needs.
+# All text following a # character is treated as comments
+
+[RunControl]
+
+[DataCollector]
+
+[LogCollector]
+
+[Producer.Example]
+
+[Producer.TLU]
+ErrorHandler=2
+
