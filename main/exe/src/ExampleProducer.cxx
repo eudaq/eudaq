@@ -29,34 +29,42 @@ class ExampleProducer : public eudaq::Producer {
     // This gets called whenever the DAQ is initialised
     virtual void OnInitialise(const eudaq::Configuration & init) {
       try {
-        std::cout << "Initialisation..." << std::endl;
-
+        std::cout << "Reading: " << init.Name() << std::endl;
+        
         // Do any initialisation of the hardware here 
         // "start-up configuration", which is usally done only once in the beginning
         // Configuration file values are accessible as config.Get(name, default)
         m_exampleInitParam = init.Get("InitParameter", 0);
+        
         // send information
-        // as cout in the terminal of your producer
-        std::cout << "Example Initialisation Parameter = " << m_exampleInitParam << std::endl;
+        // Message as cout in the terminal of your producer
+        std::cout << "Initialise with parameter = " << m_exampleInitParam << std::endl;
         // or to the LogCollector, depending which log level you want. These are the possibilities just as an example here:
-        EUDAQ_DEBUG("Debug Message to the LogCollector from ExampleProducer");
-        EUDAQ_THROW("User Message to the LogCollector from ExampleProducer");
-        EUDAQ_EXTRA("Extra Message to the LogCollector from ExampleProducer");
-        EUDAQ_INFO("Info Message to the LogCollector from ExampleProducer");
-        EUDAQ_WARN("Warn Message to the LogCollector from ExampleProducer");
-        EUDAQ_ERROR("Error Message to the LogCollector from ExampleProducer");
-        EUDAQ_USER("User Message to the LogCollector from ExampleProducer");
+        EUDAQ_INFO("Initialise with parameter = " + m_exampleInitParam);
+        //EUDAQ_DEBUG("Debug Message to the LogCollector from ExampleProducer");
+        //EUDAQ_EXTRA("Extra Message to the LogCollector from ExampleProducer");
+        //EUDAQ_INFO("Info Message to the LogCollector from ExampleProducer");
+        //EUDAQ_WARN("Warn Message to the LogCollector from ExampleProducer");
+        //EUDAQ_ERROR("Error Message to the LogCollector from ExampleProducer");
+        //EUDAQ_USER("User Message to the LogCollector from ExampleProducer");
+
+        // EUDAQ_THROW throws an error, thus here goes to catch! With that you can simulate errors...
+        //EUDAQ_THROW("User Message to the LogCollector from ExampleProducer");
 
         // send it to your hardware
         hardware.Setup(m_exampleInitParam);
+        eudaq::mSleep(5000);
 
         // At the end, set the ConnectionState that will be displayed in the Run Control.
         // and set the state of the machine.
         SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
       } 
       catch (...) {
+        // Message as cout in the terminal of your producer
+        std::cout << "Unknown exception" << std::endl;
+        // Message to the LogCollector
+        EUDAQ_ERROR("Error Message to the LogCollector from ExampleProducer");
         // Otherwise, the State is set to ERROR
-        printf("Unknown exception\n");
         SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
       }
     }
@@ -64,7 +72,7 @@ class ExampleProducer : public eudaq::Producer {
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
       try {
-        std::cout << "Configuring: " << config.Name() << std::endl;
+        std::cout << "Reading: " << config.Name() << std::endl;
 
         // Do any configuration of the hardware here
         // Configuration file values are accessible as config.Get(name, default)
