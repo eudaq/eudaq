@@ -10,6 +10,8 @@
 #include <ostream>
 #include <vector>
 
+#include "eudaq/Status.hh"
+
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
 static const std::string EVENT_TYPE = "Example";
@@ -22,70 +24,121 @@ class ExampleProducer : public eudaq::Producer {
     // and the runcontrol connection string, and initialize any member variables.
     ExampleProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol),
-      m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
+      m_run(0), m_ev(0), stopping(false), done(false) {}
+
+    // This gets called whenever the DAQ is initialised
+    virtual void OnInitialise(const eudaq::Configuration & init) {
+      try {
+        std::cout << "Initialisation..." << std::endl;
+
+        // Do any initialisation of the hardware here 
+        // "start-up configuration", which is usally done only once in the beginning
+        // Configuration file values are accessible as config.Get(name, default)
+        m_exampleInitParam = init.Get("InitParameter", 0);
+        // send information
+        // as cout in the terminal of your producer
+        std::cout << "Example Initialisation Parameter = " << m_exampleInitParam << std::endl;
+        // or to the LogCollector, depending which log level you want. These are the possibilities just as an example here:
+        EUDAQ_DEBUG("Debug Message to the LogCollector from ExampleProducer");
+        EUDAQ_THROW("User Message to the LogCollector from ExampleProducer");
+        EUDAQ_EXTRA("Extra Message to the LogCollector from ExampleProducer");
+        EUDAQ_INFO("Info Message to the LogCollector from ExampleProducer");
+        EUDAQ_WARN("Warn Message to the LogCollector from ExampleProducer");
+        EUDAQ_ERROR("Error Message to the LogCollector from ExampleProducer");
+        EUDAQ_USER("User Message to the LogCollector from ExampleProducer");
+
+        // send it to your hardware
+        hardware.Setup(m_exampleInitParam);
+
+        // At the end, set the ConnectionState that will be displayed in the Run Control.
+        // and set the state of the machine.
+        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
+      } 
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+      }
+    }
 
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
+      try {
+        std::cout << "Configuring: " << config.Name() << std::endl;
 
-      std::cout << "Configuring: " << config.Name() << std::endl;
+        // Do any configuration of the hardware here
+        // Configuration file values are accessible as config.Get(name, default)
+        m_exampleConfParam = config.Get("ConfParameter", 0);
+        std::cout << "Example Configuration Parameter = " << m_exampleConfParam << std::endl;
+        hardware.Setup(m_exampleConfParam);
 
-      // Do any configuration of the hardware here
-      // Configuration file values are accessible as config.Get(name, default)
-      m_exampleparam = config.Get("Parameter", 0);
-      std::cout << "Example Parameter = " << m_exampleparam << std::endl;
-      hardware.Setup(m_exampleparam);
-
-      // At the end, set the ConnectionState that will be displayed in the Run Control.
-      // and set the state of the machine.
-      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
+        // At the end, set the ConnectionState that will be displayed in the Run Control.
+        // and set the state of the machine.
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
+      } 
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
+      }
     }
 
     // This gets called whenever a new run is started
     // It receives the new run number as a parameter
+    // And sets the event number to 0 (internally)
     virtual void OnStartRun(unsigned param) {
+      try {
 
-      //For Debugging the Error state of producers:
-      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR);
+        m_run = param;
+        m_ev = 0;
+      
+        std::cout << "Start Run: " << m_run << std::endl;
 
-      m_run = param;
-      m_ev = 0;
-	  
-      std::cout << "Start Run: " << m_run << std::endl;
+        // It must send a BORE (Begin-Of-Run Event) to the Data Collector
+        eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
+        // You can set tags on the BORE that will be saved in the data file
+        // and can be used later to help decoding
+        bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleConfParam));
+        // Starting your hardware
+        hardware.PrepareForRun();
+        // Send the event to the Data Collector
+        SendEvent(bore);
 
-      // It must send a BORE to the Data Collector
-      eudaq::RawDataEvent bore(eudaq::RawDataEvent::BORE(EVENT_TYPE, m_run));
-      // You can set tags on the BORE that will be saved in the data file
-      // and can be used later to help decoding
-      bore.SetTag("EXAMPLE", eudaq::to_string(m_exampleparam));
-      hardware.PrepareForRun();
-      // Send the event to the Data Collector
-      SendEvent(bore);
-
-      // At the end, set the ConnectionState that will be displayed in the Run Control.
-      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
-      started=true;
+        // At the end, set the ConnectionState that will be displayed in the Run Control.
+        SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
+      } 
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Starting Error");
+      }
     }
 
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
-      
-      started=false;
-      // Set a flag to signal to the polling loop that the run is over
-      stopping = true;
+      try {
+        // Set a flag to signal to the polling loop that the run is over and it is in the stopping process
+        stopping = true;
 
-
-      // wait until all events have been read out from the hardware
-      while (stopping) {
-        eudaq::mSleep(20);
-        //std::cout<<"Does hardware have pending? "<<hardware.EventsPending()<<"\n";
+        // wait until all events have been read out from the hardware
+        while (stopping) {
+          eudaq::mSleep(20);
+          //std::cout<<"Does hardware have pending? "<<hardware.EventsPending()<<"\n";
+        }
+        // Send an EORE after all the real events have been sent
+        // You can also set tags on it (as with the BORE) if necessary
+        SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
+        
+        // At the end, set the ConnectionState that will be displayed in the Run Control.
+        // Due to the definition of FSM, it should go to STATE_CONF. 
+        if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+          SetConnectionState(eudaq::ConnectionState::STATE_CONF);
+      } 
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stopping Error");
       }
-      
-      if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
-        SetConnectionState(eudaq::ConnectionState::STATE_CONF);
-      // Send an EORE after all the real events have been sent
-      // You can also set tags on it (as with the BORE) if necessary
-      SendEvent(eudaq::RawDataEvent::EORE("Test", m_run, ++m_ev));
-
     }
 
     // This gets called when the Run Control is terminating,
@@ -95,48 +148,56 @@ class ExampleProducer : public eudaq::Producer {
       done = true;
     }
 
+    // This loop is running in the main
     // This is just an example, adapt it to your hardware
     void ReadoutLoop() {
-      // Loop until Run Control tells us to terminate
-      while (!done) {
-        if (!hardware.EventsPending()) {
-          // No events are pending, so check if the run is stopping
-          if (stopping) {
-            // if so, signal that there are no events left
-            stopping = false;
-          }
-          // Now sleep for a bit, to prevent chewing up all the CPU
-          eudaq::mSleep(20);
-          // Then restart the loop
-          continue;
-        }
-
-
-    		if (GetConnectionState() != eudaq::ConnectionState::STATE_RUNNING)
-    		{
-    			// Now sleep for a bit, to prevent chewing up all the CPU
-    			eudaq::mSleep(20);
-    			// Then restart the loop
-    			continue;
-    		}
-            // If we get here, there must be data to read out
-            // Create a RawDataEvent to contain the event data to be sent
-            eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
-
-            for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
-              // Read out a block of raw data from the hardware
-              std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
-              // Each data block has an ID that is used for ordering the planes later
-              // If there are multiple sensors, they should be numbered incrementally
-
-              // Add the block of raw data to the event
-              ev.AddBlock(plane, buffer);
+      try {
+        // Loop until Run Control tells us to terminate using the done flag
+        while (!done) {
+          if (!hardware.EventsPending()) {
+            // No events are pending, so check if the run is stopping
+            if (stopping) {
+              // if so, signal that there are no events left
+              stopping = false;
             }
-            hardware.CompletedEvent();
-            // Send the event to the Data Collector      
-            SendEvent(ev);
-            // Now increment the event number
-            m_ev++;
+            // Now sleep for a bit, to prevent chewing up all the CPU
+            eudaq::mSleep(20);
+            // Then restart the loop
+            continue;
+          }
+
+          // If the Producer is not in STATE_RUNNING, it will restart the loop
+          if (GetConnectionState() != eudaq::ConnectionState::STATE_RUNNING) {
+            // Now sleep for a bit, to prevent chewing up all the CPU
+            eudaq::mSleep(20);
+            // Then restart the loop
+            continue;
+          }
+
+          // If we get here, there must be data to read out
+          // Create a RawDataEvent to contain the event data to be sent
+          eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
+
+          for (unsigned plane = 0; plane < hardware.NumSensors(); ++plane) {
+            // Read out a block of raw data from the hardware
+            std::vector<unsigned char> buffer = hardware.ReadSensor(plane);
+            // Each data block has an ID that is used for ordering the planes later
+            // If there are multiple sensors, they should be numbered incrementally
+
+            // Add the block of raw data to the event
+            ev.AddBlock(plane, buffer);
+          }
+          hardware.CompletedEvent();
+          // Send the event to the Data Collector      
+          SendEvent(ev);
+          // Now increment the event number
+          m_ev++;
+        } 
+      }
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Error during running");
       }
     }
 
@@ -145,8 +206,8 @@ class ExampleProducer : public eudaq::Producer {
     // It here basically that the example code will compile
     // but it also generates example raw data to help illustrate the decoder
     eudaq::ExampleHardware hardware;
-    unsigned m_run, m_ev, m_exampleparam;
-    bool stopping, done,started;
+    unsigned m_run, m_ev, m_exampleConfParam, m_exampleInitParam;
+    bool stopping, done;
 };
 
 // The main function that will create a Producer instance and run it
