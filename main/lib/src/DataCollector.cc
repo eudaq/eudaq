@@ -139,6 +139,10 @@ namespace eudaq {
   void DataCollector::OnReceive(const ConnectionInfo &id,
                                 std::shared_ptr<Event> ev) {
     Info &inf = m_buffer[GetInfo(id)];
+
+    // Prevent the accumulation of old information from slow producer.
+    if(id.GetType() == "SlowProducer")
+      inf.events.clear();
     inf.events.push_back(ev);
 
     // Print if the received event is the EORE of this producer:
@@ -151,17 +155,10 @@ namespace eudaq {
     // There are two types of producers now: "fast" producer and slow producer.
     // Before starting OnComplete function we need to receive events from all
     // fast producers, but we don't have to wait for all slow producers.
-    // So we count only the number of fast producers enents. And if it exceeds
+    // So we count only the number of fast producers events. And if it exceeds
     // the number of fast producers we can go to the OnComplete function. The
     // id of producers which sent an event are stored in m_ireceived array
     // in order to know which slow producers sent an event.
-
-   /* if (inf.events.size() == 1) {
-        m_ireceived.push_back(GetInfo(id));
-        if(id.GetType() != "SlowProducer")
-          m_fastwaiting++;
-    }
-    */
 
     m_ireceived[GetInfo(id)] = id.GetType();
     int fastwaiting = 0;
@@ -171,7 +168,7 @@ namespace eudaq {
         fastwaiting++;
     }
 
-    if (fastwaiting >= m_buffer.size() - m_slow)
+    if (fastwaiting == m_buffer.size() - m_slow)
       tmp = true;
 
     if (tmp)
