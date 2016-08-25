@@ -612,6 +612,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   m_full_config_v1 = param.Get("FullConfigV1", param.Get("FullConfig", ""));
   m_full_config_v2 = param.Get("FullConfigV2", "");
   m_full_config_v3 = param.Get("FullConfigV3", "");
+  m_full_config_v4 = param.Get("FullConfigV4", "");
 
   m_SCS_charge_start = param.Get("SCSchargeStart", 0);
   m_SCS_charge_stop = param.Get("SCSchargeStop", 50);
@@ -799,7 +800,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     // data taking configuration
     // PrepareEmptyReadout
 
-    if (!(strcmp(dut->GetClassName(), "TpAlpidefs3"))) {
+    if (!(strcmp(dut->GetClassName(), "TpAlpidefs3")) || !(strcmp(dut->GetClassName(), "TpAlpidefs4")) ) {
       //std::cout << "This is " << dut->GetClassName() << std::endl;
       daq_board->ConfigureReadout(3, true, true);
       // buffer depth = 3, 'sampling on rising edge (changed for pALPIDE3)', packet-based mode
@@ -914,6 +915,11 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
         config->GetBoardConfig(idev)->BoardType = 2;
         config->GetBoardConfig(idev)->EnableDDR = false;
         config->GetChipConfig(idev)->ChipType = DUT_PALPIDEFS3;
+      } else if (!ChipType.compare("PALPIDEFS4")) {
+        m_chip_type[idev] = 4;
+        config->GetBoardConfig(idev)->BoardType = 2;
+        config->GetBoardConfig(idev)->EnableDDR = false;
+        config->GetChipConfig(idev)->ChipType = DUT_PALPIDEFS4;
       }
     }
 
@@ -1260,15 +1266,17 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   for (int i = 0; i < m_nDevices; i++) {
     std::string configstr;
 
-    if (m_chip_type[i] == 3) configstr = m_full_config_v3;
+    if (m_chip_type[i] == 4) configstr = m_full_config_v4;
+    else if (m_chip_type[i] == 3) configstr = m_full_config_v3;
     else if (m_chip_type[i] == 2) configstr = m_full_config_v2;
-
     else configstr = m_full_config_v1;
+
     TiXmlDocument doc(configstr.c_str());
     if (!doc.LoadFile()) {
       std::string msg = "Failed to load config file: ";
 
-      if (m_chip_type[i] == 3) msg += m_full_config_v3;
+      if (m_chip_type[i] == 4) msg += m_full_config_v4;
+      else if (m_chip_type[i] == 3) msg += m_full_config_v3;
       else msg += (m_chip_type[i] == 2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
       EUDAQ_ERROR(msg.data());

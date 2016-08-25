@@ -183,7 +183,7 @@ namespace eudaq {
         m_do_SCS[i] = (bool)bore.GetTag<int>(tmp, 0);
 
 #if USE_TINYXML
-        if (m_chip_type[i] == 3){
+        if (m_chip_type[i] >= 3){
           m_Vaux[i] = -10;
           m_VresetP[i] = ParseXML(config, 6, 0, 1, 0);
           m_VresetD[i] = ParseXML(config, 6, 0, 2, 0);
@@ -222,6 +222,7 @@ namespace eudaq {
             &(dynamic_cast<const RawDataEvent *>(&bore))->GetBlock(2 * i);
           m_SCS_points[i] =
             &(dynamic_cast<const RawDataEvent *>(&bore))->GetBlock(2 * i + 1);
+          
           if (!analyse_threshold_scan(
                 m_SCS_data[i]->data(), m_SCS_points[i]->data(), &m_SCS_thr[i],
                 &m_SCS_thr_rms[i], &m_SCS_noise[i], &m_SCS_noise_rms[i],
@@ -282,6 +283,11 @@ namespace eudaq {
           break;
         case 3:
           m_dut[i] = new TpAlpidefs3((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
+          m_daq_board[i] = new TDAQBoard2(0x0, conf->GetBoardConfig());
+          m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
+          break;
+        case 4:
+          m_dut[i] = new TpAlpidefs4((TTestSetup*)0x0, 0, conf->GetChipConfig(), true);
           m_daq_board[i] = new TDAQBoard2(0x0, conf->GetBoardConfig());
           m_daq_board[i]->SetFirmwareVersion(m_fw_version[i]);
           break;
@@ -835,7 +841,10 @@ namespace eudaq {
         lev.parameters().setValue(tmp, m_trigger_delay[id]);
         snprintf(tmp, n_bs, "m_readout_delay_%d", id);
         lev.parameters().setValue(tmp, m_readout_delay[id]);
-        int nSectors = (m_chip_type[id] == 3 ? 8 : 4);
+        int nSectors;
+        if (m_chip_type[id] <= 3) nSectors = 4;
+        else if (m_chip_type[id] == 3) nSectors = 8;
+        else nSectors = 1;
         if (m_do_SCS[id]) {
           for (int i_sector = 0; i_sector < nSectors; ++i_sector) {
             snprintf(tmp, n_bs, "Thr_%d_%d", id, i_sector);
