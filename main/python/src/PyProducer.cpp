@@ -117,11 +117,9 @@ class PyProducer : public eudaq::Producer {
   }
   void SetError(){
     m_internalstate = Error;
-<<<<<<< HEAD
-    SetConnectionState(eudaq::ConnectionState::LVL_ERROR);
-=======
+
     SetConnectionState(eudaq::ConnectionState::STATE_ERROR);
->>>>>>> eudaq/v1.7-dev
+
   }
   bool SendBORE(){
     if (m_internalstate!=StartingRun) return false;
