@@ -8,6 +8,7 @@
 [LogCollector]
 
 [Producer.Example]
+InitParamter = 123
 
 [Producer.TLU]
 ErrorHandler=2

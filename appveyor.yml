@@ -25,10 +25,7 @@ environment:
   BUILD_allproducer: OFF
   BUILD_altro: OFF
   BUILD_altroUSB: OFF
-  BUILD_apixct: OFF
-  BUILD_calice: ON
-  BUILD_ccpdlf: OFF
-  BUILD_clicpix: OFF
+  BUILD_calice: OFF
   BUILD_cmspixel: OFF
   BUILD_depfet: OFF
   BUILD_eudrb: OFF
@@ -39,9 +36,8 @@ environment:
   BUILD_main: OFF
   BUILD_manual: OFF
   BUILD_mimoroma: OFF
-  BUILD_mimosa32: ON
+  BUILD_mimosa32: OFF
   BUILD_miniTLU: OFF
-  BUILD_mupix: OFF
   BUILD_mvd: OFF
   BUILD_ni: ON
   BUILD_nreader: OFF
@@ -50,13 +46,11 @@ environment:
   BUILD_palpidefs: OFF
   BUILD_palpidess: OFF
   BUILD_pixelmanproducer: OFF
-  BUILD_pybar: OFF
   BUILD_python: ON
   BUILD_root: OFF
   BUILD_taki: OFF
   BUILD_timepixdummy: OFF
   BUILD_tlu: ON
-  BUILD_usbpix: OFF
   PYTHON: "C:\\Python35"
   PYTHON_VERSION: "3.5.2" 
   PYTHON_ARCH: "32"
@@ -115,17 +109,17 @@ build_script:
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
-- cmd: echo -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_apixct=%BUILD_apixct% -DBUILD_calice=%BUILD_calice% -DBUILD_ccpdlf=%BUILD_ccpdlf% -DBUILD_clicpix=%BUILD_clicpix% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mupix=%BUILD_mupix% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_pybar=%BUILD_pybar% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% -DBUILD_usbpix=%BUILD_usbpix% ..
+- cmd: echo -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_calice=%BUILD_calice% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% ..
 
-- cmd: cmake -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_apixct=%BUILD_apixct% -DBUILD_calice=%BUILD_calice% -DBUILD_ccpdlf=%BUILD_ccpdlf% -DBUILD_clicpix=%BUILD_clicpix% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mupix=%BUILD_mupix% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_pybar=%BUILD_pybar% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% -DBUILD_usbpix=%BUILD_usbpix% ..
+- cmd: cmake -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_calice=%BUILD_calice% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_explorer=%BUILD_explorer% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_mimosa32=%BUILD_mimosa32% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_palpidess=%BUILD_palpidess% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu%  ..
 
 - cmd: msbuild INSTALL.vcxproj
 
 after_build:
-- cmd: 7z a eudaq_win32_%EUDAQ_LIB_VERSION%.zip %APPVEYOR_BUILD_FOLDER%
+- cmd: 7z a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
 
 artifacts:
-  - path: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
+  - path: eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
     name: Releases
 
 deploy:
