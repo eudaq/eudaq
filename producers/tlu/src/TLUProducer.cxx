@@ -98,6 +98,7 @@ public:
 
   virtual void OnInitialise(const eudaq::Configuration &param) {
     try {
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialisation...");
       std::cout << "Initialiation..." << std::endl;
       if (m_tlu)
         m_tlu = 0;
