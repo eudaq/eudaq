@@ -22,7 +22,6 @@ namespace eudaq
   private:
     std::map<ConnectionInfo, ConnectionState> connection_status_info;
   };
-
 }
 
 #endif // EUDAQ_INCLUDED_MachineState

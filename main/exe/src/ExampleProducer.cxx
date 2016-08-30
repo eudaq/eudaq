@@ -53,7 +53,6 @@ class ExampleProducer : public eudaq::Producer {
 
         // send it to your hardware
         hardware.Setup(m_exampleInitParam);
-        eudaq::mSleep(5000);
 
         // At the end, set the ConnectionState that will be displayed in the Run Control.
         // and set the state of the machine.
@@ -173,7 +172,6 @@ class ExampleProducer : public eudaq::Producer {
             // Then restart the loop
             continue;
           }
-
           // If the Producer is not in STATE_RUNNING, it will restart the loop
           if (GetConnectionState() != eudaq::ConnectionState::STATE_RUNNING) {
             // Now sleep for a bit, to prevent chewing up all the CPU
