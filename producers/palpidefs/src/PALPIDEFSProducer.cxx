@@ -823,7 +823,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
     //tmp_value &= 0xFFFFFF; // narrow down to 24 bits
     tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
-    m_timestamp_full[i] = tmp_value << 24;
+    m_timestamp_full[i] = (m_chip_type[i] >= 3) ? (uint64_t)tmp_value << 24 : 0x0;
 
     std::cout << "Device " << i << " configured." << std::endl;
 
@@ -1566,7 +1566,7 @@ void PALPIDEFSProducer::Loop() {
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
               timestamp = (tmp_value & 0xFFFFFF) << 24;
               tmp_value &= 0xFFC000; // keep only bits not transmitted in the header (47:38)
-              m_timestamp_full[i] = (uint64_t)tmp_value << 24;
+              m_timestamp_full[i] = (m_chip_type[i] >= 3) ? (uint64_t)tmp_value << 24 : 0x0;
 
               address = 0x206; // lower 24bit
               m_reader[i]->GetDAQBoard()->ReadRegister(address, &tmp_value);
