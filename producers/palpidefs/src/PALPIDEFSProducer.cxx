@@ -384,7 +384,7 @@ void DeviceReader::Loop() {
       else if (IsFlushing() && readEvent==-2) {
         ++flushCounter;
       }
-    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<50);
+    } while ((IsRunning() || IsFlushing()) && readEvent<1 && readEvent!=-3 && flushCounter<50 && !IsStopping());
 
     if (length>0 && length < 24) {
       Print(0, "UNEXPECTED: event length shorter than 24 Bytes");
