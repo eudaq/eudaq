@@ -63,17 +63,6 @@ sub-directories from
 ./extern subfolder in your EUDAQ source directory.
 
 
-\subsubsection{VME driver}
-In order to communicate with the \gls{EUDRB} boards a VME library is needed.
-A kernel module is included for the Tsi148 VME bridge,
-for use on a Motorola MVME6100, in the \texttt{extern/Tsi148} subdirectory.
-Installation of this module is beyond the scope of this document.
-
-The \texttt{vme} subdirectory includes code for accessing the VME bus with the Tsi148 module.
-In principle other VME bridges could be used,
-you just need to write a C++ class that inherits from the VMEInterface class
-and implements the necessary methods (look at the TSI148Interface class for an example).
-
 \subsubsection{Qt}
 The graphical interface of EUDAQ uses the Qt graphical framework.
 In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
