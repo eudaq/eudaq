@@ -111,7 +111,9 @@ private:
 
   void updateButtons(int state) {
       if(state == STATE_RUNNING)
-          disableButtons = false;
+        disableButtons = false;
+      if(state == STATE_ERROR)
+        disableButtons = true;
       configLoaded = checkConfigFile();
       configLoadedInit = checkInitFile();
       btnLoadInit->setEnabled(state != STATE_RUNNING && !disableButtons);
