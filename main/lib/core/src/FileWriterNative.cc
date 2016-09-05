@@ -16,7 +16,6 @@ namespace eudaq {
     FileWriterNative(const std::string &);
     virtual void StartRun(unsigned);
     virtual void WriteEvent(const DetectorEvent &);
-    virtual void WriteBaseEvent(const Event&);
     virtual uint64_t FileBytes() const;
     virtual ~FileWriterNative();
 
@@ -45,17 +44,6 @@ namespace eudaq {
     m_ser->Flush();
   }
   
-  void FileWriterNative::WriteBaseEvent(const Event& ev){    
-    if (ev.IsBORE()) {
-      auto det = dynamic_cast<const DetectorEvent*>(&ev);
-      if (det){
-        eudaq::PluginManager::Initialize(*det);
-      }
-    }
-    if (!m_ser) EUDAQ_THROW("FileWriterNative: Attempt to write unopened file");
-    m_ser->write(ev);
-    m_ser->Flush();
-  }
 
   FileWriterNative::~FileWriterNative() {
     delete m_ser;
