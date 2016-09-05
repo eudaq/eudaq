@@ -36,7 +36,6 @@ namespace eudaq {
     virtual ~DataCollector();
 
     void DataThread();
-
   private:
     struct Info {
       std::shared_ptr<ConnectionInfo> id;
