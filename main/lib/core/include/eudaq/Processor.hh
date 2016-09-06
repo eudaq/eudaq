@@ -39,7 +39,7 @@ namespace eudaq {
   using PSWP = ProcessorWP;
   using EVUP = EventUP;
   
-  class DLLEXPORT Processor{
+  class DLLEXPORT Processor: public std::enable_shared_from_this<Processor>{
   public:
     enum STATE:uint32_t{
       STATE_UNCONF,
@@ -91,7 +91,7 @@ namespace eudaq {
     virtual void AddNextProcessor(PSSP ps);
     void AddUpstream(PSWP ps);
     void UpdatePSHub(PSWP ps);
-    void SetThisPtr(PSWP ps){m_ps_this = ps;};
+
     
     PSSP operator>>(PSSP psr);
     PSSP operator>>(std::string stream_str);
@@ -105,13 +105,12 @@ namespace eudaq {
     uint32_t GetID(){return m_psid;};
     STATE GetState(){return m_state;};
     PSSP GetNextPSSP(Processor *p);
-
+    PSSP GetThisPSSP(){return shared_from_this();};
     
   private:
     std::string m_pstype;
     uint32_t m_psid;
     PSWP m_ps_hub;
-    PSWP m_ps_this;
     std::vector<PSWP> m_ps_upstr;
     std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
     
@@ -130,20 +129,11 @@ namespace eudaq {
     std::atomic<int> m_flag;
   };
 
-
-  // class ProcessorBatch: public Processor{
-  // public:
-  //   virtual void AddNextProcessor(PSSP ps);
-
-  // private:
-  //   std::vector<PSSP> m_ps_root;
-  // };
-
 }
-
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
 DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
 DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP psl, std::string cmd_list);
+// DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP ps, eudaq::EventUP ev);
 
 
 #endif

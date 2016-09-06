@@ -11,7 +11,6 @@ ProcessorManager* ProcessorManager::GetInstance(){
 PSSP ProcessorManager::operator>>(PSSP psr){
   m_pslist_root.push_back(psr);
   psr->UpdatePSHub(psr);
-  psr->SetThisPtr(psr);
   psr->RunHubThread();
   return psr;
 }

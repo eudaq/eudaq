@@ -97,15 +97,15 @@ void Processor::AddNextProcessor(PSSP ps){
   m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
   m_evlist_white.clear();
   
-  if(!m_ps_this.lock())
-    std::cerr<<"this is not set for root processor\n";
+  PSSP ps_this = GetThisPSSP();
   
   if(!m_ps_hub.lock())
-    m_ps_hub = m_ps_this;
+    m_ps_hub = ps_this;
   
-  ps->SetThisPtr(ps);
-  ps->AddUpstream(m_ps_this);
+  ps->AddUpstream(ps_this);
   ps->UpdatePSHub(m_ps_hub);
+
+  std::cout<<"append PS "<< ps->GetID()<< "to PS "<<GetID()<<" with hub PS "<< m_ps_hub.lock()->GetID()<<std::endl; 
 }
 
 void Processor::AddUpstream(PSWP ps){
@@ -113,10 +113,10 @@ void Processor::AddUpstream(PSWP ps){
 }
 
 void Processor::UpdatePSHub(PSWP ps){
-  if(m_ps_upstr.size()<1){
+  if(m_ps_upstr.size() < 2){
     m_ps_hub = ps;
     for(auto &e: m_pslist_next){
-      e.first->UpdatePSHub(m_ps_this);
+      e.first->UpdatePSHub(GetThisPSSP());
     }
   }
   //else ignore;
@@ -269,7 +269,7 @@ PSSP Processor::operator>>(std::string stream_str){
 	if(ev_cmd=="DEL") EraseEventType(Event::str2id(ev_type));
       }
     }
-    return m_ps_this.lock();
+    return GetThisPSSP();
   }
   else{
     
@@ -283,7 +283,10 @@ PSSP Processor::operator>>(std::string stream_str){
 
 
 Processor& Processor::operator<<(EVUP ev){
-  Processing(std::move(ev));
+  auto ps_hub = m_ps_hub.lock();
+  auto ps_this = GetThisPSSP();
+  if(ps_hub)
+     ps_hub->RegisterProcessing(ps_this, std::move(ev));
   return *this;
 }
 
@@ -325,14 +328,7 @@ PSSP operator>>(PSSP psl, std::string psr_str){
   return *psl>>psr_str;
 }
 
-
-
-// void ProcessorBatch::AddNextProcessor(PSSP ps){
-//   std::lock_guard<std::mutex> lk_list(m_mtx_list);
-//   m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
-//   m_evlist_white.clear();
-
-//   m_ps_root.push_back(ps);
-//   ps->UpdatePSHub(ps);
-//   ps->SetThisPtr(ps);
+// PSSP operator<<(PSSP ps, EventUP ev){
+//   *ps<<std::move(ev);
+//   return ps;
 // }
