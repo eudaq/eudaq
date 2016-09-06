@@ -498,7 +498,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
                         std::cout << std::dec << "ROC: " << (int) _ReadoutCycle;
                         std::cout << "\tLength[BXings]: " << (int) cycleLengthBxids;
                         std::cout << "\tTrigs: " << (int) _triggersInCycle;
-                        std::cout << "\tlen: " << (0.00000078125) * (timestamp - _acq_start_ts) << " ms";
+                        std::cout << "\tlen: " << 32 * (0.00000078125) * (timestamp - _acq_start_ts) << " ms";
                         std::cout << std::endl;
                         break;
                      case 1:

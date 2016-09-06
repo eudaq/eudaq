@@ -43,6 +43,8 @@ namespace eudaq {
     void MainLoop();//  
     bool OpenConnection();//
     void CloseConnection();//
+    bool OpenConnection_unsafe();//
+    void CloseConnection_unsafe();//
     void SendCommand(const char *command,int size = 0);
 
     virtual void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
@@ -53,7 +55,7 @@ namespace eudaq {
     int _eventNo;
     int _fd;
     //airqui 
-    //pthread_mutex_t _mufd;
+    //    pthread_mutex_t _mufd;
     std::mutex _mufd;
       
     bool _running;
