@@ -61,7 +61,7 @@ namespace eudaq {
 
     unsigned GetRunNumber() const;
     unsigned GetEventNumber() const;
-    timeStamp_t GetTimestamp(size_t i=0) const;
+    timeStamp_t GetTimestamp() const;
 
     size_t   GetSizeOfTimeStamps() const;
     uint64_t getUniqueID() const;
@@ -85,7 +85,6 @@ namespace eudaq {
     
     bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
     bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
-    bool IsEUDAQ2() const { return GetFlags(FLAG_EUDAQ2) != 0; }
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
@@ -95,8 +94,6 @@ namespace eudaq {
     void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
 
     void SetTimeStampToNow(size_t i=0);
-    void setTimeStamp(timeStamp_t timeStamp, size_t i = 0);
-    void pushTimeStamp(timeStamp_t timeStamp){ m_timestamp.push_back(timeStamp); }
     void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
     void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
     uint32_t get_id() const {return m_typeid;};
@@ -115,18 +112,16 @@ namespace eudaq {
     
   protected:
     typedef std::map<std::string, std::string> map_t;
-    uint32_t m_version;
     uint32_t m_typeid; //m_event_type
+    uint32_t m_version;
+    uint32_t m_flags;
     uint32_t m_id_stream;
     uint32_t m_runnumber; //m_id_run
     uint32_t m_eventnumber; //m_id_event
-    uint32_t m_flags;
     uint64_t m_ts_begin;
     uint64_t m_ts_end;
-    std::vector<timeStamp_t> m_timestamp;
-    map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
+    map_t m_tags;
     std::vector<EventSPC> m_sub_events;
-
   };
   // DLLEXPORT std::ostream &  operator<< (std::ostream &, const Event &);
 }

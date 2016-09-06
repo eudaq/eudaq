@@ -18,8 +18,8 @@ namespace eudaq {
     static PluginManager &GetInstance();
 
     static unsigned GetTriggerID(const Event &);
-    static timeStamp_t GetTimeStamp(const Event &, size_t index);
-    static size_t GetTimeStamp_size(const Event &);
+    // static timeStamp_t GetTimeStamp(const Event &, size_t index);
+    // static size_t GetTimeStamp_size(const Event &);
     static int IsSyncWithTLU(eudaq::Event const & ev, eudaq::Event const & tlu);
     static t_eventid getEventId(eudaq::Event const & ev);
 

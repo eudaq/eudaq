@@ -29,7 +29,8 @@ namespace eudaq {
   DetectorEvent::DetectorEvent(const DetectorEvent& det) :Event(det.GetRunNumber(), det.GetEventNumber(), det.GetTimestamp(), det.GetFlags()), m_events(det.m_events)
   {
     m_tags = det.m_tags;
-    m_timestamp = det.m_timestamp;
+    m_ts_begin = det.m_ts_begin;
+    m_ts_end = det.m_ts_end;
     m_typeid = det.m_typeid;
   }
 

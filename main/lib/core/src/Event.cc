@@ -30,61 +30,39 @@ namespace eudaq {
 
   Event::Event(Deserializer & ds) {
     ds.read(m_typeid);
+    ds.read(m_version);
     ds.read(m_flags);
+    ds.read(m_id_stream);
     ds.read(m_runnumber);
     ds.read(m_eventnumber);
-    if (IsEUDAQ2()){
-      ds.read(m_timestamp);
-    }
-    else{
-      uint64_t timestamp;
-      ds.read(timestamp);
-      m_timestamp.push_back(timestamp);
-    }
+    ds.read(m_ts_begin);
+    ds.read(m_ts_end);
     ds.read(m_tags);
   }
 
   Event::Event():m_flags(0), m_runnumber(0), m_eventnumber(0){
-    
   }
 
   
-  Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/) : m_flags(flags | FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
-    m_runnumber(run),
-    m_eventnumber(event)
+  Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/)
+    : m_flags(flags), m_runnumber(run), m_eventnumber(event)
   {
-    m_timestamp.push_back(timestamp);
+    
   }
 
   void Event::Serialize(Serializer & ser) const {
     ser.write(m_typeid);
-#ifdef __FORCE_EUDAQ1_FILES___
-    auto dummy = m_flags & ~Event::FLAG_EUDAQ2;
-    ser.write(m_flags & ~Event::FLAG_EUDAQ2);
-#else
+    ser.write(m_version);
     ser.write(m_flags);
-#endif
-    
+    ser.write(m_id_stream);
     ser.write(m_runnumber);
     ser.write(m_eventnumber);
-#ifdef __FORCE_EUDAQ1_FILES___
-
-    ser.write(m_timestamp.at(0));
-#else
-
-    if (IsEUDAQ2())
-    {
-      ser.write(m_timestamp);
-      
-    }
-    else
-    {
-      ser.write(m_timestamp.at(0));
-    }
-#endif
+    ser.write(m_ts_begin);
+    ser.write(m_ts_end);
     ser.write(m_tags);
   }
-
+  
+  
   void Event::Print(std::ostream & os) const {
     Print(os, 0);
   }
@@ -94,43 +72,24 @@ namespace eudaq {
     os << std::string(offset, ' ') << "<Event> \n";
     os << std::string(offset + 2, ' ') << "<Type>" << id2str(get_id()) << ":" << GetSubType() << "</Type> \n";
     os << std::string(offset + 2, ' ') << "<RunNumber>" << m_runnumber << "</RunNumber>\n";
-    os << std::string(offset + 2, ' ') << "<EventNumber>" << m_eventnumber << "</EventNumber>\n";
-    
-    bool timestampsSet = false;
-    for (auto& e : m_timestamp)
-    {
-      if (e!=NOTIMESTAMP)
-      {
-        if (!timestampsSet)
-        {
-          os << std::string(offset + 2, ' ') << "<Time> \n";
-          timestampsSet = true;
-        }
-        os << std::string(offset +4, ' ') << "0x" << to_hex(e, 16) << ",\n";
-
-      }
-    }
-    if (timestampsSet)
-    {
-      os << std::string(offset + 2, ' ') << "</Time>\n";
-    }
-    if (m_timestamp[0] != NOTIMESTAMP)
+    os << std::string(offset + 2, ' ') << "<EventNumber>" << m_eventnumber << "</EventNumber>\n";    
+    os << std::string(offset + 2, ' ') << "<Time> \n";
+    os << std::string(offset +4, ' ') << "0x" << to_hex(m_ts_begin, 16) << ",\n";
+    os << std::string(offset +4, ' ') << "0x" << to_hex(m_ts_begin, 16) << ",\n";
+    os << std::string(offset + 2, ' ') << "</Time>\n";
     if (m_flags) {
       unsigned f = m_flags;
       bool first = true;
       for (size_t i = 0; f > 0; ++i, f >>= 1) {
         if (f & 1) {
-          if (first)
-          {
+          if (first){
             os << std::string(offset + 2, ' ') << "<Flags> ";
               first = false;
           }
-          else
-          {
+          else{
             os << ", ";
           }
-          if (i < sizeof FLAGNAMES / sizeof *FLAGNAMES)
-          {
+          if (i < sizeof FLAGNAMES / sizeof *FLAGNAMES){
             os << std::string(FLAGNAMES[i]);
           }
           else{
@@ -138,11 +97,9 @@ namespace eudaq {
           }
         }
       }
-      if (first==false)
-      {
+      if (first==false){
         os  << "</Flags> \n";
       }
-
     }
     if (m_tags.size() > 0) {
       os << std::string(offset + 2, ' ') << "<Tags> \n";
@@ -191,7 +148,8 @@ namespace eudaq {
 
   void Event::SetTimeStampToNow(size_t i)
   {
-    m_timestamp[i]=static_cast<uint64_t>(clock());
+    m_ts_begin=static_cast<uint64_t>(clock());
+    m_ts_end=m_ts_begin+1;
   }
 
   bool Event::HasTag(const std::string &name) const{
@@ -212,55 +170,26 @@ namespace eudaq {
     return m_eventnumber;
   }
 
-  Event::timeStamp_t Event::GetTimestamp(size_t i/*=0*/) const
+  Event::timeStamp_t Event::GetTimestamp() const
   {
-    return m_timestamp[i];
+    return m_ts_begin;
   }
 
   void Event::SetTimestampBegin(Event::timeStamp_t t){
-    if(m_timestamp.empty())
-      m_timestamp.push_back(t);
-    else
-      m_timestamp.front() = t;
+    m_ts_begin = t;
   }
   
   void Event::SetTimestampEnd(Event::timeStamp_t t){
-    if(m_timestamp.empty()){
-      m_timestamp.push_back(0);
-    }
-    if(m_timestamp.size()<2)
-      m_timestamp.push_back(t);
-    else
-      m_timestamp.back() = t;
+    m_ts_end = t;
   }
   
   Event::timeStamp_t Event::GetTimestampBegin() const{
-    return m_timestamp.front();
+    return m_ts_begin;
   }
   
   Event::timeStamp_t Event::GetTimestampEnd() const{
-    return m_timestamp.back();
+    return m_ts_end;
   }
-  
-  size_t Event::GetSizeOfTimeStamps() const
-  {
-    return m_timestamp.size();
-  }
-
-  void Event::setTimeStamp(timeStamp_t timeStamp, size_t i/*=0*/)
-  {
-    if (i>=m_timestamp.size())
-    {
-      size_t oldSize = m_timestamp.size();
-      m_timestamp.resize(i + 1);
-      for (auto j = oldSize; j < m_timestamp.size();++j)
-      {
-        m_timestamp[j] = NOTIMESTAMP;
-      }
-    }
-    m_timestamp[i] = timeStamp;
-  }
-
 
   uint64_t Event::getUniqueID() const
   {
@@ -278,9 +207,4 @@ namespace eudaq {
     return Factory<Event>::Create<Deserializer&>(id, ser);
   }
   
-  // std::ostream & operator << (std::ostream &os, const Event &ev) {
-  //   ev.Print(os);
-  //   return os;
-  // }
-
 }

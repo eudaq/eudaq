@@ -25,13 +25,13 @@ namespace eudaq {
 
   }
 
-  DataConverterPlugin::timeStamp_t DataConverterPlugin::GetTimeStamp(const Event& ev, size_t index) const {
-    return ev.GetTimestamp(index);
-  }
+  // DataConverterPlugin::timeStamp_t DataConverterPlugin::GetTimeStamp(const Event& ev, size_t index) const {
+  //   return ev.GetTimestamp(index);
+  // }
 
-  size_t DataConverterPlugin::GetTimeStamp_size(const Event & ev) const {
-    return ev.GetSizeOfTimeStamps();
-  }
+  // size_t DataConverterPlugin::GetTimeStamp_size(const Event & ev) const {
+  //   return ev.GetSizeOfTimeStamps();
+  // }
 
   int DataConverterPlugin::IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event & tluEvent) const {
     // dummy comparator. it is just checking if the event numbers are the same.

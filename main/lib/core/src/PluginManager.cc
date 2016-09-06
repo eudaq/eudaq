@@ -96,7 +96,6 @@ namespace eudaq {
 #endif
 
   StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
-    //StandardEvent event(dev.GetRunNumber(), dev.GetEventNumber(), dev.GetTimestamp());
     StandardEvent event(dev);
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const Event * ev = dev.GetEvent(i);
@@ -191,14 +190,14 @@ namespace eudaq {
     return GetInstance().GetPlugin(ev).isTLU(ev);
   }
 
-  PluginManager::timeStamp_t PluginManager::GetTimeStamp(const Event& ev, size_t index)
-  {
-    return GetInstance().GetPlugin(ev).GetTimeStamp(ev, index);
-  }
+  // PluginManager::timeStamp_t PluginManager::GetTimeStamp(const Event& ev, size_t index)
+  // {
+  //   return GetInstance().GetPlugin(ev).GetTimeStamp(ev, index);
+  // }
 
-  size_t PluginManager::GetTimeStamp_size(const Event & ev)
-  {
-    return GetInstance().GetPlugin(ev).GetTimeStamp_size(ev);
-  }
+  // size_t PluginManager::GetTimeStamp_size(const Event & ev)
+  // {
+  //   return GetInstance().GetPlugin(ev).GetTimeStamp_size(ev);
+  // }
 
 }//namespace eudaq

@@ -94,8 +94,8 @@ namespace eudaq {
     using t_eventid = Event::t_eventid;
     virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &);
     virtual unsigned GetTriggerID(eudaq::Event const &) const;
-    virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const;
-    virtual size_t GetTimeStamp_size(const Event & ev) const;
+    // virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const;
+    // virtual size_t GetTimeStamp_size(const Event & ev) const;
     virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const;
     virtual void setCurrentTLUEvent(eudaq::Event & ev, eudaq::TLUEvent const & tlu);
     virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const;
