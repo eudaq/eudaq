@@ -26,7 +26,7 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
 
 IF(NOT LIBUSB_FOUND)
 # find path of libusb installation in ./extern folder
-file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*usb.h)
+file(GLOB_RECURSE extern_file ${CMAKE_CURRENT_LIST_DIR}/../extern/*usb.h)
 if (extern_file)
     # strip the file and 'include' path away:
     get_filename_component(extern_lib_path "${extern_file}" PATH)
