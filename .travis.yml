@@ -119,8 +119,8 @@ matrix:
 
 before_install:
   - source .travis/before_install.sh
-  - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
-  - if [ $BUILD_rpi-controller == "ON" ]; then source .travis/install_wiringpi.sh; fi
+  - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
+  - if [[ $BUILD_rpi-controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
       
 install:
   - source .travis/install.sh
