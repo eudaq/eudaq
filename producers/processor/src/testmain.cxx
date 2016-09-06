@@ -27,10 +27,13 @@ int main(int argn, char **argc){
   
   psMan
     >>p1
+    // >>"EV(ADD=_DET)"
+    // >>p10
     >>"EV(ADD=_DET)"
-    >>p10
-    >>"EV(ADD=_DET)"
-    >>"ExamplePS(SYS:PSID=11)"
+    >>"DetEventUnpackInsertTimestampPS(SYS:PSID=100)"
+    >>"EV(ADD=_RAW)"
+    >>"SyncByTimestampPS(SYS:PSID=101)"
+    // >>"ExamplePS(SYS:PSID=11)"
     // >>"EventSenderPS(SYS:PSID=6;CONNECT=Producer,p6,tcp://127.0.0.1:40000)"
     ;
 
@@ -39,7 +42,11 @@ int main(int argn, char **argc){
 
   
   p1<<"SYS:PD:RUN";
-  p1.reset();
+
+  std::cout<<"xxxxxxx"<<std::endl;
+  {uint32_t i; std::cin>>i;}
+
+  // p1.reset();
   
   std::cout<<"xxxxxxx"<<std::endl;
   
