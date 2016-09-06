@@ -103,16 +103,16 @@ matrix:
         env: OPTION=old
       - os: osx      
         compiler: gcc    
-        env: OPTION=modern    
+        env: OPTION=modern BUILD_rpi_controller=OFF
       - os: osx
         compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=OFF
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF
       - os: osx
         compiler: clang      
-        env: OPTION=modern
+        env: OPTION=modern BUILD_rpi_controller=OFF
       - os: osx      
         compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF     
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF    
 
 before_install:
   - source .travis/before_install.sh
