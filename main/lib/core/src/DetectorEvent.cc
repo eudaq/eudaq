@@ -10,6 +10,7 @@ namespace eudaq {
 
   namespace{
     auto dummy0 = Factory<Event>::Register<DetectorEvent, Deserializer&>(Event::str2id("_DET"));
+    auto dummy1 = Factory<Event>::Register<DetectorEvent>(Event::str2id("_DET"));
   }
   
 

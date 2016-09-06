@@ -93,6 +93,9 @@ namespace eudaq {
 
     virtual void SetSubType(std::string subtype){ m_type = subtype; }
 
+    virtual uint32_t GetStreamID() const; //TODO
+
+    
   private:
     // private constructor to create BORE and EORE
     // make sure that event number is 0 for BORE

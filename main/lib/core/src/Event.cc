@@ -12,6 +12,9 @@ namespace eudaq {
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
   Factory<Event>::Instance<Deserializer&>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
+  Factory<Event>::Instance<>();
     
   namespace {
     static const char * const FLAGNAMES[] = {
@@ -174,11 +177,6 @@ namespace eudaq {
     return result;
   }
 
-  EventUP Event::Create(Deserializer &ds){
-    uint32_t id;
-    ds.PreRead(id);
-    return Factory<Event>::Create<Deserializer&>(id, ds);
-  }
   
   Event & Event::SetTag(const std::string & name, const std::string & val) {
     m_tags[name] = val;
@@ -203,10 +201,6 @@ namespace eudaq {
       return true;
   }
 
-  void Event::pushTimeStampToNow()
-  {
-    m_timestamp.push_back(static_cast<uint64_t>(clock()));
-  }
 
   unsigned Event::GetRunNumber() const
   {
@@ -223,6 +217,31 @@ namespace eudaq {
     return m_timestamp[i];
   }
 
+  void Event::SetTimestampBegin(Event::timeStamp_t t){
+    if(m_timestamp.empty())
+      m_timestamp.push_back(t);
+    else
+      m_timestamp.front() = t;
+  }
+  
+  void Event::SetTimestampEnd(Event::timeStamp_t t){
+    if(m_timestamp.empty()){
+      m_timestamp.push_back(0);
+    }
+    if(m_timestamp.size()<2)
+      m_timestamp.push_back(t);
+    else
+      m_timestamp.back() = t;
+  }
+  
+  Event::timeStamp_t Event::GetTimestampBegin() const{
+    return m_timestamp.front();
+  }
+  
+  Event::timeStamp_t Event::GetTimestampEnd() const{
+    return m_timestamp.back();
+  }
+  
   size_t Event::GetSizeOfTimeStamps() const
   {
     return m_timestamp.size();
@@ -238,11 +257,9 @@ namespace eudaq {
       {
         m_timestamp[j] = NOTIMESTAMP;
       }
-
     }
     m_timestamp[i] = timeStamp;
   }
-
 
 
   uint64_t Event::getUniqueID() const
@@ -261,9 +278,9 @@ namespace eudaq {
     return Factory<Event>::Create<Deserializer&>(id, ser);
   }
   
-  std::ostream & operator << (std::ostream &os, const Event &ev) {
-    ev.Print(os);
-    return os;
-  }
+  // std::ostream & operator << (std::ostream &os, const Event &ev) {
+  //   ev.Print(os);
+  //   return os;
+  // }
 
 }

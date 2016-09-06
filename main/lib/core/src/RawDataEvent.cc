@@ -76,4 +76,19 @@ namespace eudaq {
     ser.write(m_type);
     ser.write(m_blocks);
   }
+
+  uint32_t RawDataEvent::GetStreamID() const {//TODO, producer
+    uint32_t id = 0;
+    if(m_type=="NI"){
+      id = 10;
+    }else if(m_type=="ITS_ABC"){
+      id = 20;
+    }else if(m_type=="ITS_TTC"){
+      id = 30;
+    }else if(m_type=="USBPIXI4"){
+      id = 40;
+    }
+    return id;
+  };
+  
 }

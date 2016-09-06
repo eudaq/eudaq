@@ -6,8 +6,6 @@
 #include <memory>
 
 namespace eudaq {
-
-
   class RawDataEvent;
 
   class DLLEXPORT DetectorEvent : public Event {
@@ -17,13 +15,14 @@ namespace eudaq {
                            uint64_t timestamp);
 
     explicit DetectorEvent(Deserializer &);
+    explicit DetectorEvent(){};
+
     void AddEvent(EventSP evt);
     virtual void Print(std::ostream &) const;
     virtual void Print(std::ostream &os,size_t offset) const;
     static EventSP ShallowCopy(const DetectorEvent& det);
 
     virtual std::string GetType() const;
-    // virtual unsigned get_id() const {return Event::str2id("_DET");};
 
     size_t NumEvents() const;
     Event *GetEvent(size_t i);
@@ -47,7 +46,6 @@ namespace eudaq {
       }
       return 0;
     }
-
 
   private:
     std::vector<EventSP> m_events;
