@@ -507,7 +507,7 @@ void DeviceReader::Print(int level, const char* text, uint64_t value1,
     //     SetStatus(eudaq::Status::LVL_WARN, msg);
   } else if (level == 3) {
     EUDAQ_ERROR(msg);
-    //     SetStatus(eudaq::Status::LVL_ERROR, msg);
+    //    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg.data());
   }
 }
 
@@ -556,7 +556,7 @@ bool PALPIDEFSProducer::ConfigChip(int id, TpAlpidefs* dut,
     msg += configFile;
     std::cerr << msg.data() << std::endl;
     EUDAQ_ERROR(msg.data());
-    SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg.data());
     return false;
   }
   // TODO return code?
@@ -583,7 +583,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     }
   }
   EUDAQ_INFO("Configuring (" + param.Name() + ")");
-  SetStatus(eudaq::Status::LVL_OK, "Configuring (" + param.Name() + ")");
+  //SetStatus(eudaq::Status::LVL_OK, "Configuring (" + param.Name() + ")");
 
   m_status_interval = param.Get("StatusInterval", -1);
 
@@ -610,7 +610,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
       "Unsupported attempt to change the number of devices!";
     std::cout << error_msg << std::endl;
     EUDAQ_ERROR(error_msg);
-    SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, error_msg);
     return;
   }
 
@@ -847,7 +847,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
     if (!success) {
       std::string msg = "Failed to configure the pulser!";
       EUDAQ_ERROR(msg.data());
-      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg.data());
     }
   }
 
@@ -866,7 +866,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
 
 
   EUDAQ_INFO("Configured (" + param.Name() + ")");
-  SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+  SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
   {
     SimpleLock lock(m_mutex);
     m_configuring = false;
@@ -940,7 +940,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
               m_nDevices, m_testsetup->GetNDAQBoards());
       std::cerr << msg << std::endl;
       EUDAQ_ERROR(msg);
-      SetStatus(eudaq::Status::LVL_ERROR, msg);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg);
       return false;
     }
 
@@ -970,7 +970,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
           sprintf(msg, "Device with board address %d not found", board_address);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
-          SetStatus(eudaq::Status::LVL_ERROR, msg);
+	  SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg);
           return false;
         }
         std::cout << "Enabling device " << board_no << std::endl;
@@ -984,7 +984,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
                   board_address, overflow);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
-          SetStatus(eudaq::Status::LVL_ERROR, msg);
+          SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg);
           return false;
         }
 
@@ -996,7 +996,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
             board_address, overflow);
           std::cerr << msg << std::endl;
           EUDAQ_ERROR(msg);
-          SetStatus(eudaq::Status::LVL_ERROR, msg);
+          SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg);
           return false;
         }
 
@@ -1083,7 +1083,7 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration &param) {
       snprintf(buffer, buffer_size, "S-Curve scan of DUT %d failed!", i);
       std::cout << buffer << std::endl;
       EUDAQ_ERROR(buffer);
-      SetStatus(eudaq::Status::LVL_ERROR, buffer);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, buffer);
       result = false;
     }
   }
@@ -1091,14 +1091,14 @@ bool PALPIDEFSProducer::DoSCurveScan(const eudaq::Configuration &param) {
     char buffer[] = "Powering off the DAQ boards failed!";
     std::cout << buffer << std::endl;
     EUDAQ_ERROR(buffer);
-    SetStatus(eudaq::Status::LVL_ERROR, buffer);
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, buffer);
     result = false;
   }
   if (!InitialiseTestSetup(param)) {
     char buffer[] = "Reinitialising the DAQ boards failed!";
     std::cout << buffer << std::endl;
     EUDAQ_ERROR(buffer);
-    SetStatus(eudaq::Status::LVL_ERROR, buffer);
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, buffer);
     result = false;
   }
   return result;
@@ -1118,7 +1118,7 @@ void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration &param) {
       const char* error_msg = "Failed to configure the back-bias voltage";
       std::cout << error_msg << std::endl;
       EUDAQ_ERROR(error_msg);
-      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, error_msg);
       m_back_bias_voltage = -2.;
     } else {
       std::cout << "Back-bias voltage set!" << std::endl;
@@ -1174,7 +1174,7 @@ void PALPIDEFSProducer::ControlRotaryStages(const eudaq::Configuration &param) {
       const char *error_msg = "Failed to rotate one of the stages";
       std::cout << error_msg << std::endl;
       EUDAQ_ERROR(error_msg);
-      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, error_msg);
       m_dut_angle1 = -2.;
       m_dut_angle2 = -2.;
     } else {
@@ -1203,7 +1203,7 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
       const char* error_msg = "Failed to move the linear stage";
       std::cout << error_msg << std::endl;
       EUDAQ_ERROR(error_msg);
-      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, error_msg);
       m_dut_pos = -2.;
     } else {
       std::cout << "DUT in position!" << std::endl;
@@ -1285,7 +1285,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
       else msg += (m_chip_type[i] == 2) ? m_full_config_v2 : m_full_config_v1;
       std::cerr << msg.data() << std::endl;
       EUDAQ_ERROR(msg.data());
-      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg.data());
       return;
     }
     // 	std::cout << "PARSEXML READTRUE" << std::endl;
@@ -1393,7 +1393,7 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
   }
 
 
-  SetStatus(eudaq::Status::LVL_OK, "Running");
+  SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
   EUDAQ_INFO("Running");
 }
 
@@ -1436,7 +1436,7 @@ void PALPIDEFSProducer::OnStopRun() {
     if (count==1000) {
       std::string msg = "Failed to receive the EOT marker!";
       EUDAQ_ERROR(msg.data());
-      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg.data());
       m_reader[i]->PrintDAQboardStatus();
       resetRequired = true;
     }
@@ -1455,7 +1455,6 @@ void PALPIDEFSProducer::OnStopRun() {
     if (wait_cnt % 1000 == 0) {
       std::string msg = "Still stopping...";
       std::cout << msg << std::endl;
-      SetStatus(eudaq::Status::LVL_WARN, msg.data());
     }
   }
 
@@ -1472,7 +1471,7 @@ void PALPIDEFSProducer::OnStopRun() {
     if (!success) {
       std::string msg = "Failed to configure the pulser!";
       EUDAQ_ERROR(msg.data());
-      SetStatus(eudaq::Status::LVL_ERROR, msg.data());
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, msg.data());
     }
   }
 
@@ -1485,7 +1484,7 @@ void PALPIDEFSProducer::OnStopRun() {
     PowerOffTestSetup();
   }
 
-  SetStatus(eudaq::Status::LVL_OK, "Run Stopped");
+  SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Run Stopped");
 }
 
 void PALPIDEFSProducer::OnTerminate() {
@@ -1500,7 +1499,7 @@ void PALPIDEFSProducer::OnTerminate() {
 
 void PALPIDEFSProducer::OnReset() {
   std::cout << "Reset" << std::endl;
-  SetStatus(eudaq::Status::LVL_OK);
+  SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Reset");
 }
 
 void PALPIDEFSProducer::OnUnrecognised(const std::string &cmd,
@@ -1509,7 +1508,7 @@ void PALPIDEFSProducer::OnUnrecognised(const std::string &cmd,
   if (param.length() > 0)
     std::cout << " (" << param << ")";
   std::cout << std::endl;
-  SetStatus(eudaq::Status::LVL_WARN, "Unrecognised");
+  SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Error");
 }
 
 void PALPIDEFSProducer::Loop() {
@@ -1525,7 +1524,7 @@ void PALPIDEFSProducer::Loop() {
     if (reconfigure_count>5) {
       std::string str = "Reconfigured more than 5 times without taking any new events - halting!";
       EUDAQ_ERROR(str);
-      SetStatus(eudaq::Status::LVL_ERROR, str);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       while (1) {}
     }
 
@@ -1606,7 +1605,7 @@ void PALPIDEFSProducer::Loop() {
             std::cout << "Queue difference: " << diff << std::endl;
             std::string str = "DAQ boards queues differ by more than 1000 events";
             EUDAQ_ERROR(str);
-            SetStatus(eudaq::Status::LVL_ERROR, str);
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
             for (int i = 0; i < m_nDevices; i++) {
               std::cout << "Reader " << i << ":" << std::endl;
               m_reader[i]->PrintDAQboardStatus();
@@ -1625,7 +1624,7 @@ void PALPIDEFSProducer::Loop() {
     if (busy_count>5) {
       std::string str = "DAQ boards stay busy";
       EUDAQ_ERROR(str);
-      SetStatus(eudaq::Status::LVL_ERROR, str);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();
@@ -1636,7 +1635,7 @@ void PALPIDEFSProducer::Loop() {
     if (out_of_sync_count>10) {
       std::string str = "Out-of-sync recovery fails";
       EUDAQ_ERROR(str);
-      SetStatus(eudaq::Status::LVL_ERROR, str);
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();
@@ -1648,7 +1647,7 @@ void PALPIDEFSProducer::Loop() {
     if (reconfigure) {
       std::string msg = "Reconfiguring ...";
       std::cout << msg << std::endl;
-      SetStatus(eudaq::Status::LVL_WARN, msg.data());
+      //SetStatus(eudaq::Status::LVL_WARN, msg.data());
       EUDAQ_WARN(msg);
       for (int i = 0; i < m_nDevices; i++) { // stop the event polling loop
         m_reader[i]->StopDAQ();
@@ -1680,7 +1679,7 @@ void PALPIDEFSProducer::Loop() {
       }
       EUDAQ_INFO("Reconfiguration done.");
       ++reconfigure_count;
-      SetStatus(eudaq::Status::LVL_OK, "Running");
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
       EUDAQ_INFO("Running");
       reconfigure = false;
     }
@@ -1805,7 +1804,7 @@ int PALPIDEFSProducer::BuildEvent() {
       sprintf(msg, "Event %d. Out of sync", m_ev);
       std::string str(msg);
       if (m_oos_ev>5) {
-        SetStatus(eudaq::Status::LVL_WARN, str);
+        //SetStatus(eudaq::Status::LVL_WARN, str);
         EUDAQ_WARN(str);
       }
       else  {
