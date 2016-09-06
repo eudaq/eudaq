@@ -57,7 +57,7 @@ env:
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=OFF
-      - BUILD_rpi_controller=OFF
+      - BUILD_rpi_controller=ON
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
       - BUILD_tlu=ON
@@ -91,16 +91,16 @@ matrix:
    include:   
       - os: linux
         compiler: gcc
-        env: OPTION=modern BUILD_manual=ON BUILD_rpi_controller=ON
+        env: OPTION=modern BUILD_manual=ON
       - os: linux      
         compiler: gcc      
-        env: OPTION=old BUILD_rpi_controller=ON
+        env: OPTION=old
       - os: linux
         compiler: clang      
-        env: OPTION=modern BUILD_rpi_controller=ON
+        env: OPTION=modern
       - os: linux
         compiler: clang      
-        env: OPTION=old BUILD_rpi_controller=ON
+        env: OPTION=old
       - os: osx      
         compiler: gcc    
         env: OPTION=modern    
