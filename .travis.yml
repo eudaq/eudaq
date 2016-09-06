@@ -57,6 +57,7 @@ env:
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=OFF
+      - BUILD_rpi-controller=ON
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
       - BUILD_tlu=ON
@@ -90,16 +91,16 @@ matrix:
    include:   
       - os: linux
         compiler: gcc
-        env: OPTION=modern BUILD_manual=ON
+        env: OPTION=modern BUILD_manual=ON BUILD_rpi-controller=ON
       - os: linux      
         compiler: gcc      
-        env: OPTION=old    
+        env: OPTION=old BUILD_rpi-controller=ON
       - os: linux
         compiler: clang      
-        env: OPTION=modern
+        env: OPTION=modern BUILD_rpi-controller=ON
       - os: linux
         compiler: clang      
-        env: OPTION=old
+        env: OPTION=old BUILD_rpi-controller=ON
       - os: osx      
         compiler: gcc    
         env: OPTION=modern    
@@ -112,10 +113,14 @@ matrix:
       - os: osx      
         compiler: clang      
         env: OPTION=old BUILD_cmspixel=OFF
+      - os: linux     
+        compiler: clang      
+        env: OPTION=old BUILD_cmspixel=OFF        
 
 before_install:
   - source .travis/before_install.sh
   - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
+  - if [ $BUILD_rpi-controller == "ON" ]; then source .travis/install_wiringpi.sh; fi
       
 install:
   - source .travis/install.sh
