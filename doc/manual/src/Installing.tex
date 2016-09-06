@@ -63,17 +63,6 @@ sub-directories from
 ./extern subfolder in your EUDAQ source directory.
 
 
-\subsubsection{VME driver}
-In order to communicate with the \gls{EUDRB} boards a VME library is needed.
-A kernel module is included for the Tsi148 VME bridge,
-for use on a Motorola MVME6100, in the \texttt{extern/Tsi148} subdirectory.
-Installation of this module is beyond the scope of this document.
-
-The \texttt{vme} subdirectory includes code for accessing the VME bus with the Tsi148 module.
-In principle other VME bridges could be used,
-you just need to write a C++ class that inherits from the VMEInterface class
-and implements the necessary methods (look at the TSI148Interface class for an example).
-
 \subsubsection{Qt}
 The graphical interface of EUDAQ uses the Qt graphical framework.
 In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
@@ -196,20 +185,15 @@ This manual compiled from its \LaTeX sources. Requires a working
 
 The producers are stored in the \texttt{./producer} subdirectory and
 include: \texttt{altro}, \texttt{altroUSB}, \texttt{depfet},
-\texttt{eudrb}, \texttt{fortis}, \texttt{mimoroma}, \texttt{mvd},
+\texttt{fortis}, \texttt{mimoroma}, \texttt{mvd},
 \texttt{pixelmanproducer}, and \texttt{taki}. These are
 user-contributed producers for specific detectors inside the EUDET
 telescope.  They should not be compiled unless needed.
 
 A short description of selected producers:
 \begin{description}
-
-\ttitem{producers/eudrb}
-The code for accessing EUDRB boards over VME.  Depends
-on the vme library which will be automatically built
-when \texttt{eudrb} is enabled. This should only be compiled on an
-MVME6100 single-board computer, as it is only compatible with the
-Tundra Tsi148 VME bridge, and PPC processors.
+\item{tlu}
+\item{ni}
 \end{description}
 
 

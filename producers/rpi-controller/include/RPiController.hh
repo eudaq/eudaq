@@ -17,6 +17,7 @@ class RPiController : public eudaq::Controller {
 
 public:
   RPiController(const std::string &name, const std::string &runcontrol);
+  virtual void OnInitialise(const eudaq::Configuration & init);
   virtual void OnConfigure(const eudaq::Configuration &config);
   virtual void OnStartRun(unsigned runnumber);
   virtual void OnStopRun();
