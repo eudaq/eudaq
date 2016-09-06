@@ -54,6 +54,55 @@ namespace eudaq {
   class CaliceGenericConverterPlugin : public DataConverterPlugin {
 
   public:
+<<<<<<< HEAD
+=======
+    virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const
+    {
+      std::string sensortype = "Calice";
+
+
+      // Unpack data
+      const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> ( &ev );
+
+      unsigned int nblock =5; // the first 5 blocks contain information
+      StandardPlane plane0(0, EVENT_TYPE, sensortype);
+      plane0.SetSizeRaw( 36, 8);//36 channels, 4 chips
+
+      while(nblock < rev->NumBlocks()){
+
+	vector<short> data;
+	const RawDataEvent::data_t & bl = rev->GetBlock(nblock++);
+	data.resize(bl.size() / sizeof(short));
+	memcpy(&data[0], &bl[0],bl.size());
+
+	//data[i]=
+	//i=0 --> cycleNr
+	//i=1 --> bunch crossing id
+	//i=2 --> memcell or EvtNr (same thing, different naming)
+	//i=3 --> ChipId
+	//i=4 --> Nchannels per chip (normally 36)
+	//i=5 to NC+4 -->  14 bits that contains TDC and hit/gainbit
+	//i=NC+5 to NC+NC+4  -->  14 bits that contains ADC and again a copy of the hit/gainbit
+
+	for(int ichan=0; ichan<data[4]; ichan++) {
+	  short adc= data[5+data[4]+ichan] % 4096; // extract adc
+	  short gainbit= (data[5+data[4]+ichan] & 0x2000)/8192 ; //extract gainbit
+	  short hitbit = (data[4+data[4]+ichan] & 0x1000)/4096;  //extract hitbit
+
+	  if(data[3]<8)
+	    plane0.PushPixel( ichan, data[3], adc*hitbit);
+	}
+
+      }
+
+      sev.AddPlane( plane0 );
+
+      return true;
+
+    }
+
+
+>>>>>>> v1.7-dev
 
 #if USE_LCIO
     virtual  bool GetLCIOSubEvent(lcio::LCEvent &result, eudaq::Event const &source)  const

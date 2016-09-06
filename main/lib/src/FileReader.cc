@@ -9,6 +9,8 @@
 
 namespace eudaq {
 
+/* The FileReader Class is specifically designed to accept settings from the .conf files and to read in the data as collected from the DataCollector. The FileReader class has two defining constants, the file and the file pattern.
+*/
   FileReader::FileReader(const std::string &file,
                          const std::string &filepattern)
       : m_filename(

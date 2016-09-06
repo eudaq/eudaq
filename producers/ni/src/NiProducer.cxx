@@ -139,18 +139,18 @@ public:
       if (NiConfig) {
         std::cout << "NI crate was Configured with ERRORs " << param.Name()
                   << " " << std::endl;
-        SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
       } else {
         std::cout << "... was Configured " << param.Name() << " " << std::endl;
         EUDAQ_INFO("Configured (" + param.Name() + ")");
-        SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
       }
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
     }
   }
   virtual void OnStartRun(unsigned param) {
@@ -164,9 +164,9 @@ public:
       ev.SetTag("DET", "MIMOSA26");
       ev.SetTag("MODE", "ZS2");
       ev.SetTag("BOARDS", NumBoards);
-      for (unsigned char i = 0; i < 6; i++)
+      for (unsigned int i = 0; i < 6; i++)
         ev.SetTag("ID" + to_string(i), to_string(MimosaID[i]));
-      for (unsigned char i = 0; i < 6; i++)
+      for (unsigned int i = 0; i < 6; i++)
         ev.SetTag("MIMOSA_EN" + to_string(i), to_string(MimosaEn[i]));
       SendEvent(ev);
       eudaq::mSleep(500);
@@ -174,13 +174,13 @@ public:
       ni_control->Start();
       running = true;
 
-      SetStatus(eudaq::Status::LVL_OK, "Started");
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Started");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
     }
   }
   virtual void OnStopRun() {
@@ -193,15 +193,15 @@ public:
       eudaq::mSleep(100);
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
-      SetStatus(eudaq::Status::LVL_OK, "Stopped");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
       SendEvent(eudaq::RawDataEvent::EORE("NI", m_run, m_ev));
 
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
     }
   }
   virtual void OnTerminate() {

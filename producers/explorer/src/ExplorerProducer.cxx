@@ -480,7 +480,7 @@ private:
       FD_ZERO( &fdset );
       FD_SET( fd, &fdset );
 
-      struct timeval tv_timeout = { (int)timeout, timeout*1000000 };
+      struct timeval tv_timeout = { (int)timeout, static_cast<suseconds_t>(timeout*1000000) };
 
       int select_retval = select( fd+1, &fdset, NULL, NULL, &tv_timeout );
 

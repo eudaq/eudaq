@@ -6,7 +6,7 @@ PROJECT( EUDAQ )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 6 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 7 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # some macros are redefined to keep compatability with CMake 2.6

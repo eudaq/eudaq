@@ -752,6 +752,7 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   }
   // Move the linear stage
 //  ControlLinearStage(param);
+  ControlRotaryStages(param);
 #endif
 
   for (int i = 0; i < m_nDevices; i++) {
@@ -1057,7 +1058,8 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
       daq_board->SetPowerOnSequence(1, 0, 0, 0);
       daq_board->SendADCControlReg(ADCConfigReg0, 1,
                                    0); // register 0, self shutdown = 1, off = 0
-      daq_board->ResetBoard(10);
+      daq_board->ResetBoardFPGA(10);
+      daq_board->ResetBoardFX3(10);
     }
   }
   if (m_testsetup) {
@@ -1151,6 +1153,64 @@ void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration &param) {
 #endif
 }
 
+void PALPIDEFSProducer::ControlRotaryStages(const eudaq::Configuration &param) {
+#ifndef SIMULATION
+  // rotary stage
+  // step size: 1 step = 4.091 urad
+
+  m_dut_angle1 = param.Get("DUTangle1", -1.);
+  std::cout << "angle 1: " << m_dut_angle1 << " deg" << std::endl;
+
+  int nsteps1 = (int)(m_dut_angle1/180.*3.14159/(4.091/1e6));
+  std::cout << "   nsteps1: " << nsteps1 << std::endl;
+
+  m_dut_angle2 = param.Get("DUTangle2", -1.); 
+  std::cout << "angle 2: " << m_dut_angle2 << " deg" << std::endl;
+
+  int nsteps2 = (int)(m_dut_angle2/180.*3.14159/(4.091/1e6));
+  std::cout << "   nsteps2: " << nsteps2 << std::endl;
+
+  if (m_dut_angle1 >= 0. && m_dut_angle2 >= 0.) {
+    std::cout << "Rotating DUT..." << std::endl;
+    bool move_failed = false;
+    if (system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 0") == 0) { // init of stage 1 (only one stage sufficient)
+      // rotate both stages to home position
+      //system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 1")
+      //system("${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 2 1")
+      
+      // rotate stages 
+      const size_t buffer_size = 100;
+      char buffer[buffer_size];
+      // rotate stage 1
+      std::cout << "   stage 1..." << std::endl;
+      snprintf(buffer, buffer_size,
+               "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 3 %i", nsteps1);
+      if (system(buffer) != 0)
+        move_failed = true;
+      // rotate stage 2
+      std::cout << "   stage 2..." << std::endl;
+      snprintf(buffer, buffer_size,
+               "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 2 3 %i", nsteps2);
+      if (system(buffer) != 0)
+        move_failed = true;
+
+    } else
+      move_failed = true;
+
+    if (move_failed) {
+      const char *error_msg = "Failed to rotate one of the stages";
+      std::cout << error_msg << std::endl;
+      EUDAQ_ERROR(error_msg);
+      SetStatus(eudaq::Status::LVL_ERROR, error_msg);
+      m_dut_angle1 = -2.;
+      m_dut_angle2 = -2.;
+    } else {
+      std::cout << "DUT in position!" << std::endl;
+    }
+  }
+#endif
+}
+
 void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
 #ifndef SIMULATION
   // linear stage
@@ -1162,7 +1222,7 @@ void PALPIDEFSProducer::ControlLinearStage(const eudaq::Configuration &param) {
       const size_t buffer_size = 100;
       char buffer[buffer_size];
       snprintf(buffer, buffer_size,
-               "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 2 %f", m_dut_pos);
+               "${SCRIPT_DIR}/zaber.py /dev/ttyZABER0 1 5 %f", m_dut_pos);
       if (system(buffer) != 0)
         move_failed = true;
     } else

@@ -2,7 +2,9 @@ option(USE_ROOT "Compiling main library using ROOT" OFF)
 if (USE_ROOT)
    FIND_PACKAGE( ROOT REQUIRED )
 else (USE_ROOT)
+
    FIND_PACKAGE( ROOT )
+
 endif (USE_ROOT)
 
 if (ROOT_FOUND)
@@ -72,7 +74,7 @@ endif ()
 SOURCE_GROUP(plugins .*Plugin.*cc)
 SOURCE_GROUP(FileIO .*File.*cc)
 SOURCE_GROUP(TCPIP .*Transport.*cc)
-SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\CommandReceiver.cc src\\DataCollector.cc src\\DataSender.cc  src\\LogCollector.cc)
+SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\CommandReceiver.cc src\\Controller.cc src\\DataCollector.cc src\\DataSender.cc  src\\LogCollector.cc)
 SOURCE_GROUP(Event .*Event.*cc)
 SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 

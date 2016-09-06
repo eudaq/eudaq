@@ -46,12 +46,12 @@ namespace eudaq {
   }
 
   void DataCollector::OnServer() {
-    m_status.SetTag("_SERVER", m_dataserver->ConnectionString());
+    m_connectionstate.SetTag("_SERVER", m_dataserver->ConnectionString());
   }
 
   void DataCollector::OnGetRun() {
     // std::cout << "Sending run number: " << m_runnumber << std::endl;
-    m_status.SetTag("_RUN", to_string(m_runnumber));
+    m_connectionstate.SetTag("_RUN", to_string(m_runnumber));
   }
 
   void DataCollector::OnConnect(const ConnectionInfo &id) {
@@ -76,6 +76,8 @@ namespace eudaq {
     // if (during run) THROW
   }
 
+/* Upon recieving the Configure command the DataCollector function uses Configure object to obtain configuration setting from the .conf file. The important settings that it aquires are the file Type and Pattern that the DataCollector will write. These settings are stored in the varible m_writer which is an instance of the std File Writer Class. 
+*/
   void DataCollector::OnConfigure(const Configuration &param) {
     m_config = param;
     m_writer = std::shared_ptr<eudaq::FileWriter>(
@@ -106,17 +108,20 @@ namespace eudaq {
       }
       m_numwaiting = 0;
 
-      SetStatus(Status::LVL_OK);
+      SetConnectionState(ConnectionState::STATE_RUNNING);
     } catch (const Exception &e) {
       std::string msg =
           "Error preparing for run " + to_string(runnumber) + ": " + e.what();
       EUDAQ_ERROR(msg);
-      SetStatus(Status::LVL_ERROR, msg);
+      SetConnectionState(ConnectionState::STATE_ERROR);
     }
   }
 
   void DataCollector::OnStopRun() {
     EUDAQ_INFO("End of run " + to_string(m_runnumber));
+    std::cout<<"Stop Run for datacollector called \n";
+    if(m_connectionstate.GetState()!= ConnectionState::STATE_ERROR)
+      SetConnectionState(ConnectionState::STATE_CONF);
     // Leave the file open, more events could still arrive
     // m_ser = counted_ptr<FileSerializer>();
   }
@@ -149,10 +154,10 @@ namespace eudaq {
     std::string evt;
     if (m_eventnumber > 0)
       evt = to_string(m_eventnumber - 1);
-    m_status.SetTag("EVENT", evt);
-    m_status.SetTag("RUN", to_string(m_runnumber));
+    m_connectionstate.SetTag("EVENT", evt);
+    m_connectionstate.SetTag("RUN", to_string(m_runnumber));
     if (m_writer.get())
-      m_status.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
+      m_connectionstate.SetTag("FILEBYTES", to_string(m_writer->FileBytes()));
   }
 
   void DataCollector::OnCompleteEvent() {
@@ -199,6 +204,7 @@ namespace eudaq {
         }
         ev.AddEvent(m_buffer[i].events.front());
         m_buffer[i].events.pop_front();
+        // std::cout << "My size is " << m_buffer[i].events.size() << std::endl;
         if (m_buffer[i].events.size() == 0) {
           m_numwaiting--;
           more = false;
@@ -221,7 +227,7 @@ namespace eudaq {
           std::string msg = "Exception writing to file: ";
           msg += e.what();
           EUDAQ_ERROR(msg);
-          SetStatus(Status::LVL_ERROR, msg);
+          SetConnectionState(ConnectionState::STATE_ERROR);
         }
       } else {
         EUDAQ_ERROR("Event received before start of run");
