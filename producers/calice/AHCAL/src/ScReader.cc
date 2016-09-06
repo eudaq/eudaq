@@ -47,19 +47,23 @@ namespace eudaq {
     // set the connection and send "start runNo"
     //_producer->OpenConnection();
     if( !msg.empty() ) {
+      std::cout<<" opening OnConfigLED "<<std::endl;
       bool connected =  _producer->OpenConnection();
+      std::cout<<connected<< std::endl;
       if(connected){
 	_producer->SendCommand(os.str().c_str());
-	sleep(5);
-	//_producer->CloseConnection();
-
-      } else 	std::cout<<" connexion failed, try configurating again"<<std::endl;
+	std::cout<<" wait 10s OnConfigLED "<<std::endl;
+	sleep(10);
+	std::cout<<" Start CloseConnection OnConfigLED "<<std::endl;
+	_producer->CloseConnection();
+	std::cout<<" End CloseConnection OnConfigLED "<<std::endl;
+      } else 	{
+	std::cout<<" connexion failed, try configurating again"<<std::endl;
+      }
     }
-    //    _producer->CloseConnection();
     std::cout<<" ###################################################  "<<std::endl;
     std::cout<<" SYSTEM READY "<<std::endl;
     std::cout<<" ###################################################  "<<std::endl;
-
 
   }
 
@@ -72,6 +76,7 @@ namespace eudaq {
 
   void ScReader::Read(std::deque<char> & buf, std::deque<eudaq::RawDataEvent *> & deqEvent)
   {
+
     try{
       while(1){
 
@@ -101,7 +106,8 @@ namespace eudaq {
 	      ibuf+=2;    
 	      int ledOnOff = (unsigned char)buf[ibuf];//led on/off
 	      ledInfo.push_back(ledOnOff);
-	      cout<< " led "<< ibuf<<endl;
+	      cout<< " Layer="<< ledId<<" Voltage= "<<ledV<< " on/off="<< ledOnOff<<endl;
+	      EUDAQ_INFO(" Layer=" + to_string(ledId) + " Voltage=" + to_string(ledV) + " on/off=" + to_string(ledOnOff) );
 	    }        
 	    buf.pop_front();
 	  }  
@@ -124,9 +130,11 @@ namespace eudaq {
     	if(buf.size() <= e_sizeLdaHeader) throw 0; // all data read
 
     	length = (((unsigned char)buf[3] << 8) + (unsigned char)buf[2]);//*2;
-
-    	if(buf.size() <= e_sizeLdaHeader + length) throw 0;
-
+	
+    	if(buf.size() <= e_sizeLdaHeader + length) {
+	  throw 0;
+	}
+	
     	unsigned int cycle = (unsigned char)buf[4];
     	unsigned char status = buf[9];
  
@@ -153,6 +161,7 @@ namespace eudaq {
 
 	if(!(status & 0x40)){
     	  //We'll drop non-data packet;
+	  //cout << "Non data packet" << endl;
     	  buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
     	  continue;
     	}
@@ -171,14 +180,15 @@ namespace eudaq {
 	// remove used buffer
     	buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
       }
-    }catch(int i){} // throw if data short
+    }catch(int i){ } // throw if data short
+
    
   }
 
   std::deque<eudaq::RawDataEvent *> ScReader::NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *>  deqEvent, bool TempFlag, int cycle)
   {
 
-   if( deqEvent.size()==0 || (!TempFlag && ((_cycleNo +256) % 256) != cycle)  ){
+    if( deqEvent.size()==0 || (!TempFlag && ((_cycleNo +256) % 256) != cycle)  ){
       // new event arrived: create RawDataEvent
       _cycleNo ++;
       RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _cycleNo);
@@ -195,22 +205,29 @@ namespace eudaq {
       nev->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
       nev->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
       deqEvent.push_back(nev);
+      
+      if( (length - 12) % 146 ) {
+	//we check, that the data packets from DIF have proper sizes. The RAW packet size can be checked 
+	// by complying this condition:  
+	EUDAQ_WARN("Wrong LDA packet length = " + to_string(length)+ "in Run=" +to_string(_runNo) + " ,cycle= "+ to_string(_cycleNo));
+	// throw 0;
+      }
     } 
-   return deqEvent;
+    return deqEvent;
   }
 
   void ScReader::readTemperature(std::deque<char> buf)
   {
       
-      int lda = buf[6];
-      int port = buf[7];
-      short data = ((unsigned char)buf[23] << 8) + (unsigned char)buf[22];
+    int lda = buf[6];
+    int port = buf[7];
+    short data = ((unsigned char)buf[23] << 8) + (unsigned char)buf[22];
       
-      _vecTemp.push_back(make_pair(make_pair(lda,port),data));
+    _vecTemp.push_back(make_pair(make_pair(lda,port),data));
   }
 
 
-void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, vector<int> intVector)
+  void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, vector<int> intVector)
 
   {
     RawDataEvent *ev = deqEvent.back();
@@ -250,8 +267,11 @@ void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, in
     deque<char>::iterator it = buf.begin() + e_sizeLdaHeader;
      
     // footer check: ABAB
-    if((unsigned char)it[length-2] != 0xab || (unsigned char)it[length-1] != 0xab)
+    if((unsigned char)it[length-2] != 0xab || (unsigned char)it[length-1] != 0xab) {
       cout << "Footer abab invalid:" << (unsigned int)(unsigned char)it[length-2] << " " << (unsigned int)(unsigned char)it[length-1] << endl;
+      EUDAQ_WARN("Footer abab invalid:" + to_string((unsigned int)(unsigned char)it[length-2]) + " " + 
+		 to_string((unsigned int)(unsigned char)it[length-1]) ); 
+    }
     
     int chipId = (unsigned char)it[length-3] * 256 + (unsigned char)it[length-4];
 
@@ -276,6 +296,7 @@ void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, in
 
       int bxididx = e_sizeLdaHeader + length - 4 - (nscai-tr) * 2;
       int bxid = (unsigned char)buf[bxididx + 1] * 256 + (unsigned char)buf[bxididx];
+      if( bxid > 4096)  EUDAQ_WARN(" bxid = " + to_string(bxid) ); 
       vector<int> infodata;
       infodata.push_back((int)_cycleNo);
       infodata.push_back(bxid);

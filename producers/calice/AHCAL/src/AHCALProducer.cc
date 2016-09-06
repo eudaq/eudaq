@@ -29,6 +29,7 @@ namespace eudaq {
   AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
     Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
   {
+    //    pthread_mutex_init(&_mufd,NULL);//tests
 
   }
 
@@ -148,20 +149,40 @@ namespace eudaq {
     cout<< "  start open connection "<< endl;
 
     // open socket
-
     struct sockaddr_in dstAddr;
     memset(&dstAddr, 0, sizeof(dstAddr));
     dstAddr.sin_port = htons(_port);
     dstAddr.sin_family = AF_INET;
     dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 
-    std::mutex _mufdOpenConnection;
-    std::unique_lock<std::mutex> myLock(_mufdOpenConnection);
+    std::unique_lock<std::mutex> myLock(_mufd);
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-
     if(ret != 0)  return 0;
+
     cout<< "  stop open connection "<< endl;
+    return 1;
+
+  }
+
+ bool AHCALProducer::OpenConnection_unsafe()
+  {
+    cout<< "  start unsafe open connection "<< endl;
+
+    // open socket
+    struct sockaddr_in dstAddr;
+    memset(&dstAddr, 0, sizeof(dstAddr));
+    dstAddr.sin_port = htons(_port);
+    dstAddr.sin_family = AF_INET;
+    dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
+
+    std::mutex _mufd2;
+    std::unique_lock<std::mutex> myLock(_mufd2);
+    _fd = socket(AF_INET, SOCK_STREAM, 0);
+    int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
+    if(ret != 0)  return 0;
+
+    cout<< "  stop unsafe open connection "<< endl;
     return 1;
 
   }
@@ -174,10 +195,18 @@ namespace eudaq {
     std::unique_lock<std::mutex> myLock(_mufd);
     close(_fd);
     _fd = 0;
-    //airqui   14/01/2016 // pthread_mutex_unlock(&_mufd);
-    cout<< "  stop close connection "<< endl;
+    //airqui   14/01/2016 //pthread_mutex_unlock(&_mufd);
+    cout<< "  stop close connection "<< endl;   
+  }
 
-    
+  void AHCALProducer::CloseConnection_unsafe()
+  {
+    cout<< "  start unsafe close connection "<< endl;
+    std::mutex _mufd2;
+    std::unique_lock<std::mutex> myLock(_mufd2);
+    close(_fd);
+    _fd = 0;
+    cout<< "  stop unsafe close connection "<< endl;   
   }
   
   // send a string without any handshaking
@@ -217,13 +246,18 @@ namespace eudaq {
 
   void AHCALProducer::MainLoop()
   {
+
+    std::cout<<" Main loop " <<std::endl;
+
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
 
     while(true){
+      //std::cout<<" while true" <<std::endl;
       // wait until configured and connected
       std::unique_lock<std::mutex> myLock(_mufd);
+      //pthread_mutex_lock(&_mufd);
 
       const int bufsize = 4096;
       // copy to C array, then to vector
@@ -233,6 +267,7 @@ namespace eudaq {
 
       //      if file is not ready  just wait
       if(_fd <= 0 || !_running ){
+	myLock.unlock();
 	::usleep(1000);
 	continue;
       }
