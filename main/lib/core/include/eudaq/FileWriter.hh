@@ -29,7 +29,6 @@ namespace eudaq {
   public:
     FileWriter();
     virtual void StartRun(unsigned runnumber) = 0;
-    virtual void WriteBaseEvent(const Event&);
     virtual void WriteEvent(const DetectorEvent &) = 0;
     virtual uint64_t FileBytes() const = 0;
     void SetFilePattern(const std::string &p) { m_filepattern = p; }
