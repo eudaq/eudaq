@@ -112,7 +112,7 @@ matrix:
         env: OPTION=modern BUILD_rpi_controller=OFF
       - os: osx      
         compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF    
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF     
 
 before_install:
   - source .travis/before_install.sh
