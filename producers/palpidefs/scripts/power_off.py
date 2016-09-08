@@ -3,7 +3,7 @@
 import serial
 import sys
 import time
-import hameg2030 as h
+import hameg as h
 
 
 def main():

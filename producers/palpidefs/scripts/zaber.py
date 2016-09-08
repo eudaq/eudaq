@@ -41,6 +41,9 @@ class Zaber:
     def getpos(self):
         return self.connection.send(self.id,60,0)
 
+    def set_speed(self):
+        return self.connection.send(self.id,42, 1075) # set the zaber moving speed of 1mm/s 
+
 def main():
     # set up the device
     # zaber.py <device> <id> <mode> <value>
@@ -76,6 +79,7 @@ def main():
         stage.move_rel(int(sys.argv[4]))
 
     elif mode==5: # move in milimeters
+        stage.set_speed()
         stage.move_abs(int(float(sys.argv[4])/1e-3/0.09921875))
         # moved successfully?
         if abs(float(int(stage.getpos())*1e-3*0.09921875)-float(sys.argv[4]))>1.e-4:
