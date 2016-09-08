@@ -194,7 +194,7 @@ namespace eudaq {
       RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _cycleNo);
       string s = "EUDAQDataScCAL";
       nev->AddBlock(0,s.c_str(), s.length());
-      s = "i:CycleNr:i:BunchXID;i:EvtNr;i:ChipID;i:NChannels:i:TDC14bit[NC];i:ADC14bit[NC]";
+      s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
       nev->AddBlock(1,s.c_str(), s.length());
       unsigned int times[1];
       struct timeval tv;
@@ -204,14 +204,19 @@ namespace eudaq {
       nev->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
       nev->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
       nev->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
-      deqEvent.push_back(nev);
-      
-      if( (length - 12) % 146 ) {
+
+
+     if( (length - 12) % 146 ) {
 	//we check, that the data packets from DIF have proper sizes. The RAW packet size can be checked 
 	// by complying this condition:  
 	EUDAQ_WARN("Wrong LDA packet length = " + to_string(length)+ "in Run=" +to_string(_runNo) + " ,cycle= "+ to_string(_cycleNo));
-	// throw 0;
-      }
+	nev->SetTag("DAQquality",0);
+     } else 
+       nev->SetTag("DAQquality",1);
+     
+      deqEvent.push_back(nev);
+      
+ 
     } 
     return deqEvent;
   }
