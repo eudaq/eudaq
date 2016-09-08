@@ -79,7 +79,9 @@ namespace eudaq {
     int _port; // input port at network mode
     std::string _ipAddress; // input address at network mode
 
-     std::deque<eudaq::RawDataEvent *> deqEvent;
+    std::time_t _last_readout_time; //last time when there was any data from AHCAL
+
+    std::deque<eudaq::RawDataEvent *> deqEvent;
 
 
 
