@@ -2,9 +2,9 @@
 
 LOGFILE=$1
 
-cat $1 | grep -v WARN | grep -v Reading | grep -v mutex | grep -v Preparing | grep -v Configured | grep -v "End of run" | grep -v Stopping | grep -v "Moving" | grep -v "Event limit" | sed -r 's/^.{5}//' | cut -f 1 -d "/" | sed 's/RunControl//g' | sed 's/DataCollector//g' | sed 's/Configuring/\nConfiguring/g' | grep -v "Out of sync" | grep -v "Connection" | grep -v "started" | grep -v "Disconnected" | grep -v "Terminating" | while read l
+cat $1 | grep -v WARN | grep -v Reading | grep -v mutex | grep -v Preparing | grep -v Reconfiguration | grep -v "End of run" | grep -v Stopping | grep -v "Moving" | grep -v "Event limit" | sed -r 's/^.{5}//' | cut -f 1- -d "/" | sed 's/RunControl//g' | sed 's/DataCollector//g' | sed 's/Configuring/\nConfiguring/g' | grep -v "Out of sync" | grep -v "Connection" | grep -v "started" | grep -v "Disconnected" | grep -v "Terminating" | grep -v "Out-of-sync" | while read l
 do
-    #echo $l
+#    echo $l
     if [ "${#l}" -eq 0 ]
     then
         echo -e $RUN_NUMBER'\t'$RUN_START_DATE'\t'$RUN_START_TIME'\t'$RUN_END_TIME'\t'$EVENT_COUNT'\t'$CONFIG_FILE
@@ -18,7 +18,8 @@ do
     fi
     if [[ $l == Configuring* ]]
     then
-        CONFIG_FILE=$(echo $l | cut -f2 -d"(" | cut -f1 -d")")".conf"
+#        echo $l
+        CONFIG_FILE=$(echo $l | cut -f2 -d"(" | cut -f1 -d")" | rev | cut -f 1 -d"/" | gawk '{ print gensub(/fnoc./, "", 1) }' | rev )".conf"
     fi
     if [[ $l == Starting\ Run* ]]
     then

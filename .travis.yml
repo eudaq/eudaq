@@ -39,24 +39,22 @@ env:
       - BUILD_depfet=OFF
       - BUILD_eudrb=OFF
       - BUILD_example=OFF
-      - BUILD_explorer=OFF
       - BUILD_fortis=OFF
       - BUILD_gui=ON
       - BUILD_main=OFF
       - BUILD_manual=OFF
       - BUILD_mimoroma=OFF
-      - BUILD_mimosa32=OFF
       - BUILD_miniTLU=OFF
       - BUILD_mvd=OFF
       - BUILD_ni=ON
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=ON
-      - BUILD_palpidefs=OFF
-      - BUILD_palpidess=OFF
+      - BUILD_palpidefs=ON
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=OFF
+      - BUILD_rpi_controller=ON
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
       - BUILD_tlu=ON
@@ -93,7 +91,7 @@ matrix:
         env: OPTION=modern BUILD_manual=ON
       - os: linux      
         compiler: gcc      
-        env: OPTION=old    
+        env: OPTION=old
       - os: linux
         compiler: clang      
         env: OPTION=modern
@@ -102,20 +100,21 @@ matrix:
         env: OPTION=old
       - os: osx      
         compiler: gcc    
-        env: OPTION=modern    
+        env: OPTION=modern BUILD_rpi_controller=OFF
       - os: osx
         compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=OFF
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF
       - os: osx
         compiler: clang      
-        env: OPTION=modern
+        env: OPTION=modern BUILD_rpi_controller=OFF
       - os: osx      
         compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF     
 
 before_install:
   - source .travis/before_install.sh
-  - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
+  - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
+  - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
       
 install:
   - source .travis/install.sh
@@ -128,7 +127,7 @@ before_script:
 
 script:
   - cd build  
-  - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_calice=$BUILD_calice -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_eudrb=$BUILD_eudrb -DBUILD_example=$BUILD_example -DBUILD_explorer=$BUILD_explorer -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_mimosa32=$BUILD_mimosa32 -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_mvd=$BUILD_mvd -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs -DBUILD_palpidess=$BUILD_palpidess -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu ..
+  - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_calice=$BUILD_calice -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_eudrb=$BUILD_eudrb -DBUILD_example=$BUILD_example -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_mvd=$BUILD_mvd -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_rpi-controller=$BUILD_rpi_controller -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu ..
   - make install
 
 before_deploy:

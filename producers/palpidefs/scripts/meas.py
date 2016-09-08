@@ -3,7 +3,7 @@
 import serial
 import sys
 import time
-import hameg2030 as h
+import hameg as h
 
 def main():
     of_filepath=sys.argv[1] # where should the log file be written to

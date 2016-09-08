@@ -20,6 +20,22 @@ RPiController::RPiController(const std::string &name,
 			     const std::string &runcontrol)
   : eudaq::Controller(name, runcontrol), m_terminated(false), m_name(name), m_pinnr(0), m_waiting_time(4000) { }
 
+void RPiController::OnInitialise(const eudaq::Configuration & init) {
+      try {
+        std::cout << "Reading: " << init.Name() << std::endl;
+
+        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
+      } 
+      catch (...) {
+        // Message as cout in the terminal of your producer
+        std::cout << "Unknown exception" << std::endl;
+        // Message to the LogCollector
+        EUDAQ_ERROR("Unknown error during initialization from rpi controller");
+        // Otherwise, the State is set to ERROR
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+      }
+}
+
 void RPiController::OnConfigure(const eudaq::Configuration &config) {
 
   std::cout << "Configuring: " << config.Name() << std::endl;
@@ -47,10 +63,10 @@ void RPiController::OnConfigure(const eudaq::Configuration &config) {
   digitalWrite(m_pinnr, 0);
 
   try {
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
   }
 }
 
@@ -67,10 +83,10 @@ void RPiController::OnStartRun(unsigned runnumber) {
     EUDAQ_INFO(string("GPIO pin " + std::to_string(m_pinnr) + " now high."));
 
 
-    SetStatus(eudaq::Status::LVL_OK, "Running");
+    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
   }
 }
 
@@ -83,13 +99,13 @@ void RPiController::OnStopRun() {
     digitalWrite(m_pinnr, 0);
     EUDAQ_INFO(string("GPIO pin " + std::to_string(m_pinnr) + " now low."));
     
-    SetStatus(eudaq::Status::LVL_OK, "Stopped");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
   } catch (const std::exception &e) {
     printf("While Stopping: Caught exception: %s\n", e.what());
-    SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
   } catch (...) {
     printf("While Stopping: Unknown exception\n");
-    SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
   }
 }
 
