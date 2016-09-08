@@ -2,6 +2,7 @@
 #define EUDAQ_INCLUDED_TransportTCP
 
 #include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportBase.hh"
 #include "eudaq/Platform.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
@@ -23,7 +24,7 @@ namespace eudaq {
   class ConnectionInfoTCP : public ConnectionInfo {
   public:
     ConnectionInfoTCP(SOCKET fd, const std::string &host = "")
-        : m_fd(fd), m_host(host), m_len(0), m_buf("") {}
+        : m_fd(fd), m_len(0), m_buf(""){ m_host=host;}
     void append(size_t length, const char *data);
     bool havepacket() const;
     std::string getpacket();
@@ -43,7 +44,6 @@ namespace eudaq {
   private:
     void update_length(bool = false);
     SOCKET m_fd;
-    std::string m_host;
     size_t m_len;
     std::string m_buf;
   };

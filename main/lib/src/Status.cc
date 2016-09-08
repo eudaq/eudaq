@@ -9,7 +9,8 @@ namespace eudaq {
     ds.read(m_level);
     ds.read(m_msg);
     ds.read(m_tags);
-  }
+  } 
+
 
   void Status::Serialize(Serializer &ser) const {
     ser.write(m_level);

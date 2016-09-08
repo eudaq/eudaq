@@ -29,7 +29,7 @@ class PyLogCollector : public eudaq::LogCollector {
     }
     virtual void OnConfigure(const std::string & param) {
       std::cout << "Configure: " << param << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF);
     }
     virtual void OnStartRun(unsigned param) {
       std::cout << "Start Run: " << param << std::endl;
@@ -43,16 +43,16 @@ class PyLogCollector : public eudaq::LogCollector {
     }
     virtual void OnReset() {
       std::cout << "Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF);
     }
     virtual void OnStatus() {
-      std::cout << "Status - " << m_status << std::endl;
+      std::cout << "ConnectionState - " << m_connectionstate << std::endl;
     }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::LVL_ERROR, "Just testing");
+      //SetConnectionState(eudaq::ConnectionState::LVL_ERROR, "Just testing");
     }
     int m_loglevel;
     bool done;

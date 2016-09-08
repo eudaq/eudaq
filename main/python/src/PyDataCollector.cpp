@@ -21,11 +21,11 @@ class PyDataCollector : public eudaq::DataCollector {
       std::cout << "[PyDataCollector] Configuring (" << param.Name() << ")..." << std::endl;
       DataCollector::OnConfigure(param);
       std::cout << "[PyDataCollector] ...Configured (" << param.Name() << ")" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
     }
     virtual void OnStartRun(unsigned param) {
       DataCollector::OnStartRun(param);
-      SetStatus(eudaq::Status::LVL_OK);
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING);
     }
     //   virtual bool OnStartRun(unsigned param) {
     //     std::cout << "Start Run: " << param << std::endl;
@@ -41,17 +41,17 @@ class PyDataCollector : public eudaq::DataCollector {
 
     virtual void OnReset() {
       std::cout << "[PyDataCollector] Reset" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK);
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF);
     }
     //   virtual void OnStatus() {
     //     DataCollector::OnStatus();
-    //     //std::cout << "Status - " << m_status << std::endl;
+    //     //std::cout << "ConnectionState - " << m_connectionstate << std::endl;
     //   }
     virtual void OnUnrecognised(const std::string & cmd, const std::string & param) {
       std::cout << "[PyDataCollector] Unrecognised: (" << cmd.length() << ") " << cmd;
       if (param.length() > 0) std::cout << " (" << param << ")";
       std::cout << std::endl;
-      SetStatus(eudaq::Status::LVL_WARN, "Just testing");
+      //SetConnectionState(eudaq::ConnectionState::LVL_WARN, "Just testing");
     }
 };
 

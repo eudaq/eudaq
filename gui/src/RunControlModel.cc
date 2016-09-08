@@ -20,7 +20,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
+    return m_id->IsEnabled() ? to_string(m_connectionstate).c_str() : "DEAD";
   case 3:
     return m_id->GetRemote().c_str();
   default:
@@ -57,7 +57,7 @@ void RunControlModel::newconnection(const eudaq::ConnectionInfo &id) {
   size_t pos = it - m_disp.begin();
   beginInsertRows(QModelIndex(), pos, pos);
   m_disp.insert(it, m_data.size() - 1);
-  endInsertRows();
+  endInsertRows(); 
 }
 
 void RunControlModel::disconnected(const eudaq::ConnectionInfo &id) {
@@ -66,18 +66,19 @@ void RunControlModel::disconnected(const eudaq::ConnectionInfo &id) {
       m_data[i].SetConnected(false);
       break;
     }
-  }
+  } 
   UpdateDisplayed();
 }
 
-void RunControlModel::SetStatus(const eudaq::ConnectionInfo &id,
-                                eudaq::Status status) {
+void RunControlModel::SetConnectionState(const eudaq::ConnectionInfo &id,
+                                eudaq::ConnectionState connectionstate) {
+  
   for (size_t i = 0; i < m_data.size(); ++i) {
     if (id.Matches(m_data[i].GetId())) {
-      m_data[i].SetStatus(status);
+      m_data[i].SetConnectionState(connectionstate);
       break;
     }
-  }
+  } 
   UpdateDisplayed();
 }
 
@@ -94,20 +95,39 @@ void RunControlModel::UpdateDisplayed() {
     emit dataChanged(createIndex(0, 0), createIndex(m_data.size() - 1, 0));
   }
 }
+/*Check Configured is a function of RunControlModel that goes through the list of connections stored in m_data and determines if they are all configured.
+In the case that all are configured this function returns true,
+In the case that one of the connections is not configured this function returns false.
+*/
+bool RunControlModel::CheckConfigured() {
+  std::string connectionState; 
+  for(RunControlConnection i: m_data){
+    connectionState = i[2].toStdString();
+    //std::cout<<"ConnectionState is: "<< stdString<<" Bool Test:"<<(stdString.size()<5) <<"\n";
+    //Currently the test for configuration is based on the length of the state string. This should be
+    //implemeted differently
+    if(connectionState.size()<5)
+	    return false;  
+  }
 
-int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
+  
+    return true;
+}
+int RunControlModel::rowCount(const QModelIndex & /*parent*/) const 
+{
   return m_data.size();
+
 }
 
 int RunControlModel::columnCount(const QModelIndex & /*parent*/) const {
   return RunControlConnection::NumColumns();
 }
 
-int RunControlModel::GetLevel(const QModelIndex &index) const {
+int RunControlModel::GetState(const QModelIndex &index) const {
   const RunControlConnection &conn = m_data[m_disp[index.row()]];
   if (conn.IsConnected())
-    return conn.GetLevel();
-  return eudaq::Status::LVL_DEBUG;
+    return conn.GetState(); 
+  return eudaq::ConnectionState::STATE_ERROR;
 }
 
 QVariant RunControlModel::data(const QModelIndex &index, int role) const {

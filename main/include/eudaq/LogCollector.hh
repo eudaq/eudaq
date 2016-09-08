@@ -29,6 +29,12 @@ namespace eudaq {
     virtual void OnReceive(const LogMessage &msg) = 0;
     virtual ~LogCollector();
 
+    virtual void OnStopRun()
+    { 
+      if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+        SetConnectionState(eudaq::ConnectionState::STATE_CONF); 
+    }
+
     void LogThread();
 
   private:
