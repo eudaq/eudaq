@@ -1,4 +1,4 @@
- // CaliceReceiver.cc
+// CaliceReceiver.cc
 
 #include "AHCALProducer.hh"
 
@@ -27,13 +27,51 @@ using namespace std;
 namespace eudaq {
 
   AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
-    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
+    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _stopped(true), _configured(false)
   {
 
   }
 
+   // This gets called whenever the DAQ is initialised
+    void AHCALProducer::OnInitialise(const eudaq::Configuration & init) {
+
+      try {
+	
+	std::cout << "Reading: " << init.Name() << std::endl;
+      
+      // Do any initialisation of the hardware here 
+      // "start-up configuration", which is usally done only once in the beginning
+      // Configuration file values are accessible as config.Get(name, default)
+      //  m_exampleInitParam = init.Get("InitParameter", 0);
+      
+      // send information
+      // Message as cout in the terminal of your producer
+	//      std::cout << "Initialise with parameter = " << m_exampleInitParam << std::endl;
+      // or to the LogCollector, depending which log level you want. These are the possibilities just as an example here:
+      //  EUDAQ_INFO("Initialise with parameter = " + m_exampleInitParam);
+      
+      // send it to your hardware
+      // hardware.Setup(m_exampleInitParam);
+      
+      // At the end, set the ConnectionState that will be displayed in the Run Control.
+      // and set the state of the machine.
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
+    } 
+      catch (...) {
+        // Message as cout in the terminal of your producer
+        std::cout << "Unknown exception" << std::endl;
+        // Message to the LogCollector
+        EUDAQ_ERROR("Error Message to the LogCollector from ExampleProducer");
+        // Otherwise, the State is set to ERROR
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+      }
+    }
+
+
+
   void AHCALProducer::OnConfigure(const eudaq::Configuration & param)
   {
+      try {
 
     std::cout<< " START AHCAL CONFIGURATION "<< std::endl;
     // run rype: LED run or normal run ""
@@ -60,12 +98,20 @@ namespace eudaq {
 
     _configured = true;
    
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
+
     std::cout<< " END AHCAL congfiguration "<< std::endl;
+      }
+    catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
+      }
 
   }
 
   void AHCALProducer::OnStartRun(unsigned param) {
+    try{
     _runNo = param;
     _eventNo = 0;
     // raw file open
@@ -75,9 +121,16 @@ namespace eudaq {
 
     SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
     std::cout << "Start Run: " << param << std::endl;
-    SetStatus(eudaq::Status::LVL_OK, "");
-    _running = true;
+    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
 
+    _running = true;
+    _stopped = false;
+
+    }  catch (...) {
+      // Otherwise, the State is set to ERROR
+      printf("Unknown exception\n");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Starting Error");
+    }
 
   }
 
@@ -116,19 +169,25 @@ namespace eudaq {
   }
   
   void AHCALProducer::OnStopRun() {
+      try {
 
-    _reader->OnStop(_waitsecondsForQueuedEvents);
-    _running = false;
-    sleep(1); 
-    // Sleep added to fix a bug.
-    // Error:  uncaught exception: Deserialize asked for X only have Y
-    // sometimes appears when stopping the run and events are in the queue are being read
-    // this crashes the Labview
-    // seems to be a race condition, 
-    // for the moment fixed with this extra time after (1s) of sleep after the stop.
-    // following https://github.com/eudaq/eudaq/issues/29
-    if(_writeRaw)
-      _rawFile.close();
+	_reader->OnStop(_waitsecondsForQueuedEvents);
+	_running = false;
+	while (_stopped == false) {
+	  eudaq::mSleep(100);
+	}
+
+	if(_writeRaw)
+	  _rawFile.close();
+
+	SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
+
+      }
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stopping Error");
+      }
 
   }
 
@@ -185,64 +244,58 @@ namespace eudaq {
   void AHCALProducer::MainLoop()
   {
 
-    std::cout<<" Main loop " <<std::endl;
-    
-    _last_readout_time = std::time(NULL);
-	 
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
 
-    while(true){
+    while( true ){
       // wait until configured and connected
       std::unique_lock<std::mutex> myLock(_mufd);
+      //      if file is not ready  just wait
+      if(_fd <= 0 ){
+	myLock.unlock();
+	::usleep(1000);
+	continue;
+      }
 
       const int bufsize = 4096;
       // copy to C array, then to vector
       char buf[bufsize];
       int size = 0;        
-
-      // if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
-
-      //      if file is not ready  just wait
-      if(_fd <= 0 || !_running ){
-	myLock.unlock();
-	::usleep(1000);
-	continue;
-      }
-       
+     
       // system call: from socket to C array
       size = ::read(_fd, buf, bufsize);
       if(size == -1 || size == 0){
         if(size == -1)
           std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << endl;
         else
-          std::cout << "Socket disconnected. going to the waiting mode." << endl;         
+          {
+	    std::cout << "Socket disconnected. going to the waiting mode." << endl;         
+	    if(!_running && _stopped==false) {
+	      _stopped=true;
+	      deqEvent=sendallevents(deqEvent,0);
+	      
+	      SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+	      bufRead.clear();
+	      deqEvent.clear();
+	    }
+	  }
         close(_fd);
         _fd = -1;
 	continue;
-      }
-        
-
+      } 
+    
       if(_writeRaw && _rawFile.is_open()) _rawFile.write(buf, size);
 
       // C array to vector
       copy(buf, buf + size, back_inserter(bufRead));
 
-      if(_reader)_reader->Read(bufRead, deqEvent);
-        
-      // send events : remain the last event
+      if(_reader){
+	_reader->Read(bufRead, deqEvent);
+      }
+       
       deqEvent=sendallevents(deqEvent,1);
-
-     if(!_running){
-
-       if (std::difftime(std::time(NULL), _last_readout_time) <  _waitsecondsForQueuedEvents) continue;
-	bufRead.clear();
-
-	SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
-	SetStatus(eudaq::Status::LVL_OK, "");
-	continue;
-     }
+ 
     }
   }
 

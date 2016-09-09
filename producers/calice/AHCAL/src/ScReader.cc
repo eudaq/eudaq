@@ -71,7 +71,6 @@ namespace eudaq {
     const char *msg = "STOP\r\n";
     _producer->SendCommand(msg);
     sleep(waitQueueTimeS);
-    //    usleep(000);
   }
 
   void ScReader::Read(std::deque<char> & buf, std::deque<eudaq::RawDataEvent *> & deqEvent)
