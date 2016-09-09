@@ -643,7 +643,7 @@ namespace eudaq {
         ////////////////////////////////////////////////////////////
         //LCIO Converter
         ///////////////////////////////////////////////////////////
-#if USE_LCIO
+#if USE_LCIO && USE_EUTELESCOPE
         virtual bool GetLCIOSubEvent(lcio::LCEvent & lev, eudaq::Event const & ev) const{
 
 //            cerr << "GetLCIOSubEvent " << endl;
