@@ -27,14 +27,14 @@ env:
       - PYTHON_VERSION_MODERN=3.5.1
       - PYTHON_VERSION_OLD=2.7.10
       
-      - BUILD_AHCAL=OFF
-      - BUILD_BIFAHCAL=OFF
+      - BUILD_AHCAL=ON
+      - BUILD_BIFAHCAL=ON
       - BUILD_TESTING=OFF
       - BUILD_WITH_QT4=OFF
       - BUILD_allproducer=OFF
       - BUILD_altro=OFF
       - BUILD_altroUSB=OFF
-      - BUILD_calice=OFF
+      - BUILD_calice=ON
       - BUILD_cmspixel=OFF
       - BUILD_depfet=OFF
       - BUILD_eudrb=OFF
@@ -50,7 +50,7 @@ env:
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=ON
-      - BUILD_palpidefs=ON
+      - BUILD_palpidefs=OFF
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=OFF
