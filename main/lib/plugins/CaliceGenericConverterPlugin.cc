@@ -33,7 +33,9 @@ namespace eudaq {
   // LCIO class
   class CaliceLCGenericObject : public lcio::LCGenericObjectImpl {
   public:
-    CaliceLCGenericObject() : lcio::LCGenericObjectImpl() {_typeName = EVENT_TYPE;}
+    CaliceLCGenericObject() : lcio::LCGenericObjectImpl() {
+      _typeName = EVENT_TYPE;
+    }
     virtual ~CaliceLCGenericObject(){}
       
     void setTags(std::string &s){_dataDescription = s;}
@@ -54,51 +56,6 @@ namespace eudaq {
   class CaliceGenericConverterPlugin : public DataConverterPlugin {
 
   public:
-    virtual bool GetStandardSubEvent(StandardEvent & sev, const Event & ev) const
-    {
-      std::string sensortype = "Calice";
-
-
-      // Unpack data
-      const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> ( &ev );
-
-      unsigned int nblock =5; // the first 5 blocks contain information
-      StandardPlane plane0(0, EVENT_TYPE, sensortype);
-      plane0.SetSizeRaw( 36, 8);//36 channels, 4 chips
-
-      while(nblock < rev->NumBlocks()){
-
-	vector<short> data;
-	const RawDataEvent::data_t & bl = rev->GetBlock(nblock++);
-	data.resize(bl.size() / sizeof(short));
-	memcpy(&data[0], &bl[0],bl.size());
-
-	//data[i]=
-	//i=0 --> cycleNr
-	//i=1 --> bunch crossing id
-	//i=2 --> memcell or EvtNr (same thing, different naming)
-	//i=3 --> ChipId
-	//i=4 --> Nchannels per chip (normally 36)
-	//i=5 to NC+4 -->  14 bits that contains TDC and hit/gainbit
-	//i=NC+5 to NC+NC+4  -->  14 bits that contains ADC and again a copy of the hit/gainbit
-
-	for(int ichan=0; ichan<data[4]; ichan++) {
-	  short adc= data[5+data[4]+ichan] % 4096; // extract adc
-	  short gainbit= (data[5+data[4]+ichan] & 0x2000)/8192 ; //extract gainbit
-	  short hitbit = (data[4+data[4]+ichan] & 0x1000)/4096;  //extract hitbit
-
-	  if(data[3]<8)
-	    plane0.PushPixel( ichan, data[3], adc*hitbit);
-	}
-
-      }
-
-      sev.AddPlane( plane0 );
-
-      return true;
-
-    }
-
 
 
 #if USE_LCIO
@@ -120,12 +77,15 @@ namespace eudaq {
       }
 
       // no contents -ignore
-      if(rawev->NumBlocks() < 3) return true;
+      if(rawev->NumBlocks() < 5) return true;
            
       unsigned int nblock = 0;
 	
   
       if(rawev->NumBlocks() > 2) {
+
+     	// check if the data is okay (checked at the producer level)
+       	int DAQquality = rawev->GetTag("DAQquality",1);
 
        	// first two blocks should be string, 3rd is time
        	const RawDataEvent::data_t & bl0 = rawev->GetBlock(nblock++);
@@ -152,7 +112,7 @@ namespace eudaq {
   
 	  // READ BLOCKS WITH DATA
   	  LCCollectionVec *col = 0;
-	  col=createCollectionVec(result,colName,dataDesc, timestamp);
+	  col=createCollectionVec(result,colName,dataDesc, timestamp, DAQquality);
 	  getDataLCIOGenericObject(rawev,col,nblock);
 	}
 
@@ -162,31 +122,39 @@ namespace eudaq {
 	  // READ/WRITE SlowControl info
 	  //the  block=3, if non empty, contaions SlowControl info
 	  const RawDataEvent::data_t & bl3 = rawev->GetBlock(nblock++);
-	  if(bl3.size() > 0)   cout << "ERROR: Looking for SlowControl collection..." << endl;
+
+	  if(bl3.size() > 0)  {
+	    cout << "Looking for SlowControl collection..." << endl;
+	    LCCollectionVec *col = 0;
+	    col=createCollectionVec(result,"SlowControl", "i:sc1,i:sc2,i:scN", timestamp, DAQquality);
+	    getDataLCIOGenericObject(bl3,col,nblock);
+	  }
 
 	  // //-------------------
 	  // // READ/WRITE LED info
 	  // //the  block=4, if non empty, contaions LED info
 	  const RawDataEvent::data_t & bl4 = rawev->GetBlock(nblock++);
-	  if(bl4.size() > 0)   cout << "ERROR: Looking for LED voltages collection..." << endl;
+	  if(bl4.size() > 0)  {
+	    cout << "Looking for LED voltages collection..." << endl;
+	    LCCollectionVec *col = 0;
+	    col=createCollectionVec(result,"LEDinfo", "i:Nlayers,i:LayerID_j,i:LayerVoltage_j,i:LayerOnOff_j", timestamp, DAQquality);
+	    getDataLCIOGenericObject(bl4,col,nblock);
+	  }
   
 	  // //-------------------
 	  // // READ/WRITE Temperature info
 	  // //the  block=5, if non empty, contaions Temperature info
 	  const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
 	  if(bl5.size()>0) {
-	    LCCollectionVec *col5 = 0;
-	    col5=createCollectionVec(result,"TempSensor", "i:LDA;i:port;i:T1;i:T2;i:T3;i:T4;i:T5;i:T6;i:TDIF;i:TPWR", timestamp);
-	    getScCALTemperatureSubEvent(bl5, col5);  
+	    LCCollectionVec *col = 0;
+	    col=createCollectionVec(result,"TempSensor", "i:LDA,i:port,i:T1,i:T2,i:T3,i:T4,i:T5,i:T6,i:TDIF,i:TPWR", timestamp, DAQquality);
+	    getScCALTemperatureSubEvent(bl5, col);  
 	  }
 
 	  // READ BLOCKS WITH DATA
   	  LCCollectionVec *col = 0;
-	  col=createCollectionVec(result,colName,dataDesc, timestamp);
+	  col=createCollectionVec(result,colName,dataDesc, timestamp, DAQquality);
 	  getDataLCIOGenericObject(rawev,col,nblock);
-	  //use TrackerRawData instead of LCGenericObjects
-	  //col=createRawCollectionVec(result,colName,dataDesc, timestamp);
-	  //getDataTrackerRawData(rawev,col,nblock);
 
 	}
       }
@@ -194,7 +162,7 @@ namespace eudaq {
       return true;
     }
 
-    virtual LCCollectionVec* createCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
+    virtual LCCollectionVec* createCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp, int DAQquality ) const {
       LCCollectionVec *col = 0;
       try{
 	// looking for existing collection
@@ -213,11 +181,7 @@ namespace eudaq {
       char tmc[256];
       strftime(tmc, 256, "%a, %d %b %Y %T %z", tms);
       col->parameters().setValue("Timestamp", tmc);
-      long int t = (long int)timestamp;
-      // result.setTimeStamp(t);
-      // IMPL::LCEventImpl *lcevent = dynamic_cast<lcio::LCEvent>(result);
-      //lcevent->setTimeStamp(t);
-
+      col->parameters().setValue("DAQquality", DAQquality);
 
       return col;
     }
@@ -262,9 +226,31 @@ namespace eudaq {
       }
     }
 
-   virtual void getDataLCIOGenericObject(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
+ 
+    virtual void getDataLCIOGenericObject(const RawDataEvent::data_t & bl, LCCollectionVec *col, int nblock) const{
   
-      while(nblock < rawev->NumBlocks() ){
+	// further blocks should be data (currently limited to integer)
+
+	vector<int> v;
+	v.resize(bl.size() / sizeof(int));
+	memcpy(&v[0], &bl[0],bl.size());
+
+	CaliceLCGenericObject *obj = new CaliceLCGenericObject;
+	obj->setIntDataInt(v);
+	try{
+	  col->addElement(obj);
+	}catch(ReadOnlyException &e){
+	  cout << "CaliceGenericConverterPlugin: the collection to add is read only! skipped..." << endl;
+	  delete obj;
+	}
+   
+    }
+  
+
+    virtual void getDataLCIOGenericObject(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock, int nblock_max=0) const{
+  
+      if(nblock_max ==0 ) nblock_max = rawev->NumBlocks();
+      while(nblock < nblock_max ){
 	// further blocks should be data (currently limited to integer)
 
 	vector<int> v;
@@ -283,46 +269,6 @@ namespace eudaq {
       }
     }
 
-    virtual LCCollectionVec* createRawCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp ) const {
-      LCCollectionVec *col = 0;
-      try{
-        // looking for existing collection
-        col = dynamic_cast<IMPL::LCCollectionVec *>(result.getCollection(colName));
-        //cout << "collection found." << endl;
-      }catch(DataNotAvailableException &e){
-        // create new collection
-        //cout << "Creating TempSensor collection..." << endl;
-        col = new IMPL::LCCollectionVec(LCIO::TRACKERRAWDATA);
-        result.addCollection(col,colName);
-        //  cout << "collection added." << endl;
-      }
-      return col;
-    }
-
-    virtual void getDataTrackerRawData(eudaq::RawDataEvent const * rawev, LCCollectionVec *col, int nblock) const{
-   
-      while(nblock < rawev->NumBlocks()){
-        // further blocks should be data (currently limited to integer)
-        vector<short> v;
-        const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
-        v.resize(bl5.size());
-        memcpy(&v[0], &bl5[0],bl5.size());
-
-        TrackerRawDataImpl *obj = new TrackerRawDataImpl;
-        obj->setCellID0(int(v[0]));
-        obj->setCellID1(int(v[1]));
-        obj->setTime(int(v[2]));
-        obj->setADCValues ( v );
-
-        try{
-          col->addElement(obj);
-        }catch(ReadOnlyException &e){
-          cout << "CaliceGenericConverterPlugin: the collection to add is read only! skipped..." << endl;
-          delete obj;
-        }
-      }
-    }
-
 
 #endif
     
@@ -333,7 +279,6 @@ namespace eudaq {
     
     static CaliceGenericConverterPlugin m_instance;
     
-
   };
 
   // Instantiate the converter plugin instance

@@ -73,8 +73,26 @@ class caliceahcalbifProducer: public eudaq::Producer {
          } while (!done);
       }
 
+
+    // This gets called whenever the DAQ is initialised
+    virtual void OnInitialise(const eudaq::Configuration & init) {
+      try {
+	SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "BIF Initisialize " + init.Name() + ")");
+      } 
+      catch (...) {
+        // Message as cout in the terminal of your producer
+        std::cout << "Unknown exception" << std::endl;
+        // Message to the LogCollector
+        EUDAQ_ERROR("Error Message to the LogCollector from caliceahcalbif_Producer");
+        // Otherwise, the State is set to ERROR
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+      }
+    }
+
       virtual void OnConfigure(const eudaq::Configuration & param) {
-         SetStatus(eudaq::Status::LVL_OK, "Wait");
+        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Start Conf");
+
+	if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
 
          _dumpRaw = param.Get("DumpRawOutput", 0);
          /*DumpRawOutput = 0
@@ -138,13 +156,14 @@ class caliceahcalbifProducer: public eudaq::Producer {
 // 	m_tlu->Update(timestamps);
             std::cout << "...Configured (" << param.Name() << ")" << std::endl;
             EUDAQ_INFO("Configured (" + param.Name() + ")");
-            SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+	    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
+
          } catch (const std::exception & e) {
             printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
          } catch (...) {
             printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
          }
       }
 
@@ -173,14 +192,15 @@ class caliceahcalbifProducer: public eudaq::Producer {
       }
 
       virtual void OnStartRun(unsigned param) {
-         SetStatus(eudaq::Status::LVL_OK, "Wait");
+        // SetStatus(eudaq::Status::LVL_OK, "Wait");
          _ReadoutCycle = -1;
          _stats= {0,0,0,0};
          // raw file open
          if (_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
 
          if (!m_tlu) {
-            SetStatus(eudaq::Status::LVL_ERROR, "caliceahcalbif connection not present!");
+	   SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "caliceahcalbif connection not present!");
+
             return;
          }
          try {
@@ -229,14 +249,17 @@ class caliceahcalbifProducer: public eudaq::Producer {
             }
             TLUStarted = true;
 
-            SetStatus(eudaq::Status::LVL_OK, "Started");
+	    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
+
          } catch (const std::exception & e) {
             printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
          } catch (...) {
             printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
          }
+ 
+         
          std::cout << "Done starting" << std::endl;
       }
 
@@ -274,14 +297,18 @@ class caliceahcalbifProducer: public eudaq::Producer {
                std::cout << "================================================================" << std::endl;
             }
             m_tlu->AllTriggerVeto();
-            SetStatus(eudaq::Status::LVL_OK, "Stopped");
+
+	    if (m_connectionstate.GetState() != eudaq::ConnectionState::STATE_ERROR)
+	      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
+
          } catch (const std::exception & e) {
             printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
          } catch (...) {
             printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stopp Error");
          }
+ 
          sleep(1);
          if (_writeRaw) _rawFile.close();
 
@@ -296,25 +323,24 @@ class caliceahcalbifProducer: public eudaq::Producer {
       virtual void OnReset() {
          try {
             std::cout << "Reset" << std::endl;
-            SetStatus(eudaq::Status::LVL_OK);
-// 	m_tlu->Stop(); // stop
-// 	m_tlu->Update(false); // empty events
-            SetStatus(eudaq::Status::LVL_OK, "Reset");
+	    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopp Error");
+	    // 	m_tlu->Stop(); // stop
+	    // 	m_tlu->Update(false); // empty events
          } catch (const std::exception & e) {
             printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Reset Error");
          } catch (...) {
             printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
+	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Reset Error");
          }
       }
 
       virtual void OnStatus() {
-         m_status.SetTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
+         m_connectionstate.SetTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
 //       if (m_tlu) {
                //	m_status.SetTag("TIMESTAMP", );//to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
                // 	m_status.SetTag("LASTTIME", );//to_string(Timestamp2Seconds(lasttime)));
-         m_status.SetTag("PARTICLES", to_string(_stats.triggers));
+         m_connectionstate.SetTag("PARTICLES", to_string(_stats.triggers));
 // 	m_status.SetTag("STATUS", m_tlu->GetStatusString());
 // 	for (int i = 0; i < 4; ++i) {
 // 	  m_status.SetTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
@@ -327,7 +353,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
          std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
          if (param.length() > 0) std::cout << " (" << param << ")";
          std::cout << std::endl;
-         SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
+	 SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unrecognised command");
       }
 
    private:
@@ -498,7 +524,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
                         std::cout << std::dec << "ROC: " << (int) _ReadoutCycle;
                         std::cout << "\tLength[BXings]: " << (int) cycleLengthBxids;
                         std::cout << "\tTrigs: " << (int) _triggersInCycle;
-                        std::cout << "\tlen: " << (0.00000078125) * (timestamp - _acq_start_ts) << " ms";
+                        std::cout << "\tlen: " << 32 * (0.00000078125) * (timestamp - _acq_start_ts) << " ms";
                         std::cout << std::endl;
                         break;
                      case 1:
@@ -615,7 +641,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
          //                     CycleEvent.SetTag("TRIG", eudaq::to_string(_triggersInCycle));
          std::string s = "EUDAQDataBIF";
          CycleEvent.AddBlock(0, s.c_str(), s.length());
-         s = "i:Type:i:EventCnt:i:TS_Low:i:TS_High";
+         s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
          CycleEvent.AddBlock(1, s.c_str(), s.length());
          unsigned int times[2];
          struct timeval tv;

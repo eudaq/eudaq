@@ -39,10 +39,13 @@ namespace eudaq {
     virtual void OnStartRun(unsigned param);
     virtual void OnStopRun();
     virtual void OnConfigure(const eudaq::Configuration & param);
-    
+    virtual void OnInitialise(const eudaq::Configuration & init);
+
     void MainLoop();//  
     bool OpenConnection();//
     void CloseConnection();//
+    bool OpenConnection_unsafe();//
+    void CloseConnection_unsafe();//
     void SendCommand(const char *command,int size = 0);
 
     virtual void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
@@ -53,10 +56,11 @@ namespace eudaq {
     int _eventNo;
     int _fd;
     //airqui 
-    //pthread_mutex_t _mufd;
+    //    pthread_mutex_t _mufd;
     std::mutex _mufd;
       
     bool _running;
+    bool _stopped;
     bool _configured;
 
     // debug output
@@ -77,9 +81,7 @@ namespace eudaq {
     int _port; // input port at network mode
     std::string _ipAddress; // input address at network mode
 
-     std::deque<eudaq::RawDataEvent *> deqEvent;
-
-
+    std::deque<eudaq::RawDataEvent *> deqEvent;
 
     AHCALReader * _reader;
   };

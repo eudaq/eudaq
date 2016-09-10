@@ -16,6 +16,7 @@ namespace eudaq {
     virtual std::deque<eudaq::RawDataEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *>  deqEvent, bool tempcome, int cycle);
     virtual void readTemperature(std::deque<char> buf);
     virtual void AppendBlockTemperature(std::deque<eudaq::RawDataEvent *> deqEvent, int nb);
+    virtual void AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, std::vector<int> intVector);
 
     virtual bool readSpirocData_AddBlock(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent);
     
@@ -30,6 +31,8 @@ namespace eudaq {
 
     bool _tempmode; // during the temperature readout time
     std::vector< std::pair<std::pair<int,int>, int> > _vecTemp; // (lda, port), data;
+    std::vector<int> slowcontrol;
+    std::vector<int> ledInfo;
    
   };
 }

@@ -1,4 +1,4 @@
- // CaliceReceiver.cc
+// CaliceReceiver.cc
 
 #include "AHCALProducer.hh"
 
@@ -27,22 +27,60 @@ using namespace std;
 namespace eudaq {
 
   AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
-    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
+    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _stopped(true), _configured(false)
   {
 
   }
 
+   // This gets called whenever the DAQ is initialised
+    void AHCALProducer::OnInitialise(const eudaq::Configuration & init) {
+
+      try {
+	
+	std::cout << "Reading: " << init.Name() << std::endl;
+      
+      // Do any initialisation of the hardware here 
+      // "start-up configuration", which is usally done only once in the beginning
+      // Configuration file values are accessible as config.Get(name, default)
+      //  m_exampleInitParam = init.Get("InitParameter", 0);
+      
+      // send information
+      // Message as cout in the terminal of your producer
+	//      std::cout << "Initialise with parameter = " << m_exampleInitParam << std::endl;
+      // or to the LogCollector, depending which log level you want. These are the possibilities just as an example here:
+      //  EUDAQ_INFO("Initialise with parameter = " + m_exampleInitParam);
+      
+      // send it to your hardware
+      // hardware.Setup(m_exampleInitParam);
+      
+      // At the end, set the ConnectionState that will be displayed in the Run Control.
+      // and set the state of the machine.
+      SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
+    } 
+      catch (...) {
+        // Message as cout in the terminal of your producer
+        std::cout << "Unknown exception" << std::endl;
+        // Message to the LogCollector
+        EUDAQ_ERROR("Error Message to the LogCollector from ExampleProducer");
+        // Otherwise, the State is set to ERROR
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+      }
+    }
+
+
+
   void AHCALProducer::OnConfigure(const eudaq::Configuration & param)
   {
+      try {
 
-    cout<< " start congfiguration "<< endl;
+    std::cout<< " START AHCAL CONFIGURATION "<< std::endl;
     // run rype: LED run or normal run ""
     _fileLEDsettings = param.Get("FileLEDsettings", "");
 
     // file name
     _filename = param.Get("FileName", "");
     _waitmsFile = param.Get("WaitMillisecForFile", 100);
-    _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 5);
+    _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 2);
 
     // raw output
     _writeRaw = param.Get("WriteRawOutput", 0);
@@ -60,14 +98,20 @@ namespace eudaq {
 
     _configured = true;
    
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-    cout<< " end congfiguration "<< endl;
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
+
+    std::cout<< " END AHCAL congfiguration "<< std::endl;
+      }
+    catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configuration Error");
+      }
 
   }
 
   void AHCALProducer::OnStartRun(unsigned param) {
-    cout<< "  start run "<< endl;
-
+    try{
     _runNo = param;
     _eventNo = 0;
     // raw file open
@@ -77,10 +121,16 @@ namespace eudaq {
 
     SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
     std::cout << "Start Run: " << param << std::endl;
-    SetStatus(eudaq::Status::LVL_OK, "");
-    _running = true;
-    cout<< "  end start run "<< endl;
+    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
 
+    _running = true;
+    _stopped = false;
+
+    }  catch (...) {
+      // Otherwise, the State is set to ERROR
+      printf("Unknown exception\n");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Starting Error");
+    }
 
   }
 
@@ -116,81 +166,59 @@ namespace eudaq {
 
   void AHCALProducer::OnPrepareRun(unsigned param) {
     cout << "OnPrepareRun: runID " << param << " set." << endl;
-
   }
   
   void AHCALProducer::OnStopRun() {
-    cout<< "  stop run "<< endl;
+      try {
 
-    _reader->OnStop(_waitsecondsForQueuedEvents);
-    _running = false;
-    sleep(1); 
-    // Sleep added to fix a bug.
-    // Error:  uncaught exception: Deserialize asked for X only have Y
-    // sometimes appears when stopping the run and events are in the queue are being read
-    // this crashes the Labview
-    // seems to be a race condition, 
-    // for the moment fixed with this extra time after (1s) of sleep after the stop.
-    // following https://github.com/eudaq/eudaq/issues/29
-    if(_writeRaw)
-      _rawFile.close();
+	_reader->OnStop(_waitsecondsForQueuedEvents);
+	_running = false;
+	while (_stopped == false) {
+	  eudaq::mSleep(100);
+	}
 
-    SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
-    
-    cout<< "  end stop run 0"<< endl;
-    SetStatus(eudaq::Status::LVL_OK, "");
-    cout<< "  end stop run 1"<< endl;
+	if(_writeRaw)
+	  _rawFile.close();
+
+	SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
+
+      }
+      catch (...) {
+        // Otherwise, the State is set to ERROR
+        printf("Unknown exception\n");
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stopping Error");
+      }
 
   }
 
   bool AHCALProducer::OpenConnection()
   {
-    cout<< "  start open connection "<< endl;
-
-    // open socket
-
     struct sockaddr_in dstAddr;
     memset(&dstAddr, 0, sizeof(dstAddr));
     dstAddr.sin_port = htons(_port);
     dstAddr.sin_family = AF_INET;
     dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 
-    std::mutex _mufdOpenConnection;
-    std::unique_lock<std::mutex> myLock(_mufdOpenConnection);
+    std::unique_lock<std::mutex> myLock(_mufd);
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-
     if(ret != 0)  return 0;
-    cout<< "  stop open connection "<< endl;
     return 1;
-
   }
-  
+
+ 
   void AHCALProducer::CloseConnection()
   {
-    cout<< "  start close connection "<< endl;
-
-    //airqui  14/01/2016 // pthread_mutex_lock(&_mufd);
     std::unique_lock<std::mutex> myLock(_mufd);
     close(_fd);
     _fd = 0;
-    //airqui   14/01/2016 // pthread_mutex_unlock(&_mufd);
-    cout<< "  stop close connection "<< endl;
-
-    
   }
-  
+
+   
   // send a string without any handshaking
   void AHCALProducer::SendCommand(const char *command, int size){
 
-    cout<< "  start sendcommand "<<command<< endl;
-
-
     if(size == 0)size = strlen(command);
-
-    // maybe mutex lock is not needed because we're not conflict with
-    // open/close of socket because it's considered to be called from 
-    // event thread, which is same as thread of open/close the socket
 
     if(_fd <= 0)cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << endl;
     else {
@@ -201,8 +229,6 @@ namespace eudaq {
 		    cout << bytesWritten  << " out of " << size << " bytes is  written to the TCP socket" << endl;
 	    }
     }
-    cout<< "  stop sendcommand "<< endl;
-
 
   }
 
@@ -217,52 +243,59 @@ namespace eudaq {
 
   void AHCALProducer::MainLoop()
   {
+
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
 
-    while(true){
+    while( true ){
       // wait until configured and connected
       std::unique_lock<std::mutex> myLock(_mufd);
+      //      if file is not ready  just wait
+      if(_fd <= 0 ){
+	myLock.unlock();
+	::usleep(1000);
+	continue;
+      }
 
       const int bufsize = 4096;
       // copy to C array, then to vector
       char buf[bufsize];
       int size = 0;        
-      if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
-
-      //      if file is not ready  just wait
-      if(_fd <= 0 || !_running ){
-	::usleep(1000);
-	continue;
-      }
-       
+     
       // system call: from socket to C array
       size = ::read(_fd, buf, bufsize);
       if(size == -1 || size == 0){
         if(size == -1)
           std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << endl;
         else
-          std::cout << "Socket disconnected. going to the waiting mode." << endl;         
+          {
+	    std::cout << "Socket disconnected. going to the waiting mode." << endl;         
+	    if(!_running && _stopped==false) {
+	      _stopped=true;
+	      deqEvent=sendallevents(deqEvent,0);
+	      
+	      SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+	      bufRead.clear();
+	      deqEvent.clear();
+	    }
+	  }
         close(_fd);
         _fd = -1;
 	continue;
-      }
-        
-      if(!_running){
-	bufRead.clear();
-	continue;
-      }
-
+      } 
+    
       if(_writeRaw && _rawFile.is_open()) _rawFile.write(buf, size);
 
       // C array to vector
       copy(buf, buf + size, back_inserter(bufRead));
 
-      if(_reader)_reader->Read(bufRead, deqEvent);
-        
-      // send events : remain the last event
+      if(_reader){
+	_reader->Read(bufRead, deqEvent);
+      }
+       
       deqEvent=sendallevents(deqEvent,1);
+ 
     }
   }
 
