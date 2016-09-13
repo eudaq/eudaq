@@ -15,7 +15,6 @@ option(IGNORE_KNOWN_ISSUES "Ignore known compilation issues of producer executab
 
 optional_add_subdirectory(altro)
 optional_add_subdirectory(altroUSB)
-optional_add_subdirectory(calice)
 optional_add_subdirectory(cmspixel)
 optional_add_subdirectory(depfet)
 optional_add_subdirectory(fortis)
@@ -30,3 +29,6 @@ optional_add_subdirectory(rpi-controller)
 optional_add_subdirectory(taki)
 optional_add_subdirectory(timepixdummy)
 optional_add_subdirectory(tlu)
+
+# empty directory for AHCAL and BIF_AHCAL
+add_subdirectory(calice)
