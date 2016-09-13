@@ -34,7 +34,6 @@ env:
       - BUILD_allproducer=OFF
       - BUILD_altro=OFF
       - BUILD_altroUSB=OFF
-      - BUILD_calice=ON
       - BUILD_cmspixel=OFF
       - BUILD_depfet=OFF
       - BUILD_eudrb=OFF
