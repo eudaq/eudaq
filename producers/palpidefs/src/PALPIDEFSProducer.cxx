@@ -372,7 +372,7 @@ void DeviceReader::Loop() {
       }
 #endif
       if (readEvent==-3) {
-	while (!IsFlushing() && !IsStopping()) 
+	while (!IsFlushing() && !IsStopping())
 	  eudaq::mSleep(100);
 	{
 	  SimpleLock lock(m_mutex);
@@ -1605,7 +1605,7 @@ void PALPIDEFSProducer::Loop() {
             std::cout << "Queue difference: " << diff << std::endl;
             std::string str = "DAQ boards queues differ by more than 1000 events";
             EUDAQ_ERROR(str);
-	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
+            //SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
             for (int i = 0; i < m_nDevices; i++) {
               std::cout << "Reader " << i << ":" << std::endl;
               m_reader[i]->PrintDAQboardStatus();
@@ -1624,7 +1624,7 @@ void PALPIDEFSProducer::Loop() {
     if (busy_count>5) {
       std::string str = "DAQ boards stay busy";
       EUDAQ_ERROR(str);
-      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
+      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();
@@ -1635,7 +1635,7 @@ void PALPIDEFSProducer::Loop() {
     if (out_of_sync_count>10) {
       std::string str = "Out-of-sync recovery fails";
       EUDAQ_ERROR(str);
-      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
+      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();
