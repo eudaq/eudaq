@@ -87,9 +87,12 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
                                                          // optional
           width = atoi(valueChild->ToElement()->Attribute("width"));
 
-        if (!valueChild->FirstChild("content") &&
+        if (!valueChild || !valueChild->FirstChild("content") ||
             !valueChild->FirstChild("content")->FirstChild()) {
           std::cout << "content tag not found!" << std::endl;
+          std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
+          printf( "Element %d [%s] %d %d\n", pChild->Type(), pChild->Value(),
+                  base, rgn);
           break;
         }
         if (readwrite) {
@@ -108,6 +111,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
                       << content << " "
                       << valueChild->FirstChild("content")->Value()
                       << std::endl;
+            std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
             break;
           }
           value += content << begin;
