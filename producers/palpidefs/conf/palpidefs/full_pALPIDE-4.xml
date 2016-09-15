@@ -23,54 +23,64 @@
 				<value begin="0" width="2">
 					<title>Chip Mode Selector</title>
 					<description>0 Configuration Mode, 1 Readout Triggered Mode, 2 Readout Continuous Mode</description>
-					<context>0x0</context>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="2">
 					<title>Clustering</title>
 					<description>0 Disable Clustering, 1 Enable Clustering</description>
-					<context>0x1</context>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="3">
 					<title>Matrix Readout Speed</title>
 					<description>0 10MHz, 1 20MHz readout speed</description>
-					<context>0x1</context>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4" width="2">
 					<title>IB Serial Link Speed</title>
 					<description>0 400mbit/s 1 600mbit/s 2,3 1200mbit/s </description>
-					<context>0x3</context>
+					<default>0x3</default>
+                    <content>-1</content>
 				</value>
 				<value begin="6">
 					<title>Enable Skewing of Global Signals</title>
 					<description>0 Disable skewing of global signals to the matrix</description>
-					<context>0x1</context>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="7">
 					<title>Enable Skewing of Start Readout</title>
 					<description>0 Disable skewing 1 Skewing enabled, Region Readout is started with 1 cycle delay, starting from regions 12-19 and going outwards in groups of 8 regions</description>
-					<context>0x1</context>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8">
 					<title>Enable Readout Clock Gating</title>
 					<description>0 Clock gating disabled, RRU and TRU modules have always the clock active, 1 Enables clock gating for the readout modules (RRU and TRU), clock to the modules is disabled when readout is in idle</description>
-					<context>0x1</context>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="9">
 					<title>Enable Readout From CMU</title>
 					<description>When enabled, data is not automatically sent off-chip, but remains in the internal memeory until manually read from registers 0x0012 and 0x0013</description>
-					<context>0x0</context>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Region Disable Register 0-15</title>
 				<value begin="0" width="16">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="3">
 				<title>Region Disable Register 16-31</title>
 				<value begin="0" width="15">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
@@ -78,111 +88,131 @@
 				<value begin="0" width="3">
 					<title>Pixel MEB Mask</title>
 					<description>1 disable given event buffer (default 000 to enable all meb slices) Setting bit 0 masks Matrix Slice 1, bit1 masks slice 1 and bit 2 masks Slice 3. Masking all slices is ignored and equivalent to enabling all</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="3">
 					<title>Internal Strobe Generation</title>
 					<description>0 disabled, 1 enable internal sequencer for generation of repetitive strobe pulse in readout mode</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4">
 					<title>Enable BUSY Monitoring</title>
 					<description>0 disabled, 1 FROMU will monitor external busy line, reject triggers when BUSY is asserted</description>
-					<content>0x1</content>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="5">
 					<title>Test Pulse Mode</title>
 					<description>0 digital pulse to pixels, 1 set analog pulse as a test pulse</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="6">
 					<title>Enable Test STROBE</title>
 					<description>1 enable automatic generation of a STROBe after a PULSE signal</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="7">
 					<title>Enable Rotate Pulse Lines</title>
 					<description>1 enable automatic shift and rotate of selected pulse line after each PULSE Signal</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8" width="3">
 					<title>Trigger Delay</title>
 					<description>Delay, in clock cycles, between the arrival of the trigger and the assertion of the STROBE</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="5">
 				<title>FROMU Configuration Register2</title>
 				<value begin="0" width="16">
 					<description>Set the duration of the STROBE signal from 25ns to 1638.4us (step 25ns)</description>
-					<content>0x0014</content>
+					<default>0x0014</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="6">
 				<title>FROMU Configuration Register3</title>
 				<value begin="0" width="16">
 					<description>Set the gap between suqsequent STROBE signal from 25ns to 1638.4us (step 25ns), Internal sequencer must be enabled</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="7">
 				<title>FROMU Pulsing Register1</title>
 				<value begin="0" width="16">
 					<description>Set the delay from the test PULSE to the STROBE signal from 0 to 1638.4us (step 25ns)</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>FROMU Pulsing Register2</title>
 				<value begin="0" width="16">
 					<description>Set the PULSE duration from 0 to 1638.4us (step 25ns)</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="14">
 				<title>DAC settings for DCLK and MCLIK I/O buffers</title>
 				<value begin="0" width="4">
 					<title>DCLK Receiver current</title>
-					<content>0xA</content>
+					<default>0xA</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4" width="4">
 					<title>DCLK Driver current</title>
-					<content>0xA</content>
+					<default>0xA</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8" width="4">
 					<title>MCLK Receiver current</title>
-					<content>0xA</content>
+					<default>0xA</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="15">
 				<title>DAC settings for CMU I/O buffers</title>
 				<value begin="0" width="4">
 					<title>DCTRL Receiver current</title>
-					<content>0xA</content>
+					<default>0xA</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4" width="4">
 					<title>DCTRL Driver current</title>
-					<content>0xA</content>
+					<default>0xA</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="16">
 				<title>CMU and DMU Configuration Register</title>
 				<value begin="0" width="4">
 					<title>Previous Chip ID</title>
-					<content>0xF</content>
+					<default>0xF</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4">
 					<title>Initial Token</title>
 					<description>Must be set to 1 to the chip that has the token by default(normally should be the MASTER chip of the module)</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="5">
 					<title>Disable Manchester Encoding</title>
-					<content>0x1</content>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="6">
 					<title>Enable Double Data Rate</title>
-					<content>0x1</content>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="20">
@@ -190,27 +220,32 @@
 				<value begin="0" width="2">
 					<title>PLL VCO Delay Stages control</title>
 					<description>control the number of delay stages used in the VCO. b00 VCO with 3 stages(slow case) b01 VCO with 4stages (typical case) b11 VCO with 5stages (fast case)</description>
-					<content>0x1</content>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="2">
 					<title>PLL Bandwidth Control</title>
 					<description>b0 selects wide bandwidth response, b1 selects a narrow bandwidth response</description>
-					<content> 0x1</content>
+					<default> 0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="3">
 					<title>PLL off signal</title>
 					<description>b1 shuts down PLL</description>
-					<content>0x1</content>
+					<default>0x1</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4" width="4">
 					<title>Serializer Phase</title>
 					<description></description>
-					<content>0x8</content>
+					<default>0x8</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8">
 					<title>PLL Reset</title>
 					<description>Asynchronous reset of the PLL</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="21">
@@ -218,17 +253,20 @@
 				<value begin="0" width="4">
 					<title>PLL Charge Pump current setting</title>
 					<description></description>
-					<content>0x8</content>
+					<default>0x8</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4" width="4">
 					<title>High Speed line Driver current setting</title>
 					<description></description>
-					<content>0x8</content>
+					<default>0x8</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8" width="4">
 					<title>Pre-emphasis driver current setting</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="23">
@@ -237,12 +275,14 @@
 				<value begin="0" width="8">
 					<title>Lock Wait Cycles</title>
 					<description>PLL monitoring state machine enters the PLL LOCKED state after sampling a continuous assertion of the PLL Lock flag for a number of clock cycles set with this trigger</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8" width="8">
 					<title>Unlock Wait Cycles</title>
 					<description>The PLL monitoring state machine enters the PLL UNLOCKED state after sampling the PLL Lock flag continuously deasserted for a number of clock cycles set with this register</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="24">
@@ -250,17 +290,20 @@
 				<value begin="0">
 					<title>Test Enable</title>
 					<description>Activates the DTU test mode</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="1">
 					<title>Internal Pattern Enable</title>
 					<description>Selects between constant test patterns (1'b0) or test paterns generated by an internal pseudo-random pattern generator(1'b1)</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="2">
 					<title>Test Single Mode</title>
 					<description>Selects if encoding and line rate control circuits of the DTU Logic operate in single lane mode. This ibt is effective only while the DTU test mode is enabled</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="3" width="2">
 					<title>Prbs Rate</title>
@@ -269,37 +312,44 @@
 				<value begin="5">
 					<title>Bypass 8b10b</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="6" width="2">
 					<title>BDIN8b10b0</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8" width="2">
 					<title>BDIN8b10b1</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="10" width="2">
 					<title>BDIN8b10b2</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="12">
 					<title>K0</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="13">
 					<title>K1</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="14">
 					<title>K2</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="25">
@@ -307,12 +357,14 @@
 				<value begin="0" width="8">
 					<title>DIN0</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8" width="8">
 					<title>DIN1</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="26">
@@ -320,17 +372,20 @@
 				<value begin="0" width="8">
 					<title>DIN2</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8">
 					<title>Force Load Enable High</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="9">
 					<title>Force Load Enable Low</title>
 					<description></description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="27">
@@ -338,7 +393,8 @@
 				<value begin="0" width="5">
 					<title>BUSY Min Length</title>
 					<description>Set the minimum length of BUSY signal, in step of 25ns</description>
-					<content>0x8</content>
+					<default>0x8</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -351,7 +407,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -360,7 +417,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -369,7 +427,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -378,7 +437,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -387,7 +447,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -396,7 +457,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -405,7 +467,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -414,7 +477,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -423,7 +487,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -432,7 +497,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -441,7 +507,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -450,7 +517,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -459,7 +527,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -468,7 +537,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -477,7 +547,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -486,7 +557,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -495,7 +567,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -504,7 +577,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -513,7 +587,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -522,7 +597,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -531,7 +607,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -540,7 +617,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -549,7 +627,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -558,7 +637,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -567,7 +647,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -576,7 +657,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -585,7 +667,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -594,7 +677,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -603,7 +687,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -612,7 +697,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -621,7 +707,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -630,7 +717,8 @@
 			<address sub="0">
 				<value begin="0" width="16">
 					<display>bits</display>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -642,25 +730,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -669,25 +761,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -696,25 +792,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -723,25 +823,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -750,25 +854,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -777,25 +885,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -804,25 +916,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -831,25 +947,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -858,25 +978,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -885,25 +1009,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -912,25 +1040,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -939,25 +1071,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -966,25 +1102,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -993,25 +1133,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1020,25 +1164,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1047,25 +1195,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1074,25 +1226,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1101,25 +1257,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1128,25 +1288,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1155,25 +1319,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1182,25 +1350,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1209,25 +1381,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1236,25 +1412,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1263,25 +1443,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1290,25 +1474,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1317,25 +1505,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1344,25 +1536,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1371,25 +1567,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1398,25 +1598,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1425,25 +1629,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1452,25 +1660,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1479,25 +1691,29 @@
 			<address sub="1">
 				<title>Column Selection Slice 1</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>Column Selection Slice 2</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>Row Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>Pulse Selection Slice</title>
 				<value begin="0" width="16">
-					<content>0xFFFF</content>
+					<default>0xFFFF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1509,12 +1725,14 @@
 				<value begin="0">
 					<title>PIXCNFG_REGSEL</title>
 					<description>Selction of the in-pixel register to be addressed 0 : MaskEnable register 1 : pulse register</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="1">
 					<title>PIXCNFG_DATA</title>
 					<description>Bit to be written in the target register</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
@@ -1526,173 +1744,206 @@
 				<title>Analog Monitor and Override Register</title>
 				<value begin="0" width="4">
 					<title>Voltage DAC selection</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4" width="3">
 					<title>Current DAC selection</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="7">
 					<title>SWCNTL_DACMONI</title>
 					<description>0 monitor 1 overriding</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8">
 					<title>SWCNTL_DACMONV</title>
 					<description>0 monitor 1 overriding</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="9" width="2">
 					<title>IREF Buffer Current</title>
-					<content>0x4</content>
+					<default>0x4</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="1">
 				<title>VRESETP</title>
 				<value begin="0" width="16">
-					<content>0x0075</content>
+					<default>0x0075</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="2">
 				<title>VRESETD</title>
 				<value begin="0" width="16">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="3">
 				<title>VCASP</title>
 				<value begin="0" width="16">
-					<content>0x0056</content>
+					<default>0x0056</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="4">
 				<title>VCASN</title>
 				<value begin="0" width="16">
-					<content>0x0039</content>
+					<default>0x0039</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="5">
 				<title>VPULSEH</title>
 				<value begin="0" width="16">
-					<content>0x00FF</content>
+					<default>0x00FF</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="6">
 				<title>VPULSEL</title>
 				<value begin="0" width="16">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="7">
 				<title>VCASN2</title>
 				<value begin="0" width="16">
-					<content>0x0040</content>
+					<default>0x0040</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="8">
 				<title>VCLIP</title>
 				<value begin="0" width="16">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="9">
 				<title>VTEMP</title>
 				<value begin="0" width="16">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="10">
 				<title>IAUX2</title>
 				<value begin="0" width="16">
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="11">
 				<title>IRESET</title>
 				<value begin="0" width="16">
-					<content>0x0032</content>
+					<default>0x0032</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="12">
 				<title>IDB</title>
 				<value begin="0" width="16">
-					<content>0x0040</content>
+					<default>0x0040</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="13">
 				<title>IBIAS</title>
 				<value begin="0" width="16">
-					<content>0x0040</content>
+					<default>0x0040</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="14">
 				<title>ITHR</title>
 				<value begin="0" width="16">
-					<content>0x0033</content>
+					<default>0x0033</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="15">
 				<title>Buffer Bypass Register</title>
 				<value begin="0">
 					<title>VCASN</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="1">
 					<title>VCASN2</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="2">
 					<title>VCASP</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="3">
 					<title>VCLIP</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="4">
 					<title>IRESET</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="5">
 					<title>IBIAS</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="6">
 					<title>ITHR</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="7">
 					<title>IDB</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 			<address sub="16">
 				<title>ADC Control Register</title>
 				<value begin="0" width="2">
 					<title>Mode</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="2" width="4">
 					<title>Select Input</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="6" width="2">
 					<title>Set Comparator Current</title>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="8">
 					<title>Discriminator Sign</title>
 					<description>Control of the polarity of the ADC comparator</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 				<value begin="9" width="2">
 					<title>Ramp Speed</title>
-					<content>0x2</content>
+					<default>0x2</default>
+                    <content>-1</content>
 				</value>
 				<value begin="11">
 					<title>Half LSB Trim</title>
 					<description>Fine Control of the offset of the DAC inside the ADC. Used for ADC calibration procedures</description>
-					<content>0x0</content>
+					<default>0x0</default>
+                    <content>-1</content>
 				</value>
 			</address>
 		</address>
