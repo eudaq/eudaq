@@ -920,7 +920,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
         config->GetBoardConfig(idev)->BoardType = 2;
         config->GetBoardConfig(idev)->EnableDDR = false;
         config->GetChipConfig(idev)->ChipType = DUT_PALPIDEFS3;
-      } else if (!ChipType.compare("PALPIDEFS4")) {
+      } else if (!ChipType.compare("PALPIDEFS4") || !ChipType.compare("ALPIDE")) {
         m_chip_type[idev] = 4;
         config->GetBoardConfig(idev)->BoardType = 2;
         config->GetBoardConfig(idev)->EnableDDR = false;
