@@ -89,8 +89,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
 
         if (!valueChild || !valueChild->FirstChild("content") ||
             !valueChild->FirstChild("content")->FirstChild()) {
-          std::cout << "content tag not found!" << std::endl;
-          std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
+          std::cout << "Content tag not found! Base: " << base << ", region: " << rgn << ", sub: " << sub << std::endl;
           printf( "Element %d [%s] %d %d\n", pChild->Type(), pChild->Value(),
                   base, rgn);
           break;
@@ -98,7 +97,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
         if (readwrite) {
           int subvalue = (value >> begin) & Bitmask(width);
           char tmp[5];
-          sprintf(tmp, "%X", subvalue);
+          sprintf(tmp, "0x%X", subvalue);
           valueChild->FirstChild("content")->FirstChild()->SetValue(tmp);
         } else {
           int content = (int)strtol(
@@ -111,7 +110,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
                       << content << " "
                       << valueChild->FirstChild("content")->Value()
                       << std::endl;
-            std::cout << "region" << rgn << " " << base << " " << sub << std::endl;
+            std::cout << "Base: " << base << ", region: " << rgn << ", sub: " << sub << std::endl;
             break;
           }
           value += content << begin;
@@ -125,7 +124,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
         if (dut->ReadRegister(address, &valuecompare) != 1)
           std::cout << "Failure to read chip address after writing chip address " << address << std::endl;
         if (address != 14 && value != valuecompare)
-          std::cout << "Register read back error : write value is : " << value << " and read value is : "<< valuecompare << std::endl;
+          std::cout << "Register 0x" << std::hex << address << std::dec << "read back error : write value is : " << value << " and read value is : "<< valuecompare << std::endl;
 
       }
     }
