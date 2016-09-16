@@ -3,6 +3,7 @@
 import time
 import datetime
 import sys
+from array import array
 
 ###############
 # configuration
@@ -12,7 +13,7 @@ import sys
 current_limit=( 7*700., 15., 15. ) # in mA
 voltages=( 5.0, 3.0, 0.0 ) # in V
 #voltages=( 5.0, 3.0, 0.0 ) # in V
-vbb_chan=( 1, 2 ) # back-bias voltage channel, counting starts with 0
+vbb_chan= [2] # back-bias voltage channel, counting starts with 0
 measurement_interval=60 # in seconds
 
 # set up serial port
