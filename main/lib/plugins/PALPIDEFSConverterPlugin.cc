@@ -624,16 +624,25 @@ namespace eudaq {
             else {
               // add hits to the hit map
               for (unsigned long iHit = 0; iHit< hits.size(); ++iHit) {
-                // Double columns before ADoubleCol
-                int x  = hits[iHit].region * 32 + hits[iHit].doublecol * 2;
-                // Left or right column within the double column
-                x+= ((hits[iHit].address % 4) < 2 ? 1:0); // left or right?
+                int x = 0;
+                int y = 0;
+                if (m_chip_type[current_layer]<3) { // pALPIDE-1/2
+                  // Double columns before ADoubleCol
+                  x = hits[iHit].region * 32 + hits[iHit].doublecol * 2;
+                  // Left or right column within the double column
+                  x+= ((hits[iHit].address % 4) < 2 ? 1:0); // left or right?
 
-                int y = hits[iHit].address / 2;
-                // adjust the top-left pixel
-                if ((hits[iHit].address % 4) == 3) y -= 1;
-                // adjust the bottom-right pixel
-                if ((hits[iHit].address % 4) == 0) y += 1;
+                  y = hits[iHit].address / 2;
+                  // adjust the top-left pixel
+                  if ((hits[iHit].address % 4) == 3) y -= 1;
+                  // adjust the bottom-right pixel
+                  if ((hits[iHit].address % 4) == 0) y += 1;
+                }
+                else { // pALPIDE-3 / ALPIDE
+                  x =  hits[iHit].region * 32 + hits[iHit].doublecol * 2;
+                  x += ((((hits[iHit].address%4)==1) || ((hits[iHit].address%4)==2)) ? 1:0);
+                  y = hits[iHit].address / 2;
+                }
 
 #ifdef EVENT_SUBTRACTION
                 bool skip_hit = false;
