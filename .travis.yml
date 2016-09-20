@@ -28,7 +28,7 @@ env:
       - PYTHON_VERSION_OLD=2.7.10
       
       - BUILD_AHCAL=ON
-      - BUILD_BIFAHCAL=ON
+      - BUILD_BIFAHCAL=OFF
       - BUILD_TESTING=OFF
       - BUILD_WITH_QT4=OFF
       - BUILD_allproducer=OFF

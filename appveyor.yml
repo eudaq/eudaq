@@ -19,7 +19,7 @@ environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
   BUILD_AHCAL: ON
-  BUILD_BIFAHCAL: ON
+  BUILD_BIFAHCAL: OFF
   BUILD_TESTING: OFF
   BUILD_WITH_QT4: OFF
   BUILD_allproducer: OFF
