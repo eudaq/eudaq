@@ -55,7 +55,7 @@ namespace eudaq {
     }; // Matches FLAGNAMES in .cc file
 
     Event();
-    Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0);
+    Event(uint32_t id_stream, unsigned run, unsigned event, unsigned flags = 0);
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const = 0;
 
@@ -63,8 +63,6 @@ namespace eudaq {
     unsigned GetEventNumber() const;
     timeStamp_t GetTimestamp() const;
 
-    size_t   GetSizeOfTimeStamps() const;
-    uint64_t getUniqueID() const;
     EventUP Clone() const;
     
     virtual std::string GetSubType() const { return ""; }
@@ -81,7 +79,6 @@ namespace eudaq {
     T GetTag(const std::string & name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }
-
     
     bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
     bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }

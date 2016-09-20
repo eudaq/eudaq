@@ -131,7 +131,6 @@ namespace eudaq {
         uint64_t timestamp = NOTIMESTAMP);
     StandardEvent(const Event &);
     StandardEvent(Deserializer &);
-    void SetTimestamp(uint64_t);
 
     StandardPlane &AddPlane(const StandardPlane &);
     size_t NumPlanes() const;

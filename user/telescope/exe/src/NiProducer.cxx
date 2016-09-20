@@ -13,10 +13,11 @@ using eudaq::RawDataEvent;
 
 class NiProducer : public eudaq::Producer {
 public:
-  NiProducer(const std::string &runcontrol)
-      : eudaq::Producer("MimosaNI", runcontrol), done(false), running(false),
+  NiProducer(const std::string name, const std::string &runcontrol)
+    : eudaq::Producer(name, runcontrol), done(false), running(false),
         stopping(false) {
-
+    m_id_stream = eudaq::cstr2hash(name.c_str());
+    
     configure = false;
 
     std::cout << "NI Producer was started successful " << std::endl;
@@ -39,7 +40,7 @@ public:
         mimosa_data_1 =
             ni_control->DataTransportClientSocket_ReadData(datalength2);
 
-        eudaq::RawDataEvent ev("NI", m_run, m_ev++);
+        eudaq::RawDataEvent ev("NI", m_id_stream, m_run, m_ev++);
         ev.AddBlock(0, mimosa_data_0);
         ev.AddBlock(1, mimosa_data_1);
         SendEvent(ev);
@@ -159,8 +160,10 @@ public:
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
 
-      eudaq::RawDataEvent ev(RawDataEvent::BORE("NI", m_run));
+      eudaq::RawDataEvent ev("NI", m_id_stream, m_run, 0);
+      ev.SetFlags(eudaq::Event::FLAG_BORE);
 
+      
       ev.SetTag("DET", "MIMOSA26");
       ev.SetTag("MODE", "ZS2");
       ev.SetTag("BOARDS", NumBoards);
@@ -194,8 +197,11 @@ public:
       // Send an EORE after all the real events have been sent
       // You can also set tags on it (as with the BORE) if necessary
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
-      SendEvent(eudaq::RawDataEvent::EORE("NI", m_run, m_ev));
 
+      eudaq::RawDataEvent ev("NI", m_id_stream, m_run, m_ev);
+      ev.SetFlags(eudaq::Event::FLAG_EORE);
+      SendEvent(ev);
+      
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
@@ -213,6 +219,7 @@ public:
   }
 
 private:
+  uint32_t m_id_stream;
   unsigned m_run, m_ev;
   bool done, running, stopping, configure;
   struct timeval tv;
@@ -276,12 +283,12 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<std::string> level(
       op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> name(op, "n", "name", "NI", "string",
+  eudaq::Option<std::string> name(op, "n", "name", "MimosaNI", "string",
                                   "The name of this Producer");
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    NiProducer producer(rctrl.Value());
+    NiProducer producer(name.Value(), rctrl.Value());
     producer.MainLoop();
     eudaq::mSleep(500);
   } catch (...) {

@@ -347,10 +347,6 @@ namespace eudaq {
     ser.write(m_planes);
   }
 
-  void StandardEvent::SetTimestamp(uint64_t val) {
-    Event::SetTimestampBegin(val);
-  }
-
   void StandardEvent::Print(std::ostream & os) const {
     Print(os, 0);
   }

@@ -40,14 +40,12 @@ namespace eudaq {
     ds.read(m_tags);
   }
 
-  Event::Event():m_flags(0), m_runnumber(0), m_eventnumber(0){
+  Event::Event():m_id_stream(0), m_flags(0), m_runnumber(0), m_eventnumber(0){
   }
 
   
-  Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/)
-    : m_flags(flags), m_runnumber(run), m_eventnumber(event)
-  {
-    
+  Event::Event(uint32_t id_stream, unsigned run, unsigned event, unsigned flags /*= 0*/)
+    : m_id_stream(id_stream), m_flags(flags), m_runnumber(run), m_eventnumber(event){
   }
 
   void Event::Serialize(Serializer & ser) const {
@@ -189,14 +187,6 @@ namespace eudaq {
   
   Event::timeStamp_t Event::GetTimestampEnd() const{
     return m_ts_end;
-  }
-
-  uint64_t Event::getUniqueID() const
-  {
-    uint64_t id = PluginManager::getUniqueIdentifier(*this);
-    id = id << 32;
-    id |= GetEventNumber();
-    return id;
   }
 
   EventUP Event::Clone() const{ //TODO: clone directly

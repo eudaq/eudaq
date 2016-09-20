@@ -28,8 +28,8 @@ namespace eudaq {
     m_typeid = Event::str2id("_RAW");
   }
   
-  RawDataEvent::RawDataEvent(std::string type, unsigned run, unsigned event)
-      : Event(run, event), m_type(type) {
+  RawDataEvent::RawDataEvent(std::string type, uint32_t id_stream, unsigned run, unsigned event)
+    : Event(id_stream, run, event), m_type(type) {
     m_typeid = Event::str2id("_RAW");
   }
 

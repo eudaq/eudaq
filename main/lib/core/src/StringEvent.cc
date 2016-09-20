@@ -9,23 +9,16 @@ namespace eudaq {
   }
 
 
-StringEvent::StringEvent(Deserializer & ds) :
-  Event(ds) {
-  ds.read(m_str);
-}
+  StringEvent::StringEvent(Deserializer & ds) :
+    Event(ds) {
+    ds.read(m_str);
+  }
 
-StringEvent::StringEvent(unsigned run,
-                         unsigned event,
-                         const std::string & str
-                         ) : Event(run, event), m_str(str) {
-  m_typeid = Event::str2id("_STR");
-}
+  StringEvent::StringEvent(uint32_t id_stream, unsigned run, unsigned event, const std::string & str)
+    : Event(id_stream, run, event), m_str(str) {
+    m_typeid = Event::str2id("_STR");
+  }
 
-StringEvent::StringEvent(unsigned run,
-                         unsigned event /*= 0*/
-                         ) : Event(run, event, NOTIMESTAMP, event ? Event::FLAG_EORE : Event::FLAG_BORE) {
-  m_typeid = Event::str2id("_STR");
-}
 
 void StringEvent::Print(std::ostream & os) const {
   Print(os, 0);
@@ -47,12 +40,5 @@ void StringEvent::Serialize(Serializer & ser) const {
   ser.write(m_str);
 }
 
-eudaq::StringEvent StringEvent::EORE(unsigned run, unsigned event) {
-  return StringEvent(run, event);
-}
-
-eudaq::StringEvent StringEvent::BORE(unsigned run) {
-  return StringEvent(run);
-}
 
 }

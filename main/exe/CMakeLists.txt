@@ -1,7 +1,7 @@
 # build main EUDAQ executables (with option to disable them, use 'cmake -DMainExec=OFF ..'
 option(BUILD_main "Compile main EUDAQ executables?" ON)
 IF(BUILD_main)
-  add_subdirectory(iphc)
+  # add_subdirectory(iphc)
   
   add_executable(ClusterExtractor    src/ClusterExtractor.cxx  )
   add_executable(ExampleReader       src/ExampleReader.cxx     )

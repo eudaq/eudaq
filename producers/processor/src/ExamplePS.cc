@@ -25,7 +25,7 @@ void ExamplePS::ProcessUserEvent(EVUP ev){
 void ExamplePS::ProduceEvent(){
   // EVUP ev = EventClassFactory::Create("RawDataEvent");
   for(int i =0; i<10; i++){
-    EVUP ev(new RawDataEvent("data", 0, i));
+    EVUP ev(new RawDataEvent("data", 10 ,0, i));
     Processing(std::move(ev));
   }
 }

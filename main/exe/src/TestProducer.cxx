@@ -24,14 +24,16 @@ using eudaq::RawDataEvent;
 class TestProducer : public eudaq::Producer {
   public:
     TestProducer(const std::string & name, const std::string & runcontrol)
-      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), done(false), eventsize(100) {}
+      : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), done(false), eventsize(100) {
+      m_id_stream = eudaq::cstr2hash(name.c_str());
+    }
     void Event(const std::string & str) {
-      StringEvent ev(m_run, ++m_ev, str);
+      StringEvent ev(m_id_stream, m_run, ++m_ev, str);
       //ev.SetTag("Debug", "foo");
       SendEvent(ev);
     }
     void Event(unsigned size) {
-      RawDataEvent ev("Test", m_run, ++m_ev);
+      RawDataEvent ev("Test", m_id_stream, m_run, ++m_ev);
       std::vector<int> tmp((size+3)/4);
       for (size_t i = 0; i < tmp.size(); ++i) {
         tmp[i] = std::rand();
@@ -50,12 +52,18 @@ class TestProducer : public eudaq::Producer {
     virtual void OnStartRun(unsigned param) {
       m_run = param;
       m_ev = 0;
-      SendEvent(RawDataEvent::BORE("Test", m_run));
+      
+      eudaq::RawDataEvent ev("Test", m_id_stream, m_run, 0);
+      ev.SetFlags(eudaq::Event::FLAG_BORE);
+      SendEvent(ev);
+
       std::cout << "Start Run: " << param << std::endl;
       SetStatus(eudaq::Status::LVL_OK, "");
     }
     virtual void OnStopRun() {
-      SendEvent(RawDataEvent::EORE("Test", m_run, ++m_ev));
+      eudaq::RawDataEvent ev("Test", m_id_stream, m_run, ++m_ev);
+      ev.SetFlags(eudaq::Event::FLAG_EORE);
+      SendEvent(ev);
       std::cout << "Stop Run" << std::endl;
     }
     virtual void OnTerminate() {
@@ -79,6 +87,7 @@ class TestProducer : public eudaq::Producer {
     unsigned m_run, m_ev;
     bool done;
     unsigned eventsize;
+  uint32_t m_id_stream;
 };
 
 int main(int /*argc*/, const char ** argv) {

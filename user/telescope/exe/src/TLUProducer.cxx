@@ -27,8 +27,8 @@ char *ZestSC1_ErrorStrings[] = {"bla bla", "blub"};
 
 class TLUProducer : public eudaq::Producer {
 public:
-  TLUProducer(const std::string &runcontrol)
-      : eudaq::Producer("TLU", runcontrol), m_run(0), m_ev(0),
+  TLUProducer(const std::string name, const std::string &runcontrol)
+    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), //name: TLU
         trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
         or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
         enable_dut_veto(0), trig_rollover(0), readout_delay(100),
@@ -40,6 +40,8 @@ public:
       pmt_gain_error[i] = 1.0;
       pmt_offset_error[i] = 0.0;
     }
+    m_id_stream = eudaq::cstr2hash(name.c_str());
+
   }
   void MainLoop() {
     do {
@@ -73,7 +75,10 @@ public:
                       << std::endl;
           }
           lasttime = t;
-          TLUEvent ev(m_run, m_ev, t);
+          TLUEvent ev(m_id_stream, m_run, m_ev);
+	  ev.SetTimestampBegin(t);
+	  ev.SetTimestampEnd(t+10);//TODO, duration
+
           ev.SetTag("trigger", m_tlu->GetEntry(i).trigger2String());
           if (i == m_tlu->NumEntries() - 1) {
             ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
@@ -92,7 +97,9 @@ public:
       }
       if (JustStopped) {
         m_tlu->Update(timestamps);
-        SendEvent(TLUEvent::EORE(m_run, ++m_ev));
+	TLUEvent ev(m_id_stream, m_run, ++m_ev);
+	ev.SetFlags(eudaq::Event::FLAG_EORE);
+        SendEvent(ev);
         TLUJustStopped = false;
       }
     } while (!done);
@@ -176,7 +183,9 @@ public:
       m_run = param;
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
-      TLUEvent ev(TLUEvent::BORE(m_run));
+      TLUEvent ev(m_id_stream, m_run, 0);
+      ev.SetFlags(eudaq::Event::FLAG_BORE);
+
       ev.SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));
       ev.SetTag("TriggerInterval", to_string(trigger_interval));
       ev.SetTag("DutMask", "0x" + to_hex(dut_mask));
@@ -301,6 +310,7 @@ private:
   std::shared_ptr<TLUController> m_tlu;
   std::string pmt_id[TLU_PMTS];
   double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];
+  uint32_t m_id_stream;
 };
 
 int main(int /*argc*/, const char **argv) {
@@ -314,13 +324,17 @@ int main(int /*argc*/, const char **argv) {
       "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> op_trace(op, "t", "tracefile", "", "filename",
                                       "Log file for tracing USB access");
+
+  eudaq::Option<std::string> name(op, "n", "name", "TLU", "string",
+                                  "The name of this Producer");
+
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
     if (op_trace.Value() != "") {
       setusbtracefile(op_trace.Value());
     }
-    TLUProducer producer(rctrl.Value());
+    TLUProducer producer(name.Value(),rctrl.Value());    
     producer.MainLoop();
     std::cout << "Quitting" << std::endl;
     eudaq::mSleep(300);

@@ -22,9 +22,11 @@ namespace eudaq {
       data_t data;
     };
     RawDataEvent();
-    RawDataEvent(std::string type, unsigned run, unsigned event);
+    RawDataEvent(std::string type, uint32_t id_stream, unsigned run, unsigned event);	
     RawDataEvent(Deserializer &);
 
+
+    
     /// Add an empty block
     size_t AddBlock(unsigned id) {
       m_blocks.push_back(block_t(id));
@@ -72,18 +74,12 @@ namespace eudaq {
 
     virtual void Print(std::ostream &) const;
     virtual void Print(std::ostream & ,size_t offset) const;
-    static RawDataEvent BORE(std::string type, unsigned run) {
+    static RawDataEvent BORE(std::string type, uint32_t id_stream, unsigned run) {
       return RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
+      
     }
-    static RawDataEvent *newBORE(std::string type, unsigned run) {
-      return new RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
-    }
-    static RawDataEvent EORE(std::string type, unsigned run, unsigned event) {
+    static RawDataEvent EORE(std::string type, uint32_t id_stream, unsigned run, unsigned event) {
       return RawDataEvent(type, run, event, Event::FLAG_EORE);
-    }
-    static RawDataEvent *newEORE(std::string type, unsigned run,
-				 unsigned event) {
-      return new RawDataEvent(type, run, event, Event::FLAG_EORE);
     }
 
     virtual void Serialize(Serializer &) const;
@@ -97,13 +93,6 @@ namespace eudaq {
 
     
   private:
-    // private constructor to create BORE and EORE
-    // make sure that event number is 0 for BORE
-    RawDataEvent(std::string type, unsigned run, unsigned event, Event::Flags flag)
-      : Event(run, event, NOTIMESTAMP, flag) ,  m_type(type){
-      m_typeid = Event::str2id("_RAW");
-    }
-
     template <typename T>
     static data_t make_vector(const T *data, size_t bytes) {
       const unsigned char *ptr = reinterpret_cast<const byte_t *>(data);

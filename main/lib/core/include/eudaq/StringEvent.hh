@@ -2,7 +2,7 @@
 #define EUDAQ_INCLUDED_StringEvent
 
 #include <vector>
-#include "eudaq/Event.hh"
+#include "Event.hh"
 
 namespace eudaq {
 
@@ -12,17 +12,14 @@ namespace eudaq {
 class DLLEXPORT StringEvent : public Event {
 public:
   virtual void Serialize(Serializer &) const;
-  StringEvent(unsigned run, unsigned event, const std::string & str);
+  StringEvent(uint32_t id_stream, unsigned run, unsigned event, const std::string & str);
   StringEvent(Deserializer &);
   virtual void Print(std::ostream &) const;
   virtual void Print(std::ostream &os, size_t offset) const;
 
   virtual std::string GetType() const;
 
-  static StringEvent BORE(unsigned run);
-  static StringEvent EORE(unsigned run, unsigned event);
 private:
-  StringEvent(unsigned run, unsigned event = 0);
   std::string m_str;
 };
 
