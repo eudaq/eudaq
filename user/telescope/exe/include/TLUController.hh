@@ -110,6 +110,8 @@ namespace tlu {
     void SetEnableDUTVeto(unsigned char mask);
     void SetHandShakeMode(unsigned handshakemode);
     void SetTriggerInformation(unsigned TriggerInf);
+    void SetClockSource(unsigned in);
+
     bool SetPMTVcntl(
         unsigned value =
             PMT_VCNTL_DEFAULT); // in mV, sets all PMT control voltages the same
@@ -127,6 +129,7 @@ namespace tlu {
     unsigned char GetDUTClockStatus() const;
     unsigned char GetEnableDUTVeto() const;
     unsigned char getTriggerInformation() const;
+    unsigned char GetClockSource() const;
     std::string GetStatusString() const;
     static int DUTnum(const std::string &name);
     void SelectDUT(const std::string &name, unsigned mask = 0xf,

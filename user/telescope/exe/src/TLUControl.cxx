@@ -46,6 +46,8 @@ int main(int /*argc*/, char **argv) {
   eudaq::Option<std::string> fname(
       op, "f", "bitfile", "", "filename",
       "The bitfile containing the TLU firmware to be loaded");
+  eudaq::Option<int> clock(op, "c", "clock_source", 1, "bits",
+                           "clock_source (1 = internal)");
   eudaq::Option<int> trigg(op, "t", "trigger", 0, "msecs",
                            "The interval in milliseconds for internally "
                            "generated triggers (0 = off)");
@@ -212,6 +214,7 @@ int main(int /*argc*/, char **argv) {
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     // TLU.FullReset();
+    TLU.SetClockSource(clock.Value());
     TLU.SetHandShakeMode(hsmode.Value()); //$$ change
     TLU.SetTriggerInterval(trigg.Value());
     if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS)

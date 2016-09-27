@@ -519,6 +519,19 @@ namespace tlu {
                     m_TriggerInformation);
   }
 
+  void TLUController::SetClockSource(unsigned in){
+    if(m_addr){
+      WriteRegister(m_addr->TLU_CLOCK_SOURCE_SELECT_ADDRESS, in);
+    }
+  }
+
+  unsigned char TLUController::GetClockSource() const{
+    if(m_addr){
+      ReadRegister8(m_addr->TLU_CLOCK_SOURCE_SELECT_ADDRESS);
+    }
+  }
+
+  
   unsigned char TLUController::GetAndMask() const {
     return ReadRegister8(m_addr->TLU_BEAM_TRIGGER_AMASK_ADDRESS);
   }
