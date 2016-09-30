@@ -658,8 +658,10 @@ namespace eudaq {
                   if (skip_hit) continue;
                 }
                 m_hitmaps[current_layer][m_i_event%m_n_event_history]->push_back(address);
-#endif
+
+#else
                 planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+#endif
               }
             }
 
@@ -686,6 +688,25 @@ namespace eudaq {
             }
           }
 
+#ifdef EVENT_SUBTRACTION
+	  // assemble events from hitmaps
+	  for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+	    if (layers_found[iPlane]) {
+	      for (int iEvent = -2; iEvent <= 0; ++iEvent) {
+		if (iEvent != -1 && iPlane != 3) continue;
+		int index = (m_i_event+iEvent)%m_n_event_history;
+		if (index<0) continue;
+		for (int iHit = 0; iHit < m_hitmaps[iPlane][index]->size(); ++iHit) {
+		  //std::cout << "(iPlane,iEvent,iHit)=(" << iPlane << "," << iEvent << "," << iHit << ")" << std::endl;
+		  unsigned int address = m_hitmaps[iPlane][index]->at(iHit);
+		  int x = address & 0x3ff;
+		  int y = (address>>10) & 0x1ff;
+		  planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
+		}
+	      }
+	    }
+	  }
+#endif
           // checking whether all layers have been found in the data stream
           bool event_incomplete = false;
           for (int i = 0; i < m_nLayers; i++) {
@@ -1170,7 +1191,7 @@ namespace eudaq {
 
 #ifdef EVENT_SUBTRACTION
   const float PALPIDEFSConverterPlugin::m_event_subtraction_time = 1.e-4; // 100us
-  const int   PALPIDEFSConverterPlugin::m_n_event_history        = 10;    // number of events
+  const int   PALPIDEFSConverterPlugin::m_n_event_history        = 15;    // number of events
 #endif
 
 } // namespace eudaq
