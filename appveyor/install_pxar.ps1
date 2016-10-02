@@ -30,7 +30,7 @@ function main(){
    
    Write-Host("cmake finished");
    
-   make install ;
+   nmake install ;
    
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "User");
    
