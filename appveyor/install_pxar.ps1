@@ -24,15 +24,13 @@ function main(){
    
    Write-Host("Switched to build folder");   
    
-   #Start-Process "cmake" -ArgumentList ".." -Wait;
+   Write-Host("Building pxar with pxarui=OFF as not necessary for this purpose and there is a problem with timespec redefinition (probably pthreads probably)");
    
-   Write-Host("Building pxar with pxarui=OFF as not necessary for this purpose and there is a problem with timespec redefinition (probably pthreads problem).");
    cmake -DBUILD_pxarui=OFF .. ;
    
    Write-Host("cmake finished");
    
-   $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-   nmake install ;
+   MSBUILD.exe INSTALL.vcxproj
    
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "User");
    
