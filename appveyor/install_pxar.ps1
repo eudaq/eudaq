@@ -16,7 +16,7 @@ function main(){
    
    Write-Host("Installing pxarcore dependency: ftd2xx");
    
-    . ".\appveyor\install_ftd2xx.ps1";   
+    . "C:\\projects\eudaq\appveyor\install_ftd2xx.ps1";   
    
    mkdir build;
    
