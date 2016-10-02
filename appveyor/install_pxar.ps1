@@ -2,7 +2,11 @@ function main(){
    # This package is necessary for the CMS pixel option
    Write-Host("Pxarcore installation started");
    
-   Push-Location -StackName entryPath -Path "C:\" ;
+   Write-Host("Installing pxarcore dependency: ftd2xx");
+   
+    . ".\appveyor\install_ftd2xx.ps1";
+   
+   Push-Location -StackName entryPath -Path "C:\projects\eudaq\extern" ;
    
    Start-Process "git" -ArgumentList "clone https://github.com/simonspa/pxar.git" -Wait;
    
@@ -28,7 +32,7 @@ function main(){
    
    make install ;
    
-   [Environment]::SetEnvironmentVariable("PXARPATH", "C:\pxar", "User");
+   [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "User");
    
    Pop-Location -StackName entryPath -PassThru ;
    
