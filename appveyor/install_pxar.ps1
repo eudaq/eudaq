@@ -20,11 +20,13 @@ function main(){
    
    Write-Host("Switched to build folder");   
    
-   Start-Process "cmake" -ArgumentList ".." -Wait;
+   #Start-Process "cmake" -ArgumentList ".." -Wait;
+   
+   cmake .. ;
    
    Write-Host("cmake finished");
    
-   Start-Process "make" -ArgumentList "install" -Wait;
+   make install ;
    
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\pxar", "User");
    
