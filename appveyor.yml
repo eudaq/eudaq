@@ -100,7 +100,7 @@ build_script:
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")) {Write-Host ("Reusing cached libusb-win32 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32" + " instead of downloading from sourcefourge (which can be sometimes unreliable...)")} Else {Write-Host "Downloading libusb-win32 from sourceforge"; appveyor\download.ps1 -downloadLocation 'https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/libusb-win32-bin-1.2.6.0.zip' -storageLocation 'C:\\libusb-win32-bin-1.2.6.0.zip'; $zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 7z -y x C:\\libusb-win32-bin-1.2.6.0.zip $zipargument;  Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32-bin-1.2.6.0") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\libusb-win32")}
 
-- ps: If ($BUILD_cmspixel -eq "ON") { Write-Host("Installing pxarcore as required by cmspixel producer"); . ".\install_pxar.ps1" }
+- ps: If (${env:BUILD_cmspixel} -eq "ON") { Write-Host("Installing pxarcore as required by cmspixel producer"); . ".\install_pxar.ps1" }
 
 # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
