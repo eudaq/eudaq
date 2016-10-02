@@ -2,7 +2,7 @@ function main(){
    # This package is necessary for the CMS pixel option
    Write-Host("Pxarcore installation started");
    
-   Push-Location -StackName entryPath -Path C: ;
+   Push-Location -StackName entryPath -Path "C:\" ;
    
    Start-Process "git" -ArgumentList "clone https://github.com/simonspa/pxar.git" -Wait;
    
