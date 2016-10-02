@@ -33,6 +33,7 @@ function main(){
    MSBUILD.exe INSTALL.vcxproj
    
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "User");
+   [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "Process");
    
    Pop-Location -StackName entryPath -PassThru ;
    
