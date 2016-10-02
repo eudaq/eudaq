@@ -26,7 +26,8 @@ function main(){
    
    #Start-Process "cmake" -ArgumentList ".." -Wait;
    
-   cmake .. ;
+   Write-Host("Building pxar with pxarui=OFF as not necessary for this purpose and there is a problem with timespec redefinition (probably pthreads problem).");
+   cmake -DBUILD_pxarui=OFF .. ;
    
    Write-Host("cmake finished");
    
