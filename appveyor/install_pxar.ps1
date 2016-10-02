@@ -30,6 +30,7 @@ function main(){
    
    Write-Host("cmake finished");
    
+   $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
    nmake install ;
    
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "User");

@@ -57,7 +57,7 @@ cache:
   
 init:
 # The following line enables the remote desktop connection and show the connection information.
-#- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
