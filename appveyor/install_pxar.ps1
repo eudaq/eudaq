@@ -32,6 +32,7 @@ function main(){
    
    MSBUILD.exe INSTALL.vcxproj
    
+   #Variables put into the User context are not visible in this process, process variables are only temporary but fortunately we are running here in one process
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "User");
    [Environment]::SetEnvironmentVariable("PXARPATH", "C:\projects\eudaq\extern\pxar", "Process");
    
