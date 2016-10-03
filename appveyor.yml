@@ -14,12 +14,16 @@ configuration: Release
 
 #  - x64
 platform: x86 
-      
+
+# comments on options:
+# BIFAHCAL: Requires cactus and does not compile properly on Windows
+# cmspixel: Required pxar compiles on Windows but there are some minor problems afterwards
+# 
 environment:
   ROOTSYS: C:\root
   PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
-  BUILD_AHCAL: ON
-  BUILD_BIFAHCAL: ON
+  BUILD_AHCAL: OFF
+  BUILD_BIFAHCAL: OFF
   BUILD_TESTING: OFF
   BUILD_WITH_QT4: OFF
   BUILD_allproducer: OFF
@@ -27,8 +31,6 @@ environment:
   BUILD_altroUSB: OFF
   BUILD_cmspixel: OFF
   BUILD_depfet: OFF
-  BUILD_eudrb: OFF
-  BUILD_example: OFF
   BUILD_fortis: OFF
   BUILD_gui: ON
   BUILD_main: OFF
@@ -47,6 +49,7 @@ environment:
   BUILD_taki: OFF
   BUILD_timepixdummy: OFF
   BUILD_tlu: ON
+  IGNORE_KNOWN_ISSUES: ON
   PYTHON: "C:\\Python35"
   PYTHON_VERSION: "3.5.2" 
   PYTHON_ARCH: "32"
@@ -58,7 +61,7 @@ cache:
   
 init:
 # The following line enables the remote desktop connection and show the connection information.
-#- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
@@ -103,11 +106,13 @@ build_script:
 
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
+- ps: If (${env:BUILD_cmspixel} -eq "ON") { Write-Host("Installing pxarcore as required by cmspixel producer"); . ".\appveyor\install_pxar.ps1" }
+
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
-- cmd: echo -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_calice=%BUILD_calice% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% ..
+- cmd: echo -DIGNORE_KNOWN_ISSUES=%IGNORE_KNOWN_ISSUES% -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu% ..
 
-- cmd: cmake -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_calice=%BUILD_calice% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_eudrb=%BUILD_eudrb% -DBUILD_example=%BUILD_example% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu%  ..
+- cmd: cmake echo -DIGNORE_KNOWN_ISSUES=%IGNORE_KNOWN_ISSUES% -DBUILD_AHCAL=%BUILD_AHCAL% -DBUILD_BIFAHCAL=%BUILD_BIFAHCAL% -DBUILD_TESTING=%BUILD_TESTING% -DBUILD_WITH_QT4=%BUILD_WITH_QT4% -DBUILD_allproducer=%BUILD_allproducer% -DBUILD_altro=%BUILD_altro% -DBUILD_altroUSB=%BUILD_altroUSB% -DBUILD_cmspixel=%BUILD_cmspixel% -DBUILD_depfet=%BUILD_depfet% -DBUILD_fortis=%BUILD_fortis% -DBUILD_gui=%BUILD_gui% -DBUILD_main=%BUILD_main% -DBUILD_manual=%BUILD_manual% -DBUILD_mimoroma=%BUILD_mimoroma% -DBUILD_miniTLU=%BUILD_miniTLU% -DBUILD_mvd=%BUILD_mvd% -DBUILD_ni=%BUILD_ni% -DBUILD_nreader=%BUILD_nreader% -DBUILD_offlinemon=%BUILD_offlinemon% -DBUILD_onlinemon=%BUILD_onlinemon% -DBUILD_palpidefs=%BUILD_palpidefs% -DBUILD_pixelmanproducer=%BUILD_pixelmanproducer% -DBUILD_python=%BUILD_python% -DBUILD_root=%BUILD_root% -DBUILD_taki=%BUILD_taki% -DBUILD_timepixdummy=%BUILD_timepixdummy% -DBUILD_tlu=%BUILD_tlu%  ..
 
 - cmd: msbuild INSTALL.vcxproj
 

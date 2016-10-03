@@ -21,6 +21,7 @@ class CMSPixelProducer : public eudaq::Producer {
 public:
   CMSPixelProducer(const std::string &name, const std::string &runcontrol,
                    const std::string &verbosity);
+  virtual void OnInitialise(const eudaq::Configuration &init);
   virtual void OnConfigure(const eudaq::Configuration &config);
   virtual void OnStartRun(unsigned runnumber);
   virtual void OnStopRun();

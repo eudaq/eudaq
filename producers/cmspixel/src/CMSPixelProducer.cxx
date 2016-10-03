@@ -5,6 +5,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Status.hh"
 #include "config.h" // Version symbols
 
 #include "api.h"
@@ -53,6 +54,28 @@ CMSPixelProducer::CMSPixelProducer(const std::string &name,
     m_detector = "DUT";
     m_event_type = EVENT_TYPE_DUT;
   }
+}
+
+void CMSPixelProducer::OnInitialise(const eudaq::Configuration &init){
+      try {
+        std::cout << "Reading: " << init.Name() << std::endl;
+        
+        // Do any initialisation of the hardware here 
+        // "start-up configuration", which is usally done only once in the beginning
+        // Configuration file values are accessible as config.Get(name, default)
+
+        // At the end, set the ConnectionState that will be displayed in the Run Control.
+        // and set the state of the machine.
+        SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
+      } 
+      catch (...) {
+        // Message as cout in the terminal of your producer
+        std::cout << "Unknown exception" << std::endl;
+        // Message to the LogCollector
+        EUDAQ_ERROR("Error occurred in initialization phase of CMSPixelProducer");
+        // Otherwise, the State is set to ERROR
+        SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
+      }	
 }
 
 void CMSPixelProducer::OnConfigure(const eudaq::Configuration &config) {
@@ -293,27 +316,27 @@ void CMSPixelProducer::OnConfigure(const eudaq::Configuration &config) {
     m_api->_dut->printDACs(0);
 
     if (!m_trimmingFromConf)
-      SetStatus(eudaq::Status::LVL_WARN,
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR,
                 "Couldn't read trim parameters from \"" + config.Name() +
                     "\".");
     else
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
     std::cout << "=============================\nCONFIGURED\n=================="
                  "===========" << std::endl;
   } catch (pxar::InvalidConfig &e) {
     EUDAQ_ERROR(string("Invalid configuration settings: " + string(e.what())));
-    SetStatus(eudaq::Status::LVL_ERROR,
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR,
               string("Invalid configuration settings: ") + e.what());
     delete m_api;
     m_api = NULL;
   } catch (pxar::pxarException &e) {
     EUDAQ_ERROR(string("pxarCore Error: " + string(e.what())));
-    SetStatus(eudaq::Status::LVL_ERROR, string("pxarCore Error: ") + e.what());
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, string("pxarCore Error: ") + e.what());
     delete m_api;
     m_api = NULL;
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
     delete m_api;
     m_api = NULL;
   }
@@ -381,11 +404,11 @@ void CMSPixelProducer::OnStartRun(unsigned runnumber) {
     // Start the timer for period ROC reset:
     m_reset_timer = new eudaq::Timer;
 
-    SetStatus(eudaq::Status::LVL_USER, "Running - HV ON!");
+    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running - HV ON!");
     m_running = true;
   } catch (...) {
     EUDAQ_ERROR(string("Unknown exception."));
-    SetStatus(eudaq::Status::LVL_ERROR, "Unknown exception.");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
     delete m_api;
     m_api = NULL;
   }
@@ -458,13 +481,13 @@ void CMSPixelProducer::OnStopRun() {
                "% (" + std::to_string(m_ev_filled) + "/" +
                std::to_string(m_ev) + ")"));
 
-    SetStatus(eudaq::Status::LVL_OK, "Stopped");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
   } catch (const std::exception &e) {
     printf("While Stopping: Caught exception: %s\n", e.what());
-    SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
   } catch (...) {
     printf("While Stopping: Unknown exception\n");
-    SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
   }
 }
 
