@@ -25,7 +25,7 @@ environment:
   BUILD_allproducer: OFF
   BUILD_altro: OFF
   BUILD_altroUSB: OFF
-  BUILD_cmspixel: ON
+  BUILD_cmspixel: OFF
   BUILD_depfet: OFF
   BUILD_fortis: OFF
   BUILD_gui: ON
