@@ -12,7 +12,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew tap homebrew/dupes/expec
 
 cd --
 
-wget https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
 unzip alice-its-alpide-software-master-latest.zip
 
