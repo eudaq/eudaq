@@ -84,6 +84,7 @@ cache:
 matrix:      
    include:   
       - os: osx      
+        osx_image: beta-xcode6.2
         compiler: gcc    
         env: OPTION=modern BUILD_rpi_controller=OFF   
 #      - os: linux
