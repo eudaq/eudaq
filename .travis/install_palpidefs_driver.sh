@@ -8,7 +8,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get instal
 
 # http://apple.stackexchange.com/questions/193138/to-install-unbuffer-in-osx
 
-if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew tap homebrew/dupes/expect && brew install tinyxml homebrew/dupes/expect libusb; fi
+if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew --prefix && brew -ls verbose tinyxml && brew install tinyxml homebrew/dupes/expect libusb; fi
 
 cd --
 
