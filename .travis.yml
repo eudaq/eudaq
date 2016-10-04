@@ -83,30 +83,30 @@ cache:
   
 matrix:      
    include:   
-      - os: linux
-        compiler: gcc
-        env: OPTION=modern BUILD_manual=ON
-      - os: linux      
-        compiler: gcc      
-        env: OPTION=old
-      - os: linux
-        compiler: clang      
-        env: OPTION=modern
-      - os: linux
-        compiler: clang      
-        env: OPTION=old
       - os: osx      
         compiler: gcc    
-        env: OPTION=modern BUILD_rpi_controller=OFF
-      - os: osx
-        compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF
-      - os: osx
-        compiler: clang      
-        env: OPTION=modern BUILD_rpi_controller=OFF
-      - os: osx      
-        compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF     
+        env: OPTION=modern BUILD_rpi_controller=OFF   
+#      - os: linux
+#        compiler: gcc
+#        env: OPTION=modern BUILD_manual=ON
+#      - os: linux      
+#        compiler: gcc      
+#        env: OPTION=old
+#      - os: linux
+#        compiler: clang      
+#        env: OPTION=modern
+#      - os: linux
+#        compiler: clang      
+#        env: OPTION=old
+#      - os: osx
+#        compiler: gcc      
+#        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF
+#      - os: osx
+#        compiler: clang      
+#        env: OPTION=modern BUILD_rpi_controller=OFF
+#      - os: osx      
+#        compiler: clang      
+#        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF     
 
 before_install:
   - source .travis/before_install.sh
