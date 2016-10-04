@@ -1,9 +1,8 @@
+The EUDET TLU is based in the Orange Tree ZestSC1 FPGA board. With this board the FPGA configuration is downloaded over USB at start-up. 
 
-The EUDET TLU is based in the Orange Tree ZestSC1 FPGA board. 
-With this board the FPGA configuration is downloaded over USB at start-up. 
-(There is no configuration EPROM )
+Additonally to the libusb library, the TLU producer for the EUDET TLU requires the ZestSC1 driver package and the FPGA firmware bitfiles (The *.bit files are produced by Xilinx ISE.); these are available to download via AFS from DESY.
 
-The *.bit files are produced by Xilinx ISE
-
-The source files are available from a subversion repository at 
-https://svn.phy.bris.ac.uk/svn/uob-hep-pc017a/trunk/firmware/
+If AFS is accessible on the machine when CMake is run, the necessary files will be installed automatically; otherwise, manually copy full folder with sub-directories from
+* /afs/desy.de/group/telescopes/tlu/ZestSC1  
+* /afs/desy.de/group/telescopes/tlu/tlufirmware
+into the ./extern subfolder in your EUDAQ source directory.
