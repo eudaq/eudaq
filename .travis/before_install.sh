@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo $CXX --version
-echo $CC --version
+echo `$CXX --version`
+echo `$CC --version`
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
@@ -10,10 +10,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
 	
-	echo $CXX --version
-        echo $CC --version
+	echo `$CXX --version`
+        echo `$CC --version`
 		
-else
-	
 fi
 	

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-	if [[ $OPTION == 'modern' ]]; then
 
-	else
-
-	fi
+	if [[ $BUILD_manual == 'ON' ]]; then
+		echo "Installing texlive under OSX not prepared yet..."
+		sudo apt-get install -y texlive texlive-latex-extra
+	fi	
 	
 else 
 	
