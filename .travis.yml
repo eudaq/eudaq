@@ -77,11 +77,12 @@ cache:
   directories:
   - $TRAVIS_BUILD_DIR/extern/ZestSC1
   - $TRAVIS_BUILD_DIR/extern/tlufirmware
-  
+
+#         osx_image: beta-xcode6.2
+
 matrix:      
    include:   
       - os: osx      
-        osx_image: beta-xcode6.2
         compiler: gcc    
         env: OPTION=modern BUILD_rpi_controller=OFF   
 #      - os: linux
@@ -107,7 +108,6 @@ matrix:
 #        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF     
 
 before_install:
-  - echo $osx_image
   - source .travis/before_install.sh
   - source .travis/install_afs.sh  
   - source .travis/install_cmake.sh
