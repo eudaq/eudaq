@@ -20,10 +20,7 @@ env:
       - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.5
       - CMAKE_FILENAME_LINUX=cmake-3.5.2-Linux-x86_64.tar.gz
       - CMAKE_FILENAME_MAC=cmake-3.5.2-Darwin-x86_64.tar.gz
-      
-      - OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
-      - OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
-      
+            
       - PYTHON_VERSION_MODERN=3.5.1
       - PYTHON_VERSION_OLD=2.7.10
       
@@ -111,6 +108,7 @@ matrix:
 
 before_install:
   - source .travis/before_install.sh
+  - source .travis/install_afs.sh
   - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
   - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
