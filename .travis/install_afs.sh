@@ -1,9 +1,13 @@
 #!/bin/bash
 
 # Install openafs / auristor
+# last openafs version for OSX 10.9 -> stopped working with 10.11 as there is an error 16 (binary too old) which cannot be handled on the command line
 
-export OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
-export OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
+# export OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
+# export OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
+
+ export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.11
+ export OPENAFS_FILENAME_MAC=AuriStor-client-0.117-ElCapitan.dmg
       
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
@@ -12,10 +16,16 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	echo "Installing openafs now"
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
 	sudo hdiutil attach $OPENAFS_FILENAME_MAC
-	#ls /Volumes/OpenAFS/
-	sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
-	sudo hdiutil detach /Volumes/OpenAFS
-	sudo launchctl start org.openafs.filesystems.afs
+	
+	ls /Volumes/OpenAFS/
+	
+	sudo installer -package /Volumes/Auristor-Lite-ElCapitan/Auristor-Lite.pkg -target /
+	sudo hdiutil detach /Volumes/Auristor-Lite-ElCapitan
+	#sudo launchctl start org.auristor.filesystems.afs
+	
+	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
+	#sudo hdiutil detach /Volumes/OpenAFS
+	#sudo launchctl start org.openafs.filesystems.afs
 	#tar xfz $OPENAFS_FILENAME_MAC
 	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
 	#echo $PATH	
