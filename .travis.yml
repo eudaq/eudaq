@@ -107,6 +107,7 @@ matrix:
 #        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF     
 
 before_install:
+  - echo $osx_image
   - source .travis/before_install.sh
   - source .travis/install_cmake.sh
   - source .travis/install_python.sh  
