@@ -44,7 +44,7 @@ env:
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=ON
-      - BUILD_palpidefs=ON
+      - BUILD_palpidefs=OFF
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=OFF
@@ -108,14 +108,21 @@ matrix:
 
 before_install:
   - source .travis/before_install.sh
+  - source .travis/install_cmake.sh
+  - source .travis/install_python.sh  
+  - source .travis/install_libusb_0_1.sh  
+  - source .travis/install_libusb_1_0.sh  
+  - source .travis/install_qt.sh  
   - source .travis/install_afs.sh
+  - source .travis/install_root.sh
+  - source .travis/install_tex.sh  
   - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
   - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
   - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=~/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b/pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on"; fi  
       
 install:
-  - source .travis/install.sh
+#  - source .travis/install.sh
 
 before_script:
   - $CXX --version

@@ -4,7 +4,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Mac OS X:
 		#brew update
-		brew unlink cmake python python3
 		brew install libusb qt5 libusb-compat
 		
 		#brew install python3
@@ -20,7 +19,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	else
 		# Install package dependencies for Mac OS X:
 		#brew update
-		brew unlink cmake python python3
 		brew install libusb qt libusb-compat
 		
 		#brew install python
@@ -66,7 +64,7 @@ else
 		# Install package dependencies for Linux:
 		sudo add-apt-repository -y ppa:openafs/stable
 		sudo apt-get update		
-		sudo apt-get install --force-yes -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev cmake qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
+		sudo apt-get install --force-yes -y libusb-dev libusb-1.0-0 libusb-1.0-0-dev qt4-dev-tools linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5
 		
 		# creating ThisCell file --> since some update it seems to be absolutely necessary, otherwise start up fails with
 		# "afsd: some file missing or bad in /etc/openafs"

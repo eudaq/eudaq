@@ -7,8 +7,7 @@ export OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
       
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
-	# OS X: update brew cache:
-	brew update || brew update
+	brew outdated openssl || brew upgrade openssl
 	
 	echo "Installing openafs now"
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
@@ -26,5 +25,13 @@ else
 	#workaround as openafs in the normal is broken in the moment - kernel module does not compile
 	sudo add-apt-repository -y ppa:openafs/stable
 	sudo apt-get -qq update
+	
+	sudo apt-get install --force-yes -y linux-generic linux-headers-$(uname -r) openafs-client openafs-krb5	
+	
+	touch ~/ThisCell
+	echo "cern.ch" >> ~/ThisCell
+	echo "" >> ~/ThisCell
+	sudo cp ~/ThisCell /etc/openafs
+	sudo service openafs-client start	
 fi
 	
