@@ -7,7 +7,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	if [[ $OPTION == 'modern' ]]; then
 		# Install package dependencies for Mac OS X:
 		#brew update
-		brew install ibusb-compat
+		brew install libusb-compat
 		
 	else
 		# Install package dependencies for Mac OS X:
