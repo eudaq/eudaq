@@ -4,8 +4,8 @@
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
-	#brew uninstall cmake --force
-	brew unlink cmake
+	brew uninstall cmake --force
+	#brew unlink cmake
 	
 	export CMAKE_FILENAME=${CMAKE_FILENAME_MAC}
 	
