@@ -709,18 +709,6 @@ namespace eudaq {
 
 		  if (index<0) continue;
 
-		  /*
-		  cout << "Current: ";
-		  for (int i = 0; i<hits_in->size(); ++i) {
-		    cout << hits_in->at(i) << ' ';
-		  }
-		  cout << endl;
-		  cout << "Adding: ";
-		  for (int i = 0; i<m_hitmaps[iPlane][index]->size(); ++i) {
-		    cout << m_hitmaps[iPlane][index]->at(i) << ' ';
-		  }
-		  cout << endl;
-		  */
 		  hits_out->clear();
 		  std::set_union(hits_in->begin(), hits_in->end(),
 				 m_hitmaps[iPlane][index]->begin(), m_hitmaps[iPlane][index]->end(),
@@ -729,37 +717,10 @@ namespace eudaq {
 		  tmp = hits_in;
 		  hits_in = hits_out;
 		  hits_out = tmp;
-
-		  /*
-		  cout << "Resulting: ";
-		  for (int i = 0; i<hits_in->size(); ++i) {
-		    cout << hits_in->at(i) << ' ';
-		  }
-		  cout << endl;
-		  */
-
-		  //cout << endl << endl << "Event: " << iEvent << ", index: " << index << endl << endl;
-		  //for (int iHit = 0; iHit < m_hitmaps[iPlane][index]->size(); ++iHit) {
-		  //  cout << "(iPlane,iEvent,iHit)=(" << iPlane << "," << iEvent << "," << iHit << "): 0x" << std::hex << m_hitmaps[iPlane][index]->at(iHit) << std::dec << endl;
-		  //}
 		}
 		for (int iHit = 0; iHit < hits_out->size(); ++iHit) {
-		  //cout << "(iPlane,iHit)=(" << iPlane << "," << "," << iHit << ")=0x" << std::hex << hits_out->at(iHit) << std::dec << endl;
 		  if (iHit>0 && hits_out->at(iHit-1)==hits_out->at(iHit)) {
 		    cout << "Address 0x" << std::hex << hits_out->at(iHit) << std::dec << " found twice in " << ev.GetEventNumber() << "!" << endl;
-		    cout << "Corresponding hit list: " << endl;
-		    for (int iHitPrint = 0; iHitPrint < hits_out->size(); ++iHitPrint) {
-		      cout << "(iPlane,iHit)=(" << iPlane << "," << iHitPrint << "): 0x" << std::hex << hits_out->at(iHitPrint) << std::dec << endl;
-		    }
-
-		    for (int iEvent = -2; iEvent <= 0; ++iEvent) {
-		      if (iEvent != -1 && iPlane != 3) continue;
-		      int index = (m_i_event+iEvent)%m_n_event_history;
-		      if (index<0) continue;
-		      for (int iHitPrint = 0; iHitPrint < m_hitmaps[iPlane][index]->size(); ++iHitPrint) {
-			cout << "(iPlane,iEvent,iHit)=(" << iPlane << "," << iEvent << "," << iHitPrint << "): 0x" << std::hex << m_hitmaps[iPlane][index]->at(iHitPrint) << std::dec << endl;
-		      }
-		    }
 		  }
 		  unsigned int address = hits_out->at(iHit);
 		  int x = address & 0x3ff;
