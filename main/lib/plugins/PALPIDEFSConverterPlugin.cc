@@ -1009,7 +1009,6 @@ namespace eudaq {
 #endif
 #ifdef EVENT_SUBTRACTION
     std::vector<int>*** m_hitmaps; // [layer][event]
-    static const float m_event_subtraction_time; // time during which events will be subtracted
     static const int   m_n_event_history;        // number of events required to have the same time distance before an event is accepted as valid
     int  m_i_event;                              // counter for the event history
     bool m_event_subtraction;                     // status of the event subtration
@@ -1222,8 +1221,7 @@ namespace eudaq {
   PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
 
 #ifdef EVENT_SUBTRACTION
-  const float PALPIDEFSConverterPlugin::m_event_subtraction_time = 1.e-4; // 100us
-  const int   PALPIDEFSConverterPlugin::m_n_event_history        = 10;    // number of events
+  const int   PALPIDEFSConverterPlugin::m_n_event_history        = 20;    // number of events
 #endif
 
 } // namespace eudaq
