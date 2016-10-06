@@ -788,8 +788,8 @@ namespace eudaq {
                 std::vector<int>* hits_in  = new std::vector<int>();
                 std::vector<int>* hits_out = new std::vector<int>();
                 std::vector<int>* tmp = 0x0;
-                for (int iEvent = -2; iEvent <= 0; ++iEvent) {
-                  if (iEvent != -1 && iPlane != 3) continue;
+                for (int iEvent = -5; iEvent <= 0; ++iEvent) {
+                  if (iEvent != -3 && iPlane != 3) continue;
                   int index = (m_i_event+iEvent)%m_n_event_history;
 
                   if (index<0) continue;
