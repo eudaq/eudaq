@@ -12,8 +12,10 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	echo "Installing cmake now"
 	wget ${CMAKE_DOWNLOAD_PATH}/$CMAKE_FILENAME
 	tar xfz $CMAKE_FILENAME
-	export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
-	echo $PATH
+	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
+	#echo $PATH
+	mkdir -p /usr/local/Cellar/cmake
+	cp -r ${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/* /usr/local/Cellar/cmake/
 	
 	brew link cmake
 else
