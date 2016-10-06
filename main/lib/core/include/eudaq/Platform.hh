@@ -1,9 +1,16 @@
 #ifndef EUDAQ_INCLUDED_Platform
 #define EUDAQ_INCLUDED_Platform
-#include <memory>
 
-template <typename T, typename... Args> 
-T __check(Args&&... args); 
+#include <cstdint>
+using std::int8_t;
+using std::int16_t;
+using std::int32_t;
+using std::int64_t;
+
+using std::uint8_t;
+using std::uint16_t;
+using std::uint32_t;
+using std::uint64_t;
 
 #define PF_LINUX 1
 #define PF_MACOSX 2
@@ -26,22 +33,13 @@ T __check(Args&&... args);
 #endif
 
 
-
-
-#if EUDAQ_PLATFORM_IS(WIN32)
-#include <stdint.h>
-#endif
-
-
-
-// used for reference counted TObject 
-// Use this only if you know the object is counted somewehere else
 #define T_NEW new
+#include <memory>
+
 template <class T, class... Args>
 std::unique_ptr<T> __make_unique(Args&&... args){
   return std::unique_ptr<T>(new T(args...));
 }
-
 
 template <class derived,class base, class... Args>
 std::unique_ptr<base> __make_unique_base(Args&&... args) {

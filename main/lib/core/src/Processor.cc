@@ -19,8 +19,8 @@ PSSP Processor::MakePSSP(std::string pstype, std::string cmd){
 }
 
 Processor::Processor(std::string pstype, std::string cmd)
-  :m_pstype(pstype), m_psid(0), m_state(STATE_READY){
-}
+  :m_pstype(pstype), m_psid(0), m_state(STATE_READY), m_flag(0){
+ }
 
 Processor::~Processor() {
   std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
