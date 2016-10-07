@@ -1,14 +1,19 @@
 #!/bin/bash
 
+# TODO: Eithe find a way to reboot the worker on travis or start service without reboot"
+
 # Install openafs / auristor
 # last openafs version for OSX 10.9 -> stopped working with 10.11 as there is an error 16 (binary too old) which cannot be handled on the command line
 
 # export OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
 # export OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
 
- export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.11
- export OPENAFS_FILENAME_MAC=AuriStor-client-0.117-ElCapitan.dmg
-      
+echo "Entered install_afs.sh"
+echo "Installing afs"
+
+export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.11
+export OPENAFS_FILENAME_MAC=AuriStor-client-0.117-ElCapitan.dmg
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 	brew outdated openssl || brew upgrade openssl
@@ -25,6 +30,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
+	
+	sudo shutdown -r now
 	
 	ls /afs/
 	
