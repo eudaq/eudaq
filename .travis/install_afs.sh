@@ -17,11 +17,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
 	sudo hdiutil attach $OPENAFS_FILENAME_MAC
 	
-	ls /Volumes/OpenAFS/
+	#ls /Volumes/OpenAFS/
 	
 	sudo installer -package /Volumes/Auristor-Lite-ElCapitan/Auristor-Lite.pkg -target /
 	sudo hdiutil detach /Volumes/Auristor-Lite-ElCapitan
 	#sudo launchctl start org.auristor.filesystems.afs
+	sudo launchctl list
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
