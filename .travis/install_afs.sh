@@ -45,3 +45,12 @@ else
 	sudo service openafs-client start	
 fi
 	
+if [ -d "\\afs\desy.de\group\telescopes\" ]; then
+	echo "Afs seems to work properly"
+else
+	if [ -d "\\cern.ch\" ]; then
+		echo "Afs seems to work properly, but desy afs down?"
+	else
+		echo "Something wrong with the afs installation"
+	fi	
+fi
