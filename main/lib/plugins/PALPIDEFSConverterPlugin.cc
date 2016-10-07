@@ -674,6 +674,7 @@ namespace eudaq {
             bool headerOK  = true;
             bool eventOK   = false;
             bool trailerOK = true;
+	    unsigned int statusBits = 0x0;
 
             if (m_DataVersion==2) {
               eventOK =  m_dut[current_layer]->DecodeEvent(&data[0]+pos, data_end+1-pos, &hits);
@@ -693,7 +694,22 @@ namespace eudaq {
               headerOK  = m_daq_board[current_layer]->DecodeEventHeader(&data[0]+pos, &header);
 
               // PAYLOAD
-              eventOK   = m_dut[current_layer]->DecodeEvent(&data[0]+payload_begin, payload_length, &hits);
+	      if (m_chip_type[current_layer]<3) {
+		eventOK   = m_dut[current_layer]->DecodeEvent(&data[0]+payload_begin, payload_length, &hits);
+	      }
+	      else if (m_chip_type[current_layer]==3) { // pALPIDE-3
+		TpAlpidefs3* p3 = dynamic_cast<TpAlpidefs3*>(m_dut[current_layer]);
+		if (p3) eventOK = p3->DecodeEvent(&data[0]+payload_begin, payload_length, &hits, 0x0, 0x0, &statusBits);
+	      }
+	      else if (m_chip_type[current_layer]==4) { // ALPIDE
+		TpAlpidefs4* p4 = dynamic_cast<TpAlpidefs4*>(m_dut[current_layer]);
+		if (p4) eventOK = p4->DecodeEvent(&data[0]+payload_begin, payload_length, &hits, 0x0, &statusBits);
+	      }
+
+	      if (statusBits!=0) {
+		eventOK = false;
+		cout << "Status bits not 0x0 but " << statusBits << "!" << endl;
+	      }
 
               // TRAILER
               trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(&data[0]+trailer_begin, &header);
