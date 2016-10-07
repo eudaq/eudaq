@@ -24,7 +24,6 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	#sudo launchctl start org.auristor.filesystems.afs
 	sudo launchctl list
 	sudo launchctl start com.auristor.yfs-client
-	ls /
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
@@ -48,16 +47,10 @@ else
 	sudo service openafs-client start	
 fi
 	
-if [ -d "\\afs\desy.de\group\telescopes\" ]; then
-
+if [[ -d "/afs/desy.de/group/telescopes" ]]; then
 	echo "Afs seems to work properly"
-	
-elif [ -d "\\cern.ch\" ]; then
-	
+elif [[ -d "/afs/cern.ch" ]]; then
 	echo "Afs seems to work properly, but desy afs down?"
-		
 else
-	
-	echo "Something wrong with the afs installation";
-		
+	echo "Something wrong with the afs installation"	
 fi
