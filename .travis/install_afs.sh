@@ -23,6 +23,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	sudo hdiutil detach /Volumes/Auristor-Lite-ElCapitan
 	#sudo launchctl start org.auristor.filesystems.afs
 	sudo launchctl list
+	sudo launchctl start com.auristor.yfs-client
+	ls /
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
