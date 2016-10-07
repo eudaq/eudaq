@@ -82,9 +82,9 @@ cache:
 
 matrix:      
    include:   
-      - os: osx      
-        compiler: gcc    
-        env: OPTION=modern BUILD_rpi_controller=OFF      
+      - os: linux
+        compiler: clang      
+        env: OPTION=modern     
  
 
 
