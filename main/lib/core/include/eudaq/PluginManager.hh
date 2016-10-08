@@ -12,11 +12,12 @@ namespace eudaq {
   class DLLEXPORT PluginManager {
 
   public:
-    using timeStamp_t = DataConverterPlugin::timeStamp_t;
-    typedef DataConverterPlugin::t_eventid t_eventid;
-
+    using timeStamp_t = uint64_t;
+    using t_eventid = std::pair<uint32_t, std::string>;
+    
     static PluginManager &GetInstance();
 
+    
     static unsigned GetTriggerID(const Event &);
     // static timeStamp_t GetTimeStamp(const Event &, size_t index);
     // static size_t GetTimeStamp_size(const Event &);

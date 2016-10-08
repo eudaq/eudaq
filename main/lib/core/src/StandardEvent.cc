@@ -50,12 +50,6 @@ namespace eudaq {
     ser.write(m_mat);
   }
 
-  // StandardPlane::StandardPlane(size_t pixels, size_t frames) 
-  //   : m_pix(frames, std::vector<pixel_t>(pixels)), m_x(pixels), m_y(pixels),
-  //   m_pivot(pixels)
-  // {
-  //   //
-  // }
 
   void StandardPlane::Print(std::ostream & os) const {
     Print(os, 0);
@@ -238,16 +232,6 @@ namespace eudaq {
     return v.at(f);
   }
 
-  //   template <typename T>
-  //     std::vector<T> StandardPlane::GetPixels() const {
-  //       SetupResult();
-  //       std::vector<T> result(m_result_pix->size());
-  //       for (size_t i = 0; i < result.size(); ++i) {
-  //         result[i] = static_cast<T>((*m_result_pix)[i] * Polarity());
-  //       }
-  //       return result;
-  //     }
-
   void StandardPlane::SetupResult() const {
     if (m_result_pix)
       return;
@@ -329,14 +313,12 @@ namespace eudaq {
   template std::vector<double> StandardPlane::GetPixels<>() const;
 
   StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
-      : Event(run, evnum, timestamp) {
-    m_typeid = Event::str2id("_STD");
-
+    : Event(Event::str2id("_STD"), run, 0) {
+    SetEventN(evnum);
+    SetTimestampBegin(timestamp);
+    SetTimestampEnd(timestamp);
   }
 
-  StandardEvent::StandardEvent(const Event &e) : Event(e) {
-    m_typeid = Event::str2id("_STD");
-  }
 
   StandardEvent::StandardEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_planes);
@@ -347,9 +329,6 @@ namespace eudaq {
     ser.write(m_planes);
   }
 
-  void StandardEvent::Print(std::ostream & os) const {
-    Print(os, 0);
-  }
 
   void StandardEvent::Print(std::ostream & os, size_t offset) const
   {

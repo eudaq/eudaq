@@ -1,7 +1,6 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/StringEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
@@ -10,15 +9,7 @@
 #include <cctype>
 #include <cstdlib>
 
-// class TestEvent : public eudaq::Event {
-// public:
-//   TestEvent(const std::string & text) : m_text(text) {}
-// private:
-//   virtual std::string Serialize() const { return m_text; }
-//   std::string m_text;
-// };
 
-using eudaq::StringEvent;
 using eudaq::RawDataEvent;
 
 class TestProducer : public eudaq::Producer {
@@ -27,12 +18,8 @@ class TestProducer : public eudaq::Producer {
       : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), done(false), eventsize(100) {
       m_id_stream = eudaq::cstr2hash(name.c_str());
     }
-    void Event(const std::string & str) {
-      StringEvent ev(m_id_stream, m_run, ++m_ev, str);
-      //ev.SetTag("Debug", "foo");
-      SendEvent(ev);
-    }
-    void Event(unsigned size) {
+
+  void Event(unsigned size) {
       RawDataEvent ev("Test", m_id_stream, m_run, ++m_ev);
       std::vector<int> tmp((size+3)/4);
       for (size_t i = 0; i < tmp.size(); ++i) {
@@ -54,7 +41,7 @@ class TestProducer : public eudaq::Producer {
       m_ev = 0;
       
       eudaq::RawDataEvent ev("Test", m_id_stream, m_run, 0);
-      ev.SetFlags(eudaq::Event::FLAG_BORE);
+      ev.SetFlagBit(eudaq::Event::FLAG_BORE);
       SendEvent(ev);
 
       std::cout << "Start Run: " << param << std::endl;
@@ -62,7 +49,7 @@ class TestProducer : public eudaq::Producer {
     }
     virtual void OnStopRun() {
       eudaq::RawDataEvent ev("Test", m_id_stream, m_run, ++m_ev);
-      ev.SetFlags(eudaq::Event::FLAG_EORE);
+      ev.SetFlagBit(eudaq::Event::FLAG_EORE);
       SendEvent(ev);
       std::cout << "Stop Run" << std::endl;
     }
@@ -107,7 +94,6 @@ int main(int /*argc*/, const char ** argv) {
       if (help) {
         help = false;
         std::cout << "--- Commands ---\n"
-          << "s data Send StringEvent with 'data' as payload\n"
           << "r size Send RawDataEvent with size bytes of random data (default=1k)\n"
           << "l msg  Send log message\n"
           << "o msg  Set status=OK\n"
@@ -129,9 +115,6 @@ int main(int /*argc*/, const char ** argv) {
       }
       switch (cmd) {
         case '\0': // ignore
-          break;
-        case 's':
-          producer.Event(line);
           break;
         case 'r':
           producer.Event(eudaq::from_string(line, 1024));

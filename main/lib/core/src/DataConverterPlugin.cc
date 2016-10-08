@@ -10,7 +10,7 @@ namespace eudaq {
   Factory<DataConverterPlugin>::Instance<>();
   
   unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const & ev) const {
-    return ev.GetEventNumber();
+    return ev.GetEventN();
   }
 
   DataConverterPlugin::DataConverterPlugin(std::string subtype) :DataConverterPlugin(Event::str2id("_RAW"), subtype) {
@@ -36,13 +36,13 @@ namespace eudaq {
   int DataConverterPlugin::IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event & tluEvent) const {
     // dummy comparator. it is just checking if the event numbers are the same.
 
-    int triggerID = ev.GetEventNumber();
-    int tlu_triggerID = tluEvent.GetEventNumber();
+    int triggerID = ev.GetEventN();
+    int tlu_triggerID = tluEvent.GetEventN();
     return compareTLU2DUT(tlu_triggerID, triggerID);
   }
 
   void DataConverterPlugin::setCurrentTLUEvent(eudaq::Event & ev, eudaq::TLUEvent const & tlu) {
-    ev.SetTag("tlu_trigger_id", tlu.GetEventNumber());
+    ev.SetTag("tlu_trigger_id", tlu.GetEventN());
   }
 
   void DataConverterPlugin::GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {
@@ -57,11 +57,8 @@ namespace eudaq {
     return false;
   }
 
-  DataConverterPlugin::t_eventid const & DataConverterPlugin::GetEventType() const {
-    return m_eventtype;
-  }
 
-  event_sp DataConverterPlugin::ExtractEventN(event_sp ev, size_t NumberOfROF) {
+  EventSP DataConverterPlugin::ExtractEventN(EventSP ev, size_t NumberOfROF) {
     return nullptr;
   }
 

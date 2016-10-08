@@ -90,12 +90,9 @@ namespace eudaq {
   
   class DLLEXPORT DataConverterPlugin {
   public:
-    using timeStamp_t = Eudaq_types::timeStamp_t;
-    using t_eventid = Event::t_eventid;
+    using timeStamp_t =  uint64_t;
     virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &);
     virtual unsigned GetTriggerID(eudaq::Event const &) const;
-    // virtual timeStamp_t GetTimeStamp(const Event& ev, size_t index) const;
-    // virtual size_t GetTimeStamp_size(const Event & ev) const;
     virtual int IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event  & tluEvent) const;
     virtual void setCurrentTLUEvent(eudaq::Event & ev, eudaq::TLUEvent const & tlu);
     virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const;
@@ -110,8 +107,7 @@ namespace eudaq {
 
     /** Returns the type of event this plugin can convert to lcio as a pair of Event type id and subtype string.
      */
-    virtual t_eventid const & GetEventType() const;
-    virtual event_sp ExtractEventN(event_sp ev, size_t EventNr);
+    virtual EventSP ExtractEventN(EventSP ev, size_t EventNr);
     virtual size_t GetNumberOfEvents(const eudaq::Event& pac);
     virtual bool isTLU(const Event&);
     virtual unsigned getUniqueIdentifier(const eudaq::Event  & ev);
@@ -125,10 +121,12 @@ namespace eudaq {
      *  This string has to be set in the constructor of the actual implementations
      *  of the plugin.
      */
-    t_eventid m_eventtype;
+    
     DataConverterPlugin(std::string subtype);
     DataConverterPlugin(unsigned type, std::string subtype = "");
+
     static unsigned m_count;
+    std::pair<uint32_t, std::string> m_eventtype;
     unsigned m_thisCount;
   private:
     /** The private copy constructor and assignment operator. They are not used anywhere, so there is not

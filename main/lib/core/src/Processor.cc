@@ -55,7 +55,7 @@ void Processor::Processing(EVUP ev){
 }
 
 void Processor::SyncProcessing(EVUP ev){
-  auto evtype = ev->get_id();
+  auto evtype = ev->GetEventID();
   if(evtype == 0)//sys
     ProcessSysEvent(std::move(ev));
   else
@@ -71,7 +71,7 @@ void Processor::AsyncProcessing(EVUP ev){
 void Processor::ForwardEvent(EVUP ev) {
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   std::vector<PSSP> pslist;
-  uint32_t evid = ev->get_id();
+  uint32_t evid = ev->GetEventID();
   for(auto &psev: m_pslist_next){
     auto evset = psev.second;
     if(evset.find(evid)!=evset.end()){

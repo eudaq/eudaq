@@ -64,10 +64,10 @@ namespace eudaq {
     return GetInstance().GetPlugin(ev).IsSyncWithTLU(ev, tlu);
   }
 
-
+  
   PluginManager::t_eventid PluginManager::getEventId(eudaq::Event const & ev)
   {
-    return std::make_pair(ev.get_id(), ev.GetSubType());
+    return std::make_pair(ev.GetEventID(), ev.GetSubType());
   }
 
 #if USE_LCIO && USE_EUTELESCOPE
@@ -96,7 +96,7 @@ namespace eudaq {
 #endif
 
   StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
-    StandardEvent event(dev);
+    StandardEvent event(dev.GetRunN(), dev.GetEventN(), dev.GetTimestampBegin());
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const Event * ev = dev.GetEvent(i);
       if (!ev) EUDAQ_THROW("Null event!");
@@ -115,7 +115,7 @@ namespace eudaq {
   }
 
   std::shared_ptr<StandardEvent> PluginManager::ConvertToStandard_ptr(const DetectorEvent &dev) {
-    std::shared_ptr<StandardEvent> event = make_shared<StandardEvent>(dev);
+    std::shared_ptr<StandardEvent> event = make_shared<StandardEvent>(dev.GetRunN(), dev.GetEventN(), dev.GetTimestampBegin());
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const Event * ev = dev.GetEvent(i);
       if (!ev) EUDAQ_THROW("Null event!");

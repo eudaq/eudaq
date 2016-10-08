@@ -32,7 +32,7 @@ public:
     return  det->NumEvents();
   }
 
-  virtual event_sp ExtractEventN(event_sp pac, size_t NumberOfROF) override{
+  virtual EventSP ExtractEventN(EventSP pac, size_t NumberOfROF) override{
 
     auto det = std::dynamic_pointer_cast<DetectorEvent>(pac);
     if (NumberOfROF < det->NumEvents()) {

@@ -32,13 +32,10 @@ namespace eudaq {
     virtual void OnStartRun(unsigned param);
     virtual void OnStopRun();
 
-    shared_ptr<DetectorEvent> LastBore() const { return m_lastbore; }
-
   protected:
     unsigned m_run;
     bool m_callstart;
     shared_ptr<FileReader> m_reader;
-    shared_ptr<DetectorEvent> m_lastbore;
     unsigned limit;
     unsigned skip;
     unsigned int skip_events_with_counter;

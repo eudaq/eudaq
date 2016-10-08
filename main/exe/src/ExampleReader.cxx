@@ -49,7 +49,7 @@ int main(int /*argc*/, const char ** argv) {
             const eudaq::RawDataEvent & rev =
               reader.GetDetectorEvent().GetRawSubEvent(EVENT_TYPE);
             // Display summary of the Example RawDataEvent
-            std::cout << rev << std::endl;
+	    rev.Print(std::cout);
           } catch (const eudaq::Exception & ) {
             std::cout << "No " << EVENT_TYPE << " subevent in event "
               << reader.GetDetectorEvent().GetEventNumber()
@@ -63,7 +63,7 @@ int main(int /*argc*/, const char ** argv) {
             eudaq::PluginManager::ConvertToStandard(reader.GetDetectorEvent());
 
           // Display summary of converted event
-          std::cout << sev << std::endl;
+	  sev.Print(std::cout);
         }
       }
     }

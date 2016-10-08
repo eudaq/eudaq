@@ -53,7 +53,7 @@ SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
 }
 
 void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
-  if(ev->get_id() != Event::str2id("_RAW")){
+  if(ev->GetEventID() != Event::str2id("_RAW")){
     ForwardEvent(std::move(ev));
     ;
   }

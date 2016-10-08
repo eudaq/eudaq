@@ -7,7 +7,7 @@
 #include "BufferSerializer.hh"
 
 namespace eudaq {
-
+  
   template class DLLEXPORT Factory<Event>;
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
@@ -15,98 +15,76 @@ namespace eudaq {
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
   Factory<Event>::Instance<>();
+
+  Event::Event(uint32_t type, uint32_t run_n, uint32_t stm_n)
+    :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
     
-  namespace {
-    static const char * const FLAGNAMES[] = {
-      "BORE",
-      "EORE",
-      "HITS",
-      "FAKE",
-      "SIMU",
-      "EUDAQ2",
-      "Packet"
-    };
   }
 
   Event::Event(Deserializer & ds) {
-    ds.read(m_typeid);
+    ds.read(m_type);
     ds.read(m_version);
     ds.read(m_flags);
-    ds.read(m_id_stream);
-    ds.read(m_runnumber);
-    ds.read(m_eventnumber);
+    ds.read(m_stm_n);
+    ds.read(m_run_n);
+    ds.read(m_ev_n);
     ds.read(m_ts_begin);
     ds.read(m_ts_end);
     ds.read(m_tags);
+    uint32_t n_subev;
+    for(ds.read(n_subev); n_subev>0; n_subev--){
+      uint32_t evid;
+      ds.PreRead(evid);
+      EventSP ev = Factory<Event>::Create<Deserializer&>(evid, ds);
+      m_sub_events.push_back(std::const_pointer_cast<const Event>(ev));
+    }
   }
-
-  Event::Event():m_id_stream(0), m_flags(0), m_runnumber(0), m_eventnumber(0){
-  }
-
   
-  Event::Event(uint32_t id_stream, unsigned run, unsigned event, unsigned flags /*= 0*/)
-    : m_id_stream(id_stream), m_flags(flags), m_runnumber(run), m_eventnumber(event){
-  }
-
   void Event::Serialize(Serializer & ser) const {
-    ser.write(m_typeid);
+    ser.write(m_type);
     ser.write(m_version);
     ser.write(m_flags);
-    ser.write(m_id_stream);
-    ser.write(m_runnumber);
-    ser.write(m_eventnumber);
+    ser.write(m_stm_n);
+    ser.write(m_run_n);
+    ser.write(m_ev_n);
     ser.write(m_ts_begin);
     ser.write(m_ts_end);
     ser.write(m_tags);
-  }
-  
-  
-  void Event::Print(std::ostream & os) const {
-    Print(os, 0);
+    ser.write((uint32_t)m_sub_events.size());
+    for(auto &ev: m_sub_events){
+      ser.write(*ev);
+    }
   }
 
-  void Event::Print(std::ostream & os, size_t offset) const
-  {
-    os << std::string(offset, ' ') << "<Event> \n";
-    os << std::string(offset + 2, ' ') << "<Type>" << id2str(get_id()) << ":" << GetSubType() << "</Type> \n";
-    os << std::string(offset + 2, ' ') << "<RunNumber>" << m_runnumber << "</RunNumber>\n";
-    os << std::string(offset + 2, ' ') << "<EventNumber>" << m_eventnumber << "</EventNumber>\n";    
-    os << std::string(offset + 2, ' ') << "<Time> \n";
-    os << std::string(offset +4, ' ') << "0x" << to_hex(m_ts_begin, 16) << ",\n";
-    os << std::string(offset +4, ' ') << "0x" << to_hex(m_ts_begin, 16) << ",\n";
-    os << std::string(offset + 2, ' ') << "</Time>\n";
-    if (m_flags) {
-      unsigned f = m_flags;
-      bool first = true;
-      for (size_t i = 0; f > 0; ++i, f >>= 1) {
-        if (f & 1) {
-          if (first){
-            os << std::string(offset + 2, ' ') << "<Flags> ";
-              first = false;
-          }
-          else{
-            os << ", ";
-          }
-          if (i < sizeof FLAGNAMES / sizeof *FLAGNAMES){
-            os << std::string(FLAGNAMES[i]);
-          }
-          else{
-            os << to_string(i);
-          }
-        }
-      }
-      if (first==false){
-        os  << "</Flags> \n";
-      }
+  EventUP Event::Clone() const{ //TODO: clone directly
+    BufferSerializer ser;
+    Serialize(ser);
+    uint32_t id;
+    ser.PreRead(id);
+    return Factory<Event>::Create<Deserializer&>(id, ser);
+  }
+  
+  void Event::Print(std::ostream & os, size_t offset) const{
+    os << std::string(offset, ' ') << "<Event>\n";
+    os << std::string(offset + 2, ' ') << "<Type> " << m_type <<" </Type>\n";
+    os << std::string(offset + 2, ' ') << "<Flag> 0x" << to_hex(m_flags, 8)<< " </Flag>\n";
+    os << std::string(offset + 2, ' ') << "<Run_N> " << m_run_n << " </Run_N>\n";
+    os << std::string(offset + 2, ' ') << "<Steam_N> " << m_stm_n << " </Stream_N>\n";
+    os << std::string(offset + 2, ' ') << "<Event_N> " << m_ev_n << " </Event_N>\n";
+    os << std::string(offset + 2, ' ') << "<Timestamp> 0x" << to_hex(m_ts_begin, 16)
+       <<"  ->  0x"<< to_hex(m_ts_end, 16) << "</Timestamp>\n";
+    os << std::string(offset + 2, ' ') << "<Tags> \n";
+    for (auto &tag: m_tags){
+      os << std::string(offset+4, ' ')  << tag.first << "=" << tag.second << "\n";
     }
-    if (m_tags.size() > 0) {
-      os << std::string(offset + 2, ' ') << "<Tags> \n";
-      for (map_t::const_iterator i = m_tags.begin(); i != m_tags.end(); ++i) {
-        os << std::string(offset+4, ' ')  << i->first << "=" << i->second << "\n";
-      }
-      os << std::string(offset + 2, ' ') << "</Tags> \n";
+    os << std::string(offset + 2, ' ') << "</Tags> \n";
+    os << std::string(offset + 2, ' ') << "<SubEvents>\n";
+    os << std::string(offset + 4, ' ') << "<SubEvents_Size> " << m_sub_events.size()<< " </SubEvents_Size>\n";
+    for(auto &subev: m_sub_events){
+      subev->Print(os, offset+4);
     }
-    os << std::string(offset, ' ') << "</Event> \n";
+    os << std::string(offset + 2, ' ') << " </SubEvents>\n";
+    os << std::string(offset, ' ') << "</Event>\n";
   }
 
   unsigned Event::str2id(const std::string & str) {
@@ -133,21 +111,14 @@ namespace eudaq {
   }
 
   
-  Event & Event::SetTag(const std::string & name, const std::string & val) {
+  void Event::SetTag(const std::string & name, const std::string & val) {
     m_tags[name] = val;
-    return *this;
   }
 
   std::string Event::GetTag(const std::string & name, const std::string & def) const {
     auto i = m_tags.find(name);
     if (i == m_tags.end()) return def;
     return i->second;
-  }
-
-  void Event::SetTimeStampToNow(size_t i)
-  {
-    m_ts_begin=static_cast<uint64_t>(clock());
-    m_ts_end=m_ts_begin+1;
   }
 
   bool Event::HasTag(const std::string &name) const{
@@ -158,43 +129,7 @@ namespace eudaq {
   }
 
 
-  unsigned Event::GetRunNumber() const
-  {
-    return m_runnumber;
-  }
 
-  unsigned Event::GetEventNumber() const
-  {
-    return m_eventnumber;
-  }
-
-  Event::timeStamp_t Event::GetTimestamp() const
-  {
-    return m_ts_begin;
-  }
-
-  void Event::SetTimestampBegin(Event::timeStamp_t t){
-    m_ts_begin = t;
-  }
-  
-  void Event::SetTimestampEnd(Event::timeStamp_t t){
-    m_ts_end = t;
-  }
-  
-  Event::timeStamp_t Event::GetTimestampBegin() const{
-    return m_ts_begin;
-  }
-  
-  Event::timeStamp_t Event::GetTimestampEnd() const{
-    return m_ts_end;
-  }
-
-  EventUP Event::Clone() const{ //TODO: clone directly
-    BufferSerializer ser;
-    Serialize(ser);
-    uint32_t id;
-    ser.PreRead(id);
-    return Factory<Event>::Create<Deserializer&>(id, ser);
-  }
-  
 }
+
+

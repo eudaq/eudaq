@@ -10,10 +10,6 @@ namespace eudaq {
 
   TLUEvent::TLUEvent(Deserializer &ds) : Event(ds) { ds.read(m_extratimes); }
 
-  void TLUEvent::Print(std::ostream & os) const {
-    Print(os, 0);
-  }
-
   void TLUEvent::Print(std::ostream &os, size_t offset) const
   {
     os << std::string(offset, ' ') << "<TLUEvent> \n";

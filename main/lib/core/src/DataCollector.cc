@@ -5,6 +5,7 @@
 #include "Logger.hh"
 #include "Utils.hh"
 #include "Processor.hh"
+#include "TLUEvent.hh"
 
 #include <iostream>
 #include <ostream>
@@ -152,7 +153,7 @@ namespace eudaq {
             static_cast<TLUEvent *>(m_buffer[m_itlu].events.front().get());
         n_run = ev->GetRunNumber();
         n_ev = ev->GetEventNumber();
-        n_ts = ev->GetTimestamp();
+        n_ts = ev->GetTimestampBegin();
       }
       DetectorEvent ev(n_run, n_ev, n_ts);
       unsigned tluev = 0;

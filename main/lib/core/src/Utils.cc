@@ -7,24 +7,10 @@
 #include <iostream>
 #include <cctype>
 
-// for cross-platform sleep:
 #include <chrono>
 #include <thread>
 
-#if EUDAQ_PLATFORM_IS(WIN32)
-#ifndef __CINT__
-#define WIN32_LEAN_AND_MEAN // causes some rarely used includes to be ignored
-#define _WINSOCKAPI_
-#define _WINSOCK2API_
-#include <cstdio>  // HK
-#include <cstdlib> // HK
-#endif
-#else
-#include <unistd.h>
-#endif
-
 namespace eudaq {
-
   
   uint64_t hex2uint_64(const std::string& hex_string){
 
@@ -204,4 +190,10 @@ namespace eudaq {
       }
     }
   }
+
+  uint32_t DLLEXPORT str2hash(const std::string &stdstr, uint32_t h){
+    const char *str = stdstr.c_str();
+    return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33ULL) ^ str[h];
+  }
+
 }

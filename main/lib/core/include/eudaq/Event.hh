@@ -24,23 +24,16 @@ namespace eudaq {
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
   Factory<Event>::Instance<Deserializer&>();
   extern template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
-  Factory<Event>::Instance<>();
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
+  Factory<Event>::Instance<Deserializer&>();
 #endif
 
   using EventUP = Factory<Event>::UP_BASE; 
   using EventSP = Factory<Event>::SP_BASE;
   using EventSPC = Factory<Event>::SPC_BASE;
-  
-  using event_sp = EventSP;
-  
-  static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
   class DLLEXPORT Event : public Serializable, public std::enable_shared_from_this<Event> {
   public:
-    using t_eventid = std::pair < unsigned, std::string > ;
-    using timeStamp_t = uint64_t;
-
     enum Flags {
       FLAG_BORE = 1, 
       FLAG_EORE = 2, 
@@ -52,75 +45,78 @@ namespace eudaq {
       FLAG_BROKEN = 128,
       FLAG_STATUS = 256, 
       FLAG_ALL = (unsigned)-1
-    }; // Matches FLAGNAMES in .cc file
+    };
 
-    Event();
-    Event(uint32_t id_stream, unsigned run, unsigned event, unsigned flags = 0);
+    Event(uint32_t type, uint32_t run_n, uint32_t stm_n);
     Event(Deserializer & ds);
-    virtual void Serialize(Serializer &) const = 0;
-
-    unsigned GetRunNumber() const;
-    unsigned GetEventNumber() const;
-    timeStamp_t GetTimestamp() const;
-
+    virtual void Serialize(Serializer &) const;   
     EventUP Clone() const;
-    
-    virtual std::string GetSubType() const { return ""; }
-    virtual void Print(std::ostream &os) const = 0;
-    virtual void Print(std::ostream & os,size_t i) const = 0;
+
+    virtual void Print(std::ostream & os, size_t offset = 0) const;
+
     bool HasTag(const std::string &name) const;
-    Event &SetTag(const std::string &name, const std::string &val);
-    template <typename T> Event &SetTag(const std::string &name, const T &val) {
-      return SetTag(name, eudaq::to_string(val));
+    void SetTag(const std::string &name, const std::string &val);
+    template <typename T> void SetTag(const std::string &name, const T &val) {
+      SetTag(name, eudaq::to_string(val));
     }
     std::string GetTag(const std::string & name, const std::string & def = "") const;
     std::string GetTag(const std::string & name, const char * def) const { return GetTag(name, std::string(def)); }
-    template <typename T>
-    T GetTag(const std::string & name, T def) const {
+    template <typename T> T GetTag(const std::string & name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }
+
+    void SetFlagBit(uint32_t f) { m_flags |= f;}
+    void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
+    bool IsFlagBit(uint32_t f) const { return m_flags&f == f;}
+    bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
+    bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
     
-    bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
-    bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
+    void AddSubEvent(EventSPC ev){m_sub_events.push_back(ev);}
+    uint32_t GetNumSubEvent() const {return m_sub_events.size();}
+    EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
+    
+    void SetEventID(uint32_t id){m_type = id;}
+    void SetVersion(uint32_t v){m_version = v;}
+    void SetFlag(uint32_t f) {m_flags = f;}
+    void SetRunN(uint32_t n){m_run_n = n;}
+    void SetEventN(uint32_t n){m_ev_n = n;}
+    void SetStreamN(uint32_t n){m_stm_n = n;}
+    void SetTimestampBegin(uint64_t t){m_ts_begin = t;}
+    void SetTimestampEnd(uint64_t t){m_ts_begin = t;}
+    void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
+ 
+    uint32_t GetEventID() const {return m_type;};
+    uint32_t GetVersion()const {return m_version;}
+    uint32_t GetFlag() const { return m_flags;}
+    uint32_t GetRunN()const {return m_run_n;}
+    uint32_t GetEventN()const {return m_ev_n;}
+    uint32_t GetStreamN() const {return m_stm_n;}
+    uint64_t GetTimestampBegin() const {return m_ts_begin;}
+    uint64_t GetTimestampEnd() const {return m_ts_begin;}
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
 
-    unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
-    void SetFlags(unsigned f) { m_flags |= f; }
-    void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
 
-    void SetTimeStampToNow(size_t i=0);
-    void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
-    void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
-    uint32_t get_id() const {return m_typeid;};
-
-    void SetTimestampBegin(uint64_t t);
-    void SetTimestampEnd(uint64_t t);
-    void AddSubEvent(EventSPC ev);
+    /////TODO: remove compatiable fun from EUDAQv1
+    uint32_t GetEventNumber()const {return m_ev_n;}
+    uint32_t GetRunNumber()const {return m_run_n;}
+    uint32_t GetStreamID() const {return m_stm_n;}
+    virtual std::string GetSubType() const {return "This Event is not RAW\n";}
+    void SetFlags(uint32_t f){SetFlagBit(f);}
     
-    uint64_t GetTimestampBegin() const;
-    virtual uint64_t GetTimestampEnd() const; //TODO
-    uint32_t GetVersion() const {return m_version;};
-    virtual uint32_t GetStreamID() const {return m_id_stream;};
-    uint32_t GetEventType() const {return m_typeid;};
-    uint32_t GetNumSubEvent() const {return m_sub_events.size();};
-    EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);};
-    
-  protected:
-    typedef std::map<std::string, std::string> map_t;
-    uint32_t m_typeid; //m_event_type
+  private:
+    uint32_t m_type;
     uint32_t m_version;
     uint32_t m_flags;
-    uint32_t m_id_stream;
-    uint32_t m_runnumber; //m_id_run
-    uint32_t m_eventnumber; //m_id_event
+    uint32_t m_stm_n;
+    uint32_t m_run_n;
+    uint32_t m_ev_n;
     uint64_t m_ts_begin;
     uint64_t m_ts_end;
-    map_t m_tags;
+    std::map<std::string, std::string> m_tags;
     std::vector<EventSPC> m_sub_events;
   };
-  // DLLEXPORT std::ostream &  operator<< (std::ostream &, const Event &);
 }
 
 #endif // EUDAQ_INCLUDED_Event

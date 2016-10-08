@@ -10,29 +10,30 @@ namespace eudaq {
 
   class DLLEXPORT RawDataEvent : public Event {
   public:
-    typedef unsigned char byte_t;
-    typedef std::vector<byte_t> data_t;
     struct DLLEXPORT block_t : public Serializable {
-      block_t(unsigned id = (unsigned)-1, data_t data = data_t())
+      block_t() = default;
+      block_t(uint32_t id, const std::vector<uint8_t> &data)
           : id(id), data(data) {}
       block_t(Deserializer &);
       void Serialize(Serializer &) const;
-      void Append(const data_t &data);
-      unsigned id;
-      data_t data;
+      void Append(const std::vector<uint8_t> &data);
+      uint32_t id;
+      std::vector<uint8_t> data;
     };
-    RawDataEvent();
-    RawDataEvent(std::string type, uint32_t id_stream, unsigned run, unsigned event);	
-    RawDataEvent(Deserializer &);
 
+    RawDataEvent(std::string type, uint32_t id_stream, unsigned run, unsigned event);
+    RawDataEvent(Deserializer &);
+    virtual void Serialize(Serializer &) const;
+    virtual void Print(std::ostream & ,size_t offset = 0) const;
+
+    uint32_t GetID(size_t i) const { return m_blocks.at(i).id; }
+    const std::vector<uint8_t>& GetBlock(size_t i) const;
+    size_t NumBlocks() const { return m_blocks.size(); }
+
+    virtual std::string GetSubType() const { return m_type; }
+    void SetSubType(std::string subtype){ m_type = subtype; }
 
     
-    /// Add an empty block
-    size_t AddBlock(unsigned id) {
-      m_blocks.push_back(block_t(id));
-      return m_blocks.size() - 1;
-    }
-
     /// Add a data block as std::vector
     template <typename T>
     size_t AddBlock(unsigned id, const std::vector<T> &data) {
@@ -58,51 +59,18 @@ namespace eudaq {
     void AppendBlock(size_t index, const T *data, size_t bytes) {
       m_blocks[index].Append(make_vector(data, bytes));
     }
-
-    unsigned GetID(size_t i) const;
-    /** Get the data block number i as vector of \c{unsigned char}, which is the
-     * byte sequence which
-     *  which has been serialised. This is the recommended way to retrieve your
-     *  data from the RawDataEvent since the other GetBlock functions might
-     *  give different results depending on the endiannes of your mashine.
-     */
-    const data_t &GetBlock(size_t i) const;
-    byte_t GetByte(size_t block, size_t index) const;
-
-    /// Return the number of data blocks in the RawDataEvent
-    size_t NumBlocks() const { return m_blocks.size(); }
-
-    virtual void Print(std::ostream &) const;
-    virtual void Print(std::ostream & ,size_t offset) const;
-    static RawDataEvent BORE(std::string type, uint32_t id_stream, unsigned run) {
-      return RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
-      
-    }
-    static RawDataEvent EORE(std::string type, uint32_t id_stream, unsigned run, unsigned event) {
-      return RawDataEvent(type, run, event, Event::FLAG_EORE);
-    }
-
-    virtual void Serialize(Serializer &) const;
-
-    /// Return the type string.
-    virtual std::string GetSubType() const { return m_type; }
-
-    virtual void SetSubType(std::string subtype){ m_type = subtype; }
-
-    virtual uint32_t GetStreamID() const; //TODO
-
     
   private:
     template <typename T>
-    static data_t make_vector(const T *data, size_t bytes) {
-      const unsigned char *ptr = reinterpret_cast<const byte_t *>(data);
-      return data_t(ptr, ptr + bytes);
+      static std::vector<uint8_t> make_vector(const T *data, size_t bytes) {
+      const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data);
+      return std::vector<uint8_t>(ptr, ptr + bytes);
     }
 
     template <typename T>
-    static data_t make_vector(const std::vector<T> &data) {
-      const unsigned char *ptr = reinterpret_cast<const byte_t *>(&data[0]);
-      return data_t(ptr, ptr + data.size() * sizeof(T));
+    static std::vector<uint8_t> make_vector(const std::vector<T> &data) {
+      const uint8_t *ptr = reinterpret_cast<const uint8_t *>(&data[0]);
+      return std::vector<uint8_t>(ptr, ptr + data.size() * sizeof(T));
     }
 
     std::string m_type;

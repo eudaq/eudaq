@@ -31,7 +31,7 @@ DetEventUnpackInsertTimestampPS::DetEventUnpackInsertTimestampPS(std::string cmd
 void DetEventUnpackInsertTimestampPS::ProcessUserEvent(EVUP ev){
     std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
 
-  if(ev->get_id() != Event::str2id("_DET")){
+  if(ev->GetEventID() != Event::str2id("_DET")){
     ForwardEvent(std::move(ev));
   }
 
@@ -43,14 +43,14 @@ void DetEventUnpackInsertTimestampPS::ProcessUserEvent(EVUP ev){
   
   for(size_t i= 0; i< nevent; i++){
     auto subevptr = detev->GetEvent(i);
-    if(subevptr->get_id() == Event::str2id("_TLU")){
+    if(subevptr->GetEventID() == Event::str2id("_TLU")){
       ts  = subevptr->GetTimestampBegin();
     }
   }
   
   for(size_t i= 0; i< nevent; i++){
     auto subevptr = detev->GetEvent(i);
-    if(subevptr->get_id() == Event::str2id("_RAW")){
+    if(subevptr->GetEventID() == Event::str2id("_RAW")){
       auto subev = subevptr->Clone();
       subev->SetTimestampBegin(ts);
       //TODO:: SetTimestampEnd depending on SUBTYPE    ts+duration
