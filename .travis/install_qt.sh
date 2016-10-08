@@ -2,6 +2,9 @@
 
 # Install qt
 
+echo "Entering install_qt"
+echo "Installing qt libraries"
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	if [[ $OPTION == 'modern' ]]; then
@@ -31,3 +34,4 @@ else
 	
 fi
 	
+echo "Installed qt libraries"

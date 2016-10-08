@@ -2,6 +2,9 @@
 
 # Install python
 
+echo "Entering install_python script"
+echo "Installing python"
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	brew unlink python python3
@@ -107,3 +110,4 @@ else
 		
 fi
 	
+echo "Python has been installed"

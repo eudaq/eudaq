@@ -14,9 +14,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	python -m pip install -U pip
 	
 else
-	echo "Aptitude upgrade"
-	sudo aptitude update
-	sudo aptitude safe-upgrade
+	echo "Apt upgrade"
+	sudo apt-get update
+	sudo apt-get upgrade --force-yes -y 
 	
 fi
 	

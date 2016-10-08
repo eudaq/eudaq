@@ -2,6 +2,9 @@
 
 # This package is necessary for the palpidefs producer
 
+echo "Entering install_palpidefs_driver"
+echo "Installing palpidefs driver"
+
 export temporary_path=`pwd`
 
 if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; fi
@@ -23,3 +26,5 @@ cd pALPIDEfs-software
 make lib
 
 cd $temporary_path
+
+echo "Installed palpidefs driver
