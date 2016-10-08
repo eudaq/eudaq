@@ -2,6 +2,9 @@
 
 # Install CERN root
 
+echo "Entering install_root"
+echo "Installing CERN root"
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 	if [[ $OPTION == 'modern' ]]; then
@@ -29,3 +32,4 @@ else
 	
 fi
 	
+echo "Installed CERN root"

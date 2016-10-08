@@ -14,9 +14,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	python -m pip install -U pip
 	
 else
-	echo "Aptitude upgrade"
-	sudo aptitude update
-	sudo aptitude safe-upgrade
+	echo "Apt upgrade"
+	export DEBIAN_FRONTEND=noninteractive
+	sudo apt-get update
+	#http://askubuntu.com/questions/104899/make-apt-get-or-aptitude-run-with-y-but-not-prompt-for-replacement-of-configu
+	echo apt-get upgrade disabled temporarily due to error - 10.10.2016
+	# sudo apt-get  -o Dpkg::Options::="--force-confnew" --force-yes -y upgrade 
 	
 fi
 	

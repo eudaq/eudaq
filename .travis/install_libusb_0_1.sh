@@ -2,6 +2,9 @@
 
 # Install libusb 0.1
 
+echo "Entering install_libusb_0_1"
+echo "Installing libusb 0.1"
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 	if [[ $OPTION == 'modern' ]]; then
@@ -30,3 +33,4 @@ else
 	
 fi
 	
+echo "Installed libusb 0.1"

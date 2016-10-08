@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Install cmake
+echo "Entered install_cmake script"
+echo "Installing cmake"
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
@@ -24,3 +26,5 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 else
 	sudo apt-get install --force-yes -y cmake 
 fi
+
+echo "Cmake has been installed"
