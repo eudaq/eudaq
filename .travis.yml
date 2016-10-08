@@ -78,8 +78,6 @@ cache:
   - $TRAVIS_BUILD_DIR/extern/ZestSC1
   - $TRAVIS_BUILD_DIR/extern/tlufirmware
 
-#         osx_image: beta-xcode6.2
-
 matrix:      
    include:   
       - os: linux
@@ -95,22 +93,23 @@ matrix:
         compiler: clang      
         env: OPTION=old
       - os: osx
+        compiler: clang      
+        env: OPTION=modern BUILD_rpi_controller=OFF        
+      - os: osx
         compiler: gcc      
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF
-      - os: osx
-        compiler: clang      
-        env: OPTION=modern BUILD_rpi_controller=OFF
+      - os: osx      
+        compiler: gcc    
+        env: OPTION=modern BUILD_rpi_controller=OFF 	            
       - os: osx      
         compiler: clang      
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF    
-      - os: osx      
-        compiler: gcc    
-        env: OPTION=modern BUILD_rpi_controller=OFF 	    
- 
- 
 
 before_install:
-  - source .travis/before_install.sh
+      
+install:
+  - source .travis/set_compilers.sh
+  - source .travis/update_repositories.sh  
   - source .travis/install_afs.sh  
   - source .travis/install_cmake.sh
   - source .travis/install_python.sh  
@@ -123,8 +122,6 @@ before_install:
   - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
   - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=~/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b/pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on"; fi  
-      
-install:
 #  - source .travis/install.sh
 
 before_script:
