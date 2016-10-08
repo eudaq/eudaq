@@ -10,7 +10,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
 	# OS X: update brew cache:
 	brew update || brew upgrade
-	#pip install --upgrade pip
+	python -m pip install -U pip
 	
 	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
 	
