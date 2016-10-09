@@ -2,7 +2,7 @@ function main(){
    # This package is necessary for palpidefs
    Write-Host("Palpidefs driver installation started");
 
-   C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd /x86
+   '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
      
    Push-Location -StackName entryPath -Path "C:\projects\eudaq\extern" ;
    
