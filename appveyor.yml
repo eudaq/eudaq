@@ -41,7 +41,7 @@ environment:
   BUILD_nreader: OFF
   BUILD_offlinemon: OFF
   BUILD_onlinemon: ON
-  BUILD_palpidefs: OFF
+  BUILD_palpidefs: ON
   BUILD_pixelmanproducer: OFF
   BUILD_python: ON
   BUILD_root: OFF
@@ -58,6 +58,7 @@ cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\tlufirmware'
   - '%APPVEYOR_BUILD_FOLDER%\extern\libusb-win32'
   - '%APPVEYOR_BUILD_FOLDER%\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b'
+  - '%APPVEYOR_BUILD_FOLDER%\extern\tinyxml'  
   
 init:
 # The following line enables the remote desktop connection and show the connection information.

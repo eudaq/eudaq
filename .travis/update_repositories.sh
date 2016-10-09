@@ -15,8 +15,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 else
 	echo "Apt upgrade"
+	export DEBIAN_FRONTEND=noninteractive
 	sudo apt-get update
-	sudo apt-get upgrade --force-yes -y 
+	sudo apt-get  --force-yes -y upgrade 
 	
 fi
 	
