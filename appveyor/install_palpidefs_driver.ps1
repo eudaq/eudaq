@@ -9,7 +9,7 @@ function main(){
 	} 
 	Else {
 	Write-Host "Downloading alice-its-alpide-software-master from cernbox"; 
-	download.ps1 -downloadLocation 'https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download' -storageLocation 'C:\\alice-its-alpide-software-master-latest.zip'; 
+	C:\\projects\eudaq\appveyor\download.ps1 -downloadLocation 'https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download' -storageLocation 'C:\\alice-its-alpide-software-master-latest.zip'; 
 	$zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 
 	7z -y x C:\\alice-its-alpide-software-master-latest.zip $zipargument;  
 	#Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\alice-its-alpide-software-master-latest")
