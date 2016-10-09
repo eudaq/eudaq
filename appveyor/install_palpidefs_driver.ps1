@@ -1,7 +1,9 @@
 function main(){
    # This package is necessary for palpidefs
    Write-Host("Palpidefs driver installation started");
-   
+
+   C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd /x86
+     
    Push-Location -StackName entryPath -Path "C:\projects\eudaq\extern" ;
    
    If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b")) {
