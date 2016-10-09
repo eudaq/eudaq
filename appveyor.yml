@@ -108,9 +108,10 @@ build_script:
 
 - ps: If (${env:BUILD_cmspixel} -eq "ON") { Write-Host("Installing pxarcore as required by cmspixel producer"); . ".\appveyor\install_pxar.ps1" }
 
-- export PALPIDEFS_SPECIAL_PARAMETERS=""
+- ps: [Environment]::SetEnvironmentVariable("PALPIDEFS_SPECIAL_PARAMETERS", "", "User");
+- ps: [Environment]::SetEnvironmentVariable("PALPIDEFS_SPECIAL_PARAMETERS", "", "Process");
 - ps: If (${env:BUILD_palpidefs} -eq "ON") { Write-Host("Installing palpidefs drivers as required by palpidefs producer"); . ".\appveyor\install_tinyxml.ps1";. ".\appveyor\install_palpidefs_driver.ps1" }
-- if [[ $BUILD_palpidefs == "ON" ]]; then export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=%APPVEYOR_BUILD_FOLDER%\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b\pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on"; fi  
+- cmd: if [[ $BUILD_palpidefs == "ON" ]]; then export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=%APPVEYOR_BUILD_FOLDER%\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b\pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on"; fi  
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
