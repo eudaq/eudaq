@@ -22,7 +22,7 @@ using namespace tlu;
 class miniTLUProducer: public eudaq::Producer {
 public:
   miniTLUProducer(const std::string & runcontrol)
-    :eudaq::Producer("miniTLU", runcontrol), m_tlu(nullptr){
+    :eudaq::Producer("minitlu", runcontrol), m_tlu(nullptr){
     m_fsmstate = STATE_UNCONF;
     
   }
@@ -74,18 +74,11 @@ public:
 
   virtual void OnConfigure(const eudaq::Configuration & param) {
     try {
-      SetStatus(eudaq::Status::LVL_OK, "Configuring");
       if (m_tlu)
 	m_tlu = nullptr;
      
       m_tlu = std::unique_ptr<miniTLUController>(new miniTLUController(param.Get("ConnectionFile","file:///dummy_connections.xml"),
 								       param.Get("DeviceName","dummy.udp")));
-      // m_tlu->SetWRegister("logic_clocks.LogicRst", 1);
-      // eudaq::mSleep(100);
-      // m_tlu->SetWRegister("logic_clocks.LogicRst", 0);
-      // eudaq::mSleep(100);
-      // m_tlu->SetLogicClocksCSR(0);
-      // eudaq::mSleep(100);
 	    
       m_tlu->ResetSerdes();
       m_tlu->ResetCounters();
@@ -113,23 +106,20 @@ public:
 
       std::cout << "...Configured (" << param.Name() << ")" << std::endl;
       EUDAQ_INFO("Configured (" + param.Name() + ")");
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-      
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + param.Name() + ")");
+
       m_fsmstate=STATE_CONFED;
       
     } catch (const std::exception & e) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error: " + to_string(e.what()));
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configure ERROR (" +  to_string(e.what()) + ")");
     } catch (...) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error: unknown");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configure ERROR (unknown)");
     }
   }
 
   virtual void OnStartRun(unsigned param) {    
     try {
       m_fsmstate = STATE_GOTORUN;
-      SetStatus(eudaq::Status::LVL_OK, "Starting");
-
-      
       m_tlu->ResetCounters();
       m_tlu->ResetEventsBuffer();
       m_tlu->ResetFIFO();
@@ -145,31 +135,29 @@ public:
       SendEvent(ev);
 
       m_lasttime=m_tlu->GetCurrentTimestamp()/40000000;
-      SetStatus(eudaq::Status::LVL_OK, "Started");
+      SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Started");
       m_fsmstate = STATE_RUNNING;
       
     } catch (const std::exception & e) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error: "+ to_string(e.what()));
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error: (" +  to_string(e.what()) + ")");
     } catch (...) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error: unknown");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error (unknown)");
     }
     std::cout << "Done starting" << std::endl;
   }
 
   virtual void OnStopRun() {
     try {
-      SetStatus(eudaq::Status::LVL_OK, "Stopping");
       m_tlu->SetTriggerVeto(1);
       m_fsmstate = STATE_GOTOSTOP;
       while (m_fsmstate == STATE_GOTOSTOP) {
 	eudaq::mSleep(100); //waiting for EORE being send
       }
-      SetStatus(eudaq::Status::LVL_OK, "Stopped");
-
+      SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
     } catch (const std::exception & e) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error: " + to_string(e.what()));
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error: (" +  to_string(e.what()) + ")");
     } catch (...) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error (unknown)");
     }
   }
 
@@ -182,11 +170,10 @@ public:
     try {
       m_tlu->SetTriggerVeto(1);
       //TODO:: stop_tlu
-      SetStatus(eudaq::Status::LVL_OK, "Reset");
     } catch (const std::exception & e) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error: " + to_string(e.what()));
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Rest Error: (" +  to_string(e.what()) + ")");
     } catch (...) {
-      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error: unknown");
+      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Reset Error (unknown)");
     }
   }
 

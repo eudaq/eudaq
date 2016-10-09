@@ -165,10 +165,10 @@ void ROOTProducer::Producer_PImpl::OnConfigure(const eudaq::Configuration & conf
   ///END waiting
   
   if(getState()==STATE_CONFED){
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
   }
   else{
-    SetStatus(eudaq::Status::LVL_ERROR, "OnConfigure ERROR or timeout(" + config.Name() + ")");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Configure ERROR or timeout(" + config.Name() + ")");
     setState(STATE_ERROR);
   }
 }
@@ -182,12 +182,6 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param){
   setState(STATE_GOTORUN);
   createBOREvent();
 
-  //TEST ONLY!! remove later
-  // m_config.SetSection("Producer.ITS");
-  // std::string sfile = m_config.Get("st_det_file", std::string());
-  // std::cout<< ">>>>>st_det_file "<< sfile<<std::endl;
-
-  //
   
   int j = 0;
   while (getState()==STATE_GOTORUN && !timeout(++j)){
@@ -197,10 +191,10 @@ void ROOTProducer::Producer_PImpl::OnStartRun(unsigned param){
   if(getState()==STATE_RUNNING){
     //TODO:: add tag to BORE
     sendEvent();
-    SetStatus(eudaq::Status::LVL_OK, "Running");
+    SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Started");
   }
   else{
-    SetStatus(eudaq::Status::LVL_ERROR, "OnStartRun ERROR");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Start Error");
     setState(STATE_ERROR);
   }
   std::cout<<"End of OnStartRun()"<<std::endl;
@@ -228,12 +222,12 @@ void ROOTProducer::Producer_PImpl::OnStopRun(){
     ev->SetTag("recorded_messages", m_streamOut.str()); //but cleared by status_check
     sendEvent();
     m_errors.clear();
-    SetStatus(eudaq::Status::LVL_OK, "Stopped");
+    SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
     EUDAQ_INFO(std::to_string(m_ev) + " Events Processed" );
     EUDAQ_INFO("End of run " + std::to_string(m_run));
   }
   else{
-    SetStatus(eudaq::Status::LVL_ERROR, "OnStopRun ERROR");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Stop Error");
     setState(STATE_ERROR);
   }  
 }
@@ -250,7 +244,7 @@ void ROOTProducer::Producer_PImpl::OnTerminate(){
     EUDAQ_INFO("Terminated");
   }
   else{
-    SetStatus(eudaq::Status::LVL_ERROR, "OnTerminate ERROR");
+    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "OnTerminate ERROR");
     setState(STATE_ERROR);
   }
 }
