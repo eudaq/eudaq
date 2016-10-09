@@ -19,7 +19,7 @@ function main(){
    
    cd pALPIDEfs-software
    
-   nmakex lib
+   nmake lib
    
    Pop-Location -StackName entryPath -PassThru ;
    
