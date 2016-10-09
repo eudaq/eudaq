@@ -9,7 +9,7 @@ function main(){
 	} 
 	Else {
 	Write-Host "Downloading tinyxml from sourceforge"; 
-	appveyor\download.ps1 -downloadLocation 'http://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip' -storageLocation 'C:\\tinyxml_2_6_2.zipp'; 
+	.\download.ps1 -downloadLocation 'http://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip' -storageLocation 'C:\\tinyxml_2_6_2.zipp'; 
 	$zipargument = ("-o" + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\"); 
 	7z -y x C:\\tinyxml_2_6_2.zip $zipargument;  
 	#Rename-Item -path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\tinyxml") -newName ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\alice-its-alpide-software-master-latest")
