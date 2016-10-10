@@ -67,7 +67,7 @@ namespace eudaq {
 
     void SetFlagBit(uint32_t f) { m_flags |= f;}
     void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
-    bool IsFlagBit(uint32_t f) const { return m_flags&f == f;}
+    bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
     bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
     bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
     
