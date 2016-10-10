@@ -20,38 +20,73 @@ platform: x86
 # cmspixel: Required pxar compiles on Windows but there are some minor problems afterwards
 # 
 environment:
-  ROOTSYS: C:\root
-  PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
-  BUILD_AHCAL: OFF
-  BUILD_BIFAHCAL: OFF
-  BUILD_TESTING: OFF
-  BUILD_WITH_QT4: OFF
-  BUILD_allproducer: OFF
-  BUILD_altro: OFF
-  BUILD_altroUSB: OFF
-  BUILD_cmspixel: OFF
-  BUILD_depfet: OFF
-  BUILD_fortis: OFF
-  BUILD_gui: ON
-  BUILD_main: OFF
-  BUILD_manual: OFF
-  BUILD_mimoroma: OFF
-  BUILD_miniTLU: OFF
-  BUILD_ni: ON
-  BUILD_nreader: OFF
-  BUILD_offlinemon: OFF
-  BUILD_onlinemon: ON
-  BUILD_palpidefs: ON
-  BUILD_pixelmanproducer: OFF
-  BUILD_python: ON
-  BUILD_root: OFF
-  BUILD_taki: OFF
-  BUILD_timepixdummy: OFF
-  BUILD_tlu: ON
-  IGNORE_KNOWN_ISSUES: ON
-  PYTHON: "C:\\Python35"
-  PYTHON_VERSION: "3.5.2" 
-  PYTHON_ARCH: "32"
+  matrix:
+    - complete_build: true
+      ROOTSYS: C:\root
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
+      BUILD_AHCAL: OFF
+      BUILD_BIFAHCAL: OFF
+      BUILD_TESTING: OFF
+      BUILD_WITH_QT4: OFF
+      BUILD_allproducer: OFF
+      BUILD_altro: OFF
+      BUILD_altroUSB: OFF
+      BUILD_cmspixel: OFF
+      BUILD_depfet: OFF
+      BUILD_fortis: OFF
+      BUILD_gui: ON
+      BUILD_main: OFF
+      BUILD_manual: OFF
+      BUILD_mimoroma: OFF
+      BUILD_miniTLU: OFF
+      BUILD_ni: ON
+      BUILD_nreader: OFF
+      BUILD_offlinemon: OFF
+      BUILD_onlinemon: ON
+      BUILD_palpidefs: OFF
+      BUILD_pixelmanproducer: OFF
+      BUILD_python: ON
+      BUILD_root: OFF
+      BUILD_taki: OFF
+      BUILD_timepixdummy: OFF
+      BUILD_tlu: ON
+      IGNORE_KNOWN_ISSUES: ON
+      PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.2" 
+      PYTHON_ARCH: "32"
+    - complete_build: false
+      ROOTSYS: C:\root
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
+      BUILD_AHCAL: OFF
+      BUILD_BIFAHCAL: OFF
+      BUILD_TESTING: OFF
+      BUILD_WITH_QT4: OFF
+      BUILD_allproducer: OFF
+      BUILD_altro: OFF
+      BUILD_altroUSB: OFF
+      BUILD_cmspixel: OFF
+      BUILD_depfet: OFF
+      BUILD_fortis: OFF
+      BUILD_gui: ON
+      BUILD_main: OFF
+      BUILD_manual: OFF
+      BUILD_mimoroma: OFF
+      BUILD_miniTLU: OFF
+      BUILD_ni: ON
+      BUILD_nreader: OFF
+      BUILD_offlinemon: OFF
+      BUILD_onlinemon: ON
+      BUILD_palpidefs: OFF
+      BUILD_pixelmanproducer: OFF
+      BUILD_python: ON
+      BUILD_root: OFF
+      BUILD_taki: OFF
+      BUILD_timepixdummy: OFF
+      BUILD_tlu: ON
+      IGNORE_KNOWN_ISSUES: ON
+      PYTHON: "C:\\Python35"
+      PYTHON_VERSION: "3.5.2" 
+      PYTHON_ARCH: "32"      
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
