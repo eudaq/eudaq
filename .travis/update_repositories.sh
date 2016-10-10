@@ -18,7 +18,7 @@ else
 	export DEBIAN_FRONTEND=noninteractive
 	sudo apt-get update
 	#http://askubuntu.com/questions/104899/make-apt-get-or-aptitude-run-with-y-but-not-prompt-for-replacement-of-configu
-	sudo apt-get  -o Dpkg::Options::="--force-confold" --force-yes -y upgrade 
+	sudo apt-get  -o Dpkg::Options::="--force-confnew" --force-yes -y upgrade 
 	
 fi
 	
