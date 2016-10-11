@@ -11,7 +11,7 @@ namespace{
 
 EventFileReaderPS::EventFileReaderPS(std::string cmd)
   :Processor("EventFileReaderPS", ""){
-  *this<<cmd;
+  ProcessCmd(cmd);
 }
 
 void EventFileReaderPS::OpenFile(std::string filename){

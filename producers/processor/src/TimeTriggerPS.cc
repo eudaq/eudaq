@@ -35,7 +35,7 @@ namespace eudaq{
 
   TimeTriggerPS::TimeTriggerPS(std::string cmd)
     :Processor("TimeTriggerPS", ""){
-    *this<<cmd;
+    ProcessCmd(cmd);
     m_ts_resulution = 1; // ns
     m_trigger_rate = 1000;
     m_event_n = 0;

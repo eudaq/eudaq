@@ -52,12 +52,12 @@ namespace eudaq {
     };
 
     enum FLAG{
-        FLAG_HUB_RUN=1,
-	FLAG_HUB_BUSY=2,
-	FLAG_PDC_RUN=4,
-	FLAG_PDC_BUSY=8,
-	FLAG_CSM_RUN=16,
-	FLAG_CSM_BUSY=32
+      FLAG_HUB_RUN=1,
+      FLAG_HUB_BUSY=2,
+      FLAG_PDC_RUN=4,
+      FLAG_PDC_BUSY=8,
+      FLAG_CSM_RUN=16,
+      FLAG_CSM_BUSY=32
     };
 
     static PSSP MakePSSP(std::string pstype, std::string cmd);
@@ -82,24 +82,26 @@ namespace eudaq {
     
     void RunProducerThread();
     void RunConsumerThread();
-    void RunHubThread();
+    void RunHubThread(); //delilver
     
     virtual void AddNextProcessor(PSSP ps);
     void AddUpstream(PSWP ps);
     void UpdatePSHub(PSWP ps);
 
+    void ProcessCmd(const std::string& cmd_list);
+
     
-    PSSP operator>>(PSSP psr);
-    PSSP operator>>(std::string stream_str);
-
-    Processor& operator<<(EVUP ev);
-    Processor& operator<<(std::string cmd_str);
-
     bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
     bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
     std::string GetType(){return m_pstype;};
     uint32_t GetID(){return m_psid;};
     STATE GetState(){return m_state;};
+
+
+    ProcessorSP operator>>(ProcessorSP psr);
+    ProcessorSP operator>>(const std::string& stream_str);
+    ProcessorSP operator<<(EventUP ev);
+    ProcessorSP operator<<(const std::string& cmd_str);
     
   private:
     std::string m_pstype;
@@ -123,11 +125,17 @@ namespace eudaq {
     std::atomic<int> m_flag;
   };
 
+  template <typename T>
+  ProcessorSP operator>>(ProcessorSP psl, T t){
+    return *psl>>t;
+  }
+
+  template <typename T>
+  ProcessorSP operator<<(ProcessorSP psl, T t){
+    return *psl<<t;
+  }
+
 }
-DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
-DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
-DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP psl, std::string cmd_list);
-// DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP ps, eudaq::EventUP ev);
 
 
 #endif

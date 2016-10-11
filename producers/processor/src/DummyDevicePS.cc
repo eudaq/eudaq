@@ -24,7 +24,7 @@ namespace eudaq{
 
   DummyDevicePS::DummyDevicePS(std::string cmd)
     :Processor("DummyDevicePS", ""){
-    *this<<cmd;
+    ProcessCmd(cmd);
     m_event_n = 0;
     m_duration = 1;
   }

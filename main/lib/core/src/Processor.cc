@@ -12,7 +12,6 @@ using namespace eudaq;
 template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
 template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
 
-
 PSSP Processor::MakePSSP(std::string pstype, std::string cmd){
   PSSP ps(std::move(Factory<Processor>::Create(cstr2hash(pstype.c_str()), cmd)));
   return ps;
@@ -20,14 +19,15 @@ PSSP Processor::MakePSSP(std::string pstype, std::string cmd){
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY), m_flag(0){
- }
+  std::cout<<m_pstype<<" constructure"<<std::endl;
+}
 
 Processor::~Processor() {
   std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
 };
 
 void Processor::ProcessUserEvent(EVUP ev){
-  std::cout<< "ProcessUserEvent [PS"<<m_psid<<"] "<<ev->GetEventID()<<std::endl;
+  std::cout<< "Default ProcessUserEvent in [PS"<<m_psid<<"]"<<std::endl;
   ForwardEvent(std::move(ev));
 }
 
@@ -233,17 +233,39 @@ void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
   }
 }
 
+void Processor::ProcessCmd(const std::string& cmd_list){
+  //val1=1,2,3;val2=xx,yy;SYS:val3=abc
+  std::stringstream ss(cmd_list);
+  std::string cmd;
+  while(getline(ss, cmd, ';')){//TODO: ProcessXXCmd(name_str,val_str)
+    std::stringstream ss_cmd(cmd);
+    std::string name_str, val_str;
+    getline(ss_cmd, name_str, '=');
+    getline(ss_cmd, val_str);
+    name_str=trim(name_str);
+    val_str=trim(val_str);
+    if(!name_str.empty()){
+      name_str=ucase(name_str);
+      if(!cmd.compare(0,3,"SYS")){
+	ProcessSysCmd(name_str, val_str);
+      }
+      else
+	ProcessUsrCmd(name_str, val_str);
+    }
+  }
+}
+
 void Processor::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
   m_cmdlist_init.push_back(std::make_pair(cmd_name, cmd_par)); //configured
 }
+
 
 PSSP Processor::operator>>(PSSP psr){
   AddNextProcessor(psr);
   return psr;
 }
 
-
-PSSP Processor::operator>>(std::string stream_str){
+PSSP Processor::operator>>(const std::string& stream_str){
   std::string cmd_str;
   std::string par_str;
   std::stringstream ss(stream_str);
@@ -285,53 +307,16 @@ PSSP Processor::operator>>(std::string stream_str){
 }
 
 
-Processor& Processor::operator<<(EVUP ev){
+ProcessorSP Processor::operator<<(EVUP ev){
   auto ps_hub = m_ps_hub.lock();
   auto ps_this = shared_from_this();
   if(ps_hub)
      ps_hub->RegisterProcessing(ps_this, std::move(ev));
-  return *this;
-}
-
-Processor& Processor::operator<<(std::string cmd_list){
-  //val1=1,2,3;val2=xx,yy;SYS:val3=abc
-  std::stringstream ss(cmd_list);
-  std::string cmd;
-  while(getline(ss, cmd, ';')){//TODO: ProcessXXCmd(name_str,val_str)
-    std::stringstream ss_cmd(cmd);
-    std::string name_str, val_str;
-    getline(ss_cmd, name_str, '=');
-    getline(ss_cmd, val_str);
-    name_str=trim(name_str);
-    val_str=trim(val_str);
-    if(!name_str.empty()){
-      name_str=ucase(name_str);
-      if(!cmd.compare(0,3,"SYS")){
-	ProcessSysCmd(name_str, val_str);
-      }
-      else
-	ProcessUsrCmd(name_str, val_str);
-    }
-  }
-
-  return *this;
+  return ps_this;
 }
 
 
-PSSP operator<<(PSSP psl, std::string cmd_list){
-  *psl<<cmd_list;
-  return psl;
+ProcessorSP Processor::operator<<(const std::string& cmd_list){
+  ProcessCmd(cmd_list);
+  return shared_from_this();
 }
-
-PSSP operator>>(PSSP psl, PSSP psr){
-  return *psl>>psr;
-}
-
-PSSP operator>>(PSSP psl, std::string psr_str){
-  return *psl>>psr_str;
-}
-
-// PSSP operator<<(PSSP ps, EventUP ev){
-//   *ps<<std::move(ev);
-//   return ps;
-// }

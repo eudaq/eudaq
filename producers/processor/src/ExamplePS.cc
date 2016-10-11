@@ -26,7 +26,7 @@ namespace eudaq{
 
   ExamplePS::ExamplePS(std::string cmd)
     :Processor("ExamplePS", ""){
-    *this<<cmd; 
+    ProcessCmd(cmd);
   }
 
   void ExamplePS::ProduceEvent(){

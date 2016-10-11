@@ -39,7 +39,7 @@ private:
 
 SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
   :Processor("SyncByTimestampPS", ""){
-  *this<<cmd;
+  ProcessCmd(cmd);
 
   m_nstream = 4;
   m_nready = 0;

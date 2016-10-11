@@ -10,7 +10,7 @@ namespace{
 
 EventReceiverPS::EventReceiverPS(std::string cmd)
   :Processor("EventReceiverPS", ""){
-  *this<<cmd;
+  ProcessCmd(cmd);
 }
 
 void EventReceiverPS::ProcessUserEvent(EVUP ev){

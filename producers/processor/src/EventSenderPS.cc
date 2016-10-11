@@ -11,7 +11,7 @@ namespace{
 
 EventSenderPS::EventSenderPS(std::string cmd)
   :Processor("EventSenderPS", ""){
-  *this<<cmd;
+  ProcessCmd(cmd);
 }
 
 void EventSenderPS::ProcessUserEvent(EVUP ev){
