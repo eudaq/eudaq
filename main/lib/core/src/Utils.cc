@@ -191,9 +191,8 @@ namespace eudaq {
     }
   }
 
-  uint32_t DLLEXPORT str2hash(const std::string &stdstr, uint32_t h){
-    const char *str = stdstr.c_str();
-    return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33ULL) ^ str[h];
+  uint32_t DLLEXPORT str2hash(const std::string &stdstr){
+    return cstr2hash(stdstr.c_str());
   }
 
 }

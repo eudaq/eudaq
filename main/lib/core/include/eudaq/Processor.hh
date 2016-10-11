@@ -84,10 +84,6 @@ namespace eudaq {
     void RunConsumerThread();
     void RunHubThread();
     
-    void InsertEventType(uint32_t evtype);
-    void EraseEventType(uint32_t evtype);
-
-
     virtual void AddNextProcessor(PSSP ps);
     void AddUpstream(PSWP ps);
     void UpdatePSHub(PSWP ps);
@@ -104,8 +100,6 @@ namespace eudaq {
     std::string GetType(){return m_pstype;};
     uint32_t GetID(){return m_psid;};
     STATE GetState(){return m_state;};
-    PSSP GetNextPSSP(Processor *p);
-    PSSP GetThisPSSP(){return shared_from_this();};
     
   private:
     std::string m_pstype;

@@ -32,7 +32,7 @@ namespace eudaq {
     return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33ULL) ^ str[h];
   }
 
-  uint32_t DLLEXPORT str2hash(const std::string &stdstr, uint32_t h = 0);
+  uint32_t DLLEXPORT str2hash(const std::string &stdstr);
   
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds

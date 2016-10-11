@@ -30,8 +30,8 @@ void EventFileReaderPS::ProduceEvent(){
     uint32_t id;
     m_des->PreRead(id);
     EVUP ev = Factory<Event>::Create<Deserializer&>(id, *m_des.get());
-    ProcessUserEvent(std::move(ev));
-    // Processing(std::move(ev));
+    // ProcessUserEvent(std::move(ev));
+    Processing(std::move(ev));
   }
 }
 

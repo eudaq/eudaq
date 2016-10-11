@@ -6,7 +6,10 @@
 #include "PluginManager.hh"
 #include "BufferSerializer.hh"
 
+
+
 namespace eudaq {
+
   
   template class DLLEXPORT Factory<Event>;
   template DLLEXPORT
@@ -15,8 +18,26 @@ namespace eudaq {
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
   Factory<Event>::Instance<>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
 
-  Event::Event(uint32_t type, uint32_t run_n, uint32_t stm_n)
+  namespace{
+    auto dummy0 = Factory<Event>::Register<Event, Deserializer&>(Event::str2id("BASE"));
+    auto dummy1 = Factory<Event>::Register<Event>(Event::str2id("BASE"));
+    auto dummy2 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(Event::str2id("BASE"));
+    auto dummy3 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER")); //Trigger
+    auto dummy4 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV")); //DummyEvent
+
+  }
+
+
+  Event::Event()
+    :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
+  }
+  
+  
+  Event::Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n)
     :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
     
   }

@@ -24,8 +24,11 @@ namespace eudaq {
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
   Factory<Event>::Instance<Deserializer&>();
   extern template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
-  Factory<Event>::Instance<Deserializer&>();
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
+  Factory<Event>::Instance<>();
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
 #endif
 
   using EventUP = Factory<Event>::UP_BASE; 
@@ -47,7 +50,8 @@ namespace eudaq {
       FLAG_ALL = (unsigned)-1
     };
 
-    Event(uint32_t type, uint32_t run_n, uint32_t stm_n);
+    Event();
+    Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n);
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const;   
     EventUP Clone() const;

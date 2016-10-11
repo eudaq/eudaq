@@ -14,18 +14,24 @@ using namespace eudaq;
 int main(int argn, char **argc){
   ProcessorManager &psMan = *ProcessorManager::GetInstance();
   
-  PSSP p10 = Processor::MakePSSP("ExamplePS", "SYS:PSID=10");
+  // PSSP p10 = Processor::MakePSSP("ExamplePS", "SYS:PSID=10");
+  // PSSP p10 = Processor::MakePSSP("TimeTriggerPS", "SYS:PSID=10");
+
+  PSSP p1 = Processor::MakePSSP("TimeTriggerPS", "SYS:PSID=1");
+  PSSP p2 = Processor::MakePSSP("DummyDevicePS", "SYS:PSID=2");
   
   psMan
-    >>p10
-    >>"EV(ADD=_RAW)"
+    >>p1
+    >>"EV(ADD=TRIGGER)"
+    >>p2
+    >>"EV(ADD=DUMMYDEV)"
     >>"ExamplePS(SYS:PSID=11)"
     >>"EV(ADD=_RAW)"
     >>"ExamplePS(SYS:PSID=12)"
     ;
 
-  p10<<"SYS:PD:RUN";
-  p10.reset();
+  p1<<"SYS:PD:RUN";
+  p1.reset();
   
   std::cout << "press any key to exit..."; getchar();
 }

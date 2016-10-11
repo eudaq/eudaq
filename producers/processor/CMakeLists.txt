@@ -9,7 +9,10 @@ SET(PS_PLUGIN_SRC
   src/SyncByTimestampPS.cc
   src/EventReceiverPS.cc
   src/EventSenderPS.cc
+  src/TimeTriggerPS.cc
+  src/DummyDevicePS.cc
   )
+
 
 INCLUDE_DIRECTORIES(include)
 
