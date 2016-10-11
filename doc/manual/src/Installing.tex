@@ -1,72 +1,65 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Installing EUDAQ}
 
-\subsection{Overview}
-EUDAQ has relatively few dependencies on other software, but some
-features do rely on other packages.
-To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
-To compile EUDAQ from source code requires a compiler that implements
-the C++11 standard.
-The libusb library is only needed to communicate over USB with a \gls{TLU}\cite{Cussans2009}.
-The VME driver is only needed for reading out \glspl{EUDRB}\cite{Cotta2008}
-via VME with a Motorola MVME6100 single board computer.
-The other dependencies are only needed for running the DAQ, and not for the common library
-(for example if you only want to perform data analysis,
-or write a custom Producer to run in the EUDET telescope,
-but not run the whole DAQ yourself).
+\subsection{Prerequisites}
 
-\subsection{CMake}
-In order to automatically generate configuration files for the build
-process of EUDAQ both compiler and platform independent, the CMake
-build system is used.
+EUDAQ has relatively few dependencies on other software, but some features do rely on other packages:
+\begin{itemize}
+\item To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
+\item To compile EUDAQ from source code requires a compiler that implements the C++11 standard.
+\item The libusb library is needed to communicate over USB with a \gls{TLU} \cite{Cussans2009}.
+\item Qt is required to build GUIs of the e.g. Run Control Log Collector. 
+\item ROOT is required for the Online Monitor.
+\end{itemize}
 
-CMake is available for all major operating systems from
-\url{http://www.cmake.org/cmake/resources/software.html}. On most
-Linux distributions, it can usually be installed via the built-in
-package manager (aptitude/apt-get/yum etc.) and on OSX using
-packages provided by e.g. the MacPorts or Fink projects.
+\subsubsection{CMake (required)}
+In order to automatically generate configuration files for the build process of EUDAQ both compiler and platform independent, the CMake build system is used.
 
-\subsection{C++11 compliant compiler}
-The compilation of the EUDAQ source code requires a C++11 compliant
-compiler and has been tested with GCC (at
-least version 4.6), Clang (at least version 3.1), and MSVC (Visual
-Studio 2012 and later) on Linux, OS X and Windows.
+CMake is available for all major operating systems from \url{http://www.cmake.org/cmake/resources/software.html}. On most Linux distributions, it can usually be installed via the built-in package manager (aptitude/apt-get/yum etc.) and on OSX using packages provided by e.g. the MacPorts or Fink projects.
 
-If you are using Scientific Linux, please install the \emph{Developer
-  Toolset} available e.g. from
-\url{http://linux.web.cern.ch/linux/devtoolset/} to get access to a
-GCC version which fully implements C++11.
+\subsubsection{C++11 compliant compiler (required)}
+The compilation of the EUDAQ source code requires a C++11 complianti compiler and has been tested with GCC (at least version 4.8), Clang (at least version 3.1), and MSVC (Visual Studio 2012 and later) on Linux, OS X and Windows.
 
-\subsubsection{libusb}
-In order to communicate with a \gls{TLU}, the libusb library is needed.
-Therefore, if you want to compile the \texttt{TLU} subdirectory, you should make sure that libusb is properly installed.
+If you are using Scientific Linux, please install the \emph{Developer Toolset} available e.g. from \url{http://linux.web.cern.ch/linux/devtoolset/} to get access to a GCC version which fully implements C++11, e.g. on SL6 do
+\begin{listing}[mybash]
+scl use devtoolset-1.1 bash
+\end{listing}
+and cmake and install in this bash.
+
+\subsubsection{libusb (for the EUDET TLU)}
+In order to communicate over USB with a \gls{TLU}, the libusb library is needed.
+Therefore, if you want to compile the \texttt{tlu} subdirectory, you should make sure that libusb is properly installed.
 
 On Mac OS X, this can be installed using Fink or MacPorts.
 If using MacPorts you may also need to install the \texttt{libusb-compat} package.
+
 On Linux it may already be installed,
 otherwise you should use the built-in package manager to install it.
-Make sure to get the development version, which may be named \texttt{libusb-devel} instead of simply \texttt{libusb}.
+Make sure to get the development version, which may be named \texttt{libusb-devel} instead of simply \texttt{libusb}, e.g. on Ubuntu: 
+\begin{listing}[mybash]
+sudo apt-get install libusb-dev 
+\end{listing}
+
 On Windows, libusb is only needed if compiling with cygwin,
 in which case you should use the cygwin installer to install libusb.
 Otherwise libusb is not needed, as the included ZestSC1 libraries should work as they are.
 
-
-\subsubsection{ZestSC1 drivers and TLU firmware files}
-Additonally to the libusb library, the \gls{TLU} producer requires the
-ZestSC1 driver package and the FPGA firmware bitfiles; these are
-available to download via AFS from DESY. If AFS is accessible on the machine
-when CMake is run, the necessary files will be installed
-automatically; otherwise, manually copy full folder with
-sub-directories from
+\subsubsection{ZestSC1 drivers and TLU firmware files (for the EUDET TLU)}
+Additonally to the libusb library, the EUDET \gls{TLU} producer requires the
+ZestSC1 driver package and the FPGA firmware bitfiles. 
+These are available to download via AFS from DESY. 
+If AFS is accessible on the machine when CMake is run, the necessary files will be installed
+automatically.
+Otherwise, manually copy full folder with sub-directories from
 \texttt{/afs/desy.de/group/telescopes/tlu/ZestSC1} and
 \texttt{/afs/desy.de/group/telescopes/tlu/tlufirmware} into the
-./extern subfolder in your EUDAQ source directory.
+\texttt{./extern} subfolder in your EUDAQ source directory.
 
 
-\subsubsection{Qt}
+\subsubsection{Qt (for GUIs)}
 The graphical interface of EUDAQ uses the Qt graphical framework.
 In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
-It is available in most Linux distributions as the package \texttt{qt4-devel},
+It is available in most Linux distributions as the package \texttt{qt4-devel} or  \texttt{qt5-devel}
 but make sure the version is at least 4.4, since there are a few issues with earlier versions.
 
 If the included version is too old, or on other platforms,
@@ -79,21 +72,23 @@ and the \texttt{\$QTDIR/bin} directory is in your path.
 If you are using OSX, the easiest way to install Qt is using the
 packages provided by the MacPorts project (\url{http://www.macports.org/}).
 
-\subsubsection{Root}\label{sec:Root}
-The online monitor, as well as a few command-line utilities (contained in the \texttt{root} subdirectory),
-use the Root package for histogramming.
+\subsubsection{ROOT (for Monitor)}
+\label{sec:Root}
+The Online Monitor, as well as a few command-line utilities (contained in the \texttt{root} subdirectory), use the ROOT package for histogramming.
 It can be downloaded from \url{http://root.cern.ch} or installed via
 your favorite package manager.
-Make sure Root's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
+
+Make sure ROOt's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
 This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
-script in the \texttt{bin} directory of the Root installation:
+script in the \texttt{bin} directory of the ROOT installation:
 \begin{listing}[mybash]
-source /path/to/root/bin/thisroot.sh
+source /path-to/root/bin/thisroot.sh
 \end{listing}
 
-\subsubsection{LCIO / EUTelescope}\label{sec:LCIO-EUTel}
+\subsubsection{LCIO / EUTelescope (for converting/analysis)}
+\label{sec:LCIO-EUTel}
 To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
-eudaq must be linked against the \gls{LCIO} and EUTelescope libraries.
+EUDAQ must be linked against the \gls{LCIO} and EUTelescope libraries.
 Detailed instructions on how to install both using the
 \texttt{ilcinstall} scripts can be found at \url{http://eutelescope.web.cern.ch/content/installation}.
 
@@ -101,8 +96,9 @@ The \texttt{EUTELESCOPE} and \texttt{LCIO} environment variables should be set t
 installation directories of EUTelescope and LCIO respectively.
 This can be done by sourcing the \texttt{build\_env.sh} script as follows:
 \begin{listing}[mybash]
-source /path/to/Eutelescope/build_env.sh
+source /path-to/Eutelescope/build_env.sh
 \end{listing}
+
 
 \subsection{Downloading the source code}
 The EUDAQ source code is hosted on github. The recommended way to obtain the software is with git,
