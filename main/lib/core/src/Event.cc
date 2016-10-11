@@ -23,14 +23,15 @@ namespace eudaq {
   Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
 
   namespace{
-    auto dummy0 = Factory<Event>::Register<Event, Deserializer&>(Event::str2id("BASE"));
-    auto dummy1 = Factory<Event>::Register<Event>(Event::str2id("BASE"));
-    auto dummy2 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(Event::str2id("BASE"));
+    auto dummy0 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("BASE"));
+    auto dummy1 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("BASE"));
+    auto dummy2 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("TRIGGER"));
     auto dummy3 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER")); //Trigger
-    auto dummy4 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV")); //DummyEvent
-
+    auto dummy4 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("DUMMYDEV"));
+    auto dummy5 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV")); //DummyEvent
+    auto dummy6 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("SYNC"));
+    auto dummy7 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"));
   }
-
 
   Event::Event()
     :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){

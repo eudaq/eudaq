@@ -40,7 +40,6 @@ private:
 SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
   :Processor("SyncByTimestampPS", ""){
   ProcessCmd(cmd);
-
   m_nstream = 4;
   m_nready = 0;
   m_ts_last_end=0;
@@ -48,21 +47,14 @@ SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
   m_ts_next_end= uint64_t(-1);
   m_ts_next_next_begin= uint64_t(-1);
   m_ts_next_next_end= uint64_t(-1);
-
   
 }
 
 void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
-  if(ev->GetEventID() != Event::str2id("_RAW")){
-    ForwardEvent(std::move(ev));
-    ;
-  }
-  
-  std::cout<< "merging " <<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   auto ts_begin = ev->GetTimestampBegin(); //begin
   auto ts_end = ev->GetTimestampEnd(); //end;
   uint32_t id_stream_ev = ev->GetStreamID();
-  std::cout<< "ts_begin ="<< ts_begin << "  ts_end ="<<ts_end<< "  id_stream ="<<id_stream_ev<<std::endl;
+  std::cout<< "ts_begin ="<< ts_begin << "  ts_end ="<<ts_end<< "  stream_n ="<<id_stream_ev<< "  event_n ="<<ev->GetEventN()<<std::endl;
   
   if(ev->IsBORE()){
     m_bores[id_stream_ev] = std::move(ev); //move, !!!
@@ -113,19 +105,19 @@ void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
   while(m_nready == m_fifos.size()){ // when a wating event arrives in a stream,  N DETEvent can be built
     std::cout<<">>>>in loop: m_nready "<< m_nready <<std::endl;
     std::cout<<"\n\n\n";
-    std::cout<<"...................a detector event is begin"<<std::endl;
-    std::cout<<"m_ts_last_end "<<m_ts_last_end<<std::endl;
-    std::cout<<"m_ts_next_begin "<<m_ts_next_begin<<std::endl;
-    std::cout<<"m_ts_next_end "<<m_ts_next_end<<std::endl;
-    std::cout<<"m_ts_next_next_begin "<<m_ts_next_next_begin<<std::endl;
-    std::cout<<"m_ts_next_next_end "<<m_ts_next_next_end<<std::endl;
+    std::cout<<"...................a detector event is begin............."<<std::endl;
+    std::cout<<"  last_end ="<<m_ts_last_end;
+    std::cout<<"  next_begin ="<<m_ts_next_begin;
+    std::cout<<"  next_end ="<<m_ts_next_end;
+    std::cout<<"  nnext_begin ="<<m_ts_next_next_begin;
+    std::cout<<"  nnext_end ="<<m_ts_next_next_end<<std::endl;
+    std::cout<<"........................................................."<<std::endl;
 
-    
-    auto evup_det = Factory<Event>::Create<>(Event::str2id("_DET"));
+    EVUP evup_det = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
     evup_det->SetTimestampBegin(m_ts_next_begin);
     evup_det->SetTimestampEnd(m_ts_next_end);
-    auto ev_det = dynamic_cast<DetectorEvent*> (evup_det.get());
-
+    auto ev_det = evup_det.get();
+  
     for(auto &e: m_fifos){
       EVUP ev_candidate;
       uint32_t id_stream = e.first;
@@ -230,21 +222,21 @@ void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
       }
     }//end loop the fifos
 
-
+    std::cout<<"...................a detector event is completed........."<<std::endl;
+    std::cout<<"  last_end ="<<m_ts_last_end;
+    std::cout<<"  next_begin ="<<m_ts_next_begin;
+    std::cout<<"  next_end ="<<m_ts_next_end;
+    std::cout<<"  nnext_begin ="<<m_ts_next_next_begin;
+    std::cout<<"  nnext_end ="<<m_ts_next_next_end<<std::endl;
+    std::cout<<"  SubEvent ="<<evup_det->GetNumSubEvent()<<std::endl;
+    std::cout<<"........................................................."<<std::endl;
     ForwardEvent(std::move(evup_det));
-    std::cout<<"...................a detector event is completed"<<std::endl;
-    std::cout<<"m_ts_last_end "<<m_ts_last_end<<std::endl;
-    std::cout<<"m_ts_next_begin "<<m_ts_next_begin<<std::endl;
-    std::cout<<"m_ts_next_end "<<m_ts_next_end<<std::endl;
-    std::cout<<"m_ts_next_next_begin "<<m_ts_next_next_begin<<std::endl;
-    std::cout<<"m_ts_next_next_end "<<m_ts_next_next_end<<std::endl;
     
     m_ts_last_end = m_ts_next_end;
     m_ts_next_begin = m_ts_next_next_begin;
     m_ts_next_end = m_ts_next_next_end;
     m_ts_next_next_begin = uint64_t(-1);
     m_ts_next_next_end = uint64_t(-1);
-
 
     for(auto &e: m_ready){
       if(!e.second){

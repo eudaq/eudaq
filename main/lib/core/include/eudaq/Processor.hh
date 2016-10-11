@@ -13,7 +13,6 @@
 
 #include"Event.hh"
 #include"Configuration.hh"
-#include"RawDataEvent.hh"
 
 #include"Factory.hh"
 
@@ -60,7 +59,7 @@ namespace eudaq {
       FLAG_CSM_BUSY=32
     };
 
-    static PSSP MakePSSP(std::string pstype, std::string cmd);
+    static PSSP MakeShared(std::string pstype, std::string cmd);
     
     Processor(std::string pstype, std::string cmd);
     
@@ -84,7 +83,7 @@ namespace eudaq {
     void RunConsumerThread();
     void RunHubThread(); //delilver
     
-    virtual void AddNextProcessor(PSSP ps);
+    void AddNextProcessor(PSSP ps);
     void AddUpstream(PSWP ps);
     void UpdatePSHub(PSWP ps);
 

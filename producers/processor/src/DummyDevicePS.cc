@@ -30,7 +30,6 @@ namespace eudaq{
   }
 
   void DummyDevicePS::ProcessUserEvent(EVUP ev){
-    // std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetEventID()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
     uint64_t ts = ev->GetTimestampBegin();
     if(ts>=m_ts_last_end){
       EVUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
@@ -38,6 +37,7 @@ namespace eudaq{
       devev->SetTimestampBegin(ts);
       devev->SetTimestampEnd(ts+m_duration);
       ForwardEvent(std::move(devev));
+      ForwardEvent(std::move(ev));
     }
     else{
       std::cout<<"Device is busy. Trigger is lost"<<std::endl;

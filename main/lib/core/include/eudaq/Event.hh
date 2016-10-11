@@ -86,7 +86,7 @@ namespace eudaq {
     void SetEventN(uint32_t n){m_ev_n = n;}
     void SetStreamN(uint32_t n){m_stm_n = n;}
     void SetTimestampBegin(uint64_t t){m_ts_begin = t;}
-    void SetTimestampEnd(uint64_t t){m_ts_begin = t;}
+    void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
  
     uint32_t GetEventID() const {return m_type;};
@@ -96,11 +96,10 @@ namespace eudaq {
     uint32_t GetEventN()const {return m_ev_n;}
     uint32_t GetStreamN() const {return m_stm_n;}
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
-    uint64_t GetTimestampEnd() const {return m_ts_begin;}
+    uint64_t GetTimestampEnd() const {return m_ts_end;}
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
-
 
     /////TODO: remove compatiable fun from EUDAQv1
     uint32_t GetEventNumber()const {return m_ev_n;}
@@ -108,6 +107,10 @@ namespace eudaq {
     uint32_t GetStreamID() const {return m_stm_n;}
     virtual std::string GetSubType() const {return "This Event is not RAW\n";}
     void SetFlags(uint32_t f){SetFlagBit(f);}
+    void AddEvent(EventUP ev){
+      EventSP evsp(std::move(ev));
+      AddSubEvent(evsp);
+    }
     
   private:
     uint32_t m_type;

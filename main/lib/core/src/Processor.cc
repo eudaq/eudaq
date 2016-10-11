@@ -12,14 +12,13 @@ using namespace eudaq;
 template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
 template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
 
-PSSP Processor::MakePSSP(std::string pstype, std::string cmd){
+PSSP Processor::MakeShared(std::string pstype, std::string cmd){
   PSSP ps(std::move(Factory<Processor>::Create(cstr2hash(pstype.c_str()), cmd)));
   return ps;
 }
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0), m_state(STATE_READY), m_flag(0){
-  std::cout<<m_pstype<<" constructure"<<std::endl;
 }
 
 Processor::~Processor() {
@@ -27,7 +26,7 @@ Processor::~Processor() {
 };
 
 void Processor::ProcessUserEvent(EVUP ev){
-  std::cout<< "Default ProcessUserEvent in [PS"<<m_psid<<"]"<<std::endl;
+  // std::cout<< "Default ProcessUserEvent in [PS"<<m_psid<<"]"<<std::endl;
   ForwardEvent(std::move(ev));
 }
 
@@ -108,7 +107,7 @@ void Processor::UpdatePSHub(PSWP ps){
   if(m_ps_upstr.size() < 2){
     m_ps_hub = ps;
     for(auto &e: m_pslist_next){
-      e.first->UpdatePSHub(shared_from_this());
+      e.first->UpdatePSHub(ps);
     }
   }
   //else ignore;
@@ -170,6 +169,8 @@ void Processor::RunProducerThread(){
 }
 
 void Processor::RunHubThread(){
+  if(!m_ps_hub.lock())
+    m_ps_hub = shared_from_this();
   std::thread t(&Processor::HubProcessing, this);
   m_flag = m_flag|FLAG_HUB_RUN;//safe
   t.detach();
@@ -185,6 +186,10 @@ void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
   }
   case cstr2hash("SYS:CS:RUN"):{
     RunConsumerThread();
+    break;
+  }
+  case cstr2hash("SYS:HB:RUN"):{
+    RunHubThread();
     break;
   }
   case cstr2hash("SYS:PD:STOP"):{

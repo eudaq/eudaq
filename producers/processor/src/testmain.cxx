@@ -1,6 +1,6 @@
 
 #include"Processor.hh"
-#include"ProcessorManager.hh"
+// #include"ProcessorManager.hh"
 #include"RawDataEvent.hh"
 
 
@@ -12,28 +12,25 @@
 using namespace eudaq;
 
 int main(int argn, char **argc){
-  ProcessorManager &psMan = *ProcessorManager::GetInstance();
+  PSSP p1 = Processor::MakeShared("TimeTriggerPS", "SYS:PSID=1");
+  PSSP p2 = Processor::MakeShared("DummyDevicePS", "SYS:PSID=2");
   
-  // PSSP p10 = Processor::MakePSSP("ExamplePS", "SYS:PSID=10");
-  // PSSP p10 = Processor::MakePSSP("TimeTriggerPS", "SYS:PSID=10");
-
-  PSSP p1 = Processor::MakePSSP("TimeTriggerPS", "SYS:PSID=1");
-  PSSP p2 = Processor::MakePSSP("DummyDevicePS", "SYS:PSID=2");
-  
-  psMan
-    >>p1
+  p1
     >>"EV(ADD=TRIGGER)"
     >>p2
     >>"EV(ADD=DUMMYDEV)"
-    >>"ExamplePS(SYS:PSID=11)"
-    >>"EV(ADD=_RAW)"
-    >>"ExamplePS(SYS:PSID=12)"
+    >>"EV(ADD=TRIGGER)"
+    >>"SyncByTimestampPS(SYS:PSID=11)"
+    // >>"ExamplePS(SYS:PSID=11)"
+    // >>"EV(ADD=DUMMYDEV)"
+    // >>"ExamplePS(SYS:PSID=12)"
     ;
-
+  p2.reset();  
+  p1<<"SYS:HB:RUN";
   p1<<"SYS:PD:RUN";
-  p1.reset();
   
-  std::cout << "press any key to exit..."; getchar();
+  std::cout << "press any key to exit...\n"; getchar();
+  p1.reset();
 }
 
 // "EventFileReaderPS(SYS:PSID=0;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN)"
