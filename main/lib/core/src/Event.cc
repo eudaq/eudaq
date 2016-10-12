@@ -9,7 +9,6 @@
 
 
 namespace eudaq {
-
   
   template class DLLEXPORT Factory<Event>;
   template DLLEXPORT
@@ -33,6 +32,7 @@ namespace eudaq {
     auto dummy7 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"));
   }
 
+  
   Event::Event()
     :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
   }
@@ -90,22 +90,28 @@ namespace eudaq {
     os << std::string(offset, ' ') << "<Event>\n";
     os << std::string(offset + 2, ' ') << "<Type> " << m_type <<" </Type>\n";
     os << std::string(offset + 2, ' ') << "<Flag> 0x" << to_hex(m_flags, 8)<< " </Flag>\n";
-    os << std::string(offset + 2, ' ') << "<Run_N> " << m_run_n << " </Run_N>\n";
-    os << std::string(offset + 2, ' ') << "<Steam_N> " << m_stm_n << " </Stream_N>\n";
-    os << std::string(offset + 2, ' ') << "<Event_N> " << m_ev_n << " </Event_N>\n";
+    os << std::string(offset + 2, ' ') << "<RunN> " << m_run_n << " </RunN>\n";
+    os << std::string(offset + 2, ' ') << "<StreamN> " << m_stm_n << " </StreamN>\n";
+    os << std::string(offset + 2, ' ') << "<EventN> " << m_ev_n << " </EventN>\n";
     os << std::string(offset + 2, ' ') << "<Timestamp> 0x" << to_hex(m_ts_begin, 16)
-       <<"  ->  0x"<< to_hex(m_ts_end, 16) << "</Timestamp>\n";
-    os << std::string(offset + 2, ' ') << "<Tags> \n";
-    for (auto &tag: m_tags){
-      os << std::string(offset+4, ' ')  << tag.first << "=" << tag.second << "\n";
+       <<"  ->  0x"<< to_hex(m_ts_end, 16) << " </Timestamp>\n";
+    os << std::string(offset + 2, ' ') << "<Timestamp> " << m_ts_begin
+       <<"  ->  "<< m_ts_end << " </Timestamp>\n";
+    if(!m_tags.empty()){
+      os << std::string(offset + 2, ' ') << "<Tags> \n";
+      for (auto &tag: m_tags){
+	os << std::string(offset+4, ' ') << "<Tag> "<< tag.first << "=" << tag.second << " </Tag>\n";
+      }
+      os << std::string(offset + 2, ' ') << "</Tags> \n";
     }
-    os << std::string(offset + 2, ' ') << "</Tags> \n";
-    os << std::string(offset + 2, ' ') << "<SubEvents>\n";
-    os << std::string(offset + 4, ' ') << "<SubEvents_Size> " << m_sub_events.size()<< " </SubEvents_Size>\n";
-    for(auto &subev: m_sub_events){
-      subev->Print(os, offset+4);
+    if(!m_sub_events.empty()){
+      os << std::string(offset + 2, ' ') << "<SubEvents>\n";
+      os << std::string(offset + 4, ' ') << "<Size> " << m_sub_events.size()<< " </Size>\n";
+      for(auto &subev: m_sub_events){
+	subev->Print(os, offset+4);
+      }
+      os << std::string(offset + 2, ' ') << "</SubEvents>\n";
     }
-    os << std::string(offset + 2, ' ') << " </SubEvents>\n";
     os << std::string(offset, ' ') << "</Event>\n";
   }
 
