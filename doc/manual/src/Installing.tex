@@ -1,16 +1,38 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Installing EUDAQ}
 
-\subsection{Prerequisites}
+The installation is described in four steps:%
+\footnote{A quick installation manual is also described in the \texttt{README.md}, e.g. \url{https://github.com/eudaq/eudaq/blob/v1.6-dev/README.md}.}
+\begin{enumerate}
+\item Installation of (required) prerequisites
+\item Downloading the source code (GitHub)
+\item Configuration of the code (CMake)
+\item Compilation of the code
+\end{enumerate}
 
-EUDAQ has relatively few dependencies on other software, but some features do rely on other packages:
+If you occur problems during the installation process, please have a look into the issue tracker on GitHub.%
+\footnote{Go to \url{https://github.com/eudaq/eudaq/issues}} 
+Here you can search, if your problem had already been experienced by someone else, or you can open a new issue (see \autoref{sec:reporting}).
+
+\subsection{Installation of prerequisites}
+
+EUDAQ has few dependencies on other software, but some features do rely on other packages:
 \begin{itemize}
+\item To get the code and stay updated with the central repository on GitHub git is used.
 \item To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
 \item To compile EUDAQ from source code requires a compiler that implements the C++11 standard.
 \item The libusb library is needed to communicate over USB with a \gls{TLU} \cite{Cussans2009}.
 \item Qt is required to build GUIs of the e.g. Run Control Log Collector. 
 \item ROOT is required for the Online Monitor.
 \end{itemize}
+
+\subsubsection{Git}
+Git is a free and open source distributed version control and is available for all of the usual platforms \cite{gitWWW}. 
+It allows for local version control and repositories, but also communicating with central online repositories like GitHub.
+   
+In order to get the EUDAQ code and stay updated with the central repository on GitHub git is used (see \autoref{sec:downloadingEUDAQ}).
+But also for developing the EUDAQ code having different versions (tags) or branches (development repositories), git is used (see \autoref{sec:contributing}).
+
 
 \subsubsection{CMake (required)}
 In order to automatically generate configuration files for the build process of EUDAQ both compiler and platform independent, the CMake build system is used.
@@ -51,9 +73,11 @@ These are available to download via AFS from DESY.
 If AFS is accessible on the machine when CMake is run, the necessary files will be installed
 automatically.
 Otherwise, manually copy full folder with sub-directories from
-\texttt{/afs/desy.de/group/telescopes/tlu/ZestSC1} and
-\texttt{/afs/desy.de/group/telescopes/tlu/tlufirmware} into the
-\texttt{./extern} subfolder in your EUDAQ source directory.
+\begin{itemize}
+\item \texttt{/afs/desy.de/group/telescopes/tlu/ZestSC1} and
+\item \texttt{/afs/desy.de/group/telescopes/tlu/tlufirmware}
+\end{itemize}
+into the \texttt{extern} subfolder in your EUDAQ source directory.
 
 
 \subsubsection{Qt (for GUIs)}
@@ -99,36 +123,50 @@ This can be done by sourcing the \texttt{build\_env.sh} script as follows:
 source /path-to/Eutelescope/build_env.sh
 \end{listing}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Download the source code from GitHub}
+\label{sec:downloadingEUDAQ}
 
-\subsection{Downloading the source code}
-The EUDAQ source code is hosted on github. The recommended way to obtain the software is with git,
+The EUDAQ source code is hosted on GitHub \cite{githubEUDAQ}. 
+Here, we describe how to get the code and install a stable version release. 
+In order to get information about the work flow of developing the EUDAQ code, please find the relevant information in see \autoref{sec:contributing}.
+
+\subsubsection{Downloading the code (clone)}
+We recommend to obtain the software by using git,
 since this will allow you to easily update to newer versions.
-The latest version can be checked out with the following command:
+The source code can be downloaded with the following command:
 \begin{listing}[mybash]
 git clone https://github.com/eudaq/eudaq.git eudaq
 \end{listing}
-
 This will create the directory \texttt{eudaq}, and download the latest
-development version into it. 
-If you already have a copy installed, and want to update it to the
-latest version, you do not need to clone the repository again, just change to the \texttt{eudaq} directory use the command:
+version into it. 
+
+\textit{Note:} Alternatively and without version control, you can also download a zip/tar.gz file of EUDAQ releases (tags) from \url{https://github.com/eudaq/eudaq/releases}. 
+By downloading the code, you can skip the next two subsections. 
+
+\subsubsection{Changing to a release version (checkout)}
+After cloning the code from GitHub, your local EUDAQ version is on the master branch (check with \texttt{git status}).  
+For using EUDAQ without development or for production environments (e.g. at test beams), we strongly recommend to use the latest release version. 
+Use 
 \begin{listing}[mybash]
-git pull
+git tag 
 \end{listing}
-to update your local copy with all changes commited to the central repository.
-
-Alternatively you can also download a zip file from
-\url{https://github.com/eudaq/eudaq/archive/master.zip}.
-
-For production environments (e.g. testbeams) we strongly recommend to
-use the latest release version. Use the command \texttt{git tag} in
-the repository to find the newest version and type e.g. 
+in the repository to find the newest stable version as the last entry.
+In order to change to this version in your local repository, execute e.g. 
 \begin{listing}[mybash]
-git checkout tags/v01-01-00
+git checkout v1.6.0
 \end{listing}
-to change to version 1.1.0.
+to change to version v1.6.0.
 
-\subsection{Configuring via CMake}
+\subsubsection{Updating the code (fetch)}
+If you want to update your local code, e.g to get the newest release versions, execute in the \texttt{eudaq} directory: 
+\begin{listing}[mybash]
+git fetch
+\end{listing}
+and check for new versions with \texttt{git tag}. 
+
+
+\subsection{Configuration via CMake}
 CMake supports out-of-source configurations and builds -- just enter
 the './build' directory and run CMake, i.e.
 \begin{listing}[mybash]
@@ -210,7 +248,9 @@ rm -rf *
 to start from scratch.
 
 
-\subsection{Compilation on Linux/OSX}
+\subsection{Compilation}
+
+\subsubsection{Compilation on Linux/OSX}
 You should just have to run the command:
 \begin{listing}[mybash]
 make install
@@ -226,7 +266,7 @@ The executable binaries and the common shared library will be installed by defau
 respectively. If you would like to install into a different location,
 please set the respective parameter during the CMake configuration.
 
-\subsection{Setup and Compilation on Windows using Visual~Studio}
+\subsubsection{Setup and Compilation on Windows using Visual~Studio}
 
 This section gives a short overview on the steps needed to compile the
 project under Windows (tested under Windows 7, 32-bit). For a more
@@ -283,3 +323,4 @@ MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
 
 Note on ``\emph{moc.exe - System Error: The program can't start
   because MSVCP110.dll is missing from your computer}'' errors: when using Visual~Express~2013 and \texttt{pthreads-w32} 2.9.1, you might require ``Visual C++ Redistributable for Visual Studio 2012'': download (either x86 or x64) from \url{http://www.microsoft.com/en-us/download/details.aspx?id=30679} and install.
+
