@@ -11,6 +11,7 @@ SET(PS_PLUGIN_SRC
   src/EventSenderPS.cc
   src/TimeTriggerPS.cc
   src/DummyDevicePS.cc
+  src/RandomDelayPS.cc
   )
 
 

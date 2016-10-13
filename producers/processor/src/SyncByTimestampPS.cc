@@ -1,7 +1,5 @@
 #include "Processor.hh"
 #include "Event.hh"
-#include "DetectorEvent.hh"
-
 
 #include <map>
 #include <deque>

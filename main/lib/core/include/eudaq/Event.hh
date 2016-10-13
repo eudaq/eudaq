@@ -58,17 +58,17 @@ namespace eudaq {
 
     virtual void Print(std::ostream & os, size_t offset = 0) const;
 
-    bool HasTag(const std::string &name) const;
     void SetTag(const std::string &name, const std::string &val);
-    template <typename T> void SetTag(const std::string &name, const T &val) {
-      SetTag(name, eudaq::to_string(val));
-    }
+    const std::map<std::string, std::string>& GetTags() const {return m_tags;}
     std::string GetTag(const std::string & name, const std::string & def = "") const;
     std::string GetTag(const std::string & name, const char * def) const { return GetTag(name, std::string(def)); }
     template <typename T> T GetTag(const std::string & name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }
-
+    template <typename T> void SetTag(const std::string &name, const T &val) {
+      SetTag(name, eudaq::to_string(val));
+    }
+    
     void SetFlagBit(uint32_t f) { m_flags |= f;}
     void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
     bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
@@ -85,7 +85,7 @@ namespace eudaq {
     void SetRunN(uint32_t n){m_run_n = n;}
     void SetEventN(uint32_t n){m_ev_n = n;}
     void SetStreamN(uint32_t n){m_stm_n = n;}
-    void SetTimestampBegin(uint64_t t){m_ts_begin = t;}
+    void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
     void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
  
@@ -102,6 +102,7 @@ namespace eudaq {
     static std::string id2str(unsigned id);
 
     /////TODO: remove compatiable fun from EUDAQv1
+    bool HasTag(const std::string &name) const;
     uint32_t GetEventNumber()const {return m_ev_n;}
     uint32_t GetRunNumber()const {return m_run_n;}
     uint32_t GetStreamID() const {return m_stm_n;}
