@@ -2,7 +2,7 @@
 \section{Installing EUDAQ}
 
 The installation is described in four steps:%
-\footnote{A quick installation manual is also described in the \texttt{README.md}, e.g. \url{https://github.com/eudaq/eudaq/blob/v1.6-dev/README.md}.}
+\footnote{Quick installation instructions are also described on \url{http://eudaq.github.io/} or in the main \texttt{README.md} file of each branch, e.g. \url{https://github.com/eudaq/eudaq/blob/v1.6-dev/README.md}.}
 \begin{enumerate}
 \item Installation of (required) prerequisites
 \item Downloading the source code (GitHub)
@@ -184,11 +184,37 @@ cmake -DBUILD_gui=OFF -DBUILD_tlu=ON ..
 to disable the GUI but enable additionally executables of the TLU producer.
 Find some of the most important building options in \autoref{tab:cmakeoptions}.
 
+\begin{table}[!h]
+{\footnotesize
+\begin{tabular}{l|l|p{9.5cm}}
+option &  default &  comment \\
+\hline
+\texttt{-DBUILD\_main} &  ON & Builds main EUDAQ executables.
+The common library, and some command-line programs that depend on only this library \\
+\texttt{-DBUILD\_manual} & OFF &  Builds Manual in pdf-format. In Ubuntu e.g.: \texttt{pdflatex}, \texttt{scrartcl.cls} and \texttt{upquote.sty} are required, thus execute \texttt{sudo apt-get install texlive-latex-base texlive-latex-recommended texlive-latex-extra} \\
+\texttt{-DBUILD\_tlu} &  OFF &  Builds the TLU producer and command-line tools. libus, ZestSC1 and tlufirmware files are required. \\
+\texttt{-DBUILD\_<producername>} &  OFF &  \texttt{-DBUILD\_<producername>=ON} is needed to enable bulding of a specific producer. 
+The producername is the same as the name of the producer's directory in \texttt{./producer}. 
+These are user-contributed producers for specific detectors operating with the EUDET-type beam telescope. They should not be compiled unless needed.\\
+\texttt{-DBUILD\_gui} &  ON & Builds GUI executables, such as the Run Control and Log Collector. Requires QT4/5. \\
+\texttt{-DBUILD\_python} & ON & Builds Python EUDAQ binding library. \\
+\texttt{-DBUILD\_pybindgen} &  OFF &  Builds pybindgen binding libraries. \\
+\texttt{-DBUILD\_onlinemon} &  ON & Builds Online Monitor executable. Requires ROOT. \\
+\texttt{-DBUILD\_offlinemon} & OFF &  Builds offline monitor executable. Requires ROOT. \\
+\texttt{-DBUILD\_metamon} &  OFF &  Builds MetaData Monitor executable. \\
+\texttt{-DBUILD\_resender} & OFF &  Builds resender producer. \\
+\texttt{-DBUILD\_nreader} &  OFF &  Builds native reader Marlin processor used for data conversion into LCIO. Requires LCIO/EUTelescope \\
+\texttt{-DINSTALL\_PREFIX=<PATH>} & \texttt{<eudaq>} & In order to install the executables into \texttt{bin} and the library into \texttt{lib} of a specific \texttt{<path>}, instead of into the \texttt{<eudaq>} path. 
+The corresponding de-installation can be done by:
+\texttt{cd <eudaq>\/build\/ \&\& sudo xargs rm < install\_manifest.txt}
+\end{tabular}
+\caption{Some of the most important building options for CMake.}
+\label{tab:cmakeoptions}
+}
+\end{table}
+
 \textit{Note:} After generating building files by running \texttt{cmake ..}, you can list all possible option and their status by running \texttt{cmake -L}. 
-Using a GUI version of CMake shows also the options.   
-
-
-
+Using a GUI version of CMake shows also all of the possible options.   
 
 Corresponding settings are cached, thus they will be used again next time CMake is running.
 If you encounter a problem during installation, it is recommended to clean the cache by just removing all files from the build folder, since it only contains automatically generated files. 
@@ -199,44 +225,13 @@ rm -rf *
 \end{listing}
 
 
-
-
-option  default   comment
--DBUILD\_main  ON  Builds main EUDAQ executables.
-The common library, and some command-line programs that depend on only this library
--DBUILD\_manual  OFF   Builds Manual in pdf-format. pdflatex, scrartcl.cls and upquote.sty are required, e.g. sudo apt-get install texlive-latex-base, sudo apt-get install texlive-latex-recommended and sudo apt-get install texlive-latex-extra
--DBUILD\_tlu   OFF   Builds the TLU producer and command-line tools. libus, ZestSC1 and tlufirmware files are required. 
--DBUILD\_<producername>  OFF   Builds specific producer: -DBUILD\_<producername>=ON is needed to enable bulding of a specific producer.
-The producername is the same as the name of the producer's directory in \texttt{./producer}. 
-These are user-contributed producers for specific detectors operating with the EUDET-type beam telescope. They should not be compiled unless needed.
--DBUILD\_gui   ON  Builds GUI executables, such as the Run Control and Log Collector. Requires QT4/5.
--DBUILD\_python  ON  Builds Python EUDAQ binding library.
--DBUILD\_pybindgen   OFF   Builds pybindgen binding libraries.
--DBUILD\_onlinemon   ON  Builds Online Monitor executable. Requires ROOT.
--DBUILD\_offlinemon  OFF   Builds offline monitor executable. Requires ROOT.
--DBUILD\_metamon   OFF   Builds MetaData Monitor executable.
--DBUILD\_resender  OFF   Builds resender producer.
--DBUILD\_nreader   OFF   Builds native reader Marlin processor used for data conversion into LCIO. Requires LCIO/EUTelescope
--DINSTALL\_PREFIX  <PATH>  Default: the EUDAQ folder. Changes the install prefix for libraries and executables, which will be install into the source directory (./lib and ./bin).%
-%\footnote{To install the binaries and the library outside the source tree, you need to set the \texttt{INSTALL\_PREFIX} option, e.g.
-%\begin{listing}[mybash]
-%cmake -D INSTALL\_PREFIX=/usr/local ..
-%\end{listing}
-%to install the executables into the \texttt{bin} and the library into \texttt{lib} subdirectories of \texttt{/usr/local}.
-%
-%The corresponding de-installation can be done by
-%\begin{listing}[mybash]
-%cd eudaq/build/
-%sudo xargs rm < install\_manifest.txt
-%\end{listing}
-%}
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
 \subsection{Compilation}
 
 \subsubsection{Compilation on Linux/OSX}
 You should just have to run the command:
 \begin{listing}[mybash]
+cd build
 make install
 \end{listing}
 
