@@ -43,7 +43,7 @@ env:
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=ON
-      - BUILD_palpidefs=OFF
+      - BUILD_palpidefs=ON
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=ON
@@ -76,6 +76,13 @@ cache:
   directories:
   - $TRAVIS_BUILD_DIR/extern/ZestSC1
   - $TRAVIS_BUILD_DIR/extern/tlufirmware
+  - $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
+  
+before_cache:
+  - rm -r $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
+  - cd $TRAVIS_BUILD_DIR/extern
+  - unzip aliceitsalpidesoftwaremaster.zip
+  - mv $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
 
 matrix:      
    include:   
@@ -93,16 +100,16 @@ matrix:
         env: OPTION=old
       - os: osx
         compiler: clang      
-        env: OPTION=modern BUILD_rpi_controller=OFF        
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF       
       - os: osx      
         compiler: clang      
-        env: OPTION=old BUILD_cmspixel=ON BUILD_rpi_controller=OFF            
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF           
       - os: osx      
         compiler: gcc    
-        env: OPTION=modern BUILD_rpi_controller=OFF 	        
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF        
       - os: osx
         compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=ON BUILD_rpi_controller=OFF            
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
 before_install:
       
@@ -120,7 +127,7 @@ install:
   - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
   - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
-  - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=~/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b/pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on"; fi  
+  - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi  
 
 before_script:
   - $CXX --version
