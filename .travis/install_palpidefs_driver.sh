@@ -7,6 +7,8 @@ echo "Installing palpidefs driver"
 
 export temporary_path=`pwd`
 
+cd --
+
 if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; fi
 
 # http://apple.stackexchange.com/questions/193138/to-install-unbuffer-in-osx
@@ -18,8 +20,6 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	#brew -ls verbose tinyxml
 	#brew install tinyxml homebrew/dupes/expect libusb
 	brew install homebrew/dupes/expect libusb
-	
-	cd --
 
 	wget -O tinyxml_2_6_2.zip http://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
 
