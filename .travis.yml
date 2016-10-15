@@ -46,7 +46,7 @@ env:
       - BUILD_palpidefs=OFF
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
-      - BUILD_root=OFF
+      - BUILD_root=ON
       - BUILD_rpi_controller=ON
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
