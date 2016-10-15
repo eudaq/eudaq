@@ -96,13 +96,13 @@ matrix:
         env: OPTION=modern BUILD_rpi_controller=OFF        
       - os: osx      
         compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF            
+        env: OPTION=old BUILD_cmspixel=ON BUILD_rpi_controller=OFF            
       - os: osx      
         compiler: gcc    
         env: OPTION=modern BUILD_rpi_controller=OFF 	        
       - os: osx
         compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF            
+        env: OPTION=old BUILD_cmspixel=ON BUILD_rpi_controller=OFF            
 
 before_install:
       
