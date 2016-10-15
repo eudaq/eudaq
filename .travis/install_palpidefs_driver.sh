@@ -27,4 +27,4 @@ make lib
 
 cd $temporary_path
 
-echo "Installed palpidefs driver
+echo "Installed palpidefs driver"
