@@ -21,8 +21,6 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 
-using namespace eudaq;
-using namespace std;
 
 namespace eudaq {
 
@@ -91,7 +89,7 @@ namespace eudaq {
     _port = param.Get("Port", 9011);
     _ipAddress = param.Get("IPAddress", "127.0.0.1");
     
-    string reader = param.Get("Reader", "");
+    std::string reader = param.Get("Reader", "");
     SetReader(new ScReader(this)); // in sc dif ID is not specified
     
     _reader->OnConfigLED(_fileLEDsettings); //newLED
@@ -165,7 +163,7 @@ namespace eudaq {
 
 
   void AHCALProducer::OnPrepareRun(unsigned param) {
-    cout << "OnPrepareRun: runID " << param << " set." << endl;
+    std::cout << "OnPrepareRun: runID " << param << " set." << std::endl;
   }
   
   void AHCALProducer::OnStopRun() {
@@ -220,19 +218,19 @@ namespace eudaq {
 
     if(size == 0)size = strlen(command);
 
-    if(_fd <= 0)cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << endl;
+    if(_fd <= 0) std::cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << std::endl;
     else {
 	    size_t bytesWritten = write(_fd, command, size);
 	    if ( bytesWritten  < 0 ) {
-		    cout << "There was an error writing to the TCP socket" << endl;
+		    std::cout << "There was an error writing to the TCP socket" << std::endl;
 	    } else {
-		    cout << bytesWritten  << " out of " << size << " bytes is  written to the TCP socket" << endl;
+		    std::cout << bytesWritten  << " out of " << size << " bytes is  written to the TCP socket" << std::endl;
 	    }
     }
 
   }
 
-  deque<eudaq::RawDataEvent *>  AHCALProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
+  std::deque<eudaq::RawDataEvent *>  AHCALProducer::sendallevents(std::deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
     while(deqEvent.size() > minimumsize){
       SendEvent(*(deqEvent.front()));
       delete deqEvent.front();
@@ -244,9 +242,9 @@ namespace eudaq {
   void AHCALProducer::MainLoop()
   {
 
-    deque<char> bufRead;
+    std::deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
-    deque<eudaq::RawDataEvent *> deqEvent;
+    std::deque<eudaq::RawDataEvent *> deqEvent;
 
     while( true ){
       // wait until configured and connected
@@ -267,10 +265,10 @@ namespace eudaq {
       size = ::read(_fd, buf, bufsize);
       if(size == -1 || size == 0){
         if(size == -1)
-          std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << endl;
+          std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << std::endl;
         else
           {
-	    std::cout << "Socket disconnected. going to the waiting mode." << endl;         
+	    std::cout << "Socket disconnected. going to the waiting mode." << std::endl;         
 	    if(!_running && _stopped==false) {
 	      _stopped=true;
 	      deqEvent=sendallevents(deqEvent,0);
@@ -319,7 +317,7 @@ int main(int /*argc*/, const char ** argv) {
     // Set the Log level for displaying messages based on command-line
     EUDAQ_LOG_LEVEL(level.Value());
     // Create a producer
-    cout << name.Value() << " " << rctrl.Value() << endl;
+    std::cout << name.Value() << " " << rctrl.Value() << std::endl;
     eudaq::AHCALProducer producer(name.Value(), rctrl.Value());
     //producer.SetReader(new eudaq::SiReader(0));
     // And set it running...

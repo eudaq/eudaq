@@ -10,8 +10,6 @@
 #include <algorithm>
 #include <iomanip>
 
-using namespace eudaq;
-using namespace std;
 
 namespace eudaq {
   void ScReader::OnStart(int runNo){
@@ -23,7 +21,7 @@ namespace eudaq {
     _producer->OpenConnection();
 
     // using characters to send the run number
-    ostringstream os;
+    std::ostringstream os;
     os << "RUN_START"; //newLED
     // os << "START"; //newLED
     os.width(8);
@@ -38,7 +36,7 @@ namespace eudaq {
   //newLED
   void ScReader::OnConfigLED(std::string msg){
 
-    ostringstream os;
+    std::ostringstream os;
     os<< "CONFIG_VL";
     os<< msg;
     os<< "\r\n";
@@ -104,7 +102,7 @@ namespace eudaq {
 	      ibuf+=2;    
 	      int ledOnOff = (unsigned char)buf[ibuf];//led on/off
 	      ledInfo.push_back(ledOnOff);
-	      cout<< " Layer="<< ledId<<" Voltage= "<<ledV<< " on/off="<< ledOnOff<<endl;
+	      std::cout<< " Layer="<< ledId<<" Voltage= "<<ledV<< " on/off="<< ledOnOff<<std::endl;
 	      EUDAQ_INFO(" Layer=" + to_string(ledId) + " Voltage=" + to_string(ledV) + " on/off=" + to_string(ledOnOff) );
 	    }        
 	    buf.pop_front();
@@ -159,16 +157,16 @@ namespace eudaq {
 
 	if(!(status & 0x40)){
     	  //We'll drop non-data packet;
-	  //cout << "Non data packet" << endl;
+	  //std::cout << "Non data packet" << std::endl;
     	  buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
     	  continue;
     	}
 
-	deque<char>::iterator it = buf.begin() + e_sizeLdaHeader;
+	std::deque<char>::iterator it = buf.begin() + e_sizeLdaHeader;
 	
 	// 0x4341 0x4148
 	if(it[1] != 0x43 || it[0] != 0x41 || it[3] != 0x41 || it[2] != 0x48){
-	  cout << "ScReader: header invalid." << endl;
+	  std::cout << "ScReader: header invalid." << std::endl;
 	  buf.pop_front();
 	  continue;
 	}
@@ -190,7 +188,7 @@ namespace eudaq {
       // new event arrived: create RawDataEvent
       _cycleNo ++;
       RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _cycleNo);
-      string s = "EUDAQDataScCAL";
+      std::string s = "EUDAQDataScCAL";
       nev->AddBlock(0,s.c_str(), s.length());
       s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
       nev->AddBlock(1,s.c_str(), s.length());
@@ -199,9 +197,9 @@ namespace eudaq {
       ::gettimeofday(&tv, NULL);
       times[0] = tv.tv_sec;
       nev->AddBlock(2, times, sizeof(times));
-      nev->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
-      nev->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
-      nev->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
+      nev->AddBlock(3, std::vector<int>()); // dummy block to be filled later with slowcontrol files
+      nev->AddBlock(4, std::vector<int>()); // dummy block to be filled later with LED information (only if LED run)
+      nev->AddBlock(5, std::vector<int>()); // dummy block to be filled later with temperature
 
 
      if( (length - 12) % 146 ) {
@@ -226,11 +224,11 @@ namespace eudaq {
     int port = buf[7];
     short data = ((unsigned char)buf[23] << 8) + (unsigned char)buf[22];
       
-    _vecTemp.push_back(make_pair(make_pair(lda,port),data));
+    _vecTemp.push_back(std::make_pair(std::make_pair(lda,port),data));
   }
 
 
-  void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, vector<int> intVector)
+  void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, std::vector<int> intVector)
 
   {
     RawDataEvent *ev = deqEvent.back();
@@ -244,7 +242,7 @@ namespace eudaq {
 
     // tempmode finished; store to the rawdataevent 
     RawDataEvent *ev = deqEvent.back();
-    vector<int> output;
+    std::vector<int> output;
     for(unsigned int i=0;i<_vecTemp.size();i++){
       int lda,port,data;
       lda = _vecTemp[i].first.first;
@@ -267,11 +265,11 @@ namespace eudaq {
   {
 
     RawDataEvent *ev = deqEvent.back();
-    deque<char>::iterator it = buf.begin() + e_sizeLdaHeader;
+    std::deque<char>::iterator it = buf.begin() + e_sizeLdaHeader;
      
     // footer check: ABAB
     if((unsigned char)it[length-2] != 0xab || (unsigned char)it[length-1] != 0xab) {
-      cout << "Footer abab invalid:" << (unsigned int)(unsigned char)it[length-2] << " " << (unsigned int)(unsigned char)it[length-1] << endl;
+      std::cout << "Footer abab invalid:" << (unsigned int)(unsigned char)it[length-2] << " " << (unsigned int)(unsigned char)it[length-1] << std::endl;
       EUDAQ_WARN("Footer abab invalid:" + to_string((unsigned int)(unsigned char)it[length-2]) + " " + 
 		 to_string((unsigned int)(unsigned char)it[length-1]) ); 
     }
@@ -285,7 +283,7 @@ namespace eudaq {
 
     for(short tr=0;tr<nscai;tr++){
       // binary data: 128 words
-      vector<unsigned short> adc, tdc;
+      std::vector<unsigned short> adc, tdc;
       
       for(int np = 0; np < NChannel; np ++){
 	unsigned short tdc_value =(unsigned char)it[np * 2] + ((unsigned char)it[np * 2 + 1] << 8);
@@ -300,7 +298,7 @@ namespace eudaq {
       int bxididx = e_sizeLdaHeader + length - 4 - (nscai-tr) * 2;
       int bxid = (unsigned char)buf[bxididx + 1] * 256 + (unsigned char)buf[bxididx];
       if( bxid > 4096)  EUDAQ_WARN(" bxid = " + to_string(bxid) ); 
-      vector<int> infodata;
+      std::vector<int> infodata;
       infodata.push_back((int)_cycleNo);
       infodata.push_back(bxid);
       infodata.push_back(nscai - tr - 1);// memory cell is inverted
