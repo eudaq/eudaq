@@ -42,6 +42,8 @@ cd pALPIDEfs-software
 
 make lib
 
+pwd
+
 cd $temporary_path
 
 echo "Installed palpidefs driver"
