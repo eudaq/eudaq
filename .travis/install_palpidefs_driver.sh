@@ -11,9 +11,26 @@ if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get instal
 
 # http://apple.stackexchange.com/questions/193138/to-install-unbuffer-in-osx
 
-if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew --prefix && brew -ls verbose tinyxml && brew install tinyxml homebrew/dupes/expect libusb; fi
+if [ $TRAVIS_OS_NAME == osx ]; then 
 
-cd --
+	brew update
+	#brew --prefix
+	#brew -ls verbose tinyxml
+	#brew install tinyxml homebrew/dupes/expect libusb
+	brew install homebrew/dupes/expect libusb
+	
+	cd --
+
+	wget -O tinyxml_2_6_2.zip http://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
+
+	unzip tinyxml_2_6_2.zip
+
+	cp tinyxml
+
+	make install
+
+	cp ..	
+fi
 
 wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
