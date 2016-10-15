@@ -24,14 +24,14 @@ environment:
     - build_type: full
       ROOTSYS: C:\root
       PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
-      BUILD_AHCAL: OFF
+      BUILD_AHCAL: ON
       BUILD_BIFAHCAL: OFF
       BUILD_TESTING: OFF
       BUILD_WITH_QT4: OFF
       BUILD_allproducer: OFF
       BUILD_altro: OFF
       BUILD_altroUSB: OFF
-      BUILD_cmspixel: ON
+      BUILD_cmspixel: OFF
       BUILD_depfet: OFF
       BUILD_fortis: OFF
       BUILD_gui: ON
