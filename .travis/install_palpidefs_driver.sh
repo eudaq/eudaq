@@ -27,7 +27,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	cp tinyxml
 
-	make install
+	make
 
 	cp ..	
 fi
