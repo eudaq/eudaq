@@ -33,7 +33,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	export PATH=/Users/travis/tinyxml:$PATH
 	
-	cp ..	
+	cd ..	
 fi
 
 wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
@@ -43,6 +43,8 @@ unzip alice-its-alpide-software-master-latest.zip
 cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
 
 cd pALPIDEfs-software
+
+sed -i '2s/.*//' Makefile
 
 sed -i '3s/.*/CFLAGS= -I/Users/travis/tinyxml -pipe -fPIC -DVERSION=\"0.0.0\" -g -std=c++0x/' Makefile
 
