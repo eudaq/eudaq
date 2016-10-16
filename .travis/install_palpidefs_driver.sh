@@ -44,6 +44,10 @@ cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
 
 cd pALPIDEfs-software
 
+sed -i '3s/.*/CFLAGS= -I/Users/travis/tinyxml -pipe -fPIC -DVERSION=\"$(GIT_VERSION)\" -g -std=c++0x/' Makefile
+
+sed -i '4s/.*/LINKFLAGS=-L/Users/travis/tinyxml -lusb-1.0 -ltinyxml/' Makefile
+
 make lib
 
 pwd
