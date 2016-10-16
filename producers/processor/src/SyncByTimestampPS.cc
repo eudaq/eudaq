@@ -20,7 +20,7 @@ class SyncByTimestampPS: public Processor{
 public:
   SyncByTimestampPS(std::string cmd);
   virtual void ProcessUserEvent(EVUP ev);
-  // virtual void ProcessUserCmd();
+  virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
   void AddEvent(EVUP ev);
   EVUP GetMergedEvent();
   void UpdateFifoStatus();
@@ -53,6 +53,19 @@ SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
   m_ts_next_next_end= uint64_t(-1);
 
   m_event_n = 0;
+}
+
+
+void SyncByTimestampPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+  switch(cstr2hash(cmd_name.c_str())){
+  case cstr2hash("N_STREAM"):{
+    std::stringstream ss(cmd_par);
+    ss>>m_nstream;
+    break;
+  }
+  default:
+    std::cout<<"unkonw user cmd"<<std::endl;
+  }
 }
 
 
@@ -122,6 +135,7 @@ void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
 
 EVUP SyncByTimestampPS::GetMergedEvent(){
   EVUP ev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
+  ev->SetEventN(m_event_n++);
   ev->SetTimestampBegin(m_ts_next_begin);
   ev->SetTimestampEnd(m_ts_next_end);
   

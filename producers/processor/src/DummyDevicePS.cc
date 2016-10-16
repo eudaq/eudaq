@@ -1,6 +1,5 @@
 #include "Processor.hh"
-#include "TLUEvent.hh"
-#include "RawDataEvent.hh"
+#include "Event.hh"
 
 namespace eudaq{
 
@@ -30,18 +29,17 @@ namespace eudaq{
   }
 
   void DummyDevicePS::ProcessUserEvent(EVUP ev){
-    uint64_t ts = ev->GetTimestampBegin();
-    if(ts>=m_ts_last_end){
-      EVUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
-      devev->SetEventN(m_event_n++);
-      devev->SetTimestampBegin(ts);
-      devev->SetTimestampEnd(ts+m_duration);
-      ForwardEvent(std::move(devev));
+    EVUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
+    if(ev->IsBORE() || ev->IsEORE()){
       ForwardEvent(std::move(ev));
+      return;
     }
-    else{
-      std::cout<<"Device is busy. Trigger is lost"<<std::endl;
-    }
+    
+    uint64_t ts = ev->GetTimestampBegin();
+    devev->SetEventN(m_event_n++);
+    devev->SetTimestampBegin(ts);
+    devev->SetTimestampEnd(ts+m_duration);
+    ForwardEvent(std::move(devev));
   }
   
 }

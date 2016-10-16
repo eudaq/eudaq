@@ -95,12 +95,15 @@ namespace eudaq {
     std::string GetType(){return m_pstype;};
     uint32_t GetID(){return m_psid;};
     STATE GetState(){return m_state;};
-
-
+    void Print(std::ostream &os, uint32_t offset=0) const;
+    
     ProcessorSP operator>>(ProcessorSP psr);
     ProcessorSP operator>>(const std::string& stream_str);
-    ProcessorSP operator<<(EventUP ev);
     ProcessorSP operator<<(const std::string& cmd_str);
+
+    ProcessorSP operator+(const std::string& evtype);
+    ProcessorSP operator-(const std::string& evtype);
+    ProcessorSP operator<<=(EventUP ev);
     
   private:
     std::string m_pstype;
@@ -109,7 +112,8 @@ namespace eudaq {
     std::vector<PSWP> m_ps_upstr;
     std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
     
-    std::set<uint32_t> m_evlist_white;
+    std::set<uint32_t> m_evlist_white; //TODO: for processor input
+    std::set<uint32_t> m_evlist_black; //TODO: for processor output
     std::vector<std::pair<std::string, std::string>> m_cmdlist_init;    
     
     std::queue<EVUP> m_fifo_events; //fifo async
@@ -134,6 +138,21 @@ namespace eudaq {
     return *psl<<t;
   }
 
+  template <typename T>
+  ProcessorSP operator+(ProcessorSP psl, T t){
+    return (*psl)+t;
+  }
+
+  template <typename T>
+  ProcessorSP operator-(ProcessorSP psl, T t){
+    return (*psl)-t;
+  }
+  
+  template <typename T>
+  ProcessorSP operator<<=(ProcessorSP psl, T t){
+    return *psl<<=t;
+  }
+  
 }
 
 

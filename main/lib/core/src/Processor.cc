@@ -93,10 +93,10 @@ void Processor::AddNextProcessor(PSSP ps){
   if(!m_ps_hub.lock())
     m_ps_hub = ps_this;
   
+  std::cout<<"append PS "<< ps->GetID()<< "to PS "<<GetID()<<std::endl; 
   ps->AddUpstream(ps_this);
   ps->UpdatePSHub(m_ps_hub);
 
-  std::cout<<"append PS "<< ps->GetID()<< "to PS "<<GetID()<<" with hub PS "<< m_ps_hub.lock()->GetID()<<std::endl; 
 }
 
 void Processor::AddUpstream(PSWP ps){
@@ -105,12 +105,24 @@ void Processor::AddUpstream(PSWP ps){
 
 void Processor::UpdatePSHub(PSWP ps){
   if(m_ps_upstr.size() < 2){
+    if(m_ps_hub.lock() == ps.lock())
+      return; //break circle
+    std::cout<<"Update PSHUB of PS"<<m_psid<<" to "<<ps.lock()->GetID()<<std::endl; 
     m_ps_hub = ps;
     for(auto &e: m_pslist_next){
-      e.first->UpdatePSHub(ps);
+      e.first->UpdatePSHub(m_ps_hub);
     }
   }
-  //else ignore;
+  else{
+    if(m_ps_hub.lock() == shared_from_this())
+      return; //break circle
+    m_ps_hub = shared_from_this();
+    RunHubThread();
+    std::cout<<"Update PSHUB of PS"<<m_psid<<" to itself"<<std::endl;     
+    for(auto &e: m_pslist_next){
+      e.first->UpdatePSHub(m_ps_hub);
+    }
+  }
 }
 
 void Processor::ProduceEvent(){
@@ -179,7 +191,7 @@ void Processor::RunHubThread(){
 void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
   std::cout<<"---------ProcessSysCmd "<<cmd_name<<"="<<cmd_par<<std::endl;
 
-  switch(cstr2hash(cmd_name.c_str())){
+  switch(str2hash(cmd_name)){
   case cstr2hash("SYS:PD:RUN"):{
     RunProducerThread();
     break;
@@ -265,6 +277,30 @@ void Processor::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_
 }
 
 
+void Processor::Print(std::ostream &os, uint32_t offset) const{
+  os << std::string(offset, ' ') << "<Processor>\n";
+  os << std::string(offset + 2, ' ') << "<Type> " << m_pstype <<" </Type>\n";
+  os << std::string(offset + 2, ' ') << "<ID> " << m_psid << " </ID>\n";
+  os << std::string(offset + 2, ' ') << "<HubID> " << m_ps_hub.lock()->GetID() << " </HubID>\n";
+  if(!m_ps_upstr.empty()){
+    os << std::string(offset + 2, ' ') << "<Upstreams> \n";
+    for (auto &pswp: m_ps_upstr){
+      os << std::string(offset+4, ' ') << "<Processor> "<< pswp.lock()->GetType() << "=" << pswp.lock()->GetID() << " </Processor>\n";
+    }
+    os << std::string(offset + 2, ' ') << "</Upstreams> \n";
+  }
+  if(!m_pslist_next.empty()){
+    os << std::string(offset + 2, ' ') << "<Downstreams> \n";
+    for (auto &psev: m_pslist_next){
+      os << std::string(offset+4, ' ') << "<Processor> "<< psev.first->GetType() << "=" << psev.first->GetID() << " </Processor>\n";
+    }
+    os << std::string(offset + 2, ' ') << "</Downstreams> \n";
+  }
+  os << std::string(offset, ' ') << "</Processor>\n";
+}
+
+
+
 PSSP Processor::operator>>(PSSP psr){
   AddNextProcessor(psr);
   return psr;
@@ -277,51 +313,43 @@ PSSP Processor::operator>>(const std::string& stream_str){
   getline(ss, cmd_str, '(');
   getline(ss, par_str, ')');
   cmd_str=trim(cmd_str);
-  if(cmd_str=="EV"){
-    std::stringstream ss_par_str(par_str);
-    std::string ev_str;
-    while(getline(ss_par_str, ev_str, ';' )){
-      std::stringstream ss_ev_str(ev_str);
-      std::string ev_cmd, ev_list;
-      getline(ss_ev_str, ev_cmd, '=');
-      ev_cmd=trim(ev_cmd);
-      getline(ss_ev_str, ev_list);
-      std::stringstream ss_ev_list(ev_list);
-      std::string ev_type;
-      while(getline(ss_ev_list, ev_type, ',')){
-	ev_type=trim(ev_type);
-	uint32_t evid;
-	if(ev_type.front()=='_')
-	  evid=Event::str2id(ev_type);
-	else
-	  evid=str2hash(ev_type);
-	if(ev_cmd=="ADD") m_evlist_white.insert(evid);
-	if(ev_cmd=="DEL") m_evlist_white.erase(evid);
-      }
-    }
-    return shared_from_this();
-  }
-  else{
-    
-    std::string ps_type = cmd_str; //TODO
-    ps_type=trim(ps_type);
-    PSSP psr(Factory<Processor>::Create(cstr2hash(ps_type.c_str()), par_str));
-    AddNextProcessor(psr);
-    return psr;
-  }
+  std::string ps_type = cmd_str; //TODO
+  ps_type=trim(ps_type);
+  PSSP psr(Factory<Processor>::Create(str2hash(ps_type), par_str));
+  AddNextProcessor(psr);
+  return psr;
+}
+
+ProcessorSP Processor::operator<<(const std::string& cmd_list){
+  ProcessCmd(cmd_list);
+  return shared_from_this();
 }
 
 
-ProcessorSP Processor::operator<<(EVUP ev){
+ProcessorSP Processor::operator+(const std::string& evtype){
+  uint32_t evid; 
+  if(evtype.front()=='_')
+    evid=Event::str2id(evtype);
+  else
+    evid=str2hash(evtype);
+  m_evlist_white.insert(evid);
+  return shared_from_this();
+}
+
+ProcessorSP Processor::operator-(const std::string& evtype){
+  uint32_t evid; 
+  if(evtype.front()=='_')
+    evid=Event::str2id(evtype);
+  else
+    evid=str2hash(evtype);
+  m_evlist_white.erase(evid);
+  return shared_from_this();
+}
+
+ProcessorSP Processor::operator<<=(EventUP ev){
   auto ps_hub = m_ps_hub.lock();
   auto ps_this = shared_from_this();
   if(ps_hub)
      ps_hub->RegisterProcessing(ps_this, std::move(ev));
   return ps_this;
-}
-
-
-ProcessorSP Processor::operator<<(const std::string& cmd_list){
-  ProcessCmd(cmd_list);
-  return shared_from_this();
 }

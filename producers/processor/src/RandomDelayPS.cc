@@ -17,6 +17,7 @@ namespace{
     (eudaq::cstr2hash("RandomDelayPS"));
 }
 
+
 class RandomDelayPS: public Processor{
 public:
   RandomDelayPS(std::string cmd);
@@ -34,7 +35,7 @@ private:
 
   
 RandomDelayPS::RandomDelayPS(std::string cmd)
-  :Processor("SyncByTimestampPS", ""){
+  :Processor("RandomDelayPS", ""){
   ProcessCmd(cmd);
   m_nevent = 0;
   m_ndelay = 100;
@@ -43,9 +44,9 @@ RandomDelayPS::RandomDelayPS(std::string cmd)
 }
 
 void RandomDelayPS::ProcessUserEvent(EVUP ev){
-  if(ev->IsBORE()){
-    m_isend = false;
-  }
+  // if(ev->IsBORE()){
+  //   m_isend = false;
+  // }
 
   if(ev->IsEORE()){
     m_isend = true;

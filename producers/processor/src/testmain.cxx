@@ -12,25 +12,43 @@
 using namespace eudaq;
 
 int main(int argn, char **argc){
-  PSSP p1 = Processor::MakeShared("TimeTriggerPS", "SYS:PSID=1");
-  PSSP p2 = Processor::MakeShared("DummyDevicePS", "SYS:PSID=2");
+  PSSP ptt0 = Processor::MakeShared("TimeTriggerPS", "SYS:PSID=0");
+  PSSP pdd0 = Processor::MakeShared("DummyDevicePS", "SYS:PSID=10");
+  // PSSP pdd1 = Processor::MakeShared("DummyDevicePS", "SYS:PSID=11");
+  PSSP prd0 = Processor::MakeShared("RandomDelayPS", "SYS:PSID=20");
+  PSSP pst0 = Processor::MakeShared("SyncByTimestampPS", "SYS:PSID=30");
+  PSSP pep0 = Processor::MakeShared("ExamplePS", "SYS:PSID=40");
+
   
-  p1
-    >>"EV(ADD=TRIGGER)"
-    >>p2
-    >>"EV(ADD=DUMMYDEV)"
-    >>"EV(ADD=TRIGGER)"
-    >>"SyncByTimestampPS(SYS:PSID=11)"
-    // >>"ExamplePS(SYS:PSID=11)"
-    // >>"EV(ADD=DUMMYDEV)"
-    // >>"ExamplePS(SYS:PSID=12)"
+  ptt0 + "TRIGGER"
+    >>pdd0 + "DUMMYDEV" + "TRIGGER"
+    >>prd0 + "DUMMYDEV" + "TRIGGER"
+    >>pst0 + "SYNC"
+    >>pep0
     ;
-  p2.reset();  
-  p1<<"SYS:HB:RUN";
-  p1<<"SYS:PD:RUN";
+
+  // ptt0 + "TRIGGER"
+  //   >>pdd1 + "DUMMYDEV"
+  //   >>prd0
+  //   ;
   
+  ptt0 + "TRIGGER"
+    >>prd0
+    ;  
+
+  pst0<<"N_STREAM=2";
+
+  // ptt0->Print(std::cout);
+  // pdd0->Print(std::cout);
+  // // pdd1->Print(std::cout);
+  // prd0->Print(std::cout);
+  // pst0->Print(std::cout);
+  // pep0->Print(std::cout);
+  
+  ptt0<<"SYS:HB:RUN";
+  ptt0<<"SYS:PD:RUN";  
   std::cout << "press any key to exit...\n"; getchar();
-  p1.reset();
+  ptt0.reset();
 }
 
 // "EventFileReaderPS(SYS:PSID=0;FILE=/opt/eudaq/run000703.raw;SYS:SLEEP=1000;SYS:PD:RUN)"
