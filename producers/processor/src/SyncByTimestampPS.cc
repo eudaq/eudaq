@@ -38,13 +38,17 @@ private:
   std::map<uint32_t, std::deque<EVUP>> m_fifos;
   std::map<uint32_t, EVUP> m_bores;
   std::map<uint32_t, bool> m_ready;
+
+
+  std::ofstream m_file;
+
 };
 
 
 SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
   :Processor("SyncByTimestampPS", ""){
   ProcessCmd(cmd);
-  m_nstream = 2;
+  m_nstream = 10;
   m_nready = 0;
   m_ts_last_end=0;
   m_ts_next_begin= uint64_t(-1);
@@ -53,6 +57,9 @@ SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
   m_ts_next_next_end= uint64_t(-1);
 
   m_event_n = 0;
+
+  m_file.open("SyncByTimestamp.xml", std::ofstream::out | std::ofstream::trunc);
+
 }
 
 
@@ -127,7 +134,10 @@ void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
 
     EVUP ev_merged(GetMergedEvent());
     ev_merged->Print(std::cout);
+    ev_merged->Print(m_file);
     ForwardEvent(std::move(ev_merged));
+    
+
   }
     
 }

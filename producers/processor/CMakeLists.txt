@@ -12,6 +12,9 @@ SET(PS_PLUGIN_SRC
   src/TimeTriggerPS.cc
   src/DummyDevicePS.cc
   src/RandomDelayPS.cc
+  src/DummySystemPS.cc
+  src/OldEventFilterPS.cc
+  src/UnpackSyncEventPS.cc
   )
 
 
