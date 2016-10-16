@@ -25,7 +25,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	unzip tinyxml_2_6_2.zip
 
-	cp tinyxml
+	cd tinyxml
 
 	make
 	
