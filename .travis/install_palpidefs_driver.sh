@@ -29,6 +29,8 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	make
 
+	export PATH=/Users/travis/tinyxml:$PATH
+	
 	cp ..	
 fi
 
