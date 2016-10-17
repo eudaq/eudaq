@@ -46,7 +46,7 @@ cd pALPIDEfs-software
 
 sed -i '' '2s/.*//' Makefile
 
-sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\"123\" -g -std=c++0x/' Makefile
+sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\"\"123\"\" -g -std=c++0x/' Makefile
 
 sed -i '' '4s/.*/LINKFLAGS=-L\/Users\/travis\/tinyxml -lusb-1.0 -ltinyxml/' Makefile
 
