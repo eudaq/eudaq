@@ -269,6 +269,19 @@ namespace eudaq {
 #ifdef EVENT_DISPLAY
         sprintf(tmp, "run%06d-eventDisplay.root", bore.GetRunNumber());
         m_file_event_display = new TFile(tmp, "RECREATE");
+
+
+        sprintf(tmp, "run%06d-eventList.txt", bore.GetRunNumber());
+        m_file_event_list.open(tmp, std::ifstream::in);
+
+
+        if (m_file_event_list) {
+          int value;
+          while (m_file_event_list >> value) {
+            m_event_list.push_back(value);
+          }
+        }
+        sort(m_event_list.begin(), m_event_list.end());
 #endif
 
         // firmware version
@@ -534,27 +547,39 @@ namespace eudaq {
 #endif
 
 #ifdef EVENT_DISPLAY
+          bool m_write_event = false;
+          while (m_event_list_entry<m_event_list.size()-1 &&
+                 m_event_list[m_event_list_entry]<ev.GetEventNumber()) {
+            const_cast<PALPIDEFSConverterPlugin*>(this)->m_event_list_entry++;
+          }
+          if (m_event_list[m_event_list_entry]==ev.GetEventNumber()) m_write_event = true;
+          else                                                       m_write_event = false;
+
           char tmp[50] = { 0 };
           snprintf(tmp, 50, "c_%06d", ev.GetEventNumber());
-          TCanvas *c = new TCanvas(tmp, "", 1920, 1080);
-          if (m_nLayers==9)      c->Divide(3,3);
-          else if (m_nLayers>6)  c->Divide(4,2);
-          else if (m_nLayers>4)  c->Divide(3,2);
-          else if (m_nLayers==4) c->Divide(2,2);
-          else if (m_nLayers==3) c->Divide(3);
-          else if (m_nLayers==2) c->Divide(2);
-          else if (m_nLayers>9) {
-            cerr << "Unsupported number of layers for the event display" << endl;
+          TCanvas *c = (m_write_event) ? new TCanvas(tmp, "", 1920, 1080) : 0x0;
+          if (m_write_event) {
+            if (m_nLayers==9)      c->Divide(3,3);
+            else if (m_nLayers>6)  c->Divide(4,2);
+            else if (m_nLayers>4)  c->Divide(3,2);
+            else if (m_nLayers==4) c->Divide(2,2);
+            else if (m_nLayers==3) c->Divide(3);
+            else if (m_nLayers==2) c->Divide(2);
+            else if (m_nLayers>9) {
+              cerr << "Unsupported number of layers for the event display" << endl;
+            }
           }
 
           TH2F** hitmap_event_display = 0x0;
-          hitmap_event_display = new TH2F*[m_nLayers];
-          char tmp_name[50];
-          char tmp_title[50];
-          for (int i = 0; i < m_nLayers; ++i) {
-            snprintf(tmp_name,  50, "h_%06d_%d", ev.GetEventNumber(), i);
-            snprintf(tmp_title, 50, "Layer %d", i);
-            hitmap_event_display[i] = new TH2F(tmp_name, tmp_title, 1024, 0., 1024., 512, 0., 512.);
+          if (m_write_event) {
+            hitmap_event_display = new TH2F*[m_nLayers];
+            char tmp_name[50];
+            char tmp_title[50];
+            for (int i = 0; i < m_nLayers; ++i) {
+              snprintf(tmp_name,  50, "h_%06d_%d", ev.GetEventNumber(), i);
+              snprintf(tmp_title, 50, "Layer %d", i);
+              hitmap_event_display[i] = new TH2F(tmp_name, tmp_title, 1024, 0., 1024., 512, 0., 512.);
+            }
           }
 #endif
 
@@ -704,7 +729,7 @@ namespace eudaq {
 #endif
                   planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
 #ifdef EVENT_DISPLAY
-      hitmap_event_display[current_layer]->Fill(x,y);
+                  if (m_write_event) hitmap_event_display[current_layer]->Fill(x,y);
 #endif
 #ifdef EVENT_SUBTRACTION
                 }
@@ -767,7 +792,7 @@ namespace eudaq {
                   int y = (address>>10) & 0x1ff;
                   planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
 #ifdef EVENT_DISPLAY
-      hitmap_event_display[iPlane]->Fill(x,y);
+                  if (m_write_event) hitmap_event_display[iPlane]->Fill(x,y);
 #endif
                 }
                 delete hits_in;
@@ -780,25 +805,27 @@ namespace eudaq {
 #endif
 
 #ifdef EVENT_DISPLAY
-          m_file_event_display->cd();
-          for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
-            c->cd(iPlane+1);
-            hitmap_event_display[iPlane]->Draw("colz");
-            hitmap_event_display[iPlane]->Write();
-          }
-          c->Write();
-          m_file_event_display->Flush();
-          delete c;
-          c = 0x0;
-          for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+          if (m_write_event) {
+            m_file_event_display->cd();
+            for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+              c->cd(iPlane+1);
+              hitmap_event_display[iPlane]->Draw("colz");
+              hitmap_event_display[iPlane]->Write();
+            }
+            c->Write();
+            m_file_event_display->Flush();
+            delete c;
+            c = 0x0;
+            for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
               delete hitmap_event_display[iPlane];
               hitmap_event_display[iPlane] = 0x0;
+            }
+            delete hitmap_event_display;
+            hitmap_event_display = 0x0;
           }
-          delete hitmap_event_display;
-          hitmap_event_display = 0x0;
 #endif
 
-    // checking whether all layers have been found in the data stream
+          // checking whether all layers have been found in the data stream
           bool event_incomplete = false;
           for (int i = 0; i < m_nLayers; i++) {
             if (!layers_found[i]) {
@@ -1078,6 +1105,9 @@ namespace eudaq {
 #endif
 #ifdef EVENT_DISPLAY
     TFile *m_file_event_display;
+    ifstream m_file_event_list;
+    std::vector<int> m_event_list;
+    size_t m_event_list_entry;
 #endif
 
 #if USE_TINYXML
@@ -1290,6 +1320,9 @@ namespace eudaq {
 #endif
 #ifdef EVENT_DISPLAY
       , m_file_event_display(0x0)
+      , m_file_event_list()
+      , m_event_list()
+      , m_event_list_entry(0)
 #endif
       {}
 
