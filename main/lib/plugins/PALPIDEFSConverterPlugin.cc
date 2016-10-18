@@ -788,6 +788,14 @@ namespace eudaq {
           }
           c->Write();
           m_file_event_display->Flush();
+          delete c;
+          c = 0x0;
+          for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+              delete hitmap_event_display[iPlane];
+              hitmap_event_display[iPlane] = 0x0;
+          }
+          delete hitmap_event_display;
+          hitmap_event_display = 0x0;
 #endif
 
     // checking whether all layers have been found in the data stream
