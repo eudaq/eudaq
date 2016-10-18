@@ -30,6 +30,9 @@ typedef unsigned __int64 uint64_t;
 #include "TMath.h"
 #include "TFitResultPtr.h"
 #include "TFitResult.h"
+#include "TH2F.h"
+#include "TFile.h"
+#include "TCanvas.h"
 #endif
 
 #include <iostream>
@@ -63,6 +66,10 @@ using namespace std;
                                // period, they are marked as broken
 
 //#define EVENT_SUBTRACTION  // subtract the previous events
+
+#if ROOT_FOUND
+//#define EVENT_DISPLAY
+#endif
 
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -258,6 +265,11 @@ namespace eudaq {
         ofstream maskedPixelFile(tmp);
         maskedPixelFile << pixels;
 
+
+#ifdef EVENT_DISPLAY
+        sprintf(tmp, "run%06d-eventDisplay.root", bore.GetRunNumber());
+        m_file_event_display = new TFile(tmp, "RECREATE");
+#endif
 
         // firmware version
         sprintf(tmp, "FirmwareVersion_%d", i);
@@ -521,6 +533,31 @@ namespace eudaq {
           cout << "vector has size : " << data.size() << endl;
 #endif
 
+#ifdef EVENT_DISPLAY
+          char tmp[50] = { 0 };
+          snprintf(tmp, 50, "c_%06d", ev.GetEventNumber());
+          TCanvas *c = new TCanvas(tmp, "", 1920, 1080);
+          if (m_nLayers==9)      c->Divide(3,3);
+          else if (m_nLayers>6)  c->Divide(4,2);
+          else if (m_nLayers>4)  c->Divide(3,2);
+          else if (m_nLayers==4) c->Divide(2,2);
+          else if (m_nLayers==3) c->Divide(3);
+          else if (m_nLayers==2) c->Divide(2);
+          else if (m_nLayers>9) {
+            cerr << "Unsupported number of layers for the event display" << endl;
+          }
+
+          TH2F** hitmap_event_display = 0x0;
+          hitmap_event_display = new TH2F*[m_nLayers];
+          char tmp_name[50];
+          char tmp_title[50];
+          for (int i = 0; i < m_nLayers; ++i) {
+            snprintf(tmp_name,  50, "h_%06d_%d", ev.GetEventNumber(), i);
+            snprintf(tmp_title, 50, "Layer %d", i);
+            hitmap_event_display[i] = new TH2F(tmp_name, tmp_title, 1024, 0., 1024., 512, 0., 512.);
+          }
+#endif
+
           //###################################################################
           // DATA FORMAT
           // m_nLayers times
@@ -666,6 +703,9 @@ namespace eudaq {
 		else {
 #endif
 		  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+#ifdef EVENT_DISPLAY
+      hitmap_event_display[current_layer]->Fill(x,y);
+#endif
 #ifdef EVENT_SUBTRACTION
 		}
 #endif
@@ -726,6 +766,9 @@ namespace eudaq {
 		  int x = address & 0x3ff;
 		  int y = (address>>10) & 0x1ff;
 		  planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
+#ifdef EVENT_DISPLAY
+      hitmap_event_display[iPlane]->Fill(x,y);
+#endif
 		}
 		delete hits_in;
 		hits_in = 0x0;
@@ -735,7 +778,19 @@ namespace eudaq {
 	    }
 	  }
 #endif
-          // checking whether all layers have been found in the data stream
+
+#ifdef EVENT_DISPLAY
+          m_file_event_display->cd();
+          for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+            c->cd(iPlane+1);
+            hitmap_event_display[iPlane]->Draw("colz");
+            hitmap_event_display[iPlane]->Write();
+          }
+          c->Write();
+          m_file_event_display->Flush();
+#endif
+
+    // checking whether all layers have been found in the data stream
           bool event_incomplete = false;
           for (int i = 0; i < m_nLayers; i++) {
             if (!layers_found[i]) {
@@ -1013,7 +1068,9 @@ namespace eudaq {
     int  m_i_event;                              // counter for the event history
     bool m_event_subtraction;                     // status of the event subtration
 #endif
-
+#ifdef EVENT_DISPLAY
+    TFile *m_file_event_display;
+#endif
 
 #if USE_TINYXML
     int ParseXML(string xml, int base, int rgn, int sub, int begin) {
@@ -1210,6 +1267,21 @@ namespace eudaq {
         m_SCS_noise_rms(0x0)
 #ifdef WRITE_TEMPERATURE_FILE
       , m_temperature_file(0x0)
+#endif
+#ifdef PALPIDEFS
+      , m_daq_board(0x0)
+      , m_dut(0x0)
+      , m_daq_header_length(0x0)
+      , m_daq_trailer_length(0x0)
+#endif
+#ifdef EVENT_SUBTRACTION
+      , m_hitmaps(0x0)
+      , m_n_event_history(0x0)
+      , m_i_event(0)
+      , m_event_subtraction(false)
+#endif
+#ifdef EVENT_DISPLAY
+      , m_file_event_display(0x0)
 #endif
       {}
 
