@@ -32,6 +32,12 @@ namespace eudaq {
     auto dummy7 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"));
   }
 
+  EventSP Event::MakeShared(Deserializer& des){
+    uint32_t evid;
+    des.PreRead(evid);
+    EventSP ev = Factory<Event>::Create(evid, des);
+    return ev;
+  }
   
   Event::Event()
     :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){

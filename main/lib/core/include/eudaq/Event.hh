@@ -46,7 +46,7 @@ namespace eudaq {
       FLAG_EUDAQ2 = 32, 
       FLAG_PACKET = 64, 
       FLAG_BROKEN = 128,
-      FLAG_STATUS = 256, 
+      FLAG_STATUS = 256,
       FLAG_ALL = (unsigned)-1
     };
 
@@ -72,8 +72,11 @@ namespace eudaq {
     void SetFlagBit(uint32_t f) { m_flags |= f;}
     void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
     bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
+
     bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
     bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
+    void SetBORE() {SetTimestamp(0, 1); SetFlagBit(FLAG_BORE);}
+    void SetEORE() {SetTimestamp(-2, -1); SetFlagBit(FLAG_EORE);}
     
     void AddSubEvent(EventSPC ev){m_sub_events.push_back(ev);}
     uint32_t GetNumSubEvent() const {return m_sub_events.size();}
@@ -100,7 +103,8 @@ namespace eudaq {
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
-
+    static EventSP MakeShared(Deserializer&);
+    
     /////TODO: remove compatiable fun from EUDAQv1
     bool HasTag(const std::string &name) const;
     uint32_t GetEventNumber()const {return m_ev_n;}

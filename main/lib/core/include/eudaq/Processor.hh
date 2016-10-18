@@ -26,6 +26,8 @@ namespace eudaq {
   Factory<Processor>::Instance<std::string&>();
   extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>&
   Factory<Processor>::Instance<std::string&&>();
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)()>&
+  Factory<Processor>::Instance<>();
 #endif
   
 
@@ -59,33 +61,33 @@ namespace eudaq {
       FLAG_CSM_BUSY=32
     };
 
-    static PSSP MakeShared(std::string pstype, std::string cmd);
+    static ProcessorSP MakeShared(std::string pstype, std::string cmd);
     
     Processor(std::string pstype, std::string cmd);
     
     virtual ~Processor();
-    virtual void ProcessUserEvent(EVUP ev);
+    virtual void ProcessUserEvent(EventUP ev);
     virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     virtual void ProduceEvent();
     void ConsumeEvent();
     
     void HubProcessing();
-    void Processing(EVUP ev);
-    void AsyncProcessing(EVUP ev);
-    void SyncProcessing(EVUP ev);
-    void ForwardEvent(EVUP ev);
-    void RegisterProcessing(PSSP ps, EVUP ev);
+    void Processing(EventUP ev);
+    void AsyncProcessing(EventUP ev);
+    void SyncProcessing(EventUP ev);
+    void ForwardEvent(EventUP ev);
+    void RegisterProcessing(ProcessorSP ps, EventUP ev);
 
     void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
-    void ProcessSysEvent(EVUP ev);
+    void ProcessSysEvent(EventUP ev);
     
     void RunProducerThread();
     void RunConsumerThread();
     void RunHubThread(); //delilver
     
-    void AddNextProcessor(PSSP ps);
-    void AddUpstream(PSWP ps);
-    void UpdatePSHub(PSWP ps);
+    void AddNextProcessor(ProcessorSP ps);
+    void AddUpstream(ProcessorWP ps);
+    void UpdatePSHub(ProcessorWP ps);
 
     void ProcessCmd(const std::string& cmd_list);
 
@@ -108,16 +110,16 @@ namespace eudaq {
   private:
     std::string m_pstype;
     uint32_t m_psid;
-    PSWP m_ps_hub;
-    std::vector<PSWP> m_ps_upstr;
-    std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
+    ProcessorWP m_ps_hub;
+    std::vector<ProcessorWP> m_ps_upstr;
+    std::vector<std::pair<ProcessorSP, std::set<uint32_t>>> m_pslist_next;
     
     std::set<uint32_t> m_evlist_white; //TODO: for processor input
     std::set<uint32_t> m_evlist_black; //TODO: for processor output
     std::vector<std::pair<std::string, std::string>> m_cmdlist_init;    
     
-    std::queue<EVUP> m_fifo_events; //fifo async
-    std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs; //fifo hub
+    std::queue<EventUP> m_fifo_events; //fifo async
+    std::queue<std::pair<ProcessorSP, EventUP> > m_fifo_pcs; //fifo hub
     std::mutex m_mtx_fifo;
     std::mutex m_mtx_pcs;
     std::mutex m_mtx_state;
@@ -129,28 +131,28 @@ namespace eudaq {
   };
 
   template <typename T>
-  ProcessorSP operator>>(ProcessorSP psl, T t){
-    return *psl>>t;
+  ProcessorSP operator>>(ProcessorSP psl, T&& t){
+    return *psl>>std::forward<T>(t);
   }
 
   template <typename T>
-  ProcessorSP operator<<(ProcessorSP psl, T t){
-    return *psl<<t;
+  ProcessorSP operator<<(ProcessorSP psl, T&& t){
+    return *psl<<std::forward<T>(t);
   }
 
   template <typename T>
-  ProcessorSP operator+(ProcessorSP psl, T t){
-    return (*psl)+t;
+  ProcessorSP operator+(ProcessorSP psl, T&& t){
+    return (*psl)+std::forward<T>(t);
   }
 
   template <typename T>
-  ProcessorSP operator-(ProcessorSP psl, T t){
-    return (*psl)-t;
+  ProcessorSP operator-(ProcessorSP psl, T&& t){
+    return (*psl)-std::forward<T>(t);
   }
   
   template <typename T>
-  ProcessorSP operator<<=(ProcessorSP psl, T t){
-    return *psl<<=t;
+  ProcessorSP operator<<=(ProcessorSP psl, T&& t){
+    return (*psl)<<=std::forward<T>(t);
   }
   
 }

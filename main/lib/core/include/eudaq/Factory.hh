@@ -18,16 +18,24 @@ namespace eudaq{
     using SPC_BASE = std::shared_ptr<const BASE>;
 
     template <typename ...ARGS>
-      static typename Factory<BASE>::UP_BASE
-      Create(std::uint32_t id, ARGS&& ...args);
-    
+    static typename Factory<BASE>::UP_BASE
+    MakeUnique(std::uint32_t id, ARGS&& ...args);
+
+    template <typename ...ARGS>
+    static typename Factory<BASE>::SP_BASE
+    MakeShared(std::uint32_t id, ARGS&& ...args);
+
+    template <typename ...ARGS>
+    static typename Factory<BASE>::UP_BASE
+    Create(std::uint32_t id, ARGS&& ...args);
+
     template <typename... ARGS>
       static std::map<std::uint32_t, UP_BASE (*)(ARGS&&...)>&
-      Instance();
+    Instance();
     
     template <typename DERIVED, typename... ARGS>
-      static std::uint32_t
-      Register(std::uint32_t id);
+    static std::uint32_t
+    Register(std::uint32_t id);
     
   private:
     template <typename DERIVED, typename... ARGS>
@@ -39,7 +47,7 @@ namespace eudaq{
   template <typename BASE>
   template <typename ...ARGS>
   typename Factory<BASE>::UP_BASE
-  Factory<BASE>::Create(std::uint32_t id, ARGS&& ...args){
+  Factory<BASE>::MakeUnique(std::uint32_t id, ARGS&& ...args){
     auto &ins = Instance<ARGS&&...>();
     auto it = ins.find(id);
     if (it == ins.end()){
@@ -50,6 +58,22 @@ namespace eudaq{
     return (it->second)(std::forward<ARGS>(args)...);
   };
 
+  template <typename BASE>
+  template <typename ...ARGS>
+  typename Factory<BASE>::SP_BASE
+  Factory<BASE>::MakeShared(std::uint32_t id, ARGS&& ...args){
+    SP_BASE sp = MakeUnique(id, std::forward<ARGS>(args)...);
+    return sp;
+  }
+
+  
+  template <typename BASE>
+  template <typename ...ARGS>
+  typename Factory<BASE>::UP_BASE
+  Factory<BASE>::Create(std::uint32_t id, ARGS&& ...args){
+    return MakeUnique(id, std::forward<ARGS>(args)...);
+  }
+  
   template <typename BASE>
   template <typename... ARGS>
   std::map<std::uint32_t, typename Factory<BASE>::UP_BASE (*)(ARGS&&...)>&
