@@ -588,11 +588,11 @@ namespace eudaq {
 
 
 #ifdef EVENT_SUBTRACTION
-	  if (m_event_subtraction) {
-	    for (int i = 0; i < m_nLayers; i++) {
-	      m_hitmaps[i][m_i_event%m_n_event_history]->clear();
-	    }
-	  }
+          if (m_event_subtraction) {
+            for (int i = 0; i < m_nLayers; i++) {
+              m_hitmaps[i][m_i_event%m_n_event_history]->clear();
+            }
+          }
 #endif
 
 // RAW dump
@@ -684,30 +684,30 @@ namespace eudaq {
                 }
 
 #ifdef EVENT_SUBTRACTION
-		if (m_event_subtraction) {
-		  bool skip_hit = false;
-		  unsigned int address = (x & 0x3ff) | ((y & 0x1ff)<<10);
-		  for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
-		    if (iEvt == m_i_event%m_n_event_history) continue;
-		    for (unsigned long iEntry = 0; iEntry<m_hitmaps[current_layer][iEvt]->size(); ++iEntry) {
-		      if (m_hitmaps[current_layer][iEvt]->at(iEntry) == address){
-			//cout << "Skipping hit 0x" << std::hex << address << std::dec << " in plane " << current_layer << "!" << endl;
-			skip_hit = true;
-			break;
-		      }
-		    }
-		    if (skip_hit) break;
-		  }
-		  if (!skip_hit) m_hitmaps[current_layer][m_i_event%m_n_event_history]->push_back(address);
-		}
-		else {
+                if (m_event_subtraction) {
+                  bool skip_hit = false;
+                  unsigned int address = (x & 0x3ff) | ((y & 0x1ff)<<10);
+                  for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+                    if (iEvt == m_i_event%m_n_event_history) continue;
+                    for (unsigned long iEntry = 0; iEntry<m_hitmaps[current_layer][iEvt]->size(); ++iEntry) {
+                      if (m_hitmaps[current_layer][iEvt]->at(iEntry) == address){
+                        //cout << "Skipping hit 0x" << std::hex << address << std::dec << " in plane " << current_layer << "!" << endl;
+                        skip_hit = true;
+                        break;
+                      }
+                    }
+                    if (skip_hit) break;
+                  }
+                  if (!skip_hit) m_hitmaps[current_layer][m_i_event%m_n_event_history]->push_back(address);
+                }
+                else {
 #endif
-		  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
 #ifdef EVENT_DISPLAY
       hitmap_event_display[current_layer]->Fill(x,y);
 #endif
 #ifdef EVENT_SUBTRACTION
-		}
+                }
 #endif
               }
             }
@@ -736,47 +736,47 @@ namespace eudaq {
           }
 
 #ifdef EVENT_SUBTRACTION
-	  if (m_event_subtraction) {
-	    // assemble events from hitmaps
-	    for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
-	      if (layers_found[iPlane]) {
-		std::vector<int>* hits_in  = new std::vector<int>();
-		std::vector<int>* hits_out = new std::vector<int>();
-		std::vector<int>* tmp = 0x0;
-		for (int iEvent = -2; iEvent <= 0; ++iEvent) {
-		  if (iEvent != -1 && iPlane != 3) continue;
-		  int index = (m_i_event+iEvent)%m_n_event_history;
+          if (m_event_subtraction) {
+            // assemble events from hitmaps
+            for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+              if (layers_found[iPlane]) {
+                std::vector<int>* hits_in  = new std::vector<int>();
+                std::vector<int>* hits_out = new std::vector<int>();
+                std::vector<int>* tmp = 0x0;
+                for (int iEvent = -2; iEvent <= 0; ++iEvent) {
+                  if (iEvent != -1 && iPlane != 3) continue;
+                  int index = (m_i_event+iEvent)%m_n_event_history;
 
-		  if (index<0) continue;
+                  if (index<0) continue;
 
-		  hits_out->clear();
-		  std::set_union(hits_in->begin(), hits_in->end(),
-				 m_hitmaps[iPlane][index]->begin(), m_hitmaps[iPlane][index]->end(),
-				 std::back_inserter(*hits_out));
+                  hits_out->clear();
+                  std::set_union(hits_in->begin(), hits_in->end(),
+                                 m_hitmaps[iPlane][index]->begin(), m_hitmaps[iPlane][index]->end(),
+                                 std::back_inserter(*hits_out));
 
-		  tmp = hits_in;
-		  hits_in = hits_out;
-		  hits_out = tmp;
-		}
-		for (int iHit = 0; iHit < hits_out->size(); ++iHit) {
-		  if (iHit>0 && hits_out->at(iHit-1)==hits_out->at(iHit)) {
-		    cout << "Address 0x" << std::hex << hits_out->at(iHit) << std::dec << " found twice in " << ev.GetEventNumber() << "!" << endl;
-		  }
-		  unsigned int address = hits_out->at(iHit);
-		  int x = address & 0x3ff;
-		  int y = (address>>10) & 0x1ff;
-		  planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
+                  tmp = hits_in;
+                  hits_in = hits_out;
+                  hits_out = tmp;
+                }
+                for (int iHit = 0; iHit < hits_out->size(); ++iHit) {
+                  if (iHit>0 && hits_out->at(iHit-1)==hits_out->at(iHit)) {
+                    cout << "Address 0x" << std::hex << hits_out->at(iHit) << std::dec << " found twice in " << ev.GetEventNumber() << "!" << endl;
+                  }
+                  unsigned int address = hits_out->at(iHit);
+                  int x = address & 0x3ff;
+                  int y = (address>>10) & 0x1ff;
+                  planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
 #ifdef EVENT_DISPLAY
       hitmap_event_display[iPlane]->Fill(x,y);
 #endif
-		}
-		delete hits_in;
-		hits_in = 0x0;
-		delete hits_out;
-		hits_out = 0x0;
-	      }
-	    }
-	  }
+                }
+                delete hits_in;
+                hits_in = 0x0;
+                delete hits_out;
+                hits_out = 0x0;
+              }
+            }
+          }
 #endif
 
 #ifdef EVENT_DISPLAY
@@ -846,20 +846,20 @@ namespace eudaq {
 #endif
 #ifdef EVENT_SUBTRACTION
             if (m_event_subtraction) {
-	      if (m_i_event<m_n_event_history) {
-		sev.SetFlags(Event::FLAG_BROKEN);
-		cout << "Event " << ev.GetEventNumber() << " has only " <<  m_i_event << " leading events with the correct timestamp instead of " << m_n_event_history << endl;
-	      }
+              if (m_i_event<m_n_event_history) {
+                sev.SetFlags(Event::FLAG_BROKEN);
+                cout << "Event " << ev.GetEventNumber() << " has only " <<  m_i_event << " leading events with the correct timestamp instead of " << m_n_event_history << endl;
+              }
 
-	      if (!ok_zero || !ok_ref || !ok_last || !ok_event_distance) { // event will be rejected
-		const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event = 0;
-		for (int iLayer = 0; iLayer < m_nLayers; iLayer++) {
-		  for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
-		    m_hitmaps[iLayer][iEvt]->clear();
-		  }
-		}
-	      }
-	    }
+              if (!ok_zero || !ok_ref || !ok_last || !ok_event_distance) { // event will be rejected
+                const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event = 0;
+                for (int iLayer = 0; iLayer < m_nLayers; iLayer++) {
+                  for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+                    m_hitmaps[iLayer][iEvt]->clear();
+                  }
+                }
+              }
+            }
 #endif
             if (!ok_zero || !ok_ref || !ok_last) { // timestamps suspicious
               cout << "ERROR: Event " << ev.GetEventNumber()
@@ -883,9 +883,9 @@ namespace eudaq {
                 m_last_timestamp[i] = timestamps[i];
               }
 #ifdef EVENT_SUBTRACTION
-	      if (m_event_subtraction){
-		const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event++; // complete event, move to next history buffer
-	      }
+              if (m_event_subtraction){
+                const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event++; // complete event, move to next history buffer
+              }
 #endif
             }
           }
@@ -1003,7 +1003,7 @@ namespace eudaq {
           zsFrame->chargeValues().push_back(1);
           zsFrame->chargeValues().push_back(1);
 
-          // 	  cout << x_values.size() << " " << x_values.at(i) << " "
+          //           cout << x_values.size() << " " << x_values.at(i) << " "
           // << y_values.at(i) << endl;
         }
 
