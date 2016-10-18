@@ -267,10 +267,6 @@ namespace eudaq {
 
 
 #ifdef EVENT_DISPLAY
-        sprintf(tmp, "run%06d-eventDisplay.root", bore.GetRunNumber());
-        m_file_event_display = new TFile(tmp, "RECREATE");
-
-
         sprintf(tmp, "run%06d-eventList.txt", bore.GetRunNumber());
         m_file_event_list.open(tmp, std::ifstream::in);
 
@@ -280,8 +276,17 @@ namespace eudaq {
           while (m_file_event_list >> value) {
             m_event_list.push_back(value);
           }
+          sort(m_event_list.begin(), m_event_list.end());
+
+          cout << endl << endl;
+          cout << "Read event list " << tmp << " for the production of hitmaps" << endl;
+          cout << m_event_list.size() << " event IDs." << endl << endl;
+
+          if (m_event_list.size()>0) {
+            sprintf(tmp, "run%06d-eventDisplay.root", bore.GetRunNumber());
+            m_file_event_display = new TFile(tmp, "RECREATE");
+          }
         }
-        sort(m_event_list.begin(), m_event_list.end());
 #endif
 
         // firmware version
@@ -548,12 +553,13 @@ namespace eudaq {
 
 #ifdef EVENT_DISPLAY
           bool m_write_event = false;
-          while (m_event_list_entry<m_event_list.size()-1 &&
-                 m_event_list[m_event_list_entry]<ev.GetEventNumber()) {
-            const_cast<PALPIDEFSConverterPlugin*>(this)->m_event_list_entry++;
+          if (m_event_list.size()>0) {
+            while (m_event_list_entry<m_event_list.size()-1 &&
+                   m_event_list[m_event_list_entry]<ev.GetEventNumber()) {
+              const_cast<PALPIDEFSConverterPlugin*>(this)->m_event_list_entry++;
+            }
+            if (m_event_list[m_event_list_entry]==ev.GetEventNumber()) m_write_event = true;
           }
-          if (m_event_list[m_event_list_entry]==ev.GetEventNumber()) m_write_event = true;
-          else                                                       m_write_event = false;
 
           char tmp[50] = { 0 };
           snprintf(tmp, 50, "c_%06d", ev.GetEventNumber());
