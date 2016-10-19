@@ -62,13 +62,14 @@ using namespace std;
                          // broken
 #define WRITE_TEMPERATURE_LOG // write NTC values to a text file
 
-//#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
-                               // period, they are marked as broken
+#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
+                            // period, they are marked as broken
 
-//#define EVENT_SUBTRACTION  // subtract the previous events
+#define EVENT_SUBTRACTION  // subtract the previous events
 
 #if ROOT_FOUND
 //#define EVENT_DISPLAY
+//#define ANALYSIS
 #endif
 
 namespace eudaq {
@@ -168,25 +169,61 @@ namespace eudaq {
 #endif
 
 
+
+      char tmp[100];
+#ifdef EVENT_DISPLAY
+      snprintf(tmp, 100, "run%06d-eventList.txt", bore.GetRunNumber());
+      m_file_event_list.open(tmp, std::ifstream::in);
+
+
+      if (m_file_event_list) {
+        int value;
+        while (m_file_event_list >> value) {
+          m_event_list.push_back(value);
+        }
+        sort(m_event_list.begin(), m_event_list.end());
+
+        cout << endl << endl;
+        cout << "Read event list " << tmp << " for the production of hitmaps" << endl;
+        cout << m_event_list.size() << " event IDs." << endl << endl;
+
+        if (m_event_list.size()>0) {
+          snprintf(tmp, 100, "run%06d-eventDisplay.root", bore.GetRunNumber());
+          m_file_event_display = new TFile(tmp, "RECREATE");
+        }
+      }
+#endif
+
+#ifdef ANALYSIS
+      snprintf(tmp, 100, "run%06d-converterAnalysis.root", bore.GetRunNumber());
+      m_file_analysis = new TFile(tmp, "RECREATE");
+      m_hits_hit_planes = new TH2F*[m_nLayers];
+      for (int i = 0; i < m_nLayers; i++) {
+        snprintf(tmp, 100, "hitsHitPlanes_%d", i);
+        m_hits_hit_planes[i] = new TH2F(tmp, "", 100, 0., 100., m_nLayers+2, 0., (double)m_nLayers+1.);
+      }
+#endif
+
+
       for (int i = 0; i < m_nLayers; i++) {
         char tmp[100];
-        sprintf(tmp, "Config_%d", i);
+        snprintf(tmp, 100, "Config_%d", i);
         string config = bore.GetTag<string>(tmp, "");
         // cout << "Config of layer " << i << " is: " << config.c_str() << endl;
         m_configs[i] = config;
 
-        sprintf(tmp, "ChipType_%d", i);
+        snprintf(tmp, 100, "ChipType_%d", i);
         m_chip_type[i] = bore.GetTag<int>(tmp, 1);
-        sprintf(tmp, "StrobeLength_%d", i);
+        snprintf(tmp, 100, "StrobeLength_%d", i);
         m_strobe_length[i] = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "StrobeBLength_%d", i);
+        snprintf(tmp, 100, "StrobeBLength_%d", i);
         m_strobeb_length[i] = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "ReadoutDelay_%d", i);
+        snprintf(tmp, 100, "ReadoutDelay_%d", i);
         m_readout_delay[i] = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "TriggerDelay_%d", i);
+        snprintf(tmp, 100, "TriggerDelay_%d", i);
         m_trigger_delay[i] = bore.GetTag<int>(tmp, -100);
 
-        sprintf(tmp, "SCS_%d", i);
+        snprintf(tmp, 100, "SCS_%d", i);
         m_do_SCS[i] = (bool)bore.GetTag<int>(tmp, 0);
 
 #if USE_TINYXML
@@ -257,40 +294,17 @@ namespace eudaq {
         }
 
         // get masked pixels
-        sprintf(tmp, "MaskedPixels_%d", i);
+        snprintf(tmp, 100, "MaskedPixels_%d", i);
         string pixels = bore.GetTag<string>(tmp, "");
         // cout << "Masked pixels of layer " << i << " is: " << pixels.c_str()
         // << endl;
-        sprintf(tmp, "run%06d-maskedPixels_%d.txt", bore.GetRunNumber(), i);
+        snprintf(tmp, 100, "run%06d-maskedPixels_%d.txt", bore.GetRunNumber(), i);
         ofstream maskedPixelFile(tmp);
         maskedPixelFile << pixels;
 
 
-#ifdef EVENT_DISPLAY
-        sprintf(tmp, "run%06d-eventList.txt", bore.GetRunNumber());
-        m_file_event_list.open(tmp, std::ifstream::in);
-
-
-        if (m_file_event_list) {
-          int value;
-          while (m_file_event_list >> value) {
-            m_event_list.push_back(value);
-          }
-          sort(m_event_list.begin(), m_event_list.end());
-
-          cout << endl << endl;
-          cout << "Read event list " << tmp << " for the production of hitmaps" << endl;
-          cout << m_event_list.size() << " event IDs." << endl << endl;
-
-          if (m_event_list.size()>0) {
-            sprintf(tmp, "run%06d-eventDisplay.root", bore.GetRunNumber());
-            m_file_event_display = new TFile(tmp, "RECREATE");
-          }
-        }
-#endif
-
         // firmware version
-        sprintf(tmp, "FirmwareVersion_%d", i);
+        snprintf(tmp, 100, "FirmwareVersion_%d", i);
         string version = bore.GetTag<string>(tmp, "");
         cout << "Firmware version on layer " << i << " is: " << version.c_str()
              << endl;
@@ -343,7 +357,7 @@ namespace eudaq {
       }
 #ifdef WRITE_TEMPERATURE_FILE
       char tmp[100];
-      sprintf(tmp, "run%06d-temperature.txt", bore.GetRunNumber());
+      snprintf(tmp, 100, "run%06d-temperature.txt", bore.GetRunNumber());
       m_temperature_file = new ofstream(tmp);
 #endif
     }
@@ -789,11 +803,11 @@ namespace eudaq {
                   hits_in = hits_out;
                   hits_out = tmp;
                 }
-                for (int iHit = 0; iHit < hits_out->size(); ++iHit) {
-                  if (iHit>0 && hits_out->at(iHit-1)==hits_out->at(iHit)) {
-                    cout << "Address 0x" << std::hex << hits_out->at(iHit) << std::dec << " found twice in " << ev.GetEventNumber() << "!" << endl;
+                for (int iHit = 0; iHit < hits_in->size(); ++iHit) {
+                  if (iHit>0 && hits_in->at(iHit-1)==hits_in->at(iHit)) {
+                    cout << "Address 0x" << std::hex << hits_in->at(iHit) << std::dec << " found twice in " << ev.GetEventNumber() << "!" << endl;
                   }
-                  unsigned int address = hits_out->at(iHit);
+                  unsigned int address = hits_in->at(iHit);
                   int x = address & 0x3ff;
                   int y = (address>>10) & 0x1ff;
                   planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
@@ -1115,7 +1129,10 @@ namespace eudaq {
     std::vector<int> m_event_list;
     size_t m_event_list_entry;
 #endif
-
+#ifdef ANALYSIS
+    TFile *m_file_analysis;
+    TH2F **m_hits_hit_planes;
+#endif
 #if USE_TINYXML
     int ParseXML(string xml, int base, int rgn, int sub, int begin) {
       TiXmlDocument conf;
@@ -1320,7 +1337,6 @@ namespace eudaq {
 #endif
 #ifdef EVENT_SUBTRACTION
       , m_hitmaps(0x0)
-      , m_n_event_history(0x0)
       , m_i_event(0)
       , m_event_subtraction(false)
 #endif
@@ -1329,6 +1345,11 @@ namespace eudaq {
       , m_file_event_list()
       , m_event_list()
       , m_event_list_entry(0)
+#endif
+#ifdef ANALYSIS
+      , m_file_analysis(0x0)
+      , m_hits_hit_planes(0x0)
+
 #endif
       {}
 
