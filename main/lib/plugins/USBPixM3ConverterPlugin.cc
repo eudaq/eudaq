@@ -51,6 +51,12 @@ const uint8_t address_record = header | 0x2;	//0b11101 010
 const uint8_t value_record = header | 0x4;		//0b11101 100
 const uint8_t service_record = header | 0x7;	//0b11101 111
 
+struct APIXPix {
+	int x, y, tot1, tot2, channel, lv1;
+	APIXPix(int x, int y, int tot1, int tot2, int lv1, int channel): 
+		x(x), y(y), tot1(tot1), 
+		tot2(tot2), lv1(lv1), channel(channel) {};
+};
 
 class USBPixM3ConverterPlugin: public eudaq::DataConverterPlugin {
 
@@ -58,6 +64,67 @@ class USBPixM3ConverterPlugin: public eudaq::DataConverterPlugin {
 	USBPixM3ConverterPlugin(): DataConverterPlugin(USBPIX_M3_NAME){};
 
 	std::string EVENT_TYPE = USBPIX_M3_NAME;
+
+
+
+std::vector<APIXPix> decodeData(std::vector<unsigned char> const & data) const {
+	std::vector<APIXPix> result;
+
+	for(auto i : data) {
+
+		uint8_t channel = selectBits(i, 24, 8);
+		uint8_t data_headers = 0;
+
+		if(channel >> 7) { //Trigger
+			uint32_t trigger_number = selectBits(i, 0, 31); //testme
+		} else {
+			uint8_t type = selectBits(i, 16, 8);
+
+			switch(type) {
+				case data_header: {
+					int bcid = selectBits(i, 0, 10);
+					int lv1id = selectBits(i, 10, 5);
+					int flag = selectBits(i, 15, 1);
+					data_headers++;
+
+					break;
+				}
+
+				case address_record: {
+					int type = selectBits(i, 15, 1);
+					int address = selectBits(i, 0, 15);
+					break;
+				}
+
+				case value_record: {
+					int value = selectBits(i, 0, 16);
+					break;
+				}
+
+				case service_record: {
+					int code = selectBits(i, 10, 6);
+					int count = selectBits(i, 0, 10);
+					break;
+				}
+
+				default: { //data record
+					unsigned tot2 = selectBits(i, 0, 4);
+					unsigned tot1 = selectBits(i, 4, 4);
+					unsigned row = selectBits(i, 8, 9) - 1;
+					unsigned column = selectBits(i, 17, 7) - 1;
+
+					if(column < 80 && ((tot2 == 15 && row < 336) || (tot2 < 15 && row < 335) )) {
+						result.emplace_back(row, column, tot1, tot2, 0, channel);
+					} else { // invalid data record
+						//invalid_dr ++;
+					}
+					break;
+				}
+			}
+		}
+	}
+	return result;
+}
 
     /** Returns the LCIO version of the event.
      */
@@ -69,14 +136,22 @@ class USBPixM3ConverterPlugin: public eudaq::DataConverterPlugin {
     /** Returns the StandardEvent version of the event.
      */
     virtual bool GetStandardSubEvent(StandardEvent& sev,
-                                     eudaq::Event const & /*source*/) const {
+                                     eudaq::Event const & ev) const {
 
 		StandardPlane plane(0, EVENT_TYPE, "FEI4A");
-		plane.SetSizeZS(50, 70, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-		plane.PushPixel(23, 22, 3, false, 0);
+		plane.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+
+		//If we get here it must be a data event
+		auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
+		auto pixelVec = decodeData(evRaw.GetBlock(0));
+
+		for(auto& hitPixel: pixelVec) {
+			plane.PushPixel(hitPixel.x, hitPixel.y, 3, false, 0);
+		}
 		sev.AddPlane(plane);
       return true;
-    };
+    }
+
 
 	static USBPixM3ConverterPlugin m_instance;
 };
