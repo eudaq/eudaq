@@ -66,20 +66,20 @@ namespace eudaq {
     Processor(std::string pstype, std::string cmd);
     
     virtual ~Processor();
-    virtual void ProcessUserEvent(EventUP ev);
+    virtual void ProcessUserEvent(EventSPC ev);
     virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     virtual void ProduceEvent();
     void ConsumeEvent();
     
     void HubProcessing();
-    void Processing(EventUP ev);
-    void AsyncProcessing(EventUP ev);
-    void SyncProcessing(EventUP ev);
-    void ForwardEvent(EventUP ev);
-    void RegisterProcessing(ProcessorSP ps, EventUP ev);
+    void Processing(EventSPC ev);
+    void AsyncProcessing(EventSPC ev);
+    void SyncProcessing(EventSPC ev);
+    void ForwardEvent(EventSPC ev);
+    void RegisterProcessing(ProcessorSP ps, EventSPC ev);
 
     void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
-    void ProcessSysEvent(EventUP ev);
+    void ProcessSysEvent(EventSPC ev);
     
     void RunProducerThread();
     void RunConsumerThread();
@@ -105,7 +105,7 @@ namespace eudaq {
 
     ProcessorSP operator+(const std::string& evtype);
     ProcessorSP operator-(const std::string& evtype);
-    ProcessorSP operator<<=(EventUP ev);
+    ProcessorSP operator<<=(EventSPC ev);
     
   private:
     std::string m_pstype;
@@ -118,8 +118,8 @@ namespace eudaq {
     std::set<uint32_t> m_evlist_black; //TODO: for processor output
     std::vector<std::pair<std::string, std::string>> m_cmdlist_init;    
     
-    std::queue<EventUP> m_fifo_events; //fifo async
-    std::queue<std::pair<ProcessorSP, EventUP> > m_fifo_pcs; //fifo hub
+    std::queue<EventSPC> m_fifo_events; //fifo async
+    std::queue<std::pair<ProcessorSP, EventSPC> > m_fifo_pcs; //fifo hub
     std::mutex m_mtx_fifo;
     std::mutex m_mtx_pcs;
     std::mutex m_mtx_state;

@@ -1,8 +1,19 @@
-#include"EventFileReaderPS.hh"
-
-#include"Event.hh"
+#include"Processor.hh"
+#include"FileSerializer.hh"
 
 using namespace eudaq;
+
+class EventFileReaderPS:public Processor{
+public:
+  EventFileReaderPS(std::string cmd);
+  ~EventFileReaderPS(){};
+  void ProcessUserEvent(EventSPC ev) final override;
+  void OpenFile(std::string filename);
+  void ProduceEvent() final override;
+  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+private:
+  std::unique_ptr<FileDeserializer> m_des;    
+};
 
 namespace{
   auto dummy0 = Factory<Processor>::Register<EventFileReaderPS, std::string&>(eudaq::cstr2hash("EventFileReaderPS"));
@@ -18,9 +29,9 @@ void EventFileReaderPS::OpenFile(std::string filename){
   m_des.reset(new FileDeserializer(filename));  
 }
 
-void EventFileReaderPS::ProcessUserEvent(EVUP ev){
+void EventFileReaderPS::ProcessUserEvent(EventSPC ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
-  ForwardEvent(std::move(ev));
+  ForwardEvent(ev);
 }
 
 void EventFileReaderPS::ProduceEvent(){
@@ -29,9 +40,9 @@ void EventFileReaderPS::ProduceEvent(){
   for(uint32_t i=0; i<10; i++ ){
     uint32_t id;
     m_des->PreRead(id);
-    EVUP ev = Factory<Event>::Create<Deserializer&>(id, *m_des.get());
-    // ProcessUserEvent(std::move(ev));
-    Processing(std::move(ev));
+    EventSP ev = Factory<Event>::MakeShared<Deserializer&>(id, *m_des.get());
+    // ProcessUserEvent(ev);
+    Processing(ev);
   }
 }
 

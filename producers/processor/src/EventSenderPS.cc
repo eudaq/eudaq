@@ -1,8 +1,22 @@
-#include"EventSenderPS.hh"
+#include "Processor.hh"
+#include "DataSender.hh"
 
 #include<sstream>
 
 using namespace eudaq;
+
+class EventSenderPS: public Processor{
+public:
+  EventSenderPS(std::string cmd);
+  ~EventSenderPS(){};
+  void ProcessUserEvent(EventSPC ev) final override;
+  void Connect(std::string type, std::string name, std::string server);
+  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+    
+private:
+  std::unique_ptr<DataSender> m_sender;
+};
+
 
 namespace{
   auto dummy0 = Factory<Processor>::Register<EventSenderPS, std::string&>(eudaq::cstr2hash("EventSenderPS"));
@@ -14,7 +28,7 @@ EventSenderPS::EventSenderPS(std::string cmd)
   ProcessCmd(cmd);
 }
 
-void EventSenderPS::ProcessUserEvent(EVUP ev){
+void EventSenderPS::ProcessUserEvent(EventSPC ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
   if (!m_sender){
     EUDAQ_THROW("DataSender is not created!");

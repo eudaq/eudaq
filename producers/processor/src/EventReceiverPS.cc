@@ -1,7 +1,25 @@
-#include"EventReceiverPS.hh"
 #include"TransportFactory.hh"
+#include"Processor.hh"
 
 using namespace eudaq;
+
+class EventReceiverPS: public Processor{
+public:
+  EventReceiverPS(std::string cmd);
+  
+  void ProduceEvent()  final override;
+  void ProcessUserEvent(EventSPC ev)  final override;
+    
+  void SetServer(std::string listenaddress);
+  void DataHandler(TransportEvent &ev);
+  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par)  final override;
+
+private:
+  std::unique_ptr<TransportServer> m_server;
+  
+};
+
+
 
 namespace{
   auto dummy0 = Factory<Processor>::Register<EventReceiverPS, std::string&>(eudaq::cstr2hash("EventReceiverPS"));
@@ -13,9 +31,9 @@ EventReceiverPS::EventReceiverPS(std::string cmd)
   ProcessCmd(cmd);
 }
 
-void EventReceiverPS::ProcessUserEvent(EVUP ev){
+void EventReceiverPS::ProcessUserEvent(EventSPC ev){
   std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
-  ForwardEvent(std::move(ev));
+  ForwardEvent(ev);
 }
 
 void EventReceiverPS::ProduceEvent(){
@@ -88,8 +106,8 @@ void EventReceiverPS::DataHandler(TransportEvent &ev) {
       BufferSerializer ser(ev.packet.begin(), ev.packet.end());
       uint32_t id;
       ser.read(id);
-      EVUP event = Factory<Event>::Create<Deserializer&>(id, ser);
-      Processing(std::move(event));
+      EventSP event = Factory<Event>::MakeShared<Deserializer&>(id, ser);
+      Processing(event);
     }
     break;
   default:

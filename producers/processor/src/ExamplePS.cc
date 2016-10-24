@@ -1,10 +1,7 @@
-#define EUDAQ_MODULE
-
 #include <iostream>
 #include <chrono>
 #include <string>
 
-#include "Platform.hh"
 #include "Processor.hh"
 #include "RawDataEvent.hh"
 
@@ -15,8 +12,8 @@ namespace eudaq{
   class ExamplePS:public Processor{
   public:
     ExamplePS(std::string cmd);
-    virtual ~ExamplePS() {};   
-    virtual void ProduceEvent();
+    ~ExamplePS() {};   
+    void ProduceEvent() final override;
   };
 
   namespace{

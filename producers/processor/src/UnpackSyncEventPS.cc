@@ -9,8 +9,7 @@ namespace eudaq{
   class UnpackSyncEventPS: public Processor{
   public:
     UnpackSyncEventPS(std::string cmd);
-    void ProcessUserEvent(EVUP ev);
-
+    void ProcessUserEvent(EventSPC ev) final override;
   };
 
 
@@ -24,7 +23,7 @@ namespace eudaq{
     ProcessCmd(cmd);
   }
 
-  void UnpackSyncEventPS::ProcessUserEvent(EVUP ev){
+  void UnpackSyncEventPS::ProcessUserEvent(EventSPC ev){
     // if(ev->GetEventID() != cstr2hash("SYNC"))
     //   return;
     // std::cout<<"\n\n.................NEW SYNC EVENT.........\n";
@@ -32,7 +31,7 @@ namespace eudaq{
     uint32_t n = ev->GetNumSubEvent();
     for(uint32_t i = 0; i< n; i++){
       auto subev = ev->GetSubEvent(i);
-      ForwardEvent( subev->Clone());
+      ForwardEvent(subev);
       // subev->Print(std::cout, 20);
     }
     

@@ -173,9 +173,7 @@ namespace eudaq {
 
   void DataCollector::OnReceive(const ConnectionInfo &id, EventSP ev) {
     if(m_ps_input){
-      auto ev_stm = ev->Clone();
-      //DO SOME CHECK
-      m_ps_input<<=std::move(ev_stm);
+      m_ps_input<<=ev;
     }
     
     Info &inf = m_buffer[GetInfo(id)];

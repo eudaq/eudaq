@@ -28,38 +28,38 @@ Processor::~Processor() {
   std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
 };
 
-void Processor::ProcessUserEvent(EventUP ev){
-  ForwardEvent(std::move(ev));
+void Processor::ProcessUserEvent(EventSPC ev){
+  ForwardEvent(ev);
 }
 
-void Processor::ProcessSysEvent(EventUP ev){
-  ForwardEvent(std::move(ev));
+void Processor::ProcessSysEvent(EventSPC ev){
+  ForwardEvent(ev);
 }
 
-void Processor::Processing(EventUP ev){
+void Processor::Processing(EventSPC ev){
   if(IsAsync()){
-    AsyncProcessing(std::move(ev));
+    AsyncProcessing(ev);
   }
   else{
-    SyncProcessing(std::move(ev));
+    SyncProcessing(ev);
   }
 }
 
-void Processor::SyncProcessing(EventUP ev){
+void Processor::SyncProcessing(EventSPC ev){
   auto evtype = ev->GetEventID();
   if(evtype == 0)//sys
-    ProcessSysEvent(std::move(ev));
+    ProcessSysEvent(ev);
   else
-    ProcessUserEvent(std::move(ev));
+    ProcessUserEvent(ev);
 }
 
-void Processor::AsyncProcessing(EventUP ev){
+void Processor::AsyncProcessing(EventSPC ev){
   std::unique_lock<std::mutex> lk(m_mtx_fifo);
-  m_fifo_events.push(std::move(ev));
+  m_fifo_events.push(ev);
   m_cv.notify_all();
 }
 
-void Processor::ForwardEvent(EventUP ev) {
+void Processor::ForwardEvent(EventSPC ev) {
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
   std::vector<ProcessorSP> pslist;
   uint32_t evid = ev->GetEventID();
@@ -74,9 +74,9 @@ void Processor::ForwardEvent(EventUP ev) {
   if(ps_hub){
     for(auto &ps: pslist){
       if(remain_ps == 1)
-	ps_hub->RegisterProcessing(ps, std::move(ev));
+	ps_hub->RegisterProcessing(ps, ev);
       else{
-	ps_hub->RegisterProcessing(ps, ev->Clone());
+	ps_hub->RegisterProcessing(ps, ev);
       }
       remain_ps--;
     }
@@ -128,9 +128,9 @@ void Processor::UpdatePSHub(PSWP ps){
 void Processor::ProduceEvent(){
 }
 
-void Processor::RegisterProcessing(ProcessorSP ps, EventUP ev){
+void Processor::RegisterProcessing(ProcessorSP ps, EventSPC ev){
   std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
-  m_fifo_pcs.push(std::make_pair(ps, std::move(ev)));
+  m_fifo_pcs.push(std::make_pair(ps, ev));
   m_cv_pcs.notify_all();
 }
 
@@ -143,10 +143,10 @@ void Processor::HubProcessing(){
       m_cv_pcs.wait(lk);
     }
     ProcessorSP ps = m_fifo_pcs.front().first;
-    EventUP ev = std::move(m_fifo_pcs.front().second);
+    EventSPC ev(m_fifo_pcs.front().second);
     m_fifo_pcs.pop();
     lk.unlock();
-    ps->Processing(std::move(ev));
+    ps->Processing(ev);
   }
 }
 
@@ -156,10 +156,10 @@ void Processor::ConsumeEvent(){
     bool fifoempty = m_fifo_events.empty();
     if(fifoempty)
       m_cv.wait(lk);
-    EventUP ev = std::move(m_fifo_events.front());
+    EventSPC ev(m_fifo_events.front());
     m_fifo_events.pop();
     lk.unlock();
-    SyncProcessing(std::move(ev));
+    SyncProcessing(ev);
   }
 }
 
@@ -338,10 +338,10 @@ ProcessorSP Processor::operator-(const std::string& evtype){
   return shared_from_this();
 }
 
-ProcessorSP Processor::operator<<=(EventUP ev){
+ProcessorSP Processor::operator<<=(EventSPC ev){
   auto ps_hub = m_ps_hub.lock();
   auto ps_this = shared_from_this();
   if(ps_hub)
-     ps_hub->RegisterProcessing(ps_this, std::move(ev));
+     ps_hub->RegisterProcessing(ps_this, ev);
   return ps_this;
 }

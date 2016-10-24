@@ -21,12 +21,12 @@ namespace{
 class RandomDelayPS: public Processor{
 public:
   RandomDelayPS(std::string cmd);
-  void ProcessUserEvent(EVUP ev);
-  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
-  EventUP GetEventFromBuffer();
+  void ProcessUserEvent(EventSPC ev) final override;
+  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  EventSPC GetEventFromBuffer() ;
 
 private:
-  std::map<uint32_t, std::deque<EVUP>> m_fifos;
+  std::map<uint32_t, std::deque<EventSPC>> m_fifos;
   uint32_t m_nevent;
   uint32_t m_ndelay;
   bool m_isend;
@@ -60,10 +60,10 @@ void RandomDelayPS::ProcessUsrCmd(const std::string cmd_name, const std::string 
 
 }
 
-void RandomDelayPS::ProcessUserEvent(EVUP ev){
+void RandomDelayPS::ProcessUserEvent(EventSPC ev){
 
   auto stm_n = ev->GetStreamN();
-  m_fifos[stm_n].push_back(std::move(ev));
+  m_fifos[stm_n].push_back(ev);
   m_nevent++;
   
   if(m_nevent<m_ndelay){
@@ -73,7 +73,7 @@ void RandomDelayPS::ProcessUserEvent(EVUP ev){
   
 }
 
-EventUP RandomDelayPS::GetEventFromBuffer(){
+EventSPC RandomDelayPS::GetEventFromBuffer(){
   std::vector<uint32_t> ready; 
   for(auto &e: m_fifos){
     auto fifo_stm = e.first;
@@ -84,7 +84,7 @@ EventUP RandomDelayPS::GetEventFromBuffer(){
   
   std::uniform_int_distribution<uint32_t> dis(0, ready.size()-1);
   auto stm_n_output = ready[dis(m_gen)];
-  EVUP ev_output = std::move(m_fifos[stm_n_output].front());
+  EventSPC ev_output(m_fifos[stm_n_output].front());
   m_fifos[stm_n_output].pop_front();
   m_nevent--;
   return ev_output;

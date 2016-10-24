@@ -19,12 +19,12 @@ namespace{
 class SyncByTimestampPS: public Processor{
 public:
   SyncByTimestampPS(std::string cmd);
-  virtual void ProcessUserEvent(EVUP ev);
-  virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
-  void AddEvent(EVUP ev);
-  EVUP GetMergedEvent();
+  void ProcessUserEvent(EventSPC ev) final override;
+  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  void AddEvent(EventSPC ev);
+  EventSP GetMergedEvent();
   void UpdateFifoStatus();
-  void UpdateNextNextTimestamp(Event *ev);
+  void UpdateNextNextTimestamp(EventSPC ev);
 private:
   uint32_t m_nstream;
   uint32_t m_nready;
@@ -35,8 +35,8 @@ private:
   uint64_t m_ts_next_next_end;
   uint32_t m_event_n;
   
-  std::map<uint32_t, std::deque<EVUP>> m_fifos;
-  std::map<uint32_t, EVUP> m_bores;
+  std::map<uint32_t, std::deque<EventSPC>> m_fifos;
+  std::map<uint32_t, EventSPC> m_bores;
   std::map<uint32_t, bool> m_ready;
 
 
@@ -76,9 +76,9 @@ void SyncByTimestampPS::ProcessUsrCmd(const std::string cmd_name, const std::str
 }
 
 
-void SyncByTimestampPS::AddEvent(EVUP ev){
+void SyncByTimestampPS::AddEvent(EventSPC ev){
   if(ev->IsBORE()){
-    m_bores[ev->GetStreamN()] = std::move(ev); //move, !!!
+    m_bores[ev->GetStreamN()] = ev; //move, !!!
     m_fifos[ev->GetStreamN()];
     if(m_bores.size() == m_nstream){
       std::cout<< "full bore"<<std::endl;
@@ -103,7 +103,7 @@ void SyncByTimestampPS::AddEvent(EVUP ev){
   if(!fifo.empty() && ts_begin < fifo.back()->GetTimestampEnd())
     throw std::domain_error("ts_begin < fifo.back()->GetTimestampEnd()");
 
-  fifo.push_back(std::move(ev));
+  fifo.push_back(ev);
   if(!isReady){
     isReady = true;
     m_nready ++;
@@ -119,8 +119,8 @@ void SyncByTimestampPS::AddEvent(EVUP ev){
   std::cout<<"m_nready "<< m_nready <<std::endl;
 }
 
-void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
-  AddEvent(std::move(ev));
+void SyncByTimestampPS::ProcessUserEvent(EventSPC ev){
+  AddEvent(ev);
   while(m_nready == m_nstream){ //IsReady()
     std::cout<<"\n\n\n";
     std::cout<<">>>>in loop: m_nready "<< m_nready <<std::endl;
@@ -132,19 +132,18 @@ void SyncByTimestampPS::ProcessUserEvent(EVUP ev){
     std::cout<<"  nnext_end ="<<m_ts_next_next_end<<std::endl;
     std::cout<<"........................................................."<<std::endl;
 
-    EVUP ev_merged(GetMergedEvent());
+    EventSPC ev_merged(GetMergedEvent());
     ev_merged->Print(std::cout);
     ev_merged->Print(m_file);
-    ForwardEvent(std::move(ev_merged));
-    
+    ForwardEvent(ev_merged);    
 
   }
     
 }
 
 
-EVUP SyncByTimestampPS::GetMergedEvent(){
-  EVUP ev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
+EventSP SyncByTimestampPS::GetMergedEvent(){
+  EventSP ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
   ev->SetEventN(m_event_n++);
   ev->SetTimestampBegin(m_ts_next_begin);
   ev->SetTimestampEnd(m_ts_next_end);
@@ -152,7 +151,7 @@ EVUP SyncByTimestampPS::GetMergedEvent(){
   for(auto &e: m_fifos){
     //print fifos layout
     
-    EVUP ev_candidate;
+    EventSPC ev_candidate;
     uint32_t id_stream = e.first;
     auto &isReady = m_ready[id_stream];
     auto &fifo = e.second;
@@ -168,29 +167,29 @@ EVUP SyncByTimestampPS::GetMergedEvent(){
 	std::cout<< "pop fifo\n";
       }
       else if(ts_end<m_ts_next_end){ //candidate, pop, not valid after m_ts_next_end
-	ev_candidate = std::move(fifo.front());
+	ev_candidate = fifo.front();
 	fifo.pop_front();  //update next_next later
 	std::cout<< "candidate, pop fifo\n";
       }
       else if(ts_end==m_ts_next_end){ //candidate, pop, full overlap, not valid after m_ts_next_end
-	ev_candidate = std::move(fifo.front());
+	ev_candidate = fifo.front();
 	fifo.pop_front();
 	if(!fifo.empty()){
 	  isReady = true;
 	  m_nready ++;
-	  UpdateNextNextTimestamp(fifo.front().get());
+	  UpdateNextNextTimestamp(fifo.front());
 	}
-	ev->AddEvent(std::move(ev_candidate));
+	ev->AddSubEvent(ev_candidate);
 	std::cout<< "candidate, pop fifo, add\n";
 	continue;
       }else{ //candidate, pop, full overlap, valid after m_ts_next_end
-	ev_candidate = fifo.front()->Clone();
+	ev_candidate = fifo.front();
 	if(fifo.size()>1){ //if not, ready may be still true. ts_fifo_front may be very long.
 	  isReady = true;
 	  m_nready ++;
-	  UpdateNextNextTimestamp(fifo[1].get());
+	  UpdateNextNextTimestamp(fifo[1]);
 	}
-	ev->AddEvent(std::move(ev_candidate));
+	ev->AddSubEvent(ev_candidate);
 	std::cout<< "ext overlap\n";
 	continue;
       }
@@ -204,27 +203,27 @@ EVUP SyncByTimestampPS::GetMergedEvent(){
       if(ts_begin<m_ts_next_end){// overlap, candidate
 	// if(ev_candiate){; replace or reserve the old}
 	if(ts_end==m_ts_next_end){ // full overlap, no <, only =
-	  ev_candidate = std::move(fifo.front()); 
+	  ev_candidate = fifo.front(); 
 	  fifo.pop_front();
 	  std::cout<< "candidate, pop\n";
 	  if(!fifo.empty()){
 	    isReady = true;
 	    m_nready ++;
-	    UpdateNextNextTimestamp(fifo.front().get());
+	    UpdateNextNextTimestamp(fifo.front());
 	  }
-	  ev->AddEvent(std::move(ev_candidate));
+	  ev->AddSubEvent(ev_candidate);
 	  std::cout<< "det add candidate\n";
 	  continue;
 	}
 	else{ //partial overlap
-	  ev_candidate = fifo.front()->Clone();
+	  ev_candidate = fifo.front();
 	  std::cout<< "candidate\n";
 	  if(fifo.size()>1){ //if not, ready may be still true. ts_fifo_front may be very long.
 	    isReady = true;
 	    m_nready ++;
-	    UpdateNextNextTimestamp(fifo[1].get());
+	    UpdateNextNextTimestamp(fifo[1]);
 	  } //Because next_next_end is not updated to its finnal value, isReady is unknown. Leave isReady to be false and checked later.
-	  ev->AddEvent(std::move(ev_candidate));
+	  ev->AddSubEvent(ev_candidate);
 	  std::cout<< "det add candidate\n";
 	  continue;
 	}
@@ -234,10 +233,10 @@ EVUP SyncByTimestampPS::GetMergedEvent(){
 	std::cout<< "too new\n";
 	isReady = true;
 	m_nready ++;
-	UpdateNextNextTimestamp(fifo.front().get());
+	UpdateNextNextTimestamp(fifo.front());
 	// // if(ev_candidate){; option to add the old}
 	if(ev_candidate){
-	  ev->AddEvent(std::move(ev_candidate));
+	  ev->AddSubEvent(ev_candidate);
 	  std::cout<< "det add oldevent candidate\n";
 	}
       }
@@ -280,7 +279,7 @@ void SyncByTimestampPS::UpdateFifoStatus(){ //Do it when next_end is updated
 }
 
 
-void SyncByTimestampPS::UpdateNextNextTimestamp(Event *ev){
+void SyncByTimestampPS::UpdateNextNextTimestamp(EventSPC ev){
   if(ev->GetTimestampBegin()<m_ts_next_next_begin)
     m_ts_next_next_begin = ev->GetTimestampBegin();
   if(ev->GetTimestampEnd()<m_ts_next_next_end)

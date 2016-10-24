@@ -10,8 +10,8 @@ namespace eudaq{
   class DummySystemPS: public Processor{
   public:
     DummySystemPS(std::string cmd);
-    void ProcessUserEvent(EVUP ev);
-    void ProduceEvent();
+    void ProcessUserEvent(EventSPC ev) final override;
+    void ProduceEvent() final override;
 
   private:
     uint32_t m_event_n;
@@ -40,8 +40,8 @@ namespace eudaq{
     m_ts_tg_last_end = 0;
   }
 
-  void DummySystemPS::ProcessUserEvent(EVUP ev){
-    }
+  void DummySystemPS::ProcessUserEvent(EventSPC ev){
+  }
   
   void DummySystemPS::ProduceEvent(){
     std::ofstream file("DummySystem.xml", std::ofstream::out | std::ofstream::trunc);
@@ -61,7 +61,7 @@ namespace eudaq{
     // the end_of_trigger is defined by new events' earliest ts_last 
     for(; m_event_n < 1000; m_event_n ++){
 
-      EVUP ev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
+      EventSP ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
       
       std::vector<uint64_t> ts_begin(m_n_stm, 0);
       std::vector<uint64_t> ts_end(m_n_stm, 0);
@@ -124,8 +124,7 @@ namespace eudaq{
       
       m_ts_tg_last_end = ts_tg_end;
 
-
-      ForwardEvent(std::move(ev));
+      ForwardEvent(ev);
     }
     
   }

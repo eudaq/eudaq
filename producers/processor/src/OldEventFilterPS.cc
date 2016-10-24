@@ -8,7 +8,7 @@ namespace eudaq{
   class OldEventFilterPS: public Processor{
   public:
     OldEventFilterPS(std::string cmd);
-    void ProcessUserEvent(EVUP ev);
+    void ProcessUserEvent(EventSPC ev) final override;
   private:
     std::ofstream m_file;
     
@@ -26,13 +26,13 @@ namespace eudaq{
     m_file.open ("filter.txt", std::ofstream::out | std::ofstream::trunc);
   }
 
-  void OldEventFilterPS::ProcessUserEvent(EVUP ev){
+  void OldEventFilterPS::ProcessUserEvent(EventSPC ev){
     if(ev->GetTag("Status") == "Old")
       return;
 
     // ev->Print(std::cout);
     // ev->Print(m_file);
-    ForwardEvent(std::move(ev));
+    ForwardEvent(ev);
     
   }
 
