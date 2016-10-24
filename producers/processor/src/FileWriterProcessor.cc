@@ -1,5 +1,4 @@
 #include"Processor.hh"
-#include"ProcessorManager.hh"
 #include"FileWriter.hh"
 
 namespace eudaq{
@@ -18,19 +17,18 @@ namespace eudaq{
     virtual uint64_t FileBytes() const{return 0;};
 
   private:
-    PSSP m_ps;
+    ProcessorSP m_ps;
     std::string m_pattern;
   };
   
   void FileWriterProcessor::WriteEvent(const DetectorEvent &ev){
     if(!m_ps){
       std::cout<<"no processor inside, create EventSenderPS connecting to "<< m_pattern <<std::endl;
-      m_ps=Factory<Processor>::Create<std::string&>(eudaq::cstr2hash("EventSenderPS"), m_pattern);
-      ProcessorManager& psMan = *ProcessorManager::GetInstance();
-      psMan>>m_ps;
+      m_ps= Processor::MakeShared("EventSenderPS", m_pattern);
+      m_ps<<"SYS:HUB:RUN";
     }
     
-    *m_ps<<ev.Clone(); //TODO
+    m_ps<<=ev.Clone(); //TODO
   }
 
 }

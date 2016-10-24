@@ -8,6 +8,7 @@
 #include "Configuration.hh"
 #include "Utils.hh"
 #include "Platform.hh"
+#include "Processor.hh"
 
 #include <string>
 #include <vector>
@@ -58,6 +59,9 @@ namespace eudaq {
     FileWriterUP m_writer;
     Configuration m_config;
     Time m_runstart;
+
+    ProcessorSP m_ps_input;
+    std::map<uint32_t, ProcessorSP> m_ps_col;
   };
 }
 

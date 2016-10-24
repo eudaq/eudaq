@@ -14,7 +14,8 @@ template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(s
 template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)()>& Factory<Processor>::Instance<>();
 
 ProcessorSP Processor::MakeShared(std::string pstype, std::string cmd){
-  ProcessorSP ps(std::move(Factory<Processor>::Create(str2hash(pstype), "")));
+  std::string cmd_no;
+  ProcessorSP ps(std::move(Factory<Processor>::Create(str2hash(pstype), cmd_no)));
   ps->ProcessCmd(cmd);
   return ps;
 }

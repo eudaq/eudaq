@@ -77,7 +77,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
       if (!m_cmdclient->IsNull()) {
         std::string packet;
         if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
-        // check packet is OK ("EUDAQ.CMD.RunControl nnn")
         auto splitted = split(packet, " ");
         if (splitted.size() < 4) {
           EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
@@ -102,7 +101,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
       }
     }
     }
-    //m_cmdclient = make_client(runcontrol, name, type);
 
     m_cmdclient->SetCallback(
         TransportCallback(this, &CommandReceiver::CommandHandler));
@@ -113,12 +111,7 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
 
   void CommandReceiver::StartThread() {
 	m_thread=std::unique_ptr<std::thread>(new std::thread(CommandReceiver_thread, this));
-	  //m_thread.start(CommandReceiver_thread, this);
-	   m_threadcreated = true;
-//     pthread_attr_init(&m_threadattr);
-//     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
-//       m_threadcreated = true;
-//     }
+	m_threadcreated = true;
   }
 
   void CommandReceiver::SetStatus(Status::Level level,

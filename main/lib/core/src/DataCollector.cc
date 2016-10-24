@@ -70,6 +70,66 @@ namespace eudaq {
     m_config = param;
     std::string fwtype = m_config.Get("FileType", "native");
     std::string fwpatt = m_config.Get("FilePattern", "run$6R_tp$X");
+    std::string sync = m_config.Get("SyncMethod", "runnumber");
+
+    m_ps_col.clear();
+    m_ps_input.reset();
+    std::cout<<"....................OnConfig.....\n";
+    std::cout<< "SyncMethod="<<sync<<std::endl;
+    if(sync == "timestamp"){
+      std::string config_key = "PS_CHAIN";
+      std::string config_val;
+      uint32_t n = 0;
+      while(1){
+	config_val = m_config.Get(config_key+std::to_string(n), "");
+	if(config_val.empty())
+	  break;
+	std::cout<<config_key+std::to_string(n)<<"="<<config_val<<std::endl;
+
+	std::stringstream ss(config_val);
+	std::string item;
+	std::vector<std::string> elems;
+	while (std::getline(ss, item, ':')) {
+	  item=trim(item);
+	  elems.push_back(item);
+	}
+	if(elems[2]=="CREATE"){
+	  uint32_t ps_n = std::stoul(elems[1]); 
+	  std::string cmd("SYS:PSID");
+	  cmd+=elems[1];
+	  m_ps_col[ps_n] = Processor::MakeShared(elems[3], cmd);
+	}
+	if(elems[2]=="CMD"){
+	  uint32_t ps_n = std::stoul(elems[1]);
+	  std::string cmd = elems[3];
+	  for(uint32_t i = 4; i< elems.size(); i++)
+	    cmd = cmd + ":" + elems[i];
+	  std::cout<< "cmd ="<<cmd<<"\n";
+	  m_ps_col[ps_n]->ProcessCmd(cmd);
+	}
+	if(elems[2]=="PIPE"){
+	  uint32_t ps_n = std::stoul(elems[1]);
+	  uint32_t ps_m = std::stoul(elems.back());
+	  std::stringstream evss(elems[3]);
+	  std::string evtype;
+	  while (std::getline(evss, evtype, '+')) {
+	    evtype=trim(evtype);
+	    m_ps_col[ps_n]+evtype;
+	  }
+	  m_ps_col[ps_n]>>m_ps_col[ps_m];
+	}
+	if(elems[2]=="INPUT"){
+	  uint32_t ps_n = std::stoul(elems[1]);
+	  m_ps_input = m_ps_col[ps_n];
+	}
+	n++;
+      }
+    }
+
+    for(auto &e: m_ps_col){
+      e.second->Print(std::cout);
+    }
+    
     uint32_t fwid = cstr2hash(fwtype.c_str());
     if(fwtype!="processor"||!m_writer){
       m_writer = Factory<FileWriter>::Create<std::string&>(fwid, fwpatt);
@@ -112,6 +172,12 @@ namespace eudaq {
   }
 
   void DataCollector::OnReceive(const ConnectionInfo &id, EventSP ev) {
+    if(m_ps_input){
+      auto ev_stm = ev->Clone();
+      //DO SOME CHECK
+      m_ps_input<<=std::move(ev_stm);
+    }
+    
     Info &inf = m_buffer[GetInfo(id)];
     inf.events.push_back(ev);
     
