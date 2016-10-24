@@ -26,12 +26,13 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_MIMOSA26 = true;
   } else if (_sensor == std::string("APIX")) {
     is_APIX = true;
-  } else if (_sensor == std::string("USBPIX")) {
+  } else if ((_sensor == std::string("USBPIX")) || (_sensor.find("USBPIXI-") != std::string::npos)) {
     is_USBPIX = true;
-  } else if (_sensor == std::string("USBPIXI4")) {
+  } else if ((_sensor == std::string("USBPIXI4")) || (_sensor.find("USBPIXI4-") == std::string::npos)) {
     is_USBPIXI4 = true;
-  } else if (_sensor == std::string("USBPIXI4B")) {
+  } else if (_sensor.find("USBPIXI4B") != std::string::npos) {
     is_USBPIXI4 = true;
+	  std::cout << "set correctly" << std::endl;
   }
   is_DEPFET = p.is_DEPFET;
 
@@ -281,10 +282,7 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
   if ((pixel_x < _maxX) && (pixel_y < _maxY)) {
     plane_map_array[pixel_x][pixel_y] = plane_map_array[pixel_x][pixel_y] + 1;
   }
-  // if (_sensor == std::string("APIX")) {
-  // if (_sensor == std::string("APIX") || _sensor == std::string("USBPIX") ||
-  // _sensor == std::string("USBPIXI4") ) {
-  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || is_DEPFET) {
+  if ((is_APIX) || (is_USBPIX) || (is_USBPIXI4) || (is_DEPFET)) {
     if (_totSingle != NULL)
       _totSingle->Fill(hit.getTOT());
     if (_lvl1Distr != NULL)
