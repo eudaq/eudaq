@@ -97,7 +97,7 @@ unsigned Mupix3ConverterPlugin::GetTriggerID(const Event & ev) const
 
     unsigned unused = 0;
     const unsigned char * data = GetRawDataChecked(ev, unused);
-    if (data == NULL) {
+    if (data == nullptr) {
         EUDAQ_INFO("cannot extract trigger_id from event "
                    + eudaq::to_string(ev.GetEventNumber()));
         return (unsigned)(-1);
@@ -129,7 +129,7 @@ bool Mupix3ConverterPlugin::GetStandardSubEvent(
     
     // avoid breaking the data collector by adding an empty plane for
     // empty data
-    if (data == NULL) {
+    if (data == nullptr) {
         EUDAQ_WARN("received event "
                    + eudaq::to_string(source)
                    + " with no data blocks.");
@@ -199,7 +199,7 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     
     // get the raw input data
     raw_buffer = GetRawDataChecked(source, n_hits);
-    if (raw_buffer == NULL) {
+    if (raw_buffer == nullptr) {
         std::cerr << "could not convert " << source << std::endl;
         return false;
     }
@@ -268,14 +268,14 @@ const unsigned char * Mupix3ConverterPlugin::GetRawDataChecked(
                    + to_string(raw.GetEventNumber())
                    + ": invalid number of data blocks "
                    + to_string(raw.NumBlocks()));
-        return NULL;
+        return nullptr;
     }
 
     if (raw.GetBlock(0).size() < 16) {
         EUDAQ_WARN("event "
                    + to_string(raw.GetEventNumber())
                    + ": data block is too small");
-        return NULL;
+        return nullptr;
     }
 
     // TODO check for consistency, i.e. not 32bit aligned. should never happen
