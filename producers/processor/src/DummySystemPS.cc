@@ -98,7 +98,7 @@ namespace eudaq{
       for(uint32_t i=0; i< m_n_stm; i++ ){
 
 	if(ts_begin[i]< ts_tg_end){ // new
-	  EVUP stmev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, 1000+i);
+	  EventUP stmev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, 1000+i);
 	  stmev->SetTimestamp(ts_begin[i], ts_end[i]);
 	  stmev->SetEventN(m_stm_event_n[i]);
 	  stmev->SetTag("Status", "New");
@@ -108,7 +108,7 @@ namespace eudaq{
 	  ev->AddEvent(std::move(stmev));
 	}
 	else if(m_ts_last_end[i]> ts_tg_begin){  //no new, but old
-	  EVUP stmev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, 1000+i);
+	  EventUP stmev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, 1000+i);
 	  stmev->SetTimestamp(m_ts_last_begin[i], m_ts_last_end[i]);
 	  stmev->SetEventN(m_stm_event_n[i]-1);
 	  stmev->SetTag("Status", "Old");

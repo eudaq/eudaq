@@ -38,28 +38,9 @@ namespace eudaq {
   
   using PSSP = ProcessorSP;
   using PSWP = ProcessorWP;
-  using EVUP = EventUP;
   
   class DLLEXPORT Processor: public std::enable_shared_from_this<Processor>{
   public:
-    enum STATE:uint32_t{
-      STATE_UNCONF,
-      STATE_READY,
-      STATE_ERROR,
-      STATE_THREAD_UNCONF,
-      STATE_THREAD_READY,
-      STATE_THREAD_BUSY,
-      STATE_THREAD_ERROR
-    };
-
-    enum FLAG{
-      FLAG_HUB_RUN=1,
-      FLAG_HUB_BUSY=2,
-      FLAG_PDC_RUN=4,
-      FLAG_PDC_BUSY=8,
-      FLAG_CSM_RUN=16,
-      FLAG_CSM_BUSY=32
-    };
 
     static ProcessorSP MakeShared(std::string pstype, std::string cmd);
     
@@ -67,23 +48,18 @@ namespace eudaq {
     
     virtual ~Processor();
     virtual void ProcessUserEvent(EventSPC ev);
-    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
-    virtual void ProduceEvent();
-    void ConsumeEvent();
-    
-    void HubProcessing();
-    void Processing(EventSPC ev);
-    void AsyncProcessing(EventSPC ev);
-    void SyncProcessing(EventSPC ev);
-    void ForwardEvent(EventSPC ev);
-    void RegisterProcessing(ProcessorSP ps, EventSPC ev);
+    virtual void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par)final{};
+    virtual void ProduceUserEvent()final{};
 
-    void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
-    void ProcessSysEvent(EventSPC ev);
+    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){};
+    virtual void ProduceEvent(){};
+
+    void Processing(EventSPC ev);
+    void ForwardEvent(EventSPC ev);
     
     void RunProducerThread();
     void RunConsumerThread();
-    void RunHubThread(); //delilver
+    void RunHubThread(); //delilver //TODO remove it, 
     
     void AddNextProcessor(ProcessorSP ps);
     void AddUpstream(ProcessorWP ps);
@@ -91,12 +67,8 @@ namespace eudaq {
 
     void ProcessCmd(const std::string& cmd_list);
 
-    
-    bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
-    bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
     std::string GetType(){return m_pstype;};
     uint32_t GetID(){return m_psid;};
-    STATE GetState(){return m_state;};
     void Print(std::ostream &os, uint32_t offset=0) const;
     
     ProcessorSP operator>>(ProcessorSP psr);
@@ -106,6 +78,15 @@ namespace eudaq {
     ProcessorSP operator+(const std::string& evtype);
     ProcessorSP operator-(const std::string& evtype);
     ProcessorSP operator<<=(EventSPC ev);
+
+  private:
+    void RegisterProcessing(ProcessorSP ps, EventSPC ev);
+    void ConsumeEvent();
+    void HubProcessing();
+    void AsyncProcessing(EventSPC ev);
+    void SyncProcessing(EventSPC ev);
+    void ProcessSysEvent(EventSPC ev);
+    void ProcessSysCmd(const std::string& cmd_name, const std::string& cmd_par);
     
   private:
     std::string m_pstype;
@@ -113,21 +94,26 @@ namespace eudaq {
     ProcessorWP m_ps_hub;
     std::vector<ProcessorWP> m_ps_upstr;
     std::vector<std::pair<ProcessorSP, std::set<uint32_t>>> m_pslist_next;
+        
+    std::deque<EventSPC> m_que_csm;
+    std::deque<std::pair<ProcessorSP, EventSPC> > m_que_hub;
+    std::mutex m_mtx_csm;
+    std::mutex m_mtx_hub;
+    std::condition_variable m_cv_csm;
+    std::condition_variable m_cv_hub;
+    std::thread m_th_csm;
+    std::thread m_th_hub;
+    std::atomic_bool m_csm_go_stop;
+    std::atomic_bool m_hub_go_stop;
+
     
     std::set<uint32_t> m_evlist_white; //TODO: for processor input
     std::set<uint32_t> m_evlist_black; //TODO: for processor output
-    std::vector<std::pair<std::string, std::string>> m_cmdlist_init;    
+    std::vector<std::pair<std::string, std::string>> m_cmdlist_init;
     
-    std::queue<EventSPC> m_fifo_events; //fifo async
-    std::queue<std::pair<ProcessorSP, EventSPC> > m_fifo_pcs; //fifo hub
-    std::mutex m_mtx_fifo;
-    std::mutex m_mtx_pcs;
-    std::mutex m_mtx_state;
     std::mutex m_mtx_list;
-    std::condition_variable m_cv;
-    std::condition_variable m_cv_pcs;
-    std::atomic<STATE> m_state;
-    std::atomic<int> m_flag;
+
+    std::thread m_th_pdc;
   };
 
   template <typename T>

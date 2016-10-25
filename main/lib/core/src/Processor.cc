@@ -1,5 +1,4 @@
 #include"Processor.hh"
-
 #include"Utils.hh"
 
 #include <string>
@@ -21,11 +20,19 @@ ProcessorSP Processor::MakeShared(std::string pstype, std::string cmd){
 }
 
 Processor::Processor(std::string pstype, std::string cmd)
-  :m_pstype(pstype), m_psid(0), m_state(STATE_READY), m_flag(0){
+  :m_pstype(pstype), m_psid(0){
 }
 
 Processor::~Processor() {
   std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
+  if(m_th_hub.joinable()){
+    m_hub_go_stop = true;
+    m_th_hub.join();
+  }
+  if(m_th_csm.joinable()){
+    m_csm_go_stop = true;
+    m_th_csm.join();
+  }
 };
 
 void Processor::ProcessUserEvent(EventSPC ev){
@@ -37,7 +44,7 @@ void Processor::ProcessSysEvent(EventSPC ev){
 }
 
 void Processor::Processing(EventSPC ev){
-  if(IsAsync()){
+  if(m_th_csm.joinable()){
     AsyncProcessing(ev);
   }
   else{
@@ -54,31 +61,25 @@ void Processor::SyncProcessing(EventSPC ev){
 }
 
 void Processor::AsyncProcessing(EventSPC ev){
-  std::unique_lock<std::mutex> lk(m_mtx_fifo);
-  m_fifo_events.push(ev);
-  m_cv.notify_all();
+  std::unique_lock<std::mutex> lk(m_mtx_csm);
+  if(m_csm_go_stop){
+    lk.unlock();
+    SyncProcessing(ev);
+    return;
+  }
+  m_que_csm.push_back(ev);
+  m_cv_csm.notify_all();
 }
 
 void Processor::ForwardEvent(EventSPC ev) {
   std::lock_guard<std::mutex> lk_list(m_mtx_list);
-  std::vector<ProcessorSP> pslist;
+  auto ps_hub = m_ps_hub.lock();
+  //if(!ps_hub) error
   uint32_t evid = ev->GetEventID();
   for(auto &psev: m_pslist_next){
     auto evset = psev.second;
     if(evset.find(evid)!=evset.end()){
-      pslist.push_back(psev.first);
-    }
-  }
-  size_t remain_ps = pslist.size();
-  auto ps_hub = m_ps_hub.lock();
-  if(ps_hub){
-    for(auto &ps: pslist){
-      if(remain_ps == 1)
-	ps_hub->RegisterProcessing(ps, ev);
-      else{
-	ps_hub->RegisterProcessing(ps, ev);
-      }
-      remain_ps--;
+      ps_hub->RegisterProcessing(psev.first, ev);
     }
   }
 }
@@ -125,66 +126,72 @@ void Processor::UpdatePSHub(PSWP ps){
   }
 }
 
-void Processor::ProduceEvent(){
+void Processor::RegisterProcessing(ProcessorSP ps, EventSPC ev){ //NOTE:: return ps_hub_wk if not sucess
+  std::unique_lock<std::mutex> lk(m_mtx_hub);
+  if(m_hub_go_stop){
+    lk.unlock();
+    return; //register to new hub_ps of that ps
+  }
+  m_que_hub.push_back(std::make_pair(ps, ev));
+  m_cv_hub.notify_all();
 }
-
-void Processor::RegisterProcessing(ProcessorSP ps, EventSPC ev){
-  std::unique_lock<std::mutex> lk_pcs(m_mtx_pcs);
-  m_fifo_pcs.push(std::make_pair(ps, ev));
-  m_cv_pcs.notify_all();
-}
-
 
 void Processor::HubProcessing(){
-  while(IsHub()){ //TODO: modify STATE enum
-    std::unique_lock<std::mutex> lk(m_mtx_pcs);
-    bool fifoempty = m_fifo_pcs.empty();
-    if(fifoempty){
-      m_cv_pcs.wait(lk);
+  while(!m_hub_go_stop){
+    std::unique_lock<std::mutex> lk(m_mtx_hub);
+    if(m_que_hub.empty()){
+      if(m_cv_hub.wait_for(lk,std::chrono::microseconds(100))==std::cv_status::timeout)
+	continue;
     }
-    ProcessorSP ps = m_fifo_pcs.front().first;
-    EventSPC ev(m_fifo_pcs.front().second);
-    m_fifo_pcs.pop();
+    ProcessorSP ps = m_que_hub.front().first;
+    EventSPC ev(m_que_hub.front().second);
+    m_que_hub.pop_front();
     lk.unlock();
     ps->Processing(ev);
   }
+  std::unique_lock<std::mutex> lk(m_mtx_hub);
+  for(auto &ps_ev: m_que_hub){
+    ps_ev.first->Processing(ps_ev.second);
+  }
+  m_que_hub.clear();
 }
 
 void Processor::ConsumeEvent(){
-  while(IsAsync()){
-    std::unique_lock<std::mutex> lk(m_mtx_fifo);
-    bool fifoempty = m_fifo_events.empty();
-    if(fifoempty)
-      m_cv.wait(lk);
-    EventSPC ev(m_fifo_events.front());
-    m_fifo_events.pop();
+  while(!m_csm_go_stop){
+    std::unique_lock<std::mutex> lk(m_mtx_csm);
+    if(m_que_csm.empty()){
+      if(m_cv_csm.wait_for(lk,std::chrono::microseconds(100))==std::cv_status::timeout)
+	continue;
+    }
+    EventSPC ev(m_que_csm.front());
+    m_que_csm.pop_front();
     lk.unlock();
     SyncProcessing(ev);
   }
+  std::unique_lock<std::mutex> lk(m_mtx_csm);
+  for(auto &ev: m_que_csm){
+    SyncProcessing(ev);
+  }
+  m_que_csm.clear();
 }
 
 void Processor::RunConsumerThread(){
-  std::thread t(&Processor::ConsumeEvent, this);
-  m_flag = m_flag|FLAG_CSM_RUN;//safe
-  t.detach();
+  m_th_csm = std::thread(&Processor::ConsumeEvent, this);
 }
 
 
 void Processor::RunProducerThread(){
-  std::thread t(&Processor::ProduceEvent, this);
-  m_flag = m_flag|FLAG_PDC_RUN;//safe
-  t.detach();
+  m_th_pdc = std::thread(&Processor::ProduceEvent, this);
+  m_th_pdc.detach();
 }
 
 void Processor::RunHubThread(){
   if(!m_ps_hub.lock())
     m_ps_hub = shared_from_this();
-  std::thread t(&Processor::HubProcessing, this);
-  m_flag = m_flag|FLAG_HUB_RUN;//safe
-  t.detach();
+  m_th_hub = std::thread(&Processor::HubProcessing, this);
 }
 
-void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
+void Processor::ProcessSysCmd(const std::string& cmd_name, const std::string& cmd_par){
   switch(str2hash(cmd_name)){
   case cstr2hash("SYS:PD:RUN"):{
     RunProducerThread();
@@ -198,6 +205,14 @@ void Processor::ProcessSysCmd(std::string cmd_name, std::string cmd_par){
     RunHubThread();
     break;
   }
+  // case cstr2hash("SYS:HB:STOP"):{ //HB is managed automaticly
+  //   if(m_th_hub.joinable()){
+  //     m_hub_go_stop = true;
+  //     m_th_hub.join();
+  //   }
+  //   break;
+  // }
+
   case cstr2hash("SYS:PD:STOP"):{
     //TODO, setflag
     break;
@@ -264,10 +279,6 @@ void Processor::ProcessCmd(const std::string& cmd_list){
   }
 }
 
-void Processor::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
-  m_cmdlist_init.push_back(std::make_pair(cmd_name, cmd_par)); //configured
-}
-
 
 void Processor::Print(std::ostream &os, uint32_t offset) const{
   os << std::string(offset, ' ') << "<Processor>\n";
@@ -290,7 +301,6 @@ void Processor::Print(std::ostream &os, uint32_t offset) const{
   }
   os << std::string(offset, ' ') << "</Processor>\n";
 }
-
 
 
 ProcessorSP Processor::operator>>(ProcessorSP psr){
@@ -316,7 +326,6 @@ ProcessorSP Processor::operator<<(const std::string& cmd_list){
   ProcessCmd(cmd_list);
   return shared_from_this();
 }
-
 
 ProcessorSP Processor::operator+(const std::string& evtype){
   uint32_t evid; 

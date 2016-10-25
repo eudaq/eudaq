@@ -6,7 +6,7 @@ namespace eudaq{
   class DummyDevicePS: public Processor{
   public:
     DummyDevicePS(std::string cmd);
-    virtual void ProcessUserEvent(EVUP ev);
+    virtual void ProcessUserEvent(EventUP ev);
     // virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     
   private:
@@ -28,8 +28,8 @@ namespace eudaq{
     m_duration = 1;
   }
 
-  void DummyDevicePS::ProcessUserEvent(EVUP ev){
-    EVUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
+  void DummyDevicePS::ProcessUserEvent(EventUP ev){
+    EventUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
     if(ev->IsBORE() || ev->IsEORE()){
       ForwardEvent(std::move(ev));
       return;

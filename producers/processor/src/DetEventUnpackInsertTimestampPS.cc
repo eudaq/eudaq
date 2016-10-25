@@ -17,7 +17,7 @@ namespace{
 class DetEventUnpackInsertTimestampPS: public Processor{
 public:
   DetEventUnpackInsertTimestampPS(std::string cmd);
-  virtual void ProcessUserEvent(EVUP ev);
+  virtual void ProcessUserEvent(EventUP ev);
   // virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
 
 };
@@ -28,7 +28,7 @@ DetEventUnpackInsertTimestampPS::DetEventUnpackInsertTimestampPS(std::string cmd
   *this<<cmd;
 }
 
-void DetEventUnpackInsertTimestampPS::ProcessUserEvent(EVUP ev){
+void DetEventUnpackInsertTimestampPS::ProcessUserEvent(EventUP ev){
     std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
 
   if(ev->GetEventID() != Event::str2id("_DET")){

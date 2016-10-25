@@ -12,7 +12,7 @@ namespace eudaq{
   class TimeTriggerPS: public Processor{
   public:
     TimeTriggerPS(std::string cmd);
-    // virtual void ProcessUserEvent(EVUP ev);
+    // virtual void ProcessUserEvent(EventUP ev);
     virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     virtual void ProduceEvent();
 
@@ -69,7 +69,7 @@ namespace eudaq{
     
     // while(1){
     for(uint32_t i=0; i<110; i++ ){
-      EVUP ev = Factory<Event>::Create(cstr2hash("TRIGGER"), cstr2hash("TRIGGER"), 0, GetID());
+      EventUP ev = Factory<Event>::Create(cstr2hash("TRIGGER"), cstr2hash("TRIGGER"), 0, GetID());
       ev->SetEventN(m_event_n++);
       std::chrono::nanoseconds ns_sleep(dis(gen));
       tp_trigger += ns_sleep;
@@ -80,7 +80,7 @@ namespace eudaq{
       ev->SetTimestampEnd(du_begin.count()+m_duration);
       Processing(std::move(ev));
     }
-    EVUP ev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER"), cstr2hash("TRIGGER"), 0, GetID());
+    EventUP ev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER"), cstr2hash("TRIGGER"), 0, GetID());
     ev->SetFlagBit(Event::FLAG_EORE);
     Processing(std::move(ev));
   }

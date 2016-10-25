@@ -28,7 +28,7 @@ namespace eudaq{
 
   void ExamplePS::ProduceEvent(){
     for(int i =0; i<10; i++){
-      EVUP ev(new RawDataEvent("data", 10 ,0, i), [](Event *p) {delete p; });
+      EventUP ev(new RawDataEvent("data", 10 ,0, i), [](Event *p) {delete p; });
       Processing(std::move(ev));
     }
 
