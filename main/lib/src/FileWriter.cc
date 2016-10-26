@@ -32,7 +32,7 @@ namespace eudaq {
     std::vector<std::string> result;
     for (map_t::const_iterator it = FileWriterMap().begin();
          it != FileWriterMap().end(); ++it) {
-      result.push_back(it->first);
+         result.push_back(it->first);
     }
     return result;
   }
