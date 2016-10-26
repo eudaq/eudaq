@@ -75,9 +75,7 @@ namespace eudaq {
 
       const eudaq::StandardPlane &plane = sev.GetPlane(iplane);
       std::vector<double> cds = plane.GetPixels<double>();
-
       for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
-
         id_plane = plane.ID();
         id_hit = ipix;
         id_x = plane.GetX(ipix);
@@ -85,6 +83,7 @@ namespace eudaq {
         i_time_stamp = sev.GetTimestamp();
         i_run = sev.GetRunNumber();
         i_event = sev.GetEventNumber();
+	i_tlu = plane.TLUEvent();
         m_ttree->Fill();
       }
     }
