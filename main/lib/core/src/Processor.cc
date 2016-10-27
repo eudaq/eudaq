@@ -14,13 +14,14 @@ template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)()
 
 ProcessorSP Processor::MakeShared(std::string pstype, std::string cmd){
   std::string cmd_no;
-  ProcessorSP ps(std::move(Factory<Processor>::Create(str2hash(pstype), cmd_no)));
+  ProcessorSP ps = Factory<Processor>::MakeShared(str2hash(pstype), cmd_no);
   ps->ProcessCmd(cmd);
   return ps;
 }
 
 Processor::Processor(std::string pstype, std::string cmd)
   :m_pstype(pstype), m_psid(0){
+
 }
 
 Processor::~Processor() {
@@ -274,7 +275,7 @@ void Processor::ProcessCmd(const std::string& cmd_list){
 	ProcessSysCmd(name_str, val_str);
       }
       else
-	ProcessUsrCmd(name_str, val_str);
+	ProcessUserCmd(name_str, val_str);
     }
   }
 }
@@ -304,20 +305,6 @@ void Processor::Print(std::ostream &os, uint32_t offset) const{
 
 
 ProcessorSP Processor::operator>>(ProcessorSP psr){
-  AddNextProcessor(psr);
-  return psr;
-}
-
-ProcessorSP Processor::operator>>(const std::string& stream_str){
-  std::string cmd_str;
-  std::string par_str;
-  std::stringstream ss(stream_str);
-  getline(ss, cmd_str, '(');
-  getline(ss, par_str, ')');
-  cmd_str=trim(cmd_str);
-  std::string ps_type = cmd_str; //TODO
-  ps_type=trim(ps_type);
-  ProcessorSP psr(Factory<Processor>::Create(str2hash(ps_type), par_str));
   AddNextProcessor(psr);
   return psr;
 }

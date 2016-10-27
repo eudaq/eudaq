@@ -12,7 +12,7 @@ public:
     
   void SetServer(std::string listenaddress);
   void DataHandler(TransportEvent &ev);
-  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par)  final override;
+  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par)  final override;
 
 private:
   std::unique_ptr<TransportServer> m_server;
@@ -116,13 +116,13 @@ void EventReceiverPS::DataHandler(TransportEvent &ev) {
 }
 
 
-void EventReceiverPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+void EventReceiverPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("SETSERVER"):{
     SetServer(cmd_par);
     break;
   }
   default:
-    Processor::ProcessUsrCmd(cmd_name, cmd_par);
+    break;
   }
 }

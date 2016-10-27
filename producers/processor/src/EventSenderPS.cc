@@ -11,7 +11,7 @@ public:
   ~EventSenderPS(){};
   void ProcessUserEvent(EventSPC ev) final override;
   void Connect(std::string type, std::string name, std::string server);
-  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
     
 private:
   std::unique_ptr<DataSender> m_sender;
@@ -42,7 +42,7 @@ void EventSenderPS::Connect(std::string type, std::string name, std::string serv
   m_sender->Connect(server); //tcp://ipaddress:portnum
 }
 
-void EventSenderPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+void EventSenderPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("CONNECT"):{
     std::stringstream ss(cmd_par);

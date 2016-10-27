@@ -20,7 +20,7 @@ class SyncByTimestampPS: public Processor{
 public:
   SyncByTimestampPS(std::string cmd);
   void ProcessUserEvent(EventSPC ev) final override;
-  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
   void AddEvent(EventSPC ev);
   EventSP GetMergedEvent();
   void UpdateFifoStatus();
@@ -63,7 +63,7 @@ SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
 }
 
 
-void SyncByTimestampPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+void SyncByTimestampPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("N_STREAM"):{
     std::stringstream ss(cmd_par);

@@ -10,7 +10,7 @@ public:
   void ProcessUserEvent(EventSPC ev) final override;
   void OpenFile(std::string filename);
   void ProduceEvent() final override;
-  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
 private:
   std::unique_ptr<FileDeserializer> m_des;    
 };
@@ -46,12 +46,12 @@ void EventFileReaderPS::ProduceEvent(){
   }
 }
 
-void EventFileReaderPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+void EventFileReaderPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("FILE"):
     OpenFile(cmd_par);
     break;
   default:
-    Processor::ProcessUsrCmd(cmd_name, cmd_par);
+    break;
   }
 }

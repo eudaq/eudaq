@@ -22,7 +22,7 @@ class RandomDelayPS: public Processor{
 public:
   RandomDelayPS(std::string cmd);
   void ProcessUserEvent(EventSPC ev) final override;
-  void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
   EventSPC GetEventFromBuffer() ;
 
 private:
@@ -45,7 +45,7 @@ RandomDelayPS::RandomDelayPS(std::string cmd)
   m_gen.seed(m_rd());
 }
 
-void RandomDelayPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+void RandomDelayPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("EMPTY"):{
     while(m_nevent){

@@ -18,8 +18,6 @@ class DetEventUnpackInsertTimestampPS: public Processor{
 public:
   DetEventUnpackInsertTimestampPS(std::string cmd);
   virtual void ProcessUserEvent(EventUP ev);
-  // virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
-
 };
 
 

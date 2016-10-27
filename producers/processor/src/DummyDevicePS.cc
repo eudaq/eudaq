@@ -7,7 +7,6 @@ namespace eudaq{
   public:
     DummyDevicePS(std::string cmd);
     virtual void ProcessUserEvent(EventUP ev);
-    // virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
     
   private:
     uint32_t m_event_n;

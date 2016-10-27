@@ -12,9 +12,8 @@ namespace eudaq{
   class TimeTriggerPS: public Processor{
   public:
     TimeTriggerPS(std::string cmd);
-    // virtual void ProcessUserEvent(EventUP ev);
-    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
-    virtual void ProduceEvent();
+    virtual void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
+    virtual void ProduceEvent() final override;
 
   private:
     std::chrono::steady_clock::time_point m_tp_start_run;
@@ -42,7 +41,7 @@ namespace eudaq{
   }
 
   
-  void TimeTriggerPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+  void TimeTriggerPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
     switch(cstr2hash(cmd_name.c_str())){
     case cstr2hash("RESULUTION"):{
       m_ts_resulution = std::stoul(cmd_par);     

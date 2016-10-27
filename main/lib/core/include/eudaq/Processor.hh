@@ -48,11 +48,10 @@ namespace eudaq {
     
     virtual ~Processor();
     virtual void ProcessUserEvent(EventSPC ev);
-    virtual void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par)final{};
-    virtual void ProduceUserEvent()final{};
-
-    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){};
+    virtual void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){};
     virtual void ProduceEvent(){};
+
+    void ProcessCmd(const std::string& cmd_list);
 
     void Processing(EventSPC ev);
     void ForwardEvent(EventSPC ev);
@@ -65,10 +64,9 @@ namespace eudaq {
     void AddUpstream(ProcessorWP ps);
     void UpdatePSHub(ProcessorWP ps);
 
-    void ProcessCmd(const std::string& cmd_list);
 
-    std::string GetType(){return m_pstype;};
-    uint32_t GetID(){return m_psid;};
+    std::string GetType()const {return m_pstype;};
+    uint32_t GetID()const {return m_psid;};
     void Print(std::ostream &os, uint32_t offset=0) const;
     
     ProcessorSP operator>>(ProcessorSP psr);
@@ -105,7 +103,8 @@ namespace eudaq {
     std::thread m_th_hub;
     std::atomic_bool m_csm_go_stop;
     std::atomic_bool m_hub_go_stop;
-
+    
+    std::atomic_bool m_hub_force;
     
     std::set<uint32_t> m_evlist_white; //TODO: for processor input
     std::set<uint32_t> m_evlist_black; //TODO: for processor output
