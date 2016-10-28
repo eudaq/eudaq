@@ -1,32 +1,48 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Running EUDAQ}
-This section will describe running the DAQ system, mainly from the point of view of the
-EUDET JRA1 Pixel Telescope\cite{eudet2009} with a \gls{DUT}, although most of it should
-also be applicable to the DAQ in general, even without the telescope.
+This section will describe running the DAQ system, mainly from the point of view of EUDET-type beam telescope \cite{telescopeWikiUserManual} operated together with \gls{DUT}s.
+However, this description can be applied to DAQ system in general.
 
-All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory,
-and should be run from here.
-
-They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter,
-which will provide a summary of the different command-line options that can be used.
+All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory, and should be run from here. They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter, which will provide a summary of possible different command-line options.
 
 \subsection{Preparation}
 Some preparation is needed to make sure the environment is set up correctly and
 the necessary TCP ports are not blocked before the DAQ can run properly.
 
 \subsubsection{Directories}
-The DAQ expects two directories to exist, that it will use to store data files and log files.
-They need not be real directories -- they can be symbolic links to other directories
-if you don't want to store the files inside the EUDAQ installation.
+EUDAQ expects two directories that will be used to store data files and log files.
+These can be directories or symbolic links to other directories.
 
-First, inside the \texttt{eudaq} directory, there should be a directory (or symbolic link) called \texttt{data}.
+Firstly, inside the \texttt{eudaq} directory, there should be a directory (or a symbolic link) called \texttt{data}.
 This will contain the data files written by the Data Collector, as well as a file containing the last run number,
-so that it will continue incrementing even when the DAQ is restarted.
-
+so that it will continue incrementing even when the DAQ is restarted. 
 Secondly, there should be a directory (or symbolic link) called \texttt{logs}.
 This will be used by the Log Collector to store log files containing all the log messages received.
 
-\subsubsection{Firewall}
+\subsubsection{Hostnames}
+EUDAQ processes communicate between themselves using TCP/IP sockets.
+When processes are started, they need to know where the Run Control runs.
+There is no completely fool-proof way of determining this,
+so processes look at the environment variable \texttt{\$HOSTNAME}.
+
+Usually, this should be the DNS name of the machine it is running on, but in some cases it may not work correctly.
+If this is the case, it may be necessary to set this variable manually, either to the real host name
+or the machine's IP address. 
+In the case, that all the processes will be running on the same computer, the host name can be set to \texttt{localhost} which correspons do the IP adress \texttt{127.0.0.1}.
+
+Depending on the operating system and the command shell, you can set the host name by
+\begin{itemize}
+\item for bash-like shells: \inline[mybash]{export HOSTNAME=name}
+\item for csh-like shells: \inline[csh]{setenv HOSTNAME name}
+\item for Windows comman lines / scripts: \inline[mybash]{set HOSTNAME=name}
+\end{itemize}
+where \texttt{name} is the name or the IP adress.
+
+Note: It is recommended to set the host name to the (local) IP adress. 
+This method is approved and working at the EUDET-type telescopes at DESY and CERN.
+
+
+\subsubsection{Ports and firewall}
 The different processes communicate between themselves using TCP/IP sockets.
 If a firewall is running, it may block these connections,
 especially if the processes are running on different computers.
@@ -38,7 +54,7 @@ when attempting to start some programs:
 Are you sure the server is running? - Error 61 connecting to localhost:44000: Connection refused
 \end{listing}
 
-The ports used may be configured on the command line, but the default values used are:
+The ports can be configured when calling the the processors on the command line (see below), but the default and usually free port numbers are:
 \begin{description}
 
 \ttitem{44000}
@@ -52,65 +68,43 @@ This port is used to send log messages from all processes to the Log Collector.
 
 \end{description}
 
-If processes will be run on different computers,
+If processes will be running on different computers,
 then these ports should be opened up in the firewall.
 The method for doing this depends on the Operating System used,
 and is outside the scope of this manual.
 
-\subsubsection{Environment}
-When a process connects to the Run Control, it must be told what addresses to use
-to connect to the Log Collector and (if it is a Producer) to the Data Collector.
-The Run Control will ask the Log and Data Collectors what address to report,
-and these processes therefore need a way to determine what address they are listening on.
-There is no completely fool-proof way of determining this,
-so they look at the environment variable \texttt{\$HOSTNAME}.
-
-Usually this should be the DNS name of the machine it is running on, but in some cases it may not work correctly.
-If this is the case, it may be necessary to set this variable manually, either to the real host name,
-or the machine's IP address, or (if all the processes will be run on the same computer) it can be set to \texttt{localhost}.
-
-Depending on the command shell used, the command to do this should be either
-``\inline[mybash]{export HOSTNAME=name}'' (for bash-like shells)
-or ``\inline[csh]{setenv HOSTNAME name}'' (for csh-like shells),
-where \texttt{name} is the name to use.
 
 \subsubsection{TLU permissions}\label{sec:TLUperm}
-If you are not using a TLU, or not running on Linux, you may skip this part.
+If you are not using a TLU conencted to a Linux OS, you may skip this part.
 
 On many Linux distributions, the device node used to communicate over the USB bus is only
-accessible by the user \texttt{root} by default.
-
-To have the system set the correct permissions when a \gls{TLU} is
-connected, you need to add a \texttt{udev} rule: as \textrm{root}
-user, create the file \texttt{/etc/udev/rules.d/54-tlu.rules} and add
+accessible by a user having root rights by default (\texttt{sudo ...}).
+To set the correct permissions when a \gls{TLU} is
+connected, you need to add a \texttt{udev} rule: as a root user, 
+create the file \texttt{/etc/udev/rules.d/54-tlu.rules} and add
 the following lines:
-
-\begin{listing}
-# for Red Hat, e.g. SL5
-SYSFS{idVendor}=="165d", SYSFS{idProduct}=="0001", GROUP="NOROOTUSB", MODE="0666"
-\end{listing}
-
-if you are using a Red~Hat-based distribution (such as Scientific
-Linux) or:
-
 \begin{listing}
 # for Debian
 ACTION=="add", DRIVERS=="?*",  ATTR{idVendor}=="165d", ATTR{idProduct}=="0001",  MODE="0666"
 \end{listing}
-
 in case you are using a debian-based distribution such as Ubuntu.
+\begin{listing}
+# for Red Hat, e.g. SL5
+SYSFS{idVendor}=="165d", SYSFS{idProduct}=="0001", GROUP="NOROOTUSB", MODE="0666"
+\end{listing}
+if you are using a Red~Hat-based distribution (such as Scientific Linux) or:
 
-After replugging the {TLU}, the device should be accessible by
+After replugging the \gls{TLU}, the device should be accessible by
 all users.
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
 \subsection{Processes}
 The DAQ system is made up of a number of different processes that may all be run on the same,
-or on different computers. They are each described below.
+or on different computers. 
 
 \subsubsection{Run Control}
-There are two versions of the Run Control -- a text-based version, and a graphical version (see \autoref{fig:RunControl}).
-The graphical version is preferred, since it is the most used, and therefore the most tested and complete.
+There are two versions of the Run Control -- a text-based version and a graphical version (see \autoref{fig:RunControl}).
+The graphical version is recommended, since it is well tested and complete.
 The executable is called \texttt{euRun.exe}, or on Mac OS X it is an application bundle called \texttt{euRun.app}.
 The text-based version can be useful for testing, the executable is \texttt{TestRunControl.exe}.
 
@@ -122,21 +116,17 @@ The text-based version can be useful for testing, the executable is \texttt{Test
   \end{center}
 \end{figure}
 
-Normally no command-line options should be needed, but it can be told to listen on a non-standard port,
-(e.g. to run two copies on the same machine), with the \texttt{-a \param{port}} option:
+Usually, no command-line option should be needed. 
+If needed, it can be told to listen on a specific port (e.g. to run two copies on the same machine) 
+using the \texttt{-a \param{port}} option, for example:
 \begin{listing}[mybash]
-$[./euRun.app/Contents/MacOS/euRun]$ -a 3000
+$[./euRun.exe]$ -a 60000
 \end{listing}
-
-This example is for Mac OS X, where the executable is inside an application bundle,
-on other architectures it will be just \texttt{euRun.exe}.
-Note also that it is not recommended to run two copies of the DAQ simultaneously,
-since it becomes difficult to keep them completely separate as the Log and Data Collectors
-must also be run on different ports.
+Note: If two copies of EUDAQ should run simultaneously,
+the ports of the Log and DataCollectors have to be different!
 
 \subsubsection{Log Collector}
-Running the Log Collector is optional. If it is run, then all log messages generated by all other processes
-in the DAQ will be collected in one central location.
+It is recommended to start the Log Collector directly after having started the Run Control and before starting other processors in order to collect all log messages generated by all other processes.
 
 \begin{figure}[htb]
   \begin{center}
@@ -150,32 +140,35 @@ Like the Run Control, there are also two versions of the Log Collector.
 The graphical version is called \texttt{euLog.exe}, or \texttt{euLog.app} on Mac OS X,
 and the text-based version is called \texttt{TestLogCollector.exe}.
 
-If it is being run on the same machine as the Run Control, it should not need any command-line options.
-However, if it is run on a different machine, it must be told on which machine the Run Control is running,
-using the \texttt{-r \param{hostname}} option, e.g.:
+If it is running on the same machine as the Run Control, it should not need any command-line options.
+However, if it is running on a different machine, it must be told on which machine the Run Control is running.
+By using the \texttt{-r \param{hostname}} option, the Log Collector knows where to connect to the Run Control, for example the Run Control runs on a machine haveing a local IP 192.168.0.1 and listening on the port 40000 (as default):
 \begin{listing}[mybash]
-$[./euLog.exe]$ -r eudetmac001.cern.ch
+$[./euLog.exe]$ -r tcp://192.168.0.1:44000
 \end{listing}
-
-It may also be told to listen on a non-standard port, using the \texttt{-a \param{port}} option, similar to the Run Control.
+The port can also be set using the \texttt{-a \param{port}} option, similar to the Run Control.
 
 \subsubsection{Data Collector}
 The Data Collector is the process that collects all the raw data from the Producers,
 merges all the connected incoming streams into a single data stream, and writes it to file.
+There is only a text-based version called \texttt{TestDataCollector.exe}.
+It is recommended to start the Data Collector directly after having started the Run Control and RunControl and before starting other processors.
 
-Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine,
-and it may also be told to listen on a non-standard port, with the \texttt{-r} and \texttt{-a} options respectively, for example:
+Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine.
+Accordingly, the \texttt{-r} and \texttt{-a} options can be used, for example:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -r eudet -a tcp://55001
+$[./TestDataCollector.exe]$ -r tcp://192.168.0.1:44000
 \end{listing}
 
 It is also possible to run multiple Data Collector instances within
-one EUDAQ session. This can be useful to reduce network traffic and
-e.g. write the output of one producer to a locally attached disk. When running
-several Data Collectors simultaneously, Run Controls assigns a
+one EUDAQ session. 
+This can be useful to reduce network traffic and
+e.g. write the output of one producer to a locally attached disk. 
+When running several Data Collectors simultaneously, the Run Control assigns a
 Producer to a Data Collector by name: if the name of a Data Collector
 matches that of a Producer, the latter will be given the address and
-port of the former. There can be only one instance of an \emph{unnamed} Data
+port of the former. 
+There can be only one instance of an \emph{unnamed} Data
 Collector which serves as the default for any non-matching Producer;
 if no unnamed Data Collector is present, the first one connecting will
 serve as the default.
@@ -186,10 +179,10 @@ The name of a Data Collector can be set with the
 $[./TestDataCollector.exe]$ -n myproducer
 \end{listing}
 
-Should you wish to run several instances of the Data Collector on one
+If you wish to run several instances of the Data Collector on one
 machine, you need to make sure that they listen to different addresses
-using the \texttt{-a} option as described above. Furthermore, you need
-to make each Data Collector write to a different file by including the
+using the \texttt{-a} option as described above. 
+Furthermore, each Data Collector has to write to a different file by including the
 \texttt{FilePattern} option in the corresponding section of your
 configuration file (also see section \ref{sec:ConfigFiles}):
 
@@ -197,6 +190,52 @@ configuration file (also see section \ref{sec:ConfigFiles}):
 [DataCollector.myproducer]
 FilePattern = "../data/run$6R_myproducer$X"
 \end{listing}
+
+\subsubsection{TLU Producer}
+If you do not have a \gls{TLU} in your setup, you may skip this part.
+Otherwise you should run a TLUProducer, which will configure the \gls{TLU},
+and read out the timestamps and send them to the Data Collector.
+On the computer with the \gls{TLU} connected, start the \texttt{TLUProducer.exe} program.
+If this is not the same machine as the Run Control,
+use the \texttt{-r} option as for the Data and Log Collectors, in this example:
+\begin{listing}[mybash]
+$[./TLUProducer.exe]$ -r 192.168.0.1:44000
+\end{listing}
+If the TLUProducer fails to start, make sure the permissions are set up correctly (see \autoref{sec:TLUperm}).
+
+\subsubsection{NI Producer (Mimosa 26 sensors)}
+
+\subsubsection{Online Monitor}
+The Online Monitor reads the data file written by the Data Collector,
+and generates several ROOT histograms that can be useful for online monitoring.
+Since it reads the native data file directly (by using the corresponding DataConverterPlugin), it must be run on the same machine as the Data Collector.
+
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{src/images/OnlineMonCorrelations}
+    \caption{The OnlineMon showing correlation plots between different
+      Mimosa26 planes of the EUDET telescope.}
+    \label{fig:OnlineMonPlots}
+  \end{center}
+\end{figure}
+
+The Online Monitor can be run in one of two modes: online or offline.
+In online mode, it connects to the Run Control, so it will know when new runs are started,
+and it will automatically open each new data file as it is created.
+To run it in online mode, the \texttt{-r} option may be used to assign Run Control, in this example:
+\begin{listing}[mybash]
+$[./OnlineMon.exe]$ -r 192.168.0.1:44000
+\end{listing}
+Note: The Online Monitor is working properly on Unix machines. In addition, it is recommended to run the Online Monitor on the same machine as the Data Collector.
+
+In offline mode, there is no Run Control,
+and it only analyses the data file it is given on the command line usind the \texttt{-f} option. 
+An example command line is:
+\begin{listing}[mybash]
+$[./OnlineMon.exe]$ -f 5432
+\end{listing}
+This will run it in offline mode, opening the file corresponding to run 5432
+(alternatively, the full path to a file may be given).
 
 \subsubsection{TestProducer}
 For testing purposes, you may use the Test Producer.
@@ -212,71 +251,9 @@ in that it does not require user intervention to generate each trigger,
 and the data generated emulates a simple (but realistic) sensor,
 and can be properly converted, and therefore displayed in the Monitor.
 
-\subsubsection{TLUProducer}
-If you do not have a \gls{TLU} in your setup, you may skip this part.
-Otherwise you should run a TLUProducer, which will configure the \gls{TLU},
-and read out the timestamps and send them to the Data Collector.
-
-On the computer with the \gls{TLU} connected, start the \texttt{TLUProducer.exe} program.
-If this is not the same machine as the Run Control,
-use the \texttt{-r} option as for the Data and Log Collectors.
-For example:
-\begin{listing}[mybash]
-$[./TLUProducer.exe]$ -r eudet.unige.ch:3000
-\end{listing}
-
-If the TLUProducer fails to start, make sure the permissions are set up correctly (see \autoref{sec:TLUperm}).
-
-\subsubsection{EUDRBProducer}
-The \gls{EUDRB} boards are used to read out the telescope sensors.
-The \gls{EUDRB} Producer is designed to run on a Motorola MVME6100 single board computer,
-using the Tundra TSI148 VME bridge for communication with the \glspl{EUDRB}.
-
-If more than one EUDRBProducer is to be run, they must all have different names.
-The name can be set with the \texttt{-n \param{name}} option.
-
-As with the other processes, the address of the Run Control should be set with the \texttt{-r} option.
-An example is shown below:
-\begin{listing}[mybash]
-$[./EUDRBProducer.exe]$ -n EUDRB2 -r 192.168.1.1
-\end{listing}
-
 \subsubsection{Other Producer(s)}
 If you have a producer for your own hardware (see \autoref{sec:Producers}),
 it should also have an option to set the address of the Run Control.
-
-\subsubsection{OnlineMon}
-
-The OnlineMon reads the data file written by the Data Collector,
-and generates several Root histograms that can be useful for online monitoring.
-Since it reads the native data file directly, it must be run on the
-same machine as the Data Collector.
-
-\begin{figure}[htb]
-  \begin{center}
-    \includegraphics[width=0.8\textwidth]{src/images/OnlineMonCorrelations}
-    \caption{The OnlineMon showing correlation plots between different
-      Mimosa26 planes of the EUDET telescope.}
-    \label{fig:OnlineMonPlots}
-  \end{center}
-\end{figure}
-
-
-The OnlineMon can be run in one of two modes: online or offline.
-In online mode, it connects to the RunControl, so it will know when new runs are started,
-and it will automatically open each new data file as it is created.
-In offline mode, there is no RunControl,
-and it only analyses the data file it is given on the command line. 
-An example command line is:
-\begin{listing}[mybash]
-$[./OnlineMon.exe]$ -f 5432
-\end{listing}
-
-This will run it in offline mode, opening the file corresponding to run 5432
-(alternatively, the full path to a file may be given).
-To run it in online mode, simply omit the \texttt{-f} option,
-then the \texttt{-r} option may be used if the RunControl
-is running on a different computer or using a non-standard port.
 
 \subsubsection{Python Interface and Wrapper for Core EUDAQ Components}
 \label{sssec:pywrapper}
