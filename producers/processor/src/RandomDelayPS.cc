@@ -11,18 +11,15 @@ using namespace eudaq;
 class RandomDelayPS;
 
 namespace{
-  auto dummy0 = Factory<Processor>::Register<RandomDelayPS, std::string&>
-    (eudaq::cstr2hash("RandomDelayPS"));
-  auto dummy1 = Factory<Processor>::Register<RandomDelayPS, std::string&&>
-    (eudaq::cstr2hash("RandomDelayPS"));
+  auto dummy0 = Factory<Processor>::Register<RandomDelayPS>(eudaq::cstr2hash("RandomDelayPS"));
 }
 
 
 class RandomDelayPS: public Processor{
 public:
-  RandomDelayPS(std::string cmd);
-  void ProcessUserEvent(EventSPC ev) final override;
-  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  RandomDelayPS();
+  void ProcessEvent(EventSPC ev) final override;
+  void ProcessCommand(const std::string& cmd_name, const std::string& cmd_par) final override;
   EventSPC GetEventFromBuffer() ;
 
 private:
@@ -36,16 +33,15 @@ private:
 };
 
   
-RandomDelayPS::RandomDelayPS(std::string cmd)
-  :Processor("RandomDelayPS", ""){
-  ProcessCmd(cmd);
+RandomDelayPS::RandomDelayPS()
+  :Processor("RandomDelayPS"){
   m_nevent = 0;
   m_ndelay = 100;
   m_isend = false;
   m_gen.seed(m_rd());
 }
 
-void RandomDelayPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
+void RandomDelayPS::ProcessCommand(const std::string& cmd_name, const std::string& cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("EMPTY"):{
     while(m_nevent){
@@ -60,7 +56,7 @@ void RandomDelayPS::ProcessUserCmd(const std::string cmd_name, const std::string
 
 }
 
-void RandomDelayPS::ProcessUserEvent(EventSPC ev){
+void RandomDelayPS::ProcessEvent(EventSPC ev){
 
   auto stm_n = ev->GetStreamN();
   m_fifos[stm_n].push_back(ev);

@@ -24,8 +24,8 @@ namespace eudaq{
   void FileWriterProcessor::WriteEvent(const DetectorEvent &ev){
     if(!m_ps){
       std::cout<<"no processor inside, create EventSenderPS connecting to "<< m_pattern <<std::endl;
-      m_ps= Processor::MakeShared("EventSenderPS", m_pattern);
-      m_ps<<"SYS:HUB:RUN";
+      m_ps= Processor::MakeShared("EventSenderPS", {{m_pattern, ""}}); //TODO, ERROR
+      m_ps<<"SYS:HUB:RUN"; //TODO, remove hub 
     }
     
     m_ps<<=ev.Clone(); //TODO

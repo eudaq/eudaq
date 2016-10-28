@@ -5,36 +5,26 @@ using namespace eudaq;
 
 class DetEventUnpackInsertTimestampPS;
 
-
 namespace{
-  auto dummy0 = Factory<Processor>::Register<DetEventUnpackInsertTimestampPS, std::string&>
-    (eudaq::cstr2hash("DetEventUnpackInsertTimestampPS"));
-  auto dummy1 = Factory<Processor>::Register<DetEventUnpackInsertTimestampPS, std::string&&>
+  auto dummy0 = Factory<Processor>::Register<DetEventUnpackInsertTimestampPS>
     (eudaq::cstr2hash("DetEventUnpackInsertTimestampPS"));
 }
 
 
 class DetEventUnpackInsertTimestampPS: public Processor{
 public:
-  DetEventUnpackInsertTimestampPS(std::string cmd);
-  virtual void ProcessUserEvent(EventUP ev);
+  DetEventUnpackInsertTimestampPS();
+  void ProcessEvent(EventSPC ev) final override;
 };
 
-
-DetEventUnpackInsertTimestampPS::DetEventUnpackInsertTimestampPS(std::string cmd)
-  :Processor("DetEventUnpackInsertTimestampPS", ""){
-  *this<<cmd;
+DetEventUnpackInsertTimestampPS::DetEventUnpackInsertTimestampPS()
+  :Processor("DetEventUnpackInsertTimestampPS"){
 }
 
-void DetEventUnpackInsertTimestampPS::ProcessUserEvent(EventUP ev){
-    std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
-
+void DetEventUnpackInsertTimestampPS::ProcessEvent(EventSPC ev){
   if(ev->GetEventID() != Event::str2id("_DET")){
-    ForwardEvent(std::move(ev));
+    ForwardEvent(ev);
   }
-
-  std::cout<<"DetEvent pass"<<std::endl;
-  
   auto detev = dynamic_cast<const eudaq::DetectorEvent *>(ev.get());
   size_t nevent = detev->NumEvents();
   uint64_t ts= 0;

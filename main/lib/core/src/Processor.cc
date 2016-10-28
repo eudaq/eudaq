@@ -8,24 +8,27 @@
 
 using namespace eudaq;
 
-template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>& Factory<Processor>::Instance<std::string&>();
-template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>& Factory<Processor>::Instance<std::string&&>();
-template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)()>& Factory<Processor>::Instance<>();
+template DLLEXPORT
+std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)()>& Factory<Processor>::Instance<>();
 
-ProcessorSP Processor::MakeShared(std::string pstype, std::string cmd){
-  std::string cmd_no;
-  ProcessorSP ps = Factory<Processor>::MakeShared(str2hash(pstype), cmd_no);
-  ps->ProcessCmd(cmd);
+ProcessorSP Processor::MakeShared(const std::string& pstype,
+				  std::initializer_list
+				  <std::pair<const std::string, const std::string>> l){
+  ProcessorSP ps = Factory<Processor>::MakeShared(str2hash(pstype));
+  for(auto &p: l){
+    ps->ProcessSysCmd(p.first, p.second);
+  }
   return ps;
 }
 
-Processor::Processor(std::string pstype, std::string cmd)
-  :m_pstype(pstype), m_psid(0){
 
+Processor::Processor(const std::string& dsp)
+  :m_description(dsp){
+  m_instance_n = static_cast<uint32_t>(reinterpret_cast<uint64_t>(this));
 }
 
 Processor::~Processor() {
-  std::cout<<m_pstype<<" destructure PSID = "<<m_psid<<std::endl;
+  std::cout<<m_description<<" destructure PSID = "<<m_instance_n<<std::endl;
   if(m_th_hub.joinable()){
     m_hub_go_stop = true;
     m_th_hub.join();
@@ -36,11 +39,7 @@ Processor::~Processor() {
   }
 };
 
-void Processor::ProcessUserEvent(EventSPC ev){
-  ForwardEvent(ev);
-}
-
-void Processor::ProcessSysEvent(EventSPC ev){
+void Processor::ProcessEvent(EventSPC ev){
   ForwardEvent(ev);
 }
 
@@ -49,23 +48,16 @@ void Processor::Processing(EventSPC ev){
     AsyncProcessing(ev);
   }
   else{
-    SyncProcessing(ev);
+    ProcessEvent(ev);
   }
-}
-
-void Processor::SyncProcessing(EventSPC ev){
-  auto evtype = ev->GetEventID();
-  if(evtype == 0)//sys
-    ProcessSysEvent(ev);
-  else
-    ProcessUserEvent(ev);
 }
 
 void Processor::AsyncProcessing(EventSPC ev){
   std::unique_lock<std::mutex> lk(m_mtx_csm);
   if(m_csm_go_stop){
     lk.unlock();
-    SyncProcessing(ev);
+    //TODO, wait for m_que_csm to be empty!
+    ProcessEvent(ev);
     return;
   }
   m_que_csm.push_back(ev);
@@ -73,11 +65,11 @@ void Processor::AsyncProcessing(EventSPC ev){
 }
 
 void Processor::ForwardEvent(EventSPC ev) {
-  std::lock_guard<std::mutex> lk_list(m_mtx_list);
+  std::lock_guard<std::mutex> lk(m_mtx_config);
   auto ps_hub = m_ps_hub.lock();
   //if(!ps_hub) error
   uint32_t evid = ev->GetEventID();
-  for(auto &psev: m_pslist_next){
+  for(auto &psev: m_ps_downstream){
     auto evset = psev.second;
     if(evset.find(evid)!=evset.end()){
       ps_hub->RegisterProcessing(psev.first, ev);
@@ -85,9 +77,15 @@ void Processor::ForwardEvent(EventSPC ev) {
   }
 }
 
+void Processor::RegisterEvent(EventSPC ev) {
+  auto ps_hub = m_ps_hub.lock();
+  //if(!ps_hub) error
+  ps_hub->RegisterProcessing(shared_from_this(), ev);
+}
+
 void Processor::AddNextProcessor(ProcessorSP ps){
-  std::lock_guard<std::mutex> lk_list(m_mtx_list);
-  m_pslist_next.push_back(std::make_pair(ps, m_evlist_white));
+  std::lock_guard<std::mutex> lk(m_mtx_config);
+  m_ps_downstream.push_back(std::make_pair(ps, m_evlist_white));
   m_evlist_white.clear();
   
   ProcessorSP ps_this = shared_from_this();
@@ -95,23 +93,22 @@ void Processor::AddNextProcessor(ProcessorSP ps){
   if(!m_ps_hub.lock())
     m_ps_hub = ps_this;
   
-  std::cout<<"append PS "<< ps->GetID()<< "to PS "<<GetID()<<std::endl; 
+  std::cout<<"append PS "<< ps->m_instance_n<< "to PS "<<m_instance_n<<std::endl; 
   ps->AddUpstream(ps_this);
   ps->UpdatePSHub(m_ps_hub);
-
 }
 
-void Processor::AddUpstream(PSWP ps){
-  m_ps_upstr.push_back(ps);
+void Processor::AddUpstream(ProcessorWP ps){
+  m_ps_upstream.push_back(ps);
 }
 
-void Processor::UpdatePSHub(PSWP ps){
-  if(m_ps_upstr.size() < 2){
+void Processor::UpdatePSHub(ProcessorWP ps){
+  if(m_ps_upstream.size() < 2){
     if(m_ps_hub.lock() == ps.lock())
       return; //break circle
-    std::cout<<"Update PSHUB of PS"<<m_psid<<" to "<<ps.lock()->GetID()<<std::endl; 
+    std::cout<<"Update PSHUB of PS"<<m_instance_n<<" to "<<ps.lock()->m_instance_n<<std::endl; 
     m_ps_hub = ps;
-    for(auto &e: m_pslist_next){
+    for(auto &e: m_ps_downstream){
       e.first->UpdatePSHub(m_ps_hub);
     }
   }
@@ -120,8 +117,8 @@ void Processor::UpdatePSHub(PSWP ps){
       return; //break circle
     m_ps_hub = shared_from_this();
     RunHubThread();
-    std::cout<<"Update PSHUB of PS"<<m_psid<<" to itself"<<std::endl;     
-    for(auto &e: m_pslist_next){
+    std::cout<<"Update PSHUB of PS"<<m_instance_n<<" to itself"<<std::endl;     
+    for(auto &e: m_ps_downstream){
       e.first->UpdatePSHub(m_ps_hub);
     }
   }
@@ -167,11 +164,11 @@ void Processor::ConsumeEvent(){
     EventSPC ev(m_que_csm.front());
     m_que_csm.pop_front();
     lk.unlock();
-    SyncProcessing(ev);
+    ProcessEvent(ev);
   }
   std::unique_lock<std::mutex> lk(m_mtx_csm);
   for(auto &ev: m_que_csm){
-    SyncProcessing(ev);
+    ProcessEvent(ev);
   }
   m_que_csm.clear();
 }
@@ -192,8 +189,8 @@ void Processor::RunHubThread(){
   m_th_hub = std::thread(&Processor::HubProcessing, this);
 }
 
-void Processor::ProcessSysCmd(const std::string& cmd_name, const std::string& cmd_par){
-  switch(str2hash(cmd_name)){
+void Processor::ProcessSysCmd(const std::string& cmd, const std::string& arg){
+  switch(str2hash(cmd)){
   case cstr2hash("SYS:PD:RUN"):{
     RunProducerThread();
     break;
@@ -206,13 +203,6 @@ void Processor::ProcessSysCmd(const std::string& cmd_name, const std::string& cm
     RunHubThread();
     break;
   }
-  // case cstr2hash("SYS:HB:STOP"):{ //HB is managed automaticly
-  //   if(m_th_hub.joinable()){
-  //     m_hub_go_stop = true;
-  //     m_th_hub.join();
-  //   }
-  //   break;
-  // }
 
   case cstr2hash("SYS:PD:STOP"):{
     //TODO, setflag
@@ -223,12 +213,12 @@ void Processor::ProcessSysCmd(const std::string& cmd_name, const std::string& cm
     break;
   }
   case cstr2hash("SYS:SLEEP"):{
-    uint32_t msec = std::stoul(cmd_par);
+    uint32_t msec = std::stoul(arg);
     std::this_thread::sleep_for(std::chrono::milliseconds(msec));
     break;
   }
   case cstr2hash("SYS:EVTYPE:ADD"):{
-    std::stringstream ss(cmd_par);
+    std::stringstream ss(arg);
     std::string evtype;
     while(getline(ss, evtype, ',')){
       if(evtype.front()=='_')
@@ -239,7 +229,7 @@ void Processor::ProcessSysCmd(const std::string& cmd_name, const std::string& cm
     break;
   }
   case cstr2hash("SYS:EVTYPE:DEL"):{
-    std::stringstream ss(cmd_par);
+    std::stringstream ss(arg);
     std::string evtype;
     while(getline(ss, evtype, ',')){
       if(evtype.front()=='_')
@@ -251,52 +241,34 @@ void Processor::ProcessSysCmd(const std::string& cmd_name, const std::string& cm
   }
 
   case cstr2hash("SYS:PSID"):{
-    std::stringstream ss(cmd_par);
-    ss>>m_psid;
+    std::stringstream ss(arg);
+    ss>>m_instance_n;
+    break;
+  }
+  default:{
+    ProcessCommand(cmd, arg);
+    //TODO user
     break;
   }
   }
 }
 
-void Processor::ProcessCmd(const std::string& cmd_list){
-  //val1=1,2,3;val2=xx,yy;SYS:val3=abc
-  std::stringstream ss(cmd_list);
-  std::string cmd;
-  while(getline(ss, cmd, ';')){//TODO: ProcessXXCmd(name_str,val_str)
-    std::stringstream ss_cmd(cmd);
-    std::string name_str, val_str;
-    getline(ss_cmd, name_str, '=');
-    getline(ss_cmd, val_str);
-    name_str=trim(name_str);
-    val_str=trim(val_str);
-    if(!name_str.empty()){
-      name_str=ucase(name_str);
-      if(!cmd.compare(0,3,"SYS")){
-	ProcessSysCmd(name_str, val_str);
-      }
-      else
-	ProcessUserCmd(name_str, val_str);
-    }
-  }
-}
-
-
 void Processor::Print(std::ostream &os, uint32_t offset) const{
   os << std::string(offset, ' ') << "<Processor>\n";
-  os << std::string(offset + 2, ' ') << "<Type> " << m_pstype <<" </Type>\n";
-  os << std::string(offset + 2, ' ') << "<ID> " << m_psid << " </ID>\n";
-  os << std::string(offset + 2, ' ') << "<HubID> " << m_ps_hub.lock()->GetID() << " </HubID>\n";
-  if(!m_ps_upstr.empty()){
+  os << std::string(offset + 2, ' ') << "<Type> " << m_description <<" </Type>\n";
+  os << std::string(offset + 2, ' ') << "<ID> " << m_instance_n << " </ID>\n";
+  os << std::string(offset + 2, ' ') << "<HubID> " << m_ps_hub.lock()->m_instance_n << " </HubID>\n";
+  if(!m_ps_upstream.empty()){
     os << std::string(offset + 2, ' ') << "<Upstreams> \n";
-    for (auto &pswp: m_ps_upstr){
-      os << std::string(offset+4, ' ') << "<Processor> "<< pswp.lock()->GetType() << "=" << pswp.lock()->GetID() << " </Processor>\n";
+    for (auto &pswp: m_ps_upstream){
+      os << std::string(offset+4, ' ') << "<Processor> "<< pswp.lock()->m_description << "=" << pswp.lock()->m_instance_n << " </Processor>\n";
     }
     os << std::string(offset + 2, ' ') << "</Upstreams> \n";
   }
-  if(!m_pslist_next.empty()){
+  if(!m_ps_downstream.empty()){
     os << std::string(offset + 2, ' ') << "<Downstreams> \n";
-    for (auto &psev: m_pslist_next){
-      os << std::string(offset+4, ' ') << "<Processor> "<< psev.first->GetType() << "=" << psev.first->GetID() << " </Processor>\n";
+    for (auto &psev: m_ps_downstream){
+      os << std::string(offset+4, ' ') << "<Processor> "<< psev.first->m_description << "=" << psev.first->m_instance_n << " </Processor>\n";
     }
     os << std::string(offset + 2, ' ') << "</Downstreams> \n";
   }
@@ -309,8 +281,12 @@ ProcessorSP Processor::operator>>(ProcessorSP psr){
   return psr;
 }
 
-ProcessorSP Processor::operator<<(const std::string& cmd_list){
-  ProcessCmd(cmd_list);
+ProcessorSP Processor::operator<<(const std::string& cmd){
+  auto dm = cmd.find_first_of('=');
+  if(dm!=std::string::npos&& dm!=cmd.size()-1)
+    ProcessSysCmd(cmd.substr(0, dm), cmd.substr(dm+1));
+  else
+    ProcessSysCmd(cmd.substr(0, dm), "");
   return shared_from_this();
 }
 

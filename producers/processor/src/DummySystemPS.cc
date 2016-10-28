@@ -9,8 +9,7 @@ namespace eudaq{
 
   class DummySystemPS: public Processor{
   public:
-    DummySystemPS(std::string cmd);
-    void ProcessUserEvent(EventSPC ev) final override;
+    DummySystemPS();
     void ProduceEvent() final override;
 
   private:
@@ -25,22 +24,17 @@ namespace eudaq{
 
 
   namespace{
-  auto dummy0 = Factory<Processor>::Register<DummySystemPS, std::string&>(eudaq::cstr2hash("DummySystemPS"));
-  auto dummy1 = Factory<Processor>::Register<DummySystemPS, std::string&&>(eudaq::cstr2hash("DummySystemPS"));
+  auto dummy0 = Factory<Processor>::Register<DummySystemPS>(eudaq::cstr2hash("DummySystemPS"));
   }
 
-  DummySystemPS::DummySystemPS(std::string cmd)
-    :Processor("DummySystemPS", ""){
-    ProcessCmd(cmd);
+  DummySystemPS::DummySystemPS()
+    :Processor("DummySystemPS"){
     m_event_n = 0;
     m_n_stm = 10;
     m_ts_last_begin.resize(m_n_stm , 0);
     m_ts_last_end.resize(m_n_stm , 0);
     m_stm_event_n.resize(m_n_stm, 0);
     m_ts_tg_last_end = 0;
-  }
-
-  void DummySystemPS::ProcessUserEvent(EventSPC ev){
   }
   
   void DummySystemPS::ProduceEvent(){
@@ -123,8 +117,7 @@ namespace eudaq{
       ev->Print(file);
       
       m_ts_tg_last_end = ts_tg_end;
-
-      ForwardEvent(ev);
+      RegisterEvent(ev);
     }
     
   }

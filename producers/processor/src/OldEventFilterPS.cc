@@ -7,26 +7,23 @@ namespace eudaq{
 
   class OldEventFilterPS: public Processor{
   public:
-    OldEventFilterPS(std::string cmd);
-    void ProcessUserEvent(EventSPC ev) final override;
+    OldEventFilterPS();
+    void ProcessEvent(EventSPC ev) final override;
   private:
-    std::ofstream m_file;
-    
+    std::ofstream m_file;    
   };
 
 
   namespace{
-  auto dummy0 = Factory<Processor>::Register<OldEventFilterPS, std::string&>(eudaq::cstr2hash("OldEventFilterPS"));
-  auto dummy1 = Factory<Processor>::Register<OldEventFilterPS, std::string&&>(eudaq::cstr2hash("OldEventFilterPS"));
+  auto dummy0 = Factory<Processor>::Register<OldEventFilterPS>(eudaq::cstr2hash("OldEventFilterPS"));
   }
 
-  OldEventFilterPS::OldEventFilterPS(std::string cmd)
-    :Processor("OldEventFilterPS", ""){
-    ProcessCmd(cmd);
+  OldEventFilterPS::OldEventFilterPS()
+    :Processor("OldEventFilterPS"){
     m_file.open ("filter.txt", std::ofstream::out | std::ofstream::trunc);
   }
 
-  void OldEventFilterPS::ProcessUserEvent(EventSPC ev){
+  void OldEventFilterPS::ProcessEvent(EventSPC ev){
     if(ev->GetTag("Status") == "Old")
       return;
 

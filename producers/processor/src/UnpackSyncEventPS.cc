@@ -8,22 +8,19 @@ namespace eudaq{
 
   class UnpackSyncEventPS: public Processor{
   public:
-    UnpackSyncEventPS(std::string cmd);
-    void ProcessUserEvent(EventSPC ev) final override;
+    UnpackSyncEventPS();
+    void ProcessEvent(EventSPC ev) final override;
   };
 
-
   namespace{
-  auto dummy0 = Factory<Processor>::Register<UnpackSyncEventPS, std::string&>(eudaq::cstr2hash("UnpackSyncEventPS"));
-  auto dummy1 = Factory<Processor>::Register<UnpackSyncEventPS, std::string&&>(eudaq::cstr2hash("UnpackSyncEventPS"));
+  auto dummy0 = Factory<Processor>::Register<UnpackSyncEventPS>(eudaq::cstr2hash("UnpackSyncEventPS"));
   }
 
-  UnpackSyncEventPS::UnpackSyncEventPS(std::string cmd)
-    :Processor("UnpackSyncEventPS", ""){
-    ProcessCmd(cmd);
+  UnpackSyncEventPS::UnpackSyncEventPS()
+    :Processor("UnpackSyncEventPS"){
   }
 
-  void UnpackSyncEventPS::ProcessUserEvent(EventSPC ev){
+  void UnpackSyncEventPS::ProcessEvent(EventSPC ev){
     // if(ev->GetEventID() != cstr2hash("SYNC"))
     //   return;
     // std::cout<<"\n\n.................NEW SYNC EVENT.........\n";

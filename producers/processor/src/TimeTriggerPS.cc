@@ -6,14 +6,13 @@
 #include <thread>
 #include <random>
 
-
 namespace eudaq{
 
   class TimeTriggerPS: public Processor{
   public:
-    TimeTriggerPS(std::string cmd);
-    virtual void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
-    virtual void ProduceEvent() final override;
+    TimeTriggerPS();
+    void ProcessCommand(const std::string& cmd_name, const std::string& cmd_par) final override;
+    void ProduceEvent() final override;
 
   private:
     std::chrono::steady_clock::time_point m_tp_start_run;
@@ -25,23 +24,19 @@ namespace eudaq{
   };
 
   namespace{
-  auto dummy0 = Factory<Processor>::Register<TimeTriggerPS, std::string&>(eudaq::cstr2hash("TimeTriggerPS"));
-  auto dummy1 = Factory<Processor>::Register<TimeTriggerPS, std::string&&>(eudaq::cstr2hash("TimeTriggerPS"));
+  auto dummy0 = Factory<Processor>::Register<TimeTriggerPS>(eudaq::cstr2hash("TimeTriggerPS"));
   }
 
-
-  TimeTriggerPS::TimeTriggerPS(std::string cmd)
-    :Processor("TimeTriggerPS", ""){
-    ProcessCmd(cmd);
+  TimeTriggerPS::TimeTriggerPS()
+    :Processor("TimeTriggerPS"){
     m_ts_resulution = 1; // ns
     m_trigger_rate = 10000;
     m_event_n = 0;
     m_duration = 200;
     m_min_period = 500;
   }
-
   
-  void TimeTriggerPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
+  void TimeTriggerPS::ProcessCommand(const std::string& cmd_name, const std::string& cmd_par){
     switch(cstr2hash(cmd_name.c_str())){
     case cstr2hash("RESULUTION"):{
       m_ts_resulution = std::stoul(cmd_par);     
@@ -77,11 +72,11 @@ namespace eudaq{
       std::chrono::nanoseconds du_begin(tp_trigger_now - m_tp_start_run);
       ev->SetTimestampBegin(du_begin.count());
       ev->SetTimestampEnd(du_begin.count()+m_duration);
-      Processing(std::move(ev));
+      RegisterEvent(std::move(ev));
     }
     EventUP ev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER"), cstr2hash("TRIGGER"), 0, GetID());
     ev->SetFlagBit(Event::FLAG_EORE);
-    Processing(std::move(ev));
+    RegisterEvent(std::move(ev));
   }
   
 }

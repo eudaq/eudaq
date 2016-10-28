@@ -94,10 +94,8 @@ namespace eudaq {
 	  elems.push_back(item);
 	}
 	if(elems[2]=="CREATE"){
-	  uint32_t ps_n = std::stoul(elems[1]); 
-	  std::string cmd("SYS:PSID");
-	  cmd+=elems[1];
-	  m_ps_col[ps_n] = Processor::MakeShared(elems[3], cmd);
+	  uint32_t ps_n = std::stoul(elems[1]);
+	  m_ps_col[ps_n] = Processor::MakeShared(elems[3], {{"SYS:PSID", std::to_string(ps_n)}});
 	}
 	if(elems[2]=="CMD"){
 	  uint32_t ps_n = std::stoul(elems[1]);
@@ -105,7 +103,7 @@ namespace eudaq {
 	  for(uint32_t i = 4; i< elems.size(); i++)
 	    cmd = cmd + ":" + elems[i];
 	  std::cout<< "cmd ="<<cmd<<"\n";
-	  m_ps_col[ps_n]->ProcessCmd(cmd);
+	  m_ps_col[ps_n]<<cmd;
 	}
 	if(elems[2]=="PIPE"){
 	  uint32_t ps_n = std::stoul(elems[1]);

@@ -5,8 +5,8 @@ namespace eudaq{
 
   class DummyDevicePS: public Processor{
   public:
-    DummyDevicePS(std::string cmd);
-    virtual void ProcessUserEvent(EventUP ev);
+    DummyDevicePS();
+    void ProcessEvent(EventSPC ev) final override;
     
   private:
     uint32_t m_event_n;
@@ -16,18 +16,16 @@ namespace eudaq{
 
 
   namespace{
-  auto dummy0 = Factory<Processor>::Register<DummyDevicePS, std::string&>(eudaq::cstr2hash("DummyDevicePS"));
-  auto dummy1 = Factory<Processor>::Register<DummyDevicePS, std::string&&>(eudaq::cstr2hash("DummyDevicePS"));
+  auto dummy0 = Factory<Processor>::Register<DummyDevicePS>(eudaq::cstr2hash("DummyDevicePS"));
   }
 
-  DummyDevicePS::DummyDevicePS(std::string cmd)
-    :Processor("DummyDevicePS", ""){
-    ProcessCmd(cmd);
+  DummyDevicePS::DummyDevicePS()
+    :Processor("DummyDevicePS"){
     m_event_n = 0;
     m_duration = 1;
   }
 
-  void DummyDevicePS::ProcessUserEvent(EventUP ev){
+  void DummyDevicePS::ProcessEvent(EventSPC ev){
     EventUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
     if(ev->IsBORE() || ev->IsEORE()){
       ForwardEvent(std::move(ev));

@@ -5,34 +5,26 @@ using namespace eudaq;
 
 class EventReceiverPS: public Processor{
 public:
-  EventReceiverPS(std::string cmd);
-  
+  EventReceiverPS();
   void ProduceEvent()  final override;
-  void ProcessUserEvent(EventSPC ev)  final override;
-    
+  void ProcessEvent(EventSPC ev)  final override;
+  void ProcessCommand(const std::string& cmd_name, const std::string& cmd_par)  final override;
   void SetServer(std::string listenaddress);
   void DataHandler(TransportEvent &ev);
-  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par)  final override;
-
 private:
   std::unique_ptr<TransportServer> m_server;
-  
 };
 
 
-
 namespace{
-  auto dummy0 = Factory<Processor>::Register<EventReceiverPS, std::string&>(eudaq::cstr2hash("EventReceiverPS"));
-  auto dummy1 = Factory<Processor>::Register<EventReceiverPS, std::string&&>(eudaq::cstr2hash("EventReceiverPS"));
+  auto dummy0 = Factory<Processor>::Register<EventReceiverPS>(eudaq::cstr2hash("EventReceiverPS"));
 }
 
-EventReceiverPS::EventReceiverPS(std::string cmd)
-  :Processor("EventReceiverPS", ""){
-  ProcessCmd(cmd);
+EventReceiverPS::EventReceiverPS()
+  :Processor("EventReceiverPS"){
 }
 
-void EventReceiverPS::ProcessUserEvent(EventSPC ev){
-  std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
+void EventReceiverPS::ProcessEvent(EventSPC ev){
   ForwardEvent(ev);
 }
 
@@ -107,7 +99,7 @@ void EventReceiverPS::DataHandler(TransportEvent &ev) {
       uint32_t id;
       ser.read(id);
       EventSP event = Factory<Event>::MakeShared<Deserializer&>(id, ser);
-      Processing(event);
+      RegisterEvent(event);
     }
     break;
   default:
@@ -116,7 +108,7 @@ void EventReceiverPS::DataHandler(TransportEvent &ev) {
 }
 
 
-void EventReceiverPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
+void EventReceiverPS::ProcessCommand(const std::string& cmd_name, const std::string& cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("SETSERVER"):{
     SetServer(cmd_par);

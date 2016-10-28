@@ -9,18 +9,15 @@ using namespace eudaq;
 class SyncByTimestampPS;
 
 namespace{
-  auto dummy0 = Factory<Processor>::Register<SyncByTimestampPS, std::string&>
-    (eudaq::cstr2hash("SyncByTimestampPS"));
-  auto dummy1 = Factory<Processor>::Register<SyncByTimestampPS, std::string&&>
-    (eudaq::cstr2hash("SyncByTimestampPS"));
+  auto dummy0 = Factory<Processor>::Register<SyncByTimestampPS>(eudaq::cstr2hash("SyncByTimestampPS"));
 }
 
 
 class SyncByTimestampPS: public Processor{
 public:
-  SyncByTimestampPS(std::string cmd);
-  void ProcessUserEvent(EventSPC ev) final override;
-  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
+  SyncByTimestampPS();
+  void ProcessEvent(EventSPC ev) final override;
+  void ProcessCommand(const std::string& cmd_name, const std::string& cmd_par) final override;
   void AddEvent(EventSPC ev);
   EventSP GetMergedEvent();
   void UpdateFifoStatus();
@@ -39,15 +36,12 @@ private:
   std::map<uint32_t, EventSPC> m_bores;
   std::map<uint32_t, bool> m_ready;
 
-
   std::ofstream m_file;
-
 };
 
 
-SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
-  :Processor("SyncByTimestampPS", ""){
-  ProcessCmd(cmd);
+SyncByTimestampPS::SyncByTimestampPS()
+  :Processor("SyncByTimestampPS"){
   m_nstream = 10;
   m_nready = 0;
   m_ts_last_end=0;
@@ -62,8 +56,7 @@ SyncByTimestampPS::SyncByTimestampPS(std::string cmd)
 
 }
 
-
-void SyncByTimestampPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
+void SyncByTimestampPS::ProcessCommand(const std::string& cmd_name, const std::string& cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("N_STREAM"):{
     std::stringstream ss(cmd_par);
@@ -119,7 +112,7 @@ void SyncByTimestampPS::AddEvent(EventSPC ev){
   std::cout<<"m_nready "<< m_nready <<std::endl;
 }
 
-void SyncByTimestampPS::ProcessUserEvent(EventSPC ev){
+void SyncByTimestampPS::ProcessEvent(EventSPC ev){
   AddEvent(ev);
   while(m_nready == m_nstream){ //IsReady()
     std::cout<<"\n\n\n";

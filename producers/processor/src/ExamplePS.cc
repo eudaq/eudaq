@@ -11,25 +11,23 @@ namespace eudaq{
 
   class ExamplePS:public Processor{
   public:
-    ExamplePS(std::string cmd);
+    ExamplePS();
     ~ExamplePS() {};   
     void ProduceEvent() final override;
   };
 
   namespace{
-    auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
-    auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
+    auto dummy0 = Factory<Processor>::Register<ExamplePS>(eudaq::cstr2hash("ExamplePS"));
   }
 
-  ExamplePS::ExamplePS(std::string cmd)
-    :Processor("ExamplePS", ""){
-    ProcessCmd(cmd);
+  ExamplePS::ExamplePS()
+    :Processor("ExamplePS"){
   }
 
   void ExamplePS::ProduceEvent(){
     for(int i =0; i<10; i++){
       EventUP ev(new RawDataEvent("data", 10 ,0, i), [](Event *p) {delete p; });
-      Processing(std::move(ev));
+      RegisterEvent(std::move(ev));
     }
 
     while(1){

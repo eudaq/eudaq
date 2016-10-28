@@ -81,7 +81,7 @@ namespace eudaq{
     static std::map<std::uint32_t, typename Factory<BASE>::UP_BASE (*)(ARGS&&...)> m;
     static bool init = true;
     if(init){
-      std::cout<<"Instance a new Factory<"<<static_cast<const void *>(&m)<<">"<<std::endl;
+      // std::cout<<"Instance a new Factory<"<<static_cast<const void *>(&m)<<">"<<std::endl;
       init=false;
     }
     return m;
@@ -92,13 +92,13 @@ namespace eudaq{
   std::uint32_t
   Factory<BASE>::Register(std::uint32_t id){
     auto &ins = Instance<ARGS&&...>();
-    std::cout<<"Register ID "<<id <<"  to Factory<"
-	     <<static_cast<const void *>(&ins)<<">    ";
+    // std::cout<<"Register ID "<<id <<"  to Factory<"
+    // 	     <<static_cast<const void *>(&ins)<<">    ";
     ins[id] = &MakerFun<DERIVED, ARGS&&...>;
-    std::cout<<"   map items: ";
-    for(auto& e: ins)
-      std::cout<<e.first<<"  ";
-    std::cout<<std::endl;
+    // std::cout<<"   map items: ";
+    // for(auto& e: ins)
+    //   std::cout<<e.first<<"  ";
+    // std::cout<<std::endl;
     return 0;
   };
 

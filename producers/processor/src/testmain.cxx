@@ -12,16 +12,14 @@
 using namespace eudaq;
 
 int main(int argn, char **argc){
-  // PSSP ptt0 = Processor::MakeShared("TimeTriggerPS", "SYS:PSID=0");
-  // PSSP pdd0 = Processor::MakeShared("DummyDevicePS", "SYS:PSID=10");
-  // // PSSP pdd1 = Processor::MakeShared("DummyDevicePS", "SYS:PSID=11");
-  PSSP prd0 = Processor::MakeShared("RandomDelayPS", "SYS:PSID=20");
-  PSSP pst0 = Processor::MakeShared("SyncByTimestampPS", "SYS:PSID=30");
-  PSSP pep0 = Processor::MakeShared("ExamplePS", "SYS:PSID=40");
-  PSSP pds0 = Processor::MakeShared("DummySystemPS", "SYS:PSID=100");
-  PSSP pus0 = Processor::MakeShared("UnpackSyncEventPS", "SYS:PSID=110");
-  PSSP pof0 = Processor::MakeShared("OldEventFilterPS", "SYS:PSID=110");
 
+  auto prd0 = Processor::MakeShared("RandomDelayPS", {{"SYS:PSID", "20"}});
+  auto pst0 = Processor::MakeShared("SyncByTimestampPS", {{"SYS:PSID", "30"}});
+  auto pep0 = Processor::MakeShared("ExamplePS", {{"SYS:PSID", "40"}});
+  auto pds0 = Processor::MakeShared("DummySystemPS", {{"SYS:PSID", "100"}});
+  auto pus0 = Processor::MakeShared("UnpackSyncEventPS", {{"SYS:PSID", "110"}});
+  auto pof0 = Processor::MakeShared("OldEventFilterPS", {{"SYS:PSID", "110"}});
+  
   
   pds0 + "SYNC"
     >>pus0 + "DUMMYDEV"
@@ -30,14 +28,10 @@ int main(int argn, char **argc){
     >>pst0
     ;
 
-
-
   pds0<<"SYS:HB:RUN";
   pds0<<"SYS:PD:RUN";  
   std::cout << "press any key to exit...\n"; getchar();
-
   prd0<<"EMPTY";
-
   std::cout << "press any key to exit...\n"; getchar();
 
   // ptt0 + "TRIGGER"

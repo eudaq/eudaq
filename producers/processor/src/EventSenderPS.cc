@@ -7,29 +7,24 @@ using namespace eudaq;
 
 class EventSenderPS: public Processor{
 public:
-  EventSenderPS(std::string cmd);
-  ~EventSenderPS(){};
-  void ProcessUserEvent(EventSPC ev) final override;
+  EventSenderPS();
+  void ProcessEvent(EventSPC ev) final override;
+  void ProcessCommand(const std::string& cmd_name, const std::string& cmd_par) final override;
   void Connect(std::string type, std::string name, std::string server);
-  void ProcessUserCmd(const std::string cmd_name, const std::string cmd_par) final override;
-    
+
 private:
   std::unique_ptr<DataSender> m_sender;
 };
 
-
 namespace{
-  auto dummy0 = Factory<Processor>::Register<EventSenderPS, std::string&>(eudaq::cstr2hash("EventSenderPS"));
-  auto dummy1 = Factory<Processor>::Register<EventSenderPS, std::string&&>(eudaq::cstr2hash("EventSenderPS"));
+  auto dummy0 = Factory<Processor>::Register<EventSenderPS>(eudaq::cstr2hash("EventSenderPS"));
 }
 
-EventSenderPS::EventSenderPS(std::string cmd)
-  :Processor("EventSenderPS", ""){
-  ProcessCmd(cmd);
+EventSenderPS::EventSenderPS()
+  :Processor("EventSenderPS"){
 }
 
-void EventSenderPS::ProcessUserEvent(EventSPC ev){
-  std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
+void EventSenderPS::ProcessEvent(EventSPC ev){
   if (!m_sender){
     EUDAQ_THROW("DataSender is not created!");
   }
@@ -42,7 +37,7 @@ void EventSenderPS::Connect(std::string type, std::string name, std::string serv
   m_sender->Connect(server); //tcp://ipaddress:portnum
 }
 
-void EventSenderPS::ProcessUserCmd(const std::string cmd_name, const std::string cmd_par){
+void EventSenderPS::ProcessCommand(const std::string& cmd_name, const std::string& cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("CONNECT"):{
     std::stringstream ss(cmd_par);
