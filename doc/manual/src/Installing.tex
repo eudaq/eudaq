@@ -167,6 +167,7 @@ and check for new versions with \texttt{git tag}.
 
 
 \subsection{Configuration via CMake}
+\label{sec:cmake}
 CMake supports out-of-source configurations and generates building files for compilation (makefiles). 
 Enter the \texttt{build} directory and run CMake, i.e.
 \begin{listing}[mybash]
@@ -229,16 +230,14 @@ rm -rf *
 \subsection{Compilation}
 
 \subsubsection{Compilation on Linux/OSX}
-You should just have to run the command:
+From the top EUDAQ directory, run the command
 \begin{listing}[mybash]
 cd build
 make install
 \end{listing}
-
-from the top EUDAQ directory to compile the common library,
-along with some command-line programs (the contents of the \texttt{./main/exe} subdirectory).
+in order to compile the common library with some command-line programs (the contents of the \texttt{./main/exe} subdirectory).
 If other parts are needed, you can specify them as arguments to the
-CMake command during the configuration step.
+CMake command during the configuration step (see \ref{sec:cmake}).
 
 The executable binaries and the common shared library will be installed by default into the
 \texttt{bin} and \texttt{lib} directories in the source tree,
@@ -248,20 +247,20 @@ please set the respective parameter during the CMake configuration.
 \subsubsection{Setup and Compilation on Windows using Visual~Studio}
 
 This section gives a short overview on the steps needed to compile the
-project under Windows (tested under Windows 7, 32-bit). For a more
+project under Windows (tested under Windows 7, 32-bit and 64-bit). For a more
 detailed introduction to the Windows build system and Visual~Studio
 project files see the appendix~\ref{app:compileOnWindows} on
 page~\pageref{app:compileOnWindows}.
 
 \begin{itemize}
-\item Prerequisites: 
+\item Prerequisites 
 \begin{itemize}
-\item Download Qt4 or Qt5:
+\item Compiler: Download Visual Studio Express Desktop 2012 or later (e.g. 2013 Version):
+  \url{http://www.microsoft.com/en-us/download/details.aspx?id=40787}
+\item Download Qt4 or later Qt5
 \item Download and install the pthreads library (pre-build binary from
   \url{ftp://sources.redhat.com/pub/pthreads-win32}) into either
-  \texttt{c:\\pthreads-w32} or \texttt{./extern/pthreads-w32}
-\item Download Visual Studio Express Desktop (e.g. 2013 Version):
-  \url{http://www.microsoft.com/en-us/download/details.aspx?id=40787}
+  \texttt{\lstinline{c:\\pthreads-w32}} or \texttt{./extern/pthreads-w32}
 \end{itemize}
 
 \item Start the Visual Studio \emph{Developer Command Prompt} from the
@@ -269,35 +268,31 @@ page~\pageref{app:compileOnWindows}.
   \texttt{cmd.exe} session with the necessary environment variables
   already set. If your Qt installation has not been added to the
   global \texttt{\%PATH\%} variable, you need to execute the \texttt{qtenv2.bat} batch file (or similar) in the Qt folder, e.g.
-  
   \begin{listing}[mybash]
 C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
 \end{listing}
 Replace "5.1.1" with the version string of your Qt installation.
 
 \item Now clone the EUDAQ repository (or download using GitHub) and enter the build directory on the prompt, e.g. by entering
-
   \begin{listing}[mybash]
 cd c:\Users\[username]\Documents\GitHub\eudaq\build
 \end{listing}
 
 \item Configuration: Now enter
-
   \begin{listing}[mybash]
 cmake ..
 \end{listing}
-
 to generate the VS project files.
 
 \item Compile by calling
   \begin{listing}[mybash]
 MSBUILD.exe EUDAQ.sln /p:Configuration=Release
 \end{listing}
-or install into \texttt{eudaq\\bin} by running
+or install into \texttt{\lstinline{eudaq\\bin}} by running
   \begin{listing}[mybash]
 MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
 \end{listing}
-\item This will compile the main library and the GUI; for the remaining processors, please check the individual documentation.
+\item This will compile the main library and the GUI. For additional processors, please check the individual documentation.
 \end{itemize}
 
 Note on ``\emph{moc.exe - System Error: The program can't start
