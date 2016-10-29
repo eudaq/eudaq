@@ -37,6 +37,7 @@ namespace eudaq {
 				  <std::pair<const std::string, const std::string>> l = {{}});
     
     Processor(const std::string& dsp);
+    Processor(Processor&) = delete;
     Processor() = delete;
     virtual ~Processor();
     virtual void ProcessEvent(EventSPC ev);
@@ -45,21 +46,13 @@ namespace eudaq {
 
     void ForwardEvent(EventSPC ev);
     void RegisterEvent(EventSPC ev);
-    
-    void RunProducerThread();
-    void RunConsumerThread();
-    void RunHubThread(); //delilver //TODO remove it, 
-    
-    void AddNextProcessor(ProcessorSP ps);
-    void AddUpstream(ProcessorWP ps);
-    void UpdatePSHub(ProcessorWP ps);
 
     uint32_t GetInstanceN()const {return m_instance_n;};
     std::string GetDescription()const {return m_description;};
     void Print(std::ostream &os, uint32_t offset=0) const;
     
     ProcessorSP operator>>(ProcessorSP psr);
-    ProcessorSP operator<<(const std::string& cmd_str);
+    ProcessorSP operator<<(const std::string& cmd);
 
     ProcessorSP operator+(const std::string& evtype);
     ProcessorSP operator-(const std::string& evtype);
@@ -69,12 +62,14 @@ namespace eudaq {
     uint32_t GetID()const {return GetInstanceN();};
     
   private:
-    void Processing(EventSPC ev);
     void RegisterProcessing(ProcessorSP ps, EventSPC ev);
+    void Processing(EventSPC ev);
+    void BufferEvent(EventSPC ev);
     void ConsumeEvent();
-    void HubProcessing();
-    void AsyncProcessing(EventSPC ev);
-    void ProcessSysCmd(const std::string& cmd, const std::string& arg);
+    void HubProcessing(); //relay
+    void ProcessSysCommand(const std::string& cmd, const std::string& arg);
+    void AddDownstream(ProcessorSP ps);
+    void UpdateHub(ProcessorWP ps);
     
   private:
     std::string m_description;

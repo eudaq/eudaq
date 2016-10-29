@@ -28,7 +28,6 @@ int main(int argn, char **argc){
     >>pst0
     ;
 
-  pds0<<"SYS:HB:RUN";
   pds0<<"SYS:PD:RUN";  
   std::cout << "press any key to exit...\n"; getchar();
   prd0<<"EMPTY";
