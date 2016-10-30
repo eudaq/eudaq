@@ -90,7 +90,8 @@ namespace eudaq {
   }
 
   FileWriterRoot::~FileWriterRoot() {
-
+    std::cout << "closing root file" << std::endl;
+    m_tfile->Write();
     m_tfile->Close();
     delete m_tfile;
   }
