@@ -1,40 +1,75 @@
-#ifndef EUDAQ_INCLUDED_FileReader
-#define EUDAQ_INCLUDED_FileReader
-
-#include "FileSerializer.hh"
-#include "DetectorEvent.hh"
-#include "StandardEvent.hh"
-#include "baseFileReader.hh"
-
+#ifndef baseFileReader_h__
+#define baseFileReader_h__
 #include <string>
 #include <memory>
+#include "Platform.hh"
+#include "ClassFactory.hh"
+#include "Configuration.hh"
 
-namespace eudaq {
+#define RegisterFileReader(derivedClass,ID) REGISTER_DERIVED_CLASS(eudaq::baseFileReader,derivedClass,ID)
 
-  class DLLEXPORT FileReader : public baseFileReader {
+namespace eudaq{
+  class Event;
+  class OptionParser;
+  class baseFileReader;
+  class fileConfig;
+  using FileReader_up = std::unique_ptr < baseFileReader, std::function<void(baseFileReader*)> > ;
+  class DLLEXPORT baseFileReader{
   public:
-    FileReader(const std::string & filename, const std::string & filepattern = "");
-    FileReader(Parameter_ref param);
-    ~FileReader();
-    
-    virtual unsigned RunNumber() const;
-    virtual bool NextEvent(size_t skip = 0);
-    virtual EventSP getEventPtr() { return m_ev; }
-    virtual EventSP GetNextEvent();
-    virtual void Interrupt() { m_des.Interrupt(); }
-
-    const eudaq::Event & GetEvent() const;
-    const DetectorEvent & Event() const { return GetDetectorEvent(); } // for backward compatibility
-    const DetectorEvent & GetDetectorEvent() const;
-    const StandardEvent & GetStandardEvent() const;
-    std::shared_ptr<eudaq::DetectorEvent> GetDetectorEvent_ptr(){ return std::dynamic_pointer_cast<eudaq::DetectorEvent>(m_ev); };
+    static const char* getKeyFileName();
+    static const char* getKeyInputPattern();
+    static const char* getKeySectionName();
+    using MainType = std::string;
+    using Parameter_t = eudaq::Configuration;
+    using Parameter_ref = const Parameter_t&;
+    static Parameter_t getConfiguration(const std::string& fileName, const std::string& filePattern);
+    baseFileReader(Parameter_ref config);
+    baseFileReader(const std::string&  fileName);
+    std::string Filename()const;
+    std::string InputPattern() const;
+    Parameter_ref getConfiguration()const;
+    Parameter_t&  getConfiguration();
+    virtual unsigned RunNumber() const = 0;
+    virtual bool NextEvent(size_t skip = 0) = 0;
+    virtual std::shared_ptr<eudaq::Event> GetNextEvent() = 0;
+    virtual const eudaq::Event & GetEvent() const = 0;
+    virtual std::shared_ptr<eudaq::Event> getEventPtr()  = 0 ;
+    virtual void Interrupt();
 
   private:
-    FileDeserializer m_des;
-    EventSP m_ev;
-    unsigned m_ver;
-    size_t m_subevent_counter = 0;
+    Parameter_t m_config;
+  };
+
+
+
+  class DLLEXPORT FileReaderFactory{
+  public:
+    
+    static FileReader_up create(const std::string & filename, const std::string & filepattern);
+    static FileReader_up create(const std::string & filename);
+    static FileReader_up create(baseFileReader::MainType type, baseFileReader::Parameter_ref  param);
+    static FileReader_up create(eudaq::OptionParser & op);
+    static FileReader_up create(const fileConfig& file_conf_);
+
+    static void addComandLineOptions(eudaq::OptionParser & op);
+    static std::string Help_text();
+    static std::string getDefaultInputpattern();
+
+  private:
+
+    class Impl;
+    static Impl& getImpl();
+
+  };
+
+  class DLLEXPORT fileConfig {
+  public:
+    fileConfig(eudaq::OptionParser & op);
+    explicit fileConfig(const std::string& fileName);
+    std::string get() const;
+  private:
+    std::string m_type;
   };
 }
 
-#endif // EUDAQ_INCLUDED_FileReader
+#endif // baseFileReader_h__
