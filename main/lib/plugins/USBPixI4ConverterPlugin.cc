@@ -281,9 +281,9 @@ class USBPixI4ConverterBase : public ATLASFEI4Interpreter<dh_lv1id_msk, dh_bcid_
 		return true;
 	}
 
-	StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id) const
+	StandardPlane ConvertPlane(const std::vector<unsigned char> & data, unsigned id, unsigned full_id) const
 	{
-		StandardPlane plane(id, EVENT_TYPE, EVENT_TYPE);
+		StandardPlane plane(full_id, EVENT_TYPE, EVENT_TYPE);
 
 		//check for consistency
 		bool valid = isEventValid(data);
@@ -452,16 +452,15 @@ class USBPixI4ConverterPlugin : public DataConverterPlugin , public USBPixI4Conv
 
 		//If we get here it must be a data event
 		const RawDataEvent & ev_raw = dynamic_cast<const RawDataEvent &>(ev);
-
 		for(size_t i = 0; i < ev_raw.NumBlocks(); ++i)
 		{
 			if(this->advancedConfig) 
 			{
-				sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), this->moduleConfig.at(i)));
+				sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), this->moduleConfig.at(i), this->moduleConfig.at(i)+chip_id_offset-1+this->first_sensor_id));
 			}
 			else
 			{
-				sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i)));
+				sev.AddPlane(this->ConvertPlane(ev_raw.GetBlock(i), ev_raw.GetID(i), ev_raw.GetID(i) + chip_id_offset + this->first_sensor_id));
 			}
 		}
 		return true;

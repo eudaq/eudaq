@@ -523,7 +523,7 @@ namespace eudaq {
     for(std::size_t i=0;i<m_sensorids.size();i++){
       for(int sm=0;sm<m_smult[i];sm++){
 	int sensorid=m_sensorids[i];
-	StandardPlane plane(sensorid+sm, "APIX", "APIX");
+	StandardPlane plane(sensorid+sm + chip_id_offset, "APIX", "APIX");
 	if(m_nFeSensor[sensorid]!=3){
 	  int colmult=1;
 	  int rowmult=1;
