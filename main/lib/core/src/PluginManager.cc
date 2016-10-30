@@ -2,19 +2,6 @@
 #include "Exception.hh"
 #include "Configuration.hh"
 
-#if USE_LCIO
-#include "lcio.h"
-#include "IMPL/LCEventImpl.h"
-#include "IMPL/LCRunHeaderImpl.h"
-#endif
-
-#if USE_EUTELESCOPE
-#include "EUTELESCOPE.h"
-#include "EUTelRunHeaderImpl.h"
-using eutelescope::EUTELESCOPE;
-#endif
-
-//#include <iostream>
 #include <string>
 using namespace std;
 
@@ -25,17 +12,10 @@ namespace eudaq {
     return manager;
   }
 
-  DataConverterPlugin & PluginManager::GetPlugin(const Event & event) {
-    return GetPlugin(getEventId(event));
-  }
-
-  DataConverterPlugin & PluginManager::GetPlugin(PluginManager::t_eventid eventtype) {
-    uint32_t id = eventtype.first;
-    if(!eventtype.second.empty()){
-      id += eudaq::cstr2hash(eventtype.second.c_str());
-    }
+  DataConverterPlugin & PluginManager::GetPlugin(const Event& ev){
+    uint32_t id = ev.GetEventID();
     if (m_datacvts.find(id) == m_datacvts.end()){
-      m_datacvts[id] = Factory<DataConverterPlugin>::Create<>(id);
+      m_datacvts[id] = Factory<DataConverterPlugin>::MakeUnique(id);
     }
     return *(m_datacvts[id].get());
   }
@@ -44,56 +24,9 @@ namespace eudaq {
     eudaq::Configuration conf(dev.GetTag("CONFIG"));
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       const eudaq::Event & subev = *dev.GetEvent(i);
-      InitializeSubEvent(subev, conf);
+      GetInstance().GetPlugin(subev).Initialize(subev, conf);
     }
   }
-
-  void PluginManager::InitializeSubEvent(const Event& subev, const Configuration& conf)
-  {
-    GetInstance().GetPlugin(subev).Initialize(subev, conf);
-  }
-
-
-  unsigned PluginManager::GetTriggerID(const Event & ev) {
-    return GetInstance().GetPlugin(ev).GetTriggerID(ev);
-  }
-
-
-  int PluginManager::IsSyncWithTLU(eudaq::Event const & ev, eudaq::Event const & tlu)
-  {
-    return GetInstance().GetPlugin(ev).IsSyncWithTLU(ev, tlu);
-  }
-
-  
-  PluginManager::t_eventid PluginManager::getEventId(eudaq::Event const & ev)
-  {
-    return std::make_pair(ev.GetEventID(), ev.GetSubType());
-  }
-
-#if USE_LCIO && USE_EUTELESCOPE
-  lcio::LCRunHeader * PluginManager::GetLCRunHeader(const DetectorEvent & bore) {
-    IMPL::LCRunHeaderImpl * lcHeader = new IMPL::LCRunHeaderImpl;
-    lcHeader->setRunNumber(bore.GetRunNumber());
-    lcHeader->setDetectorName("EUTelescope");
-    eutelescope::EUTelRunHeaderImpl runHeader(lcHeader);
-    runHeader.setDateTime();
-    runHeader.setDataType(EUTELESCOPE::DAQDATA);
-    runHeader.setDAQSWName(EUTELESCOPE::EUDAQ);
-
-    const eudaq::Configuration conf(bore.GetTag("CONFIG"));
-    runHeader.setGeoID(conf.Get("GeoID", 0));
-
-    for (size_t i = 0; i < bore.NumEvents(); ++i) {
-      const eudaq::Event & subev = *bore.GetEvent(i);
-      GetInstance().GetPlugin(subev).GetLCIORunHeader(*lcHeader, subev, conf);
-    }
-    return lcHeader;
-  }
-#else
-  lcio::LCRunHeader * PluginManager::GetLCRunHeader(const DetectorEvent &) {
-    return 0;
-  }
-#endif
 
   StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
     StandardEvent event(dev.GetRunN(), dev.GetEventN(), dev.GetTimestampBegin());
@@ -114,26 +47,47 @@ namespace eudaq {
     return event;
   }
 
-  std::shared_ptr<StandardEvent> PluginManager::ConvertToStandard_ptr(const DetectorEvent &dev) {
-    std::shared_ptr<StandardEvent> event = make_shared<StandardEvent>(dev.GetRunN(), dev.GetEventN(), dev.GetTimestampBegin());
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const Event * ev = dev.GetEvent(i);
-      if (!ev) EUDAQ_THROW("Null event!");
-      if (ev->GetSubType() == "EUDRB") {
-        ConvertStandardSubEvent(*event, *ev);
-      }
+  void PluginManager::ConvertStandardSubEvent(StandardEvent & dest, const Event & source) {
+    try {
+      GetInstance().GetPlugin(source).GetStandardSubEvent(dest, source);
     }
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const Event * ev = dev.GetEvent(i);
-      if (!ev) EUDAQ_THROW("Null event!");
-      if (ev->GetSubType() != "EUDRB") {
-        ConvertStandardSubEvent(*event, *ev);
-      }
+    catch (const Exception & e) {
+      std::cerr << "Error during conversion in PluginManager::ConvertStandardSubEvent:\n"
+		<< e.what() << std::endl;
     }
-    return event;
   }
 
-#if USE_LCIO
+  void PluginManager::ConvertLCIOSubEvent(lcio::LCEvent & dest, const Event & source) {
+    GetInstance().GetPlugin(source).GetLCIOSubEvent(dest, source);
+  }
+  
+#if USE_LCIO && USE_EUTELESCOPE
+#include "lcio.h"
+#include "IMPL/LCEventImpl.h"
+#include "IMPL/LCRunHeaderImpl.h"
+
+#include "EUTELESCOPE.h"
+#include "EUTelRunHeaderImpl.h"
+using eutelescope::EUTELESCOPE;
+
+  lcio::LCRunHeader * PluginManager::GetLCRunHeader(const DetectorEvent & bore) {
+    IMPL::LCRunHeaderImpl * lcHeader = new IMPL::LCRunHeaderImpl;
+    lcHeader->setRunNumber(bore.GetRunNumber());
+    lcHeader->setDetectorName("EUTelescope");
+    eutelescope::EUTelRunHeaderImpl runHeader(lcHeader);
+    runHeader.setDateTime();
+    runHeader.setDataType(EUTELESCOPE::DAQDATA);
+    runHeader.setDAQSWName(EUTELESCOPE::EUDAQ);
+
+    const eudaq::Configuration conf(bore.GetTag("CONFIG"));
+    runHeader.setGeoID(conf.Get("GeoID", 0));
+
+    for (size_t i = 0; i < bore.NumEvents(); ++i) {
+      const eudaq::Event & subev = *bore.GetEvent(i);
+      GetInstance().GetPlugin(subev).GetLCIORunHeader(*lcHeader, subev, conf);
+    }
+    return lcHeader;
+  }
   lcio::LCEvent * PluginManager::ConvertToLCIO(const DetectorEvent & dev) {
     lcio::LCEventImpl * event = new lcio::LCEventImpl;
     event->setEventNumber(dev.GetEventNumber());
@@ -143,61 +97,11 @@ namespace eudaq {
     for (size_t i = 0; i < dev.NumEvents(); ++i) {
       ConvertLCIOSubEvent(*event, *dev.GetEvent(i));
     }
-
     return event;
   }
 #else
-  lcio::LCEvent * PluginManager::ConvertToLCIO(const DetectorEvent &) {
-    return 0;
-  }
+  lcio::LCRunHeader * PluginManager::GetLCRunHeader(const DetectorEvent &) {return 0;}
+  lcio::LCEvent * PluginManager::ConvertToLCIO(const DetectorEvent &) {return 0;}
 #endif
 
-  void PluginManager::ConvertStandardSubEvent(StandardEvent & dest, const Event & source) {
-    try {
-      GetInstance().GetPlugin(source).GetStandardSubEvent(dest, source);
-    }
-    catch (const Exception & e) {
-      std::cerr << "Error during conversion in PluginManager::ConvertStandardSubEvent:\n" << e.what() << std::endl;
-    }
-  }
-
-  void PluginManager::ConvertLCIOSubEvent(lcio::LCEvent & dest, const Event & source) {
-    GetInstance().GetPlugin(source).GetLCIOSubEvent(dest, source);
-  }
-
-  void PluginManager::setCurrentTLUEvent(eudaq::Event & ev, eudaq::TLUEvent const & tlu)
-  {
-    GetInstance().GetPlugin(ev).setCurrentTLUEvent(ev, tlu);
-  }
-
-  std::shared_ptr<eudaq::Event> PluginManager::ExtractEventN(std::shared_ptr<eudaq::Event> pac, size_t NumberOfROF)
-  {
-    return GetInstance().GetPlugin(*pac).ExtractEventN(pac, NumberOfROF);
-  }
-
-  size_t PluginManager::GetNumberOfEvents(const eudaq::Event& pac)
-  {
-    return GetInstance().GetPlugin(pac).GetNumberOfEvents(pac);
-
-  }
-  unsigned PluginManager::getUniqueIdentifier(const Event &ev)
-  {
-    return GetInstance().GetPlugin(ev).getUniqueIdentifier(ev);
-  }
-
-  bool PluginManager::isTLU(const Event& ev)
-  {
-    return GetInstance().GetPlugin(ev).isTLU(ev);
-  }
-
-  // PluginManager::timeStamp_t PluginManager::GetTimeStamp(const Event& ev, size_t index)
-  // {
-  //   return GetInstance().GetPlugin(ev).GetTimeStamp(ev, index);
-  // }
-
-  // size_t PluginManager::GetTimeStamp_size(const Event & ev)
-  // {
-  //   return GetInstance().GetPlugin(ev).GetTimeStamp_size(ev);
-  // }
-
-}//namespace eudaq
+}

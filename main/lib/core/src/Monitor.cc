@@ -14,7 +14,7 @@ namespace eudaq {
         skip_events_with_counter(skip_evts) {
     if (datafile != "") {
       // set offline
-      m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), datafile);
+      m_reader = Factory<FileReader>::MakeShared(cstr2hash("RawFileReader"), datafile);
       PluginManager::Initialize(*dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get())); // process BORE
       // m_callstart = true;
       std::cout << "DEBUG: Reading file " << datafile << " -> "

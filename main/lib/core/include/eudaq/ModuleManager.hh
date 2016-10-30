@@ -11,11 +11,14 @@ class ModuleManager;
 namespace eudaq{
   class ModuleManager{
   public:
-    ModuleManager();
     static ModuleManager* Instance();
-    uint32_t LoadModuleDir(const std::string dir);
-    bool LoadModuleFile(const std::string file);
+    ModuleManager(const ModuleManager&) = delete;
+    ModuleManager& operator=(const ModuleManager&) = delete;
+    uint32_t LoadModuleDir(const std::string& dir);
+    bool LoadModuleFile(const std::string& file);
+    void Print(std::ostream& os, size_t offset) const;
   private:
+    ModuleManager();
     std::map<std::string, void*> m_modules;
   };
 }

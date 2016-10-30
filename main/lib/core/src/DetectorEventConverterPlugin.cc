@@ -27,12 +27,12 @@ public:
     EUDAQ_THROW("a detector Event can't be converted to standart event");
   }
 
-  virtual size_t GetNumberOfEvents(const eudaq::Event& pac) override{
+  virtual size_t GetNumSubEvent(const eudaq::Event& pac) override{
     auto det = dynamic_cast<const DetectorEvent*>(&pac);
     return  det->NumEvents();
   }
 
-  virtual EventSP ExtractEventN(EventSP pac, size_t NumberOfROF) override{
+  virtual EventSP GetSubEvent(EventSP pac, size_t NumberOfROF) override{
 
     auto det = std::dynamic_pointer_cast<DetectorEvent>(pac);
     if (NumberOfROF < det->NumEvents()) {

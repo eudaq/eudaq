@@ -3,10 +3,7 @@
 #include <time.h>
 
 #include "Event.hh"
-#include "PluginManager.hh"
 #include "BufferSerializer.hh"
-
-
 
 namespace eudaq {
   
@@ -165,5 +162,3 @@ namespace eudaq {
 
 
 }
-
-

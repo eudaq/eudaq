@@ -11,7 +11,7 @@ using std::uint8_t;
 using std::uint16_t;
 using std::uint32_t;
 using std::uint64_t;
-
+using std::size_t;
 #define PF_LINUX 1
 #define PF_MACOSX 2
 #define PF_CYGWIN 3
