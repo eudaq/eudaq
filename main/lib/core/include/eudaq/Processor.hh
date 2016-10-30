@@ -1,20 +1,18 @@
 #ifndef PROCESSOR_HH_
 #define PROCESSOR_HH_
 
-#include<set>
-#include<vector>
-#include<string>
-#include<queue>
-#include<memory>
-#include<thread>
-#include<mutex>
-#include<atomic>
-#include<condition_variable>
+#include <set>
+#include <vector>
+#include <string>
+#include <queue>
+#include <memory>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
 
-#include"Event.hh"
-#include"Configuration.hh"
-
-#include"Factory.hh"
+#include "Event.hh"
+#include "Factory.hh"
 
 namespace eudaq {
   class Processor;
@@ -47,8 +45,10 @@ namespace eudaq {
     void ForwardEvent(EventSPC ev);
     void RegisterEvent(EventSPC ev);
 
-    uint32_t GetInstanceN()const {return m_instance_n;};
-    std::string GetDescription()const {return m_description;};
+    void StopProducer();
+    inline bool GetProducerStopFlag() const {return m_pdc_go_stop;};
+    inline uint32_t GetInstanceN()const {return m_instance_n;};
+    inline std::string GetDescription()const {return m_description;};
     void Print(std::ostream &os, uint32_t offset=0) const;
     
     ProcessorSP operator>>(ProcessorSP psr);
@@ -58,25 +58,27 @@ namespace eudaq {
     ProcessorSP operator-(const std::string& evtype);
     ProcessorSP operator<<=(EventSPC ev);
 
-    //TODO: to be removed
-    uint32_t GetID()const {return GetInstanceN();};
-    
   private:
-    void RegisterProcessing(ProcessorSP ps, EventSPC ev);
     void Processing(EventSPC ev);
-    void BufferEvent(EventSPC ev);
     void ConsumeEvent();
     void HubProcessing(); //relay
     void ProcessSysCommand(const std::string& cmd, const std::string& arg);
-    void AddDownstream(ProcessorSP ps);
-    void UpdateHub(ProcessorWP ps);
+    void RegisterProcessing(ProcessorSP ps, EventSPC ev);
+    void RegisterDownstream(ProcessorSP ps, const std::set<uint32_t>& evset = {});
+    void RegisterUpstream(ProcessorSP up, ProcessorWP hub);
     
   private:
     std::string m_description;
     uint32_t m_instance_n;
+    
     ProcessorWP m_ps_hub;
     std::vector<ProcessorWP> m_ps_upstream;
     std::vector<std::pair<ProcessorSP, std::set<uint32_t>>> m_ps_downstream;
+    std::mutex m_mtx_input;  // m_ps_upstream, m_ps_hub; guard the event intput
+    std::mutex m_mtx_output; // m_ps_downstream; guard the event output
+    // std::mutex m_mtx_config;
+    
+    std::atomic_bool m_hub_force;
     
     std::deque<EventSPC> m_que_csm;
     std::deque<std::pair<ProcessorSP, EventSPC> > m_que_hub;
@@ -86,20 +88,15 @@ namespace eudaq {
     std::condition_variable m_cv_hub;
     std::thread m_th_csm;
     std::thread m_th_hub;
+    std::thread m_th_pdc;
     std::atomic_bool m_csm_go_stop;
     std::atomic_bool m_hub_go_stop;
+    std::atomic_bool m_pdc_go_stop;
     
-    std::mutex m_mtx_config;
-    std::atomic_bool m_hub_force;
-    
-    std::set<uint32_t> m_evlist_white; //TODO: for processor input
-    
-
-    std::thread m_th_pdc;
+    std::set<uint32_t> m_ev_out_default;
   };
 
-
-
+  
   
   template <typename T>
   ProcessorSP operator>>(ProcessorSP psl, T&& t){
@@ -115,10 +112,10 @@ namespace eudaq {
   ProcessorSP operator+(ProcessorSP psl, T&& t){
     return (*psl)+std::forward<T>(t);
   }
-
+  
   template <typename T>
   ProcessorSP operator-(ProcessorSP psl, T&& t){
-    return (*psl)-std::forward<T>(t);
+    return (*psl)+std::forward<T>(t);
   }
   
   template <typename T>

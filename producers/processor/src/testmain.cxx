@@ -28,7 +28,7 @@ int main(int argn, char **argc){
     >>pst0
     ;
 
-  pds0<<"SYS:PD:RUN";  
+  pds0<<"SYS:PD:RUN"<<"SYS:PD:DETACH";
   std::cout << "press any key to exit...\n"; getchar();
   prd0<<"EMPTY";
   std::cout << "press any key to exit...\n"; getchar();

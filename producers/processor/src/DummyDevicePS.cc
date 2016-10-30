@@ -26,7 +26,7 @@ namespace eudaq{
   }
 
   void DummyDevicePS::ProcessEvent(EventSPC ev){
-    EventUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetID());
+    EventUP devev = Factory<Event>::Create<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV"), cstr2hash("DUMMYDEV"), 0, GetInstanceN());
     if(ev->IsBORE() || ev->IsEORE()){
       ForwardEvent(std::move(ev));
       return;

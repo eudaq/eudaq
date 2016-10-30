@@ -55,7 +55,7 @@ namespace eudaq{
     // the end_of_trigger is defined by new events' earliest ts_last 
     for(; m_event_n < 1000; m_event_n ++){
 
-      EventSP ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetID());
+      EventSP ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetInstanceN());
       
       std::vector<uint64_t> ts_begin(m_n_stm, 0);
       std::vector<uint64_t> ts_end(m_n_stm, 0);
