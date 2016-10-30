@@ -1,20 +1,33 @@
-#ifndef baseFileReader_h__
-#define baseFileReader_h__
+#ifndef FILEREADER_HH__
+#define FILEREADER_HH__
 #include <string>
 #include <memory>
-#include "Platform.hh"
-#include "ClassFactory.hh"
-#include "Configuration.hh"
+#include "eudaq/Platform.hh"
+#include "eudaq/ClassFactory.hh"
+#include "eudaq/Configuration.hh"
+#include "eudaq/Factory.hh"
 
-#define RegisterFileReader(derivedClass,ID) REGISTER_DERIVED_CLASS(eudaq::baseFileReader,derivedClass,ID)
+#define RegisterFileReader(derivedClass,ID) REGISTER_DERIVED_CLASS(eudaq::FileReader,derivedClass,ID)
 
 namespace eudaq{
+  class FileReader;  
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT
+  Factory<FileReader>;
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<FileReader>::UP(*)(std::string&)>&
+  Factory<FileReader>::Instance<std::string&>();
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<FileReader>::UP(*)(std::string&&)>&
+  Factory<FileReader>::Instance<std::string&&>();
+#endif
+  using FileReaderUP = Factory<FileReader>::UP;
+  using FileReaderSP = Factory<FileReader>::SP;
+
   class Event;
   class OptionParser;
-  class baseFileReader;
   class fileConfig;
-  using FileReader_up = std::unique_ptr < baseFileReader, std::function<void(baseFileReader*)> > ;
-  class DLLEXPORT baseFileReader{
+  using FileReader_up = FileReaderUP;
+
+  class DLLEXPORT FileReader{
   public:
     static const char* getKeyFileName();
     static const char* getKeyInputPattern();
@@ -23,8 +36,8 @@ namespace eudaq{
     using Parameter_t = eudaq::Configuration;
     using Parameter_ref = const Parameter_t&;
     static Parameter_t getConfiguration(const std::string& fileName, const std::string& filePattern);
-    baseFileReader(Parameter_ref config);
-    baseFileReader(const std::string&  fileName);
+    FileReader(Parameter_ref config);
+    FileReader(const std::string&  fileName);
     std::string Filename()const;
     std::string InputPattern() const;
     Parameter_ref getConfiguration()const;
@@ -47,7 +60,7 @@ namespace eudaq{
     
     static FileReader_up create(const std::string & filename, const std::string & filepattern);
     static FileReader_up create(const std::string & filename);
-    static FileReader_up create(baseFileReader::MainType type, baseFileReader::Parameter_ref  param);
+    static FileReader_up create(FileReader::MainType type, FileReader::Parameter_ref  param);
     static FileReader_up create(eudaq::OptionParser & op);
     static FileReader_up create(const fileConfig& file_conf_);
 
@@ -72,4 +85,4 @@ namespace eudaq{
   };
 }
 
-#endif // baseFileReader_h__
+#endif // FileReader_h__

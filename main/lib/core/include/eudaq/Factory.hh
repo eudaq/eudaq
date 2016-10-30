@@ -17,6 +17,11 @@ namespace eudaq{
     using WP_BASE = std::weak_ptr<BASE>;
     using SPC_BASE = std::shared_ptr<const BASE>;
 
+    using UP = std::unique_ptr<BASE, std::function<void(BASE*)> >;
+    using SP = std::shared_ptr<BASE>;
+    using WP = std::weak_ptr<BASE>;
+    using SPC = std::shared_ptr<const BASE>;
+    
     template <typename ...ARGS>
     static typename Factory<BASE>::UP_BASE
     MakeUnique(std::uint32_t id, ARGS&& ...args);

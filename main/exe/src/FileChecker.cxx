@@ -15,12 +15,11 @@
 #include <vector>
 
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/FileReader.hh"
+#include "eudaq/RawFileReader.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/TLUEvent.hh"
-#include "eudaq/FileReader.hh"
 
 
 using namespace eudaq;
@@ -94,7 +93,7 @@ int main(int /*argc*/, const char ** argv) {
         try {
             // always synchronize based on the trigger id
 
-          FileReader reader(run, input_pattern);
+          RawFileReader reader(run, input_pattern);
             
 
             const DetectorEvent & bore = reader.GetDetectorEvent();

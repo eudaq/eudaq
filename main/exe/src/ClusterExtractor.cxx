@@ -1,6 +1,6 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/FileReader.hh"
+#include "eudaq/RawFileReader.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 
@@ -61,7 +61,7 @@ int main(int /*argc*/, char ** argv) {
     op.Parse(argv);
     //EUDAQ_LOG_LEVEL("INFO");
     for (size_t i = 0; i < op.NumArgs(); ++i) {
-      eudaq::FileReader reader(op.GetArg(i), ipat.Value());
+      eudaq::RawFileReader reader(op.GetArg(i), ipat.Value());
       if (tracksonly.IsSet()) EUDAQ_THROW("Tracking is not yet implemented");
       if (clust.Value() < 1 || (clust.Value() % 2) != 1) EUDAQ_THROW("Cluster size must be an odd number");
       std::cout << "Reading: " << reader.Filename() << std::endl;

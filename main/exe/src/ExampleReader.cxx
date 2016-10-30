@@ -1,4 +1,4 @@
-#include "eudaq/FileReader.hh"
+#include "eudaq/RawFileReader.hh"
 #include "eudaq/PluginManager.hh"
 #include "eudaq/OptionParser.hh"
 #include <iostream>
@@ -21,7 +21,7 @@ int main(int /*argc*/, const char ** argv) {
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
       // Create a reader for this file
-      eudaq::FileReader reader(op.GetArg(i));
+      eudaq::RawFileReader reader(op.GetArg(i));
 
       // Display the actual filename (argument could have been a run number)
       std::cout << "Opened file: " << reader.Filename() << std::endl;

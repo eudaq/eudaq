@@ -4,18 +4,18 @@
 #include "FileSerializer.hh"
 #include "DetectorEvent.hh"
 #include "StandardEvent.hh"
-#include "baseFileReader.hh"
+#include "FileReader.hh"
 
 #include <string>
 #include <memory>
 
 namespace eudaq {
 
-  class DLLEXPORT FileReader : public baseFileReader {
+  class DLLEXPORT RawFileReader : public FileReader {
   public:
-    FileReader(const std::string & filename, const std::string & filepattern = "");
-    FileReader(Parameter_ref param);
-    ~FileReader();
+    RawFileReader(const std::string & filename, const std::string & filepattern = "");
+    RawFileReader(Parameter_ref param);
+    ~RawFileReader();
     
     virtual unsigned RunNumber() const;
     virtual bool NextEvent(size_t skip = 0);

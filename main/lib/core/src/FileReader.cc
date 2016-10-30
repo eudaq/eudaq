@@ -1,58 +1,63 @@
 #include <list>
-#include "eudaq/baseFileReader.hh"
+#include "eudaq/FileReader.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/OptionParser.hh"
 
 namespace eudaq {
-  using FileReaderClassFactory = ClassFactory<baseFileReader, baseFileReader::MainType, baseFileReader::Parameter_t>;
+  using FileReaderClassFactory = ClassFactory<FileReader, FileReader::MainType, FileReader::Parameter_t>;
+
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&)>& Factory<FileReader>::Instance<std::string&>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&&)>& Factory<FileReader>::Instance<std::string&&>();
   
-  baseFileReader::baseFileReader(Parameter_ref config) :
+  FileReader::FileReader(Parameter_ref config) :
     m_config(config)
   {
     
   }
 
-  baseFileReader::baseFileReader(const std::string& fileName)  
+  FileReader::FileReader(const std::string& fileName)  
   {
     m_config.Set(getKeyFileName(), fileName);
   }
 
-  std::string baseFileReader::Filename() const
+  std::string FileReader::Filename() const
   {
     return m_config.Get(getKeyFileName(), "");
   }
 
-  void baseFileReader::Interrupt()
+  void FileReader::Interrupt()
   {
 
   }
 
-  std::string baseFileReader::InputPattern() const
+  std::string FileReader::InputPattern() const
   {
     return m_config.Get(getKeyInputPattern(),"");
   }
 
-  const char* baseFileReader::getKeyFileName()
+  const char* FileReader::getKeyFileName()
   {
     return "InputFileName__";
   }
 
-  const char* baseFileReader::getKeyInputPattern()
+  const char* FileReader::getKeyInputPattern()
   {
     return "InputPattern__";
   }
 
-  const char* baseFileReader::getKeySectionName()
+  const char* FileReader::getKeySectionName()
   {
     return "FileReaderConfig";
   }
 
-  baseFileReader::Parameter_ref baseFileReader::getConfiguration() const
+  FileReader::Parameter_ref FileReader::getConfiguration() const
   {
     return m_config;
   }
 
-  baseFileReader::Parameter_t& baseFileReader::getConfiguration()
+  FileReader::Parameter_t& FileReader::getConfiguration()
   {
     return m_config;
   }
@@ -64,7 +69,7 @@ namespace eudaq {
 
   }
 
-  REGISTER_BASE_CLASS(baseFileReader);
+  REGISTER_BASE_CLASS(FileReader);
 
   fileConfig::fileConfig(eudaq::OptionParser & op) {
     if (op.NumArgs() == 1) {
@@ -92,10 +97,10 @@ namespace eudaq {
     return m_type;
   }
 
-  baseFileReader::Parameter_t baseFileReader::getConfiguration(const std::string& fileName, const std::string& filePattern)
+  FileReader::Parameter_t FileReader::getConfiguration(const std::string& fileName, const std::string& filePattern)
   {
 
-    auto configuartion = std::string("[") + baseFileReader::getKeySectionName() + "] \n " + baseFileReader::getKeyFileName() + "=" + fileName+ "\n " + baseFileReader::getKeyInputPattern() +"="+ filePattern +"\n";
+    auto configuartion = std::string("[") + FileReader::getKeySectionName() + "] \n " + FileReader::getKeyFileName() + "=" + fileName+ "\n " + FileReader::getKeyInputPattern() +"="+ filePattern +"\n";
     return Parameter_t(configuartion);
   }
 
@@ -176,17 +181,17 @@ namespace eudaq {
     params.erase(params.begin());
     
     std::stringstream ss;
-    ss <<"["<< baseFileReader::getKeySectionName() << "] \n ";
+    ss <<"["<< FileReader::getKeySectionName() << "] \n ";
     for (auto& e:params)
     {
       ss << e;
       ss << '\n';
     }
-    ss << baseFileReader::getKeyFileName() << " = " << inFileName << " \n ";
-    ss << baseFileReader::getKeyInputPattern() << " = " << inFilePattern << " \n ";
+    ss << FileReader::getKeyFileName() << " = " << inFileName << " \n ";
+    ss << FileReader::getKeyInputPattern() << " = " << inFilePattern << " \n ";
    
    // std::cout << ss << std::endl;
-    baseFileReader::Parameter_t m(ss, baseFileReader::getKeySectionName());
+    FileReader::Parameter_t m(ss, FileReader::getKeySectionName());
     return create(type, m);
 
 
@@ -229,7 +234,7 @@ namespace eudaq {
 
 
 
-  FileReader_up FileReaderFactory::create(baseFileReader::MainType type, baseFileReader::Parameter_ref param)
+  FileReader_up FileReaderFactory::create(FileReader::MainType type, FileReader::Parameter_ref param)
   {
     return FileReaderClassFactory::Create(type, param);
   }

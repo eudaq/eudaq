@@ -3,10 +3,9 @@
 
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/FileReader.hh"
+#include "eudaq/RawFileReader.hh"
 #include <string>
 #include <memory>
-using std::shared_ptr;
 namespace eudaq {
 
   /**
@@ -28,14 +27,14 @@ namespace eudaq {
     virtual void OnIdle();
 
     virtual void OnEvent(const StandardEvent & /*ev*/){};
-    virtual void OnBadEvent(shared_ptr<Event> /*ev*/) {}
+    virtual void OnBadEvent(EventSP /*ev*/) {}
     virtual void OnStartRun(unsigned param);
     virtual void OnStopRun();
 
   protected:
     unsigned m_run;
     bool m_callstart;
-    shared_ptr<FileReader> m_reader;
+    std::shared_ptr<RawFileReader> m_reader;
     unsigned limit;
     unsigned skip;
     unsigned int skip_events_with_counter;

@@ -14,7 +14,7 @@ namespace eudaq {
         skip_events_with_counter(skip_evts) {
     if (datafile != "") {
       // set offline
-      m_reader = std::shared_ptr<FileReader>(new FileReader(datafile));
+      m_reader = std::shared_ptr<RawFileReader>(new RawFileReader(datafile));
       PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
       // m_callstart = true;
       std::cout << "DEBUG: Reading file " << datafile << " -> "
@@ -88,7 +88,7 @@ namespace eudaq {
   void Monitor::OnStartRun(unsigned param) {
     std::cout << "run " << param << std::endl;
     m_run = param;
-    m_reader = std::shared_ptr<FileReader>(new FileReader(to_string(m_run)));
+    m_reader = std::shared_ptr<RawFileReader>(new RawFileReader(to_string(m_run)));
     PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
     EUDAQ_INFO("Starting run " + to_string(m_run));
   }
