@@ -9,6 +9,8 @@ namespace eudaq {
   namespace{
     auto dummy0 = Factory<FileWriter>::Register<FileWriterNative, std::string&>(cstr2hash("native"));
     auto dummy1 = Factory<FileWriter>::Register<FileWriterNative, std::string&&>(cstr2hash("native"));
+    auto dummy2 = Factory<FileWriter>::Register<FileWriterNative, std::string&>(cstr2hash("RawFileWriter"));
+    auto dummy3 = Factory<FileWriter>::Register<FileWriterNative, std::string&&>(cstr2hash("RawFileWriter"));
   }
   
   class FileWriterNative : public FileWriter {

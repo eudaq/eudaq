@@ -15,7 +15,8 @@
 #include <vector>
 
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/RawFileReader.hh"
+#include "eudaq/FileReader.hh"
+#include "eudaq/FileNamer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/RawDataEvent.hh"
@@ -92,17 +93,16 @@ int main(int /*argc*/, const char ** argv) {
 
         try {
             // always synchronize based on the trigger id
+	  eudaq::FileReaderUP reader_up = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::cstr2hash("RawFileReader"), eudaq::FileNamer(input_pattern).Set('X', ".raw").SetReplace('R', run));
+	  eudaq::FileReader &reader = *(reader_up.get());
 
-          RawFileReader reader(run, input_pattern);
-            
-
-            const DetectorEvent & bore = reader.GetDetectorEvent();
+            const DetectorEvent & bore = *dynamic_cast<const DetectorEvent*>(reader.GetNextEvent().get());
             if (!bore.IsBORE()) errors += "first event is not BORE. ";
             // TODO do we need to initialize the PluginManager?
             // no conversion to StandardEvents occurs
 
             for (num_events = 0; reader.NextEvent(); ++num_events) {
-                const DetectorEvent & e = reader.GetDetectorEvent();
+                const DetectorEvent & e = *dynamic_cast<const DetectorEvent*>(reader.GetNextEvent().get());
 
                 if (e.IsEORE()) break;
 

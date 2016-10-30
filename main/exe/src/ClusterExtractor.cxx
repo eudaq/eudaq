@@ -1,6 +1,7 @@
 #include "eudaq/PluginManager.hh"
 #include "eudaq/DetectorEvent.hh"
-#include "eudaq/RawFileReader.hh"
+#include "eudaq/FileReader.hh"
+#include "eudaq/FileNamer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 
@@ -61,7 +62,10 @@ int main(int /*argc*/, char ** argv) {
     op.Parse(argv);
     //EUDAQ_LOG_LEVEL("INFO");
     for (size_t i = 0; i < op.NumArgs(); ++i) {
-      eudaq::RawFileReader reader(op.GetArg(i), ipat.Value());
+
+      eudaq::FileReaderUP reader_up = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::cstr2hash("RawFileReader"), eudaq::FileNamer(ipat.Value()).Set('X', ".raw").SetReplace('R', op.GetArg(i)));
+      eudaq::FileReader &reader = *(reader_up.get());
+
       if (tracksonly.IsSet()) EUDAQ_THROW("Tracking is not yet implemented");
       if (clust.Value() < 1 || (clust.Value() % 2) != 1) EUDAQ_THROW("Cluster size must be an odd number");
       std::cout << "Reading: " << reader.Filename() << std::endl;
@@ -125,7 +129,7 @@ int main(int /*argc*/, char ** argv) {
 
       std::vector<unsigned> hit_hist;
       {
-        const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
+        const eudaq::DetectorEvent & dev = *dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get());
         eudaq::PluginManager::Initialize(dev);
         runnum = dev.GetRunNumber();
         std::cout << "Found BORE, run number = " << runnum << std::endl;
@@ -155,7 +159,7 @@ int main(int /*argc*/, char ** argv) {
       }
 
       while (reader.NextEvent()) {
-        const eudaq::DetectorEvent & dev = reader.GetDetectorEvent();
+        const eudaq::DetectorEvent & dev = *dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get());
         if (dev.IsBORE()) {
           std::cout << "ERROR: Found another BORE !!!" << std::endl;
         } else if (dev.IsEORE()) {

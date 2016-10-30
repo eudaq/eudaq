@@ -11,6 +11,8 @@ namespace eudaq {
   namespace{
     auto dummy0 = Factory<FileReader>::Register<RawFileReader, std::string&>(cstr2hash("RawFileReader"));
     auto dummy1 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("RawFileReader"));
+    auto dummy2 = Factory<FileReader>::Register<RawFileReader, std::string&>(cstr2hash("raw"));
+    auto dummy3 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("raw"));
   }
   
   RawFileReader::RawFileReader(const std::string & file, const std::string & filepattern)
@@ -21,9 +23,10 @@ namespace eudaq {
     m_ev = Factory<eudaq::Event>::Create<Deserializer&>(id, m_des);
   }
 
-  RawFileReader::RawFileReader(Parameter_ref param) :RawFileReader(param.Get(getKeyFileName(),""),param.Get(getKeyInputPattern(),""))
-  {
-
+  RawFileReader::RawFileReader(const std::string& file):FileReader(file), m_des(Filename()),m_ver(1){
+    uint32_t id;
+    m_des.PreRead(id);
+    m_ev = Factory<eudaq::Event>::Create<Deserializer&>(id, m_des);
   }
 
   RawFileReader::~RawFileReader() {
@@ -31,9 +34,7 @@ namespace eudaq {
   }
 
   bool RawFileReader::NextEvent(size_t skip) {
-    std::shared_ptr<eudaq::Event> ev = nullptr;
-
-
+    EventSP ev = nullptr;
     bool result = m_des.ReadEvent(m_ver, ev, skip);
     if (ev) m_ev = ev;
     return result;
@@ -43,29 +44,13 @@ namespace eudaq {
     return m_ev->GetRunNumber();
   }
 
-  const Event & RawFileReader::GetEvent() const {
-    return *m_ev;
-  }
 
-  const DetectorEvent & RawFileReader::GetDetectorEvent() const {
-    return dynamic_cast<const DetectorEvent &>(*m_ev);
-  }
-
-  const StandardEvent & RawFileReader::GetStandardEvent() const {
-    return dynamic_cast<const StandardEvent &>(*m_ev);
-  }
-
-  std::shared_ptr<eudaq::Event> RawFileReader::GetNextEvent(){
-
+  EventSPC RawFileReader::GetNextEvent(){
     if (!NextEvent()) {
       return nullptr;
     }
-
     return m_ev;
 
-
   }
-
-  RegisterFileReader(RawFileReader, "raw");
 
 }

@@ -3,7 +3,7 @@
 
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/RawFileReader.hh"
+#include "eudaq/FileReader.hh"
 #include <string>
 #include <memory>
 namespace eudaq {
@@ -34,7 +34,7 @@ namespace eudaq {
   protected:
     unsigned m_run;
     bool m_callstart;
-    std::shared_ptr<RawFileReader> m_reader;
+    FileReaderSP m_reader;
     unsigned limit;
     unsigned skip;
     unsigned int skip_events_with_counter;

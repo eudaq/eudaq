@@ -4,12 +4,12 @@
 #include "eudaq/OptionParser.hh"
 
 namespace eudaq {
-  using FileReaderClassFactory = ClassFactory<FileReader, FileReader::MainType, FileReader::Parameter_t>;
 
   template DLLEXPORT
   std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&)>& Factory<FileReader>::Instance<std::string&>();
   template DLLEXPORT
   std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&&)>& Factory<FileReader>::Instance<std::string&&>();
+
   
   FileReader::FileReader(Parameter_ref config) :
     m_config(config)
@@ -69,7 +69,6 @@ namespace eudaq {
 
   }
 
-  REGISTER_BASE_CLASS(FileReader);
 
   fileConfig::fileConfig(eudaq::OptionParser & op) {
     if (op.NumArgs() == 1) {
@@ -143,154 +142,5 @@ namespace eudaq {
     return ret;
   }
 
-
-  class FileReaderFactory::Impl{
-
-  public:
-    std::unique_ptr<eudaq::Option<std::string>> m_default_filePattern;
-
-  };
-
-  FileReader_up FileReaderFactory::create(const std::string & filename, const std::string & filepattern)
-  {
-    // return nullptr;
-   
-    std::string type,inFileName,inFilePattern;
-
-
-    if (filename.find_first_not_of("0123456789") == std::string::npos) {
-      // filename is run number. using default file reader
-
-      auto splitted_pattern = split_name_identifier(filepattern);
-      type = splitted_pattern.first;
-      auto shorted_file_pattern = splitted_pattern.second;
-      inFileName =filename;
-      inFilePattern=shorted_file_pattern;
-    }
-    else
-    {
-      auto splitted_filename = split_name_identifier(filename);
-      type = splitted_filename.first;
-      auto shorted_file_name = splitted_filename.second;
-      inFileName = splitted_filename.second;
-      inFilePattern =filepattern;
-    }
-
-    auto params = split(type, "@");
-    type = params[0];
-    params.erase(params.begin());
-    
-    std::stringstream ss;
-    ss <<"["<< FileReader::getKeySectionName() << "] \n ";
-    for (auto& e:params)
-    {
-      ss << e;
-      ss << '\n';
-    }
-    ss << FileReader::getKeyFileName() << " = " << inFileName << " \n ";
-    ss << FileReader::getKeyInputPattern() << " = " << inFilePattern << " \n ";
-   
-   // std::cout << ss << std::endl;
-    FileReader::Parameter_t m(ss, FileReader::getKeySectionName());
-    return create(type, m);
-
-
-
-  }
-
-  FileReader_up FileReaderFactory::create(const std::string & filename)
-  {
-    return create(filename, getDefaultInputpattern());
-  }
-
-  FileReader_up FileReaderFactory::create(eudaq::OptionParser & op)
-  {
-
-    if (op.NumArgs() == 1)
-    {
-      return eudaq::FileReaderFactory::create(op.GetArg(0));
-
-    }
-    else
-    {
-
-      std::string combinedFiles = "";
-        for (size_t i = 0; i < op.NumArgs(); ++i)
-        {
-          if (!combinedFiles.empty())
-          {
-            combinedFiles += ',';
-          }
-          combinedFiles += op.GetArg(i);
-
-          
-        }
-        combinedFiles += "$multi";
-
-        return eudaq::FileReaderFactory::create(combinedFiles);
-    }
-
-  }
-
-
-
-  FileReader_up FileReaderFactory::create(FileReader::MainType type, FileReader::Parameter_ref param)
-  {
-    return FileReaderClassFactory::Create(type, param);
-  }
-
-  FileReader_up FileReaderFactory::create(const fileConfig& file_conf_) {
-    return eudaq::FileReaderFactory::create(file_conf_.get());
-  }
-
-  std::string FileReaderFactory::Help_text()
-  {
-    std::string ret = "\n =========== \n";
-    ret += "HELP: File Reader: \n";
-    ret += "The file reader has two inputs the \"file name\" and the \"file pattern\" \n";
-    ret += "option one:\n";
-    ret += "\"file name\" = run number\n";
-    ret += "In this case the \"file pattern\" gets expanded to a \"file name\" \n";
-    ret += "example: \n";
-    ret += "\"file pattern\" = ../data/run$6R.raw \n";
-    ret += "\"file name\" = 1\n";
-    ret += "this expands to: \n";
-    ret += "\"file name\" = ../data/run000001.raw\n";
-    ret += "option two:\n";
-    ret += "\"file name\" = file path\n";
-    ret += "in this case the file pattern gets ignored and and only the \"filename\" is taken.\n \n";
-    ret += "The file reader gets chosen by the file extension. \n";
-    ret += "one can force the use of a specific \"file reader\" by adding #<extension> \n";
-    ret += "example:\n";
-    ret += "../data/run000001.raw#raw2\n \n";
-    ret += "\"file pattern\" = ../data/run$6R.raw#raw2 \n \n";
-    ret += "possible \"file readers\" are " + to_string(FileReaderClassFactory::GetTypes(), ", ")+"\n";
-
-    return ret;
-  }
-
-  
-
-  FileReaderFactory::Impl& FileReaderFactory::getImpl()
-  {
-    static FileReaderFactory::Impl m_impl;
-    return m_impl;
-  }
-
-  void FileReaderFactory::addComandLineOptions(eudaq::OptionParser & op)
-  {
-
-    getImpl().m_default_filePattern = std::unique_ptr<eudaq::Option<std::string>>(new Option<std::string>(op, "i", "inpattern", getDefaultInputpattern(), "string", "Input filename pattern"));
-
-  }
-
-  std::string FileReaderFactory::getDefaultInputpattern()
-  {
-    if (getImpl().m_default_filePattern && getImpl().m_default_filePattern->IsSet())
-    {
-      return getImpl().m_default_filePattern->Value();
-    }
-    return "../data/run$6R.raw";
-  }
 
 }

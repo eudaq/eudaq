@@ -14,8 +14,8 @@ namespace eudaq {
         skip_events_with_counter(skip_evts) {
     if (datafile != "") {
       // set offline
-      m_reader = std::shared_ptr<RawFileReader>(new RawFileReader(datafile));
-      PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
+      m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), datafile);
+      PluginManager::Initialize(*dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get())); // process BORE
       // m_callstart = true;
       std::cout << "DEBUG: Reading file " << datafile << " -> "
                 << m_reader->Filename() << std::endl;
@@ -26,21 +26,21 @@ namespace eudaq {
 
   bool Monitor::ProcessEvent() {
 
-    if (!m_reader.get())
+    if (!m_reader)
       return false;
     if (!m_reader->NextEvent())
       return false;
 
-    unsigned evt_number = m_reader->GetDetectorEvent().GetEventNumber();
+    unsigned evt_number = m_reader->GetNextEvent()->GetEventNumber();
     if (limit > 0 && evt_number > limit)
       return true;
 
     if (evt_number % 1000 == 0) {
       std::cout << "ProcessEvent "
-                << m_reader->GetDetectorEvent().GetEventNumber()
-                << (m_reader->GetDetectorEvent().IsBORE()
+                << m_reader->GetNextEvent()->GetEventNumber()
+                << (m_reader->GetNextEvent()->IsBORE()
                         ? "B"
-                        : m_reader->GetDetectorEvent().IsEORE() ? "E" : "")
+                        : m_reader->GetNextEvent()->IsEORE() ? "E" : "")
                 << std::endl;
     }
 
@@ -49,15 +49,15 @@ namespace eudaq {
     } else if (skip_events_with_counter >
                0) { //-sc functionality, you cant have both
       if (++counter_for_skipping < skip_events_with_counter && evt_number > 0 &&
-          !m_reader->GetDetectorEvent().IsBORE() &&
-          !m_reader->GetDetectorEvent().IsEORE())
+          !m_reader->GetNextEvent()->IsBORE() &&
+          !m_reader->GetNextEvent()->IsEORE())
         return true;
       else
         counter_for_skipping = 0;
     }
 
     try {
-      const DetectorEvent &dev = m_reader->GetDetectorEvent();
+      const DetectorEvent &dev = *dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get());
       OnEvent(PluginManager::ConvertToStandard(dev));
       //        ++counter_events_for_online_monitor;
     } catch (const InterruptedException &) {
@@ -88,8 +88,8 @@ namespace eudaq {
   void Monitor::OnStartRun(unsigned param) {
     std::cout << "run " << param << std::endl;
     m_run = param;
-    m_reader = std::shared_ptr<RawFileReader>(new RawFileReader(to_string(m_run)));
-    PluginManager::Initialize(m_reader->GetDetectorEvent()); // process BORE
+    m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), to_string(m_run));
+    PluginManager::Initialize(*dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get())); // process BORE
     EUDAQ_INFO("Starting run " + to_string(m_run));
   }
 
