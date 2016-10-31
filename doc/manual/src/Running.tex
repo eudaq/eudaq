@@ -427,11 +427,10 @@ to print a summary of the available options.
 
 \subsubsection{TLUControl}
 The \texttt{TLUControl.exe} program is a standalone program for running the TLU without using the
-full DAQ. The most commonly used parameters are shown below. For each option, the short (preceeded
-by one dash) and the long (preceeded by two dashes) option names are shown (only one of the two
-forms should be used for each option, but long and short options can be mixed together on the
-command line), along with any parameters and their default value that will be used if the option is
-not specified.
+full DAQ. The most commonly used parameters are shown below. 
+For each option, the short (preceeded by one dash) and the long (preceeded by two dashes) option names are shown. 
+Only one of the two forms should be used for each option, but long and short options can be mixed together on the command line)
+Each options has a parameter and a default value that will be used if the option is not specified.
 
 \begin{description}
 \ttitem{-d --dutmask \param{mask = 0}}
@@ -661,64 +660,6 @@ The status is of the \gls{DUT} connections formatted as:
   \end{myitemize}
 \end{myitemize}
 
-\subsubsection{VMETest}
-The VMETest.exe program uses the EUDAQ VME library to perform VME accesses.
-It can be useful for determining whether a VME card is responding at a particular address.
-The available options are:
-\begin{description}
-\ttitem{-b \param{address}}
-The base address for the VME accesses.
-This value will be added to the offsets specified in the commands to give the actual address used.
-
-\ttitem{-s \param{bytes}}
-Sets the window size in bytes.
-This is the amount of memory that is mapped into the VME address space.
-Any accesses outside this range will result in an access violation.
-
-\ttitem{-a \param{bits}}
-The address bus width in bits.
-Valid values are 16, 24, 32 or 64.
-
-\ttitem{-d \param{bits}}
-The data bus width in bits.
-Valid values are 8, 16, 32 or 64.
-
-\ttitem{-m \param{mode}}
-The VME access mode.
-Valid values are S (single accesses), B (BLT), M (MBLT), 2 (2eVME), E (2eSST) and T (2eSSTB).
-
-\end{description}
-
-The options set up the mode for the VME accesses.
-Following the options, a number of commands can be specified to perform actual reads or writes.
-The commands can be any of the following:
-\begin{description}
-\ttitem{r\param{offset}}
-Reads a value from the specified offset, and displays the value read.
-
-\ttitem{R\param{offset},\param{words}}
-Performs a block read of the specified number of words, starting from the specified offset.
-
-\ttitem{w\param{offset},\param{value}}
-Writes the specified value to the specified offset.
-
-\ttitem{W\param{offset},\param{value1}{[},\param{value2}\ldots{]}}
-Performs a block write of the specified values, starting at the specified offset.
-
-\end{description}
-
-Numerical arguments to either the options or the commands can be given either in decimal,
-or in hexadecimal by prefixing them with \texttt{0x}, as in C or C++.
-Note that the options require a space between the option character and its argument,
-but the commands must not have a space.
-For example:
-
-\begin{listing}[mybash]
-$[./VMETest.exe]$ -b 0x180000 -a 24 -d 16 w0x20,123 r0x10
-\end{listing}
-
-This sets up a window starting at 180000 hex, in A24 address space with D16.
-It then writes the value 123 to offset 32 (20 hex), and then reads the value at offset 16 (10 hex).
 
 \subsubsection{TestReader}\label{sec:TestReader}
 The \texttt{TestReader.exe} program will read a native data file,
