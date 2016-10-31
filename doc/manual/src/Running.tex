@@ -34,7 +34,7 @@ Depending on the operating system and the command shell, you can set the host na
 \begin{itemize}
 \item for bash-like shells: \inline[mybash]{export HOSTNAME=name}
 \item for csh-like shells: \inline[csh]{setenv HOSTNAME name}
-\item for Windows comman lines / scripts: \inline[mybash]{set HOSTNAME=name}
+\item for Windows command lines / scripts: \inline[mybash]{set HOSTNAME=name}
 \end{itemize}
 where \texttt{name} is the name or the IP adress.
 
@@ -120,7 +120,7 @@ Usually, no command-line option should be needed.
 If needed, it can be told to listen on a specific port (e.g. to run two copies on the same machine) 
 using the \texttt{-a \param{port}} option, for example:
 \begin{listing}[mybash]
-$[./euRun.exe]$ -a 60000
+$[./euRun.exe]$ -a 44000
 \end{listing}
 Note: If two copies of EUDAQ should run simultaneously,
 the ports of the Log and DataCollectors have to be different!
@@ -193,7 +193,7 @@ FilePattern = "../data/run$6R_myproducer$X"
 
 \subsubsection{TLU Producer}
 If you do not have a \gls{TLU} in your setup, you may skip this part.
-Otherwise you should run a TLUProducer, which will configure the \gls{TLU},
+Otherwise you should run a TLU Producer, which will configure the \gls{TLU},
 and read out the timestamps and send them to the Data Collector.
 On the computer with the \gls{TLU} connected, start the \texttt{TLUProducer.exe} program.
 If this is not the same machine as the Run Control,
@@ -201,9 +201,20 @@ use the \texttt{-r} option as for the Data and Log Collectors, in this example:
 \begin{listing}[mybash]
 $[./TLUProducer.exe]$ -r 192.168.0.1:44000
 \end{listing}
-If the TLUProducer fails to start, make sure the permissions are set up correctly (see \autoref{sec:TLUperm}).
+If the TLU Producer fails to start, make sure the permissions are set up correctly (see \autoref{sec:TLUperm}).
 
 \subsubsection{NI Producer (Mimosa 26 sensors)}
+
+If you don't have a EUDET-type beam telescope using 6 planes with Mimosa 26 sensors~\cite{Jansen:2016} in your setup, you may skip this part.
+The NI Producer is the interface between the Mimosa DAQ (at the moment Anemome 1.3 LabView software) and the EUDAQ. 
+The Mimosa DAQ is based on a National Instrument machine which runs with a Windows OS. 
+Thus, you start the NI Producer only on a NI crate after opening the Anemone LabView software.
+It will connect to the Run Control (euRun) by using \texttt{-r} option, too, in this example:
+\begin{listing}[mybash]
+$[./NIProducer.exe]$ -r 192.168.0.1:44000
+\end{listing}
+If the NI Producer fails to start, make sure that the IP adresses (host names) are set correctly in the start scripts and the EUDAQ configurations files \cite[section 5.2.1.2 1.]{telescopesWikiUserManual}.
+
 
 \subsubsection{Online Monitor}
 The Online Monitor reads the data file written by the Data Collector,
@@ -237,13 +248,11 @@ $[./OnlineMon.exe]$ -f 5432
 This will run it in offline mode, opening the file corresponding to run 5432
 (alternatively, the full path to a file may be given).
 
-\subsubsection{TestProducer}
-For testing purposes, you may use the Test Producer.
+\subsubsection{Test and Example Producer}
+For testing purposes, you may use the TestProducer.
 This works similarly to a real producer, but does not talk to any real hardware,
-instead providing a menu for the user to manually send events
-(or see the ExampleProducer, below).
+instead providing a menu for the user to manually send events.
 
-\subsubsection{ExampleProducer}
 The ExampleProducer was written to illustrate the writing of a new Producer (see \autoref{sec:Producers}).
 However, it will actually generate some example data, and so can also be used for testing purposes.
 It works more like a real Producer than the TestProducer,
@@ -251,7 +260,7 @@ in that it does not require user intervention to generate each trigger,
 and the data generated emulates a simple (but realistic) sensor,
 and can be properly converted, and therefore displayed in the Monitor.
 
-\subsubsection{Other Producer(s)}
+\subsubsection{Other/DUT Producer(s)}
 If you have a producer for your own hardware (see \autoref{sec:Producers}),
 it should also have an option to set the address of the Run Control.
 
