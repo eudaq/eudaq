@@ -1,4 +1,5 @@
 #include "NiController.hh"
+#include "eudaq/Logger.hh"
 
 #include <string.h>
 #include <stdio.h>
@@ -45,21 +46,16 @@ int EUDAQ_SEND(SOCKET s, unsigned char *buf, int len, int flags) {
 unsigned char start[5] = "star";
 unsigned char stop[5] = "stop";
 
-NiController::NiController() {
-  // NI_IP = "192.76.172.199";
-}
-void NiController::Configure(const eudaq::Configuration & /*param*/) {
-  // NiIPaddr = param.Get("NiIPaddr", "");
-}
-void NiController::TagsSetting() {
-  // ev.SetTag("DET", 12);
-}
+
 void NiController::GetProduserHostInfo() {
   /*** get Producer information, NAME and INET ADDRESS ***/
+  char ThisHost[80];
+  struct hostent *hclient;
   gethostname(ThisHost, MAXHOSTNAME);
   printf("----TCP/Producer running at host NAME: %s\n", ThisHost);
   hclient = gethostbyname(ThisHost);
   if (hclient != 0) {
+    struct sockaddr_in client;
     EUDAQ_BCOPY(hclient->h_addr, &(client.sin_addr), hclient->h_length);
     printf("----TCP/Producer INET ADDRESS is: %s \n",
            inet_ntoa(client.sin_addr));
@@ -72,17 +68,12 @@ void NiController::GetProduserHostInfo() {
 void NiController::Start() { ConfigClientSocket_Send(start, sizeof(start)); }
 void NiController::Stop() { ConfigClientSocket_Send(stop, sizeof(stop)); }
 
-void NiController::ConfigClientSocket_Open(const eudaq::Configuration &param) {
+void NiController::ConfigClientSocket_Open(const std::string& addr, uint16_t port) {
   /*** Network configuration for NI, NAME and INET ADDRESS ***/
 
-  std::string m_server;
-  m_server = param.Get("NiIPaddr", "");
-
-  std::string m_config_socket_port;
-  m_config_socket_port = param.Get("NiConfigSocketPort", "49248");
 
   // convert string in config into IPv4 address
-  hostent *host = gethostbyname(m_server.c_str());
+  hostent *host = gethostbyname(addr.c_str());
   if (!host) {
     EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
                 "IPv4 address!");
@@ -99,11 +90,10 @@ void NiController::ConfigClientSocket_Open(const eudaq::Configuration &param) {
     printf("----TCP/NI crate: SOCKET is OK...\n");
 
   printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
-  printf("----TCP/NI crate INET PORT is: %s \n", m_config_socket_port.c_str());
+  printf("----TCP/NI crate INET PORT is: %lu \n", port);
 
   config.sin_family = AF_INET;
-  int i_auto = std::stoi(m_config_socket_port, nullptr, 10);
-  config.sin_port = htons(i_auto);
+  config.sin_port = htons(port);
   memset(&(config.sin_zero), '\0', 8);
   if (connect(sock_config, (struct sockaddr *)&config,
               sizeof(struct sockaddr)) == -1) {
@@ -133,6 +123,7 @@ NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
   unsigned int datalength;
   int i;
   bool dbg = false;
+  int numbytes;
   if ((numbytes = recv(sock_config, Buffer_length, 2, 0)) == -1) {
     EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
@@ -171,6 +162,7 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
 
   stored_bytes = 0;
   read_bytes_left = datalength;
+  int numbytes;
   while (read_bytes_left > 0) {
     if ((numbytes = recv(sock_config, Buffer_data, read_bytes_left, 0)) == -1) {
       EUDAQ_ERROR("|==ConfigClientSocket_ReadLength==| Read data error ");
@@ -199,18 +191,10 @@ NiController::ConfigClientSocket_ReadData(int datalength) {
   return ConfigData;
 }
 
-void NiController::DatatransportClientSocket_Open(
-    const eudaq::Configuration &param) {
-  /*** Creation for the data transmit socket, NAME and INET ADDRESS ***/
-  std::string m_server;
-  m_server = param.Get("NiIPaddr", "");
 
-  std::string m_data_transport_socket_port;
-  m_data_transport_socket_port =
-      param.Get("NiDataTransportSocketPort", "49250");
 
-  // convert string in config into IPv4 address
-  hostent *host = gethostbyname(m_server.c_str());
+void NiController::DatatransportClientSocket_Open(const std::string& addr, uint16_t port){
+  hostent *host = gethostbyname(addr.c_str());
   if (!host) {
     EUDAQ_ERROR("ConfSocket: Bad NiIPaddr value in config file: must be legal "
                 "IPv4 address!");
@@ -229,12 +213,10 @@ void NiController::DatatransportClientSocket_Open(
 
   printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n",
          inet_ntoa(datatransport.sin_addr));
-  printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %s \n",
-         m_data_transport_socket_port.c_str());
+  printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %lu \n", port);
 
   datatransport.sin_family = AF_INET;
-  int i_auto = std::stoi(m_data_transport_socket_port, nullptr, 10);
-  datatransport.sin_port = htons(i_auto);
+  datatransport.sin_port = htons(port);
   memset(&(datatransport.sin_zero), '\0', 8);
   if (connect(sock_datatransport, (struct sockaddr *)&datatransport,
               sizeof(struct sockaddr)) == -1) {
@@ -252,6 +234,7 @@ NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
   unsigned int datalength;
   int i;
   bool dbg = false;
+  int numbytes;
   if ((numbytes = recv(sock_datatransport, Buffer_length, 2, 0)) == -1) {
     EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
@@ -291,9 +274,9 @@ NiController::DataTransportClientSocket_ReadData(int datalength) {
 
   stored_bytes = 0;
   read_bytes_left = datalength;
+  int numbytes;
   while (read_bytes_left > 0) {
-    if ((numbytes =
-             recv(sock_datatransport, Buffer_data, read_bytes_left, 0)) == -1) {
+    if ((numbytes = recv(sock_datatransport, Buffer_data, read_bytes_left, 0)) == -1) {
       EUDAQ_ERROR("DataTransportSocket: Read data error ");
       perror("recv()");
       exit(1);
@@ -319,9 +302,7 @@ NiController::DataTransportClientSocket_ReadData(int datalength) {
     printf("\n");
   return mimosa_data;
 }
+
 void NiController::DatatransportClientSocket_Close() {
   EUDAQ_CLOSE_SOCKET(sock_datatransport);
-}
-NiController::~NiController() {
-  //
 }

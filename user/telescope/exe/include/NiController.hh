@@ -1,12 +1,10 @@
-#include "eudaq/Utils.hh"
-#include "eudaq/Configuration.hh"
-#include "eudaq/Logger.hh"
-
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <errno.h>
 #include <string.h>
+#include <string>
+#include <vector>
 
 #include <sys/types.h>
 
@@ -21,7 +19,6 @@
 typedef int SOCKET;
 #endif
 
-using eudaq::to_string;
 
 // the port client will be connecting to
 #define PORT_CONFIG 49248
@@ -36,54 +33,28 @@ using eudaq::to_string;
 class NiController {
 
 public:
-  NiController();
-  void Configure(const eudaq::Configuration &conf);
-  virtual ~NiController();
   void GetProduserHostInfo();
   void Start();
   void Stop();
-  void TagsSetting();
-  void DatatransportClientSocket_Open(const eudaq::Configuration &conf);
+  void DatatransportClientSocket_Open(const std::string& addr, uint16_t port);
   void DatatransportClientSocket_Close();
   unsigned int DataTransportClientSocket_ReadLength(const char string[4]);
   std::vector<unsigned char> DataTransportClientSocket_ReadData(int datalength);
 
-  void ConfigClientSocket_Open(const eudaq::Configuration &conf);
+  void ConfigClientSocket_Open(const std::string& addr, uint16_t port);
   void ConfigClientSocket_Close();
   void ConfigClientSocket_Send(unsigned char *text, size_t len);
   unsigned int ConfigClientSocket_ReadLength(const char string[4]);
   std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
 
 private:
-  struct hostent *hclient, *hconfig, *hdatatransport;
-  struct sockaddr_in client;
+  struct hostent *hconfig, *hdatatransport;
   struct sockaddr_in config;
   struct sockaddr_in datatransport;
-
-  unsigned char conf_parameters[10];
-
-  struct timeval tv;
-  unsigned int sec;
-  unsigned int microsec;
-
-  char ThisHost[80];
-
-  char Buffer_data[7000];
-  char Buffer_length[7000];
-
-  uint32_t data_trans_addres; // = INADDR_NONE;
   SOCKET sock_config;
   SOCKET sock_datatransport;
-  int numbytes;
 
-  // NiIPaddr;
-  unsigned TriggerType;
-  unsigned Det;
-  unsigned Mode;
-  unsigned NiVersion;
-  unsigned NumBoards;
-  unsigned FPGADownload;
-  unsigned MimosaID[6];
-  unsigned MimosaEn[6];
-  bool OneFrame;
+  unsigned char conf_parameters[10];
+  char Buffer_data[7000];
+  char Buffer_length[7000];
 };

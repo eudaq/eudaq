@@ -56,8 +56,12 @@ public:
       if (!configure) {
         ni_control = std::make_shared<NiController>();
         ni_control->GetProduserHostInfo();
-        ni_control->ConfigClientSocket_Open(param);
-        ni_control->DatatransportClientSocket_Open(param);
+	std::string addr = param.Get("NiIPaddr", "localhost");
+	uint16_t port = param.Get("NiConfigSocketPort", 49248);
+        ni_control->ConfigClientSocket_Open(addr, port);
+	addr = param.Get("NiIPaddr", "localhost");
+	port = param.Get("NiDataTransportSocketPort", 49250);
+        ni_control->DatatransportClientSocket_Open(addr, port);
         std::cout << " " << std::endl;
         configure = true;
       }
@@ -69,8 +73,8 @@ public:
       NumBoards = param.Get("NumBoards", 255);
       FPGADownload = param.Get("FPGADownload", 1);
       for (unsigned char i = 0; i < 6; i++) {
-        MimosaID[i] = param.Get("MimosaID_" + to_string(i + 1), 255);
-        MimosaEn[i] = param.Get("MimosaEn_" + to_string(i + 1), 255);
+        MimosaID[i] = param.Get("MimosaID_" + std::to_string(i + 1), 255);
+        MimosaEn[i] = param.Get("MimosaEn_" + std::to_string(i + 1), 255);
       }
       OneFrame = param.Get("OneFrame", 255);
 
@@ -168,9 +172,9 @@ public:
       ev.SetTag("MODE", "ZS2");
       ev.SetTag("BOARDS", NumBoards);
       for (unsigned char i = 0; i < 6; i++)
-        ev.SetTag("ID" + to_string(i), to_string(MimosaID[i]));
+        ev.SetTag("ID" + std::to_string(i), std::to_string(MimosaID[i]));
       for (unsigned char i = 0; i < 6; i++)
-        ev.SetTag("MIMOSA_EN" + to_string(i), to_string(MimosaEn[i]));
+        ev.SetTag("MIMOSA_EN" + std::to_string(i), std::to_string(MimosaEn[i]));
       SendEvent(ev);
       eudaq::mSleep(500);
 
