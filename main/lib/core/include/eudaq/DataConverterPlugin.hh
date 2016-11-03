@@ -2,40 +2,11 @@
 #define EUDAQ_INCLUDED_DataConverterPlugin
 
 #include "StandardEvent.hh"
-#include "RawDataEvent.hh"
 #include "Factory.hh"
-#include "TLUEvent.hh"
-
-#include <functional>
+#include "Configuration.hh"
 #include <memory>
 #include <string>
 #include <algorithm>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #define NOTIMESTAMPSET (uint64_t)-1

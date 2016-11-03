@@ -5,23 +5,21 @@
 namespace eudaq {
 
   namespace{
-    auto dummy0 = Factory<Event>::Register<TLUEvent, Deserializer&>(Event::str2id("_TLU"));
+    auto dummy1 = Factory<Event>::Register<TLUEvent, Deserializer&>(cstr2hash("TLUEvent"));
   }
 
-  TLUEvent::TLUEvent(Deserializer &ds) : Event(ds) { ds.read(m_extratimes); }
-
-  void TLUEvent::Print(std::ostream &os, size_t offset) const
-  {
+  TLUEvent::TLUEvent(Deserializer &ds) : RawDataEvent(ds){}  
+  TLUEvent::TLUEvent(uint32_t dev_n, uint32_t run_n, uint32_t ev_n)
+    :RawDataEvent("TLUEvent", dev_n, run_n, ev_n){
+  }
+  
+  void TLUEvent::Print(std::ostream &os, size_t offset) const{
     os << std::string(offset, ' ') << "<TLUEvent> \n";
     Event::Print(os,offset+2);
-    if (m_extratimes.size() > 0) {
-      os << std::string(offset+2, ' ') << "<extraTimes>" << m_extratimes.size() << "</extraTimes>\n";
-    }
     os << std::string(offset, ' ') << "</TLUEvent>\n";
   }
 
   void TLUEvent::Serialize(Serializer &ser) const {
     Event::Serialize(ser);
-    ser.write(m_extratimes);
   }
 }

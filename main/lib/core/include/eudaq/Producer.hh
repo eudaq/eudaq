@@ -21,17 +21,13 @@ namespace eudaq {
      * connect to.
      */
     Producer(const std::string &name, const std::string &runcontrol);
-    virtual ~Producer() {}
-    virtual void OnData(const std::string &param);
-
+    void OnData(const std::string &param) override;
     void Connect(const std::string & server);
     void SendEvent(const Event &);
     
   private:
     std::string m_name;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
-    // std::vector<std::unique_ptr<DataSender>> m_senders;
-
   };
 }
 

@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <iosfwd>
-#include <iostream>
-#include <memory>
+#include <ostream>
 
 #include "Serializable.hh"
 #include "Serializer.hh"
@@ -29,6 +27,11 @@ namespace eudaq {
   extern template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const uint32_t&, const uint32_t&, const uint32_t&)>&
   Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
+
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
+  
 #endif
 
   using EventUP = Factory<Event>::UP_BASE; 

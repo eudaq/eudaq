@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+
 namespace eudaq {
   
   template class DLLEXPORT Factory<DataConverterPlugin>;

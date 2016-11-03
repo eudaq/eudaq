@@ -227,6 +227,8 @@ namespace eudaq {
 #endif
   }
 
+
+  
   template <typename T>
   inline void setbigendian(unsigned char *ptr, const T &val) {
 #if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) ||                 \
