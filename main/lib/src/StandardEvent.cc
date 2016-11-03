@@ -343,8 +343,8 @@ namespace eudaq {
   void StandardEvent::Print(std::ostream &os) const {
     Event::Print(os);
     os << ", " << m_planes.size() << " planes:\n";
-    for (size_t i = 0; i < m_planes.size(); ++i) {
-      os << "  " << m_planes[i] << "\n";
+    for (auto i : m_planes) {
+      os << "  " << i << "\n";
     }
   }
 

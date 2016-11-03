@@ -27,17 +27,13 @@ namespace eudaq {
 
   std::string ucase(const std::string &str) {
     std::string result(str);
-    for (size_t i = 0; i < result.length(); ++i) {
-      result[i] = std::toupper(result[i]);
-    }
+    for (auto & i : result) { i = std::toupper(i); }
     return result;
   }
 
   std::string lcase(const std::string &str) {
     std::string result(str);
-    for (size_t i = 0; i < result.length(); ++i) {
-      result[i] = std::tolower(result[i]);
-    }
+    for (auto & i : result) { i = std::tolower(i); }
     return result;
   }
 
@@ -56,13 +52,13 @@ namespace eudaq {
   std::string escape(const std::string &s) {
     std::ostringstream ret;
     ret << std::setfill('0') << std::hex;
-    for (size_t i = 0; i < s.length(); ++i) {
-      if (s[i] == '\\')
+    for (auto & i : s) {
+      if (i == '\\')
         ret << "\\\\";
-      else if (s[i] < 32)
-        ret << "\\x" << std::setw(2) << int(s[i]);
+      else if (i < 32)
+        ret << "\\x" << std::setw(2) << int(i);
       else
-        ret << s[i];
+        ret << i;
     }
     return ret.str();
   }
