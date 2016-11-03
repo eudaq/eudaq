@@ -19,7 +19,6 @@ public:
   void ProcessCommand(const std::string& cmd, const std::string& arg) final override;
 
   static constexpr const char* m_description = "TluProducerPS";
-  static constexpr const uint32_t m_id_ps = cstr2hash(m_description);
 private:
   std::shared_ptr<TLUController> m_tlu;
   uint32_t m_run;

@@ -7,14 +7,15 @@
 #include "NiController.hh"
 
 using namespace eudaq;
-class TelProducerPS : public eudaq::Processor {
+class TelProducerPS : public Processor {
 public:
   TelProducerPS();
   ~TelProducerPS() override;
-  void ProcessEvent(eudaq::EventSPC ev) final override{};
+  void ProcessEvent(EventSPC ev) final override{};
   void ProduceEvent() final override;
   void ProcessCommand(const std::string& cmd, const std::string& arg) final override;
 
+  static constexpr const char* m_description = "TelProducerPS";
 private:
   std::shared_ptr<NiController> ni_control;
   uint8_t conf_parameters[10];
@@ -24,8 +25,13 @@ private:
   bool running;
 };
 
+namespace{
+  auto dummy0 = Factory<Processor>::
+    Register<TelProducerPS>(cstr2hash(TelProducerPS::m_description));
+}
 
-TelProducerPS::TelProducerPS(): eudaq::Processor("TelProducerPS"){
+
+TelProducerPS::TelProducerPS(): Processor(TelProducerPS::m_description){
   ni_control = std::make_shared<NiController>();
   m_run = 0;
   m_ev = 0;
@@ -49,7 +55,7 @@ void TelProducerPS::ProduceEvent(){
     size_t datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");
     std::vector<uint8_t> data_1(datalength2);
     data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
-    auto rawev = eudaq::RawDataEvent::MakeShared("TelRawDataEvent", GetInstanceN(),
+    auto rawev = RawDataEvent::MakeShared("TelRawDataEvent", GetInstanceN(),
 						   m_run, m_ev++);
     rawev->AddBlock(0, data_0);
     rawev->AddBlock(1, data_1);
@@ -79,7 +85,7 @@ void TelProducerPS::ProcessCommand(const std::string& key, const std::string& va
       m_run++;
     else
       m_run = std::stoul(val);
-    auto rawev = eudaq::RawDataEvent::MakeShared("TelRawDataEvent", GetInstanceN(),
+    auto rawev = RawDataEvent::MakeShared("TelRawDataEvent", GetInstanceN(),
 						 m_run, m_ev++);
     rawev->SetBORE();
     rawev->SetTag("DET", "MIMOSA26");
@@ -93,7 +99,7 @@ void TelProducerPS::ProcessCommand(const std::string& key, const std::string& va
     std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     running = false;
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    auto rawev = eudaq::RawDataEvent::MakeShared("TelRawDataEvent", GetInstanceN(),
+    auto rawev = RawDataEvent::MakeShared("TelRawDataEvent", GetInstanceN(),
 						 m_run, m_ev++);
     rawev->SetEORE();
     RegisterEvent(rawev); //TODO:: check 

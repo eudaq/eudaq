@@ -31,6 +31,13 @@ target_link_libraries(TLUControl ${EUDAQ_CORE} ${USER_SHARED})
 target_link_libraries(TLUReset ${EUDAQ_CORE} ${USER_SHARED})
 target_link_libraries(NiProducer ${EUDAQ_CORE} ${USER_SHARED})
 
+
+add_executable(TelTest src/TelTest.cxx)
+target_link_libraries(TelTest ${EUDAQ_CORE} ${USER_SHARED})
+install(TARGETS
+  TelTest
+  RUNTIME DESTINATION bin)
+
 install(TARGETS
   TLUProducer TLUControl TLUReset NiProducer
   RUNTIME DESTINATION bin
