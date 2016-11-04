@@ -48,6 +48,8 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	echo $PATH
 	
 	export PATH=/Users/travis/tinyxml:$PATH
+	export CFLAGS="-I /Users/travis/tinyxml" $CFLAGS
+	export LDFLAGS="-L /Users/travis/tinyxml" $LDFLAGS
 	
 	cd ..	
 	
