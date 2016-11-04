@@ -23,7 +23,6 @@
 #include "eudaq/MultiFileReader.hh"
 
 
-using namespace eudaq;
 
 /** increase the counter by one. default to 1 for the first access
  * adapted from http://stackoverflow.com/questions/2333728/stdmap-default-value
@@ -39,25 +38,25 @@ void increase(std::map<K,V> & m, const K & key)
     }
 }
 
-const TLUEvent * as_tlu(const DetectorEvent & e, unsigned i_sub)
+const eudaq::TLUEvent * as_tlu(const eudaq::DetectorEvent & e, unsigned i_sub)
 {
-    return dynamic_cast<const TLUEvent *>(e.GetEvent(i_sub));
+    return dynamic_cast<const eudaq::TLUEvent *>(e.GetEvent(i_sub));
 }
 
-const RawDataEvent * as_raw(const DetectorEvent & e, unsigned i_sub)
+const eudaq::RawDataEvent * as_raw(const eudaq::DetectorEvent & e, unsigned i_sub)
 {
-    return dynamic_cast<const RawDataEvent *>(e.GetEvent(i_sub));
+    return dynamic_cast<const eudaq::RawDataEvent *>(e.GetEvent(i_sub));
 }
 
 int main(int /*argc*/, const char ** argv) {
 
     EUDAQ_LOG_LEVEL("WARN");
 
-    OptionParser opt("FileChecker.exe", "1.0", "", 1);
-    Option<std::string> opt_input_pattern(opt,
+    eudaq::OptionParser opt("FileChecker.exe", "1.0", "", 1);
+    eudaq::Option<std::string> opt_input_pattern(opt,
         "i", "input-pattern", "../data/run$6R.raw",
         "STRING", "input filepath pattern");
-    OptionFlag async(opt, "a", "nosync", "Disables Synchronisation with TLU events");
+    eudaq::OptionFlag async(opt, "a", "nosync", "Disables Synchronisation with TLU events");
 
     try {
         opt.Parse(argv);
@@ -92,25 +91,25 @@ int main(int /*argc*/, const char ** argv) {
 
         try {
             // always synchronize based on the trigger id
-	  multiFileReader reader(!async.Value());
+	    eudaq::multiFileReader reader(!async.Value());
             reader.addFileReader(run, input_pattern);
 
-            const DetectorEvent & bore = reader.GetDetectorEvent();
+            const eudaq::DetectorEvent & bore = reader.GetDetectorEvent();
             if (!bore.IsBORE()) errors += "first event is not BORE. ";
             // TODO do we need to initialize the PluginManager?
             // no conversion to StandardEvents occurs
 
             for (num_events = 0; reader.NextEvent(); ++num_events) {
-                const DetectorEvent & e = reader.GetDetectorEvent();
+                const eudaq::DetectorEvent & e = reader.GetDetectorEvent();
 
                 if (e.IsEORE()) break;
 
                 // count the number each subevent occurs
                 for (size_t i_sub = 0; i_sub < e.NumEvents(); ++i_sub) {
-                    if (const TLUEvent * st = as_tlu(e, i_sub)) {
+                    if (const eudaq::TLUEvent * st = as_tlu(e, i_sub)) {
                         increase(subevents, std::string("TLU"));
                         continue;
-                    } else if (const RawDataEvent * sr = as_raw(e, i_sub)) {
+                    } else if (const eudaq::RawDataEvent * sr = as_raw(e, i_sub)) {
                         increase(subevents, sr->GetSubType());
                     }
                 }
