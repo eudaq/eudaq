@@ -97,16 +97,15 @@ void HitmapCollection::Write(TFile *file) {
     gDirectory->mkdir("Hitmaps");
     gDirectory->cd("Hitmaps");
 
-    std::map<SimpleStandardPlane, HitmapHistos *>::iterator it;
-    for (it = _map.begin(); it != _map.end(); ++it) {
+    for (auto it : _map) {
 
       char sensorfolder[255] = "";
-      sprintf(sensorfolder, "%s_%d", it->first.getName().c_str(),
-              it->first.getID());
+      sprintf(sensorfolder, "%s_%d", it.first.getName().c_str(),
+              it.first.getID());
       // cout << "Making new subfolder " << sensorfolder << endl;
       gDirectory->mkdir(sensorfolder);
       gDirectory->cd(sensorfolder);
-      it->second->Write();
+      it.second->Write();
 
       // gDirectory->ls();
       gDirectory->cd("..");
@@ -117,18 +116,16 @@ void HitmapCollection::Write(TFile *file) {
 
 void HitmapCollection::Calculate(const unsigned int currentEventNumber) {
   if ((currentEventNumber > 10 && currentEventNumber % 1000 * _reduce == 0)) {
-    std::map<SimpleStandardPlane, HitmapHistos *>::iterator it;
-    for (it = _map.begin(); it != _map.end(); ++it) {
+    for (auto it : _map) {
       // std::cout << "Calculating ..." << std::endl;
-      it->second->Calculate(currentEventNumber / _reduce);
+      it.second->Calculate(currentEventNumber / _reduce);
     }
   }
 }
 
 void HitmapCollection::Reset() {
-  std::map<SimpleStandardPlane, HitmapHistos *>::iterator it;
-  for (it = _map.begin(); it != _map.end(); ++it) {
-    (*it).second->Reset();
+  for (auto it : _map) {
+    it.second->Reset();
   }
 }
 

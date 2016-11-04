@@ -224,16 +224,15 @@ CMSPixelProducer::GetConfTrimming(std::vector<pxar::pixelConfig> maskbits,
   }
 
   // Process the mask bit list:
-  for (std::vector<pxar::pixelConfig>::iterator px = pixels.begin();
-       px != pixels.end(); px++) {
+  for (auto px : pixels) {
 
     // Check if this pixel is part of the maskbit vector:
     std::vector<pxar::pixelConfig>::iterator maskpx =
         std::find_if(maskbits.begin(), maskbits.end(),
-                     findPixelXY(px->column(), px->row(), i2c < 0 ? 0 : i2c));
+                     findPixelXY(px.column(), px.row(), i2c < 0 ? 0 : i2c));
     // Pixel is part of mask vector, set the mask bit:
     if (maskpx != maskbits.end()) {
-      px->setMask(true);
+      px.setMask(true);
     }
   }
 

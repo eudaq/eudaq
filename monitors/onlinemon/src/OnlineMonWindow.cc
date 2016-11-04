@@ -291,12 +291,11 @@ void OnlineMonWindow::registerTreeItem(std::string item) {
 }
 
 void OnlineMonWindow::makeTreeItemSummary(std::string item) {
-  std::map<std::string, TNamed *>::iterator it;
   std::vector<std::string> v;
-  for (it = _hitmapMap.begin(); it != _hitmapMap.end(); ++it) {
-    std::string c = std::string(it->first, 0, item.length());
+  for (auto it : _hitmapMap) {
+    std::string c = std::string(it.first, 0, item.length());
     if (c == item) {
-      v.push_back(it->first);
+      v.push_back(it.first);
     }
   }
   _summaryMap[item] = v;
