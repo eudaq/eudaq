@@ -1,29 +1,27 @@
 #include "TLUController.hh"
-#include "USBTracer.hh"
+// #include "USBTracer.hh"
 #include "TLUAddresses.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/Exception.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
-
-#ifdef WIN32
-#include <cstdio> // HK
-#include "win_Usleep.h"
-#define EUDAQ_uSLEEP(x) uSleep(x)
-
-#else
-#define EUDAQ_uSLEEP(x) usleep(x)
-#include <unistd.h>
-#endif
 
 #include <iostream>
 #include <ostream>
 #include <fstream>
 #include <iomanip>
 #include <cstdlib>
+#include <thread>
+#include <chrono>
 
-using eudaq::mSleep;
+#ifdef WIN32
+#include "lusb0_usb.h"
+#else
+#include <usb.h>
+#endif
+#include "ZestSC1.h"
+#include "Local.h"
+
 using eudaq::hexdec;
 using eudaq::to_string;
 using eudaq::to_hex;
@@ -52,8 +50,13 @@ namespace tlu {
 
   static const uint64_t NOTIMESTAMP = (uint64_t)-1;
 
-  int do_usb_reset(ZESTSC1_HANDLE Handle); // defined in TLU_USB.cc
+  int do_usb_reset(ZESTSC1_HANDLE Handle) {
+    ZESTSC1_CHECK_HANDLE("ResetUSB", Handle);
+    usb_reset(Struct->DeviceHandle);
+    return 0;
+  }
 
+  
   std::string TLUException::make_msg(const std::string &msg, int status,
                                      int tries) {
     if (status == 0) {
@@ -74,18 +77,9 @@ namespace tlu {
     static const unsigned FIRSTV2SERIAL = 1000;
 
     static const char *g_versions[] = {"Unknown", "v0.1", "v0.2a", "v0.2c"};
-
-    //     static const uint32_t g_scaler_address[TLU_TRIGGER_INPUTS] = {
-    //       TRIGGER_IN0_COUNTER_0,
-    //       TRIGGER_IN1_COUNTER_0,
-    //       TRIGGER_IN2_COUNTER_0,
-    //       TRIGGER_IN3_COUNTER_0
-    //     };
-
     // Use one static flag for aborting, since the ErrorHandler can't easily
     // find which instance did the access
     // (an improvement would be to use a static
-    // std::map<ZESTSC1_HANDLE,TLUController*>)
     static bool errorhandleraborts(int newmode = -1) {
       static bool mode = false;
       if (newmode >= 0)
@@ -100,7 +94,7 @@ namespace tlu {
       if (errorhandleraborts()) {
         std::cerr << "ZESTSC1 ERROR:  function " << function
                   << " returned error: " << msg << std::endl;
-        usbflushtracefile();
+        // usbflushtracefile();
         std::abort();
       }
     }
@@ -110,7 +104,6 @@ namespace tlu {
       do {
         // wait
       } while (t.uSeconds() < us);
-      // usleep(us);
     }
 
     static unsigned lemo_dac_value(double voltage) {
@@ -335,7 +328,7 @@ namespace tlu {
       WriteI2C16(
           (AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC, 0x0f,
           CalcPMTDACValue((double)value / 1000.0)); // Convert mV value to volts
-    } catch (const eudaq::Exception &) {
+    } catch (const TLUException &) {
       return false;
     }
 
@@ -369,7 +362,7 @@ namespace tlu {
       try {
         WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_PMT_DAC,
                    0x08 >> i, CalcPMTDACValue(target_voltages[i]));
-      } catch (const eudaq::Exception &) {
+      } catch (const TLUException &) {
         return false;
       }
     }
@@ -393,7 +386,7 @@ namespace tlu {
                  0xf000 | (lemo_dac_value(-0.5) << 2));
       WriteI2C16((AD5316_HW_ADDR << 2) | m_addr->TLU_I2C_BUS_LEMO_DAC, 0xC,
                  0xf000 | (lemo_dac_value(0.4) << 2));
-    } catch (const eudaq::Exception &) {
+    } catch (const TLUException &) {
 
       return false;
     }
@@ -429,8 +422,6 @@ namespace tlu {
     WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS,
                   1 << m_addr->TLU_TIMESTAMP_RESET_BIT);
     m_timestampzero = eudaq::Time::Current();
-    // WriteRegister(m_addr->TLU_RESET_REGISTER_ADDRESS, 0); // don't need to
-    // write zero afterwards.
   }
 
   void TLUController::ResetUSB() {
@@ -720,7 +711,6 @@ namespace tlu {
                      trig++, trigger_buffer ? trigger_buffer[i] : 0));
       }
     }
-    // mSleep(1);
   }
 
   unsigned char TLUController::GetTriggerStatus() const {
@@ -742,16 +732,16 @@ namespace tlu {
       if (delay == 0) {
         delay = 20;
       } else {
-        EUDAQ_uSLEEP(delay);
+	std::this_thread::sleep_for(std::chrono::microseconds(delay));
         delay += delay;
       }
       status = ZestSC1WriteRegister(m_handle, offset, val);
-      usbtrace(" W", offset, val, status);
+      // usbtrace(" W", offset, val, status);
       if (status == ZESTSC1_SUCCESS)
         break;
     }
     if (status != ZESTSC1_SUCCESS) {
-      usbflushtracefile();
+      // usbflushtracefile();
       throw TLUException("WriteRegister", status, count);
     }
   }
@@ -768,17 +758,17 @@ namespace tlu {
         if (delay == 0) {
           delay = 20;
         } else {
-          EUDAQ_uSLEEP(delay);
+	  std::this_thread::sleep_for(std::chrono::microseconds(delay));
           delay += delay;
         }
         status = ZestSC1WriteRegister(m_handle, offset + byte,
                                       ((val >> (8 * byte)) & 0xFF));
-        usbtrace(" W", offset, val, status);
+        // usbtrace(" W", offset, val, status);
         if (status == ZESTSC1_SUCCESS)
           break;
       }
       if (status != ZESTSC1_SUCCESS) {
-        usbflushtracefile();
+        // usbflushtracefile();
         throw TLUException("WriteRegister24", status, count);
       }
     }
@@ -833,16 +823,16 @@ namespace tlu {
       if (delay == 0) {
         delay = 20;
       } else {
-        EUDAQ_uSLEEP(delay);
+	std::this_thread::sleep_for(std::chrono::microseconds(delay));
         delay += delay;
       }
       status = ZestSC1ReadRegister(m_handle, offset, &val);
-      usbtrace(" R", offset, val, status);
+      // usbtrace(" R", offset, val, status);
       if (status == ZESTSC1_SUCCESS)
         break;
     }
     if (status != ZESTSC1_SUCCESS) {
-      usbflushtracefile();
+      // usbflushtracefile();
       throw TLUException("ReadRegister", status, count);
     }
     return val;
@@ -947,7 +937,6 @@ namespace tlu {
 
     const uint64_t timestamp_mask = 0x0FFFFFFFFFFFFFFFULL;
 
-    //    uint64_t buffer[4][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     if (m_addr->TLU_BUFFER_DEPTH > 4096)
       EUDAQ_THROW("Buffer size error");
 
@@ -958,8 +947,7 @@ namespace tlu {
                                                       // transfer going. Further
                                                       // writes do nothing.
 
-    EUDAQ_uSLEEP(10);
-
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
     // Read four buffers at once. first buffer will contain some data from
     // previous readout,
     // but futher reads should return indentical data, but data corruption will
@@ -993,11 +981,6 @@ namespace tlu {
     }
 
     for (unsigned i = buffer_offset; i < entries + buffer_offset; ++i) {
-
-      // std::cout << std::setw(8) <<  m_working_buffer[0][i] << "  " <<
-      // m_working_buffer[1][i] << "  " <<   m_working_buffer[2][i] << "  " <<
-      // m_working_buffer[3][i] << std::endl;
-
       // check that at least 2 out of three timestamps agree with each other....
       // due to latency in buffer transfer the real data starts at the third
       // 64-bit word.
@@ -1070,8 +1053,6 @@ namespace tlu {
     // need to add checking that timestamp is in the correct ball-park ( use
     // Timestamp2Seconds ... )
 
-    // usbtrace("BR", 0, m_working_buffer[3], m_addr->TLU_BUFFER_DEPTH, result);
-
     m_uncorrectable_blockread_errors += num_uncorrectable_errors;
     m_correctable_blockread_errors += num_correctable_errors;
 
@@ -1095,12 +1076,8 @@ namespace tlu {
                                                     bool pad) {
 
     // first read the 4 block again three times...
-
     static const unsigned buffer_offset = 2;
-
     unsigned num_errors;
-
-    // uint64_t buffer[12][4096]; // should be m_addr->TLU_BUFFER_DEPTH
     uint64_t padding_buffer[2048];
 
     std::cout << "### Error recovery: About to read out blocks three times..."
@@ -1288,8 +1265,6 @@ namespace tlu {
 
   void TLUController::UpdateLEDs() {
     std::vector<TLU_LEDs> leds(TLU_DUTS);
-    // std::cout << "mask: " << hexdec(m_mask) << ", ipsel: " << hexdec(m_ipsel)
-    // << std::endl;
     for (int i = 0; i < TLU_DUTS; ++i) {
       int bit = 1 << i;
       if (m_mask & bit)
@@ -1313,7 +1288,6 @@ namespace tlu {
         break;
       }
     }
-    // std::cout << "LEDS: " << to_string(leds) << std::endl;
     SetLEDs(leds);
   }
 
@@ -1341,9 +1315,7 @@ namespace tlu {
       WriteRegister(m_addr->TLU_DUT_LED_ADDRESS, ledval);
     } else {
       int dutled = 0, lemoled = 0;
-      // std::cout << "LED:";
       for (int i = 0; i < TLU_DUTS; ++i) {
-        // std::cout << ' ' << leds[i];
         if (leds[i].left)
           dutled |= 1 << (2 * i + 1);
         if (leds[i].right)
@@ -1355,16 +1327,12 @@ namespace tlu {
         int swap = ((leds[i].trig >> 1) & 1) | ((leds[i].trig & 1) << 1);
         lemoled |= swap << (2 * i + 8);
       }
-      // std::cout << "\n  dut=" << hexdec(dutled) << ", lemo=" <<
-      // hexdec(lemoled) << std::endl;
       // Swap the two LSBs, to work around routing bug on TLU
       dutled = (dutled & ~3) | ((dutled & 1) << 1) | ((dutled >> 1) & 1);
       // And invert, because 1 means off
       dutled ^= 0xffff;
       // Invert lowest 8 bits (LEMO reset/busy LEDs)
       lemoled ^= 0xff;
-      // std::cout << "  dut=" << hexdec(dutled) << ", lemo=" << hexdec(lemoled)
-      // << std::endl;
       try {
         WritePCA955(m_addr->TLU_I2C_BUS_MOTHERBOARD,
                     m_addr->TLU_I2C_BUS_MOTHERBOARD_LED_IO, dutled);
@@ -1452,14 +1420,11 @@ namespace tlu {
     WriteI2Clines(0, 1);
     I2Cdelay();
     if (WriteI2Clines(1, 1)) {
-      throw eudaq::Exception("I2C device failed to acknowledge");
+      throw TLUException("I2C device failed to acknowledge");
     }
   }
 
   bool TLUController::WriteI2Clines(bool scl, bool sda) {
-#if TLUDEBUG
-// std::cout << scl << sda << ",";
-#endif
     WriteRegister(m_addr->TLU_DUT_I2C_BUS_DATA_ADDRESS,
                   (scl << m_addr->TLU_I2C_SCL_OUT_BIT) |
                       (sda << m_addr->TLU_I2C_SDA_OUT_BIT));

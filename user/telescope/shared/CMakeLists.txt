@@ -29,11 +29,10 @@ IF(USER_TELESCOPE_SHARED)
   
   SET(SHARED_SRC
     src/TLUController.cc
-    src/TLU_USB.cc
-    src/USBTracer.cc
+    # src/TLU_USB.cc
+    # src/USBTracer.cc
     src/TLUAddresses1.cc
     src/TLUAddresses2.cc
-    src/win_uSleep.cc
     src/TluProducerPS.cc
     src/NiController.cc
     src/TelProducerPS.cc

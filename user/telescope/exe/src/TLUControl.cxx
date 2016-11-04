@@ -1,5 +1,5 @@
 #include "TLUController.hh"
-#include "USBTracer.hh"
+// #include "USBTracer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
@@ -196,19 +196,19 @@ int main(int /*argc*/, char **argv) {
         EUDAQ_THROW("Unable to open file: " + sname.Value());
     }
     signal(SIGINT, ctrlchandler);
-    if (trace.Value() != "") {
-      std::string fname = trace.Value();
-      if (fname[0] == '-') {
-        tlu::setusbtracelevel(1);
-        fname = std::string(fname, 1);
-      } else if (fname[0] == '+') {
-        tlu::setusbtracelevel(3);
-        fname = std::string(fname, 1);
-      } else {
-        tlu::setusbtracelevel(2);
-      }
-      tlu::setusbtracefile(fname);
-    }
+    // if (trace.Value() != "") {
+    //   std::string fname = trace.Value();
+    //   if (fname[0] == '-') {
+    //     tlu::setusbtracelevel(1);
+    //     fname = std::string(fname, 1);
+    //   } else if (fname[0] == '+') {
+    //     tlu::setusbtracelevel(3);
+    //     fname = std::string(fname, 1);
+    //   } else {
+    //     tlu::setusbtracelevel(2);
+    //   }
+    //   tlu::setusbtracefile(fname);
+    // }
     TLUController TLU(emode.Value());
     TLU.SetVersion(fwver.Value());
     TLU.SetFirmware(fname.Value());

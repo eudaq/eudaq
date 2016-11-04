@@ -5,7 +5,7 @@
 #include "OptionParser.hh"
 
 #include "TLUController.hh"
-#include "USBTracer.hh"
+// #include "USBTracer.hh"
 
 #include "TLUEvent.hh"
 
@@ -331,9 +331,9 @@ int main(int /*argc*/, const char **argv) {
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    if (op_trace.Value() != "") {
-      setusbtracefile(op_trace.Value());
-    }
+    // if (op_trace.Value() != "") {
+    //   setusbtracefile(op_trace.Value());
+    // }
     TLUProducer producer(name.Value(),rctrl.Value());    
     producer.MainLoop();
     std::cout << "Quitting" << std::endl;

@@ -8,7 +8,6 @@
 #include <stdexcept>
 #include <iostream>
 #include <ostream>
-#include "eudaq/Utils.hh"
 #include "eudaq/Time.hh"
 
 #define DO_NOT_USE_TRIGGER_INPUT_INFORMATION 0
