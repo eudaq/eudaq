@@ -81,10 +81,10 @@ int main(int, char ** argv) {
       std::cout << "RunNo:       " << conf.RunNo << std::endl
         << "RunEvNb:     " << conf.RunEvNb << std::endl
         << "RunFileEvNb: " << conf.RunFileEvNb << std::endl
-        << "AsicNb:      " << (int)conf.AsicNb << std::endl
-        << "AsicName:    " << (int)conf.AsicName << " (" << asicname(conf.AsicName) << ")" << std::endl
-        << "SwTrigEn:    " << (int)conf.SwTrigEnabled << std::endl
-        << "HwTrigMode:  " << (int)conf.HwTrigModeSavedData << std::endl
+        << "AsicNb:      " << static_cast<int>(conf.AsicNb) << std::endl
+        << "AsicName:    " << static_cast<int>(conf.AsicName) << " (" << asicname(conf.AsicName) << ")" << std::endl
+        << "SwTrigEn:    " << static_cast<int>(conf.SwTrigEnabled) << std::endl
+        << "HwTrigMode:  " << static_cast<int>(conf.HwTrigModeSavedData) << std::endl
         << "StartTime:   " << decodetime(conf.StartDate, conf.StartTime) << std::endl
         ;
 

@@ -58,10 +58,10 @@ int main(int, char ** argv) {
       if(dbg>0)std::cout<< "no more events to read" << std::endl;
     
   } catch (...) {
-	    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+	    std::cout << "Time: " << (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
     return op.HandleMainException();
   }
-    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+    std::cout << "Time: " << (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
   if(dbg>0)std::cout<< "almost done with Converter. exiting" << std::endl;
   return 0;
 }
