@@ -9,7 +9,23 @@ export temporary_path=`pwd`
 
 cd --
 
-if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; fi
+if [ $TRAVIS_OS_NAME == linux ]; then 
+	
+	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
+	
+	wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+
+	unzip alice-its-alpide-software-master-latest.zip
+
+	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
+
+	cd pALPIDEfs-software
+
+	sed -i '2s/.*//' Makefile
+	
+	make lib
+
+fi
 
 # http://apple.stackexchange.com/questions/193138/to-install-unbuffer-in-osx
 
@@ -34,23 +50,25 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	export PATH=/Users/travis/tinyxml:$PATH
 	
 	cd ..	
+	
+	wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+
+	unzip alice-its-alpide-software-master-latest.zip
+
+	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
+
+	cd pALPIDEfs-software
+
+	sed -i '' '2s/.*//' Makefile
+	
+	make lib
+	
 fi
 
-wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
-unzip alice-its-alpide-software-master-latest.zip
+#sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\"'(const unsigned char *)abcdef'\" -g -std=c++0x/' Makefile
 
-cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
-
-cd pALPIDEfs-software
-
-sed -i '' '2s/.*//' Makefile
-
-sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\"'(const unsigned char *)abcdef'\" -g -std=c++0x/' Makefile
-
-sed -i '' '4s/.*/LINKFLAGS=-L\/Users\/travis\/tinyxml -lusb-1.0 -ltinyxml/' Makefile
-
-make lib
+#sed -i '' '4s/.*/LINKFLAGS=-L\/Users\/travis\/tinyxml -lusb-1.0 -ltinyxml/' Makefile
 
 pwd
 
