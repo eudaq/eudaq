@@ -172,7 +172,7 @@ namespace eudaq {
     size /= 8;
     out.reserve(size);
     for (auto i = inBegin; i < inEnd; ++i) {
-      dummy += (unsigned char)(*i) << (j % 8);
+      dummy += static_cast<unsigned char>(*i) << (j % 8);
 
       if ((j % 8) == 7) {
         out.push_back(dummy);

@@ -210,7 +210,7 @@ namespace eudaq {
                 noise.reserve(m_nPixels);
 
                 // average all the runs
-                double div = 1./(double)m_noe;
+                double div = 1./static_cast<double>(m_noe);
 
                 // calculate pedestals
                 for(unsigned int i=0; i<m_Ped.size(); ++i){
@@ -223,14 +223,14 @@ namespace eudaq {
                     for(unsigned int ipix=0; ipix<m_Ped.size(); ++ipix){
                         if(ievt==0) {
 //                            cout << cds[ievt][ipix] << endl;
-                            noise.push_back( ((double)cds[ievt][ipix]-peds[ipix])*((double)cds[ievt][ipix]-peds[ipix]) );
+                            noise.push_back( (static_cast<double>(cds[ievt][ipix]-peds[ipix]))*(static_cast<double>(cds[ievt][ipix]-peds[ipix])) );
                         }
                         else
-                            noise[ipix] += ((double)cds[ievt][ipix]-peds[ipix])*((double)cds[ievt][ipix]-peds[ipix]);
+                            noise[ipix] += (static_cast<double>(cds[ievt][ipix]-peds[ipix]))*(static_cast<double>(cds[ievt][ipix]-peds[ipix]));
                     }
                 }
                 for(unsigned int i=0; i<noise.size(); ++i){
-                    noise[i] = sqrt( noise[i]/((double)m_noe-1.) );
+                    noise[i] = sqrt( noise[i]/(static_cast<double>(m_noe)-1.) );
 //                    if(noise[i] > 10.) cout << noise[i] << endl;
                     avnoise[2*(i/11700)+((i%11700)/8100)]+=noise[i];
                 }
@@ -579,12 +579,12 @@ namespace eudaq {
             if(m_PedMeas){  //sum up pedestals in a vector and sum up square of pedestals
                 if(m_noe==1){ //create pedestal and noise vectors
                     for(unsigned int i=0;i<pedestalCalc.size();i++){
-                        m_Ped.push_back((double)pedestalCalc[i]);
+                        m_Ped.push_back(static_cast<double>(pedestalCalc[i]));
                     }
                 }
                 else {
                     for(unsigned int i=0;i<m_Ped.size();i++){  //summing up
-                        m_Ped[i] += (double)pedestalCalc[i];
+                        m_Ped[i] += static_cast<double>(pedestalCalc[i]);
                     }
                 }
                 cds.push_back(pedestalCalc);
