@@ -62,15 +62,12 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	cd pALPIDEfs-software
 
 	sed -i '' '2s/.*//' Makefile
+	sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\"$(GIT_VERSION)\" -g -std=c++0x/' Makefile
+	sed -i '' '4s/.*/LINKFLAGS=-L\/Users\/travis\/tinyxml -lusb-1.0 -ltinyxml/' Makefile		
 	
 	make lib
 	
 fi
-
-
-#sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\"'(const unsigned char *)abcdef'\" -g -std=c++0x/' Makefile
-
-#sed -i '' '4s/.*/LINKFLAGS=-L\/Users\/travis\/tinyxml -lusb-1.0 -ltinyxml/' Makefile
 
 pwd
 
