@@ -62,8 +62,10 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	cd pALPIDEfs-software
 
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
-	sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\\"$(GIT_VERSION)\\" -g -std=c++0x/' Makefile
+	sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\\"$(GIT_VERSION)\\" -g -std=c++11/' Makefile
 	sed -i '' '4s/.*/LINKFLAGS=-L\/Users\/travis\/tinyxml -lusb-1.0 -ltinyxml/' Makefile		
+	
+	sed -i '' '308s/.*//' c_wrapper.cpp		
 	
 	make lib
 	
