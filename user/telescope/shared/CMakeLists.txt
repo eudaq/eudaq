@@ -38,7 +38,7 @@ IF(USER_TELESCOPE_SHARED)
     src/TelProducerPS.cc
     )
 
-  add_library(${USER_SHARED} SHARED ${SHARED_SRC})
+  add_library(${USER_SHARED} STATIC ${SHARED_SRC})
   target_link_libraries(${USER_SHARED} ${EUDAQ_CORE} ${LIBUSB_LIBRARIES} ${ZESTSC1_LIBRARIES})
   
   install(TARGETS
