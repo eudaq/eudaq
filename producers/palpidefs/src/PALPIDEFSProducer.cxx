@@ -1292,7 +1292,9 @@ void PALPIDEFSProducer::OnStartRun(unsigned param) {
     m_reader[i]->ParseXML(doc.FirstChild("root")->ToElement(), -1, -1, true);
 
     std::string configStr;
-    configStr << doc;
+    std::stringstream configStream;
+    configStream << doc;
+    configStr = configStream.str();
 
     char tmp[100];
     sprintf(tmp, "Config_%d", i);
