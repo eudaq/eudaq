@@ -54,7 +54,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	mv /Users/travis/tinyxml/tinystr.o /Users/travis/tinyxml/tinystr.a
 	mv /Users/travis/tinyxml/tinyxmlerror.o /Users/travis/tinyxml/tinyxmlerror.a
 	mv /Users/travis/tinyxml/tinyxmlparser.o /Users/travis/tinyxml/tinyxmlparser.a
-	mv /Users/travis\tinyxml/tinyxml.o /Users/travis\tinyxml/tinyxml.a
+	mv /Users/travis/tinyxml/tinyxml.o /Users/travis/tinyxml/tinyxml.a
 	
 	cd ..	
 	
