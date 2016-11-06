@@ -51,6 +51,11 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	export CFLAGS="-I /Users/travis/tinyxml" $CFLAGS
 	export LDFLAGS="-L /Users/travis/tinyxml" $LDFLAGS
 	
+	mv /Users/travis/tinyxml/tinystr.o /Users/travis/tinyxml/tinystr.a
+	mv /Users/travis/tinyxml/tinyxmlerror.o /Users/travis/tinyxml/tinyxmlerror.a
+	mv /Users/travis/tinyxml/tinyxmlparser.o /Users/travis/tinyxml/tinyxmlparser.a
+	mv /Users/travis\tinyxml/tinyxml.o /Users/travis\tinyxml/tinyxml.a
+	
 	cd ..	
 	
 	wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
@@ -63,7 +68,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
 	sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/tinyxml -pipe -fPIC -DVERSION=\\"$(GIT_VERSION)\\" -g -std=c++11/' Makefile
-	sed -i '' '4s/.*/LINKFLAGS=\/Users\/travis\/tinyxml\/tinystr.o \/Users\/travis\/tinyxml\/tinyxmlerror.o \/Users\/travis\/tinyxml\/tinyxmlparser.o \/Users\/travis\/tinyxml\/tinyxml.o -lusb-1.0 /' Makefile		
+	sed -i '' '4s/.*/LINKFLAGS=\/Users\/travis\/tinyxml\/tinystr.a \/Users\/travis\/tinyxml\/tinyxmlerror.a \/Users\/travis\/tinyxml\/tinyxmlparser.a \/Users\/travis\/tinyxml\/tinyxml.a -lusb-1.0 /' Makefile		
 	
 	sed -i '' '308s/.*//' c_wrapper.cpp		
 	
