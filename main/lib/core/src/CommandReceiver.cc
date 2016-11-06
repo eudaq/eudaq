@@ -63,12 +63,8 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
   } // anonymous namespace
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
-      const std::string & runcontrol, bool startthread)
-    : m_done(false),
-    m_type(type),
-    m_name(name),
-    m_threadcreated(false)
-  {
+				   const std::string & runcontrol, bool startthread)
+    : m_done(false), m_type(type), m_name(name){
     int i = 0;
     while (true) {
 
@@ -110,8 +106,7 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
   }
 
   void CommandReceiver::StartThread() {
-	m_thread=std::unique_ptr<std::thread>(new std::thread(CommandReceiver_thread, this));
-	m_threadcreated = true;
+    m_thread = std::thread(CommandReceiver_thread, this);
   }
 
   void CommandReceiver::SetStatus(Status::Level level,
@@ -125,11 +120,8 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
     std::cout << "Config:\n" << param << std::endl;
   }
 
-  void CommandReceiver::OnClear() { SetStatus(Status::LVL_NONE, "Wait"); }
-
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
-    // return false;
   }
 
   void CommandReceiver::OnIdle() { mSleep(500); }
@@ -149,17 +141,12 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
         param = std::string(cmd, i + 1);
         cmd = std::string(cmd, 0, i);
       }
-      // std::cout << "(" << cmd << ")(" << param << ")" << std::endl;
-      if (cmd == "CLEAR") {
-        OnClear();
-      } else if (cmd == "CONFIG") {
+      if (cmd == "CONFIG") {
         std::string section = m_type;
         if (m_name != "")
           section += "." + m_name;
         Configuration conf(param, section);
         OnConfigure(conf);
-      } else if (cmd == "PREPARE") {
-        OnPrepareRun(from_string(param, 0));
       } else if (cmd == "START") {
         OnStartRun(from_string(param, 0));
       } else if (cmd == "STOP") {
@@ -176,8 +163,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
         OnLog(param);
       } else if (cmd == "SERVER") {
         OnServer();
-      } else if (cmd == "GETRUN") {
-        OnGetRun();
       } else {
         OnUnrecognised(cmd, param);
       }
@@ -190,7 +175,8 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
-    if (m_threadcreated) m_thread->join();
+    if (m_thread.joinable())
+      m_thread.join();
    
   }
 

@@ -15,7 +15,8 @@ SET(PS_PLUGIN_SRC
   src/DummySystemPS.cc
   src/OldEventFilterPS.cc
   src/UnpackSyncEventPS.cc
-  src/FileWriterProcessor.cc
+  # src/FileWriterProcessor.cc
+  src/SyncByEventNumberPS.cc
   )
 
 

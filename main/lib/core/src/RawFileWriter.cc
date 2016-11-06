@@ -16,8 +16,8 @@ namespace eudaq {
   class RawFileWriter : public FileWriter {
   public:
     RawFileWriter(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
+    virtual void StartRun(uint32_t);
+    virtual void WriteEvent(EventSPC ev);
     virtual uint64_t FileBytes() const;
     virtual ~RawFileWriter();
 
@@ -29,20 +29,16 @@ namespace eudaq {
     //EUDAQ_DEBUG("Constructing RawFileWriter(" + to_string(param) + ")");
   }
 
-  void RawFileWriter::StartRun(unsigned runnumber) {
+  void RawFileWriter::StartRun(uint32_t runnumber) {
     delete m_ser;
     m_ser = new FileSerializer(
         FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
   }
 
-  void RawFileWriter::WriteEvent(const DetectorEvent &ev) {
+  void RawFileWriter::WriteEvent(EventSPC ev) {
     if (!m_ser)
       EUDAQ_THROW("RawFileWriter: Attempt to write unopened file");
-    if (ev.IsBORE()) {
-      eudaq::PluginManager::Initialize(ev);
-    }
-    if (!m_ser) EUDAQ_THROW("RawFileWriter: Attempt to write unopened file");
-    m_ser->write(ev);
+    m_ser->write(*(ev.get())); //TODO: Serializer accepts EventSPC
     m_ser->Flush();
   }
   
