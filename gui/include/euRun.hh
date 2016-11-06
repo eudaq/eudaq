@@ -51,18 +51,18 @@ class RunControlGUI : public QMainWindow,
 public:
   RunControlGUI(const std::string &listenaddress, QRect geom,
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
-  ~RunControlGUI();
+  ~RunControlGUI() override;
 
 private:
   enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
-  virtual void OnConnect(const eudaq::ConnectionInfo &id);
-  virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
+  void OnConnect(const eudaq::ConnectionInfo &id) override;
+  void OnDisconnect(const eudaq::ConnectionInfo &id) override{
     m_run.disconnected(id);
   }
-  virtual void OnReceive(const eudaq::ConnectionInfo &id,
-                         std::shared_ptr<eudaq::Status> status);
+  void OnReceive(const eudaq::ConnectionInfo &id,
+		 std::shared_ptr<eudaq::Status> status) override;
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
       return;

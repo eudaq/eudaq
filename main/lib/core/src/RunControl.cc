@@ -78,7 +78,6 @@ namespace eudaq {
 
   void RunControl::Configure(const std::string &param, int geoid) {
     EUDAQ_INFO("Configuring (" + param + ")");
-    // EUDAQ_EXTRA("Loading configuration from: " + filename);
     std::ifstream file(param.c_str());
     if (file.is_open()) {
       Configuration config(file);
@@ -103,7 +102,7 @@ namespace eudaq {
     m_listening = false;
     m_stopping = false;
     m_runnumber++;
-    // std::string packet;
+
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
     SendCommand("CLEAR");
     mSleep(500);
@@ -118,6 +117,7 @@ namespace eudaq {
   }
 
   void RunControl::StopRun(bool listen) {
+    
     EUDAQ_INFO("Stopping Run " + to_string(m_runnumber));
     SendCommand("STOP");
     m_stopping = true;
@@ -161,7 +161,6 @@ namespace eudaq {
   }
 
   void RunControl::CommandHandler(TransportEvent &ev) {
-    // std::cout << "Event: ";
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
       std::cout << "Connect:    " << ev.id << std::endl;
@@ -174,7 +173,6 @@ namespace eudaq {
       }
       break;
     case (TransportEvent::DISCONNECT):
-      // std::cout << "Disconnection: " << ev.id << std::endl;
       OnDisconnect(ev.id);
       if (m_idata != (size_t)-1 && ev.id.Matches(GetConnection(m_idata)))
         m_idata = (size_t)-1;
@@ -182,7 +180,6 @@ namespace eudaq {
         m_ilog = (size_t)-1;
       break;
     case (TransportEvent::RECEIVE):
-      // std::cout << "Receive: " << ev.packet << std::endl;
       if (ev.id.GetState() == 0) { // waiting for identification
         // check packet
         do {
@@ -215,7 +212,7 @@ namespace eudaq {
           part = std::string(ev.packet, i0, i1 - i0);
           ev.id.SetName(part);
         } while (false);
-        // std::cout << "client replied, sending OK" << std::endl;
+
         m_cmdserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
         if (ev.id.GetType() == "LogCollector") {
@@ -226,7 +223,8 @@ namespace eudaq {
           InitOther(ev.id);
         }
         OnConnect(ev.id);
-      } else {
+      }
+      else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         std::shared_ptr<Status> status(new Status(ser));
         if (status->GetLevel() == Status::LVL_BUSY && ev.id.GetState() == 1) {
@@ -248,8 +246,6 @@ namespace eudaq {
           // number
           OnReceive(ev.id, status);
         }
-        // std::cout << "Receive:    " << ev.id << " \'" << ev.packet << "\'" <<
-        // std::endl;
       }
       break;
     default:
@@ -257,7 +253,7 @@ namespace eudaq {
     }
   }
 
-  void RunControl::InitData(const ConnectionInfo &id) {
+  void RunControl::InitData(const ConnectionInfo &id){
     // default DC already connected?
     if (m_idata != (size_t)-1) {
       if (id.GetName() == "") {
@@ -274,15 +270,9 @@ namespace eudaq {
     bool isDefaultDC = false;
     if (id.GetName() == "" || m_idata == (size_t)-1) {
       isDefaultDC = true;
-      std::cout << "New default DataCollector with name '" << id.GetName()
-                << "' is connecting" << std::endl;
-    } else {
-      std::cout << "Additional DataCollector with name '" << id.GetName()
-                << "' is connecting" << std::endl;
     }
-
     eudaq::Status status =
-        m_cmdserver->SendReceivePacket<eudaq::Status>("GETRUN", id, 1000000);
+      m_cmdserver->SendReceivePacket<eudaq::Status>("GETRUN", id, 1000000);
     std::string part = status.GetTag("_RUN");
 
     if (part == "")
@@ -290,9 +280,6 @@ namespace eudaq {
 
     // verify and initialize (correct) run number
     unsigned thisRunNumber = from_string(part, 0);
-    std::cout << "DataServer responded: RunNumber = " << thisRunNumber
-              << std::endl;
-
     if (m_runnumber >= 0) {
       // we have set the run number value before
       if (m_runnumber != static_cast<int32_t>(thisRunNumber)) {
