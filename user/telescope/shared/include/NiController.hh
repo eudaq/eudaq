@@ -8,8 +8,9 @@
 
 #include <sys/types.h>
 
-#ifndef WIN32
-
+#ifdef WIN32
+#include <winsock.h>
+#else
 #include <sys/time.h>
 #include <unistd.h>
 #include <netdb.h>

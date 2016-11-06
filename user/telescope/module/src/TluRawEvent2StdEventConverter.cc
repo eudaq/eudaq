@@ -3,7 +3,7 @@
 
 namespace eudaq{
 
-  class DLLEXPORT TluRawEvent2StdEventConverter: public StdEventConverter{
+  class TluRawEvent2StdEventConverter: public StdEventConverter{
   public:
     bool Converting(EventSPC d1, StandardEventSP d2) const override;
     static const uint32_t m_id_cvt = cstr2hash("TluRawDataEvent");

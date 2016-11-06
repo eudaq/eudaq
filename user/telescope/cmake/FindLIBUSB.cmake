@@ -1,29 +1,3 @@
-# This CMake script wants to use libusb functionality, therefore it looks 
-# for libusb include files and libraries. 
-#
-# Operating Systems Supported:
-# - Unix (requires pkg-config)
-#   Tested with Ubuntu 9.04 and Fedora 11
-# - Windows (requires MSVC)
-#   Tested with Windows XP
-#
-# This should work for both 32 bit and 64 bit systems.
-#
-# Original author: F. Kooman <fkooman@tuxed.net>
-#
-
-# FreeBSD has built-in libusb since 800069
-IF(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
-  EXEC_PROGRAM(sysctl ARGS -n kern.osreldate OUTPUT_VARIABLE FREEBSD_VERSION)
-  SET(MIN_FREEBSD_VERSION 800068)
-  IF(FREEBSD_VERSION GREATER ${MIN_FREEBSD_VERSION})
-    SET(LIBUSB_FOUND TRUE)
-    SET(LIBUSB_INCLUDE_DIRS "/usr/include")
-    SET(LIBUSB_LIBRARIES "usb")
-    SET(LIBUSB_LIBRARY_DIRS "/usr/lib/")
-  ENDIF(FREEBSD_VERSION GREATER ${MIN_FREEBSD_VERSION})
-ENDIF(CMAKE_SYSTEM_NAME MATCHES FreeBSD)
-
 IF(NOT LIBUSB_FOUND)
 # find path of libusb installation in ./extern folder
 file(GLOB_RECURSE extern_file ${CMAKE_CURRENT_LIST_DIR}/../extern/*usb.h)

@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "eudaq/StdEventConverter.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Logger.hh"
@@ -7,7 +8,7 @@
 
 namespace eudaq{
 
-  class DLLEXPORT TelRawEvent2StdEventConverter: public StdEventConverter{
+  class TelRawEvent2StdEventConverter: public StdEventConverter{
     typedef std::vector<uint8_t>::const_iterator datait;
   public:
     bool Converting(EventSPC d1, StandardEventSP d2) const override;
@@ -70,11 +71,11 @@ namespace eudaq{
 	len1 = std::max(len1, len1_h);
       }
 
-      if (len0 * 4 + 12 > static_cast<size_t>(data0.end() - it0)) {
+      if (len0 * 4 + 12 > data0.end()-it0) {
 	EUDAQ_WARN("Bad length in first frame");
 	break;
       }
-      if (len1 * 4 + 12 > static_cast<size_t>(data1.end() - it1)) {
+      if (len1 * 4 + 12 > data1.end() - it1) {
 	EUDAQ_WARN("Bad length in second frame");
 	break;
       }

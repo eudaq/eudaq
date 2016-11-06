@@ -1,5 +1,4 @@
 #include "TLUController.hh"
-// #include "USBTracer.hh"
 #include "TLUAddresses.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Timer.hh"
@@ -40,7 +39,13 @@ using eudaq::ucase;
 #define PCA955_CONFIG0_REGISTER 6
 #define PCA955_CONFIG1_REGISTER 7
 
+
 namespace tlu {
+#ifdef WIN32
+  char *ZestSC1_ErrorStrings[] = {"window", "wants", "it"};
+  ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler = NULL;
+
+#endif
 
   void TLU_LEDs::print(std::ostream &os) const {
     os << (left ? 'L' : '.') << (right ? 'R' : '.') << '-'
@@ -517,9 +522,7 @@ namespace tlu {
   }
 
   unsigned char TLUController::GetClockSource() const{
-    if(m_addr){
-      ReadRegister8(m_addr->TLU_CLOCK_SOURCE_SELECT_ADDRESS);
-    }
+    return ReadRegister8(m_addr->TLU_CLOCK_SOURCE_SELECT_ADDRESS);
   }
 
   

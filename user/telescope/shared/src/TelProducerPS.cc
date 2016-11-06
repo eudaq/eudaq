@@ -110,7 +110,7 @@ void TelProducerPS::ProcessCommand(const std::string& key, const std::string& va
     break;
   }
   case cstr2hash("NiVersion"):{
-    conf_parameters[0] = std::stoul(val);
+    conf_parameters[0] = std::stoul(val); //TODO: endian unsafe !!!
     break;
   }
   case cstr2hash("TriggerType"):{

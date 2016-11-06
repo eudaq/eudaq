@@ -1,3 +1,6 @@
+#ifndef EXPORTEVENTPS_HH
+#define EXPORTEVENTPS_HH
+
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
@@ -18,3 +21,5 @@ namespace eudaq{
   };
   
 }
+
+#endif

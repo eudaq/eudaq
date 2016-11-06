@@ -12,6 +12,8 @@ find_bitfiles_in_extern("")
 
 if (NOT TLUFIRMWARE_PATH)
   MESSAGE(WARNING "Could not find TLUFirmware bitfiles required by tlu producer. Please refer to the documentation on how to obtain them.")
+else()
+  set(TLUFirmware_FOUND TRUE)
 endif()
 
 set(TLUFIRMWARE_DEFINITIONS "-DTLUFIRMWARE_PATH=\"${TLUFIRMWARE_PATH}\"" )

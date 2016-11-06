@@ -11,7 +11,13 @@ using std::uint8_t;
 using std::uint16_t;
 using std::uint32_t;
 using std::uint64_t;
+
+#ifdef WIN32
+#include <crtdefs.h>
+#else
 using std::size_t;
+#endif
+
 #define PF_LINUX 1
 #define PF_MACOSX 2
 #define PF_CYGWIN 3
@@ -26,7 +32,6 @@ using std::size_t;
 #else
 #define DLLEXPORT __declspec(dllimport)
 #endif
-
 #else
 
 #define DLLEXPORT

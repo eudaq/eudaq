@@ -79,6 +79,8 @@ find_zestsc1_in_extern("")
 
 if (NOT ZESTSC1_LIBRARY)
   MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+else()
+  set(ZestSC1_FOUND TRUE)
 endif()
 
 set(ZESTSC1_LIBRARIES ${ZESTSC1_LIBRARY} )

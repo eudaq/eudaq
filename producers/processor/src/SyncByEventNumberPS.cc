@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include "Processor.hh"
 #include "Event.hh"
 

@@ -1,6 +1,7 @@
 #ifndef STDEVENTCONVERTER_HH_ 
 #define STDEVENTCONVERTER_HH_
 
+#include "eudaq/Platform.hh"
 #include "eudaq/DataConverter.hh"
 #include "eudaq/Event.hh"
 #include "eudaq/StandardEvent.hh"
