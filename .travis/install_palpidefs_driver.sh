@@ -3,9 +3,11 @@
 # This package is necessary for the palpidefs producer
 
 echo "Entering install_palpidefs_driver"
-echo "Installing palpidefs driver"
+echo "Installing palpidefs driver:"
 
 export temporary_path=`pwd`
+
+echo $temporary_path
 
 cd $TRAVIS_BUILD_DIR/extern/
 
@@ -20,8 +22,6 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	fi
 
 	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
-	
-	echo `ls`
 
 	cd pALPIDEfs-software
 
