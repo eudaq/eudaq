@@ -7,15 +7,17 @@ echo "Installing palpidefs driver"
 
 export temporary_path=`pwd`
 
-cd --
+cd $TRAVIS_BUILD_DIR/extern/
 
 if [ $TRAVIS_OS_NAME == linux ]; then 
 	
 	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
 	
-	wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b]; then
+		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
-	unzip alice-its-alpide-software-master-latest.zip
+		unzip alice-its-alpide-software-master-latest.zip
+	fi
 
 	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
 
@@ -45,8 +47,6 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	make
 	
-	echo $PATH
-	
 	export PATH=/Users/travis/tinyxml:$PATH
 	export CFLAGS="-I /Users/travis/tinyxml" $CFLAGS
 	export LDFLAGS="-L /Users/travis/tinyxml" $LDFLAGS
@@ -58,9 +58,11 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 	
-	wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b]; then
+		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
-	unzip alice-its-alpide-software-master-latest.zip
+		unzip alice-its-alpide-software-master-latest.zip
+	fi
 
 	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
 
