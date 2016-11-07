@@ -21,7 +21,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 
 	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
 	
-	ls
+	echo `ls`
 
 	cd pALPIDEfs-software
 
