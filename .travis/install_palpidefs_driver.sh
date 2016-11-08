@@ -17,7 +17,9 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	
 	if [ -d "$TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b" ]; then
 	
-		echo "palpidefs source restored from cache"
+		echo "palpidefs source restored from cache as path exists:"
+		
+		ls $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
 		
 	else
 
