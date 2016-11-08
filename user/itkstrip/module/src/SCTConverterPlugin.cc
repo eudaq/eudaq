@@ -135,12 +135,6 @@ namespace eudaq {
       }
     }
 
-    virtual int IsSyncWithTLU(eudaq::Event const &ev,
-                              const eudaq::Event &tluEvent) const {
-      unsigned triggerID = GetTriggerID(ev);
-      auto tlu_triggerID = tluEvent.GetEventNumber();
-      return compareTLU2DUT(tlu_triggerID, triggerID + 1);
-    }
 
     virtual bool GetStandardSubEvent(StandardEvent &sev,
                                      const Event &ev) const {
@@ -151,23 +145,6 @@ namespace eudaq {
       if (!raw) {
         return false;
       }
-
-      // std::string tagname;
-      // tagname = "Temperature";
-      // if(raw->HasTag(tagname)){
-      // 	sev.SetTag(tagname,raw->GetTag(tagname));
-      // }
-      // tagname = "Voltage";
-      // if(raw->HasTag(tagname)){
-      // 	sev.SetTag(tagname,raw->GetTag(tagname));
-      // }
-      
-      // std::vector<std::string> paralist = raw->GetTagList("PLOT_");
-      // for(auto &e: paralist){
-      // 	double val ;
-      // 	val=raw->GetTag(e, val);
-      // 	sev.SetTag(e,val);
-      // }
 
       size_t  nblocks= raw->NumBlocks();
       if(!nblocks){
@@ -281,13 +258,6 @@ namespace eudaq {
   public:
     SCTConverterPlugin_ITS_TTC() : DataConverterPlugin(EVENT_TYPE_ITS_TTC) {}
     virtual void Initialize(const Event &bore, const Configuration &cnf){}
-    virtual int IsSyncWithTLU(eudaq::Event const &ev,
-                              const eudaq::Event &tluEvent) const {
-      unsigned triggerID = GetTriggerID(ev);
-      auto tlu_triggerID = tluEvent.GetEventNumber();
-      return compareTLU2DUT(tlu_triggerID, triggerID + 1);
-    }
-
     virtual bool GetStandardSubEvent(StandardEvent &sev,
                                      const Event &ev) const {
       if (ev.IsBORE() ||ev.IsEORE()) {

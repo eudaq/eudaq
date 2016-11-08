@@ -40,7 +40,7 @@ public:
         mimosa_data_1 =
             ni_control->DataTransportClientSocket_ReadData(datalength2);
 
-        eudaq::RawDataEvent ev("NI", m_id_stream, m_run, m_ev++);
+        eudaq::RawDataEvent ev("TelRawDataEvent", m_id_stream, m_run, m_ev++);
         ev.AddBlock(0, mimosa_data_0);
         ev.AddBlock(1, mimosa_data_1);
         SendEvent(ev);
@@ -164,7 +164,7 @@ public:
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
 
-      eudaq::RawDataEvent ev("NI", m_id_stream, m_run, 0);
+      eudaq::RawDataEvent ev("TelRawDataEvent", m_id_stream, m_run, 0);
       ev.SetFlags(eudaq::Event::FLAG_BORE);
 
       
@@ -202,7 +202,7 @@ public:
       // You can also set tags on it (as with the BORE) if necessary
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
 
-      eudaq::RawDataEvent ev("NI", m_id_stream, m_run, m_ev);
+      eudaq::RawDataEvent ev("TelRawDataEvent", m_id_stream, m_run, m_ev);
       ev.SetFlags(eudaq::Event::FLAG_EORE);
       SendEvent(ev);
       

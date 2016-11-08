@@ -1,18 +1,17 @@
 #include "Configuration.hh"
 #include "Producer.hh"
-#include "Utils.hh"
-#include "Logger.hh"
-#include "OptionParser.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/OptionParser.hh"
+#include "eudaq/RawDataEvent.hh"
 
 #include "TLUController.hh"
-#include "TLUEvent.hh"
 
 #include <iostream>
 #include <ostream>
 #include <cctype>
 #include <memory>
 
-typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
 using eudaq::to_hex;
 using namespace tlu;
@@ -73,10 +72,10 @@ public:
                       << std::endl;
           }
           lasttime = t;
-          TLUEvent ev(m_id_stream, m_run, m_ev);
-	  ev.SetTimestampBegin(t);
-	  ev.SetTimestampEnd(t+10);//TODO, duration
 
+	  eudaq::RawDataEvent ev("TluRawDataEvent", m_id_stream, m_run, m_ev);
+	  ev.SetTimestamp(t, t+1);//TODO, duration
+	  
           ev.SetTag("trigger", m_tlu->GetEntry(i).trigger2String());
           if (i == m_tlu->NumEntries() - 1) {
             ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
@@ -87,16 +86,11 @@ public:
           }
           SendEvent(ev);
         }
-        //         if (m_tlu->NumEntries()) {
-        //           std::cout << "========" << std::endl;
-        //         } else {
-        //           std::cout << "." << std::flush;
-        //         }
       }
       if (JustStopped) {
         m_tlu->Update(timestamps);
-	TLUEvent ev(m_id_stream, m_run, ++m_ev);
-	ev.SetFlags(eudaq::Event::FLAG_EORE);
+	eudaq::RawDataEvent ev("TluRawDataEvent", m_id_stream, m_run, ++m_ev);
+	ev.SetEORE();
         SendEvent(ev);
         TLUJustStopped = false;
       }
@@ -181,9 +175,8 @@ public:
       m_run = param;
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
-      TLUEvent ev(m_id_stream, m_run, 0);
-      ev.SetFlags(eudaq::Event::FLAG_BORE);
-
+      eudaq::RawDataEvent ev("TluRawDataEvent", m_id_stream, m_run, 0);
+      ev.SetBORE();
       ev.SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));
       ev.SetTag("TriggerInterval", to_string(trigger_interval));
       ev.SetTag("DutMask", "0x" + to_hex(dut_mask));
@@ -210,7 +203,6 @@ public:
         ev.SetTag("PMTOffsetError" + to_string(i + 1), pmt_offset_error[i]);
       }
       ev.SetTag("ReadoutDelay", to_string(readout_delay));
-      //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       ev.SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
       eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
       SendEvent(ev);
