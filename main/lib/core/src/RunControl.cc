@@ -12,30 +12,11 @@
 
 namespace eudaq {
 
-  namespace {
-
-    class PseudoMutex {
-    public:
-      typedef bool type;
-      PseudoMutex(type &flag) : m_flag(flag) {
-        while (m_flag) {
-          mSleep(10);
-        };
-        m_flag = true;
-      }
-      ~PseudoMutex() { m_flag = false; }
-
-    private:
-      type &m_flag;
-    };
-
-  } // anonymous namespace
-
   RunControl::RunControl(const std::string &listenaddress)
-      : m_done(false), m_listening(true), m_runnumber(-1), m_cmdserver(0),
+      : m_done(false), m_listening(true), m_runnumber(-1),
         m_idata((size_t)-1), m_ilog((size_t)-1), m_runsizelimit(0),
         m_runeventlimit(0), m_nextconfigonrunchange(false), m_stopping(false),
-        m_busy(false), m_producerbusy(false) {
+        m_producerbusy(false) {
     if (listenaddress != "") {
       StartServer(listenaddress);
     }
@@ -43,18 +24,18 @@ namespace eudaq {
 
   void RunControl::StartServer(const std::string &listenaddress) {
     m_done = false;
-    m_cmdserver = TransportFactory::CreateServer(listenaddress);
+    m_cmdserver.reset(TransportFactory::CreateServer(listenaddress));
     m_cmdserver->SetCallback(
         TransportCallback(this, &RunControl::CommandHandler));
-    m_thread = std::unique_ptr<std::thread>(new std::thread(&RunControl::CommandThread, this));
+    m_thread = std::thread(&RunControl::CommandThread, this);
     std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString()
               << std::endl;
   }
 
   void RunControl::StopServer() {
     m_done = true;
-    m_thread->join();
-    delete m_cmdserver;
+    if(m_thread.joinable())
+      m_thread.join();
   }
 
   RunControl::~RunControl() { StopServer(); }
@@ -131,8 +112,9 @@ namespace eudaq {
   }
 
   void RunControl::SendCommand(const std::string &cmd, const std::string &param,
-                               const ConnectionInfo &id) {
-    PseudoMutex m(m_busy);
+                               const ConnectionInfo &id){
+    std::unique_lock<std::mutex> lk(m_mtx_sendcmd);
+    
     std::string packet(cmd);
     if (param.length() > 0) {
       packet += '\0' + param;
@@ -143,8 +125,8 @@ namespace eudaq {
   std::string RunControl::SendReceiveCommand(const std::string &cmd,
                                              const std::string &param,
                                              const ConnectionInfo &id) {
-    PseudoMutex m(m_busy);
-    mSleep(500); // make sure there are no pending replies
+    std::unique_lock<std::mutex> lk(m_mtx_sendcmd);
+    mSleep(500); // make sure there are no pending replies //TODO: it is unreliable.
     std::string packet(cmd);
     if (param.length() > 0) {
       packet += '\0' + param;
@@ -271,27 +253,7 @@ namespace eudaq {
     if (id.GetName() == "" || m_idata == (size_t)-1) {
       isDefaultDC = true;
     }
-    eudaq::Status status =
-      m_cmdserver->SendReceivePacket<eudaq::Status>("GETRUN", id, 1000000);
-    std::string part = status.GetTag("_RUN");
 
-    if (part == "")
-      EUDAQ_THROW("Bad response from DataCollector");
-
-    // verify and initialize (correct) run number
-    unsigned thisRunNumber = from_string(part, 0);
-    if (m_runnumber >= 0) {
-      // we have set the run number value before
-      if (m_runnumber != static_cast<int32_t>(thisRunNumber)) {
-        EUDAQ_THROW("DataCollector run number mismatch! Previously received "
-                    "run number does not match run number reported by newly "
-                    "connected DataCollector " +
-                    id.GetName());
-      }
-    } else {
-      // set the run number value to the one reported by the data collector
-      m_runnumber = thisRunNumber;
-    }
 
     // search all connections for this particular DC (and remember other DCs
     // found)
@@ -319,9 +281,9 @@ namespace eudaq {
     // no name indicates default DC -- init global var
     if (isDefaultDC)
       m_idata = thisDCIndex;
-
-    status =
-        m_cmdserver->SendReceivePacket<eudaq::Status>("SERVER", id, 1000000);
+    
+    Status status =
+      m_cmdserver->SendReceivePacket<Status>("SERVER", id, 1000000);
     std::string dsAddrReported = status.GetTag("_SERVER");
     if (dsAddrReported == "")
       EUDAQ_THROW("Invalid response from DataCollector");

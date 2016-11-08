@@ -9,16 +9,6 @@
 
 namespace eudaq {
 
-  namespace {
-
-    void *LogCollector_thread(void *arg) {
-      LogCollector *dc = static_cast<LogCollector *>(arg);
-      dc->LogThread();
-      return 0;
-    }
-
-  } // anonymous namespace
-
   LogCollector::LogCollector(const std::string &runcontrol,
                              const std::string &listenaddress,
 			     const std::string &logdirectory)
@@ -34,10 +24,7 @@ namespace eudaq {
     else std::cout << "LogCollector opened \"" << m_filename << "\" for logging." << std::endl;
     m_logserver->SetCallback(
         TransportCallback(this, &LogCollector::LogHandler));
-    // pthread_attr_init(&m_threadattr);
-    // pthread_create(&m_thread, &m_threadattr, LogCollector_thread, this);
-    m_thread = std::unique_ptr<std::thread>(
-        new std::thread(LogCollector_thread, this));
+    m_thread = std::thread(&LogCollector::LogThread, this);
     std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
               << std::endl
               << "       logfile=" << m_filename << std::endl;
@@ -52,16 +39,13 @@ namespace eudaq {
     m_file << "*** LogCollector stopped at " << Time::Current().Formatted()
            << " ***" << std::endl;
     m_done = true;
-    ///*if (m_thread)*/ pthread_join(m_thread, 0);
-    m_thread->join();
-    delete m_logserver;
+    if(m_thread.joinable())
+      m_thread.join();
   }
 
   void LogCollector::OnServer() {
     if (!m_logserver)
       EUDAQ_ERROR("Oops");
-    // std::cout << "OnServer: " << m_logserver->ConnectionString() <<
-    // std::endl;
     m_status.SetTag("_SERVER", m_logserver->ConnectionString());
   }
 
@@ -74,10 +58,8 @@ namespace eudaq {
   }
 
   void LogCollector::LogHandler(TransportEvent &ev) {
-    // std::cout << "LogHandler()" << std::endl;
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
-      // std::cout << "Connect:    " << ev.id << std::endl;
       if (m_listening) {
         m_logserver->SendPacket("OK EUDAQ LOG LogCollector", ev.id, true);
       } else {
@@ -123,17 +105,10 @@ namespace eudaq {
           part = std::string(ev.packet, i0, i1 - i0);
           ev.id.SetName(part);
         } while (false);
-        // std::cout << "client replied, sending OK" << std::endl;
         m_logserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
         OnConnect(ev.id);
       } else {
-        // std::cout << "Receive:    " << ev.id << " " << ev.packet <<
-        // std::endl;
-        // for (size_t i = 0; i < 8 && i < ev.packet.size(); ++i) {
-        //    std::cout << to_hex(ev.packet[i], 2) << ' ';
-        //}
-        // std::cout << ")" << std::endl;
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         std::string src = ev.id.GetType();
         if (ev.id.GetName() != "")

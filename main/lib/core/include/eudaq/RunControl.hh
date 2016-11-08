@@ -10,6 +10,7 @@
 #include <string>
 #include <memory>
 #include <thread>
+#include <mutex>
 
 namespace eudaq {
 
@@ -61,16 +62,17 @@ namespace eudaq {
     bool m_listening;
 
   protected:
-    int32_t m_runnumber;          ///< The current run number
-    TransportServer *m_cmdserver; ///< Transport for sending commands
-    std::unique_ptr<std::thread> m_thread;
+    int32_t m_runnumber;     ///< The current run number
+    std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
+    std::thread m_thread;
     size_t m_idata, m_ilog;
     std::string m_logaddr;                    // address of log collector
     std::map<size_t, std::string> m_dataaddr; // map of data collector addresses
     int64_t m_runsizelimit;
     int64_t m_runeventlimit;
     bool m_nextconfigonrunchange;
-    bool m_stopping, m_busy, m_producerbusy;
+    bool m_stopping, m_producerbusy;
+    std::mutex m_mtx_sendcmd;
   };
 }
 

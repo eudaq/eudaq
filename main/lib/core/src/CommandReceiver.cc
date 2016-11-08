@@ -44,23 +44,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
     return ret;
   }
 }
-  namespace {
-
-    void *CommandReceiver_thread(void *arg) {
-      CommandReceiver *cr = static_cast<CommandReceiver *>(arg);
-      try {
-        cr->CommandThread();
-      } catch (const std::exception &e) {
-        std::cout << "Command Thread exiting due to exception:\n" << e.what()
-                  << std::endl;
-      } catch (...) {
-        std::cout << "Command Thread exiting due to unknown exception."
-                  << std::endl;
-      }
-      return 0;
-    }
-
-  } // anonymous namespace
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol, bool startthread)
@@ -106,7 +89,7 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
   }
 
   void CommandReceiver::StartThread() {
-    m_thread = std::thread(CommandReceiver_thread, this);
+    m_thread = std::thread(&CommandReceiver::CommandThread, this);
   }
 
   void CommandReceiver::SetStatus(Status::Level level,
