@@ -38,16 +38,6 @@ using std::size_t;
 #endif
 
 
-#define T_NEW new
 #include <memory>
 
-template <class T, class... Args>
-std::unique_ptr<T> __make_unique(Args&&... args){
-  return std::unique_ptr<T>(new T(args...));
-}
-
-template <class derived,class base, class... Args>
-std::unique_ptr<base> __make_unique_base(Args&&... args) {
-  return std::unique_ptr<base>(dynamic_cast<base>(new derived(args...)));
-}
 #endif // EUDAQ_INCLUDED_Platform
