@@ -22,20 +22,14 @@ include_directories(${ZESTSC1_INCLUDE_DIRS})
 include_directories(${LIBUSB_INCLUDE_DIRS})
 add_definitions(${TLUFIRMWARE_DEFINITIONS})
 
-cmake_dependent_option(USER_TELESCOPE_SHARED "build telescope module hardware" ON
-  "USER_TELESCOPE" OFF)
 IF(USER_TELESCOPE_SHARED)
   include_directories(include)
   
   SET(SHARED_SRC
     src/TLUController.cc
-    # src/TLU_USB.cc
-    # src/USBTracer.cc
     src/TLUAddresses1.cc
     src/TLUAddresses2.cc
-    src/TluProducerPS.cc
     src/NiController.cc
-    src/TelProducerPS.cc
     )
 
   add_library(${USER_SHARED} STATIC ${SHARED_SRC})

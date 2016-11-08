@@ -1,5 +1,4 @@
 #include "TLUController.hh"
-// #include "USBTracer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"

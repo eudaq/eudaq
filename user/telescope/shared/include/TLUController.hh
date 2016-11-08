@@ -2,7 +2,6 @@
 #define H_TLUController_hh
 
 #include <cstdint>
-#include "ZestSC1.h"
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -28,6 +27,8 @@ namespace tlu {
     return os;
   }
 
+  typedef void *ZESTSC1_HANDLE;
+  
   static const int TLU_TRIGGER_INPUTS = 4;
   static const int TLU_LEMO_DUTS = 4;
   static const int TLU_DUTS = 6;
@@ -57,8 +58,6 @@ namespace tlu {
 
   class TLUEntry {
   public:
-    //     TLUEntry(uint64_t t = 0, uint32_t e = 0)
-    // 		: m_timestamp(t), m_eventnum(e) {}
     TLUEntry(uint64_t t = 0, uint32_t e = 0, unsigned trigger = 0)
         : m_timestamp(t), m_eventnum(e) {
       for (int i = 0; i < 4; ++i) {

@@ -5,8 +5,6 @@
 #include "OptionParser.hh"
 
 #include "TLUController.hh"
-// #include "USBTracer.hh"
-
 #include "TLUEvent.hh"
 
 #include <iostream>

@@ -1,3 +1,4 @@
+#include "ZestSC1.h"
 #include "TLUController.hh"
 #include "TLUAddresses.hh"
 #include "eudaq/Platform.hh"
