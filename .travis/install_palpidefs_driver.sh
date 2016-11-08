@@ -15,11 +15,11 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	
 	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
 	
-	if [ -d "$TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b" ]; then
+	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster" ]; then
 	
 		echo "palpidefs source restored from cache as path exists:"
 		
-		ls $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
+		ls $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
 		
 	else
 
@@ -28,10 +28,12 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
 		unzip alice-its-alpide-software-master-latest.zip
+		
+		mv $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
 	
 	fi
 
-	cd "$TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b/pALPIDEfs-software"
+	cd "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software"
 
 	sed -i '2s/.*//' Makefile
 	
