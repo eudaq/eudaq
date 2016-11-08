@@ -81,7 +81,7 @@ cache:
 before_cache:
   - rm -r $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
   - cd $TRAVIS_BUILD_DIR/extern
-  - unzip alice-its-alpide-software-master-latest.zip
+  - unzip aliceitsalpidesoftwaremaster.zip
   - mv $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
 
 matrix:      

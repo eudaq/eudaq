@@ -21,11 +21,15 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 		
 		ls $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
 		
+		zip -r aliceitsalpidesoftwaremaster.zip aliceitsalpidesoftwaremaster
+		
 	else
 
 		echo "palpidefs source not restored from cache - downloading from CERNBOX and unpacking"
 		
 		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+		
+		cp alice-its-alpide-software-master-latest.zip aliceitsalpidesoftwaremaster.zip
 
 		unzip alice-its-alpide-software-master-latest.zip
 		
