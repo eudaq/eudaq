@@ -1,28 +1,46 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Running EUDAQ}
 
-
-
-
-
-
-
 This section will describe running the DAQ system, mainly from the point of view of EUDET-type beam telescope \cite{telescopesWikiUserManual} operated together with \gls{DUT}s.
 However, this description can be applied to DAQ system in general.
 
 All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory, and should be run from here. They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter, which will provide a summary of possible different command-line options.
 
-The executable programs mainly split up in two different categories: Processes, which are used for the data acquisition and communicating with the Run Control (DAQ), and utilities, which are used after the data taking in order to access the data files (Tools).
-Only a few executables belong to a third category, which includes tools for development or testing before data taking (Test).
+The executable programs mainly split up in two different categories: Processes, which are used for the data acquisition and communicating with the Run Control (DAQ), and utilities, which are used before or after the data taking in order to access the data files (Test, Devel., Tools).
 In \autoref{tab:exes}, you will find an overview of the most important EUDAQ executables.
 
 \begin{table}
 \centering
-\begin{tabular}{ l | l | l | p{6cm}}
+\small
+\begin{tabular}{ c | l | l | p{4cm}}
   \textbf{Category} & \textbf{Name} & \textbf{Binary}  & \textbf{Description}\\
   \hline			
-  DAQ & Run Control & \texttt{euRun.exe} (GUI) & bla \\
-  \hline  
+  \hline			
+  DAQ & Run Control & \texttt{euRun.exe} & GUI version, recommended (Sec. \ref{sec:runcontrol}) \\
+  DAQ & Run Control & \texttt{TestRunControl.exe} & CLI version (Sec. \ref{sec:runcontrol}) \\
+  DAQ & Log Collector & \texttt{euLog.exe} & GUI version, recommended (Sec. \ref{sec:logcollector}) \\
+  DAQ & Log Collector & \texttt{TestLogCollector.exe} & CLI version (Sec. \ref{sec:logcollector}) \\
+  DAQ & Data Collector & \texttt{TestDataCollector.exe} & CLI, recommended (Sec. \ref{sec:datacollector}) \\
+  DAQ & Online Monitor & \texttt{OnlineMon.exe} & GUI version, recommended (Sec. \ref{sec:onlinemonitor}) \\
+  DAQ & Online Monitor & \texttt{TestMonitor.exe} & CLI version (Sec. \ref{sec:onlinemonitor}) \\
+  DAQ & TLU Producer & \texttt{TLUProducer.exe} & CLI for EUDET-type telescopes (Sec. \ref{sec:tluproducer}) \\
+  DAQ & Mimosa26 Producer & \texttt{NIProducer.exe} & CLI for EUDET-type telescopes (Sec. \ref{sec:niproducer}) \\
+  DAQ & Run Listener & \texttt{RunListener.exe} & CLI, listens to Run Control, no description \\
+  \hline
+  Test & TLU Control & \texttt{TLUControl.exe} & CLI (Sec. \ref{sec:tlucontrol}) \\
+  Test/DAQ & Test Producer & \texttt{TestProducer.exe} & CLI (Sec. \ref{sec:testproducer}) \\
+  Test/DAQ & Dummy Producer & \texttt{euProd.exe} & GUI, no description \\
+  Devel./DAQ & Example Producer & \texttt{ExampleProducer.exe} & CLI, recommended (Sec. \ref{sec:testproducer}) \\
+  Devel. & Exampler Reader & \texttt{ExampleReader.exe} & CLI, example raw file reader, no description \\
+  Devel. & Option Example & \texttt{OptionExample.exe} & CLI, example to use options, no description \\
+  \hline
+  Tools & File Checker & \texttt{FileChecker.exe} & CLI, raw data file checker (Sec. \ref{sec:FileChecker}) \\
+  Tools & Test Reader & \texttt{TestReader.exe} & CLI, raw data file reader (Sec. \ref{sec:TestReader}) \\
+  Tools & EURunSplitter & \texttt{EURunSplitter.exe} & CLI, splits raw data files, no description \\
+  Tools & Converter & \texttt{Converter.exe} & CLI, raw data file converter (Sec. \ref{sec:Converter}) \\
+  Tools & IPHC Converter & \texttt{IPHCConverter.exe} & CLI, IPHC M26 to raw converter, no description \\
+  Tools & Cluster Extractor & \texttt{ClusterExtractor.exe} & CLI, extracting clusters from raw files  (Sec. \ref{sec:ClusterExtractor}) \\
+  Tools & MagicLogBook & \texttt{MagicLogBook.exe} & obsolete (!), CLI  (Sec. \ref{sec:MagicLogBook}) \\
 \end{tabular}
 \caption{Overview of EUDAQ executables: DAQ processes and tools as graphical user interfaces (GUI) or command line interfaces (CLI).}
 \label{tab:exes}
@@ -304,6 +322,7 @@ This will run it in offline mode, opening the file corresponding to run 5432
 (alternatively, the full path to a file may be given).
 
 \subsubsection{Test and Example Producer}
+\label{sec:testproducer}
 For testing purposes, you may use the TestProducer.
 This works similarly to a real producer, but does not talk to any real hardware,
 instead providing a menu for the user to manually send events.
@@ -691,6 +710,35 @@ The status is of the \gls{DUT} connections formatted as:
 \end{myitemize}
 
 
+\subsubsection{FileChecker}
+\label{sec:FileChecker}
+
+This is a small utility that reads raw data files and checks if all events are
+readable, can be syncronised using the TLU trigger id and lists which type
+of subevents the file contains.
+
+It should be called with list of file paths or run numbers. For any argument
+that consist only of numerical digits the file path is constructed by
+substituting \texttt{\$6R} in the input pattern (defaults to
+``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
+
+For example:
+\begin{listing}[mybash]
+$[./FileChecker.exe]$ {6045..6050}
+\end{listing}
+
+This would produce the following output.
+\begin{listing}[]
+run     valid  num_events  contains                   errors                    
+------  -----  ----------  -------------------------  ----------------------
+  6045   true       13131  MUPIX4,NI,TLU                                        
+  6046   true           1  MUPIX4,NI,TLU                                        
+  6047   true       14674  MUPIX4,NI,TLU                                        
+  6048   true        7776  MUPIX4,NI,TLU                                        
+  6049  false           0                             no events in the file.    
+  6050  false          -1                             read error. 
+\end{listing}
+
 \subsubsection{TestReader}
 \label{sec:TestReader}
 The \texttt{TestReader.exe} program will read a native data file,
@@ -966,34 +1014,6 @@ and \texttt{Efw} should be \texttt{EUDRBfw}.
 The columns \texttt{Mode}, \texttt{Det} and \texttt{EUDRBfw} are missing from the output
 due to the fact that this information is now stored in a \texttt{RawDataEvent},
 which is not currently accessible with this version of the program.
-
-\subsubsection{FileChecker}
-
-This is a small utility that reads raw data files and checks if all events are
-readable, can be syncronised using the TLU trigger id and lists which type
-of subevents the file contains.
-
-It should be called with list of file paths or run numbers. For any argument
-that consist only of numerical digits the file path is constructed by
-substituting \texttt{\$6R} in the input pattern (defaults to
-``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
-
-For example:
-\begin{listing}[mybash]
-$[./FileChecker.exe]$ {6045..6050}
-\end{listing}
-
-This would produce the following output.
-\begin{listing}[]
-run     valid  num_events  contains                   errors                    
-------  -----  ----------  -------------------------  ----------------------
-  6045   true       13131  MUPIX4,NI,TLU                                        
-  6046   true           1  MUPIX4,NI,TLU                                        
-  6047   true       14674  MUPIX4,NI,TLU                                        
-  6048   true        7776  MUPIX4,NI,TLU                                        
-  6049  false           0                             no events in the file.    
-  6050  false          -1                             read error. 
-\end{listing}
 
 \subsubsection{Others}
 Some programs that are less used (or recently added)
