@@ -9,75 +9,41 @@
 namespace eudaq {
 
   namespace{
-    auto dummy0 = Factory<Event>::Register<DetectorEvent, Deserializer&>(Event::str2id("_DET"));
+    auto dummy1 = Factory<Event>::Register<DetectorEvent, Deserializer&>(cstr2hash("DetectorEvent"));
+    auto dummy8 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DetectorEvent"));  //NOTE: it is not Detector constructor
+
+
   }
   
-
   DetectorEvent::DetectorEvent(Deserializer &ds) : Event(ds) {
-    unsigned n;
-    ds.read(n);
-    SetFlags(Event::FLAG_PACKET);
-    for (size_t i = 0; i < n; ++i) {
-      uint32_t id;
-      ds.PreRead(id);
-      EventSP ev = Factory<Event>::Create<Deserializer&>(id, ds);
-      m_events.push_back(ev);
-    }
+    SetFlag(Event::FLAG_PACKET);
   }
 
-  DetectorEvent::DetectorEvent(const DetectorEvent& det) :Event(det.GetRunNumber(), det.GetEventNumber(), det.GetTimestamp(), det.GetFlags()), m_events(det.m_events)
-  {
-    m_tags = det.m_tags;
-    m_timestamp = det.m_timestamp;
-    m_typeid = det.m_typeid;
+  DetectorEvent::DetectorEvent(uint32_t run_n, uint32_t ev_n, uint64_t ts)
+    : Event(cstr2hash("DetectorEvent"), run_n, 0){ //stream_n = 0
+    SetEventN(ev_n);
+    SetTimestamp(ts, ts+1);
   }
 
-  DetectorEvent::DetectorEvent(unsigned runnumber, unsigned eventnumber, uint64_t timestamp) : Event(runnumber, eventnumber, timestamp) {
-    m_typeid = Event::str2id("_DET");
-  }
-
-  void DetectorEvent::AddEvent(std::shared_ptr<Event> evt) {
-    if (!evt.get()) EUDAQ_THROW("Adding null event!");
-    SetFlags(evt->GetFlags());
-    m_events.push_back(std::move(evt));
-    
-  }
-
-  void DetectorEvent::Print(std::ostream & os) const {
-    Print(os, 0);
-  }
-
-  void DetectorEvent::Print(std::ostream &os, size_t offset) const
-  {
-    os << std::string(offset, ' ') << "<DetectorEvent> \n";
-    Event::Print(os,offset+2);
-    os <<std::string(offset+2,' ') << "<SubEvents> \n";
-    for (size_t i = 0; i < NumEvents(); ++i) {
-      GetEvent(i)->Print(os,offset+4) ;
-    }
-    os << std::string(offset+2, ' ') << "</SubEvents> \n";
-
-    os << std::string(offset, ' ') << "</DetectorEvent> \n";
-  }
 
   void DetectorEvent::Serialize(Serializer & ser) const {
     Event::Serialize(ser);
-    ser.write((unsigned)m_events.size());
-    for (size_t i = 0; i < m_events.size(); ++i) {
-      m_events[i]->Serialize(ser);
-    }
+  }
+  
+  void DetectorEvent::AddEvent(EventSPC evt) {
+    if (!evt) EUDAQ_THROW("Adding null event!");
+    SetFlag(evt->GetFlag());
+    AddSubEvent(evt);
   }
 
-  const Event * DetectorEvent::GetEvent(size_t i) const {
-    return m_events[i].get();
+  void DetectorEvent::Print(std::ostream &os, size_t offset) const{
+    os << std::string(offset, ' ') << "<DetectorEvent> \n";
+    Event::Print(os,offset+2);
+    os << std::string(offset, ' ') << "</DetectorEvent> \n";
   }
 
-  Event * DetectorEvent::GetEvent(size_t i) {
-    return m_events[i].get();
-  }
-
-  std::shared_ptr<Event> DetectorEvent::GetEventPtr(size_t i) const {
-    return m_events[i];
+  const Event* DetectorEvent::GetEvent(size_t i) const {
+    return GetSubEvent(i).get();
   }
 
   const RawDataEvent & DetectorEvent::GetRawSubEvent(const std::string & subtype, int n) const {
@@ -93,22 +59,4 @@ namespace eudaq {
     }
     EUDAQ_THROW("DetectorEvent::GetRawSubEvent: could not find " + subtype + ":" + to_string(n));
   }
-
-  void DetectorEvent::clearEvents() {
-    m_events.clear();
-  }
-
-  event_sp DetectorEvent::ShallowCopy(const DetectorEvent& det)
-  {
-    return  event_sp(new DetectorEvent(det));
-  }
-
-  std::string DetectorEvent::GetType() const {
-    return "DetectorEvent";
-  }
-
-  size_t DetectorEvent::NumEvents() const {
-    return m_events.size();
-  }
-
 }

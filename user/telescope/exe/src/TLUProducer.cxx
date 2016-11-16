@@ -1,20 +1,17 @@
 #include "Configuration.hh"
 #include "Producer.hh"
-#include "Utils.hh"
-#include "Logger.hh"
-#include "OptionParser.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/OptionParser.hh"
+#include "eudaq/RawDataEvent.hh"
 
 #include "TLUController.hh"
-#include "USBTracer.hh"
-
-#include "TLUEvent.hh"
 
 #include <iostream>
 #include <ostream>
 #include <cctype>
 #include <memory>
 
-typedef eudaq::TLUEvent TLUEvent;
 using eudaq::to_string;
 using eudaq::to_hex;
 using namespace tlu;
@@ -27,8 +24,8 @@ char *ZestSC1_ErrorStrings[] = {"bla bla", "blub"};
 
 class TLUProducer : public eudaq::Producer {
 public:
-  TLUProducer(const std::string &runcontrol)
-      : eudaq::Producer("TLU", runcontrol), m_run(0), m_ev(0),
+  TLUProducer(const std::string name, const std::string &runcontrol)
+    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), //name: TLU
         trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
         or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
         enable_dut_veto(0), trig_rollover(0), readout_delay(100),
@@ -40,6 +37,8 @@ public:
       pmt_gain_error[i] = 1.0;
       pmt_offset_error[i] = 0.0;
     }
+    m_id_stream = eudaq::cstr2hash(name.c_str());
+
   }
   void MainLoop() {
     do {
@@ -73,7 +72,10 @@ public:
                       << std::endl;
           }
           lasttime = t;
-          TLUEvent ev(m_run, m_ev, t);
+
+	  eudaq::RawDataEvent ev("TluRawDataEvent", m_id_stream, m_run, m_ev);
+	  ev.SetTimestamp(t, t+1);//TODO, duration
+	  
           ev.SetTag("trigger", m_tlu->GetEntry(i).trigger2String());
           if (i == m_tlu->NumEntries() - 1) {
             ev.SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
@@ -84,15 +86,12 @@ public:
           }
           SendEvent(ev);
         }
-        //         if (m_tlu->NumEntries()) {
-        //           std::cout << "========" << std::endl;
-        //         } else {
-        //           std::cout << "." << std::flush;
-        //         }
       }
       if (JustStopped) {
         m_tlu->Update(timestamps);
-        SendEvent(TLUEvent::EORE(m_run, ++m_ev));
+	eudaq::RawDataEvent ev("TluRawDataEvent", m_id_stream, m_run, ++m_ev);
+	ev.SetEORE();
+        SendEvent(ev);
         TLUJustStopped = false;
       }
     } while (!done);
@@ -176,7 +175,8 @@ public:
       m_run = param;
       m_ev = 0;
       std::cout << "Start Run: " << param << std::endl;
-      TLUEvent ev(TLUEvent::BORE(m_run));
+      eudaq::RawDataEvent ev("TluRawDataEvent", m_id_stream, m_run, 0);
+      ev.SetBORE();
       ev.SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));
       ev.SetTag("TriggerInterval", to_string(trigger_interval));
       ev.SetTag("DutMask", "0x" + to_hex(dut_mask));
@@ -203,7 +203,6 @@ public:
         ev.SetTag("PMTOffsetError" + to_string(i + 1), pmt_offset_error[i]);
       }
       ev.SetTag("ReadoutDelay", to_string(readout_delay));
-      //      SendEvent(TLUEvent::BORE(m_run).SetTag("Interval",trigger_interval).SetTag("DUT",dut_mask));
       ev.SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
       eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
       SendEvent(ev);
@@ -301,6 +300,7 @@ private:
   std::shared_ptr<TLUController> m_tlu;
   std::string pmt_id[TLU_PMTS];
   double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];
+  uint32_t m_id_stream;
 };
 
 int main(int /*argc*/, const char **argv) {
@@ -314,13 +314,17 @@ int main(int /*argc*/, const char **argv) {
       "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> op_trace(op, "t", "tracefile", "", "filename",
                                       "Log file for tracing USB access");
+
+  eudaq::Option<std::string> name(op, "n", "name", "TLU", "string",
+                                  "The name of this Producer");
+
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    if (op_trace.Value() != "") {
-      setusbtracefile(op_trace.Value());
-    }
-    TLUProducer producer(rctrl.Value());
+    // if (op_trace.Value() != "") {
+    //   setusbtracefile(op_trace.Value());
+    // }
+    TLUProducer producer(name.Value(),rctrl.Value());    
     producer.MainLoop();
     std::cout << "Quitting" << std::endl;
     eudaq::mSleep(300);

@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <iosfwd>
-#include <iostream>
-#include <memory>
+#include <ostream>
 
 #include "Serializable.hh"
 #include "Serializer.hh"
@@ -23,19 +21,25 @@ namespace eudaq {
   extern template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
   Factory<Event>::Instance<Deserializer&>();
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
+  Factory<Event>::Instance<>();
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
+
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
+  
 #endif
 
   using EventUP = Factory<Event>::UP_BASE; 
-  using EventSP = std::shared_ptr<Event>;
-  using event_sp = EventSP;
-  
-  static const uint64_t NOTIMESTAMP = (uint64_t)-1;
+  using EventSP = Factory<Event>::SP_BASE;
+  using EventSPC = Factory<Event>::SPC_BASE;
 
-  class DLLEXPORT Event : public Serializable {
+  class DLLEXPORT Event : public Serializable, public std::enable_shared_from_this<Event> {
   public:
-    using t_eventid = std::pair < unsigned, std::string > ;
-    using timeStamp_t = uint64_t;
-
     enum Flags {
       FLAG_BORE = 1, 
       FLAG_EORE = 2, 
@@ -45,74 +49,89 @@ namespace eudaq {
       FLAG_EUDAQ2 = 32, 
       FLAG_PACKET = 64, 
       FLAG_BROKEN = 128,
-      FLAG_STATUS = 256, 
+      FLAG_STATUS = 256,
       FLAG_ALL = (unsigned)-1
-    }; // Matches FLAGNAMES in .cc file
+    };
 
     Event();
-    Event(unsigned run, unsigned event, timeStamp_t timestamp = NOTIMESTAMP, unsigned flags = 0);
+    Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n);
     Event(Deserializer & ds);
-    virtual void Serialize(Serializer &) const = 0;
+    virtual void Serialize(Serializer &) const;   
+    EventUP Clone() const;
 
-    unsigned GetRunNumber() const;
-    unsigned GetEventNumber() const;
-    timeStamp_t GetTimestamp(size_t i=0) const;
-    size_t   GetSizeOfTimeStamps() const;
-    uint64_t getUniqueID() const;
-    Event* Clone() const;
-    /** Returns the type string of the event implementation.
-     *  Used by the plugin mechanism to identify the event type.
-     */
-    virtual std::string GetSubType() const { return ""; }
-    virtual void GetSubType(std::string){}
-    virtual void Print(std::ostream &os) const = 0;
-    virtual void Print(std::ostream & os,size_t i) const = 0;
-    bool HasTag(const std::string &name) const;
-    Event &SetTag(const std::string &name, const std::string &val);
-    template <typename T> Event &SetTag(const std::string &name, const T &val) {
-      return SetTag(name, eudaq::to_string(val));
-    }
+    virtual void Print(std::ostream & os, size_t offset = 0) const;
+
+    void SetTag(const std::string &name, const std::string &val);
+    const std::map<std::string, std::string>& GetTags() const {return m_tags;}
     std::string GetTag(const std::string & name, const std::string & def = "") const;
     std::string GetTag(const std::string & name, const char * def) const { return GetTag(name, std::string(def)); }
-    template <typename T>
-    T GetTag(const std::string & name, T def) const {
+    template <typename T> T GetTag(const std::string & name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }
+    template <typename T> void SetTag(const std::string &name, const T &val) {
+      SetTag(name, eudaq::to_string(val));
+    }
+    
+    void SetFlagBit(uint32_t f) { m_flags |= f;}
+    void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
+    bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
 
-    bool IsBORE() const { return GetFlags(FLAG_BORE) != 0; }
-    bool IsEORE() const { return GetFlags(FLAG_EORE) != 0; }
-    bool IsEUDAQ2() const { return GetFlags(FLAG_EUDAQ2) != 0; }
-    bool IsPacket() const { return GetFlags(FLAG_PACKET) != 0; }
-
+    bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
+    bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
+    void SetBORE() {SetTimestamp(0, 1); SetFlagBit(FLAG_BORE);}
+    void SetEORE() {SetTimestamp(-2, -1); SetFlagBit(FLAG_EORE);}
+    
+    void AddSubEvent(EventSPC ev){m_sub_events.push_back(ev);}
+    uint32_t GetNumSubEvent() const {return m_sub_events.size();}
+    EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
+    
+    void SetEventID(uint32_t id){m_type = id;}
+    void SetVersion(uint32_t v){m_version = v;}
+    void SetFlag(uint32_t f) {m_flags = f;}
+    void SetRunN(uint32_t n){m_run_n = n;}
+    void SetEventN(uint32_t n){m_ev_n = n;}
+    void SetStreamN(uint32_t n){m_stm_n = n;}
+    void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
+    void SetTimestampEnd(uint64_t t){m_ts_end = t;}
+    void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
+ 
+    uint32_t GetEventID() const {return m_type;};
+    uint32_t GetVersion()const {return m_version;}
+    uint32_t GetFlag() const { return m_flags;}
+    uint32_t GetRunN()const {return m_run_n;}
+    uint32_t GetEventN()const {return m_ev_n;}
+    uint32_t GetStreamN() const {return m_stm_n;}
+    uint64_t GetTimestampBegin() const {return m_ts_begin;}
+    uint64_t GetTimestampEnd() const {return m_ts_end;}
 
     static unsigned str2id(const std::string & idstr);
     static std::string id2str(unsigned id);
-    static EventUP Create(Deserializer &ds);
-
-    unsigned GetFlags(unsigned f = FLAG_ALL) const { return m_flags & f; }
-    void SetFlags(unsigned f) { m_flags |= f; }
-    void SetTimeStampToNow(size_t i=0);
-    void pushTimeStampToNow();
-    void setTimeStamp(timeStamp_t timeStamp, size_t i = 0);
-   
-    void pushTimeStamp(timeStamp_t timeStamp){ m_timestamp.push_back(timeStamp); }
-    void setRunNumber(unsigned newRunNumber){ m_runnumber = newRunNumber; }
-    void setEventNumber(unsigned newEventNumber){ m_eventnumber = newEventNumber; }
-    void ClearFlags(unsigned f = FLAG_ALL) { m_flags &= ~f; }
-    unsigned get_id() const {return m_typeid;};
-  protected:
-    typedef std::map<std::string, std::string> map_t;
-
-    uint32_t m_typeid;
-    unsigned m_flags, m_runnumber, m_eventnumber;
-    std::vector<timeStamp_t> m_timestamp;
-    map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
- 
+    static EventSP MakeShared(Deserializer&);
+    
+    /////TODO: remove compatiable fun from EUDAQv1
+    bool HasTag(const std::string &name) const;
+    uint32_t GetEventNumber()const {return m_ev_n;}
+    uint32_t GetRunNumber()const {return m_run_n;}
+    uint32_t GetStreamID() const {return m_stm_n;}
+    virtual std::string GetSubType() const {return "This Event is not RAW\n";}
+    void SetFlags(uint32_t f){SetFlagBit(f);}
+    void AddEvent(EventUP ev){
+      EventSP evsp(std::move(ev));
+      AddSubEvent(evsp);
+    }
+    
+  private:
+    uint32_t m_type;
+    uint32_t m_version;
+    uint32_t m_flags;
+    uint32_t m_stm_n;
+    uint32_t m_run_n;
+    uint32_t m_ev_n;
+    uint64_t m_ts_begin;
+    uint64_t m_ts_end;
+    std::map<std::string, std::string> m_tags;
+    std::vector<EventSPC> m_sub_events;
   };
-
-  DLLEXPORT std::ostream &  operator<< (std::ostream &, const Event &);
-
 }
-
 
 #endif // EUDAQ_INCLUDED_Event

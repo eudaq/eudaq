@@ -42,10 +42,10 @@ is it from the context correct?
 
 */
 
-#include "eudaq/TransportTCP.hh"
-#include "eudaq/Exception.hh"
-#include "eudaq/Time.hh"
-#include "eudaq/Utils.hh"
+#include "TransportTCP.hh"
+#include "Exception.hh"
+#include "Time.hh"
+#include "Utils.hh"
 #include <iostream>
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
@@ -85,7 +85,7 @@ is it from the context correct?
 #define EUDAQ_ERROR_NO_DATA_RECEIVED -1
 #else
 
-#include "eudaq/TransportTCP_POSIX.hh"
+#include "TransportTCP_POSIX.hh"
 
 // defining error code more informations under
 // http://www.gnu.org/software/libc/manual/html_node/Error-Codes.html
@@ -160,13 +160,6 @@ is it from the context correct?
               __VA_ARGS__);                                                    \
   } while (0)
 
-#include <sys/types.h>
-#include <errno.h>
-//#include <unistd.h>
-
-#include <iostream>
-#include <ostream>
-#include <iostream>
 
 namespace eudaq {
 

@@ -5,14 +5,15 @@
 #  ZESTSC1_LIBRARIES - The libraries needed to use ZestSC1
 #  ZESTSC1_DEFINITIONS - Compiler switches required for using ZestSC1
 
+
 macro(find_zestsc1_in_extern arg)
 # disable a warning about changed behaviour when traversing directories recursively (wrt symlinks)
 IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0009 NEW)
   CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
 ENDIF(COMMAND cmake_policy)
-# determine path to zestsc1 package in ./extern folder
-file(GLOB_RECURSE extern_file ${PROJECT_SOURCE_DIR}/extern/*ZestSC1.h)
+
+file(GLOB_RECURSE extern_file ${CMAKE_CURRENT_LIST_DIR}/../extern/*ZestSC1.h)
 if (extern_file)
   # should have found multiple files of that name, take root of folder (no 'windows*7/inc' string)
   FOREACH (this_file ${extern_file})
@@ -76,15 +77,10 @@ endmacro()
 
 find_zestsc1_in_extern("")
 
-# could not find the package at the usual locations -- try to copy from AFS if accessible
 if (NOT ZESTSC1_LIBRARY)
-  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/ZestSC1")
-    MESSAGE(STATUS "Could not find ZestSC1 driver package required by tlu producer; downloading it now via AFS to ./extern ....")
-    copy_files("/afs/desy.de/group/telescopes/tlu/ZestSC1" ${PROJECT_SOURCE_DIR}/extern)
-    find_zestsc1_in_extern(NO_DEFAULT_PATH)
-  ELSE()
-    MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
-  ENDIF()
+  MESSAGE(WARNING "Could not find ZestSC1 driver package required by tlu producer. Please refer to the documentation on how to obtain the software.")
+else()
+  set(ZestSC1_FOUND TRUE)
 endif()
 
 set(ZESTSC1_LIBRARIES ${ZESTSC1_LIBRARY} )

@@ -1,39 +1,38 @@
-#include"ExamplePS.hh"
+#include <iostream>
+#include <chrono>
+#include <string>
 
-#include<iostream>
-#include"RawDataEvent.hh"
+#include "Processor.hh"
+#include "RawDataEvent.hh"
 
 using namespace eudaq;
 
-namespace{
-  auto dummy0 = Factory<Processor>::Register<ExamplePS, std::string&>(eudaq::cstr2hash("ExamplePS"));
-  auto dummy1 = Factory<Processor>::Register<ExamplePS, std::string&&>(eudaq::cstr2hash("ExamplePS"));
-}
+namespace eudaq{
 
-ExamplePS::ExamplePS(std::string cmd)
-  :Processor("ExamplePS", ""){
-  *this<<cmd; 
-}
+  class ExamplePS:public Processor{
+  public:
+    ExamplePS();
+    ~ExamplePS() {};   
+    void ProduceEvent() final override;
+  };
 
-ExamplePS::ExamplePS(uint32_t psid, std::string cmd)
-  :Processor("ExamplePS", psid, ""){
-  *this<<cmd;
-}
+  namespace{
+    auto dummy0 = Factory<Processor>::Register<ExamplePS>(eudaq::cstr2hash("ExamplePS"));
+  }
 
-void ExamplePS::ProcessUserEvent(EVUP ev){
-  std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
-  ForwardEvent(std::move(ev));
-}
+  ExamplePS::ExamplePS()
+    :Processor("ExamplePS"){
+  }
 
+  void ExamplePS::ProduceEvent(){
+    for(int i =0; i<10; i++){
+      EventUP ev(new RawDataEvent("data", 10 ,0, i), [](Event *p) {delete p; });
+      RegisterEvent(std::move(ev));
+    }
 
-void ExamplePS::ProcessCmdEvent(EVUP ev){
+    while(1){
+      std::this_thread::sleep_for (std::chrono::seconds(1));
+    }
     
-}
-
-void ExamplePS::ProduceEvent(){
-  // EVUP ev = EventClassFactory::Create("RawDataEvent");
-  for(int i =0; i<10; i++){
-    EVUP ev(new RawDataEvent("data", 0, i));
-    Processing(std::move(ev));
   }
 }

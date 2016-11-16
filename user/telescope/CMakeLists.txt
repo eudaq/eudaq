@@ -1,8 +1,10 @@
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
+set(USER_SHARED ${EUDAQ_USERNAME}_static)
 option(USER_TELESCOPE "build telescope" ON)
 
-include_directories(module/include)
+include_directories(shared/include)
+add_subdirectory(shared)
 add_subdirectory(module)
 add_subdirectory(exe)

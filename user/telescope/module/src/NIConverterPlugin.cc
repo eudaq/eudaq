@@ -58,10 +58,24 @@ namespace eudaq {
 
   public:
     NIConverterPlugin() : DataConverterPlugin("NI"), m_boards(0) {}
-    virtual ~NIConverterPlugin() {}
+    virtual void Initialize(const Event &bore, const Configuration & /*c*/);
+    virtual unsigned GetTriggerID(Event const &ev) const;
+    virtual bool GetStandardSubEvent(StandardEvent &result, const Event &source) const;
+    void DecodeFrame(StandardPlane &plane, size_t len, datait it, int frame) const;
 
-    virtual void Initialize(const Event &bore, const Configuration & /*c*/) {
+#if USE_LCIO && USE_EUTELESCOPE
+    virtual void GetLCIORunHeader(lcio::LCRunHeader & /*header*/,
+                                  eudaq::Event const & /*bore*/,
+                                  eudaq::Configuration const & /*conf*/) const;
+    virtual bool GetLCIOSubEvent(lcio::LCEvent &result,
+                                 const Event &source) const;
+#endif
+  private:
+    unsigned m_boards;
+    std::vector<int> m_ids;
+  };
 
+  void NIConverterPlugin::Initialize(const Event &bore, const Configuration & /*c*/) {
       m_boards = from_string(bore.GetTag("BOARDS"), 0);
       if (m_boards == 255) {
         m_boards = 6;
@@ -74,14 +88,14 @@ namespace eudaq {
       }
     }
 
-    virtual unsigned GetTriggerID(Event const &ev) const {
+  unsigned NIConverterPlugin::GetTriggerID(Event const &ev) const {
       const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(ev);
       if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8)
         return (unsigned)-1;
       return GET(rawev.GetBlock(0), 1) >> 16;
     }
 
-    virtual bool GetStandardSubEvent(StandardEvent &result,
+  bool NIConverterPlugin::GetStandardSubEvent(StandardEvent &result,
                                      const Event &source) const {
       if (source.IsBORE()) {
         std::cout << "GetStandardSubEvent : got BORE" << std::endl;
@@ -226,7 +240,9 @@ namespace eudaq {
       return true;
     }
 
-    void DecodeFrame(StandardPlane &plane, size_t len, datait it,
+
+  
+  void NIConverterPlugin::DecodeFrame(StandardPlane &plane, size_t len, datait it,
                      int frame) const {
       std::vector<unsigned short> vec;
       for (size_t i = 0; i < len; ++i) {
@@ -274,18 +290,8 @@ namespace eudaq {
       //++offset;
     }
 
-#if USE_LCIO && USE_EUTELESCOPE
-    virtual void GetLCIORunHeader(lcio::LCRunHeader & /*header*/,
-                                  eudaq::Event const & /*bore*/,
-                                  eudaq::Configuration const & /*conf*/) const;
-    virtual bool GetLCIOSubEvent(lcio::LCEvent &result,
-                                 const Event &source) const;
-#endif
-  private:
-    unsigned m_boards;
-    std::vector<int> m_ids;
-  };
 
+  
 #if USE_LCIO && USE_EUTELESCOPE
   void NIConverterPlugin::GetLCIORunHeader(
       lcio::LCRunHeader &header, eudaq::Event const & /*bore*/,

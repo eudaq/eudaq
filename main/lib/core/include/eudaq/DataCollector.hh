@@ -8,12 +8,13 @@
 #include "Configuration.hh"
 #include "Utils.hh"
 #include "Platform.hh"
+#include "Processor.hh"
 
 #include <string>
 #include <vector>
 #include <list>
 #include <memory>
-
+#include <atomic>
 
 namespace eudaq {
 
@@ -21,44 +22,33 @@ namespace eudaq {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol,
                   const std::string &listenaddress,
-                  const std::string &runnumberfile = "../data/runnumber.dat");
-
+                  const std::string &runnumberfile);
+    ~DataCollector() override;
+    void OnServer() override;
+    void OnConfigure(const Configuration &param) override;
+    void OnStartRun(uint32_t) override;
+    void OnStopRun() override;
+    void OnStatus() override;
     virtual void OnConnect(const ConnectionInfo &id);
     virtual void OnDisconnect(const ConnectionInfo &id);
-    virtual void OnServer();
-    virtual void OnGetRun();
-    virtual void OnConfigure(const Configuration &param);
-    virtual void OnPrepareRun(unsigned runnumber);
-    virtual void OnStopRun();
-    virtual void OnReceive(const ConnectionInfo &id, std::shared_ptr<Event> ev);
-    virtual void OnCompleteEvent();
-    virtual void OnStatus();
-    virtual ~DataCollector();
-
-    void DataThread();
-
+    virtual void OnReceive(const ConnectionInfo &id, EventSP ev);
   private:
-    struct Info {
-      std::shared_ptr<ConnectionInfo> id;
-      std::list<EventSP> events;
-    };
-    
-    const std::string m_runnumberfile; // path to the file containing the run number
+    void DataThread();
+    void WriterThread();
     void DataHandler(TransportEvent &ev);
-    size_t GetInfo(const ConnectionInfo &id);
-
-    bool m_done, m_listening;
-    
+    Time m_runstart;	
+    const std::string m_runnumberfile;
+    std::atomic_bool m_done;
+    std::atomic_bool m_done_writer;
+    std::atomic<uint32_t> m_runnumber;
+    std::atomic<uint32_t> m_eventnumber;
     std::unique_ptr<TransportServer> m_dataserver;
-    std::unique_ptr<std::thread> m_thread;
-    std::vector<Info> m_buffer;
-    size_t m_numwaiting; ///< The number of producers with events waiting in the
-                         ///buffer
-    size_t m_itlu;       ///< Index of TLU in m_buffer vector, or -1 if no TLU
-    unsigned m_runnumber, m_eventnumber;
+    ProcessorSP m_ps_input;
+    ProcessorSP m_ps_output;
     FileWriterUP m_writer;
-    Configuration m_config;
-    Time m_runstart;
+    std::vector<ConnectionInfo> m_info_pdc;
+    std::thread m_thread;
+    std::thread m_thread_writer;
   };
 }
 

@@ -33,17 +33,16 @@ namespace eudaq {
   void TransportBase::Process(int timeout) {
     if (timeout == -1)
       timeout = DEFAULT_TIMEOUT;
-    MutexLock m(m_mutex);
+    std::unique_lock<std::recursive_mutex> lk(m_mutex);
     ProcessEvents(timeout);
-    m.Release();
+    lk.unlock();
     for (;;) {
-      MutexLock m(m_mutex);
+      std::unique_lock<std::recursive_mutex> lk(m_mutex);
       if (m_events.empty())
         break;
-      // std::cout << "Got packet" << std::endl;
       TransportEvent evt(m_events.front());
       m_events.pop();
-      m.Release();
+      lk.unlock();
       m_callback(evt);
     }
   }
@@ -83,23 +82,11 @@ namespace eudaq {
                                         std::string *recpacket,
                                         const ConnectionInfo &connection,
                                         int timeout) {
-    // acquire mutex...
+    std::lock_guard<std::recursive_mutex> lk(m_mutex);
+    SendPacket(sendpacket, connection);
     if (timeout == -1)
       timeout = DEFAULT_TIMEOUT;
-    // std::cout << "DEBUG: SendReceive: Acquiring mutex" << std::endl;
-    MutexLock m(m_mutex, false);
-    try {
-      m.Lock();
-    } catch (const eudaq::Exception &) {
-      // swallow it
-    }
-    // std::cout << "DEBUG: SendReceive: got mutex" << std::endl;
-    SendPacket(sendpacket, connection);
-    // std::cout << "DEBUG: SendReceive sent packet " << sendpacket <<
-    // std::endl;
     bool ret = ReceivePacket(recpacket, timeout, connection);
-    // std::cout << "SendReceivePacket() return '" << *recpacket << "' " << (ret
-    // ? "true" : "false") << std::endl;
     return ret;
   }
 

@@ -12,7 +12,7 @@ namespace eudaq {
 
   void LogSender::Connect(const std::string &type, const std::string &name,
                           const std::string &server) {
-    MutexLock m(m_mutex);
+    std::lock_guard<std::recursive_mutex> lk(m_mutex);
     if (isConnected) {
       return;
     }
@@ -61,7 +61,7 @@ namespace eudaq {
   }
 
   void LogSender::Disconnect() {
-    MutexLock m(m_mutex);
+    std::lock_guard<std::recursive_mutex> lk(m_mutex);
     delete m_logclient;
     isConnected = false;
   }
@@ -73,9 +73,7 @@ namespace eudaq {
 
   void LogSender::SendLogMessage(const LogMessage &msg, std::ostream &out,
                                  std::ostream &error_out) {
-
-    MutexLock m(m_mutex);
-    // std::cout << "Sending: " << msg << std::endl;
+    std::lock_guard<std::recursive_mutex> lk(m_mutex);
     if (msg.GetLevel() >= m_level) {
       if (msg.GetLevel() >= m_errlevel) {
         if (m_name != "")

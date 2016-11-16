@@ -30,8 +30,6 @@ namespace eudaq{
     else{
       top = pwd;
     }
-
-    // char* env_ps_path = getenv("EUDAQ_MODULE_PATH");
     filesystem::path module_dir=top/lib;
     LoadModuleDir(module_dir.string());
     module_dir=top/bin;
@@ -44,7 +42,7 @@ namespace eudaq{
   }
   
   
-  uint32_t ModuleManager::LoadModuleDir(const std::string dir){
+  uint32_t ModuleManager::LoadModuleDir(const std::string& dir){
     const std::string module_prefix("libeudaq_module_");
     const std::string module_suffix_win(".dll");
     const std::string module_suffix_lnx(".so");
@@ -63,8 +61,7 @@ namespace eudaq{
     return n;
   }
   
-  bool ModuleManager::LoadModuleFile(const std::string file){
-    std::cout<<">>>>>>>>>>load... "<<file<<std::endl;
+  bool ModuleManager::LoadModuleFile(const std::string& file){
     void *handle;
 #if EUDAQ_PLATFORM_IS(WIN32)
     handle = (void *)LoadLibrary(file.c_str());
@@ -72,14 +69,18 @@ namespace eudaq{
     handle = dlopen(file.c_str(), RTLD_NOW);
 #endif
     if(handle){
-      std::cout<<file<<"  load succ"<<std::endl;
       m_modules[file]=handle;
       return true;
     }
     else{
-      std::cout<<file<<"  load fail"<<std::endl;
+      std::cerr<<"ModuleManager WARNING: Fail to load module binary.  "<<file<<std::endl;
       return false;
     }
+  }
+
+  void ModuleManager::Print(std::ostream & os, size_t offset) const{
+    //TODO
+    
   }
   
 }

@@ -44,31 +44,10 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
     return ret;
   }
 }
-  namespace {
-
-    void *CommandReceiver_thread(void *arg) {
-      CommandReceiver *cr = static_cast<CommandReceiver *>(arg);
-      try {
-        cr->CommandThread();
-      } catch (const std::exception &e) {
-        std::cout << "Command Thread exiting due to exception:\n" << e.what()
-                  << std::endl;
-      } catch (...) {
-        std::cout << "Command Thread exiting due to unknown exception."
-                  << std::endl;
-      }
-      return 0;
-    }
-
-  } // anonymous namespace
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
-      const std::string & runcontrol, bool startthread)
-    : m_done(false),
-    m_type(type),
-    m_name(name),
-    m_threadcreated(false)
-  {
+				   const std::string & runcontrol, bool startthread)
+    : m_done(false), m_type(type), m_name(name){
     int i = 0;
     while (true) {
 
@@ -77,7 +56,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
       if (!m_cmdclient->IsNull()) {
         std::string packet;
         if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
-        // check packet is OK ("EUDAQ.CMD.RunControl nnn")
         auto splitted = split(packet, " ");
         if (splitted.size() < 4) {
           EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
@@ -102,7 +80,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
       }
     }
     }
-    //m_cmdclient = make_client(runcontrol, name, type);
 
     m_cmdclient->SetCallback(
         TransportCallback(this, &CommandReceiver::CommandHandler));
@@ -112,13 +89,7 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
   }
 
   void CommandReceiver::StartThread() {
-	m_thread=std::unique_ptr<std::thread>(new std::thread(CommandReceiver_thread, this));
-	  //m_thread.start(CommandReceiver_thread, this);
-	   m_threadcreated = true;
-//     pthread_attr_init(&m_threadattr);
-//     if (pthread_create(&m_thread, &m_threadattr, CommandReceiver_thread, this) != 0) {
-//       m_threadcreated = true;
-//     }
+    m_thread = std::thread(&CommandReceiver::CommandThread, this);
   }
 
   void CommandReceiver::SetStatus(Status::Level level,
@@ -132,11 +103,8 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
     std::cout << "Config:\n" << param << std::endl;
   }
 
-  void CommandReceiver::OnClear() { SetStatus(Status::LVL_NONE, "Wait"); }
-
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
-    // return false;
   }
 
   void CommandReceiver::OnIdle() { mSleep(500); }
@@ -156,17 +124,12 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
         param = std::string(cmd, i + 1);
         cmd = std::string(cmd, 0, i);
       }
-      // std::cout << "(" << cmd << ")(" << param << ")" << std::endl;
-      if (cmd == "CLEAR") {
-        OnClear();
-      } else if (cmd == "CONFIG") {
+      if (cmd == "CONFIG") {
         std::string section = m_type;
         if (m_name != "")
           section += "." + m_name;
         Configuration conf(param, section);
         OnConfigure(conf);
-      } else if (cmd == "PREPARE") {
-        OnPrepareRun(from_string(param, 0));
       } else if (cmd == "START") {
         OnStartRun(from_string(param, 0));
       } else if (cmd == "STOP") {
@@ -183,8 +146,6 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
         OnLog(param);
       } else if (cmd == "SERVER") {
         OnServer();
-      } else if (cmd == "GETRUN") {
-        OnGetRun();
       } else {
         OnUnrecognised(cmd, param);
       }
@@ -197,7 +158,8 @@ TransportClient* make_client(const std::string & runcontrol, const std::string &
 
   CommandReceiver::~CommandReceiver() {
     m_done = true;
-    if (m_threadcreated) m_thread->join();
+    if (m_thread.joinable())
+      m_thread.join();
    
   }
 

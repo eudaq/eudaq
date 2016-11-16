@@ -1,145 +1,129 @@
 #ifndef PROCESSOR_HH_
 #define PROCESSOR_HH_
 
-#include<set>
-#include<vector>
-#include<string>
-#include<queue>
-#include<memory>
-#include<thread>
-#include<mutex>
-#include<atomic>
-#include<condition_variable>
+#include <set>
+#include <vector>
+#include <string>
+#include <queue>
+#include <memory>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
 
-#include"Event.hh"
-#include"Configuration.hh"
-#include"RawDataEvent.hh"
-
-#include"Factory.hh"
+#include "Event.hh"
+#include "Factory.hh"
 
 namespace eudaq {
   class Processor;
-  class ProcessorManager;  
 
 #ifndef EUDAQ_CORE_EXPORTS
   extern template class DLLEXPORT
   Factory<Processor>;
-  extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&)>&
-  Factory<Processor>::Instance<std::string&>();
-  extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)(std::string&&)>&
-  Factory<Processor>::Instance<std::string&&>();
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<Processor>::UP_BASE (*)()>&
+  Factory<Processor>::Instance<>();
 #endif
   
-
+  using ProcessorUP = Factory<Processor>::UP_BASE;
+  using ProcessorSP = Factory<Processor>::SP_BASE;
+  using ProcessorWP = Factory<Processor>::WP_BASE;
   
-  using CreatePS  = Processor* (*)(uint32_t);
-  using DestroyPS = void (*)(Processor*);
-  using CreateEV = Event* (*)();
-  using DestroyEV = void (*)(Event*);
-  
-  using PSSP = std::shared_ptr<Processor>;
-  using PSWP = std::weak_ptr<Processor>;
-  using EVUP = std::unique_ptr<Event, std::function<void(Event*)> >;
-  
-  class DLLEXPORT Processor{
+  class DLLEXPORT Processor: public std::enable_shared_from_this<Processor>{
   public:
-    enum STATE:uint32_t{
-      STATE_UNCONF,
-      STATE_READY,
-      STATE_ERROR,
-      STATE_THREAD_UNCONF,
-      STATE_THREAD_READY,
-      STATE_THREAD_BUSY,
-      STATE_THREAD_ERROR
-    };
-
-    enum FLAG{
-        FLAG_HUB_RUN=1,
-	FLAG_HUB_BUSY=2,
-	FLAG_PDC_RUN=4,
-	FLAG_PDC_BUSY=8,
-	FLAG_CSM_RUN=16,
-	FLAG_CSM_BUSY=32
-    };
+    static ProcessorSP MakeShared(const std::string& pstype,
+				  std::initializer_list
+				  <std::pair<const std::string, const std::string>> l = {{}});
     
-    Processor(std::string pstype, uint32_t psid);
-    Processor(std::string pstype, std::string cmd);
-    Processor(std::string pstype, uint32_t psid, std::string cmd);
-
-    Processor(){};
+    Processor(const std::string& dsp);
+    Processor(Processor&) = delete;
+    Processor() = delete;
     virtual ~Processor();
-    virtual void ProcessUserEvent(EVUP ev);
-    virtual void ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par);
-    virtual void ProduceEvent();
-    virtual void ConsumeEvent();
+    virtual void ProcessEvent(EventSPC ev);
+    virtual void ProduceEvent(){};
+    virtual void ProcessCommand(const std::string& cmd, const std::string& arg){};
 
-    bool IsHub(){return m_flag&FLAG_HUB_RUN ;};
-    bool IsAsync(){return m_flag&FLAG_CSM_RUN ;};
+    void ForwardEvent(EventSPC ev);
+    void RegisterEvent(EventSPC ev);
+
+    void StopProducer();
+    inline bool GetProducerStopFlag() const {return m_pdc_go_stop;};
+    inline uint32_t GetInstanceN()const {return m_instance_n;};
+    inline std::string GetDescription()const {return m_description;};
+    void Print(std::ostream &os, uint32_t offset=0) const;
     
-    std::string GetType(){return m_pstype;};
-    uint32_t GetID(){return m_psid;};
-    STATE GetState(){return m_state;};
-    void HubProcessing();
-    void Processing(EVUP ev);
-    void AsyncProcessing(EVUP ev);
-    void SyncProcessing(EVUP ev);
-    virtual void ForwardEvent(EVUP ev);
+    ProcessorSP operator>>(ProcessorSP psr);
+    ProcessorSP operator<<(const std::string& cmd);
 
-    void RegisterProcessing(PSSP ps, EVUP ev);
-    void RunProducerThread();
-    void RunConsumerThread();
-    void RunHubThread();
-    
-    PSWP GetPSHub(){return m_ps_hub;};
-    void SetPSHub(PSWP ps); //TODO: thread safe
-    void InsertEventType(uint32_t evtype);
-    void EraseEventType(uint32_t evtype);
+    ProcessorSP operator+(const std::string& evtype);
+    ProcessorSP operator-(const std::string& evtype);
+    ProcessorSP operator<<=(EventSPC ev);
 
-    void ProcessSysEvent(EVUP ev);
-    void AddNextProcessor(PSSP ps);
-    void CreateNextProcessor(std::string pstype);
-    void RemoveNextProcessor(uint32_t psid);
-
-    uint32_t GetNumUpstream(){return m_num_upstream;};
-    void IncreaseNumUpstream(){m_num_upstream++;};
-
-    void ProcessSysCmd(std::string cmd_name, std::string cmd_par);
-    
-    virtual PSSP operator>>(PSSP psr);
-
-    virtual Processor& operator<<(EVUP ev);
-    virtual Processor& operator<<(std::string cmd_str);
+  private:
+    void Processing(EventSPC ev);
+    void ConsumeEvent();
+    void HubProcessing(); //relay
+    void ProcessSysCommand(const std::string& cmd, const std::string& arg);
+    void RegisterProcessing(ProcessorSP ps, EventSPC ev);
+    void RegisterDownstream(ProcessorSP ps, const std::set<uint32_t>& evset = {});
+    void RegisterUpstream(ProcessorSP up, ProcessorWP hub);
     
   private:
-    std::string m_pstype;
-    uint32_t m_psid;
-    uint32_t m_num_upstream;
-    PSWP m_ps_hub;
+    std::string m_description;
+    uint32_t m_instance_n;
     
-    std::set<uint32_t> m_evlist_white;
-    std::vector<std::pair<PSSP, std::set<uint32_t>>> m_pslist_next;
-    std::vector<std::pair<std::string, std::string>> m_cmdlist_init;
+    ProcessorWP m_ps_hub;
+    std::vector<ProcessorWP> m_ps_upstream;
+    std::vector<std::pair<ProcessorSP, std::set<uint32_t>>> m_ps_downstream;
+    std::mutex m_mtx_input;  // m_ps_upstream, m_ps_hub; guard the event intput
+    std::mutex m_mtx_output; // m_ps_downstream; guard the event output
+    // std::mutex m_mtx_config;
     
+    std::atomic_bool m_hub_force;
     
-    std::queue<EVUP> m_fifo_events;
-    std::queue<std::pair<PSSP, EVUP> > m_fifo_pcs;
-    std::mutex m_mtx_fifo;
-    std::mutex m_mtx_pcs;
-    std::mutex m_mtx_state;
-    std::mutex m_mtx_list;
-    std::condition_variable m_cv;
-    std::condition_variable m_cv_pcs;
-    std::atomic<STATE> m_state;
-    std::map<std::string, std::pair<CreateEV, DestroyEV> > m_evlist_cache;
-    std::atomic<int> m_flag;
+    std::deque<EventSPC> m_que_csm;
+    std::deque<std::pair<ProcessorSP, EventSPC> > m_que_hub;
+    std::mutex m_mtx_csm;
+    std::mutex m_mtx_hub;
+    std::condition_variable m_cv_csm;
+    std::condition_variable m_cv_hub;
+    std::thread m_th_csm;
+    std::thread m_th_hub;
+    std::thread m_th_pdc;
+    std::atomic_bool m_csm_go_stop;
+    std::atomic_bool m_hub_go_stop;
+    std::atomic_bool m_pdc_go_stop;
+    
+    std::set<uint32_t> m_ev_out_default;
   };
+
+  
+  
+  template <typename T>
+  ProcessorSP operator>>(ProcessorSP psl, T&& t){
+    return *psl>>std::forward<T>(t);
+  }
+
+  template <typename T>
+  ProcessorSP operator<<(ProcessorSP psl, T&& t){
+    return *psl<<std::forward<T>(t);
+  }
+
+  template <typename T>
+  ProcessorSP operator+(ProcessorSP psl, T&& t){
+    return (*psl)+std::forward<T>(t);
+  }
+  
+  template <typename T>
+  ProcessorSP operator-(ProcessorSP psl, T&& t){
+    return (*psl)+std::forward<T>(t);
+  }
+  
+  template <typename T>
+  ProcessorSP operator<<=(ProcessorSP psl, T&& t){
+    return (*psl)<<=std::forward<T>(t);
+  }
   
 }
-
-DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, eudaq::PSSP psr);
-DLLEXPORT  eudaq::PSSP operator>>(eudaq::PSSP psl, std::string psr_str);
-DLLEXPORT  eudaq::PSSP operator<<(eudaq::PSSP psl, std::string cmd_list);
-
 
 
 #endif

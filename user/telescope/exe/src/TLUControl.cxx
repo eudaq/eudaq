@@ -1,5 +1,4 @@
 #include "TLUController.hh"
-#include "USBTracer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
@@ -46,6 +45,8 @@ int main(int /*argc*/, char **argv) {
   eudaq::Option<std::string> fname(
       op, "f", "bitfile", "", "filename",
       "The bitfile containing the TLU firmware to be loaded");
+  eudaq::Option<int> clock(op, "c", "clock_source", 1, "bits",
+                           "clock_source (1 = internal)");
   eudaq::Option<int> trigg(op, "t", "trigger", 0, "msecs",
                            "The interval in milliseconds for internally "
                            "generated triggers (0 = off)");
@@ -194,24 +195,25 @@ int main(int /*argc*/, char **argv) {
         EUDAQ_THROW("Unable to open file: " + sname.Value());
     }
     signal(SIGINT, ctrlchandler);
-    if (trace.Value() != "") {
-      std::string fname = trace.Value();
-      if (fname[0] == '-') {
-        tlu::setusbtracelevel(1);
-        fname = std::string(fname, 1);
-      } else if (fname[0] == '+') {
-        tlu::setusbtracelevel(3);
-        fname = std::string(fname, 1);
-      } else {
-        tlu::setusbtracelevel(2);
-      }
-      tlu::setusbtracefile(fname);
-    }
+    // if (trace.Value() != "") {
+    //   std::string fname = trace.Value();
+    //   if (fname[0] == '-') {
+    //     tlu::setusbtracelevel(1);
+    //     fname = std::string(fname, 1);
+    //   } else if (fname[0] == '+') {
+    //     tlu::setusbtracelevel(3);
+    //     fname = std::string(fname, 1);
+    //   } else {
+    //     tlu::setusbtracelevel(2);
+    //   }
+    //   tlu::setusbtracefile(fname);
+    // }
     TLUController TLU(emode.Value());
     TLU.SetVersion(fwver.Value());
     TLU.SetFirmware(fname.Value());
     TLU.Configure();
     // TLU.FullReset();
+    TLU.SetClockSource(clock.Value());
     TLU.SetHandShakeMode(hsmode.Value()); //$$ change
     TLU.SetTriggerInterval(trigg.Value());
     if (ipsel.NumItems() > (unsigned)TLU_LEMO_DUTS)

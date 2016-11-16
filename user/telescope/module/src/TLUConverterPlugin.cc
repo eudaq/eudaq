@@ -1,5 +1,4 @@
 #include "DataConverterPlugin.hh"
-#include "TLUEvent.hh"
 #include <string>
 
 #if USE_LCIO
@@ -11,7 +10,7 @@ namespace eudaq {
   class TLUConverterPlugin;
   
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConverterPlugin>(Event::str2id("_TLU"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConverterPlugin>(Event::str2id("TLUEvent"));
   }
   
   class TLUConverterPlugin : public DataConverterPlugin {
@@ -20,7 +19,8 @@ namespace eudaq {
 
     virtual bool GetStandardSubEvent(eudaq::StandardEvent &result,
                                      const eudaq::Event &source) const {
-      result.SetTimestamp(source.GetTimestamp());
+      result.SetTimestampBegin(source.GetTimestampBegin());
+      result.SetTimestampEnd(source.GetTimestampEnd());
       result.SetTag("TLU_trigger", source.GetTag("trigger"));
       return true;
     }

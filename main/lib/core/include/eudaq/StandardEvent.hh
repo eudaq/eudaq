@@ -1,7 +1,7 @@
 #ifndef EUDAQ_INCLUDED_StandardEvent
 #define EUDAQ_INCLUDED_StandardEvent
 
-#include "eudaq/Event.hh"
+#include "Event.hh"
 #include <vector>
 #include <string>
 
@@ -128,18 +128,15 @@ namespace eudaq {
   class DLLEXPORT StandardEvent : public Event {
     public:
     StandardEvent(unsigned run = 0, unsigned evnum = 0,
-        uint64_t timestamp = NOTIMESTAMP);
-    StandardEvent(const Event &);
+		  uint64_t timestamp = -1);
     StandardEvent(Deserializer &);
-    void SetTimestamp(uint64_t);
 
     StandardPlane &AddPlane(const StandardPlane &);
     size_t NumPlanes() const;
     const StandardPlane &GetPlane(size_t i) const;
     StandardPlane &GetPlane(size_t i);
     virtual void Serialize(Serializer &) const;
-    virtual void Print(std::ostream &) const;
-    virtual void Print(std::ostream & os,size_t offset) const;
+    virtual void Print(std::ostream & os,size_t offset = 0) const;
   private:
     std::vector<StandardPlane> m_planes;
   };

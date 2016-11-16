@@ -1,8 +1,8 @@
 #ifndef EUDAQ_INCLUDED_FileWriter
 #define EUDAQ_INCLUDED_FileWriter
 
-#include "DetectorEvent.hh"
 #include "Factory.hh"
+#include "Event.hh"
 
 #include <vector>
 #include <string>
@@ -29,8 +29,8 @@ namespace eudaq {
   public:
     FileWriter();
     virtual void StartRun(unsigned runnumber) = 0;
-    virtual void WriteBaseEvent(const Event&);
-    virtual void WriteEvent(const DetectorEvent &) = 0;
+    // virtual void WriteEvent(const DetectorEvent &) = 0;
+    virtual void WriteEvent(EventSPC ) = 0;
     virtual uint64_t FileBytes() const = 0;
     void SetFilePattern(const std::string &p) { m_filepattern = p; }
     virtual ~FileWriter() {}

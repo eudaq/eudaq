@@ -5,7 +5,6 @@
  * Defines TransportBase along with a number of related classes.
  */
 
-#include "eudaq/Mutex.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/BufferSerializer.hh"
 #include <string>
@@ -13,6 +12,7 @@
 #include <iosfwd>
 #include <cstring>
 #include <iostream>
+#include <mutex>
 
 namespace eudaq {
 
@@ -211,7 +211,9 @@ namespace eudaq {
         m_events; ///< A buffer to queue up events until they are handled
     TransportCallback
         m_callback; ///< The callback function to invoke on a transport event
-    Mutex m_mutex;
+    // Mutex m_mutex;
+    std::recursive_mutex m_mutex;
+
   };
 
   template <typename T>

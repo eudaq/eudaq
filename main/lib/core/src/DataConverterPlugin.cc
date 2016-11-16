@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+
 namespace eudaq {
   
   template class DLLEXPORT Factory<DataConverterPlugin>;
@@ -10,7 +11,7 @@ namespace eudaq {
   Factory<DataConverterPlugin>::Instance<>();
   
   unsigned DataConverterPlugin::GetTriggerID(eudaq::Event const & ev) const {
-    return ev.GetEventNumber();
+    return ev.GetEventN();
   }
 
   DataConverterPlugin::DataConverterPlugin(std::string subtype) :DataConverterPlugin(Event::str2id("_RAW"), subtype) {
@@ -25,26 +26,6 @@ namespace eudaq {
 
   }
 
-  DataConverterPlugin::timeStamp_t DataConverterPlugin::GetTimeStamp(const Event& ev, size_t index) const {
-    return ev.GetTimestamp(index);
-  }
-
-  size_t DataConverterPlugin::GetTimeStamp_size(const Event & ev) const {
-    return ev.GetSizeOfTimeStamps();
-  }
-
-  int DataConverterPlugin::IsSyncWithTLU(eudaq::Event const & ev, const eudaq::Event & tluEvent) const {
-    // dummy comparator. it is just checking if the event numbers are the same.
-
-    int triggerID = ev.GetEventNumber();
-    int tlu_triggerID = tluEvent.GetEventNumber();
-    return compareTLU2DUT(tlu_triggerID, triggerID);
-  }
-
-  void DataConverterPlugin::setCurrentTLUEvent(eudaq::Event & ev, eudaq::TLUEvent const & tlu) {
-    ev.SetTag("tlu_trigger_id", tlu.GetEventNumber());
-  }
-
   void DataConverterPlugin::GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const {
 
   }
@@ -57,28 +38,14 @@ namespace eudaq {
     return false;
   }
 
-  DataConverterPlugin::t_eventid const & DataConverterPlugin::GetEventType() const {
-    return m_eventtype;
-  }
 
-  event_sp DataConverterPlugin::ExtractEventN(event_sp ev, size_t NumberOfROF) {
+  EventSP DataConverterPlugin::GetSubEvent(EventSP ev, size_t NumberOfROF) {
     return nullptr;
   }
 
-  bool DataConverterPlugin::isTLU(const Event&) {
-    return false;
-  }
 
-  unsigned DataConverterPlugin::getUniqueIdentifier(const eudaq::Event & ev) {
-    return m_thisCount;
-  }
-
-  size_t DataConverterPlugin::GetNumberOfEvents(const eudaq::Event& pac) {
+  size_t DataConverterPlugin::GetNumSubEvent(const eudaq::Event& pac) {
     return 1;
-  }
-
-  DataConverterPlugin::~DataConverterPlugin() {
-
   }
 
   unsigned DataConverterPlugin::m_count = 0;
