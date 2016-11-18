@@ -1,11 +1,10 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Writing a Producer}\label{sec:Producers}
-In order to integrate a \gls{DUT} fully into the DAQ, it needs its own Producer.
-A Producer is both a CommandReceiver and a DataSender,
-meaning it receives commands from Run Control,
-and it also sends events to the Data Collector.
-A base class is provided that users may inherit from, to make this as easy as possible.
-For example code, see \autoref{sec:ExampleProducer}.
+Producers are the binding part between a user DAQ and the central EUDAQ Run Control.
+A Producer consistes of a CommandReceiver and a DataSender, where the first receives commands from the Run Control while the latter allows to send binary data events to the Data Collector.
+A Producer base class is provided in order to simplify the integration.
+The Producer is compiled against the EUDAQ library which implements all of the required communication over the network.
+Example code for producers is provided, see \autoref{sec:ExampleProducer}.
 
 \subsection{Configuration}
 The \texttt{Configuration} class is a way of storing configuration information
@@ -45,13 +44,24 @@ A configuration object will be received by the Producer during the configuration
 as described in \autoref{sec:OnConfigure}.
 
 \subsection{Receiving Commands}
-Whenever a command is received from the Run Control,
-a corresponding member function of the Producer will be called by the code in the base classes.
-In order to react to a command, the necessary code is simply put inside the corresponding method.
-The \texttt{Producer} base class is declared by including the following header file:
+The Run Control distributs commands to all registered clients, controlling the global finite state machine and thus the DAQ.
+Whenever a user input is received from the Run Control, the corresponding member function of the Producer will be invoked.
+These member functions of the Producer class are virtual and can be overloaded by the user in their respective Producer implementations.
+The \texttt{Producer} base class definition is provided in the header file:
 \begin{listing}
 #include "eudaq/Producer.hh"
 \end{listing}
+
+\subsubsection{OnInitialise}
+This method is called whenever an initialise command is received from the Run Control.
+The method signature is:
+\begin{listing}
+virtual void OnInitialise(const eudaq::Configuration & config);
+\end{listing}
+
+The configuration object is received from the Run Control. The Producer is free to read any part of the configuration object but parameters cannot be changed owing to the const qualifier.
+
+If the initialisation step is not required for a certain DAQ, the function can be left unimplemented in the Producer. In that case the corresponding member function of the \texttt{CommandReceiver} base class is executed.
 
 \subsubsection{OnConfigure}\label{sec:OnConfigure}
 This method is called whenever a configure command is received from the Run Control.
@@ -60,8 +70,8 @@ The method signature is:
 virtual void OnConfigure(const eudaq::Configuration & config);
 \end{listing}
 
-As a parameter, it receives the configuration chosen in the Run Control.
-Information may be extracted from the configuration in order to set up the hardware.
+The configuration object is received from the Run Control where is has been loaded from a user configurable file. The Producer is free to read any part of the configuration object but parameters cannot be changed owing to the const qualifier.
+
 
 \subsubsection{OnStartRun}
 This is called on the start of each run.
@@ -72,7 +82,8 @@ virtual void OnStartRun(unsigned param);
 
 As a parameter, it receives the run number of the started run.
 The Producer must send a \gls{BORE},
-and then prepare for reading out events from the hardware.
+and then enable the data acquisition on the attached devices and prepare for receiving events from the hardware.
+
 
 \subsubsection{OnStopRun}
 This is called at the end of the run.
@@ -94,38 +105,35 @@ void SendEvent(const Event &);
 
 It takes as a parameter an object derived from the \texttt{eudaq::Event} base class
 that will be serialised and sent to the Data Collector.
-In practice it will usually be of concrete type \texttt{RawDataEvent}.
+In practice it will usually be of the type \texttt{RawDataEvent}.
 
-The \texttt{RawDataEvent} is a generic container for blocks of raw bytes,
-used to encapsulate the data read out from the sensor electronics
-and send it to the DAQ.
+The \texttt{RawDataEvent} is a generic container for blocks of binary data and is used to encapsulate the data read directly from the devices and send it to the central DAQ for storage.
 Each \texttt{RawDataEvent} may contain any number of raw data blocks.
 By convention each block usually corresponds to one sensor,
 but this is not required;
-it is up to each Producer how the raw data are encoded,
-since it is up to the corresponding DataConverterPlugin how they are decoded.
+it is up to each Producer how the raw data are encoded.
 The RawDataEvent class is defined in the following header file:
 \begin{listing}
 #include "eudaq/RawDataEvent.hh"
 \end{listing}
 
-The class is described in more detail below.
+The class is described in the following in more detail.
 
-\subsubsection{Constructing}
+\subsubsection{Constructor}
 A \texttt{RawDataEvent} is constructed as follows:
 \begin{listing}
 RawDataEvent event("EXAMPLE", run, event);
 \end{listing}
 
 Where \texttt{"EXAMPLE"} is a string unique to the particular producer
-that will be used to select the correct converter during decoding.
+that will be used by the event decoding factory to select the correct converter during decoding.
 The \texttt{run} and \texttt{event} parameters are the run number
-and event number respectively.
+and event number, respectively.
 
-As well as normal data events, the producer must also send a \gls{BORE}
+Furthermore, the producer is required to send a \gls{BORE}
 and \gls{EORE} at the beginning and end of a run respectively.
-These are just normal \texttt{RawDataEvent} objects, but with a particular flag set.
-The \texttt{RawDataEvent} has factory methods to simplify these cases:
+These are regular \texttt{RawDataEvent} objects with a particular flag set.
+For convenience, separate methods are available to create the respective event types:
 \begin{listing}
 RawDataEvent::BORE("EXAMPLE", run);
 RawDataEvent::EORE("EXAMPLE", run, event);
@@ -148,54 +156,46 @@ unsigned char * buffer = ...;
 event.AddBlock(id, buffer, len);
 \end{listing}
 
-Where \texttt{id} is an integer used to differentiate the different blocks.
-Usually it can just be 0 for the first block and increment by 1 for the following blocks.
-And \texttt{buffer} contains the actual data for the block.
-If the buffer is a \texttt{vector}, the whole length is used,
-if it is a pointer, then the length must be specified.
+Where \texttt{id} is an integer used to uniquely identify the different blocks.
+The \texttt{buffer} variable points to the actual data for the block under consideration block and can be provided either as STL \texttt{vector}, where the full vector is read and sent, or as C-pointer to a memory block where the \texttt{len} argument is required to specify the size.
 
-The type of the vector or pointer need not be \texttt{unsigned char},
-since these methods are in fact template methods that can take a vector of any basic type,
-but if larger types are used, care must be taken about endianness,
-since the buffer will be converted to \texttt{unsigned char}
-according to the endianness of the machine it is running on.
-Therefore if the producer may run on different architectures steps should be taken
-to ensure that any endianness issues are handled correctly.
+The type of the vector or data array can be freely chosen by the user since the data serializers are implemented as templates.
+However, if data types larger than \texttt{char} are used, special care has to be taken for appropriate endianness of the data.
+This is especially true if the producer and decoding software run on different machines which might have different architectures.
+
 
 \subsubsection{Tags}\label{sec:Tags}
-The \texttt{RawDataEvent} (in fact any type that descends from the \texttt{Event} base class)
-may also have tags set.
-These are name-value pairs containing extra information that does not easily fit
-in the usual raw data.
-This is used particularly in the \gls{BORE} to include information about the particular run
-that may be useful for the decoding later.
-A tag may be set as follows:
+\texttt{RawDataEvent} objects as well as other types inheriting from the \texttt{Event} base class also provide the option to store tags.
+Tags are name-value pairs containing additional information which does not qualify as regular DAQ data which is written in the binary blocks.
+Particularily in the \gls{BORE} this is very useful to store information about the exact sensor configuration which micht be required in order to be able to decode the raw data stored.
+A tag is stored as follows:
 \begin{listing}
 event.SetTag("Temperature", 42);
 \end{listing}
 
 The value corresponding to the tag can be set as an arbitrary type (in this case an integer),
-it will be converted to a string internally.
+it will be converted to a STL string internally.
 
 \subsection{Log Messages}
-A method is provided for sending log messages to the central Log Collector.
-To use it the follwing header should be included:
+The logging infrastructure allows to send information, error messages or debug information to a central point in the DAQ system to collect logging information, the Log Collector.
+It is strongly encouraged to use the logging system rather than simple cout statements.
+The logging class is defined in:
 \begin{listing}
 #include "eudaq/Logger.hh"
 \end{listing}
 
-This defines the following macros for sending log messages,
-listed in decreasing order of severity:
+The following macros for sending log messages are defined,
+listed here in decreasing order of severity:
 \begin{description}
 
 \ttitem{EUDAQ\_USER}
 A user-generated message (e.g. from the RunControl Log button).
 
 \ttitem{EUDAQ\_ERROR}
-Something that has gone wrong and should probably be looked into.
+Something that went wrong and should be fixed. Errors usually are blocking, i.e. the data acquisition cannot be continued without fixing the cause.
 
 \ttitem{EUDAQ\_WARN}
-A warning that something may not be quite right.
+A warning that something may not be quite right and should probably be taken care of. Warnings are considered non-blocking, i.e. the data acquisition will proceed but some of the components might experience problems (lacking configurations for a threshold setting would be an example).
 
 \ttitem{EUDAQ\_INFO}
 An message generated during normal running containing information that may be useful to the user.
@@ -204,7 +204,7 @@ An message generated during normal running containing information that may be us
 Some extra information that may be less useful in normal running.
 
 \ttitem{EUDAQ\_DEBUG}
-Information for debugging purposes that will normally be hidden.
+Information for debugging purposes that will normally be hidden and should only be used for development purposes. Additional information for shifters should be categorized as \texttt{EUDAQ\_EXTRA}.
 
 \end{description}
 
