@@ -15,7 +15,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	
 	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
 	
-	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster" ]; then
+	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software" ]; then
 	
 		echo "palpidefs source restored from cache as path exists:"
 		
