@@ -33,7 +33,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 
 		unzip alice-its-alpide-software-master-latest.zip
 		
-		mv $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
+		mv alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b aliceitsalpidesoftwaremaster
 	
 	fi
 
