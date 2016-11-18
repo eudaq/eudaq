@@ -1,24 +1,26 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Data Conversion}
 Data are stored on disk, by default, in a native binary format, containing the raw data as read out by the various Producers.
-It is basically the same format used for serialising the data over the socket connection to the Data Collector.
-To be useful, this data must be converted into a standardised format so that the monitoring and analysis software
-does not depend on particularities of the individual sensors, but can be applied generically to any sensor.
-Two different formats are used for this. The first is the \texttt{StandardEvent} type,
-an internal class that does not depend on any external libraries,
-and is used by the online monitoring, and many of the utility programs of the framework.
+It is the same format used for serialising the data over the socket connection to the Data Collector.
+To be legible to other software components, this data must be converted into a standardised format so that the monitoring and analysis software
+does not require specific information about the functionalities and data encoding scheme of every detector, but can be applied generically to any sensor.
+
+Currently, two different formats are provided for this purpose.
+The first is the \texttt{StandardEvent} type, an EUDAQ-internal class used by the online monitoring tool and other utilities of the framework. It is a very simplified format tailored towards pixelated tracking detectors.
 The second type is the \gls{LCIO} standard format from the linear collider community,
-used by the full analysis software.
+which is also used by the EUTelescope analysis software.
+
 
 \subsection{StandardEvent and StandardPlane}
 The \texttt{StandardEvent} is a class designed to represent pixel sensor data in a reasonably easy to use way,
-but still be flexible enough to store the data from a wide range of different sensors as completely as possible.
+but still be flexible enough to store the data from a wide range of different sensors.
+
 Each \texttt{StandardEvent} represents one event of data from the whole telescope and any \glspl{DUT},
 so a run will consist of a sequence of \texttt{StandardEvent}s.
 It inherits from the \texttt{Event} base class, meaning that it has a run number, an event number, an optional timestamp,
 and may also contain tags (see \autoref{sec:Tags}).
-It also has an array of \texttt{StandardPlane}s, each representing one sensor plane of the telescope or \gls{DUT}.
 
+The decoded pixel data is stored in an array of \texttt{StandardPlane}s, each representing one sensor plane of the telescope or \gls{DUT}.
 Each \texttt{StandardPlane} contains the charge values from the pixels of one sensor,
 and may contain several frames in cases where the sensor is read out multiple times per event.
 It also has the concept of a ``result'' frame, which is calculated from the one or more of the source frames
@@ -132,7 +134,7 @@ void PushPixel(unsigned x, unsigned y, unsigned pix,
 
 where all parameters are the same as in \texttt{SetPixel}.
 The only difference being the lack of an \texttt{index} parameter,
-since this will always be the newly allocated pixel.
+since this will always allocate a new pixel and append it to the existing list.
 
 \subsubsection{Setting other information}
 Other than the pixel values, the \texttt{StandardPlane} also stores some other information
@@ -163,7 +165,7 @@ Some flags may be set after calling \texttt{SetSizeRaw} or \texttt{SetSizeZS}, b
 \texttt{FLAG\_WITHPIVOT}, \texttt{FLAG\_WITHSUBMAT} or \texttt{FLAG\_DIFFCOORDS} since these
 flags affect how memory is allocated by those methods.
 
-\subsubsection{Adding to the StandardEvent}
+\subsubsection{Adding Planes to the StandardEvent}
 Once the plane has been constructed and filled, it may be added to a \texttt{StandardPlane} using the following method:
 \begin{listing}
 StandardPlane & AddPlane(const StandardPlane &);
@@ -249,20 +251,10 @@ which returns the information from the underlying source frame instead of the re
 
 \subsection{LCIO and LCEvent}\label{sec:LCIO}
 % TODO: describe LCIO format
-Due to time constraints, the \gls{LCIO} format is not yet described in this manual.
-If you need to write a converter to \gls{LCIO},
-first check whether a newer version of this manual is available,
-otherwise you can look at the other converters that are already implemented,
-and if that is not enough, seek the help of an expert.
-%\begin{listing}
-%#include "IMPL/LCEventImpl.h"
-%#include "IMPL/TrackerRawDataImpl.h"
-%#include "IMPL/TrackerDataImpl.h"
-%#include "IMPL/LCCollectionVec.h"
-%#include "IMPL/LCGenericObjectImpl.h"
-%#include "UTIL/CellIDEncoder.h"
-%#include "lcio.h"
-%\end{listing}
+Another option available with the framework is the ouput of data as \gls{LCIO} events.
+The LCIO format is a very flexible container defined and used by the linear collider community. The exact encoding of the data relies upon the requirements from the user and cannot be described in a generic way.
+
+Many tracking detectors rely on the additional classes provided by the EUTelescope data analysis framework, examples for implementations can be found in the respective converter plugins in the EUDAQ source tree.
 
 \subsection{DataConverterPlugin}
 In order to allow different \glspl{DUT} to easily incorporate their data into the monitoring and analysis chain,
