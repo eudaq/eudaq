@@ -39,7 +39,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 
 	echo `ls `
 	
-	cd "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software"
+	cd aliceitsalpidesoftwaremaster/"pALPIDEfs-software"
 
 	sed -i '2s/.*//' Makefile
 	
