@@ -42,7 +42,7 @@ env:
       - BUILD_ni=ON
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
-      - BUILD_onlinemon=ON
+      - BUILD_onlinemon=OFF
       - BUILD_palpidefs=ON
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
