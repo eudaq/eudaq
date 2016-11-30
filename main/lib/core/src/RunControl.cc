@@ -12,6 +12,11 @@
 
 namespace eudaq {
 
+  template class DLLEXPORT Factory<RunControl>;
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<RunControl>::UP_BASE (*)(const std::string&)>&
+  Factory<RunControl>::Instance<const std::string&>();
+  
   RunControl::RunControl(const std::string &listenaddress)
       : m_done(false), m_listening(true), m_runnumber(-1),
         m_idata((size_t)-1), m_ilog((size_t)-1), m_runsizelimit(0),

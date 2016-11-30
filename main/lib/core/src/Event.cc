@@ -18,8 +18,6 @@ namespace eudaq {
   Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
   //RawDataEvent
   
-
-  
   namespace{
     auto dummy0 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("BASE"));
     auto dummy1 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("BASE"));

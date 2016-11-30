@@ -1,11 +1,12 @@
 #ifndef EUDAQ_INCLUDED_RunControl
 #define EUDAQ_INCLUDED_RunControl
 
-#include "TransportServer.hh"
-#include "Logger.hh"
-#include "Status.hh"
-#include "Configuration.hh"
-#include "Platform.hh"
+#include "eudaq/TransportServer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/Status.hh"
+#include "eudaq/Configuration.hh"
+#include "eudaq/Platform.hh"
+#include "eudaq/Factory.hh"
 
 #include <string>
 #include <memory>
@@ -14,6 +15,14 @@
 
 namespace eudaq {
 
+  class RunControl;
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<RunControl>;
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<RunControl>::UP_BASE (*)(const std::string&)>&
+  Factory<RunControl>::Instance<const std::string&>();  
+#endif
+  
   /** Implements the functionality of the Run Control application.
    *
    */

@@ -1,14 +1,15 @@
 #ifndef EUDAQ_INCLUDED_DataCollector
 #define EUDAQ_INCLUDED_DataCollector
 
-#include "TransportServer.hh"
-#include "CommandReceiver.hh"
-#include "Event.hh"
-#include "FileWriter.hh"
-#include "Configuration.hh"
-#include "Utils.hh"
-#include "Platform.hh"
-#include "Processor.hh"
+#include "eudaq/TransportServer.hh"
+#include "eudaq/CommandReceiver.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/FileWriter.hh"
+#include "eudaq/Configuration.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Platform.hh"
+#include "eudaq/Processor.hh"
+#include "eudaq/Factory.hh"
 
 #include <string>
 #include <vector>
@@ -17,7 +18,17 @@
 #include <atomic>
 
 namespace eudaq {
-
+  class DataCollector;
+  
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<DataCollector>;
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<DataCollector>::UP_BASE (*)
+				     (const std::string&, const std::string&,
+				      const std::string&, const std::string& )>&
+  Factory<DataCollector>::Instance<const std::string&, const std::string&,
+				   const std::string&, const std::string&>();
+#endif
+  
   class DLLEXPORT DataCollector : public CommandReceiver {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol,
