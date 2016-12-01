@@ -16,6 +16,7 @@ namespace eudaq{
 #endif
   using StdEventConverterUP = Factory<StdEventConverter>::UP;
   using StandardEventSP = std::shared_ptr<StandardEvent>;
+  using StandardEventSPC = std::shared_ptr<const StandardEvent>;
   
   class DLLEXPORT StdEventConverter:public DataConverter<Event, StandardEvent>{
   public:

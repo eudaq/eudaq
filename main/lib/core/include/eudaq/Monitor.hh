@@ -1,7 +1,7 @@
 #ifndef EUDAQ_INCLUDED_Monitor
 #define EUDAQ_INCLUDED_Monitor
 
-#include "eudaq/StandardEvent.hh"
+#include "eudaq/Event.hh"
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/FileReader.hh"
 #include <string>
@@ -21,20 +21,18 @@ namespace eudaq {
     Monitor(const std::string &name, const std::string &runcontrol,
             const unsigned lim, const unsigned skip_,
             const unsigned int skip_evts, const std::string &datafile = "");
-    virtual ~Monitor() {}
 
+    void OnIdle() override;
+    void OnStartRun(uint32_t param) override;
+    void OnStopRun() override;
     bool ProcessEvent();
-    virtual void OnIdle();
-
-    virtual void OnEvent(const StandardEvent & /*ev*/){};
-    virtual void OnBadEvent(EventSP /*ev*/) {}
-    virtual void OnStartRun(unsigned param);
-    virtual void OnStopRun();
-
+    virtual void OnEvent(EventSPC /*ev*/) = 0; //TODO: onlinemonitor
+    virtual void Exec() = 0;
   protected:
     unsigned m_run;
     bool m_callstart;
     FileReaderSP m_reader;
+    // Configuration m_conf;
     unsigned limit;
     unsigned skip;
     unsigned int skip_events_with_counter;

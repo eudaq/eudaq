@@ -170,11 +170,14 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
-void RootMonitor::OnEvent(const eudaq::StandardEvent & ev) {
+void RootMonitor::OnEvent(EventSPC e) {
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-    
+  
+  auto ev =  StdEventConverter::MakeSharedStdEvent(runnumber, 0);
+  StdEventConverter::Convert(e, ev, m_conf);
+
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
   cout << "Number of Planes " << ev.NumPlanes()<< endl;

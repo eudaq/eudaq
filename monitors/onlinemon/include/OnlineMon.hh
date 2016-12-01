@@ -17,6 +17,7 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/StdEventConverter.hh"
 #endif
 
 
@@ -85,28 +86,23 @@ public:
   virtual void StartIdleing() {}
   OnlineMonWindow *getOnlineMon() { return onlinemon; }
 
-  virtual void OnConfigure(const eudaq::Configuration &param) {
+  void OnConfigure(const eudaq::Configuration &param) override final{
     std::cout << "Configure: " << param.Name() << std::endl;
+    m_conf = param;
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
-  virtual void OnTerminate() {
+  void OnTerminate() override final{
     std::cout << "Terminating" << std::endl;
     EUDAQ_SLEEP(1);
     gApplication->Terminate();
   }
-  virtual void OnReset() {
+  void OnReset() override final{
     std::cout << "Reset" << std::endl;
     SetStatus(eudaq::Status::LVL_OK);
   }
-  virtual void OnStartRun(unsigned param);
-  virtual void OnEvent(const eudaq::StandardEvent &ev);
-
-  virtual void OnBadEvent(std::shared_ptr<eudaq::Event> ev) {
-    EUDAQ_ERROR("Bad event type found in data file");
-    std::cout << "Bad Event: " << *ev << std::endl;
-  }
-
-  virtual void OnStopRun();
+  void OnStartRun(unsigned param) override final;
+  void OnEvent(EventSPC e) override final;
+  void OnStopRun() override final;
   void setWriteRoot(const bool write) { _writeRoot = write; }
   void autoReset(const bool reset);
   void setReduce(const unsigned int red);
@@ -126,6 +122,7 @@ public:
   string GetSnapShotDir();
   OnlineMonConfiguration mon_configdata; // FIXME
 private:
+  Configuration m_conf;
   string snapshotdir;
   EventSanityChecker myevent; // FIXME
   bool useTrackCorrelator;
