@@ -165,7 +165,7 @@ public:
       std::cout << "Start Run: " << param << std::endl;
 
       eudaq::RawDataEvent ev("TelRawDataEvent", m_id_stream, m_run, 0);
-      ev.SetFlags(eudaq::Event::FLAG_BORE);
+      ev.SetBORE();
 
       
       ev.SetTag("DET", "MIMOSA26");
@@ -203,7 +203,7 @@ public:
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
 
       eudaq::RawDataEvent ev("TelRawDataEvent", m_id_stream, m_run, m_ev);
-      ev.SetFlags(eudaq::Event::FLAG_EORE);
+      ev.SetEORE();
       SendEvent(ev);
       
     } catch (const std::exception &e) {
