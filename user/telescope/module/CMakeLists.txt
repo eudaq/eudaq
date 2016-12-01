@@ -10,6 +10,7 @@ IF(USER_TELESCOPE_MODULE)
   if(NOT USER_TELESCOPE_SHARED)
     list(REMOVE_ITEM MODULE_SRC src/TelProducerPS.cc)
     list(REMOVE_ITEM MODULE_SRC src/TluProducerPS.cc)
+    list(REMOVE_ITEM MODULE_SRC src/NiProducer.cc)
   endif()
   
   add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
