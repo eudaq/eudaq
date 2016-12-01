@@ -22,8 +22,8 @@ namespace eudaq{
     StdEventConverter() = default;
     StdEventConverter(const StdEventConverter&) = delete;
     StdEventConverter& operator = (const StdEventConverter&) = delete;
-    bool Converting(EventSPC d1, StandardEventSP d2) const override = 0;
-    static bool Convert(EventSPC d1, StandardEventSP d2);
+    bool Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const override = 0;
+    static bool Convert(EventSPC d1, StandardEventSP d2, const Configuration &conf);
     static StandardEventSP MakeSharedStdEvent(uint32_t run, uint32_t stm);
   };
 

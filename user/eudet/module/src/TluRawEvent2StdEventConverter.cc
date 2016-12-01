@@ -5,7 +5,7 @@ namespace eudaq{
 
   class TluRawEvent2StdEventConverter: public StdEventConverter{
   public:
-    bool Converting(EventSPC d1, StandardEventSP d2) const override;
+    bool Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const override;
     static const uint32_t m_id_cvt = cstr2hash("TluRawDataEvent");
   };
   
@@ -13,8 +13,8 @@ namespace eudaq{
     auto dummy0 = Factory<StdEventConverter>::
       Register<TluRawEvent2StdEventConverter>(TluRawEvent2StdEventConverter::m_id_cvt);
   }  
-
-  bool TluRawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2) const{
+  
+  bool TluRawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const{
     static const std::string TLU("TLU");
     auto ev = std::dynamic_pointer_cast<const RawDataEvent>(d1);
     if(!ev)

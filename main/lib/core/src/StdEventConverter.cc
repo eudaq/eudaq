@@ -6,7 +6,7 @@ namespace eudaq{
   std::map<uint32_t, typename Factory<StdEventConverter>::UP(*)()>&
   Factory<StdEventConverter>::Instance<>();
   
-  bool StdEventConverter::Convert(EventSPC d1, StandardEventSP d2){
+  bool StdEventConverter::Convert(EventSPC d1, StandardEventSP d2, const Configuration &conf){
     
     if(d1->IsFlagBit(Event::FLAG_PACKET)){
       d2->SetFlag(d1->GetFlag());
@@ -18,7 +18,7 @@ namespace eudaq{
       size_t nsub = d1->GetNumSubEvent();
       for(size_t i=0; i<nsub; i++){
 	auto subev = d1->GetSubEvent(i);
-	if(!StdEventConverter::Convert(subev, d2))
+	if(!StdEventConverter::Convert(subev, d2, conf))
 	  return false;
       }
       return  true;
@@ -27,7 +27,7 @@ namespace eudaq{
     uint32_t id = d1->GetEventID();
     auto cvt = Factory<StdEventConverter>::MakeUnique(id);
     if(cvt){
-      return cvt->Converting(d1, d2);
+      return cvt->Converting(d1, d2, conf);
     }
     else{
       std::cerr<<"StdEventConverter: WARNING, no converter for EventID = "<<d1<<"\n";
