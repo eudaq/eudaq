@@ -1,7 +1,6 @@
 #include "DataCollector.hh"
 #include "TransportFactory.hh"
 #include "BufferSerializer.hh"
-#include "DetectorEvent.hh"
 #include "Logger.hh"
 #include "Utils.hh"
 #include "Processor.hh"

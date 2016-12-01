@@ -1,8 +1,4 @@
-#include "DataConverterPlugin.hh"
-#include "PluginManager.hh"
-
-#include <iostream>
-
+#include "eudaq/DataConverterPlugin.hh"
 
 namespace eudaq {
   
@@ -14,15 +10,10 @@ namespace eudaq {
     return ev.GetEventN();
   }
 
-  DataConverterPlugin::DataConverterPlugin(std::string subtype) :DataConverterPlugin(RawDataEvent::m_id_factory, subtype) {
+  DataConverterPlugin::DataConverterPlugin(std::string subtype){
   }
 
-  DataConverterPlugin::DataConverterPlugin(unsigned type, std::string subtype)
-    : m_eventtype(make_pair(type, subtype)), m_thisCount(m_count) {
-    m_count += 10;
-  }
-
-  void DataConverterPlugin::Initialize(eudaq::Event const &, eudaq::Configuration const &) {
+  void DataConverterPlugin::Initialize(eudaq::Event const &, eudaq::Configuration const &){
 
   }
 
@@ -48,6 +39,5 @@ namespace eudaq {
     return 1;
   }
 
-  unsigned DataConverterPlugin::m_count = 0;
 
 }//namespace eudaq

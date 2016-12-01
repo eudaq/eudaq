@@ -1,5 +1,5 @@
 #include "eudaq/PluginManager.hh"
-#include "eudaq/DetectorEvent.hh"
+#include "eudaq/RawDataEvent.hh"
 #include "eudaq/FileReader.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/OptionParser.hh"

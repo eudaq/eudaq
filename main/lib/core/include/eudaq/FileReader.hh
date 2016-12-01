@@ -5,7 +5,7 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Factory.hh"
-#include "eudaq/DetectorEvent.hh"
+#include "eudaq/Event.hh"
 
 
 namespace eudaq{

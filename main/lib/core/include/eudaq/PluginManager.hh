@@ -1,8 +1,7 @@
 #ifndef EUDAQ_INCLUDED_PluginManager
 #define EUDAQ_INCLUDED_PluginManager
 
-#include "DataConverterPlugin.hh"
-#include "DetectorEvent.hh"
+#include "eudaq/DataConverterPlugin.hh"
 
 #include <string>
 #include <map>

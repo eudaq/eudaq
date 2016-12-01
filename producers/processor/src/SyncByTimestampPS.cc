@@ -137,6 +137,7 @@ void SyncByTimestampPS::ProcessEvent(EventSPC ev){
 
 EventSP SyncByTimestampPS::GetMergedEvent(){
   EventSP ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetInstanceN());
+  ev->SetFlagBit(Event::FLAG_PACKET);
   ev->SetEventN(m_event_n++);
   ev->SetTimestampBegin(m_ts_next_begin);
   ev->SetTimestampEnd(m_ts_next_end);
