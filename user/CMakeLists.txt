@@ -1,2 +1,2 @@
-add_subdirectory(telescope)
+add_subdirectory(eudet)
 add_subdirectory(itkstrip)
