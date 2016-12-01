@@ -46,7 +46,7 @@ namespace eudaq {
   class NIConverterPlugin;
 
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<NIConverterPlugin>(Event::str2id("_RAW")+eudaq::cstr2hash("NI"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<NIConverterPlugin>(cstr2hash("NI"));
   }
   
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data

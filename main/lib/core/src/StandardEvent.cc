@@ -4,7 +4,7 @@
 namespace eudaq {
 
   namespace{
-    auto dummy0 = Factory<Event>::Register<StandardEvent, Deserializer&>(Event::str2id("_STD"));
+    auto dummy0 = Factory<Event>::Register<StandardEvent, Deserializer&>(StandardEvent::m_id_factory);
   }
 
   StandardPlane::StandardPlane()
@@ -313,7 +313,7 @@ namespace eudaq {
   template std::vector<double> StandardPlane::GetPixels<>() const;
 
   StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
-    : Event(Event::str2id("_STD"), run, 0) {
+    : Event(StandardEvent::m_id_factory, run, 0) {
     SetEventN(evnum);
     SetTimestampBegin(timestamp);
     SetTimestampEnd(timestamp);

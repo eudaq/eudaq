@@ -80,6 +80,10 @@ namespace eudaq {
     
     std::string m_description;
     std::vector<block_t> m_blocks;
+
+  public:
+    static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
+
   };
 }
 

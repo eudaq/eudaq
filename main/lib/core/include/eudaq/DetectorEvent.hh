@@ -16,6 +16,9 @@ namespace eudaq {
                            uint64_t ts);
     explicit DetectorEvent(Deserializer &);
     void Print(std::ostream &os, size_t offset = 0) const override;
+
+    static const uint32_t m_id_factory = cstr2hash("StandardEvent");
+
   };
 }
 

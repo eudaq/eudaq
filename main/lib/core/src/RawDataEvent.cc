@@ -3,11 +3,9 @@
 namespace eudaq {
 
   namespace{
-    auto dummy0 = Factory<Event>::Register<RawDataEvent, Deserializer&>(cstr2hash("RawDataEvent"));
-
-    auto dummy7 = Factory<Event>::Register<RawDataEvent, const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("RawDataEvent"));
+    auto dummy0 = Factory<Event>::Register<RawDataEvent, Deserializer&>(RawDataEvent::m_id_factory);
+    auto dummy7 = Factory<Event>::Register<RawDataEvent, const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>(RawDataEvent::m_id_factory);
   }
-
 
   std::shared_ptr<RawDataEvent> RawDataEvent::MakeShared(const std::string& dspt,
 						     uint32_t dev_n, uint32_t run_n,

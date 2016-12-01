@@ -137,6 +137,8 @@ namespace eudaq {
     StandardPlane &GetPlane(size_t i);
     virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream & os,size_t offset = 0) const;
+
+    static const uint32_t m_id_factory = cstr2hash("StandardEvent");
   private:
     std::vector<StandardPlane> m_planes;
   };

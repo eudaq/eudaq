@@ -14,7 +14,7 @@ namespace eudaq {
     return ev.GetEventN();
   }
 
-  DataConverterPlugin::DataConverterPlugin(std::string subtype) :DataConverterPlugin(Event::str2id("_RAW"), subtype) {
+  DataConverterPlugin::DataConverterPlugin(std::string subtype) :DataConverterPlugin(RawDataEvent::m_id_factory, subtype) {
   }
 
   DataConverterPlugin::DataConverterPlugin(unsigned type, std::string subtype)

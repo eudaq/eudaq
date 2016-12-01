@@ -235,18 +235,12 @@ void Processor::ProcessSysCommand(const std::string& cmd, const std::string& arg
   }
   case cstr2hash("SYS:EV:ADD"):{
     std::lock_guard<std::mutex> lk(m_mtx_output);
-    if(arg.front()=='_')
-      m_ev_out_default.insert(Event::str2id(arg));
-    else
-      m_ev_out_default.insert(str2hash(arg));
+    m_ev_out_default.insert(str2hash(arg));
     break;
   }
   case cstr2hash("SYS:EV:DEL"):{
     std::lock_guard<std::mutex> lk(m_mtx_output);
-    if(arg.front()=='_')
-      m_ev_out_default.erase(Event::str2id(arg));
-    else
-      m_ev_out_default.erase(str2hash(arg));
+    m_ev_out_default.erase(str2hash(arg));
     break;
   }
   case cstr2hash("SYS:PSID"):{

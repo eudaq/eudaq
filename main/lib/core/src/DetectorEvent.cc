@@ -9,8 +9,8 @@
 namespace eudaq {
 
   namespace{
-    auto dummy1 = Factory<Event>::Register<DetectorEvent, Deserializer&>(cstr2hash("DetectorEvent"));
-    auto dummy8 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DetectorEvent"));  //NOTE: it is not Detector constructor
+    auto dummy1 = Factory<Event>::Register<DetectorEvent, Deserializer&>(DetectorEvent::m_id_factory);
+    auto dummy8 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(DetectorEvent::m_id_factory);  //NOTE: it is not Detector constructor
     
   }
   

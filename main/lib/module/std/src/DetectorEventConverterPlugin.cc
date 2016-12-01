@@ -4,22 +4,14 @@
 #include "DetectorEvent.hh"
 #include "Event.hh"
 #include "PluginManager.hh"
-// All LCIO-specific parts are put in conditional compilation blocks
-// so that the other parts may still be used if LCIO is not available.
-#if USE_LCIO
-#  include "IMPL/LCEventImpl.h"
-#  include "IMPL/TrackerRawDataImpl.h"
-#  include "IMPL/LCCollectionVec.h"
-#  include "lcio.h"
-#endif
 
 namespace eudaq {
   class DetectorEventConverterPlugin;
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<DetectorEventConverterPlugin>(Event::str2id("_DET"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<DetectorEventConverterPlugin>(cstr2hash("DetectorEvent"));
   }
 
-class DetectorEventConverterPlugin : public DataConverterPlugin {
+  class DetectorEventConverterPlugin : public DataConverterPlugin {
 public:
 
   virtual bool GetStandardSubEvent(StandardEvent &,
@@ -43,9 +35,9 @@ public:
   }
 
   DetectorEventConverterPlugin()
-    : DataConverterPlugin(Event::str2id("_DET"), "") {
+    : DataConverterPlugin("DetectorEvent") {
   }
-
+    
 };
 
 

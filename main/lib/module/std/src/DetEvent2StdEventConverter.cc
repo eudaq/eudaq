@@ -6,12 +6,12 @@ namespace eudaq{
   class DLLEXPORT DetEvent2StdEventConverter: public StdEventConverter{
   public:
     bool Converting(EventSPC d1, StandardEventSP d2) const override;
-    static const uint32_t m_id_cvt = cstr2hash("DetectorEvent");
+    static const uint32_t m_id_factory = cstr2hash("DetectorEvent");
   };
 
   namespace{
     auto dummy0 = Factory<StdEventConverter>::
-      Register<DetEvent2StdEventConverter>(DetEvent2StdEventConverter::m_id_cvt);
+      Register<DetEvent2StdEventConverter>(DetEvent2StdEventConverter::m_id_factory);
   }
   
   bool DetEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2) const{
@@ -23,7 +23,6 @@ namespace eudaq{
     d2->SetEventN(ev->GetEventN());
     d2->SetStreamN(ev->GetStreamN());
     d2->SetTimestamp(ev->GetTimestampBegin(), ev->GetTimestampEnd());
-    bool ret = true;
     size_t nsub = d2->GetNumSubEvent();
     for(size_t i=0; i<nsub; i++){
       auto subev = d1->GetSubEvent(i);

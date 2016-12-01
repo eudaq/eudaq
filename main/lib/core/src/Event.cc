@@ -117,30 +117,6 @@ namespace eudaq {
     }
     os << std::string(offset, ' ') << "</Event>\n";
   }
-
-  unsigned Event::str2id(const std::string & str) {
-    uint32_t result = 0;
-    for (size_t i = 0; i < 4; ++i) {
-      if (i < str.length()) result |= str[i] << (8 * i);
-    }
-    return result;
-  }
-
-  std::string Event::id2str(unsigned id) {
-    std::string result(4, '\0');
-    for (int i = 0; i < 4; ++i) {
-      result[i] = (char)(id & 0xff);
-      id >>= 8;
-    }
-    for (int i = 3; i >= 0; --i) {
-      if (result[i] == '\0') {
-        result.erase(i);
-        break;
-      }
-    }
-    return result;
-  }
-
   
   void Event::SetTag(const std::string & name, const std::string & val) {
     m_tags[name] = val;

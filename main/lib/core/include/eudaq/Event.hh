@@ -104,8 +104,6 @@ namespace eudaq {
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
     uint64_t GetTimestampEnd() const {return m_ts_end;}
 
-    static unsigned str2id(const std::string & idstr);
-    static std::string id2str(unsigned id);
     static EventSP MakeShared(Deserializer&);
     
     // /////TODO: remove compatiable fun from EUDAQv1
