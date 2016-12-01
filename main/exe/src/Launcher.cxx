@@ -1,7 +1,8 @@
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Logger.hh"
+#include "eudaq/RunControl.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/DataCollector.hh"
+#include "eudaq/LogCollector.hh"
 #include "eudaq/Processor.hh"
 
 #include <iostream>
@@ -28,26 +29,31 @@ int main(int /*argc*/, const char **argv) {
 
   std::cout<<"parsing;\n";
   op.Parse(argv);
-  EUDAQ_LOG_LEVEL(loglevel.Value());
   std::cout<<"endl;\n";
   
   std::string app_name = name.Value();
   if(app_name.find("Producer") != std::string::npos){
-    auto producer=Factory<Producer>::MakeShared<const std::string&,const std::string&>(str2hash(name.Value()), name.Value(), rctrl.Value());
-    producer->MainLoop();
-    eudaq::mSleep(500);
+    auto app=Factory<Producer>::MakeShared<const std::string&,const std::string&>
+      (str2hash(name.Value()), name.Value(), rctrl.Value());
+    app->Exec();
   }else if(app_name.find("DataCollector") != std::string::npos){
-    auto producer=Factory<DataCollector>::MakeShared<const std::string&,const std::string&,
-						     const std::string&,const std::string&>
+    auto app=Factory<DataCollector>::MakeShared<const std::string&,const std::string&,
+						const std::string&,const std::string&>
       (str2hash(name.Value()), name.Value(), rctrl.Value(), listen.Value(), runfile.Value());
-    // do {
-    //   eudaq::mSleep(10);
-    // } while (!fw.done);
+    app->Exec();
+  }else if(app_name.find("LogCollector") != std::string::npos){
+    auto app=Factory<LogCollector>::MakeShared<const std::string&,const std::string&,
+					       const std::string&,const int&>
+      (str2hash(name.Value()), rctrl.Value(), listen.Value(), logpath.Value(),
+       eudaq::Status::String2Level(loglevel.Value()));
+    app->Exec();
+  }else if(app_name.find("RunControl") != std::string::npos){
+    auto app=Factory<RunControl>::MakeShared<const std::string&>(str2hash(name.Value()), listen.Value());
+    app->Exec();
   }
   else{
     std::cout<<"unknow application"<<std::endl;
     return -1;
   }
-  
   return 0;
 }

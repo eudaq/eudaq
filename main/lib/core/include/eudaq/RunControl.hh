@@ -34,7 +34,7 @@ namespace eudaq {
     void StopServer();
 
     void Configure(const Configuration &
-                       settings); ///< Send 'Configure' command with settings
+		   settings); ///< Send 'Configure' command with settings
     void Configure(const std::string &settings,
                    int geoid = 0); ///< Send 'Configure' command with settings
     void Reset();                  ///< Send 'Reset' command
@@ -44,12 +44,12 @@ namespace eudaq {
                                                         ///number
     virtual void StopRun(bool listen = true); ///< Send 'StopRun' command
     void Terminate();                         ///< Send 'Terminate' command
-
     virtual void OnConnect(const ConnectionInfo & /*id*/) {}
     virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
     virtual void OnReceive(const ConnectionInfo & /*id*/,
                            std::shared_ptr<Status>) {}
     virtual ~RunControl();
+    virtual void Exec(){};
 
     void CommandThread();
     size_t NumConnections() const { return m_cmdserver->NumConnections(); }

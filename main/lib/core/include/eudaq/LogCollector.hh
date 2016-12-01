@@ -41,6 +41,7 @@ namespace eudaq {
     virtual ~LogCollector();
 
     void LogThread();
+    virtual void Exec(){};
 
   private:
     void LogHandler(TransportEvent &ev);

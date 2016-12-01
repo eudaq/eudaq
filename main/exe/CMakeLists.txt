@@ -38,7 +38,7 @@ IF(BUILD_main)
   # target_link_libraries(FileChecker         EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   # list(APPEND INSTALL_TARGETS FileChecker)
   
-  add_executable(Launcher src/launcher.cxx)
+  add_executable(Launcher src/Launcher.cxx)
   set_property(TARGET Launcher PROPERTY PROJECT_LABEL "bin_Launcher") 
   target_link_libraries(Launcher EUDAQ ${EUDAQ_THREADS_LIB})
   list(APPEND INSTALL_TARGETS Launcher)

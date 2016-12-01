@@ -43,6 +43,7 @@ namespace eudaq {
     virtual void OnConnect(const ConnectionInfo &id);
     virtual void OnDisconnect(const ConnectionInfo &id);
     virtual void OnReceive(const ConnectionInfo &id, EventSP ev);
+    virtual void Exec(){};
   private:
     void DataThread();
     void WriterThread();

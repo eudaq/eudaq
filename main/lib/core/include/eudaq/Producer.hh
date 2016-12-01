@@ -36,9 +36,9 @@ namespace eudaq {
     void OnData(const std::string &param) override;
     void Connect(const std::string & server);
     void SendEvent(const Event &);
-    
+    virtual void Exec(){MainLoop();};
     virtual void MainLoop(){};
-
+    
   private:
     std::string m_name;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
