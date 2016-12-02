@@ -12,7 +12,6 @@
 class BaseCollection;
 
 class CheckEOF {
-  // RQ_OBJECT("CheckEOF")
 protected:
   bool _isEOF;
   TTimer *timer;
@@ -36,8 +35,5 @@ public:
   void setRootFileName(std::string name) { _rootfilename = name; }
 };
 
-#ifdef __CINT__
-#pragma link C++ class CheckEOF - ;
-#endif
 
 #endif
