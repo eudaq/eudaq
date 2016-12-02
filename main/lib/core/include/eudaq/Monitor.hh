@@ -26,13 +26,12 @@ namespace eudaq {
     void OnStartRun(uint32_t param) override;
     void OnStopRun() override;
     bool ProcessEvent();
-    virtual void OnEvent(EventSPC /*ev*/) = 0; //TODO: onlinemonitor
+    virtual void OnEvent(EventSPC /*ev*/) = 0;
     virtual void Exec() = 0;
   protected:
     unsigned m_run;
     bool m_callstart;
     FileReaderSP m_reader;
-    // Configuration m_conf;
     unsigned limit;
     unsigned skip;
     unsigned int skip_events_with_counter;

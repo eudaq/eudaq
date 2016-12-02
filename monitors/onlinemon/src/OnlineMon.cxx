@@ -48,7 +48,7 @@ using namespace std;
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
+  : eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
 
   if (_offline <= 0)
   {
@@ -170,14 +170,14 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
-void RootMonitor::OnEvent(EventSPC e) {
+void RootMonitor::OnEvent(eudaq::EventSPC e) {
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
   
-  auto ev =  StdEventConverter::MakeSharedStdEvent(runnumber, 0);
-  StdEventConverter::Convert(e, ev, m_conf);
-
+  auto ev_sp =  eudaq::StdEventConverter::MakeSharedStdEvent(runnumber, 0);
+  eudaq::StdEventConverter::Convert(e, ev_sp, m_conf);
+  auto &ev = *ev_sp.get();
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
   cout << "Number of Planes " << ev.NumPlanes()<< endl;
@@ -256,7 +256,7 @@ void RootMonitor::OnEvent(EventSPC e) {
     simpEv.setMonitor_eventcorrelationtime(previous_event_correlation_time);
     // add some info into the simple event header
     simpEv.setEvent_number(ev.GetEventNumber());
-    simpEv.setEvent_timestamp(ev.GetTimestamp());
+    simpEv.setEvent_timestamp(ev.GetTimestampBegin());
     
     // auto slowpara = ev.GetSlowPara();
     // for(auto &e: slowpara){
@@ -513,6 +513,13 @@ string RootMonitor::GetSnapShotDir()
   return snapshotdir;
 }
 
+
+void RootMonitor::Exec(){
+  TApplication theApp("App",0,0,0,0);
+  theApp.Run();
+}
+
+
 int main(int argc, const char ** argv) {
 
   eudaq::OptionParser op("EUDAQ Root Monitor", "1.0", "A Monitor using root for gui and graphics");
@@ -567,9 +574,6 @@ int main(int argc, const char ** argv) {
       exit(-1);
     }
 
-    // start the GUI
-    //    cout<< "DEBUG: LIMIT VALUE " << (unsigned)limit.Value();
-    TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
     RootMonitor mon(rctrl.Value(), file.Value(), x.Value(), y.Value(),
         w.Value(), h.Value(), argc, offline.Value(), limit.Value(),
         skipping.Value(), skip_counter.Value(), configfile.Value());
@@ -584,25 +588,14 @@ int main(int argc, const char ** argv) {
     cout <<"Monitor Settings:" <<endl;
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;
     cout <<"Reduce Events   :" <<reduce.Value() <<endl;
-    if (offline.Value() >0)
-    {
-      //cout <<"Offline Mode   :" <<"active" <<endl;
-      //cout <<"Events         :" <<offline.Value()<<endl;
+    if (offline.Value() >0){
       cout <<"Offline Mode not supported"<<endl;
       exit(-1);
     }
-
-    theApp.Run(); //execute
+    mon.Exec();
   } catch (...) {
     return op.HandleMainException();
   }
   return 0;
 }
-
-
-
-
-
-
-
 

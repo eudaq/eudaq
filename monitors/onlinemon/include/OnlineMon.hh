@@ -28,7 +28,6 @@
 #include "ParaMonitorCollection.hh"
 
 #include "OnlineMonWindow.hh"
-//#include "OnlineHistograms.hh"
 #include "SimpleStandardEvent.hh"
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
@@ -51,10 +50,7 @@ class OnlineMonWindow;
 class BaseCollection;
 class CheckEOF;
 
-class RootMonitor : private eudaq::Holder<int>,
-                    // public TApplication,
-                    // public TGMainFrame,
-                    public eudaq::Monitor {
+class RootMonitor : public eudaq::Monitor {
   RQ_OBJECT("RootMonitor")
 protected:
   bool histos_booked;
@@ -101,8 +97,9 @@ public:
     SetStatus(eudaq::Status::LVL_OK);
   }
   void OnStartRun(unsigned param) override final;
-  void OnEvent(EventSPC e) override final;
+  void OnEvent(eudaq::EventSPC e) override final;
   void OnStopRun() override final;
+  void Exec() override final;
   void setWriteRoot(const bool write) { _writeRoot = write; }
   void autoReset(const bool reset);
   void setReduce(const unsigned int red);
@@ -122,7 +119,7 @@ public:
   string GetSnapShotDir();
   OnlineMonConfiguration mon_configdata; // FIXME
 private:
-  Configuration m_conf;
+  eudaq::Configuration m_conf;
   string snapshotdir;
   EventSanityChecker myevent; // FIXME
   bool useTrackCorrelator;
