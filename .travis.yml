@@ -9,6 +9,12 @@ branches:
     - master
     - v1.7-dev
 
+addons:
+  apt:
+    packages:
+      - valgrind
+      - g++-6
+
 # set here versions / file paths
 env:
    global:
@@ -88,28 +94,28 @@ matrix:
    include:   
       - os: linux
         compiler: clang      
-        env: OPTION=modern
+        env: OPTION=modern LLVM_VERSION=3.9
       - os: linux
         compiler: clang      
-        env: OPTION=old   
+        env: OPTION=old  LLVM_VERSION=3.9
       - os: linux
         compiler: gcc
-        env: OPTION=modern BUILD_manual=ON
+        env: OPTION=modern BUILD_manual=ON GCC_VERSION=6.0
       - os: linux      
         compiler: gcc      
-        env: OPTION=old
+        env: OPTION=old GCC_VERSION=6.0
       - os: osx
         compiler: clang      
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF       
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9
       - os: osx      
         compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF           
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9
       - os: osx      
         compiler: gcc    
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF        
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=6.0        
       - os: osx
         compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=6.0     
 
 before_install:
       
