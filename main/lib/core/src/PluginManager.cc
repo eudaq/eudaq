@@ -22,23 +22,23 @@ namespace eudaq {
 
   void PluginManager::Initialize(const DetectorEvent & dev) {
     eudaq::Configuration conf(dev.GetTag("CONFIG"));
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const eudaq::Event & subev = *dev.GetEvent(i);
+    for (size_t i = 0; i < dev.GetNumSubEvent(); ++i) {
+      const eudaq::Event & subev = *(dev.GetSubEvent(i).get());
       GetInstance().GetPlugin(subev).Initialize(subev, conf);
     }
   }
 
   StandardEvent PluginManager::ConvertToStandard(const DetectorEvent & dev) {
     StandardEvent event(dev.GetRunN(), dev.GetEventN(), dev.GetTimestampBegin());
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const Event * ev = dev.GetEvent(i);
+    for (size_t i = 0; i < dev.GetNumSubEvent(); ++i) {
+      const Event * ev = dev.GetSubEvent(i).get();
       if (!ev) EUDAQ_THROW("Null event!");
       if (ev->GetSubType() == "EUDRB") {
 	ConvertStandardSubEvent(event, *ev);
       }
     }
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      const Event * ev = dev.GetEvent(i);
+    for (size_t i = 0; i < dev.GetNumSubEvent(); ++i) {
+      const Event * ev = dev.GetSubEvent(i).get();
       if (!ev) EUDAQ_THROW("Null event!");
       if (ev->GetSubType() != "EUDRB") {
 	ConvertStandardSubEvent(event, *ev);
@@ -82,7 +82,7 @@ using eutelescope::EUTELESCOPE;
     const eudaq::Configuration conf(bore.GetTag("CONFIG"));
     runHeader.setGeoID(conf.Get("GeoID", 0));
 
-    for (size_t i = 0; i < bore.NumEvents(); ++i) {
+    for (size_t i = 0; i < bore.GetNumSubEvent(); ++i) {
       const eudaq::Event & subev = *bore.GetEvent(i);
       GetInstance().GetPlugin(subev).GetLCIORunHeader(*lcHeader, subev, conf);
     }
@@ -94,8 +94,8 @@ using eutelescope::EUTELESCOPE;
     event->setRunNumber(dev.GetRunNumber());
     event->setTimeStamp(dev.GetTimestamp());
 
-    for (size_t i = 0; i < dev.NumEvents(); ++i) {
-      ConvertLCIOSubEvent(*event, *dev.GetEvent(i));
+    for (size_t i = 0; i < dev.GetNumSubEvent(); ++i) {
+      ConvertLCIOSubEvent(*event, *(dev.GetSubEvent(i).get()));
     }
     return event;
   }

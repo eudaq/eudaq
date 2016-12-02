@@ -135,8 +135,8 @@ int main(int /*argc*/, char ** argv) {
         std::cout << "Found BORE, run number = " << runnum << std::endl;
         //eudaq::PluginManager::ConvertToStandard(dev);
         unsigned totalboards = 0;
-        for (size_t i = 0; i < dev.NumEvents(); ++i) {
-          const eudaq::Event * drbev = dev.GetEvent(i);
+        for (size_t i = 0; i < dev.GetNumSubEvent(); ++i) {
+          const eudaq::Event * drbev = dev.GetSubEvent(i).get();
           if (drbev->GetSubType() == "EUDRB") {
             unsigned numboards = from_string(drbev->GetTag("BOARDS"), 0);
             totalboards += numboards;

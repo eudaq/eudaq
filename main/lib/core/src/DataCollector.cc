@@ -11,6 +11,13 @@
 
 namespace eudaq {
 
+  template class DLLEXPORT Factory<DataCollector>;
+  template DLLEXPORT std::map<uint32_t, typename Factory<DataCollector>::UP_BASE (*)
+			      (const std::string&, const std::string&,
+			       const std::string&, const std::string& )>&
+  Factory<DataCollector>::Instance<const std::string&, const std::string&,
+				   const std::string&, const std::string&>();
+  
   DataCollector::DataCollector(const std::string &name,
                                const std::string &runcontrol,
                                const std::string &listenaddress,

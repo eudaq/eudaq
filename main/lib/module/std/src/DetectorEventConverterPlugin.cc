@@ -29,14 +29,14 @@ public:
 
   virtual size_t GetNumSubEvent(const eudaq::Event& pac) override{
     auto det = dynamic_cast<const DetectorEvent*>(&pac);
-    return  det->NumEvents();
+    return  det->GetNumSubEvent();
   }
 
   virtual EventSP GetSubEvent(EventSP pac, size_t NumberOfROF) override{
 
     auto det = std::dynamic_pointer_cast<DetectorEvent>(pac);
-    if (NumberOfROF < det->NumEvents()) {
-      return det->GetEventPtr(NumberOfROF);
+    if (NumberOfROF < det->GetNumSubEvent()) {
+      return std::const_pointer_cast<Event>(det->GetSubEvent(NumberOfROF));      
     }
 
     return nullptr;

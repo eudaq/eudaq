@@ -7,11 +7,22 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
+#include "eudaq/Factory.hh"
 #include <memory>
 #include <thread>
 
 namespace eudaq {
-
+  class LogCollector;
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<LogCollector>;
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<LogCollector>::UP_BASE (*)
+	   (const std::string&, const std::string&,
+	    const std::string&, const int&)>&
+  Factory<LogCollector>::Instance<const std::string&, const std::string&,
+				  const std::string&, const int&>();//TODO: check const int& 
+#endif
+  
   class LogMessage;
 
   /** Implements the functionality of the File Writer application.
@@ -30,6 +41,7 @@ namespace eudaq {
     virtual ~LogCollector();
 
     void LogThread();
+    virtual void Exec(){};
 
   private:
     void LogHandler(TransportEvent &ev);

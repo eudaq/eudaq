@@ -47,7 +47,7 @@ namespace eudaq {
       FLAG_FAKE = 8, 
       FLAG_SIMU = 16, 
       FLAG_EUDAQ2 = 32, 
-      FLAG_PACKET = 64, 
+      FLAG_PACKET = 64,
       FLAG_BROKEN = 128,
       FLAG_STATUS = 256,
       FLAG_ALL = (unsigned)-1
@@ -108,17 +108,11 @@ namespace eudaq {
     static std::string id2str(unsigned id);
     static EventSP MakeShared(Deserializer&);
     
-    /////TODO: remove compatiable fun from EUDAQv1
+    // /////TODO: remove compatiable fun from EUDAQv1
     bool HasTag(const std::string &name) const;
     uint32_t GetEventNumber()const {return m_ev_n;}
     uint32_t GetRunNumber()const {return m_run_n;}
-    uint32_t GetStreamID() const {return m_stm_n;}
     virtual std::string GetSubType() const {return "This Event is not RAW\n";}
-    void SetFlags(uint32_t f){SetFlagBit(f);}
-    void AddEvent(EventUP ev){
-      EventSP evsp(std::move(ev));
-      AddSubEvent(evsp);
-    }
     
   private:
     uint32_t m_type;

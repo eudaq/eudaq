@@ -9,6 +9,14 @@
 
 namespace eudaq {
 
+  template class DLLEXPORT Factory<LogCollector>;
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<LogCollector>::UP_BASE (*)
+	   (const std::string&, const std::string&,
+	    const std::string&, const int&)>&
+  Factory<LogCollector>::Instance<const std::string&, const std::string&,
+				  const std::string&, const int&>();//TODO: check const int&
+  
   LogCollector::LogCollector(const std::string &runcontrol,
                              const std::string &listenaddress,
 			     const std::string &logdirectory)
