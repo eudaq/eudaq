@@ -24,22 +24,22 @@ env:
       - PYTHON_VERSION_MODERN=3.5.1
       - PYTHON_VERSION_OLD=2.7.10
       
-      - BUILD_AHCAL=ON
+      - BUILD_AHCAL=OFF
       - BUILD_BIFAHCAL=OFF
       - BUILD_TESTING=OFF
       - BUILD_WITH_QT4=OFF
       - BUILD_allproducer=OFF
       - BUILD_altro=OFF
       - BUILD_altroUSB=OFF
-      - BUILD_cmspixel=ON
+      - BUILD_cmspixel=OFF
       - BUILD_depfet=OFF
       - BUILD_fortis=OFF
-      - BUILD_gui=ON
+      - BUILD_gui=OFF
       - BUILD_main=OFF
       - BUILD_manual=OFF
       - BUILD_mimoroma=OFF
       - BUILD_miniTLU=OFF
-      - BUILD_ni=ON
+      - BUILD_ni=OFF
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
       - BUILD_onlinemon=OFF
@@ -47,10 +47,10 @@ env:
       - BUILD_pixelmanproducer=OFF
       - BUILD_python=ON
       - BUILD_root=OFF
-      - BUILD_rpi_controller=ON
+      - BUILD_rpi_controller=OFF
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
-      - BUILD_tlu=ON
+      - BUILD_tlu=OFF
       - BUILD_user_telescope=OFF
 
       
