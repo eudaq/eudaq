@@ -43,7 +43,7 @@ else
 		echo "Installing clang $LLVM_VERSION for linux"
 		if [[ "${LLVM_VERSION}" != "" ]]; then
 			LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-			if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
+			#if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
 				LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
 				LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
 				LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
@@ -56,7 +56,7 @@ else
 				(cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++)
 				(cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
 				(cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
-			fi
+			#fi
 			export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
 			export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
 			export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
