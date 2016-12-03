@@ -2,7 +2,6 @@
 #include "FileNamer.hh"
 #include "FileSerializer.hh"
 #include "FileReader.hh"
-#include "PluginManager.hh"
 #include "Event.hh"
 #include "Logger.hh"
 #include "Configuration.hh"

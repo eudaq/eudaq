@@ -1,7 +1,6 @@
 #include "FileNamer.hh"
 #include "FileWriter.hh"
 #include "FileSerializer.hh"
-#include "PluginManager.hh"
 
 namespace eudaq {
   class RawFileWriter;

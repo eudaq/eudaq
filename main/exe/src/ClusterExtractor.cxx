@@ -1,9 +1,12 @@
-#include "eudaq/PluginManager.hh"
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/StandardEvent.hh"
 #include "eudaq/FileReader.hh"
 #include "eudaq/FileNamer.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
+#include "eudaq/StdEventConverter.hh"
+#include "eudaq/Configuration.hh"
+
 
 #include <iostream>
 #include <algorithm>
@@ -61,6 +64,8 @@ int main(int /*argc*/, char ** argv) {
   try {
     op.Parse(argv);
     //EUDAQ_LOG_LEVEL("INFO");
+    eudaq::Configuration conf;
+
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
       eudaq::FileReaderUP reader_up = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::cstr2hash("RawFileReader"), eudaq::FileNamer(ipat.Value()).Set('X', ".raw").SetReplace('R', op.GetArg(i)));
@@ -129,14 +134,14 @@ int main(int /*argc*/, char ** argv) {
 
       std::vector<unsigned> hit_hist;
       {
-        const eudaq::DetectorEvent & dev = *dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get());
-        eudaq::PluginManager::Initialize(dev);
-        runnum = dev.GetRunNumber();
+        auto dev = reader.GetNextEvent();
+        // eudaq::PluginManager::Initialize(dev);
+        runnum = dev->GetRunNumber();
         std::cout << "Found BORE, run number = " << runnum << std::endl;
         //eudaq::PluginManager::ConvertToStandard(dev);
         unsigned totalboards = 0;
-        for (size_t i = 0; i < dev.GetNumSubEvent(); ++i) {
-          const eudaq::Event * drbev = dev.GetSubEvent(i).get();
+        for (size_t i = 0; i < dev->GetNumSubEvent(); ++i) {
+          auto drbev = dev->GetSubEvent(i);
           if (drbev->GetSubType() == "EUDRB") {
             unsigned numboards = from_string(drbev->GetTag("BOARDS"), 0);
             totalboards += numboards;
@@ -159,25 +164,27 @@ int main(int /*argc*/, char ** argv) {
       }
 
       while (reader.NextEvent()) {
-        const eudaq::DetectorEvent & dev = *dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get());
-        if (dev.IsBORE()) {
+        auto dev = reader.GetNextEvent();
+        if (dev->IsBORE()) {
           std::cout << "ERROR: Found another BORE !!!" << std::endl;
-        } else if (dev.IsEORE()) {
+        } else if (dev->IsEORE()) {
           std::cout << "Found EORE" << std::endl;
         } else {
           try {
             unsigned boardnum = 0;
-            if (limit.Value() > 0 && dev.GetEventNumber() >= limit.Value()) break;
-            if (dev.GetEventNumber() % 100 == 0) {
-              std::cout << "Event " << dev.GetEventNumber() << std::endl;
+            if (limit.Value() > 0 && dev->GetEventNumber() >= limit.Value()) break;
+            if (dev->GetEventNumber() % 100 == 0) {
+              std::cout << "Event " << dev->GetEventNumber() << std::endl;
             }
             for (size_t i = 0; i < track.size(); ++i) {
               track[i].clear();
             }
-            StandardEvent sev = eudaq::PluginManager::ConvertToStandard(dev);
-            for (size_t p = 0; p < sev.NumPlanes(); ++p) {
+
+	    auto sev =  eudaq::StdEventConverter::MakeSharedStdEvent(0, 0);
+	    eudaq::StdEventConverter::Convert(dev, sev, conf);
+            for (size_t p = 0; p < sev->NumPlanes(); ++p) {
               if (!files[p]) continue;
-              eudaq::StandardPlane & brd = sev.GetPlane(p);
+              eudaq::StandardPlane & brd = sev->GetPlane(p);
               //size_t npixels = brd.HitPixels();
               //std::vector<short> cds(npixels, 0);
               //for (size_t i = 0; i < brd.m_x.size(); ++i) {
@@ -249,8 +256,8 @@ int main(int /*argc*/, char ** argv) {
             for (size_t b = 0; b < track.size(); ++b) {
               if (track[b].size()) {
                 numhit++;
-                std::string ts = to_string(dev.GetTimestampBegin() == -1 ? 0 : dev.GetTimestampBegin());
-                *files[b] << dev.GetEventNumber() << "\t" << track[b].size() << "\t" << ts << "\n";
+                std::string ts = to_string(dev->GetTimestampBegin() == -1 ? 0 : dev->GetTimestampBegin());
+                *files[b] << dev->GetEventNumber() << "\t" << track[b].size() << "\t" << ts << "\n";
                 for (size_t c = 0; c < track[b].size(); ++c) {
                   *files[b] << " " << track[b][c].x << "\t" << track[b][c].y << "\t" << track[b][c].c << "\n";
                 }

@@ -1,7 +1,6 @@
 #include "DataConverterPlugin.hh"
 #include "StandardEvent.hh"
 #include "Utils.hh"
-#include "PluginManager.hh"
 #include "Configuration.hh"
 #include <algorithm>
 

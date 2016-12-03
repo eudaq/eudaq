@@ -1,7 +1,9 @@
 #include "eudaq/FileReader.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/PluginManager.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/Configuration.hh"
+#include "eudaq/StdEventConverter.hh"
+
 #include <iostream>
 
 static const std::string EVENT_TYPE = "Example";
@@ -19,6 +21,7 @@ int main(int /*argc*/, const char ** argv) {
     // This will look through the command-line arguments and set the options
     op.Parse(argv);
 
+    eudaq::Configuration conf;
     // Loop over all filenames
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
@@ -32,7 +35,7 @@ int main(int /*argc*/, const char ** argv) {
       // The BORE is now accessible in reader.GetDetectorEvent()
       if (docon.IsSet()) {
         // The PluginManager should be initialized with the BORE
-        eudaq::PluginManager::Initialize(*dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get()));
+        // eudaq::PluginManager::Initialize(*dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get()));
       }
 
       // Now loop over all events in the file
@@ -51,8 +54,7 @@ int main(int /*argc*/, const char ** argv) {
             // Look for a specific RawDataEvent, will throw an exception if not found
 	    uint32_t nev = reader.GetNextEvent()->GetNumSubEvent();
 	    for(uint32_t i= 0; i< nev;i++){
-	      // const eudaq::RawDataEvent & rev =
-	      auto ev = dynamic_cast<const eudaq::RawDataEvent*>(reader.GetNextEvent()->GetSubEvent(i).get());
+	      auto ev = reader.GetNextEvent()->GetSubEvent(i);
 	      if(!ev&&(ev->GetEventID()==EVENT_ID)){
 		// Display summary of the Example RawDataEvent
 		ev->Print(std::cout);
@@ -66,12 +68,10 @@ int main(int /*argc*/, const char ** argv) {
         }
 
         if (docon.IsSet()) {
-          // Convert the RawDataEvent into a StandardEvent
-          eudaq::StandardEvent sev =
-            eudaq::PluginManager::ConvertToStandard(*dynamic_cast<const eudaq::DetectorEvent*>(reader.GetNextEvent().get()));
-          // Display summary of converted event
-	  sev.Print(std::cout);
-        }
+	  auto ev_sp =  eudaq::StdEventConverter::MakeSharedStdEvent(0, 0);
+	  eudaq::StdEventConverter::Convert(reader.GetNextEvent(), ev_sp, conf);
+	  ev_sp->Print(std::cout);
+	}
       }
     }
 
