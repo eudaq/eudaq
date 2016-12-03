@@ -9,7 +9,11 @@ IF(NOT BUILD_onlinemon)
   return()
 ENDIF()
 
-find_package(ROOT REQUIRED COMPONENTS Gui)
+if(WIN32)
+  find_package(ROOT REQUIRED COMPONENTS libGui)
+else()
+  find_package(ROOT REQUIRED COMPONENTS Gui)
+endif()
 include(${ROOT_USE_FILE})
 include_directories(. include)
 
