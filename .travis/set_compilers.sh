@@ -30,6 +30,8 @@ else
 	if [[ $COMPILER == 'gcc' ]]; then
 	
 		echo "Installing gcc $GCC_VERSION for linux"
+		sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+		sudo apt-get update
 		sudo apt-get install -qq gcc-$GCC_VERSION
 		export CXX="gcc-$GCC_VERSION" 
 		export CC="gcc-$GCC_VERSION"
