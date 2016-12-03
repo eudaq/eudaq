@@ -32,10 +32,11 @@ else
 		echo "Installing g++ $GCC_VERSION for linux"
 		sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 		sudo apt-get update
-		sudo apt-get install -qq g++-$GCC_VERSION
+		sudo apt-get install -qq g++-$GCC_VERSION gcc-$GCC_VERSION
 		export CXX="g++-$GCC_VERSION" 
-		export CC="g++-$GCC_VERSION"
+		export CC="gcc-$GCC_VERSION"
 		sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-$GCC_VERSION 90
+		sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-$GCC_VERSION 90
 	
 	else
 
