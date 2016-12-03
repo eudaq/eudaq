@@ -15,7 +15,7 @@ echo "Current C++/C compilers"
 echo `$CXX --version`
 echo `$CC --version`
 
-export DEPS_DIR=$HOME
+export DEPS_DIR=$HOME/dependencies
 
     
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -29,9 +29,9 @@ else
 	
 	if [[ $COMPILER == 'gcc' ]]; then
 	
-		echo "Installing g++ $GCC_VERSION for linux"
-		sudo apt-get install -qq g++-$GCC_VERSION
-		export CXX="g++-$GCC_VERSION" 
+		echo "Installing gcc $GCC_VERSION for linux"
+		sudo apt-get install -qq gcc-$GCC_VERSION
+		export CXX="gcc-$GCC_VERSION" 
 		export CC="gcc-$GCC_VERSION"
 		sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-$GCC_VERSION 90
 	
