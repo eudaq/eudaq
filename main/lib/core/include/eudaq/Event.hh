@@ -39,7 +39,7 @@ namespace eudaq {
   using EventSP = Factory<Event>::SP_BASE;
   using EventSPC = Factory<Event>::SPC_BASE;
 
-  class DLLEXPORT Event : public Serializable, public std::enable_shared_from_this<Event> {
+  class DLLEXPORT Event : public Serializable{
   public:
     enum Flags {
       FLAG_BORE = 1, 

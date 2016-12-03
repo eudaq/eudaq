@@ -16,7 +16,7 @@ namespace eudaq {
     auto dummy3 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("raw"));
   }
 
-  class DLLEXPORT RawFileReader : public FileReader {
+  class RawFileReader : public FileReader {
   public:
     RawFileReader(const std::string& filename);
     ~RawFileReader(){};

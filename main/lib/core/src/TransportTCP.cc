@@ -492,7 +492,7 @@ namespace eudaq {
   }
 
   std::string TCPServer::ConnectionString() const {
-#ifdef WIN32
+#ifdef _WIN32
     const char *host = getenv("computername");
 #else
     const char *host = getenv("HOSTNAME");
@@ -569,7 +569,7 @@ namespace eudaq {
       FD_ZERO(&tempset);
       FD_SET(m_sock, &tempset);
       timeval timeremain = t_remain;
-#ifdef WIN32
+#ifdef _WIN32
       int result = select(static_cast<int>(m_sock + 1), &tempset, NULL, NULL,
                           &timeremain);
 #else

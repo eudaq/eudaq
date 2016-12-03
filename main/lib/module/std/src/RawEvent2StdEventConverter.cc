@@ -3,7 +3,7 @@
 
 namespace eudaq{
 
-  class DLLEXPORT RawEvent2StdEventConverter: public StdEventConverter{
+  class RawEvent2StdEventConverter: public StdEventConverter{
   public:
     bool Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const override;
     static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
