@@ -9,12 +9,6 @@ branches:
     - master
     - v1.7-dev
 
-addons:
-  apt:
-    packages:
-      - valgrind
-      - g++-6
-
 # set here versions / file paths
 env:
    global:
