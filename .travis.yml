@@ -86,36 +86,28 @@ before_cache:
 
 matrix:      
    include:   
+      - os: linux    
+        env: OPTION=modern LLVM_VERSION=3.9 COMPILER=clang  
+      - os: linux  
+        env: OPTION=old  LLVM_VERSION=3.9 COMPILER=clang 
       - os: linux
-        compiler: clang      
-        env: OPTION=modern LLVM_VERSION=3.9
-      - os: linux
-        compiler: clang      
-        env: OPTION=old  LLVM_VERSION=3.9
-      - os: linux
-        compiler: gcc
-        env: OPTION=modern BUILD_manual=ON GCC_VERSION=6.0
-      - os: linux      
-        compiler: gcc      
-        env: OPTION=old GCC_VERSION=6.0
+        env: OPTION=modern BUILD_manual=ON GCC_VERSION=6.0 COMPILER=gcc
+      - os: linux            
+        env: OPTION=old GCC_VERSION=6.0 COMPILER=gcc
       - os: osx
-        compiler: clang      
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9 COMPILER=clang 
+      - os: osx           
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9 COMPILER=clang 
+      - os: osx          
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=6.0 COMPILER=gcc        
       - os: osx      
-        compiler: clang      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9
-      - os: osx      
-        compiler: gcc    
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=6.0        
-      - os: osx
-        compiler: gcc      
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=6.0     
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=6.0 COMPILER=gcc     
 
 before_install:
       
 install:
-  - source .travis/set_compilers.sh
   - source .travis/update_repositories.sh  
+  - source .travis/set_compilers.sh  
   - source .travis/install_afs.sh  
   - source .travis/install_cmake.sh
   - source .travis/install_python.sh  

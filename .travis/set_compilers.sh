@@ -25,8 +25,11 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 else	
 
+	echo "Installing compiler for linux"
+	
 	if [[ $COMPILER == 'gcc' ]]; then
 	
+		echo "Installing g++ $GCC_VERSION for linux"
 		sudo apt-get install -qq g++-$GCC_VERSION
 		export CXX="g++-$GCC_VERSION" 
 		export CC="gcc-$GCC_VERSION"
@@ -34,6 +37,7 @@ else
 	
 	else
 
+		echo "Installing clang $LLVM_VERSION for linux"
 		if [[ "${LLVM_VERSION}" != "" ]]; then
 			LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
 			if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
