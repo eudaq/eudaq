@@ -12,13 +12,14 @@
 #include <sstream>
 #include "OnlineMonWindow.hh"
 
+
 #include "config.h" // for version symbols
 
 // File IO includes
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 

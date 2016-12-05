@@ -2,7 +2,6 @@
 #include "FileNamer.hh"
 #include "FileSerializer.hh"
 #include "FileReader.hh"
-#include "PluginManager.hh"
 #include "Event.hh"
 #include "Logger.hh"
 #include "Configuration.hh"
@@ -16,7 +15,7 @@ namespace eudaq {
     auto dummy3 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("raw"));
   }
 
-  class DLLEXPORT RawFileReader : public FileReader {
+  class RawFileReader : public FileReader {
   public:
     RawFileReader(const std::string& filename);
     ~RawFileReader(){};

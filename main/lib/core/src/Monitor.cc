@@ -1,6 +1,5 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/PluginManager.hh"
 
 #define EUDAQ_MAX_EVENTS_PER_IDLE 1000
 
@@ -12,19 +11,15 @@ namespace eudaq {
       : CommandReceiver("Monitor", name, runcontrol, false), m_run(0),
         m_callstart(false), m_reader(0), limit(lim), skip(100 - skip_),
         skip_events_with_counter(skip_evts) {
-    if (datafile != "") {
-      // set offline
+    if (datafile != ""){
       m_reader = Factory<FileReader>::MakeShared(cstr2hash("RawFileReader"), datafile);
-      PluginManager::Initialize(*dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get())); // process BORE
-      // m_callstart = true;
       std::cout << "DEBUG: Reading file " << datafile << " -> "
                 << m_reader->Filename() << std::endl;
-      // OnStartRun(m_run);
     }
     StartThread();
   }
 
-  bool Monitor::ProcessEvent() {
+  bool Monitor::ProcessEvent() { //TODO:: Deal with BORE
 
     if (!m_reader)
       return false;
@@ -57,9 +52,7 @@ namespace eudaq {
     }
 
     try {
-      const DetectorEvent &dev = *dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get());
-      OnEvent(PluginManager::ConvertToStandard(dev));
-      //        ++counter_events_for_online_monitor;
+      OnEvent(m_reader->GetNextEvent());
     } catch (const InterruptedException &) {
       return false;
     }
@@ -67,7 +60,6 @@ namespace eudaq {
   }
 
   void Monitor::OnIdle() {
-    // std::cout << "..." << std::endl;
     if (m_callstart) {
       m_callstart = false;
       OnStartRun(m_run);
@@ -77,7 +69,6 @@ namespace eudaq {
       if (ProcessEvent()) {
         processed = true;
       } else {
-        // if (offline) OnTerminate();
         break;
       }
     }
@@ -85,13 +76,13 @@ namespace eudaq {
       mSleep(1);
   }
 
-  void Monitor::OnStartRun(unsigned param) {
+  void Monitor::OnStartRun(uint32_t param) {
     std::cout << "run " << param << std::endl;
     m_run = param;
     m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), to_string(m_run));
-    PluginManager::Initialize(*dynamic_cast<const DetectorEvent*>(m_reader->GetNextEvent().get())); // process BORE
     EUDAQ_INFO("Starting run " + to_string(m_run));
   }
 
   void Monitor::OnStopRun() { m_reader->Interrupt(); }
+
 }

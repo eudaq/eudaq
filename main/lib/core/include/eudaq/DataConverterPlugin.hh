@@ -1,16 +1,11 @@
 #ifndef EUDAQ_INCLUDED_DataConverterPlugin
 #define EUDAQ_INCLUDED_DataConverterPlugin
 
-#include "StandardEvent.hh"
-#include "Factory.hh"
-#include "Configuration.hh"
-#include <memory>
+#include "eudaq/StandardEvent.hh"
+#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Factory.hh"
+#include "eudaq/Configuration.hh"
 #include <string>
-#include <algorithm>
-
-
-#define NOTIMESTAMPSET (uint64_t)-1
-#define NOTIMEDURATIONSET 0
 
 namespace EVENT { class LCEvent; class LCRunHeader; }
 namespace lcio { using namespace EVENT; }
@@ -30,6 +25,9 @@ namespace eudaq {
   
   class DLLEXPORT DataConverterPlugin {
   public:
+    DataConverterPlugin(std::string subtype);
+    DataConverterPlugin(const DataConverterPlugin &) = delete;
+    DataConverterPlugin & operator = (const DataConverterPlugin &) = delete;
     virtual void Initialize(eudaq::Event const &, eudaq::Configuration const &);
     virtual unsigned GetTriggerID(eudaq::Event const &) const;
     virtual void GetLCIORunHeader(lcio::LCRunHeader &, eudaq::Event const &, eudaq::Configuration const &) const;
@@ -38,17 +36,6 @@ namespace eudaq {
     virtual EventSP GetSubEvent(EventSP ev, size_t EventNr);
     virtual size_t GetNumSubEvent(const eudaq::Event& pac);
     virtual ~DataConverterPlugin(){};
-
-  protected:
-    DataConverterPlugin(std::string subtype);
-    DataConverterPlugin(unsigned type, std::string subtype = "");
-
-    static unsigned m_count;
-    std::pair<uint32_t, std::string> m_eventtype;
-    unsigned m_thisCount;
-  private:
-    DataConverterPlugin(const DataConverterPlugin &) = delete;
-    DataConverterPlugin & operator = (const DataConverterPlugin &) = delete;
   };
 
 }//namespace eudaq

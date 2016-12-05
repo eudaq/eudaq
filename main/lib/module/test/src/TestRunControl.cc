@@ -1,7 +1,7 @@
 #include "eudaq/RunControl.hh"
 #include "eudaq/Utils.hh"
 #include <iostream>
-
+#include <cctype>
 
 class TestRunControl : public eudaq::RunControl {
 public:
@@ -63,7 +63,7 @@ void TestRunControl::Exec(){
     std::getline(std::cin, line);
     char cmd = '\0';
     if (line.length() > 0) {
-      cmd = std::tolower(line[0]);
+      cmd = tolower(line[0]);
       line = eudaq::trim(std::string(line, 1));
     }
     else {

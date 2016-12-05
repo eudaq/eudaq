@@ -15,6 +15,7 @@
 
 namespace eudaq {
   class Event;
+  using DetectorEvent = Event;
 
 #ifndef EUDAQ_CORE_EXPORTS
   extern template class DLLEXPORT Factory<Event>;
@@ -38,7 +39,7 @@ namespace eudaq {
   using EventSP = Factory<Event>::SP_BASE;
   using EventSPC = Factory<Event>::SPC_BASE;
 
-  class DLLEXPORT Event : public Serializable, public std::enable_shared_from_this<Event> {
+  class DLLEXPORT Event : public Serializable{
   public:
     enum Flags {
       FLAG_BORE = 1, 
@@ -61,10 +62,11 @@ namespace eudaq {
 
     virtual void Print(std::ostream & os, size_t offset = 0) const;
 
-    void SetTag(const std::string &name, const std::string &val);
+    bool HasTag(const std::string &name) const {return m_tags.find(name) != m_tags.end();}
+    void SetTag(const std::string &name, const std::string &val) {m_tags[name] = val;}
     const std::map<std::string, std::string>& GetTags() const {return m_tags;}
-    std::string GetTag(const std::string & name, const std::string & def = "") const;
-    std::string GetTag(const std::string & name, const char * def) const { return GetTag(name, std::string(def)); }
+    std::string GetTag(const std::string &name, const std::string &def = "") const;
+    std::string GetTag(const std::string &name, const char *def) const {return GetTag(name, std::string(def));}
     template <typename T> T GetTag(const std::string & name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }
@@ -94,6 +96,7 @@ namespace eudaq {
     void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
     void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
+    void SetSubType(const std::string &t) {SetTag("SubType", t);}
  
     uint32_t GetEventID() const {return m_type;};
     uint32_t GetVersion()const {return m_version;}
@@ -103,17 +106,14 @@ namespace eudaq {
     uint32_t GetStreamN() const {return m_stm_n;}
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
     uint64_t GetTimestampEnd() const {return m_ts_end;}
+    std::string GetSubType() const {return GetTag("SubType");}
 
-    static unsigned str2id(const std::string & idstr);
-    static std::string id2str(unsigned id);
     static EventSP MakeShared(Deserializer&);
     
     // /////TODO: remove compatiable fun from EUDAQv1
-    bool HasTag(const std::string &name) const;
     uint32_t GetEventNumber()const {return m_ev_n;}
     uint32_t GetRunNumber()const {return m_run_n;}
-    virtual std::string GetSubType() const {return "This Event is not RAW\n";}
-    
+
   private:
     uint32_t m_type;
     uint32_t m_version;

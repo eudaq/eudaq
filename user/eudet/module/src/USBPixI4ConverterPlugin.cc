@@ -36,8 +36,8 @@ namespace eudaq {
   class USBPixFEI4AConverter;
   class USBPixFEI4BConverter;
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<USBPixFEI4AConverter>(Event::str2id("_RAW")+eudaq::cstr2hash("USBPIXI4"));
-    auto dummy1 = Factory<DataConverterPlugin>::Register<USBPixFEI4BConverter>(Event::str2id("_RAW")+eudaq::cstr2hash("USBPIXI4B"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<USBPixFEI4AConverter>(eudaq::cstr2hash("USBPIXI4"));
+    auto dummy1 = Factory<DataConverterPlugin>::Register<USBPixFEI4BConverter>(eudaq::cstr2hash("USBPIXI4B"));
   }
   
   //Will be set as the EVENT_TYPE for the different versions of this producer

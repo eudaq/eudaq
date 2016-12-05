@@ -11,10 +11,12 @@ namespace eudaq {
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
   Factory<Event>::Instance<>();
   template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const uint32_t&, const uint32_t&, const uint32_t&)>&
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)
+	   (const uint32_t&, const uint32_t&, const uint32_t&)>&
   Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
   template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)
+	   (const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
   Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
   //RawDataEvent
   
@@ -38,8 +40,7 @@ namespace eudaq {
   
   Event::Event()
     :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
-  }
-  
+  }  
   
   Event::Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n)
     :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
@@ -117,46 +118,12 @@ namespace eudaq {
     }
     os << std::string(offset, ' ') << "</Event>\n";
   }
-
-  unsigned Event::str2id(const std::string & str) {
-    uint32_t result = 0;
-    for (size_t i = 0; i < 4; ++i) {
-      if (i < str.length()) result |= str[i] << (8 * i);
-    }
-    return result;
-  }
-
-  std::string Event::id2str(unsigned id) {
-    std::string result(4, '\0');
-    for (int i = 0; i < 4; ++i) {
-      result[i] = (char)(id & 0xff);
-      id >>= 8;
-    }
-    for (int i = 3; i >= 0; --i) {
-      if (result[i] == '\0') {
-        result.erase(i);
-        break;
-      }
-    }
-    return result;
-  }
-
   
-  void Event::SetTag(const std::string & name, const std::string & val) {
-    m_tags[name] = val;
-  }
 
   std::string Event::GetTag(const std::string & name, const std::string & def) const {
     auto i = m_tags.find(name);
     if (i == m_tags.end()) return def;
     return i->second;
-  }
-
-  bool Event::HasTag(const std::string &name) const{
-    if (m_tags.find(name) == m_tags.end())
-      return false;
-    else
-      return true;
   }
 
 }

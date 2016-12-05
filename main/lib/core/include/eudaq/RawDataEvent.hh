@@ -34,11 +34,7 @@ namespace eudaq {
 
     uint32_t GetID(size_t i) const { return m_blocks.at(i).id; }
     const std::vector<uint8_t>& GetBlock(size_t i) const;
-    size_t NumBlocks() const { return m_blocks.size(); }
-
-    std::string GetSubType() const override{ return m_description; }
-    void SetSubType(const std::string& subtype){ m_description = subtype; }
-    
+    size_t NumBlocks() const { return m_blocks.size(); }    
     /// Add a data block as std::vector
     template <typename T>
     size_t AddBlock(uint32_t id, const std::vector<T> &data) {
@@ -78,8 +74,11 @@ namespace eudaq {
       return std::vector<uint8_t>(ptr, ptr + data.size() * sizeof(T));
     }
     
-    std::string m_description;
     std::vector<block_t> m_blocks;
+
+  public:
+    static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
+
   };
 }
 

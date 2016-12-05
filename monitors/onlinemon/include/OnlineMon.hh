@@ -14,11 +14,10 @@
 #ifndef __CINT__
 #include "eudaq/Configuration.hh"
 #include "eudaq/Monitor.hh"
-#include "eudaq/DetectorEvent.hh"
-#include "eudaq/TLUEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
+#include "eudaq/StdEventConverter.hh"
 #endif
 
 
@@ -29,7 +28,6 @@
 #include "ParaMonitorCollection.hh"
 
 #include "OnlineMonWindow.hh"
-//#include "OnlineHistograms.hh"
 #include "SimpleStandardEvent.hh"
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
@@ -52,10 +50,7 @@ class OnlineMonWindow;
 class BaseCollection;
 class CheckEOF;
 
-class RootMonitor : private eudaq::Holder<int>,
-                    // public TApplication,
-                    // public TGMainFrame,
-                    public eudaq::Monitor {
+class RootMonitor : public eudaq::Monitor {
   RQ_OBJECT("RootMonitor")
 protected:
   bool histos_booked;
@@ -87,28 +82,24 @@ public:
   virtual void StartIdleing() {}
   OnlineMonWindow *getOnlineMon() { return onlinemon; }
 
-  virtual void OnConfigure(const eudaq::Configuration &param) {
+  void OnConfigure(const eudaq::Configuration &param) override final{
     std::cout << "Configure: " << param.Name() << std::endl;
+    m_conf = param;
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
   }
-  virtual void OnTerminate() {
+  void OnTerminate() override final{
     std::cout << "Terminating" << std::endl;
     EUDAQ_SLEEP(1);
     gApplication->Terminate();
   }
-  virtual void OnReset() {
+  void OnReset() override final{
     std::cout << "Reset" << std::endl;
     SetStatus(eudaq::Status::LVL_OK);
   }
-  virtual void OnStartRun(unsigned param);
-  virtual void OnEvent(const eudaq::StandardEvent &ev);
-
-  virtual void OnBadEvent(std::shared_ptr<eudaq::Event> ev) {
-    EUDAQ_ERROR("Bad event type found in data file");
-    std::cout << "Bad Event: " << *ev << std::endl;
-  }
-
-  virtual void OnStopRun();
+  void OnStartRun(unsigned param) override final;
+  void OnEvent(eudaq::EventSPC e) override final;
+  void OnStopRun() override final;
+  void Exec() override final;
   void setWriteRoot(const bool write) { _writeRoot = write; }
   void autoReset(const bool reset);
   void setReduce(const unsigned int red);
@@ -128,6 +119,7 @@ public:
   string GetSnapShotDir();
   OnlineMonConfiguration mon_configdata; // FIXME
 private:
+  eudaq::Configuration m_conf;
   string snapshotdir;
   EventSanityChecker myevent; // FIXME
   bool useTrackCorrelator;

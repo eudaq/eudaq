@@ -57,8 +57,10 @@ void SyncByEventNumberPS::ProcessEvent(EventSPC ev){
     auto &fifo = e.second;
     min_ev_n = std::min(min_ev_n, fifo.front()->GetEventN());
   }
-  
-  EventSP sync_ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DetectorEvent"), cstr2hash("DetectorEvent"), 0, GetInstanceN());
+
+  EventSP sync_ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetInstanceN());
+  sync_ev->SetFlagBit(Event::FLAG_PACKET);
+
   for(auto &e: m_fifos){
     auto &fifo = e.second;
     auto devn = e.first;

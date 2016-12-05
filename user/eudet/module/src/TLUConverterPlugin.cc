@@ -10,12 +10,12 @@ namespace eudaq {
   class TLUConverterPlugin;
   
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConverterPlugin>(Event::str2id("TLUEvent"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<TLUConverterPlugin>(cstr2hash("TLU"));
   }
   
   class TLUConverterPlugin : public DataConverterPlugin {
   public:
-    TLUConverterPlugin() : DataConverterPlugin(Event::str2id("_TLU")) {}
+    TLUConverterPlugin() : DataConverterPlugin("TLU") {}
 
     virtual bool GetStandardSubEvent(eudaq::StandardEvent &result,
                                      const eudaq::Event &source) const {

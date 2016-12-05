@@ -7,7 +7,7 @@
 #include <string>
 #include <cstring>
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef __CINT__
 #include <winsock.h>
 #endif

@@ -1,7 +1,6 @@
 #include "DataConverterPlugin.hh"
 #include "StandardEvent.hh"
 #include "Utils.hh"
-#include "PluginManager.hh"
 #include "Configuration.hh"
 #include <algorithm>
 
@@ -35,8 +34,8 @@ namespace eudaq {
   class SCTConverterPlugin_ITS_ABC;
   class SCTConverterPlugin_ITS_TTC;
   namespace{
-    auto dummy0 = Factory<DataConverterPlugin>::Register<SCTConverterPlugin_ITS_ABC>(Event::str2id("_RAW")+eudaq::cstr2hash("ITS_ABC"));
-    auto dummy1 = Factory<DataConverterPlugin>::Register<SCTConverterPlugin_ITS_TTC>(Event::str2id("_RAW")+eudaq::cstr2hash("ITS_TTC"));
+    auto dummy0 = Factory<DataConverterPlugin>::Register<SCTConverterPlugin_ITS_ABC>(eudaq::cstr2hash("ITS_ABC"));
+    auto dummy1 = Factory<DataConverterPlugin>::Register<SCTConverterPlugin_ITS_TTC>(eudaq::cstr2hash("ITS_TTC"));
   }
   
   namespace sct {

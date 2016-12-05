@@ -21,9 +21,6 @@ SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
-
-
-# some macros are redefined to keep compatability with CMake 2.6
 include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
 
 # Determine platform- and compiler-specific settings
@@ -74,9 +71,6 @@ MESSAGE("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 # cmake -DINSTALL_PREFIX=/some/dir ..
 SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
-
-# optional debug defines
-# add_definitions("-DDEBUG_NOTIMEOUT=1 -DDEBUG_TRANSPORT=1")
 
 # Set the correct build type and allow command line options:
 # Set a default build type if none was specified
@@ -164,24 +158,19 @@ ENDIF(NOT TARGET uninstall)
 # installed, we can make available the Python-based regression tests
 # through CMake/CTest; for more detailed information see the CMake manual or
 #web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
-if (${CMAKE_VERSION} VERSION_GREATER 2.8)
-  # git support only available with CMake greater 2.8
-  ENABLE_TESTING()
-  INCLUDE(CTest)
-  FIND_PACKAGE(PythonInterp)
-  IF(PYTHONINTERP_FOUND AND BUILD_python)
-    # test for numpy package
-    EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
-    IF(NUMPYRC EQUAL 1)
-      MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
-    ELSE(NUMPYRC EQUAL 1)
-      MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
-      INCLUDE(etc/tests/testing.cmake)
-    ENDIF(NUMPYRC EQUAL 1)
-  ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
-ELSE(${CMAKE_VERSION} VERSION_GREATER 2.8)
-  MESSAGE(WARNING "Cannot setup CTest: requires CMake version 2.8 or later (found ${CMAKE_VERSION})")
-ENDIF(${CMAKE_VERSION} VERSION_GREATER 2.8)
+ENABLE_TESTING()
+INCLUDE(CTest)
+FIND_PACKAGE(PythonInterp)
+IF(PYTHONINTERP_FOUND AND BUILD_python)
+  # test for numpy package
+  EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
+  IF(NUMPYRC EQUAL 1)
+    MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
+  ELSE(NUMPYRC EQUAL 1)
+    MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
+    INCLUDE(etc/tests/testing.cmake)
+  ENDIF(NUMPYRC EQUAL 1)
+ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
 
 MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
 MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )

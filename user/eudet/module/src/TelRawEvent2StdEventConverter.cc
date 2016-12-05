@@ -11,7 +11,7 @@ namespace eudaq{
   class TelRawEvent2StdEventConverter: public StdEventConverter{
     typedef std::vector<uint8_t>::const_iterator datait;
   public:
-    bool Converting(EventSPC d1, StandardEventSP d2) const override;
+    bool Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const override;
     void DecodeFrame(StandardPlane& plane, const uint32_t fm_n,
 		     const uint8_t *const d, const size_t l32) const;
     static const uint32_t m_id_cvt = cstr2hash("TelRawDataEvent");
@@ -22,7 +22,7 @@ namespace eudaq{
       Register<TelRawEvent2StdEventConverter>(TelRawEvent2StdEventConverter::m_id_cvt);
   }  
 
-  bool TelRawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2) const{
+  bool TelRawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const{
     static const uint32_t m_boards = 6;
     static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
     //TODO: number of telescope plane may be less than 6. Decode additional tags 

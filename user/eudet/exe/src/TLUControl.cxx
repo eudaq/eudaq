@@ -4,7 +4,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 
@@ -20,20 +20,22 @@ using eudaq::to_string;
 using eudaq::hexdec;
 
 static sig_atomic_t g_done = 0;
-#ifdef WIN32
+#ifdef _WIN32
 static const std::string TIME_FORMAT = "%M:%S.%3";
 #else
 static const std::string TIME_FORMAT = "%s.%3";
 #endif
-#ifdef WIN32
-ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler =
-    NULL; // set to NULL so that this function will not be called. it seems that
-          // this is only requiered on WINDOWS
-char *ZestSC1_ErrorStrings[] = {"dummy", "dummy1"}; // needs to have some dummy
-                                                    // strings but for now i
-                                                    // dont know where they will
-                                                    // be used again.
-#endif
+// #ifdef _WIN32
+// ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler = 0;
+// // set to NULL so that this function will not be called. it seems that
+// // this is only requiered on WINDOWS
+// char *ZestSC1_ErrorStrings[] = {"dummy", "dummy1"};
+// // needs to have some dummy
+// // strings but for now i
+// // dont know where they will
+// // be used again.
+// #endif
+
 void ctrlchandler(int) { g_done += 1; }
 
 int main(int /*argc*/, char **argv) {

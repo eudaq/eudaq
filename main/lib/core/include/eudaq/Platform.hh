@@ -1,7 +1,6 @@
 #ifndef EUDAQ_INCLUDED_Platform
 #define EUDAQ_INCLUDED_Platform
 
-#include <cstddef>
 #include <cstdint>
 using std::int8_t;
 using std::int16_t;
@@ -13,8 +12,7 @@ using std::uint16_t;
 using std::uint32_t;
 using std::uint64_t;
 
-//TODO Is this really necessary with C++11?
-#ifdef WIN32
+#ifdef _WIN32
 #include <crtdefs.h>
 #else
 using std::size_t;

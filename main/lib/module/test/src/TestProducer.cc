@@ -3,7 +3,7 @@
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include <iostream>
-
+#include <cctype>
 using eudaq::RawDataEvent;
 
 class TestProducer : public eudaq::Producer {
@@ -118,7 +118,7 @@ void TestProducer::Exec(){
     //std::cout << "Line=\'" << line << "\'" << std::endl;
     char cmd = '\0';
     if (line.length() > 0) {
-      cmd = std::tolower(line[0]);
+      cmd = tolower(line[0]);
       line = eudaq::trim(std::string(line, 1));
     } else {
       line = "";

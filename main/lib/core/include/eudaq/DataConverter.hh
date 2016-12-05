@@ -21,7 +21,7 @@ namespace eudaq{
     DataConverter(const DataConverter &) = delete;
     DataConverter& operator = (const DataConverter &) = delete;
     virtual ~DataConverter(){};
-    virtual bool Converting(T1SPC d1, T2SP d2) const = 0;
+    virtual bool Converting(T1SPC d1, T2SP d2, const Configuration &conf) const = 0;
   };
 }
 #endif
