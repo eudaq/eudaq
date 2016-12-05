@@ -5,6 +5,9 @@ echo "Entered install_cmake script"
 echo "Installing cmake"
 
 export DEPS_DIR=$HOME/dependencies
+export temporary_path=`pwd`
+
+echo $temporary_path
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
@@ -31,10 +34,12 @@ else
 	travis_retry wget --quiet --directory-prefix=${CMAKE_DIR} ${CMAKE_DOWNLOAD_PATH}/${CMAKE_FILENAME_LINUX} 
 	ls ${CMAKE_DIR}
 	cd ${CMAKE_DIR}
-	tar -xf -C . *.tar* --strip-components=1 
+	tar -xf *.tar* --strip-components=1 
 	export PATH="${CMAKE_DIR}/bin:${PATH}"
 	export CMAKE_ROOT="${CMAKE_DIR}"
 fi
+
+cd $temporary_path
 
 echo "Cmake has been installed"
 echo `cmake --version` 
