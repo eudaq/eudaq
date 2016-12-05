@@ -4,6 +4,8 @@
 echo "Entered install_cmake script"
 echo "Installing cmake"
 
+export DEPS_DIR=$HOME/dependencies
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	
@@ -24,7 +26,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	brew link cmake
 	cmake --version
 else
-	sudo apt-get install --force-yes -y cmake 
+	CMAKE_DIR=${DEPS_DIR}/cmake
+	mkdir -p ${CMAKE_DIR}
+	travis_retry wget --quiet -O - ${CMAKE_DOWNLOAD_PATH}/${CMAKE_FILENAME_LINUX}      | tar --strip-components=1 -xJ -C ${CMAKE_DIR}
+	export PATH="${CMAKE_DIR}/bin:${PATH}"
+	export CMAKE_ROOT="${CMAKE_DIR}"
 fi
 
 echo "Cmake has been installed"
+echo cmake --version
