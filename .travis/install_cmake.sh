@@ -29,6 +29,7 @@ else
 	CMAKE_DIR=${DEPS_DIR}/cmake
 	mkdir -p ${CMAKE_DIR}
 	travis_retry wget --quiet --directory-prefix=${CMAKE_DIR} ${CMAKE_DOWNLOAD_PATH}/${CMAKE_FILENAME_LINUX} 
+	ls ${CMAKE_DIR}
 	tar -xf -C ${CMAKE_DIR} ${CMAKE_DIR}/*.tar* --strip-components=1 
 	export PATH="${CMAKE_DIR}/bin:${PATH}"
 	export CMAKE_ROOT="${CMAKE_DIR}"
