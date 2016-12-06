@@ -5,55 +5,84 @@ if(NOT BUILD_gui)
 endif()
 
 include(CMakeDependentOption)
-# Check if environment variable QTDIR is set.
-# Extra security for windows environment as well.
-if (DEFINED ENV{QTDIR})
-  set(CMAKE_PREFIX_PATH $ENV{QTDIR} ${CMAKE_PREFIX_PATH})
+
+cmake_minimum_required(VERSION 3.1.0)
+find_package(Qt5Widgets QUIET)
+if(Qt5Widgets_FOUND)
+  message(STATUS "Found Qt5Widgets: ${Qt5Widgets_DIR}")
+  macro(qt_wrap_cpp)
+    qt5_wrap_cpp(${ARGN})
+  endmacro()
+  macro(qt_wrap_ui)
+    qt5_wrap_ui(${ARGN})
+  endmacro()
+  set(EXTERNAL_LIB_QT Qt5::Widgets)
+  include_directories(${Qt5Widgets_INCLUDE_DIRS})
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+else()
+  message(STATUS "NOT found Qt5Widgets.")
+  message(STATUS "Please setup Qt5Widgets_DIR, if Qt5 is intended to be built with.")
+  message(STATUS "Try to find Qt4...")
+  find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
+  macro(qt_wrap_cpp)
+    qt4_wrap_cpp(${ARGN})
+  endmacro()
+  macro(qt_wrap_ui)
+    qt4_wrap_ui(${ARGN})
+  endmacro()
+  set(EXTERNAL_LIB_QT Qt4::QtCore Qt4::QtGui)
+  include_directories(${QT_INCLUDES})
+  add_definitions(${QT_DEFINITIONS})
 endif()
 
-# search for Qt5 package 'Widgets' (implies Core and Gui)
-cmake_minimum_required(VERSION 3.1.0)
-find_package(Qt5Widgets REQUIRED) # QUIET means it won't complain if not found
-message(STATUS "Found Qt5Widgets: ${Qt5Widgets_DIR}")
-message(STATUS "Found Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}, will build GUI executables")
-
-macro(qt_wrap_cpp)
-  qt5_wrap_cpp(${ARGN})
-endmacro()
-macro(qt_wrap_ui)
-  qt5_wrap_ui(${ARGN})
-endmacro()
-
-set(my_qt_libraries ${Qt5Widgets_LIBRARIES})
-include_directories(${Qt5Widgets_INCLUDE_DIRS})
-include_directories(./include)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-add_definitions(${Qt5Widgets_DEFINITIONS})
+include_directories(./include)
 
-# this will run uic on .ui files:
-QT_WRAP_UI(euRun_UISrcs ui/euRun.ui)
-QT_WRAP_UI(euProd_UISrcs ui/euProd.ui)
-QT_WRAP_UI(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
+set(MODULE_SRC
+  src/euRun.cc
+  src/RunControlModel.cc
+  src/euLog.cc
+  src/LogCollectorModel.cc
+  src/euProd.cc
+  # src/euRun.rc
+  # src/euLog.rc
+  # src/euProd.rc
+  )
 
-# and finally this will run moc:
-QT_WRAP_CPP(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
-QT_WRAP_CPP(euProd_MOCSrcs include/euProd.hh )
-QT_WRAP_CPP(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
+qt_wrap_ui(euRun_UISrcs ui/euRun.ui)
+qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
+list(APPEND MODULE_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
 
-# here we instruct CMake to build "sample" executable from all of the source files
-add_executable(euRun  src/euRun.cc src/euRun.rc src/RunControlModel.cc ${euRun_MOCSrcs} ${euRun_UISrcs} )
-add_executable(euProd  src/euProd.cc src/euProd.rc ${euProd_MOCSrcs} ${euProd_UISrcs} )
-add_executable(euLog  src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
+qt_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
+qt_wrap_ui(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
+list(APPEND MODULE_SRC ${euLog_UISrcs} ${euLog_MOCSrcs})
 
-set_property(TARGET euRun   PROPERTY PROJECT_LABEL "BinEuRun") 
-set_property(TARGET euProd   PROPERTY PROJECT_LABEL "BinEuProd") 
-set_property(TARGET euLog   PROPERTY PROJECT_LABEL "BinEuLog") 
+qt_wrap_cpp(euProd_MOCSrcs include/euProd.hh )
+qt_wrap_ui(euProd_UISrcs ui/euProd.ui)
+list(APPEND MODULE_SRC ${euProd_UISrcs} ${euProd_MOCSrcs})
 
-target_link_libraries(euRun   EUDAQ ${EUDAQ_THREADS_LIB} Qt5::Widgets)
-target_link_libraries(euProd  EUDAQ ${EUDAQ_THREADS_LIB} Qt5::Widgets)
-target_link_libraries(euLog   EUDAQ ${EUDAQ_THREADS_LIB} Qt5::Widgets)
+get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+set(EUDAQ_MODULE module_${MODULE_NAME})
+add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
 
-install(TARGETS euRun  euProd  euLog 
+add_executable(euRun src/euRun.cxx)
+set_property(TARGET euRun PROPERTY PROJECT_LABEL "BinEuRun")
+target_link_libraries(euRun ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+list(APPEND INSTALL_TARGETS euRun)
+
+add_executable(euLog src/euLog.cxx)
+set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog") 
+target_link_libraries(euLog ${EUDAQ_CORE})
+list(APPEND INSTALL_TARGETS euLog)
+
+add_executable(euProd src/euProd.cxx)
+set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
+target_link_libraries(euProd ${EUDAQ_CORE})
+list(APPEND INSTALL_TARGETS euProd)
+
+install(TARGETS ${INSTALL_TARGETS}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

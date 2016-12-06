@@ -1,5 +1,4 @@
 #include "ui_euRun.h"
-#include "ui_euRun.h"
 #include "RunControlModel.hh"
 #include "eudaq/RunControl.hh"
 #include "eudaq/Utils.hh"
@@ -44,15 +43,17 @@ private:
   RunControlModel *m_model;
 };
 
-class RunControlGUI : public QMainWindow,
-                      public Ui::wndRun,
-                      public eudaq::RunControl {
+
+class RunControlGUI :public QMainWindow,
+		     public Ui::wndRun,
+		     public eudaq::RunControl {
   Q_OBJECT
 public:
-  RunControlGUI(const std::string &listenaddress, QRect geom,
+  RunControlGUI(const std::string &listenaddress,
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
   ~RunControlGUI() override;
 
+  void Exec() override final;
 private:
   enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
   QString lastUsedDirectory = "";
