@@ -20,7 +20,7 @@ namespace eudaq {
   RunControl::RunControl(const std::string &listenaddress)
       : m_done(false), m_listening(true), m_runnumber(-1),
         m_idata((size_t)-1), m_ilog((size_t)-1), m_runsizelimit(0),
-        m_runeventlimit(0), m_nextconfigonrunchange(false), m_stopping(false),
+        m_runeventlimit(0), m_stopping(false),
         m_producerbusy(false) {
     if (listenaddress != "") {
       StartServer(listenaddress);
@@ -52,13 +52,13 @@ namespace eudaq {
     if (config.SetSection("RunControl")) {
       m_runsizelimit = config.Get("RunSizeLimit", 0LL);
       m_runeventlimit = config.Get("RunEventLimit", 0LL);
-      m_nextconfigonrunchange =
+      auto m_nextconfigonrunchange =
           config.Get("NextConfigFileOnRunChange",
                      config.Get("NextConfigFileOnFileLimit", false));
     } else {
       m_runsizelimit = 0;
       m_runeventlimit = 0;
-      m_nextconfigonrunchange = false;
+      // m_nextconfigonrunchange = false;
     }
   }
 

@@ -203,7 +203,7 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
   //                         "This will reset all connected Producers etc.");
   m_run.newconnection(id);
   if (id.GetType() == "DataCollector") {
-    EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
+    EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
     SetState(ST_NONE);
   }
   if (id.GetType() == "LogCollector") {

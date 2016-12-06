@@ -56,7 +56,10 @@ namespace eudaq {
     const ConnectionInfo &GetConnection(size_t i) const {
       return m_cmdserver->GetConnection(i);
     }
-
+    int32_t GetRunNumber() const{ return m_runnumber;}
+    bool IsStop() const {return m_stopping;}
+    int64_t GetRunSizeLimit() const {return m_runsizelimit;}
+    int64_t GetRunEventLimit() const {return m_runeventlimit;}
   private:
     void InitLog(const ConnectionInfo &id);
     void InitData(const ConnectionInfo &id);
@@ -68,9 +71,7 @@ namespace eudaq {
                        const ConnectionInfo &id = ConnectionInfo::ALL);
     void CommandHandler(TransportEvent &ev);
     bool m_done;
-    bool m_listening;
-
-  protected:
+    bool m_listening;    
     int32_t m_runnumber;     ///< The current run number
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
     std::thread m_thread;
@@ -79,8 +80,8 @@ namespace eudaq {
     std::map<size_t, std::string> m_dataaddr; // map of data collector addresses
     int64_t m_runsizelimit;
     int64_t m_runeventlimit;
-    bool m_nextconfigonrunchange;
-    bool m_stopping, m_producerbusy;
+    bool m_stopping;
+    bool m_producerbusy;
     std::mutex m_mtx_sendcmd;
   };
 }
