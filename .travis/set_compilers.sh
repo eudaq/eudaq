@@ -65,8 +65,8 @@ else
 			#export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
 			#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
 			#export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-			export CXX="clang++" 
-			export CC="clang"
+			export CXX="clang++-3.9" 
+			export CC="clang-3.9"
 		fi
     
 	fi
