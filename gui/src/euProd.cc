@@ -15,7 +15,7 @@ ProducerGUI::ProducerGUI(const std::string & name, const std::string &runcontrol
 
 void ProducerGUI::Exec(){
   show();
-  if(!QApplication::instance())
+  if(QApplication::instance())
     QApplication::instance()->exec(); 
   else
     std::cerr<<"ERROR: ProducerGUI::EXEC\n";

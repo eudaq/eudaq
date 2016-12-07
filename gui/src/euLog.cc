@@ -73,7 +73,7 @@ void LogCollectorGUI::AddSender(const std::string &type,
 
 void LogCollectorGUI::Exec(){
   show();
-  if(!QApplication::instance())
+  if(QApplication::instance())
     QApplication::instance()->exec(); 
   else
     std::cerr<<"ERROR: LogCollectorGUI::EXEC\n";
