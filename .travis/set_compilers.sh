@@ -43,7 +43,7 @@ else
 		echo "Installing clang $LLVM_VERSION for linux"
 		if [[ "${LLVM_VERSION}" != "" ]]; then
 			wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main"
+			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main"
 			sudo apt-get update
 			sudo apt-get install -y clang-3.9 lldb-3.9
 			#LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
