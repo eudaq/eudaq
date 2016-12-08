@@ -11,8 +11,8 @@
 echo "Entered install_afs.sh"
 echo "Installing afs"
 
-export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.11
-export OPENAFS_FILENAME_MAC=AuriStor-client-0.128-ElCapitan.dmg
+export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.12
+export OPENAFS_FILENAME_MAC=AuriStor-client-0.128-Sierra.dmg
 
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
