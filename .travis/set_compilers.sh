@@ -46,7 +46,7 @@ else
 			sudo aptitude purge libclang-common-dev
 			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main"
 			sudo apt-get update
-			sudo apt-get install g++-6 clang-3.9 lldb-3.9 llvm-3.9-dev llvm-3.9 -y
+			sudo apt-get install g++-5 clang-3.9 lldb-3.9 llvm-3.9-dev llvm-3.9 -y
 			#LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
 			#if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
 			#	LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
