@@ -43,6 +43,7 @@ else
 		echo "Installing clang $LLVM_VERSION for linux"
 		if [[ "${LLVM_VERSION}" != "" ]]; then
 			wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+			sudo aptitude purge libclang-common-dev
 			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main"
 			sudo apt-get update
 			sudo apt-get install clang-3.9 lldb-3.9 llvm-3.9-dev llvm-3.9 -y
