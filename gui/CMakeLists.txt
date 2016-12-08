@@ -69,7 +69,7 @@ list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
 
 add_executable(euRun src/euRun.cxx)
 set_property(TARGET euRun PROPERTY PROJECT_LABEL "BinEuRun")
-target_link_libraries(euRun ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+target_link_libraries(euRun ${EUDAQ_CORE})
 list(APPEND INSTALL_TARGETS euRun)
 
 add_executable(euLog src/euLog.cxx)

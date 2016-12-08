@@ -5,7 +5,7 @@
 #include "eudaq/Producer.hh"
 #include <iostream>
 
-int main(int /*argc*/, const char ** argv) {
+int main(int argc, char ** argv) {
   eudaq::OptionParser op("EUDAQ Producer", "1.0", "A comand-line version of a dummy Producer");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
       "The address of the RunControl application");
