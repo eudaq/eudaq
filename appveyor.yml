@@ -34,22 +34,23 @@ environment:
       BUILD_cmspixel: OFF
       BUILD_depfet: OFF
       BUILD_fortis: OFF
-      BUILD_gui: ON
+      BUILD_gui: OFF
       BUILD_main: OFF
       BUILD_manual: OFF
       BUILD_mimoroma: OFF
       BUILD_miniTLU: OFF
-      BUILD_ni: ON
+      BUILD_ni: OFF
       BUILD_nreader: OFF
       BUILD_offlinemon: OFF
       BUILD_onlinemon: OFF
       BUILD_palpidefs: OFF
       BUILD_pixelmanproducer: OFF
-      BUILD_python: ON
+      BUILD_python: OFF
       BUILD_root: OFF
       BUILD_taki: OFF
       BUILD_timepixdummy: OFF
-      BUILD_tlu: ON
+      BUILD_tlu: OFF
+      BUILD_user_telescope: OFF      
       IGNORE_KNOWN_ISSUES: ON
       PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5.2" 
@@ -67,22 +68,23 @@ environment:
       BUILD_cmspixel: OFF
       BUILD_depfet: OFF
       BUILD_fortis: OFF
-      BUILD_gui: ON
+      BUILD_gui: OFF
       BUILD_main: OFF
       BUILD_manual: OFF
       BUILD_mimoroma: OFF
       BUILD_miniTLU: OFF
-      BUILD_ni: ON
+      BUILD_ni: OFF
       BUILD_nreader: OFF
       BUILD_offlinemon: OFF
       BUILD_onlinemon: ON
       BUILD_palpidefs: OFF
       BUILD_pixelmanproducer: OFF
-      BUILD_python: ON
+      BUILD_python: OFF
       BUILD_root: OFF
       BUILD_taki: OFF
       BUILD_timepixdummy: OFF
-      BUILD_tlu: ON
+      BUILD_tlu: OFF
+      BUILD_user_telescope: OFF            
       IGNORE_KNOWN_ISSUES: OFF
       PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5.2" 
@@ -116,6 +118,7 @@ environment:
       BUILD_taki: OFF
       BUILD_timepixdummy: OFF
       BUILD_tlu: OFF
+      BUILD_user_telescope: OFF            
       IGNORE_KNOWN_ISSUES: OFF
       PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5.2" 
