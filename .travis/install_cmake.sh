@@ -32,7 +32,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	#export PATH="/usr/local/bin:$PATH"
 	export CMAKE_ROOT="${CMAKE_DIR}"
 	#brew link cmake
-	cmake --version
+	#cmake --version
 else
 	CMAKE_DIR=${DEPS_DIR}/cmake
 	mkdir -p ${CMAKE_DIR}
