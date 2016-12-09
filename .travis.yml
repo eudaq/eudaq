@@ -96,9 +96,11 @@ matrix:
       - os: linux            
         env: OPTION=old GCC_VERSION=5 COMPILER=gcc
       - os: osx
+        compiler: clang
         osx_image: xcode8.1
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
       - os: osx           
+        compiler: clang
         osx_image: xcode8.1
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
       - os: osx          
