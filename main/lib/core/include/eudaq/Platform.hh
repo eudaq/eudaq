@@ -1,7 +1,6 @@
 #ifndef EUDAQ_INCLUDED_Platform
 #define EUDAQ_INCLUDED_Platform
 
-#include <cstddef>
 #include <cstdint>
 using std::int8_t;
 using std::int16_t;
