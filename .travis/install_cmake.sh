@@ -12,21 +12,26 @@ echo $temporary_path
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	
-	#brew uninstall cmake --force
-	#brew unlink cmake
+	brew uninstall cmake --force
+	brew unlink cmake
 	
 	#export CMAKE_FILENAME=${CMAKE_FILENAME_MAC}
 	
-	#echo "Installing cmake now"
-	#wget ${CMAKE_DOWNLOAD_PATH}/$CMAKE_FILENAME
-	#tar xfz $CMAKE_FILENAME
-	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
+	echo "Installing cmake on mac now"
+	CMAKE_DIR=${DEPS_DIR}/cmake
+	mkdir -p ${CMAKE_DIR}
+	cd ${CMAKE_DIR}
+	
+	wget ${CMAKE_DOWNLOAD_PATH}/$CMAKE_FILENAME_MAC
+	tar xfz $CMAKE_FILENAME_MAC --strip-components=3
+	export PATH="${CMAKE_DIR}/bin":$PATH	
 	#echo $PATH
 	#mkdir -p /usr/local/Cellar/cmake
 	#cp -r ${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/* /usr/local/Cellar/cmake/
 	
-	export PATH="/usr/local/bin:$PATH"
-	brew link cmake
+	#export PATH="/usr/local/bin:$PATH"
+	export CMAKE_ROOT="${CMAKE_DIR}"
+	#brew link cmake
 	cmake --version
 else
 	CMAKE_DIR=${DEPS_DIR}/cmake
