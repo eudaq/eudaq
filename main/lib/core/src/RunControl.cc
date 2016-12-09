@@ -46,7 +46,7 @@ namespace eudaq {
   RunControl::~RunControl() { StopServer(); }
 
   void RunControl::Configure(const Configuration &config) {
-    SendCommand("CLEAR");
+    // SendCommand("CLEAR");
     mSleep(500);
     SendCommand("CONFIG", to_string(config));
     if (config.SetSection("RunControl")) {
@@ -90,7 +90,7 @@ namespace eudaq {
     m_runnumber++;
 
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
-    SendCommand("CLEAR");
+    // SendCommand("CLEAR");
     mSleep(500);
     // give the data collectors time to prepare
     for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();
