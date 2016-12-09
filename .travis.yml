@@ -13,14 +13,17 @@ branches:
 env:
    global:
       - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.06.08.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT6_FILENAME_MAC=root_v6.06.08.macosx64-10.11-clang73.tar.gz
+      - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.9-clang60.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.06.06.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.06.06.macosx64-10.9-clang60.tar.gz
       
-      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.7
-      - CMAKE_FILENAME_LINUX=cmake-3.7.1-Linux-x86_64.tar.gz
-      - CMAKE_FILENAME_MAC=cmake-3.7.1-Darwin-x86_64.tar.gz
-            
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.5
+      - CMAKE_FILENAME_LINUX=cmake-3.5.2-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.5.2-Darwin-x86_64.tar.gz
+      
+      - OPENAFS_DOWNLOAD_PATH_MAC=http://www.openafs.org/dl/openafs/1.6.6/macos-10.9
+      - OPENAFS_FILENAME_MAC=OpenAFS-1.6.6-Mavericks.dmg
+      
       - PYTHON_VERSION_MODERN=3.5.1
       - PYTHON_VERSION_OLD=2.7.10
       
@@ -31,27 +34,38 @@ env:
       - BUILD_allproducer=OFF
       - BUILD_altro=OFF
       - BUILD_altroUSB=OFF
-      - BUILD_cmspixel=OFF
-      - BUILD_depfet=OFF
-      - BUILD_fortis=OFF
-      - BUILD_gui=OFF
+      - BUILD_apixct=OFF
+      - BUILD_calice=ON
+      - BUILD_ccpdlf=OFF
+      - BUILD_clicpix=OFF
+      - BUILD_cmspixel=ON
+      - BUILD_depfet=ON
+      - BUILD_eudrb=OFF
+      - BUILD_example=OFF
+      - BUILD_explorer=ON
+      - BUILD_fortis=ON
+      - BUILD_gui=ON
       - BUILD_main=OFF
       - BUILD_manual=OFF
-      - BUILD_mimoroma=OFF
+      - BUILD_mimoroma=ON
+      - BUILD_mimosa32=ON
       - BUILD_miniTLU=OFF
-      - BUILD_ni=OFF
+      - BUILD_mupix=OFF
+      - BUILD_mvd=OFF
+      - BUILD_ni=ON
       - BUILD_nreader=OFF
       - BUILD_offlinemon=OFF
-      - BUILD_onlinemon=OFF
+      - BUILD_onlinemon=ON
       - BUILD_palpidefs=OFF
+      - BUILD_palpidess=OFF
       - BUILD_pixelmanproducer=OFF
-      - BUILD_python=OFF
+      - BUILD_pybar=OFF
+      - BUILD_python=ON
       - BUILD_root=OFF
-      - BUILD_rpi_controller=OFF
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
-      - BUILD_tlu=OFF
-      - BUILD_user_telescope=OFF
+      - BUILD_tlu=ON
+      - BUILD_usbpix=OFF
 
       
 # possible options:
@@ -73,71 +87,49 @@ env:
 # disabled for mac, old, gcc and clang as pxar can be installed but during eudaq compilation is fails to include properly the defines from api.h
 # the reason for this behaviour is unclear
 
-cache:
-  directories:
-  - $TRAVIS_BUILD_DIR/extern/ZestSC1
-  - $TRAVIS_BUILD_DIR/extern/tlufirmware
-  - $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
-  
-before_cache:
-  - rm -r $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
-  - cd $TRAVIS_BUILD_DIR/extern
-  - unzip aliceitsalpidesoftwaremaster.zip
-  - mv $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
-
 matrix:      
    include:   
-      - os: linux    
-        env: OPTION=modern LLVM_VERSION=3.9.0 COMPILER=clang  
-      - os: linux  
-        env: OPTION=old  LLVM_VERSION=3.9.0 COMPILER=clang 
       - os: linux
-        env: OPTION=modern BUILD_manual=OFF GCC_VERSION=5 COMPILER=gcc
-      - os: linux            
-        env: OPTION=old GCC_VERSION=5 COMPILER=gcc
-      - os: osx
-        compiler: clang
-        osx_image: xcode8.2
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
-      - os: osx           
-        compiler: clang
-        osx_image: xcode8.2
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
-      - os: osx          
-        osx_image: xcode8.2
         compiler: gcc
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc        
+        env: OPTION=modern BUILD_manual=ON
+      - os: linux      
+        compiler: gcc      
+        env: OPTION=old    
+      - os: linux
+        compiler: clang      
+        env: OPTION=modern
+      - os: linux
+        compiler: clang      
+        env: OPTION=old
+      - os: osx      
+        compiler: gcc    
+        env: OPTION=modern    
       - os: osx
-        osx_image: xcode8.2      
-        compiler: gcc
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc     
+        compiler: gcc      
+        env: OPTION=old BUILD_cmspixel=OFF
+      - os: osx
+        compiler: clang      
+        env: OPTION=modern
+      - os: osx      
+        compiler: clang      
+        env: OPTION=old BUILD_cmspixel=OFF
 
 before_install:
+  - source .travis/before_install.sh
+  - if [ $BUILD_cmspixel == "ON" ]; then source .travis/install_pxar.sh; fi
       
 install:
-  - source .travis/update_repositories.sh  
-  - source .travis/install_cmake.sh  
-  - source .travis/set_compilers.sh  
-  - source .travis/install_afs.sh  
-  - source .travis/install_python.sh  
-  - source .travis/install_libusb_0_1.sh  
-  - source .travis/install_libusb_1_0.sh  
-  - source .travis/install_qt.sh  
-  - source .travis/install_root.sh
-  - source .travis/install_tex.sh  
-  - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
-  - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
-  - export PALPIDEFS_SPECIAL_PARAMETERS=""
-  - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi  
+  - source .travis/install.sh
 
 before_script:
   - $CXX --version
+  - $CC --version
   - echo $PATH
   - echo $LD_LIBRARY_PATH
 
 script:
   - cd build  
-  - cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs $PALPIDEFS_SPECIAL_PARAMETERS -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_rpi-controller=$BUILD_rpi_controller -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu -DUSER_TELESCOPE=$BUILD_user_telescope ..
+  - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_apixct=$BUILD_apixct -DBUILD_calice=$BUILD_calice -DBUILD_ccpdlf=$BUILD_ccpdlf -DBUILD_clicpix=$BUILD_clicpix -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_eudrb=$BUILD_eudrb -DBUILD_example=$BUILD_example -DBUILD_explorer=$BUILD_explorer -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_mimosa32=$BUILD_mimosa32 -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_mupix=$BUILD_mupix -DBUILD_mvd=$BUILD_mvd -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs -DBUILD_palpidess=$BUILD_palpidess -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_pybar=$BUILD_pybar -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu -DBUILD_usbpix=$BUILD_usbpix ..
   - make install
 
 before_deploy:
