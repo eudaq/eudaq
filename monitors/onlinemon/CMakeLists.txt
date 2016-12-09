@@ -10,16 +10,20 @@ if(NOT BUILD_onlinemon)
 endif()
 
 if(WIN32)
-  find_package(ROOT REQUIRED COMPONENTS libGui)
+  find_package(ROOT REQUIRED COMPONENTS libGui libCore libHist libRIO)
 else()
   find_package(ROOT REQUIRED COMPONENTS Gui)
 endif()
 
+include_directories(${ROOT_INCLUDE_DIR})
 if(ROOT_USE_FILE)
   include(${ROOT_USE_FILE})
 endif()
 
 include_directories(. include)
+include_directories(${CMAKE_BINARY_DIR})
+
+message("${ROOT_LIBRARIES}")
 
 if(ROOT_VERSION_MAJOR GREATER 5)
   add_definitions(-DEUDAQ_LIB_ROOT6)
