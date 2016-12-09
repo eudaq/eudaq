@@ -20,8 +20,8 @@ export DEPS_DIR=$HOME/dependencies
     
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
-	echo "Setting C-Compiler to 4.9 for OSX"
-	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
+	#echo "Setting C-Compiler to 4.9 for OSX"
+	#if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
 	
 else	
 
