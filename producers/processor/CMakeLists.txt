@@ -6,7 +6,7 @@ SET(PS_PLUGIN_SRC
   src/ExamplePS.cc
   src/EventFileReaderPS.cc
   src/DetEventUnpackInsertTimestampPS.cc
-  src/SyncByTimestampPS.cc
+  # src/SyncByTimestampPS.cc
   src/EventReceiverPS.cc
   src/EventSenderPS.cc
   src/TimeTriggerPS.cc
@@ -16,7 +16,7 @@ SET(PS_PLUGIN_SRC
   src/OldEventFilterPS.cc
   src/UnpackSyncEventPS.cc
   # src/FileWriterProcessor.cc
-  src/SyncByEventNumberPS.cc
+  # src/SyncByEventnumberPS.cc
   )
 
 

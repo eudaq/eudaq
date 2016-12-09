@@ -2,7 +2,26 @@
 
 #include <vector>
 #include <iostream>
-#include <experimental/filesystem> //It will be avaliable in C++17. Waiting
+
+#if !defined(__GNUC__) || (__GNUC__ > 5) || (__GNUC__ == 5 && (__GNUC_MINOR__ > 2))
+#define EUDAQ_CXX17_FS
+#endif
+
+#if defined(_MSC_VER) && (_MSC_VER < 1900)
+#error Minimum Visual Studio 2015 required
+#endif
+
+#ifdef EUDAQ_CXX17_FS
+//This C++17 filesystem is available in GCC >= 5.3 or VisualStudio >= vs2015 (1900)
+#include <experimental/filesystem>
+namespace filesystem = std::experimental::filesystem;
+#else
+#include <libgen.h>
+#include <dirent.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#endif
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 #include <windows.h>
@@ -10,16 +29,14 @@
 #include <dlfcn.h>
 #endif
 
-
 namespace eudaq{
 
   namespace {
     auto dummy = ModuleManager::Instance();
   }
-
-  namespace filesystem = std::experimental::filesystem;
   
   ModuleManager::ModuleManager(){
+#ifdef EUDAQ_CXX17_FS
     filesystem::path bin("bin");
     filesystem::path lib("lib");
     filesystem::path pwd = filesystem::current_path();
@@ -33,7 +50,29 @@ namespace eudaq{
     filesystem::path module_dir=top/lib;
     LoadModuleDir(module_dir.string());
     module_dir=top/bin;
-    LoadModuleDir(module_dir.string());
+    LoadModuleDir(module_dir.string());    
+#else
+    const std::string bin("/bin");
+    const std::string lib("/lib");
+    char pwd_path[PATH_MAX];
+    char pwd_path_ab[PATH_MAX]; 
+    if(!getcwd(pwd_path, sizeof(pwd_path))){
+      std::cerr<<"ERROR: Can not get path of cwd.";
+    }
+    if(!realpath(pwd_path, pwd_path_ab)){
+      std::cerr<<"ERROR: Can not get realpath of cwd.";
+    }
+    std::string pwd(pwd_path_ab);
+    std::string top;
+    if(pwd.rfind(bin) != std::string::npos && pwd.rfind(bin) == pwd.size()-bin.size()){
+      top = pwd.substr(0,pwd.rfind(bin));
+    }
+    else{
+      top = pwd;
+    }
+    LoadModuleDir(top+lib);
+    LoadModuleDir(top+bin);
+#endif
   }
   
   ModuleManager* ModuleManager::Instance(){
@@ -44,21 +83,40 @@ namespace eudaq{
   
   uint32_t ModuleManager::LoadModuleDir(const std::string& dir){
     const std::string module_prefix("libeudaq_module_");
-    const std::string module_suffix_win(".dll");
-    const std::string module_suffix_lnx(".so");
+#if EUDAQ_PLATFORM_IS(WIN32)
+    const std::string module_suffix(".dll");
+#else
+    const std::string module_suffix(".so");
+#endif
+    
     uint32_t n=0;
+#ifdef EUDAQ_CXX17_FS
     for(auto& e: filesystem::directory_iterator(filesystem::absolute(dir))){
       filesystem::path file(e);
       std::string fname = file.filename().string();
       if(!fname.compare(0, module_prefix.size(), module_prefix)
-	 && (fname.find(module_suffix_win) != std::string::npos ||
-	     fname.find(module_suffix_lnx) != std::string::npos)){
+	 && (fname.find(module_suffix) != std::string::npos)){
 	if(LoadModuleFile(file.string())){
 	  n++;
 	}
       }
     }
+#else    
+    DIR *dpath = opendir(dir.c_str());
+    struct dirent *dfile;
+    while((dfile = readdir(dpath)) != NULL){
+      std::string fname(dfile->d_name);
+      if(!fname.compare(0, module_prefix.size(), module_prefix)
+	 && (fname.find(module_suffix) != std::string::npos)){
+	if(LoadModuleFile(fname)){
+	  n++;
+	}
+      }
+    }
+    closedir(dpath);
+#endif
     return n;
+
   }
   
   bool ModuleManager::LoadModuleFile(const std::string& file){
@@ -79,8 +137,18 @@ namespace eudaq{
   }
 
   void ModuleManager::Print(std::ostream & os, size_t offset) const{
-    //TODO
-    
+    os<< std::string(offset, ' ')<< "<Modules>\n";
+    for(auto &e : m_modules){
+      os<< std::string(offset+2, ' ')<< "<Module>\n";
+      os<< std::string(offset+4, ' ')<< "<Path> " <<e.first << " </Path>";
+      os<< std::string(offset+4, ' ')<< "<Status> ";
+      if(e.second)
+	os<< "Loaded";
+      else
+	os<< "Failed";
+      os<< "</Status>\n";
+      os<< std::string(offset+2, ' ')<< "</Module>\n";
+    }
+    os << std::string(offset, ' ')<< "</Modules>\n";
   }
-  
 }

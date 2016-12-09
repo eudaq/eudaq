@@ -32,7 +32,7 @@ namespace eudaq {
   public:
     static ProcessorSP MakeShared(const std::string& pstype,
 				  std::initializer_list
-				  <std::pair<const std::string, const std::string>> l = {{}});
+				  <std::pair<const std::string, const std::string>> l =  {});
     
     Processor(const std::string& dsp);
     Processor(Processor&) = delete;

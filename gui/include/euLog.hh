@@ -32,13 +32,11 @@ public:
   LogCollectorGUI(const std::string &runcontrol,
                   const std::string &listenaddress,
 		  const std::string &directory,
-		  QRect geom,
-                  const std::string &filename,
-		  int loglevel,
-                  QWidget *parent = 0, Qt::WindowFlags flags = 0)
-      : QMainWindow(parent, flags),
+		  int loglevel)
+      : QMainWindow(0, 0),
         eudaq::LogCollector(runcontrol, listenaddress, directory), m_delegate(&m_model) {
     setupUi(this);
+    std::string filename;
     viewLog->setModel(&m_model);
     viewLog->setItemDelegate(&m_delegate);
     for (int i = 0; i < LogMessage::NumColumns(); ++i) {
@@ -56,7 +54,7 @@ public:
       level++;
     }
     cmbLevel->setCurrentIndex(loglevel);
-
+    QRect geom(-1,-1, 100, 100);
     QRect geom_from_last_program_run;
     QSettings settings("EUDAQ collaboration", "EUDAQ");
 
@@ -99,6 +97,7 @@ public:
     settings.endGroup();
   }
 
+  void Exec() override final;
 protected:
   void LoadFile(const std::string &filename) {
     std::vector<std::string> sources = m_model.LoadFile(filename);
