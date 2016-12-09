@@ -20,7 +20,6 @@
 #include "TRootEmbeddedCanvas.h"
 #include "TH1D.h"
 #include "TH2D.h"
-#include "TPaletteAxis.h"
 #include "TThread.h"
 #include "TFile.h"
 #include "TColor.h"
