@@ -2,14 +2,14 @@ find_package(ZestSC1)
 find_package(LIBUSB)
 find_package(TLUFirmware)
 
-cmake_dependent_option(USER_TELESCOPE_SHARED "build telescope hardware lib" ON
+cmake_dependent_option(USER_TELESCOPE_HARDWARE "build telescope hardware lib" ON
   "USER_TELESCOPE;LIBUSB_FOUND;ZestSC1_FOUND;TLUFirmware_FOUND" OFF)
 
-IF(USER_TELESCOPE AND (NOT USER_TELESCOPE_SHARED))
+IF(USER_TELESCOPE AND (NOT USER_TELESCOPE_HARDWARE))
   message("Telescope hardware lib is not to be built")
 ENDIF()
 
-IF(NOT USER_TELESCOPE_SHARED)
+IF(NOT USER_TELESCOPE_HARDWARE)
   return()
 ENDIF()
 
@@ -22,22 +22,28 @@ include_directories(${ZESTSC1_INCLUDE_DIRS})
 include_directories(${LIBUSB_INCLUDE_DIRS})
 add_definitions(${TLUFIRMWARE_DEFINITIONS})
 
-IF(USER_TELESCOPE_SHARED)
+if(USER_TELESCOPE_HARDWARE)
   include_directories(include)
   
-  SET(SHARED_SRC
+  SET(HARDWARE_SRC
     src/TLUController.cc
     src/TLUAddresses1.cc
     src/TLUAddresses2.cc
     src/NiController.cc
     )
 
-  add_library(${USER_SHARED} STATIC ${SHARED_SRC})
-  target_link_libraries(${USER_SHARED} ${EUDAQ_CORE} ${LIBUSB_LIBRARIES} ${ZESTSC1_LIBRARIES})
+  add_library(${USER_HARDWARE} STATIC ${HARDWARE_SRC})
+  target_link_libraries(${USER_HARDWARE} ${EUDAQ_CORE} ${LIBUSB_LIBRARIES} ${ZESTSC1_LIBRARIES})
   
   install(TARGETS
-    ${USER_SHARED}
+    ${USER_HARDWARE}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib)
-ENDIF()
+
+  if(WIN32 AND LIBUSB_FOUND AND LIBUSB_WIN_DLL)
+    INSTALL(FILES
+      ${LIBUSB_WIN_DLL}
+      DESTINATION bin)
+  endif()
+endif()

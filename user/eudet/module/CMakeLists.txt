@@ -7,14 +7,14 @@ IF(USER_TELESCOPE_MODULE)
   include_directories(include)
   aux_source_directory(src MODULE_SRC)
 
-  if(NOT USER_TELESCOPE_SHARED)
+  if(NOT USER_TELESCOPE_HARDWARE)
     list(REMOVE_ITEM MODULE_SRC src/TelProducerPS.cc)
     list(REMOVE_ITEM MODULE_SRC src/TluProducerPS.cc)
     list(REMOVE_ITEM MODULE_SRC src/NiProducer.cc)
   endif()
   
   add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-  target_link_libraries(${EUDAQ_MODULE} ${USER_SHARED} ${PROJECT_NAME})
+  target_link_libraries(${EUDAQ_MODULE} ${USER_HARDWARE} ${PROJECT_NAME})
 
   install(TARGETS
     ${EUDAQ_MODULE}
