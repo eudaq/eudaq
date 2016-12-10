@@ -92,7 +92,7 @@ matrix:
       - os: linux  
         env: OPTION=old  LLVM_VERSION=3.9.0 COMPILER=clang 
       - os: linux
-        env: OPTION=modern BUILD_manual=OFF GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=modern BUILD_manual=ON GCC_VERSION=5 COMPILER=gcc
       - os: linux            
         env: OPTION=old GCC_VERSION=5 COMPILER=gcc
       - os: osx
