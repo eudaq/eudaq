@@ -1,5 +1,4 @@
 #include "ui_euRun.h"
-#include "ui_euRun.h"
 #include "RunControlModel.hh"
 #include "eudaq/RunControl.hh"
 #include "eudaq/Utils.hh"
@@ -44,25 +43,27 @@ private:
   RunControlModel *m_model;
 };
 
-class RunControlGUI : public QMainWindow,
-                      public Ui::wndRun,
-                      public eudaq::RunControl {
+
+class RunControlGUI :public QMainWindow,
+		     public Ui::wndRun,
+		     public eudaq::RunControl {
   Q_OBJECT
 public:
-  RunControlGUI(const std::string &listenaddress, QRect geom,
+  RunControlGUI(const std::string &listenaddress,
                 QWidget *parent = 0, Qt::WindowFlags flags = 0);
-  ~RunControlGUI();
+  ~RunControlGUI() override;
 
+  void Exec() override final;
 private:
   enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
-  virtual void OnConnect(const eudaq::ConnectionInfo &id);
-  virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
+  void OnConnect(const eudaq::ConnectionInfo &id) override;
+  void OnDisconnect(const eudaq::ConnectionInfo &id) override{
     m_run.disconnected(id);
   }
-  virtual void OnReceive(const eudaq::ConnectionInfo &id,
-                         std::shared_ptr<eudaq::Status> status);
+  void OnReceive(const eudaq::ConnectionInfo &id,
+		 std::shared_ptr<eudaq::Status> status) override;
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
       return;
@@ -107,7 +108,7 @@ private slots:
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
     StartRun(cont ? "Continued" : txtRunmsg->displayText().toStdString());
-    EmitStatus("RUN", to_string(m_runnumber));
+    EmitStatus("RUN", to_string(GetRunNumber()));
     emit StatusChanged("EVENT", "0");
     emit StatusChanged("TRIG", "0");
     emit StatusChanged("PARTICLES", "0");
@@ -117,7 +118,7 @@ private slots:
   }
   void on_btnStop_clicked() {
     StopRun();
-    EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
+    EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
     SetState(ST_READY);
   }
   void on_btnLog_clicked() {
@@ -139,7 +140,9 @@ private slots:
     }
   }
   void timer() {
-    if (!m_stopping) {
+    if (!IsStop()) {
+      auto m_runsizelimit = GetRunSizeLimit();
+      auto m_runeventlimit = GetRunSizeLimit();
       if ((m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) ||
           (m_runeventlimit >= 1 && m_events >= m_runeventlimit)) {
         if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
@@ -159,32 +162,7 @@ private slots:
           StopRun(false);
 	}
         eudaq::mSleep(20000);
-        if (m_nextconfigonrunchange) {
-          QDir dir(lastUsedDirectory, "*.conf");
-	  
-          // allConfigFiles
-          for (size_t i = 0; i < dir.count(); ++i) {
-            QString item = dir[i];
-            allConfigFiles.append(dir.absoluteFilePath(item));
-          }
-	  
-          if (allConfigFiles.indexOf(
-                  QRegExp("^" + QRegExp::escape(txtConfigFileName->text()))) +
-                  1 <
-              allConfigFiles.count()) {
-            EUDAQ_INFO("Moving to next config file and starting a new run");
-            txtConfigFileName->setText(allConfigFiles.at(allConfigFiles.indexOf(
-                QRegExp("^" + QRegExp::escape(txtConfigFileName->text())))+1));
-            on_btnConfig_clicked();
-	    if(!m_nextconfigonrunchange) {
-	      m_lastconfigonrunchange=true;
-	    }
-            eudaq::mSleep(1000);
-            m_startrunwhenready = true;
-          } else
-            EUDAQ_INFO("All config files processed.");
-        } else
-          on_btnStart_clicked(true);
+	on_btnStart_clicked(true);
       } else if (dostatus) {
         GetStatus();
       }

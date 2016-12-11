@@ -1,113 +1,88 @@
 # CMake script to build GUI applications
-# it will search for either Qt4 or Qt5, starting with Qt5
-option(BUILD_gui "Compile GUI executables (requires QT4/5)?" ON)
-IF(BUILD_gui)
+option(BUILD_gui "Compile GUI executables (requires QT5)?" ON)
+if(NOT BUILD_gui)
+  return()
+endif()
 
-  include(CMakeDependentOption)
+include(CMakeDependentOption)
 
-  IF(POLICY CMP0020)
-    CMAKE_POLICY(SET CMP0011 NEW) # disabling a warning about policy changing in this scope
-    CMAKE_POLICY(SET CMP0020 OLD) # explicitly disabling automatic linking of Qt executables to qtmain target on Windows (changed in CMake 2.8.10)
-  ENDIF(POLICY CMP0020)
+cmake_minimum_required(VERSION 3.1.0)
+find_package(Qt5Widgets QUIET)
+if(Qt5Widgets_FOUND)
+  message(STATUS "Found Qt5Widgets: ${Qt5Widgets_DIR}")
+  macro(qt_wrap_cpp)
+    qt5_wrap_cpp(${ARGN})
+  endmacro()
+  macro(qt_wrap_ui)
+    qt5_wrap_ui(${ARGN})
+  endmacro()
+  set(EXTERNAL_LIB_QT Qt5::Widgets)
+  include_directories(${Qt5Widgets_INCLUDE_DIRS})
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+else()
+  message(STATUS "NOT found Qt5Widgets.")
+  message(STATUS "Please setup Qt5Widgets_DIR, if Qt5 is intended to be built with.")
+  message(STATUS "Try to find Qt4...")
+  find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
+  macro(qt_wrap_cpp)
+    qt4_wrap_cpp(${ARGN})
+  endmacro()
+  macro(qt_wrap_ui)
+    qt4_wrap_ui(${ARGN})
+  endmacro()
+  set(EXTERNAL_LIB_QT Qt4::QtCore Qt4::QtGui)
+  include_directories(${QT_INCLUDES})
+  add_definitions(${QT_DEFINITIONS})
+endif()
 
-  # Check if environment variable QTDIR is set.
-  # Extra security for windows environment as well.
-  if (DEFINED ENV{QTDIR})
-    set(CMAKE_PREFIX_PATH $ENV{QTDIR} ${CMAKE_PREFIX_PATH})
-  endif()
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+include_directories(./include)
 
-  option(BUILD_WITH_QT4 "Build with Qt4 no matter whether Qt5 is found or not" OFF)
+set(MODULE_SRC
+  src/euRun.cc
+  src/RunControlModel.cc
+  src/euLog.cc
+  src/LogCollectorModel.cc
+  src/euProd.cc
+  # src/euRun.rc
+  # src/euLog.rc
+  # src/euProd.rc
+  )
 
-  if( NOT BUILD_WITH_QT4 )
-    # search for Qt5 package 'Widgets' (implies Core and Gui)
-    find_package(Qt5Widgets QUIET) # QUIET means it won't complain if not found
-    if( Qt5Widgets_DIR)
-      message(STATUS "Found Qt5Widgets: ${Qt5Widgets_DIR}")
-      macro(qt_wrap_cpp)
-        qt5_wrap_cpp(${ARGN})
-      endmacro()
-      macro(qt_wrap_ui)
-        qt5_wrap_ui(${ARGN})
-      endmacro()
-      # setup Qt5 libaries and include paths
-      set (my_qt_libraries ${Qt5Widgets_LIBRARIES})
-      include_directories(${Qt5Widgets_INCLUDE_DIRS})
-      ADD_DEFINITIONS(${Qt5Widgets_DEFINITIONS})
-    endif()
-  endif()
+qt_wrap_ui(euRun_UISrcs ui/euRun.ui)
+qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
+list(APPEND MODULE_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
 
-  if( NOT Qt5Gui_DIR )
-    message(STATUS "Could not find Qt5, searching for Qt4 instead...")
-    find_package( Qt4 )
-    macro(qt5_use_modules)
-    endmacro()
-    macro(qt_wrap_cpp)
-      qt4_wrap_cpp(${ARGN})
-    endmacro()
-    macro(qt_wrap_ui)
-      qt4_wrap_ui(${ARGN})
-    endmacro()
-    # setup Qt4 libaries and include paths
-    include( ${QT_USE_FILE} )
-    set (my_qt_libraries ${QT_LIBRARIES})
-    ADD_DEFINITIONS(${QT_DEFINITIONS})
-  endif()
+qt_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
+qt_wrap_ui(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
+list(APPEND MODULE_SRC ${euLog_UISrcs} ${euLog_MOCSrcs})
 
+qt_wrap_cpp(euProd_MOCSrcs include/euProd.hh )
+qt_wrap_ui(euProd_UISrcs ui/euProd.ui)
+list(APPEND MODULE_SRC ${euProd_UISrcs} ${euProd_MOCSrcs})
 
-  IF (NOT Qt5Gui_DIR AND NOT QT4_FOUND)
-    MESSAGE(WARNING "Neither Qt4 nor Qt5 were not found, will not build gui applications!")
-  ELSE()
-    message(STATUS "Found Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH}, will build GUI executables")
-    # this will run uic on .ui files:
-    QT_WRAP_UI(euRun_UISrcs ui/euRun.ui)
-    QT_WRAP_UI(euProd_UISrcs ui/euProd.ui)
-    QT_WRAP_UI(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
+get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+set(EUDAQ_MODULE module_${MODULE_NAME})
+add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
 
-    # and finally this will run moc:
-    QT_WRAP_CPP(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
-    QT_WRAP_CPP(euProd_MOCSrcs include/euProd.hh )
-    QT_WRAP_CPP(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
+add_executable(euRun src/euRun.cxx)
+set_property(TARGET euRun PROPERTY PROJECT_LABEL "BinEuRun")
+target_link_libraries(euRun ${EUDAQ_CORE})
+list(APPEND INSTALL_TARGETS euRun)
 
-    # we need this to be able to include headers produced by uic in our
-    # code (CMAKE_BINARY_DIR holds a path to the build directory, while
-    # INCLUDE_DIRECTORIES() works just like INCLUDEPATH from qmake)
-    include_directories(./include ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} )
+add_executable(euLog src/euLog.cxx)
+set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog") 
+target_link_libraries(euLog ${EUDAQ_CORE})
+list(APPEND INSTALL_TARGETS euLog)
 
-    # here we instruct CMake to build "sample" executable from all of the source files
-    ADD_EXECUTABLE(euRun  src/euRun.cc src/euRun.rc src/RunControlModel.cc ${euRun_MOCSrcs} ${euRun_UISrcs} )
-    ADD_EXECUTABLE(euProd  src/euProd.cc src/euProd.rc ${euProd_MOCSrcs} ${euProd_UISrcs} )
-    ADD_EXECUTABLE(euLog  src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
-    set_property(TARGET euRun   PROPERTY PROJECT_LABEL "BinEuRun") 
-    set_property(TARGET euProd   PROPERTY PROJECT_LABEL "BinEuProd") 
-    set_property(TARGET euLog   PROPERTY PROJECT_LABEL "BinEuLog") 
-    # last thing we have to do is to tell CMake what libraries our executable needs
-    TARGET_LINK_LIBRARIES(euRun   EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
-    TARGET_LINK_LIBRARIES(euProd  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
-    TARGET_LINK_LIBRARIES(euLog   EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+add_executable(euProd src/euProd.cxx)
+set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
+target_link_libraries(euProd ${EUDAQ_CORE})
+list(APPEND INSTALL_TARGETS euProd)
 
-    # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
-    IF(WIN32) # Check if we are on Windows
-      if(MSVC) # Check if we are using the Visual Studio compiler
-	# this causes linker errors on Qt5:
-	#      set_target_properties(euRun.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-	#      set_target_properties(euProd.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-	#      set_target_properties(euLog.exe PROPERTIES LINK_FLAGS "/SUBSYSTEM:WINDOWS")
-      elseif(CMAKE_COMPILER_IS_GNUCXX)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows") # Not tested
-      else()
-	message(SEND_ERROR "You are using an unsupported Windows compiler! (Not MSVC or GCC)")
-      endif()
-    elseif(UNIX)
-      # Nothing special required
-    else()
-      message(SEND_ERROR "You are on an unsupported platform! (Not Win32 or Unix)")
-    ENDIF()
-
-    INSTALL(TARGETS euRun  euProd  euLog 
-      RUNTIME DESTINATION bin
-      LIBRARY DESTINATION lib
-      ARCHIVE DESTINATION lib)
-
-  ENDIF() # check if any Qt was found
-
-ENDIF(BUILD_gui)
+install(TARGETS ${INSTALL_TARGETS}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)

@@ -1,31 +1,15 @@
 #ifndef EUDAQ_INCLUDED_Utils
 #define EUDAQ_INCLUDED_Utils
 
-/**
- * \file Utils.hh
- * Contains generally useful utility functions.
- */
-
 #include <string>
 #include <vector>
 #include <sstream>
 #include <iomanip>
 #include <stdexcept>
 #include <fstream>
-#include <sys/types.h>
-#include "eudaq/Platform.hh"
 
-#if ((defined WIN32) && (defined __CINT__))
-typedef unsigned long long uint64_t typedef long long
-    int64_t typedef unsigned int uint32_t typedef int int32_t
-#else
-#include <cstdint>
-#endif
+#include "Platform.hh"
 
-namespace Eudaq_types{
-  using timeStamp_t = int64_t;
-
-}
 namespace eudaq {
 
   std::string DLLEXPORT ucase(const std::string &);
@@ -47,6 +31,8 @@ namespace eudaq {
   constexpr uint32_t cstr2hash(const char* str, uint32_t h = 0){
     return !str[h] ? 5381 : (cstr2hash(str, h+1) * 33ULL) ^ str[h];
   }
+
+  uint32_t DLLEXPORT str2hash(const std::string &stdstr);
   
   /** Sleep for a specified number of milliseconds.
    * \param ms The number of milliseconds
@@ -241,6 +227,8 @@ namespace eudaq {
 #endif
   }
 
+
+  
   template <typename T>
   inline void setbigendian(unsigned char *ptr, const T &val) {
 #if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) ||                 \

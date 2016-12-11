@@ -1,7 +1,6 @@
 #include <QApplication>
 #include <QDateTime>
 #include <fstream>
-#include "euRunApplication.h"
 #include "euRun.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
@@ -9,72 +8,33 @@
 #include "eudaq/Status.hh"
 #include <exception>
 #include "config.h" // for version symbols
-//#include <QWindow>
-//#include <QScreen>
+
+namespace{
+  auto dummy0 = eudaq::Factory<eudaq::RunControl>::
+    Register<RunControlGUI, const std::string&>(eudaq::cstr2hash("RunControlGUI"));
+  auto dummy1 = eudaq::Factory<eudaq::RunControl>::
+    Register<RunControlGUI, const std::string&>(eudaq::cstr2hash("GuiRunControl"));
+}
+
+namespace{
+  QCoreApplication* GetQApplication(){
+    QCoreApplication* qapp = QApplication::instance();
+    if(!qapp){
+      int argc = 1;
+      char *argv[] = {(char*)"euGUI"};
+      qapp = new QApplication(argc, argv );  
+    }
+    return qapp;
+  }
+  auto qapp = GetQApplication();
+}
+
 
 static const char *statuses[] = {
     "RUN",       "Run Number", "EVENT",    "Events Built", "FULLRATE",
     "Rate",      "TRIG",       "Triggers", "FILEBYTES",    "File Bytes",
     "PARTICLES", "Particles",  "TLUSTAT",  "TLU Status",   "SCALERS",
     "Scalers",   0};
-
-euRunApplication::euRunApplication(int &argc, char **argv)
-    : QApplication(argc, argv) {}
-
-bool euRunApplication::notify(QObject *receiver, QEvent *event) {
-  bool done = true;
-  try {
-    done = QApplication::notify(receiver, event);
-  } catch (const std::exception &ex) {
-    // get current date
-    QDate date = QDate::currentDate();
-    std::cout << date.toString().toStdString()
-              << ": euRun GUI caught (and ignored) exception: " << ex.what()
-              << std::endl;
-
-  } catch (...) {
-    // get current date
-    QDate date = QDate::currentDate();
-    std::cout << date.toString().toStdString()
-              << ": euRun GUI caught (and ignored) unspecified exception "
-              << std::endl;
-  }
-  return done;
-}
-
-int main(int argc, char **argv) {
-  euRunApplication app(argc, argv);
-  eudaq::OptionParser op("EUDAQ Run Control", PACKAGE_VERSION,
-                         "A Qt version of the Run Control");
-  eudaq::Option<std::string> addr(
-      op, "a", "listen-address", "tcp://44000", "address",
-      "The address on which to listen for connections");
-  eudaq::Option<std::string> level(
-      op, "l", "log-level", "NONE", "level",
-      "The minimum level for displaying log messages locally");
-  eudaq::Option<int> x(op, "x", "left", -1, "pos");
-  eudaq::Option<int> y(op, "y", "top", -1, "pos");
-  eudaq::Option<int> w(op, "w", "width", 150, "pos");
-  eudaq::Option<int> h(op, "g", "height", 200, "pos",
-                       "The initial position of the window");
-  try {
-    op.Parse(argv);
-    EUDAQ_LOG_LEVEL(level.Value());
-    QRect rect(x.Value(), y.Value(), w.Value(), h.Value());
-    RunControlGUI gui(addr.Value(), rect);
-    gui.show();
-    return app.exec();
-  } catch (...) {
-    std::cout << "euRun exception handler" << std::endl;
-    std::ostringstream err;
-    int result = op.HandleMainException(err);
-    if (err.str() != "") {
-      QMessageBox::warning(0, "Exception", err.str().c_str());
-    }
-    return result;
-  }
-  return 0;
-}
 
 namespace {
   static const char *GEOID_FILE = "GeoID.dat";
@@ -94,14 +54,15 @@ void RunConnectionDelegate::paint(QPainter *painter,
   // painter->restore();
 }
 
-RunControlGUI::RunControlGUI(const std::string &listenaddress, QRect geom,
+RunControlGUI::RunControlGUI(const std::string &listenaddress,
                              QWidget *parent, Qt::WindowFlags flags)
-    : QMainWindow(parent, flags), eudaq::RunControl(listenaddress),
-      m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
-      m_filebytes(0), m_events(0), dostatus(false),
-      m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
-      m_startrunwhenready(false),m_lastconfigonrunchange(false) {
+  : QMainWindow(parent, flags), eudaq::RunControl(listenaddress),
+    m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
+    m_filebytes(0), m_events(0), dostatus(false),
+    m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
+    m_startrunwhenready(false),m_lastconfigonrunchange(false) {
   setupUi(this);
+  QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
   QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
@@ -256,7 +217,7 @@ void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
   //                         "This will reset all connected Producers etc.");
   m_run.newconnection(id);
   if (id.GetType() == "DataCollector") {
-    EmitStatus("RUN", "(" + to_string(m_runnumber) + ")");
+    EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
     SetState(ST_NONE);
   }
   if (id.GetType() == "LogCollector") {
@@ -289,4 +250,13 @@ RunControlGUI::~RunControlGUI() {
   settings.setValue("lastConfigFileDirectory", lastUsedDirectory);
   settings.setValue("lastConfigFile", txtConfigFileName->text());
   settings.endGroup();
+}
+
+
+void RunControlGUI::Exec(){
+  show();
+  if(QApplication::instance())
+    QApplication::instance()->exec(); 
+  else
+    std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";
 }

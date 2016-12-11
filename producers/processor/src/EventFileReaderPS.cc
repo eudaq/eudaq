@@ -1,26 +1,29 @@
-#include"EventFileReaderPS.hh"
-
-#include"Event.hh"
+#include"Processor.hh"
+#include"FileSerializer.hh"
 
 using namespace eudaq;
 
+class EventFileReaderPS:public Processor{
+public:
+  EventFileReaderPS();
+  ~EventFileReaderPS() {};
+  void ProduceEvent() final override;
+  void ProcessCommand(const std::string& cmd_name, const std::string& cmd_par) final override;
+  void OpenFile(const std::string& filename);
+private:
+  std::unique_ptr<FileDeserializer> m_des;    
+};
+
 namespace{
-  auto dummy0 = Factory<Processor>::Register<EventFileReaderPS, std::string&>(eudaq::cstr2hash("EventFileReaderPS"));
-  auto dummy1 = Factory<Processor>::Register<EventFileReaderPS, std::string&&>(eudaq::cstr2hash("EventFileReaderPS"));
+  auto dummy0 = Factory<Processor>::Register<EventFileReaderPS>(eudaq::cstr2hash("EventFileReaderPS"));
 }
 
-EventFileReaderPS::EventFileReaderPS(std::string cmd)
-  :Processor("EventFileReaderPS", ""){
-  *this<<cmd;
+EventFileReaderPS::EventFileReaderPS()
+  :Processor("EventFileReaderPS"){
 }
 
-void EventFileReaderPS::OpenFile(std::string filename){
+void EventFileReaderPS::OpenFile(const std::string& filename){
   m_des.reset(new FileDeserializer(filename));  
-}
-
-void EventFileReaderPS::ProcessUserEvent(EVUP ev){
-  std::cout<<">>>>PSID="<<GetID()<<"  PSType="<<GetType()<<"  EVType="<<ev->GetSubType()<<"  EVNum="<<ev->GetEventNumber()<<std::endl;
-  ForwardEvent(std::move(ev));
 }
 
 void EventFileReaderPS::ProduceEvent(){
@@ -29,18 +32,17 @@ void EventFileReaderPS::ProduceEvent(){
   for(uint32_t i=0; i<10; i++ ){
     uint32_t id;
     m_des->PreRead(id);
-    EVUP ev = Factory<Event>::Create<Deserializer&>(id, *m_des.get());
-    ProcessUserEvent(std::move(ev));
-    // Processing(std::move(ev));
+    EventSP ev = Factory<Event>::MakeShared<Deserializer&>(id, *m_des.get());
+    RegisterEvent(std::move(ev));
   }
 }
 
-void EventFileReaderPS::ProcessUsrCmd(const std::string cmd_name, const std::string cmd_par){
+void EventFileReaderPS::ProcessCommand(const std::string& cmd_name, const std::string& cmd_par){
   switch(cstr2hash(cmd_name.c_str())){
   case cstr2hash("FILE"):
     OpenFile(cmd_par);
     break;
   default:
-    Processor::ProcessUsrCmd(cmd_name, cmd_par);
+    break;
   }
 }

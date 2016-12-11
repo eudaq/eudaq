@@ -4,7 +4,6 @@
 #include "eudaq/TransportClient.hh"
 #include "eudaq/Serializer.hh"
 #include "eudaq/Status.hh"
-#include "eudaq/Mutex.hh"
 #include "Platform.hh"
 #include <string>
 
@@ -41,7 +40,7 @@ namespace eudaq {
     int m_errlevel;
     bool m_shownotconnected;
     bool isConnected = false;
-    Mutex m_mutex;
+    std::recursive_mutex m_mutex;
   };
 }
 

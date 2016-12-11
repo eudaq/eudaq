@@ -29,8 +29,8 @@ IF(BUILD_manual)
     src/ClassicCite.bst
     ../../main/exe/src/OptionExample.cxx
     ../../conf/ExampleConfig.conf
-    ../../main/exe/src/ExampleProducer.cxx
-    ../../main/lib/plugins/ExampleConverterPlugin.cc
+    ../../producers/example/src/ExampleProducer.cxx
+    ../../producers/example/src/ExampleConverterPlugin.cc
     ../../main/exe/src/ExampleReader.cxx
     BIBFILES src/References.bib
     USE_GLOSSARY

@@ -8,7 +8,6 @@
 
 #include <thread>
 #include <memory>
-//#include <pthread.h>
 #include <string>
 #include <iosfwd>
 
@@ -25,8 +24,7 @@ namespace eudaq {
     virtual ~CommandReceiver();
 
     virtual void OnConfigure(const Configuration & param);
-    virtual void OnPrepareRun(unsigned /*runnumber*/) {}
-    virtual void OnStartRun(unsigned /*runnumber*/) {}
+    virtual void OnStartRun(uint32_t /*runnumber*/) {}
     virtual void OnStopRun() {}
     virtual void OnTerminate() {}
     virtual void OnReset() {}
@@ -34,9 +32,7 @@ namespace eudaq {
     virtual void OnData(const std::string & /*param*/) {}
     virtual void OnLog(const std::string & /*param*/);
     virtual void OnServer() {}
-    virtual void OnGetRun() {}
     virtual void OnIdle();
-    virtual void OnClear();
     virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
 
     void Process(int timeout);
@@ -50,8 +46,7 @@ namespace eudaq {
     bool m_done;
     std::string m_type, m_name;
     void CommandHandler(TransportEvent &);
-    std::unique_ptr<std::thread> m_thread;
-    bool m_threadcreated;
+    std::thread m_thread;
   };
 
 }

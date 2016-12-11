@@ -11,15 +11,5 @@ namespace eudaq {
   Factory<FileWriter>::Instance<std::string&&>();
   
   FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern) {}
-
-  void FileWriter::WriteBaseEvent(const Event& ev){
-    auto dev = dynamic_cast<const eudaq::DetectorEvent *>(&ev);
-    if (dev){
-      WriteEvent(*dev);
-    }
-    else{
-      EUDAQ_THROW("unable to convert event into detector Event. this can happen when you try to use the sync algorithm which does not create detector events.");
-    }
-  }
- 
+  
 }

@@ -136,7 +136,6 @@ public:
   void ExecuteEvent(Int_t event, Int_t px, Int_t py, TObject *sel);
 
   void SetOnlineMon(RootMonitor *mymon);
-  ClassDef(OnlineMonWindow, 0);
 };
 
 #endif

@@ -8,39 +8,43 @@
 #include "Platform.hh"
 namespace eudaq {
 
+
   class DLLEXPORT RawDataEvent : public Event {
   public:
-    typedef unsigned char byte_t;
-    typedef std::vector<byte_t> data_t;
+
+    static std::shared_ptr<RawDataEvent> MakeShared(const std::string& dspt,
+						    uint32_t dev_n,
+						    uint32_t run_n, uint32_t ev_n);
+    
     struct DLLEXPORT block_t : public Serializable {
-      block_t(unsigned id = (unsigned)-1, data_t data = data_t())
+      block_t() = default;
+      block_t(uint32_t id, const std::vector<uint8_t> &data)
           : id(id), data(data) {}
       block_t(Deserializer &);
       void Serialize(Serializer &) const;
-      void Append(const data_t &data);
-      unsigned id;
-      data_t data;
+      void Append(const std::vector<uint8_t> &data);
+      uint32_t id;
+      std::vector<uint8_t> data;
     };
-    RawDataEvent();
-    RawDataEvent(std::string type, unsigned run, unsigned event);
+
+    RawDataEvent(const std::string& dspt, uint32_t dev_n, uint32_t run_n, uint32_t ev_n);
     RawDataEvent(Deserializer &);
+    void Serialize(Serializer &) const override;
+    void Print(std::ostream & ,size_t offset = 0) const override;
 
-    /// Add an empty block
-    size_t AddBlock(unsigned id) {
-      m_blocks.push_back(block_t(id));
-      return m_blocks.size() - 1;
-    }
-
+    uint32_t GetID(size_t i) const { return m_blocks.at(i).id; }
+    const std::vector<uint8_t>& GetBlock(size_t i) const;
+    size_t NumBlocks() const { return m_blocks.size(); }    
     /// Add a data block as std::vector
     template <typename T>
-    size_t AddBlock(unsigned id, const std::vector<T> &data) {
+    size_t AddBlock(uint32_t id, const std::vector<T> &data) {
       m_blocks.push_back(block_t(id, make_vector(data)));
       return m_blocks.size() - 1;
     }
 
     /// Add a data block as array with given size
     template <typename T>
-    size_t AddBlock(unsigned id, const T *data, size_t bytes) {
+    size_t AddBlock(uint32_t id, const T *data, size_t bytes) {
       m_blocks.push_back(block_t(id, make_vector(data, bytes)));
       return m_blocks.size() - 1;
     }
@@ -56,65 +60,25 @@ namespace eudaq {
     void AppendBlock(size_t index, const T *data, size_t bytes) {
       m_blocks[index].Append(make_vector(data, bytes));
     }
-
-    unsigned GetID(size_t i) const;
-    /** Get the data block number i as vector of \c{unsigned char}, which is the
-     * byte sequence which
-     *  which has been serialised. This is the recommended way to retrieve your
-     *  data from the RawDataEvent since the other GetBlock functions might
-     *  give different results depending on the endiannes of your mashine.
-     */
-    const data_t &GetBlock(size_t i) const;
-    byte_t GetByte(size_t block, size_t index) const;
-
-    /// Return the number of data blocks in the RawDataEvent
-    size_t NumBlocks() const { return m_blocks.size(); }
-
-    virtual void Print(std::ostream &) const;
-    virtual void Print(std::ostream & ,size_t offset) const;
-    static RawDataEvent BORE(std::string type, unsigned run) {
-      return RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
-    }
-    static RawDataEvent *newBORE(std::string type, unsigned run) {
-      return new RawDataEvent(type, run, (unsigned)-1, Event::FLAG_BORE);
-    }
-    static RawDataEvent EORE(std::string type, unsigned run, unsigned event) {
-      return RawDataEvent(type, run, event, Event::FLAG_EORE);
-    }
-    static RawDataEvent *newEORE(std::string type, unsigned run,
-				 unsigned event) {
-      return new RawDataEvent(type, run, event, Event::FLAG_EORE);
-    }
-
-    virtual void Serialize(Serializer &) const;
-
-    /// Return the type string.
-    virtual std::string GetSubType() const { return m_type; }
-
-    virtual void SetSubType(std::string subtype){ m_type = subtype; }
-
+    
   private:
-    // private constructor to create BORE and EORE
-    // make sure that event number is 0 for BORE
-    RawDataEvent(std::string type, unsigned run, unsigned event, Event::Flags flag)
-      : Event(run, event, NOTIMESTAMP, flag) ,  m_type(type){
-      m_typeid = Event::str2id("_RAW");
+    template <typename T>
+      static std::vector<uint8_t> make_vector(const T *data, size_t bytes) {
+      const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data);
+      return std::vector<uint8_t>(ptr, ptr + bytes);
     }
 
     template <typename T>
-    static data_t make_vector(const T *data, size_t bytes) {
-      const unsigned char *ptr = reinterpret_cast<const byte_t *>(data);
-      return data_t(ptr, ptr + bytes);
+    static std::vector<uint8_t> make_vector(const std::vector<T> &data) {
+      const uint8_t *ptr = reinterpret_cast<const uint8_t *>(&data[0]);
+      return std::vector<uint8_t>(ptr, ptr + data.size() * sizeof(T));
     }
-
-    template <typename T>
-    static data_t make_vector(const std::vector<T> &data) {
-      const unsigned char *ptr = reinterpret_cast<const byte_t *>(&data[0]);
-      return data_t(ptr, ptr + data.size() * sizeof(T));
-    }
-
-    std::string m_type;
+    
     std::vector<block_t> m_blocks;
+
+  public:
+    static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
+
   };
 }
 

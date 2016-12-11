@@ -58,7 +58,7 @@ public:
     }
   }
 
-  uint16_t GetRunNumber(){return RunControl::m_runnumber;}
+  //uint16_t GetRunNumber(){return RunControl::m_runnumber;}
 
   bool AllOk(){
     bool ok = true;

@@ -1,72 +1,146 @@
 #include <list>
-#include "FileReader.hh"
-#include "FileNamer.hh"
-#include "PluginManager.hh"
-#include "Event.hh"
-#include "Logger.hh"
-#include "FileSerializer.hh"
-#include "Configuration.hh"
+#include "eudaq/FileReader.hh"
+#include "eudaq/Exception.hh"
+#include "eudaq/OptionParser.hh"
 
 namespace eudaq {
 
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&)>& Factory<FileReader>::Instance<std::string&>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<FileReader>::UP (*)(std::string&&)>& Factory<FileReader>::Instance<std::string&&>();
 
-  FileReader::FileReader(const std::string & file, const std::string & filepattern)
-    : baseFileReader(FileNamer(filepattern).Set('X', ".raw").SetReplace('R', file)),
-    m_des(Filename()),m_ver(1){
-    uint32_t id;
-    m_des.PreRead(id);
-    m_ev = Factory<eudaq::Event>::Create<Deserializer&>(id, m_des);
+  
+  FileReader::FileReader(Parameter_ref config) :
+    m_config(config)
+  {
+    
   }
 
-  FileReader::FileReader(Parameter_ref param) :FileReader(param.Get(getKeyFileName(),""),param.Get(getKeyInputPattern(),""))
+  FileReader::FileReader(const std::string& fileName)  
+  {
+    m_config.Set(getKeyFileName(), fileName);
+  }
+
+  std::string FileReader::Filename() const
+  {
+    return m_config.Get(getKeyFileName(), "");
+  }
+
+  void FileReader::Interrupt()
   {
 
   }
 
-  FileReader::~FileReader() {
+  std::string FileReader::InputPattern() const
+  {
+    return m_config.Get(getKeyInputPattern(),"");
+  }
+
+  const char* FileReader::getKeyFileName()
+  {
+    return "InputFileName__";
+  }
+
+  const char* FileReader::getKeyInputPattern()
+  {
+    return "InputPattern__";
+  }
+
+  const char* FileReader::getKeySectionName()
+  {
+    return "FileReaderConfig";
+  }
+
+  FileReader::Parameter_ref FileReader::getConfiguration() const
+  {
+    return m_config;
+  }
+
+  FileReader::Parameter_t& FileReader::getConfiguration()
+  {
+    return m_config;
+  }
+
+
+
+
+  fileConfig::fileConfig(const std::string& fileName):m_type(fileName) {
 
   }
 
-  bool FileReader::NextEvent(size_t skip) {
-    std::shared_ptr<eudaq::Event> ev = nullptr;
+
+  fileConfig::fileConfig(eudaq::OptionParser & op) {
+    if (op.NumArgs() == 1) {
+       m_type =  op.GetArg(0);
+       return;
+    } else {
+
+      std::string combinedFiles = "";
+      for (size_t i = 0; i < op.NumArgs(); ++i) {
+        if (!combinedFiles.empty()) {
+          combinedFiles += ',';
+        }
+        combinedFiles += op.GetArg(i);
 
 
-    bool result = m_des.ReadEvent(m_ver, ev, skip);
-    if (ev) m_ev = ev;
-    return result;
+      }
+      combinedFiles += "$multi";
+
+      m_type = combinedFiles;
+      return;
+    }
   }
 
-  unsigned FileReader::RunNumber() const {
-    return m_ev->GetRunNumber();
+  std::string fileConfig::get() const {
+    return m_type;
   }
 
-  const Event & FileReader::GetEvent() const {
-    return *m_ev;
+  FileReader::Parameter_t FileReader::getConfiguration(const std::string& fileName, const std::string& filePattern)
+  {
+
+    auto configuartion = std::string("[") + FileReader::getKeySectionName() + "] \n " + FileReader::getKeyFileName() + "=" + fileName+ "\n " + FileReader::getKeyInputPattern() +"="+ filePattern +"\n";
+    return Parameter_t(configuartion);
   }
 
-  const DetectorEvent & FileReader::GetDetectorEvent() const {
-    return dynamic_cast<const DetectorEvent &>(*m_ev);
-  }
+  std::pair<std::string, std::string> split_name_identifier(const std::string& name){
+  
+    std::pair<std::string, std::string> ret;
+    
 
-  const StandardEvent & FileReader::GetStandardEvent() const {
-    return dynamic_cast<const StandardEvent &>(*m_ev);
-  }
+    auto index_raute = name.find_last_of('$');
+    if (index_raute == std::string::npos)
+    {
+      // no explicit type definition 
+      auto index_dot = name.find_last_of('.');
+      if (index_dot != std::string::npos)
+      {
+        std::string type = name.substr(index_dot + 1);
+              
 
-  std::shared_ptr<eudaq::Event> FileReader::GetNextEvent(){
+        ret.first = type;
+        ret.second = name;
+      
 
-    if (!NextEvent()) {
-      return nullptr;
+      }
+      else{
+        EUDAQ_THROW("unknown file type ");
+      }
+
+
+    }
+    else
+    {
+      // Explicit definition
+      std::string type = name.substr(index_raute + 1);
+      std::string name_shorted = name.substr(0, index_raute);
+   
+      ret.first = type;
+      ret.second = name_shorted;
     }
 
-    return m_ev;
-
-
+    return ret;
   }
 
-
-
-
-
-  RegisterFileReader(FileReader, "raw");
 
 }

@@ -3,11 +3,16 @@
 
 namespace eudaq {
 
+  template class DLLEXPORT Factory<Producer>;
+  template DLLEXPORT  std::map<uint32_t, typename Factory<Producer>::UP_BASE (*)
+			       (const std::string&, const std::string&)>&
+  Factory<Producer>::Instance<const std::string&, const std::string&>();  
+  
   Producer::Producer(const std::string &name, const std::string &runcontrol)
     : CommandReceiver("Producer", name, runcontrol), m_name(name){
   }
 
-  void Producer::OnData(const std::string &param) {
+  void Producer::OnData(const std::string &param){
     //TODO: decode param
     Connect(param);
   }

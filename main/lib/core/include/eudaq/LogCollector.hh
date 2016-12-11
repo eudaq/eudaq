@@ -1,18 +1,28 @@
 #ifndef EUDAQ_INCLUDED_LogCollector
 #define EUDAQ_INCLUDED_LogCollector
 
-//#include <pthread.h>
 #include <string>
 #include <fstream>
 #include "eudaq/Platform.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
+#include "eudaq/Factory.hh"
 #include <memory>
 #include <thread>
 
 namespace eudaq {
-
+  class LogCollector;
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<LogCollector>;
+  extern template DLLEXPORT
+  std::map<uint32_t, typename Factory<LogCollector>::UP_BASE (*)
+	   (const std::string&, const std::string&,
+	    const std::string&, const int&)>&
+  Factory<LogCollector>::Instance<const std::string&, const std::string&,
+				  const std::string&, const int&>();//TODO: check const int& 
+#endif
+  
   class LogMessage;
 
   /** Implements the functionality of the File Writer application.
@@ -31,15 +41,14 @@ namespace eudaq {
     virtual ~LogCollector();
 
     void LogThread();
+    virtual void Exec(){};
 
   private:
     void LogHandler(TransportEvent &ev);
     void DoReceive(const LogMessage &msg);
     bool m_done, m_listening;
-    TransportServer *m_logserver; ///< Transport for receiving log messages
-                                  //      pthread_t m_thread;
-                                  //      pthread_attr_t m_threadattr;
-    std::unique_ptr<std::thread> m_thread;
+    std::unique_ptr<TransportServer> m_logserver; ///< Transport for receiving log messages
+    std::thread m_thread;
     std::string m_filename;
     std::ofstream m_file;
   };

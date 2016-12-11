@@ -1,270 +1,129 @@
-#include <ostream>
-#include <iostream>
-#include <time.h>
-
 #include "Event.hh"
-#include "PluginManager.hh"
 #include "BufferSerializer.hh"
 
 namespace eudaq {
-
+  
   template class DLLEXPORT Factory<Event>;
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(Deserializer&)>&
   Factory<Event>::Instance<Deserializer&>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
+  Factory<Event>::Instance<>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)
+	   (const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
+  template DLLEXPORT
+  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)
+	   (const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
+  Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
+  //RawDataEvent
+  
+  namespace{
+    auto dummy0 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("BASE"));
+    auto dummy1 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("BASE"));
+    auto dummy2 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("TRIGGER"));
+    auto dummy3 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER")); //Trigger
+    auto dummy4 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("DUMMYDEV"));
+    auto dummy5 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV")); //DummyEvent
+    auto dummy6 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("SYNC"));
+    auto dummy7 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"));
+  }
+
+  EventSP Event::MakeShared(Deserializer& des){
+    uint32_t evid;
+    des.PreRead(evid);
+    EventSP ev = Factory<Event>::Create(evid, des);
+    return ev;
+  }
+  
+  Event::Event()
+    :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
+  }  
+  
+  Event::Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n)
+    :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
     
-  namespace {
-    static const char * const FLAGNAMES[] = {
-      "BORE",
-      "EORE",
-      "HITS",
-      "FAKE",
-      "SIMU",
-      "EUDAQ2",
-      "Packet"
-    };
   }
 
   Event::Event(Deserializer & ds) {
-    ds.read(m_typeid);
+    ds.read(m_type);
+    ds.read(m_version);
     ds.read(m_flags);
-    ds.read(m_runnumber);
-    ds.read(m_eventnumber);
-    if (IsEUDAQ2()){
-      ds.read(m_timestamp);
-    }
-    else{
-      uint64_t timestamp;
-      ds.read(timestamp);
-      m_timestamp.push_back(timestamp);
-    }
+    ds.read(m_stm_n);
+    ds.read(m_run_n);
+    ds.read(m_ev_n);
+    ds.read(m_ts_begin);
+    ds.read(m_ts_end);
     ds.read(m_tags);
+    uint32_t n_subev;
+    for(ds.read(n_subev); n_subev>0; n_subev--){
+      uint32_t evid;
+      ds.PreRead(evid);
+      EventSP ev = Factory<Event>::Create<Deserializer&>(evid, ds);
+      m_sub_events.push_back(std::const_pointer_cast<const Event>(ev));
+    }
   }
-
-  Event::Event():m_flags(0), m_runnumber(0), m_eventnumber(0){
-    
-  }
-
   
-  Event::Event(unsigned run, unsigned event, timeStamp_t timestamp /*= NOTIMESTAMP*/, unsigned flags /*= 0*/) : m_flags(flags | FLAG_EUDAQ2), // it is not desired that user use old EUDAQ 1 event format. If one wants to use it one has clear the flags first and then set flags with again.
-    m_runnumber(run),
-    m_eventnumber(event)
-  {
-    m_timestamp.push_back(timestamp);
-  }
-
   void Event::Serialize(Serializer & ser) const {
-    ser.write(m_typeid);
-#ifdef __FORCE_EUDAQ1_FILES___
-    auto dummy = m_flags & ~Event::FLAG_EUDAQ2;
-    ser.write(m_flags & ~Event::FLAG_EUDAQ2);
-#else
+    ser.write(m_type);
+    ser.write(m_version);
     ser.write(m_flags);
-#endif
-    
-    ser.write(m_runnumber);
-    ser.write(m_eventnumber);
-#ifdef __FORCE_EUDAQ1_FILES___
-
-    ser.write(m_timestamp.at(0));
-#else
-
-    if (IsEUDAQ2())
-    {
-      ser.write(m_timestamp);
-      
-    }
-    else
-    {
-      ser.write(m_timestamp.at(0));
-    }
-#endif
+    ser.write(m_stm_n);
+    ser.write(m_run_n);
+    ser.write(m_ev_n);
+    ser.write(m_ts_begin);
+    ser.write(m_ts_end);
     ser.write(m_tags);
+    ser.write((uint32_t)m_sub_events.size());
+    for(auto &ev: m_sub_events){
+      ser.write(*ev);
+    }
   }
 
-  void Event::Print(std::ostream & os) const {
-    Print(os, 0);
+  EventUP Event::Clone() const{ //TODO: clone directly
+    BufferSerializer ser;
+    Serialize(ser);
+    uint32_t id;
+    ser.PreRead(id);
+    return Factory<Event>::Create<Deserializer&>(id, ser);
   }
-
-  void Event::Print(std::ostream & os, size_t offset) const
-  {
-    os << std::string(offset, ' ') << "<Event> \n";
-    os << std::string(offset + 2, ' ') << "<Type>" << id2str(get_id()) << ":" << GetSubType() << "</Type> \n";
-    os << std::string(offset + 2, ' ') << "<RunNumber>" << m_runnumber << "</RunNumber>\n";
-    os << std::string(offset + 2, ' ') << "<EventNumber>" << m_eventnumber << "</EventNumber>\n";
-    
-    bool timestampsSet = false;
-    for (auto& e : m_timestamp)
-    {
-      if (e!=NOTIMESTAMP)
-      {
-        if (!timestampsSet)
-        {
-          os << std::string(offset + 2, ' ') << "<Time> \n";
-          timestampsSet = true;
-        }
-        os << std::string(offset +4, ' ') << "0x" << to_hex(e, 16) << ",\n";
-
-      }
-    }
-    if (timestampsSet)
-    {
-      os << std::string(offset + 2, ' ') << "</Time>\n";
-    }
-    if (m_timestamp[0] != NOTIMESTAMP)
-    if (m_flags) {
-      unsigned f = m_flags;
-      bool first = true;
-      for (size_t i = 0; f > 0; ++i, f >>= 1) {
-        if (f & 1) {
-          if (first)
-          {
-            os << std::string(offset + 2, ' ') << "<Flags> ";
-              first = false;
-          }
-          else
-          {
-            os << ", ";
-          }
-          if (i < sizeof FLAGNAMES / sizeof *FLAGNAMES)
-          {
-            os << std::string(FLAGNAMES[i]);
-          }
-          else{
-            os << to_string(i);
-          }
-        }
-      }
-      if (first==false)
-      {
-        os  << "</Flags> \n";
-      }
-
-    }
-    if (m_tags.size() > 0) {
+  
+  void Event::Print(std::ostream & os, size_t offset) const{
+    os << std::string(offset, ' ') << "<Event>\n";
+    os << std::string(offset + 2, ' ') << "<Type> " << m_type <<" </Type>\n";
+    os << std::string(offset + 2, ' ') << "<Flag> 0x" << to_hex(m_flags, 8)<< " </Flag>\n";
+    os << std::string(offset + 2, ' ') << "<RunN> " << m_run_n << " </RunN>\n";
+    os << std::string(offset + 2, ' ') << "<StreamN> " << m_stm_n << " </StreamN>\n";
+    os << std::string(offset + 2, ' ') << "<EventN> " << m_ev_n << " </EventN>\n";
+    os << std::string(offset + 2, ' ') << "<Timestamp> 0x" << to_hex(m_ts_begin, 16)
+       <<"  ->  0x"<< to_hex(m_ts_end, 16) << " </Timestamp>\n";
+    os << std::string(offset + 2, ' ') << "<Timestamp> " << m_ts_begin
+       <<"  ->  "<< m_ts_end << " </Timestamp>\n";
+    if(!m_tags.empty()){
       os << std::string(offset + 2, ' ') << "<Tags> \n";
-      for (map_t::const_iterator i = m_tags.begin(); i != m_tags.end(); ++i) {
-        os << std::string(offset+4, ' ')  << i->first << "=" << i->second << "\n";
+      for (auto &tag: m_tags){
+	os << std::string(offset+4, ' ') << "<Tag> "<< tag.first << "=" << tag.second << " </Tag>\n";
       }
       os << std::string(offset + 2, ' ') << "</Tags> \n";
     }
-    os << std::string(offset, ' ') << "</Event> \n";
-  }
-
-  unsigned Event::str2id(const std::string & str) {
-    uint32_t result = 0;
-    for (size_t i = 0; i < 4; ++i) {
-      if (i < str.length()) result |= str[i] << (8 * i);
-    }
-    return result;
-  }
-
-  std::string Event::id2str(unsigned id) {
-    std::string result(4, '\0');
-    for (int i = 0; i < 4; ++i) {
-      result[i] = (char)(id & 0xff);
-      id >>= 8;
-    }
-    for (int i = 3; i >= 0; --i) {
-      if (result[i] == '\0') {
-        result.erase(i);
-        break;
+    if(!m_sub_events.empty()){
+      os << std::string(offset + 2, ' ') << "<SubEvents>\n";
+      os << std::string(offset + 4, ' ') << "<Size> " << m_sub_events.size()<< " </Size>\n";
+      for(auto &subev: m_sub_events){
+	subev->Print(os, offset+4);
       }
+      os << std::string(offset + 2, ' ') << "</SubEvents>\n";
     }
-    return result;
-  }
-
-  EventUP Event::Create(Deserializer &ds){
-    uint32_t id;
-    ds.PreRead(id);
-    return Factory<Event>::Create<Deserializer&>(id, ds);
+    os << std::string(offset, ' ') << "</Event>\n";
   }
   
-  Event & Event::SetTag(const std::string & name, const std::string & val) {
-    m_tags[name] = val;
-    return *this;
-  }
 
   std::string Event::GetTag(const std::string & name, const std::string & def) const {
     auto i = m_tags.find(name);
     if (i == m_tags.end()) return def;
     return i->second;
-  }
-
-  void Event::SetTimeStampToNow(size_t i)
-  {
-    m_timestamp[i]=static_cast<uint64_t>(clock());
-  }
-
-  bool Event::HasTag(const std::string &name) const{
-    if (m_tags.find(name) == m_tags.end())
-      return false;
-    else
-      return true;
-  }
-
-  void Event::pushTimeStampToNow()
-  {
-    m_timestamp.push_back(static_cast<uint64_t>(clock()));
-  }
-
-  unsigned Event::GetRunNumber() const
-  {
-    return m_runnumber;
-  }
-
-  unsigned Event::GetEventNumber() const
-  {
-    return m_eventnumber;
-  }
-
-  Event::timeStamp_t Event::GetTimestamp(size_t i/*=0*/) const
-  {
-    return m_timestamp[i];
-  }
-
-  size_t Event::GetSizeOfTimeStamps() const
-  {
-    return m_timestamp.size();
-  }
-
-  void Event::setTimeStamp(timeStamp_t timeStamp, size_t i/*=0*/)
-  {
-    if (i>=m_timestamp.size())
-    {
-      size_t oldSize = m_timestamp.size();
-      m_timestamp.resize(i + 1);
-      for (auto j = oldSize; j < m_timestamp.size();++j)
-      {
-        m_timestamp[j] = NOTIMESTAMP;
-      }
-
-    }
-    m_timestamp[i] = timeStamp;
-  }
-
-
-
-  uint64_t Event::getUniqueID() const
-  {
-    uint64_t id = PluginManager::getUniqueIdentifier(*this);
-    id = id << 32;
-    id |= GetEventNumber();
-    return id;
-  }
-
-  Event* Event::Clone() const{ //TODO: clone directly
-    BufferSerializer ser;
-    Serialize(ser);
-    uint32_t id;
-    ser.PreRead(id);
-    Event* ev = Factory<Event>::Create<Deserializer&>(id, ser).release();
-    return ev;
-  }
-  
-  std::ostream & operator << (std::ostream &os, const Event &ev) {
-    ev.Print(os);
-    return os;
   }
 
 }
