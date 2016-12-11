@@ -7,6 +7,7 @@
 #include "RawDataEvent.hh"
 #include "Configuration.hh"
 #include "Logger.hh"
+#include "proc.hh"
 
 #if USE_LCIO
 #include "IMPL/LCEventImpl.h"
@@ -40,18 +41,118 @@ using eutelescope::EUTELESCOPE;
 #include <algorithm>
 #include <functional>
 
+#include <array>
+
 #define GET(d, i) getlittleendian<unsigned>(&(d)[(i)*4])
+#define _DEBUG_OUT if (dbg > 0) std::cout
+#define _DEBUG_OUT_2 if (dbg > 2) std::cout
+
 
 namespace eudaq {
   class NIConverterPlugin;
 
-  namespace{
+  namespace {
     auto dummy0 = Factory<DataConverterPlugin>::Register<NIConverterPlugin>(cstr2hash("NI"));
   }
-  
+  inline bool isBORE_or_EORE(const eudaq::Event& source) {
+
+    if (source.IsBORE()) {
+      std::cout << "GetStandardSubEvent : got BORE" << std::endl;
+      // shouldn't happen
+      return true;
+    } else if (source.IsEORE()) {
+      std::cout << "GetStandardSubEvent : got EORE" << std::endl;
+      // nothing to do
+      return true;
+    }
+
+    return false;
+
+  }
+
+
+
+
+
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
   static const int PIVOTPIXELOFFSET = 64;
 
+
+
+
+
+  inline bool isBadEvent(const eudaq::RawDataEvent& rawev) {
+
+    if (rawev.NumBlocks() != 2
+      ||
+      rawev.GetBlock(0).size() < 20
+      ||
+      rawev.GetBlock(1).size() < 20) {
+      EUDAQ_WARN("Ignoring bad event " + to_string(rawev.GetEventNumber()));
+      return true;
+    }
+    return false;
+  }
+
+
+  inline unsigned getPlaneID(const std::vector<int>& ids, unsigned board) {
+    unsigned id = board;
+
+    if (id < ids.size()) { id = ids[id]; }
+
+    _DEBUG_OUT << "Sensor " << board << ", id = " << id << std::endl;
+
+    return id;
+  }
+
+
+
+
+
+
+
+  inline StandardPlane make_Standardplane(unsigned planeID, unsigned TLUID, unsigned pivot) {
+    StandardPlane plane(planeID, "NI", "MIMOSA26");
+    plane.SetSizeZS(1152, 576, 0, 2, StandardPlane::FLAG_WITHPIVOT |
+      StandardPlane::FLAG_DIFFCOORDS);
+    plane.SetTLUEvent(TLUID);
+    plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
+    return plane;
+  }
+
+
+  DEFINE_PROC1(push_hit_to_plane, nextProc, decoder) {
+
+    decoder.set_pivot((decoder.get_row() >= (decoder.get_plane().PivotPixel() / 16)));
+
+    for (unsigned s = 0; s < decoder.get_numstates(); ++s) {
+      decoder.push_to_plane(s);
+    }
+
+    return nextProc(decoder);
+  }
+  DEFINE_PROC1(loop_over_frame_decoder, t, decoder) {
+
+    while (decoder.next()) {
+      if (t(decoder) != success) {
+        return procReturn::stop_;
+      };
+    }
+
+    return procReturn::success;
+  }
+
+
+
+
+  DEFINE_PROC1(DEBUG_OUT_2_Hit_line, t, decoder) {
+    decoder.DEBUG_OUT_2_Hit_line();
+    auto ret = t(decoder);
+    _DEBUG_OUT_2 << std::endl;
+    _DEBUG_OUT << "Total pixels " << decoder.get_frame() << " = " << decoder.get_npixels() << std::endl;
+    return  ret;
+
+  }
   class NIConverterPlugin : public DataConverterPlugin {
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
@@ -61,7 +162,220 @@ namespace eudaq {
     virtual void Initialize(const Event &bore, const Configuration & /*c*/);
     virtual unsigned GetTriggerID(Event const &ev) const;
     virtual bool GetStandardSubEvent(StandardEvent &result, const Event &source) const;
-    void DecodeFrame(StandardPlane &plane, size_t len, datait it, int frame) const;
+    class NI_block_Decoder {
+    public:
+      NI_block_Decoder(const datavect &data, int blockID);
+
+
+
+      bool hasTrailing_Rubbish() const;
+
+      bool isValid() const;
+      unsigned getPivot() const;
+      void DEBUG_OUT_Mimosa_header() const;
+
+      void DEBUG_OUT_Mimosa_framecount() const;
+
+
+      bool calc_Mimosa_Wordcount_Length();
+
+
+      unsigned getLen() const;
+
+      void DEBUG_OUT_Mimosa_trailer() const;
+      datait getItterator() const;
+
+      bool can_Advance_one_block() const;
+      void do_advance_one_block();
+
+      void DEBUG_OUT_advance_one_block() const;
+
+
+
+      unsigned getBlockId() const;
+
+    private:
+      static unsigned getHeader(const datavect &  vec);
+
+      static std::string getFrameName(int frameID);
+      static unsigned getPivot_(const datavect & vec);
+      void calc_Mimosa_wordcount();
+
+      bool hasBad_Mimosa_Wordcount_Length() const;
+
+
+      const datavect & m_data;
+      unsigned m_header, m_len = 0;
+      datait m_it;
+      const int m_blockID;
+      const unsigned m_pivot;
+    };
+
+
+    class NI_frame_decoder {
+    public:
+      NI_frame_decoder(NI_block_Decoder& block, StandardPlane &plane);
+
+      bool next();
+      void DEBUG_OUT_2_Hit_line()const;
+      unsigned get_row() const;
+      unsigned get_numstates() const;
+      void push_to_plane(const unsigned s);
+      void set_pivot(bool pivot_);
+      unsigned get_npixels() const;
+      int get_frame() const;
+      unsigned short at(size_t index) const;
+      const StandardPlane& get_plane() const;
+      StandardPlane& get_plane();
+      NI_block_Decoder& get_block();
+    private:
+      const size_t m_len;
+      const int frame;
+      datait m_it;
+
+      StandardPlane &m_plane;
+      unsigned npixels = 0;
+      unsigned numstates = 0;
+      unsigned row = 0;
+      bool pivot = 0;
+      size_t m_index = 0;
+      bool first = true;
+      NI_block_Decoder& m_block;
+    };
+
+
+  public:
+    virtual ~NIConverterPlugin() {}
+
+
+
+
+
+
+    class push_to_Event {
+    public:
+      push_to_Event(StandardEvent &result) :m_result(result) {
+
+      }
+      template <typename NEXT_T>
+      procReturn operator()(NEXT_T&& t, const StandardPlane& plane) {
+        m_result.AddPlane(plane);
+        return t(plane);
+      }
+      StandardEvent & m_result;
+    };
+
+    template <typename DECODER_T>
+    class convert_to_plane_impl {
+
+    public:
+
+      convert_to_plane_impl(unsigned tluID, DECODER_T&& decoder) :m_tluID(tluID), m_decoder(std::move(decoder)) {}
+
+      template <typename NEXT_T, typename BLOCKS_T, typename ID_T>
+      procReturn operator()(NEXT_T&& t, BLOCKS_T& blocks, const ID_T& id) const {
+
+
+        auto plane = make_Standardplane(id, m_tluID, blocks[0].getPivot());
+        for (auto&e : blocks) {
+
+          //DecodeFrame(plane, e.getLen(), e.getItterator() + 8, e.getBlockId());
+          //m_decoder(e, plane);
+
+          //auto  t = proc() >> check_Block_integrity();
+
+          if (m_decoder(NI_frame_decoder(e, plane)) != success) {
+            return stop_;
+          };
+        }
+        return t(plane);
+      }
+      const unsigned m_tluID;
+      mutable DECODER_T m_decoder;
+    };
+
+    template<typename T>
+    auto convert_to_plane(unsigned tluID, T&& decoder) const {
+      return convert_to_plane_impl<std::remove_reference<T>::type>(tluID, std::forward<T>(decoder));
+    }
+    class loop_over_blocks {
+    public:
+      loop_over_blocks(const std::vector<int>& vec) :m_ids(vec) {
+
+
+      }
+
+      template <typename T>
+      static bool isValid(const T& blocks) {
+        for (const auto& e : blocks) {
+          if (!e.isValid()) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      template <typename T>
+      static bool can_Advance_one_block(T& blocks) {
+        for (const auto& e : blocks) {
+          if (!e.can_Advance_one_block()) {
+            return false;
+          }
+        }
+        return true;
+      }
+      template <typename T>
+      static bool advanceBlocks(T& blocks) {
+        if (can_Advance_one_block(blocks)) {
+          for (auto& e : blocks) {
+            e.do_advance_one_block();
+          }
+
+        } else {
+          for (const auto& e : blocks) {
+            e.DEBUG_OUT_advance_one_block();
+          }
+          _DEBUG_OUT << "break the block" << std::endl;
+          return false;
+        }
+        return true;
+      }
+      template <typename BLOCKS_T, typename NEXT_T>
+      procReturn operator()(NEXT_T&& t, BLOCKS_T& blocks) const {
+        unsigned board = 0;
+        while (isValid(blocks)) {
+
+          if (t(blocks, getPlaneID(m_ids, board)) != procReturn::success) {
+            return procReturn::stop_;
+          }
+
+
+
+          if (!advanceBlocks(blocks)) {
+            return procReturn::stop_;
+          }
+
+
+
+          ++board;
+        }
+
+      }
+      const std::vector<int>& m_ids;
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if USE_LCIO && USE_EUTELESCOPE
     virtual void GetLCIORunHeader(lcio::LCRunHeader & /*header*/,
@@ -76,222 +390,323 @@ namespace eudaq {
   };
 
   void NIConverterPlugin::Initialize(const Event &bore, const Configuration & /*c*/) {
-      m_boards = from_string(bore.GetTag("BOARDS"), 0);
-      if (m_boards == 255) {
-        m_boards = 6;
-      }
-
-      m_ids.clear();
-      for (unsigned i = 0; i < m_boards; ++i) {
-        unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
-        m_ids.push_back(id);
-      }
+    m_boards = from_string(bore.GetTag("BOARDS"), 0);
+    if (m_boards == 255) {
+      m_boards = 6;
     }
 
+    m_ids.clear();
+    for (unsigned i = 0; i < m_boards; ++i) {
+      unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
+      m_ids.push_back(id);
+    }
+  }
+  
+  
   unsigned NIConverterPlugin::GetTriggerID(Event const &ev) const {
-      const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(ev);
-      if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8)
-        return (unsigned)-1;
-      return GET(rawev.GetBlock(0), 1) >> 16;
+    const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(ev);
+    if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8)
+      return (unsigned)-1;
+    return GET(rawev.GetBlock(0), 1) >> 16;
+  }
+
+
+  DEFINE_PROC1(check_Block_integrity, nextProc, d) {
+    auto& block = d.get_block();
+    auto& plane = d.get_plane();
+    block.DEBUG_OUT_Mimosa_header();
+
+
+
+    if (block.hasTrailing_Rubbish()) {
+      return procReturn::stop_;
     }
 
-  bool NIConverterPlugin::GetStandardSubEvent(StandardEvent &result,
-                                     const Event &source) const {
-      if (source.IsBORE()) {
-        std::cout << "GetStandardSubEvent : got BORE" << std::endl;
-        // shouldn't happen
-        return true;
-      } else if (source.IsEORE()) {
-        std::cout << "GetStandardSubEvent : got EORE" << std::endl;
-        // nothing to do
-        return true;
-      }
+    block.DEBUG_OUT_Mimosa_framecount();
 
-      if (dbg > 0)
-        std::cout << "GetStandardSubEvent : data" << std::endl;
 
-      // If we get here it must be a data event
-      const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(source);
-      if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
-          rawev.GetBlock(1).size() < 20) {
-        EUDAQ_WARN("Ignoring bad event " + to_string(source.GetEventNumber()));
-        return false;
-      }
-      const datavect &data0 = rawev.GetBlock(0);
-      const datavect &data1 = rawev.GetBlock(1);
-      unsigned header0 = GET(data0, 0);
-      unsigned header1 = GET(data1, 0);
-      unsigned tluid = GetTriggerID(source);
-      if (dbg)
-        std::cout << "TLU id = " << hexdec(tluid, 4) << std::endl;
-      unsigned pivot = GET(data0, 1) & 0xffff;
-      if (dbg)
-        std::cout << "Pivot = " << hexdec(pivot, 4) << std::endl;
-      datait it0 = data0.begin() + 8;
-      datait it1 = data1.begin() + 8;
-      unsigned board = 0;
-      while (it0 < data0.end() && it1 < data1.end()) {
-        unsigned id = board;
-        if (id < m_ids.size())
-          id = m_ids[id];
-        if (dbg)
-          std::cout << "Sensor " << board << ", id = " << id << std::endl;
-        if (dbg)
-          std::cout << "Mimosa_header0 = " << hexdec(header0) << std::endl;
-        if (dbg)
-          std::cout << "Mimosa_header1 = " << hexdec(header1) << std::endl;
-        if (it0 + 2 >= data0.end()) {
-          EUDAQ_WARN("Trailing rubbish in first frame");
-          break;
-        }
-        if (it1 + 2 >= data1.end()) {
-          EUDAQ_WARN("Trailing rubbish in second frame");
-          break;
-        }
-        if (dbg)
-          std::cout << "Mimosa_framecount0 = " << hexdec(GET(it0, 0))
-                    << std::endl;
-        if (dbg)
-          std::cout << "Mimosa_framecount1 = " << hexdec(GET(it1, 0))
-                    << std::endl;
-        unsigned len0 = GET(it0, 1);
-        if (dbg)
-          std::cout << "Mimosa_wordcount0 = " << hexdec(len0 & 0xffff, 4)
-                    << ", " << hexdec(len0 >> 16, 4) << std::endl;
-        if ((len0 & 0xffff) != (len0 >> 16)) {
-          EUDAQ_WARN("Mismatched lengths decoding first frame (" +
-                     to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) +
-                     ")");
-          len0 = std::max(len0 & 0xffff, len0 >> 16);
-        }
-        len0 &= 0xffff;
-        unsigned len1 = GET(it1, 1);
-        if (dbg)
-          std::cout << "Mimosa_wordcount1 = " << hexdec(len1 & 0xffff, 4)
-                    << ", " << hexdec(len1 >> 16, 4) << std::endl;
-        if ((len1 & 0xffff) != (len1 >> 16)) {
-          EUDAQ_WARN("Mismatched lengths decoding second frame (" +
-                     to_string(len1 & 0xffff) + ", " + to_string(len1 >> 16) +
-                     ")");
-          len1 = std::max(len1 & 0xffff, len1 >> 16);
-        }
-        len1 &= 0xffff;
+    if (!block.calc_Mimosa_Wordcount_Length()) {
+      return procReturn::stop_;
+    }
 
-        if (len0 * 4 + 12 > static_cast<unsigned>(data0.end() - it0)) {
-          EUDAQ_WARN("Bad length in first frame");
-          break;
-        }
-        if (len1 * 4 + 12 > static_cast<unsigned>(data1.end() - it1)) {
-          EUDAQ_WARN("Bad length in second frame");
-          break;
-        }
-        StandardPlane plane(id, "NI", "MIMOSA26");
-        plane.SetSizeZS(1152, 576, 0, 2, StandardPlane::FLAG_WITHPIVOT |
-                                             StandardPlane::FLAG_DIFFCOORDS);
-        plane.SetTLUEvent(tluid);
-        plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
-        DecodeFrame(plane, len0, it0 + 8, 0);
-        DecodeFrame(plane, len1, it1 + 8, 1);
-        result.AddPlane(plane);
 
-        if (dbg)
-          std::cout << "Mimosa_trailer0 = " << hexdec(GET(it0, len0 + 2))
-                    << std::endl;
-        if (dbg)
-          std::cout << "Mimosa_trailer1 = " << hexdec(GET(it1, len1 + 2))
-                    << std::endl;
 
-        bool advance_one_block_0 = false;
-        bool advance_one_block_1 = false;
+    //DecodeFrame(plane, e.getLen(), e.getItterator() + 8, e.getBlockId());
 
-        if (it0 < data0.end() - (len0 + 4) * 4) {
-          advance_one_block_0 = true;
-        }
 
-        if (it1 < data1.end() - (len1 + 4) * 4) {
-          advance_one_block_1 = true;
-        }
+    auto ret = nextProc(NIConverterPlugin::NI_frame_decoder(block, plane));
+    block.DEBUG_OUT_Mimosa_trailer();
+    return ret;
+  }
+  bool NIConverterPlugin::GetStandardSubEvent(StandardEvent &result, const Event &source) const {
+    if (isBORE_or_EORE(source)) { return true; }
 
-        if (advance_one_block_0 && advance_one_block_1) {
-          it0 = it0 + (len0 + 4) * 4;
-          if (dbg)
-            std::cout << " done 0 \n";
-          if (it0 <= data0.end())
-            header0 = GET(it0, -1);
 
-          it1 = it1 + (len1 + 4) * 4;
-          if (dbg)
-            std::cout << " done 1 \n";
-          if (it1 <= data1.end())
-            header1 = GET(it1, -1);
-        } else {
-          if (dbg)
-            std::cout << "advance_one_block_0 = " << advance_one_block_0
-                      << std::endl;
-          if (dbg)
-            std::cout << "advance_one_block_1 = " << advance_one_block_1
-                      << std::endl;
-          if (dbg)
-            std::cout << "break the block" << std::endl;
-          break;
-        }
-        ++board;
-      }
+    _DEBUG_OUT << "GetStandardSubEvent : data" << std::endl;
+
+    // If we get here it must be a data event
+    const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(source);
+    if (isBadEvent(rawev)) { return false; }
+
+
+
+
+
+    auto tluid = GetTriggerID(source);
+
+    _DEBUG_OUT << "TLU id = " << hexdec(tluid, 4) << std::endl;
+
+
+    std::array<NI_block_Decoder, 2> blocks = { NI_block_Decoder(rawev.GetBlock(0), 0), NI_block_Decoder(rawev.GetBlock(1), 1) };
+
+
+    blocks | proc()
+      >> loop_over_blocks(m_ids)
+      >> convert_to_plane(tluid,
+        proc() >> check_Block_integrity() >> loop_over_frame_decoder() >> DEBUG_OUT_2_Hit_line() >> push_hit_to_plane()
+      )
+      >> push_to_Event(result);
+
+
+
+
+
+    return true;
+  }
+
+
+  NIConverterPlugin::NI_block_Decoder::NI_block_Decoder(const datavect &data, int blockID) :m_data(data),
+    m_header(getHeader(data)), m_it(data.begin() + 8),
+    m_blockID(blockID), m_pivot(getPivot_(data)) {
+
+  }
+
+
+
+  bool NIConverterPlugin::NI_block_Decoder::hasTrailing_Rubbish() const {
+    if (m_it + 2 >= m_data.end()) {
+      EUDAQ_WARN("Trailing rubbish in " + getFrameName(m_blockID) + " frame");
       return true;
     }
 
+    return false;
+  }
 
-  
-  void NIConverterPlugin::DecodeFrame(StandardPlane &plane, size_t len, datait it,
-                     int frame) const {
-      std::vector<unsigned short> vec;
-      for (size_t i = 0; i < len; ++i) {
-        unsigned v = GET(it, i);
-        vec.push_back(v & 0xffff);
-        vec.push_back(v >> 16);
-      }
+  bool NIConverterPlugin::NI_block_Decoder::isValid() const {
+    if (m_it < m_data.end()) {
+      return true;
+    }
+    return false;
+  }
 
-      unsigned npixels = 0;
-      for (size_t i = 0; i < vec.size(); ++i) {
-        //  std::cout << "  " << i << " : " << hexdec(vec[i]) << std::endl;
-        if (i == vec.size() - 1)
-          break;
-        unsigned numstates = vec[i] & 0xf;
-        unsigned row = vec[i] >> 4 & 0x7ff;
-        if (numstates + 1 > vec.size() - i) {
-          // Ignoring bad line
-          // std::cout << "Ignoring bad line " << row << " (too many states)" <<
-          // std::endl;
-          break;
-        }
-        if (dbg > 2)
-          std::cout << "Hit line " << (vec[i] & 0x8000 ? "* " : ". ") << row
-                    << ", states " << numstates << ":";
-        bool pivot = (row >= (plane.PivotPixel() / 16));
-        for (unsigned s = 0; s < numstates; ++s) {
-          unsigned v = vec.at(++i);
-          unsigned column = v >> 2 & 0x7ff;
-          unsigned num = v & 3;
-          if (dbg > 2)
-            std::cout << (s ? "," : " ") << column;
-          if (dbg > 2)
-            if ((v & 3) > 0)
-              std::cout << "-" << (column + num);
-          for (unsigned j = 0; j < num + 1; ++j) {
-            plane.PushPixel(column + j, row, 1, pivot, frame);
-          }
-          npixels += num + 1;
-        }
-        if (dbg > 2)
-          std::cout << std::endl;
-      }
-      if (dbg)
-        std::cout << "Total pixels " << frame << " = " << npixels << std::endl;
-      //++offset;
+  unsigned NIConverterPlugin::NI_block_Decoder::getPivot() const {
+    return m_pivot;
+  }
+
+  void NIConverterPlugin::NI_block_Decoder::DEBUG_OUT_Mimosa_header() const {
+    _DEBUG_OUT << "Mimosa_header" << m_blockID << " = " << hexdec(m_header) << std::endl;
+  }
+
+  void NIConverterPlugin::NI_block_Decoder::DEBUG_OUT_Mimosa_framecount() const {
+    _DEBUG_OUT << "Mimosa_framecount" << m_blockID << " = " << hexdec(GET(m_it, 0)) << std::endl;
+  }
+
+  bool NIConverterPlugin::NI_block_Decoder::calc_Mimosa_Wordcount_Length() {
+    calc_Mimosa_wordcount();
+    if (hasBad_Mimosa_Wordcount_Length()) {
+      return false;
+    }
+    return true;
+  }
+
+  unsigned NIConverterPlugin::NI_block_Decoder::getLen() const {
+    return m_len;
+  }
+
+  void NIConverterPlugin::NI_block_Decoder::DEBUG_OUT_Mimosa_trailer() const {
+    _DEBUG_OUT << "Mimosa_trailer0 = " << hexdec(GET(m_it, m_len + 2)) << std::endl;
+  }
+
+  eudaq::NIConverterPlugin::datait NIConverterPlugin::NI_block_Decoder::getItterator() const {
+    return m_it;
+  }
+
+  bool NIConverterPlugin::NI_block_Decoder::can_Advance_one_block() const {
+    if (m_it < m_data.end() - (m_len + 4) * 4) {
+      return true;
+    }
+    return false;
+  }
+
+  void NIConverterPlugin::NI_block_Decoder::do_advance_one_block() {
+    m_it = m_it + (m_len + 4) * 4;
+    _DEBUG_OUT << " done 0 \n";
+    if (m_it <= m_data.end())
+      m_header = GET(m_it, -1);
+  }
+
+  void NIConverterPlugin::NI_block_Decoder::DEBUG_OUT_advance_one_block() const {
+    _DEBUG_OUT << "advance_one_block_" << m_blockID << " " << can_Advance_one_block()
+      << std::endl;
+  }
+
+
+
+
+
+  unsigned NIConverterPlugin::NI_block_Decoder::getBlockId() const {
+    return m_blockID;
+  }
+
+  unsigned NIConverterPlugin::NI_block_Decoder::getHeader(const datavect & vec) {
+    return GET(vec, 0);
+  }
+
+  std::string NIConverterPlugin::NI_block_Decoder::getFrameName(int frameID) {
+    if (frameID == 0) {
+      return "first";
+    }
+    if (frameID == 1) {
+      return "second";
     }
 
+    EUDAQ_THROW("unknown frame ID=" + to_string(frameID));
+    return "error";
+  }
 
-  
+  unsigned NIConverterPlugin::NI_block_Decoder::getPivot_(const datavect & vec) {
+    unsigned pivot = GET(vec, 1) & 0xffff;
+    _DEBUG_OUT << "Pivot = " << hexdec(pivot, 4) << std::endl;
+    return pivot;
+  }
+
+  void NIConverterPlugin::NI_block_Decoder::calc_Mimosa_wordcount() {
+    unsigned len0 = GET(m_it, 1);
+
+    _DEBUG_OUT << "Mimosa_wordcount" << m_blockID << " = " << hexdec(len0 & 0xffff, 4)
+      << ", " << hexdec(len0 >> 16, 4) << std::endl;
+
+
+    if ((len0 & 0xffff) != (len0 >> 16)) {
+      EUDAQ_WARN("Mismatched lengths decoding " + getFrameName(m_blockID) + " frame (" +
+        to_string(len0 & 0xffff) + ", " + to_string(len0 >> 16) + ")");
+      len0 = std::max(len0 & 0xffff, len0 >> 16);
+    }
+    len0 &= 0xffff;
+    m_len = len0;
+  }
+
+  bool NIConverterPlugin::NI_block_Decoder::hasBad_Mimosa_Wordcount_Length() const {
+    if (m_len * 4 + 12 > static_cast<unsigned>(m_data.end() - m_it)) {
+      EUDAQ_WARN("Bad length in " + getFrameName(m_blockID) + " frame");
+      return true;
+    }
+    return false;
+  }
+
+
+
+
+  NIConverterPlugin::NI_frame_decoder::NI_frame_decoder(NI_block_Decoder& block, StandardPlane &plane) :
+    m_block(block), m_plane(plane), m_len(block.getLen()), m_it(block.getItterator() + 8), frame(block.getBlockId()) {
+
+  }
+
+  bool NIConverterPlugin::NI_frame_decoder::next() {
+    auto i = m_index;
+    if (m_len == 0) {
+      return false;
+    }
+    if (first) {
+      first = false;
+    } else {
+      i += get_numstates() + 1;
+      m_index = i;
+    }
+    if (i >= m_len * 2 - 1) {
+      return false;
+    }
+    numstates = at(i) & 0xf;
+    row = at(i) >> 4 & 0x7ff;
+    if (numstates + 1 > m_len * 2 - i) {
+      return false;
+    }
+
+    return true;
+  }
+  void NIConverterPlugin::NI_frame_decoder::DEBUG_OUT_2_Hit_line() const {
+    _DEBUG_OUT_2 << "Hit line " << (at(m_index) & 0x8000 ? "* " : ". ") << row << ", states " << numstates << ":";
+  }
+
+  unsigned NIConverterPlugin::NI_frame_decoder::get_row() const {
+    return row;
+  }
+
+  unsigned NIConverterPlugin::NI_frame_decoder::get_numstates() const {
+    return numstates;
+  }
+
+  void NIConverterPlugin::NI_frame_decoder::push_to_plane(const unsigned s) {
+    auto i = m_index + s + 1;
+    unsigned v = at(i);
+
+    unsigned column = v >> 2 & 0x7ff;
+    unsigned num = v & 3;
+    _DEBUG_OUT_2 << (s ? "," : " ") << column;
+
+    if (dbg > 2 && (v & 3) > 0) std::cout << "-" << (column + num);
+
+
+    for (unsigned j = 0; j < num + 1; ++j) {
+
+      m_plane.PushPixel(column + j, row, 1, pivot, frame);
+    }
+    npixels += num + 1;
+  }
+
+  void NIConverterPlugin::NI_frame_decoder::set_pivot(bool pivot_) {
+    pivot = pivot_;
+  }
+
+  unsigned NIConverterPlugin::NI_frame_decoder::get_npixels() const {
+    return npixels;
+  }
+
+  int NIConverterPlugin::NI_frame_decoder::get_frame() const {
+    return frame;
+  }
+
+  unsigned short NIConverterPlugin::NI_frame_decoder::at(size_t index)  const {
+
+    unsigned v = GET(m_it, index / 2);
+    if (index % 2) {
+      return v >> 16;
+    }
+
+    return v & 0xffff;
+
+  }
+
+  const StandardPlane& NIConverterPlugin::NI_frame_decoder::get_plane() const {
+    return m_plane;
+  }
+
+  StandardPlane& NIConverterPlugin::NI_frame_decoder::get_plane() {
+    return m_plane;
+  }
+
+  NIConverterPlugin::NI_block_Decoder& NIConverterPlugin::NI_frame_decoder::get_block() {
+    return m_block;
+  }
+
+
+
+
+
+
+
+
+
 #if USE_LCIO && USE_EUTELESCOPE
   void NIConverterPlugin::GetLCIORunHeader(
       lcio::LCRunHeader &header, eudaq::Event const & /*bore*/,
@@ -316,20 +731,17 @@ namespace eudaq {
   bool NIConverterPlugin::GetLCIOSubEvent(lcio::LCEvent &result,
                                           const Event &source) const {
     if (source.IsBORE()) {
-      if (dbg > 0)
-        std::cout << "NIConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
+      _DEBUG_OUT << "NIConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
       // shouldn't happen
       return true;
     } else if (source.IsEORE()) {
-      if (dbg > 0)
-        std::cout << "NIConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
+      _DEBUG_OUT << "NIConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
       // nothing to do
       return true;
     }
     // If we get here it must be a data event
 
-    if (dbg > 0)
-      std::cout << "NIConverterPlugin::GetLCIOSubEvent data " << std::endl;
+    _DEBUG_OUT << "NIConverterPlugin::GetLCIOSubEvent data " << std::endl;
     result.parameters().setValue(eutelescope::EUTELESCOPE::EVENTTYPE,
                                  eutelescope::kDE);
 
