@@ -410,6 +410,34 @@ namespace eudaq {
     return GET(rawev.GetBlock(0), 1) >> 16;
   }
 
+
+  DEFINE_PROC1(check_Block_integrity, nextProc, d) {
+    auto& block = d.get_block();
+    auto& plane = d.get_plane();
+    block.DEBUG_OUT_Mimosa_header();
+
+
+
+    if (block.hasTrailing_Rubbish()) {
+      return procReturn::stop_;
+    }
+
+    block.DEBUG_OUT_Mimosa_framecount();
+
+
+    if (!block.calc_Mimosa_Wordcount_Length()) {
+      return procReturn::stop_;
+    }
+
+
+
+    //DecodeFrame(plane, e.getLen(), e.getItterator() + 8, e.getBlockId());
+
+
+    auto ret = nextProc(NIConverterPlugin::NI_frame_decoder(block, plane));
+    block.DEBUG_OUT_Mimosa_trailer();
+    return ret;
+  }
   bool NIConverterPlugin::GetStandardSubEvent(StandardEvent &result, const Event &source) const {
     if (isBORE_or_EORE(source)) { return true; }
 
@@ -673,34 +701,6 @@ namespace eudaq {
 
 
 
-
-  DEFINE_PROC1(check_Block_integrity, nextProc, d) {
-    auto& block = d.get_block();
-    auto& plane = d.get_plane();
-    block.DEBUG_OUT_Mimosa_header();
-
-
-
-    if (block.hasTrailing_Rubbish()) {
-      return procReturn::stop_;
-    }
-
-    block.DEBUG_OUT_Mimosa_framecount();
-
-
-    if (!block.calc_Mimosa_Wordcount_Length()) {
-      return procReturn::stop_;
-    }
-
-
-
-    //DecodeFrame(plane, e.getLen(), e.getItterator() + 8, e.getBlockId());
-
-
-    auto ret = nextProc(NIConverterPlugin::NI_frame_decoder(block, plane));
-    block.DEBUG_OUT_Mimosa_trailer();
-    return ret;
-  }
 
 
 
