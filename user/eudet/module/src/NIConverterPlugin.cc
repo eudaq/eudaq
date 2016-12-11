@@ -247,26 +247,9 @@ namespace eudaq {
   public:
     virtual ~NIConverterPlugin() {}
 
-    virtual void Initialize(const Event &bore, const Configuration & /*c*/) {
 
-      m_boards = from_string(bore.GetTag("BOARDS"), 0);
-      if (m_boards == 255) {
-        m_boards = 6;
-      }
 
-      m_ids.clear();
-      for (unsigned i = 0; i < m_boards; ++i) {
-        unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
-        m_ids.push_back(id);
-      }
-    }
 
-    virtual unsigned GetTriggerID(Event const &ev) const {
-      const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(ev);
-      if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8)
-        return (unsigned)-1;
-      return GET(rawev.GetBlock(0), 1) >> 16;
-    }
 
 
     class push_to_Event {
@@ -380,8 +363,7 @@ namespace eudaq {
       }
       const std::vector<int>& m_ids;
     };
-    virtual bool GetStandardSubEvent(StandardEvent &result,
-      const Event &source) const;
+
 
 
 
@@ -406,6 +388,64 @@ namespace eudaq {
     unsigned m_boards;
     std::vector<int> m_ids;
   };
+
+  void NIConverterPlugin::Initialize(const Event &bore, const Configuration & /*c*/) {
+    m_boards = from_string(bore.GetTag("BOARDS"), 0);
+    if (m_boards == 255) {
+      m_boards = 6;
+    }
+
+    m_ids.clear();
+    for (unsigned i = 0; i < m_boards; ++i) {
+      unsigned id = from_string(bore.GetTag("ID" + to_string(i)), i);
+      m_ids.push_back(id);
+    }
+  }
+  
+  
+  unsigned NIConverterPlugin::GetTriggerID(Event const &ev) const {
+    const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(ev);
+    if (rawev.NumBlocks() < 1 || rawev.GetBlock(0).size() < 8)
+      return (unsigned)-1;
+    return GET(rawev.GetBlock(0), 1) >> 16;
+  }
+
+  bool NIConverterPlugin::GetStandardSubEvent(StandardEvent &result, const Event &source) const {
+    if (isBORE_or_EORE(source)) { return true; }
+
+
+    _DEBUG_OUT << "GetStandardSubEvent : data" << std::endl;
+
+    // If we get here it must be a data event
+    const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(source);
+    if (isBadEvent(rawev)) { return false; }
+
+
+
+
+
+    auto tluid = GetTriggerID(source);
+
+    _DEBUG_OUT << "TLU id = " << hexdec(tluid, 4) << std::endl;
+
+
+    std::array<NI_block_Decoder, 2> blocks = { NI_block_Decoder(rawev.GetBlock(0), 0), NI_block_Decoder(rawev.GetBlock(1), 1) };
+
+
+    blocks | proc()
+      >> loop_over_blocks(m_ids)
+      >> convert_to_plane(tluid,
+        proc() >> check_Block_integrity() >> loop_over_frame_decoder() >> DEBUG_OUT_2_Hit_line() >> push_hit_to_plane()
+      )
+      >> push_to_Event(result);
+
+
+
+
+
+    return true;
+  }
+
 
   NIConverterPlugin::NI_block_Decoder::NI_block_Decoder(const datavect &data, int blockID) :m_data(data),
     m_header(getHeader(data)), m_it(data.begin() + 8),
@@ -662,41 +702,11 @@ namespace eudaq {
     return ret;
   }
 
-  bool NIConverterPlugin::GetStandardSubEvent(StandardEvent &result, const Event &source) const {
-    if (isBORE_or_EORE(source)) { return true; }
-
-
-    _DEBUG_OUT << "GetStandardSubEvent : data" << std::endl;
-
-    // If we get here it must be a data event
-    const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(source);
-    if (isBadEvent(rawev)) { return false; }
 
 
 
 
 
-    auto tluid = GetTriggerID(source);
-
-    _DEBUG_OUT << "TLU id = " << hexdec(tluid, 4) << std::endl;
-
-
-    std::array<NI_block_Decoder, 2> blocks = { NI_block_Decoder(rawev.GetBlock(0), 0), NI_block_Decoder(rawev.GetBlock(1), 1) };
-  
-
-    blocks | proc()
-      >> loop_over_blocks(m_ids)
-      >> convert_to_plane(tluid,
-        proc() >> check_Block_integrity() >> loop_over_frame_decoder() >> DEBUG_OUT_2_Hit_line() >> push_hit_to_plane()
-      )
-      >> push_to_Event(result);
-
-
-
-
-
-    return true;
-  }
 #if USE_LCIO && USE_EUTELESCOPE
   void NIConverterPlugin::GetLCIORunHeader(
       lcio::LCRunHeader &header, eudaq::Event const & /*bore*/,
