@@ -1,7 +1,7 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/StringEvent.hh"
+//#include "eudaq/StringEvent.hh"
 #include "eudaq/RawDataEvent.hh"
 // #include "eudaq/AidaPacket.hh"
 #include "eudaq/Utils.hh"
@@ -12,19 +12,19 @@
 #include <inttypes.h> /* uint64_t */
 #endif
 
-using eudaq::StringEvent;
+//using eudaq::StringEvent;
 using eudaq::RawDataEvent;
 // using eudaq::AidaPacket;
 
 class PyProducer : public eudaq::Producer {
   public:
     PyProducer(const std::string & name, const std::string & runcontrol)
-      : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) {}
+      : eudaq::Producer(name, runcontrol), m_internalstate(Init), m_name(name), m_run(0), m_evt(0), m_config(NULL) { m_id_stream = eudaq::cstr2hash(name.c_str());}
   
-    void SendEvent(uint8_t* data, size_t size) {
-      RawDataEvent ev(m_name, m_run, ++m_evt);
+    void SendEventSize(uint8_t* data, size_t size) {
+      RawDataEvent ev(m_name, m_id_stream, m_run, ++m_evt);
       ev.AddBlock(0, data, size);
-      eudaq::DataSender::SendEvent(ev);
+      SendEvent(ev);
     }
 
     virtual void OnConfigure(const eudaq::Configuration & param) {
@@ -57,7 +57,9 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Running) {
-	eudaq::DataSender::SendEvent(RawDataEvent::BORE(m_name, m_run));
+	eudaq::RawDataEvent ev(m_name, m_id_stream, m_run, 0);
+	ev.SetBORE();
+	SendEvent(ev);
 	SetStatus(eudaq::Status::LVL_OK, "");
       }
     }
@@ -70,7 +72,9 @@ class PyProducer : public eudaq::Producer {
 	eudaq::mSleep(100);
       }
       if (m_internalstate == Stopped) {
-	eudaq::DataSender::SendEvent(RawDataEvent::EORE(m_name, m_run, ++m_evt));
+        eudaq::RawDataEvent ev(m_name, m_id_stream, m_run, ++m_evt);
+        ev.SetEORE();	      
+	SendEvent(ev);
 	SetStatus(eudaq::Status::LVL_OK);
       }
     }
@@ -142,13 +146,14 @@ private:
   std::string m_name;
   unsigned m_run, m_evt;
   eudaq::Configuration * m_config;
+  uint32_t m_id_stream;
 };
 
 // ctypes can only talk to C functions -- need to provide them through 'extern "C"'
 extern "C" {
   DLLEXPORT PyProducer* PyProducer_new(char *name, char *rcaddress){return new PyProducer(std::string(name),std::string(rcaddress));}
   // functions for I/O
-  DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint8_t* buffer, size_t size){pp->SendEvent(buffer,size);}
+  DLLEXPORT void PyProducer_SendEvent(PyProducer *pp, uint8_t* buffer, size_t size){pp->SendEventSize(buffer,size);}
   DLLEXPORT char* PyProducer_GetConfigParameter(PyProducer *pp, char *item){
     std::string value = pp->GetConfigParameter(std::string(item));
     // convert string to char*

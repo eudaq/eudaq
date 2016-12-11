@@ -16,7 +16,11 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	else
 		# Install package dependencies for Mac OS X:
 		#brew update
-		brew install qt
+		brew install cartr/qt4/qt
+		#FIXME qt4 no longer officially supported upstream, no longer supported in homebrew on Sierra upwards --> retire it soon
+		#http://stackoverflow.com/questions/39690404/brew-install-qt-does-not-work-on-macos-sierra
+		#https://github.com/Homebrew/homebrew-core/pull/5216
+		# brew install qt
 		
 	fi	
 		
