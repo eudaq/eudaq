@@ -1,26 +1,28 @@
+find_package(CACTUS)
+cmake_dependent_option(USER_CALICE_BIF "build user/calice BIF" ON
+  "USER_CALICE;CACTUS_FOUND" OFF)
 
-set(name "BIFAHCALProducer")
-IF(NOT IGNORE_KNOWN_ISSUES)
-  IF(NOT BUILD_allproducer) # only warn if not configuring all producers at the same time (for testing)
-    MESSAGE(WARNING "There are known issues compiling ${name} (see https://github.com/eudaq/eudaq/issues/75). Set the IGNORE_KNOWN_ISSUES option to configure this producer to be build anyway.")
-  ENDIF(NOT BUILD_allproducer)
-ELSE(NOT IGNORE_KNOWN_ISSUES)
-  find_package(CACTUS REQUIRED)
+if(NOT USER_CALICE_BIF)
+  message("user/calice BIF is not to be built")
+  return()
+endif()
 
-  #add_definitions(${TLUFIRMWARE_DEFINITIONS})
+find_package(CACTUS REQUIRED)
 
-  INCLUDE_DIRECTORIES( include ${UHAL_LOG_INCLUDE_PREFIX} ${UHAL_GRAMMARS_INCLUDE_PREFIX} ${EXTERN_BOOST_INCLUDE_PREFIX} ${EXTERN_PUGIXML_INCLUDE_PREFIX} ${UHAL_UHAL_INCLUDE_PREFIX} )
+include_directories(include ${UHAL_LOG_INCLUDE_PREFIX} ${UHAL_GRAMMARS_INCLUDE_PREFIX} ${EXTERN_BOOST_INCLUDE_PREFIX} ${EXTERN_PUGIXML_INCLUDE_PREFIX} ${UHAL_UHAL_INCLUDE_PREFIX} )
 
-  LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${EXTERN_BOOST_LIB_PREFIX} ${EXTERN_PUGIXML_LIB_PREFIX} ${UHAL_LOG_LIB_PREFIX} ${UHAL_GRAMMARS_LIB_PREFIX} ${UHAL_UHAL_LIB_PREFIX} )
-  add_executable(${name}  src/caliceahcalbif_Producer.cxx src/caliceahcalbifController.cc )
-  add_executable(BIFAHCALControl src/caliceahcalbifControl.cxx src/caliceahcalbifController.cc )
+link_directories( ${LINK_DIRECTORIES} ${EXTERN_BOOST_LIB_PREFIX} ${EXTERN_PUGIXML_LIB_PREFIX} ${UHAL_LOG_LIB_PREFIX} ${UHAL_GRAMMARS_LIB_PREFIX} ${UHAL_UHAL_LIB_PREFIX})
 
-  target_link_libraries(BIFAHCALControl  EUDAQ boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal )
+add_executable(BIFAHCALProducer  src/caliceahcalbif_Producer.cxx src/caliceahcalbifController.cc )
+target_link_libraries(BIFAHCALProducer  EUDAQ boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal)
+list(APPEND INSTALL_TARGETS BIFAHCALProducer)
 
-  target_link_libraries(${name}  EUDAQ boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal )
+add_executable(BIFAHCALControl src/caliceahcalbifControl.cxx src/caliceahcalbifController.cc )
+target_link_libraries(BIFAHCALControl  EUDAQ boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal)
+list(APPEND INSTALL_TARGETS BIFAHCALControl)
 
-  INSTALL(TARGETS BIFAHCALProducer BIFAHCALControl
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
-ENDIF(NOT IGNORE_KNOWN_ISSUES)
+
+install(TARGETS ${INSTALL_TARGETS}
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)

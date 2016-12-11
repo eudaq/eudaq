@@ -1,26 +1,12 @@
-GET_FILENAME_COMPONENT(DIRNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-SET(PLUGIN_NAME plugin.${DIRNAME})
-SET_PROPERTY(GLOBAL APPEND PROPERTY CONVERTER_PLUGIN ${PLUGIN_NAME})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
+option(USER_CALICE "build user/calice" ON)
+if(NOT USER_CALICE)
+  message("user/calice is not to be built")
+  return()
+endif()
 
-INCLUDE_DIRECTORIES(include)
-
-SET(PLUGIN_SRC
-  src/CaliceGenericConverterPlugin.cc
-  )
-ADD_LIBRARY(${PLUGIN_NAME} SHARED ${PLUGIN_SRC})
-INSTALL(TARGETS ${PLUGIN_NAME}
-  RUNTIME DESTINATION bin
-  LIBRARY DESTINATION lib
-  ARCHIVE DESTINATION lib
-  )
-
-option(BUILD_AHCAL "Compile AHCAL" OFF)
-IF(BUILD_AHCAL)
-  add_subdirectory(AHCAL)
-ENDIF()
-
-option(BUILD_BIFAHCAL "Compile BIFAHCAL" OFF)
-IF(BUILD_BIFAHCAL)
-  add_subdirectory(BIF_AHCAL)
-ENDIF()
-
+add_subdirectory(module)
+add_subdirectory(AHCAL)
+add_subdirectory(BIF_AHCAL)
