@@ -27,7 +27,8 @@ using namespace std;
 namespace eudaq {
 
   AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
-    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _configured(false)
+    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _stopped(true), _configured(false)
+
   {
 
   }
@@ -35,14 +36,14 @@ namespace eudaq {
   void AHCALProducer::OnConfigure(const eudaq::Configuration & param)
   {
 
-    cout<< " start congfiguration "<< endl;
+    std::cout<< " START AHCAL CONFIGURATION "<< std::endl;
     // run rype: LED run or normal run ""
     _fileLEDsettings = param.Get("FileLEDsettings", "");
 
     // file name
     _filename = param.Get("FileName", "");
     _waitmsFile = param.Get("WaitMillisecForFile", 100);
-    _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 5);
+    _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 2);
 
     // raw output
     _writeRaw = param.Get("WriteRawOutput", 0);
@@ -61,13 +62,11 @@ namespace eudaq {
     _configured = true;
    
     SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-    cout<< " end congfiguration "<< endl;
+    std::cout<< " END AHCAL congfiguration "<< std::endl;
 
   }
 
   void AHCALProducer::OnStartRun(unsigned param) {
-    cout<< "  start run "<< endl;
-
     _runNo = param;
     _eventNo = 0;
     // raw file open
@@ -79,8 +78,7 @@ namespace eudaq {
     std::cout << "Start Run: " << param << std::endl;
     SetStatus(eudaq::Status::LVL_OK, "");
     _running = true;
-    cout<< "  end start run "<< endl;
-
+    _stopped = false;
 
   }
 
@@ -116,81 +114,50 @@ namespace eudaq {
 
   void AHCALProducer::OnPrepareRun(unsigned param) {
     cout << "OnPrepareRun: runID " << param << " set." << endl;
-
   }
   
   void AHCALProducer::OnStopRun() {
-    cout<< "  stop run "<< endl;
 
     _reader->OnStop(_waitsecondsForQueuedEvents);
     _running = false;
-    sleep(1); 
-    // Sleep added to fix a bug.
-    // Error:  uncaught exception: Deserialize asked for X only have Y
-    // sometimes appears when stopping the run and events are in the queue are being read
-    // this crashes the Labview
-    // seems to be a race condition, 
-    // for the moment fixed with this extra time after (1s) of sleep after the stop.
-    // following https://github.com/eudaq/eudaq/issues/29
+    while (_stopped == false) {
+      eudaq::mSleep(100);
+    }
+
     if(_writeRaw)
       _rawFile.close();
 
-    SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
-    
-    cout<< "  end stop run 0"<< endl;
     SetStatus(eudaq::Status::LVL_OK, "");
-    cout<< "  end stop run 1"<< endl;
-
   }
 
   bool AHCALProducer::OpenConnection()
   {
-    cout<< "  start open connection "<< endl;
-
-    // open socket
-
     struct sockaddr_in dstAddr;
     memset(&dstAddr, 0, sizeof(dstAddr));
     dstAddr.sin_port = htons(_port);
     dstAddr.sin_family = AF_INET;
     dstAddr.sin_addr.s_addr = inet_addr(_ipAddress.c_str());
 
-    std::mutex _mufdOpenConnection;
-    std::unique_lock<std::mutex> myLock(_mufdOpenConnection);
+    std::unique_lock<std::mutex> myLock(_mufd);
     _fd = socket(AF_INET, SOCK_STREAM, 0);
     int ret = connect(_fd, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
-
     if(ret != 0)  return 0;
-    cout<< "  stop open connection "<< endl;
     return 1;
-
   }
-  
+
+ 
   void AHCALProducer::CloseConnection()
   {
-    cout<< "  start close connection "<< endl;
-
-    //airqui  14/01/2016 // pthread_mutex_lock(&_mufd);
     std::unique_lock<std::mutex> myLock(_mufd);
     close(_fd);
     _fd = 0;
-    //airqui   14/01/2016 // pthread_mutex_unlock(&_mufd);
-    cout<< "  stop close connection "<< endl;
-
-    
   }
-  
+
+   
   // send a string without any handshaking
   void AHCALProducer::SendCommand(const char *command, int size){
 
-    cout<< "  start sendcommand "<<command<< endl;
-
-
     if(size == 0)size = strlen(command);
-
-    // maybe mutex lock is not needed because we're not conflict with
-    // open/close of socket because it's considered to be called from 
-    // event thread, which is same as thread of open/close the socket
 
     if(_fd <= 0)cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << endl;
     else {
@@ -201,14 +168,18 @@ namespace eudaq {
 		    cout << bytesWritten  << " out of " << size << " bytes is  written to the TCP socket" << endl;
 	    }
     }
-    cout<< "  stop sendcommand "<< endl;
-
 
   }
 
   deque<eudaq::RawDataEvent *>  AHCALProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
     while(deqEvent.size() > minimumsize){
-      SendEvent(*(deqEvent.front()));
+      
+      RawDataEvent *ev = deqEvent.front();
+      if( from_string(ev->GetTag("TriggerValidated"),-1) == 1 )    {
+	SendEvent(*(deqEvent.front()));
+	cout<< "Send eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
+      } else cout<< "Discard eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
+
       delete deqEvent.front();
       deqEvent.pop_front();
     }
@@ -217,6 +188,11 @@ namespace eudaq {
 
   void AHCALProducer::MainLoop()
   {
+
+    std::cout<<" Main loop " <<std::endl;
+    
+    _last_readout_time = std::time(NULL);
+	 
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
@@ -229,10 +205,12 @@ namespace eudaq {
       // copy to C array, then to vector
       char buf[bufsize];
       int size = 0;        
-      if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
+
+      // if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
 
       //      if file is not ready  just wait
       if(_fd <= 0 || !_running ){
+	myLock.unlock();
 	::usleep(1000);
 	continue;
       }
@@ -242,17 +220,22 @@ namespace eudaq {
       if(size == -1 || size == 0){
         if(size == -1)
           std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << endl;
-        else
-          std::cout << "Socket disconnected. going to the waiting mode." << endl;         
+        else {
+          std::cout << "Socket disconnected. going to the waiting mode." << endl;         	    
+	  if(!_running && _stopped==false) {
+	    _stopped=true;
+	    deqEvent=sendallevents(deqEvent,0);
+	    
+	    SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+	    bufRead.clear();
+	    deqEvent.clear();
+	  }
+	}
         close(_fd);
         _fd = -1;
 	continue;
       }
         
-      if(!_running){
-	bufRead.clear();
-	continue;
-      }
 
       if(_writeRaw && _rawFile.is_open()) _rawFile.write(buf, size);
 
@@ -263,6 +246,16 @@ namespace eudaq {
         
       // send events : remain the last event
       deqEvent=sendallevents(deqEvent,1);
+
+     if(!_running){
+
+       if (std::difftime(std::time(NULL), _last_readout_time) <  _waitsecondsForQueuedEvents) continue;
+	bufRead.clear();
+
+	SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+	SetStatus(eudaq::Status::LVL_OK, "");
+	continue;
+     }
     }
   }
 
