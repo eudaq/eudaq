@@ -159,6 +159,9 @@ namespace eudaq {
 
   public:
     NIConverterPlugin() : DataConverterPlugin("NI"), m_boards(0) {}
+    virtual void Initialize(const Event &bore, const Configuration & /*c*/);
+    virtual unsigned GetTriggerID(Event const &ev) const;
+    virtual bool GetStandardSubEvent(StandardEvent &result, const Event &source) const;
     class NI_block_Decoder {
     public:
       NI_block_Decoder(const datavect &data, int blockID);
