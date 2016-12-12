@@ -1,4 +1,4 @@
-version: 1.7.0.{build}
+version: 2.0.0.{build}
 
 pull_requests:
   do_not_increment_build_number: true
@@ -190,21 +190,20 @@ build_script:
 - cmd: msbuild INSTALL.vcxproj
 
 after_build:
-- cmd: 7z a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
-
-artifacts:
-  - path: eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
-    name: Releases
+- cmd: 7z a eudaq_win32_%build_type%_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
+- cmd: appveyor PushArtifact eudaq_win32_%build_type%_%APPVEYOR_REPO_TAG_NAME%.zip
 
 deploy:
   provider: GitHub
   auth_token:
     secure: "FXNTEGEjMMl3FZLCp4cXO0Szn3CVs4lEf+pPxz6vbb9q/PHkD5N2gAgOR+zljtll"
-  artifact: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
+  artifact: eudaq_win32_%build_type%_%APPVEYOR_REPO_TAG_NAME%.zip
   draft: false
   prerelease: false
+  force_update: true
   on:
     appveyor_repo_tag: true
+    build_type: library_only
     
 on_finish:
 #- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
