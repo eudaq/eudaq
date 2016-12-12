@@ -144,6 +144,7 @@ script:
   - cd ..
 
 before_deploy:
+ - cd $TRAVIS_BUILD_DIR
  - source .travis/before_deploy.sh
 
 deploy:
