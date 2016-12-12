@@ -4,10 +4,12 @@ sudo: required
 
 dist: trusty
 
-branches:
-  only:
-    - master
-    - v1.7-dev
+# removed due to bug https://github.com/travis-ci/travis-ci/issues/2111 https://github.com/18F/cg-style/pull/32/files
+# conflict between branch whitelist and tags
+# branches:
+#  only:
+#    - master
+#    - v1.7-dev
 
 # set here versions / file paths
 env:
