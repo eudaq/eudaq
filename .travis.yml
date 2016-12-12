@@ -153,6 +153,7 @@ deploy:
   file_glob: true
   file: "${FILE_TO_UPLOAD_1}"
   skip_cleanup: true
+  overwrite: true
   on:
     tags: true
     condition: "$BUILD_manual = ON"
