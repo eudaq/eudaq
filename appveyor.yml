@@ -203,7 +203,6 @@ deploy:
   force_update: true
   on:
     appveyor_repo_tag: true
-    build_type: library_only
     build_type: minimum
     
 on_finish:
