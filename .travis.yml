@@ -146,13 +146,13 @@ script:
 before_deploy:
  - cd $TRAVIS_BUILD_DIR
  - source .travis/before_deploy.sh
+ - ls ${FILE_TO_UPLOAD_1}
 
 deploy:
   provider: releases
   api_key:
     secure: nNpy+uDh8b0gkVMY+zf1ZSnevXox/7nFW6q8Z7TxOAGKudGdFdw2A4M+bmBGvXQX/68aqcLJfiFI4YBOkEMIdTuK75Hpr0K6vCasVDHBXmsEiPbtOXYg5PJpA5QZFEjnKJGQFGusGqdHA2nBUsWiAOCiF4ZD2Qb8GxT6t8fGgF8=
-  file_glob: true
-  file: "${FILE_TO_UPLOAD_1}"
+  file: ${FILE_TO_UPLOAD_1}
   skip_cleanup: true
   overwrite: true
   on:
