@@ -240,7 +240,10 @@ namespace eudaq {
     if( deqEvent.size()==0 || (!TempFlag && (( _cycleNo +256 ) % 256) != cycle) )  { 
     // new event arrived: create RawDataEvent
     _cycleNo ++;
-    RawDataEvent *nev = new RawDataEvent("CaliceObject", _runNo, _trigID);
+
+    
+    eudaq::RawDataEvent *nev = new eudaq::RawDataEvent("CaliceObject", 0, _runNo, _trigID);
+
     string s = "EUDAQDataScCAL";
     nev->AddBlock(0,s.c_str(), s.length());
     s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";

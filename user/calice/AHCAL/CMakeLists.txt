@@ -6,7 +6,7 @@ if(NOT USER_CALICE_AHCAL)
   return()
 endif()
 
-set(sourcefiles src/AHCALProducer.cc src/ScReader.cc)
+set(sourcefiles src/AHCALProducer.cxx src/AHCALProducer.cc src/ScReader.cc)
 
 include_directories(./include)
 add_executable(AHCALProducer ${sourcefiles})

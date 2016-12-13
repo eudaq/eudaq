@@ -27,10 +27,9 @@ using namespace std;
 namespace eudaq {
 
   AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
-    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false), _stopped(true), _configured(false)
-
-  {
-
+    Producer(name, runcontrol), _runNo(0), _eventNo(0), _fd(0), _running(false),
+    _stopped(true), _configured(false){
+    m_id_stream = eudaq::cstr2hash(name.c_str());
   }
 
   void AHCALProducer::OnConfigure(const eudaq::Configuration & param)
@@ -74,7 +73,9 @@ namespace eudaq {
 
     _reader->OnStart(param);
 
-    SendEvent(RawDataEvent::BORE("CaliceObject", _runNo));
+    eudaq::RawDataEvent ev("CaliceObject", m_id_stream, _runNo, 0);
+    ev.SetBORE();
+    SendEvent(ev);
     std::cout << "Start Run: " << param << std::endl;
     SetStatus(eudaq::Status::LVL_OK, "");
     _running = true;
@@ -111,10 +112,6 @@ namespace eudaq {
     _rawFile.open(_rawFilename);
   }
 
-
-  void AHCALProducer::OnPrepareRun(unsigned param) {
-    cout << "OnPrepareRun: runID " << param << " set." << endl;
-  }
   
   void AHCALProducer::OnStopRun() {
 
@@ -175,6 +172,7 @@ namespace eudaq {
     while(deqEvent.size() > minimumsize){
       
       RawDataEvent *ev = deqEvent.front();
+      ev->SetStreamN(m_id_stream);
       if( from_string(ev->GetTag("TriggerValidated"),-1) == 1 )    {
 	SendEvent(*(deqEvent.front()));
 	cout<< "Send eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
@@ -186,7 +184,7 @@ namespace eudaq {
     return deqEvent;
   }
 
-  void AHCALProducer::MainLoop()
+  void AHCALProducer::Exec()
   {
 
     std::cout<<" Main loop " <<std::endl;
@@ -226,7 +224,9 @@ namespace eudaq {
 	    _stopped=true;
 	    deqEvent=sendallevents(deqEvent,0);
 	    
-	    SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+	    eudaq::RawDataEvent ev("CaliceObject", m_id_stream, _runNo, _eventNo);
+	    ev.SetEORE();
+	    SendEvent(ev);
 	    bufRead.clear();
 	    deqEvent.clear();
 	  }
@@ -252,7 +252,9 @@ namespace eudaq {
        if (std::difftime(std::time(NULL), _last_readout_time) <  _waitsecondsForQueuedEvents) continue;
 	bufRead.clear();
 
-	SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+	eudaq::RawDataEvent ev("CaliceObject", m_id_stream, _runNo, _eventNo);
+	ev.SetEORE();
+	SendEvent(ev);
 	SetStatus(eudaq::Status::LVL_OK, "");
 	continue;
      }
@@ -261,34 +263,3 @@ namespace eudaq {
 
 }//end namespace eudaq
 
-int main(int /*argc*/, const char ** argv) {
-  // You can use the OptionParser to get command-line arguments
-  // then they will automatically be described in the help (-h) option
-  eudaq::OptionParser op("Calice Producer Producer", "1.0",
-                         "hogehoge");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
-                                   "tcp://localhost:44000", "address",
-                                   "The address of the RunControl.");
-  eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
-                                   "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> name (op, "n", "", "Calice1", "string",
-                                   "The name of this Producer");
-  try {
-    // This will look through the command-line arguments and set the options
-    op.Parse(argv);
-    // Set the Log level for displaying messages based on command-line
-    EUDAQ_LOG_LEVEL(level.Value());
-    // Create a producer
-    cout << name.Value() << " " << rctrl.Value() << endl;
-    eudaq::AHCALProducer producer(name.Value(), rctrl.Value());
-    //producer.SetReader(new eudaq::SiReader(0));
-    // And set it running...
-    producer.MainLoop();
-    // When the readout loop terminates, it is time to go
-    std::cout << "Quitting" << std::endl;
-  } catch (...) {
-    // This does some basic error handling of common exceptions
-    return op.HandleMainException();
-  }
-  return 0;
-}

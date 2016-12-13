@@ -25,10 +25,15 @@ using namespace std;
 using namespace lcio;
 
 namespace eudaq {
+  class CaliceGenericConverterPlugin;
+
+  namespace{
+    auto dummy0 = Factory<DataConverterPlugin>::Register<CaliceGenericConverterPlugin>
+      (cstr2hash("CaliceObject"));
+  }
 
   static const char* EVENT_TYPE = "CaliceObject";
-
-
+  
 #if USE_LCIO
   // LCIO class
   class CaliceLCGenericObject : public lcio::LCGenericObjectImpl {
@@ -87,14 +92,14 @@ namespace eudaq {
        	int DAQquality = rawev->GetTag("DAQquality",1);
 
        	// first two blocks should be string, 3rd is time
-       	const RawDataEvent::data_t & bl0 = rawev->GetBlock(nblock++);
+       	auto& bl0 = rawev->GetBlock(nblock++);
        	string colName((char *)&bl0.front(), bl0.size());
 
-       	const RawDataEvent::data_t & bl1 = rawev->GetBlock(nblock++);
+       	auto& bl1 = rawev->GetBlock(nblock++);
        	string dataDesc((char *)&bl1.front(), bl1.size());
 
        	// EUDAQ TIMESTAMP, saved in ScReader.cc
-       	const RawDataEvent::data_t & bl2 = rawev->GetBlock(nblock++);
+       	auto& bl2 = rawev->GetBlock(nblock++);
        	time_t timestamp = *(unsigned int *)(&bl2[0]);
 
 	//	IMPL::LCEventImpl  & lcevent = dynamic_cast<IMPL::LCEventImpl&>(result);
@@ -102,11 +107,11 @@ namespace eudaq {
 
 	if ( colName ==  "EUDAQDataBIF") {
 	  //-------------------
-	  const RawDataEvent::data_t & bl3 = rawev->GetBlock(nblock++);
+	  auto& bl3 = rawev->GetBlock(nblock++);
 	  if(bl3.size() > 0)     cout << "Error, block 3 is filled in the BIF raw data" << endl;
-  	  const RawDataEvent::data_t & bl4 = rawev->GetBlock(nblock++);
+  	  auto& bl4 = rawev->GetBlock(nblock++);
 	  if(bl4.size() > 0)     cout << "Error, block 4 is filled in the BIF raw data" << endl;
-  	  const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
+  	  auto& bl5 = rawev->GetBlock(nblock++);
 	  if(bl5.size() > 0)     cout << "Error, block 5 is filled in the BIF raw data" << endl;
   
 	  // READ BLOCKS WITH DATA
@@ -120,7 +125,7 @@ namespace eudaq {
 	  //-------------------
 	  // READ/WRITE SlowControl info
 	  //the  block=3, if non empty, contaions SlowControl info
-	  const RawDataEvent::data_t & bl3 = rawev->GetBlock(nblock++);
+	  auto& bl3 = rawev->GetBlock(nblock++);
 
 	  if(bl3.size() > 0)  {
 	    cout << "Looking for SlowControl collection..." << endl;
@@ -132,7 +137,7 @@ namespace eudaq {
 	  // //-------------------
 	  // // READ/WRITE LED info
 	  // //the  block=4, if non empty, contaions LED info
-	  const RawDataEvent::data_t & bl4 = rawev->GetBlock(nblock++);
+	  auto& bl4 = rawev->GetBlock(nblock++);
 	  if(bl4.size() > 0)  {
 	    cout << "Looking for LED voltages collection..." << endl;
 	    LCCollectionVec *col = 0;
@@ -143,7 +148,7 @@ namespace eudaq {
 	  // //-------------------
 	  // // READ/WRITE Temperature info
 	  // //the  block=5, if non empty, contaions Temperature info
-	  const RawDataEvent::data_t & bl5 = rawev->GetBlock(nblock++);
+	  auto& bl5 = rawev->GetBlock(nblock++);
 	  if(bl5.size()>0) {
 	    LCCollectionVec *col = 0;
 	    col=createCollectionVec(result,"TempSensor", "i:LDA,i:port,i:T1,i:T2,i:T3,i:T4,i:T5,i:T6,i:TDIF,i:TPWR", timestamp, DAQquality);
@@ -159,7 +164,7 @@ namespace eudaq {
 	  col=createCollectionVec(result,colName,dataDesc, timestamp, DAQquality);
 	  getDataLCIOGenericObject(rawev,col,nblock);
 
-	  const RawDataEvent::data_t & bl6 = rawev->GetBlock(6);
+	  auto& bl6 = rawev->GetBlock(6);
 	  if(bl6.size()==0)   cout << "Nothing in Timestamps collection..." << endl;
 	  if(bl6.size()>0) {
 	    cout << "Looking for Timestamps collection..." << endl;
@@ -196,7 +201,7 @@ namespace eudaq {
       return col;
     }
 
-    virtual void getScCALTemperatureSubEvent(const RawDataEvent::data_t & bl, LCCollectionVec *col) const{
+    virtual void getScCALTemperatureSubEvent(const std::vector<uint8_t>& bl, LCCollectionVec *col) const{
       
       // sensor specific data
       cout << "Looking for Temperature Collection... " << endl;
@@ -237,7 +242,7 @@ namespace eudaq {
     }
 
  
-    virtual void getDataLCIOGenericObject(const RawDataEvent::data_t & bl, LCCollectionVec *col, int nblock) const{
+    virtual void getDataLCIOGenericObject(const std::vector<uint8_t> & bl, LCCollectionVec *col, int nblock) const{
   
 	// further blocks should be data (currently limited to integer)
 
@@ -264,7 +269,7 @@ namespace eudaq {
 	// further blocks should be data (currently limited to integer)
 
 	vector<int> v;
-	const RawDataEvent::data_t & bl = rawev->GetBlock(nblock++);
+	auto& bl = rawev->GetBlock(nblock++);
 	v.resize(bl.size() / sizeof(int));
 	memcpy(&v[0], &bl[0],bl.size());
 
@@ -282,21 +287,11 @@ namespace eudaq {
 
 #endif
     
-  private:
     CaliceGenericConverterPlugin()
       : DataConverterPlugin(EVENT_TYPE)
     {}
     
-    static CaliceGenericConverterPlugin m_instance;
     
   };
-
-  // Instantiate the converter plugin instance
-  CaliceGenericConverterPlugin CaliceGenericConverterPlugin::m_instance;
   
 }
-
-
-
-
-  

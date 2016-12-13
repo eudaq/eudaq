@@ -34,21 +34,20 @@ namespace eudaq {
   class AHCALProducer : public eudaq::Producer {
   public:
     AHCALProducer(const std::string & name, const std::string & runcontrol);
+    void OnStartRun(unsigned param) override final;
+    void OnStopRun() override final;
+    void OnConfigure(const eudaq::Configuration & param) override final;
+    void Exec() override final;
+
     void SetReader(AHCALReader *r){_reader = r;}
-    virtual void OnPrepareRun(unsigned param);
-    virtual void OnStartRun(unsigned param);
-    virtual void OnStopRun();
-    virtual void OnConfigure(const eudaq::Configuration & param);
-    
-    void MainLoop();//  
     bool OpenConnection();//
     void CloseConnection();//
     bool OpenConnection_unsafe();//
     void CloseConnection_unsafe();//
     void SendCommand(const char *command,int size = 0);
 
-    virtual void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
-    virtual std::deque<eudaq::RawDataEvent *> sendallevents(std::deque<eudaq::RawDataEvent *> deqEvent, int minimumsize=0);
+    void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
+    std::deque<eudaq::RawDataEvent *> sendallevents(std::deque<eudaq::RawDataEvent *> deqEvent, int minimumsize=0);
       
   private:
     int _runNo;
@@ -85,6 +84,7 @@ namespace eudaq {
     std::deque<eudaq::RawDataEvent *> deqEvent;
 
 
+    uint32_t m_id_stream;
 
     AHCALReader * _reader;
   };
