@@ -149,8 +149,8 @@ before_deploy:
 
 deploy:
   provider: releases
-  api_key: 
-     secure: "oRE5zzmpwRDACPI00FmedJFIrkccyGf9841VwhiMykBxwES6KLuwOb3DAzCgCSfmZf/vEQ+xeNP7LP8KLVkbNhLvodSe4owapHL68mM7ilv4mEkKN+QlL46Y/rbHrLYKqgpuVEEm6jqRFPovO92DEi9r2hcNZmelSdk2F07Y2bG4qttc6twQX00AGUI6G0RrtWPEL+tUifnTqQhYg7NRp+o+1TrvpBPBtXqRTZ7irm0yf4MWY7Y7y2vyn/SMuOOb0jnCjk/IDy7XogDDMsUvanH7bMXO6au1sHFtF+wlhOf+Fjlg1X7w7U/erwxzc4Pg+YOjNK3wFnE31+EbdYWYOcKYDeIO9XAd9r9KPOCUWZDwNw2TUt5QOIadEiWLkyoVxLkvCsCzLBps9cWqErMmOtiF2S4s2spK87zVb+V1Fmeuj7ofCJcOxXRgcr6Y1vP1vpyMa5qsNZqSwjLQ8JmDtJS4jR8qXuASHEl1rrh6XBFPbMoVhHaa2gCFNa9noKQKSQO1kKoMJirJy02aDlUVvQaE6mNKwDmRoL4Tsyg44dk1QPcvcYjRSjQsC8lz6W7UnYluv7XOm1rAAwrqCkxgBEx9bEzOIbQeAx1F0F8OjbJGEsMwzlI1BVbu3emN6HkNoxv0u1vUoqYrA/LsUhIf7Jl/mc5PhFpmT+b28baRUEo="
+  api_key:
+    secure: nNpy+uDh8b0gkVMY+zf1ZSnevXox/7nFW6q8Z7TxOAGKudGdFdw2A4M+bmBGvXQX/68aqcLJfiFI4YBOkEMIdTuK75Hpr0K6vCasVDHBXmsEiPbtOXYg5PJpA5QZFEjnKJGQFGusGqdHA2nBUsWiAOCiF4ZD2Qb8GxT6t8fGgF8=
   file_glob: true
   file: "${FILE_TO_UPLOAD_1}"
   skip_cleanup: true
@@ -158,3 +158,4 @@ deploy:
   on:
     tags: true
     condition: "$BUILD_manual = ON"
+    repo: eudaq/eudaq       
