@@ -1,127 +1,59 @@
-#if USE_LCIO
 #include "eudaq/FileNamer.hh"
-#include "eudaq/PluginManager.hh"
 #include "eudaq/FileWriter.hh"
+#include "eudaq/Configuration.hh"
+#include "eudaq/LCEventConverter.hh"
 
+
+#include "lcio.h"
+#include "EVENT/LCIO.h"
 #include "IO/ILCFactory.h"
+#include "IO/LCWriter.h"
 #include "IMPL/LCEventImpl.h"
 #include "IMPL/LCCollectionVec.h"
-#include "EVENT/LCIO.h"
-#include "Exceptions.h"
 #include "IMPL/LCTOOLS.h"
-#include "IO/LCWriter.h"
-#include "lcio.h"
-#include <time.h>
-#include <iostream>
-
-#if USE_EUTELESCOPE
-#include "EUTelEventImpl.h"
-#include "EUTELESCOPE.h"
-#endif //USE_EUTELESCOPE
 
 namespace eudaq {
+  class LCFileWriter;
 
-  class FileWriterLCIO : public FileWriter {
-  public:
-    FileWriterLCIO(const std::string &);
-    virtual void StartRun(unsigned);
-    virtual void WriteEvent(const DetectorEvent &);
-    virtual uint64_t FileBytes() const { return 0; }
-    virtual ~FileWriterLCIO();
-
-  private:
-    lcio::LCWriter *m_lcwriter; /// The lcio writer
-    bool
-        m_fileopened; /// We have to keep track whether a file is open ourselves
-  };
-
-
-  registerFileWriter(FileWriterLCIO, "lcio");
-
-  FileWriterLCIO::FileWriterLCIO(const std::string & /*param*/)
-      : m_lcwriter(lcio::LCFactory::getInstance()
-                       ->createLCWriter()), // get an LCWriter from the factory
-        m_fileopened(false) {
-    // EUDAQ_DEBUG("Constructing FileWriterLCIO(" + to_string(param) + ")");
+  namespace{
+    auto dummy0 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("lcio"));
+    auto dummy1 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("lcio"));
+    auto dummy2 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("LCFileWriter"));
+    auto dummy3 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("LCFileWriter"));
   }
 
-  void FileWriterLCIO::StartRun(unsigned runnumber) {
-    // close an open file
-    if (m_fileopened) {
-      m_lcwriter->close();
-      m_fileopened = false;
-    }
+  class LCFileWriter : public FileWriter {
+  public:
+    LCFileWriter(const std::string &);
+    void StartRun(uint32_t) override;
+    void WriteEvent(EventSPC ev) override;
+    uint64_t FileBytes() const override {return -1;};
+  private:
+    std::unique_ptr<lcio::LCWriter> m_lcwriter;
+    Configuration m_conf;
+  };
 
-    // open a new file
+  LCFileWriter::LCFileWriter(const std::string & /*param*/){
+    
+  }
+
+  void LCFileWriter::StartRun(unsigned runnumber) {
     try {
-     time_t  ltime;
-      struct tm *Tm;
-      ltime=time(NULL);
-      Tm=localtime(&ltime);
-
-      char file_timestamp[25];
-      sprintf(file_timestamp,"__%02dp%02dp%02d__%02dp%02dp%02d",
-	     Tm->tm_mday,
-	     Tm->tm_mon+1,
-	     Tm->tm_year+1900,
-	     Tm->tm_hour,
-	     Tm->tm_min,
-	     Tm->tm_sec);
-
-      m_lcwriter->open(FileNamer(m_filepattern).Set('X',file_timestamp ).Set('R', runnumber),
-          lcio::LCIO::WRITE_NEW) ;
-      m_fileopened=true;
- 
-   } catch (const lcio::IOException &e) {
+      m_lcwriter.reset(lcio::LCFactory::getInstance()->createLCWriter());
+      m_lcwriter->open(FileNamer(m_filepattern).Set('X', ".lcio").Set('R', runnumber),
+		       lcio::LCIO::WRITE_NEW); 
+    } catch (const lcio::IOException &e) {
       std::cout << e.what() << std::endl;
       /// FIXME Error message to run control and logger
     }
   }
 
-  void FileWriterLCIO::WriteEvent(const DetectorEvent &devent) {
-    if (devent.IsBORE()) {
-      PluginManager::Initialize(devent);
-
-#if USE_EUTELESCOPE
-      auto x = std::unique_ptr<lcio::LCRunHeader>(
-          PluginManager::GetLCRunHeader(devent));
-
-      m_lcwriter->writeRunHeader(x.get());
-#endif
-
-      return;
-    } else if (devent.IsEORE()) {
-#if USE_EUTELESCOPE
-      std::cout << "Found a EORE, so adding an EORE to the LCIO file as well"
-                << std::endl;
-      auto lcioEvent = std::unique_ptr<eutelescope::EUTelEventImpl>(
-          new eutelescope::EUTelEventImpl);
-      lcioEvent->setEventType(eutelescope::kEORE);
-      lcioEvent->setTimeStamp(devent.GetTimestamp());
-      lcioEvent->setRunNumber(devent.GetRunNumber());
-      lcioEvent->setEventNumber(devent.GetEventNumber());
-
-      // sent the lcioEvent to the processor manager for further processing
-      m_lcwriter->writeEvent(lcioEvent.get());
-#endif //USE_EUTELESCOPE
-      return;
-    }
-
-    auto lcevent =
-        std::unique_ptr<lcio::LCEvent>(PluginManager::ConvertToLCIO(devent));
-
-    // only write non-empty events
-    if (!lcevent->getCollectionNames()->empty()) {
-      m_lcwriter->writeEvent(lcevent.get());
-    }
+  void LCFileWriter::WriteEvent(EventSPC ev) {
+    if (!m_lcwriter)
+      EUDAQ_THROW("LCFileWriter: Attempt to write unopened file");
+    LCEventSP lcevent(new lcio::LCEventImpl);
+    LCEventConverter::Convert(ev, lcevent, m_conf);
+    m_lcwriter->writeEvent(lcevent.get());
   }
 
-  FileWriterLCIO::~FileWriterLCIO() {
-    // close an open file
-    if (m_fileopened) {
-      m_lcwriter->close();
-    }
-  }
 }
-
-#endif // USE_LCIO
