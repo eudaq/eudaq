@@ -32,20 +32,27 @@ namespace eudaq {
   public:
     LogCollector(const std::string &runcontrol,
                  const std::string &listenaddress,
-		 const std::string & logdirectory = "../logs");
+		 const std::string & logdirectory);
+    ~LogCollector() override;
+    void OnConfigure(const Configuration & param)override final{}
+    void OnStartRun(uint32_t /*runnumber*/)override final{}
+    void OnStopRun() override final{};
+    void OnReset() override final{}; //TODO: reset member variable
+    void OnServer() override;
+    void OnTerminate() override final;
+    //void OnLog(const std::string &param) override final{};
+    void OnData(const std::string &param) override final{};
+    void Exec() override;
 
-    virtual void OnConnect(const ConnectionInfo & /*id*/) {}
-    virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
-    virtual void OnServer();
-    virtual void OnReceive(const LogMessage &msg) = 0;
-    virtual ~LogCollector();
+    virtual void DoTerminate() = 0;
+    virtual void DoConnect(const ConnectionInfo & /*id*/) {}
+    virtual void DoDisconnect(const ConnectionInfo & /*id*/) {}
+    virtual void DoReceive(const LogMessage &msg) = 0;
 
     void LogThread();
-    virtual void Exec(){};
 
   private:
     void LogHandler(TransportEvent &ev);
-    void DoReceive(const LogMessage &msg);
     bool m_done, m_listening;
     std::unique_ptr<TransportServer> m_logserver; ///< Transport for receiving log messages
     std::thread m_thread;

@@ -27,10 +27,11 @@ namespace eudaq {
     void OnStopRun() override;
     bool ProcessEvent();
     virtual void OnEvent(EventSPC /*ev*/) = 0;
-    virtual void Exec() = 0;
+    virtual void Exec() override;
   protected:
     unsigned m_run;
     bool m_callstart;
+    bool m_done;
     FileReaderSP m_reader;
     unsigned limit;
     unsigned skip;

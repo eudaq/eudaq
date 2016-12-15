@@ -5,6 +5,7 @@
 #include "eudaq/DataSender.hh"
 #include "eudaq/Platform.hh"
 #include "eudaq/Factory.hh"
+#include "eudaq/Event.hh"
 #include <string>
 
 namespace eudaq {
@@ -33,13 +34,27 @@ namespace eudaq {
      * connect to.
      */
     Producer(const std::string &name, const std::string &runcontrol);
-    void OnData(const std::string &param) override;
-    void Connect(const std::string & server);
-    void SendEvent(const Event &);
-    virtual void Exec(){MainLoop();};
-    virtual void MainLoop(){};
+    void OnConfigure(const Configuration &conf) override final;
+    void OnStartRun(uint32_t run_n) override final;
+    void OnStopRun() override final;
+    void OnReset() override final{}; //TODO: reset member variable
+    void OnTerminate() override final;
+    void OnServer() override final{};
+    void OnData(const std::string &param) override final;
+    void Exec() override; //TODO: mark it final to report derived class which has Exec override.
+
+    virtual void DoConfigure(const Configuration &conf) = 0;
+    virtual void DoStartRun(uint32_t run_n) = 0;
+    virtual void DoStopRun() = 0;
+    virtual void DoTerminate() = 0;
+    
+    void SendEvent(EventUP ev);
     
   private:
+    bool m_done;
+    uint32_t m_pdc_n;
+    uint32_t m_run_n;
+    uint32_t m_evt_c;
     std::string m_name;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
   };

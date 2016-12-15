@@ -11,13 +11,10 @@ namespace eudaq {
   DataSender::DataSender(const std::string & type, const std::string & name)
     : m_type(type),
     m_name(name),
-    m_dataclient(0),
     m_packetCounter(0) {}
 
   void DataSender::Connect(const std::string & server) {
-    delete m_dataclient;
-    m_dataclient = TransportFactory::CreateClient(server);
-
+    m_dataclient.reset(TransportFactory::CreateClient(server));
     std::string packet;
     if (!m_dataclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from DataCollector server");
     size_t i0 = 0, i1 = packet.find(' ');
@@ -57,12 +54,6 @@ namespace eudaq {
     m_packetCounter += 1;
     m_dataclient->SendPacket(ser);
     //EUDAQ_DEBUG("Sent event");
-  }
-
-
-
-  DataSender::~DataSender() {
-    delete m_dataclient;
   }
 
 }

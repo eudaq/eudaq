@@ -23,44 +23,42 @@ namespace eudaq {
 #ifndef EUDAQ_CORE_EXPORTS
   extern template class DLLEXPORT Factory<DataCollector>;
   extern template DLLEXPORT std::map<uint32_t, typename Factory<DataCollector>::UP_BASE (*)
-				     (const std::string&, const std::string&,
-				      const std::string&, const std::string& )>&
-  Factory<DataCollector>::Instance<const std::string&, const std::string&,
-				   const std::string&, const std::string&>();
+				     (const std::string&, const std::string&)>&
+  Factory<DataCollector>::Instance<const std::string&, const std::string&>();
 #endif
   
   class DLLEXPORT DataCollector : public CommandReceiver {
   public:
-    DataCollector(const std::string &name, const std::string &runcontrol,
-                  const std::string &listenaddress,
-                  const std::string &runnumberfile);
-    ~DataCollector() override;
-    void OnServer() override;
-    void OnConfigure(const Configuration &param) override;
-    void OnStartRun(uint32_t) override;
-    void OnStopRun() override;
-    void OnStatus() override;
-    virtual void OnConnect(const ConnectionInfo &id);
-    virtual void OnDisconnect(const ConnectionInfo &id);
-    virtual void OnReceive(const ConnectionInfo &id, EventSP ev);
-    virtual void Exec(){};
+    DataCollector(const std::string &name, const std::string &runcontrol);
+    void OnConfigure(const Configuration &param) override final;
+    void OnServer() override final;
+    void OnStartRun(uint32_t) override final;
+    void OnStopRun() override final;
+    void OnTerminate() override final;
+    void OnReset() override final;
+    void OnStatus() override final;
+    void OnData(const std::string &param) override final{};
+    void Exec() override;
+
+    virtual void DoConfigure(const Configuration &param){};
+    virtual void DoStartRun(uint32_t){};
+    virtual void DoStopRun(){};
+    virtual void DoTerminate(){};
+    virtual void DoReceive(const ConnectionInfo &id, EventUP ev) = 0;
+    void WriteEvent(EventUP ev);
+    const Configuration& GetConfiguration()const {return m_config;} 
   private:
-    void DataThread();
-    void WriterThread();
     void DataHandler(TransportEvent &ev);
-    Time m_runstart;	
-    const std::string m_runnumberfile;
-    std::atomic_bool m_done;
-    std::atomic_bool m_done_writer;
-    std::atomic<uint32_t> m_runnumber;
-    std::atomic<uint32_t> m_eventnumber;
+    
+  private:
+    bool m_done;
     std::unique_ptr<TransportServer> m_dataserver;
-    ProcessorSP m_ps_input;
-    ProcessorSP m_ps_output;
     FileWriterUP m_writer;
     std::vector<ConnectionInfo> m_info_pdc;
-    std::thread m_thread;
-    std::thread m_thread_writer;
+    uint32_t m_dct_n;
+    uint32_t m_run_n;
+    uint32_t m_evt_c;
+    Configuration m_config;
   };
 }
 

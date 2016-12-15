@@ -1,3 +1,8 @@
+option(EUDAQ_MODULE_TEST "build module_test" ON)
+if(NOT EUDAQ_MODULE_TEST)
+  return()
+endif()
+
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${MODULE_NAME})
 aux_source_directory(src MODULE_SRC)

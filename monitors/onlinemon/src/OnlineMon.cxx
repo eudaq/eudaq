@@ -514,6 +514,8 @@ string RootMonitor::GetSnapShotDir()
 
 
 void RootMonitor::Exec(){
+  std::thread mthread(&Monitor::Exec, this);
+  mthread.detach();
   TApplication theApp("App",0,0,0,0);
   theApp.Run();
 }

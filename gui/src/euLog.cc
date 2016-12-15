@@ -73,8 +73,16 @@ void LogCollectorGUI::AddSender(const std::string &type,
 
 void LogCollectorGUI::Exec(){
   show();
-  if(QApplication::instance())
-    QApplication::instance()->exec(); 
+  if(QApplication::instance()){
+    std::thread qthread(&LogCollector::Exec, this); //TODO: is QCore?
+    qthread.detach();
+    QApplication::instance()->exec();
+
+  // if(QApplication::instance()){
+  //   std::thread qthread(&QCoreApplication::exec, QApplication::instance()); //TODO: is QCore?
+  //   qthread.detach();
+  //   LogCollector::Exec();
+  }
   else
     std::cerr<<"ERROR: LogCollectorGUI::EXEC\n";
 }

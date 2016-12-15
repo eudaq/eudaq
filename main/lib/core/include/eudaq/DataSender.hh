@@ -13,12 +13,11 @@ class Event;
   class DLLEXPORT DataSender {
     public:
       DataSender(const std::string & type, const std::string & name);
-      ~DataSender();
       void Connect(const std::string & server);
       void SendEvent(const Event &);
     private:
       std::string m_type, m_name;
-      TransportClient * m_dataclient;
+      std::unique_ptr<TransportClient> m_dataclient;
       uint64_t m_packetCounter;
   };
 

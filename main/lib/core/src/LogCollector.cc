@@ -20,7 +20,7 @@ namespace eudaq {
   LogCollector::LogCollector(const std::string &runcontrol,
                              const std::string &listenaddress,
 			     const std::string &logdirectory)
-      : CommandReceiver("LogCollector", "", runcontrol, false), m_done(false),
+      : CommandReceiver("LogCollector", "", runcontrol), m_done(false),
         m_listening(true),
         m_logserver(TransportFactory::CreateServer(listenaddress)),
         m_filename(logdirectory + "/" + Time::Current().Formatted("%Y-%m-%d.log")),
@@ -40,7 +40,7 @@ namespace eudaq {
     os << "\n*** LogCollector started at " << Time::Current().Formatted()
        << " ***" << std::endl;
     m_file.write(os.str().c_str(), os.str().length());
-    CommandReceiver::StartThread();
+
   }
 
   LogCollector::~LogCollector() {
@@ -51,18 +51,16 @@ namespace eudaq {
       m_thread.join();
   }
 
+  void LogCollector::OnTerminate(){
+    m_done = true;
+    DoTerminate();
+    
+  }
+  
   void LogCollector::OnServer() {
     if (!m_logserver)
       EUDAQ_ERROR("Oops");
-    m_status.SetTag("_SERVER", m_logserver->ConnectionString());
-  }
-
-  void LogCollector::DoReceive(const LogMessage &ev) {
-    std::ostringstream buf;
-    ev.Write(buf);
-    m_file.write(buf.str().c_str(), buf.str().length());
-    m_file.flush();
-    OnReceive(ev);
+    SetStatusTag("_SERVER", m_logserver->ConnectionString());
   }
 
   void LogCollector::LogHandler(TransportEvent &ev) {
@@ -78,7 +76,7 @@ namespace eudaq {
       break;
     case (TransportEvent::DISCONNECT):
       // std::cout << "Disconnect: " << ev.id << std::endl;
-      OnDisconnect(ev.id);
+      DoDisconnect(ev.id);
       break;
     case (TransportEvent::RECEIVE):
       if (ev.id.GetState() == 0) { // waiting for identification
@@ -115,13 +113,20 @@ namespace eudaq {
         } while (false);
         m_logserver->SendPacket("OK", ev.id, true);
         ev.id.SetState(1); // successfully identified
-        OnConnect(ev.id);
+        DoConnect(ev.id);
       } else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         std::string src = ev.id.GetType();
         if (ev.id.GetName() != "")
           src += "." + ev.id.GetName();
-        DoReceive(LogMessage(ser).SetSender(src));
+	
+	std::ostringstream buf;
+	LogMessage logmesg(ser);
+	logmesg.SetSender(src);
+	logmesg.Write(buf);
+	m_file.write(buf.str().c_str(), buf.str().length());
+	m_file.flush();
+	DoReceive(logmesg);
       }
       break;
     default:
@@ -129,7 +134,7 @@ namespace eudaq {
     }
   }
 
-  void LogCollector::LogThread() {
+  void LogCollector::LogThread(){
     try {
       while (!m_done) {
         m_logserver->Process(100000);
@@ -140,6 +145,20 @@ namespace eudaq {
     } catch (...) {
       std::cout << "Error: Uncaught unrecognised exception: \n"
                 << "LogThread is dying..." << std::endl;
+    }
+  }
+
+
+  void LogCollector::Exec(){
+    try {
+      while (!m_done){
+	Process();
+	//TODO: sleep here is needed.
+      }
+    } catch (const std::exception &e) {
+      std::cout <<"LogCollector::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
+    } catch (...) {
+      std::cout <<"LogCollector::Exec() Error: Uncaught unrecognised exception" <<std::endl;
     }
   }
 }

@@ -8,15 +8,14 @@ namespace eudaq {
   Monitor::Monitor(const std::string &name, const std::string &runcontrol,
                    const unsigned lim, const unsigned skip_,
                    const unsigned int skip_evts, const std::string &datafile)
-      : CommandReceiver("Monitor", name, runcontrol, false), m_run(0),
+      : CommandReceiver("Monitor", name, runcontrol), m_run(0),
         m_callstart(false), m_reader(0), limit(lim), skip(100 - skip_),
-        skip_events_with_counter(skip_evts) {
+        skip_events_with_counter(skip_evts),m_done(false) {
     if (datafile != ""){
       m_reader = Factory<FileReader>::MakeShared(cstr2hash("RawFileReader"), datafile);
       std::cout << "DEBUG: Reading file " << datafile << " -> "
                 << m_reader->Filename() << std::endl;
     }
-    StartThread();
   }
 
   bool Monitor::ProcessEvent() { //TODO:: Deal with BORE
@@ -85,4 +84,17 @@ namespace eudaq {
 
   void Monitor::OnStopRun() { m_reader->Interrupt(); }
 
+  void Monitor::Exec(){
+    try {
+      while (!m_done){
+	Process();
+	//TODO: sleep here is needed.
+      }
+    } catch (const std::exception &e) {
+      std::cout <<"Monitor::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
+    } catch (...) {
+      std::cout <<"Monitor::Exec() Error: Uncaught unrecognised exception" <<std::endl;
+    }
+  }
+  
 }

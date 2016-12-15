@@ -22,12 +22,10 @@ class TestLogCollector : public eudaq::LogCollector {
   void OnReset() override final;
   void OnStatus() override final;
   void OnUnrecognised(const std::string & cmd, const std::string & param) override final;
-  void Exec() override final;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("TestLogCollector");
 private:
   int m_loglevel;
-  bool m_done;
 };
 
 
@@ -43,7 +41,7 @@ TestLogCollector::TestLogCollector(const std::string & runcontrol,
 				   const std::string & directory,
 				   int loglevel)
   :eudaq::LogCollector(runcontrol, listenaddress, directory),
-  m_loglevel(loglevel), m_done(false){
+  m_loglevel(loglevel){
 
 }
 
@@ -79,7 +77,7 @@ void TestLogCollector::OnStopRun(){
 void TestLogCollector::OnTerminate(){
   SetStatus(eudaq::Status::LVL_OK, "LC Terminating");
   std::cout << "Terminating" << std::endl;
-  m_done = true;
+  LogCollector::OnTerminate();
 }
 
 void TestLogCollector::OnReset(){
@@ -95,10 +93,4 @@ void TestLogCollector::OnUnrecognised(const std::string & cmd, const std::string
   if (param.length() > 0) std::cout << " (" << param << ")";
   std::cout << std::endl;
   SetStatus(eudaq::Status::LVL_ERROR, "Just testing");
-}
-
-void TestLogCollector::Exec(){
-  do {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  } while (!m_done);
 }

@@ -111,34 +111,33 @@ protected:
       }
     }
   }
-  virtual void OnConfigure(const eudaq::Configuration &param) {
-    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
-    LogCollector::OnConfigure(param);
-    std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-  }
-  virtual void OnStartRun(unsigned param) {
-    LogCollector::OnStartRun(param);
-    SetStatus(eudaq::Status::LVL_OK);
-  }
-  virtual void OnConnect(const eudaq::ConnectionInfo &id) {
+  // void OnConfigure(const eudaq::Configuration &param) {
+  //   std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+  //   LogCollector::OnConfigure(param);
+  //   std::cout << "...Configured (" << param.Name() << ")" << std::endl;
+  //   SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+  // }
+  // void OnStartRun(unsigned param) {
+  //   LogCollector::OnStartRun(param);
+  //   SetStatus(eudaq::Status::LVL_OK);
+  // }
+  void DoConnect(const eudaq::ConnectionInfo &id) override{
     eudaq::mSleep(100);
     CheckRegistered();
     EUDAQ_INFO("Connection from " + to_string(id));
     AddSender(id.GetType(), id.GetName());
   }
-  virtual void OnDisconnect(const eudaq::ConnectionInfo &id) {
+  void DoDisconnect(const eudaq::ConnectionInfo &id) override{
     EUDAQ_INFO("Disconnected " + to_string(id));
   }
-  virtual void OnReceive(const eudaq::LogMessage &msg) {
+  void DoReceive(const eudaq::LogMessage &msg) override{
     CheckRegistered();
     emit RecMessage(msg);
   }
-  virtual void OnTerminate() {
+  void DoTerminate() override{
     SetStatus(eudaq::Status::LVL_OK, "LC Terminating");
     std::cout << "terminating!" << std::endl;
     QApplication::quit();
-    exit(0);
   }
   void AddSender(const std::string &type, const std::string &name = "");
   void closeEvent(QCloseEvent *) {
