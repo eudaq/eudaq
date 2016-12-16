@@ -33,7 +33,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 
 		unzip alice-its-alpide-software-master-latest.zip
 		
-		mv "alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b" aliceitsalpidesoftwaremaster
+		mv "alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454" aliceitsalpidesoftwaremaster
 	
 	fi
 
