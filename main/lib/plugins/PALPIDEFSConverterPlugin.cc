@@ -2,13 +2,13 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 
-#ifdef WIN32
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+typedef long long int64_t
+typedef unsigned int uint32_t
+typedef int int32_t
 #else
-#include <stdint.h>
+#include <cstdint>
 #endif
 
 // All LCIO-specific parts are put in conditional compilation blocks
@@ -25,6 +25,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #if ROOT_FOUND
+#include "Windows4Root.h"
 #include "TF1.h"
 #include "TGraph.h"
 #include "TMath.h"
