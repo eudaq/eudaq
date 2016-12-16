@@ -53,7 +53,7 @@ env:
       - BUILD_taki=OFF
       - BUILD_timepixdummy=OFF
       - BUILD_tlu=OFF
-      - BUILD_user_telescope=OFF
+      - BUILD_user_telescope=ON
 
       
 # possible options:
