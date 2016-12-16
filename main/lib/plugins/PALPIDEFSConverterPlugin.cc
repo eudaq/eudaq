@@ -25,7 +25,9 @@ typedef int int32_t
 #endif
 
 #if ROOT_FOUND
+#if ((defined WIN32)
 #include "Windows4Root.h"
+#endif
 #include "TF1.h"
 #include "TGraph.h"
 #include "TMath.h"
