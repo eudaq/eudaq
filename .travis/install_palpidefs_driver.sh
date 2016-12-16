@@ -77,13 +77,13 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 	
-	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b ]; then
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454 ]; then
 		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
 		unzip alice-its-alpide-software-master-latest.zip
 	fi
 
-	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
+	cd alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454
 
 	cd pALPIDEfs-software
 
