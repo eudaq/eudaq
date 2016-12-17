@@ -76,11 +76,11 @@ namespace eudaq {
     }
   }
 
-  void RunControl::Reset() {
-    EUDAQ_INFO("Resetting");
-    m_listening = true;
-    SendCommand("RESET");
-  }
+  // void RunControl::Reset() {
+  //   EUDAQ_INFO("Resetting");
+  //   m_listening = true;
+  //   SendCommand("RESET");
+  // }
 
   void RunControl::GetStatus() { SendCommand("STATUS"); }
 

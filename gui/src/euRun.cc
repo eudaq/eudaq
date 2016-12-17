@@ -16,20 +16,6 @@ namespace{
     Register<RunControlGUI, const std::string&>(eudaq::cstr2hash("GuiRunControl"));
 }
 
-namespace{
-  QCoreApplication* GetQApplication(){
-    QCoreApplication* qapp = QApplication::instance();
-    if(!qapp){
-      int argc = 1;
-      char *argv[] = {(char*)"euGUI"};
-      qapp = new QApplication(argc, argv );  
-    }
-    return qapp;
-  }
-  auto qapp = GetQApplication();
-}
-
-
 static const char *statuses[] = {
     "RUN",       "Run Number", "EVENT",    "Events Built", "FULLRATE",
     "Rate",      "TRIG",       "Triggers", "FILEBYTES",    "File Bytes",

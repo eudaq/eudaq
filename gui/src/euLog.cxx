@@ -3,6 +3,21 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/LogCollector.hh"
+#include <QApplication>
+
+namespace{
+  QCoreApplication* GetQApplication(){
+    QCoreApplication* qapp = QApplication::instance();
+    if(!qapp){
+      int argc = 1;
+      char *argv[] = {(char*)"euGUI"};
+      qapp = new QApplication(argc, argv );  
+    }
+    return qapp;
+  }
+  auto qapp = GetQApplication();
+}
+
 
 int main(int argc, char **argv) {
   eudaq::OptionParser op("EUDAQ Log Collector", "1.0",

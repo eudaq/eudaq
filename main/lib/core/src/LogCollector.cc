@@ -20,41 +20,30 @@ namespace eudaq {
   LogCollector::LogCollector(const std::string &runcontrol,
                              const std::string &listenaddress,
 			     const std::string &logdirectory)
-      : CommandReceiver("LogCollector", "", runcontrol), m_done(false),
-        m_listening(true),
+      : CommandReceiver("LogCollector", "", runcontrol), m_exit(false),
         m_logserver(TransportFactory::CreateServer(listenaddress)),
         m_filename(logdirectory + "/" + Time::Current().Formatted("%Y-%m-%d.log")),
         m_file(m_filename.c_str(), std::ios_base::app) {
     if (!m_file.is_open())
       EUDAQ_THROWX(FileWriteException, "Unable to open log file (" +
-		   m_filename +
-		   ") is there a logs directory?");
+		   m_filename + ") is there a logs directory?");
     else std::cout << "LogCollector opened \"" << m_filename << "\" for logging." << std::endl;
-    m_logserver->SetCallback(
-        TransportCallback(this, &LogCollector::LogHandler));
-    m_thread = std::thread(&LogCollector::LogThread, this);
-    std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
-              << std::endl
-              << "       logfile=" << m_filename << std::endl;
+    m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     std::ostringstream os;
     os << "\n*** LogCollector started at " << Time::Current().Formatted()
        << " ***" << std::endl;
     m_file.write(os.str().c_str(), os.str().length());
-
   }
 
   LogCollector::~LogCollector() {
     m_file << "*** LogCollector stopped at " << Time::Current().Formatted()
            << " ***" << std::endl;
-    m_done = true;
-    if(m_thread.joinable())
-      m_thread.join();
+    CloseLogCollector();
   }
 
   void LogCollector::OnTerminate(){
-    m_done = true;
-    DoTerminate();
-    
+    CloseLogCollector();
+    DoTerminate(); 
   }
   
   void LogCollector::OnServer() {
@@ -66,13 +55,7 @@ namespace eudaq {
   void LogCollector::LogHandler(TransportEvent &ev) {
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
-      if (m_listening) {
-        m_logserver->SendPacket("OK EUDAQ LOG LogCollector", ev.id, true);
-      } else {
-        m_logserver->SendPacket("ERROR EUDAQ LOG Not accepting new connections",
-                                ev.id, true);
-        m_logserver->Close(ev.id);
-      }
+      m_logserver->SendPacket("OK EUDAQ LOG LogCollector", ev.id, true);
       break;
     case (TransportEvent::DISCONNECT):
       // std::cout << "Disconnect: " << ev.id << std::endl;
@@ -136,9 +119,11 @@ namespace eudaq {
 
   void LogCollector::LogThread(){
     try {
-      while (!m_done) {
+      // TODO: create m_logserver here instead of inside constructor
+      while (!m_exit) {
         m_logserver->Process(100000);
       }
+      // TODO: send disconnect event
     } catch (const std::exception &e) {
       std::cout << "Error: Uncaught exception: " << e.what() << "\n"
                 << "LogThread is dying..." << std::endl;
@@ -148,17 +133,27 @@ namespace eudaq {
     }
   }
 
+  void LogCollector::StartLogCollector(){
+    if(m_exit){
+      EUDAQ_THROW("LogCollector can not be restarted after exit. (TODO)");
+    }
+    m_thd_server = std::thread(&LogCollector::LogThread, this);
+    std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
+              << std::endl
+              << "       logfile=" << m_filename << std::endl;
+  }
 
+  void LogCollector::CloseLogCollector(){
+    m_exit = true;
+    if(m_thd_server.joinable())
+      m_thd_server.join();
+  }
+  
   void LogCollector::Exec(){
-    try {
-      while (!m_done){
-	Process();
-	//TODO: sleep here is needed.
-      }
-    } catch (const std::exception &e) {
-      std::cout <<"LogCollector::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
-    } catch (...) {
-      std::cout <<"LogCollector::Exec() Error: Uncaught unrecognised exception" <<std::endl;
+    StartLogCollector(); //TODO: Start it OnServer
+    StartCommandReceiver();
+    if(IsActiveCommandReceiver() || IsActiveLogCollector()){
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }
 }

@@ -25,9 +25,6 @@ namespace eudaq {
    */
   class DLLEXPORT Producer : public CommandReceiver{
   public:
-    // static ProducerSP MakeShared(const std::string& pstype,
-    // 				 std::initializer_list
-    // 				 <std::pair<const std::string, const std::string>> l = {{}});
     /**
      * The constructor.
      * \param runcontrol A string containing the address of the RunControl to
@@ -46,16 +43,14 @@ namespace eudaq {
     virtual void DoConfigure(const Configuration &conf) = 0;
     virtual void DoStartRun(uint32_t run_n) = 0;
     virtual void DoStopRun() = 0;
+    virtual void DoReset() = 0;
     virtual void DoTerminate() = 0;
     
     void SendEvent(EventUP ev);
-    
   private:
-    bool m_done;
     uint32_t m_pdc_n;
     uint32_t m_run_n;
     uint32_t m_evt_c;
-    std::string m_name;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
   };
 }

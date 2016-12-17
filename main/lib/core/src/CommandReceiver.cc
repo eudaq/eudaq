@@ -48,7 +48,7 @@ namespace eudaq {
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
-    : m_type(type), m_name(name){
+    : m_type(type), m_name(name), m_exit(false){
     int i = 0;
     while (true){ 
       try {
@@ -82,14 +82,13 @@ namespace eudaq {
     m_cmdclient->SetCallback(TransportCallback(this, &CommandReceiver::CommandHandler));
   }
 
+  CommandReceiver::~CommandReceiver(){
+    CloseCommandReceiver();
+  }
+  
   void CommandReceiver::SetStatus(Status::Level level,
                                   const std::string &info) {
     m_status = Status(level, info);
-  }
-
-  void CommandReceiver::Process(int timeout){
-    m_cmdclient->Process(timeout);
-    OnIdle();
   }
 
   void CommandReceiver::OnLog(const std::string &param) {
@@ -118,7 +117,7 @@ namespace eudaq {
       } else if (cmd == "STOP") {
         OnStopRun();
       } else if (cmd == "TERMINATE") {
-        OnTerminate();
+	CloseCommandReceiver();
       } else if (cmd == "RESET") {
         OnReset();
       } else if (cmd == "STATUS") {
@@ -138,4 +137,34 @@ namespace eudaq {
     }
   }
 
+  void CommandReceiver::ProcessingCommand(){
+    try {
+      //TODO: create m_cmdclient here instead of inside constructor
+      while (!m_exit){
+	m_cmdclient->Process(-1);
+	OnIdle();
+      }
+      //TODO: SendDisconnect event;
+      OnTerminate();
+    } catch (const std::exception &e) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
+    } catch (...) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
+    }
+  }
+
+  void CommandReceiver::StartCommandReceiver(){
+    if(m_exit){
+      EUDAQ_THROW("CommandReceiver can not be restarted after exit. (TODO)");
+    }
+    m_thd_client = std::thread(&CommandReceiver::ProcessingCommand, this);
+  }
+
+  void CommandReceiver::CloseCommandReceiver(){
+    m_exit = true;
+    if(m_thd_client.joinable()){
+      m_thd_client.join();
+    }
+  }
+  
 }

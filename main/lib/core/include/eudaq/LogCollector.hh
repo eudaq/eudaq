@@ -49,13 +49,15 @@ namespace eudaq {
     virtual void DoDisconnect(const ConnectionInfo & /*id*/) {}
     virtual void DoReceive(const LogMessage &msg) = 0;
 
-    void LogThread();
-
+    void StartLogCollector();
+    void CloseLogCollector();
+    bool IsActiveLogCollector(){return m_thd_server.joinable();}
   private:
+    void LogThread();
     void LogHandler(TransportEvent &ev);
-    bool m_done, m_listening;
+    bool m_exit;
     std::unique_ptr<TransportServer> m_logserver; ///< Transport for receiving log messages
-    std::thread m_thread;
+    std::thread m_thd_server;
     std::string m_filename;
     std::ofstream m_file;
   };

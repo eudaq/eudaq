@@ -9,10 +9,10 @@ namespace eudaq {
   Factory<Producer>::Instance<const std::string&, const std::string&>();  
   
   Producer::Producer(const std::string &name, const std::string &runcontrol)
-    : CommandReceiver("Producer", name, runcontrol), m_name(name),m_done(false){
+    : CommandReceiver("Producer", name, runcontrol){
     m_run_n = 0;
     m_evt_c = 0;
-    m_pdc_n = cstr2hash(name.c_str());
+    m_pdc_n = str2hash(GetFullName());
   }
   
   void Producer::OnConfigure(const Configuration &conf){
@@ -21,6 +21,7 @@ namespace eudaq {
       DoConfigure(conf);
       std::cout << "... was Configured " << conf.Name() << " " << std::endl;
       EUDAQ_INFO("Configured (" + conf.Name() + ")");
+      m_pdc_n = m_config.Get("ID", m_pdc_n);
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf.Name() + ")");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
@@ -63,34 +64,34 @@ namespace eudaq {
     }
 
   }
+
+  void OnReset() override final{
+    
+
+  };
+
+
   
   void Producer::OnTerminate(){
     std::cout << "Terminate...." << std::endl;
-    m_done = true;
     DoTerminate();
   }
   
   void Producer::OnData(const std::string &server){
     auto it = m_senders.find(server);
     if(it==m_senders.end()){
-      std::unique_ptr<DataSender> sender(new DataSender("Producer", m_name));
+      std::unique_ptr<DataSender> sender(new DataSender("Producer", GetFullName()));
       m_senders[server]= std::move(sender);
     }
     m_senders[server]->Connect(server);
   }
-
+  
   void Producer::Exec(){
-    try {
-      while (!m_done){
-	Process();
-	//TODO: sleep here is needed.
-      }
-    } catch (const std::exception &e) {
-      std::cout <<"Producer::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
-    } catch (...) {
-      std::cout <<"Producer::Exec() Error: Uncaught unrecognised exception" <<std::endl;
+    StartCommandReceiver();
+    if(IsActiveCommandReceiver()){
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
-  }  
+  }
 
   void Producer::SendEvent(EventUP ev){
     ev->SetRunN(m_run_n);

@@ -4,6 +4,22 @@
 #include "eudaq/Logger.hh"
 #include "eudaq/Producer.hh"
 #include <iostream>
+#include <QApplication>
+
+
+namespace{
+  QCoreApplication* GetQApplication(){
+    QCoreApplication* qapp = QApplication::instance();
+    if(!qapp){
+      int argc = 1;
+      char *argv[] = {(char*)"euGUI"};
+      qapp = new QApplication(argc, argv );  
+    }
+    return qapp;
+  }
+  auto qapp = GetQApplication();
+}
+
 
 int main(int argc, char ** argv) {
   eudaq::OptionParser op("EUDAQ Producer", "1.0", "A comand-line version of a dummy Producer");

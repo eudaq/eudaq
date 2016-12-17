@@ -39,7 +39,7 @@ namespace eudaq{
     Instance();
     
     template <typename DERIVED, typename... ARGS>
-    static std::uint32_t
+    static std::uint64_t
     Register(std::uint32_t id);
     
   private:
@@ -94,7 +94,7 @@ namespace eudaq{
     
   template <typename BASE>
   template <typename DERIVED, typename... ARGS>
-  std::uint32_t
+  std::uint64_t
   Factory<BASE>::Register(std::uint32_t id){
     auto &ins = Instance<ARGS&&...>();
     // std::cout<<"Register ID "<<id <<"  to Factory<"
@@ -104,7 +104,7 @@ namespace eudaq{
     // for(auto& e: ins)
     //   std::cout<<e.first<<"  ";
     // std::cout<<std::endl;
-    return 0;
+    return reinterpret_cast<std::uintptr_t>(&ins);
   };
 
 }

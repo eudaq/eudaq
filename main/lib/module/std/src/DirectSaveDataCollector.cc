@@ -1,5 +1,5 @@
 #include "eudaq/DataCollector.hh"
-
+#include <iostream>
 namespace eudaq {
   class DirectSaveDataCollector :public DataCollector{
   public:
@@ -12,6 +12,8 @@ namespace eudaq {
     auto dummy0 = Factory<DataCollector>::
       Register<DirectSaveDataCollector, const std::string&, const std::string&>
       (DirectSaveDataCollector::m_id_factory);
+    
+    auto &ddd=( std::cout<<DirectSaveDataCollector::m_id_factory<<std::endl);
   }
 
   void DirectSaveDataCollector::DoReceive(const ConnectionInfo &id, EventUP ev){

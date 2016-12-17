@@ -3,8 +3,24 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/RunControl.hh"
 #include <iostream>
+#include <QApplication>
+
 
 #include "config.h" // for version symbols
+
+
+namespace{
+  QCoreApplication* GetQApplication(){
+    QCoreApplication* qapp = QApplication::instance();
+    if(!qapp){
+      int argc = 1;
+      char *argv[] = {(char*)"euGUI"};
+      qapp = new QApplication(argc, argv );  
+    }
+    return qapp;
+  }
+  auto qapp = GetQApplication();
+}
 
 
 int main(int argc, char **argv) {

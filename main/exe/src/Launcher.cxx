@@ -37,9 +37,8 @@ int main(int /*argc*/, const char **argv) {
       (str2hash(name.Value()), name.Value(), rctrl.Value());
     app->Exec();
   }else if(app_name.find("DataCollector") != std::string::npos){
-    auto app=Factory<DataCollector>::MakeShared<const std::string&,const std::string&,
-						const std::string&,const std::string&>
-      (str2hash(name.Value()), name.Value(), rctrl.Value(), listen.Value(), runfile.Value());
+    auto app=Factory<DataCollector>::MakeShared<const std::string&,const std::string&>
+      (str2hash(name.Value()), name.Value(), rctrl.Value());
     app->Exec();
   }else if(app_name.find("LogCollector") != std::string::npos){
     auto app=Factory<LogCollector>::MakeShared<const std::string&,const std::string&,

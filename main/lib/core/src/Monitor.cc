@@ -85,16 +85,18 @@ namespace eudaq {
   void Monitor::OnStopRun() { m_reader->Interrupt(); }
 
   void Monitor::Exec(){
-    try {
-      while (!m_done){
-	Process();
-	//TODO: sleep here is needed.
-      }
-    } catch (const std::exception &e) {
-      std::cout <<"Monitor::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
-    } catch (...) {
-      std::cout <<"Monitor::Exec() Error: Uncaught unrecognised exception" <<std::endl;
-    }
+    // try {
+    //   while (!m_done){
+    // 	Process();
+    // 	//TODO: sleep here is needed.
+    //   }
+    // } catch (const std::exception &e) {
+    //   std::cout <<"Monitor::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
+    // } catch (...) {
+    //   std::cout <<"Monitor::Exec() Error: Uncaught unrecognised exception" <<std::endl;
+    // }
+
+    //TODO
   }
   
 }

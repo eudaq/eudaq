@@ -35,7 +35,6 @@ namespace eudaq {
     void OnStartRun(uint32_t) override final;
     void OnStopRun() override final;
     void OnTerminate() override final;
-    void OnReset() override final;
     void OnStatus() override final;
     void OnData(const std::string &param) override final{};
     void Exec() override;
@@ -47,11 +46,17 @@ namespace eudaq {
     virtual void DoReceive(const ConnectionInfo &id, EventUP ev) = 0;
     void WriteEvent(EventUP ev);
     const Configuration& GetConfiguration()const {return m_config;} 
+
+    void StartDataCollector();
+    void CloseDataCollector();
+    bool IsActiveDataCollector(){return m_thd_server.joinable();}
   private:
     void DataHandler(TransportEvent &ev);
-    
+    void DataThread();
+
   private:
-    bool m_done;
+    std::thread m_thd_server;
+    bool m_exit;
     std::unique_ptr<TransportServer> m_dataserver;
     FileWriterUP m_writer;
     std::vector<ConnectionInfo> m_info_pdc;
