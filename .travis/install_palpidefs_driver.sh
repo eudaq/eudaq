@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # This package is necessary for the palpidefs producer
 
@@ -17,32 +17,32 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	
 	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
 
-	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software" ]; then
+	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software" ]; then
 	
 		echo "palpidefs source restored from cache as path exists:"
 		
-		ls $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
+		ls $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
 		
-		zip -r aliceitsalpidesoftwaremaster.zip aliceitsalpidesoftwaremaster
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 		
 	else
 
 		echo "palpidefs source not restored from cache - downloading from CERNBOX and unpacking"
 		
-		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 		
-		cp alice-its-alpide-software-master-latest.zip aliceitsalpidesoftwaremaster.zip
+		cp alice-its-alpide-software.zip aliceitsalpidesoftware.zip
 
-		unzip alice-its-alpide-software-master-latest.zip
+		unzip alice-its-alpide-software.zip
 		
-		mv alice-its-alpide-software-$VERSION aliceitsalpidesoftwaremaster
+		mv alice-its-alpide-software-$VERSION aliceitsalpidesoftware
 	
 	fi
 
 	echo `ls `
 	
-	cd aliceitsalpidesoftwaremaster
-	cd "pALPIDEfs-software"
+	cd aliceitsalpidesoftware
+	cd pALPIDEfs-software
 
 	sed -i '2s/.*//' Makefile
 	
@@ -80,9 +80,9 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	cd ..	
 
 	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-$VERSION ]; then
-		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
-		unzip alice-its-alpide-software-master-latest.zip
+		unzip alice-its-alpide-software.zip
 	fi
 
 	cd alice-its-alpide-software-$VERSION
