@@ -15,8 +15,6 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	
 	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
 
-	rm -rfv $TRAVIS_BUILD_DIR/extern/alice*
-	
 	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software" ]; then
 	
 		echo "palpidefs source restored from cache as path exists:"
@@ -79,8 +77,6 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 
-	rm -rfv $TRAVIS_BUILD_DIR/extern/alice*
-	
 	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454 ]; then
 		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
