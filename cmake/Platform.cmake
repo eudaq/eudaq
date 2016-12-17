@@ -36,7 +36,7 @@ else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 # compiler specific settings
-if (CMAKE_COMPILER_IS_GNUCC)
+if ((CMAKE_COMPILER_IS_GNUCC) OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    # add some more general preprocessor defines (only for gcc)
    message(STATUS "Using gcc-specific preprocessor identifiers")
    add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")
