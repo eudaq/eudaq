@@ -31,12 +31,11 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 		
 		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 		
-		cp alice-its-alpide-software.zip aliceitsalpidesoftware.zip
-
 		unzip alice-its-alpide-software.zip
 		
 		mv alice-its-alpide-software-$VERSION aliceitsalpidesoftware
 	
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
 	echo `ls `
