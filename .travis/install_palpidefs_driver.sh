@@ -9,6 +9,8 @@ export temporary_path=`pwd`
 
 echo $temporary_path
 
+VERSION=TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454
+
 cd $TRAVIS_BUILD_DIR/extern/
 
 if [ $TRAVIS_OS_NAME == linux ]; then 
@@ -33,7 +35,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 
 		unzip alice-its-alpide-software-master-latest.zip
 		
-		mv "alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454" aliceitsalpidesoftwaremaster
+		mv alice-its-alpide-software-$VERSION aliceitsalpidesoftwaremaster
 	
 	fi
 
@@ -77,13 +79,13 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 
-	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454 ]; then
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-$VERSION ]; then
 		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
 		unzip alice-its-alpide-software-master-latest.zip
 	fi
 
-	cd alice-its-alpide-software-TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454
+	cd alice-its-alpide-software-$VERSION
 
 	cd pALPIDEfs-software
 
