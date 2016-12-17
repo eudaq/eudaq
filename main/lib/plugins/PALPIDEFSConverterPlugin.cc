@@ -2,13 +2,13 @@
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Utils.hh"
 
-#ifdef WIN32
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
+#if ((defined WIN32) && (defined __CINT__))
+typedef unsigned long long uint64_t
+typedef long long int64_t
+typedef unsigned int uint32_t
+typedef int int32_t
 #else
-#include <stdint.h>
+#include <cstdint>
 #endif
 
 // All LCIO-specific parts are put in conditional compilation blocks
@@ -25,11 +25,17 @@ typedef unsigned __int64 uint64_t;
 #endif
 
 #if ROOT_FOUND
+#if (defined WIN32)
+#include "Windows4Root.h"
+#endif
 #include "TF1.h"
 #include "TGraph.h"
 #include "TMath.h"
 #include "TFitResultPtr.h"
 #include "TFitResult.h"
+#include "TH2F.h"
+#include "TFile.h"
+#include "TCanvas.h"
 #endif
 
 #include <iostream>
@@ -59,10 +65,15 @@ using namespace std;
                          // broken
 #define WRITE_TEMPERATURE_LOG // write NTC values to a text file
 
-//#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
-                               // period, they are marked as broken
+#define CHECK_EVENT_DISTANCE // if event distance does not correspond to the set pulser
+                            // period, they are marked as broken
 
-//#define EVENT_SUBTRACTION  // subtract the previous events
+#define EVENT_SUBTRACTION  // subtract the previous events
+
+#if ROOT_FOUND
+//#define EVENT_DISPLAY
+//#define ANALYSIS
+#endif
 
 namespace eudaq {
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -161,25 +172,61 @@ namespace eudaq {
 #endif
 
 
+
+      char tmp[100];
+#ifdef EVENT_DISPLAY
+      snprintf(tmp, 100, "run%06d-eventList.txt", bore.GetRunNumber());
+      m_file_event_list.open(tmp, std::ifstream::in);
+
+
+      if (m_file_event_list) {
+        int value;
+        while (m_file_event_list >> value) {
+          m_event_list.push_back(value);
+        }
+        sort(m_event_list.begin(), m_event_list.end());
+
+        cout << endl << endl;
+        cout << "Read event list " << tmp << " for the production of hitmaps" << endl;
+        cout << m_event_list.size() << " event IDs." << endl << endl;
+
+        if (m_event_list.size()>0) {
+          snprintf(tmp, 100, "run%06d-eventDisplay.root", bore.GetRunNumber());
+          m_file_event_display = new TFile(tmp, "RECREATE");
+        }
+      }
+#endif
+
+#ifdef ANALYSIS
+      snprintf(tmp, 100, "run%06d-converterAnalysis.root", bore.GetRunNumber());
+      m_file_analysis = new TFile(tmp, "RECREATE");
+      m_hits_hit_planes = new TH2F*[m_nLayers];
+      for (int i = 0; i < m_nLayers; i++) {
+        snprintf(tmp, 100, "hitsHitPlanes_%d", i);
+        m_hits_hit_planes[i] = new TH2F(tmp, "", 100, 0., 100., m_nLayers+2, 0., (double)m_nLayers+1.);
+      }
+#endif
+
+
       for (int i = 0; i < m_nLayers; i++) {
         char tmp[100];
-        sprintf(tmp, "Config_%d", i);
+        snprintf(tmp, 100, "Config_%d", i);
         string config = bore.GetTag<string>(tmp, "");
         // cout << "Config of layer " << i << " is: " << config.c_str() << endl;
         m_configs[i] = config;
 
-        sprintf(tmp, "ChipType_%d", i);
+        snprintf(tmp, 100, "ChipType_%d", i);
         m_chip_type[i] = bore.GetTag<int>(tmp, 1);
-        sprintf(tmp, "StrobeLength_%d", i);
+        snprintf(tmp, 100, "StrobeLength_%d", i);
         m_strobe_length[i] = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "StrobeBLength_%d", i);
+        snprintf(tmp, 100, "StrobeBLength_%d", i);
         m_strobeb_length[i] = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "ReadoutDelay_%d", i);
+        snprintf(tmp, 100, "ReadoutDelay_%d", i);
         m_readout_delay[i] = bore.GetTag<int>(tmp, -100);
-        sprintf(tmp, "TriggerDelay_%d", i);
+        snprintf(tmp, 100, "TriggerDelay_%d", i);
         m_trigger_delay[i] = bore.GetTag<int>(tmp, -100);
 
-        sprintf(tmp, "SCS_%d", i);
+        snprintf(tmp, 100, "SCS_%d", i);
         m_do_SCS[i] = (bool)bore.GetTag<int>(tmp, 0);
 
 #if USE_TINYXML
@@ -222,7 +269,7 @@ namespace eudaq {
             &(dynamic_cast<const RawDataEvent *>(&bore))->GetBlock(2 * i);
           m_SCS_points[i] =
             &(dynamic_cast<const RawDataEvent *>(&bore))->GetBlock(2 * i + 1);
-          
+
           if (!analyse_threshold_scan(
                 m_SCS_data[i]->data(), m_SCS_points[i]->data(), &m_SCS_thr[i],
                 &m_SCS_thr_rms[i], &m_SCS_noise[i], &m_SCS_noise_rms[i],
@@ -250,17 +297,17 @@ namespace eudaq {
         }
 
         // get masked pixels
-        sprintf(tmp, "MaskedPixels_%d", i);
+        snprintf(tmp, 100, "MaskedPixels_%d", i);
         string pixels = bore.GetTag<string>(tmp, "");
         // cout << "Masked pixels of layer " << i << " is: " << pixels.c_str()
         // << endl;
-        sprintf(tmp, "run%06d-maskedPixels_%d.txt", bore.GetRunNumber(), i);
+        snprintf(tmp, 100, "run%06d-maskedPixels_%d.txt", bore.GetRunNumber(), i);
         ofstream maskedPixelFile(tmp);
         maskedPixelFile << pixels;
 
 
         // firmware version
-        sprintf(tmp, "FirmwareVersion_%d", i);
+        snprintf(tmp, 100, "FirmwareVersion_%d", i);
         string version = bore.GetTag<string>(tmp, "");
         cout << "Firmware version on layer " << i << " is: " << version.c_str()
              << endl;
@@ -313,7 +360,7 @@ namespace eudaq {
       }
 #ifdef WRITE_TEMPERATURE_FILE
       char tmp[100];
-      sprintf(tmp, "run%06d-temperature.txt", bore.GetRunNumber());
+      snprintf(tmp, 100, "run%06d-temperature.txt", bore.GetRunNumber());
       m_temperature_file = new ofstream(tmp);
 #endif
     }
@@ -377,7 +424,7 @@ namespace eudaq {
         current_layer = data[pos++];
       }
 
-      if (current_layer >= m_nLayers) {
+      if (current_layer >= m_nLayers || current_layer < 0) {
         cout << "ERROR: Event " << ev.GetEventNumber()
              << " Unexpected. Not defined layer in data " << current_layer
              << ", pos = " << pos << endl;
@@ -521,6 +568,44 @@ namespace eudaq {
           cout << "vector has size : " << data.size() << endl;
 #endif
 
+#ifdef EVENT_DISPLAY
+          bool m_write_event = false;
+          if (m_event_list.size()>0) {
+            while (m_event_list_entry<m_event_list.size()-1 &&
+                   m_event_list[m_event_list_entry]<ev.GetEventNumber()) {
+              const_cast<PALPIDEFSConverterPlugin*>(this)->m_event_list_entry++;
+            }
+            if (m_event_list[m_event_list_entry]==ev.GetEventNumber()) m_write_event = true;
+          }
+
+          char tmp[50] = { 0 };
+          snprintf(tmp, 50, "c_%06d", ev.GetEventNumber());
+          TCanvas *c = (m_write_event) ? new TCanvas(tmp, "", 1920, 1080) : 0x0;
+          if (m_write_event) {
+            if (m_nLayers==9)      c->Divide(3,3);
+            else if (m_nLayers>6)  c->Divide(4,2);
+            else if (m_nLayers>4)  c->Divide(3,2);
+            else if (m_nLayers==4) c->Divide(2,2);
+            else if (m_nLayers==3) c->Divide(3);
+            else if (m_nLayers==2) c->Divide(2);
+            else if (m_nLayers>9) {
+              cerr << "Unsupported number of layers for the event display" << endl;
+            }
+          }
+
+          TH2F** hitmap_event_display = 0x0;
+          if (m_write_event) {
+            hitmap_event_display = new TH2F*[m_nLayers];
+            char tmp_name[50];
+            char tmp_title[50];
+            for (int i = 0; i < m_nLayers; ++i) {
+              snprintf(tmp_name,  50, "h_%06d_%d", ev.GetEventNumber(), i);
+              snprintf(tmp_title, 50, "Layer %d", i);
+              hitmap_event_display[i] = new TH2F(tmp_name, tmp_title, 1024, 0., 1024., 512, 0., 512.);
+            }
+          }
+#endif
+
           //###################################################################
           // DATA FORMAT
           // m_nLayers times
@@ -551,8 +636,10 @@ namespace eudaq {
 
 
 #ifdef EVENT_SUBTRACTION
-          for (int i = 0; i < m_nLayers; i++) {
-            m_hitmaps[i][m_i_event%m_n_event_history]->clear();
+          if (m_event_subtraction) {
+            for (int i = 0; i < m_nLayers; i++) {
+              m_hitmaps[i][m_i_event%m_n_event_history]->clear();
+            }
           }
 #endif
 
@@ -590,6 +677,7 @@ namespace eudaq {
             bool headerOK  = true;
             bool eventOK   = false;
             bool trailerOK = true;
+            unsigned int statusBits = 0x0;
 
             if (m_DataVersion==2) {
               eventOK =  m_dut[current_layer]->DecodeEvent(&data[0]+pos, data_end+1-pos, &hits);
@@ -609,7 +697,22 @@ namespace eudaq {
               headerOK  = m_daq_board[current_layer]->DecodeEventHeader(&data[0]+pos, &header);
 
               // PAYLOAD
-              eventOK   = m_dut[current_layer]->DecodeEvent(&data[0]+payload_begin, payload_length, &hits);
+              if (m_chip_type[current_layer]<3) {
+                eventOK   = m_dut[current_layer]->DecodeEvent(&data[0]+payload_begin, payload_length, &hits);
+              }
+              else if (m_chip_type[current_layer]==3) { // pALPIDE-3
+                TpAlpidefs3* p3 = dynamic_cast<TpAlpidefs3*>(m_dut[current_layer]);
+                if (p3) eventOK = p3->DecodeEvent(&data[0]+payload_begin, payload_length, &hits, 0x0, 0x0, &statusBits);
+              }
+              else if (m_chip_type[current_layer]==4) { // ALPIDE
+                TpAlpidefs4* p4 = dynamic_cast<TpAlpidefs4*>(m_dut[current_layer]);
+                if (p4) eventOK = p4->DecodeEvent(&data[0]+payload_begin, payload_length, &hits, 0x0, &statusBits);
+              }
+
+              if (statusBits!=0) {
+                eventOK = false;
+                cout << "Status bits not 0x0 but " << statusBits << "!" << endl;
+              }
 
               // TRAILER
               trailerOK = m_daq_board[current_layer]->DecodeEventTrailer(&data[0]+trailer_begin, &header);
@@ -624,33 +727,52 @@ namespace eudaq {
             else {
               // add hits to the hit map
               for (unsigned long iHit = 0; iHit< hits.size(); ++iHit) {
-                // Double columns before ADoubleCol
-                int x  = hits[iHit].region * 32 + hits[iHit].doublecol * 2;
-                // Left or right column within the double column
-                x+= ((hits[iHit].address % 4) < 2 ? 1:0); // left or right?
+                int x = 0;
+                int y = 0;
+                if (m_chip_type[current_layer]<3) { // pALPIDE-1/2
+                  // Double columns before ADoubleCol
+                  x = hits[iHit].region * 32 + hits[iHit].doublecol * 2;
+                  // Left or right column within the double column
+                  x+= ((hits[iHit].address % 4) < 2 ? 1:0); // left or right?
 
-                int y = hits[iHit].address / 2;
-                // adjust the top-left pixel
-                if ((hits[iHit].address % 4) == 3) y -= 1;
-                // adjust the bottom-right pixel
-                if ((hits[iHit].address % 4) == 0) y += 1;
+                  y = hits[iHit].address / 2;
+                  // adjust the top-left pixel
+                  if ((hits[iHit].address % 4) == 3) y -= 1;
+                  // adjust the bottom-right pixel
+                  if ((hits[iHit].address % 4) == 0) y += 1;
+                }
+                else { // pALPIDE-3 / ALPIDE
+                  x =  hits[iHit].region * 32 + hits[iHit].doublecol * 2;
+                  x += ((((hits[iHit].address%4)==1) || ((hits[iHit].address%4)==2)) ? 1:0);
+                  y = hits[iHit].address / 2;
+                }
 
 #ifdef EVENT_SUBTRACTION
-                bool skip_hit = false;
-                unsigned int address = (x & 0x3ff) | ((y & 0x1ff)<<10);
-                for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
-                  if (iEvt == m_i_event%m_n_event_history) continue;
-                  for (unsigned long iEntry = 0; iEntry<m_hitmaps[current_layer][iEvt]->size(); ++iEntry) {
-                    if (m_hitmaps[current_layer][iEvt]->at(iEntry) == address){
-                      skip_hit = true;
-                      break;
+                if (m_event_subtraction) {
+                  bool skip_hit = false;
+                  unsigned int address = (x & 0x3ff) | ((y & 0x1ff)<<10);
+                  for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+                    if (iEvt == m_i_event%m_n_event_history) continue;
+                    for (unsigned long iEntry = 0; iEntry<m_hitmaps[current_layer][iEvt]->size(); ++iEntry) {
+                      if (m_hitmaps[current_layer][iEvt]->at(iEntry) == address){
+                        //cout << "Skipping hit 0x" << std::hex << address << std::dec << " in plane " << current_layer << "!" << endl;
+                        skip_hit = true;
+                        break;
+                      }
                     }
+                    if (skip_hit) break;
                   }
-                  if (skip_hit) continue;
+                  if (!skip_hit) m_hitmaps[current_layer][m_i_event%m_n_event_history]->push_back(address);
                 }
-                m_hitmaps[current_layer][m_i_event%m_n_event_history]->push_back(address);
+                else {
 #endif
-                planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+                  planes[current_layer]->PushPixel(x, y, 1, (unsigned int)0);
+#ifdef EVENT_DISPLAY
+                  if (m_write_event) hitmap_event_display[current_layer]->Fill(x,y);
+#endif
+#ifdef EVENT_SUBTRACTION
+                }
+#endif
               }
             }
 
@@ -676,6 +798,71 @@ namespace eudaq {
               pos = data_end+1; // skip non-decoded data
             }
           }
+
+#ifdef EVENT_SUBTRACTION
+          if (m_event_subtraction) {
+            // assemble events from hitmaps
+            for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+              if (layers_found[iPlane]) {
+                std::vector<int>* hits_in  = new std::vector<int>();
+                std::vector<int>* hits_out = new std::vector<int>();
+                std::vector<int>* tmp = 0x0;
+                for (int iEvent = -2; iEvent <= 0; ++iEvent) {
+                  if (iEvent != -1 && iPlane != 3) continue;
+                  int index = (m_i_event+iEvent)%m_n_event_history;
+
+                  if (index<0) continue;
+
+                  hits_out->clear();
+                  std::set_union(hits_in->begin(), hits_in->end(),
+                                 m_hitmaps[iPlane][index]->begin(), m_hitmaps[iPlane][index]->end(),
+                                 std::back_inserter(*hits_out));
+
+                  tmp = hits_in;
+                  hits_in = hits_out;
+                  hits_out = tmp;
+                }
+                for (int iHit = 0; iHit < hits_in->size(); ++iHit) {
+                  if (iHit>0 && hits_in->at(iHit-1)==hits_in->at(iHit)) {
+                    cout << "Address 0x" << std::hex << hits_in->at(iHit) << std::dec << " found twice in " << ev.GetEventNumber() << "!" << endl;
+                  }
+                  unsigned int address = hits_in->at(iHit);
+                  int x = address & 0x3ff;
+                  int y = (address>>10) & 0x1ff;
+                  planes[iPlane]->PushPixel(x, y, 1, (unsigned int)0);
+#ifdef EVENT_DISPLAY
+                  if (m_write_event) hitmap_event_display[iPlane]->Fill(x,y);
+#endif
+                }
+                delete hits_in;
+                hits_in = 0x0;
+                delete hits_out;
+                hits_out = 0x0;
+              }
+            }
+          }
+#endif
+
+#ifdef EVENT_DISPLAY
+          if (m_write_event) {
+            m_file_event_display->cd();
+            for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+              c->cd(iPlane+1);
+              hitmap_event_display[iPlane]->Draw("colz");
+              hitmap_event_display[iPlane]->Write();
+            }
+            c->Write();
+            m_file_event_display->Flush();
+            delete c;
+            c = 0x0;
+            for (int iPlane = 0; iPlane < m_nLayers; ++iPlane) {
+              delete hitmap_event_display[iPlane];
+              hitmap_event_display[iPlane] = 0x0;
+            }
+            delete hitmap_event_display;
+            hitmap_event_display = 0x0;
+          }
+#endif
 
           // checking whether all layers have been found in the data stream
           bool event_incomplete = false;
@@ -732,16 +919,18 @@ namespace eudaq {
             }
 #endif
 #ifdef EVENT_SUBTRACTION
-            if (m_i_event<m_n_event_history) {
-              sev.SetFlags(Event::FLAG_BROKEN);
-              cout << "Event " << ev.GetEventNumber() << " has only " <<  m_i_event << " leading events with the correct timestamp instead of " << m_n_event_history << endl;
-            }
+            if (m_event_subtraction) {
+              if (m_i_event<m_n_event_history) {
+                sev.SetFlags(Event::FLAG_BROKEN);
+                cout << "Event " << ev.GetEventNumber() << " has only " <<  m_i_event << " leading events with the correct timestamp instead of " << m_n_event_history << endl;
+              }
 
-            if (!ok_zero || !ok_ref || !ok_last || !ok_event_distance) { // event will be rejected
-              const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event = 0;
-              for (int iLayer = 0; iLayer < m_nLayers; iLayer++) {
-                for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
-                  m_hitmaps[iLayer][iEvt]->clear();
+              if (!ok_zero || !ok_ref || !ok_last || !ok_event_distance) { // event will be rejected
+                const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event = 0;
+                for (int iLayer = 0; iLayer < m_nLayers; iLayer++) {
+                  for (int iEvt = 0; iEvt < m_n_event_history; ++iEvt) {
+                    m_hitmaps[iLayer][iEvt]->clear();
+                  }
                 }
               }
             }
@@ -768,7 +957,9 @@ namespace eudaq {
                 m_last_timestamp[i] = timestamps[i];
               }
 #ifdef EVENT_SUBTRACTION
-              const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event++; // complete event, move to next history buffer
+              if (m_event_subtraction){
+                const_cast<PALPIDEFSConverterPlugin*>(this)->m_i_event++; // complete event, move to next history buffer
+              }
 #endif
             }
           }
@@ -886,7 +1077,7 @@ namespace eudaq {
           zsFrame->chargeValues().push_back(1);
           zsFrame->chargeValues().push_back(1);
 
-          // 	  cout << x_values.size() << " " << x_values.at(i) << " "
+          //           cout << x_values.size() << " " << x_values.at(i) << " "
           // << y_values.at(i) << endl;
         }
 
@@ -947,13 +1138,20 @@ namespace eudaq {
 #endif
 #ifdef EVENT_SUBTRACTION
     std::vector<int>*** m_hitmaps; // [layer][event]
-    static const float m_event_subtraction_time; // time during which events will be subtracted
     static const int   m_n_event_history;        // number of events required to have the same time distance before an event is accepted as valid
     int  m_i_event;                              // counter for the event history
     bool m_event_subtraction;                     // status of the event subtration
 #endif
-
-
+#ifdef EVENT_DISPLAY
+    TFile *m_file_event_display;
+    ifstream m_file_event_list;
+    std::vector<int> m_event_list;
+    size_t m_event_list_entry;
+#endif
+#ifdef ANALYSIS
+    TFile *m_file_analysis;
+    TH2F **m_hits_hit_planes;
+#endif
 #if USE_TINYXML
     int ParseXML(string xml, int base, int rgn, int sub, int begin) {
       TiXmlDocument conf;
@@ -1150,6 +1348,28 @@ namespace eudaq {
 #ifdef WRITE_TEMPERATURE_FILE
       , m_temperature_file(0x0)
 #endif
+#ifdef PALPIDEFS
+      , m_daq_board(0x0)
+      , m_dut(0x0)
+      , m_daq_header_length(0x0)
+      , m_daq_trailer_length(0x0)
+#endif
+#ifdef EVENT_SUBTRACTION
+      , m_hitmaps(0x0)
+      , m_i_event(0)
+      , m_event_subtraction(false)
+#endif
+#ifdef EVENT_DISPLAY
+      , m_file_event_display(0x0)
+      , m_file_event_list()
+      , m_event_list()
+      , m_event_list_entry(0)
+#endif
+#ifdef ANALYSIS
+      , m_file_analysis(0x0)
+      , m_hits_hit_planes(0x0)
+
+#endif
       {}
 
     // The single instance of this converter plugin
@@ -1160,7 +1380,6 @@ namespace eudaq {
   PALPIDEFSConverterPlugin PALPIDEFSConverterPlugin::m_instance;
 
 #ifdef EVENT_SUBTRACTION
-  const float PALPIDEFSConverterPlugin::m_event_subtraction_time = 1.e-4; // 100us
   const int   PALPIDEFSConverterPlugin::m_n_event_history        = 10;    // number of events
 #endif
 

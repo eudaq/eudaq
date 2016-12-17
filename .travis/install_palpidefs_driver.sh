@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # This package is necessary for the palpidefs producer
 
@@ -9,38 +9,39 @@ export temporary_path=`pwd`
 
 echo $temporary_path
 
+VERSION=TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454
+
 cd $TRAVIS_BUILD_DIR/extern/
 
 if [ $TRAVIS_OS_NAME == linux ]; then 
 	
 	sudo apt-get update && sudo apt-get install -y libtinyxml-dev expect-dev libusb-1.0-0-dev; 
-	
-	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software" ]; then
+
+	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software" ]; then
 	
 		echo "palpidefs source restored from cache as path exists:"
 		
-		ls $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
-		
-		zip -r aliceitsalpidesoftwaremaster.zip aliceitsalpidesoftwaremaster
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 		
 	else
 
 		echo "palpidefs source not restored from cache - downloading from CERNBOX and unpacking"
 		
-		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 		
-		cp alice-its-alpide-software-master-latest.zip aliceitsalpidesoftwaremaster.zip
-
-		unzip alice-its-alpide-software-master-latest.zip
-		
-		mv "alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b" aliceitsalpidesoftwaremaster
+		unzip alice-its-alpide-software.zip
 	
+		rm -rf aliceitsalpidesoftware
+	
+		mv alice-its-alpide-software-$VERSION aliceitsalpidesoftware
+	
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
 	echo `ls `
 	
-	cd aliceitsalpidesoftwaremaster
-	cd "pALPIDEfs-software"
+	cd aliceitsalpidesoftware
+	cd pALPIDEfs-software
 
 	sed -i '2s/.*//' Makefile
 	
@@ -76,14 +77,14 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	mv /Users/travis/tinyxml/tinyxml.o /Users/travis/tinyxml/tinyxml.a
 	
 	cd ..	
-	
-	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b ]; then
-		wget -O alice-its-alpide-software-master-latest.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
-		unzip alice-its-alpide-software-master-latest.zip
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-$VERSION ]; then
+		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+
+		unzip alice-its-alpide-software.zip
 	fi
 
-	cd alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b
+	cd alice-its-alpide-software-$VERSION
 
 	cd pALPIDEfs-software
 
