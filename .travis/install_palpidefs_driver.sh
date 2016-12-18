@@ -29,8 +29,6 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 		
 		unzip alice-its-alpide-software.zip
 	
-		rm -rf aliceitsalpidesoftware
-	
 		mv alice-its-alpide-software-* aliceitsalpidesoftware
 	
 		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
@@ -76,14 +74,15 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 
-	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-* ]; then
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware ]; then
 		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
 		unzip alice-its-alpide-software.zip
+		mv alice-its-alpide-software-* aliceitsalpidesoftware
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
-	cd alice-its-alpide-software-*
-
+	cd aliceitsalpidesoftware
 	cd pALPIDEfs-software
 
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
