@@ -1,7 +1,7 @@
 # Determine platform- and compiler-specific settings
 
-# demand c++11 support
-set (CMAKE_CXX_STANDARD 11)
+# demand c++14 support
+set (CMAKE_CXX_STANDARD 14)
 set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # platform dependent preprocessor defines
@@ -36,7 +36,7 @@ else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 # compiler specific settings
-if (CMAKE_COMPILER_IS_GNUCC)
+if ((CMAKE_COMPILER_IS_GNUCC) OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
    # add some more general preprocessor defines (only for gcc)
    message(STATUS "Using gcc-specific preprocessor identifiers")
    add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")

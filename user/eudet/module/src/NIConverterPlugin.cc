@@ -296,7 +296,7 @@ namespace eudaq {
 
     template<typename T>
     auto convert_to_plane(unsigned tluID, T&& decoder) const {
-      return convert_to_plane_impl<std::remove_reference<T>::type>(tluID, std::forward<T>(decoder));
+      return convert_to_plane_impl<typename std::remove_reference<T>::type>(tluID, std::forward<T>(decoder));
     }
     class loop_over_blocks {
     public:
