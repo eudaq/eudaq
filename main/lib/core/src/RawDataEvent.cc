@@ -15,7 +15,18 @@ namespace eudaq {
 					    run_n, dev_n);
     auto rawev = std::dynamic_pointer_cast<RawDataEvent>(ev);
     rawev->SetSubType(dspt);
+    rawev->SetEventN(ev_n);
     return rawev;
+  }
+
+  EventUP RawDataEvent::MakeUnique(const std::string& dspt){
+    uint32_t dev_n = 0;
+    uint32_t run_n = 0;
+    EventUP ev = Factory<Event>::MakeUnique(RawDataEvent::m_id_factory,
+					    cstr2hash("RawDataEvent"),
+					    run_n, dev_n);
+    ev->SetSubType(dspt);
+    return ev;
   }
 
 

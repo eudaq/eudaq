@@ -15,7 +15,8 @@ namespace eudaq {
     static std::shared_ptr<RawDataEvent> MakeShared(const std::string& dspt,
 						    uint32_t dev_n,
 						    uint32_t run_n, uint32_t ev_n);
-    
+    static EventUP MakeUnique(const std::string& dspt);
+
     struct DLLEXPORT block_t : public Serializable {
       block_t() = default;
       block_t(uint32_t id, const std::vector<uint8_t> &data)
@@ -31,7 +32,7 @@ namespace eudaq {
     RawDataEvent(Deserializer &);
     void Serialize(Serializer &) const override;
     void Print(std::ostream & ,size_t offset = 0) const override;
-
+    
     uint32_t GetID(size_t i) const { return m_blocks.at(i).id; }
     const std::vector<uint8_t>& GetBlock(size_t i) const;
     size_t NumBlocks() const { return m_blocks.size(); }    

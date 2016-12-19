@@ -119,7 +119,7 @@ namespace eudaq {
       } else if (cmd == "STOP") {
         OnStopRun();
       } else if (cmd == "TERMINATE") {
-	CloseCommandReceiver();
+	m_exit = true;
       } else if (cmd == "RESET") {
         OnReset();
       } else if (cmd == "STATUS") {

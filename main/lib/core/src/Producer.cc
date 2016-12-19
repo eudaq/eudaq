@@ -17,6 +17,7 @@ namespace eudaq {
   
   void Producer::OnConfigure(const Configuration &conf){
     try{
+      SetStatus(eudaq::Status::LVL_OK, "Wait");
       std::cout << "Configuring ...(" << conf.Name() << ")" << std::endl;
       DoConfigure(conf);
       std::cout << "... was Configured " << conf.Name() << " " << std::endl;
@@ -34,6 +35,7 @@ namespace eudaq {
 
   void Producer::OnStartRun(uint32_t run_n){
     try{
+      SetStatus(eudaq::Status::LVL_OK, "Wait");
       m_run_n = run_n;
       std::cout << "Start Run: " << m_run_n << std::endl;
       m_evt_c = 0;
@@ -52,6 +54,7 @@ namespace eudaq {
 
   void Producer::OnStopRun(){
     try{
+      SetStatus(eudaq::Status::LVL_OK, "Wait");
       std::cout << "Stop Run" << std::endl;
       DoStopRun();
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
@@ -66,7 +69,18 @@ namespace eudaq {
   }
 
   void Producer::OnReset(){
-    m_senders.clear();
+    try{
+      SetStatus(eudaq::Status::LVL_OK, "Wait");
+      m_senders.clear();
+      DoReset();
+      SetStatus(eudaq::Status::LVL_OK, "Reset");
+    } catch (const std::exception &e) {
+      printf("Producer Reset:: Caught exception: %s\n", e.what());
+      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
+    } catch (...) {
+      printf("Producer Reset:: Unknown exception\n");
+      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
+    }
   };
 
   

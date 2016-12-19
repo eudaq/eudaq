@@ -10,22 +10,18 @@ class TestProducer : public eudaq::Producer {
   public:
   TestProducer(const std::string & name, const std::string & runcontrol);
   void Event(unsigned size);
-  void OnConfigure(const eudaq::Configuration & param) override final;
-  void OnStartRun(unsigned param) override final;
-  void OnStopRun() override final;
-  void OnTerminate() override final;
-  void OnReset() override final;
+
+  void DoConfigure(const eudaq::Configuration & param) override final;
+  void DoStartRun(unsigned param) override final;
+  void DoStopRun() override final;
+  void DoTerminate() override final;
+  void DoReset() override final;
+  
   void OnStatus() override final;
   void OnUnrecognised(const std::string & cmd, const std::string & param) override final;
   void Exec() override final;
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("TestProducer");
-private:
-  bool m_done;
-  uint32_t m_run;
-  uint32_t m_ev;
-  uint32_t m_eventsize;
-  uint32_t m_id_stream;
 };
 
 
@@ -36,71 +32,65 @@ namespace{
 
 
 TestProducer::TestProducer(const std::string & name, const std::string & runcontrol)
-  : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), m_done(false), m_eventsize(100) {
-  m_id_stream = eudaq::cstr2hash(name.c_str());
+  : eudaq::Producer(name, runcontrol){
+  
 }
 
 void TestProducer::Event(unsigned size) {
-  RawDataEvent ev("Test", m_id_stream, m_run, ++m_ev);
+  eudaq::EventUP ev = eudaq::RawDataEvent::MakeUnique("Test");
   std::vector<int> tmp((size+3)/4);
   for (size_t i = 0; i < tmp.size(); ++i) {
     tmp[i] = std::rand();
   }
-  ev.AddBlock(0, &tmp[0], size);
-  SendEvent(ev);
+  RawDataEvent *evraw = dynamic_cast<RawDataEvent*>(ev.get());
+  evraw->AddBlock(0, &tmp[0], size);
+  SendEvent(std::move(ev));
 }
 
-void TestProducer::OnConfigure(const eudaq::Configuration & param) {
+void TestProducer::DoConfigure(const eudaq::Configuration & param) {
   std::cout << "Configuring." << std::endl;
-  m_eventsize = param.Get("EventSize", 1);
-  eudaq::mSleep(2000);
-  EUDAQ_INFO("Configured (" + param.Name() + ")");
-  SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
+  uint32_t eventsize = param.Get("EventSize", 1);
+  std::cout<< "EventSize = "<< eventsize;
 }
 
-void TestProducer::OnStartRun(unsigned param) {
-  m_run = param;
-  m_ev = 0;
-      
-  eudaq::RawDataEvent ev("Test", m_id_stream, m_run, 0);
-  ev.SetFlagBit(eudaq::Event::FLAG_BORE);
-  SendEvent(ev);
-
-  std::cout << "Start Run: " << param << std::endl;
-  SetStatus(eudaq::Status::LVL_OK, "");
+void TestProducer::DoStartRun(unsigned param) {
+  auto ev = eudaq::RawDataEvent::MakeUnique("Test");
+  ev->SetBORE();
+  SendEvent(std::move(ev));
+  std::cout << "TestProducer: Start Run: " << param << std::endl;
 }
 
-void TestProducer::OnStopRun() {
-  eudaq::RawDataEvent ev("Test", m_id_stream, m_run, ++m_ev);
-  ev.SetFlagBit(eudaq::Event::FLAG_EORE);
-  SendEvent(ev);
-  std::cout << "Stop Run" << std::endl;
+void TestProducer::DoStopRun() {
+  eudaq::EventUP ev = eudaq::RawDataEvent::MakeUnique("Test");
+  ev->SetEORE();
+  SendEvent(std::move(ev));
+  std::cout << "TestProducer: Stop Run" << std::endl;
 }
 
-void TestProducer::OnTerminate() {
-  std::cout << "Terminate (press enter)" << std::endl;
-  m_done = true;
+void TestProducer::DoTerminate() {
+  std::cout << "TestProducer: Terminate" << std::endl;
 }
 
-void TestProducer::OnReset() {
-  std::cout << "Reset" << std::endl;
-  SetStatus(eudaq::Status::LVL_OK);
+void TestProducer::DoReset() {
+  std::cout << "TestProducer: Reset" << std::endl;
 }
+
 
 void TestProducer::OnStatus() {
-
+  
 }
 
 void TestProducer::OnUnrecognised(const std::string & cmd, const std::string & param) {
-  std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
+  std::cout << "TestProducer: Unrecognised cmd (" << cmd.length() << ") " << cmd;
   if (param.length() > 0) std::cout << " (" << param << ")";
   std::cout << std::endl;
   SetStatus(eudaq::Status::LVL_WARN, "Just testing");
 }
 
 void TestProducer::Exec(){
+  StartCommandReceiver();
   bool help = true;
-  do {
+  while(IsActiveCommandReceiver()){
     if (help) {
       help = false;
       std::cout << "--- Commands ---\n"
@@ -142,7 +132,7 @@ void TestProducer::Exec(){
       SetStatus(eudaq::Status::LVL_ERROR, line);
       break;
     case 'q':
-      m_done = true;
+      // exit();
       break;
     case '?':
       help = true;
@@ -150,5 +140,5 @@ void TestProducer::Exec(){
     default:
       std::cout << "Unrecognised command, type ? for help" << std::endl;
     }
-  } while (!m_done);
+  }
 }

@@ -54,7 +54,6 @@ namespace eudaq{
 		  << "s        Status\n"
 		  << "b [msg]  Begin Run (with run comment 'msg')\n"
 		  << "e        End Run\n"
-		  << "x        Terminate clients\n"
 		  << "q        Quit\n"
 		  << "?        Display this help\n"
 		  << "----------------" << std::endl;
@@ -93,12 +92,8 @@ namespace eudaq{
       case 'e':
 	StopRun();
 	break;
-      case 'x':
-	Terminate();
-	break;
       case 'q':
 	Terminate();
-	std::this_thread::sleep_for(std::chrono::milliseconds(500));
 	break;
       case 'p':
 	std::cout << "Connections (" << NumConnections() << ")" << std::endl;

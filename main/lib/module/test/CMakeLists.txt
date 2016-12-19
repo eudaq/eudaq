@@ -5,7 +5,11 @@ endif()
 
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${MODULE_NAME})
-aux_source_directory(src MODULE_SRC)
+# aux_source_directory(src MODULE_SRC)
+set(MODULE_SRC
+  src/TestProducer.cc
+  )
+
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${PROJECT_NAME})
 
