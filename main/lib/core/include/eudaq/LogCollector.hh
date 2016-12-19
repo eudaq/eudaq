@@ -40,7 +40,7 @@ namespace eudaq {
     void OnReset() override final{}; //TODO: reset member variable
     void OnServer() override;
     void OnTerminate() override final;
-    //void OnLog(const std::string &param) override final{};
+    void OnLog(const std::string &param) override final{};
     void OnData(const std::string &param) override final{};
     void Exec() override;
 

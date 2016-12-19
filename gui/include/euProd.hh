@@ -13,6 +13,7 @@ public:
   void DoStartRun(uint32_t run_n) override {};
   void DoStopRun() override {};
   void DoTerminate() override {};
+  void DoReset() override {};
 
   void Exec() override final;
 private slots:

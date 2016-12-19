@@ -13,6 +13,10 @@ int main(int /*argc*/, const char **argv) {
   eudaq::OptionParser op("EUDAQ application launcher", "2.0", "The lauhcher of EUDAQ");
   eudaq::Option<std::string> name(op, "n", "name", "", "string",
 				  "The eudaq application to be launched");
+  
+  eudaq::Option<std::string> tname(op, "t", "tname", "", "string",
+				  "Runtime name of the eudaq application");
+
   eudaq::Option<std::string> listen(op, "a", "listen-port", "tcp://44001", "address",
 				  "The listenning port this ");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
@@ -34,11 +38,11 @@ int main(int /*argc*/, const char **argv) {
   std::string app_name = name.Value();
   if(app_name.find("Producer") != std::string::npos){
     auto app=Factory<Producer>::MakeShared<const std::string&,const std::string&>
-      (str2hash(name.Value()), name.Value(), rctrl.Value());
+      (str2hash(name.Value()), tname.Value(), rctrl.Value());
     app->Exec();
   }else if(app_name.find("DataCollector") != std::string::npos){
     auto app=Factory<DataCollector>::MakeShared<const std::string&,const std::string&>
-      (str2hash(name.Value()), name.Value(), rctrl.Value());
+      (str2hash(name.Value()), tname.Value(), rctrl.Value());
     app->Exec();
   }else if(app_name.find("LogCollector") != std::string::npos){
     auto app=Factory<LogCollector>::MakeShared<const std::string&,const std::string&,

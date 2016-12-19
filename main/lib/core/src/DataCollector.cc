@@ -31,8 +31,8 @@ namespace eudaq {
     try {
       std::string fwtype = m_config.Get("FileType", "native");
       std::string fwpatt = m_config.Get("FilePattern", "run$6R_tp$X");
-      m_dct_n = m_config.Get("ID", m_dct_n);
-      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(fwtype), fwpatt);      
+      m_dct_n = m_config.Get("EUDAQ_ID", m_dct_n);
+      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(fwtype), fwpatt);
       DoConfigure(m_config);
       std::cout << "...Configured (" << m_config.Name() << ")" << std::endl;
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config.Name() + ")");
@@ -46,7 +46,13 @@ namespace eudaq {
   void DataCollector::OnServer(){
     if (!m_dataserver)
       EUDAQ_THROW("OnServer is called when no dataserver is created");
-    SetStatusTag("_SERVER", m_dataserver->ConnectionString());
+    std::string addr_server = m_dataserver->ConnectionString();
+    std::string addr_cmd = GetCommandRecieverAddress();
+    if(addr_server.find("tcp://") == 0 && addr_cmd.find("tcp://") == 0){
+      addr_server = addr_cmd.substr(0, addr_cmd.find_last_of(":")) +
+	addr_server.substr(addr_server.find_last_of(":"));
+    }
+    SetStatusTag("_SERVER", addr_server);
   }
   
   void DataCollector::OnStartRun(uint32_t run_n){
@@ -202,7 +208,7 @@ namespace eudaq {
   void DataCollector::Exec(){
     StartDataCollector(); //TODO: Start it OnServer
     StartCommandReceiver();
-    if(IsActiveCommandReceiver() || IsActiveDataCollector()){
+    while(IsActiveCommandReceiver() || IsActiveDataCollector()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }

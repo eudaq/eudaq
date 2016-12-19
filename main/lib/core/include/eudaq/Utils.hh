@@ -11,7 +11,7 @@
 #include "Platform.hh"
 
 namespace eudaq {
-
+  
   std::string DLLEXPORT ucase(const std::string &);
   std::string DLLEXPORT lcase(const std::string &);
   std::string DLLEXPORT trim(const std::string &s);

@@ -29,60 +29,70 @@ namespace eudaq {
   class DLLEXPORT RunControl {
   public:
     explicit RunControl(const std::string &listenaddress = "");
+    virtual ~RunControl(){};
 
-    void StartServer(const std::string &listenaddress);
-    void StopServer();
+    //run in user thread
+    virtual void Configure(const Configuration &settings);
+    virtual void StartRun(); 
+    virtual void StopRun();
+    virtual void Reset();
+    virtual void RemoteStatus();
+    virtual void Terminate();
+    //
+    
+    //run in m_thd_server thread
+    virtual void DoConnect(const ConnectionInfo & /*id*/) {}
+    virtual void DoDisconnect(const ConnectionInfo & /*id*/) {}
+    virtual void DoStatus(const ConnectionInfo & /*id*/,
+			  std::shared_ptr<Status>) {}
+    //
 
-    void Configure(const Configuration &
-		   settings); ///< Send 'Configure' command with settings
-    void Configure(const std::string &settings,
-                   int geoid = 0); ///< Send 'Configure' command with settings
-    void Reset();                  ///< Send 'Reset' command
-    void GetStatus();              ///< Send 'Status' command to get status
-    virtual void StartRun(const std::string &msg = ""); ///< Send 'StartRun'
-                                                        ///command with run
-                                                        ///number
-    virtual void StopRun(bool listen = true); ///< Send 'StopRun' command
-    void Terminate();                         ///< Send 'Terminate' command
-    virtual void OnConnect(const ConnectionInfo & /*id*/) {}
-    virtual void OnDisconnect(const ConnectionInfo & /*id*/) {}
-    virtual void OnReceive(const ConnectionInfo & /*id*/,
-                           std::shared_ptr<Status>) {}
-    virtual ~RunControl();
-    virtual void Exec(){};
+    //thread control
+    void StartRunControl();
+    void CloseRunControl();
+    bool IsActiveRunControl() const {return m_thd_server.joinable();}
+    virtual void Exec();
+    //
 
-    void CommandThread();
+    Configuration ReadConfigFile(const std::string &param);
+    int32_t GetRunNumber() const{ return m_runnumber;}
     size_t NumConnections() const { return m_cmdserver->NumConnections(); }
     const ConnectionInfo &GetConnection(size_t i) const {
       return m_cmdserver->GetConnection(i);
     }
-    int32_t GetRunNumber() const{ return m_runnumber;}
-    bool IsStop() const {return m_stopping;}
-    int64_t GetRunSizeLimit() const {return m_runsizelimit;}
-    int64_t GetRunEventLimit() const {return m_runeventlimit;}
+    
   private:
     void InitLog(const ConnectionInfo &id);
     void InitData(const ConnectionInfo &id);
     void InitOther(const ConnectionInfo &id);
-    void SendCommand(const std::string &cmd, const std::string &param = "",
+    void SendCommand(const std::string &cmd,
+		     const std::string &param = "",
                      const ConnectionInfo &id = ConnectionInfo::ALL);
-    std::string
-    SendReceiveCommand(const std::string &cmd, const std::string &param = "",
-                       const ConnectionInfo &id = ConnectionInfo::ALL);
+    std::string SendReceiveCommand(const std::string &cmd,
+				   const std::string &param = "",
+				   const ConnectionInfo &id = ConnectionInfo::ALL);
     void CommandHandler(TransportEvent &ev);
-    bool m_done;
+    void CommandThread();
+
+  private:
+    bool m_exit;
     bool m_listening;    
-    int32_t m_runnumber;     ///< The current run number
+    int32_t m_runnumber;
+    std::thread m_thd_server;
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
-    std::thread m_thread;
-    size_t m_idata, m_ilog;
-    std::string m_logaddr;                    // address of log collector
-    std::map<size_t, std::string> m_dataaddr; // map of data collector addresses
+    std::vector<ConnectionInfo> m_info_client;
+    std::mutex m_mtx_client; //protect m_info_client against muilt threads accessing 
+    std::string m_addr_log;
+    std::mutex m_mtx_sendcmd;
+
+  public:    
+    //TODO: move to derived class
+    // virtual void DoConfigureLocal(Configuration &config);
+    int64_t GetRunSizeLimit() const {return m_runsizelimit;}
+    int64_t GetRunEventLimit() const {return m_runeventlimit;}
     int64_t m_runsizelimit;
     int64_t m_runeventlimit;
-    bool m_stopping;
-    bool m_producerbusy;
-    std::mutex m_mtx_sendcmd;
+
   };
 }
 

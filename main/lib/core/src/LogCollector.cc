@@ -49,7 +49,13 @@ namespace eudaq {
   void LogCollector::OnServer() {
     if (!m_logserver)
       EUDAQ_ERROR("Oops");
-    SetStatusTag("_SERVER", m_logserver->ConnectionString());
+    std::string addr_server = m_logserver->ConnectionString();
+    std::string addr_cmd = GetCommandRecieverAddress();
+    if(addr_server.find("tcp://") == 0 && addr_cmd.find("tcp://") == 0){
+      addr_server = addr_cmd.substr(0, addr_cmd.find_last_of(":")) +
+	addr_server.substr(addr_server.find_last_of(":"));
+    }
+    SetStatusTag("_SERVER", addr_server);
   }
 
   void LogCollector::LogHandler(TransportEvent &ev) {
@@ -152,7 +158,7 @@ namespace eudaq {
   void LogCollector::Exec(){
     StartLogCollector(); //TODO: Start it OnServer
     StartCommandReceiver();
-    if(IsActiveCommandReceiver() || IsActiveLogCollector()){
+    while(IsActiveCommandReceiver() || IsActiveLogCollector()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }

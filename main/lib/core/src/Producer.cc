@@ -21,7 +21,7 @@ namespace eudaq {
       DoConfigure(conf);
       std::cout << "... was Configured " << conf.Name() << " " << std::endl;
       EUDAQ_INFO("Configured (" + conf.Name() + ")");
-      m_pdc_n = m_config.Get("ID", m_pdc_n);
+      m_pdc_n = conf.Get("EUDAQ_ID", m_pdc_n);
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf.Name() + ")");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
@@ -37,6 +37,7 @@ namespace eudaq {
       m_run_n = run_n;
       std::cout << "Start Run: " << m_run_n << std::endl;
       m_evt_c = 0;
+      
       DoStartRun(m_run_n);
       SetStatus(eudaq::Status::LVL_OK, "Started");
     }catch (const std::exception &e) {
@@ -53,7 +54,6 @@ namespace eudaq {
     try{
       std::cout << "Stop Run" << std::endl;
       DoStopRun();
-      m_senders.clear();
       SetStatus(eudaq::Status::LVL_OK, "Stopped");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
@@ -65,11 +65,9 @@ namespace eudaq {
 
   }
 
-  void OnReset() override final{
-    
-
+  void Producer::OnReset(){
+    m_senders.clear();
   };
-
 
   
   void Producer::OnTerminate(){
@@ -80,15 +78,14 @@ namespace eudaq {
   void Producer::OnData(const std::string &server){
     auto it = m_senders.find(server);
     if(it==m_senders.end()){
-      std::unique_ptr<DataSender> sender(new DataSender("Producer", GetFullName()));
-      m_senders[server]= std::move(sender);
+      m_senders[server]= std::make_unique<DataSender>("Producer", GetFullName());
     }
     m_senders[server]->Connect(server);
   }
   
   void Producer::Exec(){
     StartCommandReceiver();
-    if(IsActiveCommandReceiver()){
+    while(IsActiveCommandReceiver()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }

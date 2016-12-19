@@ -46,7 +46,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
     m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
     m_filebytes(0), m_events(0), dostatus(false),
     m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
-    m_startrunwhenready(false),m_lastconfigonrunchange(false) {
+    m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false) {
   setupUi(this);
   QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())
@@ -123,7 +123,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   }
 }
 
-void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
+void RunControlGUI::DoStatus(const eudaq::ConnectionInfo &id,
                               std::shared_ptr<eudaq::Status> status) {
   static bool registered = false;
   if (!registered) {
@@ -193,7 +193,7 @@ void RunControlGUI::OnReceive(const eudaq::ConnectionInfo &id,
   m_run.SetStatus(id, *status);
 }
 
-void RunControlGUI::OnConnect(const eudaq::ConnectionInfo &id) {
+void RunControlGUI::DoConnect(const eudaq::ConnectionInfo &id) {
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");
@@ -241,8 +241,14 @@ RunControlGUI::~RunControlGUI() {
 
 void RunControlGUI::Exec(){
   show();
+  StartRunControl();
   if(QApplication::instance())
     QApplication::instance()->exec(); 
   else
     std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";
+
+  while(IsActiveRunControl()){
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+
 }

@@ -426,7 +426,7 @@ namespace eudaq {
             m_maxfd = (m_maxfd < peersock) ? peersock : m_maxfd;
             setup_socket(peersock);
             std::string host = inet_ntoa(addr.sin_addr);
-            host += ":" + to_string(ntohs(addr.sin_port));
+            host = "tcp://"+host+":" + to_string(ntohs(addr.sin_port));
             std::shared_ptr<ConnectionInfo> ptr(
                 new ConnectionInfoTCP(peersock, host));
             bool inserted = false;

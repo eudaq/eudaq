@@ -58,11 +58,11 @@ private:
   enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
-  void OnConnect(const eudaq::ConnectionInfo &id) override;
-  void OnDisconnect(const eudaq::ConnectionInfo &id) override{
+  void DoConnect(const eudaq::ConnectionInfo &id) override;
+  void DoDisconnect(const eudaq::ConnectionInfo &id) override{
     m_run.disconnected(id);
   }
-  void OnReceive(const eudaq::ConnectionInfo &id,
+  void DoStatus(const eudaq::ConnectionInfo &id,
 		 std::shared_ptr<eudaq::Status> status) override;
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
@@ -96,18 +96,20 @@ private slots:
 
   void on_btnConfig_clicked() {
     std::string settings = txtConfigFileName->text().toStdString();
-    Configure(settings, txtGeoID->text().toInt());
+    Configure(ReadConfigFile(settings));
     SetState(ST_READY);
     dostatus = true;
   }
-  // void on_btnReset_clicked() {
-  //  Reset();
-  //}
+  void on_btnReset_clicked() {
+   Reset();
+  }
   void on_btnStart_clicked(bool cont = false) {
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
-    StartRun(cont ? "Continued" : txtRunmsg->displayText().toStdString());
+    // StartRun(cont ? "Continued" : txtRunmsg->displayText().toStdString());
+    StartRun();
+    m_data_taking = true;
     EmitStatus("RUN", to_string(GetRunNumber()));
     emit StatusChanged("EVENT", "0");
     emit StatusChanged("TRIG", "0");
@@ -117,6 +119,7 @@ private slots:
     SetState(ST_RUNNING);
   }
   void on_btnStop_clicked() {
+    m_data_taking = false;
     StopRun();
     EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
     SetState(ST_READY);
@@ -140,7 +143,7 @@ private slots:
     }
   }
   void timer() {
-    if (!IsStop()) {
+    if (m_data_taking) {
       auto m_runsizelimit = GetRunSizeLimit();
       auto m_runeventlimit = GetRunSizeLimit();
       if ((m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) ||
@@ -159,12 +162,12 @@ private slots:
 	  on_btnStop_clicked();
 	  return;
 	} else {	
-          StopRun(false);
+          StopRun();
 	}
         eudaq::mSleep(20000);
 	on_btnStart_clicked(true);
       } else if (dostatus) {
-        GetStatus();
+        RemoteStatus();
       }
     }
     if (m_startrunwhenready && !m_producer_pALPIDEfs_not_ok &&
@@ -196,6 +199,7 @@ private:
   double m_prevtime, m_runstarttime;
   int64_t m_filebytes;
   int64_t m_events;
+  bool m_data_taking;
   bool dostatus;
   // Using automatic configuration file changes, the two variables below are
   // needed to ensure that the producers finished their configuration, before

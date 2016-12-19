@@ -34,7 +34,7 @@ namespace eudaq {
     void OnConfigure(const Configuration &conf) override final;
     void OnStartRun(uint32_t run_n) override final;
     void OnStopRun() override final;
-    void OnReset() override final{}; //TODO: reset member variable
+    void OnReset() override final;
     void OnTerminate() override final;
     void OnServer() override final{};
     void OnData(const std::string &param) override final;

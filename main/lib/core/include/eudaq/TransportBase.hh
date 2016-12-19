@@ -40,7 +40,8 @@ namespace eudaq {
 
   protected:
     int m_state;
-    std::string m_type, m_name;
+    std::string m_type;
+    std::string m_name;
     /*
        public:
        virtual bool operator = (const ClientID & other) = 0;

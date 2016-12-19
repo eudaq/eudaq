@@ -42,6 +42,9 @@ namespace eudaq {
     void SetStatusTag(const std::string &key, const std::string &val){m_status.SetTag(key, val);}
     
     std::string GetFullName() const {return m_type+"."+m_name;};
+    uint32_t GetCommandReceiverID() const {return m_cmdrcv_id;};
+    std::string GetCommandRecieverAddress() const {return m_addr_client;};
+
   private:
     void ProcessingCommand();
     void CommandHandler(TransportEvent &);
@@ -49,7 +52,10 @@ namespace eudaq {
     std::thread m_thd_client;
     Status m_status;
     std::unique_ptr<TransportClient> m_cmdclient;
-    std::string m_type, m_name;
+    std::string m_addr_client;
+    std::string m_type;
+    std::string m_name;
+    uint32_t m_cmdrcv_id;
   };
 
 }

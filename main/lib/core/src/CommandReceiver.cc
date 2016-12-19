@@ -49,6 +49,7 @@ namespace eudaq {
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
     : m_type(type), m_name(name), m_exit(false){
+    m_cmdrcv_id = static_cast<uint32_t>(reinterpret_cast<std::uintptr_t>(this)) + str2hash(GetFullName()); //TODO: add hostname
     int i = 0;
     while (true){ 
       try {
@@ -57,7 +58,7 @@ namespace eudaq {
 	  std::string packet;
 	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
 	  auto splitted = split(packet, " ");
-	  if (splitted.size() < 4) {
+	  if (splitted.size() < 5) {
 	    EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
 	  }
 	  CHECK_RECIVED_PACKET(splitted, 0, "OK");
@@ -65,6 +66,7 @@ namespace eudaq {
 	  CHECK_RECIVED_PACKET(splitted, 2, "CMD");
 	  CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
 	  m_cmdclient->SendPacket("OK EUDAQ CMD " + type + " " + name);
+	  m_addr_client = splitted[4];
 	  packet = "";
 	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
 
