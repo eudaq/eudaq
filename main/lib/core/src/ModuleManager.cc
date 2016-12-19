@@ -85,6 +85,8 @@ namespace eudaq{
     const std::string module_prefix("libeudaq_module_");
 #if EUDAQ_PLATFORM_IS(WIN32)
     const std::string module_suffix(".dll");
+#elif EUDAQ_PLATFORM_IS(MACOSX)
+    const std::string module_suffix(".dylib");	
 #else
     const std::string module_suffix(".so");
 #endif
