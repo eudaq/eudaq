@@ -20,8 +20,11 @@ namespace eudaq {
     m_dct_n= str2hash(GetFullName());
     m_run_n = 0;
     m_evt_c = 0;
-    m_exit = false;    
-    m_dataserver.reset(TransportFactory::CreateServer("tcp://40004")); //TODO
+    m_exit = false;
+    std::string addr_server("tcp://");
+    uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
+    addr_server += to_string(port);
+    m_dataserver.reset(TransportFactory::CreateServer(addr_server)); //TODO
     m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
   }
 
