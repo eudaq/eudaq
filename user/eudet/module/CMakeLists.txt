@@ -1,12 +1,15 @@
-cmake_dependent_option(USER_TELESCOPE_MODULE "build telescope module" ON
-  "USER_TELESCOPE" OFF)
+cmake_dependent_option(USER_EUDET_MODULE "build telescope module" ON
+  "USER_EUDET" OFF)
 
 
-IF(USER_TELESCOPE_MODULE)
+IF(USER_EUDET_MODULE)
   include_directories(include)
   aux_source_directory(src MODULE_SRC)
 
-  if(NOT USER_TELESCOPE_HARDWARE)
+  list(REMOVE_ITEM MODULE_SRC src/TelProducerPS.cc)
+  list(REMOVE_ITEM MODULE_SRC src/TluProducerPS.cc)
+  
+  if(NOT USER_EUDET_HARDWARE)
     list(REMOVE_ITEM MODULE_SRC src/TelProducerPS.cc)
     list(REMOVE_ITEM MODULE_SRC src/TluProducerPS.cc)
     list(REMOVE_ITEM MODULE_SRC src/NiProducer.cc)

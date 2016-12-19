@@ -2,7 +2,7 @@ add_executable(NiProducer src/NiProducer.cxx)
 target_link_libraries(NiProducer ${EUDAQ_CORE})
 list(APPEND INSTALL_TARGETS NiProducer)
 
-if(USER_TELESCOPE_HARDWARE)
+if(USER_EUDET_HARDWARE)
   add_executable(TLUProducer src/TLUProducer.cxx)
   add_executable(TLUControl src/TLUControl.cxx)
   add_executable(TLUReset src/TLUReset.cxx)

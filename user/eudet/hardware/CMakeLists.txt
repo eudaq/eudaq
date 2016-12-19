@@ -2,14 +2,14 @@ find_package(ZestSC1)
 find_package(LIBUSB)
 find_package(TLUFirmware)
 
-cmake_dependent_option(USER_TELESCOPE_HARDWARE "build telescope hardware lib" ON
-  "USER_TELESCOPE;LIBUSB_FOUND;ZestSC1_FOUND;TLUFirmware_FOUND" OFF)
+cmake_dependent_option(USER_EUDET_HARDWARE "build telescope hardware lib" ON
+  "USER_EUDET;LIBUSB_FOUND;ZestSC1_FOUND;TLUFirmware_FOUND" OFF)
 
-IF(USER_TELESCOPE AND (NOT USER_TELESCOPE_HARDWARE))
+IF(USER_EUDET AND (NOT USER_EUDET_HARDWARE))
   message("Telescope hardware lib is not to be built")
 ENDIF()
 
-IF(NOT USER_TELESCOPE_HARDWARE)
+IF(NOT USER_EUDET_HARDWARE)
   return()
 ENDIF()
 
@@ -22,7 +22,7 @@ include_directories(${ZESTSC1_INCLUDE_DIRS})
 include_directories(${LIBUSB_INCLUDE_DIRS})
 add_definitions(${TLUFIRMWARE_DEFINITIONS})
 
-if(USER_TELESCOPE_HARDWARE)
+if(USER_EUDET_HARDWARE)
   include_directories(include)
   
   SET(HARDWARE_SRC
