@@ -6,7 +6,6 @@
 #include <vector>
 #include <deque>
 #include <string>
-//#include <pthread.h>
 #include <fstream>
 #include <thread>
 #include <mutex>
@@ -34,9 +33,11 @@ namespace eudaq {
   class AHCALProducer : public eudaq::Producer {
   public:
     AHCALProducer(const std::string & name, const std::string & runcontrol);
-    void OnStartRun(unsigned param) override final;
-    void OnStopRun() override final;
-    void OnConfigure(const eudaq::Configuration & param) override final;
+    void DoConfigure(const eudaq::Configuration & param) override final;
+    void DoStartRun(unsigned param) override final;
+    void DoStopRun() override final;
+    void DoTerminate() override final{}
+    void DoReset() override final{}
     void Exec() override final;
 
     void SetReader(AHCALReader *r){_reader = r;}

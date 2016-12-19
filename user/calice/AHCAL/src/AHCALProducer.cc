@@ -5,20 +5,28 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Configuration.hh"
+#include "eudaq/Utils.hh"
 #include "ScReader.hh"
 #include "stdlib.h"
-#include <unistd.h>
-#include <iomanip>
 
+#include <iomanip>
+#include <iterator>
 #include <thread>
 #include <mutex>
 
-// socket headers
-#include <sys/types.h>
-#include <sys/stat.h>
+#ifdef _WIN32
+#pragma comment(lib, "Ws2_32.lib")
+#include <winsock.h>
+#include <io.h>
+#else
+#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
+
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 using namespace eudaq;
@@ -32,7 +40,7 @@ namespace eudaq {
     m_id_stream = eudaq::cstr2hash(name.c_str());
   }
 
-  void AHCALProducer::OnConfigure(const eudaq::Configuration & param)
+  void AHCALProducer::DoConfigure(const eudaq::Configuration & param)
   {
 
     std::cout<< " START AHCAL CONFIGURATION "<< std::endl;
@@ -65,7 +73,7 @@ namespace eudaq {
 
   }
 
-  void AHCALProducer::OnStartRun(unsigned param) {
+  void AHCALProducer::DoStartRun(unsigned param) {
     _runNo = param;
     _eventNo = 0;
     // raw file open
@@ -73,9 +81,9 @@ namespace eudaq {
 
     _reader->OnStart(param);
 
-    eudaq::RawDataEvent ev("CaliceObject", m_id_stream, _runNo, 0);
-    ev.SetBORE();
-    SendEvent(ev);
+    auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+    ev->SetBORE();
+    SendEvent(std::move(ev));
     std::cout << "Start Run: " << param << std::endl;
     SetStatus(eudaq::Status::LVL_OK, "");
     _running = true;
@@ -113,18 +121,16 @@ namespace eudaq {
   }
 
   
-  void AHCALProducer::OnStopRun() {
+  void AHCALProducer::DoStopRun() {
 
     _reader->OnStop(_waitsecondsForQueuedEvents);
     _running = false;
     while (_stopped == false) {
-      eudaq::mSleep(100);
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     if(_writeRaw)
       _rawFile.close();
-
-    SetStatus(eudaq::Status::LVL_OK, "");
   }
 
   bool AHCALProducer::OpenConnection()
@@ -146,7 +152,11 @@ namespace eudaq {
   void AHCALProducer::CloseConnection()
   {
     std::unique_lock<std::mutex> myLock(_mufd);
+#ifdef _WIN32
+    closesocket(_fd);
+#else
     close(_fd);
+#endif
     _fd = 0;
   }
 
@@ -172,12 +182,10 @@ namespace eudaq {
     while(deqEvent.size() > minimumsize){
       
       RawDataEvent *ev = deqEvent.front();
-      ev->SetStreamN(m_id_stream);
       if( from_string(ev->GetTag("TriggerValidated"),-1) == 1 )    {
-	SendEvent(*(deqEvent.front()));
+	SendEvent(ev->Clone());
 	cout<< "Send eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
       } else cout<< "Discard eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
-
       delete deqEvent.front();
       deqEvent.pop_front();
     }
@@ -186,16 +194,16 @@ namespace eudaq {
 
   void AHCALProducer::Exec()
   {
-
     std::cout<<" Main loop " <<std::endl;
-    
+    StartCommandReceiver();
+
     _last_readout_time = std::time(NULL);
 	 
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
 
-    while(true){
+    while(IsActiveCommandReceiver()){
       // wait until configured and connected
       std::unique_lock<std::mutex> myLock(_mufd);
 
@@ -209,7 +217,7 @@ namespace eudaq {
       //      if file is not ready  just wait
       if(_fd <= 0 || !_running ){
 	myLock.unlock();
-	::usleep(1000);
+	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	continue;
       }
        
@@ -222,16 +230,19 @@ namespace eudaq {
           std::cout << "Socket disconnected. going to the waiting mode." << endl;         	    
 	  if(!_running && _stopped==false) {
 	    _stopped=true;
-	    deqEvent=sendallevents(deqEvent,0);
-	    
-	    eudaq::RawDataEvent ev("CaliceObject", m_id_stream, _runNo, _eventNo);
-	    ev.SetEORE();
-	    SendEvent(ev);
+	    deqEvent=sendallevents(deqEvent,0);	    
+	    auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject"); 
+	    ev->SetEORE();
+	    SendEvent(std::move(ev));
 	    bufRead.clear();
 	    deqEvent.clear();
 	  }
 	}
+#ifdef _WIN32
+	closesocket(_fd);
+#else
         close(_fd);
+#endif
         _fd = -1;
 	continue;
       }
@@ -252,9 +263,9 @@ namespace eudaq {
        if (std::difftime(std::time(NULL), _last_readout_time) <  _waitsecondsForQueuedEvents) continue;
 	bufRead.clear();
 
-	eudaq::RawDataEvent ev("CaliceObject", m_id_stream, _runNo, _eventNo);
-	ev.SetEORE();
-	SendEvent(ev);
+	auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+	ev->SetEORE();
+	SendEvent(std::move(ev));
 	SetStatus(eudaq::Status::LVL_OK, "");
 	continue;
      }
