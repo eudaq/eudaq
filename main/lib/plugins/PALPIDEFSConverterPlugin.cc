@@ -706,7 +706,7 @@ namespace eudaq {
               }
               else if (m_chip_type[current_layer]==4) { // ALPIDE
                 TpAlpidefs4* p4 = dynamic_cast<TpAlpidefs4*>(m_dut[current_layer]);
-                if (p4) eventOK = p4->DecodeEvent(&data[0]+payload_begin, payload_length, &hits, 0x0, &statusBits);
+                if (p4) eventOK = p4->DecodeEvent(&data[0]+payload_begin, payload_length, &hits, 0x0, 0x0, &statusBits);
               }
 
               if (statusBits!=0) {
