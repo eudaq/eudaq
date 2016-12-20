@@ -28,15 +28,10 @@ namespace eudaq {
   class DLLEXPORT FileWriter {
   public:
     FileWriter();
+    virtual ~FileWriter() {}
     virtual void StartRun(unsigned runnumber) = 0;
-    // virtual void WriteEvent(const DetectorEvent &) = 0;
     virtual void WriteEvent(EventSPC ) = 0;
     virtual uint64_t FileBytes() const = 0;
-    void SetFilePattern(const std::string &p) { m_filepattern = p; }
-    virtual ~FileWriter() {}
-
-  protected:
-    std::string m_filepattern;
   };
 
 }

@@ -30,11 +30,12 @@ namespace eudaq {
     uint64_t FileBytes() const override {return -1;};
   private:
     std::unique_ptr<lcio::LCWriter> m_lcwriter;
+    std::string m_filepattern;
     Configuration m_conf;
   };
 
-  LCFileWriter::LCFileWriter(const std::string & /*param*/){
-    
+  LCFileWriter::LCFileWriter(const std::string &param){
+    m_filepattern = param;
   }
 
   void LCFileWriter::StartRun(unsigned runnumber) {

@@ -33,7 +33,7 @@ namespace eudaq {
 
     //run in user thread
     virtual void Configure(const Configuration &settings);
-    virtual void StartRun(); 
+    virtual void StartRun(uint32_t run_n); 
     virtual void StopRun();
     virtual void Reset();
     virtual void RemoteStatus();
@@ -55,7 +55,6 @@ namespace eudaq {
     //
 
     Configuration ReadConfigFile(const std::string &param);
-    int32_t GetRunNumber() const{ return m_runnumber;}
     size_t NumConnections() const { return m_cmdserver->NumConnections(); }
     const ConnectionInfo &GetConnection(size_t i) const {
       return m_cmdserver->GetConnection(i);
@@ -77,7 +76,6 @@ namespace eudaq {
   private:
     bool m_exit;
     bool m_listening;
-    int32_t m_runnumber;
     std::thread m_thd_server;
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
     std::map<std::string, std::string> m_addr_data;
@@ -86,11 +84,13 @@ namespace eudaq {
   public:    
     //TODO: move to derived class
     // virtual void DoConfigureLocal(Configuration &config);
+    int32_t GetRunNumber() const{ return m_runnumber;}
     int64_t GetRunSizeLimit() const {return m_runsizelimit;}
     int64_t GetRunEventLimit() const {return m_runeventlimit;}
     int64_t m_runsizelimit;
     int64_t m_runeventlimit;
-
+    int32_t m_runnumber;
+    
   };
 }
 

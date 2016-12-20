@@ -10,6 +10,6 @@ namespace eudaq {
   template DLLEXPORT  std::map<uint32_t, typename Factory<FileWriter>::UP_BASE (*)(std::string&&)>&
   Factory<FileWriter>::Instance<std::string&&>();
   
-  FileWriter::FileWriter() : m_filepattern(FileNamer::default_pattern) {}
+  FileWriter::FileWriter(){}
   
 }

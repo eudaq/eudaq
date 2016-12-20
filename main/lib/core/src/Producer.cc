@@ -92,7 +92,7 @@ namespace eudaq {
   void Producer::OnData(const std::string &server){
     auto it = m_senders.find(server);
     if(it==m_senders.end()){
-      m_senders[server]= std::make_unique<DataSender>("Producer", GetFullName());
+      m_senders[server]= std::unique_ptr<DataSender>(new DataSender("Producer", GetFullName()));
     }
     m_senders[server]->Connect(server);
   }

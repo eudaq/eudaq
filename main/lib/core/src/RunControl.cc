@@ -74,11 +74,11 @@ namespace eudaq {
 
   void RunControl::RemoteStatus() { SendCommand("STATUS"); }
 
-  void RunControl::StartRun(){
+  void RunControl::StartRun(uint32_t run_n){
     m_listening = false;
-    m_runnumber++;
-    EUDAQ_INFO("Starting Run " + to_string(m_runnumber));
-    SendCommand("START", to_string(m_runnumber));
+    m_runnumber = run_n;
+    EUDAQ_INFO("Starting Run " + to_string(run_n));
+    SendCommand("START", to_string(run_n));
   }
 
   void RunControl::StopRun() {
@@ -186,7 +186,6 @@ namespace eudaq {
 	  else
 	    data_name="DataCollector."+data_name;
 	  std::cout<<data_name <<" conneted, ask for server address\n";
-	  std::this_thread::sleep_for(std::chrono::seconds(1));
 	  Status st = m_cmdserver->SendReceivePacket<Status>("SERVER", ev.id, 1000000);
 	  std::string addr_data = st.GetTag("_SERVER");
 	  if(addr_data.empty())

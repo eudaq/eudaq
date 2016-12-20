@@ -8,6 +8,7 @@ SET(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
 # SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 SET(EUDAQ_CORE EUDAQ)
 
+set(CMAKE_CXX_STANDARD 11)
 include(CMakeDependentOption)
 
 include_directories(main/lib/processors/include)

@@ -4,7 +4,7 @@
 #include <cctype>
 
 namespace eudaq{
-  class StdRunControl : RunControl{
+  class StdRunControl : public RunControl{
   public:
     StdRunControl(const std::string & listenaddress);
     void DoStatus(const ConnectionInfo & id,
@@ -49,7 +49,6 @@ namespace eudaq{
 		  << "p        Print connections\n"
 		  << "l [msg]  Send log message\n"
 		  << "f [file] Configure clients (with file 'file')\n"
-		  << "c [cnf]  Configure clients (with configuration 'cnf')\n"
 		  << "r        Reset\n"
 		  << "s        Status\n"
 		  << "b [msg]  Begin Run (with run comment 'msg')\n"
@@ -77,9 +76,6 @@ namespace eudaq{
       case 'f':
 	Configure(ReadConfigFile(line));
 	break;
-      case 'c':
-	// Configure(line ===>config);
-	break;
       case 'r':
 	Reset();
 	break;
@@ -87,7 +83,7 @@ namespace eudaq{
 	RemoteStatus();
 	break;
       case 'b':
-	StartRun();
+	StartRun(std::stoul(line));
 	break;
       case 'e':
 	StopRun();

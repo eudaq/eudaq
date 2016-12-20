@@ -107,8 +107,7 @@ private slots:
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
-    // StartRun(cont ? "Continued" : txtRunmsg->displayText().toStdString());
-    StartRun();
+    StartRun(GetRunNumber()+1);
     m_data_taking = true;
     EmitStatus("RUN", to_string(GetRunNumber()));
     emit StatusChanged("EVENT", "0");
