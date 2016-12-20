@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # This package is necessary for the palpidefs producer
 
@@ -8,8 +8,6 @@ echo "Installing palpidefs driver:"
 export temporary_path=`pwd`
 
 echo $temporary_path
-
-VERSION=TestBeamStable_ALPIDE_2016-56948c980cccf12408059628d758d86a39f27454
 
 cd $TRAVIS_BUILD_DIR/extern/
 
@@ -24,7 +22,6 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 		
 	else
-
 		echo "palpidefs source not restored from cache - downloading from CERNBOX and unpacking"
 		
 		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
@@ -32,8 +29,8 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 		unzip alice-its-alpide-software.zip
 	
 		rm -rf aliceitsalpidesoftware
-	
-		mv alice-its-alpide-software-$VERSION aliceitsalpidesoftware
+
+		mv alice-its-alpide-software-* aliceitsalpidesoftware
 	
 		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
@@ -78,14 +75,15 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 
-	if [ ! -d $TRAVIS_BUILD_DIR/extern/alice-its-alpide-software-$VERSION ]; then
+	if [ ! -d $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware ]; then
 		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
 
 		unzip alice-its-alpide-software.zip
+		mv alice-its-alpide-software-* aliceitsalpidesoftware
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
-	cd alice-its-alpide-software-$VERSION
-
+	cd aliceitsalpidesoftware
 	cd pALPIDEfs-software
 
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
