@@ -375,6 +375,13 @@ namespace eudaq {
   void TCPServer::SendPacket(const unsigned char *data, size_t len,
                              const ConnectionInfo &id, bool duringconnect) {
     // std::cout << "SendPacket to " << id << std::endl;
+    // try{
+    //   const ConnectionInfoTCP &idtcp = dynamic_cast<const ConnectionInfoTCP&>(id);
+    // }catch(std::bad_cast &e){
+    //   printf("TCPServer::SendPacket:: Caught exception when casting to ConnectionInfoTCP: %s\n", e.what());
+    //   EUDAQ_THROW_NOLOG("TCPServer::SendPacket: Fail to cast to ConnectionInfoTCP");
+    // }
+    
     for (size_t i = 0; i < m_conn.size(); ++i) {
       // std::cout << "- " << i << ": " << *m_conn[i] << std::flush;
       if (id.Matches(*m_conn[i])) {

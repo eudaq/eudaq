@@ -27,7 +27,8 @@ namespace eudaq {
       uint32_t id;
       std::vector<uint8_t> data;
     };
-
+    
+    RawDataEvent(uint32_t dev_n, uint32_t run_n, uint32_t ev_n);
     RawDataEvent(const std::string& dspt, uint32_t dev_n, uint32_t run_n, uint32_t ev_n);
     RawDataEvent(Deserializer &);
     void Serialize(Serializer &) const override;

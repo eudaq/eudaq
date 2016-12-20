@@ -28,63 +28,37 @@ namespace eudaq {
 
   void RunControl::Configure(const Configuration &config) {
     m_listening = false;
-    std::unique_lock<std::mutex> lk(m_mtx_client);
-    for(auto &info_data :m_info_client){
-      if(info_data.GetType() != "DataCollector")
-	continue;
-      Status st = m_cmdserver->SendReceivePacket<Status>("SERVER", info_data, 1000000);
-      std::string addr_data = st.GetTag("_SERVER");
-      if(addr_data.empty())
-	EUDAQ_THROW("Empty address reported by datacollector");
-      std::string data_name = info_data.GetName();
-      if(data_name.empty())
-	data_name="DataCollector";
-      else
-	data_name="DataCollector."+data_name;
-
-      config.SetSection(data_name);
+    auto info_client = m_cmdserver->GetConnections();
+    for(auto &e: m_addr_data){
+      config.SetSection(e.first);
       std::string pdcs_str = config.Get("PRODUCERS", "");
       std::vector<std::string> pdcs = split(pdcs_str, ";:,", true);
       for(auto &pdc :pdcs){
-	if(pdc.empty())
-	  continue;
-	for(auto &info_pdc :m_info_client){
-	  if(info_pdc.GetType() == "Producer" && info_pdc.GetName() == pdc)
-	    SendCommand("DATA", addr_data, info_pdc);  
-	}
+    	if(pdc.empty())
+    	  continue;
+    	for(auto &info_pdc_sp :info_client){
+    	  auto &info_pdc = *info_pdc_sp;
+    	  if(info_pdc.GetType() == "Producer" && info_pdc.GetName() == pdc){
+    	    SendCommand("DATA", e.second, info_pdc);
+    	  }
+    	}
       }
-      if(pdcs.empty()){ //default to accept all if no PRODUCERS key;
-	for(auto &info_pdc :m_info_client){
-	  if(info_pdc.GetType() == "Producer")
-	    SendCommand("DATA", addr_data, info_pdc);  
-	}
+      if(pdcs.empty())
+      for(auto &info_pdc :info_client){
+	if(info_pdc->GetType() == "Producer")
+	  SendCommand("DATA", e.second, *info_pdc);  
       }
     }
-    // DoConfigureLocal(config);
     SendCommand("CONFIG", to_string(config));
   }
-
-  //TODO: move it to derived class
-  // void RunControl::DoConfigureLocal(Configuration &config){
-  //   if (config.SetSection("RunControl")) {
-  //     m_runsizelimit = config.Get("RunSizeLimit", 0LL);
-  //     m_runeventlimit = config.Get("RunEventLimit", 0LL);
-  //     auto m_nextconfigonrunchange =
-  //         config.Get("NextConfigFileOnRunChange",
-  //                    config.Get("NextConfigFileOnFileLimit", false));
-  //   } else {
-  //     m_runsizelimit = 0;
-  //     m_runeventlimit = 0;
-  //   }
-  // }
 
   Configuration RunControl::ReadConfigFile(const std::string &param){
     EUDAQ_INFO("Reading Configure File (" + param + ")");
     Configuration config;
     std::ifstream file(param);
     if (file.is_open()) {
-      Configuration(file);
-      config = Configuration(file);
+      Configuration c(file);
+      config = c;
       config.Set("Name", param);
     } else {
       EUDAQ_ERROR("Unable to open file '" + param + "'");
@@ -168,15 +142,6 @@ namespace eudaq {
     case (TransportEvent::DISCONNECT):
       if(ev.id.GetType() == "LogCollector")
 	m_addr_log.clear();
-      {
-	std::unique_lock<std::mutex> lk(m_mtx_client);
-	for (size_t i = 0; i < m_info_client.size(); ++i) {
-	  if (m_info_client[i].Matches(ev.id)){
-	    m_info_client.erase(m_info_client.begin() + i);
-	    break;
-	  }
-	}
-      }
       DoDisconnect(ev.id);
       break;
     case (TransportEvent::RECEIVE):
@@ -214,17 +179,29 @@ namespace eudaq {
         }while(false);
 	ev.id.SetState(1); // successfully identified
 	m_cmdserver->SendPacket("OK", ev.id, true);
-	{
-	  std::unique_lock<std::mutex> lk(m_mtx_client);
-	  m_info_client.push_back(ev.id);
+	if (ev.id.GetType() == "DataCollector"){
+	  std::string data_name = ev.id.GetName();
+	  if(data_name.empty())
+	    data_name="DataCollector";
+	  else
+	    data_name="DataCollector."+data_name;
+	  std::cout<<data_name <<" conneted, ask for server address\n";
+	  std::this_thread::sleep_for(std::chrono::seconds(1));
+	  Status st = m_cmdserver->SendReceivePacket<Status>("SERVER", ev.id, 1000000);
+	  std::string addr_data = st.GetTag("_SERVER");
+	  if(addr_data.empty())
+	    EUDAQ_THROW("Empty address reported by datacollector");
+	  std::cout <<data_name<<" responded: " << addr_data << std::endl;
+	  m_addr_data[data_name]=addr_data;
 	}
+	
         if (ev.id.GetType() == "LogCollector")
           InitLog(ev.id);
 	else{
 	  if (!m_addr_log.empty())
 	    SendCommand("LOG", m_addr_log, ev.id);
 	}	
-        DoConnect(ev.id);
+	DoConnect(ev.id);
       }
       else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
@@ -238,10 +215,10 @@ namespace eudaq {
           ev.id.SetState(1);
         }
 	
-        if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
+        // if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
           // ignore status messages that are marked with a previous runnumber
-          DoStatus(ev.id, status);
-        }
+	DoStatus(ev.id, status);
+        // }
       }
       break;
     default:

@@ -37,7 +37,7 @@ namespace eudaq {
     
     void StartCommandReceiver();
     void CloseCommandReceiver();
-    bool IsActiveCommandReceiver(){return m_thd_client.joinable();};
+    bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
     void SetStatus(Status::Level level, const std::string & info = "");
     void SetStatusTag(const std::string &key, const std::string &val){m_status.SetTag(key, val);}
     
@@ -49,6 +49,7 @@ namespace eudaq {
     void ProcessingCommand();
     void CommandHandler(TransportEvent &);
     bool m_exit;
+    bool m_exited;
     std::thread m_thd_client;
     Status m_status;
     std::unique_ptr<TransportClient> m_cmdclient;

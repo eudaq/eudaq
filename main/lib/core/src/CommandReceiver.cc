@@ -48,7 +48,7 @@ namespace eudaq {
 
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
-    : m_type(type), m_name(name), m_exit(false){
+    : m_type(type), m_name(name), m_exit(false), m_exited(false){
     m_cmdrcv_id = static_cast<uint32_t>(reinterpret_cast<std::uintptr_t>(this)) + str2hash(GetFullName()); //TODO: add hostname
     int i = 0;
     while (true){ 
@@ -108,6 +108,7 @@ namespace eudaq {
         param = std::string(cmd, i + 1);
         cmd = std::string(cmd, 0, i);
       }
+      std::cout<<"Received CMD "<< cmd<<std::endl;
       if (cmd == "CONFIG") {
         std::string section = m_type;
         if(m_name != "")
@@ -148,6 +149,7 @@ namespace eudaq {
       }
       //TODO: SendDisconnect event;
       OnTerminate();
+      m_exited = true;
     } catch (const std::exception &e) {
       std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
     } catch (...) {

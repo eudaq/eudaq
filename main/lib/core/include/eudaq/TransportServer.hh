@@ -13,6 +13,7 @@ namespace eudaq {
     virtual std::string ConnectionString() const = 0;
     size_t NumConnections() const { return m_conn.size(); }
     const ConnectionInfo &GetConnection(size_t i) const { return *m_conn[i]; }
+    std::vector<std::shared_ptr<ConnectionInfo>> GetConnections () const {return m_conn; }
 
   protected:
     std::vector<std::shared_ptr<ConnectionInfo>> m_conn;

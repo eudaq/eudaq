@@ -22,6 +22,8 @@ class TestProducer : public eudaq::Producer {
   void Exec() override final;
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("TestProducer");
+private:
+  bool m_exit;
 };
 
 
@@ -32,7 +34,7 @@ namespace{
 
 
 TestProducer::TestProducer(const std::string & name, const std::string & runcontrol)
-  : eudaq::Producer(name, runcontrol){
+  : eudaq::Producer(name, runcontrol), m_exit(false){
   
 }
 
@@ -69,6 +71,7 @@ void TestProducer::DoStopRun() {
 
 void TestProducer::DoTerminate() {
   std::cout << "TestProducer: Terminate" << std::endl;
+  m_exit = true;
 }
 
 void TestProducer::DoReset() {
@@ -91,7 +94,7 @@ void TestProducer::Exec(){
   StartCommandReceiver();
   bool help = true;
   while(IsActiveCommandReceiver()){
-    if (help) {
+    if(help) {
       help = false;
       std::cout << "--- Commands ---\n"
 		<< "r size Send RawDataEvent with size bytes of random data (default=1k)\n"
@@ -141,4 +144,5 @@ void TestProducer::Exec(){
       std::cout << "Unrecognised command, type ? for help" << std::endl;
     }
   }
+  std::cout << "TestProducer: Terminated" << std::endl;
 }

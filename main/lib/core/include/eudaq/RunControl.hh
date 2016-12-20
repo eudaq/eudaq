@@ -76,15 +76,13 @@ namespace eudaq {
 
   private:
     bool m_exit;
-    bool m_listening;    
+    bool m_listening;
     int32_t m_runnumber;
     std::thread m_thd_server;
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
-    std::vector<ConnectionInfo> m_info_client;
-    std::mutex m_mtx_client; //protect m_info_client against muilt threads accessing 
+    std::map<std::string, std::string> m_addr_data;
     std::string m_addr_log;
     std::mutex m_mtx_sendcmd;
-
   public:    
     //TODO: move to derived class
     // virtual void DoConfigureLocal(Configuration &config);

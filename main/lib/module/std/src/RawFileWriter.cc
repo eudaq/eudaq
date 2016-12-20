@@ -21,17 +21,16 @@ namespace eudaq {
     virtual ~RawFileWriter();
 
   private:
-    FileSerializer *m_ser;
+    std::unique_ptr<FileSerializer> m_ser;
   };
 
-  RawFileWriter::RawFileWriter(const std::string & param) : m_ser(0){
+  RawFileWriter::RawFileWriter(const std::string & param){
     //EUDAQ_DEBUG("Constructing RawFileWriter(" + to_string(param) + ")");
   }
 
   void RawFileWriter::StartRun(uint32_t runnumber) {
-    delete m_ser;
-    m_ser = new FileSerializer(
-        FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
+    m_ser = std::make_unique<FileSerializer>
+      (FileNamer(m_filepattern).Set('X', ".raw").Set('R', runnumber));
   }
 
   void RawFileWriter::WriteEvent(EventSPC ev) {
@@ -42,7 +41,6 @@ namespace eudaq {
   }
   
   RawFileWriter::~RawFileWriter() {
-    delete m_ser;
   }
 
   uint64_t RawFileWriter::FileBytes() const { return m_ser ? m_ser->FileBytes() : 0; }

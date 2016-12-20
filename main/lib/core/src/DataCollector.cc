@@ -88,6 +88,7 @@ namespace eudaq {
   }
     
   void DataCollector::OnStatus() {
+    std::cout << "OnStatus" <<std::endl;
     SetStatusTag("EVENT", std::to_string(m_evt_c));
     SetStatusTag("RUN", std::to_string(m_run_n));
     if(m_writer)

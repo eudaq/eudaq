@@ -58,6 +58,7 @@ namespace eudaq {
     std::thread m_thd_server;
     bool m_exit;
     std::unique_ptr<TransportServer> m_dataserver;
+    std::map<std::string, std::string> m_addr_data;
     FileWriterUP m_writer;
     std::vector<ConnectionInfo> m_info_pdc;
     uint32_t m_dct_n;
