@@ -99,12 +99,14 @@ namespace eudaq {
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
       m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", ev.id, true);
+      DoConnect(ev.id);
       break;
     case (TransportEvent::DISCONNECT):
       EUDAQ_INFO("Disconnected: " + to_string(ev.id));
       for (size_t i = 0; i < m_info_pdc.size(); ++i) {
 	if (m_info_pdc[i].Matches(ev.id)){
 	  m_info_pdc.erase(m_info_pdc.begin() + i);
+	  DoDisconnect(ev.id);
 	  return;
 	}
       }
