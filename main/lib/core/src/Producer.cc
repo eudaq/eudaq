@@ -36,10 +36,11 @@ namespace eudaq {
   void Producer::OnStartRun(uint32_t run_n){
     try{
       SetStatus(eudaq::Status::LVL_OK, "Wait");
+      //TODO: temporary add sleep here to wait datcollector return from OnStartRun.
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+      std::cout << "Start Run: " << run_n << std::endl;
       m_run_n = run_n;
-      std::cout << "Start Run: " << m_run_n << std::endl;
       m_evt_c = 0;
-      
       DoStartRun(m_run_n);
       SetStatus(eudaq::Status::LVL_OK, "Started");
     }catch (const std::exception &e) {

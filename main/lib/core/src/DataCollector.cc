@@ -78,6 +78,8 @@ namespace eudaq {
 
   void DataCollector::OnStopRun(){
     EUDAQ_INFO("End of run ");
+    //TODO: temporary add sleep here to receive remaining events from producers.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     DoStopRun();
   }
   
@@ -153,6 +155,8 @@ namespace eudaq {
 	uint32_t id;
 	ser.PreRead(id);
 	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
+	//TODO: check if OnStopRun is called. if yes, DO NOT call DoReceive
+	//TODO: check if OnStartRun is called.
 	DoReceive(ev.id, std::move(event));
       }
       break;
