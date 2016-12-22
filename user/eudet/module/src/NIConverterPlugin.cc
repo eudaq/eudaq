@@ -114,7 +114,8 @@ namespace eudaq {
   inline StandardPlane make_Standardplane(unsigned planeID, unsigned TLUID, unsigned pivot) {
     StandardPlane plane(planeID, "NI", "MIMOSA26");
     plane.SetSizeZS(1152, 576, 0, 2, StandardPlane::FLAG_WITHPIVOT |
-      StandardPlane::FLAG_DIFFCOORDS);
+		    StandardPlane::FLAG_DIFFCOORDS |
+		    StandardPlane::FLAG_ACCUMULATE);
     plane.SetTLUEvent(TLUID);
     plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
     return plane;
