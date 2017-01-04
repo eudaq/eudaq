@@ -7,7 +7,7 @@ get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${MODULE_NAME})
 aux_source_directory(src MODULE_SRC)
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${PROJECT_NAME})
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY})
 
 install(TARGETS
   ${EUDAQ_MODULE}

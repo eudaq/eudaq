@@ -7,8 +7,8 @@ set_property(TARGET fileSender     PROPERTY PROJECT_LABEL "test_fileSender")
 
 
 
-target_link_libraries(fileReciever    EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-target_link_libraries(fileSender      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(fileReciever    ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(fileSender      ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
 
 
 INSTALL(TARGETS fileReciever fileSender

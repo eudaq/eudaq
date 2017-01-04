@@ -13,7 +13,7 @@ IF(BUILD_SyncTest)
 
   add_executable(${SyncTest_name} ${SyncTest_SOURCES} )
 
-  target_link_libraries(${SyncTest_name} EUDAQ ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(${SyncTest_name} ${EUDAQ_CORE_LIBRARY} ${ADDITIONAL_LIBRARIES})
 
   INSTALL(TARGETS ${SyncTest_name}
     RUNTIME DESTINATION bin

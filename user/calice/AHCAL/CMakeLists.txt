@@ -10,7 +10,7 @@ set(sourcefiles src/AHCALProducer.cxx src/AHCALProducer.cc src/ScReader.cc)
 
 include_directories(./include)
 add_executable(AHCALProducer ${sourcefiles})
-target_link_libraries(AHCALProducer EUDAQ ${EUDAQ_THREADS_LIB})
+target_link_libraries(AHCALProducer ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 
 install(TARGETS AHCALProducer
   RUNTIME DESTINATION bin

@@ -64,22 +64,22 @@ list(APPEND MODULE_SRC ${euProd_UISrcs} ${euProd_MOCSrcs})
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${MODULE_NAME})
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
 
 add_executable(euRun src/euRun.cxx)
 set_property(TARGET euRun PROPERTY PROJECT_LABEL "BinEuRun")
-target_link_libraries(euRun ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euRun)
 
 add_executable(euLog src/euLog.cxx)
 set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog") 
-target_link_libraries(euLog ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euLog)
 
 add_executable(euProd src/euProd.cxx)
 set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
-target_link_libraries(euProd ${EUDAQ_CORE} ${EXTERNAL_LIB_QT})
+target_link_libraries(euProd ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euProd)
 
 install(TARGETS ${INSTALL_TARGETS}

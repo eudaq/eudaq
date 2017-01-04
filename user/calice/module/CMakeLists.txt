@@ -20,7 +20,11 @@ else()
 endif()
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-target_link_libraries(${EUDAQ_MODULE} ${PROJECT_NAME} ${LCIO_LIBRARIES})
+target_link_libraries(${EUDAQ_MODULE}
+  ${EUDAQ_CORE_LIBRARY} ${EUDAQ_LICO_LIBRARY} ${LCIO_LIBRARIES})
+
+set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
+  ${CMAKE_INTSTALL_PREFIX}/lib:${LCIO_LIBRARY_DIRS})
 
 install(TARGETS
   ${EUDAQ_MODULE}

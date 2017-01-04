@@ -17,7 +17,7 @@ IF(USER_EUDET_MODULE)
   endif()
   
   add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
-  target_link_libraries(${EUDAQ_MODULE} ${USER_HARDWARE} ${PROJECT_NAME})
+  target_link_libraries(${EUDAQ_MODULE} ${USER_HARDWARE} ${EUDAQ_CORE_LIBRARY})
   
   install(TARGETS
     ${EUDAQ_MODULE}

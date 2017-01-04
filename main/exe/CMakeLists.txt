@@ -22,25 +22,25 @@ IF(BUILD_main)
   set_property(TARGET TestDataCollector     PROPERTY PROJECT_LABEL "bin_TestDataCollector") 
 
 
-  target_link_libraries(ClusterExtractor    EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(ExampleReader       EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(OptionExample       EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(RunListener         EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(TestLogCollector    EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(TestProducer        EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(TestRunControl      EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  target_link_libraries(TestDataCollector   EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES}) 
+  target_link_libraries(ClusterExtractor    ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(ExampleReader       ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(OptionExample       ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  # target_link_libraries(RunListener         ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(TestLogCollector    ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(TestProducer        ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(TestRunControl      ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  target_link_libraries(TestDataCollector   ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES}) 
 
   list(APPEND INSTALL_TARGETS ClusterExtractor  ExampleReader  OptionExample  TestLogCollector  TestProducer TestRunControl TestDataCollector)
 
   # add_executable(FileChecker         src/FileChecker.cxx       )
   # set_property(TARGET FileChecker        PROPERTY PROJECT_LABEL "bin_FileChecker") 
-  # target_link_libraries(FileChecker         EUDAQ ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+  # target_link_libraries(FileChecker         ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
   # list(APPEND INSTALL_TARGETS FileChecker)
   
   add_executable(Launcher src/Launcher.cxx)
   set_property(TARGET Launcher PROPERTY PROJECT_LABEL "bin_Launcher") 
-  target_link_libraries(Launcher EUDAQ ${EUDAQ_THREADS_LIB})
+  target_link_libraries(Launcher ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
   list(APPEND INSTALL_TARGETS Launcher)
   
   INSTALL(TARGETS ${INSTALL_TARGETS}
