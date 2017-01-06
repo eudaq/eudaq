@@ -1,33 +1,20 @@
 # - Try to find TLUFirmware binary files needed for accessing the TLU
-# Once done this will define
 #  TLUFIRMWARE_FOUND - System has TLUFirmware
 #  TLUFIRMWARE_DEFINITIONS - Compiler switches required for using TLUFirmware
 
-macro(find_bitfiles_in_extern arg)
-  find_path(TLUFIRMWARE_PATH TLU_Toplevel.bit HINTS
-    ${CMAKE_CURRENT_LIST_DIR}/../extern/tlufirmware ${arg}
-    ${PROJECT_SOURCE_DIR}/extern/tlufirmware ${arg})
-endmacro()
+file(GLOB_RECURSE EUDET_TLU_FIRMWARE_FOUND_LIST
+  ${CMAKE_CURRENT_LIST_DIR}/../extern/*/TLU_Toplevel.bit)
 
-find_bitfiles_in_extern("")
-
-# could not find the package at the usual locations -- try to copy from AFS if accessible
-if (NOT TLUFIRMWARE_PATH)
-  IF (EXISTS "/afs/desy.de/group/telescopes/tlu/tlufirmware")
-    MESSAGE(STATUS "Could not find TLUFirmware bitfiles required by tlu producer; downloading them now via AFS to ${TLUFIRMWARE_PATH} ....")
-    copy_files("/afs/desy.de/group/telescopes/tlu/tlufirmware" ${CMAKE_CURRENT_LIST_DIR}/../extern)
-    find_bitfiles_in_extern(NO_DEFAULT_PATH)
-  ELSE()
-    MESSAGE(WARNING "Could not find TLUFirmware bitfiles required by tlu producer. Please refer to the documentation on how to obtain them.")
-  ENDIF()
+list(GET EUDET_TLU_FIRMWARE_FOUND_LIST 0 EUDET_TLU_FIRMWARE_FILE)
+get_filename_component(EUDET_TLU_FIRMWARE_FILE ${EUDET_TLU_FIRMWARE_FILE} ABSOLUTE)
+get_filename_component(EUDET_TLU_FIRMWARE_DIR ${EUDET_TLU_FIRMWARE_FILE} DIRECTORY)
+if(EUDET_TLU_FIRMWARE_DIR)
+  set(TLUFIRMWARE_PATH ${EUDET_TLU_FIRMWARE_DIR})
+  set(TLUFIRMWARE_DEFINITIONS "-DTLUFIRMWARE_PATH=\"${EUDET_TLU_FIRMWARE_DIR}\"" )
+  message(STATUS "Check for EUDET_TLU_FIRMWARE_DIR(TLU_Toplevel.bit): ${EUDET_TLU_FIRMWARE_DIR} -- ok")
+else()
+  message(WARNING "Check for EUDET_TLU_FIRMWARE_DIR (TLU_Toplevel.bit) -- false")
 endif()
 
-set(TLUFIRMWARE_DEFINITIONS "-DTLUFIRMWARE_PATH=\"${TLUFIRMWARE_PATH}\"" )
-
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set TLUFIRMWARE_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(TLUFirmware  DEFAULT_MSG
-                                  TLUFIRMWARE_PATH)
-
-mark_as_advanced(TLUFIRMWARE_PATH )
+find_package_handle_standard_args(TLUFirmware DEFAULT_MSG EUDET_TLU_FIRMWARE_DIR)

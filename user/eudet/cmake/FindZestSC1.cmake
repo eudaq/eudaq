@@ -55,7 +55,7 @@ if (WIN32)
       	    "${extern_lib_path}/windows 7/Lib/x86"
       ${arg})
   endif(${EX_PLATFORM} EQUAL 64)
-  elseif (UNIX)
+elseif (UNIX)
     MESSAGE(STATUS "UNIX OS found. extern_lib_path = ${extern_lib_path}" )
     
     if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

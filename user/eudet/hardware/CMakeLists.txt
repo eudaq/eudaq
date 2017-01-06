@@ -3,7 +3,7 @@ find_package(LIBUSB)
 find_package(TLUFirmware)
 
 cmake_dependent_option(USER_EUDET_HARDWARE "build telescope hardware lib" ON
-  "USER_EUDET;LIBUSB_FOUND;ZestSC1_FOUND;TLUFirmware_FOUND" OFF)
+  "USER_EUDET;LIBUSB_FOUND;ZESTSC1_FOUND;TLUFIRMWARE_FOUND" OFF)
 
 IF(USER_EUDET AND (NOT USER_EUDET_HARDWARE))
   message("Telescope hardware lib is not to be built")
@@ -35,12 +35,6 @@ if(USER_EUDET_HARDWARE)
   add_library(${USER_HARDWARE} STATIC ${HARDWARE_SRC})
   target_link_libraries(${USER_HARDWARE} ${EUDAQ_CORE_LIBRARY} ${LIBUSB_LIBRARIES} ${ZESTSC1_LIBRARIES})
   
-  install(TARGETS
-    ${USER_HARDWARE}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
-
   if(WIN32 AND LIBUSB_FOUND AND LIBUSB_WIN_DLL)
     INSTALL(FILES
       ${LIBUSB_WIN_DLL}
