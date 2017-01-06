@@ -12,8 +12,6 @@
 #include "eudaq/Time.hh"
 #include "uhal/uhal.hpp"
 
-#include <boost/filesystem.hpp>
-
 using namespace uhal;
 
 namespace tlu {

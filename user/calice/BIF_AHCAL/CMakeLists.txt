@@ -7,20 +7,24 @@ if(NOT USER_CALICE_BIF)
   return()
 endif()
 
-find_package(CACTUS REQUIRED)
+if(NOT CACTUS_FOUND)
+  message(WARNING "CACTUS/uhal is not found, user/calice BIF can not be built")
+  find_package(CACTUS REQUIRED)
+endif()
 
-include_directories(include ${UHAL_LOG_INCLUDE_PREFIX} ${UHAL_GRAMMARS_INCLUDE_PREFIX} ${EXTERN_BOOST_INCLUDE_PREFIX} ${EXTERN_PUGIXML_INCLUDE_PREFIX} ${UHAL_UHAL_INCLUDE_PREFIX} )
-
-link_directories( ${LINK_DIRECTORIES} ${EXTERN_BOOST_LIB_PREFIX} ${EXTERN_PUGIXML_LIB_PREFIX} ${UHAL_LOG_LIB_PREFIX} ${UHAL_GRAMMARS_LIB_PREFIX} ${UHAL_UHAL_LIB_PREFIX})
+include_directories(include ${CACTUS_INCLUDE_DIR})
 
 add_executable(BIFAHCALProducer  src/caliceahcalbif_Producer.cxx src/caliceahcalbifController.cc )
-target_link_libraries(BIFAHCALProducer ${EUDAQ_CORE_LIBRARY} boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal)
+target_link_libraries(BIFAHCALProducer ${EUDAQ_CORE_LIBRARY} ${CACTUS_LIBRARIES})
+set_target_properties(BIFAHCALProducer PROPERTIES INSTALL_RPATH
+  ${CMAKE_INTSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
 list(APPEND INSTALL_TARGETS BIFAHCALProducer)
 
 add_executable(BIFAHCALControl src/caliceahcalbifControl.cxx src/caliceahcalbifController.cc )
-target_link_libraries(BIFAHCALControl  ${EUDAQ_CORE_LIBRARY} boost_thread boost_filesystem boost_regex boost_system boost_thread boost_program_options cactus_extern_pugixml cactus_uhal_log cactus_uhal_grammars cactus_uhal_uhal)
+target_link_libraries(BIFAHCALControl ${EUDAQ_CORE_LIBRARY} ${CACTUS_LIBRARIES})
+set_target_properties(BIFAHCALControl PROPERTIES INSTALL_RPATH
+  ${CMAKE_INTSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
 list(APPEND INSTALL_TARGETS BIFAHCALControl)
-
 
 install(TARGETS ${INSTALL_TARGETS}
   RUNTIME DESTINATION bin
