@@ -2,7 +2,6 @@
 #include "Producer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/OptionParser.hh"
 #include "eudaq/RawDataEvent.hh"
 
 #include "TLUController.hh"
@@ -24,240 +23,25 @@ using namespace tlu;
 
 class TLUProducer : public eudaq::Producer {
 public:
-  TLUProducer(const std::string name, const std::string &runcontrol)
-    : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), //name: TLU
-        trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
-        or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
-        enable_dut_veto(0), trig_rollover(0), readout_delay(100),
-        timestamps(true), done(false), timestamp_per_run(false),
-        TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0) {
-    for (int i = 0; i < TLU_PMTS; i++) {
-      pmtvcntl[i] = PMT_VCNTL_DEFAULT;
-      pmt_id[i] = "<unknown>";
-      pmt_gain_error[i] = 1.0;
-      pmt_offset_error[i] = 0.0;
-    }
-    m_id_stream = eudaq::cstr2hash(name.c_str());
+  TLUProducer(const std::string name, const std::string &runcontrol); //TODO: check para no ref
+  void DoConfigure(const eudaq::Configuration &param) override;
+  void DoStartRun(unsigned param) override;
+  void DoStopRun() override;
+  void DoTerminate() override;
+  void DoReset() override;
+  void Exec() override;
 
-  }
+  void OnStatus() override;
+  void OnUnrecognised(const std::string &cmd, const std::string &param) override;
 
-  void Exec() override{
-    StartCommandReceiver();
-    while(IsActiveCommandReceiver()){
-      MainLoop();
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-  }
-  
-  void MainLoop() {
-    do {
-      if (!m_tlu) {
-        eudaq::mSleep(50);
-        continue;
-      }
-      bool JustStopped = TLUJustStopped;
-      if (JustStopped) {
-        m_tlu->Stop();
-        eudaq::mSleep(100);
-      }
-      if (TLUStarted || JustStopped) {
-        eudaq::mSleep(readout_delay);
-        m_tlu->Update(timestamps); // get new events
-        if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
-          bool inhibit = m_tlu->InhibitTriggers();
-          m_tlu->ResetTriggerCounter();
-          m_tlu->InhibitTriggers(inhibit);
-        }
-        // std::cout << "--------" << std::endl;
-        for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
-          m_ev = m_tlu->GetEntry(i).Eventnum();
-          uint64_t t = m_tlu->GetEntry(i).Timestamp();
-          int64_t d = t - lasttime;
-          // float freq= 1./(d*20./1000000000);
-          float freq = 1. / Timestamp2Seconds(d);
-          if (m_ev < 10 || m_ev % 1000 == 0) {
-            std::cout << "  " << m_tlu->GetEntry(i) << ", diff=" << d
-                      << (d <= 0 ? "  ***" : "") << ", freq=" << freq
-                      << std::endl;
-          }
-          lasttime = t;
-	  auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
-	  ev->SetTimestamp(t, t+1);//TODO, duration
-	  
-          ev->SetTag("trigger", m_tlu->GetEntry(i).trigger2String());
-          if (i == m_tlu->NumEntries() - 1) {
-            ev->SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
-            for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
-              ev->SetTag("SCALER" + to_string(i),
-			 to_string(m_tlu->GetScaler(i)));
-            }
-          }
-          SendEvent(std::move(ev));
-        }
-      }
-      if (JustStopped) {
-        m_tlu->Update(timestamps);
-	auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
-	ev->SetEORE();
-        SendEvent(std::move(ev));
-        TLUJustStopped = false;
-      }
-    } while (!done);
-  }
-  virtual void DoConfigure(const eudaq::Configuration &param) {
-    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
-    if (m_tlu)
-      m_tlu = 0;
-    int errorhandler = param.Get("ErrorHandler", 2);
-    m_tlu = std::make_shared<TLUController>(errorhandler);
+  void MainLoop();
 
-    trigger_interval = param.Get("TriggerInterval", 0);
-    dut_mask = param.Get("DutMask", 2);
-    and_mask = param.Get("AndMask", 0xff);
-    or_mask = param.Get("OrMask", 0);
-    strobe_period = param.Get("StrobePeriod", 0);
-    strobe_width = param.Get("StrobeWidth", 0);
-    enable_dut_veto = param.Get("EnableDUTVeto", 0);
-    handshake_mode = param.Get("HandShakeMode", 63);
-    veto_mask = param.Get("VetoMask", 0);
-    trig_rollover = param.Get("TrigRollover", 0);
-    timestamps = param.Get("Timestamps", 1);
-    for (int i = 0; i < TLU_PMTS;
-	 i++) // Override with any individually set values
-      {
-        pmtvcntl[i] = (unsigned)param.Get("PMTVcntl" + to_string(i + 1),
-                                          "PMTVcntl", PMT_VCNTL_DEFAULT);
-        pmt_id[i] = param.Get("PMTID" + to_string(i + 1), "<unknown>");
-        pmt_gain_error[i] = param.Get("PMTGainError" + to_string(i + 1), 1.0);
-        pmt_offset_error[i] =
-	  param.Get("PMTOffsetError" + to_string(i + 1), 0.0);
-      }
-    pmtvcntlmod = param.Get("PMTVcntlMod", 0); // If 0, it's a standard TLU;
-    // if 1, the DAC output voltage
-    // is doubled
-    readout_delay = param.Get("ReadoutDelay", 1000);
-    timestamp_per_run = param.Get("TimestampPerRun", 0);
-    // ***
-    m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
-    m_tlu->SetFirmware(param.Get("BitFile", ""));
-    m_tlu->SetVersion(param.Get("Version", 0));
-    m_tlu->Configure();
-    for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
-      m_tlu->SelectDUT(
-		       param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
-		       false);
-    }
-    m_tlu->SetTriggerInterval(trigger_interval);
-    m_tlu->SetPMTVcntlMod(pmtvcntlmod);
-    m_tlu->SetPMTVcntl(pmtvcntl, pmt_gain_error, pmt_offset_error);
-    m_tlu->SetDUTMask(dut_mask);
-    m_tlu->SetVetoMask(veto_mask);
-    m_tlu->SetAndMask(and_mask);
-    m_tlu->SetOrMask(or_mask);
-    m_tlu->SetStrobe(strobe_period, strobe_width);
-    m_tlu->SetEnableDUTVeto(enable_dut_veto);
-    m_tlu->SetHandShakeMode(handshake_mode);
-    m_tlu->SetTriggerInformation(USE_TRIGGER_INPUT_INFORMATION);
-    m_tlu->ResetTimestamp();
-
-    // by dhaas
-    eudaq::mSleep(1000);
-
-    m_tlu->Update(timestamps);
-    std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-    EUDAQ_INFO("Configured (" + param.Name() + ")");
-  }
-  virtual void DoStartRun(unsigned param) override{
-      m_run = param;
-      m_ev = 0;
-      std::cout << "Start Run: " << param << std::endl;
-      auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
-      ev->SetBORE();
-      ev->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));
-      ev->SetTag("TriggerInterval", to_string(trigger_interval));
-      ev->SetTag("DutMask", "0x" + to_hex(dut_mask));
-      ev->SetTag("AndMask", "0x" + to_hex(and_mask));
-      ev->SetTag("OrMask", "0x" + to_hex(or_mask));
-      ev->SetTag("VetoMask", "0x" + to_hex(veto_mask));
-      for (int i = 0; i < TLU_PMTS;
-           i++) // Separate loops so they are sequential in file
-      {
-        ev->SetTag("PMTID" + to_string(i + 1), pmt_id[i]);
-      }
-      ev->SetTag("PMTVcntlMod", to_string(pmtvcntlmod));
-      for (int i = 0; i < TLU_PMTS; i++) {
-        ev->SetTag("PMTVcntl" + to_string(i + 1), to_string(pmtvcntl[i]));
-      }
-      for (int i = 0; i < TLU_PMTS;
-           i++) // Separate loops so they are sequential in file
-      {
-        ev->SetTag("PMTGainError" + to_string(i + 1), pmt_gain_error[i]);
-      }
-      for (int i = 0; i < TLU_PMTS;
-           i++) // Separate loops so they are sequential in file
-      {
-        ev->SetTag("PMTOffsetError" + to_string(i + 1), pmt_offset_error[i]);
-      }
-      ev->SetTag("ReadoutDelay", to_string(readout_delay));
-      ev->SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
-      eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
-      SendEvent(std::move(ev));
-      if (timestamp_per_run)
-        m_tlu->ResetTimestamp();
-      eudaq::mSleep(5000);
-      m_tlu->ResetTriggerCounter();
-      if (timestamp_per_run)
-        m_tlu->ResetTimestamp();
-      m_tlu->ResetScalers();
-      m_tlu->Update(timestamps);
-      m_tlu->Start();
-      TLUStarted = true;
-  }
-  virtual void DoStopRun() override {
-      std::cout << "Stop Run" << std::endl;
-      TLUStarted = false;
-      TLUJustStopped = true;
-      while (TLUJustStopped) {
-        eudaq::mSleep(100);
-      }
-  }
-  virtual void DoTerminate() override{
-    std::cout << "Terminate (press enter)" << std::endl;
-    done = true;
-    eudaq::mSleep(1000);
-  }
-  virtual void DoReset() override{
-    std::cout << "Reset" << std::endl;
-    m_tlu->Stop();        // stop
-    m_tlu->Update(false); // empty events
-  }
-  virtual void OnStatus() override{
-    SetStatusTag("TRIG", to_string(m_ev));
-    if (m_tlu) {
-      SetStatusTag("TIMESTAMP",
-		   to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
-      SetStatusTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
-      SetStatusTag("PARTICLES", to_string(m_tlu->GetParticles()));
-      SetStatusTag("STATUS", m_tlu->GetStatusString());
-      for (int i = 0; i < 4; ++i) {
-        SetStatusTag("SCALER" + to_string(i),
-		     to_string(m_tlu->GetScaler(i)));
-      }
-    }
-  }
-  virtual void OnUnrecognised(const std::string &cmd,
-                              const std::string &param) override{
-    std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
-    if (param.length() > 0)
-      std::cout << " (" << param << ")";
-    std::cout << std::endl;
-    SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
-  }
-
+  static const uint32_t m_id_factory = eudaq::cstr2hash("TLUProducer");
 private:
+  
   unsigned m_run, m_ev;
   unsigned trigger_interval, dut_mask, veto_mask, and_mask, or_mask,
-      pmtvcntl[TLU_PMTS], pmtvcntlmod;
+    pmtvcntl[TLU_PMTS], pmtvcntlmod;
   uint32_t strobe_period, strobe_width;
   unsigned enable_dut_veto, handshake_mode;
   unsigned trig_rollover, readout_delay;
@@ -271,28 +55,244 @@ private:
   uint32_t m_id_stream;
 };
 
-int main(int /*argc*/, const char **argv) {
-  eudaq::OptionParser op("EUDAQ TLU Producer", "1.0",
-                         "The Producer task for the Trigger Logic Unit");
-  eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
-                                   "tcp://localhost:44000", "address",
-                                   "The address of the RunControl application");
-  eudaq::Option<std::string> level(
-      op, "l", "log-level", "NONE", "level",
-      "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> op_trace(op, "t", "tracefile", "", "filename",
-                                      "Log file for tracing USB access");
+namespace{
+  auto dummy0 = eudaq::Factory<eudaq::Producer>::
+    Register<TLUProducer, const std::string&, const std::string&>(TLUProducer::m_id_factory);
+}
 
-  eudaq::Option<std::string> name(op, "n", "name", "TLU", "string",
-                                  "The name of this Producer");
-
-  try {
-    op.Parse(argv);
-    EUDAQ_LOG_LEVEL(level.Value());
-    TLUProducer producer(name.Value(),rctrl.Value());    
-    producer.Exec();
-  } catch (...) {
-    return op.HandleMainException();
+TLUProducer::TLUProducer(const std::string name, const std::string &runcontrol)
+  : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), //name: TLU
+  trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
+  or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
+  enable_dut_veto(0), trig_rollover(0), readout_delay(100),
+  timestamps(true), done(false), timestamp_per_run(false),
+  TLUStarted(false), TLUJustStopped(false), lasttime(0), m_tlu(0) {
+  for (int i = 0; i < TLU_PMTS; i++) {
+    pmtvcntl[i] = PMT_VCNTL_DEFAULT;
+    pmt_id[i] = "<unknown>";
+    pmt_gain_error[i] = 1.0;
+    pmt_offset_error[i] = 0.0;
   }
-  return 0;
+  m_id_stream = eudaq::cstr2hash(name.c_str());
+
+}
+
+void TLUProducer::Exec(){
+  StartCommandReceiver();
+  while(IsActiveCommandReceiver()){
+    MainLoop();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+}
+  
+void TLUProducer::MainLoop() {
+  do {
+    if (!m_tlu) {
+      eudaq::mSleep(50);
+      continue;
+    }
+    bool JustStopped = TLUJustStopped;
+    if (JustStopped) {
+      m_tlu->Stop();
+      eudaq::mSleep(100);
+    }
+    if (TLUStarted || JustStopped) {
+      eudaq::mSleep(readout_delay);
+      m_tlu->Update(timestamps); // get new events
+      if (trig_rollover > 0 && m_tlu->GetTriggerNum() > trig_rollover) {
+	bool inhibit = m_tlu->InhibitTriggers();
+	m_tlu->ResetTriggerCounter();
+	m_tlu->InhibitTriggers(inhibit);
+      }
+      // std::cout << "--------" << std::endl;
+      for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
+	m_ev = m_tlu->GetEntry(i).Eventnum();
+	uint64_t t = m_tlu->GetEntry(i).Timestamp();
+	int64_t d = t - lasttime;
+	// float freq= 1./(d*20./1000000000);
+	float freq = 1. / Timestamp2Seconds(d);
+	if (m_ev < 10 || m_ev % 1000 == 0) {
+	  std::cout << "  " << m_tlu->GetEntry(i) << ", diff=" << d
+		    << (d <= 0 ? "  ***" : "") << ", freq=" << freq
+		    << std::endl;
+	}
+	lasttime = t;
+	auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
+	ev->SetTimestamp(t, t+1);//TODO, duration
+	  
+	ev->SetTag("trigger", m_tlu->GetEntry(i).trigger2String());
+	if (i == m_tlu->NumEntries() - 1) {
+	  ev->SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
+	  for (int i = 0; i < TLU_TRIGGER_INPUTS; ++i) {
+	    ev->SetTag("SCALER" + to_string(i),
+		       to_string(m_tlu->GetScaler(i)));
+	  }
+	}
+	SendEvent(std::move(ev));
+      }
+    }
+    if (JustStopped) {
+      m_tlu->Update(timestamps);
+      auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
+      ev->SetEORE();
+      SendEvent(std::move(ev));
+      TLUJustStopped = false;
+    }
+  } while (!done);
+}
+
+void TLUProducer::DoConfigure(const eudaq::Configuration &param) {
+  std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+  if (m_tlu)
+    m_tlu = 0;
+  int errorhandler = param.Get("ErrorHandler", 2);
+  m_tlu = std::make_shared<TLUController>(errorhandler);
+
+  trigger_interval = param.Get("TriggerInterval", 0);
+  dut_mask = param.Get("DutMask", 2);
+  and_mask = param.Get("AndMask", 0xff);
+  or_mask = param.Get("OrMask", 0);
+  strobe_period = param.Get("StrobePeriod", 0);
+  strobe_width = param.Get("StrobeWidth", 0);
+  enable_dut_veto = param.Get("EnableDUTVeto", 0);
+  handshake_mode = param.Get("HandShakeMode", 63);
+  veto_mask = param.Get("VetoMask", 0);
+  trig_rollover = param.Get("TrigRollover", 0);
+  timestamps = param.Get("Timestamps", 1);
+  for (int i = 0; i < TLU_PMTS;
+       i++) // Override with any individually set values
+    {
+      pmtvcntl[i] = (unsigned)param.Get("PMTVcntl" + to_string(i + 1),
+					"PMTVcntl", PMT_VCNTL_DEFAULT);
+      pmt_id[i] = param.Get("PMTID" + to_string(i + 1), "<unknown>");
+      pmt_gain_error[i] = param.Get("PMTGainError" + to_string(i + 1), 1.0);
+      pmt_offset_error[i] =
+	param.Get("PMTOffsetError" + to_string(i + 1), 0.0);
+    }
+  pmtvcntlmod = param.Get("PMTVcntlMod", 0); // If 0, it's a standard TLU;
+  // if 1, the DAC output voltage
+  // is doubled
+  readout_delay = param.Get("ReadoutDelay", 1000);
+  timestamp_per_run = param.Get("TimestampPerRun", 0);
+  // ***
+  m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
+  m_tlu->SetFirmware(param.Get("BitFile", ""));
+  m_tlu->SetVersion(param.Get("Version", 0));
+  m_tlu->Configure();
+  for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
+    m_tlu->SelectDUT(
+		     param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
+		     false);
+  }
+  m_tlu->SetTriggerInterval(trigger_interval);
+  m_tlu->SetPMTVcntlMod(pmtvcntlmod);
+  m_tlu->SetPMTVcntl(pmtvcntl, pmt_gain_error, pmt_offset_error);
+  m_tlu->SetDUTMask(dut_mask);
+  m_tlu->SetVetoMask(veto_mask);
+  m_tlu->SetAndMask(and_mask);
+  m_tlu->SetOrMask(or_mask);
+  m_tlu->SetStrobe(strobe_period, strobe_width);
+  m_tlu->SetEnableDUTVeto(enable_dut_veto);
+  m_tlu->SetHandShakeMode(handshake_mode);
+  m_tlu->SetTriggerInformation(USE_TRIGGER_INPUT_INFORMATION);
+  m_tlu->ResetTimestamp();
+
+  // by dhaas
+  eudaq::mSleep(1000);
+
+  m_tlu->Update(timestamps);
+  std::cout << "...Configured (" << param.Name() << ")" << std::endl;
+  EUDAQ_INFO("Configured (" + param.Name() + ")");
+}
+
+void TLUProducer::DoStartRun(unsigned param){
+  m_run = param;
+  m_ev = 0;
+  std::cout << "Start Run: " << param << std::endl;
+  auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
+  ev->SetBORE();
+  ev->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));
+  ev->SetTag("TriggerInterval", to_string(trigger_interval));
+  ev->SetTag("DutMask", "0x" + to_hex(dut_mask));
+  ev->SetTag("AndMask", "0x" + to_hex(and_mask));
+  ev->SetTag("OrMask", "0x" + to_hex(or_mask));
+  ev->SetTag("VetoMask", "0x" + to_hex(veto_mask));
+  for (int i = 0; i < TLU_PMTS;
+       i++) // Separate loops so they are sequential in file
+    {
+      ev->SetTag("PMTID" + to_string(i + 1), pmt_id[i]);
+    }
+  ev->SetTag("PMTVcntlMod", to_string(pmtvcntlmod));
+  for (int i = 0; i < TLU_PMTS; i++) {
+    ev->SetTag("PMTVcntl" + to_string(i + 1), to_string(pmtvcntl[i]));
+  }
+  for (int i = 0; i < TLU_PMTS;
+       i++) // Separate loops so they are sequential in file
+    {
+      ev->SetTag("PMTGainError" + to_string(i + 1), pmt_gain_error[i]);
+    }
+  for (int i = 0; i < TLU_PMTS;
+       i++) // Separate loops so they are sequential in file
+    {
+      ev->SetTag("PMTOffsetError" + to_string(i + 1), pmt_offset_error[i]);
+    }
+  ev->SetTag("ReadoutDelay", to_string(readout_delay));
+  ev->SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
+  eudaq::mSleep(5000); // temporarily, to fix startup with EUDRB
+  SendEvent(std::move(ev));
+  if (timestamp_per_run)
+    m_tlu->ResetTimestamp();
+  eudaq::mSleep(5000);
+  m_tlu->ResetTriggerCounter();
+  if (timestamp_per_run)
+    m_tlu->ResetTimestamp();
+  m_tlu->ResetScalers();
+  m_tlu->Update(timestamps);
+  m_tlu->Start();
+  TLUStarted = true;
+}
+
+void TLUProducer::DoStopRun(){
+  std::cout << "Stop Run" << std::endl;
+  TLUStarted = false;
+  TLUJustStopped = true;
+  while (TLUJustStopped) {
+    eudaq::mSleep(100);
+  }
+}
+
+void TLUProducer::DoTerminate(){
+  std::cout << "Terminate (press enter)" << std::endl;
+  done = true;
+  eudaq::mSleep(1000);
+}
+
+void TLUProducer::DoReset(){
+  std::cout << "Reset" << std::endl;
+  m_tlu->Stop();        // stop
+  m_tlu->Update(false); // empty events
+}
+
+void TLUProducer::OnStatus(){
+  SetStatusTag("TRIG", to_string(m_ev));
+  if (m_tlu) {
+    SetStatusTag("TIMESTAMP",
+		 to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
+    SetStatusTag("LASTTIME", to_string(Timestamp2Seconds(lasttime)));
+    SetStatusTag("PARTICLES", to_string(m_tlu->GetParticles()));
+    SetStatusTag("STATUS", m_tlu->GetStatusString());
+    for (int i = 0; i < 4; ++i) {
+      SetStatusTag("SCALER" + to_string(i),
+		   to_string(m_tlu->GetScaler(i)));
+    }
+  }
+}
+
+void TLUProducer::OnUnrecognised(const std::string &cmd,
+				 const std::string &param){
+  std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
+  if (param.length() > 0)
+    std::cout << " (" << param << ")";
+  std::cout << std::endl;
+  SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
 }

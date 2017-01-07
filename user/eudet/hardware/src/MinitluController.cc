@@ -1,4 +1,4 @@
-#include "miniTLUController.hh"
+#include "MinitluController.hh"
 
 #include <iomanip>
 #include <thread>

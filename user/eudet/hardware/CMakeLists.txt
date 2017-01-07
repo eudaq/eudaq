@@ -13,6 +13,7 @@ if(USER_BUILD_TLU)
 endif()
 
 if(USER_BUILD_MINITLU)
+  include_directories(${CACTUS_INCLUDE_DIR})
   list(APPEND USER_HARDWARE_SRC src/MinitluController.cc)
   list(APPEND USER_HARDWARE_DEP_LIB ${CACTUS_LIBRARIES})
 endif()

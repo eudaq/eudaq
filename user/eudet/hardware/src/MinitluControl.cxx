@@ -1,4 +1,4 @@
-#include "miniTLUController.hh"
+#include "MinitluController.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"

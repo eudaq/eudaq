@@ -7,6 +7,7 @@ include_directories(include)
 aux_source_directory(src MODULE_SRC)
 list(REMOVE_ITEM MODULE_SRC src/TelProducerPS.cc)
 list(REMOVE_ITEM MODULE_SRC src/TluProducerPS.cc)
+# list(REMOVE_ITEM MODULE_SRC src/MinitluProducer.cc)
   
 if(NOT USER_BUILD_NI)
   list(REMOVE_ITEM MODULE_SRC src/NiProducer.cc)
