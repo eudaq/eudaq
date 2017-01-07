@@ -1,5 +1,5 @@
-option(EUDAQ_MODULE_TEST "build module_test" ON)
-if(NOT EUDAQ_MODULE_TEST)
+option(EUDAQ_MODULE_BUILD_TEST "build module_test" ON)
+if(NOT EUDAQ_MODULE_BUILD_TEST)
   return()
 endif()
 

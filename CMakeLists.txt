@@ -11,6 +11,7 @@ SET(EUDAQ_CORE_LIBRARY core)
 set(CMAKE_CXX_STANDARD 11)
 include(CMakeDependentOption)
 
+
 include_directories(main/lib/processors/include)
 include_directories(main/lib/eventsyncs/include)
 include_directories(main/lib/filerws/include)
@@ -69,9 +70,9 @@ INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
 MESSAGE("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
 # set the path to which we will install later: default project home, can be changed using
-# cmake -DINSTALL_PREFIX=/some/dir ..
-SET(INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
-SET(CMAKE_INSTALL_PREFIX "${INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+# cmake -DEUDAQ_INSTALL_PREFIX=/some/dir ..
+set(EUDAQ_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
+set(CMAKE_INSTALL_PREFIX "${EUDAQ_INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 
 # Set the correct build type and allow command line options:
 # Set a default build type if none was specified

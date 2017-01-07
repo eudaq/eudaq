@@ -1,5 +1,5 @@
-option(EUDAQ_MODULE_STD "build module_std" ON)
-if(NOT EUDAQ_MODULE_STD)
+option(EUDAQ_MODULE_BUILD_STD "build module_std" ON)
+if(NOT EUDAQ_MODULE_BUILD_STD)
   return()
 endif()
 

@@ -1,6 +1,12 @@
 # GET_FILENAME_COMPONENT(OBJNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
+
+set(EUDAQ_INCLUDE_DIRS
+  ${CMAKE_CURRENT_LIST_DIR}/include
+  ${CMAKE_CURRENT_LIST_DIR}/include/eudaq
+  CACHE INTERNAL "directory of eudaq include")
+
 include_directories(include)
 include_directories(include/eudaq)
 

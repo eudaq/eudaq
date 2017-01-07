@@ -18,6 +18,8 @@ namespace eudaq {
   namespace{
     auto dummy0 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("lcio"));
     auto dummy1 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("lcio"));
+    auto dummy01 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("slcio"));
+    auto dummy11 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("slcio"));
     auto dummy2 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("LCFileWriter"));
     auto dummy3 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("LCFileWriter"));
   }
@@ -41,7 +43,7 @@ namespace eudaq {
   void LCFileWriter::StartRun(unsigned runnumber) {
     try {
       m_lcwriter.reset(lcio::LCFactory::getInstance()->createLCWriter());
-      m_lcwriter->open(FileNamer(m_filepattern).Set('X', ".lcio").Set('R', runnumber),
+      m_lcwriter->open(FileNamer(m_filepattern).Set('R', runnumber),
 		       lcio::LCIO::WRITE_NEW); 
     } catch (const lcio::IOException &e) {
       std::cout << e.what() << std::endl;
