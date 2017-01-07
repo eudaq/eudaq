@@ -26,8 +26,10 @@ public:
   void DoReset() override;
   void Exec() override;
 
+  void MainLoop();
   void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
 
+  static const uint32_t m_id_factory = eudaq::cstr2hash("caliceahcalbifProducer");
 private:
   bool FetchBifDataWasSuccessfull();
   void ProcessQueuedBifData();
@@ -77,280 +79,235 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<caliceahcalbifProducer, const std::string&, const std::string&>(eudaq::cstr2hash("caliceahcalbifProducer"));
+    Register<caliceahcalbifProducer, const std::string&, const std::string&>(caliceahcalbifProducer::m_id_factory);
 }
 
-caliceahcalbifProducer::caliceahcalbifProducer(const std::string name, const std::string &runcontrol): //TODO: hardcoded name
-            eudaq::Producer("caliceahcalbif", runcontrol), m_tlu(nullptr), m_run(-1), readout_delay(100), TLUJustStopped(false), TLUStarted(false), done(false), _acq_start_cycle(0), _acq_start_ts(0), _bxidLengthNs(4000), _dumpRaw(0), _firstBxidOffsetBins(
-                  13000), _firstStutterCycle(-1), _firstTrigger(true), _last_readout_time(std::time(NULL)), _ReadoutCycle(0), _ROC_started(false), _trigger_id(-1), _triggersInCycle(0), _WaitAfterStopSeconds(0), _writeRaw(false), _writerawfilename_timestamp(
-                  true), _dumpCycleInfoLevel(1), _dumpSummary(true), _dumpTriggerInfoLevel(0) {
+caliceahcalbifProducer::caliceahcalbifProducer(const std::string name, const std::string &runcontrol):
+  eudaq::Producer(name, runcontrol), m_tlu(nullptr), m_run(-1), readout_delay(100),
+  TLUJustStopped(false), TLUStarted(false), done(false), _acq_start_cycle(0), _acq_start_ts(0),
+  _bxidLengthNs(4000), _dumpRaw(0), _firstBxidOffsetBins(13000), _firstStutterCycle(-1),
+  _firstTrigger(true), _last_readout_time(std::time(NULL)), _ReadoutCycle(0), _ROC_started(false),
+  _trigger_id(-1), _triggersInCycle(0), _WaitAfterStopSeconds(0), _writeRaw(false),
+  _writerawfilename_timestamp(true), _dumpCycleInfoLevel(1), _dumpSummary(true), _dumpTriggerInfoLevel(0){
+
+}
+
+
+void caliceahcalbifProducer::Exec(){
+  StartCommandReceiver();
+  while(IsActiveCommandReceiver()){
+    MainLoop();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+}
+
+void caliceahcalbifProducer::MainLoop() {
+  std::cout << "Main loop!" << std::endl;
+  _last_readout_time = std::time(NULL);
+  //         eudaq::RawDataEvent CycleEvent; //
+  _ROC_started = false;
+  _firstTrigger = true;
+  do {
+    if (!m_tlu) {
+      eudaq::mSleep(50);
+      continue;
+    }
+    bool JustStopped = TLUJustStopped;
+    if (JustStopped) {
+      //m_tlu->Stop();
+      eudaq::mSleep(10);
+    }
+    if (TLUStarted || JustStopped) {
+      //	std::cout << "... " << TLUStarted << " - " << JustStopped << std::endl;
+      // eudaq::mSleep(readout_delay);
+      while (true) {               //loop until all data from BIF is processed
+	if (!FetchBifDataWasSuccessfull()) continue;
+	auto controller_queue_size = m_tlu->GetEventData()->size(); //number of 64-bit words in the local data vector
+	if (m_tlu->GetEventData()->size()) {
+	  ProcessQueuedBifData();
+	} else {
+	  eudaq::mSleep(10); //save CPU resources
+	  break;
+	}
       }
+    } else {
+      eudaq::mSleep(50);
+    }
+    if (JustStopped) {
+      if (std::difftime(std::time(NULL), _last_readout_time) < _WaitAfterStopSeconds) continue; //wait for safe time after last packet arrived
+      auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+      ev->SetEORE();
+      SendEvent(std::move(ev));
+      _ReadoutCycle ++;
+      // SendEvent(eudaq::RawDataEvent::EORE("CaliceObject", m_run, ++_ReadoutCycle));
+      TLUJustStopped = false;
+    }
+  } while (!done);
+}
 
-void caliceahcalbifProducer::Exec() {
-         std::cout << "Main loop!" << std::endl;
+void caliceahcalbifProducer::DoConfigure(const eudaq::Configuration & param) {
+  _dumpRaw = param.Get("DumpRawOutput", 0);
+  /*DumpRawOutput = 0
+    DumpCycleInfo = 1
+    DumpTriggerInfo = 1
+    DumpSummary = 1*/
+  _dumpCycleInfoLevel = param.Get("DumpCycleInfoLevel", 1);
+  _dumpTriggerInfoLevel = param.Get("DumpTriggerInfoLevel", 1);
+  _dumpSummary = param.Get("DumpSummary", 1);
 
-         _last_readout_time = std::time(NULL);
-//         eudaq::RawDataEvent CycleEvent; //
+  _writeRaw = param.Get("WriteRawOutput", 0);
+  _rawFilename = param.Get("RawFileName", "run%d.raw");
+  _writerawfilename_timestamp = param.Get("WriteRawFileNameTimestamp", 0);
+  _firstBxidOffsetBins = param.Get("FirstBxidOffsetBins", 0);
+  _bxidLengthNs = param.Get("BxidLengthNs", 4000);
+  _WaitAfterStopSeconds = param.Get("WaitAfterStopSeconds", 1.0);
 
-         _ROC_started = false;
-         _firstTrigger = true;
-         do {
-            if (!m_tlu) {
-               eudaq::mSleep(50);
-               continue;
-            }
-            bool JustStopped = TLUJustStopped;
-            if (JustStopped) {
-               //m_tlu->Stop();
-               eudaq::mSleep(10);
-            }
-            if (TLUStarted || JustStopped) {
-               //	std::cout << "... " << TLUStarted << " - " << JustStopped << std::endl;
-               // eudaq::mSleep(readout_delay);
-               while (true) {               //loop until all data from BIF is processed
-                  if (!FetchBifDataWasSuccessfull()) continue;
-                  auto controller_queue_size = m_tlu->GetEventData()->size(); //number of 64-bit words in the local data vector
-                  if (m_tlu->GetEventData()->size()) {
-                     ProcessQueuedBifData();
-                  } else {
-                     eudaq::mSleep(10); //save CPU resources
-                     break;
-                  }
-               }
-            } else {
-               eudaq::mSleep(50);
-            }
-            if (JustStopped) {
-               // 	m_tlu->Update(timestamps);
-//               std::cout << "waiting: " << std::difftime(std::time(NULL), last_readout_time) << std::endl;
-               if (std::difftime(std::time(NULL), _last_readout_time) < _WaitAfterStopSeconds) continue; //wait for safe time after last packet arrived
-	       auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-	       ev->SetEORE();
-	       SendEvent(std::move(ev));
-	       _ReadoutCycle ++;
-               // SendEvent(eudaq::RawDataEvent::EORE("CaliceObject", m_run, ++_ReadoutCycle));
-               TLUJustStopped = false;
-            }
-         } while (!done);
-      }
+  std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+  if (m_tlu) m_tlu = nullptr;
+  //	int errorhandler = param.Get("ErrorHandler", 2);
 
-      void caliceahcalbifProducer::DoConfigure(const eudaq::Configuration & param) {
-         SetStatus(eudaq::Status::LVL_OK, "Wait");
+  m_tlu = std::unique_ptr<caliceahcalbifController>(new caliceahcalbifController(param.Get("ConnectionFile", "file:///bif_connections.xml"), param.Get("DeviceName", "minitlu_bif")));
 
-         _dumpRaw = param.Get("DumpRawOutput", 0);
-         /*DumpRawOutput = 0
-          DumpCycleInfo = 1
-          DumpTriggerInfo = 1
-          DumpSummary = 1*/
-         _dumpCycleInfoLevel = param.Get("DumpCycleInfoLevel", 1);
-         _dumpTriggerInfoLevel = param.Get("DumpTriggerInfoLevel", 1);
-         _dumpSummary = param.Get("DumpSummary", 1);
+  std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
+  std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
+  std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
 
-         _writeRaw = param.Get("WriteRawOutput", 0);
-         _rawFilename = param.Get("RawFileName", "run%d.raw");
-         _writerawfilename_timestamp = param.Get("WriteRawFileNameTimestamp", 0);
-         _firstBxidOffsetBins = param.Get("FirstBxidOffsetBins", 0);
-         _bxidLengthNs = param.Get("BxidLengthNs", 4000);
-         _WaitAfterStopSeconds = param.Get("WaitAfterStopSeconds", 1.0);
+  m_tlu->SetCheckConfig(param.Get("CheckConfig", 1));
 
-         try {
-            std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
-            if (m_tlu) m_tlu = nullptr;
-            //	int errorhandler = param.Get("ErrorHandler", 2);
-
-            m_tlu = std::unique_ptr<caliceahcalbifController>(new caliceahcalbifController(param.Get("ConnectionFile", "file:///bif_connections.xml"), param.Get("DeviceName", "minitlu_bif")));
-
-            std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
-            std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
-            std::cout << "Firmware version " << std::hex << m_tlu->GetFirmwareVersion() << std::dec << std::endl;
-
-            m_tlu->SetCheckConfig(param.Get("CheckConfig", 1));
-
-            readout_delay = param.Get("ReadoutDelay", 100);
-//            m_tlu->AllTriggerVeto();
-            m_tlu->InitializeI2C(param.Get("I2C_DAC_Addr", 0x1f), param.Get("I2C_ID_Addr", 0x50));
-            if (param.Get("UseIntDACValues", 1)) {
-               m_tlu->SetDACValue(0, param.Get("DACIntThreshold0", 0x4100));
-               m_tlu->SetDACValue(1, param.Get("DACIntThreshold1", 0x4100));
-               m_tlu->SetDACValue(2, param.Get("DACIntThreshold2", 0x4100));
-               m_tlu->SetDACValue(3, param.Get("DACIntThreshold3", 0x4100));
-            } else {
-               m_tlu->SetThresholdValue(0, param.Get("DACThreshold0", 1.3));
-               m_tlu->SetThresholdValue(1, param.Get("DACThreshold1", 1.3));
-               m_tlu->SetThresholdValue(2, param.Get("DACThreshold2", 1.3));
-               m_tlu->SetThresholdValue(3, param.Get("DACThreshold3", 1.3));
-            }
-            if (param.Get("resetClocks", 0)) {
-               m_tlu->ResetBoard();
-            }
-            if (param.Get("resetSerdes", 1)) {
-               m_tlu->ResetSerdes();
-            }
-            m_tlu->ConfigureInternalTriggerInterval(param.Get("InternalTriggerInterval", 42));
-            m_tlu->SetTriggerMask(param.Get("TriggerMask", 0x0));
-            m_tlu->SetDUTMask(param.Get("DUTMask", 0x1));
-            m_tlu->SetEnableRecordData(param.Get("EnableRecordData", 0x0));
-            // write DUT mask (not implemented)
-            // write DUT style (not implemented)
-
-            // by dhaas
-//				eudaq::mSleep(1000);
-
-// 	m_tlu->Update(timestamps);
-            std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-            EUDAQ_INFO("Configured (" + param.Name() + ")");
-            SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-         } catch (const std::exception & e) {
-            printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
-         } catch (...) {
-            printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
-         }
-      }
+  readout_delay = param.Get("ReadoutDelay", 100);
+  //            m_tlu->AllTriggerVeto();
+  m_tlu->InitializeI2C(param.Get("I2C_DAC_Addr", 0x1f), param.Get("I2C_ID_Addr", 0x50));
+  if (param.Get("UseIntDACValues", 1)) {
+    m_tlu->SetDACValue(0, param.Get("DACIntThreshold0", 0x4100));
+    m_tlu->SetDACValue(1, param.Get("DACIntThreshold1", 0x4100));
+    m_tlu->SetDACValue(2, param.Get("DACIntThreshold2", 0x4100));
+    m_tlu->SetDACValue(3, param.Get("DACIntThreshold3", 0x4100));
+  } else {
+    m_tlu->SetThresholdValue(0, param.Get("DACThreshold0", 1.3));
+    m_tlu->SetThresholdValue(1, param.Get("DACThreshold1", 1.3));
+    m_tlu->SetThresholdValue(2, param.Get("DACThreshold2", 1.3));
+    m_tlu->SetThresholdValue(3, param.Get("DACThreshold3", 1.3));
+  }
+  if (param.Get("resetClocks", 0)) {
+    m_tlu->ResetBoard();
+  }
+  if (param.Get("resetSerdes", 1)) {
+    m_tlu->ResetSerdes();
+  }
+  m_tlu->ConfigureInternalTriggerInterval(param.Get("InternalTriggerInterval", 42));
+  m_tlu->SetTriggerMask(param.Get("TriggerMask", 0x0));
+  m_tlu->SetDUTMask(param.Get("DUTMask", 0x1));
+  m_tlu->SetEnableRecordData(param.Get("EnableRecordData", 0x0));
+  std::cout << "...Configured (" << param.Name() << ")" << std::endl;
+}
 
 void caliceahcalbifProducer::OpenRawFile(unsigned param, bool _writerawfilename_timestamp) {
+  //	read the local time and save into the string myString
+  time_t ltime;
+  struct tm *Tm;
+  ltime = time(NULL);
+  Tm = localtime(&ltime);
+  char file_timestamp[25];
+  std::string myString;
+  if (_writerawfilename_timestamp == 1) {
+    sprintf(file_timestamp, "__%02dp%02dp%02d__%02dp%02dp%02d.raw", Tm->tm_mday, Tm->tm_mon + 1, Tm->tm_year + 1900, Tm->tm_hour, Tm->tm_min, Tm->tm_sec);
+    myString.assign(file_timestamp, 26);
+  } else
+    myString = ".raw";
 
-         //	read the local time and save into the string myString
-         time_t ltime;
-         struct tm *Tm;
-         ltime = time(NULL);
-         Tm = localtime(&ltime);
-         char file_timestamp[25];
-         std::string myString;
-         if (_writerawfilename_timestamp == 1) {
-            sprintf(file_timestamp, "__%02dp%02dp%02d__%02dp%02dp%02d.raw", Tm->tm_mday, Tm->tm_mon + 1, Tm->tm_year + 1900, Tm->tm_hour, Tm->tm_min, Tm->tm_sec);
-            myString.assign(file_timestamp, 26);
-         } else
-            myString = ".raw";
+  std::string _rawFilenameTimeStamp;
+  //if chosen like this, add the local time to the filename
+  _rawFilenameTimeStamp = _rawFilename + myString;
+  char _rawFilename[256];
+  sprintf(_rawFilename, _rawFilenameTimeStamp.c_str(), (int) param);
 
-         std::string _rawFilenameTimeStamp;
-         //if chosen like this, add the local time to the filename
-         _rawFilenameTimeStamp = _rawFilename + myString;
-         char _rawFilename[256];
-         sprintf(_rawFilename, _rawFilenameTimeStamp.c_str(), (int) param);
-
-         _rawFile.open(_rawFilename);
-      }
+  _rawFile.open(_rawFilename);
+}
 
 void caliceahcalbifProducer::DoStartRun(unsigned param) {
-         SetStatus(eudaq::Status::LVL_OK, "Wait");
-         _ReadoutCycle = -1;
-         _stats= {0,0,0,0};
-         // raw file open
-         if (_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
+  _ReadoutCycle = -1;
+  _stats= {0,0,0,0};
+  // raw file open
+  if (_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
 
-         if (!m_tlu) {
-            SetStatus(eudaq::Status::LVL_ERROR, "caliceahcalbif connection not present!");
-            return;
-         }
-         try {
-            m_run = param;
-            std::cout << std::dec << "Start Run: " << param << std::endl;
-            // eudaq::RawDataEvent infoevent(eudaq::RawDataEvent::BORE("CaliceObject", m_run));
-	    auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-	    ev->SetBORE();
-            std::string s = "EUDAQConfigBIF";
-	    auto infoevent = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
-            infoevent->AddBlock(0, s.c_str(), s.length());
-            // infoevent->SetTimeStampToNow();
-            infoevent->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
-            infoevent->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
-            eudaq::mSleep(500);               // temporarily, to fix startup with EUDRB
-	    SendEvent(std::move(ev));
-            eudaq::mSleep(500);
-            try {
-               m_tlu->ResetCounters();
-               std::cout << "Words in FIFO before start " << m_tlu->GetEventFifoFillLevel() << ". Clearing." << std::endl;
-               m_tlu->CheckEventFIFO();
-               m_tlu->ReadEventFIFO();
-               m_tlu->ClearEventFIFO(); // software side
-               m_tlu->ResetEventFIFO(); // hardware side
-               m_tlu->NoneTriggerVeto();
-            } catch (std::exception& e) {
-               std::cout << "startup did not went correct. Problem with BIF communication " << e.what();
-               EUDAQ_ERROR("startup did not went correct. BIF data for whole run might miss triggers!");
-            }
-            TLUStarted = true;
-
-            SetStatus(eudaq::Status::LVL_OK, "Started");
-         } catch (const std::exception & e) {
-            printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
-         } catch (...) {
-            printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
-         }
-         std::cout << "Done starting" << std::endl;
-      }
+  if (!m_tlu) {
+    SetStatus(eudaq::Status::LVL_ERROR, "caliceahcalbif connection not present!");
+    return;
+  }
+  m_run = param;
+  std::cout << std::dec << "Start Run: " << param << std::endl;
+  // eudaq::RawDataEvent infoevent(eudaq::RawDataEvent::BORE("CaliceObject", m_run));
+  auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+  ev->SetBORE();
+  std::string s = "EUDAQConfigBIF";
+  auto infoevent = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
+  infoevent->AddBlock(0, s.c_str(), s.length());
+  // infoevent->SetTimeStampToNow();
+  infoevent->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
+  infoevent->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
+  eudaq::mSleep(500);               // temporarily, to fix startup with EUDRB
+  SendEvent(std::move(ev));
+  eudaq::mSleep(500);
+  try {
+    m_tlu->ResetCounters();
+    std::cout << "Words in FIFO before start " << m_tlu->GetEventFifoFillLevel() << ". Clearing." << std::endl;
+    m_tlu->CheckEventFIFO();
+    m_tlu->ReadEventFIFO();
+    m_tlu->ClearEventFIFO(); // software side
+    m_tlu->ResetEventFIFO(); // hardware side
+    m_tlu->NoneTriggerVeto();
+  } catch (std::exception& e) {
+    std::cout << "startup did not went correct. Problem with BIF communication " << e.what();
+    EUDAQ_ERROR("startup did not went correct. BIF data for whole run might miss triggers!");
+  }
+  TLUStarted = true;
+}
 
 void caliceahcalbifProducer::DoStopRun() {
-         try {
-            std::cout << "Stop Run" << std::endl;
-            TLUStarted = false;
-            TLUJustStopped = true;
-            while (TLUJustStopped) {
-               eudaq::mSleep(100);
-            }
-            uint64_t duration = _stats.runStopTS - _stats.runStartTS;
-            if (_stats.runStartTS > _stats.runStopTS) duration = (~duration) + 1; //convert negative
-            float trigs_per_roc = ((float) _stats.triggers) / _ReadoutCycle;
-            float duration_sec = timestamp_resolution_ns * 1E-9 * (1 + duration << 5);
-            float roc_per_sec = ((float) _ReadoutCycle + 1.0) / duration_sec;
-            float onTime_sec = timestamp_resolution_ns * 1E-9 * (1 + _stats.onTime << 5);
-            float onTime_percent = ((float_t) _stats.onTime) / duration;
-            if (_dumpSummary) {
-               std::cout << std::dec << std::endl;
-               std::cout << "================================================================" << std::endl;
-               std::cout << "== Run statistics" << std::endl;
-               std::cout << "================================================================" << std::endl;
-               std::cout << "Cycles: " << _ReadoutCycle;
-//            std::cout << "\tduration: " << duration;
-               std::cout << "\tduration: " << duration_sec << " s " << std::endl;
-               std::cout << "Ontime: " << onTime_sec << " s ";
-               std::cout << "\tontime: " << onTime_percent * 100 << "%" << std::endl;
-               std::cout << "avgROCLength: " << 1000. * onTime_sec / (_ReadoutCycle) << " ms ";
-               std::cout << "\tavgROC/s: " << roc_per_sec;
-               std::cout << std::endl;
-               std::cout << "triggers: " << _stats.triggers << " ";
-               std::cout << "\tavgTrig/s: " << _stats.triggers / onTime_sec << " ";
-               std::cout << "\tavgTrig/roc: " << trigs_per_roc << std::endl;
-               std::cout << "================================================================" << std::endl;
-            }
-            m_tlu->AllTriggerVeto();
-            SetStatus(eudaq::Status::LVL_OK, "Stopped");
-         } catch (const std::exception & e) {
-            printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
-         } catch (...) {
-            printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
-         }
-         sleep(1);
-         if (_writeRaw) _rawFile.close();
+  std::cout << "Stop Run" << std::endl;
+  TLUStarted = false;
+  TLUJustStopped = true;
+  while (TLUJustStopped) {
+    eudaq::mSleep(100);
+  }
+  uint64_t duration = _stats.runStopTS - _stats.runStartTS;
+  if (_stats.runStartTS > _stats.runStopTS) duration = (~duration) + 1; //convert negative
+  float trigs_per_roc = ((float) _stats.triggers) / _ReadoutCycle;
+  float duration_sec = timestamp_resolution_ns * 1E-9 * (1 + duration << 5);
+  float roc_per_sec = ((float) _ReadoutCycle + 1.0) / duration_sec;
+  float onTime_sec = timestamp_resolution_ns * 1E-9 * (1 + _stats.onTime << 5);
+  float onTime_percent = ((float_t) _stats.onTime) / duration;
+  if (_dumpSummary) {
+    std::cout << std::dec << std::endl;
+    std::cout << "================================================================" << std::endl;
+    std::cout << "== Run statistics" << std::endl;
+    std::cout << "================================================================" << std::endl;
+    std::cout << "Cycles: " << _ReadoutCycle;
+    //            std::cout << "\tduration: " << duration;
+    std::cout << "\tduration: " << duration_sec << " s " << std::endl;
+    std::cout << "Ontime: " << onTime_sec << " s ";
+    std::cout << "\tontime: " << onTime_percent * 100 << "%" << std::endl;
+    std::cout << "avgROCLength: " << 1000. * onTime_sec / (_ReadoutCycle) << " ms ";
+    std::cout << "\tavgROC/s: " << roc_per_sec;
+    std::cout << std::endl;
+    std::cout << "triggers: " << _stats.triggers << " ";
+    std::cout << "\tavgTrig/s: " << _stats.triggers / onTime_sec << " ";
+    std::cout << "\tavgTrig/roc: " << trigs_per_roc << std::endl;
+    std::cout << "================================================================" << std::endl;
+  }
+  m_tlu->AllTriggerVeto();
+  sleep(1);
+  if (_writeRaw) _rawFile.close();
 
-      }
+}
 
 void caliceahcalbifProducer::DoTerminate() {
-         std::cout << "Terminate (press enter)" << std::endl;
-         done = true;
-      }
+  std::cout << "Terminate (press enter)" << std::endl;
+  done = true;
+}
 
 void caliceahcalbifProducer::DoReset() {
-         try {
-            std::cout << "Reset" << std::endl;
-            SetStatus(eudaq::Status::LVL_OK);
-// 	m_tlu->Stop(); // stop
-// 	m_tlu->Update(false); // empty events
-            SetStatus(eudaq::Status::LVL_OK, "Reset");
-         } catch (const std::exception & e) {
-            printf("Caught exception: %s\n", e.what());
-            SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
-         } catch (...) {
-            printf("Unknown exception\n");
-            SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
-         }
-      }
+}
 
 void caliceahcalbifProducer::OnStatus() {
   SetStatusTag("TRIG", to_string(_stats.triggers)); //to_string(_ReadoutCycle));
@@ -358,11 +315,11 @@ void caliceahcalbifProducer::OnStatus() {
 }
 
 void caliceahcalbifProducer::OnUnrecognised(const std::string & cmd, const std::string & param) {
-         std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
-         if (param.length() > 0) std::cout << " (" << param << ")";
-         std::cout << std::endl;
-         SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
-      }
+  std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
+  if (param.length() > 0) std::cout << " (" << param << ")";
+  std::cout << std::endl;
+  SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
+}
 
 bool caliceahcalbifProducer::FetchBifDataWasSuccessfull() {
          try {
@@ -664,22 +621,20 @@ void caliceahcalbifProducer::WriteOutEudaqEvent()
          _cycleData.clear();
       }
 
+
 int main(int /*argc*/, const char ** argv) {
    eudaq::OptionParser op("EUDAQ AHCAL BIF Producer", "1.0", "The Producer task for the BIF (based on mini-tlu)");
    eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address", "The address of the RunControl application");
    eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level", "The minimum level for displaying log messages locally");
 
    try {
-    op.Parse(argv);
-    EUDAQ_LOG_LEVEL(level.Value());
-
-    // auto app=Factory<Producer>::MakeShared<const std::string&,const std::string&>
-    //   (cstr2hash("caliceahcalbifProducer"), "caliceahcalbifProducer", rctrl.Value());
-    // app->Exec();
-
-   } catch (...) {
+     op.Parse(argv);
+     EUDAQ_LOG_LEVEL(level.Value());
+     auto app=eudaq::Factory<eudaq::Producer>::MakeShared<const std::string&,const std::string&>
+       (eudaq::cstr2hash("caliceahcalbifProducer"), "caliceahcalbifProducer", rctrl.Value());
+     app->Exec();
+  } catch (...) {
     return op.HandleMainException();
   }
   return 0;
 }
-
