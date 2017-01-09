@@ -1,7 +1,7 @@
-cmake_dependent_option(USER_CALICE_AHCAL "build user/calice AHCAL" ON
+cmake_dependent_option(USER_CALICE_BUILD_AHCAL "build user/calice AHCAL" ON
   "USER_CALICE" OFF)
 
-if(NOT USER_CALICE_AHCAL)
+if(NOT USER_CALICE_BUILD_AHCAL)
   message("user/calice AHCAL is not to be built")
   return()
 endif()
