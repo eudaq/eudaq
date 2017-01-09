@@ -20,7 +20,8 @@ namespace eudaq {
   RunControl::RunControl(const std::string &listenaddress)
       : m_exit(false), m_listening(true), m_runnumber(-1),
 	m_runsizelimit(0),m_runeventlimit(0){
-    if (listenaddress != "") {
+    m_runnumber = ReadFromFile("../data/runnumber.dat", 0U)+1;
+    if (listenaddress != ""){
       m_cmdserver.reset(TransportFactory::CreateServer(listenaddress));
       m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
     }
@@ -77,6 +78,7 @@ namespace eudaq {
   void RunControl::StartRun(uint32_t run_n){
     m_listening = false;
     m_runnumber = run_n;
+    WriteToFile("../data/runnumber.dat", run_n);
     EUDAQ_INFO("Starting Run " + to_string(run_n));
     SendCommand("START", to_string(run_n));
   }
@@ -84,6 +86,7 @@ namespace eudaq {
   void RunControl::StopRun() {
     m_listening = true;
     EUDAQ_INFO("Stopping Run " + to_string(m_runnumber));
+    m_runnumber ++;
     SendCommand("STOP");
   }
 

@@ -42,6 +42,7 @@ namespace eudaq {
     void SetStatusTag(const std::string &key, const std::string &val){m_status.SetTag(key, val);}
     
     std::string GetFullName() const {return m_type+"."+m_name;};
+    std::string GetName() const {return m_name;};
     uint32_t GetCommandReceiverID() const {return m_cmdrcv_id;};
     std::string GetCommandRecieverAddress() const {return m_addr_client;};
 

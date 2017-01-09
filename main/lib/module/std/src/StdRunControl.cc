@@ -51,7 +51,7 @@ namespace eudaq{
 		  << "f [file] Configure clients (with file 'file')\n"
 		  << "r        Reset\n"
 		  << "s        Status\n"
-		  << "b [msg]  Begin Run (with run comment 'msg')\n"
+		  << "b [n]    Begin Run (with run number)\n"
 		  << "e        End Run\n"
 		  << "q        Quit\n"
 		  << "?        Display this help\n"
@@ -83,7 +83,10 @@ namespace eudaq{
 	RemoteStatus();
 	break;
       case 'b':
-	StartRun(std::stoul(line));
+	if(line.length())
+	  StartRun(std::stoul(line));
+	else
+	  StartRun(GetRunNumber());
 	break;
       case 'e':
 	StopRun();

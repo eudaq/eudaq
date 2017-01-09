@@ -12,11 +12,10 @@ namespace eudaq {
     auto dummy0 = Factory<DataCollector>::
       Register<DirectSaveDataCollector, const std::string&, const std::string&>
       (DirectSaveDataCollector::m_id_factory);
-    
-    auto &ddd=( std::cout<<DirectSaveDataCollector::m_id_factory<<std::endl);
   }
 
   void DirectSaveDataCollector::DoReceive(const ConnectionInfo &id, EventUP ev){
+    ev->Print(std::cout);
     WriteEvent(std::move(ev));
   }
 }

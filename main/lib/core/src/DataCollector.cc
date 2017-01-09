@@ -7,7 +7,8 @@
 #include "ExportEventPS.hh"
 #include <iostream>
 #include <ostream>
-
+#include <ctime>
+#include <iomanip>
 namespace eudaq {
 
   template class DLLEXPORT Factory<DataCollector>;
@@ -33,8 +34,14 @@ namespace eudaq {
     std::cout << "Configuring (" << m_config.Name() << ")..." << std::endl;
     try {
       std::string fwtype = m_config.Get("FileType", "native");
-      std::string fwpatt = m_config.Get("FilePattern", "run$6R_tp$X");
+      std::string fwpatt = m_config.Get("FilePattern", "run$6R$X");
       m_dct_n = m_config.Get("EUDAQ_ID", m_dct_n);
+      std::stringstream ss;
+      std::time_t time_now = std::time(nullptr);
+      char time_buff[12];
+      std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
+      ss<<time_buff<<"_"<<GetName()<<"_"<<fwpatt;
+      fwpatt = ss.str();
       m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(fwtype), fwpatt);
       DoConfigure(m_config);
       std::cout << "...Configured (" << m_config.Name() << ")" << std::endl;
