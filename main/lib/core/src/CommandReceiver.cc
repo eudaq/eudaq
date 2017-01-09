@@ -109,8 +109,14 @@ namespace eudaq {
         cmd = std::string(cmd, 0, i);
       }
       std::cout<<"Received CMD "<< cmd<<std::endl;
-      if (cmd == "CONFIG") {
+      if (cmd == "INIT") {
         std::string section = m_type;
+        if(m_name != "")
+          section += "." + m_name;
+        Configuration conf(param, section);
+        OnInitialise(conf);
+      } else if (cmd == "CONFIG"){
+	std::string section = m_type;
         if(m_name != "")
           section += "." + m_name;
         Configuration conf(param, section);

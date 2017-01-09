@@ -36,8 +36,6 @@ namespace eudaq {
   void Producer::OnStartRun(uint32_t run_n){
     try{
       SetStatus(eudaq::Status::LVL_OK, "Wait");
-      //TODO: temporary add sleep here to wait datcollector return from OnStartRun.
-      std::this_thread::sleep_for(std::chrono::seconds(1));
       std::cout << "Start Run: " << run_n << std::endl;
       m_run_n = run_n;
       m_evt_c = 0;
@@ -106,6 +104,8 @@ namespace eudaq {
   }
 
   void Producer::SendEvent(EventUP ev){
+    //TODO: add config tag to BOREvent
+    //TODO: add summary tag to EOREvent
     ev->SetRunN(m_run_n);
     ev->SetEventN(m_evt_c);
     m_evt_c ++;

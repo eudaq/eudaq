@@ -85,9 +85,14 @@ namespace eudaq {
 
   void DataCollector::OnStopRun(){
     EUDAQ_INFO("End of run ");
-    //TODO: temporary add sleep here to receive remaining events from producers.
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    DoStopRun();
+    try {
+      DoStopRun();
+      //Set Status
+    } catch (const Exception &e) {
+      std::string msg = "Error stopping for run " + std::to_string(m_run_n) + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::LVL_ERROR, msg);
+    }
   }
   
   void DataCollector::OnTerminate(){

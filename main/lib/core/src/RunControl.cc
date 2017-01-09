@@ -45,10 +45,10 @@ namespace eudaq {
     	}
       }
       if(pdcs.empty())
-      for(auto &info_pdc :info_client){
-	if(info_pdc->GetType() == "Producer")
-	  SendCommand("DATA", e.second, *info_pdc);  
-      }
+	for(auto &info_pdc :info_client){
+	  if(info_pdc->GetType() == "Producer")
+	    SendCommand("DATA", e.second, *info_pdc);  
+	}
     }
     SendCommand("CONFIG", to_string(config));
   }
@@ -80,14 +80,43 @@ namespace eudaq {
     m_runnumber = run_n;
     WriteToFile("../data/runnumber.dat", run_n);
     EUDAQ_INFO("Starting Run " + to_string(run_n));
-    SendCommand("START", to_string(run_n));
+    
+    auto info_client = m_cmdserver->GetConnections();
+    for(auto &client_sp :info_client){
+      auto &client = *client_sp;
+      if(client.GetType() != "Producer"){
+	SendCommand("START", to_string(run_n), client);
+      }
+    }
+    //TODO: make sure datacollector is started before producer. waiting
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    for(auto &client_sp :info_client){
+      auto &client = *client_sp;
+      if(client.GetType() == "Producer"){
+	SendCommand("START", to_string(run_n), client);
+      }
+    }
   }
 
   void RunControl::StopRun() {
     m_listening = true;
     EUDAQ_INFO("Stopping Run " + to_string(m_runnumber));
     m_runnumber ++;
-    SendCommand("STOP");
+    auto info_client = m_cmdserver->GetConnections();
+    for(auto &client_sp :info_client){
+      auto &client = *client_sp;
+      if(client.GetType() == "Producer"){
+	SendCommand("STOP", "", client);
+      }
+    }
+    //TODO: make sure datacollector is stoped after producer. waiting
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    for(auto &client_sp :info_client){
+      auto &client = *client_sp;
+      if(client.GetType() != "Producer"){
+	SendCommand("STOP", "", client);
+      }
+    }
   }
 
   void RunControl::Terminate() {

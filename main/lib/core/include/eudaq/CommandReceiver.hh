@@ -22,7 +22,8 @@ namespace eudaq {
 		    const std::string & runcontrol);
     virtual ~CommandReceiver();
 
-    virtual void OnConfigure(const Configuration & param) = 0;
+    virtual void OnInitialise(const Configuration &param) {}; 
+    virtual void OnConfigure(const Configuration &param) = 0;
     virtual void OnStartRun(uint32_t /*runnumber*/) = 0;
     virtual void OnStopRun() = 0;
     virtual void OnTerminate() {};
