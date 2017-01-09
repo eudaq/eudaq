@@ -3,14 +3,17 @@ get_filename_component(EUDAQ_USERNAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_MODULE module_${EUDAQ_USERNAME})
 set(USER_HARDWARE_LIBRARY ${EUDAQ_USERNAME}_static)
 
-option(USER_EUDET "build eudet" ON)
+option(USER_EUDET_BUILD "build eudet" ON)
 
-if(NOT USER_EUDET)
+if(NOT USER_EUDET_BUILD)
+  message("disable building of user/eudet  (USER_EUDET_BUILD=OFF)")
+  unset(USER_EUDET_BUILD_NI CACHE)
+  unset(USER_EUDET_BUILD_TLU CACHE)
+  unset(USER_EUDET_BUILD_MINITLU CACHE)
   return()
 endif()
 
-option(USER_EUDET_BUILD_MODULE "build user/eudet runtime module" ON)
-set(USER_BUILD_MODULE ${USER_EUDET_BUILD_MODULE})
+include_directories(${EUDAQ_INCLUDE_DIRS})
 
 option(USER_EUDET_BUILD_NI "build user/eudet ni" ON)
 set(USER_BUILD_NI ${USER_EUDET_BUILD_NI})

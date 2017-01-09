@@ -36,7 +36,7 @@ public:
 
   void MainLoop();
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("TLUProducer");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("TluProducer");
 private:
   
   unsigned m_run, m_ev;
@@ -61,7 +61,7 @@ namespace{
 }
 
 TLUProducer::TLUProducer(const std::string name, const std::string &runcontrol)
-  : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0), //name: TLU
+  : eudaq::Producer(name, runcontrol), m_run(0), m_ev(0),
   trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
   or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
   enable_dut_veto(0), trig_rollover(0), readout_delay(100),

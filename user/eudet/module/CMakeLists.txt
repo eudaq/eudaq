@@ -1,8 +1,3 @@
-if(NOT USER_BUILD_MODULE)
-  message(STATUS "building of user/eudet module is disabled")
-  return()
-endif()
-
 include_directories(include)
 aux_source_directory(src MODULE_SRC)
 list(REMOVE_ITEM MODULE_SRC src/TelProducerPS.cc)
@@ -26,7 +21,7 @@ target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBR
 
 if(USER_BUILD_MINITLU)
   set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
-    ${CMAKE_INTSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
+    ${CMAKE_INSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
 endif()
 
 install(TARGETS

@@ -42,7 +42,7 @@ if(USER_BUILD_MINITLU)
   add_executable(MinitluControl src/MinitluControl.cxx)
   target_link_libraries(MinitluControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
   set_target_properties(MinitluControl PROPERTIES INSTALL_RPATH
-    ${CMAKE_INTSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
+    ${CMAKE_INSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
   list(APPEND INSTALL_TARGETS MinitluControl)
 endif()
 # end executable
