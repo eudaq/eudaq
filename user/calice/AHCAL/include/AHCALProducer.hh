@@ -82,7 +82,7 @@ namespace eudaq {
 
     std::time_t _last_readout_time; //last time when there was any data from AHCAL
 
-    std::deque<eudaq::RawDataEvent *> deqEvent;
+    //std::deque<eudaq::RawDataEvent *> deqEvent;
 
 
     uint32_t m_id_stream;

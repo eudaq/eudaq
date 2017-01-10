@@ -75,12 +75,13 @@ namespace eudaq {
 
   void AHCALProducer::DoStartRun(unsigned param) {
     _runNo = param;
-    _eventNo = 0;
+    _eventNo = -1;
     // raw file open
     if(_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
-
+    std::cout << "AHCALProducer::OnStartRun _reader->OnStart(param);" << std::endl; //DEBUG
     _reader->OnStart(param);
-
+    std::cout << "AHCALProducer::OnStartRun _SendEvent(RawDataEvent::BORE(CaliceObject, _runNo));"
+	      << std::endl; //DEBUG
     auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
     ev->SetBORE();
     SendEvent(std::move(ev));
@@ -122,15 +123,26 @@ namespace eudaq {
 
   
   void AHCALProducer::DoStopRun() {
+          std::cout << "AHCALProducer::OnStopRun:  Stop run" << std::endl;
+      _reader->OnStop(_waitsecondsForQueuedEvents);
+      _running = false;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    _reader->OnStop(_waitsecondsForQueuedEvents);
-    _running = false;
-    while (_stopped == false) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+      std::cout << "AHCALProducer::OnStopRun waiting for _stopped" << std::endl;
+      while (!_stopped) {
+         std::cout << "!" << std::flush;
+	 std::this_thread::sleep_for(std::chrono::milliseconds(100));	 
+      }
 
-    if(_writeRaw)
-      _rawFile.close();
+      if (_writeRaw)
+         _rawFile.close();
+
+      std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo"
+		<< _eventNo << std::endl;
+      //SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
+      auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject"); 
+      ev->SetEORE();
+      SendEvent(std::move(ev));
   }
 
   bool AHCALProducer::OpenConnection()
@@ -166,7 +178,8 @@ namespace eudaq {
 
     if(size == 0)size = strlen(command);
 
-    if(_fd <= 0)cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << endl;
+    if(_fd <= 0)
+      cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << endl;
     else {
 	    size_t bytesWritten = write(_fd, command, size);
 	    if ( bytesWritten  < 0 ) {
@@ -178,97 +191,97 @@ namespace eudaq {
 
   }
 
-  deque<eudaq::RawDataEvent *>  AHCALProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) { 
-    while(deqEvent.size() > minimumsize){
-      
+  deque<eudaq::RawDataEvent *> AHCALProducer::sendallevents(deque<eudaq::RawDataEvent *> deqEvent, int minimumsize) {
+    while (deqEvent.size() > minimumsize) {
       RawDataEvent *ev = deqEvent.front();
-      if( from_string(ev->GetTag("TriggerValidated"),-1) == 1 )    {
-	SendEvent(ev->Clone());
-	cout<< "Send eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
-      } else cout<< "Discard eventN="<<ev->GetEventNumber() << " with "<< ev->NumBlocks() <<" Blocks, and TriggerTag=" <<from_string(ev->GetTag("TriggerValidated"),-1)<< endl;
+      if (from_string(ev->GetTag("TriggerValidated"), -1) == 1) {
+	if (ev->GetEventNumber() != (_eventNo + 1)) {
+	  EUDAQ_WARN("Run "+to_string(_runNo)+" Event " + to_string(ev->GetEventNumber()) + " not in sequence. Expected " + to_string(_eventNo + 1));
+
+	  //fix for a problem of 2 triggers, that came in the same ROC
+	  if (ev->GetEventNumber() == (_eventNo + 2)) {
+	    EUDAQ_WARN(" Sending event " + to_string(ev->GetEventNumber()) + " twice");
+	    // SendEvent(*(deqEvent.front()));
+	    SendEvent(deqEvent.front()->Clone());
+	  } else {
+	    int jump = (ev->GetEventNumber() - (_eventNo + 1));
+	    EUDAQ_ERROR("Run "+to_string(_runNo)+" Event "+ to_string(ev->GetEventNumber()) + " cannot be fixed by sending the packet twice. Problem more complex, which is not possible to fix a jump by " + to_string(jump) );
+	  }
+	}
+
+	    
+	_eventNo = ev->GetEventNumber(); //save the last event number
+	// SendEvent(*(deqEvent.front()));
+	SendEvent(deqEvent.front()->Clone());
+	if (from_string(ev->GetTag("TriggerInvalid"), -1) == 1) {
+	  cout << "Send DUMMY eventN=" << ev->GetEventNumber() << " with " << ev->NumBlocks() << " Blocks, and TriggerTag=" << from_string(ev->GetTag("TriggerValidated"), -1) << endl;
+	} else {
+	  cout << "Send eventN=" << ev->GetEventNumber() << " with " << ev->NumBlocks() << " Blocks, and TriggerTag=" << from_string(ev->GetTag("TriggerValidated"), -1) << endl;
+	}
+      } else
+	cout << "Discard eventN=" << ev->GetEventNumber() << " with " << ev->NumBlocks() << " Blocks, and TriggerTag=" << from_string(ev->GetTag("TriggerValidated"), -1) << endl;
       delete deqEvent.front();
       deqEvent.pop_front();
     }
     return deqEvent;
   }
 
-  void AHCALProducer::Exec()
-  {
-    std::cout<<" Main loop " <<std::endl;
-    StartCommandReceiver();
 
-    _last_readout_time = std::time(NULL);
-	 
+  void AHCALProducer::Exec(){    
+    std::cout << " Main loop " << std::endl;
+    StartCommandReceiver();
     deque<char> bufRead;
     // deque for events: add one event when new acqId is arrived: to be determined in reader
     deque<eudaq::RawDataEvent *> deqEvent;
 
-    while(IsActiveCommandReceiver()){
+    while (true) {
       // wait until configured and connected
       std::unique_lock<std::mutex> myLock(_mufd);
 
       const int bufsize = 4096;
       // copy to C array, then to vector
       char buf[bufsize];
-      int size = 0;        
+      int size = 0;
 
-      // if(!_running && deqEvent.size()) deqEvent=sendallevents(deqEvent,0);
-
-      //      if file is not ready  just wait
-      if(_fd <= 0 || !_running ){
+      if (_fd <= 0 || _stopped) {
 	myLock.unlock();
 	std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	continue;
       }
-       
-      // system call: from socket to C array
       size = ::read(_fd, buf, bufsize);
-      if(size == -1 || size == 0){
-        if(size == -1)
-          std::cout << "Error on read: " << errno << " Disconnect and going to the waiting mode." << endl;
-        else {
-          std::cout << "Socket disconnected. going to the waiting mode." << endl;         	    
-	  if(!_running && _stopped==false) {
-	    _stopped=true;
-	    deqEvent=sendallevents(deqEvent,0);	    
-	    auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject"); 
-	    ev->SetEORE();
-	    SendEvent(std::move(ev));
-	    bufRead.clear();
-	    deqEvent.clear();
-	  }
+      if (size) {
+	_last_readout_time = std::time(NULL);
+	if (_writeRaw && _rawFile.is_open())
+	  _rawFile.write(buf, size);
+	// C array to vector
+	copy(buf, buf + size, back_inserter(bufRead));
+	if (_reader)
+	  _reader->Read(bufRead, deqEvent);
+	// send events : remain the last event
+	deqEvent = sendallevents(deqEvent, 1);
+	continue;
+      }
+
+      if (size == -1 || size == 0) {
+	if (size == -1)
+	  std::cout << "Error on read: " << errno
+		    << " Disconnect and going to the waiting mode." << endl;
+	else {
+	  std::cout << "Socket disconnected. going to the waiting mode." << endl;
 	}
 #ifdef _WIN32
 	closesocket(_fd);
 #else
         close(_fd);
 #endif
-        _fd = -1;
-	continue;
-      }
-        
-
-      if(_writeRaw && _rawFile.is_open()) _rawFile.write(buf, size);
-
-      // C array to vector
-      copy(buf, buf + size, back_inserter(bufRead));
-
-      if(_reader)_reader->Read(bufRead, deqEvent);
-        
-      // send events : remain the last event
-      deqEvent=sendallevents(deqEvent,1);
-
-     if(!_running){
-
-       if (std::difftime(std::time(NULL), _last_readout_time) <  _waitsecondsForQueuedEvents) continue;
+	_fd = -1;
+	_stopped = 1;
+	deqEvent = sendallevents(deqEvent, 0);
 	bufRead.clear();
-
-	auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-	ev->SetEORE();
-	SendEvent(std::move(ev));
-	SetStatus(eudaq::Status::LVL_OK, "");
-	continue;
-     }
+	deqEvent.clear();
+      }
+      if (!_running) {
+      }
     }
   }
 
