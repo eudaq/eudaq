@@ -10,7 +10,7 @@ namespace eudaq {
     TimestampSyncDataCollector(const std::string &name,
 			       const std::string &runcontrol);
 
-    void DoStartRun(uint32_t) override;
+    void DoStartRun() override;
     void DoConnect(const ConnectionInfo & /*id*/) override;
     void DoDisconnect(const ConnectionInfo & /*id*/) override;
     void DoReceive(const ConnectionInfo &id, EventUP ev) override;
@@ -31,13 +31,12 @@ namespace eudaq {
       (TimestampSyncDataCollector::m_id_factory);
   }
 
-
   TimestampSyncDataCollector::TimestampSyncDataCollector(const std::string &name,
 							 const std::string &runcontrol):
     DataCollector(name, runcontrol),m_ts_last_end(0), m_ts_curr_beg(-2), m_ts_curr_end(-1){
   }
 
-  void TimestampSyncDataCollector::DoStartRun(uint32_t){
+  void TimestampSyncDataCollector::DoStartRun(){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     m_ts_last_end = 0;
     m_ts_curr_beg = -2;

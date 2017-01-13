@@ -1,5 +1,6 @@
 #include "ModuleManager.hh"
 
+#include <cstdlib>
 #include <vector>
 #include <iostream>
 
@@ -36,9 +37,15 @@ namespace eudaq{
   }
   
   ModuleManager::ModuleManager(){
+    char *module_dir_c = std::getenv("EUDAQ_MODULE_DIR");
+    if(module_dir_c){
+      LoadModuleDir(module_dir_c);
+      return;
+    }
+    
+    std::string top_dir;
 #ifdef EUDAQ_CXX17_FS
     filesystem::path bin("bin");
-    filesystem::path lib("lib");
     filesystem::path pwd = filesystem::current_path();
     filesystem::path top;
     if(pwd.filename()==bin){
@@ -47,13 +54,9 @@ namespace eudaq{
     else{
       top = pwd;
     }
-    filesystem::path module_dir=top/lib;
-    LoadModuleDir(module_dir.string());
-    module_dir=top/bin;
-    LoadModuleDir(module_dir.string());    
+    top_dir=top.string();
 #else
     const std::string bin("/bin");
-    const std::string lib("/lib");
     char pwd_path[PATH_MAX];
     char pwd_path_ab[PATH_MAX]; 
     if(!getcwd(pwd_path, sizeof(pwd_path))){
@@ -70,8 +73,14 @@ namespace eudaq{
     else{
       top = pwd;
     }
-    LoadModuleDir(top+lib);
-    LoadModuleDir(top+bin);
+    top_dir = top;
+#endif
+
+#if EUDAQ_PLATFORM_IS(WIN32)
+    LoadModuleDir(top_dir+="\\bin");
+#else    
+    // setenv("EUDAQ_INSTALL_PREFIX", top_dir.c_str(), 0);
+    LoadModuleDir(top_dir+="/lib");
 #endif
   }
   

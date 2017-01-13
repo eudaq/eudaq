@@ -74,7 +74,9 @@ namespace eudaq{
 	EUDAQ_USER(line);
 	break;
       case 'f':
-	Configure(ReadConfigFile(line));
+	if(!line.empty())
+	  ReadConfigureFile(line);
+	Configure();
 	break;
       case 'r':
 	Reset();
@@ -84,9 +86,8 @@ namespace eudaq{
 	break;
       case 'b':
 	if(line.length())
-	  StartRun(std::stoul(line));
-	else
-	  StartRun(GetRunNumber());
+	  SetRunNumber(std::stoul(line));
+	StartRun();
 	break;
       case 'e':
 	StopRun();

@@ -34,8 +34,8 @@ namespace eudaq {
                  const std::string &listenaddress,
 		 const std::string & logdirectory);
     ~LogCollector() override;
-    void OnConfigure(const Configuration & param)override final{}
-    void OnStartRun(uint32_t /*runnumber*/)override final{}
+    void OnConfigure() override final{}
+    void OnStartRun() override final{}
     void OnStopRun() override final{};
     void OnReset() override final{}; //TODO: reset member variable
     void OnServer() override final;

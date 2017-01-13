@@ -9,7 +9,7 @@ namespace eudaq {
   class EventnumberSyncDataCollector :public DataCollector{
   public:
     using DataCollector::DataCollector;
-    void DoStartRun(uint32_t) override;
+    void DoStartRun() override;
     void DoConnect(const ConnectionInfo & /*id*/) override;
     void DoDisconnect(const ConnectionInfo & /*id*/) override;
     void DoReceive(const ConnectionInfo &id, EventUP ev) override;
@@ -27,7 +27,7 @@ namespace eudaq {
   }
 
 
-  void EventnumberSyncDataCollector::DoStartRun(uint32_t){
+  void EventnumberSyncDataCollector::DoStartRun(){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     for(auto &que :m_que_event){
       que.second.clear();

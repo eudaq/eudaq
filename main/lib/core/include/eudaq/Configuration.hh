@@ -15,6 +15,10 @@ namespace eudaq {
                   const std::string &section = "");
     Configuration(std::istream &conffile, const std::string &section = "");
     Configuration(const Configuration &other);
+    Configuration(const Configuration &other, const std::string &section);
+
+    static std::unique_ptr<Configuration> MakeUniqueReadFile(const std::string &path);
+    
     void Save(std::ostream &file) const;
     void Load(std::istream &file, const std::string &section);
     bool SetSection(const std::string &section) const;
@@ -47,7 +51,8 @@ namespace eudaq {
     template <typename T> void Set(const std::string &key, const T &val);
     std::string Name() const;
     Configuration &operator=(const Configuration &other);
-    void Print(std::ostream &out) const;
+    
+    void Print(std::ostream &os, size_t offset=0) const;
     void Print() const;
 
   private:

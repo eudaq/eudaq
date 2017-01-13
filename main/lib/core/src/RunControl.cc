@@ -18,21 +18,28 @@ namespace eudaq {
   Factory<RunControl>::Instance<const std::string&>();
   
   RunControl::RunControl(const std::string &listenaddress)
-      : m_exit(false), m_listening(true), m_runnumber(-1),
+      : m_exit(false), m_listening(true), m_runnumber(0),
 	m_runsizelimit(0),m_runeventlimit(0){
-    m_runnumber = ReadFromFile("../data/runnumber.dat", 0U)+1;
+    char *top_dir_c = std::getenv("EUDAQ_TOP_DIR");
+    if(top_dir_c){
+      m_var_file = std::string(top_dir_c)+"/data/runnumber.dat";
+    }
+    else{
+      m_var_file = "../data/runnumber.dat";
+    }
+    m_runnumber = ReadFromFile(m_var_file.c_str(), 0U)+1;
     if (listenaddress != ""){
       m_cmdserver.reset(TransportFactory::CreateServer(listenaddress));
       m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
     }
   }
 
-  void RunControl::Configure(const Configuration &config) {
+  void RunControl::Configure(){
     m_listening = false;
     auto info_client = m_cmdserver->GetConnections();
     for(auto &e: m_addr_data){
-      config.SetSection(e.first);
-      std::string pdcs_str = config.Get("PRODUCERS", "");
+      m_conf->SetSection(e.first);
+      std::string pdcs_str = m_conf->Get("PRODUCERS", "");
       std::vector<std::string> pdcs = split(pdcs_str, ";:,", true);
       for(auto &pdc :pdcs){
     	if(pdc.empty())
@@ -50,21 +57,15 @@ namespace eudaq {
 	    SendCommand("DATA", e.second, *info_pdc);  
 	}
     }
-    SendCommand("CONFIG", to_string(config));
+    SendCommand("CONFIG", to_string(*m_conf));
   }
 
-  Configuration RunControl::ReadConfigFile(const std::string &param){
-    EUDAQ_INFO("Reading Configure File (" + param + ")");
-    Configuration config;
-    std::ifstream file(param);
-    if (file.is_open()) {
-      Configuration c(file);
-      config = c;
-      config.Set("Name", param);
-    } else {
-      EUDAQ_ERROR("Unable to open file '" + param + "'");
-    }
-    return config;
+  void RunControl::ReadConfigureFile(const std::string &path){
+    m_conf = Configuration::MakeUniqueReadFile(path);
+  }
+  
+  void RunControl::ReadInitilizeFile(const std::string &path){
+    m_conf_init = Configuration::MakeUniqueReadFile(path);
   }
   
   void RunControl::Reset() {
@@ -75,17 +76,16 @@ namespace eudaq {
 
   void RunControl::RemoteStatus() { SendCommand("STATUS"); }
 
-  void RunControl::StartRun(uint32_t run_n){
+  void RunControl::StartRun(){
     m_listening = false;
-    m_runnumber = run_n;
-    WriteToFile("../data/runnumber.dat", run_n);
-    EUDAQ_INFO("Starting Run " + to_string(run_n));
+    WriteToFile(m_var_file.c_str(), m_runnumber);
+    EUDAQ_INFO("Starting Run " + to_string(m_runnumber));
     
     auto info_client = m_cmdserver->GetConnections();
     for(auto &client_sp :info_client){
       auto &client = *client_sp;
       if(client.GetType() != "Producer"){
-	SendCommand("START", to_string(run_n), client);
+	SendCommand("START", to_string(m_runnumber), client);
       }
     }
     //TODO: make sure datacollector is started before producer. waiting
@@ -93,7 +93,7 @@ namespace eudaq {
     for(auto &client_sp :info_client){
       auto &client = *client_sp;
       if(client.GetType() == "Producer"){
-	SendCommand("START", to_string(run_n), client);
+	SendCommand("START", to_string(m_runnumber), client);
       }
     }
   }
@@ -123,7 +123,7 @@ namespace eudaq {
     m_listening = false;
     EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE");
-    mSleep(5000);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     CloseRunControl();
   }
 

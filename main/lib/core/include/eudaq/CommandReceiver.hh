@@ -22,9 +22,9 @@ namespace eudaq {
 		    const std::string & runcontrol);
     virtual ~CommandReceiver();
 
-    virtual void OnInitialise(const Configuration &param) {}; 
-    virtual void OnConfigure(const Configuration &param) = 0;
-    virtual void OnStartRun(uint32_t /*runnumber*/) = 0;
+    virtual void OnInitialise() {}; 
+    virtual void OnConfigure() = 0;
+    virtual void OnStartRun() = 0;
     virtual void OnStopRun() = 0;
     virtual void OnTerminate() {};
     virtual void OnReset() {};
@@ -45,8 +45,11 @@ namespace eudaq {
     std::string GetFullName() const {return m_type+"."+m_name;};
     std::string GetName() const {return m_name;};
     uint32_t GetCommandReceiverID() const {return m_cmdrcv_id;};
+    uint32_t GetRunNumber() const {return m_run_number;};
     std::string GetCommandRecieverAddress() const {return m_addr_client;};
-
+    
+    std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
+    std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
   private:
     void ProcessingCommand();
     void CommandHandler(TransportEvent &);
@@ -55,10 +58,13 @@ namespace eudaq {
     std::thread m_thd_client;
     Status m_status;
     std::unique_ptr<TransportClient> m_cmdclient;
+    std::shared_ptr<Configuration> m_conf;
+    std::shared_ptr<Configuration> m_conf_init;
     std::string m_addr_client;
     std::string m_type;
     std::string m_name;
     uint32_t m_cmdrcv_id;
+    uint32_t m_run_number;
   };
 
 }

@@ -31,8 +31,8 @@ namespace eudaq {
      * connect to.
      */
     Producer(const std::string &name, const std::string &runcontrol);
-    void OnConfigure(const Configuration &conf) override final;
-    void OnStartRun(uint32_t run_n) override final;
+    void OnConfigure() override final;
+    void OnStartRun() override final;
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
@@ -40,8 +40,8 @@ namespace eudaq {
     void OnData(const std::string &param) override final;
     void Exec() override; //TODO: mark it final to report derived class which has Exec override.
 
-    virtual void DoConfigure(const Configuration &conf) = 0;
-    virtual void DoStartRun(uint32_t run_n) = 0;
+    virtual void DoConfigure() = 0;
+    virtual void DoStartRun() = 0;
     virtual void DoStopRun() = 0;
     virtual void DoReset() = 0;
     virtual void DoTerminate() = 0;
@@ -49,7 +49,6 @@ namespace eudaq {
     void SendEvent(EventUP ev);
   private:
     uint32_t m_pdc_n;
-    uint32_t m_run_n;
     uint32_t m_evt_c;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
   };

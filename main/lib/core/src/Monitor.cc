@@ -8,7 +8,7 @@ namespace eudaq {
   Monitor::Monitor(const std::string &name, const std::string &runcontrol,
                    const unsigned lim, const unsigned skip_,
                    const unsigned int skip_evts, const std::string &datafile)
-      : CommandReceiver("Monitor", name, runcontrol), m_run(0),
+      : CommandReceiver("Monitor", name, runcontrol),
         m_callstart(false), m_reader(0), limit(lim), skip(100 - skip_),
         skip_events_with_counter(skip_evts),m_done(false) {
     if (datafile != ""){
@@ -61,7 +61,7 @@ namespace eudaq {
   void Monitor::OnIdle() {
     if (m_callstart) {
       m_callstart = false;
-      OnStartRun(m_run);
+      OnStartRun();
     }
     bool processed = false;
     for (int i = 0; i < EUDAQ_MAX_EVENTS_PER_IDLE; ++i) {
@@ -75,11 +75,11 @@ namespace eudaq {
       mSleep(1);
   }
 
-  void Monitor::OnStartRun(uint32_t param) {
-    std::cout << "run " << param << std::endl;
-    m_run = param;
-    m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), to_string(m_run));
-    EUDAQ_INFO("Starting run " + to_string(m_run));
+  void Monitor::OnStartRun() {
+    uint32_t run = GetRunNumber();
+    std::cout << "run " << run << std::endl;
+    m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), to_string(run));
+    EUDAQ_INFO("Starting run " + to_string(run));
   }
 
   void Monitor::OnStopRun() { m_reader->Interrupt(); }

@@ -10,20 +10,20 @@ namespace eudaq {
   
   Producer::Producer(const std::string &name, const std::string &runcontrol)
     : CommandReceiver("Producer", name, runcontrol){
-    m_run_n = 0;
     m_evt_c = 0;
     m_pdc_n = str2hash(GetFullName());
   }
   
-  void Producer::OnConfigure(const Configuration &conf){
+  void Producer::OnConfigure(){
     try{
+      auto conf = GetConfiguration();
       SetStatus(eudaq::Status::LVL_OK, "Wait");
-      std::cout << "Configuring ...(" << conf.Name() << ")" << std::endl;
-      DoConfigure(conf);
-      std::cout << "... was Configured " << conf.Name() << " " << std::endl;
-      EUDAQ_INFO("Configured (" + conf.Name() + ")");
-      m_pdc_n = conf.Get("EUDAQ_ID", m_pdc_n);
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf.Name() + ")");
+      std::cout << "Configuring ...(" << conf->Name() << ")" << std::endl;
+      DoConfigure();
+      std::cout << "Configured (" << conf->Name() << ")" << std::endl;
+      EUDAQ_INFO("Configured (" + conf->Name() + ")");
+      m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf->Name() + ")");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
@@ -32,14 +32,13 @@ namespace eudaq {
       SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
     }
   }
-
-  void Producer::OnStartRun(uint32_t run_n){
+  
+  void Producer::OnStartRun(){
     try{
       SetStatus(eudaq::Status::LVL_OK, "Wait");
-      std::cout << "Start Run: " << run_n << std::endl;
-      m_run_n = run_n;
+      std::cout << "Start Run: " << GetRunNumber() << std::endl;
       m_evt_c = 0;
-      DoStartRun(m_run_n);
+      DoStartRun();
       SetStatus(eudaq::Status::LVL_OK, "Started");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
@@ -49,7 +48,6 @@ namespace eudaq {
       SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
     }
   }
-
 
   void Producer::OnStopRun(){
     try{
@@ -64,7 +62,6 @@ namespace eudaq {
       printf("Unknown exception\n");
       SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
     }
-
   }
 
   void Producer::OnReset(){
@@ -80,8 +77,7 @@ namespace eudaq {
       printf("Producer Reset:: Unknown exception\n");
       SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
     }
-  };
-
+  }
   
   void Producer::OnTerminate(){
     std::cout << "Terminate...." << std::endl;
@@ -104,9 +100,16 @@ namespace eudaq {
   }
 
   void Producer::SendEvent(EventUP ev){
-    //TODO: add config tag to BOREvent
-    //TODO: add summary tag to EOREvent
-    ev->SetRunN(m_run_n);
+    if(ev->IsBORE()){
+      if(GetConfiguration())
+	ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
+      if(GetInitConfiguration())
+	ev->SetTag("EUDAQ_CONFIG_INIT", to_string(*GetInitConfiguration()));
+    }else if(ev->IsEORE()){
+      //TODO: add summary tag to EOREvent
+      ;
+    }
+    ev->SetRunN(GetRunNumber());
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetStreamN(m_pdc_n);
@@ -118,5 +121,4 @@ namespace eudaq {
 	EUDAQ_THROW("Producer::SendEvent, using a null pointer of DataSender");
     }
   }
-
 }

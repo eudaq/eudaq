@@ -19,7 +19,6 @@ namespace eudaq {
   DataCollector::DataCollector(const std::string &name, const std::string &runcontrol)
     :CommandReceiver("DataCollector", name, runcontrol){  
     m_dct_n= str2hash(GetFullName());
-    m_run_n = 0;
     m_evt_c = 0;
     m_exit = false;
     std::string addr_server("tcp://");
@@ -29,13 +28,13 @@ namespace eudaq {
     m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
   }
 
-  void DataCollector::OnConfigure(const Configuration &param) {
-    m_config = param;
-    std::cout << "Configuring (" << m_config.Name() << ")..." << std::endl;
+  void DataCollector::OnConfigure(){
+    auto conf = GetConfiguration();
+    std::cout << "Configuring (" << conf->Name() << ")..." << std::endl;
     try {
-      std::string fwtype = m_config.Get("FileType", "native");
-      std::string fwpatt = m_config.Get("FilePattern", "run$6R$X");
-      m_dct_n = m_config.Get("EUDAQ_ID", m_dct_n);
+      std::string fwtype = conf->Get("FileType", "native");
+      std::string fwpatt = conf->Get("FilePattern", "run$6R$X");
+      m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);
       std::stringstream ss;
       std::time_t time_now = std::time(nullptr);
       char time_buff[12];
@@ -43,11 +42,11 @@ namespace eudaq {
       ss<<time_buff<<"_"<<GetName()<<"_"<<fwpatt;
       fwpatt = ss.str();
       m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(fwtype), fwpatt);
-      DoConfigure(m_config);
-      std::cout << "...Configured (" << m_config.Name() << ")" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + m_config.Name() + ")");
+      DoConfigure();
+      std::cout << "...Configured (" << conf->Name() << ")" << std::endl;
+      SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf->Name() + ")");
     }catch (const Exception &e) {
-      std::string msg = "Error when configuring by " + m_config.Name() + ": " + e.what();
+      std::string msg = "Error when configuring by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
       SetStatus(Status::LVL_ERROR, msg);
     }
@@ -65,19 +64,18 @@ namespace eudaq {
     SetStatusTag("_SERVER", addr_server);
   }
   
-  void DataCollector::OnStartRun(uint32_t run_n){
-    EUDAQ_INFO("Preparing for run " + std::to_string(run_n));
+  void DataCollector::OnStartRun(){
+    EUDAQ_INFO("Preparing for run " + std::to_string(GetRunNumber()));
     try {
       if (!m_writer || !m_dataserver) {
         EUDAQ_THROW("You must configure before starting a run");
       }
-      m_run_n = run_n;
       m_evt_c = 0;
-      m_writer->StartRun(run_n);
-      DoStartRun(run_n);
+      m_writer->StartRun(GetRunNumber());
+      DoStartRun();
       SetStatus(Status::LVL_OK);
     } catch (const Exception &e) {
-      std::string msg = "Error preparing for run " + std::to_string(run_n) + ": " + e.what();
+      std::string msg = "Error preparing for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
       SetStatus(Status::LVL_ERROR, msg);
     }
@@ -89,7 +87,7 @@ namespace eudaq {
       DoStopRun();
       //Set Status
     } catch (const Exception &e) {
-      std::string msg = "Error stopping for run " + std::to_string(m_run_n) + ": " + e.what();
+      std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
       SetStatus(Status::LVL_ERROR, msg);
     }
@@ -104,7 +102,7 @@ namespace eudaq {
   void DataCollector::OnStatus() {
     std::cout << "OnStatus" <<std::endl;
     SetStatusTag("EVENT", std::to_string(m_evt_c));
-    SetStatusTag("RUN", std::to_string(m_run_n));
+    SetStatusTag("RUN", std::to_string(GetRunNumber()));
     if(m_writer)
       SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
   }
@@ -179,7 +177,17 @@ namespace eudaq {
   
   void DataCollector::WriteEvent(EventUP ev){
     try{
-      ev->SetRunN(m_run_n);
+      if(ev->IsBORE()){
+	if(GetConfiguration())
+	  ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
+	if(GetInitConfiguration())
+	  ev->SetTag("EUDAQ_CONFIG_INIT", to_string(*GetInitConfiguration()));
+      }else if(ev->IsEORE()){
+	//TODO: add summary tag to EOREvent
+	;
+      }
+      
+      ev->SetRunN(GetRunNumber());
       ev->SetEventN(m_evt_c);
       m_evt_c ++;
       ev->SetStreamN(m_dct_n);

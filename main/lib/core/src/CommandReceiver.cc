@@ -113,16 +113,17 @@ namespace eudaq {
         std::string section = m_type;
         if(m_name != "")
           section += "." + m_name;
-        Configuration conf(param, section);
-        OnInitialise(conf);
+	auto m_conf_init = std::make_shared<Configuration>(param, section);
+        OnInitialise();
       } else if (cmd == "CONFIG"){
 	std::string section = m_type;
         if(m_name != "")
           section += "." + m_name;
-        Configuration conf(param, section);
-        OnConfigure(conf);
+	auto m_conf = std::make_shared<Configuration>(param, section);
+        OnConfigure();
       } else if (cmd == "START") {
-        OnStartRun(from_string(param, 0));
+	m_run_number = from_string(param, 0);
+        OnStartRun();
       } else if (cmd == "STOP") {
         OnStopRun();
       } else if (cmd == "TERMINATE") {

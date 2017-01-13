@@ -32,8 +32,8 @@ namespace eudaq {
     virtual ~RunControl(){};
 
     //run in user thread
-    virtual void Configure(const Configuration &settings);
-    virtual void StartRun(uint32_t run_n); 
+    void Configure();
+    virtual void StartRun(); 
     virtual void StopRun();
     virtual void Reset();
     virtual void RemoteStatus();
@@ -54,7 +54,13 @@ namespace eudaq {
     virtual void Exec();
     //
 
-    Configuration ReadConfigFile(const std::string &param);
+    void SetRunNumber(uint32_t n){m_runnumber = n;};
+    uint32_t GetRunNumber() const {return m_runnumber;};
+    void ReadConfigureFile(const std::string &path);
+    void ReadInitilizeFile(const std::string &path);
+    std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
+    std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
+
     size_t NumConnections() const { return m_cmdserver->NumConnections(); }
     const ConnectionInfo &GetConnection(size_t i) const {
       return m_cmdserver->GetConnection(i);
@@ -78,19 +84,20 @@ namespace eudaq {
     bool m_listening;
     std::thread m_thd_server;
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
+    std::shared_ptr<Configuration> m_conf;
+    std::shared_ptr<Configuration> m_conf_init;
     std::map<std::string, std::string> m_addr_data;
     std::string m_addr_log;
+    std::string m_var_file;
     std::mutex m_mtx_sendcmd;
-  public:    
+    uint32_t m_runnumber;    
+  public:
     //TODO: move to derived class
     // virtual void DoConfigureLocal(Configuration &config);
-    int32_t GetRunNumber() const{ return m_runnumber;}
     int64_t GetRunSizeLimit() const {return m_runsizelimit;}
     int64_t GetRunEventLimit() const {return m_runeventlimit;}
     int64_t m_runsizelimit;
     int64_t m_runeventlimit;
-    int32_t m_runnumber;
-    
   };
 }
 

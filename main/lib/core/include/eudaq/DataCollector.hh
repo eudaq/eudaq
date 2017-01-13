@@ -30,9 +30,9 @@ namespace eudaq {
   class DLLEXPORT DataCollector : public CommandReceiver {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol);
-    void OnConfigure(const Configuration &param) override final;
+    void OnConfigure() override final;
     void OnServer() override final;
-    void OnStartRun(uint32_t) override final;
+    void OnStartRun() override final;
     void OnStopRun() override final;
     void OnTerminate() override final;
     void OnStatus() override final;
@@ -40,8 +40,8 @@ namespace eudaq {
     void Exec() override;
 
     //running in commandreceiver thread
-    virtual void DoConfigure(const Configuration &param){};
-    virtual void DoStartRun(uint32_t){};
+    virtual void DoConfigure(){};
+    virtual void DoStartRun(){};
     virtual void DoStopRun(){};
     virtual void DoTerminate(){};
 
@@ -51,8 +51,6 @@ namespace eudaq {
     virtual void DoReceive(const ConnectionInfo &id, EventUP ev) = 0;
 
     void WriteEvent(EventUP ev);
-    const Configuration& GetConfiguration()const {return m_config;} 
-
     void StartDataCollector();
     void CloseDataCollector();
     bool IsActiveDataCollector(){return m_thd_server.joinable();}
@@ -67,9 +65,8 @@ namespace eudaq {
     FileWriterUP m_writer;
     std::vector<ConnectionInfo> m_info_pdc;
     uint32_t m_dct_n;
-    uint32_t m_run_n;
     uint32_t m_evt_c;
-    Configuration m_config;
+    std::unique_ptr<const Configuration> m_conf;
   };
 }
 

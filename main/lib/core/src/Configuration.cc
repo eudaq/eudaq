@@ -25,6 +25,24 @@ namespace eudaq {
     SetSection(other.m_section);
   }
 
+  Configuration::Configuration(const Configuration &other, const std::string &section){
+    for(auto &e: other.m_config){
+      if(e.first == section){
+	m_config[section] = e.second;
+	SetSection(section);
+      }
+    }
+  }
+
+  std::unique_ptr<Configuration> Configuration::MakeUniqueReadFile(const std::string &path){
+    std::unique_ptr<Configuration> conf;
+    std::ifstream file(path);
+    if(file.is_open()){
+      conf.reset(new Configuration(file));
+      conf->Set("Name", path);
+    }
+  }
+  
   std::string Configuration::Name() const {
     map_t::const_iterator it = m_config.find("");
     if (it == m_config.end())
@@ -71,7 +89,7 @@ namespace eudaq {
           line = std::string(line, 1, line.length() - 2);
           // TODO: check name is alphanumeric?
           // std::cerr << "Section " << line << std::endl;
-          cur_sec = &config[line];
+	  cur_sec = &config[line];
         }
       } else {
         std::string key = trim(std::string(line, 0, equals));
@@ -90,8 +108,19 @@ namespace eudaq {
         (*cur_sec)[key] = line;
       }
     }
-    m_config = config;
-    SetSection(section);
+    
+    if(section.empty()){
+      m_config = config;
+      SetSection(section);
+    }
+    else{
+      for(auto &e: config){
+	if(e.first == section){
+	  m_config[section] = e.second;
+	  SetSection(section);
+	}
+      }
+    }
   }
 
   bool Configuration::SetSection(const std::string &section) const {
@@ -131,12 +160,7 @@ namespace eudaq {
   int64_t Configuration::Get(const std::string &key, int64_t def) const {
     try {
       std::string s = GetString(key);
-#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)
-      // Windows doesn't have strtoll, so just use stoll for now
-      return std::stoll(s);
-#else
       return std::strtoll(s.c_str(), 0, 0);
-#endif
     } catch (const Exception &) {
       // ignore: return default
     }
@@ -145,13 +169,7 @@ namespace eudaq {
   uint64_t Configuration::Get(const std::string &key, uint64_t def) const {
     try {
       std::string s = GetString(key);
-#if EUDAQ_PLATFORM_IS(CYGWIN) || EUDAQ_PLATFORM_IS(WIN32)
-      // Windows doesn't have strtull, so just use stoull for now
-      return std::stoull(s);
-
-#else
       return std::strtoull(s.c_str(), 0, 0);
-#endif
     } catch (const Exception &) {
       // ignore: return default
     }
@@ -168,10 +186,16 @@ namespace eudaq {
     return def;
   }
 
-  void Configuration::Print(std::ostream &out) const {
-    for (section_t::iterator it = m_cur->begin(); it != m_cur->end(); ++it) {
-      out << it->first << " : " << it->second << std::endl;
+  void Configuration::Print(std::ostream &os, size_t offset) const {
+    os << std::string(offset, ' ') << "<Configigration>\n";
+    for(auto &sect: m_config){
+      os << std::string(offset + 2, ' ') << "<Section title=\""<< sect.first<<"\">\n";
+      for(auto &key: sect.second){
+	os << std::string(offset + 4, ' ') << "<"<<key.first<< ">"<< key.second<< "</"<<key.first <<">\n";
+      }
+      os << std::string(offset + 2, ' ') << "</Section>\n";
     }
+    os << std::string(offset, ' ') << "</Configigration>\n";
   }
 
   void Configuration::Print() const { Print(std::cout); }

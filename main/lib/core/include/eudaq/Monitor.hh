@@ -23,13 +23,12 @@ namespace eudaq {
             const unsigned int skip_evts, const std::string &datafile = "");
 
     void OnIdle() override;
-    void OnStartRun(uint32_t param) override;
+    void OnStartRun() override;
     void OnStopRun() override;
     bool ProcessEvent();
     virtual void OnEvent(EventSPC /*ev*/) = 0;
     virtual void Exec() override;
   protected:
-    unsigned m_run;
     bool m_callstart;
     bool m_done;
     FileReaderSP m_reader;
