@@ -158,26 +158,27 @@ namespace eudaq {
   }
 
   void RunControl::CommandHandler(TransportEvent &ev) {
+    auto con = ev.id;
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
       if (m_listening) {
-	std::cout << "Connect:    " << ev.id << std::endl;
-	std::string msg = "OK EUDAQ CMD RunControl " + ev.id.GetRemote();
-        m_cmdserver->SendPacket(msg.c_str(), ev.id, true);
+	std::cout << "Connect:    " << *con << std::endl;
+	std::string msg = "OK EUDAQ CMD RunControl " + con->GetRemote();
+        m_cmdserver->SendPacket(msg.c_str(), *con, true);
       } else {
-	std::cout << "Refused connect:    " << ev.id << std::endl;
+	std::cout << "Refused connect:    " << *con << std::endl;
         m_cmdserver->SendPacket("ERROR EUDAQ CMD Not accepting new connections",
-                                ev.id, true);
-        m_cmdserver->Close(ev.id);
+                                *con, true);
+        m_cmdserver->Close(*con);
       }
       break;
     case (TransportEvent::DISCONNECT):
-      if(ev.id.GetType() == "LogCollector")
+      if(con->GetType() == "LogCollector")
 	m_addr_log.clear();
-      DoDisconnect(ev.id);
+      DoDisconnect(con);
       break;
     case (TransportEvent::RECEIVE):
-      if (ev.id.GetState() == 0) { // waiting for identification
+      if (con->GetState() == 0) { // waiting for identification
         do{// check packet
           size_t i0 = 0, i1 = ev.packet.find(' ');
           if (i1 == std::string::npos)
@@ -202,23 +203,23 @@ namespace eudaq {
           i0 = i1 + 1;
           i1 = ev.packet.find(' ', i0);
           part = std::string(ev.packet, i0, i1 - i0);
-          ev.id.SetType(part);
+          con->SetType(part);
           i0 = i1 + 1;
           i1 = ev.packet.find(' ', i0);
           part = std::string(ev.packet, i0, i1 - i0);
-          ev.id.SetName(part);
-	  // ev.id.SetState(1); // successfully identified
+          con->SetName(part);
+	  // con->SetState(1); // successfully identified
         }while(false);
-	ev.id.SetState(1); // successfully identified
-	m_cmdserver->SendPacket("OK", ev.id, true);
-	if (ev.id.GetType() == "DataCollector"){
-	  std::string data_name = ev.id.GetName();
+	con->SetState(1); // successfully identified
+	m_cmdserver->SendPacket("OK", *con, true);
+	if (con->GetType() == "DataCollector"){
+	  std::string data_name = con->GetName();
 	  if(data_name.empty())
 	    data_name="DataCollector";
 	  else
 	    data_name="DataCollector."+data_name;
 	  std::cout<<data_name <<" conneted, ask for server address\n";
-	  Status st = m_cmdserver->SendReceivePacket<Status>("SERVER", ev.id, 1000000);
+	  Status st = m_cmdserver->SendReceivePacket<Status>("SERVER", *con, 1000000);
 	  std::string addr_data = st.GetTag("_SERVER");
 	  if(addr_data.empty())
 	    EUDAQ_THROW("Empty address reported by datacollector");
@@ -226,34 +227,34 @@ namespace eudaq {
 	  m_addr_data[data_name]=addr_data;
 	}
 	
-        if (ev.id.GetType() == "LogCollector")
-          InitLog(ev.id);
+        if (con->GetType() == "LogCollector")
+          InitLog(*con);
 	else{
 	  if (!m_addr_log.empty())
-	    SendCommand("LOG", m_addr_log, ev.id);
+	    SendCommand("LOG", m_addr_log, *con);
 	}	
-	DoConnect(ev.id);
+	DoConnect(con);
       }
       else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         auto status = std::make_shared<Status>(ser);
         if (status->GetLevel() == Status::LVL_BUSY &&
-	    ev.id.GetState() == 1) {
-          ev.id.SetState(2);
+	    con->GetState() == 1) {
+	  con->SetState(2);
         }
 	else if (status->GetLevel() != Status::LVL_BUSY &&
-		 ev.id.GetState() == 2) {
-          ev.id.SetState(1);
+		 con->GetState() == 2) {
+          con->SetState(1);
         }
 	
         // if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
           // ignore status messages that are marked with a previous runnumber
-	DoStatus(ev.id, status);
+	DoStatus(con, status);
         // }
       }
       break;
     default:
-      std::cout << "Unknown:    " << ev.id << std::endl;
+      std::cout << "Unknown:    " << *con << std::endl;
     }
   }
 

@@ -238,22 +238,11 @@ namespace eudaq {
       // if (length > 500000) std::cout << "Done send packet" << std::endl;
     }
 
-    //     static void send_data(SOCKET sock, uint32_t data) {
-    //       std::string str;
-    //       for (int i = 0; i < 4; ++i) {
-    //         str += static_cast<char>(data & 0xff);
-    //         data >>= 8;
-    //       }
-    //       send_data(sock, str);
-    //     }
-
   } // anonymous namespace
 
   bool ConnectionInfoTCP::Matches(const ConnectionInfo &other) const {
     const ConnectionInfoTCP *ptr =
         dynamic_cast<const ConnectionInfoTCP *>(&other);
-    // std::cout << " [Match: " << m_fd << " == " << (ptr ? to_string(ptr->m_fd)
-    // : "null") << "] " << std::flush;
     if (ptr && (ptr->m_fd == m_fd))
       return true;
     return false;
@@ -345,13 +334,11 @@ namespace eudaq {
     closesocket(m_srvsock);
   }
 
-  ConnectionInfoTCP &TCPServer::GetInfo(SOCKET fd) const {
+  std::shared_ptr<ConnectionInfoTCP> TCPServer::GetInfo(SOCKET fd) const {
     const ConnectionInfoTCP tofind(fd);
     for (size_t i = 0; i < m_conn.size(); ++i) {
       if (tofind.Matches(*m_conn[i]) && m_conn[i]->GetState() >= 0) {
-        ConnectionInfoTCP *inf =
-            dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
-        return *inf;
+	return std::dynamic_pointer_cast<ConnectionInfoTCP>(m_conn[i]);
       }
     }
     EUDAQ_THROW_NOLOG("BUG: please report it");
@@ -374,13 +361,6 @@ namespace eudaq {
 
   void TCPServer::SendPacket(const unsigned char *data, size_t len,
                              const ConnectionInfo &id, bool duringconnect) {
-    // std::cout << "SendPacket to " << id << std::endl;
-    // try{
-    //   const ConnectionInfoTCP &idtcp = dynamic_cast<const ConnectionInfoTCP&>(id);
-    // }catch(std::bad_cast &e){
-    //   printf("TCPServer::SendPacket:: Caught exception when casting to ConnectionInfoTCP: %s\n", e.what());
-    //   EUDAQ_THROW_NOLOG("TCPServer::SendPacket: Fail to cast to ConnectionInfoTCP");
-    // }
     
     for (size_t i = 0; i < m_conn.size(); ++i) {
       // std::cout << "- " << i << ": " << *m_conn[i] << std::flush;
@@ -445,7 +425,7 @@ namespace eudaq {
             }
             if (!inserted)
               m_conn.push_back(ptr);
-            m_events.push(TransportEvent(TransportEvent::CONNECT, *ptr));
+            m_events.push(TransportEvent(TransportEvent::CONNECT, ptr));
             FD_CLR(m_srvsock, &tempset);
           }
         }
@@ -460,21 +440,21 @@ namespace eudaq {
 
             if (result > 0) {
               buffer[result] = 0;
-              ConnectionInfoTCP &m = GetInfo(j);
-              m.append(result, buffer);
-              while (m.havepacket()) {
+	      auto m = GetInfo(j);
+              m->append(result, buffer);
+              while (m->havepacket()) {
                 done = true;
                 m_events.push(
-                    TransportEvent(TransportEvent::RECEIVE, m, m.getpacket()));
+                    TransportEvent(TransportEvent::RECEIVE, m, m->getpacket()));
               }
             } // else /*if (result == 0)*/ {
             else if (result == 0) {
               debug_transport(
                   "Server #%d, return=%d, WSAError:%d (%s) Disconnected.\n", j,
                   result, errno, strerror(errno));
-              ConnectionInfoTCP &m = GetInfo(j);
+	      auto m = GetInfo(j);
               m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
-              m.Disable();
+              m->Disable();
               closesocket(j);
               FD_CLR(j, &m_fdset);
             } else if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
@@ -514,7 +494,7 @@ namespace eudaq {
   TCPClient::TCPClient(const std::string &param)
       : m_server(param), m_port(44000),
         m_sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
-        m_buf(ConnectionInfoTCP(m_sock, param)) {
+        m_buf(std::make_shared<ConnectionInfoTCP>(m_sock, param)) {
     if (m_sock == (SOCKET)-1)
       EUDAQ_THROW_NOLOG(LastSockErrorString(
           "Failed to create socket")); //$$ check if (SOCKET)-1 is correct
@@ -557,9 +537,9 @@ namespace eudaq {
   void TCPClient::SendPacket(const unsigned char *data, size_t len,
                              const ConnectionInfo &id, bool) {
     // std::cout << "Sending packet to " << id << std::endl;
-    if (id.Matches(m_buf)) {
+    if (id.Matches(*m_buf)) {
       // std::cout << " ok" << std::endl;
-      do_send_packet(m_buf.GetFd(), data, len);
+      do_send_packet(m_buf->GetFd(), data, len);
     }
     // std::cout << "Sent" << std::endl;
   }
@@ -611,10 +591,10 @@ namespace eudaq {
           EUDAQ_THROW_NOLOG(LastSockErrorString(
               "SocketClient Error (" + to_string(LastSockError()) + ")"));
         } else if (result > 0) {
-          m_buf.append(result, buffer);
-          while (m_buf.havepacket()) {
+          m_buf->append(result, buffer);
+          while (m_buf->havepacket()) {
             m_events.push(TransportEvent(TransportEvent::RECEIVE, m_buf,
-                                         m_buf.getpacket()));
+                                         m_buf->getpacket()));
             done = true;
           }
         }

@@ -68,9 +68,7 @@ namespace eudaq {
     SOCKET m_maxfd;
     fd_set m_fdset;
 
-    ConnectionInfoTCP &GetInfo(SOCKET fd) const;
-    // typedef std::map<int, TCPConnection> map_t;
-    // map_t m_map;
+    std::shared_ptr<ConnectionInfoTCP> GetInfo(SOCKET fd) const;
   };
 
   class TCPClient : public TransportClient {
@@ -88,7 +86,7 @@ namespace eudaq {
     std::string m_server;
     int m_port;
     SOCKET m_sock;
-    ConnectionInfoTCP m_buf;
+    std::shared_ptr<ConnectionInfoTCP> m_buf;
   };
 }
 

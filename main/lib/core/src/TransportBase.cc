@@ -68,7 +68,7 @@ namespace eudaq {
       // std::cout << "New level=" << m_events.size() << std::endl;
     }
     bool ret = false;
-    if (!m_events.empty() && conn.Matches(m_events.front().id)) {
+    if (!m_events.empty() && conn.Matches(*(m_events.front().id))) {
       ret = true;
       *packet = m_events.front().packet;
       m_events.pop();

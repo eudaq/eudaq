@@ -34,6 +34,7 @@ namespace eudaq {
     std::string GetName() const { return m_name; }
     void SetName(const std::string &name) { m_name = name; }
     virtual std::string GetRemote() const { return ""; }
+ 
     static const ConnectionInfo ALL;
 
     virtual ConnectionInfo *Clone() const { return new ConnectionInfo(*this); }
@@ -60,11 +61,11 @@ namespace eudaq {
   class DLLEXPORT TransportEvent {
   public:
     enum EventType { CONNECT, DISCONNECT, RECEIVE };
-    TransportEvent(EventType et, ConnectionInfo &i, const std::string &p = "")
+    TransportEvent(EventType et, std::shared_ptr<ConnectionInfo> i, const std::string &p = "")
         : etype(et), id(i), packet(p) {}
     TransportEvent & operator = (const TransportEvent& rh){etype = rh.etype; id=rh.id;  packet = rh.packet; return *this;};
     EventType etype;    ///< The type of event
-    ConnectionInfo &id; ///< The id of the connection  !! It is reference!! TODO: CHECK
+    std::shared_ptr<ConnectionInfo> id; ///< The id of the connection  !! It is reference!! TODO: CHECK
     std::string packet; ///< The packet of data in case of a RECEIVE event
   };
 

@@ -108,24 +108,25 @@ namespace eudaq {
   }
   
   void DataCollector::DataHandler(TransportEvent &ev) {
+    auto con = ev.id;
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
-      m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", ev.id, true);
-      DoConnect(ev.id);
+      m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", *con, true);
+      DoConnect(con);
       break;
     case (TransportEvent::DISCONNECT):
-      EUDAQ_INFO("Disconnected: " + to_string(ev.id));
+      EUDAQ_INFO("Disconnected: " + to_string(*con));
       for (size_t i = 0; i < m_info_pdc.size(); ++i) {
-	if (m_info_pdc[i].Matches(ev.id)){
+	if (m_info_pdc[i]->Matches(*con)){
 	  m_info_pdc.erase(m_info_pdc.begin() + i);
-	  DoDisconnect(ev.id);
+	  DoDisconnect(con);
 	  return;
 	}
       }
       EUDAQ_THROW("Unrecognised connection id");
       break;
     case (TransportEvent::RECEIVE):
-      if (ev.id.GetState() == 0) { // waiting for identification
+      if (con->GetState() == 0) { // waiting for identification
         do {
           size_t i0 = 0, i1 = ev.packet.find(' ');
           if (i1 == std::string::npos)
@@ -150,16 +151,16 @@ namespace eudaq {
           i0 = i1 + 1;
           i1 = ev.packet.find(' ', i0);
           part = std::string(ev.packet, i0, i1 - i0);
-          ev.id.SetType(part);
+          con->SetType(part);
           i0 = i1 + 1;
           i1 = ev.packet.find(' ', i0);
           part = std::string(ev.packet, i0, i1 - i0);
-          ev.id.SetName(part);
+          con->SetName(part);
         } while (false);
-        m_dataserver->SendPacket("OK", ev.id, true);
-        ev.id.SetState(1); // successfully identified
-	EUDAQ_INFO("Connection from " + to_string(ev.id));
-	m_info_pdc.push_back(ev.id);
+        m_dataserver->SendPacket("OK", *con, true);
+        con->SetState(1); // successfully identified
+	EUDAQ_INFO("Connection from " + to_string(*con));
+	m_info_pdc.push_back(con);
       } else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
 	uint32_t id;
@@ -167,11 +168,11 @@ namespace eudaq {
 	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
 	//TODO: check if OnStopRun is called. if yes, DO NOT call DoReceive
 	//TODO: check if OnStartRun is called.
-	DoReceive(ev.id, std::move(event));
+	DoReceive(con, std::move(event));
       }
       break;
     default:
-      std::cout << "Unknown:    " << ev.id << std::endl;
+      std::cout << "Unknown:    " << *con << std::endl;
     }
   }
   

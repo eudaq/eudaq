@@ -41,12 +41,11 @@ namespace eudaq {
     //
     
     //run in m_thd_server thread
-    virtual void DoConnect(const ConnectionInfo & /*id*/) {}
-    virtual void DoDisconnect(const ConnectionInfo & /*id*/) {}
-    virtual void DoStatus(const ConnectionInfo & /*id*/,
+    virtual void DoConnect(std::shared_ptr<const ConnectionInfo> con) {}
+    virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> con) {}
+    virtual void DoStatus(std::shared_ptr<const ConnectionInfo> con,
 			  std::shared_ptr<Status>) {}
     //
-
     //thread control
     void StartRunControl();
     void CloseRunControl();

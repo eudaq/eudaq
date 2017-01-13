@@ -59,16 +59,17 @@ namespace eudaq {
   }
 
   void LogCollector::LogHandler(TransportEvent &ev) {
+    auto con = ev.id;
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
-      m_logserver->SendPacket("OK EUDAQ LOG LogCollector", ev.id, true);
+      m_logserver->SendPacket("OK EUDAQ LOG LogCollector", *con, true);
       break;
     case (TransportEvent::DISCONNECT):
       // std::cout << "Disconnect: " << ev.id << std::endl;
-      DoDisconnect(ev.id);
+      DoDisconnect(con);
       break;
     case (TransportEvent::RECEIVE):
-      if (ev.id.GetState() == 0) { // waiting for identification
+      if (con->GetState() == 0) { // waiting for identification
         // check packet
         do {
           size_t i0 = 0, i1 = ev.packet.find(' ');
@@ -94,20 +95,20 @@ namespace eudaq {
           i0 = i1 + 1;
           i1 = ev.packet.find(' ', i0);
           part = std::string(ev.packet, i0, i1 - i0);
-          ev.id.SetType(part);
+          con->SetType(part);
           i0 = i1 + 1;
           i1 = ev.packet.find(' ', i0);
           part = std::string(ev.packet, i0, i1 - i0);
-          ev.id.SetName(part);
+          con->SetName(part);
         } while (false);
-        m_logserver->SendPacket("OK", ev.id, true);
-        ev.id.SetState(1); // successfully identified
-        DoConnect(ev.id);
+        m_logserver->SendPacket("OK", *con, true);
+        con->SetState(1); // successfully identified
+        DoConnect(con);
       } else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-        std::string src = ev.id.GetType();
-        if (ev.id.GetName() != "")
-          src += "." + ev.id.GetName();
+        std::string src = con->GetType();
+        if (con->GetName() != "")
+          src += "." + con->GetName();
 	
 	std::ostringstream buf;
 	LogMessage logmesg(ser);
@@ -119,7 +120,7 @@ namespace eudaq {
       }
       break;
     default:
-      std::cout << "Unknown:    " << ev.id << std::endl;
+      std::cout << "Unknown:    " << *con << std::endl;
     }
   }
 
