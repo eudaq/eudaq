@@ -11,8 +11,8 @@ class TestProducer : public eudaq::Producer {
   TestProducer(const std::string & name, const std::string & runcontrol);
   void Event(unsigned size);
 
-  void DoConfigure(const eudaq::Configuration & param) override final;
-  void DoStartRun(unsigned param) override final;
+  void DoConfigure() override final;
+  void DoStartRun() override final;
   void DoStopRun() override final;
   void DoTerminate() override final;
   void DoReset() override final;
@@ -49,17 +49,18 @@ void TestProducer::Event(unsigned size) {
   SendEvent(std::move(ev));
 }
 
-void TestProducer::DoConfigure(const eudaq::Configuration & param) {
+void TestProducer::DoConfigure() {
   std::cout << "Configuring." << std::endl;
-  uint32_t eventsize = param.Get("EventSize", 1);
+  auto conf = GetConfiguration();
+  uint32_t eventsize = conf->Get("EventSize", 1);
   std::cout<< "EventSize = "<< eventsize;
 }
 
-void TestProducer::DoStartRun(unsigned param) {
+void TestProducer::DoStartRun() {
   auto ev = eudaq::RawDataEvent::MakeUnique("Test");
   ev->SetBORE();
   SendEvent(std::move(ev));
-  std::cout << "TestProducer: Start Run: " << param << std::endl;
+  std::cout << "TestProducer: Start Run: " << GetRunNumber() << std::endl;
 }
 
 void TestProducer::DoStopRun() {

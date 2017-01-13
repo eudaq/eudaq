@@ -4,7 +4,7 @@ namespace eudaq {
   class DirectSaveDataCollector :public DataCollector{
   public:
     using DataCollector::DataCollector;
-    void DoReceive(const ConnectionInfo &id, EventUP ev) override;
+    void DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev) override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("DirectSaveDataCollector");
   };
 
@@ -14,7 +14,7 @@ namespace eudaq {
       (DirectSaveDataCollector::m_id_factory);
   }
 
-  void DirectSaveDataCollector::DoReceive(const ConnectionInfo &id, EventUP ev){
+  void DirectSaveDataCollector::DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev){
     ev->Print(std::cout);
     WriteEvent(std::move(ev));
   }

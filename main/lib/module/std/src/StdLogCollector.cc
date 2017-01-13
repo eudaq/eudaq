@@ -13,8 +13,8 @@ namespace eudaq{
 		     const std::string &listenaddress,
 		     const std::string &directory,
 		     int loglevel);
-    void DoConnect(const eudaq::ConnectionInfo & id) override final;
-    void DoDisconnect(const eudaq::ConnectionInfo & id) override final;
+    void DoConnect(std::shared_ptr<const ConnectionInfo> id) override final;
+    void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) override final;
     void DoReceive(const eudaq::LogMessage & ev) override final;
     void DoTerminate() override final;
     static const uint32_t m_id_factory = eudaq::cstr2hash("StdLogCollector");
@@ -36,12 +36,12 @@ namespace eudaq{
      m_loglevel(loglevel){
   }
 
-  void StdLogCollector::DoConnect(const eudaq::ConnectionInfo & id){
-    std::cout << "Connect:    " << id << std::endl;
+  void StdLogCollector::DoConnect(std::shared_ptr<const ConnectionInfo> id){
+    std::cout << "Connect:    " << *id << std::endl;
   }
 
-  void StdLogCollector::DoDisconnect(const eudaq::ConnectionInfo & id){
-    std::cout << "Disconnect: " << id << std::endl;
+  void StdLogCollector::DoDisconnect(std::shared_ptr<const ConnectionInfo> id){
+    std::cout << "Disconnect: " << *id << std::endl;
   }
   
   void StdLogCollector::DoReceive(const eudaq::LogMessage & ev){

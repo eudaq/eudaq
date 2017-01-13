@@ -7,10 +7,10 @@ namespace eudaq{
   class StdRunControl : public RunControl{
   public:
     StdRunControl(const std::string & listenaddress);
-    void DoStatus(const ConnectionInfo & id,
+    void DoStatus(std::shared_ptr<const ConnectionInfo> id,
 		  std::shared_ptr<Status> status) override final;
-    void DoConnect(const ConnectionInfo & id) override final;
-    void DoDisconnect(const ConnectionInfo & id) override final;
+    void DoConnect(std::shared_ptr<const ConnectionInfo> id) override final;
+    void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) override final;
     void Exec() override final;
 
     static const uint32_t m_id_factory = eudaq::cstr2hash("StdRunControl");
@@ -26,17 +26,17 @@ namespace eudaq{
 
   }
 
-  void StdRunControl::DoStatus(const ConnectionInfo & id,
+  void StdRunControl::DoStatus(std::shared_ptr<const ConnectionInfo> id,
 			       std::shared_ptr<Status> status) {
-    std::cout << "Receive:    " << *status << " from " << id << std::endl;
+    std::cout << "Receive:    " << *status << " from " << *id << std::endl;
   }
 
-  void StdRunControl::DoConnect(const ConnectionInfo & id) {
-    std::cout << "Connect:    " << id << std::endl;
+  void StdRunControl::DoConnect(std::shared_ptr<const ConnectionInfo> id) {
+    std::cout << "Connect:    " << *id << std::endl;
   }
 
-  void StdRunControl::DoDisconnect(const ConnectionInfo & id) {
-    std::cout << "Disconnect: " << id << std::endl;
+  void StdRunControl::DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {
+    std::cout << "Disconnect: " << *id << std::endl;
   }
 
   void StdRunControl::Exec(){
