@@ -123,20 +123,20 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   }
 }
 
-void RunControlGUI::DoStatus(const eudaq::ConnectionInfo &id,
+void RunControlGUI::DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
                               std::shared_ptr<eudaq::Status> status) {
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");
     registered = true;
   }
-  if (id.GetType() == "DataCollector") {
+  if (id->GetType() == "DataCollector") {
     m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
     m_events = from_string(status->GetTag("EVENT"), 0LL);
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
-  } else if (id.GetType() == "Producer") {
-    if (id.GetName() == "TLU" || id.GetName() == "miniTLU") {
+  } else if (id->GetType() == "Producer") {
+    if (id->GetName() == "TLU" || id->GetName() == "miniTLU") {
       EmitStatus("TRIG", status->GetTag("TRIG"));
       EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
       EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
@@ -183,17 +183,17 @@ void RunControlGUI::DoStatus(const eudaq::ConnectionInfo &id,
                          to_string(dtrigs / dtime) + ") Hz");
         }
       }
-    } else if (id.GetName() == "pALPIDEfs") {
+    } else if (id->GetName() == "pALPIDEfs") {
       m_producer_pALPIDEfs_not_ok = (status->GetLevel() != 1);
-    } else if (id.GetName() == "pALPIDEss") {
+    } else if (id->GetName() == "pALPIDEss") {
       m_producer_pALPIDEss_not_ok = (status->GetLevel() != 1);
     }
   }
 
-  m_run.SetStatus(id, *status);
+  m_run.SetStatus(*id, *status);
 }
 
-void RunControlGUI::DoConnect(const eudaq::ConnectionInfo &id) {
+void RunControlGUI::DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id) {
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");
@@ -201,12 +201,12 @@ void RunControlGUI::DoConnect(const eudaq::ConnectionInfo &id) {
   }
   // QMessageBox::information(this, "EUDAQ Run Control",
   //                         "This will reset all connected Producers etc.");
-  m_run.newconnection(id);
-  if (id.GetType() == "DataCollector") {
+  m_run.newconnection(*id);
+  if (id->GetType() == "DataCollector") {
     EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
     SetState(ST_NONE);
   }
-  if (id.GetType() == "LogCollector") {
+  if (id->GetType() == "LogCollector") {
     btnLogSetStatus(true);
   }
 }

@@ -1,6 +1,6 @@
 # CMake script to build GUI applications
-option(BUILD_gui "Compile GUI executables (requires QT5)?" ON)
-if(NOT BUILD_gui)
+option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT5/4)" ON)
+if(NOT EUDAQ_BUILD_GUI)
   return()
 endif()
 

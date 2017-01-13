@@ -93,11 +93,9 @@ public:
     settings.beginGroup("MainWindowEuLog");
     settings.setValue("size", size());
     settings.setValue("pos", pos());
-    // settings.setValue("screen", windowHandle()->screen()->screenNumber());
     settings.endGroup();
   }
 
-  // void Exec() override final;
 protected:
   void LoadFile(const std::string &filename) {
     std::vector<std::string> sources = m_model.LoadFile(filename);
@@ -111,24 +109,14 @@ protected:
       }
     }
   }
-  // void OnConfigure(const eudaq::Configuration &param) {
-  //   std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
-  //   LogCollector::OnConfigure(param);
-  //   std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-  //   SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-  // }
-  // void OnStartRun(unsigned param) {
-  //   LogCollector::OnStartRun(param);
-  //   SetStatus(eudaq::Status::LVL_OK);
-  // }
-  void DoConnect(const eudaq::ConnectionInfo &id) override{
+  void DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id) override{
     eudaq::mSleep(100);
     CheckRegistered();
     EUDAQ_INFO("Connection from " + to_string(id));
-    AddSender(id.GetType(), id.GetName());
+    AddSender(id->GetType(), id->GetName());
   }
-  void DoDisconnect(const eudaq::ConnectionInfo &id) override{
-    EUDAQ_INFO("Disconnected " + to_string(id));
+  void DoDisconnect(std::shared_ptr<const eudaq::ConnectionInfo> id) override{
+    EUDAQ_INFO("Disconnected " + to_string(*id));
   }
   void DoReceive(const eudaq::LogMessage &msg) override{
     CheckRegistered();
@@ -148,7 +136,6 @@ signals:
   void RecMessage(const eudaq::LogMessage &msg);
 private slots:
   void on_cmbLevel_currentIndexChanged(int index) {
-    // std::cout << "Index " << index << "!!!" << std::endl;
     m_model.SetDisplayLevel(index);
   }
   void on_cmbFrom_currentIndexChanged(const QString &text) {
@@ -158,20 +145,16 @@ private slots:
       name = type.substr(dot + 1);
       type = type.substr(0, dot);
     }
-    // std::cout << "From " << type << " " << name << std::endl;
     m_model.SetDisplayNames(type, name);
   }
   void on_txtSearch_editingFinished() {
     m_model.SetSearch(txtSearch->displayText().toStdString());
   }
   void on_viewLog_activated(const QModelIndex &i) {
-    // std::cout << "Activated: " << i.row() << ", " << i.column() << std::endl;
     new LogDialog(m_model.GetMessage(i.row()));
   }
   void AddMessage(const eudaq::LogMessage &msg) {
     QModelIndex pos = m_model.AddMessage(msg);
-    // std::cout << "pos valid=" << pos.isValid() << ", row=" << pos.row() << ",
-    // col=" << pos.column() << std::endl;
     if (pos.isValid())
       viewLog->scrollTo(pos);
   }

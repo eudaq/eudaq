@@ -9,8 +9,8 @@ class ProducerGUI : public QMainWindow, public Ui::wndProd, public eudaq::Produc
   ;
 public:
   ProducerGUI(const std::string & name, const std::string & runcontrol);
-  void DoConfigure(const eudaq::Configuration &conf) override {};
-  void DoStartRun(uint32_t run_n) override {};
+  void DoConfigure() override {};
+  void DoStartRun() override {};
   void DoStopRun() override {};
   void DoTerminate() override {};
   void DoReset() override {};

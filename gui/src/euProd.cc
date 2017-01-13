@@ -25,8 +25,6 @@ void ProducerGUI::Exec(){
     std::cerr<<"ERROR: ProducerGUI::EXEC\n";
 }
 
-
-
 void ProducerGUI::on_btnTrigger_clicked() {
     QMessageBox::information(this, "EUDAQ Dummy Producer",
                              "This will generate a software Trigger.");

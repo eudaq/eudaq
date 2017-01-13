@@ -20,12 +20,9 @@ LogItemDelegate::LogItemDelegate(LogCollectorModel *model) : m_model(model) {}
 void LogItemDelegate::paint(QPainter *painter,
                             const QStyleOptionViewItem &option,
                             const QModelIndex &index) const {
-  // std::cout << __FUNCTION__ << std::endl;
-  // painter->save();
   int level = m_model->GetLevel(index);
   painter->fillRect(option.rect, QBrush(level_colours[level]));
   QItemDelegate::paint(painter, option, index);
-  // painter->restore();
 }
 
 void LogCollectorGUI::AddSender(const std::string &type,
@@ -44,9 +41,7 @@ void LogCollectorGUI::AddSender(const std::string &type,
       if (curname == name || (curname == "*" && name == ""))
         return;
       if (!foundtype) {
-        // std::cout << "Found type" << std::endl;
         if (curname == "" && name != "") {
-          // std::cout << "Setting .*" << std::endl;
           cmbFrom->setItemText(i, (curtype + ".*").c_str());
         }
         foundtype = true;
@@ -57,31 +52,13 @@ void LogCollectorGUI::AddSender(const std::string &type,
         std::string text = type;
         if (name != "")
           text += ".*";
-        // std::cout << "Inserting type" << std::endl;
         cmbFrom->insertItem(i, text.c_str());
         insertedtype = true;
       }
       if (foundtype || (i == count && name != "")) {
-        // std::cout << "Inserting name" << std::endl;
         cmbFrom->insertItem(i + insertedtype, (type + "." + name).c_str());
         return;
       }
     }
   }
 }
-
-// void LogCollectorGUI::Exec(){
-//   show();
-//   if(QApplication::instance()){
-//     std::thread qthread(&LogCollector::Exec, this); //TODO: is QCore?
-//     qthread.detach();
-//     QApplication::instance()->exec();
-
-//   // if(QApplication::instance()){
-//   //   std::thread qthread(&QCoreApplication::exec, QApplication::instance()); //TODO: is QCore?
-//   //   qthread.detach();
-//   //   LogCollector::Exec();
-//   }
-//   else
-//     std::cerr<<"ERROR: LogCollectorGUI::EXEC\n";
-// }

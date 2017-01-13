@@ -58,11 +58,11 @@ private:
   enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
-  void DoConnect(const eudaq::ConnectionInfo &id) override;
-  void DoDisconnect(const eudaq::ConnectionInfo &id) override{
-    m_run.disconnected(id);
+  void DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id) override;
+  void DoDisconnect(std::shared_ptr<const eudaq::ConnectionInfo> id) override{
+    m_run.disconnected(*id);
   }
-  void DoStatus(const eudaq::ConnectionInfo &id,
+  void DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
 		 std::shared_ptr<eudaq::Status> status) override;
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
@@ -92,22 +92,23 @@ private slots:
     btnStop->setEnabled(state == ST_RUNNING);
   }
 
-  void on_btnTerminate_clicked() { close(); }
+  void on_btnTerminate_clicked(){ close(); }
 
-  void on_btnConfig_clicked() {
+  void on_btnConfig_clicked(){
     std::string settings = txtConfigFileName->text().toStdString();
-    Configure(ReadConfigFile(settings));
+    ReadConfigureFile(settings);
+    Configure();
     SetState(ST_READY);
     dostatus = true;
   }
-  void on_btnReset_clicked() {
+  void on_btnReset_clicked(){
    Reset();
   }
   void on_btnStart_clicked(bool cont = false) {
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
-    StartRun(GetRunNumber()+1);
+    StartRun();
     m_data_taking = true;
     EmitStatus("RUN", to_string(GetRunNumber()));
     emit StatusChanged("EVENT", "0");
