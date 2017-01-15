@@ -33,8 +33,8 @@ namespace eudaq {
   class AHCALProducer : public eudaq::Producer {
   public:
     AHCALProducer(const std::string & name, const std::string & runcontrol);
-    void DoConfigure(const eudaq::Configuration & param) override final;
-    void DoStartRun(unsigned param) override final;
+    void DoConfigure() override final;
+    void DoStartRun() override final;
     void DoStopRun() override final;
     void DoTerminate() override final{}
     void DoReset() override final{}

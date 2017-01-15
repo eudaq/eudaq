@@ -40,9 +40,8 @@ namespace eudaq {
     m_id_stream = eudaq::cstr2hash(name.c_str());
   }
 
-  void AHCALProducer::DoConfigure(const eudaq::Configuration & param)
-  {
-
+  void AHCALProducer::DoConfigure(){
+    const eudaq::Configuration &param = *GetConfiguration();
     std::cout<< " START AHCAL CONFIGURATION "<< std::endl;
     // run rype: LED run or normal run ""
     _fileLEDsettings = param.Get("FileLEDsettings", "");
@@ -73,19 +72,19 @@ namespace eudaq {
 
   }
 
-  void AHCALProducer::DoStartRun(unsigned param) {
-    _runNo = param;
+  void AHCALProducer::DoStartRun() {
+    _runNo = GetRunNumber();
     _eventNo = -1;
     // raw file open
-    if(_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
+    if(_writeRaw) OpenRawFile(_runNo, _writerawfilename_timestamp);
     std::cout << "AHCALProducer::OnStartRun _reader->OnStart(param);" << std::endl; //DEBUG
-    _reader->OnStart(param);
+    _reader->OnStart(_runNo);
     std::cout << "AHCALProducer::OnStartRun _SendEvent(RawDataEvent::BORE(CaliceObject, _runNo));"
 	      << std::endl; //DEBUG
     auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
     ev->SetBORE();
     SendEvent(std::move(ev));
-    std::cout << "Start Run: " << param << std::endl;
+    std::cout << "Start Run: " << _runNo << std::endl;
     SetStatus(eudaq::Status::LVL_OK, "");
     _running = true;
     _stopped = false;

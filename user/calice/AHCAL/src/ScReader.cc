@@ -9,7 +9,6 @@
 #include <sstream>
 #include <algorithm>
 #include <iomanip>
-#include <unistd.h>
 
 using namespace eudaq;
 using namespace std;
@@ -54,7 +53,7 @@ namespace eudaq {
          if (connected) {
             _producer->SendCommand(os.str().c_str());
             std::cout << " wait 10s OnConfigLED " << std::endl;
-            sleep(10);
+	    std::this_thread::sleep_for(std::chrono::seconds(10));
             std::cout << " Start CloseConnection OnConfigLED " << std::endl;
             _producer->CloseConnection();
             std::cout << " End CloseConnection OnConfigLED " << std::endl;
@@ -73,7 +72,7 @@ namespace eudaq {
       const char *msg = "STOP\r\n";
       _producer->SendCommand(msg);
       std::cout << "ScREader::OnStop before going to sleep()" << std::endl;
-      sleep(waitQueueTimeS);
+      std::this_thread::sleep_for(std::chrono::seconds(waitQueueTimeS));
       std::cout << "ScREader::OnStop after sleep()" << std::endl;
       //    usleep(000);
    }

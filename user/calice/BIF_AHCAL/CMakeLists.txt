@@ -17,13 +17,13 @@ include_directories(include ${CACTUS_INCLUDE_DIR})
 add_executable(BIFAHCALProducer  src/caliceahcalbif_Producer.cxx src/caliceahcalbifController.cc )
 target_link_libraries(BIFAHCALProducer ${EUDAQ_CORE_LIBRARY} ${CACTUS_LIBRARIES})
 set_target_properties(BIFAHCALProducer PROPERTIES INSTALL_RPATH
-  ${CMAKE_INSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
+  ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
 list(APPEND INSTALL_TARGETS BIFAHCALProducer)
 
 add_executable(BIFAHCALControl src/caliceahcalbifControl.cxx src/caliceahcalbifController.cc )
 target_link_libraries(BIFAHCALControl ${EUDAQ_CORE_LIBRARY} ${CACTUS_LIBRARIES})
 set_target_properties(BIFAHCALControl PROPERTIES INSTALL_RPATH
-  ${CMAKE_INSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
+  ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
 list(APPEND INSTALL_TARGETS BIFAHCALControl)
 
 install(TARGETS ${INSTALL_TARGETS}

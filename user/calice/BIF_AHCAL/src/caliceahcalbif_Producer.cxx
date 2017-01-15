@@ -19,8 +19,8 @@ public:
   void OnStatus()override;
   void OnUnrecognised(const std::string & cmd, const std::string & param) override;
 
-  void DoConfigure(const eudaq::Configuration & param) override;
-  void DoStartRun(unsigned param) override;
+  void DoConfigure() override;
+  void DoStartRun() override;
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
@@ -145,7 +145,8 @@ void caliceahcalbifProducer::MainLoop() {
   } while (!done);
 }
 
-void caliceahcalbifProducer::DoConfigure(const eudaq::Configuration & param) {
+void caliceahcalbifProducer::DoConfigure() {
+  const eudaq::Configuration &param = *GetConfiguration();
   _dumpRaw = param.Get("DumpRawOutput", 0);
   /*DumpRawOutput = 0
     DumpCycleInfo = 1
@@ -224,18 +225,18 @@ void caliceahcalbifProducer::OpenRawFile(unsigned param, bool _writerawfilename_
   _rawFile.open(_rawFilename);
 }
 
-void caliceahcalbifProducer::DoStartRun(unsigned param) {
+void caliceahcalbifProducer::DoStartRun() {
   _ReadoutCycle = -1;
   _stats= {0,0,0,0};
   // raw file open
-  if (_writeRaw) OpenRawFile(param, _writerawfilename_timestamp);
+  if (_writeRaw) OpenRawFile(GetRunNumber(), _writerawfilename_timestamp);
 
   if (!m_tlu) {
     SetStatus(eudaq::Status::LVL_ERROR, "caliceahcalbif connection not present!");
     return;
   }
-  m_run = param;
-  std::cout << std::dec << "Start Run: " << param << std::endl;
+  m_run = GetRunNumber();
+  std::cout << std::dec << "Start Run: " << m_run << std::endl;
   // eudaq::RawDataEvent infoevent(eudaq::RawDataEvent::BORE("CaliceObject", m_run));
   auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
   ev->SetBORE();
