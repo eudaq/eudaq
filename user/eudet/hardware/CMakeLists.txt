@@ -42,7 +42,7 @@ if(USER_BUILD_MINITLU)
   add_executable(MinitluControl src/MinitluControl.cxx)
   target_link_libraries(MinitluControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
   set_target_properties(MinitluControl PROPERTIES INSTALL_RPATH
-    ${CMAKE_INSTALL_PREFIX}/lib:${CACTUS_LIBRARY_DIR})
+    ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
   list(APPEND INSTALL_TARGETS MinitluControl)
 endif()
 # end executable
@@ -53,7 +53,10 @@ install(TARGETS ${INSTALL_TARGETS}
   ARCHIVE DESTINATION lib)
 
 if(WIN32 AND USER_BUILD_TLU AND LIBUSB_WIN_DLL)
+  message("${LIBUSB_WIN_DLL} will copy to bin/")
   install(FILES
     ${LIBUSB_WIN_DLL}
-    DESTINATION bin)
+    DESTINATION bin
+    RENAME libusb0.dll
+    )
 endif()

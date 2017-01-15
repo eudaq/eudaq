@@ -18,8 +18,8 @@ class MinitluProducer: public eudaq::Producer {
 public:
   MinitluProducer(const std::string name, const std::string &runcontrol);
   void MainLoop();
-  void DoConfigure(const eudaq::Configuration & param) override;
-  void DoStartRun(unsigned param) override;
+  void DoConfigure() override;
+  void DoStartRun() override;
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
@@ -119,12 +119,16 @@ void MinitluProducer::MainLoop() {
 }
 
 
-void MinitluProducer::DoConfigure(const eudaq::Configuration & param) {
+void MinitluProducer::DoConfigure() {
+  auto conf = GetConfiguration();
+  const eudaq::Configuration &param = *conf;
+
   if (m_tlu)
     m_tlu = nullptr;
      
   m_tlu = std::unique_ptr<miniTLUController>(new miniTLUController(param.Get("ConnectionFile","file:///dummy_connections.xml"),
 								   param.Get("DeviceName","dummy.udp")));
+
   // m_tlu->SetWRegister("logic_clocks.LogicRst", 1);
   // eudaq::mSleep(100);
   // m_tlu->SetWRegister("logic_clocks.LogicRst", 0);
@@ -159,15 +163,14 @@ void MinitluProducer::DoConfigure(const eudaq::Configuration & param) {
   m_fsmstate=STATE_CONFED;
 }
 
-void MinitluProducer::DoStartRun(unsigned param) {    
+void MinitluProducer::DoStartRun() {    
   m_tlu->ResetCounters();
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
   m_tlu->SetTriggerVeto(0);;
 
-  m_run = param;
+  m_run = GetRunNumber();
   m_ev = 0;
-  std::cout << "Start Run: " << param << std::endl;
   // TLUEvent ev(TLUEvent::BORE(m_run));
   auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
   ev->SetBORE();

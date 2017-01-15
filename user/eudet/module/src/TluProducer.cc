@@ -24,8 +24,8 @@ using namespace tlu;
 class TLUProducer : public eudaq::Producer {
 public:
   TLUProducer(const std::string name, const std::string &runcontrol); //TODO: check para no ref
-  void DoConfigure(const eudaq::Configuration &param) override;
-  void DoStartRun(unsigned param) override;
+  void DoConfigure() override;
+  void DoStartRun() override;
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
@@ -141,47 +141,47 @@ void TLUProducer::MainLoop() {
   } while (!done);
 }
 
-void TLUProducer::DoConfigure(const eudaq::Configuration &param) {
-  std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
+void TLUProducer::DoConfigure() {
+  auto conf = GetConfiguration();
+  std::cout << "Configuring (" << conf->Name() << ")..." << std::endl;
   if (m_tlu)
     m_tlu = 0;
-  int errorhandler = param.Get("ErrorHandler", 2);
+  int errorhandler = conf->Get("ErrorHandler", 2);
   m_tlu = std::make_shared<TLUController>(errorhandler);
 
-  trigger_interval = param.Get("TriggerInterval", 0);
-  dut_mask = param.Get("DutMask", 2);
-  and_mask = param.Get("AndMask", 0xff);
-  or_mask = param.Get("OrMask", 0);
-  strobe_period = param.Get("StrobePeriod", 0);
-  strobe_width = param.Get("StrobeWidth", 0);
-  enable_dut_veto = param.Get("EnableDUTVeto", 0);
-  handshake_mode = param.Get("HandShakeMode", 63);
-  veto_mask = param.Get("VetoMask", 0);
-  trig_rollover = param.Get("TrigRollover", 0);
-  timestamps = param.Get("Timestamps", 1);
+  trigger_interval = conf->Get("TriggerInterval", 0);
+  dut_mask = conf->Get("DutMask", 2);
+  and_mask = conf->Get("AndMask", 0xff);
+  or_mask = conf->Get("OrMask", 0);
+  strobe_period = conf->Get("StrobePeriod", 0);
+  strobe_width = conf->Get("StrobeWidth", 0);
+  enable_dut_veto = conf->Get("EnableDUTVeto", 0);
+  handshake_mode = conf->Get("HandShakeMode", 63);
+  veto_mask = conf->Get("VetoMask", 0);
+  trig_rollover = conf->Get("TrigRollover", 0);
+  timestamps = conf->Get("Timestamps", 1);
   for (int i = 0; i < TLU_PMTS;
        i++) // Override with any individually set values
     {
-      pmtvcntl[i] = (unsigned)param.Get("PMTVcntl" + to_string(i + 1),
+      pmtvcntl[i] = (unsigned)conf->Get("PMTVcntl" + to_string(i + 1),
 					"PMTVcntl", PMT_VCNTL_DEFAULT);
-      pmt_id[i] = param.Get("PMTID" + to_string(i + 1), "<unknown>");
-      pmt_gain_error[i] = param.Get("PMTGainError" + to_string(i + 1), 1.0);
+      pmt_id[i] = conf->Get("PMTID" + to_string(i + 1), "<unknown>");
+      pmt_gain_error[i] = conf->Get("PMTGainError" + to_string(i + 1), 1.0);
       pmt_offset_error[i] =
-	param.Get("PMTOffsetError" + to_string(i + 1), 0.0);
+	conf->Get("PMTOffsetError" + to_string(i + 1), 0.0);
     }
-  pmtvcntlmod = param.Get("PMTVcntlMod", 0); // If 0, it's a standard TLU;
+  pmtvcntlmod = conf->Get("PMTVcntlMod", 0); // If 0, it's a standard TLU;
   // if 1, the DAC output voltage
   // is doubled
-  readout_delay = param.Get("ReadoutDelay", 1000);
-  timestamp_per_run = param.Get("TimestampPerRun", 0);
+  readout_delay = conf->Get("ReadoutDelay", 1000);
+  timestamp_per_run = conf->Get("TimestampPerRun", 0);
   // ***
-  m_tlu->SetDebugLevel(param.Get("DebugLevel", 0));
-  m_tlu->SetFirmware(param.Get("BitFile", ""));
-  m_tlu->SetVersion(param.Get("Version", 0));
+  m_tlu->SetDebugLevel(conf->Get("DebugLevel", 0));
+  m_tlu->SetFirmware(conf->Get("BitFile", ""));
+  m_tlu->SetVersion(conf->Get("Version", 0));
   m_tlu->Configure();
   for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
-    m_tlu->SelectDUT(
-		     param.Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
+    m_tlu->SelectDUT(conf->Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
 		     false);
   }
   m_tlu->SetTriggerInterval(trigger_interval);
@@ -201,14 +201,14 @@ void TLUProducer::DoConfigure(const eudaq::Configuration &param) {
   eudaq::mSleep(1000);
 
   m_tlu->Update(timestamps);
-  std::cout << "...Configured (" << param.Name() << ")" << std::endl;
-  EUDAQ_INFO("Configured (" + param.Name() + ")");
+  std::cout << "...Configured (" << conf->Name() << ")" << std::endl;
+  EUDAQ_INFO("Configured (" + conf->Name() + ")");
 }
 
-void TLUProducer::DoStartRun(unsigned param){
-  m_run = param;
+void TLUProducer::DoStartRun(){
+  m_run = GetRunNumber();
   m_ev = 0;
-  std::cout << "Start Run: " << param << std::endl;
+  std::cout << "Start Run " << std::endl;
   auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
   ev->SetBORE();
   ev->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));

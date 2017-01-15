@@ -13,8 +13,8 @@ class NiProducer : public eudaq::Producer {
 public:
   NiProducer(const std::string name, const std::string &runcontrol);
   ~NiProducer();
-  void DoConfigure(const eudaq::Configuration &param) override final;
-  void DoStartRun(unsigned param) override final;
+  void DoConfigure() override final;
+  void DoStartRun() override final;
   void DoStopRun() override final;
   void DoReset() override final {};
   void DoTerminate() override final;
@@ -86,8 +86,8 @@ void NiProducer::DataLoop(){
   };
 }
 
-void NiProducer::DoConfigure(const eudaq::Configuration &param) {
-
+void NiProducer::DoConfigure() {
+  const eudaq::Configuration &param = *GetConfiguration();
   unsigned char configur[5] = "conf";
 
   if (!m_configured) {
@@ -183,7 +183,7 @@ void NiProducer::DoConfigure(const eudaq::Configuration &param) {
   }
 }
 
-void NiProducer::DoStartRun(unsigned param) {
+void NiProducer::DoStartRun() {
   auto ev = eudaq::RawDataEvent::MakeUnique("TelRawDataEvent");
   ev->SetBORE();
   ev->SetTag("DET", "MIMOSA26");
