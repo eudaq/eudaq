@@ -1,6 +1,6 @@
 find_package(CACTUS)
 cmake_dependent_option(USER_CALICE_BUILD_BIF "build user/calice BIF" ON
-  "USER_CALICE;CACTUS_FOUND" OFF)
+  "USER_CALICE_BUILD;CACTUS_FOUND" OFF)
 
 if(NOT USER_CALICE_BUILD_BIF)
   message("user/calice BIF is not to be built")

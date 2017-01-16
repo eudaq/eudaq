@@ -12,7 +12,7 @@ namespace eudaq{
   
   class AHCalRawEvent2LCEventConverter: public LCEventConverter{
   public:
-    bool Converting(EventSPC d1, LCEventSP d2, const Configuration &conf) const override;
+    bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = cstr2hash("AHCalRawDataEvent");
   private:
     LCCollectionVec* createCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp, int DAQquality ) const;
@@ -44,7 +44,7 @@ namespace eudaq{
   };
 
   
-  bool AHCalRawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, const Configuration &conf) const{
+  bool AHCalRawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const{
     // try to cast the Event
     auto& source = *(d1.get());
     auto& result = *(d2.get());

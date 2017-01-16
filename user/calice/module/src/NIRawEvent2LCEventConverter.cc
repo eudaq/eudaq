@@ -24,7 +24,7 @@ namespace eudaq{
     typedef std::vector<unsigned char>::const_iterator datait;
 
   public:
-    bool Converting(EventSPC d1, LCEventSP d2, const Configuration &conf) const override;
+    bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = cstr2hash("NIRawDataEvent");
     
   private:
@@ -37,7 +37,7 @@ namespace eudaq{
       Register<NIRawEvent2LCEventConverter>(NIRawEvent2LCEventConverter::m_id_factory);
   }  
 
-  bool NIRawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, const Configuration &conf) const{
+  bool NIRawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const{
     auto& source = *(d1.get());
     auto& result = *(d2.get());
     static const uint32_t m_boards = 6;

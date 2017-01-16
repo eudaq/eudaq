@@ -67,7 +67,6 @@ namespace eudaq {
 
     _configured = true;
    
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
     std::cout<< " END AHCAL congfiguration "<< std::endl;
 
   }
@@ -85,7 +84,6 @@ namespace eudaq {
     ev->SetBORE();
     SendEvent(std::move(ev));
     std::cout << "Start Run: " << _runNo << std::endl;
-    SetStatus(eudaq::Status::LVL_OK, "");
     _running = true;
     _stopped = false;
 

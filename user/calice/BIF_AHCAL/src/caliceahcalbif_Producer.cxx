@@ -232,7 +232,7 @@ void caliceahcalbifProducer::DoStartRun() {
   if (_writeRaw) OpenRawFile(GetRunNumber(), _writerawfilename_timestamp);
 
   if (!m_tlu) {
-    SetStatus(eudaq::Status::LVL_ERROR, "caliceahcalbif connection not present!");
+    EUDAQ_ERROR("caliceahcalbif connection not present!");
     return;
   }
   m_run = GetRunNumber();
@@ -319,7 +319,7 @@ void caliceahcalbifProducer::OnUnrecognised(const std::string & cmd, const std::
   std::cout << "Unrecognised: (" << cmd.length() << ") " << cmd;
   if (param.length() > 0) std::cout << " (" << param << ")";
   std::cout << std::endl;
-  SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
+  EUDAQ_WARN("Unrecognised command");
 }
 
 bool caliceahcalbifProducer::FetchBifDataWasSuccessfull() {
