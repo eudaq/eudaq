@@ -124,7 +124,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
 }
 
 void RunControlGUI::DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
-                              std::shared_ptr<eudaq::Status> status) {
+                              std::shared_ptr<const eudaq::Status> status) {
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");

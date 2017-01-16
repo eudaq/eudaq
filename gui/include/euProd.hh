@@ -3,7 +3,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 
-class ProducerGUI : public QMainWindow, public Ui::wndProd, public eudaq::Producer {
+class ProducerGUI : public QMainWindow, public Ui::wndProd, public eudaq::Producer{
   Q_OBJECT
   Q_CLASSINFO("Author", "Emlyn Corrin")
   ;

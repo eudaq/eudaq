@@ -151,9 +151,9 @@ std::string LogMessage::Text(int i) const {
   case 1:
     return m_time.Formatted("%Y-%m-%d %H:%M:%S.%6");
   case 2:
-    return (to_string(m_level) + "-" + Level2String(m_level));
+    return (to_string(GetLevel()) + "-" + Level2String(GetLevel()));
   case 3:
-    return m_msg;
+    return GetMessage();
   case 4:
     return GetSender();
   case 5:

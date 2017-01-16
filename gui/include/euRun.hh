@@ -63,7 +63,7 @@ private:
     m_run.disconnected(*id);
   }
   void DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
-		 std::shared_ptr<eudaq::Status> status) override;
+		 std::shared_ptr<const eudaq::Status> status) override;
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")
       return;

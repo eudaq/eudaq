@@ -123,7 +123,6 @@ protected:
     emit RecMessage(msg);
   }
   void DoTerminate() override{
-    SetStatus(eudaq::Status::LVL_OK, "LC Terminating");
     std::cout << "terminating!" << std::endl;
     QApplication::quit();
   }
