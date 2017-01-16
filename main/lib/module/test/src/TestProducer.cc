@@ -88,7 +88,6 @@ void TestProducer::OnUnrecognised(const std::string & cmd, const std::string & p
   std::cout << "TestProducer: Unrecognised cmd (" << cmd.length() << ") " << cmd;
   if (param.length() > 0) std::cout << " (" << param << ")";
   std::cout << std::endl;
-  SetStatus(eudaq::Status::LVL_WARN, "Just testing");
 }
 
 void TestProducer::Exec(){
@@ -126,15 +125,15 @@ void TestProducer::Exec(){
     case 'l':
       EUDAQ_USER(line);
       break;
-    case 'o':
-      SetStatus(eudaq::Status::LVL_OK, line);
-      break;
-    case 'w':
-      SetStatus(eudaq::Status::LVL_WARN, line);
-      break;
-    case 'e':
-      SetStatus(eudaq::Status::LVL_ERROR, line);
-      break;
+    // case 'o':
+    //   SetStatus(eudaq::Status::LVL_OK, line);
+    //   break;
+    // case 'w':
+    //   SetStatus(eudaq::Status::LVL_WARN, line);
+    //   break;
+    // case 'e':
+    //   SetStatus(eudaq::Status::LVL_ERROR, line);
+    //   break;
     case 'q':
       // exit();
       break;

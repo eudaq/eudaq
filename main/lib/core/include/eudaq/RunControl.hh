@@ -32,7 +32,8 @@ namespace eudaq {
     virtual ~RunControl(){};
 
     //run in user thread
-    void Configure();
+    virtual void Initialise();
+    virtual void Configure();
     virtual void StartRun(); 
     virtual void StopRun();
     virtual void Reset();
@@ -44,10 +45,10 @@ namespace eudaq {
     virtual void DoConnect(std::shared_ptr<const ConnectionInfo> con) {}
     virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> con) {}
     virtual void DoStatus(std::shared_ptr<const ConnectionInfo> con,
-			  std::shared_ptr<Status>) {}
+			  std::shared_ptr<const Status> st) {}
     //
     //thread control
-    void StartRunControl();
+    void StartRunControl(); 
     void CloseRunControl();
     bool IsActiveRunControl() const {return m_thd_server.joinable();}
     virtual void Exec();
@@ -66,9 +67,7 @@ namespace eudaq {
     }
     
   private:
-    void InitLog(const ConnectionInfo &id);
-    void InitData(const ConnectionInfo &id);
-    void InitOther(const ConnectionInfo &id);
+    void InitLog(std::shared_ptr<const ConnectionInfo> id);
     void SendCommand(const std::string &cmd,
 		     const std::string &param = "",
                      const ConnectionInfo &id = ConnectionInfo::ALL);
@@ -86,6 +85,7 @@ namespace eudaq {
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
     std::map<std::string, std::string> m_addr_data;
+    std::map<std::string, std::shared_ptr<Status>> m_status;
     std::string m_addr_log;
     std::string m_var_file;
     std::mutex m_mtx_sendcmd;

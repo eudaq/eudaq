@@ -8,7 +8,13 @@
 #include <map>
 
 namespace eudaq {
-
+  class Configuration;
+  
+  using ConfigurationUP = std::unique_ptr<Configuration, std::function<void(Configuration*)> >;
+  using ConfigurationSP = std::shared_ptr<Configuration>;
+  using ConfigurationWP = std::weak_ptr<Configuration>;
+  using ConfigurationSPC = std::shared_ptr<const Configuration>;
+  
   class DLLEXPORT Configuration {
   public:
     Configuration(const std::string &config = "",

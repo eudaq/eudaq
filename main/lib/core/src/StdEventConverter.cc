@@ -6,7 +6,7 @@ namespace eudaq{
   std::map<uint32_t, typename Factory<StdEventConverter>::UP(*)()>&
   Factory<StdEventConverter>::Instance<>();
   
-  bool StdEventConverter::Convert(EventSPC d1, StandardEventSP d2, const Configuration &conf){
+  bool StdEventConverter::Convert(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf){
     
     if(d1->IsFlagBit(Event::FLAG_PACKET)){
       d2->SetFlag(d1->GetFlag());

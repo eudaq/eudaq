@@ -27,7 +27,20 @@ namespace eudaq {
     m_dataserver.reset(TransportFactory::CreateServer(addr_server)); //TODO
     m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
   }
+  
+  void DataCollector::OnInitialise() {
+    auto conf = GetConfiguration();
+    try{
+      DoInitialise();
+      SetStatus(Status::STATE_UNCONF, "Initialized");
+    }catch (const Exception &e) {
+      std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::STATE_ERROR, msg);
+    }
+  }
 
+  
   void DataCollector::OnConfigure(){
     auto conf = GetConfiguration();
     std::cout << "Configuring (" << conf->Name() << ")..." << std::endl;
@@ -44,11 +57,11 @@ namespace eudaq {
       m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(fwtype), fwpatt);
       DoConfigure();
       std::cout << "...Configured (" << conf->Name() << ")" << std::endl;
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf->Name() + ")");
+      SetStatus(Status::STATE_CONF, "Configured (" + conf->Name() + ")");
     }catch (const Exception &e) {
       std::string msg = "Error when configuring by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
-      SetStatus(Status::LVL_ERROR, msg);
+      SetStatus(Status::STATE_ERROR, msg);
     }
   }
   
@@ -73,11 +86,11 @@ namespace eudaq {
       m_evt_c = 0;
       m_writer->StartRun(GetRunNumber());
       DoStartRun();
-      SetStatus(Status::LVL_OK);
+      SetStatus(Status::STATE_RUNNING, "Started");
     } catch (const Exception &e) {
       std::string msg = "Error preparing for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
-      SetStatus(Status::LVL_ERROR, msg);
+      SetStatus(Status::STATE_ERROR, msg);
     }
   }
 
@@ -85,11 +98,11 @@ namespace eudaq {
     EUDAQ_INFO("End of run ");
     try {
       DoStopRun();
-      //Set Status
+      SetStatus(Status::STATE_CONF, "Stopped");
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
-      SetStatus(Status::LVL_ERROR, msg);
+      SetStatus(Status::STATE_ERROR, msg);
     }
   }
   
@@ -97,6 +110,7 @@ namespace eudaq {
     std::cout << "Terminating" << std::endl;
     CloseDataCollector();
     DoTerminate();
+    SetStatus(Status::STATE_UNINIT, "Terminated");
   }
     
   void DataCollector::OnStatus() {
@@ -201,7 +215,7 @@ namespace eudaq {
       std::string msg = "Exception writing to file: ";
       msg += e.what();
       EUDAQ_ERROR(msg);
-      SetStatus(Status::LVL_ERROR, msg);
+      SetStatus(Status::STATE_ERROR, msg);
     }
   }
 

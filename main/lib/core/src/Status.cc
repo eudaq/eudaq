@@ -7,20 +7,32 @@ namespace eudaq {
 
   Status::Status(Deserializer &ds) {
     ds.read(m_level);
+    ds.read(m_state);
     ds.read(m_msg);
     ds.read(m_tags);
   }
 
   void Status::Serialize(Serializer &ser) const {
     ser.write(m_level);
+    ser.write(m_state);
     ser.write(m_msg);
     ser.write(m_tags);
   }
+  
+  void Status::ResetStatus(State st, Level lvl, const std::string &msg){
+    m_state = st;
+    m_level = lvl;
+    m_msg = msg;
+  }
 
+  void Status::ResetTags(){
+    m_tags.clear();
+  }
+  
   std::string Status::Level2String(int level) {
     static const char *const strings[] = {"DEBUG", "OK",   "THROW", "EXTRA",
                                           "INFO",  "WARN", "ERROR", "USER",
-                                          "BUSY",  "NONE"};
+					  "NONE"};
     if (level < LVL_DEBUG || level > LVL_NONE)
       return "";
     return strings[level];
@@ -43,7 +55,7 @@ namespace eudaq {
   }
 
   std::string Status::GetTag(const std::string &name,
-                             const std::string &def) const {
+                             const std::string &def) const{
     std::map<std::string, std::string>::const_iterator i = m_tags.find(name);
     if (i == m_tags.end())
       return def;

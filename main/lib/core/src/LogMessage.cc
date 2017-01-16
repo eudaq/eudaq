@@ -39,12 +39,6 @@ namespace eudaq {
   }
 
   LogMessage LogMessage::Read(std::istream &is) {
-    //     os << Level2String(m_level) << "\t"
-    //        << escape_string(m_msg) << "\t"
-    //        << m_time.Formatted() << "\t"
-    //        << GetSender() << "\t"
-    //        << m_file << ":" << m_line << "\t"
-    //        << m_func << "\n";
     std::string line;
     std::getline(is, line);
     std::vector<std::string> parts = eudaq::split(line);
@@ -81,10 +75,10 @@ namespace eudaq {
   }
 
   void LogMessage::Print(std::ostream &os) const {
-    os << Level2String(m_level) << ": " << m_msg << " " << m_time.Formatted();
+    os << Level2String(GetLevel()) << ": " << GetMessage() << " " << m_time.Formatted();
     if (m_sendertype != "")
       os << " " << GetSender();
-    if ((m_level <= LVL_DEBUG || m_level >= LVL_ERROR) && m_file != "") {
+    if ((GetLevel() <= LVL_DEBUG || GetLevel() >= LVL_ERROR) && m_file != "") {
       os << " [in " << m_file << ":" << m_line;
       if (m_func != "")
         os << ", " << m_func;
@@ -93,7 +87,7 @@ namespace eudaq {
   }
 
   void LogMessage::Write(std::ostream &os) const {
-    os << Level2String(m_level) << "\t" << escape_string(m_msg) << "\t"
+    os << Level2String(GetLevel()) << "\t" << escape_string(GetMessage()) << "\t"
        << m_time.Formatted() << "\t" << GetSender() << "\t" << m_file << ":"
        << m_line << "\t" << m_func << "\n";
   }

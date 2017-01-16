@@ -34,7 +34,23 @@ namespace eudaq {
     }
   }
 
+  void RunControl::Initialise(){
+    for(auto &e: m_status){
+      auto client_state = e.second->GetState();
+      if(client_state != Status::STATE_UNINIT && client_state != Status::STATE_UNCONF){
+	EUDAQ_ERROR(e.first+" is not Status::STATE_UNINIT OR Status::STATE_UNCONF");
+      }
+    }
+    SendCommand("RESET");
+  }
+  
   void RunControl::Configure(){
+    for(auto &e: m_status){
+      auto client_state = e.second->GetState();
+      if(client_state != Status::STATE_UNCONF && client_state != Status::STATE_CONF){
+	EUDAQ_ERROR(e.first+" is not Status::STATE_UNCONF OR Status::STATE_CONF");
+      }
+    }
     m_listening = false;
     auto info_client = m_cmdserver->GetConnections();
     for(auto &e: m_addr_data){
@@ -58,6 +74,9 @@ namespace eudaq {
 	}
     }
     SendCommand("CONFIG", to_string(*m_conf));
+
+    
+    
   }
 
   void RunControl::ReadConfigureFile(const std::string &path){
@@ -77,6 +96,12 @@ namespace eudaq {
   void RunControl::RemoteStatus() { SendCommand("STATUS"); }
 
   void RunControl::StartRun(){
+    for(auto &e: m_status){
+      if(e.second->GetState() != Status::STATE_CONF){
+	EUDAQ_ERROR(e.first+"is not Status::STATE_CONF");
+      }
+    }
+
     m_listening = false;
     WriteToFile(m_var_file.c_str(), m_runnumber);
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber));
@@ -86,8 +111,19 @@ namespace eudaq {
       auto &client = *client_sp;
       if(client.GetType() != "Producer"){
 	SendCommand("START", to_string(m_runnumber), client);
+	while(1){
+	  uint n = 0;
+	  n++;
+	  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	  auto st = m_status[client_sp->GetName()];
+	  if(st && st->GetState() == Status::STATE_RUNNING)
+	    break;
+	  if(n>30)
+	    EUDAQ_ERROR("Timesout waiting running status");
+	}
       }
     }
+
     //TODO: make sure datacollector is started before producer. waiting
     std::this_thread::sleep_for(std::chrono::seconds(1));
     for(auto &client_sp :info_client){
@@ -96,9 +132,10 @@ namespace eudaq {
 	SendCommand("START", to_string(m_runnumber), client);
       }
     }
+
   }
 
-  void RunControl::StopRun() {
+  void RunControl::StopRun(){
     m_listening = true;
     EUDAQ_INFO("Stopping Run " + to_string(m_runnumber));
     m_runnumber ++;
@@ -228,7 +265,7 @@ namespace eudaq {
 	}
 	
         if (con->GetType() == "LogCollector")
-          InitLog(*con);
+          InitLog(con);
 	else{
 	  if (!m_addr_log.empty())
 	    SendCommand("LOG", m_addr_log, *con);
@@ -238,17 +275,19 @@ namespace eudaq {
       else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         auto status = std::make_shared<Status>(ser);
-        if (status->GetLevel() == Status::LVL_BUSY &&
-	    con->GetState() == 1) {
-	  con->SetState(2);
-        }
-	else if (status->GetLevel() != Status::LVL_BUSY &&
-		 con->GetState() == 2) {
-          con->SetState(1);
-        }
+        // if (status->GetLevel() == Status::LVL_BUSY &&
+	//     con->GetState() == 1) {
+	//   con->SetState(2);
+        // }
+	// if (status->GetLevel() != Status::LVL_BUSY &&
+	//     con->GetState() == 2) {
+        //   con->SetState(1);
+        // }
 	
         // if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
           // ignore status messages that are marked with a previous runnumber
+	
+	m_status[con->GetName()] = status; 
 	DoStatus(con, status);
         // }
       }
@@ -258,10 +297,10 @@ namespace eudaq {
     }
   }
 
-  void RunControl::InitLog(const ConnectionInfo &id) {
-    if(id.GetType() != "LogCollector")
+  void RunControl::InitLog(std::shared_ptr<const ConnectionInfo> id) {
+    if(id->GetType() != "LogCollector")
       EUDAQ_THROW("This connection is not logcollector");
-    Status status = m_cmdserver->SendReceivePacket<Status>("SERVER", id, 1000000);
+    Status status = m_cmdserver->SendReceivePacket<Status>("SERVER", *id, 1000000);
     m_addr_log = status.GetTag("_SERVER");
     std::cout << "LogServer responded: " << m_addr_log << std::endl;
     

@@ -56,6 +56,7 @@ namespace eudaq {
     ds.read(m_ev_n);
     ds.read(m_ts_begin);
     ds.read(m_ts_end);
+    ds.read(m_dspt);
     ds.read(m_tags);
     uint32_t n_subev;
     for(ds.read(n_subev); n_subev>0; n_subev--){
@@ -75,6 +76,7 @@ namespace eudaq {
     ser.write(m_ev_n);
     ser.write(m_ts_begin);
     ser.write(m_ts_end);
+    ser.write(m_dspt);
     ser.write(m_tags);
     ser.write((uint32_t)m_sub_events.size());
     for(auto &ev: m_sub_events){

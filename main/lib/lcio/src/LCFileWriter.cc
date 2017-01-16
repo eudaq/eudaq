@@ -33,7 +33,7 @@ namespace eudaq {
   private:
     std::unique_ptr<lcio::LCWriter> m_lcwriter;
     std::string m_filepattern;
-    Configuration m_conf;
+    ConfigurationSPC m_conf;
   };
 
   LCFileWriter::LCFileWriter(const std::string &param){

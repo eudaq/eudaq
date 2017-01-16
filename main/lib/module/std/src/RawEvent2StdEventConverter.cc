@@ -5,7 +5,7 @@ namespace eudaq{
 
   class RawEvent2StdEventConverter: public StdEventConverter{
   public:
-    bool Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const override;
+    bool Converting(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf) const override;
     static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
   };
 
@@ -14,7 +14,7 @@ namespace eudaq{
       Register<RawEvent2StdEventConverter>(RawEvent2StdEventConverter::m_id_factory);
   }
   
-  bool RawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2, const Configuration &conf) const {
+  bool RawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf) const {
     auto ev = std::dynamic_pointer_cast<const RawDataEvent>(d1);
     if(!ev)
       return false;

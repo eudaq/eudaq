@@ -43,7 +43,8 @@ namespace eudaq {
 
   void LogCollector::OnTerminate(){
     CloseLogCollector();
-    DoTerminate(); 
+    DoTerminate();
+    SetStatus(Status::STATE_UNINIT, "Terminated");
   }
   
   void LogCollector::OnServer() {

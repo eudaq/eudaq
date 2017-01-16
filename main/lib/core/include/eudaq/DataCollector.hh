@@ -30,6 +30,7 @@ namespace eudaq {
   class DLLEXPORT DataCollector : public CommandReceiver {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol);
+    void OnInitialise() override final;
     void OnConfigure() override final;
     void OnServer() override final;
     void OnStartRun() override final;
@@ -40,6 +41,7 @@ namespace eudaq {
     void Exec() override;
 
     //running in commandreceiver thread
+    virtual void DoInitialise(){};
     virtual void DoConfigure(){};
     virtual void DoStartRun(){};
     virtual void DoStopRun(){};

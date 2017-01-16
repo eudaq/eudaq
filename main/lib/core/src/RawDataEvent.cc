@@ -6,9 +6,9 @@ namespace eudaq {
     auto dummy0 = Factory<Event>::Register<RawDataEvent, Deserializer&>(RawDataEvent::m_id_factory);
     auto dummy7 = Factory<Event>::Register<RawDataEvent, const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>(RawDataEvent::m_id_factory);
     auto dummy2 = Factory<Event>::Register<RawDataEvent, const uint32_t&, const uint32_t&, const uint32_t&>(RawDataEvent::m_id_factory);
-    auto &cccout = (std::cout<<"Resisted to Factory<"
-		    <<std::hex<<dummy2<<std::dec
-		    <<"> ID "<<RawDataEvent::m_id_factory<<std::endl);
+    // auto &cccout = (std::cout<<"Resisted to Factory<"
+    // 		    <<std::hex<<dummy2<<std::dec
+    // 		    <<"> ID "<<RawDataEvent::m_id_factory<<std::endl);
   }
 
   std::shared_ptr<RawDataEvent> RawDataEvent::MakeShared(const std::string& dspt,

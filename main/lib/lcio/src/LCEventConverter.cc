@@ -6,7 +6,7 @@ namespace eudaq{
   std::map<uint32_t, typename Factory<LCEventConverter>::UP(*)()>&
   Factory<LCEventConverter>::Instance<>();
   
-  bool LCEventConverter::Convert(EventSPC d1, LCEventSP d2, const Configuration &conf){    
+  bool LCEventConverter::Convert(EventSPC d1, LCEventSP d2, ConfigurationSPC conf){    
     if(d1->IsFlagBit(Event::FLAG_PACKET)){
       d2->parameters().setValue("EventFlag", (int)d1->GetFlag());
       d2->parameters().setValue("RunNumber", (int)d1->GetRunN());

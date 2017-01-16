@@ -93,6 +93,7 @@ namespace eudaq {
     void SetRunN(uint32_t n){m_run_n = n;}
     void SetEventN(uint32_t n){m_ev_n = n;}
     void SetStreamN(uint32_t n){m_stm_n = n;}
+    void SetDeviceN(uint32_t n){m_stm_n = n;}
     void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
     void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
@@ -104,6 +105,7 @@ namespace eudaq {
     uint32_t GetRunN()const {return m_run_n;}
     uint32_t GetEventN()const {return m_ev_n;}
     uint32_t GetStreamN() const {return m_stm_n;}
+    uint32_t GetDeviceN() const {return m_stm_n;}
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
     uint64_t GetTimestampEnd() const {return m_ts_end;}
     std::string GetSubType() const {return GetTag("SubType");}
@@ -123,6 +125,7 @@ namespace eudaq {
     uint32_t m_ev_n;
     uint64_t m_ts_begin;
     uint64_t m_ts_end;
+    std::string m_dspt;
     std::map<std::string, std::string> m_tags;
     std::vector<EventSPC> m_sub_events;
   };

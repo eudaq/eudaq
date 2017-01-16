@@ -8,7 +8,7 @@ namespace eudaq{
   public:
     StdRunControl(const std::string & listenaddress);
     void DoStatus(std::shared_ptr<const ConnectionInfo> id,
-		  std::shared_ptr<Status> status) override final;
+		  std::shared_ptr<const Status> status) override final;
     void DoConnect(std::shared_ptr<const ConnectionInfo> id) override final;
     void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) override final;
     void Exec() override final;
@@ -27,7 +27,7 @@ namespace eudaq{
   }
 
   void StdRunControl::DoStatus(std::shared_ptr<const ConnectionInfo> id,
-			       std::shared_ptr<Status> status) {
+			       std::shared_ptr<const Status> status) {
     std::cout << "Receive:    " << *status << " from " << *id << std::endl;
   }
 

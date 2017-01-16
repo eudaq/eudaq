@@ -22,12 +22,12 @@ namespace eudaq {
 		    const std::string & runcontrol);
     virtual ~CommandReceiver();
 
-    virtual void OnInitialise() {}; 
-    virtual void OnConfigure() = 0;
-    virtual void OnStartRun() = 0;
-    virtual void OnStopRun() = 0;
-    virtual void OnTerminate() {};
-    virtual void OnReset() {};
+    virtual void OnInitialise() {SetStatus(Status::STATE_UNCONF, "Initialized");}; 
+    virtual void OnConfigure() {SetStatus(Status::STATE_CONF, "Configured");};
+    virtual void OnStartRun() {SetStatus(Status::STATE_RUNNING, "Started");};
+    virtual void OnStopRun() {SetStatus(Status::STATE_CONF, "Stopped");};
+    virtual void OnTerminate() {SetStatus(Status::STATE_UNINIT, "Terminated");};
+    virtual void OnReset() {SetStatus(Status::STATE_UNINIT, "Reseted");};
     virtual void OnStatus() {}
     virtual void OnData(const std::string & /*param*/) {}
     virtual void OnLog(const std::string & /*param*/);
@@ -39,8 +39,8 @@ namespace eudaq {
     void StartCommandReceiver();
     void CloseCommandReceiver();
     bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
-    void SetStatus(Status::Level level, const std::string & info = "");
-    void SetStatusTag(const std::string &key, const std::string &val){m_status.SetTag(key, val);}
+    void SetStatus(Status::State state, const std::string & info);
+    void SetStatusTag(const std::string &key, const std::string &val);
     
     std::string GetFullName() const {return m_type+"."+m_name;};
     std::string GetName() const {return m_name;};
@@ -57,6 +57,7 @@ namespace eudaq {
     bool m_exited;
     std::thread m_thd_client;
     Status m_status;
+    std::mutex m_mtx_status;
     std::unique_ptr<TransportClient> m_cmdclient;
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
@@ -65,6 +66,7 @@ namespace eudaq {
     std::string m_name;
     uint32_t m_cmdrcv_id;
     uint32_t m_run_number;
+    
   };
 
 }

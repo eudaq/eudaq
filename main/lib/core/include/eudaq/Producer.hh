@@ -31,6 +31,7 @@ namespace eudaq {
      * connect to.
      */
     Producer(const std::string &name, const std::string &runcontrol);
+    void OnInitialise() override final;
     void OnConfigure() override final;
     void OnStartRun() override final;
     void OnStopRun() override final;
@@ -40,7 +41,8 @@ namespace eudaq {
     void OnData(const std::string &param) override final;
     void Exec() override; //TODO: mark it final to report derived class which has Exec override.
 
-    virtual void DoConfigure() = 0;
+    virtual void DoInitialise(){};
+    virtual void DoConfigure(){};
     virtual void DoStartRun() = 0;
     virtual void DoStopRun() = 0;
     virtual void DoReset() = 0;

@@ -19,7 +19,6 @@ namespace eudaq {
   }
 
   bool Monitor::ProcessEvent() { //TODO:: Deal with BORE
-
     if (!m_reader)
       return false;
     if (!m_reader->NextEvent())
@@ -76,13 +75,29 @@ namespace eudaq {
   }
 
   void Monitor::OnStartRun() {
-    uint32_t run = GetRunNumber();
-    std::cout << "run " << run << std::endl;
-    m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), to_string(run));
-    EUDAQ_INFO("Starting run " + to_string(run));
+    try{  
+      uint32_t run = GetRunNumber();
+      std::cout << "run " << run << std::endl;
+      m_reader = Factory<FileReader>::MakeShared(str2hash("RawFileReader"), to_string(run));
+      EUDAQ_INFO("Starting run " + to_string(run));
+      SetStatus(Status::STATE_RUNNING, "Started");
+    } catch (const Exception &e) {
+      std::string msg = "Error preparing for run " + std::to_string(GetRunNumber()) + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::STATE_ERROR, msg);
+    }
   }
 
-  void Monitor::OnStopRun() { m_reader->Interrupt(); }
+  void Monitor::OnStopRun() {
+    try{  
+      m_reader->Interrupt();
+      SetStatus(Status::STATE_CONF, "Stopped");
+    } catch (const Exception &e) {
+      std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::STATE_ERROR, msg);
+    }
+  }
 
   void Monitor::Exec(){
     // try {

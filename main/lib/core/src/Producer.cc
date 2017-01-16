@@ -13,75 +13,98 @@ namespace eudaq {
     m_evt_c = 0;
     m_pdc_n = str2hash(GetFullName());
   }
+
+  void Producer::OnInitialise(){
+    try{
+      auto conf = GetInitConfiguration();
+      if(conf)
+	EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
+      DoInitialise();
+      EUDAQ_INFO("Initialized");
+      SetStatus(Status::STATE_UNCONF, "Initializd");
+    }catch (const std::exception &e) {
+      printf("Caught exception: %s\n", e.what());
+      SetStatus(Status::STATE_ERROR, "Init Error");
+    }catch (...) {
+      printf("Unknown exception\n");
+      SetStatus(Status::STATE_ERROR, "Init Error");
+    }
+  }
   
   void Producer::OnConfigure(){
     try{
       auto conf = GetConfiguration();
-      SetStatus(eudaq::Status::LVL_OK, "Wait");
-      std::cout << "Configuring ...(" << conf->Name() << ")" << std::endl;
+      if(conf)
+	EUDAQ_INFO("Configuring ...("+ conf->Name()+")");
       DoConfigure();
-      std::cout << "Configured (" << conf->Name() << ")" << std::endl;
-      EUDAQ_INFO("Configured (" + conf->Name() + ")");
+      EUDAQ_INFO("Configured");
       m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
-      SetStatus(eudaq::Status::LVL_OK, "Configured (" + conf->Name() + ")");
+      SetStatus(Status::STATE_CONF, "Configured");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      SetStatus(Status::STATE_ERROR, "Configuration Error");
     }catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Configuration Error");
+      SetStatus(Status::STATE_ERROR, "Configuration Error");
     }
   }
   
   void Producer::OnStartRun(){
     try{
-      SetStatus(eudaq::Status::LVL_OK, "Wait");
-      std::cout << "Start Run: " << GetRunNumber() << std::endl;
+      EUDAQ_INFO("Start Run: "+ GetRunNumber());
       m_evt_c = 0;
       DoStartRun();
-      SetStatus(eudaq::Status::LVL_OK, "Started");
+      SetStatus(Status::STATE_RUNNING, "Started");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+      SetStatus(Status::STATE_ERROR, "Start Error");
     }catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Start Error");
+      SetStatus(Status::STATE_ERROR, "Start Error");
     }
   }
 
   void Producer::OnStopRun(){
     try{
-      SetStatus(eudaq::Status::LVL_OK, "Wait");
-      std::cout << "Stop Run" << std::endl;
+      EUDAQ_INFO("Stopping Run");
       DoStopRun();
-      SetStatus(eudaq::Status::LVL_OK, "Stopped");
+      SetStatus(Status::STATE_CONF, "Stopped");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetStatus(Status::STATE_ERROR, "Stop Error");
     } catch (...) {
       printf("Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Stop Error");
+      SetStatus(Status::STATE_ERROR, "Stop Error");
     }
   }
 
   void Producer::OnReset(){
     try{
-      SetStatus(eudaq::Status::LVL_OK, "Wait");
+      EUDAQ_INFO("Resetting");
       m_senders.clear();
       DoReset();
-      SetStatus(eudaq::Status::LVL_OK, "Reset");
+      SetStatus(Status::STATE_UNINIT, "Reset");
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());
-      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
+      SetStatus(Status::STATE_ERROR, "Reset Error");
     } catch (...) {
       printf("Producer Reset:: Unknown exception\n");
-      SetStatus(eudaq::Status::LVL_ERROR, "Reset Error");
+      SetStatus(Status::STATE_ERROR, "Reset Error");
     }
   }
   
   void Producer::OnTerminate(){
-    std::cout << "Terminate...." << std::endl;
-    DoTerminate();
+    try{
+      EUDAQ_INFO("Terminating");
+      DoTerminate();
+      SetStatus(Status::STATE_UNINIT, "Terminated");
+    }catch (const std::exception &e) {
+      printf("Caught exception: %s\n", e.what());
+      SetStatus(Status::STATE_ERROR, "Terminate Error");
+    } catch (...) {
+      printf("Unknown exception\n");
+      SetStatus(Status::STATE_ERROR, "Terminate Error");
+    }
   }
   
   void Producer::OnData(const std::string &server){

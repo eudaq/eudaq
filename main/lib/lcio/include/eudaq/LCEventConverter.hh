@@ -28,8 +28,8 @@ namespace eudaq{
     LCEventConverter() = default;
     LCEventConverter(const LCEventConverter&) = delete;
     LCEventConverter& operator = (const LCEventConverter&) = delete;
-    bool Converting(EventSPC d1, LCEventSP d2, const Configuration &conf) const override = 0;
-    static bool Convert(EventSPC d1, LCEventSP d2, const Configuration &conf);
+    bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override = 0;
+    static bool Convert(EventSPC d1, LCEventSP d2, ConfigurationSPC conf);
     // static LCEventSP MakeSharedLCEvent(uint32_t run, uint32_t stm);
   };
 

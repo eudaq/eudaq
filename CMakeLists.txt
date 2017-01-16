@@ -11,7 +11,6 @@ SET(EUDAQ_CORE_LIBRARY core)
 set(CMAKE_CXX_STANDARD 11)
 include(CMakeDependentOption)
 
-
 include_directories(main/lib/processors/include)
 include_directories(main/lib/eventsyncs/include)
 include_directories(main/lib/filerws/include)
@@ -100,8 +99,10 @@ set(CMAKE_MACOSX_RPATH 1)
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 # when building, don't use the install RPATH already
 # (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
-SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+set(EUDAQ_INSTALL_RPATH "\$ORIGIN/../lib")
+set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 # *ALTERNATIVELY*: USE RELATIVE PATHS
 # see http://www.semipol.de/archives/356
 # for all binaries created in a CMake project:
@@ -115,7 +116,8 @@ SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # the RPATH to be used when installing, but only if it's not a system directory
 LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
 IF("${isSystemDir}" STREQUAL "-1")
-   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+  set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
+  # SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
@@ -174,6 +176,6 @@ IF(PYTHONINTERP_FOUND AND BUILD_python)
   ENDIF(NUMPYRC EQUAL 1)
 ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
 
-MESSAGE (STATUS "*** Build Type ${CMAKE_BUILD_TYPE} ***" )
-MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_CXX_FLAGS}"  )
-MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
+message (STATUS "*** Build Type CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE} ***" )
+message (STATUS "*** Compiler Flags CMAKE_CXX_FLAGS:  ${CMAKE_CXX_FLAGS}"x)
+message (STATUS "*** Compiler Flags CMAKE_LD_FLAGS:  ${CMAKE_LD_FLAGS}")
