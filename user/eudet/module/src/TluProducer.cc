@@ -294,5 +294,5 @@ void TLUProducer::OnUnrecognised(const std::string &cmd,
   if (param.length() > 0)
     std::cout << " (" << param << ")";
   std::cout << std::endl;
-  SetStatus(eudaq::Status::LVL_WARN, "Unrecognised command");
+  EUDAQ_WARN("Unrecognised command");
 }
