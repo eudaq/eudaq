@@ -21,7 +21,7 @@ int main(int /*argc*/, const char ** argv) {
     // This will look through the command-line arguments and set the options
     op.Parse(argv);
 
-    eudaq::Configuration conf;
+    std::shared_ptr<eudaq::Configuration> conf(new eudaq::Configuration);
     // Loop over all filenames
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 

@@ -64,7 +64,7 @@ int main(int /*argc*/, char ** argv) {
   try {
     op.Parse(argv);
     //EUDAQ_LOG_LEVEL("INFO");
-    eudaq::Configuration conf;
+    std::shared_ptr<eudaq::Configuration> conf(new eudaq::Configuration);
 
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 
