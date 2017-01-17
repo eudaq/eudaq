@@ -56,11 +56,19 @@ else()
     SOURCE_DIR  ${EUDAQ_LCIO_EX_SOURCE_DIR}
     SVN_REPOSITORY ${EUDAQ_LCIO_EX_SVN_REPOSITORY}
     )
+
+  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(LCIO_LIBRARIES
+      ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/liblcio.dylib
+      ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/libsio.dylib
+      CACHE INTERNAL "external lcio library")
+  else()
+    set(LCIO_LIBRARIES
+      ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/liblcio.so
+      ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/libsio.so
+      CACHE INTERNAL "external lcio library")
+  endif()
   
-  set(LCIO_LIBRARIES
-    ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/liblcio.so
-    ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/libsio.so
-    CACHE INTERNAL "external lcio library")
   set(LCIO_LIBRARY_DIRS ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib
     CACHE INTERNAL "directory of external lcio library")
 
