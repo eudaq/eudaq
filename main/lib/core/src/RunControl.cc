@@ -112,7 +112,7 @@ namespace eudaq {
       if(client.GetType() != "Producer"){
 	SendCommand("START", to_string(m_runnumber), client);
 	while(1){
-	  uint n = 0;
+	  int n = 0;
 	  n++;
 	  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	  auto st = m_status[client_sp->GetName()];

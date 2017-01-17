@@ -4,6 +4,7 @@
 #include "Utils.hh"
 #include "Exception.hh"
 #include "Platform.hh"
+#include <functional>
 #include <string>
 #include <map>
 
