@@ -274,9 +274,8 @@ namespace eudaq {
          s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
          nev->AddBlock(1, s.c_str(), s.length());
          unsigned int times[1];
-         struct timeval tv;
-         ::gettimeofday(&tv, NULL);
-         times[0] = tv.tv_sec;
+	 auto since_epoch= std::chrono::system_clock::now().time_since_epoch();
+         times[0] = std::chrono::duration_cast<std::chrono::seconds>(since_epoch).count();
          nev->AddBlock(2, times, sizeof(times));
          nev->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
          nev->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
