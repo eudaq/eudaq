@@ -51,7 +51,7 @@ namespace eudaq {
   
   void Producer::OnStartRun(){
     try{
-      EUDAQ_INFO("Start Run: "+ GetRunNumber());
+      EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
       m_evt_c = 0;
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");

@@ -41,6 +41,7 @@ namespace eudaq {
       conf.reset(new Configuration(file));
       conf->Set("Name", path);
     }
+    return conf;
   }
   
   std::string Configuration::Name() const {
