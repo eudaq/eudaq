@@ -87,15 +87,17 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
                                                          // optional
           width = atoi(valueChild->ToElement()->Attribute("width"));
 
-        if (!valueChild->FirstChild("content") &&
+        if (!valueChild || !valueChild->FirstChild("content") ||
             !valueChild->FirstChild("content")->FirstChild()) {
-          std::cout << "content tag not found!" << std::endl;
+          std::cout << "Content tag not found! Base: " << base << ", region: " << rgn << ", sub: " << sub << std::endl;
+          printf( "Element %d [%s] %d %d\n", pChild->Type(), pChild->Value(),
+                  base, rgn);
           break;
         }
         if (readwrite) {
           int subvalue = (value >> begin) & Bitmask(width);
           char tmp[5];
-          sprintf(tmp, "%X", subvalue);
+          sprintf(tmp, "0x%X", subvalue);
           valueChild->FirstChild("content")->FirstChild()->SetValue(tmp);
         } else {
           int content = (int)strtol(
@@ -108,6 +110,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
                       << content << " "
                       << valueChild->FirstChild("content")->Value()
                       << std::endl;
+            std::cout << "Base: " << base << ", region: " << rgn << ", sub: " << sub << std::endl;
             break;
           }
           value += content << begin;
@@ -121,7 +124,7 @@ void ParseXML(TpAlpidefs* dut, TiXmlNode* node, int base, int rgn,
         if (dut->ReadRegister(address, &valuecompare) != 1)
           std::cout << "Failure to read chip address after writing chip address " << address << std::endl;
         if (address != 14 && value != valuecompare)
-          std::cout << "Register read back error : write value is : " << value << " and read value is : "<< valuecompare << std::endl;
+          std::cout << "Register 0x" << std::hex << address << std::dec << "read back error : write value is : " << value << " and read value is : "<< valuecompare << std::endl;
 
       }
     }
@@ -372,7 +375,7 @@ void DeviceReader::Loop() {
       }
 #endif
       if (readEvent==-3) {
-	while (!IsFlushing() && !IsStopping()) 
+	while (!IsFlushing() && !IsStopping())
 	  eudaq::mSleep(100);
 	{
 	  SimpleLock lock(m_mutex);
@@ -920,7 +923,7 @@ bool PALPIDEFSProducer::InitialiseTestSetup(const eudaq::Configuration &param) {
         config->GetBoardConfig(idev)->BoardType = 2;
         config->GetBoardConfig(idev)->EnableDDR = false;
         config->GetChipConfig(idev)->ChipType = DUT_PALPIDEFS3;
-      } else if (!ChipType.compare("PALPIDEFS4")) {
+      } else if (!ChipType.compare("PALPIDEFS4") || !ChipType.compare("ALPIDE")) {
         m_chip_type[idev] = 4;
         config->GetBoardConfig(idev)->BoardType = 2;
         config->GetBoardConfig(idev)->EnableDDR = false;
@@ -1605,7 +1608,7 @@ void PALPIDEFSProducer::Loop() {
             std::cout << "Queue difference: " << diff << std::endl;
             std::string str = "DAQ boards queues differ by more than 1000 events";
             EUDAQ_ERROR(str);
-	    SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
+            //SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
             for (int i = 0; i < m_nDevices; i++) {
               std::cout << "Reader " << i << ":" << std::endl;
               m_reader[i]->PrintDAQboardStatus();
@@ -1624,7 +1627,7 @@ void PALPIDEFSProducer::Loop() {
     if (busy_count>5) {
       std::string str = "DAQ boards stay busy";
       EUDAQ_ERROR(str);
-      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
+      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();
@@ -1635,7 +1638,7 @@ void PALPIDEFSProducer::Loop() {
     if (out_of_sync_count>10) {
       std::string str = "Out-of-sync recovery fails";
       EUDAQ_ERROR(str);
-      SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
+      //SetConnectionState(eudaq::ConnectionState::STATE_ERROR, str);
       for (int i = 0; i < m_nDevices; i++) {
         std::cout << "Reader " << i << ":" << std::endl;
         m_reader[i]->PrintDAQboardStatus();

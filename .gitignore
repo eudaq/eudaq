@@ -43,6 +43,9 @@ extern/pxar
 extern/ZestSC1
 extern/tlufirmware
 
+# Ignore binary data file folders downloaded for SBG Mimosa re-integration:
+extern/IPHCRC
+
 # Ignore paths to windows libraries installed by user:
 extern/pthread*
 extern/libusb*

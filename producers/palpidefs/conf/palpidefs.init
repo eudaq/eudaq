@@ -1,0 +1,17 @@
+# This is an example init file, you can adapt it to your needs.
+# All text following a # character is treated as comments
+
+[RunControl]
+
+[DataCollector]
+
+[LogCollector]
+
+[Producer.Example]
+InitParamter = 123
+
+[Producer.TLU]
+ErrorHandler=2
+
+[Producer.pALPIDEfs]
+# nothing to be done for now

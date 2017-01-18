@@ -40,10 +40,10 @@ void CorrelationVSTimePlots::setCorrelationAxis()
 
   // to take all combinations into account without writing to many if statements they get calculated.
   vector<double> combinations;
-  combinations.push_back(m_x_axis.low*CorrectionFactorX - m_x_axis.low*CorrectionFactorY - ConstantTerm);
-  combinations.push_back(m_x_axis.low*CorrectionFactorX - m_x_axis.high*CorrectionFactorY - ConstantTerm);
-  combinations.push_back(m_x_axis.high*CorrectionFactorX - m_x_axis.high*CorrectionFactorY - ConstantTerm);
-  combinations.push_back(m_x_axis.high*CorrectionFactorX - m_x_axis.low*CorrectionFactorY - ConstantTerm);
+  combinations.push_back(m_x_axis.low*CorrectionFactorX - m_y_axis.low*CorrectionFactorY - ConstantTerm);
+  combinations.push_back(m_x_axis.low*CorrectionFactorX - m_y_axis.high*CorrectionFactorY - ConstantTerm);
+  combinations.push_back(m_x_axis.high*CorrectionFactorX - m_y_axis.high*CorrectionFactorY - ConstantTerm);
+  combinations.push_back(m_x_axis.high*CorrectionFactorX - m_y_axis.low*CorrectionFactorY - ConstantTerm);
   m_axis0_minus_axis1.low = *min_element(combinations.begin(), combinations.end());
   m_axis0_minus_axis1.high = *max_element(combinations.begin(), combinations.end());
 

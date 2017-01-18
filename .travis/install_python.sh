@@ -1,20 +1,15 @@
 #!/bin/bash
 
-echo $CXX --version
-echo $CC --version
+# Install python
+
+echo "Entering install_python script"
+echo "Installing python"
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-
-	# OS X: update brew cache:
-	brew update || brew update
-	brew outdated openssl || brew upgrade openssl
 	
-	brew unlink cmake python python3
-	
-	if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
+	brew unlink python python3
 	
 	if [[ $OPTION == 'modern' ]]; then
-		export ROOT_FILENAME=${ROOT6_FILENAME_MAC}
 		# install pyenv
 		# https://github.com/pyca/cryptography/blob/master/.travis/install.sh
 		git clone https://github.com/yyuu/pyenv.git ~/.pyenv
@@ -55,33 +50,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		pip install --upgrade pip
 		pip install -q numpy		
 	fi
-	export CMAKE_FILENAME=${CMAKE_FILENAME_MAC}
-
-	echo "Installing root now"
-	wget https://root.cern.ch/download/$ROOT_FILENAME
-	tar -xvf $ROOT_FILENAME
-	source root/bin/thisroot.sh
-	
-	echo "Installing cmake now"
-	wget ${CMAKE_DOWNLOAD_PATH}/$CMAKE_FILENAME
-	tar xfz $CMAKE_FILENAME
-	export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
-	echo $PATH
-	
-	echo "Installing openafs now"
-	wget ${OPENAFS_DOWNLOAD_PATH_MAC}/$OPENAFS_FILENAME_MAC
-	sudo hdiutil attach $OPENAFS_FILENAME_MAC
-	#ls /Volumes/OpenAFS/
-	sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
-	sudo hdiutil detach /Volumes/OpenAFS
-	sudo launchctl start org.openafs.filesystems.afs
-	#tar xfz $OPENAFS_FILENAME_MAC
-	#export PATH="`pwd`/${CMAKE_FILENAME%%.tar.gz}/CMake.app/Contents/bin":$PATH:	
-	#echo $PATH	
 	
 else
 	if [[ $OPTION == 'modern' ]]; then
-		export ROOT_FILENAME=${ROOT6_FILENAME_LINUX}
 		
 		export PIP_REQUIRE_VIRTUALENV=true
 		
@@ -111,8 +82,7 @@ else
 		pip install -q numpy
 		#pyenv rehash
 	else
-		export ROOT_FILENAME=${ROOT5_FILENAME_LINUX}
-		
+
 		pyenv install ${PYTHON_VERSION_OLD}
 		pyenv global ${PYTHON_VERSION_OLD}
 		pyenv versions
@@ -137,14 +107,7 @@ else
 		pip install -q numpy
 		#pyenv rehash		
 	fi
-	
-	echo "Installing root now"
-	wget https://root.cern.ch/download/$ROOT_FILENAME
-	tar -xvf $ROOT_FILENAME
-	source root/bin/thisroot.sh
-	
-	#workaround as openafs in the normal is broken in the moment - kernel module does not compile
-	sudo add-apt-repository -y ppa:openafs/stable
-	sudo apt-get -qq update
+		
 fi
 	
+echo "Python has been installed"
