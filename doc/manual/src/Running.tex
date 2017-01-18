@@ -1,32 +1,89 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Running EUDAQ}
-This section will describe running the DAQ system, mainly from the point of view of the
-EUDET JRA1 Pixel Telescope\cite{eudet2009} with a \gls{DUT}, although most of it should
-also be applicable to the DAQ in general, even without the telescope.
 
-All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory,
-and should be run from here.
+This section will describe running the DAQ system, mainly from the point of view of EUDET-type beam telescope \cite{telescopesWikiUserManual} operated together with \gls{DUT}s.
+However, this description can be applied to DAQ system in general.
 
-They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter,
-which will provide a summary of the different command-line options that can be used.
+All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory, and should be run from here. They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter, which will provide a summary of possible different command-line options.
+
+The executable programs mainly split up in two different categories: Processes, which are used for the data acquisition and communicating with the Run Control (DAQ), and utilities, which are used before or after the data taking in order to access the data files (Test, Devel., Tools).
+In \autoref{tab:exes}, you will find an overview of the most important EUDAQ executables.
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{ c | l | l | p{4cm}}
+  \textbf{Category} & \textbf{Name} & \textbf{Binary}  & \textbf{Description}\\
+  \hline			
+  \hline			
+  DAQ & Run Control & \texttt{euRun.exe} & GUI version, recommended (Sec. \ref{sec:runcontrol}) \\
+  DAQ & Run Control & \texttt{TestRunControl.exe} & CLI version (Sec. \ref{sec:runcontrol}) \\
+  DAQ & Log Collector & \texttt{euLog.exe} & GUI version, recommended (Sec. \ref{sec:logcollector}) \\
+  DAQ & Log Collector & \texttt{TestLogCollector.exe} & CLI version (Sec. \ref{sec:logcollector}) \\
+  DAQ & Data Collector & \texttt{TestDataCollector.exe} & CLI, recommended (Sec. \ref{sec:datacollector}) \\
+  DAQ & Online Monitor & \texttt{OnlineMon.exe} & GUI version, recommended (Sec. \ref{sec:onlinemonitor}) \\
+  DAQ & Online Monitor & \texttt{TestMonitor.exe} & CLI version (Sec. \ref{sec:onlinemonitor}) \\
+  DAQ & TLU Producer & \texttt{TLUProducer.exe} & CLI for EUDET-type telescopes (Sec. \ref{sec:tluproducer}) \\
+  DAQ & Mimosa26 Producer & \texttt{NIProducer.exe} & CLI for EUDET-type telescopes (Sec. \ref{sec:niproducer}) \\
+  DAQ & Run Listener & \texttt{RunListener.exe} & CLI, listens to Run Control, no description \\
+  \hline
+  Test & TLU Control & \texttt{TLUControl.exe} & CLI (Sec. \ref{sec:tlucontrol}) \\
+  Test/DAQ & Test Producer & \texttt{TestProducer.exe} & CLI (Sec. \ref{sec:testproducer}) \\
+  Test/DAQ & Dummy Producer & \texttt{euProd.exe} & GUI, no description \\
+  Devel./DAQ & Example Producer & \texttt{ExampleProducer.exe} & CLI, recommended (Sec. \ref{sec:testproducer}) \\
+  Devel. & Exampler Reader & \texttt{ExampleReader.exe} & CLI, example raw file reader, no description \\
+  Devel. & Option Example & \texttt{OptionExample.exe} & CLI, example to use options, no description \\
+  \hline
+  Tools & File Checker & \texttt{FileChecker.exe} & CLI, raw data file checker (Sec. \ref{sec:FileChecker}) \\
+  Tools & Test Reader & \texttt{TestReader.exe} & CLI, raw data file reader (Sec. \ref{sec:TestReader}) \\
+  Tools & EURunSplitter & \texttt{EURunSplitter.exe} & CLI, splits raw data files, no description \\
+  Tools & Converter & \texttt{Converter.exe} & CLI, raw data file converter (Sec. \ref{sec:Converter}) \\
+  Tools & IPHC Converter & \texttt{IPHCConverter.exe} & CLI, IPHC M26 to raw converter, no description \\
+  Tools & Cluster Extractor & \texttt{ClusterExtractor.exe} & CLI, extracting clusters from raw files  (Sec. \ref{sec:ClusterExtractor}) \\
+  Tools & MagicLogBook & \texttt{MagicLogBook.exe} & obsolete (!), CLI  (Sec. \ref{sec:MagicLogBook}) \\
+\end{tabular}
+\caption{Overview of EUDAQ executables: DAQ processes and tools as graphical user interfaces (GUI) or command line interfaces (CLI).}
+\label{tab:exes}
+\end{table}
 
 \subsection{Preparation}
 Some preparation is needed to make sure the environment is set up correctly and
 the necessary TCP ports are not blocked before the DAQ can run properly.
 
 \subsubsection{Directories}
-The DAQ expects two directories to exist, that it will use to store data files and log files.
-They need not be real directories -- they can be symbolic links to other directories
-if you don't want to store the files inside the EUDAQ installation.
+EUDAQ expects two directories that will be used to store data files and log files.
+These can be directories or symbolic links to other directories.
 
-First, inside the \texttt{eudaq} directory, there should be a directory (or symbolic link) called \texttt{data}.
+Firstly, inside the \texttt{eudaq} directory, there should be a directory (or a symbolic link) called \texttt{data}.
 This will contain the data files written by the Data Collector, as well as a file containing the last run number,
-so that it will continue incrementing even when the DAQ is restarted.
-
+so that it will continue incrementing even when the DAQ is restarted. 
 Secondly, there should be a directory (or symbolic link) called \texttt{logs}.
 This will be used by the Log Collector to store log files containing all the log messages received.
 
-\subsubsection{Firewall}
+\subsubsection{Hostnames}
+EUDAQ processes communicate between themselves using TCP/IP sockets.
+When processes are started, they need to know where the Run Control runs.
+There is no completely fool-proof way of determining this,
+so processes look at the environment variable \texttt{\$HOSTNAME}.
+
+Usually, this should be the DNS name of the machine it is running on, but in some cases it may not work correctly.
+If this is the case, it may be necessary to set this variable manually, either to the real host name
+or the machine's IP address. 
+In the case, that all the processes will be running on the same computer, the host name can be set to \texttt{localhost} which correspons do the IP adress \texttt{127.0.0.1}.
+
+Depending on the operating system and the command shell, you can set the host name by
+\begin{itemize}
+\item for bash-like shells: \inline[mybash]{export HOSTNAME=name}
+\item for csh-like shells: \inline[csh]{setenv HOSTNAME name}
+\item for Windows command lines / scripts: \inline[mybash]{set HOSTNAME=name}
+\end{itemize}
+where \texttt{name} is the name or the IP adress.
+
+Note: It is recommended to set the host name to the (local) IP adress. 
+This method is approved and working at the EUDET-type telescopes at DESY and CERN.
+
+
+\subsubsection{Ports and firewall}
 The different processes communicate between themselves using TCP/IP sockets.
 If a firewall is running, it may block these connections,
 especially if the processes are running on different computers.
@@ -38,7 +95,7 @@ when attempting to start some programs:
 Are you sure the server is running? - Error 61 connecting to localhost:44000: Connection refused
 \end{listing}
 
-The ports used may be configured on the command line, but the default values used are:
+The ports can be configured when calling the the processors on the command line (see below), but the default and usually free port numbers are:
 \begin{description}
 
 \ttitem{44000}
@@ -52,91 +109,93 @@ This port is used to send log messages from all processes to the Log Collector.
 
 \end{description}
 
-If processes will be run on different computers,
+If processes will be running on different computers,
 then these ports should be opened up in the firewall.
 The method for doing this depends on the Operating System used,
 and is outside the scope of this manual.
 
-\subsubsection{Environment}
-When a process connects to the Run Control, it must be told what addresses to use
-to connect to the Log Collector and (if it is a Producer) to the Data Collector.
-The Run Control will ask the Log and Data Collectors what address to report,
-and these processes therefore need a way to determine what address they are listening on.
-There is no completely fool-proof way of determining this,
-so they look at the environment variable \texttt{\$HOSTNAME}.
-
-Usually this should be the DNS name of the machine it is running on, but in some cases it may not work correctly.
-If this is the case, it may be necessary to set this variable manually, either to the real host name,
-or the machine's IP address, or (if all the processes will be run on the same computer) it can be set to \texttt{localhost}.
-
-Depending on the command shell used, the command to do this should be either
-``\inline[mybash]{export HOSTNAME=name}'' (for bash-like shells)
-or ``\inline[csh]{setenv HOSTNAME name}'' (for csh-like shells),
-where \texttt{name} is the name to use.
 
 \subsubsection{TLU permissions}\label{sec:TLUperm}
-If you are not using a TLU, or not running on Linux, you may skip this part.
+If you are not using a TLU conencted to a Linux OS, you may skip this part.
 
 On many Linux distributions, the device node used to communicate over the USB bus is only
-accessible by the user \texttt{root} by default.
-
-To have the system set the correct permissions when a \gls{TLU} is
-connected, you need to add a \texttt{udev} rule: as \textrm{root}
-user, create the file \texttt{/etc/udev/rules.d/54-tlu.rules} and add
+accessible by a user having root rights by default (\texttt{sudo ...}).
+To set the correct permissions when a \gls{TLU} is
+connected, you need to add a \texttt{udev} rule: as a root user, 
+create the file \texttt{/etc/udev/rules.d/54-tlu.rules} and add
 the following lines:
-
-\begin{listing}
-# for Red Hat, e.g. SL5
-SYSFS{idVendor}=="165d", SYSFS{idProduct}=="0001", GROUP="NOROOTUSB", MODE="0666"
-\end{listing}
-
-if you are using a Red~Hat-based distribution (such as Scientific
-Linux) or:
-
 \begin{listing}
 # for Debian
 ACTION=="add", DRIVERS=="?*",  ATTR{idVendor}=="165d", ATTR{idProduct}=="0001",  MODE="0666"
 \end{listing}
-
 in case you are using a debian-based distribution such as Ubuntu.
+\begin{listing}
+# for Red Hat, e.g. SL5
+SYSFS{idVendor}=="165d", SYSFS{idProduct}=="0001", GROUP="NOROOTUSB", MODE="0666"
+\end{listing}
+if you are using a Red~Hat-based distribution (such as Scientific Linux) or:
 
-After replugging the {TLU}, the device should be accessible by
+After replugging the \gls{TLU}, the device should be accessible by
 all users.
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
 \subsection{Processes}
 The DAQ system is made up of a number of different processes that may all be run on the same,
-or on different computers. They are each described below.
+or on different computers. 
 
 \subsubsection{Run Control}
-There are two versions of the Run Control -- a text-based version, and a graphical version (see \autoref{fig:RunControl}).
-The graphical version is preferred, since it is the most used, and therefore the most tested and complete.
+\label{sec:runcontrol}
+There are two versions of the Run Control -- a text-based version and a graphical version (see \autoref{fig:RunControl}).
+The graphical version is recommended, since it is well tested and complete.
 The executable is called \texttt{euRun.exe}, or on Mac OS X it is an application bundle called \texttt{euRun.app}.
 The text-based version can be useful for testing, the executable is \texttt{TestRunControl.exe}.
 
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.6\textwidth]{src/images/RunControl}
+    \includegraphics[width=0.8\textwidth]{src/images/RunControl}
     \caption{The Run Control graphical user interface.}
     \label{fig:RunControl}
   \end{center}
 \end{figure}
 
-Normally no command-line options should be needed, but it can be told to listen on a non-standard port,
-(e.g. to run two copies on the same machine), with the \texttt{-a \param{port}} option:
+Usually, no command-line option should be needed. 
+If needed, it can be told to listen on a specific port (e.g. to run two copies on the same machine) 
+using the \texttt{-a \param{port}} option, for example:
 \begin{listing}[mybash]
-$[./euRun.app/Contents/MacOS/euRun]$ -a 3000
+$[./euRun.exe]$ -a 44000
 \end{listing}
+Note: If two copies of EUDAQ should run simultaneously,
+the ports of the Log and DataCollectors have to be different!
 
-This example is for Mac OS X, where the executable is inside an application bundle,
-on other architectures it will be just \texttt{euRun.exe}.
-Note also that it is not recommended to run two copies of the DAQ simultaneously,
-since it becomes difficult to keep them completely separate as the Log and Data Collectors
-must also be run on different ports.
+\paragraph{Finite-State Machine}
+\label{sec:fsm}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{src/images/fsmv2.pdf}
+\end{center}
+\caption{The FSM of EUDAQ.}
+\label{fig:fsm}
+\end{figure}
+
+Since EUDAQ version 1.7, a \gls{FSM} is implemented (see \autoref{fig:fsm}) \cite{Shirokova:2016}.
+Each process connected to the Run Control can always be characterized by the current state:
+
+\begin{itemize}
+\item UNINITIALISED: the initial state of every connection. Initialisation has not not been conducted yet. Available transitions are \texttt{OnInitialise} and \texttt{OnTerminate}.%
+\footnote{Some detectors require not only setting up different parameters, but also the first initialisation of the hardware. Previously both these steps were carried out during the configuration. However, setting up the hardware is only necessary during the start and can be time demanding, so reinitialisation of the hardware can take additional time when reconfiguration is needed.
+One should note that \texttt{OnInitialise} function that is used to set the connection into the CONFIGURED state has default implementation in the base \texttt{CommandReceiver} class, so users who do not need an initialisation step can simply skip it. In addition, this ensures backward compatibility for existing producers. \cite{Shirokova:2016}}
+\item UNCONFIGURED: initialisation has already been conducted, but configuration parameters have not been set yet. Available transitions are \texttt{OnConfigure} and \texttt{OnTerminate}.
+\item CONFIGURED: configuration parameters have already been set. Available transitions are \texttt{OnStartRun}, \texttt{OnConfigure} and \texttt{OnTerminate}.
+\item RUNNING: the state of the operating connections.  For producers it means producing data, the \texttt{OnlineMonitor} are providing plots, the \texttt{LogCollector} is continuing to collect log messages and the \texttt{DataCollector} combines data streams from producers. The only available transition is \texttt{OnStopRun}.
+\item ERROR: this state can be used by users in case of errors during configuration, running process, etc. The only available transition is \texttt{OnTerminate}.
+\end{itemize}
+
+The state of the machine is determined by the lowest state of the connected components (\texttt{LogCollector}, \texttt{DataCollector}, \texttt{OnlineMonotor}, \texttt{Producers}) in the following priority: ERROR, UNITIALISED, UNCONFIGURED, CONFIGURED, RUNNING. It means, for example, that even if only one connection is in the ERROR state, the whole machine will also be in that state. This prevents such mistakes as running the system before every component has finished the configuration.
 
 \subsubsection{Log Collector}
-Running the Log Collector is optional. If it is run, then all log messages generated by all other processes
-in the DAQ will be collected in one central location.
+\label{sec:logcollector}
+It is recommended to start the Log Collector directly after having started the Run Control and before starting other processors in order to collect all log messages generated by all other processes.
 
 \begin{figure}[htb]
   \begin{center}
@@ -150,32 +209,36 @@ Like the Run Control, there are also two versions of the Log Collector.
 The graphical version is called \texttt{euLog.exe}, or \texttt{euLog.app} on Mac OS X,
 and the text-based version is called \texttt{TestLogCollector.exe}.
 
-If it is being run on the same machine as the Run Control, it should not need any command-line options.
-However, if it is run on a different machine, it must be told on which machine the Run Control is running,
-using the \texttt{-r \param{hostname}} option, e.g.:
+If it is running on the same machine as the Run Control, it should not need any command-line options.
+However, if it is running on a different machine, it must be told on which machine the Run Control is running.
+By using the \texttt{-r \param{hostname}} option, the Log Collector knows where to connect to the Run Control, for example the Run Control runs on a machine haveing a local IP 192.168.0.1 and listening on the port 40000 (as default):
 \begin{listing}[mybash]
-$[./euLog.exe]$ -r eudetmac001.cern.ch
+$[./euLog.exe]$ -r tcp://192.168.0.1:44000
 \end{listing}
-
-It may also be told to listen on a non-standard port, using the \texttt{-a \param{port}} option, similar to the Run Control.
+The port can also be set using the \texttt{-a \param{port}} option, similar to the Run Control.
 
 \subsubsection{Data Collector}
+\label{sec:datacollector}
 The Data Collector is the process that collects all the raw data from the Producers,
 merges all the connected incoming streams into a single data stream, and writes it to file.
+There is only a text-based version called \texttt{TestDataCollector.exe}.
+It is recommended to start the Data Collector directly after having started the Run Control and RunControl and before starting other processors.
 
-Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine,
-and it may also be told to listen on a non-standard port, with the \texttt{-r} and \texttt{-a} options respectively, for example:
+Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine.
+Accordingly, the \texttt{-r} and \texttt{-a} options can be used, for example:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -r eudet -a tcp://55001
+$[./TestDataCollector.exe]$ -r tcp://192.168.0.1:44000
 \end{listing}
 
 It is also possible to run multiple Data Collector instances within
-one EUDAQ session. This can be useful to reduce network traffic and
-e.g. write the output of one producer to a locally attached disk. When running
-several Data Collectors simultaneously, Run Controls assigns a
+one EUDAQ session. 
+This can be useful to reduce network traffic and
+e.g. write the output of one producer to a locally attached disk. 
+When running several Data Collectors simultaneously, the Run Control assigns a
 Producer to a Data Collector by name: if the name of a Data Collector
 matches that of a Producer, the latter will be given the address and
-port of the former. There can be only one instance of an \emph{unnamed} Data
+port of the former. 
+There can be only one instance of an \emph{unnamed} Data
 Collector which serves as the default for any non-matching Producer;
 if no unnamed Data Collector is present, the first one connecting will
 serve as the default.
@@ -186,10 +249,10 @@ The name of a Data Collector can be set with the
 $[./TestDataCollector.exe]$ -n myproducer
 \end{listing}
 
-Should you wish to run several instances of the Data Collector on one
+If you wish to run several instances of the Data Collector on one
 machine, you need to make sure that they listen to different addresses
-using the \texttt{-a} option as described above. Furthermore, you need
-to make each Data Collector write to a different file by including the
+using the \texttt{-a} option as described above. 
+Furthermore, each Data Collector has to write to a different file by including the
 \texttt{FilePattern} option in the corresponding section of your
 configuration file (also see section \ref{sec:ConfigFiles}):
 
@@ -198,59 +261,38 @@ configuration file (also see section \ref{sec:ConfigFiles}):
 FilePattern = "../data/run$6R_myproducer$X"
 \end{listing}
 
-\subsubsection{TestProducer}
-For testing purposes, you may use the Test Producer.
-This works similarly to a real producer, but does not talk to any real hardware,
-instead providing a menu for the user to manually send events
-(or see the ExampleProducer, below).
-
-\subsubsection{ExampleProducer}
-The ExampleProducer was written to illustrate the writing of a new Producer (see \autoref{sec:Producers}).
-However, it will actually generate some example data, and so can also be used for testing purposes.
-It works more like a real Producer than the TestProducer,
-in that it does not require user intervention to generate each trigger,
-and the data generated emulates a simple (but realistic) sensor,
-and can be properly converted, and therefore displayed in the Monitor.
-
-\subsubsection{TLUProducer}
+\subsubsection{TLU Producer}
+\label{sec:tluproducer}
 If you do not have a \gls{TLU} in your setup, you may skip this part.
-Otherwise you should run a TLUProducer, which will configure the \gls{TLU},
+Otherwise you should run a TLU Producer, which will configure the \gls{TLU},
 and read out the timestamps and send them to the Data Collector.
-
 On the computer with the \gls{TLU} connected, start the \texttt{TLUProducer.exe} program.
 If this is not the same machine as the Run Control,
-use the \texttt{-r} option as for the Data and Log Collectors.
-For example:
+use the \texttt{-r} option as for the Data and Log Collectors, in this example:
 \begin{listing}[mybash]
-$[./TLUProducer.exe]$ -r eudet.unige.ch:3000
+$[./TLUProducer.exe]$ -r 192.168.0.1:44000
 \end{listing}
+If the TLU Producer fails to start, make sure the permissions are set up correctly (see \autoref{sec:TLUperm}).
 
-If the TLUProducer fails to start, make sure the permissions are set up correctly (see \autoref{sec:TLUperm}).
+\subsubsection{NI Producer (Mimosa 26 sensors)}
+\label{sec:niproducer}
 
-\subsubsection{EUDRBProducer}
-The \gls{EUDRB} boards are used to read out the telescope sensors.
-The \gls{EUDRB} Producer is designed to run on a Motorola MVME6100 single board computer,
-using the Tundra TSI148 VME bridge for communication with the \glspl{EUDRB}.
-
-If more than one EUDRBProducer is to be run, they must all have different names.
-The name can be set with the \texttt{-n \param{name}} option.
-
-As with the other processes, the address of the Run Control should be set with the \texttt{-r} option.
-An example is shown below:
+If you don't have a EUDET-type beam telescope using 6 planes with Mimosa 26 sensors~\cite{Jansen:2016} in your setup, you may skip this part.
+The NI Producer is the interface between the Mimosa DAQ (at the moment Anemome 1.3 LabView software) and the EUDAQ. 
+The Mimosa DAQ is based on a National Instrument machine which runs with a Windows OS. 
+Thus, you start the NI Producer only on a NI crate after opening the Anemone LabView software.
+It will connect to the Run Control (euRun) by using \texttt{-r} option, too, in this example:
 \begin{listing}[mybash]
-$[./EUDRBProducer.exe]$ -n EUDRB2 -r 192.168.1.1
+$[./NIProducer.exe]$ -r 192.168.0.1:44000
 \end{listing}
+If the NI Producer fails to start, make sure that the IP adresses (host names) are set correctly in the start scripts and the EUDAQ configurations files \cite[section 5.2.1.2 1.]{telescopesWikiUserManual}.
 
-\subsubsection{Other Producer(s)}
-If you have a producer for your own hardware (see \autoref{sec:Producers}),
-it should also have an option to set the address of the Run Control.
 
-\subsubsection{OnlineMon}
-
-The OnlineMon reads the data file written by the Data Collector,
-and generates several Root histograms that can be useful for online monitoring.
-Since it reads the native data file directly, it must be run on the
-same machine as the Data Collector.
+\subsubsection{Online Monitor}
+\label{sec:onlinemonitor}
+The Online Monitor reads the data file written by the Data Collector,
+and generates several ROOT histograms that can be useful for online monitoring.
+Since it reads the native data file directly (by using the corresponding DataConverterPlugin), it must be run on the same machine as the Data Collector.
 
 \begin{figure}[htb]
   \begin{center}
@@ -261,22 +303,45 @@ same machine as the Data Collector.
   \end{center}
 \end{figure}
 
-
-The OnlineMon can be run in one of two modes: online or offline.
-In online mode, it connects to the RunControl, so it will know when new runs are started,
+The Online Monitor can be run in one of two modes: online or offline.
+In online mode, it connects to the Run Control, so it will know when new runs are started,
 and it will automatically open each new data file as it is created.
-In offline mode, there is no RunControl,
-and it only analyses the data file it is given on the command line. 
+To run it in online mode, the \texttt{-r} option may be used to assign Run Control, in this example:
+\begin{listing}[mybash]
+$[./OnlineMon.exe]$ -r 192.168.0.1:44000
+\end{listing}
+Note: The Online Monitor is working properly on Unix machines. In addition, it is recommended to run the Online Monitor on the same machine as the Data Collector.
+
+In offline mode, there is no Run Control,
+and it only analyses the data file it is given on the command line usind the \texttt{-f} option. 
 An example command line is:
 \begin{listing}[mybash]
 $[./OnlineMon.exe]$ -f 5432
 \end{listing}
-
 This will run it in offline mode, opening the file corresponding to run 5432
 (alternatively, the full path to a file may be given).
-To run it in online mode, simply omit the \texttt{-f} option,
-then the \texttt{-r} option may be used if the RunControl
-is running on a different computer or using a non-standard port.
+
+\subsubsection{Test and Example Producer}
+\label{sec:testproducer}
+For testing purposes, you may use the TestProducer.
+This works similarly to a real producer, but does not talk to any real hardware,
+instead providing a menu for the user to manually send events.
+
+The ExampleProducer was written to illustrate the writing of a new Producer (see \autoref{sec:Producers}).
+However, it will actually generate some example data, and so can also be used for testing purposes.
+It works more like a real Producer than the TestProducer,
+in that it does not require user intervention to generate each trigger,
+and the data generated emulates a simple (but realistic) sensor,
+and can be properly converted, and therefore displayed in the Monitor.
+
+\subsubsection{Other/DUT Producer(s)}
+If you have a producer for your own hardware (see \autoref{sec:Producers}),
+it should also have an option to set the address of the Run Control.
+
+\subsubsection{Slow Producer}
+Since EUDAQ version 1.7 \cite{Shirokova:2016}: A slow producer is a special type of producers which interacts with the \texttt{DataCollector} in a different way using the hardware conception of the triggerless data taking. Instead of sending busy signals it can simply provide data at its own rate. The \texttt{DataCollector} distinguishes the slow producer from the usual one, it waits only for events from simple producers and ignores the absence of those from slow producers.
+In order to integrate a slow device one has to simply extend it from the \texttt{SlowProducer} class instead of the \texttt{Producer} class, but having then the same functionality. 
+
 
 \subsubsection{Python Interface and Wrapper for Core EUDAQ Components}
 \label{sssec:pywrapper}
@@ -311,75 +376,80 @@ starts a new run. Several more extensive examples for using Python
 with EUDAQ are located in the \texttt{python} directory in the main
 EUDAQ directory.
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
 \subsection{Running the DAQ}
-To start the DAQ, all the necessary processes must be started in the correct order.
-The first process must be the Run Control,
+
+\subsubsection{Starting EUDAQ using STARTRUN scripts}\label{sec:STARTRUN}
+To start EUDAQ, all of the necessary processes have to be started in the correct order.
+The first process must be the Run Control (euRun),
 since all other processes will attempt to connect to it when they start up.
 Then it is recommended to start the Log Collector,
 since any log messages it receives may be useful
 to help with debugging in case everything does not start as expected.
 Next, the Data Collector should be started.
-Finally all the Producers, and if needed, the RootMonitor.
+Finally all others Producers, and if needed, the Online Monitor.
 
-\subsubsection{STARTRUN}\label{sec:STARTRUN}
-The \texttt{STARTRUN} file, in the main \texttt{eudaq} directory
-(as opposed to the \texttt{bin} subdirectory where the executables exist),
-is a shell script that can be customized to load the appropriate processes for running the DAQ.
-This allows you to start all the processes necessary with a single command.
-If starting processes on other computers via SSH,
-it is recommended to set up SSH keys so that the processes may be started without having to type a password.
+In the \texttt{eudaq/etc/scripts} directory, there are different Unix \texttt{STARTRUN} scripts.
+These scripts can be customized to load the appropriate processes for running the DAQ.
+This allows you to start all the processes necessary with a single command.%
+\footnote{If starting processes on other computers via SSH,
+it is recommended to set up SSH keys so that the processes may be started without having to type a password.}
 
-In the future the \texttt{STARTRUN} script may be replaced with a more intelligent version
-that uses a configuration file generated by the config script to decide what to load.
+Starting scripts for Unix and for Windows, you can find in the eudaq-configuration repository \cite{githubEUDAQconfiguration}.
 
-\subsubsection{Controlling the DAQ}
-Once all the processes have been started, the DAQ can be configured, and runs may be started and stopped
-using the Run Control (see \autoref{fig:RunControl}).
+\subsubsection{Operating EUDAQ}
+Once all the processes have been started, 
+and by using the Run Control (see \autoref{fig:RunControl}),
+According to the machine state \autoref{sec:fsm}, EUDAQ and all processes can be initialized, configured or re-configured, data taking (runs) can be started and stopped, and the software can be terminated.
 
-First the appropriate configuration should be selected from the drop-down list
+\begin{itemize}
+\item First, the appropriate initialisation file should be selected (see \autoref{sec:ConfigFiles} for creating and editing init-files). Then the \texttt{Init} button can be pressed,
+which will send a initialisation command to all connected processes.
+
+\item Second, the appropriate configuration should be selected 
 (see \autoref{sec:ConfigFiles} for creating and editing configurations),
 and the \texttt{GeoID} should be verified (see \autoref{sec:GeoID}), before continuing.
-
 Then the \texttt{Config} button can be pressed,
 which will send a configuration command
 (with the contents of the selected configuration file) to all connected processes.
 The full contents of the configuration file will also be stored
 in the \gls{BORE} of the data file,
 so that this information is always available along with the data.
-
-Once all connected processes are fully configured, a run may be started, by pressing the \texttt{Start} button.
-Whatever text is in the corresponding text box when the button is pressed
+\item Once all connected processes are fully configured, a run may be started, by pressing the \texttt{Start} button.
+Whatever text is in the corresponding text box ("\texttt{Run:}") when the button is pressed
 will be stored as a comment in the data file.
 This can be used to help identify the different runs later.
-
-Once a run is completed, it may be stopped by pressing the \texttt{Stop} button.
-Runs will also stop and restart automatically when the data file reaches a threshold in size
-(by default this is 1~GB).
-This is because there is a file size limit of 2~GB for storage on the GRID,
-and the processed files can grow bigger than the original native files.
+\item Once a run is completed, it may be stopped by pressing the \texttt{Stop} button.
+Runs will also stop and restart automatically when the data file reaches a threshold in size (by default this is 1~GB).%
+\footnote{This is because there is a file size limit of 2~GB for storage on the GRID,
+and the processed files can grow bigger than the original native files.}
 The threshold size for restarting a run may be configured in the config file (see \autoref{sec:ConfigFiles}).
-
-At any point a message may be sent to the log file by filling in the \texttt{Log} text box and pressing the corresponding button.
+\item At any time, a message may be sent to the log file by filling in the ("\texttt{Log:}") text box and pressing the corresponding button.
 The text should appear in the LogCollector window, and will be stored in the log file for later access.
+\item Once the run is stopped, the system may be reconfigured with a different configuration, or another run may be started; or EUDAQ can be terminated.
 
-Once the run is stopped, the system may be reconfigured with a different configuration, or another run may be started.
+\end{itemize}
 
-\subsubsection{Config Files}\label{sec:ConfigFiles}
-The \texttt{Config} drop-down in the Run Control is populated from the files in the \texttt{config} subdirectory.
-These are just text files in a specific format, containing name-value pairs separated into different sections.
+\subsubsection{Init/Config-Files}\label{sec:ConfigFiles}
+\texttt{$\ast$.init}-files for initialisation and \texttt{$\ast$.conf}-files for configuration
+are text files in a specific format, containing name-value pairs separated into different sections.
 See \autoref{sec:ExampleConfig} for an example file.
 
 Any text from a \texttt{\#} character until the end of the line is treated as a comment, and
-ignored.  Each section in the config file is delimited by a name in square brackets
-(e.g. \verb@[RunControl]@).  The name represents the type of process to which it applies; if there
+ignored.  
+Each section in the config file is delimited by a name in square brackets
+(e.g. \verb@[RunControl]@).  
+The name represents the type of process to which it applies; if there
 are several such processes, then they can be differentiated by including the name after a period
-(e.g. \verb@[Producer.Example]@).  Within each section, any number of parameters may be specified,
-in the form \mbox{\texttt{Name = Value}}.  It is then up to the individual processes how these
+(e.g. \verb@[Producer.Example]@).  
+Within each section, any number of parameters may be specified,
+in the form \mbox{\texttt{Name = Value}}.  
+It is then up to the individual processes how these
 parameters are interpreted.
 
 The entire contents of the config file will be sent to all processes during the configuration, and
-each process will have the appropriate section selected.  The file will also be attached to the
+each process will have the appropriate section selected.  
+The file will also be attached to the
 \gls{BORE}, so that it is available with the data later, even if the original config file is
 modified or deleted.
 
@@ -393,6 +463,9 @@ but if necessary you may edit the value first.
 The GeoID is inserted into the config file when it is sent, so it is also stored in the data file,
 and will be used to select the correct GEAR file for alignment during the data analysis stage.
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Other Utilities}
 There are a number of other utilities available that are not needed for running the DAQ,
 but can be useful for other tasks such as debugging.
@@ -401,12 +474,12 @@ They should all accept a help (\texttt{-h} or \texttt{--help}) option,
 to print a summary of the available options.
 
 \subsubsection{TLUControl}
+\label{sec:tlucontrol}
 The \texttt{TLUControl.exe} program is a standalone program for running the TLU without using the
-full DAQ. The most commonly used parameters are shown below. For each option, the short (preceeded
-by one dash) and the long (preceeded by two dashes) option names are shown (only one of the two
-forms should be used for each option, but long and short options can be mixed together on the
-command line), along with any parameters and their default value that will be used if the option is
-not specified.
+full DAQ. The most commonly used parameters are shown below. 
+For each option, the short (preceeded by one dash) and the long (preceeded by two dashes) option names are shown. 
+Only one of the two forms should be used for each option, but long and short options can be mixed together on the command line)
+Each options has a parameter and a default value that will be used if the option is not specified.
 
 \begin{description}
 \ttitem{-d --dutmask \param{mask = 0}}
@@ -636,66 +709,38 @@ The status is of the \gls{DUT} connections formatted as:
   \end{myitemize}
 \end{myitemize}
 
-\subsubsection{VMETest}
-The VMETest.exe program uses the EUDAQ VME library to perform VME accesses.
-It can be useful for determining whether a VME card is responding at a particular address.
-The available options are:
-\begin{description}
-\ttitem{-b \param{address}}
-The base address for the VME accesses.
-This value will be added to the offsets specified in the commands to give the actual address used.
 
-\ttitem{-s \param{bytes}}
-Sets the window size in bytes.
-This is the amount of memory that is mapped into the VME address space.
-Any accesses outside this range will result in an access violation.
+\subsubsection{FileChecker}
+\label{sec:FileChecker}
 
-\ttitem{-a \param{bits}}
-The address bus width in bits.
-Valid values are 16, 24, 32 or 64.
+This is a small utility that reads raw data files and checks if all events are
+readable, can be syncronised using the TLU trigger id and lists which type
+of subevents the file contains.
 
-\ttitem{-d \param{bits}}
-The data bus width in bits.
-Valid values are 8, 16, 32 or 64.
+It should be called with list of file paths or run numbers. For any argument
+that consist only of numerical digits the file path is constructed by
+substituting \texttt{\$6R} in the input pattern (defaults to
+``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
 
-\ttitem{-m \param{mode}}
-The VME access mode.
-Valid values are S (single accesses), B (BLT), M (MBLT), 2 (2eVME), E (2eSST) and T (2eSSTB).
-
-\end{description}
-
-The options set up the mode for the VME accesses.
-Following the options, a number of commands can be specified to perform actual reads or writes.
-The commands can be any of the following:
-\begin{description}
-\ttitem{r\param{offset}}
-Reads a value from the specified offset, and displays the value read.
-
-\ttitem{R\param{offset},\param{words}}
-Performs a block read of the specified number of words, starting from the specified offset.
-
-\ttitem{w\param{offset},\param{value}}
-Writes the specified value to the specified offset.
-
-\ttitem{W\param{offset},\param{value1}{[},\param{value2}\ldots{]}}
-Performs a block write of the specified values, starting at the specified offset.
-
-\end{description}
-
-Numerical arguments to either the options or the commands can be given either in decimal,
-or in hexadecimal by prefixing them with \texttt{0x}, as in C or C++.
-Note that the options require a space between the option character and its argument,
-but the commands must not have a space.
 For example:
-
 \begin{listing}[mybash]
-$[./VMETest.exe]$ -b 0x180000 -a 24 -d 16 w0x20,123 r0x10
+$[./FileChecker.exe]$ {6045..6050}
 \end{listing}
 
-This sets up a window starting at 180000 hex, in A24 address space with D16.
-It then writes the value 123 to offset 32 (20 hex), and then reads the value at offset 16 (10 hex).
+This would produce the following output.
+\begin{listing}[]
+run     valid  num_events  contains                   errors                    
+------  -----  ----------  -------------------------  ----------------------
+  6045   true       13131  MUPIX4,NI,TLU                                        
+  6046   true           1  MUPIX4,NI,TLU                                        
+  6047   true       14674  MUPIX4,NI,TLU                                        
+  6048   true        7776  MUPIX4,NI,TLU                                        
+  6049  false           0                             no events in the file.    
+  6050  false          -1                             read error. 
+\end{listing}
 
-\subsubsection{TestReader}\label{sec:TestReader}
+\subsubsection{TestReader}
+\label{sec:TestReader}
 The \texttt{TestReader.exe} program will read a native data file,
 and can display various pieces of information from the file.
 Commonly used options are:
@@ -736,7 +781,8 @@ This will display the \gls{BORE} and \gls{EORE}, and the events 1 to 10, 100 and
 processing them to also display the StandardEvents,
 from the files \texttt{example.raw} and \texttt{../data/run005432.raw}.
 
-\subsubsection{Converter}\label{sec:Converter}
+\subsubsection{Converter}
+\label{sec:Converter}
 The \texttt{Converter.exe} program will read a native data file,
 optionally select just a subset of events from the file,
 and can then write it out to another file in either the same native format, or a different format.
@@ -788,6 +834,7 @@ Although this program can be used to convert a native data file into \gls{LCIO} 
 the more usual (and therefore better tested) way is to use the EUTelescope converter.
 
 \subsubsection{ClusterExtractor}
+\label{sec:ClusterExtractor}
 This program can be used to quickly extract some clusters from raw data.
 It is not as sophisticated as the EUTelescope package, which should be preferred for real analysis,
 but it can be useful for doing quick checks.
@@ -847,6 +894,7 @@ The cluster lines are prepended with a space to make it easier to scan the file 
 
 
 \subsubsection{MagicLogBook}
+\label{sec:MagicLogBook}
 This program is designed to extract as much information as possible from data files and log files,
 in order to reconstruct a log book.
 Despite its name, it is in fact not magical,
@@ -966,34 +1014,6 @@ and \texttt{Efw} should be \texttt{EUDRBfw}.
 The columns \texttt{Mode}, \texttt{Det} and \texttt{EUDRBfw} are missing from the output
 due to the fact that this information is now stored in a \texttt{RawDataEvent},
 which is not currently accessible with this version of the program.
-
-\subsubsection{FileChecker}
-
-This is a small utility that reads raw data files and checks if all events are
-readable, can be syncronised using the TLU trigger id and lists which type
-of subevents the file contains.
-
-It should be called with list of file paths or run numbers. For any argument
-that consist only of numerical digits the file path is constructed by
-substituting \texttt{\$6R} in the input pattern (defaults to
-``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
-
-For example:
-\begin{listing}[mybash]
-$[./FileChecker.exe]$ {6045..6050}
-\end{listing}
-
-This would produce the following output.
-\begin{listing}[]
-run     valid  num_events  contains                   errors                    
-------  -----  ----------  -------------------------  ----------------------
-  6045   true       13131  MUPIX4,NI,TLU                                        
-  6046   true           1  MUPIX4,NI,TLU                                        
-  6047   true       14674  MUPIX4,NI,TLU                                        
-  6048   true        7776  MUPIX4,NI,TLU                                        
-  6049  false           0                             no events in the file.    
-  6050  false          -1                             read error. 
-\end{listing}
 
 \subsubsection{Others}
 Some programs that are less used (or recently added)
