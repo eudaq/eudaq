@@ -75,7 +75,7 @@ namespace eudaq {
       	return false;
       }
       // should check the type
-      if(rawev->GetSubType() != EVENT_TYPE){
+      if(rawev->GetExtendWord() != eudaq::cstr2hash(EVENT_TYPE)){
       	cout << "CaliceGenericConverter: type failed!" << endl;
       	return false;
       }

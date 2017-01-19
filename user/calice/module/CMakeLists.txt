@@ -4,6 +4,8 @@ aux_source_directory(src MODULE_SRC)
 
 list(REMOVE_ITEM MODULE_SRC src/TLUConverterPlugin.cc)
 list(REMOVE_ITEM MODULE_SRC src/NIConverterPlugin.cc)
+list(REMOVE_ITEM MODULE_SRC src/CaliceGenericConverterPlugin.cc)
+
 
 if(NOT EUDAQ_LCIO_LIBRARY)
   list(REMOVE_ITEM MODULE_SRC src/TLURawEvent2LCEventConverter.cc)
