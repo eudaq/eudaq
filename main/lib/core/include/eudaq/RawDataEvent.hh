@@ -33,7 +33,7 @@ namespace eudaq {
     RawDataEvent(Deserializer &);
     void Serialize(Serializer &) const override;
     void Print(std::ostream & ,size_t offset = 0) const override;
-    
+
     uint32_t GetID(size_t i) const { return m_blocks.at(i).id; }
     const std::vector<uint8_t>& GetBlock(size_t i) const;
     size_t NumBlocks() const { return m_blocks.size(); }    
@@ -77,7 +77,7 @@ namespace eudaq {
     }
     
     std::vector<block_t> m_blocks;
-
+    
   public:
     static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
 

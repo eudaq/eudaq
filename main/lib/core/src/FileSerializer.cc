@@ -58,7 +58,13 @@ namespace eudaq {
       EUDAQ_THROWX(FileReadException, "seek to begin failed: " + fname);
     }
   }
-
+  
+  FileDeserializer::~FileDeserializer(){
+    if (m_file) {
+      fclose(m_file);
+    }
+  }
+  
   bool FileDeserializer::HasData() {
     if (level() == 0)
       FillBuffer();

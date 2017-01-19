@@ -92,26 +92,33 @@ namespace eudaq {
     void SetFlag(uint32_t f) {m_flags = f;}
     void SetRunN(uint32_t n){m_run_n = n;}
     void SetEventN(uint32_t n){m_ev_n = n;}
-    void SetStreamN(uint32_t n){m_stm_n = n;}
     void SetDeviceN(uint32_t n){m_stm_n = n;}
+    void SetTriggerN(uint32_t n){m_tg_n = n;}
+    void SetExtendWord(uint32_t n){m_extend = n;}
     void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
     void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
-    void SetSubType(const std::string &t) {SetTag("SubType", t);}
+    void SetDescription(const std::string &t) {m_dspt = t;}
+    // void SetSubType(const std::string &t) {SetTag("SubType", t);}
  
     uint32_t GetEventID() const {return m_type;};
     uint32_t GetVersion()const {return m_version;}
     uint32_t GetFlag() const { return m_flags;}
     uint32_t GetRunN()const {return m_run_n;}
     uint32_t GetEventN()const {return m_ev_n;}
-    uint32_t GetStreamN() const {return m_stm_n;}
     uint32_t GetDeviceN() const {return m_stm_n;}
+    uint32_t GetTriggerN() const {return m_tg_n;}
+    uint32_t GetExtendWord() const {return m_extend;}
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
     uint64_t GetTimestampEnd() const {return m_ts_end;}
-    std::string GetSubType() const {return GetTag("SubType");}
+    std::string GetDescription() const {return m_dspt;}
+    // std::string GetSubType() const {return GetTag("SubType");}
 
     static EventSP MakeShared(Deserializer&);
-    
+
+    //TODO: the meanning of "stream" is not so clear
+    void SetStreamN(uint32_t n){m_stm_n = n;}
+    uint32_t GetStreamN() const {return m_stm_n;}
     // /////TODO: remove compatiable fun from EUDAQv1
     uint32_t GetEventNumber()const {return m_ev_n;}
     uint32_t GetRunNumber()const {return m_run_n;}
@@ -123,6 +130,8 @@ namespace eudaq {
     uint32_t m_stm_n;
     uint32_t m_run_n;
     uint32_t m_ev_n;
+    uint32_t m_tg_n;
+    uint32_t m_extend; //reserved
     uint64_t m_ts_begin;
     uint64_t m_ts_end;
     std::string m_dspt;

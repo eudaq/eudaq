@@ -9,8 +9,6 @@
 namespace eudaq {
   class RawFileReader;
   namespace{
-    auto dummy0 = Factory<FileReader>::Register<RawFileReader, std::string&>(cstr2hash("RawFileReader"));
-    auto dummy1 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("RawFileReader"));
     auto dummy2 = Factory<FileReader>::Register<RawFileReader, std::string&>(cstr2hash("raw"));
     auto dummy3 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("raw"));
   }
@@ -18,43 +16,27 @@ namespace eudaq {
   class RawFileReader : public FileReader {
   public:
     RawFileReader(const std::string& filename);
-    ~RawFileReader(){};
-    
-    unsigned RunNumber() const final override;
-    bool NextEvent(size_t skip = 0)final override;
-    EventSPC GetNextEvent()final override;
-    void Interrupt() final override { m_des.Interrupt(); }
-
+    EventSPC GetNextEvent()override;
   private:
-    FileDeserializer m_des;
-    EventSP m_ev;
-    unsigned m_ver;
+    std::unique_ptr<FileDeserializer> m_des;
+    std::string m_filename;
   };
 
-  RawFileReader::RawFileReader(const std::string& file):FileReader(file), m_des(Filename()),m_ver(1){
-    uint32_t id;
-    m_des.PreRead(id);
-    m_ev = Factory<eudaq::Event>::Create<Deserializer&>(id, m_des);
+  RawFileReader::RawFileReader(const std::string& filename): m_filename(filename){
+    
   }
-
-  bool RawFileReader::NextEvent(size_t skip) {
-    EventSP ev = nullptr;
-    bool result = m_des.ReadEvent(m_ver, ev, skip);
-    if (ev) m_ev = ev;
-    return result;
-  }
-
-  unsigned RawFileReader::RunNumber() const {
-    return m_ev->GetRunNumber();
-  }
-
 
   EventSPC RawFileReader::GetNextEvent(){
-    if (!NextEvent()) {
-      return nullptr;
+    if(!m_des){
+      m_des.reset(new FileDeserializer(m_filename));
+      //TODO: check sucess or fail
     }
-    return m_ev;
-
+    EventUP ev;
+    uint32_t id = -1;
+    m_des->PreRead(id);
+    if(id != -1)
+      ev = Factory<eudaq::Event>::Create<Deserializer&>(id, *m_des);
+    return ev;
   }
 
 }

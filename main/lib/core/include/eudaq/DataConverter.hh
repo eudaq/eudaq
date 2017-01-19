@@ -2,6 +2,7 @@
 #define DATACONVERTER_HH_
 
 #include "eudaq/Factory.hh"
+#include "eudaq/Logger.hh"
 #include "eudaq/Configuration.hh"
 #include <memory>
 

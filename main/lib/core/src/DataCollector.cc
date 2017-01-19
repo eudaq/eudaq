@@ -84,7 +84,6 @@ namespace eudaq {
         EUDAQ_THROW("You must configure before starting a run");
       }
       m_evt_c = 0;
-      m_writer->StartRun(GetRunNumber());
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     } catch (const Exception &e) {

@@ -20,7 +20,8 @@ namespace eudaq {
 					    cstr2hash("RawDataEvent"),
 					    run_n, dev_n);
     auto rawev = std::dynamic_pointer_cast<RawDataEvent>(ev);
-    rawev->SetSubType(dspt);
+    rawev->SetExtendWord(eudaq::str2hash(dspt));
+    rawev->SetDescription(dspt);
     rawev->SetEventN(ev_n);
     return rawev;
   }
@@ -31,10 +32,11 @@ namespace eudaq {
     EventUP ev = Factory<Event>::MakeUnique<const uint32_t&, const uint32_t&,
 					    const uint32_t&>
       (RawDataEvent::m_id_factory, cstr2hash("RawDataEvent"), run_n, dev_n);
-    ev->SetSubType(dspt);
+
+    ev->SetExtendWord(eudaq::str2hash(dspt));
+    ev->SetDescription(dspt);
     return ev;
   }
-
   
   RawDataEvent::block_t::block_t(Deserializer &des) {
     des.read(id);
@@ -59,7 +61,8 @@ namespace eudaq {
   RawDataEvent::RawDataEvent(const std::string& dspt, uint32_t dev_n, uint32_t run_n, uint32_t ev_n)
     : Event(cstr2hash("RawDataEvent"), run_n, dev_n){
     SetEventN(ev_n);
-    SetSubType(dspt);
+    SetExtendWord(eudaq::str2hash(dspt));
+    SetDescription(dspt);
   }
 
   RawDataEvent::RawDataEvent(Deserializer &ds) : Event(ds) {
@@ -72,7 +75,7 @@ namespace eudaq {
 
   void RawDataEvent::Print(std::ostream & os, size_t offset) const{
     os << std::string(offset, ' ') << "<RawDataEvent> \n";
-    os << std::string(offset + 2, ' ') << "<SubType> " << GetSubType() << "</SubType> \n";
+    os << std::string(offset + 2, ' ') << "<SubType> " << GetExtendWord() << "</SubType> \n";
     Event::Print(os,offset+2);
     os << std::string(offset + 2, ' ') << "<Block_Size> " << m_blocks.size() << "</Block_Size> \n";
     os << std::string(offset, ' ') << "</RawDataEvent> \n";

@@ -39,12 +39,11 @@ namespace eudaq {
   }
   
   Event::Event()
-    :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
+    :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_tg_n(0), m_extend(0), m_ts_begin(0), m_ts_end(0){
   }  
   
   Event::Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n)
-    :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_ts_begin(0), m_ts_end(0){
-    
+    :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_tg_n(0), m_extend(0), m_ts_begin(0), m_ts_end(0){  
   }
 
   Event::Event(Deserializer & ds) {
@@ -54,6 +53,9 @@ namespace eudaq {
     ds.read(m_stm_n);
     ds.read(m_run_n);
     ds.read(m_ev_n);
+    ds.read(m_tg_n);
+    ds.read(m_ev_n);
+    ds.read(m_extend);
     ds.read(m_ts_begin);
     ds.read(m_ts_end);
     ds.read(m_dspt);
@@ -74,6 +76,8 @@ namespace eudaq {
     ser.write(m_stm_n);
     ser.write(m_run_n);
     ser.write(m_ev_n);
+    ser.write(m_tg_n);
+    ser.write(m_extend);
     ser.write(m_ts_begin);
     ser.write(m_ts_end);
     ser.write(m_dspt);

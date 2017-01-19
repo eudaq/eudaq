@@ -20,43 +20,38 @@ namespace eudaq {
     auto dummy1 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("lcio"));
     auto dummy01 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("slcio"));
     auto dummy11 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("slcio"));
-    auto dummy2 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("LCFileWriter"));
-    auto dummy3 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("LCFileWriter"));
   }
 
   class LCFileWriter : public FileWriter {
   public:
-    LCFileWriter(const std::string &);
-    void StartRun(uint32_t) override;
+    LCFileWriter(const std::string &patt);
     void WriteEvent(EventSPC ev) override;
-    uint64_t FileBytes() const override {return -1;};
   private:
     std::unique_ptr<lcio::LCWriter> m_lcwriter;
     std::string m_filepattern;
-    ConfigurationSPC m_conf;
+    uint32_t m_run_n;
   };
 
-  LCFileWriter::LCFileWriter(const std::string &param){
-    m_filepattern = param;
-  }
-
-  void LCFileWriter::StartRun(unsigned runnumber) {
-    try {
-      m_lcwriter.reset(lcio::LCFactory::getInstance()->createLCWriter());
-      m_lcwriter->open(FileNamer(m_filepattern).Set('R', runnumber),
-		       lcio::LCIO::WRITE_NEW); 
-    } catch (const lcio::IOException &e) {
-      std::cout << e.what() << std::endl;
-      /// FIXME Error message to run control and logger
-    }
+  LCFileWriter::LCFileWriter(const std::string &patt){
+    m_filepattern = patt;
   }
 
   void LCFileWriter::WriteEvent(EventSPC ev) {
-    if (!m_lcwriter)
+    uint32_t run_n = ev->GetRunN();
+    if(!m_lcwriter || m_run_n != run_n){
+      try {
+	m_lcwriter.reset(lcio::LCFactory::getInstance()->createLCWriter());
+	m_lcwriter->open(FileNamer(m_filepattern).Set('R', run_n),
+			 lcio::LCIO::WRITE_NEW);
+	m_run_n = run_n;
+      } catch (const lcio::IOException &e) {
+	EUDAQ_THROW(std::string("Fail to open LCIO file")+e.what());
+      }
+    }
+    if(!m_lcwriter)
       EUDAQ_THROW("LCFileWriter: Attempt to write unopened file");
     LCEventSP lcevent(new lcio::LCEventImpl);
-    LCEventConverter::Convert(ev, lcevent, m_conf);
+    LCEventConverter::Convert(ev, lcevent, GetConfiguration());
     m_lcwriter->writeEvent(lcevent.get());
   }
-
 }

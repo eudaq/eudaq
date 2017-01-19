@@ -1,8 +1,9 @@
 #ifndef EUDAQ_INCLUDED_FileWriter
 #define EUDAQ_INCLUDED_FileWriter
 
-#include "Factory.hh"
-#include "Event.hh"
+#include "eudaq/Factory.hh"
+#include "eudaq/Event.hh"
+#include "eudaq/Configuration.hh"
 
 #include <vector>
 #include <string>
@@ -19,6 +20,7 @@ namespace eudaq {
   extern template DLLEXPORT
   std::map<uint32_t, typename Factory<FileWriter>::UP_BASE (*)(std::string&&)>&
   Factory<FileWriter>::Instance<std::string&&>();
+
 #endif
   
   using FileWriterUP = Factory<FileWriter>::UP_BASE;
@@ -29,9 +31,12 @@ namespace eudaq {
   public:
     FileWriter();
     virtual ~FileWriter() {}
-    virtual void StartRun(unsigned runnumber) = 0;
+    void SetConfiguration(ConfigurationSPC c) {m_conf = c;};
+    ConfigurationSPC GetConfiguration() const {return m_conf;};
     virtual void WriteEvent(EventSPC ) = 0;
-    virtual uint64_t FileBytes() const = 0;
+    virtual uint64_t FileBytes() const {return 0;};
+  private:
+    ConfigurationSPC m_conf;
   };
 
 }
