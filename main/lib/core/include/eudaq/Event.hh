@@ -42,16 +42,12 @@ namespace eudaq {
   class DLLEXPORT Event : public Serializable{
   public:
     enum Flags {
-      FLAG_BORE = 1, 
-      FLAG_EORE = 2, 
-      FLAG_HITS = 4, 
-      FLAG_FAKE = 8, 
-      FLAG_SIMU = 16, 
-      FLAG_EUDAQ2 = 32, 
-      FLAG_PACKET = 64,
-      FLAG_BROKEN = 128,
-      FLAG_STATUS = 256,
-      FLAG_ALL = (unsigned)-1
+      FLAG_BORE = 0x1, 
+      FLAG_EORE = 0x2,
+      FLAG_NODATA = 0x4,
+      FLAG_PACKET = 0x8,
+      FLAG_TRIG = 0x10,
+      FLAG_TIME = 0x20
     };
 
     Event();
@@ -78,10 +74,15 @@ namespace eudaq {
     void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
     bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
 
+    void SetFlagTimestamp(){SetFlagBit(FLAG_TIME);}
+    void SetFlagTrigger(){SetFlagBit(FLAG_TRIG);}
+    bool IsFlagTimestamp() const {return IsFlagBit(FLAG_TIME);}
+    bool IsFlagTrigger() const {return IsFlagBit(FLAG_TRIG);}
+
     bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
     bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
-    void SetBORE() {SetTimestamp(0, 1); SetFlagBit(FLAG_BORE);}
-    void SetEORE() {SetTimestamp(-2, -1); SetFlagBit(FLAG_EORE);}
+    void SetBORE() {SetFlagBit(FLAG_BORE);}
+    void SetEORE() {SetFlagBit(FLAG_EORE);}
     
     void AddSubEvent(EventSPC ev){m_sub_events.push_back(ev);}
     uint32_t GetNumSubEvent() const {return m_sub_events.size();}
@@ -94,13 +95,15 @@ namespace eudaq {
     void SetEventN(uint32_t n){m_ev_n = n;}
     void SetDeviceN(uint32_t n){m_stm_n = n;}
     void SetTriggerN(uint32_t n){m_tg_n = n;}
+    void SetTriggerN(uint32_t n, bool flag){m_tg_n = n; if(flag) SetFlagBit(FLAG_TRIG);}
+    
     void SetExtendWord(uint32_t n){m_extend = n;}
     void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
     void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
+    void SetTimestamp(uint64_t tb, uint64_t te, uint32_t fq_num, uint32_t fq_den, bool flag);
     void SetDescription(const std::string &t) {m_dspt = t;}
-    // void SetSubType(const std::string &t) {SetTag("SubType", t);}
- 
+    
     uint32_t GetEventID() const {return m_type;};
     uint32_t GetVersion()const {return m_version;}
     uint32_t GetFlag() const { return m_flags;}
@@ -109,10 +112,11 @@ namespace eudaq {
     uint32_t GetDeviceN() const {return m_stm_n;}
     uint32_t GetTriggerN() const {return m_tg_n;}
     uint32_t GetExtendWord() const {return m_extend;}
+    uint64_t GetClockFrequentNum() const {return m_fq_num;}
+    uint64_t GetClockFrequentDen() const {return m_fq_den;}
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
     uint64_t GetTimestampEnd() const {return m_ts_end;}
     std::string GetDescription() const {return m_dspt;}
-    // std::string GetSubType() const {return GetTag("SubType");}
 
     static EventSP MakeShared(Deserializer&);
 
@@ -132,6 +136,8 @@ namespace eudaq {
     uint32_t m_ev_n;
     uint32_t m_tg_n;
     uint32_t m_extend; //reserved
+    uint32_t m_fq_num;
+    uint32_t m_fq_den;
     uint64_t m_ts_begin;
     uint64_t m_ts_end;
     std::string m_dspt;

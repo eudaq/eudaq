@@ -56,6 +56,8 @@ namespace eudaq {
     ds.read(m_tg_n);
     ds.read(m_ev_n);
     ds.read(m_extend);
+    ds.read(m_fq_num);
+    ds.read(m_fq_den);
     ds.read(m_ts_begin);
     ds.read(m_ts_end);
     ds.read(m_dspt);
@@ -68,6 +70,16 @@ namespace eudaq {
       m_sub_events.push_back(std::const_pointer_cast<const Event>(ev));
     }
   }
+
+  void Event::SetTimestamp(uint64_t tb, uint64_t te, uint32_t fq_num, uint32_t fq_den, bool flag){
+    m_ts_begin = tb;
+    m_ts_end = te;
+    m_fq_num = fq_num;
+    m_fq_den = fq_den;
+    if(flag)
+      SetFlagBit(FLAG_TIME);
+    
+  }
   
   void Event::Serialize(Serializer & ser) const {
     ser.write(m_type);
@@ -78,6 +90,8 @@ namespace eudaq {
     ser.write(m_ev_n);
     ser.write(m_tg_n);
     ser.write(m_extend);
+    ser.write(m_fq_num);
+    ser.write(m_fq_den);
     ser.write(m_ts_begin);
     ser.write(m_ts_end);
     ser.write(m_dspt);
