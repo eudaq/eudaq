@@ -81,11 +81,23 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	cd ..	
 
-	if [ ! -d $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware ]; then
+	if [ -d "$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software" ]; then
+		
+		echo "palpidefs source restored from cache as path exists:"
+		
+		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
+		
+	else
+		echo "palpidefs source not restored from cache - downloading from CERNBOX and unpacking"
+		
 		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
-
+		
 		unzip alice-its-alpide-software.zip
+	
+		rm -rf aliceitsalpidesoftware
+
 		mv alice-its-alpide-software-* aliceitsalpidesoftware
+	
 		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
