@@ -89,7 +89,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
-	cd cd $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
+	cd $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
 	cd pALPIDEfs-software
 
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
