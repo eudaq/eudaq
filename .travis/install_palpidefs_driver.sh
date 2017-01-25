@@ -68,10 +68,16 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	export CFLAGS="-I /Users/travis/tinyxml" $CFLAGS
 	export LDFLAGS="-L /Users/travis/tinyxml" $LDFLAGS
 	
-	mv /Users/travis/tinyxml/tinystr.o /Users/travis/tinyxml/tinystr.a
-	mv /Users/travis/tinyxml/tinyxmlerror.o /Users/travis/tinyxml/tinyxmlerror.a
-	mv /Users/travis/tinyxml/tinyxmlparser.o /Users/travis/tinyxml/tinyxmlparser.a
-	mv /Users/travis/tinyxml/tinyxml.o /Users/travis/tinyxml/tinyxml.a
+	pwd
+	
+	ls
+	
+	
+	
+	mv tinystr.o tinystr.a
+	mv tinyxmlerror.o tinyxmlerror.a
+	mv tinyxmlparser.o tinyxmlparser.a
+	mv tinyxml.o tinyxml.a
 	
 	cd ..	
 
@@ -83,7 +89,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 		zip -r aliceitsalpidesoftware.zip aliceitsalpidesoftware
 	fi
 
-	cd aliceitsalpidesoftware
+	cd cd $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
 	cd pALPIDEfs-software
 
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
