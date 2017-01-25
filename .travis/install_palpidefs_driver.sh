@@ -56,7 +56,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	#brew install tinyxml homebrew/dupes/expect libusb
 	brew install homebrew/dupes/expect libusb
 
-	wget -O tinyxml_2_6_2.zip http://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
+	wget -O tinyxml_2_6_2.zip https://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
 
 	unzip tinyxml_2_6_2.zip
 
