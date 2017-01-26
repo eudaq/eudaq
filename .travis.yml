@@ -106,8 +106,9 @@ install:
   - if [[ $BUILD_cmspixel == "ON" ]]; then source .travis/install_pxar.sh; fi
   - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
-  - if [[ $BUILD_palpidefs == "ON" ]] && [[ $os == "linux" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
-  - if [[ $BUILD_palpidefs == "ON" ]] && [[ $os == "osx" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=on -DTINYXML_INCLUDE_DIRS=/Users/travis/build/eudaq/eudaq/extern/tinyxml -DTINYXML_LIBRARIES=/Users/travis/build/eudaq/eudaq/extern/tinyxml -DUSE_ROOT=on"; fi  
+  - echo $TRAVIS_OS_NAME
+  - if [[ $BUILD_palpidefs == "ON" ]] && [[ $TRAVIS_OS_NAME== "linux" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
+  - if [[ $BUILD_palpidefs == "ON" ]] && [[ $TRAVIS_OS_NAME == "osx" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=on -DTINYXML_INCLUDE_DIRS=/Users/travis/build/eudaq/eudaq/extern/tinyxml -DTINYXML_LIBRARIES=/Users/travis/build/eudaq/eudaq/extern/tinyxml -DUSE_ROOT=on"; fi  
 
 before_script:
   - $CXX --version
