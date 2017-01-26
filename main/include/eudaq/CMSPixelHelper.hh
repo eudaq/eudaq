@@ -118,6 +118,7 @@ namespace eudaq {
       // a module with just one sensor plane:
       else
         GetSinglePlane(out, m_planeid, evt);
+      return true;
     }
 
 #if USE_LCIO && USE_EUTELESCOPE
