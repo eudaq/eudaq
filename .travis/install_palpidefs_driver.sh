@@ -103,7 +103,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	cd $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
 	cd pALPIDEfs-software
-/Users/travis/build/eudaq/eudaq/extern/tinyxml
+
 	sed -i '' '2s/.*/GIT_VERSION:=\"e1b12f7\"/' Makefile
 	sed -i '' '3s/.*/CFLAGS= -I\/Users\/travis\/build\/eudaq\/eudaq\/extern\/tinyxml -pipe -fPIC -DVERSION=\\"$(GIT_VERSION)\\" -g -std=c++11/' Makefile
 	sed -i '' '4s/.*/LINKFLAGS=\/Users\/travis\/build\/eudaq\/eudaq\/extern\/tinyxml\/tinystr.a \/Users\/travis\/build\/eudaq\/eudaq\/extern\/tinyxml\/tinyxmlerror.a \/Users\/travis\/build\/eudaq\/eudaq\/extern\/tinyxml\/tinyxmlparser.a \/Users\/travis\/build\/eudaq\/eudaq\/extern\/tinyxml\/tinyxml.a -lusb-1.0 /' Makefile		
