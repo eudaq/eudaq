@@ -108,7 +108,7 @@ install:
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
   - echo $TRAVIS_OS_NAME
   - if [[ $BUILD_palpidefs == "ON" ]] && [[ $TRAVIS_OS_NAME == "linux" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi
-  - if [[ $BUILD_palpidefs == "ON" ]] && [[ $TRAVIS_OS_NAME == "osx" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on"; export PATH="/Users/travis/build/eudaq/eudaq/extern/tinyxml:$PATH"; fi  
+  - if [[ $BUILD_palpidefs == "ON" ]] && [[ $TRAVIS_OS_NAME == "osx" ]] ; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware/pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on -DCMAKE_LIBRARY_PATH=/Users/travis/build/eudaq/eudaq/extern/tinyxml"; export PATH="/Users/travis/build/eudaq/eudaq/extern/tinyxml:$PATH"; fi  
 
 before_script:
   - $CXX --version
