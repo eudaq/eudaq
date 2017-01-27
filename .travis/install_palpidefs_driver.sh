@@ -55,10 +55,19 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	#brew -ls verbose tinyxml
 	#brew install tinyxml homebrew/dupes/expect libusb
 	brew install homebrew/dupes/expect libusb
+	
+	if [ -d "$TRAVIS_BUILD_DIR/extern/tinyxml" ]; then
+	
+		echo "tinyxml source restored from cache as path exists:"
+		
+	else
+		echo "tinyxml source not restored from cache - downloading from sourceforge and unpacking"
+		
+		wget -O tinyxml_2_6_2.zip https://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
+		
+		unzip tinyxml_2_6_2.zip
 
-	wget -O tinyxml_2_6_2.zip https://downloads.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
-
-	unzip tinyxml_2_6_2.zip
+	fi
 
 	cd tinyxml
 
