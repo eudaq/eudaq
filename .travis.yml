@@ -77,7 +77,7 @@ cache:
   - $TRAVIS_BUILD_DIR/extern/ZestSC1
   - $TRAVIS_BUILD_DIR/extern/tlufirmware
   - $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
-  - $TRAVIS_BUILD_DIR/extern/tinyxml  
+
   
 before_cache:
   - rm -r $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware
