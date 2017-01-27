@@ -71,11 +71,11 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	cd tinyxml
 
-	sed -i '22s/.*//' Makefile
-	sed -i '23s/.*//' Makefile
-	sed -i '24s/.*//' Makefile
-	sed -i '25s/.*//' Makefile
-	sed -i '26s/.*//' Makefile	
+	sed -i.bak '22s/.*//' Makefile
+	sed -i.bak '23s/.*//' Makefile
+	sed -i.bak '24s/.*//' Makefile
+	sed -i.bak '25s/.*//' Makefile
+	sed -i.bak '26s/.*//' Makefile	
 	
 	make
 	
