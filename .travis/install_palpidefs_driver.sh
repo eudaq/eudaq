@@ -64,9 +64,9 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	make
 	
-	export PATH=/Users/travis/tinyxml:$PATH
-	export CFLAGS="-I /Users/travis/tinyxml" $CFLAGS
-	export LDFLAGS="-L /Users/travis/tinyxml" $LDFLAGS
+	export PATH=/Users/travis/build/eudaq/eudaq/extern/tinyxml:$PATH
+	export CFLAGS="-I /Users/travis/build/eudaq/eudaq/extern/tinyxml" $CFLAGS
+	export LDFLAGS="-L /Users/travis/build/eudaq/eudaq/extern/tinyxml" $LDFLAGS
 	
 	pwd
 	
