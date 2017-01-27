@@ -86,7 +86,7 @@ before_cache:
 matrix:      
    include:   
       - os: osx
-        compiler: gcc      
+        compiler: clang      
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=ON       
     
 

@@ -62,6 +62,12 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 	cd tinyxml
 
+	sed -i '22s/.*//' Makefile
+	sed -i '23s/.*//' Makefile
+	sed -i '24s/.*//' Makefile
+	sed -i '25s/.*//' Makefile
+	sed -i '26s/.*//' Makefile	
+	
 	make
 	
 	export PATH=/Users/travis/build/eudaq/eudaq/extern/tinyxml:$PATH
