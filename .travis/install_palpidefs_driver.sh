@@ -74,10 +74,10 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	
 	
-	mv tinystr.o tinystr.a
-	mv tinyxmlerror.o tinyxmlerror.a
-	mv tinyxmlparser.o tinyxmlparser.a
-	mv tinyxml.o tinyxml.a
+	#mv tinystr.o tinystr.a
+	#mv tinyxmlerror.o tinyxmlerror.a
+	#mv tinyxmlparser.o tinyxmlparser.a
+	#mv tinyxml.o tinyxml.a
 	
 	cd ..	
 
