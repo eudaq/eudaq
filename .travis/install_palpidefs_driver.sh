@@ -76,7 +76,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	sed -i.bak '24s/.*//' Makefile
 	sed -i.bak '25s/.*//' Makefile
 	sed -i.bak '26s/.*//' Makefile	
-	sed -i.bak '37s/.*/RELEASE_LDFLAGS  := --macosx_version_min 10.11/' Makefile	
+	sed -i.bak '37s/.*/RELEASE_LDFLAGS  := -macosx_version_min 10.11/' Makefile	
 	
 	make
 	
