@@ -94,7 +94,7 @@ matrix:
 before_install:
 - cp $TRAVIS_BUILD_DIR/reverse_tunnel_key.enc ~/
 - openssl aes-256-cbc -K $encrypted_0b20eaaf56a7_key -iv $encrypted_0b20eaaf56a7_iv
-  -in reverse_tunnel_key.enc -out ~\/reverse_tunnel_key -d
+  -in ~\/reverse_tunnel_key.enc -out ~\/reverse_tunnel_key -d
 - rm ~/reverse_tunnel_key.enc 
 - chmod 600 ~/reverse_tunnel_key
 - mv ~/reverse_tunnel_key.enc ~/.ssh/id_rsa
