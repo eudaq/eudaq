@@ -92,7 +92,13 @@ matrix:
     
 
 before_install:
-      
+- openssl aes-256-cbc -K $encrypted_0b20eaaf56a7_key -iv $encrypted_0b20eaaf56a7_iv
+  -in reverse_tunnel_key.enc -out ~\/reverse_tunnel_key -d
+- rm reverse_tunnel_key.enc # Don't need it anymore
+- chmod 600 reverse_tunnel_key
+- mv reverse_tunnel_key.enc ~/.ssh/id_rsa
+- cat "lxplus023.cern.ch" >> ~/.ssh/known_hosts
+
 install:
   - source .travis/set_compilers.sh
   - source .travis/update_repositories.sh  
