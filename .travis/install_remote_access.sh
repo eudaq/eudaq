@@ -38,18 +38,18 @@
 # Creating screenshot at hanged builds  (after 5min)
 #################################################
 # Enable AT
-- sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.atrun.plist
+#- sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.atrun.plist
 
 # Prepare screenshot script to upload to remote ssh server
-- echo "screencapture screenshot.jpg" > screenshot.sh
-- echo "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -i ssh/travisci screenshot.jpg ubuntu@someremotehostonaws.compute.amazonaws.com:" >> screenshot.sh
-- cat screenshot.sh
-- chmod +x screenshot.sh
+#- echo "screencapture screenshot.jpg" > screenshot.sh
+#- echo "scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no  -i ssh/travisci screenshot.jpg ubuntu@someremotehostonaws.compute.amazonaws.com:" >> screenshot.sh
+#- cat screenshot.sh
+#- chmod +x screenshot.sh
 
 # After 5 minutes take a screenshot
-- at -f screenshot.sh now+5min
+#- at -f screenshot.sh now+5min
 
 #################################################
 # Enable Apple Remote mgmt of system (can be tunneled using same mechanism as ssh tunnel -R)
 #################################################
-- sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -off -restart -agent -privs -all -allowAccessFor -allUsers
+#- sudo /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -off -restart -agent -privs -all -allowAccessFor -allUsers
