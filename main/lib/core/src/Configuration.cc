@@ -26,12 +26,18 @@ namespace eudaq {
   }
 
   Configuration::Configuration(const Configuration &other, const std::string &section){
+    auto it = other.m_config.find("");
+    if(it != other.m_config.end())
+      m_config[""] = it->second;
+    else
+      m_config[""];
     for(auto &e: other.m_config){
       if(e.first == section){
 	m_config[section] = e.second;
 	SetSection(section);
       }
     }
+    
   }
 
   std::unique_ptr<Configuration> Configuration::MakeUniqueReadFile(const std::string &path){
@@ -188,7 +194,7 @@ namespace eudaq {
   }
 
   void Configuration::Print(std::ostream &os, size_t offset) const {
-    os << std::string(offset, ' ') << "<Configigration>\n";
+    os << std::string(offset, ' ') << "<Configuration>\n";
     for(auto &sect: m_config){
       os << std::string(offset + 2, ' ') << "<Section title=\""<< sect.first<<"\">\n";
       for(auto &key: sect.second){
@@ -196,7 +202,7 @@ namespace eudaq {
       }
       os << std::string(offset + 2, ' ') << "</Section>\n";
     }
-    os << std::string(offset, ' ') << "</Configigration>\n";
+    os << std::string(offset, ' ') << "</Configuration>\n";
   }
 
   void Configuration::Print() const { Print(std::cout); }

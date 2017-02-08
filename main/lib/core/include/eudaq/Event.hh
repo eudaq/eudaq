@@ -84,7 +84,7 @@ namespace eudaq {
     void SetBORE() {SetFlagBit(FLAG_BORE);}
     void SetEORE() {SetFlagBit(FLAG_EORE);}
     
-    void AddSubEvent(EventSPC ev){m_sub_events.push_back(ev);}
+    void AddSubEvent(EventSPC ev);
     uint32_t GetNumSubEvent() const {return m_sub_events.size();}
     EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
     
@@ -94,14 +94,11 @@ namespace eudaq {
     void SetRunN(uint32_t n){m_run_n = n;}
     void SetEventN(uint32_t n){m_ev_n = n;}
     void SetDeviceN(uint32_t n){m_stm_n = n;}
-    void SetTriggerN(uint32_t n){m_tg_n = n;}
-    void SetTriggerN(uint32_t n, bool flag){m_tg_n = n; if(flag) SetFlagBit(FLAG_TRIG);}
-    
+    void SetTriggerN(uint32_t n, bool flag = true){m_tg_n = n; if(flag) SetFlagBit(FLAG_TRIG);}
     void SetExtendWord(uint32_t n){m_extend = n;}
     void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
     void SetTimestampEnd(uint64_t t){m_ts_end = t;}
-    void SetTimestamp(uint64_t tb, uint64_t te){m_ts_begin = tb; m_ts_end = te;}
-    void SetTimestamp(uint64_t tb, uint64_t te, uint32_t fq_num, uint32_t fq_den, bool flag);
+    void SetTimestamp(uint64_t tb, uint64_t te, bool flag = true);
     void SetDescription(const std::string &t) {m_dspt = t;}
     
     uint32_t GetEventID() const {return m_type;};
@@ -112,8 +109,6 @@ namespace eudaq {
     uint32_t GetDeviceN() const {return m_stm_n;}
     uint32_t GetTriggerN() const {return m_tg_n;}
     uint32_t GetExtendWord() const {return m_extend;}
-    uint64_t GetClockFrequentNum() const {return m_fq_num;}
-    uint64_t GetClockFrequentDen() const {return m_fq_den;}
     uint64_t GetTimestampBegin() const {return m_ts_begin;}
     uint64_t GetTimestampEnd() const {return m_ts_end;}
     std::string GetDescription() const {return m_dspt;}
@@ -136,13 +131,11 @@ namespace eudaq {
     uint32_t m_ev_n;
     uint32_t m_tg_n;
     uint32_t m_extend; //reserved
-    uint32_t m_fq_num;
-    uint32_t m_fq_den;
     uint64_t m_ts_begin;
     uint64_t m_ts_end;
     std::string m_dspt;
     std::map<std::string, std::string> m_tags;
-    std::vector<EventSPC> m_sub_events;
+    std::vector<EventSPC> m_sub_events; //TODO::  std::set
   };
 }
 

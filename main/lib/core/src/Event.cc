@@ -54,10 +54,7 @@ namespace eudaq {
     ds.read(m_run_n);
     ds.read(m_ev_n);
     ds.read(m_tg_n);
-    ds.read(m_ev_n);
     ds.read(m_extend);
-    ds.read(m_fq_num);
-    ds.read(m_fq_den);
     ds.read(m_ts_begin);
     ds.read(m_ts_end);
     ds.read(m_dspt);
@@ -71,14 +68,23 @@ namespace eudaq {
     }
   }
 
-  void Event::SetTimestamp(uint64_t tb, uint64_t te, uint32_t fq_num, uint32_t fq_den, bool flag){
+
+  void Event::AddSubEvent(EventSPC ev){
+    bool exist = false;
+    for(auto &e : m_sub_events){
+      if(ev == e){
+	exist = true;
+      }
+    }
+    if(!exist && ev)
+      m_sub_events.push_back(ev);
+    }
+  
+  void Event::SetTimestamp(uint64_t tb, uint64_t te, bool flag){
     m_ts_begin = tb;
     m_ts_end = te;
-    m_fq_num = fq_num;
-    m_fq_den = fq_den;
     if(flag)
       SetFlagBit(FLAG_TIME);
-    
   }
   
   void Event::Serialize(Serializer & ser) const {
@@ -90,8 +96,6 @@ namespace eudaq {
     ser.write(m_ev_n);
     ser.write(m_tg_n);
     ser.write(m_extend);
-    ser.write(m_fq_num);
-    ser.write(m_fq_den);
     ser.write(m_ts_begin);
     ser.write(m_ts_end);
     ser.write(m_dspt);
@@ -117,6 +121,7 @@ namespace eudaq {
     os << std::string(offset + 2, ' ') << "<RunN> " << m_run_n << " </RunN>\n";
     os << std::string(offset + 2, ' ') << "<StreamN> " << m_stm_n << " </StreamN>\n";
     os << std::string(offset + 2, ' ') << "<EventN> " << m_ev_n << " </EventN>\n";
+    os << std::string(offset + 2, ' ') << "<TriggerN> " << m_tg_n << " </TriggerN>\n";
     os << std::string(offset + 2, ' ') << "<Timestamp> 0x" << to_hex(m_ts_begin, 16)
        <<"  ->  0x"<< to_hex(m_ts_end, 16) << " </Timestamp>\n";
     os << std::string(offset + 2, ' ') << "<Timestamp> " << m_ts_begin

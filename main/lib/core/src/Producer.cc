@@ -34,11 +34,12 @@ namespace eudaq {
   void Producer::OnConfigure(){
     try{
       auto conf = GetConfiguration();
-      if(conf)
+      if(conf){
 	EUDAQ_INFO("Configuring ...("+ conf->Name()+")");
+	m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
+      }
       DoConfigure();
       EUDAQ_INFO("Configured");
-      m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
       SetStatus(Status::STATE_CONF, "Configured");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
