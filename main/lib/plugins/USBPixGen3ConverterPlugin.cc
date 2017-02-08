@@ -36,14 +36,18 @@
 #include "eudaq/Configuration.hh"
 
 namespace eudaq {
-  //Will be set as the EVENT_TYPE for the different versions of this producer
 
 static const std::string USBPIX_GEN3_NAME = "USBPIX_GEN3";
 
 class USBPixGen3ConverterPlugin: public eudaq::DataConverterPlugin {
 
+  private:
+    std::vector<int> attachedBoards;
+    mutable std::map<int, bool> boardInitialized;
+    mutable std::map<int, std::vector<int>> boardChannels;
+
   public:
-	USBPixGen3ConverterPlugin(): DataConverterPlugin(USBPIX_GEN3_NAME){};
+  USBPixGen3ConverterPlugin(): DataConverterPlugin(USBPIX_GEN3_NAME) {};
 
 	std::string EVENT_TYPE = USBPIX_GEN3_NAME;
 
@@ -54,61 +58,58 @@ class USBPixGen3ConverterPlugin: public eudaq::DataConverterPlugin {
       return false;
     }
 
+
+    virtual void Initialize(const Event & bore, const Configuration & cnf) {
+      int boardID = bore.GetTag("board", -999);
+
+      cnf.Print(std::cout);
+
+      if(boardID != -999) {
+          attachedBoards.emplace_back(boardID);
+          boardChannels[boardID] = std::vector<int>();
+          boardInitialized[boardID] = false;
+          std::cout << "Added USBPix Board: " << boardID << " to list!" << std::endl;
+      } 
+    }
+
     /** Returns the StandardEvent version of the event.
      */
     virtual bool GetStandardSubEvent(StandardEvent& sev, eudaq::Event const & ev) const {
-
-		StandardPlane plane1(1, EVENT_TYPE, "USBPIX_GEN3");
-    StandardPlane plane2(2, EVENT_TYPE, "USBPIX_GEN3");
-    StandardPlane plane3(3, EVENT_TYPE, "USBPIX_GEN3");
-		plane1.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-		plane2.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-    plane3.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-
-		//If we get here it must be a data event
+      
+    std::map<int, StandardPlane> StandardPlaneMap;
 		auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
-	  auto pixelVec = decodeFEI4Data(evRaw.GetBlock(0));
-    //auto& dataVec = evRaw.GetBlock(0);
+    auto pixelVec = decodeFEI4Data(evRaw.GetBlock(0));
+    int boardID = evRaw.GetTag("board", int());
 
- //std::cout << "Data length: " << dataVec.size() << std::endl;
-/*
- size_t x = 0;
- for(auto entry: dataVec) {
-   if((x++)%4 == 0) std::cout << "----------\n";
-   std::cout << "Data element: " << std::bitset<8>(entry) << std::endl;
- }*/
- /*
-		for(size_t index = 0;  index < dataVec.size(); index+=4) {
-      uint32_t data = ( static_cast<uint32_t>(dataVec[index+3]) << 24 ) | 
-                      ( static_cast<uint32_t>(dataVec[index+2]) << 16 ) | 
-                      ( static_cast<uint32_t>(dataVec[index+1]) << 8 ) | 
-                      ( static_cast<uint32_t>(dataVec[index+0]) );
-      std::cout << "Data element: " << std::bitset<32>(data) << std::endl;
+      if(!boardInitialized.at(boardID)) {
+      boardChannels.at(boardID) = getChannels(evRaw.GetBlock(0));
+        if(!boardChannels.at(boardID).empty()) boardInitialized.at(boardID) = true;
+        //for(auto channel: channels){
+        //  std::cout << channel << ' ';
+        //} 
       }
-*/
-		for(auto& hitPixel: pixelVec) {
-      //std::cout << "Got a pixel!" << std::endl;
-      switch(hitPixel.channel) {
-        case 1:
-          plane1.PushPixel(hitPixel.x, hitPixel.y, 3, false, 0);
-          break;
-        case 2:
-          plane2.PushPixel(hitPixel.x, hitPixel.y, 3, false, 0);
-          break;
-        case 3:
-          plane3.PushPixel(hitPixel.x, hitPixel.y, 3, false, 0);
-          break;
+      for(auto channel: boardChannels.at(boardID)){
+            std::string planeName = "USBPIX_GEN3_BOARD_" + to_string(boardID);
+            auto pair = std::make_pair(channel, StandardPlane(channel, EVENT_TYPE, planeName));
+            pair.second.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+            StandardPlaneMap.insert(pair);
       }
-		}
 
-		sev.AddPlane(plane1);
-    sev.AddPlane(plane2);
-    sev.AddPlane(plane3);
+
+    int hitDiscConf = 0;
+
+  for(auto& hitPixel: pixelVec) {
+    StandardPlaneMap[hitPixel.channel].PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
+  }
+
+    for(auto& planePair: StandardPlaneMap) {
+      sev.AddPlane(planePair.second);
+    }
       return true;
     }
 
-
 	static USBPixGen3ConverterPlugin m_instance;
+
 };
 
 //Instantiate the converter plugin instance
