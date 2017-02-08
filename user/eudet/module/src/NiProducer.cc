@@ -45,12 +45,10 @@ private:
   unsigned char conf_parameters[10];
 };
 
-
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
     Register<NiProducer, const std::string&, const std::string&>(eudaq::cstr2hash("NiProducer"));
 }
-
 
 NiProducer::NiProducer(const std::string name, const std::string &runcontrol)
   : eudaq::Producer(name, runcontrol){
@@ -67,23 +65,38 @@ NiProducer::~NiProducer(){
 }
 
 void NiProducer::DataLoop(){
-  while(m_running){
+  ni_control->Start();
+  bool isbegin = true;
+  while(1){
+    auto evup = eudaq::RawDataEvent::MakeUnique("TelRawDataEvent");
     datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
     std::vector<unsigned char> mimosa_data_0(datalength1);
-    mimosa_data_0 =
-      ni_control->DataTransportClientSocket_ReadData(datalength1);
-     
+    mimosa_data_0 = ni_control->DataTransportClientSocket_ReadData(datalength1);
     datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");
     std::vector<unsigned char> mimosa_data_1(datalength2);
-    mimosa_data_1 =
-      ni_control->DataTransportClientSocket_ReadData(datalength2);
-
-    auto evup = eudaq::RawDataEvent::MakeUnique("TelRawDataEvent");
+    mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
     auto ev = dynamic_cast<eudaq::RawDataEvent*>(evup.get());
     ev->AddBlock(0, mimosa_data_0);
     ev->AddBlock(1, mimosa_data_1);
+    if(isbegin){
+      isbegin = false;
+      evup->SetBORE();
+      evup->SetTag("DET", "MIMOSA26");
+      evup->SetTag("MODE", "ZS2");
+      evup->SetTag("BOARDS", NumBoards);
+      for (unsigned char i = 0; i < 6; i++)
+	evup->SetTag("ID" + std::to_string(i), std::to_string(MimosaID[i]));
+      for (unsigned char i = 0; i < 6; i++)
+	evup->SetTag("MIMOSA_EN" + std::to_string(i), std::to_string(MimosaEn[i]));
+    }
+    if(!m_running){
+      evup->SetEORE();
+      SendEvent(std::move(evup));
+      break;
+    }    
     SendEvent(std::move(evup));
-  };
+  }
+  ni_control->Stop();
 }
 
 void NiProducer::DoConfigure() {
@@ -183,35 +196,18 @@ void NiProducer::DoConfigure() {
   }
 }
 
-void NiProducer::DoStartRun() {
-  auto ev = eudaq::RawDataEvent::MakeUnique("TelRawDataEvent");
-  ev->SetBORE();
-  ev->SetTag("DET", "MIMOSA26");
-  ev->SetTag("MODE", "ZS2");
-  ev->SetTag("BOARDS", NumBoards);
-  for (unsigned char i = 0; i < 6; i++)
-    ev->SetTag("ID" + std::to_string(i), std::to_string(MimosaID[i]));
-  for (unsigned char i = 0; i < 6; i++)
-    ev->SetTag("MIMOSA_EN" + std::to_string(i), std::to_string(MimosaEn[i]));
-  SendEvent(std::move(ev));
-  eudaq::mSleep(500);
-  ni_control->Start();
-  m_running = true;
-  if(!m_thd_data.joinable())
-    m_thd_data = std::thread(&NiProducer::DataLoop, this);
-  else
+void NiProducer::DoStartRun(){
+  if(m_thd_data.joinable())
     EUDAQ_THROW("NiProducer::OnStartRun(): Last run is not stopped.");
+
+  m_running = true;
+  m_thd_data = std::thread(&NiProducer::DataLoop, this);
 }
 
 void NiProducer::DoStopRun() {
-  ni_control->Stop();
-  eudaq::mSleep(5000);
   m_running = false;
   if(m_thd_data.joinable())
     m_thd_data.join();
-  auto ev = eudaq::RawDataEvent::MakeUnique("TelRawDataEvent");
-  ev->SetEORE();
-  SendEvent(std::move(ev));
 }
 
 void NiProducer::DoTerminate() {
