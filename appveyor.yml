@@ -190,17 +190,17 @@ build_script:
 - cmd: msbuild INSTALL.vcxproj
 
 after_build:
-- cmd: 7z a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
+- cmd: 7z -oc:\ a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
 
 artifacts:
-  - path: eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
+  - path: c:\eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
     name: Releases
 
 deploy:
   provider: GitHub
   auth_token:
     secure: "FXNTEGEjMMl3FZLCp4cXO0Szn3CVs4lEf+pPxz6vbb9q/PHkD5N2gAgOR+zljtll"
-  artifact: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
+  artifact: c:\eudaq_win32_%EUDAQ_LIB_VERSION%.zip
   draft: false
   prerelease: false
   on:
