@@ -26,7 +26,7 @@ namespace eudaq {
       _unfinishedPacketState = UnfinishedPacketStates::DONE;
       switch (_producer->getEventMode()) {
          case AHCALProducer::EventMode::TRIGID:
-            _lastBuiltEventNr = _producer->getLdaTrigidOffset() - 1;
+            _lastBuiltEventNr = _producer->getGenerateTriggerIDFrom() - 1;
             break;
          case AHCALProducer::EventMode::ROC:
             default:
@@ -359,7 +359,7 @@ namespace eudaq {
 //            buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
          }
       }
-      catch (BufferProcessigExceptions e) {
+      catch (BufferProcessigExceptions &e) {
 //all data in buffer processed (or not enough data in the buffer)
 //std::cout << "DEBUG: MAP sizes: " << _LDAAsicData.size() << "\t" << _LDATimestampData.size();
 //std::cout << "\t last ROC: " << _LDAAsicData.rbegin()->first << "\t" << _LDATimestampData.rbegin()->first << std::endl;
@@ -405,6 +405,7 @@ namespace eudaq {
    }
 
    void ScReader::buildEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll) {
+      if (_producer->getDebugKeepBuffered()) return;
       std::lock_guard<std::mutex> lock(_eventBuildingQueueMutex); //minimal lock for pushing new event
       switch (_producer->getEventMode()) {
          case AHCALProducer::EventMode::ROC:
@@ -413,9 +414,13 @@ namespace eudaq {
          case AHCALProducer::EventMode::TRIGID:
             buildTRIGIDEvents(EventQueue, dumpAll);
             break;
-
-         case AHCALProducer::EventMode::BUILT_BXID_ALL:
-            default:
+         case AHCALProducer::EventMode::BUILD_BXID_ALL:
+            buildBXIDEvents(EventQueue, dumpAll);
+            break;
+         case AHCALProducer::EventMode::BUILD_BXID_VALIDATED:
+            buildValidatedBXIDEvents(EventQueue, dumpAll);
+            break;
+         default:
             break;
       }
       //append temperature etc.
@@ -433,71 +438,174 @@ namespace eudaq {
       }
    }
 
+   void ScReader::prepareEudaqRawPacket(eudaq::RawDataEvent * ev) {
+      string s = "EUDAQDataScCAL";
+      ev->AddBlock(0, s.c_str(), s.length());
+      s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
+      ev->AddBlock(1, s.c_str(), s.length());
+      unsigned int times[1];
+      struct timeval tv;
+      ::gettimeofday(&tv, NULL);
+      times[0] = tv.tv_sec;
+      ev->AddBlock(2, times, sizeof(times));
+      ev->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
+      ev->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
+      ev->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
+      ev->AddBlock(6, vector<uint32_t>()); // dummy block to be filled later with cycledata(start, stop, trigger)
+   }
+
+   void ScReader::buildValidatedBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll) {
+      int keptEventCount = dumpAll ? 0 : 3; //how many ROCs to keep in the data maps
+      //      keptEventCount = 100000;
+      while (_LDAAsicData.size() > keptEventCount) { //at least 2 finished ROC
+         int roc = _LDAAsicData.begin()->first; //_LDAAsicData.begin()->first;
+         std::vector<std::vector<int> > &data = _LDAAsicData.begin()->second;
+
+         //create a table with BXIDs
+         std::map<int, std::vector<std::vector<int> > > bxids;
+         //std::cout << "processing readout cycle " << roc << std::endl;
+
+         //data from the readoutcycle to be sorted by BXID.
+         for (std::vector<int> &dit : data) { // = data.begin(); dit != data.end(); ++dit
+            int bxid = (int) dit[1];
+            //std::cout << "bxid " << (int) dit[1] << "\t chipid: " << (int) dit[3] << std::endl;
+            std::vector<std::vector<int> >& sameBxidPackets = bxids.insert( { bxid, std::vector<std::vector<int> >() }).first->second;
+            sameBxidPackets.push_back(std::move(dit));
+         }
+
+         uint64_t startTS = 0;
+
+         //get the list of bxid for the triggerIDs timestamps
+         std::multimap<int, std::tuple<int, uint64_t> > triggerBxids; //calculated_bxid, triggerid, timestamp
+         if (_LDATimestampData.count(roc)) {
+            //get the start of acquisition timestamp
+            startTS = _LDATimestampData[roc].TS_Start;
+            for (int i = 0; i < _LDATimestampData[roc].TS_Triggers.size(); ++i) {
+               if (!startTS) {
+                  std::cout << "ERROR EB: Start timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
+                  break;
+               }
+               if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 100 * C_MILLISECOND_TICS) {
+                  std::cout << "ERROR EB: Length of the acquisition is longer than 100 ms in run " << roc << std::endl;
+               }
+
+               uint64_t trigTS = _LDATimestampData[roc].TS_Triggers[i];
+               int bxid = ((int64_t) trigTS - (int64_t) startTS - (int64_t) _producer->getAhcalbxid0Offset()) / _producer->getAhcalbxidWidth();
+               //if ((bxid < 0) || (bxid > 4096)) std::cout << "\033[34mWARNING EB: calculated trigger bxid not in range: " << bxid << " in ROC " << roc << "\033[0m" << std::endl;
+               int triggerId = _LDATimestampData[roc].TriggerIDs[i];
+               triggerBxids.insert( { bxid, std::tuple<int, uint64_t>(triggerId, trigTS) });
+               //std::pair std::pair<int, uint64_t>(triggerId, trigTS);
+               //std::cout << "Trigger info BXID=" << bxid << "\tTrigID=" << triggerId << std::endl;
+            }
+            _LDATimestampData.erase(roc);
+         }
+         else {
+            std::cout << "ERROR EB: matching LDA timestamp information not found for ROC " << roc << std::endl;
+         }
+
+         //iterate over bxids from single ROC
+         for (std::pair<const int, std::vector<std::vector<int> > > & sameBxidPackets : bxids) {
+            //std::cout << "bxid: " << sameBxidPackets.first << "\tsize: " << sameBxidPackets.second.size() << std::endl;
+            int bxid = sameBxidPackets.first;
+
+            //there might be more external triggerIDs within one BXID, therefore we iterate over everything within the bxid
+            for (std::multimap<int, std::tuple<int, uint64_t> >::iterator trigIt = triggerBxids.find(bxid); trigIt != triggerBxids.end(); trigIt = triggerBxids.find(bxid)) {
+               _RunTimesStatistics.builtBXIDs++;
+
+               //trigger ID within the ROC is found at this place
+               int rawTrigId = std::get<0>(trigIt->second);
+               while ((++_lastBuiltEventNr < (rawTrigId - _producer->getLdaTrigidOffset()))
+                     && (_producer->getInsertDummyPackets())) {
+                  //std::cout << "WARNING EB: inserting a dummy trigger: " << _lastBuiltEventNr << ", because " << _LDATimestampData[roc].TriggerIDs[i] << " is next" << std::endl;
+                  insertDummyEvent(EventQueue, -1, _lastBuiltEventNr, false);
+               }
+
+               eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+               eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
+               prepareEudaqRawPacket(nev_raw);
+               nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset(), false);
+               if (startTS) {
+                  nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset());
+                  nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + _producer->getAhcalbxidWidth());
+               }
+               for (auto & minipacket : sameBxidPackets.second) {
+                  if (minipacket.size()) {
+                     if (triggerBxids.count(bxid) > 1) {
+                        std::cout <<
+                              nev_raw->AddBlock(nev_raw->NumBlocks(), minipacket);
+                     } else {
+                        nev_raw->AddBlock(nev_raw->NumBlocks(), std::move(minipacket));
+                     }
+                  }
+               }
+               EventQueue.push_back(std::move(nev));
+               triggerBxids.erase(trigIt);
+            }
+
+            if (!triggerBxids.count(sameBxidPackets.first)) {
+               //no matching trigger validation information. Move on to another trigger
+               continue;
+            }
+         }
+         _LDAAsicData.erase(_LDAAsicData.begin());
+      }
+   }
+
    void ScReader::buildBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll) {
       int keptEventCount = dumpAll ? 0 : 3; //how many ROCs to keep in the data maps
 //      keptEventCount = 100000;
       while (_LDAAsicData.size() > keptEventCount) { //at least 2 finished ROC
-         while (++_lastBuiltEventNr < _LDAAsicData.begin()->first)
-            insertDummyEvent(EventQueue, _lastBuiltEventNr);
          int roc = _LDAAsicData.begin()->first; //_LDAAsicData.begin()->first;
          std::vector<std::vector<int> > &data = _LDAAsicData.begin()->second;
-//         eudaq::RawDataEvent *ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-//         std::cout << "DEBUG: Creating event with ROC " << roc << std::endl;
-//         eudaq::RawDataEvent *nev = new eudaq::RawDataEvent("CaliceObject", 0, _runNo, roc);
-//         eudaq::EventUP nevup (new eudaq::RawDataEvent("CaliceObject", 0, _runNo, roc));
-         eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-         eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
-         nev->SetEventN(roc);
-         nev->SetRunN(_runNo);
-         string s = "EUDAQDataScCAL";
-         nev_raw->AddBlock(0, s.c_str(), s.length());
-         s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
-         nev_raw->AddBlock(1, s.c_str(), s.length());
-         unsigned int times[1];
-         struct timeval tv;
-         ::gettimeofday(&tv, NULL);
-         times[0] = tv.tv_sec;
-         nev_raw->AddBlock(2, times, sizeof(times));
-         nev_raw->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
-         nev_raw->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
-         nev_raw->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
-         nev_raw->AddBlock(6, vector<uint32_t>()); // dummy block to be filled later with cycledata(start, stop, trigger)
-         for (std::vector<std::vector<int> >::iterator idata = data.begin(); idata != data.end(); ++idata) {
-            if (idata->size()) {
-               nev_raw->AddBlock(nev_raw->NumBlocks(), std::move(*idata));
-            }
+
+         //create a table with BXIDs
+         std::map<int, std::vector<std::vector<int> > > bxids;
+         //std::cout << "processing readout cycle " << roc << std::endl;
+
+         //data from the readoutcycle to be sorted by BXID.
+         for (std::vector<int> &dit : data) { // = data.begin(); dit != data.end(); ++dit
+            int bxid = (int) dit[1];
+            //std::cout << "bxid " << (int) dit[1] << "\t chipid: " << (int) dit[3] << std::endl;
+            std::vector<std::vector<int> >& sameBxidPackets = bxids.insert( { bxid, std::vector<std::vector<int> >() }).first->second;
+            sameBxidPackets.push_back(std::move(dit));
          }
-//nev->Print(std::cout, 0);
+
+         //get the start of acquisition timestamp
+         uint64_t startTS = 0;
          if (_LDATimestampData.count(roc)) {
-            const uint64_t hundred_miliseconds = (uint64_t) 4000000;
-            if (_LDATimestampData[roc].TS_Start && _LDATimestampData[roc].TS_Stop) {
-               //save timestamp only if both timestamps are present. Otherwise there was something wrong in the data
-               nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop);
-            } else {
-               std::cout << "ERROR: one of the timestamp is incorrect in ROC " << roc << " Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
+            startTS = _LDATimestampData[roc].TS_Start;
+            if (!_LDATimestampData[roc].TS_Start) {
+               std::cout << "ERROR: Start timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
             }
-            if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > hundred_miliseconds) {
+            if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 100 * C_MILLISECOND_TICS) {
                std::cout << "ERROR: Length of the acquisition is longer than 100 ms in run " << roc << std::endl;
             }
-            std::vector<uint32_t> cycledata;
-            cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start));
-            cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start >> 32));
-            cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Stop));
-            cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Stop >> 32));
-            if (_LDATimestampData[roc].TS_Triggers.size()) {
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Triggers.back()));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Triggers.back() >> 32));
-            } else {
-               cycledata.push_back((uint32_t) 0);
-               cycledata.push_back((uint32_t) 0);
-            }
-            nev_raw->AppendBlock(6, cycleData);
             _LDATimestampData.erase(roc);
          } else {
             std::cout << "ERROR: matching LDA timestamp information not found for ROC " << roc << std::endl;
          }
+         //----------------------------------------------------------
 
-         EventQueue.push_back(std::move(nev));
+         for (std::pair<const int, std::vector<std::vector<int> > > & sameBxidPackets : bxids) {
+            _RunTimesStatistics.builtBXIDs++;
+            //std::cout << "bxid: " << sameBxidPackets.first << "\tsize: " << sameBxidPackets.second.size() << std::endl;
+
+            ++_lastBuiltEventNr;
+            eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+            eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
+            prepareEudaqRawPacket(nev_raw);
+
+            if (startTS) {
+               nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset());
+               nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + _producer->getAhcalbxidWidth());
+            }
+            for (auto & minipacket : sameBxidPackets.second) {
+               if (minipacket.size()) {
+                  nev_raw->AddBlock(nev_raw->NumBlocks(), std::move(minipacket));
+               }
+            }
+            EventQueue.push_back(std::move(nev));
+         }
          _LDAAsicData.erase(_LDAAsicData.begin());
       }
    }
@@ -506,31 +614,16 @@ namespace eudaq {
       int keptEventCount = dumpAll ? 0 : 3; //how many ROCs to keep in the data maps
       //      keptEventCount = 100000;
       while (_LDAAsicData.size() > keptEventCount) { //at least 2 finished ROC
-         while (++_lastBuiltEventNr < _LDAAsicData.begin()->first)
-            insertDummyEvent(EventQueue, _lastBuiltEventNr);
+
+         while ((++_lastBuiltEventNr < _LDAAsicData.begin()->first) && _producer->getInsertDummyPackets())
+            insertDummyEvent(EventQueue, _lastBuiltEventNr, -1, false);
          int roc = _LDAAsicData.begin()->first; //_LDAAsicData.begin()->first;
          std::vector<std::vector<int> > &data = _LDAAsicData.begin()->second;
-         //         eudaq::RawDataEvent *ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-         //         std::cout << "DEBUG: Creating event with ROC " << roc << std::endl;
-         //         eudaq::RawDataEvent *nev = new eudaq::RawDataEvent("CaliceObject", 0, _runNo, roc);
-         //         eudaq::EventUP nevup (new eudaq::RawDataEvent("CaliceObject", 0, _runNo, roc));
          eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
          eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
+         prepareEudaqRawPacket(nev_raw);
+
          nev->SetEventN(roc);
-         nev->SetRunN(_runNo);
-         string s = "EUDAQDataScCAL";
-         nev_raw->AddBlock(0, s.c_str(), s.length());
-         s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
-         nev_raw->AddBlock(1, s.c_str(), s.length());
-         unsigned int times[1];
-         struct timeval tv;
-         ::gettimeofday(&tv, NULL);
-         times[0] = tv.tv_sec;
-         nev_raw->AddBlock(2, times, sizeof(times));
-         nev_raw->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
-         nev_raw->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
-         nev_raw->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
-         nev_raw->AddBlock(6, vector<uint32_t>()); // dummy block to be filled later with cycledata(start, stop, trigger)
          for (std::vector<std::vector<int> >::iterator idata = data.begin(); idata != data.end(); ++idata) {
             if (idata->size()) {
                nev_raw->AddBlock(nev_raw->NumBlocks(), std::move(*idata));
@@ -538,14 +631,13 @@ namespace eudaq {
          }
          //nev->Print(std::cout, 0);
          if (_LDATimestampData.count(roc)) {
-            const uint64_t hundred_miliseconds = (uint64_t) 4000000;
             if (_LDATimestampData[roc].TS_Start && _LDATimestampData[roc].TS_Stop) {
                //save timestamp only if both timestamps are present. Otherwise there was something wrong in the data
                nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop);
             } else {
                std::cout << "ERROR: one of the timestamp is incorrect in ROC " << roc << " Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
             }
-            if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > hundred_miliseconds) {
+            if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 100 * C_MILLISECOND_TICS) {
                std::cout << "ERROR: Length of the acquisition is longer than 100 ms in run " << roc << std::endl;
             }
             std::vector<uint32_t> cycledata;
@@ -576,7 +668,6 @@ namespace eudaq {
          std::cout << "dumping all remaining events. Size " << _LDAAsicData.size() << std::endl;
          //printLDAROCInfo(std::cout);
       }
-      const uint64_t hundred_miliseconds = (uint64_t) 4000000;
       int keptEventCount = dumpAll ? 0 : 3; //how many ROCs to keep in the data maps
       while (_LDAAsicData.size() > keptEventCount) { //at least w finished ROCs
          int roc = _LDAAsicData.begin()->first;
@@ -591,39 +682,25 @@ namespace eudaq {
                   //std::cout << "ERROR EB: Trigger timestamp after the AHCAL stopped measuring. TrigID:" << _LDATimestampData[roc].TriggerIDs[i] << std::endl;
                   continue;
                }
-               if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > hundred_miliseconds * 10) {
+               if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 1000 * C_MILLISECOND_TICS) {
                   std::cout << "ERROR EB: Length of the acquisition is longer than 1 s in ROC " << roc << std::endl;
                   continue;
                }
 
                //trigger ID within the ROC is found at this place
-//               while (++_lastBuiltEventNr < _LDATimestampData[roc].TriggerIDs[i]) {
-//                  //std::cout << "WARNING EB: inserting a dummy trigger: " << _lastBuiltEventNr << ", because " << _LDATimestampData[roc].TriggerIDs[i] << " is next" << std::endl;
-//                  insertDummyEvent(EventQueue, _lastBuiltEventNr - _producer->getLdaTrigidOffset());
-//               }
+               while ((++_lastBuiltEventNr < (_LDATimestampData[roc].TriggerIDs[i] - _producer->getLdaTrigidOffset()))
+                     && (_producer->getInsertDummyPackets())) {
+                  //std::cout << "WARNING EB: inserting a dummy trigger: " << _lastBuiltEventNr << ", because " << _LDATimestampData[roc].TriggerIDs[i] << " is next" << std::endl;
+                  insertDummyEvent(EventQueue, -1, _lastBuiltEventNr, true);
+               }
                int trigid = _LDATimestampData[roc].TriggerIDs[i];
 
                std::vector<std::vector<int> > &data = _LDAAsicData.begin()->second;
                eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
                eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
+               prepareEudaqRawPacket(nev_raw);
 
                nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset());
-               nev->SetRunN(_runNo);
-               //               eudaq::EventUP nev(new eudaq::RawDataEvent("CaliceObject", 0, _runNo, trigid));
-               string s = "EUDAQDataScCAL";
-               nev_raw->AddBlock(0, s.c_str(), s.length());
-               s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
-               nev_raw->AddBlock(1, s.c_str(), s.length());
-               unsigned int times[1];
-               struct timeval tv;
-               ::gettimeofday(&tv, NULL);
-               times[0] = tv.tv_sec;
-               nev_raw->AddBlock(2, times, sizeof(times));
-               nev_raw->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
-               nev_raw->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
-               nev_raw->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
-               nev_raw->AddBlock(6, vector<uint32_t>()); // dummy block to be filled later with cycledata(start, stop, trigger)
-//               nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop);
 
                //copy the ahcal data
                if (i == (_LDATimestampData[roc].TS_Triggers.size() - 1)) {
@@ -669,27 +746,13 @@ namespace eudaq {
       }
    }
 
-   void ScReader::insertDummyEvent(std::deque<eudaq::EventUP> &EventQueue, int eventNumber) {
-      std::cout << "WARNING: inserting dummy Event nr. " << eventNumber << std::endl;
+   void ScReader::insertDummyEvent(std::deque<eudaq::EventUP> &EventQueue, int eventNumber, int triggerid, bool triggeridFlag) {
+      std::cout << "WARNING: inserting dummy Event nr. " << eventNumber << ", triggerID " << triggerid << std::endl;
       eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
       eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
-//      eudaq::EventUP nev(new eudaq::RawDataEvent("CaliceObject", 0, _runNo, eventNumber));
-      nev->SetEventN(eventNumber);
-      nev->SetRunN(_runNo);
-      string s = "EUDAQDataScCAL";
-      nev_raw->AddBlock(0, s.c_str(), s.length());
-      s = "i:CycleNr,i:BunchXID,i:EvtNr,i:ChipID,i:NChannels,i:TDC14bit[NC],i:ADC14bit[NC]";
-      nev_raw->AddBlock(1, s.c_str(), s.length());
-      unsigned int times[1];
-      struct timeval tv;
-      ::gettimeofday(&tv, NULL);
-      times[0] = tv.tv_sec;
-      nev_raw->AddBlock(2, times, sizeof(times));
-      nev_raw->AddBlock(3, vector<int>()); // dummy block to be filled later with slowcontrol files
-      nev_raw->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
-      nev_raw->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
-      nev_raw->AddBlock(6, vector<uint32_t>()); // dummy block to be filled later with cycledata(start, stop, trigger)
-      //nev_raw->se->SetFlag(eudaq::Event::Flags::FLAG_BROKEN | eudaq::Event::Flags::FLAG_FAKE);
+      prepareEudaqRawPacket(nev_raw);
+      if (eventNumber > 0) nev->SetEventN(eventNumber);
+      if (triggerid > 0) nev->SetTriggerN(triggerid, triggeridFlag);
       EventQueue.push_back(std::move(nev));
    }
 
@@ -802,26 +865,28 @@ namespace eudaq {
       unsigned int LDA_Header_cycle = (unsigned char) buf[4]; //from LDA packet header - 8 bits only!
       unsigned int LDA_cycle = _cycleNo; //copy from the global readout cycle.
 
-//      std::cout << "DEBUG: processing TS from LDA_header_cycle " << LDA_Header_cycle << std::endl;
+      // std::cout << "DEBUG: processing TS from LDA_header_cycle " << LDA_Header_cycle << std::endl;
 
       if ((!_buffer_inside_acquisition) && (TStype == C_TSTYPE_TRIGID_INC)) {
-//cout << "WARNING ScReader: Trigger is outside acquisition! Cycle " << LDA_cycle << endl;
-//         std::cout << "!";
+         //cout << "WARNING ScReader: Trigger is outside acquisition! Cycle " << LDA_cycle << endl;
+         //         std::cout << "!";
          LDA_Header_cycle--;
          _RunTimesStatistics.triggers_outside_roc++;
-//uncomment if want to ignore trigger information from outside of ROC
-//buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
-//return;
+         //uncomment if want to ignore trigger information from outside of ROC
+         //buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
+         //return;
       }
 
-// TODO in the future there might be a case when the AHCAL will not send any data (not even dummy trigger). The readout cycle incremens might need to be treated from here
+      // TODO in the future there might be a case when the AHCAL will not send any data (not even dummy trigger). The readout cycle incremens might need to be treated from here
 
-// explenation of Readout cycle: LDA has an internal ROC counter, which is added to all LDA header packets.
-// The internal LDA ROC counter is incremented after reception of the STOP fastcommands. Therefore, the ROC counter
-// during the start acquisition event is lower by 1. This is compensated internally in the LDA and the ROC value in
-// the header is already incremented by 1 for start, stop and trigger and no further operation in DAQ is needed.
+      // explanation of Readout cycle: LDA has an internal ROC counter, which is added to all LDA header packets.
+      // The internal LDA ROC counter is incremented after reception of the STOP fastcommands. Therefore, the ROC counter
+      // during the start acquisition event is lower by 1. This is compensated internally in the LDA and the ROC value in
+      // the header is already incremented by 1 for start, stop and trigger and no further operation in DAQ is needed.
       if (((TStype == C_TSTYPE_START_ACQ) || (TStype == C_TSTYPE_STOP_ACQ) || (TStype == C_TSTYPE_TRIGID_INC))) {
-// std::cout << "DEBUG: Raw LDA timestamp: ROC:" << (int) LDA_Header_cycle << " type:" << (int) TStype << std::endl;
+         // std::cout << "DEBUG: Raw LDA timestamp: ROC:" << (int) LDA_Header_cycle << " type:" << (int) TStype << std::endl;
+
+         //At first we have to get to a correct LDA cycle. The packet contains only least 8 bits of the cycle number
          int8_t cycle_difference = LDA_Header_cycle - (LDA_cycle & 0xFF);
 
          if (cycle_difference == -1) {      //received a data from previous ROC. should not happen
@@ -844,7 +909,7 @@ namespace eudaq {
             if (cycle_difference < 20)
                LDA_cycle += cycle_difference; //we compensate only small difference
          }
-//std::cout << "DEBUG: processing TS from LDA cycle after correction " << LDA_cycle << std::endl;
+         //std::cout << "DEBUG: processing TS from LDA cycle after correction " << LDA_cycle << std::endl;
          LDATimeData & currentROCData = LDATimestamps.insert( { LDA_cycle, LDATimeData() }).first->second;         //uses the existing one or creates new
 
          uint64_t timestamp = ((uint64_t) ((unsigned char) buf[18]) +
@@ -908,7 +973,7 @@ namespace eudaq {
                if ((trigIDdifference > 1) && (trigIDdifference < 100)) {
                   //we do accept small jumps forward
                   _trigID += trigIDdifference;
-                  _RunTimesStatistics.triggers_missed += trigIDdifference - 1;
+                  _RunTimesStatistics.triggers_lost += trigIDdifference - 1;
                   cout << (trigIDdifference - 1) << " Skipped TriggerIDs detected in run " << _runNo << ". Filling with dummy packet. ROC=" << _cycleNo << ", TrigID=" << _trigID << endl;
                   EUDAQ_WARN(to_string(trigIDdifference - 1) + "Skipped TriggerID detected in run " + to_string(_runNo) +
                         ". Filling with dummy packet. ROC=" + to_string(_cycleNo) + ", TrigID=" + to_string(_trigID));
@@ -923,7 +988,7 @@ namespace eudaq {
                   buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
                   return;
                }
-            } else {
+            } else { //the difference is 1
                _trigID++;
             }
             if (_buffer_inside_acquisition) {
@@ -1078,7 +1143,14 @@ namespace eudaq {
       }
       out << "#Left in Timestamp buffers:" << std::endl;
       for (auto &it : _LDATimestampData) {
-         out << "ROC " << it.first << std::endl;
+         out << "ROC " << it.first << "\traw_trigIDs:";
+         for (int i = 0; i < it.second.TriggerIDs.size(); ++i) {
+            out << " " << it.second.TriggerIDs[i];
+            if (!it.second.TS_Start) cout << "_invalidStartAcq";
+            if (!it.second.TS_Stop) cout << "_invalidStopAcq";
+            if ((it.second.TS_Triggers[i] < it.second.TS_Start) || (it.second.TS_Triggers[i] > it.second.TS_Stop)) cout << "_outside";
+         }
+         out << std::endl;
          if (it.second.TS_Start == 0) {
             out << "WARNING: ROC " << it.first << " has zero TS_Start" << std::endl;
          }
@@ -1100,7 +1172,8 @@ namespace eudaq {
       cycle_triggers = 0;
       triggers_inside_roc = 0;
       triggers_outside_roc = 0;
-      triggers_missed = 0;
+      triggers_lost = 0;
+      builtBXIDs = 0;
       length_acquisitions.clear();
       length_processing.clear();
       triggers_in_cycle_histogram.clear();
@@ -1113,7 +1186,8 @@ namespace eudaq {
       cycles += otherStats.cycles;
       triggers_inside_roc += otherStats.triggers_inside_roc;
       triggers_outside_roc += otherStats.triggers_outside_roc;
-      triggers_missed += otherStats.triggers_missed;
+      triggers_lost += otherStats.triggers_lost;
+      builtBXIDs += otherStats.builtBXIDs;
       length_acquisitions.insert(length_acquisitions.end(), otherStats.length_acquisitions.begin(), otherStats.length_acquisitions.end());
       length_processing.insert(length_processing.end(), otherStats.length_processing.begin(), otherStats.length_processing.end());
       for (std::map<int, int>::const_iterator it = otherStats.triggers_in_cycle_histogram.begin(); it != otherStats.triggers_in_cycle_histogram.end(); ++it) {
@@ -1132,12 +1206,13 @@ namespace eudaq {
       out << "DAQ Speed: " << 1.0 * cycles / ((25E-9) * (last_TS - first_TS)) << " (ROC/s)" << std::endl;
       out << "DAQ Speed: " << 1.0 * triggers_inside_roc / ((25E-9) * (last_TS - first_TS)) << " (Triggers/s)" << std::endl;
       out << "Triggers inside acquisition: " << triggers_inside_roc << " ( " <<
-            (100.0 * triggers_inside_roc / (triggers_inside_roc + triggers_outside_roc + triggers_missed)) << " % of all triggers)" << std::endl;
+            (100.0 * triggers_inside_roc / (triggers_inside_roc + triggers_outside_roc + triggers_lost)) << " % of all triggers)" << std::endl;
       out << "Triggers outside acquisition: " << triggers_outside_roc << " ( " <<
-            (100.0 * triggers_outside_roc / (triggers_inside_roc + triggers_outside_roc + triggers_missed)) << " % of all triggers)" << std::endl;
-      out << "Missed triggers: " << triggers_missed << " ( " <<
-            (100.0 * triggers_missed / (triggers_inside_roc + triggers_outside_roc + triggers_missed)) << " % of all triggers)" << std::endl;
-      out << "Total triggers (including missed): " << triggers_missed + triggers_inside_roc + triggers_outside_roc << std::endl;
+            (100.0 * triggers_outside_roc / (triggers_inside_roc + triggers_outside_roc + triggers_lost)) << " % of all triggers)" << std::endl;
+      out << "Lost triggers (data loss): " << triggers_lost << " ( " <<
+            (100.0 * triggers_lost / (triggers_inside_roc + triggers_outside_roc + triggers_lost)) << " % of all triggers)" << std::endl;
+      out << "Built BXIDs: " << builtBXIDs << std::endl;
+      out << "Total triggers (including missed): " << triggers_lost + triggers_inside_roc + triggers_outside_roc << std::endl;
       out << "Trigger distribution per Acquisition cycle:" << std::endl;
       for (std::map<int, int>::const_iterator it = triggers_in_cycle_histogram.begin(); it != triggers_in_cycle_histogram.end(); ++it) {
          out << "        " << to_string(it->first) << " triggers in " << it->second << " cycles" << std::endl;

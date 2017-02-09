@@ -85,12 +85,18 @@ namespace eudaq {
 
       _LdaTrigidOffset = param.Get("LdaTrigidOffset", 0);
       _LdaTrigidStartsFrom = param.Get("LdaTrigidStartsFrom", 0);
+      _AHCALBXID0Offset = param.Get("AHCALBXID0Offset", 2123); //default for mini-LDA, new DIF and no powerpulsing
+      _AHCALBXIDWidth = param.Get("AHCALBXIDWidth", 160); //4us Testbeam mode is default
+      _GenerateTriggerIDFrom = param.Get("GenerateTriggerIDFrom", 0);
+
+      _InsertDummyPackets = param.Get("InsertDummyPackets", 0);
+      _DebugKeepBuffered = param.Get("DebugKeepBuffered", 0);
 
       string eventmode = param.Get("EventMode", "ROC");
       if (!eventmode.compare("ROC")) _eventMode = AHCALProducer::EventMode::ROC;
       if (!eventmode.compare("TRIGID")) _eventMode = AHCALProducer::EventMode::TRIGID;
-      if (!eventmode.compare("BUILT_BXID_ALL")) _eventMode = AHCALProducer::EventMode::BUILT_BXID_ALL;
-      if (!eventmode.compare("BUILT_BXID_VALIDATED")) _eventMode = AHCALProducer::EventMode::BUILT_BXID_VALIDATED;
+      if (!eventmode.compare("BUILD_BXID_ALL")) _eventMode = AHCALProducer::EventMode::BUILD_BXID_ALL;
+      if (!eventmode.compare("BUILD_BXID_VALIDATED")) _eventMode = AHCALProducer::EventMode::BUILD_BXID_VALIDATED;
       std::cout << "Creating events in " << eventmode << " mode" << std::endl;
 
       _configured = true;
@@ -156,12 +162,11 @@ namespace eudaq {
       if (_writeRaw)
          _rawFile.close();
 
-      std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo"
-            << _eventNo << std::endl;
+      std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo" << _eventNo << std::endl;
       //SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
-      auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-      ev->SetEORE();
-      SendEvent(std::move(ev));
+//      auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+//      ev->SetEORE();
+//      SendEvent(std::move(ev));
    }
 
    bool AHCALProducer::OpenConnection()
@@ -245,10 +250,10 @@ namespace eudaq {
             if ((minimumsize == 0) && (deqEvent.size() == 1))
                deqEvent.front()->SetEORE();
 
-            if (deqEvent.front()->GetEventN() != (_eventNo + 1)) {
-               std::cout << "SENDEVENTS: Run " + to_string(_runNo) + " Event " + to_string(deqEvent.front()->GetEventN()) + " not in sequence. Expected " + to_string(_eventNo + 1) << std::endl;
-               EUDAQ_WARN("Run " + to_string(_runNo) + " Event " + to_string(deqEvent.front()->GetEventN()) + " not in sequence. Expected " + to_string(_eventNo + 1));
-            }
+//            if (deqEvent.front()->GetEventN() != (_eventNo + 1)) {
+//               std::cout << "SENDEVENTS: Run " + to_string(_runNo) + " Event " + to_string(deqEvent.front()->GetEventN()) + " not in sequence. Expected " + to_string(_eventNo + 1) << std::endl;
+//               EUDAQ_WARN("Run " + to_string(_runNo) + " Event " + to_string(deqEvent.front()->GetEventN()) + " not in sequence. Expected " + to_string(_eventNo + 1));
+//            }
             _eventNo = deqEvent.front()->GetEventN();
             SendEvent(std::move(deqEvent.front()));
          }
@@ -353,11 +358,39 @@ namespace eudaq {
       }
    }
 
-   int AHCALProducer::getLdaTrigidOffset() {
+   AHCALProducer::EventMode AHCALProducer::getEventMode() const {
+      return _eventMode;
+   }
+
+   int AHCALProducer::getLdaTrigidOffset() const {
       return _LdaTrigidOffset;
    }
-   int AHCALProducer::getLdaTrigidStartsFrom() {
+   int AHCALProducer::getLdaTrigidStartsFrom() const {
       return _LdaTrigidStartsFrom;
    }
+
+   int AHCALProducer::getAhcalbxid0Offset() const {
+      return _AHCALBXID0Offset;
+   }
+
+   int AHCALProducer::getAhcalbxidWidth() const {
+      return _AHCALBXIDWidth;
+   }
+
+   int AHCALProducer::getInsertDummyPackets() const
+   {
+      return _InsertDummyPackets;
+   }
+
+   int AHCALProducer::getDebugKeepBuffered() const
+   {
+      return _DebugKeepBuffered;
+   }
+
+   int AHCALProducer::getGenerateTriggerIDFrom() const
+   {
+      return _GenerateTriggerIDFrom;
+   }
+
 }	//end namespace eudaq
 

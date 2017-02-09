@@ -45,7 +45,7 @@ namespace eudaq {
       public:
 
          enum class EventMode {
-            ROC, TRIGID, BUILT_BXID_ALL, BUILT_BXID_VALIDATED
+            ROC, TRIGID, BUILD_BXID_ALL, BUILD_BXID_VALIDATED
          };
 
          AHCALProducer(const std::string & name, const std::string & runcontrol);
@@ -69,17 +69,24 @@ namespace eudaq {
          void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
          void sendallevents(std::deque<eudaq::EventUP> &deqEvent, int minimumsize);
 
-         EventMode getEventMode()
-         {
-            return _eventMode;
-         }
-         int getLdaTrigidOffset();
-         int getLdaTrigidStartsFrom();
+         EventMode getEventMode() const;
+         int getLdaTrigidOffset() const;
+         int getLdaTrigidStartsFrom() const;
+         int getAhcalbxid0Offset() const;
+         int getAhcalbxidWidth() const;
+         int getInsertDummyPackets() const;
+         int getDebugKeepBuffered() const;
+         int getGenerateTriggerIDFrom() const;
 
       private:
          AHCALProducer::EventMode _eventMode;
-         int _LdaTrigidOffset; //LdaTrigidOffset to compensate differences between TLU (or other trigger number source) and LDA. Eudaq Event counting starts from this number and will be always subtracted from the eudaq event triggerid.
-         int _LdaTrigidStartsFrom;   // triggerID of first valid event in case it doesn't start from 0
+         int _LdaTrigidOffset; //LdaTrigidOffset to compensate trigger number differences between TLU (or other trigger number source) and LDA. Eudaq Event counting starts from this number and will be always subtracted from the eudaq event triggerid.
+         int _LdaTrigidStartsFrom;   // triggerID number of first valid event in case it doesn't start from 0
+         int _AHCALBXID0Offset; //offset from start acquisition Timestamp to BXID0 (in 25ns steps). Varies with AHCAL powerpulsing setting and DIF firmware
+         int _AHCALBXIDWidth; //length of the bxid in 25 ns steps
+         int _InsertDummyPackets;//1=Put dummy packets to maintain an uninterrupted sequence of TriggerIDs. 0=don't inset anything
+         int _DebugKeepBuffered;//1=keep events in buffer and don't send them to data collector
+         int _GenerateTriggerIDFrom;//sets from which triggerID number should be data generated (and filled with dummy triggers if necessary). Only works when insert_dummy_packets is enabled and in selected event building mode
 
          int _runNo;
          int _eventNo; //last sent event - for checking of correct event numbers sequence during sending events

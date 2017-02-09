@@ -51,7 +51,8 @@ namespace eudaq {
                int cycle_triggers; //triggers inside acq counted only for last ROC
                int triggers_inside_roc;
                int triggers_outside_roc;
-               int triggers_missed; //completely missed triggers
+               int triggers_lost; //completely missed triggers due to data loss
+               int builtBXIDs; //how many BXIDs was made during event building
                std::vector<uint64_t> length_acquisitions;
                std::vector<uint64_t> length_processing;
                std::map<int, int> triggers_in_cycle_histogram;
@@ -80,7 +81,9 @@ namespace eudaq {
          void buildROCEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
          void buildTRIGIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
          void buildBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
-         void insertDummyEvent(std::deque<eudaq::EventUP> &EventQueue, int eventNumber);
+         void buildValidatedBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
+         void insertDummyEvent(std::deque<eudaq::EventUP> &EventQueue, int eventNumber, int triggerid, bool triggeridFlag);
+         void prepareEudaqRawPacket(eudaq::RawDataEvent * ev);
 
          static const unsigned char C_TSTYPE_START_ACQ = 0x01;
          static const unsigned char C_TSTYPE_STOP_ACQ = 0x02;
@@ -90,6 +93,7 @@ namespace eudaq {
          static const unsigned char C_TSTYPE_BUSY_FALL = 0x20;
          static const unsigned char C_TSTYPE_BUSY_RISE = 0x21;
          static const unsigned int C_TS_IGNORE_ROC_JUMPS_UP_TO = 20;
+         static const uint64_t C_MILLISECOND_TICS = 40000; //how many clock cycles make a millisecond
 
          void readAHCALData(std::deque<char> &buf, std::map<int, std::vector<std::vector<int> > > &AHCALData);
          void readLDATimestamp(std::deque<char> &buf, std::map<int, LDATimeData> &LDATimestamps);
