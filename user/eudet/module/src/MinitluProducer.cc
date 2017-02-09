@@ -1,28 +1,23 @@
 #include "eudaq/Producer.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/RawDataEvent.hh"
-#include "eudaq/Timer.hh"
-#include "eudaq/Utils.hh"
 
 #include "MinitluController.hh"
 #include <iostream>
 #include <ostream>
 #include <vector>
 
-using eudaq::to_string;
-using namespace tlu;
 
 class MinitluProducer: public eudaq::Producer {
 public:
   MinitluProducer(const std::string name, const std::string &runcontrol);
-  void MainLoop();
   void DoConfigure() override;
   void DoStartRun() override;
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
+
   void OnStatus() override;
-  void Exec() override;
+
+  void MainLoop();
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("MinitluProducer");
 private:
@@ -30,8 +25,8 @@ private:
   std::thread m_thd_run;
   bool m_exit_of_run;
   
-  std::unique_ptr<miniTLUController> m_tlu;
-  uint64_t m_lasttime;  
+  std::unique_ptr<tlu::miniTLUController> m_tlu;
+  uint64_t m_lasttime;
 };
 
 namespace{
@@ -53,15 +48,16 @@ void MinitluProducer::MainLoop(){
   m_tlu->ResetFIFO();
   m_tlu->SetTriggerVeto(0);
   while(true) {
-    m_lasttime=m_tlu->GetCurrentTimestamp()/40000000;
+    m_lasttime=m_tlu->GetCurrentTimestamp()*25;
     m_tlu->ReceiveEvents();
     while (!m_tlu->IsBufferEmpty()){
-      minitludata *data = m_tlu->PopFrontEvent();
+      tlu::minitludata *data = m_tlu->PopFrontEvent();
       uint32_t trigger_n = data->eventnumber;
       uint64_t ts_raw = data->timestamp;
-      uint64_t ts_ns = ts_raw; //TODO: to ns
+      // uint64_t ts_ns = ts_raw; //TODO: to ns
+      uint64_t ts_ns = ts_raw*25; 
       auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
-      ev->SetTimestamp(ts_ns, ts_ns+1);//TODO, duration
+      ev->SetTimestamp(ts_ns, ts_ns+25, false);//TODO, duration
       ev->SetTriggerN(trigger_n);
       
       std::stringstream  triggerss;
@@ -71,11 +67,11 @@ void MinitluProducer::MainLoop(){
 	uint32_t sl0,sl1,sl2,sl3, pt;
 	m_tlu->GetScaler(sl0,sl1,sl2,sl3);
 	pt=m_tlu->GetPreVetoTriggers();  
-	ev->SetTag("SCALER0", to_string(sl0));
-	ev->SetTag("SCALER1", to_string(sl1));
-	ev->SetTag("SCALER2", to_string(sl2));
-	ev->SetTag("SCALER3", to_string(sl3));
-	ev->SetTag("PARTICLES", to_string(pt));
+	ev->SetTag("SCALER0", std::to_string(sl0));
+	ev->SetTag("SCALER1", std::to_string(sl1));
+	ev->SetTag("SCALER2", std::to_string(sl2));
+	ev->SetTag("SCALER3", std::to_string(sl3));
+	ev->SetTag("PARTICLES", std::to_string(pt));
 
 	if(m_exit_of_run){
 	  ev->SetEORE();
@@ -85,8 +81,8 @@ void MinitluProducer::MainLoop(){
       if(isbegin){
 	isbegin = false;
 	ev->SetBORE();
-	ev->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
-	ev->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
+	ev->SetTag("FirmwareID", std::to_string(m_tlu->GetFirmwareVersion()));
+	ev->SetTag("BoardID", std::to_string(m_tlu->GetBoardID()));
       }
       SendEvent(std::move(ev));
       delete data;
@@ -102,7 +98,7 @@ void MinitluProducer::DoConfigure() {
   std::string uhal_node = "dummy.udp";
   uhal_conn = conf->Get("ConnectionFile", uhal_conn);
   uhal_node = conf->Get("DeviceName",uhal_node);
-  m_tlu = std::unique_ptr<miniTLUController>(new miniTLUController(uhal_conn, uhal_node));
+  m_tlu = std::unique_ptr<tlu::miniTLUController>(new tlu::miniTLUController(uhal_conn, uhal_node));
   
   // m_tlu->SetWRegister("logic_clocks.LogicRst", 1);
   // eudaq::mSleep(100);
@@ -165,18 +161,18 @@ void MinitluProducer::OnStatus() {
     uint64_t time = m_tlu->GetCurrentTimestamp();
     time = time/40000000; // in second
 
-    SetStatusTag("TIMESTAMP", to_string(time));
-    SetStatusTag("LASTTIME", to_string(m_lasttime));
+    SetStatusTag("TIMESTAMP", std::to_string(time));
+    SetStatusTag("LASTTIME", std::to_string(m_lasttime));
     
     uint32_t sl0,sl1,sl2,sl3, pret, post;
     pret=m_tlu->GetPreVetoTriggers();
     post=m_tlu->GetPostVetoTriggers();  
     m_tlu->GetScaler(sl0,sl1,sl2,sl3);
-    SetStatusTag("SCALER0", to_string(sl0));
-    SetStatusTag("SCALER1", to_string(sl1));
-    SetStatusTag("SCALER2", to_string(sl2));
-    SetStatusTag("SCALER3", to_string(sl3));
-    SetStatusTag("PARTICLES", to_string(pret));
-    SetStatusTag("TRIG", to_string(post));      
+    SetStatusTag("SCALER0", std::to_string(sl0));
+    SetStatusTag("SCALER1", std::to_string(sl1));
+    SetStatusTag("SCALER2", std::to_string(sl2));
+    SetStatusTag("SCALER3", std::to_string(sl3));
+    SetStatusTag("PARTICLES", std::to_string(pret));
+    SetStatusTag("TRIG", std::to_string(post));      
   }
 }

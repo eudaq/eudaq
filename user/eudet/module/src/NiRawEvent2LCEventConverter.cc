@@ -19,7 +19,7 @@ namespace eudaq{
   static const int dbg = 0; // 0=off, 1=structure, 2=structure+data
   static const int PIVOTPIXELOFFSET = 64;
 
-  class NIRawEvent2LCEventConverter: public LCEventConverter{
+  class NiRawEvent2LCEventConverter: public LCEventConverter{
     typedef std::vector<unsigned char> datavect;
     typedef std::vector<unsigned char>::const_iterator datait;
 
@@ -34,10 +34,10 @@ namespace eudaq{
   
   namespace{
     auto dummy0 = Factory<LCEventConverter>::
-      Register<NIRawEvent2LCEventConverter>(NIRawEvent2LCEventConverter::m_id_factory);
+      Register<NiRawEvent2LCEventConverter>(NiRawEvent2LCEventConverter::m_id_factory);
   }  
 
-  bool NIRawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const{
+  bool NiRawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const{
     auto& source = *(d1.get());
     auto& result = *(d2.get());
     static const uint32_t m_boards = 6;
@@ -177,7 +177,7 @@ namespace eudaq{
 
 
 
-  bool NIRawEvent2LCEventConverter::GetStandardSubEvent(StandardEvent &result,
+  bool NiRawEvent2LCEventConverter::GetStandardSubEvent(StandardEvent &result,
 							const Event &source) const {
     static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5}; //TODO
 
@@ -354,7 +354,7 @@ namespace eudaq{
   }
 
   
-  void NIRawEvent2LCEventConverter::DecodeFrame(StandardPlane &plane, size_t len, datait it,
+  void NiRawEvent2LCEventConverter::DecodeFrame(StandardPlane &plane, size_t len, datait it,
 						int frame) const {
     std::vector<unsigned short> vec;
     for (size_t i = 0; i < len; ++i) {

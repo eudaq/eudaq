@@ -1,26 +1,21 @@
 #include "eudaq/LCEventConverter.hh"
 #include "eudaq/Logger.hh"
 
-namespace eudaq{
-  using namespace lcio;
-
-  class TLURawEvent2LCEventConverter: public LCEventConverter{
-  public:
-    bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override;
-    static const uint32_t m_id_factory = cstr2hash("TluRawDataEvent");
-  };
+class TluRawEvent2LCEventConverter: public eudaq::LCEventConverter{
+public:
+  bool Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigurationSPC conf) const override;
+  static const uint32_t m_id_factory = eudaq::cstr2hash("TluRawDataEvent");
+};
   
-  namespace{
-    auto dummy0 = Factory<LCEventConverter>::
-      Register<TLURawEvent2LCEventConverter>(TLURawEvent2LCEventConverter::m_id_factory);
-  }
+namespace{
+  auto dummy0 = eudaq::Factory<eudaq::LCEventConverter>::
+    Register<TluRawEvent2LCEventConverter>(TluRawEvent2LCEventConverter::m_id_factory);
+}
 
-  bool TLURawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const{
-    auto d2impl = std::dynamic_pointer_cast<LCEventImpl>(d2);
-    d2impl->setTimeStamp(d1->GetTimestampBegin());
-    d2impl->setEventNumber(d1->GetEventNumber());
-    d2impl->setRunNumber(d1->GetRunNumber());
-    return true;    
-  }
-  
+bool TluRawEvent2LCEventConverter::Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigurationSPC conf) const{
+  auto d2impl = std::dynamic_pointer_cast<lcio::LCEventImpl>(d2);
+  d2impl->setTimeStamp(d1->GetTimestampBegin());
+  d2impl->setEventNumber(d1->GetEventNumber());
+  d2impl->setRunNumber(d1->GetRunNumber());
+  return true;    
 }

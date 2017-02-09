@@ -1,44 +1,42 @@
 #include "NiController.hh"
 #include "eudaq/Producer.hh"
-#include "eudaq/RawDataEvent.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <memory>
-
 
 class NiProducer : public eudaq::Producer {
 public:
   NiProducer(const std::string name, const std::string &runcontrol);
-  ~NiProducer();
-  void DoConfigure() override final;
-  void DoStartRun() override final;
-  void DoStopRun() override final;
-  void DoReset() override final {};
-  void DoTerminate() override final;
+  ~NiProducer() override;
+  void DoConfigure() override;
+  void DoStartRun() override;
+  void DoStopRun() override;
+  void DoReset() override;
+  void DoTerminate() override;
 
   void DataLoop();
+
+  static const uint32_t m_id_factory = eudaq::cstr2hash("NiProducer");
 private:
   bool m_running;
   bool m_configured;
   std::thread m_thd_data;
   std::shared_ptr<NiController> ni_control;
   
-  unsigned int datalength1;
-  unsigned int datalength2;
-  unsigned int ConfDataLength;
+  uint32_t datalength1;
+  uint32_t datalength2;
+  uint32_t ConfDataLength;
   std::vector<uint8_t> ConfDataError;
 
-  unsigned TriggerType;
-  unsigned Det;
-  unsigned Mode;
-  unsigned NiVersion;
-  unsigned NumBoards;
-  unsigned FPGADownload;
-  unsigned MimosaID[6];
-  unsigned MimosaEn[6];
+  uint32_t TriggerType;
+  uint32_t Det;
+  uint32_t Mode;
+  uint32_t NiVersion;
+  uint32_t NumBoards;
+  uint32_t FPGADownload;
+  uint32_t MimosaID[6];
+  uint32_t MimosaEn[6];
   bool OneFrame;
   bool NiConfig;
   
@@ -47,14 +45,13 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<NiProducer, const std::string&, const std::string&>(eudaq::cstr2hash("NiProducer"));
+    Register<NiProducer, const std::string&, const std::string&>(NiProducer::m_id_factory);
 }
 
 NiProducer::NiProducer(const std::string name, const std::string &runcontrol)
-  : eudaq::Producer(name, runcontrol){
+  : eudaq::Producer(name, runcontrol), m_running(false), m_configured(false){
   m_running = false;
   m_configured = false;
-  std::cout << "NI Producer was started successful " << std::endl;
 }
 
 NiProducer::~NiProducer(){
@@ -68,12 +65,12 @@ void NiProducer::DataLoop(){
   ni_control->Start();
   bool isbegin = true;
   while(1){
-    auto evup = eudaq::RawDataEvent::MakeUnique("TelRawDataEvent");
+    auto evup = eudaq::RawDataEvent::MakeUnique("NiRawDataEvent");
     datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
-    std::vector<unsigned char> mimosa_data_0(datalength1);
+    std::vector<uint8_t> mimosa_data_0(datalength1);
     mimosa_data_0 = ni_control->DataTransportClientSocket_ReadData(datalength1);
     datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");
-    std::vector<unsigned char> mimosa_data_1(datalength2);
+    std::vector<uint8_t> mimosa_data_1(datalength2);
     mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
     auto ev = dynamic_cast<eudaq::RawDataEvent*>(evup.get());
     ev->AddBlock(0, mimosa_data_0);
@@ -84,9 +81,9 @@ void NiProducer::DataLoop(){
       evup->SetTag("DET", "MIMOSA26");
       evup->SetTag("MODE", "ZS2");
       evup->SetTag("BOARDS", NumBoards);
-      for (unsigned char i = 0; i < 6; i++)
+      for (size_t i = 0; i < 6; i++)
 	evup->SetTag("ID" + std::to_string(i), std::to_string(MimosaID[i]));
-      for (unsigned char i = 0; i < 6; i++)
+      for (size_t i = 0; i < 6; i++)
 	evup->SetTag("MIMOSA_EN" + std::to_string(i), std::to_string(MimosaEn[i]));
     }
     if(!m_running){
@@ -100,35 +97,33 @@ void NiProducer::DataLoop(){
 }
 
 void NiProducer::DoConfigure() {
-  const eudaq::Configuration &param = *GetConfiguration();
-  unsigned char configur[5] = "conf";
-
+  auto conf = GetConfiguration();  
   if (!m_configured) {
     ni_control = std::make_shared<NiController>();
     ni_control->GetProduserHostInfo();
-    std::string addr = param.Get("NiIPaddr", "localhost");
-    uint16_t port = param.Get("NiConfigSocketPort", 49248);
+    std::string addr = conf->Get("NiIPaddr", "localhost");
+    uint16_t port = conf->Get("NiConfigSocketPort", 49248);
     ni_control->ConfigClientSocket_Open(addr, port);
-    addr = param.Get("NiIPaddr", "localhost");
-    port = param.Get("NiDataTransportSocketPort", 49250);
+    addr = conf->Get("NiIPaddr", "localhost");
+    port = conf->Get("NiDataTransportSocketPort", 49250);
     ni_control->DatatransportClientSocket_Open(addr, port);
     std::cout << " " << std::endl;
     m_configured = true;
   }
 
-  TriggerType = param.Get("TriggerType", 255);
-  Det = param.Get("Det", 255);
-  Mode = param.Get("Mode", 255);
-  NiVersion = param.Get("NiVersion", 255);
-  NumBoards = param.Get("NumBoards", 255);
-  FPGADownload = param.Get("FPGADownload", 1);
-  for (unsigned char i = 0; i < 6; i++) {
-    MimosaID[i] = param.Get("MimosaID_" + std::to_string(i + 1), 255);
-    MimosaEn[i] = param.Get("MimosaEn_" + std::to_string(i + 1), 255);
+  TriggerType = conf->Get("TriggerType", 255);
+  Det = conf->Get("Det", 255);
+  Mode = conf->Get("Mode", 255);
+  NiVersion = conf->Get("NiVersion", 255);
+  NumBoards = conf->Get("NumBoards", 255);
+  FPGADownload = conf->Get("FPGADownload", 1);
+  for (size_t i = 0; i < 6; i++) {
+    MimosaID[i] = conf->Get("MimosaID_" + std::to_string(i + 1), 255);
+    MimosaEn[i] = conf->Get("MimosaEn_" + std::to_string(i + 1), 255);
   }
-  OneFrame = param.Get("OneFrame", 255);
+  OneFrame = conf->Get("OneFrame", 255);
 
-  std::cout << "Configuring ...(" << param.Name() << ")" << std::endl;
+  std::cout << "Configuring ...(" << conf->Name() << ")" << std::endl;
 
   conf_parameters[0] = NiVersion;
   conf_parameters[1] = TriggerType;
@@ -141,6 +136,7 @@ void NiProducer::DoConfigure() {
   conf_parameters[8] = NumBoards;
   conf_parameters[9] = FPGADownload;
 
+  unsigned char configur[5] = "conf";
   ni_control->ConfigClientSocket_Send(configur, sizeof(configur));
   ni_control->ConfigClientSocket_Send(conf_parameters,
 				      sizeof(conf_parameters));
@@ -192,7 +188,7 @@ void NiProducer::DoConfigure() {
   } // FIFO_2 Start
 
   if (NiConfig) {
-    EUDAQ_THROW("NiProducer was Configured with ERRORs "+ param.Name());
+    EUDAQ_THROW("NiProducer was Configured with ERRORs "+ conf->Name());
   }
 }
 
@@ -208,6 +204,15 @@ void NiProducer::DoStopRun() {
   m_running = false;
   if(m_thd_data.joinable())
     m_thd_data.join();
+}
+
+
+void NiProducer::DoReset(){
+  m_running = false;
+  if(m_thd_data.joinable())
+    m_thd_data.join();
+  m_configured = false;
+  ni_control.reset();
 }
 
 void NiProducer::DoTerminate() {

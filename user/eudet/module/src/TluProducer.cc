@@ -1,8 +1,4 @@
-#include "Configuration.hh"
-#include "Producer.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Producer.hh"
 
 #include "TLUController.hh"
 
@@ -11,9 +7,10 @@
 #include <cctype>
 #include <memory>
 
-using eudaq::to_string;
-using eudaq::to_hex;
-using namespace tlu;
+using tlu::TLUController;
+using tlu::TLU_PMTS;
+using tlu::PMT_VCNTL_DEFAULT;
+using tlu::Timestamp2Seconds;
 // #ifdef _WIN32
 // ZESTSC1_ERROR_FUNC ZestSC1_ErrorHandler = NULL;
 // // Windows needs some parameters for this. i dont know where it will
@@ -21,9 +18,9 @@ using namespace tlu;
 // char *ZestSC1_ErrorStrings[] = {"bla bla", "blub"};
 // #endif
 
-class TLUProducer : public eudaq::Producer {
+class TluProducer : public eudaq::Producer {
 public:
-  TLUProducer(const std::string name, const std::string &runcontrol); //TODO: check para no ref
+  TluProducer(const std::string name, const std::string &runcontrol); //TODO: check para no ref
   void DoConfigure() override;
   void DoStartRun() override;
   void DoStopRun() override;
@@ -56,10 +53,10 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<TLUProducer, const std::string&, const std::string&>(TLUProducer::m_id_factory);
+    Register<TluProducer, const std::string&, const std::string&>(TluProducer::m_id_factory);
 }
 
-TLUProducer::TLUProducer(const std::string name, const std::string &runcontrol)
+TluProducer::TluProducer(const std::string name, const std::string &runcontrol)
   : eudaq::Producer(name, runcontrol), m_trigger_n(0),
   trigger_interval(0), dut_mask(0), veto_mask(0), and_mask(255),
   or_mask(0), pmtvcntlmod(0), strobe_period(0), strobe_width(0),
@@ -73,7 +70,7 @@ TLUProducer::TLUProducer(const std::string name, const std::string &runcontrol)
   }
 }
 
-void TLUProducer::MainLoop(){
+void TluProducer::MainLoop(){
   bool isbegin = true;
   if (timestamp_per_run)
     m_tlu->ResetTimestamp();
@@ -100,8 +97,11 @@ void TLUProducer::MainLoop(){
       auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
       m_trigger_n = tlu_entry.Eventnum();
       uint64_t ts_raw = tlu_entry.Timestamp();
-      uint64_t ts_ns = ts_raw; //TODO, convert to ns
-      ev->SetTimestamp(ts_ns, ts_ns+1, false);//TODO, duration
+      // uint64_t ts_ns = ts_raw; //TODO, convert to ns
+      // uint64_t ts_ns = ts_raw / (tlu::TLUFREQUENCY * tlu::TLUFREQUENCYMULTIPLIER);
+      // uint64_t ts_ns = ts_raw*125000/48001; //TODO: 
+      uint64_t ts_ns = ts_raw*125/48;
+      ev->SetTimestamp(ts_ns, ts_ns+8, false);//TODO, duration
       ev->SetTriggerN(m_trigger_n);
       if (m_ts_last && (m_trigger_n < 10 || m_trigger_n % 1000 == 0)) {
 	uint64_t delta_ts = ts_ns - m_ts_last;
@@ -111,19 +111,19 @@ void TLUProducer::MainLoop(){
       }
       ev->SetTag("trigger", tlu_entry.trigger2String()); //TriggerParttern
       if(i+1 == m_tlu->NumEntries()) {
-	ev->SetTag("PARTICLES", to_string(m_tlu->GetParticles()));
-	ev->SetTag("SCALER0",to_string(m_tlu->GetScaler(0)));
-	ev->SetTag("SCALER1",to_string(m_tlu->GetScaler(1)));
-	ev->SetTag("SCALER2",to_string(m_tlu->GetScaler(2)));
-	ev->SetTag("SCALER3",to_string(m_tlu->GetScaler(3)));
+	ev->SetTag("PARTICLES", std::to_string(m_tlu->GetParticles()));
+	ev->SetTag("SCALER0",std::to_string(m_tlu->GetScaler(0)));
+	ev->SetTag("SCALER1",std::to_string(m_tlu->GetScaler(1)));
+	ev->SetTag("SCALER2",std::to_string(m_tlu->GetScaler(2)));
+	ev->SetTag("SCALER3",std::to_string(m_tlu->GetScaler(3)));
 	if(m_exit_of_run)
 	  ev->SetEORE();
       }
       if(isbegin){
 	isbegin = false;
 	ev->SetBORE();
-	ev->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareID()));
-	ev->SetTag("TimestampZero", to_string(m_tlu->TimestampZero()));
+	ev->SetTag("FirmwareID", std::to_string(m_tlu->GetFirmwareID()));
+	ev->SetTag("TimestampZero", eudaq::to_string(m_tlu->TimestampZero()));
       }
       SendEvent(std::move(ev));
       m_ts_last = ts_ns;
@@ -133,7 +133,7 @@ void TLUProducer::MainLoop(){
   m_tlu->Stop();
 }
 
-void TLUProducer::DoConfigure() {
+void TluProducer::DoConfigure() {
   auto conf = GetConfiguration();  
   if(!conf)
     EUDAQ_THROW("No configration exits for tlu");
@@ -152,11 +152,11 @@ void TLUProducer::DoConfigure() {
   int errorhandler = conf->Get("ErrorHandler", 2);
 
   for (int i = 0; i < TLU_PMTS; i++){
-    pmtvcntl[i] = (unsigned)conf->Get("PMTVcntl" + to_string(i + 1),
+    pmtvcntl[i] = (unsigned)conf->Get("PMTVcntl" + std::to_string(i + 1),
 				      "PMTVcntl", PMT_VCNTL_DEFAULT);
-    pmt_id[i] = conf->Get("PMTID" + to_string(i + 1), "<unknown>");
-    pmt_gain_error[i] = conf->Get("PMTGainError" + to_string(i + 1), 1.0);
-    pmt_offset_error[i] = conf->Get("PMTOffsetError" + to_string(i + 1), 0.0);
+    pmt_id[i] = conf->Get("PMTID" + std::to_string(i + 1), "<unknown>");
+    pmt_gain_error[i] = conf->Get("PMTGainError" + std::to_string(i + 1), 1.0);
+    pmt_offset_error[i] = conf->Get("PMTOffsetError" + std::to_string(i + 1), 0.0);
   }
   
   pmtvcntlmod = conf->Get("PMTVcntlMod", 0); // If 0, it's a standard TLU;
@@ -172,7 +172,7 @@ void TLUProducer::DoConfigure() {
   m_tlu->SetVersion(conf->Get("Version", 0));
   m_tlu->Configure();
   for (int i = 0; i < tlu::TLU_LEMO_DUTS; ++i) {
-    m_tlu->SelectDUT(conf->Get("DUTInput", "DUTInput" + to_string(i), "RJ45"), 1 << i,
+    m_tlu->SelectDUT(conf->Get("DUTInput", "DUTInput" + std::to_string(i), "RJ45"), 1 << i,
 		     false);
   }
   m_tlu->SetTriggerInterval(trigger_interval);
@@ -192,24 +192,24 @@ void TLUProducer::DoConfigure() {
   m_tlu->Update(timestamps);
 }
 
-void TLUProducer::DoStartRun(){
+void TluProducer::DoStartRun(){
   m_exit_of_run = false;
-  m_thd_run = std::thread(&TLUProducer::MainLoop, this);
+  m_thd_run = std::thread(&TluProducer::MainLoop, this);
 }
 
-void TLUProducer::DoStopRun(){
+void TluProducer::DoStopRun(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 
-void TLUProducer::DoTerminate(){
+void TluProducer::DoTerminate(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 
-void TLUProducer::DoReset(){
+void TluProducer::DoReset(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
@@ -217,15 +217,15 @@ void TLUProducer::DoReset(){
   m_tlu.reset();
 }
 
-void TLUProducer::OnStatus(){
-  SetStatusTag("TRIG", to_string(m_trigger_n));
+void TluProducer::OnStatus(){
+  SetStatusTag("TRIG", std::to_string(m_trigger_n));
   if (m_tlu) {
-    SetStatusTag("TIMESTAMP", to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
-    SetStatusTag("LASTTIME", to_string(Timestamp2Seconds(m_ts_last)));
-    SetStatusTag("PARTICLES", to_string(m_tlu->GetParticles()));
+    SetStatusTag("TIMESTAMP", std::to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
+    SetStatusTag("LASTTIME", std::to_string(Timestamp2Seconds(m_ts_last)));
+    SetStatusTag("PARTICLES", std::to_string(m_tlu->GetParticles()));
     SetStatusTag("STATUS", m_tlu->GetStatusString());
     for (int i = 0; i < 4; ++i) {
-      SetStatusTag("SCALER" + to_string(i), to_string(m_tlu->GetScaler(i)));
+      SetStatusTag("SCALER" + std::to_string(i), std::to_string(m_tlu->GetScaler(i)));
     }
   }
 }
