@@ -2,7 +2,6 @@
 
 #include "eudaq/Platform.hh"
 #include "eudaq/Exception.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 

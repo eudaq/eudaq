@@ -1,6 +1,9 @@
 include_directories(include)
 aux_source_directory(src MODULE_SRC)
-  
+
+
+list(REMOVE_ITEM MODULE_SRC src/USBPixI4ConverterPlugin.cc)
+
 if(NOT USER_BUILD_NI)
   list(REMOVE_ITEM MODULE_SRC src/NiProducer.cc)
 endif()

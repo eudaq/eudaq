@@ -1,6 +1,5 @@
 #include "tlu/caliceahcalbifController.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
 #ifndef WIN32
@@ -144,7 +143,7 @@ int main(int /*argc*/, char ** argv) {
 		//}
 
 		if (quit.IsSet()) return 0;
-		eudaq::Timer totaltime, lasttime;
+		// eudaq::Timer totaltime, lasttime;
 
 		if (pause.IsSet()) {
 			std::cerr << "Press enter to start triggers." << std::endl;

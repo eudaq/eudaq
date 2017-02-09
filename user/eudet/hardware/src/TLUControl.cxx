@@ -1,6 +1,5 @@
 #include "TLUController.hh"
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Exception.hh"
 
@@ -258,7 +257,7 @@ int main(int /*argc*/, char **argv) {
     }
     if (quit.IsSet())
       return 0;
-    eudaq::Timer totaltime, lasttime;
+    // eudaq::Timer totaltime, lasttime;
 
     if (pause.IsSet()) {
       std::cerr << "Press enter to start triggers." << std::endl;
@@ -279,12 +278,12 @@ int main(int /*argc*/, char **argv) {
         }
       }
       total += TLU.NumEntries();
-      double hertz = TLU.NumEntries() / lasttime.Seconds();
-      double avghertz = total / totaltime.Seconds();
-      lasttime.Restart();
-      std::cout << "Time: " << totaltime.Formatted(TIME_FORMAT) << " s, "
-                << "Freq: " << hertz << " Hz, "
-                << "Average: " << avghertz << " Hz" << std::endl;
+      // double hertz = TLU.NumEntries() / lasttime.Seconds();
+      // double avghertz = total / totaltime.Seconds();
+      // lasttime.Restart();
+      // std::cout << "Time: " << totaltime.Formatted(TIME_FORMAT) << " s, "
+      //           << "Freq: " << hertz << " Hz, "
+      //           << "Average: " << avghertz << " Hz" << std::endl;
       if (wait.Value() > 0) {
         eudaq::mSleep(wait.Value());
       }

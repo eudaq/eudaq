@@ -8,7 +8,6 @@
 #include "eudaq/Event.hh"
 #include "eudaq/RawDataEvent.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 
 #include <string>

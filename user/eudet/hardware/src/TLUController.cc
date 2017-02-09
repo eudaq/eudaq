@@ -2,7 +2,6 @@
 #include "TLUController.hh"
 #include "TLUAddresses.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Logger.hh"
 
@@ -106,10 +105,7 @@ namespace tlu {
     }
 
     static void I2Cdelay(unsigned us = 100) {
-      eudaq::Timer t;
-      do {
-        // wait
-      } while (t.uSeconds() < us);
+      std::this_thread::sleep_for(std::chrono::microseconds(us));
     }
 
     static unsigned lemo_dac_value(double voltage) {

@@ -1,7 +1,6 @@
 #include "eudaq/Producer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/RawDataEvent.hh"
-#include "eudaq/Timer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "tlu/caliceahcalbifController.hh"
