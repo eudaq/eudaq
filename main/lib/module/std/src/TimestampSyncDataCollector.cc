@@ -11,9 +11,9 @@ namespace eudaq {
 			       const std::string &runcontrol);
 
     void DoStartRun() override;
-    void DoConnect(std::shared_ptr<const ConnectionInfo>/*id*/) override;
-    void DoDisconnect(std::shared_ptr<const ConnectionInfo> /*id*/) override;
-    void DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev) override;
+    void DoConnect(uint32_t /*id*/) override;
+    void DoDisconnect(uint32_t /*id*/) override;
+    void DoReceive(uint32_t id, EventUP ev) override;
     
     static const uint32_t m_id_factory = eudaq::cstr2hash("TimestampSyncDataCollector");
   private:
@@ -50,21 +50,18 @@ namespace eudaq {
   }
 
   
-  void TimestampSyncDataCollector::DoConnect(std::shared_ptr<const ConnectionInfo> id){
+  void TimestampSyncDataCollector::DoConnect(uint32_t id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
-    std::string pdc_name = id->GetName();
-    if(pdc_name.empty())
-      EUDAQ_THROW("DataCollector::DoConnect, anonymous producer is not supported, please config a unique name to the producer in "
-		  +id->GetRemote());
+    std::string pdc_name = std::to_string(id);
     if(m_que_event.find(pdc_name) != m_que_event.end())
       EUDAQ_THROW("DataCollector::Doconnect, multiple producers are sharing a same name");
     m_que_event[pdc_name].clear();
     m_event_ready[pdc_name] = false;
   }
 
-  void TimestampSyncDataCollector::DoDisconnect(std::shared_ptr<const ConnectionInfo> id){
+  void TimestampSyncDataCollector::DoDisconnect(uint32_t id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
-    std::string pdc_name = id->GetName();
+    std::string pdc_name = std::to_string(id);
     if(m_que_event.find(pdc_name) == m_que_event.end())
       EUDAQ_THROW("DataCollector::DisDoconnect, the disconnecting producer was not existing in list");
     EUDAQ_WARN("Producer."+pdc_name+" is disconnected, the remaining events are erased. ("+std::to_string(m_que_event[pdc_name].size())+ " Events)");
@@ -72,9 +69,9 @@ namespace eudaq {
     m_event_ready.erase(pdc_name);
   }
   
-  void TimestampSyncDataCollector::DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev){
+  void TimestampSyncDataCollector::DoReceive(uint32_t id, EventUP ev){
     std::unique_lock<std::mutex> lk(m_mtx_map);
-    std::string pdc_name = id->GetName();
+    std::string pdc_name = std::to_string(id);
     m_que_event[pdc_name].push_back(std::move(ev));
     uint64_t ts_ev_beg =  ev->GetTimestampBegin();
     uint64_t ts_ev_end =  ev->GetTimestampEnd();
@@ -125,6 +122,7 @@ namespace eudaq {
       uint64_t ts_next_end = -1;
       uint64_t ts_next_beg = ts_next_end - 1;
       auto ev_wrap = RawDataEvent::MakeUnique(GetFullName());
+      ev_wrap->SetFlagPacket();
       ev_wrap->SetTimestamp(m_ts_curr_beg, m_ts_curr_end);
       for(auto &que :m_que_event){
 	auto &ready = m_event_ready[que.first];

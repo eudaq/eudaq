@@ -7,13 +7,18 @@ namespace eudaq{
   Factory<LCEventConverter>::Instance<>();
   
   bool LCEventConverter::Convert(EventSPC d1, LCEventSP d2, ConfigurationSPC conf){    
-    if(d1->IsFlagBit(Event::FLAG_PACKET)){
+    if(d1->IsFlagPacket()){
       d2->parameters().setValue("EventFlag", (int)d1->GetFlag());
       d2->parameters().setValue("RunNumber", (int)d1->GetRunN());
-      d2->parameters().setValue("EventNumber", (int)d1->GetEventN());
+      // d2->parameters().setValue("EventNumber", (int)d1->GetEventN());
       d2->parameters().setValue("StreamNumber", (int)d1->GetStreamN());
-      d2->parameters().setValue("TimestampBegin", (int)d1->GetTimestampBegin());
-      d2->parameters().setValue("TimestampEnd", (int)d1->GetTimestampEnd());
+      if(d1->IsFlagTrigger()){
+	d2->parameters().setValue("TriggerNumber", (int)d1->GetTimestampBegin());
+      }
+      if(d1->IsFlagTimestamp()){
+	d2->parameters().setValue("TimestampBegin", (int)d1->GetTimestampBegin());
+	d2->parameters().setValue("TimestampEnd", (int)d1->GetTimestampEnd());
+      }
       size_t nsub = d1->GetNumSubEvent();
       for(size_t i=0; i<nsub; i++){
 	auto subev = d1->GetSubEvent(i);

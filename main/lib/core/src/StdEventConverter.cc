@@ -7,19 +7,24 @@ namespace eudaq{
   Factory<StdEventConverter>::Instance<>();
   
   bool StdEventConverter::Convert(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf){
+
+    if(d1->IsFlagFake()){
+      return true;
+    }
     
-    if(d1->IsFlagBit(Event::FLAG_PACKET)){
+    if(d1->IsFlagPacket()){
       d2->SetFlag(d1->GetFlag());
-      d2->ClearFlagBit(Event::FLAG_PACKET);
       d2->SetRunN(d1->GetRunN());
       d2->SetEventN(d1->GetEventN());
       d2->SetStreamN(d1->GetStreamN());
-      d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd());
+      d2->SetTriggerN(d1->GetTriggerN(), d1->IsFlagTrigger());
+      d2->SetTimestamp(d1->GetTimestampBegin(), d1->GetTimestampEnd(), d1->IsFlagTimestamp());
       size_t nsub = d1->GetNumSubEvent();
       for(size_t i=0; i<nsub; i++){
 	auto subev = d1->GetSubEvent(i);
-	if(!StdEventConverter::Convert(subev, d2, conf))
-	  return false;
+	if(!d1->IsFlagFake())
+	  if(!StdEventConverter::Convert(subev, d2, conf))
+	    return false;
       }
       return  true;
     }

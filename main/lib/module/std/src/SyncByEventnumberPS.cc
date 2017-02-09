@@ -59,7 +59,7 @@ void SyncByEventNumberPS::ProcessEvent(EventSPC ev){
   }
 
   EventSP sync_ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetInstanceN());
-  sync_ev->SetFlagBit(Event::FLAG_PACKET);
+  sync_ev->SetFlagPacket();
 
   for(auto &e: m_fifos){
     auto &fifo = e.second;

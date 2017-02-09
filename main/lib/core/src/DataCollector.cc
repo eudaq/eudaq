@@ -125,14 +125,18 @@ namespace eudaq {
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
       m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", *con, true);
-      DoConnect(con);
+      // DoConnect(con);
+      // std::cout<< "DoConnecg con type"<< con->GetType()<<" "<< str2hash(con->GetName())<<std::endl;
+      // std::cout<< "DoConnecg con name "<< con->GetName()<<" "<< str2hash(con->GetName())<<std::endl;
+      // DoConnect(str2hash(con->GetName()));
       break;
     case (TransportEvent::DISCONNECT):
       EUDAQ_INFO("Disconnected: " + to_string(*con));
       for (size_t i = 0; i < m_info_pdc.size(); ++i) {
 	if (m_info_pdc[i]->Matches(*con)){
 	  m_info_pdc.erase(m_info_pdc.begin() + i);
-	  DoDisconnect(con);
+	  // DoDisconnect(con);
+	  DoDisconnect(str2hash(con->GetName()));
 	  return;
 	}
       }
@@ -173,7 +177,10 @@ namespace eudaq {
         m_dataserver->SendPacket("OK", *con, true);
         con->SetState(1); // successfully identified
 	EUDAQ_INFO("Connection from " + to_string(*con));
+	std::cout<< "DoConnecg con type"<< con->GetType()<<" "<< str2hash(con->GetName())<<std::endl;
+	std::cout<< "DoConnecg con name "<< con->GetName()<<" "<< str2hash(con->GetName())<<std::endl;
 	m_info_pdc.push_back(con);
+	DoConnect(str2hash(con->GetName()));
       } else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
 	uint32_t id;
@@ -181,7 +188,8 @@ namespace eudaq {
 	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
 	//TODO: check if OnStopRun is called. if yes, DO NOT call DoReceive
 	//TODO: check if OnStartRun is called.
-	DoReceive(con, std::move(event));
+	// DoReceive(con, std::move(event));
+	DoReceive(str2hash(con->GetName()), std::move(event));
       }
       break;
     default:

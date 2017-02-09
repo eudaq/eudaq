@@ -287,7 +287,7 @@ namespace eudaq {
         // if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
           // ignore status messages that are marked with a previous runnumber
 	
-	m_status[con->GetName()] = status; 
+	m_status[con->GetName()] = status;
 	DoStatus(con, status);
         // }
       }

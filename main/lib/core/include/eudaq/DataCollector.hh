@@ -48,10 +48,14 @@ namespace eudaq {
     virtual void DoTerminate(){};
 
     //running in dataserver thread
-    virtual void DoConnect(std::shared_ptr<const ConnectionInfo> id) {}
-    virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {}
-    virtual void DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev) = 0;
+    // virtual void DoConnect(std::shared_ptr<const ConnectionInfo> id) {}
+    // virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {}
+    // virtual void DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev) = 0;
 
+    virtual void DoConnect(uint32_t id) {}
+    virtual void DoDisconnect(uint32_t id) {}
+    virtual void DoReceive(uint32_t id, EventUP ev) = 0;
+    
     void WriteEvent(EventUP ev);
     void StartDataCollector();
     void CloseDataCollector();

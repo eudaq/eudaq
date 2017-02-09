@@ -44,8 +44,8 @@ namespace eudaq {
     enum Flags {
       FLAG_BORE = 0x1, 
       FLAG_EORE = 0x2,
-      FLAG_NODATA = 0x4,
-      FLAG_PACKET = 0x8,
+      FLAG_FAKE = 0x4,
+      FLAG_PACK = 0x8,
       FLAG_TRIG = 0x10,
       FLAG_TIME = 0x20
     };
@@ -79,6 +79,12 @@ namespace eudaq {
     bool IsFlagTimestamp() const {return IsFlagBit(FLAG_TIME);}
     bool IsFlagTrigger() const {return IsFlagBit(FLAG_TRIG);}
 
+    void SetFlagFake(){SetFlagBit(FLAG_FAKE);}
+    bool IsFlagFake() const {return IsFlagBit(FLAG_FAKE);}
+
+    void SetFlagPacket(){SetFlagBit(FLAG_PACK);}
+    bool IsFlagPacket() const {return IsFlagBit(FLAG_PACK);}
+    
     bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
     bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
     void SetBORE() {SetFlagBit(FLAG_BORE);}

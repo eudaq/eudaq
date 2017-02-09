@@ -20,6 +20,7 @@ namespace eudaq{
       EUDAQ_ERROR("ERROR, the input event is not RawDataEvent");
       return false;
     }
+
     uint32_t id = ev->GetExtendWord();
     auto cvt = Factory<StdEventConverter>::MakeUnique(id);
     if(cvt){
