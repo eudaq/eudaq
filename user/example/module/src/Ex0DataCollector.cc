@@ -86,7 +86,7 @@ void Ex0DataCollector::DoConfigure(){
   auto conf = GetConfiguration();
   if(conf){
     conf->Print();
-    m_pri_ts = conf->Get("PRIOR_TIMESTAMP", m_pri_ts);
+    m_pri_ts = conf->Get("PRIOR_TIMESTAMP", m_pri_ts?1:0);
   }
 }
 
@@ -212,8 +212,8 @@ void Ex0DataCollector::BuildEvent_Final(){
       continue;
     }//else
 
-    uint32_t ts_beg = ev_tg->GetTimestampBegin();
-    uint32_t ts_end = ev_tg->GetTimestampEnd();
+    uint64_t ts_beg = ev_tg->GetTimestampBegin();
+    uint64_t ts_end = ev_tg->GetTimestampEnd();
     uint32_t tg_n = ev_tg->GetTriggerN();
 
     //

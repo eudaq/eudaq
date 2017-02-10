@@ -177,5 +177,5 @@ IF(PYTHONINTERP_FOUND AND BUILD_python)
 ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
 
 message (STATUS "*** Build Type CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE} ***" )
-message (STATUS "*** Compiler Flags CMAKE_CXX_FLAGS:  ${CMAKE_CXX_FLAGS}"x)
+message (STATUS "*** Compiler Flags CMAKE_CXX_FLAGS:  ${CMAKE_CXX_FLAGS}")
 message (STATUS "*** Compiler Flags CMAKE_LD_FLAGS:  ${CMAKE_LD_FLAGS}")

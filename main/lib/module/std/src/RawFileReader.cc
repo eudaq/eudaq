@@ -36,7 +36,7 @@ namespace eudaq {
     m_des->PreRead(id);
     if(id != -1)
       ev = Factory<eudaq::Event>::Create<Deserializer&>(id, *m_des);
-    return ev;
+    return std::move(ev);
   }
 
 }
