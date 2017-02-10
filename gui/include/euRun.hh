@@ -12,6 +12,8 @@
 #include <QTimer>
 #include <QInputDialog>
 #include <QSettings>
+#include <QRegExp>
+#include <QString>
 
 using eudaq::to_string;
 using eudaq::from_string;
@@ -44,9 +46,9 @@ private:
 };
 
 
-class RunControlGUI :public QMainWindow,
-		     public Ui::wndRun,
-		     public eudaq::RunControl {
+class RunControlGUI : public QMainWindow,
+		      public Ui::wndRun,
+		      public eudaq::RunControl {
   Q_OBJECT
 public:
   RunControlGUI(const std::string &listenaddress,
@@ -55,8 +57,16 @@ public:
 
   void Exec() override final;
 private:
-  enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
-  QString lastUsedDirectory = "";
+  //  enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
+  enum state_t { STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR };
+  // enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR};// ST_CONFIGLOADE
+  bool configLoaded;
+  bool configLoadedInit;
+  bool disableButtons;
+  bool m_nextconfigonrunchange; 
+  int curState;
+  QString lastUsedDirectory;
+  QString lastUsedDirectoryInit;  
   QStringList allConfigFiles;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override{
@@ -82,16 +92,79 @@ private:
     }
   }
   bool eventFilter(QObject *object, QEvent *event);
+  bool checkInitFile(){
+    QString loadedFile = txtInitFileName->text();
+    if(loadedFile.isNull())
+      return false;
+    QRegExp rx(".+(\\.init$)");
+    return rx.exactMatch(loadedFile);
+  }
+
+
+  bool checkConfigFile() {
+    QString loadedFile = txtConfigFileName->text();
+    if(loadedFile.isNull())
+        return false;
+    QRegExp rx (".+(\\.conf$)");
+    return rx.exactMatch(loadedFile);
+  }
+
+  void updateButtons(int state) {
+      if(state == STATE_RUNNING)
+        disableButtons = false;
+      if(state == STATE_ERROR)
+        disableButtons = true;
+      configLoaded = checkConfigFile();
+      configLoadedInit = checkInitFile();
+      btnLoadInit->setEnabled(state != STATE_RUNNING && !disableButtons);
+      btnInit->setEnabled(state != STATE_RUNNING && !disableButtons && configLoadedInit);
+      btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && !disableButtons);
+      btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded && !dis\
+ableButtons);
+      btnTerminate->setEnabled(state != STATE_RUNNING);
+      btnStart->setEnabled(state == STATE_CONF && !disableButtons);
+      btnStop->setEnabled(state == STATE_RUNNING);
+  }
+
 private slots:
 
   void SetStateSlot(int state) {
-    btnLoad->setEnabled(state != ST_RUNNING);
+    curState=state; 
+    updateButtons(state);  
+     if(state == STATE_UNINIT) {
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b><\
+/font>").arg(FONT_SIZE));
+    }
+    else if(state == STATE_UNCONF) {
+       lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></\
+font>").arg(FONT_SIZE));
+    } else if (state == STATE_CONF) {
+       lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b><\
+/font>").arg(FONT_SIZE));
+    }
+    else if (state ==STATE_RUNNING)
+       lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></fon\
+t>").arg(FONT_SIZE));
+     else
+       lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></fon\
+t>").arg(FONT_SIZE));
+     m_run.UpdateDisplayed();
+    /*btnLoad->setEnabled(state != ST_RUNNING);
     btnConfig->setEnabled((state == ST_CONFIGLOADED) || (state == ST_READY));
     btnTerminate->setEnabled(state != ST_RUNNING);
     btnStart->setEnabled(state == ST_READY);
     btnStop->setEnabled(state == ST_RUNNING);
-  }
+    //    btnStop->setEnabled(state == ST_RUNNING);
+    //    btnStop->setEnabled(state == ST_RUNNING);
+    */  
+}
 
+  void on_btnInit_clicked() {
+    std::string settings = txtInitFileName->text().toStdString();
+    //   void ReadConfigureFile(const std::string &path);
+    ReadInitilizeFile(settings);
+    Initialise();
+  }
   void on_btnTerminate_clicked(){ close(); }
 
   void on_btnConfig_clicked(){
@@ -100,13 +173,14 @@ private slots:
     m_runsizelimit = GetConfiguration()->Get("RunSizeLimit", 0);
     m_runeventlimit = GetConfiguration()->Get("RunEventSizeLimit", 0);
     Configure();
-    SetState(ST_READY);
+    //   SetState(ST_READY);
     dostatus = true;
   }
-  void on_btnReset_clicked(){
-   Reset();
-  }
+  //  void on_btnReset_clicked(){
+  //   Reset();
+  //  }
   void on_btnStart_clicked(bool cont = false) {
+    disableButtons=true;   
     m_prevtrigs = 0;
     m_prevtime = 0.0;
     m_runstarttime = 0.0;
@@ -118,18 +192,34 @@ private slots:
     emit StatusChanged("PARTICLES", "0");
     emit StatusChanged("RATE", "");
     emit StatusChanged("MEANRATE", "");
-    SetState(ST_RUNNING);
+    //    SetState(ST_RUNNING);
   }
   void on_btnStop_clicked() {
     m_data_taking = false;
     StopRun();
     EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
-    SetState(ST_READY);
+    //  SetState(ST_READY);
   }
   void on_btnLog_clicked() {
     std::string msg = txtLogmsg->displayText().toStdString();
     EUDAQ_USER(msg);
   }
+
+ void on_btnLoadInit_clicked() {
+    QString temporaryFileNameInit = QFileDialog::getOpenFileName(
+        this, tr("Open File"), lastUsedDirectoryInit, tr("*.init (*.init)"));
+
+    if (!temporaryFileNameInit.isNull()) {
+      txtInitFileName->setText(temporaryFileNameInit);
+      lastUsedDirectoryInit =
+          QFileInfo(temporaryFileNameInit).path(); // store path for next time                      
+      configLoadedInit = true;
+      updateButtons(curState);
+    }
+  }
+
+
+
   void on_btnLoad_clicked() {
     // QString tempLastFileName;
     // tempLastFileName = txtConfigFileName->text();
@@ -140,8 +230,10 @@ private slots:
     if (!temporaryFileName.isNull()) {
       txtConfigFileName->setText(temporaryFileName);
       lastUsedDirectory =
-          QFileInfo(temporaryFileName).path(); // store path for next time
-      SetState(ST_CONFIGLOADED);
+	QFileInfo(temporaryFileName).path(); // store path for next time
+      configLoaded=true;
+      updateButtons(curState);
+      //      SetState(ST_CONFIGLOADED);
     }
   }
   void timer() {
@@ -164,12 +256,36 @@ private slots:
 	} else {	
           StopRun();
 	}
-        eudaq::mSleep(20000);
+        eudaq::mSleep(20000); ////////
+	if (m_nextconfigonrunchange) {
+          QDir dir(lastUsedDirectory, "*.conf");
+          // allConfigFiles                                                                         
+          for (size_t i = 0; i < dir.count(); ++i) {
+            QString item = dir[i];
+            allConfigFiles.append(dir.absoluteFilePath(item));
+          }
+
+          if (allConfigFiles.indexOf(
+                  QRegExp("^" + QRegExp::escape(txtConfigFileName->text()))) +
+                  1 <
+              allConfigFiles.count()) {
+            EUDAQ_INFO("Moving to next config file and starting a new run");
+            txtConfigFileName->setText(allConfigFiles.at(allConfigFiles.indexOf(
+                QRegExp("^" + QRegExp::escape(txtConfigFileName->text())))+1));
+            on_btnConfig_clicked();
+            if(!m_nextconfigonrunchange) {
+              m_lastconfigonrunchange=true;
+            }
+            eudaq::mSleep(1000);
+            m_startrunwhenready = true;
+          } else
+            EUDAQ_INFO("All config files processed.");
+        } else
 	on_btnStart_clicked(true);
       } else if (dostatus) {
         RemoteStatus();
       }
-    }
+    } /////////////////
     if (m_startrunwhenready && !m_producer_pALPIDEfs_not_ok &&
         !m_producer_pALPIDEss_not_ok) {
       m_startrunwhenready = false;

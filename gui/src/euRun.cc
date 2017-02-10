@@ -1,11 +1,13 @@
 #include <QApplication>
 #include <QDateTime>
 #include <fstream>
+//#include "euRunApplication.h"  // does the file exist in eudaq2?
 #include "euRun.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "Colours.hh"
 #include "eudaq/Status.hh"
+//#include "eudaq/ConnectionState.hh" // does the file exist in eudaq2?
 #include <exception>
 #include "config.h" // for version symbols
 
@@ -40,13 +42,16 @@ void RunConnectionDelegate::paint(QPainter *painter,
   // painter->restore();
 }
 
+//  RunControlGUI(const std::string &listenaddress, QRect geom,
+//                QWidget *parent = 0, Qt::WindowFlags flags = 0);
+//  ~RunControlGUI() override;
 RunControlGUI::RunControlGUI(const std::string &listenaddress,
                              QWidget *parent, Qt::WindowFlags flags)
   : QMainWindow(parent, flags), eudaq::RunControl(listenaddress),
     m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
     m_filebytes(0), m_events(0), dostatus(false),
     m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
-    m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false) {
+    m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false), m_nextconfigonrunchange(false), configLoaded(false), configLoadedInit(false), disableButtons(false), curState(STATE_UNINIT),lastUsedDirectory(""),lastUsedDirectoryInit("") {
   setupUi(this);
   QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())
@@ -73,16 +78,6 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
 
   // cmbConfig->setEditText("default");
   QRect geom_from_last_program_run;
-  QSettings settings("EUDAQ collaboration", "EUDAQ");
-
-  settings.beginGroup("MainWindowEuRun");
-  geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
-  geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
-  lastUsedDirectory =
-      settings.value("lastConfigFileDirectory", "").toString();
-  txtConfigFileName->setText(
-      settings.value("lastConfigFile", "config file not set").toString());
-  settings.endGroup();
 
   QSize fsize = frameGeometry().size();
   if ((geom.x() == -1)||(geom.y() == -1)||(geom.width() == -1)||(geom.height() == -1)) {
@@ -99,6 +94,19 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
     }
   }
 
+
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
+
+  settings.beginGroup("MainWindowEuRun");
+  geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
+  geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
+  lastUsedDirectory =
+      settings.value("lastConfigFileDirectory", "").toString();
+  txtConfigFileName->setText(
+      settings.value("lastConfigFile", "config file not set").toString());
+  settings.endGroup();
+
+
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
           SLOT(ChangeStatus(const QString &, const QString &)));
   connect(&m_statustimer, SIGNAL(timeout()), this, SLOT(timer()));
@@ -111,7 +119,8 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   setWindowIcon(QIcon("../images/Icon_euRun.png"));
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
 
-  if(txtConfigFileName->text()!="config file not set") {
+  // following states have been taken out now, Check if to change ?
+  /*  if(txtConfigFileName->text()!="config file not set") {
    QFile file(txtConfigFileName->text());
    if(file.exists()){
      SetState(ST_CONFIGLOADED);
@@ -120,8 +129,8 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
      txtConfigFileName->setText("config file not set");
    }
    file.close();
+   }*/
   }
-}
 
 void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
                               std::shared_ptr<const eudaq::Status> status) {
@@ -136,63 +145,67 @@ void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
     EmitStatus("EVENT", status->GetTag("EVENT"));
     EmitStatus("FILEBYTES", to_bytes(status->GetTag("FILEBYTES")));
   } else if (id->GetType() == "Producer") {
-    if (id->GetName() == "TLU" ||id->GetName() == "tlu"|| id->GetName() == "miniTLU"){
+    if (id->GetName() == "caliceahcalbif") {  // AHCALBIG just added from 1.7
       EmitStatus("TRIG", status->GetTag("TRIG"));
       EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
-      EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
-      EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
-      EmitStatus("TLUSTAT", status->GetTag("STATUS"));
-      bool ok = true;
-      std::string scalers;
-      for (int i = 0; i < 4; ++i) {
-        std::string s = status->GetTag("SCALER" + to_string(i));
-        if (s == "") {
+    }{
+      if (id->GetName() == "TLU" || id->GetName() == "miniTLU") {
+	EmitStatus("TRIG", status->GetTag("TRIG"));
+	EmitStatus("PARTICLES", status->GetTag("PARTICLES"));
+	EmitStatus("TIMESTAMP", status->GetTag("TIMESTAMP"));
+	EmitStatus("LASTTIME", status->GetTag("LASTTIME"));
+	EmitStatus("TLUSTAT", status->GetTag("STATUS"));
+	bool ok = true;
+	std::string scalers;
+	for (int i = 0; i < 4; ++i) {
+	  std::string s = status->GetTag("SCALER" + to_string(i));
+	  if (s == "") {
           ok = false;
           break;
-        }
-        if (scalers != "")
-          scalers += ", ";
-        scalers += s;
+	  }
+	  if (scalers != "")
+	    scalers += ", ";
+	  scalers += s;
+	}
+	if (ok)
+	  EmitStatus("SCALERS", scalers);
+	int trigs = from_string(status->GetTag("TRIG"), -1);
+	double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
+	if (trigs >= 0) {
+	  bool dorate = true;
+	  if (m_runstarttime == 0.0) {
+	    if (trigs > 0)
+	      m_runstarttime = time;
+	    dorate = false;
+	  } else {
+	    EmitStatus("MEANRATE",
+		       to_string((trigs - 1) / (time - m_runstarttime)) + " Hz");
+	  }
+	  int dtrigs = trigs - m_prevtrigs;
+	  double dtime = time - m_prevtime;
+	  if (dtrigs >= 10 || dtime >= 1.0) {
+	    m_prevtrigs = trigs;
+	    m_prevtime = time;
+	    EmitStatus("RATE", to_string(dtrigs / dtime) + " Hz");
+	  } else {
+	    dorate = false;
+	  }
+	  if (dorate) {
+	    EmitStatus("FULLRATE",
+		       to_string((trigs - 1) / (time - m_runstarttime)) + " (" +
+		       to_string(dtrigs / dtime) + ") Hz");
+	  }
+	}
+      } else if (id->GetName() == "pALPIDEfs") {
+	m_producer_pALPIDEfs_not_ok = (status->GetLevel() != 1);
+      } else if (id->GetName() == "pALPIDEss") {
+	m_producer_pALPIDEss_not_ok = (status->GetLevel() != 1);
       }
-      if (ok)
-        EmitStatus("SCALERS", scalers);
-      int trigs = from_string(status->GetTag("TRIG"), -1);
-      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
-      if (trigs >= 0) {
-        bool dorate = true;
-        if (m_runstarttime == 0.0) {
-          if (trigs > 0)
-            m_runstarttime = time;
-          dorate = false;
-        } else {
-          EmitStatus("MEANRATE",
-                     to_string((trigs - 1) / (time - m_runstarttime)) + " Hz");
-        }
-        int dtrigs = trigs - m_prevtrigs;
-        double dtime = time - m_prevtime;
-        if (dtrigs >= 10 || dtime >= 1.0) {
-          m_prevtrigs = trigs;
-          m_prevtime = time;
-          EmitStatus("RATE", to_string(dtrigs / dtime) + " Hz");
-        } else {
-          dorate = false;
-        }
-        if (dorate) {
-          EmitStatus("FULLRATE",
-                     to_string((trigs - 1) / (time - m_runstarttime)) + " (" +
-                         to_string(dtrigs / dtime) + ") Hz");
-        }
-      }
-    } else if (id->GetName() == "pALPIDEfs") {
-      m_producer_pALPIDEfs_not_ok = (status->GetLevel() != 1);
-    } else if (id->GetName() == "pALPIDEss") {
-      m_producer_pALPIDEss_not_ok = (status->GetLevel() != 1);
     }
+    
+    m_run.SetStatus(*id, *status);
   }
-
-  m_run.SetStatus(id, *status);
-}
-
+} 
 void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
   static bool registered = false;
   if (!registered) {
@@ -204,14 +217,14 @@ void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
   m_run.newconnection(id);
   if (id->GetType() == "DataCollector") {
     EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
-    SetState(ST_NONE);
+    //    SetState(ST_NONE);
   }
   if (id->GetType() == "LogCollector") {
     btnLogSetStatus(true);
   }
 }
-
-bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
+ 
+ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
   if (object == txtGeoID && event->type() == QEvent::MouseButtonDblClick) {
     int oldid = txtGeoID->text().toInt();
     bool ok = false;
@@ -224,31 +237,31 @@ bool RunControlGUI::eventFilter(QObject *object, QEvent *event) {
     return true;
   }
   return false;
-}
-
-RunControlGUI::~RunControlGUI() {
-  QSettings settings("EUDAQ collaboration", "EUDAQ");
-
-  settings.beginGroup("MainWindowEuRun");
-  settings.setValue("size", size());
-  settings.setValue("pos", pos());
-  // settings.setValue("screen", windowHandle()->screen()->screenNumber());
-  settings.setValue("lastConfigFileDirectory", lastUsedDirectory);
-  settings.setValue("lastConfigFile", txtConfigFileName->text());
-  settings.endGroup();
-}
-
-
-void RunControlGUI::Exec(){
-  show();
-  StartRunControl();
-  if(QApplication::instance())
-    QApplication::instance()->exec(); 
-  else
-    std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";
-
-  while(IsActiveRunControl()){
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  }
-
-}
+ }
+ 
+ RunControlGUI::~RunControlGUI() {
+   QSettings settings("EUDAQ collaboration", "EUDAQ");
+   
+   settings.beginGroup("MainWindowEuRun");
+   settings.setValue("size", size());
+   settings.setValue("pos", pos());
+   // settings.setValue("screen", windowHandle()->screen()->screenNumber());
+   settings.setValue("lastConfigFileDirectory", lastUsedDirectory);
+   settings.setValue("lastConfigFile", txtConfigFileName->text());
+   settings.endGroup();
+ }
+ 
+ 
+ void RunControlGUI::Exec(){
+   show();
+   StartRunControl();
+   if(QApplication::instance())
+     QApplication::instance()->exec(); 
+   else
+     std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";
+   
+   while(IsActiveRunControl()){
+     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+   }
+ }
+ 
