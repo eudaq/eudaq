@@ -108,7 +108,7 @@ namespace eudaq {
       std::cout << "ScREader::OnStop before going to sleep()" << std::endl;
       std::this_thread::sleep_for(std::chrono::seconds(waitQueueTimeS));
       std::cout << "ScREader::OnStop after sleep()... " << std::endl;
-      _RunTimesStatistics.print(std::cout);
+      _RunTimesStatistics.print(std::cout, _producer->getColoredTerminalMessages());
       std::cout << "DEBUG: MAP sizes: " << _LDAAsicData.size() << "\t" << _LDATimestampData.size() << "\t last ROC: ";
       if (_LDAAsicData.crbegin() != _LDAAsicData.crend())
          std::cout << _LDAAsicData.rbegin()->first;
@@ -339,10 +339,12 @@ namespace eudaq {
 
             if (!(status & 0x40)) {
                //We'll drop non-ASIC data packet;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31;1m";
                std::cout << "ERROR: unexpected packet type 0x" << to_hex(status) << ", erasing " << length << " and " << e_sizeLdaHeader << endl;
                for (int i = 0; i < length + e_sizeLdaHeader; ++i) {
                   cout << " " << to_hex(buf[i], 2);
                }
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                std::cout << std::endl;
                buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
                continue;
@@ -516,11 +518,15 @@ namespace eudaq {
             startTS = _LDATimestampData[roc].TS_Start;
             for (int i = 0; i < _LDATimestampData[roc].TS_Triggers.size(); ++i) {
                if (!startTS) {
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
                   std::cout << "ERROR EB: Start timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                   break;
                }
                if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 100 * C_MILLISECOND_TICS) {
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[33;1m";
                   std::cout << "ERROR EB: Length of the acquisition is longer than 100 ms in run " << roc << std::endl;
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                }
 
                uint64_t trigTS = _LDATimestampData[roc].TS_Triggers[i];
@@ -534,7 +540,9 @@ namespace eudaq {
             _LDATimestampData.erase(roc);
          }
          else {
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
             std::cout << "ERROR EB: matching LDA timestamp information not found for ROC " << roc << std::endl;
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
          }
 
          //iterate over bxids from single ROC
@@ -621,14 +629,20 @@ namespace eudaq {
          if (_LDATimestampData.count(roc)) {
             startTS = _LDATimestampData[roc].TS_Start;
             if (!_LDATimestampData[roc].TS_Start) {
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
                std::cout << "ERROR: Start timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
             }
             if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 100 * C_MILLISECOND_TICS) {
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[33;1m";
                std::cout << "ERROR: Length of the acquisition is longer than 100 ms in run " << roc << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
             }
             _LDATimestampData.erase(roc);
          } else {
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
             std::cout << "ERROR: matching LDA timestamp information not found for ROC " << roc << std::endl;
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
          }
          //----------------------------------------------------------
 
@@ -681,10 +695,14 @@ namespace eudaq {
                //save timestamp only if both timestamps are present. Otherwise there was something wrong in the data
                nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop);
             } else {
-               std::cout << "ERROR: one of the timestamp is incorrect in ROC " << roc << " Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
+               std::cout << "ERROR EB: one of the timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
             }
             if (_LDATimestampData[roc].TS_Stop - _LDATimestampData[roc].TS_Start > 100 * C_MILLISECOND_TICS) {
-               std::cout << "ERROR: Length of the acquisition is longer than 100 ms in run " << roc << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
+               std::cout << "ERROR EB: Length of the acquisition is longer than 100 ms in ROC " << roc << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
             }
             std::vector<uint32_t> cycledata;
             cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start));
@@ -701,7 +719,9 @@ namespace eudaq {
             nev_raw->AppendBlock(6, cycleData);
             _LDATimestampData.erase(roc);
          } else {
-            std::cout << "ERROR: matching LDA timestamp information not found for ROC " << roc << std::endl;
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
+            std::cout << "ERROR EB: matching LDA timestamp information not found for ROC " << roc << std::endl;
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
          }
 
          EventQueue.push_back(std::move(nev));
@@ -797,7 +817,9 @@ namespace eudaq {
             }
             _LDATimestampData.erase(roc);
          } else {
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
             std::cout << "ERROR: matching LDA timestamp information not found for ROC " << roc << std::endl;
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
          }
          _LDAAsicData.erase(_LDAAsicData.begin());
          continue;
@@ -963,7 +985,9 @@ namespace eudaq {
 
          if (cycle_difference > 1) {
             //really bad data corruption
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31;1m";
             cout << "ERROR: Jump in run " << _runNo << " in TS readoutcycle by " << to_string((int) cycle_difference) << " in ROC " << LDA_cycle << endl;
+            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
             EUDAQ_ERROR("ERROR: Jump in run " + to_string(_runNo) + "in TS readoutcycle by " + to_string((int )cycle_difference) + "in ROC " + to_string(LDA_cycle));
             if (cycle_difference < 20)
                LDA_cycle += cycle_difference; //we compensate only small difference
@@ -980,7 +1004,9 @@ namespace eudaq {
 
          if (TStype == C_TSTYPE_START_ACQ) {
             if (_buffer_inside_acquisition) {
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31;1m";
                cout << "ERROR: start acquisition without previous stop in run " << _runNo << " in ROC " << LDA_cycle << endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                EUDAQ_ERROR("ERROR: start acquisition without previous stop in run " + to_string(_runNo) + " in ROC " + to_string(LDA_cycle));
             } else {
                _RunTimesStatistics.last_TS = timestamp;
@@ -1002,7 +1028,9 @@ namespace eudaq {
 
          if (TStype == C_TSTYPE_STOP_ACQ) {
             if (!_buffer_inside_acquisition) {
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31;1m";
                cout << "ERROR: stop acquisition without previous start in run " << _runNo << " in ROC " << LDA_cycle << endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                EUDAQ_ERROR("ERROR: stop acquisition without previous start in run " + to_string(_runNo) + " in ROC " + to_string(LDA_cycle));
             } else {
                _RunTimesStatistics.last_TS = timestamp;
@@ -1033,7 +1061,10 @@ namespace eudaq {
                   //we do accept small jumps forward
                   _trigID += trigIDdifference;
                   _RunTimesStatistics.triggers_lost += trigIDdifference - 1;
-                  cout << (trigIDdifference - 1) << " Skipped TriggerIDs detected in run " << _runNo << ". Filling with dummy packet. ROC=" << _cycleNo << ", TrigID=" << _trigID << endl;
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[35;1m";
+                  cout << "WARNING: " << (trigIDdifference - 1) << " Skipped TriggerIDs detected in run " << _runNo << ". Filling with dummy packet. ROC=" << _cycleNo << ", TrigID=" << _trigID
+                        << endl;
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                   EUDAQ_WARN(to_string(trigIDdifference - 1) + "Skipped TriggerID detected in run " + to_string(_runNo) +
                         ". Filling with dummy packet. ROC=" + to_string(_cycleNo) + ", TrigID=" + to_string(_trigID));
                }
@@ -1041,7 +1072,9 @@ namespace eudaq {
                //TODO fix the case, when the trigger comes as the very first event. Not the case for TLU - it starts sending triggers later
                if ((trigIDdifference < 1) || (trigIDdifference >= 100)) {
                   //too big difference to be compensated. Dropping this packet
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[31;1m";
                   cout << "Unexpected TriggerID in run " << _runNo << ". ROC=" << _cycleNo << ", Expected TrigID=" << (_trigID + 1) << ", received:" << rawTrigID << ". SKipping" << endl;
+                  if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                   EUDAQ_ERROR("Unexpected TriggerID in run " + to_string(_runNo) + ". ROC=" + to_string(_cycleNo) + ", Expected TrigID=" +
                         to_string(_trigID + 1) + ", received:" + to_string(rawTrigID) + ". SKipping");
                   buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
@@ -1088,7 +1121,7 @@ namespace eudaq {
 ////            }
 //         }
 //      }
-
+      if (_producer->getColoredTerminalMessages()) out << "\033[32m";
       out << "============================================================" << std::endl;
       out << "Last processed Cycle: " << _cycleNo << " (counts from 0)" << std::endl;
       out << "Last processed TriggerID: " << _trigID << " (counts from " << _producer->getLdaTrigidStartsFrom() << "?)" << std::endl;
@@ -1115,7 +1148,9 @@ namespace eudaq {
             out << "WARNING: ROC " << it.first << " has zero TS_Stop" << std::endl;
          }
       }
-      out << "============================================================" << std::endl;
+      out << "============================================================";
+      if (_producer->getColoredTerminalMessages()) out << "\033[0m";
+      out << std::endl;
    }
 
    void ScReader::RunTimeStatistics::clear() {
@@ -1152,7 +1187,8 @@ namespace eudaq {
       }
    }
 
-   void ScReader::RunTimeStatistics::print(std::ostream &out) const {
+   void ScReader::RunTimeStatistics::print(std::ostream &out, int colorOutput) const {
+      if (colorOutput) out << "\033[32m";
       float length = (25E-9) * (last_TS - first_TS);
       out << "============================================================" << std::endl;
       out << "Cycles: " << cycles << std::endl;
@@ -1174,7 +1210,9 @@ namespace eudaq {
       for (std::map<int, int>::const_iterator it = triggers_in_cycle_histogram.begin(); it != triggers_in_cycle_histogram.end(); ++it) {
          out << "        " << to_string(it->first) << " triggers in " << it->second << " cycles" << std::endl;
       }
-      out << "============================================================" << std::endl;
+      out << "============================================================";
+      if (colorOutput) out << "\033[0m";
+      out << std::endl;
 //      out << "Acquisition lengths:" << std::endl;
 //      int i = 0;
 //      for (std::vector<uint64_t>::const_iterator it = length_acquisitions.begin(); it != length_acquisitions.end(); ++it) {

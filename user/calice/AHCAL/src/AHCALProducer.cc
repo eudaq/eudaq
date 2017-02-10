@@ -35,30 +35,30 @@ using namespace std;
 namespace eudaq {
 
    AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
-         Producer(name, runcontrol),
-               _runNo(0),
-               _eventNo(0),
-               _fd(0),
-               _running(false),
-               _stopped(true),
-               _terminated(false),
-               _BORE_sent(false),
-               _reader(NULL),
-
-               _eventBuildingMode(EventBuildingMode::ROC),
-               _eventNumberingPreference(EventNumbering::TRIGGERID),
-               _AHCALBXID0Offset(0),
-               _AHCALBXIDWidth(0),
-               _DebugKeepBuffered(0),
-               _GenerateTriggerIDFrom(0),
-               _InsertDummyPackets(0),
-               _LdaTrigidOffset(0),
-               _LdaTrigidStartsFrom(0),
-               _port(5622),
-               _waitmsFile(0),
-               _waitsecondsForQueuedEvents(2),
-               _writerawfilename_timestamp(true),
-               _writeRaw(true)
+   Producer(name, runcontrol),
+   _runNo(0),
+   _eventNo(0),
+   _fd(0),
+   _running(false),
+   _stopped(true),
+   _terminated(false),
+   _BORE_sent(false),
+   _reader(NULL),
+   _ColoredTerminalMessages(1),
+   _eventBuildingMode(EventBuildingMode::ROC),
+   _eventNumberingPreference(EventNumbering::TRIGGERID),
+   _AHCALBXID0Offset(0),
+   _AHCALBXIDWidth(0),
+   _DebugKeepBuffered(0),
+   _GenerateTriggerIDFrom(0),
+   _InsertDummyPackets(0),
+   _LdaTrigidOffset(0),
+   _LdaTrigidStartsFrom(0),
+   _port(5622),
+   _waitmsFile(0),
+   _waitsecondsForQueuedEvents(2),
+   _writerawfilename_timestamp(true),
+   _writeRaw(true)
    {
       m_id_stream = eudaq::cstr2hash(name.c_str());
    }
@@ -96,7 +96,7 @@ namespace eudaq {
       _reader->OnConfigLED(_fileLEDsettings); //newLED
 
       _redirectedInputFileName = param.Get("RedirectInputFromFile", "");
-
+      _ColoredTerminalMessages = param.Get("ColoredTerminalMessages", 1);
       _LdaTrigidOffset = param.Get("LdaTrigidOffset", 0);
       _LdaTrigidStartsFrom = param.Get("LdaTrigidStartsFrom", 0);
       _AHCALBXID0Offset = param.Get("AHCALBXID0Offset", 2123); //default for mini-LDA, new DIF and no powerpulsing
@@ -414,6 +414,11 @@ namespace eudaq {
    AHCALProducer::EventNumbering AHCALProducer::getEventNumberingPreference() const
    {
       return _eventNumberingPreference;
+   }
+
+   int AHCALProducer::getColoredTerminalMessages() const
+   {
+      return _ColoredTerminalMessages;
    }
 
 }	//end namespace eudaq

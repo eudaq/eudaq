@@ -42,7 +42,7 @@ namespace eudaq {
          struct RunTimeStatistics {
                void clear();
                void append(const RunTimeStatistics& otherStats);
-               void print(std::ostream &out) const;
+               void print(std::ostream &out,int colorOutput) const;
                uint64_t first_TS; //the very first TS in the data
                uint64_t last_TS; //the very last recorded TS in the data
                uint64_t previous_start_TS;

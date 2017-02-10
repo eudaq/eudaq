@@ -80,6 +80,7 @@ namespace eudaq {
          int getInsertDummyPackets() const;
          int getDebugKeepBuffered() const;
          int getGenerateTriggerIDFrom() const;
+         int getColoredTerminalMessages() const;
 
       private:
          AHCALProducer::EventBuildingMode _eventBuildingMode;
@@ -91,6 +92,7 @@ namespace eudaq {
          int _InsertDummyPackets; //1=Put dummy packets to maintain an uninterrupted sequence of TriggerIDs. 0=don't inset anything
          int _DebugKeepBuffered; //1=keep events in buffer and don't send them to data collector
          int _GenerateTriggerIDFrom; //sets from which triggerID number should be data generated (and filled with dummy triggers if necessary). Only works when insert_dummy_packets is enabled and in selected event building mode
+         int _ColoredTerminalMessages; //1 for colored error worning and info messages
 
          int _runNo;
          int _eventNo; //last sent event - for checking of correct event numbers sequence during sending events
