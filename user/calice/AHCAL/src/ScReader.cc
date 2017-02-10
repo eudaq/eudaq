@@ -41,10 +41,10 @@ namespace eudaq {
       _RunTimesStatistics.clear();
       _unfinishedPacketState = UnfinishedPacketStates::DONE;
       switch (_producer->getEventMode()) {
-         case AHCALProducer::EventMode::TRIGID:
+         case AHCALProducer::EventBuildingMode::TRIGGERID:
             _lastBuiltEventNr = _producer->getGenerateTriggerIDFrom() - 1;
             break;
-         case AHCALProducer::EventMode::ROC:
+         case AHCALProducer::EventBuildingMode::ROC:
             default:
             _lastBuiltEventNr = -1;
             break;
@@ -424,16 +424,16 @@ namespace eudaq {
       if (_producer->getDebugKeepBuffered()) return;
       std::lock_guard<std::mutex> lock(_eventBuildingQueueMutex); //minimal lock for pushing new event
       switch (_producer->getEventMode()) {
-         case AHCALProducer::EventMode::ROC:
+         case AHCALProducer::EventBuildingMode::ROC:
             buildROCEvents(EventQueue, dumpAll);
             break;
-         case AHCALProducer::EventMode::TRIGID:
+         case AHCALProducer::EventBuildingMode::TRIGGERID:
             buildTRIGIDEvents(EventQueue, dumpAll);
             break;
-         case AHCALProducer::EventMode::BUILD_BXID_ALL:
+         case AHCALProducer::EventBuildingMode::BUILD_BXID_ALL:
             buildBXIDEvents(EventQueue, dumpAll);
             break;
-         case AHCALProducer::EventMode::BUILD_BXID_VALIDATED:
+         case AHCALProducer::EventBuildingMode::BUILD_BXID_VALIDATED:
             buildValidatedBXIDEvents(EventQueue, dumpAll);
             break;
          default:
@@ -557,10 +557,22 @@ namespace eudaq {
                eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
                eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
                prepareEudaqRawPacket(nev_raw);
-               nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset(), false);
+
+               nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset());
                if (startTS) {
-                  nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset());
-                  nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + _producer->getAhcalbxidWidth());
+                  nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
+                  nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
+               }
+               switch (_producer->getEventNumberingPreference()) {
+                  case AHCALProducer::EventNumbering::TRIGGERID:
+                     nev->SetFlagBit(eudaq::Event::Flags::FLAG_TRIG);
+                     nev->ClearFlagBit(eudaq::Event::Flags::FLAG_TIME);
+                     break;
+                  case AHCALProducer::EventNumbering::TIMESTAMP:
+                     default:
+                     nev->SetFlagBit(eudaq::Event::Flags::FLAG_TIME);
+                     nev->ClearFlagBit(eudaq::Event::Flags::FLAG_TRIG);
+                     break;
                }
                for (auto & minipacket : sameBxidPackets.second) {
                   if (minipacket.size()) {
@@ -621,17 +633,17 @@ namespace eudaq {
          //----------------------------------------------------------
 
          for (std::pair<const int, std::vector<std::vector<int> > > & sameBxidPackets : bxids) {
+            int bxid = sameBxidPackets.first;
             _RunTimesStatistics.builtBXIDs++;
             //std::cout << "bxid: " << sameBxidPackets.first << "\tsize: " << sameBxidPackets.second.size() << std::endl;
-
             ++_lastBuiltEventNr;
             eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
             eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
             prepareEudaqRawPacket(nev_raw);
 
             if (startTS) {
-               nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset());
-               nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + _producer->getAhcalbxidWidth());
+               nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
+               nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
             }
             for (auto & minipacket : sameBxidPackets.second) {
                if (minipacket.size()) {
@@ -733,8 +745,20 @@ namespace eudaq {
                eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
                eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
                prepareEudaqRawPacket(nev_raw);
-
-               nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset());
+               switch (_producer->getEventNumberingPreference()) {
+                  case AHCALProducer::EventNumbering::TIMESTAMP:
+                     nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), false);
+                     nev->SetTimestampBegin(_LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth());
+                     nev->SetTimestampEnd(_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth());
+                     break;
+                  case AHCALProducer::EventNumbering::TRIGGERID:
+                     default:
+                     nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), true);
+                     nev->SetTimestampBegin(_LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth());
+                     nev->SetTimestampEnd(_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth());
+                     nev->ClearFlagBit(eudaq::Event::Flags::FLAG_TIME);
+                     break;
+               }
 
                //copy the ahcal data
                if (i == (_LDATimestampData[roc].TS_Triggers.size() - 1)) {

@@ -45,7 +45,8 @@ namespace eudaq {
                _BORE_sent(false),
                _reader(NULL),
 
-               _eventMode(EventMode::ROC),
+               _eventBuildingMode(EventBuildingMode::ROC),
+               _eventNumberingPreference(EventNumbering::TRIGGERID),
                _AHCALBXID0Offset(0),
                _AHCALBXIDWidth(0),
                _DebugKeepBuffered(0),
@@ -105,12 +106,17 @@ namespace eudaq {
       _InsertDummyPackets = param.Get("InsertDummyPackets", 0);
       _DebugKeepBuffered = param.Get("DebugKeepBuffered", 0);
 
-      string eventmode = param.Get("EventMode", "ROC");
-      if (!eventmode.compare("ROC")) _eventMode = AHCALProducer::EventMode::ROC;
-      if (!eventmode.compare("TRIGID")) _eventMode = AHCALProducer::EventMode::TRIGID;
-      if (!eventmode.compare("BUILD_BXID_ALL")) _eventMode = AHCALProducer::EventMode::BUILD_BXID_ALL;
-      if (!eventmode.compare("BUILD_BXID_VALIDATED")) _eventMode = AHCALProducer::EventMode::BUILD_BXID_VALIDATED;
-      std::cout << "Creating events in " << eventmode << " mode" << std::endl;
+      string eventBuildingMode = param.Get("EventBuildingMode", "ROC");
+      if (!eventBuildingMode.compare("ROC")) _eventBuildingMode = AHCALProducer::EventBuildingMode::ROC;
+      if (!eventBuildingMode.compare("TRIGGERID")) _eventBuildingMode = AHCALProducer::EventBuildingMode::TRIGGERID;
+      if (!eventBuildingMode.compare("BUILD_BXID_ALL")) _eventBuildingMode = AHCALProducer::EventBuildingMode::BUILD_BXID_ALL;
+      if (!eventBuildingMode.compare("BUILD_BXID_VALIDATED")) _eventBuildingMode = AHCALProducer::EventBuildingMode::BUILD_BXID_VALIDATED;
+      std::cout << "Creating events in \"" << eventBuildingMode << "\" mode" << std::endl;
+
+      string eventNumberingMode = param.Get("EventNumberingPreference", "TRIGGERID");
+      if (!eventNumberingMode.compare("TRIGGERID")) _eventNumberingPreference = AHCALProducer::EventNumbering::TRIGGERID;
+      if (!eventNumberingMode.compare("TIMESTAMP")) _eventNumberingPreference = AHCALProducer::EventNumbering::TIMESTAMP;
+      std::cout << "Preferring event numbering type: \"" << eventNumberingMode << "\"" << std::endl;
 
       //_configured = true;
 
@@ -371,8 +377,8 @@ namespace eudaq {
       }
    }
 
-   AHCALProducer::EventMode AHCALProducer::getEventMode() const {
-      return _eventMode;
+   AHCALProducer::EventBuildingMode AHCALProducer::getEventMode() const {
+      return _eventBuildingMode;
    }
 
    int AHCALProducer::getLdaTrigidOffset() const {
@@ -403,6 +409,11 @@ namespace eudaq {
    int AHCALProducer::getGenerateTriggerIDFrom() const
    {
       return _GenerateTriggerIDFrom;
+   }
+
+   AHCALProducer::EventNumbering AHCALProducer::getEventNumberingPreference() const
+   {
+      return _eventNumberingPreference;
    }
 
 }	//end namespace eudaq

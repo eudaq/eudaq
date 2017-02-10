@@ -44,8 +44,10 @@ namespace eudaq {
    class AHCALProducer: public eudaq::Producer {
       public:
 
-         enum class EventMode {
-            ROC, TRIGID, BUILD_BXID_ALL, BUILD_BXID_VALIDATED
+         enum class EventBuildingMode {
+            ROC, TRIGGERID, BUILD_BXID_ALL, BUILD_BXID_VALIDATED
+         };enum class EventNumbering {
+            TRIGGERID, TIMESTAMP
          };
 
          AHCALProducer(const std::string & name, const std::string & runcontrol);
@@ -69,7 +71,8 @@ namespace eudaq {
          void OpenRawFile(unsigned param, bool _writerawfilename_timestamp);
          void sendallevents(std::deque<eudaq::EventUP> &deqEvent, int minimumsize);
 
-         EventMode getEventMode() const;
+         AHCALProducer::EventBuildingMode getEventMode() const;
+         AHCALProducer::EventNumbering getEventNumberingPreference() const;
          int getLdaTrigidOffset() const;
          int getLdaTrigidStartsFrom() const;
          int getAhcalbxid0Offset() const;
@@ -79,7 +82,8 @@ namespace eudaq {
          int getGenerateTriggerIDFrom() const;
 
       private:
-         AHCALProducer::EventMode _eventMode;
+         AHCALProducer::EventBuildingMode _eventBuildingMode;
+         AHCALProducer::EventNumbering _eventNumberingPreference;
          int _LdaTrigidOffset; //LdaTrigidOffset to compensate trigger number differences between TLU (or other trigger number source) and LDA. Eudaq Event counting starts from this number and will be always subtracted from the eudaq event triggerid.
          int _LdaTrigidStartsFrom;   // triggerID number of first valid event in case it doesn't start from 0
          int _AHCALBXID0Offset; //offset from start acquisition Timestamp to BXID0 (in 25ns steps). Varies with AHCAL powerpulsing setting and DIF firmware
