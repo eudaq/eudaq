@@ -191,6 +191,7 @@ build_script:
 
 after_build:
 - cmd: 7z -o%APPVEYOR_BUILD_FOLDER% a eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip %APPVEYOR_BUILD_FOLDER%
+- cmd: dir %APPVEYOR_BUILD_FOLDER%
 
 artifacts:
   - path: eudaq_win32_%APPVEYOR_REPO_TAG_NAME%.zip
@@ -200,7 +201,7 @@ deploy:
   provider: GitHub
   auth_token:
     secure: "FXNTEGEjMMl3FZLCp4cXO0Szn3CVs4lEf+pPxz6vbb9q/PHkD5N2gAgOR+zljtll"
-  file: eudaq_win32_%EUDAQ_LIB_VERSION%.zip
+  artifact: Releases
   overwrite: true
   draft: false
   prerelease: false
