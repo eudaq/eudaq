@@ -41,20 +41,16 @@ namespace eudaq {
                _fd(0),
                _running(false),
                _stopped(true),
-               _configured(false),
                _terminated(false),
                _BORE_sent(false),
                _reader(NULL),
 
                _eventMode(EventMode::ROC),
                _AHCALBXID0Offset(0),
-               _AHCALBXIDWidth(0) ,
+               _AHCALBXIDWidth(0),
                _DebugKeepBuffered(0),
-               _dumpRaw(false),
-               _filemode(false),
                _GenerateTriggerIDFrom(0),
                _InsertDummyPackets(0),
-               _last_readout_time(0),
                _LdaTrigidOffset(0),
                _LdaTrigidStartsFrom(0),
                _port(5622),
@@ -62,7 +58,7 @@ namespace eudaq {
                _waitsecondsForQueuedEvents(2),
                _writerawfilename_timestamp(true),
                _writeRaw(true)
-               {
+   {
       m_id_stream = eudaq::cstr2hash(name.c_str());
    }
 
@@ -76,7 +72,7 @@ namespace eudaq {
       _fileLEDsettings = param.Get("FileLEDsettings", "");
 
       // file name
-      _filename = param.Get("FileName", "");
+      //_filename = param.Get("FileName", "");
       _waitmsFile = param.Get("WaitMillisecForFile", 100);
       _waitsecondsForQueuedEvents = param.Get("waitsecondsForQueuedEvents", 2);
 
@@ -116,7 +112,7 @@ namespace eudaq {
       if (!eventmode.compare("BUILD_BXID_VALIDATED")) _eventMode = AHCALProducer::EventMode::BUILD_BXID_VALIDATED;
       std::cout << "Creating events in " << eventmode << " mode" << std::endl;
 
-      _configured = true;
+      //_configured = true;
 
       std::cout << " END AHCAL congfiguration " << std::endl;
 
@@ -179,11 +175,11 @@ namespace eudaq {
       if (_writeRaw)
          _rawFile.close();
 
-      std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo" << _eventNo << std::endl;
+      //std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo" << _eventNo << std::endl;
       //SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
-//      auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-//      ev->SetEORE();
-//      SendEvent(std::move(ev));
+      //auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+      //ev->SetEORE();
+      //SendEvent(std::move(ev));
    }
 
    bool AHCALProducer::OpenConnection()
@@ -340,7 +336,7 @@ namespace eudaq {
          size = ::read(_fd, buf, bufsize);
          //std::cout << "DEBUG: producer Exec(): read" << size << " bytes" << std::endl;
          if (size > 0) {
-            _last_readout_time = std::time(NULL);
+            //_last_readout_time = std::time(NULL);
             if (_writeRaw && _rawFile.is_open())
                _rawFile.write(buf, size);
             // C array to vector
