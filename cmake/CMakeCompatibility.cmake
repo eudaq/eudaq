@@ -1,5 +1,6 @@
 # -*- mode: cmake; -*-
-# This file contains macros to ensure compatibility with older CMake versions such as 2.6
+# This file contained macros to ensure compatibility with older CMake versions such as 2.6
+# Now only CMAKE_CXX_COMPILER_VERSION is remaining as it is not officially guaranteed
 # 
 
 
