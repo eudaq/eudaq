@@ -2,13 +2,6 @@
 # This file contains macros to ensure compatibility with older CMake versions such as 2.6
 # 
 
-# Copy files from source directory to destination directory, substituting any
-# variables.  Create destination directory if it does not exist.
-# define macro as alias to FILE(COPY ..)
-macro(copy_files srcDir destDir)
-  FILE(COPY ${srcDir} DESTINATION ${destDir})
-endmacro(copy_files)
-
 
 # newer versions of CMake set the compiler version variable;
 # if not set, check manually
