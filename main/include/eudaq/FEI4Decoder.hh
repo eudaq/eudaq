@@ -19,6 +19,9 @@ const uint8_t address_record = header | 0x2;	//0b11101 010
 const uint8_t value_record = header | 0x4;		//0b11101 100
 const uint8_t service_record = header | 0x7;	//0b11101 111
 
+const uint tr_no_31_24_msk = 0x000000FF;
+const uint tr_no_23_0_msk = 0x00FFFFFF;
+
 struct APIXPix {
 	int x, y, tot, channel, lv1;
 	APIXPix(int x, int y, int tot, int lv1, int channel): 
