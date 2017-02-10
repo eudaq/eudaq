@@ -21,7 +21,7 @@ namespace eudaq {
                _buffer_inside_acquisition(false),
                _lastBuiltEventNr(0),
                _cycleNo(0),
-               _tempmode(false),
+               //               _tempmode(false),
                _trigID(0),
                _unfinishedPacketState(UnfinishedPacketStates::DONE),
                length(0) {
@@ -34,7 +34,7 @@ namespace eudaq {
       _runNo = runNo;
       _cycleNo = -1;
       _trigID = _producer->getLdaTrigidStartsFrom() - 1;
-      _tempmode = false;
+//      _tempmode = false;
       cycleData.resize(6);
       _LDAAsicData.clear(); //erase(_LDAAsicData.begin(), _LDAAsicData.end()); //clear();
       _LDATimestampData.clear();
@@ -452,6 +452,23 @@ namespace eudaq {
          ev->AppendBlock(4, ledInfo);
          ledInfo.clear();
       }
+
+      if (_vecTemp.size() > 0) {
+         vector<int> output;
+         for (unsigned int i = 0; i < _vecTemp.size(); i++) {
+            int lda, port, data;
+            lda = _vecTemp[i].first.first;
+            port = _vecTemp[i].first.second;
+            data = _vecTemp[i].second;
+            output.push_back(lda);
+            output.push_back(port);
+            output.push_back(data);
+         }
+         ev->AppendBlock(5, output);
+         output.clear();
+         _vecTemp.clear();
+
+      }
    }
 
    void ScReader::prepareEudaqRawPacket(eudaq::RawDataEvent * ev) {
@@ -468,6 +485,7 @@ namespace eudaq {
       ev->AddBlock(4, vector<int>()); // dummy block to be filled later with LED information (only if LED run)
       ev->AddBlock(5, vector<int>()); // dummy block to be filled later with temperature
       ev->AddBlock(6, vector<uint32_t>()); // dummy block to be filled later with cycledata(start, stop, trigger)
+      appendOtherInfo(ev);
    }
 
    void ScReader::buildValidatedBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll) {
@@ -776,7 +794,8 @@ namespace eudaq {
       int lda = buf[6];
       int port = buf[7];
       short data = ((unsigned char) buf[23] << 8) + (unsigned char) buf[22];
-//std::cout << "DEBUG: temp LDA:" << lda << " PORT:" << port << " Temp" << data << std::endl;
+      //std::cout << "DEBUG reading Temperature, length=" << length << " lda=" << lda << " port=" << port << std::endl;
+      //std::cout << "DEBUG: temp LDA:" << lda << " PORT:" << port << " Temp" << data << std::endl;
       _vecTemp.push_back(make_pair(make_pair(lda, port), data));
       buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
    }
@@ -1016,108 +1035,6 @@ namespace eudaq {
          }
       }
       buf.erase(buf.begin(), buf.begin() + length + e_sizeLdaHeader);
-   }
-
-   void ScReader::AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, vector<int> intVector)
-         {
-      RawDataEvent *ev = deqEvent.back();
-      ev->AppendBlock(nb, intVector);
-   }
-
-   void ScReader::AppendBlockGeneric_32(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, vector<uint32_t> intVector)
-         {
-      RawDataEvent *ev = deqEvent.back();
-      ev->AppendBlock(nb, intVector);
-   }
-
-   void ScReader::AppendBlockTemperature(std::deque<eudaq::RawDataEvent *> deqEvent, int nb)
-         {
-// tempmode finished; store to the rawdataevent
-      RawDataEvent *ev = deqEvent.back();
-      vector<int> output;
-      for (unsigned int i = 0; i < _vecTemp.size(); i++) {
-         int lda, port, data;
-         lda = _vecTemp[i].first.first;
-         port = _vecTemp[i].first.second;
-         data = _vecTemp[i].second;
-         output.push_back(lda);
-         output.push_back(port);
-         output.push_back(data);
-      }
-
-      ev->AppendBlock(nb, output);
-      _tempmode = false;
-      output.clear();
-      _vecTemp.clear();
-
-   }
-
-   void ScReader::readSpirocData_AddBlock(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent) {
-      RawDataEvent *ev = deqEvent.back();
-
-      deque<char>::iterator it = buf.begin() + e_sizeLdaHeader;
-
-// footer check: ABAB
-      if ((unsigned char) it[length - 2] != 0xab || (unsigned char) it[length - 1] != 0xab) {
-         cout << "Footer abab invalid:" << (unsigned int) (unsigned char) it[length - 2] << " " << (unsigned int) (unsigned char) it[length - 1] << endl;
-         EUDAQ_WARN("Footer abab invalid:" + to_string((unsigned int )(unsigned char )it[length - 2]) + " " +
-               to_string((unsigned int )(unsigned char )it[length - 1]));
-      }
-
-      int chipId = (unsigned char) it[length - 3] * 256 + (unsigned char) it[length - 4];
-
-      const int NChannel = 36;
-      int nscai = (length - 8) / (NChannel * 4 + 2);
-
-      it += 8;
-
-      for (short tr = 0; tr < nscai; tr++) {
-// binary data: 128 words
-         vector<unsigned short> adc, tdc;
-
-         for (int np = 0; np < NChannel; np++) {
-            unsigned short tdc_value = (unsigned char) it[np * 2] + ((unsigned char) it[np * 2 + 1] << 8);
-            unsigned short adc_value = (unsigned char) it[np * 2 + NChannel * 2] + ((unsigned char) it[np * 2 + 1 + NChannel * 2] << 8);
-            tdc.push_back(tdc_value);
-            adc.push_back(adc_value);
-         }
-
-         it += NChannel * 4;
-
-         int bxididx = e_sizeLdaHeader + length - 4 - (nscai - tr) * 2;
-         int bxid = (unsigned char) buf[bxididx + 1] * 256 + (unsigned char) buf[bxididx];
-         if (bxid > 4096) EUDAQ_WARN(" bxid = " + to_string(bxid));
-         vector<int> infodata;
-         infodata.push_back((int) _cycleNo);
-         infodata.push_back(bxid);
-         infodata.push_back(nscai - tr - 1); // memory cell is inverted
-         infodata.push_back(chipId); //TODO add LDA number and port number in the higher bytes of the int
-         infodata.push_back(NChannel);
-
-         for (int n = 0; n < NChannel; n++)
-            infodata.push_back(tdc[NChannel - n - 1]); //channel ordering was inverted, now is correct
-
-         for (int n = 0; n < NChannel; n++)
-            infodata.push_back(adc[NChannel - n - 1]);
-
-         if (infodata.size() > 0) ev->AddBlock(ev->NumBlocks(), infodata); //add event (consisting from all information from single BXID (= 1 memory cell) from 1 ASIC)
-
-         if ((length - 12) % 146) {
-            //we check, that the data packets from DIF have proper sizes. The RAW packet size can be checked
-            // by complying this condition:
-            EUDAQ_WARN("Wrong LDA packet length = " + to_string(length) + "in Run=" + to_string(_runNo) + " ,cycle= " + to_string(_cycleNo));
-            ev->SetTag("DAQquality", 0);
-         }
-
-      }
-
-   }
-
-   void ScReader::printLDATimestampCycles(std::map<int, LDATimeData> &TSData) {
-      std::cout << "TS map size:" << TSData.size() << std::endl;
-//      for (auto it = TSData.begin(); it != TSData.end(); ++it) {
-//         std::cout << "cycle " << it->first << std::endl;
-//      }
    }
 
    void ScReader::printLDAROCInfo(std::ostream &out) {

@@ -16,12 +16,8 @@ namespace eudaq {
 
          virtual std::deque<eudaq::RawDataEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *> deqEvent, bool tempcome, int LdaRawcycle, bool newForced);
          virtual void readTemperature(std::deque<char>& buf);
-         virtual void AppendBlockTemperature(std::deque<eudaq::RawDataEvent *> deqEvent, int nb);
-         virtual void AppendBlockGeneric(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, std::vector<int> intVector);
-         virtual void AppendBlockGeneric_32(std::deque<eudaq::RawDataEvent *> deqEvent, int nb, std::vector<uint32_t> intVector);
 
          void appendOtherInfo(eudaq::RawDataEvent * ev);
-         virtual void readSpirocData_AddBlock(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent);
 
          ScReader(AHCALProducer *r); //:
 //               AHCALReader(r),
@@ -81,7 +77,6 @@ namespace eudaq {
          };
 
       private:
-         void printLDATimestampCycles(std::map<int, LDATimeData> &TSData);
          void printLDATimestampTriggers(std::map<int, LDATimeData> &TSData);
          void printLDAROCInfo(std::ostream &out);
          void buildROCEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
@@ -111,7 +106,7 @@ namespace eudaq {
          unsigned int _trigID; //last successfully read trigger ID from LDA timestamp. Next trigger should be _trigID+1
          unsigned int length; //length of the packed derived from LDA Header
 
-         bool _tempmode; // during the temperature readout time
+         //bool _tempmode; // during the temperature readout time
          bool _buffer_inside_acquisition; //the reader is reading data from within the acquisition, defined by start and stop commands
          //uint64_t _last_stop_ts; //timestamp of the last stop of acquisition
 
