@@ -14,6 +14,22 @@ using namespace eudaq;
 using namespace std;
 
 namespace eudaq {
+
+   ScReader::ScReader(AHCALProducer *r) :
+         AHCALReader(r),
+               _runNo(-1),
+               _buffer_inside_acquisition(false),
+               _lastBuiltEventNr(0),
+               _cycleNo(0),
+               _tempmode(false),
+               _trigID(0),
+               _unfinishedPacketState(UnfinishedPacketStates::DONE),
+               length(0) {
+   }
+
+   ScReader::~ScReader() {
+   }
+
    void ScReader::OnStart(int runNo) {
       _runNo = runNo;
       _cycleNo = -1;

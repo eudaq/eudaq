@@ -23,12 +23,18 @@ namespace eudaq {
          void appendOtherInfo(eudaq::RawDataEvent * ev);
          virtual void readSpirocData_AddBlock(std::deque<char> buf, std::deque<eudaq::RawDataEvent *> deqEvent);
 
-         ScReader(AHCALProducer *r) :
-               AHCALReader(r) {
-            _runNo = -1;
-         }
-         ~ScReader() {
-         }
+         ScReader(AHCALProducer *r); //:
+//               AHCALReader(r),
+//                     _runNo(-1),
+//                     _buffer_inside_acquisition(false),
+//                     _lastBuiltEventNr(0),
+//                     _cycleNo(0),
+//                     _tempmode(false),
+//                     _trigID(0),
+//                     _unfinishedPacketState(UnfinishedPacketStates::DONE),
+//                     length(0) {
+//         }
+         virtual ~ScReader();
 
          struct LDATimeData {
                uint64_t TS_Start; //start of acquisition

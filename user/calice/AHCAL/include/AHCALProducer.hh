@@ -28,10 +28,8 @@ namespace eudaq {
          virtual void OnConfigLED(std::string _fname) {
          }
 
-         AHCALReader(AHCALProducer *r) {
-            _producer = r;
-         }
-         ~AHCALReader() {
+         AHCALReader(AHCALProducer *r);
+         virtual ~AHCALReader() {
          }
       public:
          std::mutex _eventBuildingQueueMutex;

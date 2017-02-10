@@ -45,7 +45,24 @@ namespace eudaq {
                _terminated(false),
                _BORE_sent(false),
                _reader(NULL),
-               _eventMode(EventMode::ROC) {
+
+               _eventMode(EventMode::ROC),
+               _AHCALBXID0Offset(0),
+               _AHCALBXIDWidth(0) ,
+               _DebugKeepBuffered(0),
+               _dumpRaw(false),
+               _filemode(false),
+               _GenerateTriggerIDFrom(0),
+               _InsertDummyPackets(0),
+               _last_readout_time(0),
+               _LdaTrigidOffset(0),
+               _LdaTrigidStartsFrom(0),
+               _port(5622),
+               _waitmsFile(0),
+               _waitsecondsForQueuedEvents(2),
+               _writerawfilename_timestamp(true),
+               _writeRaw(true)
+               {
       m_id_stream = eudaq::cstr2hash(name.c_str());
    }
 
