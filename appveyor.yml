@@ -54,72 +54,7 @@ environment:
       PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5.2" 
       PYTHON_ARCH: "32"
-    - build_type: minimum
-      ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
-      BUILD_AHCAL: OFF
-      BUILD_BIFAHCAL: OFF
-      BUILD_TESTING: OFF
-      BUILD_WITH_QT4: OFF
-      BUILD_allproducer: OFF
-      BUILD_altro: OFF
-      BUILD_altroUSB: OFF
-      BUILD_cmspixel: OFF
-      BUILD_depfet: OFF
-      BUILD_fortis: OFF
-      BUILD_gui: ON
-      BUILD_main: OFF
-      BUILD_manual: OFF
-      BUILD_mimoroma: OFF
-      BUILD_miniTLU: OFF
-      BUILD_ni: ON
-      BUILD_nreader: OFF
-      BUILD_offlinemon: OFF
-      BUILD_onlinemon: ON
-      BUILD_palpidefs: OFF
-      BUILD_pixelmanproducer: OFF
-      BUILD_python: ON
-      BUILD_root: OFF
-      BUILD_taki: OFF
-      BUILD_timepixdummy: OFF
-      BUILD_tlu: ON
-      IGNORE_KNOWN_ISSUES: OFF
-      PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.2" 
-      PYTHON_ARCH: "32"      
-    - build_type: library_only
-      ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.6\msvc2015;C:\Python35;C:\Miniconda35;C:\Miniconda35\\Scripts;%PATH%'
-      BUILD_AHCAL: OFF
-      BUILD_BIFAHCAL: OFF
-      BUILD_TESTING: OFF
-      BUILD_WITH_QT4: OFF
-      BUILD_allproducer: OFF
-      BUILD_altro: OFF
-      BUILD_altroUSB: OFF
-      BUILD_cmspixel: OFF
-      BUILD_depfet: OFF
-      BUILD_fortis: OFF
-      BUILD_gui: OFF
-      BUILD_main: OFF
-      BUILD_manual: OFF
-      BUILD_mimoroma: OFF
-      BUILD_miniTLU: OFF
-      BUILD_ni: OFF
-      BUILD_nreader: OFF
-      BUILD_offlinemon: OFF
-      BUILD_onlinemon: OFF
-      BUILD_palpidefs: OFF
-      BUILD_pixelmanproducer: OFF
-      BUILD_python: OFF
-      BUILD_root: OFF
-      BUILD_taki: OFF
-      BUILD_timepixdummy: OFF
-      BUILD_tlu: OFF
-      IGNORE_KNOWN_ISSUES: OFF
-      PYTHON: "C:\\Python35"
-      PYTHON_VERSION: "3.5.2" 
-      PYTHON_ARCH: "32"        
+       
 
 cache:
   - '%APPVEYOR_BUILD_FOLDER%\extern\ZestSC1'
@@ -179,7 +114,7 @@ build_script:
 - ps: If (${env:BUILD_palpidefs} -eq "ON") { Write-Host("Installing palpidefs drivers as required by palpidefs producer"); . ".\appveyor\install_tinyxml.ps1";. ".\appveyor\install_palpidefs_driver.ps1" }
 - ps: If (${env:BUILD_palpidefs} -eq "ON") { [Environment]::SetEnvironmentVariable("PALPIDEFS_SPECIAL_PARAMETERS", "-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=%APPVEYOR_BUILD_FOLDER%\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b\pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on", "Process"); } Else { [Environment]::SetEnvironmentVariable("PALPIDEFS_SPECIAL_PARAMETERS", "", "Process"); }
 
-# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - cd %APPVEYOR_BUILD_FOLDER%\build
 
