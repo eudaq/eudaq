@@ -6,8 +6,8 @@ dist: trusty
 
 branches:
   only:
-    - master
-    - v1.7-dev
+#    - master
+    - v1.8-dev
 
 # set here versions / file paths
 env:
