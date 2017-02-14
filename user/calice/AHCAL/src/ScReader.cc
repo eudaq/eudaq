@@ -580,7 +580,7 @@ namespace eudaq {
                prepareEudaqRawPacket(nev_raw);
 
                nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset());
-               if (startTS) {
+               if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
                   nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
                   nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
                }
@@ -668,7 +668,7 @@ namespace eudaq {
             eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
             prepareEudaqRawPacket(nev_raw);
 
-            if (startTS) {
+            if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
                nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
                nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
             }
@@ -703,10 +703,10 @@ namespace eudaq {
             }
          }
          //nev->Print(std::cout, 0);
-         if (_LDATimestampData.count(roc)) {
+         if (_LDATimestampData.count(roc) && (!_producer->getIgnoreLdaTimestamps())) {
             if (_LDATimestampData[roc].TS_Start && _LDATimestampData[roc].TS_Stop) {
                //save timestamp only if both timestamps are present. Otherwise there was something wrong in the data
-               nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop);
+               nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop, true);
             } else {
                if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
                std::cout << "ERROR EB: one of the timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
@@ -732,9 +732,11 @@ namespace eudaq {
             nev_raw->AppendBlock(6, cycleData);
             _LDATimestampData.erase(roc);
          } else {
-            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
-            std::cout << "ERROR EB: matching LDA timestamp information not found for ROC " << roc << std::endl;
-            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
+            if (!_producer->getIgnoreLdaTimestamps()) {
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
+               std::cout << "ERROR EB: matching LDA timestamp information not found for ROC " << roc << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
+            }
          }
 
          EventQueue.push_back(std::move(nev));
@@ -787,9 +789,11 @@ namespace eudaq {
                   case AHCALProducer::EventNumbering::TRIGGERID:
                      default:
                      nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), true);
-                     nev->SetTimestampBegin(_LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth());
-                     nev->SetTimestampEnd(_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth());
-                     nev->ClearFlagBit(eudaq::Event::Flags::FLAG_TIME);
+                     if (!_producer->getIgnoreLdaTimestamps()) {
+                        nev->SetTimestampBegin(_LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth());
+                        nev->SetTimestampEnd(_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth());
+                        nev->ClearFlagBit(eudaq::Event::Flags::FLAG_TIME);
+                     }
                      break;
                }
 
@@ -830,9 +834,11 @@ namespace eudaq {
             }
             _LDATimestampData.erase(roc);
          } else {
-            if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
-            std::cout << "ERROR: matching LDA timestamp information not found for ROC " << roc << std::endl;
-            if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
+            if (!_producer->getIgnoreLdaTimestamps()) {
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
+               std::cout << "ERROR: matching LDA timestamp information not found for ROC " << roc << std::endl;
+               if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
+            }
          }
          _LDAAsicData.erase(_LDAAsicData.begin());
          continue;
