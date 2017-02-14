@@ -11,31 +11,17 @@ namespace eudaq {
   template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
   Factory<Event>::Instance<>();
-  template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)
-	   (const uint32_t&, const uint32_t&, const uint32_t&)>&
-  Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
-  template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)
-	   (const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
-  Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
-  //RawDataEvent
-  
-  namespace{
-    auto dummy0 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("BASE"));
-    auto dummy1 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("BASE"));
-    auto dummy2 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("TRIGGER"));
-    auto dummy3 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("TRIGGER")); //Trigger
-    auto dummy4 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("DUMMYDEV"));
-    auto dummy5 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("DUMMYDEV")); //DummyEvent
-    auto dummy6 = Factory<Event>::Register<Event, Deserializer&>(cstr2hash("SYNC"));
-    auto dummy7 = Factory<Event>::Register<Event, const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"));
+
+  EventUP Event::MakeUnique(const std::string& dspt){
+    EventUP ev = Factory<Event>::MakeUnique<>(cstr2hash("RawDataEvent"));
+    ev->SetType(cstr2hash("RawDataEvent"));
+    ev->SetExtendWord(eudaq::str2hash(dspt));
+    ev->SetDescription(dspt);
+    return ev;
   }
 
-  EventSP Event::MakeShared(Deserializer& des){
-    uint32_t evid;
-    des.PreRead(evid);
-    EventSP ev = Factory<Event>::Create(evid, des);
+  EventSP Event::MakeShared(const std::string& dspt){
+    EventSP ev = MakeUnique(dspt);
     return ev;
   }
   

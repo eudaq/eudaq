@@ -6,7 +6,7 @@ namespace eudaq{
   std::map<uint32_t, typename Factory<StdEventConverter>::UP(*)()>&
   Factory<StdEventConverter>::Instance<>();
   
-  bool StdEventConverter::Convert(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf){
+  bool StdEventConverter::Convert(EventSPC d1, StdEventSP d2, ConfigurationSPC conf){
 
     if(d1->IsFlagFake()){
       return true;
@@ -40,9 +40,4 @@ namespace eudaq{
     }
   }
   
-  StandardEventSP StdEventConverter::MakeSharedStdEvent(uint32_t run, uint32_t stm){
-    uint32_t id = cstr2hash("StandardEvent"); //TODO: check the register, hash or add?
-    return std::dynamic_pointer_cast<StandardEvent>(Factory<Event>::MakeShared(id, run, stm));
-  }
-
 }

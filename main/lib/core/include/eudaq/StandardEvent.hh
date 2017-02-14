@@ -1,12 +1,21 @@
 #ifndef EUDAQ_INCLUDED_StandardEvent
 #define EUDAQ_INCLUDED_StandardEvent
 
-#include "Event.hh"
+#include "eudaq/Event.hh"
 #include <vector>
 #include <string>
 
-namespace eudaq {
 
+
+namespace eudaq {
+  class StandardEvent;
+  
+  using StdEventUP = Factory<StandardEvent>::UP;
+  using StdEventSP = Factory<StandardEvent>::SP;
+  using StdEventSPC = Factory<StandardEvent>::SPC;
+  using StandardEventSP = StdEventSP;
+  using StandardEventSPC = StdEventSPC;
+  
   class DLLEXPORT StandardPlane : public Serializable {
     public:
     enum FLAGS {
@@ -137,7 +146,14 @@ namespace eudaq {
     StandardPlane &GetPlane(size_t i);
     virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream & os,size_t offset = 0) const;
-
+    
+    static StandardEventSP MakeShared(uint32_t run, uint32_t stm){
+      auto ev = std::dynamic_pointer_cast<StandardEvent>(Factory<Event>::MakeShared(m_id_factory));
+      ev->SetStreamN(run);
+      ev->SetStreamN(stm);
+      return ev;
+    }
+    
     static const uint32_t m_id_factory = cstr2hash("StandardEvent");
   private:
     std::vector<StandardPlane> m_planes;

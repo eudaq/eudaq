@@ -24,15 +24,7 @@ namespace eudaq {
   Factory<Event>::Instance<Deserializer&>();
   extern template DLLEXPORT
   std::map<uint32_t, typename Factory<Event>::UP_BASE (*)()>&
-  Factory<Event>::Instance<>();
-  extern template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const uint32_t&, const uint32_t&, const uint32_t&)>&
-  Factory<Event>::Instance<const uint32_t&, const uint32_t&, const uint32_t&>();
-
-  extern template DLLEXPORT
-  std::map<uint32_t, typename Factory<Event>::UP_BASE (*)(const std::string&, const uint32_t&, const uint32_t&, const uint32_t&)>&
-  Factory<Event>::Instance<const std::string&, const uint32_t&, const uint32_t&, const uint32_t&>();
-  
+  Factory<Event>::Instance<>();  
 #endif
 
   using EventUP = Factory<Event>::UP_BASE; 
@@ -55,9 +47,10 @@ namespace eudaq {
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const;   
     EventUP Clone() const;
-
+    
     virtual void Print(std::ostream & os, size_t offset = 0) const;
 
+    
     bool HasTag(const std::string &name) const {return m_tags.find(name) != m_tags.end();}
     void SetTag(const std::string &name, const std::string &val) {m_tags[name] = val;}
     const std::map<std::string, std::string>& GetTags() const {return m_tags;}
@@ -94,6 +87,7 @@ namespace eudaq {
     uint32_t GetNumSubEvent() const {return m_sub_events.size();}
     EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
     
+    void SetType(uint32_t id){m_type = id;}
     void SetEventID(uint32_t id){m_type = id;}
     void SetVersion(uint32_t v){m_version = v;}
     void SetFlag(uint32_t f) {m_flags = f;}
@@ -119,7 +113,8 @@ namespace eudaq {
     uint64_t GetTimestampEnd() const {return m_ts_end;}
     std::string GetDescription() const {return m_dspt;}
 
-    static EventSP MakeShared(Deserializer&);
+    static EventUP MakeUnique(const std::string& dspt);
+    static EventSP MakeShared(const std::string& dspt);    
 
     //TODO: the meanning of "stream" is not so clear
     void SetStreamN(uint32_t n){m_stm_n = n;}
@@ -131,7 +126,6 @@ namespace eudaq {
     //from RawdataEvent
     const std::vector<uint8_t>& GetBlock(uint32_t i) const;
     size_t NumBlocks() const { return m_blocks.size(); }
-    
     
     std::vector<uint32_t> GetBlockNumList() const;
     
