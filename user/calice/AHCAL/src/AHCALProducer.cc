@@ -35,30 +35,31 @@ using namespace std;
 namespace eudaq {
 
    AHCALProducer::AHCALProducer(const std::string & name, const std::string & runcontrol) :
-   Producer(name, runcontrol),
-   _runNo(0),
-   _eventNo(0),
-   _fd(0),
-   _running(false),
-   _stopped(true),
-   _terminated(false),
-   _BORE_sent(false),
-   _reader(NULL),
-   _ColoredTerminalMessages(1),
-   _eventBuildingMode(EventBuildingMode::ROC),
-   _eventNumberingPreference(EventNumbering::TRIGGERID),
-   _AHCALBXID0Offset(0),
-   _AHCALBXIDWidth(0),
-   _DebugKeepBuffered(0),
-   _GenerateTriggerIDFrom(0),
-   _InsertDummyPackets(0),
-   _LdaTrigidOffset(0),
-   _LdaTrigidStartsFrom(0),
-   _port(5622),
-   _waitmsFile(0),
-   _waitsecondsForQueuedEvents(2),
-   _writerawfilename_timestamp(true),
-   _writeRaw(true)
+         Producer(name, runcontrol),
+               _runNo(0),
+               _eventNo(0),
+               _fd(0),
+               _running(false),
+               _stopped(true),
+               _terminated(false),
+               _BORE_sent(false),
+               _reader(NULL),
+               _ColoredTerminalMessages(1),
+               _IgnoreLdaTimestamps(0),
+               _eventBuildingMode(EventBuildingMode::ROC),
+               _eventNumberingPreference(EventNumbering::TRIGGERID),
+               _AHCALBXID0Offset(0),
+               _AHCALBXIDWidth(0),
+               _DebugKeepBuffered(0),
+               _GenerateTriggerIDFrom(0),
+               _InsertDummyPackets(0),
+               _LdaTrigidOffset(0),
+               _LdaTrigidStartsFrom(0),
+               _port(5622),
+               _waitmsFile(0),
+               _waitsecondsForQueuedEvents(2),
+               _writerawfilename_timestamp(true),
+               _writeRaw(true)
    {
       m_id_stream = eudaq::cstr2hash(name.c_str());
    }
@@ -102,6 +103,7 @@ namespace eudaq {
       _AHCALBXID0Offset = param.Get("AHCALBXID0Offset", 2123); //default for mini-LDA, new DIF and no powerpulsing
       _AHCALBXIDWidth = param.Get("AHCALBXIDWidth", 160); //4us Testbeam mode is default
       _GenerateTriggerIDFrom = param.Get("GenerateTriggerIDFrom", 0);
+      _IgnoreLdaTimestamps = param.Get("IgnoreLdaTimestamps", 0);
 
       _InsertDummyPackets = param.Get("InsertDummyPackets", 0);
       _DebugKeepBuffered = param.Get("DebugKeepBuffered", 0);
@@ -419,6 +421,11 @@ namespace eudaq {
    int AHCALProducer::getColoredTerminalMessages() const
    {
       return _ColoredTerminalMessages;
+   }
+
+   int AHCALProducer::getIgnoreLdaTimestamps() const
+   {
+      return _IgnoreLdaTimestamps;
    }
 
 }	//end namespace eudaq

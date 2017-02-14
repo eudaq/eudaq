@@ -110,12 +110,13 @@ namespace eudaq {
       std::cout << "ScREader::OnStop after sleep()... " << std::endl;
       _RunTimesStatistics.print(std::cout, _producer->getColoredTerminalMessages());
       std::cout << "DEBUG: MAP sizes: " << _LDAAsicData.size() << "\t" << _LDATimestampData.size() << "\t last ROC: ";
-      if (_LDAAsicData.crbegin() != _LDAAsicData.crend())
-         std::cout << _LDAAsicData.rbegin()->first;
+      if (_LDAAsicData.crbegin() != _LDAAsicData.crend()) {
+         std::cout << _LDAAsicData.crbegin()->first;
+      }
       else
          std::cout << "N/A";
       std::cout << "\t";
-      if (_LDAAsicData.crbegin() != _LDAAsicData.crend())
+      if (_LDATimestampData.crbegin() != _LDATimestampData.crend())
          std::cout << _LDATimestampData.rbegin()->first;
       else
          std::cout << "N/A";
@@ -168,24 +169,34 @@ namespace eudaq {
                      buf.erase(buf.begin(), buf.begin() + ibuf - 1);	//LED info from buffer already saved, therefore can be deleted from buffer.
                      continue;
                   } else {	//unknown data
-                     std::cout << "ERROR: unknown data" << std::endl;
+                     std::cout << "ERROR: unknown data (LED)" << std::endl;
                   }
                   //buf.pop_front();
                }
 
                // read LABVIEW SlowControl Information (alway present)
-               if ((_unfinishedPacketState == UnfinishedPacketStates::SLOWCONTROL) || ((unsigned char) buf[0] == magic_sc[0])) {
+               if ((_unfinishedPacketState == UnfinishedPacketStates::SLOWCONTROL)
+                     || ((unsigned char) buf[0] == magic_sc[0])) {
                   if (buf.size() < 2) throw BufferProcessigExceptions::ERR_INCOMPLETE_INFO_CYCLE;
-                  if ((unsigned char) buf[1] == magic_sc[1]) {
+                  if ((_unfinishedPacketState == UnfinishedPacketStates::SLOWCONTROL)
+                        || ((unsigned char) buf[1] == magic_sc[1])) {
                      int ibuf = 2;
                      if (_unfinishedPacketState == UnfinishedPacketStates::SLOWCONTROL) ibuf = 0;
                      _unfinishedPacketState = UnfinishedPacketStates::SLOWCONTROL;
+                     std::cout << "read slowcontrols" << std::endl;
+
                      //TODO this is wrong - it will break, when 0xCD will be in the slowcontrol stream
                      //TODO this is wrong again - it will brake when the complete slowcontrol will be not contained fully in the buffer
                      while (buf.size() > ibuf) {
                         if ((unsigned char) buf[ibuf] == magic_data[0]) {
-                           _unfinishedPacketState = UnfinishedPacketStates::DONE;
-                           break;
+                           if ((buf.size() > ibuf + 1)) {
+                              if ((unsigned char) buf[ibuf + 1] == magic_data[1]) {
+                                 _unfinishedPacketState = UnfinishedPacketStates::DONE;
+                                 break;
+                              }
+                           } else {
+                              throw BufferProcessigExceptions::ERR_INCOMPLETE_INFO_CYCLE;
+                           }
                         }
                         int sc = (unsigned char) buf[ibuf];
                         slowcontrol.push_back(sc);
@@ -195,7 +206,9 @@ namespace eudaq {
                      buf.erase(buf.begin(), buf.begin() + ibuf - 1);            //Slowcontrol data saved, therefore can be deleted from buffer.
                      continue;
                   } else {  //unknown data
-                     std::cout << "ERROR: unknown data" << std::endl;
+                     std::cout << "ERROR: unknown data (Slowcontrol) " << to_hex(buf[0]) << " " << to_hex(buf[1])
+                           << "\tstate:" << ((int) _unfinishedPacketState) << std::endl;
+                     _unfinishedPacketState = UnfinishedPacketStates::DONE;
                   }
                }
 
@@ -204,7 +217,7 @@ namespace eudaq {
                   // std::cout << "AHCAL packet found" << std::endl;
                   break;//data packet will be processed outside this while loop
                }
-//               std::cout << "!";
+               std::cout << "!" << to_hex(buf[0], 2);
                buf.pop_front();            //when nothing match, throw away
             }
 
@@ -1062,11 +1075,11 @@ namespace eudaq {
                   _trigID += trigIDdifference;
                   _RunTimesStatistics.triggers_lost += trigIDdifference - 1;
                   if (_producer->getColoredTerminalMessages()) std::cout << "\033[35;1m";
-                  cout << "WARNING: " << (trigIDdifference - 1) << " Skipped TriggerIDs detected in run " << _runNo << ". Filling with dummy packet. ROC=" << _cycleNo << ", TrigID=" << _trigID
+                  cout << "WARNING: " << (trigIDdifference - 1) << " Skipped TriggerIDs detected in run " << _runNo << ". Incrementing counter. ROC=" << _cycleNo << ", TrigID=" << _trigID
                         << endl;
                   if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
                   EUDAQ_WARN(to_string(trigIDdifference - 1) + "Skipped TriggerID detected in run " + to_string(_runNo) +
-                        ". Filling with dummy packet. ROC=" + to_string(_cycleNo) + ", TrigID=" + to_string(_trigID));
+                        ". Incrementing counter. ROC=" + to_string(_cycleNo) + ", TrigID=" + to_string(_trigID));
                }
 
                //TODO fix the case, when the trigger comes as the very first event. Not the case for TLU - it starts sending triggers later
@@ -1129,7 +1142,7 @@ namespace eudaq {
       out << "============================================================" << std::endl;
       out << "#Left in ASIC buffers:" << std::endl;
       for (auto &it : _LDAAsicData) {
-         out << "ROC " << it.first << " size" << it.second.size() << std::endl;
+         out << "ROC " << it.first << "\tsize " << it.second.size() << std::endl;
       }
       out << "#Left in Timestamp buffers:" << std::endl;
       for (auto &it : _LDATimestampData) {

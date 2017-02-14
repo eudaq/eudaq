@@ -81,6 +81,7 @@ namespace eudaq {
          int getDebugKeepBuffered() const;
          int getGenerateTriggerIDFrom() const;
          int getColoredTerminalMessages() const;
+         int getIgnoreLdaTimestamps() const;
 
       private:
          AHCALProducer::EventBuildingMode _eventBuildingMode;
@@ -93,6 +94,7 @@ namespace eudaq {
          int _DebugKeepBuffered; //1=keep events in buffer and don't send them to data collector
          int _GenerateTriggerIDFrom; //sets from which triggerID number should be data generated (and filled with dummy triggers if necessary). Only works when insert_dummy_packets is enabled and in selected event building mode
          int _ColoredTerminalMessages; //1 for colored error worning and info messages
+         int _IgnoreLdaTimestamps; //ignores the timestamp in the AHCAL LDA data stream
 
          int _runNo;
          int _eventNo; //last sent event - for checking of correct event numbers sequence during sending events
