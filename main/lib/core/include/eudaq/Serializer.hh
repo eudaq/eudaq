@@ -311,9 +311,8 @@ namespace eudaq {
     unsigned len = 0;
     read(len);
     for (size_t i = 0; i < len; ++i) {
-      std::string name = read<std::string>();
-      std::string val = read<std::string>();
-      t[name] = val;
+      auto&& key = read<T>();
+      t[key] = read<U>();
     }
   }
 

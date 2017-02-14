@@ -1,4 +1,6 @@
 #include "eudaq/RawDataEvent.hh"
+#include "eudaq/Logger.hh"
+#include <string>
 
 namespace eudaq {
 
@@ -37,21 +39,7 @@ namespace eudaq {
     ev->SetDescription(dspt);
     return ev;
   }
-  
-  RawDataEvent::block_t::block_t(Deserializer &des) {
-    des.read(id);
-    des.read(data);
-  }
-
-  void RawDataEvent::block_t::Serialize(Serializer &ser) const {
-    ser.write(id);
-    ser.write(data);
-  }
-
-  void RawDataEvent::block_t::Append(const std::vector<uint8_t> &d) {
-    data.insert(data.end(), d.begin(), d.end());
-  }
-  
+    
   RawDataEvent::RawDataEvent(uint32_t type, uint32_t run_n, uint32_t ev_n)
     : Event(type, run_n, 0){
     SetEventN(ev_n);
@@ -66,24 +54,7 @@ namespace eudaq {
   }
 
   RawDataEvent::RawDataEvent(Deserializer &ds) : Event(ds) {
-    ds.read(m_blocks);
   }
 
-  const std::vector<uint8_t> &RawDataEvent::GetBlock(size_t i) const {
-    return m_blocks.at(i).data;
-  }
-
-  void RawDataEvent::Print(std::ostream & os, size_t offset) const{
-    os << std::string(offset, ' ') << "<RawDataEvent> \n";
-    os << std::string(offset + 2, ' ') << "<SubType> " << GetExtendWord() << "</SubType> \n";
-    Event::Print(os,offset+2);
-    os << std::string(offset + 2, ' ') << "<Block_Size> " << m_blocks.size() << "</Block_Size> \n";
-    os << std::string(offset, ' ') << "</RawDataEvent> \n";
-  }
-
-  void RawDataEvent::Serialize(Serializer &ser) const {
-    Event::Serialize(ser);
-    ser.write(m_blocks);
-  }
   
 }

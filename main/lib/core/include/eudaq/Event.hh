@@ -128,6 +128,56 @@ namespace eudaq {
     uint32_t GetEventNumber()const {return m_ev_n;}
     uint32_t GetRunNumber()const {return m_run_n;}
 
+    //from RawdataEvent
+    const std::vector<uint8_t>& GetBlock(uint32_t i) const;
+    size_t NumBlocks() const { return m_blocks.size(); }
+    
+    
+    std::vector<uint32_t> GetBlockNumList() const;
+    
+    /// Add a data block as std::vector
+    template <typename T>
+    size_t AddBlock(uint32_t id, const std::vector<T> &data){
+      m_blocks[id]=make_vector(data);
+      return m_blocks.size();
+    }
+
+    /// Add a data block as array with given size
+    template <typename T>
+    size_t AddBlock(uint32_t id, const T *data, size_t bytes){
+      m_blocks[id]=make_vector(data, bytes);
+      return m_blocks.size();
+    }
+
+    /// Append data to a block as std::vector
+    template <typename T>
+    void AppendBlock(size_t index, const std::vector<T> &data) {
+      auto &&src = make_vector(data);
+      auto &&dst = m_blocks[index];
+      dst.insert(dst.end(), src.begin(), src.end());
+    }
+
+    /// Append data to a block as array with given size
+    template <typename T>
+    void AppendBlock(size_t index, const T *data, size_t bytes) {
+      auto &&src = make_vector(data, bytes);
+      auto &&dst = m_blocks[index];
+      dst.insert(dst.end(), src.begin(), src.end());
+    }
+    
+  private:
+    template <typename T>
+      static std::vector<uint8_t> make_vector(const T *data, size_t bytes) {
+      const uint8_t *ptr = reinterpret_cast<const uint8_t *>(data);
+      return std::vector<uint8_t>(ptr, ptr + bytes);
+    }
+
+    template <typename T>
+    static std::vector<uint8_t> make_vector(const std::vector<T> &data) {
+      const uint8_t *ptr = reinterpret_cast<const uint8_t *>(&data[0]);
+      return std::vector<uint8_t>(ptr, ptr + data.size() * sizeof(T));
+    }
+    
   private:
     uint32_t m_type;
     uint32_t m_version;
@@ -141,6 +191,7 @@ namespace eudaq {
     uint64_t m_ts_end;
     std::string m_dspt;
     std::map<std::string, std::string> m_tags;
+    std::map<uint32_t, std::vector<uint8_t>> m_blocks;
     std::vector<EventSPC> m_sub_events; //TODO::  std::set
   };
 }
