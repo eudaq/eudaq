@@ -45,16 +45,15 @@ namespace eudaq {
     auto conf = GetConfiguration();
     std::cout << "Configuring (" << conf->Name() << ")..." << std::endl;
     try {
-      std::string fwtype = conf->Get("FileType", "native");
-      std::string fwpatt = conf->Get("FilePattern", "run$6R$X");
+      m_fwtype = conf->Get("FileType", "native");
+      m_fwpatt = conf->Get("FilePattern", "run$6R$X");
       m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);
       std::stringstream ss;
       std::time_t time_now = std::time(nullptr);
       char time_buff[12];
       std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
-      ss<<time_buff<<"_"<<GetName()<<"_"<<fwpatt;
-      fwpatt = ss.str();
-      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(fwtype), fwpatt);
+      ss<<time_buff<<"_"<<GetName()<<"_"<<m_fwpatt;
+      m_fwpatt = ss.str();
       DoConfigure();
       std::cout << "...Configured (" << conf->Name() << ")" << std::endl;
       SetStatus(Status::STATE_CONF, "Configured (" + conf->Name() + ")");
@@ -80,9 +79,10 @@ namespace eudaq {
   void DataCollector::OnStartRun(){
     EUDAQ_INFO("Preparing for run " + std::to_string(GetRunNumber()));
     try {
-      if (!m_writer || !m_dataserver) {
+      if (!m_dataserver) {
         EUDAQ_THROW("You must configure before starting a run");
       }
+      m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt);
       m_evt_c = 0;
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
@@ -125,17 +125,12 @@ namespace eudaq {
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
       m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", *con, true);
-      // DoConnect(con);
-      // std::cout<< "DoConnecg con type"<< con->GetType()<<" "<< str2hash(con->GetName())<<std::endl;
-      // std::cout<< "DoConnecg con name "<< con->GetName()<<" "<< str2hash(con->GetName())<<std::endl;
-      // DoConnect(str2hash(con->GetName()));
       break;
     case (TransportEvent::DISCONNECT):
       EUDAQ_INFO("Disconnected: " + to_string(*con));
       for (size_t i = 0; i < m_info_pdc.size(); ++i) {
 	if (m_info_pdc[i]->Matches(*con)){
 	  m_info_pdc.erase(m_info_pdc.begin() + i);
-	  // DoDisconnect(con);
 	  DoDisconnect(str2hash(con->GetName()));
 	  return;
 	}
@@ -181,14 +176,11 @@ namespace eudaq {
 	std::cout<< "DoConnecg con name "<< con->GetName()<<" "<< str2hash(con->GetName())<<std::endl;
 	m_info_pdc.push_back(con);
 	DoConnect(str2hash(con->GetName()));
-      } else {
+      } else{
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
 	uint32_t id;
 	ser.PreRead(id);
 	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
-	//TODO: check if OnStopRun is called. if yes, DO NOT call DoReceive
-	//TODO: check if OnStartRun is called.
-	// DoReceive(con, std::move(event));
 	DoReceive(str2hash(con->GetName()), std::move(event));
       }
       break;

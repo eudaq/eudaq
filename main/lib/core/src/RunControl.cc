@@ -41,7 +41,7 @@ namespace eudaq {
 	EUDAQ_ERROR(e.first+" is not Status::STATE_UNINIT OR Status::STATE_UNCONF");
       }
     }
-    SendCommand("RESET");
+    SendCommand("INIT");
   }
   
   void RunControl::Configure(){
@@ -73,10 +73,7 @@ namespace eudaq {
 	    SendCommand("DATA", e.second, *info_pdc);  
 	}
     }
-    SendCommand("CONFIG", to_string(*m_conf));
-
-    
-    
+    SendCommand("CONFIG", to_string(*m_conf));    
   }
 
   void RunControl::ReadConfigureFile(const std::string &path){
@@ -275,21 +272,8 @@ namespace eudaq {
       else {
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
         auto status = std::make_shared<Status>(ser);
-        // if (status->GetLevel() == Status::LVL_BUSY &&
-	//     con->GetState() == 1) {
-	//   con->SetState(2);
-        // }
-	// if (status->GetLevel() != Status::LVL_BUSY &&
-	//     con->GetState() == 2) {
-        //   con->SetState(1);
-        // }
-	
-        // if (from_string(status->GetTag("RUN"), m_runnumber) == m_runnumber) {
-          // ignore status messages that are marked with a previous runnumber
-	
 	m_status[con->GetName()] = status;
 	DoStatus(con, status);
-        // }
       }
       break;
     default:

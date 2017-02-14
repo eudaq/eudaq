@@ -41,13 +41,9 @@ namespace eudaq {
 
   protected:
     int m_state;
+    uint32_t m_id;
     std::string m_type;
     std::string m_name;
-    /*
-       public:
-       virtual bool operator = (const ClientID & other) = 0;
-       virtual std::string Name() const = 0;
-     */
   };
 
   inline std::ostream &operator<<(std::ostream &os, const ConnectionInfo &id) {

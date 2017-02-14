@@ -69,6 +69,8 @@ namespace eudaq {
     bool m_exit;
     std::unique_ptr<TransportServer> m_dataserver;
     FileWriterUP m_writer;
+    std::string m_fwpatt;
+    std::string m_fwtype;
     std::vector<std::shared_ptr<ConnectionInfo>> m_info_pdc;
     uint32_t m_dct_n;
     uint32_t m_evt_c;

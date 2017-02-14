@@ -40,6 +40,7 @@ namespace eudaq {
     void CloseCommandReceiver();
     bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
     void SetStatus(Status::State state, const std::string & info);
+    bool IsStatus(Status::State state) const {return m_status.GetState() == state;};
     void SetStatusTag(const std::string &key, const std::string &val);
     
     std::string GetFullName() const {return m_type+"."+m_name;};

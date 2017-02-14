@@ -16,9 +16,12 @@ namespace eudaq {
 
   void Producer::OnInitialise(){
     try{
+      if(!IsStatus(Status::STATE_UNINIT) && !IsStatus(Status::STATE_UNCONF))
+	EUDAQ_THROW("OnStopRun can not be called unless in STATE_UNINIT or STATE_UNCONF");
       auto conf = GetInitConfiguration();
-      if(conf)
-	EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
+      if(!conf)
+	EUDAQ_THROW("No Configuration Section for OnInitialise");
+      EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
       DoInitialise();
       EUDAQ_INFO("Initialized");
       SetStatus(Status::STATE_UNCONF, "Initializd");
@@ -33,11 +36,14 @@ namespace eudaq {
   
   void Producer::OnConfigure(){
     try{
+      if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF)&& !IsStatus(Status::STATE_UNINIT))//TODO: remove UNINIT
+      // if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
+	EUDAQ_THROW("OnStopRun can not be called unless in STATE_UNCONF or STATE_CONF");
       auto conf = GetConfiguration();
-      if(conf){
-	EUDAQ_INFO("Configuring ...("+ conf->Name()+")");
-	m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
-      }
+      if(!conf)
+	EUDAQ_THROW("No Configuration Section for OnConfigure");
+      EUDAQ_INFO("Configuring ...("+ conf->Name()+")");
+      m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
       DoConfigure();
       EUDAQ_INFO("Configured");
       SetStatus(Status::STATE_CONF, "Configured");
@@ -52,6 +58,8 @@ namespace eudaq {
   
   void Producer::OnStartRun(){
     try{
+      if(!IsStatus(Status::STATE_CONF))
+	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
       m_evt_c = 0;
       DoStartRun();
@@ -67,6 +75,8 @@ namespace eudaq {
 
   void Producer::OnStopRun(){
     try{
+      if(!IsStatus(Status::STATE_RUNNING))
+	EUDAQ_THROW("OnStopRun can not be called unless in STATE_RUNNING");
       EUDAQ_INFO("Stopping Run");
       DoStopRun();
       SetStatus(Status::STATE_CONF, "Stopped");
