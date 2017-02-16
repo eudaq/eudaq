@@ -46,7 +46,8 @@ namespace eudaq {
 
          enum class EventBuildingMode {
             ROC, TRIGGERID, BUILD_BXID_ALL, BUILD_BXID_VALIDATED
-         };enum class EventNumbering {
+         };
+         enum class EventNumbering {
             TRIGGERID, TIMESTAMP
          };
 
@@ -102,7 +103,7 @@ namespace eudaq {
 
          std::mutex _mufd;
 
-         std::string _redirectedInputFileName;// if set, this filename will be used as input
+         std::string _redirectedInputFileName; // if set, this filename will be used as input
 
          bool _running;
          bool _stopped;
