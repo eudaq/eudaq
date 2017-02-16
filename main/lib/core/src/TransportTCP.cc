@@ -316,7 +316,7 @@ namespace eudaq {
       closesocket(m_srvsock);
       EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to bind socket: " + param));
     }
-    if (listen(m_srvsock, MAXPENDING)) {
+    if (listen(m_srvsock, MAXPENDING)){
       closesocket(m_srvsock);
       EUDAQ_THROW_NOLOG(
           LastSockErrorString("Failed to listen on socket: " + param));
@@ -324,10 +324,8 @@ namespace eudaq {
   }
 
   TCPServer::~TCPServer() {
-    for (size_t i = 0; i < m_conn.size(); ++i) {
-      ConnectionInfoTCP *inf =
-          dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
-      if (inf && inf->IsEnabled()) {
+    for(auto &inf : m_conn){
+      if (inf) {
         closesocket(inf->GetFd());
       }
     }
@@ -338,36 +336,41 @@ namespace eudaq {
     const ConnectionInfoTCP tofind(fd);
     for (size_t i = 0; i < m_conn.size(); ++i) {
       if (tofind.Matches(*m_conn[i]) && m_conn[i]->GetState() >= 0) {
-	return std::dynamic_pointer_cast<ConnectionInfoTCP>(m_conn[i]);
+	return m_conn[i];
       }
     }
     EUDAQ_THROW_NOLOG("BUG: please report it");
   }
 
+
+  std::vector<ConnectionSPC> TCPServer::GetConnections () const{
+    std::vector<ConnectionSPC> conn;
+    for(auto &info: m_conn){
+      if(info)
+	conn.push_back(info);
+    }
+    return conn;
+  }
+  
   void TCPServer::Close(const ConnectionInfo &id) {
-    for (size_t i = 0; i < m_conn.size(); ++i) {
-      if (id.Matches(*m_conn[i])) {
-        ConnectionInfoTCP *inf =
-            dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
-        if (inf && inf->IsEnabled()) {
+    for (auto &inf: m_conn){
+      if(inf && id.Matches(*inf)){
           SOCKET fd = inf->GetFd();
-          inf->Disable();
           FD_CLR(fd, &m_fdset);
           closesocket(fd);
-        }
-      }
+	  inf.reset();
+      }	
     }
   }
-
+  
   void TCPServer::SendPacket(const unsigned char *data, size_t len,
                              const ConnectionInfo &id, bool duringconnect) {
     
     for (size_t i = 0; i < m_conn.size(); ++i) {
       // std::cout << "- " << i << ": " << *m_conn[i] << std::flush;
       if (id.Matches(*m_conn[i])) {
-        ConnectionInfoTCP *inf =
-            dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
-        if (inf && inf->IsEnabled() && (inf->GetState() > 0 || duringconnect)) {
+	auto inf = m_conn[i];
+        if (inf && (inf->GetState() > 0 || duringconnect)) {
           // std::cout << " ok" << std::endl;
           do_send_packet(inf->GetFd(), data, len);
         } // else std::cout << " not quite" << std::endl;
@@ -414,13 +417,13 @@ namespace eudaq {
             setup_socket(peersock);
             std::string host = inet_ntoa(addr.sin_addr);
             host = "tcp://"+host+":" + to_string(ntohs(addr.sin_port));
-            std::shared_ptr<ConnectionInfo> ptr(
-                new ConnectionInfoTCP(peersock, host));
+            auto ptr = std::make_shared<ConnectionInfoTCP>(peersock, host);
             bool inserted = false;
-            for (size_t i = 0; i < m_conn.size(); ++i) {
-              if (m_conn[i]->GetState() < 0) {
-                m_conn[i] = ptr;
+            for(auto &e: m_conn) {
+              if(!e) {
+                e = ptr;
                 inserted = true;
+		break;
               }
             }
             if (!inserted)
@@ -454,9 +457,7 @@ namespace eudaq {
                   result, errno, strerror(errno));
 	      auto m = GetInfo(j);
               m_events.push(TransportEvent(TransportEvent::DISCONNECT, m));
-              m->Disable();
-              closesocket(j);
-              FD_CLR(j, &m_fdset);
+	      Close(*m);
             } else if (result == EUDAQ_ERROR_NO_DATA_RECEIVED) {
               debug_transport(
                   "Server #%d, return=%d, WSAError:%d (%s) No Data Received.\n",

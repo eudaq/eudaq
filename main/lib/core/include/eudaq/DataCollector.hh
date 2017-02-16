@@ -8,7 +8,6 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
-#include "eudaq/Processor.hh"
 #include "eudaq/Factory.hh"
 
 #include <string>
@@ -52,9 +51,9 @@ namespace eudaq {
     // virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {}
     // virtual void DoReceive(std::shared_ptr<const ConnectionInfo> id, EventUP ev) = 0;
 
-    virtual void DoConnect(uint32_t id) {}
-    virtual void DoDisconnect(uint32_t id) {}
-    virtual void DoReceive(uint32_t id, EventUP ev) = 0;
+    virtual void DoConnect(ConnectionSPC id) {}
+    virtual void DoDisconnect(ConnectionSPC id) {}
+    virtual void DoReceive(ConnectionSPC id, EventUP ev) = 0;
     
     void WriteEvent(EventUP ev);
     void StartDataCollector();

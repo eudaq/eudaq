@@ -42,9 +42,9 @@ namespace eudaq {
     //
     
     //run in m_thd_server thread
-    virtual void DoConnect(std::shared_ptr<const ConnectionInfo> con) {}
-    virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> con) {}
-    virtual void DoStatus(std::shared_ptr<const ConnectionInfo> con,
+    virtual void DoConnect(ConnectionSPC con) {}
+    virtual void DoDisconnect(ConnectionSPC con) {}
+    virtual void DoStatus(ConnectionSPC con,
 			  std::shared_ptr<const Status> st) {}
     //
     //thread control
@@ -62,9 +62,6 @@ namespace eudaq {
     std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
 
     size_t NumConnections() const { return m_cmdserver->NumConnections(); }
-    const ConnectionInfo &GetConnection(size_t i) const {
-      return m_cmdserver->GetConnection(i);
-    }
     
   private:
     void InitLog(std::shared_ptr<const ConnectionInfo> id);

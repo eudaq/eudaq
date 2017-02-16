@@ -3,6 +3,7 @@
 #include <mutex>
 #include <deque>
 #include <map>
+#include <set>
 
 class Ex0DataCollector:public eudaq::DataCollector{
 public:
@@ -11,9 +12,9 @@ public:
 
   void DoStartRun() override;
   void DoConfigure() override;
-  void DoConnect(uint32_t id) override;
-  void DoDisconnect(uint32_t id) override;
-  void DoReceive(uint32_t id, eudaq::EventUP ev) override;
+  void DoConnect(eudaq::ConnectionSPC id) override;
+  void DoDisconnect(eudaq::ConnectionSPC id) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0DataCollector");
 private:
@@ -91,7 +92,8 @@ void Ex0DataCollector::DoConfigure(){
 }
 
 
-void Ex0DataCollector::DoConnect(uint32_t id){
+void Ex0DataCollector::DoConnect(eudaq::ConnectionSPC idx){
+  uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_con_id.insert(id);
 
@@ -99,12 +101,14 @@ void Ex0DataCollector::DoConnect(uint32_t id){
 
 }
 
-void Ex0DataCollector::DoDisconnect(uint32_t id){
+void Ex0DataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+  uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_con_id.erase(id);
 }
 
-void Ex0DataCollector::DoReceive(uint32_t id, eudaq::EventUP ev){
+void Ex0DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+  uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   std::cout<< "hi new enent is comming\n";
 

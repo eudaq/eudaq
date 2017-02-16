@@ -11,9 +11,9 @@ namespace eudaq {
 			       const std::string &runcontrol);
 
     void DoStartRun() override;
-    void DoConnect(uint32_t /*id*/) override;
-    void DoDisconnect(uint32_t /*id*/) override;
-    void DoReceive(uint32_t id, EventUP ev) override;
+    void DoConnect(ConnectionSPC id /*id*/) override;
+    void DoDisconnect(ConnectionSPC id /*id*/) override;
+    void DoReceive(ConnectionSPC id, EventUP ev) override;
     
     static const uint32_t m_id_factory = eudaq::cstr2hash("TimestampSyncDataCollector");
   private:
@@ -50,18 +50,18 @@ namespace eudaq {
   }
 
   
-  void TimestampSyncDataCollector::DoConnect(uint32_t id){
+  void TimestampSyncDataCollector::DoConnect(ConnectionSPC id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
-    std::string pdc_name = std::to_string(id);
+    std::string pdc_name = id->GetName();
     if(m_que_event.find(pdc_name) != m_que_event.end())
       EUDAQ_THROW("DataCollector::Doconnect, multiple producers are sharing a same name");
     m_que_event[pdc_name].clear();
     m_event_ready[pdc_name] = false;
   }
 
-  void TimestampSyncDataCollector::DoDisconnect(uint32_t id){
+  void TimestampSyncDataCollector::DoDisconnect(ConnectionSPC id){
     std::unique_lock<std::mutex> lk(m_mtx_map);
-    std::string pdc_name = std::to_string(id);
+    std::string pdc_name = id->GetName();
     if(m_que_event.find(pdc_name) == m_que_event.end())
       EUDAQ_THROW("DataCollector::DisDoconnect, the disconnecting producer was not existing in list");
     EUDAQ_WARN("Producer."+pdc_name+" is disconnected, the remaining events are erased. ("+std::to_string(m_que_event[pdc_name].size())+ " Events)");
@@ -69,9 +69,9 @@ namespace eudaq {
     m_event_ready.erase(pdc_name);
   }
   
-  void TimestampSyncDataCollector::DoReceive(uint32_t id, EventUP ev){
+  void TimestampSyncDataCollector::DoReceive(ConnectionSPC id, EventUP ev){
     std::unique_lock<std::mutex> lk(m_mtx_map);
-    std::string pdc_name = std::to_string(id);
+    std::string pdc_name = id->GetName();
     m_que_event[pdc_name].push_back(std::move(ev));
     uint64_t ts_ev_beg =  ev->GetTimestampBegin();
     uint64_t ts_ev_end =  ev->GetTimestampEnd();

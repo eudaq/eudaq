@@ -33,12 +33,12 @@ namespace eudaq {
       m_len = 0;
       m_buf = "";
     }
-    virtual bool Matches(const ConnectionInfo &other) const;
-    virtual void Print(std::ostream &) const;
-    virtual std::string GetRemote() const { return m_host; }
-    virtual ConnectionInfo *Clone() const {
-      return new ConnectionInfoTCP(*this);
-    }
+    bool Matches(const ConnectionInfo &other) const override;
+    void Print(std::ostream &) const override;
+    std::string GetRemote() const override { return m_host; }
+    // ConnectionInfo *Clone() const override {
+    //   return new ConnectionInfoTCP(*this);
+    // }
 
   private:
     void update_length(bool = false);
@@ -51,18 +51,21 @@ namespace eudaq {
   class TCPServer : public TransportServer {
   public:
     TCPServer(const std::string &param);
-    virtual ~TCPServer();
-
-    virtual void Close(const ConnectionInfo &id);
-    virtual void SendPacket(const unsigned char *data, size_t len,
-                            const ConnectionInfo &id = ConnectionInfo::ALL,
-                            bool duringconnect = false);
-    virtual void ProcessEvents(int timeout);
-
-    virtual std::string ConnectionString() const;
+    ~TCPServer() override;
+    void Close(const ConnectionInfo &id) override;
+    void SendPacket(const unsigned char *data, size_t len,
+		    const ConnectionInfo &id = ConnectionInfo::ALL,
+		    bool duringconnect = false) override;
+    void ProcessEvents(int timeout) override;
+    std::string ConnectionString() const override;
+    size_t NumConnections() const override { return m_conn.size(); }
+    std::vector<ConnectionSPC> GetConnections() const  override;
     static const std::string name;
 
   private:
+    std::vector<std::shared_ptr<ConnectionInfoTCP>> m_conn;
+    std::mutex m_mtx_conn;
+    
     int m_port;
     SOCKET m_srvsock;
     SOCKET m_maxfd;

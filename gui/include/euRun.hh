@@ -58,11 +58,11 @@ private:
   enum state_t { ST_NONE, ST_CONFIGLOADED, ST_READY, ST_RUNNING };
   QString lastUsedDirectory = "";
   QStringList allConfigFiles;
-  void DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id) override;
-  void DoDisconnect(std::shared_ptr<const eudaq::ConnectionInfo> id) override{
-    m_run.disconnected(*id);
+  void DoConnect(eudaq::ConnectionSPC id) override;
+  void DoDisconnect(eudaq::ConnectionSPC id) override{
+    m_run.disconnected(id);
   }
-  void DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
+  void DoStatus(eudaq::ConnectionSPC id,
 		 std::shared_ptr<const eudaq::Status> status) override;
   void EmitStatus(const char *name, const std::string &val) {
     if (val == "")

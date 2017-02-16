@@ -123,7 +123,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   }
 }
 
-void RunControlGUI::DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
+void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
                               std::shared_ptr<const eudaq::Status> status) {
   static bool registered = false;
   if (!registered) {
@@ -190,10 +190,10 @@ void RunControlGUI::DoStatus(std::shared_ptr<const eudaq::ConnectionInfo> id,
     }
   }
 
-  m_run.SetStatus(*id, *status);
+  m_run.SetStatus(id, *status);
 }
 
-void RunControlGUI::DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id) {
+void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");
@@ -201,7 +201,7 @@ void RunControlGUI::DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id) {
   }
   // QMessageBox::information(this, "EUDAQ Run Control",
   //                         "This will reset all connected Producers etc.");
-  m_run.newconnection(*id);
+  m_run.newconnection(id);
   if (id->GetType() == "DataCollector") {
     EmitStatus("RUN", "(" + to_string(GetRunNumber()) + ")");
     SetState(ST_NONE);

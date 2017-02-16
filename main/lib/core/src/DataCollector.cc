@@ -1,10 +1,8 @@
-#include "DataCollector.hh"
-#include "TransportFactory.hh"
-#include "BufferSerializer.hh"
-#include "Logger.hh"
-#include "Utils.hh"
-#include "Processor.hh"
-#include "ExportEventPS.hh"
+#include "eudaq/DataCollector.hh"
+#include "eudaq/TransportFactory.hh"
+#include "eudaq/BufferSerializer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/Utils.hh"
 #include <iostream>
 #include <ostream>
 #include <ctime>
@@ -131,7 +129,7 @@ namespace eudaq {
       for (size_t i = 0; i < m_info_pdc.size(); ++i) {
 	if (m_info_pdc[i]->Matches(*con)){
 	  m_info_pdc.erase(m_info_pdc.begin() + i);
-	  DoDisconnect(str2hash(con->GetName()));
+	  DoDisconnect(con);
 	  return;
 	}
       }
@@ -175,13 +173,13 @@ namespace eudaq {
 	std::cout<< "DoConnecg con type"<< con->GetType()<<" "<< str2hash(con->GetName())<<std::endl;
 	std::cout<< "DoConnecg con name "<< con->GetName()<<" "<< str2hash(con->GetName())<<std::endl;
 	m_info_pdc.push_back(con);
-	DoConnect(str2hash(con->GetName()));
+	DoConnect(con);
       } else{
         BufferSerializer ser(ev.packet.begin(), ev.packet.end());
 	uint32_t id;
 	ser.PreRead(id);
 	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
-	DoReceive(str2hash(con->GetName()), std::move(event));
+	DoReceive(con, std::move(event));
       }
       break;
     default:

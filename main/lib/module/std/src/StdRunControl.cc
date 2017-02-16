@@ -95,12 +95,12 @@ namespace eudaq{
       case 'q':
 	Terminate();
 	break;
-      case 'p':
-	std::cout << "Connections (" << NumConnections() << ")" << std::endl;
-	for (unsigned i = 0; i < NumConnections(); ++i) {
-	  std::cout << "  " << GetConnection(i) << std::endl;
-	}
-	break;
+      // case 'p':
+      // 	std::cout << "Connections (" << NumConnections() << ")" << std::endl;
+      // 	for (unsigned i = 0; i < NumConnections(); ++i) {
+      // 	  std::cout << "  " << GetConnection(i) << std::endl;
+      // 	}
+      // 	break;
       case '?':
 	help = true;
 	break;

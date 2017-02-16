@@ -37,7 +37,7 @@ namespace eudaq {
  
     static const ConnectionInfo ALL;
 
-    virtual ConnectionInfo *Clone() const { return new ConnectionInfo(*this); }
+    // virtual ConnectionInfo *Clone() const { return new ConnectionInfo(*this); }
 
   protected:
     int m_state;
@@ -46,6 +46,10 @@ namespace eudaq {
     std::string m_name;
   };
 
+  using ConnectionWP = std::weak_ptr<ConnectionInfo>;
+  using ConnectionSP = std::shared_ptr<ConnectionInfo>;
+  using ConnectionSPC = std::shared_ptr<const ConnectionInfo>;
+  
   inline std::ostream &operator<<(std::ostream &os, const ConnectionInfo &id) {
     id.Print(os);
     return os;
