@@ -9,13 +9,9 @@ namespace eudaq {
 
   class DLLEXPORT TransportServer : public TransportBase {
   public:
-    virtual ~TransportServer();
+    ~TransportServer() override;
     virtual std::string ConnectionString() const = 0;
-    virtual size_t NumConnections() const { return 0; }
-    virtual std::vector<ConnectionSPC> GetConnections() const {
-      std::vector<ConnectionSPC> cons;
-      return cons;
-    }
+    virtual std::vector<ConnectionSPC> GetConnections() const = 0;
   };
 }
 

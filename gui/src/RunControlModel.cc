@@ -20,7 +20,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return m_id->IsEnabled() ? to_string(m_status).c_str() : "DEAD";
+    return m_id.unique() ? to_string(m_status).c_str() : "DEAD";
   case 3:
     return m_id->GetRemote().c_str();
   default:
@@ -44,7 +44,7 @@ RunControlModel::RunControlModel(QObject *parent)
 
 void RunControlModel::newconnection(eudaq::ConnectionSPC id) {
   for (size_t i = 0; i < m_data.size(); ++i) {
-    if (!m_data[i].IsConnected() && id->Matches(m_data[i].GetId())) {
+    if (!m_data[i].IsConnected() && id == m_data[i].GetId()) {
       m_data[i] = RunControlConnection(id);
       UpdateDisplayed();
       return;
@@ -62,7 +62,7 @@ void RunControlModel::newconnection(eudaq::ConnectionSPC id) {
 
 void RunControlModel::disconnected(eudaq::ConnectionSPC id) {
   for (size_t i = 0; i < m_data.size(); ++i) {
-    if (id->Matches(m_data[i].GetId())){
+    if (id == m_data[i].GetId()){
       // m_data[i].SetConnected(false);
       //TODO: yiliu urgent
       break;
@@ -74,7 +74,7 @@ void RunControlModel::disconnected(eudaq::ConnectionSPC id) {
 void RunControlModel::SetStatus(eudaq::ConnectionSPC id,
                                 eudaq::Status status) {
   for (size_t i = 0; i < m_data.size(); ++i) {
-    if (id->Matches(m_data[i].GetId())) {
+    if (id == m_data[i].GetId()) {
       m_data[i].SetStatus(status);
       break;
     }

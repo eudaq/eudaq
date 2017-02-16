@@ -342,7 +342,7 @@ namespace eudaq {
     EUDAQ_THROW_NOLOG("BUG: please report it");
   }
 
-
+  
   std::vector<ConnectionSPC> TCPServer::GetConnections () const{
     std::vector<ConnectionSPC> conn;
     for(auto &info: m_conn){

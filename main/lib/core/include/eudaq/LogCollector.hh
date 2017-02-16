@@ -42,8 +42,8 @@ namespace eudaq {
     void Exec() override;
 
     virtual void DoTerminate() = 0;
-    virtual void DoConnect(std::shared_ptr<const ConnectionInfo> id) {}
-    virtual void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {}
+    virtual void DoConnect(ConnectionSPC id) {}
+    virtual void DoDisconnect(ConnectionSPC id) {}
     virtual void DoReceive(const LogMessage &msg) = 0;
 
     void StartLogCollector();

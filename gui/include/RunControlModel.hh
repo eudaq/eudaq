@@ -13,8 +13,7 @@ public:
   eudaq::Status GetStatus() const { return m_status; }
   int GetLevel() const { return m_status.GetLevel(); }
   bool IsConnected() const { return !m_id.unique(); }
-  // void SetConnected(bool con) { m_id->SetState(2 * con - 1); }
-  const eudaq::ConnectionInfo &GetId() const { return *m_id; }
+  eudaq::ConnectionSPC GetId() const { return m_id; }
   void SetStatus(const eudaq::Status &status) { m_status = status; }
 
 private:

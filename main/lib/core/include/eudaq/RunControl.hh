@@ -60,17 +60,12 @@ namespace eudaq {
     void ReadInitilizeFile(const std::string &path);
     std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
     std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
-
-    size_t NumConnections() const { return m_cmdserver->NumConnections(); }
     
   private:
     void InitLog(std::shared_ptr<const ConnectionInfo> id);
     void SendCommand(const std::string &cmd,
 		     const std::string &param = "",
-                     const ConnectionInfo &id = ConnectionInfo::ALL);
-    std::string SendReceiveCommand(const std::string &cmd,
-				   const std::string &param = "",
-				   const ConnectionInfo &id = ConnectionInfo::ALL);
+                     const ConnectionSPC id = ConnectionSPC());
     void CommandHandler(TransportEvent &ev);
     void CommandThread();
 

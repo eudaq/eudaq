@@ -127,7 +127,7 @@ namespace eudaq {
     case (TransportEvent::DISCONNECT):
       EUDAQ_INFO("Disconnected: " + to_string(*con));
       for (size_t i = 0; i < m_info_pdc.size(); ++i) {
-	if (m_info_pdc[i]->Matches(*con)){
+	if (m_info_pdc[i] == con){
 	  m_info_pdc.erase(m_info_pdc.begin() + i);
 	  DoDisconnect(con);
 	  return;

@@ -36,9 +36,6 @@ namespace eudaq {
     bool Matches(const ConnectionInfo &other) const override;
     void Print(std::ostream &) const override;
     std::string GetRemote() const override { return m_host; }
-    // ConnectionInfo *Clone() const override {
-    //   return new ConnectionInfoTCP(*this);
-    // }
 
   private:
     void update_length(bool = false);
@@ -58,7 +55,6 @@ namespace eudaq {
 		    bool duringconnect = false) override;
     void ProcessEvents(int timeout) override;
     std::string ConnectionString() const override;
-    size_t NumConnections() const override { return m_conn.size(); }
     std::vector<ConnectionSPC> GetConnections() const  override;
     static const std::string name;
 
