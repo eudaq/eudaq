@@ -96,6 +96,7 @@ public:
     settings.endGroup();
   }
 
+  void Exec() override;
 protected:
   void LoadFile(const std::string &filename) {
     std::vector<std::string> sources = m_model.LoadFile(filename);

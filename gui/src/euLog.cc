@@ -62,3 +62,19 @@ void LogCollectorGUI::AddSender(const std::string &type,
     }
   }
 }
+
+
+void LogCollectorGUI::Exec(){
+  StartLogCollector(); //TODO: Start it OnServer
+  StartCommandReceiver();
+
+  show();
+  if(QApplication::instance())
+    QApplication::instance()->exec(); 
+  else
+    std::cerr<<"ERROR: LogCollectorGUI::EXEC\n";
+
+  while(IsActiveCommandReceiver() || IsActiveLogCollector()){
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+  }
+}
