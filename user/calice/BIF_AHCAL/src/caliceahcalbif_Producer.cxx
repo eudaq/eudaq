@@ -34,7 +34,19 @@ class caliceahcalbifProducer: public eudaq::Producer {
       void ProcessQueuedBifData();
       void trigger_push_back(std::vector<uint32_t> &cycleData, const uint32_t type,
             const uint32_t evtNumber, const uint64_t Timestamp);
-      void WriteOutEudaqEvent();
+      void buildEudaqEvents(std::deque<eudaq::EventUP> & deqEvent);
+      void sendallevents(std::deque<eudaq::EventUP> & deqEvent, int minimumsize);
+      void buildEudaqEventsROC(std::deque<eudaq::EventUP>& deqEvent);
+
+      enum class EventBuildingMode {
+         ROC, TRIGGERS
+      };
+      enum class EventNumbering {
+         TRIGGERNUMBER, TIMESTAMP
+      };
+
+      caliceahcalbifProducer::EventBuildingMode _eventBuildingMode;
+      caliceahcalbifProducer::EventNumbering _eventNumberingPreference;
 
       unsigned m_run;
       unsigned readout_delay;
@@ -56,6 +68,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
       bool _word1WrittenPreviously; //word was already stored to raw file in previous processing
       int _ReadoutCycle; //current ReadoutCycle in the run
       uint64_t _acq_start_ts; //timestamp of last start acquisition (shutter on)
+      uint64_t _acq_stop_ts; // timestamp of the stop of the acquisition
       uint32_t _acq_start_cycle; //raw cycle number of the acq start. Direct copy from the packet (no correction for starting the run from cycle 0
       uint32_t _trigger_id; //last trigger raw event number
 
@@ -79,6 +92,9 @@ class caliceahcalbifProducer: public eudaq::Producer {
       std::string _redirectedInputFileName; //file name, which will be used to receive data from (instead of real minitlu)
       std::ifstream _ifs;
       std::vector<uint64_t> _redirectedInputData;
+
+      std::deque<eudaq::EventUP> _deqEvent; //queue of the EUDAQ raw events
+      std::mutex _deqEventAccessMutex; //lock for accessing the _deqEvent
 };
 
 namespace {
@@ -93,7 +109,8 @@ caliceahcalbifProducer::caliceahcalbifProducer(const std::string name, const std
             _firstTrigger(true), _last_readout_time(std::time(NULL)), _ReadoutCycle(0), _ROC_started(false),
             _trigger_id(-1), _triggersInCycle(0), _WaitAfterStopSeconds(0), _writeRaw(false),
             _writerawfilename_timestamp(true), _dumpCycleInfoLevel(1), _dumpSummary(true), _dumpTriggerInfoLevel(0),
-            _word1WrittenPreviously(false) {
+            _BORESent(false), _word1WrittenPreviously(false), _eventBuildingMode(caliceahcalbifProducer::EventBuildingMode::ROC),
+            _eventNumberingPreference(caliceahcalbifProducer::EventNumbering::TIMESTAMP) {
 
 }
 
@@ -140,15 +157,14 @@ void caliceahcalbifProducer::MainLoop() {
                eudaq::mSleep(10); //save CPU resources
                break;
             }
+            sendallevents(_deqEvent, 1);
          }
       } else {
          eudaq::mSleep(50);
       }
       if (JustStopped) {
          if (std::difftime(std::time(NULL), _last_readout_time) < _WaitAfterStopSeconds) continue; //wait for safe time after last packet arrived
-         auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
-         ev->SetEORE();
-         SendEvent(std::move(ev));
+         sendallevents(_deqEvent, 0);
          _ReadoutCycle++;
          // SendEvent(eudaq::RawDataEvent::EORE("CaliceObject", m_run, ++_ReadoutCycle));
          _TLUJustStopped = false;
@@ -174,6 +190,16 @@ void caliceahcalbifProducer::DoConfigure() {
    _bxidLengthNs = param.Get("BxidLengthNs", 4000);
    _WaitAfterStopSeconds = param.Get("WaitAfterStopSeconds", 1.0);
    _redirectedInputFileName = param.Get("RedirectInputFromFile", "");
+
+   std::string eventBuildingMode = param.Get("EventBuildingMode", "ROC");
+   if (!eventBuildingMode.compare("ROC")) _eventBuildingMode = caliceahcalbifProducer::EventBuildingMode::ROC;
+   if (!eventBuildingMode.compare("TRIGGERS")) _eventBuildingMode = caliceahcalbifProducer::EventBuildingMode::TRIGGERS;
+   std::cout << "Creating events in \"" << eventBuildingMode << "\" mode" << std::endl;
+
+   std::string eventNumberingMode = param.Get("EventNumberingPreference", "TRIGGERID");
+   if (!eventNumberingMode.compare("TRIGGERNUMBER")) _eventNumberingPreference = caliceahcalbifProducer::EventNumbering::TRIGGERNUMBER;
+   if (!eventNumberingMode.compare("TIMESTAMP")) _eventNumberingPreference = caliceahcalbifProducer::EventNumbering::TIMESTAMP;
+   std::cout << "Preferring event numbering type: \"" << eventNumberingMode << "\"" << std::endl;
 
    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
    if (m_tlu) m_tlu = nullptr;
@@ -243,6 +269,7 @@ void caliceahcalbifProducer::OpenRawFile(unsigned param, bool _writerawfilename_
 
 void caliceahcalbifProducer::DoStartRun() {
    std::cout << "Starting Run" << std::endl;
+   _deqEvent.clear();
    _ReadoutCycle = -1;
    _stats= {0,0,0,0};
    _BORESent = false;
@@ -467,9 +494,9 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
                   char errorMessage[200];
                   sprintf(errorMessage, "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run %d, ROC %d.", m_run, _ReadoutCycle);
                   EUDAQ_WARN(errorMessage);
-                  WriteOutEudaqEvent();
+                  buildEudaqEvents(_deqEvent);
                } else if ((difference >= 1) && (difference <= 500)) { //Don't compensate too big event loss
-                  WriteOutEudaqEvent();
+                  buildEudaqEvents(_deqEvent);
                } else if (difference == 0x0FFF) {
                   _ReadoutCycle--; //probably receiving same readoutcycledata twice. Lets fix it only if it is the same packet,
                }
@@ -502,7 +529,7 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
                   char errorMessage[200];
                   sprintf(errorMessage, "Writing dummy/incomplete BIF cycles for missing readoutcycle data. Run %d, ROC %d.", m_run, _ReadoutCycle);
                   EUDAQ_WARN(errorMessage);
-                  WriteOutEudaqEvent();
+                  buildEudaqEvents(_deqEvent);
                   _ReadoutCycle++;
                   difference--;
                }
@@ -523,6 +550,7 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
             _ROC_started = false;
             _stats.triggers += _triggersInCycle;
             _stats.runStopTS = timestamp;
+            _acq_stop_ts = timestamp;
             if (timestamp < _acq_start_ts) {
                _stats.onTime += ~(timestamp - _acq_start_ts) + 1;                  //convert unsigned negative
             } else {
@@ -552,9 +580,10 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
             //                              std::cout << "\tcycle: " << (int) acq_start_cycle
             event_complete = true;
             {
-               trigger_push_back(_cycleData, 0x02000000, (uint32_t) _ReadoutCycle, _acq_start_ts << 5);
+               trigger_push_back(_cycleData, 0x02000000, static_cast<uint32_t>(_ReadoutCycle), timestamp << 5);
+               //trigger_push_back(_cycleData, 0x02000000, (uint32_t) _ReadoutCycle, _acq_start_ts << 5);
                //trigger_push_back(_cycleData, 0x02000000, inputs, _acq_start_ts << 5);
-               WriteOutEudaqEvent();
+               buildEudaqEvents(_deqEvent);
             }
             break;
          case 0x04: //edge falling
@@ -567,14 +596,14 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
          default:
             break;
       }
-      if (_writeRaw && (!_word1WrittenPreviously)){
+      if (_writeRaw && (!_word1WrittenPreviously)) {
          _rawFile.write((char*) &word1, sizeof(word1));
       }
       _word1WrittenPreviously = false;
       //                      printf("raw64: %016lX\n", word1);
       if (event_complete) continue;
       it++; //treat next word as 2nd word of the packet
-      if (it == (_redirectedInputFileName.length() ? _redirectedInputData.end() : m_tlu->GetEventData()->end())) break;//incomplete event
+      if (it == (_redirectedInputFileName.length() ? _redirectedInputData.end() : m_tlu->GetEventData()->end())) break; //incomplete event
       word2 = *(it);
       evtNumber = word2 & 0x00000000FFFFFFFF;
       if (evtNumber != ++_trigger_id) {
@@ -650,26 +679,30 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
       if (!event_complete) m_tlu->GetEventData()->push_back(word1); //data in the fifo ends in the middle of the packet. Let's put back the word1. It will be completed in the next iteration
    }
    if (!event_complete) {
-      _word1WrittenPreviously=true;
+      _word1WrittenPreviously = true;
    }
 }
 
 void caliceahcalbifProducer::trigger_push_back(std::vector<uint32_t> &cycleData, const uint32_t type, const uint32_t evtNumber, const uint64_t Timestamp) {
+   std::cout << "storing " << to_hex(type, 8) << " " << static_cast<uint32_t>(evtNumber) << " " << to_hex(Timestamp, 16) << std::endl;
    cycleData.push_back(type);
    cycleData.push_back((uint32_t) (evtNumber));
    cycleData.push_back((uint32_t) (Timestamp));
    cycleData.push_back((uint32_t) ((Timestamp >> 32)));
 }
 
-void caliceahcalbifProducer::WriteOutEudaqEvent()
-{
-// eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
+void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deqEvent) {
+   //complete readout cycle treated as single event
+   // eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
    auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
    std::string s = "EUDAQDataBIF";
    auto CycleEvent = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
    CycleEvent->AddBlock(0, s.c_str(), s.length());
    s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
    CycleEvent->AddBlock(1, s.c_str(), s.length());
+   ev->SetTimestamp(_acq_start_ts,_acq_stop_ts,false);
+   ev->SetTriggerN(_ReadoutCycle,false);
+   //get startacq
    unsigned int times[2];
    struct timeval tv;
    ::gettimeofday(&tv, NULL);
@@ -680,8 +713,41 @@ void caliceahcalbifProducer::WriteOutEudaqEvent()
    CycleEvent->AddBlock(4, std::vector<uint8_t>());
    CycleEvent->AddBlock(5, std::vector<uint8_t>());
    CycleEvent->AddBlock(6, _cycleData);
-   SendEvent(std::move(ev));
+   deqEvent.push_back(std::move(ev));
+   //   SendEvent(std::move(ev));
    _cycleData.clear();
+}
+
+void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEvent) {
+   std::cout << "-----------------------------" << std::endl;   //DEBUG
+   switch (_eventBuildingMode) {
+      case EventBuildingMode::ROC:
+         // eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
+         buildEudaqEventsROC(deqEvent);
+         break;
+      default:
+         break;
+   }
+}
+
+void caliceahcalbifProducer::sendallevents(std::deque<eudaq::EventUP> & deqEvent, int minimumsize) {
+   while (deqEvent.size() > minimumsize) {
+      std::lock_guard<std::mutex> lock(_deqEventAccessMutex); //minimal lock for pushing ne
+      if (deqEvent.front()) {
+         if (!_BORESent) {
+            deqEvent.front()->SetBORE();
+            _BORESent = true;
+            if (!_redirectedInputFileName.length()) {
+               deqEvent.front()->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
+               deqEvent.front()->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
+            }
+         }
+         if ((minimumsize == 0) && (deqEvent.size() == 1))
+            deqEvent.front()->SetEORE();
+         SendEvent(std::move(deqEvent.front()));
+      }
+      deqEvent.pop_front();
+   }
 }
 
 int main(int /*argc*/, const char ** argv) {
