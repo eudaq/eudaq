@@ -22,17 +22,15 @@ namespace eudaq {
 
   class ConnectionInfoTCP : public ConnectionInfo {
   public:
+    ConnectionInfoTCP() = delete;
+    ConnectionInfoTCP(const ConnectionInfoTCP&) = delete;
+    ConnectionInfoTCP& operator = (const ConnectionInfoTCP&) = delete;   
     ConnectionInfoTCP(SOCKET fd, const std::string &host = "")
-        : m_fd(fd), m_host(host), m_len(0), m_buf("") {}
+      : m_fd(fd), m_host(host), m_len(0), m_buf(""), ConnectionInfo("") {}
     void append(size_t length, const char *data);
     bool havepacket() const;
     std::string getpacket();
     SOCKET GetFd() const { return m_fd; }
-    void Disable() {
-      m_state = -1;
-      m_len = 0;
-      m_buf = "";
-    }
     bool Matches(const ConnectionInfo &other) const override;
     void Print(std::ostream &) const override;
     std::string GetRemote() const override { return m_host; }

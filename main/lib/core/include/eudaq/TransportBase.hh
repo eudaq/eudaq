@@ -21,6 +21,10 @@ namespace eudaq {
    */
   class ConnectionInfo {
   public:
+    ConnectionInfo() = delete;
+    ConnectionInfo(const ConnectionInfo&) = delete;
+    ConnectionInfo& operator = (const ConnectionInfo&) = delete;   
+
     explicit ConnectionInfo(const std::string &name = "")
         : m_state(0), m_name(name) {}
     virtual ~ConnectionInfo() {}

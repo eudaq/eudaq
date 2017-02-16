@@ -20,7 +20,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return m_id.unique() ? to_string(m_status).c_str() : "DEAD";
+    return to_string(m_status).c_str();
   case 3:
     return m_id->GetRemote().c_str();
   default:

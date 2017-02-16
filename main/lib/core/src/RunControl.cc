@@ -60,18 +60,12 @@ namespace eudaq {
       for(auto &pdc :pdcs){
     	if(pdc.empty())
     	  continue;
-    	for(auto &info_pdc_sp :info_client){
-    	  auto &info_pdc = *info_pdc_sp;
-    	  if(info_pdc.GetType() == "Producer" && info_pdc.GetName() == pdc){
-    	    SendCommand("DATA", e.second, info_pdc_sp);
+    	for(auto &info_pdc :info_client){
+    	  if(info_pdc->GetType() == "Producer" && info_pdc->GetName() == pdc){
+    	    SendCommand("DATA", e.second, info_pdc);
     	  }
     	}
       }
-      if(pdcs.empty())
-	for(auto &info_pdc :info_client){
-	  if(info_pdc->GetType() == "Producer")
-	    SendCommand("DATA", e.second, info_pdc);  
-	}
     }
     SendCommand("CONFIG", to_string(*m_conf));    
   }

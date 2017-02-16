@@ -122,8 +122,8 @@ namespace eudaq {
     auto it = m_senders.find(server);
     if(it==m_senders.end()){
       m_senders[server]= std::unique_ptr<DataSender>(new DataSender("Producer", GetFullName()));
+      m_senders[server]->Connect(server);
     }
-    m_senders[server]->Connect(server);
   }
   
   void Producer::Exec(){
