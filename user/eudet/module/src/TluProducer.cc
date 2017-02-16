@@ -94,7 +94,7 @@ void TluProducer::MainLoop(){
     
     for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
       auto tlu_entry =  m_tlu->GetEntry(i);
-      auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
+      auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
       m_trigger_n = tlu_entry.Eventnum();
       uint64_t ts_raw = tlu_entry.Timestamp();
       // uint64_t ts_ns = ts_raw; //TODO, convert to ns

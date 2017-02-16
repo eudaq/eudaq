@@ -65,16 +65,15 @@ void NiProducer::DataLoop(){
   ni_control->Start();
   bool isbegin = true;
   while(1){
-    auto evup = eudaq::RawDataEvent::MakeUnique("NiRawDataEvent");
+    auto evup = eudaq::Event::MakeUnique("NiRawDataEvent");
     datalength1 = ni_control->DataTransportClientSocket_ReadLength("priv");
     std::vector<uint8_t> mimosa_data_0(datalength1);
     mimosa_data_0 = ni_control->DataTransportClientSocket_ReadData(datalength1);
     datalength2 = ni_control->DataTransportClientSocket_ReadLength("priv");
     std::vector<uint8_t> mimosa_data_1(datalength2);
     mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
-    auto ev = dynamic_cast<eudaq::RawDataEvent*>(evup.get());
-    ev->AddBlock(0, mimosa_data_0);
-    ev->AddBlock(1, mimosa_data_1);
+    evup->AddBlock(0, mimosa_data_0);
+    evup->AddBlock(1, mimosa_data_1);
     if(isbegin){
       isbegin = false;
       evup->SetBORE();

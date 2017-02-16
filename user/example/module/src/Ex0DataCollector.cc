@@ -303,7 +303,7 @@ void Ex0DataCollector::BuildEvent_TimeStamp(){
     std::cout<<"ts building main, loop\n";
     uint64_t ts_next_end = -1;
     uint64_t ts_next_beg = ts_next_end - 1;
-    auto ev_wrap = eudaq::RawDataEvent::MakeUnique(GetFullName());
+    auto ev_wrap = eudaq::Event::MakeUnique(GetFullName());
     ev_wrap->SetTimestamp(m_ts_curr_beg, m_ts_curr_end);
     std::set<uint32_t> has_eore;
     for(auto &que_p :m_que_event_ts){
@@ -426,7 +426,7 @@ void Ex0DataCollector::AddEvent_TriggerN(uint32_t id, eudaq::EventSPC ev){
 void Ex0DataCollector::BuildEvent_Trigger(){
   while(!m_event_ready_tg.empty() && m_event_ready_tg.size() ==m_que_event_tg.size()){
     std::set<uint32_t> has_eore;
-    auto ev_wrap = eudaq::RawDataEvent::MakeUnique(GetFullName());
+    auto ev_wrap = eudaq::Event::MakeUnique(GetFullName());
     ev_wrap->SetTriggerN(m_tg_curr_n);
     for(auto &que_p :m_que_event_tg){
       auto &que = que_p.second;

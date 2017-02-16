@@ -56,7 +56,7 @@ void MinitluProducer::MainLoop(){
       uint64_t ts_raw = data->timestamp;
       // uint64_t ts_ns = ts_raw; //TODO: to ns
       uint64_t ts_ns = ts_raw*25; 
-      auto ev = eudaq::RawDataEvent::MakeUnique("TluRawDataEvent");
+      auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
       ev->SetTimestamp(ts_ns, ts_ns+25, false);//TODO, duration
       ev->SetTriggerN(trigger_n);
       

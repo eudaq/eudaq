@@ -128,7 +128,7 @@ void Ex0Producer::Mainloop(){
     auto tp_end_of_busy = tp_trigger + m_ms_busy;
     std::chrono::nanoseconds du_ts_beg_ns(tp_trigger - tp_start_run);
     std::chrono::nanoseconds du_ts_end_ns(tp_end_of_busy - tp_start_run);
-    auto ev = eudaq::RawDataEvent::MakeUnique("ExampleA");
+    auto ev = eudaq::Event::MakeUnique("ExampleA");
 
     if(m_flag_ts)
       ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
@@ -137,9 +137,8 @@ void Ex0Producer::Mainloop(){
 
     std::vector<uint8_t> data_a(1000, 0);
     std::vector<uint8_t> data_b(10, 2);
-    auto evraw = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
-    evraw->AddBlock(0,data_a);
-    evraw->AddBlock(1,data_b);
+    ev->AddBlock(0,data_a);
+    ev->AddBlock(1,data_b);
     if(trigger_n == 0){
       ev->SetBORE();
     }
