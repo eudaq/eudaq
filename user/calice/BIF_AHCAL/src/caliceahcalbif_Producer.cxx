@@ -53,6 +53,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
       bool _writeRaw; //write to separate file
       std::string _rawFilename;
       bool _writerawfilename_timestamp; //whether to append timestamp to the raw file
+      bool _word1WrittenPreviously; //word was already stored to raw file in previous processing
       int _ReadoutCycle; //current ReadoutCycle in the run
       uint64_t _acq_start_ts; //timestamp of last start acquisition (shutter on)
       uint32_t _acq_start_cycle; //raw cycle number of the acq start. Direct copy from the packet (no correction for starting the run from cycle 0
@@ -91,7 +92,8 @@ caliceahcalbifProducer::caliceahcalbifProducer(const std::string name, const std
             _bxidLengthNs(4000), _dumpRaw(0), _firstBxidOffsetBins(13000), _firstStutterCycle(-1),
             _firstTrigger(true), _last_readout_time(std::time(NULL)), _ReadoutCycle(0), _ROC_started(false),
             _trigger_id(-1), _triggersInCycle(0), _WaitAfterStopSeconds(0), _writeRaw(false),
-            _writerawfilename_timestamp(true), _dumpCycleInfoLevel(1), _dumpSummary(true), _dumpTriggerInfoLevel(0) {
+            _writerawfilename_timestamp(true), _dumpCycleInfoLevel(1), _dumpSummary(true), _dumpTriggerInfoLevel(0),
+            _word1WrittenPreviously(false) {
 
 }
 
@@ -325,7 +327,7 @@ void caliceahcalbifProducer::DoStopRun() {
    }
    sleep(1);
    if (_writeRaw) _rawFile.close();
-
+   std::cout << "Run stopped" << std::endl;
 }
 
 void caliceahcalbifProducer::DoTerminate() {
@@ -565,11 +567,14 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
          default:
             break;
       }
-      if (_writeRaw) _rawFile.write((char*) &word1, sizeof(word1));
+      if (_writeRaw && (!_word1WrittenPreviously)){
+         _rawFile.write((char*) &word1, sizeof(word1));
+      }
+      _word1WrittenPreviously = false;
       //                      printf("raw64: %016lX\n", word1);
       if (event_complete) continue;
       it++; //treat next word as 2nd word of the packet
-      if (it == (_redirectedInputFileName.length() ? _redirectedInputData.end() : m_tlu->GetEventData()->end())) break;
+      if (it == (_redirectedInputFileName.length() ? _redirectedInputData.end() : m_tlu->GetEventData()->end())) break;//incomplete event
       word2 = *(it);
       evtNumber = word2 & 0x00000000FFFFFFFF;
       if (evtNumber != ++_trigger_id) {
@@ -643,6 +648,9 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
    } else {
       m_tlu->ClearEventFIFO();
       if (!event_complete) m_tlu->GetEventData()->push_back(word1); //data in the fifo ends in the middle of the packet. Let's put back the word1. It will be completed in the next iteration
+   }
+   if (!event_complete) {
+      _word1WrittenPreviously=true;
    }
 }
 
