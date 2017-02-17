@@ -691,8 +691,7 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
 }
 
 void caliceahcalbifProducer::trigger_push_back(std::vector<uint32_t> &cycleData, const uint32_t type, const uint32_t evtNumber, const uint64_t Timestamp) {
-   std::cout << "storing " << to_hex(type, 8) << " " << static_cast<uint32_t>(evtNumber - _firstTriggerNumber) << " " << to_hex(Timestamp, 16)
-         << " " << _stats.triggers << std::endl;
+   //std::cout << "storing " << to_hex(type, 8) << " " << static_cast<uint32_t>(evtNumber - _firstTriggerNumber) << " " << to_hex(Timestamp, 16) << " " << _stats.triggers << std::endl;
    cycleData.push_back(type);
    cycleData.push_back((uint32_t) (evtNumber));
    cycleData.push_back((uint32_t) (Timestamp));
@@ -781,11 +780,11 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       std::copy(trigger.begin(), trigger.end(), std::back_inserter(data));
       std::copy(stop_packet.begin(), stop_packet.end(), std::back_inserter(data));
 
-      std::cout << "Data: ";
-      for (auto value : data) {
-         std::cout << to_hex(value, 8) << " ";
-      }
-      std::cout << std::endl;
+      //std::cout << "Data: ";
+      //for (auto value : data) {
+      //   std::cout << to_hex(value, 8) << " ";
+      //}
+      //std::cout << std::endl;
 
       CycleEvent->AddBlock(6, data);
       deqEvent.push_back(std::move(ev));
@@ -795,7 +794,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
 }
 
 void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEvent) {
-   std::cout << "-----------------------------" << std::endl;   //DEBUG
+   //std::cout << "-----------------------------" << std::endl;   //DEBUG
    switch (_eventBuildingMode) {
       case EventBuildingMode::ROC:
          // eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
