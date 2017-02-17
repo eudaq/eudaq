@@ -1,13 +1,11 @@
 #include <QApplication>
 #include <QDateTime>
 #include <fstream>
-//#include "euRunApplication.h"  // does the file exist in eudaq2?
 #include "euRun.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Utils.hh"
 #include "Colours.hh"
 #include "eudaq/Status.hh"
-//#include "eudaq/ConnectionState.hh" // does the file exist in eudaq2?
 #include <exception>
 #include "config.h" // for version symbols
 
@@ -51,7 +49,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
     m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
     m_filebytes(0), m_events(0), dostatus(false),
     m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
-    m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false), m_nextconfigonrunchange(false), configLoaded(false), configLoadedInit(false), disableButtons(false), curState(STATE_UNINIT),lastUsedDirectory(""),lastUsedDirectoryInit("") {
+    m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false), configLoaded(false), configLoadedInit(false), disableButtons(false), curState(STATE_UNINIT),lastUsedDirectory(""),lastUsedDirectoryInit("") {  // m_nextconfigonrunchange(false) taken out for test!
   setupUi(this);
   QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())

@@ -256,7 +256,7 @@ t>").arg(FONT_SIZE));
 	} else {	
           StopRun();
 	}
-        eudaq::mSleep(20000); ////////
+        eudaq::mSleep(20000); 
 	if (m_nextconfigonrunchange) {
           QDir dir(lastUsedDirectory, "*.conf");
           // allConfigFiles                                                                         
@@ -281,11 +281,11 @@ t>").arg(FONT_SIZE));
           } else
             EUDAQ_INFO("All config files processed.");
         } else
-	on_btnStart_clicked(true);
+	    on_btnStart_clicked(true);
       } else if (dostatus) {
         RemoteStatus();
       }
-    } /////////////////
+    }
     if (m_startrunwhenready && !m_producer_pALPIDEfs_not_ok &&
         !m_producer_pALPIDEss_not_ok) {
       m_startrunwhenready = false;
@@ -299,10 +299,12 @@ t>").arg(FONT_SIZE));
     }
   }
   void btnLogSetStatusSlot(bool status) { btnLog->setEnabled(status); }
+  void btnStartSetStatusSlot(bool status) { btnStart->setEnabled(status); }
 
 signals:
   void StatusChanged(const QString &, const QString &);
   void btnLogSetStatus(bool status);
+  void btnStartSetStatus(bool status);
   void SetState(int status);
 
 private:
