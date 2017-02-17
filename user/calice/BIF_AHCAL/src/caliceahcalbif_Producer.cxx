@@ -707,9 +707,10 @@ void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deq
    s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
    CycleEvent->AddBlock(1, s.c_str(), s.length());
    ev->SetTimestamp(_acq_start_ts, _acq_stop_ts, false);
-   ev->SetTriggerN(_ReadoutCycle, false);
+   ev->SetTriggerN(_ReadoutCycle, false); //ROC is used as a trigger number
+   if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
+   if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
    ev->SetTag("ROC", _ReadoutCycle);
-   //get startacq
    unsigned int times[2];
    struct timeval tv;
    ::gettimeofday(&tv, NULL);
@@ -721,7 +722,7 @@ void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deq
    CycleEvent->AddBlock(5, std::vector<uint8_t>());
    CycleEvent->AddBlock(6, _cycleData);
    deqEvent.push_back(std::move(ev));
-   //   SendEvent(std::move(ev));
+//   SendEvent(std::move(ev));
    _cycleData.clear();
 }
 
@@ -732,10 +733,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
    std::vector<uint32_t> stop_packet;
    std::vector<std::vector<uint32_t>> trigger_packets;
 
-//   cycleData.push_back(type);
-//      cycleData.push_back((uint32_t) (evtNumber));
-//      cycleData.push_back((uint32_t) (Timestamp));
-//      cycleData.push_back((uint32_t) ((Timestamp >> 32)));
+   //prepare list of trigger by extracting them from the _cycleData
    //TODO quite inefficient due to memory copy
    for (int i = 0; i < _cycleData.size() - 3; i += 4) {
       switch (_cycleData[i] & 0xFF000000) {
@@ -752,6 +750,8 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
             break;
       }
    }
+
+   //make new event for every trigger
    for (auto trigger : trigger_packets) {
       auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
       std::string s = "EUDAQDataBIF";
@@ -764,8 +764,9 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       uint32_t trig_number = trigger[1];
       ev->SetTimestamp(trig_ts, trig_ts + 1, false);
       ev->SetTriggerN(trig_number - _firstTriggerNumber, false);
+      if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
+      if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
       ev->SetTag("ROC", _ReadoutCycle);
-      //get startacq
       unsigned int times[2];
       struct timeval tv;
       ::gettimeofday(&tv, NULL);
@@ -794,7 +795,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
 }
 
 void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEvent) {
-   //std::cout << "-----------------------------" << std::endl;   //DEBUG
+//std::cout << "-----------------------------" << std::endl;   //DEBUG
    switch (_eventBuildingMode) {
       case EventBuildingMode::ROC:
          // eudaq::RawDataEvent CycleEvent("CaliceObject", m_run, _ReadoutCycle);
