@@ -578,7 +578,7 @@ namespace eudaq {
                eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
                eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
                prepareEudaqRawPacket(nev_raw);
-               nev->SetTag("ROC",roc);
+               nev->SetTag("ROC", roc);
                nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset());
                if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
                   nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
@@ -667,7 +667,7 @@ namespace eudaq {
             eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
             eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
             prepareEudaqRawPacket(nev_raw);
-            nev->SetTag("ROC",roc);
+            nev->SetTag("ROC", roc);
 
             if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
                nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
@@ -696,8 +696,9 @@ namespace eudaq {
          eudaq::EventUP nev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
          eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
          prepareEudaqRawPacket(nev_raw);
+         nev->SetTag("ROC", roc);
 
-         nev->SetEventN(roc);
+//         nev->SetEventN(roc);
          for (std::vector<std::vector<int> >::iterator idata = data.begin(); idata != data.end(); ++idata) {
             if (idata->size()) {
                nev_raw->AddBlock(nev_raw->NumBlocks(), std::move(*idata));
@@ -718,7 +719,6 @@ namespace eudaq {
                std::cout << "ERROR EB: Length of the acquisition is longer than 100 ms in ROC " << roc << std::endl;
                if (_producer->getColoredTerminalMessages()) std::cout << "\033[0m";
             }
-            nev->SetTag("ROC",roc);
             std::vector<uint32_t> cycledata;
             cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start));
             cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start >> 32));
@@ -798,7 +798,7 @@ namespace eudaq {
                      }
                      break;
                }
-               nev->SetTag("ROC",roc);
+               nev->SetTag("ROC", roc);
                //copy the ahcal data
                if (i == (_LDATimestampData[roc].TS_Triggers.size() - 1)) {
                   //the last triggerID in the vector
