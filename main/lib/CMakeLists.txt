@@ -95,7 +95,7 @@ SOURCE_GROUP(TCPIP FILES src\\Serializable.cc src\\Producer.cc src\\SlowProducer
 SOURCE_GROUP(Event .*Event.*cc)
 SOURCE_GROUP(Utilities FILES src\\Utils.cc src\\Time.cc src\\Mutex.cc src\\EudaqThread.cc)
 
-target_link_libraries( ${PROJECT_NAME} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
+target_link_libraries( ${PROJECT_NAME} ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS ${PROJECT_NAME}
   RUNTIME DESTINATION bin
