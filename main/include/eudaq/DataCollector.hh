@@ -1,7 +1,6 @@
 #ifndef EUDAQ_INCLUDED_DataCollector
 #define EUDAQ_INCLUDED_DataCollector
 
-//#include <pthread.h>
 #include <string>
 #include <vector>
 #include <list>
@@ -52,8 +51,6 @@ namespace eudaq {
 
     bool m_done, m_listening;
     TransportServer *m_dataserver; ///< Transport for receiving data packets
-                                   //       pthread_t m_thread;
-                                   //       pthread_attr_t m_threadattr;
     std::unique_ptr<std::thread> m_thread;
     std::vector<Info> m_buffer;
     size_t m_numwaiting; ///< The number of producers with events waiting in the
