@@ -1,7 +1,6 @@
 #ifndef EUDAQ_INCLUDED_LogCollector
 #define EUDAQ_INCLUDED_LogCollector
 
-//#include <pthread.h>
 #include <string>
 #include <fstream>
 #include "eudaq/Platform.hh"
