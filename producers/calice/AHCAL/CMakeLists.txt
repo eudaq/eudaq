@@ -14,7 +14,7 @@ ELSE(NOT IGNORE_KNOWN_ISSUES AND WIN32)
   INCLUDE_DIRECTORIES( ${ext_inc_paths})
   ADD_EXECUTABLE(${name} ${sourcefiles})
 
-  TARGET_LINK_LIBRARIES(${name} ${ext_libraries})
+  TARGET_LINK_LIBRARIES(${name} EUDAQ ${ext_libraries})
 
   INSTALL(TARGETS ${name}
     RUNTIME DESTINATION bin
