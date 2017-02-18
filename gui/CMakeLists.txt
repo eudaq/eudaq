@@ -77,9 +77,9 @@ ELSE()
   ADD_EXECUTABLE(euLog.exe src/euLog.cc src/euLog.rc src/LogCollectorModel.cc ${euLog_MOCSrcs} ${euLog_UISrcs} )
 
   # last thing we have to do is to tell CMake what libraries our executable needs
-  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
-  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
-  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${EUDAQ_THREADS_LIB} ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euRun.exe  EUDAQ ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euProd.exe EUDAQ ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
+  TARGET_LINK_LIBRARIES(euLog.exe  EUDAQ ${my_qt_libraries} ${ADDITIONAL_LIBRARIES})
 
   # to disable the opening of a command window on Windows platforms, add LINK_FLAGS properties
   IF(WIN32) # Check if we are on Windows
