@@ -54,21 +54,18 @@ namespace eudaq {
         TransportCallback(this, &RunControl::CommandHandler));
     m_thread =
         std::unique_ptr<std::thread>(new std::thread(RunControl_thread, this));
-    // pthread_attr_init(&m_threadattr);
-    // pthread_create(&m_thread, &m_threadattr, RunControl_thread, this);
     std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString()
               << std::endl;
   }
 
   void RunControl::StopServer() {
     m_done = true;
-    ///*if (m_thread)*/ pthread_join(m_thread, 0);
     m_thread->join();
     delete m_cmdserver;
   }
 
   RunControl::~RunControl() { StopServer(); }
-/*Impelmentation of the Configure function. This function recieves a Configuration object, which is a representation and a handler for the .conf files. If the section RunControl exists in the scope of the .conf file, the RunControl adopts these configurations, namely the size and event limit of the run. Then the function gets the next Configure File
+/*Implementation of the Configure function. This function recieves a Configuration object, which is a representation and a handler for the .conf files. If the section RunControl exists in the scope of the .conf file, the RunControl adopts these configurations, namely the size and event limit of the run. Then the function gets the next Configure File
 */
   void RunControl::Configure(const Configuration &config) {
     SendCommand("CLEAR");
