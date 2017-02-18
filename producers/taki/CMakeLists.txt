@@ -14,7 +14,7 @@ ELSE(NOT IGNORE_KNOWN_ISSUES AND WIN32)
   ADD_EXECUTABLE(${name} ${sourcefiles})
   ADD_EXECUTABLE(TakiProducerFAKEDATA.exe src/TakiProducerFAKEDATA.cxx)
 
-  TARGET_LINK_LIBRARIES(${name}   EUDAQ ${EUDAQ_THREADS_LIB} ${ext_libraries})
+  TARGET_LINK_LIBRARIES(${name} ${ext_libraries})
   TARGET_LINK_LIBRARIES(TakiProducerFAKEDATA.exe   EUDAQ ${EUDAQ_THREADS_LIB} ${ext_libraries})
 
   INSTALL(TARGETS ${name} TakiProducerFAKEDATA.exe
