@@ -15,7 +15,7 @@ SET (OfflineMon_SOURCES
 
 add_executable(${OfflineMon_name} ${OfflineMon_SOURCES} )
 
-target_link_libraries(${OfflineMon_name} EUDAQ ${EUDAQ_THREADS_LIB} ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
+target_link_libraries(${OfflineMon_name} EUDAQ ${ROOT_LIBRARIES} ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS ${OfflineMon_name}
   RUNTIME DESTINATION bin
