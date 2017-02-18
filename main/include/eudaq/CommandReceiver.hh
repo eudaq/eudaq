@@ -6,7 +6,6 @@
 
 #include <thread>
 #include <memory>
-//#include <pthread.h>
 #include <string>
 #include <iosfwd>
 #include <iostream>
