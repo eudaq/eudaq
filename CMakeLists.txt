@@ -78,9 +78,6 @@ INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 # additional packages to be searched for by cmake
 LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-# find necessary threading libraries (using C++11 threading)
-Find_Package(Threads REQUIRED)
-set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
 # search for the packages needed for the main library when building the native reader library
 option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
