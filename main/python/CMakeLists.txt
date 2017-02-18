@@ -12,11 +12,11 @@ IF(PYTHONLIBS_FOUND)
   ADD_LIBRARY( PyIndexReader SHARED 
 	  src/PyIndexReader.cpp
   )
-  target_link_libraries(PyIndexReader EUDAQ ${EUDAQ_THREADS_LIB})
+  target_link_libraries(PyIndexReader EUDAQ )
   ADD_LIBRARY( PyAidaFileReader SHARED 
 	  src/PyAidaFileReader.cpp
   )
-  target_link_libraries(PyAidaFileReader EUDAQ ${EUDAQ_THREADS_LIB})
+  target_link_libraries(PyAidaFileReader EUDAQ )
   
   INSTALL(TARGETS PyAidaFileReader PyIndexReader
     RUNTIME DESTINATION bin
@@ -32,7 +32,7 @@ ADD_LIBRARY( PyEUDAQ SHARED
   src/PyLogCollector.cpp
 )
 
-target_link_libraries(PyEUDAQ      EUDAQ ${EUDAQ_THREADS_LIB})
+target_link_libraries(PyEUDAQ EUDAQ )
 
 INSTALL(TARGETS PyEUDAQ 
   RUNTIME DESTINATION bin
