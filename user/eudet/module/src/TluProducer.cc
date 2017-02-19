@@ -26,7 +26,6 @@ public:
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-  void Exec() override;
 
   void OnStatus() override;
 
