@@ -102,8 +102,6 @@ private:
   // the next run is started. If that is covered by the control FSM in a later
   // version of the software, these variables and the respective code need to
   // be removed again.
-  bool m_producer_pALPIDEfs_not_ok;
-  bool m_producer_pALPIDEss_not_ok;
   bool m_startrunwhenready;
   bool m_lastconfigonrunchange;
 

@@ -40,7 +40,6 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   : QMainWindow(parent, flags), eudaq::RunControl(listenaddress),
   m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
   m_filebytes(0), m_events(0), dostatus(false),
-  m_producer_pALPIDEfs_not_ok(false), m_producer_pALPIDEss_not_ok(false),
   m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false), configLoaded(false), configLoadedInit(false), disableButtons(false), curState(STATE_UNINIT),lastUsedDirectory(""),lastUsedDirectoryInit("") {  // m_nextconfigonrunchange(false) taken out for test!
   setupUi(this);
   QRect geom(-1,-1, 150, 200);
@@ -64,7 +63,19 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   }
   viewConn->setModel(&m_run);
   viewConn->setItemDelegate(&m_delegate);
+  
   QRect geom_from_last_program_run;
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
+  
+  settings.beginGroup("MainWindowEuRun");
+  geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
+  geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
+  lastUsedDirectory =
+    settings.value("lastConfigFileDirectory", "").toString();
+  txtConfigFileName
+    ->setText(settings.value("lastConfigFile", "config file not set").toString());
+  settings.endGroup();
+  
   QSize fsize = frameGeometry().size();
   if ((geom.x() == -1)||(geom.y() == -1)||(geom.width() == -1)||(geom.height() == -1)) {
     if ((geom_from_last_program_run.x() == -1)||(geom_from_last_program_run.y() == -1)||(geom_from_last_program_run.width() == -1)||(geom_from_last_program_run.height() == -1)) {
@@ -79,19 +90,6 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
       resize(geom_from_last_program_run.size());
     }
   }
-
-
-  QSettings settings("EUDAQ collaboration", "EUDAQ");
-
-  settings.beginGroup("MainWindowEuRun");
-  geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
-  geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
-  lastUsedDirectory =
-    settings.value("lastConfigFileDirectory", "").toString();
-  txtConfigFileName->setText(
-			     settings.value("lastConfigFile", "config file not set").toString());
-  settings.endGroup();
-
 
   connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
           SLOT(ChangeStatus(const QString &, const QString &)));
@@ -338,8 +336,7 @@ void RunControlGUI::timer() {
       RemoteStatus();
     }
   }
-  if (m_startrunwhenready && !m_producer_pALPIDEfs_not_ok &&
-      !m_producer_pALPIDEss_not_ok) {
+  if (m_startrunwhenready) {
     m_startrunwhenready = false;
     on_btnStart_clicked(false);
   }
@@ -444,7 +441,6 @@ RunControlGUI::~RunControlGUI() {
   settings.setValue("lastConfigFile", txtConfigFileName->text());
   settings.endGroup();
 }
-
  
 void RunControlGUI::Exec(){
   show();
@@ -458,4 +454,3 @@ void RunControlGUI::Exec(){
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 }
- 
