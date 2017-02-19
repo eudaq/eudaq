@@ -1,5 +1,4 @@
-#include "eudaq/TransportBase.hh"
-#include "eudaq/CommandReceiver.hh"
+#include "eudaq/RunControl.hh"
 #include <QAbstractListModel>
 #include <vector>
 #include <memory>
@@ -24,16 +23,9 @@ private:
 class ConnectionSorter {
 public:
   ConnectionSorter(std::vector<RunControlConnection> *messages)
-      : m_msgs(messages), m_col(0), m_asc(true) {}
-  void SetSort(int col, bool ascending) {
-    m_col = col;
-    m_asc = ascending;
-  }
-  bool operator()(size_t lhs, size_t rhs) {
-    QString l = (*m_msgs)[lhs][m_col];
-    QString r = (*m_msgs)[rhs][m_col];
-    return m_asc ^ (QString::compare(l, r, Qt::CaseInsensitive) < 0);
-  }
+    : m_msgs(messages), m_col(0), m_asc(true){}
+  void SetSort(int col, bool ascending);
+  bool operator()(size_t lhs, size_t rhs);
 
 private:
   std::vector<RunControlConnection> *m_msgs;
@@ -49,23 +41,16 @@ public:
 
   void newconnection(eudaq::ConnectionSPC id);
   void disconnected(eudaq::ConnectionSPC id);
-
   int GetLevel(const QModelIndex &index) const;
   void UpdateDisplayed();
   bool CheckConfigured();
-
   int rowCount(const QModelIndex &parent = QModelIndex()) const;
   int columnCount(const QModelIndex &parent = QModelIndex()) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation,
                       int role = Qt::DisplayRole) const;
-
   void SetStatus(eudaq::ConnectionSPC id, eudaq::Status status);
-  void sort(int column, Qt::SortOrder order) {
-    // std::cout << "sorting " << column << ", " << order << std::endl;
-    m_sorter.SetSort(column, order == Qt::AscendingOrder);
-    UpdateDisplayed();
-  }
+  void sort(int column, Qt::SortOrder order);
 
 private:
   std::vector<RunControlConnection> m_data;

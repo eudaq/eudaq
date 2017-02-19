@@ -1,4 +1,3 @@
-#include "eudaq/Utils.hh"
 #include "RunControlModel.hh"
 
 #include <vector>
@@ -6,12 +5,12 @@
 #include "qmetatype.h"
 
 namespace {
-  static const char *const g_columns[] = {"type", "name", "state",
-                                          "connection"};
+  static const char *const g_columns[] =
+    {"type", "name", "state", "connection"};
 }
 
 RunControlConnection::RunControlConnection(eudaq::ConnectionSPC id)
-    : m_id(id) {}
+  : m_id(id) {}
 
 QString RunControlConnection::operator[](int i) const {
   switch (i) {
@@ -20,7 +19,7 @@ QString RunControlConnection::operator[](int i) const {
   case 1:
     return m_id->GetName().c_str();
   case 2:
-    return to_string(m_status).c_str();
+    return m_id.unique()?"DEAD":to_string(m_status).c_str();
   case 3:
     return m_id->GetRemote().c_str();
   default:
@@ -39,8 +38,19 @@ const char *RunControlConnection::ColumnName(int i) {
   return g_columns[i];
 }
 
+void ConnectionSorter::SetSort(int col, bool ascending) {
+  m_col = col;
+  m_asc = ascending;
+}
+
+bool ConnectionSorter::operator()(size_t lhs, size_t rhs) {
+  QString l = (*m_msgs)[lhs][m_col];
+  QString r = (*m_msgs)[rhs][m_col];
+  return m_asc ^ (QString::compare(l, r, Qt::CaseInsensitive) < 0);
+}
+
 RunControlModel::RunControlModel(QObject *parent)
-    : QAbstractListModel(parent), m_sorter(&m_data) {}
+  : QAbstractListModel(parent), m_sorter(&m_data) {}
 
 void RunControlModel::newconnection(eudaq::ConnectionSPC id) {
   for (size_t i = 0; i < m_data.size(); ++i) {
@@ -53,7 +63,7 @@ void RunControlModel::newconnection(eudaq::ConnectionSPC id) {
 
   m_data.push_back(RunControlConnection(id));
   std::vector<size_t>::iterator it = std::lower_bound(
-      m_disp.begin(), m_disp.end(), m_data.size() - 1, m_sorter);
+						      m_disp.begin(), m_disp.end(), m_data.size() - 1, m_sorter);
   size_t pos = it - m_disp.begin();
   beginInsertRows(QModelIndex(), pos, pos);
   m_disp.insert(it, m_data.size() - 1);
@@ -84,42 +94,26 @@ void RunControlModel::SetStatus(eudaq::ConnectionSPC id,
 
 void RunControlModel::UpdateDisplayed() {
   if (m_disp.size() > 0) {
-    // beginRemoveRows(createIndex(0, 0), 0, m_data.size() - 1);
-    // m_disp.clear();
-    // endRemoveRows();
     std::sort(m_disp.begin(), m_disp.end(), m_sorter);
-    // beginInsertRows(createIndex(0, 0), 0, m_disp.size() - 1);
-    // m_disp = disp;
-    // endInsertRows();
-
     emit dataChanged(createIndex(0, 0), createIndex(m_data.size() - 1, 0));
   }
 }
 
 
 /*Check Configured is a function of RunControlModel that goes through the list of connect\
-ions stored in m_data and determines if they are all configured.                          
-In the case that all are configured this function returns true,                           
-In the case that one of the connections is not configured this function returns false.    
+  ions stored in m_data and determines if they are all configured.                          
+  In the case that all are configured this function returns true,                           
+  In the case that one of the connections is not configured this function returns false.    
 */
 bool RunControlModel::CheckConfigured() {
   std::string connectionState;
   for(RunControlConnection i: m_data){
     connectionState = i[2].toStdString();
-    //std::cout<<"ConnectionState is: "<< stdString<<" Bool Test:"<<(stdString.size()<5) \
-<<"\n";                                                                                   
-    //Currently the test for configuration is based on the length of the state string. Th\
-is should be                                                                              
-    //implemeted differently                                                              
     if(connectionState.size()<5)
-            return false;
+      return false;
   }
-
-
-    return true;
+  return true;
 }
-
-
 
 int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
   return m_data.size();
@@ -155,4 +149,9 @@ QVariant RunControlModel::headerData(int section, Qt::Orientation orientation,
     return RunControlConnection::ColumnName(section);
 
   return QVariant();
+}
+
+void RunControlModel::sort(int column, Qt::SortOrder order) {
+  m_sorter.SetSort(column, order == Qt::AscendingOrder);
+  UpdateDisplayed();
 }
