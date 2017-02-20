@@ -52,15 +52,6 @@ private:
   void updateButtons(int state);
   std::string to_bytes(const std::string &val);
 
-  void on_btnInit_clicked();
-  void on_btnTerminate_clicked();
-  void on_btnConfig_clicked();
-  void on_btnStart_clicked(bool cont = false);
-  void on_btnStop_clicked();
-  void on_btnLog_clicked();
-  void on_btnLoadInit_clicked();
-  void on_btnLoad_clicked();
-
 signals:
   void StatusChanged(const QString &, const QString &);
   void btnLogSetStatus(bool status);
@@ -73,6 +64,15 @@ private slots:
   void ChangeStatus(const QString &name, const QString &value);
   void btnLogSetStatusSlot(bool status);
   void btnStartSetStatusSlot(bool status);
+
+  void on_btnInit_clicked();
+  void on_btnTerminate_clicked();
+  void on_btnConfig_clicked();
+  void on_btnStart_clicked(bool cont = false);
+  void on_btnStop_clicked();
+  void on_btnLog_clicked();
+  void on_btnLoadInit_clicked();
+  void on_btnLoad_clicked();
 
 private:
   enum state_t { STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR };
