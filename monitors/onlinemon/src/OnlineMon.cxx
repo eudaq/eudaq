@@ -173,9 +173,8 @@ void RootMonitor::OnEvent(eudaq::EventSPC e) {
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-  
-  auto ev_sp =  eudaq::StdEventConverter::MakeSharedStdEvent(runnumber, 0);
-  eudaq::StdEventConverter::Convert(e, ev_sp, m_conf);
+  auto ev_sp =  eudaq::StandardEvent::MakeShared(runnumber, 0);
+  eudaq::StdEventConverter::Convert(e, ev_sp, GetConfiguration());
   auto &ev = *ev_sp.get();
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
@@ -460,7 +459,8 @@ void RootMonitor::OnStopRun()
   onlinemon->UpdateStatus("Run stopped");
 }
 
-void RootMonitor::OnStartRun(unsigned param) {
+void RootMonitor::OnStartRun() {
+  uint32_t param = GetRunNumber();
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -475,7 +475,7 @@ void RootMonitor::OnStartRun(unsigned param) {
     }
   }
 
-  Monitor::OnStartRun(param);
+  Monitor::OnStartRun();
   std::cout << "Called on start run" << param <<std::endl;
   onlinemon->UpdateStatus("Starting run..");
   char out[255];
@@ -491,8 +491,27 @@ void RootMonitor::OnStartRun(unsigned param) {
   // Reset the planes initializer on new run start:
   _planesInitialized = false;
 
-  SetStatus(eudaq::Status::LVL_OK);
+  SetStatus(eudaq::Status::STATE_RUNNING, "Started");
 }
+
+void RootMonitor::OnConfigure(){
+  auto& param = *GetConfiguration();
+  std::cout << "Configure: " << param.Name() << std::endl;
+  m_conf = param;
+  SetStatus(eudaq::Status::STATE_CONF, "Configured");
+}
+
+void RootMonitor::OnTerminate(){
+  std::cout << "Terminating" << std::endl;
+  EUDAQ_SLEEP(1);
+  gApplication->Terminate();
+}
+
+void RootMonitor::OnReset(){
+  std::cout << "Reset" << std::endl;
+  SetStatus(eudaq::Status::STATE_UNINIT, "Reset");
+}
+
 
 void RootMonitor::setUpdate(const unsigned int up) {
   if (_offline <= 0) onlinemon->setUpdate(up);

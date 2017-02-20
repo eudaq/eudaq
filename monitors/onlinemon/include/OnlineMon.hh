@@ -18,6 +18,7 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "eudaq/StdEventConverter.hh"
+#include "eudaq/Status.hh"
 #endif
 
 
@@ -81,22 +82,10 @@ public:
 
   virtual void StartIdleing() {}
   OnlineMonWindow *getOnlineMon() { return onlinemon; }
-
-  void OnConfigure(const eudaq::Configuration &param) override final{
-    std::cout << "Configure: " << param.Name() << std::endl;
-    m_conf = param;
-    SetStatus(eudaq::Status::LVL_OK, "Configured (" + param.Name() + ")");
-  }
-  void OnTerminate() override final{
-    std::cout << "Terminating" << std::endl;
-    EUDAQ_SLEEP(1);
-    gApplication->Terminate();
-  }
-  void OnReset() override final{
-    std::cout << "Reset" << std::endl;
-    SetStatus(eudaq::Status::LVL_OK);
-  }
-  void OnStartRun(unsigned param) override final;
+  void OnConfigure() override final;
+  void OnTerminate() override final;
+  void OnReset() override final;
+  void OnStartRun() override final;
   void OnEvent(eudaq::EventSPC e) override final;
   void OnStopRun() override final;
   void Exec() override final;
