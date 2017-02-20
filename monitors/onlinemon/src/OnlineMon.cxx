@@ -20,6 +20,7 @@
 #include "TRootEmbeddedCanvas.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TPaletteAxis.h"
 #include "TThread.h"
 #include "TFile.h"
 #include "TColor.h"
@@ -42,12 +43,13 @@
 //ONLINE MONITOR Includes
 #include "OnlineMon.hh"
 
+#include "eudaq/StandardEvent.hh"
 using namespace std;
 
 RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
 			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
 			 const std::string & conffile)
-  : eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
+  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
 
   if (_offline <= 0)
   {
@@ -169,13 +171,12 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
-void RootMonitor::OnEvent(eudaq::EventSPC e) {
+void RootMonitor::OnEvent(eudaq::EventSPC evsp) {
+  auto &ev = *(dynamic_cast<const eudaq::StandardEvent*>(evsp.get()));
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-  auto ev_sp =  eudaq::StandardEvent::MakeShared(runnumber, 0);
-  eudaq::StdEventConverter::Convert(e, ev_sp, GetConfiguration());
-  auto &ev = *ev_sp.get();
+    
 #ifdef DEBUG
   cout << "Called onEvent " << ev.GetEventNumber()<< endl;
   cout << "Number of Planes " << ev.NumPlanes()<< endl;
@@ -256,10 +257,6 @@ void RootMonitor::OnEvent(eudaq::EventSPC e) {
     simpEv.setEvent_number(ev.GetEventNumber());
     simpEv.setEvent_timestamp(ev.GetTimestampBegin());
     
-    // auto slowpara = ev.GetSlowPara();
-    // for(auto &e: slowpara){
-    //   simpEv.setSlow_para(e.first, e.second);
-    // }
     std::string tagname;
     tagname = "Temperature";
     if(ev.HasTag(tagname)){
@@ -274,6 +271,13 @@ void RootMonitor::OnEvent(eudaq::EventSPC e) {
       simpEv.setSlow_para(tagname,val);
     }
 
+    // std::vector<std::string> paralist = ev.GetTagList("PLOT_");
+    // for(auto &e: paralist){
+    //   double val ;
+    //   val=ev.GetTag(e, val);
+    //   simpEv.setSlow_para(e,val);
+    // }
+    
     if (skip_dodgy_event)
     {
       return; //don't process any further
@@ -457,6 +461,7 @@ void RootMonitor::OnStopRun()
     f->Close();
   }
   onlinemon->UpdateStatus("Run stopped");
+  SetStatus(eudaq::Status::STATE_CONF, "Stopped");
 }
 
 void RootMonitor::OnStartRun() {
@@ -490,28 +495,8 @@ void RootMonitor::OnStartRun() {
 
   // Reset the planes initializer on new run start:
   _planesInitialized = false;
-
   SetStatus(eudaq::Status::STATE_RUNNING, "Started");
 }
-
-void RootMonitor::OnConfigure(){
-  auto& param = *GetConfiguration();
-  std::cout << "Configure: " << param.Name() << std::endl;
-  m_conf = param;
-  SetStatus(eudaq::Status::STATE_CONF, "Configured");
-}
-
-void RootMonitor::OnTerminate(){
-  std::cout << "Terminating" << std::endl;
-  EUDAQ_SLEEP(1);
-  gApplication->Terminate();
-}
-
-void RootMonitor::OnReset(){
-  std::cout << "Reset" << std::endl;
-  SetStatus(eudaq::Status::STATE_UNINIT, "Reset");
-}
-
 
 void RootMonitor::setUpdate(const unsigned int up) {
   if (_offline <= 0) onlinemon->setUpdate(up);
@@ -530,15 +515,6 @@ string RootMonitor::GetSnapShotDir()
 {
   return snapshotdir;
 }
-
-
-void RootMonitor::Exec(){
-  std::thread mthread(&Monitor::Exec, this);
-  mthread.detach();
-  TApplication theApp("App",0,0,0,0);
-  theApp.Run();
-}
-
 
 int main(int argc, const char ** argv) {
 
@@ -594,6 +570,9 @@ int main(int argc, const char ** argv) {
       exit(-1);
     }
 
+    // start the GUI
+    //    cout<< "DEBUG: LIMIT VALUE " << (unsigned)limit.Value();
+    TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
     RootMonitor mon(rctrl.Value(), file.Value(), x.Value(), y.Value(),
         w.Value(), h.Value(), argc, offline.Value(), limit.Value(),
         skipping.Value(), skip_counter.Value(), configfile.Value());
@@ -608,14 +587,17 @@ int main(int argc, const char ** argv) {
     cout <<"Monitor Settings:" <<endl;
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;
     cout <<"Reduce Events   :" <<reduce.Value() <<endl;
-    if (offline.Value() >0){
+    if (offline.Value() >0)
+    {
+      //cout <<"Offline Mode   :" <<"active" <<endl;
+      //cout <<"Events         :" <<offline.Value()<<endl;
       cout <<"Offline Mode not supported"<<endl;
       exit(-1);
     }
-    mon.Exec();
+
+    theApp.Run(); //execute
   } catch (...) {
     return op.HandleMainException();
   }
   return 0;
 }
-

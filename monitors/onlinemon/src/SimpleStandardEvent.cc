@@ -104,3 +104,11 @@ bool SimpleStandardEvent::getSlow_para(std::string name, double &value) const{
     return true;
   }
 }
+
+
+std::vector<std::string> SimpleStandardEvent::getSlowList() const {
+    std::vector<std::string> list;
+    for(auto &e:slowpara)
+      list.push_back(e.first);
+    return list;
+  };

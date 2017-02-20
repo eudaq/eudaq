@@ -161,7 +161,7 @@ void CorrelationCollection::Fill(const SimpleStandardEvent &simpev) {
             (skip_this_plane[planeB]) == false) {
           const SimpleStandardPlane &p1 = simpev.getPlane(planeA);
           const SimpleStandardPlane &p2 = simpev.getPlane(planeB);
-          fillHistograms(p1, p2);
+          fillHistograms(p1, p2,simpev);
         }
       }
     }
@@ -360,13 +360,15 @@ void CorrelationCollection::fillHistograms(
         CorrelationHistos *corrmap = _map[planePair];
 
         corrmap->Fill(firstCluster, secondCluster);
+	corrmap->FillCorrVsTime(firstCluster, secondCluster, simpEv);
       }
     }
   }
 }
 
 void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
-                                           const SimpleStandardPlane &p2) {
+                                           const SimpleStandardPlane &p2,
+					   const SimpleStandardEvent &simpEv) {
 
   std::pair<SimpleStandardPlane, SimpleStandardPlane> plane(p1, p2);
   CorrelationHistos *corrmap = _map[plane];
@@ -396,11 +398,14 @@ void CorrelationCollection::fillHistograms(const SimpleStandardPlane &p1,
           continue;
         } else {
           corrmap->Fill(oneAcluster, oneBcluster);
+	  corrmap->FillCorrVsTime(oneAcluster, oneBcluster, simpEv);
         }
       }
     }
   }
 }
+
+
 
 void CorrelationCollection::registerPlaneCorrelations(
     const SimpleStandardPlane &p1, const SimpleStandardPlane &p2) {
@@ -446,7 +451,47 @@ void CorrelationCollection::registerPlaneCorrelations(
             p1.getID());
     _mon->getOnlineMon()->makeTreeItemSummary(tree);
   }
+
+
+  if (_mon != NULL) {
+    // cout << "HitmapCollection:: Monitor running in online-mode" << endl;
+    std::string dirName;
+
+    if (_mon->getUseTrack_corr() == true)
+      dirName = "Track Correlations Vs Time";
+    else
+      dirName = "Correlations Vs Time";
+
+    char tree[1024];
+    sprintf(tree, "%s/%s %i/%s %i in X Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeXHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+    
+    
+    sprintf(tree, "%s/%s %i/%s %i in Y Vs Time", dirName.c_str(), p1.getName().c_str(),
+            p1.getID(), p2.getName().c_str(), p2.getID());
+    _mon->getOnlineMon()->registerTreeItem(tree);
+    _mon->getOnlineMon()->registerHisto(
+        tree, getCorrelationHistos(p1, p2)->getCorrTimeYHisto(), "COLZ", 0);
+    _mon->getOnlineMon()->registerMutex(
+	tree, getCorrelationHistos(p1, p2)->getMutex());
+
+    sprintf(tree, "%s/%s %i", dirName.c_str(), p1.getName().c_str(),
+            p1.getID());
+    _mon->getOnlineMon()->makeTreeItemSummary(tree);
+  }
+
+
 }
+
+
+
+
+
 
 bool CorrelationCollection::getCorrelateAllPlanes() const {
   return correlateAllPlanes;

@@ -31,8 +31,12 @@ endif()
 
 set(ONLINEMON OnlineMon)
 
+set(ONLINEMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/OnlineMon_ROOT.cxx)
+root_generate_dictionary(OnlineMon_ROOT include/OnlineMonWindow.hh include/CheckEOF.hh)
+
 aux_source_directory(src ONLINEMON_SRC)
-add_executable(${ONLINEMON} ${ONLINEMON_SRC})
+add_executable(${ONLINEMON} ${ONLINEMON_SRC} ${ONLINEMON_DICT_CXX})
+
 if(CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
   set_property(TARGET ${ONLINEMON} PROPERTY CXX_STANDARD 14)
 endif()
