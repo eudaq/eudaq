@@ -1,0 +1,14 @@
+# This file is configured at cmake time, and loaded at cpack time.
+# To pass variables to cpack from cmake, they must be configured
+# in this file.
+if(CPACK_GENERATOR MATCHES "DEB")
+  # https://cmake.org/cmake/help/v3.7/module/CPackDeb.html
+  #set(CPACK_SET_DESTDIR "OFF")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "EUDAQ collaboration <github.com/eudaq/eudaq>")
+  set(CPACK_DEBIAN_PACKAGE_NAME "EUDAQ")
+  set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT) 
+  set(CPACK_DEBIAN_PACKAGE_VERSION)
+  set(CPACK_DEBIAN_PACKAGE_RELEASE)
+  #set(CPACK_DEBIAN_PACKAGE_DEPENDS "libusb (>= 2.3.1-6), libgcc1 (>= 1:3.4.2-12)")
+endif()
+
