@@ -99,13 +99,14 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
       for(auto& hitPixel: vec1) {
         plane1.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
       }
-
+/*
       //std::cout << "Data from board 2: " << std::endl;
       auto data2 = evRaw.GetBlock(1);
       auto vec2 = decodeFEI4DataGen2(data2);
       for(auto& hitPixel: vec2) {
         plane2.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
       }      
+
       //std::cout << "Data from board 3: " << std::endl;
       auto data3 = evRaw.GetBlock(2);
       auto vec3 =decodeFEI4DataGen2(data3);
@@ -118,7 +119,7 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
       for(auto& hitPixel: vec4) {
         plane4.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
       }
-
+*/
 
       sev.AddPlane(plane1);
       sev.AddPlane(plane2);
@@ -160,6 +161,23 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
       return true;
     }
 
+
+virtual unsigned GetTriggerID(const Event & ev) const {
+	auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
+	auto data = evRaw.GetBlock(0);
+	auto dataLen = data.size();
+        uint32_t i =( static_cast<uint32_t>(data[dataLen-8]) << 24 ) |
+		    ( static_cast<uint32_t>(data[dataLen-7]) << 16 ) |
+                    ( static_cast<uint32_t>(data[dataLen-6]) << 8 ) |
+                    ( static_cast<uint32_t>(data[dataLen-5]) );
+
+	uint32_t j =( static_cast<uint32_t>(data[dataLen-1]) << 24 ) |
+		    ( static_cast<uint32_t>(data[dataLen-2]) << 16 ) |
+                    ( static_cast<uint32_t>(data[dataLen-3]) << 8 ) |
+                    ( static_cast<uint32_t>(data[dataLen-4]) );
+
+	return get_tr_no_2(i, j);
+}
 	static USBPixGen2ConverterPlugin m_instance;
 
 };

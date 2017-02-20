@@ -84,9 +84,6 @@ class USBPixGen3ConverterPlugin: public eudaq::DataConverterPlugin {
       if(!boardInitialized.at(boardID)) {
       boardChannels.at(boardID) = getChannels(evRaw.GetBlock(0));
         if(!boardChannels.at(boardID).empty()) boardInitialized.at(boardID) = true;
-        //for(auto channel: channels){
-        //  std::cout << channel << ' ';
-        //} 
       }
       for(auto channel: boardChannels.at(boardID)){
             std::string planeName = "USBPIX_GEN3_BOARD_" + to_string(boardID);
@@ -94,7 +91,6 @@ class USBPixGen3ConverterPlugin: public eudaq::DataConverterPlugin {
             pair.second.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
             StandardPlaneMap.insert(pair);
       }
-
 
     int hitDiscConf = 0;
 
@@ -107,6 +103,17 @@ class USBPixGen3ConverterPlugin: public eudaq::DataConverterPlugin {
     }
       return true;
     }
+
+
+virtual unsigned GetTriggerID(const Event & ev) const {
+	auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
+	auto data = evRaw.GetBlock(0);
+        uint32_t i =( static_cast<uint32_t>(data[2]) << 16 ) |
+                    ( static_cast<uint32_t>(data[1]) << 8 ) |
+                    ( static_cast<uint32_t>(data[0]) );
+	return i;
+}
+
 
 	static USBPixGen3ConverterPlugin m_instance;
 

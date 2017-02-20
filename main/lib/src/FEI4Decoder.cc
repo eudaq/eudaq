@@ -72,7 +72,8 @@ std::vector<APIXPix> decodeFEI4DataGen2(std::vector<unsigned char> const & data)
                     } else if(lv1 == 16 ) {
                          std::cout << "Lv1 16 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
                         lv1 = 15;
-                    }
+                    } else if (lv1 > 16) lv1 = 15;
+			else if(lv1 < 0) lv1 = 0;
                     if( tot2 != 0xF) result.emplace_back(column, row+1, tot2, lv1, 0);
     				result.emplace_back(column, row, tot1, lv1, 0);
 				} else { // invalid data record

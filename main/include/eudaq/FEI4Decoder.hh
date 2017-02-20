@@ -22,6 +22,10 @@ const uint8_t service_record = header | 0x7;	//0b11101 111
 const uint tr_no_31_24_msk = 0x000000FF;
 const uint tr_no_23_0_msk = 0x00FFFFFF;
 
+inline uint get_tr_no_2(uint X, uint Y) {
+      return ((tr_no_31_24_msk & X) << 24) | (tr_no_23_0_msk & Y);
+}
+
 struct APIXPix {
 	int x, y, tot, channel, lv1;
 	APIXPix(int x, int y, int tot, int lv1, int channel): 
