@@ -350,7 +350,7 @@ void caliceahcalbifProducer::DoStopRun() {
       std::cout << "\tavgROC/s: " << roc_per_sec;
       std::cout << std::endl;
       std::cout << "triggers: " << _stats.triggers << " ";
-      std::cout << "\tavgTrig/s: " << _stats.triggers / onTime_sec << " ";
+      std::cout << "\tavgTrig/s: " << _stats.triggers / duration_sec << " ";
       std::cout << "\tavgTrig/roc: " << trigs_per_roc << std::endl;
       std::cout << "================================================================" << std::endl;
    }
@@ -675,7 +675,7 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
                   }
                }
             } else {
-               std::cout << "Trigger too soon after the previous trigger, eventNr=" << evtNumber << ", Difference" << ((timestamp << 5) - _lastTriggerTime) << std::endl;
+               //std::cout << "Trigger too soon after the previous trigger, eventNr=" << evtNumber << ", Difference" << ((timestamp << 5) - _lastTriggerTime) << std::endl;
             }
 
             break;
