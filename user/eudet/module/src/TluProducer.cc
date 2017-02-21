@@ -115,8 +115,6 @@ void TluProducer::MainLoop(){
 	ev->SetTag("SCALER1",std::to_string(m_tlu->GetScaler(1)));
 	ev->SetTag("SCALER2",std::to_string(m_tlu->GetScaler(2)));
 	ev->SetTag("SCALER3",std::to_string(m_tlu->GetScaler(3)));
-	if(m_exit_of_run)
-	  ev->SetEORE();
       }
       if(isbegin){
 	isbegin = false;
@@ -127,8 +125,17 @@ void TluProducer::MainLoop(){
       SendEvent(std::move(ev));
       m_ts_last = ts_ns;
     }
+
+    if(m_exit_of_run){
+      if(isbegin)
+	break;
+      auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
+      ev->SetEORE();
+      ev->SetFlagFake();
+      SendEvent(std::move(ev));
+      break;
+    }
   }
-  std::this_thread::sleep_for(std::chrono::milliseconds(200));
   m_tlu->Stop();
 }
 
@@ -158,14 +165,16 @@ void TluProducer::DoConfigure() {
     pmt_offset_error[i] = conf->Get("PMTOffsetError" + std::to_string(i + 1), 0.0);
   }
   
+
   pmtvcntlmod = conf->Get("PMTVcntlMod", 0); // If 0, it's a standard TLU;
   // if 1, the DAC output voltage
   // is doubled
   readout_delay = conf->Get("ReadoutDelay", 1000);
   timestamp_per_run = conf->Get("TimestampPerRun", 0);
   // ***
-
-  m_tlu = std::make_shared<TLUController>(errorhandler);
+  
+  if(!m_tlu)
+    m_tlu = std::make_shared<TLUController>(errorhandler);
   m_tlu->SetDebugLevel(conf->Get("DebugLevel", 0));
   m_tlu->SetFirmware(conf->Get("BitFile", ""));
   m_tlu->SetVersion(conf->Get("Version", 0));
@@ -200,6 +209,7 @@ void TluProducer::DoStopRun(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
+  std::cout<<">>>>>>>>>>>>>STOPped\n";
 }
 
 void TluProducer::DoTerminate(){

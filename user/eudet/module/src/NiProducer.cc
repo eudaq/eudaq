@@ -85,12 +85,17 @@ void NiProducer::DataLoop(){
       for (size_t i = 0; i < 6; i++)
 	evup->SetTag("MIMOSA_EN" + std::to_string(i), std::to_string(MimosaEn[i]));
     }
+    SendEvent(std::move(evup));
+    
     if(!m_running){
+      if(isbegin)
+	break;
+      auto evup = eudaq::Event::MakeUnique("NiRawDataEvent");
       evup->SetEORE();
+      evup->SetFlagFake();
       SendEvent(std::move(evup));
       break;
     }    
-    SendEvent(std::move(evup));
   }
   ni_control->Stop();
 }
@@ -203,6 +208,8 @@ void NiProducer::DoStopRun() {
   m_running = false;
   if(m_thd_data.joinable())
     m_thd_data.join();
+
+  std::cout<<">>>>>>>>>>>>>STOPped\n";
 }
 
 
