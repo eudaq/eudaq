@@ -68,6 +68,8 @@ class caliceahcalbifProducer: public eudaq::Producer {
       bool _writerawfilename_timestamp; //whether to append timestamp to the raw file
       bool _word1WrittenPreviously; //word was already stored to raw file in previous processing
       int _ReadoutCycle; //current ReadoutCycle in the run
+      uint64_t _lastTriggerTime; //Timestamp of last trigger. Used for filtering double trigger event
+      int _consecutiveTriggerIgnorePeriod;
       uint64_t _acq_start_ts; //timestamp of last start acquisition (shutter on)
       uint64_t _acq_stop_ts; // timestamp of the stop of the acquisition
       uint32_t _acq_start_cycle; //raw cycle number of the acq start. Direct copy from the packet (no correction for starting the run from cycle 0
@@ -109,7 +111,7 @@ caliceahcalbifProducer::caliceahcalbifProducer(const std::string name, const std
             _TLUJustStopped(false), _TLUStarted(false), done(false), _acq_start_cycle(0), _acq_start_ts(0),
             _bxidLengthNs(4000), _dumpRaw(0), _firstBxidOffsetBins(13000), _firstStutterCycle(-1),
             _firstTrigger(true), _firstTriggerNumber(0), _last_readout_time(std::time(NULL)),
-            _ReadoutCycle(0), _ROC_started(false),
+            _ReadoutCycle(0), _ROC_started(false), _consecutiveTriggerIgnorePeriod(0), _lastTriggerTime(0LLU),
             _trigger_id(-1), _triggersInCycle(0), _WaitAfterStopSeconds(0), _writeRaw(false),
             _writerawfilename_timestamp(true), _dumpCycleInfoLevel(1), _dumpSummary(true), _dumpTriggerInfoLevel(0),
             _BORESent(false), _word1WrittenPreviously(false), _eventBuildingMode(caliceahcalbifProducer::EventBuildingMode::ROC),
@@ -203,6 +205,7 @@ void caliceahcalbifProducer::DoConfigure() {
    if (!eventNumberingMode.compare("TRIGGERNUMBER")) _eventNumberingPreference = caliceahcalbifProducer::EventNumbering::TRIGGERNUMBER;
    if (!eventNumberingMode.compare("TIMESTAMP")) _eventNumberingPreference = caliceahcalbifProducer::EventNumbering::TIMESTAMP;
    std::cout << "Preferring event numbering type: \"" << eventNumberingMode << "\"" << std::endl;
+   _consecutiveTriggerIgnorePeriod = param.Get("ConsecutiveTriggerIgnorePeriod", 0);
 
    std::cout << "Configuring (" << param.Name() << ")..." << std::endl;
    if (m_tlu) m_tlu = nullptr;
@@ -647,29 +650,34 @@ void caliceahcalbifProducer::ProcessQueuedBifData() {
             trigger_push_back(_cycleData, 0, (uint32_t) evtNumber, (uint32_t) ((timestamp << 5) | fineStamps[0]));
             break;
          case 0x01: //external trigger
-            _triggersInCycle++;
-
-            for (uint16_t input = 0; input < 4; ++input) {
-               if ((inputs >> 8) & (1 << input)) {
-                  switch (_dumpTriggerInfoLevel) {
-                     case 2:
-                        std::cout << "Trigger from input: " << input << "\tTS: ";
-                        std::cout << std::hex << ((timestamp << 5) | fineStamps[input]);
-                        std::cout << std::hex << "\tfineTS: " << (uint32_t) fineStamps[input];
-                        std::cout << std::dec << "\teventNo: " << (word2 & 0x00000000FFFFFFFF);
-                        std::cout << std::dec << std::endl;
-                        break;
-                     case 1:
-                        std::cout << "," << std::flush;
-                        break;
-                     default:
-                        break;
+            if ((timestamp << 5) - _lastTriggerTime > _consecutiveTriggerIgnorePeriod) {
+               _triggersInCycle++;
+               _lastTriggerTime = (timestamp << 5);
+               for (uint16_t input = 0; input < 4; ++input) {
+                  if ((inputs >> 8) & (1 << input)) {
+                     switch (_dumpTriggerInfoLevel) {
+                        case 2:
+                           std::cout << "Trigger from input: " << input << "\tTS: ";
+                           std::cout << std::hex << ((timestamp << 5) | fineStamps[input]);
+                           std::cout << std::hex << "\tfineTS: " << (uint32_t) fineStamps[input];
+                           std::cout << std::dec << "\teventNo: " << (word2 & 0x00000000FFFFFFFF);
+                           std::cout << std::dec << std::endl;
+                           break;
+                        case 1:
+                           std::cout << "," << std::flush;
+                           break;
+                        default:
+                           break;
+                     }
+                     uint32_t type = 0x01000000 | (input << 16);
+                     uint64_t Timestamp = (timestamp << 5) | fineStamps[input];
+                     trigger_push_back(_cycleData, type, evtNumber, Timestamp);
                   }
-                  uint32_t type = 0x01000000 | (input << 16);
-                  uint64_t Timestamp = (timestamp << 5) | fineStamps[input];
-                  trigger_push_back(_cycleData, type, evtNumber, Timestamp);
                }
+            } else {
+               std::cout << "Trigger too soon after the previous trigger, eventNr=" << evtNumber << ", Difference" << ((timestamp << 5) - _lastTriggerTime) << std::endl;
             }
+
             break;
          default:
             break;
@@ -706,6 +714,7 @@ void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deq
    CycleEvent->AddBlock(0, s.c_str(), s.length());
    s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
    CycleEvent->AddBlock(1, s.c_str(), s.length());
+   ev->SetTag("ROCStartTS", _acq_start_ts);
    ev->SetTimestamp(_acq_start_ts, _acq_stop_ts, false);
    ev->SetTriggerN(_ReadoutCycle, false); //ROC is used as a trigger number
    if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
@@ -754,6 +763,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
    //make new event for every trigger
    for (auto trigger : trigger_packets) {
       auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+      ev->SetTag("ROCStartTS", _acq_start_ts);
       std::string s = "EUDAQDataBIF";
       auto CycleEvent = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
       CycleEvent->AddBlock(0, s.c_str(), s.length());
