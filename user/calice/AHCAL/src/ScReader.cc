@@ -706,6 +706,7 @@ namespace eudaq {
          }
          //nev->Print(std::cout, 0);
          if (_LDATimestampData.count(roc) && (!_producer->getIgnoreLdaTimestamps())) {
+            nev->SetTag("ROCStartTS", _LDATimestampData[roc].TS_Start);
             if (_LDATimestampData[roc].TS_Start && _LDATimestampData[roc].TS_Stop) {
                //save timestamp only if both timestamps are present. Otherwise there was something wrong in the data
                nev->SetTimestamp(_LDATimestampData[roc].TS_Start, _LDATimestampData[roc].TS_Stop, true);

@@ -370,8 +370,9 @@ namespace eudaq {
             close(_fd);
 #endif
             _fd = -1;
-            _stopped = 1;
+            std::cout << "sending the rest of the event" << std::endl;
             _reader->buildEvents(deqEvent, true);
+            _stopped = 1;
             sendallevents(deqEvent, 0);
             bufRead.clear();
             deqEvent.clear();
