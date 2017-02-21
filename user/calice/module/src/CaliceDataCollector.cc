@@ -29,6 +29,14 @@ namespace{
     (CaliceDataCollector::m_id_factory);
 }
 
+CaliceDataCollector::CaliceDataCollector(const std::string &name,
+					 const std::string &runcontrol):
+  DataCollector(name, runcontrol),m_ts_bore_bif(0),m_ts_bore_cal(0){
+  
+}
+
+
+
 void CaliceDataCollector::DoConnect(eudaq::ConnectionSPC id){
   std::cout<<"new producer connection: "<<id;
   std::string name = id->GetName();
@@ -53,12 +61,12 @@ void CaliceDataCollector::DoConfigure(){
 void CaliceDataCollector::DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev){
   if(id->GetName() == "caliceahcalbifProducer"){
     if(ev->IsBORE())
-      m_ts_bore_bif = ev->GetTag("ROCStartTS", uint64_t(0));
+      m_ts_bore_bif = ev->GetTag("ROCStartTS", m_ts_bore_bif);
     m_que_bif.push_back(std::move(ev));
   }
   else if(id->GetName() == "Calice1"){
     if(ev->IsBORE())
-      m_ts_bore_cal = ev->GetTag("ROCStartTS", uint64_t(0));
+      m_ts_bore_cal = ev->GetTag("ROCStartTS", m_ts_bore_cal);
     m_que_cal.push_back(std::move(ev));
   }
   else{
