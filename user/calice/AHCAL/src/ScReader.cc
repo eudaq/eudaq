@@ -1252,3 +1252,8 @@ namespace eudaq {
 //      out << "============================================================" << std::endl;
    }
 }
+
+const ScReader::RunTimeStatistics& ScReader::getRunTimesStatistics() const
+{
+   return _RunTimesStatistics;
+}

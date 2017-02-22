@@ -37,12 +37,13 @@ namespace eudaq {
                uint64_t TS_Stop; //stop of acquisition
                std::vector<int> TriggerIDs; //trigger IDs from the LDA packet
                std::vector<uint64_t> TS_Triggers; //triggers Timestamps inside acquisition
+
          };
 
          struct RunTimeStatistics {
                void clear();
                void append(const RunTimeStatistics& otherStats);
-               void print(std::ostream &out,int colorOutput) const;
+               void print(std::ostream &out, int colorOutput) const;
                uint64_t first_TS; //the very first TS in the data
                uint64_t last_TS; //the very last recorded TS in the data
                uint64_t previous_start_TS;
@@ -59,6 +60,8 @@ namespace eudaq {
                std::vector<uint64_t> length_processing;
                std::map<int, int> triggers_in_cycle_histogram;
          };
+
+         const ScReader::RunTimeStatistics& getRunTimesStatistics() const;
 
       private:
          enum class UnfinishedPacketStates {

@@ -267,6 +267,7 @@ namespace eudaq {
             if (!_BORE_sent) {
                _BORE_sent = true;
                deqEvent.front()->SetBORE();
+               deqEvent.front()->SetTag("FirstROCStartTS", dynamic_cast<ScReader*>(_reader)->getRunTimesStatistics().first_TS);
             }
             if ((minimumsize == 0) && (deqEvent.size() == 1))
                deqEvent.front()->SetEORE();

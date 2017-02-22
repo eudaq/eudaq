@@ -826,6 +826,7 @@ void caliceahcalbifProducer::sendallevents(std::deque<eudaq::EventUP> & deqEvent
          if (!_BORESent) {
             deqEvent.front()->SetBORE();
             _BORESent = true;
+            deqEvent.front()->SetTag("FirstROCStartTS", _stats.runStartTS);
             if (!_redirectedInputFileName.length()) {
                deqEvent.front()->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
                deqEvent.front()->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
