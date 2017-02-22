@@ -579,6 +579,7 @@ namespace eudaq {
                eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
                prepareEudaqRawPacket(nev_raw);
                nev->SetTag("ROC", roc);
+               nev->SetTag("ROCStartTS", startTS);
                nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset());
                if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
                   nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
@@ -668,6 +669,7 @@ namespace eudaq {
             eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
             prepareEudaqRawPacket(nev_raw);
             nev->SetTag("ROC", roc);
+            if (_LDATimestampData.count(roc)) nev->SetTag("ROCStartTS", _LDATimestampData[roc].TS_Start);
 
             if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
                nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
@@ -800,6 +802,7 @@ namespace eudaq {
                      break;
                }
                nev->SetTag("ROC", roc);
+               nev->SetTag("ROCStartTS", _LDATimestampData[roc].TS_Start);
                //copy the ahcal data
                if (i == (_LDATimestampData[roc].TS_Triggers.size() - 1)) {
                   //the last triggerID in the vector
