@@ -169,7 +169,7 @@ namespace eudaq {
    }
 
    void AHCALProducer::DoStopRun() {
-      std::cout << "AHCALProducer::OnStopRun:  Stop run" << std::endl;
+      std::cout << "AHCALProducer::DoStopRu:  Stop run" << std::endl;
       _reader->OnStop(_waitsecondsForQueuedEvents);
       _running = false;
       std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -182,7 +182,7 @@ namespace eudaq {
 
       if (_writeRaw)
          _rawFile.close();
-
+      std::cout<<"AHCALProducer::DoStopRun() finished"<<std::endl;
       //std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo" << _eventNo << std::endl;
       //SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
       //auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
@@ -262,6 +262,9 @@ namespace eudaq {
 
    void AHCALProducer::sendallevents(std::deque<eudaq::EventUP> & deqEvent, int minimumsize) {
       while (deqEvent.size() > minimumsize) {
+
+         //std::this_thread::sleep_for(std::chrono::seconds(1));
+
          std::lock_guard<std::mutex> lock(_reader->_eventBuildingQueueMutex);
          if (deqEvent.front()) {
             if (!_BORE_sent) {

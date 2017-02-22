@@ -715,7 +715,7 @@ void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deq
    s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
    CycleEvent->AddBlock(1, s.c_str(), s.length());
    ev->SetTag("ROCStartTS", _acq_start_ts);
-   ev->SetTimestamp(_acq_start_ts, _acq_stop_ts, false);
+   ev->SetTimestamp(_acq_start_ts << 5, _acq_stop_ts << 5, false);
    ev->SetTriggerN(_ReadoutCycle, false); //ROC is used as a trigger number
    if (_eventNumberingPreference == EventNumbering::TIMESTAMP) ev->SetFlagTimestamp();
    if (_eventNumberingPreference == EventNumbering::TRIGGERNUMBER) ev->SetFlagTrigger();
@@ -770,7 +770,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
       CycleEvent->AddBlock(1, s.c_str(), s.length());
 
-      uint64_t trig_ts = (uint64_t) trigger[2] + (((uint64_t) trigger[3]) << 32);
+      uint64_t trig_ts = ((uint64_t) trigger[2] + (((uint64_t) trigger[3]) << 32));
       uint32_t trig_number = trigger[1];
       ev->SetTimestamp(trig_ts, trig_ts + 1, false);
       ev->SetTriggerN(trig_number - _firstTriggerNumber, false);
@@ -821,12 +821,14 @@ void caliceahcalbifProducer::buildEudaqEvents(std::deque<eudaq::EventUP> & deqEv
 
 void caliceahcalbifProducer::sendallevents(std::deque<eudaq::EventUP> & deqEvent, int minimumsize) {
    while (deqEvent.size() > minimumsize) {
+      //std::this_thread::sleep_for(std::chrono::seconds(1));
+
       std::lock_guard<std::mutex> lock(_deqEventAccessMutex); //minimal lock for pushing ne
       if (deqEvent.front()) {
          if (!_BORESent) {
             deqEvent.front()->SetBORE();
             _BORESent = true;
-            deqEvent.front()->SetTag("FirstROCStartTS", _stats.runStartTS);
+            deqEvent.front()->SetTag("FirstROCStartTS", _stats.runStartTS << 5);
             if (!_redirectedInputFileName.length()) {
                deqEvent.front()->SetTag("FirmwareID", to_string(m_tlu->GetFirmwareVersion()));
                deqEvent.front()->SetTag("BoardID", to_string(m_tlu->GetBoardID()));
