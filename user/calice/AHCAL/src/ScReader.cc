@@ -509,7 +509,6 @@ namespace eudaq {
       while (_LDAAsicData.size() > keptEventCount) { //at least 2 finished ROC
          int roc = _LDAAsicData.begin()->first; //_LDAAsicData.begin()->first;
          std::vector<std::vector<int> > &data = _LDAAsicData.begin()->second;
-
          //create a table with BXIDs
          std::map<int, std::vector<std::vector<int> > > bxids;
          //std::cout << "processing readout cycle " << roc << std::endl;
@@ -523,11 +522,13 @@ namespace eudaq {
          }
 
          uint64_t startTS = 0LLU;
+         uint64_t stopTS = 0LLU;
          //get the list of bxid for the triggerIDs timestamps
          std::multimap<int, std::tuple<int, uint64_t> > triggerBxids; //calculated_bxid, triggerid, timestamp
          if (_LDATimestampData.count(roc)) {
             //get the start of acquisition timestamp
             startTS = _LDATimestampData[roc].TS_Start;
+            stopTS = _LDATimestampData[roc].TS_Stop;
             for (int i = 0; i < _LDATimestampData[roc].TS_Triggers.size(); ++i) {
                if (!startTS) {
                   if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
@@ -585,10 +586,10 @@ namespace eudaq {
                   nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
                }
                std::vector<uint32_t> cycledata;
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start >> 32));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Stop));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Stop >> 32));
+               cycledata.push_back((uint32_t) (startTS));
+               cycledata.push_back((uint32_t) (startTS >> 32));
+               cycledata.push_back((uint32_t) (stopTS));
+               cycledata.push_back((uint32_t) (stopTS >> 32));
                cycledata.push_back((uint32_t) (std::get<1>(trigIt->second)));
                cycledata.push_back((uint32_t) (std::get<1>(trigIt->second) >> 32));
                nev_raw->AppendBlock(6, cycleData);
@@ -647,9 +648,11 @@ namespace eudaq {
          }
 
          //get the start of acquisition timestamp
-         uint64_t startTS = 0;
+         uint64_t startTS = 0LLU;
+         uint64_t stopTS = 0LLU;
          if (_LDATimestampData.count(roc)) {
             startTS = _LDATimestampData[roc].TS_Start;
+            stopTS = _LDATimestampData[roc].TS_Stop;
             if (!_LDATimestampData[roc].TS_Start) {
                if (_producer->getColoredTerminalMessages()) std::cout << "\033[31m";
                std::cout << "ERROR: Start timestamp is incorrect in ROC " << roc << ". Start=" << _LDATimestampData[roc].TS_Start << " STOP=" << _LDATimestampData[roc].TS_Stop << std::endl;
@@ -678,12 +681,12 @@ namespace eudaq {
             prepareEudaqRawPacket(nev_raw);
             nev->SetTag("ROC", roc);
             if (_LDATimestampData.count(roc)) {
-               nev->SetTag("ROCStartTS", _LDATimestampData[roc].TS_Start);
+               nev->SetTag("ROCStartTS", startTS);
                std::vector<uint32_t> cycledata;
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Start >> 32));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Stop));
-               cycledata.push_back((uint32_t) (_LDATimestampData[roc].TS_Stop >> 32));
+               cycledata.push_back((uint32_t) (startTS));
+               cycledata.push_back((uint32_t) (startTS >> 32));
+               cycledata.push_back((uint32_t) (stopTS));
+               cycledata.push_back((uint32_t) (stopTS >> 32));
                if (_LDATimestampData[roc].TS_Triggers.size()) {
                   for (auto trig : _LDATimestampData[roc].TS_Triggers) {
                      cycledata.push_back((uint32_t) (trig));
@@ -708,6 +711,9 @@ namespace eudaq {
             EventQueue.push_back(std::move(nev));
          }
          _LDAAsicData.erase(_LDAAsicData.begin());
+         if (_LDATimestampData.count(roc)) {
+            _LDATimestampData.erase(roc);
+         }
       }
    }
 
