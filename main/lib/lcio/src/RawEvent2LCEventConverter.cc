@@ -16,9 +16,10 @@ namespace eudaq{
   
   bool RawEvent2LCEventConverter::Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const {
     auto ev = std::dynamic_pointer_cast<const RawDataEvent>(d1);
-    if(!ev)
+    if(!ev){
       EUDAQ_ERROR("ERROR, the input event is not RawDataEvent");
       return false;
+    }
     uint32_t id = ev->GetExtendWord();
     auto cvt = Factory<LCEventConverter>::MakeUnique(id);
     if(cvt){

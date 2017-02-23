@@ -118,7 +118,6 @@ namespace eudaq {
     }
     return vnum;
   }
-
   
   void Event::Print(std::ostream & os, size_t offset) const{
     os << std::string(offset, ' ') << "<Event>\n";
@@ -133,12 +132,14 @@ namespace eudaq {
        <<"  ->  0x"<< to_hex(m_ts_end, 16) << "</Timestamp>\n";
     os << std::string(offset + 2, ' ') << "<Timestamp>" << m_ts_begin
        <<"  ->  "<< m_ts_end << " </Timestamp>\n";
+    os << std::string(offset + 2, ' ') << "<Extendword>" << m_extend<< "</Extendword>\n";
+    os << std::string(offset + 2, ' ') << "<Description>" << m_dspt<< "</Description>\n";
     if(!m_tags.empty()){
-      os << std::string(offset + 2, ' ') << "<Tags> \n";
+      os << std::string(offset + 2, ' ') << "<Tags>\n";
       for (auto &tag: m_tags){
-	os << std::string(offset+4, ' ') << "<Tag>"<< tag.first << "=" << tag.second << " </Tag>\n";
+	os << std::string(offset+4, ' ') << "<Tag>"<< tag.first << "=" << tag.second << "</Tag>\n";
       }
-      os << std::string(offset + 2, ' ') << "</Tags> \n";
+      os << std::string(offset + 2, ' ') << "</Tags>\n";
     }
     os << std::string(offset + 2, ' ')<<"<Block_Size>"<<m_blocks.size()<<"</Block_Size>\n";
 
@@ -153,7 +154,6 @@ namespace eudaq {
     os << std::string(offset, ' ') << "</Event>\n";
   }
   
-
   std::string Event::GetTag(const std::string & name, const std::string & def) const {
     auto i = m_tags.find(name);
     if (i == m_tags.end()) return def;

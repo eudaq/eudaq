@@ -3,7 +3,6 @@
 #include "eudaq/Configuration.hh"
 #include "eudaq/LCEventConverter.hh"
 
-
 #include "lcio.h"
 #include "EVENT/LCIO.h"
 #include "IO/ILCFactory.h"
