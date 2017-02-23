@@ -22,13 +22,12 @@ using eudaq::from_string;
 class RunConnectionDelegate : public QItemDelegate {
 public:
   RunConnectionDelegate(RunControlModel *model);
-
+  void GetModelData();
 private:
   void paint(QPainter *painter, const QStyleOptionViewItem &option,
              const QModelIndex &index) const;
   RunControlModel *m_model;
 };
-
 
 class RunControlGUI : public QMainWindow,
 		      public Ui::wndRun,
@@ -44,6 +43,7 @@ public:
 		std::shared_ptr<const eudaq::Status> status) override;
   void Exec() override final;
 private:
+  void SendState(int state){SetState(state);}
   void EmitStatus(const char *name, const std::string &val);
   void closeEvent(QCloseEvent *event);
   bool eventFilter(QObject *object, QEvent *event);

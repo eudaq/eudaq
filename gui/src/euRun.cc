@@ -21,7 +21,6 @@ static const char *statuses[] = {
 namespace {
   static const char *GEOID_FILE = "GeoID.dat";
 }
-
 RunConnectionDelegate::RunConnectionDelegate(RunControlModel *model)
   : m_model(model) {}
 
@@ -40,11 +39,12 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
   : QMainWindow(parent, flags), eudaq::RunControl(listenaddress),
   m_delegate(&m_run), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
   m_filebytes(0), m_events(0), dostatus(false),
-  m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false), configLoaded(false), configLoadedInit(false), disableButtons(false), curState(STATE_UNINIT),lastUsedDirectory(""),lastUsedDirectoryInit("") {  // m_nextconfigonrunchange(false) taken out for test!
+    m_startrunwhenready(false),m_lastconfigonrunchange(false), m_data_taking(false), configLoaded(false), configLoadedInit(false), disableButtons(false), curState(STATE_UNINIT),lastUsedDirectory(""),lastUsedDirectoryInit(""),  m_nextconfigonrunchange(false) {  
   setupUi(this);
   QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
+  lblCurrent->setText(QString("<font size=%1 color='red'> <b> Current State: Uninitilised </b. </font>").arg(FONT_SIZE));
   QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
   int row = 0, col = 0;
   for (const char **st = statuses; st[0] && st[1]; st += 2) {
@@ -408,8 +408,8 @@ void RunControlGUI::updateButtons(int state) {
   configLoadedInit = checkInitFile();
   btnLoadInit->setEnabled(state != STATE_RUNNING && !disableButtons);
   btnInit->setEnabled(state != STATE_RUNNING && !disableButtons && configLoadedInit);
-  btnLoad->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && !disableButtons);
-  btnConfig->setEnabled(state != STATE_RUNNING && state != STATE_UNINIT && configLoaded &&
+  btnLoad->setEnabled(state != STATE_RUNNING && !disableButtons);
+  btnConfig->setEnabled(state != STATE_RUNNING && configLoaded &&
 			!disableButtons);
   btnTerminate->setEnabled(state != STATE_RUNNING);
   btnStart->setEnabled(state == STATE_CONF && !disableButtons);
