@@ -8,12 +8,11 @@ namespace eudaq{
 
   using namespace std;
   using namespace lcio;
-
   
   class AHCalRawEvent2LCEventConverter: public LCEventConverter{
   public:
     bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override;
-    static const uint32_t m_id_factory = cstr2hash("AHCalRawDataEvent");
+    static const uint32_t m_id_factory = cstr2hash("CaliceObject");
   private:
     LCCollectionVec* createCollectionVec(lcio::LCEvent &result, string colName, string dataDesc, time_t timestamp, int DAQquality ) const;
     void getScCALTemperatureSubEvent(const std::vector<uint8_t> &bl, LCCollectionVec *col) const;
