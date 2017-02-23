@@ -594,6 +594,7 @@ namespace eudaq {
                cycledata.push_back((uint32_t) (std::get<1>(trigIt->second) >> 32));
                nev_raw->AppendBlock(6, cycledata);
 
+
                switch (_producer->getEventNumberingPreference()) {
                   case AHCALProducer::EventNumbering::TRIGGERID:
                      nev->SetFlagBit(eudaq::Event::Flags::FLAG_TRIG);
@@ -696,7 +697,7 @@ namespace eudaq {
                   cycledata.push_back((uint32_t) 0);
                   cycledata.push_back((uint32_t) 0);
                }
-               nev_raw->AppendBlock(6, cycleData);
+               nev_raw->AppendBlock(6, cycledata);
             }
 
             if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
@@ -765,7 +766,7 @@ namespace eudaq {
                cycledata.push_back((uint32_t) 0);
                cycledata.push_back((uint32_t) 0);
             }
-            nev_raw->AppendBlock(6, cycleData);
+            nev_raw->AppendBlock(6, cycledata);
             _LDATimestampData.erase(roc);
          } else {
             if (!_producer->getIgnoreLdaTimestamps()) {
@@ -866,7 +867,7 @@ namespace eudaq {
                   cycledata.push_back((uint32_t) 0);
                   cycledata.push_back((uint32_t) 0);
                }
-               nev_raw->AppendBlock(6, cycleData);
+               nev_raw->AppendBlock(6, cycledata);
                EventQueue.push_back(std::move(nev));
             }
             _LDATimestampData.erase(roc);
