@@ -97,6 +97,8 @@ private slots:
   void on_btnConfig_clicked(){
     std::string settings = txtConfigFileName->text().toStdString();
     ReadConfigureFile(settings);
+    m_runsizelimit = GetConfiguration()->Get("RunSizeLimit", 0);
+    m_runeventlimit = GetConfiguration()->Get("RunEventSizeLimit", 0);
     Configure();
     SetState(ST_READY);
     dostatus = true;
@@ -144,8 +146,6 @@ private slots:
   }
   void timer() {
     if (m_data_taking) {
-      auto m_runsizelimit = GetRunSizeLimit();
-      auto m_runeventlimit = GetRunSizeLimit();
       if ((m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) ||
           (m_runeventlimit >= 1 && m_events >= m_runeventlimit)) {
         if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
@@ -210,4 +210,7 @@ private:
   bool m_producer_pALPIDEss_not_ok;
   bool m_startrunwhenready;
   bool m_lastconfigonrunchange;
+
+  int64_t m_runsizelimit;
+  int64_t m_runeventlimit;
 };
