@@ -737,14 +737,14 @@ void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deq
 
 void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>& deqEvent) {
    //cherrypicking just the triggers + adding copy of the start acq and stop acq
-
+   //std::cout << "<" << std::flush;
    std::vector<uint32_t> start_packet;
    std::vector<uint32_t> stop_packet;
    std::vector<std::vector<uint32_t>> trigger_packets;
 
    //prepare list of trigger by extracting them from the _cycleData
    //TODO quite inefficient due to memory copy
-   for (int i = 0; i < _cycleData.size() - 3; i += 4) {
+   for (int i = 0; i < (static_cast<int>(_cycleData.size()) - 3); i += 4) {
       switch (_cycleData[i] & 0xFF000000) {
          case 0x03000000:
             start_packet = std::vector<uint32_t>(&_cycleData[i], &_cycleData[i + 4]);
@@ -759,7 +759,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
             break;
       }
    }
-
+   //std::cout << "." << std::flush;
    //make new event for every trigger
    for (auto trigger : trigger_packets) {
       auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
@@ -769,7 +769,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       CycleEvent->AddBlock(0, s.c_str(), s.length());
       s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
       CycleEvent->AddBlock(1, s.c_str(), s.length());
-
+      //std::cout << ":" << std::flush;
       uint64_t trig_ts = ((uint64_t) trigger[2] + (((uint64_t) trigger[3]) << 32));
       uint32_t trig_number = trigger[1];
       ev->SetTimestamp(trig_ts, trig_ts + 1, false);
@@ -801,6 +801,7 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
       deqEvent.push_back(std::move(ev));
       //   SendEvent(std::move(ev));
    }
+   //std::cout << ">" << std::flush;
    _cycleData.clear();
 }
 
