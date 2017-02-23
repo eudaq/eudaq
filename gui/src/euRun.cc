@@ -232,6 +232,8 @@ void RunControlGUI::on_btnTerminate_clicked(){
 void RunControlGUI::on_btnConfig_clicked(){
   std::string settings = txtConfigFileName->text().toStdString();
   ReadConfigureFile(settings);
+  m_runsizelimit = GetConfiguration()->Get("RunSizeLimit", 0);
+  m_runeventlimit = GetConfiguration()->Get("RunEventSizeLimit", 0);
   Configure();
   dostatus = true;
 }
@@ -289,8 +291,6 @@ void RunControlGUI::on_btnLoad_clicked() {
 
 void RunControlGUI::timer() {
   if (m_data_taking) {
-    auto m_runsizelimit = GetRunSizeLimit();
-    auto m_runeventlimit = GetRunSizeLimit();
     if ((m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) ||
 	(m_runeventlimit >= 1 && m_events >= m_runeventlimit)) {
       if (m_runsizelimit >= 1024 && m_filebytes >= m_runsizelimit) {
