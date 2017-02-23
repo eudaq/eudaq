@@ -18,8 +18,7 @@ namespace eudaq {
   Factory<RunControl>::Instance<const std::string&>();
   
   RunControl::RunControl(const std::string &listenaddress)
-      : m_exit(false), m_listening(true), m_runnumber(0),
-	m_runsizelimit(0),m_runeventlimit(0){
+      : m_exit(false), m_listening(true), m_runnumber(0){
     char *top_dir_c = std::getenv("EUDAQ_TOP_DIR");
     if(top_dir_c){
       m_var_file = std::string(top_dir_c)+"/data/runnumber.dat";
@@ -72,10 +71,12 @@ namespace eudaq {
 
   void RunControl::ReadConfigureFile(const std::string &path){
     m_conf = Configuration::MakeUniqueReadFile(path);
+    m_conf->SetSection("RunControl");
   }
   
   void RunControl::ReadInitilizeFile(const std::string &path){
     m_conf_init = Configuration::MakeUniqueReadFile(path);
+    m_conf->SetSection("RunControl");
   }
   
   void RunControl::Reset() {

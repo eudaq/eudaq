@@ -82,13 +82,6 @@ namespace eudaq {
     std::string m_var_file;
     std::mutex m_mtx_sendcmd;
     uint32_t m_runnumber;    
-  public:
-    //TODO: move to derived class
-    // virtual void DoConfigureLocal(Configuration &config);
-    int64_t GetRunSizeLimit() const {return m_runsizelimit;}
-    int64_t GetRunEventLimit() const {return m_runeventlimit;}
-    int64_t m_runsizelimit;
-    int64_t m_runeventlimit;
   };
 }
 
