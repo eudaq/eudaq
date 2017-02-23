@@ -592,7 +592,7 @@ namespace eudaq {
                cycledata.push_back((uint32_t) (stopTS >> 32));
                cycledata.push_back((uint32_t) (std::get<1>(trigIt->second)));
                cycledata.push_back((uint32_t) (std::get<1>(trigIt->second) >> 32));
-               nev_raw->AppendBlock(6, cycleData);
+               nev_raw->AppendBlock(6, cycledata);
 
                switch (_producer->getEventNumberingPreference()) {
                   case AHCALProducer::EventNumbering::TRIGGERID:
