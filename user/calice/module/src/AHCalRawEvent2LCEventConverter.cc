@@ -149,9 +149,9 @@ namespace eudaq{
 	auto& bl6 = rawev->GetBlock(6);
 	if(bl6.size()==0)   cout << "Nothing in Timestamps collection..." << endl;
 	if(bl6.size()>0) {
-	  cout << "Looking for Timestamps collection..." << endl;
+	  //cout << "Looking for Timestamps collection..." << endl;
 	  LCCollectionVec *col = 0;
-	  col=createCollectionVec(result,"TimeStamps", "Start:Stop:BusyOn:BusyOff:Trig", timestamp, DAQquality);
+	  col=createCollectionVec(result,"TimeStamps", "i:StartTS_L;i:StartTS_H;i:StopTS_L;i:StopTS_H;i:TrigTS_L;i:TrigTS_H", timestamp, DAQquality);
 	  getDataLCIOGenericObject(bl6,col,nblock);
 	}
 
