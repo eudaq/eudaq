@@ -110,7 +110,7 @@ matrix:
         compiler: gcc      
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
-before_install:
+#before_install:
       
 install:
   - source .travis/set_compilers.sh
