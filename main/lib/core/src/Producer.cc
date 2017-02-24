@@ -24,7 +24,7 @@ namespace eudaq {
       EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
       DoInitialise();
       EUDAQ_INFO("Initialized");
-      SetStatus(Status::STATE_UNCONF, "Initializd");
+      SetStatus(Status::STATE_UNCONF, "Initialized");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Init Error");
