@@ -8,8 +8,13 @@ namespace eudaq{
   
   bool LCEventConverter::Convert(EventSPC d1, LCEventSP d2, ConfigurationSPC conf){    
     if(d1->IsFlagPacket()){
+      d2->setRunNumber(d1->GetRunN());
+      d2->setEventNumber(d1->GetEventN());
+      d2->setDetectorName(d1->GetDescription());
+      if(d1->IsFlagTimestamp()){
+	d2->setTimeStamp(d1->GetTimestampBegin());
+      }
       d2->parameters().setValue("EventFlag", (int)d1->GetFlag());
-      d2->parameters().setValue("RunNumber", (int)d1->GetRunN());
       d2->parameters().setValue("StreamNumber", (int)d1->GetStreamN());
       if(d1->IsFlagTrigger()){
 	d2->parameters().setValue("TriggerNumber", (int)d1->GetTriggerN());

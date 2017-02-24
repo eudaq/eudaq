@@ -20,10 +20,10 @@ namespace eudaq{
   Factory<LCEventConverter>::Instance<>();
 #endif
   using LCEventConverterUP = Factory<LCEventConverter>::UP;
-  using LCEventSP = std::shared_ptr<lcio::LCEvent>;
-  using LCEventSPC = std::shared_ptr<const lcio::LCEvent>;
+  using LCEventSP = std::shared_ptr<lcio::LCEventImpl>;
+  using LCEventSPC = std::shared_ptr<const lcio::LCEventImpl>;
   
-  class DLLEXPORT LCEventConverter:public DataConverter<Event, lcio::LCEvent>{
+  class DLLEXPORT LCEventConverter:public DataConverter<Event, lcio::LCEventImpl>{
   public:
     LCEventConverter() = default;
     LCEventConverter(const LCEventConverter&) = delete;
