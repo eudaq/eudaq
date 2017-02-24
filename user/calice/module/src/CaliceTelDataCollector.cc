@@ -16,11 +16,7 @@ public:
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("CaliceTelDataCollector");
-private:
-  void AddEvent_TimeStamp(uint32_t id, eudaq::EventSPC ev);
-  void BuildEvent_TimeStamp();
-  
-  //ts
+private:  
   std::deque<eudaq::EventSPC> m_que_cal;
   std::deque<eudaq::EventSPC> m_que_bif;
   std::deque<eudaq::EventSPC> m_que_tel;
@@ -70,7 +66,6 @@ void CaliceTelDataCollector::DoConfigure(){
   }
 }
 
-
 void CaliceTelDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::cout<<"connecting "<<idx<<std::endl;
 }
@@ -84,14 +79,32 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
     EUDAQ_WARN("Receive event fake");
     return;
   }
+  
   std::string con_name = idx->GetName();
-  if(con_name == "Producer.Calice1")
+  if(con_name == "Producer.Calice1"){
+    if(m_que_cal.size() >= 100000){
+      EUDAQ_WARN("Too many events buffered in queue cal, dropped");
+      m_que_cal.clear();
+      return;
+    }
     m_que_cal.push_back(std::move(ev));
-  else if(con_name == "Producer.caliceahcalbifProducer")
+  }
+  else if(con_name == "Producer.caliceahcalbifProducer"){
+    if(m_que_bif.size() >= 10000){
+      EUDAQ_WARN("Too many events buffered in queue bif, dropped");
+      m_que_bif.clear();
+      return;
+    }
     m_que_bif.push_back(std::move(ev));
-  else if(con_name == "Producer.ni")
-    // ev->Print(std::cout);
+  }
+  else if(con_name == "Producer.ni"){
+    if(m_que_tel.size() >= 10000){
+      EUDAQ_WARN("Too many events buffered in queue tel, dropped");
+      m_que_tel.clear();
+      return;
+    }
     m_que_tel.push_back(std::move(ev));
+  }
   else{
     EUDAQ_WARN("Receive event from unkonwn Producer");
     return;
@@ -105,7 +118,6 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
   if(m_que_cal.empty() || m_que_bif.empty() || m_que_tel.empty()){
     return;
   }
-  // std::cout<<"p 1 \n";
   
   if(!m_offset_ts_done){
     if(!m_que_cal.front()->IsBORE() || !m_que_cal.front()->IsBORE())
@@ -114,16 +126,19 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
     uint64_t start_ts_bif = m_que_bif.front()->GetTag("FirstROCStartTS", uint64_t(0));
     m_ts_offset_cal2bif = (start_ts_cal<<5) - start_ts_bif - 120LL;
     m_offset_ts_done = true;
-    // std::cout<<"start_ts_bif "<< start_ts_bif <<std::endl;
-    // std::cout<<"start_ts_cal "<< start_ts_cal <<std::endl;
-    // std::cout<<"offset "<< m_ts_offset_cal2bif <<std::endl;
   }
 
-  while(!m_que_cal.empty() && !m_que_bif.empty() && !m_que_tel.empty()){
-    // std::cout<<">>>>>>>>>>>>>>>>"<<m_que_bif.size()<<" "<<m_que_cal.size()<<std::endl;
-    auto ev_front_bif = m_que_bif.front(); 
+  std::cout<<"############\n"
+	   <<m_que_cal.front()->GetTriggerN()<<" -> "<< m_que_cal.back()->GetTriggerN()<<std::endl
+    	   <<m_que_cal.front()->GetEventN()<<" -> "<< m_que_cal.back()->GetEventN()<<std::endl
+	   <<m_que_tel.front()->GetEventN()<<" -> "<<m_que_tel.back()->GetEventN()<<std::endl;
+
+  while(!m_que_cal.empty() && !m_que_bif.empty() && !m_que_tel.empty()
+	&& m_que_tel.back()->GetEventN() >= m_que_cal.front()->GetTriggerN()){
+    
+    auto ev_front_bif = m_que_bif.front();
     auto ev_front_cal = m_que_cal.front();
-    auto ev_sync =  eudaq::Event::MakeUnique("CaliceTS");
+    auto ev_sync =  eudaq::Event::MakeUnique("CaliceTel");
     ev_sync->SetFlagPacket();
     uint64_t ts_beg_bif = ev_front_bif->GetTimestampBegin();
     uint64_t ts_beg_cal = (ev_front_cal->GetTimestampBegin()<<5) - m_ts_offset_cal2bif;
@@ -156,14 +171,14 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
       ev_sync->AddSubEvent(m_ev_last_cal);
     }
 
-    ev_sync->SetTimestamp(ts_beg, ts_end, false);
+    ev_sync->SetTimestamp(ts_beg, ts_end);
 
     if(!ev_sync->IsFlagTrigger())
       continue;
     
     uint32_t tg_n_sync = ev_sync->GetTriggerN();
     while(!m_que_tel.empty() && m_que_tel.front()->GetEventN() < tg_n_sync){
-      auto ev_sync_only_tel =  eudaq::Event::MakeUnique("CaliceTS");
+      auto ev_sync_only_tel =  eudaq::Event::MakeUnique("CaliceTel");
       ev_sync_only_tel->SetFlagPacket();
       ev_sync_only_tel->SetTriggerN(m_que_tel.front()->GetEventN());
       ev_sync_only_tel->AddSubEvent(m_que_tel.front());
@@ -177,7 +192,6 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
       m_ev_last_tel = m_que_tel.front();
       m_que_tel.pop_front();
     }
-    //TODO:
     else if(m_ev_last_tel && m_ev_last_tel->GetEventN() == tg_n_sync){
       ev_sync->AddSubEvent(m_ev_last_tel);
     }
