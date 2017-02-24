@@ -148,7 +148,13 @@ namespace eudaq {
   bool StandardPlane::GetPivot(unsigned index, unsigned frame) const {
     if (!GetFlags(FLAG_DIFFCOORDS))
       frame = 0;
-    return m_pivot.at(frame).at(index);
+      bool return_value = false;
+    try{
+	return_value = m_pivot.at(frame).at(index);    
+    } catch (std::out_of_range& err) {
+	//std::cerr << "GetPivot tried to access non-existing entry" << std::endl;
+  }
+    return return_value;
   }
 
   void StandardPlane::SetPivot(unsigned index, unsigned frame, bool PivotFlag) {
