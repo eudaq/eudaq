@@ -20,7 +20,7 @@ namespace eudaq {
   LogCollector::LogCollector(const std::string &runcontrol,
                              const std::string &listenaddress,
 			     const std::string &logdirectory)
-      : CommandReceiver("LogCollector", "", runcontrol), m_exit(false),
+      : CommandReceiver("LogCollector", "log", runcontrol), m_exit(false),
         m_logserver(TransportFactory::CreateServer(listenaddress)),
         m_filename(logdirectory + "/" + Time::Current().Formatted("%Y-%m-%d.log")),
         m_file(m_filename.c_str(), std::ios_base::app) {

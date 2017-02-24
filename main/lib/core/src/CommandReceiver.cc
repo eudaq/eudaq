@@ -49,9 +49,10 @@ namespace eudaq {
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
     : m_type(type), m_name(name), m_exit(false), m_exited(false){
-    m_cmdrcv_id = static_cast<uint32_t>(reinterpret_cast<std::uintptr_t>(this)) + str2hash(GetFullName()); //TODO: add hostname
+    uint64_t addr = static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(this));
+    m_cmdrcv_id = static_cast<uint32_t>((addr>>32)+(addr<<32)+addr);
     int i = 0;
-    while (true){ 
+    while (true){
       try {
 	m_cmdclient = std::unique_ptr<TransportClient>( TransportFactory::CreateClient(runcontrol));
 	if (!m_cmdclient->IsNull()) {
