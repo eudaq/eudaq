@@ -43,22 +43,6 @@ namespace eudaq{
     static const uint32_t m_boards = 6;
 
     TrackerDataImpl *zsFrame;
-
-    if (source.IsBORE()) {
-      if (dbg > 0)
-        std::cout << "NIConverterPlugin::GetLCIOSubEvent BORE " << std::endl;
-      // shouldn't happen
-      return true;
-    } else if (source.IsEORE()) {
-      if (dbg > 0)
-        std::cout << "NIConverterPlugin::GetLCIOSubEvent EORE " << std::endl;
-      // nothing to do
-      return true;
-    }
-    // If we get here it must be a data event
-
-    if (dbg > 0)
-      std::cout << "NIConverterPlugin::GetLCIOSubEvent data " << std::endl;
  
     // prepare the collections for the rawdata and the zs ones
     LCCollectionVec *rawDataCollection, *zsDataCollection, *zs2DataCollection;
@@ -180,20 +164,6 @@ namespace eudaq{
   bool NiRawEvent2LCEventConverter::GetStandardSubEvent(StandardEvent &result,
 							const Event &source) const {
     static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5}; //TODO
-
-    
-    if (source.IsBORE()) {
-      std::cout << "GetStandardSubEvent : got BORE" << std::endl;
-      // shouldn't happen
-      return true;
-    } else if (source.IsEORE()) {
-      std::cout << "GetStandardSubEvent : got EORE" << std::endl;
-      // nothing to do
-      return true;
-    }
-
-    if (dbg > 0)
-      std::cout << "GetStandardSubEvent : data" << std::endl;
 
     // If we get here it must be a data event
     const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(source);
