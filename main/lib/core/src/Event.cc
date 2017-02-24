@@ -122,7 +122,8 @@ namespace eudaq {
   void Event::Print(std::ostream & os, size_t offset) const{
     os << std::string(offset, ' ') << "<Event>\n";
     os << std::string(offset + 2, ' ') << "<Type>" << m_type <<"</Type>\n";
-    os << std::string(offset + 2, ' ') << "<SubType>"<< GetExtendWord() <<"</SubType>\n";
+    os << std::string(offset + 2, ' ') << "<Extendword>" << m_extend<< "</Extendword>\n";
+    os << std::string(offset + 2, ' ') << "<Description>" << m_dspt<< "</Description>\n";
     os << std::string(offset + 2, ' ') << "<Flag>0x" << to_hex(m_flags, 8)<< "</Flag>\n";
     os << std::string(offset + 2, ' ') << "<RunN>" << m_run_n << "</RunN>\n";
     os << std::string(offset + 2, ' ') << "<StreamN>" << m_stm_n << "</StreamN>\n";
@@ -132,8 +133,6 @@ namespace eudaq {
        <<"  ->  0x"<< to_hex(m_ts_end, 16) << "</Timestamp>\n";
     os << std::string(offset + 2, ' ') << "<Timestamp>" << m_ts_begin
        <<"  ->  "<< m_ts_end << " </Timestamp>\n";
-    os << std::string(offset + 2, ' ') << "<Extendword>" << m_extend<< "</Extendword>\n";
-    os << std::string(offset + 2, ' ') << "<Description>" << m_dspt<< "</Description>\n";
     if(!m_tags.empty()){
       os << std::string(offset + 2, ' ') << "<Tags>\n";
       for (auto &tag: m_tags){
