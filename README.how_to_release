@@ -1,0 +1,11 @@
+How to release
+=======
+
+### Change Version Information
+The current development model requires that a new release is created from a version specific branch. Check whether the commit compiled on the CIs. Change the version information in CMakeLists.txt and README.md
+
+
+### Create Release On Github
+On github go Releases and press the "draft new release" button. Fill in all the informations but leave out the tag version as it will be automatically created. Press "publish release", after the CIs have completed a windows binary and the manual in form of a pdf will be automatically attached. If the compilation failed, remove the release and tag and retry.
+
+
