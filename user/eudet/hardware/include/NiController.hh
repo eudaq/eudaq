@@ -16,7 +16,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 typedef int SOCKET;
 #endif
 
@@ -39,13 +41,14 @@ public:
   void Stop();
   void DatatransportClientSocket_Open(const std::string& addr, uint16_t port);
   void DatatransportClientSocket_Close();
-  unsigned int DataTransportClientSocket_ReadLength(const char string[4]);
+  unsigned int DataTransportClientSocket_ReadLength();
   std::vector<unsigned char> DataTransportClientSocket_ReadData(int datalength);
 
   void ConfigClientSocket_Open(const std::string& addr, uint16_t port);
   void ConfigClientSocket_Close();
+  bool DataTransportClientSocket_Select();
   void ConfigClientSocket_Send(unsigned char *text, size_t len);
-  unsigned int ConfigClientSocket_ReadLength(const char string[4]);
+  unsigned int ConfigClientSocket_ReadLength();
   std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);
 
 private:

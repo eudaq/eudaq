@@ -117,8 +117,32 @@ void NiController::ConfigClientSocket_Close() {
 
   EUDAQ_CLOSE_SOCKET(sock_config);
 }
+
+bool NiController::DataTransportClientSocket_Select(){
+  fd_set rfds;
+  timeval tv;
+  int retval;
+  FD_ZERO(&rfds);
+  FD_SET(sock_datatransport, &rfds);
+  tv.tv_sec = 0;
+  tv.tv_usec = 100000;
+  retval = select(static_cast<int>(sock_datatransport + 1), &rfds, NULL, NULL, &tv);
+  if (retval == -1){
+    return false;
+  }
+  else if (retval){
+    //printf("Data is available now.\n");
+    /* FD_ISSET(0, &rfds) will be true. */
+    return true;
+  }
+  else
+    return false;
+}
+
+
+
 unsigned int
-NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
+NiController::ConfigClientSocket_ReadLength() {
   unsigned int datalengthTmp;
   unsigned int datalength;
   int i;
@@ -129,29 +153,15 @@ NiController::ConfigClientSocket_ReadLength(const char * /*string[4]*/) {
     perror("recv()");
     exit(1);
   } else {
-    if (dbg)
-      printf("|==ConfigClientSocket_ReadLength ==|    numbytes=%u \n",
-             static_cast<uint32_t>(numbytes));
-    i = 0;
-    if (dbg) {
-      while (i < numbytes) {
-        printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i + 1]);
-        i = i + 2;
-      }
-    }
     datalengthTmp = 0;
     datalengthTmp = 0xFF & Buffer_length[0];
     datalengthTmp <<= 8;
     datalengthTmp += 0xFF & Buffer_length[1];
     datalength = datalengthTmp;
-
-    if (dbg)
-      printf(" data= %d", datalength);
-    if (dbg)
-      printf("\n");
   }
   return datalength;
 }
+
 std::vector<unsigned char>
 NiController::ConfigClientSocket_ReadData(int datalength) {
   std::vector<unsigned char> ConfigData(datalength);
@@ -229,37 +239,21 @@ void NiController::DatatransportClientSocket_Open(const std::string& addr, uint1
     printf("----TCP/NI crate DATA TRANSPORT: The CONNECT executed OK...\n");
 }
 unsigned int
-NiController::DataTransportClientSocket_ReadLength(const char * /*string[4]*/) {
+NiController::DataTransportClientSocket_ReadLength() {
   unsigned int datalengthTmp;
   unsigned int datalength;
-  int i;
-  bool dbg = false;
   int numbytes;
   if ((numbytes = recv(sock_datatransport, Buffer_length, 2, 0)) == -1) {
     EUDAQ_ERROR("DataTransportSocket: Read length error ");
     perror("recv()");
     exit(1);
   } else {
-    if (dbg)
-      printf("|==DataTransportClientSocket_ReadLength ==|    numbytes=%u \n",
-             static_cast<uint32_t>(numbytes));
-    i = 0;
-    if (dbg) {
-      while (i < numbytes) {
-        printf(" 0x%x%x", 0xFF & Buffer_length[i], 0xFF & Buffer_length[i + 1]);
-        i = i + 2;
-      }
-    }
     datalengthTmp = 0;
     datalengthTmp = 0xFF & Buffer_length[0];
     datalengthTmp <<= 8;
     datalengthTmp += 0xFF & Buffer_length[1];
     datalength = datalengthTmp;
 
-    if (dbg)
-      printf(" data= %d", datalength);
-    if (dbg)
-      printf("\n");
   }
   return datalength;
 }
