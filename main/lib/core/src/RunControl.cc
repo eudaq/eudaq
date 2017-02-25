@@ -27,17 +27,22 @@ namespace eudaq {
       m_var_file = "../data/runnumber.dat";
     }
     m_runnumber = ReadFromFile(m_var_file.c_str(), 0U)+1;
-    if (listenaddress != ""){
+    if(listenaddress != ""){
       m_cmdserver.reset(TransportFactory::CreateServer(listenaddress));
       m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
     }
   }
 
   void RunControl::Initialise(){
+    auto conns = m_cmdserver->GetConnections();
     for(auto &e: m_status){
       auto client_state = e.second->GetState();
       if(client_state != Status::STATE_UNINIT && client_state != Status::STATE_UNCONF){
 	EUDAQ_ERROR(e.first+" is not Status::STATE_UNINIT OR Status::STATE_UNCONF");
+      }
+      else{
+	
+	//TODO
       }
     }
     SendCommand("INIT", "");
@@ -84,8 +89,6 @@ namespace eudaq {
     EUDAQ_INFO("Resetting");
     SendCommand("RESET", "");
   }
-
-  void RunControl::RemoteStatus() { SendCommand("STATUS"); }
 
   void RunControl::StartRun(){
     for(auto &e: m_status){
@@ -175,6 +178,13 @@ namespace eudaq {
     }
   }
 
+  void RunControl::StatusThread(){
+    while(true){
+      SendCommand("STATUS", "");
+      std::this_thread::sleep_for(std::chrono::milliseconds(300));
+    }
+  }
+  
   void RunControl::CommandHandler(TransportEvent &ev) {
     auto con = ev.id;
     switch (ev.etype) {
@@ -279,9 +289,8 @@ namespace eudaq {
   }
 
   void RunControl::StartRunControl(){
+    m_thd_status = std::thread(&RunControl::StatusThread, this);
     m_thd_server = std::thread(&RunControl::CommandThread, this);
-    std::cout << "DEBUG: listenaddress=" << m_cmdserver->ConnectionString()
-              << std::endl;  
   }
 
   void RunControl::CloseRunControl(){

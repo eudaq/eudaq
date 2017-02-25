@@ -37,7 +37,6 @@ namespace eudaq {
     virtual void StartRun(); 
     virtual void StopRun();
     virtual void Reset();
-    virtual void RemoteStatus();
     virtual void Terminate();
     //
     
@@ -68,11 +67,12 @@ namespace eudaq {
                      const ConnectionSPC id = ConnectionSPC());
     void CommandHandler(TransportEvent &ev);
     void CommandThread();
-
+    void StatusThread();
   private:
     bool m_exit;
     bool m_listening;
     std::thread m_thd_server;
+    std::thread m_thd_status;
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
