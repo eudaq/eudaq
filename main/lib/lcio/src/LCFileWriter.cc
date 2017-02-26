@@ -2,6 +2,10 @@
 #include "eudaq/FileWriter.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/LCEventConverter.hh"
+#include <ostream>
+#include <ctime>
+#include <iomanip>
+
 
 #include "lcio.h"
 #include "EVENT/LCIO.h"
@@ -40,7 +44,12 @@ namespace eudaq {
     if(!m_lcwriter || m_run_n != run_n){
       try {
 	m_lcwriter.reset(lcio::LCFactory::getInstance()->createLCWriter());
-	m_lcwriter->open(FileNamer(m_filepattern).Set('R', run_n),
+	std::time_t time_now = std::time(nullptr);
+	char time_buff[13];
+	time_buff[12] = 0;
+	std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
+	std::string time_str(time_buff);
+	m_lcwriter->open(FileNamer(m_filepattern).Set('R', run_n).Set('D', time_str),
 			 lcio::LCIO::WRITE_NEW);
 	m_run_n = run_n;
       } catch (const lcio::IOException &e) {

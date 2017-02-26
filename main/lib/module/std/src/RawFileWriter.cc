@@ -30,7 +30,12 @@ namespace eudaq {
   void RawFileWriter::WriteEvent(EventSPC ev) {
     uint32_t run_n = ev->GetRunN();
     if(!m_ser || m_run_n != run_n){
-      m_ser.reset(new FileSerializer((FileNamer(m_filepattern).Set('X', ".raw").Set('R', run_n))));
+      std::time_t time_now = std::time(nullptr);
+      char time_buff[13];
+      time_buff[12] = 0;
+      std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
+      std::string time_str(time_buff);
+      m_ser.reset(new FileSerializer((FileNamer(m_filepattern).Set('X', ".raw").Set('R', run_n).Set('D', time_str))));
       m_run_n = run_n;
     }
     if(!m_ser)

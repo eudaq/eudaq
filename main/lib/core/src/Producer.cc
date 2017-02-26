@@ -62,7 +62,6 @@ namespace eudaq {
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
       m_evt_c = 0;
-
       std::string dc_str = GetConfiguration()->Get("DATACOLLECTORS", "");
       std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
       std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
@@ -77,6 +76,8 @@ namespace eudaq {
       }
       GetInitConfiguration()->SetSection(cur_backup);
       
+      std::this_thread::sleep_for(std::chrono::seconds(2));
+      //TODO: remove. Producer waits 1 second to startup. FilePattern can have Date
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     }catch (const std::exception &e) {

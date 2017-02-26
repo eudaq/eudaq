@@ -44,8 +44,6 @@ namespace eudaq {
       char time_buff[13];
       time_buff[12] = 0;
       std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
-      ss<<time_buff<<"_"<<GetName()<<"_"<<m_fwpatt;
-      m_fwpatt = ss.str();
       DoConfigure();
       SetStatus(Status::STATE_CONF, "Configured");
     }catch (const Exception &e) {
