@@ -41,12 +41,13 @@ public:
   void Stop();
   void DatatransportClientSocket_Open(const std::string& addr, uint16_t port);
   void DatatransportClientSocket_Close();
+  bool DataTransportClientSocket_Select();
   unsigned int DataTransportClientSocket_ReadLength();
   std::vector<unsigned char> DataTransportClientSocket_ReadData(int datalength);
 
   void ConfigClientSocket_Open(const std::string& addr, uint16_t port);
   void ConfigClientSocket_Close();
-  bool DataTransportClientSocket_Select();
+  bool ConfigClientSocket_Select();
   void ConfigClientSocket_Send(unsigned char *text, size_t len);
   unsigned int ConfigClientSocket_ReadLength();
   std::vector<unsigned char> ConfigClientSocket_ReadData(int datalength);

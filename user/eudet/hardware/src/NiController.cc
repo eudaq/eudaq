@@ -139,6 +139,27 @@ bool NiController::DataTransportClientSocket_Select(){
     return false;
 }
 
+bool NiController::ConfigClientSocket_Select(){
+  fd_set rfds;
+  timeval tv;
+  int retval;
+  FD_ZERO(&rfds);
+  FD_SET(sock_config, &rfds);
+  tv.tv_sec = 0;
+  tv.tv_usec = 100000;
+  retval = select(static_cast<int>(sock_config + 1), &rfds, NULL, NULL, &tv);
+  if (retval == -1){
+    return false;
+  }
+  else if (retval){
+    //printf("Data is available now.\n");
+    /* FD_ISSET(0, &rfds) will be true. */
+    return true;
+  }
+  else
+    return false;
+}
+
 
 
 unsigned int

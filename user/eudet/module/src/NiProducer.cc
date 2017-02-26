@@ -98,6 +98,25 @@ void NiProducer::DataLoop(){
     SendEvent(std::move(evup));
   }
   ni_control->Stop();
+  std::chrono::milliseconds ms_dump(1000);
+  auto tp_beg = std::chrono::steady_clock::now();
+  auto tp_end = tp_beg + ms_dump;
+  while(1){
+    if(ni_control->DataTransportClientSocket_Select()){
+      uint32_t datalength1 = ni_control->DataTransportClientSocket_ReadLength();
+      std::vector<uint8_t> mimosa_data_0(datalength1);
+      mimosa_data_0 = ni_control->DataTransportClientSocket_ReadData(datalength1);
+      uint32_t datalength2 = ni_control->DataTransportClientSocket_ReadLength();
+      std::vector<uint8_t> mimosa_data_1(datalength2);
+      mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
+    }
+    auto tp_now = std::chrono::steady_clock::now();
+    if(tp_now>tp_end){
+      if(ni_control->DataTransportClientSocket_Select())
+	EUDAQ_WARN("There are more events which are not dumpped from labview.");
+      break;
+    }
+  }
 }
 
 void NiProducer::DoConfigure() {
