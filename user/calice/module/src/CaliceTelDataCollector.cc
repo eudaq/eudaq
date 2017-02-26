@@ -10,6 +10,7 @@ public:
 		   const std::string &runcontrol);
 
   void DoStartRun() override;
+  void DoStopRun() override;
   void DoConfigure() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
@@ -27,8 +28,11 @@ private:
   uint64_t m_ts_end_last_bif;
   bool m_offset_ts_done;
   int64_t m_ts_offset_cal2bif;
-
+  
+  int16_t m_shift_tgn_cal;
   uint32_t m_ev_n;
+
+  bool m_accept_ev;
 };
 
 namespace{
@@ -40,7 +44,9 @@ namespace{
 CaliceTelDataCollector::CaliceTelDataCollector(const std::string &name,
 					     const std::string &runcontrol):
   DataCollector(name, runcontrol){
-  
+  m_shift_tgn_cal = 0;
+
+  m_accept_ev = false;
 }
 
 void CaliceTelDataCollector::DoStartRun(){
@@ -56,14 +62,33 @@ void CaliceTelDataCollector::DoStartRun(){
   m_offset_ts_done = false;
   m_ts_offset_cal2bif = 0;
   m_ev_n = 0;
+
+  m_accept_ev = true;
+}
+
+void CaliceTelDataCollector::DoStopRun(){
+  m_accept_ev = false;
+  m_ev_last_cal.reset();
+  m_ev_last_bif.reset();
+  m_ev_last_tel.reset();
+  m_que_cal.clear();
+  m_que_bif.clear();
+  m_que_tel.clear();
+
+  m_ts_end_last_cal = 0;
+  m_ts_end_last_bif = 0;
+  m_offset_ts_done = false;
+  m_ts_offset_cal2bif = 0;
+  m_ev_n = 0;
 }
 
 void CaliceTelDataCollector::DoConfigure(){
   auto conf = GetConfiguration();
   if(conf){
     conf->Print();
-    // m_pri_ts = conf->Get("PRIOR_TIMESTAMP", m_pri_ts?1:0);
+    m_shift_tgn_cal = conf->Get("SHIFT_TGN_CAL", int16_t(0));
   }
+  EUDAQ_INFO("m_shift_tgn_cal "+ std::to_string(m_shift_tgn_cal));
 }
 
 void CaliceTelDataCollector::DoConnect(eudaq::ConnectionSPC idx){
@@ -76,16 +101,29 @@ void CaliceTelDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
 
 void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
   if(ev->IsFlagFake()){
-    EUDAQ_WARN("Receive event fake");
+    EUDAQ_WARN("Receive event fake, dropped");
     return;
   }
   
+  if(!m_accept_ev){
+    return;
+  }
+  if(ev->GetRunN()!=GetRunNumber()){
+    EUDAQ_WARN("Receive event with unmatched run number, dropped, conns is " + idx->GetName());
+    return;
+  }
+
   std::string con_name = idx->GetName();
   if(con_name == "Producer.Calice1"){
+ 
     if(m_que_cal.size() >= 100000){
       EUDAQ_WARN("Too many events buffered in queue cal, dropped");
       m_que_cal.clear();
       return;
+    }
+    if(m_shift_tgn_cal>0){
+      uint32_t tgn = ev->GetTriggerN() + m_shift_tgn_cal;
+      ev->SetTriggerN(tgn);
     }
     m_que_cal.push_back(std::move(ev));
   }
@@ -102,6 +140,10 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
       EUDAQ_WARN("Too many events buffered in queue tel, dropped");
       m_que_tel.clear();
       return;
+    }
+    if(m_shift_tgn_cal<0){
+      uint32_t tgn = ev->GetEventN() - m_shift_tgn_cal;
+      ev->SetEventN(tgn);
     }
     m_que_tel.push_back(std::move(ev));
   }
@@ -120,8 +162,23 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
   }
   
   if(!m_offset_ts_done){
-    if(!m_que_cal.front()->IsBORE() || !m_que_cal.front()->IsBORE())
+    std::stringstream ss;
+    ss<<"the first event in queues: run(cal:bif:tel)=("
+      <<m_que_cal.front()->GetRunN()<<":"
+      <<m_que_bif.front()->GetRunN()<<":"
+      <<m_que_tel.front()->GetRunN()<<")  "
+      <<"evn(cal:bif:tel)=("
+      <<m_que_cal.front()->GetEventN()<<":"
+      <<m_que_bif.front()->GetEventN()<<":"
+      <<m_que_tel.front()->GetEventN()<<")  "
+      <<"tgn(cal:bif:tel)=("
+      <<m_que_cal.front()->GetTriggerN()<<":"
+      <<m_que_bif.front()->GetTriggerN()<<":"
+      <<m_que_tel.front()->GetTriggerN()<<")";
+    EUDAQ_WARN(ss.str().c_str());
+    if(!m_que_cal.front()->IsBORE() || !m_que_bif.front()->IsBORE() || !m_que_tel.front()->IsBORE()){
       EUDAQ_THROW("the first event is not bore");
+    }
     uint64_t start_ts_cal = m_que_cal.front()->GetTag("FirstROCStartTS", uint64_t(0));
     uint64_t start_ts_bif = m_que_bif.front()->GetTag("FirstROCStartTS", uint64_t(0));
     m_ts_offset_cal2bif = (start_ts_cal<<5) - start_ts_bif - 120LL;
