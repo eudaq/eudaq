@@ -59,7 +59,8 @@ namespace eudaq {
                _waitmsFile(0),
                _waitsecondsForQueuedEvents(2),
                _writerawfilename_timestamp(true),
-               _writeRaw(true)
+               _writeRaw(true),
+               _StartWaitSeconds(0)
    {
       m_id_stream = eudaq::cstr2hash(name.c_str());
    }
@@ -104,6 +105,7 @@ namespace eudaq {
       _AHCALBXIDWidth = param.Get("AHCALBXIDWidth", 160); //4us Testbeam mode is default
       _GenerateTriggerIDFrom = param.Get("GenerateTriggerIDFrom", 0);
       _IgnoreLdaTimestamps = param.Get("IgnoreLdaTimestamps", 0);
+      _StartWaitSeconds = param.Get("StartWaitSeconds", 0);
 
       _InsertDummyPackets = param.Get("InsertDummyPackets", 0);
       _DebugKeepBuffered = param.Get("DebugKeepBuffered", 0);
@@ -132,6 +134,14 @@ namespace eudaq {
       _BORE_sent = false;
       // raw file open
       if (_writeRaw) OpenRawFile(_runNo, _writerawfilename_timestamp);
+      if (_StartWaitSeconds) {
+         std::cout << "Delayed start by " << _StartWaitSeconds << " seconds. Waiting";
+         for (int i = 0; i < _StartWaitSeconds; i++) {
+            std::cout << "."<<std::flush;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+         }
+         std::cout << std::endl;
+      }
       std::cout << "AHCALProducer::OnStartRun _reader->OnStart(param);" << std::endl; //DEBUG
       _reader->OnStart(_runNo);
 //      std::cout << "AHCALProducer::OnStartRun _SendEvent(RawDataEvent::BORE(CaliceObject, _runNo));" << std::endl; //DEBUG
@@ -182,7 +192,7 @@ namespace eudaq {
 
       if (_writeRaw)
          _rawFile.close();
-      std::cout<<"AHCALProducer::DoStopRun() finished"<<std::endl;
+      std::cout << "AHCALProducer::DoStopRun() finished" << std::endl;
       //std::cout << "AHCALProducer::OnStopRun sending EORE event with _eventNo" << _eventNo << std::endl;
       //SendEvent(RawDataEvent::EORE("CaliceObject", _runNo, _eventNo));
       //auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");

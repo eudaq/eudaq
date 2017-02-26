@@ -96,7 +96,7 @@ namespace eudaq {
          int _GenerateTriggerIDFrom; //sets from which triggerID number should be data generated (and filled with dummy triggers if necessary). Only works when insert_dummy_packets is enabled and in selected event building mode
          int _ColoredTerminalMessages; //1 for colored error worning and info messages
          int _IgnoreLdaTimestamps; //ignores the timestamp in the AHCAL LDA data stream
-
+         int _StartWaitSeconds; //wait a fixed amount of seconds, befor the DoStartRun is executed
          int _runNo;
          int _eventNo; //last sent event - for checking of correct event numbers sequence during sending events
          int _fd;
