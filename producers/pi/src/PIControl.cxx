@@ -9,8 +9,6 @@
 #include "PIWrapper.h"
 #include "eudaq/Utils.hh"
 
-using namespace piwrapper;
-
 int main(int argc, char* argv[])
 {
 	char *m_hostname;

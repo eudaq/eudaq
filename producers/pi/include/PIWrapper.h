@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <vector>
 
-namespace piwrapper {
+
 	//PI controller class
 	class PIWrapper {
 
@@ -100,6 +100,6 @@ namespace piwrapper {
 		bool printVelocityStage(char* axis);
 
 	};
-}
+
 
 #endif

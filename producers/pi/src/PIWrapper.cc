@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string>
 
-namespace piwrapper {
+
 	//*** constructor and destructor
 
 	/*	PIWrapper::PIWrapper()
@@ -501,4 +501,4 @@ namespace piwrapper {
 	}
 	*/
 
-}
+
