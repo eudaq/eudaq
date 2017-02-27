@@ -420,7 +420,7 @@ class caliceahcalbifProducer: public eudaq::Producer {
           * SC0..3 are fine timestamps (5 bits), but shifted by value 8
           * */
 
-         for (auto it : m_tlu) { //iterate the local buffer
+         for (auto& it : m_tlu) { //iterate the local buffer
             event_complete = false;
             word1 = it;
             uint64_t timestamp = word1 & 0x0000FFFFFFFFFFFF; //take only first 48 bits

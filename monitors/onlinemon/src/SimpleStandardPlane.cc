@@ -200,7 +200,7 @@ void SimpleStandardPlane::doClustering() {
   }*/
   nClusters = clusterSet.size();
 
-  for (auto it : clusterSet) {
+  for (auto& it : clusterSet) {
     SimpleStandardCluster cluster;
     for (unsigned int i = 0; i < npixels_hit; i++) {
       if (clusterNumber.at(i) == it) { // Put only these pixels in that

@@ -36,11 +36,11 @@ namespace eudaq {
   }
 
   void Configuration::Save(std::ostream &stream) const {
-    for (const auto i : m_config) {
+    for (const auto& i : m_config) {
       if (i.first != "") {
         stream << "[" << i.first << "]\n";
       }
-      for (const auto j : i.second) {
+      for (const auto& j : i.second) {
         stream << j.first << " = " << j.second << "\n";
       }
       stream << "\n";
@@ -168,7 +168,7 @@ namespace eudaq {
   }
 
   void Configuration::Print(std::ostream &out) const {
-    for (auto it : *m_cur) {
+    for (auto& it : *m_cur) {
       out << it.first << " : " << it.second << std::endl;
     }
   }

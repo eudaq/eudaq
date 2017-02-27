@@ -123,7 +123,7 @@ int main(int /*argc*/, const char ** argv) {
         // subevents should have the same count as the detector events
         std::string contains;
         bool has_consistent_subevents = true;
-        for (const auto sub : subevents) {
+        for (const auto& sub : subevents) {
             if (!contains.empty()) contains += ",";
             contains += sub.first;
             has_consistent_subevents &= (sub.second == num_events);

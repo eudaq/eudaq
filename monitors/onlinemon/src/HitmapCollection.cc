@@ -97,7 +97,7 @@ void HitmapCollection::Write(TFile *file) {
     gDirectory->mkdir("Hitmaps");
     gDirectory->cd("Hitmaps");
 
-    for (auto it : _map) {
+    for (auto& it : _map) {
 
       char sensorfolder[255] = "";
       sprintf(sensorfolder, "%s_%d", it.first.getName().c_str(),
@@ -116,7 +116,7 @@ void HitmapCollection::Write(TFile *file) {
 
 void HitmapCollection::Calculate(const unsigned int currentEventNumber) {
   if ((currentEventNumber > 10 && currentEventNumber % 1000 * _reduce == 0)) {
-    for (auto it : _map) {
+    for (auto& it : _map) {
       // std::cout << "Calculating ..." << std::endl;
       it.second->Calculate(currentEventNumber / _reduce);
     }
@@ -124,7 +124,7 @@ void HitmapCollection::Calculate(const unsigned int currentEventNumber) {
 }
 
 void HitmapCollection::Reset() {
-  for (auto it : _map) {
+  for (auto& it : _map) {
     it.second->Reset();
   }
 }

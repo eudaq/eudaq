@@ -110,7 +110,7 @@ namespace eudaq {
 
   std::vector<std::string> AidaFileWriterFactory::GetTypes() {
     std::vector<std::string> result;
-    for (const auto it:AidaFileWriterMap()) { result.emplace_back(it.first); }
+    for (const auto& it:AidaFileWriterMap()) { result.emplace_back(it.first); }
     return result;
   }
 }

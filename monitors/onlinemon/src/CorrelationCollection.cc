@@ -74,7 +74,7 @@ CorrelationCollection::getCorrelationHistos(const SimpleStandardPlane &p1,
 }
 
 void CorrelationCollection::Reset() {
-  for (auto it : _map) {
+  for (auto& it : _map) {
     it.second->Reset();
   }
 }
@@ -523,7 +523,7 @@ void CorrelationCollection::Write(TFile *file) {
     gDirectory->cd("Correlations");
   }
 
-  for (auto it : _map) {
+  for (auto& it : _map) {
     // char sensorfolder[255]="";
     // sprintf(sensorfolder,"%s_%d:%s_%d",it->first.getPlane1().getName().c_str(),it->first.getPlane1().getID(),
     // it->first.getPlane2().getName().c_str(),it->first.getPlane2().getID());

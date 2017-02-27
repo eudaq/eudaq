@@ -19,7 +19,7 @@ namespace eudaq {
     static std::string escape_string(const std::string &s) {
       std::string result;
       result.reserve(s.length());
-      for (const auto it : s) {
+      for (const auto& it : s) {
         result += escape_char(it);
       }
       return result;

@@ -30,7 +30,7 @@ namespace eudaq {
 
   std::vector<std::string> FileWriterFactory::GetTypes() {
     std::vector<std::string> result;
-    for (const auto it : FileWriterMap()) {
+    for (const auto& it : FileWriterMap()) {
          result.push_back(it.first);
     }
     return result;

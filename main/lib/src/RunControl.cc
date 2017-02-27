@@ -129,7 +129,7 @@ namespace eudaq {
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
     mSleep(500);
     // give the data collectors time to prepare
-    for (auto it : m_dataaddr) {
+    for (auto& it : m_dataaddr) {
       SendReceiveCommand("PREPARE", to_string(m_runnumber),
                          GetConnection(it.first));
     }
@@ -456,7 +456,7 @@ namespace eudaq {
     SendCommand("LOG", m_logaddr);
 
     // loop over data collectors and announce LC
-    for (auto it : m_dataaddr) {
+    for (auto& it : m_dataaddr) {
       SendCommand("DATA", it.second, id);
     }
   }
@@ -470,7 +470,7 @@ namespace eudaq {
 
     // search for applicable DC
     bool foundDC = false;
-    for (auto it : m_dataaddr) {
+    for (auto& it : m_dataaddr) {
       if (GetConnection(it.first).GetName() == id.GetName()) {
         foundDC = true;
         SendCommand("DATA", it.second, id);

@@ -292,7 +292,7 @@ void OnlineMonWindow::registerTreeItem(std::string item) {
 
 void OnlineMonWindow::makeTreeItemSummary(std::string item) {
   std::vector<std::string> v;
-  for (auto it : _hitmapMap) {
+  for (auto& it : _hitmapMap) {
     std::string c = std::string(it.first, 0, item.length());
     if (c == item) {
       v.push_back(it.first);

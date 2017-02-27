@@ -224,7 +224,7 @@ CMSPixelProducer::GetConfTrimming(std::vector<pxar::pixelConfig> maskbits,
   }
 
   // Process the mask bit list:
-  for (auto px : pixels) {
+  for (auto& px : pixels) {
 
     // Check if this pixel is part of the maskbit vector:
     std::vector<pxar::pixelConfig>::iterator maskpx =

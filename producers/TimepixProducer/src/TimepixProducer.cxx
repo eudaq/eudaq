@@ -597,7 +597,7 @@ while(!fitpixstate.FrameReady){
       }
 
 
-      for(auto it : events)
+      for(auto& it : events)
       {
      //   std::cout<< "[event] "<<it->to_char();
         eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
