@@ -17,21 +17,36 @@ using namespace std;
 
 PIController::PIController(const std::string &name,
 			     const std::string &runcontrol)
-  : eudaq::Controller(name, runcontrol), m_terminated(false), m_name(name), m_pinnr(0), m_waiting_time(4000) { }
+  : eudaq::Controller(name, runcontrol), m_terminated(false), 
+m_name(name), 
+m_hostname(hostname),
+m_portname(portname)
+//m_pinnr(0), 
+//m_waiting_time(4000) 
+{ }
 
 void PIController::OnInitialise(const eudaq::Configuration & init) {
       try {
         std::cout << "Reading: " << init.Name() << std::endl;
-	//
-	//
-	//
+        
+        PIWrapper wrapper(m_portnumber, m_hostname);
+
+        if (!wrapper.axisIsReferenced(m_axis1)) { 
+		std::cout << "Axis1 not referenced! Please use PIControl!" << std::endl; }
+        if (!wrapper.axisIsReferenced(m_axis2)) { 
+		std::cout << "Axis2 not referenced! Please use PIControl!" << std::endl; }
+        if (!wrapper.axisIsReferenced(m_axis3)) { 
+		std::cout << "Axis3 not referenced! Please use PIControl!" << std::endl; }
+        if (!wrapper.axisIsReferenced(m_axis4)) { 
+		std::cout << "Axis4 not referenced! Please use PIControl!" << std::endl; }
+
         SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
       } 
       catch (...) {
         // Message as cout in the terminal of your producer
         std::cout << "Unknown exception" << std::endl;
         // Message to the LogCollector
-        EUDAQ_ERROR("Unknown error during initialization from rpi controller");
+        EUDAQ_ERROR("Unknown error during initialization from PI controller");
         // Otherwise, the State is set to ERROR
         SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Initialisation Error");
       }
@@ -146,6 +161,10 @@ int main(int /*argc*/, const char **argv) {
       "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name(op, "n", "name", "PIController", "string",
                                   "The name of this Producer/Controller");
+  eudaq::Option<std::string> hostname(op, "ho", "HostName", "192.168.22.5", "string", "set hostname for TCP/IP connection");
+  eudaq::Option<int> portnumber(op, "p", "PortNumber", 50000, "number", "set portnumber for TCP/IP connection");
+
+
   try {
     // This will look through the command-line arguments and set the options
     op.Parse(argv);

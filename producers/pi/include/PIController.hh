@@ -29,9 +29,10 @@ public:
   
 private:
   bool m_terminated;
-  unsigned m_waiting_time;
   std::string m_name;
-  int m_pinnr;
-
+  char *m_hostname;
+  int m_portnumber;
+  //int m_pinnr;
+  //unsigned m_waiting_time;
 };
 #endif /*PICONTROLLER_HH*/
