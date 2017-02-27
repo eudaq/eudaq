@@ -129,10 +129,9 @@ namespace eudaq {
     EUDAQ_INFO("Starting Run " + to_string(m_runnumber) + ": " + msg);
     mSleep(500);
     // give the data collectors time to prepare
-    for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();
-         it != m_dataaddr.end(); ++it) {
+    for (auto& it : m_dataaddr) {
       SendReceiveCommand("PREPARE", to_string(m_runnumber),
-                         GetConnection(it->first));
+                         GetConnection(it.first));
     }
     mSleep(1000);
     SendCommand("START", to_string(m_runnumber));
@@ -417,14 +416,7 @@ namespace eudaq {
     for (size_t i = 0; i < NumConnections(); ++i) {
       if (isDefaultDC) {
         // check that we do not override a previously connected DC
-        bool matches = false;
-        for (std::vector<std::string>::iterator it = otherDC.begin();
-             it != otherDC.end(); ++it) {
-          if (GetConnection(i).GetName() == *it) {
-            matches = true;
-          }
-        }
-        if (!matches) {
+        if (!(std::any_of(otherDC.begin(), otherDC.end(), [this,i](std::string strnam){return strnam==GetConnection(i).GetName();}))) {
           // announce default DC to any connected command receiver not
           // named the same as previously found DCs
           SendCommand("DATA", thisDataAddr, GetConnection(i));
@@ -464,9 +456,8 @@ namespace eudaq {
     SendCommand("LOG", m_logaddr);
 
     // loop over data collectors and announce LC
-    for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();
-         it != m_dataaddr.end(); ++it) {
-      SendCommand("DATA", it->second, id);
+    for (auto& it : m_dataaddr) {
+      SendCommand("DATA", it.second, id);
     }
   }
 
@@ -479,11 +470,10 @@ namespace eudaq {
 
     // search for applicable DC
     bool foundDC = false;
-    for (std::map<size_t, std::string>::iterator it = m_dataaddr.begin();
-         it != m_dataaddr.end(); ++it) {
-      if (GetConnection(it->first).GetName() == id.GetName()) {
+    for (auto& it : m_dataaddr) {
+      if (GetConnection(it.first).GetName() == id.GetName()) {
         foundDC = true;
-        SendCommand("DATA", it->second, id);
+        SendCommand("DATA", it.second, id);
       }
     }
     // if not found, use default DC

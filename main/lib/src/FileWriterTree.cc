@@ -170,7 +170,7 @@ namespace eudaq {
       unpack_b(it, DS, 3); // Dataspecifier
 
       // Start position of first data frame
-      framepos[(int)*it] =
+      framepos[static_cast<int>(*it)] =
           make_pair(it + 1, FRAME_LENGTH -
                                 12); // readout the frame count should be 0 here
       it++;
@@ -220,13 +220,13 @@ namespace eudaq {
 
           // if everything went correct up to here the next byte should be the
           // Framecount
-          if ((int)*it <= 0 || (int)*it > 16) {
+          if (static_cast<int>(*it) <= 0 || static_cast<int>(*it) > 16) {
             cout << "Framecount not possible! <1.|==1.|>16" << endl
                  << "Dropping Event" << endl;
             bad = true;
             break;
           }
-          framepos[(int)*it] =
+          framepos[static_cast<int>(*it)] =
               make_pair(it + 1, FRAME_LENGTH - 12); // Set FrameInfo
           it++;
           nframes++;

@@ -93,7 +93,7 @@ namespace eudaq {
     // std::flush;
     std::string result(4, '\0');
     for (int i = 0; i < 4; ++i) {
-      result[i] = (char)(id & 0xff);
+      result[i] = static_cast<char>(id & 0xff);
       id >>= 8;
     }
     for (int i = 3; i >= 0; --i) {

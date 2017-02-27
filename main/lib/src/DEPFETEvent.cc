@@ -32,7 +32,7 @@ namespace eudaq {
   }
 
   void DEPFETEvent::Debug() {
-    for (unsigned i = 0; i < NumBoards(); ++i) {
+    for (auto i = 0; i < NumBoards(); ++i) {
       std::cout << GetBoard(i) << std::endl;
     }
   }

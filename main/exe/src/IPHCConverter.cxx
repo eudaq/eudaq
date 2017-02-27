@@ -22,19 +22,18 @@
 #include "iphc/mi26.typ"
 //#include "iphc/daq_pxi.def"
 
-using namespace eudaq;
 
-const std::string FileNamer::default_pattern = "../data/run$6R$X";
+const std::string eudaq::FileNamer::default_pattern = "../data/run$6R$X";
 
 inline std::string decodetime(unsigned date, unsigned time) {
   std::string result =
-    to_string((date & 0xff) + 2000) + "-" +
-    to_string(date>>8 & 0xff, 2) + "-" +
-    to_string(date>>16 & 0xff, 2) + " " +
-    to_string(time>>24 & 0xff, 2) + ":" +
-    to_string(time>>16 & 0xff, 2) + ":" +
-    to_string(time>>8 & 0xff, 2) + "." +
-    to_string(time & 0xff, 2);
+    eudaq::to_string((date & 0xff) + 2000) + "-" +
+    eudaq::to_string(date>>8 & 0xff, 2) + "-" +
+    eudaq::to_string(date>>16 & 0xff, 2) + " " +
+    eudaq::to_string(time>>24 & 0xff, 2) + ":" +
+    eudaq::to_string(time>>16 & 0xff, 2) + ":" +
+    eudaq::to_string(time>>8 & 0xff, 2) + "." +
+    eudaq::to_string(time & 0xff, 2);
   //std::cout << "DBG " << hexdec(date) << ", " << hexdec(time) << ", " << result << std::endl;
   return result;
 }
@@ -52,17 +51,17 @@ std::string asicname(unsigned n) {
 }
 
 int main(int, char ** argv) {
-  OptionParser op("IPHC M26 to EUDAQ Native File Converter", "1.0", "", 1);
-  Option<std::string> type(op, "t", "type", "native", "name", "Output file type");
-  Option<std::string> path(op, "p", "path", "mi26data", "path", "Path to data files");
-  Option<std::string> ipat(op, "i", "inpattern", "$P/$R/run_$4R_$T$X", "string", "Input filename pattern");
-  Option<std::string> opat(op, "o", "outpattern", "run$6R$X", "string", "Output filename pattern");
+  eudaq::OptionParser op("IPHC M26 to EUDAQ Native File Converter", "1.0", "", 1);
+  eudaq::Option<std::string> type(op, "t", "type", "native", "name", "Output file type");
+  eudaq::Option<std::string> path(op, "p", "path", "mi26data", "path", "Path to data files");
+  eudaq::Option<std::string> ipat(op, "i", "inpattern", "$P/$R/run_$4R_$T$X", "string", "Input filename pattern");
+  eudaq::Option<std::string> opat(op, "o", "outpattern", "run$6R$X", "string", "Output filename pattern");
   try {
     op.Parse(argv);
     for (size_t i = 0; i < op.NumArgs(); ++i) {
-      unsigned runnumber = from_string(op.GetArg(i), 0U);
+      unsigned runnumber = eudaq::from_string(op.GetArg(i), 0U);
       std::cout << "\nStarting processing for run " << runnumber << std::endl;
-      FileNamer fnamer(ipat.Value());
+      eudaq::FileNamer fnamer(ipat.Value());
 
       fnamer.Set('P', path.Value()).Set('R', runnumber).Set('T', "cnf").Set('X', ".bin");
       std::cout << "Opening configuration file: " << std::string(fnamer) << std::endl;
@@ -81,10 +80,10 @@ int main(int, char ** argv) {
       std::cout << "RunNo:       " << conf.RunNo << std::endl
         << "RunEvNb:     " << conf.RunEvNb << std::endl
         << "RunFileEvNb: " << conf.RunFileEvNb << std::endl
-        << "AsicNb:      " << (int)conf.AsicNb << std::endl
-        << "AsicName:    " << (int)conf.AsicName << " (" << asicname(conf.AsicName) << ")" << std::endl
-        << "SwTrigEn:    " << (int)conf.SwTrigEnabled << std::endl
-        << "HwTrigMode:  " << (int)conf.HwTrigModeSavedData << std::endl
+        << "AsicNb:      " << static_cast<int>(conf.AsicNb) << std::endl
+        << "AsicName:    " << static_cast<int>(conf.AsicName) << " (" << asicname(conf.AsicName) << ")" << std::endl
+        << "SwTrigEn:    " << static_cast<int>(conf.SwTrigEnabled) << std::endl
+        << "HwTrigMode:  " << static_cast<int>(conf.HwTrigModeSavedData) << std::endl
         << "StartTime:   " << decodetime(conf.StartDate, conf.StartTime) << std::endl
         ;
 
@@ -107,16 +106,16 @@ int main(int, char ** argv) {
         << "StopTime:    " << decodetime(res.StopDate, res.StopTime) << std::endl
         ;
 
-      std::shared_ptr<FileWriter> writer(FileWriterFactory::Create(type.Value()));
+      std::shared_ptr<eudaq::FileWriter> writer(eudaq::FileWriterFactory::Create(type.Value()));
       writer->SetFilePattern(opat.Value());
       writer->StartRun(runnumber);
       {
-        DetectorEvent dev(runnumber, 0, NOTIMESTAMP);
-       std::shared_ptr<Event> rev(new RawDataEvent(RawDataEvent::BORE("EUDRB", runnumber)));
+        eudaq::DetectorEvent dev(runnumber, 0, eudaq::NOTIMESTAMP);
+        std::shared_ptr<eudaq::Event> rev(new eudaq::RawDataEvent(eudaq::RawDataEvent::BORE("EUDRB", runnumber)));
         rev->SetTag("VERSION", "3");
         rev->SetTag("DET", asicname(conf.AsicName));
         rev->SetTag("MODE", "ZS2");
-        rev->SetTag("BOARDS", to_string((int)conf.AsicNb));
+        rev->SetTag("BOARDS", eudaq::to_string((int)conf.AsicNb));
         dev.AddEvent(rev);
         dev.SetTag("STARTTIME", decodetime(conf.StartDate, conf.StartTime));
         writer->WriteEvent(dev);
@@ -126,7 +125,7 @@ int main(int, char ** argv) {
       fnamer.Set('X', ".bin");
       unsigned eventnumber = 0;
       for (int dfile = 0; dfile < nfiles; ++dfile) {
-        fnamer.Set('T', to_string(dfile, 4));
+        fnamer.Set('T', eudaq::to_string(dfile, 4));
         std::cout << "Opening data file: " << std::string(fnamer) << std::endl;
         f = fopen(std::string(fnamer).c_str(), "rb");
         if (!f) {
@@ -143,9 +142,9 @@ int main(int, char ** argv) {
         int nevents = conf.RunFileEvNb;
         if (dfile == nfiles-1) nevents = res.EvNbTaken - (nfiles-1) * conf.RunFileEvNb;
         for (int ev = 0; ev < nevents; ++ev) {
-          eudaq::DetectorEvent dev(runnumber, eventnumber, NOTIMESTAMP);
-          RawDataEvent * rev = new RawDataEvent("EUDRB", runnumber, eventnumber);
-          std::shared_ptr<Event> ev1(rev);
+          eudaq::DetectorEvent dev(runnumber, eventnumber, eudaq::NOTIMESTAMP);
+          eudaq::RawDataEvent * rev = new eudaq::RawDataEvent("EUDRB", runnumber, eventnumber);
+          std::shared_ptr<eudaq::Event> ev1(rev);
           for (int brd = 0; brd < conf.AsicNb; ++brd) {
             MI26__TZsFFrameRaw data;
             if (!fread((void*)&data, sizeof data, 1, f)) {
@@ -197,8 +196,8 @@ int main(int, char ** argv) {
         fclose(f);
       }
       {
-        DetectorEvent dev(runnumber, eventnumber, NOTIMESTAMP);
-        std::shared_ptr<Event> rev(new RawDataEvent(RawDataEvent::EORE("EUDRB", runnumber, eventnumber)));
+        eudaq::DetectorEvent dev(runnumber, eventnumber, eudaq::NOTIMESTAMP);
+        std::shared_ptr<eudaq::Event> rev(new eudaq::RawDataEvent(eudaq::RawDataEvent::EORE("EUDRB", runnumber, eventnumber)));
         dev.AddEvent(rev);
         dev.SetTag("STOPTIME", decodetime(res.StopDate, res.StopTime));
         writer->WriteEvent(dev);

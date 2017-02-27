@@ -200,11 +200,10 @@ void SimpleStandardPlane::doClustering() {
   }*/
   nClusters = clusterSet.size();
 
-  std::set<int>::iterator it;
-  for (it = clusterSet.begin(); it != clusterSet.end(); ++it) {
+  for (auto& it : clusterSet) {
     SimpleStandardCluster cluster;
     for (unsigned int i = 0; i < npixels_hit; i++) {
-      if (clusterNumber.at(i) == *it) { // Put only these pixels in that
+      if (clusterNumber.at(i) == it) { // Put only these pixels in that
                                         // ClusterCollection that belong to that
                                         // cluster
         cluster.addPixel(_hits.at(i));
