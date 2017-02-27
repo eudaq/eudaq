@@ -3,7 +3,7 @@
 #include "eudaq/OptionParser.hh"
 #include <iostream>
 
-static const std::string EVENT_TYPE = "Example";
+static const std::string EVENT_TYPE = "Hexagon";
 
 int main(int /*argc*/, const char ** argv) {
   // You can use the OptionParser to get command-line arguments

@@ -8,9 +8,19 @@ namespace eudaq {
     std::vector<unsigned char> MakeRawEvent(unsigned width, unsigned height) {
       std::vector<unsigned char> result(width * height * 2);
       size_t offset = 0;
+
+      unsigned hotX=2, hotY=42;
       for (unsigned y = 0; y < height; ++y) {
         for (unsigned x = 0; x < width; ++x) {
-          short charge = 0;
+          unsigned short charge = std::rand()%300;
+	  // Make a hot spot:
+	  if ( (abs(x-hotX) + abs(y-hotY)) < 2)
+	    charge+=22;
+	  if ((abs(x-hotX) + abs(y-hotY)) > 3)
+	    charge = charge/10.0;
+	  if ((abs(x-hotX) + abs(y-hotY)) > 5)
+	    charge=1;
+
           setlittleendian(&result[offset], charge);
           offset += 2;
         }
@@ -20,13 +30,13 @@ namespace eudaq {
 
     std::vector<unsigned char>
     ZeroSuppressEvent(const std::vector<unsigned char> &data, unsigned width,
-                      int threshold = 10) {
+                      int threshold = 30) {
       unsigned height = data.size() / width / 2;
       std::vector<unsigned char> result;
       size_t inoffset = 0, outoffset = 0;
       for (unsigned y = 0; y < height; ++y) {
         for (unsigned x = 0; x < width; ++x) {
-          short charge = getlittleendian<short>(&data[inoffset]);
+          unsigned short charge = getlittleendian<short>(&data[inoffset]);
           if (charge > threshold) {
             result.resize(outoffset + 6);
             setlittleendian<unsigned short>(&result[outoffset + 0], x);
@@ -42,7 +52,7 @@ namespace eudaq {
   }
 
   ExampleHardware::ExampleHardware()
-      : m_numsensors(2), m_width(256), m_height(256), m_triggerid(0) {}
+      : m_numsensors(8), m_width(4), m_height(64), m_triggerid(0) {}
 
   void ExampleHardware::Setup(int) {}
 

@@ -12,18 +12,18 @@
 
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
-static const std::string EVENT_TYPE = "Example";
+static const std::string EVENT_TYPE = "Hexagon";
 
 // Declare a new class that inherits from eudaq::Producer
 class ExampleProducer : public eudaq::Producer {
   public:
-
+    
     // The constructor must call the eudaq::Producer constructor with the name
     // and the runcontrol connection string, and initialize any member variables.
     ExampleProducer(const std::string & name, const std::string & runcontrol)
       : eudaq::Producer(name, runcontrol),
-      m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
-
+	m_run(0), m_ev(0), stopping(false), done(false),started(0) {}
+    
     // This gets called whenever the DAQ is configured
     virtual void OnConfigure(const eudaq::Configuration & config) {
       std::cout << "Configuring: " << config.Name() << std::endl;
@@ -31,8 +31,13 @@ class ExampleProducer : public eudaq::Producer {
       // Do any configuration of the hardware here
       // Configuration file values are accessible as config.Get(name, default)
       m_exampleparam = config.Get("Parameter", 0);
+
+      m_ski = config.Get("Ski", 0);
+
       std::cout << "Example Parameter = " << m_exampleparam << std::endl;
+      std::cout << "Example SKI Parameter = " << m_ski << std::endl;
       hardware.Setup(m_exampleparam);
+      hardware.Setup(m_ski);
 
       // At the end, set the status that will be displayed in the Run Control.
       SetStatus(eudaq::Status::LVL_OK, "Configured (" + config.Name() + ")");
@@ -56,9 +61,9 @@ class ExampleProducer : public eudaq::Producer {
 
       // At the end, set the status that will be displayed in the Run Control.
       SetStatus(eudaq::Status::LVL_OK, "Running");
-	  started=true;
+      started=true;
     }
-
+    
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
       std::cout << "Stopping Run" << std::endl;
@@ -98,13 +103,13 @@ class ExampleProducer : public eudaq::Producer {
           // Then restart the loop
           continue;
         }
-		if (!started)
-		{
-			// Now sleep for a bit, to prevent chewing up all the CPU
-			eudaq::mSleep(20);
-			// Then restart the loop
-			continue;
-		}
+	if (!started)
+	  {
+	    // Now sleep for a bit, to prevent chewing up all the CPU
+	    eudaq::mSleep(20);
+	    // Then restart the loop
+	    continue;
+	  }
         // If we get here, there must be data to read out
         // Create a RawDataEvent to contain the event data to be sent
         eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);
@@ -132,6 +137,7 @@ class ExampleProducer : public eudaq::Producer {
     // but it also generates example raw data to help illustrate the decoder
     eudaq::ExampleHardware hardware;
     unsigned m_run, m_ev, m_exampleparam;
+    unsigned m_ski;
     bool stopping, done,started;
 };
 

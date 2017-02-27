@@ -7,7 +7,7 @@ print "Starting RunControl"
 prc = PyRunControl("44000") # listen to address 44000
 
 # wait for more than one active connection to appear
-while prc.NumConnections < 2:
+while prc.NumConnections < 1:
     sleep(1)
     print "Number of active connections: ", prc.NumConnections
 

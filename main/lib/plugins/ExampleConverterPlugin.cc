@@ -15,7 +15,7 @@ namespace eudaq {
 
   // The event type for which this converter plugin will be registered
   // Modify this to match your actual event type (from the Producer)
-  static const char *EVENT_TYPE = "Example";
+  static const char *EVENT_TYPE = "Hexagon";
 
   // Declare a new class that inherits from DataConverterPlugin
   class ExampleConverterPlugin : public DataConverterPlugin {
@@ -58,21 +58,89 @@ namespace eudaq {
                                      const Event &ev) const {
       // If the event type is used for different sensors
       // they can be differentiated here
-      std::string sensortype = "example";
-      // Create a StandardPlane representing one sensor plane
-      int id = 0;
-      StandardPlane plane(id, EVENT_TYPE, sensortype);
-      // Set the number of pixels
-      int width = 100, height = 50;
-      plane.SetSizeRaw(width, height);
-      // Set the trigger ID
-      plane.SetTLUEvent(GetTriggerID(ev));
-      // Add the plane to the StandardEvent
-      sev.AddPlane(plane);
+      std::string sensortype = "Hexa";
+
+
+      const RawDataEvent * rev = dynamic_cast<const RawDataEvent *> ( &ev );
+
+      //rev->Print(std::cout);
+
+      unsigned nPlanes = rev->NumBlocks();
+      std::cout<<"Number of Raw Data Blocks (=Planes): "<<nPlanes<<std::endl;
+      
+      for (unsigned pl=0; pl<nPlanes; pl++){
+	
+	std::cout<<"Plane = "<<pl<<"  Raw GetID = "<<rev->GetID(pl)<<std::endl;
+
+	const RawDataEvent::data_t & bl = rev->GetBlock(pl);
+	
+	std::cout<<"size of block: "<<bl.size()<<std::endl;
+
+	if (bl.size()==520){
+	  std::cout<<"This is non-ZS data plane: "<<pl<<std::endl;
+	  // Create a StandardPlane representing one sensor plane
+	  StandardPlane plane(2*pl+1, EVENT_TYPE, sensortype);
+	  // Set the number of pixels
+	  int nROCs = 4, nPixels = 64;
+	  plane.SetSizeRaw(nROCs, nPixels, 3);
+	  
+	  //std::cout<<"Plane type = "<<plane.Type()<<std::endl;
+	  //std::cout<<"Plane sensor = "<<plane.Sensor()<<std::endl;
+	  
+
+
+	  // TODO -------------->>>>
+	  // Investigate this method instead of memcpy stuf
+	  //const std::vector <unsigned char> & data=dynamic_cast<const std::vector<unsigned char> &> (ev_raw.GetBlock(i));
+	  // <<<<<<- ----------
+
+	  std::vector<unsigned short> data;
+	  data.resize(bl.size() / sizeof(short));
+	  std::memcpy(&data[0], &bl[0], bl.size());
+	  
+	  std::cout<<" size of data = "<<data.size()<<std::endl;
+	  
+	  //for (size_t d=0; d<data.size();d++){
+	  //if (d<10)
+	  //  std::cout<<d<<" data value: "<<data[d]<<std::endl;
+	  //}
+	  
+	  int ind=0;
+	  for (unsigned px = 0; px < nPixels; ++px) {
+	    for (unsigned roc = 0; roc < nROCs; ++roc) {
+	      unsigned short charge = data[4+roc+px*nROCs];
+	      //for (unsigned fr=0; fr < 3; fr++)
+	      plane.SetPixel(ind, roc, px, 0.25*charge, false, 0);	  
+	      plane.SetPixel(ind, roc, px, charge, false, 1);	  
+	      plane.SetPixel(ind, roc, px, 0.10*charge, false, 2);	  
+
+	      //if (abs(roc-2)+abs(px-42)<7)
+	      //std::cout<<ind<<" roc="<<roc<<" px="<<px<<" charge: "<<charge<<std::endl;
+
+	      ind++;
+	    }
+	  }
+	  
+	  // Set the trigger ID
+	  plane.SetTLUEvent(GetTriggerID(ev));
+	  // Add the plane to the StandardEvent
+	  
+	  sev.AddPlane(plane);
+	}
+	
+	else {
+	  std::cout<<"This is ZS data plane "<<pl<<std::endl;
+	  // Need special plane constructor etc
+	}
+
+      }
+      //std::cout<<"St Ev NumPlanes: "<<sev.NumPlanes()<<std::endl;
+      
       // Indicate that data was successfully converted
       return true;
+      
     }
-
+    
 #if USE_LCIO
     // This is where the conversion to LCIO is done
     virtual lcio::LCEvent *GetLCIOEvent(const Event * /*ev*/) const {
