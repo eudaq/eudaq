@@ -6,30 +6,43 @@
 #include "eudaq/Configuration.hh"
 
 #include "PIController.hh"
+#include "PIWrapper.h"
 
 #include <iostream>
 #include <ostream>
 #include <vector>
 //#include <sched.h>
 
-using namespace std;
-
+using namespace piwrapper;
 
 PIController::PIController(const std::string &name,
 			     const std::string &runcontrol)
-  : eudaq::Controller(name, runcontrol), m_terminated(false), 
-m_name(name), 
-m_hostname(hostname),
-m_portname(portname)
-//m_pinnr(0), 
-//m_waiting_time(4000) 
-{ }
+  : eudaq::Controller(name, runcontrol), m_terminated(false), m_name(name), wrapper(nullptr) { }
 
 void PIController::OnInitialise(const eudaq::Configuration & init) {
       try {
         std::cout << "Reading: " << init.Name() << std::endl;
-        
-        PIWrapper wrapper(m_portnumber, m_hostname);
+
+		m_hostname = &(init.Get("HostName", "192.168.22.5"))[0];
+		//m_hostname = &m_hostname2[0];
+		m_portnumber = init.Get("PortNumber", 50000);
+		//std::cout << m_hostname << m_portnumber << m_hostname << std::endl;
+        //PIWrapper wrapper(m_portnumber, m_hostname);
+		wrapper = std::unique_ptr<PIWrapper::PIWrapper>(new PIWrapper::PIWrapper(m_portnumber, m_hostname));
+
+
+		// connect
+		if(!wrapper.connectTCPIP()) {
+			EUDAQ_ERROR("No TCP/IP connection to PI Controller!");
+		}
+		// check
+		if (!wrapper.isConnected()) {
+			EUDAQ_ERROR("No TCP/IP connection to PI Controller!");
+		}
+		else {
+			wrapper.printStringID();
+			wrapper.printStageTypeAll();
+		}
 
         if (!wrapper.axisIsReferenced(m_axis1)) { 
 		std::cout << "Axis1 not referenced! Please use PIControl!" << std::endl; }
@@ -55,33 +68,85 @@ void PIController::OnInitialise(const eudaq::Configuration & init) {
 void PIController::OnConfigure(const eudaq::Configuration &config) {
   try {
     std::cout << "Configuring: " << config.Name() << std::endl;
+  
+	m_velocity1 = config.Get("Velocity1", -1.0); 
+	m_velocity2 = config.Get("Velocity2", -1.0); 
+	m_velocity3 = config.Get("Velocity3", -1.0); 
+	m_velocity4 = config.Get("Velocity4", -1.0); 
+	m_position1 = config.Get("Position1", -1.0); 
+	m_position2 = config.Get("Position2", -1.0);
+	m_position3 = config.Get("Position3", -1.0);
+	m_position4 = config.Get("Position4", -1.0);
 
-  // Read and store configured pin from eudaq config:
-  //m_pinnr = config.Get("pinnr", 0);
-  //std::cout << m_name << ": Configured pin " << std::to_string(m_pinnr) << " to be set to high." << std::endl;
-  //EUDAQ_INFO(string("Configured pin " + std::to_string(m_pinnr) +
-  //                  " of the Raspberry Pi controller to be set to high."));
+	// Set velocity
+	std::cout << "Set to max. velocity:" << std::endl;
+	wrapper.setVelocityStage(m_axis1, m_velocitymax);
+	wrapper.setVelocityStage(m_axis2, m_velocitymax);
+	wrapper.setVelocityStage(m_axis3, m_velocitymax);
+	wrapper.setVelocityStage(m_axis4, m_velocitymax);
+	printf("\nSet individual velocity:\n");
+	if (m_velocity1 >= m_velocitymax) { m_velocity1 = m_velocitymax; }
+	if (m_velocity1 < 0) { printf("No velocity change for axis1!\n"); }
+	else { wrapper.setVelocityStage(m_axis1, m_velocity1); }
+	if (m_velocity2 >= m_velocitymax) { m_velocity2 = m_velocitymax; }
+	if (m_velocity2 < 0) { printf("No velocity change for axis2!\n"); }
+	else { wrapper.setVelocityStage(m_axis2, m_velocity2); }
+	if (m_velocity3 >= m_velocitymax) { m_velocity3 = m_velocitymax; }
+	if (m_velocity3 < 0) { printf("No velocity change for axis3!\n"); }
+	else { wrapper.setVelocityStage(m_axis3, m_velocity3); }
+	if (m_velocity4 >= m_velocitymax) { m_velocity4 = m_velocitymax; }
+	if (m_velocity4 < 0) { printf("No velocity change for axis4!\n"); }
+	else { wrapper.setVelocityStage(m_axis4, m_velocity4); }
+	// get velocity // alternative: wrapper.getVelocityStage2(m_axis1, &m_velocity1);
+	std::cout << "\nGet velocity:" << std::endl;
+	wrapper.printVelocityStage(m_axis1);
+	wrapper.printVelocityStage(m_axis2);
+	wrapper.printVelocityStage(m_axis3);
+	wrapper.printVelocityStage(m_axis4);
 
-  // Store waiting time in ms before the pin is set to high in OnRunStart():
-  //m_waiting_time = config.Get("waiting_time", 4000);
-  //std::cout << m_name << ": Waiting " << std::to_string(m_waiting_time) << "ms for pin action." << std::endl;
-  //EUDAQ_INFO(string("Waiting " + std::to_string(m_waiting_time) +
-  //                  "ms before enabling output pin at run start."));
+	// get maximum travel range
+	wrapper.maxRangeOfStage(m_axis1, &m_axis1max);
+	wrapper.maxRangeOfStage(m_axis2, &m_axis2max);
+	wrapper.maxRangeOfStage(m_axis3, &m_axis3max);
+	wrapper.maxRangeOfStage(m_axis4, &m_axis4max);
+	std::cout << "\nGet maximum range:\n"
+		<< m_axis1max << "\n"
+		<< m_axis2max << "\n"
+		<< m_axis3max << "\n"
+		<< m_axis4max << std::endl;
+	// get position
+	printf("\nCurrent position:\n");
+	wrapper.printPosition(m_axis1);
+	wrapper.printPosition(m_axis2);
+	wrapper.printPosition(m_axis3);
+	wrapper.printPosition(m_axis4);
 
-  //if(wiringPiSetupGpio() == -1) {
-  //  std::cout << "WiringPi could not be set up" << std::endl;
-  //  throw eudaq::LoggedException("WiringPi could not be set up");
-  //}
-  // Set pin mode to output:
-  //pinMode(m_pinnr, OUTPUT);
+	// Move
+	printf("\nMoving...\n");
+	if (m_position1 >= m_axis1max) { m_position1 = m_axis1max; }
+	if (m_position1 < 0) { printf("No movement of axis1!\n"); }
+	else { wrapper.moveTo(m_axis1, m_position1); }
+	if (m_position2 >= m_axis2max) { m_position2 = m_axis2max; }
+	if (m_position2 < 0) { printf("No movement of axis2!\n"); }
+	else { wrapper.moveTo(m_axis2, m_position2); }
+	if (m_position3 >= m_axis3max) { m_position3 = m_axis3max; }
+	if (m_position3 < 0) { printf("No movement of axis3!\n"); }
+	else { wrapper.moveTo(m_axis3, m_position3); }
+	if (m_position4 >= m_axis4max) { m_position4 = m_axis4max; }
+	if (m_position4 < 0) { printf("No movement of axis4!\n"); }
+	else { wrapper.moveTo(m_axis4, m_position4); }
 
-  // Initialize as low:
-  //digitalWrite(m_pinnr, 0);
+	// New position	
+	printf("\nNew position:\n");
+	wrapper.printPosition(m_axis1);
+	wrapper.printPosition(m_axis2);
+	wrapper.printPosition(m_axis3);
+	wrapper.printPosition(m_axis4);
 
     SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Configured (" + config.Name() + ")");
   } 
   catch (...) {
-    EUDAQ_ERROR(string("Unknown exception."));
+    EUDAQ_ERROR("Unknown exception.");
     SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
   }
 }
@@ -89,20 +154,19 @@ void PIController::OnConfigure(const eudaq::Configuration &config) {
 void PIController::OnStartRun(unsigned runnumber) {
 
   try {
-    // Wait defined time before returning OK.
-    //std::cout << "Waiting configured time of "
-    //	      << std::to_string(m_waiting_time) << "ms" << std::endl;
-    //eudaq::mSleep(m_waiting_time);
-    // Set configured pin to high:
-    //std::cout << "Calling digitalWrite() to set pin high" << std::endl;
-    //digitalWrite(m_pinnr, 1);
-    //EUDAQ_INFO(string("GPIO pin " + std::to_string(m_pinnr) + " now high."));
+    // No Action
 
+	// get position
+	printf("\nCurrent position:\n");
+	wrapper.printPosition(m_axis1);
+	wrapper.printPosition(m_axis2);
+	wrapper.printPosition(m_axis3);
+	wrapper.printPosition(m_axis4);
 
     SetConnectionState(eudaq::ConnectionState::STATE_RUNNING, "Running");
   } 
   catch (...) {
-    EUDAQ_ERROR(string("Unknown exception."));
+    EUDAQ_ERROR("Unknown exception.");
     SetConnectionState(eudaq::ConnectionState::STATE_ERROR, "Unknown exception.");
   }
 }
@@ -111,11 +175,15 @@ void PIController::OnStartRun(unsigned runnumber) {
 void PIController::OnStopRun() {
 
   try {
-    // Set configured pin to low:
-    //std::cout << "Calling digitalWrite() to set pin low" << std::endl;
-    //digitalWrite(m_pinnr, 0);
-    //EUDAQ_INFO(string("GPIO pin " + std::to_string(m_pinnr) + " now low."));
-    
+	// No Action
+
+	// get position
+	printf("\nCurrent position:\n");
+	wrapper.printPosition(m_axis1);
+	wrapper.printPosition(m_axis2);
+	wrapper.printPosition(m_axis3);
+	wrapper.printPosition(m_axis4);
+
     SetConnectionState(eudaq::ConnectionState::STATE_CONF, "Stopped");
   } 
   catch (const std::exception &e) {
@@ -142,7 +210,7 @@ void PIController::Loop() {
   while (!m_terminated) {
     // Move this thread to the end of the scheduler queue:
     //sched_yield();
-	eudaq::mSleep(20);
+	eudaq::mSleep(50);
     continue;
   }
 
@@ -161,9 +229,6 @@ int main(int /*argc*/, const char **argv) {
       "The minimum level for displaying log messages locally");
   eudaq::Option<std::string> name(op, "n", "name", "PIController", "string",
                                   "The name of this Producer/Controller");
-  eudaq::Option<std::string> hostname(op, "ho", "HostName", "192.168.22.5", "string", "set hostname for TCP/IP connection");
-  eudaq::Option<int> portnumber(op, "p", "PortNumber", 50000, "number", "set portnumber for TCP/IP connection");
-
 
   try {
     // This will look through the command-line arguments and set the options
