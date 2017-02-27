@@ -402,8 +402,8 @@ namespace eudaq {
     // If we get here it must be a data event
 
     // prepare the collections for the rawdata and the zs ones
-    std::auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERRAWDATA) ) ;
-    std::auto_ptr< lcio::LCCollectionVec > zsDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERDATA) ) ;
+    std::unique_ptr< lcio::LCCollectionVec > rawDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERRAWDATA) ) ;
+    std::unique_ptr< lcio::LCCollectionVec > zsDataCollection ( new lcio::LCCollectionVec (lcio::LCIO::TRACKERDATA) ) ;
 
     // set the proper cell encoder
     CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( eutelescope::EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
@@ -467,7 +467,7 @@ namespace eudaq {
 
         printf("prepare a new TrackerData for the ZS data \n");
         // prepare a new TrackerData for the ZS data
-        //  std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+        //  std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
         zsFrame= new TrackerDataImpl;
         currentDetector->setMode( mode );
         //	  zsDataEncoder["sensorID"] = plane.ID();

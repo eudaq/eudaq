@@ -159,13 +159,12 @@ bool Mupix4ConverterPlugin::GetLCIOSubEvent(
     }
 
     // lcio takes ownership over the different data objects when they are
-    // added to the event. secure them w/ auto_ptr so they get deleted
+    // added to the event. secure them w/ unique_ptr so they get deleted
     // automatically when something breaks.
-    // NOTE to future self: use unique_ptr since auto_ptr is deprecated
     bool collection_exists = false;
     LCCollectionVec * collection;
-    std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
+    std::unique_ptr<TrackerDataImpl> frame;
+    std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
 
     // get the lcio output collection
     try {

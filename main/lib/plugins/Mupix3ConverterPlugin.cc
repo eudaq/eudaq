@@ -178,13 +178,12 @@ bool Mupix3ConverterPlugin::GetLCIOSubEvent(
     unsigned n_hits;
     const unsigned char * raw_buffer;
     // lcio takes ownership over the different data objects when they are
-    // added to the event. secure them w/ auto_ptr so they get deleted
+    // added to the event. secure them w/ unique_ptr so they get deleted
     // automatically when something breaks.
-    // NOTE to future self: use unique_ptr since auto_ptr are deprecated
     bool collection_exists = false;
     LCCollectionVec * collection;
-    std::auto_ptr<TrackerDataImpl> frame;
-    std::auto_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
+    std::unique_ptr<TrackerDataImpl> frame;
+    std::unique_ptr<EUTelTrackerDataInterfacerImpl<EUTelGenericSparsePixel> > pixels;
     
     if (source.IsBORE()) {
         // this should never happen. BORE event should be handled
