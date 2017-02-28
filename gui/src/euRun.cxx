@@ -6,9 +6,6 @@
 #include <QApplication>
 
 
-#include "config.h" // for version symbols
-
-
 namespace{
   QCoreApplication* GetQApplication(){
     QCoreApplication* qapp = QApplication::instance();
@@ -24,7 +21,7 @@ namespace{
 
 
 int main(int argc, char **argv) {
-  eudaq::OptionParser op("EUDAQ Run Control", PACKAGE_VERSION,
+  eudaq::OptionParser op("EUDAQ Run Control", "2",
                          "A Qt version of the Run Control");
   eudaq::Option<std::string> addr(op, "a", "listen-address", "tcp://44000", "address",
 				  "The address on which to listen for connections");

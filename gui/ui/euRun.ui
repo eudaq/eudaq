@@ -97,7 +97,7 @@
         </widget>
        </item>
        <item row="1" column="3">
-        <widget class="QPushButton" name="btnLoad">
+        <widget class="QPushButton" name="btnLoadConf">
          <property name="text">
           <string>Load</string>
          </property>
@@ -134,16 +134,16 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="2">
-        <widget class="QLineEdit" name="txtGeoID">
-         <property name="toolTip">
-          <string>Double-click to change GeoID</string>
-         </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
+       <!-- <item row="4" column="2"> -->
+       <!--  <widget class="QLineEdit" name="txtGeoID"> -->
+       <!--   <property name="toolTip"> -->
+       <!--    <string>Double-click to change GeoID</string> -->
+       <!--   </property> -->
+       <!--   <property name="readOnly"> -->
+       <!--    <bool>true</bool> -->
+       <!--   </property> -->
+       <!--  </widget> -->
+       <!-- </item> -->
        <item row="3" column="0">
         <widget class="QLabel" name="lblLogmsg">
          <property name="text">
@@ -151,13 +151,13 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="lblGeoID">
-         <property name="text">
-          <string>GeoID:</string>
-         </property>
-        </widget>
-       </item>
+       <!-- <item row="4" column="0"> -->
+       <!--  <widget class="QLabel" name="lblGeoID"> -->
+       <!--   <property name="text"> -->
+       <!--    <string>GeoID:</string> -->
+       <!--   </property> -->
+       <!--  </widget> -->
+       <!-- </item> -->
        <item row="1" column="4">
         <widget class="QPushButton" name="btnConfig">
          <property name="enabled">
@@ -226,6 +226,19 @@
          </property>
          <property name="text">
           <string>Terminate</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="4">
+        <widget class="QPushButton" name="btnReset">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="toolTip">
+          <string>Reset all the DAQ clients</string>
+         </property>
+         <property name="text">
+          <string>Reset</string>
          </property>
         </widget>
        </item>
