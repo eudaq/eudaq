@@ -81,9 +81,9 @@ namespace eudaq{
       case 'r':
 	Reset();
 	break;
-      case 's':
-	RemoteStatus();
-	break;
+      // case 's':
+      // 	RemoteStatus();
+      // 	break;
       case 'b':
 	if(line.length())
 	  SetRunNumber(std::stoul(line));

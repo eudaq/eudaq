@@ -81,7 +81,7 @@ namespace eudaq {
   
   void RunControl::ReadInitilizeFile(const std::string &path){
     m_conf_init = Configuration::MakeUniqueReadFile(path);
-    m_conf->SetSection("RunControl");
+    m_conf_init->SetSection("RunControl");
   }
   
   void RunControl::Reset() {
@@ -179,7 +179,7 @@ namespace eudaq {
   }
 
   void RunControl::StatusThread(){
-    while(true){
+    while(!m_exit){
       SendCommand("STATUS", "");
       std::this_thread::sleep_for(std::chrono::milliseconds(300));
     }
@@ -295,6 +295,8 @@ namespace eudaq {
 
   void RunControl::CloseRunControl(){
     m_exit = true;
+    if(m_thd_status.joinable())
+      m_thd_status.join();
     if(m_thd_server.joinable())
       m_thd_server.join();
   }
