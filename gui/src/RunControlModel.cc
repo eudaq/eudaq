@@ -6,7 +6,7 @@
 
 namespace {
   static const char *const g_columns[] =
-    {"type", "name", "state", "connection"};
+    {"type", "name", "state", "connection", "info"};
 }
 
 RunControlConnection::RunControlConnection(eudaq::ConnectionSPC id)
@@ -50,7 +50,10 @@ bool ConnectionSorter::operator()(size_t lhs, size_t rhs) {
 }
 
 RunControlModel::RunControlModel(QObject *parent)
-  : QAbstractListModel(parent), m_sorter(&m_data) {}
+  : QAbstractListModel(parent), m_sorter(&m_data){
+  qRegisterMetaType<QVector<int> >("QVector<int>");
+
+}
 
 void RunControlModel::newconnection(eudaq::ConnectionSPC id) {
   for (size_t i = 0; i < m_data.size(); ++i) {
@@ -62,8 +65,8 @@ void RunControlModel::newconnection(eudaq::ConnectionSPC id) {
   }
 
   m_data.push_back(RunControlConnection(id));
-  std::vector<size_t>::iterator it = std::lower_bound(
-						      m_disp.begin(), m_disp.end(), m_data.size() - 1, m_sorter);
+  std::vector<size_t>::iterator it =
+    std::lower_bound(m_disp.begin(), m_disp.end(), m_data.size() - 1, m_sorter);
   size_t pos = it - m_disp.begin();
   beginInsertRows(QModelIndex(), pos, pos);
   m_disp.insert(it, m_data.size() - 1);
@@ -99,12 +102,6 @@ void RunControlModel::UpdateDisplayed() {
   }
 }
 
-
-/*Check Configured is a function of RunControlModel that goes through the list of connect\
-  ions stored in m_data and determines if they are all configured.                          
-  In the case that all are configured this function returns true,                           
-  In the case that one of the connections is not configured this function returns false.    
-*/
 bool RunControlModel::CheckConfigured() {
   std::string connectionState;
   for(RunControlConnection i: m_data){
@@ -115,19 +112,22 @@ bool RunControlModel::CheckConfigured() {
   return true;
 }
 
+int RunControlModel::GetLevel(const QModelIndex &index) const {
+  const RunControlConnection &conn = m_data[m_disp[index.row()]];
+  if (conn.IsConnected())
+    return conn.GetLevel();
+  return eudaq::Status::LVL_DEBUG;
+}
+
+
+
+
 int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
   return m_data.size();
 }
 
 int RunControlModel::columnCount(const QModelIndex & /*parent*/) const {
   return RunControlConnection::NumColumns();
-}
-
-int RunControlModel::GetLevel(const QModelIndex &index) const {
-  const RunControlConnection &conn = m_data[m_disp[index.row()]];
-  if (conn.IsConnected())
-    return conn.GetLevel();
-  return eudaq::Status::LVL_DEBUG;
 }
 
 QVariant RunControlModel::data(const QModelIndex &index, int role) const {

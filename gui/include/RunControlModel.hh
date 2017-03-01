@@ -9,7 +9,6 @@ public:
   QString operator[](int) const;
   static int NumColumns();
   static const char *ColumnName(int i);
-  eudaq::Status GetStatus() const { return m_status; }
   int GetLevel() const { return m_status.GetLevel(); }
   bool IsConnected() const { return !m_id.unique(); }
   eudaq::ConnectionSPC GetId() const { return m_id; }
@@ -38,19 +37,19 @@ class RunControlModel : public QAbstractListModel {
 
 public:
   RunControlModel(QObject *parent = 0);
-
+  int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+  int columnCount(const QModelIndex &parent = QModelIndex()) const override;
+  QVariant data(const QModelIndex &index, int role) const override;
+  QVariant headerData(int section, Qt::Orientation orientation,
+                      int role = Qt::DisplayRole) const override;
+  void sort(int column, Qt::SortOrder order) override;
+  
   void newconnection(eudaq::ConnectionSPC id);
   void disconnected(eudaq::ConnectionSPC id);
   int GetLevel(const QModelIndex &index) const;
   void UpdateDisplayed();
   bool CheckConfigured();
-  int rowCount(const QModelIndex &parent = QModelIndex()) const;
-  int columnCount(const QModelIndex &parent = QModelIndex()) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation,
-                      int role = Qt::DisplayRole) const;
   void SetStatus(eudaq::ConnectionSPC id, eudaq::Status status);
-  void sort(int column, Qt::SortOrder order);
 
 private:
   std::vector<RunControlConnection> m_data;

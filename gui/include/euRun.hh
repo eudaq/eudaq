@@ -15,8 +15,6 @@
 #include <QString>
 
 #define FONT_SIZE 12
-// To make Qt behave on OSX (to be checked on other OSes)
-#define MAGIC_NUMBER 22
 
 using eudaq::from_string;
 
@@ -35,8 +33,7 @@ class RunControlGUI : public QMainWindow,
 		      public eudaq::RunControl {
   Q_OBJECT
 public:
-  RunControlGUI(const std::string &listenaddress,
-                QWidget *parent = 0, Qt::WindowFlags flags = 0);
+  RunControlGUI(const std::string &listenaddress);
   ~RunControlGUI() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;

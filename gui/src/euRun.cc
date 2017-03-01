@@ -19,7 +19,7 @@ static const char *statuses[] = {
   "Scalers",   0};
 
 RunConnectionDelegate::RunConnectionDelegate(RunControlModel *model)
-  : m_model(model) {}
+  : m_model(model){}
 
 void RunConnectionDelegate::paint(QPainter *painter,
                                   const QStyleOptionViewItem &option,
@@ -29,12 +29,15 @@ void RunConnectionDelegate::paint(QPainter *painter,
   QItemDelegate::paint(painter, option, index);
 }
 
-RunControlGUI::RunControlGUI(const std::string &listenaddress,
-                             QWidget *parent, Qt::WindowFlags flags)
-  : QMainWindow(parent, flags), eudaq::RunControl(listenaddress),
+RunControlGUI::RunControlGUI(const std::string &listenaddress)
+  : QMainWindow(0, 0), eudaq::RunControl(listenaddress),
   m_delegate(&m_run), m_state(STATE_UNINIT), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
   m_filebytes(0), m_events(0){
+
+  qRegisterMetaType<QModelIndex>("QModelIndex");
+  
   setupUi(this);
+
   QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
@@ -96,11 +99,6 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress,
 
 void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
 			     std::shared_ptr<const eudaq::Status> status) {
-  static bool registered = false;
-  if(!registered) {
-    qRegisterMetaType<QModelIndex>("QModelIndex");
-    registered = true;
-  }
   if (id->GetType() == "DataCollector") {
     m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
     m_events = from_string(status->GetTag("EVENT"), 0LL);
@@ -160,11 +158,6 @@ void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
 }
 
 void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
-  static bool registered = false;
-  if (!registered) {
-    qRegisterMetaType<QModelIndex>("QModelIndex");
-    registered = true;
-  }
   if (id->GetType() == "LogCollector") {
     btnLog->setEnabled(true);
   }
