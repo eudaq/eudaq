@@ -43,8 +43,7 @@ namespace eudaq {
     //run in m_thd_server thread
     virtual void DoConnect(ConnectionSPC con) {}
     virtual void DoDisconnect(ConnectionSPC con) {}
-    virtual void DoStatus(ConnectionSPC con,
-			  std::shared_ptr<const Status> st) {}
+    virtual void DoStatus(ConnectionSPC con, StatusSPC st) {}
     //
     //thread control
     void StartRunControl(); 
@@ -53,6 +52,8 @@ namespace eudaq {
     virtual void Exec();
     //
 
+    void SetRunN(uint32_t n){m_runnumber = n;};
+    uint32_t GetRunN() const {return m_runnumber;};
     void SetRunNumber(uint32_t n){m_runnumber = n;};
     uint32_t GetRunNumber() const {return m_runnumber;};
     void ReadConfigureFile(const std::string &path);

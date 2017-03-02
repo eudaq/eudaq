@@ -1,6 +1,6 @@
 #ifndef EUDAQ_INCLUDED_Serializable
 #define EUDAQ_INCLUDED_Serializable
-#include "Platform.hh"
+#include "eudaq/Platform.hh"
 namespace eudaq {
 
   class Serializer;

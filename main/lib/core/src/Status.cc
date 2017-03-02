@@ -49,7 +49,7 @@ namespace eudaq {
     EUDAQ_THROW("Unrecognised level: " + str);
   }
 
-  Status &Status::SetTag(const std::string &name, const std::string &val) {
+  Status &Status::SetTag(const std::string &name, const std::string &val){
     m_tags[name] = val;
     return *this;
   }
@@ -62,10 +62,18 @@ namespace eudaq {
     return i->second;
   }
 
-  void Status::print(std::ostream &os) const {
-    os << Level2String(m_level);
-    if (m_msg.size() > 0) {
-      os << ": " << m_msg;
+  void Status::Print(std::ostream &os, size_t offset) const {
+    os << std::string(offset, ' ') << "<Status>\n";
+    os << std::string(offset + 2, ' ') << "<Level>" << Level2String(m_level) <<"</Level>\n";
+    os << std::string(offset + 2, ' ') << "<State>" << m_state <<"</State>\n";
+    os << std::string(offset + 2, ' ') << "<Message>" <<m_msg <<"</Message>\n";
+    if(!m_tags.empty()){
+      os << std::string(offset + 2, ' ') << "<Tags>\n";
+      for (auto &tag: m_tags){
+	os << std::string(offset+4, ' ') << "<Tag>"<< tag.first << "=" << tag.second << "</Tag>\n";
+      }
+      os << std::string(offset + 2, ' ') << "</Tags>\n";
     }
+    os << std::string(offset, ' ') << "</Status>\n";
   }
 }

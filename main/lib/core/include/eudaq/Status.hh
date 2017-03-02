@@ -11,7 +11,12 @@ namespace eudaq {
 
   class Serializer;
   class Deserializer;
+  class Status;
 
+  using StatusUP = std::unique_ptr<Status>;
+  using StatusSP = std::shared_ptr<Status>;
+  using StatusSPC = std::shared_ptr<const Status>;
+  
   class DLLEXPORT Status : public Serializable {
   public:
     enum Level {
@@ -55,17 +60,17 @@ namespace eudaq {
     static std::string Level2String(int level);
     static int String2Level(const std::string &);
     virtual ~Status() {}
-    virtual void print(std::ostream &) const;
+    virtual void Print(std::ostream &os, size_t offset = 0) const;
   private:
     typedef std::map<std::string, std::string> map_t;
     int m_level;
     int m_state;
     std::string m_msg;
-    map_t m_tags; ///< Metadata tags in (name=value) pairs of strings
+    map_t m_tags;
   };
 
   inline std::ostream &operator<<(std::ostream &os, const Status &s) {
-    s.print(os);
+    s.Print(os);
     return os;
   }
 }
