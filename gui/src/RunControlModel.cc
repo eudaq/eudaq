@@ -18,8 +18,17 @@ QString RunControlConnection::operator[](int i) const {
     return m_id->GetType().c_str();
   case 1:
     return m_id->GetName().c_str();
-  case 2:
-    return m_id.unique()?"DEAD":to_string(m_status).c_str();
+  case 2:{
+    if(m_status){
+      // std::cout<<">>>1"<<std::endl;
+      // m_status->Print(std::cout);      
+      return m_id.unique()?"DEAD":to_string(*m_status).c_str();
+    }
+    // std::cout<<">>>0"<<std::endl;
+    // return m_id.unique()?"DEAD":to_string(*m_status).c_str();
+    // else
+    return "NONE_STATUS";
+  }
   case 3:
     return m_id->GetRemote().c_str();
   default:
@@ -27,7 +36,7 @@ QString RunControlConnection::operator[](int i) const {
   }
 }
 
-int RunControlConnection::NumColumns() {
+int RunControlConnection::NumColumns(){
   return sizeof g_columns / sizeof *g_columns;
 }
 
@@ -85,9 +94,9 @@ void RunControlModel::disconnected(eudaq::ConnectionSPC id) {
 }
 
 void RunControlModel::SetStatus(eudaq::ConnectionSPC id,
-                                eudaq::Status status) {
+                                eudaq::StatusSPC status) {
   for (size_t i = 0; i < m_data.size(); ++i) {
-    if (id == m_data[i].GetId()) {
+    if (id == m_data[i].GetId()){
       m_data[i].SetStatus(status);
       break;
     }
@@ -118,9 +127,6 @@ int RunControlModel::GetLevel(const QModelIndex &index) const {
     return conn.GetLevel();
   return eudaq::Status::LVL_DEBUG;
 }
-
-
-
 
 int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
   return m_data.size();

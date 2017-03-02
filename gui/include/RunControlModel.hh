@@ -9,14 +9,14 @@ public:
   QString operator[](int) const;
   static int NumColumns();
   static const char *ColumnName(int i);
-  int GetLevel() const { return m_status.GetLevel(); }
+  int GetLevel() const { return m_status->GetLevel(); }
   bool IsConnected() const { return !m_id.unique(); }
   eudaq::ConnectionSPC GetId() const { return m_id; }
-  void SetStatus(const eudaq::Status &status) { m_status = status; }
+  void SetStatus(eudaq::StatusSPC status) { m_status = status; }
 
 private:
   eudaq::ConnectionSPC m_id;
-  eudaq::Status m_status;
+  eudaq::StatusSPC m_status;
 };
 
 class ConnectionSorter {
@@ -49,10 +49,12 @@ public:
   int GetLevel(const QModelIndex &index) const;
   void UpdateDisplayed();
   bool CheckConfigured();
-  void SetStatus(eudaq::ConnectionSPC id, eudaq::Status status);
+  void SetStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status);
 
 private:
   std::vector<RunControlConnection> m_data;
   std::vector<size_t> m_disp;
   ConnectionSorter m_sorter;
+  std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_con_status;
+  
 };

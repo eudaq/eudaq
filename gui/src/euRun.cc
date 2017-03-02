@@ -18,20 +18,9 @@ static const char *statuses[] = {
   "PARTICLES", "Particles",  "TLUSTAT",  "TLU Status",   "SCALERS",
   "Scalers",   0};
 
-RunConnectionDelegate::RunConnectionDelegate(RunControlModel *model)
-  : m_model(model){}
-
-void RunConnectionDelegate::paint(QPainter *painter,
-                                  const QStyleOptionViewItem &option,
-                                  const QModelIndex &index) const {
-  int level = m_model->GetLevel(index);
-  painter->fillRect(option.rect, QBrush(level_colours[level]));
-  QItemDelegate::paint(painter, option, index);
-}
-
 RunControlGUI::RunControlGUI(const std::string &listenaddress)
   : QMainWindow(0, 0), eudaq::RunControl(listenaddress),
-  m_delegate(&m_run), m_state(STATE_UNINIT), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
+  m_state(STATE_UNINIT), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
   m_filebytes(0), m_events(0){
 
   qRegisterMetaType<QModelIndex>("QModelIndex");
@@ -97,8 +86,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress)
   m_timer_display.start(500);
 }
 
-void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
-			     std::shared_ptr<const eudaq::Status> status) {
+void RunControlGUI::DoStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status){
   if (id->GetType() == "DataCollector") {
     m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
     m_events = from_string(status->GetTag("EVENT"), 0LL);
@@ -154,11 +142,11 @@ void RunControlGUI::DoStatus(eudaq::ConnectionSPC id,
       }
     }
   }
-  m_run.SetStatus(id, *status);
+  m_run.SetStatus(id, status);
 }
 
 void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
-  if (id->GetType() == "LogCollector") {
+  if (id->GetType() == "LogCollector"){
     btnLog->setEnabled(true);
   }
   m_run.newconnection(id);
@@ -303,6 +291,13 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
       == QMessageBox::Cancel) {
     event->ignore();
   } else {
+    QSettings settings("EUDAQ collaboration", "EUDAQ");  
+    settings.beginGroup("euRun2");
+    settings.setValue("size", size());
+    settings.setValue("pos", pos());
+    settings.setValue("lastConfigFile", txtConfigFileName->text());
+    settings.setValue("lastInitFile", txtInitFileName->text());
+    settings.endGroup();
     Terminate();
     event->accept();
   }
@@ -324,15 +319,6 @@ bool RunControlGUI::checkConfigFile() {
   return rx.exactMatch(loadedFile);
 }
 
-RunControlGUI::~RunControlGUI() {
-  QSettings settings("EUDAQ collaboration", "EUDAQ");   
-  settings.beginGroup("euRun2");
-  settings.setValue("size", size());
-  settings.setValue("pos", pos());
-  settings.setValue("lastConfigFile", txtConfigFileName->text());
-  settings.setValue("lastInitFile", txtInitFileName->text());
-  settings.endGroup();
-}
 
 void RunControlGUI::Exec(){
   show();

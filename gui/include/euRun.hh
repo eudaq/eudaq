@@ -20,12 +20,7 @@ using eudaq::from_string;
 
 class RunConnectionDelegate : public QItemDelegate {
 public:
-  RunConnectionDelegate(RunControlModel *model);
-  void GetModelData();
-private:
-  void paint(QPainter *painter, const QStyleOptionViewItem &option,
-             const QModelIndex &index) const;
-  RunControlModel *m_model;
+  RunConnectionDelegate();
 };
 
 class RunControlGUI : public QMainWindow,
@@ -34,14 +29,12 @@ class RunControlGUI : public QMainWindow,
   Q_OBJECT
 public:
   RunControlGUI(const std::string &listenaddress);
-  ~RunControlGUI() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoStatus(eudaq::ConnectionSPC id,
-		std::shared_ptr<const eudaq::Status> status) override;
+  void DoStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status) override;
   void Exec() override final;
 private:
-  void closeEvent(QCloseEvent *event);
+  void closeEvent(QCloseEvent *event) override;
   bool checkInitFile();
   bool checkConfigFile();
   void updateButtons();
@@ -69,7 +62,7 @@ private:
   int m_state;
 
   RunControlModel m_run;
-  RunConnectionDelegate m_delegate;
+  QItemDelegate m_delegate;
   QTimer m_timer_display;
   QTimer m_timer_autorun;
   std::map<std::string, QLabel*> m_status;
