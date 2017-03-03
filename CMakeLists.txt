@@ -140,6 +140,11 @@ IF(BUILD_main)
   add_subdirectory(main/exe)
 ENDIF()
 
+option(BUILD_sandbox "Build my sandbox, please.." OFF)
+IF(BUILD_sandbox)
+  add_subdirectory(sandbox)
+ENDIF()
+
 # build EUDAQ python exe bindings
 option(BUILD_python "Compile Python EUDAQ binding library?" OFF)
 IF(BUILD_python)
