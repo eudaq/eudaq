@@ -34,11 +34,12 @@ public:
 			m_hostname = &m_hostname2[0];
 			m_portnumber = init.Get("PortNumber", 50001);
 			std::cout << m_hostname2 << m_portnumber << m_hostname << std::endl;
-			wrapper = std::make_shared<PIWrapper>(m_portnumber, m_hostname);
-
-			// connect
-			if (!wrapper->connectTCPIP()) {
-				EUDAQ_ERROR("No TCP/IP connection to PI Controller!");
+			if (!wrapper) {
+				wrapper = std::make_shared<PIWrapper>(m_portnumber, m_hostname);
+				// connect
+				if (!wrapper->connectTCPIP()) {
+					EUDAQ_ERROR("No TCP/IP connection to PI Controller!");
+				}
 			}
 			// check
 			if (!wrapper->isConnected()) {
