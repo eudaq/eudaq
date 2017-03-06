@@ -141,10 +141,13 @@ class RpiTestProducer : public eudaq::Producer {
 
 	socklen_t cli_len = sizeof(cli_addr);
 
+	// This call is blocking by default. This would prevent us stopping the run:
 	m_cli_sockfd = accept(m_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
 	if (m_cli_sockfd < 0)
 	  EUDAQ_ERROR("Sockets: ERROR on accept");
 	
+	std::cout<<" after accept. fd="<<m_cli_sockfd<<std::endl;
+
 	const int bufsize = 4096;
 	char buffer[bufsize];
 	bzero(buffer, bufsize);
@@ -153,6 +156,8 @@ class RpiTestProducer : public eudaq::Producer {
 	int n = read(m_cli_sockfd, buffer, bufsize);
 	if (n < 0) EUDAQ_ERROR("Sockets: ERROR reading from socket");
 	
+	std::cout<<" after read. n="<<n<<std::endl;
+
 	// If we get here, there must be data to read out
 	// Create a RawDataEvent to contain the event data to be sent
 	eudaq::RawDataEvent ev(EVENT_TYPE, m_run, m_ev);	  
