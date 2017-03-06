@@ -1,15 +1,15 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 # file Copyright.txt or https://cmake.org/licensing for details.
 
-#SET(CMake_SOURCE_DIR ${PROJECT_SOURCE_DIR} )
-
-#set(CPACK_PACKAGING_INSTALL_PREFIX "/opt")
-#set(CPACK_INSTALL_PREFIX "/opt")
-#string(SUBSTRING ${EUDAQ_LIB_VERSION} 1 -1 EUDAQ_LIB_VERSION_STRIPPED)
-
-INSTALL(DIRECTORY "${PROJECT_SOURCE_DIR}/images" DESTINATION ".")
-INSTALL(FILES ${PROJECT_SOURCE_DIR}/LICENSE.md DESTINATION ".")
-INSTALL(FILES ${PROJECT_SOURCE_DIR}/AUTHORS DESTINATION ".")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "EUDAQ is distributed data acquisition sysem")
+set(CPACK_PACKAGE_VENDOR "EUDAQ collaboration")
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
+set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
+set(CPACK_PACKAGE_VERSION "${EUDAQ_LIB_VERSION_STRIPPED}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "eudaq-${EUDAQ_LIB_VERSION_STRIPPED}")
+set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/images/eudaq_logo.bmp")
 
 option(CMAKE_INSTALL_DEBUG_LIBRARIES
   "Install Microsoft runtime debug libraries with CMake." FALSE)
@@ -24,16 +24,6 @@ if(CMake_INSTALL_DEPENDENCIES)
   #include(${CMake_SOURCE_DIR}/Modules/InstallRequiredSystemLibraries.cmake)
   include(InstallRequiredSystemLibraries.cmake)
 endif()
-
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "EUDAQ is distributed data acquisition sysem")
-set(CPACK_PACKAGE_VENDOR "EUDAQ collaboration")
-set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md")
-set(CPACK_PACKAGE_NAME "${CMAKE_PROJECT_NAME}")
-set(CPACK_PACKAGE_VERSION "${EUDAQ_LIB_VERSION_STRIPPED}")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "eudaq-${EUDAQ_LIB_VERSION}")
-set(CPACK_PACKAGE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/doc/manual/src/images/eudaq_logo.png")
 
 # Installers for 32- vs. 64-bit CMake:
 #  - Root install directory (displayed to end user at installer-run time)
@@ -86,7 +76,6 @@ if(UNIX)
   #set(CPACK_SOURCE_STRIP_FILES "")
   #set(CPACK_PACKAGE_EXECUTABLES "ccmake" "CMake")
   #set (CPACK_PACKAGE_INSTALL_DIRECTORY "eudaq")
-  set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/eudaq")
   #execute_process(COMMAND ln -s /opt/eudaq/bin/TestReader.exe TestReader.exe)
   #install(FILES ${CMAKE_BINARY_DIR}/TestReader.exe DESTINATION /usr/bin)  
   file(GLOB files "${CMAKE_BINARY_DIR}/*")
@@ -94,12 +83,7 @@ if(UNIX)
   #  execute_process(COMMAND ln -s /opt/eudaq/bin/${exec_file_name} ${exec_file_name})
   #  install(FILES ${CMAKE_BINARY_DIR}/${exec_file_name} DESTINATION /usr/bin) 
   #endforeach(exec_file_name)  
-  #set(CPACK_INSTALL_PREFIX "/opt")
-  set( CPACK_DEBIAN_GUI_PACKAGE_CONTROL_EXTRA "${PROJECT_SOURCE_DIR}/cmake/cpack/debian/scripts/preinst" )
-  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-  set(CPACK_DEBIAN_PACKAGE_DEBUG YES)
-  set(CPACK_DEB_COMPONENT_INSTALL ON)  
-  set(CPACK_DEBIAN_TLU_PACKAGE_DEPENDS "eudaq-main_lib (=${EUDAQ_LIB_VERSION_STRIPPED})")
+  #set(CPACK_INSTALL_PREFIX "/opt")s
 endif()
 
 set(CPACK_WIX_UPGRADE_GUID "8ffd1d72-b7f1-11e2-8ee5-00238bca4991")
@@ -118,9 +102,12 @@ endif()
 # Set the options file that needs to be included inside CMakeCPackOptions.cmake
 set(QT_DIALOG_CPACK_OPTIONS_FILE ${CMake_BINARY_DIR}/Source/QtDialog/QtDialogCPack.cmake)
 configure_file("CMakeCPackOptions.cmake.in" "CMakeCPackOptions.cmake" @ONLY)
-set(CPACK_PROJECT_CONFIG_FILE "${CMake_CURRENT_BINARY_DIR}/CMakeCPackOptions.cmake")
+set(CPACK_PROJECT_CONFIG_FILE "CMakeCPackOptions.cmake")
 
-set(CPACK_COMPONENTS_ALL MAIN_LIB MAIN_EXE GUI TLU NI ONLINEMON MAIN_PYTHON RPICONTROLLER)
+#set(CPACK_COMPONENTS_ALL MAIN_LIB MAIN_EXE GUI TLU NI ONLINEMON MAIN_PYTHON RPICONTROLLER OFFLINEMON)
+
+# Either set generator here or call by cpack -G $GeneratorName from shell
 # SET(CPACK_GENERATOR "DEB")
+
 # include CPack model once all variables are set
 include(CPack)
