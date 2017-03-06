@@ -74,10 +74,8 @@ CorrelationCollection::getCorrelationHistos(const SimpleStandardPlane &p1,
 }
 
 void CorrelationCollection::Reset() {
-  std::map<std::pair<SimpleStandardPlane, SimpleStandardPlane>,
-           CorrelationHistos *>::iterator it;
-  for (it = _map.begin(); it != _map.end(); ++it) {
-    (*it).second->Reset();
+  for (auto& it : _map) {
+    it.second->Reset();
   }
 }
 
@@ -524,16 +522,14 @@ void CorrelationCollection::Write(TFile *file) {
     gDirectory->mkdir("Correlations");
     gDirectory->cd("Correlations");
   }
-  std::map<std::pair<SimpleStandardPlane, SimpleStandardPlane>,
-           CorrelationHistos *>::iterator it;
 
-  for (it = _map.begin(); it != _map.end(); ++it) {
+  for (auto& it : _map) {
     // char sensorfolder[255]="";
     // sprintf(sensorfolder,"%s_%d:%s_%d",it->first.getPlane1().getName().c_str(),it->first.getPlane1().getID(),
     // it->first.getPlane2().getName().c_str(),it->first.getPlane2().getID());
     // gDirectory->mkdir(sensorfolder);
     // gDirectory->cd(sensorfolder);
-    it->second->Write();
+    it.second->Write();
 
     // gDirectory->cd("..");
   }

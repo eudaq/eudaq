@@ -102,8 +102,7 @@ namespace eudaq {
 
   AidaFileWriter *AidaFileWriterFactory::Create(const std::string &name,
                                                 const std::string &params) {
-    map_t::const_iterator it =
-        AidaFileWriterMap().find(name == "" ? "native" : name);
+    const auto it = AidaFileWriterMap().find(name == "" ? "native" : name);
     if (it == AidaFileWriterMap().end())
       EUDAQ_THROW("Unknown file writer: " + name);
     return (it->second)(params);
@@ -111,10 +110,7 @@ namespace eudaq {
 
   std::vector<std::string> AidaFileWriterFactory::GetTypes() {
     std::vector<std::string> result;
-    for (map_t::const_iterator it = AidaFileWriterMap().begin();
-         it != AidaFileWriterMap().end(); ++it) {
-      result.push_back(it->first);
-    }
+    for (const auto& it:AidaFileWriterMap()) { result.emplace_back(it.first); }
     return result;
   }
 }

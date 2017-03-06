@@ -365,9 +365,9 @@ Otherwise pack the data into a buffer using unsigned chars. The function passes 
   }
 
   TCPServer::~TCPServer() {
-    for (size_t i = 0; i < m_conn.size(); ++i) {
+    for (auto & i : m_conn) {
       ConnectionInfoTCP *inf =
-          dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
+          dynamic_cast<ConnectionInfoTCP *>(i.get());
       if (inf && inf->IsEnabled()) {
         closesocket(inf->GetFd());
       }
@@ -377,10 +377,10 @@ Otherwise pack the data into a buffer using unsigned chars. The function passes 
 
   ConnectionInfoTCP &TCPServer::GetInfo(SOCKET fd) const {
     const ConnectionInfoTCP tofind(fd);
-    for (size_t i = 0; i < m_conn.size(); ++i) {
-      if (tofind.Matches(*m_conn[i]) && m_conn[i]->GetState() >= 0) {
+    for (auto & i : m_conn) {
+      if (tofind.Matches(*i) && i->GetState() >= 0) {
         ConnectionInfoTCP *inf =
-            dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
+            dynamic_cast<ConnectionInfoTCP *>(i.get());
         return *inf;
       }
     }
@@ -388,10 +388,10 @@ Otherwise pack the data into a buffer using unsigned chars. The function passes 
   }
 
   void TCPServer::Close(const ConnectionInfo &id) {
-    for (size_t i = 0; i < m_conn.size(); ++i) {
-      if (id.Matches(*m_conn[i])) {
+    for (auto & i : m_conn) {
+      if (id.Matches(*i)) {
         ConnectionInfoTCP *inf =
-            dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
+            dynamic_cast<ConnectionInfoTCP *>(i.get());
         if (inf && inf->IsEnabled()) {
           SOCKET fd = inf->GetFd();
           inf->Disable();
@@ -405,11 +405,11 @@ Otherwise pack the data into a buffer using unsigned chars. The function passes 
   void TCPServer::SendPacket(const unsigned char *data, size_t len,
                              const ConnectionInfo &id, bool duringconnect) {
     // std::cout << "SendPacket to " << id << std::endl;
-    for (size_t i = 0; i < m_conn.size(); ++i) {
+    for (auto & i : m_conn) {
       // std::cout << "- " << i << ": " << *m_conn[i] << std::flush;
-      if (id.Matches(*m_conn[i])) {
+      if (id.Matches(*i)) {
         ConnectionInfoTCP *inf =
-            dynamic_cast<ConnectionInfoTCP *>(m_conn[i].get());
+            dynamic_cast<ConnectionInfoTCP *>(i.get());
         if (inf && inf->IsEnabled() && (inf->GetState() > 0 || duringconnect)) {
           // std::cout << " ok" << std::endl;
           do_send_packet(inf->GetFd(), data, len);
@@ -460,9 +460,9 @@ Otherwise pack the data into a buffer using unsigned chars. The function passes 
             std::shared_ptr<ConnectionInfo> ptr(
                 new ConnectionInfoTCP(peersock, host));
             bool inserted = false;
-            for (size_t i = 0; i < m_conn.size(); ++i) {
-              if (m_conn[i]->GetState() < 0) {
-                m_conn[i] = ptr;
+            for (auto & i : m_conn) {
+              if (i->GetState() < 0) {
+                i = ptr;
                 inserted = true;
               }
             }

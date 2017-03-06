@@ -607,15 +607,15 @@ namespace eudaq {
         size_t nPixel = plane.HitPixels();
 
         // prepare a new TrackerData for the ZS data
-        std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+        std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
         zsDataEncoder.setCellID( zsFrame.get() );
 
         // this is the structure that will host the sparse pixel
-        std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+        std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
           sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
         // prepare a sparse pixel to be added to the sparse data
-        std::auto_ptr< eutelescope::EUTelGenericSparsePixel > sparsePixel( new eutelescope::EUTelGenericSparsePixel );
+        std::unique_ptr< eutelescope::EUTelGenericSparsePixel > sparsePixel( new eutelescope::EUTelGenericSparsePixel );
         for ( size_t iPixel = 0; iPixel < nPixel; ++iPixel ) {
 
           // the data contain also the markers, so we have to strip
@@ -718,7 +718,7 @@ namespace eudaq {
 
         // this is the right place to prepare the TrackerRawData
         // object
-        std::auto_ptr< lcio::TrackerRawDataImpl > cdsFrame( new lcio::TrackerRawDataImpl );
+        std::unique_ptr< lcio::TrackerRawDataImpl > cdsFrame( new lcio::TrackerRawDataImpl );
         rawDataEncoder.setCellID( cdsFrame.get() );
 
         // add the cds stripped values to the current TrackerRawData

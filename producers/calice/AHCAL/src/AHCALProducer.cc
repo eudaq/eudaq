@@ -220,7 +220,7 @@ namespace eudaq {
 
     if(_fd <= 0) std::cout << "AHCALProducer::SendCommand(): cannot send command because connection is not open." << std::endl;
     else {
-	    size_t bytesWritten = write(_fd, command, size);
+	    ssize_t bytesWritten = write(_fd, command, size);
 	    if ( bytesWritten  < 0 ) {
 		    std::cout << "There was an error writing to the TCP socket" << std::endl;
 	    } else {

@@ -36,13 +36,12 @@ namespace eudaq {
   }
 
   void Configuration::Save(std::ostream &stream) const {
-    for (map_t::const_iterator i = m_config.begin(); i != m_config.end(); ++i) {
-      if (i->first != "") {
-        stream << "[" << i->first << "]\n";
+    for (const auto& i : m_config) {
+      if (i.first != "") {
+        stream << "[" << i.first << "]\n";
       }
-      for (section_t::const_iterator j = i->second.begin();
-           j != i->second.end(); ++j) {
-        stream << j->first << " = " << j->second << "\n";
+      for (const auto& j : i.second) {
+        stream << j.first << " = " << j.second << "\n";
       }
       stream << "\n";
     }
@@ -169,8 +168,8 @@ namespace eudaq {
   }
 
   void Configuration::Print(std::ostream &out) const {
-    for (section_t::iterator it = m_cur->begin(); it != m_cur->end(); ++it) {
-      out << it->first << " : " << it->second << std::endl;
+    for (auto& it : *m_cur) {
+      out << it.first << " : " << it.second << std::endl;
     }
   }
 

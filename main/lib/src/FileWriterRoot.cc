@@ -31,7 +31,10 @@ namespace eudaq {
     unsigned i_tlu;        // a trigger id
     unsigned i_run;        // a run  number
     unsigned i_event;      // an event number
+    unsigned id_frame;      // an event number
+    unsigned id_charge;      // an event number
     uint64_t i_time_stamp; // the time stamp
+    bool id_pivot;
   };
 
   namespace {
@@ -58,6 +61,9 @@ namespace eudaq {
     m_ttree->Branch("id_hit", &id_hit, "id_hit/I");
     m_ttree->Branch("id_x", &id_x, "id_x/D");
     m_ttree->Branch("id_y", &id_y, "id_y/D");
+    m_ttree->Branch("id_frame", &id_frame, "id_frame/i");
+    m_ttree->Branch("id_charge", &id_charge, "id_charge/i");
+    m_ttree->Branch("id_pivot", &id_pivot, "id_pivot/O");
     m_ttree->Branch("i_time_stamp", &i_time_stamp, "i_time_stamp/LLU");
     m_ttree->Branch("i_tlu", &i_tlu, "i_tlu/I");
     m_ttree->Branch("i_run", &i_run, "i_run/I");
@@ -75,16 +81,23 @@ namespace eudaq {
 
       const eudaq::StandardPlane &plane = sev.GetPlane(iplane);
       std::vector<double> cds = plane.GetPixels<double>();
-      for (size_t ipix = 0; ipix < cds.size(); ++ipix) {
-        id_plane = plane.ID();
-        id_hit = ipix;
-        id_x = plane.GetX(ipix);
-        id_y = plane.GetY(ipix);
-        i_time_stamp = sev.GetTimestamp();
-        i_run = sev.GetRunNumber();
-        i_event = sev.GetEventNumber();
-	i_tlu = plane.TLUEvent();
-        m_ttree->Fill();
+      unsigned int ipix = 0;
+      for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); lvl1++) {
+	for (unsigned int index = 0; index < plane.HitPixels(lvl1);index++) {
+	  id_plane = plane.ID();
+	  id_hit = ipix;
+	  id_x = plane.GetX(index,lvl1);
+	  id_y = plane.GetY(index,lvl1);
+	  id_frame = lvl1;
+	  id_charge = plane.GetPixel(index,lvl1);
+	  id_pivot = plane.GetPivot(index,lvl1);
+	  i_time_stamp = sev.GetTimestamp();
+	  i_run = sev.GetRunNumber();
+	  i_event = sev.GetEventNumber();
+	  i_tlu = plane.TLUEvent();
+	  m_ttree->Fill();
+	  ipix++;
+	}
       }
     }
   }

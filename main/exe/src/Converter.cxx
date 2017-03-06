@@ -7,7 +7,6 @@
 #include <iostream>
 #include "eudaq/MultiFileReader.hh"
 
-using namespace eudaq;
 unsigned dbg = 0; 
 
 
@@ -25,18 +24,18 @@ int main(int, char ** argv) {
   eudaq::Option<uint64_t> syncDelay(op, "d" ,"longDelay",20,"uint64_t","us time long time delay");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
       "The minimum level for displaying log messages locally");
-  op.ExtraHelpText("Available output types are: " + to_string(eudaq::FileWriterFactory::GetTypes(), ", "));
+  op.ExtraHelpText("Available output types are: " + eudaq::to_string(eudaq::FileWriterFactory::GetTypes(), ", "));
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    std::vector<unsigned> numbers = parsenumbers(events.Value());
+    std::vector<unsigned> numbers = eudaq::parsenumbers(events.Value());
 	std::sort(numbers.begin(),numbers.end());
 		eudaq::multiFileReader reader(!async.Value());
     for (size_t i = 0; i < op.NumArgs(); ++i) {
 	
       reader.addFileReader(op.GetArg(i), ipat.Value());
 	}
-      std::shared_ptr<eudaq::FileWriter> writer(FileWriterFactory::Create(type.Value()));
+      std::shared_ptr<eudaq::FileWriter> writer(eudaq::FileWriterFactory::Create(type.Value()));
       writer->SetFilePattern(opat.Value());
       writer->StartRun(reader.RunNumber());
 	  int event_nr=0;
@@ -58,10 +57,10 @@ int main(int, char ** argv) {
       if(dbg>0)std::cout<< "no more events to read" << std::endl;
     
   } catch (...) {
-	    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+	    std::cout << "Time: " << (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
     return op.HandleMainException();
   }
-    std::cout << "Time: " << (std::clock() - start) / (double)(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
+    std::cout << "Time: " << (std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC / 1000) << " ms" << std::endl;
   if(dbg>0)std::cout<< "almost done with Converter. exiting" << std::endl;
   return 0;
 }

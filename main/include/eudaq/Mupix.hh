@@ -58,7 +58,7 @@ namespace eudaq {
      */
     class Mupix4DataProxy {
     public:
-      Mupix4DataProxy() : _data(NULL) {}
+      Mupix4DataProxy() : _data(nullptr) {}
       Mupix4DataProxy(const uint8_t *data) : _data(data) {}
 
       static Mupix4DataProxy from_event(const RawDataEvent &e) {
@@ -92,7 +92,7 @@ namespace eudaq {
         return from_event(dynamic_cast<const RawDataEvent &>(e));
       }
 
-      operator bool() const { return (_data != NULL); }
+      operator bool() const { return (_data != nullptr); }
 
       uint32_t event_id() const {
         return eudaq::getlittleendian<uint32_t>(&_data[0]);

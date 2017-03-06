@@ -699,7 +699,8 @@ void PALPIDEFSProducer::OnConfigure(const eudaq::Configuration &param) {
   SetBackBiasVoltage(param);
   // Power supply monitoring
   if (m_monitor_PSU) {
-    system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date "
+    int returnValue;
+    returnValue = system("${SCRIPT_DIR}/meas.sh ${SCRIPT_DIR} ${LOG_DIR}/$(date "
            "+%s)-meas-tab ${LOG_DIR}/$(date +%s)-meas-log "
            "${SCRIPT_DIR}/meas-pid.txt");
   }
@@ -1050,7 +1051,8 @@ bool PALPIDEFSProducer::PowerOffTestSetup() {
   }
 
   eudaq::mSleep(5000);
-  system("${SCRIPT_DIR}/fx3/program.sh");
+  int returnValue;
+  returnValue = system("${SCRIPT_DIR}/fx3/program.sh");
   return true;
 }
 
@@ -1111,7 +1113,8 @@ void PALPIDEFSProducer::SetBackBiasVoltage(const eudaq::Configuration &param) {
   m_back_bias_voltage = param.Get("BackBiasVoltage", -1.);
   if (m_back_bias_voltage >= 0.) {
     std::cout << "Setting back-bias voltage..." << std::endl;
-    system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat "
+    int returnValue;
+    returnValue = system("if [ -f ${SCRIPT_DIR}/meas-pid.txt ]; then kill -2 $(cat "
            "${SCRIPT_DIR}/meas-pid.txt); fi");
     const size_t buffer_size = 100;
     char buffer[buffer_size];
