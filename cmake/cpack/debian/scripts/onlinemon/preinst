@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+if command -v root-config >/dev/null 2>&1; then
+        echo "root-config found"
+	export LOCAL_ROOT_VERSION=`root-config --version`
+	echo "ROOT version string: $LOCAL_ROOT_VERSION "
+	if [ $LOCAL_ROOT_VERSION  > "6.08" ]; then
+		echo "ROOT version accepted"
+		exit 0
+	else
+		echo "ROOT version too old"
+		exit 1
+	fi
+else
+	echo "root-config has not been found. Please check your CERN root installation. eudaq installation will be aborted."
+	exit 1
+fi
+
