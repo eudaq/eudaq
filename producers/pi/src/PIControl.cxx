@@ -9,8 +9,6 @@
 #include "PIWrapper.h"
 #include "eudaq/Utils.hh"
 
-//using namespace std;
-
 int main(int argc, char* argv[])
 {
 	char *m_hostname;
@@ -26,10 +24,10 @@ int main(int argc, char* argv[])
 	char *m_axis2 = "2";
 	char *m_axis3 = "3";
 	char *m_axis4 = "4";
-	double m_axis1max = 0;
-	double m_axis2max = 0;
-	double m_axis3max = 0;
-	double m_axis4max = 0;
+	double m_axis1max = 0.0;
+	double m_axis2max = 0.0;
+	double m_axis3max = 0.0;
+	double m_axis4max = 0.0;
 	double m_position1 = 0.0;
 	double m_position2 = 0.0;
 	double m_position3 = 0.0;
@@ -38,7 +36,7 @@ int main(int argc, char* argv[])
 	double m_velocity2 = 0.0;
 	double m_velocity3 = 0.0;
 	double m_velocity4 = 0.0;
-	double m_velocitymax = 25.0;
+	double m_velocitymax = 10.0;
 
 	eudaq::OptionParser op("PI stage Control Utility", "1.1", "A comand-line tool for controlling the PI stage");
 	eudaq::Option<std::string> hostname(op, "ho", "HostName", "192.168.22.5", "string", "set hostname for TCP/IP connection");
@@ -47,10 +45,10 @@ int main(int argc, char* argv[])
 	eudaq::Option<std::string> stagename2(op, "s2", "StageName", "NOSTAGE", "string", "set stage for axis 2");
 	eudaq::Option<std::string> stagename3(op, "s3", "StageName", "NOSTAGE", "string", "set stage for axis 3");
 	eudaq::Option<std::string> stagename4(op, "s4", "StageName", "NOSTAGE", "string", "set stage for axis 4");
-	eudaq::Option<double> velocity1(op, "p1", "Velocity1", -1.0, "number", "set velocity of axis1, -1 no change");
-	eudaq::Option<double> velocity2(op, "p2", "Velocity2", -1.0, "number", "set velocity of axis2, -1 no change");
-	eudaq::Option<double> velocity3(op, "p3", "Velocity3", -1.0, "number", "set velocity of axis3, -1 no change");
-	eudaq::Option<double> velocity4(op, "p4", "Velocity4", -1.0, "number", "set velocity of axis4, -1 no change");
+	eudaq::Option<double> velocity1(op, "v1", "Velocity1", -1.0, "number", "set velocity of axis1, -1 no change");
+	eudaq::Option<double> velocity2(op, "v2", "Velocity2", -1.0, "number", "set velocity of axis2, -1 no change");
+	eudaq::Option<double> velocity3(op, "v3", "Velocity3", -1.0, "number", "set velocity of axis3, -1 no change");
+	eudaq::Option<double> velocity4(op, "v4", "Velocity4", -1.0, "number", "set velocity of axis4, -1 no change");
 	eudaq::Option<double> position1(op, "p1", "Position1", -1.0, "number", "move stage on axis1 to position, -1 no movement");
 	eudaq::Option<double> position2(op, "p2", "Position2", -1.0, "number", "move stage on axis2 to position, -1 no movement");
 	eudaq::Option<double> position3(op, "p3", "Position3", -1.0, "number", "move stage on axis3 to position, -1 no movement");
@@ -93,29 +91,6 @@ int main(int argc, char* argv[])
 		wrapper.printStageTypeAll();
 	}
 
-	// get velocity
-	std::cout << "Velocity" << std::endl;
-	wrapper.printVelocityStage(m_axis1);
-	wrapper.printVelocityStage(m_axis2);
-	wrapper.printVelocityStage(m_axis3);
-	wrapper.printVelocityStage(m_axis4);
-	// get maximum travel range
-	wrapper.maxRangeOfStage(m_axis1, &m_axis1max);
-	wrapper.maxRangeOfStage(m_axis2, &m_axis2max);
-	wrapper.maxRangeOfStage(m_axis3, &m_axis3max);
-	wrapper.maxRangeOfStage(m_axis4, &m_axis4max);
-	std::cout << "\nMaximum range\n" 
-		<< m_axis1max << "\n" 
-		<< m_axis2max << "\n" 
-		<< m_axis3max << "\n"
-		<< m_axis4max << std::endl;
-	// get position
-	printf("\nPosition...\n");
-	wrapper.printPosition(m_axis1);
-	wrapper.printPosition(m_axis2);
-	wrapper.printPosition(m_axis3);
-	wrapper.printPosition(m_axis4);
-
 	//check if set, if not, assign, servo, reference
 	if (!wrapper.axisIsReferenced(m_axis1)) {
 		wrapper.setStageToAxis(m_axis1, m_stagename1);
@@ -147,7 +122,12 @@ int main(int argc, char* argv[])
 	}
 
 	// Set velocity
-	printf("\nSet velocity...\n");
+	std::cout << "Set to max. velocity:" << std::endl;
+	wrapper.setVelocityStage(m_axis1, m_velocitymax);
+	wrapper.setVelocityStage(m_axis2, m_velocitymax);
+	wrapper.setVelocityStage(m_axis3, m_velocitymax);
+	wrapper.setVelocityStage(m_axis4, m_velocitymax);
+	printf("\nSet individual velocity:\n");
 	if (m_velocity1 >= m_velocitymax) { m_velocity1 = m_velocitymax; }
 	if (m_velocity1 < 0) { printf("No velocity change for axis1!\n"); }
 	else { wrapper.setVelocityStage(m_axis1, m_velocity1); }
@@ -158,11 +138,36 @@ int main(int argc, char* argv[])
 	if (m_velocity3 < 0) { printf("No velocity change for axis3!\n"); }
 	else { wrapper.setVelocityStage(m_axis3, m_velocity3); }
 	if (m_velocity4 >= m_velocitymax) { m_velocity4 = m_velocitymax; }
-	if (m_velocity4 < 0) { printf("No velocity change for axis14\n"); }
+	if (m_velocity4 < 0) { printf("No velocity change for axis4!\n"); }
 	else { wrapper.setVelocityStage(m_axis4, m_velocity4); }
+	// get velocity // alternative: wrapper.getVelocityStage2(m_axis1, &m_velocity1);
+	std::cout << "\nGet velocity:" << std::endl;
+	wrapper.printVelocityStage(m_axis1);
+	wrapper.printVelocityStage(m_axis2);
+	wrapper.printVelocityStage(m_axis3);
+	wrapper.printVelocityStage(m_axis4);
 
-        // Move
-	printf("\nMove...\n");
+	// get maximum travel range
+	wrapper.maxRangeOfStage(m_axis1, &m_axis1max);
+	wrapper.maxRangeOfStage(m_axis2, &m_axis2max);
+	wrapper.maxRangeOfStage(m_axis3, &m_axis3max);
+	wrapper.maxRangeOfStage(m_axis4, &m_axis4max);
+	std::cout << "\nGet maximum range:\n" 
+		<< m_axis1max << "\n" 
+		<< m_axis2max << "\n" 
+		<< m_axis3max << "\n"
+		<< m_axis4max << std::endl;
+	// get position
+	printf("\nCurrent position:\n");
+	wrapper.printPosition(m_axis1);
+	wrapper.printPosition(m_axis2);
+	wrapper.printPosition(m_axis3);
+	wrapper.printPosition(m_axis4);
+
+
+
+    // Move
+	printf("\nMoving...\n");
 	if (m_position1 >= m_axis1max) { m_position1 = m_axis1max; }
 	if (m_position1 < 0) { printf("No movement of axis1!\n"); }
 	else { wrapper.moveTo(m_axis1, m_position1); }
@@ -177,7 +182,7 @@ int main(int argc, char* argv[])
 	else { wrapper.moveTo(m_axis4, m_position4); }
 
 	// New position	
-	printf("\nPosition...\n");
+	printf("\nNew position:\n");
 	wrapper.printPosition(m_axis1);
 	wrapper.printPosition(m_axis2);
 	wrapper.printPosition(m_axis3);

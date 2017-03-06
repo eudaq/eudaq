@@ -8,8 +8,9 @@
 #include <windows.h>
 #include <vector>
 
-//PI controller class
-class PIWrapper {
+
+	//PI controller class
+	class PIWrapper {
 
 	protected:
 		int m_ID;
@@ -45,12 +46,12 @@ class PIWrapper {
 		void setHostName(char* host);																						  //write host as member variable m_hostname
 		char* getAxis();																											  	//return member variable m_szAxis
 		void setAxis(char* axis);																								  //write axis as member variable m_szAxis
-			
+
 		//functions for interaction
 		bool moveTo(char* axis, double position);
 		bool moveToWithOutput(char* axis, double position);																			//move of stage to position
 		bool axisIsReferenced(char* axis);
-		
+
 		bool printStageTypeOfAxis(char* axis);
 		bool getStageTypeOfAxis(char* axis, char* name, int buffer);
 		bool printStageTypeAll();
@@ -65,6 +66,7 @@ class PIWrapper {
 		bool maxRangeOfStage(char* axis, double* maxValue);
 
 		bool getPosition(char* axis, double position);
+		bool getPosition2(char* axis, double* position);
 		bool printPosition(char* axis);
 
 		bool printAvailableStageTypes();
@@ -94,8 +96,10 @@ class PIWrapper {
 
 		bool setVelocityStage(char* axis, double velo);
 		bool getVelocityStage(char* axis, double velo);
+		bool getVelocityStage2(char* axis, double* velo);
 		bool printVelocityStage(char* axis);
 
-};
+	};
+
 
 #endif
