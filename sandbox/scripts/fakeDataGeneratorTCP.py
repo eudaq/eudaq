@@ -3,11 +3,31 @@
 import socket
 import sys
 from thread import *
+import threading
 import time
 
 # HOST = '128.141.89.137'
 HOST = '127.0.0.1'
 PORT = 55511
+
+
+t1_stop = threading.Event()
+#t1 = threading.Thread(target=sendFakeData, args=(1, t1_stop))
+
+def sendFakeData(conn, stop_event):
+  m = 0
+  print 'This is conn=', conn
+  while (not stop_event.is_set()):
+    print 'submitting data', m
+    try:
+        conn.sendall('-->>>  Here is your data <<< --')
+    except socket.error:
+        print 'The client socket is probably closed. We stop sending data.'
+        break
+    stop_event.wait(0.5)
+    #time.sleep(0.5)
+    m+=1
+    
 
 def clientthread(conn):
     #Sending message to connected client
@@ -15,7 +35,6 @@ def clientthread(conn):
     
     #infinite loop so that function do not terminate and thread do not end.
 
-    global stop_it 
     while True:
         #Receiving from client
         try:
@@ -28,29 +47,17 @@ def clientthread(conn):
             break
         
         print 'Command recieved:', str(data), type(data)
-        if str(data)=='blink':
-            print "I am doing blink now"
-            #Blink(8, 10,0.2)        
-        elif str(data)=='START_RUN':
+
+        if str(data)=='START_RUN':
+            t1_stop.clear()
             conn.sendall('GOOD_START\n')
             time.sleep(0.2)
-            stop_it = 0
-
-            m = 0
-            while not stop_it:
-                print 'submitting data', m
-                try:
-                    conn.sendall('-->>>  Here is your data <<< --')
-                except socket.error:
-                    print 'The client socket is probably closed. We stop sending data.'
-                    stop_it = 1
-                    
-                time.sleep(0.5)
-                m+=1
+            start_new_thread(sendFakeData, (conn,t1_stop))
 
         elif str(data)=='STOP_RUN':
-            stop_it = 1
-            conn.sendall('STOPPED_OK\n')
+            t1_stop.set()
+            time.sleep(2)
+            conn.sendall('STOPPED_OK')
             print 'Sent STOPPED_OK confirmation'
         else:
             conn.sendall('Message Received at the server: %s\n' % str(data))

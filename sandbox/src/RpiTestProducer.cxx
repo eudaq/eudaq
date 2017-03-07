@@ -115,8 +115,12 @@ class RpiTestProducer : public eudaq::Producer {
       // Send command to Hardware:
       SendCommand("STOP_RUN");
 
+
       // Set a flag to signal to the polling loop that the run is over
       SetStatus(eudaq::Status::LVL_OK, "Stopping...");
+
+      eudaq::mSleep(1000);
+
       m_stopping = true;
 
       if (!m_running){
@@ -138,6 +142,10 @@ class RpiTestProducer : public eudaq::Producer {
 	      SetStatus(eudaq::Status::LVL_ERROR, "Can't Start Run on Hardware side.");
 	      return;
 	    }
+
+	    CloseConnection();
+	    m_stopping = false;
+	    m_running  = false;
 	    m_stopped=true;
 	  }
 	}
@@ -148,7 +156,6 @@ class RpiTestProducer : public eudaq::Producer {
 
       // wait until all events have been read out from the hardware
       while (m_stopping) {
-	SetStatus(eudaq::Status::LVL_OK, "Stopping Loop.");
         eudaq::mSleep(20);
       }
 
@@ -178,13 +185,13 @@ class RpiTestProducer : public eudaq::Producer {
 	if (!m_running)
 	  {
 	    eudaq::mSleep(2000);
-	    EUDAQ_EXTRA("Not Running; but sleeping");
+	    EUDAQ_DEBUG("Not Running; but sleeping");
 	    SetStatus(eudaq::Status::LVL_USER, "Sleeping");
 	    continue;
 	  }
 
         if (m_sockfd <= 0) {
-	  EUDAQ_EXTRA("Not Running; but sleeping");
+	  EUDAQ_DEBUG("Not Running; but sleeping");
 	  SetStatus(eudaq::Status::LVL_USER, "No Socket yet in Readout Loop");
 	  eudaq::mSleep(200);
 	  continue;
@@ -194,14 +201,15 @@ class RpiTestProducer : public eudaq::Producer {
 	// If we are below this point, we listen for data
 	// ***********
 
+	SetStatus(eudaq::Status::LVL_DEBUG, "Running");
+	EUDAQ_DEBUG("Running again");
+
 	const int bufsize = 4096;
 	char buffer[bufsize];
 	bzero(buffer, bufsize);
 
 	int n = recv(m_sockfd, buffer, bufsize, 0);
 	if (n <= 0) {
-	  eudaq::mSleep(500);
-
 	  if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
 	    std::cout<<"n = "<<n<<" Socket timed out. Errno="<<errno<<std::endl;
 
@@ -214,6 +222,8 @@ class RpiTestProducer : public eudaq::Producer {
 	      SetStatus(eudaq::Status::LVL_WARN, "No Data");
 	      EUDAQ_WARN("Sockets: No data for too long..");
 	    }
+
+	  eudaq::mSleep(500);
 
 	  }
 	  else {
@@ -233,6 +243,8 @@ class RpiTestProducer : public eudaq::Producer {
 	  // We have sent STOP_RUN command, let's see if we receive a confirmation:
 	  if (strncmp("STOPPED_OK",buffer,10)==0){
 	    
+	    EUDAQ_EXTRA("Received Confirmation.. Stopping from readout loop");
+
 	    CloseConnection();
 	    m_stopping = false;
 	    m_running  = false;
