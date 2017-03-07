@@ -77,15 +77,15 @@ class RpiTestProducer : public eudaq::Producer {
       bzero(answer, 20);
       int n = recv(m_sockfd, answer, 20, 0);
       if (n <= 0) {
-	std::cout<<"Something is wrong, we can't start the run..."<<std::endl;
+	std::cout<<n<<" Something is wrong with socket, we can't start the run..."<<std::endl;
 	SetStatus(eudaq::Status::LVL_ERROR, "Can't Start Run on Hardware side.");
 	return;
       }
       
       else {
 	std::cout<<"Answer to START_RUN: "<<answer<<std::endl;
-	if (answer!="GOOD_START"){
-	  std::cout<<"Something is wrong, we can't start the run..."<<std::endl;
+	if (strncmp(answer,"GOOD_START",10)!=0) {
+	  std::cout<<n<<" Not expected answer from server, we can't start the run..."<<std::endl;
 	  SetStatus(eudaq::Status::LVL_ERROR, "Can't Start Run on Hardware side.");
 	  return;
 	}
@@ -100,19 +100,27 @@ class RpiTestProducer : public eudaq::Producer {
       // Send the event to the Data Collector
       SendEvent(bore);
 
+      m_running=true;
+      m_stopped=false;
+      m_stopping=false;
+
       // At the end, set the status that will be displayed in the Run Control.
       SetStatus(eudaq::Status::LVL_OK, "Running");
-      m_running=true;
     }
 
     // This gets called whenever a run is stopped
     virtual void OnStopRun() {
       std::cout << "Stopping Run" << std::endl;
 
+      // Send command to Hardware:
       SendCommand("STOP_RUN");
 
+      // Set a flag to signal to the polling loop that the run is over
+      SetStatus(eudaq::Status::LVL_OK, "Stopping...");
+      m_stopping = true;
+
       if (!m_running){
-	// If we're not running, them we need to catch the confirmation here
+	// If we're not running, then we need to catch the confirmation here
 	// Otherwise it will be caught in the ReadOut loop (hopefully...)
 
 	while (!m_stopped){
@@ -125,22 +133,22 @@ class RpiTestProducer : public eudaq::Producer {
 	  }
 	  else {
 	    std::cout<<"Answer to STOP_RUN: "<<answer<<std::endl;
-	    if (answer!="STOPPED_RUN"){
+	    if (strncmp(answer,"STOPPED_OK",10)!=0) {
 	      std::cout<<"Something is wrong, we can't stop the run..."<<std::endl;
 	      SetStatus(eudaq::Status::LVL_ERROR, "Can't Start Run on Hardware side.");
 	      return;
 	    }
-	    m_stopped;
+	    m_stopped=true;
 	  }
 	}
       }
-      m_running=false;
-      // Set a flag to signal to the polling loop that the run is over
-      m_stopping = true;
+
+      // If we were running, send signal to stop:
+      //m_running=false;
 
       // wait until all events have been read out from the hardware
       while (m_stopping) {
-	SetStatus(eudaq::Status::LVL_OK, "Stopping...");
+	SetStatus(eudaq::Status::LVL_OK, "Stopping Loop.");
         eudaq::mSleep(20);
       }
 
@@ -171,16 +179,13 @@ class RpiTestProducer : public eudaq::Producer {
 	  {
 	    eudaq::mSleep(2000);
 	    EUDAQ_EXTRA("Not Running; but sleeping");
+	    SetStatus(eudaq::Status::LVL_USER, "Sleeping");
 	    continue;
 	  }
 
-
-	// APZ: I'm not sure what those mutex locks are for.
-	// Tell me if you understand this:
-	//std::unique_lock<std::mutex> myLock(m_mufd);
-
-        if (m_sockfd <= 0 || m_stopping) {
-	  //myLock.unlock();
+        if (m_sockfd <= 0) {
+	  EUDAQ_EXTRA("Not Running; but sleeping");
+	  SetStatus(eudaq::Status::LVL_USER, "No Socket yet in Readout Loop");
 	  eudaq::mSleep(200);
 	  continue;
 	}
@@ -189,34 +194,32 @@ class RpiTestProducer : public eudaq::Producer {
 	// If we are below this point, we listen for data
 	// ***********
 
-
-	// This call is blocking by default. This would prevent us stopping the run:
-	//m_cli_sockfd = accept(m_sockfd, (struct sockaddr *) &cli_addr, &cli_len);
-	//if (m_cli_sockfd < 0)
-	//EUDAQ_ERROR("Sockets: ERROR on accept");
-	//std::cout<<" after accept. fd="<<m_cli_sockfd<<std::endl;
-
 	const int bufsize = 4096;
 	char buffer[bufsize];
 	bzero(buffer, bufsize);
 
 	int n = recv(m_sockfd, buffer, bufsize, 0);
 	if (n <= 0) {
-	  if ((errno != EAGAIN) && (errno != EWOULDBLOCK)) {
-	    std::cout<<"Sockets timeout?  errno="<<errno<<std::endl;
-	    // No need to stop the run, just wait
-	    continue;
+	  eudaq::mSleep(500);
+
+	  if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+	    std::cout<<"n = "<<n<<" Socket timed out. Errno="<<errno<<std::endl;
+
+	    std::time_t current_time = std::time(NULL);
+
+	    if (current_time - m_last_readout_time < 30)
+	      continue; // No need to stop the run, just wait
+	    else {
+	      // It's been too long without data, we shall give a warning
+	      SetStatus(eudaq::Status::LVL_WARN, "No Data");
+	      EUDAQ_WARN("Sockets: No data for too long..");
+	    }
+
 	  }
 	  else {
-	    std::cout<<"Sockets timeout?  n="<<n<<" errno="<<errno<<std::endl;
+	    std::cout<<" n="<<n<<" errno="<<errno<<std::endl;
 	    SetStatus(eudaq::Status::LVL_WARN, "Nothing to read from socket...");
 	    EUDAQ_WARN("Sockets: ERROR reading from socket (it's probably disconnected)");
-
-
-	    // Let's now close connection to the socket and stop the readout loop
-	    //CloseConnection();
-	    // m_stopped = 1;
-	    //m_running = 0;
 	    continue;
 	  }
 	}
@@ -224,14 +227,15 @@ class RpiTestProducer : public eudaq::Producer {
 	// We are here if there is data and it's size is > 0
 
 	std::cout<<" After recv. n="<<n<<std::endl;
-	std::cout<<"In ReadoutLoop.  Here is the message from Server: %s\n"<<buffer<<std::endl;
+	std::cout<<"In ReadoutLoop.  Here is the message from Server: \n"<<buffer<<std::endl;
 
 	if (m_stopping){
 	  // We have sent STOP_RUN command, let's see if we receive a confirmation:
-	  if ("STOPPED_OK" == buffer){
+	  if (strncmp("STOPPED_OK",buffer,10)==0){
 	    
 	    CloseConnection();
 	    m_stopping = false;
+	    m_running  = false;
 	    
 	    eudaq::mSleep(100);
 	    continue;

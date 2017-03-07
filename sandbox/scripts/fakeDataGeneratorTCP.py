@@ -9,17 +9,21 @@ import time
 HOST = '127.0.0.1'
 PORT = 55511
 
-#stop_it = 0
-
 def clientthread(conn):
     #Sending message to connected client
     #conn.send('Welcome to the server. Receving Data...\n')
-
+    
     #infinite loop so that function do not terminate and thread do not end.
+
+    global stop_it 
     while True:
         #Receiving from client
-        data = conn.recv(1024)
-        
+        try:
+            data = conn.recv(1024)
+        except socket.error:
+            print 'The client socket is probably closed. break this thread'
+            break
+
         if not data:
             break
         
@@ -28,21 +32,26 @@ def clientthread(conn):
             print "I am doing blink now"
             #Blink(8, 10,0.2)        
         elif str(data)=='START_RUN':
-            conn.sendall('GOOD_RUN\n')
+            conn.sendall('GOOD_START\n')
             time.sleep(0.2)
-            # Start sending data
-            #while not stop_it:
+            stop_it = 0
+
             m = 0
-            while m<20:
+            while not stop_it:
                 print 'submitting data', m
-                conn.sendall('\t -->>>  Here is your data')
-                time.sleep(1)
+                try:
+                    conn.sendall('-->>>  Here is your data <<< --')
+                except socket.error:
+                    print 'The client socket is probably closed. We stop sending data.'
+                    stop_it = 1
+                    
+                time.sleep(0.5)
                 m+=1
 
         elif str(data)=='STOP_RUN':
             stop_it = 1
-            conn.sendall('STOPPED_RUN\n')
-            print 'Sent STOPPED_RUN confirmation'
+            conn.sendall('STOPPED_OK\n')
+            print 'Sent STOPPED_OK confirmation'
         else:
             conn.sendall('Message Received at the server: %s\n' % str(data))
 
