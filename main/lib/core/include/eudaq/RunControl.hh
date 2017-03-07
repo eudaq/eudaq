@@ -45,6 +45,10 @@ namespace eudaq {
     virtual void DoDisconnect(ConnectionSPC con) {}
     virtual void DoStatus(ConnectionSPC con, StatusSPC st) {}
     //
+
+    bool IsActiveConnection(ConnectionSPC con);
+    StatusSPC GetConnectionStatus(ConnectionSPC con);
+    
     //thread control
     void StartRunControl(); 
     void CloseRunControl();
@@ -52,20 +56,17 @@ namespace eudaq {
     virtual void Exec();
     //
 
-    void SetRunN(uint32_t n){m_runnumber = n;};
-    uint32_t GetRunN() const {return m_runnumber;};
-    void SetRunNumber(uint32_t n){m_runnumber = n;};
-    uint32_t GetRunNumber() const {return m_runnumber;};
+    void SetRunN(uint32_t n){m_run_n = n;};
+    uint32_t GetRunN() const {return m_run_n;};
     void ReadConfigureFile(const std::string &path);
     void ReadInitilizeFile(const std::string &path);
     std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
     std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
     
   private:
-    void InitLog(std::shared_ptr<const ConnectionInfo> id);
     void SendCommand(const std::string &cmd,
 		     const std::string &param = "",
-                     const ConnectionSPC id = ConnectionSPC());
+                     ConnectionSPC id = ConnectionSPC());
     void CommandHandler(TransportEvent &ev);
     void CommandThread();
     void StatusThread();
@@ -77,12 +78,13 @@ namespace eudaq {
     std::unique_ptr<TransportServer> m_cmdserver; ///< Transport for sending commands
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
-    std::map<std::string, std::string> m_addr_data;
-    std::map<std::string, std::shared_ptr<Status>> m_status;
+    std::map<ConnectionSPC, StatusSPC> m_conn_status;
+    std::mutex m_mtx_conn;
+
     std::string m_addr_log;
     std::string m_var_file;
     std::mutex m_mtx_sendcmd;
-    uint32_t m_runnumber;    
+    uint32_t m_run_n;
   };
 }
 

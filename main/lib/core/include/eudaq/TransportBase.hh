@@ -41,8 +41,6 @@ namespace eudaq {
  
     static const ConnectionInfo ALL;
 
-    // virtual ConnectionInfo *Clone() const { return new ConnectionInfo(*this); }
-
   protected:
     int m_state;
     uint32_t m_id;

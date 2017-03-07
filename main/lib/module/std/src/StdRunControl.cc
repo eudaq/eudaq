@@ -86,7 +86,7 @@ namespace eudaq{
       // 	break;
       case 'b':
 	if(line.length())
-	  SetRunNumber(std::stoul(line));
+	  SetRunN(std::stoul(line));
 	StartRun();
 	break;
       case 'e':
