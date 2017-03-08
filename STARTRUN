@@ -1,1 +1,20 @@
-sandbox/STARTRUN
+#!/bin/bash
+
+
+echo $1 $2 $3
+
+script=none
+if [[ $1 == "example" ]]; then
+    script=./etc/scripts/STARTRUN.example
+elif [[ $1 == "rpi" ]]; then
+    script=./sandbox/STARTRUN
+else
+    # default
+    script=./sandbox/STARTRUN
+fi
+
+ln -s $script tmp.start
+
+./tmp.start
+
+rm ./tmp.start
