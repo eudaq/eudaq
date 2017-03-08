@@ -62,18 +62,16 @@ printf '\033[22;33m\t TestDataCollector \033[0m \n'
 xterm -sb -sl 1000 -geom 80x10-480-900 -fn fixed -T "Data Collector" -e './TestDataCollector.exe -r tcp://$HOSTIP:$RCPORT' &
 sleep 2
 
+
 ######################################################################
-# NI Producer
+# RPI Test Producer
 ###############
-#if [ -f "NiProducer.exe" ]
-#then
-#    printf '\033[22;33m\t  NiProducer for linux  \033[0m \n'
-#    xterm -sb -sl 1000 -geom 80x10-480-700 -T 'Ni Producer for Linux' -e './NiProducer.exe -r tcp://$HOSTIP:$RCPORT' &
-#    sleep 1
-#else
-#    printf '\033[22;31m\t  NiProducer for linux not found!  \033[0m \n'
-#    echo 'Configure EUDAQ with the CMake option "-D BUILD_ni=ON" and re-run "make install" to install.'
-#fi
+printf '\033[22;33m\t RPI Producer \033[0m \n'
+xterm -sb -sl 1000 -geom 80x10-280-900 -fn fixed -T "RPI Producer" -e './RpiTestProducer.exe -r tcp://$HOSTIP:$RCPORT' &
+#./RpiTestProcessor.exe
+sleep 2
+
+
 ######################################################################
 # TLU producer
 ###############

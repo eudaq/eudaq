@@ -17,7 +17,6 @@ static const char *statuses[] = {
     "Rate",      "TRIG",       "Triggers", "FILEBYTES",    "File Bytes",
     "PARTICLES", "Particles",  "TLUSTAT",  "TLU Status",   "SCALERS",
     "Scalers",   0};
-
 euRunApplication::euRunApplication(int &argc, char **argv)
     : QApplication(argc, argv) {}
 
