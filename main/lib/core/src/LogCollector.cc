@@ -21,14 +21,13 @@ namespace eudaq {
                              const std::string &listenaddress,
 			     const std::string &logdirectory)
       : CommandReceiver("LogCollector", "log", runcontrol), m_exit(false),
-        m_logserver(TransportFactory::CreateServer(listenaddress)),
+	m_log_addr(listenaddress),
         m_filename(logdirectory + "/" + Time::Current().Formatted("%Y-%m-%d.log")),
         m_file(m_filename.c_str(), std::ios_base::app) {
     if (!m_file.is_open())
       EUDAQ_THROWX(FileWriteException, "Unable to open log file (" +
 		   m_filename + ") is there a logs directory?");
     else std::cout << "LogCollector opened \"" << m_filename << "\" for logging." << std::endl;
-    m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     std::ostringstream os;
     os << "\n*** LogCollector started at " << Time::Current().Formatted()
        << " ***" << std::endl;
@@ -47,18 +46,6 @@ namespace eudaq {
     SetStatus(Status::STATE_UNINIT, "Terminated");
   }
   
-  void LogCollector::OnServer() {
-    if (!m_logserver)
-      EUDAQ_ERROR("Oops");
-    std::string addr_server = m_logserver->ConnectionString();
-    std::string addr_cmd = GetCommandRecieverAddress();
-    if(addr_server.find("tcp://") == 0 && addr_cmd.find("tcp://") == 0){
-      addr_server = addr_cmd.substr(0, addr_cmd.find_last_of(":")) +
-	addr_server.substr(addr_server.find_last_of(":"));
-    }
-    SetStatusTag("_SERVER", addr_server);
-  }
-
   void LogCollector::LogHandler(TransportEvent &ev) {
     auto con = ev.id;
     switch (ev.etype) {
@@ -145,10 +132,13 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("LogCollector can not be restarted after exit. (TODO)");
     }
+    m_logserver.reset(TransportFactory::CreateServer(m_log_addr)),
+    m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     m_thd_server = std::thread(&LogCollector::LogThread, this);
     std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
               << std::endl
               << "       logfile=" << m_filename << std::endl;
+    SetStatusTag("_SERVER", m_log_addr);
   }
 
   void LogCollector::CloseLogCollector(){

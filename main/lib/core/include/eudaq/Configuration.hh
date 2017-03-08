@@ -30,6 +30,7 @@ namespace eudaq {
     void Load(std::istream &file, const std::string &section);
     bool SetSection(const std::string &section) const;
     bool SetSection(const std::string &section);
+    std::string GetCurrentSectionName() const {return m_section;};
     std::string operator[](const std::string &key) const {
       return GetString(key);
     }
@@ -62,9 +63,10 @@ namespace eudaq {
     void Print(std::ostream &os, size_t offset=0) const;
     void Print() const;
 
+    void SetString(const std::string &key, const std::string &val);
+
   private:
     std::string GetString(const std::string &key) const;
-    void SetString(const std::string &key, const std::string &val);
     typedef std::map<std::string, std::string> section_t;
     typedef std::map<std::string, section_t> map_t;
     map_t m_config;

@@ -49,8 +49,28 @@ namespace eudaq {
       }
     }
     lk.unlock();
+
+    m_conf_init->SetSection("");
+    for(auto &conn: conn_to_init){
+      std::string conn_type = conn->GetType();
+      std::string conn_name = conn->GetName();
+      std::string conn_addr = conn->GetRemote();
+      if(conn_type == "DataCollector" || conn_type == "LogCollector"){
+	lk.lock();
+	std::string server_addr = m_conn_status[conn]->GetTag("_SERVER");
+	lk.unlock();
+	if(server_addr.find("tcp://") == 0 && conn_addr.find("tcp://") == 0){
+	  server_addr = conn_addr.substr(0, conn_addr.find_last_not_of("0123456789"))
+	    + ":"
+	    + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
+	}
+	m_conf_init->SetString(conn_type+"."+conn_name, server_addr);
+      }
+    }
+    m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
+    
     for(auto &conn: conn_to_init)
-      SendCommand("INIT", "", conn);
+      SendCommand("INIT", to_string(*m_conf_init), conn);
   }
   
   void RunControl::Configure(){
@@ -69,6 +89,7 @@ namespace eudaq {
     }
     lk.unlock();
     m_listening = false;
+
     for(auto &conn: conn_to_conf)
       SendCommand("CONFIG", to_string(*m_conf), conn);
   }

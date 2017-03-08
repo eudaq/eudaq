@@ -16,8 +16,8 @@ namespace eudaq {
 
   void Producer::OnInitialise(){
     try{
-      if(!IsStatus(Status::STATE_UNINIT) && !IsStatus(Status::STATE_UNCONF))
-	EUDAQ_THROW("OnStopRun can not be called unless in STATE_UNINIT or STATE_UNCONF");
+      if(!IsStatus(Status::STATE_UNINIT))
+	EUDAQ_THROW("OnInitialise can not be called unless in STATE_UNINIT");
       auto conf = GetInitConfiguration();
       if(!conf)
 	EUDAQ_THROW("No Configuration Section for OnInitialise");
@@ -36,9 +36,9 @@ namespace eudaq {
   
   void Producer::OnConfigure(){
     try{
-      if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF)&& !IsStatus(Status::STATE_UNINIT))//TODO: remove UNINIT
-      // if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
-	EUDAQ_THROW("OnStopRun can not be called unless in STATE_UNCONF or STATE_CONF");
+      // if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF)&& !IsStatus(Status::STATE_UNINIT))//TODO: remove UNINIT
+      if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
+	EUDAQ_THROW("OnConfigure can not be called unless in STATE_UNCONF or STATE_CONF");
       auto conf = GetConfiguration();
       if(!conf)
 	EUDAQ_THROW("No Configuration Section for OnConfigure");
@@ -62,6 +62,21 @@ namespace eudaq {
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
       m_evt_c = 0;
+
+      std::string dc_str = GetConfiguration()->Get("DATACOLLECTORS", "");
+      std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
+      std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
+      GetInitConfiguration()->SetSection("");//NOTE: it is m_conf_init
+      for(auto &dc_name: col_dc_name){
+	std::string dc_addr =  GetInitConfiguration()->Get("DataCollector."+dc_name, "");
+	if(!dc_addr.empty()){
+	  m_senders[dc_addr]
+	    = std::unique_ptr<DataSender>(new DataSender("Producer", GetFullName()));
+	  m_senders[dc_addr]->Connect(dc_addr);
+	}
+      }
+      GetInitConfiguration()->SetSection(cur_backup);
+      
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     }catch (const std::exception &e) {
@@ -79,6 +94,7 @@ namespace eudaq {
 	EUDAQ_THROW("OnStopRun can not be called unless in STATE_RUNNING");
       EUDAQ_INFO("Stopping Run");
       DoStopRun();
+      m_senders.clear();
       SetStatus(Status::STATE_CONF, "Stopped");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
@@ -92,8 +108,8 @@ namespace eudaq {
   void Producer::OnReset(){
     try{
       EUDAQ_INFO("Resetting");
-      m_senders.clear();
       DoReset();
+      m_senders.clear();
       SetStatus(Status::STATE_UNINIT, "Reset");
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());
@@ -118,14 +134,6 @@ namespace eudaq {
     }
   }
   
-  void Producer::OnData(const std::string &server){
-    auto it = m_senders.find(server);
-    if(it==m_senders.end()){
-      m_senders[server]= std::unique_ptr<DataSender>(new DataSender("Producer", GetFullName()));
-      m_senders[server]->Connect(server);
-    }
-  }
-  
   void Producer::Exec(){
     StartCommandReceiver();
     while(IsActiveCommandReceiver()){
@@ -139,9 +147,6 @@ namespace eudaq {
 	ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
       if(GetInitConfiguration())
 	ev->SetTag("EUDAQ_CONFIG_INIT", to_string(*GetInitConfiguration()));
-    }else if(ev->IsEORE()){
-      //TODO: add summary tag to EOREvent
-      ;
     }
     ev->SetRunN(GetRunNumber());
     ev->SetEventN(m_evt_c);

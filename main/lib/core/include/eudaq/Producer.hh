@@ -41,8 +41,6 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
-    void OnServer() override final{};
-    void OnData(const std::string &param) override final;
     void Exec() override; //TODO: mark it final to report derived class which has Exec override.
 
     virtual void DoInitialise(){};

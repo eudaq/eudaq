@@ -31,12 +31,10 @@ namespace eudaq {
     DataCollector(const std::string &name, const std::string &runcontrol);
     void OnInitialise() override final;
     void OnConfigure() override final;
-    void OnServer() override final;
     void OnStartRun() override final;
     void OnStopRun() override final;
     void OnTerminate() override final;
     void OnStatus() override final;
-    void OnData(const std::string &param) override final{};
     void Exec() override;
 
     //running in commandreceiver thread
@@ -63,6 +61,7 @@ namespace eudaq {
     std::thread m_thd_server;
     bool m_exit;
     std::unique_ptr<TransportServer> m_dataserver;
+    std::string m_data_addr;
     FileWriterUP m_writer;
     std::string m_fwpatt;
     std::string m_fwtype;

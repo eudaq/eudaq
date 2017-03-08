@@ -29,9 +29,7 @@ namespace eudaq {
     virtual void OnTerminate() {SetStatus(Status::STATE_UNINIT, "Terminated");};
     virtual void OnReset() {SetStatus(Status::STATE_UNINIT, "Reseted");};
     virtual void OnStatus() {}
-    virtual void OnData(const std::string & /*param*/) {}
     virtual void OnLog(const std::string & /*param*/);
-    virtual void OnServer() {}
     virtual void OnIdle();
     virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
     virtual void Exec() = 0;
@@ -40,7 +38,7 @@ namespace eudaq {
     void CloseCommandReceiver();
     bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
     void SetStatus(Status::State state, const std::string & info);
-    bool IsStatus(Status::State state) const {return m_status.GetState() == state;};
+    bool IsStatus(Status::State state);
     void SetStatusTag(const std::string &key, const std::string &val);
     
     std::string GetFullName() const {return m_type+"."+m_name;};

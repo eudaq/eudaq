@@ -99,13 +99,16 @@ namespace eudaq {
 
     std::unique_lock<std::mutex> lk(m_mtx_status);
     m_status.ResetStatus(state, level, info);
-    lk.unlock();
   }
   
   void CommandReceiver::SetStatusTag(const std::string &key, const std::string &val){
     std::unique_lock<std::mutex> lk(m_mtx_status);
     m_status.SetTag(key, val);
-    lk.unlock();
+  }
+
+  bool CommandReceiver::IsStatus(Status::State state){
+    std::unique_lock<std::mutex> lk(m_mtx_status);
+    return m_status.GetState() == state;
   }
   
   void CommandReceiver::OnLog(const std::string &param) {
@@ -113,7 +116,6 @@ namespace eudaq {
   }
 
   void CommandReceiver::OnIdle() { mSleep(500); }
-
 
   void CommandReceiver::CommandHandler(TransportEvent &ev) {
     if (ev.etype == TransportEvent::RECEIVE) {
@@ -146,19 +148,15 @@ namespace eudaq {
         OnReset();
       } else if (cmd == "STATUS") {
         OnStatus();
-      } else if (cmd == "DATA") {
-        OnData(param);
       } else if (cmd == "LOG") {
         OnLog(param);
-      } else if (cmd == "SERVER") {
-        OnServer();
       } else {
         OnUnrecognised(cmd, param);
       }
       BufferSerializer ser;
       std::unique_lock<std::mutex> lk(m_mtx_status);
       m_status.Serialize(ser);
-      m_status.ResetTags();
+      // m_status.ResetTags();
       lk.unlock();
       m_cmdclient->SendPacket(ser);
     }

@@ -35,10 +35,8 @@ namespace eudaq {
 		 const std::string & logdirectory);
     ~LogCollector() override;
     
-    void OnServer() override final;
     void OnTerminate() override final;
     void OnLog(const std::string &param) override final{};
-    void OnData(const std::string &param) override final{};
     void Exec() override;
 
     virtual void DoTerminate() = 0;
@@ -57,6 +55,7 @@ namespace eudaq {
     std::thread m_thd_server;
     std::string m_filename;
     std::ofstream m_file;
+    std::string m_log_addr;
   };
 }
 

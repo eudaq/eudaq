@@ -19,14 +19,9 @@ namespace eudaq {
     m_dct_n= str2hash(GetFullName());
     m_evt_c = 0;
     m_exit = false;
-    std::string addr_server("tcp://");
-    uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
-    addr_server += to_string(port);
-    m_dataserver.reset(TransportFactory::CreateServer(addr_server)); //TODO
-    m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
   }
   
-  void DataCollector::OnInitialise() {
+  void DataCollector::OnInitialise(){    
     auto conf = GetConfiguration();
     try{
       DoInitialise();
@@ -62,19 +57,7 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, msg);
     }
   }
-  
-  void DataCollector::OnServer(){
-    if (!m_dataserver)
-      EUDAQ_THROW("OnServer is called when no dataserver is created");
-    std::string addr_server = m_dataserver->ConnectionString();
-    std::string addr_cmd = GetCommandRecieverAddress();
-    if(addr_server.find("tcp://") == 0 && addr_cmd.find("tcp://") == 0){
-      addr_server = addr_cmd.substr(0, addr_cmd.find_last_of(":")) +
-	addr_server.substr(addr_server.find_last_of(":"));
-    }
-    SetStatusTag("_SERVER", addr_server);
-  }
-  
+    
   void DataCollector::OnStartRun(){
     EUDAQ_INFO("Preparing for run " + std::to_string(GetRunNumber()));
     try {
@@ -235,21 +218,26 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("DataCollector can not be restarted after exit. (TODO)");
     }
+    m_data_addr = "tcp://";
+    uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
+    m_data_addr += to_string(port);
+    m_dataserver.reset(TransportFactory::CreateServer(m_data_addr));
+    m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
     m_thd_server = std::thread(&DataCollector::DataThread, this);
     std::cout << "###### listenaddress=" << m_dataserver->ConnectionString()
 	      << std::endl;
+    SetStatusTag("_SERVER", m_data_addr);
   }
 
   void DataCollector::CloseDataCollector(){
     m_exit = true;
     if(m_thd_server.joinable()){
       m_thd_server.join();
-    }
-    
+    } 
   }
   
   void DataCollector::Exec(){
-    StartDataCollector(); //TODO: Start it OnServer
+    StartDataCollector();
     StartCommandReceiver();
     while(IsActiveCommandReceiver() || IsActiveDataCollector()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
