@@ -85,18 +85,18 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 	cellIDEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
 	std::map<int, std::unique_ptr<lcio::TrackerDataImpl>> frameMap;
-	std::map<int, std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>> frameInterfaceMap;
+	std::map<int, std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>> frameInterfaceMap;
 	
 
 	for(auto channel: boardChannels.at(boardID)){
 		auto frame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl);
 		auto sensorID = boardID + channel;
-		zsDataEncoder["sensorID"] = sensorID;
+		cellIDEncoder["sensorID"] = sensorID;
 		cellIDEncoder.setCellID(frame.get());
 		auto frameInterface = 	std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>( 
 						new eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>(frame.get())
 					);
-		frameInterfaceMap = std::move(frameInterface);
+		frameInterfaceMap[channel] = std::move(frameInterface);
 		frameMap[channel] = std::move(frame);
 	}
 	
@@ -104,7 +104,7 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 
 	auto pixelVec = decodeFEI4Data(evRaw.GetBlock(0));
 	for(auto& hitPixel: pixelVec) {
-		frameInterface[hitPixel.channel]->emplace_back( hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1 )
+		frameInterfaceMap[hitPixel.channel]->emplace_back(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, hitPixel.lv1);
 	}
 
 	for(auto& framePair: frameMap){
@@ -112,7 +112,7 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 	}
 
 	//add this collection to lcio event
-	if((dataCollectionExists) && (dataCollection->size()!=0)) lcioEvent.addCollection( dataCollection, "zsdata_apix" );
+	if( !dataCollectionExists && (dataCollection->size()!=0)) lcioEvent.addCollection(dataCollection, "zsdata_apix" );
 
 	return true;
 }
