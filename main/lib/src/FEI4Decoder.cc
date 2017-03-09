@@ -1,4 +1,5 @@
 #include "eudaq/FEI4Decoder.hh"
+#include <array>
 
 namespace eudaq{
 
@@ -27,7 +28,7 @@ std::vector<APIXPix> decodeFEI4DataGen2(std::vector<unsigned char> const & data)
 	size_t no_data_headers = 0;
 
 // /std::cout << "Size: " << data.size() << std::endl;
-	for(size_t index = 8;  index < data.size(); index+=4) {
+	for(size_t index = 0;  index < data.size()-8; index+=4) {
         uint32_t i =( static_cast<uint32_t>(data[index+3]) << 24 ) | 
                 	( static_cast<uint32_t>(data[index+2]) << 16 ) | 
 					( static_cast<uint32_t>(data[index+1]) << 8 ) | 
