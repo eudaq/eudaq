@@ -209,6 +209,9 @@ namespace eutelescope {
 
     //! Vector of detectors readout by the TLUProducer
     std::vector<EUTelBaseDetector *> _tluDetectors;
+    
+    //! File wih path which contains alternative EUDAQ configuration to be used by EUTelNativeReader and ConverterPlugins
+    std::string _eudaqConfigFileName;
 
     // detector specific...................................
 

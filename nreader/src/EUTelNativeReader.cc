@@ -75,7 +75,11 @@ EUTelNativeReader::EUTelNativeReader()
 
   registerProcessorParameter("GeoID", "The geometry identification number",
                              _geoID, static_cast<int>(0));
-
+			     
+  registerOptionalParameter("ModifiedEUDAQConfigFileName",
+                            "This is the file name of a eudaq config file which will be used instead of the one written in the BORE of the data stream",
+                            _eudaqConfigFileName, string(""));			     
+			     
   // from here below only detector specific parameters.
 
   // ---------- //
@@ -147,11 +151,37 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   }
 
   if (reader->Event().IsBORE()) {
-    eudaq::PluginManager::Initialize(reader->Event());
-    // this is the case in which the eudaq event is a Begin Of Run
-    // Event. This is translating into a RunHeader in the case of
-    // LCIO
-    processBORE(reader->Event());
+    bool hasLoadedNewEudaqConfig = false;
+    if (!_eudaqConfigFileName.empty()) {
+        std::ifstream eudaqConfigFile(_eudaqConfigFileNames.c_str());
+        if (file.is_open()) {
+            Configuration config(file);
+            reader->Event()
+	    hasLoadedNewEudaqConfig = true;
+	    streamlog_out(INFO) << "Alternative eudaq configuration file " << _eudaqConfigFileNames << " opened and used instead of BORE entry." << std::endl;
+        } else  {
+	    streamlog_out(ERROR5) << "Alternative eudaq configuration file " << _eudaqConfigFileNames << " could not be opened." << std::endl;
+	}
+    }
+    
+    if hasLoadedNewEudaqConfig {
+	eudaq::DetectorEvent copyBORE = reader->Event();
+	copyBORE.SetTag("CONFIG", to_string(m_config));
+	eudaq::PluginManager::Initialize(copyBORE);
+    
+	// this is the case in which the eudaq event is a Begin Of Run
+	// Event. This is translating into a RunHeader in the case of
+	// LCIO
+	processBORE(copyBORE);	
+    }
+    else {
+	eudaq::PluginManager::Initialize(reader->Event());
+    
+	// this is the case in which the eudaq event is a Begin Of Run
+	// Event. This is translating into a RunHeader in the case of
+	// LCIO
+	processBORE(reader->Event());
+    }
   }
 
   while (reader->NextEvent() && (eventCounter < numEvents)) {
@@ -170,7 +200,28 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       // outside the while loop.
       //
       // Anyway I'm processing this BORE again,
-      processBORE(eudaqEvent);
+    bool hasLoadedNewEudaqConfig = false;      
+    if (!_eudaqConfigFileName.empty()) {
+        std::ifstream eudaqConfigFile(_eudaqConfigFileNames.c_str());
+        if (file.is_open()) {
+            Configuration config(file);
+            reader->Event()
+	    hasLoadedNewEudaqConfig = true;
+	    streamlog_out(INFO) << "Alternative eudaq configuration file " << _eudaqConfigFileNames << " opened and used instead of BORE entry." << std::endl;
+        } else  {
+	    streamlog_out(ERROR5) << "Alternative eudaq configuration file " << _eudaqConfigFileNames << " could not be opened." << std::endl;
+	}
+    }
+
+    if hasLoadedNewEudaqConfig {
+	eudaq::DetectorEvent copyBORE = eudaqEvent;
+	copyBORE.SetTag("CONFIG", to_string(m_config));
+
+	processBORE(copyBORE);	
+    }
+    else {
+	processBORE(eudaqEvent);
+    }    
 
     } else if (eudaqEvent.IsEORE()) {
 
