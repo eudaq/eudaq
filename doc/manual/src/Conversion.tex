@@ -321,24 +321,25 @@ virtual unsigned GetTriggerID(const Event & ev) const;
 It receives the \texttt{Event} as a parameter, from which it should extract the \gls{TLU} trigger ID,
 and return it as an unsigned integer.
 
-\subsubsection{GetStandardEvent}
+\subsubsection{GetStandardSubEvent}
 This method should extract the sensor data from the \texttt{RawDataEvent} input parameter,
 and fill in the \texttt{StandardEvent} by adding the appropriate number of \texttt{StandardPlane}s
 (one per sensor plane).
 The method signature is:
 \begin{listing}
-virtual bool GetStandardSubEvent(StandardEvent & out,
-                                 const Event & in) const;
+virtual bool GetStandardSubEvent(StandardEvent & /*ressult*/,
+                                     eudaq::Event const & /*source*/) const ;
 \end{listing}
 
 It should return \texttt{true} if it successfully updated the \texttt{StandardEvent}, or \texttt{false} to indicate an error.
 
-\subsubsection{GetLCIOEvent}
-Similar to \texttt{GetStandardEvent}, the \texttt{GetLCIOEvent} method converts a \texttt{RawDataEvent}
+\subsubsection{GetLCIOSubEvent}
+Similar to \texttt{GetStandardSubEvent}, the \texttt{GetLCIOSubEvent} method converts a \texttt{RawDataEvent}
 into a standardized format, in this case \gls{LCIO}.
 The signature is:
 \begin{listing}
-virtual lcio::LCEvent * GetLCIOEvent(const Event * ev) const;
+virtual bool GetLCIOSubEvent(lcio::LCEvent & /*result*/,
+				eudaq::Event const & /*source*/) const;
 \end{listing}
 
 It receives the \texttt{RawDataEvent} as a parameter, and should return a pointer to a new LCEvent
