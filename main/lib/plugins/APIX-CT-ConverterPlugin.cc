@@ -25,6 +25,8 @@
 #  include "EUTelGenericSparsePixel.h"
 #include <list>
 using eutelescope::EUTELESCOPE;
+// to be imported from ilcutil
+#include "streamlog/streamlog.h"
 #endif
 
 #include <iostream>
@@ -188,6 +190,8 @@ namespace eudaq {
     std::map<int,int> &m_nFeSensor;
     std::vector<int> &m_smult;
     
+    mutable std::map<int,int> internalIDtoSensorID;
+
     static APIXCTConverterPlugin const m_instance;
   };
   
@@ -200,10 +204,17 @@ namespace eudaq {
   
   bool APIXCTConverterPlugin::GetLCIOSubEvent(lcio::LCEvent & lcioEvent, const Event & eudaqEvent) const
   {
+
+    streamlog::logscope scope(streamlog::out);
+    scope.setName("EUDAQ:ConverterPlugin:APIX-CT");
+
     if (eudaqEvent.IsBORE()) {
       // shouldn't happen
       return true;
     } else if (eudaqEvent.IsEORE()) {
+    	for(auto& entry : internalIDtoSensorID){
+			returnAssignedSensorID(entry.first);
+		}
       // nothing to do
       return true;
     }
@@ -242,7 +253,16 @@ namespace eudaq {
 	
 	int cio=chip_id_offset;
 	if(m_nFeSensor[m_sensorids[sensor]]==3)cio=0;
-	zsDataEncoder["sensorID"] = m_sensorids[sensor] + sm + cio;
+
+	if(internalIDtoSensorID.count(m_sensorids[sensor] + sm + cio)>0){
+		zsDataEncoder["sensorID"] = internalIDtoSensorID.at(m_sensorids[sensor] + sm + cio);
+		streamlog_out(DEBUG) << "APXI-CT producer 0 has already SensorID " << internalIDtoSensorID.at(m_sensorids[sensor] + sm + cio) << " assigned to " << sensor << std::endl;
+	} else {
+		internalIDtoSensorID[m_sensorids[sensor] + sm + cio] = getNewlyAssignedSensorID(m_sensorids[sensor] + sm + cio,20,"APIX-CT",0);
+		zsDataEncoder["sensorID"] = internalIDtoSensorID.at(m_sensorids[sensor] + sm + cio);
+		streamlog_out(MESSAGE9) << "APXI-CT producer 0 got SensorID " << internalIDtoSensorID.at(m_sensorids[sensor] + sm + cio) << " assigned to " << sensor << std::endl;
+	}
+
 	zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 	
 	// prepare a new TrackerData object for the ZS data
@@ -467,6 +487,11 @@ namespace eudaq {
   APIXCTConverterPlugin const APIXCTConverterPlugin::m_instance;
 
   void APIXCTConverterPlugin::Initialize(const Event & source, const Configuration &) {
+    #if USE_LCIO && USE_EUTELESCOPE
+    streamlog::logscope scope(streamlog::out);
+    scope.setName("EUDAQ:ConverterPlugin:APIX-CT");
+    #endif
+
     int nFrontends = from_string(source.GetTag("nFrontends"), 0);
     m_nFrames = from_string(source.GetTag("consecutive_lvl1"), 1);
     char tagname[128];
@@ -501,7 +526,11 @@ namespace eudaq {
 	m_smult.push_back(sm); //for FEI3 one FE (MCC) can have multiple planes (FEs)
       }
     }
-    std::cout<<nFrontends<<" frontends and "<<m_sensorids.size()<<" sensors."<<std::endl;
+			#if USE_LCIO && USE_EUTELESCOPE
+			streamlog_out(MESSAGE9) << "Recognized " << nFrontends<<" frontends and "<<m_sensorids.size()<<" sensors."<<std::endl;
+			#else
+			std::cout << "[ConverterPlugin:APIX-CT] " << "Recognized " << nFrontends<< " frontends and "<<m_sensorids.size()<<" sensors."<<std::endl;
+			#endif
     //std::cout << " Nrows , NColumns = " << m_NumRows << "  ,  " <<  m_NumColumns << std::endl;
     //std::cout << " Initial row , column = " << m_InitialRow << "  ,  " <<  m_InitialColumn << std::endl;
   }
@@ -614,7 +643,11 @@ namespace eudaq {
     //std::cout<<"Trigger time: "<<rcetrig<<std::endl;
     //std::cout<<"Deadtime: "<<deadtime<<std::endl;
     if(rcetrig==0 && triggerword==0){
-      std::cout<<"Event not valid. Not filling Planes."<<std::endl;
+			#if USE_LCIO && USE_EUTELESCOPE
+			streamlog_out(ERROR3) << "Event not valid. Not filling Planes."<<std::endl;
+			#else
+			std::cout << "[ConverterPlugin:APIX-CT] " << "Event not valid. Not filling Planes."<<std::endl;
+			#endif
       return hits;
     }
     eudaq::RawDataEvent::data_t pixblock=ev.GetBlock(1);
