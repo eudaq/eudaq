@@ -11,11 +11,16 @@
 #include <fstream>
 
 namespace eudaq {
-
+  
   template class DLLEXPORT Factory<RunControl>;
   template DLLEXPORT
   std::map<uint32_t, typename Factory<RunControl>::UP_BASE (*)(const std::string&)>&
   Factory<RunControl>::Instance<const std::string&>();
+
+  namespace{
+    auto dummy0 = Factory<RunControl>::
+      Register<RunControl, const std::string&>(RunControl::m_id_factory);
+  }
   
   RunControl::RunControl(const std::string &listenaddress)
       : m_exit(false), m_listening(true), m_run_n(0){
@@ -307,6 +312,15 @@ namespace eudaq {
     }
     else
       return it->second;
+  }
+
+  std::vector<ConnectionSPC> RunControl::GetActiveConnections(){
+    std::vector<ConnectionSPC> conns;
+    std::unique_lock<std::mutex> lk(m_mtx_conn);
+    for(auto &conn_status: m_conn_status){
+      conns.push_back(conn_status.first);
+    }
+    return conns;
   }
   
   void RunControl::StartRunControl(){

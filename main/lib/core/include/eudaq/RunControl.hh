@@ -22,6 +22,8 @@ namespace eudaq {
   std::map<uint32_t, typename Factory<RunControl>::UP_BASE (*)(const std::string&)>&
   Factory<RunControl>::Instance<const std::string&>();  
 #endif
+
+  using RunControlUP = Factory<RunControl>::UP_BASE;
   
   /** Implements the functionality of the Run Control application.
    *
@@ -48,6 +50,7 @@ namespace eudaq {
 
     bool IsActiveConnection(ConnectionSPC con);
     StatusSPC GetConnectionStatus(ConnectionSPC con);
+    std::vector<ConnectionSPC> GetActiveConnections();
     
     //thread control
     void StartRunControl(); 
@@ -62,7 +65,9 @@ namespace eudaq {
     void ReadInitilizeFile(const std::string &path);
     std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
     std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
-    
+
+    static const uint32_t m_id_factory = eudaq::cstr2hash("RunControl");
+
   private:
     void SendCommand(const std::string &cmd,
 		     const std::string &param = "",
