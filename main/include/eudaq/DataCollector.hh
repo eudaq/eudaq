@@ -14,6 +14,8 @@
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 #include <memory>
+#include <map>
+
 namespace eudaq {
 
   /** Implements the functionality of the File Writer application.
@@ -56,14 +58,18 @@ namespace eudaq {
                                    //       pthread_attr_t m_threadattr;
     std::unique_ptr<std::thread> m_thread;
     std::vector<Info> m_buffer;
-    size_t m_numwaiting; ///< The number of producers with events waiting in the
-                         ///buffer
+
     size_t m_itlu;       ///< Index of TLU in m_buffer vector, or -1 if no TLU
+    size_t m_slow;     /// The number of slow producers registered
     unsigned m_runnumber, m_eventnumber;
     std::shared_ptr<FileWriter> m_writer;
+
+    //std::vector<size_t> ireceived;    // storage of producers which sent event
+    std::map<size_t, std::string> m_ireceived;    // <producer_num, produser_type>
+                                // pairs of producers which sent event
     Configuration m_config;
     Time m_runstart;
   };
 }
-
+// Todo write comments ireciecve/receivemask
 #endif // EUDAQ_INCLUDED_DataCollector
