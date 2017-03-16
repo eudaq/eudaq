@@ -5,44 +5,23 @@
 #include <iostream>
 #include <QApplication>
 
-
-namespace{
-  QCoreApplication* GetQApplication(){
-    QCoreApplication* qapp = QApplication::instance();
-    if(!qapp){
-      int argc = 1;
-      char *argv[] = {(char*)"euGUI"};
-      qapp = new QApplication(argc, argv );  
-    }
-    return qapp;
-  }
-  auto qapp = GetQApplication();
-}
-
-
 int main(int argc, char **argv) {
+  QCoreApplication *qapp = new QApplication(argc, argv );  
+
   eudaq::OptionParser op("EUDAQ Run Control", "2",
                          "A Qt version of the Run Control");
   eudaq::Option<std::string> addr(op, "a", "listen-address", "tcp://44000", "address",
 				  "The address on which to listen for connections");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
 				   "The minimum level for displaying log messages locally");
-  try {
-    op.Parse(argv);
-    EUDAQ_LOG_LEVEL(level.Value());
-    auto app=eudaq::Factory<eudaq::RunControl>::MakeUnique<const std::string&>(eudaq::cstr2hash("RunControl"), addr.Value());
-    app->StartRunControl();
-    RunControlGUI gui;
-    gui.SetInstance(std::move(app));
-    std::cout<<">>"<<std::endl;
-    gui.Exec();
-    std::cout<<">>"<<std::endl;
-  } catch (...) {
-    std::cout << "euRun exception handler" << std::endl;
-    std::ostringstream err;
-    int result = op.HandleMainException(err);
-    std::cerr<<"Exception"<< err.str()<<"\n";
-    return result;
-  }
+  op.Parse(argv);
+  EUDAQ_LOG_LEVEL(level.Value());
+  auto app=eudaq::Factory<eudaq::RunControl>::MakeUnique<const std::string&>(eudaq::cstr2hash("RunControl"), addr.Value());
+  app->StartRunControl();
+  RunControlGUI gui;
+  // gui.SetInstance(std::move(app));
+  std::cout<<">>"<<std::endl;
+  gui.Exec();
+  std::cout<<">>"<<std::endl;
   return 0;
 }
