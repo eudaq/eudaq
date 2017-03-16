@@ -11,7 +11,7 @@ namespace eudaq {
      * The base class from which all SlowProducers should inherit.
      * It is both a CommandReceiver, listening to commands from RunControl,
      * and a DataSender, sending data to a DataCollector.
-     * SlowProducer can generate less events then simle producer and data
+     * SlowProducer can generate less events then simple producer and data
      * collector doesn't have to wait an event from SlowProducer to complete
      * receiving data from producers.
      */

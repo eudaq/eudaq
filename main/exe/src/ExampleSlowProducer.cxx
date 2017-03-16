@@ -12,7 +12,7 @@
 
 // A name to identify the raw data format of the events generated
 // Modify this to something appropriate for your producer.
-static const std::string EVENT_TYPE = "Example";
+static const std::string EVENT_TYPE = "ExampleSlow";
 
 // Declare a new class that inherits from eudaq::SlowProducer
 class ExampleSlowProducer : public eudaq::SlowProducer {

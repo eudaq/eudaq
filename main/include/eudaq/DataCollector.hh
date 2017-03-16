@@ -64,12 +64,11 @@ namespace eudaq {
     unsigned m_runnumber, m_eventnumber;
     std::shared_ptr<FileWriter> m_writer;
 
-    //std::vector<size_t> ireceived;    // storage of producers which sent event
-    std::map<size_t, std::string> m_ireceived;    // <producer_num, produser_type>
+    std::map<size_t, std::string> m_ireceived;    // <producer_num, producer_type>
                                 // pairs of producers which sent event
     Configuration m_config;
     Time m_runstart;
   };
 }
-// Todo write comments ireciecve/receivemask
+
 #endif // EUDAQ_INCLUDED_DataCollector
