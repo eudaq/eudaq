@@ -27,7 +27,7 @@ void RunControlModel::SetStatus(eudaq::ConnectionSPC id,
   UpdateDisplayed();
 }
 
-void RunControlModel::UpdateDisplayed() {
+void RunControlModel::UpdateDisplayed(){
   // if (m_disp.size() > 0) {
     // std::sort(m_disp.begin(), m_disp.end(), m_sorter);
     emit dataChanged(createIndex(0, 0), createIndex(m_con_status.size() - 1, 0));

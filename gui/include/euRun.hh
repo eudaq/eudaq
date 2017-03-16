@@ -14,39 +14,27 @@
 #include <QRegExp>
 #include <QString>
 
-#define FONT_SIZE 12
-
-using eudaq::from_string;
-
 class RunConnectionDelegate : public QItemDelegate {
 public:
   RunConnectionDelegate();
 };
 
 class RunControlGUI : public QMainWindow,
-		      public Ui::wndRun,
-		      public eudaq::RunControl {
+		      public Ui::wndRun{
   Q_OBJECT
 public:
-  RunControlGUI(const std::string &listenaddress);
-  void DoConnect(eudaq::ConnectionSPC id) override;
-  void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status) override;
-  void Exec() override final;
+  RunControlGUI();
+  void SetInstance(eudaq::RunControlUP rc);
+  void Exec();
 private:
   void closeEvent(QCloseEvent *event) override;
   bool checkInitFile();
   bool checkConfigFile();
   void updateButtons();
-  void updateTopbar();
 
-signals:
-  void StatusChanged(const QString &, const QString &);
-		     
 private slots:
   void DisplayTimer();
-  void AutorunTimer();
-  void ChangeStatus(const QString &k, const QString &v);
+  // void ChangeStatus(const QString &k, const QString &v);
   
   void on_btnInit_clicked();
   void on_btnConfig_clicked();
@@ -58,19 +46,24 @@ private slots:
   void on_btnLoadInit_clicked();
   void on_btnLoadConf_clicked();
 private:
-  enum state_t {STATE_UNINIT, STATE_UNCONF, STATE_CONF, STATE_RUNNING, STATE_ERROR };
-  int m_state;
+  const std::map<int, QString> m_map_state_str ={
+    {eudaq::Status::STATE_UNINIT,
+     "<font size=12 color='red'><b>Current State: Uninitialised </b></font>"},
+    {eudaq::Status::STATE_UNCONF,
+     "<font size=12 color='red'><b>Current State: Unconfigured </b></font>"},
+    {eudaq::Status::STATE_CONF,
+     "<font size=12 color='orange'><b>Current State: Configured </b></font>"},
+    {eudaq::Status::STATE_RUNNING,
+     "<font size=12 color='green'><b>Current State: Running </b></font>"},
+    {eudaq::Status::STATE_ERROR,
+     "<font size=12 color='darkred'><b>Current State: Error </b></font>"},
+    };
 
+  int m_state;
+  eudaq::RunControlUP m_rc;
+  
   RunControlModel m_run;
   QItemDelegate m_delegate;
   QTimer m_timer_display;
-  QTimer m_timer_autorun;
-  std::map<std::string, QLabel*> m_status;
-  
-  int m_prevtrigs;
-  double m_prevtime;
-  double m_runstarttime;
-  int64_t m_filebytes;
-  int64_t m_events;
-  int64_t m_runeventlimit;
+  std::map<std::string, QLabel*> m_status;  
 };

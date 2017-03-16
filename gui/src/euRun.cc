@@ -5,24 +5,15 @@
 #include "Colours.hh"
 #include "config.h" // for version symbols
 
-namespace{
-  auto dummy0 = eudaq::Factory<eudaq::RunControl>::
-    Register<RunControlGUI, const std::string&>(eudaq::cstr2hash("RunControlGUI"));
-  auto dummy1 = eudaq::Factory<eudaq::RunControl>::
-    Register<RunControlGUI, const std::string&>(eudaq::cstr2hash("GuiRunControl"));
-}
-
 static const char *statuses[] = {
   "RUN",       "Run Number", "EVENT",    "Events Built", "FULLRATE",
   "Rate",      "TRIG",       "Triggers", "FILEBYTES",    "File Bytes",
   "PARTICLES", "Particles",  "TLUSTAT",  "TLU Status",   "SCALERS",
   "Scalers",   0};
 
-RunControlGUI::RunControlGUI(const std::string &listenaddress)
-  : QMainWindow(0, 0), eudaq::RunControl(listenaddress),
-  m_state(STATE_UNINIT), m_prevtrigs(0), m_prevtime(0.0), m_runstarttime(0.0),
-  m_filebytes(0), m_events(0){
-
+RunControlGUI::RunControlGUI()
+  : QMainWindow(0, 0),m_state(eudaq::Status::STATE_UNINIT){
+    
   qRegisterMetaType<QModelIndex>("QModelIndex");
   
   setupUi(this);
@@ -30,7 +21,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress)
   QRect geom(-1,-1, 150, 200);
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
-  lblCurrent->setText(QString("<font size=%1 color='red'> <b> Current State: Uninitilised </b. </font>").arg(FONT_SIZE));
+  lblCurrent->setText(m_map_state_str.at(m_state));
   QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
   int row = 0, col = 0;
   for (const char **st = statuses; st[0] && st[1]; st += 2) {
@@ -42,7 +33,7 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress)
     layout->addWidget(lblname, row, col * 2);
     layout->addWidget(lblvalue, row, col * 2 + 1);
     m_status[st[0]] = lblvalue;
-    if (++col > 1) {
+    if (++col > 1){
       ++row;
       col = 0;
     }
@@ -76,99 +67,45 @@ RunControlGUI::RunControlGUI(const std::string &listenaddress)
     }
   }
 
-  // setWindowIcon(QIcon("../images/Icon_euRun.png"));
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
-
-  connect(this, SIGNAL(StatusChanged(const QString &, const QString &)), this,
-	  SLOT(ChangeStatus(const QString &, const QString &)));
   connect(&m_timer_display, SIGNAL(timeout()), this, SLOT(DisplayTimer()));
-  connect(&m_timer_autorun, SIGNAL(timeout()), this, SLOT(AutorunTimer()));
   m_timer_display.start(500);
 }
 
-void RunControlGUI::DoStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status){
-  if (id->GetType() == "DataCollector") {
-    m_filebytes = from_string(status->GetTag("FILEBYTES"), 0LL);
-    m_events = from_string(status->GetTag("EVENT"), 0LL);
-    emit StatusChanged("EVENT", QString::number(m_events));
-    emit StatusChanged("FILEBYTES", QString::number(m_filebytes));
-  } else if (id->GetType() == "Producer") {
-    if (id->GetName().find("TLU") != std::string::npos) {
-      emit StatusChanged("TRIG", status->GetTag("TRIG").c_str());
-      emit StatusChanged("PARTICLES", status->GetTag("PARTICLES").c_str());
-      emit StatusChanged("TIMESTAMP", status->GetTag("TIMESTAMP").c_str());
-      emit StatusChanged("LASTTIME", status->GetTag("LASTTIME").c_str());
-      emit StatusChanged("TLUSTAT", status->GetTag("STATUS").c_str());
-      bool ok = true;
-      std::string scalers;
-      for (int i = 0; i < 4; ++i) {
-	std::string s = status->GetTag("SCALER" + std::to_string(i));
-	if (s == "") {
-          ok = false;
-          break;
-	}
-	if (scalers != "")
-	  scalers += ", ";
-	scalers += s;
-      }
-      if (ok)
-	emit StatusChanged("SCALERS", scalers.c_str());
-      int trigs = from_string(status->GetTag("TRIG"), -1);
-      double time = from_string(status->GetTag("TIMESTAMP"), 0.0);
-      if(trigs >= 0) {
-	bool dorate = true;
-	if (m_runstarttime == 0.0) {
-	  if (trigs > 0)
-	    m_runstarttime = time;
-	  dorate = false;
-	} else {
-	  emit StatusChanged("MEANRATE",
-			     QString::number((trigs - 1) / (time - m_runstarttime)) + " Hz");
-	}
-	int dtrigs = trigs - m_prevtrigs;
-	double dtime = time - m_prevtime;
-	if(dtrigs >= 10 || dtime >= 1.0) {
-	  m_prevtrigs = trigs;
-	  m_prevtime = time;
-	  emit StatusChanged("RATE", QString::number(dtrigs / dtime) + " Hz");
-	} else {
-	  dorate = false;
-	}
-	if(dorate) {
-	  emit StatusChanged("FULLRATE",
-			     QString::number((trigs - 1) / (time - m_runstarttime)) + " (" +
-			     QString::number(dtrigs / dtime) + ") Hz");
-	}
-      }
-    }
-  }
-  m_run.SetStatus(id, status);
+void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
+  m_rc = std::move(rc);
 }
 
-void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
-  if (id->GetType() == "LogCollector"){
-    btnLog->setEnabled(true);
-  }
-  m_run.newconnection(id);
-}
+// void RunControlGUI::DoStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status){
+//   m_run.SetStatus(id, status);
+// }
+
+// void RunControlGUI::DoConnect(eudaq::ConnectionSPC id) {
+//   if (id->GetType() == "LogCollector"){
+//     btnLog->setEnabled(true);
+//   }
+//   m_run.newconnection(id);
+// }
 
 
-void RunControlGUI::DoDisconnect(eudaq::ConnectionSPC id){
-  m_run.disconnected(id);
-}
+// void RunControlGUI::DoDisconnect(eudaq::ConnectionSPC id){
+//   m_run.disconnected(id);
+// }
 
-void RunControlGUI::ChangeStatus(const QString &name, const QString &value){
-  auto i = m_status.find(name.toStdString());
-  if (i != m_status.end()) {
-    i->second->setText(value);
-  }
-}
+// void RunControlGUI::ChangeStatus(const QString &name, const QString &value){
+//   auto i = m_status.find(name.toStdString());
+//   if (i != m_status.end()) {
+//     i->second->setText(value);
+//   }
+// }
 
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
   std::cout<<settings<<std::endl;
-  ReadInitilizeFile(settings);
-  Initialise();
+  if(m_rc){
+    m_rc->ReadInitilizeFile(settings);
+    m_rc->Initialise();
+  }
 }
 
 void RunControlGUI::on_btnTerminate_clicked(){
@@ -177,32 +114,25 @@ void RunControlGUI::on_btnTerminate_clicked(){
 
 void RunControlGUI::on_btnConfig_clicked(){
   std::string settings = txtConfigFileName->text().toStdString();
-  ReadConfigureFile(settings);
-  m_runeventlimit = GetConfiguration()->Get("RunEventSizeLimit", 0);
-  Configure();
+  if(m_rc){
+    m_rc->ReadConfigureFile(settings);
+    m_rc->Configure();
+  }
 }
 
 void RunControlGUI::on_btnStart_clicked(){
-  m_prevtrigs = 0;
-  m_prevtime = 0.0;
-  m_runstarttime = 0.0;
-  StartRun();
-  emit StatusChanged("RUN", QString::number(GetRunNumber()));
-  emit StatusChanged("EVENT", "0");
-  emit StatusChanged("TRIG", "0");
-  emit StatusChanged("PARTICLES", "0");
-  emit StatusChanged("RATE", "");
-  emit StatusChanged("MEANRATE", "");
+  if(m_rc)
+    m_rc->StartRun();
 }
 
 void RunControlGUI::on_btnStop_clicked() {
-  StopRun();
-  emit StatusChanged("RUN", "("+QString::number(GetRunNumber())+")");
+  if(m_rc)
+    m_rc->StopRun();
 }
 
 void RunControlGUI::on_btnReset_clicked() {
-  Reset();
-  emit StatusChanged("RUN", "("+QString::number(GetRunNumber())+")");
+  if(m_rc)
+    m_rc->Reset();
 }
 
 void RunControlGUI::on_btnLog_clicked() {
@@ -232,55 +162,27 @@ void RunControlGUI::on_btnLoadConf_clicked() {
 
 void RunControlGUI::DisplayTimer(){
   updateButtons();
-  updateTopbar();
-  m_run.UpdateDisplayed();
-}
+  lblCurrent->setText(m_map_state_str.at(m_state));
 
-void RunControlGUI::AutorunTimer(){
-  if ((m_runeventlimit >= 2 && m_events >= m_runeventlimit)){
-    EUDAQ_INFO("Event limit per run reached: " + std::to_string(m_events) + " > " +
-	       std::to_string(m_runeventlimit));
-    on_btnStop_clicked();
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    on_btnConfig_clicked();
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    on_btnStart_clicked();
-  }
+  // m_run.SetStatus(id, status);
+  
+  m_run.UpdateDisplayed();
 }
 
 void RunControlGUI::updateButtons() {
   auto confLoaded = checkConfigFile();
   auto initLoaded = checkInitFile();
-  btnInit->setEnabled(m_state == STATE_UNINIT && initLoaded);
-  btnConfig->setEnabled(m_state == STATE_UNCONF && m_state == STATE_CONF
-			&& confLoaded);
+  btnInit->setEnabled(m_state == eudaq::Status::STATE_UNINIT && initLoaded);
+  btnConfig->setEnabled(m_state == eudaq::Status::STATE_UNCONF &&
+			m_state == eudaq::Status::STATE_CONF &&
+			confLoaded);
   
-  btnLoadInit->setEnabled(m_state != STATE_RUNNING);
-  btnLoadConf->setEnabled(m_state != STATE_RUNNING);
-  btnStart->setEnabled(m_state == STATE_CONF);
-  btnStop->setEnabled(m_state == STATE_RUNNING);
-  btnReset->setEnabled(m_state != STATE_RUNNING);
-  btnTerminate->setEnabled(m_state != STATE_RUNNING);
-}
-
-void RunControlGUI::updateTopbar(){
-  if(m_state == STATE_UNINIT){
-    lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Uninitialised </b><\
-/font>").arg(FONT_SIZE));
-  }
-  else if(m_state == STATE_UNCONF) {
-    lblCurrent->setText(QString("<font size=%1 color='red'><b>Current State: Unconfigured </b></\
-font>").arg(FONT_SIZE));
-  } else if (m_state == STATE_CONF) {
-    lblCurrent->setText(QString("<font size=%1 color='orange'><b>Current State: Configured </b><\
-/font>").arg(FONT_SIZE));
-  }
-  else if (m_state ==STATE_RUNNING)
-    lblCurrent->setText(QString("<font size=%1 color='green'><b>Current State: Running </b></fon\
-t>").arg(FONT_SIZE));
-  else
-    lblCurrent->setText(QString("<font size=%1 color='darkred'><b>Current State: Error </b></fon\
-t>").arg(FONT_SIZE));
+  btnLoadInit->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
+  btnLoadConf->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
+  btnStart->setEnabled(m_state == eudaq::Status::STATE_CONF);
+  btnStop->setEnabled(m_state == eudaq::Status::STATE_RUNNING);
+  btnReset->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
+  btnTerminate->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
 }
 
 void RunControlGUI::closeEvent(QCloseEvent *event) {
@@ -288,7 +190,7 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
       QMessageBox::question(this, "Quitting",
 			    "Terminate all connections and quit?",
 			    QMessageBox::Ok | QMessageBox::Cancel)
-      == QMessageBox::Cancel) {
+      == QMessageBox::Cancel){
     event->ignore();
   } else {
     QSettings settings("EUDAQ collaboration", "EUDAQ");  
@@ -298,7 +200,8 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
     settings.setValue("lastConfigFile", txtConfigFileName->text());
     settings.setValue("lastInitFile", txtInitFileName->text());
     settings.endGroup();
-    Terminate();
+    if(m_rc)
+      m_rc->Terminate();
     event->accept();
   }
 }
@@ -319,16 +222,15 @@ bool RunControlGUI::checkConfigFile() {
   return rx.exactMatch(loadedFile);
 }
 
-
 void RunControlGUI::Exec(){
+  std::cout<<">>>>"<<std::endl;
+  //TODO: check dump reason
   show();
-  StartRunControl();
+  std::cout<<">>>>"<<std::endl;
+  // if(m_rc)
+  //   m_rc->StartRunControl();
   if(QApplication::instance())
     QApplication::instance()->exec(); 
   else
-    std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";
-   
-  while(IsActiveRunControl()){
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  }
+    std::cerr<<"ERROR: RUNContrlGUI::EXEC\n";   
 }

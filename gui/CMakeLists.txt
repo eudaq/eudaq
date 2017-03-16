@@ -38,20 +38,42 @@ endif()
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(./include)
 
-set(MODULE_SRC
+
+set(RUN_GUI_SRC
+  src/euRun.cxx
   src/euRun.cc
   src/RunControlModel.cc
+  # src/euRun.rc
+  )
+qt_wrap_ui(euRun_UISrcs ui/euRun.ui)
+qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
+list(APPEND RUN_GUI_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
+add_executable(euRun ${RUN_GUI_SRC})
+target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
+list(APPEND INSTALL_TARGETS euRun)
+
+set(LOG_GUI_SRC
+  src/euLog.cxx
+  src/euLog.cc
+  src/LogCollectorModel.cc
+  # src/euLog.rc
+  )
+
+set(PRD_GUI_SRC
+  src/euProd.cxx
+  src/euProd.cc
+  # src/euProd.rc
+  )
+
+
+set(MODULE_SRC
   src/euLog.cc
   src/LogCollectorModel.cc
   src/euProd.cc
-  # src/euRun.rc
   # src/euLog.rc
   # src/euProd.rc
   )
 
-qt_wrap_ui(euRun_UISrcs ui/euRun.ui)
-qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
-list(APPEND MODULE_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
 
 qt_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
 qt_wrap_ui(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
@@ -66,11 +88,6 @@ set(EUDAQ_MODULE module_${MODULE_NAME})
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
-
-add_executable(euRun src/euRun.cxx)
-set_property(TARGET euRun PROPERTY PROJECT_LABEL "BinEuRun")
-target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-list(APPEND INSTALL_TARGETS euRun)
 
 add_executable(euLog src/euLog.cxx)
 set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog") 

@@ -1,7 +1,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
-#include "eudaq/RunControl.hh"
+#include "euRun.hh"
 #include <iostream>
 #include <QApplication>
 
@@ -30,8 +30,13 @@ int main(int argc, char **argv) {
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    auto app=eudaq::Factory<eudaq::RunControl>::MakeShared<const std::string&>(eudaq::cstr2hash("GuiRunControl"), addr.Value());
-    app->Exec();
+    auto app=eudaq::Factory<eudaq::RunControl>::MakeUnique<const std::string&>(eudaq::cstr2hash("RunControl"), addr.Value());
+    app->StartRunControl();
+    RunControlGUI gui;
+    gui.SetInstance(std::move(app));
+    std::cout<<">>"<<std::endl;
+    gui.Exec();
+    std::cout<<">>"<<std::endl;
   } catch (...) {
     std::cout << "euRun exception handler" << std::endl;
     std::ostringstream err;
