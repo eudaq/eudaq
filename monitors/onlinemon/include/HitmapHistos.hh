@@ -9,6 +9,8 @@
 #define HITMAPHISTOS_HH_
 
 #include <TH2I.h>
+#include <TH2D.h>
+#include <TProfile2D.h>
 #include <TFile.h>
 
 #include <map>
@@ -50,6 +52,9 @@ protected:
   TH1I **_nClusters_section;
   TH1I **_nClustersize_section;
   TH1I **_nHotPixels_section;
+  TH2D* _lvl1VsTot;
+  TProfile2D* _totHeat;
+
 
 public:
   HitmapHistos(SimpleStandardPlane p, RootMonitor *mon);
@@ -61,6 +66,9 @@ public:
 
   void Calculate(const int currentEventNum);
   void Write();
+
+  TH2D* getLVL1vsTOTHisto() { return _lvl1VsTot; }
+  TProfile2D* getTOTHeatHisto() { return _totHeat; }
 
   TH2I *getHitmapHisto() { return _hitmap; }
   TH1I *getHitXmapHisto() { return _hitXmap; }

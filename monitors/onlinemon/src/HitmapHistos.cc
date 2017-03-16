@@ -13,8 +13,10 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     : _sensor(p.getName()), _id(p.getID()), _maxX(p.getMaxX()),
       _maxY(p.getMaxY()), _wait(false), _hitmap(NULL), _hitXmap(NULL),
       _hitYmap(NULL), _clusterMap(NULL), _lvl1Distr(NULL), _lvl1Width(NULL),
-      _lvl1Cluster(NULL), _totSingle(NULL), _totCluster(NULL), _hitOcc(NULL),
-      _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL),
+      _lvl1Cluster(NULL), _totSingle(NULL),
+      _lvl1VsTot(NULL), _totHeat(NULL),
+      _totCluster(NULL), _hitOcc(NULL),
+      _nClusters(NULL), _nHits(NULL), _clusterXWidth(NULL), 
       _clusterYWidth(NULL), _nbadHits(NULL), _nHotPixels(NULL),
       _hitmapSections(NULL), is_MIMOSA26(false), is_APIX(false),
       is_USBPIX(false), is_USBPIXI4(false) {
@@ -34,6 +36,7 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     is_USBPIXI4 = true;
 	  std::cout << "set correctly" << std::endl;
   }
+
   is_DEPFET = p.is_DEPFET;
 
   // std::cout << "HitmapHistos::Sensorname: " << _sensor << " "<< _id<<
@@ -64,26 +67,42 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 
     sprintf(out, "%s %i hot Pixel Map", _sensor.c_str(), _id);
     sprintf(out2, "h_hotpixelmap_%s_%i", _sensor.c_str(), _id);
-    _HotPixelMap =
-        new TH2D(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
+    _HotPixelMap = new TH2D(out2, out, _maxX, 0, _maxX, _maxY, 0, _maxY);
     SetHistoAxisLabels(_HotPixelMap, "X", "Y");
 
     sprintf(out, "%s %i LVL1 Pixel Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1_%s_%i", _sensor.c_str(), _id);
     _lvl1Distr = new TH1I(out2, out, 16, 0, 16);
+    SetHistoAxisLabelx(_lvl1Distr, "Lvl1 [25 ns]");
 
     sprintf(out, "%s %i LVL1 Cluster Distribution", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1cluster_%s_%i", _sensor.c_str(), _id);
     _lvl1Cluster = new TH1I(out2, out, 16, 0, 16);
+    SetHistoAxisLabelx(_lvl1Cluster, "Lvl1 [25 ns]");
 
-    sprintf(out, "%s %i LVL1 Clusterwidth", _sensor.c_str(), _id);
+    sprintf(out, "%s %i Lvl1 Clusterwidth", _sensor.c_str(), _id);
     sprintf(out2, "h_lvl1width_%s_%i", _sensor.c_str(), _id);
     _lvl1Width = new TH1I(out2, out, 16, 0, 16);
+    SetHistoAxisLabelx(_lvl1Width, "Lvl1 width [25 ns]");
 
-    sprintf(out, "%s %i TOT Single Pixels", _sensor.c_str(), _id);
+    //LVL1 vs ToT
+    sprintf(out, "%s %i Lvl1 vs ToT", _sensor.c_str(), _id);
+    sprintf(out2, "h_lvl1vstot_%s_%i", _sensor.c_str(), _id);
+    _lvl1VsTot = new TH2D(out2, out, 16, 0, 16, 16, 0, 16);
+    SetHistoAxisLabels(_lvl1VsTot, "ToT [ToT code]", "Lvl1 [25 ns]");
+
+    //ToT spatially resolved
+    sprintf(out, "%s %i ToT Heatmap", _sensor.c_str(), _id);
+    sprintf(out2, "h_totheat_%s_%i", _sensor.c_str(), _id);
+    _totHeat = new TProfile2D(out2, out, 80, 0, 80, 336, 0, 336, 0, 14);
+    SetHistoAxisLabels(_totHeat, "X", "Y");
+
+
+    sprintf(out, "%s %i ToT Single Pixels", _sensor.c_str(), _id);
     sprintf(out2, "h_totsingle_%s_%i", _sensor.c_str(), _id);
     if (p.is_USBPIXI4) {
       _totSingle = new TH1I(out2, out, 16, 0, 15);
+      SetHistoAxisLabelx(_totSingle, "ToT [ToT code]");
     } else if (p.is_DEPFET) {
       _totSingle = new TH1I(out2, out, 255, -127, 127);
     } else {
@@ -95,12 +114,14 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
 #endif
     }
 
-    sprintf(out, "%s %i TOT Clusters", _sensor.c_str(), _id);
+    sprintf(out, "%s %i ToT Clusters", _sensor.c_str(), _id);
     sprintf(out2, "h_totcluster_%s_%i", _sensor.c_str(), _id);
-    if (p.is_USBPIXI4)
+    if (p.is_USBPIXI4) {
       _totCluster = new TH1I(out2, out, 80, 0, 79);
-    else
+      SetHistoAxisLabelx(_totCluster, "ToT [sum ToT code]");
+    } else {
       _totCluster = new TH1I(out2, out, 256, 0, 255);
+    }
 
     sprintf(out, "%s %i Hitoccupancy", _sensor.c_str(), _id);
     sprintf(out2, "h_hitocc%s_%i", _sensor.c_str(), _id);
@@ -136,10 +157,12 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out, "%s %i Clustersize in X", _sensor.c_str(), _id);
     sprintf(out2, "h_clustersizeX_%s_%i", _sensor.c_str(), _id);
     _clusterXWidth = new TH1I(out2, out, 20, 0, 19);
+    SetHistoAxisLabelx(_clusterXWidth, "Cluster width X");
 
     sprintf(out, "%s %i Clustersize in Y", _sensor.c_str(), _id);
     sprintf(out2, "h_clustersizeY_%s_%i", _sensor.c_str(), _id);
     _clusterYWidth = new TH1I(out2, out, 20, 0, 19);
+    SetHistoAxisLabelx(_clusterYWidth, "Cluster width Y");
 
     sprintf(out, "%s %i Hitmap Sections", _sensor.c_str(), _id);
     sprintf(out2, "h_hitmapSections_%s_%i", _sensor.c_str(), _id);
@@ -287,7 +310,11 @@ void HitmapHistos::Fill(const SimpleStandardHit &hit) {
       _totSingle->Fill(hit.getTOT());
     if (_lvl1Distr != NULL)
       _lvl1Distr->Fill(hit.getLVL1());
-  }
+    if(_lvl1VsTot != NULL)
+      _lvl1VsTot->Fill(hit.getTOT(), hit.getLVL1());
+    if(_totHeat != NULL)
+      _totHeat->Fill(hit.getX(), hit.getY(), hit.getTOT());
+ }
 }
 
 void HitmapHistos::Fill(const SimpleStandardPlane &plane) {
@@ -377,6 +404,9 @@ void HitmapHistos::Reset() {
   _clusterXWidth->Reset();
   _hitmapSections->Reset();
   _nPivotPixel->Reset();
+  _lvl1VsTot->Reset();
+  _totHeat->Reset();
+
   for (unsigned int section = 0; section < mimosa26_max_section; section++) {
     _nClusters_section[section]->Reset();
     _nHits_section[section]->Reset();
@@ -466,6 +496,8 @@ void HitmapHistos::Write() {
   _clusterYWidth->Write();
   _hitmapSections->Write();
   _nPivotPixel->Write();
+  _lvl1VsTot->Write();
+  _totHeat->Write();
   for (unsigned int section = 0; section < mimosa26_max_section; section++) {
     _nClusters_section[section]->Write();
     _nHits_section[section]->Write();
