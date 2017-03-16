@@ -84,11 +84,11 @@ namespace eudaq {
     m_buffer.erase(m_buffer.begin() + i);
   }
 
-/* Upon recieving the Configure command the DataCollector function uses
+/* Upon receiving the Configure command the DataCollector function uses
  * Configure object to obtain configuration setting from the .conf file. The
  * important settings that it aquires are the file Type and Pattern that the
  * DataCollector will write. These settings are stored in the varible m_writer
- * which is an instance of the std File Writer Class.
+ * which is an instance of the standard FileWriter Class.
 */
   void DataCollector::OnConfigure(const Configuration &param) {
     m_config = param;
@@ -150,7 +150,6 @@ namespace eudaq {
       std::cout << "Received EORE Event from " << id << ": " << *ev
                 << std::endl;
 
-    bool tmp = false;
 
     // There are two types of producers now: "fast" producer and slow producer.
     // Before starting OnComplete function we need to receive events from all
@@ -161,17 +160,10 @@ namespace eudaq {
     // in order to know which slow producers sent an event.
 
     m_ireceived[GetInfo(id)] = id.GetType();
-    int fastwaiting = 0;
-    for (std::map<size_t, std::string>::iterator it = m_ireceived.begin();
-            it != m_ireceived.end(); ++it) {
-      if (it->second != "SlowProducer")
-        fastwaiting++;
-    }
+
+    int fastwaiting = std::count_if(m_ireceived.begin(), m_ireceived.end(), [](std::pair<size_t, std::string> i) -> bool {i.second != "SlowProducer";});
 
     if (fastwaiting == m_buffer.size() - m_slow)
-      tmp = true;
-
-    if (tmp)
       OnCompleteEvent();
   }
 
