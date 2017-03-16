@@ -90,7 +90,7 @@ virtual bool GetLCIOSubEvent(lcio::LCEvent & lcioEvent, eudaq::Event const & eud
 
 	for(auto channel: boardChannels.at(boardID)){
 		auto frame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl);
-		auto sensorID = boardID + channel;
+		auto sensorID = 20 + channel;
 		cellIDEncoder["sensorID"] = sensorID;
 		cellIDEncoder.setCellID(frame.get());
 		auto frameInterface = 	std::unique_ptr<eutelescope::EUTelTrackerDataInterfacerImpl<eutelescope::EUTelGenericSparsePixel>>( 
