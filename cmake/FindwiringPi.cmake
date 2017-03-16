@@ -1,9 +1,8 @@
 # - Try to find wiringPi 
 # Once done this will define
-#  WIRINGPI_FOUND - System has wiringPi
-#  WIRINGPI_INCLUDE_DIR - The wiringPi include directory
-#  WIRINGPI_LIBRARY - The libraries needed to use wiringPi
-#  WIRINGPI_DEFINITIONS - Compiler switches required for using wiringPi
+#  wiringPi_FOUND - System has wiringPi
+#  wiringPi_INCLUDE_DIRS - The wiringPi include directory
+#  wiringPi_LIBRARIES - The libraries needed to use wiringPi
 
 include(LibFindMacros)
 

@@ -19,40 +19,22 @@ find_path(crypt_INCLUDE_DIR
 )
 
 # Finally the library itself
-find_library(crypt_LIBRARY_SHARED
-  NAMES ${CMAKE_SHARED_LIBRARY_PREFIX}crypt${CMAKE_SHARED_LIBRARY_SUFFIX}
-  PATHS ${crypt_PKGCONF_LIBRARY_DIRS}
-)
-
-find_library(crypt_LIBRARY_STATIC
-  NAMES ${CMAKE_STATIC_LIBRARY_PREFIX}crypt${CMAKE_STATIC_LIBRARY_SUFFIX}
+find_library(crypt_LIBRARY
+  NAMES crypt
   PATHS ${crypt_PKGCONF_LIBRARY_DIRS}
 )
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
 # NOTE: Singular variables for this library, plural for libraries this this lib depends on.
-set(crypt_INCLUDE_DIR crypt_INCLUDE_DIRS)
-set(crypt_LIBRARY_SHARED crypt_LIBRARIES_SHARED)
-set(crypt_LIBRARY_STATIC crypt_LIBRARIES_STATIC)
 libfind_process(crypt)
 
 IF (crypt_INCLUDE_DIR)
 	MESSAGE(" -- Found crypt header files in ${crypt_INCLUDE_DIR}.")
-	MESSAGE(" -- Found crypt header (and dependencies) files in ${crypt_INCLUDE_DIRS}.")
 ENDIF (crypt_INCLUDE_DIR)
 
-IF (crypt_LIBRARY_SHARED)
-	MESSAGE(" -- Found shared library crypt in ${crypt_LIBRARY_SHARED}.")	
-	MESSAGE(" -- Found shared library  (and dependencies)  crypt in ${crypt_LIBRARIES_SHARED}.")	
-ELSE (crypt_LIBRARY_SHARED)
-	MESSAGE("Looked for dynamic crypt libraries named ${CRYPT_NAMES}.")
-	MESSAGE("Could NOT find dynamic crypt library")
-ENDIF (crypt_LIBRARY_SHARED)
-
-IF (crypt_LIBRARY_STATIC)
-	MESSAGE(" -- Found static library crypt in ${crypt_LIBRARY_STATIC}.")	
-	MESSAGE(" -- Found static library  (and dependencies)  crypt in ${crypt_LIBRARIES_STATIC}.")	
-ELSE (crypt_LIBRARY_STATIC)
-	MESSAGE("Looked for static crypt libraries named ${CRYPT_NAMES}.")
-	MESSAGE("Could NOT find static crypt library")
-ENDIF (crypt_LIBRARY_STATIC)
+IF (crypt_LIBRARY)
+	MESSAGE(" -- Found library crypt in ${crypt_LIBRARY}.")	
+ELSE (crypt_LIBRARY)
+	MESSAGE("Looked for crypt libraries named ${CRYPT_NAMES}.")
+	MESSAGE("Could NOT find crypt library")
+ENDIF (crypt_LIBRARY)

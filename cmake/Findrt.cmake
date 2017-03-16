@@ -1,10 +1,10 @@
 # - Check for the presence of RT
 #
 # The following variables are set when RT is found:
-#  HAVE_RT       = Set to true, if all components of RT
+#  rt_FOUND       = Set to true, if all components of RT
 #                          have been found.
-#  RT_INCLUDES   = Include path for the header files of RT
-#  RT_LIBRARIES  = Link these to use RT
+#  rt_INCLUDE_DIRS   = Include path for the header files of RT
+#  rt_LIBRARIES  = Link these to use RT
 
 include(LibFindMacros)
 
