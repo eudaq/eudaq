@@ -28,10 +28,7 @@ public:
   void Exec();
 private:
   void closeEvent(QCloseEvent *event) override;
-  bool checkInitFile();
-  bool checkConfigFile();
-  void updateButtons();
-
+			
 private slots:
   void DisplayTimer();
   // void ChangeStatus(const QString &k, const QString &v);
@@ -46,24 +43,13 @@ private slots:
   void on_btnLoadInit_clicked();
   void on_btnLoadConf_clicked();
 private:
-  const std::map<int, QString> m_map_state_str ={
-    {eudaq::Status::STATE_UNINIT,
-     "<font size=12 color='red'><b>Current State: Uninitialised </b></font>"},
-    {eudaq::Status::STATE_UNCONF,
-     "<font size=12 color='red'><b>Current State: Unconfigured </b></font>"},
-    {eudaq::Status::STATE_CONF,
-     "<font size=12 color='orange'><b>Current State: Configured </b></font>"},
-    {eudaq::Status::STATE_RUNNING,
-     "<font size=12 color='green'><b>Current State: Running </b></font>"},
-    {eudaq::Status::STATE_ERROR,
-     "<font size=12 color='darkred'><b>Current State: Error </b></font>"},
-    };
-
+  static std::map<int, QString> m_map_state_str;
+  std::map<QString, QString> m_map_label_str;
   int m_state;
   eudaq::RunControlUP m_rc;
-  
-  RunControlModel m_run;
+  RunControlModel m_model_conns;
   QItemDelegate m_delegate;
   QTimer m_timer_display;
-  std::map<std::string, QLabel*> m_status;  
+  std::map<QString, QLabel*> m_status;
+  std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_map_conn_status_last;
 };

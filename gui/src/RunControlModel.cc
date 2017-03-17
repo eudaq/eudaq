@@ -4,6 +4,8 @@
 #include <string>
 #include "qmetatype.h"
 
+std::vector<QString> RunControlModel::m_str_header={"type", "name", "state", "connection", "info"};
+
 RunControlModel::RunControlModel(QObject *parent)
   : QAbstractListModel(parent){
   qRegisterMetaType<QVector<int> >("QVector<int>");
@@ -25,6 +27,7 @@ void RunControlModel::SetStatus(eudaq::ConnectionSPC id,
                                 eudaq::StatusSPC status){
   m_con_status.at(id) = status;  
   UpdateDisplayed();
+  
 }
 
 void RunControlModel::UpdateDisplayed(){
@@ -34,9 +37,6 @@ void RunControlModel::UpdateDisplayed(){
   // }
 }
 
-bool RunControlModel::CheckConfigured() {
-  return true;
-}
 
 int RunControlModel::rowCount(const QModelIndex & /*parent*/) const {
   return m_con_status.size();

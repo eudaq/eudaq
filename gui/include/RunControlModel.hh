@@ -17,10 +17,9 @@ public:
   void newconnection(eudaq::ConnectionSPC id);
   void disconnected(eudaq::ConnectionSPC id);
   void UpdateDisplayed();
-  bool CheckConfigured();
   void SetStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status);
 private:
-  const std::vector<QString> m_str_header={"type", "name", "state", "connection", "info"};
+  static std::vector<QString> m_str_header;
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_con_status;
   std::mutex m_mtx_con;
 };

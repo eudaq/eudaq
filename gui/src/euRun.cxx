@@ -17,9 +17,9 @@ int main(int argc, char **argv) {
   op.Parse(argv);
   EUDAQ_LOG_LEVEL(level.Value());
   auto app=eudaq::Factory<eudaq::RunControl>::MakeUnique<const std::string&>(eudaq::cstr2hash("RunControl"), addr.Value());
-  app->StartRunControl();
+  // app->StartRunControl();
   RunControlGUI gui;
-  // gui.SetInstance(std::move(app));
+  gui.SetInstance(std::move(app));
   std::cout<<">>"<<std::endl;
   gui.Exec();
   std::cout<<">>"<<std::endl;
