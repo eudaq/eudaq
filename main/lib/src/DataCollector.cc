@@ -26,7 +26,7 @@ namespace eudaq {
       : CommandReceiver("DataCollector", name, runcontrol, false),
         m_runnumberfile(runnumberfile), m_done(false), m_listening(true),
         m_dataserver(TransportFactory::CreateServer(listenaddress)), m_thread(),
-        m_numwaiting(0), m_itlu((size_t)-1),
+        m_itlu((size_t)-1), m_slow(0),
         m_runnumber(ReadFromFile(runnumberfile, 0U)), m_eventnumber(0),
         m_runstart(0) {
     m_dataserver->SetCallback(
@@ -62,6 +62,11 @@ namespace eudaq {
     if (id.GetType() == "Producer" && id.GetName() == "TLU") {
       m_itlu = m_buffer.size() - 1;
     }
+    // One should count the number of SlowProducers to know how many Producers
+    // have to be synchronised.
+    if (id.GetType() == "SlowProducer") {
+      m_slow++;
+    }
   }
 
   void DataCollector::OnDisconnect(const ConnectionInfo &id) {
@@ -72,11 +77,18 @@ namespace eudaq {
     } else if (i < m_itlu) {
       --m_itlu;
     }
+    // Substract disconnected slow producer from the number of SlowProducers.
+    if (id.GetType() == "SlowProducer") {
+      m_slow--;
+    }
     m_buffer.erase(m_buffer.begin() + i);
-    // if (during run) THROW
   }
 
-/* Upon recieving the Configure command the DataCollector function uses Configure object to obtain configuration setting from the .conf file. The important settings that it aquires are the file Type and Pattern that the DataCollector will write. These settings are stored in the varible m_writer which is an instance of the std File Writer Class. 
+/* Upon receiving the Configure command the DataCollector function uses
+ * Configure object to obtain configuration setting from the .conf file. The
+ * important settings that it aquires are the file Type and Pattern that the
+ * DataCollector will write. These settings are stored in the varible m_writer
+ * which is an instance of the standard FileWriter Class.
 */
   void DataCollector::OnConfigure(const Configuration &param) {
     m_config = param;
@@ -106,8 +118,6 @@ namespace eudaq {
           m_buffer[i].events.clear();
         }
       }
-      m_numwaiting = 0;
-
       SetConnectionState(ConnectionState::STATE_RUNNING);
     } catch (const Exception &e) {
       std::string msg =
@@ -129,6 +139,10 @@ namespace eudaq {
   void DataCollector::OnReceive(const ConnectionInfo &id,
                                 std::shared_ptr<Event> ev) {
     Info &inf = m_buffer[GetInfo(id)];
+
+    // Prevent the accumulation of old information from slow producer.
+    if(id.GetType() == "SlowProducer")
+      inf.events.clear();
     inf.events.push_back(ev);
 
     // Print if the received event is the EORE of this producer:
@@ -136,17 +150,20 @@ namespace eudaq {
       std::cout << "Received EORE Event from " << id << ": " << *ev
                 << std::endl;
 
-    bool tmp = false;
-    if (inf.events.size() == 1) {
-      m_numwaiting++;
-      if (m_numwaiting == m_buffer.size()) {
-        tmp = true;
-      }
-    }
 
-    // std::cout << "Waiting buffers: " << m_numwaiting << " out of " <<
-    // m_buffer.size() << std::endl;
-    if (tmp)
+    // There are two types of producers now: "fast" producer and slow producer.
+    // Before starting OnComplete function we need to receive events from all
+    // fast producers, but we don't have to wait for all slow producers.
+    // So we count only the number of fast producers events. And if it exceeds
+    // the number of fast producers we can go to the OnComplete function. The
+    // id of producers which sent an event are stored in m_ireceived array
+    // in order to know which slow producers sent an event.
+
+    m_ireceived[GetInfo(id)] = id.GetType();
+
+    int fastwaiting = std::count_if(m_ireceived.begin(), m_ireceived.end(), [](std::pair<size_t, std::string> i) -> bool {i.second != "SlowProducer";});
+
+    if (fastwaiting == m_buffer.size() - m_slow)
       OnCompleteEvent();
   }
 
@@ -163,7 +180,6 @@ namespace eudaq {
   void DataCollector::OnCompleteEvent() {
     bool more = true;
     bool found_bore = false;
-
     while (more) {
       if (m_eventnumber < 10 || m_eventnumber % 1000 == 0) {
         std::cout << "Complete Event: " << m_runnumber << "." << m_eventnumber
@@ -181,35 +197,41 @@ namespace eudaq {
       DetectorEvent ev(n_run, n_ev, n_ts);
       unsigned tluev = 0;
       for (size_t i = 0; i < m_buffer.size(); ++i) {
+        // Checking if the producer has sent the data to read.
+        //if (std::find(m_ireceived.begin(), m_ireceived.end(), i) == m_ireceived.end())
+        //  continue;
+        if (m_ireceived.count(i) == 0)
+          continue;
         if (m_buffer[i].events.front()->GetRunNumber() != m_runnumber) {
           EUDAQ_ERROR("Run number mismatch in event " +
                       to_string(ev.GetEventNumber()));
         }
-        if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) &&
-            (m_buffer[i].events.front()->GetEventNumber() !=
-             m_eventnumber - 1)) {
-          if (ev.GetEventNumber() % 1000 == 0) {
-            // dhaas: added if-statement to filter out TLU event number 0, in
-            // case of bad clocking out
-            if (m_buffer[i].events.front()->GetEventNumber() != 0)
-              EUDAQ_WARN(
-                  "Event number mismatch > 1 in event " +
-                  to_string(ev.GetEventNumber()) + " " +
-                  to_string(m_buffer[i].events.front()->GetEventNumber()) +
-                  " " + to_string(m_eventnumber));
-            if (m_buffer[i].events.front()->GetEventNumber() == 0)
-              EUDAQ_WARN("Event number mismatch > 1 in event " +
-                         to_string(ev.GetEventNumber()));
+        if (m_ireceived[i] != "SlowProducer") {
+          if ((m_buffer[i].events.front()->GetEventNumber() != m_eventnumber) &&
+              (m_buffer[i].events.front()->GetEventNumber() !=
+               m_eventnumber - 1)) {
+            if (ev.GetEventNumber() % 1000 == 0) {
+              // dhaas: added if-statement to filter out TLU event number 0, in
+              // case of bad clocking out
+              if (m_buffer[i].events.front()->GetEventNumber() != 0)
+                EUDAQ_WARN(
+                    "Event number mismatch > 1 in event " +
+                    to_string(ev.GetEventNumber()) + " " +
+                    to_string(m_buffer[i].events.front()->GetEventNumber()) +
+                    " " + to_string(m_eventnumber));
+              if (m_buffer[i].events.front()->GetEventNumber() == 0)
+                EUDAQ_WARN("Event number mismatch > 1 in event " +
+                           to_string(ev.GetEventNumber()));
+            }
           }
         }
         ev.AddEvent(m_buffer[i].events.front());
         m_buffer[i].events.pop_front();
-        // std::cout << "My size is " << m_buffer[i].events.size() << std::endl;
         if (m_buffer[i].events.size() == 0) {
-          m_numwaiting--;
           more = false;
         }
       }
+
       if (ev.IsBORE()) {
         ev.SetTag("STARTTIME", m_runstart.Formatted());
         ev.SetTag("CONFIG", to_string(m_config));
@@ -239,6 +261,7 @@ namespace eudaq {
       if (!found_bore)
         ++m_eventnumber;
     }
+    m_ireceived.clear();
   }
 
   size_t DataCollector::GetInfo(const ConnectionInfo &id) {

@@ -27,7 +27,6 @@ namespace eudaq {
 
   int ConnectionInfo::GetRemoteInfo() const
   {
-    // std::string temp = GetRemote();
     std::string info = m_host.substr(m_host.find(":")+1);
     //std::cout<<info<<"\n";
     if( info.compare("") != 0)

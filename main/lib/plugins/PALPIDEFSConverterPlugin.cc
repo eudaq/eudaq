@@ -889,7 +889,7 @@ namespace eudaq {
             bool ok_ref = true;
             bool ok_last = true;
             bool ok_event_distance = true;
-            double event_distance = fabs((double)timestamps[0] - (double)m_last_timestamp[0])*12.5e-9;
+            double event_distance = fabs(static_cast<double>(timestamps[0]) - static_cast<double>(m_last_timestamp[0]))*12.5e-9;
             if ((event_distance-m_period>m_period*1.e-3) && (m_period>0.)) {
               ok_event_distance = false;
             }
@@ -899,14 +899,14 @@ namespace eudaq {
                 ok_zero=false;
                 break;
               }
-              double rel_diff_ref = fabs(1.0 - (double)timestamps[i] / (double)timestamps[i + 1]);
-              double abs_diff_ref = fabs((double)timestamps[i] - (double)timestamps[i + 1]);
+              double rel_diff_ref = fabs(1.0 - static_cast<double>(timestamps[i]) / static_cast<double>(timestamps[i + 1]));
+              double abs_diff_ref = fabs(static_cast<double>(timestamps[i]) - static_cast<double>(timestamps[i + 1]));
               if (rel_diff_ref > 0.0001 && abs_diff_ref> 10) {
                 cout << "Relative difference to reference timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_ref <<" / " << abs_diff_ref << " in planes " << i << " and " << i+1 <<endl;
                 ok_ref=false;
               }
-              double rel_diff_last = fabs(1.0 - ((double)timestamps[i]-(double)m_last_timestamp[i]) / ((double)timestamps[i + 1]-(double)m_last_timestamp[i + 1]));
-              double abs_diff_last = fabs(((double)timestamps[i] - (double)m_last_timestamp[i]) - ((double)timestamps[i+1] - (double)m_last_timestamp[i+1]));
+              double rel_diff_last = fabs(1.0 - (static_cast<double>(timestamps[i])-static_cast<double>(m_last_timestamp[i])) / (static_cast<double>(timestamps[i + 1])-static_cast<double>(m_last_timestamp[i + 1])));
+              double abs_diff_last = fabs((static_cast<double>(timestamps[i]) - static_cast<double>(m_last_timestamp[i])) - (static_cast<double>(timestamps[i+1]) - static_cast<double>(m_last_timestamp[i+1])));
               if (rel_diff_last > 0.0001 && abs_diff_last>10 ) {
                 cout << "Relative difference to last timestamp larger than 1.e-4 and 10 clock cycles: " << rel_diff_last << " / " << abs_diff_last << " in planes " << i << " and " << i+1 << endl;
                 ok_last = false;
@@ -941,9 +941,9 @@ namespace eudaq {
 //#ifdef MYDEBUG
               for (int i = 0; i < m_nLayers; i++) {
                 //printf("%d %llu %llu %llu %llu\n", i, trigger_ids[i], timestamps[i], timestamps_reference[i], m_last_timestamp[i]);
-                long long diff = (long long)timestamps[i] -(long long)timestamps[0];
+                long long diff = static_cast<long long>(timestamps[i]) -static_cast<long long>(timestamps[0]);
 
-                cout << i << '\t' << ev.GetEventNumber() << '\t' << trigger_ids[i] << '\t' << timestamps[i]+timestamps_reference[i] << '\t' << '\t' << timestamps[i] << '\t' << m_last_timestamp[i] << '\t' <<  (long long)timestamps[i]-(long long)m_last_timestamp[i] << '\t' << diff << '\t' << (double)diff/(double)timestamps[0]  << endl;
+                cout << i << '\t' << ev.GetEventNumber() << '\t' << trigger_ids[i] << '\t' << timestamps[i]+timestamps_reference[i] << '\t' << '\t' << timestamps[i] << '\t' << m_last_timestamp[i] << '\t' <<  static_cast<long long>(timestamps[i])-static_cast<long long>(m_last_timestamp[i]) << '\t' << diff << '\t' << static_cast<double>(diff)/static_cast<double>(timestamps[0])  << endl;
               }
 //#endif
 #ifdef CHECK_TIMESTAMPS
@@ -1217,7 +1217,7 @@ namespace eudaq {
       double *y = new double[n_points];
 
       for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-        x[i_point] = (double)points[i_point];
+        x[i_point] = static_cast<double>(points[i_point]);
       }
 
       TF1 f_sc("sc", "0.5*(1.+TMath::Erf((x-[0])/([1]*TMath::Sqrt2())))", x[0],
@@ -1242,8 +1242,8 @@ namespace eudaq {
 
           int i_thr_point = -1;
           for (unsigned int i_point = 0; i_point < n_points; ++i_point) {
-            y[i_point] = ((double)data[i_pixel * n_points + i_point]) /
-              ((double)n_events);
+            y[i_point] = (static_cast<double>(data[i_pixel * n_points + i_point])) /
+              (static_cast<double>(n_events));
             if (y[i_point] >= 0.5 && i_thr_point == -1)
               i_thr_point = i_point;
           }
@@ -1260,10 +1260,10 @@ namespace eudaq {
           g = new TGraph(n_points, x, y);
           TFitResultPtr r = g->Fit(&f_sc, "QRSW");
           if (r->IsValid()) {
-            (*thr)[sector] += (float)f_sc.GetParameter(0);
-            (*thr_rms)[sector] += (float)f_sc.GetParameter(0) * (float)f_sc.GetParameter(0);
-            (*noise)[sector] += (float)f_sc.GetParameter(1);
-            (*noise_rms)[sector] += (float)f_sc.GetParameter(1) * (float)f_sc.GetParameter(1);
+            (*thr)[sector] += static_cast<float>(f_sc.GetParameter(0));
+            (*thr_rms)[sector] += static_cast<float>(f_sc.GetParameter(0)) * static_cast<float>(f_sc.GetParameter(0));
+            (*noise)[sector] += static_cast<float>(f_sc.GetParameter(1));
+            (*noise_rms)[sector] += static_cast<float>(f_sc.GetParameter(1)) * static_cast<float>(f_sc.GetParameter(1));
             ++successful_fits[sector];
           } else {
             ++unsuccessful_fits[sector];
@@ -1275,18 +1275,18 @@ namespace eudaq {
 
       for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
         if (successful_fits[sector] > 0) {
-          (*thr_rms)[i_sector] = (float)TMath::Sqrt(
-            (*thr_rms)[i_sector] / (float)successful_fits[i_sector] -
+          (*thr_rms)[i_sector] = static_cast<float>(TMath::Sqrt(
+            (*thr_rms)[i_sector] / static_cast<float>(successful_fits[i_sector]) -
             (*thr)[i_sector] * (*thr)[i_sector] /
-            (float)successful_fits[i_sector] /
-            (float)successful_fits[i_sector]);
-          (*noise_rms)[i_sector] = (float)TMath::Sqrt(
-            (*noise_rms)[i_sector] / (float)successful_fits[i_sector] -
+            static_cast<float>(successful_fits[i_sector]) /
+            static_cast<float>(successful_fits[i_sector])));
+          (*noise_rms)[i_sector] = static_cast<float>(TMath::Sqrt(
+            (*noise_rms)[i_sector] / static_cast<float>(successful_fits[i_sector]) -
             (*noise)[i_sector] * (*noise)[i_sector] /
-            (float)successful_fits[i_sector] /
-            (float)successful_fits[i_sector]);
-          (*thr)[i_sector] /= (float)successful_fits[i_sector];
-          (*noise)[i_sector] /= (float)successful_fits[i_sector];
+            static_cast<float>(successful_fits[i_sector]) /
+            static_cast<float>(successful_fits[i_sector])));
+          (*thr)[i_sector] /= static_cast<float>(successful_fits[i_sector]);
+          (*noise)[i_sector] /= static_cast<float>(successful_fits[i_sector]);
           cout << (*thr)[i_sector] << '\t' << (*thr_rms)[i_sector] << '\t'
                << (*noise)[i_sector] << '\t' << (*noise_rms)[i_sector]
                << endl;
@@ -1305,19 +1305,19 @@ namespace eudaq {
         sum_successful_fits += successful_fits[i_sector];
       }
 
-      if (sum_unsuccessful_fits > (double)sum_successful_fits / 100.) {
+      if (sum_unsuccessful_fits > static_cast<double>(sum_successful_fits) / 100.) {
         cout << endl
              << endl;
         cout << "Error during S-Curve scan analysis: "
              << sum_unsuccessful_fits << " ("
-             << (double)sum_unsuccessful_fits /
-          (double)(sum_unsuccessful_fits + sum_successful_fits) *
+             << static_cast<double>(sum_unsuccessful_fits) /
+          static_cast<double>(sum_unsuccessful_fits + sum_successful_fits) *
           100. << "%) fits failed in total" << endl;
         for (unsigned int i_sector = 0; i_sector < n_sectors; ++i_sector) {
           cout << "Sector " << i_sector << ":\t"
                << unsuccessful_fits[i_sector] << " ("
-               << (double)unsuccessful_fits[i_sector] /
-            (double)(successful_fits[i_sector] +
+               << static_cast<double>(unsuccessful_fits[i_sector]) /
+            static_cast<double>(successful_fits[i_sector] +
                      unsuccessful_fits[i_sector]) *
             100. << "%) fits failed" << endl;
           sum_successful_fits += successful_fits[i_sector];

@@ -341,14 +341,14 @@ namespace eudaq {
 
           // prepare a new TrackerData object for the ZS data
           // it contains all the hits for a particular sensor in one event
-          std::auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+          std::unique_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
           // set some values of "Cells" for this object
           zsDataEncoder.setCellID( zsFrame.get() );
 
           // this is the structure that will host the sparse pixel
           // it helps to decode (and later to decode) parameters of all hits (x, y, charge, ...) to
           // a single TrackerData object (zsFrame) that will correspond to a single sensor in one event
-          std::auto_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
+          std::unique_ptr< eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > >
             sparseFrame( new eutelescope::EUTelTrackerDataInterfacerImpl< eutelescope::EUTelGenericSparsePixel > ( zsFrame.get() ) );
 
           unsigned int ToT = 0;
