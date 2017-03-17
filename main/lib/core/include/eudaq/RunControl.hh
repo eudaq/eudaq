@@ -51,6 +51,7 @@ namespace eudaq {
     bool IsActiveConnection(ConnectionSPC con);
     StatusSPC GetConnectionStatus(ConnectionSPC con);
     std::vector<ConnectionSPC> GetActiveConnections();
+    std::map<ConnectionSPC, StatusSPC> GetActiveConnectionStatusMap();
     
     //thread control
     void StartRunControl(); 

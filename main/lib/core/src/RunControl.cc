@@ -323,6 +323,11 @@ namespace eudaq {
     return conns;
   }
   
+  std::map<ConnectionSPC, StatusSPC> RunControl::GetActiveConnectionStatusMap(){
+    std::unique_lock<std::mutex> lk(m_mtx_conn);
+    return m_conn_status;
+  }
+  
   void RunControl::StartRunControl(){
     m_thd_status = std::thread(&RunControl::StatusThread, this);
     m_thd_server = std::thread(&RunControl::CommandThread, this);

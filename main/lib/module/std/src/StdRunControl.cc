@@ -4,53 +4,52 @@
 #include <cctype>
 
 namespace eudaq{
-  class StdRunControl : public RunControl{
+  class CliRunControl : public RunControl{
   public:
-    StdRunControl(const std::string & listenaddress);
+    CliRunControl(const std::string & listenaddress);
     void DoStatus(std::shared_ptr<const ConnectionInfo> id,
 		  std::shared_ptr<const Status> status) override final;
     void DoConnect(std::shared_ptr<const ConnectionInfo> id) override final;
     void DoDisconnect(std::shared_ptr<const ConnectionInfo> id) override final;
     void Exec() override final;
 
-    static const uint32_t m_id_factory = eudaq::cstr2hash("StdRunControl");
+    static const uint32_t m_id_factory = eudaq::cstr2hash("CliRunControl");
   };
 
   namespace{
     auto dummy0 = Factory<RunControl>::
-      Register<StdRunControl, const std::string&>(StdRunControl::m_id_factory);
+      Register<CliRunControl, const std::string&>(CliRunControl::m_id_factory);
   }
 
-  StdRunControl::StdRunControl(const std::string & listenaddress)
+  CliRunControl::CliRunControl(const std::string & listenaddress)
     : RunControl(listenaddress){
 
   }
 
-  void StdRunControl::DoStatus(std::shared_ptr<const ConnectionInfo> id,
+  void CliRunControl::DoStatus(std::shared_ptr<const ConnectionInfo> id,
 			       std::shared_ptr<const Status> status) {
-    std::cout << "Receive:    " << *status << " from " << *id << std::endl;
   }
 
-  void StdRunControl::DoConnect(std::shared_ptr<const ConnectionInfo> id) {
+  void CliRunControl::DoConnect(std::shared_ptr<const ConnectionInfo> id) {
     std::cout << "Connect:    " << *id << std::endl;
   }
 
-  void StdRunControl::DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {
+  void CliRunControl::DoDisconnect(std::shared_ptr<const ConnectionInfo> id) {
     std::cout << "Disconnect: " << *id << std::endl;
   }
 
-  void StdRunControl::Exec(){
+  void CliRunControl::Exec(){
     StartRunControl();
     bool help = true;
     while(IsActiveRunControl()){
       if (help) {
 	help = false;
 	std::cout << "--- Commands ---\n"
-		  << "p        Print connections\n"
+		  << "p        Print connections and status\n"
 		  << "l [msg]  Send log message\n"
-		  << "f [file] Configure clients (with file 'file')\n"
+		  << "i [file] Initialize clients (with file 'file')\n"
+		  << "c [file] Configure clients (with file 'file')\n"
 		  << "r        Reset\n"
-		  << "s        Status\n"
 		  << "b [n]    Begin Run (with run number)\n"
 		  << "e        End Run\n"
 		  << "q        Quit\n"
@@ -73,7 +72,12 @@ namespace eudaq{
       case 'l':
 	EUDAQ_USER(line);
 	break;
-      case 'f':
+      case 'i':
+	if(!line.empty())
+	  ReadInitilizeFile(line);
+	Initialise();
+	break;
+      case 'c':
 	if(!line.empty())
 	  ReadConfigureFile(line);
 	Configure();
@@ -81,9 +85,6 @@ namespace eudaq{
       case 'r':
 	Reset();
 	break;
-      // case 's':
-      // 	RemoteStatus();
-      // 	break;
       case 'b':
 	if(line.length())
 	  SetRunN(std::stoul(line));
@@ -95,12 +96,15 @@ namespace eudaq{
       case 'q':
 	Terminate();
 	break;
-      // case 'p':
-      // 	std::cout << "Connections (" << NumConnections() << ")" << std::endl;
-      // 	for (unsigned i = 0; i < NumConnections(); ++i) {
-      // 	  std::cout << "  " << GetConnection(i) << std::endl;
-      // 	}
-      // 	break;
+      case 'p':
+	{
+	  auto map_conn_status= GetActiveConnectionStatusMap();
+	  for(auto &conn_status: map_conn_status){
+	    std::cout<<*conn_status.first<<std::endl;
+	    conn_status.second->Print(std::cout);
+	  }
+	}
+      	break;
       case '?':
 	help = true;
 	break;

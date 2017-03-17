@@ -32,12 +32,11 @@ namespace eudaq {
     };
 
     enum State {
+      STATE_ERROR,
       STATE_UNINIT,
       STATE_UNCONF,
       STATE_CONF,
-      STATE_RUNNING,
-      STATE_BUSY,
-      STATE_ERROR
+      STATE_RUNNING
     };
     
     Status(int level = LVL_OK, const std::string &msg = "")
