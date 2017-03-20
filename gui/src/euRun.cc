@@ -9,10 +9,10 @@
 RunControlGUI::RunControlGUI()
   : QMainWindow(0, 0),m_state(eudaq::Status::STATE_UNINIT){
   m_map_label_str = {
-    {"RUN", "Run Number"}, {"EVENT", "Events Built"},
-    {"FULLRATE","Rate"}, {"TRIG", "Triggers"},
-    {"FILEBYTES", "File Bytes"},{"PARTICLES", "Particles"},
-    {"TLUSTAT", "TLU Status"}, {"SCALERS", "Scalers"}
+    {"RUN", "Run Number"}
+    // {"FULLRATE","Rate"}, {"TRIG", "Triggers"},
+    // {"FILEBYTES", "File Bytes"},{"PARTICLES", "Particles"},
+    // {"TLUSTAT", "TLU Status"}, {"SCALERS", "Scalers"}
   };
   
   qRegisterMetaType<QModelIndex>("QModelIndex");

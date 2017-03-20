@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-class RunControlModel : public QAbstractListModel {
+class RunControlModel : public  QAbstractListModel{
   Q_OBJECT
 public:
   RunControlModel(QObject *parent = 0);
@@ -11,12 +11,9 @@ public:
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
   QVariant data(const QModelIndex &index, int role) const override;
   QVariant headerData(int section, Qt::Orientation orientation,
-                      int role) const override;
-  void sort(int column, Qt::SortOrder order) override;
-  
+                      int role) const override;  
   void newconnection(eudaq::ConnectionSPC id);
   void disconnected(eudaq::ConnectionSPC id);
-  void UpdateDisplayed();
   void SetStatus(eudaq::ConnectionSPC id, eudaq::StatusSPC status);
 private:
   static std::vector<QString> m_str_header;

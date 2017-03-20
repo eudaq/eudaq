@@ -4,7 +4,7 @@
 #include <string>
 #include "qmetatype.h"
 
-std::vector<QString> RunControlModel::m_str_header={"type", "name", "state", "connection", "info"};
+std::vector<QString> RunControlModel::m_str_header={"type", "name", "state", "connection", "info", "EventNumber", "EventRate"};
 
 RunControlModel::RunControlModel(QObject *parent)
   : QAbstractListModel(parent){
@@ -15,26 +15,17 @@ void RunControlModel::newconnection(eudaq::ConnectionSPC id){
   m_con_status[id].reset();  
   beginInsertRows(QModelIndex(), 0, 0);
   endInsertRows();
-  UpdateDisplayed();
 }
 
 void RunControlModel::disconnected(eudaq::ConnectionSPC id){
   m_con_status.erase(id);
-  UpdateDisplayed();
+  emit dataChanged(createIndex(0, 0), createIndex(m_con_status.size(), m_str_header.size()-1));
 }
 
 void RunControlModel::SetStatus(eudaq::ConnectionSPC id,
                                 eudaq::StatusSPC status){
-  m_con_status.at(id) = status;  
-  UpdateDisplayed();
-  
-}
-
-void RunControlModel::UpdateDisplayed(){
-  // if (m_disp.size() > 0) {
-    // std::sort(m_disp.begin(), m_disp.end(), m_sorter);
-    emit dataChanged(createIndex(0, 0), createIndex(m_con_status.size() - 1, 0));
-  // }
+  m_con_status.at(id) = status;
+  emit dataChanged(createIndex(0, 0), createIndex(m_con_status.size()-1, m_str_header.size()-1));
 }
 
 
@@ -47,7 +38,7 @@ int RunControlModel::columnCount(const QModelIndex & /*parent*/) const {
 }
 
 QVariant RunControlModel::data(const QModelIndex &index, int role) const {
-  if (role != Qt::DisplayRole || !index.isValid())
+  if(role != Qt::DisplayRole || !index.isValid())
     return QVariant();
 
   auto col_n = index.column();
@@ -62,18 +53,37 @@ QVariant RunControlModel::data(const QModelIndex &index, int role) const {
     auto &sta = it->second;
     switch(col_n){
     case 0:
-      return con->GetType().c_str();
+      return QString::fromStdString(con->GetType());
     case 1:
-      return con->GetName().c_str();
+      return QString::fromStdString(con->GetName());
     case 2:{
       if(sta)
-	return con.unique()?"DEAD":to_string(*sta).c_str();
-      return "NONE_STATUS";
+	return QString::fromStdString(sta->GetStateMessage());
+      else
+	return QString("WAITING: NO Status");
     }
     case 3:
-      return con->GetRemote().c_str();
+      return QString::fromStdString(con->GetRemote());
+    case 4:{
+      std::string info;
+      if(sta){
+	auto tags = sta->GetTags();
+	for(auto &tag: tags){
+	  info += ("<"+tag.first+"> ");
+	  info += (tag.second+"  ");
+	}
+      }
+      return QString::fromStdString(info);
+    }
+    case 5:{
+      std::string ev_n_str;
+      if(sta){
+	ev_n_str = sta->GetTag("EventN", "");
+      }
+      return QString::fromStdString(ev_n_str);
+    }
     default:
-      return "";
+      return QString("");
     }
   }
   else
@@ -89,9 +99,4 @@ QVariant RunControlModel::headerData(int section, Qt::Orientation orientation,
     return m_str_header[section];
   }
   return QVariant();
-}
-
-void RunControlModel::sort(int column, Qt::SortOrder order) {
-  // m_sorter.SetSort(column, order == Qt::AscendingOrder);
-  // UpdateDisplayed();
 }
