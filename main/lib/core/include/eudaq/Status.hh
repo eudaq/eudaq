@@ -44,28 +44,30 @@ namespace eudaq {
     
 
     Status(Deserializer &);
-    virtual void Serialize(Serializer &) const;
+    void Serialize(Serializer &) const override;
 
     void ResetStatus(State st, Level lvl, const std::string &msg);
-    void ResetTags();
     int GetLevel() const { return m_level;}
-    int GetState() const { return m_state; }    
-    std::string GetMessage() const { return m_msg; }
+    int GetState() const { return m_state;}
+    std::string GetStateMessage()const;
+
+    std::string GetMessage() const { return m_msg;}
     
     Status &SetTag(const std::string &name, const std::string &val);
     std::string GetTag(const std::string &name,
                        const std::string &def = "") const;
+    std::map<std::string, std::string> GetTags() const {return m_tags;};
     
     static std::string Level2String(int level);
     static int String2Level(const std::string &);
-    virtual ~Status() {}
     virtual void Print(std::ostream &os, size_t offset = 0) const;
   private:
-    typedef std::map<std::string, std::string> map_t;
     int m_level;
     int m_state;
     std::string m_msg;
-    map_t m_tags;
+    std::map<std::string, std::string> m_tags;
+    static std::map<uint32_t, std::string> m_map_state_str;
+    static std::map<uint32_t, std::string> m_map_level_str;
   };
 
   inline std::ostream &operator<<(std::ostream &os, const Status &s) {

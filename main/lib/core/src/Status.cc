@@ -25,17 +25,19 @@ namespace eudaq {
     m_msg = msg;
   }
 
-  void Status::ResetTags(){
-    m_tags.clear();
+  std::string Status::GetStateMessage() const{
+    if(m_msg.empty())
+      return m_map_state_str.at(m_state);
+    else
+      return m_map_state_str.at(m_state)+": "+m_msg;
   }
+
   
   std::string Status::Level2String(int level) {
-    static const char *const strings[] = {"DEBUG", "OK",   "THROW", "EXTRA",
-                                          "INFO",  "WARN", "ERROR", "USER",
-					  "NONE"};
-    if (level < LVL_DEBUG || level > LVL_NONE)
-      return "";
-    return strings[level];
+    if(m_map_level_str.count(level))
+      return m_map_level_str.at(level);
+    else
+      return std::string("");
   }
 
   int Status::String2Level(const std::string &str) {
@@ -70,10 +72,31 @@ namespace eudaq {
     if(!m_tags.empty()){
       os << std::string(offset + 2, ' ') << "<Tags>\n";
       for (auto &tag: m_tags){
-	os << std::string(offset+4, ' ') << "<Tag>"<< tag.first << "=" << tag.second << "</Tag>\n";
+	os << std::string(offset+4, ' ') <<"<Tag name=\""<<tag.first<<"\">"<< tag.second <<"</Tag>\n";
       }
       os << std::string(offset + 2, ' ') << "</Tags>\n";
     }
     os << std::string(offset, ' ') << "</Status>\n";
   }
+  
+  std::map<uint32_t, std::string> Status::m_map_state_str = {
+    {STATE_ERROR, "ERROR"},
+    {STATE_UNINIT, "UNINIT"},
+    {STATE_UNCONF, "UNCONF"},
+    {STATE_CONF, "CONF"},
+    {STATE_RUNNING, "CONF"}
+  };
+
+  std::map<uint32_t, std::string> Status::m_map_level_str = {
+    {LVL_DEBUG, "DEBUG"},
+    {LVL_OK, "OK"},
+    {LVL_THROW, "THROW"},
+    {LVL_EXTRA, "EXTRA"},
+    {LVL_INFO, "INFO"},
+    {LVL_WARN, "WARN"},
+    {LVL_ERROR, "ERROR"},
+    {LVL_USER, "USER"},
+    {LVL_NONE, "NONE"}
+  };
+
 }

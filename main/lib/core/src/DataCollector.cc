@@ -94,12 +94,11 @@ namespace eudaq {
     SetStatus(Status::STATE_UNINIT, "Terminated");
   }
     
-  void DataCollector::OnStatus() {
-    std::cout << "OnStatus" <<std::endl;
-    SetStatusTag("EVENT", std::to_string(m_evt_c));
-    SetStatusTag("RUN", std::to_string(GetRunNumber()));
-    if(m_writer)
+  void DataCollector::OnStatus(){
+    SetStatusTag("EventN", std::to_string(m_evt_c));
+    if(m_writer && m_writer->FileBytes()){
       SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
+    }
   }
   
   void DataCollector::DataHandler(TransportEvent &ev) {
@@ -243,5 +242,4 @@ namespace eudaq {
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }
-
 }
