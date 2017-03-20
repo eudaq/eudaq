@@ -160,18 +160,12 @@ is it from the context correct?
               __VA_ARGS__);                                                    \
   } while (0)
 
-
 namespace eudaq {
-
   const std::string TCPServer::name = "tcp";
-
   namespace {
-
     static const int MAXPENDING = 16;
     static const int MAX_BUFFER_SIZE = 10000;
-
     static int to_int(char c) { return static_cast<unsigned char>(c); }
-
 #ifdef MSG_NOSIGNAL
     // On Linux (and cygwin?) send(...) can be told to
     // ignore signals by setting the flag below
@@ -191,7 +185,6 @@ namespace eudaq {
 
     static void do_send_data(SOCKET sock, const unsigned char *data,
                              size_t len) {
-      // if (len > 500000) std::cout << "Starting send" << std::endl;
       size_t sent = 0;
       do {
         int result = send(sock, reinterpret_cast<const char *>(data + sent),
@@ -209,12 +202,10 @@ namespace eudaq {
           EUDAQ_THROW_NOLOG(LastSockErrorString("Error sending data"));
         }
       } while (sent < len);
-      // if (len > 500000) std::cout << "Done send" << std::endl;
     }
 
     static void do_send_packet(SOCKET sock, const unsigned char *data,
-                               size_t length) {
-      // if (length > 500000) std::cout << "Starting send packet" << std::endl;
+                               size_t length){
       if (length < 1020) {
         size_t len = length;
         std::string buffer(len + 4, '\0');
@@ -235,7 +226,6 @@ namespace eudaq {
         do_send_data(sock, buffer, 4);
         do_send_data(sock, data, length);
       }
-      // if (length > 500000) std::cout << "Done send packet" << std::endl;
     }
 
   } // anonymous namespace
@@ -256,8 +246,6 @@ namespace eudaq {
   void ConnectionInfoTCP::append(size_t length, const char *data) {
     m_buf += std::string(data, length);
     update_length();
-    // std::cout << *this << " - append: " << m_len << ", " << m_buf.size() <<
-    // std::endl;
   }
 
   bool ConnectionInfoTCP::havepacket() const {
@@ -270,27 +258,18 @@ namespace eudaq {
     std::string packet(m_buf, 4, m_len);
     m_buf.erase(0, m_len + 4);
     update_length(true);
-    // std::cout << *this << " - getpacket: " << m_len << ", " << m_buf.size()
-    // << std::endl;
     return packet;
   }
 
   void ConnectionInfoTCP::update_length(bool force) {
-    // std::cout << "DBG: len=" << m_len << ", buf=" << m_buf.length();
     if (force || m_len == 0) {
       m_len = 0;
       if (m_buf.length() >= 4) {
         for (int i = 0; i < 4; ++i) {
           m_len |= to_int(m_buf[i]) << (8 * i);
         }
-        //         std::cout << " (" << to_hex(m_buf[3], 2)
-        //                   << " " << to_hex(m_buf[2], 2)
-        //                   << " " << to_hex(m_buf[1], 2)
-        //                   << " " << to_hex(m_buf[0], 2)
-        //                   << ")";
       }
     }
-    // std::cout << ", len=" << m_len << std::endl;
   }
 
   TCPServer::TCPServer(const std::string &param)
@@ -324,9 +303,9 @@ namespace eudaq {
   }
 
   TCPServer::~TCPServer() {
-    for(auto &inf : m_conn){
-      if (inf) {
-        closesocket(inf->GetFd());
+    for(auto &conn : m_conn){
+      if(conn){
+        closesocket(conn->GetFd());
       }
     }
     closesocket(m_srvsock);
@@ -334,9 +313,9 @@ namespace eudaq {
 
   std::shared_ptr<ConnectionInfoTCP> TCPServer::GetInfo(SOCKET fd) const {
     const ConnectionInfoTCP tofind(fd);
-    for (size_t i = 0; i < m_conn.size(); ++i) {
-      if (tofind.Matches(*m_conn[i]) && m_conn[i]->GetState() >= 0) {
-	return m_conn[i];
+    for(auto &conn: m_conn){
+      if (conn && tofind.Matches(*conn) && conn->GetState() >= 0) {
+	return conn;
       }
     }
     EUDAQ_THROW_NOLOG("BUG: please report it");
@@ -344,42 +323,37 @@ namespace eudaq {
 
   
   std::vector<ConnectionSPC> TCPServer::GetConnections () const{
-    std::vector<ConnectionSPC> conn;
-    for(auto &info: m_conn){
-      if(info)
-	conn.push_back(info);
+    std::vector<ConnectionSPC> conns;
+    for(auto &conn: m_conn){
+      if(conn)
+	conns.push_back(conn);
     }
-    return conn;
+    return conns;
   }
   
   void TCPServer::Close(const ConnectionInfo &id) {
-    for (auto &inf: m_conn){
-      if(inf && id.Matches(*inf)){
-          SOCKET fd = inf->GetFd();
+    for(auto &conn: m_conn){
+      if(conn && id.Matches(*conn)){
+          SOCKET fd = conn->GetFd();
           FD_CLR(fd, &m_fdset);
           closesocket(fd);
-	  inf.reset();
+	  conn.reset();
       }	
     }
   }
   
   void TCPServer::SendPacket(const unsigned char *data, size_t len,
-                             const ConnectionInfo &id, bool duringconnect) {
-    
-    for (size_t i = 0; i < m_conn.size(); ++i) {
-      // std::cout << "- " << i << ": " << *m_conn[i] << std::flush;
-      if (id.Matches(*m_conn[i])) {
-	auto inf = m_conn[i];
-        if (inf && (inf->GetState() > 0 || duringconnect)) {
-          // std::cout << " ok" << std::endl;
-          do_send_packet(inf->GetFd(), data, len);
-        } // else std::cout << " not quite" << std::endl;
-      } // else std::cout << " nope" << std::endl;
+                             const ConnectionInfo &id, bool duringconnect) { 
+    for(auto &conn: m_conn){
+      if(conn && id.Matches(*conn)){
+        if(conn->GetState() > 0 || duringconnect) {
+          do_send_packet(conn->GetFd(), data, len);
+        }
+      }
     }
   }
 
   void TCPServer::ProcessEvents(int timeout) {
-// std::cout << "DEBUG: Process..." << std::endl;
 #if DEBUG_NOTIMEOUT == 0
     Time t_start = Time::Current(); /*t_curr = t_start,*/
 #endif
@@ -388,13 +362,9 @@ namespace eudaq {
     do {
       fd_set tempset;
       memcpy(&tempset, &m_fdset, sizeof(tempset));
-      // std::cout << "select timeout=" << t_remain << std::endl;
       timeval timeremain = t_remain;
       int result = select(static_cast<int>(m_maxfd + 1), &tempset, NULL, NULL,
                           &timeremain);
-
-      // std::cout << "select done" << std::endl;
-
       if (result == 0) {
         // std::cout << "timeout" << std::endl;
       } else if (result < 0 &&
@@ -410,25 +380,23 @@ namespace eudaq {
           if (peersock == INVALID_SOCKET) {
             std::cout << LastSockErrorString("Error in accept()") << std::endl;
           } else {
-            // std::cout << "Connect " << peersock << " from " <<
-            // inet_ntoa(addr.sin_addr) << std::endl;
             FD_SET(peersock, &m_fdset);
             m_maxfd = (m_maxfd < peersock) ? peersock : m_maxfd;
             setup_socket(peersock);
             std::string host = inet_ntoa(addr.sin_addr);
             host = "tcp://"+host+":" + to_string(ntohs(addr.sin_port));
-            auto ptr = std::make_shared<ConnectionInfoTCP>(peersock, host);
+            auto conn_new = std::make_shared<ConnectionInfoTCP>(peersock, host);
             bool inserted = false;
-            for(auto &e: m_conn) {
-              if(!e) {
-                e = ptr;
+            for(auto &conn: m_conn) {
+              if(!conn) {
+                conn = conn_new;
                 inserted = true;
 		break;
               }
             }
             if (!inserted)
-              m_conn.push_back(ptr);
-            m_events.push(TransportEvent(TransportEvent::CONNECT, ptr));
+              m_conn.push_back(conn_new);
+            m_events.push(TransportEvent(TransportEvent::CONNECT, conn_new));
             FD_CLR(m_srvsock, &tempset);
           }
         }
@@ -450,7 +418,7 @@ namespace eudaq {
                 m_events.push(
                     TransportEvent(TransportEvent::RECEIVE, m, m->getpacket()));
               }
-            } // else /*if (result == 0)*/ {
+            }
             else if (result == 0) {
               debug_transport(
                   "Server #%d, return=%d, WSAError:%d (%s) Disconnected.\n", j,
@@ -466,9 +434,9 @@ namespace eudaq {
               debug_transport("Server #%d, return=%d, WSAError:%d (%s) \n", j,
                               result, errno, strerror(errno));
             }
-          } // end if (FD_ISSET(j, &amp;tempset))
-        }   // end for (j=0;...)
-      }     // end else if (result > 0)
+          }
+        }
+      }
 
 // optionally disable timeout at compile time by setting DEBUG_NOTIMEOUT to 1
 #if DEBUG_NOTIMEOUT
@@ -479,13 +447,12 @@ namespace eudaq {
     } while (!done && t_remain > Time(0));
   }
 
-  std::string TCPServer::ConnectionString() const {
+  std::string TCPServer::ConnectionString() const{
 #ifdef _WIN32
-    const char *host = getenv("computername");
+    const char *host = std::getenv("computername");
 #else
-    const char *host = getenv("HOSTNAME");
+    const char *host = std::getenv("HOSTNAME");
 #endif
-
     if (!host)
       host = "localhost";
     // gethostname(buf, sizeof buf);
@@ -537,16 +504,12 @@ namespace eudaq {
 
   void TCPClient::SendPacket(const unsigned char *data, size_t len,
                              const ConnectionInfo &id, bool) {
-    // std::cout << "Sending packet to " << id << std::endl;
-    if (id.Matches(*m_buf)) {
-      // std::cout << " ok" << std::endl;
+    if(id.Matches(*m_buf)) {
       do_send_packet(m_buf->GetFd(), data, len);
     }
-    // std::cout << "Sent" << std::endl;
   }
 
   void TCPClient::ProcessEvents(int timeout) {
-// std::cout << "ProcessEvents()" << std::endl;
 #if DEBUG_NOTIMEOUT == 0
     Time t_start = Time::Current(); /*t_curr = t_start,*/
 #endif
@@ -557,16 +520,8 @@ namespace eudaq {
       FD_ZERO(&tempset);
       FD_SET(m_sock, &tempset);
       timeval timeremain = t_remain;
-#ifdef _WIN32
-      int result = select(static_cast<int>(m_sock + 1), &tempset, NULL, NULL,
-                          &timeremain);
-#else
-      SOCKET result = select(static_cast<int>(m_sock + 1), &tempset, NULL, NULL,
-                             &timeremain);
-#endif
-
-      //	std::cout << "Select result=" << result << std::endl;
-
+      auto result = select(static_cast<int>(m_sock + 1), &tempset, NULL, NULL,
+			   &timeremain);
       bool donereading = false;
       do {
         char buffer[MAX_BUFFER_SIZE + 1];
@@ -585,9 +540,8 @@ namespace eudaq {
           debug_transport("Client, return=%d, WSAError:%d (%s) Time Out\n",
                           result, errno, strerror(errno));
         } else if (result == 0) {
-          debug_transport(
-              "Client, return=%d, WSAError:%d (%s) Disconnect (?)\n", result,
-              errno, strerror(errno));
+          debug_transport("Client, return=%d, WSAError:%d (%s) Disconnect (?)\n", result,
+			  errno, strerror(errno));
           donereading = true;
           EUDAQ_THROW_NOLOG(LastSockErrorString(
               "SocketClient Error (" + to_string(LastSockError()) + ")"));
@@ -607,13 +561,10 @@ namespace eudaq {
 #else
       t_remain = Time(0, timeout) + t_start - Time::Current();
 #endif
-      // std::cout << "Remaining time in ProcessEvents(): " << t_remain <<
-      // (t_remain > Time(0) ? " >0" : " <0")<< std::endl;
       if (!(t_remain > Time(0))) {
         debug_transport("%s\n", "Reached Timeout in ProcessEvents().");
       }
     } while (!done && t_remain > Time(0));
-    // std::cout << "done" << std::endl;
   }
 
   TCPClient::~TCPClient() { closesocket(m_sock); }

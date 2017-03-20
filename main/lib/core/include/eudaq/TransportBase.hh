@@ -165,14 +165,12 @@ namespace eudaq {
     void SendPacket(const std::string &data,
                     const ConnectionInfo &inf = ConnectionInfo::ALL,
                     bool duringconnect = false) {
-      // std::cout << "SendPacket (string)" << std::endl;
       SendPacket(reinterpret_cast<const unsigned char *>(&data[0]),
                  data.length(), inf, duringconnect);
     }
     void SendPacket(const char *str,
                     const ConnectionInfo &inf = ConnectionInfo::ALL,
                     bool duringconnect = false) {
-      // std::cout << "SendPacket (char*)" << std::endl;
       SendPacket(reinterpret_cast<const unsigned char *>(str), std::strlen(str),
                  inf, duringconnect);
     }
@@ -197,42 +195,16 @@ namespace eudaq {
      * events so that they may be handled.
      */
     virtual void ProcessEvents(int timeout) = 0;
-
     void Process(int timeout = -1);
     bool ReceivePacket(std::string *packet, int timeout = -1,
                        const ConnectionInfo & = ConnectionInfo::ALL);
-    bool SendReceivePacket(const std::string &sendpacket,
-                           std::string *recpacket,
-                           const ConnectionInfo &connection, int timeout = -1);
-    template <typename T>
-    T SendReceivePacket(const std::string &packet,
-                        const ConnectionInfo &connection, int timeout = -1);
     void SetCallback(const TransportCallback &);
     virtual bool IsNull() const { return false; }
-
   protected:
-    std::queue<TransportEvent>
-        m_events; ///< A buffer to queue up events until they are handled
-    TransportCallback
-        m_callback; ///< The callback function to invoke on a transport event
-    // Mutex m_mutex;
+    std::queue<TransportEvent> m_events; ///< A buffer to queue up events until they are handled
+    TransportCallback m_callback; ///< The callback function to invoke on a transport event
     std::recursive_mutex m_mutex;
-
   };
-
-  template <typename T>
-  inline T TransportBase::SendReceivePacket(const std::string &packet,
-                                            const ConnectionInfo &connection,
-                                            int timeout) {
-    std::string buf;
-    bool ok = SendReceivePacket(packet, &buf, connection, timeout);
-    if (!ok)
-      EUDAQ_THROW("Timeout: No response in SendReceivePacket");
-    BufferSerializer ser(buf.begin(), buf.end());
-    T result;
-    ser.read(result);
-    return result;
-  }
 }
 
 #endif // EUDAQ_INCLUDED_TransportBase

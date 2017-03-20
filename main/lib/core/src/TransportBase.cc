@@ -51,21 +51,16 @@ namespace eudaq {
                                     const ConnectionInfo &conn) {
     if (timeout == -1)
       timeout = DEFAULT_TIMEOUT;
-    // std::cout << "ReceivePacket()" << std::flush;
     while (!m_events.empty() &&
            m_events.front().etype != TransportEvent::RECEIVE) {
       m_events.pop();
     }
-    // std::cout << " current level=" << m_events.size() << std::endl;
     if (m_events.empty()) {
-      // std::cout << "Getting more" << std::endl;
       ProcessEvents(timeout);
-      // std::cout << "Temp level=" << m_events.size() << std::endl;
       while (!m_events.empty() &&
              m_events.front().etype != TransportEvent::RECEIVE) {
         m_events.pop();
       }
-      // std::cout << "New level=" << m_events.size() << std::endl;
     }
     bool ret = false;
     if (!m_events.empty() && conn.Matches(*(m_events.front().id))) {
@@ -73,20 +68,6 @@ namespace eudaq {
       *packet = m_events.front().packet;
       m_events.pop();
     }
-    // std::cout << "ReceivePacket() return " << (ret ? "true" : "false") <<
-    // std::endl;
-    return ret;
-  }
-
-  bool TransportBase::SendReceivePacket(const std::string &sendpacket,
-                                        std::string *recpacket,
-                                        const ConnectionInfo &connection,
-                                        int timeout) {
-    std::lock_guard<std::recursive_mutex> lk(m_mutex);
-    SendPacket(sendpacket, connection);
-    if (timeout == -1)
-      timeout = DEFAULT_TIMEOUT;
-    bool ret = ReceivePacket(recpacket, timeout, connection);
     return ret;
   }
 
