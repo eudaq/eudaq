@@ -1,6 +1,6 @@
 #include "eudaq/LogSender.hh"
 #include "eudaq/LogMessage.hh"
-#include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportClient.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/BufferSerializer.hh"
 
@@ -20,7 +20,7 @@ namespace eudaq {
     m_shownotconnected = true;
     delete m_logclient;
     m_name = type + " " + name;
-    m_logclient = TransportFactory::CreateClient(server);
+    m_logclient = TransportClient::CreateClient(server);
 
     std::string packet;
     if (!m_logclient->ReceivePacket(&packet, 1000000))

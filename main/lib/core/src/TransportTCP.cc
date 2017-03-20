@@ -162,6 +162,15 @@ is it from the context correct?
 
 namespace eudaq {
   const std::string TCPServer::name = "tcp";
+  const std::string TCPClient::name = "tcp";
+
+  namespace{
+    auto d0=Factory<TransportServer>::Register<TCPServer, const std::string&>
+      (str2hash(TCPServer::name));
+    auto d1=Factory<TransportClient>::Register<TCPClient, const std::string&>
+      (str2hash(TCPClient::name));
+  }
+  
   namespace {
     static const int MAXPENDING = 16;
     static const int MAX_BUFFER_SIZE = 10000;

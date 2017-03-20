@@ -1,7 +1,7 @@
 #include "eudaq/LogCollector.hh"
 #include "eudaq/LogMessage.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportServer.hh"
 #include "eudaq/BufferSerializer.hh"
 #include <iostream>
 #include <ostream>
@@ -132,7 +132,7 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("LogCollector can not be restarted after exit. (TODO)");
     }
-    m_logserver.reset(TransportFactory::CreateServer(m_log_addr)),
+    m_logserver.reset(TransportServer::CreateServer(m_log_addr)),
     m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     m_thd_server = std::thread(&LogCollector::LogThread, this);
     std::cout << "###### listenaddress=" << m_logserver->ConnectionString()

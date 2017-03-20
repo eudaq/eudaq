@@ -200,6 +200,7 @@ namespace eudaq {
                        const ConnectionInfo & = ConnectionInfo::ALL);
     void SetCallback(const TransportCallback &);
     virtual bool IsNull() const { return false; }
+
   protected:
     std::queue<TransportEvent> m_events; ///< A buffer to queue up events until they are handled
     TransportCallback m_callback; ///< The callback function to invoke on a transport event

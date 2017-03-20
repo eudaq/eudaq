@@ -1,6 +1,5 @@
 #include "eudaq/Event.hh"
 #include "eudaq/TransportClient.hh"
-#include "eudaq/TransportFactory.hh"
 #include "eudaq/Exception.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Logger.hh"
@@ -14,7 +13,7 @@ namespace eudaq {
     m_packetCounter(0) {}
 
   void DataSender::Connect(const std::string & server) {
-    m_dataclient.reset(TransportFactory::CreateClient(server));
+    m_dataclient.reset(TransportClient::CreateClient(server));
     std::string packet;
     if (!m_dataclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from DataCollector server");
     size_t i0 = 0, i1 = packet.find(' ');

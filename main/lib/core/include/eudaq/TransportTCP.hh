@@ -1,7 +1,8 @@
 #ifndef EUDAQ_INCLUDED_TransportTCP
 #define EUDAQ_INCLUDED_TransportTCP
 
-#include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportServer.hh"
+#include "eudaq/TransportClient.hh"
 #include "eudaq/Platform.hh"
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
@@ -19,7 +20,6 @@ typedef int SOCKET;
 #include <map>
 
 namespace eudaq {
-
   class ConnectionInfoTCP : public ConnectionInfo {
   public:
     ConnectionInfoTCP() = delete;
@@ -42,7 +42,7 @@ namespace eudaq {
     size_t m_len;
     std::string m_buf;
   };
-
+  
   class TCPServer : public TransportServer {
   public:
     TCPServer(const std::string &param);
@@ -55,7 +55,6 @@ namespace eudaq {
     std::string ConnectionString() const override;
     std::vector<ConnectionSPC> GetConnections() const  override;
     static const std::string name;
-
   private:
     std::vector<std::shared_ptr<ConnectionInfoTCP>> m_conn;
     std::mutex m_mtx_conn;
@@ -77,7 +76,7 @@ namespace eudaq {
                             const ConnectionInfo &id = ConnectionInfo::ALL,
                             bool = false);
     virtual void ProcessEvents(int timeout = -1);
-
+    static const std::string name;
   private:
     void OpenConnection();
     std::string m_server;

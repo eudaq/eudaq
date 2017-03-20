@@ -1,5 +1,4 @@
 #include "eudaq/TransportClient.hh"
-#include "eudaq/TransportFactory.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Exception.hh"
@@ -20,7 +19,7 @@
 namespace eudaq {
   
   TransportClient* make_client(const std::string & runcontrol, const std::string & type, const std::string & name) {
-    TransportClient* ret =  TransportFactory::CreateClient(runcontrol);
+    TransportClient* ret =  TransportClient::CreateClient(runcontrol);
     if (!ret->IsNull()) {
       std::string packet;
       if (!ret->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
@@ -54,7 +53,7 @@ namespace eudaq {
     int i = 0;
     while (true){
       try {
-	m_cmdclient = std::unique_ptr<TransportClient>( TransportFactory::CreateClient(runcontrol));
+	m_cmdclient = std::unique_ptr<TransportClient>( TransportClient::CreateClient(runcontrol));
 	if (!m_cmdclient->IsNull()) {
 	  std::string packet;
 	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");

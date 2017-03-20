@@ -1,7 +1,8 @@
 #ifndef EUDAQ_INCLUDED_TransportNULL
 #define EUDAQ_INCLUDED_TransportNULL
 
-#include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportServer.hh"
+#include "eudaq/TransportClient.hh"
 
 #include <vector>
 #include <string>

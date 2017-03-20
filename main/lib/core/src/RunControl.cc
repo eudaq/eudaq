@@ -1,5 +1,5 @@
 #include "eudaq/RunControl.hh"
-#include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportServer.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Exception.hh"
@@ -33,7 +33,7 @@ namespace eudaq {
     }
     m_run_n = ReadFromFile(m_var_file.c_str(), 0U)+1;
     if(listenaddress != ""){
-      m_cmdserver.reset(TransportFactory::CreateServer(listenaddress));
+      m_cmdserver.reset(TransportServer::CreateServer(listenaddress));
       m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
     }
   }

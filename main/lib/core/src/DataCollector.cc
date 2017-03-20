@@ -1,5 +1,5 @@
 #include "eudaq/DataCollector.hh"
-#include "eudaq/TransportFactory.hh"
+#include "eudaq/TransportServer.hh"
 #include "eudaq/BufferSerializer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
@@ -220,7 +220,7 @@ namespace eudaq {
     m_data_addr = "tcp://";
     uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
     m_data_addr += to_string(port);
-    m_dataserver.reset(TransportFactory::CreateServer(m_data_addr));
+    m_dataserver.reset(TransportServer::CreateServer(m_data_addr));
     m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
     m_thd_server = std::thread(&DataCollector::DataThread, this);
     std::cout << "###### listenaddress=" << m_dataserver->ConnectionString()
