@@ -30,9 +30,7 @@ private:
   void closeEvent(QCloseEvent *event) override;
 			
 private slots:
-  void DisplayTimer();
-  // void ChangeStatus(const QString &k, const QString &v);
-  
+  void DisplayTimer();  
   void on_btnInit_clicked();
   void on_btnConfig_clicked();
   void on_btnStart_clicked();
@@ -45,11 +43,10 @@ private slots:
 private:
   static std::map<int, QString> m_map_state_str;
   std::map<QString, QString> m_map_label_str;
-  int m_state;
   eudaq::RunControlUP m_rc;
   RunControlModel m_model_conns;
   QItemDelegate m_delegate;
   QTimer m_timer_display;
-  std::map<QString, QLabel*> m_status;
+  std::map<QString, QLabel*> m_str_label;
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_map_conn_status_last;
 };

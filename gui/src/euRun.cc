@@ -7,20 +7,15 @@
 
 
 RunControlGUI::RunControlGUI()
-  : QMainWindow(0, 0),m_state(eudaq::Status::STATE_UNINIT){
-  m_map_label_str = {
-    {"RUN", "Run Number"}
-    // {"FULLRATE","Rate"}, {"TRIG", "Triggers"},
-    // {"FILEBYTES", "File Bytes"},{"PARTICLES", "Particles"},
-    // {"TLUSTAT", "TLU Status"}, {"SCALERS", "Scalers"}
-  };
+  : QMainWindow(0, 0){
+  m_map_label_str = {{"RUN", "Run Number"}};
   
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
 
   if (!grpStatus->layout())
     grpStatus->setLayout(new QGridLayout(grpStatus));
-  lblCurrent->setText(m_map_state_str.at(m_state));
+  lblCurrent->setText(m_map_state_str.at(eudaq::Status::STATE_UNINIT));
   QGridLayout *layout = dynamic_cast<QGridLayout *>(grpStatus->layout());
   int row = 0, col = 0;
   for(auto &label_str: m_map_label_str) {
@@ -31,7 +26,7 @@ RunControlGUI::RunControlGUI()
     lblvalue->setObjectName("txt_st_" + label_str.first);
     layout->addWidget(lblname, row, col * 2);
     layout->addWidget(lblvalue, row, col * 2 + 1);
-    m_status[label_str.first] = lblvalue;
+    m_str_label[label_str.first] = lblvalue;
     if (++col > 1){
       ++row;
       col = 0;
@@ -71,19 +66,20 @@ RunControlGUI::RunControlGUI()
   setWindowTitle("eudaq Run Control " PACKAGE_VERSION);
   connect(&m_timer_display, SIGNAL(timeout()), this, SLOT(DisplayTimer()));
   m_timer_display.start(500);
+  btnInit->setEnabled(1);
+  btnConfig->setEnabled(1);
+  btnLoadInit->setEnabled(1);
+  btnLoadConf->setEnabled(1);
+  btnStart->setEnabled(1);
+  btnStop->setEnabled(1);
+  btnReset->setEnabled(1);
+  btnTerminate->setEnabled(1);
 }
 
 void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   m_rc = std::move(rc);
   m_rc->StartRunControl();
 }
-
-// void RunControlGUI::ChangeStatus(const QString &name, const QString &value){
-//   auto i = m_status.find(name.toStdString());
-//   if (i != m_status.end()) {
-//     i->second->setText(value);
-//   }
-// }
 
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
@@ -148,6 +144,7 @@ void RunControlGUI::on_btnLoadConf_clicked() {
 
 void RunControlGUI::DisplayTimer(){
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> map_conn_status;
+  auto state = eudaq::Status::STATE_RUNNING;
   if(m_rc)
     map_conn_status= m_rc->GetActiveConnectionStatusMap();
   
@@ -163,37 +160,37 @@ void RunControlGUI::DisplayTimer(){
   }
 
   if(map_conn_status.empty()){
-    m_state = eudaq::Status::STATE_UNINIT;
+    state = eudaq::Status::STATE_UNINIT;
   }
   else{
-    m_state = eudaq::Status::STATE_RUNNING;
+    state = eudaq::Status::STATE_RUNNING;
     for(auto &conn_status: map_conn_status){
       if(!conn_status.second)
 	continue;
       auto state_conn = conn_status.second->GetState();
       switch(state_conn){
       case eudaq::Status::STATE_ERROR:{
-  	m_state = eudaq::Status::STATE_ERROR;
+  	state = eudaq::Status::STATE_ERROR;
   	break;
       }
       case eudaq::Status::STATE_UNINIT:{
-  	if(m_state != eudaq::Status::STATE_ERROR){
-  	  m_state = eudaq::Status::STATE_UNINIT;
+  	if(state != eudaq::Status::STATE_ERROR){
+  	  state = eudaq::Status::STATE_UNINIT;
   	}
   	break;
       }
       case eudaq::Status::STATE_UNCONF:{
-  	if(m_state != eudaq::Status::STATE_ERROR &&
-  	   m_state != eudaq::Status::STATE_UNINIT){
-  	  m_state = eudaq::Status::STATE_UNCONF;
+  	if(state != eudaq::Status::STATE_ERROR &&
+  	   state != eudaq::Status::STATE_UNINIT){
+  	  state = eudaq::Status::STATE_UNCONF;
   	}
   	break;
       }
       case eudaq::Status::STATE_CONF:{
-  	if(m_state != eudaq::Status::STATE_ERROR &&
-  	   m_state != eudaq::Status::STATE_UNINIT &&
-  	   m_state != eudaq::Status::STATE_UNCONF){
-  	  m_state = eudaq::Status::STATE_CONF;
+  	if(state != eudaq::Status::STATE_ERROR &&
+  	   state != eudaq::Status::STATE_UNINIT &&
+  	   state != eudaq::Status::STATE_UNCONF){
+  	  state = eudaq::Status::STATE_CONF;
   	}
   	break;
       }
@@ -206,20 +203,24 @@ void RunControlGUI::DisplayTimer(){
   QRegExp rx_conf(".+(\\.conf$)");
   bool confLoaded = rx_conf.exactMatch(txtConfigFileName->text());
   bool initLoaded = rx_init.exactMatch(txtInitFileName->text());
-  std::cout<<"state "<<m_state<<"  confLoaded "<<confLoaded<<std::endl;
+  // std::cout<<"state "<<state<<"  confLoaded "<<confLoaded<<std::endl;
   
-  btnInit->setEnabled(m_state == eudaq::Status::STATE_UNINIT && initLoaded);
-  btnConfig->setEnabled((m_state == eudaq::Status::STATE_UNCONF ||
-			 m_state == eudaq::Status::STATE_CONF )&& confLoaded);
-  btnLoadInit->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
-  btnLoadConf->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
-  btnStart->setEnabled(m_state == eudaq::Status::STATE_CONF);
-  btnStop->setEnabled(m_state == eudaq::Status::STATE_RUNNING);
-  btnReset->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
-  btnTerminate->setEnabled(m_state != eudaq::Status::STATE_RUNNING);
+  btnInit->setEnabled(state == eudaq::Status::STATE_UNINIT && initLoaded);
+  btnConfig->setEnabled((state == eudaq::Status::STATE_UNCONF ||
+			 state == eudaq::Status::STATE_CONF )&& confLoaded);
+  btnLoadInit->setEnabled(state != eudaq::Status::STATE_RUNNING);
+  btnLoadConf->setEnabled(state != eudaq::Status::STATE_RUNNING);
+  btnStart->setEnabled(state == eudaq::Status::STATE_CONF);
+  btnStop->setEnabled(state == eudaq::Status::STATE_RUNNING);
+  btnReset->setEnabled(state != eudaq::Status::STATE_RUNNING);
+  btnTerminate->setEnabled(state != eudaq::Status::STATE_RUNNING);
   
-  lblCurrent->setText(m_map_state_str.at(m_state));
+  lblCurrent->setText(m_map_state_str.at(state));
 
+  if(m_rc&&m_str_label.count("RUN")){
+    m_str_label.at("RUN")->setText(QString::number(m_rc->GetRunN()));
+  }
+  
   m_map_conn_status_last = map_conn_status;
 }
 
@@ -243,11 +244,8 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
   }
 }
 
-
 void RunControlGUI::Exec(){
-  std::cout<<">>>>"<<std::endl;
   show();
-  std::cout<<">>>>"<<std::endl;
   if(QApplication::instance())
     QApplication::instance()->exec(); 
   else

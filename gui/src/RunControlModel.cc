@@ -4,11 +4,10 @@
 #include <string>
 #include "qmetatype.h"
 
-std::vector<QString> RunControlModel::m_str_header={"type", "name", "state", "connection", "info", "EventNumber", "EventRate"};
+std::vector<QString> RunControlModel::m_str_header={"type", "name", "state", "connection", "message", "information"};
 
 RunControlModel::RunControlModel(QObject *parent)
   : QAbstractListModel(parent){
-  qRegisterMetaType<QVector<int> >("QVector<int>");
 }
 
 void RunControlModel::newconnection(eudaq::ConnectionSPC id){
@@ -58,13 +57,18 @@ QVariant RunControlModel::data(const QModelIndex &index, int role) const {
       return QString::fromStdString(con->GetName());
     case 2:{
       if(sta)
-	return QString::fromStdString(sta->GetStateMessage());
+	return QString::fromStdString(sta->GetStateString());
       else
 	return QString("WAITING: NO Status");
     }
     case 3:
       return QString::fromStdString(con->GetRemote());
-    case 4:{
+    case 4:
+      if(sta)
+	return QString::fromStdString(sta->GetMessage());
+      else
+	return QString("");
+    case 5:{
       std::string info;
       if(sta){
 	auto tags = sta->GetTags();
@@ -74,13 +78,6 @@ QVariant RunControlModel::data(const QModelIndex &index, int role) const {
 	}
       }
       return QString::fromStdString(info);
-    }
-    case 5:{
-      std::string ev_n_str;
-      if(sta){
-	ev_n_str = sta->GetTag("EventN", "");
-      }
-      return QString::fromStdString(ev_n_str);
     }
     default:
       return QString("");

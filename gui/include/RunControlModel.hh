@@ -18,5 +18,6 @@ public:
 private:
   static std::vector<QString> m_str_header;
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_con_status;
+  // std::map<eudaq::ConnectionSPC, std::vector<std::string>> m_con_info;
   std::mutex m_mtx_con;
 };
