@@ -11,9 +11,7 @@ namespace{
   auto dummy1 = eudaq::Factory<eudaq::LogCollector>::
     Register<LogCollectorGUI, const std::string&, const std::string&,
 	     const std::string&, const int&>(eudaq::cstr2hash("GuiLogCollector"));
-
 }
-
 
 LogItemDelegate::LogItemDelegate(LogCollectorModel *model) : m_model(model) {}
 
@@ -25,13 +23,119 @@ void LogItemDelegate::paint(QPainter *painter,
   QItemDelegate::paint(painter, option, index);
 }
 
+LogCollectorGUI::LogCollectorGUI(const std::string &runcontrol,
+				 const std::string &listenaddress,
+				 const std::string &directory,
+				 int loglevel)
+  : QMainWindow(0, 0),
+    eudaq::LogCollector(runcontrol, listenaddress, directory), m_delegate(&m_model) {
+  setupUi(this);
+  std::string filename;
+  viewLog->setModel(&m_model);
+  viewLog->setItemDelegate(&m_delegate);
+  for (int i = 0; i < LogMessage::NumColumns(); ++i) {
+    int w = LogMessage::ColumnWidth(i);
+    if (w >= 0)
+      viewLog->setColumnWidth(i, w);
+  }
+  int level = 0;
+  for (;;) {
+    std::string text = eudaq::Status::Level2String(level);
+    if (text == "")
+      break;
+    text = eudaq::to_string(level) + "-" + text;
+    cmbLevel->addItem(text.c_str());
+    level++;
+  }
+  cmbLevel->setCurrentIndex(loglevel);
+  QRect geom(-1,-1, 100, 100);
+  QRect geom_from_last_program_run;
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
+
+  settings.beginGroup("MainWindowEuLog");
+  geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
+  geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
+  settings.endGroup();
+
+  QSize fsize = frameGeometry().size();
+  if ((geom.x() == -1)||(geom.y() == -1)||(geom.width() == -1)||(geom.height() == -1)) {
+    if ((geom_from_last_program_run.x() == -1)||(geom_from_last_program_run.y() == -1)||(geom_from_last_program_run.width() == -1)||(geom_from_last_program_run.height() == -1)) {
+      geom.setX(x()); 
+      geom.setY(y());
+      geom.setWidth(fsize.width());
+      geom.setHeight(fsize.height());
+      move(geom.topLeft());
+      resize(geom.size());
+    } else {
+      move(geom_from_last_program_run.topLeft());
+      resize(geom_from_last_program_run.size());
+    }
+  }
+  connect(this, SIGNAL(RecMessage(const eudaq::LogMessage &)), this,
+	  SLOT(AddMessage(const eudaq::LogMessage &)));
+  try {
+    if (filename != "")
+      LoadFile(filename);
+  } catch (const std::runtime_error &) {
+    // probably file not found: ignore
+  }
+  setWindowIcon(QIcon("../images/Icon_euLog.png"));
+}
+
+LogCollectorGUI::~LogCollectorGUI(){
+  QSettings settings("EUDAQ collaboration", "EUDAQ");
+  settings.beginGroup("MainWindowEuLog");
+  settings.setValue("size", size());
+  settings.setValue("pos", pos());
+  settings.endGroup();
+}
+
+
+void LogCollectorGUI::LoadFile(const std::string &filename) {
+  std::vector<std::string> sources = m_model.LoadFile(filename);
+  std::cout << "File loaded, sources = " << sources.size() << std::endl;
+  for (size_t i = 0; i < sources.size(); ++i) {
+    size_t dot = sources[i].find('.');
+    if (dot != std::string::npos) {
+      AddSender(sources[i].substr(0, dot), sources[i].substr(dot + 1));
+    } else {
+      AddSender(sources[i]);
+    }
+  }
+}
+
+void LogCollectorGUI::DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id){
+  eudaq::mSleep(100);
+  CheckRegistered();
+  EUDAQ_INFO("Connection from " + to_string(id));
+  AddSender(id->GetType(), id->GetName());
+}
+
+void LogCollectorGUI::DoDisconnect(std::shared_ptr<const eudaq::ConnectionInfo> id){
+  EUDAQ_INFO("Disconnected " + to_string(*id));
+}
+
+void LogCollectorGUI::DoReceive(const eudaq::LogMessage &msg){
+  CheckRegistered();
+  emit RecMessage(msg);
+}
+void LogCollectorGUI::DoTerminate(){
+  std::cout << "terminating!" << std::endl;
+  QApplication::quit();
+}
+
+void closeEvent(QCloseEvent *) {
+  std::cout << "Closing!" << std::endl;
+  QApplication::quit();
+}
+
 void LogCollectorGUI::AddSender(const std::string &type,
                                 const std::string &name) {
   bool foundtype = false;
   int count = cmbFrom->count();
   for (int i = 0; i <= count; ++i) {
     std::string curname,
-        curtype = (i == count ? "" : cmbFrom->itemText(i).toStdString());
+      curtype = (i == count ? "" : cmbFrom->itemText(i).toStdString());
     size_t dot = curtype.find('.');
     if (dot != std::string::npos) {
       curname = curtype.substr(dot + 1);
@@ -63,6 +167,42 @@ void LogCollectorGUI::AddSender(const std::string &type,
   }
 }
 
+void LogCollectorGUI::on_cmbLevel_currentIndexChanged(int index) {
+  m_model.SetDisplayLevel(index);
+}
+
+void LogCollectorGUI::on_cmbFrom_currentIndexChanged(const QString &text) {
+  std::string type = text.toStdString(), name;
+  size_t dot = type.find('.');
+  if (dot != std::string::npos) {
+    name = type.substr(dot + 1);
+    type = type.substr(0, dot);
+  }
+  m_model.SetDisplayNames(type, name);
+}
+
+void LogCollectorGUI::on_txtSearch_editingFinished() {
+  m_model.SetSearch(txtSearch->displayText().toStdString());
+}
+
+void LogCollectorGUI::on_viewLog_activated(const QModelIndex &i) {
+  new LogDialog(m_model.GetMessage(i.row()));
+}
+
+void LogCollectorGUI::AddMessage(const eudaq::LogMessage &msg) {
+  QModelIndex pos = m_model.AddMessage(msg);
+  if (pos.isValid())
+    viewLog->scrollTo(pos);
+}
+
+void CheckRegistered(){
+  static bool registered = false;
+  if (!registered) {
+    qRegisterMetaType<QModelIndex>("QModelIndex");
+    qRegisterMetaType<eudaq::LogMessage>("eudaq::LogMessage");
+    registered = true;
+  }
+}
 
 void LogCollectorGUI::Exec(){
   StartLogCollector(); //TODO: Start it OnServer

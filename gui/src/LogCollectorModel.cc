@@ -18,10 +18,6 @@ namespace {
 
   static eudaq::LogMessage make_msg(const std::string &fileline) {
     std::vector<std::string> parts = split(fileline);
-    //     std::cout << "line: " << fileline << std::endl;
-    //     for (size_t i = 0; i < parts.size(); ++i) {
-    //       std::cout << " " << i << ": \'" << parts[i] << "\'" << std::endl;
-    //     }
     if (parts.size() == 1) {
       parts = split(fileline, " ");
       if (parts.size() == 7 && parts[0] == "***" && parts[3] == "at" &&
@@ -31,11 +27,6 @@ namespace {
         if (timeparts.size() != 3 || tempparts.size() != 4)
           EUDAQ_THROW("Badly formatted time: " + parts[4] + " " + parts[5]);
         timeparts.insert(timeparts.end(), tempparts.begin(), tempparts.end());
-        //         std::vector<std::string> & r = timeparts;
-        //         for (size_t i = 0; i < r.size(); ++i) {
-        //           std::cout << i << ": \'" << r[i] << "\' " <<
-        //           from_string(r[i], 0) << std::endl;
-        //         }
         eudaq::Time time(
             from_string(timeparts[0], 1970), from_string(timeparts[1], 1),
             from_string(timeparts[2], 1), from_string(timeparts[3], 0),
@@ -103,15 +94,13 @@ namespace {
   }
 }
 
+std::vector<QString> LogMessage::g_columns =
+  {"Received", "Sent", "Level", "Text", "From", "File", "Function"};
+
 LogMessage::LogMessage(const eudaq::LogMessage &msg)
     : eudaq::LogMessage(msg), m_ok(true) {}
 LogMessage::LogMessage(const std::string &fileline)
     : eudaq::LogMessage(make_msg(fileline)) {}
-
-namespace {
-  static const char *const g_columns[] = {"Received", "Sent", "Level",   "Text",
-                                          "From",     "File", "Function"};
-}
 
 int LogMessage::ColumnWidth(int i) {
   switch (i) {
@@ -165,13 +154,18 @@ std::string LogMessage::Text(int i) const {
   }
 }
 
-int LogMessage::NumColumns() { return sizeof g_columns / sizeof *g_columns; }
+int LogMessage::NumColumns() { return sizeof g_columns.size(); }
 
-const char *LogMessage::ColumnName(int i) {
-  if (i < 0 || i >= NumColumns()) {
+QString LogMessage::ColumnName(int i) {
+  if (i < 0 || i >= g_columns.size()) {
     return "";
   }
   return g_columns[i];
+}
+
+LogSearcher::LogSearcher() : m_set(false) {
+  m_regexp.setPatternSyntax(QRegExp::Wildcard);
+  m_regexp.setCaseSensitivity(Qt::CaseInsensitive);
 }
 
 void LogSearcher::SetSearch(const std::string &regexp) {
@@ -187,6 +181,20 @@ bool LogSearcher::Match(const LogMessage &msg) {
       return true;
   }
   return false;
+}
+
+LogSorter::LogSorter(std::vector<LogMessage> *messages)
+  :m_msgs(messages), m_col(0), m_asc(true) {}
+
+void LogSorter::SetSort(int col, bool ascending) {
+  m_col = col;
+  m_asc = ascending;
+}
+
+bool LogSorter::operator()(size_t lhs, size_t rhs) {
+  QString l = (*m_msgs)[lhs].Text(m_col).c_str();
+  QString r = (*m_msgs)[rhs].Text(m_col).c_str();
+  return m_asc ^ (QString::compare(l, r, Qt::CaseInsensitive) < 0);
 }
 
 LogCollectorModel::LogCollectorModel(QObject *parent)
@@ -229,7 +237,6 @@ QModelIndex LogCollectorModel::AddMessage(const LogMessage &msg) {
     beginInsertRows(QModelIndex(), pos, pos);
     m_disp.insert(it, m_all.size() - 1);
     endInsertRows();
-    // std::cout << "Added row=" << pos << std::endl;
     return createIndex(pos, 0);
   }
   return QModelIndex();
@@ -254,12 +261,6 @@ void LogCollectorModel::UpdateDisplayed() {
     endInsertRows();
   }
 }
-
-// void LogCollectorModel::newconnection(const eudaq::ConnectionInfo & id) {
-//   emit layoutAboutToBeChanged();
-//   m_data.push_back(LogCollectorConnection(id));
-//   emit layoutChanged();
-// }
 
 int LogCollectorModel::rowCount(const QModelIndex & /*parent*/) const {
   return m_disp.size();
@@ -296,4 +297,25 @@ QVariant LogCollectorModel::headerData(int section, Qt::Orientation orientation,
     return LogMessage::ColumnName(section);
 
   return QVariant();
+}
+
+void LogCollectorModel::sort(int column, Qt::SortOrder order){
+  m_sorter.SetSort(column, order == Qt::AscendingOrder);
+  UpdateDisplayed();
+}
+
+void LogCollectorModel::SetSearch(const std::string &regexp) {
+  m_search.SetSearch(regexp);
+  UpdateDisplayed();
+}
+
+void LogCollectorModel::SetDisplayNames(const std::string &type, const std::string &name) {
+  m_displaytype = type;
+  m_displayname = name;
+  UpdateDisplayed();
+}
+
+void LogCollectorModel::SetDisplayLevel(int level){
+  m_displaylevel = level;
+  UpdateDisplayed();
 }

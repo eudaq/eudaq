@@ -14,11 +14,6 @@
 #include <QRegExp>
 #include <QString>
 
-class RunConnectionDelegate : public QItemDelegate {
-public:
-  RunConnectionDelegate();
-};
-
 class RunControlGUI : public QMainWindow,
 		      public Ui::wndRun{
   Q_OBJECT
