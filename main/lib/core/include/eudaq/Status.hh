@@ -49,9 +49,8 @@ namespace eudaq {
     void ResetStatus(State st, Level lvl, const std::string &msg);
     int GetLevel() const { return m_level;}
     int GetState() const { return m_state;}
-    std::string GetStateMessage()const;
-
-    std::string GetMessage() const { return m_msg;}
+    std::string GetStateString()const;
+    std::string GetMessage() const {return m_msg;}
     
     Status &SetTag(const std::string &name, const std::string &val);
     std::string GetTag(const std::string &name,

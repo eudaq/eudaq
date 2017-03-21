@@ -25,13 +25,9 @@ namespace eudaq {
     m_msg = msg;
   }
 
-  std::string Status::GetStateMessage() const{
-    if(m_msg.empty())
-      return m_map_state_str.at(m_state);
-    else
-      return m_map_state_str.at(m_state)+": "+m_msg;
+  std::string Status::GetStateString() const{
+    return m_map_state_str.at(m_state);
   }
-
   
   std::string Status::Level2String(int level) {
     if(m_map_level_str.count(level))
