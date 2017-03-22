@@ -79,7 +79,6 @@ LogCollectorGUI::LogCollectorGUI(const std::string &runcontrol,
   } catch (const std::runtime_error &) {
     // probably file not found: ignore
   }
-  setWindowIcon(QIcon("../images/Icon_euLog.png"));
 }
 
 LogCollectorGUI::~LogCollectorGUI(){
@@ -124,7 +123,7 @@ void LogCollectorGUI::DoTerminate(){
   QApplication::quit();
 }
 
-void closeEvent(QCloseEvent *) {
+void LogCollectorGUI::closeEvent(QCloseEvent *) {
   std::cout << "Closing!" << std::endl;
   QApplication::quit();
 }
@@ -195,7 +194,7 @@ void LogCollectorGUI::AddMessage(const eudaq::LogMessage &msg) {
     viewLog->scrollTo(pos);
 }
 
-void CheckRegistered(){
+void LogCollectorGUI::CheckRegistered(){
   static bool registered = false;
   if (!registered) {
     qRegisterMetaType<QModelIndex>("QModelIndex");

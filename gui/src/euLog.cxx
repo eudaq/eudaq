@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
                                    "The address of the RunControl application");
   eudaq::Option<std::string> addr(op, "a", "listen-address", "tcp://44002", "address",
 				  "The address on which to listen for Log connections");
-  eudaq::Option<std::string> directory (op, "d", "directory", "../logs", "directory",
+  eudaq::Option<std::string> directory (op, "d", "directory", ".", "directory",
 					"The path in which the log files should be stored");
   eudaq::Option<std::string> level(op, "l", "log-level", "INFO", "level",
 				   "The initial level for displaying log messages");

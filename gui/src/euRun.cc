@@ -40,6 +40,7 @@ RunControlGUI::RunControlGUI()
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
   settings.beginGroup("euRun2");
+  m_run_n_qsettings = settings.value("runnumber", 0).toUInt();
   geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
   geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
   txtConfigFileName
@@ -78,6 +79,7 @@ RunControlGUI::RunControlGUI()
 
 void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   m_rc = std::move(rc);
+  m_rc->SetRunN(m_run_n_qsettings);
   m_rc->StartRunControl();
 }
 
@@ -199,7 +201,7 @@ void RunControlGUI::DisplayTimer(){
     }
   }
   
-  QRegExp rx_init(".+(\\.init\\.conf$)");
+  QRegExp rx_init(".+(\\.ini$)");
   QRegExp rx_conf(".+(\\.conf$)");
   bool confLoaded = rx_conf.exactMatch(txtConfigFileName->text());
   bool initLoaded = rx_init.exactMatch(txtInitFileName->text());
@@ -217,8 +219,20 @@ void RunControlGUI::DisplayTimer(){
   
   lblCurrent->setText(m_map_state_str.at(state));
 
+  uint32_t run_n = m_rc->GetRunN();
+  if(m_run_n_qsettings != run_n){
+    m_run_n_qsettings = run_n;
+    QSettings settings("EUDAQ collaboration", "EUDAQ");  
+    settings.beginGroup("euRun2");
+    settings.setValue("runnumber", m_run_n_qsettings);
+    settings.endGroup();
+  }
+  
   if(m_rc&&m_str_label.count("RUN")){
-    m_str_label.at("RUN")->setText(QString::number(m_rc->GetRunN()));
+    if(state == eudaq::Status::STATE_RUNNING)
+      m_str_label.at("RUN")->setText(QString::number(run_n));
+    else
+      m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
   }
   
   m_map_conn_status_last = map_conn_status;
@@ -233,6 +247,10 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
   } else {
     QSettings settings("EUDAQ collaboration", "EUDAQ");  
     settings.beginGroup("euRun2");
+    if(m_rc)
+      settings.setValue("runnumber", m_rc->GetRunN());
+    else
+      settings.setValue("runnumber", m_run_n_qsettings);
     settings.setValue("size", size());
     settings.setValue("pos", pos());
     settings.setValue("lastConfigFile", txtConfigFileName->text());

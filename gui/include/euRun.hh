@@ -44,4 +44,5 @@ private:
   QTimer m_timer_display;
   std::map<QString, QLabel*> m_str_label;
   std::map<eudaq::ConnectionSPC, eudaq::StatusSPC> m_map_conn_status_last;
+  uint32_t m_run_n_qsettings;
 };

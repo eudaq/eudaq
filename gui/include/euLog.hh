@@ -4,6 +4,7 @@
 #include "eudaq/LogCollector.hh"
 #include "eudaq/Logger.hh"
 #include <QMainWindow>
+#include <QCloseEvent>
 #include <QMessageBox>
 #include <QItemDelegate>
 #include <QPainter>
