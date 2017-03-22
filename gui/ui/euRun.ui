@@ -16,10 +16,6 @@
   <property name="windowTitle">
    <string>eudaq Run Control</string>
   </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>../../images/Icon_euRun.png</normaloff>../../images/Icon_euRun.png</iconset>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout">
     <property name="spacing">

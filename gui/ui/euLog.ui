@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0" >
  <class>wndLog</class>
  <widget class="QMainWindow" name="wndLog" >
@@ -11,9 +12,6 @@
   </property>
   <property name="windowTitle" >
    <string>EUDAQ Log Collector</string>
-  </property>
-  <property name="windowIcon" >
-   <iconset>../../images/Icon_euLog.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget" >
    <layout class="QVBoxLayout" >

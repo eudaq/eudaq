@@ -43,7 +43,7 @@ set(RUN_GUI_SRC
   src/euRun.cxx
   src/euRun.cc
   src/RunControlModel.cc
-  # src/euRun.rc
+  src/euRun.rc
   )
 qt_wrap_ui(euRun_UISrcs ui/euRun.ui)
 qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
@@ -89,12 +89,12 @@ add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS ${EUDAQ_MODULE})
 
-add_executable(euLog src/euLog.cxx)
+add_executable(euLog src/euLog.cxx src/euLog.rc)
 set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog") 
 target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euLog)
 
-add_executable(euProd src/euProd.cxx)
+add_executable(euProd src/euProd.cxx src/euProd.rc)
 set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
 target_link_libraries(euProd ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euProd)
