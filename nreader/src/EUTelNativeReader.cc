@@ -1,6 +1,5 @@
 #ifdef USE_EUDAQ
 // in this case, read immediately the info
-#include <eudaq/Info.hh>
 #include "eudaq/Event.hh"
 
 // now check if we have the new plugin mechanism, otherwise quit
