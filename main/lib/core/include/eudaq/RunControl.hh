@@ -88,7 +88,6 @@ namespace eudaq {
     std::mutex m_mtx_conn;
 
     std::string m_addr_log;
-    std::string m_var_file;
     std::mutex m_mtx_sendcmd;
     uint32_t m_run_n;
   };

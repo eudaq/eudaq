@@ -24,14 +24,12 @@ namespace eudaq {
   
   RunControl::RunControl(const std::string &listenaddress)
       : m_exit(false), m_listening(true), m_run_n(0){
-    char *top_dir_c = std::getenv("EUDAQ_TOP_DIR");
-    if(top_dir_c){
-      m_var_file = std::string(top_dir_c)+"/data/runnumber.dat";
-    }
-    else{
-      m_var_file = "../data/runnumber.dat";
-    }
-    m_run_n = ReadFromFile(m_var_file.c_str(), 0U)+1;
+    std::time_t time_now = std::time(nullptr);
+    char time_buff[10];
+    time_buff[9] = 0;
+    std::strftime(time_buff, sizeof(time_buff), "%V%u%H%M%S", std::localtime(&time_now));
+    std::string time_str(time_buff);
+    m_run_n = std::stoul(time_str);
     if(listenaddress != ""){
       m_cmdserver.reset(TransportServer::CreateServer(listenaddress));
       m_cmdserver->SetCallback(TransportCallback(this, &RunControl::CommandHandler));
@@ -117,7 +115,6 @@ namespace eudaq {
 
   void RunControl::StartRun(){
     m_listening = false;
-    WriteToFile(m_var_file.c_str(), m_run_n);
     EUDAQ_INFO("Starting Run " + to_string(m_run_n));
 
     std::vector<ConnectionSPC> conn_to_run;

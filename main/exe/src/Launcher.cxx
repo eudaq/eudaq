@@ -23,11 +23,9 @@ int main(int /*argc*/, const char **argv) {
   				   "The address of the RunControl to connect");
   eudaq::Option<std::string> loglevel(op, "l", "log-level", "NONE", "level",
 				      "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> runfile(op, "u", "run-file", "../data/runnumber.dat", "string",
-  				     "The file containing the run number of the last run.");  
   eudaq::Option<std::string> logfile(op, "o", "log-file", "", "filename",
   				     "A log file to load at startup");
-  eudaq::Option<std::string> logpath(op, "p", "log-path", "../logs", "directory",
+  eudaq::Option<std::string> logpath(op, "p", "log-path", "./", "directory",
   				     "The path in which the log files should be stored");
 
 
