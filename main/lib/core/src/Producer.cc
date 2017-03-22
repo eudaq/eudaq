@@ -36,7 +36,6 @@ namespace eudaq {
   
   void Producer::OnConfigure(){
     try{
-      // if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF)&& !IsStatus(Status::STATE_UNINIT))//TODO: remove UNINIT
       if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
 	EUDAQ_THROW("OnConfigure can not be called unless in STATE_UNCONF or STATE_CONF");
       auto conf = GetConfiguration();
@@ -62,7 +61,7 @@ namespace eudaq {
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
       EUDAQ_INFO("Start Run: "+ std::to_string(GetRunNumber()));
       m_evt_c = 0;
-      std::string dc_str = GetConfiguration()->Get("DATACOLLECTORS", "");
+      std::string dc_str = GetConfiguration()->Get("EUDAQ_DC", "");
       std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
       std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
       GetInitConfiguration()->SetSection("");//NOTE: it is m_conf_init
@@ -70,14 +69,12 @@ namespace eudaq {
 	std::string dc_addr =  GetInitConfiguration()->Get("DataCollector."+dc_name, "");
 	if(!dc_addr.empty()){
 	  m_senders[dc_addr]
-	    = std::unique_ptr<DataSender>(new DataSender("Producer", GetFullName()));
+	    = std::unique_ptr<DataSender>(new DataSender("Producer", GetName()));
 	  m_senders[dc_addr]->Connect(dc_addr);
 	}
       }
       GetInitConfiguration()->SetSection(cur_backup);
       
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      //TODO: remove. Producer waits 1 second to startup. FilePattern can have Date
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     }catch (const std::exception &e) {

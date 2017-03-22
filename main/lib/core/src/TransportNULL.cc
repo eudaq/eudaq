@@ -7,6 +7,14 @@ namespace eudaq {
 
   const std::string NULLServer::name = "null";
 
+
+  namespace{
+    auto d0=Factory<TransportServer>::Register<NULLServer, const std::string&>
+      (cstr2hash("null"));
+    auto d1=Factory<TransportClient>::Register<NULLClient, const std::string&>
+      (cstr2hash("null"));
+  }
+  
   NULLServer::NULLServer(const std::string &) {}
 
   NULLServer::~NULLServer() {}
@@ -30,9 +38,7 @@ namespace eudaq {
                               const ConnectionInfo &, bool) {}
 
   void NULLClient::ProcessEvents(int timeout) {
-    // std::cout << "NULLClient::ProcessEvents " << timeout << std::endl;
     mSleep(timeout);
-    // std::cout << "ok" << std::endl;
   }
 
   NULLClient::~NULLClient() {}
