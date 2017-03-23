@@ -78,53 +78,28 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
       auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
       int boardID = evRaw.GetTag("board", int());
       std::string planeName = "USBPIX_GEN2_BOARD_" + to_string(boardID);
+      auto channels = evRaw.NumBlocks();
 
-      auto plane1 = StandardPlane(0, EVENT_TYPE, planeName);
-      auto plane2 = StandardPlane(1, EVENT_TYPE, planeName);
-      auto plane3 = StandardPlane(2, EVENT_TYPE, planeName);
-      auto plane4 = StandardPlane(3, EVENT_TYPE, planeName);
+	  std::vector<StandardPlane> planes;
 
-      plane1.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-      plane2.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-      plane3.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-      plane4.SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
-
-
+      for(size_t i = 0; i < channels; ++i){
+		planes.emplace_back(i, EVENT_TYPE, planeName);
+	    planes.back().SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
+	  }
      
       int hitDiscConf = 0;
 
-      //std::cout << "Data from board 1: " << std::endl;
-      auto data1 = evRaw.GetBlock(0);
-      auto vec1 = decodeFEI4DataGen2(data1);
-      for(auto& hitPixel: vec1) {
-        plane1.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
-      }
-/*
-      //std::cout << "Data from board 2: " << std::endl;
-      auto data2 = evRaw.GetBlock(1);
-      auto vec2 = decodeFEI4DataGen2(data2);
-      for(auto& hitPixel: vec2) {
-        plane2.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
-      }      
+	  for(size_t i = 0; i < channels; ++i) {
+		auto data = evRaw.GetBlock(i);
+		auto hitPixelVec = decodeFEI4DataGen2(data);
+			for(auto& hitPixel: hitPixelVec) {
+				planes.at(i).PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
+			}
+	  }
 
-      //std::cout << "Data from board 3: " << std::endl;
-      auto data3 = evRaw.GetBlock(2);
-      auto vec3 =decodeFEI4DataGen2(data3);
-      for(auto& hitPixel: vec3) {
-        plane3.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
-      }
-      //std::cout << "Data from board 4: " << std::endl;
-      auto data4 = evRaw.GetBlock(3);
-      auto vec4 =decodeFEI4DataGen2(data4);
-      for(auto& hitPixel: vec4) {
-        plane4.PushPixel(hitPixel.x, hitPixel.y, hitPixel.tot+1+hitDiscConf, false, hitPixel.lv1);
-      }
-*/
-
-      sev.AddPlane(plane1);
-      sev.AddPlane(plane2);
-      sev.AddPlane(plane3);
-      sev.AddPlane(plane4);
+	  for(auto& plane: planes) {
+		sev.AddPlane(plane);
+	  } 
 /*      
     std::map<int, StandardPlane> StandardPlaneMap;
 
