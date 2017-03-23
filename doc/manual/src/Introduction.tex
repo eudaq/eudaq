@@ -21,7 +21,7 @@ other processes connect to the Run Control to receive commands and to report the
 \begin{figure}[htb]
   \begin{center}
     \includegraphics[width=0.9\textwidth]{src/images/eudaq_working_principle}
-    \caption{Schematic of the EUDAQ architecture \cite{Spannagel:2016}.}
+    \caption{Schematic of the EUDAQ architecture \cite{Spannagel:2017}.}
     \label{fig:DAQ}
   \end{center}
 \end{figure}
@@ -54,37 +54,36 @@ The general structure is outlined below:
   All definitions in the library should be inside the \texttt{eudaq} namespace.
   It is organised into the following subdirectories:
   \begin{myitemize}
-  \item \texttt{lib/src}
-    contains the library source code,
-  \item \texttt{exe/src}
+  \item \texttt{main/lib/core}
+    contains the source code of core library,
+  \item \texttt{main/lib/lcio}
+    contains the source code of lcio extension library,
+  \item \texttt{main/lib/root}
+    contains the source code of root extension library,
+  \item \texttt{main/module}
+    contains the source code of module libraries,
+  \item \texttt{main/exe}
     contains the (command line) executables source code,
-  \item \texttt{include}
-    contains the header files inside the \texttt{eudaq} subdirectory (to match the namespace),
   \end{myitemize}
 \item \texttt{gui}
   contains the graphical programs that are built with Qt, such as the RunControl and LogCollector.
-\item \texttt{producers}
-  contains all (user-provided) producers shipped with the EUDAQ
+\item \texttt{user}
+  contains all user provided code shipped with the EUDAQ
   distribution, for example:
   \begin{myitemize}
-\item \texttt{tlu}
-  contain the parts that depend on the \gls{TLU}.
-\item \texttt{ni}
-  contain the parts that depend on the \gls{NI} system for Mimosa 26 read out.
-\item e.g. \texttt{depfet}, \texttt{fortis}, \texttt{taki}\ldots{}
-  contain the code for third-party producers that have been used with
-  EUDET-type beam telescopes.
+\item \texttt{user/example}
+  contain example code for the intergration with user provides code.
+\item \texttt{user/eudet}
+  contain the parts that depend on the EUDET-type telescope.
+\item e.g. \texttt{user/calice}, \texttt{user/itkstrip}\ldots{}
+  contain the code from third-party users.
   \end{myitemize}
 \item \texttt{extern}
-  stores external software that is not part of EUDAQ itself, but that is needed by EUDAQ in some cases,
-  such as the \texttt{ZestSC1} driver and the \texttt{tlufirmware} for the \gls{TLU}.
-% and the Tsi148 VME driver.
+  stores external software that is not part of EUDAQ itself, but that is needed by EUDAQ in some cases.
 \item \texttt{bin} and \texttt{lib}
   contain the compiled binaries (executables and libraries) generated from the other directories.
 \item \texttt{conf}
   contains configuration files for running the beam telescope.
-\item \texttt{data} and \texttt{logs}
-  are directories for storing the data and log files generated while running the DAQ.
 \item \texttt{doc}
   contains documentation, such as this manual.
 \end{myitemize}
