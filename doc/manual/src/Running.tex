@@ -16,28 +16,11 @@ In \autoref{tab:exes}, you will find an overview of the most important EUDAQ exe
   \textbf{Category} & \textbf{Name} & \textbf{Binary}  & \textbf{Description}\\
   \hline			
   \hline			
-  DAQ & Run Control & \texttt{euRun.exe} & GUI version, recommended (Sec. \ref{sec:runcontrol}) \\
-  DAQ & Run Control & \texttt{TestRunControl.exe} & CLI version (Sec. \ref{sec:runcontrol}) \\
-  DAQ & Log Collector & \texttt{euLog.exe} & GUI version, recommended (Sec. \ref{sec:logcollector}) \\
-  DAQ & Log Collector & \texttt{TestLogCollector.exe} & CLI version (Sec. \ref{sec:logcollector}) \\
-  DAQ & Data Collector & \texttt{TestDataCollector.exe} & CLI, recommended (Sec. \ref{sec:datacollector}) \\
-  DAQ & Online Monitor & \texttt{OnlineMon.exe} & GUI version, recommended (Sec. \ref{sec:onlinemonitor}) \\
-  DAQ & Online Monitor & \texttt{TestMonitor.exe} & CLI version (Sec. \ref{sec:onlinemonitor}) \\
-  DAQ & Run Listener & \texttt{RunListener.exe} & CLI, listens to Run Control, no description \\
+  DAQ & Run Control & \texttt{euRun} & GUI version, recommended (Sec. \ref{sec:runcontrol}) \\
+  DAQ & Log Collector & \texttt{euLog} & GUI version, recommended (Sec. \ref{sec:logcollector}) \\
+  DAQ & Online Monitor & \texttt{OnlineMon} & GUI version, recommended (Sec. \ref{sec:onlinemonitor}) \\
   \hline
-  Test & TLU Control & \texttt{TLUControl.exe} & CLI (Sec. \ref{sec:tlucontrol}) \\
-  Test/DAQ & Test Producer & \texttt{TestProducer.exe} & CLI (Sec. \ref{sec:testproducer}) \\
-  Test/DAQ & Dummy Producer & \texttt{euProd.exe} & GUI, no description \\
-  Devel./DAQ & Example Producer & \texttt{ExampleProducer.exe} & CLI, recommended (Sec. \ref{sec:testproducer}) \\
-  Devel. & Exampler Reader & \texttt{ExampleReader.exe} & CLI, example raw file reader, no description \\
-  Devel. & Option Example & \texttt{OptionExample.exe} & CLI, example to use options, no description \\
-  \hline
-  Tools & File Checker & \texttt{FileChecker.exe} & CLI, raw data file checker (Sec. \ref{sec:FileChecker}) \\
-  Tools & Test Reader & \texttt{TestReader.exe} & CLI, raw data file reader (Sec. \ref{sec:TestReader}) \\
-  Tools & EURunSplitter & \texttt{EURunSplitter.exe} & CLI, splits raw data files, no description \\
-  Tools & Converter & \texttt{Converter.exe} & CLI, raw data file converter (Sec. \ref{sec:Converter}) \\
-  Tools & Cluster Extractor & \texttt{ClusterExtractor.exe} & CLI, extracting clusters from raw files  (Sec. \ref{sec:ClusterExtractor}) \\
-  Tools & MagicLogBook & \texttt{MagicLogBook.exe} & obsolete (!), CLI  (Sec. \ref{sec:MagicLogBook}) \\
+  Tools & Converter & \texttt{Converter} & CLI, raw data file converter (Sec. \ref{sec:Converter}) \\
 \end{tabular}
 \caption{Overview of EUDAQ executables: DAQ processes and tools as graphical user interfaces (GUI) or command line interfaces (CLI).}
 \label{tab:exes}
@@ -74,13 +57,10 @@ The ports can be configured when calling the the processors on the command line 
 \begin{description}
 
 \ttitem{44000}
-This is the port used to send commands from the Run Control.
-
-\ttitem{44001}
-This port is used to send data from the producers to the Data Collector.
+The Run Contorl listens at this port to get connections with clients (LogCollector, DataCollector, Monitor, Producer). Commands are send, client status are received by RunControl. 
 
 \ttitem{44002}
-This port is used to send log messages from all processes to the Log Collector.
+The Log Collector listens at this port to get connections with clients (RunContorl, DataCollector, Monitor, Producer). Client log messages are received by LogCollector.
 
 \end{description}
 
@@ -90,7 +70,6 @@ The method for doing this depends on the Operating System used,
 and is outside the scope of this manual.
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
 \subsection{Processes}
 The DAQ system is made up of a number of different processes that may all be run on the same,
@@ -98,10 +77,7 @@ or on different computers.
 
 \subsubsection{Run Control}
 \label{sec:runcontrol}
-There are two versions of the Run Control -- a text-based version and a graphical version (see \autoref{fig:RunControl}).
-The graphical version is recommended, since it is well tested and complete.
-The executable is called \texttt{euRun.exe}, or on Mac OS X it is an application bundle called \texttt{euRun.app}.
-The text-based version can be useful for testing, the executable is \texttt{TestRunControl.exe}.
+There are two versions of the Run Control -- a text-based version \texttt{euCliRun} and a graphical version \texttt{euRun} (see \autoref{fig:RunControl}).
 
 \begin{figure}[htb]
   \begin{center}
@@ -112,13 +88,6 @@ The text-based version can be useful for testing, the executable is \texttt{Test
 \end{figure}
 
 Usually, no command-line option should be needed. 
-If needed, it can be told to listen on a specific port (e.g. to run two copies on the same machine) 
-using the \texttt{-a \param{port}} option, for example:
-\begin{listing}[mybash]
-$[./euRun.exe]$ -a 44000
-\end{listing}
-Note: If two copies of EUDAQ should run simultaneously,
-the ports of the Log and DataCollectors have to be different!
 
 \paragraph{Finite-State Machine}
 \label{sec:fsm}
@@ -132,19 +101,17 @@ the ports of the Log and DataCollectors have to be different!
 \end{figure}
 
 Since EUDAQ version 1.7, a \gls{FSM} is implemented (see \autoref{fig:fsm}) \cite{Shirokova:2016}.
-Each process connected to the Run Control can always be characterized by the current state:
+Each client connected to the Run Control can always be characterized by the current state:
 
 \begin{itemize}
-\item UNINITIALISED: the initial state of every connection. Initialisation has not not been conducted yet. Available transitions are \texttt{OnInitialise} and \texttt{OnTerminate}.%
-\footnote{Some detectors require not only setting up different parameters, but also the first initialisation of the hardware. Previously both these steps were carried out during the configuration. However, setting up the hardware is only necessary during the start and can be time demanding, so reinitialisation of the hardware can take additional time when reconfiguration is needed.
-One should note that \texttt{OnInitialise} function that is used to set the connection into the CONFIGURED state has default implementation in the base \texttt{CommandReceiver} class, so users who do not need an initialisation step can simply skip it. In addition, this ensures backward compatibility for existing producers. \cite{Shirokova:2016}}
-\item UNCONFIGURED: initialisation has already been conducted, but configuration parameters have not been set yet. Available transitions are \texttt{OnConfigure} and \texttt{OnTerminate}.
-\item CONFIGURED: configuration parameters have already been set. Available transitions are \texttt{OnStartRun}, \texttt{OnConfigure} and \texttt{OnTerminate}.
-\item RUNNING: the state of the operating connections.  For producers it means producing data, the \texttt{OnlineMonitor} are providing plots, the \texttt{LogCollector} is continuing to collect log messages and the \texttt{DataCollector} combines data streams from producers. The only available transition is \texttt{OnStopRun}.
-\item ERROR: this state can be used by users in case of errors during configuration, running process, etc. The only available transition is \texttt{OnTerminate}.
+\item UNINITIALISED: the initial state of every client. Initialisation has not been conducted. Available transitions are \texttt{DoInitialise} and \texttt{DoReset}.%
+\item UNCONFIGURED: initialisation has already been conducted, but configuration parameters have not been set yet. Available transitions are \texttt{DoConfigure} and \texttt{DoReset}.
+\item CONFIGURED: configuration parameters have already been set. Available transitions are \texttt{DoStartRun}, \texttt{DoConfigure} and \texttt{DoReset}.
+\item RUNNING: the state of the operating client. For producers it means producing data, the \texttt{OnlineMonitor} are providing plots, the \texttt{LogCollector} is continuing to collect log messages and the \texttt{DataCollector} combines data streams from producers. The only available transition is \texttt{DoStopRun}.
+\item ERROR: this state can be used by users in case of errors during configuration, running process, etc. The only available transition is \texttt{DoReset}.
 \end{itemize}
 
-The state of the machine is determined by the lowest state of the connected components (\texttt{LogCollector}, \texttt{DataCollector}, \texttt{OnlineMonotor}, \texttt{Producers}) in the following priority: ERROR, UNITIALISED, UNCONFIGURED, CONFIGURED, RUNNING. It means, for example, that even if only one connection is in the ERROR state, the whole machine will also be in that state. This prevents such mistakes as running the system before every component has finished the configuration.
+The state of RunControl is determined by the lowest state of the connected client (\texttt{LogCollector}, \texttt{DataCollector}, \texttt{Monitor}, \texttt{Producers}) in the following priority: ERROR, UNITIALISED, UNCONFIGURED, CONFIGURED, RUNNING. It means, for example, that even if only one connection is in the ERROR state, the whole machine will also be in that state. This prevents such mistakes as running the system before every component has finished the configuration.
 
 \subsubsection{Log Collector}
 \label{sec:logcollector}
@@ -159,14 +126,13 @@ It is recommended to start the Log Collector directly after having started the R
 \end{figure}
 
 Like the Run Control, there are also two versions of the Log Collector.
-The graphical version is called \texttt{euLog.exe}, or \texttt{euLog.app} on Mac OS X,
-and the text-based version is called \texttt{TestLogCollector.exe}.
+The graphical version is called \texttt{euLog},
+and the text-based version is called \texttt{euCliLog}.
 
 If it is running on the same machine as the Run Control, it should not need any command-line options.
 However, if it is running on a different machine, it must be told on which machine the Run Control is running.
-By using the \texttt{-r \param{hostname}} option, the Log Collector knows where to connect to the Run Control, for example the Run Control runs on a machine haveing a local IP 192.168.0.1 and listening on the port 40000 (as default):
 \begin{listing}[mybash]
-$[./euLog.exe]$ -r tcp://192.168.0.1:44000
+$[./euLog]$ -r tcp://{run_contorl_hostname}:{run_contorl_port}
 \end{listing}
 The port can also be set using the \texttt{-a \param{port}} option, similar to the Run Control.
 
@@ -174,33 +140,26 @@ The port can also be set using the \texttt{-a \param{port}} option, similar to t
 \label{sec:datacollector}
 The Data Collector is the process that collects all the raw data from the Producers,
 merges all the connected incoming streams into a single data stream, and writes it to file.
-There is only a text-based version called \texttt{TestDataCollector.exe}.
-It is recommended to start the Data Collector directly after having started the Run Control and RunControl and before starting other processors.
+There is only a text-based version called \texttt{euCliDac}.
 
-Like the Log Collector, it should be told where to connect to the Run Control if it is not running on the same machine.
-Accordingly, the \texttt{-r} and \texttt{-a} options can be used, for example:
+The command line parttern to startup a DataCollector is:
 \begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -r tcp://192.168.0.1:44000
+$[euCliDac]$ -n {code_name_of_data_collector} -t {runtime_name_of_data_collector} -r tcp://{run_contorl_hostname}:{run_contorl_port} -a tcp://{listening_port}
 \end{listing}
+
+Option \texttt{-n} required\\
+Option \texttt{-t} required\\
+Option \texttt{-r} optional, \texttt{run\_contorl\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000\\
+Option \texttt{-a} optional, \texttt{listening\_port} default value is random\\
+
+By default, an example DataCollector \texttt{Ex0DataCollector} is avalible. For example, you may startup a instance of \texttt{Ex0DataCollector} by
+\begin{listing}[mybash]
+$[euCliDac]$ -n Ex0DataCollector -t my_dc
+\end{listing}
+
 
 It is also possible to run multiple Data Collector instances within
 one EUDAQ session. 
-This can be useful to reduce network traffic and
-e.g. write the output of one producer to a locally attached disk. 
-When running several Data Collectors simultaneously, the Run Control assigns a
-Producer to a Data Collector by name: if the name of a Data Collector
-matches that of a Producer, the latter will be given the address and
-port of the former. 
-There can be only one instance of an \emph{unnamed} Data
-Collector which serves as the default for any non-matching Producer;
-if no unnamed Data Collector is present, the first one connecting will
-serve as the default.
-
-The name of a Data Collector can be set with the
-\texttt{-n} option, for example:
-\begin{listing}[mybash]
-$[./TestDataCollector.exe]$ -n myproducer
-\end{listing}
 
 If you wish to run several instances of the Data Collector on one
 machine, you need to make sure that they listen to different addresses
@@ -210,16 +169,15 @@ Furthermore, each Data Collector has to write to a different file by including t
 configuration file (also see section \ref{sec:ConfigFiles}):
 
 \begin{listing}[conf]
-[DataCollector.myproducer]
-FilePattern = "../data/run$6R_myproducer$X"
+[DataCollector.my_dc_name]
+FilePattern = "{path_to_data_folder}/run$6R$X"
 \end{listing}
 
-
-\subsubsection{Online Monitor}
+\subsubsection{Monitor}
 \label{sec:onlinemonitor}
 The Online Monitor reads the data file written by the Data Collector,
 and generates several ROOT histograms that can be useful for online monitoring.
-Since it reads the native data file directly (by using the corresponding DataConverterPlugin), it must be run on the same machine as the Data Collector.
+Since it reads the native data file directly, it must be run on the same machine as the Data Collector. (TODO)
 
 \begin{figure}[htb]
   \begin{center}
@@ -235,20 +193,18 @@ In online mode, it connects to the Run Control, so it will know when new runs ar
 and it will automatically open each new data file as it is created.
 To run it in online mode, the \texttt{-r} option may be used to assign Run Control, in this example:
 \begin{listing}[mybash]
-$[./OnlineMon.exe]$ -r 192.168.0.1:44000
+$[./OnlineMon]$ -r tcp://{run_control_hostname}::{run_contorl_port}
 \end{listing}
-Note: The Online Monitor is working properly on Unix machines. In addition, it is recommended to run the Online Monitor on the same machine as the Data Collector.
+Note: The Online Monitor is working properly on Unix machines..
 
 In offline mode, there is no Run Control,
 and it only analyses the data file it is given on the command line usind the \texttt{-f} option. 
 An example command line is:
 \begin{listing}[mybash]
-$[./OnlineMon.exe]$ -f 5432
+$[./OnlineMon]$ -f {path_to_data_file}
 \end{listing}
-This will run it in offline mode, opening the file corresponding to run 5432
-(alternatively, the full path to a file may be given).
 
-\subsubsection{Test and Example Producer}
+\subsubsection{Producer}
 \label{sec:testproducer}
 For testing purposes, you may use the TestProducer.
 This works similarly to a real producer, but does not talk to any real hardware,
@@ -264,10 +220,6 @@ and can be properly converted, and therefore displayed in the Monitor.
 \subsubsection{Other/DUT Producer(s)}
 If you have a producer for your own hardware (see \autoref{sec:Producers}),
 it should also have an option to set the address of the Run Control.
-
-\subsubsection{Slow Producer}
-Since EUDAQ version 1.7 \cite{Shirokova:2016}: A slow producer is a special type of producers which interacts with the \texttt{DataCollector} in a different way using the hardware conception of the triggerless data taking. Instead of sending busy signals it can simply provide data at its own rate. The \texttt{DataCollector} distinguishes the slow producer from the usual one, it waits only for events from simple producers and ignores the absence of those from slow producers.
-In order to integrate a slow device one has to simply extend it from the \texttt{SlowProducer} class instead of the \texttt{Producer} class, but having then the same functionality. 
 
 
 \subsubsection{Python Interface and Wrapper for Core EUDAQ Components}
@@ -395,7 +347,7 @@ substituting \texttt{\$6R} in the input pattern (defaults to
 
 For example:
 \begin{listing}[mybash]
-$[./FileChecker.exe]$ {6045..6050}
+$[./FileChecker]$ {6045..6050}
 \end{listing}
 
 This would produce the following output.
@@ -413,7 +365,7 @@ run     valid  num_events  contains                   errors
 
 \subsubsection{Converter}
 \label{sec:Converter}
-The \texttt{Converter.exe} program will read a native data file,
+The \texttt{Converter} program will read a native data file,
 optionally select just a subset of events from the file,
 and can then write it out to another file in either the same native format, or a different format.
 The most commonly used options are:
@@ -496,7 +448,7 @@ instead of the position of the seed pixel.
 
 An example use is:
 \begin{listing}[mybash]
-$[./ClusterExtractor.exe]$ -p 3 -n 3.5 -s 6 -c 10 -w 5432
+$[./ClusterExtractor]$ -p 3 -n 3.5 -s 6 -c 10 -w 5432
 \end{listing}
 
 This will generate a number of text files named \texttt{runNNN\_eutel\_M.txt},
@@ -622,7 +574,7 @@ but there is currently no way to specify this.
 The \texttt{MagicLogBook} command is used as follows:
 
 \begin{listing}[mybash]
-$[./MagicLogBook.exe]$ -p normal ../data/*.raw
+$[./MagicLogBook]$ -p normal ../data/*.raw
 \end{listing}
 
 This will produce an output similar to the following:

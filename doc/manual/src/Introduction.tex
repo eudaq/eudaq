@@ -26,7 +26,7 @@ other processes connect to the Run Control to receive commands and to report the
   \end{center}
 \end{figure}
 
-Each hardware that produces data (e.g. the \gls{TLU}, the \gls{NI}, or a \gls{DUT}) will have a Producer process (on the left in \autoref{fig:DAQ}).
+Each hardware that produces data will have a Producer process (on the left in \autoref{fig:DAQ}).
 This will initialize, configure, stop and start the hardware by receiving the commands from the Run Control (red arrows), read out the data and send it to the Data Collector (blue arrows).
 
 The Data Collector receives all the data streams from all the Producers,
@@ -63,7 +63,7 @@ The general structure is outlined below:
   \item \texttt{main/module}
     contains the source code of module libraries,
   \item \texttt{main/exe}
-    contains the (command line) executables source code,
+    contains the CLI (command line interface) executables source code,
   \end{myitemize}
 \item \texttt{gui}
   contains the graphical programs that are built with Qt, such as the RunControl and LogCollector.
@@ -72,29 +72,32 @@ The general structure is outlined below:
   distribution, for example:
   \begin{myitemize}
 \item \texttt{user/example}
-  contain example code for the intergration with user provides code.
+  contains example code for the intergration with user provides code.
 \item \texttt{user/eudet}
-  contain the parts that depend on the EUDET-type telescope.
+  contains the parts that depend on the EUDET-type telescope.
 \item e.g. \texttt{user/calice}, \texttt{user/itkstrip}\ldots{}
   contain the code from third-party users.
   \end{myitemize}
 \item \texttt{extern}
-  stores external software that is not part of EUDAQ itself, but that is needed by EUDAQ in some cases.
-\item \texttt{bin} and \texttt{lib}
-  contain the compiled binaries (executables and libraries) generated from the other directories.
+  global folder which contians external softwares which themselves are not part of EUDAQ project.
+\item \texttt{cmake}
+  global folder which contians cmake files.
+\item \texttt{etc}
+  contains configuration files of EUDAQ installation.
 \item \texttt{conf}
   contains configuration files for running the beam telescope.
 \item \texttt{doc}
-  contains documentation, such as this manual.
+  contains source code of documentation, such as this manual.
 \end{myitemize}
 
 Each directory containing code has its own \texttt{src} and \texttt{include} subdirectories,
-as well as a local \texttt{CMakeLists.txt} file containing the rules
+as well as a local \texttt{CMakeLists.txt} and a optional \texttt{cmake} folder containing the rules
 for building that directory using \texttt{CMake}.
-Header files usually have a \texttt{.hh} extension so that they can be automatically recognised as C++
-(as opposed to C), and source files have either \texttt{.cc} for parts of a library or \texttt{.cxx} for executables.
+Header files have a \texttt{.hh} extension so that they can be automatically recognised as C++,
+and source files have either \texttt{.cc} for parts of libraries and \texttt{.cxx} for executables.
+In the case of any external dependencies are required, there could be a local \texttt{extern} folder
 
 Each directory can contain a \texttt{README.md} file for brief documentation for this specific part, e.g.  
 as installation advice. 
 Using the \texttt{*.md} file ending allows for applying the Markdown language \cite{markdownWWW}. 
-Accordingly, content will be formatted on the the GitHub platform, where the code is hosted online.
+Accordingly, the content will be formatted on the the GitHub platform, where the code is hosted online.

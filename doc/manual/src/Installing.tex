@@ -42,33 +42,17 @@ On most Linux distributions, it can usually be installed via the built-in packag
 \subsubsection{C++11 compliant compiler (required)}
 The compilation of the EUDAQ source code requires a C++11 complianti compiler and has been tested with GCC (at least version 4.8.1), Clang (at least version 3.1), and MSVC (Visual Studio 2013 and later) on Linux, OS X and Windows.
 
-If you are using Scientific Linux, please install the \emph{Developer Toolset} available e.g. from \url{http://linux.web.cern.ch/linux/devtoolset/} to get access to a GCC version which fully implements C++11, e.g. on SL6 do
-\begin{listing}[mybash]
-scl use devtoolset-1.1 bash
-\end{listing}
-and cmake and install in this bash.
-
-
 \subsubsection{Qt (for GUIs)}
 The graphical interface of EUDAQ uses the Qt graphical framework.
 In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
-It is available in most Linux distributions as the package \texttt{qt4-devel} or  \texttt{qt5-devel}.
+It is available in most Linux distributions as the package \texttt{qt5-devel} or \texttt{qt5-dev}.
+It can also be downloaded and installed from \url{http://download.qt.io/archive/qt/}. 
 
-If the included version is too old, or on other platforms,
-it can be downloaded from \url{http://qt.nokia.com/downloads}.
-Select the LGPL (free) version, then choose the complete development environment
-(it may also work with just the framework, but this is untested).
-Make sure the \texttt{QTDIR} environment variable is set to the Qt installation directory,
-and the \texttt{\$QTDIR/bin} directory is in your path.
-
-If you are using OSX, the easiest way to install Qt is using the
-packages provided by the MacPorts project (\url{http://www.macports.org/}).
-
-\subsubsection{ROOT (for Monitor)}
+\subsubsection{ROOT (for ROOT extension and OnlineMonitor)}
 \label{sec:Root}
-The Online Monitor, as well as a few command-line utilities (contained in the \texttt{root} subdirectory), use the ROOT package for histogramming.
-It can be downloaded from \url{http://root.cern.ch} or installed via
-your favorite package manager.
+To enable the EUDAQ extensions library support to ROOT, EUDAQ need to be compiled and linked to ROOT library.
+Online Monitor also use the ROOT package.
+It can be downloaded from \url{http://root.cern.ch}.
 
 Make sure ROOt's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
 This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
@@ -77,8 +61,8 @@ script in the \texttt{bin} directory of the ROOT installation:
 source /path-to/root/bin/thisroot.sh
 \end{listing}
 
-\subsubsection{LCIO}
-\label{sec:LCIO-EUTel}
+\subsubsection{LCIO (for LCIO extension)}
+\label{sec:LCIO}
 To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
 EUDAQ must be linked against the \gls{LCIO} libraries.
 When LCIO option is enabled during the configuration step, source files will be download from internet and compiled automatically.
@@ -136,32 +120,35 @@ cmake ..
 \end{listing}
 CMake automatically searches for required packages and verifies that all dependencies are met using the \texttt{CMakeLists.txt} scripts in the main folder and in all sub directories. 
 
-By default, only the central shared library, the main executables and (if Qt4 or Qt5 have been found) the graphical user interface (GUI) are configured for compilation. 
-You can modify this default behavior by passing the \texttt{-DBUILD\_[name]} option to
+You can modify this default behavior by passing the \texttt{-D[eudaq\_build\_option]} option to
 CMake where \texttt{[name]} refers to an optional component, e.g.
 \begin{listing}[mybash]
-cmake -DBUILD_gui=OFF -DBUILD_tlu=ON ..
+cmake -DEUDAQ_BUILD_GUI=ON  ..
 \end{listing}
 to disable the GUI but enable additionally executables of the TLU producer.
 Find some of the most important building options in \autoref{tab:cmakeoptions}.
 
+If you are not familiar with cmake, cmake-gui is nice GUI tool to help you configre the project.
+
 \begin{table}[!h]
 {\footnotesize
-\begin{tabular}{l|l|p{9.5cm}}
-option &  default &  comment \\
+\begin{tabular}{l|l|p{2cm}|p{5.5cm}}
+option &  default &  dependency & comment \\
 \hline
-\texttt{-DBUILD\_main} &  ON & Builds main EUDAQ executables.
-The common library, and some command-line programs that depend on only this library \\
-\texttt{-DBUILD\_manual} & OFF &  Builds Manual in pdf-format. In Ubuntu e.g.: \texttt{pdflatex}, \texttt{scrartcl.cls} and \texttt{upquote.sty} are required, thus execute \texttt{sudo apt-get install texlive-latex-base texlive-latex-recommended texlive-latex-extra} \\
-\texttt{-DBUILD\_gui} &  ON & Builds GUI executables, such as the Run Control and Log Collector. Requires QT4/5. \\
-\texttt{-DBUILD\_python} & ON & Builds Python EUDAQ binding library. \\
-\texttt{-DBUILD\_onlinemon} &  ON & Builds Online Monitor executable. Requires ROOT. \\
-\texttt{-DBUILD\_nreader} &  OFF &  Builds native reader Marlin processor used for data conversion into LCIO. Requires LCIO/EUTelescope \\
-\texttt{-DINSTALL\_PREFIX=<PATH>} & \texttt{<eudaq>} & In order to install the executables into \texttt{bin} and the library into \texttt{lib} of a specific \texttt{<path>}, instead of into the \texttt{<eudaq>} path. 
-The corresponding de-installation can be done by:
-\texttt{cd <eudaq>\/build\/ \&\& sudo xargs rm < install\_manifest.txt}
+\texttt{EUDAQ\_BUILD\_EXECUTABLE} &  \texttt{<auto>} & none & Builds main EUDAQ executables.\\
+\texttt{EUDAQ\_BUILD\_GUI} & \texttt{<auto>} & Qt5 & Builds GUI executables, such as the Run Control(euRun) and Log Collector(euLog).\\
+\texttt{EUDAQ\_BUILD\_MANUAL} & \texttt{OFF} & LaTex &  Builds Manual in pdf-format.  \\
+\texttt{EUDAQ\_BUILD\_NREADER} & \texttt{OFF} & EUTelescope, LCIO &  Builds native reader Marlin processor used for data conversion into LCIO.\\
+\texttt{EUDAQ\_BUILD\_ONLINE\_MONITOR} & \texttt{auto} & ROOT6 &  Builds online monitor.  \\
+\texttt{EUDAQ\_INSTALL\_PREFIX} & \texttt{<source\_folder>} & none & In order to install the executables into \texttt{bin} and the library into \texttt{lib} of a specific path, instead of into the \texttt{<source\_folder>} path.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_CLI} & \texttt{ON} & none & Builds extension library of command line interface\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_LCIO} & \texttt{<auto>} & LCIO & Builds LCIO extension library\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_ROOT} & \texttt{<auto>} & ROOT & Builds ROOT extension library\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_TEST} & \texttt{ON} & none & Builds extension library for develop test\\
+\texttt{USER\_EXAMPLE\_BUILD} & \texttt{ON} & none & Builds example user code\\
+\texttt{USER\_\{user\_name\}\_BUILD} & \texttt{<unknown>} & \texttt{<unknown>} & Builds user code inside user folder \{user\_name\}\\
 \end{tabular}
-\caption{Some of the most important building options for CMake.}
+\caption{Options for CMake.}
 \label{tab:cmakeoptions}
 }
 \end{table}
@@ -171,75 +158,12 @@ Using a GUI version of CMake shows also all of the possible options.
 
 Corresponding settings are cached, thus they will be used again next time CMake is running.
 If you encounter a problem during installation, it is recommended to clean the cache by just removing all files from the build folder, since it only contains automatically generated files. 
-In order to start from scratch, just run:
-\begin{listing}[mybash]
-cd build
-rm -rf *
-\end{listing}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
 \subsection{Compilation}
-
-\subsubsection{Compilation on Linux/OSX}
-From the top EUDAQ directory, run the command
+Unversial command for all systems:
 \begin{listing}[mybash]
-cd build
-make install
+cmake --build {source_folder}/build --target install --config Release
 \end{listing}
-in order to compile the common library with some command-line programs (the contents of the \texttt{./main/exe} subdirectory).
-If other parts are needed, you can specify them as arguments to the
-CMake command during the configuration step (see \ref{sec:cmake}).
-
-The executable binaries and the common shared library will be installed by default into the
-\texttt{bin} and \texttt{lib} directories in the source tree,
-respectively. If you would like to install into a different location,
-please set the respective parameter during the CMake configuration.
-
-\subsubsection{Setup and Compilation on Windows using Visual~Studio}
-
-This section gives a short overview on the steps needed to compile the
-project under Windows (tested under Windows 7, 32-bit and 64-bit). For a more
-detailed introduction to the Windows build system and Visual~Studio
-project files see the appendix~\ref{app:compileOnWindows} on
-page~\pageref{app:compileOnWindows}.
-
-\begin{itemize}
-\item Prerequisites 
-\begin{itemize}
-\item Compiler: Download Visual Studio Express/Community (2013 or later):
-  \url{https://www.visualstudio.com/downloads/}
-\item Download Qt4 or later Qt5
-\end{itemize}
-
-\item Start the Visual Studio \emph{Developer Command Prompt} from the
-  Start~Menu entries for Visual~Studio (Tools subfolder) which opens a
-  \texttt{cmd.exe} session with the necessary environment variables
-  already set. If your Qt installation has not been added to the
-  global \texttt{\%PATH\%} variable, you need to execute the \texttt{qtenv2.bat} batch file (or similar) in the Qt folder, e.g.
-  \begin{listing}[mybash]
-C:\Qt\Qt5.1.1\5.1.1\msvc2015\bin\qtenv2.bat
-\end{listing}
-Replace "5.1.1" with the version string of your Qt installation.
-
-\item Now clone the EUDAQ repository (or download using GitHub) and enter the build directory on the prompt, e.g. by entering
-  \begin{listing}[mybash]
-cd c:\Users\[username]\Documents\GitHub\eudaq\build
-\end{listing}
-
-\item Configuration: Now enter
-  \begin{listing}[mybash]
-cmake ..
-\end{listing}
-to generate the VS project files.
-
-\item Compile by calling
-  \begin{listing}[mybash]
-MSBUILD.exe EUDAQ.sln /p:Configuration=Release
-\end{listing}
-or install into \texttt{\lstinline{eudaq\\bin}} by running
-  \begin{listing}[mybash]
-MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
-\end{listing}
-\item This will compile the main library and the GUI. For additional processors, please check the individual documentation.
-\end{itemize}
+Done!
