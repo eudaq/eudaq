@@ -21,7 +21,7 @@ If you occur problems during the installation process, please have a look into t
 \footnote{Go to \url{https://github.com/eudaq/eudaq/issues}} 
 Here you can search, if your problem had already been experienced by someone else, or you can open a new issue (see \autoref{sec:reporting}).
 
-\subsubsection{Installation of prerequisites}
+\subsubsection{Prerequisites}
 
 EUDAQ has few dependencies on other software, but some features do rely on other packages:
 \begin{itemize}
@@ -32,7 +32,7 @@ EUDAQ has few dependencies on other software, but some features do rely on other
 \item ROOT is required for the Online Monitor.
 \end{itemize}
 
-\subsubsection{Git}
+\paragraph{Git}
 Git is a free and open source distributed version control and is available for all of the usual platforms \cite{gitWWW}. 
 It allows for local version control and repositories, but also communicating with central online repositories like GitHub.
    
@@ -40,22 +40,22 @@ In order to get the EUDAQ code and stay updated with the central repository on G
 But also for developing the EUDAQ code having different versions (tags) or branches (development repositories), git is used (see \autoref{sec:contributing}).
 
 
-\subsubsection{CMake (required)}
+\paragraph{CMake (required)}
 In order to generate configuration files for building EUDAQ (makefiles) independently from the compiler and the operating platform, the CMake (at least version 3.1) build system is used.
 
 CMake is available for all major operating systems from \url{http://www.cmake.org/cmake/resources/software.html}. 
 On most Linux distributions, it can usually be installed via the built-in package manager (aptitude/apt-get/yum etc.) and on OSX using packages provided by e.g. the MacPorts or Fink projects.
 
-\subsubsection{C++11 compliant compiler (required)}
+\paragraph{C++11 compliant compiler (required)}
 The compilation of the EUDAQ source code requires a C++11 complianti compiler and has been tested with GCC (at least version 4.8.1), Clang (at least version 3.1), and MSVC (Visual Studio 2013 and later) on Linux, OS X and Windows.
 
-\subsubsection{Qt (for GUIs)}
+\paragraph{Qt (for GUIs)}
 The graphical interface of EUDAQ uses the Qt graphical framework.
 In order to compile the \texttt{gui} subdirectory, you must therefore have Qt installed.
 It is available in most Linux distributions as the package \texttt{qt5-devel} or \texttt{qt5-dev}.
 It can also be downloaded and installed from \url{http://download.qt.io/archive/qt/}. 
 
-\subsubsection{ROOT (for ROOT extension and OnlineMonitor)}
+\paragraph{ROOT (for ROOT extension and OnlineMonitor)}
 \label{sec:Root}
 To enable the EUDAQ extensions library support to ROOT, EUDAQ need to be compiled and linked to ROOT library.
 Online Monitor also use the ROOT package.
@@ -68,21 +68,21 @@ script in the \texttt{bin} directory of the ROOT installation:
 source /path-to/root/bin/thisroot.sh
 \end{listing}
 
-\subsubsection{LCIO (for LCIO extension)}
+\paragraph{LCIO (for LCIO extension)}
 \label{sec:LCIO}
 To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
 EUDAQ must be linked against the \gls{LCIO} libraries.
 When LCIO option is enabled during the configuration step, source files will be download from internet and compiled automatically.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Download the source code from GitHub}
+\subsubsection{Obtain the source code}
 \label{sec:downloadingEUDAQ}
 
 The EUDAQ source code is hosted on GitHub \cite{githubEUDAQ}. 
 Here, we describe how to get the code and install a stable version release. 
 In order to get information about the work flow of developing the EUDAQ code, please find the relevant information in see \autoref{sec:contributing}.
 
-\subsubsection{Downloading the code (clone)}
+\paragraph{Downloading the code (clone)}
 We recommend to obtain the software by using git,
 since this will allow you to easily update to newer versions.
 The source code can be downloaded with the following command:
@@ -95,7 +95,7 @@ version into it.
 \textit{Note:} Alternatively and without version control, you can also download a zip/tar.gz file of EUDAQ releases (tags) from \url{https://github.com/eudaq/eudaq/releases}. 
 By downloading the code, you can skip the next two subsections. 
 
-\subsubsection{Changing to a release version (checkout)}
+\paragraph{Changing to a release version (checkout)}
 After cloning the code from GitHub, your local EUDAQ version is on the master branch (check with \texttt{git status}).  
 For using EUDAQ without development or for production environments (e.g. at test beams), we strongly recommend to use the latest release version. 
 Use 
@@ -109,7 +109,7 @@ git checkout v2.0.0alpha
 \end{listing}
 to change to version v2.0.0alpha.
 
-\subsubsection{Updating the code (fetch)}
+\paragraph{Updating the code (fetch)}
 If you want to update your local code, e.g to get the newest release versions, execute in the \texttt{eudaq} directory: 
 \begin{listing}[mybash]
 git fetch
@@ -117,7 +117,7 @@ git fetch
 and check for new versions with \texttt{git tag}. 
 
 
-\subsection{Configuration via CMake}
+\subsubsection{Configuration via CMake}
 \label{sec:cmake}
 CMake supports out-of-source configurations and generates building files for compilation (makefiles). 
 Enter the \texttt{build} directory and run CMake, i.e.
@@ -168,7 +168,7 @@ If you encounter a problem during installation, it is recommended to clean the c
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
-\subsection{Compilation}
+\subsubsection{Compilation}
 Unversial command for all systems:
 \begin{listing}[mybash]
 cmake --build {source_folder}/build --target install --config Release

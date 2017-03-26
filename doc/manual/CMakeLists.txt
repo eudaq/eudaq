@@ -25,16 +25,18 @@ IF(BUILD_manual)
     src/DataCollector.tex
     src/DataConverter.tex
     src/Monitor.tex
+    src/RunControl.tex
     src/NewData.tex
     src/OtherParts.tex
     src/Contributing.tex
-    ../../conf/ExampleConfig.conf
+    src/PlatformIssue.tex
+    ../../user/example/misc/Ex0.ini
+    ../../user/example/misc/Ex0.conf
     ../../user/example/module/src/Ex0Producer.cc
     ../../user/example/module/src/Ex0DataCollector.cc
     ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
     ../../producers/example/src/ExampleConverterPlugin.cc
     ../../main/exe/src/ExampleReader.cxx
-    src/CompilingOnWindows.tex
     BIBFILES src/References.bib
     USE_GLOSSARY
     IMAGE_DIRS src/images

@@ -276,82 +276,6 @@ due to the fact that this information is now stored in a \texttt{RawDataEvent},
 which is not currently accessible with this version of the program.
 
 
-
-\subsection{FileWriter}
-The FileWriter part of the framework allows different file formats to be written,
-using a common interface, using a plugin-like system to define new file types.
-The \texttt{FileWriter} class defines the interface that each type must implement,
-and the \texttt{FileWriterFactory} allows code that writes data files to select any
-available file type, and write it in a generic way,
-without needing to know details about the particular file format.
-A number of different file types are already implemented,
-for a list with descriptions, see page \pageref{lst:FileTypes}
-
-The easiest way to make use of the different \texttt{FileWriter}s,
-is to use the \texttt{Converter.exe} program (see \autoref{sec:Converter}).
-
-The \texttt{FileWriter} base class is defined in the following header:
-\begin{listing}
-#include "eudaq/FileWriter.hh"
-\end{listing}
-
-In order to implement a new \texttt{FileWriter}, a new class must be written,
-inheriting from the \texttt{FileWriter} base class, and implementing the following methods:
-\begin{listing}
-virtual void StartRun(unsigned);
-virtual void WriteEvent(const DetectorEvent &);
-virtual uint64_t FileBytes() const;
-\end{listing}
-
-The \texttt{StartRun} method is called at the start of each new run
-with the run number as a parameter.
-This allows a new file to be opened, and any header information to be written if necessary.
-Then the \texttt{WriteEvent} method is called for each event to be written.
-Here the \texttt{DetectorEvent} can be decoded and processed
-and the necessary data written to file.
-The \texttt{FileBytes} method should return the number of bytes written to the file.
-However, it is optional, and may simply return zero if the actual size is not easily known.
-
-\subsection{FileReader}
-Although tools are provided to access the information in the native data files,
-and to convert them to other formats (such as LCIO, for analysis with the EUTelescope package),
-in some cases it may be preferable to access the native data directly.
-For this, the \texttt{FileReader} class is provided,
-allowing a custom program to be written to access a native file and process it as desired.
-
-The constructor takes as an argument the name of the file to be opened,
-and will read the first event from the file (which should be the \gls{BORE}).
-The \texttt{NextEvent()} method can then be called to advance through the file.
-It can optionally take as a parameter the number of events to skip,
-and will return \texttt{true} as long as a new event was read.
-The currently loaded event can be accessed with the \texttt{GetDetectorEvent()} method.
-
-The basic usage is shown below, while a more complete example is available in \autoref{sec:ExampleReader}:
-\begin{listing}
-#include "eudaq/FileReader.hh"
-#include <iostream>
-
-int main(int argc, char ** argv) {
-  if (argc != 2) {
-    std::cerr << "usage: " << argv[0] << " file" << std::endl;
-    return 1;
-  }
-  eudaq::FileReader reader(argv[1]);
-  std::cout << "Opened file: " << reader.Filename() << std::endl;
-  std::cout << "BORE:\n" << reader.GetDetectorEvent() << std::endl;
-  while (reader.NextEvent()) {
-    std::cout << reader.GetDetectorEvent() << std::endl;
-  }
-  return 0;
-}
-\end{listing}
-
-This will open the file specified on the command line,
-and print out a summary of all the events in there.
-Be aware that running it as it is may generate a large amount of output,
-especially with large data files.
-
-%\subsection{FileNamer}
 \subsection{PluginManager}\label{sec:PluginManager}
 The \texttt{PluginManager} handles the different \texttt{DataConverterPlugin}s,
 allowing raw data stored in a \texttt{RawDataEvent} to be easily converted
@@ -608,7 +532,82 @@ It takes as an argument the number of milliseconds to sleep.
 The advantage of this function is that it will work on Linux,
 Mac OS X and Windows, as it will automatically call the correct underlying function.
 
-%\section{Monitoring and Analysis}
-%The EUDAQ framework is does not perform any detailed analysis of the data taken.
-%For this, the EUTelescope\cite{eutel2008} package is available.
-%In order to use it, the data must be converted to LCIO format (\autoref{sec:LCIO}).
+\subsection{Python Interface}
+\label{sssec:pywrapper}
+A Python interface is provided for selected EUDAQ components:
+RunControl, DataCollector and a Producer, that can be extended on the
+Python side. The interface is realized through the \texttt{ctypes}
+package that is part of every standard Python installation and
+requires the \texttt{numpy} Python package to be installed. The
+interface code for all components is located in the
+\texttt{main/python} directory.
+
+To use the interface and access the components as Python objects, the
+wrapper must be loaded inside your Python script:
+
+\begin{listing}[python]
+  #!/usr/bin/env python2 
+  execfile('PyEUDAQWrapper.py') # load ctypes wrapper
+
+  prc = PyRunControl() # start run control with default settings
+  # wait for more than one active connection to appear
+  while prc.NumConnections < 2:
+      sleep(1)
+  prc.Configure("ExampleConfig") # load configuration file
+  while not prc.AllOk:
+      sleep(1) # sleep while waiting for all connected producers
+  prc.StartRun()
+\end{listing}
+
+This little scripts creates a RunControl instance, sends a
+configuration to all connected producers, waits for their reply, and
+starts a new run. Several more extensive examples for using Python
+with EUDAQ are located in the \texttt{python} directory in the main
+EUDAQ directory.
+
+\subsection{Log Messages}
+The logging infrastructure allows to send information, error messages or debug information to a central point in the DAQ system to collect logging information, the Log Collector.
+It is strongly encouraged to use the logging system rather than simple cout statements.
+The logging class is defined in:
+\begin{listing}
+#include "eudaq/Logger.hh"
+\end{listing}
+
+The following macros for sending log messages are defined,
+listed here in decreasing order of severity:
+\begin{description}
+
+\ttitem{EUDAQ\_USER}
+A user-generated message (e.g. from the RunControl Log button).
+
+\ttitem{EUDAQ\_ERROR}
+Something that went wrong and should be fixed. Errors usually are blocking, i.e. the data acquisition cannot be continued without fixing the cause.
+
+\ttitem{EUDAQ\_WARN}
+A warning that something may not be quite right and should probably be taken care of. Warnings are considered non-blocking, i.e. the data acquisition will proceed but some of the components might experience problems (lacking configurations for a threshold setting would be an example).
+
+\ttitem{EUDAQ\_INFO}
+An message generated during normal running containing information that may be useful to the user.
+
+\ttitem{EUDAQ\_EXTRA}
+Some extra information that may be less useful in normal running.
+
+\ttitem{EUDAQ\_DEBUG}
+Information for debugging purposes that will normally be hidden and should only be used for development purposes. Additional information for shifters should be categorized as \texttt{EUDAQ\_EXTRA}.
+
+\end{description}
+
+They are used as follows:
+\begin{listing}
+EUDAQ_ERROR("No keyboard detected: press F1 to continue.");
+\end{listing}
+
+The messages will be sent to the central Log Collector if it is connected,
+otherwise they will be displayed on the local terminal.
+The log level can be changed in the following way:
+\begin{listing}
+EUDAQ_LOG_LEVEL("WARN");
+\end{listing}
+
+Any messages lower than the specified level will just be ignored.
+This can be useful to filter out unimportant messages and, for example, just display error messages.

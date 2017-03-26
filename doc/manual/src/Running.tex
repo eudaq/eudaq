@@ -1,32 +1,23 @@
 % !TEX root = EUDAQUserManual.tex
-\section{Example Run-time Setup}
+\section{Run an Example Setup}
 This section will describe running the DAQ system, mainly from the point of view of running an example setup as a demonstration without dedicated hardware.
 However, this description can be applied to DAQ system in general.
 
-All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory. They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter, which will provide a summary of possible different command-line options.
-
-The executable programs mainly split up in two different categories: Processes, which are used for the data acquisition and communicating with the Run Control (DAQ), and utilities, which are used before or after the data taking in order to access the data files (Test, Devel., Tools).
-In \autoref{tab:exes}, you will find an overview of the most important EUDAQ executables.
-
-\begin{table}
-\centering
-\small
-\begin{tabular}{ c | l | l | p{4cm}}
-  \textbf{Category} & \textbf{Name} & \textbf{Binary}  & \textbf{Description}\\
-  \hline			
-  \hline			
-  DAQ & Run Control & \texttt{euRun} & GUI version, recommended (Sec. \ref{sec:runcontrol}) \\
-  DAQ & Run Control & \texttt{euCliRun} & CLI version (Sec. \ref{sec:runcontrol}) \\
-  DAQ & Log Collector & \texttt{euLog} & GUI version, recommended (Sec. \ref{sec:logcollector}) \\
-  DAQ & Log Collector & \texttt{euCliLog} & CLI version (Sec. \ref{sec:logcollector}) \\
-  DAQ & Log Collector & \texttt{euLog} & GUI version (Sec. \ref{sec:logcollector}) \\
-  DAQ & Producer & \texttt{euCliProducer} & CLI version (Sec. \ref{sec:producer}) \\
-  \hline
-  Tools & Converter & \texttt{euConverter} & CLI, raw data file converter (Sec. \ref{sec:Converter}) \\
-\end{tabular}
-\caption{Overview of EUDAQ executables: DAQ processes and tools as graphical user interfaces (GUI) or command line interfaces (CLI).}
-\label{tab:exes}
-\end{table}
+\subsection{Target Setup}
+In this example, user hardware device is simulated and implimented as an example Producer which can be configured to generate fake data according the configuration. This works similarly to a real producer, but does not talk to any real hardware. Example DataCollector is also implimented. \\
+The runtime setup is consisted of the following processes of EUDAQ.
+\begin{description}
+\ttitem{RunControl}
+Standard RunContorl GUI
+\ttitem{LogCollector}
+Standard LogCollector GUI
+\ttitem{Producer}
+2 Producers instanced by CLI command. One of them produce event at rate 1Hz, the other producer event at rate of 2Hz.
+\ttitem{DataCollector}
+2 DataCollectors instanced by CLI command. One of them receives event only from the producer at 1Hz rate, the other receives events from both DataCollectors, and sync the 2 stream by Timestamp.
+\ttitem{Monitor}
+No monitor exists. (TODO: producer generate hit data)
+\end{description}
 
 \subsection{Preparation}
 Some preparation is needed to make sure the environment is set up correctly and
@@ -35,45 +26,63 @@ the necessary TCP ports are not blocked before the DAQ can run properly.
 \subsubsection{Directories}
 If no speficed path is passed to EUDAQ (by configeration file or commnad line parameter), EUDAQ will assume the working folder where executable is started up  is writable. Data and log files will be stored to workding folder.
 
-\subsubsection{Ports and firewall}
-The different processes communicate between themselves using TCP/IP sockets.
-If a firewall is running, it may block these connections,
-especially if the processes are running on different computers.
-If all the processes will be run from the same computer,
-then it is probably not necessary to do anything.
-If a port is blocked, you will see an error message similar to the following
-when attempting to start some programs:
-\begin{listing}[]
-Are you sure the server is running? - Error 61 connecting to localhost:44000: Connection refused
-\end{listing}
+\subsubsection{Init/Config-Files}\label{sec:ConfigFiles}
+\texttt{$\ast$.ini}-files for initialisation and \texttt{$\ast$.conf}-files for configuration
+are text files in a specific format, containing name-value pairs separated into different sections.
+Any text from a \texttt{\#} character until the end of the line is treated as a comment, and
+ignored.  
+Each section in the config file is delimited by a name in square brackets
+(e.g. \verb@[RunControl]@).  
+The name represents the type of process to which it applies; if there
+are several such processes, then they can be differentiated by including the name after a period
+(e.g. \verb@[Producer.Example]@).  
+Within each section, any number of parameters may be specified,
+in the form \mbox{\texttt{Name = Value}}.  
+It is then up to the individual processes how these parameters are interpreted.
+\url{https://en.wikipedia.org/wiki/INI\_file}
 
-The ports can be configured when calling the the processors on the command line (see below), but the default and usually free port numbers are:
-\begin{description}
+During the initialisation and configuration, each process gets its section and do not know the other parts of ini/conf files.
 
-\ttitem{44000}
-The Run Contorl listens at this port to get connections with clients (LogCollector, DataCollector, Monitor, Producer). Commands are send, client status are received by RunControl. 
+\myinputlisting[conf]{-30}{user/example/misc/Ex0.ini}
+\myinputlisting[conf]{-30}{user/example/misc/Ex0.conf}
 
+\subsubsection{Ports and Firewall}
+The different processes communicate between themselves using TCP/IP sockets. The ports can be configured when calling the the processors on the command line (see below). By default, TCP port 44000 is listened by Run Contorl, and TCP port 44002 is listened by Log Collector to get connections from clients. Data Collector itself will pick a random TCP port to listen and get incoming data from its connected Producers if there is no spesific port signed explicitly by user.
 
-\ttitem{44002}
-The Log Collector listens at this port to get connections with clients (RunContorl, DataCollector, Monitor, Producer). Client log messages are received by LogCollector.
+When all EUDAQ processes run at a same computer, commom firewares will not affact the TCP connections among them. However, running EUDAQ distrobutely on several computers may have issue from fireware blocking. You will have to open up those TCP port for incomming connection or temperaly shut down the fireware. The instruction about fireware is operate system depended.\\
 
-\end{description}
+In this example, all processes will run at same Linux computer, we can skip the setup of TCP port.
 
-If processes will be running on different computers,
-then these ports should be opened up in the firewall.
-The method for doing this depends on the Operating System used,
-and is outside the scope of this manual.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
-\subsection{Processes}
-The DAQ system is made up of a number of different processes that may all be run on the same,
-or on different computers. 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+\subsection{Startup}
+To start EUDAQ, all of the necessary processes have to be started in the correct order.
+The first process must be the Run Control (euRun),
+since all other processes will attempt to connect to it when they start up.
+Then it is recommended to start the Log Collector,
+since any log messages it receives may be useful
+to help with debugging in case everything does not start as expected.
+Finally, the Data Collector, Producers and Monitor can be started.
 
 \subsubsection{RunControl}
 \label{sec:runcontrol}
-There are two versions of the RunControl -- a text-based version \texttt{euCliRun} and a graphical version \texttt{euRun} (see \autoref{fig:RunControl}).
+Two versions of the RunControl -- a text-based version \texttt{euCliRun} and a graphical version \texttt{euRun} (see \autoref{fig:RunControl}).
 
+The command line parttern to startup a Log Collector is:
+\begin{listing}[mybash]
+$[euRun]$ -a tcp://{listening_port}
+\end{listing}
+
+\begin{description}
+\ttitem{-a \param{listening\_addr}}
+optional, \texttt{listening\_port} default value is 44000.
+\end{description}
+
+For this example setup, we will startup the GUI version of Run Control and make it serve at TCP port 44000\\
+\begin{listing}[mybash]
+$[euRun]$ -a tcp://44000
+\end{listing}
+
+After run the above command, a new GUI windows is showing \autoref{fig:RunControl}.
 \begin{figure}[htb]
   \begin{center}
     \includegraphics[width=0.8\textwidth]{src/images/RunControl}
@@ -82,36 +91,41 @@ There are two versions of the RunControl -- a text-based version \texttt{euCliRu
   \end{center}
 \end{figure}
 
-Usually, no command-line option should be needed. 
+\paragraph{Initialization Section}
+none
 
-\paragraph{Finite-State Machine}
-\label{sec:fsm}
+\paragraph{Configration Section}
+\begin{listing}[conf]
+[RunControl]
+EventSizeLimit=10000
+\end{listing}
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.9\textwidth]{src/images/fsmv2.pdf}
-\end{center}
-\caption{The FSM of EUDAQ.}
-\label{fig:fsm}
-\end{figure}
-
-Since EUDAQ version 1.7, a \gls{FSM} is implemented (see \autoref{fig:fsm}) \cite{Shirokova:2016}.
-Each client connected to the Run Control can always be characterized by the current state:
-
-\begin{itemize}
-\item UNINITIALISED: the initial state of every client. Initialisation has not been conducted. Available transitions are \texttt{DoInitialise} and \texttt{DoReset}.%
-\item UNCONFIGURED: initialisation has already been conducted, but configuration parameters have not been set yet. Available transitions are \texttt{DoConfigure} and \texttt{DoReset}.
-\item CONFIGURED: configuration parameters have already been set. Available transitions are \texttt{DoStartRun}, \texttt{DoConfigure} and \texttt{DoReset}.
-\item RUNNING: the state of the operating client. For producers it means producing data, the \texttt{OnlineMonitor} are providing plots, the \texttt{LogCollector} is continuing to collect log messages and the \texttt{DataCollector} combines data streams from producers. The only available transition is \texttt{DoStopRun}.
-\item ERROR: this state can be used by users in case of errors during configuration, running process, etc. The only available transition is \texttt{DoReset}.
-\end{itemize}
-
-The state of RunControl is determined by the lowest state of the connected client (\texttt{LogCollector}, \texttt{DataCollector}, \texttt{Monitor}, \texttt{Producers}) in the following priority: ERROR, UNITIALISED, UNCONFIGURED, CONFIGURED, RUNNING. It means, for example, that even if only one connection is in the ERROR state, the whole machine will also be in that state. This prevents such mistakes as running the system before every component has finished the configuration.
-
-\subsubsection{Log Collector}
+\subsubsection{LogCollector}
 \label{sec:logcollector}
 It is recommended to start the Log Collector directly after having started the Run Control and before starting other processors in order to collect all log messages generated by all other processes.
 
+There are also two versions of the Log Collector.
+The graphical version is called \texttt{euLog},
+and the text-based version is called \texttt{euCliLog}.
+
+The command line parttern to startup a Log Collector is:
+\begin{listing}[mybash]
+$[euLog]$ -r tcp://{run_contorl_hostname}:{run_contorl_port} -a tcp://{listening_port}
+\end{listing}
+
+\begin{description}
+\ttitem{-r \param{runcontrol\_addr}}
+optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000.
+\ttitem{-a \param{listening\_addr}}
+optional, \texttt{listening\_port} default value is 44002.
+\end{description}
+
+For this example setup, we will startup the GUI version of Log Collector, connect it to the Run Contorl at local port 44000 and make it serve at TCP port 44002\\
+\begin{listing}[mybash]
+$[euLog]$ -r tcp://localhost:44000 -a tcp://44002
+\end{listing}
+
+After run the above command, a new GUI windows is showing \autoref{fig:LogCollector}, and Run Contorl is displaying a new connection \autoref{fig:RunControl_con_log}
 \begin{figure}[htb]
   \begin{center}
     \includegraphics[width=\textwidth]{src/images/LogCollector}
@@ -120,59 +134,145 @@ It is recommended to start the Log Collector directly after having started the R
   \end{center}
 \end{figure}
 
-Like the Run Control, there are also two versions of the Log Collector.
-The graphical version is called \texttt{euLog},
-and the text-based version is called \texttt{euCliLog}.
 
-If it is running on the same machine as the Run Control, it should not need any command-line options.
-However, if it is running on a different machine, it must be told on which machine the Run Control is running.
-\begin{listing}[mybash]
-$[./euLog]$ -r tcp://{run_contorl_hostname}:{run_contorl_port}
-\end{listing}
-The port can also be set using the \texttt{-a \param{port}} option, similar to the Run Control.
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{src/images/RunControl}
+    \caption{The Run Control with connection from Log Collector.}
+    \label{fig:RunControl_con_log}
+  \end{center}
+\end{figure}
 
-\subsubsection{Data Collector}
+
+\subsubsection{DataCollector}
 \label{sec:datacollector}
-The Data Collector is the process that collects all the raw data from the Producers,
-merges all the connected incoming streams into a single data stream, and writes it to file.
-There is only a text-based version called \texttt{euCliDac}.
-
+There is only a text-based version called \texttt{euCliDataCollector}.
 The command line parttern to startup a DataCollector is:
 \begin{listing}[mybash]
-$[euCliDac]$ -n {code_name_of_data_collector} -t {runtime_name_of_data_collector} -r tcp://{run_contorl_hostname}:{run_contorl_port} -a tcp://{listening_port}
+$[euCliDataCollector]$ -n {code_name} -t {runtime_name} -r tcp://{run_control_hostname}:{run_contorl_port} -a tcp://{listening_port}
 \end{listing}
 
-Option \texttt{-n} required\\
-Option \texttt{-t} required\\
-Option \texttt{-r} optional, \texttt{run\_contorl\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000\\
-Option \texttt{-a} optional, \texttt{listening\_port} default value is random\\
+\begin{description}
+\ttitem{-n \param{code\_name}}
+required.
+\ttitem{-t \param{runtime\_name}}
+required.
+\ttitem{-r \param{runcontrol\_addr}}
+optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000.
+\ttitem{-a \param{listening\_addr}}
+optional, \texttt{listening\_port} default value is random.
+\end{description}
 
-By default, an example DataCollector \texttt{Ex0DataCollector} is avalible. For example, you may startup a instance of \texttt{Ex0DataCollector} by
+By default, example DataCollector \texttt{Ex0DataCollector} is avaliable with standard installation of EUDAQ.
+For this example setup, we will startup 2 instances of \texttt{Ex0DataCollector} with runtime names \texttt{my\_dc} and \texttt{another\_dc}\\
 \begin{listing}[mybash]
-$[euCliDac]$ -n Ex0DataCollector -t my_dc
+$[euCliDataCollector]$ -n Ex0DataCollector -t my_dc -r tcp://localhost:44000 -a tcp://45001
+$[euCliDataCollector]$ -n Ex0DataCollector -t another_dc -r tcp://localhost:44000 -a tcp://45002
 \end{listing}
 
+\paragraph{Initialization Section}
+\begin{listing}[conf]
+[DataCollector.my_dc]
+KEY1=a
 
-It is also possible to run multiple Data Collector instances within
-one EUDAQ session. 
+[DataCollector.another_dc]
+KEY1=b
+\end{listing}
 
-If you wish to run several instances of the Data Collector on one
-machine, you need to make sure that they listen to different addresses
-using the \texttt{-a} option as described above. 
-Furthermore, each Data Collector has to write to a different file by including the
+\paragraph{Configration Section}
+Each Data Collector has to write to a different file by including the
 \texttt{FilePattern} option in the corresponding section of your
 configuration file (also see section \ref{sec:ConfigFiles}):
 
 \begin{listing}[conf]
-[DataCollector.my_dc_name]
-FilePattern = "{path_to_data_folder}/run$6R$X"
+[DataCollector.my_dc]
+FilePattern=run$6R$X
+
+[DataCollector.another_dc]
+FilePattern=dc2_run$6R$X
 \end{listing}
+
+
+\subsubsection{Producer}
+\label{sec:testproducer}
+There is only a text-based version called \texttt{euCliProducer}.
+The command line parttern to startup a Producer is:
+\begin{listing}[mybash]
+$[euCliProducer]$ -n {code_name} -t {runtime_name} -r tcp://{run_control_hostname}:{run_contorl_port}
+\end{listing}
+
+\begin{description}
+\ttitem{-n \param{code\_name}}
+required.
+\ttitem{-t \param{runtime\_name}}
+required.
+\ttitem{-r \param{runcontrol\_addr}}
+optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000.
+\end{description}
+
+By default, example Producer \texttt{Ex0Producer} is avaliable with standard installation of EUDAQ.
+For this example setup, we will startup 2 instances of \texttt{Ex0Producer} with runtime names \texttt{prd1hz} and \texttt{prd2hz}\\
+\begin{listing}[mybash]
+$[euCliProducer]$ -n Ex0Producer -t prd1hz -r tcp://localhost:44000
+$[euCliProducer]$ -n Ex0Producer -t prd2hz -r tcp://localhost:44000
+\end{listing}
+
+
+After run all the above commands, Run Contorl GUI window will be like \autoref{fig:RunControl_1l2d2p}
+
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=0.8\textwidth]{src/images/RunControl}
+    \caption{The Run Control with connections of 2 Producers.}
+    \label{fig:RunControl_1l2d2p}
+  \end{center}
+\end{figure}
+
+\paragraph{Initialization Section}
+\begin{listing}[conf]
+[Producer.prd1hz]
+EUDAQ_DC=my_dc
+
+[Producer.prd2hz]
+EUDAQ_DC=my_dc,another_dc
+\end{listing}
+
+\paragraph{Configration Section}
+\begin{listing}[conf]
+[Producer.prd1hz]
+Rate=1
+Random=true
+
+[Producer.prd2hz]
+Rate=2
+Random=false
+\end{listing}
+
 
 \subsubsection{Monitor}
 \label{sec:onlinemonitor}
-The Online Monitor reads the data file written by the Data Collector,
-and generates several ROOT histograms that can be useful for online monitoring.
-Since it reads the native data file directly, it must be run on the same machine as the Data Collector. (TODO)
+There is a RootMonitor which can run in both online and offline mod.
+To run it in online mode, the command line pattern is:
+\begin{listing}[mybash]
+$[OnlineMon]$ -r tcp://{run_control_hostname}:{run_contorl_port} -a tcp://{listenning_port}
+\end{listing}
+
+\begin{description}
+\ttitem{-r \param{runcontrol\_addr}}
+optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000.
+\ttitem{-a \param{listening\_addr}}
+optional, \texttt{listening\_port} default value is random.
+\end{description}
+
+In offline mode, there is no Run Control, To run it in online mode, the command line pattern is:
+\begin{listing}[mybash]
+$[OnlineMon]$ -f {path_to_data_file}
+\end{listing}
+
+\begin{description}
+\ttitem{-f \param{path\_to\_data\_file}}
+requried
+\end{description}
 
 \begin{figure}[htb]
   \begin{center}
@@ -183,86 +283,7 @@ Since it reads the native data file directly, it must be run on the same machine
   \end{center}
 \end{figure}
 
-The Online Monitor can be run in one of two modes: online or offline.
-In online mode, it connects to the Run Control, so it will know when new runs are started,
-and it will automatically open each new data file as it is created.
-To run it in online mode, the \texttt{-r} option may be used to assign Run Control, in this example:
-\begin{listing}[mybash]
-$[./OnlineMon]$ -r tcp://{run_control_hostname}::{run_contorl_port}
-\end{listing}
-Note: The Online Monitor is working properly on Unix machines..
-
-In offline mode, there is no Run Control,
-and it only analyses the data file it is given on the command line usind the \texttt{-f} option. 
-An example command line is:
-\begin{listing}[mybash]
-$[./OnlineMon]$ -f {path_to_data_file}
-\end{listing}
-
-\subsubsection{Producer}
-\label{sec:testproducer}
-For testing purposes, you may use the TestProducer.
-This works similarly to a real producer, but does not talk to any real hardware,
-instead providing a menu for the user to manually send events.
-
-The ExampleProducer was written to illustrate the writing of a new Producer (see \autoref{sec:Producers}).
-However, it will actually generate some example data, and so can also be used for testing purposes.
-It works more like a real Producer than the TestProducer,
-in that it does not require user intervention to generate each trigger,
-and the data generated emulates a simple (but realistic) sensor,
-and can be properly converted, and therefore displayed in the Monitor.
-
-\subsubsection{Other/DUT Producer(s)}
-If you have a producer for your own hardware (see \autoref{sec:Producers}),
-it should also have an option to set the address of the Run Control.
-
-
-\subsubsection{Python Interface and Wrapper for Core EUDAQ Components}
-\label{sssec:pywrapper}
-A Python interface is provided for selected EUDAQ components:
-RunControl, DataCollector and a Producer, that can be extended on the
-Python side. The interface is realized through the \texttt{ctypes}
-package that is part of every standard Python installation and
-requires the \texttt{numpy} Python package to be installed. The
-interface code for all components is located in the
-\texttt{main/python} directory.
-
-To use the interface and access the components as Python objects, the
-wrapper must be loaded inside your Python script:
-
-\begin{listing}[python]
-  #!/usr/bin/env python2 
-  execfile('PyEUDAQWrapper.py') # load ctypes wrapper
-
-  prc = PyRunControl() # start run control with default settings
-  # wait for more than one active connection to appear
-  while prc.NumConnections < 2:
-      sleep(1)
-  prc.Configure("ExampleConfig") # load configuration file
-  while not prc.AllOk:
-      sleep(1) # sleep while waiting for all connected producers
-  prc.StartRun()
-\end{listing}
-
-This little scripts creates a RunControl instance, sends a
-configuration to all connected producers, waits for their reply, and
-starts a new run. Several more extensive examples for using Python
-with EUDAQ are located in the \texttt{python} directory in the main
-EUDAQ directory.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
-\subsection{Running the DAQ}
-
-\subsubsection{Starting EUDAQ}\label{sec:STARTRUN}
-To start EUDAQ, all of the necessary processes have to be started in the correct order.
-The first process must be the Run Control (euRun),
-since all other processes will attempt to connect to it when they start up.
-Then it is recommended to start the Log Collector,
-since any log messages it receives may be useful
-to help with debugging in case everything does not start as expected.
-Finally, the Data Collector, Producers and Monitor can be started.
-
-\subsubsection{Operating EUDAQ}
+\subsection{Operating}
 Once all the processes have been started, 
 and by using the Run Control (see \autoref{fig:RunControl}),
 According to the machine state \autoref{sec:fsm}, EUDAQ and all processes can be initialized, configured or re-configured, data taking (runs) can be started and stopped, and the software can be terminated.
@@ -292,28 +313,5 @@ The threshold size for restarting a run may be configured in the config file (se
 \item At any time, a message may be sent to the log file by filling in the ("\texttt{Log:}") text box and pressing the corresponding button.
 The text should appear in the LogCollector window, and will be stored in the log file for later access.
 \item Once the run is stopped, the system may be reconfigured with a different configuration, or another run may be started; or EUDAQ can be terminated.
-
+  
 \end{itemize}
-
-\subsubsection{Init/Config-Files}\label{sec:ConfigFiles}
-\texttt{$\ast$.ini}-files for initialisation and \texttt{$\ast$.conf}-files for configuration
-are text files in a specific format, containing name-value pairs separated into different sections.
-See \autoref{sec:ExampleConfig} for an example file.
-
-Any text from a \texttt{\#} character until the end of the line is treated as a comment, and
-ignored.  
-Each section in the config file is delimited by a name in square brackets
-(e.g. \verb@[RunControl]@).  
-The name represents the type of process to which it applies; if there
-are several such processes, then they can be differentiated by including the name after a period
-(e.g. \verb@[Producer.Example]@).  
-Within each section, any number of parameters may be specified,
-in the form \mbox{\texttt{Name = Value}}.  
-It is then up to the individual processes how these
-parameters are interpreted.
-
-The entire contents of the config file will be sent to all processes during the configuration, and
-each process will have the appropriate section selected.  
-The file will also be attached to the
-\gls{BORE}, so that it is available with the data later, even if the original config file is
-modified or deleted.

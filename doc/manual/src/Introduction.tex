@@ -26,21 +26,65 @@ other processes connect to the Run Control to receive commands and to report the
   \end{center}
 \end{figure}
 
+
+The DAQ system is made up of a number of different processes that may all be run on the same,
+or on different computers. 
+
+\subsubsection{Run Control}
+TODO\\
+
+
+\subsubsection{Producer}
 Each hardware that produces data will have a Producer process (on the left in \autoref{fig:DAQ}).
 This will initialize, configure, stop and start the hardware by receiving the commands from the Run Control (red arrows), read out the data and send it to the Data Collector (blue arrows).
+
+\subsubsection{Data Collector}
+The Data Collector is the process that collects all the raw data from the Producers,
+merges all the connected incoming streams into a single data stream, and writes it to file.\\
 
 The Data Collector receives all the data streams from all the Producers,
 and combines them into a single stream that is written to disk (Storage).
 It writes the data in a native raw binary format,
 but it can be configured to write in other formats, such as \gls{LCIO}.
 
+\subsubsection{Log Collector}
 The Log Collector receives log messages from all other processes (grey arrows),
 and displays them to the user, as well as writing them all to file.
 This allows for easier debugging, since all log messages are stored together in a central location.
 
+\subsubsection{Monitor}
 The Monitor reads the data file and generates online-monitoring plots for display.
 In the schematic it is shown to communicate with the Data Collector via a socket,
-but it actually just reads the data file from disk.
+but it actually just reads the data file from disk.\\
+
+The Online Monitor can be run in one of two modes: online or offline.
+In online mode, it connects to the Run Control, so it will know when new runs are started,
+and it will automatically open each new data file as it is created.
+
+\subsection{Finite-State Machine}
+\label{sec:fsm}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.9\textwidth]{src/images/fsmv2.pdf}
+\end{center}
+\caption{The FSM of EUDAQ.}
+\label{fig:fsm}
+\end{figure}
+
+Since EUDAQ version 1.7, a \gls{FSM} is implemented (see \autoref{fig:fsm}) \cite{Shirokova:2016}.
+Each client connected to the Run Control can always be characterized by the current state:
+
+\begin{itemize}
+\item UNINITIALISED: the initial state of every client. Initialisation has not been conducted. Available transitions are \texttt{DoInitialise} and \texttt{DoReset}.%
+\item UNCONFIGURED: initialisation has already been conducted, but configuration parameters have not been set yet. Available transitions are \texttt{DoConfigure} and \texttt{DoReset}.
+\item CONFIGURED: configuration parameters have already been set. Available transitions are \texttt{DoStartRun}, \texttt{DoConfigure} and \texttt{DoReset}.
+\item RUNNING: the state of the operating client. For producers it means producing data, the \texttt{OnlineMonitor} are providing plots, the \texttt{LogCollector} is continuing to collect log messages and the \texttt{DataCollector} combines data streams from producers. The only available transition is \texttt{DoStopRun}.
+\item ERROR: this state can be used by users in case of errors during configuration, running process, etc. The only available transition is \texttt{DoReset}.
+\end{itemize}
+
+The state of RunControl is determined by the lowest state of the connected client (\texttt{LogCollector}, \texttt{DataCollector}, \texttt{Monitor}, \texttt{Producers}) in the following priority: ERROR, UNITIALISED, UNCONFIGURED, CONFIGURED, RUNNING. It means, for example, that even if only one connection is in the ERROR state, the whole machine will also be in that state. This prevents such mistakes as running the system before every component has finished the configuration.
+
 
 \subsection{Directory and File Structure}
 The EUDAQ software is split into several parts that can each be compiled independently,
@@ -101,3 +145,58 @@ Each directory can contain a \texttt{README.md} file for brief documentation for
 as installation advice. 
 Using the \texttt{*.md} file ending allows for applying the Markdown language \cite{markdownWWW}. 
 Accordingly, the content will be formatted on the the GitHub platform, where the code is hosted online.
+
+\subsection{Executables}
+All executable programs from the different subdirectories are placed inside the \texttt{bin} subdirectory. They should all accept a \texttt{-h} (or \texttt{--help}) command-line parameter, which will provide a summary of possible different command-line options.
+
+The executable programs mainly split up in two different categories: Processes, which are used for the data acquisition and communicating with the Run Control (DAQ), and utilities, which are used before or after the data taking in order to access the data files (Test, Devel., Tools).
+In \autoref{tab:exesall}, you will find an overview of the most important EUDAQ executables.
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{ c | l | l | p{4cm}}
+  \textbf{Binary} & \textbf{Category} & \textbf{GUI/CLI}  & \textbf{Description}\\
+  \hline
+  \hline
+  \texttt{euRun} & Run Control & GUI & (Sec. \ref{sec:runcontrol}) \\
+  \texttt{euCliRun} & Run Control & CLI & (Sec. \ref{sec:runcontrol}) \\
+  \texttt{euLog} & Log Collector & GUI & (Sec. \ref{sec:logcollector}) \\
+  \texttt{euCliLog} & Log Collector & CLI & (Sec. \ref{sec:logcollector}) \\
+  \texttt{euCliDataCol} & Data Collector & CLI & (Sec. \ref{sec:datacollector}) \\
+  \texttt{euCliProducer} & Producer & CLI & (Sec. \ref{sec:producer}) \\
+  \hline
+  \texttt{euConverter} & Offline Tool & CLI & raw data file converter (Sec. \ref{sec:Converter}) \\
+\end{tabular}
+\caption{Overview of EUDAQ executables.}
+\label{tab:exesall}
+\end{table}
+
+
+\subsection{Libraries}
+The libraries are installed to \texttt{lib} sub-folder under install path in Linux/MacOS system, and to \texttt{bin} sub-folder in Windows system. The suffix of libraries name can be \texttt{.so}, \texttt{.dylib}, \texttt{.dll} depending on opterate systems. There are 3 category of libraries: core, extension and module. In \autoref{tab:liball}, you will find an overview of the all EUDAQ libraries.\\
+
+\begin{itemize}
+\item Core: the core library. It should be always build and installed.
+\item Extension: optional features of EUDAQ (eg. support external data format). Static linked core library.
+\item Module: user module. Dynamic load by EUDAQ core library at run-time.
+\end{itemize}
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{ l | l | l | p{4cm}}
+  \textbf{Binary} & \textbf{Category} & \textbf{Source Code} & \textbf{Description}\\
+  \hline
+  \hline
+  \texttt{libeudaq\_core} & Core & main$\backslash$lib$\backslash$core & core library \\
+  \hline
+  \texttt{libeudaq\_lcio} & Extension & main$\backslash$lib$\backslash$lcio & lcio extension library \\
+  \texttt{libeudaq\_std} & Extension & main$\backslash$lib$\backslash$std & standard extension library \\
+  \hline
+  \texttt{libeudaq\_module\_test} & Module & main$\backslash$module$\backslash$test & test module library \\
+  \texttt{libeudaq\_module\_example} & Module & user$\backslash$example$\backslash$module &  module library by example user\\
+\end{tabular}
+\caption{Overview of EUDAQ libraries.}
+\label{tab:liball}
+\end{table}

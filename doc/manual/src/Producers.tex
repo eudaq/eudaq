@@ -11,31 +11,8 @@ Example code for producers is provided, see \autoref{sec:ExampleProducer}.
 \myinputlisting{-60}{user/example/module/src/Ex0Producer.cc}
 \newpage
 
+\subsection{Register }
 
-\subsection{Configuration}
-The \texttt{Configuration} class is a way of storing configuration information
-in a way that is easily accessible, and can be saved to or loaded from a human-readable file
-(see \autoref{sec:ConfigFiles}), and can be sent over the network.
-It is defined in the following header:
-
-\begin{listing}
-#include "eudaq/Configuration.hh"
-\end{listing}
-
-The configuration consists of a number of sections,
-each of which contains a list of name-value pairs.
-The values are stored as strings, but they can be converted to/from arbitrary types.
-Methods are provided to load from or save to file, to set the current section,
-and to set or get configuration values.
-
-This creates a configuration loaded from the file \texttt{../conf/ExampleConfig.conf},
-selecting the \texttt{Producer.Example} section.
-It then gets an integer parameter from the configuration and displays it.
-Then it modifies the value of the parameter and sets another parameter,
-before writing the configuration to the file \texttt{Test.conf}.
-
-A configuration object will be received by the Producer during the configuration,
-as described in \autoref{sec:OnConfigure}.
 
 \subsection{Receiving Commands}
 The Run Control distributs commands to all registered clients, controlling the global finite state machine and thus the DAQ.
@@ -57,7 +34,7 @@ The configuration object is received from the Run Control. The Producer is free 
 
 If the initialisation step is not required for a certain DAQ, the function can be left unimplemented in the Producer. In that case the corresponding member function of the \texttt{CommandReceiver} base class is executed.
 
-\subsubsection{OnConfigure}\label{sec:OnConfigure}
+\subsubsection{DoConfigure}\label{sec:OnConfigure}
 This method is called whenever a configure command is received from the Run Control.
 The method signature is:
 \begin{listing}
@@ -67,7 +44,7 @@ virtual void OnConfigure(const eudaq::Configuration & config);
 The configuration object is received from the Run Control where is has been loaded from a user configurable file. The Producer is free to read any part of the configuration object but parameters cannot be changed owing to the const qualifier.
 
 
-\subsubsection{OnStartRun}
+\subsubsection{DoStartRun}
 This is called on the start of each run.
 The method signature is:
 \begin{listing}
@@ -79,7 +56,7 @@ The Producer must send a \gls{BORE},
 and then enable the data acquisition on the attached devices and prepare for receiving events from the hardware.
 
 
-\subsubsection{OnStopRun}
+\subsubsection{DoStopRun}
 This is called at the end of the run.
 The method signature is simply:
 \begin{listing}
@@ -170,49 +147,3 @@ event.SetTag("Temperature", 42);
 The value corresponding to the tag can be set as an arbitrary type (in this case an integer),
 it will be converted to a STL string internally.
 
-\subsection{Log Messages}
-The logging infrastructure allows to send information, error messages or debug information to a central point in the DAQ system to collect logging information, the Log Collector.
-It is strongly encouraged to use the logging system rather than simple cout statements.
-The logging class is defined in:
-\begin{listing}
-#include "eudaq/Logger.hh"
-\end{listing}
-
-The following macros for sending log messages are defined,
-listed here in decreasing order of severity:
-\begin{description}
-
-\ttitem{EUDAQ\_USER}
-A user-generated message (e.g. from the RunControl Log button).
-
-\ttitem{EUDAQ\_ERROR}
-Something that went wrong and should be fixed. Errors usually are blocking, i.e. the data acquisition cannot be continued without fixing the cause.
-
-\ttitem{EUDAQ\_WARN}
-A warning that something may not be quite right and should probably be taken care of. Warnings are considered non-blocking, i.e. the data acquisition will proceed but some of the components might experience problems (lacking configurations for a threshold setting would be an example).
-
-\ttitem{EUDAQ\_INFO}
-An message generated during normal running containing information that may be useful to the user.
-
-\ttitem{EUDAQ\_EXTRA}
-Some extra information that may be less useful in normal running.
-
-\ttitem{EUDAQ\_DEBUG}
-Information for debugging purposes that will normally be hidden and should only be used for development purposes. Additional information for shifters should be categorized as \texttt{EUDAQ\_EXTRA}.
-
-\end{description}
-
-They are used as follows:
-\begin{listing}
-EUDAQ_ERROR("No keyboard detected: press F1 to continue.");
-\end{listing}
-
-The messages will be sent to the central Log Collector if it is connected,
-otherwise they will be displayed on the local terminal.
-The log level can be changed in the following way:
-\begin{listing}
-EUDAQ_LOG_LEVEL("WARN");
-\end{listing}
-
-Any messages lower than the specified level will just be ignored.
-This can be useful to filter out unimportant messages and, for example, just display error messages.
