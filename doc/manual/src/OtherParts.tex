@@ -1,7 +1,281 @@
 % !TEX root = EUDAQUserManual.tex
-\section{Other Parts of the Framework}
+\section{Usefull Utilities}
 The EUDAQ framework contains a number of other parts that may be useful.
-Those that have not already been described in previous sections will be outlined below.
+Those that have not already been described in previous sections will be outlined below.\\
+
+
+There are a number of other utilities available that are not needed for running the DAQ,
+but can be useful for other tasks such as debugging.
+The executables are all located in the \texttt{bin} subdirectory.
+They should all accept a help (\texttt{-h} or \texttt{--help}) option,
+to print a summary of the available options.
+
+
+\subsection{FileChecker}
+\label{sec:FileChecker}
+
+This is a small utility that reads raw data files and checks if all events are
+readable, can be syncronised using the TLU trigger id and lists which type
+of subevents the file contains.
+
+It should be called with list of file paths or run numbers. For any argument
+that consist only of numerical digits the file path is constructed by
+substituting \texttt{\$6R} in the input pattern (defaults to
+``\texttt{../data/run\$6R.raw}'') with the run number padded to 6 digits.
+
+For example:
+\begin{listing}[mybash]
+$[./FileChecker]$ {6045..6050}
+\end{listing}
+
+This would produce the following output.
+\begin{listing}[]
+run     valid  num_events  contains                   errors                    
+------  -----  ----------  -------------------------  ----------------------
+  6045   true       13131  MUPIX4,NI,TLU                                        
+  6046   true           1  MUPIX4,NI,TLU                                        
+  6047   true       14674  MUPIX4,NI,TLU                                        
+  6048   true        7776  MUPIX4,NI,TLU                                        
+  6049  false           0                             no events in the file.    
+  6050  false          -1                             read error. 
+\end{listing}
+
+
+\subsection{Converter}
+\label{sec:Converter}
+The \texttt{Converter} program will read a native data file,
+optionally select just a subset of events from the file,
+and can then write it out to another file in either the same native format, or a different format.
+The most commonly used options are:
+\begin{description}
+\ttitem{-t \param{type}}
+The file type to write out.
+The available types are listed below.
+
+\ttitem{-e \param{range}}
+Select the specified range of event numbers.
+
+\ttitem{-s}
+Try to resynchronize events based on the TLU event number
+(see TestReader in \autoref{sec:TestReader}).
+
+\end{description}
+
+The available output file types are as follows:
+
+\begin{description}\phantomsection\label{lst:FileTypes}
+
+\ttitem{native}
+The native EUDAQ binary file format, consisting of a serialised stream of
+\texttt{DetectorEvent}s, containing the raw data read out from the hardware.
+
+\ttitem{standard}
+Like the \texttt{native} format, this is also a serialised stream,
+but in this case it contains \texttt{StandardEvent}s,
+in which the raw data has been converted into a standard format.
+
+\ttitem{lcio}
+The standard \gls{LCIO} file format used by the analysis software.
+This type is only available if EUDAQ was compiled with \gls{LCIO} support.
+
+\ttitem{root}
+A Root file containing a TTree with the hit pixel information.
+
+\ttitem{text}
+A simple text based format (not yet implemented).
+
+\ttitem{mimoloop}
+A text based format mimicking the output of the mimoloop program
+(from Angelo Cotta Ramusino and Lorenzo Chiarelli at INFN Ferrara).
+
+\end{description}
+
+Although this program can be used to convert a native data file into \gls{LCIO} format,
+the more usual (and therefore better tested) way is to use the EUTelescope converter.
+
+\subsection{ClusterExtractor}
+\label{sec:ClusterExtractor}
+This program can be used to quickly extract some clusters from raw data.
+It is not as sophisticated as the EUTelescope package, which should be preferred for real analysis,
+but it can be useful for doing quick checks.
+It will read a native data file, perform a basic clustering,
+and then write these clusters to one text file per sensor plane.
+The most commonly used options are:
+\begin{description}
+\ttitem{-p \param{pixels}}
+The cluster size in pixels.
+It should be an odd number, with 1 meaning no clustering (just pixels over threshold),
+3 meaning 3\x{}3 pixel clusters, etc.
+
+\ttitem{-n \param{adcs}}
+The noise level (sigma) in ADC units.
+This is used to scale the thresholds in terms of the noise.
+
+\ttitem{-s \param{thresh}}
+The threshold for seed pixels, in terms of the noise.
+
+\ttitem{-c \param{thresh}}
+The threshold for the total charge of a cluster,
+in terms of the cumulative noise of all the pixels in the cluster.
+
+\ttitem{-w}
+Reports the cluster centre as the weighted average of the pixels,
+instead of the position of the seed pixel.
+
+\end{description}
+
+An example use is:
+\begin{listing}[mybash]
+$[./ClusterExtractor]$ -p 3 -n 3.5 -s 6 -c 10 -w 5432
+\end{listing}
+
+This will generate a number of text files named \texttt{runNNN\_eutel\_M.txt},
+where \texttt{NNN} is the run number, and \texttt{M} is the sensor plane number.
+The format of the output text files is as follows:
+\begin{listing}[]
+2       2       51487659237
+ 182    153     126
+ 241    120     125
+3       1       51489095892
+ 111    67      346
+5       1       51491334074
+ 113    141     171
+7       2       51495330212
+ 252    240     305
+ 95     170     189
+\end{listing}
+
+The first line contains the event number,
+the number of clusters, and the TLU timestamp.
+Then for each cluster there is one line,
+containing the \texttt{x} and \texttt{y} coordinates of the cluster centre,
+and the total charge in ADC units.
+The cluster lines are prepended with a space to make it easier to scan the file by eye.
+
+
+\subsection{MagicLogBook}
+\label{sec:MagicLogBook}
+This program is designed to extract as much information as possible from data files and log files,
+in order to reconstruct a log book.
+Despite its name, it is in fact not magical,
+so it is preferable to keep a good log book during running,
+rather than relying on this program to generate it later.
+
+The available options are listed below:
+\begin{description}
+\ttitem{-f \param{fields}}
+A list of fields to include in the output, in the form \texttt{name=value},
+with multiple fields separated by commas.
+If a predefined list is also specified these will be appended to the list.
+
+\ttitem{-s \param{separator}}
+The separator to use between fields in the output. The default is a tab character.
+
+\ttitem{-h \param{string}}
+A string that appears at the beginning of the header line (with the list of field names),
+that can be used to differentiate it from the other lines. The default is an empty string.
+
+\ttitem{-p {name}}
+Use a predefined list of fields.
+Currently available values are \texttt{normal} and \texttt{full}.
+
+\ttitem{-o \param{file}}
+The output filename. By default the standard output is used.
+
+\end{description}
+
+The easiest method of running is to use a predefined list of fields.
+There are currently two predefined lists available: \texttt{normal} and \texttt{full}.
+If neither of these are suitable, contact the EUDAQ maintainer,
+as it may be possible to add more options.
+
+The \texttt{normal} list includes:
+\begin{myitemize}
+  \item the run number,
+  \item the config file name,
+  \item the run start time,
+  \item for the \glspl{EUDRB}:
+  \begin{myitemize}
+    \item the mode,
+    \item the sensor type,
+    \item whether they are running unsynchronized,
+    \item the number of boards,
+    \item and the firmware version.
+  \end{myitemize}
+  \item and for the \gls{TLU}:
+    \begin{myitemize}
+    \item the internal trigger interval,
+    \item the AND mask,
+    \item the DUT mask,
+    \item and the firmware version.
+  \end{myitemize}
+\end{myitemize}
+
+The \texttt{full} list includes all the values from the \texttt{normal} list,
+plus the number of events in the run and the end of run time.
+This is because these values can only be known by reading
+the whole data file to the end, which is slow, especially for large data files.
+
+If necessary, other information is available using custom fields,
+although the syntax for these is a bit complicated,
+since it is designed to be as flexible as possible at specifying any information in the data file.
+In the future it may be redefined in order to simplify it if possible.
+Therefore it is recommended to use a predefined list of fields where possible.
+Custom fields are specified as a comma separated list of items in the form \texttt{name=value},
+with the name being what will appear on the header line of the output,
+and the value specifying what exactly to extract from the file.
+The possible values are illustrated below, although not exhaustively:
+
+\begin{mydescription}
+  \ttitem{events$^\ast$} The number of events in the run.
+  \ttitem{config} The configuration name, or:
+  \begin{mydescription}
+    \ttitem{config:section:key} The value of the \texttt{key} from the corresponding \texttt{section} in the config
+    (e.g. \texttt{config:Producer.EUDRB:NumBoards}).
+  \end{mydescription}
+  \item{\texttt{bore}, \texttt{tlu}, \texttt{eudrb}, \texttt{eore}$^\ast$:} Something from the \gls{BORE},
+  the \texttt{TLUEvent} or \texttt{EUDRBEvent} subevents of the \gls{BORE}, or the \gls{EORE}, respectively:
+  \begin{mydescription}
+    \ttitem{bore:.Run} The run number
+    \ttitem{bore:\param{name}} Otherwise, if the second part does not start with a period, the value of the tag \param{name} is used
+    (e.g. \texttt{tlu:DutMask} or \texttt{eudrb:MODE}).
+  \end{mydescription}
+  \ttitem{log} Something from the log file (not implemented yet).
+\end{mydescription}
+
+$^\ast$ items marked with an asterisk require reading the whole data file, and are therefore slow,
+especially when large data files are involved.
+
+Note that the \texttt{EUDRBEvent} is now deprecated, having been replaced by the \texttt{RawDataEvent},
+but there is currently no way to specify this.
+
+The \texttt{MagicLogBook} command is used as follows:
+
+\begin{listing}[mybash]
+$[./MagicLogBook]$ -p normal ../data/*.raw
+\end{listing}
+
+This will produce an output similar to the following:
+\begin{listing}[]
+Run  Config     Mode Det Start                   U P Trg AND  DUT  Tfw Efw
+6371 eudet-beam          2009-07-29 07:44:39.535 1 6   0 0xf  0x10 241
+6372 eudet-beam          2009-07-29 08:03:05.079 1 6   0 0xf  0x10 241
+6373 eudet-m26test       2009-07-30 09:57:45.157 1 6 255 0xff 0x12 241
+6374 eudet-m26test       2009-07-30 10:00:45.205 1 6 255 0xff 0x12 241
+6375 eudet-m26test       2009-07-30 10:05:38.625 1 6   1 0xff 0x12 241
+6376 eudet-m26test       2009-07-30 10:10:00.107 1 6   1 0xff 0x12 241
+6379 eudet-m26test       2009-07-30 10:13:05.322 1 6   1 0xff 0x12 241
+\end{listing}
+
+Note that the header row has been modified slightly to fit into the page width:
+the \texttt{U} should be \texttt{UnSync}, \texttt{P} should be \texttt{Planes},
+\texttt{Trg} should be \texttt{TriggerInterval}, \texttt{Tfw} should be \texttt{TLUfw},
+and \texttt{Efw} should be \texttt{EUDRBfw}.
+The columns \texttt{Mode}, \texttt{Det} and \texttt{EUDRBfw} are missing from the output
+due to the fact that this information is now stored in a \texttt{RawDataEvent},
+which is not currently accessible with this version of the program.
+
+
 
 \subsection{FileWriter}
 The FileWriter part of the framework allows different file formats to be written,

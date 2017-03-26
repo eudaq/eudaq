@@ -12,26 +12,29 @@ IF(BUILD_manual)
 
   ADD_LATEX_DOCUMENT(
     src/EUDAQUserManual.tex
-    INPUTS src/CompilingOnWindows.tex
-    src/Contributing.tex
-    src/Conversion.tex
-    src/glossary.tex
-    src/Installing.tex
-    src/Introduction.tex
-    src/License.tex
-    src/OnlineMonConfig.tex
-    src/OtherParts.tex
+    INPUTS
     src/preamble.tex
-    src/Producers.tex
-    src/Reporting.tex
-    src/Running.tex
-    src/SourceCode.tex
     src/ClassicCite.bst
-    ../../main/exe/src/OptionExample.cxx
+    src/glossary.tex
+    src/License.tex
+    src/Introduction.tex
+    src/Installing.tex
+    src/Running.tex
+    src/Integration.tex
+    src/Producers.tex
+    src/DataCollector.tex
+    src/DataConverter.tex
+    src/Monitor.tex
+    src/NewData.tex
+    src/OtherParts.tex
+    src/Contributing.tex
     ../../conf/ExampleConfig.conf
-    ../../producers/example/src/ExampleProducer.cxx
+    ../../user/example/module/src/Ex0Producer.cc
+    ../../user/example/module/src/Ex0DataCollector.cc
+    ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
     ../../producers/example/src/ExampleConverterPlugin.cc
     ../../main/exe/src/ExampleReader.cxx
+    src/CompilingOnWindows.tex
     BIBFILES src/References.bib
     USE_GLOSSARY
     IMAGE_DIRS src/images

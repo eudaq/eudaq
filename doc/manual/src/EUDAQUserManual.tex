@@ -57,7 +57,7 @@ This document provides an overview of the EUDAQ software framework,
 the data acquisition framework used also by the EUDET-type beam telescopes~\cite{telescopesWiki}.
 It describes how to install and run the DAQ system and use many of the included utility programs,
 and how users may integrate their DAQ systems into the EUDAQ framework
-by writing their own Producer -- for integrating the data stream into the acquisition -- and DataConverterPlugin -- for converting data for offline analysis (e.g. the EUTelescope analysis framework).
+by writing their own Producer -- for integrating the data stream into the acquisition,  DataCollector-- for merging the muiltple data streams and writing to disk -- and DataConverter -- for converting data for offline analysis.
 \end{abstract}
 \newpage
 
@@ -72,19 +72,19 @@ by writing their own Producer -- for integrating the data stream into the acquis
 \include{src/Introduction}
 \include{src/Installing}
 \include{src/Running}
+\include{src/Integration}
 \include{src/Producers}
-\include{src/Conversion}
+\include{src/DataCollector}
+\include{src/DataConverter}
+\include{src/Monitor}
+\include{src/NewData}
 \include{src/OtherParts}
-\include{src/Reporting}
 \include{src/Contributing}
-
 
 % Appendices
 \appendix
-\include{src/SourceCode}
+%% \include{src/SourceCode}
 \include{src/CompilingOnWindows}
-\include{src/OnlineMonConfig}
-
 
 \printglossaries
 

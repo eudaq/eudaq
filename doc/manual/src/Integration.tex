@@ -1,16 +1,10 @@
 % !TEX root = EUDAQUserManual.tex
-\section{Writing a Producer}\label{sec:Producers}
+\section{Integration with User Hardwares}\label{sec:Integration}
 Producers are the binding part between a user DAQ and the central EUDAQ Run Control.
 A Producer consistes of a CommandReceiver and a DataSender, where the first receives commands from the Run Control while the latter allows to send binary data events to the Data Collector.
 A Producer base class is provided in order to simplify the integration.
 The Producer is compiled against the EUDAQ library which implements all of the required communication over the network.
 Example code for producers is provided, see \autoref{sec:ExampleProducer}.
-
-
-\subsection{Example Source Code}\label{sec:Ex0Producer_cc}
-\myinputlisting{-60}{user/example/module/src/Ex0Producer.cc}
-\newpage
-
 
 \subsection{Configuration}
 The \texttt{Configuration} class is a way of storing configuration information
