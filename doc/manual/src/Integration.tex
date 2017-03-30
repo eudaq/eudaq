@@ -1,13 +1,110 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Integration with User Hardwares}\label{sec:Integration}
-TODO
+EUDAQ itself is only a data taking framework which provdes the common feature. It means that the users with their dedicated hardware and readout software are required to write some code to bridge the hardware specific readout software to EUDAQ frame work. The mininum adaption task is to have write a Producer for each piece of hardware, a Data Collector to receive the data (aka. Event) from Producers. 
+
+\subsection{Announcement of Derived Class}
+The derived EUDAQ classes provided user will compiled and packed to a dymamic shared library (EUDAQ Module Library). At compiling/linking time of EUDAQ core library, it does not know the existing of any Module Library. When EUDAQ core library is been loading by any appliacation, the core library will looking any library file with name prefix libeudaq\_module\_ in the module folder. All pattern matched library are goint to be loaded. It is the time point when each derived EUDAQ class announces itself to the EUDAQ runtime environment.
+
+Technically, the announcement of a derived class is done by a calling to the correlated static function provided by a generic C++ template (eudaq::Factory). Tab. \autoref{tab:derivable} is the list of derivable EUDAQ classes
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{ l | l }
+  \textbf{Class} & \textbf{Description}\\
+  \hline
+  \texttt{eudaq::Producer} & Sec. \ref{sec:ProducerWriting}\\
+  \texttt{eudaq::DataCollector} & Sec. \ref{sec:DataCollectorWriting}\\
+  \texttt{eudaq::RunControl} & Sec. \ref{sec:RunControlWriting}\\
+  \texttt{eudaq::Event} &  \\
+  \texttt{eudaq::LogCollector} & \\
+  \texttt{eudaq::Monitor} & Sec. \ref{sec:MonitorWriting}\\
+  \texttt{eudaq::FileWriter} & Sec. \ref{sec:FileWriterWriting}\\
+  \texttt{eudaq::FileReader} & Sec. \ref{sec:FileReaderWriting}\\
+  \texttt{eudaq::StdEventConverter} & \\
+  \texttt{eudaq::LCEventConverter} & \\
+  \texttt{eudaq::TransportServer} & internal only \\
+  \texttt{eudaq::TransportClient} & internal only \\
+\end{tabular}
+\caption{Derivable Classes.}
+\label{tab:derivable}
+\end{table}
+
+\subsection{Serializable}
+As a distrubuted DAQ framework, a runtime setup of EUDAQ system inlcude several applications. Data objects will go through the boundry of an application or a computer. Those data objects should have the capability to be seriablized. When a data object is serialized, all the cricial data of this data object is feeded to serialized memory which then can be send by plain binary to another application and reconsturd to a copy of original data object. \\
+
+All the classes which hold serializable data are derived from a base serializable class (eudaq::Serializable). All serializable data class
+should impliment the function \texttt{Serialize} which serializes the inner data object and feeds a eudaq::Serializer, and a consturctor function which takes the reference of eudaq::Deserializer as input parameter.\\
+
+\autoref{tab:serializable} is the list of serializable EUDAQ classes.
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{ l | l }
+  \textbf{Class} & \textbf{Description}\\
+  \hline
+  \texttt{eudaq::Event} & \\
+  \texttt{eudaq::Configuration} & \\
+  \texttt{eudaq::LogMessage} & \\
+  \texttt{eudaq::Status} &  \\
+\end{tabular}
+\caption{Serializable Classes.}
+\label{tab:serializable}
+\end{table}
+
+\subsubsection{Event}
+eudaq::Event is most importante serializable class which holds physics data from hardwares. Producer is the EUDAQ compoment which create object of eudaq::Event and feed it by the physics data from measurment.  \autoref{tab:serializable} lists the variables inside the eudaq::Event. \\
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{ l | l | l }
+  \textbf{variable} & \textbf{C++ type} & \textbf{Description}\\
+  \hline
+  \texttt{m\_type} & \texttt{uint32\_t} & event type\\
+  \texttt{m\_verion} & \texttt{uint32\_t} & version\\
+  \texttt{m\_flags} & \texttt{uint32\_t} & flags\\
+  \texttt{m\_stm\_n} & \texttt{uint32\_t} & device/stream number\\
+  \texttt{m\_run\_n} & \texttt{uint32\_t} & run number\\
+  \texttt{m\_ev\_n} & \texttt{uint32\_t} & event number\\
+  \texttt{m\_tg\_n} & \texttt{uint32\_t} & trigger number\\
+  \texttt{m\_extend} & \texttt{uint32\_t} & reserved word\\
+  \texttt{m\_ts\_begin} & \texttt{uint64\_t} & timestamp at the begin of event\\
+  \texttt{m\_ts\_end} & \texttt{uint64\_t} & timestamp at the end of event\\
+  \texttt{m\_dspt} & \texttt{std::string} & description\\
+  \texttt{m\_tags} & \texttt{std::map<std::string, std::string>} & tags\\
+  \texttt{m\_blocks} & \texttt{std::map<uint32\_t, std::vector<uint8\_t>>} & blocks of raw data\\
+  \texttt{m\_sub\_events} & \texttt{std::vector<EventSPC>} & pointers of sub events\\
+\end{tabular}
+\caption{Variables of eudaq::Event.}
+\label{tab:eventdata}
+\end{table}
+
+The \texttt{m\_blocks} is physics data which only can be known by the user who owns the hardware. There is a pair of timestamps to define the time slice when the physics event occurs, and a trigger number to identify the trigger sequceqnce. Timestamps and trigger number are optional to be set if you are going to use them to synchroze data from multiple stream/decice. It is also possible to have sub events inside an eudaq::Event object. The sub eudaq::Event objects is hold by std::shared\_ptr. See next sub section.
+
+\subsection{Ownership}
+std::shared\_ptr and std::shared\_ptr is heavelly used in EUDAQ to hold the object pointer of serializable class and derivable class. 
+
+\subsection{Command/Status Handling}
+RunControl is the command sender which issue comman according to user actions from GUI or CLI. Producer, DataCollector, LogCollector and Monitor is command reciever which execuses the correlated function according the command. The command reciever will set up a status and report the status to RunControl.
+
+\subsubsection{Initialise}
+\paragraph{RunControl}
+
+\paragraph{Command Reciever}
+
+\subsubsection{Configure}
 
 
-\subsection{Register Derived Class}
-TODO
+\subsubsection{StartRun}
 
 
-\subsection{Data structure}
+\subsubsection{StopRun}
 
 
-\subsection{Commamd Handling}
+\subsubsection{Reset}
+
+
+\subsubsection{Terminate}
+

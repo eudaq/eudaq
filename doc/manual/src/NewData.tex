@@ -1,12 +1,12 @@
 % !TEX root = EUDAQUserManual.tex
-\section{Handling New Data Type}
+\section{Handling New Data Type}\label{sec:NewDataHandling}
 The EUDAQ framework contains a number of other parts that may be useful.
 Those that have not already been described in previous sections will be outlined below.
 
 \subsection{Derive from Event}
 
 
-\subsection{Writing a FileWriter}
+\subsection{Writing a FileWriter}\label{sec:FileWriterWriting}
 The FileWriter part of the framework allows different file formats to be written,
 using a common interface, using a plugin-like system to define new file types.
 The \texttt{FileWriter} class defines the interface that each type must implement,
@@ -41,7 +41,7 @@ and the necessary data written to file.
 The \texttt{FileBytes} method should return the number of bytes written to the file.
 However, it is optional, and may simply return zero if the actual size is not easily known.
 
-\subsection{Writing a FileReader}
+\subsection{Writing a FileReader}\label{sec:FileReaderWriting}
 Although tools are provided to access the information in the native data files,
 and to convert them to other formats (such as LCIO, for analysis with the EUTelescope package),
 in some cases it may be preferable to access the native data directly.
@@ -80,7 +80,7 @@ and print out a summary of all the events in there.
 Be aware that running it as it is may generate a large amount of output,
 especially with large data files.
 
-\subsection{Writing a Data Converter (base class)}\label{sec:PluginManager}
+\subsection{Writing a Data Converter (base class)}\label{sec:BaseConverterWriting}
 The \texttt{PluginManager} handles the different \texttt{DataConverterPlugin}s,
 allowing raw data stored in a \texttt{RawDataEvent} to be easily converted
 to a \texttt{StandardEvent} or \texttt{LCEvent} without having to know the details of all the detector types in there.
