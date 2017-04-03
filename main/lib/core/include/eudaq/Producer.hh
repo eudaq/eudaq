@@ -27,13 +27,9 @@ namespace eudaq {
    * It is both a CommandReceiver, listening to commands from RunControl,
    * and a DataSender, sending data to a DataCollector.
    */
+  //----------DOC-MARK-----BEGINDECLEAR-----DOC-MARK----------
   class DLLEXPORT Producer : public CommandReceiver{
   public:
-    /**
-     * The constructor.
-     * \param runcontrol A string containing the address of the RunControl to
-     * connect to.
-     */
     Producer(const std::string &name, const std::string &runcontrol);
     void OnInitialise() override final;
     void OnConfigure() override final;
@@ -41,7 +37,7 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
-    void Exec() override; //TODO: mark it final to report derived class which has Exec override.
+    void Exec() override; //TODO: mark it final to report derived class which has Exec override.//
 
     virtual void DoInitialise(){};
     virtual void DoConfigure(){};
@@ -56,6 +52,7 @@ namespace eudaq {
     uint32_t m_evt_c;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
   };
+  //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }
 
 #endif // EUDAQ_INCLUDED_Producer

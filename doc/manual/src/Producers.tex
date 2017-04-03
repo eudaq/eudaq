@@ -1,142 +1,77 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Writing a Producer}\label{sec:ProducerWriting}
-Producers are the binding part between a user DAQ and the central EUDAQ Run Control.
-A Producer consistes of a CommandReceiver and a DataSender, where the first receives commands from the Run Control while the latter allows to send binary data events to the Data Collector.
-A Producer base class is provided in order to simplify the integration.
-The Producer is compiled against the EUDAQ library which implements all of the required communication over the network.
-Example code for producers is provided, see \autoref{sec:ExampleProducer}.
+Producers are the binding part between a user DAQ and the central EUDAQ Run Control. The base class of Producer is eudaq::Producer. The eudaq::Producer is an inherited class of eudaq::CommandReceiver which receives commands from the eudaq::RunControl. It also maintaines a set of eudaq::DataSender which allows to send binary data (eudaq::Event) to each destinations.\\
 
+\subsection{Declaration of base Producer}\label{sec:Producer_hh}
+
+\autoref{producerdef} is part of the header file which declares the eudaq::Producer. You are aquired to write the user Producer derived from eudaq::Producer. According the the set of commands (\autoref{sec:command}) in EUDAQ framwork, there are 5 virtual functions should be implemented in user producer. They are DoInitialise(), DoConfigure(), DoStopRun(), DoStartRun(), DoReset() and DoTerminate(). These command related function should return as soon as possiable since no further command can be execuseted untill the finish the recent command. \\
+
+\lstinputlisting[label=producerdef, style=cpp, linerange=BEGINDECLEAR-ENDDECLEAR]{../../main/lib/core/include/eudaq/Producer.hh}
+
+The virtual function Exec() is optional to be implimented in user producer. Internally, the base Exec() to create a thread for command executation and itself goes to a unlimited loop and can never return untill the Terminate command. In case you are going to impliment it yourselves, please read the souce code to find detial information.
 
 \subsection{Example Source Code}\label{sec:Ex0Producer_cc}
-\myinputlisting{-60}{user/example/module/src/Ex0Producer.cc}
-\newpage
+\subsubsection{Declaration}
+Let's go to a example implemention of user Producer. The full source code is avaliable at file path user/example/module/src/Ex0Producer.cc.  \autoref{ls:ex0producerdef} is the declaration part. There are 6 commmand related functions, a constructor function and a \texttt{Mainloop} function. \\
 
-\subsection{Register }
+\lstinputlisting[label=ls:ex0producerdef, style=cpp, linerange=BEG*DEC-END*DEC]{../../user/example/module/src/Ex0Producer.cc}
 
+In the line \lstinline[style=cpp]{static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Producer")}, it defines a static number wich is a hash from name string. This number will be used later as a ID to register this \lstinline[style=cpp]{Ex0Producer} to EUDAQ runtime env.
 
-\subsection{Receiving Commands}
-The Run Control distributs commands to all registered clients, controlling the global finite state machine and thus the DAQ.
-Whenever a user input is received from the Run Control, the corresponding member function of the Producer will be invoked.
-These member functions of the Producer class are virtual and can be overloaded by the user in their respective Producer implementations.
-The \texttt{Producer} base class definition is provided in the header file:
-\begin{listing}
-#include "eudaq/Producer.hh"
-\end{listing}
-
-\subsubsection{DoInitialise}
-This method is called whenever an initialise command is received from the Run Control.
-The method signature is:
-\begin{listing}
-virtual void OnInitialise(const eudaq::Configuration & config);
-\end{listing}
-
-The configuration object is received from the Run Control. The Producer is free to read any part of the configuration object but parameters cannot be changed owing to the const qualifier.
-
-If the initialisation step is not required for a certain DAQ, the function can be left unimplemented in the Producer. In that case the corresponding member function of the \texttt{CommandReceiver} base class is executed.
-
-\subsubsection{DoConfigure}\label{sec:OnConfigure}
-This method is called whenever a configure command is received from the Run Control.
-The method signature is:
-\begin{listing}
-virtual void OnConfigure(const eudaq::Configuration & config);
-\end{listing}
-
-The configuration object is received from the Run Control where is has been loaded from a user configurable file. The Producer is free to read any part of the configuration object but parameters cannot be changed owing to the const qualifier.
-
-
-\subsubsection{DoStartRun}
-This is called on the start of each run.
-The method signature is:
-\begin{listing}
-virtual void OnStartRun(unsigned param);
-\end{listing}
-
-As a parameter, it receives the run number of the started run.
-The Producer must send a \gls{BORE},
-and then enable the data acquisition on the attached devices and prepare for receiving events from the hardware.
-
-
-\subsubsection{DoStopRun}
-This is called at the end of the run.
-The method signature is simply:
-\begin{listing}
-virtual void OnStopRun();
-\end{listing}
-
-Care should be taken that there are no more events pending to be read out.
-Once all data events have been sent, an \gls{EORE} should also be sent,
-to signal to the DAQ that the Producer has ended the run successfully.
-
-\subsection{Sending Data and the RawDataEvent class}
-Events may be sent to the DAQ using the \texttt{Producer}'s \texttt{SendEvent()} method
-that has the following signature:
-\begin{listing}
-void SendEvent(const Event &);
-\end{listing}
-
-It takes as a parameter an object derived from the \texttt{eudaq::Event} base class
-that will be serialised and sent to the Data Collector.
-In practice it will usually be of the type \texttt{RawDataEvent}.
-
-The \texttt{RawDataEvent} is a generic container for blocks of binary data and is used to encapsulate the data read directly from the devices and send it to the central DAQ for storage.
-Each \texttt{RawDataEvent} may contain any number of raw data blocks.
-By convention each block usually corresponds to one sensor,
-but this is not required;
-it is up to each Producer how the raw data are encoded.
-The RawDataEvent class is defined in the following header file:
-\begin{listing}
-#include "eudaq/RawDataEvent.hh"
-\end{listing}
-
-The class is described in the following in more detail.
+\subsubsection{Register to Factory}
+To make EUDAQ framework know the eiisting of \lstinline[style=cpp]{Ex0Producer}, this Producer should regitested to \lstinline[style=cpp]{eudaq::Factory<eudaq::Producer>} with it static ID number. The input paramter types of construtor function is also provided to Register function. See the example code below.
+\lstinputlisting[label=ls:ex0producerdef, style=cpp, linerange=BEG*REG-END*REG]{../../user/example/module/src/Ex0Producer.cc}
 
 \subsubsection{Constructor}
-A \texttt{RawDataEvent} is constructed as follows:
-\begin{listing}
-RawDataEvent event("EXAMPLE", run, event);
-\end{listing}
+The Constructor function takes in 2 parameters, the runtime name of the instance of Producer and the address of RunControl. 
+\lstinputlisting[style=cpp, linerange=BEG*CON-BEG*INI]{../../user/example/module/src/Ex0Producer.cc}
+In this example of Ex0Producer, constructor function does nothing beside passing pamamters to base constructor function of Producer and inilialize the \lstinline[style=cpp]{m_exit_of_run} variable.
 
-Where \texttt{"EXAMPLE"} is a string unique to the particular producer
-that will be used by the event decoding factory to select the correct converter during decoding.
-The \texttt{run} and \texttt{event} parameters are the run number
-and event number, respectively.
+\subsubsection{DoInitialise}
+This method is called whenever an initialise command is received from the Run Control. When This function is called, the correlated section of initializition file have arrived to the Producer from RunControl. This initializition section can be obtained by \\
+\lstinline[style=cpp]{eudaq::ConfigurationSPC eudaq::CommandReceiver::GetInitConfiguration()} \\
 
-Furthermore, the producer is required to send a \gls{BORE}
-and \gls{EORE} at the beginning and end of a run respectively.
-These are regular \texttt{RawDataEvent} objects with a particular flag set.
-For convenience, separate methods are available to create the respective event types:
-\begin{listing}
-RawDataEvent::BORE("EXAMPLE", run);
-RawDataEvent::EORE("EXAMPLE", run, event);
-\end{listing}
+Here is example \lstinline[style=cpp]{DoInitialise} of Ex0Producer.
+\lstinputlisting[style=cpp, linerange=BEG*INI-BEG*CONF]{../../user/example/module/src/Ex0Producer.cc}
+The Configuration object \lstinline[style=cpp]{ini} is obtained. According to the value DMMMY\_STRING and UMMY\_FILE\_PATH in \lstinline[style=cpp]{ini} object, a new file is openned and filled by dummy data. The path of file is saved as variable member for later access of this dummy data file.
 
-These methods return a \texttt{RawDataEvent} that may be either be sent directly to the DAQ,
-or be modified first, e.g. by setting tags as described below in \autoref{sec:Tags}.
+\subsubsection{DoConfigure}
+This method is called whenever an configure command is received from the Run Control. When This function is called, the correlated section of configuration file have arrived to the Producer from RunControl. The configuration section named by Procuder runtime name can be obtained by \\
+\lstinline[style=cpp]{eudaq::ConfigurationSPC eudaq::CommandReceiver::GetConfiguration()} \\
 
-\subsubsection{Adding Data}
-Once a RawDataEvent has been constructed,
-data blocks may be added either using a vector:
-\begin{listing}
-std::vector<unsigned char> buffer = ...;
-event.AddBlock(id, buffer);
-\end{listing}
+Here is example \lstinline[style=cpp]{DoConfigure} of Ex0Producer.
+\lstinputlisting[style=cpp, linerange=BEG*CONF-BEG*RUN]{../../user/example/module/src/Ex0Producer.cc}
+The variable \lstinline[style=cpp]{m_ms_busy}, \lstinline[style=cpp]{m_flag_ts} and \lstinline[style=cpp]{m_flag_tg} are set according the Configuration object.
 
-or using a pointer to a block of memory, and a length in bytes:
-\begin{listing}
-unsigned char * buffer = ...;
-event.AddBlock(id, buffer, len);
-\end{listing}
+\subsubsection{DoStartRun}\label{sec:ex0prdstart}
+This method is called whenever an StartRun command is received from the Run Control. When This function is called, the runnumber have already been increased by 1. For real hardware specific Producer, the hardwre is told to starup.
+Here is example \lstinline[style=cpp]{DoStartRun} of Ex0Producer.
+\lstinputlisting[style=cpp, linerange=BEG*RUN-BEG*STOP]{../../user/example/module/src/Ex0Producer.cc}
+Instead of talking to real hardware, a file is opened. Then, a new thread is started using the function \lstinline[style=cpp]{Mainloop}.
 
-Where \texttt{id} is an integer used to uniquely identify the different blocks.
-The \texttt{buffer} variable points to the actual data for the block under consideration block and can be provided either as STL \texttt{vector}, where the full vector is read and sent, or as C-pointer to a memory block where the \texttt{len} argument is required to specify the size.
+\subsubsection{DoStopRun}
+This method is called whenever an StopRun command is received from the Run Control. Here is example \lstinline[style=cpp]{DoStopRun} of Ex0Producer.
+\lstinputlisting[style=cpp, linerange=BEG*STOP-BEG*RST]{../../user/example/module/src/Ex0Producer.cc}
 
-The type of the vector or data array can be freely chosen by the user since the data serializers are implemented as templates.
-However, if data types larger than \texttt{char} are used, special care has to be taken for appropriate endianness of the data.
-This is especially true if the producer and decoding software run on different machines which might have different architectures.
+\subsubsection{DoReset}
+When the Producer goes into the error state. Only Reset command is acceptable. It is recommand to reset all member varialbe to original value when the proucer object is instanced.\\
+Here is example \lstinline[style=cpp]{DoReset} of Ex0Producer. 
+\lstinputlisting[style=cpp, linerange=BEG*RST-BEG*TER]{../../user/example/module/src/Ex0Producer.cc}
+For any case the data thread is running, it should be stopped.
 
+\subsubsection{DoTerminate}
+This method is called whenever an StopRun command is received from the Run Control. After the return of \lstinline[style=cpp]{DoTerminate}, the application will exit.\\
+Here is example \lstinline[style=cpp]{DoStopRun} of Ex0Producer.
+\lstinputlisting[style=cpp, linerange=BEG*TER-BEG*LOOP]{../../user/example/module/src/Ex0Producer.cc}
+The data thread is closed. 
 
-\subsubsection{Tags}\label{sec:Tags}
-\texttt{RawDataEvent} objects as well as other types inheriting from the \texttt{Event} base class also provide the option to store tags.
+\subsubsection{Send Event}
+In \lstinline[style=cpp]{DoStartRun}, a data thread is created with the function \lstinline[style=cpp]{Mainloop}. Here is the implemention of this function. The generated data Event is depending the value set by \lstinline[style=cpp]{DoInitialise} and \lstinline[style=cpp]{DoConfigure}.
+\lstinputlisting[style=cpp, linerange=BEG*LOOP-END*IMP]{../../user/example/module/src/Ex0Producer.cc}
+In each loop, a new object of Event named Ex0Event is created. Trigger number and Timestamp are optional to be set depending the flags. A data block with 100 zeros is filled to the Event object by id 0. Another data block read from file is filled to some Event object by id 2.Then, this Event object is sent out by \lstinline[style=cpp]{SendEvent(std::move(ev))}. The first Event object has a flag BORE by method \lstinline[style=cpp]{eudaq::Event::SetBORE()}
+
+\paragraph{Tags}\label{sec:Tags}
+The \texttt{Event} class also provide the option to store tags.
 Tags are name-value pairs containing additional information which does not qualify as regular DAQ data which is written in the binary blocks.
 Particularily in the \gls{BORE} this is very useful to store information about the exact sensor configuration which micht be required in order to be able to decode the raw data stored.
 A tag is stored as follows:
@@ -146,4 +81,9 @@ event.SetTag("Temperature", 42);
 
 The value corresponding to the tag can be set as an arbitrary type (in this case an integer),
 it will be converted to a STL string internally.
+
+\subsubsection{Error}\label{sec:Tags}
+The the case Producer fail to run the command function. Throw an execption like this\\
+\lstinline[style=cpp]{EUDAQ_THROW("dummy data file (" + m_dummy_data_path +") can not open for writing")}\\
+Since Mainloop function is running as an independent thread, the execption throw from it can not catched from outside.
 

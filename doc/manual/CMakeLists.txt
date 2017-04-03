@@ -10,6 +10,8 @@ IF(BUILD_manual)
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseLATEX.cmake)
 
+  message(ERROR ${CMAKE_SOURCE_DIR})
+  
   ADD_LATEX_DOCUMENT(
     src/EUDAQUserManual.tex
     INPUTS
@@ -30,13 +32,9 @@ IF(BUILD_manual)
     src/OtherParts.tex
     src/Contributing.tex
     src/PlatformIssue.tex
-    ../../user/example/misc/Ex0.ini
-    ../../user/example/misc/Ex0.conf
+    ../../main/lib/core/include/eudaq/Producer.hh    
     ../../user/example/module/src/Ex0Producer.cc
-    ../../user/example/module/src/Ex0DataCollector.cc
-    ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
-    ../../producers/example/src/ExampleConverterPlugin.cc
-    ../../main/exe/src/ExampleReader.cxx
+
     BIBFILES src/References.bib
     USE_GLOSSARY
     IMAGE_DIRS src/images

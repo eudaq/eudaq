@@ -50,6 +50,7 @@ namespace eudaq {
     virtual void DoReceive(ConnectionSPC id, EventUP ev) = 0;
     
     void WriteEvent(EventUP ev);
+    void SetServerAddress(const std::string &addr){m_data_addr = addr;};
     void StartDataCollector();
     void CloseDataCollector();
     bool IsActiveDataCollector(){return m_thd_server.joinable();}

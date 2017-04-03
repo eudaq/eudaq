@@ -31,13 +31,15 @@
 \newcommand*\ccitem[1]{\item[]\lstinline[style=shaded,language=C++]{#1}}
 %\lstMakeShortInline[style=plain,language=C++]@
 \newcommand*\inline[2][C++]{\lstinline[style=plain,language=#1]{#2}}
+
 \newcommand*\myinputlisting[3][C++]{
-Latest version available at:\\
-\textls[#2]{\url{https://github.com/eudaq/eudaq/blob/master/#3}}
+  %% Latest version available at:\\
+  %% \textls[#2]{\url{https://github.com/eudaq/eudaq/blob/master/#3}}
 
 \lstinputlisting[style=full, language=#1]{../../#3}
-\rule[\baselineskip]{\textwidth}{1pt}
+%% \rule[\baselineskip]{\textwidth}{1pt}
 }
+
 \lstnewenvironment{listing}[1][C++]{\lstset{style=shaded,language=#1}}{}
 
 \newenvironment{myitemize}
@@ -107,6 +109,24 @@ Latest version available at:\\
     %belowskip={\baselineskip},
     backgroundcolor=\color[rgb]{1,1,0.95},
 }
+
+\lstdefinestyle{cpp}{
+    language=C++, 
+    morekeywords={override, final},
+    basicstyle=\small\ttfamily,
+    numbers=left,
+    frame=single,
+    %belowskip={\baselineskip},
+    backgroundcolor=\color[rgb]{1,1,0.95},
+    %% texcl=true,
+    rangeprefix=//----------DOC-MARK-----,
+    rangesuffix=-----DOC-MARK----------,
+    includerangemarker=false,
+    columns=flexible,
+    %% escapeinside={//TODO}{.},
+}
+
+
 \lstdefinelanguage{conf}{
     otherkeywords={=},
     alsoletter={[},

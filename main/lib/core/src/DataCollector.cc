@@ -212,9 +212,11 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("DataCollector can not be restarted after exit. (TODO)");
     }
-    m_data_addr = "tcp://";
-    uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
-    m_data_addr += to_string(port);
+    if(!m_data_addr.empty()){
+      m_data_addr = "tcp://";
+      uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
+      m_data_addr += to_string(port);
+    }
     m_dataserver.reset(TransportServer::CreateServer(m_data_addr));
     m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
     m_thd_server = std::thread(&DataCollector::DataThread, this);

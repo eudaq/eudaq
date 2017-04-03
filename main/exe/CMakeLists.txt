@@ -4,47 +4,35 @@ if(NOT EUDAQ_BUILD_EXECUTABLE)
   return()
 endif()
 
-  # add_subdirectory(iphc)
-  
-  # add_executable(ClusterExtractor    src/ClusterExtractor.cxx  )
-  # add_executable(ExampleReader       src/ExampleReader.cxx     )
-  # add_executable(OptionExample       src/OptionExample.cxx     )
-  # add_executable(RunListener         src/RunListener.cxx       )
-  # add_executable(TestLogCollector    src/TestLogCollector.cxx  )
-  # add_executable(TestProducer        src/TestProducer.cxx      )
-  # add_executable(TestRunControl      src/TestRunControl.cxx    )
-  # add_executable(TestDataCollector   src/TestDataCollector.cxx    )
-
-  # set_property(TARGET ClusterExtractor   PROPERTY PROJECT_LABEL "bin_ClusterExtractor")  
-  # set_property(TARGET ExampleReader      PROPERTY PROJECT_LABEL "bin_ExampleReader") 
-  # set_property(TARGET OptionExample      PROPERTY PROJECT_LABEL "bin_OptionExample") 
-  # set_property(TARGET RunListener        PROPERTY PROJECT_LABEL "bin_RunListener") 
-  # set_property(TARGET TestLogCollector   PROPERTY PROJECT_LABEL "bin_TestLogCollector")
-  # set_property(TARGET TestProducer       PROPERTY PROJECT_LABEL "bin_TestProducer") 
-  # set_property(TARGET TestRunControl     PROPERTY PROJECT_LABEL "bin_TestRunControl") 
-  # set_property(TARGET TestDataCollector     PROPERTY PROJECT_LABEL "bin_TestDataCollector") 
-
-
-  # target_link_libraries(ClusterExtractor    ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(ExampleReader       ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(OptionExample       ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(RunListener         ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(TestLogCollector    ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(TestProducer        ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(TestRunControl      ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # target_link_libraries(TestDataCollector   ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES}) 
-
-  # list(APPEND INSTALL_TARGETS ExampleReader  OptionExample  TestLogCollector  TestProducer TestRunControl TestDataCollector)
-
-  # add_executable(FileChecker         src/FileChecker.cxx       )
-  # set_property(TARGET FileChecker        PROPERTY PROJECT_LABEL "bin_FileChecker") 
-  # target_link_libraries(FileChecker         ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${ADDITIONAL_LIBRARIES})
-  # list(APPEND INSTALL_TARGETS FileChecker)
-  
 add_executable(Launcher src/Launcher.cxx)
 target_link_libraries(Launcher ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS Launcher)
-  
+
+set(EXE_CLI_PRODUCER euCliProducer)
+add_executable(${EXE_CLI_PRODUCER} src/euCliProducer.cxx)
+target_link_libraries(${EXE_CLI_PRODUCER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_PRODUCER})
+
+set(EXE_CLI_DATACOL euCliDataCollector)
+add_executable(${EXE_CLI_DATACOL} src/euCliDataCollector.cxx)
+target_link_libraries(${EXE_CLI_DATACOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_DATACOL})
+
+set(EXE_CLI_RUN euCliRun)
+add_executable(${EXE_CLI_RUN} src/euCliRun.cxx)
+target_link_libraries(${EXE_CLI_RUN} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_RUN})
+
+set(EXE_CLI_LOG euCliLog)
+add_executable(${EXE_CLI_LOG} src/euCliLog.cxx)
+target_link_libraries(${EXE_CLI_LOG} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_LOG})
+
+set(EXE_CLI_MON euCliMonitor)
+add_executable(${EXE_CLI_MON} src/euCliMonitor.cxx)
+target_link_libraries(${EXE_CLI_MON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_MON})
+
 install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
   LIBRARY DESTINATION lib
