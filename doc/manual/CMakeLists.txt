@@ -33,6 +33,7 @@ IF(BUILD_manual)
     src/Contributing.tex
     src/PlatformIssue.tex
     ../../main/lib/core/include/eudaq/Producer.hh    
+    ../../main/lib/core/include/eudaq/DataCollector.hh
     ../../user/example/module/src/Ex0Producer.cc
 
     BIBFILES src/References.bib

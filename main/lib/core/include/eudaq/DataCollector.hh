@@ -25,7 +25,8 @@ namespace eudaq {
 				     (const std::string&, const std::string&)>&
   Factory<DataCollector>::Instance<const std::string&, const std::string&>();
 #endif
-  
+
+  //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
   class DLLEXPORT DataCollector : public CommandReceiver {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol);
@@ -71,6 +72,7 @@ namespace eudaq {
     uint32_t m_evt_c;
     std::unique_ptr<const Configuration> m_conf;
   };
+  //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
 
 #endif // EUDAQ_INCLUDED_DataCollector
