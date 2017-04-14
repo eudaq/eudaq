@@ -24,7 +24,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 	else
 		echo "palpidefs source not restored from cache - downloading from CERNBOX and unpacking"
 		
-		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/WpOQOjrUXihXD98/download
 		
 		unzip alice-its-alpide-software.zip
 	
@@ -76,7 +76,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	cd ..	
 
 	if [ ! -d $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftware ]; then
-		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/QIRPTV84XziyQ3q/download
+		wget -O alice-its-alpide-software.zip https://cernbox.cern.ch/index.php/s/WpOQOjrUXihXD98/download
 
 		unzip alice-its-alpide-software.zip
 		mv alice-its-alpide-software-* aliceitsalpidesoftware
