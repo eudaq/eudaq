@@ -32,10 +32,21 @@ IF(BUILD_manual)
     src/OtherParts.tex
     src/Contributing.tex
     src/PlatformIssue.tex
-    ../../main/lib/core/include/eudaq/Producer.hh    
+    ../../main/lib/core/include/eudaq/Producer.hh  
     ../../main/lib/core/include/eudaq/DataCollector.hh
+    ../../main/lib/core/include/eudaq/Monitor.hh
+    ../../main/lib/core/include/eudaq/RunControl.hh
+    ../../main/lib/core/include/eudaq/FileWriter.hh
+    ../../main/lib/core/include/eudaq/FileReader.hh
+    ../../main/module/std/src/RawFileWriter.cc
+    ../../main/module/std/src/RawFileReader.cc
     ../../user/example/module/src/Ex0Producer.cc
-
+    ../../user/example/module/src/Ex0DataCollector.cc
+    ../../user/example/module/src/Ex1DataCollector.cc
+    ../../user/example/module/src/Ex2DataCollector.cc
+    ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
+    ../../main/module/std/src/DirectSaveDataCollector.cc
+    
     BIBFILES src/References.bib
     USE_GLOSSARY
     IMAGE_DIRS src/images

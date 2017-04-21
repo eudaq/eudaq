@@ -15,6 +15,11 @@ namespace eudaq {
   using ConfigurationSP = std::shared_ptr<Configuration>;
   using ConfigurationWP = std::weak_ptr<Configuration>;
   using ConfigurationSPC = std::shared_ptr<const Configuration>;
+
+  using ConfigUP = ConfigurationUP;
+  using ConfigSP = ConfigurationSP;
+  using ConfigWP = ConfigurationWP;
+  using ConfigSPC = ConfigurationSPC;
   
   class DLLEXPORT Configuration {
   public:

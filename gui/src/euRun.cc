@@ -43,6 +43,7 @@ RunControlGUI::RunControlGUI()
   m_run_n_qsettings = settings.value("runnumber", 0).toUInt();
   geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
   geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
+  //TODO: check last if last file exits. if not, use defalt value.
   txtConfigFileName
     ->setText(settings.value("lastConfigFile", "config file not set").toString());
   txtInitFileName
@@ -128,7 +129,7 @@ void RunControlGUI::on_btnLoadInit_clicked() {
   QString usedpath =QFileInfo(txtInitFileName->text()).path();
   QString filename =QFileDialog::getOpenFileName(this, tr("Open File"),
 						 usedpath,
-						 tr("*.init.conf (*.init.conf)"));
+						 tr("*.ini (*.ini)"));
   if (!filename.isNull()){
     txtInitFileName->setText(filename);
   }

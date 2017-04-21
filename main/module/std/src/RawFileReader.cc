@@ -1,42 +1,36 @@
-#include <list>
-#include "FileNamer.hh"
-#include "FileSerializer.hh"
-#include "FileReader.hh"
-#include "Event.hh"
-#include "Logger.hh"
-#include "Configuration.hh"
+#include "eudaq/FileSerializer.hh"
+#include "eudaq/FileReader.hh"
 
-namespace eudaq {
-  class RawFileReader;
-  namespace{
-    auto dummy2 = Factory<FileReader>::Register<RawFileReader, std::string&>(cstr2hash("raw"));
-    auto dummy3 = Factory<FileReader>::Register<RawFileReader, std::string&&>(cstr2hash("raw"));
+class NativeFileReader : public eudaq::FileReader {
+public:
+  NativeFileReader(const std::string& filename);
+  eudaq::EventSPC GetNextEvent()override;
+private:
+  std::unique_ptr<eudaq::FileDeserializer> m_des;
+  std::string m_filename;
+};
+
+namespace{
+  auto dummy0 = eudaq::Factory<eudaq::FileReader>::
+    Register<NativeFileReader, std::string&>(eudaq::cstr2hash("native"));
+  auto dummy1 = eudaq::Factory<eudaq::FileReader>::
+    Register<NativeFileReader, std::string&&>(eudaq::cstr2hash("native"));
+}
+
+NativeFileReader::NativeFileReader(const std::string& filename)
+  :m_filename(filename){    
+}
+
+eudaq::EventSPC NativeFileReader::GetNextEvent(){
+  if(!m_des){
+    m_des.reset(new eudaq::FileDeserializer(m_filename));
+    //TODO: check sucess or fail
   }
-
-  class RawFileReader : public FileReader {
-  public:
-    RawFileReader(const std::string& filename);
-    EventSPC GetNextEvent()override;
-  private:
-    std::unique_ptr<FileDeserializer> m_des;
-    std::string m_filename;
-  };
-
-  RawFileReader::RawFileReader(const std::string& filename): m_filename(filename){
-    
-  }
-
-  EventSPC RawFileReader::GetNextEvent(){
-    if(!m_des){
-      m_des.reset(new FileDeserializer(m_filename));
-      //TODO: check sucess or fail
-    }
-    EventUP ev;
-    uint32_t id = -1;
-    m_des->PreRead(id);
-    if(id != -1)
-      ev = Factory<eudaq::Event>::Create<Deserializer&>(id, *m_des);
-    return std::move(ev);
-  }
-
+  eudaq::EventUP ev;
+  uint32_t id = -1;
+  m_des->PreRead(id);
+  if(id != -1)
+    ev = eudaq::Factory<eudaq::Event>::
+      Create<eudaq::Deserializer&>(id, *m_des);
+  return std::move(ev);
 }

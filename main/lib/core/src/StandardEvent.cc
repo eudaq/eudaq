@@ -315,10 +315,8 @@ namespace eudaq {
   StandardEvent::StandardEvent(unsigned run, unsigned evnum, uint64_t timestamp)
     : Event(StandardEvent::m_id_factory, run, 0) {
     SetEventN(evnum);
-    SetTimestampBegin(timestamp);
-    SetTimestampEnd(timestamp);
+    SetTimestamp(timestamp, timestamp+1);
   }
-
 
   StandardEvent::StandardEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_planes);

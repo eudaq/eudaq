@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 
+//----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class Ex0DataCollector:public eudaq::DataCollector{
 public:
   Ex0DataCollector(const std::string &name,
@@ -48,6 +49,7 @@ private:
   std::set<uint32_t> m_event_ready_tg;
   uint32_t m_tg_curr_n;
 };
+//----------DOC-MARK-----END*DEC-----DOC-MARK----------
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::

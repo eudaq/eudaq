@@ -22,6 +22,7 @@ namespace eudaq{
   using FileReaderUP = Factory<FileReader>::UP;
   using FileReaderSP = Factory<FileReader>::SP;
 
+  //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
   class DLLEXPORT FileReader{
   public:
     FileReader();
@@ -32,6 +33,7 @@ namespace eudaq{
   private:
     ConfigurationSPC m_conf;
   };
+  //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
 
 #endif // FileReader_h__

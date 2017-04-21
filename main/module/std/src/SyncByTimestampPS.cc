@@ -139,8 +139,7 @@ EventSP SyncByTimestampPS::GetMergedEvent(){
   EventSP ev = Factory<Event>::MakeShared<const uint32_t&, const uint32_t&, const uint32_t&>(cstr2hash("SYNC"), cstr2hash("SYNC"), 0, GetInstanceN());
   ev->SetFlagPacket();
   ev->SetEventN(m_event_n++);
-  ev->SetTimestampBegin(m_ts_next_begin);
-  ev->SetTimestampEnd(m_ts_next_end);
+  ev->SetTimestamp(m_ts_next_begin, m_ts_next_end);
   
   for(auto &e: m_fifos){
     //print fifos layout

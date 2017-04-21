@@ -45,50 +45,38 @@ namespace eudaq {
     Event();
     Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n);
     Event(Deserializer & ds);
-    virtual void Serialize(Serializer &) const;   
-    EventUP Clone() const;
-    
+    virtual void Serialize(Serializer &) const;    
     virtual void Print(std::ostream & os, size_t offset = 0) const;
-
     
     bool HasTag(const std::string &name) const {return m_tags.find(name) != m_tags.end();}
     void SetTag(const std::string &name, const std::string &val) {m_tags[name] = val;}
-    const std::map<std::string, std::string>& GetTags() const {return m_tags;}
     std::string GetTag(const std::string &name, const std::string &def = "") const;
-    std::string GetTag(const std::string &name, const char *def) const {return GetTag(name, std::string(def));}
-    template <typename T> T GetTag(const std::string & name, T def) const {
-      return eudaq::from_string(GetTag(name), def);
-    }
-    template <typename T> void SetTag(const std::string &name, const T &val) {
-      SetTag(name, eudaq::to_string(val));
-    }
+    std::map<std::string, std::string> GetTags() const {return m_tags;}
     
     void SetFlagBit(uint32_t f) { m_flags |= f;}
     void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
     bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
 
+    void SetBORE() {SetFlagBit(FLAG_BORE);}
+    void SetEORE() {SetFlagBit(FLAG_EORE);}
+    void SetFlagFake(){SetFlagBit(FLAG_FAKE);}
+    void SetFlagPacket(){SetFlagBit(FLAG_PACK);}
     void SetFlagTimestamp(){SetFlagBit(FLAG_TIME);}
     void SetFlagTrigger(){SetFlagBit(FLAG_TRIG);}
-    bool IsFlagTimestamp() const {return IsFlagBit(FLAG_TIME);}
-    bool IsFlagTrigger() const {return IsFlagBit(FLAG_TRIG);}
-
-    void SetFlagFake(){SetFlagBit(FLAG_FAKE);}
-    bool IsFlagFake() const {return IsFlagBit(FLAG_FAKE);}
-
-    void SetFlagPacket(){SetFlagBit(FLAG_PACK);}
-    bool IsFlagPacket() const {return IsFlagBit(FLAG_PACK);}
     
     bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
     bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
-    void SetBORE() {SetFlagBit(FLAG_BORE);}
-    void SetEORE() {SetFlagBit(FLAG_EORE);}
+    bool IsFlagFake() const {return IsFlagBit(FLAG_FAKE);}
+    bool IsFlagPacket() const {return IsFlagBit(FLAG_PACK);}
+    bool IsFlagTimestamp() const {return IsFlagBit(FLAG_TIME);}
+    bool IsFlagTrigger() const {return IsFlagBit(FLAG_TRIG);}    
     
     void AddSubEvent(EventSPC ev);
     uint32_t GetNumSubEvent() const {return m_sub_events.size();}
     EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
+    std::vector<EventSPC> GetSubEvents() const {return m_sub_events;}
     
     void SetType(uint32_t id){m_type = id;}
-    void SetEventID(uint32_t id){m_type = id;}
     void SetVersion(uint32_t v){m_version = v;}
     void SetFlag(uint32_t f) {m_flags = f;}
     void SetRunN(uint32_t n){m_run_n = n;}
@@ -96,12 +84,10 @@ namespace eudaq {
     void SetDeviceN(uint32_t n){m_stm_n = n;}
     void SetTriggerN(uint32_t n, bool flag = true){m_tg_n = n; if(flag) SetFlagBit(FLAG_TRIG);}
     void SetExtendWord(uint32_t n){m_extend = n;}
-    void SetTimestampBegin(uint64_t t){m_ts_begin = t; if(!m_ts_end) m_ts_end = t+1;}
-    void SetTimestampEnd(uint64_t t){m_ts_end = t;}
     void SetTimestamp(uint64_t tb, uint64_t te, bool flag = true);
     void SetDescription(const std::string &t) {m_dspt = t;}
     
-    uint32_t GetEventID() const {return m_type;};
+    uint32_t GetType() const {return m_type;};
     uint32_t GetVersion()const {return m_version;}
     uint32_t GetFlag() const { return m_flags;}
     uint32_t GetRunN()const {return m_run_n;}
@@ -114,8 +100,10 @@ namespace eudaq {
     std::string GetDescription() const {return m_dspt;}
 
     static EventUP MakeUnique(const std::string& dspt);
-    static EventSP MakeShared(const std::string& dspt);    
+    static EventSP MakeShared(const std::string& dspt);
 
+    void SetEventID(uint32_t id){m_type = id;}
+    uint32_t GetEventID() const {return m_type;};
     //TODO: the meanning of "stream" is not so clear
     void SetStreamN(uint32_t n){m_stm_n = n;}
     uint32_t GetStreamN() const {return m_stm_n;}
@@ -124,7 +112,7 @@ namespace eudaq {
     uint32_t GetRunNumber()const {return m_run_n;}
 
     //from RawdataEvent
-    const std::vector<uint8_t>& GetBlock(uint32_t i) const;
+    std::vector<uint8_t> GetBlock(uint32_t i) const;
     size_t NumBlocks() const { return m_blocks.size(); }
     
     std::vector<uint32_t> GetBlockNumList() const;
@@ -158,6 +146,15 @@ namespace eudaq {
       auto &&dst = m_blocks[index];
       dst.insert(dst.end(), src.begin(), src.end());
     }
+
+    //TODO: remove, clearn up
+    std::string GetTag(const std::string &name, const char *def) const {return GetTag(name, std::string(def));}
+    template <typename T> T GetTag(const std::string & name, T def) const {
+      return eudaq::from_string(GetTag(name), def);
+    }
+    template <typename T> void SetTag(const std::string &name, const T &val) {
+      SetTag(name, eudaq::to_string(val));
+    }
     
   private:
     template <typename T>
@@ -186,7 +183,7 @@ namespace eudaq {
     std::string m_dspt;
     std::map<std::string, std::string> m_tags;
     std::map<uint32_t, std::vector<uint8_t>> m_blocks;
-    std::vector<EventSPC> m_sub_events; //TODO::  std::set
+    std::vector<EventSPC> m_sub_events;
   };
 }
 

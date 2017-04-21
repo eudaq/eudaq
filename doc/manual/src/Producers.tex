@@ -2,7 +2,7 @@
 \section{Writing a Producer}\label{sec:ProducerWriting}
 Producers are the binding part between a user DAQ and the central EUDAQ Run Control. The base class of Producer is eudaq::Producer. The eudaq::Producer is an inherited class of eudaq::CommandReceiver which receives commands from the eudaq::RunControl. It also maintaines a set of eudaq::DataSender which allows to send binary data (eudaq::Event) to each destinations.\\
 
-\subsection{Declaration of base Producer}\label{sec:Producer_hh}
+\subsection{Producer Prototype}\label{sec:Producer_hh}
 
 \autoref{producerdef} is part of the header file which declares the eudaq::Producer. You are aquired to write the user Producer derived from eudaq::Producer. According the the set of commands (\autoref{sec:command}) in EUDAQ framwork, there are 5 virtual functions should be implemented in user producer. They are DoInitialise(), DoConfigure(), DoStopRun(), DoStartRun(), DoReset() and DoTerminate(). These command related function should return as soon as possiable since no further command can be execuseted untill the finish the recent command. \\
 
@@ -10,7 +10,7 @@ Producers are the binding part between a user DAQ and the central EUDAQ Run Cont
 
 The virtual function Exec() is optional to be implimented in user producer. Internally, the base Exec() to create a thread for command executation and itself goes to a unlimited loop and can never return untill the Terminate command. In case you are going to impliment it yourselves, please read the souce code to find detial information.
 
-\subsection{Example Source Code}\label{sec:Ex0Producer_cc}
+\subsection{Example Source Code: Dummy Event Producer}\label{sec:Ex0Producer_cc}
 \subsubsection{Declaration}
 Let's go to a example implemention of user Producer. The full source code is avaliable at file path user/example/module/src/Ex0Producer.cc.  \autoref{ls:ex0producerdef} is the declaration part. There are 6 commmand related functions, a constructor function and a \texttt{Mainloop} function. \\
 

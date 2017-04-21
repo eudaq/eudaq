@@ -1,3 +1,13 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Writing a Monitor}\label{sec:MonitorWriting}
+eudaq::Monitor provides the the base class and common methods to monitor the data quality online. The internal implementation of eudaq::Monitor is very similar to eudaq::DataCollector. The only difference between them is that eudaq::Monitor accepts only a single connection from an eudaq::DataCollector or eudaq::Producer. (not implemented)\\
+
+\subsection{Monitor Prototype}\label{sec:monitor_hh}
+
+\lstinputlisting[label=ls:monitordef, style=cpp, linerange=BEG*DEC-END*DEC]{../../main/lib/core/include/eudaq/Monitor.hh}
+
+\subsection{Example Code}
+TODO
+
+\subsection{Graphical User Interface}
 TODO

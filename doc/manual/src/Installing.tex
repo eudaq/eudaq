@@ -154,6 +154,7 @@ option &  default &  dependency & comment \\
 \texttt{EUDAQ\_LIBRARY\_BUILD\_TEST} & \texttt{ON} & none & Builds extension library for develop test\\
 \texttt{USER\_EXAMPLE\_BUILD} & \texttt{ON} & none & Builds example user code\\
 \texttt{USER\_\{user\_name\}\_BUILD} & \texttt{<unknown>} & \texttt{<unknown>} & Builds user code inside user folder \{user\_name\}\\
+\texttt{CMAKE\_BUILD\_TYPE} & \texttt{RelWithDebInfo} & \texttt{none} & Only affect the building on Linux/MacOS, see CMake Manual\\
 \end{tabular}
 \caption{Options for CMake.}
 \label{tab:cmakeoptions}
@@ -171,6 +172,12 @@ If you encounter a problem during installation, it is recommended to clean the c
 \subsubsection{Compilation}
 Unversial command for all systems:
 \begin{listing}[mybash]
+cmake --build {source_folder}/build --target install
+\end{listing}
+
+On Windows/Visual Studio, CMake option CMAKE\_BUILD\_TYPE does not really affect the build type. It is possible to change the default build type Debug to Release by the build time option ``--config Release''.
+\begin{listing}[mybash]
 cmake --build {source_folder}/build --target install --config Release
 \end{listing}
+
 Done!

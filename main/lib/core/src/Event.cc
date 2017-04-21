@@ -95,15 +95,7 @@ namespace eudaq {
     }
   }
 
-  EventUP Event::Clone() const{ //TODO: clone directly
-    BufferSerializer ser;
-    Serialize(ser);
-    uint32_t id;
-    ser.PreRead(id);
-    return Factory<Event>::Create<Deserializer&>(id, ser);
-  }
-
-  const std::vector<uint8_t>& Event::GetBlock(uint32_t i) const{
+  std::vector<uint8_t> Event::GetBlock(uint32_t i) const{
     auto it = m_blocks.find(i);
     if(it == m_blocks.end()){
       EUDAQ_WARN(std::string("RAWDATAEVENT:: no bolck with ID ") + std::to_string(i) + " exists");

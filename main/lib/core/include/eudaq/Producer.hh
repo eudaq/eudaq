@@ -37,7 +37,7 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
-    void Exec() override; //TODO: mark it final to report derived class which has Exec override.//
+    void Exec() override;
 
     virtual void DoInitialise(){};
     virtual void DoConfigure(){};

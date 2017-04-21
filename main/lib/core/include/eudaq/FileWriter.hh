@@ -25,8 +25,8 @@ namespace eudaq {
   
   using FileWriterUP = Factory<FileWriter>::UP_BASE;
   using FileWriterSP = Factory<FileWriter>::SP_BASE;
-  using FileWriter_up = FileWriterUP;
 
+  //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
   class DLLEXPORT FileWriter {
   public:
     FileWriter();
@@ -38,7 +38,7 @@ namespace eudaq {
   private:
     ConfigurationSPC m_conf;
   };
-
+  //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
 
 #endif // EUDAQ_INCLUDED_FileWriter
