@@ -582,8 +582,9 @@ namespace eudaq {
                nev->SetTag("ROCStartTS", startTS);
                nev->SetTriggerN(rawTrigId - _producer->getLdaTrigidOffset());
                if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
-                  nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
-                  nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
+		 uint64_t ts_beg = startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1;
+		 uint64_t ts_end = startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1;
+		 nev->SetTimestamp(ts_beg, ts_end, true);//false?
                }
                std::vector<uint32_t> cycledata;
                cycledata.push_back((uint32_t) (startTS));
@@ -701,8 +702,9 @@ namespace eudaq {
             }
 
             if (startTS && (!_producer->getIgnoreLdaTimestamps())) {
-               nev->SetTimestampBegin(startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1);
-               nev->SetTimestampEnd(startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1);
+               uint64_t ts_beg = startTS + _producer->getAhcalbxid0Offset() + bxid * _producer->getAhcalbxidWidth() - 1;
+               uint64_t ts_end = startTS + _producer->getAhcalbxid0Offset() + (bxid + 1) * _producer->getAhcalbxidWidth() + 1;
+	       nev->SetTimestamp(ts_beg, ts_end, false);
             }
             for (auto & minipacket : sameBxidPackets.second) {
                if (minipacket.size()) {
@@ -818,20 +820,22 @@ namespace eudaq {
                eudaq::RawDataEvent *nev_raw = dynamic_cast<RawDataEvent*>(nev.get());
                prepareEudaqRawPacket(nev_raw);
                switch (_producer->getEventNumberingPreference()) {
-                  case AHCALProducer::EventNumbering::TIMESTAMP:
-                     nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), false);
-                     nev->SetTimestampBegin(_LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth());
-                     nev->SetTimestampEnd(_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth());
-                     break;
-                  case AHCALProducer::EventNumbering::TRIGGERID:
-                     default:
-                     nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), true);
-                     if (!_producer->getIgnoreLdaTimestamps()) {
-                        nev->SetTimestampBegin(_LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth());
-                        nev->SetTimestampEnd(_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth());
-                        nev->ClearFlagBit(eudaq::Event::Flags::FLAG_TIME);
-                     }
-                     break;
+	       case AHCALProducer::EventNumbering::TIMESTAMP:{
+		 nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), false);
+		 uint64_t ts_beg = _LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth();
+		 uint64_t ts_end =_LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth();
+		 nev->SetTimestamp(ts_beg, ts_end, true);//false?
+		 break;
+	       }
+	       case AHCALProducer::EventNumbering::TRIGGERID:
+	       default:
+		 nev->SetTriggerN(trigid - _producer->getLdaTrigidOffset(), true);
+		 if (!_producer->getIgnoreLdaTimestamps()) {
+		   uint64_t ts_beg = _LDATimestampData[roc].TS_Triggers[i] - _producer->getAhcalbxidWidth();
+		   uint64_t ts_end = _LDATimestampData[roc].TS_Triggers[i] + _producer->getAhcalbxidWidth();
+		   nev->SetTimestamp(ts_beg, ts_end, false);
+		 }
+		 break;
                }
                nev->SetTag("ROC", roc);
                nev->SetTag("ROCStartTS", _LDATimestampData[roc].TS_Start);
