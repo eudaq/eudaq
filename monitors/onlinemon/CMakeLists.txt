@@ -1,7 +1,7 @@
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT)
 
-cmake_dependent_option(BUILD_onlinemon "build online monitor executable" ON
+cmake_dependent_option(EUDAQ_BUILD_ONLINE_MONITOR "build online monitor executable" ON
   "ROOT_FOUND" OFF)
 
 if(NOT BUILD_onlinemon)

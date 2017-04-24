@@ -45,6 +45,8 @@ IF(BUILD_manual)
     ../../user/example/module/src/Ex1DataCollector.cc
     ../../user/example/module/src/Ex2DataCollector.cc
     ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
+    ../../user/example/misc/Ex0.ini
+    ../../user/example/misc/Ex0.conf
     ../../main/module/std/src/DirectSaveDataCollector.cc
     
     BIBFILES src/References.bib
