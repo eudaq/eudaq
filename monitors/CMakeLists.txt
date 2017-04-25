@@ -1,2 +1,1 @@
 ADD_SUBDIRECTORY(onlinemon)
-ADD_SUBDIRECTORY(offlinemon)
