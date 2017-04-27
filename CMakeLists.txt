@@ -123,16 +123,11 @@ ENDIF("${isSystemDir}" STREQUAL "-1")
 
 ADD_SUBDIRECTORY(main)
 ADD_SUBDIRECTORY(user)
-# ADD_SUBDIRECTORY(producers)
 ADD_SUBDIRECTORY(monitors)
-# ADD_SUBDIRECTORY(tests)
-# ADD_SUBDIRECTORY(syncTest)
-ADD_SUBDIRECTORY(nreader)
+ADD_SUBDIRECTORY(extra)
 ADD_SUBDIRECTORY(gui)
 ADD_SUBDIRECTORY(doc)
 # ADD_SUBDIRECTORY(python)
-
-
 
 #######################################################
 # Print out system information useful for bug reports #
