@@ -1,17 +1,17 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Writing a RunControl}\label{sec:RunControlWriting}
-In most user cases, the base eudaq::RunControl can meet the requirement of the controlling flow process upon the detector system which adapts EUDAQ framework. It is still prossible to overload the default behavior of base eudaq::RunControl by implemented a derived RunContorl class with overload the virtual methods which are correlated to the command sending and client status checking.\\
+In most user cases, the base eudaq::RunControl can meet the requirement of the controlling flow process upon the detector system which adapts EUDAQ framework. It is still possible to overload the default behavior of base eudaq::RunControl by implemented a derived RunContorl class with overload the virtual methods which are correlated to the command sending and client status checking.\\
 
 \subsection{RunControl Prototype}
 The command methods are \lstinline[style=cpp]{Initialise()}, \lstinline[style=cpp]{Configure()}, \lstinline[style=cpp]{StartRun()}, \lstinline[style=cpp]{StopRun()}, \lstinline[style=cpp]{Reset()} and \lstinline[style=cpp]{Terminate()}. \\
 
-The Methods \lstinline[style=cpp]{DoConnect()}, \lstinline[style=cpp]{DoDisconnect()}, \lstinline[style=cpp]{DoStatus()} are also provided for the case the derived RunControl want be informed in time by the conncetion changing and eudaq::Status object comming.\\
+The Methods \lstinline[style=cpp]{DoConnect()}, \lstinline[style=cpp]{DoDisconnect()}, \lstinline[style=cpp]{DoStatus()} are also provided for the case the derived RunControl want be informed in time by the connection changing and eudaq::Status object coming.\\
 
 
 \subsection{RunControl Mode}
 There are two options when making the integration among EUDAQ RunControl and other DAQ systems which do not adapt the eudaq::Producer approach and can not talk with base eudaq::RunControl.
 \subsubsection{EUDAQ Working as Master DAQ}
-In this case, RunControl should behave as an entrance point to the full detector system. As the base eudaq::RunControl can not manager the controlling of the non-EUDAQ slaver DAQ, users are required to implement a specific RunControl class derived from eudaq::RunControl. With overloaded virtual methods, the user RunControl not only gonern EUDAQ system but also talk to non-EUDAQ compenment by user specfic commication protocal.\\
+In this case, RunControl should behave as an entrance point to the full detector system. As the base eudaq::RunControl can not manager the controlling of the non-EUDAQ slaver DAQ, users are required to implement a specific RunControl class derived from eudaq::RunControl. With overloaded virtual methods, the user RunControl not only govern EUDAQ system but also talk to non-EUDAQ component by user specific communication protocol.\\
 By this approach, the user RunControl can be instanced by the standard GUI RunControl launcher (euRun).
 
 \subsubsection{EUDAQ Working as Slaver DAQ}

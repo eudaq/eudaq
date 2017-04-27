@@ -1,6 +1,6 @@
 % !TEX root = EUDAQUserManual.tex
 \section{Support User Defined Event Type}\label{sec:NewDataHandling}
-In EUDAQ framework, the defination \texttt{data} usually means a object of eudaq::Event or its derivations. 
+In EUDAQ framework, the definition \texttt{data} usually means a object of eudaq::Event or its derivations. 
 
 \subsection{Event}
 eudaq::Event is serializable as it is derived from eudaq::Serializable and implements
@@ -9,12 +9,12 @@ eudaq::Event is serializable as it is derived from eudaq::Serializable and imple
   virtual void Serialize(Serializer &) const;    
 \end{listing}
 
-There are 3 eudaq::Event derivations exsiting by default installation of EUDAQ. They are \lstinline[style=cpp]{RawDataEvent} (\autoref{sec:convrawdata}), \lstinline[style=cpp]{StandardEvent} (\autoref{sec:convstddata}) and \lstinline[style=cpp]{LCEvent}. Certainly, the eudaq::Event derivations are serializable. But if there are additional member variable intoruded to derived Event, the new variable should be serlized along with the other variables defined in eudaq::Event. Otherwise, part data of user defined Event object are losted when doing the Event writing to disk by EUDAQ native format (\autoref{sec:FileWriterWriting}).\\
+There are 3 eudaq::Event derivations existing by default installation of EUDAQ. They are \lstinline[style=cpp]{RawDataEvent} (\autoref{sec:convrawdata}), \lstinline[style=cpp]{StandardEvent} (\autoref{sec:convstddata}) and \lstinline[style=cpp]{LCEvent}. Certainly, the eudaq::Event derivations are serializable. But if there are additional member variable intoruded to derived Event, the new variable should be serialized along with the other variables defined in eudaq::Event. Otherwise, part data of user defined Event object are losted when doing the Event writing to disk by EUDAQ native format (\autoref{sec:FileWriterWriting}).\\
 
 It is recommend to reuse the raw data blocks \lstinline[style=cpp]{m_blocks} of eudaq::Event. Then the base eudaq::Event will take care of serialize and deserialize the \lstinline[style=cpp]{m_blocks}.\\
 
 \subsection{FileWriter}\label{sec:FileWriterWriting}
-Usually, the objects of eudaq::Event and its derivations are the only data going to be stored in disk for later offline analysis. User may prefer to write Event data in other format which is human readable or widely used by other software. User can defined a class derived from eudaq::FileWriter to take response the writing of spefic Event type.
+Usually, the objects of eudaq::Event and its derivations are the only data going to be stored in disk for later offline analysis. User may prefer to write Event data in other format which is human readable or widely used by other software. User can defined a class derived from eudaq::FileWriter to take response the writing of specific Event type.
 
 \subsubsection{FileWriter Prototype}
 \lstinputlisting[label=ls:filewritedec, style=cpp, linerange=BEG*DEC-END*DEC]{../../main/lib/core/include/eudaq/FileWriter.hh}

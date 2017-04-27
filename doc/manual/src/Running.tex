@@ -4,7 +4,7 @@ This section will describe running the DAQ system, mainly from the point of view
 However, this description can be applied to DAQ system in general.
 
 \subsection{Target Setup}
-In this example, user hardware device is simulated and implimented as an example Producer which can be configured to generate fake data according the configuration. This works similarly to a real producer, but does not talk to any real hardware. Example DataCollector is also implimented. \\
+In this example, user hardware device is simulated and implemented as an example Producer which can be configured to generate fake data according the configuration. This works similarly to a real producer, but does not talk to any real hardware. Example DataCollector is also implemented. \\
 The runtime setup is consisted of the following processes of EUDAQ.
 \begin{description}
 \ttitem{RunControl}
@@ -24,10 +24,10 @@ Some preparation is needed to make sure the environment is set up correctly and
 the necessary TCP ports are not blocked before the DAQ can run properly.
 
 \subsubsection{Directories}
-If no speficed path is passed to EUDAQ (by configeration file or commnad line parameter), EUDAQ will assume the working folder where executable is started up  is writable. Data and log files will be stored to workding folder.
+If no specified path is passed to EUDAQ (by configuration file or command line parameter), EUDAQ will assume the working folder where executable is started up  is writable. Data and log files will be stored to working folder.
 
 \subsubsection{Init/Config-Files}\label{sec:ConfigFiles}
-\texttt{$\ast$.ini}-files for initialisation and \texttt{$\ast$.conf}-files for configuration
+\texttt{$\ast$.ini}-files for initialization and \texttt{$\ast$.conf}-files for configuration
 are text files in a specific format, containing name-value pairs separated into different sections.
 Any text from a \texttt{\#} character until the end of the line is treated as a comment, and
 ignored.  
@@ -41,15 +41,15 @@ in the form \mbox{\texttt{Name = Value}}.
 It is then up to the individual processes how these parameters are interpreted.
 \url{https://en.wikipedia.org/wiki/INI\_file}
 
-During the initialisation and configuration, each process gets its section and do not know the other parts of ini/conf files.
-
+During the initialization and configuration, each process gets its section and do not know the other parts of ini/conf files.
 \myinputlisting[conf]{-30}{user/example/misc/Ex0.ini}
+
 \myinputlisting[conf]{-30}{user/example/misc/Ex0.conf}
 
 \subsubsection{Ports and Firewall}
-The different processes communicate between themselves using TCP/IP sockets. The ports can be configured when calling the the processors on the command line (see below). By default, TCP port 44000 is listened by Run Contorl, and TCP port 44002 is listened by Log Collector to get connections from clients. Data Collector itself will pick a random TCP port to listen and get incoming data from its connected Producers if there is no spesific port signed explicitly by user.
+The different processes communicate between themselves using TCP/IP sockets. The ports can be configured when calling the the processors on the command line (see below). By default, TCP port 44000 is listened by RunContorl, and TCP port 44002 is listened by Log Collector to get connections from clients. Data Collector itself will pick a random TCP port to listen and get incoming data from its connected Producers if there is no specific port signed explicitly by user.
 
-When all EUDAQ processes run at a same computer, commom firewares will not affact the TCP connections among them. However, running EUDAQ distrobutely on several computers may have issue from fireware blocking. You will have to open up those TCP port for incomming connection or temperaly shut down the fireware. The instruction about fireware is operate system depended.\\
+When all EUDAQ processes run at a same computer, common firewalls will not affect the TCP connections among them. However, running EUDAQ distributively on several computers may have issue from firewall blocking. You will have to open up those TCP port for incoming connection or temporally shut down the firewall. The instruction about firewall is operate system depended.\\
 
 In this example, all processes will run at same Linux computer, we can skip the setup of TCP port.
 
@@ -67,7 +67,7 @@ Finally, the Data Collector, Producers and Monitor can be started.
 \label{sec:runcontrol}
 Two versions of the RunControl -- a text-based version \texttt{euCliRun} and a graphical version \texttt{euRun} (see \autoref{fig:RunControl}).
 
-The command line parttern to startup a Log Collector is:
+The command line pattern to start up a Log Collector is:
 \begin{listing}[mybash]
 $[euRun]$ -a tcp://{listening_port}
 \end{listing}
@@ -94,7 +94,7 @@ After run the above command, a new GUI windows is showing \autoref{fig:RunContro
 \paragraph{Initialization Section}
 none
 
-\paragraph{Configration Section}
+\paragraph{Configuration Section}
 \begin{listing}[conf]
 [RunControl]
 EventSizeLimit=10000
@@ -108,7 +108,7 @@ There are also two versions of the Log Collector.
 The graphical version is called \texttt{euLog},
 and the text-based version is called \texttt{euCliLog}.
 
-The command line parttern to startup a Log Collector is:
+The command line pattern to startup a Log Collector is:
 \begin{listing}[mybash]
 $[euLog]$ -r tcp://{run_contorl_hostname}:{run_contorl_port} -a tcp://{listening_port}
 \end{listing}
@@ -147,7 +147,7 @@ After run the above command, a new GUI windows is showing \autoref{fig:LogCollec
 \subsubsection{DataCollector}
 \label{sec:datacollector}
 There is only a text-based version called \texttt{euCliDataCollector}.
-The command line parttern to startup a DataCollector is:
+The command line pattern to startup a DataCollector is:
 \begin{listing}[mybash]
 $[euCliDataCollector]$ -n {code_name} -t {runtime_name} -r tcp://{run_control_hostname}:{run_contorl_port} -a tcp://{listening_port}
 \end{listing}
@@ -163,7 +163,7 @@ optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run
 optional, \texttt{listening\_port} default value is random.
 \end{description}
 
-By default, example DataCollector \texttt{Ex0DataCollector} is avaliable with standard installation of EUDAQ.
+By default, example DataCollector \texttt{Ex0DataCollector} is available with standard installation of EUDAQ.
 For this example setup, we will startup 2 instances of \texttt{Ex0DataCollector} with runtime names \texttt{my\_dc} and \texttt{another\_dc}\\
 \begin{listing}[mybash]
 $[euCliDataCollector]$ -n Ex0DataCollector -t my_dc -r tcp://localhost:44000 -a tcp://45001
@@ -179,7 +179,7 @@ KEY1=a
 KEY1=b
 \end{listing}
 
-\paragraph{Configration Section}
+\paragraph{Configuration Section}
 Each Data Collector has to write to a different file by including the
 \texttt{FilePattern} option in the corresponding section of your
 configuration file (also see section \ref{sec:ConfigFiles}):
@@ -196,7 +196,7 @@ FilePattern=dc2_run$6R$X
 \subsubsection{Producer}
 \label{sec:testproducer}
 There is only a text-based version called \texttt{euCliProducer}.
-The command line parttern to startup a Producer is:
+The command line pattern to startup a Producer is:
 \begin{listing}[mybash]
 $[euCliProducer]$ -n {code_name} -t {runtime_name} -r tcp://{run_control_hostname}:{run_contorl_port}
 \end{listing}
@@ -210,7 +210,7 @@ required.
 optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run\_contorl\_port}  default value: 44000.
 \end{description}
 
-By default, example Producer \texttt{Ex0Producer} is avaliable with standard installation of EUDAQ.
+By default, example Producer \texttt{Ex0Producer} is available with standard installation of EUDAQ.
 For this example setup, we will startup 2 instances of \texttt{Ex0Producer} with runtime names \texttt{prd1hz} and \texttt{prd2hz}\\
 \begin{listing}[mybash]
 $[euCliProducer]$ -n Ex0Producer -t prd1hz -r tcp://localhost:44000
@@ -237,7 +237,7 @@ EUDAQ_DC=my_dc
 EUDAQ_DC=my_dc,another_dc
 \end{listing}
 
-\paragraph{Configration Section}
+\paragraph{Configuration Section}
 \begin{listing}[conf]
 [Producer.prd1hz]
 Rate=1
@@ -271,7 +271,7 @@ $[OnlineMon]$ -f {path_to_data_file}
 
 \begin{description}
 \ttitem{-f \param{path\_to\_data\_file}}
-requried
+required
 \end{description}
 
 \begin{figure}[htb]
@@ -289,8 +289,8 @@ and by using the Run Control (see \autoref{fig:RunControl}),
 According to the machine state \autoref{sec:fsm}, EUDAQ and all processes can be initialized, configured or re-configured, data taking (runs) can be started and stopped, and the software can be terminated.
 
 \begin{itemize}
-\item First, the appropriate initialisation file should be selected (see \autoref{sec:ConfigFiles} for creating and editing init-files). Then the \texttt{Init} button can be pressed,
-which will send a initialisation command to all connected processes.
+\item First, the appropriate initialization file should be selected (see \autoref{sec:ConfigFiles} for creating and editing init-files). Then the \texttt{Init} button can be pressed,
+which will send a initialization command to all connected processes.
 
 \item Second, the appropriate configuration should be selected 
 (see \autoref{sec:ConfigFiles} for creating and editing configurations),

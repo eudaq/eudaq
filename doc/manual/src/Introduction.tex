@@ -73,12 +73,12 @@ The general structure is outlined below:
   contains the core EUDAQ library with the parts that are common to most of the software,
   and several command-line programs that depend only on this library.
   All definitions in the library should be inside the \texttt{eudaq} namespace.
-  It is organised into the following subdirectories:
+  It is organized into the following subdirectories:
   \begin{myitemize}
   \item \texttt{main/lib/core}
     contains the source code of core library,
   \item \texttt{main/lib/lcio}
-    contains the source code of lcio extension library,
+    contains the source code of LCIO extension library,
   \item \texttt{main/lib/root}
     contains the source code of root extension library,
   \item \texttt{main/module}
@@ -93,16 +93,16 @@ The general structure is outlined below:
   distribution, for example:
   \begin{myitemize}
 \item \texttt{user/example}
-  contains example code for the intergration with user provides code.
+  contains example code for the integration with user provides code.
 \item \texttt{user/eudet}
   contains the parts that depend on the EUDET-type telescope.
 \item e.g. \texttt{user/calice}, \texttt{user/itkstrip}\ldots{}
   contain the code from third-party users.
   \end{myitemize}
 \item \texttt{extern}
-  global folder which contians external softwares which themselves are not part of EUDAQ project.
+  global folder which contains external software which themselves are not part of EUDAQ project.
 \item \texttt{cmake}
-  global folder which contians cmake files.
+  global folder which contains cmake files.
 \item \texttt{etc}
   contains configuration files of EUDAQ installation.
 \item \texttt{conf}
@@ -114,7 +114,7 @@ The general structure is outlined below:
 Each directory containing code has its own \texttt{src} and \texttt{include} subdirectories,
 as well as a local \texttt{CMakeLists.txt} and a optional \texttt{cmake} folder containing the rules
 for building that directory using \texttt{CMake}.
-Header files have a \texttt{.hh} extension so that they can be automatically recognised as C++,
+Header files have a \texttt{.hh} extension so that they can be automatically recognized as C++,
 and source files have either \texttt{.cc} for parts of libraries and \texttt{.cxx} for executables.
 In the case of any external dependencies are required, there could be a local \texttt{extern} folder
 
@@ -151,7 +151,7 @@ In \autoref{tab:exesall}, you will find an overview of the most important EUDAQ 
 
 
 \subsection{Libraries}
-The libraries are installed to \texttt{lib} sub-folder under install path in Linux/MacOS system, and to \texttt{bin} sub-folder in Windows system. The suffix of libraries name can be \texttt{.so}, \texttt{.dylib}, \texttt{.dll} depending on opterate systems. There are 3 category of libraries: core, extension and module. In \autoref{tab:liball}, you will find an overview of the all EUDAQ libraries.\\
+The libraries are installed to \texttt{lib} sub-folder under install path in Linux/MacOS system, and to \texttt{bin} sub-folder in Windows system. The suffix of libraries name can be \texttt{.so}, \texttt{.dylib}, \texttt{.dll} depending on operate systems. There are 3 category of libraries: core, extension and module. In \autoref{tab:liball}, you will find an overview of the all EUDAQ libraries.\\
 
 \begin{itemize}
 \item Core: the core library. It should be always build and installed.
