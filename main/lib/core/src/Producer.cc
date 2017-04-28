@@ -74,7 +74,7 @@ namespace eudaq {
 	}
       }
       GetInitConfiguration()->SetSection(cur_backup);
-      
+      SetStatusTag("EventN", std::to_string(m_evt_c));      
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     }catch (const std::exception &e) {
@@ -148,7 +148,6 @@ namespace eudaq {
     }
     ev->SetRunN(GetRunNumber());
     ev->SetEventN(m_evt_c);
-    SetStatusTag("EventN", std::to_string(m_evt_c));
     m_evt_c ++;
     ev->SetStreamN(m_pdc_n);
     EventSP evsp(std::move(ev));
@@ -158,5 +157,6 @@ namespace eudaq {
       else
 	EUDAQ_THROW("Producer::SendEvent, using a null pointer of DataSender");
     }
+    SetStatusTag("EventN", std::to_string(m_evt_c));
   }
 }

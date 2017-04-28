@@ -94,14 +94,10 @@ namespace eudaq {
           continue;
         if (line[0] == '[' && line[line.length() - 1] == ']') {
           line = std::string(line, 1, line.length() - 2);
-          // TODO: check name is alphanumeric?
-          // std::cerr << "Section " << line << std::endl;
 	  cur_sec = &config[line];
         }
       } else {
         std::string key = trim(std::string(line, 0, equals));
-        // TODO: check key does not already exist
-        // handle lines like: blah = "foo said ""bar""; ok." # not "baz"
         line = trim(std::string(line, equals + 1));
         if ((line[0] == '\'' && line[line.length() - 1] == '\'') ||
             (line[0] == '\"' && line[line.length() - 1] == '\"')) {
@@ -111,7 +107,6 @@ namespace eudaq {
           if (i != std::string::npos)
             line = trim(std::string(line, 0, i));
         }
-        // std::cerr << "Key " << key << " = " << line << std::endl;
         (*cur_sec)[key] = line;
       }
     }
@@ -121,6 +116,7 @@ namespace eudaq {
       SetSection(section);
     }
     else{
+      m_config[""] = config[""];//the un-named section is always copied.
       for(auto &e: config){
 	if(e.first == section){
 	  m_config[section] = e.second;
