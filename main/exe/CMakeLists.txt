@@ -4,10 +4,6 @@ if(NOT EUDAQ_BUILD_EXECUTABLE)
   return()
 endif()
 
-add_executable(Launcher src/Launcher.cxx)
-target_link_libraries(Launcher ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
-list(APPEND INSTALL_TARGETS Launcher)
-
 set(EXE_CLI_PRODUCER euCliProducer)
 add_executable(${EXE_CLI_PRODUCER} src/euCliProducer.cxx)
 target_link_libraries(${EXE_CLI_PRODUCER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})

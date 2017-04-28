@@ -179,6 +179,7 @@ namespace eudaq {
       
       ev->SetRunN(GetRunNumber());
       ev->SetEventN(m_evt_c);
+      SetStatusTag("EventN", std::to_string(m_evt_c));
       m_evt_c ++;
       ev->SetStreamN(m_dct_n);
       EventSP evsp(std::move(ev));

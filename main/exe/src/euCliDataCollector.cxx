@@ -21,7 +21,13 @@ int main(int /*argc*/, const char **argv) {
       std::cout<<"unknow DataCollector"<<std::endl;
       return -1;
     }
-    app->SetServerAddress(listen.Value());
+
+    uint16_t port = static_cast<uint16_t>(eudaq::str2hash(name.Value()+tname.Value()+rctrl.Value()));
+    std::string addr_listen = "tcp://"+std::to_string(port);
+    if(!listen.Value().empty()){
+      addr_listen = listen.Value();
+    }
+    app->SetServerAddress(addr_listen);
     app->Exec();
   }
   else{
