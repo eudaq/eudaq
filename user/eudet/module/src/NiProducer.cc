@@ -60,6 +60,8 @@ NiProducer::~NiProducer(){
 void NiProducer::DataLoop(){
   ni_control->Start();
   bool isbegin = true;
+  uint16_t tg_h16 = 0;
+  uint16_t last_tg_l16 = 0;
   while(1){
     if(!m_running){
       if(isbegin)
@@ -81,7 +83,17 @@ void NiProducer::DataLoop(){
     uint32_t datalength2 = ni_control->DataTransportClientSocket_ReadLength();
     std::vector<uint8_t> mimosa_data_1(datalength2);
     mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
-    
+
+    if(mimosa_data_0.size()>8){
+      uint16_t tg_l16 = mimosa_data_0[6] + (mimosa_data_0[7]<<8);
+      uint32_t tg_n = (tg_h16<<16) + tg_l16;
+      evup->SetTriggerN(tg_n);
+      if(tg_l16 < last_tg_l16){
+	tg_h16++;
+	EUDAQ_INFO("increase high 16bits of trigger number");
+      }
+      last_tg_l16 = tg_l16;
+    }
     evup->AddBlock(0, mimosa_data_0);
     evup->AddBlock(1, mimosa_data_1);
     if(isbegin){
