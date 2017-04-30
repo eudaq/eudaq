@@ -24,7 +24,7 @@ namespace eudaq {
     static inline std::string LastSockErrorString(const std::string & msg) {
       const size_t buflen = 79;
       char buf[buflen] = "";
-      strerror_r(errno, buf, buflen);
+      if(strerror_r(errno, buf, buflen));//work around warn_unused_result at GNU strerror_r
       return msg + ": " + buf;
     }
 

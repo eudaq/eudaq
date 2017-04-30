@@ -90,7 +90,7 @@ void Ex0Producer::DoReset(){
   if(m_thd_run.joinable())
     m_thd_run.join();
 
-  m_ifile = std::ifstream();
+  m_ifile.close();
   m_thd_run = std::thread();
   m_ms_busy = std::chrono::milliseconds();
   m_exit_of_run = false;

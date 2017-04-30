@@ -6,7 +6,14 @@ endif()
 get_filename_component(EUDAQ_COMPONENT ${CMAKE_CURRENT_LIST_DIR} NAME)
 set(EUDAQ_LCIO_LIBRARY ${EUDAQ_COMPONENT} CACHE INTERNAL "eudaq lcio library")
 
-option(EUDAQ_LIBRARY_BUILD_LCIO "build eudaq lib/lcio library" ON)
+find_package(Subversion)
+file(GLOB_RECURSE LCIO_CMAKE_CONFIG_FILE_FOUND
+  ${PROJECT_SOURCE_DIR}/extern/*/LCIOConfig.cmake)
+if(SUBVERSION_FOUND OR LCIO_CMAKE_CONFIG_FILE_FOUND)
+  set(SVN_OR_FOUND TRUE)
+endif()
+cmake_dependent_option(EUDAQ_LIBRARY_BUILD_LCIO "build eudaq lib/lcio library" ON
+  "SVN_OR_FOUND" OFF)
 
 if(NOT EUDAQ_LIBRARY_BUILD_LCIO)
   message("disable building of eudaq lib/lcio library (EUDAQ_LIBRARY_BUILD_LCIO=OFF)")
@@ -15,9 +22,6 @@ if(NOT EUDAQ_LIBRARY_BUILD_LCIO)
   unset(LCIO_LIBRARY_DIRS CACHE)
   return()
 endif()
-
-file(GLOB_RECURSE LCIO_CMAKE_CONFIG_FILE_FOUND
-  ${PROJECT_SOURCE_DIR}/extern/*/LCIOConfig.cmake)
 
 add_definitions("-DEUDAQ_CORE_EXPORTS")
 aux_source_directory(src EUDAQ_COMPONENT_SRC)

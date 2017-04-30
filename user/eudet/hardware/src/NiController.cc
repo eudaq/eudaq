@@ -90,7 +90,7 @@ void NiController::ConfigClientSocket_Open(const std::string& addr, uint16_t por
     printf("----TCP/NI crate: SOCKET is OK...\n");
 
   printf("----TCP/NI crate INET ADDRESS is: %s \n", inet_ntoa(config.sin_addr));
-  printf("----TCP/NI crate INET PORT is: %lu \n", port);
+  printf("----TCP/NI crate INET PORT is: %i \n", port);
 
   config.sin_family = AF_INET;
   config.sin_port = htons(port);
@@ -244,7 +244,7 @@ void NiController::DatatransportClientSocket_Open(const std::string& addr, uint1
 
   printf("----TCP/NI crate DATA TRANSPORT INET ADDRESS is: %s \n",
          inet_ntoa(datatransport.sin_addr));
-  printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %lu \n", port);
+  printf("----TCP/NI crate DATA TRANSPORT INET PORT is: %i \n", port);
 
   datatransport.sin_family = AF_INET;
   datatransport.sin_port = htons(port);
