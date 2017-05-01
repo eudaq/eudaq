@@ -13,10 +13,10 @@ typedef unsigned int uint;
  *  DATA_HEADER_BCID_MASK	0x000003FF
  */
 
-namespace eudaq {
+// namespace eudaq {
 
   template <uint dh_lv1id_msk, uint dh_bcid_msk> class ATLASFEI4Interpreter {
-  protected:
+  public:
     //-----------------
     // Data Header (dh)
     //-----------------
@@ -138,6 +138,6 @@ namespace eudaq {
 
   }; // class ATLASFEI4Interpreter
 
-} // namespace eudaq
+// } // namespace eudaq
 
 #endif // ATLASFE4IINTERPRETER_H
