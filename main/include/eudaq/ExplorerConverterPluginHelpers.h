@@ -1,3 +1,4 @@
+#pragma warning disable C4305, C4244
 #ifndef EXPLORER_CONVERTER_PLUGIN_HELPERS_H
 #define EXPLORER_CONVERTER_PLUGIN_HELPERS_H
 #if ROOT_FOUND
@@ -679,3 +680,4 @@ public:
 
 #endif
 #endif
+#pragma warning restore C4305, C4244
