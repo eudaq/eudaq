@@ -9,8 +9,13 @@ add_executable(${EXE_CLI_PRODUCER} src/euCliProducer.cxx)
 target_link_libraries(${EXE_CLI_PRODUCER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_PRODUCER})
 
-set(EXE_CLI_DATACOL euCliDataCollector)
+set(EXE_CLI_DATACOL euCliCollector)
 add_executable(${EXE_CLI_DATACOL} src/euCliDataCollector.cxx)
+target_link_libraries(${EXE_CLI_DATACOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_DATACOL})
+
+set(EXE_CLI_DATACOL euCliConverter)
+add_executable(${EXE_CLI_DATACOL} src/euCliConverter.cxx)
 target_link_libraries(${EXE_CLI_DATACOL} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_DATACOL})
 
