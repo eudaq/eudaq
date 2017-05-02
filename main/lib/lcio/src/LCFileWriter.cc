@@ -19,8 +19,6 @@ namespace eudaq {
   class LCFileWriter;
 
   namespace{
-    auto dummy0 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("lcio"));
-    auto dummy1 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("lcio"));
     auto dummy01 = Factory<FileWriter>::Register<LCFileWriter, std::string&>(cstr2hash("slcio"));
     auto dummy11 = Factory<FileWriter>::Register<LCFileWriter, std::string&&>(cstr2hash("slcio"));
   }

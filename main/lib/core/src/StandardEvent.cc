@@ -333,7 +333,6 @@ namespace eudaq {
     ser.write(m_planes);
   }
 
-
   void StandardEvent::Print(std::ostream & os, size_t offset) const
   {
     Event::Print(os,offset);

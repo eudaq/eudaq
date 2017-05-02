@@ -11,9 +11,6 @@ SET(EUDAQ_CORE_LIBRARY core)
 set(CMAKE_CXX_STANDARD 11)
 include(CMakeDependentOption)
 
-include_directories(main/lib/processors/include)
-include_directories(main/lib/eventsyncs/include)
-include_directories(main/lib/filerws/include)
 include_directories(main/lib/core/include)
 include_directories(main/lib/core/include/eudaq)
 

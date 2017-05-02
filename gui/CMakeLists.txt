@@ -94,10 +94,10 @@ set_property(TARGET euLog PROPERTY PROJECT_LABEL "BinEuLog")
 target_link_libraries(euLog ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
 list(APPEND INSTALL_TARGETS euLog)
 
-add_executable(euProd src/euProd.cxx src/euProd.rc)
-set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
-target_link_libraries(euProd ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
-list(APPEND INSTALL_TARGETS euProd)
+# add_executable(euProd src/euProd.cxx src/euProd.rc)
+# set_property(TARGET euProd PROPERTY PROJECT_LABEL "BinEuProd")
+# target_link_libraries(euProd ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
+# list(APPEND INSTALL_TARGETS euProd)
 
 install(TARGETS ${INSTALL_TARGETS}
   RUNTIME DESTINATION bin

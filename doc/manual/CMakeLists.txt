@@ -5,9 +5,8 @@
 # http://www.cmake.org/Wiki/CMakeUserUseLATEX
 # The code resides here:
 # https://github.com/kmorel/UseLATEX
-option(BUILD_manual "Generate user's manual as PDF? (requires LaTeX)?" OFF)
-IF(BUILD_manual)
-
+option(EUDAQ_BUILD_MANUAL "Generate user's manual as PDF? (requires LaTeX)?" OFF)
+IF(EUDAQ_BUILD_MANUAL)
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseLATEX.cmake)
 
   message(ERROR ${CMAKE_SOURCE_DIR})
@@ -62,4 +61,4 @@ IF(BUILD_manual)
   INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/EUDAQUserManual.pdf
     DESTINATION doc/manual)
 
-ENDIF(BUILD_manual)
+ENDIF()
