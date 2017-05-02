@@ -1,85 +1,55 @@
 #include "eudaq/Monitor.hh"
 #include "eudaq/Logger.hh"
-
-#define EUDAQ_MAX_EVENTS_PER_IDLE 1000
-
+#include "eudaq/TransportServer.hh"
+#include "eudaq/BufferSerializer.hh"
+#include "eudaq/Logger.hh"
+#include "eudaq/Utils.hh"
+#include <iostream>
+#include <ostream>
+#include <ctime>
+#include <iomanip>
 namespace eudaq {
-
-  Monitor::Monitor(const std::string &name, const std::string &runcontrol,
-                   const unsigned lim, const unsigned skip_,
-                   const unsigned int skip_evts, const std::string &datafile)
-      : CommandReceiver("Monitor", name, runcontrol),
-        m_callstart(false), m_reader(0), limit(lim), skip(100 - skip_),
-        skip_events_with_counter(skip_evts),m_done(false) {
-    if (datafile != ""){
-      m_reader = Factory<FileReader>::MakeShared(cstr2hash("raw"), datafile);
-      std::cout << "DEBUG: Reading file " << datafile << std::endl;
+  template class DLLEXPORT Factory<Monitor>;
+  template DLLEXPORT std::map<uint32_t, typename Factory<Monitor>::UP_BASE (*)
+			      (const std::string&, const std::string&)>&
+  Factory<Monitor>::Instance<const std::string&, const std::string&>(); //TODO
+  
+  Monitor::Monitor(const std::string &name, const std::string &runcontrol)
+    :CommandReceiver("Monitor", name, runcontrol){  
+    m_exit = false;
+  }
+  
+  void Monitor::OnInitialise(){    
+    auto conf = GetConfiguration();
+    try{
+      DoInitialise();
+      SetStatus(Status::STATE_UNCONF, "Initialized");
+    }catch (const Exception &e) {
+      std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::STATE_ERROR, msg);
     }
   }
-
-  bool Monitor::ProcessEvent() { //TODO:: Deal with BORE
-    if (!m_reader)
-      return false;
-    auto ev = m_reader->GetNextEvent();
-    if (!ev)
-      return false;
-    
-    unsigned evt_number = ev->GetEventNumber();
-    if (limit > 0 && evt_number > limit)
-      return true;
-
-    if (evt_number % 1000 == 0) {
-      std::cout << "ProcessEvent "
-                << ev->GetEventNumber()
-                << (ev->IsBORE()
-                        ? "B"
-                        : ev->IsEORE() ? "E" : "")
-                << std::endl;
-    }
-
-    if (skip > 0 && (evt_number % 100 >= skip)) { //-s functionality
-      return true;
-    } else if (skip_events_with_counter >
-               0) { //-sc functionality, you cant have both
-      if (++counter_for_skipping < skip_events_with_counter && evt_number > 0 &&
-          !ev->IsBORE() &&
-          !ev->IsEORE())
-        return true;
-      else
-        counter_for_skipping = 0;
-    }
-
+  
+  void Monitor::OnConfigure(){
+    auto conf = GetConfiguration();
     try {
-      OnEvent(ev);
-    } catch (const InterruptedException &) {
-      return false;
+      DoConfigure();
+      SetStatus(Status::STATE_CONF, "Configured");
+    }catch (const Exception &e) {
+      std::string msg = "Error when configuring by " + conf->Name() + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::STATE_ERROR, msg);
     }
-    return true;
   }
-
-  void Monitor::OnIdle() {
-    if (m_callstart) {
-      m_callstart = false;
-      OnStartRun();
-    }
-    bool processed = false;
-    for (int i = 0; i < EUDAQ_MAX_EVENTS_PER_IDLE; ++i) {
-      if (ProcessEvent()) {
-        processed = true;
-      } else {
-        break;
+    
+  void Monitor::OnStartRun(){
+    EUDAQ_INFO("Preparing for run " + std::to_string(GetRunNumber()));
+    try {
+      if (!m_dataserver) {
+        EUDAQ_THROW("You must configure before starting a run");
       }
-    }
-    if (!processed)
-      mSleep(1);
-  }
-
-  void Monitor::OnStartRun() {
-    try{  
-      uint32_t run = GetRunNumber();
-      std::cout << "run " << run << std::endl;
-      m_reader = Factory<FileReader>::MakeShared(str2hash("raw"), to_string(run));
-      EUDAQ_INFO("Starting run " + to_string(run));
+      DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     } catch (const Exception &e) {
       std::string msg = "Error preparing for run " + std::to_string(GetRunNumber()) + ": " + e.what();
@@ -88,9 +58,10 @@ namespace eudaq {
     }
   }
 
-  void Monitor::OnStopRun() {
-    try{  
-      // m_reader->Interrupt();
+  void Monitor::OnStopRun(){
+    EUDAQ_INFO("End of run ");
+    try {
+      DoStopRun();
       SetStatus(Status::STATE_CONF, "Stopped");
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
@@ -98,20 +69,119 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, msg);
     }
   }
-
-  void Monitor::Exec(){
-    // try {
-    //   while (!m_done){
-    // 	Process();
-    // 	//TODO: sleep here is needed.
-    //   }
-    // } catch (const std::exception &e) {
-    //   std::cout <<"Monitor::Exec() Error: Uncaught exception: " <<e.what() <<std::endl;
-    // } catch (...) {
-    //   std::cout <<"Monitor::Exec() Error: Uncaught unrecognised exception" <<std::endl;
-    // }
-
-    //TODO
+  
+  void Monitor::OnTerminate(){
+    std::cout << "Terminating" << std::endl;
+    CloseMonitor();
+    DoTerminate();
+    SetStatus(Status::STATE_UNINIT, "Terminated");
+  }
+    
+  void Monitor::OnStatus(){
+    // SetStatusTag("EventN", std::to_string(m_evt_c));
   }
   
+  void Monitor::DataHandler(TransportEvent &ev) {
+    auto con = ev.id;
+    switch (ev.etype) {
+    case (TransportEvent::CONNECT):
+      m_dataserver->SendPacket("OK EUDAQ DATA Monitor", *con, true);
+      break;
+    case (TransportEvent::DISCONNECT):
+      EUDAQ_INFO("Disconnected: " + to_string(*con));
+      break;
+    case (TransportEvent::RECEIVE):
+      if (con->GetState() == 0) { // waiting for identification
+        do {
+          size_t i0 = 0, i1 = ev.packet.find(' ');
+          if (i1 == std::string::npos)
+            break;
+          std::string part(ev.packet, i0, i1);
+          if (part != "OK")
+            break;
+          i0 = i1 + 1;
+          i1 = ev.packet.find(' ', i0);
+          if (i1 == std::string::npos)
+            break;
+          part = std::string(ev.packet, i0, i1 - i0);
+          if (part != "EUDAQ")
+            break;
+          i0 = i1 + 1;
+          i1 = ev.packet.find(' ', i0);
+          if (i1 == std::string::npos)
+            break;
+          part = std::string(ev.packet, i0, i1 - i0);
+          if (part != "DATA")
+            break;
+          i0 = i1 + 1;
+          i1 = ev.packet.find(' ', i0);
+          part = std::string(ev.packet, i0, i1 - i0);
+          con->SetType(part);
+          i0 = i1 + 1;
+          i1 = ev.packet.find(' ', i0);
+          part = std::string(ev.packet, i0, i1 - i0);
+          con->SetName(part);
+        } while (false);
+        m_dataserver->SendPacket("OK", *con, true);
+        con->SetState(1); // successfully identified
+	EUDAQ_INFO("Connection from " + to_string(*con));
+      } else{
+        BufferSerializer ser(ev.packet.begin(), ev.packet.end());
+	uint32_t id;
+	ser.PreRead(id);
+	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
+	DoReceive(std::move(event));
+      }
+      break;
+    default:
+      std::cout << "Unknown:    " << *con << std::endl;
+    }
+  }
+  
+  void Monitor::DataThread() {
+    try {
+      while (!m_exit) {
+        m_dataserver->Process(100000);
+      }
+    } catch (const std::exception &e) {
+      std::cout << "Error: Uncaught exception: " << e.what() << "\n"
+                << "DataThread is dying..." << std::endl;
+    } catch (...) {
+      std::cout << "Error: Uncaught unrecognised exception: \n"
+                << "DataThread is dying..." << std::endl;
+    }
+  }
+
+  void Monitor::StartMonitor(){
+    if(m_exit){
+      EUDAQ_THROW("Monitor can not be restarted after exit. (TODO)");
+    }
+    if(!m_data_addr.empty()){
+      m_data_addr = "tcp://";
+      uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
+      m_data_addr += to_string(port);
+    }
+    m_dataserver.reset(TransportServer::CreateServer(m_data_addr));
+    m_dataserver->SetCallback(TransportCallback(this, &Monitor::DataHandler));
+    m_thd_server = std::thread(&Monitor::DataThread, this);
+    std::cout << "###### listenaddress=" << m_dataserver->ConnectionString()
+	      << std::endl;
+    SetStatusTag("_SERVER", m_data_addr);
+  }
+
+  void Monitor::CloseMonitor(){
+    m_exit = true;
+    if(m_thd_server.joinable()){
+      m_thd_server.join();
+    } 
+  }
+  
+  void Monitor::Exec(){
+    StartMonitor();
+    StartCommandReceiver();
+    while(IsActiveCommandReceiver() || IsActiveMonitor()){
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+  }
 }
+

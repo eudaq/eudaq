@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
+
 // constructor, reserve some planes and initialize all variables
 SimpleStandardEvent::SimpleStandardEvent() {
   _planes.reserve(20);

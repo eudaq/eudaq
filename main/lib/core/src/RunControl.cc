@@ -58,7 +58,7 @@ namespace eudaq {
       std::string conn_type = conn->GetType();
       std::string conn_name = conn->GetName();
       std::string conn_addr = conn->GetRemote();
-      if(conn_type == "DataCollector" || conn_type == "LogCollector"){
+      if(conn_type == "DataCollector" || conn_type == "LogCollector" || conn_type == "Monitor"){
 	lk.lock();
 	std::string server_addr = m_conn_status[conn]->GetTag("_SERVER");
 	lk.unlock();
@@ -133,7 +133,7 @@ namespace eudaq {
     lk.unlock();
     
     for(auto &conn :conn_to_run){
-      if(conn->GetType() != "Producer"){
+      if(conn->GetType() != "Producer" && conn->GetType() != "DataCollector"){
 	SendCommand("START", to_string(m_run_n), conn);
 	while(1){
 	  int n = 0;
@@ -148,6 +148,23 @@ namespace eudaq {
       }
     }
 
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    for(auto &conn :conn_to_run){
+      if(conn->GetType() == "DataCollector"){
+	SendCommand("START", to_string(m_run_n), conn);
+	while(1){
+	  int n = 0;
+	  n++;
+	  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	  auto st = GetConnectionStatus(conn);
+	  if(st && st->GetState() == Status::STATE_RUNNING)
+	    break;
+	  if(n>30)
+	    EUDAQ_ERROR("Timesout waiting running status");
+	}
+      }
+    }
+    
     //TODO: make sure datacollector is started before producer. waiting
     std::this_thread::sleep_for(std::chrono::seconds(1));
     for(auto &conn :conn_to_run){
@@ -182,10 +199,18 @@ namespace eudaq {
 	SendCommand("STOP", "", conn);
       }
     }
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    for(auto &conn :conn_to_stop){
+      if(conn->GetType() == "DataCollector"){
+	SendCommand("STOP", "", conn);
+      }
+    }
+
     //TODO: make sure datacollector is stoped after producer. waiting. check status
     std::this_thread::sleep_for(std::chrono::seconds(1));
     for(auto &conn :conn_to_stop){
-      if(conn->GetType() != "Producer"){
+      if(conn->GetType() != "Producer" && conn->GetType() != "DataCollector"){
 	SendCommand("STOP", "", conn);
       }
     }

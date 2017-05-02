@@ -1,39 +1,69 @@
 #ifndef EUDAQ_INCLUDED_Monitor
 #define EUDAQ_INCLUDED_Monitor
 
-#include "eudaq/Event.hh"
+#include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/FileReader.hh"
-#include <string>
-#include <memory>
-namespace eudaq {
+#include "eudaq/Event.hh"
+#include "eudaq/Configuration.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Platform.hh"
+#include "eudaq/Factory.hh"
 
-  /**
-   * The base class from which all Monitors should inherit.
-   */
+#include <string>
+#include <vector>
+#include <list>
+#include <memory>
+#include <atomic>
+
+namespace eudaq {
+  class Monitor;
+  
+#ifndef EUDAQ_CORE_EXPORTS
+  extern template class DLLEXPORT Factory<Monitor>;
+  extern template DLLEXPORT std::map<uint32_t, typename Factory<Monitor>::UP_BASE (*)
+				     (const std::string&, const std::string&)>&
+  Factory<Monitor>::Instance<const std::string&, const std::string&>();
+#endif
+
   //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
   class DLLEXPORT Monitor : public CommandReceiver {
   public:
-    Monitor(const std::string &name, const std::string &runcontrol,
-            const unsigned lim, const unsigned skip_,
-            const unsigned int skip_evts, const std::string &datafile = "");
-    void OnIdle() override;
-    void OnStartRun() override;
-    void OnStopRun() override;
-    virtual void OnEvent(EventSPC /*ev*/) = 0;
+    Monitor(const std::string &name, const std::string &runcontrol);
+    void OnInitialise() override final;
+    void OnConfigure() override final;
+    void OnStartRun() override final;
+    void OnStopRun() override final;
+    void OnTerminate() override final;
+    void OnStatus() override final;
     void Exec() override;
 
-    bool ProcessEvent();
-  protected:
-    bool m_callstart;
-    bool m_done;
-    FileReaderSP m_reader;
-    unsigned limit;
-    unsigned skip;
-    unsigned int skip_events_with_counter;
-    unsigned int counter_for_skipping;
+    //running in commandreceiver thread
+    virtual void DoInitialise(){};
+    virtual void DoConfigure(){};
+    virtual void DoStartRun(){};
+    virtual void DoStopRun(){};
+    virtual void DoTerminate(){};
+
+    //running in dataserver thread
+    virtual void DoReceive(EventUP ev) = 0;
+    
+    void SetServerAddress(const std::string &addr){m_data_addr = addr;};
+    void StartMonitor();
+    void CloseMonitor();
+    bool IsActiveMonitor(){return m_thd_server.joinable();}
+  private:
+    void DataHandler(TransportEvent &ev);
+    void DataThread();
+
+  private:
+    std::thread m_thd_server;
+    bool m_exit;
+    std::unique_ptr<TransportServer> m_dataserver;
+    std::string m_data_addr;
   };
   //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
+
+
 
 #endif // EUDAQ_INCLUDED_Monitor

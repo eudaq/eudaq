@@ -46,10 +46,9 @@
 #include "eudaq/StandardEvent.hh"
 using namespace std;
 
-RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & datafile, int /*x*/, int /*y*/, int /*w*/,
-			 int /*h*/, int argc, int offline, const unsigned lim, const unsigned skip_, const unsigned int skip_with_counter,
-			 const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("OnlineMon", runcontrol, lim, skip_, skip_with_counter, datafile), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
+RootMonitor::RootMonitor(const std::string & runcontrol, int /*x*/, int /*y*/, int /*w*/,
+			 int /*h*/, int argc, int offline, const std::string & conffile)
+  : eudaq::Holder<int>(argc), eudaq::Monitor("RootStdEventMonitor", runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL) {
 
   if (_offline <= 0)
   {
@@ -108,46 +107,6 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string & dat
   // print the configuration
   mon_configdata.PrintConfiguration();
 
-  cout << "Datafile: " << datafile << endl;
-  if (datafile != "") {
-    cout << "Calling program from file" << endl;
-    size_t first = datafile.find_last_of("/")+1;
-    //extract filename
-    string filename=datafile.substr(first,datafile.length());
-    char out[1024] = "";
-    char num[1024] = "";
-
-    if (string::npos!=filename.find_last_of(".raw"))
-    {
-      filename.copy(num,filename.length()-filename.find_last_of(".raw"),0);
-    }
-    else
-    {
-      filename.copy(num,filename.length(),0);
-    }
-    filename=filename+".root";
-    filename.copy(out,filename.length(),0);
-    int n=atoi(num);
-
-
-    if (_offline <= 0)
-    {
-      onlinemon->setRunNumber(n);
-    }
-
-    cout << "ROOT output filename is: " << out << endl;
-    if (_offline <= 0)
-    {
-      onlinemon->setRootFileName(out);
-    }
-    rootfilename = out;
-    if (_offline > 0) {
-      _checkEOF.setCollections(_colls);
-      _checkEOF.setRootFileName(out);
-      _checkEOF.startChecking(10000);
-    }
-  }
-
   cout << "End of Constructor" << endl;
 
   //set a few defaults
@@ -171,8 +130,9 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
-void RootMonitor::OnEvent(eudaq::EventSPC evsp) {
-  auto &ev = *(dynamic_cast<const eudaq::StandardEvent*>(evsp.get()));
+void RootMonitor::DoReceive(eudaq::EventUP evup) {
+  //TODO: convert to StdEvent
+  auto &ev = *(dynamic_cast<const eudaq::StandardEvent*>(evup.get()));
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
@@ -184,7 +144,6 @@ void RootMonitor::OnEvent(eudaq::EventSPC evsp) {
   _checkEOF.EventReceived();
 
   //    cout << "Called onEvent " << ev.GetEventNumber()<< endl;
-
   //start timing to measure processing time
   my_event_processing_time.Start(true);
 
@@ -297,7 +256,6 @@ void RootMonitor::OnEvent(eudaq::EventSPC evsp) {
       }
       cout << i << " "<<plane.TLUEvent() << " "<< plane.PivotPixel() <<endl;
 #endif
-
 
       string sensorname;
       if ((plane.Type() == std::string("DEPFET")) &&(plane.Sensor().length()==0)) // FIXME ugly hack for the DEPFET
@@ -445,7 +403,7 @@ void RootMonitor::autoReset(const bool reset) {
 
 }
 
-void RootMonitor::OnStopRun()
+void RootMonitor::DoStopRun()
 {
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -461,10 +419,9 @@ void RootMonitor::OnStopRun()
     f->Close();
   }
   onlinemon->UpdateStatus("Run stopped");
-  SetStatus(eudaq::Status::STATE_CONF, "Stopped");
 }
 
-void RootMonitor::OnStartRun() {
+void RootMonitor::DoStartRun() {
   uint32_t param = GetRunNumber();
   while(_offline <= 0 && onlinemon==NULL){
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -480,7 +437,6 @@ void RootMonitor::OnStartRun() {
     }
   }
 
-  Monitor::OnStartRun();
   std::cout << "Called on start run" << param <<std::endl;
   onlinemon->UpdateStatus("Starting run..");
   char out[255];
@@ -495,7 +451,6 @@ void RootMonitor::OnStartRun() {
 
   // Reset the planes initializer on new run start:
   _planesInitialized = false;
-  SetStatus(eudaq::Status::STATE_RUNNING, "Started");
 }
 
 void RootMonitor::setUpdate(const unsigned int up) {
@@ -523,17 +478,11 @@ int main(int argc, const char ** argv) {
       "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> file (op, "f", "data-file", "", "filename",
-      "A data file to load - setting this changes the default"
-      " run control address to 'null://'");
   eudaq::Option<int>             x(op, "x", "left",    100, "pos");
   eudaq::Option<int>             y(op, "y", "top",       0, "pos");
   eudaq::Option<int>             w(op, "w", "width",  1400, "pos");
   eudaq::Option<int>             h(op, "g", "height",  700, "pos", "The initial position of the window");
   eudaq::Option<int>             reduce(op, "rd", "reduce",  1, "Reduce the number of events");
-  eudaq::Option<unsigned>        limit(op, "n", "limit", 0, "Event number limit for analysis");
-  eudaq::Option<unsigned>        skip_counter(op, "sc", "skip_count", 10, "Number of events to skip per every taken event");
-  eudaq::Option<unsigned>        skipping(op, "s", "skip", 0, "Percentage of events to skip");
   eudaq::Option<unsigned>        corr_width(op, "cw", "corr_width",500, "Width of the track correlation window");
   eudaq::Option<unsigned>        corr_planes(op, "cp", "corr_planes",  5, "Minimum amount of planes for track reconstruction in the correlation");
   eudaq::Option<bool>            track_corr(op, "tc", "track_correlation", false, "Using (EXPERIMENTAL) track correlation(true) or cluster correlation(false)");
@@ -546,7 +495,7 @@ int main(int argc, const char ** argv) {
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    if (file.IsSet() && !rctrl.IsSet()) rctrl.SetValue("null://");
+    if (!rctrl.IsSet()) rctrl.SetValue("null://");
     if (gROOT!=NULL)
     {
     //  gROOT->Reset();
@@ -570,12 +519,9 @@ int main(int argc, const char ** argv) {
       exit(-1);
     }
 
-    // start the GUI
-    //    cout<< "DEBUG: LIMIT VALUE " << (unsigned)limit.Value();
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
-    RootMonitor mon(rctrl.Value(), file.Value(), x.Value(), y.Value(),
-        w.Value(), h.Value(), argc, offline.Value(), limit.Value(),
-        skipping.Value(), skip_counter.Value(), configfile.Value());
+    RootMonitor mon(rctrl.Value(), x.Value(), y.Value(),
+        w.Value(), h.Value(), argc, offline.Value(), configfile.Value());
     mon.setWriteRoot(do_rootatend.IsSet());
     mon.autoReset(do_resetatend.IsSet());
     mon.setReduce(reduce.Value());
@@ -587,14 +533,10 @@ int main(int argc, const char ** argv) {
     cout <<"Monitor Settings:" <<endl;
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;
     cout <<"Reduce Events   :" <<reduce.Value() <<endl;
-    if (offline.Value() >0)
-    {
-      //cout <<"Offline Mode   :" <<"active" <<endl;
-      //cout <<"Events         :" <<offline.Value()<<endl;
-      cout <<"Offline Mode not supported"<<endl;
-      exit(-1);
-    }
+    //TODO: run cmd data thread
 
+    mon.StartMonitor();
+    mon.StartCommandReceiver();
     theApp.Run(); //execute
   } catch (...) {
     return op.HandleMainException();

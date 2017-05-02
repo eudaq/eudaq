@@ -71,9 +71,8 @@ protected:
   // bool _autoReset;
 
 public:
-  RootMonitor(const std::string &runcontrol, const std::string &datafile, int x,
-              int y, int w, int h, int argc, int offline, const unsigned lim,
-              const unsigned skip_, const unsigned int skip_with_counter,
+  RootMonitor(const std::string &runcontrol, int x,
+              int y, int w, int h, int argc, int offline,
               const std::string &conffile = "");
   ~RootMonitor() { gApplication->Terminate(); }
   void registerSensorInGUI(std::string name, int id);
@@ -82,32 +81,21 @@ public:
   EUDAQMonitorCollection *eudaqCollection;
   ParaMonitorCollection *paraCollection;
 
-  virtual void StartIdleing() {}
   OnlineMonWindow *getOnlineMon() { return onlinemon; }
 
-  virtual void OnConfigure() override{
+  void DoConfigure() override{
     auto &param = *GetConfiguration();
     std::cout << "Configure: " << param.Name() << std::endl;
-    SetStatus(eudaq::Status::STATE_CONF, "Configured");
   }
-  virtual void OnTerminate() override {
-    std::cout << "Terminating" << std::endl;
-    EUDAQ_SLEEP(1);
+  
+  void DoTerminate() override {
     gApplication->Terminate();
-  }
-  virtual void OnReset() override{
-    std::cout << "Reset" << std::endl;
-    SetStatus(eudaq::Status::STATE_UNINIT, "Reset");
-  }
-  virtual void OnStartRun() override;
-  virtual void OnEvent(eudaq::EventSPC) override;
+  }  
 
-  virtual void OnBadEvent(std::shared_ptr<eudaq::Event> ev) {
-    EUDAQ_ERROR("Bad event type found in data file");
-    // std::cout << "Bad Event: " << *ev << std::endl;
-  }
-
-  virtual void OnStopRun() override;
+  void DoStartRun() override;
+  void DoStopRun() override;
+  void DoReceive(eudaq::EventUP) override;
+  
   void setWriteRoot(const bool write) { _writeRoot = write; }
   void autoReset(const bool reset);
   void setReduce(const unsigned int red);

@@ -4,7 +4,7 @@ find_package(ROOT)
 cmake_dependent_option(EUDAQ_BUILD_ONLINE_MONITOR "build online monitor executable" ON
   "ROOT_FOUND" OFF)
 
-if(NOT BUILD_onlinemon)
+if(NOT EUDAQ_BUILD_ONLINE_MONITOR)
   message("Online monitor is not to be built")
   return()
 endif()
