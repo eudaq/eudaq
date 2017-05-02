@@ -30,18 +30,15 @@ class LogCollectorGUI:public QMainWindow,
 		      public eudaq::LogCollector {
   Q_OBJECT
 public:
-  LogCollectorGUI(const std::string &runcontrol,
-                  const std::string &listenaddress,
-		  const std::string &directory,
-		  int loglevel);
+  LogCollectorGUI(const std::string &name,
+                  const std::string &runcontrol);
   ~LogCollectorGUI();
   void Exec() override;
-protected:
-  void LoadFile(const std::string &filename);
+public:
+  void DoInitialise() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
-  void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(const eudaq::LogMessage &msg) override;
-  void DoTerminate() override;
+  void LoadFile(const std::string &filename);
   void AddSender(const std::string &type, const std::string &name = "");
   void closeEvent(QCloseEvent *) override;
 signals:
@@ -56,4 +53,5 @@ private:
   static void CheckRegistered();
   LogCollectorModel m_model;
   LogItemDelegate m_delegate;
+  std::ofstream m_os_file;
 };

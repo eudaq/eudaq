@@ -17,33 +17,30 @@ namespace eudaq {
   extern template class DLLEXPORT Factory<LogCollector>;
   extern template DLLEXPORT
   std::map<uint32_t, typename Factory<LogCollector>::UP_BASE (*)
-	   (const std::string&, const std::string&,
-	    const std::string&, const int&)>&
-  Factory<LogCollector>::Instance<const std::string&, const std::string&,
-				  const std::string&, const int&>();//TODO: check const int& 
+	   (const std::string&, const std::string&)>&
+  Factory<LogCollector>::Instance<const std::string&, const std::string&>();
 #endif
   
   class LogMessage;
 
-  /** Implements the functionality of the File Writer application.
-   *
-   */
   class DLLEXPORT LogCollector : public CommandReceiver {
   public:
-    LogCollector(const std::string &runcontrol,
-                 const std::string &listenaddress,
-		 const std::string & logdirectory);
+    LogCollector(const std::string &name, const std::string &runcontrol);
     ~LogCollector() override;
     
+    void OnInitialise() override final;
     void OnTerminate() override final;
     void OnLog(const std::string &param) override final{};
     void Exec() override;
 
-    virtual void DoTerminate() = 0;
+    virtual void DoInitialise(){};
+    virtual void DoTerminate(){};
+
     virtual void DoConnect(ConnectionSPC id) {}
     virtual void DoDisconnect(ConnectionSPC id) {}
     virtual void DoReceive(const LogMessage &msg) = 0;
 
+    void SetServerAddress(const std::string &addr){m_log_addr = addr;};
     void StartLogCollector();
     void CloseLogCollector();
     bool IsActiveLogCollector(){return m_thd_server.joinable();}
@@ -53,8 +50,6 @@ namespace eudaq {
     bool m_exit;
     std::unique_ptr<TransportServer> m_logserver; ///< Transport for receiving log messages
     std::thread m_thd_server;
-    std::string m_filename;
-    std::ofstream m_file;
     std::string m_log_addr;
   };
 }

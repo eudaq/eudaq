@@ -12,38 +12,35 @@ namespace eudaq {
   template class DLLEXPORT Factory<LogCollector>;
   template DLLEXPORT
   std::map<uint32_t, typename Factory<LogCollector>::UP_BASE (*)
-	   (const std::string&, const std::string&,
-	    const std::string&, const int&)>&
-  Factory<LogCollector>::Instance<const std::string&, const std::string&,
-				  const std::string&, const int&>();//TODO: check const int&
+	   (const std::string&, const std::string&)>&
+  Factory<LogCollector>::Instance<const std::string&, const std::string&>();
   
-  LogCollector::LogCollector(const std::string &runcontrol,
-                             const std::string &listenaddress,
-			     const std::string &logdirectory)
-      : CommandReceiver("LogCollector", "log", runcontrol), m_exit(false),
-	m_log_addr(listenaddress),
-        m_filename(logdirectory + "/" + Time::Current().Formatted("%Y-%m-%d.log")),
-        m_file(m_filename.c_str(), std::ios_base::app) {
-    if (!m_file.is_open())
-      EUDAQ_THROWX(FileWriteException, "Unable to open log file (" +
-		   m_filename + ") is there a logs directory?");
-    else std::cout << "LogCollector opened \"" << m_filename << "\" for logging." << std::endl;
-    std::ostringstream os;
-    os << "\n*** LogCollector started at " << Time::Current().Formatted()
-       << " ***" << std::endl;
-    m_file.write(os.str().c_str(), os.str().length());
+  LogCollector::LogCollector(const std::string &name, const std::string &runcontrol)
+    : CommandReceiver("LogCollector", name, runcontrol), m_exit(false){
   }
-
-  LogCollector::~LogCollector() {
-    m_file << "*** LogCollector stopped at " << Time::Current().Formatted()
-           << " ***" << std::endl;
+  
+  LogCollector::~LogCollector(){
     CloseLogCollector();
   }
 
+  void LogCollector::OnInitialise(){
+    auto conf = GetConfiguration();
+    try{
+      DoInitialise();
+      SetStatus(Status::STATE_UNCONF, "Initialized");
+    }catch (const Exception &e) {
+      std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
+      EUDAQ_ERROR(msg);
+      SetStatus(Status::STATE_ERROR, msg);
+    }
+  }
+
+  
   void LogCollector::OnTerminate(){
     CloseLogCollector();
     DoTerminate();
     SetStatus(Status::STATE_UNINIT, "Terminated");
+    std::exit(0);
   }
   
   void LogCollector::LogHandler(TransportEvent &ev) {
@@ -53,7 +50,6 @@ namespace eudaq {
       m_logserver->SendPacket("OK EUDAQ LOG LogCollector", *con, true);
       break;
     case (TransportEvent::DISCONNECT):
-      // std::cout << "Disconnect: " << ev.id << std::endl;
       DoDisconnect(con);
       break;
     case (TransportEvent::RECEIVE):
@@ -102,8 +98,8 @@ namespace eudaq {
 	LogMessage logmesg(ser);
 	logmesg.SetSender(src);
 	logmesg.Write(buf);
-	m_file.write(buf.str().c_str(), buf.str().length());
-	m_file.flush();
+	// m_file.write(buf.str().c_str(), buf.str().length());
+	// m_file.flush();
 	DoReceive(logmesg);
       }
       break;
@@ -134,10 +130,10 @@ namespace eudaq {
     }
     m_logserver.reset(TransportServer::CreateServer(m_log_addr)),
     m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
+    
     m_thd_server = std::thread(&LogCollector::LogThread, this);
     std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
-              << std::endl
-              << "       logfile=" << m_filename << std::endl;
+              << std::endl;
     SetStatusTag("_SERVER", m_log_addr);
   }
 

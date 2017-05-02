@@ -1,16 +1,15 @@
 #include <QApplication>
 #include <QMessageBox>
+#include "eudaq/FileNamer.hh"
 #include "euLog.hh"
 #include "Colours.hh"
 
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::LogCollector>::
-    Register<LogCollectorGUI, const std::string&, const std::string&,
-	     const std::string&, const int&>(eudaq::cstr2hash("LogCollectorGUI"));
+    Register<LogCollectorGUI, const std::string&, const std::string&>(eudaq::cstr2hash("LogCollectorGUI"));
   auto dummy1 = eudaq::Factory<eudaq::LogCollector>::
-    Register<LogCollectorGUI, const std::string&, const std::string&,
-	     const std::string&, const int&>(eudaq::cstr2hash("GuiLogCollector"));
+    Register<LogCollectorGUI, const std::string&, const std::string&>(eudaq::cstr2hash("GuiLogCollector"));
 }
 
 LogItemDelegate::LogItemDelegate(LogCollectorModel *model) : m_model(model) {}
@@ -23,12 +22,10 @@ void LogItemDelegate::paint(QPainter *painter,
   QItemDelegate::paint(painter, option, index);
 }
 
-LogCollectorGUI::LogCollectorGUI(const std::string &runcontrol,
-				 const std::string &listenaddress,
-				 const std::string &directory,
-				 int loglevel)
+LogCollectorGUI::LogCollectorGUI(const std::string &name,
+				 const std::string &runcontrol)
   : QMainWindow(0, 0),
-    eudaq::LogCollector(runcontrol, listenaddress, directory), m_delegate(&m_model) {
+    eudaq::LogCollector(name, runcontrol), m_delegate(&m_model) {
   setupUi(this);
   std::string filename;
   viewLog->setModel(&m_model);
@@ -47,7 +44,7 @@ LogCollectorGUI::LogCollectorGUI(const std::string &runcontrol,
     cmbLevel->addItem(text.c_str());
     level++;
   }
-  cmbLevel->setCurrentIndex(loglevel);
+  cmbLevel->setCurrentIndex(0);//loglevel
   QRect geom(-1,-1, 100, 100);
   QRect geom_from_last_program_run;
   QSettings settings("EUDAQ collaboration", "EUDAQ");
@@ -103,24 +100,38 @@ void LogCollectorGUI::LoadFile(const std::string &filename) {
   }
 }
 
-void LogCollectorGUI::DoConnect(std::shared_ptr<const eudaq::ConnectionInfo> id){
+void LogCollectorGUI::DoInitialise(){
+  auto ini = GetInitConfiguration();
+  std::string file_pattern = "euLog$12D$.log";
+  if(ini){
+    file_pattern = ini->Get("FILE_PATTERN", file_pattern);
+  }
+  std::time_t time_now = std::time(nullptr);
+  char time_buff[13];
+  time_buff[12] = 0;
+  std::strftime(time_buff, sizeof(time_buff),
+		"%y%m%d%H%M%S", std::localtime(&time_now));
+  std::string start_time(time_buff);
+  m_os_file.open(std::string(eudaq::FileNamer(file_pattern).Set('D', start_time)).c_str(),
+		 std::ios_base::app);
+  std::stringstream ss;
+  ss << "\n*** LogCollector started at "<< time_now<< " ***\n";
+  m_os_file<<ss.str();
+}
+
+
+void LogCollectorGUI::DoConnect(eudaq::ConnectionSPC id){
   eudaq::mSleep(100);
   CheckRegistered();
   EUDAQ_INFO("Connection from " + to_string(id));
   AddSender(id->GetType(), id->GetName());
 }
 
-void LogCollectorGUI::DoDisconnect(std::shared_ptr<const eudaq::ConnectionInfo> id){
-  EUDAQ_INFO("Disconnected " + to_string(*id));
-}
-
 void LogCollectorGUI::DoReceive(const eudaq::LogMessage &msg){
   CheckRegistered();
+  if(m_os_file.is_open())
+    m_os_file << msg << std::endl;
   emit RecMessage(msg);
-}
-void LogCollectorGUI::DoTerminate(){
-  std::cout << "terminating!" << std::endl;
-  QApplication::quit();
 }
 
 void LogCollectorGUI::closeEvent(QCloseEvent *) {
