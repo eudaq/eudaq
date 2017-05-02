@@ -291,8 +291,7 @@ namespace eudaq {
       auto plane = tmp_evt.GetPlane(0);
 
       // set the proper cell encoder
-      auto zsDataEncoder = CellIDEncoder<TrackerDataImpl>(
-          eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+      CellIDEncoder<TrackerDataImpl> zsDataEncoder (eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
       zsDataEncoder["sensorID"] = 8;
       zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 

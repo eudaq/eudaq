@@ -53,8 +53,7 @@ namespace eudaq {
     LCCollectionVec *zsDataCollection = nullptr;
     auto zsDataCollectionExists = Collection_createIfNotExist(
         &zsDataCollection, result, LCIO_collection_name_TTC);
-    auto zsDataEncoder = CellIDEncoder<TrackerDataImpl>(
-        eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+    CellIDEncoder<TrackerDataImpl> zsDataEncoder (eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
     zsDataEncoder["sensorID"] = ID;
     zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 
@@ -240,8 +239,7 @@ namespace eudaq {
       size_t nplanes = tmp_evt.NumPlanes();
       for(size_t n =0; n<nplanes; n++){
 	auto plane = tmp_evt.GetPlane(n);
-	auto zsDataEncoder = CellIDEncoder<TrackerDataImpl>
-	  (eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
+	CellIDEncoder<TrackerDataImpl> zsDataEncoder (eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection);
 	zsDataEncoder["sensorID"] = plane.ID() + PLANE_ID_OFFSET_ABC;
 	zsDataEncoder["sparsePixelType"] = eutelescope::kEUTelGenericSparsePixel;
 	auto zsFrame = std::unique_ptr<lcio::TrackerDataImpl>(new lcio::TrackerDataImpl());
