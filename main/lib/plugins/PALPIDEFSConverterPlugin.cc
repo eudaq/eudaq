@@ -172,8 +172,9 @@ namespace eudaq {
 #endif
 
 
-
+#pragma warning disable C4101
       char tmp[100];
+#pragma warning restore C4101
 #ifdef EVENT_DISPLAY
       snprintf(tmp, 100, "run%06d-eventList.txt", bore.GetRunNumber());
       m_file_event_list.open(tmp, std::ifstream::in);
