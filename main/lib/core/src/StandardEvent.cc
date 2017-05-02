@@ -1,5 +1,8 @@
-#include "StandardEvent.hh"
-#include "Exception.hh"
+#include "eudaq/StandardEvent.hh"
+#include "eudaq/Exception.hh"
+
+#include <memory>
+
 
 namespace eudaq {
 
@@ -312,9 +315,14 @@ namespace eudaq {
   template std::vector<int> StandardPlane::GetPixels<>() const;
   template std::vector<double> StandardPlane::GetPixels<>() const;
 
+  StdEventSP StandardEvent::MakeShared(){
+    auto ev = Factory<Event>::MakeShared(m_id_factory);
+    return std::dynamic_pointer_cast<StandardEvent>(ev);
+  }
+  
   StandardEvent::StandardEvent(){
     SetType(m_id_factory);
-  };
+  }
   
   StandardEvent::StandardEvent(Deserializer &ds) : Event(ds) {
     ds.read(m_planes);

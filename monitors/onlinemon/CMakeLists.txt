@@ -1,11 +1,11 @@
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT)
 
-cmake_dependent_option(EUDAQ_BUILD_ONLINE_MONITOR "build online monitor executable" ON
+cmake_dependent_option(EUDAQ_BUILD_STDEVENT_MONITOR "build StdEvent monitor executable" ON
   "ROOT_FOUND" OFF)
 
-if(NOT EUDAQ_BUILD_ONLINE_MONITOR)
-  message("Online monitor is not to be built")
+if(NOT EUDAQ_BUILD_STDEVENT_MONITOR)
+  message("StdEvent monitor is not to be built")
   return()
 endif()
 
@@ -29,20 +29,20 @@ if(ROOT_VERSION_MAJOR GREATER 5)
   add_definitions(-DEUDAQ_LIB_ROOT6)
 endif()
 
-set(ONLINEMON OnlineMon)
+set(THISMON StdEventMonitor)
 
-set(ONLINEMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/OnlineMon_ROOT.cxx)
-root_generate_dictionary(OnlineMon_ROOT include/OnlineMonWindow.hh include/CheckEOF.hh)
+set(THISMON_DICT_CXX ${CMAKE_CURRENT_BINARY_DIR}/${THISMON}_ROOT.cxx)
+root_generate_dictionary(${THISMON}_ROOT include/OnlineMonWindow.hh include/CheckEOF.hh)
 
-aux_source_directory(src ONLINEMON_SRC)
-add_executable(${ONLINEMON} ${ONLINEMON_SRC} ${ONLINEMON_DICT_CXX})
+aux_source_directory(src THISMON_SRC)
+add_executable(${THISMON} ${THISMON_SRC} ${THISMON_DICT_CXX})
 
 if(CMAKE_COMPILER_IS_GNUCC AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0))
-  set_property(TARGET ${ONLINEMON} PROPERTY CXX_STANDARD 14)
+  set_property(TARGET ${THISMON} PROPERTY CXX_STANDARD 14)
 endif()
-target_link_libraries(${ONLINEMON} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
+target_link_libraries(${THISMON} ${EUDAQ_CORE_LIBRARY} ${ROOT_LIBRARIES})
 
-install(TARGETS ${ONLINEMON}
+install(TARGETS ${THISMON}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)

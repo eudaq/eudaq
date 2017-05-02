@@ -71,8 +71,8 @@ protected:
   // bool _autoReset;
 
 public:
-  RootMonitor(const std::string &runcontrol, int x,
-              int y, int w, int h, int argc, int offline,
+  RootMonitor(const std::string &runcontrol, const std::string &addr_listen, 
+	      int x, int y, int w, int h, int argc, int offline,
               const std::string &conffile = "");
   ~RootMonitor() { gApplication->Terminate(); }
   void registerSensorInGUI(std::string name, int id);
