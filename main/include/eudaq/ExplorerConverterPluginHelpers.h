@@ -1,4 +1,3 @@
-#pragma warning disable C4305, C4244
 #ifndef EXPLORER_CONVERTER_PLUGIN_HELPERS_H
 #define EXPLORER_CONVERTER_PLUGIN_HELPERS_H
 #if ROOT_FOUND
@@ -49,7 +48,7 @@ const int Ex1Prop::w[] = {90, 60};
 const int Ex1Prop::p[] = {20, 30};
 const int Ex1Prop::n_pitch = sizeof(Ex1Prop::p) / sizeof(int);
 const float Ex1Prop::meas_offset =
-    1.8 / 2.; // circuit on proximity leads to a divided by 2
+    static_cast<float>(1.8 / 2.); // circuit on proximity leads to a divided by 2
 
 //-------------------------------------------------------------------------------------------------
 Float_t ADC_counts_to_V(Float_t val, Bool_t apply_offset = kTRUE) {
@@ -369,7 +368,7 @@ gain_fit_result *do_gain_fits(TGraphErrors *g, Float_t v_rst = 0.8,
   result->off_qf = f_quad->GetParameter(0);
   result->eff_qf = f_quad->GetParError(0);
   result->ndf_qf = f_quad->GetNDF();
-  result->chi2_qf = f_quad->GetChisquare();
+  result->chi2_qf = static_cast<Float_t>(f_quad->GetChisquare());
 
   f_cube->SetParameters(f_quad->GetParameter(0), f_quad->GetParameter(1),
                         f_quad->GetParameter(2), 0);
@@ -581,7 +580,7 @@ public:
     fMapsAreLoaded = false;
   };
   void SetVbb(float vbb) {
-    fVbb = vbb - 0.01;
+    fVbb = static_cast<float>(vbb - 0.01);
     fMapsAreLoaded = false;
   }; // nasty trick to achieve -0.0
   void SetVrstRef(float vrr) {
@@ -616,12 +615,12 @@ public:
       std::cerr << "column index out of bounds" << std::endl;
       return -1;
     }
-    fOffset = fOffsetMap->GetBinContent(i_col + 1, i_row + 1);
-    fGain = fGainMap->GetBinContent(i_col + 1, i_row + 1);
-    fGain2 = fGain2Map->GetBinContent(i_col + 1, i_row + 1);
-    fGain3 = fGain3Map->GetBinContent(i_col + 1, i_row + 1);
-    fEffVrst = fEffVresetMap->GetBinContent(i_col + 1, i_row + 1);
-    fVrstNPROut = fVresetNPROutMap->GetBinContent(i_col + 1, i_row + 1);
+    fOffset = static_cast<float>(fOffsetMap->GetBinContent(i_col + 1, i_row + 1));
+    fGain = static_cast<float>(fGainMap->GetBinContent(i_col + 1, i_row + 1));
+    fGain2 =static_cast<float>( fGain2Map->GetBinContent(i_col + 1, i_row + 1));
+    fGain3 = static_cast<float>(fGain3Map->GetBinContent(i_col + 1, i_row + 1));
+    fEffVrst = static_cast<float>(fEffVresetMap->GetBinContent(i_col + 1, i_row + 1));
+    fVrstNPROut = static_cast<float>(fVresetNPROutMap->GetBinContent(i_col + 1, i_row + 1));
 
     // woOffset assumes the value to be relative to the currently selected
     // memory
@@ -668,11 +667,11 @@ public:
     //         fGain3*(value-fVrstNPROut+0.5*fVsig)*(value-fVrstNPROut+0.5*fVsig)*(value-fVrstNPROut+0.5*fVsig);
 
     // cubic fit
-    Float_t vref = fVrstNPROut + 0.01 - fVsig / 2;
+    Float_t vref = static_cast<Float_t>(fVrstNPROut + 0.01 - fVsig / 2);
     fFit->SetParameters(fOffset, fGain, fGain2, fGain3, vref);
     value = (woOffset)
                 ? fFit->Eval(fVrstNPROut) - fFit->Eval(fVrstNPROut - value)
-                : fFit->Eval(value);
+                : fFit->Eval(static_cast<float>(value));
 
     return V_to_ADC_counts(value, !woOffset);
   }
@@ -680,4 +679,3 @@ public:
 
 #endif
 #endif
-#pragma warning restore C4305, C4244
