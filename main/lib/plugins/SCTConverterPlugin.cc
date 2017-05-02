@@ -153,7 +153,7 @@ namespace eudaq {
       
       std::vector<std::string> paralist = raw->GetTagList("PLOT_");
       for(auto &e: paralist){
-	double val ;
+	double val = -1;
 	val=raw->GetTag(e, val);
 	sev.SetTag(e,val);
       }
