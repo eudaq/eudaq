@@ -1,5 +1,4 @@
 #include "eudaq/Producer.hh"
-#include "eudaq/RawDataEvent.hh"
 #include <iostream>
 #include <ratio>
 #include <chrono>

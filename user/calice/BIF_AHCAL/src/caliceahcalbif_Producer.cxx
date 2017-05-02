@@ -1,6 +1,6 @@
 #include "eudaq/Producer.hh"
+#include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
-#include "eudaq/RawDataEvent.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/OptionParser.hh"
 #include "tlu/caliceahcalbifController.hh"
@@ -708,9 +708,9 @@ void caliceahcalbifProducer::trigger_push_back(std::vector<uint32_t> &cycleData,
 
 void caliceahcalbifProducer::buildEudaqEventsROC(std::deque<eudaq::EventUP>& deqEvent) {
    //complete readout cycle treated as single event
-   auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+   auto ev = eudaq::Event::MakeUnique("CaliceObject");
    std::string s = "EUDAQDataBIF";
-   auto CycleEvent = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
+   auto CycleEvent = dynamic_cast<eudaq::RawEvent*>(ev.get());
    CycleEvent->AddBlock(0, s.c_str(), s.length());
    s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
    CycleEvent->AddBlock(1, s.c_str(), s.length());
@@ -762,10 +762,10 @@ void caliceahcalbifProducer::buildEudaqEventsTriggers(std::deque<eudaq::EventUP>
    //std::cout << "." << std::flush;
    //make new event for every trigger
    for (auto trigger : trigger_packets) {
-      auto ev = eudaq::RawDataEvent::MakeUnique("CaliceObject");
+      auto ev = eudaq::Event::MakeUnique("CaliceObject");
       ev->SetTag("ROCStartTS", _acq_start_ts);
       std::string s = "EUDAQDataBIF";
-      auto CycleEvent = dynamic_cast<eudaq::RawDataEvent*>(ev.get());
+      auto CycleEvent = dynamic_cast<eudaq::RawEvent*>(ev.get());
       CycleEvent->AddBlock(0, s.c_str(), s.length());
       s = "i:Type,i:EventCnt,i:TS_Low,i:TS_High";
       CycleEvent->AddBlock(1, s.c_str(), s.length());

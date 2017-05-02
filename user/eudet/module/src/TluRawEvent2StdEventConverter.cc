@@ -1,10 +1,10 @@
 #include "eudaq/StdEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 
 class TluRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("TluRawDataEvent");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("TluRawEvent");
 };
 
 namespace{

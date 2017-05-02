@@ -10,8 +10,6 @@
 #include <thread>
 #include <mutex>
 
-#include "eudaq/RawDataEvent.hh"
-
 namespace eudaq {
 
    class AHCALProducer;

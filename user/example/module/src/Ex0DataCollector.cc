@@ -1,5 +1,5 @@
 #include "eudaq/DataCollector.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Event.hh"
 #include <mutex>
 #include <deque>
 #include <map>

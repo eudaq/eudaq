@@ -1,5 +1,5 @@
 #include "eudaq/DataCollector.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Event.hh"
 #include <mutex>
 #include <deque>
 #include <map>
@@ -121,7 +121,7 @@ namespace eudaq {
     while(ready_c == m_event_ready.size()){
       uint64_t ts_next_end = -1;
       uint64_t ts_next_beg = ts_next_end - 1;
-      auto ev_wrap = RawDataEvent::MakeUnique(GetFullName());
+      auto ev_wrap = Event::MakeUnique(GetFullName());
       ev_wrap->SetFlagPacket();
       ev_wrap->SetTimestamp(m_ts_curr_beg, m_ts_curr_end);
       for(auto &que :m_que_event){

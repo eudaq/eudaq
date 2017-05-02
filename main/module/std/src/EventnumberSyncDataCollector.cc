@@ -1,5 +1,5 @@
 #include "eudaq/DataCollector.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/Event.hh"
 
 #include <deque>
 #include <map>
@@ -60,7 +60,7 @@ namespace eudaq {
 	n++;
     }
     if(n==m_que_event.size()){
-      auto ev_wrap = RawDataEvent::MakeUnique(GetFullName());
+      auto ev_wrap = Event::MakeUnique(GetFullName());
       ev_wrap->SetFlagPacket();
       uint32_t ev_c = m_que_event.begin()->second.front()->GetEventN();
       bool match = true;

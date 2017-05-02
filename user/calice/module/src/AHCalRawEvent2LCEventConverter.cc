@@ -1,5 +1,5 @@
 #include "eudaq/LCEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
 

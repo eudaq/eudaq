@@ -2,6 +2,8 @@
 #define SCREADER_HH
 
 #include "AHCALProducer.hh"
+#include "eudaq/RawEvent.hh"
+
 #include <deque>
 
 namespace eudaq {
@@ -14,10 +16,10 @@ namespace eudaq {
          virtual void OnConfigLED(std::string _fname) override; //chose configuration file for LED runs
          virtual void buildEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll) override;
 
-         virtual std::deque<eudaq::RawDataEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawDataEvent *> deqEvent, bool tempcome, int LdaRawcycle, bool newForced);
+         virtual std::deque<eudaq::RawEvent *> NewEvent_createRawDataEvent(std::deque<eudaq::RawEvent *> deqEvent, bool tempcome, int LdaRawcycle, bool newForced);
          virtual void readTemperature(std::deque<char>& buf);
 
-         void appendOtherInfo(eudaq::RawDataEvent * ev);
+         void appendOtherInfo(eudaq::RawEvent * ev);
 
          ScReader(AHCALProducer *r); //:
 //               AHCALReader(r),
@@ -87,7 +89,7 @@ namespace eudaq {
          void buildBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
          void buildValidatedBXIDEvents(std::deque<eudaq::EventUP> &EventQueue, bool dumpAll);
          void insertDummyEvent(std::deque<eudaq::EventUP> &EventQueue, int eventNumber, int triggerid, bool triggeridFlag);
-         void prepareEudaqRawPacket(eudaq::RawDataEvent * ev);
+         void prepareEudaqRawPacket(eudaq::RawEvent * ev);
 
          static const unsigned char C_TSTYPE_START_ACQ = 0x01;
          static const unsigned char C_TSTYPE_STOP_ACQ = 0x02;

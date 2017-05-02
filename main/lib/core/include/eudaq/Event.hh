@@ -43,7 +43,6 @@ namespace eudaq {
     };
 
     Event();
-    Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n);
     Event(Deserializer & ds);
     virtual void Serialize(Serializer &) const;    
     virtual void Print(std::ostream & os, size_t offset = 0) const;

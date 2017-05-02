@@ -1,5 +1,5 @@
 #include "eudaq/StdEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 
 class Ex0RawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
@@ -13,7 +13,7 @@ namespace{
 }
 
 bool Ex0RawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const{
-  auto ev = std::dynamic_pointer_cast<const eudaq::RawDataEvent>(d1);
+  auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   size_t nblocks= ev->NumBlocks();
   auto block_n_list = ev->GetBlockNumList();
   for(auto &block_n: block_n_list){

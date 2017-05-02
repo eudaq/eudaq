@@ -136,8 +136,7 @@ namespace eudaq {
 
   class DLLEXPORT StandardEvent : public Event {
     public:
-    StandardEvent(unsigned run = 0, unsigned evnum = 0,
-		  uint64_t timestamp = -1);
+    StandardEvent();
     StandardEvent(Deserializer &);
 
     StandardPlane &AddPlane(const StandardPlane &);

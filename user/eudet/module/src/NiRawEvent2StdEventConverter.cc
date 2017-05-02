@@ -1,6 +1,6 @@
 #define NOMINMAX
 #include "eudaq/StdEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
 #define PIVOTPIXELOFFSET 64
@@ -11,7 +11,7 @@ public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
   void DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
 		   const uint8_t *const d, const size_t l32) const;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawEvent");
 };
   
 namespace{
@@ -23,7 +23,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
   static const uint32_t m_boards = 6;
   static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
   //TODO: number of telescope plane may be less than 6. Decode additional tags 
-  auto ev = std::dynamic_pointer_cast<const eudaq::RawDataEvent>(d1);
+  auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   if(!ev)
     return false;
 

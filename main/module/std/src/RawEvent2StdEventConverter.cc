@@ -1,12 +1,12 @@
 #include "eudaq/StdEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 
 namespace eudaq{
 
   class RawEvent2StdEventConverter: public StdEventConverter{
   public:
     bool Converting(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf) const override;
-    static const uint32_t m_id_factory = cstr2hash("RawDataEvent");
+    static const uint32_t m_id_factory = cstr2hash("RawEvent");
   };
 
   namespace{
@@ -15,9 +15,9 @@ namespace eudaq{
   }
   
   bool RawEvent2StdEventConverter::Converting(EventSPC d1, StandardEventSP d2, ConfigurationSPC conf) const {
-    auto ev = std::dynamic_pointer_cast<const RawDataEvent>(d1);
+    auto ev = std::dynamic_pointer_cast<const RawEvent>(d1);
     if(!ev){
-      EUDAQ_ERROR("ERROR, the input event is not RawDataEvent");
+      EUDAQ_ERROR("ERROR, the input event is not RawEvent");
       return false;
     }
 
@@ -28,7 +28,7 @@ namespace eudaq{
       return true;
     }
     else{
-      EUDAQ_WARN("WARNING, no StdEventConverter for RawDataEvent with ExtendWord("
+      EUDAQ_WARN("WARNING, no StdEventConverter for RawEvent with ExtendWord("
 		 + std::to_string(id)+ ") and Description("+ ev->GetDescription()+ ")");
       return false;
     }

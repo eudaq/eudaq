@@ -1,5 +1,5 @@
 #include "eudaq/LCEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Logger.hh"
 
@@ -67,8 +67,8 @@ Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigurationSPC conf
   lcio::CellIDEncoder<lcio::TrackerDataImpl> zsDataEncoder("sensorID:7,sparsePixelType:5", zsDataCollection);
   //( eutelescope::EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection  )
 
-  //this is an event as we sent from Producer, needs to be converted to concrete type RawDataEvent
-  auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawDataEvent>(d1);
+  //this is an event as we sent from Producer, needs to be converted to concrete type RawEvent
+  auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
 
   auto block_n_list = ev_raw->GetBlockNumList();
   for(auto &chip: block_n_list){

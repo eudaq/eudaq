@@ -6,7 +6,6 @@
 #include "eudaq/Platform.hh"
 #include "eudaq/Factory.hh"
 #include "eudaq/Event.hh"
-#include "eudaq/RawDataEvent.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 

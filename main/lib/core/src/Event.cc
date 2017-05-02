@@ -13,8 +13,8 @@ namespace eudaq {
   Factory<Event>::Instance<>();
 
   EventUP Event::MakeUnique(const std::string& dspt){
-    EventUP ev = Factory<Event>::MakeUnique<>(cstr2hash("RawDataEvent"));
-    ev->SetType(cstr2hash("RawDataEvent"));
+    EventUP ev = Factory<Event>::MakeUnique<>(cstr2hash("RawEvent"));
+    ev->SetType(cstr2hash("RawEvent"));
     ev->SetExtendWord(eudaq::str2hash(dspt));
     ev->SetDescription(dspt);
     return ev;
@@ -29,10 +29,6 @@ namespace eudaq {
     :m_type(0), m_version(2), m_flags(0), m_stm_n(0), m_run_n(0), m_ev_n(0), m_tg_n(0), m_extend(0), m_ts_begin(0), m_ts_end(0){
   }  
   
-  Event::Event(const uint32_t type, const uint32_t run_n, const uint32_t stm_n)
-    :m_type(type), m_version(2), m_flags(0), m_stm_n(stm_n), m_run_n(run_n), m_ev_n(0), m_tg_n(0), m_extend(0), m_ts_begin(0), m_ts_end(0){  
-  }
-
   Event::Event(Deserializer & ds) {
     ds.read(m_type);
     ds.read(m_version);

@@ -1,5 +1,5 @@
 #include "eudaq/StdEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 #include "eudaq/Logger.hh"
 
 #include "ATLASFE4IInterpreter.hh"
@@ -51,7 +51,7 @@ namespace{
 
 bool UsbpixrefRawEvent2StdEventConverter::
 Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
-  auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawDataEvent>(d1);
+  auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   auto block_n_list = ev_raw->GetBlockNumList();
   for(auto &bn: block_n_list){
     d2->AddPlane(ConvertPlane(ev_raw->GetBlock(bn), bn));

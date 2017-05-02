@@ -1,5 +1,5 @@
 #include "eudaq/LCEventConverter.hh"
-#include "eudaq/RawDataEvent.hh"
+#include "eudaq/RawEvent.hh"
 #include "eudaq/StandardEvent.hh"
 #include "eudaq/Logger.hh"
 
@@ -25,7 +25,7 @@ namespace eudaq{
 
   public:
     bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override;
-    static const uint32_t m_id_factory = cstr2hash("NiRawDataEvent");
+    static const uint32_t m_id_factory = cstr2hash("NiRawEvent");
     
   private:
     bool GetStandardSubEvent(StandardEvent &result, const Event &source) const;
@@ -93,7 +93,7 @@ namespace eudaq{
 	<< "NIConverterPlugin::GetLCIOSubEvent rawDataEvent with boards="
 	<< m_boards << std::endl;
     const RawDataEvent &rawDataEvent =
-      dynamic_cast<const RawDataEvent &>(source);
+      dynamic_cast<const RawEvent &>(source);
 
     size_t numplanes = m_boards; // NumPlanes(source);
 
@@ -166,7 +166,7 @@ namespace eudaq{
     static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5}; //TODO
 
     // If we get here it must be a data event
-    const RawDataEvent &rawev = dynamic_cast<const RawDataEvent &>(source);
+    const RawEvent &rawev = dynamic_cast<const RawEvent &>(source);
     if (rawev.NumBlocks() != 2 || rawev.GetBlock(0).size() < 20 ||
 	rawev.GetBlock(1).size() < 20) {
       EUDAQ_WARN("Ignoring bad event " + to_string(source.GetEventNumber()));
