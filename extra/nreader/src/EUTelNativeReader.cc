@@ -30,7 +30,6 @@
 #include <eudaq/FileReader.hh>
 #include <eudaq/Event.hh>
 #include <eudaq/Logger.hh>
-#include <eudaq/PluginManager.hh>
 
 // lcio includes
 #include <IMPL/LCCollectionVec.h>
@@ -117,7 +116,6 @@ void EUTelNativeReader::init() {
 }
 
 void EUTelNativeReader::readDataSource(int numEvents) {
-
   // this event counter is used to stop the processing when it is
   // greater than numEvents.
   int eventCounter = 0;
@@ -133,10 +131,10 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   streamlog_out(DEBUG4) << "Reading " << _fileName
                         << " with eudaq file deserializer " << endl;
 
-  eudaq::FileReader *reader = 0;
+  eudaq::FileReaderUP reader;
   // open the input file with the eudaq reader
   try {
-    reader = new eudaq::FileReader(_fileName, "");
+    reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash("native"), _fileName);    
   } catch (...) {
     streamlog_out(ERROR5)
         << "eudaq::FileReader could not read the input file ' " << _fileName
@@ -145,86 +143,37 @@ void EUTelNativeReader::readDataSource(int numEvents) {
     throw ParseException("Problems with reading file " + _fileName);
   }
 
-  if (reader->Event().IsBORE()) {
-    eudaq::PluginManager::Initialize(reader->Event());
-    // this is the case in which the eudaq event is a Begin Of Run
-    // Event. This is translating into a RunHeader in the case of
-    // LCIO
-    processBORE(reader->Event());
-  }
-
-  while (reader->NextEvent() && (eventCounter < numEvents)) {
-
-    const eudaq::DetectorEvent &eudaqEvent = reader->Event();
-
-    if (eudaqEvent.IsBORE()) {
-
-      streamlog_out(WARNING9) << "Found another BORE event: This is a strange "
-                                 "case but the event will be processed anyway"
-                              << endl;
-      streamlog_out(WARNING9) << eudaqEvent << endl;
-
-      // this is a very strange case, because there should be one and
-      // one only BORE in a run and this should be processed already
-      // outside the while loop.
-      //
-      // Anyway I'm processing this BORE again,
-      processBORE(eudaqEvent);
-
-    } else if (eudaqEvent.IsEORE()) {
-
-      streamlog_out(DEBUG4) << "Found a EORE event " << endl;
-      streamlog_out(DEBUG4) << eudaqEvent << endl;
-
-      processEORE(eudaqEvent);
-
-    } else {
-
-      LCEvent *lcEvent = eudaq::PluginManager::ConvertToLCIO(eudaqEvent);
-
-      if (lcEvent == NULL) {
-        streamlog_out(ERROR1)
+  while (eventCounter < numEvents) {
+    auto ev = reader->GetNextEvent();
+    if(!ev)
+      break;
+    LCEventSP lcEvent(new lcio::LCEventImpl);
+    LCEventConverter::Convert(ev, lcEvent, nullptr);
+    if (lcEvent == NULL) {
+      streamlog_out(ERROR1)
             << "The eudaq plugin manager is not able to create a valid LCEvent"
             << endl
             << "Check that eudaq was compiled with LCIO and EUTELESCOPE active "
             << endl;
         throw MissingLibraryException(this, "eudaq");
-      }
-      if (lcEvent->getParameters().getIntVal(
+    }
+    if (lcEvent->getParameters().getIntVal(
               "FLAG") == Event::FLAG_STATUS) { /*cout << "Skipping event " <<
                                                   lcEvent->getEventNumber() <<
                                                   ": status event" <<  endl;*/
-        continue;
-      } else if (lcEvent->getParameters().getIntVal(
-                     "FLAG") == Event::
-                                    FLAG_BROKEN) { /*cout << "Skipping event "
-                                                      <<
-                                                      lcEvent->getEventNumber()
-                                                      << ": broken or out of
-                                                      sync" <<  endl;*/
-        continue;
-      }
-      ProcessorMgr::instance()->processEvent(lcEvent);
-      delete lcEvent;
+      continue;
+    } else if (lcEvent->getParameters().getIntVal(
+						  "FLAG") == Event::
+	       FLAG_BROKEN) { /*cout << "Skipping event "
+				<<
+				lcEvent->getEventNumber()
+				<< ": broken or out of
+				sync" <<  endl;*/
+      continue;
     }
+    ProcessorMgr::instance()->processEvent(lcEvent.get());
     ++eventCounter;
   }
-
-  delete reader;
-}
-
-void EUTelNativeReader::processEORE(const eudaq::DetectorEvent &eore) {
-  streamlog_out(DEBUG4)
-      << "Found a EORE, so adding an EORE to the LCIO file as well" << endl;
-  EUTelEventImpl *lcioEvent = new EUTelEventImpl;
-  lcioEvent->setEventType(kEORE);
-  lcioEvent->setTimeStamp(eore.GetTimestamp());
-  lcioEvent->setRunNumber(eore.GetRunNumber());
-  lcioEvent->setEventNumber(eore.GetEventNumber());
-
-  // sent the lcioEvent to the processor manager for further processing
-  ProcessorMgr::instance()->processEvent(static_cast<LCEventImpl *>(lcioEvent));
-  delete lcioEvent;
 }
 
 void EUTelNativeReader::end() {
@@ -234,24 +183,6 @@ void EUTelNativeReader::end() {
                             << " events out of sync " << endl;
   }
   streamlog_out(MESSAGE5) << "Successfully finished" << endl;
-}
-
-void EUTelNativeReader::processBORE(const eudaq::DetectorEvent &bore) {
-  streamlog_out(DEBUG4) << "Found a BORE, so processing the RunHeader" << endl;
-
-  LCRunHeader *runHeader = eudaq::PluginManager::GetLCRunHeader(bore);
-
-  if (runHeader == NULL) {
-    streamlog_out(ERROR1)
-        << "The eudaq plugin manager is not able to create a valid LCRunHeader"
-        << endl
-        << "Check that eudaq was compiled with LCIO and EUTELESCOPE active "
-        << endl;
-    throw MissingLibraryException(this, "eudaq");
-  }
-
-  ProcessorMgr::instance()->processRunHeader(runHeader);
-  delete runHeader;
 }
 
 #endif

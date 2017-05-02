@@ -1,8 +1,8 @@
 # CMake script to build library providing native reader Marlin processor for data conversion into LCIO
 # and reconstruction using EUTelescope analysis framework
 # build native reader used for data conversion into LCIO
-option(BUILD_nreader "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
-IF(BUILD_nreader)
+option(EUDAQ_EXTRA_BUILD_NREADER "Compile native reader shared library (requires LCIO/EUTelescope)?" OFF)
+IF(EUDAQ_EXTRA_BUILD_NREADER)
   SET(USE_LCIO ON)
   FIND_PACKAGE(EUTelescope REQUIRED)
   FIND_PACKAGE(LCIO REQUIRED)
@@ -63,4 +63,4 @@ IF(BUILD_nreader)
     ARCHIVE DESTINATION lib
     )
 
-ENDIF(BUILD_nreader)
+ENDIF()
