@@ -4,12 +4,13 @@
 #include <ratio>
 #include <chrono>
 #include <thread>
+#include <random>
+#include <sys/file.h>
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class Ex0Producer : public eudaq::Producer {
   public:
   Ex0Producer(const std::string & name, const std::string & runcontrol);
-
   void DoInitialise() override;
   void DoConfigure() override;
   void DoStartRun() override;
@@ -22,10 +23,9 @@ class Ex0Producer : public eudaq::Producer {
 private:
   bool m_flag_ts;
   bool m_flag_tg;
-  std::ifstream m_ifile;
-  std::string m_dummy_data_path;
+  uint32_t m_plane_id;
+  FILE* m_file_lock;
   std::chrono::milliseconds m_ms_busy;
-  
   std::thread m_thd_run;
   bool m_exit_of_run;
 };
@@ -43,21 +43,18 @@ Ex0Producer::Ex0Producer(const std::string & name, const std::string & runcontro
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void Ex0Producer::DoInitialise(){
   auto ini = GetInitConfiguration();
-  std::ofstream ofile;
-  std::string dummy_string;
-  dummy_string = ini->Get("DUMMY_STRING", dummy_string);
-  m_dummy_data_path = ini->Get("DUMMY_FILE_PATH", "ex0dummy.txt");
-  ofile.open(m_dummy_data_path);
-  if(!ofile.is_open()){
-    EUDAQ_THROW("dummy data file (" + m_dummy_data_path +") can not open for writing");
+  std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
+  m_file_lock = fopen(lock_path.c_str(), "a");
+  if(flock(fileno(m_file_lock), LOCK_EX|LOCK_NB)){ //fail
+    EUDAQ_THROW("unable to lock the lockfile: "+lock_path );
   }
-  ofile << dummy_string;
-  ofile.close();
 }
+
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
 void Ex0Producer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
+  m_plane_id = conf->Get("PLANE_ID", 0);
   m_ms_busy = std::chrono::milliseconds(conf->Get("DURATION_BUSY_MS", 1000));
   m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
   m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
@@ -70,11 +67,6 @@ void Ex0Producer::DoConfigure(){
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void Ex0Producer::DoStartRun(){
   m_exit_of_run = false;
-
-  m_ifile.open(m_dummy_data_path);
-  if(!m_ifile.is_open()){
-    EUDAQ_THROW("dummy data file (" + m_dummy_data_path +") can not open for reading");
-  }
   m_thd_run = std::thread(&Ex0Producer::Mainloop, this);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
@@ -82,15 +74,14 @@ void Ex0Producer::DoStopRun(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
-  m_ifile.close();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void Ex0Producer::DoReset(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
-
-  m_ifile.close();
+  flock(fileno(m_file_lock), LOCK_UN);
+  fclose(m_file_lock);
   m_thd_run = std::thread();
   m_ms_busy = std::chrono::milliseconds();
   m_exit_of_run = false;
@@ -100,14 +91,20 @@ void Ex0Producer::DoTerminate(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
+  fclose(m_file_lock);
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
-void Ex0Producer::Mainloop(){  
+void Ex0Producer::Mainloop(){
   auto tp_start_run = std::chrono::steady_clock::now();
   uint32_t trigger_n = 0;
+  uint8_t x_pixel = 16;
+  uint8_t y_pixel = 16;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<uint32_t> position(0, x_pixel*y_pixel-1);
+  std::uniform_int_distribution<uint32_t> signal(0, 255);
   while(m_exit_of_run){
-    auto ev = eudaq::Event::MakeUnique("Ex0Event");
-    
+    auto ev = eudaq::Event::MakeUnique("Ex0_RAW_PROD");    
     auto tp_trigger = std::chrono::steady_clock::now();
     auto tp_end_of_busy = tp_trigger + m_ms_busy;
     if(m_flag_ts){
@@ -118,20 +115,15 @@ void Ex0Producer::Mainloop(){
     if(m_flag_tg)
       ev->SetTriggerN(trigger_n);
 
-    std::vector<uint8_t> data_a(100, 0);
-    uint32_t block_id_a = 0;
-    ev->AddBlock(block_id_a, data_a);
-    std::filebuf* pbuf = m_ifile.rdbuf();
-    size_t len = pbuf->pubseekoff(0,m_ifile.end, m_ifile.in);
-    pbuf->pubseekpos (0,m_ifile.in);
-    std::vector<uint8_t> data_b(len);
-    pbuf->sgetn ((char*)&(data_b[0]), len);
-    uint32_t block_id_b = 2;
-    ev->AddBlock(block_id_b, data_b);
-
-    if(trigger_n == 0){
-      ev->SetBORE();
-    }
+    std::vector<uint8_t> hit(x_pixel*y_pixel, 0);
+    hit[position(gen)] = signal(gen);
+    std::vector<uint8_t> data;
+    data.push_back(x_pixel);
+    data.push_back(y_pixel);
+    data.insert(data.end(), hit.begin(), hit.end());
+    
+    uint32_t block_id = m_plane_id;
+    ev->AddBlock(block_id, data);
     SendEvent(std::move(ev));
     trigger_n++;
     std::this_thread::sleep_until(tp_end_of_busy);

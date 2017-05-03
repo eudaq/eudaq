@@ -3,15 +3,15 @@
 #include <deque>
 #include <map>
 
-class Ex2DataCollector:public eudaq::DataCollector{
+class Ex0TgDataCollector:public eudaq::DataCollector{
 public:
-  Ex2DataCollector(const std::string &name,
+  Ex0TgDataCollector(const std::string &name,
 		   const std::string &rc);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex2DataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TgDataCollector");
 private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
@@ -19,26 +19,26 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::
-    Register<Ex2DataCollector, const std::string&, const std::string&>
-    (Ex2DataCollector::m_id_factory);
+    Register<Ex0TgDataCollector, const std::string&, const std::string&>
+    (Ex0TgDataCollector::m_id_factory);
 }
 
-Ex2DataCollector::Ex2DataCollector(const std::string &name,
+Ex0TgDataCollector::Ex0TgDataCollector(const std::string &name,
 				   const std::string &rc):
   DataCollector(name, rc){
 }
 
-void Ex2DataCollector::DoConnect(eudaq::ConnectionSPC idx){
+void Ex0TgDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque[idx].clear();
 }
 
-void Ex2DataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+void Ex0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque.erase(idx);
 }
 
-void Ex2DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
+void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
   if(!evsp->IsFlagTrigger()){
@@ -57,7 +57,7 @@ void Ex2DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
     }
   }
 
-  auto ev_sync = eudaq::Event::MakeUnique("myEx2_Event");
+  auto ev_sync = eudaq::Event::MakeUnique("Ex0Tg_RAW_DAC");
   ev_sync->SetTriggerN(trigger_n);
   for(auto &conn_evque: m_conn_evque){
     auto &ev_front = conn_evque.second.front(); 

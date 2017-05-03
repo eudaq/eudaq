@@ -18,16 +18,19 @@ bool Ex0RawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEve
   auto block_n_list = ev->GetBlockNumList();
   for(auto &block_n: block_n_list){
     std::vector<uint8_t> block = ev->GetBlock(block_n);
-    std::vector<bool> channels;
-    eudaq::uchar2bool(block.data(), block.data() + block.size(), channels);
+    if(block.size() < 2)
+      EUDAQ_THROW("Unknown data");
+    uint8_t x_pixel = block[0];
+    uint8_t y_pixel = block[1];
+    std::vector<uint8_t> hit(block.begin()+2, block.end());
+    if(hit.size() != x_pixel*y_pixel)
+      EUDAQ_THROW("Unknown data");
     eudaq::StandardPlane plane(block_n, "my_ex0_plane", "my_ex0_plane");
-    plane.SetSizeZS(channels.size(), 1, 0);
-    uint32_t x = 0;
-    for(size_t i = 0; i < channels.size(); ++i) {
-      if(channels[i] == true) {
-	plane.PushPixel(x, 1 , 1);
+    plane.SetSizeZS(hit.size(), 1, 0);
+    for(size_t i = 0; i < y_pixel; ++i) {
+      for(size_t n = 0; n < x_pixel; ++n){
+	plane.PushPixel(n, i , hit[n+i*x_pixel]);
       }
-      ++x;
     }
     d2->AddPlane(plane);
   }

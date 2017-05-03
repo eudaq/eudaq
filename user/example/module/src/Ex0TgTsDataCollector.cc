@@ -6,9 +6,9 @@
 #include <set>
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-class Ex0DataCollector:public eudaq::DataCollector{
+class Ex0TgTsDataCollector:public eudaq::DataCollector{
 public:
-  Ex0DataCollector(const std::string &name,
+  Ex0TgTsDataCollector(const std::string &name,
 		   const std::string &runcontrol);
 
   void DoStartRun() override;
@@ -17,7 +17,7 @@ public:
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0DataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TgTsDataCollector");
 private:
   void AddEvent_TimeStamp(uint32_t id, eudaq::EventSPC ev);
   void AddEvent_TriggerN(uint32_t id, eudaq::EventSPC ev);
@@ -53,18 +53,18 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::
-    Register<Ex0DataCollector, const std::string&, const std::string&>
-    (Ex0DataCollector::m_id_factory);
+    Register<Ex0TgTsDataCollector, const std::string&, const std::string&>
+    (Ex0TgTsDataCollector::m_id_factory);
 }
 
-Ex0DataCollector::Ex0DataCollector(const std::string &name,
+Ex0TgTsDataCollector::Ex0TgTsDataCollector(const std::string &name,
 				   const std::string &runcontrol):
   DataCollector(name, runcontrol),m_ts_last_end(0), m_ts_curr_beg(-2), m_ts_curr_end(-1){
   
 }
 
 
-void Ex0DataCollector::DoStartRun(){
+void Ex0TgTsDataCollector::DoStartRun(){
   std::unique_lock<std::mutex> lk(m_mtx_map);
 
   m_has_all_bore = false;
@@ -85,7 +85,7 @@ void Ex0DataCollector::DoStartRun(){
   m_tg_curr_n = 0;
 }
 
-void Ex0DataCollector::DoConfigure(){
+void Ex0TgTsDataCollector::DoConfigure(){
   auto conf = GetConfiguration();
   if(conf){
     conf->Print();
@@ -94,7 +94,7 @@ void Ex0DataCollector::DoConfigure(){
 }
 
 
-void Ex0DataCollector::DoConnect(eudaq::ConnectionSPC idx){
+void Ex0TgTsDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_con_id.insert(id);
@@ -103,13 +103,13 @@ void Ex0DataCollector::DoConnect(eudaq::ConnectionSPC idx){
 
 }
 
-void Ex0DataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+void Ex0TgTsDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_con_id.erase(id);
 }
 
-void Ex0DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+void Ex0TgTsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
   uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   std::cout<< "hi new enent is comming\n";
@@ -156,7 +156,7 @@ void Ex0DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
 }
 
 
-void Ex0DataCollector::BuildEvent_Final(){
+void Ex0TgTsDataCollector::BuildEvent_Final(){
 
   if(m_pri_ts)
   while(!m_que_event_wrap_ts.empty()){
@@ -252,7 +252,7 @@ void Ex0DataCollector::BuildEvent_Final(){
   }
 }
 
-void Ex0DataCollector::AddEvent_TimeStamp(uint32_t id, eudaq::EventSPC ev){
+void Ex0TgTsDataCollector::AddEvent_TimeStamp(uint32_t id, eudaq::EventSPC ev){
   if(ev->IsBORE()){
     m_que_event_ts[id].clear();
     m_que_event_ts[id].push_back(ev);
@@ -298,7 +298,7 @@ void Ex0DataCollector::AddEvent_TimeStamp(uint32_t id, eudaq::EventSPC ev){
   }
 }
 
-void Ex0DataCollector::BuildEvent_TimeStamp(){
+void Ex0TgTsDataCollector::BuildEvent_TimeStamp(){
   std::cout<< "m_event_ready_ts.size() "<< m_event_ready_ts.size()<<std::endl;
   std::cout<< "m_que_event_ts.size() "<< m_que_event_ts.size()<<std::endl;
   while(!m_event_ready_ts.empty() && m_event_ready_ts.size() == m_que_event_ts.size()){
@@ -403,7 +403,7 @@ void Ex0DataCollector::BuildEvent_TimeStamp(){
   }
 }
 
-void Ex0DataCollector::AddEvent_TriggerN(uint32_t id, eudaq::EventSPC ev){
+void Ex0TgTsDataCollector::AddEvent_TriggerN(uint32_t id, eudaq::EventSPC ev){
   if(ev->IsBORE()){
     m_que_event_tg[id].clear();
     m_que_event_tg[id].push_back(ev);
@@ -425,7 +425,7 @@ void Ex0DataCollector::AddEvent_TriggerN(uint32_t id, eudaq::EventSPC ev){
 }
 
 
-void Ex0DataCollector::BuildEvent_Trigger(){
+void Ex0TgTsDataCollector::BuildEvent_Trigger(){
   while(!m_event_ready_tg.empty() && m_event_ready_tg.size() ==m_que_event_tg.size()){
     std::set<uint32_t> has_eore;
     auto ev_wrap = eudaq::Event::MakeUnique(GetFullName());

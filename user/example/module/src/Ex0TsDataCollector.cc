@@ -5,15 +5,15 @@
 #include <set>
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-class Ex1DataCollector:public eudaq::DataCollector{
+class Ex0TsDataCollector:public eudaq::DataCollector{
 public:
-  Ex1DataCollector(const std::string &name,
+  Ex0TsDataCollector(const std::string &name,
 		   const std::string &runcontrol);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex1DataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TsDataCollector");
 private:
   void BuildEvent();
   
@@ -29,17 +29,17 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::
-    Register<Ex1DataCollector, const std::string&, const std::string&>
-    (Ex1DataCollector::m_id_factory);
+    Register<Ex0TsDataCollector, const std::string&, const std::string&>
+    (Ex0TsDataCollector::m_id_factory);
 }
 
-Ex1DataCollector::Ex1DataCollector(const std::string &name,
+Ex0TsDataCollector::Ex0TsDataCollector(const std::string &name,
 				   const std::string &runcontrol):
   DataCollector(name, runcontrol),m_ts_last_end(0), m_ts_curr_beg(-2), m_ts_curr_end(-1){
   
 }
 
-void Ex1DataCollector::DoConnect(eudaq::ConnectionSPC idx){
+void Ex0TsDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   if(m_que_event_ts.empty()){
     m_ts_last_end = 0;
@@ -52,7 +52,7 @@ void Ex1DataCollector::DoConnect(eudaq::ConnectionSPC idx){
   m_que_event_ts[idx].clear();
 }
 
-void Ex1DataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+void Ex0TsDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   if(m_que_event_ts[idx].empty())
     m_que_event_ts.erase(idx);
@@ -60,7 +60,7 @@ void Ex1DataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
     m_conn_disconnected.insert(idx);
 }
 
-void Ex1DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
+void Ex0TsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
   eudaq::EventSP evsp = std::move(ev);
   if(!evsp->IsFlagTimestamp()){
     EUDAQ_THROW("!evsp->IsFlagTimestamp()");
@@ -105,7 +105,7 @@ void Ex1DataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
 }
 
 
-void Ex1DataCollector::BuildEvent(){
+void Ex0TsDataCollector::BuildEvent(){
   while(!m_event_ready_ts.empty() && m_event_ready_ts.size() == m_que_event_ts.size()){
     uint64_t ts_next_end = -1;
     uint64_t ts_next_beg = ts_next_end - 1;
