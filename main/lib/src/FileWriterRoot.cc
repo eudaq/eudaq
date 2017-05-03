@@ -89,7 +89,7 @@ namespace eudaq {
 	  id_x = plane.GetX(index,lvl1);
 	  id_y = plane.GetY(index,lvl1);
 	  id_frame = lvl1;
-	  id_charge = plane.GetPixel(index,lvl1);
+	  id_charge = static_cast<unsigned int>(plane.GetPixel(index,lvl1));
 	  id_pivot = plane.GetPivot(index,lvl1);
 	  i_time_stamp = sev.GetTimestamp();
 	  i_run = sev.GetRunNumber();
