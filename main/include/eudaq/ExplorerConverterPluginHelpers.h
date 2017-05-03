@@ -224,9 +224,9 @@ Float_t calc_gain(Float_t *x, Float_t *y, Int_t index, Int_t mode = 0) {
 //-------------------------------------------------------------------------------------------------
 Float_t calc_inl(Double_t *x, Double_t *y, Int_t i_start, Int_t i_end,
                  Float_t gain) {
-  Float_t expected_sig = gain * (x[i_end] - x[i_start]);
-  Float_t real_sig = y[i_end] - y[i_start];
-  return (real_sig / expected_sig - 1.);
+  Float_t expected_sig = static_cast<Float_t>(gain * (x[i_end] - x[i_start]));
+  Float_t real_sig = static_cast<Float_t>(y[i_end] - y[i_start]);
+  return static_cast<Float_t>(real_sig / expected_sig - 1.);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ void average(Int_t n, Float_t *y, Float_t *y_err, Int_t mode = 0,
     Float_t mean = 0.;
     Float_t mean_sq = 0.;
     for (Int_t a = 0; a < avg_width; ++a) {
-      Float_t w = (mode == 0) ? 1. / (t_err[i + a] * t_err[i + a]) : 1.;
+      Float_t w = static_cast<Float_t>((mode == 0) ? 1. / (t_err[i + a] * t_err[i + a]) : 1.);
       sum_of_weights += w;
       mean += w * t[i + a];
       mean_sq += w * t[i + a] * t[i + a];
@@ -266,8 +266,8 @@ void average(Int_t n, Float_t *y, Float_t *y_err, Int_t mode = 0,
     mean /= sum_of_weights;
     mean_sq /= sum_of_weights;
     y[i + avg_width / 2] = mean;
-    y_err[i + avg_width / 2] = (mode == 0) ? TMath::Sqrt(1 / sum_of_weights)
-                                           : TMath::Sqrt(mean_sq - mean * mean);
+    y_err[i + avg_width / 2] = static_cast<Float_t>((mode == 0) ? TMath::Sqrt(1 / sum_of_weights)
+                                           : TMath::Sqrt(mean_sq - mean * mean));
   }
 }
 
@@ -279,7 +279,7 @@ float read_vrst(std::string file) {
     while (f.good()) {
       getline(f, l);
       if (l.length() > 0) {
-        return atof(l.c_str()); // C++11 => std::stod(l)
+        return static_cast<float>(atof(l.c_str())); // C++11 => std::stod(l)
       }
     }
   } else {
@@ -355,35 +355,35 @@ gain_fit_result *do_gain_fits(TGraphErrors *g, Float_t v_rst = 0.8,
   f_cube->SetLineWidth(1);
 
   result->r_lf = g->Fit(f_lin, "QSR");
-  result->g_lf = f_lin->GetParameter(1);
-  result->e_lf = f_lin->GetParError(1);
-  result->ndf_lf = f_lin->GetNDF();
-  result->chi2_lf = f_lin->GetChisquare();
+  result->g_lf = static_cast<Float_t>(f_lin->GetParameter(1));
+  result->e_lf = static_cast<Float_t>(f_lin->GetParError(1));
+  result->ndf_lf = static_cast<Float_t>(f_lin->GetNDF());
+  result->chi2_lf = static_cast<Float_t>(f_lin->GetChisquare());
 
   result->r_qf = g->Fit(f_quad, "QSR");
-  result->g_qf = f_quad->GetParameter(1);
-  result->e_qf = f_quad->GetParError(1);
-  result->g2_qf = f_quad->GetParameter(2);
-  result->e2_qf = f_quad->GetParError(2);
-  result->off_qf = f_quad->GetParameter(0);
-  result->eff_qf = f_quad->GetParError(0);
-  result->ndf_qf = f_quad->GetNDF();
+  result->g_qf = static_cast<Float_t>(f_quad->GetParameter(1));
+  result->e_qf = static_cast<Float_t>(f_quad->GetParError(1));
+  result->g2_qf = static_cast<Float_t>(f_quad->GetParameter(2));
+  result->e2_qf = static_cast<Float_t>(f_quad->GetParError(2));
+  result->off_qf = static_cast<Float_t>(f_quad->GetParameter(0));
+  result->eff_qf = static_cast<Float_t>(f_quad->GetParError(0));
+  result->ndf_qf = static_cast<Float_t>(f_quad->GetNDF());
   result->chi2_qf = static_cast<Float_t>(f_quad->GetChisquare());
 
   f_cube->SetParameters(f_quad->GetParameter(0), f_quad->GetParameter(1),
                         f_quad->GetParameter(2), 0);
   result->r_cf = g->Fit(f_cube, "QSR");
   // result->r_cf    = g->Fit(f_cube, "SR");
-  result->g_cf = f_cube->GetParameter(1);
-  result->e_cf = f_cube->GetParError(1);
-  result->g2_cf = f_cube->GetParameter(2);
-  result->e2_cf = f_cube->GetParError(2);
-  result->g3_cf = f_cube->GetParameter(3);
-  result->e3_cf = f_cube->GetParError(3);
-  result->off_cf = f_cube->GetParameter(0);
-  result->eff_cf = f_cube->GetParError(0);
-  result->ndf_cf = f_cube->GetNDF();
-  result->chi2_cf = f_cube->GetChisquare();
+  result->g_cf = static_cast<Float_t>(f_cube->GetParameter(1));
+  result->e_cf = static_cast<Float_t>(f_cube->GetParError(1));
+  result->g2_cf = static_cast<Float_t>(f_cube->GetParameter(2));
+  result->e2_cf = static_cast<Float_t>(f_cube->GetParError(2));
+  result->g3_cf = static_cast<Float_t>(f_cube->GetParameter(3));
+  result->e3_cf = static_cast<Float_t>(f_cube->GetParError(3));
+  result->off_cf = static_cast<Float_t>(f_cube->GetParameter(0));
+  result->eff_cf = static_cast<Float_t>(f_cube->GetParError(0));
+  result->ndf_cf = static_cast<Float_t>(f_cube->GetNDF());
+  result->chi2_cf = static_cast<Float_t>(f_cube->GetChisquare());
 
   delete f_lin;
   f_lin = 0x0;
@@ -565,7 +565,7 @@ public:
         fGain3Map(0x0), fEffVresetMap(0x0), fVresetNPROutMap(0x0), fFit(0x0),
         fVsig(0.1), fPitch(-1), fMem(1), fVbb(1.8), fVrstRef(0.7), fChan(-1),
         fOffset(0.), fGain(0.), fGain2(0.), fGain3(0.), fEffVrst(0.),
-        fVrstNPROut(0.), fMapsAreLoaded(false) {}
+        fVrstNPROut(static_cast<float>(0.)), fMapsAreLoaded(false) {}
   bool SetDataFile(TString filename) {
     TCanvas *mydummycanvas = new TCanvas();
     if (fMapFile) {
@@ -669,9 +669,9 @@ public:
     // cubic fit
     Float_t vref = static_cast<Float_t>(fVrstNPROut + 0.01 - fVsig / 2);
     fFit->SetParameters(fOffset, fGain, fGain2, fGain3, vref);
-    value = (woOffset)
+    value = static_cast<float>((woOffset)
                 ? fFit->Eval(fVrstNPROut) - fFit->Eval(fVrstNPROut - value)
-                : fFit->Eval(static_cast<float>(value));
+                : fFit->Eval(value));
 
     return V_to_ADC_counts(value, !woOffset);
   }
