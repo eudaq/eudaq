@@ -64,7 +64,7 @@ Float_t ADC_counts_to_V(Float_t val, Bool_t apply_offset = kTRUE) {
   //    : val/ADC_val_rng*ADC_volt_rng/gain;
 
   // measured conversion from self-test hybrid, mean value of all 4 channels:
-  return (apply_offset) ? (6101.8 - val) / 4507.8 : -val / 4507.8;
+  return static_cast<Float_t>((apply_offset) ? (6101.8 - val) / 4507.8 : -val / 4507.8);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -81,14 +81,14 @@ Float_t V_to_ADC_counts(Float_t val, Bool_t apply_offset = kTRUE) {
   //    : val*ADC_val_rng/ADC_volt_rng*gain;
 
   // measured conversion from self-test hybrid, mean value of all 4 channels
-  return (apply_offset) ? 6101.8 - val * 4507.8 : -val * 4507.8;
+  return static_cast<Float_t>((apply_offset) ? 6101.8 - val * 4507.8 : -val * 4507.8);
 }
 
 //-------------------------------------------------------------------------------------------------
 Float_t DAC_counts_to_V(Int_t val) {
   // input (DAC counts)
 
-  return val / 4096. * 5.;
+  return static_cast<Float_t>(val / 4096. * 5.);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ Float_t V_to_C(Float_t val) {
   // Fe-55 generating
   // 1640 electrons of 1.602e-19C
 
-  return 1640 * 1.602e-19 / val;
+  return static_cast<Float_t>(1640 * 1.602e-19 / val);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ bool read_list_file(std::string name, std::vector<float> *vec) {
     while (f.good()) {
       getline(f, l);
       if (l.length() > 0) {
-        vec->push_back(atof(l.c_str())); // C++11 => std::stod(l)
+        vec->push_back(static_cast<float>(atof(l.c_str()))); // FIXME C++11 => std::stod(l)
       }
     }
   } else
@@ -190,8 +190,8 @@ int centre_pix_sec(int i_sec, int i_pitch) {
   // starting with (r=0,c=0) top left, (r=0,c=89) top right and (r=89,c=89) at
   // bottom right
   int offset = i_pitch * Ex1Prop::w[0] * Ex1Prop::w[0];
-  int row = Ex1Prop::w[i_pitch] * (0.5 + i_sec % 3) / 3.;
-  int col = Ex1Prop::w[i_pitch] * (0.5 + i_sec / 3) / 3.;
+  int row = static_cast<int>(Ex1Prop::w[i_pitch] * (0.5 + i_sec % 3) / 3.);
+  int col = static_cast<int>(Ex1Prop::w[i_pitch] * (0.5 + i_sec / 3) / 3.);
   return offset + col * Ex1Prop::w[i_pitch] + row;
 }
 

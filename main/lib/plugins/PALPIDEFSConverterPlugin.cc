@@ -172,7 +172,8 @@ namespace eudaq {
 #endif
 
 
-#pragma warning ( suppress: C4101)      
+// FIXME: Unreferenced variable tmp warning only suppressed --> reorganize code
+#pragma warning ( suppress: 4101)      
       char tmp[100];
 #ifdef EVENT_DISPLAY
       snprintf(tmp, 100, "run%06d-eventList.txt", bore.GetRunNumber());
