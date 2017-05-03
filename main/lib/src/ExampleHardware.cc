@@ -73,7 +73,7 @@ namespace eudaq {
       std::vector<unsigned char> data =
           ZeroSuppressEvent(MakeRawEvent(m_width, m_height), m_width);
       result.insert(result.end(), data.begin(), data.end());
-      unsigned short numhits = (result.size() - 8) / 6;
+      unsigned short numhits = static_cast<unsigned short>((result.size() - 8) / 6);
       setlittleendian<unsigned short>(&result[6], 0x8000 | numhits);
     }
     return result;

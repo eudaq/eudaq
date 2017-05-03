@@ -161,7 +161,7 @@ namespace eudaq {
 
     m_ireceived[GetInfo(id)] = id.GetType();
 
-    int fastwaiting = std::count_if(m_ireceived.begin(), m_ireceived.end(), [](std::pair<size_t, std::string> i) -> bool {i.second != "SlowProducer";});
+    int fastwaiting = std::count_if(m_ireceived.begin(), m_ireceived.end(), [](std::pair<size_t, std::string> i) -> bool {return i.second != "SlowProducer";});
 
     if (fastwaiting == m_buffer.size() - m_slow)
       OnCompleteEvent();

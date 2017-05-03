@@ -39,7 +39,7 @@ namespace eudaq {
   MetaData::MetaData(Deserializer &ds) { ds.read(m_metaData); };
 
   int MetaData::GetType(uint64_t meta_data) {
-    return getBits(ENTRY_TYPE, meta_data);
+    return static_cast<int>(getBits(ENTRY_TYPE, meta_data));
   };
 
   void MetaData::SetType(uint64_t &meta_data, int type) {
