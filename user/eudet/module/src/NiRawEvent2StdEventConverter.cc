@@ -86,7 +86,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     eudaq::StandardPlane plane(id, "NI", "MIMOSA26");
     plane.SetSizeZS(1152, 576, 0, 2, eudaq::StandardPlane::FLAG_WITHPIVOT |
 		    eudaq::StandardPlane::FLAG_DIFFCOORDS);
-    plane.SetTLUEvent(tluid);
+    // plane.SetTLUEvent(tluid);
     plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
     DecodeFrame(plane, 0, &it0[8], len0);
     DecodeFrame(plane, 1, &it1[8], len1);
