@@ -31,7 +31,6 @@ protected:
   TProfile **Hits_vs_Events;
   TProfile *Hits_vs_PlaneHisto;
   TH1F *Planes_perEventHisto;
-  TProfile **TLUdelta_perEventHisto;
   TProfile *TracksPerEvent;
   TGraph *m_EventN_vs_TimeStamp;
 
@@ -49,7 +48,6 @@ public:
   TProfile *getHits_vs_EventsTotal() const;
   TProfile *getHits_vs_PlaneHisto() const;
   TH1F *getPlanes_perEventHisto() const;
-  TProfile *getTLUdelta_perEventHisto(unsigned int i) const;
   TProfile *getTracksPerEventHisto() const;
   TNamed *getEventN_vs_TimeStamp() const;
   
@@ -60,7 +58,6 @@ public:
   std::mutex* getMutexHits_vs_Events(unsigned int i){return &m_mu;};
   std::mutex* getMutexHits_vs_Plane(){return &m_mu;};
   std::mutex* getMutexPlanes_perEvent(){return &m_mu;};
-  std::mutex* getMutexTLUdelta_perEvent(unsigned int i){return &m_mu;};
   std::mutex* getMutexTracksPerEvent(){return &m_mu;};
   std::mutex* getMutexEventN_vs_TimeStamp(){return &m_mu;};
 

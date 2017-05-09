@@ -262,7 +262,6 @@ void RootMonitor::DoReceive(eudaq::EventUP evup) {
       {
         cout << "Plane Pixels Hit Frame " << nframes <<" "<<plane.HitPixels(0) <<endl;
       }
-      cout << i << " "<<plane.TLUEvent() << " "<< plane.PivotPixel() <<endl;
 #endif
 
       string sensorname;
@@ -280,7 +279,7 @@ void RootMonitor::DoReceive(eudaq::EventUP evup) {
       {
         continue;
       }
-      SimpleStandardPlane simpPlane(sensorname,plane.ID(),plane.XSize(),plane.YSize(), plane.TLUEvent(),plane.PivotPixel(),&mon_configdata);
+      SimpleStandardPlane simpPlane(sensorname,plane.ID(),plane.XSize(),plane.YSize(),&mon_configdata);
 
       for (unsigned int lvl1 = 0; lvl1 < plane.NumFrames(); lvl1++)
       {

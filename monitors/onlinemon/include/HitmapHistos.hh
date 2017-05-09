@@ -44,7 +44,6 @@ protected:
   TH1I *_clusterYWidth;
   TH1I *_nbadHits;
   TH1I *_nHotPixels;
-  TH1I *_nPivotPixel;
   TH1I *_hitmapSections;
   TH1I **_nHits_section;
   TH1I **_nClusters_section;
@@ -98,7 +97,6 @@ public:
     return _nHotPixels_section[section];
   }
   TH1I *getNHotPixelsHisto() { return _nHotPixels; }
-  TH1I *getNPivotPixelHisto() { return _nPivotPixel; }
   void setRootMonitor(RootMonitor *mon) { _mon = mon; }
 
 private:

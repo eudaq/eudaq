@@ -43,13 +43,10 @@ protected:
                                                    // Mimosa
   std::vector<SimpleStandardCluster>
       _section_clusters[4]; // FIXME hard-coded for Mimosa
-  int _tlu_event;
-  int _pivot_pixel;
-
+  
 public:
   SimpleStandardPlane(const std::string &name, const int id, const int maxX,
-                      const int maxY, const int tlu_event,
-                      const int pivot_pixel, OnlineMonConfiguration *mymon);
+                      const int maxY, OnlineMonConfiguration *mymon);
   SimpleStandardPlane(const std::string &name, const int id);
   void addHit(SimpleStandardHit oneHit);
   void addRawHit(SimpleStandardHit oneHit);
@@ -77,8 +74,6 @@ public:
   int getMaxY() { return _maxY; }
   int getBinsX() { return _binsX; }
   int getBinsY() { return _binsY; }
-  int getPivotPixel() const { return _pivot_pixel; }
-  int getTLUEvent() const { return _tlu_event; }
   void addSuffix(const std::string &suf) { _name = _name + suf; }
   void reducePixels(const int reduceX, const int reduceY);
   void setMonitorConfiguration(OnlineMonConfiguration *mymon) { mon = mymon; }

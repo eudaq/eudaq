@@ -145,10 +145,6 @@ HitmapHistos::HitmapHistos(SimpleStandardPlane p, RootMonitor *mon)
     sprintf(out2, "h_hitmapSections_%s_%i", _sensor.c_str(), _id);
     _hitmapSections = new TH1I(out2, out, mimosa26_max_section, _id, _id + 1);
 
-    sprintf(out, "%s %i Pivot Pixel Usage", _sensor.c_str(), _id);
-    sprintf(out2, "h_pivotpixel_%s_%i", _sensor.c_str(), _id);
-    _nPivotPixel = new TH1I(out2, out, 930, 0, 9300);
-
     for (unsigned int section = 0; section < mimosa26_max_section; section++) {
       sprintf(out, "%i%c", _id, (section + 65));
       _hitmapSections->GetXaxis()->SetBinLabel(section + 1, out);
@@ -303,7 +299,6 @@ void HitmapHistos::Fill(const SimpleStandardPlane &plane) {
   // we fill the information for the individual mimosa sections, and do a
   // zero-suppression,in case not all sections have hits/clusters
   if (is_MIMOSA26) {
-    _nPivotPixel->Fill(plane.getPivotPixel());
     for (unsigned int section = 0; section < mimosa26_max_section; section++) {
       if (_nHits_section[section] != NULL) {
         if (plane.getNSectionHits(section) > 0) {
@@ -376,7 +371,6 @@ void HitmapHistos::Reset() {
   _clusterYWidth->Reset();
   _clusterXWidth->Reset();
   _hitmapSections->Reset();
-  _nPivotPixel->Reset();
   for (unsigned int section = 0; section < mimosa26_max_section; section++) {
     _nClusters_section[section]->Reset();
     _nHits_section[section]->Reset();
@@ -465,7 +459,6 @@ void HitmapHistos::Write() {
   _clusterXWidth->Write();
   _clusterYWidth->Write();
   _hitmapSections->Write();
-  _nPivotPixel->Write();
   for (unsigned int section = 0; section < mimosa26_max_section; section++) {
     _nClusters_section[section]->Write();
     _nHits_section[section]->Write();

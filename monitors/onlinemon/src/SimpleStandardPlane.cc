@@ -11,8 +11,6 @@
 
 SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
                                          const int maxX, const int maxY,
-                                         const int tlu_event,
-                                         const int pivot_pixel,
                                          OnlineMonConfiguration *mymon)
     : _name(name), _id(id), _maxX(maxX), _maxY(maxY), _binsX(maxX),
       _binsY(maxY) {
@@ -39,8 +37,6 @@ SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id,
   is_UNKNOWN = true; // per default we don't know this plane
   isRotated = false;
   setPixelType(name); // set the pixel type
-  _tlu_event = tlu_event;
-  _pivot_pixel = pivot_pixel;
 }
 
 SimpleStandardPlane::SimpleStandardPlane(const std::string &name, const int id)

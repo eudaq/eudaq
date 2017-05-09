@@ -268,20 +268,6 @@ void HitmapCollection::registerPlane(const SimpleStandardPlane &p) {
         tree, getHitmapHistos(p.getName(), p.getID())->getHotPixelMapHisto(),
         "COLZ", 0);
 
-    if (p.is_MIMOSA26) {
-      // setup histogram showing the number of hits per section of a Mimosa26
-      sprintf(tree, "%s/Sensor %i/Hitmap Sections", p.getName().c_str(),
-              p.getID());
-      _mon->getOnlineMon()->registerTreeItem(tree);
-      _mon->getOnlineMon()->registerHisto(
-          tree,
-          getHitmapHistos(p.getName(), p.getID())->getHitmapSectionsHisto());
-      sprintf(tree, "%s/Sensor %i/Pivot Pixel", p.getName().c_str(), p.getID());
-      _mon->getOnlineMon()->registerTreeItem(tree);
-      _mon->getOnlineMon()->registerHisto(
-          tree, getHitmapHistos(p.getName(), p.getID())->getNPivotPixelHisto());
-    }
-
     sprintf(tree, "%s/Sensor %i", p.getName().c_str(), p.getID());
     _mon->getOnlineMon()->makeTreeItemSummary(tree);
 
