@@ -58,7 +58,7 @@ void Ex0Producer::DoConfigure(){
   m_ms_busy = std::chrono::milliseconds(conf->Get("DURATION_BUSY_MS", 1000));
   m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
   m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
-  if(!m_flag_ts && m_flag_tg){
+  if(!m_flag_ts && !m_flag_tg){
     EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. Now, Timestamp is enabled by default");
     m_flag_ts = false;
     m_flag_tg = true;
@@ -103,7 +103,7 @@ void Ex0Producer::Mainloop(){
   std::mt19937 gen(rd());
   std::uniform_int_distribution<uint32_t> position(0, x_pixel*y_pixel-1);
   std::uniform_int_distribution<uint32_t> signal(0, 255);
-  while(m_exit_of_run){
+  while(!m_exit_of_run){
     auto ev = eudaq::Event::MakeUnique("Ex0_RAW_PROD");    
     auto tp_trigger = std::chrono::steady_clock::now();
     auto tp_end_of_busy = tp_trigger + m_ms_busy;

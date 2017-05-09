@@ -127,12 +127,6 @@ void TluProducer::MainLoop(){
     }
 
     if(m_exit_of_run){
-      if(isbegin)
-	break;
-      auto ev = eudaq::Event::MakeUnique("TluRawDataEvent");
-      ev->SetEORE();
-      ev->SetFlagFake();
-      SendEvent(std::move(ev));
       break;
     }
   }

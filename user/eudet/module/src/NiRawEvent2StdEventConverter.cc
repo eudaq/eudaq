@@ -104,7 +104,6 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
   return true;
 }
 
-
 void NiRawEvent2StdEventConverter::DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
 					       const uint8_t *const d, const size_t l32) const{
   std::vector<uint16_t> vec;

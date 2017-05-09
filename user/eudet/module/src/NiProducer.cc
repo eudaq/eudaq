@@ -64,12 +64,6 @@ void NiProducer::DataLoop(){
   uint16_t last_tg_l16 = 0;
   while(1){
     if(!m_running){
-      if(isbegin)
-	break;
-      auto evup = eudaq::Event::MakeUnique("NiRawDataEvent");
-      evup->SetEORE();
-      evup->SetFlagFake();
-      SendEvent(std::move(evup));
       break;
     } 
     if(!ni_control->DataTransportClientSocket_Select()){
