@@ -11,7 +11,7 @@ and the \texttt{FileWriterFactory} allows code that writes data files to select 
 available file type, and write it in a generic way,
 without needing to know details about the particular file format.
 A number of different file types are already implemented,
-for a list with descriptions, see page \pageref{lst:FileTypes}
+for a list with descriptions, see page \pageref{lst:FileTypes}.
 
 The easiest way to make use of the different \texttt{FileWriter}s,
 is to use the \texttt{Converter.exe} program (see \autoref{sec:Converter}).
@@ -328,11 +328,8 @@ If the result is required in a string, instead of being printed,
 this can be achieved with \inline{to_string(hexdec(value))}.
 
 \subsubsection{mSleep}\label{sec:mSleep}
-This is a wrapper around the operating system's \texttt{sleep}/\texttt{usleep}
-(or equivalent) function.
-It takes as an argument the number of milliseconds to sleep.
-The advantage of this function is that it will work on Linux,
-Mac OS X and Windows, as it will automatically call the correct underlying function.
+This was a wrapper around the operating system's \texttt{sleep}/\texttt{usleep}
+(or equivalent) function. Now it uses the \inline{std::this\_thread::sleep\_for} function provided by the C++ standard library. It takes as an argument the number of milliseconds to sleep.
 
 %\section{Monitoring and Analysis}
 %The EUDAQ framework is does not perform any detailed analysis of the data taken.
