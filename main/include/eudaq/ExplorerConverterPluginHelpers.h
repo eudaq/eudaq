@@ -48,7 +48,7 @@ const int Ex1Prop::w[] = {90, 60};
 const int Ex1Prop::p[] = {20, 30};
 const int Ex1Prop::n_pitch = sizeof(Ex1Prop::p) / sizeof(int);
 const float Ex1Prop::meas_offset =
-    1.8 / 2.; // circuit on proximity leads to a divided by 2
+    static_cast<float>(1.8 / 2.); // circuit on proximity leads to a divided by 2
 
 //-------------------------------------------------------------------------------------------------
 Float_t ADC_counts_to_V(Float_t val, Bool_t apply_offset = kTRUE) {
@@ -64,7 +64,7 @@ Float_t ADC_counts_to_V(Float_t val, Bool_t apply_offset = kTRUE) {
   //    : val/ADC_val_rng*ADC_volt_rng/gain;
 
   // measured conversion from self-test hybrid, mean value of all 4 channels:
-  return (apply_offset) ? (6101.8 - val) / 4507.8 : -val / 4507.8;
+  return static_cast<Float_t>((apply_offset) ? (6101.8 - val) / 4507.8 : -val / 4507.8);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -81,14 +81,14 @@ Float_t V_to_ADC_counts(Float_t val, Bool_t apply_offset = kTRUE) {
   //    : val*ADC_val_rng/ADC_volt_rng*gain;
 
   // measured conversion from self-test hybrid, mean value of all 4 channels
-  return (apply_offset) ? 6101.8 - val * 4507.8 : -val * 4507.8;
+  return static_cast<Float_t>((apply_offset) ? 6101.8 - val * 4507.8 : -val * 4507.8);
 }
 
 //-------------------------------------------------------------------------------------------------
 Float_t DAC_counts_to_V(Int_t val) {
   // input (DAC counts)
 
-  return val / 4096. * 5.;
+  return static_cast<Float_t>(val / 4096. * 5.);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ Float_t V_to_C(Float_t val) {
   // Fe-55 generating
   // 1640 electrons of 1.602e-19C
 
-  return 1640 * 1.602e-19 / val;
+  return static_cast<Float_t>(1640 * 1.602e-19 / val);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -108,7 +108,7 @@ bool read_list_file(std::string name, std::vector<float> *vec) {
     while (f.good()) {
       getline(f, l);
       if (l.length() > 0) {
-        vec->push_back(atof(l.c_str())); // C++11 => std::stod(l)
+        vec->push_back(static_cast<float>(atof(l.c_str()))); // FIXME C++11 => std::stod(l)
       }
     }
   } else
@@ -190,8 +190,8 @@ int centre_pix_sec(int i_sec, int i_pitch) {
   // starting with (r=0,c=0) top left, (r=0,c=89) top right and (r=89,c=89) at
   // bottom right
   int offset = i_pitch * Ex1Prop::w[0] * Ex1Prop::w[0];
-  int row = Ex1Prop::w[i_pitch] * (0.5 + i_sec % 3) / 3.;
-  int col = Ex1Prop::w[i_pitch] * (0.5 + i_sec / 3) / 3.;
+  int row = static_cast<int>(Ex1Prop::w[i_pitch] * (0.5 + i_sec % 3) / 3.);
+  int col = static_cast<int>(Ex1Prop::w[i_pitch] * (0.5 + i_sec / 3) / 3.);
   return offset + col * Ex1Prop::w[i_pitch] + row;
 }
 
@@ -224,9 +224,9 @@ Float_t calc_gain(Float_t *x, Float_t *y, Int_t index, Int_t mode = 0) {
 //-------------------------------------------------------------------------------------------------
 Float_t calc_inl(Double_t *x, Double_t *y, Int_t i_start, Int_t i_end,
                  Float_t gain) {
-  Float_t expected_sig = gain * (x[i_end] - x[i_start]);
-  Float_t real_sig = y[i_end] - y[i_start];
-  return (real_sig / expected_sig - 1.);
+  Float_t expected_sig = static_cast<Float_t>(gain * (x[i_end] - x[i_start]));
+  Float_t real_sig = static_cast<Float_t>(y[i_end] - y[i_start]);
+  return static_cast<Float_t>(real_sig / expected_sig - 1.);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -258,7 +258,7 @@ void average(Int_t n, Float_t *y, Float_t *y_err, Int_t mode = 0,
     Float_t mean = 0.;
     Float_t mean_sq = 0.;
     for (Int_t a = 0; a < avg_width; ++a) {
-      Float_t w = (mode == 0) ? 1. / (t_err[i + a] * t_err[i + a]) : 1.;
+      Float_t w = static_cast<Float_t>((mode == 0) ? 1. / (t_err[i + a] * t_err[i + a]) : 1.);
       sum_of_weights += w;
       mean += w * t[i + a];
       mean_sq += w * t[i + a] * t[i + a];
@@ -266,8 +266,8 @@ void average(Int_t n, Float_t *y, Float_t *y_err, Int_t mode = 0,
     mean /= sum_of_weights;
     mean_sq /= sum_of_weights;
     y[i + avg_width / 2] = mean;
-    y_err[i + avg_width / 2] = (mode == 0) ? TMath::Sqrt(1 / sum_of_weights)
-                                           : TMath::Sqrt(mean_sq - mean * mean);
+    y_err[i + avg_width / 2] = static_cast<Float_t>((mode == 0) ? TMath::Sqrt(1 / sum_of_weights)
+                                           : TMath::Sqrt(mean_sq - mean * mean));
   }
 }
 
@@ -279,7 +279,7 @@ float read_vrst(std::string file) {
     while (f.good()) {
       getline(f, l);
       if (l.length() > 0) {
-        return atof(l.c_str()); // C++11 => std::stod(l)
+        return static_cast<float>(atof(l.c_str())); // C++11 => std::stod(l)
       }
     }
   } else {
@@ -355,35 +355,35 @@ gain_fit_result *do_gain_fits(TGraphErrors *g, Float_t v_rst = 0.8,
   f_cube->SetLineWidth(1);
 
   result->r_lf = g->Fit(f_lin, "QSR");
-  result->g_lf = f_lin->GetParameter(1);
-  result->e_lf = f_lin->GetParError(1);
-  result->ndf_lf = f_lin->GetNDF();
-  result->chi2_lf = f_lin->GetChisquare();
+  result->g_lf = static_cast<Float_t>(f_lin->GetParameter(1));
+  result->e_lf = static_cast<Float_t>(f_lin->GetParError(1));
+  result->ndf_lf = static_cast<Float_t>(f_lin->GetNDF());
+  result->chi2_lf = static_cast<Float_t>(f_lin->GetChisquare());
 
   result->r_qf = g->Fit(f_quad, "QSR");
-  result->g_qf = f_quad->GetParameter(1);
-  result->e_qf = f_quad->GetParError(1);
-  result->g2_qf = f_quad->GetParameter(2);
-  result->e2_qf = f_quad->GetParError(2);
-  result->off_qf = f_quad->GetParameter(0);
-  result->eff_qf = f_quad->GetParError(0);
-  result->ndf_qf = f_quad->GetNDF();
-  result->chi2_qf = f_quad->GetChisquare();
+  result->g_qf = static_cast<Float_t>(f_quad->GetParameter(1));
+  result->e_qf = static_cast<Float_t>(f_quad->GetParError(1));
+  result->g2_qf = static_cast<Float_t>(f_quad->GetParameter(2));
+  result->e2_qf = static_cast<Float_t>(f_quad->GetParError(2));
+  result->off_qf = static_cast<Float_t>(f_quad->GetParameter(0));
+  result->eff_qf = static_cast<Float_t>(f_quad->GetParError(0));
+  result->ndf_qf = static_cast<Float_t>(f_quad->GetNDF());
+  result->chi2_qf = static_cast<Float_t>(f_quad->GetChisquare());
 
   f_cube->SetParameters(f_quad->GetParameter(0), f_quad->GetParameter(1),
                         f_quad->GetParameter(2), 0);
   result->r_cf = g->Fit(f_cube, "QSR");
   // result->r_cf    = g->Fit(f_cube, "SR");
-  result->g_cf = f_cube->GetParameter(1);
-  result->e_cf = f_cube->GetParError(1);
-  result->g2_cf = f_cube->GetParameter(2);
-  result->e2_cf = f_cube->GetParError(2);
-  result->g3_cf = f_cube->GetParameter(3);
-  result->e3_cf = f_cube->GetParError(3);
-  result->off_cf = f_cube->GetParameter(0);
-  result->eff_cf = f_cube->GetParError(0);
-  result->ndf_cf = f_cube->GetNDF();
-  result->chi2_cf = f_cube->GetChisquare();
+  result->g_cf = static_cast<Float_t>(f_cube->GetParameter(1));
+  result->e_cf = static_cast<Float_t>(f_cube->GetParError(1));
+  result->g2_cf = static_cast<Float_t>(f_cube->GetParameter(2));
+  result->e2_cf = static_cast<Float_t>(f_cube->GetParError(2));
+  result->g3_cf = static_cast<Float_t>(f_cube->GetParameter(3));
+  result->e3_cf = static_cast<Float_t>(f_cube->GetParError(3));
+  result->off_cf = static_cast<Float_t>(f_cube->GetParameter(0));
+  result->eff_cf = static_cast<Float_t>(f_cube->GetParError(0));
+  result->ndf_cf = static_cast<Float_t>(f_cube->GetNDF());
+  result->chi2_cf = static_cast<Float_t>(f_cube->GetChisquare());
 
   delete f_lin;
   f_lin = 0x0;
@@ -565,7 +565,7 @@ public:
         fGain3Map(0x0), fEffVresetMap(0x0), fVresetNPROutMap(0x0), fFit(0x0),
         fVsig(0.1), fPitch(-1), fMem(1), fVbb(1.8), fVrstRef(0.7), fChan(-1),
         fOffset(0.), fGain(0.), fGain2(0.), fGain3(0.), fEffVrst(0.),
-        fVrstNPROut(0.), fMapsAreLoaded(false) {}
+        fVrstNPROut(static_cast<float>(0.)), fMapsAreLoaded(false) {}
   bool SetDataFile(TString filename) {
     TCanvas *mydummycanvas = new TCanvas();
     if (fMapFile) {
@@ -580,7 +580,7 @@ public:
     fMapsAreLoaded = false;
   };
   void SetVbb(float vbb) {
-    fVbb = vbb - 0.01;
+    fVbb = static_cast<float>(vbb - 0.01);
     fMapsAreLoaded = false;
   }; // nasty trick to achieve -0.0
   void SetVrstRef(float vrr) {
@@ -615,12 +615,12 @@ public:
       std::cerr << "column index out of bounds" << std::endl;
       return -1;
     }
-    fOffset = fOffsetMap->GetBinContent(i_col + 1, i_row + 1);
-    fGain = fGainMap->GetBinContent(i_col + 1, i_row + 1);
-    fGain2 = fGain2Map->GetBinContent(i_col + 1, i_row + 1);
-    fGain3 = fGain3Map->GetBinContent(i_col + 1, i_row + 1);
-    fEffVrst = fEffVresetMap->GetBinContent(i_col + 1, i_row + 1);
-    fVrstNPROut = fVresetNPROutMap->GetBinContent(i_col + 1, i_row + 1);
+    fOffset = static_cast<float>(fOffsetMap->GetBinContent(i_col + 1, i_row + 1));
+    fGain = static_cast<float>(fGainMap->GetBinContent(i_col + 1, i_row + 1));
+    fGain2 =static_cast<float>( fGain2Map->GetBinContent(i_col + 1, i_row + 1));
+    fGain3 = static_cast<float>(fGain3Map->GetBinContent(i_col + 1, i_row + 1));
+    fEffVrst = static_cast<float>(fEffVresetMap->GetBinContent(i_col + 1, i_row + 1));
+    fVrstNPROut = static_cast<float>(fVresetNPROutMap->GetBinContent(i_col + 1, i_row + 1));
 
     // woOffset assumes the value to be relative to the currently selected
     // memory
@@ -667,11 +667,11 @@ public:
     //         fGain3*(value-fVrstNPROut+0.5*fVsig)*(value-fVrstNPROut+0.5*fVsig)*(value-fVrstNPROut+0.5*fVsig);
 
     // cubic fit
-    Float_t vref = fVrstNPROut + 0.01 - fVsig / 2;
+    Float_t vref = static_cast<Float_t>(fVrstNPROut + 0.01 - fVsig / 2);
     fFit->SetParameters(fOffset, fGain, fGain2, fGain3, vref);
-    value = (woOffset)
+    value = static_cast<float>((woOffset)
                 ? fFit->Eval(fVrstNPROut) - fFit->Eval(fVrstNPROut - value)
-                : fFit->Eval(value);
+                : fFit->Eval(value));
 
     return V_to_ADC_counts(value, !woOffset);
   }

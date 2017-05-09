@@ -102,7 +102,7 @@ The Online Monitor, as well as a few command-line utilities (contained in the \t
 It can be downloaded from \url{http://root.cern.ch} or installed via
 your favorite package manager.
 
-Make sure ROOt's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
+Make sure ROOT's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
 This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
 script in the \texttt{bin} directory of the ROOT installation:
 \begin{listing}[mybash]
@@ -154,9 +154,9 @@ git tag
 in the repository to find the newest stable version as the last entry.
 In order to change to this version in your local repository, execute e.g. 
 \begin{listing}[mybash]
-git checkout v1.6.0
+git checkout v1.7.0
 \end{listing}
-to change to version v1.6.0.
+to change to version v1.7.0.
 
 \subsubsection{Updating the code (fetch)}
 If you want to update your local code, e.g to get the newest release versions, execute in the \texttt{eudaq} directory: 
@@ -255,9 +255,9 @@ page~\pageref{app:compileOnWindows}.
 \begin{itemize}
 \item Prerequisites 
 \begin{itemize}
-\item Compiler: Download Visual Studio Express Desktop 2012 or later (e.g. 2013 Version):
+\item Compiler: Download Visual Studio Express Desktop 2012 or later (e.g. 2017 Version):
   \url{http://www.microsoft.com/en-us/download/details.aspx?id=40787}
-\item Download Qt4 or later Qt5
+\item Download Qt5 (Qt4 still possible)
 \item Download and install the pthreads library (pre-build binary from
   \url{ftp://sources.redhat.com/pub/pthreads-win32}) into either
   \texttt{\lstinline{c:\\pthreads-w32}} or \texttt{./extern/pthreads-w32}

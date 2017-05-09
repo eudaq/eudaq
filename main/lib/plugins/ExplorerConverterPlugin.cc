@@ -464,7 +464,7 @@ namespace eudaq {
 
                             // CMC part 1 - grouping pixels by sector
                             if (matrix_size == 90) {
-                                short sec = 3*floor(i/30)+floor(j/30);
+                                short sec = static_cast<short> (3*floor(i/30)+floor(j/30));
                                 if (k==0) {
                                     cds_array[l][0][sec][(j%30)*30+(i%30)] = adccInt; // set to MEM1
                                 }
@@ -473,7 +473,7 @@ namespace eudaq {
                                 }
                             }
                             else { // matrix size is 60
-                                short sec = 3*floor(i/20)+floor(j/20);
+                                short sec = static_cast<short> (3*floor(i/20)+floor(j/20));
                                 if (k==0) {
                                     cds_array[l][1][sec][(j%20)*20+(i%20)] = adccInt; // set to MEM1
                                 }
@@ -506,7 +506,7 @@ namespace eudaq {
                     for (int isec=0; isec<9; ++isec) { // sectors
                         sec_wm[ich][ips][isec] = 0.;
                         short nwm = (30-ips*10)*(30-ips*10);
-                        short trunc = 0.05*nwm; // truncate 5% each tail
+                        short trunc = static_cast<short> (0.05*nwm); // truncate 5% each tail
                         std::sort(cds_array[ich][ips][isec], cds_array[ich][ips][isec]+nwm);
 	    
                         short i = 0;
@@ -541,11 +541,11 @@ namespace eudaq {
                             // CMC part 3 - Apply CMC
                             if(k==0) {
                                 if(matrix_size == 90) {
-                                    short sec = 3*floor(i/30)+floor(j/30);
+                                    short sec = static_cast<short> (3*floor(i/30)+floor(j/30));
                                     adcc -= sec_wm[l][0][sec];
                                 }
                                 else {
-                                    short sec = 3*floor(i/20)+floor(j/20);
+                                    short sec = static_cast<short> (3*floor(i/20)+floor(j/20));
                                     adcc -= sec_wm[l][1][sec];
                                 }
                             }

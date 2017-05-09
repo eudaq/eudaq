@@ -43,13 +43,16 @@ namespace eudaq {
     SerializeHeader(ser);
     SerializeMetaData(ser);
     ser.write(m_data_size);
+    #pragma warning (suppress: 4244)
     ser.append((const unsigned char *)m_data, m_data_size * sizeof(uint64_t));
     ser.write(ser.GetCheckSum());
   }
 
   void AidaPacket::DeserializeData(Deserializer &ds) {
     ds.read(m_data_size);
+    #pragma warning (suppress: 4244)
     uint64_t *tmp = new uint64_t[m_data_size];
+    #pragma warning (suppress: 4244)
     ds.read((unsigned char *)tmp, m_data_size * sizeof(uint64_t));
     placeholder = std::unique_ptr<uint64_t[]>(tmp);
     m_data = placeholder.get();
@@ -155,6 +158,7 @@ namespace eudaq {
     AidaPacket::PacketHeader header = AidaPacket::DeserializeHeader(ds);
     int long long id = header.data.packetType;
     // std::cout << "Create id = " << std::hex << id << std::dec << std::endl;
+    #pragma warning (suppress: 4244)	  
     packet_creator cr = GetCreator(id);
     if (cr)
       return cr(header, ds);
@@ -169,6 +173,7 @@ namespace eudaq {
   void PacketFactory::Register(uint64_t id,
                                PacketFactory::packet_creator func) {
     // TODO: check id is not already in map
+    #pragma warning (suppress: 4244)				       
     get_map()[id] = func;
   }
 

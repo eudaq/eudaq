@@ -151,7 +151,9 @@ namespace eudaq {
       bool return_value = false;
     try{
 	return_value = m_pivot.at(frame).at(index);    
+    #pragma warning (suppress: 4101)
     } catch (std::out_of_range& err) {
+	//FIXME Handle error
 	//std::cerr << "GetPivot tried to access non-existing entry" << std::endl;
   }
     return return_value;
