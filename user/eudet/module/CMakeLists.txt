@@ -19,6 +19,12 @@ endif()
 if(NOT EUDAQ_LCIO_LIBRARY)
   list(REMOVE_ITEM MODULE_SRC src/TluRawEvent2LCEventConverter.cc)
   list(REMOVE_ITEM MODULE_SRC src/NiRawEvent2LCEventConverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
+endif()
+
+if(WIN32)
+  list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2StdEventConverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
 endif()
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})

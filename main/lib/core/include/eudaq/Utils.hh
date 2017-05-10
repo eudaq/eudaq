@@ -137,10 +137,22 @@ namespace eudaq {
     return static_cast<int32_t>(from_string(x, (int64_t)def));
   }
   template <>
-  inline uint32_t from_string(const std::string &x, const uint32_t &def) {
+  inline uint32_t DLLEXPORT
+  from_string(const std::string &x, const uint32_t &def) {
     return static_cast<uint32_t>(from_string(x, (uint64_t)def));
   }
 
+  template <>
+  inline int16_t DLLEXPORT
+  from_string(const std::string &x, const int16_t &def) {
+    return static_cast<int16_t>(from_string(x, (int64_t)def));
+  }
+  template <>
+  inline uint16_t DLLEXPORT
+  from_string(const std::string &x, const uint16_t &def) {
+    return static_cast<uint16_t>(from_string(x, (uint64_t)def));
+  }
+  
   template <typename T> struct Holder {
     Holder(T val) : m_val(val) {}
     T m_val;

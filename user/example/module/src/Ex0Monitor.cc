@@ -7,7 +7,6 @@
 #include <chrono>
 #include <thread>
 #include <random>
-#include <sys/file.h>
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class Ex0Monitor : public eudaq::Monitor {
@@ -50,6 +49,10 @@ void Ex0Monitor::DoConfigure(){
   m_en_std_converter = conf->Get("ENABLE_STD_CONVERTER", 0);
   m_en_std_print = conf->Get("ENABLE_STD_PRINT", 0);
 }
+
+void Ex0Monitor::DoStartRun(){
+}
+
 
 void Ex0Monitor::DoStopRun(){
 }

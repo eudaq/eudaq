@@ -5,8 +5,9 @@
 #include <chrono>
 #include <thread>
 #include <random>
+#ifndef _WIN32
 #include <sys/file.h>
-
+#endif
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class Ex0Producer : public eudaq::Producer {
   public:
@@ -45,9 +46,11 @@ void Ex0Producer::DoInitialise(){
   auto ini = GetInitConfiguration();
   std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
   m_file_lock = fopen(lock_path.c_str(), "a");
+#ifndef _WIN32
   if(flock(fileno(m_file_lock), LOCK_EX|LOCK_NB)){ //fail
     EUDAQ_THROW("unable to lock the lockfile: "+lock_path );
   }
+#endif _WIN32
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
@@ -80,7 +83,9 @@ void Ex0Producer::DoReset(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
+#ifndef _WIN32
   flock(fileno(m_file_lock), LOCK_UN);
+#endif
   fclose(m_file_lock);
   m_thd_run = std::thread();
   m_ms_busy = std::chrono::milliseconds();

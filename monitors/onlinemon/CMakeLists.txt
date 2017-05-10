@@ -1,3 +1,8 @@
+if(WIN32)
+  message("StdEvent monitor is not to be built on windows")
+  return()
+endif()
+
 list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 find_package(ROOT)
 

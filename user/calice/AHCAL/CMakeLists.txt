@@ -1,3 +1,8 @@
+if(WIN32)
+  message("user/calice AHCAL is not to be built on windows (fixme)")
+  return()
+endif()
+
 cmake_dependent_option(USER_CALICE_BUILD_AHCAL "build user/calice AHCAL" ON
   "USER_CALICE_BUILD" OFF)
 
