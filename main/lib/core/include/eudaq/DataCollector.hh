@@ -5,6 +5,7 @@
 #include "eudaq/CommandReceiver.hh"
 #include "eudaq/Event.hh"
 #include "eudaq/FileWriter.hh"
+#include "eudaq/DataSender.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
@@ -34,6 +35,7 @@ namespace eudaq {
     void OnConfigure() override final;
     void OnStartRun() override final;
     void OnStopRun() override final;
+    void OnReset() override final;
     void OnTerminate() override final;
     void OnStatus() override final;
     void Exec() override;
@@ -43,6 +45,7 @@ namespace eudaq {
     virtual void DoConfigure(){};
     virtual void DoStartRun(){};
     virtual void DoStopRun(){};
+    virtual void DoReset(){};
     virtual void DoTerminate(){};
 
     //running in dataserver thread
@@ -65,6 +68,7 @@ namespace eudaq {
     std::unique_ptr<TransportServer> m_dataserver;
     std::string m_data_addr;
     FileWriterUP m_writer;
+    std::map<std::string, std::unique_ptr<DataSender>> m_senders;
     std::string m_fwpatt;
     std::string m_fwtype;
     std::vector<std::shared_ptr<ConnectionInfo>> m_info_pdc;

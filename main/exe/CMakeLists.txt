@@ -24,7 +24,7 @@ add_executable(${EXE_CLI_RUN} src/euCliRun.cxx)
 target_link_libraries(${EXE_CLI_RUN} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_RUN})
 
-set(EXE_CLI_LOG euCliLog)
+set(EXE_CLI_LOG euCliLogger)
 add_executable(${EXE_CLI_LOG} src/euCliLog.cxx)
 target_link_libraries(${EXE_CLI_LOG} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_LOG})

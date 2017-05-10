@@ -33,6 +33,7 @@ namespace eudaq {
     void OnConfigure() override final;
     void OnStartRun() override final;
     void OnStopRun() override final;
+    void OnReset() override final;
     void OnTerminate() override final;
     void OnStatus() override final;
     void Exec() override;
@@ -42,6 +43,7 @@ namespace eudaq {
     virtual void DoConfigure(){};
     virtual void DoStartRun(){};
     virtual void DoStopRun(){};
+    virtual void DoReset(){};
     virtual void DoTerminate(){};
 
     //running in dataserver thread

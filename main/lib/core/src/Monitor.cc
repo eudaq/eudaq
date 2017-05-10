@@ -69,6 +69,20 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, msg);
     }
   }
+
+  void Monitor::OnReset(){
+    try{
+      EUDAQ_INFO("Resetting");
+      DoReset();
+      SetStatus(Status::STATE_UNINIT, "Reset");
+    } catch (const std::exception &e) {
+      printf("Producer Reset:: Caught exception: %s\n", e.what());
+      SetStatus(Status::STATE_ERROR, "Reset Error");
+    } catch (...) {
+      printf("Producer Reset:: Unknown exception\n");
+      SetStatus(Status::STATE_ERROR, "Reset Error");
+    }
+  }
   
   void Monitor::OnTerminate(){
     std::cout << "Terminating" << std::endl;
@@ -184,4 +198,3 @@ namespace eudaq {
     }
   }
 }
-

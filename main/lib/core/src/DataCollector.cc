@@ -61,6 +61,20 @@ namespace eudaq {
       }
       m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt);
       m_evt_c = 0;
+
+      std::string mn_str = GetConfiguration()->Get("EUDAQ_MN", "");
+      std::vector<std::string> col_mn_name = split(mn_str, ";,", true);
+      std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
+      GetInitConfiguration()->SetSection("");//NOTE: it is m_conf_init
+      for(auto &mn_name: col_mn_name){
+	std::string mn_addr =  GetInitConfiguration()->Get("Monitor."+mn_name, "");
+	if(!mn_addr.empty()){
+	  m_senders[mn_addr]
+	    = std::unique_ptr<DataSender>(new DataSender("DataCollector", GetName()));
+	  m_senders[mn_addr]->Connect(mn_addr);
+	}
+      }
+      
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
     } catch (const Exception &e) {
@@ -74,6 +88,7 @@ namespace eudaq {
     EUDAQ_INFO("End of run ");
     try {
       DoStopRun();
+      m_senders.clear();
       SetStatus(Status::STATE_CONF, "Stopped");
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
@@ -81,6 +96,22 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, msg);
     }
   }
+
+  void DataCollector::OnReset(){
+    try{
+      EUDAQ_INFO("Resetting");
+      DoReset();
+      m_senders.clear();
+      SetStatus(Status::STATE_UNINIT, "Reset");
+    } catch (const std::exception &e) {
+      printf("DataCollector Reset:: Caught exception: %s\n", e.what());
+      SetStatus(Status::STATE_ERROR, "Reset Error");
+    } catch (...) {
+      printf("DataCollector Reset:: Unknown exception\n");
+      SetStatus(Status::STATE_ERROR, "Reset Error");
+    }
+  }
+
   
   void DataCollector::OnTerminate(){
     std::cout << "Terminating" << std::endl;
@@ -172,9 +203,6 @@ namespace eudaq {
 	  ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
 	if(GetInitConfiguration())
 	  ev->SetTag("EUDAQ_CONFIG_INIT", to_string(*GetInitConfiguration()));
-      }else if(ev->IsEORE()){
-	//TODO: add summary tag to EOREvent
-	;
       }
       
       ev->SetRunN(GetRunNumber());
@@ -187,6 +215,12 @@ namespace eudaq {
 	m_writer->WriteEvent(evsp);
       else
 	EUDAQ_THROW("FileWriter is not created before writing.");
+      for(auto &e: m_senders){
+	if(e.second)
+	  e.second->SendEvent(*(evsp.get()));
+	else
+	  EUDAQ_THROW("DataCollector::WriterEvent, using a null pointer of DataSender");
+      }
     }catch (const Exception &e) {
       std::string msg = "Exception writing to file: ";
       msg += e.what();
