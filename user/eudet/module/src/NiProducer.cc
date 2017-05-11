@@ -60,8 +60,8 @@ NiProducer::~NiProducer(){
 void NiProducer::DataLoop(){
   ni_control->Start();
   bool isbegin = true;
-  uint16_t tg_h16 = 0;
-  uint16_t last_tg_l16 = 0;
+  uint32_t tg_h17 = 0;
+  uint16_t last_tg_l15 = 0;
   while(1){
     if(!m_running){
       break;
@@ -69,7 +69,6 @@ void NiProducer::DataLoop(){
     if(!ni_control->DataTransportClientSocket_Select()){
       continue;
     }
-
     auto evup = eudaq::Event::MakeUnique("NiRawDataEvent");
     uint32_t datalength1 = ni_control->DataTransportClientSocket_ReadLength();
     std::vector<uint8_t> mimosa_data_0(datalength1);
@@ -77,16 +76,17 @@ void NiProducer::DataLoop(){
     uint32_t datalength2 = ni_control->DataTransportClientSocket_ReadLength();
     std::vector<uint8_t> mimosa_data_1(datalength2);
     mimosa_data_1 = ni_control->DataTransportClientSocket_ReadData(datalength2);
-
     if(mimosa_data_0.size()>8){
-      uint16_t tg_l16 = mimosa_data_0[6] + (mimosa_data_0[7]<<8);
-      uint32_t tg_n = (tg_h16<<16) + tg_l16;
-      evup->SetTriggerN(tg_n);
-      if(tg_l16 < last_tg_l16){
-	tg_h16++;
-	EUDAQ_INFO("increase high 16bits of trigger number");
+      uint16_t tg_l15 = 0x7fff & (mimosa_data_0[6] + (mimosa_data_0[7]<<8));
+      if(tg_l15 < last_tg_l15 && last_tg_l15>0x6000 && tg_l15<0x2000){
+	tg_h17++;
+	EUDAQ_INFO("increase high 17bits of trigger number, last_tg_l15("+ 
+		   std::to_string(last_tg_l15)+") tg_l15("+ 
+		   std::to_string(tg_l15)+")" );
       }
-      last_tg_l16 = tg_l16;
+      uint32_t tg_n = (tg_h17<<15) + tg_l15;
+      evup->SetTriggerN(tg_n);
+      last_tg_l15 = tg_l15;
     }
     evup->AddBlock(0, mimosa_data_0);
     evup->AddBlock(1, mimosa_data_1);
@@ -165,7 +165,6 @@ void NiProducer::DoConfigure() {
   ni_control->ConfigClientSocket_Send(configur, sizeof(configur));
   ni_control->ConfigClientSocket_Send(conf_parameters,
 				      sizeof(conf_parameters));
-
   ConfDataLength = ni_control->ConfigClientSocket_ReadLength();
   ConfDataError = ni_control->ConfigClientSocket_ReadData(ConfDataLength);
 

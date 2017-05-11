@@ -36,14 +36,9 @@ namespace eudaq {
   void DataCollector::OnConfigure(){
     auto conf = GetConfiguration();
     try {
-      m_fwtype = conf->Get("FileType", "native");
-      m_fwpatt = conf->Get("FilePattern", "run$6R$X");
+      m_fwtype = conf->Get("EUDAQ_FW", "native");
+      m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
       m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);
-      std::stringstream ss;
-      std::time_t time_now = std::time(nullptr);
-      char time_buff[13];
-      time_buff[12] = 0;
-      std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
       DoConfigure();
       SetStatus(Status::STATE_CONF, "Configured");
     }catch (const Exception &e) {
@@ -51,8 +46,7 @@ namespace eudaq {
       EUDAQ_ERROR(msg);
       SetStatus(Status::STATE_ERROR, msg);
     }
-  }
-    
+  }  
   void DataCollector::OnStartRun(){
     EUDAQ_INFO("Preparing for run " + std::to_string(GetRunNumber()));
     try {
