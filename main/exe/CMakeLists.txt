@@ -34,6 +34,16 @@ add_executable(${EXE_CLI_MON} src/euCliMonitor.cxx)
 target_link_libraries(${EXE_CLI_MON} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_MON})
 
+set(EXE_CLI_HASH euCliHash)
+add_executable(${EXE_CLI_HASH} src/euCliHash.cxx)
+target_link_libraries(${EXE_CLI_HASH} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_HASH})
+
+set(EXE_CLI_READER euCliReader)
+add_executable(${EXE_CLI_READER} src/euCliReader.cxx)
+target_link_libraries(${EXE_CLI_READER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_READER})
+
 install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
   LIBRARY DESTINATION lib
