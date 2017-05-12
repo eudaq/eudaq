@@ -76,6 +76,7 @@ RunControlGUI::RunControlGUI()
   btnStop->setEnabled(1);
   btnReset->setEnabled(1);
   btnTerminate->setEnabled(1);
+  btnLog->setEnabled(1);
 }
 
 void RunControlGUI::SetInstance(eudaq::RunControlUP rc){

@@ -30,21 +30,21 @@ endif()
 # end library
 
 # executable
-if(USER_BUILD_TLU)
-  add_executable(TLUControl src/TLUControl.cxx)
-  add_executable(TLUReset src/TLUReset.cxx)
-  target_link_libraries(TLUControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-  target_link_libraries(TLUReset ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-  list(APPEND INSTALL_TARGETS TLUControl TLUReset)
-endif()
+# if(USER_BUILD_TLU)
+#   add_executable(TLUControl src/TLUControl.cxx)
+#   add_executable(TLUReset src/TLUReset.cxx)
+#   target_link_libraries(TLUControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
+#   target_link_libraries(TLUReset ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
+#   list(APPEND INSTALL_TARGETS TLUControl TLUReset)
+# endif()
 
-if(USER_BUILD_MINITLU)
-  add_executable(MinitluControl src/MinitluControl.cxx)
-  target_link_libraries(MinitluControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-  set_target_properties(MinitluControl PROPERTIES INSTALL_RPATH
-    ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
-  list(APPEND INSTALL_TARGETS MinitluControl)
-endif()
+# if(USER_BUILD_MINITLU)
+#   add_executable(MinitluControl src/MinitluControl.cxx)
+#   target_link_libraries(MinitluControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
+#   set_target_properties(MinitluControl PROPERTIES INSTALL_RPATH
+#     ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
+#   list(APPEND INSTALL_TARGETS MinitluControl)
+# endif()
 # end executable
 
 install(TARGETS ${INSTALL_TARGETS}
