@@ -50,7 +50,7 @@ void Ex0Producer::DoInitialise(){
   if(flock(fileno(m_file_lock), LOCK_EX|LOCK_NB)){ //fail
     EUDAQ_THROW("unable to lock the lockfile: "+lock_path );
   }
-#endif _WIN32
+#endif
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
@@ -109,7 +109,7 @@ void Ex0Producer::Mainloop(){
   std::uniform_int_distribution<uint32_t> position(0, x_pixel*y_pixel-1);
   std::uniform_int_distribution<uint32_t> signal(0, 255);
   while(!m_exit_of_run){
-    auto ev = eudaq::Event::MakeUnique("Ex0_RAW_PROD");    
+    auto ev = eudaq::Event::MakeUnique("Ex0Raw");  
     auto tp_trigger = std::chrono::steady_clock::now();
     auto tp_end_of_busy = tp_trigger + m_ms_busy;
     if(m_flag_ts){

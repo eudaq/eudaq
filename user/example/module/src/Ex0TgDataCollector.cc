@@ -57,7 +57,8 @@ void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
     }
   }
 
-  auto ev_sync = eudaq::Event::MakeUnique("Ex0Tg_RAW_DAC");
+  auto ev_sync = eudaq::Event::MakeUnique("Ex0Tg");
+  ev_sync->SetFlagPacket();
   ev_sync->SetTriggerN(trigger_n);
   for(auto &conn_evque: m_conn_evque){
     auto &ev_front = conn_evque.second.front(); 

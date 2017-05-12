@@ -4,7 +4,7 @@
 class Ex0RawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("my_Ex0");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Raw");
 };
 
 namespace{
