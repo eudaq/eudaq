@@ -33,9 +33,8 @@ namespace eudaq {
     i0 = i1+1;
     i1 = packet.find(' ', i0);
     part = std::string(packet, i0, i1-i0);
-    if (part != "DataCollector" )
-    	EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
-    if (part != "DataCollector" ) EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
+    if (part != "DataCollector" && part != "Monitor" )
+      EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
 
     m_dataclient->SendPacket("OK EUDAQ DATA " + m_type + " " + m_name);
     packet = "";

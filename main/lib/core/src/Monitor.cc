@@ -144,6 +144,7 @@ namespace eudaq {
 	uint32_t id;
 	ser.PreRead(id);
 	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
+	SetStatusTag("EventN", std::to_string(event->GetEventN()));
 	DoReceive(std::move(event));
       }
       break;

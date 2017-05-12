@@ -8,6 +8,7 @@ namespace eudaq {
 
   namespace{
     auto dummy0 = Factory<Event>::Register<StandardEvent, Deserializer&>(StandardEvent::m_id_factory);
+    auto dummy3 = Factory<Event>::Register<StandardEvent>(StandardEvent::m_id_factory);
   }
 
   StdEventSP StandardEvent::MakeShared(){
@@ -28,15 +29,20 @@ namespace eudaq {
     ser.write(m_planes);
   }
 
-  void StandardEvent::Print(std::ostream & os, size_t offset) const
-  {
-    Event::Print(os,offset);
-    os << std::string(offset, ' ') << ", " << m_planes.size() << " planes:\n";
-    for (size_t i = 0; i < m_planes.size(); ++i) {
-      os << std::string(offset, ' ') << "  " << m_planes[i] << "\n";
+  void StandardEvent::Print(std::ostream & os, size_t offset) const{
+    os << std::string(offset, ' ') << "<StandardEvent>\n";
+    if(!m_planes.empty()){
+      os << std::string(offset+2, ' ') << "<Planes>\n";
+      os << std::string(offset+4, ' ') << "<Plane_Size>" << m_planes.size() << "</Plane_Size>\n";
+      for (auto &plane: m_planes){
+	os << std::string(offset+4, ' ') << "<Plane>" << plane << "</Plane>\n";
+      }
+      os << std::string(offset+2, ' ') << "<Planes>\n";
     }
+    Event::Print(os,offset+2);
+    os << std::string(offset, ' ') << "</StandardEvent>\n";
   }
-
+  
   size_t StandardEvent::NumPlanes() const { return m_planes.size(); }
 
   StandardPlane &StandardEvent::GetPlane(size_t i) { return m_planes[i]; }
