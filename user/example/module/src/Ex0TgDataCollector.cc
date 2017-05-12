@@ -2,6 +2,7 @@
 #include <mutex>
 #include <deque>
 #include <map>
+#include <set>
 
 class Ex0TgDataCollector:public eudaq::DataCollector{
 public:
@@ -15,6 +16,7 @@ public:
 private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
+  std::set<eudaq::ConnectionSPC> m_conn_inactive;
 };
 
 namespace{
@@ -24,18 +26,19 @@ namespace{
 }
 
 Ex0TgDataCollector::Ex0TgDataCollector(const std::string &name,
-				   const std::string &rc):
+				       const std::string &rc):
   DataCollector(name, rc){
 }
 
 void Ex0TgDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque[idx].clear();
+  m_conn_inactive.erase(idx);
 }
 
 void Ex0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
-  m_conn_evque.erase(idx);
+  m_conn_inactive.insert(idx);
 }
 
 void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
@@ -67,5 +70,20 @@ void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
       conn_evque.second.pop_front();
     }
   }
+  
+  if(!m_conn_inactive.empty()){
+    std::set<eudaq::ConnectionSPC> conn_inactive_empty;
+    for(auto &conn: m_conn_inactive){
+      if(m_conn_evque.find(conn) != m_conn_evque.end() && 
+	 m_conn_evque[conn].empty()){
+	m_conn_evque.erase(conn);
+	conn_inactive_empty.insert(conn);	
+      }
+    }
+    for(auto &conn: conn_inactive_empty){
+      m_conn_inactive.erase(conn);
+    }
+  }
+  ev_sync->Print(std::cout);
   WriteEvent(std::move(ev_sync));
 }

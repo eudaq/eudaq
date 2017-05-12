@@ -11,7 +11,7 @@ public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
   void DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
 		   const uint8_t *const d, const size_t l32) const;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawEvent");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
 };
   
 namespace{
@@ -100,6 +100,8 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
       break;
     }
     ++board;
+    if(board>5)
+      break;
   }
   return true;
 }
