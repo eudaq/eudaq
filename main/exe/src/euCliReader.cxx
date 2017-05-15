@@ -1,5 +1,7 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/FileReader.hh"
+#include "eudaq/StdEventConverter.hh"
+
 #include <iostream>
 
 int main(int /*argc*/, const char **argv) {
@@ -12,6 +14,7 @@ int main(int /*argc*/, const char **argv) {
   eudaq::Option<uint32_t> timestampl(op, "ts", "timestamp", 0, "uint32_t", "timestamp low");
   eudaq::Option<uint32_t> timestamph(op, "TS", "timestamphigh", 0, "uint32_t", "timestamp high");
   eudaq::OptionFlag stat(op, "s", "statistics", "enable print of statistics");
+  eudaq::OptionFlag stdev(op, "std", "stdevent", "enable converter of StdEvent");
   
   op.Parse(argv);
 
@@ -66,9 +69,13 @@ int main(int /*argc*/, const char **argv) {
     else
       in_range_tsn = true;
 
-    std::cout<<in_range_evn<<in_range_tgn<<in_range_tsn<<not_all_zero<<std::endl;
     if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
       ev->Print(std::cout);
+      if(stdev.Value()){
+	auto stdevent = eudaq::StandardEvent::MakeShared();
+	eudaq::StdEventConverter::Convert(ev, stdevent, nullptr);
+	stdevent->Print(std::cout);
+      }
     }
 
     event_count ++;

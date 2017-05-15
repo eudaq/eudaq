@@ -25,7 +25,7 @@ namespace eudaq{
 
   public:
     bool Converting(EventSPC d1, LCEventSP d2, ConfigurationSPC conf) const override;
-    static const uint32_t m_id_factory = cstr2hash("NiRawEvent");
+    static const uint32_t m_id_factory = cstr2hash("NiRawDataEvent");
     
   private:
     bool GetStandardSubEvent(StandardEvent &result, const Event &source) const;

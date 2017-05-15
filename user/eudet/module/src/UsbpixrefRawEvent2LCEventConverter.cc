@@ -18,7 +18,7 @@ class UsbpixrefRawEvent2LCEventConverter: public eudaq::LCEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigurationSPC conf) const override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("Usbpixref");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("USBPIXI4");
 private:
 
   uint32_t getWord(const std::vector<uint8_t>& data, size_t index) const;
