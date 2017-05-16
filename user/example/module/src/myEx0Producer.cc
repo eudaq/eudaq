@@ -7,6 +7,8 @@
 #include <random>
 #ifndef _WIN32
 #include <sys/file.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #endif
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class myEx0Producer : public eudaq::Producer {
@@ -26,10 +28,15 @@ private:
   bool m_flag_tg;
   uint32_t m_plane_id;
   FILE* m_file_lock;
-  std::ifstream m_file_stream;
   std::chrono::milliseconds m_ms_busy;
   std::thread m_thd_run;
   bool m_exit_of_run;
+
+  std::string m_stream_path;
+  std::ifstream m_file_stream;
+  struct stat sb;
+  std::map<std::string, std::string> m_tags;
+  
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 //----------DOC-MARK-----BEG*REG-----DOC-MARK----------
@@ -53,13 +60,13 @@ void myEx0Producer::DoInitialise(){
   }
 #endif
 
-  std::string stream_path = ini->Get("DEV_STREAM_PATH","input.csv");
-  m_file_stream.open( stream_path.c_str(), std::ifstream::in );
+  m_stream_path = ini->Get("DEV_STREAM_PATH","input.csv");
+  m_file_stream.open( m_stream_path.c_str(), std::ifstream::in );
   if (!m_file_stream.is_open()) {
-    EUDAQ_THROW("Oops, this file seems not exist? please check ==> " + stream_path);
+    EUDAQ_THROW("Oops, this file seems not exist? please check ==> " + m_stream_path);
   }
   else {
-    std::cout<<"Congrats! This file is open\n ==>  "<< stream_path <<std::endl;
+    std::cout<<"Congrats! This file is open\n ==>  "<< m_stream_path <<std::endl;
   }
 }
 
@@ -81,6 +88,35 @@ void myEx0Producer::DoConfigure(){
 void myEx0Producer::DoStartRun(){
   m_exit_of_run = false;
   m_thd_run = std::thread(&myEx0Producer::Mainloop, this);
+
+  //--> start of wmq
+  //--> tremendous print out of the csv file status <--
+  if (stat(m_stream_path, &sb) == -1)  EUDAQ_THROW("stat");
+  
+
+
+
+  
+  
+  //--> read all tags stored in the first line of csv file:
+  if (m_file_stream.good()) {
+    std::string tag_line;
+    getline(m_file_stream, tag_line);
+    std::stringstream tag_line_stream(tag_line);
+    std::string tag_cell;
+    std::cout<<"[StartRun]: Looking for tags from csv file\n ==> ";
+    //--> get the tag_cell until next comma from the line stream:
+    while ( getline(tag_line_stream, tag_cell, ',') ){
+      if (m_tags.find(tag_cell) == m_tags.end()){ // not found
+	m_tags[tag_cell] = "99"; // init a random num for test TODO
+	std::cout<< tag_cell <<";  ";
+      }
+      else EUDAQ_THROW("duplicate tag \""+ tag_cell+ "\" found.") ; // duplicate tag found
+    }
+    std::cout<<" <==\n";
+  }
+  //--> end of wmq
+  
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void myEx0Producer::DoStopRun(){
@@ -130,15 +166,48 @@ void myEx0Producer::Mainloop(){
       std::chrono::nanoseconds du_ts_beg_ns(tp_trigger - tp_start_run);
       std::chrono::nanoseconds du_ts_end_ns(tp_end_of_busy - tp_start_run);
       ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
-      std::cout<<"[Loop]: Timestamp enabled to use\n";
+
+      std::cout<<"[Loop]: Timestamp enabled to use\n"; //wmq
+      std::cout<<"[Loop]: m_ms_busy ==>    "<< m_ms_busy.count()<<"\n"; //wmq
+      std::cout<<"[Loop]: time begin at ==> "<<du_ts_beg_ns.count()<<"ns; ends at ==> "<<du_ts_end_ns.count()<<"ns\n";//wmq
 
     }
     if(m_flag_tg){
       ev->SetTriggerN(trigger_n);
-      std::cout<<"[Loop]: TriggerNumber enabled to use";
-      std::cout<<" ==> Trigger #"<<trigger_n<<"\n";
+      std::cout<<"[Loop]: TriggerNumber enabled to use"; //wmq
+      std::cout<<" ==> Trigger #"<<trigger_n<<"\n"; //wmq
     }
 
+    //--> start <--
+    
+    std::string monitor_line;
+    int row=0;
+
+    while(m_file_stream.good()){
+      getline( m_file_stream, monitor_line); // read a string line by line
+      std::stringstream lineStream(monitor_line);
+      std::string cell;
+
+      int counter = 0;
+      while (getline(lineStream, cell, ',')) { // read a string from sstream until next comma
+	printf("Row %d : # %d is %s; ", row, counter, cell.c_str());
+	counter++;
+      }
+      if(!monitor_line.empty()) printf("\n");
+      row++;
+    }
+    //--> end <-- 
+    
+    //--> start <-- template to set a tag
+    for (std::map<std::string, std::string>::iterator this_tag = m_tags.begin(); this_tag!=m_tags.end(); ++this_tag){
+      ev->SetTag( this_tag->first, this_tag->second);
+    }
+    /* ev->SetTag("a test temperature", "21 degree");
+    auto degree1=12.4;
+    std::string degree2=std::to_string(degree1)+"%";  
+    ev->SetTag("a test robot", degree2); */
+    //--> end <-- template to set a tag
+	
     std::vector<uint8_t> hit(x_pixel*y_pixel, 0);
     hit[position(gen)] = signal(gen);
     std::vector<uint8_t> data;
@@ -148,9 +217,19 @@ void myEx0Producer::Mainloop(){
     
     uint32_t block_id = m_plane_id;
     ev->AddBlock(block_id, data);
+
+    //--> start of evt print <--// wmq dev
+    std::filebuf fb;
+    fb.open("out.txt", std::ios::out|std::ios::app);
+    std::ostream os(&fb);
+    ev->Print(os, 0);
+    //--> end of evt print
+    
     SendEvent(std::move(ev));
     trigger_n++;
     std::this_thread::sleep_until(tp_end_of_busy);
-  }
+
+  }//--> end of while loop
+
 }
 //----------DOC-MARK-----END*IMP-----DOC-MARK----------
