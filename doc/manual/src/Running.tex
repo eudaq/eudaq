@@ -163,11 +163,11 @@ optional, \texttt{run\_control\_hostname} default value: localhost;  \texttt{run
 optional, \texttt{listening\_port} default value is random.
 \end{description}
 
-By default, example DataCollector \texttt{Ex0DataCollector} is available with standard installation of EUDAQ.
-For this example setup, we will startup 2 instances of \texttt{Ex0DataCollector} with runtime names \texttt{my\_dc} and \texttt{another\_dc}\\
+By default, example DataCollector \texttt{Ex0TgDataCollector} is available with standard installation of EUDAQ.
+For this example setup, we will startup 2 instances of \texttt{Ex0TsDataCollector} with runtime names \texttt{my\_dc} and \texttt{another\_dc}\\
 \begin{listing}[mybash]
-$[euCliDataCollector]$ -n Ex0DataCollector -t my_dc -r tcp://localhost:44000 -a tcp://45001
-$[euCliDataCollector]$ -n Ex0DataCollector -t another_dc -r tcp://localhost:44000 -a tcp://45002
+$[euCliCollector]$ -n Ex0DataCollector -t my_dc -r tcp://localhost:44000 -a tcp://45001
+$[euCliCollector]$ -n Ex0DataCollector -t another_dc -r tcp://localhost:44000 -a tcp://45002
 \end{listing}
 
 \paragraph{Initialization Section}

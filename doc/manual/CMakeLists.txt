@@ -37,12 +37,12 @@ IF(EUDAQ_BUILD_MANUAL)
     ../../main/lib/core/include/eudaq/RunControl.hh
     ../../main/lib/core/include/eudaq/FileWriter.hh
     ../../main/lib/core/include/eudaq/FileReader.hh
-    ../../main/module/std/src/RawFileWriter.cc
-    ../../main/module/std/src/RawFileReader.cc
+    ../../main/lib/core/src/NativeFileWriter.cc
+    ../../main/lib/core/src/NativeFileReader.cc
     ../../user/example/module/src/Ex0Producer.cc
-    ../../user/example/module/src/Ex0DataCollector.cc
-    ../../user/example/module/src/Ex1DataCollector.cc
-    ../../user/example/module/src/Ex2DataCollector.cc
+    ../../user/example/module/src/Ex0TgDataCollector.cc
+    ../../user/example/module/src/Ex0TsDataCollector.cc
+    ../../user/example/module/src/Ex0TgTsDataCollector.cc
     ../../user/example/module/src/Ex0RawEvent2StdEventConverter.cc
     ../../user/example/misc/Ex0.ini
     ../../user/example/misc/Ex0.conf
