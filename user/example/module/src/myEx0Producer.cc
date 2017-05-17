@@ -9,7 +9,12 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #endif
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class myEx0Producer : public eudaq::Producer {
   public:
@@ -22,7 +27,20 @@ class myEx0Producer : public eudaq::Producer {
   void DoReset() override;
   void Mainloop();
   
+  std::vector<std::string> ConvertStringToVec(std::string str, char delim)
+  {// added by wmq TBD: to integrate to a separate tool header!
+    std::vector<std::string> vec;
+    std::stringstream strstream(str);
+    std::string cell;
+    
+    while (getline(strstream, cell, delim)){
+      vec.push_back(cell);
+    }
+    return vec;
+  }
+
   static const uint32_t m_id_factory = eudaq::cstr2hash("myEx0Producer");
+  
 private:
   bool m_flag_ts;
   bool m_flag_tg;
@@ -34,7 +52,7 @@ private:
 
   std::string m_stream_path;
   std::ifstream m_file_stream;
-  struct stat sb;
+  struct stat m_sb;
   std::map<std::string, std::string> m_tags;
   
 };
@@ -68,6 +86,94 @@ void myEx0Producer::DoInitialise(){
   else {
     std::cout<<"Congrats! This file is open\n ==>  "<< m_stream_path <<std::endl;
   }
+
+  //--> start of wmq
+  /*--> start -- tremendous print out of the csv file status <--*/
+  if (stat(m_stream_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("stat");
+  
+  printf("\nID of containing device:  [%lx,%lx]\n",
+	 (long) major(m_sb.st_dev), (long) minor(m_sb.st_dev));
+  
+  printf("File type:                ");
+  
+  switch (m_sb.st_mode & S_IFMT) {
+  case S_IFBLK:  printf("block device\n");            break;
+  case S_IFCHR:  printf("character device\n");        break;
+  case S_IFDIR:  printf("directory\n");               break;
+  case S_IFIFO:  printf("FIFO/pipe\n");               break;
+  case S_IFLNK:  printf("symlink\n");                 break;
+  case S_IFREG:  printf("regular file\n");            break;
+  case S_IFSOCK: printf("socket\n");                  break;
+  default:       printf("unknown?\n");                break;
+  }
+  
+  printf("I-node number:            %ld\n", (long) m_sb.st_ino);
+  
+  printf("Mode:                     %lo (octal)\n",
+	 (unsigned long) m_sb.st_mode);
+  
+  printf("Link count:               %ld\n", (long) m_sb.st_nlink);
+  printf("Ownership:                UID=%ld   GID=%ld\n",
+	 (long) m_sb.st_uid, (long) m_sb.st_gid);
+  
+  printf("Preferred I/O block size: %ld bytes\n",
+	 (long) m_sb.st_blksize);
+  printf("File size:                %lld bytes\n",
+	 (long long) m_sb.st_size);
+  printf("Blocks allocated:         %lld\n",
+	 (long long) m_sb.st_blocks);
+  
+  printf("Last status change:       %s", ctime(&m_sb.st_ctime));
+  printf("Last file access:         %s", ctime(&m_sb.st_atime));
+  printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
+
+  /*--> end -- tremendous print out of the csv file status <-- */
+  
+  //--> read all tags stored in the first line of csv file:
+  //    and get the current last line as an init number if exist
+  //    or set to a null -99 by default
+  int row = 0;
+  std::string this_line, first_line, last_line;
+
+  while (m_file_stream.good()) {
+    getline (m_file_stream, this_line);
+    if ( this_line.empty() ) {
+      printf("empty line!\n");
+      continue; // you just ignore this line, not counting it as a row
+    }
+    else {
+      printf("Row %d: %s\n", row, this_line.c_str());
+      if (row==0) first_line = this_line;
+      else last_line = this_line;
+    }
+    row++;
+  }
+  std::vector<std::string> tag_vc, value_vc;
+  tag_vc = ConvertStringToVec (first_line, ',');
+  value_vc = ConvertStringToVec (last_line, ',');
+
+  //-- init the tag and value for condition map:
+  for (int itag=0; itag<tag_vc.size(); itag++){
+    std::string value="-99", key = tag_vc[itag];
+    
+    //-- check if same amount of keys and values for a map:
+    //--  empty or only-space csv value ignored and default -99 used.
+    if (tag_vc.size() == value_vc.size() && !value_vc[itag].empty() && value_vc[itag].find_first_not_of(' ')!=std::string::npos ) value = value_vc[itag];
+    else printf("\nwarning: there are #%lu tags with #%lu values; all tags init with value of -99 by default.\n", tag_vc.size(), value_vc.size());
+
+    //-- check if there is any duplicate tag:
+    if (m_tags.find(key) == m_tags.end()) { // not found
+      m_tags [key] = value;
+    }
+    else EUDAQ_THROW("duplicate tag \""+ key + "\" found."); // duplicate tag found
+  }
+
+  //-- print out the init m_tags map:
+  for (std::map<std::string, std::string>::iterator _it = m_tags.begin(); _it!=m_tags.end(); ++_it)
+    std::cout << _it->first << " => " << _it->second << '\n';
+    
+  //--> end of wmq
+    
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
@@ -79,7 +185,7 @@ void myEx0Producer::DoConfigure(){
   m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
   m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
   if(!m_flag_ts && !m_flag_tg){
-    EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. Now, Timestamp is enabled by default");
+    EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. \n  ==> Now, Timestamp is enabled by default");
     m_flag_ts = false;
     m_flag_tg = true;
   }
@@ -88,35 +194,6 @@ void myEx0Producer::DoConfigure(){
 void myEx0Producer::DoStartRun(){
   m_exit_of_run = false;
   m_thd_run = std::thread(&myEx0Producer::Mainloop, this);
-
-  //--> start of wmq
-  //--> tremendous print out of the csv file status <--
-  if (stat(m_stream_path, &sb) == -1)  EUDAQ_THROW("stat");
-  
-
-
-
-  
-  
-  //--> read all tags stored in the first line of csv file:
-  if (m_file_stream.good()) {
-    std::string tag_line;
-    getline(m_file_stream, tag_line);
-    std::stringstream tag_line_stream(tag_line);
-    std::string tag_cell;
-    std::cout<<"[StartRun]: Looking for tags from csv file\n ==> ";
-    //--> get the tag_cell until next comma from the line stream:
-    while ( getline(tag_line_stream, tag_cell, ',') ){
-      if (m_tags.find(tag_cell) == m_tags.end()){ // not found
-	m_tags[tag_cell] = "99"; // init a random num for test TODO
-	std::cout<< tag_cell <<";  ";
-      }
-      else EUDAQ_THROW("duplicate tag \""+ tag_cell+ "\" found.") ; // duplicate tag found
-    }
-    std::cout<<" <==\n";
-  }
-  //--> end of wmq
-  
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void myEx0Producer::DoStopRun(){
@@ -174,11 +251,17 @@ void myEx0Producer::Mainloop(){
     }
     if(m_flag_tg){
       ev->SetTriggerN(trigger_n);
-      std::cout<<"[Loop]: TriggerNumber enabled to use"; //wmq
+      std::cout<<"[Loop]: TriggerNumber enabled to use\n"; //wmq
       std::cout<<" ==> Trigger #"<<trigger_n<<"\n"; //wmq
     }
 
     //--> start <--
+
+    m_file_stream.clear(); // clear the failbit and restart to read the file stream; see std::ios::clear, http://www.cplusplus.com/reference/ios/ios/clear/
+    if (stat(m_stream_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("[Loop] stat");
+    // printf("Last status change:       %s", ctime(&m_sb.st_ctime));
+    // printf("Last file access:         %s", ctime(&m_sb.st_atime));
+    printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
     
     std::string monitor_line;
     int row=0;
@@ -189,13 +272,15 @@ void myEx0Producer::Mainloop(){
       std::string cell;
 
       int counter = 0;
+      if (!monitor_line.empty()) printf("Row %d : ", row);
       while (getline(lineStream, cell, ',')) { // read a string from sstream until next comma
-	printf("Row %d : # %d is %s; ", row, counter, cell.c_str());
+	printf(" # %d is %s; ", counter, cell.c_str());
 	counter++;
       }
       if(!monitor_line.empty()) printf("\n");
       row++;
     }
+
     //--> end <-- 
     
     //--> start <-- template to set a tag
