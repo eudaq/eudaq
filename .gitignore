@@ -50,6 +50,9 @@ extern/IPHCRC
 extern/pthread*
 extern/libusb*
 
+# Ignore build and lcio
+build/
+extern/lcio-v02-07/
 
 #ignore debug folder
 debug/*
