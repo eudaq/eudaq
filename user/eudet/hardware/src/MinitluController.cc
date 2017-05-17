@@ -1,30 +1,279 @@
 #include "MinitluController.hh"
-
+#include "TLUhardware.hh"
+#include "i2cBus.hh"
 #include <iomanip>
 #include <thread>
 #include <chrono>
+#include <string>
+#include <bitset>
+#include <iomanip>
+
 
 #include "uhal/uhal.hpp"
 
 namespace tlu {
   miniTLUController::miniTLUController(const std::string & connectionFilename, const std::string & deviceName) : m_hw(0), m_DACaddr(0), m_IDaddr(0) {
 
+    //m_i2c = new i2cCore(connectionFilename, deviceName);
     std::cout << "Configuring from " << connectionFilename << " the device " << deviceName << std::endl;
     if(!m_hw) {
       ConnectionManager manager ( connectionFilename );
       m_hw = new uhal::HwInterface(manager.getDevice( deviceName ));
+      m_i2c = new i2cCore(m_hw);
+      GetFW();
 
     }
   }
 
-
-  void miniTLUController::SetWRegister(const std::string & name, int value) {
-    try {
-    m_hw->getNode(name).write(static_cast< uint32_t >(value));
-    m_hw->dispatch();
-    } catch (...) {
-       return;
+  void miniTLUController::DumpEventsBuffer() {
+    std::cout<<"miniTLUController::DumpEvents......"<<std::endl;
+    for(auto&& i: m_data){
+      std::cout<<i<<std::endl;
     }
+    std::cout<<"miniTLUController::DumpEvents end"<<std::endl;
+  }
+
+  void miniTLUController::enableClkLEMO(bool enable, bool verbose= false){
+    int bank=1;
+    unsigned char mask= 0x10;
+    unsigned char oldStatus;
+    unsigned char newStatus;
+
+    oldStatus= m_IOexpander2.getIOReg(bank, false);
+    newStatus= oldStatus & ~mask;
+    std::string outstat= "enabled";
+    if (!enable){ //0 activates the output. 1 disables it.
+      newStatus= newStatus | mask;
+      outstat= "disabled";
+    }
+    std::cout << "  Clk LEMO " << outstat << std::endl;
+    if (verbose){
+      std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
+    }
+    m_IOexpander2.setIOReg(bank, newStatus, verbose);
+  }
+
+  void miniTLUController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
+    int nDUTs= 4;
+    unsigned char oldStatus;
+    unsigned char newStatus;
+    unsigned char mask;
+
+    if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
+      std::cout << std::boolalpha << "  Setting HDMI " << hdmiN << " to " << enable << std::endl;
+
+      hdmiN = hdmiN-1;  // <<<<< CAREFUL HERE. All the rest is meant to work with [0:3] rather than [1:4}]
+      unsigned int bank = (unsigned int)hdmiN / 2; // DUT0 and DUT1 are on bank 0. DUT2 and DUT3 on bank 1
+      unsigned int nibble = hdmiN % 2;    // DUT0 and DUT2 are on nibble 0. DUT1 and DUT3 are on nibble 1
+
+      if (verbose){
+        std::cout << "\tBank " << bank << " Nibble " << nibble << std::endl;
+      }
+      oldStatus= m_IOexpander1.getIOReg(bank, false);
+      mask= 0xF << 4*nibble;
+      newStatus= oldStatus & (~mask);
+      if (!enable){ // we want to write 0 to activate the outputs so check opposite of "enable"
+        newStatus |= mask;
+      }
+      if (verbose){
+        std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
+      }
+      m_IOexpander1.setIOReg(bank, newStatus, verbose);
+    }
+    else{
+      std::cout << "enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
+    }
+  }
+
+  uint32_t miniTLUController::GetEventFifoCSR() {
+    uint32_t res;
+    bool empty, alm_empty, alm_full, full, prog_full;
+    res= ReadRRegister("eventBuffer.EventFifoCSR");
+    empty = 0x1 & res;
+    alm_empty= 0x2 & res;
+    alm_full= 0x4 & res;
+    full= 0x8 & res;
+    prog_full= 0x4 & res;
+    std::cout << "  FIFO status:" << std::endl;
+    if (empty){std::cout << "\tEMPTY" << std::endl;}
+    if (alm_empty){std::cout << "\tALMOST EMPTY (1 word in FIFO)" << std::endl;}
+    if (alm_full){std::cout << "\tALMOST FULL (1 word left)" << std::endl;}
+    if (full){std::cout << "\tFULL (8192 word)" << std::endl;}
+    if (prog_full){std::cout << "\tABOVE THRESHOLD (8181/8192)" << std::endl;}
+    return res;
+  }
+
+  uint32_t miniTLUController::GetEventFifoFillLevel() {
+    uint32_t res;
+    uint32_t fifomax= 8192;
+
+    res= ReadRRegister("eventBuffer.EventFifoFillLevel");
+    //std::cout << std::fixed << std::setw( 3 ) << std::setprecision( 2 ) << std::setfill( '0' ) << "  FIFO level " << (float)res/fifomax << "% (" << res << "/" << fifomax << ")" << std::endl;
+    return res;
+  };
+
+  uint32_t miniTLUController::GetFW(){
+    uint32_t res;
+    res= ReadRRegister("version");
+    std::cout << "TLU FIRMWARE VERSION= " << std::hex<< res <<std::dec<< std::endl;
+    return res;
+  }
+
+  uint64_t miniTLUController::getSN(){
+    m_IDaddr= m_I2C_address.EEPROM;
+    for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
+      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr);//here
+      m_BoardID = ((((uint64_t)nibble)&0xff)<<((0xff-myaddr)*8))|m_BoardID;
+    }
+    std::cout << "  TLU Unique ID : " << std::setw(12) << std::setfill('0') << std::hex << m_BoardID << std::endl;
+    return m_BoardID;
+  }
+
+  uint64_t miniTLUController::GetTriggerMask(){
+    uint32_t maskHi, maskLo;
+    maskLo= ReadRRegister("triggerLogic.TriggerPattern_lowR");
+    maskHi= ReadRRegister("triggerLogic.TriggerPattern_highR");
+    uint64_t triggerPattern = ((uint64_t)maskHi) << 32 | maskLo;
+    std::cout << std::hex << "\tTRIGGER PATTERN (for external triggers) READ 0x" << maskHi << " --- 0x"<< maskLo << std::dec << std::endl;
+    return triggerPattern;
+  }
+
+  uint32_t miniTLUController::I2C_enable(char EnclustraExpAddr)
+	// This must be executed at least once after powering up the TLU or the I2C bus will not work.
+	{
+		std::cout << "  Enabling I2C bus" << std::endl;
+		m_i2c->WriteI2CChar(EnclustraExpAddr, 0x01, 0x7F);//here
+		char res= m_i2c->ReadI2CChar(EnclustraExpAddr, 0x01);//here
+		std::bitset<8> resbit(res);
+		if (resbit.test(7))
+		{
+			std::cout << "\tWarning: enabling Enclustra I2C bus might have failed. This could prevent from talking to the I2C slaves on the TLU." << int(res) << std::endl;
+		}else{
+			std::cout << "\tSuccess." << std::endl;
+		}
+	}
+
+  void miniTLUController::InitializeClkChip(const std::string & filename){
+    std::vector< std::vector< unsigned int> > tmpConf;
+    m_zeClock.SetI2CPar(m_i2c, m_I2C_address.clockChip);
+    m_zeClock.getDeviceVersion();
+    //std::string filename = "/users/phpgb/workspace/myFirmware/AIDA/bitFiles/TLU_CLK_Config.txt";
+    tmpConf= m_zeClock.parseClkFile(filename, false);
+    m_zeClock.writeConfiguration(tmpConf, false);
+    m_zeClock.checkDesignID();
+  }
+
+  void miniTLUController::InitializeDAC() {
+    m_zeDAC1.SetI2CPar(m_i2c, m_I2C_address.DAC1);
+    m_zeDAC1.SetIntRef(false, true);
+    m_zeDAC2.SetI2CPar(m_i2c, m_I2C_address.DAC2);
+    m_zeDAC2.SetIntRef(false, true);
+    //std::cout << "  I/O expander: initialized" << std::endl;
+  }
+
+  void miniTLUController::InitializeIOexp(){
+    m_IOexpander1.SetI2CPar(m_i2c, m_I2C_address.expander1);
+    m_IOexpander2.SetI2CPar(m_i2c, m_I2C_address.expander2);
+
+    //EPX1 bank 0
+    m_IOexpander1.setInvertReg(0, 0x00, false); //0= normal, 1= inverted
+    m_IOexpander1.setIOReg(0, 0xFF, false); // 0= output, 1= input
+    m_IOexpander1.setOutputs(0, 0xFF, false); // If output, set to 1
+    //EPX1 bank 1
+    m_IOexpander1.setInvertReg(1, 0x00, false); // 0= normal, 1= inverted
+    m_IOexpander1.setIOReg(1, 0xFF, false);// 0= output, 1= input
+    m_IOexpander1.setOutputs(1, 0xFF, false); // If output, set to 1
+
+    //EPX2 bank 0
+    m_IOexpander2.setInvertReg(0, 0x00, false);// 0= normal, 1= inverted
+    m_IOexpander2.setIOReg(0, 0xFF, false);// 0= output, 1= input
+    m_IOexpander2.setOutputs(0, 0xFF, false);// If output, set to 1
+    //EPX2 bank 1
+    m_IOexpander2.setInvertReg(1, 0x00, false);// 0= normal, 1= inverted
+    m_IOexpander2.setIOReg(1, 0x5F, false);// 0= output, 1= input
+    m_IOexpander2.setOutputs(1, 0xFF, false);// If output, set to 1
+    std::cout << "  I/O expanders: initialized" << std::endl;
+  }
+
+  void miniTLUController::InitializeI2C() {
+    std::ios::fmtflags coutflags( std::cout.flags() );// Store cout flags to be able to restore them
+
+    SetI2CClockPrescale(0x30);
+    SetI2CControl(0x80);
+
+    //First we need to enable the enclustra I2C expander or we will not see any I2C slave past on the TLU
+    I2C_enable(m_I2C_address.core);
+
+    std::cout << "  Scan I2C bus:" << std::endl;
+    for(int myaddr = 0; myaddr < 128; myaddr++) {
+      SetI2CTX((myaddr<<1)|0x0);
+      SetI2CCommand(0x90); // 10010000
+	    while(I2CCommandIsDone()) { // xxxxxx1x   TODO:: isDone or notDone
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+	    }
+	    bool isConnected = (((GetI2CStatus()>>7)&0x1) == 0);  // 0xxxxxxx connected
+      if (isConnected){
+        if (myaddr== m_I2C_address.core){
+          //std::cout << "\tFOUND I2C slave CORE" << std::endl;
+        }
+        else if (myaddr== m_I2C_address.clockChip){
+          std::cout << "\tFOUND I2C slave CLOCK" << std::endl;
+        }
+        else if (myaddr== m_I2C_address.DAC1){
+          std::cout << "\tFOUND I2C slave DAC1" << std::endl;
+        }
+        else if (myaddr== m_I2C_address.DAC2){
+          std::cout << "\tFOUND I2C slave DAC2" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.EEPROM){
+          m_IDaddr= myaddr;
+          std::cout << "\tFOUND I2C slave EEPROM" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.expander1){
+          std::cout << "\tFOUND I2C slave EXPANDER1" << std::endl;
+        }
+        else if (myaddr==m_I2C_address.expander2){
+          std::cout << "\tFOUND I2C slave EXPANDER2" << std::endl;
+        }
+        else{
+          std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
+        }
+      }
+      SetI2CTX(0x0);
+  		SetI2CCommand(0x50); // 01010000
+  		while(I2CCommandIsDone()) {
+  			std::this_thread::sleep_for(std::chrono::seconds(1));
+  		}
+    }
+
+    if(m_IDaddr){
+      getSN();
+    }
+    std::cout.flags( coutflags ); // Restore cout flags
+  }
+
+  unsigned int miniTLUController::PackBits(std::vector< unsigned int>  rawValues){
+    //Pack 6 number using only 5-bits for each.
+    int nChannels= 6;
+    unsigned int packedbits= 0;
+    int tmpint= 0;
+    if (nChannels== rawValues.size()){
+      for (int iCh=0; iCh < nChannels; iCh++){
+        tmpint= ((int)rawValues.at(iCh))<< iCh*5;
+        packedbits = packedbits | tmpint;
+      }
+      //std::cout << "PACKED "<< packedbits << std::endl;
+    }
+    else{
+      std::cout << "PackBits - ERROR: wrong number of elements in vector." << std::endl;
+    }
+    return packedbits;
+  }
+
+  minitludata* miniTLUController::PopFrontEvent(){
+    minitludata *e = m_data.front();
+    m_data.pop_front();
+    return e;
   }
 
   uint32_t miniTLUController::ReadRRegister(const std::string & name) {
@@ -42,7 +291,6 @@ namespace tlu {
     }
   }
 
-
   void miniTLUController::ReceiveEvents(){
     // std::cout<<"miniTLUController::ReceiveEvents"<<std::endl;
     uint32_t nevent = GetEventFifoFillLevel()/4;
@@ -51,7 +299,7 @@ namespace tlu {
     // if(0){ // no read
     if(nevent){
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*4);
-      m_hw->dispatch();    
+      m_hw->dispatch();
       if(fifoContent.valid()) {
 	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/4<<std::endl;
 	if(fifoContent.size()%4 !=0){
@@ -61,10 +309,10 @@ namespace tlu {
 	  m_data.push_back(new minitludata(*i, *(i+1), *(i+2), *(i+3)));
 	  std::cout<< *(m_data.back());
 	}
-      }	
+      }
     }
   }
-  
+
   void miniTLUController::ResetEventsBuffer(){
     for(auto &&i: m_data){
       delete i;
@@ -72,167 +320,129 @@ namespace tlu {
     m_data.clear();
   }
 
-  minitludata* miniTLUController::PopFrontEvent(){
-    minitludata *e = m_data.front();
-    m_data.pop_front();
-    return e;
-  }
+  void miniTLUController::SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose= false){
+    int nDUTs= 4;
+    unsigned char oldStatus;
+    unsigned char newStatus;
+    unsigned char mask, maskLow, maskHigh;
+    int bank= 0;
 
-  
-  void miniTLUController::InitializeI2C(char DACaddr, char IDaddr) {
-    SetI2CClockPrescale(0x30);
-    SetI2CClockPrescale(0x30);
-    SetI2CControl(0x80);
-    SetI2CControl(0x80);
-    
-    std::cout << "Scan I2C bus:" << std::endl;
-    for(int myaddr = 0; myaddr < 128; myaddr++) {
-      SetI2CTX((myaddr<<1)|0x0);
-      SetI2CCommand(0x90); // 10010000
-      while(I2CCommandIsDone()) { // xxxxxx1x   TODO:: isDone or notDone
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+    if ((hdmiN < 1 ) || ( hdmiN > nDUTs )){
+      std::cout << "\tSetDutClkSrc - ERROR: HDMI must be in range [1, 4]" << std::endl;
+      return;
+    }
+    if ((source < 0 ) || ( source > 2 )){
+      std::cout << "\tSetDutClkSrc - ERROR: Clock source can only be 0 (disabled), 1 (Si5345) or 2 (FPGA)" << std::endl;
+      return;
+    }
+    std::cout  << "  Setting HDMI " << hdmiN << " clock source:" << std::endl;
+    hdmiN= hdmiN-1;
+    maskLow= 1 << (1* hdmiN); //CLK FROM FPGA
+    maskHigh= 1<< (1* hdmiN +4); //CLK FROM Si5345
+    mask= maskLow | maskHigh;
+    oldStatus= m_IOexpander2.getIOReg(bank, false);
+    newStatus= oldStatus & ~mask; //
+    switch(source){
+      case 0 : {
+        newStatus = newStatus | mask;
+        std::cout << "\tdisabled" << std::endl;
+        break;
       }
-      bool isConnected = (((GetI2CStatus()>>7)&0x1) == 0);  // 0xxxxxxx connected
-      if(myaddr == DACaddr) {
-	if (isConnected) { 
-	  std::cout << "DAC at addr 0x" << std::hex << myaddr << std::dec<< " is connected" << std::endl;
-	  m_DACaddr = myaddr;
-	} else {
-	  std::cout << "DAC at addr 0x" << std::hex << DACaddr << std::dec<<" is NOT connected" << std::endl;
-	}
-      } else if (myaddr == IDaddr) {
-	if (isConnected) { 
-	  std::cout << "ID at addr 0x" << std::hex << myaddr << std::dec<<" is connected" << std::endl;
-	  m_IDaddr = myaddr;
-	} else {
-	  std::cout << "ID at addr 0x" << std::hex << DACaddr << std::dec<<" is NOT connected" << std::endl;
-	}
-      } else if (isConnected) 
-	std::cout << "Device 0x" << std::hex << myaddr << std::dec<<" is connected" << std::endl;
-      SetI2CTX(0x0);
-      SetI2CCommand(0x50); // 01010000
-      while(I2CCommandIsDone()) {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+      case 1 : {
+        newStatus = newStatus | maskLow;
+        std::cout << "\tSi5435" << std::endl;
+        break;
       }
-    }
-  
-    if(m_IDaddr) {
-      m_BoardID = 0;
-      for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
-	char nibble = ReadI2CChar(m_IDaddr, myaddr);
-	m_BoardID = ((((uint64_t)nibble)&0xff)<<((0xff-myaddr)*8))|m_BoardID;
+      case 2 : {
+        newStatus= newStatus | maskHigh;
+        std::cout << "\tFPGA" << std::endl;
+        break;
       }
-      std::cout << "Unique ID : " << std::setw(12) << std::setfill('0') << m_BoardID << std::endl;
-    }
-  }
-
-  void miniTLUController::WriteI2CChar(char deviceAddr, char memAddr, char value) {
-    SetI2CTX((deviceAddr<<1)|0x0);
-    SetI2CCommand(0x90);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    SetI2CTX(memAddr);
-    SetI2CCommand(0x10);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    SetI2CTX(value);
-    SetI2CCommand(0x50);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-  }
-
-  void miniTLUController::WriteI2CCharArray(char deviceAddr, char memAddr, unsigned char *values, unsigned int len) {
-    unsigned int i;
-
-    SetI2CTX((deviceAddr<<1)|0x0);
-    SetI2CCommand(0x90);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    SetI2CTX(memAddr);
-    SetI2CCommand(0x10);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    for(i = 0; i < len-1; ++i) {
-      SetI2CTX(values[i]);
-      SetI2CCommand(0x10);
-      while(I2CCommandIsDone()) {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+      default: {
+        newStatus= oldStatus;
+        std::cout << "\tNo valid clock source selected" << std::endl;
+        break;
       }
     }
-    SetI2CTX(values[len-1]);
-    SetI2CCommand(0x50);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+    if(verbose){
+      std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
+    m_IOexpander2.setIOReg(bank, newStatus, verbose);
   }
 
-  char miniTLUController::ReadI2CChar(char deviceAddr, char memAddr) {
-    SetI2CTX((deviceAddr<<1)|0x0);
-    SetI2CCommand(0x90);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    SetI2CTX(memAddr);
-    SetI2CCommand(0x10);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    SetI2CTX((deviceAddr<<1)|0x1);
-    SetI2CCommand(0x90);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    SetI2CCommand(0x28);
-    while(I2CCommandIsDone()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    return GetI2CRX();
+  void miniTLUController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
+    SetPulseStretch( (int)PackBits(valuesVec) );
   }
 
-
-  void miniTLUController::SetDACValue(unsigned char channel, uint32_t value) {
-    unsigned char chrsToSend[2];
-
-    std::cout << "Setting DAC channel " << (unsigned int)channel << " = " << value << std::endl;
-
-    chrsToSend[0] = 0x0;
-    chrsToSend[1] = 0x0;
-    //chrsToSend[1] = 0x1;
-    WriteI2CCharArray(m_DACaddr, 0x38, chrsToSend, 2);
-
-    // set the value
-    chrsToSend[1] = value&0xff;
-    chrsToSend[0] = (value>>8)&0xff;
-    WriteI2CCharArray(m_DACaddr, 0x18+(channel&0x7), chrsToSend, 2);
+  void miniTLUController::SetPulseDelayPack(std::vector< unsigned int>  valuesVec){
+    SetPulseDelay( (int)PackBits(valuesVec) );
   }
+
 
   void miniTLUController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
+    //Channel can either be [0, 5] or 7 (all channels).
+    int nChannels= 6; //We should read this from conf file, ideally.
+    bool intRef= false; //We should read this from conf file, ideally.
+    float vref;
+    if (intRef){
+      vref = 2.500; // Internal reference
+    }
+    else{
+      vref = 1.300; // Reference voltage is 1.3V on newer TLU
+    }
+    if ( std::abs(thresholdVoltage) > vref ){
+      thresholdVoltage= vref*thresholdVoltage/std::abs(thresholdVoltage);
+      std::cout<<"\tWarning: Threshold voltage is outside range [-1.3 , +1.3] V. Coerced to "<< thresholdVoltage << " V"<<std::endl;
+    }
 
-    std::cout << "Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-    float vref = 1.300 ; // Reference voltage is 1.3V on newer TLU
     float vdac = ( thresholdVoltage + vref ) / 2;
     float dacCode =  0xFFFF * vdac / vref;
 
-    if ( std::abs(thresholdVoltage) > vref )
-      std::cout<<"Threshold voltage must be > -1.3V and < 1.3V"<<std::endl;
-
-    SetDACValue(channel , int(dacCode) );
-      
-  }
-
-  void miniTLUController::DumpEventsBuffer() {
-    std::cout<<"miniTLUController::DumpEvents......"<<std::endl;
-    for(auto&& i: m_data){
-      std::cout<<i<<std::endl;
+    if( (channel != 7) && ((channel < 0) || (channel > (nChannels-1)))  ){
+      std::cout<<"\tError: DAC illegal DAC channel. Use 7 for all channels or 0 <= channel <= "<< nChannels-1 << std::endl;
+      return;
     }
-    std::cout<<"miniTLUController::DumpEvents end"<<std::endl;
+
+    if (channel==7){
+      m_zeDAC1.SetDACValue(channel , int(dacCode) );
+      m_zeDAC2.SetDACValue(channel , int(dacCode) );
+      std::cout << "  Setting threshold for all channels to " << thresholdVoltage << " Volts" << std::endl;
+      return;
+    }
+    if (channel <4){
+      m_zeDAC2.SetDACValue(channel , int(dacCode) );
+      std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+    }
+    else{
+      m_zeDAC1.SetDACValue(channel-4 , int(dacCode) );
+      std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+    }
+
   }
 
+  void miniTLUController::SetTriggerMask(uint64_t value){
+    uint32_t maskHi, maskLo;
+    maskHi = (uint32_t)(value>>32);
+    maskLo = (uint32_t)value;
+    std::cout << std::hex << "  TRIGGER PATTERN (for external triggers) SET TO 0x" << maskHi << " --- 0x"<< maskLo << " (Two 32-bit words)" << std::dec << std::endl;
+    SetWRegister("triggerLogic.TriggerPattern_lowW",  maskLo);
+    SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
+  }
+
+  void miniTLUController::SetTriggerMask(uint32_t maskHi, uint32_t maskLo){
+    std::cout << std::hex << "  TRIGGER PATTERN (for external triggers) SET TO 0x" << maskHi << " --- 0x"<< maskLo << " (Two 32-bit words)" << std::dec << std::endl;
+    SetWRegister("triggerLogic.TriggerPattern_lowW",  maskLo);
+    SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
+  }
+
+  void miniTLUController::SetWRegister(const std::string & name, int value){
+    try {
+    m_hw->getNode(name).write(static_cast< uint32_t >(value));
+    m_hw->dispatch();
+    } catch (...) {
+      return;
+    }
+  }
 
   void miniTLUController::SetUhalLogLevel(uchar_t l){
     switch(l){
@@ -258,18 +468,18 @@ namespace tlu {
       uhal::setLogLevelTo(uhal::Debug());
       break;
     default:
-      uhal::setLogLevelTo(uhal::Debug());      
+      uhal::setLogLevelTo(uhal::Debug());
     }
   }
 
 
-  
+
   std::ostream &operator<<(std::ostream &s, minitludata &d) {
     s << "eventnumber: " << d.eventnumber << " type: " << int(d.eventtype) <<" timestamp: 0x" <<std::hex<< d.timestamp <<std::dec<<std::endl
       <<" input0: " << int(d.input0) << " input1: " << int(d.input1) << " input2: " << int(d.input2) << " input3: " << int(d.input3) <<std::endl
       <<" sc0: " << int(d.sc0) << " sc1: "  << int(d.sc1) << " sc2: "  << int(d.sc2) << " sc3: " << int(d.sc3) <<std::endl;
     return s;
-  } 
-  
+  }
+
 
 }

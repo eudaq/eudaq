@@ -92,7 +92,8 @@ int main(int /*argc*/, char ** argv) {
     TLU.SetTriggerVeto(1);
     TLU.ResetFIFO();
     TLU.ResetEventsBuffer();      
-    TLU.InitializeI2C(dacAddr.Value(),identAddr.Value());
+    //TLU.InitializeI2C(dacAddr.Value(),identAddr.Value());
+	TLU.InitializeI2C();
     TLU.SetThresholdValue(0, vthresh_0.Value());
     TLU.SetThresholdValue(1, vthresh_1.Value());
     TLU.SetThresholdValue(2, vthresh_2.Value());
