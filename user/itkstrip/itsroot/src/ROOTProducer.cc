@@ -49,10 +49,9 @@ private:
 
 ItsRootProducer::ItsRootProducer(const std::string & name,
 			       const std::string & runcontrol)
-  :eudaq::Producer(name, runcontrol){
+  :eudaq::Producer(name, runcontrol), m_state(STATE::UNINIT){
   m_ev_name = name;
 }
-
 
 
 void ItsRootProducer::DoInitialise(){
@@ -143,12 +142,15 @@ bool ROOTProducer::isNetConnected(){
 }
 
 void ROOTProducer::createNewEvent(unsigned nev){
+  std::unique_lock<std::mutex> lk(m_mtx_ev);
   ev = m_prod->makeRawEvent();
   ev->SetTriggerN(nev);
 }
 
 void ROOTProducer::addData2Event(unsigned dataid, UChar_t * data, size_t size){
-  ev->AddBlock(dataid, data, size);
+  std::unique_lock<std::mutex> lk(m_mtx_ev);
+  if(ev)
+    ev->AddBlock(dataid, data, size);
 }
 
 int ROOTProducer::getConfiguration(const char* tag, int defaultValue){
@@ -161,20 +163,23 @@ int ROOTProducer::getConfiguration(const char* tag, int defaultValue){
 }
 
 void ROOTProducer::setTag( const char* tagNameTagValue ){
-  // std::string dummy(tagNameTagValue);
-  // size_t equalsymbol=dummy.find_first_of("=");
-  // if (equalsymbol!=std::string::npos&&equalsymbol>0){
-  //   std::string tagName=dummy.substr(0,equalsymbol);
-  //   std::string tagValue=dummy.substr(equalsymbol+1);
-  //   tagName = eudaq::trim(tagName);
-  //   tagValue = eudaq::trim(tagValue);
-  //   ev->SetTag(tagName, tagValue);
-  // }else{
-  //   std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
-  // }
+  std::unique_lock<std::mutex> lk(m_mtx_ev);
+  std::string dummy(tagNameTagValue);
+  size_t equalsymbol=dummy.find_first_of("=");
+  if (equalsymbol!=std::string::npos&&equalsymbol>0){
+    std::string tagName=dummy.substr(0,equalsymbol);
+    std::string tagValue=dummy.substr(equalsymbol+1);
+    tagName = eudaq::trim(tagName);
+    tagValue = eudaq::trim(tagValue);
+    if(ev)
+      ev->SetTag(tagName, tagValue);
+  }else{
+    std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
+  }
 }
 
 void ROOTProducer::sendEvent(){
+  std::unique_lock<std::mutex> lk(m_mtx_ev);
   try {
     m_prod->SendEvent(std::move(ev));
     checkStatus();

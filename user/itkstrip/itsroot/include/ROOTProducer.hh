@@ -8,6 +8,7 @@
 
 #ifndef __CINT__
 #include "eudaq/RawEvent.hh"
+#include <mutex>
 class ItsRootProducer;
 #endif
 
@@ -40,6 +41,7 @@ private:
 #ifndef __CINT__
   std::unique_ptr<ItsRootProducer> m_prod;
   eudaq::EventUP ev;
+  std::mutex m_mtx_ev;
 #endif
   ClassDef(ROOTProducer, 0)
 };
