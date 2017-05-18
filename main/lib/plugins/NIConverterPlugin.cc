@@ -477,7 +477,7 @@ namespace eudaq {
       std::vector<size_t> markerVec = currentDetector->getMarkerPosition();
 
       if (plane.GetFlags(StandardPlane::FLAG_ZS)) {
-        zsDataEncoder["sensorID"] = plane.ID()-1;
+        zsDataEncoder["sensorID"] = plane.ID();
         zsDataEncoder["sparsePixelType"] =
             eutelescope::kEUTelGenericSparsePixel;
 
