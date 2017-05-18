@@ -26,7 +26,9 @@ class myEx0Producer : public eudaq::Producer {
   void DoTerminate() override;
   void DoReset() override;
   void Mainloop();
-  
+
+  static const uint32_t m_id_factory = eudaq::cstr2hash("myEx0Producer");
+
   std::vector<std::string> ConvertStringToVec(std::string str, char delim)
   {// added by wmq TBD: to integrate to a separate tool header!
     std::vector<std::string> vec;
@@ -39,8 +41,8 @@ class myEx0Producer : public eudaq::Producer {
     return vec;
   }
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("myEx0Producer");
-  
+  void PrintFileStat(std::string file_path);
+    
 private:
   bool m_flag_ts;
   bool m_flag_tg;
@@ -53,8 +55,9 @@ private:
   std::string m_stream_path;
   std::ifstream m_file_stream;
   struct stat m_sb;
-  std::map<std::string, std::string> m_tags;
-  
+  std::map<std::string, std::string> m_tag_map;
+  std::vector<std::string> m_tag_vc, m_value_vc;
+ 
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 //----------DOC-MARK-----BEG*REG-----DOC-MARK----------
@@ -80,54 +83,12 @@ void myEx0Producer::DoInitialise(){
 
   m_stream_path = ini->Get("DEV_STREAM_PATH","input.csv");
   m_file_stream.open( m_stream_path.c_str(), std::ifstream::in );
-  if (!m_file_stream.is_open()) {
-    EUDAQ_THROW("Oops, this file seems not exist? please check ==> " + m_stream_path);
-  }
-  else {
-    std::cout<<"Congrats! This file is open\n ==>  "<< m_stream_path <<std::endl;
-  }
+  if (!m_file_stream.is_open()) EUDAQ_THROW("Oops, this file seems not exist? please check ==> " + m_stream_path);
+  else std::cout<<"Congrats! This file is open\n ==>  "<< m_stream_path <<std::endl;
 
   //--> start of wmq
-  /*--> start -- tremendous print out of the csv file status <--*/
-  if (stat(m_stream_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("stat");
-  
-  printf("\nID of containing device:  [%lx,%lx]\n",
-	 (long) major(m_sb.st_dev), (long) minor(m_sb.st_dev));
-  
-  printf("File type:                ");
-  
-  switch (m_sb.st_mode & S_IFMT) {
-  case S_IFBLK:  printf("block device\n");            break;
-  case S_IFCHR:  printf("character device\n");        break;
-  case S_IFDIR:  printf("directory\n");               break;
-  case S_IFIFO:  printf("FIFO/pipe\n");               break;
-  case S_IFLNK:  printf("symlink\n");                 break;
-  case S_IFREG:  printf("regular file\n");            break;
-  case S_IFSOCK: printf("socket\n");                  break;
-  default:       printf("unknown?\n");                break;
-  }
-  
-  printf("I-node number:            %ld\n", (long) m_sb.st_ino);
-  
-  printf("Mode:                     %lo (octal)\n",
-	 (unsigned long) m_sb.st_mode);
-  
-  printf("Link count:               %ld\n", (long) m_sb.st_nlink);
-  printf("Ownership:                UID=%ld   GID=%ld\n",
-	 (long) m_sb.st_uid, (long) m_sb.st_gid);
-  
-  printf("Preferred I/O block size: %ld bytes\n",
-	 (long) m_sb.st_blksize);
-  printf("File size:                %lld bytes\n",
-	 (long long) m_sb.st_size);
-  printf("Blocks allocated:         %lld\n",
-	 (long long) m_sb.st_blocks);
-  
-  printf("Last status change:       %s", ctime(&m_sb.st_ctime));
-  printf("Last file access:         %s", ctime(&m_sb.st_atime));
-  printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
-
-  /*--> end -- tremendous print out of the csv file status <-- */
+  // print many status info of the file
+  myEx0Producer::PrintFileStat(m_stream_path.c_str());
   
   //--> read all tags stored in the first line of csv file:
   //    and get the current last line as an init number if exist
@@ -148,28 +109,27 @@ void myEx0Producer::DoInitialise(){
     }
     row++;
   }
-  std::vector<std::string> tag_vc, value_vc;
-  tag_vc = ConvertStringToVec (first_line, ',');
-  value_vc = ConvertStringToVec (last_line, ',');
+  m_tag_vc = ConvertStringToVec (first_line, ',');
+  m_value_vc = ConvertStringToVec (last_line, ',');
 
   //-- init the tag and value for condition map:
-  for (int itag=0; itag<tag_vc.size(); itag++){
-    std::string value="-99", key = tag_vc[itag];
+  for (int itag=0; itag<m_tag_vc.size(); itag++){
+    std::string ivalue="-99", ikey = m_tag_vc[itag];
     
     //-- check if same amount of keys and values for a map:
     //--  empty or only-space csv value ignored and default -99 used.
-    if (tag_vc.size() == value_vc.size() && !value_vc[itag].empty() && value_vc[itag].find_first_not_of(' ')!=std::string::npos ) value = value_vc[itag];
-    else printf("\nwarning: there are #%lu tags with #%lu values; all tags init with value of -99 by default.\n", tag_vc.size(), value_vc.size());
+    if (m_tag_vc.size() == m_value_vc.size() && !m_value_vc[itag].empty() && m_value_vc[itag].find_first_not_of(' ')!=std::string::npos ) ivalue = m_value_vc[itag];
+    else printf("\nwarning: there are #%lu tags with #%lu values; \" %s \" tag init value of -99 by default.\n", m_tag_vc.size(), m_value_vc.size(), ikey.c_str());
 
     //-- check if there is any duplicate tag:
-    if (m_tags.find(key) == m_tags.end()) { // not found
-      m_tags [key] = value;
+    if (m_tag_map.find(ikey) == m_tag_map.end()) { // not found
+      m_tag_map [ikey] = ivalue;
     }
-    else EUDAQ_THROW("duplicate tag \""+ key + "\" found."); // duplicate tag found
+    else EUDAQ_THROW("duplicate tag \""+ ikey + "\" found."); // duplicate tag found
   }
 
-  //-- print out the init m_tags map:
-  for (std::map<std::string, std::string>::iterator _it = m_tags.begin(); _it!=m_tags.end(); ++_it)
+  //-- print out the init m_tag_map map:
+  for (std::map<std::string, std::string>::iterator _it = m_tag_map.begin(); _it!=m_tag_map.end(); ++_it)
     std::cout << _it->first << " => " << _it->second << '\n';
     
   //--> end of wmq
@@ -255,36 +215,67 @@ void myEx0Producer::Mainloop(){
       std::cout<<" ==> Trigger #"<<trigger_n<<"\n"; //wmq
     }
 
-    //--> start <--
+    //--> start <-- check if file updated, and read the last line to update the tag-map
 
-    m_file_stream.clear(); // clear the failbit and restart to read the file stream; see std::ios::clear, http://www.cplusplus.com/reference/ios/ios/clear/
+    //-- just to print, update-check not via this:
     if (stat(m_stream_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("[Loop] stat");
     // printf("Last status change:       %s", ctime(&m_sb.st_ctime));
     // printf("Last file access:         %s", ctime(&m_sb.st_atime));
     printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
-    
-    std::string monitor_line;
-    int row=0;
 
+    m_file_stream.clear(); // clear the failbit and restart to read the file stream; see std::ios::clear, http://www.cplusplus.com/reference/ios/ios/clear/
+
+    //-- to check if any new row added, and get the new last line:
+    std::string new_line, new_last_line="";
+    int row=0;
     while(m_file_stream.good()){
-      getline( m_file_stream, monitor_line); // read a string line by line
-      std::stringstream lineStream(monitor_line);
+      getline( m_file_stream, new_line); // read a string line by line
+      std::stringstream lineStream(new_line);
       std::string cell;
 
       int counter = 0;
-      if (!monitor_line.empty()) printf("Row %d : ", row);
-      while (getline(lineStream, cell, ',')) { // read a string from sstream until next comma
-	printf(" # %d is %s; ", counter, cell.c_str());
-	counter++;
+      if (new_line.empty()) continue; // skip empty lines
+      else{
+	printf("Row %d : ", row);
+	new_last_line = new_line;
+	while (getline(lineStream, cell, ',')) { // read a string from sstream until next comma
+	  printf(" # %d is %s; ", counter, cell.c_str());
+	  counter++;
+	  if(!new_line.empty()) printf("\n");
+	  row++;
+	}
       }
-      if(!monitor_line.empty()) printf("\n");
-      row++;
     }
+    
+    //-- if updated, update the tag map for event tagging:
+    if ( row>0 ) {
+      std::cout<<"Hey! New non-empty line added, ie File udpated!"<<std::endl;
+      printf("The new LAST line is: %s\n", new_last_line.c_str());
 
+      m_value_vc.clear();// clear the value vector to re-fill w/ updated values
+      m_value_vc =  ConvertStringToVec ( new_last_line, ',' );
+
+      bool badNewValues=(m_tag_vc.size()!=m_value_vc.size());
+      for (int jval=0; jval<m_value_vc.size(); jval++){
+	if( m_value_vc[jval].empty() || m_value_vc[jval].find_first_not_of(' ')==std::string::npos)
+	  badNewValues=true; // empty or only-space value found
+	else continue;
+      }
+
+      if (badNewValues) EUDAQ_WARN("Bad new condition line in csv file: less or empty values found!");
+      else {
+	//-- init the tag and value for condition map:
+	m_tag_map.clear();// clear to re-fill
+	for (int jtag=0; jtag<m_tag_vc.size(); jtag++){
+	  //-- no need to check duplicate tag, as done in DoInitialise()
+	  m_tag_map [ m_tag_vc[jtag] ] = m_value_vc[jtag];
+	}
+      }
+    }
     //--> end <-- 
     
     //--> start <-- template to set a tag
-    for (std::map<std::string, std::string>::iterator this_tag = m_tags.begin(); this_tag!=m_tags.end(); ++this_tag){
+    for (std::map<std::string, std::string>::iterator this_tag = m_tag_map.begin(); this_tag!=m_tag_map.end(); ++this_tag){
       ev->SetTag( this_tag->first, this_tag->second);
     }
     /* ev->SetTag("a test temperature", "21 degree");
@@ -318,3 +309,57 @@ void myEx0Producer::Mainloop(){
 
 }
 //----------DOC-MARK-----END*IMP-----DOC-MARK----------
+
+//----------DOC-MARK-----BEG*toolFunc-----DOC-MARK----------
+
+
+
+void myEx0Producer::PrintFileStat(std::string file_path){
+
+  if (file_path.empty()){
+    std::cout<<"warning: empty file path to print stat()"<<std::endl;
+    return;
+  }
+  
+  /*--> start -- tremendous print out of the csv file status <--*/
+  if (stat(file_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("stat");
+  
+  printf("\nID of containing device:  [%lx,%lx]\n",
+	 (long) major(m_sb.st_dev), (long) minor(m_sb.st_dev));
+  
+  printf("File type:                ");
+  
+  switch (m_sb.st_mode & S_IFMT) {
+  case S_IFBLK:  printf("block device\n");            break;
+  case S_IFCHR:  printf("character device\n");        break;
+  case S_IFDIR:  printf("directory\n");               break;
+  case S_IFIFO:  printf("FIFO/pipe\n");               break;
+  case S_IFLNK:  printf("symlink\n");                 break;
+  case S_IFREG:  printf("regular file\n");            break;
+  case S_IFSOCK: printf("socket\n");                  break;
+  default:       printf("unknown?\n");                break;
+  }
+  
+  printf("I-node number:            %ld\n", (long) m_sb.st_ino);
+  
+  printf("Mode:                     %lo (octal)\n",
+	 (unsigned long) m_sb.st_mode);
+  
+  printf("Link count:               %ld\n", (long) m_sb.st_nlink);
+  printf("Ownership:                UID=%ld   GID=%ld\n",
+	 (long) m_sb.st_uid, (long) m_sb.st_gid);
+  
+  printf("Preferred I/O block size: %ld bytes\n",
+	 (long) m_sb.st_blksize);
+  printf("File size:                %lld bytes\n",
+	 (long long) m_sb.st_size);
+  printf("Blocks allocated:         %lld\n",
+	 (long long) m_sb.st_blocks);
+  
+  printf("Last status change:       %s", ctime(&m_sb.st_ctime));
+  printf("Last file access:         %s", ctime(&m_sb.st_atime));
+  printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
+
+  /*--> end -- tremendous print out of the csv file status <-- */
+
+}
