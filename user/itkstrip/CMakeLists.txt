@@ -7,7 +7,8 @@ if(NOT USER_ITKSTRIP_BUILD)
 endif()
 add_subdirectory(module)
 
-list(APPEND CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
+set(ROOT_DIR $ENV{ROOTSYS}/cmake)
 find_package(ROOT)
 cmake_dependent_option(USER_ITKSTRIP_BUILD_ITSROOT "build ITSDAQ ROOT Producer" ON
   "ROOT_FOUND" OFF)

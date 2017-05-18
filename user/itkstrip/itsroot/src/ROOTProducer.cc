@@ -1,4 +1,4 @@
-#include "ItsRootProducer.hh"
+#include "ROOTProducer.hh"
 
 #include "eudaq/Producer.hh"
 #include "eudaq/RawEvent.hh"
