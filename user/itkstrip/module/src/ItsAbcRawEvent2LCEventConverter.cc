@@ -9,7 +9,7 @@ class ItsAbcRawEvent2LCEventConverter: public eudaq::LCEventConverter{
   typedef std::vector<uint8_t>::const_iterator datait;
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("ItsAbcRaw");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("ITS_ABC");
   static const uint32_t PLANE_ID_OFFSET_ABC = 10;
 };
   

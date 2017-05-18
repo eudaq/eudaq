@@ -4,7 +4,7 @@
 class ItsTtcRawEvent2StdEventConverter: public eudaq::StdEventConverter{
 public:
   bool Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, eudaq::ConfigSPC conf) const override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("ItsTtcRaw");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("ITS_TTC");
 };
 
 namespace{

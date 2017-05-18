@@ -39,33 +39,42 @@ public:
   STATE getState(){return m_state;};
   void setState(STATE s){m_state=s;};
   void waitingLockRelease(){std::unique_lock<std::mutex> lck(m_doing);};
-
+  eudaq::EventUP makeRawEvent(){ return eudaq::Event::MakeUnique(m_ev_name);};
 private:
   STATE m_state;
   std::mutex m_doing;
+
+  std::string m_ev_name;
 };
 
 ItsRootProducer::ItsRootProducer(const std::string & name,
 			       const std::string & runcontrol)
   :eudaq::Producer(name, runcontrol){
+  m_ev_name = name;
 }
+
+
 
 void ItsRootProducer::DoInitialise(){
   std::unique_lock<std::mutex> lck(m_doing);
   int j = 0;
+  setState(STATE::GOTOINIT);
   while (getState()==STATE::GOTOINIT && j<5){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     j++;
   }
   if(getState()!=STATE::UNCONF){
     EUDAQ_THROW("OnInitialise ERROR or timeout");
-    setState(STATE::ERROR);
+    setState(STATE::UNCONF);
   }
 }
 
 void ItsRootProducer::DoConfigure(){
   std::unique_lock<std::mutex> lck(m_doing);
+  auto conf = GetConfiguration();
+  m_ev_name = conf->Get("ITSROOT_EVENT_NAME", m_ev_name);
   int j = 0;
+  setState(STATE::GOTOCONF);
   while (getState()==STATE::GOTOCONF && j<5){
     std::this_thread::sleep_for(std::chrono::seconds(1));
     j++;
@@ -134,25 +143,35 @@ bool ROOTProducer::isNetConnected(){
 }
 
 void ROOTProducer::createNewEvent(unsigned nev){
-  ev = eudaq::Event::MakeUnique("ITS_ROOT_RAW"); //TODO: rename and configurable, nev is not used
+  ev = m_prod->makeRawEvent();
+  ev->SetTriggerN(nev);
 }
 
 void ROOTProducer::addData2Event(unsigned dataid, UChar_t * data, size_t size){
   ev->AddBlock(dataid, data, size);
 }
 
-void ROOTProducer::setTag( const char* tagNameTagValue ){
-  std::string dummy(tagNameTagValue);
-  size_t equalsymbol=dummy.find_first_of("=");
-  if (equalsymbol!=std::string::npos&&equalsymbol>0){
-    std::string tagName=dummy.substr(0,equalsymbol);
-    std::string tagValue=dummy.substr(equalsymbol+1);
-    tagName = eudaq::trim(tagName);
-    tagValue = eudaq::trim(tagValue);
-    ev->SetTag(tagName, tagValue);
-  }else{
-    std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
+int ROOTProducer::getConfiguration(const char* tag, int defaultValue){
+  try{
+    return m_prod->GetConfiguration()->Get(tag,defaultValue);
+  }catch(...){
+    std::cout<<"unable to getConfiguration"<<std::endl;
+    return 0;
   }
+}
+
+void ROOTProducer::setTag( const char* tagNameTagValue ){
+  // std::string dummy(tagNameTagValue);
+  // size_t equalsymbol=dummy.find_first_of("=");
+  // if (equalsymbol!=std::string::npos&&equalsymbol>0){
+  //   std::string tagName=dummy.substr(0,equalsymbol);
+  //   std::string tagValue=dummy.substr(equalsymbol+1);
+  //   tagName = eudaq::trim(tagName);
+  //   tagValue = eudaq::trim(tagValue);
+  //   ev->SetTag(tagName, tagValue);
+  // }else{
+  //   std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
+  // }
 }
 
 void ROOTProducer::sendEvent(){

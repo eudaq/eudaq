@@ -28,7 +28,7 @@ public:
   void Connect2RunControl(const char *name, const char *runcontrol);
   bool isNetConnected();
   void checkStatus();
-  
+  int getConfiguration(const char *tag, int defaultValue);
   void createNewEvent(unsigned nev);
   void setTag(const char *tagNameTagValue); //"tag=value"
   void addData2Event(unsigned dataid, UChar_t * data, size_t size);
