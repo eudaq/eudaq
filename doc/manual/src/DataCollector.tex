@@ -22,7 +22,7 @@ Tow virtual methods are implemented in DirectSaveDataCollector, \lstinline[style
 
 \subsection{Example Code: SyncTrigger}\label{sec:ex2datacollector_cc}
 Now, a more realistic example. The full source code is available here \autoref{ls:ex2datacoldec}. It can merge the eduaq::Event by trigger number from the connected eudaq::Producer.
-\lstinputlisting[label=ls:ex2datacoldec, style=cpp]{../../user/example/module/src/Ex2DataCollector.cc}
+\lstinputlisting[label=ls:ex2datacoldec, style=cpp]{../../user/example/module/src/Ex0TgTsDataCollector.cc}
 Comparing to previous DirectSaveDataCollector example, 2 more virtual methods are implemented. There are more virtual methods implemented instead of only two in the DirectSaveDataCollector case. They are \lstinline[style=cpp]{DoConnect}, \lstinline[style=cpp]{DoDisconnect}. The first one will be called when a new connection from eudaq::Producer is created, and the other will be called  when the connection is expired. The information of the correlated connection is provided by the incoming parameter. The lifetime of the connection between the eudaq::DataCollector and eudaq::Producer is a data-taking run. No \lstinline[style=cpp]{DoConfigure} method is implemented, and this DataCollector is not Configurable.
 
 

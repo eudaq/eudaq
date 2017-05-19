@@ -11,7 +11,7 @@ public:
   bool Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const override;
   void DecodeFrame(eudaq::StandardPlane& plane, const uint32_t fm_n,
 		   const uint8_t *const d, const size_t l32) const;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawEvent");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("NiRawDataEvent");
 };
   
 namespace{
@@ -20,7 +20,6 @@ namespace{
 }  
 
 bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
-  static const uint32_t m_boards = 6;
   static const std::vector<uint32_t> m_ids = {0, 1, 2, 3, 4, 5};
   //TODO: number of telescope plane may be less than 6. Decode additional tags 
   auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
@@ -46,7 +45,7 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
   const std::vector<uint8_t> &data0 = rawev.GetBlock(0);
   const std::vector<uint8_t> &data1 = rawev.GetBlock(1);
   uint32_t header0 = eudaq::getlittleendian<uint32_t>(&data0[0]);
-  uint32_t header1 = eudaq::getlittleendian<uint32_t>(&data0[0]);
+  uint32_t header1 = eudaq::getlittleendian<uint32_t>(&data1[0]);
   uint16_t pivot = eudaq::getlittleendian<uint16_t>(&data0[4]);
   uint16_t tluid = eudaq::getlittleendian<uint16_t>(&data0[6]);
   datait it0 = data0.begin() + 8;
@@ -54,19 +53,18 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
   uint32_t board = 0;
   while (it0 < data0.end() && it1 < data1.end()) {
     uint32_t id = m_ids[board];
-    uint32_t fcnt0 =  eudaq::getlittleendian<uint32_t>(&data0[8]);
-    uint32_t fcnt1 =  eudaq::getlittleendian<uint32_t>(&data1[8]);
-    uint16_t len0 = eudaq::getlittleendian<uint16_t>(&data0[12]);
-    uint16_t len0_h = eudaq::getlittleendian<uint16_t>(&data0[14]);
+    uint32_t fcnt0 =  eudaq::getlittleendian<uint32_t>(&(*(it0)));
+    uint32_t fcnt1 =  eudaq::getlittleendian<uint32_t>(&(*(it1)));
+    uint16_t len0 = eudaq::getlittleendian<uint16_t>(&(*(it0+4)));
+    uint16_t len0_h = eudaq::getlittleendian<uint16_t>(&(*(it0+6)));
+    uint16_t len1 = eudaq::getlittleendian<uint16_t>(&(*(it1+4)));
+    uint16_t len1_h = eudaq::getlittleendian<uint16_t>(&(*(it1+6)));
     if (len0!= len0_h) {
       EUDAQ_WARN("Mismatched lengths decoding first frame (" +
 		 std::to_string(len0) + ", " + std::to_string(len0_h) +
 		 ")");
       len0 = std::max(len0, len0_h);
-    }
-
-    uint16_t len1 = eudaq::getlittleendian<uint16_t>(&data1[12]);
-    uint16_t len1_h = eudaq::getlittleendian<uint16_t>(&data1[14]);
+    }    
     if (len1 != len1_h) {
       EUDAQ_WARN("Mismatched lengths decoding second frame (" +
 		 std::to_string(len1) + ", " + std::to_string(len1_h) +
@@ -75,28 +73,49 @@ bool NiRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Standar
     }
 
     if (len0 * 4 + 12 > data0.end()-it0) {
-      EUDAQ_WARN("Bad length in first frame");
+      EUDAQ_WARN("Bad length in first frame, len0 * 4 + 12 > data0.end()-it0 ("+
+		 std::to_string(len0 * 4 + 12)+" > "+ std::to_string(data0.end()-it0)+
+		 ")");
       break;
     }
+    
     if (len1 * 4 + 12 > data1.end() - it1) {
-      EUDAQ_WARN("Bad length in second frame");
+      EUDAQ_WARN("Bad length in second frame,  len1 * 4 + 12 > data1.end()-it1 ("+
+		 std::to_string(len1 * 4 + 12)+" > "+ std::to_string(data1.end()-it1)+
+		 ")");
       break;
     }
 
     eudaq::StandardPlane plane(id, "NI", "MIMOSA26");
     plane.SetSizeZS(1152, 576, 0, 2, eudaq::StandardPlane::FLAG_WITHPIVOT |
 		    eudaq::StandardPlane::FLAG_DIFFCOORDS);
-    // plane.SetTLUEvent(tluid);
     plane.SetPivotPixel((9216 + pivot + PIVOTPIXELOFFSET) % 9216);
     DecodeFrame(plane, 0, &it0[8], len0);
     DecodeFrame(plane, 1, &it1[8], len1);
     d2->AddPlane(plane);
 
-    if (it0 < data0.end()-(len0+4)*4 &&
-	it1 < data1.end()-(len1+4)*4){
+    bool advance_one_block_0 = false;
+    bool advance_one_block_1 = false;
+    if (it0 < data0.end() - (len0 + 4) * 4) {
+      advance_one_block_0 = true;
+    }
+    if (it1 < data1.end() - (len1 + 4) * 4) {
+      advance_one_block_1 = true;
+    }
+
+    bool dbg = true;
+    if (advance_one_block_0 && advance_one_block_1) {
       it0 = it0 + (len0 + 4) * 4;
+      if (it0 <= data0.end()){
+	header0 = eudaq::getlittleendian<uint32_t>(&(*(it0-4)));
+      }
+
       it1 = it1 + (len1 + 4) * 4;
+      if (it1 <= data1.end()){
+	header1 = eudaq::getlittleendian<uint32_t>(&(*(it1-4)));
+      }
     } else {
+      // EUDAQ_WARN("break the block");
       break;
     }
     ++board;
