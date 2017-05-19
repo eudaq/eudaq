@@ -112,7 +112,8 @@ void ItsRootProducer::DoStopRun(){
 }
 
 void ItsRootProducer::DoTerminate(){
-  
+  std::unique_lock<std::mutex> lck(m_doing);
+  setState(STATE::GOTOTERM);
 }
 
 ///////////////////////////////////////////
@@ -173,6 +174,9 @@ void ROOTProducer::setTag( const char* tagNameTagValue ){
     tagValue = eudaq::trim(tagValue);
     if(ev)
       ev->SetTag(tagName, tagValue);
+    else {
+      std::cout<<"Skip initial tag: ( "<<tagNameTagValue<< ")" <<std::endl;
+    }
   }else{
     std::cout<<"error in: setTag( "<<tagNameTagValue<< ")" <<std::endl;
   }
