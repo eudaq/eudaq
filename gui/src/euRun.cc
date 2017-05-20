@@ -41,6 +41,7 @@ RunControlGUI::RunControlGUI()
   QSettings settings("EUDAQ collaboration", "EUDAQ");
   settings.beginGroup("euRun2");
   m_run_n_qsettings = settings.value("runnumber", 0).toUInt();
+  m_lastexit_success = settings.value("successexit", 1).toUInt();
   geom_from_last_program_run.setSize(settings.value("size", geom.size()).toSize());
   geom_from_last_program_run.moveTo(settings.value("pos", geom.topLeft()).toPoint());
   //TODO: check last if last file exits. if not, use defalt value.
@@ -77,11 +78,19 @@ RunControlGUI::RunControlGUI()
   btnReset->setEnabled(1);
   btnTerminate->setEnabled(1);
   btnLog->setEnabled(1);
+
+  QSettings settings_output("EUDAQ collaboration", "EUDAQ");  
+  settings_output.beginGroup("euRun2");
+  settings_output.setValue("successexit", 0);
+  settings_output.endGroup();
 }
 
 void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   m_rc = std::move(rc);
-  m_rc->SetRunN(m_run_n_qsettings);
+  if(m_lastexit_success)
+    m_rc->SetRunN(m_run_n_qsettings);
+  else
+    m_rc->SetRunN(m_run_n_qsettings+1);
   m_rc->StartRunControl();
 }
 
@@ -257,6 +266,7 @@ void RunControlGUI::closeEvent(QCloseEvent *event) {
     settings.setValue("pos", pos());
     settings.setValue("lastConfigFile", txtConfigFileName->text());
     settings.setValue("lastInitFile", txtInitFileName->text());
+    settings.setValue("successexit", 1);
     settings.endGroup();
     if(m_rc)
       m_rc->Terminate();
