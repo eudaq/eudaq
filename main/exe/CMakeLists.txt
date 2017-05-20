@@ -34,6 +34,7 @@ target_link_libraries(TestReader.exe         EUDAQ ${ADDITIONAL_LIBRARIES})
 target_link_libraries(TestRunControl.exe     EUDAQ ${ADDITIONAL_LIBRARIES})
 
 INSTALL(TARGETS ClusterExtractor.exe Converter.exe ExampleProducer.exe ExampleSlowProducer.exe ExampleReader.exe FileChecker.exe IPHCConverter.exe MagicLogBook.exe OptionExample.exe RunListener.exe TestDataCollector.exe TestLogCollector.exe TestMonitor.exe TestProducer.exe TestReader.exe TestRunControl.exe
+  EXPORT ${PROJECT_NAME}
   RUNTIME DESTINATION bin COMPONENT MAIN_EXE
   LIBRARY DESTINATION lib COMPONENT MAIN_EXE
   ARCHIVE DESTINATION lib COMPONENT MAIN_EXE)

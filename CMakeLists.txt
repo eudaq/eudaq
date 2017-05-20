@@ -77,7 +77,7 @@ IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 ENDIF()
 
 # include directories
-INCLUDE_DIRECTORIES( ./main/include )
+#INCLUDE_DIRECTORIES( ./main/include )
 INCLUDE_DIRECTORIES( ./extern/jsoncons-0.93/src )
 
 # additional packages to be searched for by cmake
@@ -258,3 +258,53 @@ MESSAGE (STATUS "*** Compiler Flags:  ${CMAKE_LD_FLAGS}"  )
 
 # Set everything for packaging with CPACK
 include (CMakeCPack.cmake)
+
+include(CMakePackageConfigHelpers)
+
+set(INCLUDE_INSTALL_DIR include/ )
+set(LIB_INSTALL_DIR lib/ )
+set(SYSCONFIG_INSTALL_DIR etc/eudaq/ )
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/eudaqConfigVersion.cmake"
+  VERSION ${EUDAQ_LIB_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+export(EXPORT ${PROJECT_NAME}
+  #NAMESPACE EUDAQ::
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/eudaqTargets.cmake"
+)
+
+configure_package_config_file(eudaqConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/eudaqConfig.cmake
+  INSTALL_DESTINATION ${LIB_INSTALL_DIR}/EUDAQ/cmake
+  PATH_VARS INCLUDE_INSTALL_DIR SYSCONFIG_INSTALL_DIR)
+
+export (PACKAGE EUDAQ)
+
+# We redefine this variable, using this time a relative path:
+set ( eudaq_INCLUDE_DIRS "include" )
+
+# We write in the 'export' folder in order not to collide with
+# the previous config file:
+#configure_package_config_file ( 
+#       "<PATH TO THE CONFIG TEMPLATE>/foo-config.cmake.in" 
+#       "${CMAKE_BINARY_DIR}/export/foo-config.cmake.cmake"
+#       INSTALL_DESTINATION "${CMAKE_CONFIG_DEST}"
+#       PATH_VARS foo_INCLUDE_DIRS )
+
+#install (
+#      EXPORT export 
+#      DESTINATION ${CMAKE_CONFIG_DEST} FILE "fooTargets.cmake" )
+      
+#export(EXPORT EUDAQ_MAIN_EXE
+#  FILE "${CMAKE_CURRENT_BINARY_DIR}/eudaqExeTargets.cmake"
+#  NAMESPACE Upstream::
+#)
+
+#configure_file(cmake/eudaqTargets.cmake
+#  "${CMAKE_CURRENT_BINARY_DIR}/eudaqTargets.cmake"
+#  COPYONLY
+#)
+
