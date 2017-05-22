@@ -146,6 +146,8 @@ void ROOTProducer::createNewEvent(unsigned nev){
   std::unique_lock<std::mutex> lk(m_mtx_ev);
   ev = m_prod->makeRawEvent();
   ev->SetTriggerN(nev);
+  if(nev == 0)
+    ev->SetBORE();
 }
 
 void ROOTProducer::addData2Event(unsigned dataid, UChar_t * data, size_t size){
