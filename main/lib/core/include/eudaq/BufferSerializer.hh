@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include "eudaq/Serializer.hh"
+#include "eudaq/Deserializer.hh"
 #include "eudaq/Exception.hh"
 
 namespace eudaq {

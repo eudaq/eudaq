@@ -6,6 +6,7 @@
 
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
+#include "eudaq/Deserializer.hh"
 #include "eudaq/Status.hh"
 #include "eudaq/Time.hh"
 #include "eudaq/Platform.hh"

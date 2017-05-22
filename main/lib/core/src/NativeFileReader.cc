@@ -1,4 +1,4 @@
-#include "eudaq/FileSerializer.hh"
+#include "eudaq/FileDeserializer.hh"
 #include "eudaq/FileReader.hh"
 
 class NativeFileReader : public eudaq::FileReader {
@@ -24,13 +24,15 @@ NativeFileReader::NativeFileReader(const std::string& filename)
 eudaq::EventSPC NativeFileReader::GetNextEvent(){
   if(!m_des){
     m_des.reset(new eudaq::FileDeserializer(m_filename));
-    //TODO: check sucess or fail
+    if(!m_des)
+      EUDAQ_THROW("unable to open file: " + m_filename);
   }
   eudaq::EventUP ev;
-  uint32_t id = -1;
-  m_des->PreRead(id);
-  if(id != -1)
+  uint32_t id;
+  if(m_des->HasData()){
+    m_des->PreRead(id);
     ev = eudaq::Factory<eudaq::Event>::
       Create<eudaq::Deserializer&>(id, *m_des);
+  }
   return std::move(ev);
 }
