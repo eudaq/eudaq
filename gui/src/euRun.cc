@@ -3,7 +3,7 @@
 #include <fstream>
 #include "euRun.hh"
 #include "Colours.hh"
-#include "config.h" // for version symbols
+#include "eudaq/Config.hh"
 
 
 RunControlGUI::RunControlGUI()

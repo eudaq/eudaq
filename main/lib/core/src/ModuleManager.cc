@@ -1,4 +1,5 @@
-#include "ModuleManager.hh"
+#include "eudaq/ModuleManager.hh"
+#include "eudaq/Config.hh"
 
 #include <cstdlib>
 #include <vector>
@@ -13,6 +14,7 @@
 #endif
 
 #ifdef EUDAQ_CXX17_FS
+
 //This C++17 filesystem is available in GCC >= 5.3 or VisualStudio >= vs2015 (1900)
 #include <experimental/filesystem>
 namespace filesystem = std::experimental::filesystem;
@@ -30,6 +32,8 @@ namespace filesystem = std::experimental::filesystem;
 #include <dlfcn.h>
 #endif
 
+#include "eudaq/Logger.hh"
+
 namespace eudaq{
 
   namespace {
@@ -37,12 +41,21 @@ namespace eudaq{
   }
   
   ModuleManager::ModuleManager(){
-    char *module_dir_c = std::getenv("EUDAQ_MODULE_DIR");
-    if(module_dir_c){
-      LoadModuleDir(module_dir_c);
+    char *env_module_dir_c = std::getenv("EUDAQ_MODULE_DIR");
+    if(env_module_dir_c){
+      std::string env_module_dir(env_module_dir_c);
+      std::cout<<env_module_dir<<std::endl;
+      std::stringstream ss(env_module_dir);
+      while(ss.good()){
+      	std::string dir;
+      	std::getline(ss,dir,':');
+      	if(!dir.empty()){
+      	  LoadModuleDir(dir);
+      	}
+      }
       return;
     }
-    
+    std::string install_prefix_dir(PACKAGE_INSTALL_PREFIX);
     std::string top_dir;
 #ifdef EUDAQ_CXX17_FS
     filesystem::path bin("bin");
@@ -89,7 +102,6 @@ namespace eudaq{
     return &mm;
   }
   
-  
   uint32_t ModuleManager::LoadModuleDir(const std::string& dir){
     const std::string module_prefix("libeudaq_module_");
 #if EUDAQ_PLATFORM_IS(WIN32)
@@ -102,6 +114,10 @@ namespace eudaq{
     
     uint32_t n=0;
 #ifdef EUDAQ_CXX17_FS
+    if(!filesystem::is_directory(dir)){
+      EUDAQ_INFO("Ignored module path which does not exist: "+dir);
+      return 0;
+    }
     for(auto& e: filesystem::directory_iterator(filesystem::absolute(dir))){
       filesystem::path file(e);
       std::string fname = file.filename().string();
@@ -142,7 +158,7 @@ namespace eudaq{
       return true;
     }
     else{
-      std::cerr<<"ModuleManager WARNING: Fail to load module binary.  "<<file<<std::endl;
+      EUDAQ_WARN("Fail to load module binary ("+ file+")");
       return false;
     }
   }
@@ -151,7 +167,7 @@ namespace eudaq{
     os<< std::string(offset, ' ')<< "<Modules>\n";
     for(auto &e : m_modules){
       os<< std::string(offset+2, ' ')<< "<Module>\n";
-      os<< std::string(offset+4, ' ')<< "<Path> " <<e.first << " </Path>";
+      os<< std::string(offset+4, ' ')<< "<Path>" <<e.first << "</Path>";
       os<< std::string(offset+4, ' ')<< "<Status> ";
       if(e.second)
 	os<< "Loaded";

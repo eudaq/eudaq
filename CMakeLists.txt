@@ -61,8 +61,8 @@ ELSE(NOT SOURCE_PACKAGE)
   # If we don't have git we take the hard-set version.
   SET(EUDAQ_LIB_VERSION "v${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
 ENDIF(NOT SOURCE_PACKAGE)
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/Config.cmake.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/Config.hh" @ONLY)
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}/include")
 MESSAGE("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
 # set the path to which we will install later: default project home, can be changed using

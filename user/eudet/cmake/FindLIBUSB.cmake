@@ -1,8 +1,9 @@
 if(UNIX)
   find_package(PkgConfig REQUIRED)
-  pkg_check_modules(LIBUSB REQUIRED libusb)
+  pkg_check_modules(LIBUSB libusb)
   if(LIBUSB_FOUND)
     message(STATUS "FOUND libusb-0.1")
+    set(LIBUSB_FOUND TRUE)
     return()
   endif()
 else()
@@ -22,18 +23,15 @@ else()
     find_file(LIBUSB_WIN_DLL NAMES libusb0.dll
       PATHS ${LIBUSB_INCLUDE_DIRS}/../bin/amd64)
   else()
-    
     find_library(LIBUSB_LIBRARIES NAMES libusb
       PATHS ${LIBUSB_INCLUDE_DIRS}/../lib/msvc)
     find_file(LIBUSB_WIN_DLL NAMES libusb0_x86.dll
       PATHS ${LIBUSB_INCLUDE_DIRS}/../bin/x86)
     message("${LIBUSB_INCLUDE_DIRS}/../bin/x86  ${LIBUSB_WIN_DLL}")
   endif()
-
   if((LIBUSB_INCLUDE_DIRS) AND (LIBUSB_LIBRARIES) AND (LIBUSB_WIN_DLL))
     set(LIBUSB_FOUND TRUE)
   endif()
-
 endif()
 
 
