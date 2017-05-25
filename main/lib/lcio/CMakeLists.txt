@@ -72,7 +72,7 @@ else()
       ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib/libsio.so
       CACHE INTERNAL "external lcio library")
   endif()
-  
+
   set(LCIO_LIBRARY_DIRS ${EUDAQ_LCIO_EX_SOURCE_DIR}/lib
     CACHE INTERNAL "directory of external lcio library")
 
@@ -95,3 +95,12 @@ install(TARGETS ${EUDAQ_COMPONENT}
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib)
+
+INSTALL( DIRECTORY include
+  DESTINATION .
+  FILES_MATCHING PATTERN "*.hh"
+  PATTERN "*~" EXCLUDE
+  PATTERN "*#*" EXCLUDE
+  PATTERN ".#*" EXCLUDE
+  PATTERN "*CVS" EXCLUDE
+  PATTERN "*.svn" EXCLUDE)
