@@ -1,7 +1,13 @@
 project(EUDAQ)
+set(${PROJECT_NAME}_VERSION_MAJOR 2 )
+set(${PROJECT_NAME}_VERSION_MINOR 0 )
+set(${PROJECT_NAME}_VERSION_PATCH 0 )
+
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/extern)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/extern/cmake)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
@@ -12,10 +18,7 @@ set(EUDAQ_CORE_LIBRARY core)
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 
 include_directories(main/lib/core/include)
-
-set(${PROJECT_NAME}_VERSION_MAJOR 2 )
-set(${PROJECT_NAME}_VERSION_MINOR 0 )
-set(${PROJECT_NAME}_VERSION_PATCH 0 )
+include_directories(extern/include)
 
 find_package(Git QUIET)
 if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git AND GIT_FOUND)
@@ -60,18 +63,14 @@ set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
 # see http://www.cmake.org/Wiki/CMake_RPATH_handling
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(EUDAQ_INSTALL_RPATH "@loader_path/../lib")
+  set(EUDAQ_INSTALL_RPATH "@loader_path/../lib;@loader_path/../extern/lib")
 else()
-  set(EUDAQ_INSTALL_RPATH "\$ORIGIN/../lib")
+  set(EUDAQ_INSTALL_RPATH "\$ORIGIN/../lib:\$ORIGIN/../extern/lib")
 endif()
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-if("${isSystemDir}" STREQUAL "-1")
-  set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
-endif()
 
 add_subdirectory(main)
 add_subdirectory(user)

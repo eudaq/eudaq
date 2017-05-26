@@ -1,7 +1,7 @@
 set(CMAKE_CXX_STANDARD 14)
 set_property(GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-# platform dependent preprocessor defines
+
 if(WIN32)
   if(NOT MSVC)
     message(FATAL_ERROR "On Microsoft Windows, only Visual Studio is support")
@@ -21,5 +21,4 @@ else()
     add_definitions("-DEUDAQ_PLATFORM=PF_LINUX")
   endif()
   add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")
-  add_definitions("-D_GLIBCXX_USE_NANOSLEEP")
 endif()
