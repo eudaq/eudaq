@@ -61,78 +61,83 @@ namespace eudaq {
     }
   }
 #endif // USE_EUTELESCOPE
-    std::map<int,DataConverterPlugin::sensorIDType> DataConverterPlugin::_sensorIDsTaken;
+    std::map<int,DataConverterPlugin::SensorIDType> DataConverterPlugin::_sensorIDsTaken;
 
-    int DataConverterPlugin::getNewlyAssignedSensorID(int desiredSensorID, int desiredSensorIDoffset, std::string type, int instance, std::string identifier, std::string description){
-    	sensorIDType temp;
-    	temp.description = description;
-    	temp.desiredSensorIDoffset = desiredSensorIDoffset;
-    	temp.identifier = identifier;
-    	temp.instance = instance;
-    	temp.type = type;
-	temp.desiredSensorID = desiredSensorID;
-	
-	#if USE_LCIO && USE_EUTELESCOPE
-	streamlog::logscope scope(streamlog::out);
-    scope.setName("EUDAQ:ConverterPlugin:BaseClass");
-	streamlog_out(MESSAGE9) << "SensorID requested by producer " << type << " instance " << instance << " : "  << description << std::endl;
-	#else
-	std::cout << "[EUDAQ:ConverterPlugin:BaseClass] SensorID requested by producer " << type << " instance " << instance << " : "  << description << std::endl;
-	#endif	    
-	if(desiredSensorID!=-1){
-    		if(_sensorIDsTaken.count(desiredSensorID)==0){
-    			_sensorIDsTaken[desiredSensorID] = temp;
-    			#if USE_LCIO && USE_EUTELESCOPE
-    			streamlog_out(MESSAGE9) << "Requested SensorID " << desiredSensorID << " has been successfully assigned." << std::endl;
-				#else
-    			std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID " << desiredSensorID << " has been successfully assigned." << std::endl;
-				#endif
-    			return desiredSensorID;
-    		} else {
-				#if USE_LCIO && USE_EUTELESCOPE
-    			streamlog_out(MESSAGE9) << "Requested SensorID " << desiredSensorID << " is already taken." << std::endl;
-				#else
-    			std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID " << desiredSensorID << " is already taken." << std::endl;
-				#endif
-    			}
-	} 
-	
-	int sensorCounter = desiredSensorIDoffset;
-
-	if(desiredSensorIDoffset!=.1){
-		#if USE_LCIO && USE_EUTELESCOPE
-		streamlog_out(MESSAGE9) << "Will now try to fulfill (secondary) sensor offset requirement: " << desiredSensorIDoffset << "." << std::endl;
-		#else
-		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Will try now to fulfill (secondary) sensor offset requirement: " << desiredSensorIDoffset << "." << std::endl;
-		#endif
-		sensorCounter = desiredSensorIDoffset;
-	} else {
-		sensorCounter = 0;
-	}
-
-	bool sensorIDready = false;
-	while(sensorIDready==false){
-		if(_sensorIDsTaken.count(sensorCounter)==0){
-			_sensorIDsTaken[sensorCounter] = temp;
-			#if USE_LCIO && USE_EUTELESCOPE
-			streamlog_out(MESSAGE9) << "SensorID " << sensorCounter << " has been assigend." << std::endl;
-			#else
-			std::cout << "[EUDAQ:ConverterPlugin:BaseClass] SensorID " << sensorCounter << " has been assigend." << std::endl;
-			#endif	
-			return sensorCounter;
-		}
-		sensorCounter++;
-	}
-	#if USE_LCIO && USE_EUTELESCOPE
-	streamlog_out(ERROR9) << "No sensor ID assigned - this should not be possible but it occurred!" << std::endl;
-	#else
-	std::cout <<  "No sensor ID assigned - this should not be possible but it occurred!" << std::endl;
-	#endif
-    	return -1;
+    bool DataConverterPlugin::GetNewlyAssignedSensorID(unsigned int DesiredSensorID, int ProducerInstance, std::string SensorIdentifier, std::string ProducerDescription, std::string SensorComment) {
+    	SensorIDType currentlyRequestedSensor;
+	    
+	currentlyRequestedSensor.ProducerInstance = ProducerInstance; 	    
+	currentlyRequestedSensor.DesiredSensorID = DesiredSensorID;
+	currentlyRequestedSensor.SensorIdentifier = SensorIdentifier;
+	currentlyRequestedSensor.ProducerDescription = ProducerDescription;
+	currentlyRequestedSensor.SensorComment = SensorComment;	  
+	    
+	return GetNewlyAssignedSensorID(currentlyRequestedSensor);
     }
 
-    void DataConverterPlugin::returnAssignedSensorID(int sensorID) {
+    std::vector<bool> DataConverterPlugin::GetNewlyAssignedSensorIDRange(std::vector<SensorIDType> sensors) {
+	std::vector<bool> results;
+	for(auto  & currentSensor : sensors) {
+		results.push_back(GetNewlyAssignedSensorID(currentSensor));
+	}
+	return results;    
+    }
+    
+    bool DataConverterPlugin::GetNewlyAssignedSensorID(SensorIDType sensor) {
+
+	#if USE_LCIO && USE_EUTELESCOPE
+	streamlog::logscope scope(streamlog::out);
+        scope.setName("EUDAQ:ConverterPlugin:BaseClass");
+	streamlog_out(MESSAGE9) << "SensorID requested by producers (event subtype)" << getSubEventType() << " instance " << sensor.ProducerInstance << " : "  << sensor.ProducerDescription << std::endl;
+	#else
+	std::cout << "[EUDAQ:ConverterPlugin:BaseClass] SensorID requested by producer " << getSubEventType()  << " instance " << sensor.ProducerInstance << " : "  << sensor.ProducerDescription << std::endl;
+	#endif	    
+	
+	if(_sensorIDsTaken.count(sensor.DesiredSensorID)==0){
+		_sensorIDsTaken[sensor.DesiredSensorID] = sensor;
+		#if USE_LCIO && USE_EUTELESCOPE
+		streamlog_out(MESSAGE9) << "Requested SensorID " << sensor.DesiredSensorID << " has been successfully assigned to the following sensor:" << std::endl;
+		streamlog_out(MESSAGE9) << "Producer type (event subtype) " << getSubEventType() <<  std::endl;		
+		streamlog_out(MESSAGE9) << "Producer instance " << sensor.ProducerInstance <<  std::endl;
+		streamlog_out(MESSAGE9) << "Producer description " << sensor.ProducerDescription <<  std::endl;
+		streamlog_out(MESSAGE9) << "Sensor identifier" << sensor.SensorIdentifier <<  std::endl;
+		streamlog_out(MESSAGE9) << "Sensor comment" << sensor.SensorComment <<  std::endl;
+		#else
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Requested SensorID " << sensor.DesiredSensorID << " has been successfully assigned to the following sensor:" << std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID " << "Producer type (event subtype) " << getSubEventType() <<  std::endl;		
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Producer instance " << sensor.ProducerInstance <<  std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Producer description " << sensor.ProducerDescription <<  std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Sensor identifier" << sensor.SensorIdentifier <<  std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Sensor comment" << sensor.SensorComment <<  std::endl;		
+		#endif
+		return true;
+	} else {
+		#if USE_LCIO && USE_EUTELESCOPE
+		streamlog_out(WARNING) << "Requested SensorID " << sensor.DesiredSensorID << " is already taken and cannot be assigned to the following sensor:" << std::endl;
+		streamlog_out(MESSAGE9) << "Producer type (event subtype) " << getSubEventType() <<  std::endl;		
+		streamlog_out(MESSAGE9) << "Producer instance " << sensor.ProducerInstance <<  std::endl;
+		streamlog_out(MESSAGE9) << "Producer description " << sensor.ProducerDescription <<  std::endl;
+		streamlog_out(MESSAGE9) << "Sensor identifier" << sensor.SensorIdentifier <<  std::endl;
+		streamlog_out(MESSAGE9) << "Sensor comment" << sensor.SensorComment <<  std::endl;		
+		#else
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID " << sensor.DesiredSensorID << " is already taken and cannot be assigned to the following sensor:" << std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID " << "Producer type (event subtype) " << getSubEventType() <<  std::endl;		
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Producer instance " << sensor.ProducerInstance <<  std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Producer description " << sensor.ProducerDescription <<  std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Sensor identifier" << sensor.SensorIdentifier <<  std::endl;
+		std::cout << "[EUDAQ:ConverterPlugin:BaseClass] Requested SensorID "  << "Sensor comment" << sensor.SensorComment <<  std::endl;			
+		#endif
+		return false;
+	}
+	 
+    }
+
+    void DataConverterPlugin::ReturnAssignedSensorID(int sensorID) {
     	_sensorIDsTaken.erase(sensorID);
+    }
+    
+    std::string DataConverterPlugin::getSubEventType() {
+	    return m_eventtype.second;
     }
 
 

@@ -173,16 +173,35 @@ namespace eudaq {
      * Event type id and subtype string.
      */
     virtual t_eventid const &GetEventType() const { return m_eventtype; }
+     /** Returns the type of sub event this plugin as string.
+     */   
+    std::string getSubEventType();
 
     /** The empty destructor. Need to add it to make it virtual.
      */
     virtual ~DataConverterPlugin() {}
+    /** Data structure for information necessary to request SensorID
+    */    
+    typedef struct{
+    		unsigned int ProducerInstance; 	    
+	        unsigned int DesiredSensorID;
+    		std::string SensorIdentifier;
+    		std::string ProducerDescription;
+		std::string SensorComment;
+    } SensorIDType;	    
     /** Ask for a free Sensor ID to be assigned and registered
     */
-    static int getNewlyAssignedSensorID(int desiredSensorID = -1, int desiredSensorIDoffset = -1, std::string type = "", int instance = 0, std::string identifier = "", std::string description = "");
+    bool GetNewlyAssignedSensorID(unsigned int DesiredSensorID, int ProducerInstance = 0, std::string SensorIdentifier = "", std::string ProducerDescription = "", std::string SensorComment = "");
+    /** Ask for a free Sensor ID to be assigned and registered
+    */
+    bool GetNewlyAssignedSensorID(SensorIDType sensor);    
+    /** Ask for several Sensor IDs to be assigned and registered
+    */
+    std::vector<bool> GetNewlyAssignedSensorIDRange(std::vector<SensorIDType> sensors);    
     /** Ask for an assigned and registered Sensor ID to be released into pool
     */
-    static void returnAssignedSensorID(int sensorID);
+    static void ReturnAssignedSensorID(int sensorID);
+    
 
   protected:
     /** The string storing the event type this plugin can convert to lcio.
@@ -210,15 +229,7 @@ namespace eudaq {
     DataConverterPlugin(DataConverterPlugin &);
     DataConverterPlugin &operator=(const DataConverterPlugin &);
 
-    typedef struct{
-	        int desiredSensorID;
-    		int desiredSensorIDoffset;
-    		std::string type;
-    		int instance;
-    		std::string identifier;
-    		std::string description;
-    } sensorIDType;
-    static std::map<int,sensorIDType> _sensorIDsTaken;
+    static std::map<int,SensorIDType> _sensorIDsTaken;
 
   };
 
