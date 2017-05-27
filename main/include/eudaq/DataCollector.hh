@@ -31,6 +31,7 @@ namespace eudaq {
     virtual void OnDisconnect(const ConnectionInfo &id);
     virtual void OnServer();
     virtual void OnGetRun();
+    virtual void OnInitialise(const Configuration &init);
     virtual void OnConfigure(const Configuration &param);
     virtual void OnPrepareRun(unsigned runnumber);
     virtual void OnStopRun();
@@ -66,6 +67,7 @@ namespace eudaq {
 
     std::map<size_t, std::string> m_ireceived;    // <producer_num, producer_type>
                                 // pairs of producers which sent event
+    Configuration m_init;
     Configuration m_config;
     Time m_runstart;
   };

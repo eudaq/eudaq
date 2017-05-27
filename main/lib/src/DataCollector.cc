@@ -84,6 +84,10 @@ namespace eudaq {
     m_buffer.erase(m_buffer.begin() + i);
   }
 
+  void DataCollector::OnInitialise(const Configuration &init) {
+    m_init = init;
+  }
+  
 /* Upon receiving the Configure command the DataCollector function uses
  * Configure object to obtain configuration setting from the .conf file. The
  * important settings that it aquires are the file Type and Pattern that the
@@ -234,6 +238,7 @@ namespace eudaq {
 
       if (ev.IsBORE()) {
         ev.SetTag("STARTTIME", m_runstart.Formatted());
+	ev.SetTag("INIT", to_string(m_init));
         ev.SetTag("CONFIG", to_string(m_config));
         found_bore = true;
       }
