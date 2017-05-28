@@ -2,6 +2,7 @@ bin/*
 build/*
 conf/*
 data/*
+include/*
 extern/*
 lib/*
 logs/*

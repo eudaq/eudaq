@@ -6,8 +6,6 @@ set(${PROJECT_NAME}_VERSION_PATCH 0 )
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/extern)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/extern/cmake)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(CMakeCompatibility)
 include(Platform)
@@ -47,9 +45,13 @@ configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.hh" "${CMAKE_CURRENT_BI
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 message("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
+file(GLOB INC_FILES "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/*.hh")
+install(FILES ${INC_FILES} DESTINATION include/eudaq)
+
 # set the path to which we will install later: default project home, can be changed using
 set(EUDAQ_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 set(CMAKE_INSTALL_PREFIX "${EUDAQ_INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/extern)
 
 # Set the correct build type and allow command line options:
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -88,6 +90,7 @@ if(NOT TARGET uninstall)
   add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 endif()
+
 
 # Python-based regression tests (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
 # enable_testing()
