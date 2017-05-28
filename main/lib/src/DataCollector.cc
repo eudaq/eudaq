@@ -86,6 +86,7 @@ namespace eudaq {
 
   void DataCollector::OnInitialise(const Configuration &init) {
     m_init = init;
+    SetConnectionState(eudaq::ConnectionState::STATE_UNCONF, "Initialised (" + init.Name() + ")");
   }
   
 /* Upon receiving the Configure command the DataCollector function uses
