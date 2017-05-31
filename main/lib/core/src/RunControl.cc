@@ -121,7 +121,6 @@ namespace eudaq {
   void RunControl::StartRun(){
     m_listening = false;
     EUDAQ_INFO("Starting Run " + to_string(m_run_n));
-
     std::vector<ConnectionSPC> conn_to_run;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){
@@ -183,7 +182,6 @@ namespace eudaq {
     m_listening = true;
     EUDAQ_INFO("Stopping Run " + to_string(m_run_n));
     m_run_n ++;
-
     std::vector<ConnectionSPC> conn_to_stop;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){

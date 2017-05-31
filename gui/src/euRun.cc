@@ -91,7 +91,8 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
     m_rc->SetRunN(m_run_n_qsettings);
   else
     m_rc->SetRunN(m_run_n_qsettings+1);
-  m_rc->StartRunControl();
+  auto thd_rc = std::thread(&eudaq::RunControl::Exec, m_rc.get());
+  thd_rc.detach();
 }
 
 void RunControlGUI::on_btnInit_clicked(){
