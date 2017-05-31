@@ -187,7 +187,8 @@ void ROOTProducer::setTag( const char* tagNameTagValue ){
 void ROOTProducer::sendEvent(){
   std::unique_lock<std::mutex> lk(m_mtx_ev);
   try {
-    m_prod->SendEvent(std::move(ev));
+    if(ev)
+      m_prod->SendEvent(std::move(ev));
     checkStatus();
   }catch (...){
     std::cout<<"unable to send Event"<<std::endl;
