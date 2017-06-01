@@ -1,16 +1,13 @@
 #include "eudaq/RunControl.hh"
 
-//Note
-//Start this by euRun -n CaliceRunControl
-
-class CaliceRunControl: public eudaq::RunControl{
+class ItkstripRunControl: public eudaq::RunControl{
 public:
-  CaliceRunControl(const std::string & listenaddress);
+  ItkstripRunControl(const std::string & listenaddress);
   void DoStatus(eudaq::ConnectionSPC id,
   		std::shared_ptr<const eudaq::Status> status) override;
   void Configure() override;
   void Exec() override;
-  static const uint32_t m_id_factory = eudaq::cstr2hash("CaliceRunControl");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("ItkstripRunControl");
 
 private:
   std::string m_next_conf_path;
@@ -22,16 +19,16 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::RunControl>::
-    Register<CaliceRunControl, const std::string&>(CaliceRunControl::m_id_factory);
+    Register<ItkstripRunControl, const std::string&>(ItkstripRunControl::m_id_factory);
 }
 
-CaliceRunControl::CaliceRunControl(const std::string & listenaddress)
+ItkstripRunControl::ItkstripRunControl(const std::string & listenaddress)
   :RunControl(listenaddress){
   m_flag_goto_stop_run = 0;
-  std::cout<< "hi, I'm CaliceRunControl\n";
+  std::cout<< "hi, I'm ItkstripRunControl\n";
 }
 
-void CaliceRunControl::DoStatus(eudaq::ConnectionSPC id,
+void ItkstripRunControl::DoStatus(eudaq::ConnectionSPC id,
 				std::shared_ptr<const eudaq::Status> status){
   if(id->GetType()+"."+id->GetName() == m_check_full_name){
     std::string ev_str = status->GetTag("EventN");
@@ -48,20 +45,20 @@ void CaliceRunControl::DoStatus(eudaq::ConnectionSPC id,
   }
 }
 
-void CaliceRunControl::Configure(){
+void ItkstripRunControl::Configure(){
   auto conf = GetConfiguration();
-  m_next_conf_path = conf->Get("CALICE_NEXT_RUN_CONF_FILE", "");  
-  m_check_full_name = conf->Get("CALICE_STOP_RUN_CHECK_FULLNAME", "");
-  m_max_evn =  conf->Get("CALICE_STOP_RUN_MAX_EVENT", 0);
-  m_min_second = conf->Get("CALICE_STOP_RUN_MIN_SECOND", 10);
-  std::cout<<"CALICE_NEXT_RUN_CONF_FILE "<<m_next_conf_path<<std::endl;
-  std::cout<<"CALICE_STOP_RUN_CHECK_FULLNAME "<<m_check_full_name<<std::endl;
-  std::cout<<"CALICE_STOP_RUN_MAX_EVENT "<<m_max_evn<<std::endl;
-  std::cout<<"CALICE_STOP_RUN_MIN_SECOND "<<m_min_second<<std::endl;
+  m_next_conf_path = conf->Get("ITSRC_NEXT_RUN_CONF_FILE", "");  
+  m_check_full_name = conf->Get("ITSRC_STOP_RUN_CHECK_FULLNAME", "");
+  m_max_evn =  conf->Get("ITSRC_STOP_RUN_MAX_EVENT", 0);
+  m_min_second = conf->Get("ITSRC_STOP_RUN_MIN_SECOND", 60);
+  std::cout<<"ITSRC_NEXT_RUN_CONF_FILE "<<m_next_conf_path<<std::endl;
+  std::cout<<"ITSRC_STOP_RUN_CHECK_FULLNAME "<<m_check_full_name<<std::endl;
+  std::cout<<"ITSRC_STOP_RUN_MAX_EVENT "<<m_max_evn<<std::endl;
+  std::cout<<"ITSRC_STOP_RUN_MIN_SECOND "<<m_min_second<<std::endl;
   RunControl::Configure();
 }
 
-void CaliceRunControl::Exec(){
+void ItkstripRunControl::Exec(){
   StartRunControl();
   while(IsActiveRunControl()){
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
