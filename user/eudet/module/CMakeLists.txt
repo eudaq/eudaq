@@ -9,8 +9,9 @@ if(NOT USER_BUILD_TLU)
   list(REMOVE_ITEM MODULE_SRC src/TluProducer.cc)
 endif()
 
-if(NOT USER_BUILD_MINITLU)
+if(NOT USER_BUILD_FMCTLU)
   list(REMOVE_ITEM MODULE_SRC src/MinitluProducer.cc)
+  list(REMOVE_ITEM MODULE_SRC src/FmctluProducer.cc)
 endif()
 
 if(NOT EUDAQ_LCIO_LIBRARY)

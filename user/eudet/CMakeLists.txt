@@ -9,7 +9,7 @@ if(NOT USER_EUDET_BUILD)
   message("disable building of user/eudet  (USER_EUDET_BUILD=OFF)")
   unset(USER_EUDET_BUILD_NI CACHE)
   unset(USER_EUDET_BUILD_TLU CACHE)
-  unset(USER_EUDET_BUILD_MINITLU CACHE)
+  unset(USER_EUDET_BUILD_FMCTLU CACHE)
   return()
 endif()
 
@@ -19,9 +19,9 @@ option(USER_EUDET_BUILD_NI "build user/eudet ni" ON)
 set(USER_BUILD_NI ${USER_EUDET_BUILD_NI})
 
 find_package(CACTUS)
-cmake_dependent_option(USER_EUDET_BUILD_MINITLU "build user/eudet minitlu" ON
+cmake_dependent_option(USER_EUDET_BUILD_FMCTLU "build user/eudet FMC TLU" ON
   "CACTUS_FOUND" OFF)
-set(USER_BUILD_MINITLU ${USER_EUDET_BUILD_MINITLU})
+set(USER_BUILD_FMCTLU ${USER_EUDET_BUILD_FMCTLU})
 
 find_package(ZestSC1)
 find_package(LIBUSB)
