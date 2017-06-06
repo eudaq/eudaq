@@ -1,5 +1,4 @@
 #include "eudaq/ModuleManager.hh"
-#include "eudaq/Config.hh"
 
 #include <cstdlib>
 #include <vector>
@@ -28,6 +27,8 @@ namespace filesystem = std::experimental::filesystem;
 
 #if EUDAQ_PLATFORM_IS(WIN32)
 #include <windows.h>
+#include <intrin.h>
+#pragma intrinsic(_ReturnAddress)
 #else
 #include <dlfcn.h>
 #endif
@@ -35,7 +36,6 @@ namespace filesystem = std::experimental::filesystem;
 #include "eudaq/Logger.hh"
 
 namespace eudaq{
-
   namespace {
     auto dummy = ModuleManager::Instance();
   }
@@ -44,7 +44,6 @@ namespace eudaq{
     char *env_module_dir_c = std::getenv("EUDAQ_MODULE_DIR");
     if(env_module_dir_c){
       std::string env_module_dir(env_module_dir_c);
-      std::cout<<env_module_dir<<std::endl;
       std::stringstream ss(env_module_dir);
       while(ss.good()){
       	std::string dir;
@@ -53,48 +52,23 @@ namespace eudaq{
       	  LoadModuleDir(dir);
       	}
       }
-      return;
     }
-    std::string install_prefix_dir(PACKAGE_INSTALL_PREFIX);
-    std::string top_dir;
+    char *env_module_ignore_default = std::getenv("EUDAQ_MODULE_IGNORE_DEFALUT");
+    if(env_module_ignore_default){
+      std::string env_ignore_default(env_module_ignore_default);
+      if(env_ignore_default == "YES" || env_ignore_default == "yes" || env_ignore_default == "1")
+	return;
+    }
+
+    std::string core_lib_path_str = GetModulePath();
 #ifdef EUDAQ_CXX17_FS
-    filesystem::path bin("bin");
-    filesystem::path pwd = filesystem::current_path();
-    filesystem::path top;
-    if(pwd.filename()==bin){
-      top = pwd.parent_path();
-    }
-    else{
-      top = pwd;
-    }
-    top_dir=top.string();
+    filesystem::path core_lib_dir = filesystem::path(core_lib_path_str).parent_path();
+    LoadModuleDir(core_lib_dir.string());
 #else
-    const std::string bin("/bin");
-    char pwd_path[PATH_MAX];
-    char pwd_path_ab[PATH_MAX]; 
-    if(!getcwd(pwd_path, sizeof(pwd_path))){
-      std::cerr<<"ERROR: Can not get path of cwd.";
-    }
-    if(!realpath(pwd_path, pwd_path_ab)){
-      std::cerr<<"ERROR: Can not get realpath of cwd.";
-    }
-    std::string pwd(pwd_path_ab);
-    std::string top;
-    if(pwd.rfind(bin) != std::string::npos && pwd.rfind(bin) == pwd.size()-bin.size()){
-      top = pwd.substr(0,pwd.rfind(bin));
-    }
-    else{
-      top = pwd;
-    }
-    top_dir = top;
+    std::string core_lib_dir_str = core_lib_path_str.substr(0, core_lib_path_str.find_last_of("/\\"));
+    LoadModuleDir(core_lib_dir_str);
 #endif
 
-#if EUDAQ_PLATFORM_IS(WIN32)
-    LoadModuleDir(top_dir+="\\bin");
-#else    
-    // setenv("EUDAQ_INSTALL_PREFIX", top_dir.c_str(), 0);
-    LoadModuleDir(top_dir+="/lib");
-#endif
   }
   
   ModuleManager* ModuleManager::Instance(){
@@ -143,7 +117,6 @@ namespace eudaq{
     closedir(dpath);
 #endif
     return n;
-
   }
   
   bool ModuleManager::LoadModuleFile(const std::string& file){
@@ -163,6 +136,25 @@ namespace eudaq{
     }
   }
 
+  std::string ModuleManager::GetModulePath(){
+#if EUDAQ_PLATFORM_IS(WIN32)
+    void* address_return = _ReturnAddress();
+    HMODULE handle = NULL;
+    ::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+			|GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			static_cast<LPCSTR>(address_return), &handle);
+    char modpath[MAX_PATH] = {'\0'};
+    ::GetModuleFileNameA(handle, modpath, MAX_PATH);
+    return modpath;
+#else
+    void* address_return = (void*)(__builtin_return_address(0));
+    Dl_info dli;
+    dli.dli_fname = 0;
+    dladdr(address_return, &dli);
+    return dli.dli_fname;
+#endif
+  }
+  
   void ModuleManager::Print(std::ostream & os, size_t offset) const{
     os<< std::string(offset, ' ')<< "<Modules>\n";
     for(auto &e : m_modules){

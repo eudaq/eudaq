@@ -12,6 +12,7 @@ namespace eudaq{
   class ModuleManager{
   public:
     static ModuleManager* Instance();
+    static std::string GetModulePath();
     ModuleManager(const ModuleManager&) = delete;
     ModuleManager& operator=(const ModuleManager&) = delete;
     uint32_t LoadModuleDir(const std::string& dir);
@@ -22,6 +23,5 @@ namespace eudaq{
     std::map<std::string, void*> m_modules;
   };
 }
-
 
 #endif
