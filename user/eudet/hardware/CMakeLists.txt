@@ -15,6 +15,8 @@ endif()
 if(USER_BUILD_MINITLU)
   include_directories(${CACTUS_INCLUDE_DIR})
   list(APPEND USER_HARDWARE_SRC src/MinitluController.cc)
+  list(APPEND USER_HARDWARE_SRC src/TLUhardware.cc)
+  list(APPEND USER_HARDWARE_SRC src/i2cBus.cc)
   list(APPEND USER_HARDWARE_DEP_LIB ${CACTUS_LIBRARIES})
 endif()
 
