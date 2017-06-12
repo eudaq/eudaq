@@ -1,3 +1,6 @@
+#ifndef EUDAQ_INCLUDED_RawEvent
+#define EUDAQ_INCLUDED_RawEvent
+
 #include "eudaq/Event.hh"
 
 namespace eudaq {
@@ -10,3 +13,7 @@ namespace eudaq {
   };
   using RawDataEvent = RawEvent;
 }
+
+#endif
+
+

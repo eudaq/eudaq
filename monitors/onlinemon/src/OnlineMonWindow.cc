@@ -12,7 +12,7 @@
 #include <sstream>
 #include "OnlineMonWindow.hh"
 
-#include "config.h" // for version symbols
+#include "eudaq/Config.hh"
 
 // File IO includes
 #include <sys/types.h>

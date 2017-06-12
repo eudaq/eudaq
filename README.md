@@ -24,10 +24,10 @@ Please check out the online documentation at
 ### Other sources of documentation
 
 The user's manual is provided as LaTeX source files in the repository;
-to generate the pdf on Linux/OSX, follow these steps:
+to generate the pdf on Linux/OSX, make sure that you have installed ImageMagick, then follow these steps:
 ```
 cd build
-cmake -DBUILD_manual=ON ..
+cmake -DEUDAQ_BUILD_MANUAL=ON ..
 make pdf
 ```
 The manual can then be found in ```./doc/manual/EUDAQUserManual.pdf```.

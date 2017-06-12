@@ -12,11 +12,12 @@ if(USER_BUILD_TLU)
   list(APPEND USER_HARDWARE_DEP_LIB ${LIBUSB_LIBRARIES} ${ZESTSC1_LIBRARIES})
 endif()
 
-if(USER_BUILD_MINITLU)
+if(USER_BUILD_FMCTLU)
   include_directories(${CACTUS_INCLUDE_DIR})
   list(APPEND USER_HARDWARE_SRC src/MinitluController.cc)
-  list(APPEND USER_HARDWARE_SRC src/TLUhardware.cc)
-  list(APPEND USER_HARDWARE_SRC src/i2cBus.cc)
+  list(APPEND USER_HARDWARE_SRC src/FmctluController.cc)
+  list(APPEND USER_HARDWARE_SRC src/FmctluHardware.cc)
+  list(APPEND USER_HARDWARE_SRC src/FmctluI2c.cc)
   list(APPEND USER_HARDWARE_DEP_LIB ${CACTUS_LIBRARIES})
 endif()
 
@@ -24,7 +25,7 @@ if(USER_BUILD_NI)
   list(APPEND USER_HARDWARE_SRC src/NiController.cc)
 endif()
 
-if(USER_BUILD_TLU OR USER_BUILD_MINITLU OR USER_BUILD_NI)
+if(USER_BUILD_TLU OR USER_BUILD_FMCTLU OR USER_BUILD_NI)
   add_library(${USER_HARDWARE_LIBRARY} STATIC ${USER_HARDWARE_SRC})
   target_link_libraries(${USER_HARDWARE_LIBRARY} ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_DEP_LIB})
   list(APPEND INSTALL_TARGETS ${USER_HARDWARE_LIBRARY})
@@ -40,12 +41,17 @@ endif()
 #   list(APPEND INSTALL_TARGETS TLUControl TLUReset)
 # endif()
 
-# if(USER_BUILD_MINITLU)
-#   add_executable(MinitluControl src/MinitluControl.cxx)
-#   target_link_libraries(MinitluControl ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
-#   set_target_properties(MinitluControl PROPERTIES INSTALL_RPATH
+# if(USER_BUILD_FMCTLU)
+#   add_executable(MinitluController src/MinitluController.cxx)
+#   add_executable(FmctluController src/FmctluController.cxx)
+#   target_link_libraries(MinitluController ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
+#   target_link_libraries(FmctluController ${EUDAQ_CORE_LIBRARY} ${USER_HARDWARE_LIBRARY})
+#   set_target_properties(MinitluController PROPERTIES INSTALL_RPATH
 #     ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
-#   list(APPEND INSTALL_TARGETS MinitluControl)
+#   set_target_properties(FmctluController PROPERTIES INSTALL_RPATH
+#     ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
+#   list(APPEND INSTALL_TARGETS MinitluController)
+#   list(APPEND INSTALL_TARGETS FmctluController)
 # endif()
 # end executable
 

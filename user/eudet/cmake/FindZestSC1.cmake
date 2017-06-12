@@ -41,7 +41,7 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 if (WIN32) 
-  if (${EX_PLATFORM} EQUAL 64)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     find_library(ZESTSC1_LIBRARY NAMES ZestSC1
       HINTS "${extern_lib_path}/Lib/amd64"
             "${extern_lib_path}/windows_7/Lib/amd64"

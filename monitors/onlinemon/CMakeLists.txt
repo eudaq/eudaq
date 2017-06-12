@@ -28,8 +28,6 @@ endif()
 include_directories(. include)
 include_directories(${CMAKE_BINARY_DIR})
 
-message("${ROOT_LIBRARIES}")
-
 if(ROOT_VERSION_MAJOR GREATER 5)
   add_definitions(-DEUDAQ_LIB_ROOT6)
 endif()

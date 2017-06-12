@@ -32,8 +32,8 @@ int main(int argc, char **argv) {
     // EUDAQ_LOG_LEVEL(level.Value());
     auto app=eudaq::Factory<eudaq::LogCollector>::
       MakeShared<const std::string&, const std::string&>
-      (eudaq::cstr2hash("GuiLogCollector"), "Log", rctrl.Value());
-    uint16_t port = static_cast<uint16_t>(eudaq::str2hash("Log"+rctrl.Value()));
+      (eudaq::cstr2hash("GuiLogCollector"), "log", rctrl.Value());
+    uint16_t port = static_cast<uint16_t>(eudaq::str2hash("log"+rctrl.Value()));
     std::string addr_listen = "tcp://"+std::to_string(port);
     if(!listen.Value().empty()){
       addr_listen = listen.Value();

@@ -1,27 +1,17 @@
-# Ignore binaries:
 bin/*
-
-# Ignore libraries:
+build/*
+conf/*
+data/*
+include/*
+extern/*
 lib/*
-
-# Ignore data files:
-*.raw
-*.raw2
-*.idx
-*.dat
-
-# ignore everything in logs
 logs/*
 
-# ignore log files
+*.raw
 *.log
-
-# ignore everything in conf:
-conf/*
-
-# ignore ROOT files
 *.root
 
+<<<<<<< HEAD
 # ignore emacs autosaves
 \#*#
 *~
@@ -64,12 +54,20 @@ debug/*
 *.vcxproj*
 
 # ignore archives
+=======
+>>>>>>> master
 *.zip
 *.rar
+*.tar
 *.7z
 *.gz
-*.tar*
+*.xz
+*.bz
+*.bz2
 
-# ignore OS files
+.*
+\#*#
+*~
+*.pyc
+
 Thumbs.db
-*.lnk
