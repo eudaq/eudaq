@@ -128,7 +128,8 @@ void FmctluProducer::DoConfigure() {
   m_tlu->InitializeI2C();
   m_tlu->InitializeDAC();
   m_tlu->InitializeIOexp();
-  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./confClk.txt")  );
+  //m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./confClk.txt")  );
+  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","../conf/confClk.txt")  );
 
   // Enable HDMI connectors
   m_tlu->enableHDMI(1, conf->Get("HDMI1_on", true), false);
