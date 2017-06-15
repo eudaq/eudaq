@@ -34,6 +34,7 @@ namespace eudaq {
   void Monitor::OnConfigure(){
     auto conf = GetConfiguration();
     try {
+      SetStatus(Status::STATE_UNCONF, "Configuring");
       DoConfigure();
       SetStatus(Status::STATE_CONF, "Configured");
     }catch (const Exception &e) {

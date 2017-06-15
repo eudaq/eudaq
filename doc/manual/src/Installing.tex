@@ -9,7 +9,7 @@ TODO
 \subsection{Building from Source Code}
 
 The installation is described in four steps:%
-\footnote{Quick installation instructions are also described on \url{http://eudaq.github.io/} or in the main \texttt{README.md} file of each branch, e.g. \url{https://github.com/eudaq/eudaq/blob/v1.6-dev/README.md}.}
+\footnote{Quick installation instructions are also described on \url{http://eudaq.github.io/} or in the main \texttt{README.md} file of each branch, e.g. \url{https://github.com/eudaq/eudaq/blob/master/README.md}.}
 \begin{enumerate}
 \item Installation of (required) prerequisites
 \item Downloading the source code (GitHub)
@@ -17,27 +17,27 @@ The installation is described in four steps:%
 \item Compilation of the code
 \end{enumerate}
 
-If you occur problems during the installation process, please have a look into the issue tracker on GitHub.%
+If problems occur during the installation process, please have a look at the issue tracker on GitHub.%
 \footnote{Go to \url{https://github.com/eudaq/eudaq/issues}} 
-Here you can search, if your problem had already been experienced by someone else, or you can open a new issue (see \autoref{sec:reporting}).
+Here you can search whether your problem had already been experienced by someone else, or you can open a new issue (see \autoref{sec:reporting}).
 
 \subsubsection{Prerequisites}
 
-EUDAQ has few dependencies on other software, but some features do rely on other packages:
+EUDAQ has some dependencies on other software, but some features do rely on other packages:
 \begin{itemize}
-\item To get the code and stay updated with the central repository on GitHub git is used.
+\item To get the code and stay updated with the central repository on GitHub, git is used.
 \item To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
 \item To compile EUDAQ from source code requires a compiler that implements the C++11 standard.
-\item Qt is required to build GUI of the e.g. Run Control Log Collector. 
+\item Qt is required to build GUIs of e.g.\ the RunControl or LogCollector. 
 \item ROOT is required for the Online Monitor.
 \end{itemize}
 
 \paragraph{Git}
 Git is a free and open source distributed version control and is available for all of the usual platforms \cite{gitWWW}. 
-It allows for local version control and repositories, but also communicating with central online repositories like GitHub.
+It allows local version control and provides repositories, but also enables communication with central online repositories like GitHub.
    
-In order to get the EUDAQ code and stay updated with the central repository on GitHub git is used (see \autoref{sec:downloadingEUDAQ}).
-But also for developing the EUDAQ code having different versions (tags) or branches (development repositories), git is used (see \autoref{sec:contributing}).
+In order to get the EUDAQ code and stay updated with the central repository on GitHub, git is used (see \autoref{sec:downloadingEUDAQ}).
+For EUDAQ code development, requiring different versions (tags) or branches (development repositories), git is also used. %%%% (see \autoref{sec:contributing}).
 
 
 \paragraph{CMake (required)}
@@ -55,13 +55,13 @@ In order to compile the \texttt{gui} subdirectory, you must therefore have Qt in
 It is available in most Linux distributions as the package \texttt{qt5-devel} or \texttt{qt5-dev}.
 It can also be downloaded and installed from \url{http://download.qt.io/archive/qt/}. 
 
-\paragraph{ROOT (for ROOT extension and OnlineMonitor)}
+\paragraph{ROOT (for the OnlineMonitor)}
 \label{sec:Root}
-To enable the EUDAQ extensions library support to ROOT, EUDAQ need to be compiled and linked to ROOT library.
-Online Monitor also use the ROOT package.
+%%%% To enable the EUDAQ extensions library support to ROOT, EUDAQ needs to be compiled and linked to the ROOT library.
+The Online Monitor uses the ROOT package.
 It can be downloaded from \url{http://root.cern.ch}.
 
-Make sure ROOt's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
+Make sure ROOT's \texttt{bin} subdirectory is in your path, so that the \texttt{root-config} utility can be run.
 This can be done by sourcing the \texttt{thisroot.sh} (or \texttt{thisroot.ch} for csh-like shells)
 script in the \texttt{bin} directory of the ROOT installation:
 \begin{listing}[mybash]
@@ -72,18 +72,18 @@ source /path-to/root/bin/thisroot.sh
 \label{sec:LCIO}
 To enable the writing of \gls{LCIO} files, or the conversion of native files to \gls{LCIO} format,
 EUDAQ must be linked against the \gls{LCIO} libraries.
-When LCIO option is enabled during the configuration step, source files will be download from internet and compiled automatically.
+When the LCIO option is enabled during the configuration step, source files will be download from the internet and compiled automatically.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Obtain the source code}
+\subsubsection{Obtaining the source code}
 \label{sec:downloadingEUDAQ}
 
 The EUDAQ source code is hosted on GitHub \cite{githubEUDAQ}. 
 Here, we describe how to get the code and install a stable version release. 
-In order to get information about the work flow of developing the EUDAQ code, please find the relevant information in see \autoref{sec:contributing}.
+In order to get information about the work flow of developing EUDAQ code, please find the relevant information in see \autoref{sec:contributing}.
 
 \paragraph{Downloading the code (clone)}
-We recommend to obtain the software by using git,
+We recommend using git to download the software,
 since this will allow you to easily update to newer versions.
 The source code can be downloaded with the following command:
 \begin{listing}[mybash]
@@ -133,7 +133,7 @@ CMake where \texttt{[name]} refers to an optional component, e.g.
 cmake -DEUDAQ_BUILD_GUI=ON  ..
 \end{listing}
 to disable the GUI but enable additionally executable of the TLU producer.
-Find some of the most important building options in \autoref{tab:cmakeoptions}.
+The most important building options are given in \autoref{tab:cmakeoptions}.
 
 If you are not familiar with cmake, cmake-gui is nice GUI tool to help you configure the project.
 
@@ -143,28 +143,28 @@ If you are not familiar with cmake, cmake-gui is nice GUI tool to help you confi
 option &  default &  dependency & comment \\
 \hline
 \texttt{EUDAQ\_BUILD\_EXECUTABLE} &  \texttt{<auto>} & none & Builds main EUDAQ executables.\\
-\texttt{EUDAQ\_BUILD\_GUI} & \texttt{<auto>} & Qt5 & Builds GUI executables, such as the Run Control(euRun) and Log Collector(euLog).\\
-\texttt{EUDAQ\_BUILD\_MANUAL} & \texttt{OFF} & LaTex &  Builds Manual in pdf-format.  \\
+\texttt{EUDAQ\_BUILD\_GUI} & \texttt{<auto>} & Qt5 & Builds GUI executables, such as the RunControl (euRun) and LogCollector (euLog).\\
+\texttt{EUDAQ\_BUILD\_MANUAL} & \texttt{OFF} & LaTex &  Builds manual in pdf-format.  \\
 \texttt{EUDAQ\_BUILD\_NREADER} & \texttt{OFF} & EUTelescope, LCIO &  Builds native reader Marlin processor used for data conversion into LCIO.\\
 \texttt{EUDAQ\_BUILD\_ONLINE\_MONITOR} & \texttt{auto} & ROOT6 &  Builds online monitor.  \\
 \texttt{EUDAQ\_INSTALL\_PREFIX} & \texttt{<source\_folder>} & none & In order to install the executables into \texttt{bin} and the library into \texttt{lib} of a specific path, instead of into the \texttt{<source\_folder>} path.\\
-\texttt{EUDAQ\_LIBRARY\_BUILD\_CLI} & \texttt{ON} & none & Builds extension library of command line interface\\
-\texttt{EUDAQ\_LIBRARY\_BUILD\_LCIO} & \texttt{<auto>} & LCIO & Builds LCIO extension library\\
-\texttt{EUDAQ\_LIBRARY\_BUILD\_ROOT} & \texttt{<auto>} & ROOT & Builds ROOT extension library\\
-\texttt{EUDAQ\_LIBRARY\_BUILD\_TEST} & \texttt{ON} & none & Builds extension library for develop test\\
-\texttt{USER\_EXAMPLE\_BUILD} & \texttt{ON} & none & Builds example user code\\
-\texttt{USER\_\{user\_name\}\_BUILD} & \texttt{<unknown>} & \texttt{<unknown>} & Builds user code inside user folder \{user\_name\}\\
-\texttt{CMAKE\_BUILD\_TYPE} & \texttt{RelWithDebInfo} & \texttt{none} & Only affect the building on Linux/MacOS, see CMake Manual\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_CLI} & \texttt{ON} & none & Builds extension library of command line interface.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_LCIO} & \texttt{<auto>} & LCIO & Builds LCIO extension library.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_ROOT} & \texttt{<auto>} & ROOT & Builds ROOT extension library.\\
+\texttt{EUDAQ\_LIBRARY\_BUILD\_TEST} & \texttt{ON} & none & Builds extension library for develop test.\\
+\texttt{USER\_EXAMPLE\_BUILD} & \texttt{ON} & none & Builds example user code.\\
+\texttt{USER\_\{user\_name\}\_BUILD} & \texttt{<unknown>} & \texttt{<unknown>} & Builds user code inside user folder \{user\_name\}.\\
+\texttt{CMAKE\_BUILD\_TYPE} & \texttt{RelWithDebInfo} & \texttt{none} & Only affect the building on Linux/MacOS, see CMake manual.\\
 \end{tabular}
 \caption{Options for CMake.}
 \label{tab:cmakeoptions}
 }
 \end{table}
 
-\textit{Note:} After generating building files by running \texttt{cmake ..}, you can list all possible option and their status by running \texttt{cmake -L}. 
+\textit{Note:} After building files by running \texttt{cmake ..}, you can list all possible options and their status by running \texttt{cmake -L}. 
 Using a GUI version of CMake shows also all of the possible options.   
 
-Corresponding settings are cached, thus they will be used again next time CMake is running.
+Corresponding settings are cached, thus they will be used again next time CMake is run.
 If you encounter a problem during installation, it is recommended to clean the cache by just removing all files from the build folder, since it only contains automatically generated files. 
 
 

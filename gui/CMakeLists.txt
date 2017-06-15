@@ -1,43 +1,23 @@
-# CMake script to build GUI applications
-option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT5/4)" ON)
+cmake_minimum_required(VERSION 3.1.0)
+include(CMakeDependentOption)
+find_package(Qt5Widgets QUIET)
+
+cmake_dependent_option(EUDAQ_BUILD_GUI "Compile GUI executables (requires QT5)" ON
+  "Qt5Widgets_FOUND" OFF)
+
 if(NOT EUDAQ_BUILD_GUI)
+  message(STATUS "EUDAQ GUI Interface is disabled. (requires QT5)")
   return()
 endif()
 
-include(CMakeDependentOption)
-
-cmake_minimum_required(VERSION 3.1.0)
-find_package(Qt5Widgets QUIET)
-if(Qt5Widgets_FOUND)
-  message(STATUS "Found Qt5Widgets: ${Qt5Widgets_DIR}")
-  macro(qt_wrap_cpp)
-    qt5_wrap_cpp(${ARGN})
-  endmacro()
-  macro(qt_wrap_ui)
-    qt5_wrap_ui(${ARGN})
-  endmacro()
-  set(EXTERNAL_LIB_QT Qt5::Widgets)
-  include_directories(${Qt5Widgets_INCLUDE_DIRS})
-  add_definitions(${Qt5Widgets_DEFINITIONS})
-else()
-  message(STATUS "NOT found Qt5Widgets.")
-  message(STATUS "Please setup Qt5Widgets_DIR, if Qt5 is intended to be built with.")
-  message(STATUS "Try to find Qt4...")
-  find_package(Qt4 REQUIRED COMPONENTS QtCore QtGui)
-  macro(qt_wrap_cpp)
-    qt4_wrap_cpp(${ARGN})
-  endmacro()
-  macro(qt_wrap_ui)
-    qt4_wrap_ui(${ARGN})
-  endmacro()
-  set(EXTERNAL_LIB_QT Qt4::QtCore Qt4::QtGui)
-  include_directories(${QT_INCLUDES})
-  add_definitions(${QT_DEFINITIONS})
-endif()
+find_package(Qt5Widgets REQUIRED)
+message(STATUS "Qt5Widgets: ${Qt5Widgets_DIR}")
+set(EXTERNAL_LIB_QT Qt5::Widgets)
+include_directories(${Qt5Widgets_INCLUDE_DIRS})
+add_definitions(${Qt5Widgets_DEFINITIONS})
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-include_directories(./include)
-
+include_directories(include)
 
 set(RUN_GUI_SRC
   src/euRun.cxx
@@ -45,8 +25,8 @@ set(RUN_GUI_SRC
   src/RunControlModel.cc
   src/euRun.rc
   )
-qt_wrap_ui(euRun_UISrcs ui/euRun.ui)
-qt_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
+qt5_wrap_ui(euRun_UISrcs ui/euRun.ui)
+qt5_wrap_cpp(euRun_MOCSrcs include/RunControlModel.hh include/euRun.hh )
 list(APPEND RUN_GUI_SRC ${euRun_UISrcs} ${euRun_MOCSrcs})
 add_executable(euRun ${RUN_GUI_SRC})
 target_link_libraries(euRun ${EUDAQ_CORE_LIBRARY} ${EXTERNAL_LIB_QT})
@@ -75,12 +55,12 @@ set(MODULE_SRC
   )
 
 
-qt_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
-qt_wrap_ui(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
+qt5_wrap_cpp(euLog_MOCSrcs include/LogCollectorModel.hh include/euLog.hh )
+qt5_wrap_ui(euLog_UISrcs ui/LogDialog.ui ui/euLog.ui)
 list(APPEND MODULE_SRC ${euLog_UISrcs} ${euLog_MOCSrcs})
 
-qt_wrap_cpp(euProd_MOCSrcs include/euProd.hh )
-qt_wrap_ui(euProd_UISrcs ui/euProd.ui)
+qt5_wrap_cpp(euProd_MOCSrcs include/euProd.hh )
+qt5_wrap_ui(euProd_UISrcs ui/euProd.ui)
 list(APPEND MODULE_SRC ${euProd_UISrcs} ${euProd_MOCSrcs})
 
 get_filename_component(MODULE_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)

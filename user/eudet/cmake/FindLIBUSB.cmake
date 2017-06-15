@@ -1,8 +1,12 @@
 if(UNIX)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(LIBUSB REQUIRED libusb)
+  find_package(PkgConfig)
+  if(NOT PkgConfig_FOUND)
+    message("pkg-config is not installed, FindLIBUSB fails")
+  endif()
+  pkg_check_modules(LIBUSB libusb)
   if(LIBUSB_FOUND)
     message(STATUS "FOUND libusb-0.1")
+    set(LIBUSB_FOUND TRUE)
     return()
   endif()
 else()
@@ -16,24 +20,21 @@ else()
     message(STATUS "libusb-0.1 can be download from  https://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/1.2.6.0/")
     return()
   endif()
-  if(${EX_PLATFORM} EQUAL 64)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     find_library(LIBUSB_LIBRARIES NAMES libusb
       PATHS ${LIBUSB_INCLUDE_DIRS}/../lib/msvc_x64)
     find_file(LIBUSB_WIN_DLL NAMES libusb0.dll
       PATHS ${LIBUSB_INCLUDE_DIRS}/../bin/amd64)
   else()
-    
     find_library(LIBUSB_LIBRARIES NAMES libusb
       PATHS ${LIBUSB_INCLUDE_DIRS}/../lib/msvc)
     find_file(LIBUSB_WIN_DLL NAMES libusb0_x86.dll
       PATHS ${LIBUSB_INCLUDE_DIRS}/../bin/x86)
     message("${LIBUSB_INCLUDE_DIRS}/../bin/x86  ${LIBUSB_WIN_DLL}")
   endif()
-
   if((LIBUSB_INCLUDE_DIRS) AND (LIBUSB_LIBRARIES) AND (LIBUSB_WIN_DLL))
     set(LIBUSB_FOUND TRUE)
   endif()
-
 endif()
 
 

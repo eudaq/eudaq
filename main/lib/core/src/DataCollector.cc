@@ -36,6 +36,7 @@ namespace eudaq {
   void DataCollector::OnConfigure(){
     auto conf = GetConfiguration();
     try {
+      SetStatus(Status::STATE_UNCONF, "Configuring");
       m_fwtype = conf->Get("EUDAQ_FW", "native");
       m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
       m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);

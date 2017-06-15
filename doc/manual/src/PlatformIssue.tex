@@ -14,23 +14,22 @@ This is the program that processes the project (solution) files and feeds it to 
 $[MSBUILD.exe]$ MyApp.sln /t:Rebuild /p:Configuration=Release
 \end{listing}
 
-myApp.sln is the file you want to Process. The parameter
-\texttt{/target} (short \texttt{/t}) tells msbuild what to do in this
+myApp.sln is the file you want to process. The parameter
+\texttt{/target} (short \texttt{/t}) tells msbuild what to do, in this
 case rebuild. You have all the options you need like: clean, build and
 rebuild. You can also specify your own targets. With the ``parameter
-property'' switch you can change the properties of your Project. Let's
-say you want to compile EUDAQ, you go in the build folder where the solution (sln) file is and type:
+property'' switch you can change the properties of your Project. If you want to compile EUDAQ, you go in the build folder where the solution (sln) file is and type:
 
       \begin{listing}[mybash]
 $[MSBUILD.exe]$ EUDAQ.sln /p:Configuration=Release 
 \end{listing}
 
 One thing one has to keep in mind is that there are some default
-configurations. The default is a debug build for x86. If you want to
-have it different then you need to specify it in the command line. And
+configurations. The default is a debug build for x86. If you want a
+different build then you need to specify it in the command line. And
 one thing you want to have is a release build! With the /p switch you
 can overwrite properties like in this case the configuration. But you
-could also overwrite the compiler version it should use. Let's say you
+could also overwrite the compiler version it should use. For example, if you
 want to use VS 2013 then you have to specify it by writing:
 
       \begin{listing}[mybash]
@@ -42,5 +41,5 @@ But be careful when changing the compiler settings. It is possible that some the
 \subsubsection{Known Problems}
 
 \begin{itemize}
-\item The environment variables are pulled in as properties therefore they can be overwritten in the project file or in the ``vcxproj.user'' file. So if for example your QT Project won't compile and keeps complaining about not finding the correct directory make sure you are not overwriting the QTDIR environment Variable with a Property. 
+\item The environment variables are pulled in as properties therefore they can be overwritten in the project file or in the ``vcxproj.user'' file. So if for example your QT Project does not compile and keeps complaining about not finding the correct directory make sure you are not overwriting the QTDIR environment Variable with a Property. 
 \end{itemize}
