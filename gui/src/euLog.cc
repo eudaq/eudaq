@@ -102,7 +102,7 @@ void LogCollectorGUI::LoadFile(const std::string &filename) {
 
 void LogCollectorGUI::DoInitialise(){
   auto ini = GetInitConfiguration();
-  std::string file_pattern = "euLog$12D$.log";
+  std::string file_pattern = "euLog$12D.log";
   if(ini){
     file_pattern = ini->Get("FILE_PATTERN", file_pattern);
   }
@@ -115,8 +115,8 @@ void LogCollectorGUI::DoInitialise(){
   m_os_file.open(std::string(eudaq::FileNamer(file_pattern).Set('D', start_time)).c_str(),
 		 std::ios_base::app);
   std::stringstream ss;
-  ss << "\n*** LogCollector started at "<< time_now<< " ***\n";
-  m_os_file<<ss.str();
+  ss << "\n*** LogCollector started at "<< time_now<< " ***";
+  m_os_file<<ss.str()<<std::endl;
 }
 
 
@@ -128,6 +128,8 @@ void LogCollectorGUI::DoConnect(eudaq::ConnectionSPC id){
 }
 
 void LogCollectorGUI::DoReceive(const eudaq::LogMessage &msg){
+
+  std::cout<< msg<<std::endl;
   CheckRegistered();
   if(m_os_file.is_open())
     m_os_file << msg << std::endl;

@@ -1,173 +1,108 @@
-########################################################
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
-########################################################
-# project name
-PROJECT(EUDAQ)
-SET(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
-SET(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
-# SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
-SET(EUDAQ_CORE_LIBRARY core)
+project(EUDAQ)
+set(${PROJECT_NAME}_VERSION_MAJOR 2 )
+set(${PROJECT_NAME}_VERSION_MINOR 0 )
+set(${PROJECT_NAME}_VERSION_PATCH 0 )
 
-set(CMAKE_CXX_STANDARD 11)
+cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 include(CMakeDependentOption)
 
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(CMakeCompatibility)
+include(Platform)
+
+set(CMAKE_SHARED_LIBRARY_PREFIX libeudaq_)
+set(CMAKE_SHARED_MODULE_PREFIX  libeudaq_)
+set(EUDAQ_CORE_LIBRARY core)
+# set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
+
 include_directories(main/lib/core/include)
-include_directories(main/lib/core/include/eudaq)
+include_directories(extern/include)
 
-# project version
-SET( ${PROJECT_NAME}_VERSION_MAJOR 2 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 0 )
-SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+set(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
+set(EUDAQ_LIB_VERSION_BASE ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
+find_package(Git QUIET)
+if(GIT_FOUND AND (IS_DIRECTORY ${PROJECT_SOURCE_DIR}/.git))
+  execute_process(COMMAND ${GIT_EXECUTABLE} --work-tree=${PROJECT_SOURCE_DIR} describe --tags HEAD OUTPUT_VARIABLE EUDAQ_GIT_VERSION ERROR_VARIABLE EUDAQ_GIT_ERROR_DESCRIBE)
+  execute_process(COMMAND ${GIT_EXECUTABLE} --work-tree=${PROJECT_SOURCE_DIR} status --porcelain ${PROJECT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_GIT_MAIN_STATUS ERROR_VARIABLE EUDAQ_GIT_ERROR_STATUS)
+  if(EUDAQ_GIT_ERROR_DESCRIBE OR EUDAQ_GIT_ERROR_STATUS)
+    message(WARNING "Could not determine EUDAQ version from git -- git execution resulted in error: ${EUDAQ_GIT_ERROR_DESCRIBE} : ${EUDAQ_GIT_ERROR_STATUS}")
+  else()
+    string(REGEX REPLACE "([v0-9.]+[-a-zA-Z0-9]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_GIT_LIB_VERSION ${EUDAQ_GIT_VERSION})
+    string(REGEX REPLACE "\n" "" EUDAQ_GIT_VERSION ${EUDAQ_GIT_VERSION}) # remove potential line breaks
+    string(REGEX REPLACE "v([v0-9.]+)(.*)" "\\1" EUDAQ_GIT_VERSION_BASE ${EUDAQ_GIT_VERSION})
+    if("${EUDAQ_GIT_VERSION_BASE}" VERSION_LESS "${EUDAQ_LIB_VERSION_BASE}")
+      message(WARNING "Your do not seem to have fetched the latest tags in your git repository -- please consider running 'git fetch upstream'")
+      message("EUDAQ_GIT_VERSION_BASE=${EUDAQ_GIT_VERSION_BASE} EUDAQ_LIB_VERSION_BASE=${EUDAQ_LIB_VERSION_BASE}")
+    endif()
+    if(NOT (EUDAQ_GIT_MAIN_STATUS STREQUAL ""))
+      message("the directory ${PROJECT_SOURCE_DIR}/main is dirty (uncommitted changes present). ${EUDAQ_GIT_MAIN_STATUS}")
+    endif()
+    set(EUDAQ_LIB_VERSION ${EUDAQ_GIT_VERSION})
+  endif()
+endif()
+message(STATUS "-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
 
-include(${PROJECT_SOURCE_DIR}/cmake/CMakeCompatibility.cmake)
-
-# Determine platform- and compiler-specific settings
-include(${PROJECT_SOURCE_DIR}/cmake/Platform.cmake)
-
-# Check if this is a source tarball build
-IF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-  SET(SOURCE_PACKAGE 1)
-ENDIF(NOT IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-
-# Set package version
-IF(NOT SOURCE_PACKAGE)
-  # Get the version from last git tag plus numer of additional commits:
-  FIND_PACKAGE(Git QUIET)
-  IF(GIT_FOUND)
-    EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} describe --tags HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE EUDAQ_LIB_VERSION ERROR_VARIABLE GIT_ERROR)
-    IF(GIT_ERROR) # git execution resulted in error message -- cannot trust result but construct version from hard-set variable
-      MESSAGE(WARNING "Could not determine EUDAQ version from git -- git execution resulted in error: ${GIT_ERROR}")
-      SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
-    ELSE(GIT_ERROR)
-      STRING(REGEX REPLACE "([v0-9.]+[-a-zA-Z0-9]+)-([0-9]+)-([A-Za-z0-9]+)" "\\1+\\2~\\3" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION})
-      STRING(REGEX REPLACE "\n" "" EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION}) # remove potential line breaks
-      STRING(REGEX REPLACE "v([v0-9.]+)(.*)" "\\1" EUDAQ_LIB_BASEVERSION ${EUDAQ_LIB_VERSION})
-      IF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
-	MESSAGE(WARNING "Your do not seem to have fetched the latest tags in your git repository -- please consider running 'git fetch upstream'")
-      ENDIF("${EUDAQ_LIB_BASEVERSION}" VERSION_LESS "${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
-      EXEC_PROGRAM(git ARGS status --porcelain ${CMAKE_CURRENT_SOURCE_DIR}/main OUTPUT_VARIABLE EUDAQ_MAIN_STATUS)
-      IF(EUDAQ_MAIN_STATUS STREQUAL "")
-	MESSAGE(STATUS "Main EUDAQ library directory is clean (all changes have been commited).")
-      ELSE(EUDAQ_MAIN_STATUS STREQUAL "")
-	MESSAGE(STATUS "Main EUDAQ library directory is dirty (uncommitted changes present):\n ${EUDAQ_MAIN_STATUS}.")
-	SET(EUDAQ_LIB_VERSION ${EUDAQ_LIB_VERSION}*)
-      ENDIF(EUDAQ_MAIN_STATUS STREQUAL "")
-    ENDIF(GIT_ERROR)
-  ELSE(GIT_FOUND)
-    # If we don't have git we take the hard-set version.
-    SET(EUDAQ_LIB_VERSION ${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH})
-  ENDIF(GIT_FOUND)
-ELSE(NOT SOURCE_PACKAGE)
-  # If we don't have git we take the hard-set version.
-  SET(EUDAQ_LIB_VERSION "v${EUDAQ_VERSION_MAJOR}.${EUDAQ_VERSION_MINOR}.${EUDAQ_VERSION_PATCH}")
-ENDIF(NOT SOURCE_PACKAGE)
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake.h" "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_BINARY_DIR}")
-MESSAGE("-- Determined EUDAQ version ${EUDAQ_LIB_VERSION}")
+configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.hh" "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/Config.hh" @ONLY)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
+file(GLOB INC_FILES "${CMAKE_CURRENT_BINARY_DIR}/include/eudaq/*.hh")
+install(FILES ${INC_FILES} DESTINATION include/eudaq)
 
 # set the path to which we will install later: default project home, can be changed using
-# cmake -DEUDAQ_INSTALL_PREFIX=/some/dir ..
 set(EUDAQ_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 set(CMAKE_INSTALL_PREFIX "${EUDAQ_INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
+list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/extern)
 
 # Set the correct build type and allow command line options:
-# Set a default build type if none was specified
-IF(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  MESSAGE(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-  SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
-ENDIF()
-
-
-# additional packages to be searched for by cmake
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+endif()
 
 # find necessary threading libraries (using C++11 threading)
-Find_Package(Threads REQUIRED)
+find_package(Threads REQUIRED)
 set(EUDAQ_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
 
-
-
-# SET THE RPATH SO THAT OUR EXECUTABLES FIND THE EUDAQ LIBRARY EVEN WHEN INSTALLED INTO NON-DEFAULT LOCATIONS
 # see http://www.cmake.org/Wiki/CMake_RPATH_handling
-# enable @rpath in the install name for any shared library being built
-# note: it is planned that a future version of CMake will enable this by default
-set(CMAKE_MACOSX_RPATH 1)
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-set(EUDAQ_INSTALL_RPATH "\$ORIGIN/../lib")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(EUDAQ_INSTALL_RPATH "@loader_path/../lib;@loader_path/../extern/lib")
+else()
+  set(EUDAQ_INSTALL_RPATH "\$ORIGIN/../lib:\$ORIGIN/../extern/lib")
+endif()
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
-# *ALTERNATIVELY*: USE RELATIVE PATHS
-# see http://www.semipol.de/archives/356
-# for all binaries created in a CMake project:
-#SET(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
-# for certain targets
-#SET_TARGET_PROPERTIES(target 1 target2 ...
-#    PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/")
-# add the automatically determined parts of the RPATH
-# which point to directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-# the RPATH to be used when installing, but only if it's not a system directory
-LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
-IF("${isSystemDir}" STREQUAL "-1")
-  set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
-  # SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-ENDIF("${isSystemDir}" STREQUAL "-1")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+add_subdirectory(main)
+add_subdirectory(user)
+add_subdirectory(monitors)
+add_subdirectory(extra)
+add_subdirectory(gui)
+add_subdirectory(doc)
 
-ADD_SUBDIRECTORY(main)
-ADD_SUBDIRECTORY(user)
-ADD_SUBDIRECTORY(monitors)
-ADD_SUBDIRECTORY(extra)
-ADD_SUBDIRECTORY(gui)
-ADD_SUBDIRECTORY(doc)
-# ADD_SUBDIRECTORY(python)
-
-#######################################################
-# Print out system information useful for bug reports #
-#######################################################
-include(PrintSystemInformation)
-
-
-####################
 # Uninstall Target #
-####################
-
-IF(NOT TARGET uninstall)
-  # uninstall target
+if(NOT TARGET uninstall)
   configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/uninstall.cmake.in"
     "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
     IMMEDIATE @ONLY)
-
   add_custom_target(uninstall
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
-ENDIF(NOT TARGET uninstall)
+endif()
 
-###############################################
-# Python-based regression tests
-###############################################
-# if the Python interpreter can be found and the numpy package is
-# installed, we can make available the Python-based regression tests
-# through CMake/CTest; for more detailed information see the CMake manual or
-#web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
-ENABLE_TESTING()
-INCLUDE(CTest)
-FIND_PACKAGE(PythonInterp)
-IF(PYTHONINTERP_FOUND AND BUILD_python)
-  # test for numpy package
-  EXECUTE_PROCESS( COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
-  IF(NUMPYRC EQUAL 1)
-    MESSAGE(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
-  ELSE(NUMPYRC EQUAL 1)
-    MESSAGE(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
-    INCLUDE(etc/tests/testing.cmake)
-  ENDIF(NUMPYRC EQUAL 1)
-ENDIF(PYTHONINTERP_FOUND AND BUILD_python)
 
-message (STATUS "*** Build Type CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE} ***" )
-message (STATUS "*** Compiler Flags CMAKE_CXX_FLAGS:  ${CMAKE_CXX_FLAGS}")
-message (STATUS "*** Compiler Flags CMAKE_LD_FLAGS:  ${CMAKE_LD_FLAGS}")
+# Python-based regression tests (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
+# enable_testing()
+# include(CTest)
+# find_package(PythonInterp)
+# if(PYTHONINTERP_FOUND AND BUILD_python)
+#   execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import numpy" OUTPUT_QUIET ERROR_QUIET RESULT_VARIABLE NUMPYRC)
+#   if(NUMPYRC EQUAL 1)
+#     message(WARNING "Python interpreter found but 'numpy' package not available -- cannot use either Python wrapper nor regression tests.")
+#   else()
+#     message(STATUS "Found Python with installed numpy package -- making regression tests available through CTest")
+#     include(etc/tests/testing.cmake)
+#   endif()
+# endif()
+
+include(PrintSystemInformation)

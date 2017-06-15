@@ -1,72 +1,28 @@
-# Ignore binaries:
 bin/*
-
-# Ignore libraries:
+build/*
+conf/*
+data/*
+include/*
+extern/*
 lib/*
-
-# Ignore data files:
-*.raw
-*.raw2
-*.idx
-*.dat
-
-# ignore everything in logs
 logs/*
 
-# ignore log files
+*.raw
 *.log
-
-# ignore everything in conf:
-conf/*
-
-# ignore ROOT files
 *.root
 
-# ignore emacs autosaves
-\#*#
-*~
-
-# ignore hidden files:
-.*
-
-# ignore git mergetool backup files
-*.orig
-
-# ignore eclipse project files
-.project
-.cproject
-
-# Ignore path to library necessary for cmspixel option
-extern/pxar
-
-# Ignore binary data file folders downloaded for TLU producer:
-extern/ZestSC1
-extern/tlufirmware
-
-# Ignore binary data file folders downloaded for SBG Mimosa re-integration:
-extern/IPHCRC
-
-# Ignore paths to windows libraries installed by user:
-extern/pthread*
-extern/libusb*
-
-
-#ignore debug folder
-debug/*
-
-# ignore python byte code
-*.pyc
-
-# ignore MSVC files
-*.vcxproj*
-
-# ignore archives
 *.zip
 *.rar
+*.tar
 *.7z
 *.gz
-*.tar*
+*.xz
+*.bz
+*.bz2
 
-# ignore OS files
+.*
+\#*#
+*~
+*.pyc
+
 Thumbs.db
-*.lnk

@@ -56,14 +56,14 @@ namespace eudaq {
     void CloseRunControl();
     bool IsActiveRunControl() const {return m_thd_server.joinable();}
     virtual void Exec();
-
+    
     void SetRunN(uint32_t n){m_run_n = n;};
     uint32_t GetRunN() const {return m_run_n;};
     void ReadConfigureFile(const std::string &path);
     void ReadInitilizeFile(const std::string &path);
-    std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
-    std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
-
+    ConfigurationSPC GetConfiguration() const {return m_conf;};
+    ConfigurationSPC GetInitConfiguration() const {return m_conf_init;};
+    
     static const uint32_t m_id_factory = eudaq::cstr2hash("RunControl");
   private:
     void SendCommand(const std::string &cmd,
