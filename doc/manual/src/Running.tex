@@ -84,7 +84,7 @@ $[euRun]$ -n Ex0RunControl -a tcp://44000
 After executing the above command, a new GUI windows is shown in \autoref{fig:RunControl}.
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.8\textwidth]{src/images/RunControl}
+    \includegraphics[width=0.8\textwidth]{src/images/eurun_ui}
     \caption{The Run Control graphical user interface.}
     \label{fig:RunControl}
   \end{center}
@@ -130,7 +130,7 @@ $[euLog]$ -r tcp://localhost:44000 -a tcp://44002
 After executing the above command, a new GUI window, as shown in \autoref{fig:LogCollector}, is opened and the RunControl displays a new connection, as seen in \autoref{fig:RunControl_con_log}.
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=\textwidth]{src/images/LogCollector}
+    \includegraphics[width=\textwidth]{src/images/eulog_ui}
     \caption{The Log Collector graphical user interface.}
     \label{fig:LogCollector}
   \end{center}
@@ -141,7 +141,8 @@ After executing the above command, a new GUI window, as shown in \autoref{fig:Lo
 \begin{listing}[conf]
 [LogCollector.log]
 # Currently, all LogCollectors have a hardcoded runtime name: log
-# nothing
+EULOG_GUI_LOG_FILE_PATTERN = myexample_$12D.log
+# the $12D will be converted a data/time string with 12 digits. 
 \end{listing}
 
 \paragraph{Configuration Section}
@@ -191,6 +192,9 @@ EUDAQ_FW=native
 # the format of data file
 EUDAQ_FW_PATTERN=$12D_run$6R$X
 # the name pattern of data file
+# the $12D will be converted a data/time string with 12 digits.
+# the $6R will be converted a run number string with 6 digits.
+# the $X will be converted the suffix name of data file.
 \end{listing}
 
 \subsubsection{Producer}
@@ -220,22 +224,25 @@ $[euCliProducer]$ -n Ex0Producer -t my_pd1 -r tcp://localhost:44000
 \paragraph{Initialization Section}
 \begin{listing}[conf]
 [Producer.my_pd0]
-# nothing
+EX0_DEV_LOCK_PATH = /tmp/mydev0.lock
+
 [Producer.my_pd1]
-# nothing
+EX0_DEV_LOCK_PATH = /tmp/mydev1.lock
 \end{listing}
 
 \paragraph{Configuration Section}
 \begin{listing}[conf]
 [Producer.my_pd0]
 EUDAQ_DC=my_dc
-Rate=1
-Random=true
+EX0_PLANE_ID=0
+EX0_DURATION_BUSY_MS=1
+EX0_ENABLE_TRIGERNUMBER=1
 
 [Producer.my_pd1]
 EUDAQ_DC=my_dc
-Rate=1
-Random=false
+EX0_PLANE_ID=1
+EX0_DURATION_BUSY_MS=1
+EX0_ENABLE_TRIGERNUMBER=1
 \end{listing}
 
 \subsubsection{Monitor}
@@ -259,7 +266,7 @@ optional, \texttt{listening\_port} default value is random.
 By default, an example Monitor \texttt{Ex0Monitor} is available with the standard installation of EUDAQ. To simplify this example, the \texttt{Ex0Monitor} has no graphic windows, it can only print Event in commnad line terminal.
 For this example setup, we will startup two instances of \texttt{Ex0Producer} with runtime names \texttt{my\_mon}\\
 \begin{listing}[mybash]
-$[euCliMonitor]$ -n Ex0Monitor -t my_mon -r tcp://localhost:44000 -a tcp://45006
+$[euCliMonitor]$ -n Ex0Monitor -t my_mon -r tcp://localhost:44000 -a tcp://45002
 \end{listing}
 
 \paragraph{Initialization Section}
@@ -271,14 +278,16 @@ $[euCliMonitor]$ -n Ex0Monitor -t my_mon -r tcp://localhost:44000 -a tcp://45006
 \paragraph{Configuration Section}
 \begin{listing}[conf]
 [Monitor.my_mon]
-# nothing
+EX0_ENABLE_PRINT=0
+EX0_ENABLE_STD_PRINT=0
+EX0_ENABLE_STD_CONVERTER=1
 \end{listing}
 
 \subsection{Operating}
 Once all the processes have been started, the RunControl GUI window will be as in \autoref{fig:RunControl_operate}.
 \begin{figure}[htb]
   \begin{center}
-    \includegraphics[width=0.8\textwidth]{src/images/RunControl}
+    \includegraphics[width=0.8\textwidth]{src/images/eurun_ui_connected}
     \caption{The RunControl with all connections of the example setup.}
     \label{fig:RunControl_operate}
   \end{center}
