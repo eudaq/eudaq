@@ -44,7 +44,7 @@ Ex0Producer::Ex0Producer(const std::string & name, const std::string & runcontro
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void Ex0Producer::DoInitialise(){
   auto ini = GetInitConfiguration();
-  std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
+  std::string lock_path = ini->Get("EX0_DEV_LOCK_PATH", "ex0lockfile.txt");
   m_file_lock = fopen(lock_path.c_str(), "a");
 #ifndef _WIN32
   if(flock(fileno(m_file_lock), LOCK_EX|LOCK_NB)){ //fail
@@ -57,10 +57,10 @@ void Ex0Producer::DoInitialise(){
 void Ex0Producer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_plane_id = conf->Get("PLANE_ID", 0);
-  m_ms_busy = std::chrono::milliseconds(conf->Get("DURATION_BUSY_MS", 1000));
-  m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
-  m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
+  m_plane_id = conf->Get("EX0_PLANE_ID", 0);
+  m_ms_busy = std::chrono::milliseconds(conf->Get("EX0_DURATION_BUSY_MS", 1000));
+  m_flag_ts = conf->Get("EX0_ENABLE_TIEMSTAMP", 0);
+  m_flag_tg = conf->Get("EX0_ENABLE_TRIGERNUMBER", 0);
   if(!m_flag_ts && !m_flag_tg){
     EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. Now, Timestamp is enabled by default");
     m_flag_ts = false;
