@@ -174,8 +174,14 @@ namespace eudaq {
       m_exited = true;
     } catch (const std::exception &e) {
       std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      OnTerminate();
+      m_exited = true;
     } catch (...) {
       std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
+      std::this_thread::sleep_for(std::chrono::seconds(3));
+      OnTerminate();
+      m_exited = true;
     }
   }
 
