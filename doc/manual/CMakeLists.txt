@@ -40,6 +40,8 @@ IF(EUDAQ_BUILD_MANUAL)
     ../../main/lib/core/src/NativeFileWriter.cc
     ../../main/lib/core/src/NativeFileReader.cc
     ../../user/example/module/src/Ex0Producer.cc
+    ../../user/example/module/src/Ex0RunControl.cc
+    ../../user/example/module/src/Ex0Monitor.cc
     ../../user/example/module/src/Ex0TgDataCollector.cc
     ../../user/example/module/src/Ex0TsDataCollector.cc
     ../../user/example/module/src/Ex0TgTsDataCollector.cc

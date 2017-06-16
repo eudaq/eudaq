@@ -2,10 +2,12 @@
 #define EUDAQ_INCLUDED_Status
 
 #include "eudaq/Serializable.hh"
+#include "eudaq/Deserializer.hh"
+#include "eudaq/Platform.hh"
+
 #include <string>
 #include <map>
 #include <ostream>
-#include "eudaq/Platform.hh"
 
 namespace eudaq {
 

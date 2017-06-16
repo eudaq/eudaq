@@ -20,6 +20,8 @@ namespace eudaq {
   namespace{
     auto dummy0 = Factory<RunControl>::
       Register<RunControl, const std::string&>(RunControl::m_id_factory);
+    auto dummy1 = Factory<RunControl>::
+      Register<RunControl, const std::string&>(eudaq::cstr2hash("RunControl"));
   }
   
   RunControl::RunControl(const std::string &listenaddress)
@@ -54,6 +56,7 @@ namespace eudaq {
     lk.unlock();
 
     m_conf_init->SetSection("");
+    std::string log_addr;
     for(auto &conn: conn_to_init){
       std::string conn_type = conn->GetType();
       std::string conn_name = conn->GetName();
@@ -67,11 +70,15 @@ namespace eudaq {
 	    + ":"
 	    + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
 	}
-	m_conf_init->SetString(conn_type+"."+conn_name, server_addr);
+	std::string server_name = conn_type+"."+conn_name;
+	m_conf_init->SetString(server_name, server_addr);
+	if(server_name=="LogCollector.log")
+	  log_addr=server_addr;
       }
     }
+    if(!log_addr.empty())
+      SendCommand("LOG", log_addr);
     m_conf_init->SetSection("RunControl"); //TODO: RunControl section must exist
-    
     for(auto &conn: conn_to_init)
       SendCommand("INIT", to_string(*m_conf_init), conn);
   }
@@ -116,7 +123,6 @@ namespace eudaq {
   void RunControl::StartRun(){
     m_listening = false;
     EUDAQ_INFO("Starting Run " + to_string(m_run_n));
-
     std::vector<ConnectionSPC> conn_to_run;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){
@@ -178,7 +184,6 @@ namespace eudaq {
     m_listening = true;
     EUDAQ_INFO("Stopping Run " + to_string(m_run_n));
     m_run_n ++;
-
     std::vector<ConnectionSPC> conn_to_stop;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){

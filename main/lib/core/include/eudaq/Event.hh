@@ -6,12 +6,13 @@
 #include <map>
 #include <ostream>
 
-#include "Serializable.hh"
-#include "Serializer.hh"
-#include "Exception.hh"
-#include "Utils.hh"
-#include "Platform.hh"
-#include "Factory.hh"
+#include "eudaq/Serializable.hh"
+#include "eudaq/Serializer.hh"
+#include "eudaq/Deserializer.hh"
+#include "eudaq/Exception.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Platform.hh"
+#include "eudaq/Factory.hh"
 
 namespace eudaq {
   class Event;

@@ -1,7 +1,7 @@
 # -*- mode: cmake; -*-
 
 macro(copy_files srcDir destDir)
-  FILE(COPY ${srcDir} DESTINATION ${destDir})
+  file(COPY ${srcDir} DESTINATION ${destDir})
 endmacro(copy_files)
 
 # newer versions of CMake set the compiler version variable;

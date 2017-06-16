@@ -1,9 +1,6 @@
 include_directories(include)
 aux_source_directory(src MODULE_SRC)
 
-
-list(REMOVE_ITEM MODULE_SRC src/USBPixI4ConverterPlugin.cc)
-
 if(NOT USER_BUILD_NI)
   list(REMOVE_ITEM MODULE_SRC src/NiProducer.cc)
 endif()
@@ -12,8 +9,9 @@ if(NOT USER_BUILD_TLU)
   list(REMOVE_ITEM MODULE_SRC src/TluProducer.cc)
 endif()
 
-if(NOT USER_BUILD_MINITLU)
+if(NOT USER_BUILD_FMCTLU)
   list(REMOVE_ITEM MODULE_SRC src/MinitluProducer.cc)
+  list(REMOVE_ITEM MODULE_SRC src/FmctluProducer.cc)
 endif()
 
 if(NOT EUDAQ_LCIO_LIBRARY)
@@ -31,12 +29,9 @@ add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
   ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} ${USER_HARDWARE_LIBRARY})
 
-if(USER_BUILD_MINITLU)
+if(USER_BUILD_FMCTLU)
   set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
-    ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR}:${LCIO_LIBRARY_DIRS})
-else()
-  set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
-    ${EUDAQ_INSTALL_RPATH}:${LCIO_LIBRARY_DIRS})
+    ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
 endif()
 
 install(TARGETS

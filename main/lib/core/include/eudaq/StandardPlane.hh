@@ -3,6 +3,7 @@
 
 #include "eudaq/Serializable.hh"
 #include "eudaq/Serializer.hh"
+#include "eudaq/Deserializer.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
 

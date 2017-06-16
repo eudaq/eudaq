@@ -145,7 +145,7 @@ void myEx0Producer::DoConfigure(){
   m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
   m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
   if(!m_flag_ts && !m_flag_tg){
-    EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. \n  ==> Now, Timestamp is enabled by default");
+    EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. \n  ==> Now, TriggerNumber is enabled by default");
     m_flag_ts = false;
     m_flag_tg = true;
   }

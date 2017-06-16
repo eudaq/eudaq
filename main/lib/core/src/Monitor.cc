@@ -34,6 +34,7 @@ namespace eudaq {
   void Monitor::OnConfigure(){
     auto conf = GetConfiguration();
     try {
+      SetStatus(Status::STATE_UNCONF, "Configuring");
       DoConfigure();
       SetStatus(Status::STATE_CONF, "Configured");
     }catch (const Exception &e) {
@@ -161,9 +162,11 @@ namespace eudaq {
     } catch (const std::exception &e) {
       std::cout << "Error: Uncaught exception: " << e.what() << "\n"
                 << "DataThread is dying..." << std::endl;
+      m_exit = true;
     } catch (...) {
       std::cout << "Error: Uncaught unrecognised exception: \n"
                 << "DataThread is dying..." << std::endl;
+      m_exit = true;
     }
   }
 
@@ -171,7 +174,7 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("Monitor can not be restarted after exit. (TODO)");
     }
-    if(!m_data_addr.empty()){
+    if(m_data_addr.empty()){
       m_data_addr = "tcp://";
       uint16_t port = static_cast<uint16_t>(GetCommandReceiverID()) + 1024;
       m_data_addr += to_string(port);
@@ -179,8 +182,6 @@ namespace eudaq {
     m_dataserver.reset(TransportServer::CreateServer(m_data_addr));
     m_dataserver->SetCallback(TransportCallback(this, &Monitor::DataHandler));
     m_thd_server = std::thread(&Monitor::DataThread, this);
-    std::cout << "###### listenaddress=" << m_dataserver->ConnectionString()
-	      << std::endl;
     SetStatusTag("_SERVER", m_data_addr);
   }
 

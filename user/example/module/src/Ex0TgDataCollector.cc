@@ -39,6 +39,10 @@ void Ex0TgDataCollector::DoConnect(eudaq::ConnectionSPC idx){
 void Ex0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_inactive.insert(idx);
+  if(m_conn_inactive.size() == m_conn_evque.size()){
+    m_conn_inactive.clear();
+    m_conn_evque.clear();
+  }
 }
 
 void Ex0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  

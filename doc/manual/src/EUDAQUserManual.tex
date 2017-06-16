@@ -6,10 +6,10 @@
 
 % PDF info and link colours
 \hypersetup{
-  pdftitle={EUDAQ User Manual},
+  pdftitle={EUDAQ2 User Manual},
   pdfauthor={EUDAQ Development Team},
   pdfsubject={EUDAQ},
-  pdfkeywords={EUDET, EUDAQ, Software, User Manual},
+  pdfkeywords={EUDAQ, AIDA, EUDET, Software, User Manual},
   colorlinks=true,
   linkcolor=black, % \ref \autoref \pageref
   citecolor=blue, % \cite
@@ -39,13 +39,14 @@
 \includegraphics[width=0.7\textwidth]{src/images/eudaq_logo}
 \end{center}
 }
-\title{\Large EUDAQ User Manual} 
-\author{\normalsize EUDAQ Development Team}
+\title{\Large EUDAQ2 User Manual} 
+\author{\normalsize EUDAQ2 Development Team \\
+        \normalsize Yi Liu}
 \input{src/version.tex} % defines the \CMakeLibVersion command which is
                     % set by CMake to the current EUDAQ version number
                     % (with git hash tag)
-\date{\normalsize Last update on March 2017 \\  %\today
-for EUDAQ version v2.0alpha} %\CMakeLibVersion}
+\date{\normalsize Last update on June 2017 \\  %\today
+for EUDAQ version v2.0.0} %\CMakeLibVersion}
 
 \begin{document}
 
@@ -54,10 +55,11 @@ for EUDAQ version v2.0alpha} %\CMakeLibVersion}
 \begin{abstract}
 \noindent
 This document provides an overview of the EUDAQ software framework,
-the data acquisition framework used also by the EUDET-type beam telescopes~\cite{telescopesWiki}.
+the data acquisition framework originally developed for use by the
+EUDET-type beam telescopes~\cite{telescopesWiki}.
 It describes how to install and run the DAQ system and use many of the included utility programs,
 and how users may integrate their DAQ systems into the EUDAQ framework
-by writing their own Producer -- for integrating the data stream into the acquisition,  DataCollector-- for merging the muiltple data streams and writing to disk -- and DataConverter -- for converting data for offline analysis.
+by writing their own: Producer, for integrating the data stream into the acquisition; DataCollector, for merging the muiltple data streams and writing to disk; and DataConverter, for converting data for offline analysis.
 \end{abstract}
 \newpage
 
@@ -80,11 +82,12 @@ by writing their own Producer -- for integrating the data stream into the acquis
 \include{src/RunControl}
 \include{src/NewData}
 %% \include{src/OtherParts}
-%% \include{src/Contributing}
+\include{src/Contributing}
 
 % Appendices
 \appendix
-\include{src/CompilingOnWindows}
+\include{src/PlatformIssue}
+%%%% \include{src/CompilingOnWindows}
 
 \printglossaries
 

@@ -38,6 +38,7 @@ namespace eudaq {
     try{
       if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
 	EUDAQ_THROW("OnConfigure can not be called unless in STATE_UNCONF or STATE_CONF");
+      SetStatus(Status::STATE_UNCONF, "Configuring");
       auto conf = GetConfiguration();
       if(!conf)
 	EUDAQ_THROW("No Configuration Section for OnConfigure");
