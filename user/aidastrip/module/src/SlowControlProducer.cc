@@ -14,6 +14,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "ControlServer.h"
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class SlowControlProducer : public eudaq::Producer {
@@ -72,6 +73,8 @@ SlowControlProducer::SlowControlProducer(const std::string & name, const std::st
 }
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void SlowControlProducer::DoInitialise(){
+  ControlServer cntrlServer;
+
   auto ini = GetInitConfiguration();
   std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
   m_file_lock = fopen(lock_path.c_str(), "a");
