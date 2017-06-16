@@ -102,9 +102,9 @@ void LogCollectorGUI::LoadFile(const std::string &filename) {
 
 void LogCollectorGUI::DoInitialise(){
   auto ini = GetInitConfiguration();
-  std::string file_pattern = "euLog$12D.log";
+  std::string file_pattern = "euLog_$12D.log";
   if(ini){
-    file_pattern = ini->Get("FILE_PATTERN", file_pattern);
+    file_pattern = ini->Get("EULOG_GUI_LOG_FILE_PATTERN", file_pattern);
   }
   std::time_t time_now = std::time(nullptr);
   char time_buff[13];

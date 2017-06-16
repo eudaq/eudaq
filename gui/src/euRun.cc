@@ -49,6 +49,7 @@ RunControlGUI::RunControlGUI()
     ->setText(settings.value("lastConfigFile", "config file not set").toString());
   txtInitFileName
     ->setText(settings.value("lastInitFile", "init file not set").toString());
+  
   settings.endGroup();
   
   QSize fsize = frameGeometry().size();
@@ -95,6 +96,9 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
   thd_rc.detach();
 }
 
+// void RunControlGUI::on_btn
+
+
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
   std::cout<<settings<<std::endl;
@@ -117,6 +121,15 @@ void RunControlGUI::on_btnConfig_clicked(){
 }
 
 void RunControlGUI::on_btnStart_clicked(){
+  QString qs_next_run = txtNextRunNumber->text();
+  if(!qs_next_run.isEmpty()){
+    bool succ;
+    uint32_t run_n = qs_next_run.toInt(&succ);
+    if(succ){
+      m_rc->SetRunN(run_n);
+    }
+    txtNextRunNumber->clear();
+  }
   if(m_rc)
     m_rc->StartRun();
 }
@@ -217,7 +230,6 @@ void RunControlGUI::DisplayTimer(){
   QRegExp rx_conf(".+(\\.conf$)");
   bool confLoaded = rx_conf.exactMatch(txtConfigFileName->text());
   bool initLoaded = rx_init.exactMatch(txtInitFileName->text());
-  // std::cout<<"state "<<state<<"  confLoaded "<<confLoaded<<std::endl;
   
   btnInit->setEnabled(state == eudaq::Status::STATE_UNINIT && initLoaded);
   btnConfig->setEnabled((state == eudaq::Status::STATE_UNCONF ||
@@ -241,10 +253,12 @@ void RunControlGUI::DisplayTimer(){
   }
   
   if(m_rc&&m_str_label.count("RUN")){
-    if(state == eudaq::Status::STATE_RUNNING)
+    if(state == eudaq::Status::STATE_RUNNING){
       m_str_label.at("RUN")->setText(QString::number(run_n));
-    else
+    }
+    else{
       m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
+    }
   }
   
   m_map_conn_status_last = map_conn_status;

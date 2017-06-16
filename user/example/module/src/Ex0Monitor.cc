@@ -45,9 +45,9 @@ void Ex0Monitor::DoInitialise(){
 void Ex0Monitor::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_en_print = conf->Get("ENABLE_PRINT", 1);
-  m_en_std_converter = conf->Get("ENABLE_STD_CONVERTER", 0);
-  m_en_std_print = conf->Get("ENABLE_STD_PRINT", 0);
+  m_en_print = conf->Get("EX0_ENABLE_PRINT", 1);
+  m_en_std_converter = conf->Get("EX0_ENABLE_STD_CONVERTER", 0);
+  m_en_std_print = conf->Get("EX0_ENABLE_STD_PRINT", 0);
 }
 
 void Ex0Monitor::DoStartRun(){

@@ -43,12 +43,12 @@ in the ```build``` directory after CMake. The resulting HTML files are stored in
 
 1.1. Main Library, Executables and GUI
 --------------------------------------
-EUDAQ requires a C++11 compliant compiler and a Qt version 4 or higher to build GUIs.
+EUDAQ requires a C++11 compliant compiler and a Qt version 5 or higher to build GUIs.
 
 ### Linux
 ------------------
 #### gcc
-Version (```gcc --version```): It is observed using older versions of gcc (4.6.3 e.g), it is not working. We recommend version 4.9 or later:
+Version (```gcc --version```): We recommend version 4.9 or later:
 ``` 
 sudo apt-get install gcc-4.9-multilib
 ```
@@ -62,63 +62,33 @@ http://askubuntu.com/questions/26498/choose-gcc-and-g-version
 
 
 #### Qt 
-Install Qt4 or later, e.g. by using the package manager of your distribution: ```apt-get install qt4-devel```
-(In Ubuntu 12: ```sudo apt-get install qt-sdk``` and ```apt-cache search qtcreator```)
-
-
+Install Qt5 or later, e.g. by using the package manager of your distribution: ```apt-get install qt5-devel```
 
 
 ### Windows
 ------------------
 #### MSVC
-- The recommende windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2012 and later
+- The recommende windows compiler is MSVC (Microsoft Visual C++) like Visual Studio 2013 and later
 - Download Visual Studio Express Desktop (e.g. 2013 Version): http://www.microsoft.com/en-us/download/details.aspx?id=40787
-- If you are using MSVC 2010, please make sure that you also install Service Pack 1 (SP1)
-#### QT
-- Download and install Qt4 or later
-- Use the binaries compatible with your version of MSVC
-- For full description on how to set up the development environment for Windows, see section below (2. WIndows).
-
 
 ### OS X
 ------------------
 #### Clang
 Clang (at least version 3.1)
 #### Qt
-Install Qt4 or later, e.g. by using MacPorts (http://www.macports.org/): ```sudo port install qt4-mac-devel```
-
-
-1.2. Specific Producers and Components
---------------------------------------
-
-### TLU producer
-------------------
-- install ZestSC1 driver package (if AFS is accessible on the machine, this will be installed automatically when running CMake; otherwise, manually copy full folder with sub-directories from /afs/desy.de/group/telescopes/tlu/ZestSC1 to into ./extern subfolder in EUDAQ sources)
-- install firmware bitfiles (if AFS is accessible on the machine, this will be installed automatically when runnig CMake; otherwise, manually copy /afs/desy.de/group/telescopes/tlu/tlufirmware into ./extern)
-
-#### Windows
-install libusb (download from http://sourceforge.net/projects/libusb-win32/files/libusb-win32-releases/, for documentation see http://sourceforge.net/apps/trac/libusb-win32/wiki) into ./extern/libusb-w32
-#### Linux
-- install libusb package, e.g. in Ubuntu ```apt-get install libusb-dev```
-- maybe you have to add this udev-rule to /lib/udev/rules.d/ as root: https://github.com/eudaq/eudaq/blob/master/etc/usb_device_permissions/54-tlu.rules
-
-### Online Monitor
---------------------
-- requires ROOT (download from http://root.cern.ch/drupal/content/downloading-root) with the `-lPhysics` library compiled
-- (Windows) Make sure that you have installed the corresponding version of MSVC with which your downloaded ROOT binaries have been compiled!
-
+Install Qt5 or later, e.g. by using MacPorts (http://www.macports.org/): ```sudo port install qt5-mac-devel```
 
 2. Configuring and installation/compiling EUDAQ
 ----------------------------------
 
 cmake will configure the installation and prepare the makefiles. It searches for all the required files. It has to be executed in the ```build``` folder, however the relevant CMakeLists.txt is in the main level, thus, the command is ```cmake ..```. If cmake is successful, EUDAQ can be installed. Variables set are cached in CMakeCache.txt and will again be taken into account at the next cmake run.
 
-cmake has several options to activate or deactivate programs which will be built. The main library (libEUDAQ.so) is always built, while the rest of the package is optional. Defaults are to build the main executables and
+cmake has several options to activate or deactivate programs which will be built. The main library (libeuaq_core.so) is always built, while the rest of the package is optional. Defaults are to build the main executables and
 (if Qt is found) the GUI application. Disable this behavior by setting
-e.g. ```-DBUILD_main=OFF``` (disabling main executables) or enable
-e.g. producers using ```-DBUILD_tlu=ON``` to enable setting up the
-configuration and compilation environment of tlu producer and
-executables. Example: ```cmake -DBUILD_tlu=ON ..```. More options:
+e.g. ```-DEUDAQ_BUILD_GUI=OFF``` (disabling GUI executables) or enable
+e.g. producers using ```-DEUDAQ_LIBRARY_BUILD_LCIO=ON``` to enable setting up the
+configuration and compilation environment of LCIO extenstion support and
+executables. More options:
 https://telescopes.desy.de/EUDAQ#Cmake_options
 
 If cmake is not successful and complains about something is missing, it is recommended to clean the ```build``` folder, before a new try, e.g. .
@@ -145,7 +115,7 @@ rm -rf *
 
 Start the Visual Studio "Developer Command Prompt" from the Start Menu entries for Visual Studio (Tools subfolder) which opens a ```cmd.exe``` session with the necessary environment variables already set. If your Qt installation path has not been added to the global %PATH% variable, you need to execute the "qtenv2.bat" batch file in the Qt folder, e.g.
 ```
-C:\Qt\Qt5.1.1\5.1.1\msvc2012\bin\qtenv2.bat
+C:\Qt\Qt5.1.1\5.1.1\msvc2013\bin\qtenv2.bat
 ```
 (Replace "5.1.1" with the version string of your Qt installation.)
 
@@ -158,10 +128,7 @@ cmake ..
 
 Installing into eudaq\bin:
 ```
-MSBUILD.exe INSTALL.vcxproj /p:Configuration=Release
+cmake --build . --target install --config Release
 ```
-(Alternative: ```MSBUILD.exe EUDAQ.sln /p:Configuration=Release```)
-
-(Note on "moc.exe - System Error: The program can't start because MSVCP110.dll is missing from your computer.": when using "Visual Express 2013" and pthreads-w32 2.9.1, you might require "Visual C++ Redistributable for Visual Studio 2012": download (either x86 or x64) from http://www.microsoft.com/en-us/download/details.aspx?id=30679 and install.)
 
 This will compile the main library and the GUI; for the remaining processors, please check the individual documentation.
