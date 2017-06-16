@@ -21,9 +21,9 @@
 #include "UdpLink.h"
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-class kpixReader : public eudaq::Producer {
+class kpixProducer : public eudaq::Producer {
   public:
-  kpixReader(const std::string & name, const std::string & runcontrol);
+  kpixProducer(const std::string & name, const std::string & runcontrol);
   void DoInitialise() override;
   void DoConfigure() override;
   void DoStartRun() override;
@@ -32,8 +32,8 @@ class kpixReader : public eudaq::Producer {
   void DoReset() override;
   void Mainloop();
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("kpixReader");
-  bool stop; //kpix
+  static const uint32_t m_id_factory = eudaq::cstr2hash("kpixProducer");
+  bool stop; //kpixdev
    
 private:
   bool m_flag_ts;
@@ -43,31 +43,54 @@ private:
   std::thread m_thd_run;
   bool m_exit_of_run;
 
+  //kpixdev:
+  std::string m_defFile;
+  //int m_port; 
+  
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
 //----------DOC-MARK-----BEG*REG-----DOC-MARK----------
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<kpixReader, const std::string&, const std::string&>(kpixReader::m_id_factory);
+    Register<kpixProducer, const std::string&, const std::string&>(kpixProducer::m_id_factory);
 }
 //----------DOC-MARK-----END*REG-----DOC-MARK----------
 
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
-kpixReader::kpixReader(const std::string & name, const std::string & runcontrol)
+kpixProducer::kpixProducer(const std::string & name, const std::string & runcontrol)
   :eudaq::Producer(name, runcontrol), m_exit_of_run(false){  
 }
 
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
-void kpixReader::DoInitialise(){
-
+void kpixProducer::DoInitialise(){
+  
   auto ini = GetInitConfiguration();
-  std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
-
+  // kpixdev:
+  m_defFile = ini->Get("KPIX_CONFIG_FILE", "defaults.xml"); //kpixdev
+  try{
+    UdpLink udpLink;
+    KpixControl kpix(&udpLink, "",32);
+    
+    // Create and setup PGP link
+    udpLink.setMaxRxTx(500000);
+    udpLink.setDebug(true);
+    udpLink.open(8192,1,"192.168.1.16");
+    //udpLink.openDataNet("127.0.0.1",8099);
+    udpLink.enableSharedMemory("kpix",1);
+    //usleep(100);
+    kpix.parseXmlString("<system><command><ReadStatus/>\n</command></system>");
+    //--> to continue stamp@16-June-2017
+    
+  }catch(std::string error) {
+    std::cout <<"Caught error: "<<std::endl;
+    std::cout << error << std::endl;
+  }
+  
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
-void kpixReader::DoConfigure(){
+void kpixProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
   m_plane_id = conf->Get("PLANE_ID", 0);
@@ -81,34 +104,37 @@ void kpixReader::DoConfigure(){
   }
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
-void kpixReader::DoStartRun(){
+void kpixProducer::DoStartRun(){
   m_exit_of_run = false;
-  m_thd_run = std::thread(&kpixReader::Mainloop, this);
+  m_thd_run = std::thread(&kpixProducer::Mainloop, this);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
-void kpixReader::DoStopRun(){
+void kpixProducer::DoStopRun(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
-void kpixReader::DoReset(){
+void kpixProducer::DoReset(){
   m_exit_of_run = true;
+  
+  /*
   if(m_thd_run.joinable())
     m_thd_run.join();
 
   m_thd_run = std::thread();
   m_ms_busy = std::chrono::milliseconds();
+  */
   m_exit_of_run = false;
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
-void kpixReader::DoTerminate(){
+void kpixProducer::DoTerminate(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
-void kpixReader::Mainloop(){
+void kpixProducer::Mainloop(){
   auto tp_start_run = std::chrono::steady_clock::now();
   uint32_t trigger_n = 0;
   uint8_t x_pixel = 16;
