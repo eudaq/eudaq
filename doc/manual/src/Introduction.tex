@@ -31,8 +31,7 @@ The DAQ system is made up of a number of different processes that may all be run
 or on different computers. 
 
 \subsubsection{Run Control}
-TODO\\
-
+The RunControl is the controller process which manages the full EUDAQ system. There should be always only one instance of RunControl for a runtime setup. All other data taking processes must have the network location of RunControl and anounces themelves to the RunControl. The RunControl takes in the paths of ini/config files and picks up and sends the correlated section to each of the connected processes. As the front end point to users, the RunControl will wait for user input by command line or GUI button click and issue the data taking command to whole EUDAQ system.
 
 \subsubsection{Producer}
 Each hardware that produces data will have a Producer process (on the left in \autoref{fig:DAQ}).
@@ -137,13 +136,17 @@ In \autoref{tab:exesall}, an overview of the most important EUDAQ executables is
   \hline
   \hline
   \texttt{euRun} & Run Control & GUI & (Sec. \ref{sec:runcontrol}) \\
-  \texttt{euCliRun} & Run Control & CLI & (Sec. \ref{sec:runcontrol}) \\
   \texttt{euLog} & Log Collector & GUI & (Sec. \ref{sec:logcollector}) \\
-  \texttt{euCliLog} & Log Collector & CLI & (Sec. \ref{sec:logcollector}) \\
-  \texttt{euCliDataCol} & Data Collector & CLI & (Sec. \ref{sec:datacollector}) \\
+  \texttt{StdEventMonitor} & legacy Monitor & GUI & \\
+  \texttt{euCliRun} & Run Control & CLI & (Sec. \ref{sec:runcontrol}) \\
+  \texttt{euCliLogger} & Log Collector & CLI & (Sec. \ref{sec:logcollector}) \\
+  \texttt{euCliCollector} & Data Collector & CLI & (Sec. \ref{sec:datacollector}) \\
   \texttt{euCliProducer} & Producer & CLI & (Sec. \ref{sec:testproducer}) \\
+  \texttt{euCliMonitor} & Monitor & CLI & (Sec. \ref{sec:onlinemonitor}) \\
   \hline
-  \texttt{euConverter} & Offline Tool & CLI & raw data file converter (Sec. \ref{sec:Converter}) \\
+  \texttt{euCliConverter} & Offline Tool & CLI & data file converter (Sec. \ref{sec:convertafterdatatacking}) \\
+  \texttt{euCliReader} & Offline Tool & CLI & dump events from data file (Sec. \ref{sec:dumpafterdatatacking}) \\
+  
 \end{tabular}
 \caption{Overview of EUDAQ executables.}
 \label{tab:exesall}

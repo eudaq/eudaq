@@ -20,6 +20,8 @@ namespace eudaq {
   namespace{
     auto dummy0 = Factory<RunControl>::
       Register<RunControl, const std::string&>(RunControl::m_id_factory);
+    auto dummy1 = Factory<RunControl>::
+      Register<RunControl, const std::string&>(eudaq::cstr2hash("RunControl"));
   }
   
   RunControl::RunControl(const std::string &listenaddress)

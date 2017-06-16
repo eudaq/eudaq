@@ -3,8 +3,7 @@
 To install the EUDAQ on Linux, Windows or MacOS, you have a choice to download binary distribution package or build it from the source code.
 
 \subsection{Binary Package Installation}
-TODO
-
+The portable precompiled packages are avaliable from EUDAQ website. You could unpack the installation package to any folder and run the example directly. Please note, not all features of EUDAQ are enabled in the precompiled package, since it is not sure at compiling time whether the end user have the necessary dependency package installed.
 
 \subsection{Building from Source Code}
 
@@ -29,7 +28,7 @@ EUDAQ has some dependencies on other software, but some features do rely on othe
 \item To configure the EUDAQ build process, the CMake cross-platform, open-source build system is used.
 \item To compile EUDAQ from source code requires a compiler that implements the C++11 standard.
 \item Qt is required to build GUIs of e.g.\ the RunControl or LogCollector. 
-\item ROOT is required for the Online Monitor.
+\item ROOT is required for the lagecy StdEventMonitor.
 \end{itemize}
 
 \paragraph{Git}
@@ -55,7 +54,7 @@ In order to compile the \texttt{gui} subdirectory, you must therefore have Qt in
 It is available in most Linux distributions as the package \texttt{qt5-devel} or \texttt{qt5-dev}.
 It can also be downloaded and installed from \url{http://download.qt.io/archive/qt/}. 
 
-\paragraph{ROOT (for the OnlineMonitor)}
+\paragraph{ROOT (for the StdEventMonitor)}
 \label{sec:Root}
 %%%% To enable the EUDAQ extensions library support to ROOT, EUDAQ needs to be compiled and linked to the ROOT library.
 The Online Monitor uses the ROOT package.
@@ -145,12 +144,12 @@ option &  default &  dependency & comment \\
 \texttt{EUDAQ\_BUILD\_EXECUTABLE} &  \texttt{<auto>} & none & Builds main EUDAQ executables.\\
 \texttt{EUDAQ\_BUILD\_GUI} & \texttt{<auto>} & Qt5 & Builds GUI executables, such as the RunControl (euRun) and LogCollector (euLog).\\
 \texttt{EUDAQ\_BUILD\_MANUAL} & \texttt{OFF} & LaTex &  Builds manual in pdf-format.  \\
-\texttt{EUDAQ\_BUILD\_NREADER} & \texttt{OFF} & EUTelescope, LCIO &  Builds native reader Marlin processor used for data conversion into LCIO.\\
-\texttt{EUDAQ\_BUILD\_ONLINE\_MONITOR} & \texttt{auto} & ROOT6 &  Builds online monitor.  \\
+%% \texttt{EUDAQ\_BUILD\_NREADER} & \texttt{OFF} & EUTelescope, LCIO &  Builds native reader Marlin processor used for data conversion into LCIO.\\
+\texttt{EUDAQ\_BUILD\_STDEVENT\_MONITOR} & \texttt{auto} & ROOT6 &  Builds lagecy standardevent monitor.  \\
 \texttt{EUDAQ\_INSTALL\_PREFIX} & \texttt{<source\_folder>} & none & In order to install the executables into \texttt{bin} and the library into \texttt{lib} of a specific path, instead of into the \texttt{<source\_folder>} path.\\
 \texttt{EUDAQ\_LIBRARY\_BUILD\_CLI} & \texttt{ON} & none & Builds extension library of command line interface.\\
 \texttt{EUDAQ\_LIBRARY\_BUILD\_LCIO} & \texttt{<auto>} & LCIO & Builds LCIO extension library.\\
-\texttt{EUDAQ\_LIBRARY\_BUILD\_ROOT} & \texttt{<auto>} & ROOT & Builds ROOT extension library.\\
+%% \texttt{EUDAQ\_LIBRARY\_BUILD\_ROOT} & \texttt{<auto>} & ROOT & Builds ROOT extension library.\\
 \texttt{EUDAQ\_LIBRARY\_BUILD\_TEST} & \texttt{ON} & none & Builds extension library for develop test.\\
 \texttt{USER\_EXAMPLE\_BUILD} & \texttt{ON} & none & Builds example user code.\\
 \texttt{USER\_\{user\_name\}\_BUILD} & \texttt{<unknown>} & \texttt{<unknown>} & Builds user code inside user folder \{user\_name\}.\\
@@ -173,11 +172,6 @@ If you encounter a problem during installation, it is recommended to clean the c
 Universal command for all systems:
 \begin{listing}[mybash]
 cmake --build {source_folder}/build --target install
-\end{listing}
-
-On Windows/Visual Studio, CMake option CMAKE\_BUILD\_TYPE does not really affect the build type. It is possible to change the default build type Debug to Release by the build time option ``--config Release''.
-\begin{listing}[mybash]
-cmake --build {source_folder}/build --target install --config Release
 \end{listing}
 
 Done!
