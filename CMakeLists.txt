@@ -2,7 +2,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1 FATAL_ERROR)
 ########################################################
 # project name
-PROJECT( EUDAQ )
+PROJECT( EUDAQ LANGUAGES CXX)
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 1 )
@@ -272,7 +272,7 @@ write_basic_package_version_file(
 )
 
 export(EXPORT ${PROJECT_NAME}
-  #NAMESPACE EUDAQ::
+  NAMESPACE EUDAQ::
   FILE "${CMAKE_CURRENT_BINARY_DIR}/eudaqTargets.cmake"
 )
 
