@@ -3,21 +3,21 @@
 #include <iostream>
 
 int main(int /*argc*/, const char **argv) {
-  eudaq::OptionParser op("EUDAQ Command Line LogCollector", "2.0", "The LogCollcector lauhcher of EUDAQ");
+  eudaq::OptionParser op("EUDAQ Command Line LogCollector", "2.0", "The LogCollcector launcher of EUDAQ");
   eudaq::Option<std::string> name(op, "n", "name", "FileLogCollector", "string",
 				  "The eudaq application to be launched");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
 				   "tcp://localhost:44000", "address",
-  				   "The address of the RunControl to connect");
+  				   "The address of the RunControl to connect to");
   eudaq::Option<std::string> listen(op, "a", "listen-address", "", "address",
-				    "The address on which to listen for Log connections");
+				    "The address on which to listen for log connections");
   try{
     op.Parse(argv);
     auto app=eudaq::Factory<eudaq::LogCollector>::
       MakeShared<const std::string&,const std::string&>
       (eudaq::str2hash(name.Value()), "Log" ,rctrl.Value());
     if(!app){
-      std::cout<<"unknow LogCollector"<<std::endl;
+      std::cout<<"unknown LogCollector"<<std::endl;
       return -1;
     }
     uint16_t port = static_cast<uint16_t>(eudaq::str2hash(name.Value()+"Log"+rctrl.Value()));
