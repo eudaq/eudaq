@@ -5,13 +5,13 @@ echo "Installing tex system"
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
-	if [[ $BUILD_manual == 'ON' ]]; then
+	if [[ $EUDAQ_BUILD_MANUAL == 'ON' ]]; then
 		echo "Installing texlive under OSX not prepared yet..."
 	fi	
 	
 else 
 	
-	if [[ $BUILD_manual == 'ON' ]]; then
+	if [[ $EUDAQ_BUILD_MANUAL == 'ON' ]]; then
 		echo "Installing texlive as manual will be build..."
 		sudo apt-get install -y texlive texlive-latex-extra
 	fi
