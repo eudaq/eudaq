@@ -19,148 +19,116 @@
 //--> kpix lib:
 #include "KpixControl.h"
 #include "UdpLink.h"
+#include "System.h"
+#include "ControlServer.h"
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-class kpixReader : public eudaq::Producer {
+//class System;
+
+class kpixProducer : public eudaq::Producer {
   public:
-  kpixReader(const std::string & name, const std::string & runcontrol);
+  kpixProducer(const std::string & name, const std::string & runcontrol);
   void DoInitialise() override;
   void DoConfigure() override;
   void DoStartRun() override;
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-  void Mainloop();
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("kpixReader");
-  bool stop; //kpix
+  static const uint32_t m_id_factory = eudaq::cstr2hash("kpixProducer");
+  bool stop; //kpixdev
    
 private:
-  bool m_flag_ts;
-  bool m_flag_tg;
-  uint32_t m_plane_id;
-  std::chrono::milliseconds m_ms_busy;
-  std::thread m_thd_run;
   bool m_exit_of_run;
 
+  //System *system_;
+  
+  UdpLink udpLink;
+  std::string m_defFile;
+  std::string m_debug;
+  //KpixControl kpix(&udpLink, m_defFile, 32);
+  KpixControl *kpix;
+  //int m_port; 
+  
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
 //----------DOC-MARK-----BEG*REG-----DOC-MARK----------
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<kpixReader, const std::string&, const std::string&>(kpixReader::m_id_factory);
+    Register<kpixProducer, const std::string&, const std::string&>(kpixProducer::m_id_factory);
 }
 //----------DOC-MARK-----END*REG-----DOC-MARK----------
 
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
-kpixReader::kpixReader(const std::string & name, const std::string & runcontrol)
+kpixProducer::kpixProducer(const std::string & name, const std::string & runcontrol)
   :eudaq::Producer(name, runcontrol), m_exit_of_run(false){  
 }
 
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
-void kpixReader::DoInitialise(){
-
+void kpixProducer::DoInitialise(){
+  
   auto ini = GetInitConfiguration();
-  std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
+  // --- read the ini file:
+  m_defFile = ini->Get("KPIX_CONFIG_FILE", "defaults.xml"); //kpixdev
+  m_debug = ini->Get("KPIX_DEBUG", "false");
+      
+  try{
+    if (m_debug!="true" && m_debug!="false")
+      throw std::string("[kpixProducer::Init] KPIX_DEBUG value error! (must be 'true' or 'false')");
+    else std::cout<<"[kpixProducer::Init] info, debug == "<< m_debug <<std::endl;
+    bool b_m_debug = (m_debug=="true")? true : false;
+  
+    kpix =new KpixControl(&udpLink, m_defFile, 32);
+    kpix->setDebug(b_m_debug);
 
+    // Create and setup PGP link
+    udpLink.setMaxRxTx(500000);
+    udpLink.setDebug(b_m_debug);
+    udpLink.open(8192,1,"192.168.1.16");
+    //udpLink.openDataNet("127.0.0.1",8099);
+    udpLink.enableSharedMemory("kpix",1);
+    //usleep(100);
+    std::string mycommand="<ReadStatus/>\n";
+    //string mycommand="<HardReset/>";
+    std::string xmlString="<system><command>"+mycommand+"</command></system>";
+
+    kpix->parseXmlString(xmlString);
+    
+  }catch(std::string error) {
+    std::cout <<"Caught error: "<<std::endl;
+    std::cout << error << std::endl;
+  }
+
+  
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
-void kpixReader::DoConfigure(){
+void kpixProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_plane_id = conf->Get("PLANE_ID", 0);
-  m_ms_busy = std::chrono::milliseconds(conf->Get("DURATION_BUSY_MS", 1000));
-  m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
-  m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
-  if(!m_flag_ts && !m_flag_tg){
-    EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. \n  ==> Now, Timestamp is enabled by default");
-    m_flag_ts = false;
-    m_flag_tg = true;
-  }
+  kpix->parseXmlFile(m_defFile); // working point @ June20
+  //  m_plane_id = conf->Get("PLANE_ID", 0);
+ 
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
-void kpixReader::DoStartRun(){
-  m_exit_of_run = false;
-  m_thd_run = std::thread(&kpixReader::Mainloop, this);
+void kpixProducer::DoStartRun(){
+
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
-void kpixReader::DoStopRun(){
-  m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
+void kpixProducer::DoStopRun(){
+
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
-void kpixReader::DoReset(){
-  m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
-
-  m_thd_run = std::thread();
-  m_ms_busy = std::chrono::milliseconds();
-  m_exit_of_run = false;
+void kpixProducer::DoReset(){
+  kpix->parseXmlString("<system><command><HardReset/></command></system>");
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
-void kpixReader::DoTerminate(){
-  m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
+void kpixProducer::DoTerminate(){
+  //-->you can call join to the std::thread in order to set it non-joinable to be safely destroyed
+  
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
-void kpixReader::Mainloop(){
-  auto tp_start_run = std::chrono::steady_clock::now();
-  uint32_t trigger_n = 0;
-  uint8_t x_pixel = 16;
-  uint8_t y_pixel = 16;
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<uint32_t> position(0, x_pixel*y_pixel-1);
-  std::uniform_int_distribution<uint32_t> signal(0, 255);
-  while(!m_exit_of_run){
-    auto ev = eudaq::Event::MakeUnique("Ex0Raw");  
-    auto tp_trigger = std::chrono::steady_clock::now();
-    auto tp_end_of_busy = tp_trigger + m_ms_busy;
-    if(m_flag_ts){
-      std::chrono::nanoseconds du_ts_beg_ns(tp_trigger - tp_start_run);
-      std::chrono::nanoseconds du_ts_end_ns(tp_end_of_busy - tp_start_run);
-      ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
 
-      std::cout<<"[Loop]: Timestamp enabled to use\n"; //wmq
-      std::cout<<"[Loop]: m_ms_busy ==>    "<< m_ms_busy.count()<<"\n"; //wmq
-      std::cout<<"[Loop]: time begin at ==> "<<du_ts_beg_ns.count()<<"ns; ends at ==> "<<du_ts_end_ns.count()<<"ns\n";//wmq
-
-    }
-    if(m_flag_tg){
-      ev->SetTriggerN(trigger_n);
-      std::cout<<"[Loop]: TriggerNumber enabled to use\n"; //wmq
-      std::cout<<" ==> Trigger #"<<trigger_n<<"\n"; //wmq
-    }
-
-    
-    std::vector<uint8_t> hit(x_pixel*y_pixel, 0);
-    hit[position(gen)] = signal(gen);
-    std::vector<uint8_t> data;
-    data.push_back(x_pixel);
-    data.push_back(y_pixel);
-    data.insert(data.end(), hit.begin(), hit.end());
-    
-    uint32_t block_id = m_plane_id;
-    ev->AddBlock(block_id, data);
-
-    //--> start of evt print <--// wmq dev
-    std::filebuf fb;
-    fb.open("out.txt", std::ios::out|std::ios::app);
-    std::ostream os(&fb);
-    ev->Print(os, 0);
-    //--> end of evt print
-    
-    SendEvent(std::move(ev));
-    trigger_n++;
-    std::this_thread::sleep_until(tp_end_of_busy);
-
-  }//--> end of while loop
-
-}
 //----------DOC-MARK-----END*IMP-----DOC-MARK----------
 
