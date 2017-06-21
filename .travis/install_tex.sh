@@ -13,7 +13,7 @@ else
 	
 	if [[ $EUDAQ_BUILD_MANUAL == 'ON' ]]; then
 		echo "Installing texlive as manual will be build..."
-		sudo apt-get install -y texlive texlive-latex-extra
+		sudo apt-get install -y texlive texlive-latex-extra poppler-utils latex2html doxygen
 	fi
 	
 fi 
