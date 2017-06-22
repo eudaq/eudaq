@@ -51,6 +51,8 @@ install(FILES ${INC_FILES} DESTINATION include/eudaq)
 set(EUDAQ_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Prefix prepended to install directories")
 set(CMAKE_INSTALL_PREFIX "${EUDAQ_INSTALL_PREFIX}" CACHE INTERNAL "Prefix prepended to install directories" FORCE)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/extern)
+## by mengqing: to have eudaq run with qt5 installed somewhere else@pc-kpix1
+list(APPEND CMAKE_PREFIX_PATH "/opt/qt/5.5.1/") 
 
 # Set the correct build type and allow command line options:
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
