@@ -24,7 +24,7 @@ public:
   void DoTerminate() override;
 
   enum STATE{
-    ERROR,
+    ERR,
     UNINIT,
     GOTOINIT,
     UNCONF,
@@ -80,7 +80,7 @@ void ItsRootProducer::DoConfigure(){
   }
   if(getState()!=STATE::CONFED){
     EUDAQ_THROW("OnConfigure ERROR or timeout");
-    setState(STATE::ERROR);
+    setState(STATE::ERR);
   }
 }
 
@@ -94,7 +94,7 @@ void ItsRootProducer::DoStartRun(){
   }  
   if(getState()!=STATE::RUNNING){
     EUDAQ_THROW("OnStartRun ERROR");
-    setState(STATE::ERROR);
+    setState(STATE::ERR);
   }
 }
 

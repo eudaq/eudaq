@@ -9,7 +9,13 @@ add_subdirectory(module)
 
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS})
 set(ROOT_DIR $ENV{ROOTSYS}/cmake)
-find_package(ROOT)
+
+if(WIN32)
+  find_package(ROOT REQUIRED COMPONENTS libCore libCint)
+else()
+  find_package(ROOT)
+endif()
+
 cmake_dependent_option(USER_ITKSTRIP_BUILD_ITSROOT "build ITSDAQ ROOT Producer" ON
   "ROOT_FOUND" OFF)
 if(USER_ITKSTRIP_BUILD_ITSROOT)
