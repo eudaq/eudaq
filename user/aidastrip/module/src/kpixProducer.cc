@@ -89,9 +89,7 @@ void kpixProducer::DoInitialise(){
     //udpLink.openDataNet("127.0.0.1",8099);
     udpLink.enableSharedMemory("kpix",1);
     //usleep(100);
-    std::string mycommand="<ReadStatus/>\n";
-    //string mycommand="<HardReset/>";
-    std::string xmlString="<system><command>"+mycommand+"</command></system>";
+    std::string xmlString="<system><command><ReadStatus/>\n</command></system>";
 
     kpix->parseXmlString(xmlString);
     
@@ -107,7 +105,7 @@ void kpixProducer::DoInitialise(){
 void kpixProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  kpix->parseXmlFile(m_defFile); // working point @ June20
+  kpix->parseXmlFile(m_defFile); // work as set defaults
   //  m_plane_id = conf->Get("PLANE_ID", 0);
  
 }
@@ -117,10 +115,13 @@ void kpixProducer::DoStartRun(){
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void kpixProducer::DoStopRun(){
-
+  // stop listen to the hardware
+  udpLink.close();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void kpixProducer::DoReset(){
+  // stop listen to the hardware
+  udpLink.close();
   kpix->parseXmlString("<system><command><HardReset/></command></system>");
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
