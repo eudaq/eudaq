@@ -142,7 +142,7 @@ build_script:
 - ps: If (${env:BUILD_palpidefs} -eq "ON") { Write-Host("Installing palpidefs drivers as required by palpidefs producer"); . ".\appveyor\install_tinyxml.ps1";. ".\appveyor\install_palpidefs_driver.ps1" }
 - ps: If (${env:BUILD_palpidefs} -eq "ON") { [Environment]::SetEnvironmentVariable("PALPIDEFS_SPECIAL_PARAMETERS", "-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=%APPVEYOR_BUILD_FOLDER%\extern\alice-its-alpide-software-master-3189f00d7515733d46a61a5ab2606e436df4955b\pALPIDEfs-software -DUSE_TINYXML=on -DUSE_ROOT=on", "Process"); } Else { [Environment]::SetEnvironmentVariable("PALPIDEFS_SPECIAL_PARAMETERS", "", "Process"); }
 
-# - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # creating installation folder
 - mkdir C:\eudaq_installation_folder
