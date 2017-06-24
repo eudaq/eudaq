@@ -65,10 +65,10 @@ env:
 
 cache:
   directories:
-  - $TRAVIS_BUILD_DIR/extern/ZestSC1
-  - $TRAVIS_BUILD_DIR/extern/tlufirmware
-  - $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
-  - $TRAVIS_BUILD_DIR/extern/uhal_2_4_2
+    - $TRAVIS_BUILD_DIR/extern/ZestSC1
+    - $TRAVIS_BUILD_DIR/extern/tlufirmware
+    - $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
+    - $TRAVIS_BUILD_DIR/extern/uhal_2_4_2
   
 before_cache:
   - rm -r $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
