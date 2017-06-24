@@ -24,5 +24,11 @@ else()
   endif()
   add_definitions("-DEUDAQ_PLATFORM=PF_LINUX")
   add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    #workaround for xfer_bufptrs public/private bug
+    #http://mailman.isi.edu/pipermail/ns-developers/2016-February/013378.html
+    #https://gcc.gnu.org/bugzilla/show_bug.cgi?id=69470
+    add_definitions("-include sstream")
+  endif()  
   list(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
 endif()

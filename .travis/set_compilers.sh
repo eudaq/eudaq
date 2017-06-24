@@ -20,7 +20,7 @@ export DEPS_DIR=$HOME/dependencies
     
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
-	echo "Setting C-Compiler for OSX"
+	echo "Not setting a particular C++-Compiler for OSX"
 	#if [[ "$CC" == "gcc" ]]; then CC=gcc-4.9; fi	
 	
 else	
@@ -45,30 +45,11 @@ else
 			wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
 			sudo aptitude purge libclang-common-dev
 			sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main"
+			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-$LLVM_VERSION main"
 			sudo apt-get update
-			sudo apt-get install g++-5 gcc-5 clang-3.9 lldb-3.9 llvm-3.9-dev llvm-3.9 -y
-			#LLVM_DIR=${DEPS_DIR}/llvm-${LLVM_VERSION}
-			#if [[ -z "$(ls -A ${LLVM_DIR})" ]]; then
-			#	LLVM_URL="http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.xz"
-			#	LIBCXX_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxx-${LLVM_VERSION}.src.tar.xz"
-			#	LIBCXXABI_URL="http://llvm.org/releases/${LLVM_VERSION}/libcxxabi-${LLVM_VERSION}.src.tar.xz"
-			#	CLANG_URL="http://llvm.org/releases/${LLVM_VERSION}/clang+llvm-${LLVM_VERSION}-x86_64-linux-gnu-ubuntu-14.04.tar.xz"
-			#	mkdir -p ${LLVM_DIR} ${LLVM_DIR}/build ${LLVM_DIR}/projects/libcxx ${LLVM_DIR}/projects/libcxxabi ${LLVM_DIR}/clang
-			#	travis_retry wget --quiet -O - ${LLVM_URL}      | tar --strip-components=1 -xJ -C ${LLVM_DIR}
-			#	travis_retry wget --quiet -O - ${LIBCXX_URL}    | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxx
-			#	travis_retry wget --quiet -O - ${LIBCXXABI_URL} | tar --strip-components=1 -xJ -C ${LLVM_DIR}/projects/libcxxabi
-			#	travis_retry wget --quiet -O - ${CLANG_URL}     | tar --strip-components=1 -xJ -C ${LLVM_DIR}/clang
-			#	(cd ${LLVM_DIR}/build && cmake .. -DCMAKE_INSTALL_PREFIX=${LLVM_DIR}/install -DCMAKE_CXX_COMPILER=clang++)
-			#	(cd ${LLVM_DIR}/build/projects/libcxx && make install -j2)
-			#	(cd ${LLVM_DIR}/build/projects/libcxxabi && make install -j2)
-			#fi
-			#export CXXFLAGS="-nostdinc++ -isystem ${LLVM_DIR}/install/include/c++/v1"
-			#export LDFLAGS="-L ${LLVM_DIR}/install/lib -l c++ -l c++abi"
-			#export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${LLVM_DIR}/install/lib"
-			#export PATH="${LLVM_DIR}/clang/bin:${PATH}"
-			export CXX="clang++-3.9" 
-			export CC="clang-3.9"
+			sudo apt-get install g++-5 gcc-5 clang-$LLVM_VERSION clang-$LLVM_VERSION-doc libclang-common-$LLVM_VERSION-dev libclang-$LLVM_VERSION-dev libclang1-$LLVM_VERSION libclang1-$LLVM_VERSION-dbg libllvm-$LLVM_VERSION-ocaml-dev libllvm$LLVM_VERSION libllvm$LLVM_VERSION-dbg liblldb-$LLVM_VERSION llvm-$LLVM_VERSION llvm-$LLVM_VERSION-dev llvm-$LLVM_VERSION-doc llvm-$LLVM_VERSION-examples llvm-$LLVM_VERSION-runtime clang-format-$LLVM_VERSION python-clang-$LLVM_VERSION liblldb-$LLVM_VERSION-dev lld-$LLVM_VERSION libfuzzer-$LLVM_VERSION-dev  -y
+			export CXX="clang++-"$LLVM_VERSION 
+			export CC="clang-"$LLVM_VERSION
 		fi
     
 	fi
