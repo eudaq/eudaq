@@ -41,7 +41,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 	
 	#sudo apt-get install -y bzip2-devel zlib-devel ncurses-devel openssl openssl-devel python-devel curl curl-devel graphviz graphviz-devel libuuid-devel qt qt-devel PyQt PyQt-devel wxPython gd gd-devel cmake;
 	
-	if [ -d "$TRAVIS_BUILD_DIR/extern/uhal_2_4_2" ]; then
+	if [ -d "$TRAVIS_BUILD_DIR/extern/uhal_2_4_2" ] && [ "$(ls -A $TRAVIS_BUILD_DIR/extern/uhal_2_4_2)" ]; then
 	
 		echo "CACTUS source restored from cache as path exists:"
 		
