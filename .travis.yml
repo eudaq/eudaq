@@ -38,6 +38,7 @@ env:
       - USER_EUDET_BUILD=ON
       - USER_EUDET_BUILD_NI=ON
       - USER_EUDET_BUILD_TLU=ON
+      - USER_BUILD_FMCTLU=ON
       - USER_EXAMPLE_BUILD=ON
       - USER_ITKSTRIP_BUILD=ON
       - USER_ITKSTRIP_BUILD_ITSROOT=ON
@@ -67,6 +68,7 @@ cache:
   - $TRAVIS_BUILD_DIR/extern/ZestSC1
   - $TRAVIS_BUILD_DIR/extern/tlufirmware
   - $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
+  - $TRAVIS_BUILD_DIR/extern/uhal_2_4_2
   
 before_cache:
   - rm -r $TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster
@@ -118,6 +120,7 @@ install:
   - if [[ $BUILD_rpi_controller == "ON" ]]; then source .travis/install_wiringpi.sh; fi
   - export PALPIDEFS_SPECIAL_PARAMETERS=""
   - if [[ $BUILD_palpidefs == "ON" ]]; then source .travis/install_palpidefs_driver.sh; export PALPIDEFS_SPECIAL_PARAMETERS="-DCMAKE_PALPIDEFS_DRIVER_INCLUDE:FILEPATH=$TRAVIS_BUILD_DIR/extern/aliceitsalpidesoftwaremaster/pALPIDEfs-software -DUSE_TINYXML=off -DUSE_ROOT=on"; fi  
+  - if [[ $USER_BUILD_FMCTLU == "ON" ]]; then source .travis/install_cactus.sh; fi  
 
 before_script:
   - $CXX --version
