@@ -96,8 +96,8 @@ void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
 
   //std::string uhal_conn = "file:///dummy_connections.xml";
-  std::string uhal_conn = "file://./dummy_TLU_connections.xml";
-  std::string uhal_node = "dummy.udp";
+  std::string uhal_conn = "file://./FMCTLU_connections.xml";
+  std::string uhal_node = "fmctlu.udp";
   uhal_conn = conf->Get("ConnectionFile", uhal_conn);
   uhal_node = conf->Get("DeviceName",uhal_node);
   m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
