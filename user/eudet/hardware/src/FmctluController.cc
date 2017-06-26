@@ -403,18 +403,18 @@ namespace tlu {
     }
 
     if (channel==7){
+      std::cout << "  Setting threshold for all channels to " << thresholdVoltage << " Volts" << std::endl;
       m_zeDAC1.SetDACValue(channel , int(dacCode) );
       m_zeDAC2.SetDACValue(channel , int(dacCode) );
-      std::cout << "  Setting threshold for all channels to " << thresholdVoltage << " Volts" << std::endl;
       return;
     }
     if (channel <4){
-      m_zeDAC2.SetDACValue(channel , int(dacCode) );
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+      m_zeDAC2.SetDACValue(channel , int(dacCode) );
     }
     else{
-      m_zeDAC1.SetDACValue(channel-4 , int(dacCode) );
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
+      m_zeDAC1.SetDACValue(channel-4 , int(dacCode) );
     }
 
   }
