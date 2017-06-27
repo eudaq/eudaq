@@ -94,6 +94,7 @@ void FmctluProducer::MainLoop(){
 
 void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
+  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
 
   //std::string uhal_conn = "file:///dummy_connections.xml";
   std::string uhal_conn = "file://./FMCTLU_connections.xml";
@@ -129,7 +130,7 @@ void FmctluProducer::DoConfigure() {
   m_tlu->InitializeDAC();
   m_tlu->InitializeIOexp();
   //m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./confClk.txt")  );
-  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","../conf/confClk.txt")  );
+  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
 
   // Enable HDMI connectors
   m_tlu->enableHDMI(1, conf->Get("HDMI1_on", true), false);
