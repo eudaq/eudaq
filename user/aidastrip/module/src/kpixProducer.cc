@@ -39,13 +39,11 @@ class kpixProducer : public eudaq::Producer {
   bool stop; //kpixdev
    
 private:
-  bool m_exit_of_run;
-
-  //System *system_;
-  
+ 
   UdpLink udpLink;
   std::string m_defFile;
   std::string m_debug;
+  std::string m_runstate;
   //KpixControl kpix(&udpLink, m_defFile, 32);
   KpixControl *kpix;
   //int m_port; 
@@ -62,7 +60,7 @@ namespace{
 
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
 kpixProducer::kpixProducer(const std::string & name, const std::string & runcontrol)
-  :eudaq::Producer(name, runcontrol), m_exit_of_run(false){
+  :eudaq::Producer(name, runcontrol), m_debug("False"), m_runstate("Running"){
   // Create and setup PGP link
   udpLink.setMaxRxTx(500000);
   udpLink.open(8192,1,"192.168.1.16");
@@ -80,8 +78,8 @@ void kpixProducer::DoInitialise(){
       
   try{
     if (m_debug!="True" && m_debug!="False")
-      throw std::string("[kpixProducer::Init] KPIX_DEBUG value error! (must be 'True' or 'False')");
-    else std::cout<<"[kpixProducer::Init] info, debug == "<< m_debug <<std::endl;
+      throw std::string("      KPIX_DEBUG value error! (must be 'True' or 'False')\n");
+    else std::cout<<"[Init:info] kpix system debug == "<< m_debug <<std::endl;
     bool b_m_debug = (m_debug=="True")? true : false;
   
     kpix =new KpixControl(&udpLink, m_defFile, 32);
@@ -112,6 +110,7 @@ void kpixProducer::DoConfigure(){
   kpix->parseXmlFile(m_defFile); // work as set defaults
 
   //--> read eudaq config to rewrite the kpix config:
+  //--> Kpix Config override:
   std::string database = conf->Get("KPIX_DataBase","");
   std::string datafile = conf->Get("KPIX_DataFile","");
   std::string dataauto = conf->Get("KPIX_DataAuto","");
@@ -119,11 +118,15 @@ void kpixProducer::DoConfigure(){
   if (datafile!="") kpix->getVariable("DataFile")->set(datafile);
   if (dataauto!="") kpix->getVariable("DataAuto")->set(dataauto);
   
+  //--> Kpix Run Control
+  m_runstate = conf->Get("KPIX_RunState","Running");
+  int runcount = conf->Get("KPIX_RunCount",0);
+  if (runcount!=0) kpix->getVariable("RunCount")->setInt(runcount);
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void kpixProducer::DoStartRun(){
   kpix->command("OpenDataFile","");
-  kpix->command("SetRunState","Running");
+  kpix->command("SetRunState",m_runstate);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void kpixProducer::DoStopRun(){
