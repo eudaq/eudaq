@@ -82,7 +82,7 @@ class USBPixGen2ConverterPlugin: public eudaq::DataConverterPlugin {
 
 	  std::vector<StandardPlane> planes;
 
-      for(size_t i = 0; i < channels; ++i){
+      for(size_t i = 20; i < (20 + channels); ++i){
 		planes.emplace_back(i, EVENT_TYPE, planeName);
 	    planes.back().SetSizeZS(80, 336, 0, 16, StandardPlane::FLAG_DIFFCOORDS | StandardPlane::FLAG_ACCUMULATE);
 	  }
@@ -141,7 +141,7 @@ virtual unsigned GetTriggerID(const Event & ev) const {
 	auto evRaw = dynamic_cast<RawDataEvent const &>(ev);
 	auto data = evRaw.GetBlock(0);
 	auto dataLen = data.size();
-        uint32_t i =( static_cast<uint32_t>(data[dataLen-8]) << 24 ) |
+	uint32_t i =( static_cast<uint32_t>(data[dataLen-8]) << 24 ) |
 		    ( static_cast<uint32_t>(data[dataLen-7]) << 16 ) |
                     ( static_cast<uint32_t>(data[dataLen-6]) << 8 ) |
                     ( static_cast<uint32_t>(data[dataLen-5]) );
