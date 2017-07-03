@@ -11,6 +11,7 @@ class FmctluProducer: public eudaq::Producer {
 public:
   FmctluProducer(const std::string name, const std::string &runcontrol);
   void DoConfigure() override;
+  void DoInitialise() override;
   void DoStartRun() override;
   void DoStopRun() override;
   void DoTerminate() override;
@@ -90,6 +91,12 @@ void FmctluProducer::MainLoop(){
     }
   }
   m_tlu->SetTriggerVeto(1);
+}
+
+void FmctluProducer::DoInitialise(){
+  auto ini = GetInitConfiguration();
+  std::cout << "INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
+  
 }
 
 void FmctluProducer::DoConfigure() {
