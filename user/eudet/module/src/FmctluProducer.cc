@@ -94,28 +94,16 @@ void FmctluProducer::MainLoop(){
 }
 
 void FmctluProducer::DoInitialise(){
+  /* Establish a connection with the TLU using IPBus.
+     Define the main hardware parameters.
+  */
   auto ini = GetInitConfiguration();
   std::cout << "INITIALIZE ID: " << ini->Get("initid", 0) << std::endl;
-  
-}
-
-void FmctluProducer::DoConfigure() {
-  auto conf = GetConfiguration();
-  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
-
-  //std::string uhal_conn = "file:///dummy_connections.xml";
   std::string uhal_conn = "file://./FMCTLU_connections.xml";
   std::string uhal_node = "fmctlu.udp";
-  uhal_conn = conf->Get("ConnectionFile", uhal_conn);
-  uhal_node = conf->Get("DeviceName",uhal_node);
+  uhal_conn = ini->Get("ConnectionFile", uhal_conn);
+  uhal_node = ini->Get("DeviceName",uhal_node);
   m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
-
-  // m_tlu->SetWRegister("logic_clocks.LogicRst", 1);
-  // eudaq::mSleep(100);
-  // m_tlu->SetWRegister("logic_clocks.LogicRst", 0);
-  // eudaq::mSleep(100);
-  // m_tlu->SetLogicClocksCSR(0);
-  // eudaq::mSleep(100);
 
   m_tlu->ResetSerdes();
   m_tlu->ResetCounters();
@@ -123,6 +111,46 @@ void FmctluProducer::DoConfigure() {
   m_tlu->ResetFIFO();
   m_tlu->ResetEventsBuffer();
 
+  //Import I2C addresses for hardware
+  //Populate address list for I2C elements
+  m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
+  m_tlu->SetI2C_clockChip_addr(ini->Get("I2C_CLK_Addr", 0x68));
+  m_tlu->SetI2C_DAC1_addr(ini->Get("I2C_DAC1_Addr",0x13) );
+  m_tlu->SetI2C_DAC2_addr(ini->Get("I2C_DAC2_Addr",0x1f) );
+  m_tlu->SetI2C_EEPROM_addr(ini->Get("I2C_ID_Addr", 0x50) );
+  m_tlu->SetI2C_expander1_addr(ini->Get("I2C_EXP1_Addr",0x74));
+  m_tlu->SetI2C_expander2_addr(ini->Get("I2C_EXP2_Addr",0x75) );
+
+  // Initialize TLU hardware
+  m_tlu->InitializeI2C();
+  m_tlu->InitializeDAC();
+  m_tlu->InitializeIOexp();
+
+}
+
+void FmctluProducer::DoConfigure() {
+  auto conf = GetConfiguration();
+  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
+
+  //std::string uhal_conn = "file://./FMCTLU_connections.xml";
+  //std::string uhal_node = "fmctlu.udp";
+  //uhal_conn = conf->Get("ConnectionFile", uhal_conn);
+  //uhal_node = conf->Get("DeviceName",uhal_node);
+  //m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
+
+  // m_tlu->SetWRegister("logic_clocks.LogicRst", 1);
+  // eudaq::mSleep(100);
+  // m_tlu->SetWRegister("logic_clocks.LogicRst", 0);
+  // eudaq::mSleep(100);
+  // m_tlu->SetLogicClocksCSR(0);
+  // eudaq::mSleep(100);
+/*
+  m_tlu->ResetSerdes();
+  m_tlu->ResetCounters();
+  m_tlu->SetTriggerVeto(1);
+  m_tlu->ResetFIFO();
+  m_tlu->ResetEventsBuffer();
+*//*
   //Populate address list for I2C elements
   m_tlu->SetI2C_core_addr(conf->Get("I2C_COREEXP_Addr", 0x21));
   m_tlu->SetI2C_clockChip_addr(conf->Get("I2C_CLK_Addr", 0x68));
@@ -131,11 +159,12 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetI2C_EEPROM_addr(conf->Get("I2C_ID_Addr", 0x50) );
   m_tlu->SetI2C_expander1_addr( conf->Get("I2C_EXP1_Addr",0x74));
   m_tlu->SetI2C_expander2_addr(conf->Get("I2C_EXP2_Addr",0x75) );
-
+*//*
   // Initialize TLU hardware and registers
   m_tlu->InitializeI2C();
   m_tlu->InitializeDAC();
   m_tlu->InitializeIOexp();
+*/
   //m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./confClk.txt")  );
   m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
 
