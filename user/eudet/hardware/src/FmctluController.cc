@@ -24,6 +24,12 @@ namespace tlu {
     }
   }
 
+  void FmctluController::DefineConst(int nDUTs, int nTrigInputs){
+    m_nTrgIn= nTrigInputs;
+    m_nDUTs= nDUTs;
+    std::cout << "  TLU (" << m_nDUTs << " DUTs; " << m_nTrgIn << " Trigger inputs)" << std::endl;
+  }
+
   void FmctluController::DumpEventsBuffer() {
     std::cout<<"FmctluController::DumpEvents......"<<std::endl;
     for(auto&& i: m_data){
@@ -53,10 +59,11 @@ namespace tlu {
   }
 
   void FmctluController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
-    int nDUTs= 4;
+    int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
     unsigned char mask;
+    nDUTs= m_nDUTs;
 
     if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
       std::cout << std::boolalpha << "  Setting HDMI " << hdmiN << " to " << enable << std::endl;
@@ -162,12 +169,12 @@ namespace tlu {
     m_zeClock.checkDesignID();
   }
 
-  void FmctluController::InitializeDAC() {
+  void FmctluController::InitializeDAC(bool intRef, float Vref) {
     m_zeDAC1.SetI2CPar(m_i2c, m_I2C_address.DAC1);
-    m_zeDAC1.SetIntRef(false, true);
+    m_zeDAC1.SetIntRef(intRef, true);
     m_zeDAC2.SetI2CPar(m_i2c, m_I2C_address.DAC2);
-    m_zeDAC2.SetIntRef(false, true);
-    //std::cout << "  I/O expander: initialized" << std::endl;
+    m_zeDAC2.SetIntRef(intRef, true);
+    SetDACref(Vref);
   }
 
   void FmctluController::InitializeIOexp(){
@@ -253,7 +260,7 @@ namespace tlu {
 
   unsigned int FmctluController::PackBits(std::vector< unsigned int>  rawValues){
     //Pack 6 number using only 5-bits for each.
-    int nChannels= 6;
+    int nChannels= m_nTrgIn;
     unsigned int packedbits= 0;
     int tmpint= 0;
     if (nChannels== rawValues.size()){
@@ -320,12 +327,13 @@ namespace tlu {
   }
 
   void FmctluController::SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose= false){
-    int nDUTs= 4;
+    int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
     unsigned char mask, maskLow, maskHigh;
     int bank= 0;
-
+    
+    nDUTs= m_nDUTs;
     if ((hdmiN < 1 ) || ( hdmiN > nDUTs )){
       std::cout << "\tSetDutClkSrc - ERROR: HDMI must be in range [1, 4]" << std::endl;
       return;
@@ -377,25 +385,24 @@ namespace tlu {
     SetPulseDelay( (int)PackBits(valuesVec) );
   }
 
+  void FmctluController::SetDACref(float vref){
+    m_vref= vref;
+    std::cout << "  DAC will use Vref= " << m_vref << " V" << std::endl;
+  }
 
   void FmctluController::SetThresholdValue(unsigned char channel, float thresholdVoltage ) {
     //Channel can either be [0, 5] or 7 (all channels).
-    int nChannels= 6; //We should read this from conf file, ideally.
+    int nChannels= m_nTrgIn; //We should read this from conf file, ideally.
     bool intRef= false; //We should read this from conf file, ideally.
     float vref;
-    if (intRef){
-      vref = 2.500; // Internal reference
-    }
-    else{
-      vref = 1.300; // Reference voltage is 1.3V on newer TLU
-    }
-    if ( std::abs(thresholdVoltage) > vref ){
-      thresholdVoltage= vref*thresholdVoltage/std::abs(thresholdVoltage);
+
+    if ( std::abs(thresholdVoltage) > m_vref ){
+      thresholdVoltage= m_vref*thresholdVoltage/std::abs(thresholdVoltage);
       std::cout<<"\tWarning: Threshold voltage is outside range [-1.3 , +1.3] V. Coerced to "<< thresholdVoltage << " V"<<std::endl;
     }
 
-    float vdac = ( thresholdVoltage + vref ) / 2;
-    float dacCode =  0xFFFF * vdac / vref;
+    float vdac = ( thresholdVoltage + m_vref ) / 2;
+    float dacCode =  0xFFFF * vdac / m_vref;
 
     if( (channel != 7) && ((channel < 0) || (channel > (nChannels-1)))  ){
       std::cout<<"\tError: DAC illegal DAC channel. Use 7 for all channels or 0 <= channel <= "<< nChannels-1 << std::endl;

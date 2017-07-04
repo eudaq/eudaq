@@ -105,6 +105,10 @@ void FmctluProducer::DoInitialise(){
   uhal_node = ini->Get("DeviceName",uhal_node);
   m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
 
+  // Define constants
+  m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
+
+  // Reset IPBus registers
   m_tlu->ResetSerdes();
   m_tlu->ResetCounters();
   m_tlu->SetTriggerVeto(1);
@@ -123,8 +127,14 @@ void FmctluProducer::DoInitialise(){
 
   // Initialize TLU hardware
   m_tlu->InitializeI2C();
-  m_tlu->InitializeDAC();
   m_tlu->InitializeIOexp();
+  if (ini->Get("intRefOn", false)){
+    m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefInt", 2.5));
+  }
+  else{
+    m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
+  }
+
 
 }
 
@@ -132,40 +142,6 @@ void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
 
-  //std::string uhal_conn = "file://./FMCTLU_connections.xml";
-  //std::string uhal_node = "fmctlu.udp";
-  //uhal_conn = conf->Get("ConnectionFile", uhal_conn);
-  //uhal_node = conf->Get("DeviceName",uhal_node);
-  //m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
-
-  // m_tlu->SetWRegister("logic_clocks.LogicRst", 1);
-  // eudaq::mSleep(100);
-  // m_tlu->SetWRegister("logic_clocks.LogicRst", 0);
-  // eudaq::mSleep(100);
-  // m_tlu->SetLogicClocksCSR(0);
-  // eudaq::mSleep(100);
-/*
-  m_tlu->ResetSerdes();
-  m_tlu->ResetCounters();
-  m_tlu->SetTriggerVeto(1);
-  m_tlu->ResetFIFO();
-  m_tlu->ResetEventsBuffer();
-*//*
-  //Populate address list for I2C elements
-  m_tlu->SetI2C_core_addr(conf->Get("I2C_COREEXP_Addr", 0x21));
-  m_tlu->SetI2C_clockChip_addr(conf->Get("I2C_CLK_Addr", 0x68));
-  m_tlu->SetI2C_DAC1_addr(conf->Get("I2C_DAC1_Addr",0x13) );
-  m_tlu->SetI2C_DAC2_addr(conf->Get("I2C_DAC2_Addr",0x1f) );
-  m_tlu->SetI2C_EEPROM_addr(conf->Get("I2C_ID_Addr", 0x50) );
-  m_tlu->SetI2C_expander1_addr( conf->Get("I2C_EXP1_Addr",0x74));
-  m_tlu->SetI2C_expander2_addr(conf->Get("I2C_EXP2_Addr",0x75) );
-*//*
-  // Initialize TLU hardware and registers
-  m_tlu->InitializeI2C();
-  m_tlu->InitializeDAC();
-  m_tlu->InitializeIOexp();
-*/
-  //m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./confClk.txt")  );
   m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
 
   // Enable HDMI connectors

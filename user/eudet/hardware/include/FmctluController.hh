@@ -119,17 +119,20 @@ namespace tlu {
     bool IsBufferEmpty(){return m_data.empty();};
     void ReceiveEvents();
     void ResetEventsBuffer();
+    void DefineConst(int nDUTs, int nTrigInputs);
     void DumpEventsBuffer();
 
     void enableClkLEMO(bool enable, bool verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
     void InitializeClkChip(const std::string & filename);
-    void InitializeDAC();
+    void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
     void SetDACValue(unsigned char channel, uint32_t value);
     void SetThresholdValue(unsigned char channel, float thresholdVoltage);
     void SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose);
+    void SetDACref(float vref);
+    float GetDACref(){return m_vref;};
 
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
@@ -169,6 +172,12 @@ namespace tlu {
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
+
+    // Define constants such as number of DUTs and trigger inputs
+    int m_nDUTs;
+    int m_nTrgIn;
+    // Define reference voltage for DACs
+    float m_vref;
 
     std::deque<fmctludata*> m_data;
 
