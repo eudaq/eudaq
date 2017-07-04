@@ -134,9 +134,70 @@ namespace eudaq {
   }
   
   void Producer::Exec(){
+    std::cout << " CLI Run Check: " << m_cli_run << std::endl;
+    if(!m_cli_run){
     StartCommandReceiver();
     while(IsActiveCommandReceiver()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    }
+    else if(m_cli_run){
+
+      bool help = true;
+      if (help) {
+        help = false;
+        std::cout << "--- Commands ---\n"
+                  << "i [file] Initialize clients (with file 'file')\n"
+                  << "c [file] Configure clients (with file 'file')\n"
+                  << "r        Reset\n"
+                  << "b [n]    Begin Run (with run number)\n"
+                  << "e        End Run\n"
+                  << "q        Quit\n"
+                  << "?        Display this help\n"
+                  << "----------------" << std::endl;
+      }
+      std::string line;
+      std::getline(std::cin, line);
+      std::cout << " amjad edit 2 " << line << std::endl;
+      char cmd = '\0';
+      if (line.length() > 0) {
+        cmd = tolower(line[0]);
+        line = eudaq::trim(std::string(line, 1));
+      }else {
+        line = "";
+      }
+      switch (cmd) {
+      case '\0': // ignore
+        break;
+      case 'i':
+        if(!line.empty())
+          // ReadInitilizeFile(line);
+          DoInitialise();
+        break;
+      case 'c':
+        if(!line.empty())
+          //      ReadConfigureFile(line);
+          DoConfigure();
+        break;
+      case 'b':
+        //      if(line.length())         SetRunN(std::stoul(line));
+        DoStartRun();
+        break;
+      case 'e':
+        DoStopRun();
+        break;
+      case 'r':
+        DoReset();
+        break;
+      case 'q':
+	DoTerminate();
+        break;
+      case '?':
+        help = true;
+        break;
+      default:
+        std::cout << "Unrecognized command, type ? for help" << std::endl;
+      }
     }
   }
 

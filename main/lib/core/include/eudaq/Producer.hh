@@ -49,6 +49,7 @@ namespace eudaq {
   private:
     uint32_t m_pdc_n;
     uint32_t m_evt_c;
+    bool m_cli_run=false; 
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
