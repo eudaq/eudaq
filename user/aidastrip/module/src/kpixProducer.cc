@@ -39,13 +39,11 @@ class kpixProducer : public eudaq::Producer {
   bool stop; //kpixdev
    
 private:
-  bool m_exit_of_run;
-
-  //System *system_;
-  
+ 
   UdpLink udpLink;
   std::string m_defFile;
   std::string m_debug;
+  std::string m_runstate;
   //KpixControl kpix(&udpLink, m_defFile, 32);
   KpixControl *kpix;
   //int m_port; 
@@ -62,7 +60,12 @@ namespace{
 
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
 kpixProducer::kpixProducer(const std::string & name, const std::string & runcontrol)
-  :eudaq::Producer(name, runcontrol), m_exit_of_run(false){  
+  :eudaq::Producer(name, runcontrol), m_debug("False"), m_runstate("Running"){
+  // Create and setup PGP link
+  udpLink.setMaxRxTx(500000);
+  udpLink.open(8192,1,"192.168.1.16");
+  //udpLink.openDataNet("127.0.0.1",8099);
+  //usleep(100);
 }
 
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
@@ -71,24 +74,20 @@ void kpixProducer::DoInitialise(){
   auto ini = GetInitConfiguration();
   // --- read the ini file:
   m_defFile = ini->Get("KPIX_CONFIG_FILE", "defaults.xml"); //kpixdev
-  m_debug = ini->Get("KPIX_DEBUG", "false");
+  m_debug = ini->Get("KPIX_DEBUG", "False");
       
   try{
-    if (m_debug!="true" && m_debug!="false")
-      throw std::string("[kpixProducer::Init] KPIX_DEBUG value error! (must be 'true' or 'false')");
-    else std::cout<<"[kpixProducer::Init] info, debug == "<< m_debug <<std::endl;
-    bool b_m_debug = (m_debug=="true")? true : false;
+    if (m_debug!="True" && m_debug!="False")
+      throw std::string("      KPIX_DEBUG value error! (must be 'True' or 'False')\n");
+    else std::cout<<"[Init:info] kpix system debug == "<< m_debug <<std::endl;
+    bool b_m_debug = (m_debug=="True")? true : false;
   
     kpix =new KpixControl(&udpLink, m_defFile, 32);
     kpix->setDebug(b_m_debug);
 
-    // Create and setup PGP link
-    udpLink.setMaxRxTx(500000);
     udpLink.setDebug(b_m_debug);
-    udpLink.open(8192,1,"192.168.1.16");
-    //udpLink.openDataNet("127.0.0.1",8099);
     udpLink.enableSharedMemory("kpix",1);
-    //usleep(100);
+
     std::string xmlString="<system><command><ReadStatus/>\n</command></system>";
 
     kpix->parseXmlString(xmlString);
@@ -105,29 +104,49 @@ void kpixProducer::DoInitialise(){
 void kpixProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
+  
+  std::string conf_defFile = conf->Get("KPIX_CONFIG_FILE","");
+  if (conf_defFile!="") m_defFile=conf_defFile; 
   kpix->parseXmlFile(m_defFile); // work as set defaults
-  //  m_plane_id = conf->Get("PLANE_ID", 0);
- 
+
+  //--> read eudaq config to rewrite the kpix config:
+  //--> Kpix Config override:
+  std::string database = conf->Get("KPIX_DataBase","");
+  std::string datafile = conf->Get("KPIX_DataFile","");
+  std::string dataauto = conf->Get("KPIX_DataAuto","");
+  if (database!="") kpix->getVariable("DataBase")->set(database); 
+  if (datafile!="") kpix->getVariable("DataFile")->set(datafile);
+  if (dataauto!="") kpix->getVariable("DataAuto")->set(dataauto);
+  
+  //--> Kpix Run Control
+  m_runstate = conf->Get("KPIX_RunState","Running");
+  int runcount = conf->Get("KPIX_RunCount",0);
+  if (runcount!=0) kpix->getVariable("RunCount")->setInt(runcount);
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void kpixProducer::DoStartRun(){
-
+  kpix->command("OpenDataFile","");
+  kpix->command("SetRunState",m_runstate);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void kpixProducer::DoStopRun(){
-  // stop listen to the hardware
-  udpLink.close();
+  kpix->command("CloseDataFile","");
+  kpix->command("SetRunState","Stopped");
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void kpixProducer::DoReset(){
-  // stop listen to the hardware
-  udpLink.close();
   kpix->parseXmlString("<system><command><HardReset/></command></system>");
+  
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
 void kpixProducer::DoTerminate(){
   //-->you can call join to the std::thread in order to set it non-joinable to be safely destroyed
-  
+
+  // stop listen to the hardware
+  kpix->command("CloseDataFile",""); // no problem though file closed, as protected in kpix/generic/System.cpp
+  udpLink.close();
+  delete kpix;
+
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
 
