@@ -4,6 +4,10 @@
 echo "Entered install_cmake script"
 echo "Installing cmake"
 
+export temporary_path=`pwd`
+
+cd --
+
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	
 	
@@ -24,7 +28,12 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	brew link cmake
 	cmake --version
 else
-	sudo apt-get install --force-yes -y cmake 
+	#sudo apt-get install --force-yes -y cmake 
+	wget $CMAKE_DOWNLOAD_PATH/$CMAKE_FILENAME_LINUX
+	tar -xvf $CMAKE_FILENAME_LINUX
+	export PATH="~/${CMAKE_FILENAME_LINUX%.*.*}/bin:$PATH"
 fi
+
+cd $temporary_path
 
 echo "Cmake has been installed"
