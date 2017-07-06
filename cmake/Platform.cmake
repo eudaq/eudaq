@@ -42,8 +42,8 @@ if (CMAKE_COMPILER_IS_GNUCC)
    add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")
    add_definitions("-D_GLIBCXX_USE_NANOSLEEP")
 
-   LIST ( APPEND CMAKE_CXX_FLAGS "-fPIC" )
-   LIST ( APPEND CMAKE_LD_FLAGS "-fPIC" )
+   STRING( APPEND CMAKE_CXX_FLAGS "-fPIC" )
+   STRING( APPEND CMAKE_LD_FLAGS "-fPIC" )
 
 elseif(MSVC)
    message(STATUS "Using MSVC-specific preprocessor identifiers and options")
