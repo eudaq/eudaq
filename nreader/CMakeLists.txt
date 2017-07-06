@@ -11,11 +11,10 @@ FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED ILCTEST)
 INCLUDE( ilcsoft_default_settings )
 
 FIND_PACKAGE( Marlin 1.0 REQUIRED )
-FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
 
 LINK_LIBRARIES( EUDAQ )
 
-FOREACH( pkg Marlin MarlinUtil EUTELESCOPE)
+FOREACH( pkg Marlin EUTELESCOPE)
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
@@ -31,8 +30,6 @@ ENDFOREACH()
 
 ADD_DEFINITIONS("-DUSE_EUDAQ")
 ADD_DEFINITIONS("-DUSE_MARLIN")
-ADD_DEFINITIONS("-DUSE_GEAR")
-ADD_DEFINITIONS("-DUSE_MARLINUTIL")
 
 # ---------------------------------------------------------------------------
 

@@ -9,7 +9,7 @@
     HINTS "${EUTELESCOPE}/eutelescope/libraries/include" "$ENV{EUTELESCOPE}/eutelescope/libraries/include")
   
   find_path(EUTELESCOPE_INT_INCLUDE_DIR EUTelTrackerDataInterfacer.h
-    HINTS "${EUTELESCOPE}/eutelescope/interfaces/include" "$ENV{EUTELESCOPE}/eutelescope/interfaces/include")
+    HINTS "${EUTELESCOPE}/eutelescope/interfaces/pixel/include" "$ENV{EUTELESCOPE}/eutelescope/interfaces/pixel/include")
 
   find_library(EUTELESCOPE_LIBRARY NAMES Eutelescope
     HINTS "${EUTELESCOPE}/lib" "$ENV{EUTELESCOPE}/lib")
