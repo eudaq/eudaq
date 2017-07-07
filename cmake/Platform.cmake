@@ -4,6 +4,9 @@
 set (CMAKE_CXX_STANDARD 11)
 set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 
+# position independent code on instead of setting -fPIC directly
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # platform dependent preprocessor defines
 if (WIN32)
   if (CYGWIN)
@@ -41,10 +44,6 @@ if (CMAKE_COMPILER_IS_GNUCC)
    message(STATUS "Using gcc-specific preprocessor identifiers")
    add_definitions("-DEUDAQ_FUNC=__PRETTY_FUNCTION__ ")
    add_definitions("-D_GLIBCXX_USE_NANOSLEEP")
-
-   STRING( APPEND CMAKE_CXX_FLAGS "-fPIC" )
-   STRING( APPEND CMAKE_LD_FLAGS "-fPIC" )
-
 elseif(MSVC)
    message(STATUS "Using MSVC-specific preprocessor identifiers and options")
    add_definitions("-DEUDAQ_FUNC=__FUNCTION__")
