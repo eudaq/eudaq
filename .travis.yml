@@ -21,8 +21,8 @@ env:
       - CMAKE_FILENAME_LINUX=cmake-3.8.2-Linux-x86_64.tar.gz
       - CMAKE_FILENAME_MAC=cmake-3.8.2-Darwin-x86_64.tar.gz
             
-      - PYTHON_VERSION_MODERN=3.5.1
-      - PYTHON_VERSION_OLD=2.7.10
+#      - PYTHON_VERSION_MODERN=3.5.1
+#      - PYTHON_VERSION_OLD=2.7.10
       
       - BUILD_AHCAL=ON
       - BUILD_BIFAHCAL=OFF
@@ -87,27 +87,35 @@ matrix:
    include:   
       - os: linux
         compiler: clang      
+        python: 3.6
         env: OPTION=modern
       - os: linux
-        compiler: clang      
+        compiler: clang     
+        python: 2.7
         env: OPTION=old   
       - os: linux
         compiler: gcc
+        python: 3.6        
         env: OPTION=modern BUILD_manual=ON
       - os: linux      
-        compiler: gcc      
+        compiler: gcc
+        python: 2.7        
         env: OPTION=old
       - os: osx
         compiler: clang      
+        python: 3.6        
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF       
       - os: osx      
-        compiler: clang      
+        compiler: clang
+        python: 2.7        
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF           
       - os: osx      
         compiler: gcc    
+        python: 3.6        
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF        
       - os: osx
-        compiler: gcc      
+        compiler: gcc
+        python: 2.7    
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF     
 
 #before_install:
