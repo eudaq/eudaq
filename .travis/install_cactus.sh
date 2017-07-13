@@ -25,7 +25,7 @@ if [ $TRAVIS_OS_NAME == linux ]; then
 
 		echo "palpidefs source not restored from cache - checking out from CERN svn"
 		
-		svn co https://svn.cern.ch/reps/cactus/tags/ipbus_sw/uhal_2_4_2
+		svn co --non-interactive  --trust-server-cert  https://svn.cern.ch/reps/cactus/tags/ipbus_sw/uhal_2_4_2
 	
 	fi
 
@@ -51,7 +51,7 @@ if [ $TRAVIS_OS_NAME == osx ]; then
 
 		echo "palpidefs source not restored from cache - checking out from CERN svn"
 		
-		svn co https://svn.cern.ch/reps/cactus/tags/ipbus_sw/uhal_2_4_2
+		svn co --non-interactive  --trust-server-cert https://svn.cern.ch/reps/cactus/tags/ipbus_sw/uhal_2_4_2
 	
 	fi
 
