@@ -33,9 +33,13 @@ namespace eudaq {
     virtual void OnIdle();
     virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
     virtual void Exec() = 0;
-    
+
+    void ReadConfigureFile(const std::string &path);
+    void ReadInitializeFile(const std::string &path);
+
     void StartCommandReceiver();
     void CloseCommandReceiver();
+
     bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
     void SetStatus(Status::State state, const std::string & info);
     bool IsStatus(Status::State state);

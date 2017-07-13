@@ -103,7 +103,7 @@ void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
   std::cout<<settings<<std::endl;
   if(m_rc){
-    m_rc->ReadInitilizeFile(settings);
+    m_rc->ReadInitializeFile(settings);
     m_rc->Initialise();
   }
 }

@@ -60,7 +60,7 @@ namespace eudaq {
     void SetRunN(uint32_t n){m_run_n = n;};
     uint32_t GetRunN() const {return m_run_n;};
     void ReadConfigureFile(const std::string &path);
-    void ReadInitilizeFile(const std::string &path);
+    void ReadInitializeFile(const std::string &path);
     ConfigurationSPC GetConfiguration() const {return m_conf;};
     ConfigurationSPC GetInitConfiguration() const {return m_conf_init;};
     
