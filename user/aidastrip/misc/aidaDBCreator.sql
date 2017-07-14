@@ -36,10 +36,17 @@ create table if not exists `aidaSC` (
 `ch1`	     double	, -- chid -> 0.id in AMR
 `ch11`	     double	,
 `ch21`	     double	,
+`ch31`	     double	,
 `ch40`	     double	,
 `ch41`	     double	,
 `ch42`	     double	,
 `ch43`	     double	,
+`ch44`	     double	,
+`ch45`	     double	,
+`ch46`	     double	,
+`ch47`	     double	,
+`ch48`	     double	,
+`ch49`	     double	,
 primary key (`counter`, `timer`)
 );
 describe aidaSC;
