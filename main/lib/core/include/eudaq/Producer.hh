@@ -50,7 +50,7 @@ namespace eudaq {
     //    void ReadConfigureFile(const std::string &path);
     //    void ReadInitializeFile(const std::string &path);
     void SendEvent(EventUP ev);
-
+    
 
   private:
     bool m_exit;
@@ -64,7 +64,6 @@ namespace eudaq {
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
     uint32_t m_pdc_n;
     uint32_t m_evt_c;
-    uint32_t m_run_number;
     FileWriterUP m_writer;
 
   };

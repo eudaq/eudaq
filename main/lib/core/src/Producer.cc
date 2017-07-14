@@ -150,55 +150,63 @@ namespace eudaq {
     else{
       m_exit=false;
       while(!m_exit){
-      std::string line;
-      std::string pathini;
-      std::string pathconfig;
-      std::getline(std::cin, line);
-      std::string cmd;
-      cmd=line;
-      size_t i = cmd.find('\0');
-      std::string param;
-      if (i != std::string::npos) {
-        param = std::string(cmd, i + 1);
-      }
-      if (cmd == "init") {
-	std::cout << " Path to Initialize file : " << std::endl;
-	std::cin >> pathini;
-	ReadInitializeFile(pathini);
-	//	ReadInitializeFile("Ex0.ini");
-        OnInitialise();
-      } else if (cmd == "config"){
-	std::cout << " Path to Configure file : " << std::endl;
-	std::cin >> pathconfig;
-	ReadConfigureFile(pathconfig);
-	//	ReadConfigureFile("Ex0.conf");
-        OnConfigure();
-      } else if (cmd == "start") {
-	m_run_number = from_string(param, 0);
-	OnStartRun();
-      } else if (cmd == "stop") {
-        OnStopRun();
-      } else if (cmd == "quit") {
-	OnTerminate();
-	m_exit = true;
-      } else if (cmd == "reset") {
-        OnReset();
-      } else if (cmd == "help") {
-        std::cout << "--- Commands ---\n"
-                  << "init [file] Initialize clients (with file 'file')\n"
-                  << "config [file] Configure clients (with file 'file')\n"
-                  << "reset        Reset\n"
-                  << "start [n]    Begin Run (with run number)\n"
-                  << "stop        End Run\n"
-                  << "quit        Quit\n"
-                  << "help        Display this help\n"
-                  << "----------------" << std::endl;
-      } else if (cmd == "status") {
-	//	printf(Status); // TODO. 
-      } else {
-	//	std::cout << "This command is not recognised. Please use help" << std::endl;
-        OnUnrecognised(cmd, param);
-      }
+	//      std::string line;
+	//      std::getline(std::cin, line);
+	//      cmd=line;
+	std::string pathini;
+	std::string pathconfig;
+	uint32_t nrun;
+	std::string param;
+	std::string cmd;
+	std::getline(std::cin, cmd);
+	size_t i = cmd.find('\0');
+	if (i != std::string::npos) {
+	  param = std::string(cmd, i + 1);
+	  cmd = std::string(cmd,0,i);
+	}
+	if (cmd == "init") {
+	  /*	  std::cout << " Path to Initialize file : " << std::endl;
+	  std::cin >> pathini;
+	  ReadInitializeFile(pathini);
+	  */
+	  ReadInitializeFile("Ex0.ini");
+	  OnInitialise();
+	} else if (cmd == "config"){
+	  /*std::cout << " Path to Configure file : " << std::endl;
+	  std::cin >> pathconfig;
+	  ReadConfigureFile(pathconfig);
+	  */
+	  ReadConfigureFile("Ex0.conf");
+	  OnConfigure();
+	} else if (cmd == "start") {
+	  std::cout << "Please Enter Run Number " << std::endl;
+	  std::cin >> nrun; 
+	  SetRunN(from_string(param,nrun));
+	  OnStartRun();
+	} else if (cmd == "stop") {
+	  OnStopRun();
+	} else if (cmd == "quit") {
+	  OnTerminate();
+	  m_exit = true;
+	} else if (cmd == "reset") {
+	  OnReset();
+	  std::cout << " Status reset to UnInitialized." << std::endl;
+	} else if (cmd == "help") {
+	  std::cout << "--- Commands ---\n"
+		    << "init [file] Initialize clients (with file 'file')\n"
+		    << "config [file] Configure clients (with file 'file')\n"
+		    << "reset        Reset\n"
+		    << "start [n]    Begin Run (with run number)\n"
+		    << "stop        End Run\n"
+		    << "quit        Quit\n"
+		    << "help        Display this help\n"
+		    << "----------------" << std::endl;
+	} else if (cmd == "status") {
+	  //	printf(Status); // TODO. 
+	} else {
+	  //	std::cout << "This command is not recognised " << std::endl;
+	  OnUnrecognised(cmd, param);
+	}
       }
       
     }
