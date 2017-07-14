@@ -8,7 +8,7 @@ aux_source_directory(src MODULE_SRC)
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 message("[dev]: project_source_dir is ${PROJECT_SOURCE_DIR}; eudaq_install_rpath is ${EUDAQ_INSTALL_RPATH}")
-target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} -L${PROJECT_SOURCE_DIR}/extern/lib/ -lkpix)
+target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY} -L${PROJECT_SOURCE_DIR}/extern/lib/ -lkpix -lodbc)
 
 install(TARGETS
   ${EUDAQ_MODULE}

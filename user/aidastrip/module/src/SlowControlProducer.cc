@@ -14,7 +14,14 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "ControlServer.h"
+
+//#include <unistd.h>
+
+//---- SQL related lib:
+#include <sql.h>
+#include <sqlext.h>
+
+#define MAX_COL_NAME_LEN  256
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class SlowControlProducer : public eudaq::Producer {
@@ -30,6 +37,7 @@ class SlowControlProducer : public eudaq::Producer {
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("SlowControlProducer");
 
+  
   std::vector<std::string> ConvertStringToVec(std::string str, char delim)
   {// added by wmq TBD: to integrate to a separate tool header!
     std::vector<std::string> vec;
@@ -42,19 +50,41 @@ class SlowControlProducer : public eudaq::Producer {
     return vec;
   }
 
-  void PrintFileStat(std::string file_path);
-    
+  void odbcFetchData(SQLHSTMT stmt, SQLSMALLINT columns);
+  void odbcListDSN();
+  void odbcDoAlotPrint();
+  void odbcExtractError(std::string fn,
+			SQLHANDLE handle,
+			SQLSMALLINT type);
 private:
-  bool m_flag_ts;
-  bool m_flag_tg;
-  uint32_t m_plane_id;
-  FILE* m_file_lock;
-  std::chrono::milliseconds m_ms_busy;
+  bool m_debug;
+  SQLHENV m_env;
+  SQLHDBC m_dbc;
+  SQLHSTMT m_stmt;
+  SQLRETURN m_ret; /* ODBC API return status */
+
+  std::string m_tbsc_dsn;
+  std::string m_tbsc_db;
+  unsigned int m_s_intvl;
+  
   std::thread m_thd_run;
+
+  std::filebuf m_fb; // output file to print event
+
+  // mapa<(string)ch_id, std::mapb>, mapb<aida_channels.colName, val>
+  std::map sc_para_map <std::string, std::map<std::string, std::string>>;
+  
+  ///------ stale below
+  //bool m_flag_ts;
+  //bool m_flag_tg;
+  //uint32_t m_plane_id;
+  //FILE* m_file_lock;
+  //std::chrono::milliseconds m_ms_busy;
+
   bool m_exit_of_run;
 
-  std::string m_stream_path;
-  std::ifstream m_file_stream;
+  //  std::string m_stream_path;
+  //std::ifstream m_file_stream;
   struct stat m_sb;
   std::map<std::string, std::string> m_tag_map;
   std::vector<std::string> m_tag_vc, m_value_vc;
@@ -68,116 +98,91 @@ namespace{
 }
 //----------DOC-MARK-----END*REG-----DOC-MARK----------
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
-SlowControlProducer::SlowControlProducer(const std::string & name, const std::string & runcontrol)
-  :eudaq::Producer(name, runcontrol), m_exit_of_run(false){  
+SlowControlProducer::SlowControlProducer(const std::string & name, const std::string & runcontrol):
+  eudaq::Producer(name, runcontrol),
+  m_exit_of_run(false),
+  m_debug(false),
+  m_s_intvl(90)
+{
+ 
+  /* Allocate an environment handle */
+  SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &m_env);
+  /* We want ODBC 3 support */
+  SQLSetEnvAttr(m_env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
+  /* Allocate a connection handle */
+  SQLAllocHandle(SQL_HANDLE_DBC, m_env, &m_dbc);
 }
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void SlowControlProducer::DoInitialise(){
-  ControlServer cntrlServer;
-
   auto ini = GetInitConfiguration();
-  std::string lock_path = ini->Get("DEV_LOCK_PATH", "ex0lockfile.txt");
-  m_file_lock = fopen(lock_path.c_str(), "a");
-#ifndef _WIN32
-  if(flock(fileno(m_file_lock), LOCK_EX|LOCK_NB)){ //fail
-    EUDAQ_THROW("unable to lock the lockfile: "+lock_path );
-  }
-#endif
-
-  m_stream_path = ini->Get("DEV_STREAM_PATH","input.csv");
-  m_file_stream.open( m_stream_path.c_str(), std::ifstream::in );
-  if (!m_file_stream.is_open()) EUDAQ_THROW("Oops, this file seems not exist? please check ==> " + m_stream_path);
-  else std::cout<<"Congrats! This file is open\n ==>  "<< m_stream_path <<std::endl;
-
-  //--> start of wmq
-  // print many status info of the file
-  SlowControlProducer::PrintFileStat(m_stream_path.c_str());
-  
-  //--> read all tags stored in the first line of csv file:
-  //    and get the current last line as an init number if exist
-  //    or set to a null -99 by default
-  int row = 0;
-  std::string this_line, first_line, last_line;
-
-  while (m_file_stream.good()) {
-    getline (m_file_stream, this_line);
-    if ( this_line.empty() ) {
-      printf("empty line!\n");
-      continue; // you just ignore this line, not counting it as a row
-    }
-    else {
-      printf("Row %d: %s\n", row, this_line.c_str());
-      if (row==0) first_line = this_line;
-      else last_line = this_line;
-    }
-    row++;
-  }
-  m_tag_vc = ConvertStringToVec (first_line, ',');
-  m_value_vc = ConvertStringToVec (last_line, ',');
-
-  //-- init the tag and value for condition map:
-  for (int itag=0; itag<m_tag_vc.size(); itag++){
-    std::string ivalue="-99", ikey = m_tag_vc[itag];
-    
-    //-- check if same amount of keys and values for a map:
-    //--  empty or only-space csv value ignored and default -99 used.
-    if (m_tag_vc.size() == m_value_vc.size() && !m_value_vc[itag].empty() && m_value_vc[itag].find_first_not_of(' ')!=std::string::npos ) ivalue = m_value_vc[itag];
-    else printf("\nwarning: there are #%lu tags with #%lu values; \" %s \" tag init value of -99 by default.\n", m_tag_vc.size(), m_value_vc.size(), ikey.c_str());
-
-    //-- check if there is any duplicate tag:
-    if (m_tag_map.find(ikey) == m_tag_map.end()) { // not found
-      m_tag_map [ikey] = ivalue;
-    }
-    else EUDAQ_THROW("duplicate tag \""+ ikey + "\" found."); // duplicate tag found
-  }
-
-  //-- print out the init m_tag_map map:
-  for (std::map<std::string, std::string>::iterator _it = m_tag_map.begin(); _it!=m_tag_map.end(); ++_it)
-    std::cout << _it->first << " => " << _it->second << '\n';
-    
-  //--> end of wmq
-    
+  m_tbsc_dsn = ini->Get("TBSC_DSN", "myodbc5a");
+  m_tbsc_db  = ini->Get("TBSC_DATABASE", "aidaTest");
+  std::string ini_debug = ini->Get("TBSC_DEBUG", "");
+  m_debug = (ini_debug=="true"||ini_debug=="True")? true : false;
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
 void SlowControlProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  m_plane_id = conf->Get("PLANE_ID", 0);
-  m_ms_busy = std::chrono::milliseconds(conf->Get("DURATION_BUSY_MS", 1000));
-  m_flag_ts = conf->Get("ENABLE_TIEMSTAMP", 0);
-  m_flag_tg = conf->Get("ENABLE_TRIGERNUMBER", 0);
-  if(!m_flag_ts && !m_flag_tg){
-    EUDAQ_WARN("Both Timestamp and TriggerNumber are disabled. \n  ==> Now, Timestamp is enabled by default");
-    m_flag_ts = false;
-    m_flag_tg = true;
+  //m_tbsc_dsn= (conf->Get("TBSC_DSN","")=="" )? m_tbsc_dsn: conf->Get("TBSC_DSN","");
+  m_tbsc_dsn=conf->Get("TBSC_DSN", m_tbsc_dsn);
+  //m_tbsc_db = (conf->Get("TBSC_DATABASE","")=="" )? m_tbsc_db: conf->Get("TBSC_DATABASE","");
+  m_tbsc_db = conf->Get("TBSC_DATABASE", m_tbsc_db);
+  std::string conf_debug = conf->Get("TBSC_DEBUG", "");
+  //m_debug = (conf_debug=="true" || conf_debug=="True")? true: m_debug;
+  m_debug=true;
+  m_s_intvl = conf->Get("TBSC_INTERVAL_SEC", m_s_intvl);
+  printf("check invl: %d", m_s_intvl);
+  
+  /* Connect to the DSN m_tbsc_dsn */
+  SQLDisconnect(m_dbc); /* in case multiple press on configure */
+  m_ret = SQLDriverConnect(m_dbc, NULL,
+			   (SQLCHAR*)("DSN="+m_tbsc_dsn+";DATABASE="+m_tbsc_db+";").c_str(), SQL_NTS,
+			   NULL, 0,
+			   NULL, SQL_DRIVER_COMPLETE);
+  if (m_debug){
+    EUDAQ_INFO("Listing installed Data Sources from ODBC: ");
+    odbcListDSN();
+  } else;
+  if (!SQL_SUCCEEDED(m_ret)){
+    odbcExtractError("SQLAllocHandle for dbc", m_dbc, SQL_HANDLE_DBC);
+    EUDAQ_THROW("Unable to connect to the DSN = '"+m_tbsc_dsn+"', please check!");
+  }else {
+    EUDAQ_INFO("DSN '"+m_tbsc_dsn+"' Connected!");
+    if (m_debug) odbcDoAlotPrint();
   }
+  
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void SlowControlProducer::DoStartRun(){
   m_exit_of_run = false;
+  //--> start of evt print <--// wmq dev
+  //m_fb.open("out.txt", std::ios::out|std::ios::app);
+  m_fb.open("out.txt", std::ios::out);
+  
   m_thd_run = std::thread(&SlowControlProducer::Mainloop, this);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void SlowControlProducer::DoStopRun(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
+  if(m_thd_run.joinable()){
     m_thd_run.join();
+  }
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void SlowControlProducer::DoReset(){
+
+  SQLDisconnect(m_dbc); // disconnect from driver 
+  
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
-#ifndef _WIN32
-  flock(fileno(m_file_lock), LOCK_UN);
-#endif
-  fclose(m_file_lock);
+  // fclose(m_file_lock);
 
-  m_file_stream.close();
+  //  m_file_stream.close();
   
   m_thd_run = std::thread();
-  m_ms_busy = std::chrono::milliseconds();
   m_exit_of_run = false;
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
@@ -185,184 +190,214 @@ void SlowControlProducer::DoTerminate(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
-  fclose(m_file_lock);
-  m_file_stream.close();
+  //  fclose(m_file_lock);
+  //  m_file_stream.close();
+
+  /* free up allocated handles */
+  SQLFreeHandle(SQL_HANDLE_DBC, m_dbc);
+  SQLFreeHandle(SQL_HANDLE_ENV, m_env);
+  SQLFreeHandle(SQL_HANDLE_STMT, m_stmt);
 }
+
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
 void SlowControlProducer::Mainloop(){
-  auto tp_start_run = std::chrono::steady_clock::now();
-  uint32_t trigger_n = 0;
-  uint8_t x_pixel = 16;
-  uint8_t y_pixel = 16;
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_int_distribution<uint32_t> position(0, x_pixel*y_pixel-1);
-  std::uniform_int_distribution<uint32_t> signal(0, 255);
-  while(!m_exit_of_run){
-    auto ev = eudaq::Event::MakeUnique("Ex0Raw");  
-    auto tp_trigger = std::chrono::steady_clock::now();
-    auto tp_end_of_busy = tp_trigger + m_ms_busy;
-    if(m_flag_ts){
-      std::chrono::nanoseconds du_ts_beg_ns(tp_trigger - tp_start_run);
-      std::chrono::nanoseconds du_ts_end_ns(tp_end_of_busy - tp_start_run);
-      ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
+  std::ostream os(&m_fb);
 
-      std::cout<<"[Loop]: Timestamp enabled to use\n"; //wmq
-      std::cout<<"[Loop]: m_ms_busy ==>    "<< m_ms_busy.count()<<"\n"; //wmq
-      std::cout<<"[Loop]: time begin at ==> "<<du_ts_beg_ns.count()<<"ns; ends at ==> "<<du_ts_end_ns.count()<<"ns\n";//wmq
+  
+  /* Allocate a statement handle */
+  SQLAllocHandle(SQL_HANDLE_STMT, m_dbc, &m_stmt);
+  /* Retrieve a list of tables */
+  SQLTables(m_stmt, NULL, 0, NULL, 0,
+  	    NULL, 0,
+  	    //(SQLCHAR*)"aidaSC", SQL_NTS, /* TableName */
+  	    (SQLCHAR*)"TABLE", SQL_NTS);
+  /* How many columns are there */
+  SQLSMALLINT columns; /* number of columns in result-set */
+  SQLNumResultCols(m_stmt, &columns);
 
-    }
-    if(m_flag_tg){
-      ev->SetTriggerN(trigger_n);
-      std::cout<<"[Loop]: TriggerNumber enabled to use\n"; //wmq
-      std::cout<<" ==> Trigger #"<<trigger_n<<"\n"; //wmq
-    }
-
-    //--> start <-- check if file updated, and read the last line to update the tag-map
-
-    //-- just to print, update-check not via this:
-    if (stat(m_stream_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("[Loop] stat");
-    // printf("Last status change:       %s", ctime(&m_sb.st_ctime));
-    // printf("Last file access:         %s", ctime(&m_sb.st_atime));
-    printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
-
-    m_file_stream.clear(); // clear the failbit and restart to read the file stream; see std::ios::clear, http://www.cplusplus.com/reference/ios/ios/clear/
-
-    //-- to check if any new row added, and get the new last line:
-    std::string new_line, new_last_line="";
-    int row=0;
-    while(m_file_stream.good()){
-      getline( m_file_stream, new_line); // read a string line by line
-      std::stringstream lineStream(new_line);
-      std::string cell;
-
-      int counter = 0;
-      if (new_line.empty()) continue; // skip empty lines
-      else{
-	printf("Row %d : ", row);
-	new_last_line = new_line;
-	while (getline(lineStream, cell, ',')) { // read a string from sstream until next comma
-	  printf(" # %d is %s; ", counter, cell.c_str());
-	  counter++;
-	  if(!new_line.empty()) printf("\n");
-	  row++;
-	}
-      }
-    }
+  m_exit_of_run=false;
+  
+  int acounter=0;
+  std::string latest_update="NULL";
+  SQLCHAR* checkUpdate= (SQLCHAR*)"select UPDATE_TIME from information_schema.tables where TABLE_SCHEMA='aidaTest' and TABLE_NAME='aidaSC';";
+  do{
+    printf(" #%d check update_time <-|\n", acounter);
+    SQLFreeStmt(m_stmt,SQL_CLOSE);
+    SQLExecDirect(m_stmt, checkUpdate, SQL_NTS);
     
-    //-- if updated, update the tag map for event tagging:
-    if ( row>0 ) {
-      std::cout<<"Hey! New non-empty line added, ie File udpated!"<<std::endl;
-      printf("The new LAST line is: %s\n", new_last_line.c_str());
-
-      m_value_vc.clear();// clear the value vector to re-fill w/ updated values
-      m_value_vc =  ConvertStringToVec ( new_last_line, ',' );
-
-      bool badNewValues=(m_tag_vc.size()!=m_value_vc.size());
-      for (int jval=0; jval<m_value_vc.size(); jval++){
-	if( m_value_vc[jval].empty() || m_value_vc[jval].find_first_not_of(' ')==std::string::npos)
-	  badNewValues=true; // empty or only-space value found
-	else continue;
-      }
-
-      if (badNewValues) EUDAQ_WARN("Bad new condition line in csv file: less or empty values found!");
-      else {
-	//-- init the tag and value for condition map:
-	m_tag_map.clear();// clear to re-fill
-	for (int jtag=0; jtag<m_tag_vc.size(); jtag++){
-	  //-- no need to check duplicate tag, as done in DoInitialise()
-	  m_tag_map [ m_tag_vc[jtag] ] = m_value_vc[jtag];
-	}
-      }
-    }
-    //--> end <-- 
-    
-    //--> start <-- template to set a tag
-    for (std::map<std::string, std::string>::iterator this_tag = m_tag_map.begin(); this_tag!=m_tag_map.end(); ++this_tag){
-      ev->SetTag( this_tag->first, this_tag->second);
-    }
-    /* ev->SetTag("a test temperature", "21 degree");
-    auto degree1=12.4;
-    std::string degree2=std::to_string(degree1)+"%";  
-    ev->SetTag("a test robot", degree2); */
-    //--> end <-- template to set a tag
+    if (SQL_SUCCEEDED(SQLFetch(m_stmt))){
+      SQLLEN indicator;
+      char buf_ut[512];
+      if ( SQL_SUCCEEDED(SQLGetData(m_stmt, 1, SQL_C_CHAR, &buf_ut, sizeof(buf_ut), &indicator))){
+	if (indicator == SQL_NULL_DATA) strcpy (buf_ut,"NULL");
+	printf("\tUpdateTime: %s\n", buf_ut);
 	
-    std::vector<uint8_t> hit(x_pixel*y_pixel, 0);
-    hit[position(gen)] = signal(gen);
-    std::vector<uint8_t> data;
-    data.push_back(x_pixel);
-    data.push_back(y_pixel);
-    data.insert(data.end(), hit.begin(), hit.end());
-    
-    uint32_t block_id = m_plane_id;
-    ev->AddBlock(block_id, data);
+	if (std::string(buf_ut)!=latest_update){
+	  latest_update=std::string(buf_ut);
 
-    //--> start of evt print <--// wmq dev
-    std::filebuf fb;
-    fb.open("out.txt", std::ios::out|std::ios::app);
-    std::ostream os(&fb);
+	  SQLFreeStmt(m_stmt,SQL_CLOSE);
+	  SQLExecDirect(m_stmt, (SQLCHAR*)"select * from aidaSC order by ts desc limit 2;", SQL_NTS);
+	  odbcFetchData(m_stmt, columns);
+	  
+	}else {
+	  printf("\tSame as before.\n");
+	}
+      }
+    }
+
+    for( int i_intvl=m_s_intvl; i_intvl>=0; i_intvl--){
+      auto tp_next = std::chrono::steady_clock::now() +  std::chrono::seconds(1);
+      std::this_thread::sleep_until(tp_next);
+      if(m_exit_of_run) break;
+    }
+
+    auto ev = eudaq::Event::MakeUnique("SCRawEvt"); 
+
     ev->Print(os, 0);
-    //--> end of evt print
     
+	
     SendEvent(std::move(ev));
-    trigger_n++;
-    std::this_thread::sleep_until(tp_end_of_busy);
+    acounter++;
+  }while(!m_exit_of_run);
 
-  }//--> end of while loop
+  
+  printf("\nComplete.\n");
 
 }
 //----------DOC-MARK-----END*IMP-----DOC-MARK----------
 
+//**********************************************************
+//**********************************************************
 //----------DOC-MARK-----BEG*toolFunc-----DOC-MARK----------
 
+// void SlowControlProducer::FillChannelMap(std::string table){
+//   table = (table=="")?"aida_channels":table;
+//   SQLFreeStmt(m_stmt,SQL_CLOSE);
+//   SQLExecDirect(m_stmt, (SQLCHAR*)("select * from "+table+";").c_str(), SQL_NTS);
+//   odbcFetchData(m_stmt, columns);
+// }
 
+void SlowControlProducer::odbcExtractError(
+					   std::string fn,
+					   SQLHANDLE handle,
+					   SQLSMALLINT type){
+  SQLINTEGER i = 0;
+  SQLINTEGER native;
+  SQLCHAR state[ 7 ];
+  SQLCHAR text[256];
+  SQLSMALLINT len;
+  SQLRETURN ret;
+  fprintf(stderr,"\n");
+  EUDAQ_INFO("The driver reported the following diagnostics whilst running "+fn);
+  do
+    {
+      ret = SQLGetDiagRec(type, handle, ++i, state, &native, text,
+			  sizeof (text), &len );
+      if (SQL_SUCCEEDED(ret))
+	printf("%s:%d:%d:%s\n", state, i, native, text);
+    }
+  while ( ret == SQL_SUCCESS );
+  printf("\n");
+}
 
-void SlowControlProducer::PrintFileStat(std::string file_path){
-
-  if (file_path.empty()){
-    std::cout<<"warning: empty file path to print stat()"<<std::endl;
-    return;
+void SlowControlProducer::odbcDoAlotPrint(){
+  EUDAQ_INFO("[DEBUG] Print a lot info of ODBC driver/driver manager/data source:");
+    
+  SQLCHAR dbms_name[256], dbms_ver[256];
+  SQLUINTEGER getdata_support;
+  SQLUSMALLINT max_concur_act;
+  SQLSMALLINT string_len;
+  //
+  // Find something out about the driver.
+  //
+  SQLGetInfo(m_dbc, SQL_DBMS_NAME, (SQLPOINTER)dbms_name,
+	     sizeof (dbms_name), NULL);
+  SQLGetInfo(m_dbc, SQL_DBMS_VER, (SQLPOINTER)dbms_ver,
+	     sizeof (dbms_ver), NULL);
+  SQLGetInfo(m_dbc, SQL_GETDATA_EXTENSIONS, (SQLPOINTER)&getdata_support,
+	     0, 0);
+  SQLGetInfo(m_dbc, SQL_MAX_CONCURRENT_ACTIVITIES, &max_concur_act, 0, 0);
+  printf("\tDBMS Name: %s\n", dbms_name);
+  printf("\tDBMS Version: %s\n", dbms_ver);
+  if (max_concur_act == 0) {
+    printf("\tSQL_MAX_CONCURRENT_ACTIVITIES - no limit or undefined\n");
+  } else {
+    printf("\tSQL_MAX_CONCURRENT_ACTIVITIES = %u\n", max_concur_act);
   }
-  
-  /*--> start -- tremendous print out of the csv file status <--*/
-  if (stat(file_path.c_str(), &m_sb) == -1)  EUDAQ_THROW("stat");
-  
-  printf("\nID of containing device:  [%lx,%lx]\n",
-	 (long) major(m_sb.st_dev), (long) minor(m_sb.st_dev));
-  
-  printf("File type:                ");
-  
-  switch (m_sb.st_mode & S_IFMT) {
-  case S_IFBLK:  printf("block device\n");            break;
-  case S_IFCHR:  printf("character device\n");        break;
-  case S_IFDIR:  printf("directory\n");               break;
-  case S_IFIFO:  printf("FIFO/pipe\n");               break;
-  case S_IFLNK:  printf("symlink\n");                 break;
-  case S_IFREG:  printf("regular file\n");            break;
-  case S_IFSOCK: printf("socket\n");                  break;
-  default:       printf("unknown?\n");                break;
-  }
-  
-  printf("I-node number:            %ld\n", (long) m_sb.st_ino);
-  
-  printf("Mode:                     %lo (octal)\n",
-	 (unsigned long) m_sb.st_mode);
-  
-  printf("Link count:               %ld\n", (long) m_sb.st_nlink);
-  printf("Ownership:                UID=%ld   GID=%ld\n",
-	 (long) m_sb.st_uid, (long) m_sb.st_gid);
-  
-  printf("Preferred I/O block size: %ld bytes\n",
-	 (long) m_sb.st_blksize);
-  printf("File size:                %lld bytes\n",
-	 (long long) m_sb.st_size);
-  printf("Blocks allocated:         %lld\n",
-	 (long long) m_sb.st_blocks);
-  
-  printf("Last status change:       %s", ctime(&m_sb.st_ctime));
-  printf("Last file access:         %s", ctime(&m_sb.st_atime));
-  printf("Last file modification:   %s\n", ctime(&m_sb.st_mtime));
+  if (getdata_support & SQL_GD_ANY_ORDER)
+    printf("\tSQLGetData - columns can be retrieved in any order\n");
+  else
+    printf("\tSQLGetData - columns must be retrieved in order\n");
+  if (getdata_support & SQL_GD_ANY_COLUMN)
+    printf("\tSQLGetData - can retrieve columns before last bound one\n");
+  else
+    printf("\tSQLGetData - columns must be retrieved after last bound one\n");
 
-  /*--> end -- tremendous print out of the csv file status <-- */
+  printf("\n");
+}
+
+void SlowControlProducer::odbcListDSN(){
+  SQLUSMALLINT direction;
+  SQLRETURN _ret;
+
+  char dsn[256];
+  char desc[256];
+  SQLSMALLINT dsn_ret;
+  SQLSMALLINT desc_ret;
+  
+  direction = SQL_FETCH_FIRST;
+  while (SQL_SUCCEEDED(_ret = SQLDataSources(m_env, direction,
+					    (SQLCHAR*) dsn, sizeof (dsn), &dsn_ret,
+					    (SQLCHAR*) desc, sizeof (desc), &desc_ret))) {
+    direction = SQL_FETCH_NEXT;
+    printf("\t%s - %s\n", dsn, desc);
+    if (_ret == SQL_SUCCESS_WITH_INFO) printf("\tdata truncation\n");
+  }
+  printf("\n");
+}
+
+void SlowControlProducer::odbcFetchData(SQLHSTMT stmt, SQLSMALLINT columns ){
+  SQLRETURN ret; /* ODBC API return status */
+  int row = 0;
+
+  /* Loop through the rows in the result-set */
+  while (SQL_SUCCEEDED(SQLFetch(stmt))) {
+    SQLUSMALLINT icol;
+    printf("Row %d\n", row++);
+    /* Loop through the columns */
+    for (icol = 1; icol <= columns; icol++) {
+      SQLLEN indicator;
+      char buf[512];
+      SQLCHAR colName[MAX_COL_NAME_LEN];
+      SQLSMALLINT colNameLen;
+      /* retrieve column data as a string */
+      ret = SQLGetData(stmt, icol, SQL_C_CHAR,
+  		       buf, sizeof (buf),
+  		       &indicator);
+      SQLRETURN ret_des =  ret = SQLDescribeCol (
+			    stmt,
+			    icol,
+			    colName,
+			    MAX_COL_NAME_LEN,
+			    &colNameLen,
+			    NULL,
+			    NULL,
+			    NULL,
+			    NULL
+			    );
+      if (SQL_SUCCEEDED(ret) && SQL_SUCCEEDED(ret_des)) {
+  	/* Handle null columns */
+  	if (indicator == SQL_NULL_DATA) strcpy(buf, "NULL");
+	if (std::string(buf).find("u2103") != std::string::npos) {
+	  //printf("\tHere I got centigrade\n");
+	  strcpy(buf,"\u2103");
+	}
+  	printf(" Column %u, %s : %s\n", icol, colName, buf);
+      }
+    }
+  }
+  printf("%s\n",std::string(20,'*').c_str());
 
 }
+
+//----------DOC-MARK-----END*toolFunc-----DOC-MARK----------
