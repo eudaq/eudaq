@@ -150,9 +150,6 @@ namespace eudaq {
     else{
       m_exit=false;
       while(!m_exit){
-	//      std::string line;
-	//      std::getline(std::cin, line);
-	//      cmd=line;
 	std::string pathini;
 	std::string pathconfig;
 	uint32_t nrun;
@@ -165,18 +162,16 @@ namespace eudaq {
 	  cmd = std::string(cmd,0,i);
 	}
 	if (cmd == "init") {
-	  /*	  std::cout << " Path to Initialize file : " << std::endl;
+	  std::cout << " Path to Initialize file : " << std::endl;
 	  std::cin >> pathini;
 	  ReadInitializeFile(pathini);
-	  */
-	  ReadInitializeFile("Ex0.ini");
+	  //  ReadInitializeFile("Ex0.ini");
 	  OnInitialise();
 	} else if (cmd == "config"){
-	  /*std::cout << " Path to Configure file : " << std::endl;
+	  std::cout << " Path to Configure file : " << std::endl;
 	  std::cin >> pathconfig;
 	  ReadConfigureFile(pathconfig);
-	  */
-	  ReadConfigureFile("Ex0.conf");
+	  //  ReadConfigureFile("Ex0.conf");
 	  OnConfigure();
 	} else if (cmd == "start") {
 	  std::cout << "Please Enter Run Number " << std::endl;
@@ -202,9 +197,8 @@ namespace eudaq {
 		    << "help        Display this help\n"
 		    << "----------------" << std::endl;
 	} else if (cmd == "status") {
-	  //	printf(Status); // TODO. 
+	  // TODO. 
 	} else {
-	  //	std::cout << "This command is not recognised " << std::endl;
 	  OnUnrecognised(cmd, param);
 	}
       }
@@ -225,7 +219,7 @@ namespace eudaq {
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetStreamN(m_pdc_n);
-    //  ev->Print(std::cout); // Print event while running. 
+    //  ev->Print(std::cout); // Print event during the run. 
     EventSP evsp(std::move(ev));
     if(m_cli_run){
     if(m_writer)

@@ -47,8 +47,6 @@ namespace eudaq {
     virtual void DoReset() = 0;
     virtual void DoTerminate() = 0;
 
-    //    void ReadConfigureFile(const std::string &path);
-    //    void ReadInitializeFile(const std::string &path);
     void SendEvent(EventUP ev);
     
 
