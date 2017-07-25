@@ -15,13 +15,42 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include <unistd.h>
-
 //---- SQL related lib:
 #include <sql.h>
 #include <sqlext.h>
 
 #define MAX_COL_NAME_LEN  256
+
+
+void printNestedMap ( std::map<std::string, std::map<std::string, std::string>> map_data){
+  
+  std::map<std::string, std::string>::iterator itr1;
+  std::map<std::string, std::map<std::string, std::string> >::iterator itr2;
+  for(itr2 = map_data.begin(); itr2 != map_data.end(); itr2++)
+    {
+      std::map<std::string, std::string> data = itr2->second;
+      for(itr1 = data.begin(); itr1 != data.end(); itr1++)
+	{
+	  std::cout << "*^*Map: " << itr2->first << " \\ " << itr1->first << " \\ " << itr1->second <<std::endl;
+	}
+    }
+}
+
+void readCSVToVector (std::string csv_str,
+		      std::vector<std::string> &csv_vec){
+  std::stringstream csv_ss(csv_str);
+  std::string itoken;
+  csv_vec.clear();
+  
+  while( std::getline(csv_ss, itoken, ',') ){
+    csv_vec.push_back(itoken);
+  }
+  
+  //printf("[debug] string = '%s'\n\t csv_vec.size() == %d\n", csv_str.c_str(), csv_vec.size());
+  std::cout<<"==> You are requesting tags from SC: \t[";
+  for (int j=0; j<csv_vec.size(); j++) std::cout<<" "<< csv_vec.at(j)<<",";
+  std::cout<<"]\n";
+}
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 class SlowControlProducer : public eudaq::Producer {
@@ -49,30 +78,37 @@ class SlowControlProducer : public eudaq::Producer {
     }
     return vec;
   }
-
-  void odbcFetchData(SQLHSTMT stmt, SQLSMALLINT columns);
+  void fillChannelMap(std::string table="");
+  void odbcFetchData(SQLHSTMT stmt, /*statement handle allocated to a database*/
+		     SQLCHAR* dbcommand, /*mysql command to execute w/ stmt*/
+		     SQLSMALLINT columns, 
+		     std::map<std::string, std::map<std::string, std::string>> &data_map /*output*/
+		     ); /* columns in result-set*/
   void odbcListDSN();
   void odbcDoAlotPrint();
-  void odbcExtractError(std::string fn,
-			SQLHANDLE handle,
-			SQLSMALLINT type);
+  void odbcExtractError(std::string fn, /*input string to print out*/
+			SQLHANDLE handle, /*an odbc handle*/
+			SQLSMALLINT type);  /*type of handle*/
 private:
   bool m_debug;
   SQLHENV m_env;
   SQLHDBC m_dbc;
   SQLHSTMT m_stmt;
   SQLRETURN m_ret; /* ODBC API return status */
+  SQLSMALLINT m_columns; /* number of columns in result-set */
 
   std::string m_tbsc_dsn;
   std::string m_tbsc_db;
   unsigned int m_s_intvl;
+  //std::string m_tbsc_mask;
+  std::vector<std::string> m_tbsc_mask;
   
   std::thread m_thd_run;
 
   std::filebuf m_fb; // output file to print event
 
   // mapa<(string)ch_id, std::mapb>, mapb<aida_channels.colName, val>
-  std::map sc_para_map <std::string, std::map<std::string, std::string>>;
+  std::map <std::string, std::map<std::string, std::string>> sc_para_map;
   
   ///------ stale below
   //bool m_flag_ts;
@@ -111,6 +147,7 @@ SlowControlProducer::SlowControlProducer(const std::string & name, const std::st
   SQLSetEnvAttr(m_env, SQL_ATTR_ODBC_VERSION, (void *) SQL_OV_ODBC3, 0);
   /* Allocate a connection handle */
   SQLAllocHandle(SQL_HANDLE_DBC, m_env, &m_dbc);
+
 }
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void SlowControlProducer::DoInitialise(){
@@ -125,15 +162,17 @@ void SlowControlProducer::DoInitialise(){
 void SlowControlProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
-  //m_tbsc_dsn= (conf->Get("TBSC_DSN","")=="" )? m_tbsc_dsn: conf->Get("TBSC_DSN","");
   m_tbsc_dsn=conf->Get("TBSC_DSN", m_tbsc_dsn);
-  //m_tbsc_db = (conf->Get("TBSC_DATABASE","")=="" )? m_tbsc_db: conf->Get("TBSC_DATABASE","");
   m_tbsc_db = conf->Get("TBSC_DATABASE", m_tbsc_db);
   std::string conf_debug = conf->Get("TBSC_DEBUG", "");
-  //m_debug = (conf_debug=="true" || conf_debug=="True")? true: m_debug;
-  m_debug=true;
+  m_debug = (conf_debug=="true" || conf_debug=="True")? true: m_debug;
+  //m_debug=true;
   m_s_intvl = conf->Get("TBSC_INTERVAL_SEC", m_s_intvl);
-  printf("check invl: %d", m_s_intvl);
+  printf("check invl: %d\n", m_s_intvl);
+
+  /* read the parameter mask from config, decide which parameters saved to events*/
+  std::string tbsc_mask = conf->Get("TBSC_PARA_MASK", "ch1,ch11,ch21,ch31");
+  readCSVToVector(tbsc_mask, m_tbsc_mask);
   
   /* Connect to the DSN m_tbsc_dsn */
   SQLDisconnect(m_dbc); /* in case multiple press on configure */
@@ -152,7 +191,14 @@ void SlowControlProducer::DoConfigure(){
     EUDAQ_INFO("DSN '"+m_tbsc_dsn+"' Connected!");
     if (m_debug) odbcDoAlotPrint();
   }
-  
+
+      
+  /* Allocate a statement handle */
+  SQLAllocHandle(SQL_HANDLE_STMT, m_dbc, &m_stmt);
+
+  /*Fill in the readout data map*/
+  fillChannelMap();
+  if (m_debug) printNestedMap(sc_para_map);
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void SlowControlProducer::DoStartRun(){
@@ -169,11 +215,13 @@ void SlowControlProducer::DoStopRun(){
   if(m_thd_run.joinable()){
     m_thd_run.join();
   }
+  m_fb.close();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void SlowControlProducer::DoReset(){
 
   SQLDisconnect(m_dbc); // disconnect from driver 
+  if (m_fb.is_open()) m_fb.close();
   
   m_exit_of_run = true;
   if(m_thd_run.joinable())
@@ -184,6 +232,7 @@ void SlowControlProducer::DoReset(){
   
   m_thd_run = std::thread();
   m_exit_of_run = false;
+  
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
 void SlowControlProducer::DoTerminate(){
@@ -197,6 +246,8 @@ void SlowControlProducer::DoTerminate(){
   SQLFreeHandle(SQL_HANDLE_DBC, m_dbc);
   SQLFreeHandle(SQL_HANDLE_ENV, m_env);
   SQLFreeHandle(SQL_HANDLE_STMT, m_stmt);
+  if (m_fb.is_open()) m_fb.close();
+
 }
 
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
@@ -205,26 +256,24 @@ void SlowControlProducer::Mainloop(){
 
   
   /* Allocate a statement handle */
-  SQLAllocHandle(SQL_HANDLE_STMT, m_dbc, &m_stmt);
+  // SQLAllocHandle(SQL_HANDLE_STMT, m_dbc, &m_stmt);
   /* Retrieve a list of tables */
-  SQLTables(m_stmt, NULL, 0, NULL, 0,
-  	    NULL, 0,
-  	    //(SQLCHAR*)"aidaSC", SQL_NTS, /* TableName */
-  	    (SQLCHAR*)"TABLE", SQL_NTS);
-  /* How many columns are there */
-  SQLSMALLINT columns; /* number of columns in result-set */
-  SQLNumResultCols(m_stmt, &columns);
+  // SQLTables(m_stmt, NULL, 0, NULL, 0,
+  // 	    NULL, 0,
+  // 	    //(SQLCHAR*)"aidaSC", SQL_NTS, /* TableName */
+  // 	    (SQLCHAR*)"TABLE", SQL_NTS);
 
   m_exit_of_run=false;
   
   int acounter=0;
   std::string latest_update="NULL";
   SQLCHAR* checkUpdate= (SQLCHAR*)"select UPDATE_TIME from information_schema.tables where TABLE_SCHEMA='aidaTest' and TABLE_NAME='aidaSC';";
+  std::map<std::string, std::map<std::string, std::string>> sc_data;
   do{
     printf(" #%d check update_time <-|\n", acounter);
     SQLFreeStmt(m_stmt,SQL_CLOSE);
     SQLExecDirect(m_stmt, checkUpdate, SQL_NTS);
-    
+
     if (SQL_SUCCEEDED(SQLFetch(m_stmt))){
       SQLLEN indicator;
       char buf_ut[512];
@@ -235,29 +284,44 @@ void SlowControlProducer::Mainloop(){
 	if (std::string(buf_ut)!=latest_update){
 	  latest_update=std::string(buf_ut);
 
-	  SQLFreeStmt(m_stmt,SQL_CLOSE);
-	  SQLExecDirect(m_stmt, (SQLCHAR*)"select * from aidaSC order by ts desc limit 2;", SQL_NTS);
-	  odbcFetchData(m_stmt, columns);
+	  sc_data.clear();
+	  odbcFetchData(m_stmt,
+			(SQLCHAR*)"select * from aidaSC order by timer desc limit 2;",
+			m_columns,
+			sc_data);
 	  
 	}else {
 	  printf("\tSame as before.\n");
 	}
+	if (m_debug) printNestedMap(sc_data);
       }
     }
 
+    auto ev = eudaq::Event::MakeUnique("SCRawEvt");
+
+    /* loop over sc data to set tag to events if shown up in the mask vector*/
+    auto tagdata = sc_data["1"]; 
+    for(auto it = tagdata.cbegin(); it != tagdata.cend(); ++it){
+      if (std::find(m_tbsc_mask.begin(), m_tbsc_mask.end(), it->first) != m_tbsc_mask.end()){
+	/* if channel is required to tag to event*/
+	std::cout << it->first << " " << it->second << "\n";
+	ev->SetTag(it->first, it->second);
+      }
+    }
+      
+    ev->Print(os, 0);// print event info to the m_fb txt
+    
+    SendEvent(std::move(ev));
+    
+    
+    /*sleep for m_s_invl seconds, but awake every second to check status*/
     for( int i_intvl=m_s_intvl; i_intvl>=0; i_intvl--){
       auto tp_next = std::chrono::steady_clock::now() +  std::chrono::seconds(1);
       std::this_thread::sleep_until(tp_next);
       if(m_exit_of_run) break;
     }
-
-    auto ev = eudaq::Event::MakeUnique("SCRawEvt"); 
-
-    ev->Print(os, 0);
-    
-	
-    SendEvent(std::move(ev));
     acounter++;
+    
   }while(!m_exit_of_run);
 
   
@@ -270,15 +334,8 @@ void SlowControlProducer::Mainloop(){
 //**********************************************************
 //----------DOC-MARK-----BEG*toolFunc-----DOC-MARK----------
 
-// void SlowControlProducer::FillChannelMap(std::string table){
-//   table = (table=="")?"aida_channels":table;
-//   SQLFreeStmt(m_stmt,SQL_CLOSE);
-//   SQLExecDirect(m_stmt, (SQLCHAR*)("select * from "+table+";").c_str(), SQL_NTS);
-//   odbcFetchData(m_stmt, columns);
-// }
 
-void SlowControlProducer::odbcExtractError(
-					   std::string fn,
+void SlowControlProducer::odbcExtractError(std::string fn,
 					   SQLHANDLE handle,
 					   SQLSMALLINT type){
   SQLINTEGER i = 0;
@@ -354,18 +411,112 @@ void SlowControlProducer::odbcListDSN(){
     if (_ret == SQL_SUCCESS_WITH_INFO) printf("\tdata truncation\n");
   }
   printf("\n");
-}
+} // ---- End of SlowControlProducer::odbcListDSN() ----- 
 
-void SlowControlProducer::odbcFetchData(SQLHSTMT stmt, SQLSMALLINT columns ){
+void SlowControlProducer::fillChannelMap(std::string table){
+  /* Descibe: Fill in the nested map from the complimentary table from the database,
+   indexing by the column names from the table noting the SC data*/
+  
+  table = (table=="")?"aida_channels":table;
+  //SQLFreeStmt(m_stmt,SQL_CLOSE);
+  // SQLExecDirect(m_stmt, (SQLCHAR*)("select * from "+table+";").c_str(), SQL_NTS);
+
+  SQLFreeStmt(m_stmt, SQL_CLOSE);
+  SQLExecDirect(m_stmt,
+		(SQLCHAR*)("select * from "+table+" ;").c_str(),
+		SQL_NTS);
+  /* How many columns are there */
+  SQLNumResultCols(m_stmt, &m_columns);
+  /* Clear the map to refill */
+  sc_para_map.clear();
+
   SQLRETURN ret; /* ODBC API return status */
   int row = 0;
+
+ /* Loop through the rows in the result-set */
+  while (SQL_SUCCEEDED(SQLFetch(m_stmt))) {
+    SQLUSMALLINT icol;
+    printf("Row %d\n", row++);
+    /* Loop through the columns */
+    
+    std::string sc_para_map_index;
+    std::map<std::string, std::string> resdata;
+    for (icol = 1; icol <= m_columns; icol++) {
+      SQLLEN indicator;
+      char buf[512];
+      SQLCHAR colName[MAX_COL_NAME_LEN];
+      SQLSMALLINT colNameLen;
+      
+      /* retrieve column data as a string */
+      ret = SQLGetData(m_stmt, icol, SQL_C_CHAR,
+  		       buf, sizeof (buf),
+  		       &indicator);
+      SQLRETURN ret_des =  SQLDescribeCol (
+					   m_stmt,
+					   icol,
+					   colName,
+					   MAX_COL_NAME_LEN,
+					   &colNameLen,
+					   NULL,
+					   NULL,
+					   NULL,
+					   NULL
+					   );
+      if (SQL_SUCCEEDED(ret) && SQL_SUCCEEDED(ret_des)) {
+  	/* Handle null columns */
+  	if (indicator == SQL_NULL_DATA) strcpy(buf, "NULL");
+	if (std::string(buf).find("u2103") != std::string::npos) {
+	  //printf("\tHere I got centigrade\n");
+	  strcpy(buf,"\u2103");
+	}
+  	printf(" Column %u, %s : %s\n", icol, colName, buf);
+	std::stringstream myss;
+	myss<<colName;
+	std::string colName_str;
+	myss>>colName_str;
+	/* Fill in the map */
+	if (colName_str == "chid") {
+	  sc_para_map_index = std::string(buf);
+	  resdata.emplace( "value", "null");
+	}else {
+	  resdata.emplace( colName_str, std::string(buf) );
+	} // Fill in the nested-map
+      } // if column info & value get correctly
+    } // loop over all columns in a given row
+
+    sc_para_map.emplace(sc_para_map_index, resdata);
+    
+  } // loop over all rows
+  
+  printf("%s\n",std::string(20,'*').c_str());
+
+} // ---- End of SlowControlProducer::fillChannelMap(std::string table) ----- 
+ 
+
+
+void SlowControlProducer::odbcFetchData(SQLHSTMT stmt,
+					SQLCHAR* dbcommand,
+					SQLSMALLINT columns,
+					std::map<std::string, std::map<std::string, std::string>> &data_map
+					){
+  SQLRETURN ret; /* ODBC API return status */
+  int row = 0;
+
+  SQLFreeStmt(stmt, SQL_CLOSE);
+  SQLExecDirect(stmt, dbcommand, SQL_NTS);
+  /* How many columns are there */
+  SQLNumResultCols(stmt, &columns);
 
   /* Loop through the rows in the result-set */
   while (SQL_SUCCEEDED(SQLFetch(stmt))) {
     SQLUSMALLINT icol;
     printf("Row %d\n", row++);
+
+    std::map<std::string, std::string> data;
+
     /* Loop through the columns */
     for (icol = 1; icol <= columns; icol++) {
+      printf("start looping");
       SQLLEN indicator;
       char buf[512];
       SQLCHAR colName[MAX_COL_NAME_LEN];
@@ -374,7 +525,7 @@ void SlowControlProducer::odbcFetchData(SQLHSTMT stmt, SQLSMALLINT columns ){
       ret = SQLGetData(stmt, icol, SQL_C_CHAR,
   		       buf, sizeof (buf),
   		       &indicator);
-      SQLRETURN ret_des =  ret = SQLDescribeCol (
+      SQLRETURN ret_des =   SQLDescribeCol (
 			    stmt,
 			    icol,
 			    colName,
@@ -393,11 +544,17 @@ void SlowControlProducer::odbcFetchData(SQLHSTMT stmt, SQLSMALLINT columns ){
 	  strcpy(buf,"\u2103");
 	}
   	printf(" Column %u, %s : %s\n", icol, colName, buf);
+	std::stringstream myss;
+	myss<<colName;
+	std::string colName_str;
+	myss>>colName_str;
+	data.emplace( colName_str, std::string(buf));
       }
     }
+    data_map.emplace(std::to_string(row), data);
   }
   printf("%s\n",std::string(20,'*').c_str());
-
 }
 
 //----------DOC-MARK-----END*toolFunc-----DOC-MARK----------
+
