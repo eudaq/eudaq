@@ -9,10 +9,14 @@
 
 myRunControlGUI::myRunControlGUI()
   : QMainWindow(0, 0){
-  m_map_label_str = {{"Atitle","Status"},
-		     {"RUN", "Run Number"},
-		     {"xxx","xxxa"},
-		     {"yyy","yyyb"}};
+  /*
+    map ordering by the key (number, alphabet, capitalized etc)
+    thus showing up to the window as widget
+   */
+  m_map_label_str = {{"2RunRate","Run Rate"},
+		     {"1RUN", "Run Number"},
+		     {"xxx","Data/Event"},
+		     {"yyy","Configuration Tab"}};
   
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
@@ -264,12 +268,12 @@ void myRunControlGUI::DisplayTimer(){
     settings.endGroup();
   }
   
-  if(m_rc&&m_str_label.count("RUN")){
+  if(m_rc&&m_str_label.count("1RUN")){
     if(state == eudaq::Status::STATE_RUNNING){
-      m_str_label.at("RUN")->setText(QString::number(run_n));
+      m_str_label.at("1RUN")->setText(QString::number(run_n));
     }
     else{
-      m_str_label.at("RUN")->setText(QString::number(run_n)+" (next run)");
+      m_str_label.at("1RUN")->setText(QString::number(run_n)+" (next run)");
     }
   }
   
