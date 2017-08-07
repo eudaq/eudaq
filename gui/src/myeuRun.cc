@@ -15,8 +15,8 @@ myRunControlGUI::myRunControlGUI()
    */
   m_map_label_str = {{"2RunRate","Run Rate"},
 		     {"1RUN", "Run Number"},
-		     {"xxx","Data/Event"},
-		     {"yyy","Configuration Tab"}};
+		     {"3DtEvt","Data/Event"},
+		     {"4ConfInfo","Configuration Tab"}};
   
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
@@ -190,6 +190,30 @@ void myRunControlGUI::DisplayTimer(){
   auto state = eudaq::Status::STATE_RUNNING;
   if(m_rc)
     map_conn_status= m_rc->GetActiveConnectionStatusMap();
+
+  /* wmq dev: 
+   * print out status map to test
+   */
+  std::string tagkey="Run Rate";
+  if (m_rc && false){
+    for (const auto &itr1: map_conn_status){
+      std::ostream & objOstream = std::cout;
+      objOstream << "*^* Map Win:";
+      itr1.first->Print(objOstream);
+      objOstream << "\n";
+
+      if (!itr1.second) objOstream << "\tNo status value in map!";
+      else{
+	//objOstream<<itr1.second.get();
+	auto getTheTag = itr1.second->GetTag(tagkey);
+	objOstream << getTheTag;
+	//itr1.second->Print(objOstream);
+      }
+      objOstream << "\n";
+    }
+  }
+  /*end of wmq-dev*/
+  
   
   for(auto &conn_status_last: m_map_conn_status_last){
     if(!map_conn_status.count(conn_status_last.first)){
@@ -276,7 +300,32 @@ void myRunControlGUI::DisplayTimer(){
       m_str_label.at("1RUN")->setText(QString::number(run_n)+" (next run)");
     }
   }
-  
+
+  /* start of wmq-dev */
+  if (m_rc && true) {
+    for (auto &itr1: map_conn_status){
+      /*TODO: check if you retrieving the correct tags from TCP of the kpixProducer*/
+      if (!itr1.second) continue;
+      
+      if (m_str_label.count("2RunRate") && state!= eudaq::Status::STATE_RUNNING){
+	/*No need to check run rate when running, as read from config*/
+	auto runrate = itr1.second->GetTag("Run Rate");
+	m_str_label.at("2RunRate")->setText( QString::fromUtf8(runrate.c_str()) );
+      }
+      if (m_str_label.count("3DtEvt")){
+	/*Always check*/
+	auto dtevt = itr1.second->GetTag("Data/Event");
+	m_str_label.at("3DtEvt")->setText( QString::fromUtf8(dtevt.c_str()) );
+      } 
+      if (m_str_label.count("4ConfInfo")&& ( state == eudaq::Status::STATE_CONF)){
+	/*Check only when configured*/
+	auto confinfo = itr1.second->GetTag("Configuration Tab");
+	  m_str_label.at("4ConfInfo")->setText( QString::fromUtf8(confinfo.c_str()) );
+      } 
+    }
+  }
+  /* end of wmq-dev */
+
   m_map_conn_status_last = map_conn_status;
 }
 
