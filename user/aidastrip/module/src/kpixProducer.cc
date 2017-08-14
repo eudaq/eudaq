@@ -16,11 +16,13 @@
 #include <stdlib.h>
 
 #include <signal.h>
-//--> kpix lib:
+//--> start of kpix libs:
 #include "KpixControl.h"
 #include "UdpLink.h"
 #include "System.h"
 #include "ControlServer.h"
+//#include "Data.h"
+//--> end of kpix libs:
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
 //class System;
@@ -38,7 +40,8 @@ class kpixProducer : public eudaq::Producer {
   void OnStatus() override;
   
   void Mainloop();
-  
+  void pollKpixData(int &evt_counter);
+    
   static const uint32_t m_id_factory = eudaq::cstr2hash("kpixProducer");
   bool stop; //kpixdev
    
@@ -53,9 +56,11 @@ private:
   //int m_port; 
 
   std::string m_runrate, m_dataOverEvt;
-  
+
   bool m_exit_of_run;
   std::thread m_thd_run;
+
+  int m_runcount;
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
@@ -74,7 +79,7 @@ kpixProducer::kpixProducer(const std::string & name, const std::string & runcont
 {
   // Create and setup PGP link
   udpLink.setMaxRxTx(500000);
-  udpLink.open(8192,1,"192.168.1.16");
+  udpLink.open(8192,1,"192.168.1.16"); // to have multiple udplink connections
   //udpLink.openDataNet("127.0.0.1",8099);
   //usleep(100);
 }
@@ -134,8 +139,8 @@ void kpixProducer::DoConfigure(){
   
   //--> Kpix Run Control
   m_kpixRunState = conf->Get("KPIX_RunState","Running");
-  int runcount = conf->Get("KPIX_RunCount",0);
-  if (runcount!=0) kpix->getVariable("RunCount")->setInt(runcount);
+  m_runcount = conf->Get("KPIX_RunCount",0);
+  if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
 
   m_runrate = kpix->getVariable("RunRate")->get();
   std::cout<<"[producer:dev] run_rate = "<< m_runrate <<std::endl;
@@ -156,6 +161,7 @@ void kpixProducer::DoStopRun(){
   if(m_thd_run.joinable()){
     m_thd_run.join();
   }
+
   
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
@@ -166,6 +172,7 @@ void kpixProducer::DoReset(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
+
   /* Step2: set the thread free and turned off the exit_of_run sign*/
   m_thd_run = std::thread();
   m_exit_of_run = false;
@@ -177,6 +184,7 @@ void kpixProducer::DoTerminate(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
+
   //kpix->command("CloseDataFile",""); // no problem though file closed, as protected in kpix/generic/System.cpp
 
   /* stop listen to the hardware */
@@ -206,11 +214,17 @@ void kpixProducer::Mainloop(){
   kpix->command("OpenDataFile","");
   
   kpix->command("SetRunState",m_kpixRunState);
-  
-  for (int ii=10; ii>=0; ii--){
+
+
+  int evt_counter = 0;
+
+  //for (int ii=10; ii>=0; ii--){
+  for (int ii = m_runcount; ii>=0; ii--){
+    /* sleep 1 second after each loop */
     auto tp_next = std::chrono::steady_clock::now() +  std::chrono::seconds(1);
     std::this_thread::sleep_until(tp_next);
-
+    
+    
     kpix->poll(NULL);
 
     auto btrial = kpix->getVariable("RunState")->get();
@@ -219,20 +233,44 @@ void kpixProducer::Mainloop(){
     auto dataOverEvt = kpix->getVariable("DataRxCount")->get();
     std::cout<< "\t[KPiX:dev] Data/Event ==> " << dataOverEvt <<std::endl;
     m_dataOverEvt=dataOverEvt;
-    
-    if (btrial =="Stopped") break;
+
+
+    if (btrial =="Stopped") {
+      break;
+      m_exit_of_run = true;
+    }
     else if (m_exit_of_run){
       kpix->command("SetRunState","Stopped");
       break;
     } else/*do nothing*/;
-  }
 
+    /* start wmq-dev: polling data from kpix to eudaq*/
+    pollKpixData(evt_counter);
+    /* end wmq-dev: polling data from kpix to eudaq*/
+
+  }
+  
   /*Close data file to write*/
   kpix->command("CloseDataFile","");
 
   /* TODO: Do sth to get a stopped sign*/
-  
 }
+
+/* start wmq-dev: polling data from kpix to eudaq*/
+void kpixProducer::pollKpixData(int &evt_counter){
+
+  //if (evt_counter>=10) return; // a safety check
+  
+  // int evt_counter = 0;
+  // while(!m_exit_of_datapoll && !m_exit_of_run){
+  auto datbuff = udpLink.pollDataQueue(0);
+  if (datbuff != NULL) {
+    evt_counter++;
+    std::cout<< " @_@ COUNTER! Event #"<< evt_counter<<std::endl;
+  }
+    //}
+ 
+}/* end wmq-dev: polling data from kpix to eudaq*/
 
 
 //----------DOC-MARK-----END*IMP-----DOC-MARK----------
