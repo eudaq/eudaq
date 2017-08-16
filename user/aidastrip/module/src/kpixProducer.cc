@@ -21,7 +21,7 @@
 #include "UdpLink.h"
 #include "System.h"
 #include "ControlServer.h"
-//#include "Data.h"
+#include "Data.h"
 //--> end of kpix libs:
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
@@ -40,7 +40,7 @@ class kpixProducer : public eudaq::Producer {
   void OnStatus() override;
   
   void Mainloop();
-  void pollKpixData(int &evt_counter);
+  Data* pollKpixData(int &evt_counter);
     
   static const uint32_t m_id_factory = eudaq::cstr2hash("kpixProducer");
   bool stop; //kpixdev
@@ -222,7 +222,8 @@ void kpixProducer::Mainloop(){
   //for (int ii=10; ii>=0; ii--){
   for (int ii = m_runcount; ii>=0; ii--){
     /* sleep 1 second after each loop */
-    auto tp_next = std::chrono::steady_clock::now() +  std::chrono::seconds(1);
+    auto tp_current_evt = std::chrono::steady_clock::now();
+    auto tp_next = tp_current_evt +  std::chrono::seconds(1);
     std::this_thread::sleep_until(tp_next);
     
     
@@ -246,7 +247,10 @@ void kpixProducer::Mainloop(){
     } else/*do nothing*/;
 
     /* start wmq-dev: polling data from kpix to eudaq*/
-    pollKpixData(evt_counter);
+    auto ev = eudaq::Event::MakeUnique("KpixRawEvt");
+    auto databuff = pollKpixData(evt_counter);
+
+    SendEvent(std::move(ev));
     /* end wmq-dev: polling data from kpix to eudaq*/
 
   }
@@ -258,7 +262,7 @@ void kpixProducer::Mainloop(){
 }
 
 /* start wmq-dev: polling data from kpix to eudaq*/
-void kpixProducer::pollKpixData(int &evt_counter){
+Data* kpixProducer::pollKpixData(int &evt_counter){
 
   //if (evt_counter>=10) return; // a safety check
   
@@ -270,7 +274,8 @@ void kpixProducer::pollKpixData(int &evt_counter){
     evt_counter++;
   }
     //}
- 
+  return datbuff;
+  
 }/* end wmq-dev: polling data from kpix to eudaq*/
 
 
