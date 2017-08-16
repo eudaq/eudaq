@@ -204,6 +204,7 @@ void kpixProducer::OnStatus(){
   SetStatusTag("Data/Event", m_dataOverEvt);
   SetStatusTag("Run Rate", m_runrate);
   SetStatusTag("Configuration Tab","conf. values computed from .config" );
+  SetStatusTag("KpixStopped", m_exit_of_run ? "true" : "false");
 }
 
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
@@ -265,8 +266,8 @@ void kpixProducer::pollKpixData(int &evt_counter){
   // while(!m_exit_of_datapoll && !m_exit_of_run){
   auto datbuff = udpLink.pollDataQueue(0);
   if (datbuff != NULL) {
-    evt_counter++;
     std::cout<< " @_@ COUNTER! Event #"<< evt_counter<<std::endl;
+    evt_counter++;
   }
     //}
  
