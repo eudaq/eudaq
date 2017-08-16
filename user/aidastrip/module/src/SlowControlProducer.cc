@@ -253,7 +253,7 @@ void SlowControlProducer::DoTerminate(){
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
 void SlowControlProducer::Mainloop(){
   std::ostream os(&m_fb);
-
+  auto tp_start_run = std::chrono::steady_clock::now();
   
   /* Allocate a statement handle */
   // SQLAllocHandle(SQL_HANDLE_STMT, m_dbc, &m_stmt);
@@ -278,7 +278,8 @@ void SlowControlProducer::Mainloop(){
       SQLLEN indicator;
       char buf_ut[512];
       if ( SQL_SUCCEEDED(SQLGetData(m_stmt, 1, SQL_C_CHAR, &buf_ut, sizeof(buf_ut), &indicator))){
-	if (indicator == SQL_NULL_DATA) strcpy (buf_ut,"NULL");
+	//---> in case empty, give null to the buffer
+	if (indicator == SQL_NULL_DATA) strcpy (buf_ut,"NULL"); 
 	printf("\tUpdateTime: %s\n", buf_ut);
 	
 	if (std::string(buf_ut)!=latest_update){
@@ -298,7 +299,8 @@ void SlowControlProducer::Mainloop(){
     }
 
     auto ev = eudaq::Event::MakeUnique("SCRawEvt");
-
+    
+    
     /* loop over sc data to set tag to events if shown up in the mask vector*/
     auto tagdata = sc_data["1"]; 
     for(auto it = tagdata.cbegin(); it != tagdata.cend(); ++it){
@@ -308,9 +310,20 @@ void SlowControlProducer::Mainloop(){
 	ev->SetTag(it->first, it->second);
       }
     }
-      
-    ev->Print(os, 0);// print event info to the m_fb txt
     
+    ev->Print(os, 0);// print event info to the m_fb txt
+
+    //--> If you want a timestampe
+    bool flag_ts = true; // to be moved to config
+    if (flag_ts){
+      auto tp_current_evt = std::chrono::steady_clock::now();
+      auto tp_end_of_busy = tp_current_evt + std::chrono::seconds(m_s_intvl);
+      std::chrono::nanoseconds du_ts_beg_ns(tp_current_evt - tp_start_run);
+      std::chrono::nanoseconds du_ts_end_ns(tp_end_of_busy - tp_start_run);
+      ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
+      std::cout<< "CHECK: start =="<<du_ts_beg_ns.count() <<"; end =="<< du_ts_end_ns.count()<<std::endl;
+    }
+      
     SendEvent(std::move(ev));
     
     
