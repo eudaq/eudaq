@@ -13,10 +13,11 @@ myRunControlGUI::myRunControlGUI()
     map ordering by the key (number, alphabet, capitalized etc)
     thus showing up to the window as widget
    */
-  m_map_label_str = {{"2RunRate","Run Rate"},
-		     {"1RUN", "Run Number"},
-		     {"3DtEvt","Data/Event"},
-		     {"4ConfInfo","Configuration Tab"}};
+  m_map_label_str = {{"3RunRate", "Run Rate"},
+		     {"1RUN",     "Run Number"},
+		     {"2EventN",  "Event#"},
+		     {"4DtEvt",   "Data/Event"},
+		     {"5ConfInfo","Configuration Tab"}};
   
   qRegisterMetaType<QModelIndex>("QModelIndex");
   setupUi(this);
@@ -306,21 +307,25 @@ void myRunControlGUI::DisplayTimer(){
     for (auto &itr1: map_conn_status){
       /*TODO: check if you retrieving the correct tags from TCP of the kpixProducer*/
       if (!itr1.second) continue;
-      
-      if (m_str_label.count("2RunRate") && state!= eudaq::Status::STATE_RUNNING){
+
+      if (m_str_label.count("2EventN") && state==eudaq::Status::STATE_RUNNING) {
+	auto ev_n = itr1.second->GetTag("EventN");
+	m_str_label.at("2EventN")->setText( QString::fromUtf8(ev_n.c_str()) );
+      }
+      if (m_str_label.count("3RunRate") && state!= eudaq::Status::STATE_RUNNING){
 	/*No need to check run rate when running, as read from config*/
 	auto runrate = itr1.second->GetTag("Run Rate");
-	m_str_label.at("2RunRate")->setText( QString::fromUtf8(runrate.c_str()) );
+	m_str_label.at("3RunRate")->setText( QString::fromUtf8(runrate.c_str()) );
       }
-      if (m_str_label.count("3DtEvt")){
+      if (m_str_label.count("4DtEvt")){
 	/*Always check*/
 	auto dtevt = itr1.second->GetTag("Data/Event");
-	m_str_label.at("3DtEvt")->setText( QString::fromUtf8(dtevt.c_str()) );
+	m_str_label.at("4DtEvt")->setText( QString::fromUtf8(dtevt.c_str()) );
       } 
-      if (m_str_label.count("4ConfInfo")&& ( state == eudaq::Status::STATE_CONF)){
+      if (m_str_label.count("5ConfInfo")&& ( state == eudaq::Status::STATE_CONF)){
 	/*Check only when configured*/
 	auto confinfo = itr1.second->GetTag("Configuration Tab");
-	  m_str_label.at("4ConfInfo")->setText( QString::fromUtf8(confinfo.c_str()) );
+	  m_str_label.at("5ConfInfo")->setText( QString::fromUtf8(confinfo.c_str()) );
       } 
     }
   }
