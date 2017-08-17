@@ -4,15 +4,15 @@
 #include <map>
 #include <set>
 
-class myEx0TgDataCollector:public eudaq::DataCollector{
+class kpixDataCollector:public eudaq::DataCollector{
 public:
-  myEx0TgDataCollector(const std::string &name,
+  kpixDataCollector(const std::string &name,
 		   const std::string &rc);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("myEx0TgDataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("kpixDataCollector");
 private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
@@ -21,27 +21,27 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::
-    Register<myEx0TgDataCollector, const std::string&, const std::string&>
-    (myEx0TgDataCollector::m_id_factory);
+    Register<kpixDataCollector, const std::string&, const std::string&>
+    (kpixDataCollector::m_id_factory);
 }
 
-myEx0TgDataCollector::myEx0TgDataCollector(const std::string &name,
+kpixDataCollector::kpixDataCollector(const std::string &name,
 				       const std::string &rc):
   DataCollector(name, rc){
 }
 
-void myEx0TgDataCollector::DoConnect(eudaq::ConnectionSPC idx){
+void kpixDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque[idx].clear();
   m_conn_inactive.erase(idx);
 }
 
-void myEx0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+void kpixDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_inactive.insert(idx);
 }
 
-void myEx0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
+void kpixDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
   if(!evsp->IsFlagTrigger()){

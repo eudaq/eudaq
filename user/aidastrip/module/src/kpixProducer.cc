@@ -60,7 +60,7 @@ private:
   bool m_exit_of_run;
   std::thread m_thd_run;
 
-  int m_runcount;
+  uint32_t m_runcount;
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
@@ -140,8 +140,10 @@ void kpixProducer::DoConfigure(){
   //--> Kpix Run Control
   m_kpixRunState = conf->Get("KPIX_RunState","Running");
   m_runcount = conf->Get("KPIX_RunCount",0);
-  if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
-
+  // if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
+  std::cout<<"[producer:dev] run count = "<< kpix->getVariable("RunCount")->getInt() <<std::endl;
+  std::cout<<"[producer:dev] run progress = "<<kpix->getVariable("RunProgress")->getInt() <<std::endl;
+  
   m_runrate = kpix->getVariable("RunRate")->get();
   std::cout<<"[producer:dev] run_rate = "<< m_runrate <<std::endl;
 }
@@ -219,8 +221,8 @@ void kpixProducer::Mainloop(){
 
   int evt_counter = 0;
 
-  //for (int ii=10; ii>=0; ii--){
-  for (int ii = m_runcount; ii>=0; ii--){
+  for (int ii=10; ii>=0; ii--){
+  //for (int ii = m_runcount; ii>=0; ii--){
     /* sleep 1 second after each loop */
     auto tp_current_evt = std::chrono::steady_clock::now();
     auto tp_next = tp_current_evt +  std::chrono::seconds(1);
@@ -236,25 +238,29 @@ void kpixProducer::Mainloop(){
     std::cout<< "\t[KPiX:dev] Data/Event ==> " << dataOverEvt <<std::endl;
     m_dataOverEvt=dataOverEvt;
 
+    /* start wmq-dev: polling data from kpix to eudaq*/
+    auto ev = eudaq::Event::MakeUnique("KpixRawEvt");
+    auto databuff = pollKpixData(evt_counter);
+
+    std::vector<Data*> dataToSave = {databuff};
+    ev->AddBlock(0, dataToSave);
+    SendEvent(std::move(ev));
+    /* end wmq-dev: polling data from kpix to eudaq*/
+   
 
     if (btrial =="Stopped") {
-      break;
       m_exit_of_run = true;
+      break;
     }
     else if (m_exit_of_run){
       kpix->command("SetRunState","Stopped");
       break;
     } else/*do nothing*/;
 
-    /* start wmq-dev: polling data from kpix to eudaq*/
-    auto ev = eudaq::Event::MakeUnique("KpixRawEvt");
-    auto databuff = pollKpixData(evt_counter);
-
-    SendEvent(std::move(ev));
-    /* end wmq-dev: polling data from kpix to eudaq*/
-
   }
-  
+
+  std::cout<<"FINISH: kpix finished running"<<std::endl;
+  std::cout<<"\t m_exit_of_run == "<< (m_exit_of_run ? "true" : "false") <<std::endl;
   /*Close data file to write*/
   kpix->command("CloseDataFile","");
 
