@@ -61,6 +61,7 @@ private:
   std::thread m_thd_run;
 
   uint32_t m_runcount;
+  bool m_noDevice;
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
@@ -91,7 +92,8 @@ void kpixProducer::DoInitialise(){
   // --- read the ini file:
   m_defFile = ini->Get("KPIX_CONFIG_FILE", "defaults.xml"); //kpixdev
   m_debug = ini->Get("KPIX_DEBUG", "False");
-      
+  m_noDevice = true; // if no device connected, to test sturcture
+  
   try{
     if (m_debug!="True" && m_debug!="False")
       throw std::string("      KPIX_DEBUG value error! (must be 'True' or 'False')\n");
@@ -217,7 +219,6 @@ void kpixProducer::Mainloop(){
   kpix->command("OpenDataFile","");
   
   kpix->command("SetRunState",m_kpixRunState);
-
 
   int evt_counter = 0;
 
