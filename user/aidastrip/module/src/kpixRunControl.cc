@@ -58,8 +58,8 @@ void kpixRunControl::DoStatus(eudaq::ConnectionSPC id,
     bool exit_of_run_kpix = m_exit_of_run_kpix=="true" ? true : false;
     if (exit_of_run_kpix) m_flag_goto_stop_run = 1;
     else m_flag_goto_stop_run = 0;
-    std::cout<< "[CHECK]" << m_exit_of_run_kpix
-    	     << std::endl;
+    // std::cout<< "[CHECK]" << m_exit_of_run_kpix
+    //	     << std::endl;
     
   }
   

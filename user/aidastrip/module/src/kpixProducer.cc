@@ -61,7 +61,7 @@ private:
   std::thread m_thd_run;
 
   uint32_t m_runcount;
-  bool m_noDevice;
+  //bool m_noDevice;
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
@@ -92,7 +92,7 @@ void kpixProducer::DoInitialise(){
   // --- read the ini file:
   m_defFile = ini->Get("KPIX_CONFIG_FILE", "defaults.xml"); //kpixdev
   m_debug = ini->Get("KPIX_DEBUG", "False");
-  m_noDevice = true; // if no device connected, to test sturcture
+  //  m_noDevice = true; // if no device connected, to test sturcture
   
   try{
     if (m_debug!="True" && m_debug!="False")
@@ -143,7 +143,10 @@ void kpixProducer::DoConfigure(){
   m_kpixRunState = conf->Get("KPIX_RunState","Running");
   m_runcount = conf->Get("KPIX_RunCount",0);
   // if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
+  // kpix->getVariable("RunCount")->setInt(2);
+  std::cout<<"[producer:dev] m_runcount = "<< m_runcount <<std::endl;  
   std::cout<<"[producer:dev] run count = "<< kpix->getVariable("RunCount")->getInt() <<std::endl;
+  //m_runcount = kpix->getVariable("RunCount")->getInt();
   std::cout<<"[producer:dev] run progress = "<<kpix->getVariable("RunProgress")->getInt() <<std::endl;
   
   m_runrate = kpix->getVariable("RunRate")->get();
@@ -220,10 +223,13 @@ void kpixProducer::Mainloop(){
   
   kpix->command("SetRunState",m_kpixRunState);
 
+  auto tp_start_run = std::chrono::steady_clock::now();
+  bool save_ts=true;
+
   int evt_counter = 0;
 
-  for (int ii=10; ii>=0; ii--){
-  //for (int ii = m_runcount; ii>=0; ii--){
+  // for (int ii=10; ii>=0; ii--){
+  for (int ii = m_runcount; ii>=0; ii--){
     /* sleep 1 second after each loop */
     auto tp_current_evt = std::chrono::steady_clock::now();
     auto tp_next = tp_current_evt +  std::chrono::seconds(1);
@@ -243,9 +249,29 @@ void kpixProducer::Mainloop(){
     auto ev = eudaq::Event::MakeUnique("KpixRawEvt");
     auto databuff = pollKpixData(evt_counter);
 
-    std::vector<Data*> dataToSave = {databuff};
-    ev->AddBlock(0, dataToSave);
-    SendEvent(std::move(ev));
+    //--> data is ready
+    if (databuff!=NULL) {
+      auto tp_trigger = std::chrono::steady_clock::now();
+      
+      if (save_ts) {
+	std::chrono::nanoseconds this_ts_ns(tp_trigger - tp_start_run);
+	ev->SetTimestamp(this_ts_ns.count(), this_ts_ns.count());
+	std::cout<<"\t[Loop]: Timestamp enabled to use\n"; //wmq
+	std::cout<<"\t[Loop]: time stamp at ==> "<<this_ts_ns.count()<<"ns\n";
+      }
+      auto buff = databuff->data();
+      auto size = databuff->size();
+      std::vector<Data*> dataToSave = {databuff};
+
+      std::cout<<"[producer.CHECK] buff = "<< buff << "\n"
+	       <<"                 size = "<< size << std::endl;
+
+      //--> milestone: remember this pointer stuff @ August-17th
+      ev->AddBlock(0, buff, size*4);
+
+      delete databuff;
+      SendEvent(std::move(ev));
+    }
     /* end wmq-dev: polling data from kpix to eudaq*/
    
 
