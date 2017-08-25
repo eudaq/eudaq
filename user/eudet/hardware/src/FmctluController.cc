@@ -125,13 +125,17 @@ namespace tlu {
     return res;
   }
 
-  uint64_t FmctluController::getSN(){
+  uint32_t FmctluController::getSN(){
     m_IDaddr= m_I2C_address.EEPROM;
-    for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
-      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr);//here
-      m_BoardID = ((((uint64_t)nibble)&0xff)<<((0xff-myaddr)*8))|m_BoardID;
+    unsigned char myaddr= 0xfc;
+    //for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
+    for(int iaddr =0; iaddr < 4; iaddr++) {
+      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr+iaddr);
+      m_BoardID = ( ( ( (uint)nibble)&0xff) << ( (iaddr)*8) ) |m_BoardID;
+      //std::cout << std::hex << ( (uint)nibble&0xff ) << " " << (( (uint)nibble & 0xff) << ( (4-iaddr)*8) ) << " "<< m_BoardID<< std::endl;
     }
-    std::cout << "  TLU Unique ID : " << std::setw(12) << std::setfill('0') << std::hex << m_BoardID << std::endl;
+    //std::cout << "  TLU unique ID : " << std::setw(12) << std::setfill('0') << std::hex << m_BoardID << std::endl;
+    std::cout << "  TLU unique ID : " <<  std::hex << m_BoardID << std::endl;
     return m_BoardID;
   }
 

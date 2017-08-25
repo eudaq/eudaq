@@ -49,7 +49,8 @@ void FmctluProducer::MainLoop(){
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
   m_tlu->SetTriggerVeto(0);
-  while(true) {
+  //while(true) {
+  while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
     m_tlu->ReceiveEvents();
     while (!m_tlu->IsBufferEmpty()){

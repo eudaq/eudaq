@@ -88,7 +88,7 @@ namespace tlu {
     };
 
     uint32_t I2C_enable(char EnclustraExpAddr);
-    uint64_t getSN();
+    uint32_t getSN();
 
     void SetI2CControl(int value) { SetWRegister("i2c_master.i2c_ctrl", value&0xff); };
     void SetI2CCommand(int value) { SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
@@ -166,7 +166,7 @@ namespace tlu {
 
     char m_DACaddr;
     char m_IDaddr;
-    uint64_t m_BoardID;
+    uint32_t m_BoardID=0;
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;
