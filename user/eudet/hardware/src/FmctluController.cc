@@ -299,20 +299,20 @@ namespace tlu {
 
   void FmctluController::ReceiveEvents(){
     // std::cout<<"FmctluController::ReceiveEvents"<<std::endl;
-    uint32_t nevent = GetEventFifoFillLevel()/4;
+    uint32_t nevent = GetEventFifoFillLevel()/6;
     // std::cout<< "fifo "<<GetEventFifoFillLevel()<<std::endl;
-    if (nevent*4 == 0x7D00) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl;
+    if (nevent*6 == 0x7D00) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl;
     // if(0){ // no read
     if(nevent){
-      ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*4);
+      ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*6);
       m_hw->dispatch();
       if(fifoContent.valid()) {
-	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/4<<std::endl;
-	if(fifoContent.size()%4 !=0){
+	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/6<<std::endl;
+	if(fifoContent.size()%6 !=0){
 	  std::cout<<"receive error"<<std::endl;
 	}
-	for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=4 ) { //0123
-	  m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3)));
+	for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
+	  m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
 	  std::cout<< *(m_data.back());
 	}
       }
@@ -332,7 +332,7 @@ namespace tlu {
     unsigned char newStatus;
     unsigned char mask, maskLow, maskHigh;
     int bank= 0;
-    
+
     nDUTs= m_nDUTs;
     if ((hdmiN < 1 ) || ( hdmiN > nDUTs )){
       std::cout << "\tSetDutClkSrc - ERROR: HDMI must be in range [1, 4]" << std::endl;

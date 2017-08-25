@@ -185,7 +185,7 @@ namespace tlu {
 
   class fmctludata{
   public:
-    fmctludata(uint64_t wl, uint64_t wh):  // wl -> wh
+    fmctludata(uint64_t wl, uint64_t wh, uint64_t we):  // wl -> wh
       eventtype((wl>>60)&0xf),
       input0((wl>>59)&0x1),
       input1((wl>>58)&0x1),
@@ -199,7 +199,7 @@ namespace tlu {
       eventnumber(wh&0xffffffff){
     }
 
-    fmctludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3) // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3
+    fmctludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3, uint32_t w4, uint32_t w5) // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3
       :eventtype((w0>>28)&0xf),
        input0((w0>>27)&0x1),
        input1((w0>>26)&0x1),

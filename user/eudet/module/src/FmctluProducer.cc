@@ -66,25 +66,28 @@ void FmctluProducer::MainLoop(){
       triggerss<< data->input3 << data->input2 << data->input1 << data->input0;
       ev->SetTag("trigger", triggerss.str());
       if(m_tlu->IsBufferEmpty()){
-	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
-	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
-	pt=m_tlu->GetPreVetoTriggers();
-	ev->SetTag("SCALER0", std::to_string(sl0));
-	ev->SetTag("SCALER1", std::to_string(sl1));
-	ev->SetTag("SCALER2", std::to_string(sl2));
-	ev->SetTag("SCALER3", std::to_string(sl3));
-	ev->SetTag("PARTICLES", std::to_string(pt));
+      	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
+      	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
+      	pt=m_tlu->GetPreVetoTriggers();
+      	ev->SetTag("SCALER0", std::to_string(sl0));
+      	ev->SetTag("SCALER1", std::to_string(sl1));
+      	ev->SetTag("SCALER2", std::to_string(sl2));
+      	ev->SetTag("SCALER3", std::to_string(sl3));
+        ev->SetTag("SCALER4", std::to_string(sl4));
+        ev->SetTag("SCALER5", std::to_string(sl5));
+      	ev->SetTag("PARTICLES", std::to_string(pt));
 
-	if(m_exit_of_run){
-	  ev->SetEORE();
-	}
+
+        if(m_exit_of_run){
+          ev->SetEORE();
+        }
       }
 
       if(isbegin){
-	isbegin = false;
-	ev->SetBORE();
-	ev->SetTag("FirmwareID", std::to_string(m_tlu->GetFirmwareVersion()));
-	ev->SetTag("BoardID", std::to_string(m_tlu->GetBoardID()));
+        isbegin = false;
+	      ev->SetBORE();
+        ev->SetTag("FirmwareID", std::to_string(m_tlu->GetFirmwareVersion()));
+        ev->SetTag("BoardID", std::to_string(m_tlu->GetBoardID()));
       }
       SendEvent(std::move(ev));
       delete data;
