@@ -142,7 +142,7 @@ namespace eudaq{
            return NULL;
       sprintf(buf, "error 0x%x", (unsigned int)dw);
       //TODO get human readable https://msdn.microsoft.com/en-us/library/windows/desktop/ms679351(v=vs.85).aspx
-      errstr = &buf;
+      errstr = buf;
 #else
       errstr = dlerror();
 #endif	    
