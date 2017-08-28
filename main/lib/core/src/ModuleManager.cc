@@ -134,7 +134,18 @@ namespace eudaq{
       EUDAQ_WARN("Fail to load module binary ("+ file+")");
 
       char *errstr;
+#if EUDAQ_PLATFORM_IS(WIN32)
+      //copied from https://mail.python.org/pipermail//pypy-commit/2012-October/066804.html
+      static char buf[32];
+      DWORD dw = GetLastError();
+      if (dw == 0)
+           return NULL;
+      sprintf(buf, "error 0x%x", (unsigned int)dw);
+      //TODO get human readable https://msdn.microsoft.com/en-us/library/windows/desktop/ms679351(v=vs.85).aspx
+      errstr = buf;
+#else
       errstr = dlerror();
+#endif	    
       printf ("A dynamic linking error occurred: (%s)\n", errstr); //Give the poor user some way to know what went wrong...
       return false;
     }
