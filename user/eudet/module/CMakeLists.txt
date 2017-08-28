@@ -15,7 +15,7 @@ if(NOT USER_BUILD_FMCTLU)
 endif()
 
 if(NOT EUDAQ_LCIO_LIBRARY)
-  list(REMOVE_ITEM MODULE_SRC src/TluRawEvent2LCEventCuseonverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/TluRawEvent2LCEventConverter.cc)
   list(REMOVE_ITEM MODULE_SRC src/NiRawEvent2LCEventConverter.cc)
   list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
 endif()
