@@ -39,7 +39,7 @@ namespace eudaq{
   namespace {
     auto dummy = ModuleManager::Instance();
   }
-  
+
   ModuleManager::ModuleManager(){
     char *env_module_dir_c = std::getenv("EUDAQ_MODULE_DIR");
     if(env_module_dir_c){
@@ -70,22 +70,22 @@ namespace eudaq{
 #endif
 
   }
-  
+
   ModuleManager* ModuleManager::Instance(){
     static ModuleManager mm;
     return &mm;
   }
-  
+
   uint32_t ModuleManager::LoadModuleDir(const std::string& dir){
     const std::string module_prefix("libeudaq_module_");
 #if EUDAQ_PLATFORM_IS(WIN32)
     const std::string module_suffix(".dll");
 #elif EUDAQ_PLATFORM_IS(MACOSX)
-    const std::string module_suffix(".dylib");	
+    const std::string module_suffix(".dylib");
 #else
     const std::string module_suffix(".so");
 #endif
-    
+
     uint32_t n=0;
 #ifdef EUDAQ_CXX17_FS
     if(!filesystem::is_directory(dir)){
@@ -102,7 +102,7 @@ namespace eudaq{
 	}
       }
     }
-#else    
+#else
     DIR *dpath = opendir(dir.c_str());
     struct dirent *dfile;
     while((dfile = readdir(dpath)) != NULL){
@@ -118,7 +118,7 @@ namespace eudaq{
 #endif
     return n;
   }
-  
+
   bool ModuleManager::LoadModuleFile(const std::string& file){
     void *handle;
 #if EUDAQ_PLATFORM_IS(WIN32)
@@ -132,6 +132,10 @@ namespace eudaq{
     }
     else{
       EUDAQ_WARN("Fail to load module binary ("+ file+")");
+
+      char *errstr;
+      errstr = dlerror();
+      printf ("A dynamic linking error occurred: (%s)\n", errstr); //Give the poor user some way to know what went wrong...
       return false;
     }
   }
@@ -154,7 +158,7 @@ namespace eudaq{
     return dli.dli_fname;
 #endif
   }
-  
+
   void ModuleManager::Print(std::ostream & os, size_t offset) const{
     os<< std::string(offset, ' ')<< "<Modules>\n";
     for(auto &e : m_modules){

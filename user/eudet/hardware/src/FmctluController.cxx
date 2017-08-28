@@ -32,7 +32,7 @@ int main(int /*argc*/, char ** argv) {
   float vthresh_values[4];
 
   eudaq::OptionParser op("FMC TLU Control Utility", "1.1", "A comand-line tool for controlling the AIDA FMC TLU");
-  
+
   eudaq::Option<std::string> ConnectionFile(op, "cf", "connectionFile", "connection.xml", "filename",
 					    "IPBus/uHAL connection file describing network connection to TLU");
   eudaq::Option<std::string> DeviceName(op, "dn", "deviceName", "fmctlu", "filename",
@@ -46,15 +46,15 @@ int main(int /*argc*/, char ** argv) {
   eudaq::Option<uchar_t>  dutmode(op, "m", "dutmode", 60, "mask",
 				  "Mask for DUT Mode (2 bits each channel)");
   eudaq::Option<uchar_t>  dutmm(op, "m", "dutmm", 60, "mask",
-				"Mask for DUT Mode Modifier (2 bits each channel)");  
+				"Mask for DUT Mode Modifier (2 bits each channel)");
   eudaq::Option<uint32_t> clk(op, "i", "clk", 0, "1/160MHz",
 				 "The interval of internally generated triggers (0 = off)");
   eudaq::Option<uchar_t>  vmask(op, "v", "vetomask", 0, "mask",
 				"The mask for vetoing external triggers");
   eudaq::Option<uchar_t>  amask(op, "a", "andmask", 15, "mask",
 				"The mask for coincidence of external triggers");
-  
-  
+
+
   eudaq::Option<uchar_t>        dacAddr(op, "da" ,"dacAddr" , 0x1F , "I2C address" , "I2C address of threshold DAC");
   eudaq::Option<uchar_t>        identAddr(op, "id" ,"idAddr" , 0x50 , "I2C address" , "I2C address of ID EEPROM");
 
@@ -73,11 +73,11 @@ int main(int /*argc*/, char ** argv) {
   eudaq::Option<std::string> sname(op, "s", "save-file", "", "filename",
                                    "The filename to save trigger numbers and timestamps");
   eudaq::Option<uchar_t>     ipbusDebug(op, "z", "ipbusDebug", 2, "level" "Debugg level of IPBus");
-  
+
   try {
     op.Parse(argv);
     //TODO:: print config
-    
+
     std::shared_ptr<std::ofstream> sfile;
     if (sname.Value() != "") {
       sfile = std::make_shared<std::ofstream>(sname.Value().c_str());
@@ -91,14 +91,14 @@ int main(int /*argc*/, char ** argv) {
     TLU.ResetCounters();
     TLU.SetTriggerVeto(1);
     TLU.ResetFIFO();
-    TLU.ResetEventsBuffer();      
+    TLU.ResetEventsBuffer();
     //TLU.InitializeI2C(dacAddr.Value(),identAddr.Value());
     TLU.InitializeI2C();
     TLU.SetThresholdValue(0, vthresh_0.Value());
     TLU.SetThresholdValue(1, vthresh_1.Value());
     TLU.SetThresholdValue(2, vthresh_2.Value());
     TLU.SetThresholdValue(3, vthresh_3.Value());
-    
+
     TLU.SetDUTMask(dmask.Value());
     TLU.SetDUTMaskMode(dutmode.Value());
     TLU.SetDUTMaskModeModifier(dutmm.Value());
@@ -115,7 +115,7 @@ int main(int /*argc*/, char ** argv) {
     uint32_t fid = TLU.GetFirmwareVersion();
     std::cout << "Board ID number  = " << eudaq::hexdec(bid, 12) << std::endl
               << "Firmware version = " << fid << std::endl<<std::endl;
-    
+
     if (quit.IsSet()) return 0;
     // eudaq::Timer totaltime, lasttime;
 
@@ -132,10 +132,10 @@ int main(int /*argc*/, char ** argv) {
       int nev = 0;
       while (!TLU.IsBufferEmpty()){
 	nev++;
-	fmctludata * data = TLU.PopFrontEvent();	  
+	fmctludata * data = TLU.PopFrontEvent();
 	uint32_t evn = data->eventnumber;
 	uint64_t t = data->timestamp;
-	
+
 	if (sfile.get()) {
 	  *sfile << *data;
 	}
@@ -158,4 +158,3 @@ int main(int /*argc*/, char ** argv) {
   }
   return 0;
 }
-

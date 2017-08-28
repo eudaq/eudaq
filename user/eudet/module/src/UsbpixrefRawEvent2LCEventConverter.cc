@@ -27,7 +27,7 @@ private:
   bool getHitData(uint32_t &Word, bool second_hit,
 		  uint32_t &Col, uint32_t &Row, uint32_t &ToT) const;
   uint32_t getTrigger(const std::vector<uint8_t> & data) const;
-  
+
   static const uint32_t CHIP_MIN_COL = 1;
   static const uint32_t CHIP_MAX_COL = 80;
   static const uint32_t CHIP_MIN_ROW = 1;
@@ -35,6 +35,7 @@ private:
   static const uint32_t CHIP_MAX_ROW_NORM = CHIP_MAX_ROW - CHIP_MIN_ROW;
   static const uint32_t CHIP_MAX_COL_NORM = CHIP_MAX_COL - CHIP_MIN_COL;
   uint32_t consecutive_lvl1 = 16;
+  
   static ATLASFEI4Interpreter<0x00007F00, 0x000000FF> fei4a_intp;
 
 
@@ -72,11 +73,11 @@ Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigurationSPC conf
 
   auto block_n_list = ev_raw->GetBlockNumList();
   for(auto &chip: block_n_list){
-    auto buffer = ev_raw->GetBlock(chip);    
+    auto buffer = ev_raw->GetBlock(chip);
     int sensorID  = chip + chip_id_offset + first_sensor_id;
-  
-    lcio::TrackerDataImpl *zsFrame = new lcio::TrackerDataImpl;	
-    
+
+    lcio::TrackerDataImpl *zsFrame = new lcio::TrackerDataImpl;
+
     zsDataEncoder["sensorID"] = sensorID;
     zsDataEncoder["sparsePixelType"] = 2;//eutelescope::kEUTelGenericSparsePixel
     zsDataEncoder.setCellID(zsFrame);
@@ -176,14 +177,14 @@ getHitData(uint32_t &Word, bool second_hit,
   Col = t_Col;
   Row = t_Row;
   return true;
-}  
+}
 
 uint32_t UsbpixrefRawEvent2LCEventConverter::
 getTrigger(const std::vector<uint8_t> & data) const{
   //Get Trigger Number and check for errors
   uint32_t i = data.size() - 8; //splitted in 2x 32bit words
   uint32_t Trigger_word1 = getWord(data, i);
-        
+
   if(Trigger_word1==(uint32_t) -1){
     return (uint32_t)-1;
   }
