@@ -41,6 +41,15 @@ void kpixDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   m_conn_inactive.insert(idx);
 }
 
+void kpixDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+  if (!m_noprint)
+    ev->Print(std::cout);
+  WriteEvent(std::move(ev));
+  // do sth
+}
+
+/*
+=======
 void kpixDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
