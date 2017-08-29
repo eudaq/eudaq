@@ -57,6 +57,7 @@ void kpixDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
   if (!m_noprint)
     ev->Print(std::cout);
   WriteEvent(std::move(ev));
+  // do sth
 }
 
 /*
