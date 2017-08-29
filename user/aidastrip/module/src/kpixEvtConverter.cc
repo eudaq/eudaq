@@ -23,9 +23,10 @@ bool kpixEvtConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, euda
   auto block_n_list = ev->GetBlockNumList();
   for(auto &block_n: block_n_list){
     std::vector<uint8_t> block = ev->GetBlock(block_n);
-    if(block.size() < 2)
+    if (block.size()==0) EUDAQ_THROW("empty data");
+    /*    if(block.size() < 2)
       EUDAQ_THROW("Unknown data");
-    
+        
     uint8_t x_pixel = block[0];
     uint8_t y_pixel = block[1];
     std::vector<uint8_t> hit(block.begin()+2, block.end());
@@ -40,5 +41,9 @@ bool kpixEvtConverter::Converting(eudaq::EventSPC d1, eudaq::StdEventSP d2, euda
     }
     d2->AddPlane(plane);
   }
+    */ // parts related to Ex0RawEvt commented out
+
+  }    
+    
   return true;
 }
