@@ -33,10 +33,10 @@ drop table if exists `aidaSC`;
 create table if not exists `aidaSC` (
 `counter`    int unsigned zerofill  auto_increment,
 `timer`      datetime    NOT NULL,
-`ch1`	     double	, -- chid -> 0.id in AMR
-`ch11`	     double	,
-`ch21`	     double	,
-`ch31`	     double	,
+`ch0`	     double	, -- chid -> 0.id in AMR
+`ch10`	     double	,
+`ch20`	     double	,
+`ch30`	     double	,
 `ch40`	     double	,
 `ch41`	     double	,
 `ch42`	     double	,
@@ -62,10 +62,10 @@ primary key(`chid`, `id`, `unit`, `sensor`, `comment`)
 );
 
 insert into `aida_channels` values
-('ch1',  '0.1',  '\\u2103',   'DIGI', 'T,t'),
-('ch11', '0.11', '%H',        'DIGI', 'RH,Uw'),
-('ch21', '0.21', '\\u2103',   'DIGI', 'DT,td'),
-('ch31', '0.31', 'mb',        'DIGI', 'AP,p mbar'),
+('ch0',  '0.0',  '\\u2103',   'DIGI', 'T,t'),
+('ch10', '0.10', '%H',        'DIGI', 'RH,Uw'),
+('ch20', '0.20', '\\u2103',   'DIGI', 'DT,td'),
+('ch30', '0.30', 'mb',        'DIGI', 'AP,p mbar'),
 ('ch40', '0.40', '\\u2103',   'Ntc',  ''),
 ('ch41', '0.41', '\\u2103',   'Ntc',  ''),
 ('ch42', '0.42', '\\u2103',   'Ntc',  ''),
