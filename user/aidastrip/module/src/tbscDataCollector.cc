@@ -4,15 +4,15 @@
 #include <map>
 #include <set>
 
-class kpixDataCollector:public eudaq::DataCollector{
+class tbscDataCollector:public eudaq::DataCollector{
 public:
-  kpixDataCollector(const std::string &name,
+  tbscDataCollector(const std::string &name,
 		   const std::string &rc);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("kpixDataCollector");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("tbscDataCollector");
 private:
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
@@ -21,36 +21,27 @@ private:
 
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::DataCollector>::
-    Register<kpixDataCollector, const std::string&, const std::string&>
-    (kpixDataCollector::m_id_factory);
+    Register<tbscDataCollector, const std::string&, const std::string&>
+    (tbscDataCollector::m_id_factory);
 }
 
-kpixDataCollector::kpixDataCollector(const std::string &name,
+tbscDataCollector::tbscDataCollector(const std::string &name,
 				       const std::string &rc):
   DataCollector(name, rc){
 }
 
-void kpixDataCollector::DoConnect(eudaq::ConnectionSPC idx){
+void tbscDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque[idx].clear();
   m_conn_inactive.erase(idx);
 }
 
-void kpixDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
+void tbscDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_inactive.insert(idx);
 }
 
-void kpixDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
-  if (!m_noprint)
-    ev->Print(std::cout);
-  WriteEvent(std::move(ev));
-  // do sth
-}
-
-/*
-=======
-void kpixDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
+void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
   if(!evsp->IsFlagTrigger()){

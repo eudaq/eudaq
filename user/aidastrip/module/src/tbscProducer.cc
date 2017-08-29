@@ -53,9 +53,9 @@ void readCSVToVector (std::string csv_str,
 }
 
 //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-class SlowControlProducer : public eudaq::Producer {
+class tbscProducer : public eudaq::Producer {
   public:
-  SlowControlProducer(const std::string & name, const std::string & runcontrol);
+  tbscProducer(const std::string & name, const std::string & runcontrol);
   void DoInitialise() override;
   void DoConfigure() override;
   void DoStartRun() override;
@@ -64,7 +64,7 @@ class SlowControlProducer : public eudaq::Producer {
   void DoReset() override;
   void Mainloop();
 
-  static const uint32_t m_id_factory = eudaq::cstr2hash("SlowControlProducer");
+  static const uint32_t m_id_factory = eudaq::cstr2hash("tbscProducer");
 
   
   std::vector<std::string> ConvertStringToVec(std::string str, char delim)
@@ -130,11 +130,11 @@ private:
 //----------DOC-MARK-----BEG*REG-----DOC-MARK----------
 namespace{
   auto dummy0 = eudaq::Factory<eudaq::Producer>::
-    Register<SlowControlProducer, const std::string&, const std::string&>(SlowControlProducer::m_id_factory);
+    Register<tbscProducer, const std::string&, const std::string&>(tbscProducer::m_id_factory);
 }
 //----------DOC-MARK-----END*REG-----DOC-MARK----------
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
-SlowControlProducer::SlowControlProducer(const std::string & name, const std::string & runcontrol):
+tbscProducer::tbscProducer(const std::string & name, const std::string & runcontrol):
   eudaq::Producer(name, runcontrol),
   m_exit_of_run(false),
   m_debug(false),
@@ -150,7 +150,7 @@ SlowControlProducer::SlowControlProducer(const std::string & name, const std::st
 
 }
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
-void SlowControlProducer::DoInitialise(){
+void tbscProducer::DoInitialise(){
   auto ini = GetInitConfiguration();
   m_tbsc_dsn = ini->Get("TBSC_DSN", "myodbc5a");
   m_tbsc_db  = ini->Get("TBSC_DATABASE", "aidaTest");
@@ -159,7 +159,7 @@ void SlowControlProducer::DoInitialise(){
 }
 
 //----------DOC-MARK-----BEG*CONF-----DOC-MARK----------
-void SlowControlProducer::DoConfigure(){
+void tbscProducer::DoConfigure(){
   auto conf = GetConfiguration();
   conf->Print(std::cout);
   m_tbsc_dsn=conf->Get("TBSC_DSN", m_tbsc_dsn);
@@ -201,16 +201,16 @@ void SlowControlProducer::DoConfigure(){
   if (m_debug) printNestedMap(sc_para_map);
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
-void SlowControlProducer::DoStartRun(){
+void tbscProducer::DoStartRun(){
   m_exit_of_run = false;
   //--> start of evt print <--// wmq dev
   //m_fb.open("out.txt", std::ios::out|std::ios::app);
   m_fb.open("out.txt", std::ios::out);
   
-  m_thd_run = std::thread(&SlowControlProducer::Mainloop, this);
+  m_thd_run = std::thread(&tbscProducer::Mainloop, this);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
-void SlowControlProducer::DoStopRun(){
+void tbscProducer::DoStopRun(){
   m_exit_of_run = true;
   if(m_thd_run.joinable()){
     m_thd_run.join();
@@ -218,7 +218,7 @@ void SlowControlProducer::DoStopRun(){
   m_fb.close();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
-void SlowControlProducer::DoReset(){
+void tbscProducer::DoReset(){
 
   SQLDisconnect(m_dbc); // disconnect from driver 
   if (m_fb.is_open()) m_fb.close();
@@ -235,7 +235,7 @@ void SlowControlProducer::DoReset(){
   
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
-void SlowControlProducer::DoTerminate(){
+void tbscProducer::DoTerminate(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
@@ -251,7 +251,7 @@ void SlowControlProducer::DoTerminate(){
 }
 
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
-void SlowControlProducer::Mainloop(){
+void tbscProducer::Mainloop(){
   std::ostream os(&m_fb);
   auto tp_start_run = std::chrono::steady_clock::now();
   
@@ -348,7 +348,7 @@ void SlowControlProducer::Mainloop(){
 //----------DOC-MARK-----BEG*toolFunc-----DOC-MARK----------
 
 
-void SlowControlProducer::odbcExtractError(std::string fn,
+void tbscProducer::odbcExtractError(std::string fn,
 					   SQLHANDLE handle,
 					   SQLSMALLINT type){
   SQLINTEGER i = 0;
@@ -370,7 +370,7 @@ void SlowControlProducer::odbcExtractError(std::string fn,
   printf("\n");
 }
 
-void SlowControlProducer::odbcDoAlotPrint(){
+void tbscProducer::odbcDoAlotPrint(){
   EUDAQ_INFO("[DEBUG] Print a lot info of ODBC driver/driver manager/data source:");
     
   SQLCHAR dbms_name[256], dbms_ver[256];
@@ -406,7 +406,7 @@ void SlowControlProducer::odbcDoAlotPrint(){
   printf("\n");
 }
 
-void SlowControlProducer::odbcListDSN(){
+void tbscProducer::odbcListDSN(){
   SQLUSMALLINT direction;
   SQLRETURN _ret;
 
@@ -424,9 +424,9 @@ void SlowControlProducer::odbcListDSN(){
     if (_ret == SQL_SUCCESS_WITH_INFO) printf("\tdata truncation\n");
   }
   printf("\n");
-} // ---- End of SlowControlProducer::odbcListDSN() ----- 
+} // ---- End of tbscProducer::odbcListDSN() ----- 
 
-void SlowControlProducer::fillChannelMap(std::string table){
+void tbscProducer::fillChannelMap(std::string table){
   /* Descibe: Fill in the nested map from the complimentary table from the database,
    indexing by the column names from the table noting the SC data*/
   
@@ -503,11 +503,11 @@ void SlowControlProducer::fillChannelMap(std::string table){
   
   printf("%s\n",std::string(20,'*').c_str());
 
-} // ---- End of SlowControlProducer::fillChannelMap(std::string table) ----- 
+} // ---- End of tbscProducer::fillChannelMap(std::string table) ----- 
  
 
 
-void SlowControlProducer::odbcFetchData(SQLHSTMT stmt,
+void tbscProducer::odbcFetchData(SQLHSTMT stmt,
 					SQLCHAR* dbcommand,
 					SQLSMALLINT columns,
 					std::map<std::string, std::map<std::string, std::string>> &data_map
