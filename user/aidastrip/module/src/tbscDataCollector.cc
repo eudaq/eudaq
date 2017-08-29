@@ -16,6 +16,7 @@ public:
   static const uint32_t m_id_factory = eudaq::cstr2hash("tbscDataCollector");
 private:
   uint32_t m_noprint;
+  std::filebuf m_fb; // output file to print event
 
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
@@ -39,6 +40,7 @@ void tbscDataCollector::DoConfigure(){
   if (conf) {
     conf->Print();
     m_noprint = conf->Get("DISABLE_PRINT", 0);
+    m_fb.open("out.txt", std::ios::out);
   }
 
 }
@@ -56,8 +58,11 @@ void tbscDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
 
 void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
 
-  if (!m_noprint)
+  if (!m_noprint){
+    std::ostream os(&m_fb);
     ev->Print(std::cout);
+    ev->Print(os, 0);
+  }
   WriteEvent(std::move(ev));
   
 }

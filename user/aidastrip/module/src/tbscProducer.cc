@@ -105,8 +105,6 @@ private:
   
   std::thread m_thd_run;
 
-  std::filebuf m_fb; // output file to print event
-
   // mapa<(string)ch_id, std::mapb>, mapb<aida_channels.colName, val>
   std::map <std::string, std::map<std::string, std::string>> sc_para_map;
   
@@ -204,9 +202,6 @@ void tbscProducer::DoConfigure(){
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void tbscProducer::DoStartRun(){
   m_exit_of_run = false;
-  //--> start of evt print <--// wmq dev
-  //m_fb.open("out.txt", std::ios::out|std::ios::app);
-  m_fb.open("out.txt", std::ios::out);
   
   m_thd_run = std::thread(&tbscProducer::Mainloop, this);
 }
@@ -216,13 +211,12 @@ void tbscProducer::DoStopRun(){
   if(m_thd_run.joinable()){
     m_thd_run.join();
   }
-  m_fb.close();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void tbscProducer::DoReset(){
 
   SQLDisconnect(m_dbc); // disconnect from driver 
-  if (m_fb.is_open()) m_fb.close();
+  //  if (m_fb.is_open()) m_fb.close();
   
   m_exit_of_run = true;
   if(m_thd_run.joinable())
@@ -247,13 +241,11 @@ void tbscProducer::DoTerminate(){
   SQLFreeHandle(SQL_HANDLE_DBC, m_dbc);
   SQLFreeHandle(SQL_HANDLE_ENV, m_env);
   SQLFreeHandle(SQL_HANDLE_STMT, m_stmt);
-  if (m_fb.is_open()) m_fb.close();
 
 }
 
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
 void tbscProducer::Mainloop(){
-  std::ostream os(&m_fb);
   auto tp_start_run = std::chrono::steady_clock::now();
   
   /* Allocate a statement handle */
@@ -312,8 +304,6 @@ void tbscProducer::Mainloop(){
       }
     }
     
-    ev->Print(os, 0);// print event info to the m_fb txt
-
     //--> If you want a timestampe
     bool flag_ts = true; // to be moved to config
     if (flag_ts){
@@ -325,9 +315,7 @@ void tbscProducer::Mainloop(){
       std::cout<< "CHECK: start =="<<du_ts_beg_ns.count() <<"; end =="<< du_ts_end_ns.count()<<std::endl;
     }
 
-    std::cout << "[check] evt#=" <<ev->GetEventN()<<std::endl;
-    SendEvent(std::move(ev));
-    
+    SendEvent(std::move(ev)); 
     
     /*sleep for m_s_invl seconds, but awake every second to check status*/
     for( int i_intvl=m_s_intvl; i_intvl>=0; i_intvl--){
