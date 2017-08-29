@@ -11,9 +11,12 @@ public:
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
   void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
-
+  void DoConfigure() override;
+  
   static const uint32_t m_id_factory = eudaq::cstr2hash("tbscDataCollector");
 private:
+  uint32_t m_noprint;
+
   std::mutex m_mtx_map;
   std::map<eudaq::ConnectionSPC, std::deque<eudaq::EventSPC>> m_conn_evque;
   std::set<eudaq::ConnectionSPC> m_conn_inactive;
@@ -30,6 +33,16 @@ tbscDataCollector::tbscDataCollector(const std::string &name,
   DataCollector(name, rc){
 }
 
+void tbscDataCollector::DoConfigure(){
+  m_noprint = 0;
+  auto conf = GetConfiguration();
+  if (conf) {
+    conf->Print();
+    m_noprint = conf->Get("DISABLE_PRINT", 0);
+  }
+
+}
+
 void tbscDataCollector::DoConnect(eudaq::ConnectionSPC idx){
   std::unique_lock<std::mutex> lk(m_mtx_map);
   m_conn_evque[idx].clear();
@@ -41,6 +54,15 @@ void tbscDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   m_conn_inactive.insert(idx);
 }
 
+void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+
+  if (!m_noprint)
+    ev->Print(std::cout);
+  WriteEvent(std::move(ev));
+  
+}
+
+/*
 void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
@@ -60,7 +82,7 @@ void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
     }
   }
 
-  auto ev_sync = eudaq::Event::MakeUnique("Ex0Tg");
+  auto ev_sync = eudaq::Event::MakeUnique("SCRawEvt");
   ev_sync->SetFlagPacket();
   ev_sync->SetTriggerN(trigger_n);
   for(auto &conn_evque: m_conn_evque){
@@ -87,3 +109,4 @@ void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
   ev_sync->Print(std::cout);
   WriteEvent(std::move(ev_sync));
 }
+*/

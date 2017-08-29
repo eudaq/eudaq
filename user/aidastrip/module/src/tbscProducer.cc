@@ -324,7 +324,8 @@ void tbscProducer::Mainloop(){
       ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
       std::cout<< "CHECK: start =="<<du_ts_beg_ns.count() <<"; end =="<< du_ts_end_ns.count()<<std::endl;
     }
-      
+
+    std::cout << "[check] evt#=" <<ev->GetEventN()<<std::endl;
     SendEvent(std::move(ev));
     
     
