@@ -165,8 +165,9 @@ void tbscProducer::DoConfigure(){
   m_tbsc_dsn=conf->Get("TBSC_DSN", m_tbsc_dsn);
   m_tbsc_db = conf->Get("TBSC_DATABASE", m_tbsc_db);
   std::string conf_debug = conf->Get("TBSC_DEBUG", "");
-  m_debug = (conf_debug=="true" || conf_debug=="True")? true: m_debug;
-  //m_debug=true;
+  if (conf_debug!="")
+    m_debug = (conf_debug=="true" || conf_debug=="True")? true: false;
+ 
   m_s_intvl = conf->Get("TBSC_INTERVAL_SEC", m_s_intvl);
   printf("check invl: %d\n", m_s_intvl);
 
