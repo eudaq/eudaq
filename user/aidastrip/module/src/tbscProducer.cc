@@ -78,7 +78,7 @@ class tbscProducer : public eudaq::Producer {
     }
     return vec;
   }
-  void fillChannelMap(std::string table="");
+  void fillChannelMap(std::string inttablename="");
   void odbcFetchData(SQLHSTMT stmt, /*statement handle allocated to a database*/
 		     SQLCHAR* dbcommand, /*mysql command to execute w/ stmt*/
 		     SQLSMALLINT columns, 
@@ -106,7 +106,7 @@ private:
   std::thread m_thd_run;
 
   // mapa<(string)ch_id, std::mapb>, mapb<aida_channels.colName, val>
-  std::map <std::string, std::map<std::string, std::string>> sc_para_map;
+  std::map <std::string, std::map<std::string, std::string>> m_sc_para_map;
   
   ///------ stale below
   //bool m_flag_ts;
@@ -197,7 +197,7 @@ void tbscProducer::DoConfigure(){
 
   /*Fill in the readout data map*/
   fillChannelMap();
-  if (m_debug) printNestedMap(sc_para_map);
+  if (m_debug) printNestedMap(m_sc_para_map);
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void tbscProducer::DoStartRun(){
@@ -291,7 +291,7 @@ void tbscProducer::Mainloop(){
       }
     }
 
-    auto ev = eudaq::Event::MakeUnique("SCRawEvt");
+    auto rawevt = eudaq::Event::MakeUnique("SCRawEvt");
     
     
     /* loop over sc data to set tag to events if shown up in the mask vector*/
@@ -300,7 +300,7 @@ void tbscProducer::Mainloop(){
       if (std::find(m_tbsc_mask.begin(), m_tbsc_mask.end(), it->first) != m_tbsc_mask.end()){
 	/* if channel is required to tag to event*/
 	std::cout << it->first << " " << it->second << "\n";
-	ev->SetTag(it->first, it->second);
+	rawevt->SetTag(it->first, it->second);
       }
     }
     
@@ -311,11 +311,11 @@ void tbscProducer::Mainloop(){
       auto tp_end_of_busy = tp_current_evt + std::chrono::seconds(m_s_intvl);
       std::chrono::nanoseconds du_ts_beg_ns(tp_current_evt - tp_start_run);
       std::chrono::nanoseconds du_ts_end_ns(tp_end_of_busy - tp_start_run);
-      ev->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
+      rawevt->SetTimestamp(du_ts_beg_ns.count(), du_ts_end_ns.count());
       std::cout<< "CHECK: start =="<<du_ts_beg_ns.count() <<"; end =="<< du_ts_end_ns.count()<<std::endl;
     }
 
-    SendEvent(std::move(ev)); 
+    SendEvent(std::move(rawevt)); 
     
     /*sleep for m_s_invl seconds, but awake every second to check status*/
     for( int i_intvl=m_s_intvl; i_intvl>=0; i_intvl--){
@@ -416,22 +416,22 @@ void tbscProducer::odbcListDSN(){
   printf("\n");
 } // ---- End of tbscProducer::odbcListDSN() ----- 
 
-void tbscProducer::fillChannelMap(std::string table){
+void tbscProducer::fillChannelMap(std::string intablename){
   /* Descibe: Fill in the nested map from the complimentary table from the database,
    indexing by the column names from the table noting the SC data*/
   
-  table = (table=="")?"aida_channels":table;
+  intablename = (intablename=="")?"aida_channels":intablename;
   //SQLFreeStmt(m_stmt,SQL_CLOSE);
-  // SQLExecDirect(m_stmt, (SQLCHAR*)("select * from "+table+";").c_str(), SQL_NTS);
+  // SQLExecDirect(m_stmt, (SQLCHAR*)("select * from "+intablename+";").c_str(), SQL_NTS);
 
   SQLFreeStmt(m_stmt, SQL_CLOSE);
   SQLExecDirect(m_stmt,
-		(SQLCHAR*)("select * from "+table+" ;").c_str(),
+		(SQLCHAR*)("select * from "+intablename+" ;").c_str(),
 		SQL_NTS);
   /* How many columns are there */
   SQLNumResultCols(m_stmt, &m_columns);
   /* Clear the map to refill */
-  sc_para_map.clear();
+  m_sc_para_map.clear();
 
   SQLRETURN ret; /* ODBC API return status */
   int row = 0;
@@ -487,13 +487,13 @@ void tbscProducer::fillChannelMap(std::string table){
       } // if column info & value get correctly
     } // loop over all columns in a given row
 
-    sc_para_map.emplace(sc_para_map_index, resdata);
+    m_sc_para_map.emplace(sc_para_map_index, resdata);
     
   } // loop over all rows
   
   printf("%s\n",std::string(20,'*').c_str());
 
-} // ---- End of tbscProducer::fillChannelMap(std::string table) ----- 
+} // ---- End of tbscProducer::fillChannelMap(std::string intablename) ----- 
  
 
 

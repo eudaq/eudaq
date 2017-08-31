@@ -1,4 +1,5 @@
 #include "eudaq/DataCollector.hh"
+#include "eudaq/Time.hh"
 #include <mutex>
 #include <deque>
 #include <map>
@@ -57,6 +58,8 @@ void tbscDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
 }
 
 void tbscDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+
+  std::cout<<eudaq::Time::Current().Formatted()<<std::endl;
 
   if (!m_noprint){
     std::ostream os(&m_fb);
