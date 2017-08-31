@@ -49,30 +49,38 @@ int main(int /*argc*/, const char **argv) {
   
   if(!type_out.empty()){
 
-    std::cout<<"[output file empty] @0@!"<<std::endl;
+    std::cout<<"[output file not empty] @0@!"<<std::endl;
     writer = eudaq::Factory<eudaq::FileWriter>::MakeUnique(eudaq::str2hash(type_out), outfile_path);
     
   }
-  
+
+  int evtCounting = 0;
   while(1){
 
-    std::cout<<"I am a debugger --3: try evt \n";
+    /* 
+     * ATTENTION! once empty evt in the middle, no evt to read after the EMPTY one!
+     */
 
-    auto ev = reader->GetNextEvent();
-    if(!ev){
-      std::cout<<"I am a debugger --3: empty ev \n";
- 
-      break;
+    auto ev = reader->GetNextEvent(); //--> when ev is empty, an error catched from throw;
+    
+    if(!ev) {
+      /* 
+       * NAIVE protection to check if any evt existed after the empty one TAT;
+       */
+      auto ev2 = reader->GetNextEvent();
+      if (!ev2) break;
+      else ev = ev2;
     }
+    
     if(print_ev_in)
       ev->Print(std::cout);
-
-    if(writer){
-      std::cout<<"I am a debugger --3\n";
+    
+    if(writer)
       writer->WriteEvent(ev);
-    }
+    evtCounting++;    
   }
-  std::cout<<"I arrives the end! \n";
-
+  
+  std::cout<<"[Converter:info] # of Evt counting ==> "
+	   << evtCounting <<"\n";
   return 0;
 }
