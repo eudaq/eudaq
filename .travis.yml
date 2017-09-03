@@ -33,6 +33,7 @@ env:
       - BUILD_altroUSB=OFF
       - BUILD_cmspixel=ON
       - BUILD_depfet=OFF
+      - BUILD_drs4=ON
       - BUILD_fortis=OFF
       - BUILD_gui=ON
       - BUILD_main=OFF
@@ -144,7 +145,7 @@ before_script:
 
 script:
   - cd build  
-  - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs $PALPIDEFS_SPECIAL_PARAMETERS -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_rpi-controller=$BUILD_rpi_controller -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu ..
+  - cmake -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_drs4=$BUILD_drs4 -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs $PALPIDEFS_SPECIAL_PARAMETERS -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_rpi-controller=$BUILD_rpi_controller -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu ..
   - make install
 
 before_deploy:
