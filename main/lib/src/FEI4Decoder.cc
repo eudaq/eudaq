@@ -69,9 +69,9 @@ std::vector<APIXPix> decodeFEI4DataGen2(std::vector<unsigned char> const & data)
                     auto lv1 = static_cast<int>(no_data_headers)-1;
                     if(lv1 == -1) {
                         std::cout << "Lv1 -1 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
-                            lv1 == 0;
+			lv1 = 0;
                     } else if(lv1 == 16 ) {
-                         std::cout << "Lv1 16 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
+			std::cout << "Lv1 16 happened (x,y,tot1, tot2): " << row << ", "<< column << ", " << tot1 << ", " << tot2 << std::endl;
                         lv1 = 15;
                     } else if (lv1 > 16) lv1 = 15;
 			else if(lv1 < 0) lv1 = 0;
