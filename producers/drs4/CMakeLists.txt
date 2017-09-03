@@ -8,6 +8,7 @@ set(name "DRSProducer")
 #  MESSAGE(FATAL_ERROR "Could not find DRS! Make sure to set the environment variable $DRS_PATH to the path of your pxar installation!")
 #ENDIF(DRS_FOUND)
 
+IF(NOT WIN32) 
 find_package(libusb-1.0)
 IF(LIBUSB_1_FOUND)
 	add_definitions(-DHAVE_LIBUSB10)
@@ -27,6 +28,7 @@ ELSE(LIBUSB_1_FOUND)
 		MESSAGE(FATAL_ERROR "No libusb found!")
 	ENDIF(LIBUSB_FOUND)
 ENDIF(LIBUSB_1_FOUND)
+ENDIF(NOT WIN32) 
 
 SET(sourcefiles src/DRS4Producer.cxx 
 DRS/src/musbstd.c
