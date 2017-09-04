@@ -101,7 +101,11 @@ void RunControlGUI::SetInstance(eudaq::RunControlUP rc){
 
 void RunControlGUI::on_btnInit_clicked(){
   std::string settings = txtInitFileName->text().toStdString();
-  std::cout<<settings<<std::endl;
+  QFileInfo check_file(txtInitFileName->text());
+  if(!check_file.exists() || !check_file.isFile()){
+    QMessageBox::warning(NULL, "ERROR", "Init file does not exist.");
+    return;
+  }
   if(m_rc){
     m_rc->ReadInitilizeFile(settings);
     m_rc->Initialise();
@@ -114,6 +118,11 @@ void RunControlGUI::on_btnTerminate_clicked(){
 
 void RunControlGUI::on_btnConfig_clicked(){
   std::string settings = txtConfigFileName->text().toStdString();
+  QFileInfo check_file(txtConfigFileName->text());
+  if(!check_file.exists() || !check_file.isFile()){
+    QMessageBox::warning(NULL, "ERROR", "Config file does not exist.");
+    return;
+  }
   if(m_rc){
     m_rc->ReadConfigureFile(settings);
     m_rc->Configure();
