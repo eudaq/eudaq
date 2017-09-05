@@ -170,7 +170,7 @@ void tbscProducer::DoConfigure(){
   printf("check invl: %d\n", m_s_intvl);
 
   /* read the parameter mask from config, decide which parameters saved to events*/
-  std::string tbsc_mask = conf->Get("TBSC_PARA_MASK", "ch1,ch11,ch21,ch31");
+  std::string tbsc_mask = conf->Get("TBSC_PARA_MASK", "ch0,ch10,ch20,ch30");
   readCSVToVector(tbsc_mask, m_tbsc_mask);
   
   /* Connect to the DSN m_tbsc_dsn */
