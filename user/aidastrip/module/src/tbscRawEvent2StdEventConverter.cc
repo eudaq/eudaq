@@ -14,6 +14,8 @@ namespace{
 
 bool tbscRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const{
 
+  std::cout<<"I am the tbscRawEvt convert! @w@.. \n";
+  
   /*if(!d2->IsFlagPacket()){
     d2->SetFlag(d1->GetFlag());
     d2->SetRunN(d1->GetRunN());
