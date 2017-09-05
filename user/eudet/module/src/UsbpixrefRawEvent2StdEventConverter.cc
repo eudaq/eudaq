@@ -32,7 +32,7 @@ private:
   bool getHitData(uint32_t &Word, bool second_hit,
 		  uint32_t &Col, uint32_t &Row, uint32_t &ToT) const;
   uint32_t getTrigger(const std::vector<uint8_t> & data) const;
-  
+
   static const uint32_t CHIP_MIN_COL = 1;
   static const uint32_t CHIP_MAX_COL = 80;
   static const uint32_t CHIP_MIN_ROW = 1;
@@ -70,11 +70,11 @@ ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
   uint32_t lvl1 = 0;
   int colMult = 1;
   int rowMult = 1;
-  
+
   plane.SetSizeZS((CHIP_MAX_COL_NORM + 1)*colMult, (CHIP_MAX_ROW_NORM + 1)*rowMult,
 		  0, consecutive_lvl1,
 		  eudaq::StandardPlane::FLAG_DIFFCOORDS|eudaq::StandardPlane::FLAG_ACCUMULATE);
-    
+
   if(!valid){
     return plane;
   }
@@ -97,7 +97,7 @@ ConvertPlane(const std::vector<uint8_t> & data, uint32_t id) const{
     }
   }
   return plane;
-}	
+}
 
 
 bool UsbpixrefRawEvent2StdEventConverter::
@@ -161,14 +161,14 @@ getHitData(uint32_t &Word, bool second_hit,
   Col = t_Col;
   Row = t_Row;
   return true;
-}  
+}
 
 uint32_t UsbpixrefRawEvent2StdEventConverter::
 getTrigger(const std::vector<uint8_t> & data) const{
   //Get Trigger Number and check for errors
   uint32_t i = data.size() - 8; //splitted in 2x 32bit words
   uint32_t Trigger_word1 = getWord(data, i);
-        
+
   if(Trigger_word1==(uint32_t) -1){
     return (uint32_t)-1;
   }
