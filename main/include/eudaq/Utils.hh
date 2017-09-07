@@ -38,6 +38,10 @@
    * \param ms The number of milliseconds
    */
   void DLLEXPORT mSleep(unsigned ms);
+/** Sleep for a specified number of microseconds.
+   * \param ums The number of microseconds
+   */
+  void DLLEXPORT umSleep(unsigned ums);	    
 
   /** Converts any type to a string.
    * There must be a compatible streamer defined, which this function will make

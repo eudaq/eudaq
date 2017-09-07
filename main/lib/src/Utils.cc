@@ -89,10 +89,13 @@ namespace eudaq {
   }
 
   void mSleep(unsigned ms) {
-    // use c++11 std sleep routine
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
   }
 
+  void umSleep(unsigned ums) {
+    std::this_thread::sleep_for(std::chrono::microseconds(ums));
+  }
+  
   template <> int64_t from_string(const std::string &x, const int64_t &def) {
     if (x == "")
       return def;
