@@ -29,7 +29,7 @@ namespace eudaq{
     virtual ~FileReader();
     void SetConfiguration(ConfigurationSPC c) {m_conf = c;};
     ConfigurationSPC  GetConfiguration() const {return m_conf;};
-    virtual EventSPC GetNextEvent() = 0;
+    virtual EventSPC GetNextEvent() {return nullptr;};
   private:
     ConfigurationSPC m_conf;
   };

@@ -247,9 +247,11 @@ namespace eudaq {
     return false;
   }
 
-  void ConnectionInfoTCP::Print(std::ostream &os) const {
-    ConnectionInfo::Print(os);
-    os << " (" /*<< m_fd << ","*/ << m_host << ")";
+  void ConnectionInfoTCP::Print(std::ostream &os, size_t offset) const {
+    os << std::string(offset, ' ') << "<ConnectionTCP>\n";
+    os << std::string(offset + 2, ' ') << "<FD>" << m_host <<"</FD>\n";
+    ConnectionInfo::Print(os, offset+2);
+    os << std::string(offset, ' ') << "</ConnectionTCP>\n";
   }
 
   void ConnectionInfoTCP::append(size_t length, const char *data) {

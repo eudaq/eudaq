@@ -51,9 +51,9 @@ namespace eudaq {
     //running in dataserver thread
     virtual void DoConnect(ConnectionSPC id) {}
     virtual void DoDisconnect(ConnectionSPC id) {}
-    virtual void DoReceive(ConnectionSPC id, EventUP ev) = 0;
+    virtual void DoReceive(ConnectionSPC id, EventSP ev){};
     
-    void WriteEvent(EventUP ev);
+    void WriteEvent(EventSP ev);
     void SetServerAddress(const std::string &addr){m_data_addr = addr;};
     void StartDataCollector();
     void CloseDataCollector();

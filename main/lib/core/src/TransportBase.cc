@@ -7,16 +7,12 @@ namespace eudaq {
   const ConnectionInfo ConnectionInfo::ALL("ALL");
   static const int DEFAULT_TIMEOUT = 1000;
 
-  void ConnectionInfo::Print(std::ostream &os) const {
-    if (m_state == -1) {
-      os << "(disconnected)";
-    } else if (m_state == 0) {
-      os << "(waiting)";
-    } else {
-      os << m_type;
-      if (m_name != "")
-        os << "." << m_name;
-    }
+  void ConnectionInfo::Print(std::ostream &os, size_t offset) const {
+    os << std::string(offset, ' ') << "<Connection>\n";
+    os << std::string(offset + 2, ' ') << "<Type>" << m_type <<"</Type>\n";
+    os << std::string(offset + 2, ' ') << "<Name>" << m_name <<"</Name>\n";
+    os << std::string(offset + 2, ' ') << "<State>" << m_state <<"</State>\n";
+    os << std::string(offset, ' ') << "</Connection>\n";
   }
 
   bool ConnectionInfo::Matches(const ConnectionInfo & /*other*/) const {
