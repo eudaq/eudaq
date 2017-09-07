@@ -28,7 +28,7 @@ namespace eudaq {
     explicit ConnectionInfo(const std::string &name = "")
         : m_state(0), m_name(name) {}
     virtual ~ConnectionInfo() {}
-    virtual void Print(std::ostream &) const;
+    virtual void Print(std::ostream &, size_t offset = 0) const;
     virtual bool Matches(const ConnectionInfo &other) const;
     bool IsEnabled() const { return m_state >= 0; }
     int GetState() const { return m_state; }
@@ -43,11 +43,11 @@ namespace eudaq {
 
   protected:
     int m_state;
-    uint32_t m_id;
     std::string m_type;
     std::string m_name;
   };
 
+  using Connection = ConnectionInfo;
   using ConnectionWP = std::weak_ptr<ConnectionInfo>;
   using ConnectionSP = std::shared_ptr<ConnectionInfo>;
   using ConnectionSPC = std::shared_ptr<const ConnectionInfo>;

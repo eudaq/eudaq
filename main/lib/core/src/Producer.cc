@@ -140,7 +140,7 @@ namespace eudaq {
     }
   }
 
-  void Producer::SendEvent(EventUP ev){
+  void Producer::SendEvent(EventSP ev){
     if(ev->IsBORE()){
       if(GetConfiguration())
 	ev->SetTag("EUDAQ_CONFIG", to_string(*GetConfiguration()));
@@ -151,10 +151,9 @@ namespace eudaq {
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
     ev->SetStreamN(m_pdc_n);
-    EventSP evsp(std::move(ev));
     for(auto &e: m_senders){
       if(e.second)
-	e.second->SendEvent(*(evsp.get()));
+	e.second->SendEvent(*(ev.get()));
       else
 	EUDAQ_THROW("Producer::SendEvent, using a null pointer of DataSender");
     }

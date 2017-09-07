@@ -1,0 +1,32 @@
+
+option(EUDAQ_BUILD_PYTHON "Compile Python EUDAQ binding library?" OFF)
+if(NOT EUDAQ_BUILD_PYTHON)
+  return()
+endif()
+find_package(PythonLibsNew REQUIRED)
+message(STATUS "Found PythonLibsNew") 
+message(STATUS "PYTHON_PREFIX: ${PYTHON_PREFIX}")
+message(STATUS "PYTHON_LIBRARIES: ${PYTHON_LIBRARIES}")
+message(STATUS "PYTHON_INCLUDE_DIRS: ${PYTHON_INCLUDE_DIRS}")
+message(STATUS "PYTHON_SITE_PACKAGES: ${PYTHON_SITE_PACKAGES}")
+message(STATUS "PYTHON_IS_DEBUG : ${PYTHON_IS_DEBUG}")
+message(STATUS "PYTHON_INCLUDE_PATH: ${PYTHON_INCLUDE_PATH}")
+
+include_directories(${EUDAQ_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
+include_directories(${PYTHON_INCLUDE_DIRS})
+aux_source_directory(src EUDAQ_COMPONENT_SRC)
+
+set(CMAKE_SHARED_LIBRARY_PREFIX lib)
+set(CMAKE_SHARED_MODULE_PREFIX  lib)
+
+ADD_LIBRARY(pyeudaq SHARED ${EUDAQ_COMPONENT_SRC})
+
+
+target_link_libraries(pyeudaq ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB} ${PYTHON_LIBRARIES})
+
+install(TARGETS pyeudaq
+  RUNTIME DESTINATION bin
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib)
+

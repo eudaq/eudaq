@@ -191,7 +191,7 @@ namespace eudaq {
     }
   }
   
-  void DataCollector::WriteEvent(EventUP ev){
+  void DataCollector::WriteEvent(EventSP ev){
     try{
       if(ev->IsBORE()){
 	if(GetConfiguration())
