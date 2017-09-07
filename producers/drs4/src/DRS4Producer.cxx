@@ -145,7 +145,7 @@ void DRS4Producer::OnStopRun()
 		if (m_b && m_b->IsBusy()) {
 			m_b->SoftTrigger();
 			for (int i=0 ; i<10 && m_b->IsBusy() ; i++)
-				eudaq::mSleep(10);//todo not mt save
+				eudaq::umSleep(10);//todo not mt save
 		}
 
 	    // Sending the final end-of-run event:
@@ -203,7 +203,7 @@ void DRS4Producer::ReadoutLoop()
 				if (m_self_triggering && k%(int)1e4 == 0 ){
 					cout<<"Send software trigger"<<endl;
 					m_b->SoftTrigger();
-					eudaq::mSleep(10); //todo not mt save
+					eudaq::umSleep(10); //todo not mt save
 				}
 				else continue;
 
@@ -235,7 +235,7 @@ void DRS4Producer::OnConfigure(const eudaq::Configuration& conf)
 	m_config = conf;
 	while (!m_drs){
 		cout<<"wait for configure"<<endl;
-		eudaq::mSleep(10);
+		eudaq::umSleep(10);
 	}
 
 	try {
