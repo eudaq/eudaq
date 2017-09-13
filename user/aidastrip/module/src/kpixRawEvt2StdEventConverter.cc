@@ -21,15 +21,18 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
 
   std::cout<<"[dev] I AM HERE!\n" ;
     
-  auto ev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
-  size_t nblocks= ev->NumBlocks();
-  auto block_n_list = ev->GetBlockNumList();
+  auto rawev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
+  size_t nblocks= rawev->NumBlocks();
+  auto block_n_list = rawev->GetBlockNumList();
   for(auto &block_n: block_n_list){
-    std::vector<uint8_t> block = ev->GetBlock(block_n);
+    std::vector<uint8_t> block = rawev->GetBlock(block_n);
     if (block.size()==0) EUDAQ_THROW("empty data");
+    else {
+      std::cout<<"[dev] # of blocks = " << block.size() << "\n";
+      
+    }
     /*    if(block.size() < 2)
       EUDAQ_THROW("Unknown data");
-        
     uint8_t x_pixel = block[0];
     uint8_t y_pixel = block[1];
     std::vector<uint8_t> hit(block.begin()+2, block.end());
