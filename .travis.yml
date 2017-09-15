@@ -77,21 +77,21 @@ before_cache:
 matrix:      
    include:   
       - os: linux    
-        env: OPTION=modern LLVM_VERSION=4.0 COMPILER=clang  
+        env: OPTION=modern LLVM_VERSION=5.0 COMPILER=clang  
       - os: linux  
-        env: OPTION=old  LLVM_VERSION=4.0 COMPILER=clang 
+        env: OPTION=old  LLVM_VERSION=5.0 COMPILER=clang 
       - os: linux
-        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=7 COMPILER=gcc
       - os: linux            
-        env: OPTION=old GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=old GCC_VERSION=7 COMPILER=gcc
       - os: osx
         compiler: clang
         osx_image: xcode8.2
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx           
         compiler: clang
         osx_image: xcode8.2
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx          
         osx_image: xcode8.2
         compiler: gcc
