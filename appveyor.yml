@@ -96,6 +96,7 @@ init:
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 - '"C:\Program Files\Microsoft SDKs\Windows\v10\Bin\SetEnv.cmd" /x86'
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
 - cmd: del "C:\Program Files (x86)\MSBuild\15.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
