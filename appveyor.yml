@@ -8,7 +8,7 @@ branches:
   - master
   - v1.7-dev
 
-os: Visual Studio 2015
+os: Visual Studio 2017
 
 configuration: Release
 
@@ -22,7 +22,7 @@ environment:
   matrix:
     - build_type: full
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       CMAKE_BUILD_TYPE: RelWithDebInfo
       EUDAQ_BUILD_EXECUTABLE: ON
       EUDAQ_BUILD_GUI: ON
@@ -43,7 +43,7 @@ environment:
       PYTHON_ARCH: "32"
     - build_type: minimum
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       CMAKE_BUILD_TYPE: RelWithDebInfo
       EUDAQ_BUILD_EXECUTABLE: ON
       EUDAQ_BUILD_GUI: ON
@@ -64,7 +64,7 @@ environment:
       PYTHON_ARCH: "32"
     - build_type: library_only
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       CMAKE_BUILD_TYPE: RelWithDebInfo
       EUDAQ_BUILD_EXECUTABLE: OFF
       EUDAQ_BUILD_GUI: OFF
