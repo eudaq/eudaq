@@ -128,10 +128,10 @@ before_build:
 
 - ps: Start-Sleep -s 10;
 
-#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
-
 build_script:
 - ps: If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); }
+
+- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
 
