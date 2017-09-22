@@ -24,6 +24,40 @@ namespace tlu {
     }
   }
 
+  void FmctluController::configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose){
+    int nDUTs;
+    unsigned char oldStatus;
+    unsigned char newStatus;
+    unsigned char mask;
+    unsigned char newnibble;
+    nDUTs= m_nDUTs;
+
+    if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
+      std::cout << std::boolalpha << "  Configuring HDMI " << hdmiN << ":" << std::endl;
+
+      hdmiN = hdmiN-1;  // <<<<< CAREFUL HERE. All the rest is meant to work with [0:3] rather than [1:4}]
+      unsigned int bank = (unsigned int)hdmiN / 2; // DUT0 and DUT1 are on bank 0. DUT2 and DUT3 on bank 1
+      unsigned int nibble = hdmiN % 2;    // DUT0 and DUT2 are on nibble 0. DUT1 and DUT3 are on nibble 1
+
+      if (verbose){
+        std::cout << "\tBank " << bank << " Nibble " << nibble << std::endl;
+      }
+      // Modify the expander responsible for CONT, TRIG, SPARE and BUSY
+      oldStatus= m_IOexpander1.getOutputs(bank, false);
+      newnibble= (enable & 0xF) << 4*nibble;
+      mask = 0xF << 4*nibble; // bits we want to change are marked with 1
+      newStatus= (oldStatus & (~mask)) | (newnibble & mask);
+
+      if (verbose){
+        std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
+      }
+      m_IOexpander1.setOutputs(bank, newStatus, verbose);
+    }
+    else{
+      std::cout << "enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
+    }
+  }
+
   void FmctluController::DefineConst(int nDUTs, int nTrigInputs){
     m_nTrgIn= nTrigInputs;
     m_nDUTs= nDUTs;
@@ -44,18 +78,18 @@ namespace tlu {
     unsigned char oldStatus;
     unsigned char newStatus;
 
-    oldStatus= m_IOexpander2.getIOReg(bank, false);
+    oldStatus= m_IOexpander2.getOutputs(bank, false);
     newStatus= oldStatus & ~mask;
-    std::string outstat= "enabled";
-    if (!enable){ //0 activates the output. 1 disables it.
+    std::string outstat= "disabled";
+    if (enable){ //1 activates the output. 0 disables it.
       newStatus= newStatus | mask;
-      outstat= "disabled";
+      outstat= "enabled";
     }
     std::cout << "  Clk LEMO " << outstat << std::endl;
     if (verbose){
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
-    m_IOexpander2.setIOReg(bank, newStatus, verbose);
+    m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
   void FmctluController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
@@ -65,6 +99,7 @@ namespace tlu {
     unsigned char mask;
     nDUTs= m_nDUTs;
 
+    std::cout << "enableHDMI: This function is obsolete. Please use configureHDMI instead." << std::endl;
     if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
       std::cout << std::boolalpha << "  Setting HDMI " << hdmiN << " to " << enable << std::endl;
 
@@ -187,21 +222,21 @@ namespace tlu {
 
     //EPX1 bank 0
     m_IOexpander1.setInvertReg(0, 0x00, false); //0= normal, 1= inverted
-    m_IOexpander1.setIOReg(0, 0xFF, false); // 0= output, 1= input
-    m_IOexpander1.setOutputs(0, 0xFF, false); // If output, set to 1
+    m_IOexpander1.setIOReg(0, 0x00, false); // 0= output, 1= input
+    m_IOexpander1.setOutputs(0, 0xFF, false); // If setIOReg is output, set to pin to xx
     //EPX1 bank 1
     m_IOexpander1.setInvertReg(1, 0x00, false); // 0= normal, 1= inverted
-    m_IOexpander1.setIOReg(1, 0xFF, false);// 0= output, 1= input
-    m_IOexpander1.setOutputs(1, 0xFF, false); // If output, set to 1
+    m_IOexpander1.setIOReg(1, 0x00, false);// 0= output, 1= input
+    m_IOexpander1.setOutputs(1, 0xFF, false); // If setIOReg is output, set to pin to xx
 
     //EPX2 bank 0
     m_IOexpander2.setInvertReg(0, 0x00, false);// 0= normal, 1= inverted
-    m_IOexpander2.setIOReg(0, 0xFF, false);// 0= output, 1= input
-    m_IOexpander2.setOutputs(0, 0xFF, false);// If output, set to 1
+    m_IOexpander2.setIOReg(0, 0x00, false);// 0= output, 1= input
+    m_IOexpander2.setOutputs(0, 0x00, false);// If setIOReg is output, set to pin to xx
     //EPX2 bank 1
     m_IOexpander2.setInvertReg(1, 0x00, false);// 0= normal, 1= inverted
-    m_IOexpander2.setIOReg(1, 0x5F, false);// 0= output, 1= input
-    m_IOexpander2.setOutputs(1, 0xFF, false);// If output, set to 1
+    m_IOexpander2.setIOReg(1, 0x00, false);// 0= output, 1= input
+    m_IOexpander2.setOutputs(1, 0xB0, false);// If setIOReg is output, set to pin to xx
     std::cout << "  I/O expanders: initialized" << std::endl;
   }
 
@@ -334,6 +369,7 @@ namespace tlu {
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
+    unsigned char newnibble;
     unsigned char mask, maskLow, maskHigh;
     int bank= 0;
 
@@ -351,34 +387,38 @@ namespace tlu {
     maskLow= 1 << (1* hdmiN); //CLK FROM FPGA
     maskHigh= 1<< (1* hdmiN +4); //CLK FROM Si5345
     mask= maskLow | maskHigh;
-    oldStatus= m_IOexpander2.getIOReg(bank, false);
-    newStatus= oldStatus & ~mask; //
+    oldStatus= m_IOexpander2.getOutputs(bank, false);
+    //newStatus= oldStatus & ~mask;
     switch(source){
-    case 0 : {
-      newStatus = newStatus | mask;
-      std::cout << "\tdisabled" << std::endl;
-      break;
+      case 0 : {
+        //newStatus = newStatus | mask;
+        newStatus= (oldStatus & ~mask)  ;
+        std::cout << "\tdisabled" << std::endl;
+        break;
+      }
+      case 1 : {
+        newStatus = (oldStatus | maskHigh) & ~maskLow;
+        //newStatus= (oldStatus & ~mask) | (0xF0 & mask);
+        std::cout << "\tSi5435" << std::endl;
+        break;
+      }
+      case 2 : {
+        //newStatus= newStatus | maskLow;
+        newStatus = (oldStatus | maskLow) & ~maskHigh;
+        std::cout << "\tFPGA" << std::endl;
+        break;
+      }
+      default: {
+        newStatus= oldStatus;
+        std::cout << "\tNo valid clock source selected" << std::endl;
+        break;
+      }
     }
-    case 1 : {
-      newStatus = newStatus | maskLow;
-      std::cout << "\tSi5435" << std::endl;
-      break;
-    }
-    case 2 : {
-      newStatus= newStatus | maskHigh;
-      std::cout << "\tFPGA" << std::endl;
-      break;
-    }
-    default: {
-      newStatus= oldStatus;
-      std::cout << "\tNo valid clock source selected" << std::endl;
-      break;
-    }
-    }
+    std::cout << (int)oldStatus << " " << (int)mask << " " << (int)maskLow << " " << (int)maskHigh << " " << (int)newStatus << std::endl;
     if(verbose){
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
-    m_IOexpander2.setIOReg(bank, newStatus, verbose);
+    m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
   void FmctluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){

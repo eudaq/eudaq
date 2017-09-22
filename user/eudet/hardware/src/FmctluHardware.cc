@@ -189,6 +189,17 @@ void PCA9539PW::setOutputs(unsigned int memAddr, unsigned char direction= 0xFF, 
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+2, (unsigned char)direction);
 }
 
+char PCA9539PW::getOutputs(unsigned int memAddr, bool verbose= false){
+  //Read the incoming values of the pins for one of the two 8-bit banks.
+  char res;
+  if ((memAddr != 0) && (memAddr != 1)){
+    std::cout << "PCA9539PW - ERROR: regN should be 0 or 1" << std::endl;
+    return -1;
+  }
+  res= m_IOXcore->ReadI2CChar(m_i2cAddr, (unsigned char)memAddr+2);
+  return res;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////

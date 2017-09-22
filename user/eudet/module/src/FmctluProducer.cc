@@ -146,13 +146,15 @@ void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
 
-  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  if (conf->Get("CONFCLOCK", true)){
+    m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  }
 
   // Enable HDMI connectors
-  m_tlu->enableHDMI(1, conf->Get("HDMI1_on", true), false);
-  m_tlu->enableHDMI(2, conf->Get("HDMI2_on", true), false);
-  m_tlu->enableHDMI(3, conf->Get("HDMI3_on", true), false);
-  m_tlu->enableHDMI(4, conf->Get("HDMI4_on", true), false);
+  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), false);
+  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), false);
+  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), false);
+  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), false);
 
   // Select clock to HDMI
   m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), false);
@@ -161,7 +163,7 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), false);
 
   //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), false);
+  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), true);
 
   // Set thresholds
   m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));

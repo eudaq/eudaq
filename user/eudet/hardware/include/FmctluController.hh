@@ -24,6 +24,7 @@ namespace tlu {
     FmctluController(const std::string & connectionFilename, const std::string & deviceName);
     ~FmctluController(){ResetEventsBuffer();};
 
+    void configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose);
     void enableHDMI(unsigned int dutN, bool enable, bool verbose);
     unsigned int PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
