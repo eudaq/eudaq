@@ -32,7 +32,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
 	
-	ls /afs/
+	ls /
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS
