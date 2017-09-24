@@ -86,18 +86,18 @@ matrix:
         env: OPTION=old GCC_VERSION=7 COMPILER=gcc
       - os: osx
         compiler: clang
-        osx_image: xcode8.2
+        osx_image: xcode8.3
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx           
         compiler: clang
-        osx_image: xcode8.2
+        osx_image: xcode8.3
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx          
-        osx_image: xcode8.2
+        osx_image: xcode8.3
         compiler: gcc
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc        
       - os: osx
-        osx_image: xcode8.2      
+        osx_image: xcode8.3
         compiler: gcc
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc     
 
