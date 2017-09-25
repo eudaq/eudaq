@@ -340,7 +340,7 @@ namespace tlu {
     // std::cout<<"FmctluController::ReceiveEvents"<<std::endl;
     uint32_t nevent = GetEventFifoFillLevel()/6;
     // std::cout<< "fifo "<<GetEventFifoFillLevel()<<std::endl;
-    if (nevent*6 == 0x7D00) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl;
+    if (nevent*6 == 0x3FEA) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl; //0x7D00 ?
     // if(0){ // no read
     if(nevent){
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*6);
@@ -414,9 +414,8 @@ namespace tlu {
         break;
       }
     }
-    std::cout << (int)oldStatus << " " << (int)mask << " " << (int)maskLow << " " << (int)maskHigh << " " << (int)newStatus << std::endl;
     if(verbose){
-      std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tNEW " << (int)newStatus << std::dec << std::endl;
+      std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMASK " <<  (int)mask << "\tMASK_L " << (int)maskLow << "\tMASK_H " << (int)maskHigh << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }

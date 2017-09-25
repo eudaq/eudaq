@@ -139,12 +139,15 @@ void FmctluProducer::DoInitialise(){
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
 
+  m_tlu->ResetTimestamp();
 
 }
 
 void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
+
+  m_tlu->SetTriggerVeto(1);
 
   if (conf->Get("CONFCLOCK", true)){
     m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
@@ -208,23 +211,27 @@ void FmctluProducer::DoConfigure() {
 
 void FmctluProducer::DoStartRun(){
   m_exit_of_run = false;
+  std::cout << "TLU START command received" << std::endl;
   m_thd_run = std::thread(&FmctluProducer::MainLoop, this);
 }
 
 void FmctluProducer::DoStopRun(){
   m_exit_of_run = true;
+  std::cout << "TLU STOP command received" << std::endl;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 
 void FmctluProducer::DoTerminate(){
   m_exit_of_run = true;
+  std::cout << "TLU TERMINATE command received" << std::endl;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 
 void FmctluProducer::DoReset(){
   m_exit_of_run = true;
+  std::cout << "TLU RESET command received" << std::endl;
   if(m_thd_run.joinable())
     m_thd_run.join();
 
