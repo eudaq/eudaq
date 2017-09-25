@@ -139,6 +139,7 @@ void FmctluProducer::DoInitialise(){
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
 
+  m_tlu->ResetTimestamp();
 
 }
 
@@ -146,13 +147,17 @@ void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
 
-  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  m_tlu->SetTriggerVeto(1);
+
+  if (conf->Get("CONFCLOCK", true)){
+    m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  }
 
   // Enable HDMI connectors
-  m_tlu->enableHDMI(1, conf->Get("HDMI1_on", true), false);
-  m_tlu->enableHDMI(2, conf->Get("HDMI2_on", true), false);
-  m_tlu->enableHDMI(3, conf->Get("HDMI3_on", true), false);
-  m_tlu->enableHDMI(4, conf->Get("HDMI4_on", true), false);
+  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), false);
+  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), false);
+  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), false);
+  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), false);
 
   // Select clock to HDMI
   m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), false);
@@ -161,7 +166,7 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), false);
 
   //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), false);
+  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), true);
 
   // Set thresholds
   m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
@@ -206,23 +211,27 @@ void FmctluProducer::DoConfigure() {
 
 void FmctluProducer::DoStartRun(){
   m_exit_of_run = false;
+  std::cout << "TLU START command received" << std::endl;
   m_thd_run = std::thread(&FmctluProducer::MainLoop, this);
 }
 
 void FmctluProducer::DoStopRun(){
   m_exit_of_run = true;
+  std::cout << "TLU STOP command received" << std::endl;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 
 void FmctluProducer::DoTerminate(){
   m_exit_of_run = true;
+  std::cout << "TLU TERMINATE command received" << std::endl;
   if(m_thd_run.joinable())
     m_thd_run.join();
 }
 
 void FmctluProducer::DoReset(){
   m_exit_of_run = true;
+  std::cout << "TLU RESET command received" << std::endl;
   if(m_thd_run.joinable())
     m_thd_run.join();
 
