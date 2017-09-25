@@ -56,7 +56,7 @@ void AD5665R::SetIntRef(bool intRef, bool verbose){
 void AD5665R::SetDACValue(unsigned char channel, uint32_t value) {
   unsigned char chrsToSend[2];
 
-  std::cout << "  Setting DAC channel " << (unsigned int)channel << " = " << value << std::endl;
+  std::cout << "  Setting DAC channel " << (unsigned int)channel << " to " << value << std::endl;
 
   if (( (unsigned int)channel < 0 ) || ( 7 < (unsigned int)channel )){
     std::cout << "\tAD5665R - ERROR: channel " << int(channel)  << " not in range 0-7" << std::endl;
@@ -187,6 +187,17 @@ void PCA9539PW::setOutputs(unsigned int memAddr, unsigned char direction= 0xFF, 
   }
   direction = direction & 0xFF;
   m_IOXcore->WriteI2CChar(m_i2cAddr, (unsigned char)memAddr+2, (unsigned char)direction);
+}
+
+char PCA9539PW::getOutputs(unsigned int memAddr, bool verbose= false){
+  //Read the incoming values of the pins for one of the two 8-bit banks.
+  char res;
+  if ((memAddr != 0) && (memAddr != 1)){
+    std::cout << "PCA9539PW - ERROR: regN should be 0 or 1" << std::endl;
+    return -1;
+  }
+  res= m_IOXcore->ReadI2CChar(m_i2cAddr, (unsigned char)memAddr+2);
+  return res;
 }
 
 

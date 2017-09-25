@@ -24,6 +24,7 @@ namespace tlu {
     FmctluController(const std::string & connectionFilename, const std::string & deviceName);
     ~FmctluController(){ResetEventsBuffer();};
 
+    void configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose);
     void enableHDMI(unsigned int dutN, bool enable, bool verbose);
     unsigned int PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
@@ -88,7 +89,7 @@ namespace tlu {
     };
 
     uint32_t I2C_enable(char EnclustraExpAddr);
-    uint64_t getSN();
+    uint32_t getSN();
 
     void SetI2CControl(int value) { SetWRegister("i2c_master.i2c_ctrl", value&0xff); };
     void SetI2CCommand(int value) { SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
@@ -119,17 +120,20 @@ namespace tlu {
     bool IsBufferEmpty(){return m_data.empty();};
     void ReceiveEvents();
     void ResetEventsBuffer();
+    void DefineConst(int nDUTs, int nTrigInputs);
     void DumpEventsBuffer();
 
     void enableClkLEMO(bool enable, bool verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
     void InitializeClkChip(const std::string & filename);
-    void InitializeDAC();
+    void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
     void SetDACValue(unsigned char channel, uint32_t value);
     void SetThresholdValue(unsigned char channel, float thresholdVoltage);
     void SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose);
+    void SetDACref(float vref);
+    float GetDACref(){return m_vref;};
 
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
@@ -163,12 +167,18 @@ namespace tlu {
 
     char m_DACaddr;
     char m_IDaddr;
-    uint64_t m_BoardID;
+    uint32_t m_BoardID=0;
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;
     PCA9539PW m_IOexpander1, m_IOexpander2;
     Si5345 m_zeClock;
+
+    // Define constants such as number of DUTs and trigger inputs
+    int m_nDUTs;
+    int m_nTrgIn;
+    // Define reference voltage for DACs
+    float m_vref;
 
     std::deque<fmctludata*> m_data;
 
@@ -176,7 +186,7 @@ namespace tlu {
 
   class fmctludata{
   public:
-    fmctludata(uint64_t wl, uint64_t wh):  // wl -> wh
+    fmctludata(uint64_t wl, uint64_t wh, uint64_t we):  // wl -> wh
       eventtype((wl>>60)&0xf),
       input0((wl>>59)&0x1),
       input1((wl>>58)&0x1),
@@ -190,7 +200,7 @@ namespace tlu {
       eventnumber(wh&0xffffffff){
     }
 
-    fmctludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3) // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3
+    fmctludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3, uint32_t w4, uint32_t w5) // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3
       :eventtype((w0>>28)&0xf),
        input0((w0>>27)&0x1),
        input1((w0>>26)&0x1),

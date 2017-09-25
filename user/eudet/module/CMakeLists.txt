@@ -15,7 +15,7 @@ if(NOT USER_BUILD_FMCTLU)
 endif()
 
 if(NOT EUDAQ_LCIO_LIBRARY)
-  list(REMOVE_ITEM MODULE_SRC src/TluRawEvent2LCEventConverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/TluRawEvent2LCEventCuseonverter.cc)
   list(REMOVE_ITEM MODULE_SRC src/NiRawEvent2LCEventConverter.cc)
   list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
 endif()
@@ -29,7 +29,7 @@ add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})
 target_link_libraries(${EUDAQ_MODULE} ${EUDAQ_CORE_LIBRARY}
   ${EUDAQ_LCIO_LIBRARY} ${LCIO_LIBRARIES} ${USER_HARDWARE_LIBRARY})
 
-if(USER_BUILD_MINITLU)
+if(USER_BUILD_FMCTLU)
   set_target_properties(${EUDAQ_MODULE} PROPERTIES INSTALL_RPATH
     ${EUDAQ_INSTALL_RPATH}:${CACTUS_LIBRARY_DIR})
 endif()
