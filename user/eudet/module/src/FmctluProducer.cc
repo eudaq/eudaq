@@ -49,6 +49,7 @@ void FmctluProducer::MainLoop(){
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
   m_tlu->SetTriggerVeto(0);
+  m_tlu->PulseT0();
   //while(true) {
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
@@ -64,7 +65,7 @@ void FmctluProducer::MainLoop(){
       ev->SetTriggerN(trigger_n);
 
       std::stringstream  triggerss;
-      triggerss<< data->input3 << data->input2 << data->input1 << data->input0;
+      triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
       ev->SetTag("trigger", triggerss.str());
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
@@ -112,13 +113,6 @@ void FmctluProducer::DoInitialise(){
   // Define constants
   m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
-  // Reset IPBus registers
-  m_tlu->ResetSerdes();
-  m_tlu->ResetCounters();
-  m_tlu->SetTriggerVeto(1);
-  m_tlu->ResetFIFO();
-  m_tlu->ResetEventsBuffer();
-
   //Import I2C addresses for hardware
   //Populate address list for I2C elements
   m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
@@ -138,6 +132,13 @@ void FmctluProducer::DoInitialise(){
   else{
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
+
+  // Reset IPBus registers
+  m_tlu->ResetSerdes();
+  m_tlu->ResetCounters();
+  m_tlu->SetTriggerVeto(1);
+  m_tlu->ResetFIFO();
+  m_tlu->ResetEventsBuffer();
 
   m_tlu->ResetTimestamp();
 
