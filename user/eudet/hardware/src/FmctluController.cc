@@ -341,8 +341,9 @@ namespace tlu {
   }
 
   void FmctluController::ReceiveEvents(){
+    bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
-    uint32_t fifoStatus= GetEventFifoCSR();
+    uint32_t fifoStatus= GetEventFifoCSR(verbose);
     if ((fifoStatus & 0x18)){
       std::cout << "WARNING! fmctlu hardware FIFO is full (CSR)" << std::endl;
     }
