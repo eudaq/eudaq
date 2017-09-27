@@ -126,7 +126,7 @@ namespace tlu {
     }
   }
 
-  uint32_t FmctluController::GetEventFifoCSR() {
+  uint32_t FmctluController::GetEventFifoCSR(bool verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
     res= ReadRRegister("eventBuffer.EventFifoCSR");
@@ -135,12 +135,11 @@ namespace tlu {
     alm_full= 0x4 & res;
     full= 0x8 & res;
     prog_full= 0x4 & res;
-    std::cout << "  FIFO status:" << std::endl;
-    if (empty){std::cout << "\tEMPTY" << std::endl;}
-    if (alm_empty){std::cout << "\tALMOST EMPTY (1 word in FIFO)" << std::endl;}
-    if (alm_full){std::cout << "\tALMOST FULL (1 word left)" << std::endl;}
-    if (full){std::cout << "\tFULL (8192 word)" << std::endl;}
-    if (prog_full){std::cout << "\tABOVE THRESHOLD (8181/8192)" << std::endl;}
+    if (empty && verbose){std::cout << "  TLU FIFO status:\n\tEMPTY" << std::endl;}
+    if (alm_empty && verbose){std::cout << "  TLU FIFO status:\nALMOST EMPTY (1 word in FIFO)" << std::endl;}
+    if (alm_full){std::cout << "  TLU FIFO status:\n\tALMOST FULL (1 word left)" << std::endl;}
+    if (full){std::cout <<   "  TLU FIFO status:\n\tFULL (8192 word)" << std::endl;}
+    if (prog_full){std::cout << "  TLU FIFO status:\n\tABOVE THRESHOLD (8181/8192)" << std::endl;}
     return res;
   }
 
@@ -315,6 +314,11 @@ namespace tlu {
     return packedbits;
   }
 
+  void FmctluController::PulseT0(){
+    SetWRegister("Shutter.PulseT0", 0x1);
+    std::cout << "  PULSE T0: done"  << std::endl;
+  }
+
   fmctludata* FmctluController::PopFrontEvent(){
     fmctludata *e = m_data.front();
     m_data.pop_front();
@@ -337,23 +341,26 @@ namespace tlu {
   }
 
   void FmctluController::ReceiveEvents(){
-    // std::cout<<"FmctluController::ReceiveEvents"<<std::endl;
+    bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
-    // std::cout<< "fifo "<<GetEventFifoFillLevel()<<std::endl;
+    uint32_t fifoStatus= GetEventFifoCSR(verbose);
+    if ((fifoStatus & 0x18)){
+      std::cout << "WARNING! fmctlu hardware FIFO is full (CSR)" << std::endl;
+    }
     if (nevent*6 == 0x3FEA) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl; //0x7D00 ?
     // if(0){ // no read
     if(nevent){
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*6);
       m_hw->dispatch();
       if(fifoContent.valid()) {
-	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/6<<std::endl;
-	if(fifoContent.size()%6 !=0){
-	  std::cout<<"receive error"<<std::endl;
-	}
-	for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
-	  m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
-	  std::cout<< *(m_data.back());
-	}
+        std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/6<<std::endl;
+	      if(fifoContent.size()%6 !=0){
+	         std::cout<<"receive error"<<std::endl;
+        }
+        for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
+          m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
+          std::cout<< *(m_data.back());
+        }
       }
     }
   }
@@ -484,6 +491,13 @@ namespace tlu {
     SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
   }
 
+  void FmctluController::SetTriggerVeto(int value){
+    uint32_t vetoStatus;
+    SetWRegister("triggerLogic.TriggerVetoW",value);
+    vetoStatus= GetTriggerVeto();
+    std::cout << "  TRIGGER VETO SET TO: " << vetoStatus << std::endl;
+  }
+
   void FmctluController::SetWRegister(const std::string & name, int value){
     try {
       m_hw->getNode(name).write(static_cast< uint32_t >(value));
@@ -524,9 +538,12 @@ namespace tlu {
 
 
   std::ostream &operator<<(std::ostream &s, fmctludata &d) {
-    s << "eventnumber: " << d.eventnumber << " type: " << int(d.eventtype) <<" timestamp: 0x" <<std::hex<< d.timestamp <<std::dec<<std::endl
-      <<" input0: " << int(d.input0) << " input1: " << int(d.input1) << " input2: " << int(d.input2) << " input3: " << int(d.input3) <<std::endl
-      <<" sc0: " << int(d.sc0) << " sc1: "  << int(d.sc1) << " sc2: "  << int(d.sc2) << " sc3: " << int(d.sc3) <<std::endl;
+    s << "__________________________________________________________________________" << std::endl
+      << "EVENT NUMBER: " << d.eventnumber << " \t TYPE: " << int(d.eventtype) <<" \t TIMESTAMP COARSE: 0x" <<std::hex<< d.timestamp << std::dec<<std::endl
+      << " TRIG. INPUT 0: " << int(d.input0) << " \t TRIG. INPUT 1: " << int(d.input1) << " \t TRIG. INPUT 2: " << int(d.input2) << std::endl
+      << " TRIG. INPUT 3: " << int(d.input3) << " \t TRIG. INPUT 4: " << int(d.input4) << " \t TRIG. INPUT 5: " << int(d.input5) <<std::endl
+      << " TS FINE 0: " << int(d.sc0) << " \t TS FINE 1: "  << int(d.sc1) << " \t TS FINE 2: "  << int(d.sc2)  << std::endl
+      << " TS FINE 3: " << int(d.sc3) << " \t TS FINE 4: "  << int(d.sc4) << " \t TS FINE 5: "  << int(d.sc5)  <<std::endl;
     return s;
   }
 

@@ -49,6 +49,7 @@ void FmctluProducer::MainLoop(){
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
   m_tlu->SetTriggerVeto(0);
+  m_tlu->PulseT0();
   //while(true) {
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
@@ -64,7 +65,7 @@ void FmctluProducer::MainLoop(){
       ev->SetTriggerN(trigger_n);
 
       std::stringstream  triggerss;
-      triggerss<< data->input3 << data->input2 << data->input1 << data->input0;
+      triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
       ev->SetTag("trigger", triggerss.str());
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
@@ -112,13 +113,6 @@ void FmctluProducer::DoInitialise(){
   // Define constants
   m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
-  // Reset IPBus registers
-  m_tlu->ResetSerdes();
-  m_tlu->ResetCounters();
-  m_tlu->SetTriggerVeto(1);
-  m_tlu->ResetFIFO();
-  m_tlu->ResetEventsBuffer();
-
   //Import I2C addresses for hardware
   //Populate address list for I2C elements
   m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
@@ -139,6 +133,13 @@ void FmctluProducer::DoInitialise(){
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
 
+  // Reset IPBus registers
+  m_tlu->ResetSerdes();
+  m_tlu->ResetCounters();
+  m_tlu->SetTriggerVeto(1);
+  m_tlu->ResetFIFO();
+  m_tlu->ResetEventsBuffer();
+
   m_tlu->ResetTimestamp();
 
 }
@@ -147,6 +148,9 @@ void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
 
+  unsigned int verbose= conf->Get("verbose", 0);
+  std::cout << "VERBOSE SET TO: " << verbose << std::endl;
+
   m_tlu->SetTriggerVeto(1);
 
   if (conf->Get("CONFCLOCK", true)){
@@ -154,19 +158,19 @@ void FmctluProducer::DoConfigure() {
   }
 
   // Enable HDMI connectors
-  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), false);
-  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), false);
-  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), false);
-  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), false);
+  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), verbose);
+  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), verbose);
+  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), verbose);
+  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), verbose);
 
   // Select clock to HDMI
-  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), false);
-  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), false);
-  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), false);
-  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), false);
+  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), verbose);
 
   //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), true);
+  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), verbose);
 
   // Set thresholds
   m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
