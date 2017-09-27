@@ -148,6 +148,9 @@ void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
   std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
 
+  unsigned int verbose= conf->Get("verbose", 0);
+  std::cout << "VERBOSE SET TO: " << verbose << std::endl;
+
   m_tlu->SetTriggerVeto(1);
 
   if (conf->Get("CONFCLOCK", true)){
@@ -155,19 +158,19 @@ void FmctluProducer::DoConfigure() {
   }
 
   // Enable HDMI connectors
-  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), false);
-  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), false);
-  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), false);
-  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), false);
+  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), verbose);
+  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), verbose);
+  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), verbose);
+  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), verbose);
 
   // Select clock to HDMI
-  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), false);
-  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), false);
-  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), false);
-  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), false);
+  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), verbose);
 
   //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), true);
+  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), verbose);
 
   // Set thresholds
   m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
