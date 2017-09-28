@@ -135,21 +135,12 @@ namespace eudaq {
       return m_blocks.size();
     }
 
-    /// Append data to a block as std::vector
-    // template <typename T>
-    // void AppendBlock(size_t index, const std::vector<T> &data) {
-    //   auto &&src = make_vector(data);
-    //   auto &&dst = m_blocks[index];
-    //   dst.insert(dst.end(), src.begin(), src.end());
-    // }
-
-    // /// Append data to a block as array with given size
-    // template <typename T>
-    // void AppendBlock(size_t index, const T *data, size_t bytes) {
-    //   auto &&src = make_vector(data, bytes);
-    //   auto &&dst = m_blocks[index];
-    //   dst.insert(dst.end(), src.begin(), src.end());
-    // }
+    template <typename T>
+    void AppendBlock(size_t index, const std::vector<T> &data) {
+      auto &&src = make_vector(data);
+      auto &&dst = m_blocks[index];
+      dst.insert(dst.end(), src.begin(), src.end());
+    }
 
     //TODO: remove, clearn up
     std::string GetTag(const std::string &name, const char *def) const {return GetTag(name, std::string(def));}
