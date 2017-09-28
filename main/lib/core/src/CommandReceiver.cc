@@ -130,12 +130,18 @@ namespace eudaq {
         if(m_name != "")
           section += "." + m_name;
 	m_conf_init = std::make_shared<Configuration>(param, section);
+	std::stringstream ss;
+	m_conf_init->Print(ss, 4);
+	EUDAQ_INFO("Receive an INI section\n"+ ss.str());
         OnInitialise();
       } else if (cmd == "CONFIG"){
 	std::string section = m_type;
         if(m_name != "")
           section += "." + m_name;
 	m_conf = std::make_shared<Configuration>(param, section);
+	std::stringstream ss;
+	m_conf->Print(ss, 4);
+	EUDAQ_INFO("Receive a CONF section\n"+ ss.str());
         OnConfigure();
       } else if (cmd == "START") {
 	m_run_number = from_string(param, 0);

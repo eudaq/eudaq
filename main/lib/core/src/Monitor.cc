@@ -19,11 +19,13 @@ namespace eudaq {
     m_exit = false;
   }
   
-  void Monitor::OnInitialise(){    
+  void Monitor::OnInitialise(){
+    EUDAQ_INFO(GetFullName() + " is to be initialised...");
     auto conf = GetConfiguration();
     try{
       DoInitialise();
       SetStatus(Status::STATE_UNCONF, "Initialized");
+      EUDAQ_INFO(GetFullName() + " is initialised.");
     }catch (const Exception &e) {
       std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -32,11 +34,13 @@ namespace eudaq {
   }
   
   void Monitor::OnConfigure(){
+    EUDAQ_INFO(GetFullName() + " is to be configured...");
     auto conf = GetConfiguration();
     try {
       SetStatus(Status::STATE_UNCONF, "Configuring");
       DoConfigure();
       SetStatus(Status::STATE_CONF, "Configured");
+      EUDAQ_INFO(GetFullName() + " is configured.");
     }catch (const Exception &e) {
       std::string msg = "Error when configuring by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -45,13 +49,14 @@ namespace eudaq {
   }
     
   void Monitor::OnStartRun(){
-    EUDAQ_INFO("Preparing for run " + std::to_string(GetRunNumber()));
+    EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be started...");
     try {
       if (!m_dataserver) {
         EUDAQ_THROW("You must configure before starting a run");
       }
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
+      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
     } catch (const Exception &e) {
       std::string msg = "Error preparing for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -60,10 +65,11 @@ namespace eudaq {
   }
 
   void Monitor::OnStopRun(){
-    EUDAQ_INFO("End of run ");
+    EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be stopped...");
     try {
       DoStopRun();
       SetStatus(Status::STATE_CONF, "Stopped");
+      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -72,10 +78,11 @@ namespace eudaq {
   }
 
   void Monitor::OnReset(){
+    EUDAQ_INFO(GetFullName() + " is to be reset...");
     try{
-      EUDAQ_INFO("Resetting");
       DoReset();
       SetStatus(Status::STATE_UNINIT, "Reset");
+      EUDAQ_INFO(GetFullName() + " is reset.");
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Reset Error");
@@ -86,10 +93,11 @@ namespace eudaq {
   }
   
   void Monitor::OnTerminate(){
-    std::cout << "Terminating" << std::endl;
+    EUDAQ_INFO(GetFullName() + " is to be terminated...");
     CloseMonitor();
     DoTerminate();
     SetStatus(Status::STATE_UNINIT, "Terminated");
+    EUDAQ_INFO(GetFullName() + " is terminated.");
   }
     
   void Monitor::OnStatus(){

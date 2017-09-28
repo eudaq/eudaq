@@ -15,6 +15,7 @@ namespace eudaq {
   }
 
   void Producer::OnInitialise(){
+    EUDAQ_INFO(GetFullName() + " is to be initialised...");
     try{
       if(!IsStatus(Status::STATE_UNINIT))
 	EUDAQ_THROW("OnInitialise can not be called unless in STATE_UNINIT");
@@ -23,8 +24,8 @@ namespace eudaq {
 	EUDAQ_THROW("No Configuration Section for OnInitialise");
       EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
       DoInitialise();
-      EUDAQ_INFO("Initialized");
       SetStatus(Status::STATE_UNCONF, "Initialized");
+      EUDAQ_INFO(GetFullName() + " is initialised.");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Init Error");
@@ -35,6 +36,7 @@ namespace eudaq {
   }
   
   void Producer::OnConfigure(){
+    EUDAQ_INFO(GetFullName() + " is to be configured...");
     try{
       if(!IsStatus(Status::STATE_UNCONF)&& !IsStatus(Status::STATE_CONF))
 	EUDAQ_THROW("OnConfigure can not be called unless in STATE_UNCONF or STATE_CONF");
@@ -42,11 +44,10 @@ namespace eudaq {
       auto conf = GetConfiguration();
       if(!conf)
 	EUDAQ_THROW("No Configuration Section for OnConfigure");
-      EUDAQ_INFO("Configuring ...("+ conf->Name()+")");
       m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
       DoConfigure();
-      EUDAQ_INFO("Configured");
       SetStatus(Status::STATE_CONF, "Configured");
+      EUDAQ_INFO(GetFullName() + " is configured.");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Configuration Error");
@@ -57,6 +58,7 @@ namespace eudaq {
   }
   
   void Producer::OnStartRun(){
+    EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be started...");
     try{
       if(!IsStatus(Status::STATE_CONF))
 	EUDAQ_THROW("OnStartRun can not be called unless in STATE_CONF");
@@ -78,6 +80,7 @@ namespace eudaq {
       SetStatusTag("EventN", std::to_string(m_evt_c));      
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
+      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Start Error");
@@ -88,6 +91,7 @@ namespace eudaq {
   }
 
   void Producer::OnStopRun(){
+    EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be stopped...");
     try{
       if(!IsStatus(Status::STATE_RUNNING))
 	EUDAQ_THROW("OnStopRun can not be called unless in STATE_RUNNING");
@@ -95,6 +99,7 @@ namespace eudaq {
       DoStopRun();
       m_senders.clear();
       SetStatus(Status::STATE_CONF, "Stopped");
+      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Stop Error");
@@ -105,11 +110,12 @@ namespace eudaq {
   }
 
   void Producer::OnReset(){
+    EUDAQ_INFO(GetFullName() + " is to be reset...");
     try{
-      EUDAQ_INFO("Resetting");
       DoReset();
       m_senders.clear();
       SetStatus(Status::STATE_UNINIT, "Reset");
+      EUDAQ_INFO(GetFullName() + " is reset.");
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Reset Error");
@@ -120,10 +126,11 @@ namespace eudaq {
   }
   
   void Producer::OnTerminate(){
+    EUDAQ_INFO(GetFullName() + " is to be terminated...");
     try{
-      EUDAQ_INFO("Terminating");
       DoTerminate();
       SetStatus(Status::STATE_UNINIT, "Terminated");
+      EUDAQ_INFO(GetFullName() + " is terminated.");
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Terminate Error");
@@ -150,7 +157,7 @@ namespace eudaq {
     ev->SetRunN(GetRunNumber());
     ev->SetEventN(m_evt_c);
     m_evt_c ++;
-    ev->SetStreamN(m_pdc_n);
+    ev->SetDeviceN(m_pdc_n);
     for(auto &e: m_senders){
       if(e.second)
 	e.second->SendEvent(*(ev.get()));
