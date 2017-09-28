@@ -132,8 +132,7 @@ void RootMonitor::setReduce(const unsigned int red) {
   }
 }
 
-void RootMonitor::DoReceive(eudaq::EventUP evup) {
-  eudaq::EventSP evsp = std::move(evup);
+void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   auto stdev = std::dynamic_pointer_cast<eudaq::StandardEvent>(evsp);
   if(!stdev){
     stdev = eudaq::StandardEvent::MakeShared();

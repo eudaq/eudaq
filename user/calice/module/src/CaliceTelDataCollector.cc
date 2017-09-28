@@ -14,7 +14,7 @@ public:
   void DoConfigure() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("CaliceTelDataCollector");
 private:  
@@ -99,7 +99,7 @@ void CaliceTelDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::cout<<"disconnecting "<<idx<<std::endl;
 }
 
-void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP ev){
   if(ev->IsFlagFake()){
     EUDAQ_WARN("Receive event fake, dropped");
     return;
@@ -125,7 +125,7 @@ void CaliceTelDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP 
       uint32_t tgn = ev->GetTriggerN() + m_shift_tgn_cal;
       ev->SetTriggerN(tgn);
     }
-    m_que_cal.push_back(std::move(ev));
+    m_que_cal.push_back(ev);
   }
   else if(con_name == "Producer.caliceahcalbifProducer"){
     if(m_que_bif.size() >= 10000){
