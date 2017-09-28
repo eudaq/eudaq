@@ -4,7 +4,7 @@ class DirectSaveDataCollector :public eudaq::DataCollector{
 public:
   using eudaq::DataCollector::DataCollector;
   void DoConfigure() override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
   static const uint32_t m_id_factory = eudaq::cstr2hash("DirectSaveDataCollector");
 
 private:
@@ -26,8 +26,8 @@ void DirectSaveDataCollector::DoConfigure(){
   }
 }
   
-void DirectSaveDataCollector::DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev){
+void DirectSaveDataCollector::DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev){
   if(!m_noprint)
     ev->Print(std::cout);
-  WriteEvent(std::move(ev));
+  WriteEvent(ev);
 }

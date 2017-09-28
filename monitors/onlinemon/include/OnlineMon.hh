@@ -94,7 +94,7 @@ public:
 
   void DoStartRun() override;
   void DoStopRun() override;
-  void DoReceive(eudaq::EventUP) override;
+  void DoReceive(eudaq::EventSP) override;
   
   void setWriteRoot(const bool write) { _writeRoot = write; }
   void autoReset(const bool reset);

@@ -13,7 +13,7 @@ public:
   void DoConfigure() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("CaliceTsDataCollector");
 private:
@@ -74,7 +74,7 @@ void CaliceTsDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   std::cout<<"disconnecting "<<idx<<std::endl;
 }
 
-void CaliceTsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+void CaliceTsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP ev){
   if(ev->IsFlagFake()){
     EUDAQ_WARN("Receive event fake");
     return;

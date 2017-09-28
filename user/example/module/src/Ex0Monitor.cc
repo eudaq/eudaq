@@ -18,7 +18,7 @@ public:
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-  void DoReceive(eudaq::EventUP ev) override;
+  void DoReceive(eudaq::EventSP ev) override;
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Monitor");
   
@@ -53,7 +53,6 @@ void Ex0Monitor::DoConfigure(){
 void Ex0Monitor::DoStartRun(){
 }
 
-
 void Ex0Monitor::DoStopRun(){
 }
 
@@ -63,15 +62,14 @@ void Ex0Monitor::DoReset(){
 void Ex0Monitor::DoTerminate(){
 }
 
-void Ex0Monitor::DoReceive(eudaq::EventUP ev){
+void Ex0Monitor::DoReceive(eudaq::EventSP ev){
   if(m_en_print)
     ev->Print(std::cout);
   if(m_en_std_converter){
-    eudaq::EventSP evsp = std::move(ev);
-    auto stdev = std::dynamic_pointer_cast<eudaq::StandardEvent>(evsp);
+    auto stdev = std::dynamic_pointer_cast<eudaq::StandardEvent>(ev);
     if(!stdev){
       stdev = eudaq::StandardEvent::MakeShared();
-      eudaq::StdEventConverter::Convert(evsp, stdev, nullptr); //no conf
+      eudaq::StdEventConverter::Convert(ev, stdev, nullptr); //no conf
       if(m_en_std_print)
 	stdev->Print(std::cout);
     }

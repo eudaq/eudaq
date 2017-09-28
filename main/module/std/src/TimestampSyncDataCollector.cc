@@ -13,7 +13,7 @@ namespace eudaq {
     void DoStartRun() override;
     void DoConnect(ConnectionSPC id /*id*/) override;
     void DoDisconnect(ConnectionSPC id /*id*/) override;
-    void DoReceive(ConnectionSPC id, EventUP ev) override;
+    void DoReceive(ConnectionSPC id, EventSP ev) override;
     
     static const uint32_t m_id_factory = eudaq::cstr2hash("TimestampSyncDataCollector");
   private:
@@ -69,10 +69,10 @@ namespace eudaq {
     m_event_ready.erase(pdc_name);
   }
   
-  void TimestampSyncDataCollector::DoReceive(ConnectionSPC id, EventUP ev){
+  void TimestampSyncDataCollector::DoReceive(ConnectionSPC id, EventSP ev){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
-    m_que_event[pdc_name].push_back(std::move(ev));
+    m_que_event[pdc_name].push_back(ev);
     uint64_t ts_ev_beg =  ev->GetTimestampBegin();
     uint64_t ts_ev_end =  ev->GetTimestampEnd();
 

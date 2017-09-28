@@ -12,7 +12,7 @@ namespace eudaq {
     void DoStartRun() override;
     void DoConnect(ConnectionSPC /*id*/) override;
     void DoDisconnect(ConnectionSPC /*id*/) override;
-    void DoReceive(ConnectionSPC id, EventUP ev) override;
+    void DoReceive(ConnectionSPC id, EventSP ev) override;
     static const uint32_t m_id_factory = eudaq::cstr2hash("EventnumberSyncDataCollector");
   private:
     std::map<std::string, std::deque<EventSPC>> m_que_event;
@@ -50,7 +50,7 @@ namespace eudaq {
     m_que_event.erase(pdc_name);
   }
   
-  void EventnumberSyncDataCollector::DoReceive(ConnectionSPC id, EventUP ev){
+  void EventnumberSyncDataCollector::DoReceive(ConnectionSPC id, EventSP ev){
     std::unique_lock<std::mutex> lk(m_mtx_map);
     std::string pdc_name = id->GetName();
     m_que_event[pdc_name].push_back(std::move(ev));
