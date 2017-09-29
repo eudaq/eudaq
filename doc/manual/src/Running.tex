@@ -143,6 +143,8 @@ After executing the above command, a new GUI window, as shown in \autoref{fig:Lo
 # Currently, all LogCollectors have a hardcoded runtime name: log
 EULOG_GUI_LOG_FILE_PATTERN = myexample_$12D.log
 # the $12D will be converted a data/time string with 12 digits. 
+# the file path is allowed add as prefix in this file name pattern,
+# otherwise the log file is saved in working folder.
 \end{listing}
 
 \paragraph{Configuration Section}
@@ -195,6 +197,8 @@ EUDAQ_FW_PATTERN=$12D_run$6R$X
 # the $12D will be converted a data/time string with 12 digits.
 # the $6R will be converted a run number string with 6 digits.
 # the $X will be converted the suffix name of data file.
+# the file path is allowed add as a prefix to this name pattern,
+# otherwise the data file is saved in working folder.
 \end{listing}
 
 \subsubsection{Producer}
@@ -234,12 +238,16 @@ EX0_DEV_LOCK_PATH = /tmp/mydev1.lock
 \begin{listing}[conf]
 [Producer.my_pd0]
 EUDAQ_DC=my_dc
+# send events to the producer with runtime name my_dc.
+# it is allowed to have a configure line as "EUDAQ_DC=his_dc,her_dc"
+# to make the producer send events to muiltiple DataCollectors.  
 EX0_PLANE_ID=0
 EX0_DURATION_BUSY_MS=1
 EX0_ENABLE_TRIGERNUMBER=1
 
 [Producer.my_pd1]
 EUDAQ_DC=my_dc
+# send events to the producer with runtime name my_dc.
 EX0_PLANE_ID=1
 EX0_DURATION_BUSY_MS=1
 EX0_ENABLE_TRIGERNUMBER=1
