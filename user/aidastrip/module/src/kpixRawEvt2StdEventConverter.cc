@@ -23,14 +23,45 @@ bool kpixRawEvt2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::StdEven
     
   auto rawev = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);
   size_t nblocks= rawev->NumBlocks();
+
+  std::cout<< "[dev] nblocks =  " << nblocks << std::endl;
+    
   auto block_n_list = rawev->GetBlockNumList();
+  
+  Data* data;
+  KpixEvent event;
+  
   for(auto &block_n: block_n_list){
+    
+    std::cout<< "[dev] block id listerning ==> " << block_n <<std::endl; ;
+    
     std::vector<uint8_t> block = rawev->GetBlock(block_n);
+
     if (block.size()==0) EUDAQ_THROW("empty data");
     else {
-      std::cout<<"[dev] # of blocks = " << block.size() << "\n";
+     
+      size_t size_of_kpix = block.size()/sizeof(uint32_t);
+      std::cout<<"[dev] # of block.size()/sizeof(uint32_t) = " << block.size()/sizeof(uint32_t) << "\n"
+	       <<"\t sizeof(uint32_t) = " << sizeof(uint32_t) <<"\n"
+	       <<"\t size_of_kpixDT = "<< size_of_kpix << std::endl;
+
+
+      uint32_t *kpixEvt = nullptr;
+      if (size_of_kpix)
+	kpixEvt = reinterpret_cast<uint32_t *>(block.data());
+
+      event.copy(kpixEvt, size_of_kpix);
+      
+      std::cout<<"\t Uint32_t  = " << kpixEvt <<"\n"
+	       <<"\t evtNum    = " << kpixEvt[0] <<std::endl;
+
+      std::cout <<"\t kpixEvent.evtNum = " << event.eventNumber()<<std::endl;
+      
+      /* read kpix data */
+      //data->copy(kpixEvt, size_of_kpix);
       
     }
+    
     /*    if(block.size() < 2)
       EUDAQ_THROW("Unknown data");
     uint8_t x_pixel = block[0];
