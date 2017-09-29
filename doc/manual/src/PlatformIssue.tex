@@ -2,44 +2,27 @@
 \section{Platform Dependent Issues/ Solutions}
 \label{app:platform}
 \subsection{Linux}
-TODO
+\subsubsection{GCC Compiler}
+Normally, CMake takes the default GCC Compiler shipped by Linux distrubtion, even if alternative GCC tool suits exist and have prior in binary search paths.
+To use an alternative GCC, it is necessary to set some CMake parameters which explicitly locate the paths of GCC binaries. Those parameters are CMAKE\_CXX\_COMPILER, CMAKE\_C\_COMPILER.
+\subsubsection{LLVM/Clang}
+LLVM/Clang Compiler has not been tested on Linux platform. 
+
 \subsection{MacOS}
-TODO
+\subsubsection{Qt}
+Install Qt5 or later, e.g. by using MacPorts (http://www.macports.org/):
+\begin{listing}[mybash]
+sudo port install qt5-mac-devel
+\end{listing}
+
+
 \subsection{Windows}
-\subsubsection{MSBUILD}
-
-This is the program that processes the project (solution) files and feeds it to the compiler and linker. If you have a working project file it is more or less straight forward. It has a very simple syntax:
-
-      \begin{listing}[mybash]
-$[MSBUILD.exe]$ MyApp.sln /t:Rebuild /p:Configuration=Release
+\subsubsection{Release/Debug Version}
+On Windows/Visual Studio, CMake option CMAKE\_BUILD\_TYPE does not really affect the build type. It is possible to change the default build type Debug to Release by the build time option ``--config Release''.
+\begin{listing}[mybash]
+cmake --build {source_folder}/build --target install --config Release
 \end{listing}
 
-myApp.sln is the file you want to process. The parameter
-\texttt{/target} (short \texttt{/t}) tells msbuild what to do, in this
-case rebuild. You have all the options you need like: clean, build and
-rebuild. You can also specify your own targets. With the ``parameter
-property'' switch you can change the properties of your Project. If you want to compile EUDAQ, you go in the build folder where the solution (sln) file is and type:
+\subsubsection{Qt}
+In case CMake can not find Qt5 installation at config time, set CMake option Qt5Widgets\_DIR to the folder which contaion file Qt5WidgetsConfig.cmake .
 
-      \begin{listing}[mybash]
-$[MSBUILD.exe]$ EUDAQ.sln /p:Configuration=Release 
-\end{listing}
-
-One thing one has to keep in mind is that there are some default
-configurations. The default is a debug build for x86. If you want a
-different build then you need to specify it in the command line. And
-one thing you want to have is a release build! With the /p switch you
-can overwrite properties like in this case the configuration. But you
-could also overwrite the compiler version it should use. For example, if you
-want to use VS 2013 then you have to specify it by writing:
-
-      \begin{listing}[mybash]
-$[MSBUILD.exe]$ EUDAQ.sln /p:PlatformToolset=v120 /p:Configuration=Release
-\end{listing}
-
-But be careful when changing the compiler settings. It is possible that some then link against an incompatible version of your external libraries. 
-
-\subsubsection{Known Problems}
-
-\begin{itemize}
-\item The environment variables are pulled in as properties therefore they can be overwritten in the project file or in the ``vcxproj.user'' file. So if for example your QT Project does not compile and keeps complaining about not finding the correct directory make sure you are not overwriting the QTDIR environment Variable with a Property. 
-\end{itemize}

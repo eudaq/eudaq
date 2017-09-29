@@ -16,44 +16,31 @@ env:
    global:
       - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.06.08.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT6_FILENAME_MAC=root_v6.06.08.macosx64-10.11-clang73.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.10.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.10.04.macosx64-10.10-clang70.tar.gz
       
-      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.7
-      - CMAKE_FILENAME_LINUX=cmake-3.7.1-Linux-x86_64.tar.gz
-      - CMAKE_FILENAME_MAC=cmake-3.7.1-Darwin-x86_64.tar.gz
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.9
+      - CMAKE_FILENAME_LINUX=cmake-3.9.2-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.9.2-Darwin-x86_64.tar.gz
             
-      - PYTHON_VERSION_MODERN=3.5.1
-      - PYTHON_VERSION_OLD=2.7.10
+      - PYTHON_VERSION_MODERN=3.6.2
+      - PYTHON_VERSION_OLD=2.7.14
       
-      - BUILD_AHCAL=OFF
-      - BUILD_BIFAHCAL=OFF
-      - BUILD_TESTING=OFF
-      - BUILD_WITH_QT4=OFF
-      - BUILD_allproducer=OFF
-      - BUILD_altro=OFF
-      - BUILD_altroUSB=OFF
-      - BUILD_cmspixel=OFF
-      - BUILD_depfet=OFF
-      - BUILD_fortis=OFF
-      - BUILD_gui=ON
-      - BUILD_main=ON
-      - BUILD_manual=OFF
-      - BUILD_mimoroma=OFF
-      - BUILD_miniTLU=OFF
-      - BUILD_ni=OFF
-      - BUILD_nreader=OFF
-      - BUILD_offlinemon=OFF
-      - BUILD_onlinemon=ON
-      - BUILD_palpidefs=OFF
-      - BUILD_pixelmanproducer=OFF
-      - BUILD_python=OFF
-      - BUILD_root=OFF
-      - BUILD_rpi_controller=OFF
-      - BUILD_taki=OFF
-      - BUILD_timepixdummy=OFF
-      - BUILD_tlu=OFF
-      - BUILD_user_telescope=ON
+      - CMAKE_BUILD_TYPE=RelWithDebInfo
+      - EUDAQ_BUILD_EXECUTABLE=ON
+      - EUDAQ_BUILD_GUI=ON
+      - EUDAQ_BUILD_MANUAL=OFF
+      - EUDAQ_BUILD_STDEVENT_MONITOR=ON
+      - EUDAQ_EXTRA_BUILD_NREADER=OFF
+      - EUDAQ_LIBRARY_BUILD_LCIO=ON
+      - EUDAQ_MODULE_BUILD_STD=ON
+      - USER_CALICE_BUILD=OFF
+      - USER_EUDET_BUILD=ON
+      - USER_EUDET_BUILD_NI=ON
+      - USER_EUDET_BUILD_TLU=ON
+      - USER_EXAMPLE_BUILD=ON
+      - USER_ITKSTRIP_BUILD=ON
+      - USER_ITKSTRIP_BUILD_ITSROOT=ON
 
       
 # possible options:
@@ -90,27 +77,27 @@ before_cache:
 matrix:      
    include:   
       - os: linux    
-        env: OPTION=modern LLVM_VERSION=3.9.0 COMPILER=clang  
+        env: OPTION=modern LLVM_VERSION=5.0 COMPILER=clang  
       - os: linux  
-        env: OPTION=old  LLVM_VERSION=3.9.0 COMPILER=clang 
+        env: OPTION=old  LLVM_VERSION=5.0 COMPILER=clang 
       - os: linux
-        env: OPTION=modern BUILD_manual=ON GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=7 COMPILER=gcc
       - os: linux            
-        env: OPTION=old GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=old GCC_VERSION=7 COMPILER=gcc
       - os: osx
         compiler: clang
-        osx_image: xcode8.2
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
+        osx_image: xcode8.3
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx           
         compiler: clang
-        osx_image: xcode8.2
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
+        osx_image: xcode8.3
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx          
-        osx_image: xcode8.2
+        osx_image: xcode8.3
         compiler: gcc
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc        
       - os: osx
-        osx_image: xcode8.2      
+        osx_image: xcode8.3
         compiler: gcc
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc     
 
@@ -138,10 +125,12 @@ before_script:
   - echo $LD_LIBRARY_PATH
 
 script:
-  - cd build  
-  - cmake -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_AHCAL=$BUILD_AHCAL -DBUILD_BIFAHCAL=$BUILD_BIFAHCAL -DBUILD_TESTING=$BUILD_TESTING -DBUILD_WITH_QT4=$BUILD_WITH_QT4 -DBUILD_allproducer=$BUILD_allproducer -DBUILD_altro=$BUILD_altro -DBUILD_altroUSB=$BUILD_altroUSB -DBUILD_cmspixel=$BUILD_cmspixel -DBUILD_depfet=$BUILD_depfet -DBUILD_fortis=$BUILD_fortis -DBUILD_gui=$BUILD_gui -DBUILD_main=$BUILD_main -DBUILD_manual=$BUILD_manual -DBUILD_mimoroma=$BUILD_mimoroma -DBUILD_miniTLU=$BUILD_miniTLU -DBUILD_ni=$BUILD_ni -DBUILD_nreader=$BUILD_nreader -DBUILD_offlinemon=$BUILD_offlinemon -DBUILD_onlinemon=$BUILD_onlinemon -DBUILD_palpidefs=$BUILD_palpidefs $PALPIDEFS_SPECIAL_PARAMETERS -DBUILD_pixelmanproducer=$BUILD_pixelmanproducer -DBUILD_python=$BUILD_python -DBUILD_root=$BUILD_root -DBUILD_rpi-controller=$BUILD_rpi_controller -DBUILD_taki=$BUILD_taki -DBUILD_timepixdummy=$BUILD_timepixdummy -DBUILD_tlu=$BUILD_tlu -DUSER_TELESCOPE=$BUILD_user_telescope ..
+  - mkdir $HOME/eudaq_build_folder
+  - mkdir $HOME/eudaq_installation_folder  
+  - cd $HOME/eudaq_build_folder 
+  - echo -DEUDAQ_INSTALL_PREFIX=$HOME/eudaq_installation_folder -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DEUDAQ_BUILD_EXECUTABLE=$EUDAQ_BUILD_EXECUTABLE -DEUDAQ_BUILD_GUI=$EUDAQ_BUILD_GUI -DEUDAQ_BUILD_MANUAL=$EUDAQ_BUILD_MANUAL -DEUDAQ_BUILD_STDEVENT_MONITOR=$EUDAQ_BUILD_STDEVENT_MONITOR -DEUDAQ_EXTRA_BUILD_NREADER=$EUDAQ_EXTRA_BUILD_NREADER -DEUDAQ_LIBRARY_BUILD_LCIO=$EUDAQ_LIBRARY_BUILD_LCIO -DEUDAQ_MODULE_BUILD_STD=$EUDAQ_MODULE_BUILD_STD -DUSER_CALICE_BUILD=$USER_CALICE_BUILD -DUSER_EUDET_BUILD=$USER_EUDET_BUILD -DUSER_EUDET_BUILD_NI=$USER_EUDET_BUILD_NI -DUSER_EUDET_BUILD_TLU=$USER_EUDET_BUILD_TLU -DUSER_EXAMPLE_BUILD=$USER_EXAMPLE_BUILD -DUSER_ITKSTRIP_BUILD=$USER_ITKSTRIP_BUILD -DUSER_ITKSTRIP_BUILD_ITSROOT=$USER_ITKSTRIP_BUILD_ITSROOT  $TRAVIS_BUILD_DIR
+  - cmake -DEUDAQ_INSTALL_PREFIX=$HOME/eudaq_installation_folder -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE -DEUDAQ_BUILD_EXECUTABLE=$EUDAQ_BUILD_EXECUTABLE -DEUDAQ_BUILD_GUI=$EUDAQ_BUILD_GUI -DEUDAQ_BUILD_MANUAL=$EUDAQ_BUILD_MANUAL -DEUDAQ_BUILD_STDEVENT_MONITOR=$EUDAQ_BUILD_STDEVENT_MONITOR -DEUDAQ_EXTRA_BUILD_NREADER=$EUDAQ_EXTRA_BUILD_NREADER -DEUDAQ_LIBRARY_BUILD_LCIO=$EUDAQ_LIBRARY_BUILD_LCIO -DEUDAQ_MODULE_BUILD_STD=$EUDAQ_MODULE_BUILD_STD -DUSER_CALICE_BUILD=$USER_CALICE_BUILD -DUSER_EUDET_BUILD=$USER_EUDET_BUILD -DUSER_EUDET_BUILD_NI=$USER_EUDET_BUILD_NI -DUSER_EUDET_BUILD_TLU=$USER_EUDET_BUILD_TLU -DUSER_EXAMPLE_BUILD=$USER_EXAMPLE_BUILD -DUSER_ITKSTRIP_BUILD=$USER_ITKSTRIP_BUILD -DUSER_ITKSTRIP_BUILD_ITSROOT=$USER_ITKSTRIP_BUILD_ITSROOT  $TRAVIS_BUILD_DIR
   - make install
-  - cd ..
 
 before_deploy:
  - cd $TRAVIS_BUILD_DIR
@@ -157,5 +146,5 @@ deploy:
   overwrite: true
   on:
     tags: true
-    condition: "$BUILD_manual = ON"
+    condition: "$EUDAQ_BUILD_MANUAL = ON"
     repo: eudaq/eudaq       

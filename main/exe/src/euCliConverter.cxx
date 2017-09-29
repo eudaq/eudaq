@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main(int /*argc*/, const char **argv) {
-  eudaq::OptionParser op("EUDAQ Command Line DataConverter", "2.0", "The Data Converter lauhcher of EUDAQ");
+  eudaq::OptionParser op("EUDAQ Command Line DataConverter", "2.0", "The Data Converter launcher of EUDAQ");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string",
 					"input file");
   eudaq::Option<std::string> file_output(op, "o", "output", "", "string",

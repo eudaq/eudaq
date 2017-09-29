@@ -11,7 +11,7 @@ public:
 		   const std::string &runcontrol);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TsDataCollector");
 private:
@@ -60,8 +60,7 @@ void Ex0TsDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
     m_conn_disconnected.insert(idx);
 }
 
-void Ex0TsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
-  eudaq::EventSP evsp = std::move(ev);
+void Ex0TsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp){
   if(!evsp->IsFlagTimestamp()){
     EUDAQ_THROW("!evsp->IsFlagTimestamp()");
   }

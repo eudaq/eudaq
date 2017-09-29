@@ -29,10 +29,12 @@ eudaq::EventSPC NativeFileReader::GetNextEvent(){
   }
   eudaq::EventUP ev;
   uint32_t id;
+  
   if(m_des->HasData()){
     m_des->PreRead(id);
     ev = eudaq::Factory<eudaq::Event>::
       Create<eudaq::Deserializer&>(id, *m_des);
-  }
-  return std::move(ev);
+    return std::move(ev);
+  }  else  return nullptr;
+  
 }

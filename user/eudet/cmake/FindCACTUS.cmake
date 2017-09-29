@@ -8,9 +8,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   return()
 endif()
 
+
 file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
   ${CMAKE_CURRENT_LIST_DIR}/../extern/*/uhal.hpp)
 
+if(NOT CACTUS_UHAL_HEADER_FOUND)
+  file(GLOB_RECURSE CACTUS_UHAL_HEADER_FOUND
+    /opt/cactus/*/uhal.hpp)
+endif()
+  
 if(NOT CACTUS_UHAL_HEADER_FOUND)
   message(WARNING "Check for CACTUS/uhal header uhal.hpp -- fail")
   return()

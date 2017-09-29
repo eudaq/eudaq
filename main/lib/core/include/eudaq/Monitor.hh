@@ -47,7 +47,7 @@ namespace eudaq {
     virtual void DoTerminate(){};
 
     //running in dataserver thread
-    virtual void DoReceive(EventUP ev) = 0;
+    virtual void DoReceive(EventSP ev){};
     
     void SetServerAddress(const std::string &addr){m_data_addr = addr;};
     void StartMonitor();
@@ -65,7 +65,5 @@ namespace eudaq {
   };
   //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
-
-
 
 #endif // EUDAQ_INCLUDED_Monitor

@@ -32,7 +32,7 @@ namespace eudaq {
     std::string getpacket();
     SOCKET GetFd() const { return m_fd; }
     bool Matches(const ConnectionInfo &other) const override;
-    void Print(std::ostream &) const override;
+    void Print(std::ostream &, size_t) const override;
     std::string GetRemote() const override { return m_host; }
 
   private:

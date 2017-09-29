@@ -20,6 +20,8 @@ namespace eudaq {
   namespace{
     auto dummy0 = Factory<RunControl>::
       Register<RunControl, const std::string&>(RunControl::m_id_factory);
+    auto dummy1 = Factory<RunControl>::
+      Register<RunControl, const std::string&>(eudaq::cstr2hash("RunControl"));
   }
   
   RunControl::RunControl(const std::string &listenaddress)
@@ -37,6 +39,7 @@ namespace eudaq {
   }
 
   void RunControl::Initialise(){
+    EUDAQ_INFO("Processing Configure command");
     std::vector<ConnectionSPC> conn_to_init; 
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){
@@ -82,6 +85,7 @@ namespace eudaq {
   }
   
   void RunControl::Configure(){
+    EUDAQ_INFO("Processing Configure command");
     std::vector<ConnectionSPC> conn_to_conf;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){
@@ -113,14 +117,14 @@ namespace eudaq {
   }
   
   void RunControl::Reset() {
+    EUDAQ_INFO("Processing Reset command");
     m_listening = true;
-    EUDAQ_INFO("Resetting");
     SendCommand("RESET", "");
   }
 
   void RunControl::StartRun(){
+    EUDAQ_INFO("Processing StartRun command for RUN #" + std::to_string(m_run_n));
     m_listening = false;
-    EUDAQ_INFO("Starting Run " + to_string(m_run_n));
     std::vector<ConnectionSPC> conn_to_run;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
     for(auto &conn_st: m_conn_status){
@@ -179,8 +183,8 @@ namespace eudaq {
   }
 
   void RunControl::StopRun(){
+    EUDAQ_INFO("Processing StartRun command for RUN #" + std::to_string(m_run_n));
     m_listening = true;
-    EUDAQ_INFO("Stopping Run " + to_string(m_run_n));
     m_run_n ++;
     std::vector<ConnectionSPC> conn_to_stop;
     std::unique_lock<std::mutex> lk(m_mtx_conn);
@@ -220,8 +224,8 @@ namespace eudaq {
   }
 
   void RunControl::Terminate() {
+    EUDAQ_INFO("Processing Terminate command");
     m_listening = false;
-    EUDAQ_INFO("Terminating connections");
     SendCommand("TERMINATE", "");
     std::this_thread::sleep_for(std::chrono::seconds(1));
     CloseRunControl();

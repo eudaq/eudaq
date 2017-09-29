@@ -15,7 +15,7 @@ public:
   void DoConfigure() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0TgTsDataCollector");
 private:
@@ -109,14 +109,11 @@ void Ex0TgTsDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   m_con_id.erase(id);
 }
 
-void Ex0TgTsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){
+void Ex0TgTsDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP evsp){
   uint32_t id = eudaq::str2hash(idx->GetName());
   std::unique_lock<std::mutex> lk(m_mtx_map);
   std::cout<< "hi new enent is comming\n";
 
-  // ev->Print(std::cout);
-  
-  eudaq::EventSP evsp = std::move(ev);
   
   if(!m_has_all_bore){
     if(evsp->IsBORE()){

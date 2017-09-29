@@ -62,7 +62,9 @@
      </widget>
     </item>
     <item>
-     <widget class="QGroupBox" name="grpControl">
+      
+      
+      <widget class="QGroupBox" name="grpControl">
       <property name="title">
        <string>Control</string>
       </property>
@@ -85,17 +87,40 @@
        <property name="verticalSpacing">
         <number>4</number>
        </property>
-       <item row="1" column="0">
-        <widget class="QLabel" name="lblConfig">
+       
+       <item row="0" column="0">
+        <widget class="QLabel" name="lblInit">
          <property name="text">
-          <string>Config: </string>
+          <string>Init file:</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="3">
-        <widget class="QPushButton" name="btnLoadConf">
+       <item row="0" column="2">
+        <widget class="QLineEdit" name="txtInitFileName">
+         <property name="text">
+          <string>initialisation file not set</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3">
+        <widget class="QPushButton" name="btnLoadInit">
          <property name="text">
           <string>Load</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="4">
+        <widget class="QPushButton" name="btnInit">
+         <property name="text">
+          <string>Init</string>
+         </property>
+        </widget>
+       </item>
+
+       <item row="1" column="0">
+        <widget class="QLabel" name="lblConfig">
+         <property name="text">
+          <string>Config file: </string>
          </property>
         </widget>
        </item>
@@ -109,51 +134,13 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="2">
-        <widget class="QLineEdit" name="txtRunmsg">
-         <property name="toolTip">
-          <string>An optional message to add to the Run</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="lblRunmsg">
+       <item row="1" column="3">
+        <widget class="QPushButton" name="btnLoadConf">
          <property name="text">
-          <string>Run: </string>
+          <string>Load</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="2">
-        <widget class="QLineEdit" name="txtLogmsg">
-         <property name="toolTip">
-          <string>Send a message to the LogCollector</string>
-         </property>
-        </widget>
-       </item>
-       <!-- <item row="4" column="2"> -->
-       <!--  <widget class="QLineEdit" name="txtGeoID"> -->
-       <!--   <property name="toolTip"> -->
-       <!--    <string>Double-click to change GeoID</string> -->
-       <!--   </property> -->
-       <!--   <property name="readOnly"> -->
-       <!--    <bool>true</bool> -->
-       <!--   </property> -->
-       <!--  </widget> -->
-       <!-- </item> -->
-       <item row="3" column="0">
-        <widget class="QLabel" name="lblLogmsg">
-         <property name="text">
-          <string>Log: </string>
-         </property>
-        </widget>
-       </item>
-       <!-- <item row="4" column="0"> -->
-       <!--  <widget class="QLabel" name="lblGeoID"> -->
-       <!--   <property name="text"> -->
-       <!--    <string>GeoID:</string> -->
-       <!--   </property> -->
-       <!--  </widget> -->
-       <!-- </item> -->
        <item row="1" column="4">
         <widget class="QPushButton" name="btnConfig">
          <property name="enabled">
@@ -173,6 +160,19 @@
          </property>
         </widget>
        </item>
+       
+       <item row="2" column="0">
+        <widget class="QLabel" name="lblNextRunNumber">
+         <property name="text">
+          <string>Next RunN: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+	 <widget class="QLineEdit" name="txtNextRunNumber">
+	 </widget>
+       </item>
+
        <item row="2" column="3">
         <widget class="QPushButton" name="btnStart">
          <property name="enabled">
@@ -199,20 +199,21 @@
          </property>
         </widget>
        </item>
+
        <item row="3" column="3">
-        <widget class="QPushButton" name="btnLog">
+        <widget class="QPushButton" name="btnReset">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="toolTip">
-          <string>Send a log message</string>
+          <string>Reset all the DAQ clients</string>
          </property>
          <property name="text">
-          <string>Log</string>
+          <string>Reset</string>
          </property>
         </widget>
-       </item>
-       <item row="4" column="3">
+       </item>       
+       <item row="3" column="4">
         <widget class="QPushButton" name="btnTerminate">
          <property name="enabled">
           <bool>false</bool>
@@ -225,55 +226,44 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="4">
-        <widget class="QPushButton" name="btnReset">
+
+       <item row="4" column="0">
+        <widget class="QLabel" name="lblLogmsg">
+         <property name="text">
+          <string>Log: </string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="2">
+        <widget class="QLineEdit" name="txtLogmsg">
+         <property name="toolTip">
+          <string>Send a message to the LogCollector</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3">
+        <widget class="QPushButton" name="btnLog">
          <property name="enabled">
           <bool>false</bool>
          </property>
          <property name="toolTip">
-          <string>Reset all the DAQ clients</string>
+          <string>Send a log message</string>
          </property>
          <property name="text">
-          <string>Reset</string>
+          <string>Log</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="4">
-        <widget class="QPushButton" name="btnInit">
-         <property name="text">
-          <string>Init</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="btnLoadInit">
-         <property name="text">
-          <string>Load</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QLineEdit" name="txtInitFileName">
-         <property name="text">
-          <string>initialisation file not set</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0">
-        <widget class="QLabel" name="lblInit">
-         <property name="text">
-          <string>Init:</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+
+       
+     </layout>
      </widget>
     </item>
     <item>
      <widget class="QGroupBox" name="grpStatus">
-      <property name="title">
-       <string>Status</string>
-      </property>
+      <!-- <property name="title"> -->
+      <!--  <string>Status</string> -->
+      <!-- </property> -->
       <layout class="QGridLayout">
        <property name="leftMargin">
         <number>0</number>
