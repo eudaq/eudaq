@@ -71,7 +71,7 @@ endif()
 set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH ${EUDAQ_INSTALL_RPATH})
-<<<<<<< HEAD
+
 # *ALTERNATIVELY*: USE RELATIVE PATHS
 # see http://www.semipol.de/archives/356
 # for all binaries created in a CMake project:
@@ -103,9 +103,9 @@ ADD_SUBDIRECTORY(doc)
 # Print out system information useful for bug reports #
 #######################################################
 include(PrintSystemInformation)
-=======
+
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
->>>>>>> master
+
 
 add_subdirectory(main)
 add_subdirectory(user)
