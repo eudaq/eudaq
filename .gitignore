@@ -11,7 +11,7 @@ logs/*
 *.log
 *.root
 
-<<<<<<< HEAD
+
 # ignore emacs autosaves
 \#*#
 *~
@@ -54,8 +54,7 @@ debug/*
 *.vcxproj*
 
 # ignore archives
-=======
->>>>>>> master
+
 *.zip
 *.rar
 *.tar
