@@ -104,16 +104,6 @@ ADD_SUBDIRECTORY(doc)
 #######################################################
 include(PrintSystemInformation)
 
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-
-add_subdirectory(main)
-add_subdirectory(user)
-add_subdirectory(monitors)
-add_subdirectory(extra)
-add_subdirectory(gui)
-add_subdirectory(doc)
-
 # Uninstall Target #
 if(NOT TARGET uninstall)
   configure_file(
