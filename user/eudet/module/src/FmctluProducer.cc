@@ -133,6 +133,11 @@ void FmctluProducer::DoInitialise(){
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
 
+  // Initialize the Si5345 clock chip using pre-generated file
+  if (ini->Get("CONFCLOCK", true)){
+    m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  }
+
   // Reset IPBus registers
   m_tlu->ResetSerdes();
   m_tlu->ResetCounters();
@@ -153,9 +158,6 @@ void FmctluProducer::DoConfigure() {
 
   m_tlu->SetTriggerVeto(1);
 
-  if (conf->Get("CONFCLOCK", true)){
-    m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
-  }
 
   // Enable HDMI connectors
   m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), verbose);
