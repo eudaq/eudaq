@@ -40,12 +40,12 @@ namespace eudaq {
 
     virtual void DoInitialise(){};
     virtual void DoConfigure(){};
-    virtual void DoStartRun() = 0;
-    virtual void DoStopRun() = 0;
-    virtual void DoReset() = 0;
-    virtual void DoTerminate() = 0;
+    virtual void DoStartRun(){};
+    virtual void DoStopRun(){};
+    virtual void DoReset(){};
+    virtual void DoTerminate(){};
     
-    void SendEvent(EventUP ev);
+    void SendEvent(EventSP ev);
   private:
     uint32_t m_pdc_n;
     uint32_t m_evt_c;

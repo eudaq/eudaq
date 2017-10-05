@@ -33,7 +33,7 @@ namespace eudaq {
     virtual ~FileWriter() {}
     void SetConfiguration(ConfigurationSPC c) {m_conf = c;};
     ConfigurationSPC GetConfiguration() const {return m_conf;};
-    virtual void WriteEvent(EventSPC ) = 0;
+    virtual void WriteEvent(EventSPC ) {};
     virtual uint64_t FileBytes() const {return 0;};
   private:
     ConfigurationSPC m_conf;

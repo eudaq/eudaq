@@ -1,4 +1,3 @@
-find_package(CACTUS)
 cmake_dependent_option(USER_CALICE_BUILD_BIF "build user/calice BIF" ON
   "USER_CALICE_BUILD;CACTUS_FOUND" OFF)
 
@@ -6,6 +5,8 @@ if(NOT USER_CALICE_BUILD_BIF)
   message("user/calice BIF is not to be built")
   return()
 endif()
+
+find_package(CACTUS)
 
 if(NOT CACTUS_FOUND)
   message(WARNING "CACTUS/uhal is not found, user/calice BIF can not be built")

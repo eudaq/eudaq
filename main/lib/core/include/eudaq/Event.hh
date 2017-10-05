@@ -44,8 +44,10 @@ namespace eudaq {
     };
 
     Event();
+    // Event(const &&ev);
+    
     Event(Deserializer & ds);
-    virtual void Serialize(Serializer &) const;    
+    virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream & os, size_t offset = 0) const;
     
     bool HasTag(const std::string &name) const {return m_tags.find(name) != m_tags.end();}
@@ -113,7 +115,9 @@ namespace eudaq {
 
     //from RawdataEvent
     std::vector<uint8_t> GetBlock(uint32_t i) const;
+    size_t GetNumBlock() const { return m_blocks.size(); }
     size_t NumBlocks() const { return m_blocks.size(); }
+
     
     std::vector<uint32_t> GetBlockNumList() const;
     
@@ -131,18 +135,9 @@ namespace eudaq {
       return m_blocks.size();
     }
 
-    /// Append data to a block as std::vector
     template <typename T>
     void AppendBlock(size_t index, const std::vector<T> &data) {
       auto &&src = make_vector(data);
-      auto &&dst = m_blocks[index];
-      dst.insert(dst.end(), src.begin(), src.end());
-    }
-
-    /// Append data to a block as array with given size
-    template <typename T>
-    void AppendBlock(size_t index, const T *data, size_t bytes) {
-      auto &&src = make_vector(data, bytes);
       auto &&dst = m_blocks[index];
       dst.insert(dst.end(), src.begin(), src.end());
     }

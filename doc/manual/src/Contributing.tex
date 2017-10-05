@@ -17,7 +17,7 @@ as it ensures a record of the issue is available, and others may follow the prog
 \subsection{Regression Testing}
 \label{sec:ctest}
 
-If a CMake version later than 2.8.0 is found and Python is installed
+If a CMake version later than 3.1 is found and Python is installed
 together with the \texttt{numpy} package, several regression tests are made
 available that can be executed through CTest. The tests are based on
 the Python wrapper around EUDAQ components as described in
@@ -66,7 +66,7 @@ If you would like to contribute your code back into the main repository, please 
   'upstream' repository to local clone (change user names in URLs
   accordingly):
   \begin{listing}[mybash]
-git clone https://github.com/hperrey/eudaq eudaq
+git clone https://github.com/your_account_name/eudaq eudaq
 cd eudaq
 git remote add upstream https://github.com/eudaq/eudaq.git
 \end{listing}
@@ -75,7 +75,7 @@ git remote add upstream https://github.com/eudaq/eudaq.git
   \begin{listing}[mybash]
 cd eudaq
 git remote rename origin upstream
-git remote add origin https://github.com/hperrey/eudaq
+git remote add origin https://github.com/your_account_name/eudaq
 git remote -v show
 \end{listing}
 \item Optional: edit away on your local clone! But keep in sync with

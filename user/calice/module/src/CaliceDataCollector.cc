@@ -13,7 +13,7 @@ public:
   void DoConfigure() override;
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("CaliceDataCollector");
 private:
@@ -58,7 +58,7 @@ void CaliceDataCollector::DoConfigure(){
   //Nothing to do
 }
 
-void CaliceDataCollector::DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev){
+void CaliceDataCollector::DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev){
   if(id->GetName() == "caliceahcalbifProducer"){
     if(ev->IsBORE())
       m_ts_bore_bif = ev->GetTag("ROCStartTS", m_ts_bore_bif);
@@ -67,7 +67,7 @@ void CaliceDataCollector::DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev){
   else if(id->GetName() == "Calice1"){
     if(ev->IsBORE())
       m_ts_bore_cal = ev->GetTag("ROCStartTS", m_ts_bore_cal);
-    m_que_cal.push_back(std::move(ev));
+    m_que_cal.push_back(ev);
   }
   else{
     EUDAQ_WARN("Event from unknown producer");

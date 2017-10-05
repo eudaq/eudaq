@@ -87,7 +87,7 @@ The \texttt{m\_blocks} is physics data which can only be known by the user who o
 std::shared\_ptr and std::unique\_ptr are heavily used in EUDAQ to hold the object pointers of the serializable class and the derivable class.  They get rid of the unnecessary and ineffective memory copy and are exception safe for any memory leakage.
 
 \subsection{Command/Status Handling}
-\subsubsection{RunControl and CommandReceiver}\label{sec:fsm}
+\subsubsection{RunControl and CommandReceiver}\label{sec:runcontrol}
 \paragraph{RunControl} eudaq::RunControl is the command sender which issues commands according to user actions from the GUI or CLI.
 \paragraph{CommandReceiver} eudaq::Producer, eudaq::DataCollector, eudaq::LogCollector and eudaq::Monitor are command receivers (eudaq::CommandReceiver) which executes the correlated function according to the command. The command receiver will set up a status (eudaq::Status) and report the status to RunControl.
 

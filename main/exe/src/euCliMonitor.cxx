@@ -3,15 +3,15 @@
 #include <iostream>
 
 int main(int /*argc*/, const char **argv) {
-  eudaq::OptionParser op("EUDAQ Command Line Monitor", "2.0", "The monitor lauhcher of EUDAQ");
+  eudaq::OptionParser op("EUDAQ Command Line Monitor", "2.0", "The monitor launcher of EUDAQ");
   eudaq::Option<std::string> name(op, "n", "name", "", "string",
 				  "The eudaq application to be launched");  
   eudaq::Option<std::string> tname(op, "t", "tname", "", "string",
 				  "Runtime name of the eudaq application");
   eudaq::Option<std::string> listen(op, "a", "listen-port", "", "address",
-				  "The listenning port this ");
+				  "The port on which the data monitor is going to listen on");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
-  				   "The address of the RunControl to connect");
+  				   "The address of the RunControl to connect to");
   op.Parse(argv);
   std::string app_name = name.Value();
   if(app_name.find("Monitor") != std::string::npos){
