@@ -467,11 +467,11 @@ namespace tlu {
     }
     if (channel <2){
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC1.SetDACValue(channel , int(dacCode) );
+      m_zeDAC1.SetDACValue( 1-channel , int(dacCode) ); //The ADC channels are connected in reverse order
     }
     else{
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC2.SetDACValue(channel-2 , int(dacCode) );
+      m_zeDAC2.SetDACValue(4-(channel-2) , int(dacCode) );
     }
 
   }
