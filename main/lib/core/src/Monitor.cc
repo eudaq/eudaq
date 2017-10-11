@@ -207,4 +207,13 @@ namespace eudaq {
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
   }
+
+  MonitorSP Monitor::Make(const std::string &code_name,
+			  const std::string &run_name,
+			  const std::string &runcontrol){
+    return Factory<Monitor>::
+      MakeShared<const std::string&,const std::string&>
+      (eudaq::str2hash(code_name), run_name, runcontrol);
+  }
+
 }

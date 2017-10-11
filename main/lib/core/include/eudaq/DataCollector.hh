@@ -27,6 +27,8 @@ namespace eudaq {
   Factory<DataCollector>::Instance<const std::string&, const std::string&>();
 #endif
 
+  using DataCollectorSP = Factory<DataCollector>::SP_BASE;
+  
   //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
   class DLLEXPORT DataCollector : public CommandReceiver {
   public:
@@ -58,6 +60,11 @@ namespace eudaq {
     void StartDataCollector();
     void CloseDataCollector();
     bool IsActiveDataCollector(){return m_thd_server.joinable();}
+
+    static DataCollectorSP Make(const std::string &code_name,
+				const std::string &run_name,
+				const std::string &runcontrol);
+
   private:
     void DataHandler(TransportEvent &ev);
     void DataThread();
