@@ -20,6 +20,8 @@ namespace eudaq {
 	   (const std::string&, const std::string&)>&
   Factory<Producer>::Instance<const std::string&, const std::string&>();  
 #endif
+
+  using ProducerSP = Factory<Producer>::SP_BASE;
   
   /**
    * The base class from which all Producers should inherit.
@@ -46,6 +48,8 @@ namespace eudaq {
     virtual void DoTerminate(){};
     
     void SendEvent(EventSP ev);
+    static ProducerSP Make(const std::string &code_name, const std::string &run_name,
+			   const std::string &runcontrol);
   private:
     uint32_t m_pdc_n;
     uint32_t m_evt_c;

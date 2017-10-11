@@ -166,4 +166,13 @@ namespace eudaq {
     }
     SetStatusTag("EventN", std::to_string(m_evt_c));
   }
+
+  ProducerSP Producer::Make(const std::string &code_name,
+			    const std::string &run_name,
+			    const std::string &runcontrol){
+    return Factory<Producer>::
+      MakeShared<const std::string&,const std::string&>
+      (eudaq::str2hash(code_name), run_name, runcontrol);
+  }
 }
+

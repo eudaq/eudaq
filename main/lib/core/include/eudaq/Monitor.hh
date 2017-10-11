@@ -25,6 +25,8 @@ namespace eudaq {
   Factory<Monitor>::Instance<const std::string&, const std::string&>();
 #endif
 
+  using MonitorSP = Factory<Monitor>::SP_BASE;
+  
   //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
   class DLLEXPORT Monitor : public CommandReceiver {
   public:
@@ -53,6 +55,11 @@ namespace eudaq {
     void StartMonitor();
     void CloseMonitor();
     bool IsActiveMonitor(){return m_thd_server.joinable();}
+
+    static MonitorSP Make(const std::string &code_name,
+			  const std::string &run_name,
+			  const std::string &runcontrol);
+
   private:
     void DataHandler(TransportEvent &ev);
     void DataThread();
