@@ -139,6 +139,19 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, "Terminate Error");
     }
   }
+
+  void Producer::OnStatus(){
+    try{
+      SetStatusTag("EventN", std::to_string(m_evt_c));
+      DoStatus();
+    }catch (const std::exception &e) {
+      printf("Caught exception: %s\n", e.what());
+      SetStatus(Status::STATE_ERROR, "Status Error");
+    } catch (...) {
+      printf("Unknown exception\n");
+      SetStatus(Status::STATE_ERROR, "Status Error");
+    }
+  }
   
   void Producer::Exec(){
     StartCommandReceiver();
@@ -160,13 +173,12 @@ namespace eudaq {
     ev->SetDeviceN(m_pdc_n);
     for(auto &e: m_senders){
       if(e.second)
-	e.second->SendEvent(*(ev.get()));
+	e.second->SendEvent(ev);
       else
 	EUDAQ_THROW("Producer::SendEvent, using a null pointer of DataSender");
     }
-    SetStatusTag("EventN", std::to_string(m_evt_c));
   }
-
+  
   ProducerSP Producer::Make(const std::string &code_name,
 			    const std::string &run_name,
 			    const std::string &runcontrol){

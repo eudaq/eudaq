@@ -125,6 +125,7 @@ namespace eudaq {
     
   void DataCollector::OnStatus(){
     SetStatusTag("EventN", std::to_string(m_evt_c));
+    DoStatus();
     if(m_writer && m_writer->FileBytes()){
       SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
     }
@@ -213,14 +214,13 @@ namespace eudaq {
       SetStatusTag("EventN", std::to_string(m_evt_c));
       m_evt_c ++;
       ev->SetStreamN(m_dct_n);
-      EventSP evsp(std::move(ev));
       if(m_writer)
-	m_writer->WriteEvent(evsp);
+	m_writer->WriteEvent(ev);
       else
 	EUDAQ_THROW("FileWriter is not created before writing.");
       for(auto &e: m_senders){
 	if(e.second)
-	  e.second->SendEvent(*(evsp.get()));
+	  e.second->SendEvent(ev);
 	else
 	  EUDAQ_THROW("DataCollector::WriterEvent, using a null pointer of DataSender");
       }
@@ -285,5 +285,4 @@ namespace eudaq {
       MakeShared<const std::string&,const std::string&>
       (eudaq::str2hash(code_name), run_name, runcontrol);
   }
-
 }

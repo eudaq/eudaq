@@ -102,6 +102,7 @@ namespace eudaq {
     
   void Monitor::OnStatus(){
     // SetStatusTag("EventN", std::to_string(m_evt_c));
+    DoStatus();
   }
   
   void Monitor::DataHandler(TransportEvent &ev) {

@@ -38,6 +38,7 @@ namespace eudaq {
     void OnStopRun() override final;
     void OnReset() override final;
     void OnTerminate() override final;
+    void OnStatus() override;
     void Exec() override;
 
     virtual void DoInitialise(){};
@@ -46,6 +47,7 @@ namespace eudaq {
     virtual void DoStopRun(){};
     virtual void DoReset(){};
     virtual void DoTerminate(){};
+    virtual void DoStatus(){};
     
     void SendEvent(EventSP ev);
     static ProducerSP Make(const std::string &code_name, const std::string &run_name,

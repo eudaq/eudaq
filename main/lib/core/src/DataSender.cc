@@ -43,11 +43,11 @@ namespace eudaq {
     if (std::string(packet, 0, i1) != "OK") EUDAQ_THROW("Connection refused by DataCollector server: " + packet);
   }
 
-  void DataSender::SendEvent(const Event &ev) {
+  void DataSender::SendEvent(EventSPC ev) {
     if (!m_dataclient) EUDAQ_THROW("Transport not connected error");
     //EUDAQ_DEBUG("Serializing event");
     BufferSerializer ser;
-    ev.Serialize(ser);
+    ev->Serialize(ser);
     //EUDAQ_DEBUG("Sending event");
     m_packetCounter += 1;
     m_dataclient->SendPacket(ser);
