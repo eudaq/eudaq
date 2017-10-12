@@ -49,6 +49,7 @@ namespace eudaq {
     virtual void DoStopRun(){};
     virtual void DoReset(){};
     virtual void DoTerminate(){};
+    virtual void DoStatus(){};
 
     //running in dataserver thread
     virtual void DoConnect(ConnectionSPC id) {}
