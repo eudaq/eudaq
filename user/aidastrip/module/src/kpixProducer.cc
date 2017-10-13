@@ -14,8 +14,9 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <signal.h>
+/* linux func libs:*/
+#include <unistd.h>
 //--> start of kpix libs:
 #include "KpixControl.h"
 #include "UdpLink.h"
@@ -62,6 +63,10 @@ private:
 
   uint32_t m_runcount;
   //bool m_noDevice;
+
+  /*outpuf file in kpix data format trial@Sep 20 */
+  int32_t dataFileFd_;
+  
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK---------
 
@@ -83,6 +88,7 @@ kpixProducer::kpixProducer(const std::string & name, const std::string & runcont
   udpLink.open(8192,1,"192.168.1.16"); // to have multiple udplink connections
   //udpLink.openDataNet("127.0.0.1",8099);
   //usleep(100);
+  dataFileFd_ = -1;
 }
 
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
@@ -142,8 +148,8 @@ void kpixProducer::DoConfigure(){
   //--> Kpix Run Control
   m_kpixRunState = conf->Get("KPIX_RunState","Running");
   m_runcount = conf->Get("KPIX_RunCount",0);
-  // if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
-  // kpix->getVariable("RunCount")->setInt(2);
+  if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
+
   std::cout<<"[producer:dev] m_runcount = "<< m_runcount <<std::endl;  
   std::cout<<"[producer:dev] run count = "<< kpix->getVariable("RunCount")->getInt() <<std::endl;
   //m_runcount = kpix->getVariable("RunCount")->getInt();
@@ -151,10 +157,25 @@ void kpixProducer::DoConfigure(){
   
   m_runrate = kpix->getVariable("RunRate")->get();
   std::cout<<"[producer:dev] run_rate = "<< m_runrate <<std::endl;
+
+  
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void kpixProducer::DoStartRun(){
   //kpix->command("OpenDataFile","");
+
+  /* linux open a file for kpix output*/
+  std::string run_num = std::to_string(GetRunNumber());
+  auto len_run_n = run_num.length();
+  std::string myname(6-len_run_n, '0');
+  myname+=run_num;
+    
+  std::string kpixfile("./kpix_output_run"+myname+".bin");
+  std::cout<< kpixfile <<std::endl;
+
+  //string kpixfile = "./test_kpix_output.bin";
+  dataFileFd_ = ::open(kpixfile.c_str(),O_RDWR|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+  
   m_thd_run = std::thread(&kpixProducer::Mainloop, this);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
@@ -221,7 +242,10 @@ void kpixProducer::Mainloop(){
   /*Open data file to write*/
   kpix->command("OpenDataFile","");
   
+
   kpix->command("SetRunState",m_kpixRunState);
+  auto btrial = kpix->getVariable("RunState")->get();
+  std::cout<<"\t[KPiX:dev] Run State @mainLoop = "<<btrial<<std::endl;
 
   auto tp_start_run = std::chrono::steady_clock::now();
   bool save_ts=true;
@@ -229,16 +253,16 @@ void kpixProducer::Mainloop(){
   int evt_counter = 0;
 
   // for (int ii=10; ii>=0; ii--){
-  for (int ii = m_runcount; ii>=0; ii--){
+  //  for (int ii = m_runcount; ii>=0; ii--){
+  do{
     /* sleep 1 second after each loop */
     auto tp_current_evt = std::chrono::steady_clock::now();
     auto tp_next = tp_current_evt +  std::chrono::seconds(1);
     std::this_thread::sleep_until(tp_next);
     
-    
-    kpix->poll(NULL);
+    //kpix->poll(NULL);
 
-    auto btrial = kpix->getVariable("RunState")->get();
+    btrial = kpix->getVariable("RunState")->get();
     std::cout<<"\t[KPiX:dev] Run State@mainLoop = "<<btrial<<std::endl;
 
     auto dataOverEvt = kpix->getVariable("DataRxCount")->get();
@@ -248,33 +272,43 @@ void kpixProducer::Mainloop(){
     /* start wmq-dev: polling data from kpix to eudaq*/
     auto ev = eudaq::Event::MakeUnique("KpixRawEvt");
     auto databuff = pollKpixData(evt_counter);
-
+    
     //--> data is ready
     if (databuff!=NULL) {
       auto tp_trigger = std::chrono::steady_clock::now();
-      
+      std::cout << " [Kpix.Data] says: EventNumber = " << (databuff->data())[0] << std::endl ;
+	
       if (save_ts) {
 	std::chrono::nanoseconds this_ts_ns(tp_trigger - tp_start_run);
 	ev->SetTimestamp(this_ts_ns.count(), this_ts_ns.count());
-	std::cout<<"\t[Loop]: Timestamp enabled to use\n"; //wmq
-	std::cout<<"\t[Loop]: time stamp at ==> "<<this_ts_ns.count()<<"ns\n";
+	//std::cout<<"\t[Loop]: Timestamp enabled to use\n"; //wmq
+	//std::cout<<"\t[Loop]: time stamp at ==> "<<this_ts_ns.count()<<"ns\n";
       }
       auto buff = databuff->data();
       auto size = databuff->size();
-      std::vector<Data*> dataToSave = {databuff};
 
       std::cout<<"[producer.CHECK] buff = "<< buff << "\n"
-	       <<"                 size = "<< size << std::endl;
-
+	       <<"                 size = "<< size << "\n"
+	       <<"                 &size= "<< &size<< std::endl;
+      
       //--> milestone: remember this pointer stuff @ August-17th
+      //--> Todo: add '0000' at begining of each binary buff... @ Sept-29
+      //ev->AddBlock(0, &size, 4);
       ev->AddBlock(0, buff, size*4);
 
+      /* save databuff also to the kpix output format via linux write(2) func*/
+      if (dataFileFd_ >= 0 ){
+	auto wra = write(dataFileFd_, &size, 4);
+	auto wrb = write(dataFileFd_, buff, size*4);
+	std::cout << "[dev] wra = " << wra <<"; "
+		  << " wrb = " << wrb << std::endl;
+      }
+      
       delete databuff;
       SendEvent(std::move(ev));
     }
     /* end wmq-dev: polling data from kpix to eudaq*/
-   
-
+ 
     if (btrial =="Stopped") {
       m_exit_of_run = true;
       break;
@@ -284,13 +318,17 @@ void kpixProducer::Mainloop(){
       break;
     } else/*do nothing*/;
 
-  }
-
-  std::cout<<"FINISH: kpix finished running"<<std::endl;
+    //}while(btrial != "Stopped"); //-> used when kpix own data streaming not broken @mengqing
+  }while(evt_counter<m_runcount);
+    
+  std::cout<<"FINISH: kpix finished running with #ofEvent => " << evt_counter << " processed.\n";
   std::cout<<"\t m_exit_of_run == "<< (m_exit_of_run ? "true" : "false") <<std::endl;
   /*Close data file to write*/
   kpix->command("CloseDataFile","");
 
+  ::close(dataFileFd_);
+  dataFileFd_ = -1;
+  
   /* TODO: Do sth to get a stopped sign*/
 }
 
@@ -301,7 +339,7 @@ Data* kpixProducer::pollKpixData(int &evt_counter){
   
   // int evt_counter = 0;
   // while(!m_exit_of_datapoll && !m_exit_of_run){
-  auto datbuff = udpLink.pollDataQueue(0);
+  auto datbuff = udpLink.pollDataQueue(1000);
   if (datbuff != NULL) {
     std::cout<< " @_@ COUNTER! Event #"<< evt_counter<<std::endl;
     evt_counter++;
