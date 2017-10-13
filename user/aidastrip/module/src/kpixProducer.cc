@@ -173,10 +173,11 @@ void kpixProducer::DoStartRun(){
   std::string kpixfile("./kpix_output_run"+myname+".bin");
   std::cout<< kpixfile <<std::endl;
 
-  //string kpixfile = "./test_kpix_output.bin";
   dataFileFd_ = ::open(kpixfile.c_str(),O_RDWR|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
   
+  /* Core start to run*/
   m_thd_run = std::thread(&kpixProducer::Mainloop, this);
+  
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void kpixProducer::DoStopRun(){
