@@ -471,7 +471,7 @@ namespace tlu {
     }
     else{
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC2.SetDACValue(4-(channel-2) , int(dacCode) );
+      m_zeDAC2.SetDACValue(3-(channel-2) , int(dacCode) );
     }
 
   }
