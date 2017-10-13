@@ -5,6 +5,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 
 class FmctluProducer: public eudaq::Producer {
@@ -49,9 +51,16 @@ void FmctluProducer::MainLoop(int verbose, int delayStart){
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
 
+  // Pause the TLU to allow slow devices to get ready after the euRunControl has
+  // issued the DoStart() command
+  std::this_thread::sleep_for( std::chrono::milliseconds( delayStart ) );
+
+  // Send reset pulse to all DUTs and reset internal counters
   m_tlu->PulseT0();
+
+  // Enable triggers
   m_tlu->SetTriggerVeto(0);
-  //while(true) {
+
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
     m_tlu->ReceiveEvents(verbose);
