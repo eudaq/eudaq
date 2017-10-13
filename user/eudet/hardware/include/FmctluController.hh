@@ -69,7 +69,7 @@ namespace tlu {
     }
 
     uint32_t GetFW();
-    uint32_t GetEventFifoCSR(bool verbose= false);
+    uint32_t GetEventFifoCSR(int verbose= 0);
     uint32_t GetEventFifoFillLevel();
     uint32_t GetI2CStatus() { return ReadRRegister("i2c_master.i2c_cmdstatus"); };
     uint32_t GetI2CRX() { return ReadRRegister("i2c_master.i2c_rxtx"); };
@@ -119,7 +119,7 @@ namespace tlu {
 
     fmctludata* PopFrontEvent();
     bool IsBufferEmpty(){return m_data.empty();};
-    void ReceiveEvents();
+    void ReceiveEvents(int verbose);
     void ResetEventsBuffer();
     void DefineConst(int nDUTs, int nTrigInputs);
     void DumpEventsBuffer();

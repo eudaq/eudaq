@@ -126,7 +126,7 @@ namespace tlu {
     }
   }
 
-  uint32_t FmctluController::GetEventFifoCSR(bool verbose) {
+  uint32_t FmctluController::GetEventFifoCSR(int verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
     res= ReadRRegister("eventBuffer.EventFifoCSR");
@@ -135,8 +135,8 @@ namespace tlu {
     alm_full= 0x4 & res;
     full= 0x8 & res;
     prog_full= 0x4 & res;
-    if (empty && verbose){std::cout << "  TLU FIFO status:\n\tEMPTY" << std::endl;}
-    if (alm_empty && verbose){std::cout << "  TLU FIFO status:\nALMOST EMPTY (1 word in FIFO)" << std::endl;}
+    if (empty && (verbose > 2)){std::cout << "  TLU FIFO status:\n\tEMPTY" << std::endl;}
+    if (alm_empty && (verbose > 2)){std::cout << "  TLU FIFO status:\nALMOST EMPTY (1 word in FIFO)" << std::endl;}
     if (alm_full){std::cout << "  TLU FIFO status:\n\tALMOST FULL (1 word left)" << std::endl;}
     if (full){std::cout <<   "  TLU FIFO status:\n\tFULL (8192 word)" << std::endl;}
     if (prog_full){std::cout << "  TLU FIFO status:\n\tABOVE THRESHOLD (8181/8192)" << std::endl;}
@@ -340,8 +340,8 @@ namespace tlu {
     }
   }
 
-  void FmctluController::ReceiveEvents(){
-    bool verbose= 0;
+  void FmctluController::ReceiveEvents(int verbose){
+    //bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
     uint32_t fifoStatus= GetEventFifoCSR(verbose);
     if ((fifoStatus & 0x18)){
@@ -359,7 +359,9 @@ namespace tlu {
         }
         for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
           m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
-          std::cout<< *(m_data.back());
+          if (verbose > 1){
+            std::cout<< *(m_data.back());
+          }
         }
       }
     }
@@ -471,7 +473,7 @@ namespace tlu {
     }
     else{
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC2.SetDACValue(3-(channel-2) , int(dacCode) );
+      m_zeDAC2.SetDACValue(4-(channel-2) , int(dacCode) );
     }
 
   }
