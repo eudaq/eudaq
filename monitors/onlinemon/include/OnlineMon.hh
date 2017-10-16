@@ -71,7 +71,7 @@ protected:
   // bool _autoReset;
 
 public:
-  RootMonitor(const std::string &runcontrol, const std::string &addr_listen, 
+  RootMonitor(const std::string &runcontrol, 
 	      int x, int y, int w, int h, int argc, int offline,
               const std::string &conffile = "");
   ~RootMonitor() { gApplication->Terminate(); }

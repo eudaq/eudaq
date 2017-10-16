@@ -42,10 +42,12 @@ is it from the context correct?
 
 */
 
-#include "TransportTCP.hh"
-#include "Exception.hh"
-#include "Time.hh"
-#include "Utils.hh"
+#include "eudaq/TransportTCP.hh"
+#include "eudaq/Exception.hh"
+#include "eudaq/Time.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
+
 #include <iostream>
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
@@ -284,7 +286,7 @@ namespace eudaq {
   }
 
   TCPServer::TCPServer(const std::string &param)
-      : m_port(from_string(param, 44000)),
+      : m_port(from_string(param, 0)),
         m_srvsock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
         m_maxfd(m_srvsock) {
     if (m_srvsock == (SOCKET)-1)
@@ -305,6 +307,12 @@ namespace eudaq {
     if (bind(m_srvsock, (sockaddr *)&addr, sizeof addr)) {
       closesocket(m_srvsock);
       EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to bind socket: " + param));
+    }
+    socklen_t addr_len = sizeof addr;
+    if(m_port == 0){
+      getsockname(m_srvsock, (sockaddr *)&addr, &addr_len);
+      m_port = ntohs(addr.sin_port);
+      EUDAQ_INFO("listening on port " + std::to_string(m_port));
     }
     if (listen(m_srvsock, MAXPENDING)){
       closesocket(m_srvsock);
@@ -467,7 +475,7 @@ namespace eudaq {
     if (!host)
       host = "localhost";
     // gethostname(buf, sizeof buf);
-    return name + "://" + host + ":" + to_string(m_port);
+    return name + "://" + to_string(m_port);
   }
 
   TCPClient::TCPClient(const std::string &param)

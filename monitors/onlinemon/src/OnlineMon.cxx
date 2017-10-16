@@ -48,13 +48,12 @@
 #include "eudaq/StdEventConverter.hh"
 using namespace std;
 
-RootMonitor::RootMonitor(const std::string & runcontrol, const std::string &addr_listen,
+RootMonitor::RootMonitor(const std::string & runcontrol,
 			 int /*x*/, int /*y*/, int /*w*/, int /*h*/,
 			 int argc, int offline, const std::string & conffile)
   : eudaq::Holder<int>(argc), eudaq::Monitor("StdEventMonitor", runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
   if (_offline <= 0)
   {
-    SetServerAddress(addr_listen);
     onlinemon = new OnlineMonWindow(gClient->GetRoot(),800,600);
     if (onlinemon==NULL)
     {
@@ -484,8 +483,6 @@ int main(int argc, const char ** argv) {
       "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> listen(op, "a", "listen-port", "", "address",
-				    "The listenning port this ");
   eudaq::Option<int>             x(op, "x", "left",    100, "pos");
   eudaq::Option<int>             y(op, "y", "top",       0, "pos");
   eudaq::Option<int>             w(op, "w", "width",  1400, "pos");
@@ -503,11 +500,6 @@ int main(int argc, const char ** argv) {
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    uint16_t port = static_cast<uint16_t>(eudaq::str2hash("StdEventMonitor"+rctrl.Value()));
-    std::string addr_listen = "tcp://"+std::to_string(port);
-    if(!listen.Value().empty()){
-      addr_listen = listen.Value();
-    }
 
     if (!rctrl.IsSet()) rctrl.SetValue("null://");
     if (gROOT!=NULL)
@@ -534,7 +526,7 @@ int main(int argc, const char ** argv) {
     }
 
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
-    RootMonitor mon(rctrl.Value(), addr_listen,
+    RootMonitor mon(rctrl.Value(),
 		    x.Value(), y.Value(), w.Value(), h.Value(),
 		    argc, offline.Value(), configfile.Value());
     mon.setWriteRoot(do_rootatend.IsSet());

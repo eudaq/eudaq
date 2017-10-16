@@ -128,12 +128,14 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("LogCollector can not be restarted after exit. (TODO)");
     }
+    if(m_log_addr.empty()){
+      m_log_addr = "tcp://0";
+    }
     m_logserver.reset(TransportServer::CreateServer(m_log_addr)),
     m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     
     m_thd_server = std::thread(&LogCollector::LogThread, this);
-    std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
-              << std::endl;
+    m_log_addr = m_logserver->ConnectionString();
     SetStatusTag("_SERVER", m_log_addr);
   }
 

@@ -25,20 +25,12 @@ int main(int argc, char **argv) {
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
                                    "tcp://localhost:44000", "address",
                                    "The address of the RunControl application");
-  eudaq::Option<std::string> listen(op, "a", "listen-address", "", "address",
-				    "The address on which to listen for Log connections");
   try {
     op.Parse(argv);
     // EUDAQ_LOG_LEVEL(level.Value());
     auto app=eudaq::Factory<eudaq::LogCollector>::
       MakeShared<const std::string&, const std::string&>
       (eudaq::cstr2hash("GuiLogCollector"), "log", rctrl.Value());
-    uint16_t port = static_cast<uint16_t>(eudaq::str2hash("log"+rctrl.Value()));
-    std::string addr_listen = "tcp://"+std::to_string(port);
-    if(!listen.Value().empty()){
-      addr_listen = listen.Value();
-    }
-    app->SetServerAddress(addr_listen);
     app->Exec();
   } catch (...) {
     std::cout << "euLog exception handler" << std::endl;
