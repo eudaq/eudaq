@@ -63,11 +63,11 @@ namespace eudaq {
   class DLLEXPORT TransportEvent {
   public:
     enum EventType { CONNECT, DISCONNECT, RECEIVE };
-    TransportEvent(EventType et, std::shared_ptr<ConnectionInfo> i, const std::string &p = "")
+    TransportEvent(EventType et, ConnectionSP i, const std::string &p = "")
         : etype(et), id(i), packet(p) {}
     TransportEvent & operator = (const TransportEvent& rh){etype = rh.etype; id=rh.id;  packet = rh.packet; return *this;};
-    EventType etype;    ///< The type of event
-    std::shared_ptr<ConnectionInfo> id; ///< The id of the connection  !! It is reference!! TODO: CHECK
+    EventType etype; ///< The type of event
+    ConnectionSP id; ///< The id of the connection
     std::string packet; ///< The packet of data in case of a RECEIVE event
   };
 
