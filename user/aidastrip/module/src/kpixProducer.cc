@@ -179,19 +179,26 @@ void kpixProducer::DoStartRun(){
   m_thd_run = std::thread(&kpixProducer::Mainloop, this);
   
 }
+
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void kpixProducer::DoStopRun(){
-  /* Func1: stop the Kpix*/
-  //kpix->command("CloseDataFile","");
-  //kpix->command("SetRunState","Stopped");
-
-  /* Func2: stop the Mainloop*/
-  m_exit_of_run = true;
+ 
+  /* Func1: stop the Mainloop*/
+  m_exit_of_run = true; //--> this shall 
   if(m_thd_run.joinable()){
     m_thd_run.join();
   }
-
+  /* Close data file to write*/
+  if (dataFileFd_>=0) {
+    ::close(dataFileFd_);
+    dataFileFd_ = -1;
+  }
   
+  /* Func2: stop the Kpix*/
+  //kpix->command("CloseDataFile",""); //--> kpix data thread killed @Mengqing
+  if (kpix->getVariable("RunState")->get() != "Stopped")
+    kpix->command("SetRunState","Stopped");
+    
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void kpixProducer::DoReset(){
@@ -201,20 +208,35 @@ void kpixProducer::DoReset(){
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
-
+  if (kpix->getVariable("RunState")->get() != "Stopped")
+    kpix->command("SetRunState","Stopped");
+  /* Close data file to write*/
+  if (dataFileFd_>=0) {
+    ::close(dataFileFd_);
+    dataFileFd_ = -1;
+  }
+  
   /* Step2: set the thread free and turned off the exit_of_run sign*/
   m_thd_run = std::thread();
   m_exit_of_run = false;
+  
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
 void kpixProducer::DoTerminate(){
   //-->you can call join to the std::thread in order to set it non-joinable to be safely destroyed
-  /* Func1: stop Mainloop (kpix+data collecting)*/
+  /* Func1: stop Mainloop (kpix+data collecting)
+   * add kpix stopped command to ensure kpix closed properly.
+   */
   m_exit_of_run = true;
   if(m_thd_run.joinable())
     m_thd_run.join();
-
   //kpix->command("CloseDataFile",""); // no problem though file closed, as protected in kpix/generic/System.cpp
+  if (kpix->getVariable("RunState")->get() != "Stopped")
+    kpix->command("SetRunState","Stopped");
+  if (dataFileFd_>=0){
+    ::close(dataFileFd_);
+    dataFileFd_ = -1;
+  }
 
   /* stop listen to the hardware */
   udpLink.close();
@@ -241,8 +263,10 @@ void kpixProducer::OnStatus(){
 
 void kpixProducer::Mainloop(){
   /*Open data file to write*/
-  kpix->command("OpenDataFile","");
+  //kpix->command("OpenDataFile",""); //--> kpix data thread killed @Mengqing
   
+  if (kpix->getVariable("RunState")->get() != "Stopped")
+    EUDAQ_THROW("Check KPiX RunState ==> " + kpix->getVariable("RunState")->get() + "\n\t it SHALL be 'Stopped, CHECK!'");
 
   kpix->command("SetRunState",m_kpixRunState);
   auto btrial = kpix->getVariable("RunState")->get();
@@ -310,18 +334,19 @@ void kpixProducer::Mainloop(){
     }
     /* end wmq-dev: polling data from kpix to eudaq*/
  
-    if (btrial =="Stopped") {
+    if (btrial =="Stopped" ) {
       m_exit_of_run = true;
       break;
-    }
-    else if (m_exit_of_run){
+    } else if (m_exit_of_run){
       kpix->command("SetRunState","Stopped");
       break;
-    } else/*do nothing*/;
+    } else /*do nothing*/;
 
     //}while(btrial != "Stopped"); //-> used when kpix own data streaming not broken @mengqing
   }while(evt_counter<m_runcount);
-    
+  
+  m_exit_of_run=true;
+
   std::cout<<"FINISH: kpix finished running with #ofEvent => " << evt_counter << " processed.\n";
   std::cout<<"\t m_exit_of_run == "<< (m_exit_of_run ? "true" : "false") <<std::endl;
   /*Close data file to write*/
