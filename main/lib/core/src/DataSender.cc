@@ -54,7 +54,7 @@ namespace eudaq {
     i0 = i1+1;
     i1 = packet.find(' ', i0);
     part = std::string(packet, i0, i1-i0);
-    if (part != "DataCollector" && part != "Monitor" )
+    if (part != "DataReceiver" && part != "DataCollector" && part != "Monitor" )
       EUDAQ_THROW("Invalid response from DataCollector server, part=" + part);
 
     m_dataclient->SendPacket("OK EUDAQ DATA " + m_type + " " + m_name);
@@ -72,7 +72,7 @@ namespace eudaq {
       EUDAQ_THROW("Transport not connected error");
     std::unique_lock<std::mutex> lk(m_mx_qu_ev);
     m_qu_ev.push(ev);
-    if(m_qu_ev.size() > 10000){
+    if(m_qu_ev.size() > 50000){
       m_qu_ev.pop();
       EUDAQ_WARN("Buffer of sending event is full.");
     }
