@@ -147,9 +147,9 @@ namespace eudaq {
   
   void LogCollector::Exec(){
     StartLogCollector(); //TODO: Start it OnServer
-    StartCommandReceiver();
-    while(IsActiveCommandReceiver() || IsActiveLogCollector()){
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+    // StartCommandReceiver();
+    // while(IsActiveCommandReceiver() || IsActiveLogCollector()){
+    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // }
   }
 }

@@ -23,6 +23,9 @@ namespace eudaq {
     EUDAQ_INFO(GetFullName() + " is to be initialised...");
     auto conf = GetConfiguration();
     try{
+      m_data_addr = Listen(m_data_addr);
+      SetStatusTag("_SERVER", m_data_addr);
+      StopListen();
       DoInitialise();
       SetStatus(Status::STATE_UNCONF, "Initialized");
       EUDAQ_INFO(GetFullName() + " is initialised.");
@@ -51,9 +54,8 @@ namespace eudaq {
   void Monitor::OnStartRun(){
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be started...");
     try {
-      if (!m_dataserver) {
-        EUDAQ_THROW("You must configure before starting a run");
-      }
+      m_data_addr = Listen(m_data_addr);
+      SetStatusTag("_SERVER", m_data_addr);
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
       EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
@@ -202,10 +204,10 @@ namespace eudaq {
   
   void Monitor::Exec(){
     StartMonitor();
-    StartCommandReceiver();
-    while(IsActiveCommandReceiver() || IsActiveMonitor()){
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+    // StartCommandReceiver();
+    // while(IsActiveCommandReceiver() || IsActiveMonitor()){
+    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // }
   }
 
   MonitorSP Monitor::Make(const std::string &code_name,

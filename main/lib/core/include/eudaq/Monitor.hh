@@ -1,8 +1,8 @@
 #ifndef EUDAQ_INCLUDED_Monitor
 #define EUDAQ_INCLUDED_Monitor
 
-#include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
+#include "eudaq/DataReceiver.hh"
 #include "eudaq/Event.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
@@ -28,7 +28,7 @@ namespace eudaq {
   using MonitorSP = Factory<Monitor>::SP_BASE;
   
   //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-  class DLLEXPORT Monitor : public CommandReceiver {
+  class DLLEXPORT Monitor : public CommandReceiver, public DataReceiver{
   public:
     Monitor(const std::string &name, const std::string &runcontrol);
     void OnInitialise() override final;

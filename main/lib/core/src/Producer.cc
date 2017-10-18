@@ -66,17 +66,17 @@ namespace eudaq {
       m_evt_c = 0;
       std::string dc_str = GetConfiguration()->Get("EUDAQ_DC", "");
       std::vector<std::string> col_dc_name = split(dc_str, ";,", true);
-      std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
-      GetInitConfiguration()->SetSection("");//NOTE: it is m_conf_init
+      std::string cur_backup = GetConfiguration()->GetCurrentSectionName();
+      GetConfiguration()->SetSection("");
       for(auto &dc_name: col_dc_name){
-	std::string dc_addr =  GetInitConfiguration()->Get("DataCollector."+dc_name, "");
+	std::string dc_addr =  GetConfiguration()->Get("DataCollector."+dc_name, "");
 	if(!dc_addr.empty()){
 	  m_senders[dc_addr]
 	    = std::unique_ptr<DataSender>(new DataSender("Producer", GetName()));
 	  m_senders[dc_addr]->Connect(dc_addr);
 	}
       }
-      GetInitConfiguration()->SetSection(cur_backup);
+      GetConfiguration()->SetSection(cur_backup);
       SetStatusTag("EventN", std::to_string(m_evt_c));      
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
@@ -154,10 +154,10 @@ namespace eudaq {
   }
   
   void Producer::Exec(){
-    StartCommandReceiver();
-    while(IsActiveCommandReceiver()){
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+    // StartCommandReceiver();
+    // while(IsActiveCommandReceiver()){
+    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // }
   }
 
   void Producer::SendEvent(EventSP ev){
