@@ -10,6 +10,10 @@
 #include <memory>
 #include <string>
 #include <iosfwd>
+#include <future>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 namespace eudaq {
 
@@ -30,40 +34,48 @@ namespace eudaq {
     virtual void OnReset() {SetStatus(Status::STATE_UNINIT, "Reseted");};
     virtual void OnStatus() {}
     virtual void OnLog(const std::string & /*param*/);
-    virtual void OnIdle();
     virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
     virtual void Exec() = 0;
     
-    void StartCommandReceiver();
-    void CloseCommandReceiver();
-    bool IsActiveCommandReceiver(){return !m_exited && m_thd_client.joinable();};
     void SetStatus(Status::State state, const std::string & info);
     bool IsStatus(Status::State state);
     void SetStatusTag(const std::string &key, const std::string &val);
     
     std::string GetFullName() const {return m_type+"."+m_name;};
     std::string GetName() const {return m_name;};
-    uint32_t GetCommandReceiverID() const {return m_cmdrcv_id;};
     uint32_t GetRunNumber() const {return m_run_number;};
     std::string GetCommandRecieverAddress() const {return m_addr_client;};
     
-    std::shared_ptr<const Configuration> GetConfiguration() const {return m_conf;};
-    std::shared_ptr<const Configuration> GetInitConfiguration() const {return m_conf_init;};
+    ConfigurationSPC GetConfiguration() const {return m_conf;};
+    ConfigurationSPC GetInitConfiguration() const {return m_conf_init;};
+
+    std::string Connect(const std::string &addr);
   private:
-    void ProcessingCommand();
     void CommandHandler(TransportEvent &);
-    bool m_exit;
-    bool m_exited;
-    std::thread m_thd_client;
+    bool Deamon();
+    bool AsyncForwarding();
+    bool AsyncReceiving();
+
+  private:
+    std::unique_ptr<TransportClient> m_cmdclient;
+    std::string m_addr_client;
+    bool m_is_destructing;
+    bool m_is_connected;
+    std::future<bool> m_fut_async_rcv;
+    std::future<bool> m_fut_async_fwd;
+    std::future<bool> m_fut_deamon;
+    std::mutex m_mx_qu_cmd;
+    std::mutex m_mx_deamon;
+    std::queue<std::pair<std::string, std::string>> m_qu_cmd;
+    std::condition_variable m_cv_not_empty;
+
     Status m_status;
     std::mutex m_mtx_status;
-    std::unique_ptr<TransportClient> m_cmdclient;
+
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
-    std::string m_addr_client;
     std::string m_type;
     std::string m_name;
-    uint32_t m_cmdrcv_id;
     uint32_t m_run_number;
     
   };

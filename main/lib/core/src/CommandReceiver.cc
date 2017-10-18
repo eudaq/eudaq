@@ -18,76 +18,35 @@
 
 namespace eudaq {
   
-  TransportClient* make_client(const std::string & runcontrol, const std::string & type, const std::string & name) {
-    TransportClient* ret =  TransportClient::CreateClient(runcontrol);
-    if (!ret->IsNull()) {
-      std::string packet;
-      if (!ret->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
-      // check packet is OK ("EUDAQ.CMD.RunControl nnn")
-      auto splitted = split(packet, " ");
-      if (splitted.size() < 4) {
-	EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
-      }
-      CHECK_RECIVED_PACKET(splitted, 0, "OK");
-      CHECK_RECIVED_PACKET(splitted, 1, "EUDAQ");
-      CHECK_RECIVED_PACKET(splitted, 2, "CMD");
-      CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
-      ret->SendPacket("OK EUDAQ CMD " + type + " " + name);
-      packet = "";
-      if (!ret->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
-
-      auto splitted_res = split(packet, " ");
-      CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
-      return ret;
-    } else {
-      EUDAQ_THROW("Could not create client for: '" + runcontrol + "'");
-      return ret;
-    }
-  }
-
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
-    : m_type(type), m_name(name), m_exit(false), m_exited(false){
-    uint64_t addr = static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(this));
-    m_cmdrcv_id = static_cast<uint32_t>((addr>>32)+(addr<<32)+addr);
-    int i = 0;
-    while (true){
-      try {
-	m_cmdclient = std::unique_ptr<TransportClient>( TransportClient::CreateClient(runcontrol));
-	if (!m_cmdclient->IsNull()) {
-	  std::string packet;
-	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
-	  auto splitted = split(packet, " ");
-	  if (splitted.size() < 5) {
-	    EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
-	  }
-	  CHECK_RECIVED_PACKET(splitted, 0, "OK");
-	  CHECK_RECIVED_PACKET(splitted, 1, "EUDAQ");
-	  CHECK_RECIVED_PACKET(splitted, 2, "CMD");
-	  CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
-	  m_cmdclient->SendPacket("OK EUDAQ CMD " + type + " " + name);
-	  m_addr_client = splitted[4];
-	  packet = "";
-	  if (!m_cmdclient->ReceivePacket(&packet, 1000000)) EUDAQ_THROW("No response from RunControl server");
-
-	  auto splitted_res = split(packet, " ");
-	  CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
-	}
-	break;
-      } catch (...) {
-	std::cout << "easdasdasd\n";
-	if (++i>10){
-	  throw;
-	}
-      }
-    }
-    m_cmdclient->SetCallback(TransportCallback(this, &CommandReceiver::CommandHandler));
+    : m_type(type), m_name(name), m_is_destructing(false), m_is_connected(false){
+    m_fut_deamon = std::async(std::launch::async, &CommandReceiver::Deamon, this); 
   }
 
   CommandReceiver::~CommandReceiver(){
-    CloseCommandReceiver();
+    m_is_destructing = true;
+    if(m_fut_deamon.valid()){
+      m_fut_deamon.get();
+    }
   }
   
+  void CommandReceiver::CommandHandler(TransportEvent &ev) {
+    if (ev.etype == TransportEvent::RECEIVE) {
+      std::string cmd = ev.packet;
+      std::string param;
+      size_t i = cmd.find('\0');
+      if (i != std::string::npos) {
+        param = std::string(cmd, i + 1);
+        cmd = std::string(cmd, 0, i);
+	m_qu_cmd.push(std::make_pair(cmd, param));
+	std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
+	lk.unlock();
+	m_cv_not_empty.notify_all();
+      }
+    }
+  }
+
   void CommandReceiver::SetStatus(Status::State state,
                                   const std::string &info) {
     Status::Level level;
@@ -109,22 +68,33 @@ namespace eudaq {
     std::unique_lock<std::mutex> lk(m_mtx_status);
     return m_status.GetState() == state;
   }
-  
+
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
   }
-
-  void CommandReceiver::OnIdle() { mSleep(500); }
-
-  void CommandReceiver::CommandHandler(TransportEvent &ev) {
-    if (ev.etype == TransportEvent::RECEIVE) {
-      std::string cmd = ev.packet;
-      std::string param;
-      size_t i = cmd.find('\0');
-      if (i != std::string::npos) {
-        param = std::string(cmd, i + 1);
-        cmd = std::string(cmd, 0, i);
+  
+  bool CommandReceiver::AsyncReceiving(){
+    try{
+      while(m_is_connected){
+	m_cmdclient->Process(-1); //how long does it wait?
       }
+    } catch (const std::exception &e) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
+    } catch (...) {
+      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
+    }
+  }
+
+  bool CommandReceiver::AsyncForwarding(){
+    while(m_is_connected){
+      std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
+      if(m_qu_cmd.empty()){
+	m_cv_not_empty.wait(lk);
+      }
+      auto cmd = m_qu_cmd.front().first;
+      auto param = m_qu_cmd.front().second;
+      m_qu_cmd.pop();
+      lk.unlock();
       if (cmd == "INIT") {
         std::string section = m_type;
         if(m_name != "")
@@ -133,7 +103,7 @@ namespace eudaq {
 	std::stringstream ss;
 	m_conf_init->Print(ss, 4);
 	EUDAQ_INFO("Receive an INI section\n"+ ss.str());
-        OnInitialise();
+        OnInitialise();	
       } else if (cmd == "CONFIG"){
 	std::string section = m_type;
         if(m_name != "")
@@ -148,8 +118,10 @@ namespace eudaq {
         OnStartRun();
       } else if (cmd == "STOP") {
         OnStopRun();
-      } else if (cmd == "TERMINATE") {
-	m_exit = true;
+      } else if (cmd == "TERMINATE"){
+	m_is_destructing = true;
+	OnTerminate();
+	// TODO:
       } else if (cmd == "RESET") {
         OnReset();
       } else if (cmd == "STATUS") {
@@ -160,49 +132,110 @@ namespace eudaq {
         OnUnrecognised(cmd, param);
       }
       BufferSerializer ser;
-      std::unique_lock<std::mutex> lk(m_mtx_status);
+      std::unique_lock<std::mutex> lk_st(m_mtx_status);
       m_status.Serialize(ser);
       // m_status.ResetTags();
-      lk.unlock();
+      lk_st.unlock();
       m_cmdclient->SendPacket(ser);
     }
+    return 0;
   }
+  
+  std::string CommandReceiver::Connect(const std::string &addr){
+    std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
 
-  void CommandReceiver::ProcessingCommand(){
-    try {
-      //TODO: create m_cmdclient here instead of inside constructor
-      while (!m_exit){
-	m_cmdclient->Process(-1);
-	OnIdle();
+    if(m_cmdclient){
+      EUDAQ_THROW("command receiver is not closed before");
+    }
+    
+    int i = 0;
+    while(true){
+      try{
+	m_cmdclient.reset(TransportClient::CreateClient(addr));
+	if (!m_cmdclient->IsNull()){
+	  std::string packet;
+	  if (!m_cmdclient->ReceivePacket(&packet, 1000000))
+	    EUDAQ_THROW("No response from RunControl server");
+	  auto splitted = split(packet, " ");
+	  if (splitted.size() < 5) {
+	    EUDAQ_THROW("Invalid response from RunControl server: '" + packet + "'");
+	  }
+	  CHECK_RECIVED_PACKET(splitted, 0, "OK");
+	  CHECK_RECIVED_PACKET(splitted, 1, "EUDAQ");
+	  CHECK_RECIVED_PACKET(splitted, 2, "CMD");
+	  CHECK_RECIVED_PACKET(splitted, 3, "RunControl");
+	  m_cmdclient->SendPacket("OK EUDAQ CMD " + m_type + " " + m_name);
+	  m_addr_client = splitted[4];
+	  packet = "";
+	  if (!m_cmdclient->ReceivePacket(&packet, 1000000))
+	    EUDAQ_THROW("No response from RunControl server");
+
+	  auto splitted_res = split(packet, " ");
+	  CHECK_FOR_REFUSE_CONNECTION(splitted_res, 0, "OK");
+	}
+	m_is_connected = true;    
+	break;
+      } catch (...) {
+	std::cout << "easdasdasd\n";
+	if (++i>10){
+	  throw;
+	}
       }
-      //TODO: SendDisconnect event;
-      OnTerminate();
-      m_exited = true;
-    } catch (const std::exception &e) {
-      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-      OnTerminate();
-      m_exited = true;
-    } catch (...) {
-      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-      OnTerminate();
-      m_exited = true;
     }
+    m_cmdclient->SetCallback(TransportCallback(this, &CommandReceiver::CommandHandler));    
+    m_fut_async_rcv = std::async(std::launch::async, &CommandReceiver::AsyncReceiving, this); 
+    m_fut_async_fwd = std::async(std::launch::async, &CommandReceiver::AsyncForwarding, this);
   }
 
-  void CommandReceiver::StartCommandReceiver(){
-    if(m_exit){
-      EUDAQ_THROW("CommandReceiver can not be restarted after exit. (TODO)");
+  bool CommandReceiver::Deamon(){
+    while(!m_is_destructing){
+      std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      std::chrono::milliseconds t(10);
+      std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
+      if(m_is_connected){
+	try{
+	  if(m_fut_async_rcv.valid()){
+	    m_fut_async_rcv.wait_for(t);
+	  }
+	  if(m_fut_async_fwd.valid()){
+	    m_fut_async_fwd.wait_for(t);
+	  }
+	}
+	catch(...){
+	  EUDAQ_WARN("connection execption from disconnetion");
+	}
+      }
+      else{
+	try{
+	  if(m_fut_async_rcv.valid()){
+	    m_fut_async_rcv.get();
+	  }
+	  if(m_fut_async_fwd.valid()){
+	    m_fut_async_fwd.get();
+	  }
+	  m_cmdclient.reset();
+	  //TODO: clear queue
+	}
+	catch(...){
+	  EUDAQ_WARN("connection execption from disconnetion");
+	}
+      }
     }
-    m_thd_client = std::thread(&CommandReceiver::ProcessingCommand, this);
-  }
+    try{
+      std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
+      m_is_connected = false;
+      if(m_fut_async_rcv.valid()){
+	m_fut_async_rcv.get();
+      }
+      if(m_fut_async_fwd.valid()){
+	m_fut_async_fwd.get();
+      }
+      m_cmdclient.reset();
+    }
+    catch(...){
+      EUDAQ_WARN("connection execption from disconnetion");
+    }
 
-  void CommandReceiver::CloseCommandReceiver(){
-    m_exit = true;
-    if(m_thd_client.joinable()){
-      m_thd_client.join();
-    }
   }
   
 }
