@@ -17,12 +17,20 @@ namespace eudaq {
     m_dct_n= str2hash(GetFullName());
     m_evt_c = 0;
     m_exit = false;
+    Connect(runcontrol);
+  }
+
+  DataCollector::~DataCollector(){
+
   }
   
   void DataCollector::OnInitialise(){
     EUDAQ_INFO(GetFullName() + " is to be initialised...");
     auto conf = GetConfiguration();
     try{
+      m_data_addr = Listen(m_data_addr);
+      SetStatusTag("_SERVER", m_data_addr);
+      StopListen();
       DoInitialise();
       SetStatus(Status::STATE_UNCONF, "Initialized");
       EUDAQ_INFO(GetFullName() + " is initialised.");
@@ -54,22 +62,24 @@ namespace eudaq {
   void DataCollector::OnStartRun(){
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be started...");
     try {
+      m_data_addr = Listen(m_data_addr);
+      SetStatusTag("_SERVER", m_data_addr);
       m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt);
       m_evt_c = 0;
 
       std::string mn_str = GetConfiguration()->Get("EUDAQ_MN", "");
       std::vector<std::string> col_mn_name = split(mn_str, ";,", true);
-      std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
-      GetInitConfiguration()->SetSection("");//NOTE: it is m_conf_init
+      std::string cur_backup = GetConfiguration()->GetCurrentSectionName();
+      GetConfiguration()->SetSection("");
       for(auto &mn_name: col_mn_name){
-	std::string mn_addr =  GetInitConfiguration()->Get("Monitor."+mn_name, "");
+	std::string mn_addr =  GetConfiguration()->Get("Monitor."+mn_name, "");
 	if(!mn_addr.empty()){
 	  m_senders[mn_addr]
 	    = std::unique_ptr<DataSender>(new DataSender("DataCollector", GetName()));
 	  m_senders[mn_addr]->Connect(mn_addr);
 	}
       }
-      
+      GetConfiguration()->SetSection(cur_backup);
       DoStartRun();
       SetStatus(Status::STATE_RUNNING, "Started");
       EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
@@ -170,12 +180,9 @@ namespace eudaq {
   }
   
   void DataCollector::Exec(){
-    m_data_addr = Listen(m_data_addr); //TODO
-    SetStatusTag("_SERVER", m_data_addr);
-    StartCommandReceiver();
-    while(IsActiveCommandReceiver()){
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
+    // while(IsActiveCommandReceiver()){
+    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    // }
     std::cout<<">>>>>>>>>>>>>>>> end of exec"<<std::endl;
   }
 
