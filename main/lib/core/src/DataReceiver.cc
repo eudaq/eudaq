@@ -10,7 +10,7 @@
 namespace eudaq {
   
   DataReceiver::DataReceiver()
-    :m_is_listening(false),m_is_destructing(false){
+    :m_is_listening(false),m_is_destructing(false), m_last_addr("tcp://0"){
     m_fut_deamon = std::async(std::launch::async, &DataReceiver::Deamon, this); 
   }
 
@@ -24,7 +24,7 @@ namespace eudaq {
   void DataReceiver::OnConnect(ConnectionSPC id){
   }
   
-  void DataReceiver::OnDisconnect(ConnectionSPC id){
+  void DataReceiver::OnDisconnect(ConnectionSPC id){  
   }
   
   void DataReceiver::OnReceive(ConnectionSPC id, EventSP ev){
@@ -44,6 +44,8 @@ namespace eudaq {
 	  m_vt_con.erase(m_vt_con.begin() + i);
 	  std::unique_lock<std::mutex> lk(m_mx_qu_ev);
 	  m_qu_ev.push(std::make_pair<EventSP, ConnectionSPC>(nullptr, con));
+	  lk.unlock();
+	  m_cv_not_empty.notify_all();
 	}
       }
       EUDAQ_THROW("Unrecognised connection id");
@@ -86,6 +88,8 @@ namespace eudaq {
 	m_vt_con.push_back(con);
 	std::unique_lock<std::mutex> lk(m_mx_qu_ev);
 	m_qu_ev.push(std::make_pair<EventSP, ConnectionSPC>(nullptr, con));
+	lk.unlock();
+	m_cv_not_empty.notify_all();
       }
       else{ //identified connection  
 	BufferSerializer ser(ev.packet.begin(), ev.packet.end());
@@ -109,7 +113,7 @@ namespace eudaq {
   }
 
   bool DataReceiver::AsyncReceiving(){
-    while (m_is_listening) {
+    while (m_is_listening){
       m_dataserver->Process(100000);
     }
     return 0;
@@ -131,44 +135,32 @@ namespace eudaq {
       else{
 	if(con->GetState())
 	  OnConnect(con);
-	else
-	  OnDisconnect(con);	  
+	else{
+	  if(m_vt_con.empty())
+	    m_is_listening = false;
+	  OnDisconnect(con);
+	}
       }
     }
     return 0;
   }
   
   std::string DataReceiver::Listen(const std::string &addr){
-    std::string listen = "tcp://0";
-    if(addr.empty()){
-      listen = addr;
+    std::string this_addr = m_last_addr;
+    if(!addr.empty()){
+      this_addr = addr;
     }
 
-    std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
-    m_is_listening = false;
-    try{
-      if(m_fut_async_rcv.valid()){
-	m_fut_async_rcv.get();
-      }
-      if(m_fut_async_fwd.valid()){
-	m_fut_async_fwd.get();
-      }
+    if(m_dataserver){
+      EUDAQ_THROW("last server did not closed sucessfully");
     }
-    catch(...){
-      EUDAQ_WARN("connection execption from disconnetion");
-    }
-    
-    std::unique_lock<std::mutex> lk(m_mx_qu_ev);    
-    m_qu_ev = std::queue<std::pair<EventSP, ConnectionSPC>>();    
-    lk.unlock();
-
-    m_dataserver.reset(TransportServer::CreateServer(listen));
-    m_dataserver->SetCallback(TransportCallback(this, &DataReceiver::DataHandler));
-
     m_is_listening = true;
+    m_dataserver.reset(TransportServer::CreateServer(this_addr));
+    m_dataserver->SetCallback(TransportCallback(this, &DataReceiver::DataHandler));
     m_fut_async_rcv = std::async(std::launch::async, &DataReceiver::AsyncReceiving, this); 
     m_fut_async_fwd = std::async(std::launch::async, &DataReceiver::AsyncForwarding, this);
-    return m_dataserver->ConnectionString();
+    m_last_addr = m_dataserver->ConnectionString();
+    return m_last_addr;
   }
 
   bool DataReceiver::Deamon(){
@@ -176,17 +168,49 @@ namespace eudaq {
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       std::chrono::milliseconds t(10);
       std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
-      try{
-	if(m_fut_async_rcv.valid()){
-	  m_fut_async_rcv.wait_for(t);
+      if(m_is_listening){
+	try{
+	  if(m_fut_async_rcv.valid()){
+	    m_fut_async_rcv.wait_for(t);
+	  }
+	  if(m_fut_async_fwd.valid()){
+	    m_fut_async_fwd.wait_for(t);
+	  }
 	}
-	if(m_fut_async_fwd.valid()){
-	  m_fut_async_fwd.wait_for(t);
+	catch(...){
+	  EUDAQ_WARN("connection execption at listening time");
 	}
       }
-      catch(...){
-	EUDAQ_WARN("connection execption from disconnetion");
+      else{ //stop-start circle 
+	try{
+	  if(m_fut_async_rcv.valid()){
+	    m_fut_async_rcv.get();
+	  }
+	  if(m_fut_async_fwd.valid()){
+	    m_fut_async_fwd.get();
+	  }
+	  m_qu_ev = std::queue<std::pair<EventSP, ConnectionSPC>>();
+	  m_dataserver.reset();
+	}
+	catch(...){
+	  EUDAQ_WARN("connection execption from disconnetion");
+	}
       }
+    }
+    
+    try{
+      std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
+      m_is_listening = false;
+      if(m_fut_async_rcv.valid()){
+	m_fut_async_rcv.get();
+      }
+      if(m_fut_async_fwd.valid()){
+	m_fut_async_fwd.get();
+      }
+      //TODO: the case when data threads do not go to end (m_is_listening is not false, any remaining connections exist)
+    }
+    catch(...){
+      EUDAQ_WARN("connection execption from disconnetion");
     }
   }
   

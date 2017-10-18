@@ -36,6 +36,7 @@ namespace eudaq {
     virtual void OnDisconnect(ConnectionSPC id);
     virtual void OnReceive(ConnectionSPC id, EventSP ev);
     std::string Listen(const std::string &addr);
+    std::string StopListen(){m_is_listening = false;}; //TODO: remove this method later
   private:
     void DataHandler(TransportEvent &ev);
     bool Deamon();
@@ -44,6 +45,7 @@ namespace eudaq {
     
   private:
     std::unique_ptr<TransportServer> m_dataserver;
+    std::string m_last_addr;
     std::vector<ConnectionSP> m_vt_con;
     bool m_is_destructing;
     bool m_is_listening;
