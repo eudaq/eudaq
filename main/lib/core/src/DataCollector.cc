@@ -1,6 +1,4 @@
 #include "eudaq/DataCollector.hh"
-#include "eudaq/TransportServer.hh"
-#include "eudaq/BufferSerializer.hh"
 #include "eudaq/Logger.hh"
 #include "eudaq/Utils.hh"
 #include <iostream>
@@ -15,7 +13,7 @@ namespace eudaq {
   Factory<DataCollector>::Instance<const std::string&, const std::string&>(); //TODO
   
   DataCollector::DataCollector(const std::string &name, const std::string &runcontrol)
-    :CommandReceiver("DataCollector", name, runcontrol){  
+    :CommandReceiver("DataCollector", name, runcontrol){
     m_dct_n= str2hash(GetFullName());
     m_evt_c = 0;
     m_exit = false;
@@ -51,13 +49,11 @@ namespace eudaq {
       EUDAQ_ERROR(msg);
       SetStatus(Status::STATE_ERROR, msg);
     }
-  }  
+  }
+  
   void DataCollector::OnStartRun(){
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be started...");
     try {
-      if (!m_dataserver) {
-        EUDAQ_THROW("You must configure before starting a run");
-      }
       m_writer = Factory<FileWriter>::Create<std::string&>(str2hash(m_fwtype), m_fwpatt);
       m_evt_c = 0;
 
@@ -113,11 +109,9 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, "Reset Error");
     }
   }
-
   
   void DataCollector::OnTerminate(){
     EUDAQ_INFO(GetFullName() + " is to be terminated...");
-    CloseDataCollector();
     DoTerminate();
     SetStatus(Status::STATE_UNINIT, "Terminated");
     EUDAQ_INFO(GetFullName() + " is terminated.");
@@ -130,76 +124,19 @@ namespace eudaq {
       SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
     }
   }
-  
-  void DataCollector::DataHandler(TransportEvent &ev) {
-    auto con = ev.id;
-    switch (ev.etype) {
-    case (TransportEvent::CONNECT):
-      m_dataserver->SendPacket("OK EUDAQ DATA DataCollector", *con, true);
-      break;
-    case (TransportEvent::DISCONNECT):
-      EUDAQ_INFO("Disconnected: " + to_string(*con));
-      for (size_t i = 0; i < m_info_pdc.size(); ++i) {
-	if (m_info_pdc[i] == con){
-	  m_info_pdc.erase(m_info_pdc.begin() + i);
-	  DoDisconnect(con);
-	  return;
-	}
-      }
-      EUDAQ_THROW("Unrecognised connection id");
-      break;
-    case (TransportEvent::RECEIVE):
-      if (con->GetState() == 0) { // waiting for identification
-        do {
-          size_t i0 = 0, i1 = ev.packet.find(' ');
-          if (i1 == std::string::npos)
-            break;
-          std::string part(ev.packet, i0, i1);
-          if (part != "OK")
-            break;
-          i0 = i1 + 1;
-          i1 = ev.packet.find(' ', i0);
-          if (i1 == std::string::npos)
-            break;
-          part = std::string(ev.packet, i0, i1 - i0);
-          if (part != "EUDAQ")
-            break;
-          i0 = i1 + 1;
-          i1 = ev.packet.find(' ', i0);
-          if (i1 == std::string::npos)
-            break;
-          part = std::string(ev.packet, i0, i1 - i0);
-          if (part != "DATA")
-            break;
-          i0 = i1 + 1;
-          i1 = ev.packet.find(' ', i0);
-          part = std::string(ev.packet, i0, i1 - i0);
-          con->SetType(part);
-          i0 = i1 + 1;
-          i1 = ev.packet.find(' ', i0);
-          part = std::string(ev.packet, i0, i1 - i0);
-          con->SetName(part);
-        } while (false);
-        m_dataserver->SendPacket("OK", *con, true);
-        con->SetState(1); // successfully identified
-	EUDAQ_INFO("Connection from " + to_string(*con));
-	std::cout<< "DoConnecg con type"<< con->GetType()<<" "<< str2hash(con->GetName())<<std::endl;
-	std::cout<< "DoConnecg con name "<< con->GetName()<<" "<< str2hash(con->GetName())<<std::endl;
-	m_info_pdc.push_back(con);
-	DoConnect(con);
-      } else{
-        BufferSerializer ser(ev.packet.begin(), ev.packet.end());
-	uint32_t id;
-	ser.PreRead(id);
-	EventUP event = Factory<Event>::MakeUnique<Deserializer&>(id, ser);
-	DoReceive(con, std::move(event));
-      }
-      break;
-    default:
-      std::cout << "Unknown:    " << *con << std::endl;
-    }
+
+  void DataCollector::OnConnect(ConnectionSPC id){
+    DoConnect(id);
   }
-  
+    
+  void DataCollector::OnDisconnect(ConnectionSPC id){
+    DoDisconnect(id);
+  }
+    
+  void DataCollector::OnReceive(ConnectionSPC id, EventSP ev){
+    DoReceive(id, ev);
+  }  
+    
   void DataCollector::WriteEvent(EventSP ev){
     try{
       if(ev->IsBORE()){
@@ -231,50 +168,15 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, msg);
     }
   }
-
-  void DataCollector::DataThread() {
-    try {
-      while (!m_exit) {
-        m_dataserver->Process(100000);
-      }
-    } catch (const std::exception &e) {
-      std::cout << "Error: Uncaught exception: " << e.what() << "\n"
-                << "DataThread is dying..." << std::endl;
-      m_exit = true;
-    } catch (...) {
-      std::cout << "Error: Uncaught unrecognised exception: \n"
-                << "DataThread is dying..." << std::endl;
-      m_exit = true;
-    }
-  }
-
-  void DataCollector::StartDataCollector(){
-    if(m_exit){
-      EUDAQ_THROW("DataCollector can not be restarted after exit. (TODO)");
-    }
-    if(m_data_addr.empty()){
-      m_data_addr = "tcp://0";
-    }
-    m_dataserver.reset(TransportServer::CreateServer(m_data_addr));
-    m_dataserver->SetCallback(TransportCallback(this, &DataCollector::DataHandler));
-    m_thd_server = std::thread(&DataCollector::DataThread, this);
-    m_data_addr = m_dataserver->ConnectionString();
-    SetStatusTag("_SERVER", m_data_addr);
-  }
-
-  void DataCollector::CloseDataCollector(){
-    m_exit = true;
-    if(m_thd_server.joinable()){
-      m_thd_server.join();
-    } 
-  }
   
   void DataCollector::Exec(){
-    StartDataCollector();
+    m_data_addr = Listen(m_data_addr); //TODO
+    SetStatusTag("_SERVER", m_data_addr);
     StartCommandReceiver();
-    while(IsActiveCommandReceiver() || IsActiveDataCollector()){
+    while(IsActiveCommandReceiver()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
+    std::cout<<">>>>>>>>>>>>>>>> end of exec"<<std::endl;
   }
 
   DataCollectorSP DataCollector::Make(const std::string &code_name,

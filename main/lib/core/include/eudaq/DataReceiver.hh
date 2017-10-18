@@ -35,7 +35,7 @@ namespace eudaq {
     virtual void OnConnect(ConnectionSPC id);
     virtual void OnDisconnect(ConnectionSPC id);
     virtual void OnReceive(ConnectionSPC id, EventSP ev);
-    void Listen(const std::string &addr);
+    std::string Listen(const std::string &addr);
   private:
     void DataHandler(TransportEvent &ev);
     bool Deamon();

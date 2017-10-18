@@ -138,7 +138,7 @@ namespace eudaq {
     return 0;
   }
   
-  void DataReceiver::Listen(const std::string &addr){
+  std::string DataReceiver::Listen(const std::string &addr){
     std::string listen = "tcp://0";
     if(addr.empty()){
       listen = addr;
@@ -168,6 +168,7 @@ namespace eudaq {
     m_is_listening = true;
     m_fut_async_rcv = std::async(std::launch::async, &DataReceiver::AsyncReceiving, this); 
     m_fut_async_fwd = std::async(std::launch::async, &DataReceiver::AsyncForwarding, this);
+    return m_dataserver->ConnectionString();
   }
 
   bool DataReceiver::Deamon(){

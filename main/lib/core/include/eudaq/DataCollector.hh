@@ -1,11 +1,10 @@
 #ifndef EUDAQ_INCLUDED_DataCollector
 #define EUDAQ_INCLUDED_DataCollector
-
-#include "eudaq/TransportServer.hh"
 #include "eudaq/CommandReceiver.hh"
-#include "eudaq/Event.hh"
 #include "eudaq/FileWriter.hh"
 #include "eudaq/DataSender.hh"
+#include "eudaq/DataReceiver.hh"
+#include "eudaq/Event.hh"
 #include "eudaq/Configuration.hh"
 #include "eudaq/Utils.hh"
 #include "eudaq/Platform.hh"
@@ -30,16 +29,9 @@ namespace eudaq {
   using DataCollectorSP = Factory<DataCollector>::SP_BASE;
   
   //----------DOC-MARK-----BEG*DEC-----DOC-MARK----------
-  class DLLEXPORT DataCollector : public CommandReceiver {
+  class DLLEXPORT DataCollector : public CommandReceiver, public DataReceiver {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol);
-    void OnInitialise() override final;
-    void OnConfigure() override final;
-    void OnStartRun() override final;
-    void OnStopRun() override final;
-    void OnReset() override final;
-    void OnTerminate() override final;
-    void OnStatus() override final;
     void Exec() override;
 
     //running in commandreceiver thread
@@ -51,35 +43,39 @@ namespace eudaq {
     virtual void DoTerminate(){};
     virtual void DoStatus(){};
 
-    //running in dataserver thread
+    //running in datareceiver thread
     virtual void DoConnect(ConnectionSPC id) {}
     virtual void DoDisconnect(ConnectionSPC id) {}
     virtual void DoReceive(ConnectionSPC id, EventSP ev){};
     
     void WriteEvent(EventSP ev);
     void SetServerAddress(const std::string &addr){m_data_addr = addr;};
-    void StartDataCollector();
-    void CloseDataCollector();
-    bool IsActiveDataCollector(){return m_thd_server.joinable();}
 
     static DataCollectorSP Make(const std::string &code_name,
 				const std::string &run_name,
 				const std::string &runcontrol);
 
   private:
-    void DataHandler(TransportEvent &ev);
-    void DataThread();
+    void OnInitialise() override final;
+    void OnConfigure() override final;
+    void OnStartRun() override final;
+    void OnStopRun() override final;
+    void OnReset() override final;
+    void OnTerminate() override final;
+    void OnStatus() override final;
+
+    void OnConnect(ConnectionSPC id) override final;
+    void OnDisconnect(ConnectionSPC id) override final;
+    void OnReceive(ConnectionSPC id, EventSP ev) override final;
 
   private:
-    std::thread m_thd_server;
     bool m_exit;
-    std::unique_ptr<TransportServer> m_dataserver;
     std::string m_data_addr;
     FileWriterUP m_writer;
+    std::unique_ptr<DataReceiver> m_receiver;
     std::map<std::string, std::unique_ptr<DataSender>> m_senders;
     std::string m_fwpatt;
     std::string m_fwtype;
-    std::vector<std::shared_ptr<ConnectionInfo>> m_info_pdc;
     uint32_t m_dct_n;
     uint32_t m_evt_c;
     std::unique_ptr<const Configuration> m_conf;
