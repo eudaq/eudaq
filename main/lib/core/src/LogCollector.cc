@@ -27,7 +27,7 @@ namespace eudaq {
     auto conf = GetConfiguration();
     try{
       DoInitialise();
-      SetStatus(Status::STATE_UNCONF, "Initialized");
+      CommandReceiver::OnInitialise();
     }catch (const Exception &e) {
       std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -39,7 +39,7 @@ namespace eudaq {
   void LogCollector::OnTerminate(){
     CloseLogCollector();
     DoTerminate();
-    SetStatus(Status::STATE_UNINIT, "Terminated");
+    CommandReceiver::OnTerminate();
     std::exit(0);
   }
   
@@ -147,9 +147,9 @@ namespace eudaq {
   
   void LogCollector::Exec(){
     StartLogCollector(); //TODO: Start it OnServer
-    // StartCommandReceiver();
-    // while(IsActiveCommandReceiver() || IsActiveLogCollector()){
-    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // }
+    StartCommandReceiver();
+    while(IsActiveCommandReceiver() || IsActiveLogCollector()){
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
   }
 }

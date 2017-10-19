@@ -33,7 +33,6 @@ namespace eudaq {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol);
     ~DataCollector() override;
-    void Exec() override;
 
     //running in commandreceiver thread
     virtual void DoInitialise(){};

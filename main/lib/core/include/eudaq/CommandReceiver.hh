@@ -26,16 +26,17 @@ namespace eudaq {
 		    const std::string & runcontrol);
     virtual ~CommandReceiver();
 
-    virtual void OnInitialise() {SetStatus(Status::STATE_UNCONF, "Initialized");}; 
-    virtual void OnConfigure() {SetStatus(Status::STATE_CONF, "Configured");};
-    virtual void OnStartRun() {SetStatus(Status::STATE_RUNNING, "Started");};
-    virtual void OnStopRun() {SetStatus(Status::STATE_CONF, "Stopped");};
-    virtual void OnTerminate() {SetStatus(Status::STATE_UNINIT, "Terminated");};
-    virtual void OnReset() {SetStatus(Status::STATE_UNINIT, "Reseted");};
-    virtual void OnStatus() {}
+    virtual void OnInitialise(); 
+    virtual void OnConfigure();
+    virtual void OnStartRun();
+    virtual void OnStopRun();
+    virtual void OnTerminate();
+    virtual void OnReset();
+    virtual void OnStatus(){}
     virtual void OnLog(const std::string & /*param*/);
     virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
-    virtual void Exec() = 0;
+    virtual bool RunLoop();
+    virtual void Exec();
     
     void SetStatus(Status::State state, const std::string & info);
     bool IsStatus(Status::State state);
@@ -50,20 +51,28 @@ namespace eudaq {
     ConfigurationSPC GetInitConfiguration() const {return m_conf_init;};
 
     std::string Connect(const std::string &addr);
+    std::string Connect(){Connect(m_addr_runctrl);}
+    bool IsConnected(){return m_is_connected;}
+    void StartCommandReceiver(){Connect();}
+    bool IsActiveCommandReceiver(){return m_is_connected;}
   private:
     void CommandHandler(TransportEvent &);
     bool Deamon();
     bool AsyncForwarding();
     bool AsyncReceiving();
+    bool RunLooping();
 
   private:
     std::unique_ptr<TransportClient> m_cmdclient;
     std::string m_addr_client;
+    std::string m_addr_runctrl;
     bool m_is_destructing;
     bool m_is_connected;
+    bool m_is_runlooping;
     std::future<bool> m_fut_async_rcv;
     std::future<bool> m_fut_async_fwd;
     std::future<bool> m_fut_deamon;
+    std::future<bool> m_fut_runloop;
     std::mutex m_mx_qu_cmd;
     std::mutex m_mx_deamon;
     std::queue<std::pair<std::string, std::string>> m_qu_cmd;
@@ -79,7 +88,6 @@ namespace eudaq {
     uint32_t m_run_number;
     
   };
-
 }
 
 #endif // EUDAQ_INCLUDED_CommandReceiver
