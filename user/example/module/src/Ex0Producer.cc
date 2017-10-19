@@ -38,7 +38,7 @@ namespace{
 //----------DOC-MARK-----END*REG-----DOC-MARK----------
 //----------DOC-MARK-----BEG*CON-----DOC-MARK----------
 Ex0Producer::Ex0Producer(const std::string & name, const std::string & runcontrol)
-  :eudaq::Producer(name, runcontrol), m_exit_of_run(false){  
+  :eudaq::Producer(name, runcontrol), m_file_lock(0), m_exit_of_run(false){  
 }
 //----------DOC-MARK-----BEG*INI-----DOC-MARK----------
 void Ex0Producer::DoInitialise(){
@@ -77,18 +77,23 @@ void Ex0Producer::DoStopRun(){
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void Ex0Producer::DoReset(){
   m_exit_of_run = true;
-
+  if(m_file_lock){
 #ifndef _WIN32
-  flock(fileno(m_file_lock), LOCK_UN);
+    flock(fileno(m_file_lock), LOCK_UN);
 #endif
-  fclose(m_file_lock);
+    fclose(m_file_lock);
+    m_file_lock = 0;
+  }
   m_ms_busy = std::chrono::milliseconds();
   m_exit_of_run = false;
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
 void Ex0Producer::DoTerminate(){
   m_exit_of_run = true;
-  fclose(m_file_lock);
+  if(m_file_lock){
+    fclose(m_file_lock);
+    m_file_lock = 0;
+  }
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
 bool Ex0Producer::RunLoop(){
