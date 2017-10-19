@@ -31,14 +31,6 @@ namespace eudaq {
   class DLLEXPORT Monitor : public CommandReceiver, public DataReceiver{
   public:
     Monitor(const std::string &name, const std::string &runcontrol);
-    void OnInitialise() override final;
-    void OnConfigure() override final;
-    void OnStartRun() override final;
-    void OnStopRun() override final;
-    void OnReset() override final;
-    void OnTerminate() override final;
-    void OnStatus() override final;
-    void Exec() override;
 
     //running in commandreceiver thread
     virtual void DoInitialise(){};
@@ -53,22 +45,25 @@ namespace eudaq {
     virtual void DoReceive(EventSP ev){};
     
     void SetServerAddress(const std::string &addr){m_data_addr = addr;};
-    void StartMonitor();
-    void CloseMonitor();
-    bool IsActiveMonitor(){return m_thd_server.joinable();}
 
     static MonitorSP Make(const std::string &code_name,
 			  const std::string &run_name,
 			  const std::string &runcontrol);
 
   private:
-    void DataHandler(TransportEvent &ev);
-    void DataThread();
+    void OnInitialise() override final;
+    void OnConfigure() override final;
+    void OnStartRun() override final;
+    void OnStopRun() override final;
+    void OnReset() override final;
+    void OnTerminate() override final;
+    void OnStatus() override final;
 
+    // void OnConnect(ConnectionSPC id) override final;
+    // void OnDisconnect(ConnectionSPC id) override final;
+    void OnReceive(ConnectionSPC id, EventSP ev) override final;
+    
   private:
-    std::thread m_thd_server;
-    bool m_exit;
-    std::unique_ptr<TransportServer> m_dataserver;
     std::string m_data_addr;
   };
   //----------DOC-MARK-----END*DEC-----DOC-MARK----------

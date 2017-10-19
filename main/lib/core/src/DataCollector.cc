@@ -17,11 +17,10 @@ namespace eudaq {
     m_dct_n= str2hash(GetFullName());
     m_evt_c = 0;
     m_exit = false;
-    Connect(runcontrol);
   }
 
   DataCollector::~DataCollector(){
-
+    
   }
   
   void DataCollector::OnInitialise(){
@@ -32,8 +31,7 @@ namespace eudaq {
       SetStatusTag("_SERVER", m_data_addr);
       StopListen();
       DoInitialise();
-      SetStatus(Status::STATE_UNCONF, "Initialized");
-      EUDAQ_INFO(GetFullName() + " is initialised.");
+      CommandReceiver::OnInitialise();
     }catch (const Exception &e) {
       std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -50,8 +48,7 @@ namespace eudaq {
       m_fwpatt = conf->Get("EUDAQ_FW_PATTERN", "$12D_run$6R$X");
       m_dct_n = conf->Get("EUDAQ_ID", m_dct_n);
       DoConfigure();
-      SetStatus(Status::STATE_CONF, "Configured");
-      EUDAQ_INFO(GetFullName() + " is configured.");
+      CommandReceiver::OnConfigure();
     }catch (const Exception &e) {
       std::string msg = "Error when configuring by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -81,8 +78,7 @@ namespace eudaq {
       }
       GetConfiguration()->SetSection(cur_backup);
       DoStartRun();
-      SetStatus(Status::STATE_RUNNING, "Started");
-      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
+      CommandReceiver::OnStartRun();
     } catch (const Exception &e) {
       std::string msg = "Error preparing for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -95,8 +91,7 @@ namespace eudaq {
     try {
       DoStopRun();
       m_senders.clear();
-      SetStatus(Status::STATE_CONF, "Stopped");
-      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
+      CommandReceiver::OnStopRun();
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -109,8 +104,7 @@ namespace eudaq {
     try{
       DoReset();
       m_senders.clear();
-      SetStatus(Status::STATE_UNINIT, "Reset");
-      EUDAQ_INFO(GetFullName() + " is reset.");
+      CommandReceiver::OnReset();
     } catch (const std::exception &e) {
       EUDAQ_THROW( std::string("DataCollector Reset:: Caught exception: ") + e.what() );
       SetStatus(Status::STATE_ERROR, "Reset Error");
@@ -123,8 +117,7 @@ namespace eudaq {
   void DataCollector::OnTerminate(){
     EUDAQ_INFO(GetFullName() + " is to be terminated...");
     DoTerminate();
-    SetStatus(Status::STATE_UNINIT, "Terminated");
-    EUDAQ_INFO(GetFullName() + " is terminated.");
+    CommandReceiver::OnTerminate();
   }
     
   void DataCollector::OnStatus(){
@@ -179,12 +172,6 @@ namespace eudaq {
     }
   }
   
-  void DataCollector::Exec(){
-    // while(IsActiveCommandReceiver()){
-    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // }
-    std::cout<<">>>>>>>>>>>>>>>> end of exec"<<std::endl;
-  }
 
   DataCollectorSP DataCollector::Make(const std::string &code_name,
 				      const std::string &run_name,

@@ -18,7 +18,7 @@ class Ex0Producer : public eudaq::Producer {
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-  void Mainloop();
+  bool RunLoop() override;
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Producer");
 private:
@@ -27,7 +27,6 @@ private:
   uint32_t m_plane_id;
   FILE* m_file_lock;
   std::chrono::milliseconds m_ms_busy;
-  std::thread m_thd_run;
   bool m_exit_of_run;
 };
 //----------DOC-MARK-----END*DEC-----DOC-MARK----------
@@ -70,36 +69,29 @@ void Ex0Producer::DoConfigure(){
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
 void Ex0Producer::DoStartRun(){
   m_exit_of_run = false;
-  m_thd_run = std::thread(&Ex0Producer::Mainloop, this);
 }
 //----------DOC-MARK-----BEG*STOP-----DOC-MARK----------
 void Ex0Producer::DoStopRun(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
 }
 //----------DOC-MARK-----BEG*RST-----DOC-MARK----------
 void Ex0Producer::DoReset(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
+
 #ifndef _WIN32
   flock(fileno(m_file_lock), LOCK_UN);
 #endif
   fclose(m_file_lock);
-  m_thd_run = std::thread();
   m_ms_busy = std::chrono::milliseconds();
   m_exit_of_run = false;
 }
 //----------DOC-MARK-----BEG*TER-----DOC-MARK----------
 void Ex0Producer::DoTerminate(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
   fclose(m_file_lock);
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
-void Ex0Producer::Mainloop(){
+bool Ex0Producer::RunLoop(){
   auto tp_start_run = std::chrono::steady_clock::now();
   uint32_t trigger_n = 0;
   uint8_t x_pixel = 16;

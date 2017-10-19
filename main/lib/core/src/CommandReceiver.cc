@@ -20,7 +20,7 @@ namespace eudaq {
   
   CommandReceiver::CommandReceiver(const std::string & type, const std::string & name,
 				   const std::string & runcontrol)
-    : m_type(type), m_name(name), m_is_destructing(false), m_is_connected(false){
+    : m_type(type), m_name(name), m_is_destructing(false), m_is_connected(false), m_is_runlooping(false), m_addr_runctrl(runcontrol){
     m_fut_deamon = std::async(std::launch::async, &CommandReceiver::Deamon, this); 
   }
 
@@ -71,6 +71,63 @@ namespace eudaq {
 
   void CommandReceiver::OnLog(const std::string &param) {
     EUDAQ_LOG_CONNECT(m_type, m_name, param);
+  }
+
+  void CommandReceiver::OnInitialise(){
+    SetStatus(Status::STATE_UNCONF, "Initialized");
+    EUDAQ_INFO(GetFullName() + " is initialised.");
+  }
+  
+  void CommandReceiver::OnConfigure(){
+    SetStatus(Status::STATE_CONF, "Configured");
+    EUDAQ_INFO(GetFullName() + " is configured.");
+  }
+  
+  void CommandReceiver::OnStartRun(){
+    if(m_fut_runloop.valid()){
+      EUDAQ_THROW("Last run is not stoped");
+    }
+    m_is_runlooping = true;
+    m_fut_runloop = std::async(std::launch::async, &CommandReceiver::RunLooping, this);
+    SetStatus(Status::STATE_RUNNING, "Started");
+    EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
+  }
+  
+  void CommandReceiver::OnStopRun(){
+    if(m_fut_runloop.valid()){
+      m_is_runlooping = false;
+      m_fut_runloop.get();
+      //TODO: wait and try, error report/throw
+    }
+    SetStatus(Status::STATE_CONF, "Stopped");
+    EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
+  }
+  
+  void CommandReceiver::OnReset(){
+    SetStatus(Status::STATE_UNINIT, "Reseted");
+    EUDAQ_INFO(GetFullName() + " is reset.");
+  }
+
+  void CommandReceiver::OnTerminate(){
+    SetStatus(Status::STATE_UNINIT, "Terminated");
+    EUDAQ_INFO(GetFullName() + " is terminated.");
+  }
+
+  
+  bool CommandReceiver::RunLoop(){
+    return 0;
+  }
+
+  bool CommandReceiver::RunLooping(){
+    bool ret = RunLoop();
+    // try{
+    // }//TODO: excetption handling
+    std::chrono::milliseconds t(500);
+    while(m_is_runlooping){
+      std::this_thread::sleep_for(t);
+      //TODO message
+    }
+    return ret;
   }
   
   bool CommandReceiver::AsyncReceiving(){
@@ -200,6 +257,10 @@ namespace eudaq {
 	  if(m_fut_async_fwd.valid()){
 	    m_fut_async_fwd.wait_for(t);
 	  }
+	  // if(m_fut_runloop.valid()){
+	  //   m_fut_runloop.wait_for(t); //TODO: use flag which is set by RUNLOOPING
+	  //   //TODO:: -> message running; get -> message  
+	  // }
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
@@ -235,7 +296,13 @@ namespace eudaq {
     catch(...){
       EUDAQ_WARN("connection execption from disconnetion");
     }
+  }
 
+  void CommandReceiver::Exec(){
+    Connect();
+    while(IsConnected()){
+      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
   }
   
 }

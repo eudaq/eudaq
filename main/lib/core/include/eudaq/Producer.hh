@@ -32,14 +32,6 @@ namespace eudaq {
   class DLLEXPORT Producer : public CommandReceiver{
   public:
     Producer(const std::string &name, const std::string &runcontrol);
-    void OnInitialise() override final;
-    void OnConfigure() override final;
-    void OnStartRun() override final;
-    void OnStopRun() override final;
-    void OnReset() override final;
-    void OnTerminate() override final;
-    void OnStatus() override;
-    void Exec() override;
 
     virtual void DoInitialise(){};
     virtual void DoConfigure(){};
@@ -52,6 +44,16 @@ namespace eudaq {
     void SendEvent(EventSP ev);
     static ProducerSP Make(const std::string &code_name, const std::string &run_name,
 			   const std::string &runcontrol);
+
+  private:
+    void OnInitialise() override final;
+    void OnConfigure() override final;
+    void OnStartRun() override final;
+    void OnStopRun() override final;
+    void OnReset() override final;
+    void OnTerminate() override final;
+    void OnStatus() override;
+    
   private:
     uint32_t m_pdc_n;
     uint32_t m_evt_c;

@@ -24,8 +24,7 @@ namespace eudaq {
 	EUDAQ_THROW("No Configuration Section for OnInitialise");
       EUDAQ_INFO("Initializing ...(" + conf->Name() + ")");
       DoInitialise();
-      SetStatus(Status::STATE_UNCONF, "Initialized");
-      EUDAQ_INFO(GetFullName() + " is initialised.");
+      CommandReceiver::OnInitialise();
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Init Error");
@@ -46,8 +45,7 @@ namespace eudaq {
 	EUDAQ_THROW("No Configuration Section for OnConfigure");
       m_pdc_n = conf->Get("EUDAQ_ID", m_pdc_n);
       DoConfigure();
-      SetStatus(Status::STATE_CONF, "Configured");
-      EUDAQ_INFO(GetFullName() + " is configured.");
+      CommandReceiver::OnConfigure();
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Configuration Error");
@@ -77,10 +75,9 @@ namespace eudaq {
 	}
       }
       GetConfiguration()->SetSection(cur_backup);
-      SetStatusTag("EventN", std::to_string(m_evt_c));      
+      SetStatusTag("EventN", "0");
       DoStartRun();
-      SetStatus(Status::STATE_RUNNING, "Started");
-      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is started.");
+      CommandReceiver::OnStartRun();
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Start Error");
@@ -98,8 +95,7 @@ namespace eudaq {
       EUDAQ_INFO("Stopping Run");
       DoStopRun();
       m_senders.clear();
-      SetStatus(Status::STATE_CONF, "Stopped");
-      EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
+      CommandReceiver::OnStopRun();
     } catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Stop Error");
@@ -114,12 +110,11 @@ namespace eudaq {
     try{
       DoReset();
       m_senders.clear();
-      SetStatus(Status::STATE_UNINIT, "Reset");
-      EUDAQ_INFO(GetFullName() + " is reset.");
+      CommandReceiver::OnReset();
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Reset Error");
-    } catch (...) {
+    } catch (...){
       printf("Producer Reset:: Unknown exception\n");
       SetStatus(Status::STATE_ERROR, "Reset Error");
     }
@@ -129,8 +124,7 @@ namespace eudaq {
     EUDAQ_INFO(GetFullName() + " is to be terminated...");
     try{
       DoTerminate();
-      SetStatus(Status::STATE_UNINIT, "Terminated");
-      EUDAQ_INFO(GetFullName() + " is terminated.");
+      CommandReceiver::OnTerminate();
     }catch (const std::exception &e) {
       printf("Caught exception: %s\n", e.what());
       SetStatus(Status::STATE_ERROR, "Terminate Error");
@@ -153,13 +147,6 @@ namespace eudaq {
     }
   }
   
-  void Producer::Exec(){
-    // StartCommandReceiver();
-    // while(IsActiveCommandReceiver()){
-    //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    // }
-  }
-
   void Producer::SendEvent(EventSP ev){
     if(ev->IsBORE()){
       if(GetConfiguration())
