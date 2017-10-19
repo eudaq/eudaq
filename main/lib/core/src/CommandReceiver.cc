@@ -33,17 +33,21 @@ namespace eudaq {
   
   void CommandReceiver::CommandHandler(TransportEvent &ev) {
     if (ev.etype == TransportEvent::RECEIVE) {
+      // std::cout<<"Receving >> new cmd"<<std::endl;
       std::string cmd = ev.packet;
       std::string param;
       size_t i = cmd.find('\0');
+      // std::cout<<"Receving "<<cmd<<std::endl;
       if (i != std::string::npos) {
+	// std::cout<<"Receving >>>>  cmd with param"<<std::endl;
         param = std::string(cmd, i + 1);
         cmd = std::string(cmd, 0, i);
-	m_qu_cmd.push(std::make_pair(cmd, param));
-	std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
-	lk.unlock();
-	m_cv_not_empty.notify_all();
       }
+      
+      std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
+      m_qu_cmd.push(std::make_pair(cmd, param));
+      // std::cout<<"Receving >> pushed "<<std::endl;
+      m_cv_not_empty.notify_all();
     }
   }
 
@@ -136,9 +140,9 @@ namespace eudaq {
 	m_cmdclient->Process(-1); //how long does it wait?
       }
     } catch (const std::exception &e) {
-      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught exception: " <<e.what() <<std::endl;
+      std::cout <<"CommandReceiver::AsyncReceiving Error: Uncaught exception: " <<e.what() <<std::endl;
     } catch (...) {
-      std::cout <<"CommandReceiver::ProcessThread() Error: Uncaught unrecognised exception" <<std::endl;
+      std::cout <<"CommandReceiver::AsyncReceiving Error: Uncaught unrecognised exception" <<std::endl;
     }
   }
 
@@ -146,12 +150,20 @@ namespace eudaq {
     while(m_is_connected){
       std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
       if(m_qu_cmd.empty()){
-	m_cv_not_empty.wait(lk);
+	// std::cout<<"AsyncForwding >>>> waiting empty"<<std::endl;
+	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))==std::cv_status::timeout){
+	  if(!m_is_connected){
+	    std::cout<<"AysncForwarding << << << return"<<std::endl;
+	    return 0;
+	  }
+	}
+	// std::cout<<"AsyncForwding >>>> waiting end"<<std::endl;
       }
       auto cmd = m_qu_cmd.front().first;
       auto param = m_qu_cmd.front().second;
       m_qu_cmd.pop();
       lk.unlock();
+      // std::cout<<"AsyncForwding >>>> parse cmd"<<std::endl;
       if (cmd == "INIT") {
         std::string section = m_type;
         if(m_name != "")
@@ -178,7 +190,6 @@ namespace eudaq {
       } else if (cmd == "TERMINATE"){
 	m_is_destructing = true;
 	OnTerminate();
-	// TODO:
       } else if (cmd == "RESET") {
         OnReset();
       } else if (cmd == "STATUS") {
@@ -195,12 +206,13 @@ namespace eudaq {
       lk_st.unlock();
       m_cmdclient->SendPacket(ser);
     }
+    std::cout<<"AysncForwarding << << << return"<<std::endl;
+    
     return 0;
   }
   
   std::string CommandReceiver::Connect(const std::string &addr){
     std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
-
     if(m_cmdclient){
       EUDAQ_THROW("command receiver is not closed before");
     }
@@ -246,10 +258,12 @@ namespace eudaq {
 
   bool CommandReceiver::Deamon(){
     while(!m_is_destructing){
+      // std::cout<<">>> Deamon Loop"<<std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
       std::chrono::milliseconds t(10);
       std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
       if(m_is_connected){
+	// std::cout<<">>>>> connected Loop"<<std::endl;
 	try{
 	  if(m_fut_async_rcv.valid()){
 	    m_fut_async_rcv.wait_for(t);
@@ -268,14 +282,17 @@ namespace eudaq {
       }
       else{
 	try{
+	  std::cout<<">>>>>>>>>exiting"<<std::endl;
 	  if(m_fut_async_rcv.valid()){
 	    m_fut_async_rcv.get();
 	  }
+	  // m_cv_not_empty.notify_all();//TODO:  !!!!!!!!!!!!!!!!! processing remain events
 	  if(m_fut_async_fwd.valid()){
 	    m_fut_async_fwd.get();
 	  }
 	  m_cmdclient.reset();
 	  //TODO: clear queue
+	  std::cout<<">>>>>>>>>exit"<<std::endl;
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
@@ -283,6 +300,7 @@ namespace eudaq {
       }
     }
     try{
+      std::cout<<">>>>>>>>>exiting--"<<std::endl;
       std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
       m_is_connected = false;
       if(m_fut_async_rcv.valid()){
@@ -292,6 +310,7 @@ namespace eudaq {
 	m_fut_async_fwd.get();
       }
       m_cmdclient.reset();
+      std::cout<<">>>>>>>>>exit--"<<std::endl;
     }
     catch(...){
       EUDAQ_WARN("connection execption from disconnetion");
