@@ -124,6 +124,7 @@ namespace eudaq {
     try {
       DoStopRun();
       m_senders.clear();
+      StopListen();
       CommandReceiver::OnStopRun();
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();

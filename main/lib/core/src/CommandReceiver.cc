@@ -165,7 +165,7 @@ namespace eudaq {
   }
   
   bool CommandReceiver::AsyncReceiving(){
-    std::cout<<"AsyncReceiving >>>> enter"<<std::endl;
+    // std::cout<<"AsyncReceiving >>>> enter"<<std::endl;
     try{
       while(m_is_connected){
 	m_cmdclient->Process(-1); //how long does it wait?
@@ -178,14 +178,14 @@ namespace eudaq {
   }
 
   bool CommandReceiver::AsyncForwarding(){
-    std::cout<<"AsyncForwding >>>> enter"<<std::endl;
+    // std::cout<<"AsyncForwding >>>> enter"<<std::endl;
     while(m_is_connected){
       std::unique_lock<std::mutex> lk(m_mx_qu_cmd);
       if(m_qu_cmd.empty()){
 	// std::cout<<"AsyncForwding >>>> waiting empty"<<std::endl;
 	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))==std::cv_status::timeout){
 	  if(!m_is_connected){
-	    std::cout<<"AysncForwarding << << << return"<<std::endl;
+	    // std::cout<<"AysncForwarding << << << return"<<std::endl;
 	    return 0;
 	  }
 	}
@@ -304,7 +304,7 @@ namespace eudaq {
   }
 
   bool CommandReceiver::Deamon(){
-    std::cout<<"Deamon >>>> enter"<<std::endl;
+    // std::cout<<"Deamon >>>> enter"<<std::endl;
     while(!m_is_destructing){
       // std::cout<<">>> Deamon Loop"<<std::endl;
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -330,7 +330,7 @@ namespace eudaq {
       }
       else{
 	try{
-	  std::cout<<">>>>>>>>>exiting"<<std::endl;
+	  // std::cout<<">>>>>>>>>exiting"<<std::endl;
 	  if(m_fut_async_rcv.valid()){
 	    m_fut_async_rcv.get();
 	  }
@@ -339,7 +339,7 @@ namespace eudaq {
 	  }
 	  m_cmdclient.reset();
 	  //TODO: clear queue
-	  std::cout<<">>>>>>>>>exit"<<std::endl;
+	  // std::cout<<">>>>>>>>>exit"<<std::endl;
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
@@ -347,7 +347,7 @@ namespace eudaq {
       }
     }
     try{
-      std::cout<<">>>>>>>>>exiting--"<<std::endl;
+      // std::cout<<">>>>>>>>>exiting--"<<std::endl;
       std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
       m_is_connected = false;
       if(m_fut_async_rcv.valid()){
@@ -357,7 +357,7 @@ namespace eudaq {
 	m_fut_async_fwd.get();
       }
       m_cmdclient.reset();
-      std::cout<<">>>>>>>>>exit--"<<std::endl;
+      // std::cout<<">>>>>>>>>exit--"<<std::endl;
     }
     catch(...){
       EUDAQ_WARN("connection execption from disconnetion");

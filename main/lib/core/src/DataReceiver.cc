@@ -103,7 +103,6 @@ namespace eudaq {
 	  m_qu_ev.pop();
 	  EUDAQ_WARN("Buffer of receving event is full.");
 	}
-	lk.unlock();
 	m_cv_not_empty.notify_all();
       }
       break;
@@ -123,7 +122,12 @@ namespace eudaq {
     while(m_is_listening){
       std::unique_lock<std::mutex> lk(m_mx_qu_ev);
       if(m_qu_ev.empty()){
-	m_cv_not_empty.wait(lk);
+	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))==std::cv_status::timeout){
+	  if(!m_is_listening){
+	    std::cout<<"AysncForwarding << << << return xxx"<<std::endl;
+	    return 0;
+	  }
+	}
       }
       auto ev = m_qu_ev.front().first;
       auto con = m_qu_ev.front().second;
@@ -136,8 +140,8 @@ namespace eudaq {
 	if(con->GetState())
 	  OnConnect(con);
 	else{
-	  if(m_vt_con.empty())
-	    m_is_listening = false;
+	  // if(m_vt_con.empty())
+	  //   m_is_listening = false;
 	  OnDisconnect(con);
 	}
       }
@@ -155,16 +159,25 @@ namespace eudaq {
     if(m_dataserver){
       EUDAQ_THROW("last server did not closed sucessfully");
     }
+
+    auto dataserver = TransportServer::CreateServer(this_addr);
+    dataserver->SetCallback(TransportCallback(this, &DataReceiver::DataHandler));
+    
+    m_last_addr = dataserver->ConnectionString();
+    m_dataserver.reset(dataserver);
     m_is_listening = true;
-    m_dataserver.reset(TransportServer::CreateServer(this_addr));
-    m_dataserver->SetCallback(TransportCallback(this, &DataReceiver::DataHandler));
     m_fut_async_rcv = std::async(std::launch::async, &DataReceiver::AsyncReceiving, this); 
     m_fut_async_fwd = std::async(std::launch::async, &DataReceiver::AsyncForwarding, this);
-    m_last_addr = m_dataserver->ConnectionString();
     return m_last_addr;
   }
 
-  void DataReceiver::StopListen(){m_is_listening = false;} //TODO: remove this method later
+  void DataReceiver::StopListen(){
+    m_is_listening = false; 
+    while(m_fut_async_rcv.valid()||m_fut_async_fwd.valid()){
+      //TODO: wait and try, timeout throw
+    }
+    
+  }
   
   bool DataReceiver::Deamon(){
     while(!m_is_destructing){
@@ -194,6 +207,7 @@ namespace eudaq {
 	  }
 	  m_qu_ev = std::queue<std::pair<EventSP, ConnectionSPC>>();
 	  m_dataserver.reset();
+	  std::cout<<"m_dataServer reset"<<std::endl;
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
