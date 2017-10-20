@@ -15,7 +15,6 @@ public:
   void DoTerminate() override {};
   void DoReset() override {};
 
-  void Exec() override final;
 private slots:
   void on_btnTrigger_clicked();
 };

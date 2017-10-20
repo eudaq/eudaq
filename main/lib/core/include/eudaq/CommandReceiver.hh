@@ -25,36 +25,33 @@ namespace eudaq {
     CommandReceiver(const std::string & type, const std::string & name,
 		    const std::string & runcontrol);
     virtual ~CommandReceiver();
-
     virtual void OnInitialise(); 
     virtual void OnConfigure();
     virtual void OnStartRun();
     virtual void OnStopRun();
     virtual void OnTerminate();
     virtual void OnReset();
-    virtual void OnStatus(){}
+    virtual void OnStatus();
     virtual void OnLog(const std::string & /*param*/);
-    virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/) {}
+    virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/);
     virtual bool RunLoop();
-    virtual void Exec();
     
     void SetStatus(Status::State state, const std::string & info);
     bool IsStatus(Status::State state);
     void SetStatusTag(const std::string &key, const std::string &val);
     
-    std::string GetFullName() const {return m_type+"."+m_name;};
-    std::string GetName() const {return m_name;};
-    uint32_t GetRunNumber() const {return m_run_number;};
-    std::string GetCommandRecieverAddress() const {return m_addr_client;};
+    std::string GetFullName() const;
+    std::string GetName() const;
+    uint32_t GetRunNumber() const;
+    std::string GetCommandRecieverAddress() const;
     
-    ConfigurationSPC GetConfiguration() const {return m_conf;};
-    ConfigurationSPC GetInitConfiguration() const {return m_conf_init;};
+    ConfigurationSPC GetConfiguration() const;
+    ConfigurationSPC GetInitConfiguration() const;
 
-    std::string Connect(const std::string &addr);
-    std::string Connect(){Connect(m_addr_runctrl);}
-    bool IsConnected(){return m_is_connected;}
-    void StartCommandReceiver(){Connect();}
-    bool IsActiveCommandReceiver(){return m_is_connected;}
+    std::string Connect();
+    bool IsConnected();
+    void StartCommandReceiver();
+    bool IsActiveCommandReceiver();
   private:
     void CommandHandler(TransportEvent &);
     bool Deamon();
