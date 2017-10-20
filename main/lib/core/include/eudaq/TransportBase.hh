@@ -133,11 +133,17 @@ namespace eudaq {
     TransportCallback(const TransportCallback &other)
         : m_helper(other.m_helper->Clone()) {}
     TransportCallback &operator=(const TransportCallback &other) {
-      delete m_helper;
+      if(m_helper){
+	delete m_helper;
+      }
       m_helper = other.m_helper->Clone();
       return *this;
     }
-    ~TransportCallback() { delete m_helper; }
+    ~TransportCallback() {
+      if(m_helper){
+	delete m_helper;
+      }
+    }
 
   private:
     Helper *m_helper; ///< The helper class to perform the actual function call

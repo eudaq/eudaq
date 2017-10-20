@@ -43,15 +43,12 @@ namespace eudaq {
     std::string GetFullName() const;
     std::string GetName() const;
     uint32_t GetRunNumber() const;
-    std::string GetCommandRecieverAddress() const;
     
     ConfigurationSPC GetConfiguration() const;
     ConfigurationSPC GetInitConfiguration() const;
 
     std::string Connect();
-    bool IsConnected();
-    void StartCommandReceiver();
-    bool IsActiveCommandReceiver();
+    bool IsConnected() const;
   private:
     void CommandHandler(TransportEvent &);
     bool Deamon();
@@ -83,7 +80,6 @@ namespace eudaq {
     std::string m_type;
     std::string m_name;
     uint32_t m_run_number;
-    
   };
 }
 

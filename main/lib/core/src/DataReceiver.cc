@@ -151,6 +151,7 @@ namespace eudaq {
       this_addr = addr;
     }
 
+    std::cout<< "DataReceiver<<<<<<<<<listen enter"<<std::endl;
     if(m_dataserver){
       EUDAQ_THROW("last server did not closed sucessfully");
     }
@@ -163,6 +164,8 @@ namespace eudaq {
     return m_last_addr;
   }
 
+  void DataReceiver::StopListen(){m_is_listening = false;} //TODO: remove this method later
+  
   bool DataReceiver::Deamon(){
     while(!m_is_destructing){
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
