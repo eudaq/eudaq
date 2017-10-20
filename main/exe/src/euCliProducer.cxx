@@ -19,7 +19,9 @@ int main(int /*argc*/, const char **argv) {
       std::cout<<"unknown Producer"<<std::endl;
       return -1;
     }
-    app->Exec();
+    app->Connect();
+    std::chrono::seconds t(500);
+    std::this_thread::sleep_for(t);
   }
   else{
     std::cout<<"unknown application"<<std::endl;

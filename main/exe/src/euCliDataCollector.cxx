@@ -28,7 +28,7 @@ int main(int /*argc*/, const char **argv) {
       addr_listen = listen.Value();
     }
     app->SetServerAddress(addr_listen);
-    app->Exec();
+    // app->Exec();
   }
   else{
     std::cout<<"unknown application"<<std::endl;

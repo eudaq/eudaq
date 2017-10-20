@@ -117,6 +117,26 @@ namespace eudaq {
     EUDAQ_INFO(GetFullName() + " is terminated.");
   }
 
+  void CommandReceiver::OnStatus(){
+
+  }
+  
+  void CommandReceiver::OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/){
+
+  }
+
+
+  std::string CommandReceiver::GetFullName() const {return m_type+"."+m_name;}
+  std::string CommandReceiver::GetName() const {return m_name;}
+  uint32_t CommandReceiver::GetRunNumber() const {return m_run_number;}
+  std::string CommandReceiver::GetCommandRecieverAddress() const {return m_addr_client;}
+    
+  ConfigurationSPC CommandReceiver::GetConfiguration() const {return m_conf;}
+  ConfigurationSPC CommandReceiver::GetInitConfiguration() const {return m_conf_init;}
+
+  bool CommandReceiver::IsConnected(){return m_is_connected;}
+  void CommandReceiver::StartCommandReceiver(){Connect();}
+  bool CommandReceiver::IsActiveCommandReceiver(){return m_is_connected;}
   
   bool CommandReceiver::RunLoop(){
     return 0;
@@ -211,7 +231,8 @@ namespace eudaq {
     return 0;
   }
   
-  std::string CommandReceiver::Connect(const std::string &addr){
+  std::string CommandReceiver::Connect(){
+    std::string addr = m_addr_runctrl;
     std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
     if(m_cmdclient){
       EUDAQ_THROW("command receiver is not closed before");
@@ -314,13 +335,6 @@ namespace eudaq {
     }
     catch(...){
       EUDAQ_WARN("connection execption from disconnetion");
-    }
-  }
-
-  void CommandReceiver::Exec(){
-    Connect();
-    while(IsConnected()){
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
   }
   
