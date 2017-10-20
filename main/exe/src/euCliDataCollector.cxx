@@ -28,7 +28,16 @@ int main(int /*argc*/, const char **argv) {
       addr_listen = listen.Value();
     }
     app->SetServerAddress(addr_listen);
-    // app->Exec();
+    
+    try{
+      app->Connect();
+    }
+    catch (...){
+      std::cout<<"Can not connect to RunContrl at "<<rctrl.Value()<<std::endl;
+    }
+    while(app->IsConnected()){
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
   else{
     std::cout<<"unknown application"<<std::endl;

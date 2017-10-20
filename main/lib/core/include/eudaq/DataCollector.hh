@@ -35,21 +35,21 @@ namespace eudaq {
     ~DataCollector() override;
 
     //running in commandreceiver thread
-    virtual void DoInitialise(){};
-    virtual void DoConfigure(){};
-    virtual void DoStartRun(){};
-    virtual void DoStopRun(){};
-    virtual void DoReset(){};
-    virtual void DoTerminate(){};
-    virtual void DoStatus(){};
+    virtual void DoInitialise();
+    virtual void DoConfigure();
+    virtual void DoStartRun();
+    virtual void DoStopRun();
+    virtual void DoReset();
+    virtual void DoTerminate();
+    virtual void DoStatus();
 
     //running in datareceiver thread
-    virtual void DoConnect(ConnectionSPC id) {}
-    virtual void DoDisconnect(ConnectionSPC id) {}
-    virtual void DoReceive(ConnectionSPC id, EventSP ev){};
+    virtual void DoConnect(ConnectionSPC id);
+    virtual void DoDisconnect(ConnectionSPC id);
+    virtual void DoReceive(ConnectionSPC id, EventSP ev);
     
     void WriteEvent(EventSP ev);
-    void SetServerAddress(const std::string &addr){m_data_addr = addr;};
+    void SetServerAddress(const std::string &addr);
 
     static DataCollectorSP Make(const std::string &code_name,
 				const std::string &run_name,

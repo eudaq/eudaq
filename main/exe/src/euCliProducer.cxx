@@ -19,9 +19,16 @@ int main(int /*argc*/, const char **argv) {
       std::cout<<"unknown Producer"<<std::endl;
       return -1;
     }
-    app->Connect();
-    std::chrono::seconds t(500);
-    std::this_thread::sleep_for(t);
+    try{
+      app->Connect();
+    }
+    catch (...){
+      std::cout<<"Can not connect to RunContrl at "<<rctrl.Value()<<std::endl;
+    }
+    while(app->IsConnected()){
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    
   }
   else{
     std::cout<<"unknown application"<<std::endl;

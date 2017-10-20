@@ -19,8 +19,41 @@ namespace eudaq {
     m_exit = false;
   }
 
-  DataCollector::~DataCollector(){
-    
+  DataCollector::~DataCollector(){  
+  }
+
+  void DataCollector::DoInitialise(){
+  }
+  
+  void DataCollector::DoConfigure(){
+  }
+  
+  void DataCollector::DoStartRun(){
+  }
+  
+  void DataCollector::DoStopRun(){
+  }
+  
+  void DataCollector::DoReset(){
+  }
+  
+  void DataCollector::DoTerminate(){
+  }
+  
+  void DataCollector::DoStatus(){
+  }
+
+  void DataCollector::DoConnect(ConnectionSPC id){
+  }
+  
+  void DataCollector::DoDisconnect(ConnectionSPC id){
+  }
+  
+  void DataCollector::DoReceive(ConnectionSPC id, EventSP ev){
+  }
+
+  void DataCollector::SetServerAddress(const std::string &addr){
+    m_data_addr = addr;
   }
   
   void DataCollector::OnInitialise(){
