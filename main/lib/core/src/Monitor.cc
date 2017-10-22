@@ -17,6 +17,34 @@ namespace eudaq {
   Monitor::Monitor(const std::string &name, const std::string &runcontrol)
     :CommandReceiver("Monitor", name, runcontrol){
   }
+
+  void Monitor::DoInitialise(){
+  }
+
+  void Monitor::DoConfigure(){
+  }
+
+  void Monitor::DoStartRun(){
+  }
+
+  void Monitor::DoStopRun(){
+  }
+
+  void Monitor::DoReset(){
+  }
+
+  void Monitor::DoTerminate(){
+  }
+
+  void Monitor::DoStatus(){
+  }
+
+  void Monitor::DoReceive(EventSP ev){
+  }
+    
+  void Monitor::SetServerAddress(const std::string &addr){
+    m_data_addr = addr;
+  }
   
   void Monitor::OnInitialise(){
     EUDAQ_INFO(GetFullName() + " is to be initialised...");
@@ -66,6 +94,7 @@ namespace eudaq {
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be stopped...");
     try {
       DoStopRun();
+      StopListen();
       CommandReceiver::OnStopRun();
     } catch (const Exception &e) {
       std::string msg = "Error stopping for run " + std::to_string(GetRunNumber()) + ": " + e.what();
@@ -78,6 +107,7 @@ namespace eudaq {
     EUDAQ_INFO(GetFullName() + " is to be reset...");
     try{
       DoReset();
+      StopListen();
       CommandReceiver::OnReset();
     } catch (const std::exception &e) {
       printf("Producer Reset:: Caught exception: %s\n", e.what());

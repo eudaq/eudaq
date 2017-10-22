@@ -6,7 +6,6 @@
 #include <ctime>
 #include <iomanip>
 namespace eudaq {
-
   template class DLLEXPORT Factory<DataCollector>;
   template DLLEXPORT std::map<uint32_t, typename Factory<DataCollector>::UP_BASE (*)
 			      (const std::string&, const std::string&)>&
@@ -16,7 +15,6 @@ namespace eudaq {
     :CommandReceiver("DataCollector", name, runcontrol){
     m_dct_n= str2hash(GetFullName());
     m_evt_c = 0;
-    m_exit = false;
   }
 
   DataCollector::~DataCollector(){  
@@ -138,6 +136,7 @@ namespace eudaq {
     try{
       DoReset();
       m_senders.clear();
+      StopListen();
       CommandReceiver::OnReset();
     } catch (const std::exception &e) {
       EUDAQ_THROW( std::string("DataCollector Reset:: Caught exception: ") + e.what() );
@@ -205,7 +204,6 @@ namespace eudaq {
       SetStatus(Status::STATE_ERROR, msg);
     }
   }
-  
 
   DataCollectorSP DataCollector::Make(const std::string &code_name,
 				      const std::string &run_name,

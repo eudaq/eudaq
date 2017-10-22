@@ -31,25 +31,18 @@ namespace eudaq {
   class DLLEXPORT Monitor : public CommandReceiver, public DataReceiver{
   public:
     Monitor(const std::string &name, const std::string &runcontrol);
-
-    //running in commandreceiver thread
-    virtual void DoInitialise(){};
-    virtual void DoConfigure(){};
-    virtual void DoStartRun(){};
-    virtual void DoStopRun(){};
-    virtual void DoReset(){};
-    virtual void DoTerminate(){};
-    virtual void DoStatus(){};
-
-    //running in dataserver thread
-    virtual void DoReceive(EventSP ev){};
-    
-    void SetServerAddress(const std::string &addr){m_data_addr = addr;};
-
+    virtual void DoInitialise();
+    virtual void DoConfigure();
+    virtual void DoStartRun();
+    virtual void DoStopRun();
+    virtual void DoReset();
+    virtual void DoTerminate();
+    virtual void DoStatus();
+    virtual void DoReceive(EventSP ev);
+    void SetServerAddress(const std::string &addr);
     static MonitorSP Make(const std::string &code_name,
 			  const std::string &run_name,
 			  const std::string &runcontrol);
-
   private:
     void OnInitialise() override final;
     void OnConfigure() override final;
@@ -58,11 +51,7 @@ namespace eudaq {
     void OnReset() override final;
     void OnTerminate() override final;
     void OnStatus() override final;
-
-    // void OnConnect(ConnectionSPC id) override final;
-    // void OnDisconnect(ConnectionSPC id) override final;
     void OnReceive(ConnectionSPC id, EventSP ev) override final;
-    
   private:
     std::string m_data_addr;
   };
