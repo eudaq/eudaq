@@ -154,8 +154,6 @@ namespace eudaq {
     if(!addr.empty()){
       this_addr = addr;
     }
-
-    std::cout<< "DataReceiver<<<<<<<<<listen enter"<<std::endl;
     if(m_dataserver){
       EUDAQ_THROW("last server did not closed sucessfully");
     }
@@ -207,7 +205,7 @@ namespace eudaq {
 	  }
 	  m_qu_ev = std::queue<std::pair<EventSP, ConnectionSPC>>();
 	  m_dataserver.reset();
-	  std::cout<<"m_dataServer reset"<<std::endl;
+	  // std::cout<<"m_dataServer reset"<<std::endl;
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
