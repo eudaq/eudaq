@@ -33,8 +33,6 @@ namespace eudaq {
   public:
     DataCollector(const std::string &name, const std::string &runcontrol);
     ~DataCollector() override;
-
-    //running in commandreceiver thread
     virtual void DoInitialise();
     virtual void DoConfigure();
     virtual void DoStartRun();
@@ -42,19 +40,14 @@ namespace eudaq {
     virtual void DoReset();
     virtual void DoTerminate();
     virtual void DoStatus();
-
-    //running in datareceiver thread
     virtual void DoConnect(ConnectionSPC id);
     virtual void DoDisconnect(ConnectionSPC id);
     virtual void DoReceive(ConnectionSPC id, EventSP ev);
-    
     void WriteEvent(EventSP ev);
     void SetServerAddress(const std::string &addr);
-
     static DataCollectorSP Make(const std::string &code_name,
 				const std::string &run_name,
 				const std::string &runcontrol);
-
   private:
     void OnInitialise() override final;
     void OnConfigure() override final;
@@ -63,13 +56,10 @@ namespace eudaq {
     void OnReset() override final;
     void OnTerminate() override final;
     void OnStatus() override final;
-
     void OnConnect(ConnectionSPC id) override final;
     void OnDisconnect(ConnectionSPC id) override final;
     void OnReceive(ConnectionSPC id, EventSP ev) override final;
-
   private:
-    bool m_exit;
     std::string m_data_addr;
     FileWriterUP m_writer;
     std::unique_ptr<DataReceiver> m_receiver;
@@ -78,7 +68,7 @@ namespace eudaq {
     std::string m_fwtype;
     uint32_t m_dct_n;
     uint32_t m_evt_c;
-    std::unique_ptr<const Configuration> m_conf;
+    ConfigurationSPC m_conf;
   };
   //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
