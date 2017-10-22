@@ -166,10 +166,14 @@ namespace eudaq {
 	m_cmdclient->Process(-1); //how long does it wait?
       }
     } catch (const std::exception &e) {
-      //TODO: move the catch to up level
-      std::cout <<"CommandReceiver::AsyncReceiving Error: Uncaught exception: " <<e.what() <<std::endl;
+      //TODO: move the catch to up leve
+      EUDAQ_ERROR(std::string("CommandReceiver::AsyncReceiving Error: Uncaught exception: ")+ e.what());
+      m_is_connected = false;
+      throw;
     } catch (...) {
-      std::cout <<"CommandReceiver::AsyncReceiving Error: Uncaught unrecognised exception" <<std::endl;
+      EUDAQ_ERROR(std::string("CommandReceiver::AsyncReceiving Error: Uncaught unrecognised exception"));
+      m_is_connected = false;
+      throw;
     }
   }
 
@@ -321,8 +325,8 @@ namespace eudaq {
 	  if(m_fut_async_fwd.valid()){
 	    m_fut_async_fwd.get();
 	  }
+	  m_qu_cmd =  std::queue<std::pair<std::string, std::string>>();
 	  m_cmdclient.reset();
-	  //TODO: clear queue
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
