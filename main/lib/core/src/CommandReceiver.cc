@@ -57,6 +57,11 @@ namespace eudaq {
     std::unique_lock<std::mutex> lk(m_mtx_status);
     m_status.ResetStatus(state, level, info);
   }
+
+  void CommandReceiver::SetStatusMsg(const std::string &msg){
+    std::unique_lock<std::mutex> lk(m_mtx_status);
+    m_status.SetMessage(msg);
+  }
   
   void CommandReceiver::SetStatusTag(const std::string &key, const std::string &val){
     std::unique_lock<std::mutex> lk(m_mtx_status);
@@ -95,8 +100,16 @@ namespace eudaq {
   void CommandReceiver::OnStopRun(){
     if(m_fut_runloop.valid()){
       m_is_runlooping = false;
-      m_fut_runloop.get();
-      //TODO: wait and try, error report/throw
+      auto tp_user_return = std::chrono::steady_clock::now();
+      std::string msg = "Stopping ";
+      while(m_fut_runloop.valid() &&
+	    m_fut_runloop.wait_for(std::chrono::seconds(1))==std::future_status::timeout){
+	msg.append(1, '.');
+	SetStatusMsg(msg);
+      }
+      if((std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(10)){
+	EUDAQ_THROW("CommandReceiver:: Unable to stop the user's RunLoop");
+      }
     }
     SetStatus(Status::STATE_CONF, "Stopped");
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
@@ -144,20 +157,34 @@ namespace eudaq {
     return m_is_connected;
   }
   
-  bool CommandReceiver::RunLoop(){
-    return 0;
-  }
-
-  bool CommandReceiver::RunLooping(){
-    bool ret = RunLoop();
-    // try{
-    // }//TODO: excetption handling
+  void CommandReceiver::RunLoop(){
+    //default, just waiting
     std::chrono::milliseconds t(500);
     while(m_is_runlooping){
       std::this_thread::sleep_for(t);
-      //TODO message
     }
-    return ret;
+  }
+
+  bool CommandReceiver::RunLooping(){
+    try{
+      RunLoop();
+    }
+    catch(...){
+      EUDAQ_ERROR("CommandReciever: User's RunLoop throws an exception");
+      throw;
+    }
+    
+    bool msg_once = true;
+    auto tp_user_return = std::chrono::steady_clock::now();
+    std::chrono::milliseconds t(500);
+    while(m_is_runlooping){
+      std::this_thread::sleep_for(t);
+      if(msg_once && (std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(5) ){
+	EUDAQ_WARN("CommandReciever: User's RunLoop exits during the running");
+	msg_once = false;
+      }
+    }
+    return 0;
   }
   
   bool CommandReceiver::AsyncReceiving(){
@@ -166,7 +193,7 @@ namespace eudaq {
 	m_cmdclient->Process(-1); //how long does it wait?
       }
     } catch (const std::exception &e) {
-      //TODO: move the catch to up leve
+      //TODO: move the catch to up level
       EUDAQ_ERROR(std::string("CommandReceiver::AsyncReceiving Error: Uncaught exception: ")+ e.what());
       m_is_connected = false;
       throw;
@@ -308,10 +335,6 @@ namespace eudaq {
 	  if(m_fut_async_fwd.valid()){
 	    m_fut_async_fwd.wait_for(t);
 	  }
-	  // if(m_fut_runloop.valid()){
-	  //   m_fut_runloop.wait_for(t); //TODO: use flag which is set by RUNLOOPING
-	  //   //TODO:: -> message running; get -> message  
-	  // }
 	}
 	catch(...){
 	  EUDAQ_WARN("connection execption from disconnetion");
@@ -342,7 +365,8 @@ namespace eudaq {
       if(m_fut_async_fwd.valid()){
 	m_fut_async_fwd.get();
       }
-      m_cmdclient.reset();
+      if(m_cmdclient)
+	m_cmdclient.reset();
     }
     catch(...){
       EUDAQ_WARN("connection execption from disconnetion");

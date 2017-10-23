@@ -23,7 +23,7 @@ namespace eudaq {
   class DLLEXPORT CommandReceiver {
   public:
     CommandReceiver(const std::string & type, const std::string & name,
-		    const std::string & runcontrol);
+		    const std::string & runctrl);
     virtual ~CommandReceiver();
     virtual void OnInitialise(); 
     virtual void OnConfigure();
@@ -32,23 +32,22 @@ namespace eudaq {
     virtual void OnTerminate();
     virtual void OnReset();
     virtual void OnStatus();
-    virtual void OnLog(const std::string & /*param*/);
-    virtual void OnUnrecognised(const std::string & /*cmd*/, const std::string & /*param*/);
-    virtual bool RunLoop();
+    virtual void OnLog(const std::string &log);
+    virtual void OnUnrecognised(const std::string &cmd, const std::string &argv);
+    virtual void RunLoop();
+    std::string Connect();
     
-    void SetStatus(Status::State state, const std::string & info);
-    bool IsStatus(Status::State state);
+    void SetStatus(Status::State, const std::string&);
+    void SetStatusMsg(const std::string&);
     void SetStatusTag(const std::string &key, const std::string &val);
-    
+
     std::string GetFullName() const;
     std::string GetName() const;
     uint32_t GetRunNumber() const;
-    
     ConfigurationSPC GetConfiguration() const;
     ConfigurationSPC GetInitConfiguration() const;
-
-    std::string Connect();
     bool IsConnected() const;
+    bool IsStatus(Status::State);
   private:
     void CommandHandler(TransportEvent &);
     bool Deamon();
@@ -71,10 +70,8 @@ namespace eudaq {
     std::mutex m_mx_deamon;
     std::queue<std::pair<std::string, std::string>> m_qu_cmd;
     std::condition_variable m_cv_not_empty;
-
     Status m_status;
     std::mutex m_mtx_status;
-
     std::shared_ptr<Configuration> m_conf;
     std::shared_ptr<Configuration> m_conf_init;
     std::string m_type;
