@@ -261,23 +261,23 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          std::cout << "\tFOUND I2C slave CLOCK" << std::endl;
+          std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC1){
-          std::cout << "\tFOUND I2C slave DAC1" << std::endl;
+          std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr== m_I2C_address.DAC2){
-          std::cout << "\tFOUND I2C slave DAC2" << std::endl;
+          std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          std::cout << "\tFOUND I2C slave EEPROM" << std::endl;
+          std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.expander1){
-          std::cout << "\tFOUND I2C slave EXPANDER1" << std::endl;
+          std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.expander2){
-          std::cout << "\tFOUND I2C slave EXPANDER2" << std::endl;
+          std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
@@ -353,9 +353,11 @@ namespace tlu {
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*6);
       m_hw->dispatch();
       if(fifoContent.valid()) {
-        std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/6<<std::endl;
-	      if(fifoContent.size()%6 !=0){
-	         std::cout<<"receive error"<<std::endl;
+        if (verbose > 0){
+          std::cout<< "TLU events required: "<<nevent<<" events received: " << fifoContent.size()/6<<std::endl;
+        }
+        if(fifoContent.size()%6 !=0){
+          std::cout<<"receive error"<<std::endl;
         }
         for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
           m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
