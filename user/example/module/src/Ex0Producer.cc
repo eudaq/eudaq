@@ -18,7 +18,7 @@ class Ex0Producer : public eudaq::Producer {
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-  bool RunLoop() override;
+  void RunLoop() override;
   
   static const uint32_t m_id_factory = eudaq::cstr2hash("Ex0Producer");
 private:
@@ -96,7 +96,7 @@ void Ex0Producer::DoTerminate(){
   }
 }
 //----------DOC-MARK-----BEG*LOOP-----DOC-MARK----------
-bool Ex0Producer::RunLoop(){
+void Ex0Producer::RunLoop(){
   auto tp_start_run = std::chrono::steady_clock::now();
   uint32_t trigger_n = 0;
   uint8_t x_pixel = 16;

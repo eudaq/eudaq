@@ -128,7 +128,7 @@ void ROOTProducer::Connect2RunControl( const char* name,const char* runcontrol )
   try {
     std::string addr_rc="tcp://"+std::string(runcontrol);
     m_prod=std::unique_ptr<ItsRootProducer>(new ItsRootProducer(name,addr_rc));
-    m_prod->StartCommandReceiver();
+    m_prod->Connect();
   }
   catch(...){
     std::cout<<"unable to connect to runcontrol: "<<runcontrol<<std::endl;
@@ -136,7 +136,7 @@ void ROOTProducer::Connect2RunControl( const char* name,const char* runcontrol )
 }
 
 bool ROOTProducer::isNetConnected(){
-  if(m_prod && m_prod->IsActiveCommandReceiver())
+  if(m_prod && m_prod->IsConnected())
     return true;
   else
     return false;
