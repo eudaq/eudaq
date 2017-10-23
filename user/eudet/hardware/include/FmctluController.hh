@@ -90,7 +90,7 @@ namespace tlu {
     };
 
     uint32_t I2C_enable(char EnclustraExpAddr);
-    uint32_t getSN();
+    unsigned int* SetBoardID();
 
     void SetI2CControl(int value) { SetWRegister("i2c_master.i2c_ctrl", value&0xff); };
     void SetI2CCommand(int value) { SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
@@ -101,7 +101,7 @@ namespace tlu {
 
 
     bool I2CCommandIsDone() { return ((GetI2CStatus())>>1)&0x1; };
-    uint32_t GetBoardID() { return m_BoardID; }
+    uint32_t GetBoardID();
     void ResetFIFO() { SetEventFifoCSR(0x0); };
 
 
@@ -168,7 +168,8 @@ namespace tlu {
 
     char m_DACaddr;
     char m_IDaddr;
-    uint32_t m_BoardID=0;
+    //uint32_t m_BoardID=0;
+    unsigned int m_BoardID[6]= {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;

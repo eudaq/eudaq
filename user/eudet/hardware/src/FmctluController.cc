@@ -126,6 +126,23 @@ namespace tlu {
     }
   }
 
+  uint32_t FmctluController::GetBoardID() {
+    // Return the board unique ID. The ID is generally comprised of
+    // 6 characters (48 bits) but the first 3 are manufacturer specific so, in order to have just
+    // 32-bit, we can just skip the first two characters.
+    // D8 80 39 XX YY ZZ -->  39 XX YY ZZ
+
+    int nwords= 6;
+    int shift= 0;
+    uint32_t shortID= 0;
+    for(int iaddr =2; iaddr < nwords; iaddr++) {
+      shift= (nwords-1) -iaddr;
+      shortID= (m_BoardID[iaddr] << (8*shift) ) | shortID;
+    }
+    std::cout << "CHATTANUGA " << std::hex << shortID << std::endl;
+    return shortID;
+  }
+
   uint32_t FmctluController::GetEventFifoCSR(int verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
@@ -159,17 +176,23 @@ namespace tlu {
     return res;
   }
 
-  uint32_t FmctluController::getSN(){
+  unsigned int* FmctluController::SetBoardID(){
     m_IDaddr= m_I2C_address.EEPROM;
-    unsigned char myaddr= 0xfc;
-    //for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
-    for(int iaddr =0; iaddr < 4; iaddr++) {
-      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr+iaddr);
-      m_BoardID = ( ( ( (uint)nibble)&0xff) << ( (iaddr)*8) ) |m_BoardID;
-      //std::cout << std::hex << ( (uint)nibble&0xff ) << " " << (( (uint)nibble & 0xff) << ( (4-iaddr)*8) ) << " "<< m_BoardID<< std::endl;
+    unsigned char myaddr= 0xfa;
+    int nwords= 6;
+
+    std::ios::fmtflags coutflags( std::cout.flags() );
+    for(int iaddr =0; iaddr < nwords; iaddr++) {
+      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr + iaddr);
+      m_BoardID[iaddr]= ((uint)nibble)&0xff;
     }
-    //std::cout << "  TLU unique ID : " << std::setw(12) << std::setfill('0') << std::hex << m_BoardID << std::endl;
-    std::cout << "  TLU unique ID : " <<  std::hex << m_BoardID << std::endl;
+
+    std::cout << "  TLU unique ID:";
+    for(int iaddr =0; iaddr < nwords; iaddr++) {
+      std::cout << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[iaddr];
+    }
+    std::cout << " " << std::endl;
+    std::cout.flags( coutflags );
     return m_BoardID;
   }
 
@@ -286,12 +309,12 @@ namespace tlu {
       SetI2CTX(0x0);
       SetI2CCommand(0x50); // 01010000
       while(I2CCommandIsDone()) {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
 
     if(m_IDaddr){
-      getSN();
+      SetBoardID();
     }
     std::cout.flags( coutflags ); // Restore cout flags
   }
