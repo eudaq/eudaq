@@ -5,6 +5,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 
 class FmctluProducer: public eudaq::Producer {
@@ -19,7 +21,7 @@ public:
 
   void OnStatus() override;
 
-  void MainLoop();
+  void MainLoop(int verbose, int delayStart);
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("FmctluProducer");
 private:
@@ -42,18 +44,26 @@ FmctluProducer::FmctluProducer(const std::string name, const std::string &runcon
 
 }
 
-void FmctluProducer::MainLoop(){
+void FmctluProducer::MainLoop(int verbose, int delayStart){
   bool isbegin = true;
 
   m_tlu->ResetCounters();
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
-  m_tlu->SetTriggerVeto(0);
+
+  // Pause the TLU to allow slow devices to get ready after the euRunControl has
+  // issued the DoStart() command
+  std::this_thread::sleep_for( std::chrono::milliseconds( delayStart ) );
+
+  // Send reset pulse to all DUTs and reset internal counters
   m_tlu->PulseT0();
-  //while(true) {
+
+  // Enable triggers
+  m_tlu->SetTriggerVeto(0);
+
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
-    m_tlu->ReceiveEvents();
+    m_tlu->ReceiveEvents(verbose);
     while (!m_tlu->IsBufferEmpty()){
       tlu::fmctludata *data = m_tlu->PopFrontEvent();
       uint32_t trigger_n = data->eventnumber;
@@ -210,15 +220,24 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
   m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1));//ILC stuff related
   m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
-  m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)); // 160M/interval
+  //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
+  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), verbose );
   m_tlu->GetEventFifoCSR();
   m_tlu->GetEventFifoFillLevel();
 }
 
 void FmctluProducer::DoStartRun(){
   m_exit_of_run = false;
+
+  auto conf = GetConfiguration();
+  unsigned int verbose= conf->Get("verbose", 0);
+  std::cout << "VERBOSE SET TO: " << verbose << std::endl;
+
+  unsigned int delayStart= conf->Get("delayStart", 0);
+  std::cout << "DELAY START SET TO: " << delayStart << " ms" << std::endl;
+
   std::cout << "TLU START command received" << std::endl;
-  m_thd_run = std::thread(&FmctluProducer::MainLoop, this);
+  m_thd_run = std::thread(&FmctluProducer::MainLoop, this, verbose, delayStart);
 }
 
 void FmctluProducer::DoStopRun(){
