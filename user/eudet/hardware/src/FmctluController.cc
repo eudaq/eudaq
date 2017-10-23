@@ -176,6 +176,22 @@ namespace tlu {
     return res;
   }
 
+  uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
+    uint32_t interval;
+    uint32_t true_freq;
+
+    interval= ReadRRegister("triggerLogic.InternalTriggerIntervalR");
+    if (verbose > 0){
+      if (interval==0){
+        true_freq = 0;
+      }
+      else{
+        true_freq= (int) floor( (float)160000000 / interval );
+      }
+      std::cout << "\tFrequency read back as: " << true_freq << " Hz"<< std::endl;
+    }
+  }
+
   unsigned int* FmctluController::SetBoardID(){
     m_IDaddr= m_I2C_address.EEPROM;
     unsigned char myaddr= 0xfa;
@@ -452,6 +468,26 @@ namespace tlu {
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMASK " <<  (int)mask << "\tMASK_L " << (int)maskLow << "\tMASK_H " << (int)maskHigh << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
+  }
+
+  void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
+    uint32_t max_freq= 160000000;
+    uint32_t interval;
+    uint32_t actual_interval;
+    if (user_freq > max_freq){
+      std::cout << "SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
+      user_freq= max_freq;
+    }
+    if (user_freq==0){
+      interval = user_freq;
+    }
+    else{
+      interval = (int) floor( (float)160000000 / user_freq );
+    }
+    SetInternalTriggerInterval(interval);
+    std::cout << "  Required internal trigger frequency: " << user_freq << " Hz" << std::endl;
+    std::cout << "\tSetting internal interval to:" << interval << std::endl;
+    actual_interval= GetInternalTriggerInterval(1);
   }
 
   void FmctluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){

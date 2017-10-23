@@ -220,7 +220,8 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
   m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1));//ILC stuff related
   m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
-  m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)); // 160M/interval
+  //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
+  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), verbose );
   m_tlu->GetEventFifoCSR();
   m_tlu->GetEventFifoFillLevel();
 }

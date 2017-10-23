@@ -29,6 +29,7 @@ namespace tlu {
     unsigned int PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
     void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
+    void SetInternalTriggerFrequency(uint32_t user_freq, int verbose);
     //void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
@@ -53,7 +54,8 @@ namespace tlu {
     void SetEnableRecordData(int value) { SetWRegister("Event_Formatter.Enable_Record_Data",value); };
 
     uint32_t GetLogicClocksCSR() { return ReadRRegister("logic_clocks.LogicClocksCSR"); };
-    uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    //uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    uint32_t GetInternalTriggerInterval(int verbose);
     uint32_t GetPulseStretch(){ return ReadRRegister("triggerLogic.PulseStretchR"); };
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
