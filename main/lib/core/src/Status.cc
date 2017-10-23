@@ -5,6 +5,10 @@
 
 namespace eudaq {
 
+  Status::Status(int level, const std::string &msg )
+    :m_level(level), m_state(STATE_UNINIT), m_msg(msg){
+  }
+  
   Status::Status(Deserializer &ds) {
     ds.read(m_level);
     ds.read(m_state);
@@ -12,6 +16,10 @@ namespace eudaq {
     ds.read(m_tags);
   }
 
+  Status::~Status(){
+
+  }
+  
   void Status::Serialize(Serializer &ser) const {
     ser.write(m_level);
     ser.write(m_state);
@@ -47,9 +55,28 @@ namespace eudaq {
     EUDAQ_THROW("Unrecognised level: " + str);
   }
 
-  Status &Status::SetTag(const std::string &name, const std::string &val){
+  void Status::SetMessage(const std::string &msg){
+    m_msg = msg;
+  }
+
+  std::string Status::GetMessage() const{
+    return m_msg;
+  }
+
+  int Status::GetLevel() const{
+    return m_level;
+  }
+  
+  int Status::GetState() const {
+    return m_state;
+  }
+
+  std::map<std::string, std::string> Status::GetTags() const{
+    return m_tags;
+  }
+
+  void Status::SetTag(const std::string &name, const std::string &val){
     m_tags[name] = val;
-    return *this;
   }
 
   std::string Status::GetTag(const std::string &name,
