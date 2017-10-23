@@ -139,7 +139,7 @@ namespace tlu {
       shift= (nwords-1) -iaddr;
       shortID= (m_BoardID[iaddr] << (8*shift) ) | shortID;
     }
-    std::cout << "CHATTANUGA " << std::hex << shortID << std::endl;
+    std::cout << "  BoardID (short) " << std::hex << shortID << std::endl;
     return shortID;
   }
 
