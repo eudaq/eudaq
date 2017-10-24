@@ -22,7 +22,7 @@ int main(int /*argc*/, const char **argv) {
     return op.HandleMainException(err);
   }
   std::string app_name = name.Value();
-  if(app_name.find("Monitor") != std::string::npos){
+  if(app_name.find("Monitor") == std::string::npos){
     std::cout<<"unknown application"<<std::endl;
     return -1;
   }
