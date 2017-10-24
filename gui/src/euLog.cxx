@@ -1,43 +1,28 @@
 #include "eudaq/OptionParser.hh"
-#include "eudaq/Status.hh"
-#include "eudaq/Utils.hh"
-#include "eudaq/Logger.hh"
 #include "eudaq/LogCollector.hh"
+#include <iostream>
 #include <QApplication>
 
-namespace{
-  QCoreApplication* GetQApplication(){
-    QCoreApplication* qapp = QApplication::instance();
-    if(!qapp){
-      int argc = 1;
-      char *argv[] = {(char*)"euGUI"};
-      qapp = new QApplication(argc, argv );  
-    }
-    return qapp;
-  }
-  auto qapp = GetQApplication();
-}
-
-
 int main(int argc, char **argv) {
-  eudaq::OptionParser op("EUDAQ Log Collector", "1.0",
+  QCoreApplication *qapp = new QApplication(argc, argv );  
+  eudaq::OptionParser op("EUDAQ Log Collector", "2.0",
                          "A Qt version of the Log Collector");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol",
                                    "tcp://localhost:44000", "address",
                                    "The address of the RunControl application");
+  eudaq::Option<std::string> listen(op, "a", "listen-address", "", "address",
+				    "The address on which to listen for log connections");
   try {
     op.Parse(argv);
-    // EUDAQ_LOG_LEVEL(level.Value());
-    auto app=eudaq::Factory<eudaq::LogCollector>::
-      MakeShared<const std::string&, const std::string&>
-      (eudaq::cstr2hash("GuiLogCollector"), "log", rctrl.Value());
-    app->Exec();
   } catch (...) {
-    std::cout << "euLog exception handler" << std::endl;
     std::ostringstream err;
-    int result = op.HandleMainException(err);
-    std::cerr<<"Exception"<< err.str()<<"\n";
-    return result;
+    return op.HandleMainException(err);
   }
+
+  auto app=eudaq::Factory<eudaq::LogCollector>::
+    MakeShared<const std::string&, const std::string&>
+    (eudaq::cstr2hash("GuiLogCollector"), "log", rctrl.Value());
+  app->Exec();
+  
   return 0;
 }
