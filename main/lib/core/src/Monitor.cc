@@ -15,7 +15,7 @@ namespace eudaq {
   Factory<Monitor>::Instance<const std::string&, const std::string&>(); //TODO
   
   Monitor::Monitor(const std::string &name, const std::string &runcontrol)
-    :CommandReceiver("Monitor", name, runcontrol){
+    :m_evt_c(0),CommandReceiver("Monitor", name, runcontrol){
   }
 
   void Monitor::DoInitialise(){
@@ -53,6 +53,7 @@ namespace eudaq {
       m_data_addr = Listen(m_data_addr);
       SetStatusTag("_SERVER", m_data_addr);
       StopListen();
+      SendStatus();
       DoInitialise();
       CommandReceiver::OnInitialise();
     }catch (const Exception &e) {
@@ -81,6 +82,7 @@ namespace eudaq {
     try {
       m_data_addr = Listen(m_data_addr);
       SetStatusTag("_SERVER", m_data_addr);
+      m_evt_c = 0;
       DoStartRun();
       CommandReceiver::OnStartRun();
     } catch (const Exception &e) {
@@ -125,11 +127,13 @@ namespace eudaq {
   }
     
   void Monitor::OnStatus(){
-    // SetStatusTag("EventN", std::to_string(m_evt_c));
+    SetStatusTag("EventN", std::to_string(m_evt_c));
     DoStatus();
+    CommandReceiver::OnStatus();
   }
 
   void Monitor::OnReceive(ConnectionSPC id, EventSP ev){
+    m_evt_c ++;
     DoReceive(ev);
   }
   

@@ -14,8 +14,40 @@
 
 #include <map>
 
-namespace eudaq {
+// defining error code more informations under
+// http://msdn.microsoft.com/en-us/library/windows/desktop/ms740668%28v=vs.85%29.aspx
 
+// qute:
+// "Resource temporarily unavailable.
+//
+// 	This error is returned from operations on nonblocking sockets that
+//  cannot be completed immediately, for example recv when no data is queued
+//  to be read from the socket. It is a nonfatal error, and the operation
+//  should be retried later. It is normal for WSAEWOULDBLOCK to be reported
+//  as the result from calling connect on a nonblocking SOCK_STREAM socket,
+//  since some time must elapse for the connection to be established."
+#define EUDAQ_ERROR_Resource_temp_unavailable WSAEWOULDBLOCK
+
+// qute:
+// Operation now in progress.
+//
+// 	A blocking operation is currently executing. Windows Sockets
+// 	only allows a single blocking operation (per- task or thread) to
+// 	be outstanding, and if any other function call is made (whether
+// 	or not it references that or any other socket) the function fails
+// 	with the WSAEINPROGRESS error.
+//
+#define EUDAQ_ERROR_Operation_progress WSAEINPROGRESS
+
+// Interrupted function call.
+//	A blocking operation was interrupted by a call to WSACancelBlockingCall.
+//
+#define EUDAQ_ERROR_Interrupted_function_call WSAEINTR
+
+#define EUDAQ_ERROR_NO_DATA_RECEIVED -1
+
+
+namespace eudaq {
   namespace {
 
     // List of Winsock error constants mapped to an interpretation string.

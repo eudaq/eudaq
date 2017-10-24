@@ -32,13 +32,14 @@ namespace eudaq {
   
   void DataReceiver::DataHandler(TransportEvent &ev) {
     auto con = ev.id;
+    bool has_con_for_discon = false;
     switch (ev.etype) {
     case (TransportEvent::CONNECT):
       m_dataserver->SendPacket("OK EUDAQ DATA DataReceiver", *con, true);
       break;
     case (TransportEvent::DISCONNECT):
       con->SetState(0);
-      EUDAQ_INFO("DataReceiver:: Disconnected from " + to_string(*con));
+      EUDAQ_INFO("DataReceiver: Disconnected from " + to_string(*con));
       for (size_t i = 0; i < m_vt_con.size(); ++i){
 	if (m_vt_con[i] == con){
 	  m_vt_con.erase(m_vt_con.begin() + i);
@@ -46,10 +47,11 @@ namespace eudaq {
 	  m_qu_ev.push(std::make_pair<EventSP, ConnectionSPC>(nullptr, con));
 	  lk.unlock();
 	  m_cv_not_empty.notify_all();
-	  break;
+	  has_con_for_discon = true;
 	}
       }
-      EUDAQ_THROW("DataReceiver:: Unrecognised Connection");
+      if(!has_con_for_discon)
+	EUDAQ_THROW("DataReceiver: Unrecognised Connection"  + to_string(*con));
       break;
     case (TransportEvent::RECEIVE):
       if (con->GetState() == 0) { //unidentified connection
@@ -85,7 +87,7 @@ namespace eudaq {
         } while (false);
         m_dataserver->SendPacket("OK", *con, true);
         con->SetState(1); // successfully identified
-	EUDAQ_INFO("DataReceiver:: Connection from " + to_string(*con));
+	EUDAQ_INFO("DataReceiver: Connection from " + to_string(*con));
 	m_vt_con.push_back(con);
 	std::unique_lock<std::mutex> lk(m_mx_qu_ev);
 	m_qu_ev.push(std::make_pair<EventSP, ConnectionSPC>(nullptr, con));
@@ -102,30 +104,32 @@ namespace eudaq {
 	m_qu_ev.push(ev_con);
 	if(m_qu_ev.size() > 50000){
 	  m_qu_ev.pop();
-	  EUDAQ_WARN("DataReceiver:: Buffer of receving event is full.");
+	  EUDAQ_WARN("DataReceiver: Buffer of receving event is full.");
 	}
 	m_cv_not_empty.notify_all();
       }
       break;
     default:
-      EUDAQ_WARN("DataReceiver:: Unknown TransportEvent");
+      EUDAQ_WARN("DataReceiver: Unknown TransportEvent");
     }
   }
 
   bool DataReceiver::AsyncReceiving(){
+    m_is_async_rcv_return = false;
     while (m_is_listening){
       m_dataserver->Process(100000);
     }
+    m_is_async_rcv_return = true;
     return 0;
   }
 
   bool DataReceiver::AsyncForwarding(){
-    while(m_is_listening){
+    while(!m_is_async_rcv_return){
       std::unique_lock<std::mutex> lk(m_mx_qu_ev);
       if(m_qu_ev.empty()){
 	while(m_cv_not_empty.wait_for(lk, std::chrono::seconds(1))
 	      ==std::cv_status::timeout){
-	  if(!m_is_listening){
+	  if(m_is_async_rcv_return){
 	    return 0;
 	  }
 	}
@@ -145,6 +149,11 @@ namespace eudaq {
 	}
       }
     }
+    //clear remaining connections
+    for(auto &con: m_vt_con){
+      OnDisconnect(con);
+    }
+    m_vt_con.clear();
     return 0;
   }
   
@@ -154,7 +163,7 @@ namespace eudaq {
       this_addr = addr;
     }
     if(m_dataserver){
-      EUDAQ_THROW("DataReceiver:: Last server did not closed sucessfully");
+      EUDAQ_THROW("DataReceiver: Last server did not closed sucessfully");
     }
 
     auto dataserver = TransportServer::CreateServer(this_addr);
@@ -163,6 +172,7 @@ namespace eudaq {
     m_last_addr = dataserver->ConnectionString();
     m_dataserver.reset(dataserver);
     m_is_listening = true;
+    m_is_async_rcv_return = false;
     m_fut_async_rcv = std::async(std::launch::async, &DataReceiver::AsyncReceiving, this); 
     m_fut_async_fwd = std::async(std::launch::async, &DataReceiver::AsyncForwarding, this);
     return m_last_addr;
@@ -174,7 +184,7 @@ namespace eudaq {
     while( m_fut_async_rcv.valid() || m_fut_async_fwd.valid()){
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
       if((std::chrono::steady_clock::now()-tp_stop) > std::chrono::seconds(10)){
-	EUDAQ_THROW("DataReceiver:: Unable to stop the data receving/forwarding threads");
+	EUDAQ_THROW("DataReceiver: Unable to stop the data receving/forwarding threads");
       }
     }
   }
@@ -196,7 +206,7 @@ namespace eudaq {
 	  }
 	}
 	catch(...){
-	  EUDAQ_WARN("DataReceiver:: Connection execption at listening time");
+	  EUDAQ_WARN("DataReceiver: Connection execption at listening time");
 	}
       }
       else{ //stop-start circle 
@@ -208,14 +218,14 @@ namespace eudaq {
 	    m_fut_async_fwd.get();
 	  }
 	  if(!m_qu_ev.empty()){
-	    EUDAQ_WARN("DataReceiver:: Data buffer is not empty during the stopping");
+	    EUDAQ_WARN("DataReceiver: Data buffer is not empty during the stopping");
 	    m_qu_ev = std::queue<std::pair<EventSP, ConnectionSPC>>();
 	  }
 	  if(m_dataserver)
 	    m_dataserver.reset();
 	}
 	catch(...){
-	  EUDAQ_WARN("DataReceiver:: Connection execption from disconnetion");
+	  EUDAQ_WARN("DataReceiver: Connection execption");
 	}
       }
     }    
@@ -229,14 +239,14 @@ namespace eudaq {
 	m_fut_async_fwd.get();
       }
       if(!m_qu_ev.empty()){
-	EUDAQ_WARN("DataReceiver:: Data buffer is not empty during the exiting");
+	EUDAQ_WARN("DataReceiver: Data buffer is not empty during the exiting");
 	m_qu_ev = std::queue<std::pair<EventSP, ConnectionSPC>>();
       }
       if(m_dataserver)
 	m_dataserver.reset();
     }
     catch(...){
-      EUDAQ_WARN("DataReceiver:: Connection execption from disconnetion");
+      EUDAQ_ERROR("DataReceiver: Execption from deamon exiting");
     }
   }
 }

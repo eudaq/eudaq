@@ -54,6 +54,7 @@ namespace eudaq {
     void OnReceive(ConnectionSPC id, EventSP ev) override final;
   private:
     std::string m_data_addr;
+    uint32_t m_evt_c;
   };
   //----------DOC-MARK-----END*DEC-----DOC-MARK----------
 }
