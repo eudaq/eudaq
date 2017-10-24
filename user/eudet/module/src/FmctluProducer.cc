@@ -76,19 +76,26 @@ void FmctluProducer::MainLoop(int verbose, int delayStart){
 
       std::stringstream  triggerss;
       triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
-      ev->SetTag("trigger", triggerss.str());
+      ev->SetTag("TRIGGER", triggerss.str());
+      //std::cout << "-----> " << static_cast<unsigned>(data->input5) << " " << static_cast<unsigned>(data->input4) << " " << static_cast<unsigned>(data->input3) << " " << static_cast<unsigned>(data->input2) << " " << static_cast<unsigned>(data->input1) << " " << static_cast<unsigned>(data->input0) << " " << std::endl;
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
+        ev->SetTag("PARTICLES", std::to_string(pt));
       	ev->SetTag("SCALER0", std::to_string(sl0));
       	ev->SetTag("SCALER1", std::to_string(sl1));
       	ev->SetTag("SCALER2", std::to_string(sl2));
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
-      	ev->SetTag("PARTICLES", std::to_string(pt));
-
+      	ev->SetTag("TRIGGER0", std::to_string(data->input0));
+        ev->SetTag("TRIGGER1", std::to_string(data->input1));
+        ev->SetTag("TRIGGER2", std::to_string(data->input2));
+        ev->SetTag("TRIGGER3", std::to_string(data->input3));
+        ev->SetTag("TRIGGER4", std::to_string(data->input4));
+        ev->SetTag("TRIGGER5", std::to_string(data->input5));
+        ev->SetTag("TYPE", std::to_string(data->eventtype));
 
         if(m_exit_of_run){
           ev->SetEORE();
