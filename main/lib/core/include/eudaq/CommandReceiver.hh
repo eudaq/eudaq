@@ -37,6 +37,7 @@ namespace eudaq {
     virtual void RunLoop();
     std::string Connect();
     
+    void SendStatus();
     void SetStatus(Status::State, const std::string&);
     void SetStatusMsg(const std::string&);
     void SetStatusTag(const std::string &key, const std::string &val);
