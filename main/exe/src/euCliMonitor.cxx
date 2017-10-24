@@ -12,27 +12,37 @@ int main(int /*argc*/, const char **argv) {
 				  "The port on which the data monitor is going to listen on");
   eudaq::Option<std::string> rctrl(op, "r", "runcontrol", "tcp://localhost:44000", "address",
   				   "The address of the RunControl to connect to");
-  op.Parse(argv);
+
+
+  try{
+    op.Parse(argv);
+  }
+  catch(...){
+    std::ostringstream err;
+    return op.HandleMainException(err);
+  }
   std::string app_name = name.Value();
   if(app_name.find("Monitor") != std::string::npos){
-    auto app=eudaq::Factory<eudaq::Monitor>::MakeShared<const std::string&,const std::string&>
-      (eudaq::str2hash(name.Value()), tname.Value(), rctrl.Value());
-    if(!app){
-      std::cout<<"unknow Monitor"<<std::endl;
-      return -1;
-    }
-
-    uint16_t port = static_cast<uint16_t>(eudaq::str2hash(name.Value()+tname.Value()+rctrl.Value()));
-    std::string addr_listen = "tcp://"+std::to_string(port);
-    if(!listen.Value().empty()){
-      addr_listen = listen.Value();
-    }
-    app->SetServerAddress(addr_listen);
-    // app->Exec();
-  }
-  else{
-    std::cout<<"unknow application"<<std::endl;
+    std::cout<<"unknown application"<<std::endl;
     return -1;
+  }
+  auto app=eudaq::Monitor::Make(name.Value(), tname.Value(), rctrl.Value());
+  if(!app){
+    std::cout<<"unknown Monitor: "<<name.Value()<<std::endl;
+    return -1;
+  }
+  if(!listen.Value().empty()){
+    app->SetServerAddress(listen.Value());
+  }
+  try{
+    app->Connect();
+  }
+  catch (...){
+    std::cout<<"Can not connect to RunContrl at "<<rctrl.Value()<<std::endl;
+    return -1;
+  }
+  while(app->IsConnected()){
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   return 0;
 }
