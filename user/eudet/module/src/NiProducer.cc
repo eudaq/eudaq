@@ -14,14 +14,12 @@ public:
   void DoStopRun() override;
   void DoReset() override;
   void DoTerminate() override;
-
-  void DataLoop();
+  void RunLoop() override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("NiProducer");
 private:
   bool m_running;
   bool m_configured;
-  std::thread m_thd_data;
   std::shared_ptr<NiController> ni_control;
   
   uint32_t ConfDataLength;
@@ -35,7 +33,6 @@ private:
   uint32_t MimosaID[6];
   uint32_t MimosaEn[6];
   bool NiConfig;
-  
   unsigned char conf_parameters[10];
 };
 
@@ -52,12 +49,9 @@ NiProducer::NiProducer(const std::string name, const std::string &runcontrol)
 
 NiProducer::~NiProducer(){
   m_running = false;
-  if(m_thd_data.joinable()){
-    m_thd_data.join();
-  }
 }
 
-void NiProducer::DataLoop(){
+void NiProducer::RunLoop(){
   ni_control->Start();
   bool isbegin = true;
   uint32_t tg_h17 = 0;
@@ -217,33 +211,23 @@ void NiProducer::DoConfigure() {
 }
 
 void NiProducer::DoStartRun(){
-  if(m_thd_data.joinable())
-    EUDAQ_THROW("NiProducer::OnStartRun(): Last run is not stopped.");
-
   m_running = true;
-  m_thd_data = std::thread(&NiProducer::DataLoop, this);
 }
 
 void NiProducer::DoStopRun() {
   m_running = false;
-  if(m_thd_data.joinable())
-    m_thd_data.join();
 }
 
 void NiProducer::DoReset(){
   m_running = false;
-  if(m_thd_data.joinable())
-    m_thd_data.join();
   m_configured = false;
-  ni_control.reset();
 }
 
 void NiProducer::DoTerminate() {
   m_running = false;
-  if(m_thd_data.joinable()){
-    m_thd_data.join();
+  if(ni_control){
+    ni_control->DatatransportClientSocket_Close();
+    ni_control->ConfigClientSocket_Close();
   }
-  ni_control->DatatransportClientSocket_Close();
-  ni_control->ConfigClientSocket_Close();
   eudaq::mSleep(1000);
 }

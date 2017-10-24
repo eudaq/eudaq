@@ -26,15 +26,11 @@ public:
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-
-  void OnStatus() override;
-
-  void MainLoop();
+  void DoStatus() override;
+  void RunLoop() override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("TluProducer");
 private:
-
-  std::thread m_thd_run;
   bool m_exit_of_run;
   uint32_t m_trigger_n;
   uint64_t m_ts_last;
@@ -69,7 +65,7 @@ TluProducer::TluProducer(const std::string name, const std::string &runcontrol)
   }
 }
 
-void TluProducer::MainLoop(){
+void TluProducer::RunLoop(){
   bool isbegin = true;
   if (timestamp_per_run)
     m_tlu->ResetTimestamp();
@@ -196,31 +192,22 @@ void TluProducer::DoConfigure() {
 
 void TluProducer::DoStartRun(){
   m_exit_of_run = false;
-  m_thd_run = std::thread(&TluProducer::MainLoop, this);
 }
 
 void TluProducer::DoStopRun(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
-  std::cout<<">>>>>>>>>>>>>STOPped\n";
 }
 
 void TluProducer::DoTerminate(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
 }
 
 void TluProducer::DoReset(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
-
   m_tlu.reset();
 }
 
-void TluProducer::OnStatus(){
+void TluProducer::DoStatus(){
   SetStatusTag("TRIG", std::to_string(m_trigger_n));
   if (m_tlu) {
     SetStatusTag("TIMESTAMP", std::to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
