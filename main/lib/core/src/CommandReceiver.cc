@@ -46,6 +46,15 @@ namespace eudaq {
     }
   }
 
+  void CommandReceiver::SendStatus(){
+    BufferSerializer ser;
+    std::unique_lock<std::mutex> lk_st(m_mtx_status);
+    m_status.Serialize(ser);
+    lk_st.unlock();
+    if(m_cmdclient)
+      m_cmdclient->SendPacket(ser);
+  }
+  
   void CommandReceiver::SetStatus(Status::State state,
                                   const std::string &info) {
     Status::Level level;
@@ -106,16 +115,33 @@ namespace eudaq {
 	    m_fut_runloop.wait_for(std::chrono::seconds(1))==std::future_status::timeout){
 	msg.append(1, '.');
 	SetStatusMsg(msg);
+	SendStatus();
+	if((std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(20)){
+	  EUDAQ_THROW("CommandReceiver:: Unable to stop the user's RunLoop");
+	}
       }
-      if((std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(10)){
-	EUDAQ_THROW("CommandReceiver:: Unable to stop the user's RunLoop");
-      }
+      m_fut_runloop.get();
     }
     SetStatus(Status::STATE_CONF, "Stopped");
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is stopped.");
   }
   
   void CommandReceiver::OnReset(){
+    if(m_fut_runloop.valid()){
+      m_is_runlooping = false;
+      auto tp_user_return = std::chrono::steady_clock::now();
+      std::string msg = "Resetting ";
+      while(m_fut_runloop.valid() &&
+	    m_fut_runloop.wait_for(std::chrono::seconds(1))==std::future_status::timeout){
+	msg.append(1, '.');
+	SetStatusMsg(msg);
+	SendStatus();
+	if((std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(20)){
+	  EUDAQ_THROW("CommandReceiver:: Unable to stop the user's RunLoop");
+	}
+      }
+      m_fut_runloop.get();
+    }
     SetStatus(Status::STATE_UNINIT, "Reseted");
     EUDAQ_INFO(GetFullName() + " is reset.");
   }
@@ -170,17 +196,16 @@ namespace eudaq {
       RunLoop();
     }
     catch(...){
-      EUDAQ_ERROR("CommandReciever: User's RunLoop throws an exception");
+      EUDAQ_ERROR("CommandReceiver: User's RunLoop throws an exception");
       throw;
     }
-    
     bool msg_once = true;
     auto tp_user_return = std::chrono::steady_clock::now();
     std::chrono::milliseconds t(500);
     while(m_is_runlooping){
       std::this_thread::sleep_for(t);
-      if(msg_once && (std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(5) ){
-	EUDAQ_WARN("CommandReciever: User's RunLoop exits during the running");
+      if(msg_once && (std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(20) ){
+	EUDAQ_WARN("CommandReceiver: User's RunLoop exits during the running (20 seconds ago)");
 	msg_once = false;
       }
     }
@@ -254,14 +279,11 @@ namespace eudaq {
       } else {
         OnUnrecognised(cmd, param);
       }
-      BufferSerializer ser;
-      std::unique_lock<std::mutex> lk_st(m_mtx_status);
-      m_status.Serialize(ser);
-      lk_st.unlock();
-      m_cmdclient->SendPacket(ser);
+      SendStatus();
     }
     return 0;
   }
+
   
   std::string CommandReceiver::Connect(){
     if(!m_fut_deamon.valid())
