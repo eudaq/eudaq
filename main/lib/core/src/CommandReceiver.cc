@@ -87,6 +87,12 @@ namespace eudaq {
   }
 
   void CommandReceiver::OnInitialise(){
+    // std::string cur_backup = GetInitConfiguration()->GetCurrentSectionName();
+    // GetInitConfiguration()->SetSection("");
+    // std::string log_addr = GetInitConfiguration()->Get("EUDAQ_LOG_ADDR", "");
+    // if(!log_addr.empty())
+    //   EUDAQ_LOG_CONNECT(m_type, m_name, log_addr);
+    // GetInitConfiguration()->SetSection(cur_backup);
     SetStatus(Status::STATE_UNCONF, "Initialized");
     EUDAQ_INFO(GetFullName() + " is initialised.");
   }
@@ -98,7 +104,7 @@ namespace eudaq {
   
   void CommandReceiver::OnStartRun(){
     if(m_fut_runloop.valid()){
-      EUDAQ_THROW("Last run is not stoped");
+      EUDAQ_THROW("CommandReceiver: Last run is not stoped");
     }
     m_is_runlooping = true;
     m_fut_runloop = std::async(std::launch::async, &CommandReceiver::RunLooping, this);
@@ -117,7 +123,7 @@ namespace eudaq {
 	SetStatusMsg(msg);
 	SendStatus();
 	if((std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(20)){
-	  EUDAQ_THROW("CommandReceiver:: Unable to stop the user's RunLoop");
+	  EUDAQ_THROW("CommandReceiver: Unable to stop the user's RunLoop");
 	}
       }
       m_fut_runloop.get();
@@ -137,12 +143,12 @@ namespace eudaq {
 	SetStatusMsg(msg);
 	SendStatus();
 	if((std::chrono::steady_clock::now()-tp_user_return) > std::chrono::seconds(20)){
-	  EUDAQ_THROW("CommandReceiver:: Unable to stop the user's RunLoop");
+	  EUDAQ_THROW("CommandReceiver: Unable to stop the user's RunLoop");
 	}
       }
       m_fut_runloop.get();
     }
-    SetStatus(Status::STATE_UNINIT, "Reseted");
+    SetStatus(Status::STATE_UNINIT, "Reset");
     EUDAQ_INFO(GetFullName() + " is reset.");
   }
 
@@ -219,11 +225,11 @@ namespace eudaq {
       }
     } catch (const std::exception &e) {
       //TODO: move the catch to up level
-      EUDAQ_ERROR(std::string("CommandReceiver::AsyncReceiving Error: Uncaught exception: ")+ e.what());
+      EUDAQ_ERROR(std::string("CommandReceiver: AsyncReceiving Error: Uncaught exception: ")+ e.what());
       m_is_connected = false;
       throw;
     } catch (...) {
-      EUDAQ_ERROR(std::string("CommandReceiver::AsyncReceiving Error: Uncaught unrecognised exception"));
+      EUDAQ_ERROR(std::string("CommandReceiver: AsyncReceiving Error: Uncaught unrecognised exception"));
       m_is_connected = false;
       throw;
     }
@@ -291,7 +297,7 @@ namespace eudaq {
     std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
 
     if(m_cmdclient){
-      EUDAQ_THROW("command receiver is not closed before");
+      EUDAQ_THROW("CommandReceiver: Command receiver is not closed before");
     }
     
     auto cmdclient = TransportClient::CreateClient(m_addr_runctrl);
@@ -359,7 +365,7 @@ namespace eudaq {
 	  }
 	}
 	catch(...){
-	  EUDAQ_WARN("connection execption from disconnetion");
+	  EUDAQ_WARN("CommandReceiver: Connection execption from disconnetion");
 	}
       }
       else{
@@ -374,7 +380,7 @@ namespace eudaq {
 	  m_cmdclient.reset();
 	}
 	catch(...){
-	  EUDAQ_WARN("connection execption from disconnetion");
+	  EUDAQ_WARN("CommandReceiver: connection execption from disconnetion");
 	}
       }
     }
@@ -391,7 +397,7 @@ namespace eudaq {
 	m_cmdclient.reset();
     }
     catch(...){
-      EUDAQ_WARN("connection execption from disconnetion");
+      EUDAQ_WARN("CommandReceiver: connection execption from disconnetion");
     }
   }
   

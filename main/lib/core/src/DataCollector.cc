@@ -61,6 +61,7 @@ namespace eudaq {
       m_data_addr = Listen(m_data_addr);
       SetStatusTag("_SERVER", m_data_addr);
       StopListen();
+      SendStatus();
       DoInitialise();
       CommandReceiver::OnInitialise();
     }catch (const Exception &e) {
@@ -184,7 +185,6 @@ namespace eudaq {
       
       ev->SetRunN(GetRunNumber());
       ev->SetEventN(m_evt_c);
-      SetStatusTag("EventN", std::to_string(m_evt_c));
       m_evt_c ++;
       ev->SetStreamN(m_dct_n);
       if(m_writer)

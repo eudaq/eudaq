@@ -49,6 +49,7 @@ namespace eudaq {
     std::vector<ConnectionSP> m_vt_con;
     bool m_is_destructing;
     bool m_is_listening;
+    bool m_is_async_rcv_return;
     std::future<bool> m_fut_async_rcv;
     std::future<bool> m_fut_async_fwd;
     std::future<bool> m_fut_deamon;

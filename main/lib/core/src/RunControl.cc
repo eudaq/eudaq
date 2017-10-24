@@ -70,9 +70,10 @@ namespace eudaq {
 	    + server_addr.substr(server_addr.find_last_not_of("0123456789")+1);
 	}
 	std::string server_name = conn_type+"."+conn_name;
-	if(server_name=="LogCollector.log"){
-	  if(!server_addr.empty())
-	    SendCommand("LOG", server_addr);
+	if(server_name=="LogCollector.log" && !server_addr.empty()){
+	  m_conf_init->SetSection("");
+	  m_conf_init->SetString("EUDAQ_LOG_ADDR", server_addr);
+	  SendCommand("LOG", server_addr);
 	}
       }
     }
@@ -100,7 +101,6 @@ namespace eudaq {
     m_listening = false;
 
     m_conf->SetSection("");
-    std::string log_addr;
     for(auto &conn: conn_to_conf){
       std::string conn_type = conn->GetType();
       std::string conn_name = conn->GetName();
@@ -116,8 +116,6 @@ namespace eudaq {
 	}
 	std::string server_name = conn_type+"."+conn_name;
 	m_conf->SetString(server_name, server_addr);
-	if(server_name=="LogCollector.log")
-	  log_addr=server_addr;
       }
     }
     m_conf->SetSection("RunControl"); //TODO: RunControl section must exist
