@@ -44,6 +44,15 @@ private:
   std::shared_ptr<TLUController> m_tlu;
   std::string pmt_id[TLU_PMTS];
   double pmt_gain_error[TLU_PMTS], pmt_offset_error[TLU_PMTS];
+
+  std::string m_STATUS;
+  uint32_t m_TIMESTAMP;
+  uint32_t m_LASTTIME;
+  uint32_t m_PARTICLES;
+  uint32_t m_SCALE_0;
+  uint32_t m_SCALE_1;
+  uint32_t m_SCALE_2;
+  uint32_t m_SCALE_3;
 };
 
 namespace{
@@ -86,6 +95,15 @@ void TluProducer::RunLoop(){
       m_tlu->ResetTriggerCounter();
       m_tlu->InhibitTriggers(inhibit);
     }
+
+    m_TIMESTAMP = Timestamp2Seconds(m_tlu->GetTimestamp());
+    m_LASTTIME = Timestamp2Seconds(m_ts_last);
+    m_PARTICLES =  m_tlu->GetParticles();
+    m_STATUS = m_tlu->GetStatusString();
+    m_SCALE_0 = m_tlu->GetScaler(0);
+    m_SCALE_1 = m_tlu->GetScaler(1);
+    m_SCALE_2 = m_tlu->GetScaler(2);
+    m_SCALE_3 = m_tlu->GetScaler(3);
     
     for (size_t i = 0; i < m_tlu->NumEntries(); ++i) {
       auto tlu_entry =  m_tlu->GetEntry(i);
@@ -105,17 +123,9 @@ void TluProducer::RunLoop(){
 		  << ", freq=" << freq << std::endl;
       }
       ev->SetTag("trigger", tlu_entry.trigger2String()); //TriggerParttern
-      if(i+1 == m_tlu->NumEntries()) {
-	ev->SetTag("PARTICLES", std::to_string(m_tlu->GetParticles()));
-	ev->SetTag("SCALER0",std::to_string(m_tlu->GetScaler(0)));
-	ev->SetTag("SCALER1",std::to_string(m_tlu->GetScaler(1)));
-	ev->SetTag("SCALER2",std::to_string(m_tlu->GetScaler(2)));
-	ev->SetTag("SCALER3",std::to_string(m_tlu->GetScaler(3)));
-      }
       if(isbegin){
 	isbegin = false;
 	ev->SetBORE();
-	ev->SetTag("FirmwareID", std::to_string(m_tlu->GetFirmwareID()));
 	ev->SetTag("TimestampZero", eudaq::to_string(m_tlu->TimestampZero()));
       }
       SendEvent(std::move(ev));
@@ -188,6 +198,7 @@ void TluProducer::DoConfigure() {
 
   eudaq::mSleep(1000);
   m_tlu->Update(timestamps);
+
 }
 
 void TluProducer::DoStartRun(){
@@ -209,13 +220,10 @@ void TluProducer::DoReset(){
 
 void TluProducer::DoStatus(){
   SetStatusTag("TRIG", std::to_string(m_trigger_n));
-  if (m_tlu) {
-    SetStatusTag("TIMESTAMP", std::to_string(Timestamp2Seconds(m_tlu->GetTimestamp())));
-    SetStatusTag("LASTTIME", std::to_string(Timestamp2Seconds(m_ts_last)));
-    SetStatusTag("PARTICLES", std::to_string(m_tlu->GetParticles()));
-    SetStatusTag("STATUS", m_tlu->GetStatusString());
-    for (int i = 0; i < 4; ++i) {
-      SetStatusTag("SCALER" + std::to_string(i), std::to_string(m_tlu->GetScaler(i)));
-    }
-  }
+  SetStatusTag("TIMESTAMP", std::to_string(m_TIMESTAMP));
+  SetStatusTag("LASTTIME", std::to_string(m_LASTTIME));
+  SetStatusTag("PARTICLES", std::to_string(m_PARTICLES));
+  SetStatusTag("STATUS", m_STATUS);
+  SetStatusTag("SCALER", std::to_string(m_SCALE_0)+":"+std::to_string(m_SCALE_1)+":"
+	       +std::to_string(m_SCALE_2)+":"+std::to_string(m_SCALE_3));
 }
