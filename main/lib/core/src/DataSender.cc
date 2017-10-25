@@ -87,7 +87,6 @@ namespace eudaq {
       m_qu_ev.pop();
       EUDAQ_WARN("DataSender:: Buffer of sending event is full.");
     }
-    lk.unlock();
     m_cv_not_empty.notify_all();
   }
 
@@ -108,9 +107,8 @@ namespace eudaq {
       BufferSerializer ser;
       ev->Serialize(ser);
       m_packetCounter += 1;
-      std::cout<<">>>>>>>>>>>>>>>>>>>>>m_dataclient->SendPacket(ser)...."<<std::endl;
+      //TODO: catch exception below
       m_dataclient->SendPacket(ser);
-      std::cout<<">>>>>>>>>>>>>>>>>>>>>m_dataclient->SendPacket(ser)"<<std::endl;
     }
     
   }
