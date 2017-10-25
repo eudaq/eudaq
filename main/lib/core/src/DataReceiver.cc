@@ -11,7 +11,6 @@ namespace eudaq {
   
   DataReceiver::DataReceiver()
     :m_is_listening(false),m_is_destructing(false), m_last_addr("tcp://0"){
-    m_fut_deamon = std::async(std::launch::async, &DataReceiver::Deamon, this); 
   }
 
   DataReceiver::~DataReceiver(){
@@ -158,6 +157,9 @@ namespace eudaq {
   }
   
   std::string DataReceiver::Listen(const std::string &addr){
+    if(!m_fut_deamon.valid())
+      m_fut_deamon = std::async(std::launch::async, &DataReceiver::Deamon, this); 
+
     std::string this_addr = m_last_addr;
     if(!addr.empty()){
       this_addr = addr;
@@ -225,7 +227,7 @@ namespace eudaq {
 	    m_dataserver.reset();
 	}
 	catch(...){
-	  EUDAQ_WARN("DataReceiver: Connection execption");
+	  EUDAQ_WARN("DataReceiver: Deamon catches an execption when closing server");
 	}
       }
     }    
