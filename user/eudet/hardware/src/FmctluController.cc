@@ -126,7 +126,24 @@ namespace tlu {
     }
   }
 
-  uint32_t FmctluController::GetEventFifoCSR(bool verbose) {
+  uint32_t FmctluController::GetBoardID() {
+    // Return the board unique ID. The ID is generally comprised of
+    // 6 characters (48 bits) but the first 3 are manufacturer specific so, in order to have just
+    // 32-bit, we can just skip the first two characters.
+    // D8 80 39 XX YY ZZ -->  39 XX YY ZZ
+
+    int nwords= 6;
+    int shift= 0;
+    uint32_t shortID= 0;
+    for(int iaddr =2; iaddr < nwords; iaddr++) {
+      shift= (nwords-1) -iaddr;
+      shortID= (m_BoardID[iaddr] << (8*shift) ) | shortID;
+    }
+    std::cout << "  BoardID (short) " << std::hex << shortID << std::endl;
+    return shortID;
+  }
+
+  uint32_t FmctluController::GetEventFifoCSR(int verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
     res= ReadRRegister("eventBuffer.EventFifoCSR");
@@ -135,8 +152,8 @@ namespace tlu {
     alm_full= 0x4 & res;
     full= 0x8 & res;
     prog_full= 0x4 & res;
-    if (empty && verbose){std::cout << "  TLU FIFO status:\n\tEMPTY" << std::endl;}
-    if (alm_empty && verbose){std::cout << "  TLU FIFO status:\nALMOST EMPTY (1 word in FIFO)" << std::endl;}
+    if (empty && (verbose > 2)){std::cout << "  TLU FIFO status:\n\tEMPTY" << std::endl;}
+    if (alm_empty && (verbose > 2)){std::cout << "  TLU FIFO status:\nALMOST EMPTY (1 word in FIFO)" << std::endl;}
     if (alm_full){std::cout << "  TLU FIFO status:\n\tALMOST FULL (1 word left)" << std::endl;}
     if (full){std::cout <<   "  TLU FIFO status:\n\tFULL (8192 word)" << std::endl;}
     if (prog_full){std::cout << "  TLU FIFO status:\n\tABOVE THRESHOLD (8181/8192)" << std::endl;}
@@ -159,17 +176,39 @@ namespace tlu {
     return res;
   }
 
-  uint32_t FmctluController::getSN(){
-    m_IDaddr= m_I2C_address.EEPROM;
-    unsigned char myaddr= 0xfc;
-    //for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
-    for(int iaddr =0; iaddr < 4; iaddr++) {
-      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr+iaddr);
-      m_BoardID = ( ( ( (uint)nibble)&0xff) << ( (iaddr)*8) ) |m_BoardID;
-      //std::cout << std::hex << ( (uint)nibble&0xff ) << " " << (( (uint)nibble & 0xff) << ( (4-iaddr)*8) ) << " "<< m_BoardID<< std::endl;
+  uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
+    uint32_t interval;
+    uint32_t true_freq;
+
+    interval= ReadRRegister("triggerLogic.InternalTriggerIntervalR");
+    if (verbose > 0){
+      if (interval==0){
+        true_freq = 0;
+      }
+      else{
+        true_freq= (int) floor( (float)160000000 / interval );
+      }
+      std::cout << "\tFrequency read back as: " << true_freq << " Hz"<< std::endl;
     }
-    //std::cout << "  TLU unique ID : " << std::setw(12) << std::setfill('0') << std::hex << m_BoardID << std::endl;
-    std::cout << "  TLU unique ID : " <<  std::hex << m_BoardID << std::endl;
+  }
+
+  unsigned int* FmctluController::SetBoardID(){
+    m_IDaddr= m_I2C_address.EEPROM;
+    unsigned char myaddr= 0xfa;
+    int nwords= 6;
+
+    std::ios::fmtflags coutflags( std::cout.flags() );
+    for(int iaddr =0; iaddr < nwords; iaddr++) {
+      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr + iaddr);
+      m_BoardID[iaddr]= ((uint)nibble)&0xff;
+    }
+
+    std::cout << "  TLU unique ID:";
+    for(int iaddr =0; iaddr < nwords; iaddr++) {
+      std::cout << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[iaddr];
+    }
+    std::cout << " " << std::endl;
+    std::cout.flags( coutflags );
     return m_BoardID;
   }
 
@@ -261,23 +300,23 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          std::cout << "\tFOUND I2C slave CLOCK" << std::endl;
+          std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC1){
-          std::cout << "\tFOUND I2C slave DAC1" << std::endl;
+          std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr== m_I2C_address.DAC2){
-          std::cout << "\tFOUND I2C slave DAC2" << std::endl;
+          std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          std::cout << "\tFOUND I2C slave EEPROM" << std::endl;
+          std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.expander1){
-          std::cout << "\tFOUND I2C slave EXPANDER1" << std::endl;
+          std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.expander2){
-          std::cout << "\tFOUND I2C slave EXPANDER2" << std::endl;
+          std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
@@ -286,12 +325,12 @@ namespace tlu {
       SetI2CTX(0x0);
       SetI2CCommand(0x50); // 01010000
       while(I2CCommandIsDone()) {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
 
     if(m_IDaddr){
-      getSN();
+      SetBoardID();
     }
     std::cout.flags( coutflags ); // Restore cout flags
   }
@@ -340,8 +379,8 @@ namespace tlu {
     }
   }
 
-  void FmctluController::ReceiveEvents(){
-    bool verbose= 0;
+  void FmctluController::ReceiveEvents(int verbose){
+    //bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
     uint32_t fifoStatus= GetEventFifoCSR(verbose);
     if ((fifoStatus & 0x18)){
@@ -353,13 +392,17 @@ namespace tlu {
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*6);
       m_hw->dispatch();
       if(fifoContent.valid()) {
-        std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/6<<std::endl;
-	      if(fifoContent.size()%6 !=0){
-	         std::cout<<"receive error"<<std::endl;
+        if (verbose > 0){
+          std::cout<< "TLU events required: "<<nevent<<" events received: " << fifoContent.size()/6<<std::endl;
+        }
+        if(fifoContent.size()%6 !=0){
+          std::cout<<"receive error"<<std::endl;
         }
         for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
           m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
-          std::cout<< *(m_data.back());
+          if (verbose > 1){
+            std::cout<< *(m_data.back());
+          }
         }
       }
     }
@@ -427,6 +470,26 @@ namespace tlu {
     m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
+  void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
+    uint32_t max_freq= 160000000;
+    uint32_t interval;
+    uint32_t actual_interval;
+    if (user_freq > max_freq){
+      std::cout << "SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
+      user_freq= max_freq;
+    }
+    if (user_freq==0){
+      interval = user_freq;
+    }
+    else{
+      interval = (int) floor( (float)160000000 / user_freq );
+    }
+    SetInternalTriggerInterval(interval);
+    std::cout << "  Required internal trigger frequency: " << user_freq << " Hz" << std::endl;
+    std::cout << "\tSetting internal interval to:" << interval << std::endl;
+    actual_interval= GetInternalTriggerInterval(1);
+  }
+
   void FmctluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
     SetPulseStretch( (int)PackBits(valuesVec) );
   }
@@ -467,11 +530,11 @@ namespace tlu {
     }
     if (channel <2){
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC1.SetDACValue(channel , int(dacCode) );
+      m_zeDAC1.SetDACValue( 1-channel , int(dacCode) ); //The ADC channels are connected in reverse order
     }
     else{
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC2.SetDACValue(channel-2 , int(dacCode) );
+      m_zeDAC2.SetDACValue( 3-(channel-2) , int(dacCode) );
     }
 
   }

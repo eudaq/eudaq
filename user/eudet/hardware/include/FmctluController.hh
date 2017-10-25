@@ -29,6 +29,7 @@ namespace tlu {
     unsigned int PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
     void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
+    void SetInternalTriggerFrequency(uint32_t user_freq, int verbose);
     //void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
@@ -53,7 +54,8 @@ namespace tlu {
     void SetEnableRecordData(int value) { SetWRegister("Event_Formatter.Enable_Record_Data",value); };
 
     uint32_t GetLogicClocksCSR() { return ReadRRegister("logic_clocks.LogicClocksCSR"); };
-    uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    //uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    uint32_t GetInternalTriggerInterval(int verbose);
     uint32_t GetPulseStretch(){ return ReadRRegister("triggerLogic.PulseStretchR"); };
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
@@ -69,7 +71,7 @@ namespace tlu {
     }
 
     uint32_t GetFW();
-    uint32_t GetEventFifoCSR(bool verbose= false);
+    uint32_t GetEventFifoCSR(int verbose= 0);
     uint32_t GetEventFifoFillLevel();
     uint32_t GetI2CStatus() { return ReadRRegister("i2c_master.i2c_cmdstatus"); };
     uint32_t GetI2CRX() { return ReadRRegister("i2c_master.i2c_rxtx"); };
@@ -90,7 +92,7 @@ namespace tlu {
     };
 
     uint32_t I2C_enable(char EnclustraExpAddr);
-    uint32_t getSN();
+    unsigned int* SetBoardID();
 
     void SetI2CControl(int value) { SetWRegister("i2c_master.i2c_ctrl", value&0xff); };
     void SetI2CCommand(int value) { SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
@@ -101,7 +103,7 @@ namespace tlu {
 
 
     bool I2CCommandIsDone() { return ((GetI2CStatus())>>1)&0x1; };
-    uint32_t GetBoardID() { return m_BoardID; }
+    uint32_t GetBoardID();
     void ResetFIFO() { SetEventFifoCSR(0x0); };
 
 
@@ -119,7 +121,7 @@ namespace tlu {
 
     fmctludata* PopFrontEvent();
     bool IsBufferEmpty(){return m_data.empty();};
-    void ReceiveEvents();
+    void ReceiveEvents(int verbose);
     void ResetEventsBuffer();
     void DefineConst(int nDUTs, int nTrigInputs);
     void DumpEventsBuffer();
@@ -168,7 +170,8 @@ namespace tlu {
 
     char m_DACaddr;
     char m_IDaddr;
-    uint32_t m_BoardID=0;
+    //uint32_t m_BoardID=0;
+    unsigned int m_BoardID[6]= {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;

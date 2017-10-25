@@ -5,6 +5,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 
 class FmctluProducer: public eudaq::Producer {
@@ -19,7 +21,7 @@ public:
 
   void OnStatus() override;
 
-  void MainLoop();
+  void MainLoop(int verbose, int delayStart);
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("FmctluProducer");
 private:
@@ -42,18 +44,26 @@ FmctluProducer::FmctluProducer(const std::string name, const std::string &runcon
 
 }
 
-void FmctluProducer::MainLoop(){
+void FmctluProducer::MainLoop(int verbose, int delayStart){
   bool isbegin = true;
 
   m_tlu->ResetCounters();
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
-  m_tlu->SetTriggerVeto(0);
+
+  // Pause the TLU to allow slow devices to get ready after the euRunControl has
+  // issued the DoStart() command
+  std::this_thread::sleep_for( std::chrono::milliseconds( delayStart ) );
+
+  // Send reset pulse to all DUTs and reset internal counters
   m_tlu->PulseT0();
-  //while(true) {
+
+  // Enable triggers
+  m_tlu->SetTriggerVeto(0);
+
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
-    m_tlu->ReceiveEvents();
+    m_tlu->ReceiveEvents(verbose);
     while (!m_tlu->IsBufferEmpty()){
       tlu::fmctludata *data = m_tlu->PopFrontEvent();
       uint32_t trigger_n = data->eventnumber;
@@ -66,19 +76,26 @@ void FmctluProducer::MainLoop(){
 
       std::stringstream  triggerss;
       triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
-      ev->SetTag("trigger", triggerss.str());
+      ev->SetTag("TRIGGER", triggerss.str());
+      //std::cout << "-----> " << static_cast<unsigned>(data->input5) << " " << static_cast<unsigned>(data->input4) << " " << static_cast<unsigned>(data->input3) << " " << static_cast<unsigned>(data->input2) << " " << static_cast<unsigned>(data->input1) << " " << static_cast<unsigned>(data->input0) << " " << std::endl;
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
+        ev->SetTag("PARTICLES", std::to_string(pt));
       	ev->SetTag("SCALER0", std::to_string(sl0));
       	ev->SetTag("SCALER1", std::to_string(sl1));
       	ev->SetTag("SCALER2", std::to_string(sl2));
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
-      	ev->SetTag("PARTICLES", std::to_string(pt));
-
+      	ev->SetTag("TRIGGER0", std::to_string(data->input0));
+        ev->SetTag("TRIGGER1", std::to_string(data->input1));
+        ev->SetTag("TRIGGER2", std::to_string(data->input2));
+        ev->SetTag("TRIGGER3", std::to_string(data->input3));
+        ev->SetTag("TRIGGER4", std::to_string(data->input4));
+        ev->SetTag("TRIGGER5", std::to_string(data->input5));
+        ev->SetTag("TYPE", std::to_string(data->eventtype));
 
         if(m_exit_of_run){
           ev->SetEORE();
@@ -133,6 +150,11 @@ void FmctluProducer::DoInitialise(){
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
 
+  // Initialize the Si5345 clock chip using pre-generated file
+  if (ini->Get("CONFCLOCK", true)){
+    m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  }
+
   // Reset IPBus registers
   m_tlu->ResetSerdes();
   m_tlu->ResetCounters();
@@ -153,9 +175,6 @@ void FmctluProducer::DoConfigure() {
 
   m_tlu->SetTriggerVeto(1);
 
-  if (conf->Get("CONFCLOCK", true)){
-    m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
-  }
 
   // Enable HDMI connectors
   m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), verbose);
@@ -206,17 +225,26 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff)); // AIDA (x1) or EUDET (x0)
   m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff)); // Only for EUDET
   m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
-  m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1));//ILC stuff related
+  m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
   m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
-  m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)); // 160M/interval
+  //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
+  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), verbose );
   m_tlu->GetEventFifoCSR();
   m_tlu->GetEventFifoFillLevel();
 }
 
 void FmctluProducer::DoStartRun(){
   m_exit_of_run = false;
+
+  auto conf = GetConfiguration();
+  unsigned int verbose= conf->Get("verbose", 0);
+  std::cout << "VERBOSE SET TO: " << verbose << std::endl;
+
+  unsigned int delayStart= conf->Get("delayStart", 0);
+  std::cout << "DELAY START SET TO: " << delayStart << " ms" << std::endl;
+
   std::cout << "TLU START command received" << std::endl;
-  m_thd_run = std::thread(&FmctluProducer::MainLoop, this);
+  m_thd_run = std::thread(&FmctluProducer::MainLoop, this, verbose, delayStart);
 }
 
 void FmctluProducer::DoStopRun(){
