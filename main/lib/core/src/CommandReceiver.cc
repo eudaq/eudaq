@@ -357,15 +357,17 @@ namespace eudaq {
       std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
       if(m_is_connected){
 	try{
-	  if(m_fut_async_rcv.valid()){
-	    m_fut_async_rcv.wait_for(t);
+	  if(m_fut_async_rcv.valid() &&
+	     m_fut_async_rcv.wait_for(t)!=std::future_status::timeout){
+	    m_fut_async_rcv.get();
 	  }
-	  if(m_fut_async_fwd.valid()){
-	    m_fut_async_fwd.wait_for(t);
+	  if(m_fut_async_fwd.valid() &&
+	     m_fut_async_fwd.wait_for(t)!=std::future_status::timeout){
+	    m_fut_async_fwd.get();
 	  }
 	}
 	catch(...){
-	  EUDAQ_WARN("CommandReceiver: Connection execption from disconnetion");
+	  EUDAQ_WARN("CommandReceiver: Deamon catches an execption at listening time");
 	}
       }
       else{
@@ -376,11 +378,13 @@ namespace eudaq {
 	  if(m_fut_async_fwd.valid()){
 	    m_fut_async_fwd.get();
 	  }
-	  m_qu_cmd =  std::queue<std::pair<std::string, std::string>>();
-	  m_cmdclient.reset();
+	  if(!m_qu_cmd.empty())
+	    m_qu_cmd =  std::queue<std::pair<std::string, std::string>>();
+	  if(m_cmdclient)
+	    m_cmdclient.reset();
 	}
 	catch(...){
-	  EUDAQ_WARN("CommandReceiver: connection execption from disconnetion");
+	  EUDAQ_WARN("CommandReceiver: Deamon catches an execption when closing client");
 	}
       }
     }
@@ -397,7 +401,7 @@ namespace eudaq {
 	m_cmdclient.reset();
     }
     catch(...){
-      EUDAQ_WARN("CommandReceiver: connection execption from disconnetion");
+      EUDAQ_WARN("CommandReceiver: Deamon catches an execption when it is in exiting");
     }
   }
   
