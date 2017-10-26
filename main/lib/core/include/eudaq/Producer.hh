@@ -20,6 +20,8 @@ namespace eudaq {
 	   (const std::string&, const std::string&)>&
   Factory<Producer>::Instance<const std::string&, const std::string&>();  
 #endif
+
+  using ProducerSP = Factory<Producer>::SP_BASE;
   
   /**
    * The base class from which all Producers should inherit.
@@ -30,13 +32,6 @@ namespace eudaq {
   class DLLEXPORT Producer : public CommandReceiver{
   public:
     Producer(const std::string &name, const std::string &runcontrol);
-    void OnInitialise() override final;
-    void OnConfigure() override final;
-    void OnStartRun() override final;
-    void OnStopRun() override final;
-    void OnReset() override final;
-    void OnTerminate() override final;
-    void Exec() override;
 
     virtual void DoInitialise(){};
     virtual void DoConfigure(){};
@@ -44,8 +39,21 @@ namespace eudaq {
     virtual void DoStopRun(){};
     virtual void DoReset(){};
     virtual void DoTerminate(){};
+    virtual void DoStatus(){};
     
     void SendEvent(EventSP ev);
+    static ProducerSP Make(const std::string &code_name, const std::string &run_name,
+			   const std::string &runcontrol);
+
+  private:
+    void OnInitialise() override final;
+    void OnConfigure() override final;
+    void OnStartRun() override final;
+    void OnStopRun() override final;
+    void OnReset() override final;
+    void OnTerminate() override final;
+    void OnStatus() override;
+    
   private:
     uint32_t m_pdc_n;
     uint32_t m_evt_c;

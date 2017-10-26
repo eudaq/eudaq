@@ -22,7 +22,7 @@ namespace eudaq {
 #endif
   
   class LogMessage;
-
+  using LogCollectorSP = Factory<LogCollector>::SP_BASE;
   class DLLEXPORT LogCollector : public CommandReceiver {
   public:
     LogCollector(const std::string &name, const std::string &runcontrol);
@@ -31,7 +31,7 @@ namespace eudaq {
     void OnInitialise() override final;
     void OnTerminate() override final;
     void OnLog(const std::string &param) override final{};
-    void Exec() override;
+    virtual void Exec();
 
     virtual void DoInitialise(){};
     virtual void DoTerminate(){};
@@ -44,6 +44,10 @@ namespace eudaq {
     void StartLogCollector();
     void CloseLogCollector();
     bool IsActiveLogCollector(){return m_thd_server.joinable();}
+
+    static LogCollectorSP Make(const std::string &code_name,
+			       const std::string &run_name,
+			       const std::string &runcontrol);
   private:
     void LogThread();
     void LogHandler(TransportEvent &ev);

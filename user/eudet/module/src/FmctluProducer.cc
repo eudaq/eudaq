@@ -18,19 +18,19 @@ public:
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-
-  void OnStatus() override;
-
-  void MainLoop(int verbose, int delayStart);
+  void DoStatus() override;
+  void RunLoop() override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("FmctluProducer");
 private:
-
-  std::thread m_thd_run;
   bool m_exit_of_run;
+  std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
   std::unique_ptr<tlu::FmctluController> m_tlu;
   uint64_t m_lasttime;
+
+  uint32_t m_verbose;
+  uint32_t m_delayStart;
 };
 
 namespace{
@@ -44,16 +44,16 @@ FmctluProducer::FmctluProducer(const std::string name, const std::string &runcon
 
 }
 
-void FmctluProducer::MainLoop(int verbose, int delayStart){
+void FmctluProducer::RunLoop(){
+  std::unique_lock<std::mutex> lk(m_mtx_tlu);
   bool isbegin = true;
-
   m_tlu->ResetCounters();
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
 
   // Pause the TLU to allow slow devices to get ready after the euRunControl has
   // issued the DoStart() command
-  std::this_thread::sleep_for( std::chrono::milliseconds( delayStart ) );
+  std::this_thread::sleep_for( std::chrono::milliseconds( m_delayStart ) );
 
   // Send reset pulse to all DUTs and reset internal counters
   m_tlu->PulseT0();
@@ -63,7 +63,7 @@ void FmctluProducer::MainLoop(int verbose, int delayStart){
 
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
-    m_tlu->ReceiveEvents(verbose);
+    m_tlu->ReceiveEvents(m_verbose);
     while (!m_tlu->IsBufferEmpty()){
       tlu::fmctludata *data = m_tlu->PopFrontEvent();
       uint32_t trigger_n = data->eventnumber;
@@ -168,28 +168,28 @@ void FmctluProducer::DoInitialise(){
 
 void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
-  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
-
-  unsigned int verbose= conf->Get("verbose", 0);
-  std::cout << "VERBOSE SET TO: " << verbose << std::endl;
+  std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
+  m_verbose= conf->Get("verbose", 0);
+  std::cout << "VERBOSE SET TO: " << m_verbose << std::endl;
+  m_delayStart= conf->Get("delayStart", 0);
+  std::cout << "DELAY START SET TO: " << std::dec << m_delayStart << " ms" << std::endl;
 
   m_tlu->SetTriggerVeto(1);
 
-
   // Enable HDMI connectors
-  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), verbose);
-  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), verbose);
-  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), verbose);
-  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), verbose);
+  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), m_verbose);
+  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), m_verbose);
+  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), m_verbose);
+  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), m_verbose);
 
   // Select clock to HDMI
-  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), verbose);
-  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), verbose);
-  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), verbose);
-  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), verbose);
+  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), m_verbose);
+  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), m_verbose);
+  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), m_verbose);
+  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), m_verbose);
 
   //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), verbose);
+  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), m_verbose);
 
   // Set thresholds
   m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
@@ -228,49 +228,34 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
   m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
   //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
-  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), verbose );
+  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), m_verbose );
   m_tlu->GetEventFifoCSR();
   m_tlu->GetEventFifoFillLevel();
 }
 
 void FmctluProducer::DoStartRun(){
   m_exit_of_run = false;
-
-  auto conf = GetConfiguration();
-  unsigned int verbose= conf->Get("verbose", 0);
-  std::cout << "VERBOSE SET TO: " << verbose << std::endl;
-
-  unsigned int delayStart= conf->Get("delayStart", 0);
-  std::cout << "DELAY START SET TO: " << delayStart << " ms" << std::endl;
-
   std::cout << "TLU START command received" << std::endl;
-  m_thd_run = std::thread(&FmctluProducer::MainLoop, this, verbose, delayStart);
 }
 
 void FmctluProducer::DoStopRun(){
   m_exit_of_run = true;
   std::cout << "TLU STOP command received" << std::endl;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
 }
 
 void FmctluProducer::DoTerminate(){
   m_exit_of_run = true;
   std::cout << "TLU TERMINATE command received" << std::endl;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
 }
 
 void FmctluProducer::DoReset(){
   m_exit_of_run = true;
   std::cout << "TLU RESET command received" << std::endl;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
-
+  std::unique_lock<std::mutex> lk(m_mtx_tlu); //waiting for the runloop's return
   m_tlu.reset();
 }
 
-void FmctluProducer::OnStatus() {
+void FmctluProducer::DoStatus() {
   if (m_tlu) {
     uint64_t time = m_tlu->GetCurrentTimestamp();
     time = time/40000000; // in second
@@ -282,6 +267,7 @@ void FmctluProducer::OnStatus() {
     pret=m_tlu->GetPreVetoTriggers();
     post=m_tlu->GetPostVetoTriggers();
     m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
+    //Is tlu controller safe to be accessed by 2 threads (RunLoop and DoStatus) at some time?
     SetStatusTag("SCALER0", std::to_string(sl0));
     SetStatusTag("SCALER1", std::to_string(sl1));
     SetStatusTag("SCALER2", std::to_string(sl2));

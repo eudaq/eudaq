@@ -153,11 +153,6 @@ namespace eudaq {
     return static_cast<uint16_t>(from_string(x, (uint64_t)def));
   }
   
-  template <typename T> struct Holder {
-    Holder(T val) : m_val(val) {}
-    T m_val;
-  };
-
   template <typename T> struct hexdec_t {
     enum { DIGITS = 2 * sizeof(T) };
     hexdec_t(T val, unsigned hexdigits) : m_val(val), m_dig(hexdigits) {}

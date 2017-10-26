@@ -17,9 +17,6 @@ broken due to keep-alive activity detecting a failure while one or more
 operations are in progress. Operations that were in progress fail with
 WSAENETRESET. Subsequent operations fail with WSAECONNRESET.
 
-
-
-
 II:
 at some places we have constructions like:
  if (m_srvsock == (SOCKET)-1)
@@ -33,118 +30,28 @@ at some places we have constructions like:
 
 
  like for example in this line:
-        SOCKET result = select(static_cast<int>(m_sock+1), &tempset, NULL, NULL,
-&timeremain);
+ SOCKET result = select(static_cast<int>(m_sock+1), &tempset, NULL, NULL,
+ &timeremain);
 
  since we have defined SOCKET on Linux to be int it will work as an int but is
-is it from the context correct?
+ is it from the context correct?
  if not we should make it to int.
 
 */
 
-#include "TransportTCP.hh"
-#include "Exception.hh"
-#include "Time.hh"
-#include "Utils.hh"
+#include "eudaq/TransportTCP.hh"
+#include "eudaq/Exception.hh"
+#include "eudaq/Time.hh"
+#include "eudaq/Utils.hh"
+#include "eudaq/Logger.hh"
+
 #include <iostream>
 
 #if EUDAQ_PLATFORM_IS(WIN32) || EUDAQ_PLATFORM_IS(MINGW)
 #include "TransportTCP_WIN32.hh"
 #pragma comment(lib, "Ws2_32.lib")
-
-// defining error code more informations under
-// http://msdn.microsoft.com/en-us/library/windows/desktop/ms740668%28v=vs.85%29.aspx
-
-// qute:
-// "Resource temporarily unavailable.
-//
-// 	This error is returned from operations on nonblocking sockets that
-//  cannot be completed immediately, for example recv when no data is queued
-//  to be read from the socket. It is a nonfatal error, and the operation
-//  should be retried later. It is normal for WSAEWOULDBLOCK to be reported
-//  as the result from calling connect on a nonblocking SOCK_STREAM socket,
-//  since some time must elapse for the connection to be established."
-#define EUDAQ_ERROR_Resource_temp_unavailable WSAEWOULDBLOCK
-
-// qute:
-// Operation now in progress.
-//
-// 	A blocking operation is currently executing. Windows Sockets
-// 	only allows a single blocking operation (per- task or thread) to
-// 	be outstanding, and if any other function call is made (whether
-// 	or not it references that or any other socket) the function fails
-// 	with the WSAEINPROGRESS error.
-//
-#define EUDAQ_ERROR_Operation_progress WSAEINPROGRESS
-
-// Interrupted function call.
-//	A blocking operation was interrupted by a call to WSACancelBlockingCall.
-//
-#define EUDAQ_ERROR_Interrupted_function_call WSAEINTR
-
-#define EUDAQ_ERROR_NO_DATA_RECEIVED -1
 #else
-
 #include "TransportTCP_POSIX.hh"
-
-// defining error code more informations under
-// http://www.gnu.org/software/libc/manual/html_node/Error-Codes.html
-
-// Redirection to EAGAIN
-//
-// Quate:
-// 	"Resource temporarily unavailable; the call might work if you
-// 	try again later. The macro EWOULDBLOCK is another name for EAGAIN;
-// 	they are always the same in the GNU C Library.
-//
-// 	This error can happen in a few different situations:
-//
-// 	An operation that would block was attempted on an object
-// 	that has non-blocking mode selected. Trying the same operation
-// 	again will block until some external condition makes it possible
-// 	to read, write, or connect (whatever the operation). You can
-// 	use select to find out when the operation will be possible;
-// 	see Waiting for I/O.
-//
-// 	Portability Note: In many older Unix systems, this condition
-// 	was indicated by EWOULDBLOCK, which was a distinct error code
-// 	different from EAGAIN. To make your program portable, you
-// 	should check for both codes and treat them the same.
-// 	A temporary resource shortage made an operation impossible.
-// 	fork can return this error. It indicates that the shortage
-// 	is expected to pass, so your program can try the call again
-// 	later and it may succeed. It is probably a good idea to delay
-// 	for a few seconds before trying it again, to allow time for
-// 	other processes to release scarce resources. Such
-// 	shortages are usually fairly serious and affect the whole
-// 	system, so usually an interactive program should report
-// 	the error to the user and return to its command loop. "
-#define EUDAQ_ERROR_Resource_temp_unavailable EWOULDBLOCK
-
-// 	An operation that cannot complete immediately was initiated
-// 	on an object that has non-blocking mode selected. Some
-// 	functions that must always block (such as connect; see
-// 	Connecting) never return EAGAIN. Instead, they return
-// 	EINPROGRESS to indicate that the operation has begun and
-// 	will take some time. Attempts to manipulate the object
-// 	before the call completes return EALREADY. You can use the
-// 	select function to find out when the pending operation has
-// 	completed; see Waiting for I/O.
-#define EUDAQ_ERROR_Operation_progress EINPROGRESS
-
-// 	Interrupted function call;
-// 	an asynchronous signal occurred and
-// 	prevented completion of the call.
-// 	When this happens, you should try
-// 	the call again.
-// 	You can choose to have functions resume
-// 	after a signal that is handled, rather
-// 	than failing with EINTR; see Interrupted
-// 	Primitives.
-#define EUDAQ_ERROR_Interrupted_function_call EINTR
-
-#define EUDAQ_ERROR_NO_DATA_RECEIVED -1
-
 #endif
 
 // print debug messages that are optimized out if DEBUG_TRANSPORT is not set:
@@ -201,14 +108,17 @@ namespace eudaq {
 
         if (result > 0) {
           sent += result;
-        } else if (result < 0 &&
-                   (LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable ||
-                    LastSockError() == EUDAQ_ERROR_Interrupted_function_call)) {
+        }
+	else if (result < 0 &&
+		 (LastSockError() == EUDAQ_ERROR_Resource_temp_unavailable ||
+		  LastSockError() == EUDAQ_ERROR_Interrupted_function_call)){
           // continue
-        } else if (result == 0) {
-          EUDAQ_THROW_NOLOG("Connection reset by peer");
-        } else if (result < 0) {
-          EUDAQ_THROW_NOLOG(LastSockErrorString("Error sending data"));
+        }
+	else if (result == 0) {
+          EUDAQ_THROW_NOLOG("TransportTCP:: Connection reset by peer");
+        }
+	else if (result < 0) {
+          EUDAQ_THROW_NOLOG(LastSockErrorString("TransportTCP:: Error sending data"));
         }
       } while (sent < len);
     }
@@ -265,7 +175,7 @@ namespace eudaq {
 
   std::string ConnectionInfoTCP::getpacket() {
     if (!havepacket())
-      EUDAQ_THROW_NOLOG("No packet available");
+      EUDAQ_THROW_NOLOG("TransprotTCP:: No packet available");
     std::string packet(m_buf, 4, m_len);
     m_buf.erase(0, m_len + 4);
     update_length(true);
@@ -284,12 +194,11 @@ namespace eudaq {
   }
 
   TCPServer::TCPServer(const std::string &param)
-      : m_port(from_string(param, 44000)),
+      : m_port(from_string(param, 0)),
         m_srvsock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)),
         m_maxfd(m_srvsock) {
     if (m_srvsock == (SOCKET)-1)
-      EUDAQ_THROW_NOLOG(LastSockErrorString(
-          "Failed to create socket")); //$$ check if (SOCKET)-1 is correct
+      EUDAQ_THROW_NOLOG(LastSockErrorString("TCPServer:: Failed to create socket")); //$$ check if (SOCKET)-1 is correct
     setup_signal();
     FD_ZERO(&m_fdset);
     FD_SET(m_srvsock, &m_fdset);
@@ -304,7 +213,13 @@ namespace eudaq {
 
     if (bind(m_srvsock, (sockaddr *)&addr, sizeof addr)) {
       closesocket(m_srvsock);
-      EUDAQ_THROW_NOLOG(LastSockErrorString("Failed to bind socket: " + param));
+      EUDAQ_THROW_NOLOG(LastSockErrorString("TCPServer:: Failed to bind socket: " + param));
+    }
+    socklen_t addr_len = sizeof addr;
+    if(m_port == 0){
+      getsockname(m_srvsock, (sockaddr *)&addr, &addr_len);
+      m_port = ntohs(addr.sin_port);
+      EUDAQ_INFO("TCPServer:: Listening on port " + std::to_string(m_port));
     }
     if (listen(m_srvsock, MAXPENDING)){
       closesocket(m_srvsock);
@@ -380,17 +295,17 @@ namespace eudaq {
         // std::cout << "timeout" << std::endl;
       } else if (result < 0 &&
                  LastSockError() != EUDAQ_ERROR_Interrupted_function_call) {
-        std::cout << LastSockErrorString("Error in select()") << std::endl;
+        EUDAQ_THROW_NOLOG(LastSockErrorString("Error in select()"));
       } else if (result > 0) {
 
         if (FD_ISSET(m_srvsock, &tempset)) {
           sockaddr_in addr;
           socklen_t len = sizeof(addr);
-          SOCKET peersock =
-              accept(static_cast<int>(m_srvsock), (sockaddr *)&addr, &len);
+          SOCKET peersock = accept(static_cast<int>(m_srvsock), (sockaddr *)&addr, &len);
           if (peersock == INVALID_SOCKET) {
-            std::cout << LastSockErrorString("Error in accept()") << std::endl;
-          } else {
+	    EUDAQ_THROW_NOLOG(LastSockErrorString("Error in accept()"));
+          }
+	  else {
             FD_SET(peersock, &m_fdset);
             m_maxfd = (m_maxfd < peersock) ? peersock : m_maxfd;
             setup_socket(peersock);
@@ -467,7 +382,7 @@ namespace eudaq {
     if (!host)
       host = "localhost";
     // gethostname(buf, sizeof buf);
-    return name + "://" + host + ":" + to_string(m_port);
+    return name + "://" + to_string(m_port);
   }
 
   TCPClient::TCPClient(const std::string &param)

@@ -48,13 +48,12 @@
 #include "eudaq/StdEventConverter.hh"
 using namespace std;
 
-RootMonitor::RootMonitor(const std::string & runcontrol, const std::string &addr_listen,
+RootMonitor::RootMonitor(const std::string & runcontrol,
 			 int /*x*/, int /*y*/, int /*w*/, int /*h*/,
 			 int argc, int offline, const std::string & conffile)
-  : eudaq::Holder<int>(argc), eudaq::Monitor("StdEventMonitor", runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
+  :eudaq::Monitor("StdEventMonitor", runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
   if (_offline <= 0)
   {
-    SetServerAddress(addr_listen);
     onlinemon = new OnlineMonWindow(gClient->GetRoot(),800,600);
     if (onlinemon==NULL)
     {
@@ -123,6 +122,24 @@ RootMonitor::RootMonitor(const std::string & runcontrol, const std::string &addr
 
 }
 
+RootMonitor::~RootMonitor(){
+  gApplication->Terminate();
+}
+
+OnlineMonWindow* RootMonitor::getOnlineMon() const {
+  return onlinemon;
+}
+
+void RootMonitor::setWriteRoot(const bool write) {
+  _writeRoot = write;
+}
+
+void RootMonitor::setCorr_width(const unsigned c_w) {
+  corrCollection->setWindowWidthForCorrelation(c_w);
+}
+void RootMonitor::setCorr_planes(const unsigned c_p) {
+  corrCollection->setPlanesNumberForCorrelation(c_p);
+}
 
 void RootMonitor::setReduce(const unsigned int red) {
   if (_offline <= 0) onlinemon->setReduce(red);
@@ -131,6 +148,32 @@ void RootMonitor::setReduce(const unsigned int red) {
     _colls.at(i)->setReduce(red);
   }
 }
+
+
+void RootMonitor::setUseTrack_corr(const bool t_c) {
+  useTrackCorrelator = t_c;
+}
+
+bool RootMonitor::getUseTrack_corr() const {
+  return useTrackCorrelator;
+}
+
+void RootMonitor::setTracksPerEvent(const unsigned int tracks) {
+  tracksPerEvent = tracks;
+}
+
+unsigned int RootMonitor::getTracksPerEvent() const {
+  return tracksPerEvent;
+}
+
+void RootMonitor::DoConfigure(){
+  auto &param = *GetConfiguration();
+  std::cout << "Configure: " << param.Name() << std::endl;
+}
+
+void RootMonitor::DoTerminate(){
+  gApplication->Terminate();
+}  
 
 void RootMonitor::DoReceive(eudaq::EventSP evsp) {
   auto stdev = std::dynamic_pointer_cast<eudaq::StandardEvent>(evsp);
@@ -341,7 +384,7 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
 #ifdef DEBUG
       cout << "Waiting for booking of Histograms..." << endl;
 #endif
-      EUDAQ_SLEEP(1);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
 #ifdef DEBUG
       cout << "...long enough"<< endl;
 #endif
@@ -472,8 +515,7 @@ void RootMonitor::SetSnapShotDir(string s)
 
 
 //gets the location for the snapshots
-string RootMonitor::GetSnapShotDir()
-{
+string RootMonitor::GetSnapShotDir()const{
   return snapshotdir;
 }
 
@@ -484,8 +526,6 @@ int main(int argc, const char ** argv) {
       "The address of the RunControl application");
   eudaq::Option<std::string> level(op, "l", "log-level", "NONE", "level",
       "The minimum level for displaying log messages locally");
-  eudaq::Option<std::string> listen(op, "a", "listen-port", "", "address",
-				    "The listenning port this ");
   eudaq::Option<int>             x(op, "x", "left",    100, "pos");
   eudaq::Option<int>             y(op, "y", "top",       0, "pos");
   eudaq::Option<int>             w(op, "w", "width",  1400, "pos");
@@ -503,38 +543,10 @@ int main(int argc, const char ** argv) {
   try {
     op.Parse(argv);
     EUDAQ_LOG_LEVEL(level.Value());
-    uint16_t port = static_cast<uint16_t>(eudaq::str2hash("StdEventMonitor"+rctrl.Value()));
-    std::string addr_listen = "tcp://"+std::to_string(port);
-    if(!listen.Value().empty()){
-      addr_listen = listen.Value();
-    }
 
     if (!rctrl.IsSet()) rctrl.SetValue("null://");
-    if (gROOT!=NULL)
-    {
-    //  gROOT->Reset();
-     // gROOT->SetStyle("Plain"); //$$ change
-    }
-    else
-    {
-      cout<<"Global gROOT Object not found" <<endl;
-      exit(-1);
-    }
-    if (gStyle!=NULL)
-    {
-      gStyle->SetPalette(1);
-      gStyle->SetNumberContours(99);
-      gStyle->SetOptStat(1111);
-      gStyle->SetStatH(static_cast<Float_t>(0.15));
-    }
-    else
-    {
-      cout<<"Global gStyle Object not found" <<endl;
-      exit(-1);
-    }
-
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
-    RootMonitor mon(rctrl.Value(), addr_listen,
+    RootMonitor mon(rctrl.Value(),
 		    x.Value(), y.Value(), w.Value(), h.Value(),
 		    argc, offline.Value(), configfile.Value());
     mon.setWriteRoot(do_rootatend.IsSet());
@@ -549,9 +561,8 @@ int main(int argc, const char ** argv) {
     cout <<"Update Interval :" <<update.Value() <<" ms" <<endl;
     cout <<"Reduce Events   :" <<reduce.Value() <<endl;
     //TODO: run cmd data thread
-
-    mon.StartMonitor();
-    mon.StartCommandReceiver();
+    eudaq::Monitor *m = dynamic_cast<eudaq::Monitor*>(&mon);
+    m->Connect();
     theApp.Run(); //execute
   } catch (...) {
     return op.HandleMainException();

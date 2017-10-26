@@ -218,15 +218,14 @@ void LogCollectorGUI::CheckRegistered(){
 
 void LogCollectorGUI::Exec(){
   StartLogCollector(); //TODO: Start it OnServer
-  StartCommandReceiver();
-
+  Connect();
   show();
   if(QApplication::instance())
     QApplication::instance()->exec(); 
   else
     std::cerr<<"ERROR: LogCollectorGUI::EXEC\n";
 
-  while(IsActiveCommandReceiver() || IsActiveLogCollector()){
+  while(IsConnected() || IsActiveLogCollector()){
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
 }

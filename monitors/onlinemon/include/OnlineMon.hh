@@ -19,7 +19,6 @@
 #include "eudaq/OptionParser.hh"
 #endif
 
-
 #include "HitmapCollection.hh"
 #include "CorrelationCollection.hh"
 #include "MonitorPerformanceCollection.hh"
@@ -27,7 +26,6 @@
 #include "ParaMonitorCollection.hh"
 
 #include "OnlineMonWindow.hh"
-//#include "OnlineHistograms.hh"
 #include "SimpleStandardEvent.hh"
 #include "EventSanityChecker.hh"
 #include "OnlineMonConfiguration.hh"
@@ -38,26 +36,44 @@
 #include <string>
 #include <memory>
 
-#ifdef WIN32
-#define EUDAQ_SLEEP(x) Sleep(x * 1000)
-#else
-#define EUDAQ_SLEEP(x) sleep(x)
-#endif
-
 using namespace std;
 
 class OnlineMonWindow;
 class BaseCollection;
 class CheckEOF;
 
-class RootMonitor : private eudaq::Holder<int>,
-                    // public TApplication,
-                    // public TGMainFrame,
-                    public eudaq::Monitor {
+class RootMonitor : public eudaq::Monitor{
   RQ_OBJECT("RootMonitor")
-protected:
-  bool histos_booked;
+public:
+  RootMonitor(const std::string &runcontrol, 
+	      int x, int y, int w, int h, int argc, int offline,
+              const std::string &conffile = "");
+  ~RootMonitor() override;
+  void DoConfigure() override;
+  void DoStartRun() override;
+  void DoStopRun() override;
+  void DoTerminate() override;
+  void DoReceive(eudaq::EventSP) override;
+  
+  void registerSensorInGUI(std::string name, int id);
+  void autoReset(const bool reset);
 
+  void setWriteRoot(const bool write);
+  void setReduce(const unsigned int red);
+  void setUpdate(const unsigned int up);
+  void setCorr_width(const unsigned c_w);
+  void setCorr_planes(const unsigned c_p);
+  void setUseTrack_corr(const bool t_c);
+  void setTracksPerEvent(const unsigned int tracks);
+  void SetSnapShotDir(string s);
+
+  bool getUseTrack_corr() const;
+  unsigned int getTracksPerEvent() const;
+  string GetSnapShotDir() const;
+  OnlineMonWindow *getOnlineMon() const;
+  OnlineMonConfiguration mon_configdata; // FIXME
+private:
+  bool histos_booked;
   std::vector<BaseCollection *> _colls;
   OnlineMonWindow *onlinemon;
   std::string rootfilename;
@@ -66,55 +82,11 @@ protected:
   bool _writeRoot;
   int _offline;
   CheckEOF _checkEOF;
-
   bool _planesInitialized;
-  // bool _autoReset;
-
-public:
-  RootMonitor(const std::string &runcontrol, const std::string &addr_listen, 
-	      int x, int y, int w, int h, int argc, int offline,
-              const std::string &conffile = "");
-  ~RootMonitor() { gApplication->Terminate(); }
-  void registerSensorInGUI(std::string name, int id);
   HitmapCollection *hmCollection;
   CorrelationCollection *corrCollection;
   EUDAQMonitorCollection *eudaqCollection;
   ParaMonitorCollection *paraCollection;
-
-  OnlineMonWindow *getOnlineMon() { return onlinemon; }
-
-  void DoConfigure() override{
-    auto &param = *GetConfiguration();
-    std::cout << "Configure: " << param.Name() << std::endl;
-  }
-  
-  void DoTerminate() override {
-    gApplication->Terminate();
-  }  
-
-  void DoStartRun() override;
-  void DoStopRun() override;
-  void DoReceive(eudaq::EventSP) override;
-  
-  void setWriteRoot(const bool write) { _writeRoot = write; }
-  void autoReset(const bool reset);
-  void setReduce(const unsigned int red);
-  void setUpdate(const unsigned int up);
-  void setCorr_width(const unsigned c_w) {
-    corrCollection->setWindowWidthForCorrelation(c_w);
-  }
-  void setCorr_planes(const unsigned c_p) {
-    corrCollection->setPlanesNumberForCorrelation(c_p);
-  }
-  void setUseTrack_corr(const bool t_c) { useTrackCorrelator = t_c; }
-  bool getUseTrack_corr() const { return useTrackCorrelator; }
-  void setTracksPerEvent(const unsigned int tracks) { tracksPerEvent = tracks; }
-  unsigned int getTracksPerEvent() const { return tracksPerEvent; }
-
-  void SetSnapShotDir(string s);
-  string GetSnapShotDir();
-  OnlineMonConfiguration mon_configdata; // FIXME
-private:
   string snapshotdir;
   EventSanityChecker myevent; // FIXME
   bool useTrackCorrelator;
