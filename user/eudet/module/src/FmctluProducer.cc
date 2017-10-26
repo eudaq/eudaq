@@ -25,7 +25,7 @@ public:
 private:
   bool m_exit_of_run;
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
-  
+
   std::unique_ptr<tlu::FmctluController> m_tlu;
   uint64_t m_lasttime;
 
@@ -168,12 +168,12 @@ void FmctluProducer::DoInitialise(){
 
 void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
-  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
+  std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
   m_verbose= conf->Get("verbose", 0);
   std::cout << "VERBOSE SET TO: " << m_verbose << std::endl;
   m_delayStart= conf->Get("delayStart", 0);
-  std::cout << "DELAY START SET TO: " << m_delayStart << " ms" << std::endl;
-  
+  std::cout << "DELAY START SET TO: " << std::dec << m_delayStart << " ms" << std::endl;
+
   m_tlu->SetTriggerVeto(1);
 
   // Enable HDMI connectors
