@@ -44,7 +44,6 @@ namespace eudaq {
 	  m_vt_con.erase(m_vt_con.begin() + i);
 	  std::unique_lock<std::mutex> lk(m_mx_qu_ev);
 	  m_qu_ev.push(std::make_pair<EventSP, ConnectionSPC>(nullptr, con));
-	  lk.unlock();
 	  m_cv_not_empty.notify_all();
 	  has_con_for_discon = true;
 	}
@@ -90,7 +89,6 @@ namespace eudaq {
 	m_vt_con.push_back(con);
 	std::unique_lock<std::mutex> lk(m_mx_qu_ev);
 	m_qu_ev.push(std::make_pair<EventSP, ConnectionSPC>(nullptr, con));
-	lk.unlock();
 	m_cv_not_empty.notify_all();
       }
       else{ //identified connection  
@@ -157,6 +155,7 @@ namespace eudaq {
   }
   
   std::string DataReceiver::Listen(const std::string &addr){
+    std::unique_lock<std::mutex> lk_deamon(m_mx_deamon);
     if(!m_fut_deamon.valid())
       m_fut_deamon = std::async(std::launch::async, &DataReceiver::Deamon, this); 
 

@@ -102,11 +102,13 @@ namespace eudaq {
       GetConfiguration()->SetSection("");
       for(auto &mn_name: col_mn_name){
 	std::string mn_addr =  GetConfiguration()->Get("Monitor."+mn_name, "");
+	std::unique_lock<std::mutex> lk(m_mtx_sender);
 	if(!mn_addr.empty()){
 	  m_senders[mn_addr]
-	    = std::unique_ptr<DataSender>(new DataSender("DataCollector", GetName()));
+	    = std::shared_ptr<DataSender>(new DataSender("DataCollector", GetName()));
 	  m_senders[mn_addr]->Connect(mn_addr);
 	}
+	lk.unlock();
       }
       GetConfiguration()->SetSection(cur_backup);
       DoStartRun();
@@ -122,7 +124,9 @@ namespace eudaq {
     EUDAQ_INFO("RUN #" + std::to_string(GetRunNumber()) + " is to be stopped...");
     try {
       DoStopRun();
+      std::unique_lock<std::mutex> lk(m_mtx_sender);
       m_senders.clear();
+      lk.unlock();
       StopListen();
       CommandReceiver::OnStopRun();
     } catch (const Exception &e) {
@@ -136,7 +140,9 @@ namespace eudaq {
     EUDAQ_INFO(GetFullName() + " is to be reset...");
     try{
       DoReset();
+      std::unique_lock<std::mutex> lk(m_mtx_sender);
       m_senders.clear();
+      lk.unlock();
       StopListen();
       CommandReceiver::OnReset();
     } catch (const std::exception &e) {
@@ -157,9 +163,9 @@ namespace eudaq {
   void DataCollector::OnStatus(){
     SetStatusTag("EventN", std::to_string(m_evt_c));
     DoStatus();
-    if(m_writer && m_writer->FileBytes()){
-      SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
-    }
+    // if(m_writer && m_writer->FileBytes()){
+    //   SetStatusTag("FILEBYTES", std::to_string(m_writer->FileBytes()));
+    // }
   }
 
   void DataCollector::OnConnect(ConnectionSPC id){
@@ -187,11 +193,15 @@ namespace eudaq {
       ev->SetEventN(m_evt_c);
       m_evt_c ++;
       ev->SetStreamN(m_dct_n);
-      if(m_writer)
-	m_writer->WriteEvent(ev);
+      auto file_writer = m_writer;
+      if(file_writer)
+	file_writer->WriteEvent(ev);
       else
 	EUDAQ_THROW("FileWriter is not created before writing.");
-      for(auto &e: m_senders){
+      std::unique_lock<std::mutex> lk(m_mtx_sender);
+      auto senders = m_senders;
+      lk.unlock();
+      for(auto &e: senders){
 	if(e.second)
 	  e.second->SendEvent(ev);
 	else

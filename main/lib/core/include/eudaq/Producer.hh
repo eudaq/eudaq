@@ -57,7 +57,8 @@ namespace eudaq {
   private:
     uint32_t m_pdc_n;
     uint32_t m_evt_c;
-    std::map<std::string, std::unique_ptr<DataSender>> m_senders;
+    std::mutex m_mtx_sender;
+    std::map<std::string, std::shared_ptr<DataSender>> m_senders;
   };
   //----------DOC-MARK-----ENDDECLEAR-----DOC-MARK----------
 }
