@@ -66,7 +66,7 @@ void  init_pybind_event(py::module &m){
   event_.def("GetNumSubEvent", &eudaq::Event::GetNumSubEvent);
   event_.def("GetSubEvent",&eudaq::Event::GetSubEvent,
 	     "Get sub Event", py::arg("i"));
-  event_.def("GetSubEvents", &eudaq::Event::GetSubEvents);
+  event_.def("GetSubEvents", &eudaq::Event::GetSubEvents);  
   event_.def("SetType", &eudaq::Event::SetType,
 	     "Set Event type", py::arg("id"));
   event_.def("SetVersion", &eudaq::Event::SetVersion,
@@ -87,7 +87,20 @@ void  init_pybind_event(py::module &m){
 	     "Set time stamp", py::arg("begin"), py::arg("end"), py::arg("flag")=true);
   event_.def("SetDescription", &eudaq::Event::SetDescription,
 	     "Set Description", py::arg("dspt"));
+
+
+  event_.def("GetType", &eudaq::Event::SetType);
+  event_.def("GetVersion", &eudaq::Event::SetVersion);
+  event_.def("GetFlag", &eudaq::Event::SetFlag);
+  event_.def("GetRunN", &eudaq::Event::SetRunN);
+  event_.def("GetEventN", &eudaq::Event::SetEventN);
+  event_.def("GetDeviceN", &eudaq::Event::SetDeviceN);
+  event_.def("GetTriggerN", &eudaq::Event::SetTriggerN);
+  event_.def("GetExtendWord", &eudaq::Event::SetExtendWord);
+  event_.def("GetTimestamp", &eudaq::Event::SetTimestamp);
+  event_.def("GetDescription", &eudaq::Event::SetDescription);
   event_.def("GetDescription", &eudaq::Event::GetDescription);
+  
   event_.def("GetBlock", &eudaq::Event::GetBlock,
 	     "Get block", py::arg("n"));
   event_.def("GetNumBlock", &eudaq::Event::GetNumBlock);

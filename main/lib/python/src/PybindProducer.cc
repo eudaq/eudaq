@@ -43,13 +43,6 @@ public:
 		      DoTerminate
 		      );
   }
-
-  void Exec() override {
-    PYBIND11_OVERLOAD(void, /* Return type */
-		      eudaq::Producer,
-		      Exec
-		      );
-  }
   
 };
 
@@ -57,8 +50,7 @@ public:
 void init_pybind_producer(py::module &m){
   py::class_<eudaq::Producer, PyProducer, std::shared_ptr<eudaq::Producer>>
     producer_(m, "Producer");
-  producer_.def(py::init<const std::string&, const std::string&>());
-  producer_.def("Exec", &eudaq::Producer::Exec);
+  producer_.def(py::init(&eudaq::Producer::Make));
   producer_.def("DoInitialise", &eudaq::Producer::DoInitialise);
   producer_.def("DoConfigure", &eudaq::Producer::DoConfigure);
   producer_.def("DoStartRun", &eudaq::Producer::DoStartRun);
@@ -67,4 +59,5 @@ void init_pybind_producer(py::module &m){
   producer_.def("DoTerminate", &eudaq::Producer::DoTerminate);
   producer_.def("SendEvent", &eudaq::Producer::SendEvent,
   		"Send an Event", py::arg("ev"));
+  producer_.def("Connect", &eudaq::Producer::Connect);
 }

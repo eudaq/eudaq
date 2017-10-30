@@ -65,21 +65,13 @@ public:
   		      ev
   		      );
   }
-  
-  void Exec() override {
-    PYBIND11_OVERLOAD(void, /* Return type */
-		      eudaq::DataCollector,
-		      Exec
-		      );
-  }
- 
+   
 };
 
 void init_pybind_datacollector(py::module &m){
   py::class_<eudaq::DataCollector, PyDataCollector, std::shared_ptr<eudaq::DataCollector>>
     datacollector_(m, "DataCollector");
-  datacollector_.def(py::init<const std::string&, const std::string&>());
-  datacollector_.def("Exec", &eudaq::DataCollector::Exec);
+  datacollector_.def(py::init(&eudaq::DataCollector::Make));
   datacollector_.def("DoInitialise", &eudaq::DataCollector::DoInitialise);
   datacollector_.def("DoConfigure", &eudaq::DataCollector::DoConfigure);
   datacollector_.def("DoStartRun", &eudaq::DataCollector::DoStartRun);
@@ -92,5 +84,9 @@ void init_pybind_datacollector(py::module &m){
 		     "Called when a producer is disconnecting", py::arg("id"));
   datacollector_.def("DoReceive", &eudaq::DataCollector::DoReceive,
 		     "Called when an event is recievied", py::arg("id"), py::arg("ev"));
+  datacollector_.def("SetServerAddress", &eudaq::DataCollector::SetServerAddress,
+		     "Set port of the data listening", py::arg("addr"));
+  datacollector_.def("Connect", &eudaq::DataCollector::Connect);
+
 
 }
