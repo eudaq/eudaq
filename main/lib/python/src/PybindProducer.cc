@@ -59,6 +59,13 @@ public:
 		      DoTerminate
 		      );
   }
+
+  void RunLoop() override{
+    PYBIND11_OVERLOAD(void, /* Return type */
+		      eudaq::Producer,
+		      RunLoop
+		      );
+  }
   
 };
 
@@ -73,6 +80,7 @@ void init_pybind_producer(py::module &m){
   producer_.def("DoStopRun", &eudaq::Producer::DoStopRun);
   producer_.def("DoReset", &eudaq::Producer::DoReset);
   producer_.def("DoTerminate", &eudaq::Producer::DoTerminate);
+  producer_.def("RunLoop", &eudaq::Producer::RunLoop);
   producer_.def("SendEvent", &eudaq::Producer::SendEvent,
   		"Send an Event", py::arg("ev"));
   producer_.def("Connect", &eudaq::Producer::Connect);

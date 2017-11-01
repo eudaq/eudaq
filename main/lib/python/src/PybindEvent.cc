@@ -6,6 +6,7 @@ namespace py = pybind11;
 class PyEvent : public eudaq::Event {
 public:
   using eudaq::Event::Event;
+  
   void Print(std::ostream& os, size_t offset) const override {
     PYBIND11_OVERLOAD(void, /* Return type */
 		      eudaq::Event,
@@ -27,7 +28,8 @@ void  init_pybind_event(py::module &m){
     .value("FLAG_TIME", eudaq::Event::Flags::FLAG_TIME)
     .export_values();
 
-  event_.def(py::init(&eudaq::Event::MakeShared));
+  event_.def(py::init(&eudaq::Event::Make));
+  
   event_.def("__repr__",
 	     [](const eudaq::EventSP ev){
 	       std::ostringstream oss;
@@ -89,16 +91,16 @@ void  init_pybind_event(py::module &m){
 	     "Set Description", py::arg("dspt"));
 
 
-  event_.def("GetType", &eudaq::Event::SetType);
-  event_.def("GetVersion", &eudaq::Event::SetVersion);
-  event_.def("GetFlag", &eudaq::Event::SetFlag);
-  event_.def("GetRunN", &eudaq::Event::SetRunN);
-  event_.def("GetEventN", &eudaq::Event::SetEventN);
-  event_.def("GetDeviceN", &eudaq::Event::SetDeviceN);
-  event_.def("GetTriggerN", &eudaq::Event::SetTriggerN);
-  event_.def("GetExtendWord", &eudaq::Event::SetExtendWord);
-  event_.def("GetTimestamp", &eudaq::Event::SetTimestamp);
-  event_.def("GetDescription", &eudaq::Event::SetDescription);
+  event_.def("GetType", &eudaq::Event::GetType);
+  event_.def("GetVersion", &eudaq::Event::GetVersion);
+  event_.def("GetFlag", &eudaq::Event::GetFlag);
+  event_.def("GetRunN", &eudaq::Event::GetRunN);
+  event_.def("GetEventN", &eudaq::Event::GetEventN);
+  event_.def("GetDeviceN", &eudaq::Event::GetDeviceN);
+  event_.def("GetTriggerN", &eudaq::Event::GetTriggerN);
+  event_.def("GetExtendWord", &eudaq::Event::GetExtendWord);
+  event_.def("GetTimestampBegin", &eudaq::Event::GetTimestampBegin);
+  event_.def("GetTimestampEnd", &eudaq::Event::GetTimestampEnd);
   event_.def("GetDescription", &eudaq::Event::GetDescription);
   
   event_.def("GetBlock", &eudaq::Event::GetBlock,

@@ -35,6 +35,7 @@ namespace eudaq {
       ev->SetExtendWord(eudaq::str2hash(argv));
       ev->SetDescription(argv);
     }
+    return ev;
   }
   
   Event::Event()
