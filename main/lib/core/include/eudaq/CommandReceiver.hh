@@ -47,6 +47,10 @@ namespace eudaq {
     uint32_t GetRunNumber() const;
     ConfigurationSPC GetConfiguration() const;
     ConfigurationSPC GetInitConfiguration() const;
+
+    std::string GetConfigItem(const std::string &key) const;
+    std::string GetInitItem(const std::string &key) const;
+
     bool IsConnected() const;
     bool IsStatus(Status::State);
   private:

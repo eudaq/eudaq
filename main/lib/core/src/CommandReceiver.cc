@@ -185,6 +185,24 @@ namespace eudaq {
     return m_conf_init;
   }
 
+  std::string CommandReceiver::GetConfigItem(const std::string &key) const{
+    if(m_conf){
+      return m_conf->Get(key, "");
+    }
+    else{
+      return std::string();
+    }
+  }
+
+  std::string CommandReceiver::GetInitItem(const std::string &key) const{
+    if(m_conf_init){
+      return m_conf_init->Get(key, "");
+    }
+    else{
+      return std::string();
+    }
+  }
+  
   bool CommandReceiver::IsConnected() const{
     return m_is_connected;
   }
