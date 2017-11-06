@@ -25,7 +25,7 @@ public:
 private:
   bool m_exit_of_run;
   std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
-  
+
   std::unique_ptr<tlu::FmctluController> m_tlu;
   uint64_t m_lasttime;
 
@@ -75,9 +75,9 @@ void FmctluProducer::RunLoop(){
       ev->SetTriggerN(trigger_n);
 
       std::stringstream  triggerss;
-      triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
+      //triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
+      triggerss<< std::to_string(data->input5) << std::to_string(data->input4) << std::to_string(data->input3) << std::to_string(data->input2) << std::to_string(data->input1) << std::to_string(data->input0);
       ev->SetTag("TRIGGER", triggerss.str());
-      //std::cout << "-----> " << static_cast<unsigned>(data->input5) << " " << static_cast<unsigned>(data->input4) << " " << static_cast<unsigned>(data->input3) << " " << static_cast<unsigned>(data->input2) << " " << static_cast<unsigned>(data->input1) << " " << static_cast<unsigned>(data->input0) << " " << std::endl;
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
@@ -89,12 +89,12 @@ void FmctluProducer::RunLoop(){
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
-      	ev->SetTag("TRIGGER0", std::to_string(data->input0));
-        ev->SetTag("TRIGGER1", std::to_string(data->input1));
-        ev->SetTag("TRIGGER2", std::to_string(data->input2));
-        ev->SetTag("TRIGGER3", std::to_string(data->input3));
-        ev->SetTag("TRIGGER4", std::to_string(data->input4));
-        ev->SetTag("TRIGGER5", std::to_string(data->input5));
+      	//ev->SetTag("TRIGGER0", std::to_string(data->input0));
+        //ev->SetTag("TRIGGER1", std::to_string(data->input1));
+        //ev->SetTag("TRIGGER2", std::to_string(data->input2));
+        //ev->SetTag("TRIGGER3", std::to_string(data->input3));
+        //ev->SetTag("TRIGGER4", std::to_string(data->input4));
+        //ev->SetTag("TRIGGER5", std::to_string(data->input5));
         ev->SetTag("TYPE", std::to_string(data->eventtype));
 
         if(m_exit_of_run){
@@ -168,12 +168,12 @@ void FmctluProducer::DoInitialise(){
 
 void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
-  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
+  std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
   m_verbose= conf->Get("verbose", 0);
   std::cout << "VERBOSE SET TO: " << m_verbose << std::endl;
   m_delayStart= conf->Get("delayStart", 0);
-  std::cout << "DELAY START SET TO: " << m_delayStart << " ms" << std::endl;
-  
+  std::cout << "DELAY START SET TO: " << std::dec << m_delayStart << " ms" << std::endl;
+
   m_tlu->SetTriggerVeto(1);
 
   // Enable HDMI connectors

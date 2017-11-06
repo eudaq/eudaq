@@ -6,6 +6,8 @@ include/*
 extern/*
 lib/*
 logs/*
+test.conf
+test.ini
 
 *.raw
 *.log

@@ -110,7 +110,7 @@ namespace tlu {
       if (verbose){
         std::cout << "\tBank " << bank << " Nibble " << nibble << std::endl;
       }
-      oldStatus= m_IOexpander1.getIOReg(bank, false);
+      oldStatus= m_IOexpander1.getOutputs(bank, false);
       mask= 0xF << 4*nibble;
       newStatus= oldStatus & (~mask);
       if (!enable){ // we want to write 0 to activate the outputs so check opposite of "enable"
@@ -119,7 +119,7 @@ namespace tlu {
       if (verbose){
         std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
       }
-      m_IOexpander1.setIOReg(bank, newStatus, verbose);
+      m_IOexpander1.setOutputs(bank, newStatus, verbose);
     }
     else{
       std::cout << "enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
