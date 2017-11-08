@@ -10,7 +10,7 @@ public:
 		   const std::string &rc);
   void DoConnect(eudaq::ConnectionSPC id) override;
   void DoDisconnect(eudaq::ConnectionSPC id) override;
-  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventUP ev) override;
+  void DoReceive(eudaq::ConnectionSPC id, eudaq::EventSP ev) override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("myEx0TgDataCollector");
 private:
@@ -41,7 +41,7 @@ void myEx0TgDataCollector::DoDisconnect(eudaq::ConnectionSPC idx){
   m_conn_inactive.insert(idx);
 }
 
-void myEx0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventUP ev){  
+void myEx0TgDataCollector::DoReceive(eudaq::ConnectionSPC idx, eudaq::EventSP ev){  
   std::unique_lock<std::mutex> lk(m_mtx_map);
   eudaq::EventSP evsp = std::move(ev);
   if(!evsp->IsFlagTrigger()){
