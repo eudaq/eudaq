@@ -13,27 +13,23 @@ int main(int /*argc*/, const char **argv) {
 				    "The address on which to listen for log connections");
   try{
     op.Parse(argv);
-    auto app=eudaq::Factory<eudaq::LogCollector>::
-      MakeShared<const std::string&,const std::string&>
-      (eudaq::str2hash(name.Value()), "Log" ,rctrl.Value());
-    if(!app){
-      std::cout<<"unknown LogCollector"<<std::endl;
-      return -1;
-    }
-    uint16_t port = static_cast<uint16_t>(eudaq::str2hash(name.Value()+"Log"+rctrl.Value()));
-    std::string addr_listen = "tcp://"+std::to_string(port);
-    if(!listen.Value().empty()){
-      addr_listen = listen.Value();
-    }
-    app->SetServerAddress(addr_listen);
-    app->Exec();
   }
   catch(...){
-    std::cout << "euLog exception handler" << std::endl;
     std::ostringstream err;
-    int result = op.HandleMainException(err);
-    std::cerr<<"Exception"<< err.str()<<"\n";
-    return result;
+    return op.HandleMainException(err);
   }
+    
+  auto app=eudaq::Factory<eudaq::LogCollector>::
+    MakeShared<const std::string&,const std::string&>
+    (eudaq::str2hash(name.Value()), "log" ,rctrl.Value());
+  if(!app){
+    std::cout<<"unknown LogCollector"<<std::endl;
+    return -1;
+  }
+
+  if(!listen.Value().empty()){
+    app->SetServerAddress(listen.Value());
+  }
+  app->Exec();
   return 0;
 }

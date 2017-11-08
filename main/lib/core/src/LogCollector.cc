@@ -27,7 +27,7 @@ namespace eudaq {
     auto conf = GetConfiguration();
     try{
       DoInitialise();
-      SetStatus(Status::STATE_UNCONF, "Initialized");
+      CommandReceiver::OnInitialise();
     }catch (const Exception &e) {
       std::string msg = "Error when init by " + conf->Name() + ": " + e.what();
       EUDAQ_ERROR(msg);
@@ -39,7 +39,7 @@ namespace eudaq {
   void LogCollector::OnTerminate(){
     CloseLogCollector();
     DoTerminate();
-    SetStatus(Status::STATE_UNINIT, "Terminated");
+    CommandReceiver::OnTerminate();
     std::exit(0);
   }
   
@@ -128,12 +128,14 @@ namespace eudaq {
     if(m_exit){
       EUDAQ_THROW("LogCollector can not be restarted after exit. (TODO)");
     }
+    if(m_log_addr.empty()){
+      m_log_addr = "tcp://0";
+    }
     m_logserver.reset(TransportServer::CreateServer(m_log_addr)),
     m_logserver->SetCallback(TransportCallback(this, &LogCollector::LogHandler));
     
     m_thd_server = std::thread(&LogCollector::LogThread, this);
-    std::cout << "###### listenaddress=" << m_logserver->ConnectionString()
-              << std::endl;
+    m_log_addr = m_logserver->ConnectionString();
     SetStatusTag("_SERVER", m_log_addr);
   }
 
@@ -145,9 +147,17 @@ namespace eudaq {
   
   void LogCollector::Exec(){
     StartLogCollector(); //TODO: Start it OnServer
-    StartCommandReceiver();
-    while(IsActiveCommandReceiver() || IsActiveLogCollector()){
+    Connect();
+    while(IsConnected() || IsActiveLogCollector()){
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
+  }
+  
+  LogCollectorSP LogCollector::Make(const std::string &code_name,
+				    const std::string &run_name,
+				    const std::string &runcontrol){
+    return Factory<LogCollector>::
+      MakeShared<const std::string&,const std::string&>
+      (eudaq::str2hash(code_name), run_name, runcontrol);
   }
 }

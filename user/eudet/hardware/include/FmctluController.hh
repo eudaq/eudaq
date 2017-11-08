@@ -24,14 +24,17 @@ namespace tlu {
     FmctluController(const std::string & connectionFilename, const std::string & deviceName);
     ~FmctluController(){ResetEventsBuffer();};
 
+    void configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose);
     void enableHDMI(unsigned int dutN, bool enable, bool verbose);
     unsigned int PackBits(std::vector< unsigned int>  rawValues);
     void SetSerdesRst(int value) { SetWRegister("triggerInputs.SerdesRstW",value); };
     void SetInternalTriggerInterval(int value) { SetWRegister("triggerLogic.InternalTriggerIntervalW",value); };
+    void SetInternalTriggerFrequency(uint32_t user_freq, int verbose);
     //void SetTriggerMask(int value) { SetWRegister("triggerLogic.TriggerMaskW",value); };
     void SetTriggerMask(uint64_t value);
     void SetTriggerMask(uint32_t maskHi, uint32_t maskLo);
-    void SetTriggerVeto(int value) { SetWRegister("triggerLogic.TriggerVetoW",value); };
+    //void SetTriggerVeto(int value) { SetWRegister("triggerLogic.TriggerVetoW",value); };
+    void SetTriggerVeto(int value);
     void SetPulseStretch(int value) { SetWRegister("triggerLogic.PulseStretchW",value); };
     void SetPulseDelay(int value) { SetWRegister("triggerLogic.PulseDelayW",value); };
     void SetPulseStretchPack(std::vector< unsigned int>  valuesVec);
@@ -51,7 +54,8 @@ namespace tlu {
     void SetEnableRecordData(int value) { SetWRegister("Event_Formatter.Enable_Record_Data",value); };
 
     uint32_t GetLogicClocksCSR() { return ReadRRegister("logic_clocks.LogicClocksCSR"); };
-    uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    //uint32_t GetInternalTriggerInterval() { return ReadRRegister("triggerLogic.InternalTriggerIntervalR"); };
+    uint32_t GetInternalTriggerInterval(int verbose);
     uint32_t GetPulseStretch(){ return ReadRRegister("triggerLogic.PulseStretchR"); };
     uint32_t GetPulseDelay() { return ReadRRegister("triggerLogic.PulseDelayR"); };
     //uint32_t GetTriggerMask() { return ReadRRegister("triggerLogic.TriggerMaskR"); };
@@ -67,7 +71,7 @@ namespace tlu {
     }
 
     uint32_t GetFW();
-    uint32_t GetEventFifoCSR();
+    uint32_t GetEventFifoCSR(int verbose= 0);
     uint32_t GetEventFifoFillLevel();
     uint32_t GetI2CStatus() { return ReadRRegister("i2c_master.i2c_cmdstatus"); };
     uint32_t GetI2CRX() { return ReadRRegister("i2c_master.i2c_rxtx"); };
@@ -88,18 +92,18 @@ namespace tlu {
     };
 
     uint32_t I2C_enable(char EnclustraExpAddr);
-    uint32_t getSN();
+    unsigned int* SetBoardID();
 
     void SetI2CControl(int value) { SetWRegister("i2c_master.i2c_ctrl", value&0xff); };
     void SetI2CCommand(int value) { SetWRegister("i2c_master.i2c_cmdstatus", value&0xff); };
     void SetI2CTX(int value) { SetWRegister("i2c_master.i2c_rxtx", value&0xff); };
 
     void ResetBoard() {SetWRegister("logic_clocks.LogicRst", 1);};
-    void ResetTimestamp() {SetWRegister("Event_Formatter..ResetTimestampW", 1);};
+    void ResetTimestamp() {SetWRegister("Event_Formatter.ResetTimestampW", 1);};
 
 
     bool I2CCommandIsDone() { return ((GetI2CStatus())>>1)&0x1; };
-    uint32_t GetBoardID() { return m_BoardID; }
+    uint32_t GetBoardID();
     void ResetFIFO() { SetEventFifoCSR(0x0); };
 
 
@@ -117,29 +121,29 @@ namespace tlu {
 
     fmctludata* PopFrontEvent();
     bool IsBufferEmpty(){return m_data.empty();};
-    void ReceiveEvents();
+    void ReceiveEvents(int verbose);
     void ResetEventsBuffer();
     void DefineConst(int nDUTs, int nTrigInputs);
     void DumpEventsBuffer();
 
     void enableClkLEMO(bool enable, bool verbose);
     //void InitializeI2C(char DACaddr, char IDaddr);
+    float GetDACref(){return m_vref;};
     void InitializeClkChip(const std::string & filename);
     void InitializeDAC(bool intRef, float Vref);
     void InitializeIOexp();
     void InitializeI2C();
+    void PulseT0();
+
     void SetDACValue(unsigned char channel, uint32_t value);
     void SetThresholdValue(unsigned char channel, float thresholdVoltage);
     void SetDutClkSrc(unsigned int hdmiN, unsigned int source, bool verbose);
     void SetDACref(float vref);
-    float GetDACref(){return m_vref;};
 
     void SetWRegister(const std::string & name, int value);
     uint32_t ReadRRegister(const std::string & name);
 
     void SetUhalLogLevel(uchar_t l);
-
-
     void SetI2C_core_addr(char addressa) { m_I2C_address.core = addressa; };
     void SetI2C_clockChip_addr(char addressa) { m_I2C_address.clockChip = addressa; };
     void SetI2C_DAC1_addr(char addressa) { m_I2C_address.DAC1 = addressa; };
@@ -166,7 +170,8 @@ namespace tlu {
 
     char m_DACaddr;
     char m_IDaddr;
-    uint32_t m_BoardID=0;
+    //uint32_t m_BoardID=0;
+    unsigned int m_BoardID[6]= {0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
     // Instantiate on-board hardware (I2C slaves)
     AD5665R m_zeDAC1, m_zeDAC2;
@@ -187,30 +192,38 @@ namespace tlu {
   public:
     fmctludata(uint64_t wl, uint64_t wh, uint64_t we):  // wl -> wh
       eventtype((wl>>60)&0xf),
-      input0((wl>>59)&0x1),
-      input1((wl>>58)&0x1),
-      input2((wl>>57)&0x1),
-      input3((wl>>56)&0x1),
+      input0((wl>>48)&0x1),
+      input1((wl>>49)&0x1),
+      input2((wl>>50)&0x1),
+      input3((wl>>51)&0x1),
+      input4((wl>>52)&0x1),
+      input5((wl>>53)&0x1),
       timestamp(wl&0xffffffffffff),
       sc0((wh>>56)&0xff),
       sc1((wh>>48)&0xff),
       sc2((wh>>40)&0xff),
       sc3((wh>>32)&0xff),
+      sc4((we>>56)&0xff),
+      sc5((we>>48)&0xff),
       eventnumber(wh&0xffffffff){
     }
 
-    fmctludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3, uint32_t w4, uint32_t w5) // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3
-      :eventtype((w0>>28)&0xf),
-       input0((w0>>27)&0x1),
-       input1((w0>>26)&0x1),
-       input2((w0>>25)&0x1),
-       input3((w0>>24)&0x1),
-       timestamp(((uint64_t(w0&0xffff))<<32) + w1),
+    fmctludata(uint32_t w0, uint32_t w1, uint32_t w2, uint32_t w3, uint32_t w4, uint32_t w5): // w0 w1 w2 w3  wl= w0 w1; wh= w2 w3
+       eventtype((w0>>28)&0xf),
+       input0((w0>>16)&0x1),
+       input1((w0>>17)&0x1),
+       input2((w0>>18)&0x1),
+       input3((w0>>19)&0x1),
+       input4((w0>>20)&0x1),
+       input5((w0>>21)&0x1),
+       timestamp(((uint64_t(w0&0x0000ffff))<<32) + w1),
        // timestamp(w1),
        sc0((w2>>24)&0xff),
        sc1((w2>>16)&0xff),
        sc2((w2>>8)&0xff),
        sc3(w2&0xff),
+       sc4((w4>>24)&0xff),
+       sc5((w4>>16)&0xff),
        eventnumber(w3),
        timestamp1(w0&0xffff){
     }
@@ -220,11 +233,15 @@ namespace tlu {
     uchar_t input1;
     uchar_t input2;
     uchar_t input3;
+    uchar_t input4;
+    uchar_t input5;
     uint64_t timestamp;
     uchar_t sc0;
     uchar_t sc1;
     uchar_t sc2;
     uchar_t sc3;
+    uchar_t sc4;
+    uchar_t sc5;
     uint32_t eventnumber;
     uint64_t timestamp1;
 

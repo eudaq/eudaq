@@ -12,7 +12,7 @@ echo "Entered install_afs.sh"
 echo "Installing afs"
 
 export OPENAFS_DOWNLOAD_PATH_MAC=https://www.auristor.com/downloads/auristor/osx/macos-10.12
-export OPENAFS_FILENAME_MAC=AuriStor-client-0.150-Sierra.dmg
+export OPENAFS_FILENAME_MAC=AuriStor-client-0.160-Sierra.dmg
 
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -32,7 +32,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	sudo launchctl start com.auristor.yfs-client
 	sudo launchctl start com.auristor.XPCHelper
 	
-	ls /afs/
+	ls /
 	
 	#sudo installer -package /Volumes/OpenAFS/OpenAFS.pkg -target /
 	#sudo hdiutil detach /Volumes/OpenAFS

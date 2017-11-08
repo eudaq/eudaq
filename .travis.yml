@@ -16,15 +16,15 @@ env:
    global:
       - ROOT5_FILENAME_LINUX=root_v5.34.36.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
       - ROOT5_FILENAME_MAC=root_v5.34.36.macosx64-10.11-clang70.tar.gz
-      - ROOT6_FILENAME_LINUX=root_v6.10.00.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
-      - ROOT6_FILENAME_MAC=root_v6.10.00.macosx64-10.10-clang70.tar.gz
+      - ROOT6_FILENAME_LINUX=root_v6.10.04.Linux-ubuntu14-x86_64-gcc4.8.tar.gz
+      - ROOT6_FILENAME_MAC=root_v6.10.04.macosx64-10.10-clang70.tar.gz
       
-      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.8
-      - CMAKE_FILENAME_LINUX=cmake-3.8.2-Linux-x86_64.tar.gz
-      - CMAKE_FILENAME_MAC=cmake-3.8.2-Darwin-x86_64.tar.gz
+      - CMAKE_DOWNLOAD_PATH=https://cmake.org/files/v3.9
+      - CMAKE_FILENAME_LINUX=cmake-3.9.2-Linux-x86_64.tar.gz
+      - CMAKE_FILENAME_MAC=cmake-3.9.2-Darwin-x86_64.tar.gz
             
-      - PYTHON_VERSION_MODERN=3.5.1
-      - PYTHON_VERSION_OLD=2.7.10
+      - PYTHON_VERSION_MODERN=3.6.2
+      - PYTHON_VERSION_OLD=2.7.14
       
       - CMAKE_BUILD_TYPE=RelWithDebInfo
       - EUDAQ_BUILD_EXECUTABLE=ON
@@ -77,27 +77,27 @@ before_cache:
 matrix:      
    include:   
       - os: linux    
-        env: OPTION=modern LLVM_VERSION=4.0 COMPILER=clang  
+        env: OPTION=modern LLVM_VERSION=5.0 COMPILER=clang  
       - os: linux  
-        env: OPTION=old  LLVM_VERSION=4.0 COMPILER=clang 
+        env: OPTION=old  LLVM_VERSION=5.0 COMPILER=clang 
       - os: linux
-        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=modern EUDAQ_BUILD_MANUAL=ON GCC_VERSION=7 COMPILER=gcc
       - os: linux            
-        env: OPTION=old GCC_VERSION=5 COMPILER=gcc
+        env: OPTION=old GCC_VERSION=7 COMPILER=gcc
       - os: osx
         compiler: clang
-        osx_image: xcode8.2
-        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
+        osx_image: xcode8.3
+        env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx           
         compiler: clang
-        osx_image: xcode8.2
-        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF LLVM_VERSION=3.9.0 COMPILER=clang 
+        osx_image: xcode8.3
+        env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF COMPILER=clang 
       - os: osx          
-        osx_image: xcode8.2
+        osx_image: xcode8.3
         compiler: gcc
         env: OPTION=modern BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc        
       - os: osx
-        osx_image: xcode8.2      
+        osx_image: xcode8.3
         compiler: gcc
         env: OPTION=old BUILD_cmspixel=OFF BUILD_rpi_controller=OFF BUILD_palpidefs=OFF GCC_VERSION=5 COMPILER=gcc     
 

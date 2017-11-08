@@ -28,7 +28,7 @@ namespace eudaq {
     explicit ConnectionInfo(const std::string &name = "")
         : m_state(0), m_name(name) {}
     virtual ~ConnectionInfo() {}
-    virtual void Print(std::ostream &) const;
+    virtual void Print(std::ostream &, size_t offset = 0) const;
     virtual bool Matches(const ConnectionInfo &other) const;
     bool IsEnabled() const { return m_state >= 0; }
     int GetState() const { return m_state; }
@@ -43,11 +43,11 @@ namespace eudaq {
 
   protected:
     int m_state;
-    uint32_t m_id;
     std::string m_type;
     std::string m_name;
   };
 
+  using Connection = ConnectionInfo;
   using ConnectionWP = std::weak_ptr<ConnectionInfo>;
   using ConnectionSP = std::shared_ptr<ConnectionInfo>;
   using ConnectionSPC = std::shared_ptr<const ConnectionInfo>;
@@ -63,11 +63,11 @@ namespace eudaq {
   class DLLEXPORT TransportEvent {
   public:
     enum EventType { CONNECT, DISCONNECT, RECEIVE };
-    TransportEvent(EventType et, std::shared_ptr<ConnectionInfo> i, const std::string &p = "")
+    TransportEvent(EventType et, ConnectionSP i, const std::string &p = "")
         : etype(et), id(i), packet(p) {}
     TransportEvent & operator = (const TransportEvent& rh){etype = rh.etype; id=rh.id;  packet = rh.packet; return *this;};
-    EventType etype;    ///< The type of event
-    std::shared_ptr<ConnectionInfo> id; ///< The id of the connection  !! It is reference!! TODO: CHECK
+    EventType etype; ///< The type of event
+    ConnectionSP id; ///< The id of the connection
     std::string packet; ///< The packet of data in case of a RECEIVE event
   };
 
@@ -133,11 +133,17 @@ namespace eudaq {
     TransportCallback(const TransportCallback &other)
         : m_helper(other.m_helper->Clone()) {}
     TransportCallback &operator=(const TransportCallback &other) {
-      delete m_helper;
+      if(m_helper){
+	delete m_helper;
+      }
       m_helper = other.m_helper->Clone();
       return *this;
     }
-    ~TransportCallback() { delete m_helper; }
+    ~TransportCallback() {
+      if(m_helper){
+	delete m_helper;
+      }
+    }
 
   private:
     Helper *m_helper; ///< The helper class to perform the actual function call

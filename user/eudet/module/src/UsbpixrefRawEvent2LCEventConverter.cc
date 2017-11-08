@@ -48,6 +48,8 @@ namespace{
     Register<UsbpixrefRawEvent2LCEventConverter>(UsbpixrefRawEvent2LCEventConverter::m_id_factory);
 }
 
+ATLASFEI4Interpreter<0x00007F00, 0x000000FF> UsbpixrefRawEvent2LCEventConverter::fei4a_intp;
+
 bool UsbpixrefRawEvent2LCEventConverter::
 Converting(eudaq::EventSPC d1, eudaq::LCEventSP d2, eudaq::ConfigurationSPC conf)const {
   auto& lcioEvent = *(d2.get());

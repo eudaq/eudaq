@@ -49,6 +49,9 @@ namespace{
     Register<UsbpixrefRawEvent2StdEventConverter>(UsbpixrefRawEvent2StdEventConverter::m_id_factory);
 }
 
+
+ATLASFEI4Interpreter<0x00007F00, 0x000000FF> UsbpixrefRawEvent2StdEventConverter::fei4a_intp;
+
 bool UsbpixrefRawEvent2StdEventConverter::
 Converting(eudaq::EventSPC d1, eudaq::StandardEventSP d2, eudaq::ConfigurationSPC conf) const {
   auto ev_raw = std::dynamic_pointer_cast<const eudaq::RawEvent>(d1);

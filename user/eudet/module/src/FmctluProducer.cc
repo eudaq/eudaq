@@ -5,6 +5,8 @@
 #include <iostream>
 #include <ostream>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 
 class FmctluProducer: public eudaq::Producer {
@@ -16,19 +18,19 @@ public:
   void DoStopRun() override;
   void DoTerminate() override;
   void DoReset() override;
-
-  void OnStatus() override;
-
-  void MainLoop();
+  void DoStatus() override;
+  void RunLoop() override;
 
   static const uint32_t m_id_factory = eudaq::cstr2hash("FmctluProducer");
 private:
-
-  std::thread m_thd_run;
   bool m_exit_of_run;
+  std::mutex m_mtx_tlu; //prevent to reset tlu during the RunLoop thread
 
   std::unique_ptr<tlu::FmctluController> m_tlu;
   uint64_t m_lasttime;
+
+  uint32_t m_verbose;
+  uint32_t m_delayStart;
 };
 
 namespace{
@@ -42,17 +44,26 @@ FmctluProducer::FmctluProducer(const std::string name, const std::string &runcon
 
 }
 
-void FmctluProducer::MainLoop(){
+void FmctluProducer::RunLoop(){
+  std::unique_lock<std::mutex> lk(m_mtx_tlu);
   bool isbegin = true;
-
   m_tlu->ResetCounters();
   m_tlu->ResetEventsBuffer();
   m_tlu->ResetFIFO();
+
+  // Pause the TLU to allow slow devices to get ready after the euRunControl has
+  // issued the DoStart() command
+  std::this_thread::sleep_for( std::chrono::milliseconds( m_delayStart ) );
+
+  // Send reset pulse to all DUTs and reset internal counters
+  m_tlu->PulseT0();
+
+  // Enable triggers
   m_tlu->SetTriggerVeto(0);
-  //while(true) {
+
   while(!m_exit_of_run) {
     m_lasttime=m_tlu->GetCurrentTimestamp()*25;
-    m_tlu->ReceiveEvents();
+    m_tlu->ReceiveEvents(m_verbose);
     while (!m_tlu->IsBufferEmpty()){
       tlu::fmctludata *data = m_tlu->PopFrontEvent();
       uint32_t trigger_n = data->eventnumber;
@@ -64,20 +75,27 @@ void FmctluProducer::MainLoop(){
       ev->SetTriggerN(trigger_n);
 
       std::stringstream  triggerss;
-      triggerss<< data->input3 << data->input2 << data->input1 << data->input0;
-      ev->SetTag("trigger", triggerss.str());
+      //triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
+      triggerss<< std::to_string(data->input5) << std::to_string(data->input4) << std::to_string(data->input3) << std::to_string(data->input2) << std::to_string(data->input1) << std::to_string(data->input0);
+      ev->SetTag("TRIGGER", triggerss.str());
       if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
+        ev->SetTag("PARTICLES", std::to_string(pt));
       	ev->SetTag("SCALER0", std::to_string(sl0));
       	ev->SetTag("SCALER1", std::to_string(sl1));
       	ev->SetTag("SCALER2", std::to_string(sl2));
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
-      	ev->SetTag("PARTICLES", std::to_string(pt));
-
+      	//ev->SetTag("TRIGGER0", std::to_string(data->input0));
+        //ev->SetTag("TRIGGER1", std::to_string(data->input1));
+        //ev->SetTag("TRIGGER2", std::to_string(data->input2));
+        //ev->SetTag("TRIGGER3", std::to_string(data->input3));
+        //ev->SetTag("TRIGGER4", std::to_string(data->input4));
+        //ev->SetTag("TRIGGER5", std::to_string(data->input5));
+        ev->SetTag("TYPE", std::to_string(data->eventtype));
 
         if(m_exit_of_run){
           ev->SetEORE();
@@ -112,13 +130,6 @@ void FmctluProducer::DoInitialise(){
   // Define constants
   m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
 
-  // Reset IPBus registers
-  m_tlu->ResetSerdes();
-  m_tlu->ResetCounters();
-  m_tlu->SetTriggerVeto(1);
-  m_tlu->ResetFIFO();
-  m_tlu->ResetEventsBuffer();
-
   //Import I2C addresses for hardware
   //Populate address list for I2C elements
   m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
@@ -139,37 +150,54 @@ void FmctluProducer::DoInitialise(){
     m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
   }
 
+  // Initialize the Si5345 clock chip using pre-generated file
+  if (ini->Get("CONFCLOCK", true)){
+    m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  }
+
+  // Reset IPBus registers
+  m_tlu->ResetSerdes();
+  m_tlu->ResetCounters();
+  m_tlu->SetTriggerVeto(1);
+  m_tlu->ResetFIFO();
+  m_tlu->ResetEventsBuffer();
+
+  m_tlu->ResetTimestamp();
 
 }
 
 void FmctluProducer::DoConfigure() {
   auto conf = GetConfiguration();
-  std::cout << "CONFIG ID: " << conf->Get("confid", 0) << std::endl;
+  std::cout << "CONFIG ID: " << std::dec << conf->Get("confid", 0) << std::endl;
+  m_verbose= conf->Get("verbose", 0);
+  std::cout << "VERBOSE SET TO: " << m_verbose << std::endl;
+  m_delayStart= conf->Get("delayStart", 0);
+  std::cout << "DELAY START SET TO: " << std::dec << m_delayStart << " ms" << std::endl;
 
-  m_tlu->InitializeClkChip(conf->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+  m_tlu->SetTriggerVeto(1);
 
   // Enable HDMI connectors
-  m_tlu->enableHDMI(1, conf->Get("HDMI1_on", true), false);
-  m_tlu->enableHDMI(2, conf->Get("HDMI2_on", true), false);
-  m_tlu->enableHDMI(3, conf->Get("HDMI3_on", true), false);
-  m_tlu->enableHDMI(4, conf->Get("HDMI4_on", true), false);
+  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), m_verbose);
+  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), m_verbose);
+  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), m_verbose);
+  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), m_verbose);
 
   // Select clock to HDMI
-  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), false);
-  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), false);
-  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), false);
-  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), false);
+  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), m_verbose);
+  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), m_verbose);
+  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), m_verbose);
+  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), m_verbose);
 
   //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), false);
+  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), m_verbose);
 
   // Set thresholds
   m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
   m_tlu->SetThresholdValue(1, conf->Get("DACThreshold1", 1.2));
   m_tlu->SetThresholdValue(2, conf->Get("DACThreshold2", 1.2));
   m_tlu->SetThresholdValue(3, conf->Get("DACThreshold3", 1.2));
-  m_tlu->SetThresholdValue(4, conf->Get("DACThreshold0", 1.2));
-  m_tlu->SetThresholdValue(5, conf->Get("DACThreshold1", 1.2));
+  m_tlu->SetThresholdValue(4, conf->Get("DACThreshold4", 1.2));
+  m_tlu->SetThresholdValue(5, conf->Get("DACThreshold5", 1.2));
 
   // Set trigger stretch and delay
   std::vector<unsigned int> stretcVec = {(unsigned int)conf->Get("in0_STR",0),
@@ -197,39 +225,37 @@ void FmctluProducer::DoConfigure() {
   m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff)); // AIDA (x1) or EUDET (x0)
   m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff)); // Only for EUDET
   m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
-  m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1));//ILC stuff related
+  m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
   m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
-  m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0)); // 160M/interval
+  //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
+  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), m_verbose );
   m_tlu->GetEventFifoCSR();
   m_tlu->GetEventFifoFillLevel();
 }
 
 void FmctluProducer::DoStartRun(){
   m_exit_of_run = false;
-  m_thd_run = std::thread(&FmctluProducer::MainLoop, this);
+  std::cout << "TLU START command received" << std::endl;
 }
 
 void FmctluProducer::DoStopRun(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
+  std::cout << "TLU STOP command received" << std::endl;
 }
 
 void FmctluProducer::DoTerminate(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
+  std::cout << "TLU TERMINATE command received" << std::endl;
 }
 
 void FmctluProducer::DoReset(){
   m_exit_of_run = true;
-  if(m_thd_run.joinable())
-    m_thd_run.join();
-
+  std::cout << "TLU RESET command received" << std::endl;
+  std::unique_lock<std::mutex> lk(m_mtx_tlu); //waiting for the runloop's return
   m_tlu.reset();
 }
 
-void FmctluProducer::OnStatus() {
+void FmctluProducer::DoStatus() {
   if (m_tlu) {
     uint64_t time = m_tlu->GetCurrentTimestamp();
     time = time/40000000; // in second
@@ -241,6 +267,7 @@ void FmctluProducer::OnStatus() {
     pret=m_tlu->GetPreVetoTriggers();
     post=m_tlu->GetPostVetoTriggers();
     m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
+    //Is tlu controller safe to be accessed by 2 threads (RunLoop and DoStatus) at some time?
     SetStatusTag("SCALER0", std::to_string(sl0));
     SetStatusTag("SCALER1", std::to_string(sl1));
     SetStatusTag("SCALER2", std::to_string(sl2));

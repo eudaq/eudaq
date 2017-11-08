@@ -24,6 +24,40 @@ namespace tlu {
     }
   }
 
+  void FmctluController::configureHDMI(unsigned int hdmiN, unsigned int enable, bool verbose){
+    int nDUTs;
+    unsigned char oldStatus;
+    unsigned char newStatus;
+    unsigned char mask;
+    unsigned char newnibble;
+    nDUTs= m_nDUTs;
+
+    if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
+      std::cout << std::boolalpha << "  Configuring HDMI " << hdmiN << ":" << std::endl;
+
+      hdmiN = hdmiN-1;  // <<<<< CAREFUL HERE. All the rest is meant to work with [0:3] rather than [1:4}]
+      unsigned int bank = (unsigned int)hdmiN / 2; // DUT0 and DUT1 are on bank 0. DUT2 and DUT3 on bank 1
+      unsigned int nibble = hdmiN % 2;    // DUT0 and DUT2 are on nibble 0. DUT1 and DUT3 are on nibble 1
+
+      if (verbose){
+        std::cout << "\tBank " << bank << " Nibble " << nibble << std::endl;
+      }
+      // Modify the expander responsible for CONT, TRIG, SPARE and BUSY
+      oldStatus= m_IOexpander1.getOutputs(bank, false);
+      newnibble= (enable & 0xF) << 4*nibble;
+      mask = 0xF << 4*nibble; // bits we want to change are marked with 1
+      newStatus= (oldStatus & (~mask)) | (newnibble & mask);
+
+      if (verbose){
+        std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
+      }
+      m_IOexpander1.setOutputs(bank, newStatus, verbose);
+    }
+    else{
+      std::cout << "enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
+    }
+  }
+
   void FmctluController::DefineConst(int nDUTs, int nTrigInputs){
     m_nTrgIn= nTrigInputs;
     m_nDUTs= nDUTs;
@@ -44,18 +78,18 @@ namespace tlu {
     unsigned char oldStatus;
     unsigned char newStatus;
 
-    oldStatus= m_IOexpander2.getIOReg(bank, false);
+    oldStatus= m_IOexpander2.getOutputs(bank, false);
     newStatus= oldStatus & ~mask;
-    std::string outstat= "enabled";
-    if (!enable){ //0 activates the output. 1 disables it.
+    std::string outstat= "disabled";
+    if (enable){ //1 activates the output. 0 disables it.
       newStatus= newStatus | mask;
-      outstat= "disabled";
+      outstat= "enabled";
     }
     std::cout << "  Clk LEMO " << outstat << std::endl;
     if (verbose){
       std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
-    m_IOexpander2.setIOReg(bank, newStatus, verbose);
+    m_IOexpander2.setOutputs(bank, newStatus, verbose);
   }
 
   void FmctluController::enableHDMI(unsigned int hdmiN, bool enable, bool verbose= false){
@@ -65,6 +99,7 @@ namespace tlu {
     unsigned char mask;
     nDUTs= m_nDUTs;
 
+    std::cout << "enableHDMI: This function is obsolete. Please use configureHDMI instead." << std::endl;
     if ((0 < hdmiN )&&( hdmiN < nDUTs+1 )){
       std::cout << std::boolalpha << "  Setting HDMI " << hdmiN << " to " << enable << std::endl;
 
@@ -75,7 +110,7 @@ namespace tlu {
       if (verbose){
         std::cout << "\tBank " << bank << " Nibble " << nibble << std::endl;
       }
-      oldStatus= m_IOexpander1.getIOReg(bank, false);
+      oldStatus= m_IOexpander1.getOutputs(bank, false);
       mask= 0xF << 4*nibble;
       newStatus= oldStatus & (~mask);
       if (!enable){ // we want to write 0 to activate the outputs so check opposite of "enable"
@@ -84,14 +119,31 @@ namespace tlu {
       if (verbose){
         std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMask " << (int)mask << "\tNEW " << (int)newStatus << std::dec << std::endl;
       }
-      m_IOexpander1.setIOReg(bank, newStatus, verbose);
+      m_IOexpander1.setOutputs(bank, newStatus, verbose);
     }
     else{
       std::cout << "enableHDMI: connector out of range [1, " << nDUTs << "]" << std::endl;
     }
   }
 
-  uint32_t FmctluController::GetEventFifoCSR() {
+  uint32_t FmctluController::GetBoardID() {
+    // Return the board unique ID. The ID is generally comprised of
+    // 6 characters (48 bits) but the first 3 are manufacturer specific so, in order to have just
+    // 32-bit, we can just skip the first two characters.
+    // D8 80 39 XX YY ZZ -->  39 XX YY ZZ
+
+    int nwords= 6;
+    int shift= 0;
+    uint32_t shortID= 0;
+    for(int iaddr =2; iaddr < nwords; iaddr++) {
+      shift= (nwords-1) -iaddr;
+      shortID= (m_BoardID[iaddr] << (8*shift) ) | shortID;
+    }
+    std::cout << "  BoardID (short) " << std::hex << shortID << std::endl;
+    return shortID;
+  }
+
+  uint32_t FmctluController::GetEventFifoCSR(int verbose) {
     uint32_t res;
     bool empty, alm_empty, alm_full, full, prog_full;
     res= ReadRRegister("eventBuffer.EventFifoCSR");
@@ -100,12 +152,11 @@ namespace tlu {
     alm_full= 0x4 & res;
     full= 0x8 & res;
     prog_full= 0x4 & res;
-    std::cout << "  FIFO status:" << std::endl;
-    if (empty){std::cout << "\tEMPTY" << std::endl;}
-    if (alm_empty){std::cout << "\tALMOST EMPTY (1 word in FIFO)" << std::endl;}
-    if (alm_full){std::cout << "\tALMOST FULL (1 word left)" << std::endl;}
-    if (full){std::cout << "\tFULL (8192 word)" << std::endl;}
-    if (prog_full){std::cout << "\tABOVE THRESHOLD (8181/8192)" << std::endl;}
+    if (empty && (verbose > 2)){std::cout << "  TLU FIFO status:\n\tEMPTY" << std::endl;}
+    if (alm_empty && (verbose > 2)){std::cout << "  TLU FIFO status:\nALMOST EMPTY (1 word in FIFO)" << std::endl;}
+    if (alm_full){std::cout << "  TLU FIFO status:\n\tALMOST FULL (1 word left)" << std::endl;}
+    if (full){std::cout <<   "  TLU FIFO status:\n\tFULL (8192 word)" << std::endl;}
+    if (prog_full){std::cout << "  TLU FIFO status:\n\tABOVE THRESHOLD (8181/8192)" << std::endl;}
     return res;
   }
 
@@ -125,17 +176,39 @@ namespace tlu {
     return res;
   }
 
-  uint32_t FmctluController::getSN(){
-    m_IDaddr= m_I2C_address.EEPROM;
-    unsigned char myaddr= 0xfc;
-    //for(unsigned char myaddr = 0xfa; myaddr > 0x0; myaddr++) {
-    for(int iaddr =0; iaddr < 4; iaddr++) {
-      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr+iaddr);
-      m_BoardID = ( ( ( (uint)nibble)&0xff) << ( (iaddr)*8) ) |m_BoardID;
-      //std::cout << std::hex << ( (uint)nibble&0xff ) << " " << (( (uint)nibble & 0xff) << ( (4-iaddr)*8) ) << " "<< m_BoardID<< std::endl;
+  uint32_t FmctluController::GetInternalTriggerInterval(int verbose){
+    uint32_t interval;
+    uint32_t true_freq;
+
+    interval= ReadRRegister("triggerLogic.InternalTriggerIntervalR");
+    if (verbose > 0){
+      if (interval==0){
+        true_freq = 0;
+      }
+      else{
+        true_freq= (int) floor( (float)160000000 / interval );
+      }
+      std::cout << "\tFrequency read back as: " << true_freq << " Hz"<< std::endl;
     }
-    //std::cout << "  TLU unique ID : " << std::setw(12) << std::setfill('0') << std::hex << m_BoardID << std::endl;
-    std::cout << "  TLU unique ID : " <<  std::hex << m_BoardID << std::endl;
+  }
+
+  unsigned int* FmctluController::SetBoardID(){
+    m_IDaddr= m_I2C_address.EEPROM;
+    unsigned char myaddr= 0xfa;
+    int nwords= 6;
+
+    std::ios::fmtflags coutflags( std::cout.flags() );
+    for(int iaddr =0; iaddr < nwords; iaddr++) {
+      char nibble = m_i2c->ReadI2CChar(m_IDaddr, myaddr + iaddr);
+      m_BoardID[iaddr]= ((uint)nibble)&0xff;
+    }
+
+    std::cout << "  TLU unique ID:";
+    for(int iaddr =0; iaddr < nwords; iaddr++) {
+      std::cout << " " << std::setw(2) << std::setfill('0') << std::hex <<  m_BoardID[iaddr];
+    }
+    std::cout << " " << std::endl;
+    std::cout.flags( coutflags );
     return m_BoardID;
   }
 
@@ -187,21 +260,21 @@ namespace tlu {
 
     //EPX1 bank 0
     m_IOexpander1.setInvertReg(0, 0x00, false); //0= normal, 1= inverted
-    m_IOexpander1.setIOReg(0, 0xFF, false); // 0= output, 1= input
-    m_IOexpander1.setOutputs(0, 0xFF, false); // If output, set to 1
+    m_IOexpander1.setIOReg(0, 0x00, false); // 0= output, 1= input
+    m_IOexpander1.setOutputs(0, 0xFF, false); // If setIOReg is output, set to pin to xx
     //EPX1 bank 1
     m_IOexpander1.setInvertReg(1, 0x00, false); // 0= normal, 1= inverted
-    m_IOexpander1.setIOReg(1, 0xFF, false);// 0= output, 1= input
-    m_IOexpander1.setOutputs(1, 0xFF, false); // If output, set to 1
+    m_IOexpander1.setIOReg(1, 0x00, false);// 0= output, 1= input
+    m_IOexpander1.setOutputs(1, 0xFF, false); // If setIOReg is output, set to pin to xx
 
     //EPX2 bank 0
     m_IOexpander2.setInvertReg(0, 0x00, false);// 0= normal, 1= inverted
-    m_IOexpander2.setIOReg(0, 0xFF, false);// 0= output, 1= input
-    m_IOexpander2.setOutputs(0, 0xFF, false);// If output, set to 1
+    m_IOexpander2.setIOReg(0, 0x00, false);// 0= output, 1= input
+    m_IOexpander2.setOutputs(0, 0x00, false);// If setIOReg is output, set to pin to xx
     //EPX2 bank 1
     m_IOexpander2.setInvertReg(1, 0x00, false);// 0= normal, 1= inverted
-    m_IOexpander2.setIOReg(1, 0x5F, false);// 0= output, 1= input
-    m_IOexpander2.setOutputs(1, 0xFF, false);// If output, set to 1
+    m_IOexpander2.setIOReg(1, 0x00, false);// 0= output, 1= input
+    m_IOexpander2.setOutputs(1, 0xB0, false);// If setIOReg is output, set to pin to xx
     std::cout << "  I/O expanders: initialized" << std::endl;
   }
 
@@ -227,23 +300,23 @@ namespace tlu {
           //std::cout << "\tFOUND I2C slave CORE" << std::endl;
         }
         else if (myaddr== m_I2C_address.clockChip){
-          std::cout << "\tFOUND I2C slave CLOCK" << std::endl;
+          std::cout << "\tFOUND I2C slave CLOCK (0x" << std::hex << myaddr << ")"<< std::endl;
         }
         else if (myaddr== m_I2C_address.DAC1){
-          std::cout << "\tFOUND I2C slave DAC1" << std::endl;
+          std::cout << "\tFOUND I2C slave DAC1 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr== m_I2C_address.DAC2){
-          std::cout << "\tFOUND I2C slave DAC2" << std::endl;
+          std::cout << "\tFOUND I2C slave DAC2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.EEPROM){
           m_IDaddr= myaddr;
-          std::cout << "\tFOUND I2C slave EEPROM" << std::endl;
+          std::cout << "\tFOUND I2C slave EEPROM (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.expander1){
-          std::cout << "\tFOUND I2C slave EXPANDER1" << std::endl;
+          std::cout << "\tFOUND I2C slave EXPANDER1 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else if (myaddr==m_I2C_address.expander2){
-          std::cout << "\tFOUND I2C slave EXPANDER2" << std::endl;
+          std::cout << "\tFOUND I2C slave EXPANDER2 (0x" << std::hex << myaddr << ")" << std::endl;
         }
         else{
           std::cout << "\tI2C slave at address 0x" << std::hex << myaddr << " replied but is not on TLU address list. A mistery!" << std::endl;
@@ -252,12 +325,12 @@ namespace tlu {
       SetI2CTX(0x0);
       SetI2CCommand(0x50); // 01010000
       while(I2CCommandIsDone()) {
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
     }
 
     if(m_IDaddr){
-      getSN();
+      SetBoardID();
     }
     std::cout.flags( coutflags ); // Restore cout flags
   }
@@ -278,6 +351,11 @@ namespace tlu {
       std::cout << "PackBits - ERROR: wrong number of elements in vector." << std::endl;
     }
     return packedbits;
+  }
+
+  void FmctluController::PulseT0(){
+    SetWRegister("Shutter.PulseT0", 0x1);
+    std::cout << "  PULSE T0: done"  << std::endl;
   }
 
   fmctludata* FmctluController::PopFrontEvent(){
@@ -301,24 +379,31 @@ namespace tlu {
     }
   }
 
-  void FmctluController::ReceiveEvents(){
-    // std::cout<<"FmctluController::ReceiveEvents"<<std::endl;
+  void FmctluController::ReceiveEvents(int verbose){
+    //bool verbose= 0;
     uint32_t nevent = GetEventFifoFillLevel()/6;
-    // std::cout<< "fifo "<<GetEventFifoFillLevel()<<std::endl;
-    if (nevent*6 == 0x7D00) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl;
+    uint32_t fifoStatus= GetEventFifoCSR(verbose);
+    if ((fifoStatus & 0x18)){
+      std::cout << "WARNING! fmctlu hardware FIFO is full (CSR)" << std::endl;
+    }
+    if (nevent*6 == 0x3FEA) std::cout << "WARNING! fmctlu hardware FIFO is full" << std::endl; //0x7D00 ?
     // if(0){ // no read
     if(nevent){
       ValVector< uint32_t > fifoContent = m_hw->getNode("eventBuffer.EventFifoData").readBlock(nevent*6);
       m_hw->dispatch();
       if(fifoContent.valid()) {
-	std::cout<< "require events: "<<nevent<<" received events "<<fifoContent.size()/6<<std::endl;
-	if(fifoContent.size()%6 !=0){
-	  std::cout<<"receive error"<<std::endl;
-	}
-	for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
-	  m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
-	  std::cout<< *(m_data.back());
-	}
+        if (verbose > 0){
+          std::cout<< "TLU events required: "<<nevent<<" events received: " << fifoContent.size()/6<<std::endl;
+        }
+        if(fifoContent.size()%6 !=0){
+          std::cout<<"receive error"<<std::endl;
+        }
+        for ( std::vector<uint32_t>::const_iterator i ( fifoContent.begin() ); i!=fifoContent.end(); i+=6 ) { //0123
+          m_data.push_back(new fmctludata(*i, *(i+1), *(i+2), *(i+3), *(i+4), *(i+5)));
+          if (verbose > 1){
+            std::cout<< *(m_data.back());
+          }
+        }
       }
     }
   }
@@ -334,6 +419,7 @@ namespace tlu {
     int nDUTs;
     unsigned char oldStatus;
     unsigned char newStatus;
+    unsigned char newnibble;
     unsigned char mask, maskLow, maskHigh;
     int bank= 0;
 
@@ -351,34 +437,57 @@ namespace tlu {
     maskLow= 1 << (1* hdmiN); //CLK FROM FPGA
     maskHigh= 1<< (1* hdmiN +4); //CLK FROM Si5345
     mask= maskLow | maskHigh;
-    oldStatus= m_IOexpander2.getIOReg(bank, false);
-    newStatus= oldStatus & ~mask; //
+    oldStatus= m_IOexpander2.getOutputs(bank, false);
+    //newStatus= oldStatus & ~mask;
     switch(source){
-    case 0 : {
-      newStatus = newStatus | mask;
-      std::cout << "\tdisabled" << std::endl;
-      break;
-    }
-    case 1 : {
-      newStatus = newStatus | maskLow;
-      std::cout << "\tSi5435" << std::endl;
-      break;
-    }
-    case 2 : {
-      newStatus= newStatus | maskHigh;
-      std::cout << "\tFPGA" << std::endl;
-      break;
-    }
-    default: {
-      newStatus= oldStatus;
-      std::cout << "\tNo valid clock source selected" << std::endl;
-      break;
-    }
+      case 0 : {
+        //newStatus = newStatus | mask;
+        newStatus= (oldStatus & ~mask)  ;
+        std::cout << "\tdisabled" << std::endl;
+        break;
+      }
+      case 1 : {
+        newStatus = (oldStatus | maskHigh) & ~maskLow;
+        //newStatus= (oldStatus & ~mask) | (0xF0 & mask);
+        std::cout << "\tSi5435" << std::endl;
+        break;
+      }
+      case 2 : {
+        //newStatus= newStatus | maskLow;
+        newStatus = (oldStatus | maskLow) & ~maskHigh;
+        std::cout << "\tFPGA" << std::endl;
+        break;
+      }
+      default: {
+        newStatus= oldStatus;
+        std::cout << "\tNo valid clock source selected" << std::endl;
+        break;
+      }
     }
     if(verbose){
-      std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tNEW " << (int)newStatus << std::dec << std::endl;
+      std::cout << std::hex << "\tOLD " << (int)oldStatus << "\tMASK " <<  (int)mask << "\tMASK_L " << (int)maskLow << "\tMASK_H " << (int)maskHigh << "\tNEW " << (int)newStatus << std::dec << std::endl;
     }
-    m_IOexpander2.setIOReg(bank, newStatus, verbose);
+    m_IOexpander2.setOutputs(bank, newStatus, verbose);
+  }
+
+  void FmctluController::SetInternalTriggerFrequency(uint32_t user_freq, int verbose){
+    uint32_t max_freq= 160000000;
+    uint32_t interval;
+    uint32_t actual_interval;
+    if (user_freq > max_freq){
+      std::cout << "SetInternalTriggerFrequency: Max frequency allowed is "<< max_freq << " Hz. Coerced to this value." << std::endl;
+      user_freq= max_freq;
+    }
+    if (user_freq==0){
+      interval = user_freq;
+    }
+    else{
+      interval = (int) floor( (float)160000000 / user_freq );
+    }
+    SetInternalTriggerInterval(interval);
+    std::cout << "  Required internal trigger frequency: " << user_freq << " Hz" << std::endl;
+    std::cout << "\tSetting internal interval to:" << interval << std::endl;
+    actual_interval= GetInternalTriggerInterval(1);
   }
 
   void FmctluController::SetPulseStretchPack(std::vector< unsigned int>  valuesVec){
@@ -419,13 +528,13 @@ namespace tlu {
       m_zeDAC2.SetDACValue(channel , int(dacCode) );
       return;
     }
-    if (channel <4){
+    if (channel <2){
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC2.SetDACValue(channel , int(dacCode) );
+      m_zeDAC1.SetDACValue( 1-channel , int(dacCode) ); //The ADC channels are connected in reverse order
     }
     else{
       std::cout << "  Setting threshold for channel " << (unsigned int)channel << " to " << thresholdVoltage << " Volts" << std::endl;
-      m_zeDAC1.SetDACValue(channel-4 , int(dacCode) );
+      m_zeDAC2.SetDACValue( 3-(channel-2) , int(dacCode) );
     }
 
   }
@@ -443,6 +552,13 @@ namespace tlu {
     std::cout << std::hex << "  TRIGGER PATTERN (for external triggers) SET TO 0x" << maskHi << " --- 0x"<< maskLo << " (Two 32-bit words)" << std::dec << std::endl;
     SetWRegister("triggerLogic.TriggerPattern_lowW",  maskLo);
     SetWRegister("triggerLogic.TriggerPattern_highW", maskHi);
+  }
+
+  void FmctluController::SetTriggerVeto(int value){
+    uint32_t vetoStatus;
+    SetWRegister("triggerLogic.TriggerVetoW",value);
+    vetoStatus= GetTriggerVeto();
+    std::cout << "  TRIGGER VETO SET TO: " << vetoStatus << std::endl;
   }
 
   void FmctluController::SetWRegister(const std::string & name, int value){
@@ -485,9 +601,12 @@ namespace tlu {
 
 
   std::ostream &operator<<(std::ostream &s, fmctludata &d) {
-    s << "eventnumber: " << d.eventnumber << " type: " << int(d.eventtype) <<" timestamp: 0x" <<std::hex<< d.timestamp <<std::dec<<std::endl
-      <<" input0: " << int(d.input0) << " input1: " << int(d.input1) << " input2: " << int(d.input2) << " input3: " << int(d.input3) <<std::endl
-      <<" sc0: " << int(d.sc0) << " sc1: "  << int(d.sc1) << " sc2: "  << int(d.sc2) << " sc3: " << int(d.sc3) <<std::endl;
+    s << "__________________________________________________________________________" << std::endl
+      << "EVENT NUMBER: " << d.eventnumber << " \t TYPE: " << int(d.eventtype) <<" \t TIMESTAMP COARSE: 0x" <<std::hex<< d.timestamp << std::dec<<std::endl
+      << " TRIG. INPUT 0: " << int(d.input0) << " \t TRIG. INPUT 1: " << int(d.input1) << " \t TRIG. INPUT 2: " << int(d.input2) << std::endl
+      << " TRIG. INPUT 3: " << int(d.input3) << " \t TRIG. INPUT 4: " << int(d.input4) << " \t TRIG. INPUT 5: " << int(d.input5) <<std::endl
+      << " TS FINE 0: " << int(d.sc0) << " \t TS FINE 1: "  << int(d.sc1) << " \t TS FINE 2: "  << int(d.sc2)  << std::endl
+      << " TS FINE 3: " << int(d.sc3) << " \t TS FINE 4: "  << int(d.sc4) << " \t TS FINE 5: "  << int(d.sc5)  <<std::endl;
     return s;
   }
 

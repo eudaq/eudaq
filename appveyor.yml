@@ -8,7 +8,7 @@ branches:
   - master
   - v1.7-dev
 
-os: Visual Studio 2015
+os: Visual Studio 2017
 
 configuration: Release
 
@@ -22,7 +22,7 @@ environment:
   matrix:
     - build_type: full
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       CMAKE_BUILD_TYPE: RelWithDebInfo
       EUDAQ_BUILD_EXECUTABLE: ON
       EUDAQ_BUILD_GUI: ON
@@ -43,7 +43,7 @@ environment:
       PYTHON_ARCH: "32"
     - build_type: minimum
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       CMAKE_BUILD_TYPE: RelWithDebInfo
       EUDAQ_BUILD_EXECUTABLE: ON
       EUDAQ_BUILD_GUI: ON
@@ -64,7 +64,7 @@ environment:
       PYTHON_ARCH: "32"
     - build_type: library_only
       ROOTSYS: C:\root
-      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2015;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
+      PATH: '%ROOTSYS%\bin;C:\Qt\5.9\msvc2017;C:\Python36;C:\Miniconda36;C:\Miniconda36\\Scripts;%PATH%'
       CMAKE_BUILD_TYPE: RelWithDebInfo
       EUDAQ_BUILD_EXECUTABLE: OFF
       EUDAQ_BUILD_GUI: OFF
@@ -96,9 +96,9 @@ init:
 - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 install:
-- '"C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x86'
+#- '"C:\Program Files\Microsoft SDKs\Windows\v10\Bin\SetEnv.cmd" /x86'
 # This is a workaround for a whole lot of annoying warnings about non-existing targets.
-- cmd: del "C:\Program Files (x86)\MSBuild\14.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
+#- cmd: del "C:\Program Files (x86)\MSBuild\15.0\Microsoft.Common.targets\ImportAfter\Xamarin.Common.targets"
 
 # Install Python (from the official .msi of http://python.org) and pip when not already installed.
 # This was copied from 
@@ -130,6 +130,8 @@ before_build:
 
 build_script:
 - ps: If( Test-Path("\\afs\desy.de\group\telescopes\")) { Write-Host("Afs seems to work properly")} ElseIf ( Test-Path("\\cern.ch\")) {Write-Host("Afs seems to work properly, but desy afs down?"); } Else { Write-Host("Something wrong with the afs installation"); }
+
+#- ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 - ps: If (Test-Path ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1")) {Write-Host ("Reusing cached ZestSC1 " + "${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1" + " instead of copying from AFS")} Else {Write-Host "Copying ZestSC1 from AFS"; Copy-item "\\afs\desy.de\group\telescopes\tlu\ZestSC1" -destination ("${env:APPVEYOR_BUILD_FOLDER}" + "\extern\ZestSC1") -recurse}
 

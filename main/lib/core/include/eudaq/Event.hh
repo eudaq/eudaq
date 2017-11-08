@@ -44,77 +44,80 @@ namespace eudaq {
     };
 
     Event();
+    // Event(const &&ev);
+    
     Event(Deserializer & ds);
-    virtual void Serialize(Serializer &) const;    
+    virtual void Serialize(Serializer &) const;
     virtual void Print(std::ostream & os, size_t offset = 0) const;
     
-    bool HasTag(const std::string &name) const {return m_tags.find(name) != m_tags.end();}
-    void SetTag(const std::string &name, const std::string &val) {m_tags[name] = val;}
+    bool HasTag(const std::string &name) const;
+    void SetTag(const std::string &name, const std::string &val);
     std::string GetTag(const std::string &name, const std::string &def = "") const;
-    std::map<std::string, std::string> GetTags() const {return m_tags;}
+    std::map<std::string, std::string> GetTags() const;
     
-    void SetFlagBit(uint32_t f) { m_flags |= f;}
-    void ClearFlagBit(uint32_t f) { m_flags &= ~f;}
-    bool IsFlagBit(uint32_t f) const { return (m_flags&f) == f;}
+    void SetFlagBit(uint32_t f);
+    void ClearFlagBit(uint32_t f);
+    bool IsFlagBit(uint32_t f) const;
 
-    void SetBORE() {SetFlagBit(FLAG_BORE);}
-    void SetEORE() {SetFlagBit(FLAG_EORE);}
-    void SetFlagFake(){SetFlagBit(FLAG_FAKE);}
-    void SetFlagPacket(){SetFlagBit(FLAG_PACK);}
-    void SetFlagTimestamp(){SetFlagBit(FLAG_TIME);}
-    void SetFlagTrigger(){SetFlagBit(FLAG_TRIG);}
+    void SetBORE();
+    void SetEORE();
+    void SetFlagFake();
+    void SetFlagPacket();
+    void SetFlagTimestamp();
+    void SetFlagTrigger();
     
-    bool IsBORE() const { return IsFlagBit(FLAG_BORE);}
-    bool IsEORE() const { return IsFlagBit(FLAG_EORE);}
-    bool IsFlagFake() const {return IsFlagBit(FLAG_FAKE);}
-    bool IsFlagPacket() const {return IsFlagBit(FLAG_PACK);}
-    bool IsFlagTimestamp() const {return IsFlagBit(FLAG_TIME);}
-    bool IsFlagTrigger() const {return IsFlagBit(FLAG_TRIG);}    
+    bool IsBORE() const;
+    bool IsEORE() const;
+    bool IsFlagFake() const;
+    bool IsFlagPacket() const;
+    bool IsFlagTimestamp() const;
+    bool IsFlagTrigger() const;    
     
     void AddSubEvent(EventSPC ev);
-    uint32_t GetNumSubEvent() const {return m_sub_events.size();}
-    EventSPC GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
-    std::vector<EventSPC> GetSubEvents() const {return m_sub_events;}
+    uint32_t GetNumSubEvent() const;
+    EventSPC GetSubEvent(uint32_t i) const;
+    std::vector<EventSPC> GetSubEvents() const;
     
-    void SetType(uint32_t id){m_type = id;}
-    void SetVersion(uint32_t v){m_version = v;}
-    void SetFlag(uint32_t f) {m_flags = f;}
-    void SetRunN(uint32_t n){m_run_n = n;}
-    void SetEventN(uint32_t n){m_ev_n = n;}
-    void SetDeviceN(uint32_t n){m_stm_n = n;}
-    void SetTriggerN(uint32_t n, bool flag = true){m_tg_n = n; if(flag) SetFlagBit(FLAG_TRIG);}
-    void SetExtendWord(uint32_t n){m_extend = n;}
+    void SetType(uint32_t id);
+    void SetVersion(uint32_t v);
+    void SetFlag(uint32_t f);
+    void SetRunN(uint32_t n);
+    void SetEventN(uint32_t n);
+    void SetDeviceN(uint32_t n);
+    void SetTriggerN(uint32_t n, bool flag = true);
+    void SetExtendWord(uint32_t n);
     void SetTimestamp(uint64_t tb, uint64_t te, bool flag = true);
-    void SetDescription(const std::string &t) {m_dspt = t;}
+    void SetDescription(const std::string &t);
     
-    uint32_t GetType() const {return m_type;};
-    uint32_t GetVersion()const {return m_version;}
-    uint32_t GetFlag() const { return m_flags;}
-    uint32_t GetRunN()const {return m_run_n;}
-    uint32_t GetEventN()const {return m_ev_n;}
-    uint32_t GetDeviceN() const {return m_stm_n;}
-    uint32_t GetTriggerN() const {return m_tg_n;}
-    uint32_t GetExtendWord() const {return m_extend;}
-    uint64_t GetTimestampBegin() const {return m_ts_begin;}
-    uint64_t GetTimestampEnd() const {return m_ts_end;}
-    std::string GetDescription() const {return m_dspt;}
+    uint32_t GetType() const;
+    uint32_t GetVersion()const;
+    uint32_t GetFlag() const;
+    uint32_t GetRunN()const;
+    uint32_t GetEventN()const;
+    uint32_t GetDeviceN() const;
+    uint32_t GetTriggerN() const;
+    uint32_t GetExtendWord() const;
+    uint64_t GetTimestampBegin() const;
+    uint64_t GetTimestampEnd() const;
+    std::string GetDescription() const;
 
     static EventUP MakeUnique(const std::string& dspt);
     static EventSP MakeShared(const std::string& dspt);
+    static EventSP Make(const std::string& type, const std::string& argv);
 
-    void SetEventID(uint32_t id){m_type = id;}
-    uint32_t GetEventID() const {return m_type;};
+    void SetEventID(uint32_t id);
+    uint32_t GetEventID() const;
     //TODO: the meanning of "stream" is not so clear
-    void SetStreamN(uint32_t n){m_stm_n = n;}
-    uint32_t GetStreamN() const {return m_stm_n;}
+    void SetStreamN(uint32_t n);
+    uint32_t GetStreamN() const;
     // /////TODO: remove compatiable fun from EUDAQv1
-    uint32_t GetEventNumber()const {return m_ev_n;}
-    uint32_t GetRunNumber()const {return m_run_n;}
+    uint32_t GetEventNumber()const;
+    uint32_t GetRunNumber()const;
 
     //from RawdataEvent
     std::vector<uint8_t> GetBlock(uint32_t i) const;
-    size_t NumBlocks() const { return m_blocks.size(); }
-    
+    size_t GetNumBlock() const;
+    size_t NumBlocks() const;
     std::vector<uint32_t> GetBlockNumList() const;
     
     /// Add a data block as std::vector
@@ -131,7 +134,6 @@ namespace eudaq {
       return m_blocks.size();
     }
 
-    /// Append data to a block as std::vector
     template <typename T>
     void AppendBlock(size_t index, const std::vector<T> &data) {
       auto &&src = make_vector(data);
@@ -139,16 +141,8 @@ namespace eudaq {
       dst.insert(dst.end(), src.begin(), src.end());
     }
 
-    /// Append data to a block as array with given size
-    template <typename T>
-    void AppendBlock(size_t index, const T *data, size_t bytes) {
-      auto &&src = make_vector(data, bytes);
-      auto &&dst = m_blocks[index];
-      dst.insert(dst.end(), src.begin(), src.end());
-    }
-
     //TODO: remove, clearn up
-    std::string GetTag(const std::string &name, const char *def) const {return GetTag(name, std::string(def));}
+    std::string GetTag(const std::string &name, const char *def) const;
     template <typename T> T GetTag(const std::string & name, T def) const {
       return eudaq::from_string(GetTag(name), def);
     }

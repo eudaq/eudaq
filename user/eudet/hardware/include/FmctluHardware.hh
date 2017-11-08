@@ -43,6 +43,7 @@ public:
   char getIOReg(unsigned int memAddr, bool verbose);
   char getInputs(unsigned int memAddr, bool verbose);
   void setOutputs(unsigned int memAddr, unsigned char direction, bool verbose);
+  char getOutputs(unsigned int memAddr, bool verbose);
 };
 //////////////////////////////////////////////////////////////////////
 class Si5345{

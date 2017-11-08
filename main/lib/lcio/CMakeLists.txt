@@ -41,20 +41,12 @@ if(LCIO_FOUND)
   unset(LCIO_SIO_LIBRARY CACHE)
 else()
   message(STATUS "Check for LCIOConfig.cmake : -- fail")
-  set(EUDAQ_LCIO_EX_GIT_REPOSITORY https://github.com/iLCSoft/LCIO.git)
-  set(EUDAQ_LCIO_EX_GIT_TAG v02-07)
-  set(EUDAQ_LCIO_EX_SOURCE_DIR ${PROJECT_SOURCE_DIR}/extern/source/lcio)
-  message("Set to download source files of lcio from: ${EUDAQ_LCIO_EX_GIT_REPOSITORY}")
-  message("Check out tag/branch ${EUDAQ_LCIO_EX_GIT_TAG}")
-  message("Set to download/compile/install lcio to: ${EUDAQ_LCIO_EX_SOURCE_DIR}")
+  message(STATUS "Set to compile the build-in LCIO (${CMAKE_CURRENT_LIST_DIR}/extern/LCIO-02-07.zip)")
   include(ExternalProject)
   externalproject_add(
     extern_lcio
-    UPDATE_DISCONNECTED TRUE
-    SOURCE_DIR ${EUDAQ_LCIO_EX_SOURCE_DIR}
-    GIT_REPOSITORY ${EUDAQ_LCIO_EX_GIT_REPOSITORY}
-    GIT_TAG ${EUDAQ_LCIO_EX_GIT_TAG}
-    PATCH_COMMAND patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/lico_rpath.patch
+    URL ${CMAKE_CURRENT_LIST_DIR}/extern/LCIO-02-07.zip
+    PATCH_COMMAND patch -p1 < ${CMAKE_CURRENT_LIST_DIR}/extern/LCIO-02-07-rpath.patch
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${EUDAQ_INSTALL_PREFIX}/extern -DBUILD_TESTING:BOOL=OFF -DBUILD_LCIO_EXAMPLES:BOOL=OFF -DCMAKE_INSTALL_RPATH:PATH=${EUDAQ_INSTALL_RPATH} -DCMAKE_INSTALL_RPATH_USE_LINK_PATH:BOOL=ON -DCMAKE_MACOSX_RPATH=ON
     )
   

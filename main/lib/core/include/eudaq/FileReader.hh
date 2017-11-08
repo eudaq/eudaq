@@ -28,8 +28,9 @@ namespace eudaq{
     FileReader();
     virtual ~FileReader();
     void SetConfiguration(ConfigurationSPC c) {m_conf = c;};
-    ConfigurationSPC  GetConfiguration() const {return m_conf;};
-    virtual EventSPC GetNextEvent() = 0;
+    ConfigurationSPC GetConfiguration() const {return m_conf;};
+    virtual EventSPC GetNextEvent() {return nullptr;};
+    static FileReaderSP Make(std::string type, std::string path);
   private:
     ConfigurationSPC m_conf;
   };

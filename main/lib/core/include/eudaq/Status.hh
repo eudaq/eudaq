@@ -9,8 +9,7 @@
 #include <map>
 #include <ostream>
 
-namespace eudaq {
-
+namespace eudaq{
   class Serializer;
   class Deserializer;
   class Status;
@@ -32,7 +31,6 @@ namespace eudaq {
       LVL_USER,
       LVL_NONE // The last value, any additions should go before this
     };
-
     enum State {
       STATE_ERROR,
       STATE_UNINIT,
@@ -41,27 +39,23 @@ namespace eudaq {
       STATE_RUNNING
     };
     
-    Status(int level = LVL_OK, const std::string &msg = "")
-      : m_level(level), m_state(STATE_UNINIT), m_msg(msg) {}
-    
-
+    Status(int lvl = LVL_OK, const std::string &msg = "");
     Status(Deserializer &);
+    ~Status() override;
     void Serialize(Serializer &) const override;
-
-    void ResetStatus(State st, Level lvl, const std::string &msg);
-    int GetLevel() const { return m_level;}
-    int GetState() const { return m_state;}
-    std::string GetStateString()const;
-    std::string GetMessage() const {return m_msg;}
-    
-    Status &SetTag(const std::string &name, const std::string &val);
-    std::string GetTag(const std::string &name,
-                       const std::string &def = "") const;
-    std::map<std::string, std::string> GetTags() const {return m_tags;};
-    
-    static std::string Level2String(int level);
-    static int String2Level(const std::string &);
     virtual void Print(std::ostream &os, size_t offset = 0) const;
+    void ResetStatus(State st, Level lvl, const std::string &msg);
+    void SetMessage(const std::string &msg);
+    void SetTag(const std::string &key, const std::string &val);
+    int GetLevel() const;
+    int GetState() const;
+    std::string GetMessage() const;
+    std::string GetStateString()const;
+    std::string GetTag(const std::string &key,
+                       const std::string &val= "") const;
+    std::map<std::string, std::string> GetTags() const;
+    static std::string Level2String(int lvl);
+    static int String2Level(const std::string &str);
   private:
     int m_level;
     int m_state;
@@ -71,10 +65,6 @@ namespace eudaq {
     static std::map<uint32_t, std::string> m_map_level_str;
   };
 
-  inline std::ostream &operator<<(std::ostream &os, const Status &s) {
-    s.Print(os);
-    return os;
-  }
 }
 
 #endif // EUDAQ_INCLUDED_Status
