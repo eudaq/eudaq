@@ -78,7 +78,7 @@ void FmctluProducer::RunLoop(){
       //triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
       triggerss<< std::to_string(data->input5) << std::to_string(data->input4) << std::to_string(data->input3) << std::to_string(data->input2) << std::to_string(data->input1) << std::to_string(data->input0);
       ev->SetTag("TRIGGER", triggerss.str());
-      if(m_tlu->IsBufferEmpty()){
+      //if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
@@ -100,7 +100,7 @@ void FmctluProducer::RunLoop(){
         if(m_exit_of_run){
           ev->SetEORE();
         }
-      }
+      //}
 
       if(isbegin){
         isbegin = false;
