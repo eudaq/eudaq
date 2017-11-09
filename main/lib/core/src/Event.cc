@@ -183,7 +183,6 @@ namespace eudaq {
   bool Event::IsFlagTimestamp() const {return IsFlagBit(FLAG_TIME);}
   bool Event::IsFlagTrigger() const {return IsFlagBit(FLAG_TRIG);}    
     
-  void Event::AddSubEvent(EventSPC ev);
   uint32_t Event::GetNumSubEvent() const {return m_sub_events.size();}
   EventSPC Event::GetSubEvent(uint32_t i) const {return m_sub_events.at(i);}
   std::vector<EventSPC> Event::GetSubEvents() const {return m_sub_events;}
@@ -196,7 +195,6 @@ namespace eudaq {
   void Event::SetDeviceN(uint32_t n){m_stm_n = n;}
   void Event::SetTriggerN(uint32_t n, bool flag){m_tg_n = n; if(flag) SetFlagBit(FLAG_TRIG);}
   void Event::SetExtendWord(uint32_t n){m_extend = n;}
-  void Event::SetTimestamp(uint64_t tb, uint64_t te, bool flag);
   void Event::SetDescription(const std::string &t) {m_dspt = t;}
     
   uint32_t Event::GetType() const {return m_type;};
