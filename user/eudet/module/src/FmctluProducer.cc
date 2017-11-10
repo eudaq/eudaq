@@ -127,43 +127,47 @@ void FmctluProducer::DoInitialise(){
   uhal_node = ini->Get("DeviceName",uhal_node);
   m_tlu = std::unique_ptr<tlu::FmctluController>(new tlu::FmctluController(uhal_conn, uhal_node));
 
-  // Define constants
-  m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
-
-  //Import I2C addresses for hardware
-  //Populate address list for I2C elements
-  m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
-  m_tlu->SetI2C_clockChip_addr(ini->Get("I2C_CLK_Addr", 0x68));
-  m_tlu->SetI2C_DAC1_addr(ini->Get("I2C_DAC1_Addr",0x13) );
-  m_tlu->SetI2C_DAC2_addr(ini->Get("I2C_DAC2_Addr",0x1f) );
-  m_tlu->SetI2C_EEPROM_addr(ini->Get("I2C_ID_Addr", 0x50) );
-  m_tlu->SetI2C_expander1_addr(ini->Get("I2C_EXP1_Addr",0x74));
-  m_tlu->SetI2C_expander2_addr(ini->Get("I2C_EXP2_Addr",0x75) );
-
-  // Initialize TLU hardware
-  m_tlu->InitializeI2C();
-  m_tlu->InitializeIOexp();
-  if (ini->Get("intRefOn", false)){
-    m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefInt", 2.5));
+  if( ini->Get("skipini", false) ){
+    std::cout << "SKIPPING INITIALIZATION (skipini= 1)" << std::endl;
   }
   else{
-    m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
+    // Define constants
+    m_tlu->DefineConst(ini->Get("nDUTs", 4), ini->Get("nTrgIn", 6));
+
+    //Import I2C addresses for hardware
+    //Populate address list for I2C elements
+    m_tlu->SetI2C_core_addr(ini->Get("I2C_COREEXP_Addr", 0x21));
+    m_tlu->SetI2C_clockChip_addr(ini->Get("I2C_CLK_Addr", 0x68));
+    m_tlu->SetI2C_DAC1_addr(ini->Get("I2C_DAC1_Addr",0x13) );
+    m_tlu->SetI2C_DAC2_addr(ini->Get("I2C_DAC2_Addr",0x1f) );
+    m_tlu->SetI2C_EEPROM_addr(ini->Get("I2C_ID_Addr", 0x50) );
+    m_tlu->SetI2C_expander1_addr(ini->Get("I2C_EXP1_Addr",0x74));
+    m_tlu->SetI2C_expander2_addr(ini->Get("I2C_EXP2_Addr",0x75) );
+
+    // Initialize TLU hardware
+    m_tlu->InitializeI2C();
+    m_tlu->InitializeIOexp();
+    if (ini->Get("intRefOn", false)){
+      m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefInt", 2.5));
+    }
+    else{
+      m_tlu->InitializeDAC(ini->Get("intRefOn", false), ini->Get("VRefExt", 1.3));
+    }
+
+    // Initialize the Si5345 clock chip using pre-generated file
+    if (ini->Get("CONFCLOCK", true)){
+      m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
+    }
+
+    // Reset IPBus registers
+    m_tlu->ResetSerdes();
+    m_tlu->ResetCounters();
+    m_tlu->SetTriggerVeto(1);
+    m_tlu->ResetFIFO();
+    m_tlu->ResetEventsBuffer();
+
+    m_tlu->ResetTimestamp();
   }
-
-  // Initialize the Si5345 clock chip using pre-generated file
-  if (ini->Get("CONFCLOCK", true)){
-    m_tlu->InitializeClkChip(ini->Get("CLOCK_CFG_FILE","./../user/eudet/misc/fmctlu_clock_config.txt")  );
-  }
-
-  // Reset IPBus registers
-  m_tlu->ResetSerdes();
-  m_tlu->ResetCounters();
-  m_tlu->SetTriggerVeto(1);
-  m_tlu->ResetFIFO();
-  m_tlu->ResetEventsBuffer();
-
-  m_tlu->ResetTimestamp();
-
 }
 
 void FmctluProducer::DoConfigure() {
@@ -175,62 +179,66 @@ void FmctluProducer::DoConfigure() {
   std::cout << "DELAY START SET TO: " << std::dec << m_delayStart << " ms" << std::endl;
 
   m_tlu->SetTriggerVeto(1);
+  if( conf->Get("skipconf", false) ){
+    std::cout << "SKIPPING CONFIGURATION (skipconf= 1)" << std::endl;
+  }
+  else{
+    // Enable HDMI connectors
+    m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), m_verbose);
+    m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), m_verbose);
+    m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), m_verbose);
+    m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), m_verbose);
 
-  // Enable HDMI connectors
-  m_tlu->configureHDMI(1, conf->Get("HDMI1_set", 0b0001), m_verbose);
-  m_tlu->configureHDMI(2, conf->Get("HDMI2_set", 0b0001), m_verbose);
-  m_tlu->configureHDMI(3, conf->Get("HDMI3_set", 0b0001), m_verbose);
-  m_tlu->configureHDMI(4, conf->Get("HDMI4_set", 0b0001), m_verbose);
+    // Select clock to HDMI
+    m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), m_verbose);
+    m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), m_verbose);
+    m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), m_verbose);
+    m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), m_verbose);
 
-  // Select clock to HDMI
-  m_tlu->SetDutClkSrc(1, conf->Get("HDMI1_clk", 1), m_verbose);
-  m_tlu->SetDutClkSrc(2, conf->Get("HDMI2_clk", 1), m_verbose);
-  m_tlu->SetDutClkSrc(3, conf->Get("HDMI3_clk", 1), m_verbose);
-  m_tlu->SetDutClkSrc(4, conf->Get("HDMI4_clk", 1), m_verbose);
+    //Set lemo clock
+    m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), m_verbose);
 
-  //Set lemo clock
-  m_tlu->enableClkLEMO(conf->Get("LEMOclk", true), m_verbose);
+    // Set thresholds
+    m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
+    m_tlu->SetThresholdValue(1, conf->Get("DACThreshold1", 1.2));
+    m_tlu->SetThresholdValue(2, conf->Get("DACThreshold2", 1.2));
+    m_tlu->SetThresholdValue(3, conf->Get("DACThreshold3", 1.2));
+    m_tlu->SetThresholdValue(4, conf->Get("DACThreshold4", 1.2));
+    m_tlu->SetThresholdValue(5, conf->Get("DACThreshold5", 1.2));
 
-  // Set thresholds
-  m_tlu->SetThresholdValue(0, conf->Get("DACThreshold0", 1.2));
-  m_tlu->SetThresholdValue(1, conf->Get("DACThreshold1", 1.2));
-  m_tlu->SetThresholdValue(2, conf->Get("DACThreshold2", 1.2));
-  m_tlu->SetThresholdValue(3, conf->Get("DACThreshold3", 1.2));
-  m_tlu->SetThresholdValue(4, conf->Get("DACThreshold4", 1.2));
-  m_tlu->SetThresholdValue(5, conf->Get("DACThreshold5", 1.2));
+    // Set trigger stretch and delay
+    std::vector<unsigned int> stretcVec = {(unsigned int)conf->Get("in0_STR",0),
+  					 (unsigned int)conf->Get("in1_STR",0),
+  					 (unsigned int)conf->Get("in2_STR",0),
+  					 (unsigned int)conf->Get("in3_STR",0),
+  					 (unsigned int)conf->Get("in4_STR",0),
+  					 (unsigned int)conf->Get("in5_STR",0)};
 
-  // Set trigger stretch and delay
-  std::vector<unsigned int> stretcVec = {(unsigned int)conf->Get("in0_STR",0),
-					 (unsigned int)conf->Get("in1_STR",0),
-					 (unsigned int)conf->Get("in2_STR",0),
-					 (unsigned int)conf->Get("in3_STR",0),
-					 (unsigned int)conf->Get("in4_STR",0),
-					 (unsigned int)conf->Get("in5_STR",0)};
+    std::vector<unsigned int> delayVec = {(unsigned int)conf->Get("in0_DEL",0),
+                                          (unsigned int)conf->Get("in1_DEL",0),
+                                          (unsigned int)conf->Get("in2_DEL",0),
+                                          (unsigned int)conf->Get("in3_DEL",0),
+                                          (unsigned int)conf->Get("in4_DEL",0),
+                                          (unsigned int)conf->Get("in5_DEL",0)};
+    m_tlu->SetPulseStretchPack(stretcVec);
+    m_tlu->SetPulseDelayPack(delayVec);
+    //std::cout <<  "Stretch " << (int)m_tlu->GetPulseStretch() << " delay " << (int)m_tlu->GetPulseDelay()  << std::endl;
 
-  std::vector<unsigned int> delayVec = {(unsigned int)conf->Get("in0_DEL",0),
-                                        (unsigned int)conf->Get("in1_DEL",0),
-                                        (unsigned int)conf->Get("in2_DEL",0),
-                                        (unsigned int)conf->Get("in3_DEL",0),
-                                        (unsigned int)conf->Get("in4_DEL",0),
-                                        (unsigned int)conf->Get("in5_DEL",0)};
-  m_tlu->SetPulseStretchPack(stretcVec);
-  m_tlu->SetPulseDelayPack(delayVec);
-  //std::cout <<  "Stretch " << (int)m_tlu->GetPulseStretch() << " delay " << (int)m_tlu->GetPulseDelay()  << std::endl;
+    // Set triggerMask
+    // The conf function does not seem happy with a 32-bit default. Need to check.
+    m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
 
-  // Set triggerMask
-  // The conf function does not seem happy with a 32-bit default. Need to check.
-  m_tlu->SetTriggerMask( (uint32_t)(conf->Get("trigMaskHi", 0xFFFF)),  (uint32_t)(conf->Get("trigMaskLo", 0xFFFE)) );
-
-  m_tlu->SetDUTMask(conf->Get("DUTMask",1)); // Which DUTs are on
-  m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff)); // AIDA (x1) or EUDET (x0)
-  m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff)); // Only for EUDET
-  m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
-  m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
-  m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
-  //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
-  m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), m_verbose );
-  m_tlu->GetEventFifoCSR();
-  m_tlu->GetEventFifoFillLevel();
+    m_tlu->SetDUTMask(conf->Get("DUTMask",1)); // Which DUTs are on
+    m_tlu->SetDUTMaskMode(conf->Get("DUTMaskMode",0xff)); // AIDA (x1) or EUDET (x0)
+    m_tlu->SetDUTMaskModeModifier(conf->Get("DUTMaskModeModifier",0xff)); // Only for EUDET
+    m_tlu->SetDUTIgnoreBusy(conf->Get("DUTIgnoreBusy",0xF)); // Ignore busy in AIDA mode
+    m_tlu->SetDUTIgnoreShutterVeto(conf->Get("DUTIgnoreShutterVeto",1)); //
+    m_tlu->SetEnableRecordData(conf->Get("EnableRecordData", 1));
+    //m_tlu->SetInternalTriggerInterval(conf->Get("InternalTriggerInterval",0));  // 160M/interval
+    m_tlu->SetInternalTriggerFrequency( conf->Get("InternalTriggerFreq", 0), m_verbose );
+    m_tlu->GetEventFifoCSR();
+    m_tlu->GetEventFifoFillLevel();
+  }
 }
 
 void FmctluProducer::DoStartRun(){
