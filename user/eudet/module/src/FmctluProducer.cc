@@ -83,12 +83,12 @@ void FmctluProducer::RunLoop(){
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
         ev->SetTag("PARTICLES", std::to_string(pt));
-      	ev->SetTag("FINE_TS0", std::to_string(sl0));
-      	ev->SetTag("FINE_TS1", std::to_string(sl1));
-      	ev->SetTag("FINE_TS2", std::to_string(sl2));
-      	ev->SetTag("FINE_TS3", std::to_string(sl3));
-        ev->SetTag("FINE_TS4", std::to_string(sl4));
-        ev->SetTag("FINE_TS5", std::to_string(sl5));
+      	ev->SetTag("SCALER0", std::to_string(sl0));
+      	ev->SetTag("SCALER1", std::to_string(sl1));
+      	ev->SetTag("SCALER2", std::to_string(sl2));
+      	ev->SetTag("SCALER3", std::to_string(sl3));
+        ev->SetTag("SCALER4", std::to_string(sl4));
+        ev->SetTag("SCALER5", std::to_string(sl5));
       	//ev->SetTag("TRIGGER0", std::to_string(data->input0));
         //ev->SetTag("TRIGGER1", std::to_string(data->input1));
         //ev->SetTag("TRIGGER2", std::to_string(data->input2));
@@ -268,12 +268,12 @@ void FmctluProducer::DoStatus() {
     post=m_tlu->GetPostVetoTriggers();
     m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
     //Is tlu controller safe to be accessed by 2 threads (RunLoop and DoStatus) at some time?
-    SetStatusTag("FINE_TS0", std::to_string(sl0));
-    SetStatusTag("FINE_TS1", std::to_string(sl1));
-    SetStatusTag("FINE_TS2", std::to_string(sl2));
-    SetStatusTag("FINE_TS3", std::to_string(sl3));
-    SetStatusTag("FINE_TS4", std::to_string(sl4));
-    SetStatusTag("FINE_TS5", std::to_string(sl5));
+    SetStatusTag("SCALER0", std::to_string(sl0));
+    SetStatusTag("SCALER1", std::to_string(sl1));
+    SetStatusTag("SCALER2", std::to_string(sl2));
+    SetStatusTag("SCALER3", std::to_string(sl3));
+    SetStatusTag("SCALER4", std::to_string(sl4));
+    SetStatusTag("SCALER5", std::to_string(sl5));
     SetStatusTag("PARTICLES", std::to_string(pret));
     SetStatusTag("TRIG", std::to_string(post));
   }
