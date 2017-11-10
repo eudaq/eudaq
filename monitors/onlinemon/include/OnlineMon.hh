@@ -47,7 +47,7 @@ class RootMonitor : public eudaq::Monitor{
 public:
   RootMonitor(const std::string &runcontrol, 
 	      int x, int y, int w, int h, int argc, int offline,
-              const std::string &conffile = "");
+              const std::string &conffile = "", const std::string &monname = "");
   ~RootMonitor() override;
   void DoConfigure() override;
   void DoStartRun() override;
