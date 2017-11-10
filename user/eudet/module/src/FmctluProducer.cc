@@ -89,12 +89,12 @@ void FmctluProducer::RunLoop(){
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
-      	//ev->SetTag("TRIGGER0", std::to_string(data->input0));
-        //ev->SetTag("TRIGGER1", std::to_string(data->input1));
-        //ev->SetTag("TRIGGER2", std::to_string(data->input2));
-        //ev->SetTag("TRIGGER3", std::to_string(data->input3));
-        //ev->SetTag("TRIGGER4", std::to_string(data->input4));
-        //ev->SetTag("TRIGGER5", std::to_string(data->input5));
+      	ev->SetTag("FINE_TS0", std::to_string(data->sc0));
+        ev->SetTag("FINE_TS1", std::to_string(data->sc1));
+        ev->SetTag("FINE_TS2", std::to_string(data->sc2));
+        ev->SetTag("FINE_TS3", std::to_string(data->sc3));
+        ev->SetTag("FINE_TS4", std::to_string(data->sc4));
+        ev->SetTag("FINE_TS5", std::to_string(data->sc5));
         ev->SetTag("TYPE", std::to_string(data->eventtype));
 
         if(m_exit_of_run){
