@@ -78,7 +78,15 @@ void FmctluProducer::RunLoop(){
       //triggerss<< data->input5 << data->input4 << data->input3 << data->input2 << data->input1 << data->input0;
       triggerss<< std::to_string(data->input5) << std::to_string(data->input4) << std::to_string(data->input3) << std::to_string(data->input2) << std::to_string(data->input1) << std::to_string(data->input0);
       ev->SetTag("TRIGGER", triggerss.str());
-      //if(m_tlu->IsBufferEmpty()){
+      ev->SetTag("FINE_TS0", std::to_string(data->sc0));
+      ev->SetTag("FINE_TS1", std::to_string(data->sc1));
+      ev->SetTag("FINE_TS2", std::to_string(data->sc2));
+      ev->SetTag("FINE_TS3", std::to_string(data->sc3));
+      ev->SetTag("FINE_TS4", std::to_string(data->sc4));
+      ev->SetTag("FINE_TS5", std::to_string(data->sc5));
+      ev->SetTag("TYPE", std::to_string(data->eventtype));
+
+      if(m_tlu->IsBufferEmpty()){
       	uint32_t sl0,sl1,sl2,sl3, sl4, sl5, pt;
       	m_tlu->GetScaler(sl0,sl1,sl2,sl3,sl4,sl5);
       	pt=m_tlu->GetPreVetoTriggers();
@@ -89,18 +97,10 @@ void FmctluProducer::RunLoop(){
       	ev->SetTag("SCALER3", std::to_string(sl3));
         ev->SetTag("SCALER4", std::to_string(sl4));
         ev->SetTag("SCALER5", std::to_string(sl5));
-      	ev->SetTag("FINE_TS0", std::to_string(data->sc0));
-        ev->SetTag("FINE_TS1", std::to_string(data->sc1));
-        ev->SetTag("FINE_TS2", std::to_string(data->sc2));
-        ev->SetTag("FINE_TS3", std::to_string(data->sc3));
-        ev->SetTag("FINE_TS4", std::to_string(data->sc4));
-        ev->SetTag("FINE_TS5", std::to_string(data->sc5));
-        ev->SetTag("TYPE", std::to_string(data->eventtype));
-
         if(m_exit_of_run){
           ev->SetEORE();
         }
-      //}
+      }
 
       if(isbegin){
         isbegin = false;
