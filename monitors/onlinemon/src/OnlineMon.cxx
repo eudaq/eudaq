@@ -50,8 +50,8 @@ using namespace std;
 
 RootMonitor::RootMonitor(const std::string & runcontrol,
 			 int /*x*/, int /*y*/, int /*w*/, int /*h*/,
-			 int argc, int offline, const std::string & conffile)
-  :eudaq::Monitor("StdEventMonitor", runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
+			 int argc, int offline, const std::string & conffile, const std::string & monname)
+  :eudaq::Monitor(monname, runcontrol), _offline(offline), _planesInitialized(false), onlinemon(NULL){
   if (_offline <= 0)
   {
     onlinemon = new OnlineMonWindow(gClient->GetRoot(),800,600);
@@ -241,11 +241,14 @@ void RootMonitor::DoReceive(eudaq::EventSP evsp) {
 
         cout << "Plane Mismatch on " <<ev.GetEventNumber()<<endl;
         cout << "Current/Previous " <<num<<"/"<<myevent.getNPlanes()<<endl;
-        skip_dodgy_event=true; //we may want to skip this FIXME
+        skip_dodgy_event=false; //we may want to skip this FIXME
         ostringstream eudaq_warn_message;
         eudaq_warn_message << "Plane Mismatch in Event "<<ev.GetEventNumber() <<" "<<num<<"/"<<myevent.getNPlanes();
         EUDAQ_LOG(WARN,(eudaq_warn_message.str()).c_str());
-
+	_planesInitialized = false;
+	num = (unsigned int) ev.NumPlanes();
+	eudaq_warn_message << "Continuing and readjusting the number of planes to  " << num;
+	myevent.setNPlanes(num);
       }
       else {
         myevent.setNPlanes(num);
@@ -537,6 +540,7 @@ int main(int argc, const char ** argv) {
   eudaq::Option<int>             update(op, "u", "update",  1000, "update every ms");
   eudaq::Option<int>             offline(op, "o", "offline",  0, "running is offlinemode - analyse until event <num>");
   eudaq::Option<std::string>     configfile(op, "c", "config_file"," ", "filename","Config file to use for onlinemon");
+  eudaq::Option<std::string>     monitorname(op, "t", "monitor_name"," ", "StdEventMonitor","Name for onlinemon");	
   eudaq::OptionFlag do_rootatend (op, "rf","root","Write out root-file after each run");
   eudaq::OptionFlag do_resetatend (op, "rs","reset","Reset Histograms when run stops");
 
@@ -548,7 +552,7 @@ int main(int argc, const char ** argv) {
     TApplication theApp("App", &argc, const_cast<char**>(argv),0,0);
     RootMonitor mon(rctrl.Value(),
 		    x.Value(), y.Value(), w.Value(), h.Value(),
-		    argc, offline.Value(), configfile.Value());
+		    argc, offline.Value(), configfile.Value(),monitorname.Value());
     mon.setWriteRoot(do_rootatend.IsSet());
     mon.autoReset(do_resetatend.IsSet());
     mon.setReduce(reduce.Value());

@@ -11,5 +11,12 @@ namespace eudaq {
   Factory<FileWriter>::Instance<std::string&&>();
   
   FileWriter::FileWriter(){}
-  
+
+  FileWriterSP FileWriter::Make(std::string type, std::string path){
+    auto fw = eudaq::Factory<eudaq::FileWriter>::MakeShared(eudaq::str2hash(type), path);
+    if(!fw)
+      EUDAQ_THROW("FileWriter: There is no FileWriter regiested by "+ type);
+    return fw;
+  }
+
 }

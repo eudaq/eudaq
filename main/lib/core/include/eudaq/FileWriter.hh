@@ -35,6 +35,7 @@ namespace eudaq {
     ConfigurationSPC GetConfiguration() const {return m_conf;};
     virtual void WriteEvent(EventSPC ) {};
     virtual uint64_t FileBytes() const {return 0;};
+    static FileWriterSP Make(std::string type, std::string path);
   private:
     ConfigurationSPC m_conf;
   };

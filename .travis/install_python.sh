@@ -26,7 +26,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		python -m virtualenv ~/.venv
 		source ~/.venv/bin/activate
 		
-		pip install --upgrade pip
+		# gives error 9.11.2017
+		#pip install --upgrade pip
 		pip install -q numpy
 		
 	else
@@ -47,7 +48,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 		python -m virtualenv ~/.venv
 		source ~/.venv/bin/activate
 		
-		pip install --upgrade pip
+		# gives error 9.11.2017
+		#pip install --upgrade pip
 		pip install -q numpy		
 	fi
 	

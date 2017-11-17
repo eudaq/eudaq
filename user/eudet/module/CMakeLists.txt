@@ -23,6 +23,7 @@ endif()
 if(WIN32)
   list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2StdEventConverter.cc)
   list(REMOVE_ITEM MODULE_SRC src/UsbpixrefRawEvent2LCEventConverter.cc)
+  list(REMOVE_ITEM MODULE_SRC src/UsbpixI4BRawEvent2LCEventConverter.cc)
 endif()
 
 add_library(${EUDAQ_MODULE} SHARED ${MODULE_SRC})

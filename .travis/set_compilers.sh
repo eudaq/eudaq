@@ -47,7 +47,8 @@ else
 			sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
 			sudo apt-add-repository "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-$LLVM_VERSION main"
 			sudo apt-get update
-			sudo apt-get install g++-5 gcc-5 clang-$LLVM_VERSION clang-$LLVM_VERSION-doc libclang-common-$LLVM_VERSION-dev libclang-$LLVM_VERSION-dev libclang1-$LLVM_VERSION libclang1-$LLVM_VERSION-dbg libllvm-$LLVM_VERSION-ocaml-dev libllvm$LLVM_VERSION libllvm$LLVM_VERSION-dbg liblldb-$LLVM_VERSION llvm-$LLVM_VERSION llvm-$LLVM_VERSION-dev llvm-$LLVM_VERSION-doc llvm-$LLVM_VERSION-examples llvm-$LLVM_VERSION-runtime clang-format-$LLVM_VERSION python-clang-$LLVM_VERSION liblldb-$LLVM_VERSION-dev lld-$LLVM_VERSION libfuzzer-$LLVM_VERSION-dev  -y
+			# removing libllvm-$LLVM_VERSION-ocaml-dev  as 5.0 version cannot be found 9.11.2017
+			sudo apt-get install g++-5 gcc-5 clang-$LLVM_VERSION clang-$LLVM_VERSION-doc libclang-common-$LLVM_VERSION-dev libclang-$LLVM_VERSION-dev libclang1-$LLVM_VERSION libclang1-$LLVM_VERSION-dbg libllvm$LLVM_VERSION libllvm$LLVM_VERSION-dbg liblldb-$LLVM_VERSION llvm-$LLVM_VERSION llvm-$LLVM_VERSION-dev llvm-$LLVM_VERSION-doc llvm-$LLVM_VERSION-examples llvm-$LLVM_VERSION-runtime clang-format-$LLVM_VERSION python-clang-$LLVM_VERSION liblldb-$LLVM_VERSION-dev lld-$LLVM_VERSION libfuzzer-$LLVM_VERSION-dev  -y
 			export CXX="clang++-"$LLVM_VERSION 
 			export CC="clang-"$LLVM_VERSION
 		fi

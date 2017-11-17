@@ -10,8 +10,8 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 	echo "General brew upgrade"
 	brew update || brew upgrade
 	
-	echo "Upgrading pip itself"
-	python -m pip install -U pip
+	#echo "Upgrading pip itself"
+	#python -m pip install -U pip
 	
 else
 	echo "Apt upgrade"
