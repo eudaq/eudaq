@@ -86,7 +86,7 @@ kpixProducer::kpixProducer(const std::string & name, const std::string & runcont
   // Create and setup PGP link
   udpLink.setMaxRxTx(500000);
   udpLink.open(8192,1,"192.168.1.16"); // to have multiple udplink connections
-  //udpLink.openDataNet("127.0.0.1",8099);
+  udpLink.openDataNet("127.0.0.1",8099);
   //usleep(100);
   dataFileFd_ = -1;
 }
@@ -150,10 +150,10 @@ void kpixProducer::DoConfigure(){
   m_runcount = conf->Get("KPIX_RunCount",0);
   if (m_runcount!=0) kpix->getVariable("RunCount")->setInt(m_runcount);
 
-  std::cout<<"[producer:dev] m_runcount = "<< m_runcount <<std::endl;  
-  std::cout<<"[producer:dev] run count = "<< kpix->getVariable("RunCount")->getInt() <<std::endl;
+  //std::cout<<"[producer:dev] m_runcount = "<< m_runcount <<std::endl;  
+  //std::cout<<"[producer:dev] run count = "<< kpix->getVariable("RunCount")->getInt() <<std::endl;
   //m_runcount = kpix->getVariable("RunCount")->getInt();
-  std::cout<<"[producer:dev] run progress = "<<kpix->getVariable("RunProgress")->getInt() <<std::endl;
+  //std::cout<<"[producer:dev] run progress = "<<kpix->getVariable("RunProgress")->getInt() <<std::endl;
   
   m_runrate = kpix->getVariable("RunRate")->get();
   std::cout<<"[producer:dev] run_rate = "<< m_runrate <<std::endl;
@@ -342,8 +342,8 @@ void kpixProducer::Mainloop(){
       break;
     } else /*do nothing*/;
 
-    //}while(btrial != "Stopped"); //-> used when kpix own data streaming not broken @mengqing
-  }while(evt_counter<m_runcount);
+  }while(btrial != "Stopped"); //-> used when kpix own data streaming not broken @mengqing
+    //}while(evt_counter<m_runcount);
   
   m_exit_of_run=true;
 
