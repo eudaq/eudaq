@@ -44,6 +44,11 @@ add_executable(${EXE_CLI_READER} src/euCliReader.cxx)
 target_link_libraries(${EXE_CLI_READER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
 list(APPEND INSTALL_TARGETS ${EXE_CLI_READER})
 
+set(EXE_CLI_TLU_READER euCliTluReader)
+add_executable(${EXE_CLI_TLU_READER} src/euCliTluReader.cxx)
+target_link_libraries(${EXE_CLI_TLU_READER} ${EUDAQ_CORE_LIBRARY} ${EUDAQ_THREADS_LIB})
+list(APPEND INSTALL_TARGETS ${EXE_CLI_TLU_READER})
+
 install(TARGETS ${INSTALL_TARGETS}
   DESTINATION bin
   LIBRARY DESTINATION lib

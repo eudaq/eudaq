@@ -41,40 +41,8 @@ int main(int /*argc*/, const char **argv) {
     auto ev = reader->GetNextEvent();
     if(!ev)
       break;
-    bool in_range_evn = false;
-    if(eventl_v!=0 || eventh_v!=0){
-      uint32_t ev_n = ev->GetEventN();
-      if(ev_n >= eventl_v && ev_n < eventh_v){
-	in_range_evn = true;
-      }
-    }
-    else
-      in_range_evn = true;
 
-    bool in_range_tgn = false;
-    if(triggerl_v!=0 || triggerh_v!=0){
-      uint32_t tg_n = ev->GetTriggerN();
-      if(tg_n >= triggerl_v && tg_n < triggerh_v){
-	in_range_tgn = true;
-      }
-    }
-    else
-      in_range_tgn = true;
-
-    bool in_range_tsn = false;
-    if(timestampl_v!=0 || timestamph_v!=0){
-      uint32_t ts_beg = ev->GetTimestampBegin();
-      uint32_t ts_end = ev->GetTimestampEnd();
-      if(ts_beg >= timestampl_v && ts_end <= timestamph_v){
-	in_range_tsn = true;
-      }
-    }
-    else
-      in_range_tsn = true;
-
-
-    if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
-        auto subevents = ev->GetSubEvents();
+    auto subevents = ev->GetSubEvents();
         for (auto &subev: subevents){
             auto subeventDescription = subev->GetDescription();
             // std::cout<< subeventDescription << std::endl;
@@ -84,18 +52,15 @@ int main(int /*argc*/, const char **argv) {
 		auto triggerNumber = subev->GetTriggerN();
 		auto triggersFired = subev->GetTag("TRIGGER" , "NAN");
 		auto timeStampBegin = subev->GetTimestampBegin();
-    uint scalers [6] = { std::stoi(subev->GetTag("SCALER0" , "NAN")), std::stoi(subev->GetTag("SCALER1" , "NAN")) , std::stoi(subev->GetTag("SCALER2" , "NAN")) ,std::stoi(subev->GetTag("SCALER3" , "NAN")) ,std::stoi(subev->GetTag("SCALER4" , "NAN")) ,std::stoi(subev->GetTag("SCALER5" , "NAN"))    };
-    uint fine_ts [6] = { std::stoi(subev->GetTag("FINE_TS0" , "NAN")), std::stoi(subev->GetTag("FINE_TS1" , "NAN")) , std::stoi(subev->GetTag("FINE_TS2" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS3" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS4" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS5" , "NAN"))    };
-		std::cout<< runNumber << " " << eventNumber << " " << triggerNumber << " " << timeStampBegin << " " << triggersFired <<std::endl;
+                uint scalers [6] = { std::stoi(subev->GetTag("SCALER0" , "NAN")), std::stoi(subev->GetTag("SCALER1" , "NAN")) , std::stoi(subev->GetTag("SCALER2" , "NAN")) ,std::stoi(subev->GetTag("SCALER3" , "NAN")) ,std::stoi(subev->GetTag("SCALER4" , "NAN")) ,std::stoi(subev->GetTag("SCALER5" , "NAN"))    };
+                uint fine_ts [6] = { std::stoi(subev->GetTag("FINE_TS0" , "NAN")), std::stoi(subev->GetTag("FINE_TS1" , "NAN")) , std::stoi(subev->GetTag("FINE_TS2" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS3" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS4" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS5" , "NAN"))    };
+		std::cout<< runNumber << " " << eventNumber << " " << triggerNumber << " " << timeStampBegin << " " << triggersFired << " " << fine_ts[0] << " " << fine_ts[1]<< " " << fine_ts[2] << " " << fine_ts[3] << " " << fine_ts[4] << " " << fine_ts[5] <<std::endl;
                 //subev->Print(std::cout);
             }
 
         }
       // ev->Print(std::cout);
     }
-
-    event_count ++;
-  }
   // std::cout<< "There are "<< event_count << "Events"<<std::endl;
   return 0;
 }
