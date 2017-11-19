@@ -100,6 +100,8 @@ void init_pybind_datacollector(py::module &m){
 		     "Called when a producer is disconnecting", py::arg("id"));
   datacollector_.def("DoReceive", &eudaq::DataCollector::DoReceive,
 		     "Called when an event is recievied", py::arg("id"), py::arg("ev"));
+  datacollector_.def("WriteEvent", &eudaq::DataCollector::WriteEvent,
+		     "Write event to disk", py::arg("ev"));
   datacollector_.def("SetServerAddress", &eudaq::DataCollector::SetServerAddress,
 		     "Set port of the data listening", py::arg("addr"));
   datacollector_.def("Connect", &eudaq::DataCollector::Connect);
