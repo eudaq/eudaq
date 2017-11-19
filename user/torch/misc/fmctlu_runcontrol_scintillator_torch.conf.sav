@@ -1,0 +1,101 @@
+[Producer.fmctlu]
+verbose= 0
+confid= 20171109
+HDMI1_set= 0x6 ## 4-bit to determine direction of HDMI pins
+HDMI2_set= 0x6 ## 4-bit to determine direction of HDMI pins
+HDMI3_set= 0x6 ## 4-bit to determine direction of HDMI pins ( 7 to turn on clock )
+HDMI4_set= 0x6 ## 4-bit to determine direction of HDMI pins
+HDMI1_clk = 0
+HDMI2_clk = 0
+HDMI3_clk = 0
+HDMI4_clk = 0
+LEMOclk = 1
+in0_STR = 30
+in0_DEL = 0
+in1_STR = 30
+in1_DEL = 0
+in2_STR = 30
+in2_DEL = 0
+in3_STR = 30
+in3_DEL = 0
+in4_STR = 1
+in4_DEL = 0
+in5_STR = 30
+in5_DEL = 0
+#
+trigMaskHi = 0x00000000
+#trigMaskLo = 0x00008080
+#trigMaskLo = 0x00008888
+#trigMaskLo = 0x0000F000
+#trigMaskLo = 0x0000C000
+
+#Demand input 4 ( TORCH T2 )
+trigMaskLo = 0xFFFF0000
+
+#
+#### DAC THRESHOLD
+DACThreshold0 = -0.04
+DACThreshold1 = -0.04
+DACThreshold2 = -0.04
+DACThreshold3 = -0.04
+DACThreshold4 = -0.50
+DACThreshold5 = -0.50
+
+# AndMask = 0xf
+# OrMask = 0
+VetoMask = 0
+# DutMask = 0x5 # Which DUTs are on ( Telescope and TORCH only. Set to 7 to activate 0 ( telescope ), 1 ( USBpix ), 2 (TORCH ) )
+DutMask = 0x1
+# Define AIDA or EUDET mode ( DUT 0,1 are EUDET ( 2bits = 0 ), rest AIDA ( 2bits = 1 ))
+DUTMaskMode= 0xFFFFFFF0 
+InternalTriggerFreq = 100
+TrigRollover = 0
+#DUTInput3=LEMO
+
+EUDAQ_DC=ni_tlu_dc # Define the data collector to be used by the producer
+#EUDAQ_DC=ni_dc
+
+[LogCollector.log]
+# Currently, all LogCollectors have a hardcoded runtime name: log
+# nothing
+
+[DataCollector.ni_tlu_dc]
+EUDAQ_MN=StdEventMonitor
+EUDAQ_FW=native
+EUDAQ_FW_PATTERN=$12D_run_ni_$6R$X
+
+[Monitor.StdEventMonitor]
+EX0_ENABLE_PRINT=0
+EX0_ENABLE_STD_PRINT=0
+EX0_ENABLE_STD_CONVERTER=1
+
+[Producer.niproducer]
+NiIPaddr = 192.168.10.2
+TriggerType = 1
+Det = MIMOSA26
+Mode = ZS2
+NiVersion = 1
+NumBoards = 6
+FPGADownload = 1
+OneFrame = 0
+IDOffset = 0
+MimosaID_1 = 1
+MimosaID_2 = 2
+MimosaID_3 = 3
+MimosaID_4 = 4
+MimosaID_5 = 5
+MimosaID_6 = 6
+MimosaEn_1 = 1
+MimosaEn_2 = 1
+MimosaEn_3 = 1
+MimosaEn_4 = 1
+MimosaEn_5 = 1
+MimosaEn_6 = 1
+
+# Define the data collector to be used by the producer
+EUDAQ_DC=ni_tlu_dc 
+
+#[Producer.USBpix]
+#config_file = /home/teleuser/timing_plane_08_11_2017.cfg.root
+#SRAM_READOUT_AT = 10
+#EUDAQ_DC=ni_tlu_dc
