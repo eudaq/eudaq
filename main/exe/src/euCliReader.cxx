@@ -84,8 +84,8 @@ int main(int /*argc*/, const char **argv) {
 		auto triggerNumber = subev->GetTriggerN();
 		auto triggersFired = subev->GetTag("TRIGGER" , "NAN");
 		auto timeStampBegin = subev->GetTimestampBegin();
-    uint scalers [6] = { std::stoi(subev->GetTag("SCALER0" , "NAN")), std::stoi(subev->GetTag("SCALER1" , "NAN")) , std::stoi(subev->GetTag("SCALER2" , "NAN")) ,std::stoi(subev->GetTag("SCALER3" , "NAN")) ,std::stoi(subev->GetTag("SCALER4" , "NAN")) ,std::stoi(subev->GetTag("SCALER5" , "NAN"))    };
-    uint fine_ts [6] = { std::stoi(subev->GetTag("FINE_TS0" , "NAN")), std::stoi(subev->GetTag("FINE_TS1" , "NAN")) , std::stoi(subev->GetTag("FINE_TS2" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS3" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS4" , "NAN")) ,std::stoi(subev->GetTag("FINE_TS5" , "NAN"))    };
+		uint32_t scalers [6] = { static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER0" , "NAN"))), static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER1" , "NAN"))) , static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER2" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER3" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER4" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("SCALER5" , "NAN")))    };
+		uint32_t fine_ts [6] = { static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS0" , "NAN"))), static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS1" , "NAN"))) , static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS2" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS3" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS4" , "NAN"))) ,static_cast<uint32_t>(std::stoi(subev->GetTag("FINE_TS5" , "NAN")))    };
 		std::cout<< runNumber << " " << eventNumber << " " << triggerNumber << " " << timeStampBegin << " " << triggersFired <<std::endl;
                 //subev->Print(std::cout);
             }
