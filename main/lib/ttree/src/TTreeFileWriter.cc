@@ -36,9 +36,31 @@ namespace eudaq {
   }
   
   void TTreeFileWriter::WriteEvent(EventSPC ev) {
-    std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', m_run_n));
-    EUDAQ_INFO("Preparing the outputfile: " + foutput);
-    m_tfile = new TFile(foutput.c_str(), "RECREATE");
-    
+    uint32_t run_n = ev->GetRunN();
+    //    foutput(foutput,"RECREATE");
+    if(!m_ttreewriter || m_run_n != run_n){
+      try{
+	//	m_ttreewriter.reset(ttree::LCFactory::getInstance()->createttreeWriter());
+	std::time_t time_now = std::time(nullptr);
+	char time_buff[13];
+	time_buff[12] = 0;
+	std::strftime(time_buff, sizeof(time_buff), "%y%m%d%H%M%S", std::localtime(&time_now));
+	std::string time_str(time_buff);
+	std::string foutput(FileNamer(m_filepattern).Set('X', ".root").Set('R', m_run_n).Set('D', time_str));
+	//	m_ttreewriter.reset(m_ttreewriter);
+	EUDAQ_INFO("Preparing the outputfile: " + foutput);
+	m_tfile = new TFile(foutput.c_str(), "RECREATE");
+	
+    } catch(const Exception &e){
+      EUDAQ_THROW(std::string("Fail to open ROOT file")+e.what());
+    }
+    }
+    if(!m_ttreewriter)
+      EUDAQ_THROW("TTreeFileWriter: Attempt to write unopened file");
+    TTreeEventSP ttree(new TTree);
+    TTreeEventConverter::Convert(ev, ttree, GetConfiguration());
+    //    m_ttreewriter->writeEvent(ttree.get());
+        ttree->Write();
+  
   }
 }
