@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <cstring>
+#include <atomic>
 
 /*for fd*/
 #include <fcntl.h>
@@ -43,7 +44,8 @@ private:
   int32_t dataFileFd_;
 
   bool m_debug;
-  
+  std::atomic<bool> m_eudaqStop;
+
   bool getaheader;
   bool buflost;
   uint32_t m_datasize;
@@ -66,7 +68,7 @@ public:
   dataserver()
     :fromlen(sizeof(struct sockaddr_in)),
     dataFileFd_(-1), maxbufsize(1024),
-    m_datatype(6), m_sock(0) {};
+    m_datatype(6), m_sock(0),  m_eudaqStop(false) {};
   ~dataserver(){
     if (m_sock>0) close(m_sock);
   };
@@ -82,6 +84,10 @@ public:
   int poll(int &evt);
   void listen(bool unlimited);
   void dataHeadTail( uint32_t size);
+  void stopme(){
+    m_eudaqStop=true;
+    cout<<"[myserver] set STOPME! "<<endl;
+  };
   int setDebug(bool udebug){
     m_debug=udebug;
     return(0);
@@ -93,7 +99,7 @@ public:
 dataserver::dataserver(int32_t port)
   :fromlen(sizeof(struct sockaddr_in)),
    dataFileFd_(-1), maxbufsize(1024),
-  m_datatype(6), m_sock(0)
+  m_datatype(6), m_sock(0) ,  m_eudaqStop(false)
 {
   // this will port from 'port' opened on the *localhost* server
   m_sock=socket(AF_INET, SOCK_DGRAM, 0);
@@ -190,9 +196,12 @@ void dataserver::dataHeadTail (uint32_t size )
 
 }
 
+
+
 //--------------------------------------------------------------------------------//
 int dataserver::poll(int &evt){
      
+  // m_eudaqStop = false;
   sizeReComBuf=0;
   buf_counter=0;
   
@@ -211,6 +220,7 @@ int dataserver::poll(int &evt){
   }
 
   while (1) {
+   
     if (getaheader && m_datasize!=0){
       puts("[recvfrom] xml/rawdata case");
       
@@ -228,7 +238,7 @@ int dataserver::poll(int &evt){
 	  write(dataFileFd_, m_databuf, buf_counter);
 	  sizeReComBuf+=buf_counter;
 
-	  if (buf_counter!=m_datasize*4) // workpoint
+	  if (buf_counter!=m_datasize*4 && m_debug) // workpoint
 	    printf("[Warn] Hmm... buf_counter (%d) != datasize*4 (%d)\n", buf_counter, m_datasize*4);
 	}
 
@@ -319,6 +329,7 @@ int dataserver::poll(int &evt){
     
   }// end of while loop
 
+  cout<<"[myserver] i am stopping"<<endl;
   /* ending */
   ::close(dataFileFd_);
   dataFileFd_ = -1;

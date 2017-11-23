@@ -1,5 +1,9 @@
 #include "eudaq/RunControl.hh"
 
+/*
+ * @Nov 21: to be udpated to fix the broken run control when controling the kpix producer after sync to the latest central branch update.
+ */
+
 class kpixRunControl: public eudaq::RunControl{
 public:
   kpixRunControl(const std::string & listenaddress);
@@ -80,7 +84,7 @@ void kpixRunControl::StopRun(){
 void kpixRunControl::Configure(){
   auto conf = GetConfiguration();
   m_stop_second = conf->Get("KPIX_STOP_RUN_AFTER_N_SECONDS", 0);
-  m_check_full_name = conf->Get("PRODUCER_TO_CONTROL", "Producer.kpix");
+  m_check_full_name = conf->Get("PRODUCER_TO_CONTROL", "Producer.lycoris");
   RunControl::Configure();
 }
 
