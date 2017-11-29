@@ -295,11 +295,11 @@ void kpixProducer::OnStatus(){
 
 void kpixProducer::KpixDataReceiver(){
   _enableDataThread=true;
-  
+
   Data* datKpix;
   while( _enableDataThread ){
     
-    if ( ( datKpix = (Data*)udpLink.pollEudaqQueue()) != NULL) {
+    if ( ( datKpix = (Data*)udpLink.pollEudaqQueue()) != NULL ) {
       std::unique_lock<std::mutex> rxlock(_kpixQueue_guard);
       _kpixQueue.push_front(datKpix);
       rxlock.unlock();

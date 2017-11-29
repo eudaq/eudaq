@@ -54,7 +54,7 @@ list(APPEND CMAKE_PREFIX_PATH ${CMAKE_INSTALL_PREFIX}/extern)
 ## by mengqing: to have eudaq run with qt5 installed somewhere else@pc-kpix1
 option (USE_CUSTOMIZED_QT5 "use customized qt5 directory, other than the centralized lib path."  ON)
 if(USE_CUSTOMIZED_QT5)
-  list(APPEND CMAKE_PREFIX_PATH "/opt/qt/5.5.1/")
+  list(APPEND CMAKE_PREFIX_PATH "/opt/Qt5.9.3/")
 else()
   message("QT5 used from central libraries, not a customized one!")
 endif()
