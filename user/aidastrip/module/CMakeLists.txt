@@ -1,7 +1,7 @@
 include_directories(include)
-include_directories(/home/lycoris-dev/kpix/kpix_dev/generic)
-include_directories(/home/lycoris-dev/kpix/kpix_dev/kpix)
-include_directories(/home/lycoris-dev/kpix/kpix_dev/deviceLib)
+include_directories(/home/lycoris-dev/kpixDaq/kpix_dev/generic)
+include_directories(/home/lycoris-dev/kpixDaq/kpix_dev/kpix)
+include_directories(/home/lycoris-dev/kpixDaq/kpix_dev/deviceLib)
 include_directories(/usr/include/libxml2)
 
 aux_source_directory(src MODULE_SRC)
