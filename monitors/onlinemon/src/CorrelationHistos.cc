@@ -12,7 +12,7 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
     : _sensor1(p1.getName()), _sensor2(p2.getName()), _id1(p1.getID()),
       _id2(p2.getID()), _maxX1(p1.getMaxX()), _maxX2(p2.getMaxX()),
       _maxY1(p1.getMaxY()), _maxY2(p2.getMaxY()), _fills(0), _2dcorrX(NULL),
-      _2dcorrY(NULL) {
+      _2dcorrY(NULL), _2dcorrXY(NULL), _2dcorrYX(NULL) {
   char out[1024], out2[1024], out_x[1024], out_y[1024];  
   if (_maxX1 != -1 && _maxX2 != -1) {
     sprintf(out, "X Correlation of %s %i and %s %i", _sensor1.c_str(), _id1,
@@ -53,7 +53,47 @@ CorrelationHistos::CorrelationHistos(SimpleStandardPlane p1,
       _2dcorrY->GetXaxis()->SetTitleOffset(1);
     }
   }
-  
+
+  if (_maxX1 != -1 && _maxY2 != -1) {
+    sprintf(out, "XY Correlation of %s %i and %s %i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    sprintf(out2, "h_corr_XY_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    sprintf(out_x, "%s %i X", _sensor1.c_str(), _id1);
+    sprintf(out_y, "%s %i Y", _sensor2.c_str(), _id2);
+    _2dcorrXY = new TH2I(out2, out, _maxX1, 0, _maxX1, _maxY2, 0, _maxY2);
+    if (_2dcorrXY != NULL) {
+      _2dcorrXY->GetXaxis()->SetTitle(out_x);
+      _2dcorrXY->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
+      _2dcorrXY->GetXaxis()->SetTitleSize(static_cast<Float_t>(0.03));
+      _2dcorrXY->GetXaxis()->SetTitleOffset(1);
+      _2dcorrXY->GetYaxis()->SetTitle(out_y);
+      _2dcorrXY->GetYaxis()->SetTitleSize(static_cast<Float_t>(0.03));
+      _2dcorrXY->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
+      _2dcorrXY->GetXaxis()->SetTitleOffset(1);
+    }
+  }
+
+  if (_maxY1 != -1 && _maxX2 != -1) {
+    sprintf(out, "YX Correlation of %s %i and %s %i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    sprintf(out2, "h_corr_YX_%s_%i_vs_%s_%i", _sensor1.c_str(), _id1,
+            _sensor2.c_str(), _id2);
+    sprintf(out_x, "%s %i Y", _sensor1.c_str(), _id1);
+    sprintf(out_y, "%s %i X", _sensor2.c_str(), _id2);
+    _2dcorrYX = new TH2I(out2, out, _maxY1, 0, _maxY1, _maxX2, 0, _maxX2);
+    if (_2dcorrYX != NULL) {
+      _2dcorrYX->GetXaxis()->SetTitle(out_x);
+      _2dcorrYX->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
+      _2dcorrYX->GetXaxis()->SetTitleSize(static_cast<Float_t>(0.03));
+      _2dcorrYX->GetXaxis()->SetTitleOffset(1);
+      _2dcorrYX->GetYaxis()->SetTitle(out_y);
+      _2dcorrYX->GetYaxis()->SetTitleSize(static_cast<Float_t>(0.03));
+      _2dcorrYX->GetXaxis()->SetLabelSize(static_cast<Float_t>(0.03));
+      _2dcorrYX->GetXaxis()->SetTitleOffset(1);
+    }
+  } 
+
   m_pitchX1=1;
   m_pitchY1=1;
   m_pitchX2=1;
@@ -121,7 +161,12 @@ void CorrelationHistos::Fill(const SimpleStandardCluster &cluster1,
   if (_2dcorrY != NULL){
     _2dcorrY->Fill(cluster1.getY(), cluster2.getY());
   }
-
+  if (_2dcorrXY != NULL){
+    _2dcorrXY->Fill(cluster1.getX(), cluster2.getY());
+  }
+  if (_2dcorrYX != NULL){
+    _2dcorrYX->Fill(cluster1.getY(), cluster2.getX());
+  }
 }
 
 
@@ -139,14 +184,17 @@ void CorrelationHistos::FillCorrVsTime(const SimpleStandardCluster &cluster1,
 
 }
 
-
 void CorrelationHistos::Reset() {
   _2dcorrX->Reset();
   _2dcorrY->Reset();
+  _2dcorrXY->Reset();
+  _2dcorrYX->Reset();
 }
 
 TH2I *CorrelationHistos::getCorrXHisto() { return _2dcorrX; }
 TH2I *CorrelationHistos::getCorrYHisto() { return _2dcorrY; }
+TH2I *CorrelationHistos::getCorrXYHisto() { return _2dcorrXY; }
+TH2I *CorrelationHistos::getCorrYXHisto() { return _2dcorrYX; }
 
 void CorrelationHistos::Write() {
   _2dcorrX->Write();
