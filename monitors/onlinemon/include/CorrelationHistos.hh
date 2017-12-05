@@ -30,6 +30,9 @@ protected:
   int _fills;
   TH2I *_2dcorrX;
   TH2I *_2dcorrY;
+  TH2I *_2dcorrXY;
+  TH2I *_2dcorrYX;
+
   TH2I *_2dcorrTimeX;
   TH2I *_2dcorrTimeY;
 
@@ -54,6 +57,8 @@ public:
 
   TH2I *getCorrXHisto();
   TH2I *getCorrYHisto();
+  TH2I *getCorrXYHisto();
+  TH2I *getCorrYXHisto();
   TH2I *getCorrTimeXHisto(){return _2dcorrTimeX;};
   TH2I *getCorrTimeYHisto(){return _2dcorrTimeY;};
   std::mutex* getMutex();
