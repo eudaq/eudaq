@@ -15,14 +15,13 @@ namespace eudaq{
     if(d1->IsFlagPacket()){
       EUDAQ_INFO("Converting the inputfile into a TTree ");
       TTree* m_ttree = new TTree("tree", "a simple Tree with simple variables");
-      
       uint32_t run_n = (d1->GetRunN());
       uint32_t event_n = (d1->GetEventN());
       //      i_tlu = 0;
       
       m_ttree->Branch("run_n", &run_n, "run_n/I");
       m_ttree->Branch("event_n", &event_n, "event_n/I");
-      
+      d2.reset(m_ttree);
       size_t nsub = d1->GetNumSubEvent();
       for(size_t i=0; i<nsub; i++){
 	auto subev = d1->GetSubEvent(i);
@@ -31,6 +30,7 @@ namespace eudaq{
       }
 
       m_ttree->Fill();
+      m_ttree->Write();
 
     }
 
