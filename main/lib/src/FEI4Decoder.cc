@@ -138,7 +138,14 @@ std::vector<APIXPix> decodeFEI4Data(std::vector<unsigned char> const & data) {
 
 					if(column < 80 && ((tot2 == 0xF && row < 336) || (tot2 < 0xF && row < 335) )) {
 						//If tot2 != 0b1111 (0xF) then the tot2 is the tot code for pixel (col, row+1)
-                        auto lv1 = static_cast<unsigned>(no_data_headers.at(channel)-1);
+			unsigned int lv1;
+			try {
+				lv1 = static_cast<unsigned>(no_data_headers.at(channel)-1);
+			} catch (...) {
+				std::cout << "Exception thrown in FEI4 converter: out of range" << std::endl;
+				std::cout << "channel= " << channel << std::endl;
+				lv1 = static_cast<unsigned>(16);
+			};
                         if(lv1 > 15) lv1 = 15;
 						if( tot2 != 0xF) result.emplace_back(column, row+1, tot2, lv1, channel);
 						result.emplace_back(column, row, tot1, lv1, channel);
