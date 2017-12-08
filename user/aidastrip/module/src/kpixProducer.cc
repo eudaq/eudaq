@@ -282,6 +282,7 @@ void kpixProducer::OnStatus(){
    * SetStatusTag from CommandReceiver;
    * Tags collecting and transferred to euRun GUI as the value of tcp key of map_conn_status.
   */
+  SetStatusTag("EventN", std::to_string(m_nEvt));
   SetStatusTag("Status", "test");
   SetStatusTag("Data/Event", m_dataOverEvt);
   SetStatusTag("Run Rate", m_runrate);
@@ -298,7 +299,6 @@ void kpixProducer::KpixDataReceiver(){
 
   Data* datKpix;
   while( _enableDataThread ){
-    
     if ( ( datKpix = (Data*)udpLink.pollEudaqQueue()) != NULL ) {
       std::unique_lock<std::mutex> rxlock(_kpixQueue_guard);
       _kpixQueue.push_front(datKpix);
@@ -308,7 +308,7 @@ void kpixProducer::KpixDataReceiver(){
     }
     delete datKpix;
   }
-  cout<<"[]End of data thread"<<endl;
+  cout<<"[] End of data thread"<<endl;
   
 }/* end wmq-dev: polling data from kpix to eudaq*/
 
