@@ -99,6 +99,9 @@ private:
 
   std::string m_tbsc_dsn;
   std::string m_tbsc_db;
+  std::string m_tbsc_tab_uni;
+  std::string m_tbsc_tab_data;
+  
   unsigned int m_s_intvl;
   //std::string m_tbsc_mask;
   std::vector<std::string> m_tbsc_mask;
@@ -152,6 +155,9 @@ void tbscProducer::DoInitialise(){
   auto ini = GetInitConfiguration();
   m_tbsc_dsn = ini->Get("TBSC_DSN", "myodbc5a");
   m_tbsc_db  = ini->Get("TBSC_DATABASE", "aidaTest");
+  m_tbsc_tab_uni = ini->Get("TBSC_TAB_UNIT", "aida_channels");
+  m_tbsc_tab_data = ini->Get("TBSC_TAB_DATA", "aidaSC");
+
   std::string ini_debug = ini->Get("TBSC_DEBUG", "");
   m_debug = (ini_debug=="true"||ini_debug=="True")? true : false;
 }
@@ -162,6 +168,9 @@ void tbscProducer::DoConfigure(){
   conf->Print(std::cout);
   m_tbsc_dsn=conf->Get("TBSC_DSN", m_tbsc_dsn);
   m_tbsc_db = conf->Get("TBSC_DATABASE", m_tbsc_db);
+  m_tbsc_tab_uni = conf->Get("TBSC_TAB_UNIT", m_tbsc_tab_uni);
+  m_tbsc_tab_data = conf->Get("TBSC_TAB_DATA", m_tbsc_tab_data);
+
   std::string conf_debug = conf->Get("TBSC_DEBUG", "");
   if (conf_debug!="")
     m_debug = (conf_debug=="true" || conf_debug=="True")? true: false;
@@ -196,7 +205,7 @@ void tbscProducer::DoConfigure(){
   SQLAllocHandle(SQL_HANDLE_STMT, m_dbc, &m_stmt);
 
   /*Fill in the readout data map*/
-  fillChannelMap();
+  fillChannelMap(m_tbsc_tab_uni);
   if (m_debug) printNestedMap(m_sc_para_map);
 }
 //----------DOC-MARK-----BEG*RUN-----DOC-MARK----------
@@ -260,7 +269,8 @@ void tbscProducer::Mainloop(){
   
   int acounter=0;
   std::string latest_update="NULL";
-  SQLCHAR* checkUpdate= (SQLCHAR*)"select UPDATE_TIME from information_schema.tables where TABLE_SCHEMA='aidaTest' and TABLE_NAME='aidaSC';";
+  //  SQLCHAR* checkUpdate= (SQLCHAR*)"select UPDATE_TIME from information_schema.tables where TABLE_SCHEMA='aidaTest' and TABLE_NAME='aidaSC';";
+  SQLCHAR* checkUpdate= (SQLCHAR*)("select UPDATE_TIME from information_schema.tables where TABLE_SCHEMA='"+m_tbsc_db+"' and TABLE_NAME='"+m_tbsc_tab_data+"';").c_str();
   std::map<std::string, std::map<std::string, std::string>> sc_data;
   do{
     printf(" #%d check update_time <-|\n", acounter);
@@ -280,7 +290,8 @@ void tbscProducer::Mainloop(){
 
 	  sc_data.clear();
 	  odbcFetchData(m_stmt,
-			(SQLCHAR*)"select * from aidaSC order by timer desc limit 2;",
+			//(SQLCHAR*)"select * from aidaSC order by timer desc limit 2;",
+			(SQLCHAR*)("select * from "+m_tbsc_tab_data+" order by timer desc limit 2;").c_str(),
 			m_columns,
 			sc_data);
 	  
